@@ -184,17 +184,17 @@ int main(int ac, char *av[])
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> free_ball_get_time_step_size(free_ball);
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> damping_ball_get_time_step_size(damping_ball);
 	/** stress relaxation for the balls. */
-	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationFirstHalf> free_ball_stress_relaxation_first_half(free_ball_inner);
-	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationSecondHalf> free_ball_stress_relaxation_second_half(free_ball_inner);
-	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationFirstHalf> damping_ball_stress_relaxation_first_half(damping_ball_inner);
-	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationSecondHalf> damping_ball_stress_relaxation_second_half(damping_ball_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> free_ball_stress_relaxation_first_half(free_ball_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> free_ball_stress_relaxation_second_half(free_ball_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> damping_ball_stress_relaxation_first_half(damping_ball_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> damping_ball_stress_relaxation_second_half(damping_ball_inner);
 	/** Algorithms for solid-solid contact. */
 	InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle> free_ball_update_contact_density(free_ball_contact);
 	InteractionDynamics<solid_dynamics::ContactForceFromWall, BodyPartByParticle> free_ball_compute_solid_contact_forces(free_ball_contact);
 	InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle> damping_ball_update_contact_density(damping_ball_contact);
 	InteractionDynamics<solid_dynamics::ContactForceFromWall, BodyPartByParticle> damping_ball_compute_solid_contact_forces(damping_ball_contact);
 	/** Damping for one ball */
-	DampingWithRandomChoice<NewInteractionDynamicsSplit<DampingPairwiseInner<Vec2d>>>
+	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
 		damping(0.5, damping_ball_inner, "Velocity", physical_viscosity);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.

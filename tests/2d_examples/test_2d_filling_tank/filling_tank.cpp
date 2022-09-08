@@ -119,10 +119,10 @@ int main()
 	//----------------------------------------------------------------------
 	//	Define all numerical methods which are used in this case.
 	//----------------------------------------------------------------------
-	NewInteractionDynamics1Level<fluid_dynamics::PressureRelaxationRiemannWithWall> pressure_relaxation(water_body_complex);
-	NewInteractionDynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(water_body_complex);
-	InteractionDynamicsWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_density_by_summation(water_body_complex);
-	InteractionDynamicsWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex>
+	Dynamics1Level<fluid_dynamics::PressureRelaxationRiemannWithWall> pressure_relaxation(water_body_complex);
+	Dynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(water_body_complex);
+	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_density_by_summation(water_body_complex);
+	InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex>
 		indicate_free_surface(water_body_complex);
 	water_body.addBodyStateForRecording<Real>("PositionDivergence"); // for debug
 	water_body.addBodyStateForRecording<int>("SurfaceIndicator");	 // for debug

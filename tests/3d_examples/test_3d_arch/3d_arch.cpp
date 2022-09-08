@@ -132,14 +132,14 @@ int main()
 	/** Time step size calculation. */
 	ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(cylinder_body);
 	/** stress relaxation. */
-	NewInteractionDynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(cylinder_body_inner);
-	NewInteractionDynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(cylinder_body_inner);
+	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(cylinder_body_inner);
+	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(cylinder_body_inner);
 	/** Constrain the Boundary. */
 	BoundaryGeometry boundary_geometry(cylinder_body, "BoundaryGeometry");
 	SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion, BoundaryGeometry> constrain_holder(boundary_geometry);
-	DampingWithRandomChoice<NewInteractionDynamicsSplit<DampingPairwiseInner<Vecd>>>
+	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vecd>>>
 		cylinder_position_damping(0.2, cylinder_body_inner, "Velocity", physical_viscosity);
-	DampingWithRandomChoice<NewInteractionDynamicsSplit<DampingPairwiseInner<Vecd>>>
+	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vecd>>>
 		cylinder_rotation_damping(0.2, cylinder_body_inner, "AngularVelocity", physical_viscosity);
 	/** Output */
 	IOEnvironment io_environment(system);

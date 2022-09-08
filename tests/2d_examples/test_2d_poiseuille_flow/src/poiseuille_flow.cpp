@@ -117,15 +117,15 @@ int main()
 	 * @brief 	Algorithms of fluid dynamics.
 	 */
 	/** Evaluation of density by summation approach. */
-	InteractionDynamicsWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_complex);
+	InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_complex);
 	/** Time step size without considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
 	/** Time step size with considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	/** Pressure relaxation algorithm without Riemann solver for viscous flows. */
-	NewInteractionDynamics1Level<fluid_dynamics::PressureRelaxationWithWall> pressure_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::PressureRelaxationWithWall> pressure_relaxation(water_block_complex);
 	/** Pressure relaxation algorithm by using position verlet time stepping. */
-	NewInteractionDynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(water_block_complex);
 	/** Computing viscous acceleration. */
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	/** Impose transport velocity. */

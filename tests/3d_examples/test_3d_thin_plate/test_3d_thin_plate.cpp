@@ -163,9 +163,9 @@ int main(int ac, char *av[])
 	/** Time step size calculation. */
 	ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(plate_body);
 	/** active-passive stress relaxation. */
-	NewInteractionDynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf>
+	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf>
 		stress_relaxation_first_half(plate_body_inner);
-	NewInteractionDynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf>
+	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf>
 		stress_relaxation_second_half(plate_body_inner);
 	/** Constrain the Boundary. */
 	BoundaryGeometryParallelToXAxis boundary_geometry_x(plate_body, "BoundaryGeometryParallelToXAxis");
@@ -174,9 +174,9 @@ int main(int ac, char *av[])
 	BoundaryGeometryParallelToYAxis boundary_geometry_y(plate_body, "BoundaryGeometryParallelToYAxis");
 	SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegionAlongAxis, BoundaryGeometryParallelToYAxis>
 		constrain_holder_y(boundary_geometry_y, 1);
-	DampingWithRandomChoice<NewInteractionDynamicsSplit<DampingPairwiseInner<Vec3d>>>
+	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
 		plate_position_damping(0.5, plate_body_inner, "Velocity", physical_viscosity);
-	DampingWithRandomChoice<NewInteractionDynamicsSplit<DampingPairwiseInner<Vec3d>>>
+	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
 		plate_rotation_damping(0.5, plate_body_inner, "AngularVelocity", physical_viscosity);
 	/** Output */
 	IOEnvironment io_environment(system);

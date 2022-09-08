@@ -313,14 +313,14 @@ int main(int ac, char *av[])
 	 */
 	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
 	/** Evaluation of density by summation approach. */
-	InteractionDynamicsWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_complex);
+	InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_complex);
 	/** Time step size without considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
 	/** Time step size with considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	/** Pressure relaxation using verlet time stepping. */
-	NewInteractionDynamics1Level<fluid_dynamics::PressureRelaxationWithWall> pressure_relaxation(water_block_complex);
-	NewInteractionDynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::PressureRelaxationWithWall> pressure_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(water_block_complex);
 	/** Computing viscous acceleration. */
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	/** Impose transport velocity formulation. */
@@ -343,9 +343,9 @@ int main(int ac, char *av[])
 	/** Time step size calculation. */
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> fish_body_computing_time_step_size(fish_body);
 	/** Process of stress relaxation. */
-	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationFirstHalf>
+	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf>
 		fish_body_stress_relaxation_first_half(fish_body_inner);
-	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationSecondHalf>
+	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf>
 		fish_body_stress_relaxation_second_half(fish_body_inner);
 	/** Update normal direction on fish body.*/
 	SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection>

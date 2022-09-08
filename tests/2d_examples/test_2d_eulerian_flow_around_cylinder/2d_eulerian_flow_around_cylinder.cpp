@@ -120,9 +120,9 @@ int main(int ac, char *av[])
 	ReduceDynamics<eulerian_weakly_compressible_fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	/** Pressure relaxation using verlet time stepping. */
 	/** Here, we do not use Riemann solver for pressure as the flow is viscous. */
-	NewInteractionDynamics1Level<eulerian_weakly_compressible_fluid_dynamics::PressureRelaxationHLLCRiemannWithLimiterWithWall> pressure_relaxation(water_block_complex);
-	InteractionDynamicsWithUpdate<eulerian_weakly_compressible_fluid_dynamics::DensityAndEnergyRelaxationHLLCRiemannWithLimiterWithWall> density_relaxation(water_block_complex);
-	InteractionDynamicsWithUpdate<fluid_dynamics::FreeSurfaceIndicationComplex> surface_indicator(water_block_complex.inner_relation_, water_block_complex.contact_relation_);
+	Dynamics1Level<eulerian_weakly_compressible_fluid_dynamics::PressureRelaxationHLLCRiemannWithLimiterWithWall> pressure_relaxation(water_block_complex);
+	InteractionWithUpdate<eulerian_weakly_compressible_fluid_dynamics::DensityAndEnergyRelaxationHLLCRiemannWithLimiterWithWall> density_relaxation(water_block_complex);
+	InteractionWithUpdate<fluid_dynamics::FreeSurfaceIndicationComplex> surface_indicator(water_block_complex.inner_relation_, water_block_complex.contact_relation_);
 	/** Computing viscous acceleration with wall model. */
 	InteractionDynamics<eulerian_weakly_compressible_fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	/** non_reflective boundary condition. */

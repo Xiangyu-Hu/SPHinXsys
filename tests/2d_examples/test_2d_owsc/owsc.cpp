@@ -54,14 +54,14 @@ int main()
 	/** Time step initialization, add gravity. */
 	SimpleDynamics<TimeStepInitialization> initialize_time_step_to_fluid(water_block, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
 	/** Evaluation of density by summation approach. */
-	InteractionDynamicsWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_density_by_summation(water_block_complex);
+	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_density_by_summation(water_block_complex);
 	/** time step size without considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
 	/** time step size with considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	/** pressure relaxation using Verlet time stepping. */
-	NewInteractionDynamics1Level<fluid_dynamics::PressureRelaxationRiemannWithWall> pressure_relaxation(water_block_complex);
-	NewInteractionDynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::PressureRelaxationRiemannWithWall> pressure_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(water_block_complex);
 	/** Computing viscous acceleration. */
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	/** Inflow boundary condition. */

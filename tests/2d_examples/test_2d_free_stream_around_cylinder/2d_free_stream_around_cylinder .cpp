@@ -111,10 +111,10 @@ int main(int ac, char *av[])
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(disposer_translation)), disposer_halfsize));
 	SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion, BodyAlignedBoxByCell> disposer_outflow_deletion(disposer, 0);
 	/** time-space method to detect surface particles. */
-	InteractionDynamicsWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex>
+	InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex>
 		free_stream_surface_indicator(water_block_complex);
 	/** Evaluation of density by freestream approach. */
-	InteractionDynamicsWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_fluid_density(water_block_complex);
+	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_fluid_density(water_block_complex);
 	/** We can output a method-specific particle data for debug */
 	water_block.addBodyStateForRecording<Real>("Pressure");
 	water_block.addBodyStateForRecording<int>("SurfaceIndicator");
@@ -125,11 +125,11 @@ int main(int ac, char *av[])
 	/** modify the velocity of boundary particles with free-stream velocity. */
 	SimpleDynamics<fluid_dynamics::FreeStreamBoundaryVelocityCorrection> velocity_boundary_condition_constraint(water_block);
 	/** Pressure relaxation. */
-	NewInteractionDynamics1Level<fluid_dynamics::PressureRelaxationWithWall> pressure_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::PressureRelaxationWithWall> pressure_relaxation(water_block_complex);
 	/** correct the velocity of boundary particles with free-stream velocity through the post process of pressure relaxation. */
 	pressure_relaxation.post_processes_.push_back(&velocity_boundary_condition_constraint);
 	/** Density relaxation. */
-	NewInteractionDynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(water_block_complex);
 	/** Computing viscous acceleration. */
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	/** Apply transport velocity formulation. */

@@ -139,8 +139,8 @@ int main(int ac, char *av[])
 	SimpleDynamics<TimeStepInitialization> reset_prior_acceleration(beam_body);
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> beam_corrected_configuration(beam_body_inner);
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
-	NewInteractionDynamics1Level<solid_dynamics::KirchhoffStressRelaxationFirstHalf> stress_relaxation_first_half(beam_body_inner);
-	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half(beam_body_inner);
+	Dynamics1Level<solid_dynamics::KirchhoffStressRelaxationFirstHalf> stress_relaxation_first_half(beam_body_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half(beam_body_inner);
 	InteractionDynamics<solid_dynamics::SelfContactDensitySummation, BodyPartByParticle> beam_self_contact_density(beam_self_contact);
 	InteractionDynamics<solid_dynamics::SelfContactForce, BodyPartByParticle> beam_self_contact_forces(beam_self_contact);
 	BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));

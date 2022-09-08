@@ -139,8 +139,8 @@ int main(int ac, char *av[])
 	SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> update_beam_normal(beam_body);
 
 	/** active and passive stress relaxation. */
-	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationFirstHalf> stress_relaxation_first_half(beam_body_inner);
-	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half(beam_body_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> stress_relaxation_first_half(beam_body_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half(beam_body_inner);
 
 	/** specify end-time for defining the force-time profile */
 	Real end_time = 1;
@@ -164,7 +164,7 @@ int main(int ac, char *av[])
 	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_holder(holder);
 
 	/** Damping with the solid body*/
-	DampingWithRandomChoice<NewInteractionDynamicsSplit<DampingPairwiseInner<Vec3d>>>
+	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
 		beam_damping(0.1, beam_body_inner, "Velocity", physical_viscosity);
 
 	/** Output */

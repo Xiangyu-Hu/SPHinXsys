@@ -72,9 +72,9 @@ private:
 
 	SimpleDynamics<NormalDirectionFromBodyShape> initial_normal_direction_;
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> correct_configuration_;
-	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationFirstHalf> stress_relaxation_first_half_;
-	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half_;
-	DampingWithRandomChoice<NewInteractionDynamicsSplit<DampingPairwiseInner<Vec3d>>> damping_random_;
+	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> stress_relaxation_first_half_;
+	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half_;
+	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>> damping_random_;
 
 public:
 	// no particle reload --> direct generator
@@ -89,9 +89,9 @@ public:
 
 	SimpleDynamics<NormalDirectionFromBodyShape> *getInitialNormalDirection() { return &initial_normal_direction_; };
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> *getCorrectConfiguration() { return &correct_configuration_; };
-	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationFirstHalf> *getStressRelaxationFirstHalf() { return &stress_relaxation_first_half_; };
-	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationSecondHalf> *getStressRelaxationSecondHalf() { return &stress_relaxation_second_half_; };
-	DampingWithRandomChoice<NewInteractionDynamicsSplit<DampingPairwiseInner<Vec3d>>> *getDampingWithRandomChoice() { return &damping_random_; };
+	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> *getStressRelaxationFirstHalf() { return &stress_relaxation_first_half_; };
+	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> *getStressRelaxationSecondHalf() { return &stress_relaxation_second_half_; };
+	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>> *getDampingWithRandomChoice() { return &damping_random_; };
 };
 
 void expandBoundingBox(BoundingBox *original, BoundingBox *additional);

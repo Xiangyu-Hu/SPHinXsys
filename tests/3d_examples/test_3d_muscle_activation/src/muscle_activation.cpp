@@ -75,8 +75,8 @@ int main()
 	//	Define the numerical methods used in the simulation.
 	//	Note that there may be data dependence on the sequence of constructions.
 	//----------------------------------------------------------------------
-	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationFirstHalf> stress_relaxation_first_half(myocardium_muscle_body_inner);
-	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half(myocardium_muscle_body_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> stress_relaxation_first_half(myocardium_muscle_body_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half(myocardium_muscle_body_inner);
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> corrected_configuration(myocardium_muscle_body_inner);
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(myocardium_muscle_body);
 	SimpleDynamics<MyocardiumActivation> myocardium_activation(myocardium_muscle_body);

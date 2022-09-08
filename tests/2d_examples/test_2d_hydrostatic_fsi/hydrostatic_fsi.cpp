@@ -233,16 +233,16 @@ int main()
 	/** Initialize particle acceleration. */ //TODO: this is missing for solid body.
 	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
 	/** Evaluation of fluid density by summation approach. */
-	InteractionDynamicsWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_fluid_density(water_block_complex);
+	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_fluid_density(water_block_complex);
 	/** Compute time step size without considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_max);
 	/** Compute time step size with considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	/** Pressure relaxation using verlet time stepping. */
-	NewInteractionDynamics1Level<fluid_dynamics::PressureRelaxationWithWall> pressure_relaxation(water_block_complex);
-	NewInteractionDynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::PressureRelaxationWithWall> pressure_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(water_block_complex);
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
-	DampingWithRandomChoice<NewInteractionDynamicsSplit<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>>
+	DampingWithRandomChoice<InteractionSplit<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>>
 		fluid_damping(0.2, water_block_complex, "Velocity", mu_f);
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	SimpleDynamics<NormalDirectionFromBodyShape> gate_normal_direction(gate);
@@ -251,8 +251,8 @@ int main()
 	/** Compute time step size of elastic solid. */
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> gate_computing_time_step_size(gate);
 	/** Stress relaxation stepping for the elastic gate. */
-	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationFirstHalf> gate_stress_relaxation_first_half(gate_inner);
-	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationSecondHalf> gate_stress_relaxation_second_half(gate_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> gate_stress_relaxation_first_half(gate_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> gate_stress_relaxation_second_half(gate_inner);
 	/**Constrain a solid body part.  */
 	BodyRegionByParticle gate_constraint_part(gate, makeShared<MultiPolygonShape>(createGateConstrainShape()));
 	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> gate_constraint(gate_constraint_part);

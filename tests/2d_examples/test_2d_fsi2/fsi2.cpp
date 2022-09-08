@@ -110,17 +110,17 @@ int main(int ac, char *av[])
 	/** Initialize particle acceleration. */
 	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
 	/** Evaluation of density by summation approach. */
-	InteractionDynamicsWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_complex);
+	InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_complex);
 	/** Time step size without considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
 	/** Time step size with considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	/** Pressure relaxation using verlet time stepping. */
 	/** Here, we do not use Riemann solver for pressure as the flow is viscous. */
-	NewInteractionDynamics1Level<fluid_dynamics::PressureRelaxationWithWall> pressure_relaxation(water_block_complex);
-	NewInteractionDynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::PressureRelaxationWithWall> pressure_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(water_block_complex);
 	/** viscous acceleration and transport velocity correction can be combined because they are independent dynamics. */
-	InteractionDynamics<CombinedLocalInteractionDynamics<
+	InteractionDynamics<CombinedLocalInteraction<
 		fluid_dynamics::ViscousAccelerationWithWall,
 		fluid_dynamics::TransportVelocityCorrectionComplex>>
 		viscous_acceleration_and_transport_correction(water_block_complex);
@@ -151,8 +151,8 @@ int main(int ac, char *av[])
 	/** Compute time step size of elastic solid. */
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> insert_body_computing_time_step_size(insert_body);
 	/** Stress relaxation for the inserted body. */
-	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationFirstHalf> insert_body_stress_relaxation_first_half(insert_body_inner);
-	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationSecondHalf> insert_body_stress_relaxation_second_half(insert_body_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> insert_body_stress_relaxation_first_half(insert_body_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> insert_body_stress_relaxation_second_half(insert_body_inner);
 	/** Constrain region of the inserted body. */
 	BodyRegionByParticle beam_base(insert_body, makeShared<MultiPolygonShape>(createBeamBaseShape()));
 	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_beam_base(beam_base);

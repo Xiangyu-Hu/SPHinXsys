@@ -80,8 +80,8 @@ int main()
 	/** Time step size calculation. */
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(myocardium_body);
 	/** active and passive stress relaxation. */
-	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationFirstHalf> stress_relaxation_first_half(myocardium_body_inner);
-	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half(myocardium_body_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> stress_relaxation_first_half(myocardium_body_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half(myocardium_body_inner);
 	/** Algorithms for solid-solid contact. */
 	InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle> myocardium_update_contact_density(myocardium_plate_contact);
 	InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle> plate_update_contact_density(plate_myocardium_contact);
@@ -92,7 +92,7 @@ int main()
 		makeShared<TransformShape<GeometricShapeBox>>(translation_stationary_plate, halfsize_stationary_plate, "Holder"));
 	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle>	constraint_holder(holder);
 	/** Damping with the solid body*/
-	DampingWithRandomChoice<NewInteractionDynamicsSplit<DampingPairwiseInner<Vec3d>>>
+	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
 		muscle_damping(0.1, myocardium_body_inner, "Velocity", physical_viscosity);
 	/** Output */
 	IOEnvironment io_environment(system);

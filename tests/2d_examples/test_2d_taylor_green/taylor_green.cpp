@@ -110,7 +110,7 @@ int main(int ac, char *av[])
 	 * @brief 	Algorithms of fluid dynamics.
 	 */
 	/** Evaluation of density by summation approach. */
-	InteractionDynamicsWithUpdate<fluid_dynamics::DensitySummationInner> update_density_by_summation(water_block_inner);
+	InteractionWithUpdate<fluid_dynamics::DensitySummationInner> update_density_by_summation(water_block_inner);
 	/** Time step size without considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
 	/** Time step size with considering sound wave speed. */
@@ -119,8 +119,8 @@ int main(int ac, char *av[])
 	/** Here, we do not use Riemann solver for pressure as the flow is viscous. 
 	  * The other reason is that we are using transport velocity formulation, 
 	  * which will also introduce numerical dissipation slightly. */
-	NewInteractionDynamics1Level<fluid_dynamics::PressureRelaxationInner> pressure_relaxation(water_block_inner);
-	NewInteractionDynamics1Level<fluid_dynamics::DensityRelaxationRiemannInner> density_relaxation(water_block_inner);
+	Dynamics1Level<fluid_dynamics::PressureRelaxationInner> pressure_relaxation(water_block_inner);
+	Dynamics1Level<fluid_dynamics::DensityRelaxationRiemannInner> density_relaxation(water_block_inner);
 	/** Computing viscous acceleration. */
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_inner);
 	/** Impose transport velocity. */

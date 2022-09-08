@@ -256,7 +256,7 @@ int main()
 	/** Initialize particle acceleration. */
 	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(thermofluid_body);
 	/** Evaluation of density by summation approach. */
-	InteractionDynamicsWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(fluid_body_complex);
+	InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(fluid_body_complex);
 	/** Time step size without considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step(thermofluid_body, U_f);
 	/** Time step size with considering sound wave speed. */
@@ -267,8 +267,8 @@ int main()
 	ThermalRelaxationComplex thermal_relaxation_complex(fluid_body_complex);
 	/** Pressure relaxation using verlet time stepping. */
 	/** Here, we do not use Riemann solver for pressure as the flow is viscous. */
-	NewInteractionDynamics1Level<fluid_dynamics::PressureRelaxationWithWall> pressure_relaxation(fluid_body_complex);
-	NewInteractionDynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(fluid_body_complex);
+	Dynamics1Level<fluid_dynamics::PressureRelaxationWithWall> pressure_relaxation(fluid_body_complex);
+	Dynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(fluid_body_complex);
 	/** Computing viscous acceleration. */
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(fluid_body_complex);
 	/** Apply transport velocity formulation. */

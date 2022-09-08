@@ -177,9 +177,9 @@ int main()
 	//----------------------------------------------------------------------
 	//	Algorithms of fluid dynamics.
 	//----------------------------------------------------------------------
-	NewInteractionDynamics1Level<fluid_dynamics::PressureRelaxationRiemannWithWall> pressure_relaxation(water_block_complex_relation);
-	NewInteractionDynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(water_block_complex_relation);
-	InteractionDynamicsWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_density_by_summation(water_block_complex_relation);
+	Dynamics1Level<fluid_dynamics::PressureRelaxationRiemannWithWall> pressure_relaxation(water_block_complex_relation);
+	Dynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(water_block_complex_relation);
+	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_density_by_summation(water_block_complex_relation);
 	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
@@ -195,8 +195,8 @@ int main()
 	//----------------------------------------------------------------------
 	//	Algorithms of Elastic dynamics.
 	//----------------------------------------------------------------------
-	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationFirstHalf> gate_stress_relaxation_first_half(gate_inner_relation);
-	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationSecondHalf> gate_stress_relaxation_second_half(gate_inner_relation);
+	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> gate_stress_relaxation_first_half(gate_inner_relation);
+	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> gate_stress_relaxation_second_half(gate_inner_relation);
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> gate_computing_time_step_size(gate);
 
 	BodyRegionByParticle gate_constraint_part(gate, makeShared<MultiPolygonShape>(createGateConstrainShape()));

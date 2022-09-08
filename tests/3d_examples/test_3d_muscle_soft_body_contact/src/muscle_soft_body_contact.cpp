@@ -79,10 +79,10 @@ int main()
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> corrected_configuration(myocardium_body_inner);
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> corrected_configuration_2(moving_plate_inner);
 	/** active and passive stress relaxation. */
-	NewInteractionDynamics1Level<solid_dynamics::KirchhoffStressRelaxationFirstHalf> stress_relaxation_first_half(myocardium_body_inner);
-	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half(myocardium_body_inner);
-	NewInteractionDynamics1Level<solid_dynamics::KirchhoffStressRelaxationFirstHalf> stress_relaxation_first_half_2(moving_plate_inner);
-	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half_2(moving_plate_inner);
+	Dynamics1Level<solid_dynamics::KirchhoffStressRelaxationFirstHalf> stress_relaxation_first_half(myocardium_body_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half(myocardium_body_inner);
+	Dynamics1Level<solid_dynamics::KirchhoffStressRelaxationFirstHalf> stress_relaxation_first_half_2(moving_plate_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half_2(moving_plate_inner);
 	//stress_relaxation_first_half_2.post_processes_(spring_constraint);
 	/** Algorithms for solid-solid contact. */
 	InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle> myocardium_update_contact_density(myocardium_plate_contact);
@@ -98,9 +98,9 @@ int main()
 	SimpleDynamics<solid_dynamics::SpringDamperConstraintParticleWise> spring_constraint(moving_plate, Vecd(0.2, 0, 0), 0.01);
 
 	/** Damping with the solid body*/
-	DampingWithRandomChoice<NewInteractionDynamicsSplit<DampingPairwiseInner<Vec3d>>>
+	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
 		muscle_damping(0.2, myocardium_body_inner, "Velocity", physical_viscosity);
-	DampingWithRandomChoice<NewInteractionDynamicsSplit<DampingPairwiseInner<Vec3d>>>
+	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
 		plate_damping(0.2, moving_plate_inner, "Velocity", physical_viscosity);
 	/** Output */
 	IOEnvironment io_environment(system);

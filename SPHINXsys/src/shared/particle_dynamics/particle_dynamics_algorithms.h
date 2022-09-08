@@ -130,11 +130,11 @@ namespace SPH
 	};
 
 	/**
-	 * @class ReduceDynamicsAverage
+	 * @class ReduceAverage
 	 * @brief Template class for computing particle-wise averages
 	 */
 	template <class LocalDynamicsType, class DynamicsRange = SPHBody>
-	class ReduceDynamicsAverage : public ReduceDynamics<LocalDynamicsType, DynamicsRange>
+	class ReduceAverage : public ReduceDynamics<LocalDynamicsType, DynamicsRange>
 	{
 		using ReturnType = typename LocalDynamicsType::ReduceReturnType;
 		ReturnType outputAverage(ReturnType sum, size_t size_of_loop_range)
@@ -144,9 +144,9 @@ namespace SPH
 
 	public:
 		template <class DerivedDynamicsRange, typename... Args>
-		ReduceDynamicsAverage(DerivedDynamicsRange &derived_dynamics_range, Args &&...args)
+		ReduceAverage(DerivedDynamicsRange &derived_dynamics_range, Args &&...args)
 			: ReduceDynamics<LocalDynamicsType, DynamicsRange>(derived_dynamics_range, std::forward<Args>(args)...){};
-		virtual ~ReduceDynamicsAverage(){};
+		virtual ~ReduceAverage(){};
 
 		virtual ReturnType exec(Real dt = 0.0) override
 		{
@@ -199,11 +199,11 @@ namespace SPH
 	};
 
 	/**
-	 * @class NewInteractionDynamicsSplit
+	 * @class InteractionSplit
 	 * @brief This is for the splitting algorithm
 	 */
 	template <class LocalDynamicsType>
-	class NewInteractionDynamicsSplit : public BaseInteractionDynamics<LocalDynamicsType>
+	class InteractionSplit : public BaseInteractionDynamics<LocalDynamicsType>
 	{
 	protected:
 		RealBody &real_body_;
@@ -211,14 +211,14 @@ namespace SPH
 
 	public:
 		template <class BodyRelationType, typename... Args>
-		NewInteractionDynamicsSplit(BodyRelationType &body_relation, Args &&...args)
+		InteractionSplit(BodyRelationType &body_relation, Args &&...args)
 			: BaseInteractionDynamics<LocalDynamicsType>(body_relation, std::forward<Args>(args)...),
 			  real_body_(DynamicCast<RealBody>(this, this->sph_body_)),
 			  split_cell_lists_(real_body_.getSplitCellLists())
 		{
 			real_body_.setUseSplitCellLists();
 		};
-		virtual ~NewInteractionDynamicsSplit(){};
+		virtual ~InteractionSplit(){};
 
 		virtual void runInteractionStep(Real dt) override
 		{
@@ -300,17 +300,17 @@ namespace SPH
 	};
 
 	/**
-	 * @class InteractionDynamicsWithUpdate
+	 * @class InteractionWithUpdate
 	 * @brief This class includes an interaction and a update steps
 	 */
 	template <class LocalDynamicsType, class DynamicsRange = SPHBody>
-	class InteractionDynamicsWithUpdate : public InteractionDynamics<LocalDynamicsType, DynamicsRange>
+	class InteractionWithUpdate : public InteractionDynamics<LocalDynamicsType, DynamicsRange>
 	{
 	public:
 		template <class BodyRelationType, typename... Args>
-		InteractionDynamicsWithUpdate(BodyRelationType &body_relation, Args &&...args)
+		InteractionWithUpdate(BodyRelationType &body_relation, Args &&...args)
 			: InteractionDynamics<LocalDynamicsType, DynamicsRange>(body_relation, std::forward<Args>(args)...) {}
-		virtual ~InteractionDynamicsWithUpdate(){};
+		virtual ~InteractionWithUpdate(){};
 
 		virtual void exec(Real dt = 0.0) override
 		{
@@ -334,19 +334,19 @@ namespace SPH
 	};
 
 	/**
-	 * @class NewInteractionDynamics1Level
+	 * @class Dynamics1Level
 	 * @brief This class includes three steps, including initialization, interaction and update.
 	 * It is the most complex particle dynamics type, 
 	 * and is typically for computing the main fluid and solid dynamics.
 	 */
 	template <class LocalDynamicsType, class DynamicsRange = SPHBody>
-	class NewInteractionDynamics1Level : public InteractionDynamicsWithUpdate<LocalDynamicsType, DynamicsRange>
+	class Dynamics1Level : public InteractionWithUpdate<LocalDynamicsType, DynamicsRange>
 	{
 	public:
 		template <class BodyRelationType, typename... Args>
-		NewInteractionDynamics1Level(BodyRelationType &body_relation, Args &&...args)
-			: InteractionDynamicsWithUpdate<LocalDynamicsType, DynamicsRange>(body_relation, std::forward<Args>(args)...) {}
-		virtual ~NewInteractionDynamics1Level(){};
+		Dynamics1Level(BodyRelationType &body_relation, Args &&...args)
+			: InteractionWithUpdate<LocalDynamicsType, DynamicsRange>(body_relation, std::forward<Args>(args)...) {}
+		virtual ~Dynamics1Level(){};
 
 		virtual void exec(Real dt = 0.0) override
 		{
@@ -396,28 +396,28 @@ namespace SPH
 	 * aiming to increase computing intensity under the data caching environment
 	 */
 	template <typename... MultipleLocalDynamics>
-	class CombinedLocalInteractionDynamics;
+	class CombinedLocalInteraction;
 
 	template <>
-	class CombinedLocalInteractionDynamics<> : public LocalDynamics
+	class CombinedLocalInteraction<> : public LocalDynamics
 	{
 	public:
 		template <class BodyRelationType>
-		CombinedLocalInteractionDynamics(BodyRelationType &body_relation) : LocalDynamics(body_relation.getDynamicsRange()){};
+		CombinedLocalInteraction(BodyRelationType &body_relation) : LocalDynamics(body_relation.getDynamicsRange()){};
 
 		void interaction(size_t index_i, Real dt = 0.0){};
 	};
 
 	template <class FirstLocalDynamics, class... OtherLocalDynamics>
-	class CombinedLocalInteractionDynamics<FirstLocalDynamics, OtherLocalDynamics...> : public LocalDynamics
+	class CombinedLocalInteraction<FirstLocalDynamics, OtherLocalDynamics...> : public LocalDynamics
 	{
 	protected:
 		FirstLocalDynamics first_local_dynamics_;
-		CombinedLocalInteractionDynamics<OtherLocalDynamics...> other_local_dynamics_;
+		CombinedLocalInteraction<OtherLocalDynamics...> other_local_dynamics_;
 
 	public:
 		template <typename BodyRelationType, typename... FirstArgs, typename... OtherArgs>
-		CombinedLocalInteractionDynamics(BodyRelationType &body_relation, FirstArgs &&...first_args, OtherArgs &&...other_args)
+		CombinedLocalInteraction(BodyRelationType &body_relation, FirstArgs &&...first_args, OtherArgs &&...other_args)
 			: LocalDynamics(body_relation.getDynamicsRange()),
 			  first_local_dynamics_(body_relation, std::forward<FirstArgs>(first_args)...),
 			  other_local_dynamics_(body_relation, std::forward<OtherArgs>(other_args)...){};

@@ -230,7 +230,7 @@ int main()
 		write_solid_temperature("Phi", io_environment, temperature_observer_contact);
 	BodyRegionByParticle inner_domain(diffusion_body, makeShared<MultiPolygonShape>(createInnerDomain(), "InnerDomain"));
 	RegressionTestDynamicTimeWarping<BodyReducedQuantityRecording<
-		ReduceDynamicsAverage<DiffusionReactionSpeciesSummation<SolidBody, SolidParticles, Solid>, BodyRegionByParticle>>>
+		ReduceAverage<DiffusionReactionSpeciesSummation<SolidBody, SolidParticles, Solid>, BodyRegionByParticle>>>
 		write_solid_average_temperature_part(io_environment, inner_domain, "Phi");
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration

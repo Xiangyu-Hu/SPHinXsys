@@ -145,12 +145,12 @@ int main(int ac, char *av[])
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> ball_corrected_configuration(ball_inner);
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> ball_get_time_step_size(ball, 0.45);
 	/** stress relaxation for the balls. */
-	NewInteractionDynamics1Level<solid_dynamics::KirchhoffStressRelaxationFirstHalf> ball_stress_relaxation_first_half(ball_inner);
-	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationSecondHalf> ball_stress_relaxation_second_half(ball_inner);
+	Dynamics1Level<solid_dynamics::KirchhoffStressRelaxationFirstHalf> ball_stress_relaxation_first_half(ball_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> ball_stress_relaxation_second_half(ball_inner);
 	/** Algorithms for solid-solid contact. */
 	InteractionDynamics<solid_dynamics::ShellContactDensity, BodyPartByParticle> ball_update_contact_density(ball_contact);
 	InteractionDynamics<solid_dynamics::ContactForceFromWall, BodyPartByParticle> ball_compute_solid_contact_forces(ball_contact);
-	DampingWithRandomChoice<NewInteractionDynamicsSplit<solid_dynamics::PairwiseFrictionFromWall>>
+	DampingWithRandomChoice<InteractionSplit<solid_dynamics::PairwiseFrictionFromWall>>
 		ball_friction(0.1, ball_contact, physical_viscosity);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.

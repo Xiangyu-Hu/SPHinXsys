@@ -213,8 +213,8 @@ namespace SPH
 										typename FirstStageType::InnerBaseParticlesType,
 										typename FirstStageType::InnerBaseMaterialType>>
 			rk2_initialization_;
-		InteractionDynamicsWithUpdate<FirstStageType> rk2_1st_stage_;
-		InteractionDynamicsWithUpdate<SecondStageRK2<FirstStageType>> rk2_2nd_stage_;
+		InteractionWithUpdate<FirstStageType> rk2_1st_stage_;
+		InteractionWithUpdate<SecondStageRK2<FirstStageType>> rk2_2nd_stage_;
 
 	public:
 		explicit RelaxationOfAllDiffusionSpeciesRK2(typename FirstStageType::BodyRelationType &body_relation);
