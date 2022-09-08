@@ -220,8 +220,8 @@ int main(int ac, char *av[])
 
 	if (sph_system.generate_regression_data_)
 	{
-		write_water_mechanical_energy.generateDataBase(1.0e-2);
-		write_recorded_water_pressure.generateDataBase(1.0e-2);
+		write_water_mechanical_energy.generateDataBase(1.0e-3);
+		write_recorded_water_pressure.generateDataBase(1.0e-3);
 	}
 	else if (sph_system.restart_step_ == 0)
 	{
