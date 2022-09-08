@@ -251,8 +251,8 @@ int main()
 	/** Compute time step size of elastic solid. */
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> gate_computing_time_step_size(gate);
 	/** Stress relaxation stepping for the elastic gate. */
-	solid_dynamics::StressRelaxationFirstHalf gate_stress_relaxation_first_half(gate_inner);
-	solid_dynamics::StressRelaxationSecondHalf gate_stress_relaxation_second_half(gate_inner);
+	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationFirstHalf> gate_stress_relaxation_first_half(gate_inner);
+	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationSecondHalf> gate_stress_relaxation_second_half(gate_inner);
 	/**Constrain a solid body part.  */
 	BodyRegionByParticle gate_constraint_part(gate, makeShared<MultiPolygonShape>(createGateConstrainShape()));
 	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> gate_constraint(gate_constraint_part);

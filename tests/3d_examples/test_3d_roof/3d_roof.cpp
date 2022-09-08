@@ -143,9 +143,9 @@ int main(int ac, char *av[])
 	/** Time step size calculation. */
 	ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(cylinder_body);
 	/** stress relaxation. */
-	thin_structure_dynamics::ShellStressRelaxationFirstHalf
+	NewInteractionDynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf>
 		stress_relaxation_first_half(cylinder_body_inner);
-	thin_structure_dynamics::ShellStressRelaxationSecondHalf
+	NewInteractionDynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf>
 		stress_relaxation_second_half(cylinder_body_inner);
 	BoundaryGeometry boundary_geometry(cylinder_body, "BoundaryGeometry");
 	SimpleDynamics<solid_dynamics::FixedInAxisDirection, BoundaryGeometry> constrain_holder(boundary_geometry, Vecd(0.0, 1.0, 0.0));

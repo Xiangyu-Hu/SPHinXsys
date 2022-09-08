@@ -122,7 +122,7 @@ namespace SPH
 		 * @class BaseShellRelaxation
 		 * @brief abstract class for preparing shell relaxation
 		 */
-		class BaseShellRelaxation : public ParticleDynamics1Level, public ShellDataInner
+		class BaseShellRelaxation : public LocalDynamics, public ShellDataInner
 		{
 		public:
 			explicit BaseShellRelaxation(BaseBodyRelationInner &inner_relation);
@@ -148,6 +148,9 @@ namespace SPH
 			explicit ShellStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation,
 													int number_of_gaussian_points = 3, bool hourglass_control = false);
 			virtual ~ShellStressRelaxationFirstHalf(){};
+			void initialization(size_t index_i, Real dt = 0.0);
+			void interaction(size_t index_i, Real dt = 0.0);
+			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
 			Real rho0_, inv_rho0_;
@@ -165,10 +168,6 @@ namespace SPH
 			int number_of_gaussian_points_;
 			StdVec<Real> gaussian_point_;
 			StdVec<Real> gaussian_weight_;
-
-			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -182,11 +181,9 @@ namespace SPH
 			explicit ShellStressRelaxationSecondHalf(BaseBodyRelationInner &inner_relation)
 				: BaseShellRelaxation(inner_relation){};
 			virtual ~ShellStressRelaxationSecondHalf(){};
-
-		protected:
-			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
+			void initialization(size_t index_i, Real dt = 0.0);
+			void interaction(size_t index_i, Real dt = 0.0);
+			void update(size_t index_i, Real dt = 0.0);
 		};
 
 		/**@class ConstrainShellBodyRegion
@@ -214,51 +211,6 @@ namespace SPH
 			virtual Vecd GetAngularAcceleration(const Vecd &pos_0, const Vecd &pos_n, const Vecd &dangular_vel_dt_) { return Vecd(0); };
 			virtual Vecd GetPseudoNormal(const Vecd &pos_0, const Vecd &pos_n, const Vecd &n_0) { return n_0; };
 			virtual Vecd GetPseudoNormalChangeRate(const Vecd &pos_0, const Vecd &pos_n, const Vecd &dpseudo_normal_dt_) { return Vecd(0); };
-		};
-
-		/**
-		 * @class FixedFreeRotateShellBoundary
-		 * @brief Soft the constraint of a solid body part
-		 */
-		class FixedFreeRotateShellBoundary : public PartInteractionDynamicsByParticle1Level,
-											 public ShellDataInner
-		{
-		public:
-			FixedFreeRotateShellBoundary(BaseBodyRelationInner &inner_relation,
-										 BodyPartByParticle &body_part, Vecd constrained_direction = Vecd(0));
-			virtual ~FixedFreeRotateShellBoundary(){};
-
-		protected:
-			Real W0_;
-			Matd constrain_matrix_, recover_matrix_;
-			StdLargeVec<Real> &Vol_;
-			StdLargeVec<Vecd> &vel_, &angular_vel_;
-			StdLargeVec<Vecd> vel_n_temp_, angular_vel_temp_;
-
-			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
-		};
-
-		/**
-		 * @class ClampConstrainShellBodyRegion
-		 * @brief The clamped constrain of a shell body part
-		 */
-		class ClampConstrainShellBodyRegion : public PartInteractionDynamicsByParticle1Level,
-											  public ShellDataInner
-		{
-		public:
-			ClampConstrainShellBodyRegion(BaseBodyRelationInner &inner_relation, BodyPartByParticle &body_part);
-			virtual ~ClampConstrainShellBodyRegion(){};
-
-		protected:
-			StdLargeVec<Real> &Vol_;
-			StdLargeVec<Vecd> &vel_, &angular_vel_;
-			StdLargeVec<Vecd> vel_n_temp_, angular_vel_temp_;
-
-			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**@class ConstrainShellBodyRegionAlongAxis

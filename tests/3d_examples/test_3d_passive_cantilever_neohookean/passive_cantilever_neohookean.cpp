@@ -92,11 +92,11 @@ int main(int ac, char *av[])
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize>
 		computing_time_step_size(cantilever_body);
 	/** active and passive stress relaxation. */
-	solid_dynamics::StressRelaxationFirstHalf
+	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationFirstHalf>
 		stress_relaxation_first_half(cantilever_body_inner);
 	/** Setup the damping stress, if you know what you are doing. */
 	// stress_relaxation_first_step.setupDampingStressFactor(1.0);
-	solid_dynamics::StressRelaxationSecondHalf
+	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationSecondHalf>
 		stress_relaxation_second_half(cantilever_body_inner);
 	/** Constrain the holder. */
 	BodyRegionByParticle holder(cantilever_body,

@@ -88,8 +88,8 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	All numerical methods will be used in this case.
 	//----------------------------------------------------------------------
-	solid_dynamics::PlasticStressRelaxationFirstHalf stress_relaxation_first_half(column_inner);
-	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(column_inner);
+	NewInteractionDynamics1Level<solid_dynamics::PlasticStressRelaxationFirstHalf> stress_relaxation_first_half(column_inner);
+	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half(column_inner);
 	InteractionDynamics<solid_dynamics::DynamicContactForceWithWall, BodyPartByParticle> column_wall_contact_force(column_wall_contact);
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
 	SimpleDynamics<InitialCondition> initial_condition(column);

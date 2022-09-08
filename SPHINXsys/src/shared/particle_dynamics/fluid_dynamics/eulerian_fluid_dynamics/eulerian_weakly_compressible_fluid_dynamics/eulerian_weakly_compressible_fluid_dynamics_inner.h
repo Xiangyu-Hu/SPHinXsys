@@ -104,7 +104,7 @@ namespace SPH
 		 * @class BaseRelaxation
 		 * @brief Pure abstract base class for all fluid relaxation schemes
 		 */
-		class BaseRelaxation : public ParticleDynamics1Level, public EulerianWeaklyCompressibleFluidDataInner
+		class BaseRelaxation : public LocalDynamics, public EulerianWeaklyCompressibleFluidDataInner
 		{
 		public:
 			explicit BaseRelaxation(BaseBodyRelationInner &inner_relation);
@@ -124,10 +124,8 @@ namespace SPH
 		public:
 			explicit BasePressureRelaxation(BaseBodyRelationInner &inner_relation);
 			virtual ~BasePressureRelaxation(){};
-
-		protected:
-			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
+			void initialization(size_t index_i, Real dt = 0.0);
+			void update(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
@@ -142,9 +140,7 @@ namespace SPH
 			explicit BasePressureRelaxationInner(BaseBodyRelationInner &inner_relation);
 			virtual ~BasePressureRelaxationInner(){};
 			RiemannSolverType riemann_solver_;
-
-		protected:
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+			void interaction(size_t index_i, Real dt = 0.0) ;
 		};
 		using PressureRelaxationInner = BasePressureRelaxationInner<NoRiemannSolver>;
 		/** define the mostly used pressure relaxation scheme using Riemann solver */
@@ -163,8 +159,7 @@ namespace SPH
 			virtual ~BaseDensityAndEnergyRelaxation(){};
 
 		protected:
-			virtual void Initialization(size_t index_i, Real dt = 0.0) override{};
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
+			void update(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
@@ -178,9 +173,7 @@ namespace SPH
 			explicit BaseDensityAndEnergyRelaxationInner(BaseBodyRelationInner &inner_relation);
 			virtual ~BaseDensityAndEnergyRelaxationInner(){};
 			RiemannSolverType riemann_solver_;
-
-		protected:
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+			void interaction(size_t index_i, Real dt = 0.0);
 		};
 		using DensityAndEnergyRelaxationInner = BaseDensityAndEnergyRelaxationInner<NoRiemannSolver>;
 		/** define the mostly used density relaxation scheme using Riemann solver */

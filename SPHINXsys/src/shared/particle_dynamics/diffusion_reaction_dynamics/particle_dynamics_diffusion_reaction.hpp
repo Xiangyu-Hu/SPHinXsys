@@ -21,8 +21,8 @@ namespace SPH
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
 	GetDiffusionTimeStepSize<BodyType, BaseParticlesType, BaseMaterialType>::
 		GetDiffusionTimeStepSize(SPHBody &sph_body)
-		: ParticleDynamics<Real>(sph_body),
-		  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body)
+		: BaseDynamics<Real>(), 
+		DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body)
 	{
 		Real smoothing_length = sph_body.sph_adaptation_->ReferenceSmoothingLength();
 		diff_time_step_ = this->material_->getDiffusionTimeStepSize(smoothing_length);

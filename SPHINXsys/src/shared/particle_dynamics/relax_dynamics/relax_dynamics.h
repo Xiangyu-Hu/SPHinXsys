@@ -280,7 +280,7 @@ namespace SPH
 		 * @class ShellNormalDirectionPrediction
 		 * @brief predict the normal direction of shell particles.
 		 */
-		class ShellNormalDirectionPrediction : public ParticleDynamics<void>
+		class ShellNormalDirectionPrediction : public BaseDynamics<void>
 		{
 			const Real convergence_criterion_;
 			const Real consistency_criterion_;

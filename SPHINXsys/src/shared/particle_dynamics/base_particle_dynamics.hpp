@@ -13,12 +13,6 @@
 namespace SPH
 {
 	//=================================================================================================//
-	template <class ReturnType>
-	ParticleDynamics<ReturnType>::ParticleDynamics(SPHBody &sph_body)
-		: GlobalStaticVariables(), sph_body_(sph_body),
-		  sph_adaptation_(sph_body.sph_adaptation_),
-		  base_particles_(sph_body.base_particles_) {}
-	//=================================================================================================//
 	template <class BodyType,
 			  class ParticlesType,
 			  class MaterialType,
@@ -37,37 +31,6 @@ namespace SPH
 			contact_material_.push_back(DynamicCast<ContactMaterialType>(this, contact_sph_bodies[i]->base_material_));
 			contact_configuration_.push_back(&body_contact_relation.contact_configuration_[i]);
 		}
-	}
-	//=================================================================================================//
-	template <class ReturnType, typename ReduceOperation>
-	ReturnType ReduceIterator(size_t total_real_particles, ReturnType temp,
-							  ReduceFunctor<ReturnType> &reduce_functor, ReduceOperation &reduce_operation, Real dt)
-	{
-		for (size_t i = 0; i < total_real_particles; ++i)
-		{
-			temp = reduce_operation(temp, reduce_functor(i, dt));
-		}
-		return temp;
-	}
-	//=================================================================================================//
-	template <class ReturnType, typename ReduceOperation>
-	ReturnType ReduceIterator_parallel(size_t total_real_particles, ReturnType temp,
-									   ReduceFunctor<ReturnType> &reduce_functor, ReduceOperation &reduce_operation, Real dt)
-	{
-		return parallel_reduce(
-			blocked_range<size_t>(0, total_real_particles),
-			temp, [&](const blocked_range<size_t> &r, ReturnType temp0) -> ReturnType
-			{
-				for (size_t i = r.begin(); i != r.end(); ++i)
-				{
-					temp0 = reduce_operation(temp0, reduce_functor(i, dt));
-				}
-				return temp0;
-			},
-			[&](ReturnType x, ReturnType y) -> ReturnType
-			{
-				return reduce_operation(x, y);
-			});
 	}
 	//=================================================================================================//
 	template <class ParticleDynamicsInnerType, class ContactDataType>

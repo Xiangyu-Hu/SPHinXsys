@@ -212,8 +212,8 @@ int main(int ac, char *av[])
 	/** Time step size calculation. */
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> get_mechanics_time_step(mechanics_heart);
 	/** active and passive stress relaxation. */
-	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half(mechanics_heart_inner);
-	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(mechanics_heart_inner);
+	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationFirstHalf> stress_relaxation_first_half(mechanics_heart_inner);
+	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half(mechanics_heart_inner);
 	/** Constrain region of the inserted body. */
 	MuscleBaseShapeParameters muscle_base_parameters;
 	BodyRegionByParticle muscle_base(mechanics_heart,  makeShared<TriangleMeshShapeBrick>(muscle_base_parameters, "Holder"));

@@ -81,7 +81,7 @@ namespace SPH
 	 */
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
 	class GetDiffusionTimeStepSize
-		: public ParticleDynamics<Real>,
+		: public BaseDynamics<Real>,
 		  public DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>
 	{
 	public:

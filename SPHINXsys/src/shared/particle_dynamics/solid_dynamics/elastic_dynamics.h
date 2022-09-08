@@ -121,9 +121,7 @@ namespace SPH
 		 * @class BaseElasticRelaxation
 		 * @brief base class for elastic relaxation
 		 */
-		class BaseElasticRelaxation
-			: public ParticleDynamics1Level,
-			  public ElasticSolidDataInner
+		class BaseElasticRelaxation : public LocalDynamics, public ElasticSolidDataInner
 		{
 		public:
 			explicit BaseElasticRelaxation(BaseBodyRelationInner &inner_relation);
@@ -145,13 +143,12 @@ namespace SPH
 		public:
 			explicit BaseStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation);
 			virtual ~BaseStressRelaxationFirstHalf(){};
+			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
 			Real rho0_, inv_rho0_;
 			StdLargeVec<Vecd> &acc_prior_;
 			Real smoothing_length_;
-
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -164,14 +161,13 @@ namespace SPH
 		public:
 			explicit StressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation);
 			virtual ~StressRelaxationFirstHalf(){};
+			void initialization(size_t index_i, Real dt = 0.0);
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Matd> stress_PK1_B_;
 			Real numerical_dissipation_factor_;
 			Real inv_W0_ = 1.0 / body_->sph_adaptation_->getKernel()->W0(Vecd(0));
-
-			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -182,11 +178,10 @@ namespace SPH
 		public:
 			explicit KirchhoffParticleStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation);
 			virtual ~KirchhoffParticleStressRelaxationFirstHalf(){};
+			void initialization(size_t index_i, Real dt = 0.0);
 
 		protected:
 			const Real one_over_dimensions_ = 1.0 / (Real)Dimensions;
-
-			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -209,15 +204,14 @@ namespace SPH
 		public:
 			explicit KirchhoffStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation);
 			virtual ~KirchhoffStressRelaxationFirstHalf(){};
+			void initialization(size_t index_i, Real dt = 0.0);
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Real> J_to_minus_2_over_dimension_;
 			StdLargeVec<Matd> stress_on_particle_, inverse_F_T_;
 			const Real one_over_dimensions_ = 1.0 / (Real)Dimensions;
 			const Real correction_factor_ = 1.07;
-
-			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -231,11 +225,9 @@ namespace SPH
 			explicit StressRelaxationSecondHalf(BaseBodyRelationInner &inner_relation)
 				: BaseElasticRelaxation(inner_relation){};
 			virtual ~StressRelaxationSecondHalf(){};
-
-		protected:
-			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
+			void initialization(size_t index_i, Real dt = 0.0);
+			void interaction(size_t index_i, Real dt = 0.0);
+			void update(size_t index_i, Real dt = 0.0);
 		};
 	}
 }

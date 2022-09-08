@@ -151,8 +151,8 @@ int main(int ac, char *av[])
 	/** Compute time step size of elastic solid. */
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> insert_body_computing_time_step_size(insert_body);
 	/** Stress relaxation for the inserted body. */
-	solid_dynamics::StressRelaxationFirstHalf insert_body_stress_relaxation_first_half(insert_body_inner);
-	solid_dynamics::StressRelaxationSecondHalf insert_body_stress_relaxation_second_half(insert_body_inner);
+	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationFirstHalf> insert_body_stress_relaxation_first_half(insert_body_inner);
+	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationSecondHalf> insert_body_stress_relaxation_second_half(insert_body_inner);
 	/** Constrain region of the inserted body. */
 	BodyRegionByParticle beam_base(insert_body, makeShared<MultiPolygonShape>(createBeamBaseShape()));
 	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_beam_base(beam_base);

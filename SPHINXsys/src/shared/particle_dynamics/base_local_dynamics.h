@@ -36,6 +36,57 @@
 
 namespace SPH
 {
+	/** Functor for operation on particles. */
+	typedef std::function<void(size_t, Real)> ParticleFunctor;
+
+	/** A Functor for Summation */
+	template <class ReturnType>
+	struct ReduceSum
+	{
+		ReturnType operator()(const ReturnType &x, const ReturnType &y) const { return x + y; };
+	};
+	/** A Functor for Maximum */
+	struct ReduceMax
+	{
+		Real operator()(Real x, Real y) const { return SMAX(x, y); };
+	};
+	/** A Functor for Minimum */
+	struct ReduceMin
+	{
+		Real operator()(Real x, Real y) const { return SMIN(x, y); };
+	};
+	/** A Functor for OR operator */
+	struct ReduceOR
+	{
+		bool operator()(bool x, bool y) const { return x || y; };
+	};
+	/** A Functor for AND operator */
+	struct ReduceAND
+	{
+		bool operator()(bool x, bool y) const { return x && y; };
+	};
+	/** A Functor for lower bound */
+	struct ReduceLowerBound
+	{
+		Vecd operator()(const Vecd &x, const Vecd &y) const
+		{
+			Vecd lower_bound;
+			for (int i = 0; i < lower_bound.size(); ++i)
+				lower_bound[i] = SMIN(x[i], y[i]);
+			return lower_bound;
+		};
+	};
+	/** A Functor for upper bound */
+	struct ReduceUpperBound
+	{
+		Vecd operator()(const Vecd &x, const Vecd &y) const
+		{
+			Vecd upper_bound;
+			for (int i = 0; i < upper_bound.size(); ++i)
+				upper_bound[i] = SMAX(x[i], y[i]);
+			return upper_bound;
+		};
+	};
 
 	/**
 	 * @class BaseLocalDynamics

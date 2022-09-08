@@ -195,8 +195,8 @@ int main()
 	//----------------------------------------------------------------------
 	//	Algorithms of Elastic dynamics.
 	//----------------------------------------------------------------------
-	solid_dynamics::StressRelaxationFirstHalf gate_stress_relaxation_first_half(gate_inner_relation);
-	solid_dynamics::StressRelaxationSecondHalf gate_stress_relaxation_second_half(gate_inner_relation);
+	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationFirstHalf> gate_stress_relaxation_first_half(gate_inner_relation);
+	NewInteractionDynamics1Level<solid_dynamics::StressRelaxationSecondHalf> gate_stress_relaxation_second_half(gate_inner_relation);
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> gate_computing_time_step_size(gate);
 
 	BodyRegionByParticle gate_constraint_part(gate, makeShared<MultiPolygonShape>(createGateConstrainShape()));

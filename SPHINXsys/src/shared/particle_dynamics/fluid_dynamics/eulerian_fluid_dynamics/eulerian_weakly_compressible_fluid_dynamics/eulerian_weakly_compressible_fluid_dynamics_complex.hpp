@@ -101,9 +101,9 @@ namespace SPH
 			: RelaxationWithWall<BasePressureRelaxationType>(base_body_relation, wall_contact_relation) {}
 		//=================================================================================================//
 		template <class BasePressureRelaxationType>
-		void PressureRelaxation<BasePressureRelaxationType>::Interaction(size_t index_i, Real dt)
+		void PressureRelaxation<BasePressureRelaxationType>::interaction(size_t index_i, Real dt)
 		{
-			BasePressureRelaxationType::Interaction(index_i, dt);
+			BasePressureRelaxationType::interaction(index_i, dt);
 
 			FluidState state_i(this->rho_[index_i], this->vel_[index_i], this->p_[index_i]);
 
@@ -163,9 +163,9 @@ namespace SPH
 			: RelaxationWithWall<BaseDensityAndEnergyRelaxationType>(base_body_relation, wall_contact_relation) {}
 		//=================================================================================================//
 		template <class BaseDensityAndEnergyRelaxationType>
-		void DensityAndEnergyRelaxation<BaseDensityAndEnergyRelaxationType>::Interaction(size_t index_i, Real dt)
+		void DensityAndEnergyRelaxation<BaseDensityAndEnergyRelaxationType>::interaction(size_t index_i, Real dt)
 		{
-			BaseDensityAndEnergyRelaxationType::Interaction(index_i, dt);
+			BaseDensityAndEnergyRelaxationType::interaction(index_i, dt);
 
 			FluidState state_i(this->rho_[index_i], this->vel_[index_i], this->p_[index_i]);
 			Real density_change_rate = 0.0;

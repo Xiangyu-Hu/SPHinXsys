@@ -267,13 +267,13 @@ namespace SPH
 		ShellNormalDirectionPrediction::
 			ShellNormalDirectionPrediction(BaseBodyRelationInner &inner_relation,
 										   Real thickness, Real consistency_criterion)
-			: ParticleDynamics<void>(inner_relation.sph_body_),
+			: BaseDynamics<void>(),
 			  convergence_criterion_(cos(0.01 * Pi)),
 			  consistency_criterion_(consistency_criterion),
-			  normal_prediction_(sph_body_, thickness),
-			  normal_prediction_convergence_check_(sph_body_, convergence_criterion_),
+			  normal_prediction_(inner_relation.sph_body_, thickness),
+			  normal_prediction_convergence_check_(inner_relation.sph_body_, convergence_criterion_),
 			  consistency_correction_(inner_relation, consistency_criterion_),
-			  consistency_updated_check_(sph_body_),
+			  consistency_updated_check_(inner_relation.sph_body_),
 			  smoothing_normal_(inner_relation) {}
 		//=================================================================================================//
 		void ShellNormalDirectionPrediction::exec(Real dt)

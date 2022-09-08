@@ -72,7 +72,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		BaseRelaxation::BaseRelaxation(BaseBodyRelationInner &inner_relation)
-			: ParticleDynamics1Level(inner_relation.sph_body_),
+			: LocalDynamics(inner_relation.sph_body_),
 			  EulerianWeaklyCompressibleFluidDataInner(inner_relation),
 			  Vol_(particles_->Vol_), mass_(particles_->mass_), rho_(particles_->rho_),
 			  p_(particles_->p_), drho_dt_(particles_->drho_dt_), vel_(particles_->vel_), mom_(particles_->mom_),
@@ -81,13 +81,13 @@ namespace SPH
 		BasePressureRelaxation::
 			BasePressureRelaxation(BaseBodyRelationInner &inner_relation) : BaseRelaxation(inner_relation) {}
 		//=================================================================================================//
-		void BasePressureRelaxation::Initialization(size_t index_i, Real dt)
+		void BasePressureRelaxation::initialization(size_t index_i, Real dt)
 		{
 			rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
 			p_[index_i] = material_->getPressure(rho_[index_i]);
 		}
 		//=================================================================================================//
-		void BasePressureRelaxation::Update(size_t index_i, Real dt)
+		void BasePressureRelaxation::update(size_t index_i, Real dt)
 		{
 			mom_[index_i] += dmom_dt_[index_i] * dt;
 			vel_[index_i] = mom_[index_i] / rho_[index_i];
@@ -96,7 +96,7 @@ namespace SPH
 		BaseDensityAndEnergyRelaxation::
 			BaseDensityAndEnergyRelaxation(BaseBodyRelationInner &inner_relation) : BaseRelaxation(inner_relation) {}
 		//=================================================================================================//
-		void BaseDensityAndEnergyRelaxation::Update(size_t index_i, Real dt)
+		void BaseDensityAndEnergyRelaxation::update(size_t index_i, Real dt)
 		{
 			rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
 		}

@@ -116,7 +116,7 @@ namespace SPH
 		 * @class BaseRelaxation
 		 * @brief Pure abstract base class for all fluid relaxation schemes
 		 */
-		class BaseRelaxation : public ParticleDynamics1Level, public CompressibleFluidDataInner
+		class BaseRelaxation : public LocalDynamics, public CompressibleFluidDataInner
 		{
 		public:
 			explicit BaseRelaxation(BaseBodyRelationInner &inner_relation);
@@ -136,10 +136,8 @@ namespace SPH
 		public:
 			explicit BasePressureRelaxation(BaseBodyRelationInner &inner_relation);
 			virtual ~BasePressureRelaxation(){};
-
-		protected:
-			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
+			void initialization(size_t index_i, Real dt = 0.0);
+			void update(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
@@ -154,9 +152,7 @@ namespace SPH
 			explicit BasePressureRelaxationInner(BaseBodyRelationInner &inner_relation);
 			virtual ~BasePressureRelaxationInner(){};
 			RiemannSolverType riemann_solver_;
-
-		protected:
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+			void interaction(size_t index_i, Real dt = 0.0);
 		};
 		using PressureRelaxationHLLCRiemannInner = BasePressureRelaxationInner<HLLCRiemannSolver>;
 		using PressureRelaxationHLLCWithLimiterRiemannInner = BasePressureRelaxationInner<HLLCWithLimiterRiemannSolver>;
@@ -170,10 +166,7 @@ namespace SPH
 		public:
 			explicit BaseDensityAndEnergyRelaxation(BaseBodyRelationInner &inner_relation);
 			virtual ~BaseDensityAndEnergyRelaxation(){};
-
-		protected:
-			virtual void Initialization(size_t index_i, Real dt = 0.0) override{};
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
+			void update(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
@@ -187,9 +180,7 @@ namespace SPH
 			explicit BaseDensityAndEnergyRelaxationInner(BaseBodyRelationInner &inner_relation);
 			virtual ~BaseDensityAndEnergyRelaxationInner(){};
 			RiemannSolverType riemann_solver_;
-
-		protected:
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+			void interaction(size_t index_i, Real dt = 0.0);
 		};
 		using DensityAndEnergyRelaxationHLLCRiemannInner = BaseDensityAndEnergyRelaxationInner<HLLCRiemannSolver>;
 		using DensityAndEnergyRelaxationHLLCWithLimiterRiemannInner = BaseDensityAndEnergyRelaxationInner<HLLCWithLimiterRiemannSolver>;

@@ -101,9 +101,8 @@ namespace SPH
 		}
 		//=================================================================================================//
 		BaseShellRelaxation::BaseShellRelaxation(BaseBodyRelationInner &inner_relation)
-			: ParticleDynamics1Level(inner_relation.sph_body_),
-			  ShellDataInner(inner_relation), Vol_(particles_->Vol_),
-			  rho_(particles_->rho_), mass_(particles_->mass_),
+			: LocalDynamics(inner_relation.sph_body_), ShellDataInner(inner_relation),
+			  Vol_(particles_->Vol_), rho_(particles_->rho_), mass_(particles_->mass_),
 			  thickness_(particles_->thickness_),
 			  pos_(particles_->pos_), vel_(particles_->vel_),
 			  acc_(particles_->acc_),
@@ -128,7 +127,7 @@ namespace SPH
 			  hourglass_control_(hourglass_control),
 			  rho0_(material_->ReferenceDensity()),
 			  inv_rho0_(1.0 / rho0_),
-			  smoothing_length_(sph_adaptation_->ReferenceSmoothingLength()),
+			  smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
 			  E0_(material_->YoungsModulus()),
 			  G0_(material_->ShearModulus()),
 			  nu_(material_->PoissonRatio())
@@ -155,7 +154,7 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		void ShellStressRelaxationFirstHalf::Initialization(size_t index_i, Real dt)
+		void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
 		{
 			// Note that F_[index_i], F_bending_[index_i], dF_dt_[index_i], dF_bending_dt_[index_i]
 			// and rotation_[index_i], angular_vel_[index_i], dangular_vel_dt_[index_i], B_[index_i]
@@ -217,7 +216,7 @@ namespace SPH
 			global_shear_stress_[index_i] = (~transformation_matrix_[index_i]) * resultant_shear_stress;
 		}
 		//=================================================================================================//
-		void ShellStressRelaxationFirstHalf::Interaction(size_t index_i, Real dt)
+		void ShellStressRelaxationFirstHalf::interaction(size_t index_i, Real dt)
 		{
 			const Vecd &global_shear_stress_i = global_shear_stress_[index_i];
 			const Matd &global_stress_i = global_stress_[index_i];
@@ -258,13 +257,13 @@ namespace SPH
 			dangular_vel_dt_[index_i] = getRotationFromPseudoNormalForFiniteDeformation(local_dpseudo_n_d2t, rotation_[index_i], angular_vel_[index_i], dt);
 		}
 		//=================================================================================================//
-		void ShellStressRelaxationFirstHalf::Update(size_t index_i, Real dt)
+		void ShellStressRelaxationFirstHalf::update(size_t index_i, Real dt)
 		{
 			vel_[index_i] += (acc_prior_[index_i] + acc_[index_i]) * dt;
 			angular_vel_[index_i] += dangular_vel_dt_[index_i] * dt;
 		}
 		//=================================================================================================//
-		void ShellStressRelaxationSecondHalf::Initialization(size_t index_i, Real dt)
+		void ShellStressRelaxationSecondHalf::initialization(size_t index_i, Real dt)
 		{
 			pos_[index_i] += vel_[index_i] * dt * 0.5;
 			rotation_[index_i] += angular_vel_[index_i] * dt * 0.5;
@@ -273,7 +272,7 @@ namespace SPH
 			pseudo_n_[index_i] += dpseudo_n_dt_[index_i] * dt * 0.5;
 		}
 		//=================================================================================================//
-		void ShellStressRelaxationSecondHalf::Interaction(size_t index_i, Real dt)
+		void ShellStressRelaxationSecondHalf::interaction(size_t index_i, Real dt)
 		{
 			const Vecd &vel_n_i = vel_[index_i];
 			const Vecd &dpseudo_n_dt_i = dpseudo_n_dt_[index_i];
@@ -297,7 +296,7 @@ namespace SPH
 			dF_bending_dt_[index_i] = transformation_matrix_i * deformation_gradient_change_rate_part_two * (~transformation_matrix_i) * B_[index_i];
 		}
 		//=================================================================================================//
-		void ShellStressRelaxationSecondHalf::Update(size_t index_i, Real dt)
+		void ShellStressRelaxationSecondHalf::update(size_t index_i, Real dt)
 		{
 			F_[index_i] += dF_dt_[index_i] * dt * 0.5;
 			F_bending_[index_i] += dF_bending_dt_[index_i] * dt * 0.5;
@@ -333,108 +332,6 @@ namespace SPH
 			dangular_vel_dt_[index_i] = GetAngularAcceleration(pos_0, pos_n, dangular_vel_dt);
 			pseudo_n_[index_i] = GetPseudoNormal(pos_0, pos_n, local_pseudo_n_0);
 			dpseudo_n_dt_[index_i] = GetPseudoNormalChangeRate(pos_0, pos_n, dpseudo_normal_dt);
-		}
-		//=================================================================================================//
-		FixedFreeRotateShellBoundary::
-			FixedFreeRotateShellBoundary(BaseBodyRelationInner &inner_relation,
-										 BodyPartByParticle &body_part, Vecd constrained_direction)
-			: PartInteractionDynamicsByParticle1Level(inner_relation.sph_body_, body_part),
-			  ShellDataInner(inner_relation),
-			  W0_(sph_adaptation_->getKernel()->W0(Vecd(0))),
-			  constrain_matrix_(Matd(0)), recover_matrix_(Matd(1.0)),
-			  Vol_(particles_->Vol_), vel_(particles_->vel_),
-			  angular_vel_(particles_->angular_vel_)
-		{
-			particles_->registerVariable(vel_n_temp_, "TemporaryVelocity");
-			particles_->registerVariable(angular_vel_temp_, "TemporaryAngularVelocity");
-			for (int k = 0; k != Dimensions; ++k)
-			{
-				constrain_matrix_[k][k] = constrained_direction[k];
-				recover_matrix_[k][k] = 1.0 - constrain_matrix_[k][k];
-			}
-		}
-		//=================================================================================================//
-		void FixedFreeRotateShellBoundary::Initialization(size_t index_i, Real dt)
-		{
-			vel_[index_i] = constrain_matrix_ * vel_[index_i];
-			angular_vel_[index_i] = Vecd(0);
-		}
-		//=================================================================================================//
-		void FixedFreeRotateShellBoundary::Interaction(size_t index_i, Real dt)
-		{
-			Real ttl_weight = W0_ * Vol_[index_i];
-			Vecd vel_i = recover_matrix_ * vel_[index_i] * ttl_weight;
-			Real ttl_weight_angular = W0_ * Vol_[index_i];
-			Vecd angular_vel_i = angular_vel_[index_i] * ttl_weight_angular;
-
-			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-			{
-				size_t index_j = inner_neighborhood.j_[n];
-				Real weight_j = inner_neighborhood.W_ij_[n] * Vol_[index_j];
-
-				ttl_weight += weight_j;
-				vel_i += recover_matrix_ * vel_[index_j] * weight_j;
-				// exclude boundary particles to achieve extrapolation
-				if (angular_vel_[index_j].norm() >= Eps)
-				{
-					angular_vel_i += angular_vel_[index_j] * weight_j;
-					ttl_weight_angular += weight_j;
-				}
-			}
-
-			vel_n_temp_[index_i] = vel_i / ttl_weight;
-			angular_vel_temp_[index_i] = angular_vel_i / ttl_weight_angular;
-		}
-		//=================================================================================================//
-		void FixedFreeRotateShellBoundary::Update(size_t index_i, Real dt)
-		{
-			vel_[index_i] += vel_n_temp_[index_i];
-			angular_vel_[index_i] = angular_vel_temp_[index_i];
-		}
-		//=================================================================================================//
-		ClampConstrainShellBodyRegion::
-			ClampConstrainShellBodyRegion(BaseBodyRelationInner &inner_relation, BodyPartByParticle &body_part)
-			: PartInteractionDynamicsByParticle1Level(inner_relation.sph_body_, body_part),
-			  ShellDataInner(inner_relation),
-			  Vol_(particles_->Vol_), vel_(particles_->vel_),
-			  angular_vel_(particles_->angular_vel_)
-		{
-			particles_->registerVariable(vel_n_temp_, "TemporaryVelocity");
-			particles_->registerVariable(angular_vel_temp_, "TemporaryAngularVelocity");
-		}
-		//=================================================================================================//
-		void ClampConstrainShellBodyRegion::Initialization(size_t index_i, Real dt)
-		{
-			vel_[index_i] = Vecd(0);
-			angular_vel_[index_i] = Vecd(0);
-		}
-		//=================================================================================================//
-		void ClampConstrainShellBodyRegion::Interaction(size_t index_i, Real dt)
-		{
-			Real ttl_weight(Eps);
-			Vecd vel_i = vel_[index_i];
-			Vecd angular_vel_i = angular_vel_[index_i];
-
-			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-			{
-				size_t index_j = inner_neighborhood.j_[n];
-				Real weight_j = inner_neighborhood.W_ij_[n] * Vol_[index_j];
-
-				ttl_weight += weight_j;
-				vel_i += vel_[index_j] * weight_j;
-				angular_vel_i += angular_vel_[index_j] * weight_j;
-			}
-
-			vel_n_temp_[index_i] = vel_i / ttl_weight;
-			angular_vel_temp_[index_i] = angular_vel_i / ttl_weight;
-		}
-		//=================================================================================================//
-		void ClampConstrainShellBodyRegion::Update(size_t index_i, Real dt)
-		{
-			vel_[index_i] = vel_n_temp_[index_i];
-			angular_vel_[index_i] = angular_vel_temp_[index_i];
 		}
 		//=================================================================================================//
 		ConstrainShellBodyRegionAlongAxis::
