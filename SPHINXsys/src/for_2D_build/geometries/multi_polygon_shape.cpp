@@ -189,7 +189,7 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	Vec2d MultiPolygon::findClosestPoint(const Vec2d &input_pnt)
+	Vec2d MultiPolygon::findClosestPoint(const Vec2d &probe_point)
 	{
 		typedef model::d2::point_xy<Real> pnt_type;
 		typedef model::referring_segment<model::d2::point_xy<Real>> seg_type;
@@ -201,7 +201,7 @@ namespace SPH
 		reflected in the line string. In a for each that does not modify the points, it should still take a
 		reference (most likely a const reference) since it reduces the amount of copying.
 		*/
-		pnt_type input_p(input_pnt[0], input_pnt[1]);
+		pnt_type input_p(probe_point[0], probe_point[1]);
 		model::segment<model::d2::point_xy<Real>> closest_seg;
 		Real closest_dist_2seg = boost::numeric::bounds<Real>::highest();
 		std::function<void(seg_type)> findclosestsegment = [&closest_seg, &closest_dist_2seg, &input_p](seg_type seg)
@@ -232,7 +232,7 @@ namespace SPH
 		Vec2d p_0(x0, y0);
 		Vec2d p_1(x1, y1);
 		Vec2d vec_v = p_1 - p_0;
-		Vec2d vec_w = input_pnt - p_0;
+		Vec2d vec_w = probe_point - p_0;
 
 		Real c1 = dot(vec_v, vec_w);
 		if (c1 <= 0)
@@ -271,14 +271,14 @@ namespace SPH
 		return multi_polygon_.getBoostMultiPoly().size() == 0 ? false : true;
 	}
 	//=================================================================================================//
-	bool MultiPolygonShape::checkContain(const Vec2d &input_pnt, bool BOUNDARY_INCLUDED)
+	bool MultiPolygonShape::checkContain(const Vec2d &probe_point, bool BOUNDARY_INCLUDED)
 	{
-		return multi_polygon_.checkContain(input_pnt, BOUNDARY_INCLUDED);
+		return multi_polygon_.checkContain(probe_point, BOUNDARY_INCLUDED);
 	}
 	//=================================================================================================//
-	Vec2d MultiPolygonShape::findClosestPoint(const Vec2d &input_pnt)
+	Vec2d MultiPolygonShape::findClosestPoint(const Vec2d &probe_point)
 	{
-		return multi_polygon_.findClosestPoint(input_pnt);
+		return multi_polygon_.findClosestPoint(probe_point);
 	}
 	//=================================================================================================//
 	BoundingBox MultiPolygonShape::findBounds()

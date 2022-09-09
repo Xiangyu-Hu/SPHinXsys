@@ -53,12 +53,12 @@ namespace SPH
 		LevelSetShape(SPHBody &sph_body, Shape &shape, Real refinement_ratio = 1.0);
 		virtual ~LevelSetShape(){};
 
-		virtual bool checkContain(const Vecd &input_pnt, bool BOUNDARY_INCLUDED = true) override;
-		virtual Vecd findClosestPoint(const Vecd &input_pnt) override;
+		virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;
+		virtual Vecd findClosestPoint(const Vecd &probe_point) override;
 
-		Vecd findLevelSetGradient(const Vecd &input_pnt);
-		Real computeKernelIntegral(const Vecd &input_pnt, Real h_ratio = 1.0);
-		Vecd computeKernelGradientIntegral(const Vecd &input_pnt, Real h_ratio = 1.0);
+		Vecd findLevelSetGradient(const Vecd &probe_point);
+		Real computeKernelIntegral(const Vecd &probe_point, Real h_ratio = 1.0);
+		Vecd computeKernelGradientIntegral(const Vecd &probe_point, Real h_ratio = 1.0);
 		/** small_shift_factor = 1.0 by default, can be increased for difficult geometries for smoothing */
 		LevelSetShape *cleanLevelSet(Real small_shift_factor = 1.0);
 		void writeLevelSet(SPHBody &sph_body);
