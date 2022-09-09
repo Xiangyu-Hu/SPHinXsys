@@ -119,7 +119,7 @@ int main(int ac, char *av[])
 
 	/** Import a beam body, with corresponding material and particles. */
 	SolidBody beam_body(system, makeShared<Beam>("beam"));
-	beam_body.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho, Youngs_modulus, poisson_ratio);
+	beam_body.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho, Youngs_modulus, poisson_ratio);
 	beam_body.generateParticles<ParticleGeneratorLattice>();
 
 	// Define Observer
