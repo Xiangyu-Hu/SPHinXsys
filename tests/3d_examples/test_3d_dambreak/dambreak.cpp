@@ -4,12 +4,10 @@
 * This is the one of the basic test cases for efficient and accurate time     *
 * integration scheme investigation 							  				  *
 * ---------------------------------------------------------------------------*/
-
 #include "sphinxsys.h" // SPHinXsys Library.
-
 using namespace SPH;
 
-//for geometry
+//general parameters for geometry
 Real resolution_ref = 0.05;	  //particle spacing
 Real BW = resolution_ref * 4; //boundary width
 Real DL = 5.366;			  //tank length
