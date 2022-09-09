@@ -87,7 +87,7 @@ int main()
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	SolidBody plate_body(system, makeShared<DefaultShape>("PlateBody"));
-	plate_body.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	plate_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	plate_body.generateParticles<PlateParticleGenerator>();
 	plate_body.addBodyStateForRecording<Vecd>("PriorAcceleration");
 

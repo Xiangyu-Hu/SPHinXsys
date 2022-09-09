@@ -76,7 +76,7 @@ int main(int ac, char *av[])
 	SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
 	wall_boundary.defineAdaptation<SPHAdaptation>(1.15, 1.0);
 	// here dummy linear elastic solid is use because no solid dynamics in particle relaxation
-	wall_boundary.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(1.0, 1.0, 0.0);
+	wall_boundary.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
 	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
 	{
 		wall_boundary.generateParticles<ParticleGeneratorReload>(io_environment, wall_boundary.getName());

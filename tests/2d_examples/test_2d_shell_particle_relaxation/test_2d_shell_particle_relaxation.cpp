@@ -44,7 +44,7 @@ int main()
 	pipe_body.defineAdaptation<SPHAdaptation>(1.15, 1.0);
 	pipe_body.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(pipe_body);
 	//here dummy linear elastic solid is use because no solid dynamics in particle relaxation
-	pipe_body.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(1.0, 1.0, 0.0);
+	pipe_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
 	pipe_body.generateParticles<ThickSurfaceParticleGeneratorLattice>(thickness);
 	pipe_body.addBodyStateForRecording<Vecd>("NormalDirection");
 	/**
