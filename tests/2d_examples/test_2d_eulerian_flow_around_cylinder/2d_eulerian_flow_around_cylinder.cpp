@@ -198,9 +198,9 @@ int main(int ac, char *av[])
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
 	size_t number_of_iterations = sph_system.restart_step_;
-	int screen_output_interval = 100;
-	Real end_time = 200.0;
-	Real output_interval = 1.0; /**< time stamps for output. */
+	int screen_output_interval = 1000;
+	Real end_time = 80.0;
+	Real output_interval = 5.0; /**< time stamps for output. */
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
 	//----------------------------------------------------------------------
@@ -256,7 +256,15 @@ int main(int ac, char *av[])
 	tt = t4 - t1 - interval;
 	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
 
-	write_total_viscous_force_on_inserted_body.newResultTest();
+	if (sph_system.generate_regression_data_)
+	{
+		// The lift force at the cylinder is very small and not important in this case.
+		write_total_viscous_force_on_inserted_body.generateDataBase({1.0e-2, 1.0e-2}, {1.0e-2, 1.0e-2});
+	}
+	else
+	{
+		write_total_viscous_force_on_inserted_body.newResultTest();
+	}
 
 	return 0;
 }
