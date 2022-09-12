@@ -77,7 +77,7 @@ int main(int ac, char *av[])
 		: coil.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody stationary_plate(system, makeShared<StationaryPlate>("StationaryPlate"));
-	stationary_plate.defineParticlesAndMaterial<SolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	stationary_plate.defineParticlesAndMaterial<SolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	stationary_plate.generateParticles<ParticleGeneratorLattice>();
 	//----------------------------------------------------------------------
 	//	Define simple file input and outputs functions.

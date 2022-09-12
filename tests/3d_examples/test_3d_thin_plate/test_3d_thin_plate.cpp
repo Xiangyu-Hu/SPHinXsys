@@ -135,7 +135,7 @@ int main(int ac, char *av[])
 
 	/** create a plate body. */
 	SolidBody plate_body(system, makeShared<DefaultShape>("PlateBody"));
-	plate_body.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	plate_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	plate_body.generateParticles<PlateParticleGenerator>();
 
 	/** Define Observer. */

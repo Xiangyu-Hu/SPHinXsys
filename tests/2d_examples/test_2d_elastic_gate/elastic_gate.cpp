@@ -155,7 +155,7 @@ int main()
 
 	SolidBody gate(system, makeShared<MultiPolygonShape>(createGateShape(), "Gate"));
 	gate.defineAdaptationRatios(1.15, 2.0);
-	gate.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	gate.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	gate.generateParticles<ParticleGeneratorLattice>();
 
 	ObserverBody gate_observer(system, "Observer");

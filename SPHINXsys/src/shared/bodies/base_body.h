@@ -22,14 +22,13 @@
  * -----------------------------------------------------------------------------*/
 /**
  * @file 	base_body.h
- * @brief 	This is the base classes of SPH bodies. The real body is for
- *			that with cell linked list and the fictitious one does not.
+ * @brief 	These are the base classes of SPH bodies. The RealBody is for
+ *			that with cell linked list and the SPHBody does not.
  * 			Before the definition of the SPH bodies, the shapes with complex
- *			geometries, i.e. those are produced by advanced binary operation,
+ *			geometries, i.e. those are produced by advanced binary operations,
  * 			such as intersection, should be produced first.
  * 			Then, all shapes used in body definition should be either contain
- * 			or not contain each other.
- *			Partial overlap between them are not permitted.
+ * 			or not contain each other. Partial overlap between them are not permitted.
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
  */
 
@@ -76,9 +75,9 @@ namespace SPH
 
 	public:
 		Shape *body_shape_;						   /**< volumetric geometry enclosing the body */
-		SPHAdaptation *sph_adaptation_;			   /**< numerical adaptation policy. */
-		BaseMaterial *base_material_;			   /**< base material for dynamic cast in particle dynamics */
-		BaseParticles *base_particles_;			   /**< Base particles for dynamic cast particle dynamics  */
+		SPHAdaptation *sph_adaptation_;			   /**< numerical adaptation policy */
+		BaseMaterial *base_material_;			   /**< base material for dynamic cast in DataDelegate */
+		BaseParticles *base_particles_;			   /**< Base particles for dynamic cast DataDelegate  */
 		StdVec<SPHBodyRelation *> body_relations_; /**< all contact relations centered from this body **/
 
 		explicit SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr);

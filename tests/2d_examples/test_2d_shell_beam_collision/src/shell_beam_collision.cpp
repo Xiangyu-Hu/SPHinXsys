@@ -96,7 +96,7 @@ int main(int ac, char *av[])
 	SolidBody shell(sph_system, makeShared<Shell>("Shell"));
 	shell.defineAdaptation<SPHAdaptation>(1.15, 1.0);
 	// here dummy linear elastic solid is use because no solid dynamics in particle relaxation
-	shell.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(1.0, 1.0, 0.0);
+	shell.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
 	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
 	{
 		shell.generateParticles<ParticleGeneratorReload>(io_environment, shell.getName());
@@ -114,7 +114,7 @@ int main(int ac, char *av[])
 	}
 
 	SolidBody beam(sph_system, makeShared<Beam>("Beam"));
-	beam.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	beam.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	beam.generateParticles<ParticleGeneratorLattice>();
 	//----------------------------------------------------------------------
 	//	Define body relation map.
