@@ -146,6 +146,13 @@ namespace SPH
         addAVariableNameToList<DerivedVariableType>(variables_to_write_, derived_data->LocalDynamics().variable_name_);
     }
     //=================================================================================================//
+    template <class DerivedVariableMethod, class... Ts>
+    void BaseParticles::addDerivedVariable(Ts&&... args)
+    {
+        SimpleDynamics<DerivedVariableMethod> *derived_data = derived_particle_data_.createPtr<SimpleDynamics<DerivedVariableMethod>>(*sph_body_,std::forward<Ts>(args)...);
+        derived_variables_.push_back(derived_data);
+    }
+    //=================================================================================================//
     template <typename VariableType>
     void BaseParticles::addAVariableToRestart(const std::string &variable_name)
     {
