@@ -94,6 +94,16 @@ namespace SPH
     }
     //=================================================================================================//
     template <typename VariableType>
+    StdLargeVec<VariableType> *BaseParticles::tryVariableByName(const std::string &variable_name)
+    {
+        constexpr int type_index = ParticleDataTypeIndex<VariableType>::value;
+
+        if (all_variable_maps_[type_index].find(variable_name) != all_variable_maps_[type_index].end())
+            return std::get<type_index>(all_particle_data_)[all_variable_maps_[type_index][variable_name]];
+        return nullptr;
+    }
+    //=================================================================================================//
+    template <typename VariableType>
     void BaseParticles::
         addAVariableNameToList(ParticleVariableList &variable_name_list, const std::string &variable_name)
     {
