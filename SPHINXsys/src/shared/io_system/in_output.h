@@ -264,9 +264,12 @@ namespace SPH
 	class WriteToVtpIfVelocityOutOfBound
 		: public BodyStatesRecordingToVtp
 	{
+	private:
+	UniquePtrKeepers<ReduceDynamics<VelocityBoundCheck>> check_bodies_ptr_keeper_;	
+
 	protected:
 		bool out_of_bound_;
-		StdVec<ReduceDynamics<VelocityBoundCheck>> check_bodies_;
+		StdVec<ReduceDynamics<VelocityBoundCheck> *> check_bodies_;
 		virtual void writeWithFileName(const std::string &sequence) override;
 
 	public:
