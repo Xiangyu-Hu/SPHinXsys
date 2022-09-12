@@ -63,7 +63,7 @@ int main()
 	myocardium_body.generateParticles<ParticleGeneratorLattice>(); 
 	/** Plate. */
 	SolidBody moving_plate(system, makeShared<MovingPlate>("MovingPlate"));
-	moving_plate.defineParticlesAndMaterial<SolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	moving_plate.defineParticlesAndMaterial<SolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	moving_plate.generateParticles<ParticleGeneratorLattice>();
 	/** topology */
 	BodyRelationInner myocardium_body_inner(myocardium_body);

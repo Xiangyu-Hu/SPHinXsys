@@ -22,7 +22,7 @@ BodyPartFromMesh::BodyPartFromMesh(SPHBody &body, SharedPtr<TriangleMeshShape> t
 
 SolidBodyFromMesh::SolidBodyFromMesh(
 	SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
-	SharedPtr<LinearElasticSolid> material_model, StdLargeVec<Vecd> &pos_0, StdLargeVec<Real> &volume)
+	SharedPtr<SaintVenantKirchhoffSolid> material_model, StdLargeVec<Vecd> &pos_0, StdLargeVec<Real> &volume)
 	: SolidBody(system, triangle_mesh_shape)
 {
 	defineAdaptationRatios(1.15, system.resolution_ref_ / resolution);
@@ -33,7 +33,7 @@ SolidBodyFromMesh::SolidBodyFromMesh(
 
 SolidBodyForSimulation::SolidBodyForSimulation(
 	SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
-	Real physical_viscosity, shared_ptr<LinearElasticSolid> material_model, StdLargeVec<Vecd> &pos_0, StdLargeVec<Real> &volume)
+	Real physical_viscosity, shared_ptr<SaintVenantKirchhoffSolid> material_model, StdLargeVec<Vecd> &pos_0, StdLargeVec<Real> &volume)
 	: solid_body_from_mesh_(system, triangle_mesh_shape, resolution, material_model, pos_0, volume),
 	  inner_body_relation_(solid_body_from_mesh_),
 	  initial_normal_direction_(SimpleDynamics<NormalDirectionFromBodyShape>(solid_body_from_mesh_)),
@@ -141,7 +141,7 @@ StructuralSimulationInput::StructuralSimulationInput(
 	Real scale_stl,
 	vector<Vec3d> translation_list,
 	vector<Real> resolution_list,
-	vector<shared_ptr<LinearElasticSolid>> material_model_list,
+	vector<shared_ptr<SaintVenantKirchhoffSolid>> material_model_list,
 	StdVec<Real> physical_viscosity,
 	StdVec<IndexVector> contacting_bodies_list)
 	: relative_input_path_(relative_input_path),

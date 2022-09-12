@@ -77,7 +77,7 @@ namespace SPH
 	//=================================================================================================//
 	Matd LinearElasticSolid::StressPK2(Matd &F, size_t particle_index_i)
 	{
-		Matd strain = 0.5 * (~F * F - Matd(1.0));
+		Matd strain = 0.5 * (~F + F) - Matd(1.0); //geometric linearity or small deformation assumption
 		return lambda0_ * strain.trace() * Matd(1.0) + 2.0 * G0_ * strain;
 	}
 	//=================================================================================================//
@@ -89,6 +89,12 @@ namespace SPH
 	Real LinearElasticSolid::VolumetricKirchhoff(Real J)
 	{
 		return K0_ * J * (J - 1);
+	}
+	//=================================================================================================//
+	Matd SaintVenantKirchhoffSolid::StressPK2(Matd &F, size_t particle_index_i)
+	{
+		Matd strain = 0.5 * (~F * F - Matd(1.0));
+		return lambda0_ * strain.trace() * Matd(1.0) + 2.0 * G0_ * strain;
 	}
 	//=================================================================================================//
 	Matd NeoHookeanSolid::StressPK2(Matd &F, size_t particle_index_i)

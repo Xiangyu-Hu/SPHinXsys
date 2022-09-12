@@ -22,7 +22,9 @@
  * --------------------------------------------------------------------------*/
 /**
  * @file 	particle_dynamics_dissipation.h
- * @brief 	This is the particle dynamics applicable for all type bodies
+ * @brief 	Here are the classes for damping the magnitude of
+ * 			any variables.
+ * Note that, currently, these classes works only in single resolution.
  * @author	Chi Zhang and Xiangyu Hu
  */
 

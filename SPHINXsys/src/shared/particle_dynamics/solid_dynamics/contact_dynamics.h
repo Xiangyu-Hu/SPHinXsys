@@ -180,6 +180,8 @@ namespace SPH
 		 * @class PairwiseFrictionFromWall
 		 * @brief Damping to wall by which the wall velocity is not updated
 		 * and the mass of wall particle is not considered.
+		 * Note that, currently, this class works only when the contact 
+		 * bodies have the same resolution.
 		 */
 		class PairwiseFrictionFromWall : public LocalDynamics, public ContactWithWallData
 		{

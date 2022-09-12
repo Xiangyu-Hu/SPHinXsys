@@ -60,7 +60,7 @@ class SolidBodyFromMesh : public SolidBody
 {
 public:
 	SolidBodyFromMesh(SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
-				  SharedPtr<LinearElasticSolid> material_model, StdLargeVec<Vecd> &pos_0, StdLargeVec<Real> &volume);
+				  SharedPtr<SaintVenantKirchhoffSolid> material_model, StdLargeVec<Vecd> &pos_0, StdLargeVec<Real> &volume);
 	~SolidBodyFromMesh(){};
 };
 
@@ -80,7 +80,7 @@ public:
 	// no particle reload --> direct generator
 	SolidBodyForSimulation(
 		SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
-		Real physical_viscosity, SharedPtr<LinearElasticSolid> material_model, StdLargeVec<Vecd> &pos_0, StdLargeVec<Real> &volume);
+		Real physical_viscosity, SharedPtr<SaintVenantKirchhoffSolid> material_model, StdLargeVec<Vecd> &pos_0, StdLargeVec<Real> &volume);
 	~SolidBodyForSimulation(){};
 
 	SolidBodyFromMesh *getSolidBodyFromMesh() { return &solid_body_from_mesh_; };
@@ -120,7 +120,7 @@ public:
 	Real scale_stl_;
 	vector<Vec3d> translation_list_;
 	vector<Real> resolution_list_;
-	vector<SharedPtr<LinearElasticSolid>> material_model_list_;
+	vector<SharedPtr<SaintVenantKirchhoffSolid>> material_model_list_;
 	StdVec<Real> physical_viscosity_;
 	StdVec<IndexVector> contacting_body_pairs_list_;
 	vector<pair<array<int, 2>, array<Real, 2>>> time_dep_contacting_body_pairs_list_;
@@ -149,7 +149,7 @@ public:
 		Real scale_stl,
 		vector<Vec3d> translation_list,
 		vector<Real> resolution_list,
-		vector<shared_ptr<LinearElasticSolid>> material_model_list,
+		vector<shared_ptr<SaintVenantKirchhoffSolid>> material_model_list,
 		StdVec<Real> physical_viscosity,
 		StdVec<IndexVector> contacting_bodies_list
 	);
@@ -170,7 +170,7 @@ protected:
 	vector<Vec3d> translation_list_;
 	vector<Real> resolution_list_;
 	vector<SharedPtr<TriangleMeshShape>> body_mesh_list_;
-	vector<SharedPtr<LinearElasticSolid>> material_model_list_;
+	vector<SharedPtr<SaintVenantKirchhoffSolid>> material_model_list_;
 	StdVec<Real> physical_viscosity_;
 	StdVec<IndexVector> contacting_body_pairs_list_;
 	vector<pair<array<int, 2>, array<Real, 2>>> time_dep_contacting_body_pairs_list_; // optional: time dependent contact

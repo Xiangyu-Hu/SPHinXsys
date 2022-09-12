@@ -98,7 +98,7 @@ int main()
 
 	/** Create a Cylinder body. */
 	SolidBody cylinder_body(system, makeShared<DefaultShape>("CylinderBody"));
-	cylinder_body.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	cylinder_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	cylinder_body.generateParticles<CylinderParticleGenerator>();
 	cylinder_body.addBodyStateForRecording<Vecd>("PseudoNormal");
 

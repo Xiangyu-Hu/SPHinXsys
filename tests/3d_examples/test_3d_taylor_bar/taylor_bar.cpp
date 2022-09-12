@@ -33,7 +33,7 @@ int main(int ac, char *av[])
 	column.addBodyStateForRecording<Vecd>("NormalDirection");
 
 	SolidBody wall(system, makeShared<Wall>("Wall"));
-	wall.defineParticlesAndMaterial<SolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	wall.defineParticlesAndMaterial<SolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	wall.generateParticles<ParticleGeneratorLattice>();
 
 	/** Define Observer. */

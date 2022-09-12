@@ -117,7 +117,7 @@ int main(int ac, char *av[])
 
 	/** Create a Cylinder body. */
 	SolidBody cylinder_body(system, makeShared<DefaultShape>("CylinderBody"));
-	cylinder_body.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	cylinder_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	cylinder_body.generateParticles<CylinderParticleGenerator>();
 	/** Define Observer. */
 	ObserverBody cylinder_observer(system, "CylinderObserver");

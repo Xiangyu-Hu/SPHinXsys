@@ -239,16 +239,19 @@ namespace SPH
 		WriteToVtpIfVelocityOutOfBound(IOEnvironment &io_environment, SPHBodyVector bodies, Real velocity_bound)
 		: BodyStatesRecordingToVtp(io_environment, bodies), out_of_bound_(false)
 	{
-		std::transform(bodies.begin(), bodies.end(), std::back_inserter(check_bodies_),
-					   [&](SPHBody *body) -> ReduceDynamics<VelocityBoundCheck>
-					   { return ReduceDynamics<VelocityBoundCheck>(*body, velocity_bound); });
+		for (size_t i = 0; i < bodies_.size(); ++i)
+		{
+			check_bodies_.push_back(
+				check_bodies_ptr_keeper_.createPtr<ReduceDynamics<VelocityBoundCheck>>(*bodies[i], velocity_bound)
+			);
+		}
 	}
 	//=============================================================================================//
 	void WriteToVtpIfVelocityOutOfBound::writeWithFileName(const std::string &sequence)
 	{
-		for (auto &check_body : check_bodies_)
+		for (auto check_body : check_bodies_)
 		{
-			out_of_bound_ = out_of_bound_ || check_body.parallel_exec();
+			out_of_bound_ = out_of_bound_ || check_body->parallel_exec();
 		}
 
 		if (out_of_bound_)

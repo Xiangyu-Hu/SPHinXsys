@@ -73,7 +73,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	/** create a shell body. */
 	SolidBody shell(sph_system, makeShared<DefaultShape>("shell"));
-	shell.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	shell.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	shell.generateParticles<CylinderParticleGenerator>();
 
 	SolidBody ball(sph_system, makeShared<GeometricShapeBall>(Vec3d(radius / 2.0, 0.0, 0.0), ball_radius, "BallBody"));

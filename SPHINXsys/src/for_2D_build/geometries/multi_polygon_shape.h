@@ -59,7 +59,7 @@ namespace SPH
 
 		BoundingBox findBounds();
 		bool checkContain(const Vec2d &pnt, bool BOUNDARY_INCLUDED = true);
-		Vec2d findClosestPoint(const Vec2d &input_pnt);
+		Vec2d findClosestPoint(const Vec2d &probe_point);
 
 		void addAMultiPolygon(MultiPolygon &multi_polygon, ShapeBooleanOps op);
 		void addABoostMultiPoly(boost_multi_poly &boost_multi_poly, ShapeBooleanOps op);
@@ -90,8 +90,8 @@ namespace SPH
 		virtual ~MultiPolygonShape(){};
 
 		virtual bool isValid() override;
-		virtual bool checkContain(const Vec2d &input_pnt, bool BOUNDARY_INCLUDED = true) override;
-		virtual Vec2d findClosestPoint(const Vec2d &input_pnt) override;
+		virtual bool checkContain(const Vec2d &probe_point, bool BOUNDARY_INCLUDED = true) override;
+		virtual Vec2d findClosestPoint(const Vec2d &probe_point) override;
 
 	protected:
 		MultiPolygon multi_polygon_;
