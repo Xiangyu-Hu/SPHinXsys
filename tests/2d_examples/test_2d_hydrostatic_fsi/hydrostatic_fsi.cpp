@@ -266,8 +266,6 @@ int main()
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	/** Output body states for visualization. */
-	BodyStatesRecordingToPlt rite_real_body_states_to_plt(io_environment, system.real_bodies_);
-	/** Output body states for visualization. */
 	BodyStatesRecordingToVtp write_real_body_states_to_vtp(io_environment, system.real_bodies_);
 	/** Output the observed displacement of gate free end. */
 	RegressionTestEnsembleAveraged<ObservedQuantityRecording<Vecd>>

@@ -19,13 +19,13 @@ namespace SPH
 		return triangle_mesh;
 	}
 	//=================================================================================================//
-	bool TriangleMeshShape::checkContain(const Vec3d &pnt, bool BOUNDARY_INCLUDED)
+	bool TriangleMeshShape::checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED)
 	{
 
 		SimTK::Vec2 uv_coordinate;
 		bool inside = false;
 		int face_id;
-		Vec3d closest_pnt = triangle_mesh_->findNearestPoint(pnt, inside, face_id, uv_coordinate);
+		Vec3d closest_pnt = triangle_mesh_->findNearestPoint(probe_point, inside, face_id, uv_coordinate);
 
 		StdVec<int> neighbor_face(4);
 		neighbor_face[0] = face_id;
@@ -37,7 +37,7 @@ namespace SPH
 			neighbor_face[i] = face != face_id ? face : triangle_mesh_->getEdgeFace(edge, 1);
 		}
 
-		Vec3d from_face_to_pnt = pnt - closest_pnt;
+		Vec3d from_face_to_pnt = probe_point - closest_pnt;
 		Real sum_weights = 0.0;
 		Real weighted_dot_product = 0.0;
 		for (int i = 0; i < 4; i++)

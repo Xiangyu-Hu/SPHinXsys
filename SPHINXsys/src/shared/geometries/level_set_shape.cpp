@@ -6,7 +6,7 @@
 #include "level_set_shape.h"
 
 #include "base_body.h"
-#include "in_output.h"
+#include "io_all.h"
 #include "sph_system.h"
 
 namespace SPH

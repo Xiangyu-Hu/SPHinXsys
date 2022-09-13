@@ -22,8 +22,8 @@
  * --------------------------------------------------------------------------*/
 /**
  * @file geometric_shape.h
- * @brief Here, we define shapes represented directly by geometric elements.
- * @details The simbody contact geometry is used.
+ * @brief Here, we define simple shapes represented directly by geometric elements.
+ * @details These shape are suitable to define boundary regions or buffers.
  * @author	Xiangyu Hu
  */
 
@@ -42,13 +42,12 @@ namespace SPH
                                    const std::string &shape_name = "GeometricShapeBox");
         virtual ~GeometricShapeBox(){};
 
-        virtual bool checkContain(const Vec2d &pnt, bool BOUNDARY_INCLUDED = true) override;
-        virtual Vec2d findClosestPoint(const Vec2d &pnt) override;
+        virtual bool checkContain(const Vec2d &probe_point, bool BOUNDARY_INCLUDED = true) override;
+        virtual Vec2d findClosestPoint(const Vec2d &probe_point) override;
 
     protected:
         Vec2d halfsize_;
-   		MultiPolygon multi_polygon_;
-
+        MultiPolygon multi_polygon_;
 
         virtual BoundingBox findBounds() override;
     };
@@ -63,9 +62,9 @@ namespace SPH
                                     const std::string &shape_name = "GeometricShapeBall");
         virtual ~GeometricShapeBall(){};
 
-        virtual bool checkContain(const Vec2d &pnt, bool BOUNDARY_INCLUDED = true) override;
-        virtual Vec2d findClosestPoint(const Vec2d &pnt) override;
- 
+        virtual bool checkContain(const Vec2d &probe_point, bool BOUNDARY_INCLUDED = true) override;
+        virtual Vec2d findClosestPoint(const Vec2d &probe_point) override;
+
     protected:
         virtual BoundingBox findBounds() override;
     };
