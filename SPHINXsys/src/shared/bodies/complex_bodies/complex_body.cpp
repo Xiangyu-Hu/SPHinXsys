@@ -7,7 +7,7 @@
 
 #include "base_material.h"
 #include "base_particles.h"
-#include "neighbor_relation.h"
+#include "neighborhood.h"
 #include "adaptation.h"
 #include "base_particle_dynamics.h"
 
@@ -32,7 +32,7 @@ namespace SPH
 		neighboring_ids.push_back(branches_[1]->inner_particles_[1]);
 		/** Build configuration. */
 		const StdLargeVec<Vecd> &pos_ =  base_particles_->pos_;
-		NeighborRelationInner neighbor_relation_inner(*this);
+		NeighborBuilderInner neighbor_relation_inner(*this);
 		for (size_t n = 0; n != neighboring_ids.size(); ++n)
 		{
 			Vecd displacement = pos_[particle_id] - pos_[neighboring_ids[n]];
