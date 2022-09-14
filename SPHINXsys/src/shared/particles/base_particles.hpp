@@ -87,19 +87,9 @@ namespace SPH
         if (all_variable_maps_[type_index].find(variable_name) != all_variable_maps_[type_index].end())
             return std::get<type_index>(all_particle_data_)[all_variable_maps_[type_index][variable_name]];
 
-        std::cout << "\n Error: the variable '" << variable_name << "' is not registered!" << std::endl;
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-        exit(1);
-        return nullptr;
-    }
-    //=================================================================================================//
-    template <typename VariableType>
-    StdLargeVec<VariableType> *BaseParticles::tryVariableByName(const std::string &variable_name)
-    {
-        constexpr int type_index = ParticleDataTypeIndex<VariableType>::value;
-
-        if (all_variable_maps_[type_index].find(variable_name) != all_variable_maps_[type_index].end())
-            return std::get<type_index>(all_particle_data_)[all_variable_maps_[type_index][variable_name]];
+        std::cerr << "\n Error: the variable '" << variable_name << "' is not registered!" << std::endl;
+        std::cerr << __FILE__ << ':' << __LINE__ << std::endl;
+        assert(false);
         return nullptr;
     }
     //=================================================================================================//

@@ -129,8 +129,6 @@ namespace SPH
 		/** get a registered variable from particles by its name. return by pointer so that return nullptr if fail. */
 		template <typename VariableType>
 		StdLargeVec<VariableType> *getVariableByName(const std::string &variable_name);
-		template <typename VariableType>
-		StdLargeVec<VariableType> *tryVariableByName(const std::string &variable_name);
         
 		/** add a variable into a particle vairable name list */
 		template <typename VariableType>
