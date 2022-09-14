@@ -36,6 +36,13 @@ public:
 	explicit Myocardium(const std::string &shape_name) : ComplexShape(shape_name)
 	{
 		add<TransformShape<GeometricShapeBox>>(translation_myocardium, halfsize_myocardium);
+	}
+};
+class StationaryPlate : public ComplexShape
+{
+public:
+	explicit StationaryPlate(const std::string &shape_name) : ComplexShape(shape_name)
+	{
 		add<TransformShape<GeometricShapeBox>>(translation_stationary_plate, halfsize_stationary_plate);
 	}
 };
@@ -65,10 +72,17 @@ int main()
 	SolidBody moving_plate(system, makeShared<MovingPlate>("MovingPlate"));
 	moving_plate.defineParticlesAndMaterial<SolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
 	moving_plate.generateParticles<ParticleGeneratorLattice>();
+    /** Plate */
+    SolidBody stationary_plate(system, makeShared<StationaryPlate>("StationaryPlate"));
+	stationary_plate.defineParticlesAndMaterial<SolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	stationary_plate.generateParticles<ParticleGeneratorLattice>();
 	/** topology */
 	BodyRelationInner myocardium_body_inner(myocardium_body);
-	SolidBodyRelationContact myocardium_plate_contact(myocardium_body, {&moving_plate});
-	SolidBodyRelationContact plate_myocardium_contact(moving_plate, {&myocardium_body});
+    SolidBodyRelationContact myocardium_plate_contact(myocardium_body, {&stationary_plate});
+	SolidBodyRelationContact myocardium_plate_contact_all(myocardium_body, {&stationary_plate,&moving_plate});
+    SolidBodyRelationContact stationary_plate_myocardium_contact(stationary_plate, {&myocardium_body});
+	SolidBodyRelationContact moving_plate_myocardium_contact(moving_plate, {&myocardium_body});
+    
 	/** 
 	 * This section define all numerical methods will be used in this case.
 	 */
@@ -83,10 +97,14 @@ int main()
 	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half(myocardium_body_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(myocardium_body_inner);
 	/** Algorithms for solid-solid contact. */
+    solid_dynamics::ContactDensitySummation stationary_plate_update_contact_density(stationary_plate_myocardium_contact);
 	solid_dynamics::ContactDensitySummation myocardium_update_contact_density(myocardium_plate_contact);
-	solid_dynamics::ContactDensitySummation plate_update_contact_density(plate_myocardium_contact);
+    solid_dynamics::ContactDensitySummation myocardium_update_contact_density_all(myocardium_plate_contact_all);
+	solid_dynamics::ContactDensitySummation moving_plate_update_contact_density(moving_plate_myocardium_contact);
+
 	solid_dynamics::ContactForce myocardium_compute_solid_contact_forces(myocardium_plate_contact);
-	solid_dynamics::ContactForce plate_compute_solid_contact_forces(plate_myocardium_contact);
+	solid_dynamics::ContactForce myocardium_compute_solid_contact_forces_all(myocardium_plate_contact_all);
+	solid_dynamics::ContactForce moving_plate_compute_solid_contact_forces(moving_plate_myocardium_contact);
 	/** Constrain the holder. */
 	BodyRegionByParticle holder(myocardium_body, 
 		makeShared<TransformShape<GeometricShapeBox>>(translation_stationary_plate, halfsize_stationary_plate, "Holder"));
@@ -169,11 +187,19 @@ int main()
 			myocardium_initialize_time_step.parallel_exec();
 			moving_plate_initialize_time_step.parallel_exec();
 			/** Contact model for myocardium. */
-			myocardium_update_contact_density.parallel_exec();
-			myocardium_compute_solid_contact_forces.parallel_exec();
+            if(GlobalStaticVariables::physical_time_< end_time/10)
+			    myocardium_update_contact_density.parallel_exec();
+            else
+                myocardium_update_contact_density_all.parallel_exec();
+            moving_plate_update_contact_density.parallel_exec();
+            stationary_plate_update_contact_density.parallel_exec();
+
 			/** Contact model for plate. */
-			plate_update_contact_density.parallel_exec();
-			plate_compute_solid_contact_forces.parallel_exec();
+            if(GlobalStaticVariables::physical_time_< end_time/10)
+			    myocardium_compute_solid_contact_forces.exec();
+            else
+                myocardium_compute_solid_contact_forces_all.parallel_exec();
+            moving_plate_compute_solid_contact_forces.parallel_exec();
 			{
 				SimTK::State &state_for_update = integ.updAdvancedState();
 				force_on_bodies.clearAllBodyForces(state_for_update);
@@ -196,8 +222,11 @@ int main()
 			myocardium_body.updateCellLinkedList();
 			moving_plate.updateCellLinkedList();
 
-			myocardium_plate_contact.updateConfiguration();
-			plate_myocardium_contact.updateConfiguration();
+            if(GlobalStaticVariables::physical_time_< end_time/10)
+			    myocardium_plate_contact.updateConfiguration();
+            else
+                myocardium_plate_contact_all.updateConfiguration();
+			moving_plate_myocardium_contact.updateConfiguration();
 		}
 		tick_count t2 = tick_count::now();
 		write_states.writeToFile();
