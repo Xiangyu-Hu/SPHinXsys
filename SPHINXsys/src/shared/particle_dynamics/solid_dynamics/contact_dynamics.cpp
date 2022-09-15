@@ -47,7 +47,14 @@ namespace SPH
 			  ContactDynamicsData(solid_body_contact_relation), mass_(particles_->mass_),
 			  offset_W_ij_(StdVec<Real>(contact_configuration_.size(), 0.0))
 		{
-			particles_->registerVariable(contact_density_, "ContactDensity");
+            if(auto ptr = particles_->getVariableByName<Real>("ContactDensity"))
+                contact_density_ = ptr;
+            else
+            {
+                contact_density_ = new StdLargeVec<Real>;
+                particles_->registerVariable(*contact_density_, "ContactDensity");
+            }
+
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				contact_mass_.push_back(&(contact_particles_[k]->mass_));
@@ -82,7 +89,7 @@ namespace SPH
 					sigma += corrected_W_ij * contact_mass_k[contact_neighborhood.j_[n]];
 				}
 			}
-			contact_density_[index_i] = sigma;
+			(*contact_density_)[index_i] = sigma;
 		}
 		//=================================================================================================//
 		ShellContactDensity::ShellContactDensity(SolidBodyRelationContact &solid_body_contact_relation)

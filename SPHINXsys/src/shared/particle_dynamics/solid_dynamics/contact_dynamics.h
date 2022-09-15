@@ -70,7 +70,7 @@ namespace SPH
 			virtual ~ContactDensitySummation(){};
 
 		protected:
-			StdLargeVec<Real> contact_density_;
+			StdLargeVec<Real>* contact_density_;
 			StdLargeVec<Real> &mass_;
 			StdVec<StdLargeVec<Real> *> contact_mass_;
 			StdVec<Real> offset_W_ij_;
