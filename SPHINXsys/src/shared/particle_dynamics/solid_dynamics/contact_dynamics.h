@@ -52,7 +52,7 @@ namespace SPH
 			virtual ~SelfContactDensitySummation(){};
 
 		protected:
-			StdLargeVec<Real> self_contact_density_;
+			StdLargeVec<Real>* self_contact_density_;
 			StdLargeVec<Real> &mass_;
 			Real offset_W_ij_;
 
@@ -70,7 +70,7 @@ namespace SPH
 			virtual ~ContactDensitySummation(){};
 
 		protected:
-			StdLargeVec<Real> contact_density_;
+			StdLargeVec<Real>* contact_density_;
 			StdLargeVec<Real> &mass_;
 			StdVec<StdLargeVec<Real> *> contact_mass_;
 			StdVec<Real> offset_W_ij_;
@@ -90,7 +90,7 @@ namespace SPH
 			virtual ~ShellContactDensity(){};
 
 		protected:
-			StdLargeVec<Real> contact_density_;
+			StdLargeVec<Real>* contact_density_;
 			StdVec<StdLargeVec<Vecd> *> contact_pos_;
 			StdLargeVec<Vecd> &pos_;
 
