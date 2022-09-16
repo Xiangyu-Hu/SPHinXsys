@@ -96,11 +96,11 @@ namespace SPH
 	};
 
 	/**
-	 * @class BodyReducedQuantityRecording
+	 * @class ReducedQuantityRecording
 	 * @brief write reduced quantity of a body
 	 */
 	template <class ReduceMethodType>
-	class BodyReducedQuantityRecording
+	class ReducedQuantityRecording
 	{
 	protected:
 		IOEnvironment &io_environment_;
@@ -117,7 +117,7 @@ namespace SPH
 
 	public:
 		template <typename... ConstructorArgs>
-		BodyReducedQuantityRecording(IOEnvironment &io_environment, ConstructorArgs &&...args)
+		ReducedQuantityRecording(IOEnvironment &io_environment, ConstructorArgs &&...args)
 			: io_environment_(io_environment), plt_engine_(), reduce_method_(std::forward<ConstructorArgs>(args)...),
 			  dynamics_range_name_(reduce_method_.DynamicsRangeName()),
 			  quantity_name_(reduce_method_.QuantityName())
@@ -131,7 +131,7 @@ namespace SPH
 			out_file << "\n";
 			out_file.close();
 		};
-		virtual ~BodyReducedQuantityRecording(){};
+		virtual ~ReducedQuantityRecording(){};
 
 		virtual void writeToFile(size_t iteration_step = 0)
 		{

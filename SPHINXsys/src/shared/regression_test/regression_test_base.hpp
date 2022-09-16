@@ -26,7 +26,7 @@ namespace SPH
 	//=================================================================================================//
 	template <class ObserveMethodType>
 	template <typename ReduceType>
-	void RegressionTestBase<ObserveMethodType>::writeToXml(BodyReducedQuantityRecording<ReduceType>* reduce_method, size_t iteration)
+	void RegressionTestBase<ObserveMethodType>::writeToXml(ReducedQuantityRecording<ReduceType>* reduce_method, size_t iteration)
 	{
 		std::string element_name_ = "Snapshot_" + std::to_string(iteration);
 		SimTK::Xml::Element &element_ = observe_xml_engine_.root_element_;
@@ -56,7 +56,7 @@ namespace SPH
 	//=================================================================================================//
 	template <class ObserveMethodType>
 	template <typename ReduceType>
-	void RegressionTestBase<ObserveMethodType>::readFromXml(BodyReducedQuantityRecording<ReduceType>* reduce_method)
+	void RegressionTestBase<ObserveMethodType>::readFromXml(ReducedQuantityRecording<ReduceType>* reduce_method)
 	{
 		observe_xml_engine_.loadXmlFile(in_output_filefullpath_);
 		size_t number_of_particle_ = 1;
