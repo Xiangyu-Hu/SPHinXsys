@@ -22,7 +22,7 @@ namespace SPH
         size_t size_of_loop_range = 0;
         for (size_t i = 0; i != body_part_cells_.size(); ++i)
         {
-            size_of_loop_range += body_part_cells_[i]->real_particle_indexes_.size();
+            size_of_loop_range += body_part_cells_[i]->size();
         }
         return size_of_loop_range;
     };

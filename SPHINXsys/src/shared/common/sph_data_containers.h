@@ -42,13 +42,15 @@ namespace SPH
 	/** Vector of list data pair */
 	using ListDataVector = StdLargeVec<ListData>;
 	/** Cell lists*/
-	using CellLists = StdLargeVec<CellList *>;
+	using CellLists = StdLargeVec<ConcurrentIndexVector *>;
+	/** Cell data lists*/
+	using CellDataLists = StdLargeVec<ListDataVector *>;
 
 	/** Concurrent vector .*/
 	template <class DataType>
 	using ConcurrentVector = LargeVec<DataType>;
 	/** concurrent cell lists*/
-	using ConcurrentCellLists = LargeVec<CellList *>;
+	using ConcurrentCellLists = LargeVec<ConcurrentIndexVector *>;
 	/** Split cell list for split algorithms. */
 	using SplitCellLists = StdVec<ConcurrentCellLists>;
 	/** Pair of point and volume. */

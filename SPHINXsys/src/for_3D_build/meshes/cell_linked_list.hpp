@@ -35,7 +35,7 @@ namespace SPH
 						for (int m = SMAX(j - search_depth, 0); m <= SMIN(j + search_depth, int(number_of_cells_[1]) - 1); ++m)
 							for (int q = SMAX(k - search_depth, 0); q <= SMIN(k + search_depth, int(number_of_cells_[2]) - 1); ++q)
 							{
-								ListDataVector& target_particles = cell_linked_lists_[l][m][q].cell_list_data_;
+								ListDataVector& target_particles = cell_data_lists_[l][m][q];
 								for (const ListData& list_data : target_particles)
 								{
 									//displacement pointing from neighboring particle to origin particle
