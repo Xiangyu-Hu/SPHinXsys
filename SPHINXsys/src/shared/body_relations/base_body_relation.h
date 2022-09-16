@@ -32,7 +32,7 @@
 #include "complex_body.h"
 #include "base_particles.h"
 #include "cell_linked_list.h"
-#include "neighbor_relation.h"
+#include "neighborhood.h"
 #include "base_geometry.h"
 
 namespace SPH
@@ -137,12 +137,12 @@ namespace SPH
 	{
 	protected:
 		UniquePtrKeepers<SearchDepthMultiResolution> search_depth_multi_resolution_ptr_vector_keeper_;
-		UniquePtrKeepers<NeighborRelationContact> neighbor_relation_contact_ptr_vector_keeper_;
+		UniquePtrKeepers<NeighborBuilderContact> neighbor_relation_contact_ptr_vector_keeper_;
 
 	protected:
 		StdVec<CellLinkedList *> target_cell_linked_lists_;
 		StdVec<SearchDepthMultiResolution *> get_search_depths_;
-		StdVec<NeighborRelationContact *> get_contact_neighbors_;
+		StdVec<NeighborBuilderContact *> get_contact_neighbors_;
 
 		virtual void resetNeighborhoodCurrentSize();
 

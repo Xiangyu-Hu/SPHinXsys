@@ -90,11 +90,11 @@ namespace SPH
 	class BodyRelationContactToBodyPart : public BodyRelationContact
 	{
 	protected:
-		UniquePtrKeepers<NeighborRelationContactBodyPart> neighbor_relation_contact_body_part_ptr_vector_keeper_;
+		UniquePtrKeepers<NeighborBuilderContactBodyPart> neighbor_relation_contact_body_part_ptr_vector_keeper_;
 
 	public:
 		BodyPartVector contact_body_parts_;
-		StdVec<NeighborRelationContactBodyPart *> get_part_contact_neighbors_;
+		StdVec<NeighborBuilderContactBodyPart *> get_part_contact_neighbors_;
 
 		BodyRelationContactToBodyPart(RealBody &real_body, BodyPartVector contact_body_parts);
 		virtual ~BodyRelationContactToBodyPart(){};

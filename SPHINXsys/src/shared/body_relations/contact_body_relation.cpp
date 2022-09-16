@@ -34,7 +34,7 @@ namespace SPH
 			get_search_depths_.push_back(
 				search_depth_multi_resolution_ptr_vector_keeper_.createPtr<SearchDepthMultiResolution>(sph_body_, target_cell_linked_list));
 			get_contact_neighbors_.push_back(
-				neighbor_relation_contact_ptr_vector_keeper_.createPtr<NeighborRelationContact>(sph_body_, *contact_bodies_[k]));
+				neighbor_relation_contact_ptr_vector_keeper_.createPtr<NeighborBuilderContact>(sph_body_, *contact_bodies_[k]));
 		}
 	}
 	//=================================================================================================//
@@ -100,7 +100,7 @@ namespace SPH
 			get_search_depths_.push_back(
 				search_depth_multi_resolution_ptr_vector_keeper_.createPtr<SearchDepthMultiResolution>(sph_body_, target_cell_linked_list));
 			get_contact_neighbors_.push_back(
-				neighbor_relation_contact_ptr_vector_keeper_.createPtr<NeighborRelationSolidContact>(sph_body_, *contact_bodies_[k]));
+				neighbor_relation_contact_ptr_vector_keeper_.createPtr<NeighborBuilderSolidContact>(sph_body_, *contact_bodies_[k]));
 		}
 	}
 	//=================================================================================================//
@@ -125,7 +125,7 @@ namespace SPH
 		{
 			get_part_contact_neighbors_.push_back(
 				neighbor_relation_contact_body_part_ptr_vector_keeper_
-					.createPtr<NeighborRelationContactBodyPart>(sph_body_, *contact_body_parts[k]));
+					.createPtr<NeighborBuilderContactBodyPart>(sph_body_, *contact_body_parts[k]));
 		}
 	}
 	//=================================================================================================//

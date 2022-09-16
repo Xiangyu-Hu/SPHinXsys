@@ -33,7 +33,7 @@
 
 #include "base_data_package.h"
 #include "sph_data_containers.h"
-#include "neighbor_relation.h"
+#include "neighborhood.h"
 #include "all_body_relations.h"
 #include "base_body.h"
 

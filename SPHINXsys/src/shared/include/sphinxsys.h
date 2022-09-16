@@ -38,7 +38,7 @@ capabilities. **/
 #include "all_materials.h"
 #include "all_physical_dynamics.h"
 #include "all_simbody.h"
-#include "in_output.h"
+#include "io_all.h"
 #include "parameterization.h"
 #include "regression_test.h"
 

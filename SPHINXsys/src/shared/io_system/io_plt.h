@@ -21,25 +21,64 @@
  *                                                                              *
  * -----------------------------------------------------------------------------*/
 /**
- * @file 	observer_body.h
- * @brief 	An observer body is designed 
- * for observing a real body and recording the observed results via observation dynamics.
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @file 	io_plt.h
+ * @brief 	Classes for save data in tecplot file format.
+ * @author	Chi Zhang, Shuoguo Zhang, Zhenxi Zhao and Xiangyu Hu
  */
 
-#ifndef OBSERVER_BODY_H
-#define OBSERVER_BODY_H
+#pragma once
 
-#include "base_body.h"
+#include "io_base.h"
 
 namespace SPH
 {
-	class ObserverBody : public SPHBody
+	/**
+	 * @class PltEngine
+	 * @brief The base class which defines Tecplot file related operation.
+	 */
+	class PltEngine
 	{
 	public:
-		ObserverBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr);
-		ObserverBody(SPHSystem &sph_system, const std::string &name);
-		virtual ~ObserverBody(){};
+		PltEngine(){};
+		virtual ~PltEngine(){};
+
+		void writeAQuantityHeader(std::ofstream &out_file, const Real &quantity, const std::string &quantity_name);
+		void writeAQuantityHeader(std::ofstream &out_file, const Vecd &quantity, const std::string &quantity_name);
+		void writeAQuantity(std::ofstream &out_file, const Real &quantity);
+		void writeAQuantity(std::ofstream &out_file, const Vecd &quantity);
+	};
+
+	/**
+	 * @class BodyStatesRecordingToPlt
+	 * @brief  Write files for bodies
+	 * the output file is dat format can visualized by TecPlot
+	 */
+	class BodyStatesRecordingToPlt : public BodyStatesRecording
+	{
+	public:
+		BodyStatesRecordingToPlt(IOEnvironment &io_environment, SPHBody &body)
+			: BodyStatesRecording(io_environment, body){};
+		BodyStatesRecordingToPlt(IOEnvironment &io_environment, SPHBodyVector bodies)
+			: BodyStatesRecording(io_environment, bodies){};
+		virtual ~BodyStatesRecordingToPlt(){};
+
+	protected:
+		virtual void writeWithFileName(const std::string &sequence) override;
+	};
+
+	/**
+	 * @class MeshRecordingToPlt
+	 * @brief  write the background mesh data for relax body
+	 */
+	class MeshRecordingToPlt : public BodyStatesRecording
+	{
+	protected:
+		std::string filefullpath_;
+		BaseMeshField *mesh_field_;
+		virtual void writeWithFileName(const std::string &sequence) override;
+
+	public:
+		MeshRecordingToPlt(IOEnvironment &io_environment, SPHBody &body, BaseMeshField *mesh_field);
+		virtual ~MeshRecordingToPlt(){};
 	};
 }
-#endif // OBSERVER_BODY_H

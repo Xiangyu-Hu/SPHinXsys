@@ -3,7 +3,7 @@
  * @author	Xiangyu Hu and Chi Zhang
  */
 
-#include "neighbor_relation.h"
+#include "neighborhood.h"
 
 #include "complex_body.h"
 #include "base_particles.h"
@@ -22,7 +22,7 @@ namespace SPH
 		e_ij_[neighbor_n] = e_ij_[current_size_];
 	}
 	//=================================================================================================//
-	void NeighborRelation::createRelation(Neighborhood &neighborhood,
+	void NeighborBuilder::createNeighbor(Neighborhood &neighborhood,
 										  Real &distance, Vecd &displacement, size_t j_index) const
 	{
 		neighborhood.j_.push_back(j_index);
@@ -33,7 +33,7 @@ namespace SPH
 		neighborhood.allocated_size_++;
 	}
 	//=================================================================================================//
-	void NeighborRelation::initializeRelation(Neighborhood &neighborhood,
+	void NeighborBuilder::initializeNeighbor(Neighborhood &neighborhood,
 											  Real &distance, Vecd &displacement, size_t j_index) const
 	{
 		size_t current_size = neighborhood.current_size_;
@@ -44,7 +44,7 @@ namespace SPH
 		neighborhood.e_ij_[current_size] = displacement / (distance + TinyReal);
 	}
 	//=================================================================================================//
-	void NeighborRelation::createRelation(Neighborhood &neighborhood, Real &distance,
+	void NeighborBuilder::createNeighbor(Neighborhood &neighborhood, Real &distance,
 										  Vecd &displacement, size_t j_index, Real i_h_ratio, Real h_ratio_min) const
 	{
 		neighborhood.j_.push_back(j_index);
@@ -56,8 +56,8 @@ namespace SPH
 		neighborhood.allocated_size_++;
 	}
 	//=================================================================================================//
-	void NeighborRelation::
-		initializeRelation(Neighborhood &neighborhood, Real &distance,
+	void NeighborBuilder::
+		initializeNeighbor(Neighborhood &neighborhood, Real &distance,
 						   Vecd &displacement, size_t j_index, Real i_h_ratio, Real h_ratio_min) const
 	{
 		size_t current_size = neighborhood.current_size_;
@@ -70,33 +70,33 @@ namespace SPH
 		neighborhood.e_ij_[current_size] = displacement / (distance + TinyReal);
 	}
 	//=================================================================================================//
-	NeighborRelationInner::NeighborRelationInner(SPHBody &body) : NeighborRelation()
+	NeighborBuilderInner::NeighborBuilderInner(SPHBody &body) : NeighborBuilder()
 	{
 		kernel_ = body.sph_adaptation_->getKernel();
 	}
 	//=================================================================================================//
-	void NeighborRelationInner::operator()(Neighborhood &neighborhood,
+	void NeighborBuilderInner::operator()(Neighborhood &neighborhood,
 										   Vecd &displacement, size_t i_index, size_t j_index) const
 	{
 		Real distance = displacement.norm();
 		if (distance < kernel_->CutOffRadius() && i_index != j_index)
 		{
 			neighborhood.current_size_ >= neighborhood.allocated_size_
-				? createRelation(neighborhood, distance, displacement, j_index)
-				: initializeRelation(neighborhood, distance, displacement, j_index);
+				? createNeighbor(neighborhood, distance, displacement, j_index)
+				: initializeNeighbor(neighborhood, distance, displacement, j_index);
 			neighborhood.current_size_++;
 		}
 	};
 	//=================================================================================================//
-	NeighborRelationInnerVariableSmoothingLength::
-		NeighborRelationInnerVariableSmoothingLength(SPHBody &body)
-		: NeighborRelation(),
+	NeighborBuilderInnerVariableSmoothingLength::
+		NeighborBuilderInnerVariableSmoothingLength(SPHBody &body)
+		: NeighborBuilder(),
 		  h_ratio_(*body.base_particles_->getVariableByName<Real>("SmoothingLengthRatio"))
 	{
 		kernel_ = body.sph_adaptation_->getKernel();
 	}
 	//=================================================================================================//
-	void NeighborRelationInnerVariableSmoothingLength::
+	void NeighborBuilderInnerVariableSmoothingLength::
 	operator()(Neighborhood &neighborhood, Vecd &displacement, size_t i_index, size_t j_index) const
 	{
 		Real i_h_ratio = h_ratio_[i_index];
@@ -106,21 +106,21 @@ namespace SPH
 		if (distance < cutoff_radius && i_index != j_index)
 		{
 			neighborhood.current_size_ >= neighborhood.allocated_size_
-				? createRelation(neighborhood, distance, displacement, j_index, i_h_ratio, h_ratio_min)
-				: initializeRelation(neighborhood, distance, displacement, j_index, i_h_ratio, h_ratio_min);
+				? createNeighbor(neighborhood, distance, displacement, j_index, i_h_ratio, h_ratio_min)
+				: initializeNeighbor(neighborhood, distance, displacement, j_index, i_h_ratio, h_ratio_min);
 			neighborhood.current_size_++;
 		}
 	};
 	//=================================================================================================//
-	NeighborRelationSelfContact::
-		NeighborRelationSelfContact(SPHBody &body)
-		: NeighborRelation(),
+	NeighborBuilderSelfContact::
+		NeighborBuilderSelfContact(SPHBody &body)
+		: NeighborBuilder(),
 		  pos0_(*body.base_particles_->getVariableByName<Vecd>("InitialPosition"))
 	{
 		kernel_ = body.sph_adaptation_->getKernel();
 	}
 	//=================================================================================================//
-	void NeighborRelationSelfContact::operator()(Neighborhood &neighborhood,
+	void NeighborBuilderSelfContact::operator()(Neighborhood &neighborhood,
 												 Vecd &displacement, size_t i_index, size_t j_index) const
 	{
 		Real distance0 = (pos0_[i_index] - pos0_[j_index]).norm();
@@ -128,43 +128,43 @@ namespace SPH
 		if (distance < kernel_->CutOffRadius() && distance0 > kernel_->CutOffRadius())
 		{
 			neighborhood.current_size_ >= neighborhood.allocated_size_
-				? createRelation(neighborhood, distance, displacement, j_index)
-				: initializeRelation(neighborhood, distance, displacement, j_index);
+				? createNeighbor(neighborhood, distance, displacement, j_index)
+				: initializeNeighbor(neighborhood, distance, displacement, j_index);
 			neighborhood.current_size_++;
 		}
 	};
 	//=================================================================================================//
-	NeighborRelationContact::
-		NeighborRelationContact(SPHBody &body, SPHBody &contact_body) : NeighborRelation()
+	NeighborBuilderContact::
+		NeighborBuilderContact(SPHBody &body, SPHBody &contact_body) : NeighborBuilder()
 	{
 		Kernel *source_kernel = body.sph_adaptation_->getKernel();
 		Kernel *target_kernel = contact_body.sph_adaptation_->getKernel();
 		kernel_ = source_kernel->SmoothingLength() > target_kernel->SmoothingLength() ? source_kernel : target_kernel;
 	}
 	//=================================================================================================//
-	void NeighborRelationContact::operator()(Neighborhood &neighborhood,
+	void NeighborBuilderContact::operator()(Neighborhood &neighborhood,
 											 Vecd &displacement, size_t i_index, size_t j_index) const
 	{
 		Real distance = displacement.norm();
 		if (distance < kernel_->CutOffRadius())
 		{
 			neighborhood.current_size_ >= neighborhood.allocated_size_
-				? createRelation(neighborhood, distance, displacement, j_index)
-				: initializeRelation(neighborhood, distance, displacement, j_index);
+				? createNeighbor(neighborhood, distance, displacement, j_index)
+				: initializeNeighbor(neighborhood, distance, displacement, j_index);
 			neighborhood.current_size_++;
 		}
 	};
 	//=================================================================================================//
-	NeighborRelationSolidContact::NeighborRelationSolidContact(SPHBody &body, SPHBody &contact_body)
-		: NeighborRelationContact(body, contact_body)
+	NeighborBuilderSolidContact::NeighborBuilderSolidContact(SPHBody &body, SPHBody &contact_body)
+		: NeighborBuilderContact(body, contact_body)
 	{
 		Real source_smoothing_length = body.sph_adaptation_->ReferenceSmoothingLength();
 		Real target_smoothing_length = contact_body.sph_adaptation_->ReferenceSmoothingLength();
 		kernel_ = kernel_keeper_.createPtr<KernelWendlandC2>(0.5 * (source_smoothing_length + target_smoothing_length));
 	}
 	//=================================================================================================//
-	NeighborRelationContactBodyPart::
-		NeighborRelationContactBodyPart(SPHBody &body, BodyPart &contact_body_part) : NeighborRelation()
+	NeighborBuilderContactBodyPart::
+		NeighborBuilderContactBodyPart(SPHBody &body, BodyPart &contact_body_part) : NeighborBuilder()
 	{
 		contact_body_part.getSPHBody().base_particles_->registerVariable(part_indicator_, "BodyPartByParticleIndicator");
 		Kernel *source_kernel = body.sph_adaptation_->getKernel();
@@ -180,15 +180,15 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void NeighborRelationContactBodyPart::operator()(Neighborhood &neighborhood,
+	void NeighborBuilderContactBodyPart::operator()(Neighborhood &neighborhood,
 													 Vecd &displacement, size_t i_index, size_t j_index) const
 	{
 		Real distance = displacement.norm();
 		if (distance < kernel_->CutOffRadius() && part_indicator_[j_index] == 1)
 		{
 			neighborhood.current_size_ >= neighborhood.allocated_size_
-				? createRelation(neighborhood, distance, displacement, j_index)
-				: initializeRelation(neighborhood, distance, displacement, j_index);
+				? createNeighbor(neighborhood, distance, displacement, j_index)
+				: initializeNeighbor(neighborhood, distance, displacement, j_index);
 			neighborhood.current_size_++;
 		}
 	}

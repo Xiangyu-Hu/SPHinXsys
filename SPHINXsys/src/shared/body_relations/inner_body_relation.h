@@ -42,7 +42,7 @@ namespace SPH
 	protected:
 		SPHBodyParticlesIndex get_particle_index_;
 		SearchDepthSingleResolution get_single_search_depth_;
-		NeighborRelationInner get_inner_neighbor_;
+		NeighborBuilderInner get_inner_neighbor_;
 		CellLinkedList *cell_linked_list_;
 
 	public:
@@ -65,7 +65,7 @@ namespace SPH
 		size_t total_levels_;
 		SPHBodyParticlesIndex get_particle_index_;
 		StdVec<SearchDepthVariableSmoothingLength *> get_multi_level_search_depth_;
-		NeighborRelationInnerVariableSmoothingLength get_inner_neighbor_variable_smoothing_length_;
+		NeighborBuilderInnerVariableSmoothingLength get_inner_neighbor_variable_smoothing_length_;
 		StdVec<CellLinkedList *> cell_linked_list_levels_;
 
 	public:
@@ -95,7 +95,7 @@ namespace SPH
 		IndexVector &body_part_particles_;
 		BodyPartParticlesIndex get_body_part_particle_index_;
 		SearchDepthSingleResolution get_single_search_depth_;
-		NeighborRelationSelfContact get_self_contact_neighbor_;
+		NeighborBuilderSelfContact get_self_contact_neighbor_;
 		CellLinkedList *cell_linked_list_;
 
 		virtual void resetNeighborhoodCurrentSize() override;

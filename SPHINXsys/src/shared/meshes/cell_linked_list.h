@@ -34,7 +34,7 @@
 #define MESH_CELL_LINKED_LIST_H
 
 #include "base_mesh.h"
-#include "neighbor_relation.h"
+#include "neighborhood.h"
 
 namespace SPH
 {

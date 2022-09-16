@@ -16,6 +16,7 @@ namespace SPH
      * @class TransformShape
      * @brief A template shape in which coordinate transformation is applied
      * before or/and after access the interface functions.
+     * Note that this is more suitable to apply for simple geometric shapes.
      */
     template <class BaseShapeType>
     class TransformShape : public BaseShapeType

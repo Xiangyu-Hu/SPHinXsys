@@ -97,7 +97,6 @@ namespace SPH
 	 * @class ParticleWithLocalRefinement
 	 * @brief Base class for particle with local refinement.
 	 * @details Different refinement strategies will be used in derived classes.
-	 * TODO: I should justify whether define h_ratio_ in this class is proper or not.
 	 */
 	class ParticleWithLocalRefinement : public SPHAdaptation
 	{
