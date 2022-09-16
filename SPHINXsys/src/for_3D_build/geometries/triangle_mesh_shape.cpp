@@ -65,13 +65,13 @@ namespace SPH
 		return weighted_inside;
 	}
 	//=================================================================================================//
-	Vec3d TriangleMeshShape::findClosestPoint(const Vec3d &input_pnt)
+	Vec3d TriangleMeshShape::findClosestPoint(const Vec3d &probe_point)
 	{
 		bool inside = false;
 		int face_id;
 		SimTK::Vec2 normal;
 		Vec3d closest_pnt;
-		closest_pnt = triangle_mesh_->findNearestPoint(input_pnt, inside, face_id, normal);
+		closest_pnt = triangle_mesh_->findNearestPoint(probe_point, inside, face_id, normal);
 		if (face_id < 0 && face_id > triangle_mesh_->getNumFaces())
 		{
 			std::cout << "\n Error the nearest point is not valid" << std::endl;

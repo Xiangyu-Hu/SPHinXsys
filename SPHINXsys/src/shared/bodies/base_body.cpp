@@ -13,9 +13,9 @@ namespace SPH
 {
 	//=================================================================================================//
 	SPHBody::SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr)
-		: body_shape_(shape_ptr_keeper_.assignPtr(shape_ptr)),
-		  sph_system_(sph_system), body_name_(body_shape_->getName()), newly_updated_(true),
-		  sph_adaptation_(sph_adaptation_ptr_keeper_.createPtr<SPHAdaptation>(this)),
+		: sph_system_(sph_system), newly_updated_(true),
+		  body_shape_(shape_ptr_keeper_.assignPtr(shape_ptr)),
+		  sph_adaptation_(sph_adaptation_ptr_keeper_.createPtr<SPHAdaptation>(*this)),
 		  base_material_(nullptr), base_particles_(nullptr)
 	{
 		sph_system_.sph_bodies_.push_back(this);
@@ -24,11 +24,6 @@ namespace SPH
 	BoundingBox SPHBody::getSPHSystemBounds()
 	{
 		return sph_system_.system_domain_bounds_;
-	}
-	//=================================================================================================//
-	std::string SPHBody::getBodyName()
-	{
-		return body_name_;
 	}
 	//=================================================================================================//
 	SPHSystem &SPHBody::getSPHSystem()
@@ -52,6 +47,11 @@ namespace SPH
 	BoundingBox SPHBody::getBodyShapeBounds()
 	{
 		return body_shape_->getBounds();
+	}
+	//=================================================================================================//
+	void SPHBody::defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio)
+	{
+		sph_adaptation_->resetAdaptationRatios(h_spacing_ratio, new_system_refinement_ratio);
 	}
 	//=================================================================================================//
 	void SPHBody::writeParticlesToVtuFile(std::ostream &output_file)
@@ -102,7 +102,8 @@ namespace SPH
 	RealBody::RealBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr)
 		: SPHBody(sph_system, shape_ptr),
 		  system_domain_bounds_(this->getSPHSystem().system_domain_bounds_),
-		  use_split_cell_lists_(false), particle_sorting_(this)
+		  use_split_cell_lists_(false), particle_sorting_(this),
+		  iteration_count_(1)
 	{
 		sph_system.real_bodies_.push_back(this);
 		size_t number_of_split_cell_lists = powerN(3, Vecd(0).size());
@@ -129,6 +130,22 @@ namespace SPH
 	void RealBody::updateCellLinkedList()
 	{
 		cell_linked_list_->UpdateCellLists();
+		base_particles_->total_ghost_particles_ = 0;
+	}
+	//=================================================================================================//
+	void RealBody::updateCellLinkedListWithParticleSort(size_t particle_sorting_period)
+	{
+		if (iteration_count_ % particle_sorting_period == 0)
+			sortParticleWithCellLinkedList();
+		iteration_count_++;
+		updateCellLinkedList();
+	}
+	//=================================================================================================//
+	void RealBody::defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio)
+	{
+		sph_adaptation_->resetAdaptationRatios(h_spacing_ratio, new_system_refinement_ratio);
+		cell_linked_list_ = cell_linked_list_keeper_.movePtr(
+			sph_adaptation_->createCellLinkedList(system_domain_bounds_, *this));
 	}
 	//=================================================================================================//
 }

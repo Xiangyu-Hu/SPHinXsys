@@ -108,37 +108,36 @@ int main()
 	 * @brief 	Methods used for time stepping.
 	 */
 	/** Define external force. */
-	Gravity gravity(Vecd(gravity_g, 0.0));
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	/** Initialize particle acceleration. */
-	TimeStepInitialization initialize_a_fluid_step(water_block, gravity);
+	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, makeShared<Gravity>(Vecd(gravity_g, 0.0)));
 	/** Periodic BCs in x direction. */
 	PeriodicConditionUsingCellLinkedList periodic_condition(water_block, water_block.getBodyShapeBounds(), xAxis);
 	/**
 	 * @brief 	Algorithms of fluid dynamics.
 	 */
 	/** Evaluation of density by summation approach. */
-	fluid_dynamics::DensitySummationComplex update_density_by_summation(water_block_complex);
+	InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_complex);
 	/** Time step size without considering sound wave speed. */
-	fluid_dynamics::AdvectionTimeStepSize get_fluid_advection_time_step_size(water_block, U_f);
+	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
 	/** Time step size with considering sound wave speed. */
-	fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_block);
+	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	/** Pressure relaxation algorithm without Riemann solver for viscous flows. */
-	fluid_dynamics::PressureRelaxationWithWall pressure_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::PressureRelaxationWithWall> pressure_relaxation(water_block_complex);
 	/** Pressure relaxation algorithm by using position verlet time stepping. */
-	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(water_block_complex);
 	/** Computing viscous acceleration. */
-	fluid_dynamics::ViscousAccelerationWithWall viscous_acceleration(water_block_complex);
+	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	/** Impose transport velocity. */
-	fluid_dynamics::TransportVelocityCorrectionComplex transport_velocity_correction(water_block_complex);
+	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> transport_velocity_correction(water_block_complex);
 	/**
 	 * @brief Output.
 	 */
-	InOutput in_output(system);
+	IOEnvironment io_environment(system);
 	/** Output the body states. */
-	BodyStatesRecordingToVtp body_states_recording(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtp body_states_recording(io_environment, system.real_bodies_);
 	/** Output the body states for restart simulation. */
-	RestartIO restart_io(in_output, system.real_bodies_);
+	RestartIO restart_io(io_environment, system.real_bodies_);
 	/**
 	 * @brief Setup geometry and initial conditions.
 	 */
@@ -146,17 +145,6 @@ int main()
 	periodic_condition.update_cell_linked_list_.parallel_exec();
 	system.initializeSystemConfigurations();
 	wall_boundary_normal_direction.parallel_exec();
-	/**
-	 * @brief The time stepping starts here.
-	 */
-	/** If the starting time is not zero, please setup the restart time step ro read in restart states. */
-	if (system.restart_step_ != 0)
-	{
-		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(system.restart_step_);
-		water_block.updateCellLinkedList();
-		periodic_condition.update_cell_linked_list_.parallel_exec();
-		water_block_complex.updateConfiguration();
-	}
 	/** Output the start states of bodies. */
 	body_states_recording.writeToFile(0);
 	/**
@@ -165,7 +153,7 @@ int main()
 	size_t number_of_iterations = system.restart_step_;
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
-	Real End_Time = 20.0;	/**< End time. */
+	Real end_time = 20.0;	/**< End time. */
 	Real Output_Time = 0.1; /**< Time stamps for output of body states. */
 	Real dt = 0.0;			/**< Default acoustic time step sizes. */
 	/** statistics for computing CPU time. */
@@ -178,7 +166,7 @@ int main()
 	/**
 	 * @brief 	Main loop starts here.
 	 */
-	while (GlobalStaticVariables::physical_time_ < End_Time)
+	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
 		/** Integrate time (loop) until the next output time. */
@@ -220,7 +208,7 @@ int main()
 			time_instance = tick_count::now();
 			/** Water block configuration and periodic condition. */
 			periodic_condition.bounding_.parallel_exec();
-			water_block.updateCellLinkedList();
+			water_block.updateCellLinkedListWithParticleSort(100);
 			periodic_condition.update_cell_linked_list_.parallel_exec();
 			water_block_complex.updateConfiguration();
 			interval_updating_configuration += tick_count::now() - time_instance;

@@ -15,17 +15,14 @@ namespace SPH
 	namespace solid_dynamics
 	{
 		//=================================================================================================//
-		AcousticTimeStepSize::AcousticTimeStepSize(SolidBody &solid_body, Real CFL)
-			: ParticleDynamicsReduce<Real, ReduceMin>(solid_body),
-			  ElasticSolidDataSimple(solid_body), CFL_(CFL),
+		AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body, Real CFL)
+			: LocalDynamicsReduce<Real, ReduceMin>(sph_body, Real(MaxRealNumber)),
+			  ElasticSolidDataSimple(sph_body), CFL_(CFL),
 			  vel_(particles_->vel_), acc_(particles_->acc_),
-			  smoothing_length_(sph_adaptation_->ReferenceSmoothingLength()),
-			  c0_(material_->ReferenceSoundSpeed())
-		{
-			initial_reference_ = DBL_MAX;
-		}
+			  smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()),
+			  c0_(material_->ReferenceSoundSpeed()) {}
 		//=================================================================================================//
-		Real AcousticTimeStepSize::ReduceFunction(size_t index_i, Real dt)
+		Real AcousticTimeStepSize::reduce(size_t index_i, Real dt)
 		{
 			// since the particle does not change its configuration in pressure relaxation step
 			// I chose a time-step size according to Eulerian method
@@ -34,31 +31,24 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ElasticDynamicsInitialCondition::
-			ElasticDynamicsInitialCondition(SolidBody &solid_body)
-			: ParticleDynamicsSimple(solid_body),
-			  ElasticSolidDataSimple(solid_body),
-			  pos_(particles_->pos_), vel_(particles_->vel_)
-		{
-		}
+			ElasticDynamicsInitialCondition(SPHBody &sph_body)
+			: LocalDynamics(sph_body),
+			  ElasticSolidDataSimple(sph_body),
+			  pos_(particles_->pos_), vel_(particles_->vel_) {}
 		//=================================================================================================//
 		UpdateElasticNormalDirection::
-			UpdateElasticNormalDirection(SolidBody &solid_body)
-			: ParticleDynamicsSimple(solid_body),
-			  ElasticSolidDataSimple(solid_body),
-			  n_(particles_->n_), n0_(particles_->n0_), F_(particles_->F_)
-		{
-		}
+			UpdateElasticNormalDirection(SPHBody &sph_body)
+			: LocalDynamics(sph_body),
+			  ElasticSolidDataSimple(sph_body),
+			  n_(particles_->n_), n0_(particles_->n0_), F_(particles_->F_) {}
 		//=================================================================================================//
 		DeformationGradientTensorBySummation::
 			DeformationGradientTensorBySummation(BaseBodyRelationInner &inner_relation)
-			: InteractionDynamics(*inner_relation.sph_body_),
-			  ElasticSolidDataInner(inner_relation),
+			: LocalDynamics(inner_relation.sph_body_), ElasticSolidDataInner(inner_relation),
 			  Vol_(particles_->Vol_), pos_(particles_->pos_),
-			  B_(particles_->B_), F_(particles_->F_)
-		{
-		}
+			  B_(particles_->B_), F_(particles_->F_) {}
 		//=================================================================================================//
-		void DeformationGradientTensorBySummation::Interaction(size_t index_i, Real dt)
+		void DeformationGradientTensorBySummation::interaction(size_t index_i, Real dt)
 		{
 			Vecd &pos_n_i = pos_[index_i];
 
@@ -77,7 +67,7 @@ namespace SPH
 		//=================================================================================================//
 		BaseElasticRelaxation::
 			BaseElasticRelaxation(BaseBodyRelationInner &inner_relation)
-			: ParticleDynamics1Level(*inner_relation.sph_body_),
+			: LocalDynamics(inner_relation.sph_body_),
 			  ElasticSolidDataInner(inner_relation), Vol_(particles_->Vol_),
 			  rho_(particles_->rho_), mass_(particles_->mass_),
 			  pos_(particles_->pos_), vel_(particles_->vel_), acc_(particles_->acc_),
@@ -90,10 +80,10 @@ namespace SPH
 		{
 			rho0_ = material_->ReferenceDensity();
 			inv_rho0_ = 1.0 / rho0_;
-			smoothing_length_ = sph_adaptation_->ReferenceSmoothingLength();
+			smoothing_length_ = sph_body_.sph_adaptation_->ReferenceSmoothingLength();
 		}
 		//=================================================================================================//
-		void BaseStressRelaxationFirstHalf::Update(size_t index_i, Real dt)
+		void BaseStressRelaxationFirstHalf::update(size_t index_i, Real dt)
 		{
 			vel_[index_i] += (acc_prior_[index_i] + acc_[index_i]) * dt;
 		}
@@ -106,7 +96,7 @@ namespace SPH
 			numerical_dissipation_factor_ = 0.25;
 		}
 		//=================================================================================================//
-		void StressRelaxationFirstHalf::Initialization(size_t index_i, Real dt)
+		void StressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
 		{
 			pos_[index_i] += vel_[index_i] * dt * 0.5;
 			F_[index_i] += dF_dt_[index_i] * dt * 0.5;
@@ -116,7 +106,7 @@ namespace SPH
 			stress_PK1_B_[index_i] = F_[index_i] * material_->StressPK2(F_[index_i], index_i) * B_[index_i];
 		}
 		//=================================================================================================//
-		void StressRelaxationFirstHalf::Interaction(size_t index_i, Real dt)
+		void StressRelaxationFirstHalf::interaction(size_t index_i, Real dt)
 		{
 			// including gravity and force from fluid
 			Vecd acceleration(0);
@@ -145,7 +135,7 @@ namespace SPH
 			KirchhoffParticleStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation)
 			: StressRelaxationFirstHalf(inner_relation){};
 		//=================================================================================================//
-		void KirchhoffParticleStressRelaxationFirstHalf::Initialization(size_t index_i, Real dt)
+		void KirchhoffParticleStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
 		{
 			pos_[index_i] += vel_[index_i] * dt * 0.5;
 			F_[index_i] += dF_dt_[index_i] * dt * 0.5;
@@ -174,7 +164,7 @@ namespace SPH
 			particles_->registerVariable(inverse_F_T_, "InverseTransposedDeformation");
 		};
 		//=================================================================================================//
-		void KirchhoffStressRelaxationFirstHalf::Initialization(size_t index_i, Real dt)
+		void KirchhoffStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
 		{
 			pos_[index_i] += vel_[index_i] * dt * 0.5;
 			F_[index_i] += dF_dt_[index_i] * dt * 0.5;
@@ -190,7 +180,7 @@ namespace SPH
 				material_->NumericalDampingLeftCauchy(F_[index_i], dF_dt_[index_i], smoothing_length_, index_i) * inverse_F_T_[index_i];
 		}
 		//=================================================================================================//
-		void KirchhoffStressRelaxationFirstHalf::Interaction(size_t index_i, Real dt)
+		void KirchhoffStressRelaxationFirstHalf::interaction(size_t index_i, Real dt)
 		{
 			// including gravity and force from fluid
 			Vecd acceleration(0);
@@ -207,12 +197,12 @@ namespace SPH
 			acc_[index_i] = acceleration;
 		}
 		//=================================================================================================//
-		void StressRelaxationSecondHalf::Initialization(size_t index_i, Real dt)
+		void StressRelaxationSecondHalf::initialization(size_t index_i, Real dt)
 		{
 			pos_[index_i] += vel_[index_i] * dt * 0.5;
 		}
 		//=================================================================================================//
-		void StressRelaxationSecondHalf::Interaction(size_t index_i, Real dt)
+		void StressRelaxationSecondHalf::interaction(size_t index_i, Real dt)
 		{
 			const Vecd &vel_n_i = vel_[index_i];
 
@@ -230,7 +220,7 @@ namespace SPH
 			dF_dt_[index_i] = deformation_gradient_change_rate * B_[index_i];
 		}
 		//=================================================================================================//
-		void StressRelaxationSecondHalf::Update(size_t index_i, Real dt)
+		void StressRelaxationSecondHalf::update(size_t index_i, Real dt)
 		{
 			F_[index_i] += dF_dt_[index_i] * dt * 0.5;
 		}

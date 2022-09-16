@@ -46,7 +46,7 @@ namespace SPH
 	class ParticleGenerator;
 	class BodySurface;
 	template <class ReturnType>
-	class ParticleDynamics;
+	class BaseDynamics;
 
 	/**
 	 * @class BaseParticles
@@ -81,7 +81,7 @@ namespace SPH
 	class BaseParticles
 	{
 	private:
-		UniquePtrKeepers<ParticleDynamics<void>> derived_particle_data_;
+		UniquePtrKeepers<BaseDynamics<void>> derived_particle_data_;
 
 	public:
 		explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
@@ -98,10 +98,9 @@ namespace SPH
 		//----------------------------------------------------------------------
 		// Global information for all particles
 		//----------------------------------------------------------------------
-		Real rho0_;				/**< reference density*/
-		Real sigma0_;			/**< reference number density. */
-		Real speed_max_;		/**< Maximum particle speed. */
-		Real signal_speed_max_; /**< Maximum signal speed.*/
+		Real rho0_;		 /**< reference density*/
+		Real sigma0_;	 /**< reference number density. */
+		Real speed_max_; /**< Maximum particle speed. */
 		//----------------------------------------------------------------------
 		// Global information for defining particle groups
 		//----------------------------------------------------------------------
@@ -113,7 +112,7 @@ namespace SPH
 		//----------------------------------------------------------------------
 		ParticleData all_particle_data_;
 		ParticleDataMap all_variable_maps_;
-		StdVec<ParticleDynamics<void> *> derived_variables_;
+		StdVec<BaseDynamics<void> *> derived_variables_;
 		ParticleVariableList variables_to_write_;
 
 		/** register a variable defined in a class (can be non-particle class) */
@@ -163,7 +162,7 @@ namespace SPH
 		template <typename VariableType>
 		void registerSortableVariable(const std::string &variable_name);
 
-		SPHBody *getSPHBody() { return sph_body_; };
+		SPHBody &getSPHBody() { return sph_body_; };
 		/** initialize other variables  based one geometric variables and material */
 		virtual void initializeOtherVariables();
 		void addBufferParticles(size_t buffer_size);
@@ -200,7 +199,7 @@ namespace SPH
 		virtual Real ParticleMass(size_t index_i) { return mass_[index_i]; }
 
 	protected:
-		SPHBody *sph_body_; /**< The body in which the particles belongs to. */
+		SPHBody &sph_body_; /**< The body in which the particles belongs to. */
 		std::string body_name_;
 		XmlEngine restart_xml_engine_;
 		XmlEngine reload_xml_engine_;

@@ -64,17 +64,17 @@ namespace SPH
 	}
 	//=================================================================================================//
 	ParticleGeneratorReload::
-		ParticleGeneratorReload(SPHBody &sph_body, InOutput &in_output, const std::string &reload_body_name)
+		ParticleGeneratorReload(SPHBody &sph_body, IOEnvironment &io_environment, const std::string &reload_body_name)
 		: ParticleGenerator(sph_body)
 	{
-		if (!fs::exists(in_output.reload_folder_))
+		if (!fs::exists(io_environment.reload_folder_))
 		{
-			std::cout << "\n Error: the particle reload folder:" << in_output.reload_folder_ << " is not exists" << std::endl;
+			std::cout << "\n Error: the particle reload folder:" << io_environment.reload_folder_ << " is not exists" << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 			exit(1);
 		}
 
-		file_path_ = in_output.reload_folder_ + "/" + reload_body_name + "_rld.xml";
+		file_path_ = io_environment.reload_folder_ + "/" + reload_body_name + "_rld.xml";
 	}
 	//=================================================================================================//
 	void ParticleGeneratorReload::initializeGeometricVariables()

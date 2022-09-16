@@ -16,7 +16,7 @@ namespace SPH
 																	 BaseBodyRelationContact &contact_relation)
 			: ViscousAccelerationInner(inner_relation), MultiPhaseContactData(contact_relation)
 		{
-			if (inner_relation.sph_body_ != contact_relation.sph_body_)
+			if (&inner_relation.sph_body_ != &contact_relation.sph_body_)
 			{
 				std::cout << "\n Error: the two body_relations do not have the same source body!" << std::endl;
 				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
@@ -35,9 +35,9 @@ namespace SPH
 			: ViscousAccelerationMultiPhase(complex_relation.inner_relation_,
 											complex_relation.contact_relation_) {}
 		//=================================================================================================//
-		void ViscousAccelerationMultiPhase::Interaction(size_t index_i, Real dt)
+		void ViscousAccelerationMultiPhase::interaction(size_t index_i, Real dt)
 		{
-			ViscousAccelerationInner::Interaction(index_i, dt);
+			ViscousAccelerationInner::interaction(index_i, dt);
 
 			Real rho_i = this->rho_[index_i];
 			const Vecd &vel_i = this->vel_[index_i];
@@ -67,7 +67,7 @@ namespace SPH
 		//=================================================================================================//
 		MultiPhaseColorFunctionGradient::
 			MultiPhaseColorFunctionGradient(BaseBodyRelationContact &contact_relation)
-			: InteractionDynamics(*contact_relation.sph_body_), MultiPhaseData(contact_relation),
+			: LocalDynamics(contact_relation.sph_body_), MultiPhaseData(contact_relation),
 			  rho0_(particles_->rho0_), Vol_(particles_->Vol_),
 			  pos_div_(*particles_->getVariableByName<Real>("PositionDivergence")),
 			  surface_indicator_(particles_->surface_indicator_)
@@ -82,7 +82,7 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		void MultiPhaseColorFunctionGradient::Interaction(size_t index_i, Real dt)
+		void MultiPhaseColorFunctionGradient::interaction(size_t index_i, Real dt)
 		{
 			Real vol_i = Vol_[index_i];
 			Vecd gradient(0.0);

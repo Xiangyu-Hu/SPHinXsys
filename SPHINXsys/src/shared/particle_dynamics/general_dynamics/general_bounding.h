@@ -33,12 +33,15 @@
 
 namespace SPH
 {
+
 	/**
 	 * @class BoundingAlongAxis
 	 * @brief Bounding particle position in along axis.
 	 * The axis must be 0, 1 for 2d and 0, 1, 2 for 3d
 	 */
-	class BoundingAlongAxis : public ParticleDynamics<void>, public GeneralDataDelegateSimple
+	class BoundingAlongAxis : public BaseDynamics<void>,
+							  public LocalDynamics,
+							  public GeneralDataDelegateSimple
 	{
 	protected:
 		const int axis_;			  /**< the axis directions for bounding*/
@@ -46,6 +49,7 @@ namespace SPH
 		StdLargeVec<Vecd> &pos_;
 		BaseCellLinkedList *cell_linked_list_;
 		Real cut_off_radius_max_; /**< maximum cut off radius to avoid boundary particle depletion */
+
 	public:
 		BoundingAlongAxis(RealBody &real_body, BoundingBox bounding_bounds, int axis);
 		virtual ~BoundingAlongAxis(){};
@@ -110,10 +114,11 @@ namespace SPH
 		class PeriodicCellLinkedList : public BoundingAlongAxis
 		{
 		protected:
+			std::mutex mutex_cell_list_entry_; /**< mutex exclusion for memory conflict */
 			Vecd &periodic_translation_;
 			StdVec<CellLists> &bound_cells_;
-			virtual void checkLowerBound(ListData &list_data, Real dt = 0.0);
-			virtual void checkUpperBound(ListData &list_data, Real dt = 0.0);
+			virtual void checkLowerBound(CellList *cell_list, Real dt = 0.0);
+			virtual void checkUpperBound(CellList *cell_list, Real dt = 0.0);
 
 		public:
 			PeriodicCellLinkedList(Vecd &periodic_translation, StdVec<CellLists> &bound_cells,
@@ -124,11 +129,8 @@ namespace SPH
 			;
 			virtual ~PeriodicCellLinkedList(){};
 
-			/** This class is only implemented in sequential due to memory conflicts.
-			 * Because the cell list data is not concurrent vector.
-			 */
 			virtual void exec(Real dt = 0.0) override;
-			virtual void parallel_exec(Real dt = 0.0) override { exec(); };
+			virtual void parallel_exec(Real dt = 0.0) override;
 		};
 
 	public:
@@ -140,51 +142,6 @@ namespace SPH
 
 		PeriodicBounding bounding_;
 		PeriodicCellLinkedList update_cell_linked_list_;
-	};
-
-	/**
-	 * @class OpenBoundaryConditionAlongAxis
-	 * @brief In open boundary case, we transfer real particles to buffer particles when it runs out the bounds.
-	 * @brief int axis is used to choose direction in coordinate
-	 * @brief bool positive is used to choose upper or lower bound in your chosen direction
-	 */
-	class OpenBoundaryConditionAlongAxis
-	{
-	protected:
-		StdVec<CellLists> bound_cells_;
-
-		class ParticleTypeTransfer : public BoundingAlongAxis
-		{
-		protected:
-			StdVec<CellLists> &bound_cells_;
-			ParticleFunctor checking_bound_;
-			virtual void checkLowerBound(size_t index_i, Real dt = 0.0);
-			virtual void checkUpperBound(size_t index_i, Real dt = 0.0);
-
-		public:
-			ParticleTypeTransfer(StdVec<CellLists> &bound_cells, RealBody &real_body,
-								 BoundingBox bounding_bounds, int axis, bool positive)
-				: BoundingAlongAxis(real_body, bounding_bounds, axis),
-				  bound_cells_(bound_cells)
-			{
-				checking_bound_ = positive
-									  ? std::bind(&OpenBoundaryConditionAlongAxis::ParticleTypeTransfer::checkUpperBound, this, _1, _2)
-									  : std::bind(&OpenBoundaryConditionAlongAxis::ParticleTypeTransfer::checkLowerBound, this, _1, _2);
-			};
-			virtual ~ParticleTypeTransfer(){};
-
-			/** This class is only implemented in sequential due to memory conflicts.
-			 * Because the cell list data is not concurrent vector.
-			 */
-			virtual void exec(Real dt = 0.0) override;
-			virtual void parallel_exec(Real dt = 0.0) override { exec(); };
-		};
-
-	public:
-		OpenBoundaryConditionAlongAxis(RealBody &real_body, BoundingBox bounding_bounds, int axis, bool positive);
-		virtual ~OpenBoundaryConditionAlongAxis(){};
-
-		ParticleTypeTransfer particle_type_transfer_;
 	};
 
 	/**
@@ -209,6 +166,7 @@ namespace SPH
 		class CreatPeriodicGhostParticles : public PeriodicBounding
 		{
 		protected:
+			std::mutex mutex_create_ghost_particle_; /**< mutex exclusion for memory conflict */
 			StdVec<IndexVector> &ghost_particles_;
 			virtual void setupDynamics(Real dt = 0.0) override;
 			virtual void checkLowerBound(size_t index_i, Real dt = 0.0) override;
@@ -220,11 +178,6 @@ namespace SPH
 				: PeriodicBounding(periodic_translation, bound_cells, real_body, bounding_bounds, axis),
 				  ghost_particles_(ghost_particles){};
 			virtual ~CreatPeriodicGhostParticles(){};
-
-			/** This class is only implemented in sequential due to memory conflicts.
-			 * Because creating ghost particle allocate memory.
-			 */
-			virtual void parallel_exec(Real dt = 0.0) override { exec(); };
 		};
 
 		/**

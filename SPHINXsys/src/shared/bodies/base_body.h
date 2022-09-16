@@ -22,14 +22,13 @@
  * -----------------------------------------------------------------------------*/
 /**
  * @file 	base_body.h
- * @brief 	This is the base classes of SPH bodies. The real body is for
- *			that with cell linked list and the fictitious one does not.
+ * @brief 	These are the base classes of SPH bodies. The RealBody is for
+ *			that with cell linked list and the SPHBody does not.
  * 			Before the definition of the SPH bodies, the shapes with complex
- *			geometries, i.e. those are produced by advanced binary operation,
+ *			geometries, i.e. those are produced by advanced binary operations,
  * 			such as intersection, should be produced first.
  * 			Then, all shapes used in body definition should be either contain
- * 			or not contain each other.
- *			Partial overlap between them are not permitted.
+ * 			or not contain each other. Partial overlap between them are not permitted.
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
  */
 
@@ -63,34 +62,32 @@ namespace SPH
 	class SPHBody
 	{
 	private:
+		UniquePtrKeeper<BaseMaterial> base_material_ptr_keeper_;
+		UniquePtrKeeper<BaseParticles> base_particles_ptr_keeper_;
 		SharedPtrKeeper<Shape> shape_ptr_keeper_;
-
-	public:
-		Shape *body_shape_; /**< describe the volumetric geometry enclosing the body */
 
 	protected:
 		UniquePtrKeeper<SPHAdaptation> sph_adaptation_ptr_keeper_;
 
-	private:
-		UniquePtrKeeper<BaseMaterial> base_material_ptr_keeper_;
-		UniquePtrKeeper<BaseParticles> base_particles_ptr_keeper_;
-
 	protected:
 		SPHSystem &sph_system_;
-		std::string body_name_;
 		bool newly_updated_; /**< whether this body is in a newly updated state */
 
 	public:
-		SPHAdaptation *sph_adaptation_; /**< numerical adaptation policy. */
-		BaseMaterial *base_material_;	/**< base material for dynamic cast in particle dynamics */
-		BaseParticles *base_particles_; /**< Base particles for dynamic cast particle dynamics  */
+		Shape *body_shape_;						   /**< volumetric geometry enclosing the body */
+		SPHAdaptation *sph_adaptation_;			   /**< numerical adaptation policy */
+		BaseMaterial *base_material_;			   /**< base material for dynamic cast in DataDelegate */
+		BaseParticles *base_particles_;			   /**< Base particles for dynamic cast DataDelegate  */
 		StdVec<SPHBodyRelation *> body_relations_; /**< all contact relations centered from this body **/
 
 		explicit SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr);
 		virtual ~SPHBody(){};
 
-		std::string getBodyName();
+		std::string getName() { return body_shape_->getName(); };
 		SPHSystem &getSPHSystem();
+		SPHBody &getSPHBody() { return *this; };
+		size_t &LoopRange() { return base_particles_->total_real_particles_; };
+		size_t SizeOfLoopRange() { return base_particles_->total_real_particles_; };
 		Real getSPHBodyResolutionRef() { return sph_adaptation_->ReferenceSpacing(); };
 		void setNewlyUpdated() { newly_updated_ = true; };
 		void setNotNewlyUpdated() { newly_updated_ = false; };
@@ -100,18 +97,20 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		Object factory template functions
 		//----------------------------------------------------------------------
+		virtual void defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
+
 		template <typename... ConstructorArgs>
 		LevelSetShape *defineComponentLevelSetShape(const std::string &shape_name, ConstructorArgs &&...args)
 		{
 			ComplexShape *complex_shape = DynamicCast<ComplexShape>(this, body_shape_);
-			return complex_shape->defineLevelSetShape(this, shape_name, std::forward<ConstructorArgs>(args)...);
+			return complex_shape->defineLevelSetShape(*this, shape_name, std::forward<ConstructorArgs>(args)...);
 		};
 
 		template <typename... ConstructorArgs>
 		LevelSetShape *defineBodyLevelSetShape(ConstructorArgs &&...args)
 		{
 			LevelSetShape *levelset_shape =
-				shape_ptr_keeper_.resetPtr<LevelSetShape>(this, *body_shape_, std::forward<ConstructorArgs>(args)...);
+				shape_ptr_keeper_.resetPtr<LevelSetShape>(*this, *body_shape_, std::forward<ConstructorArgs>(args)...);
 			body_shape_ = levelset_shape;
 			return levelset_shape;
 		};
@@ -189,6 +188,7 @@ namespace SPH
 		 */
 		SplitCellLists split_cell_lists_;
 		bool use_split_cell_lists_;
+		size_t iteration_count_;
 
 	public:
 		ParticleSorting particle_sorting_;
@@ -204,7 +204,8 @@ namespace SPH
 		 * and is important because particles are not defined in FluidBody constructor.  */
 		virtual void assignBaseParticles(BaseParticles *base_particles) override;
 		virtual void sortParticleWithCellLinkedList();
-		virtual void updateCellLinkedList();
+		void updateCellLinkedList();
+		void updateCellLinkedListWithParticleSort(size_t particle_sort_period);
 		//----------------------------------------------------------------------
 		//		Object factory template functions
 		//----------------------------------------------------------------------
@@ -212,10 +213,12 @@ namespace SPH
 		void defineAdaptation(ConstructorArgs &&...args)
 		{
 			sph_adaptation_ = sph_adaptation_ptr_keeper_
-								  .createPtr<AdaptationType>(this, std::forward<ConstructorArgs>(args)...);
+								  .createPtr<AdaptationType>(*this, std::forward<ConstructorArgs>(args)...);
 			cell_linked_list_ = cell_linked_list_keeper_.movePtr(
 				sph_adaptation_->createCellLinkedList(system_domain_bounds_, *this));
 		};
+
+		virtual void defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0) override;
 	};
 }
-#endif //BASE_BODY_H
+#endif // BASE_BODY_H

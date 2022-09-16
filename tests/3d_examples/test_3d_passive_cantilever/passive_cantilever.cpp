@@ -52,11 +52,10 @@ class CantileverInitialCondition
 	: public solid_dynamics::ElasticDynamicsInitialCondition
 {
 public:
-	explicit CantileverInitialCondition(SolidBody &cantilever)
-		: solid_dynamics::ElasticDynamicsInitialCondition(cantilever){};
+	explicit CantileverInitialCondition(SPHBody &sph_body)
+		: solid_dynamics::ElasticDynamicsInitialCondition(sph_body){};
 
-protected:
-	void Update(size_t index_i, Real dt) override
+	void update(size_t index_i, Real dt)
 	{
 		if (pos_[index_i][0] > 0.0)
 		{
@@ -88,26 +87,25 @@ int main()
 	/** 
 	 * This section define all numerical methods will be used in this case.
 	 */
-	/** Initialization. */
-	CantileverInitialCondition initialization(cantilever_body);
+	SimpleDynamics<CantileverInitialCondition> initialization(cantilever_body);
 	/** Corrected configuration. */
-	solid_dynamics::CorrectConfiguration
+	InteractionDynamics<solid_dynamics::CorrectConfiguration>
 		corrected_configuration(cantilever_body_inner);
 	/** Time step size calculation. */
-	solid_dynamics::AcousticTimeStepSize
+	ReduceDynamics<solid_dynamics::AcousticTimeStepSize>
 		computing_time_step_size(cantilever_body);
 	/** active and passive stress relaxation. */
-	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half(cantilever_body_inner);
-	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(cantilever_body_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> stress_relaxation_first_half(cantilever_body_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half(cantilever_body_inner);
 	/** Constrain the holder. */
 	BodyRegionByParticle holder(cantilever_body, 
 		makeShared<TransformShape<GeometricShapeBox>>(translation_holder, halfsize_holder, "Holder"));
-	solid_dynamics::ConstrainSolidBodyRegion constrain_holder(cantilever_body, holder);
+	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_holder(holder);
 	/** Output */
-	InOutput in_output(system);
-	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
+	IOEnvironment io_environment(system);
+	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		write_displacement("Position", in_output, cantilever_observer_contact);
+		write_displacement("Position", io_environment, cantilever_observer_contact);
 	/**
 	 * From here the time stepping begins.
 	 * Set the starting time.
@@ -143,7 +141,7 @@ int main()
 						  << dt << "\n";
 			}
 			stress_relaxation_first_half.parallel_exec(dt);
-			constrain_holder.parallel_exec(dt);
+			constraint_holder.parallel_exec(dt);
 			stress_relaxation_second_half.parallel_exec(dt);
 
 			ite++;

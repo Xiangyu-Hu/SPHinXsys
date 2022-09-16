@@ -5,9 +5,9 @@
 namespace SPH
 {
 	//=================================================================================================//
-	bool ImageShape::checkContain(const Vec3d &input_pnt, bool BOUNDARY_INCLUDED)
+	bool ImageShape::checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED)
 	{
-		Real value = image_->findValueAtPoint(input_pnt);
+		Real value = image_->findValueAtPoint(probe_point);
 		if (BOUNDARY_INCLUDED == true)
 		{
 			if (value > 0.0)
@@ -24,9 +24,9 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	Vec3d ImageShape::findClosestPoint(const Vec3d &input_pnt)
+	Vec3d ImageShape::findClosestPoint(const Vec3d &probe_point)
 	{
-		return image_->findClosestPoint(input_pnt);
+		return image_->findClosestPoint(probe_point);
 	}
 	//=================================================================================================//
 	BoundingBox ImageShape::findBounds()

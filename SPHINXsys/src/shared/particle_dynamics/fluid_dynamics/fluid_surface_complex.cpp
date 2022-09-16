@@ -29,9 +29,9 @@ namespace SPH
 			: FreeSurfaceIndicationComplex(complex_relation.inner_relation_,
 										   complex_relation.contact_relation_, threshold) {}
 		//=================================================================================================//
-		void FreeSurfaceIndicationComplex::Interaction(size_t index_i, Real dt)
+		void FreeSurfaceIndicationComplex::interaction(size_t index_i, Real dt)
 		{
-			FreeSurfaceIndicationInner::Interaction(index_i, dt);
+			FreeSurfaceIndicationInner::interaction(index_i, dt);
 
 			Real pos_div = 0.0;
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
@@ -62,9 +62,9 @@ namespace SPH
 			: ColorFunctionGradientComplex(complex_relation.inner_relation_,
 										   complex_relation.contact_relation_) {}
 		//=================================================================================================//
-		void ColorFunctionGradientComplex::Interaction(size_t index_i, Real dt)
+		void ColorFunctionGradientComplex::interaction(size_t index_i, Real dt)
 		{
-			ColorFunctionGradientInner::Interaction(index_i, dt);
+			ColorFunctionGradientInner::interaction(index_i, dt);
 
 			Vecd gradient(0.0);
 			if (pos_div_[index_i] < threshold_by_dimensions_)
@@ -85,21 +85,21 @@ namespace SPH
 		}
 		//=================================================================================================//
 		SurfaceNormWithWall::SurfaceNormWithWall(BaseBodyRelationContact &contact_relation, Real contact_angle)
-			: InteractionDynamics(*contact_relation.sph_body_), FSIContactData(contact_relation),
+			: LocalDynamics(contact_relation.sph_body_), FSIContactData(contact_relation),
 			  contact_angle_(contact_angle),
 			  surface_indicator_(particles_->surface_indicator_),
 			  surface_norm_(*particles_->getVariableByName<Vecd>("SurfaceNormal")),
 			  pos_div_(*particles_->getVariableByName<Real>("PositionDivergence"))
 		{
-			particle_spacing_ = contact_relation.sph_body_->sph_adaptation_->ReferenceSpacing();
-			smoothing_length_ = contact_relation.sph_body_->sph_adaptation_->ReferenceSmoothingLength();
+			particle_spacing_ = contact_relation.sph_body_.sph_adaptation_->ReferenceSpacing();
+			smoothing_length_ = contact_relation.sph_body_.sph_adaptation_->ReferenceSmoothingLength();
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				wall_n_.push_back(&(contact_particles_[k]->n_));
 			}
 		}
 		//=================================================================================================//
-		void SurfaceNormWithWall::Interaction(size_t index_i, Real dt)
+		void SurfaceNormWithWall::interaction(size_t index_i, Real dt)
 		{
 			Real large_dist(1.0e6);
 			Vecd n_i = surface_norm_[index_i];

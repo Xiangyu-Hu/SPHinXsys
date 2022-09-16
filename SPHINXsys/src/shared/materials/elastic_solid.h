@@ -124,6 +124,26 @@ namespace SPH
 	};
 
 	/**
+	* @class SaintVenantKirchhoffSolid
+	* @brief Every thing same as linear elastic but assume 
+	* finite deformation (geometry nonlinearity). 
+	* It is the simplest hyper-elastic material model.
+	*/
+	class SaintVenantKirchhoffSolid : public LinearElasticSolid
+	{
+	public:
+		explicit SaintVenantKirchhoffSolid(Real rho0, Real youngs_modulus, Real poisson_ratio)
+			: LinearElasticSolid(rho0, youngs_modulus, poisson_ratio)
+		{
+			material_type_name_ = "SaintVenantKirchhoffSolid";
+		};
+		virtual ~SaintVenantKirchhoffSolid(){};
+
+		/** second Piola-Kirchhoff stress related with green-lagrangian deformation tensor */
+		virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) override;
+	};
+
+	/**
 	* @class NeoHookeanSolid
 	* @brief Neo-Hookean solid, Compressible formulation!
 	*/

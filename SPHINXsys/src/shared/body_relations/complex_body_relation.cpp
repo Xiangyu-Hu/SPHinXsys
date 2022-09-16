@@ -14,7 +14,7 @@ namespace SPH
 	//=================================================================================================//
 	ComplexBodyRelation::
 		ComplexBodyRelation(BaseBodyRelationInner &inner_relation, BaseBodyRelationContact &contact_relation)
-		: SPHBodyRelation(*inner_relation.sph_body_),
+		: SPHBodyRelation(inner_relation.sph_body_),
 		  inner_relation_(inner_relation),
 		  contact_relation_(contact_relation),
 		  contact_bodies_(contact_relation_.contact_bodies_),
@@ -38,10 +38,10 @@ namespace SPH
 	//=================================================================================================//
 	ComplexBodyRelation::
 		ComplexBodyRelation(BaseBodyRelationInner &inner_relation, RealBodyVector contact_bodies)
-		: SPHBodyRelation(*inner_relation.sph_body_),
+		: SPHBodyRelation(inner_relation.sph_body_),
 		  inner_relation_(inner_relation),
 		  contact_relation_(base_body_relation_contact_ptr_keeper_.createRef<BodyRelationContact>(
-			  DynamicCast<RealBody>(this, *sph_body_), contact_bodies)),
+			  DynamicCast<RealBody>(this, sph_body_), contact_bodies)),
 		  contact_bodies_(contact_relation_.contact_bodies_),
 		  inner_configuration_(inner_relation_.inner_configuration_),
 		  contact_configuration_(contact_relation_.contact_configuration_)

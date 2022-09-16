@@ -60,8 +60,8 @@ namespace SPH
 			: Shape(shape_name), translation_(0.0), rotation_(1.0),
 			  max_distance_(-INFINITY), min_distance_(INFINITY){};
 
-		virtual bool checkContain(const Vec3d &input_pnt, bool BOUNDARY_INCLUDED = true) override;
-		virtual Vec3d findClosestPoint(const Vec3d &input_pnt) override;
+		virtual bool checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED = true) override;
+		virtual Vec3d findClosestPoint(const Vec3d &probe_point) override;
 
 	protected:
 		//- distance map has to be float type image

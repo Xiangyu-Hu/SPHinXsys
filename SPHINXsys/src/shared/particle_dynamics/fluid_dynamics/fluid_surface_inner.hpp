@@ -25,9 +25,9 @@ namespace SPH
 		//=================================================================================================//
 		template <class FreeSurfaceIdentification>
 		void SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIdentification>::
-			Interaction(size_t index_i, Real dt)
+			interaction(size_t index_i, Real dt)
 		{
-			FreeSurfaceIdentification::Interaction(index_i, dt);
+			FreeSurfaceIdentification::interaction(index_i, dt);
 
 			if (this->pos_div_[index_i] < this->threshold_by_dimensions_)
 			{
@@ -59,9 +59,9 @@ namespace SPH
 		//=================================================================================================//
 		template <class FreeSurfaceIdentification>
 		void SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIdentification>::
-			Update(size_t index_i, Real dt)
+			update(size_t index_i, Real dt)
 		{
-			FreeSurfaceIdentification::Update(index_i, dt);
+			FreeSurfaceIdentification::update(index_i, dt);
 
 			previous_surface_indicator_[index_i] = this->surface_indicator_[index_i];
 		}

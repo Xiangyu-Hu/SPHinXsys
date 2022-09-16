@@ -26,7 +26,7 @@ struct BernoulliBeamInput
 	std::string relative_input_path;
 };
 
-StructuralSimulationInput createSimulationInput(const BernoulliBeamInput& input, std::shared_ptr<LinearElasticSolid> material)
+StructuralSimulationInput createSimulationInput(const BernoulliBeamInput& input, std::shared_ptr<SaintVenantKirchhoffSolid> material)
 {
 	StlList imported_stl_list = input.stls;
 	std::vector<Vec3d> translation_list = {
@@ -34,7 +34,7 @@ StructuralSimulationInput createSimulationInput(const BernoulliBeamInput& input,
 	};
 	std::vector<Real> resolution_list = input.resolution;
 
-	std::vector<shared_ptr<LinearElasticSolid>> material_model_list = {
+	std::vector<shared_ptr<SaintVenantKirchhoffSolid>> material_model_list = {
 		material
 	};
 
@@ -62,7 +62,7 @@ class BernoulliBeam
 {
 public:	
 	BernoulliBeam(const BernoulliBeamInput& input):
-	material_(make_shared<LinearElasticSolid>(input.rho_0, input.Youngs_modulus, input.poisson))
+	material_(make_shared<SaintVenantKirchhoffSolid>(input.rho_0, input.Youngs_modulus, input.poisson))
 	{
 		sim.reset(new StructuralSimulation(createSimulationInput(input, material_)));
 	}
@@ -71,7 +71,7 @@ public: //C++ Backend functions
 	void runCompleteSimulation(double endTime) { sim->runSimulation(SPH::Real(endTime)); };
 	
 private:
-	std::shared_ptr<LinearElasticSolid> material_;
+	std::shared_ptr<SaintVenantKirchhoffSolid> material_;
 	std::unique_ptr<StructuralSimulation> sim;
 };
 
@@ -82,7 +82,7 @@ class BernoulliBeamJS
 public:
 	BernoulliBeamJS(const BernoulliBeamInput& input):
 
-	material_(make_shared<LinearElasticSolid>(input.rho_0, input.Youngs_modulus, input.poisson))
+	material_(make_shared<SaintVenantKirchhoffSolid>(input.rho_0, input.Youngs_modulus, input.poisson))
 	{
 		sim_js_.reset(new StructuralSimulationJS(createSimulationInput(input, material_)));
 	}
@@ -105,7 +105,7 @@ public:
 	void onError(emscripten::val on_error) { on_error_ = [on_error](const std::string& error_message) { on_error(error_message); }; }
 
 private:
-	std::shared_ptr<LinearElasticSolid> material_;
+	std::shared_ptr<SaintVenantKirchhoffSolid> material_;
 	std::unique_ptr<StructuralSimulationJS> sim_js_;
 	std::function<void(const std::string&)> on_error_;
 };
