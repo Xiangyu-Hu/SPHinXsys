@@ -22,14 +22,23 @@
  * -----------------------------------------------------------------------------*/
 /**
 * @file 	particle_dynamics_algorithms.h
-* @brief 	This is the classes for algorithms particle dynamics.
-* @detail	Generally, there are four types dynamics. One is without particle interaction.
-*			One is with particle interaction within a body. One is with particle interaction
-*			between a center body and other contacted bodies.
-* 			Still another is the combination of the last two.
-*			For the first dynamics, there is also reduce dynamics
-*			which carries reduced operations through the particles of the body.
-
+* @brief 	This is the classes for algorithms particle dynamics .
+* @detail	Generally, there are two types of particle dynamics algorithms.
+*			One leads to the change of particle states, the other not.
+*			There are 5 classes the first type. They are:  
+* 			SimpleDynamics is without particle interaction. Particles just update their states;
+*			InteractionDynamics is with particle interaction with its neighbors;
+*			InteractionSplit is InteractionDynamics but using spliting algorithm;
+*			InteractionWithUpdate is with particle interaction with its neighbors and then update their states;
+*			Dynamics1Level is the most complex dynamics, has successive three steps: initialization, interaction and update.
+*			There are 2 classes for the second type.
+*			ReduceDynamics carries out a reduce operation through the particles.
+*			ReduceAverage further computes average of a ReduceDynamics for summation.
+*			Each particle dynamics is templated with a LocalDynamics and a DynamicsRange. 
+*			The local dynamics defines the behavior of a single particle or with its neighbors,
+*			and is recognized by particle dynamics with the signature functions, like update, initialization and interaction.
+*			DynamicsRange define and range of particles for the dynamics.
+*			The default range is the entire body. Other ranges are BodyPartByParticle and BodyPartByCell.
 * @author	Chi ZHang and Xiangyu Hu
 */
 

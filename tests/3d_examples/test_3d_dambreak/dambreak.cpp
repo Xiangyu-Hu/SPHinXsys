@@ -1,9 +1,9 @@
-/* ---------------------------------------------------------------------------*
+/*-----------------------------------------------------------------------------*
  *                       SPHinXsys: 3D dambreak example                        *
- * ----------------------------------------------------------------------------*
+ *-----------------------------------------------------------------------------*
  * This is the one of the basic test cases for efficient and accurate time     *
- * integration scheme investigation 							  				  *
- * ---------------------------------------------------------------------------*/
+ * integration scheme investigation                                            *
+ *-----------------------------------------------------------------------------*/
 #include "sphinxsys.h" // SPHinXsys Library.
 using namespace SPH;
 
@@ -64,7 +64,7 @@ public:
 	}
 };
 
-// the main program
+// the main program with commandline options
 int main(int ac, char *av[])
 {
 	//----------------------------------------------------------------------
@@ -112,7 +112,6 @@ int main(int ac, char *av[])
 	//	and regression tests of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_water_block_states(io_environment, system.real_bodies_);
-	RestartIO restart_io(io_environment, system.real_bodies_);
 	RegressionTestEnsembleAveraged<BodyReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
 		write_water_mechanical_energy(io_environment, water_block, gravity_ptr);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
