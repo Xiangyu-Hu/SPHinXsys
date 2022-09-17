@@ -47,17 +47,17 @@ namespace SPH
 	template <class ReturnType, class DataPackageType>
 	using PackageFunctor = std::function<ReturnType(DataPackageType *, Real)>;
 	/** Iterator on a collection of mesh data packages. sequential computing. */
-	template <class DataPackageType>
-	void PackageIterator(ConcurrentVec<DataPackageType *> &data_pkgs,
-						 PackageFunctor<void, DataPackageType> &pkg_functor, Real dt = 0.0)
+	template <class DataPackageType, typename LocalFunction, typename... Args>
+	void package_for(const ConcurrentVec<DataPackageType *> &data_pkgs,
+					 const LocalFunction &local_function, Args &&...args)
 	{
 		for (size_t i = 0; i != data_pkgs.size(); ++i)
-			pkg_functor(data_pkgs[i], dt);
+			local_function(i);
 	};
 	/** Iterator on a collection of mesh data packages. parallel computing. */
-	template <class DataPackageType>
-	void PackageIterator_parallel(ConcurrentVec<DataPackageType *> &data_pkgs,
-								  PackageFunctor<void, DataPackageType> &pkg_functor, Real dt = 0.0)
+	template <class DataPackageType, typename LocalFunction, typename... Args>
+	void package_parallel_for(const ConcurrentVec<DataPackageType *> &data_pkgs,
+							  const LocalFunction &local_function, Args &&...args)
 	{
 		parallel_for(
 			blocked_range<size_t>(0, data_pkgs.size()),
@@ -65,42 +65,10 @@ namespace SPH
 			{
 				for (size_t i = r.begin(); i != r.end(); ++i)
 				{
-					pkg_functor(data_pkgs[i], dt);
+					local_function(i);
 				}
 			},
 			ap);
-	};
-	/** Package iterator for reducing. sequential computing. */
-	template <class ReturnType, typename ReduceOperation, class DataPackageType>
-	ReturnType ReducePackageIterator(ConcurrentVec<DataPackageType *> &data_pkgs, ReturnType temp,
-									 PackageFunctor<ReturnType, DataPackageType> &reduce_pkg_functor,
-									 ReduceOperation &reduce_operation, Real dt = 0.0)
-	{
-		for (size_t i = 0; i < data_pkgs.size(); ++i)
-		{
-			temp = reduce_operation(temp, reduce_pkg_functor(data_pkgs[i], dt));
-		}
-		return temp;
-	};
-	/** Package iterator for reducing. parallel computing. */
-	template <class ReturnType, typename ReduceOperation, class DataPackageType>
-	ReturnType ReducePackageIterator_parallel(ConcurrentVec<DataPackageType *> &data_pkgs, ReturnType temp,
-											  PackageFunctor<ReturnType, DataPackageType> &reduce_pkg_functor,
-											  ReduceOperation &reduce_operation, Real dt = 0.0)
-	{
-		return parallel_reduce(
-			blocked_range<size_t>(0, data_pkgs.size()),
-			temp, [&](const blocked_range<size_t> &r, ReturnType temp0) -> ReturnType
-			{
-				for (size_t i = r.begin(); i != r.end(); ++i)
-				{
-					temp0 = reduce_operation(temp, reduce_pkg_functor(data_pkgs[i], dt));
-				}
-				return temp0; },
-			[&](ReturnType x, ReturnType y) -> ReturnType
-			{
-				return reduce_operation(x, y);
-			});
 	};
 
 	/**
@@ -236,8 +204,8 @@ namespace SPH
 	class MeshWithGridDataPackages : public MeshFieldType, public Mesh
 	{
 	public:
-		MyMemoryPool<GridDataPackageType> data_pkg_pool_;		  /**< memory pool for all packages in the mesh. */
-		MeshDataMatrix<GridDataPackageType *> data_pkg_addrs_;	  /**< Address of data packages. */
+		MyMemoryPool<GridDataPackageType> data_pkg_pool_;	   /**< memory pool for all packages in the mesh. */
+		MeshDataMatrix<GridDataPackageType *> data_pkg_addrs_; /**< Address of data packages. */
 		ConcurrentVec<GridDataPackageType *> inner_data_pkgs_; /**< Inner data packages which is able to carry out spatial operations. */
 
 		template <typename... Args>

@@ -144,17 +144,13 @@ namespace SPH
 		void markNearInterface(Real small_shift_factor);
 		void redistanceInterface();
 		void updateLevelSetGradient();
-		void updateLevelSetGradientForAPackage(LevelSetDataPackage *inner_data_pkg, Real dt = 0.0);
 		void updateKernelIntegrals();
-		void updateKernelIntegralsForAPackage(LevelSetDataPackage *inner_data_pkg, Real dt = 0.0);
-		void stepReinitializationForAPackage(LevelSetDataPackage *inner_data_pkg, Real dt = 0.0);
-		void markNearInterfaceForAPackage(LevelSetDataPackage *core_data_pkg, Real dt = 0.0);
-		void redistanceInterfaceForAPackage(LevelSetDataPackage *core_data_pkg, Real dt = 0.0);
+		void redistanceInterfaceForAPackage(LevelSetDataPackage *core_data_pkg);
 		bool isInnerPackage(const Vecu &cell_index);
 		LevelSetDataPackage *createDataPackage(const Vecu &cell_index, const Vecd &cell_position);
-		void initializeDataInACell(const Vecu &cell_index, Real dt);
-		void initializeAddressesInACell(const Vecu &cell_index, Real dt);
-		void tagACellIsInnerPackage(const Vecu &cell_index, Real dt);
+		void initializeDataInACell(const Vecu &cell_index);
+		void initializeAddressesInACell(const Vecu &cell_index);
+		void tagACellIsInnerPackage(const Vecu &cell_index);
 	};
 
 	/**
@@ -169,7 +165,7 @@ namespace SPH
 		virtual ~RefinedLevelSet(){};
 
 	protected:
-		void initializeDataInACellFromCoarse(const Vecu &cell_index, Real dt);
+		void initializeDataInACellFromCoarse(const Vecu &cell_index);
 	};
 
 	/**

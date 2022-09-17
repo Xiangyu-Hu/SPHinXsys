@@ -1,9 +1,12 @@
+/**
+ * @file 	cell_linked_list_supplementary.cpp
+ * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ */
+
 #include "cell_linked_list.h"
-#include "base_kernel.h"
-#include "base_body.h"
-#include "base_particles.h"
-#include "base_particle_dynamics.h"
-#include "neighborhood.h"
+
+#include "base_particles.hpp"
+#include "mesh_iterators.hpp"
 
 namespace SPH
 {
@@ -12,6 +15,13 @@ namespace SPH
 	{
 		Allocate3dArray(cell_index_lists_, number_of_cells_);
 		Allocate3dArray(cell_data_lists_, number_of_cells_);
+
+		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
+						  [&](size_t i, size_t j, size_t k)
+						  {
+							  cell_index_lists_[i][j][k].reserve(36);
+							  cell_data_lists_[i][j][k].reserve(36);
+						  });
 	}
 	//=================================================================================================//
 	void CellLinkedList ::deleteMeshDataMatrix()
@@ -22,65 +32,43 @@ namespace SPH
 	//=================================================================================================//
 	void CellLinkedList::clearCellLists()
 	{
-		parallel_for(
-			blocked_range3d<size_t>(0, number_of_cells_[0], 0, number_of_cells_[1], 0, number_of_cells_[2]),
-			[&](const blocked_range3d<size_t> &r)
-			{
-				for (size_t i = r.pages().begin(); i != r.pages().end(); ++i)
-					for (size_t j = r.rows().begin(); j != r.rows().end(); ++j)
-						for (size_t k = r.cols().begin(); k != r.cols().end(); ++k)
-						{
-							cell_index_lists_[i][j][k].clear();
-						}
-			},
-			ap);
+		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
+						  [&](size_t i, size_t j, size_t k)
+						  {
+							  cell_index_lists_[i][j][k].clear();
+						  });
 	}
 	//=================================================================================================//
 	void CellLinkedList::UpdateCellListData()
 	{
-		StdLargeVec<Vecd> &pos_n = base_particles_->pos_;
-		parallel_for(
-			blocked_range3d<size_t>(0, number_of_cells_[0], 0, number_of_cells_[1], 0, number_of_cells_[2]),
-			[&](const blocked_range3d<size_t> &r)
-			{
-				for (size_t i = r.pages().begin(); i != r.pages().end(); ++i)
-					for (size_t j = r.rows().begin(); j != r.rows().end(); ++j)
-						for (size_t k = r.cols().begin(); k != r.cols().end(); ++k)
-						{
-							cell_data_lists_[i][j][k].clear();
-							ConcurrentIndexVector &cell_list = cell_index_lists_[i][j][k];
-							for (size_t s = 0; s != cell_list.size(); ++s)
-							{
-								size_t particle_index = cell_list[s];
-								cell_data_lists_[i][j][k].emplace_back(std::make_pair(particle_index, pos_n[particle_index]));
-							}
-						}
-			},
-			ap);
+		StdLargeVec<Vecd> &pos = base_particles_->pos_;
+		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
+						  [&](size_t i, size_t j, size_t k)
+						  {
+							  cell_data_lists_[i][j][k].clear();
+							  ConcurrentIndexVector &cell_list = cell_index_lists_[i][j][k];
+							  for (size_t s = 0; s != cell_list.size(); ++s)
+							  {
+								  size_t index = cell_list[s];
+								  cell_data_lists_[i][j][k].emplace_back(std::make_pair(index, pos[index]));
+							  }
+						  });
 	}
 	//=================================================================================================//
 	void CellLinkedList::updateSplitCellLists(SplitCellLists &split_cell_lists)
 	{
 		// clear the data
 		clearSplitCellLists(split_cell_lists);
-
-		parallel_for(
-			blocked_range3d<size_t>(0, number_of_cells_[0], 0, number_of_cells_[1], 0, number_of_cells_[2]),
-			[&](const blocked_range3d<size_t> &r)
-			{
-				for (size_t i = r.pages().begin(); i != r.pages().end(); ++i)
-					for (size_t j = r.rows().begin(); j != r.rows().end(); ++j)
-						for (size_t k = r.cols().begin(); k != r.cols().end(); ++k)
-						{
-							size_t real_particles_in_cell = cell_index_lists_[i][j][k].size();
-							if (real_particles_in_cell != 0)
-							{
-								split_cell_lists[transferMeshIndexTo1D(Vecu(3), Vecu(i % 3, j % 3, k % 3))]
-									.push_back(&cell_index_lists_[i][j][k]);
-							}
-						}
-			},
-			ap);
+		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
+						  [&](size_t i, size_t j, size_t k)
+						  {
+							  size_t real_particles_in_cell = cell_index_lists_[i][j][k].size();
+							  if (real_particles_in_cell != 0)
+							  {
+								  split_cell_lists[transferMeshIndexTo1D(Vecu(3), Vecu(i % 3, j % 3, k % 3))]
+									  .push_back(&cell_index_lists_[i][j][k]);
+							  }
+						  });
 	}
 	//=================================================================================================//
 	void CellLinkedList ::insertParticleIndex(size_t particle_index, const Vecd &particle_position)

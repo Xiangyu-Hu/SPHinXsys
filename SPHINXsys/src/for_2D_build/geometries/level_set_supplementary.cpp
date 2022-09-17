@@ -4,7 +4,9 @@
  */
 
 #include "level_set.h"
+
 #include "mesh_with_data_packages.hpp"
+#include "mesh_iterators.hpp"
 #include "base_kernel.h"
 #include "base_particles.h"
 #include "base_particle_dynamics.h"
@@ -149,6 +151,37 @@ namespace SPH
 			}
 	}
 	//=================================================================================================//
+	LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing,
+					   Shape &shape, SPHAdaptation &sph_adaptation)
+		: LevelSet(tentative_bounds, data_spacing, 4, shape, sph_adaptation)
+	{
+		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
+						  [&](size_t i, size_t j)
+						  {
+							  initializeDataInACell(Vecu(i, j));
+						  });
+
+		finishDataPackages();
+	}
+	//=================================================================================================//
+	void LevelSet::finishDataPackages()
+	{
+		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
+						  [&](size_t i, size_t j)
+						  {
+							  tagACellIsInnerPackage(Vecu(i, j));
+						  });
+
+		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
+						  [&](size_t i, size_t j)
+						  {
+							  initializePackageAddressesInACell(Vecu(i, j));
+						  });
+
+		updateLevelSetGradient();
+		updateKernelIntegrals();
+	}
+	//=================================================================================================//
 	bool LevelSet::isWithinCorePackage(Vecd position)
 	{
 		Vecu cell_index = CellIndexFromPosition(position);
@@ -168,7 +201,7 @@ namespace SPH
 		return is_inner_pkg;
 	}
 	//=================================================================================================//
-	void LevelSet::redistanceInterfaceForAPackage(LevelSetDataPackage *core_data_pkg, Real dt)
+	void LevelSet::redistanceInterfaceForAPackage(LevelSetDataPackage *core_data_pkg)
 	{
 		int l = (int)core_data_pkg->pkg_index_[0];
 		int m = (int)core_data_pkg->pkg_index_[1];
@@ -421,6 +454,19 @@ namespace SPH
 
 		return integral * data_spacing_ * data_spacing_;
 	}
+	//=============================================================================================//
+	RefinedLevelSet::RefinedLevelSet(BoundingBox tentative_bounds, LevelSet &coarse_level_set,
+									 Shape &shape, SPHAdaptation &sph_adaptation)
+		: RefinedMesh(tentative_bounds, coarse_level_set, 4, shape, sph_adaptation)
+	{
+		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
+						  [&](size_t i, size_t j)
+						  {
+							  initializeDataInACellFromCoarse(Vecu(i, j));
+						  });
+
+		finishDataPackages();
+	}	
 	//=============================================================================================//
 }
 //=============================================================================================//

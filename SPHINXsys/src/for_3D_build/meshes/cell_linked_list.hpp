@@ -1,7 +1,7 @@
 /**
- * @file 	body_relation.hpp
- * @brief 	Here, Functions belong to BaseBody, RealBody and FictitiousBody are given.
- * @author	hi ZHang and Xiangyu Hu
+ * @file 	cell_linked_list.hpp
+ * @brief 	Here, template functions in CellLinkedList are defined.
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #pragma once
