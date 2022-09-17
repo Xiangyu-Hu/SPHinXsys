@@ -56,34 +56,26 @@ namespace SPH
 	{
 		setupDynamics(dt);
 
-		particle_for(
-			bound_cells_data_[0].first,
-			[&](size_t i, Real delta)
-			{ checkLowerBound(i, delta); },
-			dt);
+		particle_for(bound_cells_data_[0].first,
+					 [&](size_t i)
+					 { checkLowerBound(i, dt); });
 
-		particle_for(
-			bound_cells_data_[1].first,
-			[&](size_t i, Real delta)
-			{ checkUpperBound(i, delta); },
-			dt);
+		particle_for(bound_cells_data_[1].first,
+					 [&](size_t i)
+					 { checkUpperBound(i, dt); });
 	}
 	//=================================================================================================//
 	void BasePeriodicCondition::PeriodicBounding::parallel_exec(Real dt)
 	{
 		setupDynamics(dt);
 
-		particle_parallel_for(
-			bound_cells_data_[0].first,
-			[&](size_t i, Real delta)
-			{ checkLowerBound(i, delta); },
-			dt);
+		particle_parallel_for(bound_cells_data_[0].first,
+							  [&](size_t i)
+							  { checkLowerBound(i, dt); });
 
-		particle_parallel_for(
-			bound_cells_data_[1].first,
-			[&](size_t i, Real delta)
-			{ checkUpperBound(i, delta); },
-			dt);
+		particle_parallel_for(bound_cells_data_[1].first,
+							  [&](size_t i)
+							  { checkUpperBound(i, dt); });
 	}
 	//=================================================================================================//
 	void PeriodicConditionUsingCellLinkedList::
@@ -126,34 +118,26 @@ namespace SPH
 	{
 		setupDynamics(dt);
 
-		cell_list_for(
-			bound_cells_data_[0].second,
-			[&](ListDataVector *cell_ist, Real delta)
-			{ checkLowerBound(*cell_ist, delta); },
-			dt);
+		cell_list_for(bound_cells_data_[0].second,
+					  [&](ListDataVector *cell_ist)
+					  { checkLowerBound(*cell_ist, dt); });
 
-		cell_list_for(
-			bound_cells_data_[1].second,
-			[&](ListDataVector *cell_ist, Real delta)
-			{ checkUpperBound(*cell_ist, delta); },
-			dt);
+		cell_list_for(bound_cells_data_[1].second,
+					  [&](ListDataVector *cell_ist)
+					  { checkUpperBound(*cell_ist, dt); });
 	}
 	//=================================================================================================//
 	void PeriodicConditionUsingCellLinkedList::PeriodicCellLinkedList::parallel_exec(Real dt)
 	{
 		setupDynamics(dt);
 
-		cell_list_parallel_for(
-			bound_cells_data_[0].second,
-			[&](ListDataVector *cell_ist, Real delta)
-			{ checkLowerBound(*cell_ist, delta); },
-			dt);
+		cell_list_parallel_for(bound_cells_data_[0].second,
+							   [&](ListDataVector *cell_ist)
+							   { checkLowerBound(*cell_ist, dt); });
 
-		cell_list_parallel_for(
-			bound_cells_data_[1].second,
-			[&](ListDataVector *cell_ist, Real delta)
-			{ checkUpperBound(*cell_ist, delta); },
-			dt);
+		cell_list_parallel_for(bound_cells_data_[1].second,
+							   [&](ListDataVector *cell_ist)
+							   { checkUpperBound(*cell_ist, dt); });
 	}
 	//=================================================================================================//
 	void PeriodicConditionUsingGhostParticles::
@@ -216,17 +200,13 @@ namespace SPH
 	{
 		setupDynamics(dt);
 
-		particle_for(
-			ghost_particles_[0],
-			[&](size_t i, Real delta)
-			{ checkLowerBound(i, delta); },
-			dt);
+		particle_for(ghost_particles_[0],
+					 [&](size_t i)
+					 { checkLowerBound(i, dt); });
 
-		particle_for(
-			ghost_particles_[1],
-			[&](size_t i, Real delta)
-			{ checkUpperBound(i, delta); },
-			dt);
+		particle_for(ghost_particles_[1],
+					 [&](size_t i)
+					 { checkUpperBound(i, dt); });
 	}
 	//=================================================================================================//
 	void PeriodicConditionUsingGhostParticles::
@@ -234,17 +214,13 @@ namespace SPH
 	{
 		setupDynamics(dt);
 
-		particle_parallel_for(
-			ghost_particles_[0],
-			[&](size_t i, Real delta)
-			{ checkLowerBound(i, delta); },
-			dt);
+		particle_parallel_for(ghost_particles_[0],
+							  [&](size_t i)
+							  { checkLowerBound(i, dt); });
 
-		particle_parallel_for(
-			ghost_particles_[1],
-			[&](size_t i, Real delta)
-			{ checkUpperBound(i, delta); },
-			dt);
+		particle_parallel_for(ghost_particles_[1],
+							  [&](size_t i)
+							  { checkUpperBound(i, dt); });
 	}
 	//=================================================================================================//
 	MirrorConditionAlongAxis::MirrorBounding::
@@ -270,8 +246,8 @@ namespace SPH
 		UpdatingMirrorGhostStates(IndexVector &ghost_particles,
 								  CellLists bound_cells_data, RealBody &real_body,
 								  BoundingBox bounding_bounds, int axis, bool positive)
-		: MirrorBounding(bound_cells_data, real_body, bounding_bounds, axis, positive), 
-		ghost_particles_(ghost_particles)
+		: MirrorBounding(bound_cells_data, real_body, bounding_bounds, axis, positive),
+		  ghost_particles_(ghost_particles)
 	{
 		checking_bound_update_ =
 			positive ? std::bind(&MirrorConditionAlongAxis::UpdatingMirrorGhostStates::checkUpperBound, this, _1, _2)
@@ -323,7 +299,7 @@ namespace SPH
 			{
 				for (size_t i = r.begin(); i < r.end(); ++i)
 				{
-					ListDataVector &list_data =  *cell_list_data[i];
+					ListDataVector &list_data = *cell_list_data[i];
 					for (size_t num = 0; num < list_data.size(); ++num)
 						checking_bound_(list_data[num].first, dt);
 				}

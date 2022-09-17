@@ -21,26 +21,26 @@
  *                                                                              *
  * -----------------------------------------------------------------------------*/
 /**
-* @file 	particle_dynamics_algorithms.h
-* @brief 	This is the classes for algorithms particle dynamics .
-* @detail	Generally, there are two types of particle dynamics algorithms.
-*			One leads to the change of particle states, the other not.
-*			There are 5 classes the first type. They are:  
-* 			SimpleDynamics is without particle interaction. Particles just update their states;
-*			InteractionDynamics is with particle interaction with its neighbors;
-*			InteractionSplit is InteractionDynamics but using spliting algorithm;
-*			InteractionWithUpdate is with particle interaction with its neighbors and then update their states;
-*			Dynamics1Level is the most complex dynamics, has successive three steps: initialization, interaction and update.
-*			There are 2 classes for the second type.
-*			ReduceDynamics carries out a reduce operation through the particles.
-*			ReduceAverage further computes average of a ReduceDynamics for summation.
-*			Each particle dynamics is templated with a LocalDynamics and a DynamicsRange. 
-*			The local dynamics defines the behavior of a single particle or with its neighbors,
-*			and is recognized by particle dynamics with the signature functions, like update, initialization and interaction.
-*			DynamicsRange define and range of particles for the dynamics.
-*			The default range is the entire body. Other ranges are BodyPartByParticle and BodyPartByCell.
-* @author	Chi ZHang and Xiangyu Hu
-*/
+ * @file 	particle_dynamics_algorithms.h
+ * @brief 	This is the classes for algorithms particle dynamics .
+ * @detail	Generally, there are two types of particle dynamics algorithms.
+ *			One leads to the change of particle states, the other not.
+ *			There are 5 classes the first type. They are:
+ * 			SimpleDynamics is without particle interaction. Particles just update their states;
+ *			InteractionDynamics is with particle interaction with its neighbors;
+ *			InteractionSplit is InteractionDynamics but using spliting algorithm;
+ *			InteractionWithUpdate is with particle interaction with its neighbors and then update their states;
+ *			Dynamics1Level is the most complex dynamics, has successive three steps: initialization, interaction and update.
+ *			There are 2 classes for the second type.
+ *			ReduceDynamics carries out a reduce operation through the particles.
+ *			ReduceAverage further computes average of a ReduceDynamics for summation.
+ *			Each particle dynamics is templated with a LocalDynamics and a DynamicsRange.
+ *			The local dynamics defines the behavior of a single particle or with its neighbors,
+ *			and is recognized by particle dynamics with the signature functions, like update, initialization and interaction.
+ *			DynamicsRange define and range of particles for the dynamics.
+ *			The default range is the entire body. Other ranges are BodyPartByParticle and BodyPartByCell.
+ * @author	Chi ZHang and Xiangyu Hu
+ */
 
 #ifndef PARTICLE_DYNAMICS_ALGORITHMS_H
 #define PARTICLE_DYNAMICS_ALGORITHMS_H
@@ -71,22 +71,18 @@ namespace SPH
 		{
 			this->setBodyUpdated();
 			this->setupDynamics(dt);
-			particle_for(
-				dynamics_range_.LoopRange(),
-				[&](size_t i, Real delta)
-				{ this->update(i, delta); },
-				dt);
+			particle_for(dynamics_range_.LoopRange(),
+						 [&](size_t i)
+						 { this->update(i, dt); });
 		};
 
 		virtual void parallel_exec(Real dt = 0.0) override
 		{
 			this->setBodyUpdated();
 			this->setupDynamics(dt);
-			particle_parallel_for(
-				dynamics_range_.LoopRange(),
-				[&](size_t i, Real delta)
-				{ this->update(i, delta); },
-				dt);
+			particle_parallel_for(dynamics_range_.LoopRange(),
+								  [&](size_t i)
+								  { this->update(i, dt); });
 		};
 	};
 
@@ -120,9 +116,8 @@ namespace SPH
 			this->setupDynamics(dt);
 			ReturnType temp = particle_reduce(
 				dynamics_range_.LoopRange(), this->Reference(), this->getOperation(),
-				[&](size_t i, Real delta) -> ReturnType
-				{ return this->reduce(i, delta); },
-				dt);
+				[&](size_t i) -> ReturnType
+				{ return this->reduce(i, dt); });
 			return this->outputResult(temp);
 		};
 
@@ -131,9 +126,8 @@ namespace SPH
 			this->setupDynamics(dt);
 			ReturnType temp = particle_parallel_reduce(
 				dynamics_range_.LoopRange(), this->Reference(), this->getOperation(),
-				[&](size_t i, Real delta) -> ReturnType
-				{ return this->reduce(i, delta); },
-				dt);
+				[&](size_t i) -> ReturnType
+				{ return this->reduce(i, dt); });
 			return this->outputResult(temp);
 		};
 	};
@@ -234,11 +228,10 @@ namespace SPH
 			for (size_t k = 0; k < this->pre_processes_.size(); ++k)
 				this->pre_processes_[k]->exec(dt);
 
-			particle_for_split(
-				split_cell_lists_,
-				[&](size_t i, Real delta)
-				{ this->interaction(i, delta); },
-				dt);
+			Real dt2 = dt * 0.5;
+			particle_for_split(split_cell_lists_,
+							   [&](size_t i)
+							   { this->interaction(i, dt2); });
 
 			for (size_t k = 0; k < this->post_processes_.size(); ++k)
 				this->post_processes_[k]->exec(dt);
@@ -249,11 +242,10 @@ namespace SPH
 			for (size_t k = 0; k < this->pre_processes_.size(); ++k)
 				this->pre_processes_[k]->parallel_exec(dt);
 
-			particle_parallel_for_split(
-				split_cell_lists_,
-				[&](size_t i, Real delta)
-				{ this->interaction(i, delta); },
-				dt);
+			Real dt2 = dt * 0.5;
+			particle_parallel_for_split(split_cell_lists_,
+										[&](size_t i)
+										{ this->interaction(i, dt2); });
 
 			for (size_t k = 0; k < this->post_processes_.size(); ++k)
 				this->post_processes_[k]->parallel_exec(dt);
@@ -282,11 +274,9 @@ namespace SPH
 			for (size_t k = 0; k < this->pre_processes_.size(); ++k)
 				this->pre_processes_[k]->exec(dt);
 
-			particle_for(
-				dynamics_range_.LoopRange(),
-				[&](size_t i, Real delta)
-				{ this->interaction(i, delta); },
-				dt);
+			particle_for(dynamics_range_.LoopRange(),
+						 [&](size_t i)
+						 { this->interaction(i, dt); });
 
 			for (size_t k = 0; k < this->post_processes_.size(); ++k)
 				this->post_processes_[k]->exec(dt);
@@ -297,11 +287,9 @@ namespace SPH
 			for (size_t k = 0; k < this->pre_processes_.size(); ++k)
 				this->pre_processes_[k]->parallel_exec(dt);
 
-			particle_parallel_for(
-				dynamics_range_.LoopRange(),
-				[&](size_t i, Real delta)
-				{ this->interaction(i, delta); },
-				dt);
+			particle_parallel_for(dynamics_range_.LoopRange(),
+								  [&](size_t i)
+								  { this->interaction(i, dt); });
 
 			for (size_t k = 0; k < this->post_processes_.size(); ++k)
 				this->post_processes_[k]->parallel_exec(dt);
@@ -324,28 +312,24 @@ namespace SPH
 		virtual void exec(Real dt = 0.0) override
 		{
 			InteractionDynamics<LocalDynamicsType, DynamicsRange>::exec(dt);
-			particle_for(
-				this->dynamics_range_.LoopRange(),
-				[&](size_t i, Real delta)
-				{ this->update(i, delta); },
-				dt);
+			particle_for(this->dynamics_range_.LoopRange(),
+						 [&](size_t i)
+						 { this->update(i, dt); });
 		};
 
 		virtual void parallel_exec(Real dt = 0.0) override
 		{
 			InteractionDynamics<LocalDynamicsType, DynamicsRange>::parallel_exec(dt);
-			particle_parallel_for(
-				this->dynamics_range_.LoopRange(),
-				[&](size_t i, Real delta)
-				{ this->update(i, delta); },
-				dt);
+			particle_parallel_for(this->dynamics_range_.LoopRange(),
+								  [&](size_t i)
+								  { this->update(i, dt); });
 		};
 	};
 
 	/**
 	 * @class Dynamics1Level
 	 * @brief This class includes three steps, including initialization, interaction and update.
-	 * It is the most complex particle dynamics type, 
+	 * It is the most complex particle dynamics type,
 	 * and is typically for computing the main fluid and solid dynamics.
 	 */
 	template <class LocalDynamicsType, class DynamicsRange = SPHBody>
@@ -362,19 +346,15 @@ namespace SPH
 			this->setBodyUpdated();
 			this->setupDynamics(dt);
 
-			particle_for(
-				this->dynamics_range_.LoopRange(),
-				[&](size_t i, Real delta)
-				{ this->initialization(i, delta); },
-				dt);
+			particle_for(this->dynamics_range_.LoopRange(),
+						 [&](size_t i)
+						 { this->initialization(i, dt); });
 
 			this->runInteractionStep(dt);
 
-			particle_for(
-				this->dynamics_range_.LoopRange(),
-				[&](size_t i, Real delta)
-				{ this->update(i, delta); },
-				dt);
+			particle_for(this->dynamics_range_.LoopRange(),
+						 [&](size_t i)
+						 { this->update(i, dt); });
 		};
 
 		virtual void parallel_exec(Real dt = 0.0) override
@@ -382,19 +362,15 @@ namespace SPH
 			this->setBodyUpdated();
 			this->setupDynamics(dt);
 
-			particle_parallel_for(
-				this->dynamics_range_.LoopRange(),
-				[&](size_t i, Real delta)
-				{ this->initialization(i, delta); },
-				dt);
+			particle_parallel_for(this->dynamics_range_.LoopRange(),
+								  [&](size_t i)
+								  { this->initialization(i, dt); });
 
 			this->parallel_runInteractionStep(dt);
 
-			particle_parallel_for(
-				this->dynamics_range_.LoopRange(),
-				[&](size_t i, Real delta)
-				{ this->update(i, delta); },
-				dt);
+			particle_parallel_for(this->dynamics_range_.LoopRange(),
+								  [&](size_t i)
+								  { this->update(i, dt); });
 		};
 	};
 

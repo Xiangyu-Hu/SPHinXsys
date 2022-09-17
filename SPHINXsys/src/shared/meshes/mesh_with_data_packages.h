@@ -41,11 +41,6 @@ using namespace std::placeholders;
 
 namespace SPH
 {
-	class Kernel;
-
-	/** Functor for operation on the mesh data package. */
-	template <class ReturnType, class DataPackageType>
-	using PackageFunctor = std::function<ReturnType(DataPackageType *, Real)>;
 	/** Iterator on a collection of mesh data packages. sequential computing. */
 	template <class DataPackageType, typename LocalFunction, typename... Args>
 	void package_for(const ConcurrentVec<DataPackageType *> &data_pkgs,
