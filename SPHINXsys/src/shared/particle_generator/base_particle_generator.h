@@ -97,7 +97,7 @@ namespace SPH
 	/**
 	 * @class ObserverParticleGenerator
 	 * @brief Generate particle directly from position-and-volume data.
-	 * @details The values of PositionsVolumes will be given in the derived class.
+	 * @details The values of positions will be given in the derived class.
 	 */
 	class ObserverParticleGenerator : public ParticleGenerator
 	{

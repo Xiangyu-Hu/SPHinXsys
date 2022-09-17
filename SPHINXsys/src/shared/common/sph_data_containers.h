@@ -20,22 +20,16 @@ namespace SPH
 	class RealBody;
 	class SolidBody;
 	class BodyPart;
-	class FictitiousBody;
-	class CellList;
 	class BaseParticles;
 
-	/** Vector of Material. Note that vector of references are not allowed in c++.*/
 	using MaterialVector = StdVec<BaseMaterial *>;
-	/** Vector of bodies */
 	using SPHBodyVector = StdVec<SPHBody *>;
 	using SolidBodyVector = StdVec<SolidBody *>;
 	using RealBodyVector = StdVec<RealBody *>;
 	using BodyPartVector = StdVec<BodyPart *>;
 
-	/** Index container with elements of size_t. */
 	using IndexVector = StdVec<size_t>;
-	/** Concurrent particle indexes .*/
-	using ConcurrentIndexVector = LargeVec<size_t>;
+	using ConcurrentIndexVector = ConcurrentVec<size_t>;
 
 	/** List data pair: first for indexes, second for particle position. */
 	using ListData = std::pair<size_t, Vecd>;
@@ -44,15 +38,9 @@ namespace SPH
 	using DataListsInCells = StdLargeVec<ListDataVector *>;
 	using CellLists = std::pair<ConcurrentIndexesInCells, DataListsInCells>;
 
-	/** Concurrent vector .*/
-	template <class DataType>
-	using ConcurrentVector = LargeVec<DataType>;
-	/** concurrent cell lists*/
-	using ConcurrentCellLists = LargeVec<ConcurrentIndexVector *>;
-	/** Split cell list for split algorithms. */
+	using ConcurrentCellLists = ConcurrentVec<ConcurrentIndexVector *>;
+	/** Cell list for splitting algorithms. */
 	using SplitCellLists = StdVec<ConcurrentCellLists>;
-	/** Pair of point and volume. */
-	using PositionsVolumes = StdVec<std::pair<Vecd, Real>>;
 
 	/** Generalized particle data type */
 	typedef GeneralDataAssemble<StdLargeVec> ParticleData;

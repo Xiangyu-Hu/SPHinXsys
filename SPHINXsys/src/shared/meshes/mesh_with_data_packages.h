@@ -48,7 +48,7 @@ namespace SPH
 	using PackageFunctor = std::function<ReturnType(DataPackageType *, Real)>;
 	/** Iterator on a collection of mesh data packages. sequential computing. */
 	template <class DataPackageType>
-	void PackageIterator(ConcurrentVector<DataPackageType *> &data_pkgs,
+	void PackageIterator(ConcurrentVec<DataPackageType *> &data_pkgs,
 						 PackageFunctor<void, DataPackageType> &pkg_functor, Real dt = 0.0)
 	{
 		for (size_t i = 0; i != data_pkgs.size(); ++i)
@@ -56,7 +56,7 @@ namespace SPH
 	};
 	/** Iterator on a collection of mesh data packages. parallel computing. */
 	template <class DataPackageType>
-	void PackageIterator_parallel(ConcurrentVector<DataPackageType *> &data_pkgs,
+	void PackageIterator_parallel(ConcurrentVec<DataPackageType *> &data_pkgs,
 								  PackageFunctor<void, DataPackageType> &pkg_functor, Real dt = 0.0)
 	{
 		parallel_for(
@@ -72,7 +72,7 @@ namespace SPH
 	};
 	/** Package iterator for reducing. sequential computing. */
 	template <class ReturnType, typename ReduceOperation, class DataPackageType>
-	ReturnType ReducePackageIterator(ConcurrentVector<DataPackageType *> &data_pkgs, ReturnType temp,
+	ReturnType ReducePackageIterator(ConcurrentVec<DataPackageType *> &data_pkgs, ReturnType temp,
 									 PackageFunctor<ReturnType, DataPackageType> &reduce_pkg_functor,
 									 ReduceOperation &reduce_operation, Real dt = 0.0)
 	{
@@ -84,7 +84,7 @@ namespace SPH
 	};
 	/** Package iterator for reducing. parallel computing. */
 	template <class ReturnType, typename ReduceOperation, class DataPackageType>
-	ReturnType ReducePackageIterator_parallel(ConcurrentVector<DataPackageType *> &data_pkgs, ReturnType temp,
+	ReturnType ReducePackageIterator_parallel(ConcurrentVec<DataPackageType *> &data_pkgs, ReturnType temp,
 											  PackageFunctor<ReturnType, DataPackageType> &reduce_pkg_functor,
 											  ReduceOperation &reduce_operation, Real dt = 0.0)
 	{
@@ -238,7 +238,7 @@ namespace SPH
 	public:
 		MyMemoryPool<GridDataPackageType> data_pkg_pool_;		  /**< memory pool for all packages in the mesh. */
 		MeshDataMatrix<GridDataPackageType *> data_pkg_addrs_;	  /**< Address of data packages. */
-		ConcurrentVector<GridDataPackageType *> inner_data_pkgs_; /**< Inner data packages which is able to carry out spatial operations. */
+		ConcurrentVec<GridDataPackageType *> inner_data_pkgs_; /**< Inner data packages which is able to carry out spatial operations. */
 
 		template <typename... Args>
 		explicit MeshWithGridDataPackages(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size, Args &&...args)

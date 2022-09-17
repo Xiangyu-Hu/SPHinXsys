@@ -113,7 +113,7 @@ namespace SPH
 		: public MeshWithGridDataPackages<BaseLevelSet, LevelSetDataPackage>
 	{
 	public:
-		ConcurrentVector<LevelSetDataPackage *> core_data_pkgs_; /**< packages near to zero level set. */
+		ConcurrentVec<LevelSetDataPackage *> core_data_pkgs_; /**< packages near to zero level set. */
 		Real global_h_ratio_;
 
 		// this constructor only initialize far field
