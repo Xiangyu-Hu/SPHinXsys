@@ -29,10 +29,9 @@ namespace SPH
 		BasePeriodicCondition(RealBody &real_body, BoundingBox bounding_bounds, int axis)
 		: periodic_translation_(setPeriodicTranslation(bounding_bounds, axis))
 	{
-		bound_cells_.resize(2);
 		bound_cells_data_.resize(2);
 		BaseCellLinkedList *cell_linked_list = real_body.cell_linked_list_;
-		cell_linked_list->tagBoundingCells(bound_cells_, bound_cells_data_, bounding_bounds, axis);
+		cell_linked_list->tagBoundingCells(bound_cells_data_, bounding_bounds, axis);
 		if (periodic_translation_.norm() < real_body.sph_adaptation_->ReferenceSpacing())
 		{
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
@@ -58,13 +57,13 @@ namespace SPH
 		setupDynamics(dt);
 
 		particle_for(
-			bound_cells_[0],
+			bound_cells_data_[0].first,
 			[&](size_t i, Real delta)
 			{ checkLowerBound(i, delta); },
 			dt);
 
 		particle_for(
-			bound_cells_[1],
+			bound_cells_data_[1].first,
 			[&](size_t i, Real delta)
 			{ checkUpperBound(i, delta); },
 			dt);
@@ -75,13 +74,13 @@ namespace SPH
 		setupDynamics(dt);
 
 		particle_parallel_for(
-			bound_cells_[0],
+			bound_cells_data_[0].first,
 			[&](size_t i, Real delta)
 			{ checkLowerBound(i, delta); },
 			dt);
 
 		particle_parallel_for(
-			bound_cells_[1],
+			bound_cells_data_[1].first,
 			[&](size_t i, Real delta)
 			{ checkUpperBound(i, delta); },
 			dt);
@@ -128,13 +127,13 @@ namespace SPH
 		setupDynamics(dt);
 
 		cell_list_for(
-			bound_cells_data_[0],
+			bound_cells_data_[0].second,
 			[&](ListDataVector *cell_ist, Real delta)
 			{ checkLowerBound(*cell_ist, delta); },
 			dt);
 
 		cell_list_for(
-			bound_cells_data_[1],
+			bound_cells_data_[1].second,
 			[&](ListDataVector *cell_ist, Real delta)
 			{ checkUpperBound(*cell_ist, delta); },
 			dt);
@@ -145,13 +144,13 @@ namespace SPH
 		setupDynamics(dt);
 
 		cell_list_parallel_for(
-			bound_cells_data_[0],
+			bound_cells_data_[0].second,
 			[&](ListDataVector *cell_ist, Real delta)
 			{ checkLowerBound(*cell_ist, delta); },
 			dt);
 
 		cell_list_parallel_for(
-			bound_cells_data_[1],
+			bound_cells_data_[1].second,
 			[&](ListDataVector *cell_ist, Real delta)
 			{ checkUpperBound(*cell_ist, delta); },
 			dt);
@@ -249,10 +248,10 @@ namespace SPH
 	}
 	//=================================================================================================//
 	MirrorConditionAlongAxis::MirrorBounding::
-		MirrorBounding(CellLists &bound_cells, CellDataLists bound_cells_data, RealBody &real_body,
+		MirrorBounding(CellLists bound_cells_data, RealBody &real_body,
 					   BoundingBox bounding_bounds, int axis, bool positive)
 		: BoundingAlongAxis(real_body, bounding_bounds, axis),
-		  bound_cells_(bound_cells), bound_cells_data_(bound_cells_data), vel_(particles_->vel_)
+		  bound_cells_data_(bound_cells_data), vel_(particles_->vel_)
 	{
 		checking_bound_ =
 			positive ? std::bind(&MirrorConditionAlongAxis::MirrorBounding::checkUpperBound, this, _1, _2)
@@ -261,17 +260,17 @@ namespace SPH
 	//=================================================================================================//
 	MirrorConditionAlongAxis::CreatingMirrorGhostParticles::
 		CreatingMirrorGhostParticles(IndexVector &ghost_particles,
-									 CellLists &bound_cells, CellDataLists bound_cells_data,
+									 CellLists bound_cells_data,
 									 RealBody &real_body,
 									 BoundingBox bounding_bounds, int axis, bool positive)
-		: MirrorBounding(bound_cells, bound_cells_data, real_body, bounding_bounds, axis, positive),
+		: MirrorBounding(bound_cells_data, real_body, bounding_bounds, axis, positive),
 		  ghost_particles_(ghost_particles) {}
 	//=================================================================================================//
 	MirrorConditionAlongAxis::UpdatingMirrorGhostStates::
 		UpdatingMirrorGhostStates(IndexVector &ghost_particles,
-								  CellLists &bound_cells, CellDataLists bound_cells_data, RealBody &real_body,
+								  CellLists bound_cells_data, RealBody &real_body,
 								  BoundingBox bounding_bounds, int axis, bool positive)
-		: MirrorBounding(bound_cells, bound_cells_data, real_body, bounding_bounds, axis, positive), 
+		: MirrorBounding(bound_cells_data, real_body, bounding_bounds, axis, positive), 
 		ghost_particles_(ghost_particles)
 	{
 		checking_bound_update_ =
@@ -305,9 +304,10 @@ namespace SPH
 	void MirrorConditionAlongAxis::MirrorBounding::exec(Real dt)
 	{
 		setupDynamics(dt);
-		for (size_t i = 0; i != bound_cells_.size(); ++i)
+		DataListsInCells &cell_list_data = bound_cells_data_.second;
+		for (size_t i = 0; i != cell_list_data.size(); ++i)
 		{
-			ListDataVector &list_data = *bound_cells_data_[i];
+			ListDataVector &list_data = *cell_list_data[i];
 			for (size_t num = 0; num < list_data.size(); ++num)
 				checking_bound_(list_data[num].first, dt);
 		}
@@ -316,13 +316,14 @@ namespace SPH
 	void MirrorConditionAlongAxis::MirrorBounding ::parallel_exec(Real dt)
 	{
 		setupDynamics(dt);
+		DataListsInCells &cell_list_data = bound_cells_data_.second;
 		parallel_for(
-			blocked_range<size_t>(0, bound_cells_.size()),
+			blocked_range<size_t>(0, cell_list_data.size()),
 			[&](const blocked_range<size_t> &r)
 			{
 				for (size_t i = r.begin(); i < r.end(); ++i)
 				{
-					ListDataVector &list_data =  *bound_cells_data_[i];
+					ListDataVector &list_data =  *cell_list_data[i];
 					for (size_t num = 0; num < list_data.size(); ++num)
 						checking_bound_(list_data[num].first, dt);
 				}

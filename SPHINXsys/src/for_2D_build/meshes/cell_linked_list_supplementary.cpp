@@ -125,7 +125,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void CellLinkedList::
-		tagBodyPartByCell(CellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included)
+		tagBodyPartByCell(ConcurrentIndexesInCells &cell_lists, std::function<bool(Vecd, Real)> &check_included)
 	{
 		for (int i = 0; i < (int)number_of_cells_[0]; ++i)
 			for (int j = 0; j < (int)number_of_cells_[1]; ++j)
@@ -144,8 +144,8 @@ namespace SPH
 			}
 	}
 	//=================================================================================================//
-	void CellLinkedList::tagBoundingCells(StdVec<CellLists> &cell_lists, StdVec<CellDataLists> &cell_data_lists,
-										  BoundingBox &bounding_bounds, int axis)
+	void CellLinkedList::
+		tagBoundingCells(StdVec<CellLists> &cell_data_lists, BoundingBox &bounding_bounds, int axis)
 	{
 		int second_axis = SecondAxis(axis);
 		Vecu body_lower_bound_cell_ = CellIndexFromPosition(bounding_bounds.first);
@@ -160,8 +160,8 @@ namespace SPH
 				Vecu cell_position(0);
 				cell_position[axis] = i;
 				cell_position[second_axis] = j;
-				cell_lists[0].push_back(&concurrent_cell_lists_[cell_position[0]][cell_position[1]]);
-				cell_data_lists[0].push_back(&cell_data_lists_[cell_position[0]][cell_position[1]]);
+				cell_data_lists[0].first.push_back(&concurrent_cell_lists_[cell_position[0]][cell_position[1]]);
+				cell_data_lists[0].second.push_back(&cell_data_lists_[cell_position[0]][cell_position[1]]);
 			}
 
 		// upper bound cells
@@ -173,13 +173,13 @@ namespace SPH
 				Vecu cell_position(0);
 				cell_position[axis] = i;
 				cell_position[second_axis] = j;
-				cell_lists[1].push_back(&concurrent_cell_lists_[cell_position[0]][cell_position[1]]);
-				cell_data_lists[1].push_back(&cell_data_lists_[cell_position[0]][cell_position[1]]);
+				cell_data_lists[1].first.push_back(&concurrent_cell_lists_[cell_position[0]][cell_position[1]]);
+				cell_data_lists[1].second.push_back(&cell_data_lists_[cell_position[0]][cell_position[1]]);
 			}
 	}
 	//=================================================================================================//
-	void CellLinkedList::tagOneSideBoundingCells(CellLists &cell_lists, CellDataLists &cell_data_lists,
-												 BoundingBox &bounding_bounds, int axis, bool positive)
+	void CellLinkedList::
+		tagOneSideBoundingCells(CellLists &cell_data_lists, BoundingBox &bounding_bounds, int axis, bool positive)
 	{
 		int second_axis = SecondAxis(axis);
 		Vecu body_lower_bound_cell_ = CellIndexFromPosition(bounding_bounds.first);
@@ -196,8 +196,8 @@ namespace SPH
 					Vecu cell_position(0);
 					cell_position[axis] = i;
 					cell_position[second_axis] = j;
-					cell_lists.push_back(&concurrent_cell_lists_[cell_position[0]][cell_position[1]]);
-					cell_data_lists.push_back(&cell_data_lists_[cell_position[0]][cell_position[1]]);
+					cell_data_lists.first.push_back(&concurrent_cell_lists_[cell_position[0]][cell_position[1]]);
+					cell_data_lists.second.push_back(&cell_data_lists_[cell_position[0]][cell_position[1]]);
 				}
 		}
 		else
@@ -211,8 +211,8 @@ namespace SPH
 					Vecu cell_position(0);
 					cell_position[axis] = i;
 					cell_position[second_axis] = j;
-					cell_lists.push_back(&concurrent_cell_lists_[cell_position[0]][cell_position[1]]);
-					cell_data_lists.push_back(&cell_data_lists_[cell_position[0]][cell_position[1]]);
+					cell_data_lists.first.push_back(&concurrent_cell_lists_[cell_position[0]][cell_position[1]]);
+					cell_data_lists.second.push_back(&cell_data_lists_[cell_position[0]][cell_position[1]]);
 				}
 		}
 	}

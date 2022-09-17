@@ -63,8 +63,7 @@ namespace SPH
 	{
 	protected:
 		Vecd periodic_translation_;
-		StdVec<CellLists> bound_cells_;
-		StdVec<CellDataLists> bound_cells_data_;
+		StdVec<CellLists> bound_cells_data_;
 		Vecd setPeriodicTranslation(BoundingBox &bounding_bounds, int axis);
 
 		/**
@@ -75,19 +74,18 @@ namespace SPH
 		{
 		protected:
 			Vecd &periodic_translation_;
-			StdVec<CellLists> &bound_cells_;
-			StdVec<CellDataLists> &bound_cells_data_;
+			StdVec<CellLists> &bound_cells_data_;
 
 			virtual void checkLowerBound(size_t index_i, Real dt = 0.0);
 			virtual void checkUpperBound(size_t index_i, Real dt = 0.0);
 
 		public:
 			PeriodicBounding(Vecd &periodic_translation,
-							 StdVec<CellLists> &bound_cells, StdVec<CellDataLists> &bound_cells_data,
+							 StdVec<CellLists> &bound_cells_data,
 							 RealBody &real_body, BoundingBox bounding_bounds, int axis)
 				: BoundingAlongAxis(real_body, bounding_bounds, axis),
 				  periodic_translation_(periodic_translation),
-				  bound_cells_(bound_cells), bound_cells_data_(bound_cells_data){};
+				  bound_cells_data_(bound_cells_data){};
 			virtual ~PeriodicBounding(){};
 
 			virtual void exec(Real dt = 0.0) override;
@@ -119,18 +117,17 @@ namespace SPH
 		protected:
 			std::mutex mutex_cell_list_entry_; /**< mutex exclusion for memory conflict */
 			Vecd &periodic_translation_;
-			StdVec<CellLists> &bound_cells_;
-			StdVec<CellDataLists> &bound_cells_data_;
+			StdVec<CellLists> &bound_cells_data_;
 			virtual void checkLowerBound(ListDataVector &cell_list_data, Real dt = 0.0);
 			virtual void checkUpperBound(ListDataVector &cell_list_data, Real dt = 0.0);
 
 		public:
 			PeriodicCellLinkedList(Vecd &periodic_translation,
-								   StdVec<CellLists> &bound_cells, StdVec<CellDataLists> &bound_cells_data,
+								   StdVec<CellLists> &bound_cells_data,
 								   RealBody &real_body, BoundingBox bounding_bounds, int axis)
 				: BoundingAlongAxis(real_body, bounding_bounds, axis),
 				  periodic_translation_(periodic_translation),
-				  bound_cells_(bound_cells), bound_cells_data_(bound_cells_data){};
+				  bound_cells_data_(bound_cells_data){};
 			;
 			virtual ~PeriodicCellLinkedList(){};
 
@@ -141,8 +138,8 @@ namespace SPH
 	public:
 		PeriodicConditionUsingCellLinkedList(RealBody &real_body, BoundingBox bounding_bounds, int axis)
 			: BasePeriodicCondition(real_body, bounding_bounds, axis),
-			  bounding_(periodic_translation_, bound_cells_, bound_cells_data_, real_body, bounding_bounds, axis),
-			  update_cell_linked_list_(periodic_translation_, bound_cells_, bound_cells_data_, real_body, bounding_bounds, axis){};
+			  bounding_(periodic_translation_, bound_cells_data_, real_body, bounding_bounds, axis),
+			  update_cell_linked_list_(periodic_translation_, bound_cells_data_, real_body, bounding_bounds, axis){};
 		virtual ~PeriodicConditionUsingCellLinkedList(){};
 
 		PeriodicBounding bounding_;
@@ -179,10 +176,10 @@ namespace SPH
 
 		public:
 			CreatPeriodicGhostParticles(Vecd &periodic_translation,
-										StdVec<CellLists> &bound_cells, StdVec<CellDataLists> &bound_cells_data,
+										StdVec<CellLists> &bound_cells_data,
 										StdVec<IndexVector> &ghost_particles,
 										RealBody &real_body, BoundingBox bounding_bounds, int axis)
-				: PeriodicBounding(periodic_translation, bound_cells, bound_cells_data, real_body, bounding_bounds, axis),
+				: PeriodicBounding(periodic_translation, bound_cells_data, real_body, bounding_bounds, axis),
 				  ghost_particles_(ghost_particles){};
 			virtual ~CreatPeriodicGhostParticles(){};
 		};
@@ -200,10 +197,10 @@ namespace SPH
 
 		public:
 			UpdatePeriodicGhostParticles(Vecd &periodic_translation,
-										 StdVec<CellLists> &bound_cells, StdVec<CellDataLists> &bound_cells_data,
+										 StdVec<CellLists> &bound_cells_data,
 										 StdVec<IndexVector> &ghost_particles,
 										 RealBody &real_body, BoundingBox bounding_bounds, int axis)
-				: PeriodicBounding(periodic_translation, bound_cells, bound_cells_data, real_body, bounding_bounds, axis),
+				: PeriodicBounding(periodic_translation, bound_cells_data, real_body, bounding_bounds, axis),
 				  ghost_particles_(ghost_particles){};
 			virtual ~UpdatePeriodicGhostParticles(){};
 
@@ -214,9 +211,9 @@ namespace SPH
 	public:
 		PeriodicConditionUsingGhostParticles(RealBody &real_body, BoundingBox bounding_bounds, int axis)
 			: BasePeriodicCondition(real_body, bounding_bounds, axis),
-			  bounding_(periodic_translation_, bound_cells_, bound_cells_data_, real_body, bounding_bounds, axis),
-			  ghost_creation_(periodic_translation_, bound_cells_, bound_cells_data_, ghost_particles_, real_body, bounding_bounds, axis),
-			  ghost_update_(periodic_translation_, bound_cells_, bound_cells_data_, ghost_particles_, real_body, bounding_bounds, axis)
+			  bounding_(periodic_translation_, bound_cells_data_, real_body, bounding_bounds, axis),
+			  ghost_creation_(periodic_translation_, bound_cells_data_, ghost_particles_, real_body, bounding_bounds, axis),
+			  ghost_update_(periodic_translation_, bound_cells_data_, ghost_particles_, real_body, bounding_bounds, axis)
 		{
 			ghost_particles_.resize(2);
 		};
@@ -237,15 +234,13 @@ namespace SPH
 	class MirrorConditionAlongAxis : public BoundingAlongAxis
 	{
 	protected:
-		CellLists bound_cells_;
-		CellDataLists bound_cells_data_;
+		CellLists bound_cells_data_;
 		IndexVector ghost_particles_;
 
 		class MirrorBounding : public BoundingAlongAxis
 		{
 		protected:
-			CellLists &bound_cells_;
-			CellDataLists &bound_cells_data_;
+			CellLists &bound_cells_data_;
 			virtual void checkLowerBound(size_t index_i, Real dt = 0.0);
 			virtual void checkUpperBound(size_t index_i, Real dt = 0.0);
 			ParticleFunctor checking_bound_;
@@ -254,7 +249,7 @@ namespace SPH
 			void mirrorAlongAxis(size_t particle_index_i, Vecd body_bound, int axis);
 
 		public:
-			MirrorBounding(CellLists &bound_cells, CellDataLists bound_cells_data, RealBody &real_body,
+			MirrorBounding(CellLists bound_cells_data, RealBody &real_body,
 						   BoundingBox bounding_bounds, int axis, bool positive);
 			virtual ~MirrorBounding(){};
 			virtual void exec(Real dt = 0.0) override;
@@ -275,7 +270,7 @@ namespace SPH
 
 		public:
 			CreatingMirrorGhostParticles(IndexVector &ghost_particles,
-										 CellLists &bound_cells, CellDataLists bound_cells_data, RealBody &real_body,
+										 CellLists bound_cells_data, RealBody &real_body,
 										 BoundingBox bounding_bounds, int axis, bool positive);
 			virtual ~CreatingMirrorGhostParticles(){};
 			/** This class is only implemented in sequential due to memory conflicts. */
@@ -296,7 +291,7 @@ namespace SPH
 
 		public:
 			UpdatingMirrorGhostStates(IndexVector &ghost_particles,
-									  CellLists &bound_cells, CellDataLists bound_cells_data,
+									  CellLists bound_cells_data,
 									  RealBody &real_body, BoundingBox bounding_bounds, int axis, bool positive);
 			virtual ~UpdatingMirrorGhostStates(){};
 
