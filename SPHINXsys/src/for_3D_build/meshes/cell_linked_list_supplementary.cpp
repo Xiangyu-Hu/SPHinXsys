@@ -10,13 +10,13 @@ namespace SPH
 	//=================================================================================================//
 	void CellLinkedList ::allocateMeshDataMatrix()
 	{
-		Allocate3dArray(concurrent_cell_lists_, number_of_cells_);
+		Allocate3dArray(cell_index_lists_, number_of_cells_);
 		Allocate3dArray(cell_data_lists_, number_of_cells_);
 	}
 	//=================================================================================================//
 	void CellLinkedList ::deleteMeshDataMatrix()
 	{
-		Delete3dArray(concurrent_cell_lists_, number_of_cells_);
+		Delete3dArray(cell_index_lists_, number_of_cells_);
 		Delete3dArray(cell_data_lists_, number_of_cells_);
 	}
 	//=================================================================================================//
@@ -30,7 +30,7 @@ namespace SPH
 					for (size_t j = r.rows().begin(); j != r.rows().end(); ++j)
 						for (size_t k = r.cols().begin(); k != r.cols().end(); ++k)
 						{
-							concurrent_cell_lists_[i][j][k].clear();
+							cell_index_lists_[i][j][k].clear();
 						}
 			},
 			ap);
@@ -48,7 +48,7 @@ namespace SPH
 						for (size_t k = r.cols().begin(); k != r.cols().end(); ++k)
 						{
 							cell_data_lists_[i][j][k].clear();
-							ConcurrentIndexVector &cell_list = concurrent_cell_lists_[i][j][k];
+							ConcurrentIndexVector &cell_list = cell_index_lists_[i][j][k];
 							for (size_t s = 0; s != cell_list.size(); ++s)
 							{
 								size_t particle_index = cell_list[s];
@@ -72,24 +72,24 @@ namespace SPH
 					for (size_t j = r.rows().begin(); j != r.rows().end(); ++j)
 						for (size_t k = r.cols().begin(); k != r.cols().end(); ++k)
 						{
-							size_t real_particles_in_cell = concurrent_cell_lists_[i][j][k].size();
+							size_t real_particles_in_cell = cell_index_lists_[i][j][k].size();
 							if (real_particles_in_cell != 0)
 							{
 								split_cell_lists[transferMeshIndexTo1D(Vecu(3), Vecu(i % 3, j % 3, k % 3))]
-									.push_back(&concurrent_cell_lists_[i][j][k]);
+									.push_back(&cell_index_lists_[i][j][k]);
 							}
 						}
 			},
 			ap);
 	}
 	//=================================================================================================//
-	void CellLinkedList ::insertACellLinkedParticleIndex(size_t particle_index, const Vecd &particle_position)
+	void CellLinkedList ::insertParticleIndex(size_t particle_index, const Vecd &particle_position)
 	{
 		Vecu cellpos = CellIndexFromPosition(particle_position);
-		concurrent_cell_lists_[cellpos[0]][cellpos[1]][cellpos[2]].emplace_back(particle_index);
+		cell_index_lists_[cellpos[0]][cellpos[1]][cellpos[2]].emplace_back(particle_index);
 	}
 	//=================================================================================================//
-	void CellLinkedList ::InsertACellLinkedListDataEntry(size_t particle_index, const Vecd &particle_position)
+	void CellLinkedList ::InsertListDataEntry(size_t particle_index, const Vecd &particle_position)
 	{
 		Vecu cellpos = CellIndexFromPosition(particle_position);
 		cell_data_lists_[cellpos[0]][cellpos[1]][cellpos[2]].emplace_back(std::make_pair(particle_index, particle_position));
@@ -146,7 +146,7 @@ namespace SPH
 								}
 							}
 					if (is_included == true)
-						cell_lists.push_back(&concurrent_cell_lists_[i][j][k]);
+						cell_lists.push_back(&cell_index_lists_[i][j][k]);
 				}
 	}
 	//=================================================================================================//
@@ -174,7 +174,7 @@ namespace SPH
 					cell_position[axis] = i;
 					cell_position[second_axis] = j;
 					cell_position[third_axis] = k;
-					cell_data_lists[0].first.push_back(&concurrent_cell_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
+					cell_data_lists[0].first.push_back(&cell_index_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
 					cell_data_lists[0].second.push_back(&cell_data_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
 				}
 			}
@@ -196,7 +196,7 @@ namespace SPH
 					cell_position[axis] = i;
 					cell_position[second_axis] = j;
 					cell_position[third_axis] = k;
-					cell_data_lists[1].first.push_back(&concurrent_cell_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
+					cell_data_lists[1].first.push_back(&cell_index_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
 					cell_data_lists[1].second.push_back(&cell_data_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
 				}
 			}
@@ -229,7 +229,7 @@ namespace SPH
 						cell_position[axis] = i;
 						cell_position[second_axis] = j;
 						cell_position[third_axis] = k;
-						cell_data_lists.first.push_back(&concurrent_cell_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
+						cell_data_lists.first.push_back(&cell_index_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
 						cell_data_lists.second.push_back(&cell_data_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
 					}
 				}
@@ -253,7 +253,7 @@ namespace SPH
 						cell_position[axis] = i;
 						cell_position[second_axis] = j;
 						cell_position[third_axis] = k;
-						cell_data_lists.first.push_back(&concurrent_cell_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
+						cell_data_lists.first.push_back(&cell_index_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
 						cell_data_lists.second.push_back(&cell_data_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
 					}
 				}
@@ -315,7 +315,7 @@ namespace SPH
 			{
 				for (size_t i = 0; i != number_of_operation[0]; ++i)
 				{
-					output_file << concurrent_cell_lists_[i][j][k].size() << " ";
+					output_file << cell_index_lists_[i][j][k].size() << " ";
 				}
 				output_file << " \n";
 			}

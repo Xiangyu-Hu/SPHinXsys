@@ -43,7 +43,7 @@ namespace SPH
 			{
 				for (size_t i = r.begin(); i != r.end(); ++i)
 				{
-					insertACellLinkedParticleIndex(i, pos_n[i]);
+					insertParticleIndex(i, pos_n[i]);
 				}
 			},
 			ap);
@@ -97,17 +97,17 @@ namespace SPH
 	};
 	//=================================================================================================//
 	void MultilevelCellLinkedList::
-		insertACellLinkedParticleIndex(size_t particle_index, const Vecd &particle_position)
+		insertParticleIndex(size_t particle_index, const Vecd &particle_position)
 	{
 		size_t level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[particle_index]));
-		mesh_levels_[level]->insertACellLinkedParticleIndex(particle_index, particle_position);
+		mesh_levels_[level]->insertParticleIndex(particle_index, particle_position);
 	}
 	//=================================================================================================//
 	void MultilevelCellLinkedList::
-		InsertACellLinkedListDataEntry(size_t particle_index, const Vecd &particle_position)
+		InsertListDataEntry(size_t particle_index, const Vecd &particle_position)
 	{
 		size_t level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[particle_index]));
-		mesh_levels_[level]->InsertACellLinkedListDataEntry(particle_index, particle_position);
+		mesh_levels_[level]->InsertListDataEntry(particle_index, particle_position);
 	}
 	//=================================================================================================//
 	void MultilevelCellLinkedList::assignBaseParticles(BaseParticles *base_particles)
@@ -133,7 +133,7 @@ namespace SPH
 			{
 				for (size_t i = r.begin(); i != r.end(); ++i)
 				{
-					insertACellLinkedParticleIndex(i, pos_n[i]);
+					insertParticleIndex(i, pos_n[i]);
 				}
 			},
 			ap);

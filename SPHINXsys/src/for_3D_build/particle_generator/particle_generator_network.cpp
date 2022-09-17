@@ -26,7 +26,7 @@ namespace SPH
 		Vecd end_direction = displacement / (displacement.norm() + TinyReal);
 		// add particle to the first branch of the tree
 		growAParticleOnBranch(tree_->root_, starting_pnt_, end_direction);
-		cell_linked_list_->InsertACellLinkedListDataEntry(0, pos_[0]);
+		cell_linked_list_->InsertListDataEntry(0, pos_[0]);
 	}
 	//=================================================================================================//
 	void ParticleGeneratorNetwork::
@@ -154,7 +154,7 @@ namespace SPH
 
 			for (const size_t &particle_idx : new_branch->inner_particles_)
 			{
-				cell_linked_list_->InsertACellLinkedListDataEntry(particle_idx, pos_[particle_idx]);
+				cell_linked_list_->InsertListDataEntry(particle_idx, pos_[particle_idx]);
 			}
 		}
 

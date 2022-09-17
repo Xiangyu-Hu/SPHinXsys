@@ -27,7 +27,7 @@
  * for building the particle configurations.
  * @details  The cell linked list saves for each body a list of particles
  * located within the cell.
- * @author	Yongchuan Yu, Chi ZHang and Xiangyu Hu
+ * @author	Yongchuan Yu, Chi Zhang and Xiangyu Hu
  */
 
 #ifndef MESH_CELL_LINKED_LIST_H
@@ -73,9 +73,9 @@ namespace SPH
 		/** update the cell lists */
 		virtual void UpdateCellLists() = 0;
 		/** Insert a cell-linked_list entry to the concurrent index list. */
-		virtual void insertACellLinkedParticleIndex(size_t particle_index, const Vecd &particle_position) = 0;
+		virtual void insertParticleIndex(size_t particle_index, const Vecd &particle_position) = 0;
 		/** Insert a cell-linked_list entry of the index and particle position pair. */
-		virtual void InsertACellLinkedListDataEntry(size_t particle_index, const Vecd &particle_position) = 0;
+		virtual void InsertListDataEntry(size_t particle_index, const Vecd &particle_position) = 0;
 		/** find the nearest list data entry */
 		virtual ListData findNearestListDataEntry(const Vecd &position) = 0;
 		/** computing the sequence which indicate the order of sorted particle data */
@@ -97,8 +97,8 @@ namespace SPH
 	{
 	protected:
 		/** using concurrent vectors due to writing conflicts when building the list */
-		MeshDataMatrix<ConcurrentIndexVector> concurrent_cell_lists_;
-		/** non-concurrent cell linked list rewritten for building neighbor list */
+		MeshDataMatrix<ConcurrentIndexVector> cell_index_lists_;
+		/** non-concurrent list data rewritten for building neighbor list */
 		MeshDataMatrix<ListDataVector> cell_data_lists_;
 
 		virtual void updateSplitCellLists(SplitCellLists &split_cell_lists) override;
@@ -110,13 +110,12 @@ namespace SPH
 
 		void allocateMeshDataMatrix(); /**< allocate memories for addresses of data packages. */
 		void deleteMeshDataMatrix();   /**< delete memories for addresses of data packages. */
-
 		virtual void assignBaseParticles(BaseParticles *base_particles) override;
 		void clearCellLists();
 		void UpdateCellListData();
 		virtual void UpdateCellLists() override;
-		void insertACellLinkedParticleIndex(size_t particle_index, const Vecd &particle_position) override;
-		void InsertACellLinkedListDataEntry(size_t particle_index, const Vecd &particle_position) override;
+		void insertParticleIndex(size_t particle_index, const Vecd &particle_position) override;
+		void InsertListDataEntry(size_t particle_index, const Vecd &particle_position) override;
 		virtual ListData findNearestListDataEntry(const Vecd &position) override;
 		virtual void computingSequence(StdLargeVec<size_t> &sequence) override;
 		virtual void tagBodyPartByCell(ConcurrentIndexesInCells &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
@@ -129,13 +128,6 @@ namespace SPH
 		void searchNeighborsByParticles(size_t total_real_particles, BaseParticles &source_particles,
 										ParticleConfiguration &particle_configuration, GetParticleIndex &get_particle_index,
 										GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation);
-
-		/** generalized particle search algorithm for searching body part */
-		template <typename GetParticleIndex, typename GetSearchDepth, typename GetNeighborRelation, typename PartParticleCheck>
-		void searchNeighborPartsByParticles(size_t total_real_particles, BaseParticles &source_particles,
-											ParticleConfiguration &particle_configuration, GetParticleIndex &get_particle_index,
-											GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation,
-											PartParticleCheck &part_check);
 	};
 
 	/**
@@ -158,8 +150,8 @@ namespace SPH
 
 		virtual void assignBaseParticles(BaseParticles *base_particles) override;
 		virtual void UpdateCellLists() override;
-		void insertACellLinkedParticleIndex(size_t particle_index, const Vecd &particle_position) override;
-		void InsertACellLinkedListDataEntry(size_t particle_index, const Vecd &particle_position) override;
+		void insertParticleIndex(size_t particle_index, const Vecd &particle_position) override;
+		void InsertListDataEntry(size_t particle_index, const Vecd &particle_position) override;
 		virtual ListData findNearestListDataEntry(const Vecd &position) override { return ListData(0, Vecd(0)); };
 		virtual void computingSequence(StdLargeVec<size_t> &sequence) override{};
 		virtual void tagBodyPartByCell(ConcurrentIndexesInCells &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;

@@ -98,7 +98,7 @@ namespace SPH
 				Vecd translated_position = particle_position - periodic_translation_;
 				/** insert ghost particle to cell linked list */
 				mutex_cell_list_entry_.lock();
-				cell_linked_list_->InsertACellLinkedListDataEntry(cell_list_data[num].first, translated_position);
+				cell_linked_list_->InsertListDataEntry(cell_list_data[num].first, translated_position);
 				mutex_cell_list_entry_.unlock();
 			}
 		}
@@ -116,7 +116,7 @@ namespace SPH
 				Vecd translated_position = particle_position + periodic_translation_;
 				/** insert ghost particle to cell linked list */
 				mutex_cell_list_entry_.lock();
-				cell_linked_list_->InsertACellLinkedListDataEntry(cell_list_data[num].first, translated_position);
+				cell_linked_list_->InsertListDataEntry(cell_list_data[num].first, translated_position);
 				mutex_cell_list_entry_.unlock();
 			}
 		}
@@ -175,7 +175,7 @@ namespace SPH
 			ghost_particles_[0].push_back(ghost_particle_index);
 			pos_[ghost_particle_index] = particle_position + periodic_translation_;
 			/** insert ghost particle to cell linked list */
-			cell_linked_list_->InsertACellLinkedListDataEntry(ghost_particle_index, pos_[ghost_particle_index]);
+			cell_linked_list_->InsertListDataEntry(ghost_particle_index, pos_[ghost_particle_index]);
 			mutex_create_ghost_particle_.unlock();
 		}
 	}
@@ -192,7 +192,7 @@ namespace SPH
 			ghost_particles_[1].push_back(ghost_particle_index);
 			pos_[ghost_particle_index] = particle_position - periodic_translation_;
 			/** insert ghost particle to cell linked list */
-			cell_linked_list_->InsertACellLinkedListDataEntry(ghost_particle_index, pos_[ghost_particle_index]);
+			cell_linked_list_->InsertListDataEntry(ghost_particle_index, pos_[ghost_particle_index]);
 			mutex_create_ghost_particle_.unlock();
 		}
 	}
@@ -343,7 +343,7 @@ namespace SPH
 			mirrorAlongAxis(expected_particle_index, bounding_bounds_.first, axis_);
 			Vecd translated_position = particles_->pos_[expected_particle_index];
 			/** insert ghost particle to cell linked list */
-			cell_linked_list_->InsertACellLinkedListDataEntry(expected_particle_index, translated_position);
+			cell_linked_list_->InsertListDataEntry(expected_particle_index, translated_position);
 		}
 	}
 	//=================================================================================================//
@@ -359,7 +359,7 @@ namespace SPH
 			mirrorAlongAxis(expected_particle_index, bounding_bounds_.second, axis_);
 			Vecd translated_position = particles_->pos_[expected_particle_index];
 			/** insert ghost particle to cell linked list */
-			cell_linked_list_->InsertACellLinkedListDataEntry(expected_particle_index, translated_position);
+			cell_linked_list_->InsertListDataEntry(expected_particle_index, translated_position);
 		}
 	}
 	//=================================================================================================//
