@@ -102,8 +102,8 @@ namespace SPH
 	class BodyPartByCell : public BodyPart
 	{
 	public:
-		CellLists body_part_cells_; /**< Collection of cells to indicate the body part. */
-		CellLists &LoopRange() { return body_part_cells_; };
+		ConcurrentIndexesInCells body_part_cells_; /**< Collection of cells to indicate the body part. */
+		ConcurrentIndexesInCells &LoopRange() { return body_part_cells_; };
 		size_t SizeOfLoopRange();
 
 		BodyPartByCell(RealBody &real_body, const std::string &body_part_name)

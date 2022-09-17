@@ -8,19 +8,16 @@
 namespace SPH
 {
 	//=================================================================================================//
-	CellList::CellList()
-	{
-		concurrent_particle_indexes_.reserve(36);
-	}
-	//=================================================================================================//
 	void CellLinkedList ::allocateMeshDataMatrix()
 	{
-		Allocate3dArray(cell_linked_lists_, number_of_cells_);
+		Allocate3dArray(concurrent_cell_lists_, number_of_cells_);
+		Allocate3dArray(cell_data_lists_, number_of_cells_);
 	}
 	//=================================================================================================//
 	void CellLinkedList ::deleteMeshDataMatrix()
 	{
-		Delete3dArray(cell_linked_lists_, number_of_cells_);
+		Delete3dArray(concurrent_cell_lists_, number_of_cells_);
+		Delete3dArray(cell_data_lists_, number_of_cells_);
 	}
 	//=================================================================================================//
 	void CellLinkedList::clearCellLists()
@@ -33,8 +30,7 @@ namespace SPH
 					for (size_t j = r.rows().begin(); j != r.rows().end(); ++j)
 						for (size_t k = r.cols().begin(); k != r.cols().end(); ++k)
 						{
-							cell_linked_lists_[i][j][k].concurrent_particle_indexes_.clear();
-							cell_linked_lists_[i][j][k].real_particle_indexes_.clear();
+							concurrent_cell_lists_[i][j][k].clear();
 						}
 			},
 			ap);
@@ -51,13 +47,12 @@ namespace SPH
 					for (size_t j = r.rows().begin(); j != r.rows().end(); ++j)
 						for (size_t k = r.cols().begin(); k != r.cols().end(); ++k)
 						{
-							CellList &cell_list = cell_linked_lists_[i][j][k];
-							cell_list.cell_list_data_.clear();
-							for (size_t s = 0; s != cell_list.concurrent_particle_indexes_.size(); ++s)
+							cell_data_lists_[i][j][k].clear();
+							ConcurrentIndexVector &cell_list = concurrent_cell_lists_[i][j][k];
+							for (size_t s = 0; s != cell_list.size(); ++s)
 							{
-								size_t particle_index = cell_list.concurrent_particle_indexes_[s];
-								cell_list.real_particle_indexes_.push_back(particle_index);
-								cell_list.cell_list_data_.emplace_back(std::make_pair(particle_index, pos_n[particle_index]));
+								size_t particle_index = cell_list[s];
+								cell_data_lists_[i][j][k].emplace_back(std::make_pair(particle_index, pos_n[particle_index]));
 							}
 						}
 			},
@@ -77,12 +72,11 @@ namespace SPH
 					for (size_t j = r.rows().begin(); j != r.rows().end(); ++j)
 						for (size_t k = r.cols().begin(); k != r.cols().end(); ++k)
 						{
-							CellList &cell_list = cell_linked_lists_[i][j][k];
-							size_t real_particles_in_cell = cell_list.concurrent_particle_indexes_.size();
+							size_t real_particles_in_cell = concurrent_cell_lists_[i][j][k].size();
 							if (real_particles_in_cell != 0)
 							{
 								split_cell_lists[transferMeshIndexTo1D(Vecu(3), Vecu(i % 3, j % 3, k % 3))]
-									.push_back(&cell_linked_lists_[i][j][k]);
+									.push_back(&concurrent_cell_lists_[i][j][k]);
 							}
 						}
 			},
@@ -92,13 +86,13 @@ namespace SPH
 	void CellLinkedList ::insertACellLinkedParticleIndex(size_t particle_index, const Vecd &particle_position)
 	{
 		Vecu cellpos = CellIndexFromPosition(particle_position);
-		cell_linked_lists_[cellpos[0]][cellpos[1]][cellpos[2]].concurrent_particle_indexes_.emplace_back(particle_index);
+		concurrent_cell_lists_[cellpos[0]][cellpos[1]][cellpos[2]].emplace_back(particle_index);
 	}
 	//=================================================================================================//
 	void CellLinkedList ::InsertACellLinkedListDataEntry(size_t particle_index, const Vecd &particle_position)
 	{
 		Vecu cellpos = CellIndexFromPosition(particle_position);
-		cell_linked_lists_[cellpos[0]][cellpos[1]][cellpos[2]].cell_list_data_.emplace_back(std::make_pair(particle_index, particle_position));
+		cell_data_lists_[cellpos[0]][cellpos[1]][cellpos[2]].emplace_back(std::make_pair(particle_index, particle_position));
 	}
 	//=================================================================================================//
 	ListData CellLinkedList::findNearestListDataEntry(const Vecd &position)
@@ -117,7 +111,7 @@ namespace SPH
 			{
 				for (int q = SMAX(k - 1, 0); q <= SMIN(k + 1, int(number_of_cells_[2]) - 1); ++q)
 				{
-					ListDataVector &target_particles = cell_linked_lists_[l][m][q].cell_list_data_;
+					ListDataVector &target_particles = cell_data_lists_[l][m][q];
 					for (const ListData &list_data : target_particles)
 					{
 						Real distance = (position - list_data.second).norm();
@@ -134,7 +128,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void CellLinkedList::
-		tagBodyPartByCell(CellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included)
+		tagBodyPartByCell(ConcurrentIndexesInCells &cell_lists, std::function<bool(Vecd, Real)> &check_included)
 	{
 		for (int i = 0; i < (int)number_of_cells_[0]; ++i)
 			for (int j = 0; j < (int)number_of_cells_[1]; ++j)
@@ -152,12 +146,12 @@ namespace SPH
 								}
 							}
 					if (is_included == true)
-						cell_lists.push_back(&cell_linked_lists_[i][j][k]);
+						cell_lists.push_back(&concurrent_cell_lists_[i][j][k]);
 				}
 	}
 	//=================================================================================================//
 	void CellLinkedList::
-		tagBoundingCells(StdVec<CellLists> &cell_lists, BoundingBox &bounding_bounds, int axis)
+		tagBoundingCells(StdVec<CellLists> &cell_data_lists, BoundingBox &bounding_bounds, int axis)
 	{
 		int second_axis = SecondAxis(axis);
 		int third_axis = ThirdAxis(axis);
@@ -180,7 +174,8 @@ namespace SPH
 					cell_position[axis] = i;
 					cell_position[second_axis] = j;
 					cell_position[third_axis] = k;
-					cell_lists[0].push_back(&cell_linked_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
+					cell_data_lists[0].first.push_back(&concurrent_cell_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
+					cell_data_lists[0].second.push_back(&cell_data_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
 				}
 			}
 		}
@@ -201,14 +196,15 @@ namespace SPH
 					cell_position[axis] = i;
 					cell_position[second_axis] = j;
 					cell_position[third_axis] = k;
-					cell_lists[1].push_back(&cell_linked_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
+					cell_data_lists[1].first.push_back(&concurrent_cell_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
+					cell_data_lists[1].second.push_back(&cell_data_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
 				}
 			}
 		}
 	}
 	//=================================================================================================//
 	void CellLinkedList::
-		tagOneSideBoundingCells(CellLists &cell_lists, BoundingBox &bounding_bounds, int axis, bool positive)
+		tagOneSideBoundingCells(CellLists &cell_data_lists, BoundingBox &bounding_bounds, int axis, bool positive)
 	{
 		int second_axis = SecondAxis(axis);
 		int third_axis = ThirdAxis(axis);
@@ -233,7 +229,8 @@ namespace SPH
 						cell_position[axis] = i;
 						cell_position[second_axis] = j;
 						cell_position[third_axis] = k;
-						cell_lists.push_back(&cell_linked_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
+						cell_data_lists.first.push_back(&concurrent_cell_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
+						cell_data_lists.second.push_back(&cell_data_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
 					}
 				}
 			}
@@ -256,7 +253,8 @@ namespace SPH
 						cell_position[axis] = i;
 						cell_position[second_axis] = j;
 						cell_position[third_axis] = k;
-						cell_lists.push_back(&cell_linked_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
+						cell_data_lists.first.push_back(&concurrent_cell_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
+						cell_data_lists.second.push_back(&cell_data_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
 					}
 				}
 			}
@@ -317,7 +315,7 @@ namespace SPH
 			{
 				for (size_t i = 0; i != number_of_operation[0]; ++i)
 				{
-					output_file << cell_linked_lists_[i][j][k].concurrent_particle_indexes_.size() << " ";
+					output_file << concurrent_cell_lists_[i][j][k].size() << " ";
 				}
 				output_file << " \n";
 			}

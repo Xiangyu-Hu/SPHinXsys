@@ -95,12 +95,12 @@ namespace SPH
 	//----------------------------------------------------------------------
 
 	template <class LocalDynamicsFunction>
-	void particle_for(const CellLists &body_part_cells,
+	void particle_for(const ConcurrentIndexesInCells &body_part_cells,
 					  const LocalDynamicsFunction &local_dynamics_function, Real dt = 0.0)
 	{
 		for (size_t i = 0; i != body_part_cells.size(); ++i)
 		{
-			IndexVector &particle_indexes = body_part_cells[i]->real_particle_indexes_;
+			ConcurrentIndexVector &particle_indexes = *body_part_cells[i];
 			for (size_t num = 0; num < particle_indexes.size(); ++num)
 			{
 				local_dynamics_function(particle_indexes[num], dt);
@@ -109,7 +109,7 @@ namespace SPH
 	};
 
 	template <class LocalDynamicsFunction>
-	void particle_parallel_for(const CellLists &body_part_cells,
+	void particle_parallel_for(const ConcurrentIndexesInCells &body_part_cells,
 							   const LocalDynamicsFunction &local_dynamics_function, Real dt = 0.0)
 	{
 		parallel_for(
@@ -118,7 +118,7 @@ namespace SPH
 			{
 				for (size_t i = r.begin(); i < r.end(); ++i)
 				{
-					IndexVector &particle_indexes = body_part_cells[i]->real_particle_indexes_;
+					ConcurrentIndexVector &particle_indexes = *body_part_cells[i];
 					for (size_t num = 0; num < particle_indexes.size(); ++num)
 					{
 						local_dynamics_function(particle_indexes[num], dt);
@@ -133,7 +133,7 @@ namespace SPH
 	//----------------------------------------------------------------------
 
 	template <class LocalDynamicsFunction>
-	void cell_list_for(const CellLists &body_part_cells,
+	void cell_list_for(const DataListsInCells &body_part_cells,
 					   const LocalDynamicsFunction &local_dynamics_function, Real dt = 0.0)
 	{
 		for (size_t i = 0; i != body_part_cells.size(); ++i)
@@ -141,7 +141,7 @@ namespace SPH
 	};
 
 	template <class LocalDynamicsFunction>
-	void cell_list_parallel_for(const CellLists &body_part_cells,
+	void cell_list_parallel_for(const DataListsInCells &body_part_cells,
 								const LocalDynamicsFunction &local_dynamics_function, Real dt = 0.0)
 	{
 		parallel_for(
@@ -167,7 +167,7 @@ namespace SPH
 			ConcurrentCellLists &cell_lists = split_cell_lists[k];
 			for (size_t l = 0; l != cell_lists.size(); ++l)
 			{
-				IndexVector &particle_indexes = cell_lists[l]->real_particle_indexes_;
+				ConcurrentIndexVector &particle_indexes = *cell_lists[l];
 				for (size_t i = 0; i != particle_indexes.size(); ++i)
 				{
 					local_dynamics_function(particle_indexes[i], dt2);
@@ -181,7 +181,7 @@ namespace SPH
 			ConcurrentCellLists &cell_lists = split_cell_lists[k - 1];
 			for (size_t l = 0; l != cell_lists.size(); ++l)
 			{
-				IndexVector &particle_indexes = cell_lists[l]->real_particle_indexes_;
+				ConcurrentIndexVector &particle_indexes = *cell_lists[l];
 				for (size_t i = particle_indexes.size(); i != 0; --i)
 				{
 					local_dynamics_function(particle_indexes[i - 1], dt2);
@@ -208,7 +208,7 @@ namespace SPH
 				{
 					for (size_t l = r.begin(); l < r.end(); ++l)
 					{
-						IndexVector &particle_indexes = cell_lists[l]->real_particle_indexes_;
+						ConcurrentIndexVector &particle_indexes = *cell_lists[l];
 						for (size_t i = 0; i < particle_indexes.size(); ++i)
 						{
 							local_dynamics_function(particle_indexes[i], dt2);
@@ -228,7 +228,7 @@ namespace SPH
 				{
 					for (size_t l = r.begin(); l < r.end(); ++l)
 					{
-						IndexVector &particle_indexes = cell_lists[l]->real_particle_indexes_;
+						ConcurrentIndexVector &particle_indexes = *cell_lists[l];
 						for (size_t i = particle_indexes.size(); i != 0; --i)
 						{
 							local_dynamics_function(particle_indexes[i - 1], dt2);
@@ -314,12 +314,12 @@ namespace SPH
 	//----------------------------------------------------------------------
 
 	template <class ReturnType, typename Operation, class LocalDynamicsFunction>
-	ReturnType particle_reduce(const CellLists &body_part_cells, ReturnType temp, Operation &operation,
+	ReturnType particle_reduce(const ConcurrentIndexesInCells &body_part_cells, ReturnType temp, Operation &operation,
 							   const LocalDynamicsFunction &local_dynamics_function, Real dt = 0.0)
 	{
 		for (size_t i = 0; i != body_part_cells.size(); ++i)
 		{
-			IndexVector &particle_indexes = body_part_cells[i]->real_particle_indexes_;
+			ConcurrentIndexVector &particle_indexes = *body_part_cells[i];
 			for (size_t num = 0; num < particle_indexes.size(); ++num)
 			{
 				temp = operation(temp, local_dynamics_function(particle_indexes[num], dt));
@@ -330,7 +330,7 @@ namespace SPH
 	};
 
 	template <class ReturnType, typename Operation, class LocalDynamicsFunction>
-	ReturnType particle_parallel_reduce(const CellLists &body_part_cells, ReturnType temp, Operation &operation,
+	ReturnType particle_parallel_reduce(const ConcurrentIndexesInCells &body_part_cells, ReturnType temp, Operation &operation,
 										const LocalDynamicsFunction &local_dynamics_function, Real dt = 0.0)
 	{
 		return parallel_reduce(
@@ -340,7 +340,7 @@ namespace SPH
 			{
 				for (size_t i = r.begin(); i != r.end(); ++i)
 				{
-					IndexVector &particle_indexes = body_part_cells[i]->real_particle_indexes_;
+					ConcurrentIndexVector &particle_indexes = *body_part_cells[i];
 					for (size_t num = 0; num < particle_indexes.size(); ++num)
 					{
 						temp0 = operation(temp0, local_dynamics_function(particle_indexes[num], dt));
