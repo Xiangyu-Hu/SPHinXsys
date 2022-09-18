@@ -124,9 +124,8 @@ namespace SPH
 		virtual void writeMeshFieldToPlt(std::ofstream &output_file) override;
 
 		/** generalized particle search algorithm */
-		template <typename GetParticleIndex, typename GetSearchDepth, typename GetNeighborRelation>
-		void searchNeighborsByParticles(size_t total_real_particles, BaseParticles &source_particles,
-										ParticleConfiguration &particle_configuration, GetParticleIndex &get_particle_index,
+		template <class DynamicsRange, typename GetSearchDepth, typename GetNeighborRelation>
+		void searchNeighborsByParticles(DynamicsRange &dynamics_range, ParticleConfiguration &particle_configuration,
 										GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation);
 	};
 

@@ -86,8 +86,10 @@ namespace SPH
 		std::string getName() { return body_shape_->getName(); };
 		SPHSystem &getSPHSystem();
 		SPHBody &getSPHBody() { return *this; };
+		BaseParticles &getBaseParticles() { return *base_particles_; };
 		size_t &LoopRange() { return base_particles_->total_real_particles_; };
 		size_t SizeOfLoopRange() { return base_particles_->total_real_particles_; };
+		size_t getParticleIndex(size_t index_i) { return index_i; };
 		Real getSPHBodyResolutionRef() { return sph_adaptation_->ReferenceSpacing(); };
 		void setNewlyUpdated() { newly_updated_ = true; };
 		void setNotNewlyUpdated() { newly_updated_ = false; };
