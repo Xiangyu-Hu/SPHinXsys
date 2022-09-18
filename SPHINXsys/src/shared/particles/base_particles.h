@@ -35,6 +35,7 @@
 #include "sph_data_containers.h"
 #include "base_material.h"
 #include "xml_engine.h"
+#include "particle_sorting.h"
 
 #include <fstream>
 
@@ -157,6 +158,7 @@ namespace SPH
 		StdLargeVec<size_t> sequence_;	  /**< the sequence referred for sorting. */
 		ParticleData sortable_data_;
 		ParticleDataMap sortable_variable_maps_;
+		ParticleSorting particle_sorting_;
 
 		/** register an already defined variable as sortable */
 		template <typename VariableType>

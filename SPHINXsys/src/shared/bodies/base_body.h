@@ -193,7 +193,6 @@ namespace SPH
 		size_t iteration_count_;
 
 	public:
-		ParticleSorting particle_sorting_;
 		BaseCellLinkedList *cell_linked_list_; /**< Cell linked mesh of this body. */
 
 		explicit RealBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr);

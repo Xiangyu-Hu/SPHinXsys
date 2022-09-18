@@ -102,8 +102,7 @@ namespace SPH
 	RealBody::RealBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr)
 		: SPHBody(sph_system, shape_ptr),
 		  system_domain_bounds_(this->getSPHSystem().system_domain_bounds_),
-		  use_split_cell_lists_(false), particle_sorting_(this),
-		  iteration_count_(1)
+		  use_split_cell_lists_(false), iteration_count_(1)
 	{
 		sph_system.real_bodies_.push_back(this);
 		size_t number_of_split_cell_lists = powerN(3, Vecd(0).size());
@@ -115,7 +114,6 @@ namespace SPH
 	void RealBody::assignBaseParticles(BaseParticles *base_particles)
 	{
 		SPHBody::assignBaseParticles(base_particles);
-		particle_sorting_.assignBaseParticles(base_particles);
 		cell_linked_list_->assignBaseParticles(base_particles);
 	}
 	//=================================================================================================//
@@ -124,7 +122,7 @@ namespace SPH
 		StdLargeVec<size_t> &sequence = base_particles_->sequence_;
 		size_t size = base_particles_->total_real_particles_;
 		cell_linked_list_->computingSequence(sequence);
-		particle_sorting_.sortingParticleData(sequence.data(), size);
+		base_particles_->particle_sorting_.sortingParticleData(sequence.data(), size);
 	}
 	//=================================================================================================//
 	void RealBody::updateCellLinkedList()
