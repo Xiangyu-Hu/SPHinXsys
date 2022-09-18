@@ -65,6 +65,7 @@ namespace SPH
 	{
 	public:
 		IndexVector body_part_particles_; /**< Collection particle in this body part. */
+		BaseParticles &getBaseParticles() { return *base_particles_; };
 		IndexVector &LoopRange() { return body_part_particles_; };
 		size_t SizeOfLoopRange() { return body_part_particles_.size(); };
 		size_t getParticleIndex(size_t entry_i) { return body_part_particles_[entry_i]; };

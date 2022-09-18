@@ -18,11 +18,11 @@ namespace SPH
 													GetSearchDepth &get_search_depth,
 													GetNeighborRelation &get_neighbor_relation)
 	{
-		StdLargeVec<Vecd> &pos = base_particles_->pos_;
 		parallel_for(
 			blocked_range<size_t>(0, dynamics_range.SizeOfLoopRange()),
 			[&](const blocked_range<size_t> &r)
 			{
+				StdLargeVec<Vecd> &pos = dynamics_range.getBaseParticles().pos_;
 				for (size_t num = r.begin(); num != r.end(); ++num)
 				{
 					size_t index_i = dynamics_range.getParticleIndex(num);
