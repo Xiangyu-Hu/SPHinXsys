@@ -159,11 +159,12 @@ namespace SPH
 	/**
 	 * @class BaseReactionModel
 	 * @brief Base class for all reaction models.
+	 * TODO: this model has big cache issue. to be improved.
 	 */
 	class BaseReactionModel
 	{
 	protected:
-		/** Reaction functor . */
+		/** Reaction functor . TODO: seems like big cache issue here. the arguments should be localized.*/
 		typedef std::function<Real(StdVec<StdLargeVec<Real>> &, size_t particle_i)> ReactionFunctor;
 		StdVec<std::string> species_name_list_;
 		std::map<std::string, size_t> species_indexes_map_;
