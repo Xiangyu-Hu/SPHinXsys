@@ -37,21 +37,6 @@
 
 namespace SPH
 {
-	/** a small functor for obtaining particle index for container index */
-	struct SPHBodyParticlesIndex
-	{
-		size_t operator()(size_t particle_index) const { return particle_index; };
-	};
-
-	/** a small functor for obtaining particle index for body part container index */
-	struct BodyPartParticlesIndex
-	{
-		IndexVector &body_part_particles_;
-		explicit BodyPartParticlesIndex(IndexVector &body_part_particles)
-			: body_part_particles_(body_part_particles){};
-		size_t operator()(size_t particle_entry) const { return body_part_particles_[particle_entry]; };
-	};
-
 	/** a small functor for obtaining search range for the simplest case */
 	struct SearchDepthSingleResolution
 	{

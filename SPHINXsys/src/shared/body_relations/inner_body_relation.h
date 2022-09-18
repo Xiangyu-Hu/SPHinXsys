@@ -40,7 +40,6 @@ namespace SPH
 	class BodyRelationInner : public BaseBodyRelationInner
 	{
 	protected:
-		SPHBodyParticlesIndex get_particle_index_;
 		SearchDepthSingleResolution get_single_search_depth_;
 		NeighborBuilderInner get_inner_neighbor_;
 		CellLinkedList *cell_linked_list_;
@@ -63,7 +62,6 @@ namespace SPH
 
 	protected:
 		size_t total_levels_;
-		SPHBodyParticlesIndex get_particle_index_;
 		StdVec<SearchDepthVariableSmoothingLength *> get_multi_level_search_depth_;
 		NeighborBuilderInnerVariableSmoothingLength get_inner_neighbor_variable_smoothing_length_;
 		StdVec<CellLinkedList *> cell_linked_list_levels_;
@@ -93,7 +91,6 @@ namespace SPH
 
 	protected:
 		IndexVector &body_part_particles_;
-		BodyPartParticlesIndex get_body_part_particle_index_;
 		SearchDepthSingleResolution get_single_search_depth_;
 		NeighborBuilderSelfContact get_self_contact_neighbor_;
 		CellLinkedList *cell_linked_list_;

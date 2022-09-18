@@ -43,8 +43,6 @@ namespace SPH
 	class BodyRelationContact : public BaseBodyRelationContact
 	{
 	protected:
-		SPHBodyParticlesIndex get_particle_index_;
-
 		void initialization();
 
 	public:
@@ -77,7 +75,6 @@ namespace SPH
 
 	protected:
 		IndexVector &body_part_particles_;
-		BodyPartParticlesIndex get_body_part_particle_index_;
 
 		void initialization();
 		virtual void resetNeighborhoodCurrentSize() override;

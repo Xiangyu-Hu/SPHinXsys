@@ -44,19 +44,16 @@ namespace SPH
 		size_t total_real_particles = base_particles_->total_real_particles_;
 		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{
-			target_cell_linked_lists_[k]
-				->searchNeighborsByParticles(total_real_particles,
-											 *base_particles_, contact_configuration_[k],
-											 get_particle_index_, *get_search_depths_[k],
-											 *get_contact_neighbors_[k]);
+			target_cell_linked_lists_[k]->searchNeighborsByParticles(
+				sph_body_, contact_configuration_[k],
+				*get_search_depths_[k], *get_contact_neighbors_[k]);
 		}
 	}
 	//=================================================================================================//
 	SolidBodyRelationContact::SolidBodyRelationContact(SPHBody &sph_body, RealBodyVector contact_bodies)
 		: BaseBodyRelationContact(sph_body, contact_bodies),
 		  body_surface_layer_(shape_surface_ptr_keeper_.createPtr<BodySurfaceLayer>(sph_body)),
-		  body_part_particles_(body_surface_layer_->body_part_particles_),
-		  get_body_part_particle_index_(body_part_particles_)
+		  body_part_particles_(body_surface_layer_->body_part_particles_)
 	{
 		initialization();
 	}
@@ -66,8 +63,7 @@ namespace SPH
 								 RealBodyVector contact_bodies)
 		: BaseBodyRelationContact(*solid_body_relation_self_contact.real_body_, contact_bodies),
 		  body_surface_layer_(&solid_body_relation_self_contact.body_surface_layer_),
-		  body_part_particles_(body_surface_layer_->body_part_particles_),
-		  get_body_part_particle_index_(body_part_particles_)
+		  body_part_particles_(body_surface_layer_->body_part_particles_)
 	{
 		initialization();
 	}
@@ -82,7 +78,7 @@ namespace SPH
 				{
 					for (size_t num = r.begin(); num != r.end(); ++num)
 					{
-						size_t index_i = get_body_part_particle_index_(num);
+						size_t index_i = body_surface_layer_->getParticleIndex(num);
 						contact_configuration_[k][index_i].current_size_ = 0;
 					}
 				},
@@ -110,11 +106,9 @@ namespace SPH
 		size_t total_real_particles = body_part_particles_.size();
 		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{
-			target_cell_linked_lists_[k]
-				->searchNeighborsByParticles(total_real_particles,
-											 *base_particles_, contact_configuration_[k],
-											 get_body_part_particle_index_, *get_search_depths_[k],
-											 *get_contact_neighbors_[k]);
+			target_cell_linked_lists_[k]->searchNeighborsByParticles(
+				*body_surface_layer_, contact_configuration_[k],
+				*get_search_depths_[k], *get_contact_neighbors_[k]);
 		}
 	}
 	//=================================================================================================//
@@ -134,11 +128,9 @@ namespace SPH
 		size_t number_of_particles = base_particles_->total_real_particles_;
 		for (size_t k = 0; k != contact_body_parts_.size(); ++k)
 		{
-			target_cell_linked_lists_[k]
-				->searchNeighborsByParticles(number_of_particles,
-											 *base_particles_, contact_configuration_[k],
-											 get_particle_index_, *get_search_depths_[k],
-											 *get_part_contact_neighbors_[k]);
+			target_cell_linked_lists_[k]->searchNeighborsByParticles(
+				sph_body_, contact_configuration_[k],
+				*get_search_depths_[k], *get_part_contact_neighbors_[k]);
 		}
 	}
 	//=================================================================================================//

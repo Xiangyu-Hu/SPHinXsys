@@ -18,11 +18,9 @@ namespace SPH
 	void BodyRelationInner::updateConfiguration()
 	{
 		resetNeighborhoodCurrentSize();
-		cell_linked_list_
-			->searchNeighborsByParticles(base_particles_->total_real_particles_,
-										 *base_particles_, inner_configuration_,
-										 get_particle_index_, get_single_search_depth_,
-										 get_inner_neighbor_);
+		cell_linked_list_->searchNeighborsByParticles(
+			sph_body_, inner_configuration_,
+			get_single_search_depth_, get_inner_neighbor_);
 	}
 	//=================================================================================================//
 	BodyRelationInnerVariableSmoothingLength::
@@ -47,11 +45,9 @@ namespace SPH
 		resetNeighborhoodCurrentSize();
 		for (size_t l = 0; l != total_levels_; ++l)
 		{
-			cell_linked_list_levels_[l]
-				->searchNeighborsByParticles(base_particles_->total_real_particles_,
-											 *base_particles_, inner_configuration_, get_particle_index_,
-											 *get_multi_level_search_depth_[l],
-											 get_inner_neighbor_variable_smoothing_length_);
+			cell_linked_list_levels_[l]->searchNeighborsByParticles(
+				sph_body_, inner_configuration_,
+				*get_multi_level_search_depth_[l], get_inner_neighbor_variable_smoothing_length_);
 		}
 	}
 	//=================================================================================================//
@@ -60,7 +56,6 @@ namespace SPH
 		: BaseBodyRelationInner(real_body),
 		  body_surface_layer_(real_body),
 		  body_part_particles_(body_surface_layer_.body_part_particles_),
-		  get_body_part_particle_index_(body_part_particles_),
 		  get_self_contact_neighbor_(real_body),
 		  cell_linked_list_(DynamicCast<CellLinkedList>(this, real_body.cell_linked_list_)) {}
 	//=================================================================================================//
@@ -72,7 +67,7 @@ namespace SPH
 			{
 				for (size_t num = r.begin(); num != r.end(); ++num)
 				{
-					size_t index_i = get_body_part_particle_index_(num);
+					size_t index_i = body_surface_layer_.getParticleIndex(num);
 					inner_configuration_[index_i].current_size_ = 0;
 				}
 			},
@@ -83,11 +78,9 @@ namespace SPH
 	{
 		resetNeighborhoodCurrentSize();
 		size_t total_real_particles = body_part_particles_.size();
-		cell_linked_list_
-			->searchNeighborsByParticles(total_real_particles,
-										 *base_particles_, inner_configuration_,
-										 get_body_part_particle_index_, get_single_search_depth_,
-										 get_self_contact_neighbor_);
+		cell_linked_list_->searchNeighborsByParticles(
+			body_surface_layer_, inner_configuration_,
+			get_single_search_depth_, get_self_contact_neighbor_);
 	}
 	//=================================================================================================//
 	void TreeBodyRelationInner::updateConfiguration()
