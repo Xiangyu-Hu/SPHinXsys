@@ -49,7 +49,7 @@ namespace fs = std::experimental::filesystem;
 
 namespace SPH
 {
-    /**
+	/**
 	 * @class IOEnvironment
 	 * @brief The base class which defines folders for output,
 	 * restart and particle reload folders.
@@ -117,7 +117,7 @@ namespace SPH
 
 	protected:
 		virtual void writeWithFileName(const std::string &sequence) = 0;
-	};    
+	};
 
 	/**
 	 * @class ReloadParticleIO
@@ -170,12 +170,13 @@ namespace SPH
 	{
 	protected:
 		IOEnvironment &io_environment_;
-		BaseMaterial *base_material_;
+		BaseMaterial &base_material_;
 		std::string file_path_;
 
 	public:
-		ReloadMaterialParameterIO(IOEnvironment &io_environment, BaseMaterial *base_material);
-		ReloadMaterialParameterIO(IOEnvironment &io_environment, BaseMaterial *base_material, const std::string &given_parameters_name);
+		ReloadMaterialParameterIO(IOEnvironment &io_environment, SPHBody &sph_body);
+		ReloadMaterialParameterIO(IOEnvironment &io_environment, SPHBody &sph_body,
+								  const std::string &given_parameters_name);
 		virtual ~ReloadMaterialParameterIO(){};
 
 		virtual void writeToFile(size_t iteration_step = 0);

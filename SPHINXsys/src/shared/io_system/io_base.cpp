@@ -196,14 +196,18 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	ReloadMaterialParameterIO::ReloadMaterialParameterIO(IOEnvironment &io_environment, BaseMaterial *base_material)
-		: io_environment_(io_environment), base_material_(base_material),
-		  file_path_(io_environment.reload_folder_ + "/Material_" + base_material->LocalParametersName() + "_rld.xml") {}
+	ReloadMaterialParameterIO::
+		ReloadMaterialParameterIO(IOEnvironment &io_environment, SPHBody &sph_body)
+		: io_environment_(io_environment), base_material_(*sph_body.base_material_),
+		  file_path_(io_environment.reload_folder_ + "/Material_" +
+					 base_material_.LocalParametersName() + "_rld.xml") {}
 	//=================================================================================================//
 	ReloadMaterialParameterIO::
-		ReloadMaterialParameterIO(IOEnvironment &io_environment, BaseMaterial *base_material, const std::string &given_parameters_name)
-		: io_environment_(io_environment), base_material_(base_material),
-		  file_path_(io_environment.reload_folder_ + "/Material_" + given_parameters_name + "_rld.xml") {}
+		ReloadMaterialParameterIO(IOEnvironment &io_environment, SPHBody &sph_body,
+								  const std::string &given_parameters_name)
+		: io_environment_(io_environment), base_material_(*sph_body.base_material_),
+		  file_path_(io_environment.reload_folder_ + "/Material_" +
+					 given_parameters_name + "_rld.xml") {}
 	//=================================================================================================//
 	void ReloadMaterialParameterIO::writeToFile(size_t iteration_step)
 	{
@@ -217,7 +221,7 @@ namespace SPH
 		{
 			fs::remove(file_path_);
 		}
-		base_material_->writeToXmlForReloadLocalParameters(file_path_);
+		base_material_.writeToXmlForReloadLocalParameters(file_path_);
 	}
 	//=================================================================================================//
 	void ReloadMaterialParameterIO::readFromFile(size_t restart_step)
@@ -228,7 +232,7 @@ namespace SPH
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 			exit(1);
 		}
-		base_material_->readFromXmlForLocalParameters(file_path_);
+		base_material_.readFromXmlForLocalParameters(file_path_);
 	}
 	//=================================================================================================//
 }

@@ -68,7 +68,7 @@ int main(int ac, char *av[])
 		/** Write the particle reload files. */
 		ReloadParticleIO write_particle_reload_files(io_environment, {&herat_model}, {"HeartModel"});
 		/** Write material property to xml file. */
-		ReloadMaterialParameterIO write_material_property(io_environment, herat_model.base_material_, "FiberDirection");
+		ReloadMaterialParameterIO write_material_property(io_environment, herat_model, "FiberDirection");
 		//----------------------------------------------------------------------
 		//	Physics relaxation starts here.
 		//----------------------------------------------------------------------
@@ -143,8 +143,8 @@ int main(int ac, char *av[])
 	/** check whether reload material properties. */
 	if (!system.run_particle_relaxation_ && system.reload_particles_)
 	{
-		ReloadMaterialParameterIO read_physiology_heart_fiber(io_environment, physiology_heart.base_material_, "FiberDirection");
-		ReloadMaterialParameterIO read_mechanics_heart_fiber(io_environment, mechanics_heart.base_material_, "FiberDirection");
+		ReloadMaterialParameterIO read_physiology_heart_fiber(io_environment, physiology_heart, "FiberDirection");
+		ReloadMaterialParameterIO read_mechanics_heart_fiber(io_environment, mechanics_heart, "FiberDirection");
 		read_mechanics_heart_fiber.readFromFile();
 		read_physiology_heart_fiber.readFromFile();
 	} 
