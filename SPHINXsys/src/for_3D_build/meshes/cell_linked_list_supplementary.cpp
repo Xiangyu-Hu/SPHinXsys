@@ -39,9 +39,9 @@ namespace SPH
 						  });
 	}
 	//=================================================================================================//
-	void CellLinkedList::UpdateCellListData()
+	void CellLinkedList::UpdateCellListData(BaseParticles &base_particles)
 	{
-		StdLargeVec<Vecd> &pos = base_particles_->pos_;
+		StdLargeVec<Vecd> &pos = base_particles.pos_;
 		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
 						  [&](size_t i, size_t j, size_t k)
 						  {

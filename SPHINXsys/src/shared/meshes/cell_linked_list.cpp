@@ -16,8 +16,7 @@ namespace SPH
 	BaseCellLinkedList::
 		BaseCellLinkedList(RealBody &real_body, SPHAdaptation &sph_adaptation)
 		: BaseMeshField("CellLinkedList"),
-		  real_body_(real_body), kernel_(*sph_adaptation.getKernel()),
-		  base_particles_(nullptr) {}
+		  real_body_(real_body), kernel_(*sph_adaptation.getKernel()){}
 	//=================================================================================================//
 	void BaseCellLinkedList::clearSplitCellLists(SplitCellLists &split_cell_lists)
 	{
@@ -32,11 +31,11 @@ namespace SPH
 		allocateMeshDataMatrix();
 	}
 	//=================================================================================================//
-	void CellLinkedList::UpdateCellLists()
+	void CellLinkedList::UpdateCellLists(BaseParticles &base_particles)
 	{
 		clearCellLists();
-		StdLargeVec<Vecd> &pos_n = base_particles_->pos_;
-		size_t total_real_particles = base_particles_->total_real_particles_;
+		StdLargeVec<Vecd> &pos_n = base_particles.pos_;
+		size_t total_real_particles = base_particles.total_real_particles_;
 		parallel_for(
 			blocked_range<size_t>(0, total_real_particles),
 			[&](const blocked_range<size_t> &r)
@@ -48,7 +47,7 @@ namespace SPH
 			},
 			ap);
 
-		UpdateCellListData();
+		UpdateCellListData(base_particles);
 
 		if (real_body_.getUseSplitCellLists())
 		{
@@ -56,22 +55,18 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void CellLinkedList::assignBaseParticles(BaseParticles *base_particles)
+	void CellLinkedList::computingSequence(BaseParticles &base_particles)
 	{
-		base_particles_ = base_particles;
-	};
-	//=================================================================================================//
-	void CellLinkedList::computingSequence(StdLargeVec<size_t> &sequence)
-	{
-		StdLargeVec<Vecd> &positions = base_particles_->pos_;
-		size_t total_real_particles = base_particles_->total_real_particles_;
+		StdLargeVec<Vecd> &pos = base_particles.pos_;
+		size_t total_real_particles = base_particles.total_real_particles_;
 		parallel_for(
 			blocked_range<size_t>(0, total_real_particles),
 			[&](const blocked_range<size_t> &r)
 			{
 				for (size_t i = r.begin(); i != r.end(); ++i)
 				{
-					sequence[i] = transferMeshIndexToMortonOrder(CellIndexFromPosition(positions[i]));
+					base_particles.sequence_[i] =
+						transferMeshIndexToMortonOrder(CellIndexFromPosition(pos[i]));
 				}
 			},
 			ap);
@@ -110,22 +105,13 @@ namespace SPH
 		mesh_levels_[level]->InsertListDataEntry(particle_index, particle_position);
 	}
 	//=================================================================================================//
-	void MultilevelCellLinkedList::assignBaseParticles(BaseParticles *base_particles)
-	{
-		base_particles_ = base_particles;
-		for (size_t l = 0; l != total_levels_; ++l)
-		{
-			mesh_levels_[l]->assignBaseParticles(base_particles);
-		}
-	};
-	//=================================================================================================//
-	void MultilevelCellLinkedList::UpdateCellLists()
+	void MultilevelCellLinkedList::UpdateCellLists(BaseParticles &base_particles)
 	{
 		for (size_t level = 0; level != total_levels_; ++level)
 			mesh_levels_[level]->clearCellLists();
 
-		StdLargeVec<Vecd> &pos_n = base_particles_->pos_;
-		size_t total_real_particles = base_particles_->total_real_particles_;
+		StdLargeVec<Vecd> &pos_n = base_particles.pos_;
+		size_t total_real_particles = base_particles.total_real_particles_;
 		// rebuild the corresponding particle list.
 		parallel_for(
 			blocked_range<size_t>(0, total_real_particles),
@@ -140,7 +126,7 @@ namespace SPH
 
 		for (size_t level = 0; level != total_levels_; ++level)
 		{
-			mesh_levels_[level]->UpdateCellListData();
+			mesh_levels_[level]->UpdateCellListData(base_particles);
 		}
 
 		if (real_body_.getUseSplitCellLists())

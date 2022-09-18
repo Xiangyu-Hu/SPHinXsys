@@ -54,7 +54,6 @@ namespace SPH
 	protected:
 		RealBody &real_body_;
 		Kernel &kernel_;
-		BaseParticles *base_particles_;
 
 		/** clear split cell lists in this mesh*/
 		virtual void clearSplitCellLists(SplitCellLists &split_cell_lists);
@@ -66,12 +65,8 @@ namespace SPH
 		BaseCellLinkedList(RealBody &real_body, SPHAdaptation &sph_adaptation);
 		virtual ~BaseCellLinkedList(){};
 
-		/** Assign base particles to the mesh cell linked list,
-		 * and is important because particles are not defined in the constructor.  */
-		virtual void assignBaseParticles(BaseParticles *base_particles) = 0;
-
 		/** update the cell lists */
-		virtual void UpdateCellLists() = 0;
+		virtual void UpdateCellLists(BaseParticles &base_particles) = 0;
 		/** Insert a cell-linked_list entry to the concurrent index list. */
 		virtual void insertParticleIndex(size_t particle_index, const Vecd &particle_position) = 0;
 		/** Insert a cell-linked_list entry of the index and particle position pair. */
@@ -79,7 +74,7 @@ namespace SPH
 		/** find the nearest list data entry */
 		virtual ListData findNearestListDataEntry(const Vecd &position) = 0;
 		/** computing the sequence which indicate the order of sorted particle data */
-		virtual void computingSequence(StdLargeVec<size_t> &sequence) = 0;
+		virtual void computingSequence(BaseParticles &base_particles) = 0;
 		/** Tag body part by cell, call by body part */
 		virtual void tagBodyPartByCell(ConcurrentIndexesInCells &cell_lists, std::function<bool(Vecd, Real)> &check_included) = 0;
 		/** Tag domain bounding cells in an axis direction, called by domain bounding classes */
@@ -110,14 +105,13 @@ namespace SPH
 
 		void allocateMeshDataMatrix(); /**< allocate memories for addresses of data packages. */
 		void deleteMeshDataMatrix();   /**< delete memories for addresses of data packages. */
-		virtual void assignBaseParticles(BaseParticles *base_particles) override;
 		void clearCellLists();
-		void UpdateCellListData();
-		virtual void UpdateCellLists() override;
+		void UpdateCellListData(BaseParticles &base_particles);
+		virtual void UpdateCellLists(BaseParticles &base_particles) override;
 		void insertParticleIndex(size_t particle_index, const Vecd &particle_position) override;
 		void InsertListDataEntry(size_t particle_index, const Vecd &particle_position) override;
 		virtual ListData findNearestListDataEntry(const Vecd &position) override;
-		virtual void computingSequence(StdLargeVec<size_t> &sequence) override;
+		virtual void computingSequence(BaseParticles &base_particles) override;
 		virtual void tagBodyPartByCell(ConcurrentIndexesInCells &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
 		virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, BoundingBox &bounding_bounds, int axis) override;
 		virtual void tagOneSideBoundingCells(CellLists &cell_data_lists, BoundingBox &bounding_bounds, int axis, bool positive) override;
@@ -147,12 +141,11 @@ namespace SPH
 								 size_t total_levels, RealBody &real_body, SPHAdaptation &sph_adaptation);
 		virtual ~MultilevelCellLinkedList(){};
 
-		virtual void assignBaseParticles(BaseParticles *base_particles) override;
-		virtual void UpdateCellLists() override;
+		virtual void UpdateCellLists(BaseParticles &base_particles) override;
 		void insertParticleIndex(size_t particle_index, const Vecd &particle_position) override;
 		void InsertListDataEntry(size_t particle_index, const Vecd &particle_position) override;
 		virtual ListData findNearestListDataEntry(const Vecd &position) override { return ListData(0, Vecd(0)); };
-		virtual void computingSequence(StdLargeVec<size_t> &sequence) override{};
+		virtual void computingSequence(BaseParticles &base_particles) override{};
 		virtual void tagBodyPartByCell(ConcurrentIndexesInCells &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
 		virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, BoundingBox &bounding_bounds, int axis) override{};
 		virtual void tagOneSideBoundingCells(CellLists &cell_data_lists, BoundingBox &bounding_bounds, int axis, bool positive) override{};

@@ -114,20 +114,19 @@ namespace SPH
 	void RealBody::assignBaseParticles(BaseParticles *base_particles)
 	{
 		SPHBody::assignBaseParticles(base_particles);
-		cell_linked_list_->assignBaseParticles(base_particles);
 	}
 	//=================================================================================================//
 	void RealBody::sortParticleWithCellLinkedList()
 	{
 		StdLargeVec<size_t> &sequence = base_particles_->sequence_;
 		size_t size = base_particles_->total_real_particles_;
-		cell_linked_list_->computingSequence(sequence);
+		cell_linked_list_->computingSequence(*base_particles_);
 		base_particles_->particle_sorting_.sortingParticleData(sequence.data(), size);
 	}
 	//=================================================================================================//
 	void RealBody::updateCellLinkedList()
 	{
-		cell_linked_list_->UpdateCellLists();
+		cell_linked_list_->UpdateCellLists(*base_particles_);
 		base_particles_->total_ghost_particles_ = 0;
 	}
 	//=================================================================================================//
