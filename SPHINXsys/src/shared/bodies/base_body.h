@@ -71,13 +71,13 @@ namespace SPH
 
 	protected:
 		SPHSystem &sph_system_;
-		bool newly_updated_; /**< whether this body is in a newly updated state */
+		bool newly_updated_;			/**< whether this body is in a newly updated state */
+		BaseParticles *base_particles_; /**< Base particles for dynamic cast DataDelegate  */
 
 	public:
 		Shape *body_shape_;						   /**< volumetric geometry enclosing the body */
 		SPHAdaptation *sph_adaptation_;			   /**< numerical adaptation policy */
 		BaseMaterial *base_material_;			   /**< base material for dynamic cast in DataDelegate */
-		BaseParticles *base_particles_;			   /**< Base particles for dynamic cast DataDelegate  */
 		StdVec<SPHBodyRelation *> body_relations_; /**< all contact relations centered from this body **/
 
 		explicit SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr);

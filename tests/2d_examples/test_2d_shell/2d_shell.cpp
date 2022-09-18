@@ -68,7 +68,7 @@ public:
 private:
 	void tagManually(size_t index_i)
 	{
-		if (base_particles_->pos_[index_i][0] < -radius_mid_surface * cos(50.0 / 180.0 * Pi) || base_particles_->pos_[index_i][0] > radius_mid_surface * cos(50.0 / 180.0 * Pi))
+		if (base_particles_.pos_[index_i][0] < -radius_mid_surface * cos(50.0 / 180.0 * Pi) || base_particles_.pos_[index_i][0] > radius_mid_surface * cos(50.0 / 180.0 * Pi))
 		{
 			body_part_particles_.push_back(index_i);
 		}

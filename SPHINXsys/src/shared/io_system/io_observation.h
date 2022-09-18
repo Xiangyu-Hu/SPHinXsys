@@ -43,7 +43,7 @@ namespace SPH
 	protected:
 		SPHBody &observer_;
 		PltEngine plt_engine_;
-		BaseParticles *base_particles_;
+		BaseParticles &base_particles_;
 		std::string dynamics_range_name_;
 		const std::string quantity_name_;
 		std::string filefullpath_output_;
@@ -57,7 +57,7 @@ namespace SPH
 			: BodyStatesRecording(io_environment, contact_relation.sph_body_),
 			  observer_dynamics::ObservingAQuantity<VariableType>(contact_relation, quantity_name),
 			  observer_(contact_relation.sph_body_), plt_engine_(),
-			  base_particles_(observer_.base_particles_), 
+			  base_particles_(observer_.getBaseParticles()), 
 			  dynamics_range_name_(contact_relation.sph_body_.getName()),
 			  quantity_name_(quantity_name)
 		{
@@ -66,7 +66,7 @@ namespace SPH
 			std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
 			out_file << "run_time"
 					 << "   ";
-			for (size_t i = 0; i != base_particles_->total_real_particles_; ++i)
+			for (size_t i = 0; i != base_particles_.total_real_particles_; ++i)
 			{
 				std::string quantity_name_i = quantity_name + "[" + std::to_string(i) + "]";
 				plt_engine_.writeAQuantityHeader(out_file, (*this->interpolated_quantities_)[i], quantity_name_i);
@@ -81,7 +81,7 @@ namespace SPH
 			this->parallel_exec();
 			std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
 			out_file << GlobalStaticVariables::physical_time_ << "   ";
-			for (size_t i = 0; i != base_particles_->total_real_particles_; ++i)
+			for (size_t i = 0; i != base_particles_.total_real_particles_; ++i)
 			{
 				plt_engine_.writeAQuantity(out_file, (*this->interpolated_quantities_)[i]);
 			}

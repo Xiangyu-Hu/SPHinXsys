@@ -230,7 +230,7 @@ namespace SPH
 			write_states.writeToFile(ite);
 		}
 
-		std::cout << base_particles_->total_real_particles_ << " Particles has been successfully created!" << std::endl;
+		std::cout << base_particles_.total_real_particles_ << " Particles has been successfully created!" << std::endl;
 	}
 	//=================================================================================================//
 }

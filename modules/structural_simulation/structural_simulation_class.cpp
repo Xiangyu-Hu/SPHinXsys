@@ -121,7 +121,7 @@ std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>> generateAndRelaxParticlesFromMe
 		relaxParticlesSingleResolution(io_environment, write_particle_relaxation_data, model, inner_relation);
 	}
 
-	return std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>>(model.base_particles_->pos_, model.base_particles_->Vol_);
+	return std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>>(model.getBaseParticles().pos_, model.getBaseParticles().Vol_);
 }
 
 BodyPartByParticle *createBodyPartFromMesh(SPHBody &body, const StlList &stl_list, size_t body_index, SharedPtr<TriangleMeshShape> tmesh)

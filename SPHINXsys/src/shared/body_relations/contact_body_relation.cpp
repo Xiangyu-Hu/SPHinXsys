@@ -41,7 +41,7 @@ namespace SPH
 	void BodyRelationContact::updateConfiguration()
 	{
 		resetNeighborhoodCurrentSize();
-		size_t total_real_particles = base_particles_->total_real_particles_;
+		size_t total_real_particles = base_particles_.total_real_particles_;
 		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{
 			target_cell_linked_lists_[k]->searchNeighborsByParticles(
@@ -125,7 +125,7 @@ namespace SPH
 	//=================================================================================================//
 	void BodyRelationContactToBodyPart::updateConfiguration()
 	{
-		size_t number_of_particles = base_particles_->total_real_particles_;
+		size_t number_of_particles = base_particles_.total_real_particles_;
 		for (size_t k = 0; k != contact_body_parts_.size(); ++k)
 		{
 			target_cell_linked_lists_[k]->searchNeighborsByParticles(

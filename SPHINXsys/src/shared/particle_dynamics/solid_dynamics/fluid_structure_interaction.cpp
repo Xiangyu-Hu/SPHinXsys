@@ -189,7 +189,7 @@ namespace SPH
 			: initialize_displacement_(solid_body, pos_temp_),
 			  update_averages_(solid_body, pos_temp_)
 		{
-			solid_body.base_particles_->registerVariable(pos_temp_, "TemporaryPosition");
+			solid_body.getBaseParticles().registerVariable(pos_temp_, "TemporaryPosition");
 		}
 		//=================================================================================================//
 	}

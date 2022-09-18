@@ -27,8 +27,8 @@ namespace SPH
 				out_file << "<VTKFile type=\"PolyData\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
 				out_file << " <PolyData>\n";
 
-				BaseParticles *base_particles = body->base_particles_;
-				size_t total_real_particles = base_particles->total_real_particles_;
+				BaseParticles &base_particles = body->getBaseParticles();
+				size_t total_real_particles = base_particles.total_real_particles_;
 				out_file << "  <Piece Name =\"" << body->getName() << "\" NumberOfPoints=\"" << total_real_particles << "\" NumberOfVerts=\"" << total_real_particles << "\">\n";
 
 				body->writeParticlesToVtpFile(out_file);
@@ -88,8 +88,8 @@ namespace SPH
 		stream << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
 		stream << " <UnstructuredGrid>\n";
 
-		BaseParticles *base_particles = body->base_particles_;
-		size_t total_real_particles = base_particles->total_real_particles_;
+		BaseParticles &base_particles = body->getBaseParticles();
+		size_t total_real_particles = base_particles.total_real_particles_;
 		stream << "  <Piece Name =\"" << body->getName() << "\" NumberOfPoints=\"" << total_real_particles << "\" NumberOfCells=\"0\">\n";
 
 		body->writeParticlesToVtuFile(stream);
@@ -124,8 +124,7 @@ namespace SPH
 		for (size_t i = 0; i < bodies_.size(); ++i)
 		{
 			check_bodies_.push_back(
-				check_bodies_ptr_keeper_.createPtr<ReduceDynamics<VelocityBoundCheck>>(*bodies[i], velocity_bound)
-			);
+				check_bodies_ptr_keeper_.createPtr<ReduceDynamics<VelocityBoundCheck>>(*bodies[i], velocity_bound));
 		}
 	}
 	//=============================================================================================//

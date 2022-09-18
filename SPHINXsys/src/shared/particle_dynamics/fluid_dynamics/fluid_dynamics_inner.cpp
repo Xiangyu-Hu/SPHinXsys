@@ -258,8 +258,8 @@ namespace SPH
 		PressureRelaxationInnerOldroyd_B ::
 			PressureRelaxationInnerOldroyd_B(BaseBodyRelationInner &inner_relation)
 			: PressureRelaxationDissipativeRiemannInner(inner_relation),
-			  tau_(DynamicCast<ViscoelasticFluidParticles>(this, sph_body_.base_particles_)->tau_),
-			  dtau_dt_(DynamicCast<ViscoelasticFluidParticles>(this, sph_body_.base_particles_)->dtau_dt_) {}
+			  tau_(DynamicCast<ViscoelasticFluidParticles>(this, particles_)->tau_),
+			  dtau_dt_(DynamicCast<ViscoelasticFluidParticles>(this, particles_)->dtau_dt_) {}
 		//=================================================================================================//
 		void PressureRelaxationInnerOldroyd_B::initialization(size_t index_i, Real dt)
 		{
@@ -292,8 +292,8 @@ namespace SPH
 		DensityRelaxationInnerOldroyd_B::
 			DensityRelaxationInnerOldroyd_B(BaseBodyRelationInner &inner_relation)
 			: DensityRelaxationDissipativeRiemannInner(inner_relation),
-			  tau_(DynamicCast<ViscoelasticFluidParticles>(this, sph_body_.base_particles_)->tau_),
-			  dtau_dt_(DynamicCast<ViscoelasticFluidParticles>(this, sph_body_.base_particles_)->dtau_dt_)
+			  tau_(DynamicCast<ViscoelasticFluidParticles>(this, particles_)->tau_),
+			  dtau_dt_(DynamicCast<ViscoelasticFluidParticles>(this, particles_)->dtau_dt_)
 		{
 			Oldroyd_B_Fluid *oldroy_b_fluid = DynamicCast<Oldroyd_B_Fluid>(this, sph_body_.base_material_);
 			mu_p_ = oldroy_b_fluid->ReferencePolymericViscosity();

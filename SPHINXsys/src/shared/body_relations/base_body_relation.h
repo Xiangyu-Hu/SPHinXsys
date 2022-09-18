@@ -70,7 +70,7 @@ namespace SPH
 		SearchDepthVariableSmoothingLength(SPHBody &sph_body, CellLinkedList *target_cell_linked_list)
 			: inv_grid_spacing_(1.0 / target_cell_linked_list->GridSpacing()),
 			  kernel_(sph_body.sph_adaptation_->getKernel()),
-			  h_ratio_(*sph_body.base_particles_->getVariableByName<Real>("SmoothingLengthRatio")){};
+			  h_ratio_(*sph_body.getBaseParticles().getVariableByName<Real>("SmoothingLengthRatio")){};
 		int operator()(size_t particle_index) const
 		{
 			return 1 + (int)floor(kernel_->CutOffRadius(h_ratio_[particle_index]) * inv_grid_spacing_);
@@ -85,7 +85,7 @@ namespace SPH
 	{
 	public:
 		SPHBody &sph_body_;
-		BaseParticles *base_particles_;
+		BaseParticles &base_particles_;
 		SPHBody &getDynamicsRange() { return sph_body_; };
 
 		explicit SPHBodyRelation(SPHBody &sph_body);

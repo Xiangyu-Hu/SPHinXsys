@@ -73,7 +73,7 @@ public:
 private:
 	void tagManually(size_t index_i)
 	{
-		if (base_particles_->pos_[index_i][2] < radius_mid_surface * sin(-17.5 / 180.0 * Pi))
+		if (base_particles_.pos_[index_i][2] < radius_mid_surface * sin(-17.5 / 180.0 * Pi))
 		{
 			body_part_particles_.push_back(index_i);
 		}

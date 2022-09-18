@@ -11,7 +11,7 @@ namespace SPH
 	//=================================================================================================//
 	void BodyPartByParticle::tagParticles(TaggingParticleMethod &tagging_particle_method)
 	{
-		for (size_t i = 0; i < base_particles_->total_real_particles_; ++i)
+		for (size_t i = 0; i < base_particles_.total_real_particles_; ++i)
 		{
 			tagging_particle_method(i);
 		}
@@ -43,7 +43,7 @@ namespace SPH
 	//=================================================================================================//
 	void BodyRegionByParticle::tagByContain(size_t particle_index)
 	{
-		if (body_part_shape_.checkContain(base_particles_->pos_[particle_index]))
+		if (body_part_shape_.checkContain(base_particles_.pos_[particle_index]))
 		{
 			body_part_particles_.push_back(particle_index);
 		}
@@ -60,7 +60,7 @@ namespace SPH
 	//=================================================================================================//
 	void BodySurface::tagNearSurface(size_t particle_index)
 	{
-		Real phi = sph_body_.body_shape_->findSignedDistance(base_particles_->pos_[particle_index]);
+		Real phi = sph_body_.body_shape_->findSignedDistance(base_particles_.pos_[particle_index]);
 		if (fabs(phi) < particle_spacing_min_)
 			body_part_particles_.push_back(particle_index);
 	}
@@ -76,7 +76,7 @@ namespace SPH
 	//=================================================================================================//
 	void BodySurfaceLayer::tagSurfaceLayer(size_t particle_index)
 	{
-		Real distance = fabs(sph_body_.body_shape_->findSignedDistance(base_particles_->pos_[particle_index]));
+		Real distance = fabs(sph_body_.body_shape_->findSignedDistance(base_particles_.pos_[particle_index]));
 		if (distance < thickness_threshold_)
 		{
 			body_part_particles_.push_back(particle_index);

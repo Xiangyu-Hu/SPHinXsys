@@ -269,7 +269,7 @@ namespace SPH
 		using DerivedVariableType = VariableType;
 		std::string variable_name_;
 
-		BaseDerivedVariable(const SPHBody &sph_body, const std::string &variable_name);
+		BaseDerivedVariable(SPHBody &sph_body, const std::string &variable_name);
 		virtual ~BaseDerivedVariable(){};
 
 	protected:

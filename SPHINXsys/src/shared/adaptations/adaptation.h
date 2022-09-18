@@ -115,7 +115,7 @@ namespace SPH
 			return h_ratio_[particle_index_i];
 		};
 
-		StdLargeVec<Real> &registerSmoothingLengthRatio(BaseParticles *base_particles);
+		StdLargeVec<Real> &registerSmoothingLengthRatio(BaseParticles &base_particles);
 		virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, RealBody &real_body) override;
 		virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio) override;
 	};

@@ -99,10 +99,10 @@ namespace SPH
 	public:
 		explicit DataDelegateSimple(SPHBody &sph_body)
 			: body_(DynamicCast<BodyType>(this, &sph_body)),
-			  particles_(DynamicCast<ParticlesType>(this, sph_body.base_particles_)),
+			  particles_(DynamicCast<ParticlesType>(this, &sph_body.getBaseParticles())),
 			  material_(DynamicCast<MaterialType>(this, sph_body.base_material_)),
-			  sorted_id_(sph_body.base_particles_->sorted_id_),
-			  unsorted_id_(sph_body.base_particles_->unsorted_id_){};
+			  sorted_id_(sph_body.getBaseParticles().sorted_id_),
+			  unsorted_id_(sph_body.getBaseParticles().unsorted_id_){};
 		virtual ~DataDelegateSimple(){};
 
 		BodyType *getBody() { return body_; };

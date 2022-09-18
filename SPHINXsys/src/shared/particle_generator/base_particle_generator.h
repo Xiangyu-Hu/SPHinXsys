@@ -55,7 +55,7 @@ namespace SPH
 		virtual void initializeGeometricVariables() = 0;
 
 	protected:
-		BaseParticles *base_particles_;
+		BaseParticles &base_particles_;
 		StdLargeVec<Vecd> &pos_;		   /**< current position */
 		StdLargeVec<size_t> &unsorted_id_; /**< original particle ids */
 		virtual void initializePosition(const Vecd &position);

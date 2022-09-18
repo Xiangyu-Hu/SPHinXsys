@@ -17,7 +17,7 @@ namespace SPH
 		std::string element_name_ = "Snapshot_" + std::to_string(iteration);
 		SimTK::Xml::Element &element_ = observe_xml_engine_.root_element_;
 		observe_xml_engine_.addElementToXmlDoc(element_name_);
-		for (size_t i = 0; i != this->base_particles_->total_real_particles_; ++i)
+		for (size_t i = 0; i != this->base_particles_.total_real_particles_; ++i)
 		{
 			xmlmemory_io_.writeDataToXmlMemory(observe_xml_engine_, element_,
 				element_name_, i, (*this->interpolated_quantities_)[i], this->quantity_name_);
@@ -39,7 +39,7 @@ namespace SPH
 	void RegressionTestBase<ObserveMethodType>::readFromXml(ObservedQuantityRecording<VariableType>* observe_method)
 	{
 		observe_xml_engine_.loadXmlFile(in_output_filefullpath_);
-		size_t number_of_particle_ = this->base_particles_->total_real_particles_;
+		size_t number_of_particle_ = this->base_particles_.total_real_particles_;
 		size_t number_of_snapshot_ = std::distance(observe_xml_engine_.root_element_.element_begin(),
 			observe_xml_engine_.root_element_.element_end());
 		DoubleVec<VariableType> current_result_temp_(number_of_snapshot_, StdVec<VariableType>(number_of_particle_));

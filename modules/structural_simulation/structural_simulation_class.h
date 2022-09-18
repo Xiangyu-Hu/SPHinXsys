@@ -84,7 +84,7 @@ public:
 	~SolidBodyForSimulation(){};
 
 	SolidBodyFromMesh *getSolidBodyFromMesh() { return &solid_body_from_mesh_; };
-	ElasticSolidParticles *getElasticSolidParticles() { return DynamicCast<ElasticSolidParticles>(this, solid_body_from_mesh_.base_particles_); };
+	ElasticSolidParticles *getElasticSolidParticles() { return DynamicCast<ElasticSolidParticles>(this, &solid_body_from_mesh_.getBaseParticles()); };
 	BodyRelationInner *getInnerBodyRelation() { return &inner_body_relation_; };
 
 	SimpleDynamics<NormalDirectionFromBodyShape> *getInitialNormalDirection() { return &initial_normal_direction_; };
