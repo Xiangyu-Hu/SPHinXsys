@@ -22,9 +22,17 @@ namespace SPH
     {
     }
 
-    SegmentFace::SegmentFace(const Vecd &center, const Vecd &direction)
-        : center_(center), direction_(direction.normalize())
+    SegmentFace::SegmentFace(const Vecd &direction, const Vecd &center)
+        : direction_(direction.normalize()), center_(center)
     {
+    }
+    SegmentFace::SegmentFace(const Vecd& direction, const Vecd& center, Real radius)
+    : center_(center), direction_(direction.normalize()) 
+    {
+        StdVec<SPH::Vecd> inlet_bound_points{
+            SPH::Vecd(1,1,1)*radius+center,
+            SPH::Vecd(-1,-1,-1)*radius+center};
+            boundary_points_ = inlet_bound_points;
     }
 
     BodyRegionWithFace::BodyRegionWithFace(RealBody &real_body, SegmentFace &segment_face, Real scale)
