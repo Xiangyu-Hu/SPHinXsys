@@ -66,20 +66,20 @@ int main(int ac, char *av[])
 	//	Build up the environment of a SPHSystem with global controls.
 	//----------------------------------------------------------------------
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
-// handle command line arguments
 #ifdef BOOST_AVAILABLE
+	// handle command line arguments
 	sph_system.handleCommandlineOptions(ac, av);
-#endif	/** output environment. */
-	InOutput in_output(sph_system);
+#endif
+	IOEnvironment io_environment(sph_system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles
 	//----------------------------------------------------------------------
 	SolidBody free_cube(sph_system, makeShared<Cube>("FreeCube"));
-	free_cube.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	free_cube.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	free_cube.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
-	wall_boundary.defineParticlesAndMaterial<SolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	wall_boundary.defineParticlesAndMaterial<SolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
 	ObserverBody cube_observer(sph_system, "CubeObserver");
@@ -96,32 +96,31 @@ int main(int ac, char *av[])
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	Gravity gravity(Vecd(0.0, -gravity_g));
 	Transform2d transform2d(Rotation2d(-0.5235));
 	SimpleDynamics<TranslationAndRotation> wall_boundary_rotation(wall_boundary, transform2d);
 	SimpleDynamics<TranslationAndRotation> free_cube_rotation(free_cube, transform2d);
-	TimeStepInitialization free_cube_initialize_timestep(free_cube, gravity);
+	SimpleDynamics<TimeStepInitialization> free_cube_initialize_timestep(free_cube, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
 	/** Kernel correction. */
-	solid_dynamics::CorrectConfiguration free_cube_corrected_configuration(free_cube_inner);
+	InteractionDynamics<solid_dynamics::CorrectConfiguration> free_cube_corrected_configuration(free_cube_inner);
 	/** Time step size. */
-	solid_dynamics::AcousticTimeStepSize free_cube_get_time_step_size(free_cube);
+	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> free_cube_get_time_step_size(free_cube);
 	/** stress relaxation for the solid body. */
-	solid_dynamics::StressRelaxationFirstHalf free_cube_stress_relaxation_first_half(free_cube_inner);
-	solid_dynamics::StressRelaxationSecondHalf free_cube_stress_relaxation_second_half(free_cube_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> free_cube_stress_relaxation_first_half(free_cube_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> free_cube_stress_relaxation_second_half(free_cube_inner);
 	/** Algorithms for solid-solid contact. */
-	solid_dynamics::ContactDensitySummation free_cube_update_contact_density(free_cube_contact);
-	solid_dynamics::ContactForceFromWall free_cube_compute_solid_contact_forces(free_cube_contact);
+	InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle> free_cube_update_contact_density(free_cube_contact);
+	InteractionDynamics<solid_dynamics::ContactForceFromWall, BodyPartByParticle> free_cube_compute_solid_contact_forces(free_cube_contact);
 	/** Damping*/
-	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
+	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
 		damping(0.5, free_cube_inner,"Velocity", physical_viscosity);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	/** Output the body states. */
-	BodyStatesRecordingToVtp body_states_recording(in_output, sph_system.real_bodies_);
+	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
 	/** Observer and output. */
 	RegressionTestEnsembleAveraged<ObservedQuantityRecording<Vecd>>
-		write_free_cube_displacement("Position", in_output, cube_observer_contact);
+		write_free_cube_displacement("Position", io_environment, cube_observer_contact);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
@@ -142,9 +141,9 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	int ite = 0;
 	Real T0 = 2.5;
-	Real End_Time = T0;
-	Real D_Time = 0.01 * T0;
-	Real Dt = 0.1 * D_Time;
+	Real end_time = T0;
+	Real output_interval = 0.01 * T0;
+	Real Dt = 0.1 * output_interval;
 	Real dt = 0.0;
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
@@ -154,10 +153,10 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Main loop starts here.
 	//----------------------------------------------------------------------
-	while (GlobalStaticVariables::physical_time_ < End_Time)
+	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
-		while (integration_time < D_Time)
+		while (integration_time < output_interval)
 		{
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)

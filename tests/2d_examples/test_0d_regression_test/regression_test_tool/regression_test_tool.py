@@ -12,8 +12,8 @@ case name: test_0d_regression_test
 """
 
 case_name = "test_0d_regression_test"
-body_name = "DiffusionBody"
-parameter_name = "TotalAveragedParameterOnPartlyDiffusionBody"
+body_name = "InnerDomain"
+parameter_name = "DiffusionReactionSpeciesAverage"
 body_name_1 = "TemperatureObserver"
 parameter_name_1 = "Phi"
 

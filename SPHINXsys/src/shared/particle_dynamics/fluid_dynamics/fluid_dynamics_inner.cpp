@@ -13,19 +13,18 @@ namespace SPH
 	{
 		//=================================================================================================//
 		FluidInitialCondition::
-			FluidInitialCondition(FluidBody &fluid_body)
-			: ParticleDynamicsSimple(fluid_body), FluidDataSimple(fluid_body),
+			FluidInitialCondition(SPHBody &sph_body)
+			: LocalDynamics(sph_body), FluidDataSimple(sph_body),
 			  pos_(particles_->pos_), vel_(particles_->vel_) {}
 		//=================================================================================================//
 		DensitySummationInner::DensitySummationInner(BaseBodyRelationInner &inner_relation)
-			: InteractionDynamicsWithUpdate(*inner_relation.sph_body_),
-			  FluidDataInner(inner_relation),
+			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
 			  Vol_(particles_->Vol_), rho_(particles_->rho_), mass_(particles_->mass_),
 			  rho_sum_(particles_->rho_sum_),
-			  W0_(sph_adaptation_->getKernel()->W0(Vecd(0))),
+			  W0_(sph_body_.sph_adaptation_->getKernel()->W0(Vecd(0))),
 			  rho0_(particles_->rho0_), inv_sigma0_(1.0 / particles_->sigma0_) {}
 		//=================================================================================================//
-		void DensitySummationInner::Interaction(size_t index_i, Real dt)
+		void DensitySummationInner::interaction(size_t index_i, Real dt)
 		{
 			/** Inner interaction. */
 			Real sigma = W0_;
@@ -36,22 +35,20 @@ namespace SPH
 			rho_sum_[index_i] = sigma * rho0_ * inv_sigma0_;
 		}
 		//=================================================================================================//
-		void DensitySummationInner::Update(size_t index_i, Real dt)
+		void DensitySummationInner::update(size_t index_i, Real dt)
 		{
 			rho_[index_i] = ReinitializedDensity(rho_sum_[index_i], rho0_, rho_[index_i]);
 			Vol_[index_i] = mass_[index_i] / rho_[index_i];
 		}
 		//=================================================================================================//
-		ViscousAccelerationInner::ViscousAccelerationInner(BaseBodyRelationInner &inner_relation)
-			: InteractionDynamics(*inner_relation.sph_body_),
-			  FluidDataInner(inner_relation),
+		BaseViscousAccelerationInner::BaseViscousAccelerationInner(BaseBodyRelationInner &inner_relation)
+			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
 			  Vol_(particles_->Vol_), rho_(particles_->rho_), p_(particles_->p_),
-			  vel_(particles_->vel_),
-			  acc_prior_(particles_->acc_prior_),
+			  vel_(particles_->vel_), acc_prior_(particles_->acc_prior_),
 			  mu_(material_->ReferenceViscosity()),
-			  smoothing_length_(sph_adaptation_->ReferenceSmoothingLength()) {}
+			  smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
 		//=================================================================================================//
-		void ViscousAccelerationInner::Interaction(size_t index_i, Real dt)
+		void ViscousAccelerationInner::interaction(size_t index_i, Real dt)
 		{
 			Real rho_i = rho_[index_i];
 			const Vecd &vel_i = vel_[index_i];
@@ -62,7 +59,7 @@ namespace SPH
 			{
 				size_t index_j = inner_neighborhood.j_[n];
 
-				//viscous force
+				// viscous force
 				vel_derivative = (vel_i - vel_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
 				acceleration += 2.0 * mu_ * vel_derivative * Vol_[index_j] * inner_neighborhood.dW_ij_[n] / rho_i;
 			}
@@ -70,7 +67,7 @@ namespace SPH
 			acc_prior_[index_i] += acceleration;
 		}
 		//=================================================================================================//
-		void AngularConservativeViscousAccelerationInner::Interaction(size_t index_i, Real dt)
+		void AngularConservativeViscousAccelerationInner::interaction(size_t index_i, Real dt)
 		{
 			Real rho_i = rho_[index_i];
 			const Vecd &vel_i = vel_[index_i];
@@ -83,7 +80,7 @@ namespace SPH
 				Vecd &e_ij = inner_neighborhood.e_ij_[n];
 				Real r_ij = inner_neighborhood.r_ij_[n];
 
-				/** The following viscous force is given in Monaghan 2005 (Rep. Prog. Phys.), it seems that 
+				/** The following viscous force is given in Monaghan 2005 (Rep. Prog. Phys.), it seems that
 				 * this formulation is more accurate than the previous one for Taylor-Green-Vortex flow. */
 				Real v_r_ij = dot(vel_i - vel_[index_j], r_ij * e_ij);
 				Real eta_ij = 8.0 * mu_ * v_r_ij / (r_ij * r_ij + 0.01 * smoothing_length_);
@@ -95,10 +92,8 @@ namespace SPH
 		//=================================================================================================//
 		TransportVelocityCorrectionInner::
 			TransportVelocityCorrectionInner(BaseBodyRelationInner &inner_relation, Real coefficient)
-			: InteractionDynamics(*inner_relation.sph_body_),
-			  FluidDataInner(inner_relation),
-			  Vol_(particles_->Vol_), rho_(particles_->rho_),
-			  pos_(particles_->pos_),
+			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
+			  Vol_(particles_->Vol_), rho_(particles_->rho_), pos_(particles_->pos_),
 			  surface_indicator_(particles_->surface_indicator_), p_background_(0),
 			  coefficient_(coefficient) {}
 		//=================================================================================================//
@@ -109,7 +104,7 @@ namespace SPH
 			p_background_ = coefficient_ * density * speed_max * speed_max;
 		}
 		//=================================================================================================//
-		void TransportVelocityCorrectionInner::Interaction(size_t index_i, Real dt)
+		void TransportVelocityCorrectionInner::interaction(size_t index_i, Real dt)
 		{
 			Real rho_i = rho_[index_i];
 
@@ -120,7 +115,7 @@ namespace SPH
 				size_t index_j = inner_neighborhood.j_[n];
 				Vecd nablaW_ij = inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n];
 
-				//acceleration for transport velocity
+				// acceleration for transport velocity
 				acceleration_trans -= 2.0 * p_background_ * Vol_[index_j] * nablaW_ij / rho_i;
 			}
 
@@ -128,70 +123,63 @@ namespace SPH
 				pos_[index_i] += acceleration_trans * dt * dt * 0.5;
 		}
 		//=================================================================================================//
-		AcousticTimeStepSize::AcousticTimeStepSize(FluidBody &fluid_body)
-			: ParticleDynamicsReduce<Real, ReduceMax>(fluid_body),
-			  FluidDataSimple(fluid_body), rho_(particles_->rho_),
+		AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body)
+			: LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
+			  FluidDataSimple(sph_body), rho_(particles_->rho_),
 			  p_(particles_->p_), vel_(particles_->vel_),
-			  smoothing_length_(sph_adaptation_->ReferenceSmoothingLength())
-		{
-			initial_reference_ = 0.0;
-		}
+			  smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()) {}
 		//=================================================================================================//
-		Real AcousticTimeStepSize::ReduceFunction(size_t index_i, Real dt)
+		Real AcousticTimeStepSize::reduce(size_t index_i, Real dt)
 		{
 			return material_->getSoundSpeed(p_[index_i], rho_[index_i]) + vel_[index_i].norm();
 		}
 		//=================================================================================================//
-		Real AcousticTimeStepSize::OutputResult(Real reduced_value)
+		Real AcousticTimeStepSize::outputResult(Real reduced_value)
 		{
-			particles_->signal_speed_max_ = reduced_value;
-			//since the particle does not change its configuration in pressure relaxation step
-			//I chose a time-step size according to Eulerian method
+			// since the particle does not change its configuration in pressure relaxation step
+			// I chose a time-step size according to Eulerian method
 			return 0.6 * smoothing_length_ / (reduced_value + TinyReal);
 		}
 		//=================================================================================================//
-		AdvectionTimeStepSize::AdvectionTimeStepSize(FluidBody &fluid_body, Real U_max)
-			: ParticleDynamicsReduce<Real, ReduceMax>(fluid_body),
-			  FluidDataSimple(fluid_body), vel_(particles_->vel_),
-			  smoothing_length_(sph_adaptation_->ReferenceSmoothingLength())
-		{
-			Real rho_0 = material_->ReferenceDensity();
-			Real mu = material_->ReferenceViscosity();
-			Real viscous_speed = mu / rho_0 / smoothing_length_;
-			Real u_max = SMAX(viscous_speed, U_max);
-			initial_reference_ = u_max * u_max;
-		}
+		AdvectionTimeStepSizeForImplicitViscosity::
+			AdvectionTimeStepSizeForImplicitViscosity(SPHBody &sph_body, Real U_max)
+			: LocalDynamicsReduce<Real, ReduceMax>(sph_body, U_max * U_max),
+			  FluidDataSimple(sph_body), vel_(particles_->vel_),
+			  smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()) {}
 		//=================================================================================================//
-		Real AdvectionTimeStepSize::ReduceFunction(size_t index_i, Real dt)
+		Real AdvectionTimeStepSizeForImplicitViscosity::reduce(size_t index_i, Real dt)
 		{
 			return vel_[index_i].normSqr();
 		}
 		//=================================================================================================//
-		Real AdvectionTimeStepSize::OutputResult(Real reduced_value)
+		Real AdvectionTimeStepSizeForImplicitViscosity::outputResult(Real reduced_value)
 		{
 			Real speed_max = sqrt(reduced_value);
 			particles_->speed_max_ = speed_max;
 			return 0.25 * smoothing_length_ / (speed_max + TinyReal);
 		}
 		//=================================================================================================//
-		AdvectionTimeStepSizeForImplicitViscosity::
-			AdvectionTimeStepSizeForImplicitViscosity(FluidBody &fluid_body, Real U_max)
-			: AdvectionTimeStepSize(fluid_body, U_max)
+		AdvectionTimeStepSize::AdvectionTimeStepSize(SPHBody &sph_body, Real U_max)
+			: AdvectionTimeStepSizeForImplicitViscosity(sph_body, U_max)
 		{
-			initial_reference_ = U_max * U_max;
+			Real viscous_speed = material_->ReferenceViscosity() / material_->ReferenceDensity() / smoothing_length_;
+			reference_ = SMAX(viscous_speed * viscous_speed, reference_);
 		}
 		//=================================================================================================//
-		VorticityInner::
-			VorticityInner(BaseBodyRelationInner &inner_relation)
-			: InteractionDynamics(*inner_relation.sph_body_),
-			  FluidDataInner(inner_relation),
+		Real AdvectionTimeStepSize::reduce(size_t index_i, Real dt)
+		{
+			return AdvectionTimeStepSizeForImplicitViscosity::reduce(index_i, dt);
+		}
+		//=================================================================================================//
+		VorticityInner::VorticityInner(BaseBodyRelationInner &inner_relation)
+			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
 			  Vol_(particles_->Vol_), vel_(particles_->vel_)
 		{
 			particles_->registerVariable(vorticity_, "VorticityInner");
 			particles_->addVariableToWrite<AngularVecd>("VorticityInner");
 		}
 		//=================================================================================================//
-		void VorticityInner::Interaction(size_t index_i, Real dt)
+		void VorticityInner::interaction(size_t index_i, Real dt)
 		{
 			const Vecd &vel_i = vel_[index_i];
 
@@ -210,8 +198,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		BaseRelaxation::BaseRelaxation(BaseBodyRelationInner &inner_relation)
-			: ParticleDynamics1Level(*inner_relation.sph_body_),
-			  FluidDataInner(inner_relation),
+			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
 			  Vol_(particles_->Vol_), mass_(particles_->mass_), rho_(particles_->rho_),
 			  p_(particles_->p_), drho_dt_(particles_->drho_dt_),
 			  pos_(particles_->pos_), vel_(particles_->vel_),
@@ -221,7 +208,7 @@ namespace SPH
 		BasePressureRelaxation::
 			BasePressureRelaxation(BaseBodyRelationInner &inner_relation) : BaseRelaxation(inner_relation) {}
 		//=================================================================================================//
-		void BasePressureRelaxation::Initialization(size_t index_i, Real dt)
+		void BasePressureRelaxation::initialization(size_t index_i, Real dt)
 		{
 			rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
 			Vol_[index_i] = mass_[index_i] / rho_[index_i];
@@ -229,7 +216,7 @@ namespace SPH
 			pos_[index_i] += vel_[index_i] * dt * 0.5;
 		}
 		//=================================================================================================//
-		void BasePressureRelaxation::Update(size_t index_i, Real dt)
+		void BasePressureRelaxation::update(size_t index_i, Real dt)
 		{
 			vel_[index_i] += acc_[index_i] * dt;
 		}
@@ -258,12 +245,12 @@ namespace SPH
 		BaseDensityRelaxation::
 			BaseDensityRelaxation(BaseBodyRelationInner &inner_relation) : BaseRelaxation(inner_relation) {}
 		//=================================================================================================//
-		void BaseDensityRelaxation::Initialization(size_t index_i, Real dt)
+		void BaseDensityRelaxation::initialization(size_t index_i, Real dt)
 		{
 			pos_[index_i] += vel_[index_i] * dt * 0.5;
 		}
 		//=================================================================================================//
-		void BaseDensityRelaxation::Update(size_t index_i, Real dt)
+		void BaseDensityRelaxation::update(size_t index_i, Real dt)
 		{
 			rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
 		}
@@ -271,19 +258,19 @@ namespace SPH
 		PressureRelaxationInnerOldroyd_B ::
 			PressureRelaxationInnerOldroyd_B(BaseBodyRelationInner &inner_relation)
 			: PressureRelaxationDissipativeRiemannInner(inner_relation),
-			  tau_(DynamicCast<ViscoelasticFluidParticles>(this, sph_body_->base_particles_)->tau_),
-			  dtau_dt_(DynamicCast<ViscoelasticFluidParticles>(this, sph_body_->base_particles_)->dtau_dt_) {}
+			  tau_(DynamicCast<ViscoelasticFluidParticles>(this, sph_body_.base_particles_)->tau_),
+			  dtau_dt_(DynamicCast<ViscoelasticFluidParticles>(this, sph_body_.base_particles_)->dtau_dt_) {}
 		//=================================================================================================//
-		void PressureRelaxationInnerOldroyd_B::Initialization(size_t index_i, Real dt)
+		void PressureRelaxationInnerOldroyd_B::initialization(size_t index_i, Real dt)
 		{
-			PressureRelaxationDissipativeRiemannInner::Initialization(index_i, dt);
+			PressureRelaxationDissipativeRiemannInner::initialization(index_i, dt);
 
 			tau_[index_i] += dtau_dt_[index_i] * dt * 0.5;
 		}
 		//=================================================================================================//
-		void PressureRelaxationInnerOldroyd_B::Interaction(size_t index_i, Real dt)
+		void PressureRelaxationInnerOldroyd_B::interaction(size_t index_i, Real dt)
 		{
-			PressureRelaxationDissipativeRiemannInner::Interaction(index_i, dt);
+			PressureRelaxationDissipativeRiemannInner::interaction(index_i, dt);
 
 			Real rho_i = rho_[index_i];
 			Matd tau_i = tau_[index_i];
@@ -295,7 +282,7 @@ namespace SPH
 				size_t index_j = inner_neighborhood.j_[n];
 				Vecd nablaW_ij = inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n];
 
-				//elastic force
+				// elastic force
 				acceleration += (tau_i + tau_[index_j]) * nablaW_ij * Vol_[index_j] / rho_i;
 			}
 
@@ -305,17 +292,17 @@ namespace SPH
 		DensityRelaxationInnerOldroyd_B::
 			DensityRelaxationInnerOldroyd_B(BaseBodyRelationInner &inner_relation)
 			: DensityRelaxationDissipativeRiemannInner(inner_relation),
-			  tau_(DynamicCast<ViscoelasticFluidParticles>(this, sph_body_->base_particles_)->tau_),
-			  dtau_dt_(DynamicCast<ViscoelasticFluidParticles>(this, sph_body_->base_particles_)->dtau_dt_)
+			  tau_(DynamicCast<ViscoelasticFluidParticles>(this, sph_body_.base_particles_)->tau_),
+			  dtau_dt_(DynamicCast<ViscoelasticFluidParticles>(this, sph_body_.base_particles_)->dtau_dt_)
 		{
-			Oldroyd_B_Fluid *oldroy_b_fluid = DynamicCast<Oldroyd_B_Fluid>(this, sph_body_->base_material_);
+			Oldroyd_B_Fluid *oldroy_b_fluid = DynamicCast<Oldroyd_B_Fluid>(this, sph_body_.base_material_);
 			mu_p_ = oldroy_b_fluid->ReferencePolymericViscosity();
 			lambda_ = oldroy_b_fluid->getReferenceRelaxationTime();
 		}
 		//=================================================================================================//
-		void DensityRelaxationInnerOldroyd_B::Interaction(size_t index_i, Real dt)
+		void DensityRelaxationInnerOldroyd_B::interaction(size_t index_i, Real dt)
 		{
-			DensityRelaxationDissipativeRiemannInner::Interaction(index_i, dt);
+			DensityRelaxationDissipativeRiemannInner::interaction(index_i, dt);
 
 			Vecd vel_i = vel_[index_i];
 			Matd tau_i = tau_[index_i];
@@ -335,9 +322,9 @@ namespace SPH
 			dtau_dt_[index_i] = stress_rate;
 		}
 		//=================================================================================================//
-		void DensityRelaxationInnerOldroyd_B::Update(size_t index_i, Real dt)
+		void DensityRelaxationInnerOldroyd_B::update(size_t index_i, Real dt)
 		{
-			DensityRelaxationDissipativeRiemannInner::Update(index_i, dt);
+			DensityRelaxationDissipativeRiemannInner::update(index_i, dt);
 
 			tau_[index_i] += dtau_dt_[index_i] * dt * 0.5;
 		}

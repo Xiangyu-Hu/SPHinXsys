@@ -57,7 +57,14 @@ class DiffusionInitialCondition
 protected:
 	size_t phi_;
 
-	void Update(size_t index_i, Real dt) override
+public:
+	explicit DiffusionInitialCondition(SPHBody &sph_body)
+		: DiffusionReactionInitialCondition<SolidBody, SolidParticles, Solid>(sph_body)
+	{
+		phi_ = material_->SpeciesIndexMap()["Phi"];
+	};
+
+	void update(size_t index_i, Real dt)
 	{
 
 		if (pos_[index_i][0] >= 0.45 && pos_[index_i][0] <= 0.55)
@@ -68,13 +75,6 @@ protected:
 		{
 			species_n_[phi_][index_i] = exp(-2500.0 * ((pos_[index_i][0] - 1.5) * (pos_[index_i][0] - 1.5)));
 		}
-	};
-
-public:
-	explicit DiffusionInitialCondition(SolidBody &diffusion_body)
-		: DiffusionReactionInitialCondition<SolidBody, SolidParticles, Solid>(diffusion_body)
-	{
-		phi_ = material_->SpeciesIndexMap()["Phi"];
 	};
 };
 //----------------------------------------------------------------------
@@ -117,8 +117,7 @@ int main()
 	//	Build up the environment of a SPHSystem.
 	//----------------------------------------------------------------------
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
-	/** output environment. */
-	InOutput in_output(sph_system);
+	IOEnvironment io_environment(sph_system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
@@ -141,21 +140,17 @@ int main()
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	DiffusionInitialCondition setup_diffusion_initial_condition(diffusion_body);
-	/** Corrected configuration for diffusion body. */
-	solid_dynamics::CorrectConfiguration correct_configuration(diffusion_body_inner_relation);
-	/** Time step size calculation. */
-	GetDiffusionTimeStepSize<SolidBody, SolidParticles, Solid> get_time_step_size(diffusion_body);
-	/** Diffusion process for diffusion body. */
 	DiffusionBodyRelaxation diffusion_relaxation(diffusion_body_inner_relation);
-	/** Periodic BCs. */
+	SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
+	InteractionDynamics<solid_dynamics::CorrectConfiguration> correct_configuration(diffusion_body_inner_relation);
+	GetDiffusionTimeStepSize<SolidBody, SolidParticles, Solid> get_time_step_size(diffusion_body);
 	PeriodicConditionUsingCellLinkedList periodic_condition_y(diffusion_body, diffusion_body.getBodyShapeBounds(), yAxis);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp write_states(in_output, sph_system.real_bodies_);
+	BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
 	RegressionTestEnsembleAveraged<ObservedQuantityRecording<Real>>
-		write_solid_temperature("Phi", in_output, temperature_observer_contact);
+		write_solid_temperature("Phi", io_environment, temperature_observer_contact);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
@@ -170,8 +165,8 @@ int main()
 	//----------------------------------------------------------------------
 	int ite = 0;
 	Real T0 = 1.0;
-	Real End_Time = T0;
-	Real Output_Time = 0.1 * End_Time;
+	Real end_time = T0;
+	Real Output_Time = 0.1 * end_time;
 	Real Observe_time = 0.1 * Output_Time;
 	Real dt = 0.0;
 	//----------------------------------------------------------------------
@@ -187,7 +182,7 @@ int main()
 	//----------------------------------------------------------------------
 	//	Main loop starts here.
 	//----------------------------------------------------------------------
-	while (GlobalStaticVariables::physical_time_ < End_Time)
+	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
 		while (integration_time < Output_Time)

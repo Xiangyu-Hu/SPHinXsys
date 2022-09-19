@@ -40,6 +40,7 @@
 
 namespace SPH
 {
+	//TODO: the name better called ProbeBody
 	class ObserverBody : public SPHBody
 	{
 	public:

@@ -46,14 +46,14 @@ namespace SPH
 	{
 	public:
 		BodyPart(SPHBody &sph_body, const std::string &body_part_name)
-			: sph_body_(&sph_body), body_part_name_(body_part_name){};
+			: sph_body_(sph_body), body_part_name_(body_part_name){};
 		virtual ~BodyPart(){};
 
-		SPHBody *getSPHBody() { return sph_body_; };
-		std::string BodyPartName() { return body_part_name_; };
+		SPHBody &getSPHBody() { return sph_body_; };
+		std::string getName() { return body_part_name_; };
 
 	protected:
-		SPHBody *sph_body_;
+		SPHBody &sph_body_;
 		std::string body_part_name_;
 	};
 
@@ -65,6 +65,8 @@ namespace SPH
 	{
 	public:
 		IndexVector body_part_particles_; /**< Collection particle in this body part. */
+		IndexVector &LoopRange() { return body_part_particles_; };
+		size_t SizeOfLoopRange() { return body_part_particles_.size(); };
 
 		BodyPartByParticle(SPHBody &sph_body, const std::string &body_part_name)
 			: BodyPart(sph_body, body_part_name), base_particles_(sph_body.base_particles_),
@@ -101,6 +103,8 @@ namespace SPH
 	{
 	public:
 		CellLists body_part_cells_; /**< Collection of cells to indicate the body part. */
+		CellLists &LoopRange() { return body_part_cells_; };
+		size_t SizeOfLoopRange();
 
 		BodyPartByCell(RealBody &real_body, const std::string &body_part_name)
 			: BodyPart(real_body, body_part_name), cell_linked_list_(real_body.cell_linked_list_){};

@@ -121,15 +121,15 @@ MultiPolygon createGateShape()
 MultiPolygon createGateConstrainShape()
 {
 	// geometry
-	std::vector<Vecd> gate_constrain_shape;
-	gate_constrain_shape.push_back(ConstrainP_lb);
-	gate_constrain_shape.push_back(ConstrainP_lt);
-	gate_constrain_shape.push_back(ConstrainP_rt);
-	gate_constrain_shape.push_back(ConstrainP_rb);
-	gate_constrain_shape.push_back(ConstrainP_lb);
+	std::vector<Vecd> gate_constraint_shape;
+	gate_constraint_shape.push_back(ConstrainP_lb);
+	gate_constraint_shape.push_back(ConstrainP_lt);
+	gate_constraint_shape.push_back(ConstrainP_rt);
+	gate_constraint_shape.push_back(ConstrainP_rb);
+	gate_constraint_shape.push_back(ConstrainP_lb);
 
 	MultiPolygon multi_polygon;
-	multi_polygon.addAPolygon(gate_constrain_shape, ShapeBooleanOps::add);
+	multi_polygon.addAPolygon(gate_constraint_shape, ShapeBooleanOps::add);
 	return multi_polygon;
 }
 //----------------------------------------------------------------------
@@ -141,10 +141,7 @@ int main()
 	//	Build up the environment of a SPHSystem.
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, resolution_ref);
-	/** Set the starting time to zero. */
-	GlobalStaticVariables::physical_time_ = 0.0;
-	/** I/O environment. */
-	InOutput in_output(system);
+	IOEnvironment io_environment(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
@@ -158,7 +155,7 @@ int main()
 
 	SolidBody gate(system, makeShared<MultiPolygonShape>(createGateShape(), "Gate"));
 	gate.defineAdaptationRatios(1.15, 2.0);
-	gate.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	gate.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	gate.generateParticles<ParticleGeneratorLattice>();
 
 	ObserverBody gate_observer(system, "Observer");
@@ -177,58 +174,42 @@ int main()
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	/** Define the external force. */
-	Gravity gravity(Vecd(0.0, -gravity_g));
-	/** Initialize particle acceleration. */
-	TimeStepInitialization initialize_a_fluid_step(water_block, gravity);
 	//----------------------------------------------------------------------
 	//	Algorithms of fluid dynamics.
 	//----------------------------------------------------------------------
-	/** Evaluation of fluid density by summation approach. */
-	fluid_dynamics::DensitySummationFreeSurfaceComplex update_density_by_summation(water_block_complex_relation);
-	/** Compute time step size without considering sound wave speed. */
-	fluid_dynamics::AdvectionTimeStepSize get_fluid_advection_time_step_size(water_block, U_f);
-	/** Compute time step size with considering sound wave speed. */
-	fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_block);
-	/** Pressure relaxation using verlet time stepping. */
-	fluid_dynamics::PressureRelaxationRiemannWithWall pressure_relaxation(water_block_complex_relation);
-	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_block_complex_relation);
+	Dynamics1Level<fluid_dynamics::PressureRelaxationRiemannWithWall> pressure_relaxation(water_block_complex_relation);
+	Dynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(water_block_complex_relation);
+	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_density_by_summation(water_block_complex_relation);
+	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
+	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
+	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	//----------------------------------------------------------------------
 	//	Algorithms of FSI.
 	//----------------------------------------------------------------------
-	/** offset particle position */
 	SimpleDynamics<OffsetInitialPosition> gate_offset_position(gate, offset);
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	SimpleDynamics<NormalDirectionFromBodyShape> gate_normal_direction(gate);
-	/** Corrected configuration for solid dynamics. */
-	solid_dynamics::CorrectConfiguration gate_corrected_configuration(gate_inner_relation);
-	/** Compute the force exerted on elastic gate due to fluid pressure. */
-	solid_dynamics::FluidPressureForceOnSolidRiemann fluid_pressure_force_on_gate(gate_water_contact_relation);
+	InteractionDynamics<solid_dynamics::CorrectConfiguration> gate_corrected_configuration(gate_inner_relation);
+	InteractionDynamics<solid_dynamics::FluidPressureForceOnSolidRiemann> fluid_pressure_force_on_gate(gate_water_contact_relation);
+	solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(gate);
 	//----------------------------------------------------------------------
 	//	Algorithms of Elastic dynamics.
 	//----------------------------------------------------------------------
-	/** Compute time step size of elastic solid. */
-	solid_dynamics::AcousticTimeStepSize gate_computing_time_step_size(gate);
-	/** Stress relaxation stepping for the elastic gate. */
-	solid_dynamics::StressRelaxationFirstHalf gate_stress_relaxation_first_half(gate_inner_relation);
-	solid_dynamics::StressRelaxationSecondHalf gate_stress_relaxation_second_half(gate_inner_relation);
-	/**Constrain a solid body part.  */
-	BodyRegionByParticle gate_constrain_part(gate, makeShared<MultiPolygonShape>(createGateConstrainShape()));
-	solid_dynamics::ConstrainSolidBodyRegion gate_constrain(gate, gate_constrain_part);
-	/** Update the surface normal direction of elastic gate. */
-	solid_dynamics::UpdateElasticNormalDirection gate_update_normal(gate);
-	/** Compute the average velocity of gate. */
-	solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(gate);
+	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> gate_stress_relaxation_first_half(gate_inner_relation);
+	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> gate_stress_relaxation_second_half(gate_inner_relation);
+	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> gate_computing_time_step_size(gate);
+
+	BodyRegionByParticle gate_constraint_part(gate, makeShared<MultiPolygonShape>(createGateConstrainShape()));
+	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> gate_constraint(gate_constraint_part);
+	SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> gate_update_normal(gate);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
-	/** Output body states for visualization in Tecplot. */
-	BodyStatesRecordingToPlt write_real_body_states_to_plt(in_output, system.real_bodies_);
-	/** Output body states for visualization in Paraview. */
-	BodyStatesRecordingToVtp write_real_body_states_to_vtp(in_output, system.real_bodies_);
-	/** Output the observed displacement of gate free end. */
+	BodyStatesRecordingToPlt write_real_body_states_to_plt(io_environment, system.real_bodies_);
+	BodyStatesRecordingToVtp write_real_body_states_to_vtp(io_environment, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		write_beam_tip_displacement("Position", in_output, gate_observer_contact_relation);
+		write_beam_tip_displacement("Position", io_environment, gate_observer_contact_relation);
+	//TODO: observing position is not as good observing displacement. 
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
@@ -244,8 +225,8 @@ int main()
 	//----------------------------------------------------------------------
 	int number_of_iterations = 0;
 	int screen_output_interval = 100;
-	Real End_Time = 400.0;			/**< End time. */
-	Real D_Time = End_Time / 200.0; /**< time stamps for output. */
+	Real end_time = 400.0;
+	Real output_interval = end_time / 200.0;
 	Real dt = 0.0;					/**< Default acoustic time step sizes. */
 	Real dt_s = 0.0;				/**< Default acoustic time step sizes for solid. */
 	tick_count t1 = tick_count::now();
@@ -258,11 +239,11 @@ int main()
 	//----------------------------------------------------------------------
 	//	Main loop starts here.
 	//----------------------------------------------------------------------
-	while (GlobalStaticVariables::physical_time_ < End_Time)
+	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
 		/** Integrate time (loop) until the next output time. */
-		while (integration_time < D_Time)
+		while (integration_time < output_interval)
 		{
 			/** Acceleration due to viscous force and gravity. */
 			initialize_a_fluid_step.parallel_exec();
@@ -286,7 +267,7 @@ int main()
 					if (dt - dt_s_sum < dt_s)
 						dt_s = dt - dt_s_sum;
 					gate_stress_relaxation_first_half.parallel_exec(dt_s);
-					gate_constrain.parallel_exec();
+					gate_constraint.parallel_exec();
 					gate_stress_relaxation_second_half.parallel_exec(dt_s);
 					dt_s_sum += dt_s;
 				}
@@ -306,7 +287,7 @@ int main()
 			number_of_iterations++;
 
 			/** Update cell linked list and configuration. */
-			water_block.updateCellLinkedList();
+			water_block.updateCellLinkedListWithParticleSort(100);
 			gate.updateCellLinkedList();
 			water_block_complex_relation.updateConfiguration();
 			gate_water_contact_relation.updateConfiguration();

@@ -45,37 +45,35 @@ namespace SPH
 		 * @class SelfContactDensitySummation
 		 * @brief Computing the summation density due to solid self-contact model.
 		 */
-		class SelfContactDensitySummation : public PartInteractionDynamicsByParticle, public SolidDataInner
+		class SelfContactDensitySummation : public LocalDynamics, public SolidDataInner
 		{
 		public:
 			explicit SelfContactDensitySummation(SolidBodyRelationSelfContact &self_contact_relation);
 			virtual ~SelfContactDensitySummation(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Real> self_contact_density_;
 			StdLargeVec<Real> &mass_;
 			Real offset_W_ij_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
 		 * @class ContactDensitySummation
 		 * @brief Computing the summation density due to solid-solid contact model.
 		 */
-		class ContactDensitySummation : public PartInteractionDynamicsByParticle, public ContactDynamicsData
+		class ContactDensitySummation : public LocalDynamics, public ContactDynamicsData
 		{
 		public:
 			explicit ContactDensitySummation(SolidBodyRelationContact &solid_body_contact_relation);
 			virtual ~ContactDensitySummation(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Real> contact_density_;
 			StdLargeVec<Real> &mass_;
 			StdVec<StdLargeVec<Real> *> contact_mass_;
 			StdVec<Real> offset_W_ij_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -83,11 +81,12 @@ namespace SPH
 		 * @brief Computing the contact density due to shell contact using a
 		 * 		 surface integral being solved by Gauss-Legendre quadrature integration.
 		 */
-		class ShellContactDensity : public PartInteractionDynamicsByParticle, public ContactDynamicsData
+		class ShellContactDensity : public LocalDynamics, public ContactDynamicsData
 		{
 		public:
 			explicit ShellContactDensity(SolidBodyRelationContact &solid_body_contact_relation);
 			virtual ~ShellContactDensity(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Real> contact_density_;
@@ -96,8 +95,6 @@ namespace SPH
 
 			Kernel *kernel_;
 			Real spacing_ref_, boundary_factor_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 
 			/** Abscissas and weights for Gauss-Legendre quadrature integration with n=3 nodes */
 			Real x_0 = 0.774596669241483377035853079956;
@@ -113,36 +110,34 @@ namespace SPH
 		 * @class SelfContactForce
 		 * @brief Computing the self-contact force.
 		 */
-		class SelfContactForce : public PartInteractionDynamicsByParticle, public SolidDataInner
+		class SelfContactForce : public LocalDynamics, public SolidDataInner
 		{
 		public:
 			explicit SelfContactForce(SolidBodyRelationSelfContact &self_contact_relation);
 			virtual ~SelfContactForce(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Real> &mass_, &self_contact_density_, &Vol_;
 			StdLargeVec<Vecd> &acc_prior_, &vel_;
 			Real contact_impedance_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
 		 * @class ContactForce
 		 * @brief Computing the contact force.
 		 */
-		class ContactForce : public PartInteractionDynamicsByParticle, public ContactDynamicsData
+		class ContactForce : public LocalDynamics, public ContactDynamicsData
 		{
 		public:
 			explicit ContactForce(SolidBodyRelationContact &solid_body_contact_relation);
 			virtual ~ContactForce(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Real> &contact_density_, &Vol_, &mass_;
 			StdLargeVec<Vecd> &acc_prior_;
 			StdVec<StdLargeVec<Real> *> contact_contact_density_, contact_Vol_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -151,48 +146,49 @@ namespace SPH
 		 *  Note that the body surface of the wall should be
 		 *  updated before computing the contact force.
 		 */
-		class ContactForceFromWall : public PartInteractionDynamicsByParticle, public ContactWithWallData
+		class ContactForceFromWall : public LocalDynamics, public ContactWithWallData
 		{
 		public:
 			explicit ContactForceFromWall(SolidBodyRelationContact &solid_body_contact_relation);
 			virtual ~ContactForceFromWall(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Real> &contact_density_, &Vol_, &mass_;
 			StdLargeVec<Vecd> &acc_prior_;
 			StdVec<StdLargeVec<Real> *> contact_Vol_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
 		 * @class ContactForceToWall
 		 * @brief Computing contact force acting on a rigid wall.
 		 */
-		class ContactForceToWall : public PartInteractionDynamicsByParticle, public ContactDynamicsData
+		class ContactForceToWall : public LocalDynamics, public ContactDynamicsData
 		{
 		public:
 			explicit ContactForceToWall(SolidBodyRelationContact &solid_body_contact_relation);
 			virtual ~ContactForceToWall(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Real> &Vol_, &mass_;
 			StdLargeVec<Vecd> &acc_prior_;
 			StdVec<StdLargeVec<Real> *> contact_contact_density_, contact_Vol_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
 		 * @class PairwiseFrictionFromWall
 		 * @brief Damping to wall by which the wall velocity is not updated
 		 * and the mass of wall particle is not considered.
+		 * Note that, currently, this class works only when the contact 
+		 * bodies have the same resolution.
 		 */
-		class PairwiseFrictionFromWall : public InteractionDynamicsSplitting, public ContactWithWallData
+		class PairwiseFrictionFromWall : public LocalDynamics, public ContactWithWallData
 		{
 		public:
 			PairwiseFrictionFromWall(BaseBodyRelationContact &contact_relation, Real eta);
 			virtual ~PairwiseFrictionFromWall(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			Real eta_; /**< friction coefficient */
@@ -200,8 +196,6 @@ namespace SPH
 			StdLargeVec<Vecd> &vel_;
 			StdVec<StdLargeVec<Real> *> wall_Vol_;
 			StdVec<StdLargeVec<Vecd> *> wall_vel_n_, wall_n_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -210,11 +204,12 @@ namespace SPH
 		 *  Note that the body surface of the wall should be
 		 *  updated before computing the contact force.
 		 */
-		class DynamicContactForceWithWall : public PartInteractionDynamicsByParticle, public ContactDynamicsData
+		class DynamicContactForceWithWall : public LocalDynamics, public ContactDynamicsData
 		{
 		public:
 			explicit DynamicContactForceWithWall(SolidBodyRelationContact &solid_body_contact_relation, Real penalty_strength = 1.0);
 			virtual ~DynamicContactForceWithWall(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Real> &Vol_, &mass_;
@@ -223,8 +218,6 @@ namespace SPH
 			StdVec<StdLargeVec<Vecd> *> contact_vel_n_, contact_n_;
 			Real penalty_strength_;
 			Real impedance_, reference_pressure_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 	}
 }

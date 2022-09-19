@@ -19,7 +19,6 @@ BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 //----------------------------------------------------------------------
 Real rho0_f = 1.0;								  /**< Reference density of water. */
 Real rho0_a = 1.0e-3;							  /**< Reference density of air. */
-Real gravity_g = 0.0;							  /**< Gravity force of fluid. */
 Real U_max = 1.0;								  /**< Characteristic velocity. */
 Real c_f = 10.0 * U_max;						  /**< Reference sound speed. */
 Real mu_f = 5.0e-2;								  /**< Water viscosity. */

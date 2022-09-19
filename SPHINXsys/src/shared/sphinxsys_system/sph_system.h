@@ -37,7 +37,7 @@ namespace SPH
 	 * @brief Pre-claimed classes.
 	 */
 	class SPHBody;
-	class InOutput;
+	class IOEnvironment;
 	class ComplexShape;
 	/**
 	 * @class SPHSystem
@@ -54,7 +54,7 @@ namespace SPH
 		Real resolution_ref_;					 /**< reference resolution of the SPH system */
 		tbb::global_control tbb_global_control_; /**< global controlling on the total number parallel threads */
 
-		InOutput *in_output_;			/**< in_output setup */
+		IOEnvironment *io_environment_;			/**< io_environment setup */
 		size_t restart_step_;			/**< restart step */
 		bool run_particle_relaxation_;	/**< run particle relaxation for body fitted particle distribution */
 		bool reload_particles_;			/**< start the simulation with relaxed particles. */

@@ -22,7 +22,7 @@ namespace SPH
 				BaseBodyRelationContact &wall_contact_relation) :
 			BaseRelaxationType(base_body_relation), WCFluidWallData(wall_contact_relation)
 		{
-			if (base_body_relation.sph_body_ != wall_contact_relation.sph_body_)
+			if (&base_body_relation.sph_body_ != &wall_contact_relation.sph_body_)
 			{
 				std::cout << "\n Error: the two body_relations do not have the same source body!" << std::endl;
 				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
@@ -49,9 +49,9 @@ namespace SPH
 			: RelaxationWithWall<BaseViscousAccelerationType>(base_body_relation, wall_contact_relation) {}
 		//=================================================================================================//
 		template <class BaseViscousAccelerationType>
-		void ViscousWithWall<BaseViscousAccelerationType>::Interaction(size_t index_i, Real dt)
+		void ViscousWithWall<BaseViscousAccelerationType>::interaction(size_t index_i, Real dt)
 		{
-			BaseViscousAccelerationType::Interaction(index_i, dt);
+			BaseViscousAccelerationType::interaction(index_i, dt);
 
 			Real rho_i = this->rho_[index_i];
 			const Vecd &vel_i = this->vel_[index_i];
@@ -101,9 +101,9 @@ namespace SPH
 			: RelaxationWithWall<BasePressureRelaxationType>(base_body_relation, wall_contact_relation) {}
 		//=================================================================================================//
 		template <class BasePressureRelaxationType>
-		void PressureRelaxation<BasePressureRelaxationType>::Interaction(size_t index_i, Real dt)
+		void PressureRelaxation<BasePressureRelaxationType>::interaction(size_t index_i, Real dt)
 		{
-			BasePressureRelaxationType::Interaction(index_i, dt);
+			BasePressureRelaxationType::interaction(index_i, dt);
 
 			FluidState state_i(this->rho_[index_i], this->vel_[index_i], this->p_[index_i]);
 
@@ -163,9 +163,9 @@ namespace SPH
 			: RelaxationWithWall<BaseDensityAndEnergyRelaxationType>(base_body_relation, wall_contact_relation) {}
 		//=================================================================================================//
 		template <class BaseDensityAndEnergyRelaxationType>
-		void DensityAndEnergyRelaxation<BaseDensityAndEnergyRelaxationType>::Interaction(size_t index_i, Real dt)
+		void DensityAndEnergyRelaxation<BaseDensityAndEnergyRelaxationType>::interaction(size_t index_i, Real dt)
 		{
-			BaseDensityAndEnergyRelaxationType::Interaction(index_i, dt);
+			BaseDensityAndEnergyRelaxationType::interaction(index_i, dt);
 
 			FluidState state_i(this->rho_[index_i], this->vel_[index_i], this->p_[index_i]);
 			Real density_change_rate = 0.0;

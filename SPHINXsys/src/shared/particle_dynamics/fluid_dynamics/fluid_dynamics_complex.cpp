@@ -41,9 +41,9 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		void TransportVelocityCorrectionComplex::Interaction(size_t index_i, Real dt)
+		void TransportVelocityCorrectionComplex::interaction(size_t index_i, Real dt)
 		{
-			TransportVelocityCorrectionInner::Interaction(index_i, dt);
+			TransportVelocityCorrectionInner::interaction(index_i, dt);
 
 			Real rho_i = rho_[index_i];
 
@@ -57,7 +57,7 @@ namespace SPH
 					size_t index_j = contact_neighborhood.j_[n];
 					Vecd nablaW_ij = contact_neighborhood.dW_ij_[n] * contact_neighborhood.e_ij_[n];
 
-					//acceleration for transport velocity
+					// acceleration for transport velocity
 					acceleration_trans -= 2.0 * p_background_ * Vol_k[index_j] * nablaW_ij / rho_i;
 				}
 			}
@@ -67,9 +67,9 @@ namespace SPH
 				pos_[index_i] += acceleration_trans * dt * dt * 0.5;
 		}
 		//=================================================================================================//
-		void PressureRelaxationWithWallOldroyd_B::Interaction(size_t index_i, Real dt)
+		void PressureRelaxationWithWallOldroyd_B::interaction(size_t index_i, Real dt)
 		{
-			PressureRelaxation<PressureRelaxationInnerOldroyd_B>::Interaction(index_i, dt);
+			PressureRelaxation<PressureRelaxationInnerOldroyd_B>::interaction(index_i, dt);
 
 			Real rho_i = rho_[index_i];
 			Matd tau_i = tau_[index_i];
@@ -91,9 +91,9 @@ namespace SPH
 			acc_[index_i] += acceleration;
 		}
 		//=================================================================================================//
-		void DensityRelaxationWithWallOldroyd_B::Interaction(size_t index_i, Real dt)
+		void DensityRelaxationWithWallOldroyd_B::interaction(size_t index_i, Real dt)
 		{
-			DensityRelaxation<DensityRelaxationInnerOldroyd_B>::Interaction(index_i, dt);
+			DensityRelaxation<DensityRelaxationInnerOldroyd_B>::interaction(index_i, dt);
 
 			Vecd vel_i = vel_[index_i];
 			Matd tau_i = tau_[index_i];

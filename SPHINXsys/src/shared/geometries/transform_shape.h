@@ -33,14 +33,14 @@ namespace SPH
         Transformd &getTransform() { return transformd_; };
         void setTransform(const Transformd &transformd) { transformd_ = transformd; };
 
-        virtual bool checkContain(const Vecd &input_pnt, bool BOUNDARY_INCLUDED = true) override
+        virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override
         {
-            Vecd input_pnt_origin = transformd_.shiftBaseStationToFrame(input_pnt);
+            Vecd input_pnt_origin = transformd_.shiftBaseStationToFrame(probe_point);
             return BaseShapeType::checkContain(input_pnt_origin);
         };
-        virtual Vecd findClosestPoint(const Vecd &input_pnt) override
+        virtual Vecd findClosestPoint(const Vecd &probe_point) override
         {
-            Vecd input_pnt_origin = transformd_.shiftBaseStationToFrame(input_pnt);
+            Vecd input_pnt_origin = transformd_.shiftBaseStationToFrame(probe_point);
             Vecd closest_point_origin = BaseShapeType::findClosestPoint(input_pnt_origin);
             return transformd_.shiftFrameStationToBase(closest_point_origin);
         };

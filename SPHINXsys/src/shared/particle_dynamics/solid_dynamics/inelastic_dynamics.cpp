@@ -20,7 +20,7 @@ namespace SPH
 			numerical_dissipation_factor_ = 0.5;
 		}
 		//=================================================================================================//
-		void PlasticStressRelaxationFirstHalf::Initialization(size_t index_i, Real dt)
+		void PlasticStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
 		{
 			pos_[index_i] += vel_[index_i] * dt * 0.5;
 			F_[index_i] += dF_dt_[index_i] * dt * 0.5;

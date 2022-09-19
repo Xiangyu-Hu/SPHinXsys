@@ -16,10 +16,9 @@ namespace SPH
 	//=================================================================================================//
 	BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
 		: rho0_(base_material->ReferenceDensity()),
-		  sigma0_(sph_body.sph_adaptation_->ReferenceNumberDensity()),
-		  speed_max_(0.0), signal_speed_max_(0.0),
+		  sigma0_(sph_body.sph_adaptation_->ReferenceNumberDensity()), speed_max_(0.0), 
 		  total_real_particles_(0), real_particles_bound_(0), total_ghost_particles_(0),
-		  sph_body_(&sph_body), body_name_(sph_body.getBodyName()),
+		  sph_body_(sph_body), body_name_(sph_body.getName()),
 		  restart_xml_engine_("xml_restart", "particles"),
 		  reload_xml_engine_("xml_particle_reload", "particles")
 	{
@@ -191,7 +190,7 @@ namespace SPH
 		output_file << "\n";
 
 		//compute derived particle variables
-		for (ParticleDynamics<void> *derived_variable : derived_variables_)
+		for (auto &derived_variable : derived_variables_)
 		{
 			derived_variable->parallel_exec();
 		}

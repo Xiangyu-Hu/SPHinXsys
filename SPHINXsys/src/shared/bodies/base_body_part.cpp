@@ -16,6 +16,16 @@ namespace SPH
 			tagging_particle_method(i);
 		}
 	};
+    //=============================================================================================//
+    size_t BodyPartByCell::SizeOfLoopRange()
+    {
+        size_t size_of_loop_range = 0;
+        for (size_t i = 0; i != body_part_cells_.size(); ++i)
+        {
+            size_of_loop_range += body_part_cells_[i]->real_particle_indexes_.size();
+        }
+        return size_of_loop_range;
+    };
 	//=================================================================================================//
 	void BodyPartByCell::tagCells(TaggingCellMethod &tagging_cell_method)
 	{
@@ -50,7 +60,7 @@ namespace SPH
 	//=================================================================================================//
 	void BodySurface::tagNearSurface(size_t particle_index)
 	{
-		Real phi = sph_body_->body_shape_->findSignedDistance(base_particles_->pos_[particle_index]);
+		Real phi = sph_body_.body_shape_->findSignedDistance(base_particles_->pos_[particle_index]);
 		if (fabs(phi) < particle_spacing_min_)
 			body_part_particles_.push_back(particle_index);
 	}
@@ -66,7 +76,7 @@ namespace SPH
 	//=================================================================================================//
 	void BodySurfaceLayer::tagSurfaceLayer(size_t particle_index)
 	{
-		Real distance = fabs(sph_body_->body_shape_->findSignedDistance(base_particles_->pos_[particle_index]));
+		Real distance = fabs(sph_body_.body_shape_->findSignedDistance(base_particles_->pos_[particle_index]));
 		if (distance < thickness_threshold_)
 		{
 			body_part_particles_.push_back(particle_index);
@@ -89,7 +99,7 @@ namespace SPH
 	NearShapeSurface::
 		NearShapeSurface(RealBody &real_body, SharedPtr<Shape> shape_ptr)
 		: BodyPartByCell(real_body, shape_ptr->getName()),
-		  level_set_shape_(level_set_shape_keeper_.createRef<LevelSetShape>(&real_body, *shape_ptr.get(), true))
+		  level_set_shape_(level_set_shape_keeper_.createRef<LevelSetShape>(real_body, *shape_ptr.get(), true))
 	{
 		TaggingCellMethod tagging_cell_method = std::bind(&NearShapeSurface::checkNearSurface, this, _1, _2);
 		tagCells(tagging_cell_method);
