@@ -113,6 +113,11 @@ namespace SPH
 			shapes_and_ops_.push_back(shape_and_op);
 		};
 
+		void add(Shape& shape)
+		{
+			shapes_and_ops_.push_back({&shape, ShapeBooleanOps::add});
+		}
+
 		template <class ShapeType, typename... Args>
 		void subtract(Args &&...args)
 		{
@@ -120,6 +125,11 @@ namespace SPH
 			ShapeAndOp shape_and_op(shape, ShapeBooleanOps::sub);
 			shapes_and_ops_.push_back(shape_and_op);
 		};
+
+		void subtract(Shape& shape)
+		{
+			shapes_and_ops_.push_back({&shape, ShapeBooleanOps::sub});
+		}
 
 		virtual bool isValid() override;
 		virtual bool checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED = true) override;
