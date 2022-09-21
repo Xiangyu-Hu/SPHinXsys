@@ -195,7 +195,7 @@ int main()
 	//	Create body, materials and particles.
 	//----------------------------------------------------------------------
 	SolidBody diffusion_body(sph_system, makeShared<MultiPolygonShape>(createDiffusionDomain(), "DiffusionBody"));
-	diffusion_body.defineParticlesAndMaterial<DiffusionReactionParticles<SolidParticles>, DiffusionMaterial>();
+	diffusion_body.defineParticlesAndMaterial<DiffusionReactionParticles<SolidParticles, Solid>, DiffusionMaterial>();
 	diffusion_body.generateParticles<ParticleGeneratorLattice>();
 	//----------------------------------------------------------------------
 	//	Observer body

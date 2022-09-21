@@ -123,7 +123,7 @@ namespace SPH
 	 * @brief A group of particles with electrophysiology particle data.
 	 */
 	class ElectroPhysiologyParticles
-		: public DiffusionReactionParticles<SolidParticles>
+		: public DiffusionReactionParticles<SolidParticles, Solid>
 	{
 	public:
 		ElectroPhysiologyParticles(SPHBody &sph_body, DiffusionReaction<Solid> *diffusion_reaction_material);
@@ -135,7 +135,7 @@ namespace SPH
 	 * @brief A group of reduced particles with electrophysiology particle data.
 	 */
 	class ElectroPhysiologyReducedParticles
-		: public DiffusionReactionParticles<SolidParticles>
+		: public DiffusionReactionParticles<SolidParticles, Solid>
 	{
 	public:
 		/** Constructor. */

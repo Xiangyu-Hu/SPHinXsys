@@ -94,10 +94,10 @@ namespace SPH
 	//=================================================================================================//
 	ElectroPhysiologyParticles::ElectroPhysiologyParticles(
 		SPHBody &sph_body, DiffusionReaction<Solid> *diffusion_reaction_material)
-		: DiffusionReactionParticles<SolidParticles>(sph_body, diffusion_reaction_material) {}
+		: DiffusionReactionParticles<SolidParticles, Solid>(sph_body, diffusion_reaction_material) {}
 	//=================================================================================================//
 	ElectroPhysiologyReducedParticles::ElectroPhysiologyReducedParticles(
 		SPHBody &sph_body, DiffusionReaction<Solid> *diffusion_reaction_material)
-		: DiffusionReactionParticles<SolidParticles>(sph_body, diffusion_reaction_material) {}
+		: DiffusionReactionParticles<SolidParticles, Solid>(sph_body, diffusion_reaction_material) {}
 	//=================================================================================================//
 }

@@ -56,6 +56,7 @@ namespace SPH
 		StdLargeVec<Vecd> n_;	 /**< normal direction */
 		StdLargeVec<Vecd> n0_;	 /**< initial normal direction */
 		StdLargeVec<Matd> B_;	 /**< configuration correction for linear reproducing */
+		Solid &solid_;
 
 		/** Get the kernel gradient in weak form. */
 		virtual Vecd getKernelGradient(size_t index_i, size_t index_j, Real dW_ij, Vecd &e_ij) override;
@@ -137,7 +138,7 @@ namespace SPH
 		virtual ElasticSolidParticles *ThisObjectPtr() override { return this; };
 
 	protected:
-		ElasticSolid *elastic_solid_;
+		ElasticSolid &elastic_solid_;
 	};
 
 	/**

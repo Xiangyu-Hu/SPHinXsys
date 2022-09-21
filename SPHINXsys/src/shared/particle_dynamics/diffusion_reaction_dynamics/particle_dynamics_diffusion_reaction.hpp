@@ -77,7 +77,7 @@ namespace SPH
 	void RelaxationOfAllDiffusionSpeciesInner<BodyType, BaseParticlesType, BaseMaterialType>::
 		interaction(size_t index_i, Real dt)
 	{
-		DiffusionReactionParticles<BaseParticlesType> *particles = this->particles_;
+		DiffusionReactionParticles<BaseParticlesType, BaseMaterialType> *particles = this->particles_;
 		Neighborhood &inner_neighborhood = this->inner_configuration_[index_i];
 
 		initializeDiffusionChangeRate(index_i);
@@ -143,7 +143,7 @@ namespace SPH
 		interaction(size_t index_i, Real dt)
 	{
 		RelaxationOfAllDiffusionSpeciesInner<BodyType, BaseParticlesType, BaseMaterialType>::interaction(index_i, dt);
-		DiffusionReactionParticles<BaseParticlesType> *particles = this->particles_;
+		DiffusionReactionParticles<BaseParticlesType, BaseMaterialType> *particles = this->particles_;
 
 		for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 		{

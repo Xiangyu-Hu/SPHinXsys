@@ -39,22 +39,22 @@ namespace SPH
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
 	using DiffusionReactionSimpleData =
 		DataDelegateSimple<BodyType,
-						   DiffusionReactionParticles<BaseParticlesType>,
+						   DiffusionReactionParticles<BaseParticlesType, BaseMaterialType>,
 						   DiffusionReaction<BaseMaterialType>>;
 
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
 	using DiffusionReactionInnerData =
 		DataDelegateInner<BodyType,
-						  DiffusionReactionParticles<BaseParticlesType>,
+						  DiffusionReactionParticles<BaseParticlesType, BaseMaterialType>,
 						  DiffusionReaction<BaseMaterialType>>;
 
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType,
 			  class ContactBodyType, class ContactBaseParticlesType, class ContactBaseMaterialType>
 	using DiffusionReactionContactData =
 		DataDelegateContact<BodyType,
-							DiffusionReactionParticles<BaseParticlesType>,
+							DiffusionReactionParticles<BaseParticlesType, BaseMaterialType>,
 							DiffusionReaction<BaseMaterialType>,
-							ContactBodyType, DiffusionReactionParticles<ContactBaseParticlesType>,
+							ContactBodyType, DiffusionReactionParticles<ContactBaseParticlesType, ContactBaseMaterialType>,
 							DiffusionReaction<ContactBaseMaterialType>, DataDelegateEmptyBase>;
 
 	/**

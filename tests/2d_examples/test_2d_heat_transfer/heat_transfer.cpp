@@ -226,11 +226,11 @@ int main()
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	FluidBody thermofluid_body(system, makeShared<ThermofluidBody>("ThermofluidBody"));
-	thermofluid_body.defineParticlesAndMaterial<DiffusionReactionParticles<FluidParticles>, ThermofluidBodyMaterial>();
+	thermofluid_body.defineParticlesAndMaterial<DiffusionReactionParticles<FluidParticles, WeaklyCompressibleFluid>, ThermofluidBodyMaterial>();
 	thermofluid_body.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody thermosolid_body(system, makeShared<ThermosolidBody>("ThermosolidBody"));
-	thermosolid_body.defineParticlesAndMaterial<DiffusionReactionParticles<SolidParticles>, ThermosolidBodyMaterial>();
+	thermosolid_body.defineParticlesAndMaterial<DiffusionReactionParticles<SolidParticles, Solid>, ThermosolidBodyMaterial>();
 	thermosolid_body.generateParticles<ParticleGeneratorLattice>();
 
 	ObserverBody temperature_observer(system, "FluidObserver");
