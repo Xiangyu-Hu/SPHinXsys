@@ -43,11 +43,11 @@ namespace SPH
 
 	namespace relax_dynamics
 	{
-		typedef DataDelegateSimple<SPHBody, BaseParticles> RelaxDataDelegateSimple;
+		typedef DataDelegateSimple<BaseParticles> RelaxDataDelegateSimple;
 
-		typedef DataDelegateInner<SPHBody, BaseParticles> RelaxDataDelegateInner;
+		typedef DataDelegateInner<BaseParticles> RelaxDataDelegateInner;
 
-		typedef DataDelegateComplex<SPHBody, BaseParticles, BaseMaterial, SPHBody, BaseParticles> RelaxDataDelegateComplex;
+		typedef DataDelegateComplex<BaseParticles, BaseParticles> RelaxDataDelegateComplex;
 
 		/**
 		 * @class GetTimeStepSizeSquare

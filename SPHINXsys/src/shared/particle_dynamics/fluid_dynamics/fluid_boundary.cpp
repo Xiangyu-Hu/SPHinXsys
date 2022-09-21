@@ -137,11 +137,12 @@ namespace SPH
 		//=================================================================================================//
 		StaticConfinementPressureRelaxation::StaticConfinementPressureRelaxation(NearShapeSurface &near_surface)
 			: LocalDynamics(near_surface.getSPHBody()), FluidDataSimple(sph_body_),
+			  fluid_(particles_->fluid_),
 			  rho_(particles_->rho_), p_(particles_->p_),
 			  pos_(particles_->pos_), vel_(particles_->vel_),
 			  acc_(particles_->acc_),
 			  level_set_shape_(&near_surface.level_set_shape_),
-			  riemann_solver_(*material_, *material_) {}
+			  riemann_solver_(fluid_, fluid_) {}
 		//=================================================================================================//
 		void StaticConfinementPressureRelaxation::update(size_t index_i, Real dt)
 		{
@@ -159,10 +160,11 @@ namespace SPH
 		//=================================================================================================//
 		StaticConfinementDensityRelaxation::StaticConfinementDensityRelaxation(NearShapeSurface &near_surface)
 			: LocalDynamics(near_surface.getSPHBody()), FluidDataSimple(sph_body_),
+			  fluid_(particles_->fluid_),
 			  rho_(particles_->rho_), p_(particles_->p_), drho_dt_(particles_->drho_dt_),
 			  pos_(particles_->pos_), vel_(particles_->vel_),
 			  level_set_shape_(&near_surface.level_set_shape_),
-			  riemann_solver_(*material_, *material_) {}
+			  riemann_solver_(fluid_, fluid_) {}
 		//=================================================================================================//
 		void StaticConfinementDensityRelaxation::update(size_t index_i, Real dt)
 		{

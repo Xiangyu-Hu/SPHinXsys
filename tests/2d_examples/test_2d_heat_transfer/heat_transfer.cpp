@@ -120,14 +120,14 @@ public:
 //	Application dependent solid body initial condition
 //----------------------------------------------------------------------
 class ThermosolidBodyInitialCondition
-	: public DiffusionReactionInitialCondition<SolidBody, SolidParticles, Solid>
+	: public DiffusionReactionInitialCondition<SolidParticles, Solid>
 {
 protected:
 	size_t phi_;
 
 public:
 	explicit ThermosolidBodyInitialCondition(SPHBody &sph_body)
-		: DiffusionReactionInitialCondition<SolidBody, SolidParticles, Solid>(sph_body)
+		: DiffusionReactionInitialCondition<SolidParticles, Solid>(sph_body)
 	{
 		phi_ = particles_->diffusion_reaction_material_.SpeciesIndexMap()["Phi"];
 	};
@@ -149,14 +149,14 @@ public:
 //	Application dependent fluid body initial condition
 //----------------------------------------------------------------------
 class ThermofluidBodyInitialCondition
-	: public DiffusionReactionInitialCondition<FluidBody, FluidParticles, WeaklyCompressibleFluid>
+	: public DiffusionReactionInitialCondition<FluidParticles, WeaklyCompressibleFluid>
 {
 protected:
 	size_t phi_;
 
 public:
 	explicit ThermofluidBodyInitialCondition(SPHBody &sph_body)
-		: DiffusionReactionInitialCondition<FluidBody, FluidParticles, WeaklyCompressibleFluid>(sph_body)
+		: DiffusionReactionInitialCondition<FluidParticles, WeaklyCompressibleFluid>(sph_body)
 	{
 		phi_ = particles_->diffusion_reaction_material_.SpeciesIndexMap()["Phi"];
 	};
@@ -175,7 +175,7 @@ public:
 class ThermalRelaxationComplex
 	: public RelaxationOfAllDiffusionSpeciesRK2<
 		  RelaxationOfAllDiffusionSpeciesComplex<
-			  FluidBody, FluidParticles, WeaklyCompressibleFluid, SolidBody, SolidParticles, Solid>>
+			  FluidParticles, WeaklyCompressibleFluid, SolidParticles, Solid>>
 {
 public:
 	explicit ThermalRelaxationComplex(ComplexBodyRelation &body_complex_relation)
@@ -262,7 +262,7 @@ int main()
 	/** Time step size with considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step(thermofluid_body);
 	/** Time step size calculation. */
-	GetDiffusionTimeStepSize<FluidBody, FluidParticles, WeaklyCompressibleFluid> get_thermal_time_step(thermofluid_body);
+	GetDiffusionTimeStepSize<FluidParticles, WeaklyCompressibleFluid> get_thermal_time_step(thermofluid_body);
 	/** Diffusion process between two diffusion bodies. */
 	ThermalRelaxationComplex thermal_relaxation_complex(fluid_body_complex);
 	/** Pressure relaxation using verlet time stepping. */

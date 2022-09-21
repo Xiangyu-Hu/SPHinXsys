@@ -42,8 +42,8 @@ namespace SPH
 {
 	namespace eulerian_weakly_compressible_fluid_dynamics
 	{
-		typedef DataDelegateSimple<EulerianFluidBody, WeaklyCompressibleFluidParticles, Fluid> EulerianWeaklyCompressibleFluidDataSimple;
-		typedef DataDelegateInner<EulerianFluidBody, WeaklyCompressibleFluidParticles, Fluid> EulerianWeaklyCompressibleFluidDataInner;
+		typedef DataDelegateSimple<WeaklyCompressibleFluidParticles> EulerianWeaklyCompressibleFluidDataSimple;
+		typedef DataDelegateInner<WeaklyCompressibleFluidParticles> EulerianWeaklyCompressibleFluidDataInner;
 
 		class EulerianFlowTimeStepInitialization
 			: public BaseTimeStepInitialization,

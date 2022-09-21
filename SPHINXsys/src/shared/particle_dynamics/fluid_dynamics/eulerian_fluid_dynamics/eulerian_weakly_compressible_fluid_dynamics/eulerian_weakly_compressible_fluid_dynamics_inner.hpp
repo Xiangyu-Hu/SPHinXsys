@@ -48,7 +48,7 @@ namespace SPH
 		BaseDensityAndEnergyRelaxationInner<RiemannSolverType>::
 			BaseDensityAndEnergyRelaxationInner(BaseBodyRelationInner &inner_relation) :
 			BaseDensityAndEnergyRelaxation(inner_relation),
-			riemann_solver_(*material_, *material_) {}
+			riemann_solver_(fluid_, fluid_) {}
 		//=================================================================================================//
 		template<class RiemannSolverType>
 		void BaseDensityAndEnergyRelaxationInner<RiemannSolverType>::interaction(size_t index_i, Real dt)

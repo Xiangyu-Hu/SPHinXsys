@@ -216,6 +216,7 @@ namespace SPH
             void update(size_t index_i, Real dt = 0.0);
 
         protected:
+            Fluid &fluid_;
             StdLargeVec<Real> &rho_, &p_;
             StdLargeVec<Vecd> &pos_, &vel_, &acc_;
             LevelSetShape *level_set_shape_;
@@ -234,6 +235,7 @@ namespace SPH
             void update(size_t index_i, Real dt = 0.0);
 
         protected:
+            Fluid &fluid_;
             StdLargeVec<Real> &rho_, &p_, &drho_dt_;
             StdLargeVec<Vecd> &pos_, &vel_;
             LevelSetShape *level_set_shape_;

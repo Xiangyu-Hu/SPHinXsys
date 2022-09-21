@@ -40,7 +40,7 @@ namespace SPH
 	//----------------------------------------------------------------------
 	//		for general solid dynamics variables
 	//----------------------------------------------------------------------
-	typedef DataDelegateSimple<RealBody, SolidParticles, Solid> SolidDataSimple;
+	typedef DataDelegateSimple<SolidParticles> SolidDataSimple;
 
 	/**
 	 * @class Displacement
@@ -128,7 +128,7 @@ namespace SPH
 	//----------------------------------------------------------------------
 	//		for general elastic solid dynamics variables
 	//----------------------------------------------------------------------
-	typedef DataDelegateSimple<RealBody, ElasticSolidParticles, ElasticSolid> ElasticSolidDataSimple;
+	typedef DataDelegateSimple<ElasticSolidParticles> ElasticSolidDataSimple;
 
 	class GreenLagrangeStrain : public BaseDerivedVariable<Matd>,
 								public ElasticSolidDataSimple,

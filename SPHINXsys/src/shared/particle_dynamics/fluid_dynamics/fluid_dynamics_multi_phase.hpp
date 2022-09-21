@@ -29,6 +29,7 @@ namespace SPH
 
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
+				contact_fluids_.push_back(&contact_particles_[k]->fluid_);
 				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
 				contact_p_.push_back(&(contact_particles_[k]->p_));
 				contact_rho_n_.push_back(&(contact_particles_[k]->rho_));
@@ -45,7 +46,7 @@ namespace SPH
 		{
 			for (size_t k = 0; k != this->contact_particles_.size(); ++k)
 			{
-				riemann_solvers_.push_back(CurrentRiemannSolver(*this->material_, *this->contact_material_[k]));
+				riemann_solvers_.push_back(CurrentRiemannSolver(this->fluid_, *this->contact_fluids_[k]));
 			}
 		}
 		//=================================================================================================//
@@ -121,7 +122,7 @@ namespace SPH
 			{
 				for (size_t k = 0; k != this->contact_particles_.size(); ++k)
 				{
-					riemann_solvers_.push_back(CurrentRiemannSolver(*this->material_, *this->contact_material_[k]));
+					riemann_solvers_.push_back(CurrentRiemannSolver(this->fluid_, *this->contact_fluids_[k]));
 				}
 			}
  		//=================================================================================================//

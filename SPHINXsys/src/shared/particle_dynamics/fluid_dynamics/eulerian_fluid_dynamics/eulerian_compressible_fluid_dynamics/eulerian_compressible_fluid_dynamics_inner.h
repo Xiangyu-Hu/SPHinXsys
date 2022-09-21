@@ -42,8 +42,8 @@ namespace SPH
 {
 	namespace eulerian_compressible_fluid_dynamics
 	{
-		typedef DataDelegateSimple<EulerianFluidBody, CompressibleFluidParticles, CompressibleFluid> CompressibleFluidDataSimple;
-		typedef DataDelegateInner<EulerianFluidBody, CompressibleFluidParticles, CompressibleFluid> CompressibleFluidDataInner;
+		typedef DataDelegateSimple<CompressibleFluidParticles> CompressibleFluidDataSimple;
+		typedef DataDelegateInner<CompressibleFluidParticles> CompressibleFluidDataInner;
 
 		class CompressibleFlowTimeStepInitialization : public BaseTimeStepInitialization, public CompressibleFluidDataSimple
 		{
@@ -124,6 +124,7 @@ namespace SPH
 			virtual ~BaseRelaxation(){};
 
 		protected:
+			CompressibleFluid &compressible_fluid_;
 			StdLargeVec<Real> &Vol_, &rho_, &p_, &drho_dt_, &E_, &dE_dt_, &dE_dt_prior_;
 			StdLargeVec<Vecd> &vel_, &mom_, &dmom_dt_, &dmom_dt_prior_;
 		};
@@ -139,9 +140,6 @@ namespace SPH
 			virtual ~BasePressureRelaxation(){};
 			void initialization(size_t index_i, Real dt = 0.0);
 			void update(size_t index_i, Real dt = 0.0);
-
-		protected:
-			CompressibleFluid &compressible_fluid_;
 		};
 
 		/**

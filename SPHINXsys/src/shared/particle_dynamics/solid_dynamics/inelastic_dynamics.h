@@ -49,7 +49,7 @@ namespace SPH
 			void initialization(size_t index_i, Real dt = 0.0);
 
 		protected:
-			PlasticSolid *plastic_solid_;
+			PlasticSolid &plastic_solid_;
 		};
 	}
 }

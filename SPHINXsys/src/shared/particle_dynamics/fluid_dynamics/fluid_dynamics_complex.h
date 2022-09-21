@@ -40,15 +40,11 @@ namespace SPH
 {
 	namespace fluid_dynamics
 	{
-		typedef DataDelegateContact<FluidBody, FluidParticles, Fluid,
-									SolidBody, SolidParticles, Solid, DataDelegateEmptyBase>
+		typedef DataDelegateContact<FluidParticles, SolidParticles, DataDelegateEmptyBase>
 			FluidWallData;
-		typedef DataDelegateContact<FluidBody, FluidParticles, Fluid,
-									SPHBody, BaseParticles, BaseMaterial, DataDelegateEmptyBase>
+		typedef DataDelegateContact<FluidParticles, BaseParticles, DataDelegateEmptyBase>
 			FluidContactData;
-		typedef DataDelegateContact<FluidBody, FluidParticles, Fluid,
-									SolidBody, SolidParticles, Solid>
-			FSIContactData;
+		typedef DataDelegateContact<FluidParticles, SolidParticles> FSIContactData;
 		/**
 		 * @class RelaxationWithWall
 		 * @brief Abstract base class for general relaxation algorithms with wall

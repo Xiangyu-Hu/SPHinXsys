@@ -41,8 +41,8 @@ namespace SPH
 {
 	namespace thin_structure_dynamics
 	{
-		typedef DataDelegateSimple<SolidBody, ShellParticles, ElasticSolid> ShellDataSimple;
-		typedef DataDelegateInner<SolidBody, ShellParticles, ElasticSolid> ShellDataInner;
+		typedef DataDelegateSimple<ShellParticles> ShellDataSimple;
+		typedef DataDelegateInner<ShellParticles> ShellDataInner;
 
 		/**
 		 * @class ShellDynamicsInitialCondition

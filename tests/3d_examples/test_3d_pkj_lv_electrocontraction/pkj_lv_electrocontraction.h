@@ -109,7 +109,7 @@ public:
 /** Set diffusion relaxation. */
 class DiffusionRelaxation
 	: public RelaxationOfAllDiffusionSpeciesRK2<
-		  RelaxationOfAllDiffusionSpeciesInner<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>>
+		  RelaxationOfAllDiffusionSpeciesInner<ElasticSolidParticles, LocallyOrthotropicMuscle>>
 {
 public:
 	explicit DiffusionRelaxation(BodyRelationInner &body_inner_relation)
@@ -118,11 +118,11 @@ public:
 };
 /** Imposing diffusion boundary condition */
 class DiffusionBCs
-	: public DiffusionReactionSpeciesConstraint<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>
+	: public DiffusionReactionSpeciesConstraint<ElasticSolidParticles, LocallyOrthotropicMuscle>
 {
 public:
 	DiffusionBCs(BodyPartByParticle &body_part, const std::string &species_name)
-		: DiffusionReactionSpeciesConstraint<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>(body_part, species_name),
+		: DiffusionReactionSpeciesConstraint<ElasticSolidParticles, LocallyOrthotropicMuscle>(body_part, species_name),
 		  pos_(particles_->pos_){};
 	virtual ~DiffusionBCs(){};
 
@@ -151,7 +151,7 @@ protected:
 
 /** Compute Fiber and Sheet direction after diffusion */
 class ComputeFiberAndSheetDirections
-	: public DiffusionBasedMapping<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>
+	: public DiffusionBasedMapping<ElasticSolidParticles, LocallyOrthotropicMuscle>
 {
 protected:
 	DiffusionReaction<LocallyOrthotropicMuscle> &diffusion_reaction_material_;
@@ -162,7 +162,7 @@ protected:
 
 public:
 	explicit ComputeFiberAndSheetDirections(SPHBody &sph_body)
-		: DiffusionBasedMapping<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>(sph_body),
+		: DiffusionBasedMapping<ElasticSolidParticles, LocallyOrthotropicMuscle>(sph_body),
 		  diffusion_reaction_material_(particles_->diffusion_reaction_material_)
 
 	{

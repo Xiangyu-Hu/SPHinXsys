@@ -386,7 +386,7 @@ namespace SPH
 	DampingPairwiseFromWall<VariableType>::
 		DampingPairwiseFromWall(BaseBodyRelationContact &contact_relation, const std::string &variable_name, Real eta)
 		: LocalDynamics(contact_relation.sph_body_),
-		  DataDelegateContact<SPHBody, BaseParticles, BaseMaterial, SolidBody, SolidParticles, Solid>(contact_relation),
+		  DataDelegateContact<BaseParticles, SolidParticles>(contact_relation),
 		  eta_(eta), Vol_(particles_->Vol_), mass_(particles_->mass_),
 		  variable_(*particles_->getVariableByName<VariableType>(variable_name))
 	{

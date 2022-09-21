@@ -39,9 +39,7 @@ namespace SPH
 {
 	namespace observer_dynamics //TODO: this namespace seems not necessary, these dynamics seems belong to general dynamics
 	{
-		typedef DataDelegateContact<SPHBody, BaseParticles, BaseMaterial,
-									SPHBody, BaseParticles, BaseMaterial>
-			InterpolationContactData;
+		typedef DataDelegateContact<BaseParticles, BaseParticles> InterpolationContactData;
 
 		/**
 		 * @class BaseInterpolation

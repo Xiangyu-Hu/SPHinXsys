@@ -38,10 +38,9 @@
 
 namespace SPH
 {
-	typedef DataDelegateSimple<SPHBody, BaseParticles, BaseMaterial> GeneralDataDelegateSimple;
-	typedef DataDelegateInner<SPHBody, BaseParticles, BaseMaterial> GeneralDataDelegateInner;
-	typedef DataDelegateContact<SPHBody, BaseParticles, BaseMaterial,
-								SPHBody, BaseParticles, BaseMaterial, DataDelegateEmptyBase>
+	typedef DataDelegateSimple<BaseParticles> GeneralDataDelegateSimple;
+	typedef DataDelegateInner<BaseParticles> GeneralDataDelegateInner;
+	typedef DataDelegateContact<BaseParticles, BaseParticles, DataDelegateEmptyBase>
 		GeneralDataDelegateContact;
 
 	/**

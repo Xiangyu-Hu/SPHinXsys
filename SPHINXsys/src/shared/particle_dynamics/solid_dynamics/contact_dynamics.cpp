@@ -170,6 +170,7 @@ namespace SPH
 		{
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
+				contact_solids_.push_back(&contact_particles_[k]->solid_);
 				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
 				contact_contact_density_.push_back(contact_particles_[k]->getVariableByName<Real>("ContactDensity"));
 			}
@@ -185,7 +186,7 @@ namespace SPH
 			{
 				StdLargeVec<Real> &contact_density_k = *(contact_contact_density_[k]);
 				StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
-				Solid *solid_k = contact_material_[k];
+				Solid *solid_k = contact_solids_[k];
 
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -245,6 +246,7 @@ namespace SPH
 		{
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
+				contact_solids_.push_back(&contact_particles_[k]->solid_);
 				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
 				contact_contact_density_.push_back(contact_particles_[k]->getVariableByName<Real>("ContactDensity"));
 			}
@@ -259,7 +261,7 @@ namespace SPH
 			{
 				StdLargeVec<Real> &contact_density_k = *(contact_contact_density_[k]);
 				StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
-				Solid *solid_k = contact_material_[k];
+				Solid *solid_k = contact_solids_[k];
 
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)

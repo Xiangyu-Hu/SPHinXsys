@@ -17,11 +17,12 @@ namespace SPH
 			particles_->registerVariable(viscous_force_from_fluid_, "ViscousForceFromFluid");
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
+				contact_fluids_.push_back(&contact_particles_[k]->fluid_);
 				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
 				contact_rho_n_.push_back(&(contact_particles_[k]->rho_));
 				contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
 
-				mu_.push_back(contact_material_[k]->ReferenceViscosity());
+				mu_.push_back(contact_fluids_[k]->ReferenceViscosity());
 				smoothing_length_.push_back(contact_bodies_[k]->sph_adaptation_->ReferenceSmoothingLength());
 			}
 		}
@@ -58,17 +59,18 @@ namespace SPH
 		FluidViscousForceOnSolidInEuler::
 			FluidViscousForceOnSolidInEuler(BaseBodyRelationContact &contact_relation)
 			: LocalDynamics(contact_relation.sph_body_),
-			  EFSIContactData(contact_relation),
+			  FSIContactData(contact_relation),
 			  Vol_(particles_->Vol_), vel_ave_(*particles_->AverageVelocity())
 		{
 			particles_->registerVariable(viscous_force_from_fluid_, "ViscousForceFromFluid");
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
+				contact_fluids_.push_back(&contact_particles_[k]->fluid_);
 				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
 				contact_rho_n_.push_back(&(contact_particles_[k]->rho_));
 				contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
 
-				mu_.push_back(contact_material_[k]->ReferenceViscosity());
+				mu_.push_back(contact_fluids_[k]->ReferenceViscosity());
 				smoothing_length_.push_back(contact_bodies_[k]->sph_adaptation_->ReferenceSmoothingLength());
 			}
 		}

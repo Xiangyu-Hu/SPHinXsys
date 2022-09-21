@@ -43,8 +43,8 @@ namespace SPH
 {
 	namespace fluid_dynamics
 	{
-		typedef DataDelegateSimple<FluidBody, FluidParticles, Fluid> FluidDataSimple;
-		typedef DataDelegateInner<FluidBody, FluidParticles, Fluid> FluidDataInner;
+		typedef DataDelegateSimple<FluidParticles> FluidDataSimple;
+		typedef DataDelegateInner<FluidParticles> FluidDataInner;
 
 		/**
 		 * @class FluidInitialCondition

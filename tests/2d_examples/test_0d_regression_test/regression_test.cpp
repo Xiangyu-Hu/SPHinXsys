@@ -110,11 +110,11 @@ public:
 //	Set left side boundary condition.
 //----------------------------------------------------------------------
 class ConstantTemperatureConstraint
-	: public DiffusionReactionSpeciesConstraint<SolidBody, SolidParticles, Solid>
+	: public DiffusionReactionSpeciesConstraint<SolidParticles, Solid>
 {
 public:
 	ConstantTemperatureConstraint(BodyPartByParticle &body_part, const std::string &species_name, Real constrained_value)
-		: DiffusionReactionSpeciesConstraint<SolidBody, SolidParticles, Solid>(body_part, species_name),
+		: DiffusionReactionSpeciesConstraint<SolidParticles, Solid>(body_part, species_name),
 		  constrained_value_(constrained_value){};
 
 	void update(size_t index_i, Real dt = 0.0)
@@ -129,14 +129,14 @@ protected:
 //	Case-dependent initial condition.
 //----------------------------------------------------------------------
 class DiffusionInitialCondition
-	: public DiffusionReactionInitialCondition<SolidBody, SolidParticles, Solid>
+	: public DiffusionReactionInitialCondition<SolidParticles, Solid>
 {
 protected:
 	size_t phi_;
 
 public:
 	explicit DiffusionInitialCondition(SPHBody &sph_body)
-		: DiffusionReactionInitialCondition<SolidBody, SolidParticles, Solid>(sph_body)
+		: DiffusionReactionInitialCondition<SolidParticles, Solid>(sph_body)
 	{
 		phi_ = particles_->diffusion_reaction_material_.SpeciesIndexMap()["Phi"];
 	};
@@ -154,7 +154,7 @@ public:
 //----------------------------------------------------------------------
 class DiffusionBodyRelaxation
 	: public RelaxationOfAllDiffusionSpeciesRK2<
-		  RelaxationOfAllDiffusionSpeciesInner<SolidBody, SolidParticles, Solid>>
+		  RelaxationOfAllDiffusionSpeciesInner<SolidParticles, Solid>>
 {
 public:
 	explicit DiffusionBodyRelaxation(BodyRelationInner &body_inner_relation)
@@ -216,7 +216,7 @@ int main()
 	DiffusionBodyRelaxation diffusion_relaxation(diffusion_body_inner_relation);
 	SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> correct_configuration(diffusion_body_inner_relation);
-	GetDiffusionTimeStepSize<SolidBody, SolidParticles, Solid> get_time_step_size(diffusion_body);
+	GetDiffusionTimeStepSize<SolidParticles, Solid> get_time_step_size(diffusion_body);
 	BodyRegionByParticle left_boundary(diffusion_body, makeShared<MultiPolygonShape>(createLeftSideBoundary()));
 	SimpleDynamics<ConstantTemperatureConstraint, BodyRegionByParticle> left_boundary_condition(left_boundary, "Phi", high_temperature);
 	BodyRegionByParticle other_boundary(diffusion_body, makeShared<MultiPolygonShape>(createOtherSideBoundary()));
@@ -230,7 +230,7 @@ int main()
 		write_solid_temperature("Phi", io_environment, temperature_observer_contact);
 	BodyRegionByParticle inner_domain(diffusion_body, makeShared<MultiPolygonShape>(createInnerDomain(), "InnerDomain"));
 	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<
-		ReduceAverage<DiffusionReactionSpeciesSummation<SolidBody, SolidParticles, Solid>, BodyRegionByParticle>>>
+		ReduceAverage<DiffusionReactionSpeciesSummation<SolidParticles, Solid>, BodyRegionByParticle>>>
 		write_solid_average_temperature_part(io_environment, inner_domain, "Phi");
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration

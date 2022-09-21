@@ -152,8 +152,8 @@ namespace SPH
 
 	namespace electro_physiology
 	{
-		typedef DiffusionReactionSimpleData<RealBody, SolidParticles, Solid> ElectroPhysiologyDataDelegateSimple;
-		typedef DiffusionReactionInnerData<RealBody, SolidParticles, Solid> ElectroPhysiologyDataDelegateInner;
+		typedef DiffusionReactionSimpleData<SolidParticles, Solid> ElectroPhysiologyDataDelegateSimple;
+		typedef DiffusionReactionInnerData<SolidParticles, Solid> ElectroPhysiologyDataDelegateInner;
 		/**
 		 * @class ElectroPhysiologyInitialCondition
 		 * @brief  set initial condition for a muscle body
@@ -178,11 +178,11 @@ namespace SPH
 		 * @brief Computing the time step size from diffusion criteria
 		 */
 		class GetElectroPhysiologyTimeStepSize
-			: public GetDiffusionTimeStepSize<RealBody, SolidParticles, Solid>
+			: public GetDiffusionTimeStepSize<SolidParticles, Solid>
 		{
 		public:
 			explicit GetElectroPhysiologyTimeStepSize(RealBody &real_body)
-				: GetDiffusionTimeStepSize<RealBody, SolidParticles, Solid>(real_body){};
+				: GetDiffusionTimeStepSize<SolidParticles, Solid>(real_body){};
 			virtual ~GetElectroPhysiologyTimeStepSize(){};
 		};
 		/**
@@ -191,7 +191,7 @@ namespace SPH
 		 */
 		class ElectroPhysiologyDiffusionRelaxationInner
 			: public RelaxationOfAllDiffusionSpeciesRK2<
-				  RelaxationOfAllDiffusionSpeciesInner<RealBody, SolidParticles, Solid>>
+				  RelaxationOfAllDiffusionSpeciesInner<SolidParticles, Solid>>
 		{
 		public:
 			explicit ElectroPhysiologyDiffusionRelaxationInner(BaseBodyRelationInner &inner_relation)
@@ -204,7 +204,7 @@ namespace SPH
 		 */
 		class ElectroPhysiologyDiffusionRelaxationComplex
 			: public RelaxationOfAllDiffusionSpeciesRK2<
-				  RelaxationOfAllDiffusionSpeciesComplex<RealBody, SolidParticles, Solid, RealBody, SolidParticles, Solid>>
+				  RelaxationOfAllDiffusionSpeciesComplex<SolidParticles, Solid, SolidParticles, Solid>>
 		{
 		public:
 			explicit ElectroPhysiologyDiffusionRelaxationComplex(ComplexBodyRelation &complex_relation)
@@ -214,10 +214,10 @@ namespace SPH
 
 		/** Solve the reaction ODE equation of trans-membrane potential	using forward sweeping */
 		using ElectroPhysiologyReactionRelaxationForward =
-			SimpleDynamics<RelaxationOfAllReactionsForward<RealBody, SolidParticles, Solid>>;
+			SimpleDynamics<RelaxationOfAllReactionsForward<SolidParticles, Solid>>;
 		/** Solve the reaction ODE equation of trans-membrane potential	using backward sweeping */
 		using ElectroPhysiologyReactionRelaxationBackward =
-			SimpleDynamics<RelaxationOfAllReactionsBackward<RealBody, SolidParticles, Solid>>;
+			SimpleDynamics<RelaxationOfAllReactionsBackward<SolidParticles, Solid>>;
 	}
 }
 #endif // ELECTRO_PHYSIOLOGY_H

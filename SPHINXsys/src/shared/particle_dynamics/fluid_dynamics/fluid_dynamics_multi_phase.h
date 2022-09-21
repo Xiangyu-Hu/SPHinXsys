@@ -36,10 +36,9 @@ namespace SPH
 {
 	namespace fluid_dynamics
 	{
-		typedef DataDelegateContact<FluidBody, FluidParticles, Fluid,
-									FluidBody, FluidParticles, Fluid, DataDelegateEmptyBase>
+		typedef DataDelegateContact<FluidParticles, FluidParticles, DataDelegateEmptyBase>
 			MultiPhaseContactData;
-		typedef DataDelegateContact<FluidBody, FluidParticles, Fluid, FluidBody, FluidParticles, Fluid> MultiPhaseData;
+		typedef DataDelegateContact<FluidParticles, FluidParticles> MultiPhaseData;
 		/**
 		 * @class ViscousAccelerationMultiPhase
 		 * @brief  the viscosity force induced acceleration
@@ -54,6 +53,7 @@ namespace SPH
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
+			StdVec<Fluid *> contact_fluids_;
 			StdVec<StdLargeVec<Real> *> contact_Vol_;
 			StdVec<StdLargeVec<Vecd> *> contact_vel_n_;
 		};
@@ -73,6 +73,7 @@ namespace SPH
 			virtual ~RelaxationMultiPhase(){};
 
 		protected:
+			StdVec<Fluid *> contact_fluids_;
 			StdVec<StdLargeVec<Real> *> contact_Vol_, contact_p_, contact_rho_n_;
 			StdVec<StdLargeVec<Vecd> *> contact_vel_n_;
 		};

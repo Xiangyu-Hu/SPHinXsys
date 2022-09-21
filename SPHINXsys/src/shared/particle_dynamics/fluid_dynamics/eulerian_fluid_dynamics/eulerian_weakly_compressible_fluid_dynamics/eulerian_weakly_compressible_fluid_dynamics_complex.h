@@ -39,15 +39,11 @@ namespace SPH
 {
 	namespace eulerian_weakly_compressible_fluid_dynamics
 	{
-		typedef DataDelegateContact<EulerianFluidBody, WeaklyCompressibleFluidParticles, Fluid,
-									SolidBody, SolidParticles, Solid, DataDelegateEmptyBase>
+		typedef DataDelegateContact<WeaklyCompressibleFluidParticles, SolidParticles, DataDelegateEmptyBase>
 			WCFluidWallData;
-		typedef DataDelegateContact<EulerianFluidBody, WeaklyCompressibleFluidParticles, Fluid,
-									SPHBody, BaseParticles, BaseMaterial, DataDelegateEmptyBase>
+		typedef DataDelegateContact<WeaklyCompressibleFluidParticles, BaseParticles, DataDelegateEmptyBase>
 			WCFluidContactData;
-		typedef DataDelegateContact<EulerianFluidBody, WeaklyCompressibleFluidParticles, Fluid,
-									SolidBody, SolidParticles, Solid>
-			WCFSIContactData;
+		typedef DataDelegateContact<WeaklyCompressibleFluidParticles, SolidParticles> WCFSIContactData;
 		/**
 		 * @class RelaxationWithWall
 		 * @brief Abstract base class for general relaxation algorithms with wall

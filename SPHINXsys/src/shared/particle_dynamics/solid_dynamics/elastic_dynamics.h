@@ -45,8 +45,8 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		for elastic solid dynamics
 		//----------------------------------------------------------------------
-		typedef DataDelegateSimple<SolidBody, ElasticSolidParticles, ElasticSolid> ElasticSolidDataSimple;
-		typedef DataDelegateInner<SolidBody, ElasticSolidParticles, ElasticSolid> ElasticSolidDataInner;
+		typedef DataDelegateSimple<ElasticSolidParticles> ElasticSolidDataSimple;
+		typedef DataDelegateInner<ElasticSolidParticles> ElasticSolidDataInner;
 
 		/**
 		 * @class ElasticDynamicsInitialCondition

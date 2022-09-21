@@ -47,8 +47,8 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		for general solid dynamics
 		//----------------------------------------------------------------------
-		typedef DataDelegateSimple<SolidBody, SolidParticles, Solid> SolidDataSimple;
-		typedef DataDelegateInner<SolidBody, SolidParticles, Solid> SolidDataInner;
+		typedef DataDelegateSimple<SolidParticles> SolidDataSimple;
+		typedef DataDelegateInner<SolidParticles> SolidDataInner;
 
 		/**
 		* @class CorrectConfiguration

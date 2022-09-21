@@ -18,7 +18,7 @@ namespace SPH
 		BasePressureRelaxationInner<RiemannSolverType>::
 			BasePressureRelaxationInner(BaseBodyRelationInner &inner_relation)
 			: BasePressureRelaxation(inner_relation),
-			  riemann_solver_(*material_, *material_) {}
+			  riemann_solver_(fluid_, fluid_) {}
 		//=================================================================================================//
 		template <class RiemannSolverType>
 		void BasePressureRelaxationInner<RiemannSolverType>::interaction(size_t index_i, Real dt)
@@ -43,7 +43,7 @@ namespace SPH
 		BaseDensityRelaxationInner<RiemannSolverType>::
 			BaseDensityRelaxationInner(BaseBodyRelationInner &inner_relation)
 			: BaseDensityRelaxation(inner_relation),
-			  riemann_solver_(*material_, *material_) {}
+			  riemann_solver_(fluid_, fluid_) {}
 		//=================================================================================================//
 		template <class RiemannSolverType>
 		void BaseDensityRelaxationInner<RiemannSolverType>::interaction(size_t index_i, Real dt)

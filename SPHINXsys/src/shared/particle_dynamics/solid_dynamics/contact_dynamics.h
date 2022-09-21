@@ -38,8 +38,8 @@ namespace SPH
 	class Kernel;
 	namespace solid_dynamics
 	{
-		typedef DataDelegateContact<SolidBody, SolidParticles, Solid, SolidBody, SolidParticles, Solid> ContactDynamicsData;
-		typedef DataDelegateContact<SolidBody, SolidParticles, ElasticSolid, SolidBody, SolidParticles, Solid> ContactWithWallData;
+		typedef DataDelegateContact<SolidParticles, SolidParticles> ContactDynamicsData;
+		typedef DataDelegateContact<SolidParticles, SolidParticles> ContactWithWallData;
 
 		/**
 		 * @class SelfContactDensitySummation
@@ -140,6 +140,7 @@ namespace SPH
 			Solid &solid_;
 			StdLargeVec<Real> &contact_density_, &Vol_, &mass_;
 			StdLargeVec<Vecd> &acc_prior_;
+			StdVec<Solid *> contact_solids_;
 			StdVec<StdLargeVec<Real> *> contact_contact_density_, contact_Vol_;
 		};
 
@@ -177,6 +178,7 @@ namespace SPH
 		protected:
 			StdLargeVec<Real> &Vol_, &mass_;
 			StdLargeVec<Vecd> &acc_prior_;
+			StdVec<Solid *> contact_solids_;
 			StdVec<StdLargeVec<Real> *> contact_contact_density_, contact_Vol_;
 		};
 

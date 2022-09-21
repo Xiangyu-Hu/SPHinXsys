@@ -62,7 +62,7 @@ namespace SPH
 		//=================================================================================================//
 		AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body)
 			: LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
-			  CompressibleFluidDataSimple(sph_body), 
+			  CompressibleFluidDataSimple(sph_body),
 			  compressible_fluid_(particles_->compressible_fluid_),
 			  rho_(particles_->rho_), p_(particles_->p_), vel_(particles_->vel_),
 			  smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()) {}
@@ -81,6 +81,7 @@ namespace SPH
 		//=================================================================================================//
 		BaseRelaxation::BaseRelaxation(BaseBodyRelationInner &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_), CompressibleFluidDataInner(inner_relation),
+			  compressible_fluid_(particles_->compressible_fluid_),
 			  Vol_(particles_->Vol_), rho_(particles_->rho_), p_(particles_->p_),
 			  drho_dt_(particles_->drho_dt_), E_(particles_->E_), dE_dt_(particles_->dE_dt_),
 			  dE_dt_prior_(particles_->dE_dt_prior_),
@@ -88,8 +89,8 @@ namespace SPH
 			  dmom_dt_(particles_->dmom_dt_), dmom_dt_prior_(particles_->dmom_dt_prior_) {}
 		//=================================================================================================//
 		BasePressureRelaxation::
-			BasePressureRelaxation(BaseBodyRelationInner &inner_relation) 
-			: BaseRelaxation(inner_relation), compressible_fluid_(particles_->compressible_fluid_) {}
+			BasePressureRelaxation(BaseBodyRelationInner &inner_relation)
+			: BaseRelaxation(inner_relation) {}
 		//=================================================================================================//
 		void BasePressureRelaxation::initialization(size_t index_i, Real dt)
 		{
