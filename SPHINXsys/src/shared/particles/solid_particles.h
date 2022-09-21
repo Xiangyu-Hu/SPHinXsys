@@ -82,6 +82,7 @@ namespace SPH
 
 		StdLargeVec<Matd> F_;	  /**<  deformation tensor */
 		StdLargeVec<Matd> dF_dt_; /**<  deformation tensor change rate */
+		ElasticSolid &elastic_solid_;
 		//----------------------------------------------------------------------
 		//		for fluid-structure interaction (FSI)
 		//----------------------------------------------------------------------
@@ -136,9 +137,6 @@ namespace SPH
 
 		virtual void initializeOtherVariables() override;
 		virtual ElasticSolidParticles *ThisObjectPtr() override { return this; };
-
-	protected:
-		ElasticSolid &elastic_solid_;
 	};
 
 	/**
