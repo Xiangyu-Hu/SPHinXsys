@@ -75,7 +75,7 @@ public:
 		Real x = pos_[index_i][0] / PL;
 		if (x > 0.0)
 		{
-			vel_[index_i][1] = vf * material_->ReferenceSoundSpeed() *
+			vel_[index_i][1] = vf * particles_->elastic_solid_.ReferenceSoundSpeed() *
 							   (M * (cos(kl * x) - cosh(kl * x)) - N * (sin(kl * x) - sinh(kl * x))) / Q;
 		}
 	};

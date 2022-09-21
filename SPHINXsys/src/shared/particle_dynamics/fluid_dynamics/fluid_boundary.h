@@ -129,6 +129,7 @@ namespace SPH
             void update(size_t unsorted_index_i, Real dt = 0.0);
 
         protected:
+            Fluid &fluid_;
             StdLargeVec<Vecd> &pos_, &vel_;
             StdLargeVec<Real> &rho_, &p_;
             /** inflow pressure condition */
@@ -145,7 +146,7 @@ namespace SPH
         /**
          * @class EmitterInflowInjection
          * @brief Inject particles into the computational domain.
-         * Note that the axis is at the local coordinate and upper bound direction is 
+         * Note that the axis is at the local coordinate and upper bound direction is
          * the local positive direction.
          */
         class EmitterInflowInjection : public LocalDynamics, public FluidDataSimple
@@ -159,6 +160,7 @@ namespace SPH
 
         protected:
             std::mutex mutex_switch_to_real_; /**< mutex exclusion for memory conflict */
+            Fluid &fluid_;
             StdLargeVec<Vecd> &pos_;
             StdLargeVec<Real> &rho_, &p_;
             const int axis_; /**< the axis direction for bounding*/
@@ -182,7 +184,7 @@ namespace SPH
             StdLargeVec<Vecd> &pos_;
             const int axis_; /**< the axis direction for bounding*/
             AlignedBoxShape &aligned_box_;
-         };
+        };
 
         /**
          * @class StaticConfinementDensity

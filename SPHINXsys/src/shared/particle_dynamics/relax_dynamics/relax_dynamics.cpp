@@ -51,7 +51,7 @@ namespace SPH
 			RelaxationAccelerationInnerWithLevelSetCorrection(BaseBodyRelationInner &inner_relation)
 			: RelaxationAccelerationInner(inner_relation), sph_adaptation_(sph_body_.sph_adaptation_)
 		{
-			level_set_shape_ = DynamicCast<LevelSetShape>(this, body_->body_shape_);
+			level_set_shape_ = DynamicCast<LevelSetShape>(this, sph_body_.body_shape_);
 		}
 		//=================================================================================================//
 		void RelaxationAccelerationInnerWithLevelSetCorrection::interaction(size_t index_i, Real dt)
@@ -187,7 +187,7 @@ namespace SPH
 			: RelaxationAccelerationComplex(body_complex_relation),
 			  sph_adaptation_(sph_body_.sph_adaptation_)
 		{
-			ComplexShape &complex_shape = DynamicCast<ComplexShape>(this, *body_->body_shape_);
+			ComplexShape &complex_shape = DynamicCast<ComplexShape>(this, *sph_body_.body_shape_);
 			level_set_shape_ = DynamicCast<LevelSetShape>(this, complex_shape.getShapeByName(shape_name));
 		}
 		//=================================================================================================//
@@ -254,7 +254,7 @@ namespace SPH
 			  pos_(particles_->pos_), constrained_distance_(0.5 * sph_body_.sph_adaptation_->MinimumSpacing()),
 			  particle_spacing_ref_(sph_body_.sph_adaptation_->MinimumSpacing()),
 			  thickness_(thickness), level_set_refinement_ratio_(level_set_refinement_ratio),
-			  level_set_shape_(DynamicCast<LevelSetShape>(this, body_->body_shape_)) {}
+			  level_set_shape_(DynamicCast<LevelSetShape>(this, sph_body_.body_shape_)) {}
 		//=================================================================================================//
 		void ShellMidSurfaceBounding::update(size_t index_i, Real dt)
 		{

@@ -138,7 +138,7 @@ public:
 	explicit DiffusionInitialCondition(SPHBody &sph_body)
 		: DiffusionReactionInitialCondition<SolidBody, SolidParticles, Solid>(sph_body)
 	{
-		phi_ = material_->SpeciesIndexMap()["Phi"];
+		phi_ = particles_->diffusion_reaction_material_.SpeciesIndexMap()["Phi"];
 	};
 
 	void update(size_t index_i, Real dt)

@@ -100,6 +100,7 @@ namespace SPH
 		class AcousticTimeStepSize : public LocalDynamicsReduce<Real, ReduceMax>, public CompressibleFluidDataSimple
 		{
 		protected:
+			CompressibleFluid &compressible_fluid_;
 			StdLargeVec<Real> &rho_, &p_;
 			StdLargeVec<Vecd> &vel_;
 			Real smoothing_length_;
@@ -138,6 +139,9 @@ namespace SPH
 			virtual ~BasePressureRelaxation(){};
 			void initialization(size_t index_i, Real dt = 0.0);
 			void update(size_t index_i, Real dt = 0.0);
+
+		protected:
+			CompressibleFluid &compressible_fluid_;
 		};
 
 		/**

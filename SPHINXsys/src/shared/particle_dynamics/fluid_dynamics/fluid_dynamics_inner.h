@@ -150,6 +150,7 @@ namespace SPH
 		class AcousticTimeStepSize : public LocalDynamicsReduce<Real, ReduceMax>, public FluidDataSimple
 		{
 		protected:
+			Fluid &fluid_;
 			StdLargeVec<Real> &rho_, &p_;
 			StdLargeVec<Vecd> &vel_;
 			Real smoothing_length_;
@@ -191,6 +192,9 @@ namespace SPH
 			virtual ~AdvectionTimeStepSize(){};
 
 			Real reduce(size_t index_i, Real dt = 0.0);
+
+		protected:
+			Fluid &fluid_;
 		};
 
 		/**
@@ -221,6 +225,7 @@ namespace SPH
 			virtual ~BaseRelaxation(){};
 
 		protected:
+			Fluid &fluid_;
 			StdLargeVec<Real> &Vol_, &mass_, &rho_, &p_, &drho_dt_;
 			StdLargeVec<Vecd> &pos_, &vel_, &acc_, &acc_prior_;
 		};
@@ -320,6 +325,7 @@ namespace SPH
 			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
+			Oldroyd_B_Fluid &oldroyd_b_fluid_;
 			StdLargeVec<Matd> &tau_, &dtau_dt_;
 			Real mu_p_, lambda_;
 		};

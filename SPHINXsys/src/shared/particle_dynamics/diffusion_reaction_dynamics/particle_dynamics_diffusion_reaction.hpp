@@ -25,7 +25,7 @@ namespace SPH
 		DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body)
 	{
 		Real smoothing_length = sph_body.sph_adaptation_->ReferenceSmoothingLength();
-		diff_time_step_ = this->material_->getDiffusionTimeStepSize(smoothing_length);
+		diff_time_step_ = this->particles_->diffusion_reaction_material_.getDiffusionTimeStepSize(smoothing_length);
 	}
 	//=================================================================================================//
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
@@ -36,7 +36,7 @@ namespace SPH
 		  species_n_(this->particles_->species_n_),
 		  diffusion_dt_(this->particles_->diffusion_dt_), Vol_(this->particles_->Vol_)
 	{
-		species_diffusion_ = this->material_->SpeciesDiffusion();
+		species_diffusion_ = this->particles_->diffusion_reaction_material_.SpeciesDiffusion();
 	}
 	//=================================================================================================//
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
@@ -111,7 +111,7 @@ namespace SPH
 									   ContactBodyType, ContactBaseParticlesType, ContactBaseMaterialType>(complex_relation.contact_relation_),
 		  species_n_(this->particles_->species_n_), diffusion_dt_(this->particles_->diffusion_dt_)
 	{
-		species_diffusion_ = this->material_->SpeciesDiffusion();
+		species_diffusion_ = this->particles_->diffusion_reaction_material_.SpeciesDiffusion();
 
 		for (size_t k = 0; k != this->contact_particles_.size(); ++k)
 		{
@@ -172,7 +172,7 @@ namespace SPH
 		  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body),
 		  species_n_(this->particles_->species_n_), species_s_(species_s)
 	{
-		species_diffusion_ = this->material_->SpeciesDiffusion();
+		species_diffusion_ = this->particles_->diffusion_reaction_material_.SpeciesDiffusion();
 	}
 	//=================================================================================================//
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
@@ -201,7 +201,7 @@ namespace SPH
 		  species_n_(this->particles_->species_n_), diffusion_dt_(this->particles_->diffusion_dt_),
 		  species_s_(species_s)
 	{
-		species_diffusion_ = this->material_->SpeciesDiffusion();
+		species_diffusion_ = this->particles_->diffusion_reaction_material_.SpeciesDiffusion();
 	}
 	//=================================================================================================//
 	template <class FirstStageType>
@@ -258,7 +258,7 @@ namespace SPH
 		  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body),
 		  species_n_(this->particles_->species_n_)
 	{
-		species_reaction_ = this->material_->SpeciesReaction();
+		species_reaction_ = this->particles_->diffusion_reaction_material_.SpeciesReaction();
 	}
 	//=================================================================================================//
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
@@ -283,7 +283,7 @@ namespace SPH
 		  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body),
 		  species_n_(this->particles_->species_n_)
 	{
-		species_reaction_ = this->material_->SpeciesReaction();
+		species_reaction_ = this->particles_->diffusion_reaction_material_.SpeciesReaction();
 	}
 	//=================================================================================================//
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>

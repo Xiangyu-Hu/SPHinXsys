@@ -89,6 +89,7 @@ namespace SPH
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
+			Solid &solid_;
 			StdLargeVec<Real> contact_density_;
 			StdVec<StdLargeVec<Vecd> *> contact_pos_;
 			StdLargeVec<Vecd> &pos_;
@@ -118,6 +119,7 @@ namespace SPH
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
+			Solid &solid_;
 			StdLargeVec<Real> &mass_, &self_contact_density_, &Vol_;
 			StdLargeVec<Vecd> &acc_prior_, &vel_;
 			Real contact_impedance_;
@@ -135,6 +137,7 @@ namespace SPH
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
+			Solid &solid_;
 			StdLargeVec<Real> &contact_density_, &Vol_, &mass_;
 			StdLargeVec<Vecd> &acc_prior_;
 			StdVec<StdLargeVec<Real> *> contact_contact_density_, contact_Vol_;
@@ -154,6 +157,7 @@ namespace SPH
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
+			Solid &solid_;
 			StdLargeVec<Real> &contact_density_, &Vol_, &mass_;
 			StdLargeVec<Vecd> &acc_prior_;
 			StdVec<StdLargeVec<Real> *> contact_Vol_;
@@ -212,6 +216,7 @@ namespace SPH
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
+			Solid &solid_;
 			StdLargeVec<Real> &Vol_, &mass_;
 			StdLargeVec<Vecd> &vel_, &acc_prior_;
 			StdVec<StdLargeVec<Real> *> contact_Vol_;

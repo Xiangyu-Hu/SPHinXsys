@@ -127,7 +127,7 @@ namespace SPH
 					FluidState interface_state = this->riemann_solver_.getInterfaceState(state_i, state_j, n_k[index_j]);
 					Real p_star = interface_state.p_;
 					Vecd vel_star = interface_state.vel_;
-					Real rho_star = this->material_->DensityFromPressure(p_star);
+					Real rho_star = this->fluid_.DensityFromPressure(p_star);
 					momentum_change_rate -= 2.0 * Vol_k[index_j] *
 						(SimTK::outer(rho_star * vel_star, vel_star) + p_star * Matd(1.0)) * e_ij * dW_ij;
 				}
@@ -188,7 +188,7 @@ namespace SPH
 					FluidState interface_state = this->riemann_solver_.getInterfaceState(state_i, state_j, n_k[index_j]);
 					Real p_star = interface_state.p_;
 					Vecd vel_star = interface_state.vel_;
-					Real rho_star = this->material_->DensityFromPressure(p_star);
+					Real rho_star = this->fluid_.DensityFromPressure(p_star);
 					density_change_rate -= 2.0 * Vol_k[index_j] * dot(rho_star * vel_star, e_ij) * dW_ij;
 				}
 			}

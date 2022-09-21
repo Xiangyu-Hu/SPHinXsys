@@ -146,6 +146,7 @@ namespace SPH
 			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
+			ElasticSolid &elastic_solid_;
 			Real rho0_, inv_rho0_;
 			StdLargeVec<Vecd> &acc_prior_;
 			Real smoothing_length_;
@@ -167,7 +168,7 @@ namespace SPH
 		protected:
 			StdLargeVec<Matd> stress_PK1_B_;
 			Real numerical_dissipation_factor_;
-			Real inv_W0_ = 1.0 / body_->sph_adaptation_->getKernel()->W0(Vecd(0));
+			Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(Vecd(0));
 		};
 
 		/**

@@ -26,10 +26,10 @@ namespace SPH
 			  angular_vel_(particles_->angular_vel_), dangular_vel_dt_(particles_->dangular_vel_dt_),
 			  thickness_(particles_->thickness_),
 			  smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()),
-			  rho0_(material_->ReferenceDensity()),
-			  E0_(material_->YoungsModulus()),
-			  nu_(material_->PoissonRatio()),
-			  c0_(material_->ReferenceSoundSpeed()) {}
+			  rho0_(particles_->elastic_solid_.ReferenceDensity()),
+			  E0_(particles_->elastic_solid_.YoungsModulus()),
+			  nu_(particles_->elastic_solid_.PoissonRatio()),
+			  c0_(particles_->elastic_solid_.ReferenceSoundSpeed()) {}
 		//=================================================================================================//
 		Real ShellAcousticTimeStepSize::reduce(size_t index_i, Real dt)
 		{
@@ -119,18 +119,19 @@ namespace SPH
 			ShellStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation,
 										   int number_of_gaussian_points, bool hourglass_control)
 			: BaseShellRelaxation(inner_relation),
+			  elastic_solid_(particles_->elastic_solid_),
 			  global_stress_(particles_->global_stress_),
 			  global_moment_(particles_->global_moment_),
 			  global_shear_stress_(particles_->global_shear_stress_),
 			  n_(particles_->n_),
 			  number_of_gaussian_points_(number_of_gaussian_points),
 			  hourglass_control_(hourglass_control),
-			  rho0_(material_->ReferenceDensity()),
+			  rho0_(elastic_solid_.ReferenceDensity()),
 			  inv_rho0_(1.0 / rho0_),
 			  smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
-			  E0_(material_->YoungsModulus()),
-			  G0_(material_->ShearModulus()),
-			  nu_(material_->PoissonRatio())
+			  E0_(elastic_solid_.YoungsModulus()),
+			  G0_(elastic_solid_.ShearModulus()),
+			  nu_(elastic_solid_.PoissonRatio())
 		{
 			/** Note that, only three-point and five-point Gaussian quadrature rules are defined. */
 			switch (number_of_gaussian_points)
@@ -184,7 +185,10 @@ namespace SPH
 				Matd current_local_almansi_strain = current_transformation_matrix * (~transformation_matrix_[index_i]) * 0.5 * (Matd(1.0) - ~inverse_F_gaussian_point * inverse_F_gaussian_point) * transformation_matrix_[index_i] * (~current_transformation_matrix);
 				/** correct Almansi strain tensor according to plane stress problem. */
 				current_local_almansi_strain = getCorrectedAlmansiStrain(current_local_almansi_strain, nu_);
-				Matd cauchy_stress = material_->StressCauchy(current_local_almansi_strain, F_gaussian_point, index_i) + current_transformation_matrix * (~transformation_matrix_[index_i]) * F_gaussian_point * material_->NumericalDampingRightCauchy(F_gaussian_point, dF_gaussian_point_dt, smoothing_length_, index_i) * (~F_gaussian_point) * transformation_matrix_[index_i] * (~current_transformation_matrix) / det(F_gaussian_point);
+				Matd cauchy_stress = elastic_solid_.StressCauchy(current_local_almansi_strain, F_gaussian_point, index_i) +
+									 current_transformation_matrix * (~transformation_matrix_[index_i]) * F_gaussian_point * 
+									 elastic_solid_.NumericalDampingRightCauchy(F_gaussian_point, dF_gaussian_point_dt, smoothing_length_, index_i) * 
+									 (~F_gaussian_point) * transformation_matrix_[index_i] * (~current_transformation_matrix) / det(F_gaussian_point);
 
 				/** Impose modeling assumptions. */
 				cauchy_stress.col(Dimensions - 1) *= shear_correction_factor_;

@@ -153,12 +153,13 @@ namespace SPH
 			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
+			ElasticSolid &elastic_solid_;
 			Real rho0_, inv_rho0_;
 			StdLargeVec<Matd> &global_stress_, &global_moment_;
 			StdLargeVec<Vecd> &global_shear_stress_, &n_;
 			Real smoothing_length_, E0_, G0_, nu_, hourglass_control_factor_;
 			bool hourglass_control_;
-			const Real inv_W0_ = 1.0 / body_->sph_adaptation_->getKernel()->W0(Vecd(0));
+			const Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(Vecd(0));
 			const Real shear_correction_factor_ = 5.0 / 6.0;
 
 			const StdVec<Real> three_gaussian_points_ = {0.0, 0.7745966692414834, -0.7745966692414834};

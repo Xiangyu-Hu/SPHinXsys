@@ -160,6 +160,7 @@ namespace SPH
 		Real rho0_;
 		StdLargeVec<Real> &rho_;
 		StdLargeVec<Matd> &F_;
+		ElasticSolid &elastic_solid_;
 	};
 
 	class VonMisesStrain : public BaseDerivedVariable<Real>,

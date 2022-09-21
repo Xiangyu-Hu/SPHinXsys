@@ -88,6 +88,7 @@ namespace SPH
 									 public EulerianWeaklyCompressibleFluidDataSimple
 		{
 		protected:
+			Fluid &fluid_;	
 			StdLargeVec<Real> &rho_, &p_;
 			StdLargeVec<Vecd> &vel_;
 			Real smoothing_length_;
@@ -111,6 +112,7 @@ namespace SPH
 			virtual ~BaseRelaxation(){};
 
 		protected:
+			Fluid &fluid_;	
 			StdLargeVec<Real> &Vol_, &mass_, &rho_, &p_, &drho_dt_;
 			StdLargeVec<Vecd> &vel_, &mom_, &dmom_dt_, &dmom_dt_prior_;
 		};

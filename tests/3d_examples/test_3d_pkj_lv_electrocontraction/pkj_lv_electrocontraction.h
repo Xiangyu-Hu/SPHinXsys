@@ -125,10 +125,10 @@ public:
 		: DiffusionReactionSpeciesConstraint<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>(body_part, species_name),
 		  pos_(particles_->pos_){};
 	virtual ~DiffusionBCs(){};
-	
+
 	void update(size_t index_i, Real dt = 0.0)
 	{
-		Vecd dist_2_face = body_->body_shape_->findNormalDirection(pos_[index_i]);
+		Vecd dist_2_face = sph_body_.body_shape_->findNormalDirection(pos_[index_i]);
 		Vecd face_norm = dist_2_face / (dist_2_face.norm() + 1.0e-15);
 
 		Vecd center_norm = pos_[index_i] / (pos_[index_i].norm() + 1.0e-15);
@@ -140,7 +140,7 @@ public:
 		}
 		else
 		{
-			if (pos_[index_i][1] < -body_->sph_adaptation_->ReferenceSpacing())
+			if (pos_[index_i][1] < - sph_body_.sph_adaptation_->ReferenceSpacing())
 				species_[index_i] = 0.0;
 		}
 	};
@@ -154,6 +154,7 @@ class ComputeFiberAndSheetDirections
 	: public DiffusionBasedMapping<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>
 {
 protected:
+	DiffusionReaction<LocallyOrthotropicMuscle> &diffusion_reaction_material_;
 	size_t phi_;
 	Real beta_epi_, beta_endo_;
 	/** We define the centerline vector, which is parallel to the ventricular centerline and pointing  apex-to-base.*/
@@ -161,9 +162,11 @@ protected:
 
 public:
 	explicit ComputeFiberAndSheetDirections(SPHBody &sph_body)
-		: DiffusionBasedMapping<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>(sph_body)
+		: DiffusionBasedMapping<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>(sph_body),
+		  diffusion_reaction_material_(particles_->diffusion_reaction_material_)
+
 	{
-		phi_ = material_->SpeciesIndexMap()["Phi"];
+		phi_ = diffusion_reaction_material_.SpeciesIndexMap()["Phi"];
 		center_line_ = Vecd(0.0, 1.0, 0.0);
 		beta_epi_ = -(70.0 / 180.0) * M_PI;
 		beta_endo_ = (80.0 / 180.0) * M_PI;
@@ -195,13 +198,13 @@ public:
 
 		if (pos_[index_i][2] < 2.0 * body_->sph_adaptation_->ReferenceSpacing())
 		{
-			material_->local_f0_[index_i] = f_0 / (f_0.norm() + 1.0e-15);
-			material_->local_s0_[index_i] = face_norm;
+			diffusion_reaction_material_.local_f0_[index_i] = f_0 / (f_0.norm() + 1.0e-15);
+			diffusion_reaction_material_.local_s0_[index_i] = face_norm;
 		}
 		else
 		{
-			material_->local_f0_[index_i] = Vecd(0);
-			material_->local_s0_[index_i] = Vecd(0);
+			diffusion_reaction_material_.local_f0_[index_i] = Vecd(0);
+			diffusion_reaction_material_.local_s0_[index_i] = Vecd(0);
 		}
 	};
 };
@@ -232,7 +235,7 @@ public:
 	explicit ApplyStimulusCurrentToMyocardium(SPHBody &sph_body)
 		: electro_physiology::ElectroPhysiologyInitialCondition(sph_body)
 	{
-		voltage_ = material_->SpeciesIndexMap()["Voltage"];
+		voltage_ = particles_->diffusion_reaction_material_.SpeciesIndexMap()["Voltage"];
 	};
 
 	void update(size_t index_i, Real dt)
@@ -276,7 +279,7 @@ public:
 	explicit ApplyStimulusCurrentToPKJ(SPHBody &sph_body)
 		: electro_physiology::ElectroPhysiologyInitialCondition(sph_body)
 	{
-		voltage_ = material_->SpeciesIndexMap()["Voltage"];
+		voltage_ = particles_->diffusion_reaction_material_.SpeciesIndexMap()["Voltage"];
 	};
 
 	void update(size_t index_i, Real dt)

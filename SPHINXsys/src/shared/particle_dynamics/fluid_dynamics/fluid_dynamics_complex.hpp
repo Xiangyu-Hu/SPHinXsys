@@ -178,7 +178,7 @@ namespace SPH
 					Real face_wall_external_acceleration = dot((acc_prior_i - acc_ave_k[index_j]), -e_ij);
 					Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - state_i.vel_;
 					Real p_in_wall = state_i.p_ + state_i.rho_ * r_ij * SMAX(0.0, face_wall_external_acceleration);
-					Real rho_in_wall = this->material_->DensityFromPressure(p_in_wall);
+					Real rho_in_wall = this->fluid_.DensityFromPressure(p_in_wall);
 					FluidState state_j(rho_in_wall, vel_in_wall, p_in_wall);
 					Real p_star = this->riemann_solver_.getPStar(state_i, state_j, n_k[index_j]);
 					acceleration -= 2.0 * p_star * e_ij * Vol_k[index_j] * dW_ij / state_i.rho_;
@@ -222,7 +222,7 @@ namespace SPH
 			for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
 			{
 				Real particle_spacing_j1 = 1.0 / FluidWallData::contact_bodies_[k]->sph_adaptation_->ReferenceSpacing();
-				Real particle_spacing_ratio2 = 1.0 / (this->body_->sph_adaptation_->ReferenceSpacing() * particle_spacing_j1);
+				Real particle_spacing_ratio2 = 1.0 / (this->sph_body_.sph_adaptation_->ReferenceSpacing() * particle_spacing_j1);
 				particle_spacing_ratio2 *= 0.1 * particle_spacing_ratio2;
 
 				StdLargeVec<Real> &Vol_k = *(this->wall_Vol_[k]);
@@ -332,7 +332,7 @@ namespace SPH
 					Real face_wall_external_acceleration = dot((acc_prior_i - acc_ave_k[index_j]), -e_ij);
 					Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - state_i.vel_;
 					Real p_in_wall = state_i.p_ + state_i.rho_ * r_ij * SMAX(0.0, face_wall_external_acceleration);
-					Real rho_in_wall = this->material_->DensityFromPressure(p_in_wall);
+					Real rho_in_wall = this->fluid_.DensityFromPressure(p_in_wall);
 					FluidState state_j(rho_in_wall, vel_in_wall, p_in_wall);
 					Vecd vel_star = this->riemann_solver_.getVStar(state_i, state_j, n_k[index_j]);
 					density_change_rate += 2.0 * state_i.rho_ * Vol_k[index_j] * dot(state_i.vel_ - vel_star, e_ij) * dW_ij;

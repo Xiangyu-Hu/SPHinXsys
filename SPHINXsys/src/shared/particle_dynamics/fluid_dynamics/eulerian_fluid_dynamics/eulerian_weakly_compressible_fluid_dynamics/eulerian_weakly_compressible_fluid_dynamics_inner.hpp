@@ -18,7 +18,7 @@ namespace SPH
 		BasePressureRelaxationInner<RiemannSolverType>::
 			BasePressureRelaxationInner(BaseBodyRelationInner &inner_relation) :
 			BasePressureRelaxation(inner_relation),
-			riemann_solver_(*material_, *material_) {}
+			riemann_solver_(this->fluid_, this->fluid_) {}
 		//=================================================================================================//
 		template<class RiemannSolverType>
 		void BasePressureRelaxationInner<RiemannSolverType>::interaction(size_t index_i, Real dt)
@@ -36,7 +36,7 @@ namespace SPH
 				FluidState interface_state = riemann_solver_.getInterfaceState(state_i, state_j, e_ij);
 				Real p_star = interface_state.p_;
 				Vecd vel_star = interface_state.vel_;
-				Real rho_star = material_->DensityFromPressure(p_star);
+				Real rho_star = this->fluid_.DensityFromPressure(p_star);
 
 				momentum_change_rate -= 2.0 * Vol_[index_j] *
 					(SimTK::outer(rho_star * vel_star, vel_star) + p_star * Matd(1.0)) * e_ij * dW_ij;
@@ -66,7 +66,7 @@ namespace SPH
 				FluidState interface_state = riemann_solver_.getInterfaceState(state_i, state_j, e_ij);
 				Real p_star = interface_state.p_;
 				Vecd vel_star = interface_state.vel_;
-				Real rho_star = material_->DensityFromPressure(p_star);
+				Real rho_star = this->fluid_.DensityFromPressure(p_star);
 
 				density_change_rate -= 2.0 * Vol_[index_j] * dot(rho_star * vel_star, e_ij) * dW_ij;
 			}

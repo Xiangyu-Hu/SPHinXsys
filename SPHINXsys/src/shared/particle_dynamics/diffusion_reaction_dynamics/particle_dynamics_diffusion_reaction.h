@@ -285,13 +285,15 @@ namespace SPH
 		DiffusionReactionSpeciesConstraint(SPHBody &sph_body, const std::string &species_name)
 			: LocalDynamics(sph_body),
 			  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body),
-			  phi_(this->material_->SpeciesIndexMap()[species_name]),
+			  diffusion_reaction_material_(this->particles_->diffusion_reaction_material_),
+			  phi_(diffusion_reaction_material_.SpeciesIndexMap()[species_name]),
 			  species_(this->particles_->species_n_[phi_]){};
 		DiffusionReactionSpeciesConstraint(BodyPartByParticle &body_part, const std::string &species_name)
 			: DiffusionReactionSpeciesConstraint(body_part.getSPHBody(), species_name){};
 		virtual ~DiffusionReactionSpeciesConstraint(){};
 
 	protected:
+		DiffusionReaction<BaseMaterialType> &diffusion_reaction_material_;
 		size_t phi_;
 		StdLargeVec<Real> &species_;
 	};
@@ -329,6 +331,7 @@ namespace SPH
 		  public DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>
 	{
 	protected:
+		DiffusionReaction<BaseMaterialType> &diffusion_reaction_material_;
 		StdVec<StdLargeVec<Real>> &species_n_;
 		size_t phi_;
 
@@ -336,8 +339,9 @@ namespace SPH
 		DiffusionReactionSpeciesSummation(SPHBody &sph_body, const std::string &species_name)
 			: LocalDynamicsReduce<Real, ReduceSum<Real>>(sph_body, Real(0)),
 			  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body),
+			  diffusion_reaction_material_(this->particles_->diffusion_reaction_material_),
 			  species_n_(this->particles_->species_n_),
-			  phi_(this->material_->SpeciesIndexMap()[species_name])
+			  phi_(diffusion_reaction_material_.SpeciesIndexMap()[species_name])
 		{
 			quantity_name_ = "DiffusionReactionSpeciesAverage";
 		};

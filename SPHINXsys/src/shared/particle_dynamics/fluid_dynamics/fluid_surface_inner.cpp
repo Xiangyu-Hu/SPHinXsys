@@ -86,7 +86,7 @@ namespace SPH
         //=================================================================================================//
         FreeStreamBoundaryVelocityCorrection::FreeStreamBoundaryVelocityCorrection(SPHBody &sph_body)
             : LocalDynamics(sph_body), FluidDataSimple(sph_body),
-              u_ref_(1.0), t_ref_(2.0), rho_ref_(material_->ReferenceDensity()),
+              u_ref_(1.0), t_ref_(2.0), rho_ref_(particles_->fluid_.ReferenceDensity()),
               rho_sum(particles_->rho_sum_), vel_(particles_->vel_),
               surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")) {}
         //=================================================================================================//

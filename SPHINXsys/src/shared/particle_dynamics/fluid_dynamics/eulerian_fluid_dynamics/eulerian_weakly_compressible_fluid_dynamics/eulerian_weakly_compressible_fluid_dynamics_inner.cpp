@@ -31,7 +31,7 @@ namespace SPH
 			  EulerianWeaklyCompressibleFluidDataInner(inner_relation),
 			  Vol_(particles_->Vol_), rho_(particles_->rho_), p_(particles_->p_),
 			  vel_(particles_->vel_), dmom_dt_prior_(particles_->dmom_dt_prior_),
-			  mu_(material_->ReferenceViscosity()),
+			  mu_(particles_->fluid_.ReferenceViscosity()),
 			  smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
 		//=================================================================================================//
 		void ViscousAccelerationInner::interaction(size_t index_i, Real dt)
@@ -55,13 +55,14 @@ namespace SPH
 		//=================================================================================================//
 		AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body)
 			: LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
-			  EulerianWeaklyCompressibleFluidDataSimple(sph_body), rho_(particles_->rho_),
+			  EulerianWeaklyCompressibleFluidDataSimple(sph_body),
+			  fluid_(particles_->fluid_), rho_(particles_->rho_),
 			  p_(particles_->p_), vel_(particles_->vel_),
 			  smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()) {}
 		//=================================================================================================//
 		Real AcousticTimeStepSize::reduce(size_t index_i, Real dt)
 		{
-			return material_->getSoundSpeed(p_[index_i], rho_[index_i]) + vel_[index_i].norm();
+			return fluid_.getSoundSpeed(p_[index_i], rho_[index_i]) + vel_[index_i].norm();
 		}
 		//=================================================================================================//
 		Real AcousticTimeStepSize::outputResult(Real reduced_value)
@@ -73,18 +74,19 @@ namespace SPH
 		//=================================================================================================//
 		BaseRelaxation::BaseRelaxation(BaseBodyRelationInner &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_),
-			  EulerianWeaklyCompressibleFluidDataInner(inner_relation),
+			  EulerianWeaklyCompressibleFluidDataInner(inner_relation), fluid_(particles_->fluid_),
 			  Vol_(particles_->Vol_), mass_(particles_->mass_), rho_(particles_->rho_),
 			  p_(particles_->p_), drho_dt_(particles_->drho_dt_), vel_(particles_->vel_), mom_(particles_->mom_),
 			  dmom_dt_(particles_->dmom_dt_), dmom_dt_prior_(particles_->dmom_dt_prior_) {}
 		//=================================================================================================//
 		BasePressureRelaxation::
-			BasePressureRelaxation(BaseBodyRelationInner &inner_relation) : BaseRelaxation(inner_relation) {}
+			BasePressureRelaxation(BaseBodyRelationInner &inner_relation)
+			: BaseRelaxation(inner_relation) {}
 		//=================================================================================================//
 		void BasePressureRelaxation::initialization(size_t index_i, Real dt)
 		{
 			rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
-			p_[index_i] = material_->getPressure(rho_[index_i]);
+			p_[index_i] = fluid_.getPressure(rho_[index_i]);
 		}
 		//=================================================================================================//
 		void BasePressureRelaxation::update(size_t index_i, Real dt)

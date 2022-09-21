@@ -20,7 +20,7 @@ namespace SPH
 			  ElasticSolidDataSimple(sph_body), CFL_(CFL),
 			  vel_(particles_->vel_), acc_(particles_->acc_),
 			  smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()),
-			  c0_(material_->ReferenceSoundSpeed()) {}
+			  c0_(particles_->elastic_solid_.ReferenceSoundSpeed()) {}
 		//=================================================================================================//
 		Real AcousticTimeStepSize::reduce(size_t index_i, Real dt)
 		{
@@ -76,9 +76,10 @@ namespace SPH
 		BaseStressRelaxationFirstHalf::
 			BaseStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation)
 			: BaseElasticRelaxation(inner_relation),
+			  elastic_solid_(particles_->elastic_solid_),
 			  acc_prior_(particles_->acc_prior_)
 		{
-			rho0_ = material_->ReferenceDensity();
+			rho0_ = particles_->elastic_solid_.ReferenceDensity();
 			inv_rho0_ = 1.0 / rho0_;
 			smoothing_length_ = sph_body_.sph_adaptation_->ReferenceSmoothingLength();
 		}
@@ -103,7 +104,7 @@ namespace SPH
 			rho_[index_i] = rho0_ / det(F_[index_i]);
 			// obtain the first Piola-Kirchhoff stress from the second Piola-Kirchhoff stress
 			// it seems using reproducing correction here increases convergence rate near the free surface
-			stress_PK1_B_[index_i] = F_[index_i] * material_->StressPK2(F_[index_i], index_i) * B_[index_i];
+			stress_PK1_B_[index_i] = F_[index_i] * elastic_solid_.StressPK2(F_[index_i], index_i) * B_[index_i];
 		}
 		//=================================================================================================//
 		void StressRelaxationFirstHalf::interaction(size_t index_i, Real dt)
@@ -122,7 +123,7 @@ namespace SPH
 				Real strain_rate = SimTK::dot(pos_jump, vel_jump) * dim_r_ij_1 * dim_r_ij_1;
 				Real weight = inner_neighborhood.W_ij_[n] * inv_W0_;
 				Matd numerical_stress_ij =
-					0.5 * (F_[index_i] + F_[index_j]) * material_->PairNumericalDamping(strain_rate, smoothing_length_);
+					0.5 * (F_[index_i] + F_[index_j]) * elastic_solid_.PairNumericalDamping(strain_rate, smoothing_length_);
 				acceleration += (stress_PK1_B_[index_i] + stress_PK1_B_[index_j] +
 								 numerical_dissipation_factor_ * weight * numerical_stress_ij) *
 								inner_neighborhood.dW_ij_[n] * e_ij * Vol_[index_j] * inv_rho0_;
@@ -150,8 +151,8 @@ namespace SPH
 			// obtain the first Piola-Kirchhoff stress from the Kirchhoff stress
 			// it seems using reproducing correction here increases convergence rate
 			// near the free surface however, this correction is not used for the numerical dissipation
-			stress_PK1_B_[index_i] = (Matd(1.0) * material_->VolumetricKirchhoff(J) +
-									  material_->DeviatoricKirchhoff(deviatoric_b)) *
+			stress_PK1_B_[index_i] = (Matd(1.0) * elastic_solid_.VolumetricKirchhoff(J) +
+									  elastic_solid_.DeviatoricKirchhoff(deviatoric_b)) *
 									 inverse_F_T * B_[index_i];
 		}
 		//=================================================================================================//
@@ -174,10 +175,10 @@ namespace SPH
 			J_to_minus_2_over_dimension_[index_i] = pow(one_over_J * one_over_J, one_over_dimensions_);
 			inverse_F_T_[index_i] = ~SimTK::inverse(F_[index_i]);
 			stress_on_particle_[index_i] =
-				inverse_F_T_[index_i] * (material_->VolumetricKirchhoff(J) -
-										 correction_factor_ * material_->ShearModulus() *
+				inverse_F_T_[index_i] * (elastic_solid_.VolumetricKirchhoff(J) -
+										 correction_factor_ * elastic_solid_.ShearModulus() *
 											 J_to_minus_2_over_dimension_[index_i] * (F_[index_i] * ~F_[index_i]).trace() * one_over_dimensions_) +
-				material_->NumericalDampingLeftCauchy(F_[index_i], dF_dt_[index_i], smoothing_length_, index_i) * inverse_F_T_[index_i];
+				elastic_solid_.NumericalDampingLeftCauchy(F_[index_i], dF_dt_[index_i], smoothing_length_, index_i) * inverse_F_T_[index_i];
 		}
 		//=================================================================================================//
 		void KirchhoffStressRelaxationFirstHalf::interaction(size_t index_i, Real dt)
@@ -188,7 +189,7 @@ namespace SPH
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = inner_neighborhood.j_[n];
-				Vecd shear_force_ij = correction_factor_ * material_->ShearModulus() *
+				Vecd shear_force_ij = correction_factor_ * elastic_solid_.ShearModulus() *
 									  (J_to_minus_2_over_dimension_[index_i] + J_to_minus_2_over_dimension_[index_j]) *
 									  (pos_[index_i] - pos_[index_j]) / inner_neighborhood.r_ij_[n];
 				acceleration += ((stress_on_particle_[index_i] + stress_on_particle_[index_j]) * inner_neighborhood.e_ij_[n] + shear_force_ij) *
