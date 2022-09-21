@@ -58,7 +58,7 @@ int main(int ac, char *av[])
 		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(herat_model_inner);
 		/** Time step for diffusion. */
-		GetDiffusionTimeStepSize<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle> get_time_step_size(herat_model);
+		GetDiffusionTimeStepSize<ElasticSolidParticles, LocallyOrthotropicMuscle> get_time_step_size(herat_model);
 		/** Diffusion process for diffusion body. */
 		DiffusionRelaxation diffusion_relaxation(herat_model_inner);
 		/** Compute the fiber and sheet after diffusion. */

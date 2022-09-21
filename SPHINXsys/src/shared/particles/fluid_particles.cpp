@@ -41,7 +41,7 @@ namespace SPH
 	ViscoelasticFluidParticles::
 		ViscoelasticFluidParticles(SPHBody &sph_body, Oldroyd_B_Fluid *oldroyd_b_fluid)
 		: FluidParticles(sph_body, oldroyd_b_fluid),
-		oldroyd_b_fluid_(oldroyd_b_fluid_) {}
+		oldroyd_b_fluid_(*oldroyd_b_fluid) {}
 	//=================================================================================================//
 	void ViscoelasticFluidParticles::initializeOtherVariables()
 	{

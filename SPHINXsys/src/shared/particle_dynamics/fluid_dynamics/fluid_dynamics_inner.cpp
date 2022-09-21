@@ -294,7 +294,7 @@ namespace SPH
 		DensityRelaxationInnerOldroyd_B::
 			DensityRelaxationInnerOldroyd_B(BaseBodyRelationInner &inner_relation)
 			: DensityRelaxationDissipativeRiemannInner(inner_relation),
-			  oldroyd_b_fluid_(DynamicCast<ViscoelasticFluidParticles>(this, particles_)->oldroyd_b_fluid_),
+			  oldroyd_b_fluid_(DynamicCast<Oldroyd_B_Fluid>(this, particles_->fluid_)),
 			  tau_(DynamicCast<ViscoelasticFluidParticles>(this, particles_)->tau_),
 			  dtau_dt_(DynamicCast<ViscoelasticFluidParticles>(this, particles_)->dtau_dt_)
 		{

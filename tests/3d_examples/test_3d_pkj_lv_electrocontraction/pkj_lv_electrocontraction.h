@@ -180,7 +180,7 @@ public:
 		 * 		Present  doi.org/10.1016/j.cma.2016.05.031
 		 */
 		/** Probe the face norm from Levelset field. */
-		Vecd dist_2_face = body_->body_shape_->findNormalDirection(pos_[index_i]);
+		Vecd dist_2_face = sph_body_.body_shape_->findNormalDirection(pos_[index_i]);
 		Vecd face_norm = dist_2_face / (dist_2_face.norm() + 1.0e-15);
 		Vecd center_norm = pos_[index_i] / (pos_[index_i].norm() + 1.0e-15);
 		if (dot(face_norm, center_norm) <= 0.0)
@@ -196,7 +196,7 @@ public:
 		Vecd f_0 = cos(beta) * cd_norm + sin(beta) * SimTK::cross(face_norm, cd_norm) +
 				   dot(face_norm, cd_norm) * (1.0 - cos(beta)) * face_norm;
 
-		if (pos_[index_i][2] < 2.0 * body_->sph_adaptation_->ReferenceSpacing())
+		if (pos_[index_i][2] < 2.0 * sph_body_.sph_adaptation_->ReferenceSpacing())
 		{
 			diffusion_reaction_material_.local_f0_[index_i] = f_0 / (f_0.norm() + 1.0e-15);
 			diffusion_reaction_material_.local_s0_[index_i] = face_norm;
