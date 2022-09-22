@@ -47,7 +47,8 @@ namespace SPH
          */
         SegmentFace(StdVec<Vecd> boundary_points, Vecd direction, Vecd center);
         SegmentFace(StdVec<Vecd> boundary_points, Vecd direction);
-        SegmentFace(const Vecd& center, const Vecd& direction);
+        SegmentFace(const Vecd& direction, const Vecd& center);
+        SegmentFace(const Vecd& direction, const Vecd& center, Real radius);
 
         const StdVec<Vecd>& getBoundaryPoints()
         {
