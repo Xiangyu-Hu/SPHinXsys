@@ -38,9 +38,7 @@ namespace SPH
 							ListDataVector &target_particles = cell_data_lists_[l][m];
 							for (const ListData &list_data : target_particles)
 							{
-								// displacement pointing from neighboring particle to origin particle
-								Vecd displacement = pos[index_i] - std::get<1>(list_data);
-								get_neighbor_relation(neighborhood, displacement, index_i, std::get<0>(list_data));
+								get_neighbor_relation(neighborhood, pos[index_i], index_i, list_data);
 							}
 						}
 				}
