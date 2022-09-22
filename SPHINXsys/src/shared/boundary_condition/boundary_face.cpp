@@ -29,10 +29,65 @@ namespace SPH
     SegmentFace::SegmentFace(const Vecd& direction, const Vecd& center, Real radius)
     : center_(center), direction_(direction.normalize()) 
     {
-        StdVec<SPH::Vecd> inlet_bound_points{
-            SPH::Vecd(1,1,1)*radius+center,
-            SPH::Vecd(-1,-1,-1)*radius+center};
-            boundary_points_ = inlet_bound_points;
+        Vecd default_normal(1.0,0.0,0.0);
+        // calculate rotation matrix from defualt_normal to direction_
+        Mat3d rotationMatrix(0);
+        {
+            default_normal = default_normal.normalize();
+            direction_ = direction_.normalize();
+            Real angle = acos(SimTK::dot(default_normal,direction_));
+            Vecd p_rotate = cross(default_normal,direction_);
+            p_rotate = p_rotate.normalize();
+            
+            rotationMatrix(0, 0) = cos(angle) + p_rotate[0] * p_rotate[0] * (1 - cos(angle));
+            rotationMatrix(0, 1) = p_rotate[0] * p_rotate[1] * (1 - cos(angle) - p_rotate[2] * sin(angle));
+            rotationMatrix(0, 2) = p_rotate[1] * sin(angle) + p_rotate[0] * p_rotate[2] * (1 - cos(angle));
+        
+        
+            rotationMatrix(1, 0) = p_rotate[2] * sin(angle) + p_rotate[0] * p_rotate[1] * (1 - cos(angle));
+            rotationMatrix(1, 1) = cos(angle) + p_rotate[1] * p_rotate[1] * (1 - cos(angle));
+            rotationMatrix(1, 2) = -p_rotate[0] * sin(angle) + p_rotate[1] * p_rotate[2] * (1 - cos(angle));
+        
+        
+            rotationMatrix(2, 0) = -p_rotate[1] * sin(angle) +p_rotate[0] * p_rotate[2] * (1 - cos(angle));
+            rotationMatrix(2, 1) = p_rotate[0] * sin(angle) + p_rotate[1] * p_rotate[2] * (1 - cos(angle));
+            rotationMatrix(2, 2) = cos(angle) + p_rotate[2] * p_rotate[2] * (1 - cos(angle));
+        }
+        // calculate rotation angle
+        // Euler ZYX rotate ref:http://web.mit.edu/2.05/www/Handout/HO2.PDF
+        Mat3d rotationMatrix1(0);
+        {
+            Real gamma, beta, alpha;
+            gamma = atan(rotationMatrix(2,1)/rotationMatrix(2,2)); // gamma
+            // // theta_y = atan2(direction_[0]*cos(theta_x),direction_[2]);
+            beta = atan(-rotationMatrix(2,0)/sqrt(rotationMatrix(0,0)*rotationMatrix(0,0)+rotationMatrix(1,0)*rotationMatrix(1,0))); //beta
+            // // theta_z = atan2(cos(theta_x),sin(theta_x)*sin(theta_y));
+            alpha = atan(rotationMatrix(1,0)/rotationMatrix(0,0)); //alpha
+            
+            rotationMatrix1(0,0) = cos(alpha)*cos(beta);
+            rotationMatrix1(0,1) = cos(alpha)*sin(beta)*sin(gamma) - sin(alpha)*cos(gamma);
+            rotationMatrix1(0,2) = cos(alpha)*sin(beta)*cos(gamma) + sin(alpha)*sin(gamma);
+
+            rotationMatrix1(1,0) = sin(alpha)*cos(beta);
+            rotationMatrix1(1,1) = sin(alpha)*sin(beta)*sin(gamma) + cos(alpha)*cos(gamma);
+            rotationMatrix1(1,2) = sin(alpha)*sin(beta)*cos(gamma) - cos(alpha)*sin(gamma);
+
+            rotationMatrix1(2,0) = -sin(beta);
+            rotationMatrix1(2,1) = cos(beta)*sin(gamma);
+            rotationMatrix1(2,2) = cos(beta)*cos(gamma);
+
+        }
+        // defualt boundary points 
+        Vecd RU1(0., 1, 0), RD1(0., -1, 0), LU1(0., 0, 1), LD1(0., 0, -1);
+        // rotate and translate defualt boundary points
+        RU1 = rotationMatrix1*RU1*radius*1+ center_;
+        RD1 = rotationMatrix1*RD1*radius*1+ center_;
+        LU1 = rotationMatrix1*LU1*radius*1+ center_;
+        LD1 = rotationMatrix1*LD1*radius*1+ center_;
+        StdVec<SPH::Vecd> inlet_bound_points{RU1,RD1,LU1,LD1};
+        
+        boundary_points_ = inlet_bound_points;
+        
     }
 
     BodyRegionWithFace::BodyRegionWithFace(RealBody &real_body, SegmentFace &segment_face, Real scale)
