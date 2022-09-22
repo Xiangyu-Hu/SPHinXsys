@@ -12,7 +12,8 @@ namespace SPH
 		BoundingAlongAxis(RealBody &real_body, BoundingBox bounding_bounds, int axis)
 		: BaseDynamics<void>(), LocalDynamics(real_body),
 		  GeneralDataDelegateSimple(real_body),
-		  axis_(axis), bounding_bounds_(bounding_bounds), pos_(particles_->pos_),
+		  axis_(axis), bounding_bounds_(bounding_bounds),
+		  pos_(particles_->pos_), Vol_(particles_->Vol_),
 		  cell_linked_list_(real_body.cell_linked_list_),
 		  cut_off_radius_max_(real_body.sph_adaptation_->getKernel()->CutOffRadius()) {}
 	//=================================================================================================//
@@ -83,14 +84,15 @@ namespace SPH
 	{
 		for (size_t num = 0; num < cell_list_data.size(); ++num)
 		{
-			Vecd particle_position = cell_list_data[num].second;
+			Vecd particle_position = std::get<1>(cell_list_data[num]);
 			if (particle_position[axis_] < bounding_bounds_.second[axis_] &&
 				particle_position[axis_] > (bounding_bounds_.second[axis_] - cut_off_radius_max_))
 			{
 				Vecd translated_position = particle_position - periodic_translation_;
 				/** insert ghost particle to cell linked list */
 				mutex_cell_list_entry_.lock();
-				cell_linked_list_->InsertListDataEntry(cell_list_data[num].first, translated_position);
+				cell_linked_list_->InsertListDataEntry(std::get<0>(cell_list_data[num]),
+													   translated_position, std::get<2>(cell_list_data[num]));
 				mutex_cell_list_entry_.unlock();
 			}
 		}
@@ -101,14 +103,15 @@ namespace SPH
 	{
 		for (size_t num = 0; num < cell_list_data.size(); ++num)
 		{
-			Vecd particle_position = cell_list_data[num].second;
+			Vecd particle_position = std::get<1>(cell_list_data[num]);
 			if (particle_position[axis_] > bounding_bounds_.first[axis_] &&
 				particle_position[axis_] < (bounding_bounds_.first[axis_] + cut_off_radius_max_))
 			{
 				Vecd translated_position = particle_position + periodic_translation_;
 				/** insert ghost particle to cell linked list */
 				mutex_cell_list_entry_.lock();
-				cell_linked_list_->InsertListDataEntry(cell_list_data[num].first, translated_position);
+				cell_linked_list_->InsertListDataEntry(std::get<0>(cell_list_data[num]),
+													   translated_position, std::get<2>(cell_list_data[num]));
 				mutex_cell_list_entry_.unlock();
 			}
 		}
@@ -151,6 +154,7 @@ namespace SPH
 		CreatPeriodicGhostParticles::checkLowerBound(size_t index_i, Real dt)
 	{
 		Vecd particle_position = pos_[index_i];
+		Real particle_volumetric = Vol_[index_i];
 		if (particle_position[axis_] > bounding_bounds_.first[axis_] &&
 			particle_position[axis_] < (bounding_bounds_.first[axis_] + cut_off_radius_max_))
 		{
@@ -159,7 +163,8 @@ namespace SPH
 			ghost_particles_[0].push_back(ghost_particle_index);
 			pos_[ghost_particle_index] = particle_position + periodic_translation_;
 			/** insert ghost particle to cell linked list */
-			cell_linked_list_->InsertListDataEntry(ghost_particle_index, pos_[ghost_particle_index]);
+			cell_linked_list_->InsertListDataEntry(ghost_particle_index,
+												   pos_[ghost_particle_index], particle_volumetric);
 			mutex_create_ghost_particle_.unlock();
 		}
 	}
@@ -168,6 +173,7 @@ namespace SPH
 		CreatPeriodicGhostParticles::checkUpperBound(size_t index_i, Real dt)
 	{
 		Vecd particle_position = pos_[index_i];
+		Real particle_volumetric = Vol_[index_i];
 		if (particle_position[axis_] < bounding_bounds_.second[axis_] &&
 			particle_position[axis_] > (bounding_bounds_.second[axis_] - cut_off_radius_max_))
 		{
@@ -176,7 +182,8 @@ namespace SPH
 			ghost_particles_[1].push_back(ghost_particle_index);
 			pos_[ghost_particle_index] = particle_position - periodic_translation_;
 			/** insert ghost particle to cell linked list */
-			cell_linked_list_->InsertListDataEntry(ghost_particle_index, pos_[ghost_particle_index]);
+			cell_linked_list_->InsertListDataEntry(ghost_particle_index,
+												   pos_[ghost_particle_index], particle_volumetric);
 			mutex_create_ghost_particle_.unlock();
 		}
 	}
@@ -285,7 +292,7 @@ namespace SPH
 		{
 			ListDataVector &list_data = *cell_list_data[i];
 			for (size_t num = 0; num < list_data.size(); ++num)
-				checking_bound_(list_data[num].first, dt);
+				checking_bound_(std::get<0>(list_data[num]), dt);
 		}
 	}
 	//=================================================================================================//
@@ -301,7 +308,7 @@ namespace SPH
 				{
 					ListDataVector &list_data = *cell_list_data[i];
 					for (size_t num = 0; num < list_data.size(); ++num)
-						checking_bound_(list_data[num].first, dt);
+						checking_bound_(std::get<0>(list_data[num]), dt);
 				}
 			},
 			ap);
@@ -318,8 +325,10 @@ namespace SPH
 			/** mirror boundary condition */
 			mirrorAlongAxis(expected_particle_index, bounding_bounds_.first, axis_);
 			Vecd translated_position = particles_->pos_[expected_particle_index];
+			Real particle_volumetric = particles_->Vol_[expected_particle_index];
 			/** insert ghost particle to cell linked list */
-			cell_linked_list_->InsertListDataEntry(expected_particle_index, translated_position);
+			cell_linked_list_->InsertListDataEntry(
+				expected_particle_index, translated_position, particle_volumetric);
 		}
 	}
 	//=================================================================================================//
@@ -334,8 +343,10 @@ namespace SPH
 			/** mirror boundary condition */
 			mirrorAlongAxis(expected_particle_index, bounding_bounds_.second, axis_);
 			Vecd translated_position = particles_->pos_[expected_particle_index];
+			Real particle_volumetric = particles_->Vol_[expected_particle_index];
 			/** insert ghost particle to cell linked list */
-			cell_linked_list_->InsertListDataEntry(expected_particle_index, translated_position);
+			cell_linked_list_->InsertListDataEntry(
+				expected_particle_index, translated_position, particle_volumetric);
 		}
 	}
 	//=================================================================================================//

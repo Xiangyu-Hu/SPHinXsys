@@ -32,7 +32,7 @@ namespace SPH
 	using ConcurrentIndexVector = ConcurrentVec<size_t>;
 
 	/** List data pair: first for indexes, second for particle position. */
-	using ListData = std::pair<size_t, Vecd>;
+	using ListData = std::tuple<size_t, Vecd, Real>;
 	using ListDataVector = StdLargeVec<ListData>;
 	using ConcurrentIndexesInCells = StdLargeVec<ConcurrentIndexVector *>;
 	using DataListsInCells = StdLargeVec<ListDataVector *>;

@@ -42,8 +42,8 @@ namespace SPH
 								for (const ListData &list_data : target_particles)
 								{
 									// displacement pointing from neighboring particle to origin particle
-									Vecd displacement = pos[index_i] - list_data.second;
-									get_neighbor_relation(neighborhood, displacement, index_i, list_data.first);
+									Vecd displacement = pos[index_i] - std::get<1>(list_data);
+									get_neighbor_relation(neighborhood, displacement, index_i, std::get<0>(list_data));
 								}
 							}
 				}

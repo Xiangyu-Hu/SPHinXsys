@@ -70,7 +70,7 @@ namespace SPH
 		/** Insert a cell-linked_list entry to the concurrent index list. */
 		virtual void insertParticleIndex(size_t particle_index, const Vecd &particle_position) = 0;
 		/** Insert a cell-linked_list entry of the index and particle position pair. */
-		virtual void InsertListDataEntry(size_t particle_index, const Vecd &particle_position) = 0;
+		virtual void InsertListDataEntry(size_t particle_index, const Vecd &particle_position, Real volumetric) = 0;
 		/** find the nearest list data entry */
 		virtual ListData findNearestListDataEntry(const Vecd &position) = 0;
 		/** computing the sequence which indicate the order of sorted particle data */
@@ -109,7 +109,7 @@ namespace SPH
 		void UpdateCellListData(BaseParticles &base_particles);
 		virtual void UpdateCellLists(BaseParticles &base_particles) override;
 		void insertParticleIndex(size_t particle_index, const Vecd &particle_position) override;
-		void InsertListDataEntry(size_t particle_index, const Vecd &particle_position) override;
+		void InsertListDataEntry(size_t particle_index, const Vecd &particle_position, Real volumetric) override;
 		virtual ListData findNearestListDataEntry(const Vecd &position) override;
 		virtual void computingSequence(BaseParticles &base_particles) override;
 		virtual void tagBodyPartByCell(ConcurrentIndexesInCells &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
@@ -143,8 +143,8 @@ namespace SPH
 
 		virtual void UpdateCellLists(BaseParticles &base_particles) override;
 		void insertParticleIndex(size_t particle_index, const Vecd &particle_position) override;
-		void InsertListDataEntry(size_t particle_index, const Vecd &particle_position) override;
-		virtual ListData findNearestListDataEntry(const Vecd &position) override { return ListData(0, Vecd(0)); };
+		void InsertListDataEntry(size_t particle_index, const Vecd &particle_position, Real volumetric) override;
+		virtual ListData findNearestListDataEntry(const Vecd &position) override { return ListData(0, Vecd(0), 0); };
 		virtual void computingSequence(BaseParticles &base_particles) override{};
 		virtual void tagBodyPartByCell(ConcurrentIndexesInCells &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
 		virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, BoundingBox &bounding_bounds, int axis) override{};

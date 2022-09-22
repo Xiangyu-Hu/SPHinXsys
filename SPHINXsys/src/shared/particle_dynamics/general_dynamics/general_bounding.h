@@ -47,6 +47,7 @@ namespace SPH
 		const int axis_;			  /**< the axis directions for bounding*/
 		BoundingBox bounding_bounds_; /**< lower and upper bound for checking. */
 		StdLargeVec<Vecd> &pos_;
+		StdLargeVec<Real> &Vol_;
 		BaseCellLinkedList *cell_linked_list_;
 		Real cut_off_radius_max_; /**< maximum cut off radius to avoid boundary particle depletion */
 

@@ -42,6 +42,7 @@ namespace SPH
 	void CellLinkedList::UpdateCellListData(BaseParticles &base_particles)
 	{
 		StdLargeVec<Vecd> &pos = base_particles.pos_;
+		StdLargeVec<Real> &Vol = base_particles.Vol_;
 		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
 						  [&](size_t i, size_t j, size_t k)
 						  {
@@ -50,7 +51,7 @@ namespace SPH
 							  for (size_t s = 0; s != cell_list.size(); ++s)
 							  {
 								  size_t index = cell_list[s];
-								  cell_data_lists_[i][j][k].emplace_back(std::make_pair(index, pos[index]));
+								  cell_data_lists_[i][j][k].emplace_back(std::make_tuple(index, pos[index], Vol[index]));
 							  }
 						  });
 	}
@@ -77,16 +78,17 @@ namespace SPH
 		cell_index_lists_[cellpos[0]][cellpos[1]][cellpos[2]].emplace_back(particle_index);
 	}
 	//=================================================================================================//
-	void CellLinkedList ::InsertListDataEntry(size_t particle_index, const Vecd &particle_position)
+	void CellLinkedList ::InsertListDataEntry(size_t particle_index, const Vecd &particle_position, Real volumetric)
 	{
 		Vecu cellpos = CellIndexFromPosition(particle_position);
-		cell_data_lists_[cellpos[0]][cellpos[1]][cellpos[2]].emplace_back(std::make_pair(particle_index, particle_position));
+		cell_data_lists_[cellpos[0]][cellpos[1]][cellpos[2]].emplace_back(
+			std::make_tuple(particle_index, particle_position, volumetric));
 	}
 	//=================================================================================================//
 	ListData CellLinkedList::findNearestListDataEntry(const Vecd &position)
 	{
 		Real min_distance = Infinity;
-		ListData nearest_entry = std::make_pair(MaxSize_t, Vecd(Infinity));
+		ListData nearest_entry = std::make_tuple(MaxSize_t, Vecd(Infinity), Infinity);
 
 		Vecu cell_location = CellIndexFromPosition(position);
 		int i = (int)cell_location[0];
@@ -102,7 +104,7 @@ namespace SPH
 					ListDataVector &target_particles = cell_data_lists_[l][m][q];
 					for (const ListData &list_data : target_particles)
 					{
-						Real distance = (position - list_data.second).norm();
+						Real distance = (position - std::get<1>(list_data)).norm();
 						if (distance < min_distance)
 						{
 							min_distance = distance;
