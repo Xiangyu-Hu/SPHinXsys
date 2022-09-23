@@ -165,7 +165,7 @@ namespace SPH
 						FluidState state_l(rho_n_k[index_j], vel_n_k[index_j], p_k[index_j]);
 						FluidState state_r(rho_in_wall, vel_in_wall, p_in_wall);
 						Real p_star = riemann_solver_k.getPStar(state_l, state_r, n_i);
-						force -= 2.0 * p_star * e_ij * Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n];
+						force -= 2.0 * p_star * e_ij * Vol_i * contact_neighborhood.dW_ijV_j_[n];
 					}
 				}
 				force_from_fluid_[index_i] = force;
@@ -243,7 +243,7 @@ namespace SPH
 						FluidState state_r(rho_in_wall, vel_in_wall, p_in_wall);
 						FluidState interface_state = riemann_solver_k.getInterfaceState(state_l, state_r, n_i);
 						Real p_star = interface_state.p_;
-						force -= 2.0 * p_star * e_ij * Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n];
+						force -= 2.0 * p_star * e_ij * Vol_i * contact_neighborhood.dW_ijV_j_[n];
 					}
 				}
 				force_from_fluid_[index_i] = force;

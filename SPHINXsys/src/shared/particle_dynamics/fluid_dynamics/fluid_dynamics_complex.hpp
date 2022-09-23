@@ -120,7 +120,7 @@ namespace SPH
 					Real r_ij = contact_neighborhood.r_ij_[n];
 
 					vel_derivative = 2.0 * (vel_i - vel_ave_k[index_j]) / (r_ij + 0.01 * this->smoothing_length_);
-					acceleration += 2.0 * this->mu_ * vel_derivative * contact_neighborhood.dW_ij_[n] * Vol_k[index_j] / rho_i;
+					acceleration += 2.0 * this->mu_ * vel_derivative * contact_neighborhood.dW_ijV_j_[n] / rho_i;
 				}
 			}
 
@@ -172,7 +172,7 @@ namespace SPH
 				{
 					size_t index_j = wall_neighborhood.j_[n];
 					Vecd &e_ij = wall_neighborhood.e_ij_[n];
-					Real dW_ij = wall_neighborhood.dW_ij_[n];
+					Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
 					Real r_ij = wall_neighborhood.r_ij_[n];
 
 					Real face_wall_external_acceleration = dot((acc_prior_i - acc_ave_k[index_j]), -e_ij);
@@ -181,7 +181,7 @@ namespace SPH
 					Real rho_in_wall = this->fluid_.DensityFromPressure(p_in_wall);
 					FluidState state_j(rho_in_wall, vel_in_wall, p_in_wall);
 					Real p_star = this->riemann_solver_.getPStar(state_i, state_j, n_k[index_j]);
-					acceleration -= 2.0 * p_star * e_ij * Vol_k[index_j] * dW_ij / state_i.rho_;
+					acceleration -= 2.0 * p_star * e_ij * dW_ijV_j / state_i.rho_;
 				}
 			}
 			this->acc_[index_i] += acceleration;
@@ -232,7 +232,7 @@ namespace SPH
 				{
 					size_t index_j = wall_neighborhood.j_[n];
 					Vecd &e_ij = wall_neighborhood.e_ij_[n];
-					Real dW_ij = wall_neighborhood.dW_ij_[n];
+					Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
 					Real r_ij = wall_neighborhood.r_ij_[n];
 					Vecd &n_j = n_k[index_j];
 
@@ -244,7 +244,7 @@ namespace SPH
 					Real penalty = penalty_strength_ * beta * fabs(projection * penalty_pressure);
 
 					//penalty force induced acceleration
-					acceleration -= 2.0 * penalty * n_j * Vol_k[index_j] * dW_ij / rho_i;
+					acceleration -= 2.0 * penalty * n_j * dW_ijV_j / rho_i;
 				}
 			}
 			this->acc_[index_i] += acceleration;
@@ -327,7 +327,7 @@ namespace SPH
 					size_t index_j = wall_neighborhood.j_[n];
 					Vecd &e_ij = wall_neighborhood.e_ij_[n];
 					Real r_ij = wall_neighborhood.r_ij_[n];
-					Real dW_ij = wall_neighborhood.dW_ij_[n];
+					Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
 
 					Real face_wall_external_acceleration = dot((acc_prior_i - acc_ave_k[index_j]), -e_ij);
 					Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - state_i.vel_;
@@ -335,7 +335,7 @@ namespace SPH
 					Real rho_in_wall = this->fluid_.DensityFromPressure(p_in_wall);
 					FluidState state_j(rho_in_wall, vel_in_wall, p_in_wall);
 					Vecd vel_star = this->riemann_solver_.getVStar(state_i, state_j, n_k[index_j]);
-					density_change_rate += 2.0 * state_i.rho_ * Vol_k[index_j] * dot(state_i.vel_ - vel_star, e_ij) * dW_ij;
+					density_change_rate += 2.0 * state_i.rho_ * dot(state_i.vel_ - vel_star, e_ij) * dW_ijV_j;
 				}
 			}
 			this->drho_dt_[index_i] += density_change_rate;

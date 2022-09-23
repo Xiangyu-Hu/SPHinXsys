@@ -35,7 +35,7 @@ namespace SPH
 			size_t index_j = inner_neighborhood.j_[n];
 			// linear projection
 			VariableType variable_derivative = (variable_i - variable_[index_j]);
-			Real parameter_b = 2.0 * eta_ * inner_neighborhood.dW_ij_[n] * Vol_i * Vol_[index_j] * dt / inner_neighborhood.r_ij_[n];
+			Real parameter_b = 2.0 * eta_ * inner_neighborhood.dW_ijV_j_[n] * Vol_i * dt / inner_neighborhood.r_ij_[n];
 
 			error_and_parameters.error_ -= variable_derivative * parameter_b;
 			error_and_parameters.a_ += parameter_b;
@@ -60,7 +60,7 @@ namespace SPH
 		{
 			size_t index_j = inner_neighborhood.j_[n];
 
-			Real parameter_b = 2.0 * eta_ * inner_neighborhood.dW_ij_[n] * Vol_i * Vol_[index_j] * dt / inner_neighborhood.r_ij_[n];
+			Real parameter_b = 2.0 * eta_ * inner_neighborhood.dW_ijV_j_[n] * Vol_i * dt / inner_neighborhood.r_ij_[n];
 
 			// predicted quantity at particle j
 			VariableType variable_j = variable_[index_j] - parameter_k * parameter_b;
@@ -115,7 +115,7 @@ namespace SPH
 
 				// linear projection
 				VariableType variable_derivative = (variable_i - variable_k[index_j]);
-				Real parameter_b = 2.0 * this->eta_ * contact_neighborhood.dW_ij_[n] * Vol_i * Vol_k[index_j] * dt / contact_neighborhood.r_ij_[n];
+				Real parameter_b = 2.0 * this->eta_ * contact_neighborhood.dW_ijV_j_[n] * Vol_i * dt / contact_neighborhood.r_ij_[n];
 
 				error_and_parameters.error_ -= variable_derivative * parameter_b;
 				error_and_parameters.a_ += parameter_b;
@@ -147,7 +147,7 @@ namespace SPH
 				size_t index_j = contact_neighborhood.j_[n];
 
 				// linear projection
-				Real parameter_b = 2.0 * this->eta_ * contact_neighborhood.dW_ij_[n] * Vol_i * Vol_k[index_j] * dt / contact_neighborhood.r_ij_[n];
+				Real parameter_b = 2.0 * this->eta_ * contact_neighborhood.dW_ijV_j_[n] * Vol_i * dt / contact_neighborhood.r_ij_[n];
 
 				// predicted quantity at particle j
 				VariableType variable_j = this->variable_k[index_j] - parameter_k * parameter_b;
@@ -197,7 +197,7 @@ namespace SPH
 
 				// linear projection
 				VariableType variable_derivative = (variable_i - variable_k[index_j]);
-				Real parameter_b = 2.0 * this->eta_ * contact_neighborhood.dW_ij_[n] * Vol_i * Vol_k[index_j] * dt / contact_neighborhood.r_ij_[n];
+				Real parameter_b = 2.0 * this->eta_ * contact_neighborhood.dW_ijV_j_[n] * Vol_i * dt / contact_neighborhood.r_ij_[n];
 
 				error_and_parameters.error_ -= variable_derivative * parameter_b;
 				error_and_parameters.a_ += parameter_b;
@@ -233,7 +233,7 @@ namespace SPH
 			Real mass_j = mass_[index_j];
 
 			VariableType variable_derivative = (variable_i - variable_[index_j]);
-			parameter_b[n] = eta_ * inner_neighborhood.dW_ij_[n] * Vol_i * Vol_[index_j] * dt / inner_neighborhood.r_ij_[n];
+			parameter_b[n] = eta_ * inner_neighborhood.dW_ijV_j_[n] * Vol_i * dt / inner_neighborhood.r_ij_[n];
 
 			VariableType increment = parameter_b[n] * variable_derivative / (mass_i * mass_j - parameter_b[n] * (mass_i + mass_j));
 			variable_[index_i] += increment * mass_j;
@@ -299,7 +299,7 @@ namespace SPH
 				Real mass_j = mass_k[index_j];
 
 				VariableType variable_derivative = (variable_i - variable_k[index_j]);
-				parameter_b[n] = this->eta_ * contact_neighborhood.dW_ij_[n] * Vol_i * Vol_k[index_j] * dt / contact_neighborhood.r_ij_[n];
+				parameter_b[n] = this->eta_ * contact_neighborhood.dW_ijV_j_[n] * Vol_i * dt / contact_neighborhood.r_ij_[n];
 
 				VariableType increment = parameter_b[n] * variable_derivative / (mass_i * mass_j - parameter_b[n] * (mass_i + mass_j));
 				this->variable_[index_i] += increment * mass_j;
@@ -366,7 +366,7 @@ namespace SPH
 			{
 				size_t index_j = contact_neighborhood.j_[n];
 
-				parameter_b[n] = this->eta_ * contact_neighborhood.dW_ij_[n] * Vol_i * Vol_k[index_j] * dt / contact_neighborhood.r_ij_[n];
+				parameter_b[n] = this->eta_ * contact_neighborhood.dW_ijV_j_[n] * Vol_i * dt / contact_neighborhood.r_ij_[n];
 
 				// only update particle i
 				this->variable_[index_i] += parameter_b[n] * (variable_i - variable_k[index_j]) / (mass_i - 2.0 * parameter_b[n]);
@@ -417,7 +417,7 @@ namespace SPH
 			{
 				size_t index_j = contact_neighborhood.j_[n];
 
-				parameter_b[n] = eta_ * contact_neighborhood.dW_ij_[n] * Vol_i * Vol_k[index_j] * dt / contact_neighborhood.r_ij_[n];
+				parameter_b[n] = eta_ * contact_neighborhood.dW_ijV_j_[n] * Vol_i * dt / contact_neighborhood.r_ij_[n];
 
 				// only update particle i
 				variable_[index_i] += parameter_b[n] * (variable_i - variable_k[index_j]) / (mass_i - 2.0 * parameter_b[n]);

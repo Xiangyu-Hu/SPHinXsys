@@ -30,7 +30,7 @@ namespace SPH
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = inner_neighborhood.j_[n];
-				Real dW_ij = inner_neighborhood.dW_ij_[n];
+				Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
 				Vecd &e_ij = inner_neighborhood.e_ij_[n];
 
 				CompressibleFluidState state_j(rho_[index_j], vel_[index_j], p_[index_j], E_[index_j]);
@@ -39,8 +39,7 @@ namespace SPH
 				Real p_star = interface_state.p_;
 				Real rho_star = interface_state.rho_;
 
-				momentum_change_rate -= 2.0 * Vol_[index_j] *
-										(SimTK::outer(rho_star * vel_star, vel_star) + p_star * Matd(1.0)) * e_ij * dW_ij;
+				momentum_change_rate -= 2.0 * (SimTK::outer(rho_star * vel_star, vel_star) + p_star * Matd(1.0)) * e_ij * dW_ijV_j;
 			}
 			dmom_dt_[index_i] = momentum_change_rate;
 		}
@@ -62,18 +61,18 @@ namespace SPH
 			{
 				size_t index_j = inner_neighborhood.j_[n];
 				Vecd &e_ij = inner_neighborhood.e_ij_[n];
-				Real dW_ij = inner_neighborhood.dW_ij_[n];
+				Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
 
 				CompressibleFluidState state_j(rho_[index_j], vel_[index_j], p_[index_j], E_[index_j]);
 				CompressibleFluidState interface_state = riemann_solver_.getInterfaceState(state_i, state_j, e_ij);
-				//Vecd vel_star = interface_state.get_state_vel();
+				// Vecd vel_star = interface_state.get_state_vel();
 				Vecd vel_star = interface_state.vel_;
 				Real p_star = interface_state.p_;
 				Real rho_star = interface_state.rho_;
 				Real E_star = interface_state.E_;
 
-				density_change_rate -= 2.0 * Vol_[index_j] * dot(rho_star * vel_star, e_ij) * dW_ij;
-				energy_change_rate -= 2.0 * Vol_[index_j] * dot(E_star * vel_star + p_star * vel_star, e_ij) * dW_ij;
+				density_change_rate -= 2.0 * dot(rho_star * vel_star, e_ij) * dW_ijV_j;
+				energy_change_rate -= 2.0 * dot(E_star * vel_star + p_star * vel_star, e_ij) * dW_ijV_j;
 			}
 			drho_dt_[index_i] = density_change_rate;
 			dE_dt_[index_i] = energy_change_rate;
@@ -82,5 +81,5 @@ namespace SPH
 	}
 	//=================================================================================================//
 }
-#endif //EULERIAN_COMPRESSIBLE_FLUID_DYNAMICS_INNER_HPP
-//=================================================================================================//
+#endif // EULERIAN_COMPRESSIBLE_FLUID_DYNAMICS_INNER_HPP
+	   //=================================================================================================//

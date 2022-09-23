@@ -49,7 +49,7 @@ namespace SPH
 										  (contact_neighborhood.r_ij_[n] + 0.01 * smoothing_length_k);
 
 					force += 2.0 * mu_k * vel_derivative *
-							 Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n];
+							 Vol_i * contact_neighborhood.dW_ijV_j_[n];
 				}
 			}
 
@@ -97,7 +97,7 @@ namespace SPH
 										  (contact_neighborhood.r_ij_[n] + 0.01 * smoothing_length_k);
 
 					force += 2.0 * mu_k * vel_derivative *
-							 Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n];
+							 Vol_i * contact_neighborhood.dW_ijV_j_[n];
 				}
 			}
 
@@ -129,7 +129,7 @@ namespace SPH
 					Real vel_difference = 0.0 * (vel_ave_i - vel_n_k[index_j]).norm() * contact_neighborhood.r_ij_[n];
 					Real eta_ij = 8.0 * SMAX(mu_k, rho_n_k[index_j] * vel_difference) * v_r_ij /
 								  (contact_neighborhood.r_ij_[n] * contact_neighborhood.r_ij_[n] + 0.01 * smoothing_length_k);
-					force += eta_ij * Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n] * contact_neighborhood.e_ij_[n];
+					force += eta_ij * Vol_i * contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
 				}
 			}
 

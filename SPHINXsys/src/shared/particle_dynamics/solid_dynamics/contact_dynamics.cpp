@@ -155,7 +155,7 @@ namespace SPH
 				Real p_star = 0.5 * (p_i + self_contact_density_[index_j] * solid_.ContactStiffness());
 				Real impedance_p = 0.5 * contact_impedance_ * (SimTK::dot(vel_i - vel_[index_j], -e_ij));
 				// force to mimic pressure
-				force -= 2.0 * (p_star + impedance_p) * e_ij * Vol_i * Vol_[index_j] * inner_neighborhood.dW_ij_[n];
+				force -= 2.0 * (p_star + impedance_p) * e_ij * Vol_i * inner_neighborhood.dW_ijV_j_[n];
 			}
 			acc_prior_[index_i] += force / mass_[index_i];
 		}
@@ -196,7 +196,7 @@ namespace SPH
 
 					Real p_star = 0.5 * (p_i + contact_density_k[index_j] * solid_k->ContactStiffness());
 					// force due to pressure
-					force -= 2.0 * p_star * e_ij * Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n];
+					force -= 2.0 * p_star * e_ij * Vol_i * contact_neighborhood.dW_ijV_j_[n];
 				}
 			}
 			acc_prior_[index_i] += force / mass_[index_i];
@@ -232,7 +232,7 @@ namespace SPH
 					Vecd e_ij = contact_neighborhood.e_ij_[n];
 
 					// force due to pressure
-					force -= 2.0 * p_i * e_ij * Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n];
+					force -= 2.0 * p_i * e_ij * Vol_i * contact_neighborhood.dW_ijV_j_[n];
 				}
 			}
 			acc_prior_[index_i] += force / mass_[index_i];
@@ -271,7 +271,7 @@ namespace SPH
 
 					Real p_star = contact_density_k[index_j] * solid_k->ContactStiffness();
 					// force due to pressure
-					force -= 2.0 * p_star * e_ij * Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n];
+					force -= 2.0 * p_star * e_ij * Vol_i * contact_neighborhood.dW_ijV_j_[n];
 				}
 			}
 			acc_prior_[index_i] += force / mass_[index_i];
@@ -312,7 +312,7 @@ namespace SPH
 					size_t index_j = contact_neighborhood.j_[n];
 					Vecd &e_ij = contact_neighborhood.e_ij_[n];
 
-					parameter_b[n] = eta_ * contact_neighborhood.dW_ij_[n] * Vol_i * Vol_k[index_j] * dt / contact_neighborhood.r_ij_[n];
+					parameter_b[n] = eta_ * contact_neighborhood.dW_ijV_j_[n] * Vol_i * dt / contact_neighborhood.r_ij_[n];
 
 					// only update particle i
 					Vecd vel_derivative = (vel_i - vel_k[index_j]);
@@ -387,7 +387,7 @@ namespace SPH
 
 					// force due to pressure
 					force -= 2.0 * (impedance_p + penalty_p) * dot(e_ij, n_k_j) *
-							 n_k_j * Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n];
+							 n_k_j * Vol_i * contact_neighborhood.dW_ijV_j_[n];
 				}
 			}
 

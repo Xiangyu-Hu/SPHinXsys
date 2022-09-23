@@ -60,7 +60,7 @@ namespace SPH
 									 (r_ij + 0.01 * this->smoothing_length_);
 					Real mu_ij = 2.0 * this->mu_ * mu_j / (this->mu_ + mu_j);
 					acceleration += 2.0 * mu_ij * vel_derivative *
-									contact_neighborhood.dW_ij_[n] * Vol_k[index_j] / rho_i;
+									contact_neighborhood.dW_ijV_j_[n] / rho_i;
 				}
 			}
 
@@ -102,7 +102,7 @@ namespace SPH
 						Real rho_ij = rho0_ / (rho0_ + rho0_k);
 						Real area_ij = (vol_i * vol_i +
 										contact_vol_k[index_j] * contact_vol_k[index_j]) *
-									   contact_neighborhood.dW_ij_[n];
+									   contact_neighborhood.dW_ijV_j_[n];
 						gradient += rho_ij * area_ij * contact_neighborhood.e_ij_[n] / vol_i;
 					}
 				}

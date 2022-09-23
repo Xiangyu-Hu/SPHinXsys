@@ -55,10 +55,10 @@ namespace SPH
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
 					size_t index_j = contact_neighborhood.j_[n];
-					Vecd nablaW_ij = contact_neighborhood.dW_ij_[n] * contact_neighborhood.e_ij_[n];
+					Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
 
 					// acceleration for transport velocity
-					acceleration_trans -= 2.0 * p_background_ * Vol_k[index_j] * nablaW_ij / rho_i;
+					acceleration_trans -= 2.0 * p_background_ * nablaW_ijV_j / rho_i;
 				}
 			}
 
@@ -82,9 +82,9 @@ namespace SPH
 				for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
 				{
 					size_t index_j = wall_neighborhood.j_[n];
-					Vecd nablaW_ij = wall_neighborhood.dW_ij_[n] * wall_neighborhood.e_ij_[n];
+					Vecd nablaW_ijV_j = wall_neighborhood.dW_ijV_j_[n] * wall_neighborhood.e_ij_[n];
 					/** stress boundary condition. */
-					acceleration += 2.0 * tau_i * nablaW_ij * Vol_k[index_j] / rho_i;
+					acceleration += 2.0 * tau_i * nablaW_ijV_j / rho_i;
 				}
 			}
 
@@ -107,9 +107,9 @@ namespace SPH
 				for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
 				{
 					size_t index_j = wall_neighborhood.j_[n];
-					Vecd nablaW_ij = wall_neighborhood.dW_ij_[n] * wall_neighborhood.e_ij_[n];
+					Vecd nablaW_ijV_j = wall_neighborhood.dW_ijV_j_[n] * wall_neighborhood.e_ij_[n];
 
-					Matd velocity_gradient = -SimTK::outer((vel_i - vel_ave_k[index_j]), nablaW_ij) * Vol_k[index_j] * 2.0;
+					Matd velocity_gradient = -SimTK::outer((vel_i - vel_ave_k[index_j]), nablaW_ijV_j) * 2.0;
 					stress_rate += ~velocity_gradient * tau_i + tau_i * velocity_gradient - tau_i / lambda_ +
 								   (~velocity_gradient + velocity_gradient) * mu_p_ / lambda_;
 				}

@@ -74,11 +74,11 @@ namespace SPH
 				{
 					size_t index_j = contact_neighborhood.j_[n];
 					Vecd& e_ij = contact_neighborhood.e_ij_[n];
-					Real dW_ij = contact_neighborhood.dW_ij_[n];
+					Real dW_ijV_j = contact_neighborhood.dW_ijV_j_[n];
 
 					FluidState state_j(rho_k[index_j], vel_k[index_j], p_k[index_j]);
 					Real p_star = riemann_solver_k.getPStar(state_i, state_j, e_ij);
-					acceleration -= 2.0 * p_star * e_ij * Vol_k[index_j] * dW_ij / state_i.rho_;
+					acceleration -= 2.0 * p_star * e_ij * dW_ijV_j / state_i.rho_;
 				}
 			}
 			this->acc_[index_i] += acceleration;
@@ -101,13 +101,13 @@ namespace SPH
 				{
 					size_t index_j = contact_neighborhood.j_[n];
 					Vecd& e_ij = contact_neighborhood.e_ij_[n];
-					Real dW_ij = contact_neighborhood.dW_ij_[n];
+					Real dW_ijV_j = contact_neighborhood.dW_ijV_j_[n];
 
 					Real rho_j = rho_k[index_j];
 					Real p_j = p_k[index_j];
 
 					Real p_star = (rho_i * p_j + rho_j * p_i) / (rho_i + rho_j);
-					acceleration += (p_i - p_star) * this->Vol_[index_j] * dW_ij * e_ij / rho_i;
+					acceleration += (p_i - p_star) * this->dW_ijV_j * e_ij / rho_i;
 				}
 			}
 			return acceleration;
@@ -150,11 +150,11 @@ namespace SPH
 				{
 					size_t index_j = contact_neighborhood.j_[n];
 					Vecd& e_ij = contact_neighborhood.e_ij_[n];
-					Real dW_ij = contact_neighborhood.dW_ij_[n];
+					Real dW_ijV_j = contact_neighborhood.dW_ijV_j_[n];
 
 					FluidState state_j(rho_k[index_j], vel_k[index_j], p_k[index_j]);
 					Vecd vel_star = riemann_solver_k.getVStar(state_i, state_j, e_ij);
-					density_change_rate += 2.0 * state_i.rho_ * Vol_k[index_j] * dot(state_i.vel_ - vel_star, e_ij) * dW_ij;
+					density_change_rate += 2.0 * state_i.rho_ * dot(state_i.vel_ - vel_star, e_ij) * dW_ijV_j;
 				}
 			}
 			this->drho_dt_[index_i] += density_change_rate;

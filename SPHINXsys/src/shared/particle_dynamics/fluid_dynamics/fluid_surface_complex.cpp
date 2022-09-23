@@ -41,7 +41,7 @@ namespace SPH
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
-					pos_div -= contact_neighborhood.dW_ij_[n] * contact_neighborhood.r_ij_[n] *
+					pos_div -= contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.r_ij_[n] *
 							   contact_inv_rho0_k * contact_mass_k[contact_neighborhood.j_[n]];
 				}
 			}
@@ -75,7 +75,7 @@ namespace SPH
 					Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 					for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 					{
-						gradient -= contact_neighborhood.dW_ij_[n] * contact_neighborhood.e_ij_[n] *
+						gradient -= contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n] *
 									contact_vol_k[contact_neighborhood.j_[n]];
 					}
 				}

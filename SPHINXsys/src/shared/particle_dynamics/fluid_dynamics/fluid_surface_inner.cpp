@@ -28,7 +28,7 @@ namespace SPH
             const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
             for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
             {
-                pos_div -= inner_neighborhood.dW_ij_[n] * inner_neighborhood.r_ij_[n] * Vol_[inner_neighborhood.j_[n]];
+                pos_div -= inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.r_ij_[n] * Vol_[inner_neighborhood.j_[n]];
             }
             pos_div_[index_i] = pos_div;
         }
@@ -61,9 +61,7 @@ namespace SPH
             {
                 rho_[index_i] = rho_sum_[index_i];
             }
-
-            Vol_[index_i] = mass_[index_i] / rho_[index_i];
-        }
+         }
         //=================================================================================================//
         bool DensitySummationFreeStreamInner::isNearSurface(size_t index_i)
         {
@@ -121,7 +119,7 @@ namespace SPH
                 for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
                 {
                     size_t index_j = inner_neighborhood.j_[n];
-                    gradient -= inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n] * Vol_[index_j];
+                    gradient -= inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
                 }
             }
             color_grad_[index_i] = gradient;
@@ -193,8 +191,8 @@ namespace SPH
                     {
                         Vecd n_j = surface_norm_[index_j];
                         Vecd n_ij = n_i - n_j;
-                        curvature -= inner_neighborhood.dW_ij_[n] * Vol_[index_j] * dot(n_ij, inner_neighborhood.e_ij_[n]);
-                        pos_div -= inner_neighborhood.dW_ij_[n] * inner_neighborhood.r_ij_[n] * Vol_[index_j];
+                        curvature -= inner_neighborhood.dW_ijV_j_[n] * dot(n_ij, inner_neighborhood.e_ij_[n]);
+                        pos_div -= inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.r_ij_[n];
                     }
                 }
             }

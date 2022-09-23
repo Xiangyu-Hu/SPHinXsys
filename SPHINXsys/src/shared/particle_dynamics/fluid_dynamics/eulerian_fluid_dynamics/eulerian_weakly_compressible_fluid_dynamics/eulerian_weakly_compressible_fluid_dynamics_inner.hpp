@@ -29,7 +29,7 @@ namespace SPH
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = inner_neighborhood.j_[n];
-				Real dW_ij = inner_neighborhood.dW_ij_[n];
+				Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
 				Vecd& e_ij = inner_neighborhood.e_ij_[n];
 
 				FluidState state_j(rho_[index_j], vel_[index_j], p_[index_j]);
@@ -38,8 +38,8 @@ namespace SPH
 				Vecd vel_star = interface_state.vel_;
 				Real rho_star = this->fluid_.DensityFromPressure(p_star);
 
-				momentum_change_rate -= 2.0 * Vol_[index_j] *
-					(SimTK::outer(rho_star * vel_star, vel_star) + p_star * Matd(1.0)) * e_ij * dW_ij;
+				momentum_change_rate -= 2.0 *
+					(SimTK::outer(rho_star * vel_star, vel_star) + p_star * Matd(1.0)) * e_ij * dW_ijV_j;
 			}
 			dmom_dt_[index_i] = momentum_change_rate;
 		}
@@ -60,7 +60,7 @@ namespace SPH
 			{
 				size_t index_j = inner_neighborhood.j_[n];
 				Vecd& e_ij = inner_neighborhood.e_ij_[n];
-				Real dW_ij = inner_neighborhood.dW_ij_[n];
+				Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
 
 				FluidState state_j(rho_[index_j], vel_[index_j], p_[index_j]);
 				FluidState interface_state = riemann_solver_.getInterfaceState(state_i, state_j, e_ij);
@@ -68,7 +68,7 @@ namespace SPH
 				Vecd vel_star = interface_state.vel_;
 				Real rho_star = this->fluid_.DensityFromPressure(p_star);
 
-				density_change_rate -= 2.0 * Vol_[index_j] * dot(rho_star * vel_star, e_ij) * dW_ij;
+				density_change_rate -= 2.0 * dot(rho_star * vel_star, e_ij) * dW_ijV_j;
 			}
 			drho_dt_[index_i] = density_change_rate;
 		};

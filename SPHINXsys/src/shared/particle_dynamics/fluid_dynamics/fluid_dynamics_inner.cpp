@@ -38,7 +38,6 @@ namespace SPH
 		void DensitySummationInner::update(size_t index_i, Real dt)
 		{
 			rho_[index_i] = ReinitializedDensity(rho_sum_[index_i], rho0_, rho_[index_i]);
-			Vol_[index_i] = mass_[index_i] / rho_[index_i];
 		}
 		//=================================================================================================//
 		BaseViscousAccelerationInner::BaseViscousAccelerationInner(BaseBodyRelationInner &inner_relation)
@@ -61,7 +60,7 @@ namespace SPH
 
 				// viscous force
 				vel_derivative = (vel_i - vel_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
-				acceleration += 2.0 * mu_ * vel_derivative * Vol_[index_j] * inner_neighborhood.dW_ij_[n] / rho_i;
+				acceleration += 2.0 * mu_ * vel_derivative * inner_neighborhood.dW_ijV_j_[n] / rho_i;
 			}
 
 			acc_prior_[index_i] += acceleration;
@@ -84,7 +83,7 @@ namespace SPH
 				 * this formulation is more accurate than the previous one for Taylor-Green-Vortex flow. */
 				Real v_r_ij = dot(vel_i - vel_[index_j], r_ij * e_ij);
 				Real eta_ij = 8.0 * mu_ * v_r_ij / (r_ij * r_ij + 0.01 * smoothing_length_);
-				acceleration += eta_ij * Vol_[index_j] / rho_i * inner_neighborhood.dW_ij_[n] * e_ij;
+				acceleration += eta_ij  / rho_i * inner_neighborhood.dW_ijV_j_[n] * e_ij;
 			}
 
 			acc_prior_[index_i] += acceleration;
@@ -113,10 +112,10 @@ namespace SPH
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = inner_neighborhood.j_[n];
-				Vecd nablaW_ij = inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n];
+				Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
 
 				// acceleration for transport velocity
-				acceleration_trans -= 2.0 * p_background_ * Vol_[index_j] * nablaW_ij / rho_i;
+				acceleration_trans -= 2.0 * p_background_ * nablaW_ijV_j / rho_i;
 			}
 
 			if (surface_indicator_[index_i] == 0)
@@ -191,7 +190,7 @@ namespace SPH
 				Vecd r_ij = inner_neighborhood.r_ij_[n] * inner_neighborhood.e_ij_[n];
 
 				Vecd vel_diff = vel_i - vel_[index_j];
-				vorticity += SimTK::cross(vel_diff, r_ij) * Vol_[index_j] * inner_neighborhood.dW_ij_[n];
+				vorticity += SimTK::cross(vel_diff, r_ij) * inner_neighborhood.dW_ijV_j_[n];
 			}
 
 			vorticity_[index_i] = vorticity;
@@ -213,7 +212,6 @@ namespace SPH
 		void BasePressureRelaxation::initialization(size_t index_i, Real dt)
 		{
 			rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
-			Vol_[index_i] = mass_[index_i] / rho_[index_i];
 			p_[index_i] = fluid_.getPressure(rho_[index_i]);
 			pos_[index_i] += vel_[index_i] * dt * 0.5;
 		}
@@ -232,14 +230,14 @@ namespace SPH
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = inner_neighborhood.j_[n];
-				Real dW_ij = inner_neighborhood.dW_ij_[n];
+				Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
 				const Vecd &e_ij = inner_neighborhood.e_ij_[n];
 
 				Real rho_j = rho_[index_j];
 				Real p_j = p_[index_j];
 
 				Real p_star = (rho_i * p_j + rho_j * p_i) / (rho_i + rho_j);
-				acceleration += (p_i - p_star) * Vol_[index_j] * dW_ij * e_ij / rho_i;
+				acceleration += (p_i - p_star) * dW_ijV_j * e_ij / rho_i;
 			}
 			return acceleration;
 		}
@@ -255,6 +253,7 @@ namespace SPH
 		void BaseDensityRelaxation::update(size_t index_i, Real dt)
 		{
 			rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
+			Vol_[index_i] = mass_[index_i] / rho_[index_i];
 		}
 		//=================================================================================================//
 		PressureRelaxationInnerOldroyd_B ::
@@ -282,10 +281,10 @@ namespace SPH
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = inner_neighborhood.j_[n];
-				Vecd nablaW_ij = inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n];
+				Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
 
 				// elastic force
-				acceleration += (tau_i + tau_[index_j]) * nablaW_ij * Vol_[index_j] / rho_i;
+				acceleration += (tau_i + tau_[index_j]) * nablaW_ijV_j / rho_i;
 			}
 
 			acc_[index_i] += acceleration;
@@ -314,9 +313,9 @@ namespace SPH
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = inner_neighborhood.j_[n];
-				Vecd nablaW_ij = inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n];
+				Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
 
-				Matd velocity_gradient = -SimTK::outer((vel_i - vel_[index_j]), nablaW_ij) * Vol_[index_j];
+				Matd velocity_gradient = -SimTK::outer((vel_i - vel_[index_j]), nablaW_ijV_j);
 				stress_rate += ~velocity_gradient * tau_i + tau_i * velocity_gradient - tau_i / lambda_ +
 							   (~velocity_gradient + velocity_gradient) * mu_p_ / lambda_;
 			}

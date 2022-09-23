@@ -33,9 +33,9 @@ namespace SPH
 		registerVariable(B_, "CorrectionMatrix", Matd(1.0));
 	}
 	//=================================================================================================//
-	Vecd SolidParticles::getKernelGradient(size_t index_i, size_t index_j, Real dW_ij, Vecd &e_ij)
+	Vecd SolidParticles::getKernelGradient(size_t index_i, size_t index_j, Real dW_ijV_j, Vecd &e_ij)
 	{
-		return 0.5 * dW_ij * (B_[index_i] + B_[index_j]) * e_ij;
+		return 0.5 * dW_ijV_j * (B_[index_i] + B_[index_j]) * e_ij;
 	}
 	//=============================================================================================//
 	ElasticSolidParticles::
