@@ -86,24 +86,23 @@ namespace SPH
 		//=================================================================================================//
 		void MultiPhaseColorFunctionGradient::interaction(size_t index_i, Real dt)
 		{
-			Real vol_i = Vol_[index_i];
+			Real Vol_i = Vol_[index_i];
 			Vecd gradient(0.0);
 			if (surface_indicator_[index_i])
 			{
 				for (size_t k = 0; k < contact_configuration_.size(); ++k)
 				{
 					Real rho0_k = contact_rho0_[k];
-					StdLargeVec<Real> &contact_vol_k = *(contact_Vol_[k]);
+					StdLargeVec<Real> &contact_Vol_k = *(contact_Vol_[k]);
 					Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 					for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 					{
 						size_t index_j = contact_neighborhood.j_[n];
 						/** Norm of interface.*/
 						Real rho_ij = rho0_ / (rho0_ + rho0_k);
-						Real area_ij = (vol_i * vol_i +
-										contact_vol_k[index_j] * contact_vol_k[index_j]) *
-									   contact_neighborhood.dW_ijV_j_[n];
-						gradient += rho_ij * area_ij * contact_neighborhood.e_ij_[n] / vol_i;
+						Real area_ij = (Vol_i * Vol_i + contact_Vol_k[index_j] * contact_Vol_k[index_j]) *
+									   contact_neighborhood.dW_ijV_j_[n] / contact_Vol_k[index_j];
+						gradient += rho_ij * area_ij * contact_neighborhood.e_ij_[n] / Vol_i;
 					}
 				}
 			}

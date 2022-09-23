@@ -50,7 +50,6 @@ namespace SPH
 			Vecd acceleration_trans(0);
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
-				StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
@@ -77,7 +76,6 @@ namespace SPH
 			Vecd acceleration(0);
 			for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
 			{
-				StdLargeVec<Real> &Vol_k = *(wall_Vol_[k]);
 				Neighborhood &wall_neighborhood = (*FluidWallData::contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
 				{
@@ -101,7 +99,6 @@ namespace SPH
 			Matd stress_rate(0);
 			for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
 			{
-				StdLargeVec<Real> &Vol_k = *(wall_Vol_[k]);
 				StdLargeVec<Vecd> &vel_ave_k = *(wall_vel_ave_[k]);
 				Neighborhood &wall_neighborhood = (*FluidWallData::contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
