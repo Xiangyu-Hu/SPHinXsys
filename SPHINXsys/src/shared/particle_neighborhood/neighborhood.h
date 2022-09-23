@@ -80,16 +80,16 @@ namespace SPH
 		//	Below are for constant smoothing length.
 		//----------------------------------------------------------------------
 		void createNeighbor(Neighborhood &neighborhood, const Real &distance,
-							const Vecd &displacement, size_t j_index) const;
+							const Vecd &displacement, size_t j_index);
 		void initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
-								const Vecd &displacement, size_t j_index) const;
+								const Vecd &displacement, size_t j_index);
 		//----------------------------------------------------------------------
 		//	Below are for variable smoothing length.
 		//----------------------------------------------------------------------
 		void createNeighbor(Neighborhood &neighborhood, const Real &distance,
-							const Vecd &displacement, size_t j_index, Real i_h_ratio, Real h_ratio_min) const;
+							const Vecd &displacement, size_t j_index, Real i_h_ratio, Real h_ratio_min);
 		void initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
-								const Vecd &displacement, size_t j_index, Real i_h_ratio, Real h_ratio_min) const;
+								const Vecd &displacement, size_t j_index, Real i_h_ratio, Real h_ratio_min);
 
 	public:
 		NeighborBuilder() : kernel_(nullptr){};
@@ -105,7 +105,7 @@ namespace SPH
 	public:
 		explicit NeighborBuilderInner(SPHBody &body);
 		void operator()(Neighborhood &neighborhood,
-						const Vecd &pos_i, size_t index_i, const ListData &list_data_j) const;
+						const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 	};
 
 	/**
@@ -118,7 +118,7 @@ namespace SPH
 	public:
 		explicit NeighborBuilderInnerVariableSmoothingLength(SPHBody &body);
 		void operator()(Neighborhood &neighborhood,
-						const Vecd &pos_i, size_t index_i, const ListData &list_data_j) const;
+						const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 
 	protected:
 		StdLargeVec<Real> &h_ratio_;
@@ -134,7 +134,7 @@ namespace SPH
 		explicit NeighborBuilderSelfContact(SPHBody &body);
 		virtual ~NeighborBuilderSelfContact(){};
 		void operator()(Neighborhood &neighborhood,
-						const Vecd &pos_i, size_t index_i, const ListData &list_data_j) const;
+						const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 
 	protected:
 		StdLargeVec<Vecd> &pos0_;
@@ -150,7 +150,7 @@ namespace SPH
 		NeighborBuilderContact(SPHBody &body, SPHBody &contact_body);
 		virtual ~NeighborBuilderContact(){};
 		void operator()(Neighborhood &neighborhood,
-						const Vecd &pos_i, size_t index_i, const ListData &list_data_j) const;
+						const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 	};
 
 	/**
@@ -177,7 +177,7 @@ namespace SPH
 		NeighborBuilderContactBodyPart(SPHBody &body, BodyPart &contact_body_part);
 		virtual ~NeighborBuilderContactBodyPart(){};
 		void operator()(Neighborhood &neighborhood,
-						const Vecd &pos_i, size_t index_i, const ListData &list_data_j) const;
+						const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 
 	protected:
 		StdLargeVec<int> part_indicator_; /**< indicator of the body part */

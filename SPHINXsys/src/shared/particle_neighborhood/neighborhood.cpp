@@ -45,7 +45,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void NeighborBuilder::createNeighbor(Neighborhood &neighborhood, const Real &distance,
-										 Vecd &displacement, size_t index_j, Real i_h_ratio, Real h_ratio_min)
+										 const Vecd &displacement, size_t index_j, Real i_h_ratio, Real h_ratio_min)
 	{
 		neighborhood.j_.push_back(index_j);
 		Real weight = distance < kernel_->CutOffRadius(i_h_ratio) ? kernel_->W(i_h_ratio, distance, displacement) : 0.0;
@@ -58,7 +58,7 @@ namespace SPH
 	//=================================================================================================//
 	void NeighborBuilder::
 		initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
-						   Vecd &displacement, size_t index_j, Real i_h_ratio, Real h_ratio_min)
+						   const Vecd &displacement, size_t index_j, Real i_h_ratio, Real h_ratio_min)
 	{
 		size_t current_size = neighborhood.current_size_;
 		neighborhood.j_[current_size] = index_j;
@@ -149,7 +149,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void NeighborBuilderContact::operator()(Neighborhood &neighborhood,
-											const Vecd &pos_i, size_t index_i, const ListData &list_data_j) const
+											const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
 	{
 		size_t index_j = std::get<0>(list_data_j);
 		Vecd displacement = pos_i - std::get<1>(list_data_j);
@@ -189,7 +189,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void NeighborBuilderContactBodyPart::operator()(Neighborhood &neighborhood,
-													const Vecd &pos_i, size_t index_i, const ListData &list_data_j) const
+													const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
 	{
 		size_t index_j = std::get<0>(list_data_j);
 		Vecd displacement = pos_i - std::get<1>(list_data_j);
