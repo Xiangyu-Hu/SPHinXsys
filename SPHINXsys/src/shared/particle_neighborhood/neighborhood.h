@@ -79,17 +79,17 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//	Below are for constant smoothing length.
 		//----------------------------------------------------------------------
-		void createNeighbor(Neighborhood &neighborhood, Real &distance,
-							Vecd &displacement, size_t j_index) const;
-		void initializeNeighbor(Neighborhood &neighborhood, Real &distance,
-								Vecd &displacement, size_t j_index) const;
+		void createNeighbor(Neighborhood &neighborhood, const Real &distance,
+							const Vecd &displacement, size_t j_index) const;
+		void initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
+								const Vecd &displacement, size_t j_index) const;
 		//----------------------------------------------------------------------
 		//	Below are for variable smoothing length.
 		//----------------------------------------------------------------------
-		void createNeighbor(Neighborhood &neighborhood, Real &distance,
-							Vecd &displacement, size_t j_index, Real i_h_ratio, Real h_ratio_min) const;
-		void initializeNeighbor(Neighborhood &neighborhood, Real &distance,
-								Vecd &displacement, size_t j_index, Real i_h_ratio, Real h_ratio_min) const;
+		void createNeighbor(Neighborhood &neighborhood, const Real &distance,
+							const Vecd &displacement, size_t j_index, Real i_h_ratio, Real h_ratio_min) const;
+		void initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
+								const Vecd &displacement, size_t j_index, Real i_h_ratio, Real h_ratio_min) const;
 
 	public:
 		NeighborBuilder() : kernel_(nullptr){};

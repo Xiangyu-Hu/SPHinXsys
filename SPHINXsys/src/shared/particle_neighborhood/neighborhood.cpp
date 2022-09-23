@@ -23,7 +23,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void NeighborBuilder::createNeighbor(Neighborhood &neighborhood,
-										 Real &distance, Vecd &displacement, size_t index_j) const
+										 const Real &distance, const Vecd &displacement, size_t index_j)
 	{
 		neighborhood.j_.push_back(index_j);
 		neighborhood.W_ij_.push_back(kernel_->W(distance, displacement));
@@ -34,7 +34,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void NeighborBuilder::initializeNeighbor(Neighborhood &neighborhood,
-											 Real &distance, Vecd &displacement, size_t index_j) const
+											 const Real &distance, const Vecd &displacement, size_t index_j)
 	{
 		size_t current_size = neighborhood.current_size_;
 		neighborhood.j_[current_size] = index_j;
@@ -44,8 +44,8 @@ namespace SPH
 		neighborhood.e_ij_[current_size] = displacement / (distance + TinyReal);
 	}
 	//=================================================================================================//
-	void NeighborBuilder::createNeighbor(Neighborhood &neighborhood, Real &distance,
-										 Vecd &displacement, size_t index_j, Real i_h_ratio, Real h_ratio_min) const
+	void NeighborBuilder::createNeighbor(Neighborhood &neighborhood, const Real &distance,
+										 Vecd &displacement, size_t index_j, Real i_h_ratio, Real h_ratio_min)
 	{
 		neighborhood.j_.push_back(index_j);
 		Real weight = distance < kernel_->CutOffRadius(i_h_ratio) ? kernel_->W(i_h_ratio, distance, displacement) : 0.0;
@@ -57,8 +57,8 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void NeighborBuilder::
-		initializeNeighbor(Neighborhood &neighborhood, Real &distance,
-						   Vecd &displacement, size_t index_j, Real i_h_ratio, Real h_ratio_min) const
+		initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
+						   Vecd &displacement, size_t index_j, Real i_h_ratio, Real h_ratio_min)
 	{
 		size_t current_size = neighborhood.current_size_;
 		neighborhood.j_[current_size] = index_j;
@@ -76,16 +76,16 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void NeighborBuilderInner::operator()(Neighborhood &neighborhood,
-										  const Vecd &pos_i, size_t index_i, const ListData &list_data_j) const
+										  const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
 	{
 		size_t index_j = std::get<0>(list_data_j);
 		Vecd displacement = pos_i - std::get<1>(list_data_j);
-		Real distance = displacement.norm();
-		if (distance < kernel_->CutOffRadius() && index_i != index_j)
+		Real distance_sqr = displacement.normSqr();
+		if (distance_sqr < kernel_->CutOffRadiusSqr() && index_i != index_j)
 		{
 			neighborhood.current_size_ >= neighborhood.allocated_size_
-				? createNeighbor(neighborhood, distance, displacement, index_j)
-				: initializeNeighbor(neighborhood, distance, displacement, index_j);
+				? createNeighbor(neighborhood, std::sqrt(distance_sqr), displacement, index_j)
+				: initializeNeighbor(neighborhood, std::sqrt(distance_sqr), displacement, index_j);
 			neighborhood.current_size_++;
 		}
 	};
@@ -99,7 +99,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void NeighborBuilderInnerVariableSmoothingLength::
-	operator()(Neighborhood &neighborhood, const Vecd &pos_i, size_t index_i, const ListData &list_data_j) const
+	operator()(Neighborhood &neighborhood, const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
 	{
 		size_t index_j = std::get<0>(list_data_j);
 		Vecd displacement = pos_i - std::get<1>(list_data_j);
@@ -125,7 +125,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void NeighborBuilderSelfContact::operator()(Neighborhood &neighborhood,
-												const Vecd &pos_i, size_t index_i, const ListData &list_data_j) const
+												const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
 	{
 		size_t index_j = std::get<0>(list_data_j);
 		Vecd displacement = pos_i - std::get<1>(list_data_j);
