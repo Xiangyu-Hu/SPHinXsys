@@ -107,7 +107,7 @@ namespace SPH
 					Real p_j = p_k[index_j];
 
 					Real p_star = (rho_i * p_j + rho_j * p_i) / (rho_i + rho_j);
-					acceleration += (p_i - p_star) * this->dW_ijV_j * e_ij / rho_i;
+					acceleration += (p_i - p_star) * dW_ijV_j * e_ij / rho_i;
 				}
 			}
 			return acceleration;

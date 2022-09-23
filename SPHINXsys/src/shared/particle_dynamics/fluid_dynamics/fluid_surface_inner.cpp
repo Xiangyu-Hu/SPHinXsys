@@ -28,7 +28,7 @@ namespace SPH
             const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
             for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
             {
-                pos_div -= inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.r_ij_[n] * Vol_[inner_neighborhood.j_[n]];
+                pos_div -= inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.r_ij_[n];
             }
             pos_div_[index_i] = pos_div;
         }
