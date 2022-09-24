@@ -201,9 +201,11 @@ namespace SPH
 			  fluid_(particles_->fluid_),
 			  Vol_(particles_->Vol_), mass_(particles_->mass_), rho_(particles_->rho_),
 			  p_(particles_->p_), drho_dt_(particles_->drho_dt_),
+			  rho_dissipation_(particles_->rho_dissipation_),
 			  pos_(particles_->pos_), vel_(particles_->vel_),
 			  acc_(particles_->acc_),
-			  acc_prior_(particles_->acc_prior_) {}
+			  acc_prior_(particles_->acc_prior_),
+			  p_dissipation_(particles_->p_dissipation_) {}
 		//=================================================================================================//
 		BasePressureRelaxation::
 			BasePressureRelaxation(BaseBodyRelationInner &inner_relation)

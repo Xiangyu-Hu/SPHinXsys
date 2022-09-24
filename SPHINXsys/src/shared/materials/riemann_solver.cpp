@@ -12,14 +12,24 @@
 namespace SPH
 {
 	//=================================================================================================//
+	Real NoRiemannSolver::getPStar(const Vecd &vel_i, const Vecd &vel_j, const Vecd &e_ij)
+	{
+		return 0.0;
+	}
+	//=================================================================================================//
+	Real NoRiemannSolver::getVStar(const Real &p_i, const Real &p_j)
+	{
+		return 0.0;
+	}
+	//=================================================================================================//
 	Real NoRiemannSolver::
-		getPStar(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
+		getPStarMultiPhase(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
 	{
 		return (state_i.p_ * state_j.rho_ + state_j.p_ * state_i.rho_) / (state_i.rho_ + state_j.rho_);
 	}
 	//=================================================================================================//
 	Vecd NoRiemannSolver::
-		getVStar(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
+		getVStarMultiPhase(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
 	{
 		return (state_i.vel_ * state_i.rho_ + state_j.vel_ * state_j.rho_) / (state_i.rho_ + state_j.rho_);
 	}
@@ -34,8 +44,24 @@ namespace SPH
 		rhor_cr = fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_) * state_j.rho_;
 	}
 	//=================================================================================================//
+	AcousticRiemannSolver::AcousticRiemannSolver(Fluid &fluid_i, Fluid &fluid_j)
+		: BaseAcousticRiemannSolver(fluid_i, fluid_j),
+		  rho0_(fluid_i.ReferenceDensity()), c0_(fluid_i.getSoundSpeed(0.0, rho0_)){};
+	//=================================================================================================//
+	Real AcousticRiemannSolver:: getPStar(const Vecd &vel_i, const Vecd &vel_j, const Vecd &e_ij)
+	{
+		Real ul = dot(-e_ij, vel_i);
+		Real ur = dot(-e_ij, vel_j);
+		return rho0_ * c0_ * (ul - ur) * SMIN(3.0 * SMAX((ul - ur) / c0_, 0.0), 1.0);
+	}
+	//=================================================================================================//
+	Real AcousticRiemannSolver::getVStar(const Real &p_i, const Real &p_j)
+	{
+		return (p_i - p_j) / rho0_ / c0_;
+	}
+	//=================================================================================================//
 	Real AcousticRiemannSolver::
-		getPStar(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
+		getPStarMultiPhase(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
 	{
 		Real ul, ur, rhol_cl, rhor_cr;
 		prepareSolver(state_i, state_j, e_ij, ul, ur, rhol_cl, rhor_cr);
@@ -47,7 +73,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	Vecd AcousticRiemannSolver::
-		getVStar(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
+		getVStarMultiPhase(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
 	{
 		Real ul, ur, rhol_cl, rhor_cr;
 		prepareSolver(state_i, state_j, e_ij, ul, ur, rhol_cl, rhor_cr);
@@ -57,8 +83,23 @@ namespace SPH
 			   e_ij * (u_star - (ul * state_i.rho_ + ur * state_j.rho_) / (state_i.rho_ + state_j.rho_));
 	}
 	//=================================================================================================//
+	DissipativeRiemannSolver::DissipativeRiemannSolver(Fluid &fluid_i, Fluid &fluid_j)
+		: BaseAcousticRiemannSolver(fluid_i, fluid_j),
+		  rho0_(fluid_i.ReferenceDensity()), c0_(fluid_i.getSoundSpeed(0.0, rho0_)){};
+	//=================================================================================================//
 	Real DissipativeRiemannSolver::
-		getPStar(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
+		getPStar(const Vecd &vel_i, const Vecd &vel_j, const Vecd &e_ij)
+	{
+		return rho0_ * c0_ * (dot(-e_ij, vel_i) - dot(-e_ij, vel_j));
+	}
+	//=================================================================================================//
+	Real DissipativeRiemannSolver::getVStar(const Real &p_i, const Real &p_j)
+	{
+		return (p_i - p_j) / rho0_ / c0_;
+	}
+	//=================================================================================================//
+	Real DissipativeRiemannSolver::
+		getPStarMultiPhase(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
 	{
 		Real ul, ur, rhol_cl, rhor_cr;
 		prepareSolver(state_i, state_j, e_ij, ul, ur, rhol_cl, rhor_cr);
@@ -67,7 +108,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	Vecd DissipativeRiemannSolver::
-		getVStar(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
+		getVStarMultiPhase(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
 	{
 		Real ul, ur, rhol_cl, rhor_cr;
 		prepareSolver(state_i, state_j, e_ij, ul, ur, rhol_cl, rhor_cr);
@@ -78,7 +119,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	FluidState HLLCRiemannSolverInWeaklyCompressibleFluid::
-		getInterfaceState(const FluidState& state_i, const FluidState& state_j, const Vecd& e_ij)
+		getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
 	{
 		Real ul = dot(-e_ij, state_i.vel_);
 		Real ur = dot(-e_ij, state_j.vel_);
@@ -95,12 +136,12 @@ namespace SPH
 		}
 		if (s_l <= 0.0 && 0.0 <= s_star)
 		{
-			p_star = state_i.p_ + state_i.rho_*(s_l - ul)*(s_star - ul);
+			p_star = state_i.p_ + state_i.rho_ * (s_l - ul) * (s_star - ul);
 			v_star = state_i.vel_ - e_ij * (s_star - ul);
 		}
 		if (s_star <= 0.0 && 0.0 <= s_r)
 		{
-			p_star = state_i.p_ + state_i.rho_*(s_l - ul)*(s_star - ul);
+			p_star = state_i.p_ + state_i.rho_ * (s_l - ul) * (s_star - ul);
 			v_star = state_j.vel_ - e_ij * (s_star - ur);
 		}
 		if (s_r < 0.0)
@@ -117,7 +158,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	FluidState HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid::
-		getInterfaceState(const FluidState& state_i, const FluidState& state_j, const Vecd& e_ij)
+		getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
 	{
 		Real ul = dot(-e_ij, state_i.vel_);
 		Real ur = dot(-e_ij, state_j.vel_);
@@ -127,32 +168,32 @@ namespace SPH
 		Real p_star = 0.0;
 		Vecd v_star(0);
 		Real rho_star = 0.0;
-		if (0.0 < s_l) 
-		{ 
-			p_star = state_i.p_; 
+		if (0.0 < s_l)
+		{
+			p_star = state_i.p_;
 			v_star = state_i.vel_;
 		}
 		if (s_l <= 0.0 && 0.0 <= s_star)
 		{
-			Real rho_ave = 2 * state_i.rho_*state_j.rho_ / (state_i.rho_ + state_j.rho_);
-			Real rho_cl = state_i.rho_* fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_);
-			Real rho_cr = state_j.rho_* fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_);
-			Real rho_clr = (rho_cl*state_i.rho_ + rho_cr * state_j.rho_) / (state_i.rho_ + state_j.rho_);
-			p_star = 0.5*(state_i.p_ + state_j.p_) + 0.5*(SMIN(3.0 * SMAX(rho_ave*(ul - ur), 0.0), rho_clr)*(ul - ur) + s_star * (rho_cr - rho_cl));
+			Real rho_ave = 2 * state_i.rho_ * state_j.rho_ / (state_i.rho_ + state_j.rho_);
+			Real rho_cl = state_i.rho_ * fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_);
+			Real rho_cr = state_j.rho_ * fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_);
+			Real rho_clr = (rho_cl * state_i.rho_ + rho_cr * state_j.rho_) / (state_i.rho_ + state_j.rho_);
+			p_star = 0.5 * (state_i.p_ + state_j.p_) + 0.5 * (SMIN(3.0 * SMAX(rho_ave * (ul - ur), 0.0), rho_clr) * (ul - ur) + s_star * (rho_cr - rho_cl));
 			v_star = state_i.vel_ - e_ij * (s_star - ul);
 		}
 		if (s_star <= 0.0 && 0.0 <= s_r)
 		{
-			Real rho_ave = 2 * state_i.rho_*state_j.rho_ / (state_i.rho_ + state_j.rho_);
-			Real rho_cl = state_i.rho_* fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_);
-			Real rho_cr = state_j.rho_* fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_);
-			Real rho_clr = (rho_cl*state_i.rho_ + rho_cr * state_j.rho_) / (state_i.rho_ + state_j.rho_);
-			p_star = 0.5*(state_i.p_ + state_j.p_) + 0.5*(SMIN(3.0 * SMAX(rho_ave*(ul - ur), 0.0), rho_clr)*(ul - ur) + s_star * (rho_cr - rho_cl));
+			Real rho_ave = 2 * state_i.rho_ * state_j.rho_ / (state_i.rho_ + state_j.rho_);
+			Real rho_cl = state_i.rho_ * fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_);
+			Real rho_cr = state_j.rho_ * fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_);
+			Real rho_clr = (rho_cl * state_i.rho_ + rho_cr * state_j.rho_) / (state_i.rho_ + state_j.rho_);
+			p_star = 0.5 * (state_i.p_ + state_j.p_) + 0.5 * (SMIN(3.0 * SMAX(rho_ave * (ul - ur), 0.0), rho_clr) * (ul - ur) + s_star * (rho_cr - rho_cl));
 			v_star = state_j.vel_ - e_ij * (s_star - ur);
 		}
-		if (s_r < 0.0) 
-		{ 
-			p_star = state_j.p_; 
+		if (s_r < 0.0)
+		{
+			p_star = state_j.p_;
 			v_star = state_j.vel_;
 		}
 

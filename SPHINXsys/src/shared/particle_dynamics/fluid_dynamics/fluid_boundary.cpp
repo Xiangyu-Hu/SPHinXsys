@@ -154,7 +154,7 @@ namespace SPH
 			FluidState state_in_wall(rho_[index_i], vel_in_wall, p_[index_i]);
 
 			// always solving one-side Riemann problem for wall boundaries
-			Real p_star = riemann_solver_.getPStar(state, state_in_wall, normal_to_fluid);
+			Real p_star = riemann_solver_.getPStarMultiPhase(state, state_in_wall, normal_to_fluid);
 			acc_[index_i] -= 2.0 * p_star * kernel_gradient / state.rho_;
 		}
 		//=================================================================================================//
@@ -176,7 +176,7 @@ namespace SPH
 			FluidState state_in_wall(rho_[index_i], vel_in_wall, p_[index_i]);
 
 			// always solving one-side Riemann problem for wall boundaries
-			Vecd vel_star = riemann_solver_.getVStar(state, state_in_wall, normal_to_fluid);
+			Vecd vel_star = riemann_solver_.getVStarMultiPhase(state, state_in_wall, normal_to_fluid);
 			drho_dt_[index_i] += 2.0 * state.rho_ * dot(state.vel_ - vel_star, kernel_gradient);
 		}
 		//=================================================================================================//

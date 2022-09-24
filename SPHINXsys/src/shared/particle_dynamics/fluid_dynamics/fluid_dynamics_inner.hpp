@@ -23,8 +23,8 @@ namespace SPH
 		template <class RiemannSolverType>
 		void BasePressureRelaxationInner<RiemannSolverType>::interaction(size_t index_i, Real dt)
 		{
-			FluidState state_i(rho_[index_i], vel_[index_i], p_[index_i]);
 			Vecd acceleration = acc_prior_[index_i];
+			Real rho_dissipation(0);
 			Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
@@ -32,11 +32,11 @@ namespace SPH
 				Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
 				Vecd &e_ij = inner_neighborhood.e_ij_[n];
 
-				FluidState state_j(rho_[index_j], vel_[index_j], p_[index_j]);
-				Real p_star = riemann_solver_.getPStar(state_i, state_j, e_ij);
-				acceleration -= 2.0 * p_star * dW_ijV_j * e_ij / state_i.rho_;
+				acceleration -= (p_[index_i] + p_[index_j]) * dW_ijV_j * e_ij;
+				rho_dissipation += riemann_solver_.getVStar(p_[index_i], p_[index_j]) * dW_ijV_j;
 			}
-			acc_[index_i] = acceleration;
+			acc_[index_i] = (acceleration + p_dissipation_[index_i]) / rho_[index_i];
+			rho_dissipation_[index_i] = rho_dissipation;
 		}
 		//=================================================================================================//
 		template <class RiemannSolverType>
@@ -48,8 +48,8 @@ namespace SPH
 		template <class RiemannSolverType>
 		void BaseDensityRelaxationInner<RiemannSolverType>::interaction(size_t index_i, Real dt)
 		{
-			FluidState state_i(rho_[index_i], vel_[index_i], p_[index_i]);
 			Real density_change_rate = 0.0;
+			Vecd p_dissipation(0);
 			Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
@@ -57,11 +57,11 @@ namespace SPH
 				Vecd &e_ij = inner_neighborhood.e_ij_[n];
 				Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
 
-				FluidState state_j(rho_[index_j], vel_[index_j], p_[index_j]);
-				Vecd vel_star = riemann_solver_.getVStar(state_i, state_j, e_ij);
-				density_change_rate += 2.0 * state_i.rho_ * dot(state_i.vel_ - vel_star, e_ij) * dW_ijV_j;
+				density_change_rate += dot(vel_[index_i] - vel_[index_j], e_ij) * dW_ijV_j;
+				p_dissipation -= riemann_solver_.getPStar(vel_[index_i], vel_[index_j], e_ij) * dW_ijV_j * e_ij;
 			}
-			drho_dt_[index_i] = density_change_rate;
+			drho_dt_[index_i] = rho_[index_i] * (density_change_rate + rho_dissipation_[index_i]);
+			p_dissipation_[index_i] = p_dissipation;
 		};
 		//=================================================================================================//
 	}

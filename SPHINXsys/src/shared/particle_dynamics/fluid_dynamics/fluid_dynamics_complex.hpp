@@ -131,7 +131,7 @@ namespace SPH
 		BaseViscousAccelerationWithWall<ViscousAccelerationInnerType>::
 			BaseViscousAccelerationWithWall(ComplexBodyRelation &fluid_wall_relation)
 			: ViscousAccelerationInnerType(fluid_wall_relation.inner_relation_,
-										  fluid_wall_relation.contact_relation_) {}
+										   fluid_wall_relation.contact_relation_) {}
 		//=================================================================================================//
 		template <class ViscousAccelerationInnerType>
 		BaseViscousAccelerationWithWall<ViscousAccelerationInnerType>::
@@ -180,7 +180,7 @@ namespace SPH
 					Real p_in_wall = state_i.p_ + state_i.rho_ * r_ij * SMAX(0.0, face_wall_external_acceleration);
 					Real rho_in_wall = this->fluid_.DensityFromPressure(p_in_wall);
 					FluidState state_j(rho_in_wall, vel_in_wall, p_in_wall);
-					Real p_star = this->riemann_solver_.getPStar(state_i, state_j, n_k[index_j]);
+					Real p_star = this->riemann_solver_.getPStarMultiPhase(state_i, state_j, n_k[index_j]);
 					acceleration -= 2.0 * p_star * e_ij * dW_ijV_j / state_i.rho_;
 				}
 			}
@@ -240,10 +240,10 @@ namespace SPH
 					Real projection = dot(e_ij, n_j);
 					Real delta = 2.0 * projection * r_ij * particle_spacing_j1;
 					Real beta = delta < 1.0 ? (1.0 - delta) * (1.0 - delta) * particle_spacing_ratio2 : 0.0;
-					//penalty must be positive so that the penalty force is pointed to fluid inner domain
+					// penalty must be positive so that the penalty force is pointed to fluid inner domain
 					Real penalty = penalty_strength_ * beta * fabs(projection * penalty_pressure);
 
-					//penalty force induced acceleration
+					// penalty force induced acceleration
 					acceleration -= 2.0 * penalty * n_j * dW_ijV_j / rho_i;
 				}
 			}
@@ -334,7 +334,7 @@ namespace SPH
 					Real p_in_wall = state_i.p_ + state_i.rho_ * r_ij * SMAX(0.0, face_wall_external_acceleration);
 					Real rho_in_wall = this->fluid_.DensityFromPressure(p_in_wall);
 					FluidState state_j(rho_in_wall, vel_in_wall, p_in_wall);
-					Vecd vel_star = this->riemann_solver_.getVStar(state_i, state_j, n_k[index_j]);
+					Vecd vel_star = this->riemann_solver_.getVStarMultiPhase(state_i, state_j, n_k[index_j]);
 					density_change_rate += 2.0 * state_i.rho_ * dot(state_i.vel_ - vel_star, e_ij) * dW_ijV_j;
 				}
 			}

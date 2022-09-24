@@ -24,6 +24,9 @@ namespace SPH
 		registerVariable(drho_dt_, "DensityChangeRate");
 		registerVariable(rho_sum_, "DensitySummation");
 		registerVariable(surface_indicator_, "SurfaceIndicator");
+		registerVariable(p_dissipation_, "PressureDissipation");
+		registerVariable(rho_dissipation_, "DensityDissipation");
+
 		//----------------------------------------------------------------------
 		//		register sortable particle data
 		//----------------------------------------------------------------------

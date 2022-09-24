@@ -226,8 +226,8 @@ namespace SPH
 
 		protected:
 			Fluid &fluid_;
-			StdLargeVec<Real> &Vol_, &mass_, &rho_, &p_, &drho_dt_;
-			StdLargeVec<Vecd> &pos_, &vel_, &acc_, &acc_prior_;
+			StdLargeVec<Real> &Vol_, &mass_, &rho_, &p_, &drho_dt_, &rho_dissipation_;
+			StdLargeVec<Vecd> &pos_, &vel_, &acc_, &acc_prior_, &p_dissipation_;
 		};
 
 		/**
