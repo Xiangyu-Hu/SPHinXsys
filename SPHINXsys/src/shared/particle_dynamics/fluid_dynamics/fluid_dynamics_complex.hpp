@@ -157,10 +157,10 @@ namespace SPH
 		{
 			BasePressureRelaxationType::interaction(index_i, dt);
 
-			FluidState state_i(this->rho_[index_i], this->vel_[index_i], this->p_[index_i]);
 			Vecd acc_prior_i = computeNonConservativeAcceleration(index_i);
 
 			Vecd acceleration(0.0);
+			Real rho_dissipation(0);
 			for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
 			{
 				StdLargeVec<Real> &Vol_k = *(this->wall_Vol_[k]);
@@ -176,15 +176,13 @@ namespace SPH
 					Real r_ij = wall_neighborhood.r_ij_[n];
 
 					Real face_wall_external_acceleration = dot((acc_prior_i - acc_ave_k[index_j]), -e_ij);
-					Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - state_i.vel_;
-					Real p_in_wall = state_i.p_ + state_i.rho_ * r_ij * SMAX(0.0, face_wall_external_acceleration);
-					Real rho_in_wall = this->fluid_.DensityFromPressure(p_in_wall);
-					FluidState state_j(rho_in_wall, vel_in_wall, p_in_wall);
-					Real p_star = this->riemann_solver_.getPStarMultiPhase(state_i, state_j, n_k[index_j]);
-					acceleration -= 2.0 * p_star * e_ij * dW_ijV_j / state_i.rho_;
+					Real p_in_wall = this->p_[index_i] + this->rho_[index_i] * r_ij * SMAX(0.0, face_wall_external_acceleration);
+					acceleration -= (this->p_[index_i] + p_in_wall) * e_ij * dW_ijV_j;
+					rho_dissipation += this->riemann_solver_.getEffectiveVJump(this->p_[index_i], p_in_wall) * dW_ijV_j;
 				}
 			}
-			this->acc_[index_i] += acceleration;
+			this->acc_[index_i] += acceleration / this->rho_[index_i];
+			this->drho_dt_[index_i] += rho_dissipation * this->rho_[index_i];
 		}
 		//=================================================================================================//
 		template <class BasePressureRelaxationType>
@@ -311,8 +309,8 @@ namespace SPH
 		{
 			BaseDensityRelaxationType::interaction(index_i, dt);
 
-			FluidState state_i(this->rho_[index_i], this->vel_[index_i], this->p_[index_i]);
 			Real density_change_rate = 0.0;
+			Vecd p_dissipation(0);
 			for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
 			{
 				Vecd &acc_prior_i = this->acc_prior_[index_i];
@@ -329,16 +327,13 @@ namespace SPH
 					Real r_ij = wall_neighborhood.r_ij_[n];
 					Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
 
-					Real face_wall_external_acceleration = dot((acc_prior_i - acc_ave_k[index_j]), -e_ij);
-					Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - state_i.vel_;
-					Real p_in_wall = state_i.p_ + state_i.rho_ * r_ij * SMAX(0.0, face_wall_external_acceleration);
-					Real rho_in_wall = this->fluid_.DensityFromPressure(p_in_wall);
-					FluidState state_j(rho_in_wall, vel_in_wall, p_in_wall);
-					Vecd vel_star = this->riemann_solver_.getVStarMultiPhase(state_i, state_j, n_k[index_j]);
-					density_change_rate += 2.0 * state_i.rho_ * dot(state_i.vel_ - vel_star, e_ij) * dW_ijV_j;
+					Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - this->vel_[index_i];
+					density_change_rate += dot(this->vel_[index_i] - vel_in_wall, e_ij) * dW_ijV_j;
+					p_dissipation -= this->riemann_solver_.getEffectivePJump(this->vel_[index_i], vel_in_wall, n_k[index_j]) * dW_ijV_j * e_ij;
 				}
 			}
-			this->drho_dt_[index_i] += density_change_rate;
+			this->drho_dt_[index_i] += density_change_rate * this->rho_[index_i];
+			this->acc_[index_i] += p_dissipation / this->rho_[index_i];
 		}
 		//=================================================================================================//
 		template <class BaseDensityRelaxationType>

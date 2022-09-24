@@ -51,8 +51,6 @@ namespace SPH
 		StdLargeVec<Real> drho_dt_;			 /**< density change rate */
 		StdLargeVec<Real> rho_sum_;			 /**< number density */
 		StdLargeVec<int> surface_indicator_; /**< free surface indicator */
-		StdLargeVec<Vecd> p_dissipation_;				 /**< pressure */
-		StdLargeVec<Real> rho_dissipation_;			 /**< density change rate */
 		Fluid &fluid_;
 
 		FluidParticles(SPHBody &sph_body, Fluid *fluid);

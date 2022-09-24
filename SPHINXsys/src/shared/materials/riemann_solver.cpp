@@ -12,12 +12,12 @@
 namespace SPH
 {
 	//=================================================================================================//
-	Real NoRiemannSolver::getPStar(const Vecd &vel_i, const Vecd &vel_j, const Vecd &e_ij)
+	Real NoRiemannSolver::getEffectivePJump(const Vecd &vel_i, const Vecd &vel_j, const Vecd &e_ij)
 	{
 		return 0.0;
 	}
 	//=================================================================================================//
-	Real NoRiemannSolver::getVStar(const Real &p_i, const Real &p_j)
+	Real NoRiemannSolver::getEffectiveVJump(const Real &p_i, const Real &p_j)
 	{
 		return 0.0;
 	}
@@ -48,14 +48,14 @@ namespace SPH
 		: BaseAcousticRiemannSolver(fluid_i, fluid_j),
 		  rho0_(fluid_i.ReferenceDensity()), c0_(fluid_i.getSoundSpeed(0.0, rho0_)){};
 	//=================================================================================================//
-	Real AcousticRiemannSolver:: getPStar(const Vecd &vel_i, const Vecd &vel_j, const Vecd &e_ij)
+	Real AcousticRiemannSolver:: getEffectivePJump(const Vecd &vel_i, const Vecd &vel_j, const Vecd &e_ij)
 	{
 		Real ul = dot(-e_ij, vel_i);
 		Real ur = dot(-e_ij, vel_j);
 		return rho0_ * c0_ * (ul - ur) * SMIN(3.0 * SMAX((ul - ur) / c0_, 0.0), 1.0);
 	}
 	//=================================================================================================//
-	Real AcousticRiemannSolver::getVStar(const Real &p_i, const Real &p_j)
+	Real AcousticRiemannSolver::getEffectiveVJump(const Real &p_i, const Real &p_j)
 	{
 		return (p_i - p_j) / rho0_ / c0_;
 	}
@@ -88,12 +88,12 @@ namespace SPH
 		  rho0_(fluid_i.ReferenceDensity()), c0_(fluid_i.getSoundSpeed(0.0, rho0_)){};
 	//=================================================================================================//
 	Real DissipativeRiemannSolver::
-		getPStar(const Vecd &vel_i, const Vecd &vel_j, const Vecd &e_ij)
+		getEffectivePJump(const Vecd &vel_i, const Vecd &vel_j, const Vecd &e_ij)
 	{
 		return rho0_ * c0_ * (dot(-e_ij, vel_i) - dot(-e_ij, vel_j));
 	}
 	//=================================================================================================//
-	Real DissipativeRiemannSolver::getVStar(const Real &p_i, const Real &p_j)
+	Real DissipativeRiemannSolver::getEffectiveVJump(const Real &p_i, const Real &p_j)
 	{
 		return (p_i - p_j) / rho0_ / c0_;
 	}

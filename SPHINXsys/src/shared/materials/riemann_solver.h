@@ -57,8 +57,8 @@ namespace SPH
 
 	public:
 		NoRiemannSolver(Fluid &fluid_i, Fluid &fluid_j) : fluid_l_(fluid_i), fluid_r_(fluid_j){};
-		Real getPStar(const Vecd &vel_i, const Vecd &vel_j, const Vecd &e_ij);
-		Real getVStar(const Real &p_i, const Real &p_j);
+		Real getEffectivePJump(const Vecd &vel_i, const Vecd &vel_j, const Vecd &e_ij);
+		Real getEffectiveVJump(const Real &p_i, const Real &p_j);
 		Real getPStarMultiPhase(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
 		Vecd getVStarMultiPhase(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
 
@@ -78,8 +78,8 @@ namespace SPH
 	{
 	public:
 		AcousticRiemannSolver(Fluid &fluid_i, Fluid &fluid_j);
-		Real getPStar(const Vecd &vel_i, const Vecd &vel_j, const Vecd &e_ij);
-		Real getVStar(const Real &p_i, const Real &p_j);
+		Real getEffectivePJump(const Vecd &vel_i, const Vecd &vel_j, const Vecd &e_ij);
+		Real getEffectiveVJump(const Real &p_i, const Real &p_j);
 		Real getPStarMultiPhase(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
 		Vecd getVStarMultiPhase(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
 
@@ -91,8 +91,8 @@ namespace SPH
 	{
 	public:
 		DissipativeRiemannSolver(Fluid &fluid_i, Fluid &fluid_j);
-		Real getPStar(const Vecd &vel_i, const Vecd &vel_j, const Vecd &e_ij);
-		Real getVStar(const Real &p_i, const Real &p_j);
+		Real getEffectivePJump(const Vecd &vel_i, const Vecd &vel_j, const Vecd &e_ij);
+		Real getEffectiveVJump(const Real &p_i, const Real &p_j);
 		Real getPStarMultiPhase(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
 		Vecd getVStarMultiPhase(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
 	protected:
