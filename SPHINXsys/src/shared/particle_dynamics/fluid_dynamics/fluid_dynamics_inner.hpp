@@ -25,12 +25,12 @@ namespace SPH
 		{
 			Vecd acceleration = acc_prior_[index_i];
 			Real rho_dissipation(0);
-			Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = inner_neighborhood.j_[n];
 				Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
-				Vecd &e_ij = inner_neighborhood.e_ij_[n];
+				const Vecd &e_ij = inner_neighborhood.e_ij_[n];
 
 				acceleration -= (p_[index_i] + p_[index_j]) * dW_ijV_j * e_ij;
 				rho_dissipation += riemann_solver_.getEffectiveVJump(p_[index_i], p_[index_j]) * dW_ijV_j;
@@ -50,11 +50,11 @@ namespace SPH
 		{
 			Real density_change_rate = 0.0;
 			Vecd p_dissipation(0);
-			Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = inner_neighborhood.j_[n];
-				Vecd &e_ij = inner_neighborhood.e_ij_[n];
+				const Vecd &e_ij = inner_neighborhood.e_ij_[n];
 				Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
 
 				density_change_rate += dot(vel_[index_i] - vel_[index_j], e_ij) * dW_ijV_j;

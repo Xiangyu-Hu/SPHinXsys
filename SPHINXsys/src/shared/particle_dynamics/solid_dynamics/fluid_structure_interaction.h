@@ -157,15 +157,10 @@ namespace SPH
 						size_t index_j = contact_neighborhood.j_[n];
 						Vecd e_ij = contact_neighborhood.e_ij_[n];
 						Real r_ij = contact_neighborhood.r_ij_[n];
+
 						Real face_wall_external_acceleration = dot((acc_prior_k[index_j] - acc_ave_i), e_ij);
 						Real p_in_wall = p_k[index_j] + rho_n_k[index_j] * r_ij * SMAX(0.0, face_wall_external_acceleration);
-						Real rho_in_wall = fluid_k->DensityFromPressure(p_in_wall);
-						Vecd vel_in_wall = 2.0 * vel_ave_i - vel_n_k[index_j];
-
-						FluidState state_l(rho_n_k[index_j], vel_n_k[index_j], p_k[index_j]);
-						FluidState state_r(rho_in_wall, vel_in_wall, p_in_wall);
-						Real p_star = riemann_solver_k.getEffectivePJump(state_l, state_r, n_i);
-						force -= 2.0 * p_star * e_ij * Vol_i * contact_neighborhood.dW_ijV_j_[n];
+						force -= (p_in_wall + p_k[index_j]) * e_ij * Vol_i * contact_neighborhood.dW_ijV_j_[n];
 					}
 				}
 				force_from_fluid_[index_i] = force;

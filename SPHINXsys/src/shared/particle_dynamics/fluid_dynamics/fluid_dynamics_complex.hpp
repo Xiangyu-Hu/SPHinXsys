@@ -310,7 +310,7 @@ namespace SPH
 			BaseDensityRelaxationType::interaction(index_i, dt);
 
 			Real density_change_rate = 0.0;
-			Vecd p_dissipation(0);
+//			Vecd p_dissipation(0);
 			for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
 			{
 				Vecd &acc_prior_i = this->acc_prior_[index_i];
@@ -329,11 +329,11 @@ namespace SPH
 
 					Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - this->vel_[index_i];
 					density_change_rate += dot(this->vel_[index_i] - vel_in_wall, e_ij) * dW_ijV_j;
-					p_dissipation -= this->riemann_solver_.getEffectivePJump(this->vel_[index_i], vel_in_wall, n_k[index_j]) * dW_ijV_j * e_ij;
+//					p_dissipation -= this->riemann_solver_.getEffectivePJump(this->vel_[index_i], vel_in_wall, n_k[index_j]) * dW_ijV_j * e_ij;
 				}
 			}
 			this->drho_dt_[index_i] += density_change_rate * this->rho_[index_i];
-			this->acc_[index_i] += p_dissipation / this->rho_[index_i];
+//			this->acc_[index_i] += p_dissipation / this->rho_[index_i];
 		}
 		//=================================================================================================//
 		template <class BaseDensityRelaxationType>
