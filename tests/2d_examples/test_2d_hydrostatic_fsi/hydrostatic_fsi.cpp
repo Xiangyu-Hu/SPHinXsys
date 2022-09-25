@@ -239,8 +239,8 @@ int main()
 	/** Compute time step size with considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	/** Pressure relaxation using verlet time stepping. */
-	Dynamics1Level<fluid_dynamics::PressureRelaxationWithWall> pressure_relaxation(water_block_complex);
-	Dynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::PressureRelaxationRiemannWithWall> pressure_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::DensityRelaxationWithWall> density_relaxation(water_block_complex);
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	DampingWithRandomChoice<InteractionSplit<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>>
 		fluid_damping(0.2, water_block_complex, "Velocity", mu_f);
