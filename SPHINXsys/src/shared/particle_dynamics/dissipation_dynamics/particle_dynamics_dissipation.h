@@ -23,8 +23,11 @@
 /**
  * @file 	particle_dynamics_dissipation.h
  * @brief 	Here are the classes for damping the magnitude of
- * 			any variables.
- * Note that, currently, these classes works only in single resolution.
+ * any variables. Note that the damping coefficient has density dimension.
+ * Also note that, currently, these classes works only in single resolution.
+ * TODO: we may need to take the dimension of density away from eta 
+ * (i.e. using kinematic parameters only ) and replace the particle mass with 
+ * particle volume, so that the method is more generalized. 
  * @author	Chi Zhang and Xiangyu Hu
  */
 
