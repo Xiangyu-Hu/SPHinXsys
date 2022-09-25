@@ -93,7 +93,6 @@ namespace SPH
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			StdLargeVec<Real> &Vol_;
 			StdLargeVec<Matd> &B_;
 			StdLargeVec<Vecd> &n0_;
 			StdLargeVec<Matd> &transformation_matrix_;
@@ -112,7 +111,6 @@ namespace SPH
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			StdLargeVec<Real> &Vol_;
 			StdLargeVec<Vecd> &pos_, &pseudo_n_, &n0_;
 			StdLargeVec<Matd> &B_, &F_, &F_bending_;
 			StdLargeVec<Matd> &transformation_matrix_;
@@ -129,7 +127,7 @@ namespace SPH
 			virtual ~BaseShellRelaxation(){};
 
 		protected:
-			StdLargeVec<Real> &Vol_, &rho_, &mass_, &thickness_;
+			StdLargeVec<Real> &rho_, &thickness_;
 			StdLargeVec<Vecd> &pos_, &vel_, &acc_, &acc_prior_;
 			StdLargeVec<Vecd> &n0_, &pseudo_n_, &dpseudo_n_dt_, &dpseudo_n_d2t_, &rotation_,
 				&angular_vel_, dangular_vel_dt_;
@@ -244,7 +242,7 @@ namespace SPH
 			Real time_to_full_external_force_;
 			Real particle_spacing_ref_, h_spacing_ratio_;
 			StdLargeVec<Vecd> &pos0_, &acc_prior_;
-			StdLargeVec<Real> &Vol_, &mass_, &thickness_;
+			StdLargeVec<Real> &thickness_;
 			std::vector<StdLargeVec<Real>> weight_;
 			std::vector<Real> sum_of_weight_;
 

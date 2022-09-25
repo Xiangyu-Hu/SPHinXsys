@@ -84,8 +84,8 @@ namespace SPH
 		//=================================================================================================//
 		ShellContactDensity::ShellContactDensity(SolidBodyRelationContact &solid_body_contact_relation)
 			: LocalDynamics(solid_body_contact_relation.sph_body_),
-			  ContactDynamicsData(solid_body_contact_relation), 
-			 solid_(particles_->solid_), pos_(particles_->pos_),
+			  ContactDynamicsData(solid_body_contact_relation),
+			  solid_(particles_->solid_), pos_(particles_->pos_),
 			  kernel_(solid_body_contact_relation.sph_body_.sph_adaptation_->getKernel()),
 			  spacing_ref_(solid_body_contact_relation.sph_body_.sph_adaptation_->ReferenceSpacing())
 		{
@@ -132,7 +132,7 @@ namespace SPH
 		SelfContactForce::
 			SelfContactForce(SolidBodyRelationSelfContact &self_contact_relation)
 			: LocalDynamics(self_contact_relation.sph_body_),
-			  SolidDataInner(self_contact_relation), 
+			  SolidDataInner(self_contact_relation),
 			  solid_(particles_->solid_), mass_(particles_->mass_),
 			  self_contact_density_(*particles_->getVariableByName<Real>("SelfContactDensity")),
 			  Vol_(particles_->Vol_), acc_prior_(particles_->acc_prior_),
@@ -163,7 +163,7 @@ namespace SPH
 		ContactForce::ContactForce(SolidBodyRelationContact &solid_body_contact_relation)
 			: LocalDynamics(solid_body_contact_relation.sph_body_),
 			  ContactDynamicsData(solid_body_contact_relation),
-			  solid_(particles_->solid_), 
+			  solid_(particles_->solid_),
 			  contact_density_(*particles_->getVariableByName<Real>("ContactDensity")),
 			  Vol_(particles_->Vol_), mass_(particles_->mass_),
 			  acc_prior_(particles_->acc_prior_)
@@ -171,7 +171,6 @@ namespace SPH
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				contact_solids_.push_back(&contact_particles_[k]->solid_);
-				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
 				contact_contact_density_.push_back(contact_particles_[k]->getVariableByName<Real>("ContactDensity"));
 			}
 		}
@@ -185,7 +184,6 @@ namespace SPH
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
 				StdLargeVec<Real> &contact_density_k = *(contact_contact_density_[k]);
-				StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
 				Solid *solid_k = contact_solids_[k];
 
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
@@ -204,16 +202,10 @@ namespace SPH
 		//=================================================================================================//
 		ContactForceFromWall::ContactForceFromWall(SolidBodyRelationContact &solid_body_contact_relation)
 			: LocalDynamics(solid_body_contact_relation.sph_body_),
-			  ContactWithWallData(solid_body_contact_relation),  solid_(particles_->solid_),
+			  ContactWithWallData(solid_body_contact_relation), solid_(particles_->solid_),
 			  contact_density_(*particles_->getVariableByName<Real>("ContactDensity")),
 			  Vol_(particles_->Vol_), mass_(particles_->mass_),
-			  acc_prior_(particles_->acc_prior_)
-		{
-			for (size_t k = 0; k != contact_particles_.size(); ++k)
-			{
-				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
-			}
-		}
+			  acc_prior_(particles_->acc_prior_) {}
 		//=================================================================================================//
 		void ContactForceFromWall::interaction(size_t index_i, Real dt)
 		{
@@ -223,8 +215,6 @@ namespace SPH
 			Vecd force(0.0);
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
-				StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
-
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
@@ -247,7 +237,6 @@ namespace SPH
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				contact_solids_.push_back(&contact_particles_[k]->solid_);
-				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
 				contact_contact_density_.push_back(contact_particles_[k]->getVariableByName<Real>("ContactDensity"));
 			}
 		}
@@ -260,7 +249,6 @@ namespace SPH
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
 				StdLargeVec<Real> &contact_density_k = *(contact_contact_density_[k]);
-				StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
 				Solid *solid_k = contact_solids_[k];
 
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
@@ -285,7 +273,6 @@ namespace SPH
 		{
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
-				wall_Vol_.push_back(&(contact_particles_[k]->Vol_));
 				wall_vel_n_.push_back(&contact_particles_[k]->vel_);
 				wall_n_.push_back(&contact_particles_[k]->n_);
 			}
@@ -302,7 +289,6 @@ namespace SPH
 			/** Contact interaction. */
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
-				StdLargeVec<Real> &Vol_k = *(wall_Vol_[k]);
 				StdLargeVec<Vecd> &vel_k = *(wall_vel_n_[k]);
 				StdLargeVec<Vecd> &n_k = *(wall_n_[k]);
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
@@ -348,7 +334,6 @@ namespace SPH
 			reference_pressure_ = solid_.ReferenceDensity() * solid_.ContactStiffness();
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
-				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
 				contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
 				contact_n_.push_back(&(contact_particles_[k]->n_));
 			}
@@ -368,7 +353,6 @@ namespace SPH
 					1.0 / (sph_body_.sph_adaptation_->ReferenceSpacing() * particle_spacing_j1);
 				particle_spacing_ratio2 *= 0.1 * particle_spacing_ratio2;
 
-				StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
 				StdLargeVec<Vecd> &n_k = *(contact_n_[k]);
 				StdLargeVec<Vecd> &vel_n_k = *(contact_vel_n_[k]);
 

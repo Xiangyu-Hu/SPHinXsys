@@ -53,7 +53,6 @@ namespace SPH
 
 		protected:
 			Real threshold_by_dimensions_;
-			StdLargeVec<Real> &Vol_;
 			StdLargeVec<int> &surface_indicator_;
 			StdLargeVec<Real> pos_div_;
 			Real smoothing_length_;
@@ -171,7 +170,6 @@ namespace SPH
 
 		protected:
 			Real threshold_by_dimensions_;
-			StdLargeVec<Real> &Vol_;
 			StdLargeVec<int> &surface_indicator_;
 			StdLargeVec<Vecd> color_grad_;
 			StdLargeVec<Vecd> surface_norm_;

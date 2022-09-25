@@ -75,7 +75,7 @@ namespace SPH
 
 		protected:
 			Real W0_, rho0_, inv_sigma0_;
-			StdLargeVec<Real> &Vol_, &rho_, &mass_, &rho_sum_;
+			StdLargeVec<Real> &rho_, &rho_sum_, &mass_;
 			virtual Real ReinitializedDensity(Real rho_sum, Real rho_0, Real rho_n) { return rho_sum; };
 		};
 
@@ -92,7 +92,7 @@ namespace SPH
 		protected:
 			Real mu_;
 			Real smoothing_length_;
-			StdLargeVec<Real> &Vol_, &rho_, &p_;
+			StdLargeVec<Real> &rho_;
 			StdLargeVec<Vecd> &vel_, &acc_prior_;
 		};
 
@@ -136,7 +136,7 @@ namespace SPH
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			StdLargeVec<Real> &Vol_, &rho_;
+			StdLargeVec<Real> &rho_;
 			StdLargeVec<Vecd> &pos_;
 			StdLargeVec<int> &surface_indicator_;
 			Real p_background_;
@@ -210,7 +210,6 @@ namespace SPH
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			StdLargeVec<Real> &Vol_;
 			StdLargeVec<Vecd> &vel_;
 			StdLargeVec<AngularVecd> vorticity_;
 		};
@@ -227,7 +226,7 @@ namespace SPH
 
 		protected:
 			Fluid &fluid_;
-			StdLargeVec<Real> &Vol_, &mass_, &rho_, &p_, &drho_dt_;
+			StdLargeVec<Real> &rho_, &p_, &drho_dt_;
 			StdLargeVec<Vecd> &pos_, &vel_, &acc_, &acc_prior_;
 		};
 
@@ -277,6 +276,9 @@ namespace SPH
 			virtual ~BaseDensityRelaxation(){};
 			virtual void initialization(size_t index_i, Real dt = 0.0);
 			virtual void update(size_t index_i, Real dt = 0.0);
+
+		protected:
+			StdLargeVec<Real> &Vol_, &mass_;
 		};
 
 		/**

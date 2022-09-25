@@ -35,7 +35,7 @@ namespace SPH
 		  DiffusionReactionInnerData<BaseParticlesType, BaseMaterialType>(inner_relation),
 		  diffusion_reaction_material_(this->particles_->diffusion_reaction_material_),
 		  species_n_(this->particles_->species_n_),
-		  diffusion_dt_(this->particles_->diffusion_dt_), Vol_(this->particles_->Vol_)
+		  diffusion_dt_(this->particles_->diffusion_dt_)
 	{
 		species_diffusion_ = this->particles_->diffusion_reaction_material_.SpeciesDiffusion();
 	}
@@ -116,7 +116,6 @@ namespace SPH
 
 		for (size_t k = 0; k != this->contact_particles_.size(); ++k)
 		{
-			contact_Vol_.push_back(&(this->contact_particles_[k]->Vol_));
 			contact_species_n_.push_back(&(this->contact_particles_[k]->species_n_));
 		}
 	}
@@ -148,7 +147,6 @@ namespace SPH
 
 		for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 		{
-			StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
 			StdVec<StdLargeVec<Real>> &species_n_k = *(contact_species_n_[k]);
 
 			Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];

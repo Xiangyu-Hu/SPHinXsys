@@ -48,7 +48,7 @@ namespace SPH
 		ShellCorrectConfiguration::
 			ShellCorrectConfiguration(BaseBodyRelationInner &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_), ShellDataInner(inner_relation),
-			  Vol_(particles_->Vol_), B_(particles_->B_),
+			  B_(particles_->B_),
 			  n0_(particles_->n0_), transformation_matrix_(particles_->transformation_matrix_) {}
 		//=================================================================================================//
 		void ShellCorrectConfiguration::interaction(size_t index_i, Real dt)
@@ -73,8 +73,7 @@ namespace SPH
 		ShellDeformationGradientTensor::
 			ShellDeformationGradientTensor(BaseBodyRelationInner &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_), ShellDataInner(inner_relation),
-			  Vol_(particles_->Vol_), pos_(particles_->pos_),
-			  pseudo_n_(particles_->pseudo_n_), n0_(particles_->n0_),
+			  pos_(particles_->pos_), pseudo_n_(particles_->pseudo_n_), n0_(particles_->n0_),
 			  B_(particles_->B_), F_(particles_->F_), F_bending_(particles_->F_bending_),
 			  transformation_matrix_(particles_->transformation_matrix_) {}
 		//=================================================================================================//
@@ -101,7 +100,7 @@ namespace SPH
 		//=================================================================================================//
 		BaseShellRelaxation::BaseShellRelaxation(BaseBodyRelationInner &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_), ShellDataInner(inner_relation),
-			  Vol_(particles_->Vol_), rho_(particles_->rho_), mass_(particles_->mass_),
+			  rho_(particles_->rho_),
 			  thickness_(particles_->thickness_),
 			  pos_(particles_->pos_), vel_(particles_->vel_),
 			  acc_(particles_->acc_),
@@ -363,7 +362,7 @@ namespace SPH
 			  time_to_full_external_force_(time_to_full_external_force),
 			  particle_spacing_ref_(particle_spacing_ref), h_spacing_ratio_(h_spacing_ratio),
 			  pos0_(particles_->pos0_), acc_prior_(particles_->acc_prior_),
-			  Vol_(particles_->Vol_), mass_(particles_->mass_), thickness_(particles_->thickness_)
+			  thickness_(particles_->thickness_)
 		{
 			for (int i = 0; i < point_forces_.size(); i++)
 			{

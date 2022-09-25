@@ -60,7 +60,7 @@ namespace SPH
 
 		protected:
 			StdVec<Real> wall_inv_rho0_;
-			StdVec<StdLargeVec<Real> *> wall_mass_, wall_Vol_;
+			StdVec<StdLargeVec<Real> *> wall_mass_;
 			StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_acc_ave_, wall_n_;
 		};
 
@@ -134,8 +134,7 @@ namespace SPH
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			StdVec<StdLargeVec<Real> *> contact_Vol_;
-			virtual void prepareContactData() override;
+			virtual void prepareContactData() override {};
 		};
 
 		/**

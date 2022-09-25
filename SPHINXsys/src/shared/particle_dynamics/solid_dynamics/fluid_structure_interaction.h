@@ -57,7 +57,7 @@ namespace SPH
 			StdLargeVec<Real> &Vol_;
 			StdLargeVec<Vecd> &vel_ave_;
 			StdVec<Fluid *> contact_fluids_;
-			StdVec<StdLargeVec<Real> *> contact_Vol_, contact_rho_n_;
+			StdVec<StdLargeVec<Real> *> contact_rho_n_;
 			StdVec<StdLargeVec<Vecd> *> contact_vel_n_;
 			StdVec<Real> mu_;
 			StdVec<Real> smoothing_length_;
@@ -80,7 +80,7 @@ namespace SPH
 			StdLargeVec<Real> &Vol_;
 			StdLargeVec<Vecd> &vel_ave_;
 			StdVec<Fluid *> contact_fluids_;
-			StdVec<StdLargeVec<Real> *> contact_Vol_, contact_rho_n_;
+			StdVec<StdLargeVec<Real> *> contact_rho_n_;
 			StdVec<StdLargeVec<Vecd> *> contact_vel_n_;
 			StdVec<Real> mu_;
 			StdVec<Real> smoothing_length_;
@@ -124,7 +124,6 @@ namespace SPH
 				for (size_t k = 0; k != contact_particles_.size(); ++k)
 				{
 					contact_fluids_.push_back(&contact_particles_[k]->fluid_);
-					contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
 					contact_rho_n_.push_back(&(contact_particles_[k]->rho_));
 					contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
 					contact_p_.push_back(&(contact_particles_[k]->p_));
@@ -144,7 +143,6 @@ namespace SPH
 				Vecd force(0);
 				for (size_t k = 0; k < contact_configuration_.size(); ++k)
 				{
-					StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
 					StdLargeVec<Real> &rho_n_k = *(contact_rho_n_[k]);
 					StdLargeVec<Real> &p_k = *(contact_p_[k]);
 					StdLargeVec<Vecd> &vel_n_k = *(contact_vel_n_[k]);
@@ -171,7 +169,7 @@ namespace SPH
 			StdLargeVec<Real> &Vol_;
 			StdLargeVec<Vecd> &vel_ave_, &acc_prior_, &acc_ave_, &n_;
 			StdVec<Fluid *> contact_fluids_;
-			StdVec<StdLargeVec<Real> *> contact_Vol_, contact_rho_n_, contact_p_;
+			StdVec<StdLargeVec<Real> *> contact_rho_n_, contact_p_;
 			StdVec<StdLargeVec<Vecd> *> contact_vel_n_, contact_acc_prior_;
 			StdVec<RiemannSolverType> riemann_solvers_;
 			StdLargeVec<Vecd> force_from_fluid_; /**<  forces (including pressure and viscous) from fluid */
@@ -200,7 +198,6 @@ namespace SPH
 				for (size_t k = 0; k != contact_particles_.size(); ++k)
 				{
 					contact_fluids_.push_back(&contact_particles_[k]->fluid_);
-					contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
 					contact_rho_n_.push_back(&(contact_particles_[k]->rho_));
 					contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
 					contact_p_.push_back(&(contact_particles_[k]->p_));
@@ -218,7 +215,6 @@ namespace SPH
 				Vecd force(0);
 				for (size_t k = 0; k < contact_configuration_.size(); ++k)
 				{
-					StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
 					StdLargeVec<Real> &rho_n_k = *(contact_rho_n_[k]);
 					StdLargeVec<Real> &p_k = *(contact_p_[k]);
 					StdLargeVec<Vecd> &vel_n_k = *(contact_vel_n_[k]);
@@ -249,7 +245,7 @@ namespace SPH
 			StdLargeVec<Real> &Vol_;
 			StdLargeVec<Vecd> &vel_ave_, &acc_prior_, &n_;
 			StdVec<Fluid *> contact_fluids_;
-			StdVec<StdLargeVec<Real> *> contact_Vol_, contact_rho_n_, contact_p_;
+			StdVec<StdLargeVec<Real> *> contact_rho_n_, contact_p_;
 			StdVec<StdLargeVec<Vecd> *> contact_vel_n_;
 			StdVec<RiemannSolverType> riemann_solvers_;
 			StdLargeVec<Vecd> force_from_fluid_; /**<  forces (including pressure and viscous) from fluid */

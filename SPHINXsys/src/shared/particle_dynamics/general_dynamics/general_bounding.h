@@ -47,7 +47,6 @@ namespace SPH
 		const int axis_;			  /**< the axis directions for bounding*/
 		BoundingBox bounding_bounds_; /**< lower and upper bound for checking. */
 		StdLargeVec<Vecd> &pos_;
-		StdLargeVec<Real> &Vol_;
 		BaseCellLinkedList *cell_linked_list_;
 		Real cut_off_radius_max_; /**< maximum cut off radius to avoid boundary particle depletion */
 
@@ -171,6 +170,7 @@ namespace SPH
 		protected:
 			std::mutex mutex_create_ghost_particle_; /**< mutex exclusion for memory conflict */
 			StdVec<IndexVector> &ghost_particles_;
+			StdLargeVec<Real> &Vol_;
 			virtual void setupDynamics(Real dt = 0.0) override;
 			virtual void checkLowerBound(size_t index_i, Real dt = 0.0) override;
 			virtual void checkUpperBound(size_t index_i, Real dt = 0.0) override;
@@ -181,7 +181,7 @@ namespace SPH
 										StdVec<IndexVector> &ghost_particles,
 										RealBody &real_body, BoundingBox bounding_bounds, int axis)
 				: PeriodicBounding(periodic_translation, bound_cells_data, real_body, bounding_bounds, axis),
-				  ghost_particles_(ghost_particles){};
+				  ghost_particles_(ghost_particles), Vol_(particles_->Vol_) {};
 			virtual ~CreatPeriodicGhostParticles(){};
 		};
 

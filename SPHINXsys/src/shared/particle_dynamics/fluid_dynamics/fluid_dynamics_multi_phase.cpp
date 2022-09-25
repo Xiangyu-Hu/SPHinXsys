@@ -26,7 +26,6 @@ namespace SPH
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				contact_fluids_.push_back(&contact_particles_[k]->fluid_);
-				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
 				contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
 
 			}
@@ -48,7 +47,6 @@ namespace SPH
 			for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 			{
 				Real mu_j = this->contact_fluids_[k]->ReferenceViscosity();
-				StdLargeVec<Real> &Vol_k = *(this->contact_Vol_[k]);
 				StdLargeVec<Vecd> &vel_k = *(this->contact_vel_n_[k]);
 				Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)

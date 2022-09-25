@@ -30,7 +30,6 @@ namespace SPH
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				contact_fluids_.push_back(&contact_particles_[k]->fluid_);
-				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
 				contact_p_.push_back(&(contact_particles_[k]->p_));
 				contact_rho_n_.push_back(&(contact_particles_[k]->rho_));
 				contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
@@ -64,7 +63,6 @@ namespace SPH
 			Vecd acceleration(0.0);
 			for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 			{
-				StdLargeVec<Real>& Vol_k = *(this->contact_Vol_[k]);
 				StdLargeVec<Real>& rho_k = *(this->contact_rho_n_[k]);
 				StdLargeVec<Real>& p_k = *(this->contact_p_[k]);
 				StdLargeVec<Vecd>& vel_k = *(this->contact_vel_n_[k]);
@@ -140,7 +138,6 @@ namespace SPH
 			Real density_change_rate = 0.0;
 			for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 			{
-				StdLargeVec<Real>& Vol_k = *(this->contact_Vol_[k]);
 				StdLargeVec<Real>& rho_k = *(this->contact_rho_n_[k]);
 				StdLargeVec<Real>& p_k = *(this->contact_p_[k]);
 				StdLargeVec<Vecd>& vel_k = *(this->contact_vel_n_[k]);

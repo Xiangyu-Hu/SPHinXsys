@@ -33,8 +33,6 @@ namespace SPH
 			{
 				Real rho_0_k = WCFluidWallData::contact_particles_[k]->rho0_;
 				wall_inv_rho0_.push_back(1.0 / rho_0_k);
-				wall_mass_.push_back(&(WCFluidWallData::contact_particles_[k]->mass_));
-				wall_Vol_.push_back(&(WCFluidWallData::contact_particles_[k]->Vol_));
 				wall_vel_ave_.push_back(WCFluidWallData::contact_particles_[k]->AverageVelocity());
 				wall_acc_ave_.push_back(WCFluidWallData::contact_particles_[k]->AverageAcceleration());
 				wall_n_.push_back(&(WCFluidWallData::contact_particles_[k]->n_));
@@ -59,7 +57,6 @@ namespace SPH
 			Vecd acceleration(0), vel_derivative(0);
 			for (size_t k = 0; k < WCFluidWallData::contact_configuration_.size(); ++k)
 			{
-				StdLargeVec<Real> &Vol_k = *(this->wall_Vol_[k]);
 				StdLargeVec<Vecd> &vel_ave_k = *(this->wall_vel_ave_[k]);
 				Neighborhood &contact_neighborhood = (*WCFluidWallData::contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -110,7 +107,6 @@ namespace SPH
 			Vecd momentum_change_rate(0.0);
 			for (size_t k = 0; k < WCFluidWallData::contact_configuration_.size(); ++k)
 			{
-				StdLargeVec<Real> &Vol_k = *(this->wall_Vol_[k]);
 				StdLargeVec<Vecd> &n_k = *(this->wall_n_[k]);
 				Neighborhood &wall_neighborhood = (*WCFluidWallData::contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
@@ -170,7 +166,6 @@ namespace SPH
 			Real density_change_rate = 0.0;
 			for (size_t k = 0; k < WCFluidWallData::contact_configuration_.size(); ++k)
 			{
-				StdLargeVec<Real> &Vol_k = *(this->wall_Vol_[k]);
 				StdLargeVec<Vecd> &n_k = *(this->wall_n_[k]);
 				Neighborhood &wall_neighborhood = (*WCFluidWallData::contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)

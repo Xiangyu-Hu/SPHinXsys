@@ -59,7 +59,6 @@ namespace SPH
 
 		protected:
 			StdVec<Real> wall_inv_rho0_;
-			StdVec<StdLargeVec<Real> *> wall_mass_, wall_Vol_;
 			StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_acc_ave_, wall_n_;
 		};
 

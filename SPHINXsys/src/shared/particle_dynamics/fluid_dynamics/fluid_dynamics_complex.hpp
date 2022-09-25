@@ -33,7 +33,6 @@ namespace SPH
 				Real rho0_k = FluidWallData::contact_particles_[k]->rho0_;
 				wall_inv_rho0_.push_back(1.0 / rho0_k);
 				wall_mass_.push_back(&(FluidWallData::contact_particles_[k]->mass_));
-				wall_Vol_.push_back(&(FluidWallData::contact_particles_[k]->Vol_));
 				wall_vel_ave_.push_back(FluidWallData::contact_particles_[k]->AverageVelocity());
 				wall_acc_ave_.push_back(FluidWallData::contact_particles_[k]->AverageAcceleration());
 				wall_n_.push_back(&(FluidWallData::contact_particles_[k]->n_));
@@ -111,7 +110,6 @@ namespace SPH
 			Vecd acceleration(0), vel_derivative(0);
 			for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
 			{
-				StdLargeVec<Real> &Vol_k = *(this->wall_Vol_[k]);
 				StdLargeVec<Vecd> &vel_ave_k = *(this->wall_vel_ave_[k]);
 				Neighborhood &contact_neighborhood = (*FluidWallData::contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -163,7 +161,6 @@ namespace SPH
 			Real rho_dissipation(0);
 			for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
 			{
-				StdLargeVec<Real> &Vol_k = *(this->wall_Vol_[k]);
 				StdLargeVec<Vecd> &vel_ave_k = *(this->wall_vel_ave_[k]);
 				StdLargeVec<Vecd> &acc_ave_k = *(this->wall_acc_ave_[k]);
 				StdLargeVec<Vecd> &n_k = *(this->wall_n_[k]);
@@ -223,7 +220,6 @@ namespace SPH
 				Real particle_spacing_ratio2 = 1.0 / (this->sph_body_.sph_adaptation_->ReferenceSpacing() * particle_spacing_j1);
 				particle_spacing_ratio2 *= 0.1 * particle_spacing_ratio2;
 
-				StdLargeVec<Real> &Vol_k = *(this->wall_Vol_[k]);
 				StdLargeVec<Vecd> &n_k = *(this->wall_n_[k]);
 				Neighborhood &wall_neighborhood = (*FluidWallData::contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
@@ -314,7 +310,6 @@ namespace SPH
 			{
 				Vecd &acc_prior_i = this->acc_prior_[index_i];
 
-				StdLargeVec<Real> &Vol_k = *(this->wall_Vol_[k]);
 				StdLargeVec<Vecd> &vel_ave_k = *(this->wall_vel_ave_[k]);
 				StdLargeVec<Vecd> &acc_ave_k = *(this->wall_acc_ave_[k]);
 				StdLargeVec<Vecd> &n_k = *(this->wall_n_[k]);

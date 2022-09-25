@@ -54,7 +54,6 @@ namespace SPH
 
 		protected:
 			StdVec<Fluid *> contact_fluids_;
-			StdVec<StdLargeVec<Real> *> contact_Vol_;
 			StdVec<StdLargeVec<Vecd> *> contact_vel_n_;
 		};
 		using ViscousAccelerationMultiPhaseWithWall =
@@ -74,7 +73,7 @@ namespace SPH
 
 		protected:
 			StdVec<Fluid *> contact_fluids_;
-			StdVec<StdLargeVec<Real> *> contact_Vol_, contact_p_, contact_rho_n_;
+			StdVec<StdLargeVec<Real> *> contact_p_, contact_rho_n_;
 			StdVec<StdLargeVec<Vecd> *> contact_vel_n_;
 		};
 

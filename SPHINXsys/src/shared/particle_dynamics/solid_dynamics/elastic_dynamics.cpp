@@ -45,8 +45,7 @@ namespace SPH
 		DeformationGradientTensorBySummation::
 			DeformationGradientTensorBySummation(BaseBodyRelationInner &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_), ElasticSolidDataInner(inner_relation),
-			  Vol_(particles_->Vol_), pos_(particles_->pos_),
-			  B_(particles_->B_), F_(particles_->F_) {}
+			  pos_(particles_->pos_), B_(particles_->B_), F_(particles_->F_) {}
 		//=================================================================================================//
 		void DeformationGradientTensorBySummation::interaction(size_t index_i, Real dt)
 		{
@@ -67,8 +66,7 @@ namespace SPH
 		//=================================================================================================//
 		BaseElasticRelaxation::
 			BaseElasticRelaxation(BaseBodyRelationInner &inner_relation)
-			: LocalDynamics(inner_relation.sph_body_),
-			  ElasticSolidDataInner(inner_relation), Vol_(particles_->Vol_),
+			: LocalDynamics(inner_relation.sph_body_), ElasticSolidDataInner(inner_relation),
 			  rho_(particles_->rho_), mass_(particles_->mass_),
 			  pos_(particles_->pos_), vel_(particles_->vel_), acc_(particles_->acc_),
 			  B_(particles_->B_), F_(particles_->F_), dF_dt_(particles_->dF_dt_) {}

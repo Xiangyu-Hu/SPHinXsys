@@ -18,7 +18,7 @@ namespace SPH
 		CorrectConfiguration::
 			CorrectConfiguration(BaseBodyRelationInner &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_), SolidDataInner(inner_relation),
-			  Vol_(particles_->Vol_), B_(particles_->B_) {}
+			  B_(particles_->B_) {}
 		//=================================================================================================//
 		void CorrectConfiguration::interaction(size_t index_i, Real dt)
 		{

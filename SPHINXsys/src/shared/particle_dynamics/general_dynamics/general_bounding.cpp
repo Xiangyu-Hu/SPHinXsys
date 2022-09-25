@@ -13,7 +13,7 @@ namespace SPH
 		: BaseDynamics<void>(), LocalDynamics(real_body),
 		  GeneralDataDelegateSimple(real_body),
 		  axis_(axis), bounding_bounds_(bounding_bounds),
-		  pos_(particles_->pos_), Vol_(particles_->Vol_),
+		  pos_(particles_->pos_),
 		  cell_linked_list_(real_body.cell_linked_list_),
 		  cut_off_radius_max_(real_body.sph_adaptation_->getKernel()->CutOffRadius()) {}
 	//=================================================================================================//

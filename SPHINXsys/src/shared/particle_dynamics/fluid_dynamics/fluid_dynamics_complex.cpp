@@ -33,14 +33,6 @@ namespace SPH
 			prepareContactData();
 		}
 		//=================================================================================================//
-		void TransportVelocityCorrectionComplex::prepareContactData()
-		{
-			for (size_t k = 0; k != contact_particles_.size(); ++k)
-			{
-				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
-			}
-		}
-		//=================================================================================================//
 		void TransportVelocityCorrectionComplex::interaction(size_t index_i, Real dt)
 		{
 			TransportVelocityCorrectionInner::interaction(index_i, dt);
