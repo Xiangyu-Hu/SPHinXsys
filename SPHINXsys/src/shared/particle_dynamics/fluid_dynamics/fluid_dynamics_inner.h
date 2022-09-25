@@ -149,36 +149,38 @@ namespace SPH
 		 */
 		class AcousticTimeStepSize : public LocalDynamicsReduce<Real, ReduceMax>, public FluidDataSimple
 		{
+		public:
+			explicit AcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL = 0.6);
+			virtual ~AcousticTimeStepSize(){};
+			Real reduce(size_t index_i, Real dt = 0.0);
+			virtual Real outputResult(Real reduced_value) override;
+
 		protected:
 			Fluid &fluid_;
 			StdLargeVec<Real> &rho_, &p_;
 			StdLargeVec<Vecd> &vel_;
 			Real smoothing_length_;
-
-		public:
-			explicit AcousticTimeStepSize(SPHBody &sph_body);
-			virtual ~AcousticTimeStepSize(){};
-
-			Real reduce(size_t index_i, Real dt = 0.0);
-			virtual Real outputResult(Real reduced_value) override;
+			Real acousticCFL_;
 		};
 
 		/**
 		 * @class AdvectionTimeStepSizeForImplicitViscosity
 		 * @brief Computing the advection time step size when viscosity is handled implicitly
 		 */
-		class AdvectionTimeStepSizeForImplicitViscosity : public LocalDynamicsReduce<Real, ReduceMax>, public FluidDataSimple
+		class AdvectionTimeStepSizeForImplicitViscosity 
+		: public LocalDynamicsReduce<Real, ReduceMax>, public FluidDataSimple
 		{
+		public:
+			explicit AdvectionTimeStepSizeForImplicitViscosity(
+				SPHBody &sph_body, Real U_max, Real advectionCFL = 0.25);
+			virtual ~AdvectionTimeStepSizeForImplicitViscosity(){};
+			Real reduce(size_t index_i, Real dt = 0.0);
+			virtual Real outputResult(Real reduced_value) override;
+
 		protected:
 			Real smoothing_length_;
 			StdLargeVec<Vecd> &vel_;
-
-		public:
-			explicit AdvectionTimeStepSizeForImplicitViscosity(SPHBody &sph_body, Real U_max);
-			virtual ~AdvectionTimeStepSizeForImplicitViscosity(){};
-
-			Real reduce(size_t index_i, Real dt = 0.0);
-			virtual Real outputResult(Real reduced_value) override;
+			Real advectionCFL_;
 		};
 
 		/**
@@ -188,9 +190,8 @@ namespace SPH
 		class AdvectionTimeStepSize : public AdvectionTimeStepSizeForImplicitViscosity
 		{
 		public:
-			explicit AdvectionTimeStepSize(SPHBody &sph_body, Real U_max);
+			explicit AdvectionTimeStepSize(SPHBody &sph_body, Real U_max, Real advectionCFL = 0.25);
 			virtual ~AdvectionTimeStepSize(){};
-
 			Real reduce(size_t index_i, Real dt = 0.0);
 
 		protected:

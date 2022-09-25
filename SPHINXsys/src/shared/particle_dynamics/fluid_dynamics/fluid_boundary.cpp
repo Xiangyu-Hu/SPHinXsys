@@ -53,9 +53,10 @@ namespace SPH
 			EmitterInflowCondition(BodyAlignedBoxByParticle &aligned_box_part)
 			: LocalDynamics(aligned_box_part.getSPHBody()), FluidDataSimple(sph_body_),
 			  fluid_(particles_->fluid_),
-			  pos_(particles_->pos_), vel_(particles_->vel_),
-			  rho_(particles_->rho_), p_(particles_->p_), inflow_pressure_(0),
-			  rho0_(fluid_.ReferenceDensity()), aligned_box_(aligned_box_part.aligned_box_),
+			  pos_(particles_->pos_), vel_(particles_->vel_), acc_(particles_->acc_),
+			  rho_(particles_->rho_), p_(particles_->p_), drho_dt_(particles_->drho_dt_),
+			  inflow_pressure_(0), rho0_(fluid_.ReferenceDensity()), 
+			  aligned_box_(aligned_box_part.aligned_box_),
 			  updated_transform_(aligned_box_.getTransform()),
 			  old_transform_(updated_transform_) {}
 		//=================================================================================================//
@@ -67,7 +68,7 @@ namespace SPH
 			pos_[sorted_index_i] = updated_transform_.shiftFrameStationToBase(frame_position);
 			vel_[sorted_index_i] = updated_transform_.xformFrameVecToBase(getTargetVelocity(frame_position, frame_velocity));
 			rho_[sorted_index_i] = rho0_;
-			p_[sorted_index_i] = fluid_.getPressure(rho_[sorted_index_i]);
+			p_[sorted_index_i] = fluid_.getPressure(rho0_);
 		}
 		//=================================================================================================//
 		EmitterInflowInjection::EmitterInflowInjection(BodyAlignedBoxByParticle &aligned_box_part,

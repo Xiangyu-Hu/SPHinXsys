@@ -193,6 +193,7 @@ int main()
 				pressure_relaxation.parallel_exec(dt);
 				inflow_condition.parallel_exec();
 				density_relaxation.parallel_exec(dt);
+				inflow_condition.parallel_exec();
 				dt = get_fluid_time_step_size.parallel_exec();
 				relaxation_time += dt;
 				integration_time += dt;
@@ -211,7 +212,7 @@ int main()
 			number_of_iterations++;
 
 			/** inflow emitter injection*/
-			emitter_injection.exec();
+			emitter_injection.parallel_exec();
 			/** Update cell linked list and configuration. */
 
 			water_body.updateCellLinkedListWithParticleSort(100);
