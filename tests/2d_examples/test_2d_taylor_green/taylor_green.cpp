@@ -111,7 +111,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
 	ReloadParticleIO write_particle_reload_files(io_environment, {&water_block});
-	RegressionTestEnsembleAveraged<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
+	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
 		write_total_mechanical_energy(io_environment, water_block);
 	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<MaximumSpeed>>>
 		write_maximum_speed(io_environment, water_block);
@@ -198,7 +198,12 @@ int main(int ac, char *av[])
 
 	write_particle_reload_files.writeToFile();
 
-	if (!sph_system.reload_particles_)
+	if (sph_system.generate_regression_data_)
+	{
+		write_total_mechanical_energy.generateDataBase(1.0e-3);
+		write_maximum_speed.generateDataBase(1.0e-3);
+	}
+	else if (!sph_system.reload_particles_)
 	{
 		write_total_mechanical_energy.newResultTest();
 		write_maximum_speed.newResultTest();
