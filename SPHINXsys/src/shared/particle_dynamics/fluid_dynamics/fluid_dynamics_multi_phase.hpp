@@ -153,7 +153,7 @@ namespace SPH
 					Real dW_ijV_j = contact_neighborhood.dW_ijV_j_[n];
 
 					FluidState state_j(rho_k[index_j], vel_k[index_j], p_k[index_j]);
-					Vecd vel_star = riemann_solver_k.getPStarMultiPhase(state_i, state_j, e_ij);
+					Vecd vel_star = riemann_solver_k.getVStarMultiPhase(state_i, state_j, e_ij);
 					density_change_rate += 2.0 * state_i.rho_ * dot(state_i.vel_ - vel_star, e_ij) * dW_ijV_j;
 				}
 			}
