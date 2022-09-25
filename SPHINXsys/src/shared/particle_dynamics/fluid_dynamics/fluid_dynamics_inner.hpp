@@ -36,7 +36,7 @@ namespace SPH
 				rho_dissipation += riemann_solver_.getEffectiveVJump(p_[index_i], p_[index_j]) * dW_ijV_j;
 			}
 			acc_[index_i] += acceleration / rho_[index_i];
-			drho_dt_[index_i] = rho_dissipation * rho_[index_i];
+			drho_dt_[index_i] = 0.5 * rho_dissipation * rho_[index_i];
 		}
 		//=================================================================================================//
 		template <class RiemannSolverType>
@@ -58,7 +58,7 @@ namespace SPH
 				Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
 
 				density_change_rate += dot(vel_[index_i] - vel_[index_j], e_ij) * dW_ijV_j;
-				p_dissipation -= riemann_solver_.getEffectivePJump(vel_[index_i], vel_[index_j], e_ij) * dW_ijV_j * e_ij;
+				p_dissipation -= 0.5 * riemann_solver_.getEffectivePJump(vel_[index_i], vel_[index_j], e_ij) * dW_ijV_j * e_ij;
 			}
 			drho_dt_[index_i] += density_change_rate * rho_[index_i];
 			acc_[index_i] = p_dissipation / rho_[index_i];
