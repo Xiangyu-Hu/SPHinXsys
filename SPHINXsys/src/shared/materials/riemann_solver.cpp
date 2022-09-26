@@ -12,12 +12,12 @@
 namespace SPH
 {
 	//=================================================================================================//
-	Real NoRiemannSolver:: EffectivePJump(const Real &u_jump)
+	Real NoRiemannSolver:: DissipativePJump(const Real &u_jump)
 	{
 		return 0.0;
 	}
 	//=================================================================================================//
-	Real NoRiemannSolver::EffectiveUJump(const Real &p_jump)
+	Real NoRiemannSolver::DissipativeUJump(const Real &p_jump)
 	{
 		return 0.0;
 	}
@@ -48,12 +48,12 @@ namespace SPH
 		: BaseAcousticRiemannSolver(fluid_i, fluid_j),
 		  rho0_(fluid_i.ReferenceDensity()), c0_(fluid_i.getSoundSpeed(0.0, rho0_)){};
 	//=================================================================================================//
-	Real AcousticRiemannSolver::EffectivePJump(const Real &u_jump)
+	Real AcousticRiemannSolver::DissipativePJump(const Real &u_jump)
 	{
 		return rho0_ * c0_ * u_jump * SMIN(3.0 * SMAX(u_jump / c0_, 0.0), 1.0);
 	}
 	//=================================================================================================//
-	Real AcousticRiemannSolver::EffectiveUJump(const Real &p_jump)
+	Real AcousticRiemannSolver::DissipativeUJump(const Real &p_jump)
 	{
 		return p_jump / rho0_ / c0_;
 	}
@@ -85,12 +85,12 @@ namespace SPH
 		: BaseAcousticRiemannSolver(fluid_i, fluid_j),
 		  rho0_(fluid_i.ReferenceDensity()), c0_(fluid_i.getSoundSpeed(0.0, rho0_)){};
 	//=================================================================================================//
-	Real DissipativeRiemannSolver::EffectivePJump(const Real &u_jump)
+	Real DissipativeRiemannSolver::DissipativePJump(const Real &u_jump)
 	{
 		return rho0_ * c0_ * u_jump;
 	}
 	//=================================================================================================//
-	Real DissipativeRiemannSolver::EffectiveUJump(const Real &p_jump)
+	Real DissipativeRiemannSolver::DissipativeUJump(const Real &p_jump)
 	{
 		return p_jump / rho0_ / c0_;
 	}
