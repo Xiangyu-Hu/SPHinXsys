@@ -175,7 +175,7 @@ namespace SPH
 					Real face_wall_external_acceleration = dot((acc_prior_i - acc_ave_k[index_j]), -e_ij);
 					Real p_in_wall = this->p_[index_i] + this->rho_[index_i] * r_ij * SMAX(0.0, face_wall_external_acceleration);
 					acceleration -= (this->p_[index_i] + p_in_wall) * e_ij * dW_ijV_j;
-					rho_dissipation += this->riemann_solver_.getEffectiveVJump(this->p_[index_i], p_in_wall) * dW_ijV_j;
+					rho_dissipation += this->riemann_solver_.EffectiveUJump(this->p_[index_i] - p_in_wall) * dW_ijV_j;
 				}
 			}
 			this->acc_[index_i] += acceleration / this->rho_[index_i];
