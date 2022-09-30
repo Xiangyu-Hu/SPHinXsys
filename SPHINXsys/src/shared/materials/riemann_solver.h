@@ -75,7 +75,7 @@ namespace SPH
 			: NoRiemannSolver(fluid_i, fluid_j),
 			  c0_i_(fluid_i.ReferenceSoundSpeed()), c0_j_(fluid_j.ReferenceSoundSpeed()),
 			  rhoc_ave_inv_(2.0 / (rho0_i_ * c0_i_ + rho0_j_ * c0_j_)),
-			  c_ave_inv_(2.0 * (rho0_i_ + rho0_j_) * rhoc_ave_inv_),
+			  c_ave_inv_(0.5 * (rho0_i_ + rho0_j_) * rhoc_ave_inv_),
 			  rhoc_ave_(rho0_i_ * c0_i_ * rho0_j_ * c0_j_ * rhoc_ave_inv_){};
 		Real DissipativePJump(const Real &u_jump);
 		Real DissipativeUJump(const Real &p_jump);
