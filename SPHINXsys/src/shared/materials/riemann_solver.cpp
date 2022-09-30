@@ -12,7 +12,7 @@
 namespace SPH
 {
 	//=================================================================================================//
-	Real NoRiemannSolver:: DissipativePJump(const Real &u_jump)
+	Real NoRiemannSolver::DissipativePJump(const Real &u_jump)
 	{
 		return 0.0;
 	}
@@ -22,97 +22,29 @@ namespace SPH
 		return 0.0;
 	}
 	//=================================================================================================//
-	Real NoRiemannSolver::
-		getPStarMultiPhase(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
+	Real NoRiemannSolver::AverageP(const Real &p_i, const Real &p_j)
 	{
-		return (state_i.p_ * state_j.rho_ + state_j.p_ * state_i.rho_) / (state_i.rho_ + state_j.rho_);
+		return (p_i * rho0_j_ + p_j * rho0_i_) / (rho0_i_ + rho0_j_);
 	}
 	//=================================================================================================//
-	Vecd NoRiemannSolver::
-		getVStarMultiPhase(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
+	Vecd NoRiemannSolver::AverageV(const Vecd &vel_i, const Vecd &vel_j)
 	{
-		return (state_i.vel_ * state_i.rho_ + state_j.vel_ * state_j.rho_) / (state_i.rho_ + state_j.rho_);
+		return (vel_i * rho0_i_ + vel_j * rho0_j_)  / (rho0_i_ + rho0_j_);
 	}
-	//=================================================================================================//
-	void BaseAcousticRiemannSolver::
-		prepareSolver(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij,
-					  Real &ul, Real &ur, Real &rhol_cl, Real &rhor_cr)
-	{
-		ul = dot(-e_ij, state_i.vel_);
-		ur = dot(-e_ij, state_j.vel_);
-		rhol_cl = fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_) * state_i.rho_;
-		rhor_cr = fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_) * state_j.rho_;
-	}
-	//=================================================================================================//
-	AcousticRiemannSolver::AcousticRiemannSolver(Fluid &fluid_i, Fluid &fluid_j)
-		: BaseAcousticRiemannSolver(fluid_i, fluid_j),
-		  rho0_(fluid_i.ReferenceDensity()), c0_(fluid_i.getSoundSpeed(0.0, rho0_)){};
 	//=================================================================================================//
 	Real AcousticRiemannSolver::DissipativePJump(const Real &u_jump)
 	{
-		return rho0_ * c0_ * u_jump * SMIN(3.0 * SMAX(u_jump / c0_, 0.0), 1.0);
+		return rhoc_ave_ * u_jump * SMIN(3.0 * SMAX(u_jump * c_ave_inv_, 0.0), 1.0);
 	}
 	//=================================================================================================//
 	Real AcousticRiemannSolver::DissipativeUJump(const Real &p_jump)
 	{
-		return p_jump / rho0_ / c0_;
+		return p_jump * rhoc_ave_inv_;
 	}
-	//=================================================================================================//
-	Real AcousticRiemannSolver::
-		getPStarMultiPhase(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
-	{
-		Real ul, ur, rhol_cl, rhor_cr;
-		prepareSolver(state_i, state_j, e_ij, ul, ur, rhol_cl, rhor_cr);
-
-		Real clr = (rhol_cl + rhor_cr) / (state_i.rho_ + state_j.rho_);
-		return (rhol_cl * state_j.p_ + rhor_cr * state_i.p_ +
-				rhol_cl * rhor_cr * (ul - ur) * SMIN(3.0 * SMAX((ul - ur) / clr, 0.0), 1.0)) /
-			   (rhol_cl + rhor_cr);
-	}
-	//=================================================================================================//
-	Vecd AcousticRiemannSolver::
-		getVStarMultiPhase(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
-	{
-		Real ul, ur, rhol_cl, rhor_cr;
-		prepareSolver(state_i, state_j, e_ij, ul, ur, rhol_cl, rhor_cr);
-
-		Real u_star = (rhol_cl * ul + rhor_cr * ur + state_i.p_ - state_j.p_) / (rhol_cl + rhor_cr);
-		return (state_i.vel_ * state_i.rho_ + state_j.vel_ * state_j.rho_) / (state_i.rho_ + state_j.rho_) -
-			   e_ij * (u_star - (ul * state_i.rho_ + ur * state_j.rho_) / (state_i.rho_ + state_j.rho_));
-	}
-	//=================================================================================================//
-	DissipativeRiemannSolver::DissipativeRiemannSolver(Fluid &fluid_i, Fluid &fluid_j)
-		: BaseAcousticRiemannSolver(fluid_i, fluid_j),
-		  rho0_(fluid_i.ReferenceDensity()), c0_(fluid_i.getSoundSpeed(0.0, rho0_)){};
 	//=================================================================================================//
 	Real DissipativeRiemannSolver::DissipativePJump(const Real &u_jump)
 	{
-		return rho0_ * c0_ * u_jump;
-	}
-	//=================================================================================================//
-	Real DissipativeRiemannSolver::DissipativeUJump(const Real &p_jump)
-	{
-		return p_jump / rho0_ / c0_;
-	}
-	//=================================================================================================//
-	Real DissipativeRiemannSolver::
-		getPStarMultiPhase(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
-	{
-		Real ul, ur, rhol_cl, rhor_cr;
-		prepareSolver(state_i, state_j, e_ij, ul, ur, rhol_cl, rhor_cr);
-
-		return (rhol_cl * state_j.p_ + rhor_cr * state_i.p_ + rhol_cl * rhor_cr * (ul - ur)) / (rhol_cl + rhor_cr);
-	}
-	//=================================================================================================//
-	Vecd DissipativeRiemannSolver::
-		getVStarMultiPhase(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
-	{
-		Real ul, ur, rhol_cl, rhor_cr;
-		prepareSolver(state_i, state_j, e_ij, ul, ur, rhol_cl, rhor_cr);
-
-		Real u_star = (rhol_cl * ul + rhor_cr * ur + state_i.p_ - state_j.p_) / (rhol_cl + rhor_cr);
-		return (state_i.vel_ * state_i.rho_ + state_j.vel_ * state_j.rho_) / (state_i.rho_ + state_j.rho_) -
-			   e_ij * (u_star - (ul * state_i.rho_ + ur * state_j.rho_) / (state_i.rho_ + state_j.rho_));
+		return rhoc_ave_ * u_jump;
 	}
 	//=================================================================================================//
 	FluidState HLLCRiemannSolverInWeaklyCompressibleFluid::

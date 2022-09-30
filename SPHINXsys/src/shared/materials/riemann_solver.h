@@ -53,50 +53,46 @@ namespace SPH
 
 	class NoRiemannSolver
 	{
-		Fluid &fluid_l_, &fluid_r_;
-
 	public:
-		NoRiemannSolver(Fluid &fluid_i, Fluid &fluid_j) : fluid_l_(fluid_i), fluid_r_(fluid_j){};
+		template <class FluidI, class FluidJ>
+		NoRiemannSolver(FluidI &fluid_i, FluidJ &fluid_j)
+			: rho0_i_(fluid_i.ReferenceDensity()), rho0_j_(fluid_j.ReferenceDensity()),
+			  rho_sum_inv_(1.0 / (rho0_i_ + rho0_j_)){};
 		Real DissipativePJump(const Real &u_jump);
 		Real DissipativeUJump(const Real &p_jump);
-		Real getPStarMultiPhase(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
-		Vecd getVStarMultiPhase(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
+		Real AverageP(const Real &p_i, const Real &p_j);
+		Vecd AverageV(const Vecd &vel_i, const Vecd &vel_j);
 
-	};
-
-	class BaseAcousticRiemannSolver
-	{
 	protected:
-		Fluid &fluid_i_, &fluid_j_;
-
-	public:
-		BaseAcousticRiemannSolver(Fluid &fluid_i, Fluid &fluid_j) : fluid_i_(fluid_i), fluid_j_(fluid_j){};
-		inline void prepareSolver(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i,
-								  Real &ul, Real &ur, Real &rhol_cl, Real &rhor_cr);
+		Real rho0_i_, rho0_j_, rho_sum_inv_;
 	};
-	class AcousticRiemannSolver : public BaseAcousticRiemannSolver
+
+	class AcousticRiemannSolver : public NoRiemannSolver
 	{
 	public:
-		AcousticRiemannSolver(Fluid &fluid_i, Fluid &fluid_j);
+		template <class FluidI, class FluidJ>
+		AcousticRiemannSolver(FluidI &fluid_i, FluidJ &fluid_j)
+			: NoRiemannSolver(fluid_i, fluid_j),
+			  c0_i_(fluid_i.ReferenceSoundSpeed()), c0_j_(fluid_j.ReferenceSoundSpeed()),
+			  rhoc_ave_inv_(2.0 / (rho0_i_ * c0_i_ + rho0_j_ * c0_j_)),
+			  c_ave_inv_(2.0 * (rho0_i_ + rho0_j_) * rhoc_ave_inv_),
+			  rhoc_ave_(rho0_i_ * c0_i_ * rho0_j_ * c0_j_ * rhoc_ave_inv_){};
 		Real DissipativePJump(const Real &u_jump);
 		Real DissipativeUJump(const Real &p_jump);
-		Real getPStarMultiPhase(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
-		Vecd getVStarMultiPhase(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
 
 	protected:
-		Real rho0_, c0_;
+		Real c0_i_, c0_j_;
+		Real rhoc_ave_inv_, c_ave_inv_;
+		Real rhoc_ave_;
 	};
 
-	class DissipativeRiemannSolver : public BaseAcousticRiemannSolver
+	class DissipativeRiemannSolver : public AcousticRiemannSolver
 	{
 	public:
-		DissipativeRiemannSolver(Fluid &fluid_i, Fluid &fluid_j);
+		template <class FluidI, class FluidJ>
+		DissipativeRiemannSolver(FluidI &fluid_i, FluidJ &fluid_j)
+			: AcousticRiemannSolver(fluid_i, fluid_j){};
 		Real DissipativePJump(const Real &u_jump);
-		Real DissipativeUJump(const Real &p_jump);
-		Real getPStarMultiPhase(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
-		Vecd getVStarMultiPhase(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
-	protected:
-		Real rho0_, c0_;
 	};
 
 	class HLLCRiemannSolverInWeaklyCompressibleFluid
@@ -104,7 +100,8 @@ namespace SPH
 		Fluid &fluid_i_, &fluid_j_;
 
 	public:
-		HLLCRiemannSolverInWeaklyCompressibleFluid(Fluid &compressible_fluid_i, Fluid &compressible_fluid_j) : fluid_i_(compressible_fluid_i), fluid_j_(compressible_fluid_j){};
+		HLLCRiemannSolverInWeaklyCompressibleFluid(Fluid &compressible_fluid_i, Fluid &compressible_fluid_j)
+			: fluid_i_(compressible_fluid_i), fluid_j_(compressible_fluid_j){};
 		FluidState getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
 	};
 

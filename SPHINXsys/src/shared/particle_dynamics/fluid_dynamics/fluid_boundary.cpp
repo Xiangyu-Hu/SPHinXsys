@@ -55,7 +55,7 @@ namespace SPH
 			  fluid_(particles_->fluid_),
 			  pos_(particles_->pos_), vel_(particles_->vel_), acc_(particles_->acc_),
 			  rho_(particles_->rho_), p_(particles_->p_), drho_dt_(particles_->drho_dt_),
-			  inflow_pressure_(0), rho0_(fluid_.ReferenceDensity()), 
+			  inflow_pressure_(0), rho0_(fluid_.ReferenceDensity()),
 			  aligned_box_(aligned_box_part.aligned_box_),
 			  updated_transform_(aligned_box_.getTransform()),
 			  old_transform_(updated_transform_) {}
@@ -149,14 +149,7 @@ namespace SPH
 		{
 			Vecd kernel_gradient = level_set_shape_->computeKernelGradientIntegral(pos_[index_i]);
 			Vecd normal_to_fluid = -kernel_gradient / (kernel_gradient.norm() + TinyReal);
-
-			FluidState state(rho_[index_i], vel_[index_i], p_[index_i]);
-			Vecd vel_in_wall = -state.vel_;
-			FluidState state_in_wall(rho_[index_i], vel_in_wall, p_[index_i]);
-
-			// always solving one-side Riemann problem for wall boundaries
-			Real p_star = riemann_solver_.getPStarMultiPhase(state, state_in_wall, normal_to_fluid);
-			acc_[index_i] -= 2.0 * p_star * kernel_gradient / state.rho_;
+			acc_[index_i] -= 2.0 * p_[index_i] * kernel_gradient / rho_[index_i];
 		}
 		//=================================================================================================//
 		StaticConfinementDensityRelaxation::StaticConfinementDensityRelaxation(NearShapeSurface &near_surface)
@@ -171,14 +164,8 @@ namespace SPH
 		{
 			Vecd kernel_gradient = level_set_shape_->computeKernelGradientIntegral(pos_[index_i]);
 			Vecd normal_to_fluid = -kernel_gradient / (kernel_gradient.norm() + TinyReal);
-
-			FluidState state(rho_[index_i], vel_[index_i], p_[index_i]);
-			Vecd vel_in_wall = -state.vel_;
-			FluidState state_in_wall(rho_[index_i], vel_in_wall, p_[index_i]);
-
-			// always solving one-side Riemann problem for wall boundaries
-			Vecd vel_star = riemann_solver_.getVStarMultiPhase(state, state_in_wall, normal_to_fluid);
-			drho_dt_[index_i] += 2.0 * state.rho_ * dot(state.vel_ - vel_star, kernel_gradient);
+			Vecd vel_in_wall = -vel_[index_i];
+			drho_dt_[index_i] += rho_[index_i] * SimTK::dot(vel_[index_i] - vel_in_wall, kernel_gradient);
 		}
 		//=================================================================================================//
 		StaticConfinement::StaticConfinement(NearShapeSurface &near_surface)
