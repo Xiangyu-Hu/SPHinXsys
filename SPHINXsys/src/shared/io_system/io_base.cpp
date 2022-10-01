@@ -121,7 +121,9 @@ namespace SPH
 
 			if (!fs::exists(filefullpath))
 			{
-				std::cout << "\n Error: the input file:" << filefullpath << " is not exists" << std::endl;
+				std::cout << "\n Error: the input file:" << filefullpath << " is not exists." << std::endl;
+				std::cout << "\n You need first to run particle relaxation, which generates file for reloading." << std::endl;
+				std::cout << "\n Please check the tutorial of SPHinXsys library from www.sphinxsys.org." << std::endl;
 				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 				exit(1);
 			}
