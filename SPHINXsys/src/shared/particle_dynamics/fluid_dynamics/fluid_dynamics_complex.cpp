@@ -39,7 +39,7 @@ namespace SPH
 		//=================================================================================================//
 		void PressureRelaxationWithWallOldroyd_B::interaction(size_t index_i, Real dt)
 		{
-			PressureRelaxation<PressureRelaxationInnerOldroyd_B>::interaction(index_i, dt);
+			BasePressureRelaxationWithWall<PressureRelaxationInnerOldroyd_B>::interaction(index_i, dt);
 
 			Real rho_i = rho_[index_i];
 			Matd tau_i = tau_[index_i];
@@ -62,7 +62,7 @@ namespace SPH
 		//=================================================================================================//
 		void DensityRelaxationWithWallOldroyd_B::interaction(size_t index_i, Real dt)
 		{
-			DensityRelaxation<DensityRelaxationInnerOldroyd_B>::interaction(index_i, dt);
+			BaseDensityRelaxationWithWall<DensityRelaxationInnerOldroyd_B>::interaction(index_i, dt);
 
 			Vecd vel_i = vel_[index_i];
 			Matd tau_i = tau_[index_i];

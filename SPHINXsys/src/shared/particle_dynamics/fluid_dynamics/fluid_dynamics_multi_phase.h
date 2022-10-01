@@ -57,7 +57,7 @@ namespace SPH
 			StdVec<StdLargeVec<Vecd> *> contact_vel_n_;
 		};
 		using ViscousAccelerationMultiPhaseWithWall =
-			BaseViscousAccelerationWithWall<ViscousWithWall<ViscousAccelerationMultiPhase>>;
+			BaseViscousAccelerationWithWall<ViscousAccelerationMultiPhase>;
 
 		/**
 		 * @class ViscousAccelerationMultiPhase
@@ -100,11 +100,11 @@ namespace SPH
 		using MultiPhasePressureRelaxationRiemann = BasePressureRelaxationMultiPhase<PressureRelaxationRiemannInner>;
 
 		using MultiPhasePressureRelaxationWithWall =
-			BasePressureRelaxationWithWall<PressureRelaxation<MultiPhasePressureRelaxation>>;
+			BasePressureRelaxationWithWall<MultiPhasePressureRelaxation>;
 		using MultiPhasePressureRelaxationRiemannWithWall =
-			BasePressureRelaxationWithWall<PressureRelaxation<MultiPhasePressureRelaxationRiemann>>;
+			BasePressureRelaxationWithWall<MultiPhasePressureRelaxationRiemann>;
 		using ExtendMultiPhasePressureRelaxationRiemannWithWall =
-			ExtendPressureRelaxationWithWall<ExtendPressureRelaxation<MultiPhasePressureRelaxationRiemann>>;
+			BaseExtendPressureRelaxationWithWall<MultiPhasePressureRelaxationRiemann>;
 
 		/**
 		 * @class BaseDensityRelaxationMultiPhase

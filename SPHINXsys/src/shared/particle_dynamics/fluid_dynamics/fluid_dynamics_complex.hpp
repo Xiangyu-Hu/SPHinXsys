@@ -76,13 +76,13 @@ namespace SPH
 		//=================================================================================================//
 		template <class ViscousAccelerationInnerType>
 		template <class BaseBodyRelationType>
-		ViscousWithWall<ViscousAccelerationInnerType>::
-			ViscousWithWall(BaseBodyRelationType &base_body_relation,
+		BaseViscousAccelerationWithWall<ViscousAccelerationInnerType>::
+			BaseViscousAccelerationWithWall(BaseBodyRelationType &base_body_relation,
 							BaseBodyRelationContact &wall_contact_relation)
 			: RelaxationWithWall<ViscousAccelerationInnerType>(base_body_relation, wall_contact_relation) {}
 		//=================================================================================================//
 		template <class ViscousAccelerationInnerType>
-		void ViscousWithWall<ViscousAccelerationInnerType>::interaction(size_t index_i, Real dt)
+		void BaseViscousAccelerationWithWall<ViscousAccelerationInnerType>::interaction(size_t index_i, Real dt)
 		{
 			ViscousAccelerationInnerType::interaction(index_i, dt);
 
@@ -107,33 +107,15 @@ namespace SPH
 			this->acc_prior_[index_i] += acceleration;
 		}
 		//=================================================================================================//
-		template <class ViscousAccelerationInnerType>
-		BaseViscousAccelerationWithWall<ViscousAccelerationInnerType>::
-			BaseViscousAccelerationWithWall(ComplexBodyRelation &fluid_wall_relation)
-			: ViscousAccelerationInnerType(fluid_wall_relation.inner_relation_,
-										   fluid_wall_relation.contact_relation_) {}
-		//=================================================================================================//
-		template <class ViscousAccelerationInnerType>
-		BaseViscousAccelerationWithWall<ViscousAccelerationInnerType>::
-			BaseViscousAccelerationWithWall(BaseBodyRelationInner &fluid_inner_relation,
-											BaseBodyRelationContact &wall_contact_relation)
-			: ViscousAccelerationInnerType(fluid_inner_relation, wall_contact_relation) {}
-		//=================================================================================================//
-		template <class ViscousAccelerationInnerType>
-		BaseViscousAccelerationWithWall<ViscousAccelerationInnerType>::
-			BaseViscousAccelerationWithWall(ComplexBodyRelation &fluid_complex_relation,
-											BaseBodyRelationContact &wall_contact_relation)
-			: ViscousAccelerationInnerType(fluid_complex_relation, wall_contact_relation) {}
-		//=================================================================================================//
 		template <class BasePressureRelaxationType>
 		template <class BaseBodyRelationType>
-		PressureRelaxation<BasePressureRelaxationType>::
-			PressureRelaxation(BaseBodyRelationType &base_body_relation,
+		BasePressureRelaxationWithWall<BasePressureRelaxationType>::
+			BasePressureRelaxationWithWall(BaseBodyRelationType &base_body_relation,
 							   BaseBodyRelationContact &wall_contact_relation)
 			: RelaxationWithWall<BasePressureRelaxationType>(base_body_relation, wall_contact_relation) {}
 		//=================================================================================================//
 		template <class BasePressureRelaxationType>
-		void PressureRelaxation<BasePressureRelaxationType>::interaction(size_t index_i, Real dt)
+		void BasePressureRelaxationWithWall<BasePressureRelaxationType>::interaction(size_t index_i, Real dt)
 		{
 			BasePressureRelaxationType::interaction(index_i, dt);
 
@@ -165,33 +147,33 @@ namespace SPH
 		}
 		//=================================================================================================//
 		template <class BasePressureRelaxationType>
-		Vecd PressureRelaxation<BasePressureRelaxationType>::computeNonConservativeAcceleration(size_t index_i)
+		Vecd BasePressureRelaxationWithWall<BasePressureRelaxationType>::computeNonConservativeAcceleration(size_t index_i)
 		{
 			return this->acc_prior_[index_i];
 		}
 		//=================================================================================================//
 		template <class BasePressureRelaxationType>
 		template <class BaseBodyRelationType>
-		ExtendPressureRelaxation<BasePressureRelaxationType>::
-			ExtendPressureRelaxation(BaseBodyRelationType &base_body_relation,
+		BaseExtendPressureRelaxationWithWall<BasePressureRelaxationType>::
+			BaseExtendPressureRelaxationWithWall(BaseBodyRelationType &base_body_relation,
 									 BaseBodyRelationContact &wall_contact_relation, Real penalty_strength)
-			: PressureRelaxation<BasePressureRelaxationType>(base_body_relation, wall_contact_relation),
+			: BasePressureRelaxationWithWall<BasePressureRelaxationType>(base_body_relation, wall_contact_relation),
 			  penalty_strength_(penalty_strength)
 		{
 			this->particles_->registerVariable(non_cnsrv_acc_, "NonConservativeAcceleration");
 		}
 		//=================================================================================================//
 		template <class BasePressureRelaxationType>
-		void ExtendPressureRelaxation<BasePressureRelaxationType>::initialization(size_t index_i, Real dt)
+		void BaseExtendPressureRelaxationWithWall<BasePressureRelaxationType>::initialization(size_t index_i, Real dt)
 		{
 			BasePressureRelaxationType::initialization(index_i, dt);
 			non_cnsrv_acc_[index_i] = Vecd(0);
 		}
 		//=================================================================================================//
 		template <class BasePressureRelaxationType>
-		void ExtendPressureRelaxation<BasePressureRelaxationType>::interaction(size_t index_i, Real dt)
+		void BaseExtendPressureRelaxationWithWall<BasePressureRelaxationType>::interaction(size_t index_i, Real dt)
 		{
-			PressureRelaxation<BasePressureRelaxationType>::interaction(index_i, dt);
+			BasePressureRelaxationWithWall<BasePressureRelaxationType>::interaction(index_i, dt);
 
 			Real rho_i = this->rho_[index_i];
 			Real penalty_pressure = this->p_[index_i];
@@ -227,7 +209,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		template <class BasePressureRelaxationType>
-		Vecd ExtendPressureRelaxation<BasePressureRelaxationType>::
+		Vecd BaseExtendPressureRelaxationWithWall<BasePressureRelaxationType>::
 			computeNonConservativeAcceleration(size_t index_i)
 		{
 			Vecd acceleration = BasePressureRelaxationType::computeNonConservativeAcceleration(index_i);
@@ -235,55 +217,15 @@ namespace SPH
 			return acceleration;
 		}
 		//=================================================================================================//
-		template <class BasePressureRelaxationType>
-		BasePressureRelaxationWithWall<BasePressureRelaxationType>::
-			BasePressureRelaxationWithWall(ComplexBodyRelation &fluid_wall_relation)
-			: BasePressureRelaxationType(fluid_wall_relation.inner_relation_,
-										 fluid_wall_relation.contact_relation_) {}
-		//=================================================================================================//
-		template <class BasePressureRelaxationType>
-		BasePressureRelaxationWithWall<BasePressureRelaxationType>::
-			BasePressureRelaxationWithWall(BaseBodyRelationInner &fluid_inner_relation,
-										   BaseBodyRelationContact &wall_contact_relation)
-			: BasePressureRelaxationType(fluid_inner_relation,
-										 wall_contact_relation) {}
-		//=================================================================================================//
-		template <class BasePressureRelaxationType>
-		BasePressureRelaxationWithWall<BasePressureRelaxationType>::
-			BasePressureRelaxationWithWall(ComplexBodyRelation &fluid_complex_relation,
-										   BaseBodyRelationContact &wall_contact_relation)
-			: BasePressureRelaxationType(fluid_complex_relation,
-										 wall_contact_relation) {}
-		//=================================================================================================//
-		template <class BasePressureRelaxationType>
-		ExtendPressureRelaxationWithWall<BasePressureRelaxationType>::
-			ExtendPressureRelaxationWithWall(ComplexBodyRelation &fluid_wall_relation, Real penalty_strength)
-			: BasePressureRelaxationType(fluid_wall_relation.inner_relation_,
-										 fluid_wall_relation.contact_relation_, penalty_strength) {}
-		//=================================================================================================//
-		template <class BasePressureRelaxationType>
-		ExtendPressureRelaxationWithWall<BasePressureRelaxationType>::
-			ExtendPressureRelaxationWithWall(BaseBodyRelationInner &fluid_inner_relation,
-											 BaseBodyRelationContact &wall_contact_relation, Real penalty_strength)
-			: BasePressureRelaxationType(fluid_inner_relation,
-										 wall_contact_relation, penalty_strength) {}
-		//=================================================================================================//
-		template <class BasePressureRelaxationType>
-		ExtendPressureRelaxationWithWall<BasePressureRelaxationType>::
-			ExtendPressureRelaxationWithWall(ComplexBodyRelation &fluid_complex_relation,
-											 BaseBodyRelationContact &wall_contact_relation, Real penalty_strength)
-			: BasePressureRelaxationType(fluid_complex_relation,
-										 wall_contact_relation, penalty_strength) {}
-		//=================================================================================================//
 		template <class BaseDensityRelaxationType>
 		template <class BaseBodyRelationType>
-		DensityRelaxation<BaseDensityRelaxationType>::
-			DensityRelaxation(BaseBodyRelationType &base_body_relation,
+		BaseDensityRelaxationWithWall<BaseDensityRelaxationType>::
+			BaseDensityRelaxationWithWall(BaseBodyRelationType &base_body_relation,
 							  BaseBodyRelationContact &wall_contact_relation)
 			: RelaxationWithWall<BaseDensityRelaxationType>(base_body_relation, wall_contact_relation) {}
 		//=================================================================================================//
 		template <class BaseDensityRelaxationType>
-		void DensityRelaxation<BaseDensityRelaxationType>::interaction(size_t index_i, Real dt)
+		void BaseDensityRelaxationWithWall<BaseDensityRelaxationType>::interaction(size_t index_i, Real dt)
 		{
 			BaseDensityRelaxationType::interaction(index_i, dt);
 
@@ -309,25 +251,6 @@ namespace SPH
 			}
 			this->drho_dt_[index_i] += density_change_rate * this->rho_[index_i];
 		}
-		//=================================================================================================//
-		template <class BaseDensityRelaxationType>
-		BaseDensityRelaxationWithWall<BaseDensityRelaxationType>::
-			BaseDensityRelaxationWithWall(ComplexBodyRelation &fluid_wall_relation)
-			: DensityRelaxation<BaseDensityRelaxationType>(fluid_wall_relation.inner_relation_,
-														   fluid_wall_relation.contact_relation_) {}
-		//=================================================================================================//
-		template <class BaseDensityRelaxationType>
-		BaseDensityRelaxationWithWall<BaseDensityRelaxationType>::
-			BaseDensityRelaxationWithWall(BaseBodyRelationInner &fluid_inner_relation,
-										  BaseBodyRelationContact &wall_contact_relation)
-			: DensityRelaxation<BaseDensityRelaxationType>(fluid_inner_relation,
-														   wall_contact_relation) {}
-		//=================================================================================================//
-		template <class BaseDensityRelaxationType>
-		BaseDensityRelaxationWithWall<BaseDensityRelaxationType>::
-			BaseDensityRelaxationWithWall(ComplexBodyRelation &fluid_complex_relation,
-										  BaseBodyRelationContact &wall_contact_relation)
-			: DensityRelaxation<BaseDensityRelaxationType>(fluid_complex_relation, wall_contact_relation) {}
 		//=================================================================================================//
 	}
 	//=================================================================================================//
