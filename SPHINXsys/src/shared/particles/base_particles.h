@@ -192,9 +192,9 @@ namespace SPH
 		virtual BaseParticles *ThisObjectPtr() { return this; };
 
 		/** Get the kernel gradient in weak form. */
-		virtual Vecd getKernelGradient(size_t index_i, size_t index_j, Real dW_ij, Vecd &e_ij)
+		virtual Vecd getKernelGradient(size_t index_i, size_t index_j, Real dW_ijV_j, Vecd &e_ij)
 		{
-			return dW_ij * e_ij;
+			return dW_ijV_j * e_ij;
 		};
 
 		virtual Vecd ParticleTotalAcceleration(size_t index_i) { return acc_[index_i] + acc_prior_[index_i]; }

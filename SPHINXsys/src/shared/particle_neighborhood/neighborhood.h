@@ -32,6 +32,7 @@
 #define NEIGHBORHOOD_H
 
 #include "base_data_package.h"
+#include "sph_data_containers.h"
 #include "all_kernels.h"
 
 namespace SPH
@@ -52,7 +53,7 @@ namespace SPH
 
 		StdLargeVec<size_t> j_;	  /**< index of the neighbor particle. */
 		StdLargeVec<Real> W_ij_;  /**< kernel value or particle volume contribution */
-		StdLargeVec<Real> dW_ij_; /**< derivative of kernel function or inter-particle surface contribution */
+		StdLargeVec<Real> dW_ijV_j_; /**< derivative of kernel function or inter-particle surface contribution */
 		StdLargeVec<Real> r_ij_;  /**< distance between j and i. */
 		StdLargeVec<Vecd> e_ij_;  /**< unit vector pointing from j to i or inter-particle surface direction */
 
@@ -78,17 +79,17 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//	Below are for constant smoothing length.
 		//----------------------------------------------------------------------
-		void createNeighbor(Neighborhood &neighborhood, Real &distance,
-							Vecd &displacement, size_t j_index) const;
-		void initializeNeighbor(Neighborhood &neighborhood, Real &distance,
-								Vecd &displacement, size_t j_index) const;
+		void createNeighbor(Neighborhood &neighborhood, const Real &distance,
+							const Vecd &displacement, size_t j_index, const Real Vol_j);
+		void initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
+								const Vecd &displacement, size_t j_index, const Real Vol_j);
 		//----------------------------------------------------------------------
 		//	Below are for variable smoothing length.
 		//----------------------------------------------------------------------
-		void createNeighbor(Neighborhood &neighborhood, Real &distance,
-							Vecd &displacement, size_t j_index, Real i_h_ratio, Real h_ratio_min) const;
-		void initializeNeighbor(Neighborhood &neighborhood, Real &distance,
-								Vecd &displacement, size_t j_index, Real i_h_ratio, Real h_ratio_min) const;
+		void createNeighbor(Neighborhood &neighborhood, const Real &distance,
+							const Vecd &displacement, size_t j_index, const Real Vol_j, Real i_h_ratio, Real h_ratio_min);
+		void initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
+								const Vecd &displacement, size_t j_index, const Real Vol_j, Real i_h_ratio, Real h_ratio_min);
 
 	public:
 		NeighborBuilder() : kernel_(nullptr){};
@@ -104,7 +105,7 @@ namespace SPH
 	public:
 		explicit NeighborBuilderInner(SPHBody &body);
 		void operator()(Neighborhood &neighborhood,
-						Vecd &displacement, size_t i_index, size_t j_index) const;
+						const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 	};
 
 	/**
@@ -117,7 +118,7 @@ namespace SPH
 	public:
 		explicit NeighborBuilderInnerVariableSmoothingLength(SPHBody &body);
 		void operator()(Neighborhood &neighborhood,
-						Vecd &displacement, size_t i_index, size_t j_index) const;
+						const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 
 	protected:
 		StdLargeVec<Real> &h_ratio_;
@@ -133,7 +134,7 @@ namespace SPH
 		explicit NeighborBuilderSelfContact(SPHBody &body);
 		virtual ~NeighborBuilderSelfContact(){};
 		void operator()(Neighborhood &neighborhood,
-						Vecd &displacement, size_t i_index, size_t j_index) const;
+						const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 
 	protected:
 		StdLargeVec<Vecd> &pos0_;
@@ -149,7 +150,7 @@ namespace SPH
 		NeighborBuilderContact(SPHBody &body, SPHBody &contact_body);
 		virtual ~NeighborBuilderContact(){};
 		void operator()(Neighborhood &neighborhood,
-						Vecd &displacement, size_t i_index, size_t j_index) const;
+						const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 	};
 
 	/**
@@ -176,7 +177,7 @@ namespace SPH
 		NeighborBuilderContactBodyPart(SPHBody &body, BodyPart &contact_body_part);
 		virtual ~NeighborBuilderContactBodyPart(){};
 		void operator()(Neighborhood &neighborhood,
-						Vecd &displacement, size_t i_index, size_t j_index) const;
+						const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 
 	protected:
 		StdLargeVec<int> part_indicator_; /**< indicator of the body part */

@@ -42,16 +42,15 @@ namespace SPH
 	class WeaklyCompressibleFluid : public Fluid
 	{
 	protected:
-		Real c0_, p0_; /**< reference sound speed and pressure */
+		Real p0_; /**< reference pressure */
 	public:
 		explicit WeaklyCompressibleFluid(Real rho0, Real c0, Real mu = 0.0)
-			: Fluid(rho0, mu), c0_(c0), p0_(rho0 * c0 * c0)
+			: Fluid(rho0, c0, mu), p0_(rho0 * c0 * c0)
 		{
 			material_type_name_ = "WeaklyCompressibleFluid";
 		};
 		virtual ~WeaklyCompressibleFluid(){};
 
-		Real ReferenceSoundSpeed() { return c0_; };
 		virtual Real getPressure(Real rho) override;
 		virtual Real DensityFromPressure(Real p) override;
 		virtual Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) override;

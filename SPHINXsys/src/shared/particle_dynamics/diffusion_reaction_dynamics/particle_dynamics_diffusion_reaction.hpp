@@ -35,7 +35,7 @@ namespace SPH
 		  DiffusionReactionInnerData<BaseParticlesType, BaseMaterialType>(inner_relation),
 		  diffusion_reaction_material_(this->particles_->diffusion_reaction_material_),
 		  species_n_(this->particles_->species_n_),
-		  diffusion_dt_(this->particles_->diffusion_dt_), Vol_(this->particles_->Vol_)
+		  diffusion_dt_(this->particles_->diffusion_dt_)
 	{
 		species_diffusion_ = this->particles_->diffusion_reaction_material_.SpeciesDiffusion();
 	}
@@ -85,12 +85,12 @@ namespace SPH
 		for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 		{
 			size_t index_j = inner_neighborhood.j_[n];
-			Real dW_ij_ = inner_neighborhood.dW_ij_[n];
+			Real dW_ijV_j_ = inner_neighborhood.dW_ijV_j_[n];
 			Real r_ij_ = inner_neighborhood.r_ij_[n];
 			Vecd &e_ij = inner_neighborhood.e_ij_[n];
 
-			const Vecd &grad_ij = particles->getKernelGradient(index_i, index_j, dW_ij_, e_ij);
-			Real area_ij = 2.0 * Vol_[index_j] * dot(grad_ij, e_ij) / r_ij_;
+			const Vecd &grad_ijV_j = particles->getKernelGradient(index_i, index_j, dW_ijV_j_, e_ij);
+			Real area_ij = 2.0 * dot(grad_ijV_j, e_ij) / r_ij_;
 			getDiffusionChangeRate(index_i, index_j, e_ij, area_ij);
 		}
 	}
@@ -116,7 +116,6 @@ namespace SPH
 
 		for (size_t k = 0; k != this->contact_particles_.size(); ++k)
 		{
-			contact_Vol_.push_back(&(this->contact_particles_[k]->Vol_));
 			contact_species_n_.push_back(&(this->contact_particles_[k]->species_n_));
 		}
 	}
@@ -148,7 +147,6 @@ namespace SPH
 
 		for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 		{
-			StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
 			StdVec<StdLargeVec<Real>> &species_n_k = *(contact_species_n_[k]);
 
 			Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
@@ -156,11 +154,11 @@ namespace SPH
 			{
 				size_t index_j = contact_neighborhood.j_[n];
 				Real r_ij_ = contact_neighborhood.r_ij_[n];
-				Real dW_ij_ = contact_neighborhood.dW_ij_[n];
+				Real dW_ijV_j_ = contact_neighborhood.dW_ijV_j_[n];
 				Vecd &e_ij = contact_neighborhood.e_ij_[n];
 
-				const Vecd &grad_ij = particles->getKernelGradient(index_i, index_j, dW_ij_, e_ij);
-				Real area_ij = 2.0 * Vol_k[index_j] * dot(grad_ij, e_ij) / r_ij_;
+				const Vecd &grad_ijV_j = particles->getKernelGradient(index_i, index_j, dW_ijV_j_, e_ij);
+				Real area_ij = 2.0 * dot(grad_ijV_j, e_ij) / r_ij_;
 				getDiffusionChangeRateContact(index_i, index_j, e_ij, area_ij, species_n_k);
 			}
 		}

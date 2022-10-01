@@ -83,7 +83,6 @@ namespace SPH
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			StdLargeVec<Real> &Vol_;
 			StdLargeVec<Vecd> &acc_, &pos_;
 		};
 
@@ -158,9 +157,7 @@ namespace SPH
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			StdLargeVec<Real> &Vol_;
 			StdLargeVec<Vecd> &acc_, &pos_;
-			StdVec<StdLargeVec<Real> *> contact_Vol_;
 		};
 
 		/**

@@ -130,8 +130,8 @@ namespace SPH
 
         protected:
             Fluid &fluid_;
-            StdLargeVec<Vecd> &pos_, &vel_;
-            StdLargeVec<Real> &rho_, &p_;
+            StdLargeVec<Vecd> &pos_, &vel_, &acc_;
+            StdLargeVec<Real> &rho_, &p_, &drho_dt_;
             /** inflow pressure condition */
             Real inflow_pressure_;
             Real rho0_;

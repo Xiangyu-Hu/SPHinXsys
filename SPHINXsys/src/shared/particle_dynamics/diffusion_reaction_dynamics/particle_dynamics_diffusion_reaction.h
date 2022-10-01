@@ -101,7 +101,6 @@ namespace SPH
 		StdVec<BaseDiffusion *> species_diffusion_;
 		StdVec<StdLargeVec<Real>> &species_n_;
 		StdVec<StdLargeVec<Real>> &diffusion_dt_;
-		StdLargeVec<Real> &Vol_;
 
 		void initializeDiffusionChangeRate(size_t particle_i);
 		void getDiffusionChangeRate(size_t particle_i, size_t particle_j, Vecd &e_ij, Real surface_area_ij);
@@ -133,7 +132,6 @@ namespace SPH
 		StdVec<BaseDiffusion *> species_diffusion_;
 		StdVec<StdLargeVec<Real>> &species_n_;
 		StdVec<StdLargeVec<Real>> &diffusion_dt_;
-		StdVec<StdLargeVec<Real> *> contact_Vol_;
 		StdVec<StdVec<StdLargeVec<Real>> *> contact_species_n_;
 
 	protected:

@@ -141,7 +141,7 @@ namespace SPH
 			StdLargeVec<Real> &contact_density_, &Vol_, &mass_;
 			StdLargeVec<Vecd> &acc_prior_;
 			StdVec<Solid *> contact_solids_;
-			StdVec<StdLargeVec<Real> *> contact_contact_density_, contact_Vol_;
+			StdVec<StdLargeVec<Real> *> contact_contact_density_;
 		};
 
 		/**
@@ -161,7 +161,6 @@ namespace SPH
 			Solid &solid_;
 			StdLargeVec<Real> &contact_density_, &Vol_, &mass_;
 			StdLargeVec<Vecd> &acc_prior_;
-			StdVec<StdLargeVec<Real> *> contact_Vol_;
 		};
 
 		/**
@@ -179,7 +178,7 @@ namespace SPH
 			StdLargeVec<Real> &Vol_, &mass_;
 			StdLargeVec<Vecd> &acc_prior_;
 			StdVec<Solid *> contact_solids_;
-			StdVec<StdLargeVec<Real> *> contact_contact_density_, contact_Vol_;
+			StdVec<StdLargeVec<Real> *> contact_contact_density_;
 		};
 
 		/**
@@ -200,7 +199,6 @@ namespace SPH
 			Real eta_; /**< friction coefficient */
 			StdLargeVec<Real> &Vol_, &mass_;
 			StdLargeVec<Vecd> &vel_;
-			StdVec<StdLargeVec<Real> *> wall_Vol_;
 			StdVec<StdLargeVec<Vecd> *> wall_vel_n_, wall_n_;
 		};
 
@@ -221,7 +219,6 @@ namespace SPH
 			Solid &solid_;
 			StdLargeVec<Real> &Vol_, &mass_;
 			StdLargeVec<Vecd> &vel_, &acc_prior_;
-			StdVec<StdLargeVec<Real> *> contact_Vol_;
 			StdVec<StdLargeVec<Vecd> *> contact_vel_n_, contact_n_;
 			Real penalty_strength_;
 			Real impedance_, reference_pressure_;

@@ -50,7 +50,7 @@ public:
 		  acc_prior(particles_->acc_prior_),
 		  force_arr_(f_arr),
 		  mass_n_(particles_->mass_),
-		  vol_(particles_->Vol_),
+		  Vol_(particles_->Vol_),
 		  F_(particles_->F_),
 		  particles_num_(body_part.body_part_particles_.size())
 	{
@@ -81,7 +81,7 @@ protected:
 	StdLargeVec<Vecd> &acc_prior;
 	StdLargeVec<Real> &mass_n_;
 	StdLargeVec<Real> area_0_;
-	StdLargeVec<Real> &vol_;
+	StdLargeVec<Real> &Vol_;
 	StdLargeVec<Matd> &F_;
 
 	StdVec<array<Real, 2>> force_arr_;

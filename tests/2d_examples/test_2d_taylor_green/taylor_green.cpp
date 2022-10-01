@@ -96,8 +96,8 @@ int main(int ac, char *av[])
 	/** Here, we do not use Riemann solver for pressure as the flow is viscous.
 	 * The other reason is that we are using transport velocity formulation,
 	 * which will also introduce numerical dissipation slightly. */
-	Dynamics1Level<fluid_dynamics::PressureRelaxationInner> pressure_relaxation(water_block_inner);
-	Dynamics1Level<fluid_dynamics::DensityRelaxationRiemannInner> density_relaxation(water_block_inner);
+	Dynamics1Level<fluid_dynamics::PressureRelaxationRiemannInner> pressure_relaxation(water_block_inner);
+	Dynamics1Level<fluid_dynamics::DensityRelaxationInner> density_relaxation(water_block_inner);
 	InteractionWithUpdate<fluid_dynamics::DensitySummationInner> update_density_by_summation(water_block_inner);
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_inner);
 	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionInner> transport_velocity_correction(water_block_inner);
@@ -111,7 +111,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
 	ReloadParticleIO write_particle_reload_files(io_environment, {&water_block});
-	RegressionTestEnsembleAveraged<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
+	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
 		write_total_mechanical_energy(io_environment, water_block);
 	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<MaximumSpeed>>>
 		write_maximum_speed(io_environment, water_block);
@@ -198,7 +198,12 @@ int main(int ac, char *av[])
 
 	write_particle_reload_files.writeToFile();
 
-	if (!sph_system.reload_particles_)
+	if (sph_system.generate_regression_data_)
+	{
+		write_total_mechanical_energy.generateDataBase(1.0e-3);
+		write_maximum_speed.generateDataBase(1.0e-3);
+	}
+	else if (!sph_system.reload_particles_)
 	{
 		write_total_mechanical_energy.newResultTest();
 		write_maximum_speed.newResultTest();

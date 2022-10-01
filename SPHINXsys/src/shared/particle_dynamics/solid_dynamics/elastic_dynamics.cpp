@@ -45,8 +45,7 @@ namespace SPH
 		DeformationGradientTensorBySummation::
 			DeformationGradientTensorBySummation(BaseBodyRelationInner &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_), ElasticSolidDataInner(inner_relation),
-			  Vol_(particles_->Vol_), pos_(particles_->pos_),
-			  B_(particles_->B_), F_(particles_->F_) {}
+			  pos_(particles_->pos_), B_(particles_->B_), F_(particles_->F_) {}
 		//=================================================================================================//
 		void DeformationGradientTensorBySummation::interaction(size_t index_i, Real dt)
 		{
@@ -58,8 +57,8 @@ namespace SPH
 			{
 				size_t index_j = inner_neighborhood.j_[n];
 
-				Vecd gradW_ij = inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n];
-				deformation -= Vol_[index_j] * SimTK::outer((pos_n_i - pos_[index_j]), gradW_ij);
+				Vecd gradW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+				deformation -= SimTK::outer((pos_n_i - pos_[index_j]), gradW_ijV_j);
 			}
 
 			F_[index_i] = deformation * B_[index_i];
@@ -67,8 +66,7 @@ namespace SPH
 		//=================================================================================================//
 		BaseElasticRelaxation::
 			BaseElasticRelaxation(BaseBodyRelationInner &inner_relation)
-			: LocalDynamics(inner_relation.sph_body_),
-			  ElasticSolidDataInner(inner_relation), Vol_(particles_->Vol_),
+			: LocalDynamics(inner_relation.sph_body_), ElasticSolidDataInner(inner_relation),
 			  rho_(particles_->rho_), mass_(particles_->mass_),
 			  pos_(particles_->pos_), vel_(particles_->vel_), acc_(particles_->acc_),
 			  B_(particles_->B_), F_(particles_->F_), dF_dt_(particles_->dF_dt_) {}
@@ -126,7 +124,7 @@ namespace SPH
 					0.5 * (F_[index_i] + F_[index_j]) * elastic_solid_.PairNumericalDamping(strain_rate, smoothing_length_);
 				acceleration += (stress_PK1_B_[index_i] + stress_PK1_B_[index_j] +
 								 numerical_dissipation_factor_ * weight * numerical_stress_ij) *
-								inner_neighborhood.dW_ij_[n] * e_ij * Vol_[index_j] * inv_rho0_;
+								inner_neighborhood.dW_ijV_j_[n] * e_ij * inv_rho0_;
 			}
 
 			acc_[index_i] = acceleration;
@@ -193,7 +191,7 @@ namespace SPH
 									  (J_to_minus_2_over_dimension_[index_i] + J_to_minus_2_over_dimension_[index_j]) *
 									  (pos_[index_i] - pos_[index_j]) / inner_neighborhood.r_ij_[n];
 				acceleration += ((stress_on_particle_[index_i] + stress_on_particle_[index_j]) * inner_neighborhood.e_ij_[n] + shear_force_ij) *
-								inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inv_rho0_;
+								inner_neighborhood.dW_ijV_j_[n] * inv_rho0_;
 			}
 			acc_[index_i] = acceleration;
 		}
@@ -213,9 +211,8 @@ namespace SPH
 			{
 				size_t index_j = inner_neighborhood.j_[n];
 
-				Vecd gradW_ij = inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n];
-				deformation_gradient_change_rate -=
-					Vol_[index_j] * SimTK::outer((vel_n_i - vel_[index_j]), gradW_ij);
+				Vecd gradW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+				deformation_gradient_change_rate -= SimTK::outer((vel_n_i - vel_[index_j]), gradW_ijV_j);
 			}
 
 			dF_dt_[index_i] = deformation_gradient_change_rate * B_[index_i];

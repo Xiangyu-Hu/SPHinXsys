@@ -68,8 +68,8 @@ Real mu_f = 1.0e-6;
 
 // for material properties of the solid
 Real flap_mass = 33.04;
-Real flap_vol = 0.0579;
-Real rho0_s = flap_mass / flap_vol;
+Real flap_volume = 0.0579;
+Real rho0_s = flap_mass / flap_volume;
 
 //------------------------------------------------------------------------------
 // geometric shape elements used in the case

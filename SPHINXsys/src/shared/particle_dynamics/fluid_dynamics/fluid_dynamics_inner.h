@@ -75,7 +75,7 @@ namespace SPH
 
 		protected:
 			Real W0_, rho0_, inv_sigma0_;
-			StdLargeVec<Real> &Vol_, &rho_, &mass_, &rho_sum_;
+			StdLargeVec<Real> &rho_, &rho_sum_, &mass_;
 			virtual Real ReinitializedDensity(Real rho_sum, Real rho_0, Real rho_n) { return rho_sum; };
 		};
 
@@ -92,7 +92,7 @@ namespace SPH
 		protected:
 			Real mu_;
 			Real smoothing_length_;
-			StdLargeVec<Real> &Vol_, &rho_, &p_;
+			StdLargeVec<Real> &rho_;
 			StdLargeVec<Vecd> &vel_, &acc_prior_;
 		};
 
@@ -136,7 +136,7 @@ namespace SPH
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			StdLargeVec<Real> &Vol_, &rho_;
+			StdLargeVec<Real> &rho_;
 			StdLargeVec<Vecd> &pos_;
 			StdLargeVec<int> &surface_indicator_;
 			Real p_background_;
@@ -149,36 +149,38 @@ namespace SPH
 		 */
 		class AcousticTimeStepSize : public LocalDynamicsReduce<Real, ReduceMax>, public FluidDataSimple
 		{
+		public:
+			explicit AcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL = 0.6);
+			virtual ~AcousticTimeStepSize(){};
+			Real reduce(size_t index_i, Real dt = 0.0);
+			virtual Real outputResult(Real reduced_value) override;
+
 		protected:
 			Fluid &fluid_;
 			StdLargeVec<Real> &rho_, &p_;
 			StdLargeVec<Vecd> &vel_;
 			Real smoothing_length_;
-
-		public:
-			explicit AcousticTimeStepSize(SPHBody &sph_body);
-			virtual ~AcousticTimeStepSize(){};
-
-			Real reduce(size_t index_i, Real dt = 0.0);
-			virtual Real outputResult(Real reduced_value) override;
+			Real acousticCFL_;
 		};
 
 		/**
 		 * @class AdvectionTimeStepSizeForImplicitViscosity
 		 * @brief Computing the advection time step size when viscosity is handled implicitly
 		 */
-		class AdvectionTimeStepSizeForImplicitViscosity : public LocalDynamicsReduce<Real, ReduceMax>, public FluidDataSimple
+		class AdvectionTimeStepSizeForImplicitViscosity 
+		: public LocalDynamicsReduce<Real, ReduceMax>, public FluidDataSimple
 		{
+		public:
+			explicit AdvectionTimeStepSizeForImplicitViscosity(
+				SPHBody &sph_body, Real U_max, Real advectionCFL = 0.25);
+			virtual ~AdvectionTimeStepSizeForImplicitViscosity(){};
+			Real reduce(size_t index_i, Real dt = 0.0);
+			virtual Real outputResult(Real reduced_value) override;
+
 		protected:
 			Real smoothing_length_;
 			StdLargeVec<Vecd> &vel_;
-
-		public:
-			explicit AdvectionTimeStepSizeForImplicitViscosity(SPHBody &sph_body, Real U_max);
-			virtual ~AdvectionTimeStepSizeForImplicitViscosity(){};
-
-			Real reduce(size_t index_i, Real dt = 0.0);
-			virtual Real outputResult(Real reduced_value) override;
+			Real advectionCFL_;
 		};
 
 		/**
@@ -188,9 +190,8 @@ namespace SPH
 		class AdvectionTimeStepSize : public AdvectionTimeStepSizeForImplicitViscosity
 		{
 		public:
-			explicit AdvectionTimeStepSize(SPHBody &sph_body, Real U_max);
+			explicit AdvectionTimeStepSize(SPHBody &sph_body, Real U_max, Real advectionCFL = 0.25);
 			virtual ~AdvectionTimeStepSize(){};
-
 			Real reduce(size_t index_i, Real dt = 0.0);
 
 		protected:
@@ -209,7 +210,6 @@ namespace SPH
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			StdLargeVec<Real> &Vol_;
 			StdLargeVec<Vecd> &vel_;
 			StdLargeVec<AngularVecd> vorticity_;
 		};
@@ -226,7 +226,7 @@ namespace SPH
 
 		protected:
 			Fluid &fluid_;
-			StdLargeVec<Real> &Vol_, &mass_, &rho_, &p_, &drho_dt_;
+			StdLargeVec<Real> &rho_, &p_, &drho_dt_;
 			StdLargeVec<Vecd> &pos_, &vel_, &acc_, &acc_prior_;
 		};
 
@@ -276,6 +276,9 @@ namespace SPH
 			virtual ~BaseDensityRelaxation(){};
 			virtual void initialization(size_t index_i, Real dt = 0.0);
 			virtual void update(size_t index_i, Real dt = 0.0);
+
+		protected:
+			StdLargeVec<Real> &Vol_, &mass_;
 		};
 
 		/**

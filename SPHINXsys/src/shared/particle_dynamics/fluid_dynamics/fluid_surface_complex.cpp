@@ -36,13 +36,10 @@ namespace SPH
 			Real pos_div = 0.0;
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
-				StdLargeVec<Real> &contact_mass_k = *(contact_mass_[k]);
-				Real contact_inv_rho0_k = contact_inv_rho0_[k];
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
-					pos_div -= contact_neighborhood.dW_ij_[n] * contact_neighborhood.r_ij_[n] *
-							   contact_inv_rho0_k * contact_mass_k[contact_neighborhood.j_[n]];
+					pos_div -= contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.r_ij_[n];
 				}
 			}
 			pos_div_[index_i] += pos_div;
@@ -71,12 +68,11 @@ namespace SPH
 			{
 				for (size_t k = 0; k < contact_configuration_.size(); ++k)
 				{
-					StdLargeVec<Real> &contact_vol_k = *(contact_Vol_[k]);
+					StdLargeVec<Real> &contact_Vol_k = *(contact_Vol_[k]);
 					Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 					for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 					{
-						gradient -= contact_neighborhood.dW_ij_[n] * contact_neighborhood.e_ij_[n] *
-									contact_vol_k[contact_neighborhood.j_[n]];
+						gradient -= contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
 					}
 				}
 			}

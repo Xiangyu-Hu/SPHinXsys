@@ -33,7 +33,7 @@ namespace SPH
 		//=================================================================================================//
 		RelaxationAccelerationInner::RelaxationAccelerationInner(BaseBodyRelationInner &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_), RelaxDataDelegateInner(inner_relation),
-			  Vol_(particles_->Vol_), acc_(particles_->acc_), pos_(particles_->pos_) {}
+			  acc_(particles_->acc_), pos_(particles_->pos_) {}
 		//=================================================================================================//
 		void RelaxationAccelerationInner::interaction(size_t index_i, Real dt)
 		{
@@ -42,7 +42,7 @@ namespace SPH
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = inner_neighborhood.j_[n];
-				acceleration -= 2.0 * inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n] * Vol_[index_j];
+				acceleration -= 2.0 * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
 			}
 			acc_[index_i] = acceleration;
 		}
@@ -89,13 +89,7 @@ namespace SPH
 			RelaxationAccelerationComplex(ComplexBodyRelation &complex_relation)
 			: LocalDynamics(complex_relation.sph_body_),
 			  RelaxDataDelegateComplex(complex_relation),
-			  Vol_(particles_->Vol_), acc_(particles_->acc_), pos_(particles_->pos_)
-		{
-			for (size_t k = 0; k != contact_particles_.size(); ++k)
-			{
-				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
-			}
-		}
+			  acc_(particles_->acc_), pos_(particles_->pos_) {}
 		//=================================================================================================//
 		void RelaxationAccelerationComplex::interaction(size_t index_i, Real dt)
 		{
@@ -104,19 +98,18 @@ namespace SPH
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = inner_neighborhood.j_[n];
-				acceleration -= 2.0 * inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n] * Vol_[index_j];
+				acceleration -= 2.0 * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
 			}
 
 			/** Contact interaction. */
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
-				StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
 					size_t index_j = contact_neighborhood.j_[n];
 
-					acceleration -= 2.0 * Vol_k[index_j] * contact_neighborhood.dW_ij_[n] * contact_neighborhood.e_ij_[n];
+					acceleration -= 2.0 * contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
 				}
 			}
 
@@ -197,11 +190,11 @@ namespace SPH
 
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
-				StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 				if (contact_neighborhood.current_size_ == 0)
 				{
-					acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
+					acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(
+											   pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
 				}
 			}
 		}

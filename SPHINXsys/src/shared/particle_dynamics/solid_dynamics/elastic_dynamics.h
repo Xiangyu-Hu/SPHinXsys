@@ -112,7 +112,6 @@ namespace SPH
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			StdLargeVec<Real> &Vol_;
 			StdLargeVec<Vecd> &pos_;
 			StdLargeVec<Matd> &B_, &F_;
 		};
@@ -128,7 +127,7 @@ namespace SPH
 			virtual ~BaseElasticRelaxation(){};
 
 		protected:
-			StdLargeVec<Real> &Vol_, &rho_, &mass_;
+			StdLargeVec<Real> &rho_, &mass_;
 			StdLargeVec<Vecd> &pos_, &vel_, &acc_;
 			StdLargeVec<Matd> &B_, &F_, &dF_dt_;
 		};

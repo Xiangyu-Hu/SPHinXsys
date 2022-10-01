@@ -18,7 +18,7 @@ namespace SPH
 		CorrectConfiguration::
 			CorrectConfiguration(BaseBodyRelationInner &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_), SolidDataInner(inner_relation),
-			  Vol_(particles_->Vol_), B_(particles_->B_) {}
+			  B_(particles_->B_) {}
 		//=================================================================================================//
 		void CorrectConfiguration::interaction(size_t index_i, Real dt)
 		{
@@ -28,9 +28,9 @@ namespace SPH
 			{
 				size_t index_j = inner_neighborhood.j_[n];
 
-				Vecd gradW_ij = inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n];
+				Vecd gradW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
 				Vecd r_ji = inner_neighborhood.r_ij_[n] * inner_neighborhood.e_ij_[n];
-				local_configuration -= Vol_[index_j] * SimTK::outer(r_ji, gradW_ij);
+				local_configuration -= SimTK::outer(r_ji, gradW_ijV_j);
 			}
 			B_[index_i] = SimTK::inverse(local_configuration);
 		}

@@ -18,7 +18,6 @@ namespace SPH
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				contact_fluids_.push_back(&contact_particles_[k]->fluid_);
-				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
 				contact_rho_n_.push_back(&(contact_particles_[k]->rho_));
 				contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
 
@@ -38,7 +37,6 @@ namespace SPH
 			{
 				Real mu_k = mu_[k];
 				Real smoothing_length_k = smoothing_length_[k];
-				StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
 				StdLargeVec<Vecd> &vel_n_k = *(contact_vel_n_[k]);
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -49,7 +47,7 @@ namespace SPH
 										  (contact_neighborhood.r_ij_[n] + 0.01 * smoothing_length_k);
 
 					force += 2.0 * mu_k * vel_derivative *
-							 Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n];
+							 Vol_i * contact_neighborhood.dW_ijV_j_[n];
 				}
 			}
 
@@ -66,7 +64,6 @@ namespace SPH
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				contact_fluids_.push_back(&contact_particles_[k]->fluid_);
-				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
 				contact_rho_n_.push_back(&(contact_particles_[k]->rho_));
 				contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
 
@@ -86,7 +83,6 @@ namespace SPH
 			{
 				Real mu_k = mu_[k];
 				Real smoothing_length_k = smoothing_length_[k];
-				StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
 				StdLargeVec<Vecd> &vel_n_k = *(contact_vel_n_[k]);
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -97,7 +93,7 @@ namespace SPH
 										  (contact_neighborhood.r_ij_[n] + 0.01 * smoothing_length_k);
 
 					force += 2.0 * mu_k * vel_derivative *
-							 Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n];
+							 Vol_i * contact_neighborhood.dW_ijV_j_[n];
 				}
 			}
 
@@ -115,7 +111,6 @@ namespace SPH
 			{
 				Real mu_k = mu_[k];
 				Real smoothing_length_k = smoothing_length_[k];
-				StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
 				StdLargeVec<Real> &rho_n_k = *(contact_rho_n_[k]);
 				StdLargeVec<Vecd> &vel_n_k = *(contact_vel_n_[k]);
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
@@ -129,7 +124,7 @@ namespace SPH
 					Real vel_difference = 0.0 * (vel_ave_i - vel_n_k[index_j]).norm() * contact_neighborhood.r_ij_[n];
 					Real eta_ij = 8.0 * SMAX(mu_k, rho_n_k[index_j] * vel_difference) * v_r_ij /
 								  (contact_neighborhood.r_ij_[n] * contact_neighborhood.r_ij_[n] + 0.01 * smoothing_length_k);
-					force += eta_ij * Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n] * contact_neighborhood.e_ij_[n];
+					force += eta_ij * Vol_i * contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
 				}
 			}
 
