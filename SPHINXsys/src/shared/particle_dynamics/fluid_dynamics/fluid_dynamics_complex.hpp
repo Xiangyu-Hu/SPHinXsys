@@ -40,28 +40,10 @@ namespace SPH
 		}
 		//=================================================================================================//
 		template <class DensitySummationInnerType>
-		DensitySummation<DensitySummationInnerType>::
-			DensitySummation(BaseBodyRelationInner &inner_relation, BaseBodyRelationContact &contact_relation)
-			: ParticleDynamicsComplex<DensitySummationInnerType, FluidContactData>(inner_relation, contact_relation)
-		{
-			prepareContactData();
-		}
-		//=================================================================================================//
-		template <class DensitySummationInnerType>
-		DensitySummation<DensitySummationInnerType>::
-			DensitySummation(ComplexBodyRelation &complex_relation)
-			: DensitySummation(complex_relation.inner_relation_, complex_relation.contact_relation_) {}
-		//=================================================================================================//
-		template <class DensitySummationInnerType>
-		DensitySummation<DensitySummationInnerType>::
-			DensitySummation(ComplexBodyRelation &complex_relation, BaseBodyRelationContact &extra_contact_relation)
-			: ParticleDynamicsComplex<DensitySummationInnerType, FluidContactData>(complex_relation, extra_contact_relation)
-		{
-			prepareContactData();
-		}
-		//=================================================================================================//
-		template <class DensitySummationInnerType>
-		void DensitySummation<DensitySummationInnerType>::prepareContactData()
+		template <typename... Args>
+		DensitySummation<DensitySummationInnerType>::DensitySummation(Args &&...args)
+			: BaseInteractionDynamicsComplex<DensitySummationInnerType, FluidContactData>(
+				  std::forward<Args>(args)...)
 		{
 			for (size_t k = 0; k != this->contact_particles_.size(); ++k)
 			{
@@ -69,7 +51,7 @@ namespace SPH
 				contact_inv_rho0_.push_back(1.0 / rho0_k);
 				contact_mass_.push_back(&(this->contact_particles_[k]->mass_));
 			}
-		}
+		};
 		//=================================================================================================//
 		template <class DensitySummationInnerType>
 		void DensitySummation<DensitySummationInnerType>::interaction(size_t index_i, Real dt)

@@ -69,20 +69,17 @@ namespace SPH
 		 * @brief computing density by summation considering  contribution from contact bodies
 		 */
 		template <class DensitySummationInnerType>
-		class DensitySummation : public ParticleDynamicsComplex<DensitySummationInnerType, FluidContactData>
+		class DensitySummation : public BaseInteractionDynamicsComplex<DensitySummationInnerType, FluidContactData>
 		{
 		public:
-			DensitySummation(BaseBodyRelationInner &inner_relation, BaseBodyRelationContact &contact_relation);
-			explicit DensitySummation(ComplexBodyRelation &complex_relation);
-			DensitySummation(ComplexBodyRelation &complex_relation, BaseBodyRelationContact &extra_contact_relation);
+			template <typename... Args>
+			DensitySummation(Args &&...args);
 			virtual ~DensitySummation(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdVec<Real> contact_inv_rho0_;
 			StdVec<StdLargeVec<Real> *> contact_mass_;
-
-			virtual void prepareContactData() override;
 		};
 		/** the case without free surface */
 		using DensitySummationComplex = DensitySummation<DensitySummationInner>;
@@ -115,26 +112,21 @@ namespace SPH
 											BaseBodyRelationContact &wall_contact_relation);
 		};
 		using ViscousAccelerationWithWall = BaseViscousAccelerationWithWall<ViscousWithWall<ViscousAccelerationInner>>;
+
 		/**
 		 * @class TransportVelocityCorrectionComplex
 		 * @brief  transport velocity correction considering  the contribution from contact bodies
 		 */
 		class TransportVelocityCorrectionComplex
-			: public ParticleDynamicsComplex<TransportVelocityCorrectionInner, FluidContactData>
+			: public BaseInteractionDynamicsComplex<TransportVelocityCorrectionInner, FluidContactData>
 		{
 		public:
-			TransportVelocityCorrectionComplex(BaseBodyRelationInner &inner_relation,
-											   BaseBodyRelationContact &contact_relation);
-
-			explicit TransportVelocityCorrectionComplex(ComplexBodyRelation &complex_relation);
-
-			TransportVelocityCorrectionComplex(ComplexBodyRelation &complex_relation,
-											   BaseBodyRelationContact &extra_contact_relation);
+			template <typename... Args>
+			TransportVelocityCorrectionComplex(Args &&...args)
+				: BaseInteractionDynamicsComplex<TransportVelocityCorrectionInner, FluidContactData>(
+					  std::forward<Args>(args)...){};
 			virtual ~TransportVelocityCorrectionComplex(){};
 			void interaction(size_t index_i, Real dt = 0.0);
-
-		protected:
-			virtual void prepareContactData() override {};
 		};
 
 		/**

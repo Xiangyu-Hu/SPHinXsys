@@ -12,27 +12,6 @@ namespace SPH
 	namespace fluid_dynamics
 	{
 		//=================================================================================================//
-		TransportVelocityCorrectionComplex::
-			TransportVelocityCorrectionComplex(BaseBodyRelationInner &inner_relation,
-											   BaseBodyRelationContact &contact_relation)
-			: ParticleDynamicsComplex<TransportVelocityCorrectionInner, FluidContactData>(inner_relation, contact_relation)
-		{
-			prepareContactData();
-		}
-		//=================================================================================================//
-		TransportVelocityCorrectionComplex::
-			TransportVelocityCorrectionComplex(ComplexBodyRelation &complex_relation)
-			: TransportVelocityCorrectionComplex(complex_relation.inner_relation_,
-												 complex_relation.contact_relation_) {}
-		//=================================================================================================//
-		TransportVelocityCorrectionComplex::
-			TransportVelocityCorrectionComplex(ComplexBodyRelation &complex_relation,
-											   BaseBodyRelationContact &extra_contact_relation)
-			: ParticleDynamicsComplex<TransportVelocityCorrectionInner, FluidContactData>(complex_relation, extra_contact_relation)
-		{
-			prepareContactData();
-		}
-		//=================================================================================================//
 		void TransportVelocityCorrectionComplex::interaction(size_t index_i, Real dt)
 		{
 			TransportVelocityCorrectionInner::interaction(index_i, dt);

@@ -27,14 +27,11 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	template <class ParticleDynamicsInnerType, class ContactDataType>
-	ParticleDynamicsComplex<ParticleDynamicsInnerType, ContactDataType>::
-		ParticleDynamicsComplex(ComplexBodyRelation &complex_relation,
-								BaseBodyRelationContact &extra_contact_relation)
-		: ParticleDynamicsInnerType(complex_relation.inner_relation_),
-		  ContactDataType(complex_relation.contact_relation_)
+	template <class ParticlesType, class ContactParticlesType, class BaseDataDelegateType>
+	void DataDelegateContact<ParticlesType, ContactParticlesType, BaseDataDelegateType>::
+		addExtraContactRelation(SPHBody &this_body, BaseBodyRelationContact &extra_contact_relation)
 	{
-		if (&complex_relation.sph_body_ != &extra_contact_relation.sph_body_)
+		if (&this_body != &extra_contact_relation.sph_body_)
 		{
 			std::cout << "\n Error: the two body_relations do not have the same source body!" << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
@@ -45,13 +42,13 @@ namespace SPH
 		{
 			// here we first obtain the pointer to the most derived class and then implicitly downcast it to
 			// the types defined in the base complex dynamics
-			this->contact_bodies_.push_back(extra_body->ThisObjectPtr());
-			this->contact_particles_.push_back(extra_body->getBaseParticles().ThisObjectPtr());
+			contact_bodies_.push_back(extra_body);
+			contact_particles_.push_back(DynamicCast<ContactParticlesType>(this, &extra_body->getBaseParticles()));
 		}
 
 		for (size_t i = 0; i != extra_contact_relation.contact_bodies_.size(); ++i)
 		{
-			this->contact_configuration_.push_back(&extra_contact_relation.contact_configuration_[i]);
+			contact_configuration_.push_back(&extra_contact_relation.contact_configuration_[i]);
 		}
 	}
 	//=================================================================================================//

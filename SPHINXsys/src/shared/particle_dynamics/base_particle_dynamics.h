@@ -139,6 +139,7 @@ namespace SPH
 	public:
 		explicit DataDelegateContact(BaseBodyRelationContact &body_contact_relation);
 		virtual ~DataDelegateContact(){};
+		void addExtraContactRelation(SPHBody &this_body, BaseBodyRelationContact &extra_contact_relation);
 
 	protected:
 		SPHBodyVector contact_bodies_;
@@ -164,24 +165,31 @@ namespace SPH
 	};
 
 	/**
-	 * @class ParticleDynamicsComplex
-	 * @brief particle dynamics by considering  contribution from extra contact bodies
+	 * @class BaseInteractionDynamicsComplex
+	 * @brief Abstract base class for general complex interaction dynamics
 	 */
-	template <class ParticleDynamicsInnerType, class ContactDataType>
-	class ParticleDynamicsComplex : public ParticleDynamicsInnerType, public ContactDataType
+	template <class InteractionDynamicsInnerType, class ContactDataType>
+	class BaseInteractionDynamicsComplex : public InteractionDynamicsInnerType, public ContactDataType
 	{
 	public:
-		ParticleDynamicsComplex(BaseBodyRelationInner &inner_relation,
-								BaseBodyRelationContact &contact_relation)
-			: ParticleDynamicsInnerType(inner_relation), ContactDataType(contact_relation){};
-
-		ParticleDynamicsComplex(ComplexBodyRelation &complex_relation,
-								BaseBodyRelationContact &extra_contact_relation);
-
-		virtual ~ParticleDynamicsComplex(){};
-
-	protected:
-		virtual void prepareContactData() = 0;
+		// template for different combination of constructing body relations
+		template <typename... Args>
+		BaseInteractionDynamicsComplex(BaseBodyRelationContact &contact_relation,
+									   BaseBodyRelationInner &inner_relation, Args &&...args)
+			: InteractionDynamicsInnerType(inner_relation, std::forward<Args>(args)...),
+			  ContactDataType(contact_relation){};
+		template <typename... Args>
+		BaseInteractionDynamicsComplex(ComplexBodyRelation &complex_relation, Args &&...args)
+			: BaseInteractionDynamicsComplex(complex_relation.contact_relation_,
+											 complex_relation.inner_relation_, std::forward<Args>(args)...){};
+		template <typename... Args>
+		BaseInteractionDynamicsComplex(BaseBodyRelationContact &extra_contact_relation,
+									   ComplexBodyRelation &complex_relation, Args &&...args)
+			: BaseInteractionDynamicsComplex(complex_relation, std::forward<Args>(args)...)
+		{
+			this->addExtraContactRelation(this->sph_body_, extra_contact_relation);
+		};
+		virtual ~BaseInteractionDynamicsComplex(){};
 	};
 }
 #endif // BASE_PARTICLE_DYNAMICS_H

@@ -52,12 +52,12 @@ int main()
 	SimpleDynamics<TimeStepInitialization> initialize_a_air_step(air_block);
 	/** Evaluation of density by summation approach. */
 	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex>
-		update_water_density_by_summation(water_air_complex.inner_relation_, water_wall_contact);
+		update_water_density_by_summation(water_wall_contact, water_air_complex.inner_relation_);
 	InteractionWithUpdate<fluid_dynamics::DensitySummationComplex>
-		update_air_density_by_summation(air_water_complex, air_wall_contact);
+		update_air_density_by_summation(air_wall_contact, air_water_complex);
 	/** transport formulation for regularizing particle distribution. */
 	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex>
-		air_transport_correction(air_water_complex, air_wall_contact);
+		air_transport_correction(air_wall_contact, air_water_complex);
 	/** Time step size without considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_water_advection_time_step_size(water_block, U_max);
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_air_advection_time_step_size(air_block, U_max);
