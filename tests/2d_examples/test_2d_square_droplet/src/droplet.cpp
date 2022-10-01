@@ -66,17 +66,17 @@ int main()
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_air_time_step_size(air_block);
 	/** Pressure relaxation for water by using position verlet time stepping. */
 	Dynamics1Level<fluid_dynamics::PressureRelaxationRiemannWithWall>
-		water_pressure_relaxation(water_air_complex.inner_relation_, water_wall_contact);
+		water_pressure_relaxation(water_wall_contact, water_air_complex.inner_relation_);
 	Dynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall>
-		water_density_relaxation(water_air_complex.inner_relation_, water_wall_contact);
+		water_density_relaxation(water_wall_contact, water_air_complex.inner_relation_);
 	/** Extend Pressure relaxation is used for air. */
 	Dynamics1Level<fluid_dynamics::ExtendMultiPhasePressureRelaxationRiemannWithWall>
-		air_pressure_relaxation(air_water_complex, air_wall_contact, 2.0);
+		air_pressure_relaxation(air_wall_contact, air_water_complex, 2.0);
 	Dynamics1Level<fluid_dynamics::MultiPhaseDensityRelaxationRiemannWithWall>
-		air_density_relaxation(air_water_complex, air_wall_contact);
+		air_density_relaxation(air_wall_contact, air_water_complex);
 	/** Viscous acceleration. */
-	InteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhaseWithWall> air_viscous_acceleration(air_water_complex, air_wall_contact);
-	InteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhaseWithWall> water_viscous_acceleration(water_air_complex, water_wall_contact);
+	InteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhaseWithWall> air_viscous_acceleration(air_wall_contact, air_water_complex);
+	InteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhaseWithWall> water_viscous_acceleration(water_wall_contact, water_air_complex);
 	/** Surface tension. */
 	InteractionWithUpdate<fluid_dynamics::FreeSurfaceIndicationInner> surface_detection(water_air_complex.inner_relation_);
 	InteractionDynamics<fluid_dynamics::ColorFunctionGradientInner> color_gradient(water_air_complex.inner_relation_);

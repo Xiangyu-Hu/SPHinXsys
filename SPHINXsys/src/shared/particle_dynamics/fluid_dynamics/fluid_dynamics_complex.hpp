@@ -15,11 +15,12 @@ namespace SPH
 	{
 		//=================================================================================================//
 		template <class BaseRelaxationType>
-		template <class BaseBodyRelationType>
+		template <class BaseBodyRelationType, typename... Args>
 		RelaxationWithWall<BaseRelaxationType>::
-			RelaxationWithWall(BaseBodyRelationType &base_body_relation,
-							   BaseBodyRelationContact &wall_contact_relation)
-			: BaseRelaxationType(base_body_relation), FluidWallData(wall_contact_relation)
+			RelaxationWithWall(BaseBodyRelationContact &wall_contact_relation,
+							   BaseBodyRelationType &base_body_relation, Args &&...args)
+			: BaseRelaxationType(base_body_relation, std::forward<Args>(args)...),
+			  FluidWallData(wall_contact_relation)
 		{
 			if (&base_body_relation.sph_body_ != &wall_contact_relation.sph_body_)
 			{
@@ -75,13 +76,6 @@ namespace SPH
 		}
 		//=================================================================================================//
 		template <class ViscousAccelerationInnerType>
-		template <class BaseBodyRelationType>
-		BaseViscousAccelerationWithWall<ViscousAccelerationInnerType>::
-			BaseViscousAccelerationWithWall(BaseBodyRelationType &base_body_relation,
-							BaseBodyRelationContact &wall_contact_relation)
-			: RelaxationWithWall<ViscousAccelerationInnerType>(base_body_relation, wall_contact_relation) {}
-		//=================================================================================================//
-		template <class ViscousAccelerationInnerType>
 		void BaseViscousAccelerationWithWall<ViscousAccelerationInnerType>::interaction(size_t index_i, Real dt)
 		{
 			ViscousAccelerationInnerType::interaction(index_i, dt);
@@ -106,13 +100,6 @@ namespace SPH
 
 			this->acc_prior_[index_i] += acceleration;
 		}
-		//=================================================================================================//
-		template <class BasePressureRelaxationType>
-		template <class BaseBodyRelationType>
-		BasePressureRelaxationWithWall<BasePressureRelaxationType>::
-			BasePressureRelaxationWithWall(BaseBodyRelationType &base_body_relation,
-							   BaseBodyRelationContact &wall_contact_relation)
-			: RelaxationWithWall<BasePressureRelaxationType>(base_body_relation, wall_contact_relation) {}
 		//=================================================================================================//
 		template <class BasePressureRelaxationType>
 		void BasePressureRelaxationWithWall<BasePressureRelaxationType>::interaction(size_t index_i, Real dt)
@@ -150,17 +137,6 @@ namespace SPH
 		Vecd BasePressureRelaxationWithWall<BasePressureRelaxationType>::computeNonConservativeAcceleration(size_t index_i)
 		{
 			return this->acc_prior_[index_i];
-		}
-		//=================================================================================================//
-		template <class BasePressureRelaxationType>
-		template <class BaseBodyRelationType>
-		BaseExtendPressureRelaxationWithWall<BasePressureRelaxationType>::
-			BaseExtendPressureRelaxationWithWall(BaseBodyRelationType &base_body_relation,
-									 BaseBodyRelationContact &wall_contact_relation, Real penalty_strength)
-			: BasePressureRelaxationWithWall<BasePressureRelaxationType>(base_body_relation, wall_contact_relation),
-			  penalty_strength_(penalty_strength)
-		{
-			this->particles_->registerVariable(non_cnsrv_acc_, "NonConservativeAcceleration");
 		}
 		//=================================================================================================//
 		template <class BasePressureRelaxationType>
@@ -216,13 +192,6 @@ namespace SPH
 			non_cnsrv_acc_[index_i] = acceleration;
 			return acceleration;
 		}
-		//=================================================================================================//
-		template <class BaseDensityRelaxationType>
-		template <class BaseBodyRelationType>
-		BaseDensityRelaxationWithWall<BaseDensityRelaxationType>::
-			BaseDensityRelaxationWithWall(BaseBodyRelationType &base_body_relation,
-							  BaseBodyRelationContact &wall_contact_relation)
-			: RelaxationWithWall<BaseDensityRelaxationType>(base_body_relation, wall_contact_relation) {}
 		//=================================================================================================//
 		template <class BaseDensityRelaxationType>
 		void BaseDensityRelaxationWithWall<BaseDensityRelaxationType>::interaction(size_t index_i, Real dt)
