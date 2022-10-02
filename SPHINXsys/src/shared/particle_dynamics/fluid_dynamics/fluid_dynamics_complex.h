@@ -47,7 +47,7 @@ namespace SPH
 		typedef DataDelegateContact<FluidParticles, SolidParticles> FSIContactData;
 		/**
 		 * @class RelaxationWithWall
-		 * @brief Abstract base class for general relaxation algorithms with wall
+		 * @brief Base class adding interaction with wall to general relaxation process
 		 */
 		template <class BaseRelaxationType>
 		class RelaxationWithWall : public BaseRelaxationType, public FluidWallData
@@ -55,11 +55,11 @@ namespace SPH
 		public:
 			template <class BaseBodyRelationType, typename... Args>
 			RelaxationWithWall(BaseBodyRelationContact &wall_contact_relation,
-								  BaseBodyRelationType &base_body_relation, Args &&...args);
+							   BaseBodyRelationType &base_body_relation, Args &&...args);
 			template <typename... Args>
 			RelaxationWithWall(ComplexBodyRelation &fluid_wall_relation, Args &&...args)
 				: RelaxationWithWall(fluid_wall_relation.contact_relation_,
-										fluid_wall_relation.inner_relation_, std::forward<Args>(args)...) {}
+									 fluid_wall_relation.inner_relation_, std::forward<Args>(args)...) {}
 			virtual ~RelaxationWithWall(){};
 
 		protected:
@@ -69,10 +69,10 @@ namespace SPH
 		};
 		/**
 		 * @class DensitySummation
-		 * @brief computing density by summation considering  contribution from contact bodies
+		 * @brief computing density by summation considering contribution from contact bodies
 		 */
 		template <class DensitySummationInnerType>
-		class DensitySummation : public BaseInteractionDynamicsComplex<DensitySummationInnerType, FluidContactData>
+		class DensitySummation : public BaseInteractionComplex<DensitySummationInnerType, FluidContactData>
 		{
 		public:
 			template <typename... Args>
@@ -84,18 +84,17 @@ namespace SPH
 			StdVec<Real> contact_inv_rho0_;
 			StdVec<StdLargeVec<Real> *> contact_mass_;
 		};
-		/** the case without free surface */
+		/** the instance without considering free surface */
 		using DensitySummationComplex = DensitySummation<DensitySummationInner>;
 
 		/**
 		 * @class BaseViscousAccelerationWithWall
-		 * @brief  template class viscous acceleration with wall boundary
+		 * @brief template class viscous acceleration together with wall boundary condition
 		 */
 		template <class ViscousAccelerationInnerType>
 		class BaseViscousAccelerationWithWall : public RelaxationWithWall<ViscousAccelerationInnerType>
 		{
 		public:
-			// template for different combination of constructing body relations
 			template <typename... Args>
 			BaseViscousAccelerationWithWall(Args &&...args)
 				: RelaxationWithWall<ViscousAccelerationInnerType>(std::forward<Args>(args)...){};
@@ -107,29 +106,28 @@ namespace SPH
 
 		/**
 		 * @class TransportVelocityCorrectionComplex
-		 * @brief  transport velocity correction considering  the contribution from contact bodies
+		 * @brief  transport velocity correction considering the contribution from contact bodies
 		 */
 		class TransportVelocityCorrectionComplex
-			: public BaseInteractionDynamicsComplex<TransportVelocityCorrectionInner, FluidContactData>
+			: public BaseInteractionComplex<TransportVelocityCorrectionInner, FluidContactData>
 		{
 		public:
 			template <typename... Args>
 			TransportVelocityCorrectionComplex(Args &&...args)
-				: BaseInteractionDynamicsComplex<TransportVelocityCorrectionInner, FluidContactData>(
+				: BaseInteractionComplex<TransportVelocityCorrectionInner, FluidContactData>(
 					  std::forward<Args>(args)...){};
 			virtual ~TransportVelocityCorrectionComplex(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
-		 * @class PressureRelaxation
-		 * @brief  template class pressure relaxation scheme with wall boundary
+		 * @class BasePressureRelaxationWithWall
+		 * @brief  template class pressure relaxation scheme together with wall boundary
 		 */
 		template <class BasePressureRelaxationType>
 		class BasePressureRelaxationWithWall : public RelaxationWithWall<BasePressureRelaxationType>
 		{
 		public:
-			// template for different combination of constructing body relations
 			template <typename... Args>
 			BasePressureRelaxationWithWall(Args &&...args)
 				: RelaxationWithWall<BasePressureRelaxationType>(std::forward<Args>(args)...){};
@@ -144,7 +142,7 @@ namespace SPH
 		using PressureRelaxationRiemannWithWall = BasePressureRelaxationWithWall<PressureRelaxationRiemannInner>;
 
 		/**
-		 * @class ExtendPressureRelaxation
+		 * @class BaseExtendPressureRelaxationWithWall
 		 * @brief template class for pressure relaxation scheme with wall boundary
 		 * and considering non-conservative acceleration term and wall penalty to prevent
 		 * particle penetration.
@@ -153,7 +151,6 @@ namespace SPH
 		class BaseExtendPressureRelaxationWithWall : public BasePressureRelaxationWithWall<BasePressureRelaxationType>
 		{
 		public:
-			// template for different combination of constructing body relations
 			template <class BaseBodyRelationType, typename... Args>
 			BaseExtendPressureRelaxationWithWall(BaseBodyRelationContact &wall_contact_relation,
 												 BaseBodyRelationType &base_body_relation,
@@ -165,9 +162,11 @@ namespace SPH
 				this->particles_->registerVariable(non_cnsrv_acc_, "NonConservativeAcceleration");
 			};
 			template <typename... Args>
-			BaseExtendPressureRelaxationWithWall(ComplexBodyRelation &fluid_wall_relation, Args &&...args, Real penalty_strength = 1.0)
+			BaseExtendPressureRelaxationWithWall(ComplexBodyRelation &fluid_wall_relation,
+												 Args &&...args, Real penalty_strength = 1.0)
 				: BaseExtendPressureRelaxationWithWall(fluid_wall_relation.contact_relation_,
-													   fluid_wall_relation.inner_relation_, std::forward<Args>(args)..., penalty_strength){};
+													   fluid_wall_relation.inner_relation_,
+													   std::forward<Args>(args)..., penalty_strength){};
 			virtual ~BaseExtendPressureRelaxationWithWall(){};
 			void initialization(size_t index_i, Real dt = 0.0);
 			void interaction(size_t index_i, Real dt = 0.0);
@@ -182,7 +181,7 @@ namespace SPH
 		using ExtendPressureRelaxationRiemannWithWall = BaseExtendPressureRelaxationWithWall<PressureRelaxationRiemannInner>;
 
 		/**
-		 * @class DensityRelaxation
+		 * @class BaseDensityRelaxationWithWall
 		 * @brief template density relaxation scheme without using different Riemann solvers.
 		 * The difference from the free surface version is that no Riemann problem is applied
 		 */
@@ -190,7 +189,6 @@ namespace SPH
 		class BaseDensityRelaxationWithWall : public RelaxationWithWall<BaseDensityRelaxationType>
 		{
 		public:
-			// template for different combination of constructing body relations
 			template <typename... Args>
 			BaseDensityRelaxationWithWall(Args &&...args)
 				: RelaxationWithWall<BaseDensityRelaxationType>(std::forward<Args>(args)...){};

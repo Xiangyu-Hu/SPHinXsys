@@ -165,31 +165,31 @@ namespace SPH
 	};
 
 	/**
-	 * @class BaseInteractionDynamicsComplex
+	 * @class BaseInteractionComplex
 	 * @brief Abstract base class for general complex interaction dynamics
 	 */
-	template <class InteractionDynamicsInnerType, class ContactDataType>
-	class BaseInteractionDynamicsComplex : public InteractionDynamicsInnerType, public ContactDataType
+	template <class InteractionInnerType, class ContactDataType>
+	class BaseInteractionComplex : public InteractionInnerType, public ContactDataType
 	{
 	public:
 		// template for different combination of constructing body relations
 		template <typename... Args>
-		BaseInteractionDynamicsComplex(BaseBodyRelationContact &contact_relation,
+		BaseInteractionComplex(BaseBodyRelationContact &contact_relation,
 									   BaseBodyRelationInner &inner_relation, Args &&...args)
-			: InteractionDynamicsInnerType(inner_relation, std::forward<Args>(args)...),
+			: InteractionInnerType(inner_relation, std::forward<Args>(args)...),
 			  ContactDataType(contact_relation){};
 		template <typename... Args>
-		BaseInteractionDynamicsComplex(ComplexBodyRelation &complex_relation, Args &&...args)
-			: BaseInteractionDynamicsComplex(complex_relation.contact_relation_,
+		BaseInteractionComplex(ComplexBodyRelation &complex_relation, Args &&...args)
+			: BaseInteractionComplex(complex_relation.contact_relation_,
 											 complex_relation.inner_relation_, std::forward<Args>(args)...){};
 		template <typename... Args>
-		BaseInteractionDynamicsComplex(BaseBodyRelationContact &extra_contact_relation,
+		BaseInteractionComplex(BaseBodyRelationContact &extra_contact_relation,
 									   ComplexBodyRelation &complex_relation, Args &&...args)
-			: BaseInteractionDynamicsComplex(complex_relation, std::forward<Args>(args)...)
+			: BaseInteractionComplex(complex_relation, std::forward<Args>(args)...)
 		{
 			this->addExtraContactRelation(this->sph_body_, extra_contact_relation);
 		};
-		virtual ~BaseInteractionDynamicsComplex(){};
+		virtual ~BaseInteractionComplex(){};
 	};
 }
 #endif // BASE_PARTICLE_DYNAMICS_H

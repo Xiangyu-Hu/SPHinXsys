@@ -43,7 +43,7 @@ namespace SPH
 		template <class DensitySummationInnerType>
 		template <typename... Args>
 		DensitySummation<DensitySummationInnerType>::DensitySummation(Args &&...args)
-			: BaseInteractionDynamicsComplex<DensitySummationInnerType, FluidContactData>(
+			: BaseInteractionComplex<DensitySummationInnerType, FluidContactData>(
 				  std::forward<Args>(args)...)
 		{
 			for (size_t k = 0; k != this->contact_particles_.size(); ++k)
