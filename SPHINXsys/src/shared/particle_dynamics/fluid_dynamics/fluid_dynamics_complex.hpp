@@ -14,12 +14,12 @@ namespace SPH
 	namespace fluid_dynamics
 	{
 		//=================================================================================================//
-		template <class BaseRelaxationType>
+		template <class BaseIntegrationType>
 		template <class BaseBodyRelationType, typename... Args>
-		RelaxationWithWall<BaseRelaxationType>::
-			RelaxationWithWall(BaseContactRelation &wall_contact_relation,
+		InteractionWithWall<BaseIntegrationType>::
+			InteractionWithWall(BaseContactRelation &wall_contact_relation,
 							   BaseBodyRelationType &base_body_relation, Args &&...args)
-			: BaseRelaxationType(base_body_relation, std::forward<Args>(args)...),
+			: BaseIntegrationType(base_body_relation, std::forward<Args>(args)...),
 			  FluidWallData(wall_contact_relation)
 		{
 			if (&base_body_relation.sph_body_ != &wall_contact_relation.sph_body_)
@@ -101,10 +101,10 @@ namespace SPH
 			this->acc_prior_[index_i] += acceleration;
 		}
 		//=================================================================================================//
-		template <class BasePressureRelaxationType>
-		void BasePressureRelaxationWithWall<BasePressureRelaxationType>::interaction(size_t index_i, Real dt)
+		template <class BaseIntegration1stHalfType>
+		void BaseIntegration1stHalfWithWall<BaseIntegration1stHalfType>::interaction(size_t index_i, Real dt)
 		{
-			BasePressureRelaxationType::interaction(index_i, dt);
+			BaseIntegration1stHalfType::interaction(index_i, dt);
 
 			Vecd acc_prior_i = computeNonConservativeAcceleration(index_i);
 
@@ -133,23 +133,23 @@ namespace SPH
 			this->drho_dt_[index_i] += 0.5 * rho_dissipation * this->rho_[index_i];
 		}
 		//=================================================================================================//
-		template <class BasePressureRelaxationType>
-		Vecd BasePressureRelaxationWithWall<BasePressureRelaxationType>::computeNonConservativeAcceleration(size_t index_i)
+		template <class BaseIntegration1stHalfType>
+		Vecd BaseIntegration1stHalfWithWall<BaseIntegration1stHalfType>::computeNonConservativeAcceleration(size_t index_i)
 		{
 			return this->acc_prior_[index_i];
 		}
 		//=================================================================================================//
-		template <class BasePressureRelaxationType>
-		void BaseExtendPressureRelaxationWithWall<BasePressureRelaxationType>::initialization(size_t index_i, Real dt)
+		template <class BaseIntegration1stHalfType>
+		void BaseExtendIntegration1stHalfWithWall<BaseIntegration1stHalfType>::initialization(size_t index_i, Real dt)
 		{
-			BasePressureRelaxationType::initialization(index_i, dt);
+			BaseIntegration1stHalfType::initialization(index_i, dt);
 			non_cnsrv_acc_[index_i] = Vecd(0);
 		}
 		//=================================================================================================//
-		template <class BasePressureRelaxationType>
-		void BaseExtendPressureRelaxationWithWall<BasePressureRelaxationType>::interaction(size_t index_i, Real dt)
+		template <class BaseIntegration1stHalfType>
+		void BaseExtendIntegration1stHalfWithWall<BaseIntegration1stHalfType>::interaction(size_t index_i, Real dt)
 		{
-			BasePressureRelaxationWithWall<BasePressureRelaxationType>::interaction(index_i, dt);
+			BaseIntegration1stHalfWithWall<BaseIntegration1stHalfType>::interaction(index_i, dt);
 
 			Real rho_i = this->rho_[index_i];
 			Real penalty_pressure = this->p_[index_i];
@@ -184,19 +184,19 @@ namespace SPH
 			this->acc_[index_i] += acceleration;
 		}
 		//=================================================================================================//
-		template <class BasePressureRelaxationType>
-		Vecd BaseExtendPressureRelaxationWithWall<BasePressureRelaxationType>::
+		template <class BaseIntegration1stHalfType>
+		Vecd BaseExtendIntegration1stHalfWithWall<BaseIntegration1stHalfType>::
 			computeNonConservativeAcceleration(size_t index_i)
 		{
-			Vecd acceleration = BasePressureRelaxationType::computeNonConservativeAcceleration(index_i);
+			Vecd acceleration = BaseIntegration1stHalfType::computeNonConservativeAcceleration(index_i);
 			non_cnsrv_acc_[index_i] = acceleration;
 			return acceleration;
 		}
 		//=================================================================================================//
-		template <class BaseDensityRelaxationType>
-		void BaseDensityRelaxationWithWall<BaseDensityRelaxationType>::interaction(size_t index_i, Real dt)
+		template <class BaseIntegration2ndHalfType>
+		void BaseIntegration2ndHalfWithWall<BaseIntegration2ndHalfType>::interaction(size_t index_i, Real dt)
 		{
-			BaseDensityRelaxationType::interaction(index_i, dt);
+			BaseIntegration2ndHalfType::interaction(index_i, dt);
 
 			Real density_change_rate = 0.0;
 			for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)

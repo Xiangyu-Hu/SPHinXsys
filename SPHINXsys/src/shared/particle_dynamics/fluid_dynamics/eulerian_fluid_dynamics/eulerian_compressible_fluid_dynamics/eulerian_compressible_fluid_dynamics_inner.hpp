@@ -16,13 +16,27 @@ namespace SPH
 	{
 		//=================================================================================================//
 		template <class RiemannSolverType>
-		BasePressureRelaxationInner<RiemannSolverType>::
-			BasePressureRelaxationInner(BaseInnerRelation &inner_relation)
-			: BasePressureRelaxation(inner_relation),
-			  riemann_solver_(compressible_fluid_, compressible_fluid_) {}
+		BaseIntegration1stHalf<RiemannSolverType>::BaseIntegration1stHalf(BaseInnerRelation &inner_relation)
+			: BaseIntegration(inner_relation), riemann_solver_(compressible_fluid_, compressible_fluid_) {}
 		//=================================================================================================//
 		template <class RiemannSolverType>
-		void BasePressureRelaxationInner<RiemannSolverType>::interaction(size_t index_i, Real dt)
+		void BaseIntegration1stHalf<RiemannSolverType>::initialization(size_t index_i, Real dt)
+		{
+			E_[index_i] += dE_dt_[index_i] * dt * 0.5;
+			rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
+			Real rho_e = E_[index_i] - 0.5 * mom_[index_i].normSqr() / rho_[index_i];
+			p_[index_i] = compressible_fluid_.getPressure(rho_[index_i], rho_e);
+		}
+		//=================================================================================================//
+		template <class RiemannSolverType>
+		void BaseIntegration1stHalf<RiemannSolverType>::update(size_t index_i, Real dt)
+		{
+			mom_[index_i] += dmom_dt_[index_i] * dt;
+			vel_[index_i] = mom_[index_i] / rho_[index_i];
+		}
+		//=================================================================================================//
+		template <class RiemannSolverType>
+		void BaseIntegration1stHalf<RiemannSolverType>::interaction(size_t index_i, Real dt)
 		{
 			CompressibleFluidState state_i(rho_[index_i], vel_[index_i], p_[index_i], E_[index_i]);
 			Vecd momentum_change_rate = dmom_dt_prior_[index_i];
@@ -45,13 +59,18 @@ namespace SPH
 		}
 		//=================================================================================================//
 		template <class RiemannSolverType>
-		BaseDensityAndEnergyRelaxationInner<RiemannSolverType>::
-			BaseDensityAndEnergyRelaxationInner(BaseInnerRelation &inner_relation)
-			: BaseDensityAndEnergyRelaxation(inner_relation),
-			  riemann_solver_(compressible_fluid_, compressible_fluid_) {}
+		BaseIntegration2ndHalf<RiemannSolverType>::BaseIntegration2ndHalf(BaseInnerRelation &inner_relation)
+			: BaseIntegration(inner_relation), riemann_solver_(compressible_fluid_, compressible_fluid_) {}
 		//=================================================================================================//
 		template <class RiemannSolverType>
-		void BaseDensityAndEnergyRelaxationInner<RiemannSolverType>::interaction(size_t index_i, Real dt)
+		void BaseIntegration2ndHalf<RiemannSolverType>::update(size_t index_i, Real dt)
+		{
+			E_[index_i] += dE_dt_[index_i] * dt * 0.5;
+			rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
+		}
+		//=================================================================================================//
+		template <class RiemannSolverType>
+		void BaseIntegration2ndHalf<RiemannSolverType>::interaction(size_t index_i, Real dt)
 		{
 			CompressibleFluidState state_i(rho_[index_i], vel_[index_i], p_[index_i], E_[index_i]);
 			Real density_change_rate = 0.0;

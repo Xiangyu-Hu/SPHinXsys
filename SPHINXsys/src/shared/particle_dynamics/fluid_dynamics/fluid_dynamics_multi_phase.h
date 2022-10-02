@@ -78,56 +78,56 @@ namespace SPH
 		};
 
 		/**
-		 * @class BasePressureRelaxationMultiPhase
+		 * @class BaseMultiPhaseIntegration1stHalf
 		 * @brief  template class for multiphase pressure relaxation scheme
 		 */
-		template <class PressureRelaxationInnerType>
-		class BasePressureRelaxationMultiPhase : public RelaxationMultiPhase<PressureRelaxationInnerType>
+		template <class Integration1stHalfType>
+		class BaseMultiPhaseIntegration1stHalf : public RelaxationMultiPhase<Integration1stHalfType>
 		{
 		public:
-			BasePressureRelaxationMultiPhase(BaseInnerRelation &inner_relation,
+			BaseMultiPhaseIntegration1stHalf(BaseInnerRelation &inner_relation,
 											 BaseContactRelation &contact_relation);
-			explicit BasePressureRelaxationMultiPhase(ComplexRelation &complex_relation);
-			virtual ~BasePressureRelaxationMultiPhase(){};
+			explicit BaseMultiPhaseIntegration1stHalf(ComplexRelation &complex_relation);
+			virtual ~BaseMultiPhaseIntegration1stHalf(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			using CurrentRiemannSolver = decltype(PressureRelaxationInnerType::riemann_solver_);
+			using CurrentRiemannSolver = decltype(Integration1stHalfType::riemann_solver_);
 			StdVec<CurrentRiemannSolver> riemann_solvers_;
 			virtual Vecd computeNonConservativeAcceleration(size_t index_i) override;
 		};
-		using MultiPhasePressureRelaxation = BasePressureRelaxationMultiPhase<PressureRelaxationInner>;
-		using MultiPhasePressureRelaxationRiemann = BasePressureRelaxationMultiPhase<PressureRelaxationRiemannInner>;
+		using MultiPhaseIntegration1stHalf = BaseMultiPhaseIntegration1stHalf<Integration1stHalf>;
+		using MultiPhaseIntegration1stHalfRiemann = BaseMultiPhaseIntegration1stHalf<Integration1stHalfRiemann>;
 
-		using MultiPhasePressureRelaxationWithWall =
-			BasePressureRelaxationWithWall<MultiPhasePressureRelaxation>;
-		using MultiPhasePressureRelaxationRiemannWithWall =
-			BasePressureRelaxationWithWall<MultiPhasePressureRelaxationRiemann>;
-		using ExtendMultiPhasePressureRelaxationRiemannWithWall =
-			BaseExtendPressureRelaxationWithWall<MultiPhasePressureRelaxationRiemann>;
+		using MultiPhaseIntegration1stHalfWithWall =
+			BaseIntegration1stHalfWithWall<MultiPhaseIntegration1stHalf>;
+		using MultiPhaseIntegration1stHalfRiemannWithWall =
+			BaseIntegration1stHalfWithWall<MultiPhaseIntegration1stHalfRiemann>;
+		using ExtendMultiPhaseIntegration1stHalfRiemannWithWall =
+			BaseExtendIntegration1stHalfWithWall<MultiPhaseIntegration1stHalfRiemann>;
 
 		/**
-		 * @class BaseDensityRelaxationMultiPhase
+		 * @class BaseMultiPhaseIntegration2ndHalf
 		 * @brief  template class pressure relaxation scheme with wall boundary
 		 */
-		template <class DensityRelaxationInnerType>
-		class BaseDensityRelaxationMultiPhase : public RelaxationMultiPhase<DensityRelaxationInnerType>
+		template <class Integration2ndHalfType>
+		class BaseMultiPhaseIntegration2ndHalf : public RelaxationMultiPhase<Integration2ndHalfType>
 		{
 		public:
-			BaseDensityRelaxationMultiPhase(BaseInnerRelation &inner_relation,
+			BaseMultiPhaseIntegration2ndHalf(BaseInnerRelation &inner_relation,
 											BaseContactRelation &contact_relation);
-			explicit BaseDensityRelaxationMultiPhase(ComplexRelation &complex_relation);
-			virtual ~BaseDensityRelaxationMultiPhase(){};
+			explicit BaseMultiPhaseIntegration2ndHalf(ComplexRelation &complex_relation);
+			virtual ~BaseMultiPhaseIntegration2ndHalf(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			using CurrentRiemannSolver = decltype(DensityRelaxationInnerType::riemann_solver_);
+			using CurrentRiemannSolver = decltype(Integration2ndHalfType::riemann_solver_);
 			StdVec<CurrentRiemannSolver> riemann_solvers_;
 		};
-		using MultiPhaseDensityRelaxation = BaseDensityRelaxationMultiPhase<DensityRelaxationInner>;
-		using MultiPhaseDensityRelaxationRiemann = BaseDensityRelaxationMultiPhase<DensityRelaxationRiemannInner>;
-		using MultiPhaseDensityRelaxationWithWall = BaseDensityRelaxationMultiPhase<MultiPhaseDensityRelaxation>;
-		using MultiPhaseDensityRelaxationRiemannWithWall = BaseDensityRelaxationWithWall<MultiPhaseDensityRelaxationRiemann>;
+		using MultiPhaseIntegration2ndHalf = BaseMultiPhaseIntegration2ndHalf<Integration2ndHalf>;
+		using MultiPhaseIntegration2ndHalfRiemann = BaseMultiPhaseIntegration2ndHalf<Integration2ndHalfRiemann>;
+		using MultiPhaseIntegration2ndHalfWithWall = BaseMultiPhaseIntegration2ndHalf<MultiPhaseIntegration2ndHalf>;
+		using MultiPhaseIntegration2ndHalfRiemannWithWall = BaseIntegration2ndHalfWithWall<MultiPhaseIntegration2ndHalfRiemann>;
 
 		/**
 		 * @class MultiPhaseColorFunctionGradient

@@ -205,14 +205,14 @@ namespace SPH
         };
 
         /**
-         * @class StaticConfinementPressureRelaxation
+         * @class StaticConfinementIntegration1stHalf
          * @brief static confinement condition for pressure relaxation
          */
-        class StaticConfinementPressureRelaxation : public LocalDynamics, public FluidDataSimple
+        class StaticConfinementIntegration1stHalf : public LocalDynamics, public FluidDataSimple
         {
         public:
-            StaticConfinementPressureRelaxation(NearShapeSurface &near_surface);
-            virtual ~StaticConfinementPressureRelaxation(){};
+            StaticConfinementIntegration1stHalf(NearShapeSurface &near_surface);
+            virtual ~StaticConfinementIntegration1stHalf(){};
             void update(size_t index_i, Real dt = 0.0);
 
         protected:
@@ -224,14 +224,14 @@ namespace SPH
         };
 
         /**
-         * @class StaticConfinementDensityRelaxation
+         * @class StaticConfinementIntegration2ndHalf
          * @brief static confinement condition for density relaxation
          */
-        class StaticConfinementDensityRelaxation : public LocalDynamics, public FluidDataSimple
+        class StaticConfinementIntegration2ndHalf : public LocalDynamics, public FluidDataSimple
         {
         public:
-            StaticConfinementDensityRelaxation(NearShapeSurface &near_surface);
-            virtual ~StaticConfinementDensityRelaxation(){};
+            StaticConfinementIntegration2ndHalf(NearShapeSurface &near_surface);
+            virtual ~StaticConfinementIntegration2ndHalf(){};
             void update(size_t index_i, Real dt = 0.0);
 
         protected:
@@ -250,8 +250,8 @@ namespace SPH
         {
         public:
             SimpleDynamics<StaticConfinementDensity, NearShapeSurface> density_summation_;
-            SimpleDynamics<StaticConfinementPressureRelaxation, NearShapeSurface> pressure_relaxation_;
-            SimpleDynamics<StaticConfinementDensityRelaxation, NearShapeSurface> density_relaxation_;
+            SimpleDynamics<StaticConfinementIntegration1stHalf, NearShapeSurface> pressure_relaxation_;
+            SimpleDynamics<StaticConfinementIntegration2ndHalf, NearShapeSurface> density_relaxation_;
 
             StaticConfinement(NearShapeSurface &near_surface);
             virtual ~StaticConfinement(){};

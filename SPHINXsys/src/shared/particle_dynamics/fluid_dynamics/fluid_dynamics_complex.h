@@ -46,21 +46,21 @@ namespace SPH
 			FluidContactData;
 		typedef DataDelegateContact<FluidParticles, SolidParticles> FSIContactData;
 		/**
-		 * @class RelaxationWithWall
+		 * @class InteractionWithWall
 		 * @brief Base class adding interaction with wall to general relaxation process
 		 */
-		template <class BaseRelaxationType>
-		class RelaxationWithWall : public BaseRelaxationType, public FluidWallData
+		template <class BaseIntegrationType>
+		class InteractionWithWall : public BaseIntegrationType, public FluidWallData
 		{
 		public:
 			template <class BaseBodyRelationType, typename... Args>
-			RelaxationWithWall(BaseContactRelation &wall_contact_relation,
+			InteractionWithWall(BaseContactRelation &wall_contact_relation,
 							   BaseBodyRelationType &base_body_relation, Args &&...args);
 			template <typename... Args>
-			RelaxationWithWall(ComplexRelation &fluid_wall_relation, Args &&...args)
-				: RelaxationWithWall(fluid_wall_relation.contact_relation_,
+			InteractionWithWall(ComplexRelation &fluid_wall_relation, Args &&...args)
+				: InteractionWithWall(fluid_wall_relation.contact_relation_,
 									 fluid_wall_relation.inner_relation_, std::forward<Args>(args)...) {}
-			virtual ~RelaxationWithWall(){};
+			virtual ~InteractionWithWall(){};
 
 		protected:
 			StdVec<Real> wall_inv_rho0_;
@@ -92,12 +92,12 @@ namespace SPH
 		 * @brief template class viscous acceleration together with wall boundary condition
 		 */
 		template <class ViscousAccelerationInnerType>
-		class BaseViscousAccelerationWithWall : public RelaxationWithWall<ViscousAccelerationInnerType>
+		class BaseViscousAccelerationWithWall : public InteractionWithWall<ViscousAccelerationInnerType>
 		{
 		public:
 			template <typename... Args>
 			BaseViscousAccelerationWithWall(Args &&...args)
-				: RelaxationWithWall<ViscousAccelerationInnerType>(std::forward<Args>(args)...){};
+				: InteractionWithWall<ViscousAccelerationInnerType>(std::forward<Args>(args)...){};
 			virtual ~BaseViscousAccelerationWithWall(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 		};
@@ -121,53 +121,53 @@ namespace SPH
 		};
 
 		/**
-		 * @class BasePressureRelaxationWithWall
+		 * @class BaseIntegration1stHalfWithWall
 		 * @brief  template class pressure relaxation scheme together with wall boundary
 		 */
-		template <class BasePressureRelaxationType>
-		class BasePressureRelaxationWithWall : public RelaxationWithWall<BasePressureRelaxationType>
+		template <class BaseIntegration1stHalfType>
+		class BaseIntegration1stHalfWithWall : public InteractionWithWall<BaseIntegration1stHalfType>
 		{
 		public:
 			template <typename... Args>
-			BasePressureRelaxationWithWall(Args &&...args)
-				: RelaxationWithWall<BasePressureRelaxationType>(std::forward<Args>(args)...){};
-			virtual ~BasePressureRelaxationWithWall(){};
+			BaseIntegration1stHalfWithWall(Args &&...args)
+				: InteractionWithWall<BaseIntegration1stHalfType>(std::forward<Args>(args)...){};
+			virtual ~BaseIntegration1stHalfWithWall(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			virtual Vecd computeNonConservativeAcceleration(size_t index_i) override;
 		};
 
-		using PressureRelaxationWithWall = BasePressureRelaxationWithWall<PressureRelaxationInner>;
-		using PressureRelaxationRiemannWithWall = BasePressureRelaxationWithWall<PressureRelaxationRiemannInner>;
+		using Integration1stHalfWithWall = BaseIntegration1stHalfWithWall<Integration1stHalf>;
+		using Integration1stHalfRiemannWithWall = BaseIntegration1stHalfWithWall<Integration1stHalfRiemann>;
 
 		/**
-		 * @class BaseExtendPressureRelaxationWithWall
+		 * @class BaseExtendIntegration1stHalfWithWall
 		 * @brief template class for pressure relaxation scheme with wall boundary
 		 * and considering non-conservative acceleration term and wall penalty to prevent
 		 * particle penetration.
 		 */
-		template <class BasePressureRelaxationType>
-		class BaseExtendPressureRelaxationWithWall : public BasePressureRelaxationWithWall<BasePressureRelaxationType>
+		template <class BaseIntegration1stHalfType>
+		class BaseExtendIntegration1stHalfWithWall : public BaseIntegration1stHalfWithWall<BaseIntegration1stHalfType>
 		{
 		public:
 			template <class BaseBodyRelationType, typename... Args>
-			BaseExtendPressureRelaxationWithWall(BaseContactRelation &wall_contact_relation,
+			BaseExtendIntegration1stHalfWithWall(BaseContactRelation &wall_contact_relation,
 												 BaseBodyRelationType &base_body_relation,
 												 Args &&...args, Real penalty_strength = 1.0)
-				: BasePressureRelaxationWithWall<BasePressureRelaxationType>(
+				: BaseIntegration1stHalfWithWall<BaseIntegration1stHalfType>(
 					  wall_contact_relation, base_body_relation, std::forward<Args>(args)...),
 				  penalty_strength_(penalty_strength)
 			{
 				this->particles_->registerVariable(non_cnsrv_acc_, "NonConservativeAcceleration");
 			};
 			template <typename... Args>
-			BaseExtendPressureRelaxationWithWall(ComplexRelation &fluid_wall_relation,
+			BaseExtendIntegration1stHalfWithWall(ComplexRelation &fluid_wall_relation,
 												 Args &&...args, Real penalty_strength = 1.0)
-				: BaseExtendPressureRelaxationWithWall(fluid_wall_relation.contact_relation_,
+				: BaseExtendIntegration1stHalfWithWall(fluid_wall_relation.contact_relation_,
 													   fluid_wall_relation.inner_relation_,
 													   std::forward<Args>(args)..., penalty_strength){};
-			virtual ~BaseExtendPressureRelaxationWithWall(){};
+			virtual ~BaseExtendIntegration1stHalfWithWall(){};
 			void initialization(size_t index_i, Real dt = 0.0);
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -178,52 +178,52 @@ namespace SPH
 			virtual Vecd computeNonConservativeAcceleration(size_t index_i) override;
 		};
 
-		using ExtendPressureRelaxationRiemannWithWall = BaseExtendPressureRelaxationWithWall<PressureRelaxationRiemannInner>;
+		using ExtendIntegration1stHalfRiemannWithWall = BaseExtendIntegration1stHalfWithWall<Integration1stHalfRiemann>;
 
 		/**
-		 * @class BaseDensityRelaxationWithWall
+		 * @class BaseIntegration2ndHalfWithWall
 		 * @brief template density relaxation scheme without using different Riemann solvers.
 		 * The difference from the free surface version is that no Riemann problem is applied
 		 */
-		template <class BaseDensityRelaxationType>
-		class BaseDensityRelaxationWithWall : public RelaxationWithWall<BaseDensityRelaxationType>
+		template <class BaseIntegration2ndHalfType>
+		class BaseIntegration2ndHalfWithWall : public InteractionWithWall<BaseIntegration2ndHalfType>
 		{
 		public:
 			template <typename... Args>
-			BaseDensityRelaxationWithWall(Args &&...args)
-				: RelaxationWithWall<BaseDensityRelaxationType>(std::forward<Args>(args)...){};
-			virtual ~BaseDensityRelaxationWithWall(){};
+			BaseIntegration2ndHalfWithWall(Args &&...args)
+				: InteractionWithWall<BaseIntegration2ndHalfType>(std::forward<Args>(args)...){};
+			virtual ~BaseIntegration2ndHalfWithWall(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 		};
 
-		using DensityRelaxationWithWall = BaseDensityRelaxationWithWall<DensityRelaxationInner>;
-		using DensityRelaxationRiemannWithWall = BaseDensityRelaxationWithWall<DensityRelaxationRiemannInner>;
+		using Integration2ndHalfWithWall = BaseIntegration2ndHalfWithWall<Integration2ndHalf>;
+		using Integration2ndHalfRiemannWithWall = BaseIntegration2ndHalfWithWall<Integration2ndHalfRiemann>;
 
 		/**
-		 * @class PressureRelaxationWithWallOldroyd_B
+		 * @class Integration1stHalfWithWallOldroyd_B
 		 * @brief  first half of the pressure relaxation scheme using Riemann solver.
 		 */
-		class PressureRelaxationWithWallOldroyd_B : public BasePressureRelaxationWithWall<PressureRelaxationInnerOldroyd_B>
+		class Integration1stHalfWithWallOldroyd_B : public BaseIntegration1stHalfWithWall<Oldroyd_BIntegration1stHalf>
 		{
 		public:
-			explicit PressureRelaxationWithWallOldroyd_B(ComplexRelation &fluid_wall_relation)
-				: BasePressureRelaxationWithWall<PressureRelaxationInnerOldroyd_B>(fluid_wall_relation){};
+			explicit Integration1stHalfWithWallOldroyd_B(ComplexRelation &fluid_wall_relation)
+				: BaseIntegration1stHalfWithWall<Oldroyd_BIntegration1stHalf>(fluid_wall_relation){};
 
-			virtual ~PressureRelaxationWithWallOldroyd_B(){};
+			virtual ~Integration1stHalfWithWallOldroyd_B(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
-		 * @class DensityRelaxationWithWallOldroyd_B
+		 * @class Integration2ndHalfWithWallOldroyd_B
 		 * @brief  second half of the pressure relaxation scheme using Riemann solver.
 		 */
-		class DensityRelaxationWithWallOldroyd_B : public BaseDensityRelaxationWithWall<DensityRelaxationInnerOldroyd_B>
+		class Integration2ndHalfWithWallOldroyd_B : public BaseIntegration2ndHalfWithWall<Oldroyd_BIntegration2ndHalf>
 		{
 		public:
-			explicit DensityRelaxationWithWallOldroyd_B(ComplexRelation &fluid_wall_relation)
-				: BaseDensityRelaxationWithWall<DensityRelaxationInnerOldroyd_B>(fluid_wall_relation){};
+			explicit Integration2ndHalfWithWallOldroyd_B(ComplexRelation &fluid_wall_relation)
+				: BaseIntegration2ndHalfWithWall<Oldroyd_BIntegration2ndHalf>(fluid_wall_relation){};
 
-			virtual ~DensityRelaxationWithWallOldroyd_B(){};
+			virtual ~Integration2ndHalfWithWallOldroyd_B(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 		};
 	}

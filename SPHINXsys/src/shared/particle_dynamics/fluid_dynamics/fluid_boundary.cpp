@@ -136,7 +136,7 @@ namespace SPH
 				level_set_shape_->computeKernelIntegral(pos_[index_i]) * inv_Vol_0_i * rho0_ * inv_sigma0_;
 		}
 		//=================================================================================================//
-		StaticConfinementPressureRelaxation::StaticConfinementPressureRelaxation(NearShapeSurface &near_surface)
+		StaticConfinementIntegration1stHalf::StaticConfinementIntegration1stHalf(NearShapeSurface &near_surface)
 			: LocalDynamics(near_surface.getSPHBody()), FluidDataSimple(sph_body_),
 			  fluid_(particles_->fluid_),
 			  rho_(particles_->rho_), p_(particles_->p_),
@@ -145,14 +145,14 @@ namespace SPH
 			  level_set_shape_(&near_surface.level_set_shape_),
 			  riemann_solver_(fluid_, fluid_) {}
 		//=================================================================================================//
-		void StaticConfinementPressureRelaxation::update(size_t index_i, Real dt)
+		void StaticConfinementIntegration1stHalf::update(size_t index_i, Real dt)
 		{
 			Vecd kernel_gradient = level_set_shape_->computeKernelGradientIntegral(pos_[index_i]);
 			Vecd normal_to_fluid = -kernel_gradient / (kernel_gradient.norm() + TinyReal);
 			acc_[index_i] -= 2.0 * p_[index_i] * kernel_gradient / rho_[index_i];
 		}
 		//=================================================================================================//
-		StaticConfinementDensityRelaxation::StaticConfinementDensityRelaxation(NearShapeSurface &near_surface)
+		StaticConfinementIntegration2ndHalf::StaticConfinementIntegration2ndHalf(NearShapeSurface &near_surface)
 			: LocalDynamics(near_surface.getSPHBody()), FluidDataSimple(sph_body_),
 			  fluid_(particles_->fluid_),
 			  rho_(particles_->rho_), p_(particles_->p_), drho_dt_(particles_->drho_dt_),
@@ -160,7 +160,7 @@ namespace SPH
 			  level_set_shape_(&near_surface.level_set_shape_),
 			  riemann_solver_(fluid_, fluid_) {}
 		//=================================================================================================//
-		void StaticConfinementDensityRelaxation::update(size_t index_i, Real dt)
+		void StaticConfinementIntegration2ndHalf::update(size_t index_i, Real dt)
 		{
 			Vecd kernel_gradient = level_set_shape_->computeKernelGradientIntegral(pos_[index_i]);
 			Vecd normal_to_fluid = -kernel_gradient / (kernel_gradient.norm() + TinyReal);

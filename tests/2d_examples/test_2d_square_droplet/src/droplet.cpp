@@ -65,14 +65,14 @@ int main()
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_water_time_step_size(water_block);
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_air_time_step_size(air_block);
 	/** Pressure relaxation for water by using position verlet time stepping. */
-	Dynamics1Level<fluid_dynamics::PressureRelaxationRiemannWithWall>
+	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall>
 		water_pressure_relaxation(water_wall_contact, water_air_complex.inner_relation_);
-	Dynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall>
+	Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall>
 		water_density_relaxation(water_wall_contact, water_air_complex.inner_relation_);
 	/** Extend Pressure relaxation is used for air. */
-	Dynamics1Level<fluid_dynamics::ExtendMultiPhasePressureRelaxationRiemannWithWall>
+	Dynamics1Level<fluid_dynamics::ExtendMultiPhaseIntegration1stHalfRiemannWithWall>
 		air_pressure_relaxation(air_wall_contact, air_water_complex, 2.0);
-	Dynamics1Level<fluid_dynamics::MultiPhaseDensityRelaxationRiemannWithWall>
+	Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfRiemannWithWall>
 		air_density_relaxation(air_wall_contact, air_water_complex);
 	/** Viscous acceleration. */
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhaseWithWall> air_viscous_acceleration(air_wall_contact, air_water_complex);

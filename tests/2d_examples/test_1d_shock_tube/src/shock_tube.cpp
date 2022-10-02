@@ -109,8 +109,8 @@ int main(int ac, char *av[])
 	// Time step size with considering sound wave speed.
 	ReduceDynamics<eulerian_compressible_fluid_dynamics::AcousticTimeStepSize> get_wave_time_step_size(wave_body);
 	// Pressure, density and energy relaxation algorithm by use HLLC Riemann solver.
-	Dynamics1Level<eulerian_compressible_fluid_dynamics::PressureRelaxationHLLCRiemannInner> pressure_relaxation(wave_body_inner);
-	InteractionWithUpdate<eulerian_compressible_fluid_dynamics::DensityAndEnergyRelaxationHLLCRiemannInner> density_and_energy_relaxation(wave_body_inner);
+	Dynamics1Level<eulerian_compressible_fluid_dynamics::Integration1stHalfHLLCRiemann> pressure_relaxation(wave_body_inner);
+	InteractionWithUpdate<eulerian_compressible_fluid_dynamics::Integration2ndHalfHLLCRiemann> density_and_energy_relaxation(wave_body_inner);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations, observations of the simulation.
 	//	Regression tests are also defined here.

@@ -186,75 +186,29 @@ namespace SPH
 			vorticity_[index_i] = vorticity;
 		}
 		//=================================================================================================//
-		BaseRelaxation::BaseRelaxation(BaseInnerRelation &inner_relation)
+		BaseIntegration::BaseIntegration(BaseInnerRelation &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
 			  fluid_(particles_->fluid_), rho_(particles_->rho_),
 			  p_(particles_->p_), drho_dt_(particles_->drho_dt_),
 			  pos_(particles_->pos_), vel_(particles_->vel_),
 			  acc_(particles_->acc_), acc_prior_(particles_->acc_prior_) {}
 		//=================================================================================================//
-		BasePressureRelaxation::BasePressureRelaxation(BaseInnerRelation &inner_relation)
-			: BaseRelaxation(inner_relation) {}
-		//=================================================================================================//
-		void BasePressureRelaxation::initialization(size_t index_i, Real dt)
-		{
-			rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
-			p_[index_i] = fluid_.getPressure(rho_[index_i]);
-			pos_[index_i] += vel_[index_i] * dt * 0.5;
-		}
-		//=================================================================================================//
-		void BasePressureRelaxation::update(size_t index_i, Real dt)
-		{
-			vel_[index_i] += (acc_prior_[index_i] + acc_[index_i]) * dt;
-		}
-		//=================================================================================================//
-		Vecd BasePressureRelaxation::computeNonConservativeAcceleration(size_t index_i)
-		{
-			Vecd acceleration = acc_prior_[index_i] * rho_[index_i];
-			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-			{
-				size_t index_j = inner_neighborhood.j_[n];
-				Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
-				const Vecd &e_ij = inner_neighborhood.e_ij_[n];
-
-				acceleration += (p_[index_i] - p_[index_j]) * dW_ijV_j * e_ij;
-			}
-			return acceleration / rho_[index_i];
-		}
-		//=================================================================================================//
-		BaseDensityRelaxation::
-			BaseDensityRelaxation(BaseInnerRelation &inner_relation)
-			: BaseRelaxation(inner_relation),
-			  Vol_(particles_->Vol_), mass_(particles_->mass_) {}
-		//=================================================================================================//
-		void BaseDensityRelaxation::initialization(size_t index_i, Real dt)
-		{
-			pos_[index_i] += vel_[index_i] * dt * 0.5;
-		}
-		//=================================================================================================//
-		void BaseDensityRelaxation::update(size_t index_i, Real dt)
-		{
-			rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
-			Vol_[index_i] = mass_[index_i] / rho_[index_i];
-		}
-		//=================================================================================================//
-		PressureRelaxationInnerOldroyd_B ::
-			PressureRelaxationInnerOldroyd_B(BaseInnerRelation &inner_relation)
-			: PressureRelaxationDissipativeRiemannInner(inner_relation),
+		Oldroyd_BIntegration1stHalf ::
+			Oldroyd_BIntegration1stHalf(BaseInnerRelation &inner_relation)
+			: Integration1stHalfDissipativeRiemann(inner_relation),
 			  tau_(DynamicCast<ViscoelasticFluidParticles>(this, particles_)->tau_),
 			  dtau_dt_(DynamicCast<ViscoelasticFluidParticles>(this, particles_)->dtau_dt_) {}
 		//=================================================================================================//
-		void PressureRelaxationInnerOldroyd_B::initialization(size_t index_i, Real dt)
+		void Oldroyd_BIntegration1stHalf::initialization(size_t index_i, Real dt)
 		{
-			PressureRelaxationDissipativeRiemannInner::initialization(index_i, dt);
+			Integration1stHalfDissipativeRiemann::initialization(index_i, dt);
 
 			tau_[index_i] += dtau_dt_[index_i] * dt * 0.5;
 		}
 		//=================================================================================================//
-		void PressureRelaxationInnerOldroyd_B::interaction(size_t index_i, Real dt)
+		void Oldroyd_BIntegration1stHalf::interaction(size_t index_i, Real dt)
 		{
-			PressureRelaxationDissipativeRiemannInner::interaction(index_i, dt);
+			Integration1stHalfDissipativeRiemann::interaction(index_i, dt);
 
 			Vecd acceleration(0);
 			Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -270,9 +224,9 @@ namespace SPH
 			acc_[index_i] += acceleration / rho_[index_i];
 		}
 		//=================================================================================================//
-		DensityRelaxationInnerOldroyd_B::
-			DensityRelaxationInnerOldroyd_B(BaseInnerRelation &inner_relation)
-			: DensityRelaxationDissipativeRiemannInner(inner_relation),
+		Oldroyd_BIntegration2ndHalf::
+			Oldroyd_BIntegration2ndHalf(BaseInnerRelation &inner_relation)
+			: Integration2ndHalfDissipativeRiemann(inner_relation),
 			  oldroyd_b_fluid_(DynamicCast<Oldroyd_B_Fluid>(this, particles_->fluid_)),
 			  tau_(DynamicCast<ViscoelasticFluidParticles>(this, particles_)->tau_),
 			  dtau_dt_(DynamicCast<ViscoelasticFluidParticles>(this, particles_)->dtau_dt_)
@@ -281,9 +235,9 @@ namespace SPH
 			lambda_ = oldroyd_b_fluid_.getReferenceRelaxationTime();
 		}
 		//=================================================================================================//
-		void DensityRelaxationInnerOldroyd_B::interaction(size_t index_i, Real dt)
+		void Oldroyd_BIntegration2ndHalf::interaction(size_t index_i, Real dt)
 		{
-			DensityRelaxationDissipativeRiemannInner::interaction(index_i, dt);
+			Integration2ndHalfDissipativeRiemann::interaction(index_i, dt);
 
 			Matd tau_i = tau_[index_i];
 			Matd stress_rate(0);
@@ -301,9 +255,9 @@ namespace SPH
 			dtau_dt_[index_i] = stress_rate;
 		}
 		//=================================================================================================//
-		void DensityRelaxationInnerOldroyd_B::update(size_t index_i, Real dt)
+		void Oldroyd_BIntegration2ndHalf::update(size_t index_i, Real dt)
 		{
-			DensityRelaxationDissipativeRiemannInner::update(index_i, dt);
+			Integration2ndHalfDissipativeRiemann::update(index_i, dt);
 
 			tau_[index_i] += dtau_dt_[index_i] * dt * 0.5;
 		}

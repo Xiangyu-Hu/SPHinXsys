@@ -79,7 +79,7 @@ namespace SPH
 			return 0.6 * smoothing_length_ / (reduced_value + TinyReal);
 		}
 		//=================================================================================================//
-		BaseRelaxation::BaseRelaxation(BaseInnerRelation &inner_relation)
+		BaseIntegration::BaseIntegration(BaseInnerRelation &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_), CompressibleFluidDataInner(inner_relation),
 			  compressible_fluid_(particles_->compressible_fluid_),
 			  Vol_(particles_->Vol_), rho_(particles_->rho_), p_(particles_->p_),
@@ -87,34 +87,6 @@ namespace SPH
 			  dE_dt_prior_(particles_->dE_dt_prior_),
 			  vel_(particles_->vel_), mom_(particles_->mom_),
 			  dmom_dt_(particles_->dmom_dt_), dmom_dt_prior_(particles_->dmom_dt_prior_) {}
-		//=================================================================================================//
-		BasePressureRelaxation::
-			BasePressureRelaxation(BaseInnerRelation &inner_relation)
-			: BaseRelaxation(inner_relation) {}
-		//=================================================================================================//
-		void BasePressureRelaxation::initialization(size_t index_i, Real dt)
-		{
-			E_[index_i] += dE_dt_[index_i] * dt * 0.5;
-			rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
-			Real rho_e = E_[index_i] - 0.5 * mom_[index_i].normSqr() / rho_[index_i];
-			p_[index_i] = compressible_fluid_.getPressure(rho_[index_i], rho_e);
-		}
-		//=================================================================================================//
-		void BasePressureRelaxation::update(size_t index_i, Real dt)
-		{
-			mom_[index_i] += dmom_dt_[index_i] * dt;
-			vel_[index_i] = mom_[index_i] / rho_[index_i];
-		}
-		//=================================================================================================//
-		BaseDensityAndEnergyRelaxation::
-			BaseDensityAndEnergyRelaxation(BaseInnerRelation &inner_relation)
-			: BaseRelaxation(inner_relation) {}
-		//=================================================================================================//
-		void BaseDensityAndEnergyRelaxation::update(size_t index_i, Real dt)
-		{
-			E_[index_i] += dE_dt_[index_i] * dt * 0.5;
-			rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
-		}
 		//=================================================================================================//
 	}
 	//=================================================================================================//

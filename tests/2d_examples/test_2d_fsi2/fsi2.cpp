@@ -117,8 +117,8 @@ int main(int ac, char *av[])
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	/** Pressure relaxation using verlet time stepping. */
 	/** Here, we do not use Riemann solver for pressure as the flow is viscous. */
-	Dynamics1Level<fluid_dynamics::PressureRelaxationRiemannWithWall> pressure_relaxation(water_block_complex);
-	Dynamics1Level<fluid_dynamics::DensityRelaxationWithWall> density_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(water_block_complex);
 	/** viscous acceleration and transport velocity correction can be combined because they are independent dynamics. */
 	InteractionDynamics<CombinedLocalInteraction<
 		fluid_dynamics::ViscousAccelerationWithWall,

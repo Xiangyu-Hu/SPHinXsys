@@ -72,36 +72,12 @@ namespace SPH
 			return 0.6 / Dimensions * smoothing_length_ / (reduced_value + TinyReal);
 		}
 		//=================================================================================================//
-		BaseRelaxation::BaseRelaxation(BaseInnerRelation &inner_relation)
+		BaseIntegration::BaseIntegration(BaseInnerRelation &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_),
 			  EulerianWeaklyCompressibleFluidDataInner(inner_relation), fluid_(particles_->fluid_),
 			  Vol_(particles_->Vol_), mass_(particles_->mass_), rho_(particles_->rho_),
 			  p_(particles_->p_), drho_dt_(particles_->drho_dt_), vel_(particles_->vel_), mom_(particles_->mom_),
 			  dmom_dt_(particles_->dmom_dt_), dmom_dt_prior_(particles_->dmom_dt_prior_) {}
-		//=================================================================================================//
-		BasePressureRelaxation::
-			BasePressureRelaxation(BaseInnerRelation &inner_relation)
-			: BaseRelaxation(inner_relation) {}
-		//=================================================================================================//
-		void BasePressureRelaxation::initialization(size_t index_i, Real dt)
-		{
-			rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
-			p_[index_i] = fluid_.getPressure(rho_[index_i]);
-		}
-		//=================================================================================================//
-		void BasePressureRelaxation::update(size_t index_i, Real dt)
-		{
-			mom_[index_i] += dmom_dt_[index_i] * dt;
-			vel_[index_i] = mom_[index_i] / rho_[index_i];
-		}
-		//=================================================================================================//
-		BaseDensityAndEnergyRelaxation::
-			BaseDensityAndEnergyRelaxation(BaseInnerRelation &inner_relation) : BaseRelaxation(inner_relation) {}
-		//=================================================================================================//
-		void BaseDensityAndEnergyRelaxation::update(size_t index_i, Real dt)
-		{
-			rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
-		}
 		//=================================================================================================//
 		void NonReflectiveBoundaryVariableCorrection::interaction(size_t index_i, Real dt)
 		{

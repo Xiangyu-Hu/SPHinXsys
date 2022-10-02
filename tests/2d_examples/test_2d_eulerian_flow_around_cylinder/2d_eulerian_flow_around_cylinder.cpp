@@ -165,8 +165,8 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	SimpleDynamics<eulerian_weakly_compressible_fluid_dynamics::EulerianFlowTimeStepInitialization> initialize_a_fluid_step(water_block);
 	SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
-	Dynamics1Level<eulerian_weakly_compressible_fluid_dynamics::PressureRelaxationHLLCRiemannWithLimiterWithWall> pressure_relaxation(water_block_complex);
-	InteractionWithUpdate<eulerian_weakly_compressible_fluid_dynamics::DensityAndEnergyRelaxationHLLCRiemannWithLimiterWithWall> density_relaxation(water_block_complex);
+	Dynamics1Level<eulerian_weakly_compressible_fluid_dynamics::Integration1stHalfHLLCRiemannWithLimiterWithWall> pressure_relaxation(water_block_complex);
+	InteractionWithUpdate<eulerian_weakly_compressible_fluid_dynamics::Integration2ndHalfHLLCRiemannWithLimiterWithWall> density_relaxation(water_block_complex);
 	InteractionDynamics<eulerian_weakly_compressible_fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	ReduceDynamics<eulerian_weakly_compressible_fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	InteractionWithUpdate<fluid_dynamics::FreeSurfaceIndicationComplex> surface_indicator(water_block_complex.inner_relation_, water_block_complex.contact_relation_);

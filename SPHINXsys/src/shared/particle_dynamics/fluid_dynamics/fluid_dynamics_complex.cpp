@@ -37,9 +37,9 @@ namespace SPH
 				pos_[index_i] += acceleration_trans * dt * dt * 0.5;
 		}
 		//=================================================================================================//
-		void PressureRelaxationWithWallOldroyd_B::interaction(size_t index_i, Real dt)
+		void Integration1stHalfWithWallOldroyd_B::interaction(size_t index_i, Real dt)
 		{
-			BasePressureRelaxationWithWall<PressureRelaxationInnerOldroyd_B>::interaction(index_i, dt);
+			BaseIntegration1stHalfWithWall<Oldroyd_BIntegration1stHalf>::interaction(index_i, dt);
 
 			Real rho_i = rho_[index_i];
 			Matd tau_i = tau_[index_i];
@@ -60,9 +60,9 @@ namespace SPH
 			acc_[index_i] += acceleration;
 		}
 		//=================================================================================================//
-		void DensityRelaxationWithWallOldroyd_B::interaction(size_t index_i, Real dt)
+		void Integration2ndHalfWithWallOldroyd_B::interaction(size_t index_i, Real dt)
 		{
-			BaseDensityRelaxationWithWall<DensityRelaxationInnerOldroyd_B>::interaction(index_i, dt);
+			BaseIntegration2ndHalfWithWall<Oldroyd_BIntegration2ndHalf>::interaction(index_i, dt);
 
 			Vecd vel_i = vel_[index_i];
 			Matd tau_i = tau_[index_i];

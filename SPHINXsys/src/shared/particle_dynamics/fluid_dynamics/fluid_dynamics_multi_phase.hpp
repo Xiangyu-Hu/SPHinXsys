@@ -36,11 +36,11 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		template <class PressureRelaxationInnerType>
-		BasePressureRelaxationMultiPhase<PressureRelaxationInnerType>::
-			BasePressureRelaxationMultiPhase(BaseInnerRelation &inner_relation,
+		template <class Integration1stHalfType>
+		BaseMultiPhaseIntegration1stHalf<Integration1stHalfType>::
+			BaseMultiPhaseIntegration1stHalf(BaseInnerRelation &inner_relation,
 											 BaseContactRelation &contact_relation)
-			: RelaxationMultiPhase<PressureRelaxationInnerType>(inner_relation, contact_relation)
+			: RelaxationMultiPhase<Integration1stHalfType>(inner_relation, contact_relation)
 		{
 			for (size_t k = 0; k != this->contact_particles_.size(); ++k)
 			{
@@ -48,15 +48,15 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		template <class PressureRelaxationInnerType>
-		BasePressureRelaxationMultiPhase<PressureRelaxationInnerType>::
-			BasePressureRelaxationMultiPhase(ComplexRelation &complex_relation)
-			: BasePressureRelaxationMultiPhase(complex_relation.inner_relation_, complex_relation.contact_relation_) {}
+		template <class Integration1stHalfType>
+		BaseMultiPhaseIntegration1stHalf<Integration1stHalfType>::
+			BaseMultiPhaseIntegration1stHalf(ComplexRelation &complex_relation)
+			: BaseMultiPhaseIntegration1stHalf(complex_relation.inner_relation_, complex_relation.contact_relation_) {}
 		//=================================================================================================//
-		template <class PressureRelaxationInnerType>
-		void BasePressureRelaxationMultiPhase<PressureRelaxationInnerType>::interaction(size_t index_i, Real dt)
+		template <class Integration1stHalfType>
+		void BaseMultiPhaseIntegration1stHalf<Integration1stHalfType>::interaction(size_t index_i, Real dt)
 		{
-			PressureRelaxationInnerType::interaction(index_i, dt);
+			Integration1stHalfType::interaction(index_i, dt);
 
 			Vecd acceleration(0.0);
 			Real rho_dissipation(0);
@@ -79,12 +79,12 @@ namespace SPH
 			this->drho_dt_[index_i] += rho_dissipation * this->rho_[index_i];
 		}
 		//=================================================================================================//
-		template <class PressureRelaxationInnerType>
-		Vecd BasePressureRelaxationMultiPhase<PressureRelaxationInnerType>::
+		template <class Integration1stHalfType>
+		Vecd BaseMultiPhaseIntegration1stHalf<Integration1stHalfType>::
 			computeNonConservativeAcceleration(size_t index_i)
 		{
 			Vecd acceleration = this->rho_[index_i] *
-								PressureRelaxationInnerType::computeNonConservativeAcceleration(index_i);
+								Integration1stHalfType::computeNonConservativeAcceleration(index_i);
 
 			for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 			{
@@ -104,11 +104,11 @@ namespace SPH
 			return acceleration / this->rho_[index_i];
 		}
 		//=================================================================================================//
-		template <class DensityRelaxationInnerType>
-		BaseDensityRelaxationMultiPhase<DensityRelaxationInnerType>::
-			BaseDensityRelaxationMultiPhase(BaseInnerRelation &inner_relation,
+		template <class Integration2ndHalfType>
+		BaseMultiPhaseIntegration2ndHalf<Integration2ndHalfType>::
+			BaseMultiPhaseIntegration2ndHalf(BaseInnerRelation &inner_relation,
 											BaseContactRelation &contact_relation)
-			: RelaxationMultiPhase<DensityRelaxationInnerType>(inner_relation, contact_relation)
+			: RelaxationMultiPhase<Integration2ndHalfType>(inner_relation, contact_relation)
 		{
 			for (size_t k = 0; k != this->contact_particles_.size(); ++k)
 			{
@@ -116,15 +116,15 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		template <class DensityRelaxationInnerType>
-		BaseDensityRelaxationMultiPhase<DensityRelaxationInnerType>::
-			BaseDensityRelaxationMultiPhase(ComplexRelation &complex_relation)
-			: BaseDensityRelaxationMultiPhase(complex_relation.inner_relation_, complex_relation.contact_relation_) {}
+		template <class Integration2ndHalfType>
+		BaseMultiPhaseIntegration2ndHalf<Integration2ndHalfType>::
+			BaseMultiPhaseIntegration2ndHalf(ComplexRelation &complex_relation)
+			: BaseMultiPhaseIntegration2ndHalf(complex_relation.inner_relation_, complex_relation.contact_relation_) {}
 		//=================================================================================================//
-		template <class DensityRelaxationInnerType>
-		void BaseDensityRelaxationMultiPhase<DensityRelaxationInnerType>::interaction(size_t index_i, Real dt)
+		template <class Integration2ndHalfType>
+		void BaseMultiPhaseIntegration2ndHalf<Integration2ndHalfType>::interaction(size_t index_i, Real dt)
 		{
-			DensityRelaxationInnerType::interaction(index_i, dt);
+			Integration2ndHalfType::interaction(index_i, dt);
 
 			Real density_change_rate = 0.0;
 			Vecd p_dissipation(0);

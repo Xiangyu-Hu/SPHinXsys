@@ -167,8 +167,9 @@ namespace SPH
 		 * @class AdvectionTimeStepSizeForImplicitViscosity
 		 * @brief Computing the advection time step size when viscosity is handled implicitly
 		 */
-		class AdvectionTimeStepSizeForImplicitViscosity 
-		: public LocalDynamicsReduce<Real, ReduceMax>, public FluidDataSimple
+		class AdvectionTimeStepSizeForImplicitViscosity
+			: public LocalDynamicsReduce<Real, ReduceMax>,
+			  public FluidDataSimple
 		{
 		public:
 			explicit AdvectionTimeStepSizeForImplicitViscosity(
@@ -215,14 +216,14 @@ namespace SPH
 		};
 
 		/**
-		 * @class BaseRelaxation
+		 * @class BaseIntegration
 		 * @brief Pure abstract base class for all fluid relaxation schemes
 		 */
-		class BaseRelaxation : public LocalDynamics, public FluidDataInner
+		class BaseIntegration : public LocalDynamics, public FluidDataInner
 		{
 		public:
-			explicit BaseRelaxation(BaseInnerRelation &inner_relation);
-			virtual ~BaseRelaxation(){};
+			explicit BaseIntegration(BaseInnerRelation &inner_relation);
+			virtual ~BaseIntegration(){};
 
 		protected:
 			Fluid &fluid_;
@@ -231,83 +232,61 @@ namespace SPH
 		};
 
 		/**
-		 * @class BasePressureRelaxation
-		 * @brief Abstract base class for all pressure relaxation schemes
+		 * @class BaseIntegration1stHalf
+		 * @brief Template class for pressure relaxation scheme with the Riemann solver
+		 * as template variable
 		 */
-		class BasePressureRelaxation : public BaseRelaxation
+		template <class RiemannSolverType>
+		class BaseIntegration1stHalf : public BaseIntegration
 		{
 		public:
-			explicit BasePressureRelaxation(BaseInnerRelation &inner_relation);
-			virtual ~BasePressureRelaxation(){};
+			explicit BaseIntegration1stHalf(BaseInnerRelation &inner_relation);
+			virtual ~BaseIntegration1stHalf(){};
+			RiemannSolverType riemann_solver_;
 			void initialization(size_t index_i, Real dt = 0.0);
+			void interaction(size_t index_i, Real dt = 0.0);
 			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
 			virtual Vecd computeNonConservativeAcceleration(size_t index_i);
 		};
+		using Integration1stHalf = BaseIntegration1stHalf<NoRiemannSolver>;
+		/** define the mostly used pressure relaxation scheme using Riemann solver */
+		using Integration1stHalfRiemann = BaseIntegration1stHalf<AcousticRiemannSolver>;
+		using Integration1stHalfDissipativeRiemann = BaseIntegration1stHalf<DissipativeRiemannSolver>;
 
 		/**
-		 * @class BasePressureRelaxationInner
-		 * @brief Template class for pressure relaxation scheme with the Riemann solver
-		 * as template variable
+		 * @class BaseIntegration2ndHalf
+		 * @brief  Template density relaxation scheme with different Riemann solver
 		 */
 		template <class RiemannSolverType>
-		class BasePressureRelaxationInner : public BasePressureRelaxation
+		class BaseIntegration2ndHalf : public BaseIntegration
 		{
 		public:
-			explicit BasePressureRelaxationInner(BaseInnerRelation &inner_relation);
-			virtual ~BasePressureRelaxationInner(){};
+			explicit BaseIntegration2ndHalf(BaseInnerRelation &inner_relation);
+			virtual ~BaseIntegration2ndHalf(){};
 			RiemannSolverType riemann_solver_;
+			void initialization(size_t index_i, Real dt = 0.0);
 			void interaction(size_t index_i, Real dt = 0.0);
-		};
-		using PressureRelaxationInner = BasePressureRelaxationInner<NoRiemannSolver>;
-		/** define the mostly used pressure relaxation scheme using Riemann solver */
-		using PressureRelaxationRiemannInner = BasePressureRelaxationInner<AcousticRiemannSolver>;
-		using PressureRelaxationDissipativeRiemannInner = BasePressureRelaxationInner<DissipativeRiemannSolver>;
-
-		/**
-		 * @class BaseDensityRelaxation
-		 * @brief Abstract base class for all density relaxation schemes
-		 */
-		class BaseDensityRelaxation : public BaseRelaxation
-		{
-		public:
-			explicit BaseDensityRelaxation(BaseInnerRelation &inner_relation);
-			virtual ~BaseDensityRelaxation(){};
-			virtual void initialization(size_t index_i, Real dt = 0.0);
-			virtual void update(size_t index_i, Real dt = 0.0);
+			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Real> &Vol_, &mass_;
 		};
-
-		/**
-		 * @class DensityRelaxationInner
-		 * @brief  Template density relaxation scheme with different Riemann solver
-		 */
-		template <class RiemannSolverType>
-		class BaseDensityRelaxationInner : public BaseDensityRelaxation
-		{
-		public:
-			explicit BaseDensityRelaxationInner(BaseInnerRelation &inner_relation);
-			virtual ~BaseDensityRelaxationInner(){};
-			RiemannSolverType riemann_solver_;
-			void interaction(size_t index_i, Real dt = 0.0);
-		};
-		using DensityRelaxationInner = BaseDensityRelaxationInner<NoRiemannSolver>;
+		using Integration2ndHalf = BaseIntegration2ndHalf<NoRiemannSolver>;
 		/** define the mostly used density relaxation scheme using Riemann solver */
-		using DensityRelaxationRiemannInner = BaseDensityRelaxationInner<AcousticRiemannSolver>;
-		using DensityRelaxationDissipativeRiemannInner = BaseDensityRelaxationInner<DissipativeRiemannSolver>;
+		using Integration2ndHalfRiemann = BaseIntegration2ndHalf<AcousticRiemannSolver>;
+		using Integration2ndHalfDissipativeRiemann = BaseIntegration2ndHalf<DissipativeRiemannSolver>;
 
 		/**
-		 * @class PressureRelaxationInnerOldroyd_B
+		 * @class Oldroyd_BIntegration1stHalf
 		 * @brief Pressure relaxation scheme with the mostly used Riemann solver.
 		 */
-		class PressureRelaxationInnerOldroyd_B : public PressureRelaxationDissipativeRiemannInner
+		class Oldroyd_BIntegration1stHalf : public Integration1stHalfDissipativeRiemann
 		{
 		public:
-			explicit PressureRelaxationInnerOldroyd_B(BaseInnerRelation &inner_relation);
-			virtual ~PressureRelaxationInnerOldroyd_B(){};
+			explicit Oldroyd_BIntegration1stHalf(BaseInnerRelation &inner_relation);
+			virtual ~Oldroyd_BIntegration1stHalf(){};
 			void initialization(size_t index_i, Real dt = 0.0);
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -316,14 +295,14 @@ namespace SPH
 		};
 
 		/**
-		 * @class DensityRelaxationInnerOldroyd_B
+		 * @class Oldroyd_BIntegration2ndHalf
 		 * @brief Density relaxation scheme with the mostly used Riemann solver.
 		 */
-		class DensityRelaxationInnerOldroyd_B : public DensityRelaxationDissipativeRiemannInner
+		class Oldroyd_BIntegration2ndHalf : public Integration2ndHalfDissipativeRiemann
 		{
 		public:
-			explicit DensityRelaxationInnerOldroyd_B(BaseInnerRelation &inner_relation);
-			virtual ~DensityRelaxationInnerOldroyd_B(){};
+			explicit Oldroyd_BIntegration2ndHalf(BaseInnerRelation &inner_relation);
+			virtual ~Oldroyd_BIntegration2ndHalf(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 			void update(size_t index_i, Real dt = 0.0);
 

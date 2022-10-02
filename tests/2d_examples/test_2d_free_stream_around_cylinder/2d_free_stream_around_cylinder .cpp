@@ -125,11 +125,11 @@ int main(int ac, char *av[])
 	/** modify the velocity of boundary particles with free-stream velocity. */
 	SimpleDynamics<fluid_dynamics::FreeStreamBoundaryVelocityCorrection> velocity_boundary_condition_constraint(water_block);
 	/** Pressure relaxation. */
-	Dynamics1Level<fluid_dynamics::PressureRelaxationRiemannWithWall> pressure_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
 	/** correct the velocity of boundary particles with free-stream velocity through the post process of pressure relaxation. */
 	pressure_relaxation.post_processes_.push_back(&velocity_boundary_condition_constraint);
 	/** Density relaxation. */
-	Dynamics1Level<fluid_dynamics::DensityRelaxationWithWall> density_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(water_block_complex);
 	/** Computing viscous acceleration. */
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	/** Apply transport velocity formulation. */
