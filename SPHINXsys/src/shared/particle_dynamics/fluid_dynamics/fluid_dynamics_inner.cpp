@@ -210,9 +210,7 @@ namespace SPH
 		//=================================================================================================//
 		Vecd BasePressureRelaxation::computeNonConservativeAcceleration(size_t index_i)
 		{
-			Real rho_i = rho_[index_i];
-			Real p_i = p_[index_i];
-			Vecd acceleration = acc_prior_[index_i];
+			Vecd acceleration = acc_prior_[index_i] * rho_[index_i];
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
@@ -220,19 +218,15 @@ namespace SPH
 				Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
 				const Vecd &e_ij = inner_neighborhood.e_ij_[n];
 
-				Real rho_j = rho_[index_j];
-				Real p_j = p_[index_j];
-
-				Real p_star = (rho_i * p_j + rho_j * p_i) / (rho_i + rho_j);
-				acceleration += (p_i - p_star) * dW_ijV_j * e_ij / rho_i;
+				acceleration += (p_[index_i] - p_[index_j]) * dW_ijV_j * e_ij;
 			}
-			return acceleration;
+			return acceleration / rho_[index_i];
 		}
 		//=================================================================================================//
 		BaseDensityRelaxation::
-			BaseDensityRelaxation(BaseInnerRelation &inner_relation) 
+			BaseDensityRelaxation(BaseInnerRelation &inner_relation)
 			: BaseRelaxation(inner_relation),
-			Vol_(particles_->Vol_), mass_(particles_->mass_) {}
+			  Vol_(particles_->Vol_), mass_(particles_->mass_) {}
 		//=================================================================================================//
 		void BaseDensityRelaxation::initialization(size_t index_i, Real dt)
 		{

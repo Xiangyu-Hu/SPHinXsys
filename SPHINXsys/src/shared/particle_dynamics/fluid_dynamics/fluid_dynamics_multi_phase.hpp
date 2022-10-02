@@ -83,14 +83,13 @@ namespace SPH
 		Vecd BasePressureRelaxationMultiPhase<PressureRelaxationInnerType>::
 			computeNonConservativeAcceleration(size_t index_i)
 		{
-			Vecd acceleration = PressureRelaxationInnerType::computeNonConservativeAcceleration(index_i);
+			Vecd acceleration = this->rho_[index_i] *
+								PressureRelaxationInnerType::computeNonConservativeAcceleration(index_i);
 
-			Real rho_i = this->rho_[index_i];
-			Real p_i = this->p_[index_i];
 			for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 			{
-				StdLargeVec<Real> &rho_k = *(this->contact_rho_n_[k]);
 				StdLargeVec<Real> &p_k = *(this->contact_p_[k]);
+				CurrentRiemannSolver &riemann_solver_k = riemann_solvers_[k];
 				Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
@@ -98,14 +97,11 @@ namespace SPH
 					Vecd &e_ij = contact_neighborhood.e_ij_[n];
 					Real dW_ijV_j = contact_neighborhood.dW_ijV_j_[n];
 
-					Real rho_j = rho_k[index_j];
-					Real p_j = p_k[index_j];
-
-					Real p_star = (rho_i * p_j + rho_j * p_i) / (rho_i + rho_j);
-					acceleration += (p_i - p_star) * dW_ijV_j * e_ij / rho_i;
+					Real p_ave_k = riemann_solver_k.AverageP(this->p_[index_i], p_k[index_j]);
+					acceleration += 2.0 * (this->p_[index_i] - p_ave_k) * dW_ijV_j * e_ij;
 				}
 			}
-			return acceleration;
+			return acceleration / this->rho_[index_i];
 		}
 		//=================================================================================================//
 		template <class DensityRelaxationInnerType>
