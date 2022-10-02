@@ -116,8 +116,8 @@ int main()
 	 *  The contact map gives the data connections between the bodies
 	 *  basically the the range of bodies to build neighbor particle lists
 	 */
-	BodyRelationInner cylinder_body_inner(cylinder_body);
-	BodyRelationContact cylinder_observer_contact(cylinder_observer, {&cylinder_body});
+	InnerRelation cylinder_body_inner(cylinder_body);
+	ContactRelation cylinder_observer_contact(cylinder_observer, {&cylinder_body});
 
 	/** Common particle dynamics. */
 	SimpleDynamics<TimeStepInitialization> initialize_external_force(

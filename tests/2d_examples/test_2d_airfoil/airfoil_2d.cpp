@@ -67,7 +67,7 @@ int main(int ac, char *av[])
 	//	The contact map gives the topological connections between the bodies,
 	//	basically, in the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInnerVariableSmoothingLength airfoil_inner(airfoil);
+	AdaptiveInnerRelation airfoil_inner(airfoil);
 	//----------------------------------------------------------------------
 	//	Methods used for particle relaxation.
 	//----------------------------------------------------------------------

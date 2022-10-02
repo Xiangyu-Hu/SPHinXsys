@@ -79,8 +79,8 @@ int main(int ac, char *av[])
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	ComplexBodyRelation water_block_complex(water_block, {&wall_boundary});
-	BodyRelationContact fluid_observer_contact(fluid_observer, {&water_block});
+	ComplexRelation water_block_complex(water_block, {&wall_boundary});
+	ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
 	//----------------------------------------------------------------------
 	//	Define the numerical methods used in the simulation.
 	//	Note that there may be data dependence on the sequence of constructions.

@@ -46,7 +46,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ShellCorrectConfiguration::
-			ShellCorrectConfiguration(BaseBodyRelationInner &inner_relation)
+			ShellCorrectConfiguration(BaseInnerRelation &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_), ShellDataInner(inner_relation),
 			  B_(particles_->B_),
 			  n0_(particles_->n0_), transformation_matrix_(particles_->transformation_matrix_) {}
@@ -71,7 +71,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ShellDeformationGradientTensor::
-			ShellDeformationGradientTensor(BaseBodyRelationInner &inner_relation)
+			ShellDeformationGradientTensor(BaseInnerRelation &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_), ShellDataInner(inner_relation),
 			  pos_(particles_->pos_), pseudo_n_(particles_->pseudo_n_), n0_(particles_->n0_),
 			  B_(particles_->B_), F_(particles_->F_), F_bending_(particles_->F_bending_),
@@ -98,7 +98,7 @@ namespace SPH
 			F_bending_[index_i] = transformation_matrix_i * deformation_part_two * (~transformation_matrix_i) * B_[index_i];
 		}
 		//=================================================================================================//
-		BaseShellRelaxation::BaseShellRelaxation(BaseBodyRelationInner &inner_relation)
+		BaseShellRelaxation::BaseShellRelaxation(BaseInnerRelation &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_), ShellDataInner(inner_relation),
 			  rho_(particles_->rho_),
 			  thickness_(particles_->thickness_),
@@ -114,7 +114,7 @@ namespace SPH
 			  transformation_matrix_(particles_->transformation_matrix_) {}
 		//=================================================================================================//
 		ShellStressRelaxationFirstHalf::
-			ShellStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation,
+			ShellStressRelaxationFirstHalf(BaseInnerRelation &inner_relation,
 										   int number_of_gaussian_points, bool hourglass_control)
 			: BaseShellRelaxation(inner_relation),
 			  elastic_solid_(particles_->elastic_solid_),

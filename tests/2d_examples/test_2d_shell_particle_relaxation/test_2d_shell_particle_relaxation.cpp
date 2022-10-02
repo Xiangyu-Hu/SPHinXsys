@@ -57,7 +57,7 @@ int main()
 	 *  The contact map gives the data connections between the bodies
 	 *  basically the the range of bodies to build neighbor particle lists
 	 */
-	BodyRelationInner pipe_body_inner(pipe_body);
+	InnerRelation pipe_body_inner(pipe_body);
 
 	/** Random reset the particle position. */
 	SimpleDynamics<RandomizeParticlePosition> random_pipe_body_particles(pipe_body);

@@ -62,12 +62,12 @@ namespace SPH
 	/** @brief a small functor for obtaining search depth for variable smoothing length
 	 * @details Note that the search depth is defined on the target cell linked list.
 	 */
-	struct SearchDepthVariableSmoothingLength
+	struct AdaptiveSearchDepth
 	{
 		Real inv_grid_spacing_;
 		Kernel *kernel_;
 		StdLargeVec<Real> &h_ratio_;
-		SearchDepthVariableSmoothingLength(SPHBody &sph_body, CellLinkedList *target_cell_linked_list)
+		AdaptiveSearchDepth(SPHBody &sph_body, CellLinkedList *target_cell_linked_list)
 			: inv_grid_spacing_(1.0 / target_cell_linked_list->GridSpacing()),
 			  kernel_(sph_body.sph_adaptation_->getKernel()),
 			  h_ratio_(*sph_body.getBaseParticles().getVariableByName<Real>("SmoothingLengthRatio")){};
@@ -78,18 +78,18 @@ namespace SPH
 	};
 
 	/**
-	 * @class SPHBodyRelation
+	 * @class SPHRelation
 	 * @brief The abstract class for all relations within a SPH body or with its contact SPH bodies
 	 */
-	class SPHBodyRelation
+	class SPHRelation
 	{
 	public:
 		SPHBody &sph_body_;
 		BaseParticles &base_particles_;
 		SPHBody &getDynamicsRange() { return sph_body_; };
 
-		explicit SPHBodyRelation(SPHBody &sph_body);
-		virtual ~SPHBodyRelation(){};
+		explicit SPHRelation(SPHBody &sph_body);
+		virtual ~SPHRelation(){};
 
 		void subscribeToBody() { sph_body_.body_relations_.push_back(this); };
 		virtual void updateConfigurationMemories() = 0;
@@ -97,10 +97,10 @@ namespace SPH
 	};
 
 	/**
-	 * @class BaseBodyRelationInner
+	 * @class BaseInnerRelation
 	 * @brief The abstract relation within a SPH body
 	 */
-	class BaseBodyRelationInner : public SPHBodyRelation
+	class BaseInnerRelation : public SPHRelation
 	{
 	protected:
 		virtual void resetNeighborhoodCurrentSize();
@@ -108,17 +108,17 @@ namespace SPH
 	public:
 		RealBody *real_body_;
 		ParticleConfiguration inner_configuration_; /**< inner configuration for the neighbor relations. */
-		explicit BaseBodyRelationInner(RealBody &real_body);
-		virtual ~BaseBodyRelationInner(){};
+		explicit BaseInnerRelation(RealBody &real_body);
+		virtual ~BaseInnerRelation(){};
 
 		virtual void updateConfigurationMemories() override;
 	};
 
 	/**
-	 * @class BaseBodyRelationContact
+	 * @class BaseContactRelation
 	 * @brief The base relation between a SPH body and its contact SPH bodies
 	 */
-	class BaseBodyRelationContact : public SPHBodyRelation
+	class BaseContactRelation : public SPHRelation
 	{
 	protected:
 		UniquePtrKeepers<SearchDepthMultiResolution> search_depth_multi_resolution_ptr_vector_keeper_;
@@ -135,9 +135,9 @@ namespace SPH
 		RealBodyVector contact_bodies_;
 		ContactParticleConfiguration contact_configuration_; /**< Configurations for particle interaction between bodies. */
 
-		BaseBodyRelationContact(SPHBody &sph_body, RealBodyVector contact_bodies);
-		BaseBodyRelationContact(SPHBody &sph_body, BodyPartVector contact_body_parts);
-		virtual ~BaseBodyRelationContact(){};
+		BaseContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies);
+		BaseContactRelation(SPHBody &sph_body, BodyPartVector contact_body_parts);
+		virtual ~BaseContactRelation(){};
 
 		virtual void updateConfigurationMemories() override;
 	};

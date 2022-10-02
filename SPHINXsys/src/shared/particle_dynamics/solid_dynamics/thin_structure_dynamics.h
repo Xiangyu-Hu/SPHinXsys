@@ -88,7 +88,7 @@ namespace SPH
 		class ShellCorrectConfiguration : public LocalDynamics, public ShellDataInner
 		{
 		public:
-			explicit ShellCorrectConfiguration(BaseBodyRelationInner &inner_relation);
+			explicit ShellCorrectConfiguration(BaseInnerRelation &inner_relation);
 			virtual ~ShellCorrectConfiguration(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -106,7 +106,7 @@ namespace SPH
 		class ShellDeformationGradientTensor : public LocalDynamics, public ShellDataInner
 		{
 		public:
-			explicit ShellDeformationGradientTensor(BaseBodyRelationInner &inner_relation);
+			explicit ShellDeformationGradientTensor(BaseInnerRelation &inner_relation);
 			virtual ~ShellDeformationGradientTensor(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -123,7 +123,7 @@ namespace SPH
 		class BaseShellRelaxation : public LocalDynamics, public ShellDataInner
 		{
 		public:
-			explicit BaseShellRelaxation(BaseBodyRelationInner &inner_relation);
+			explicit BaseShellRelaxation(BaseInnerRelation &inner_relation);
 			virtual ~BaseShellRelaxation(){};
 
 		protected:
@@ -143,7 +143,7 @@ namespace SPH
 		class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
 		{
 		public:
-			explicit ShellStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation,
+			explicit ShellStressRelaxationFirstHalf(BaseInnerRelation &inner_relation,
 													int number_of_gaussian_points = 3, bool hourglass_control = false);
 			virtual ~ShellStressRelaxationFirstHalf(){};
 			void initialization(size_t index_i, Real dt = 0.0);
@@ -177,7 +177,7 @@ namespace SPH
 		class ShellStressRelaxationSecondHalf : public BaseShellRelaxation
 		{
 		public:
-			explicit ShellStressRelaxationSecondHalf(BaseBodyRelationInner &inner_relation)
+			explicit ShellStressRelaxationSecondHalf(BaseInnerRelation &inner_relation)
 				: BaseShellRelaxation(inner_relation){};
 			virtual ~ShellStressRelaxationSecondHalf(){};
 			void initialization(size_t index_i, Real dt = 0.0);

@@ -14,7 +14,7 @@ namespace SPH
 	//=================================================================================================//
 	template <typename VariableType>
 	DampingBySplittingInner<VariableType>::
-		DampingBySplittingInner(BaseBodyRelationInner &inner_relation,
+		DampingBySplittingInner(BaseInnerRelation &inner_relation,
 								const std::string &variable_name, Real eta)
 		: LocalDynamics(inner_relation.sph_body_),
 		  DissipationDataInner(inner_relation), eta_(eta),
@@ -80,7 +80,7 @@ namespace SPH
 	//=================================================================================================//
 	template <typename VariableType>
 	DampingBySplittingComplex<VariableType>::
-		DampingBySplittingComplex(ComplexBodyRelation &complex_relation,
+		DampingBySplittingComplex(ComplexRelation &complex_relation,
 								  const std::string &variable_name, Real eta)
 		: DampingBySplittingInner<VariableType>(complex_relation.inner_relation_, variable_name, eta),
 		  DissipationDataContact(complex_relation.contact_relation_)
@@ -162,7 +162,7 @@ namespace SPH
 	template <typename VariableType,
 			  template <typename BaseVariableType> class BaseDampingBySplittingType>
 	DampingBySplittingWithWall<VariableType, BaseDampingBySplittingType>::
-		DampingBySplittingWithWall(ComplexBodyRelation &complex_wall_relation,
+		DampingBySplittingWithWall(ComplexRelation &complex_wall_relation,
 								   const std::string &variable_name, Real eta)
 		: BaseDampingBySplittingType<VariableType>(complex_wall_relation.inner_relation_, variable_name, eta),
 		  DissipationDataWithWall(complex_wall_relation.contact_relation_)
@@ -209,7 +209,7 @@ namespace SPH
 	//=================================================================================================//
 	template <typename VariableType>
 	DampingPairwiseInner<VariableType>::
-		DampingPairwiseInner(BaseBodyRelationInner &inner_relation,
+		DampingPairwiseInner(BaseInnerRelation &inner_relation,
 							 const std::string &variable_name, Real eta)
 		: LocalDynamics(inner_relation.sph_body_),
 		  DissipationDataInner(inner_relation),
@@ -255,8 +255,8 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template <typename VariableType>
-	DampingPairwiseComplex<VariableType>::DampingPairwiseComplex(BaseBodyRelationInner &inner_relation,
-																 BaseBodyRelationContact &contact_relation, const std::string &variable_name, Real eta)
+	DampingPairwiseComplex<VariableType>::DampingPairwiseComplex(BaseInnerRelation &inner_relation,
+																 BaseContactRelation &contact_relation, const std::string &variable_name, Real eta)
 		: DampingPairwiseInner<VariableType>(inner_relation, variable_name, eta),
 		  DissipationDataContact(contact_relation)
 	{
@@ -270,7 +270,7 @@ namespace SPH
 	//=================================================================================================//
 	template <typename VariableType>
 	DampingPairwiseComplex<VariableType>::
-		DampingPairwiseComplex(ComplexBodyRelation &complex_relation, const std::string &variable_name, Real eta)
+		DampingPairwiseComplex(ComplexRelation &complex_relation, const std::string &variable_name, Real eta)
 		: DampingPairwiseComplex(complex_relation.inner_relation_,
 								 complex_relation.contact_relation_, variable_name, eta) {}
 	//=================================================================================================//
@@ -323,8 +323,8 @@ namespace SPH
 	template <typename VariableType,
 			  template <typename BaseVariableType> class BaseDampingPairwiseType>
 	DampingPairwiseWithWall<VariableType, BaseDampingPairwiseType>::
-		DampingPairwiseWithWall(BaseBodyRelationInner &inner_relation,
-								BaseBodyRelationContact &contact_relation, const std::string &variable_name, Real eta)
+		DampingPairwiseWithWall(BaseInnerRelation &inner_relation,
+								BaseContactRelation &contact_relation, const std::string &variable_name, Real eta)
 		: BaseDampingPairwiseType<VariableType>(inner_relation, variable_name, eta),
 		  DissipationDataWithWall(contact_relation)
 	{
@@ -338,7 +338,7 @@ namespace SPH
 	template <typename VariableType,
 			  template <typename BaseVariableType> class BaseDampingPairwiseType>
 	DampingPairwiseWithWall<VariableType, BaseDampingPairwiseType>::
-		DampingPairwiseWithWall(ComplexBodyRelation &complex_wall_relation, const std::string &variable_name, Real eta)
+		DampingPairwiseWithWall(ComplexRelation &complex_wall_relation, const std::string &variable_name, Real eta)
 		: DampingPairwiseWithWall(complex_wall_relation.inner_relation_,
 								  complex_wall_relation.contact_relation_, variable_name, eta) {}
 	//=================================================================================================//
@@ -384,7 +384,7 @@ namespace SPH
 	//=================================================================================================//
 	template <typename VariableType>
 	DampingPairwiseFromWall<VariableType>::
-		DampingPairwiseFromWall(BaseBodyRelationContact &contact_relation, const std::string &variable_name, Real eta)
+		DampingPairwiseFromWall(BaseContactRelation &contact_relation, const std::string &variable_name, Real eta)
 		: LocalDynamics(contact_relation.sph_body_),
 		  DataDelegateContact<BaseParticles, SolidParticles>(contact_relation),
 		  eta_(eta), Vol_(particles_->Vol_), mass_(particles_->mass_),

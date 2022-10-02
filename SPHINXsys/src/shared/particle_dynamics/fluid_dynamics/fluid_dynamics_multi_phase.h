@@ -46,9 +46,9 @@ namespace SPH
 		class ViscousAccelerationMultiPhase : public ViscousAccelerationInner, public MultiPhaseContactData
 		{
 		public:
-			ViscousAccelerationMultiPhase(BaseBodyRelationInner &inner_relation,
-										  BaseBodyRelationContact &contact_relation);
-			explicit ViscousAccelerationMultiPhase(ComplexBodyRelation &complex_relation);
+			ViscousAccelerationMultiPhase(BaseInnerRelation &inner_relation,
+										  BaseContactRelation &contact_relation);
+			explicit ViscousAccelerationMultiPhase(ComplexRelation &complex_relation);
 			virtual ~ViscousAccelerationMultiPhase(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -67,8 +67,8 @@ namespace SPH
 		class RelaxationMultiPhase : public RelaxationInnerType, public MultiPhaseContactData
 		{
 		public:
-			RelaxationMultiPhase(BaseBodyRelationInner &inner_relation,
-								 BaseBodyRelationContact &contact_relation);
+			RelaxationMultiPhase(BaseInnerRelation &inner_relation,
+								 BaseContactRelation &contact_relation);
 			virtual ~RelaxationMultiPhase(){};
 
 		protected:
@@ -85,9 +85,9 @@ namespace SPH
 		class BasePressureRelaxationMultiPhase : public RelaxationMultiPhase<PressureRelaxationInnerType>
 		{
 		public:
-			BasePressureRelaxationMultiPhase(BaseBodyRelationInner &inner_relation,
-											 BaseBodyRelationContact &contact_relation);
-			explicit BasePressureRelaxationMultiPhase(ComplexBodyRelation &complex_relation);
+			BasePressureRelaxationMultiPhase(BaseInnerRelation &inner_relation,
+											 BaseContactRelation &contact_relation);
+			explicit BasePressureRelaxationMultiPhase(ComplexRelation &complex_relation);
 			virtual ~BasePressureRelaxationMultiPhase(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -114,9 +114,9 @@ namespace SPH
 		class BaseDensityRelaxationMultiPhase : public RelaxationMultiPhase<DensityRelaxationInnerType>
 		{
 		public:
-			BaseDensityRelaxationMultiPhase(BaseBodyRelationInner &inner_relation,
-											BaseBodyRelationContact &contact_relation);
-			explicit BaseDensityRelaxationMultiPhase(ComplexBodyRelation &complex_relation);
+			BaseDensityRelaxationMultiPhase(BaseInnerRelation &inner_relation,
+											BaseContactRelation &contact_relation);
+			explicit BaseDensityRelaxationMultiPhase(ComplexRelation &complex_relation);
 			virtual ~BaseDensityRelaxationMultiPhase(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -137,7 +137,7 @@ namespace SPH
 		class MultiPhaseColorFunctionGradient : public LocalDynamics, public MultiPhaseData
 		{
 		public:
-			explicit MultiPhaseColorFunctionGradient(BaseBodyRelationContact &contact_relation);
+			explicit MultiPhaseColorFunctionGradient(BaseContactRelation &contact_relation);
 			virtual ~MultiPhaseColorFunctionGradient(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 

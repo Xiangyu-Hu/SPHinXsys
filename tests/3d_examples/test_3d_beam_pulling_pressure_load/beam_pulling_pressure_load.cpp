@@ -126,8 +126,8 @@ int main(int ac, char *av[])
 	ObserverBody beam_observer(system, "BeamObserver");
 	beam_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	/** topology */
-	BodyRelationInner beam_body_inner(beam_body);
-	BodyRelationContact beam_observer_contact(beam_observer, {&beam_body});
+	InnerRelation beam_body_inner(beam_body);
+	ContactRelation beam_observer_contact(beam_observer, {&beam_body});
 	/** initialize a time step */
 	SimpleDynamics<TimeStepInitialization> beam_initialize(beam_body);
 

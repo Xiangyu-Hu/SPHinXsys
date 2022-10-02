@@ -57,11 +57,11 @@ int main(int ac, char *av[])
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner insert_body_inner(insert_body);
-	ComplexBodyRelation water_block_complex(water_block, RealBodyVector{&wall_boundary, &insert_body});
-	BodyRelationContact insert_body_contact(insert_body, {&water_block});
-	BodyRelationContact beam_observer_contact(beam_observer, {&insert_body});
-	BodyRelationContact fluid_observer_contact(fluid_observer, {&water_block});
+	InnerRelation insert_body_inner(insert_body);
+	ComplexRelation water_block_complex(water_block, RealBodyVector{&wall_boundary, &insert_body});
+	ContactRelation insert_body_contact(insert_body, {&water_block});
+	ContactRelation beam_observer_contact(beam_observer, {&insert_body});
+	ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------

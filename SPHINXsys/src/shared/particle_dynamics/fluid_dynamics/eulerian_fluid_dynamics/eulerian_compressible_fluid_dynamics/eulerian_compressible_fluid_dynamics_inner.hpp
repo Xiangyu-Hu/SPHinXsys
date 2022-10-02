@@ -17,7 +17,7 @@ namespace SPH
 		//=================================================================================================//
 		template <class RiemannSolverType>
 		BasePressureRelaxationInner<RiemannSolverType>::
-			BasePressureRelaxationInner(BaseBodyRelationInner &inner_relation)
+			BasePressureRelaxationInner(BaseInnerRelation &inner_relation)
 			: BasePressureRelaxation(inner_relation),
 			  riemann_solver_(compressible_fluid_, compressible_fluid_) {}
 		//=================================================================================================//
@@ -46,7 +46,7 @@ namespace SPH
 		//=================================================================================================//
 		template <class RiemannSolverType>
 		BaseDensityAndEnergyRelaxationInner<RiemannSolverType>::
-			BaseDensityAndEnergyRelaxationInner(BaseBodyRelationInner &inner_relation)
+			BaseDensityAndEnergyRelaxationInner(BaseInnerRelation &inner_relation)
 			: BaseDensityAndEnergyRelaxation(inner_relation),
 			  riemann_solver_(compressible_fluid_, compressible_fluid_) {}
 		//=================================================================================================//

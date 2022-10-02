@@ -69,7 +69,7 @@ namespace SPH
 			  public EulerianWeaklyCompressibleFluidDataInner
 		{
 		public:
-			explicit ViscousAccelerationInner(BaseBodyRelationInner &inner_relation);
+			explicit ViscousAccelerationInner(BaseInnerRelation &inner_relation);
 			virtual ~ViscousAccelerationInner(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -108,7 +108,7 @@ namespace SPH
 		class BaseRelaxation : public LocalDynamics, public EulerianWeaklyCompressibleFluidDataInner
 		{
 		public:
-			explicit BaseRelaxation(BaseBodyRelationInner &inner_relation);
+			explicit BaseRelaxation(BaseInnerRelation &inner_relation);
 			virtual ~BaseRelaxation(){};
 
 		protected:
@@ -124,7 +124,7 @@ namespace SPH
 		class BasePressureRelaxation : public BaseRelaxation
 		{
 		public:
-			explicit BasePressureRelaxation(BaseBodyRelationInner &inner_relation);
+			explicit BasePressureRelaxation(BaseInnerRelation &inner_relation);
 			virtual ~BasePressureRelaxation(){};
 			void initialization(size_t index_i, Real dt = 0.0);
 			void update(size_t index_i, Real dt = 0.0);
@@ -139,7 +139,7 @@ namespace SPH
 		class BasePressureRelaxationInner : public BasePressureRelaxation
 		{
 		public:
-			explicit BasePressureRelaxationInner(BaseBodyRelationInner &inner_relation);
+			explicit BasePressureRelaxationInner(BaseInnerRelation &inner_relation);
 			virtual ~BasePressureRelaxationInner(){};
 			RiemannSolverType riemann_solver_;
 			void interaction(size_t index_i, Real dt = 0.0) ;
@@ -157,7 +157,7 @@ namespace SPH
 		class BaseDensityAndEnergyRelaxation : public BaseRelaxation
 		{
 		public:
-			explicit BaseDensityAndEnergyRelaxation(BaseBodyRelationInner &inner_relation);
+			explicit BaseDensityAndEnergyRelaxation(BaseInnerRelation &inner_relation);
 			virtual ~BaseDensityAndEnergyRelaxation(){};
 
 		protected:
@@ -172,7 +172,7 @@ namespace SPH
 		class BaseDensityAndEnergyRelaxationInner : public BaseDensityAndEnergyRelaxation
 		{
 		public:
-			explicit BaseDensityAndEnergyRelaxationInner(BaseBodyRelationInner &inner_relation);
+			explicit BaseDensityAndEnergyRelaxationInner(BaseInnerRelation &inner_relation);
 			virtual ~BaseDensityAndEnergyRelaxationInner(){};
 			RiemannSolverType riemann_solver_;
 			void interaction(size_t index_i, Real dt = 0.0);
@@ -191,7 +191,7 @@ namespace SPH
 		class NonReflectiveBoundaryVariableCorrection : public LocalDynamics, public EulerianWeaklyCompressibleFluidDataInner
 		{
 		public:
-			NonReflectiveBoundaryVariableCorrection(BaseBodyRelationInner &inner_relation)
+			NonReflectiveBoundaryVariableCorrection(BaseInnerRelation &inner_relation)
 				: LocalDynamics(inner_relation.sph_body_), EulerianWeaklyCompressibleFluidDataInner(inner_relation),
 				  rho_(particles_->rho_), p_(particles_->p_), vel_(particles_->vel_),
 				  mom_(particles_->mom_), pos_(particles_->pos_), mass_(particles_->mass_), Vol_(particles_->Vol_),

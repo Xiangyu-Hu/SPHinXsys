@@ -103,8 +103,8 @@ int main(int ac, char *av[])
 		//----------------------------------------------------------------------
 		//	Define body relation map used for particle relaxation.
 		//----------------------------------------------------------------------
-		BodyRelationInner ball_inner(ball);
-		BodyRelationInner wall_boundary_inner(wall_boundary);
+		InnerRelation ball_inner(ball);
+		InnerRelation wall_boundary_inner(wall_boundary);
 		//----------------------------------------------------------------------
 		//	Define the methods for particle relaxation for ball.
 		//----------------------------------------------------------------------
@@ -162,9 +162,9 @@ int main(int ac, char *av[])
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner ball_inner(ball);
-	SolidBodyRelationContact ball_contact(ball, {&wall_boundary});
-	BodyRelationContact ball_observer_contact(ball_observer, {&ball});
+	InnerRelation ball_inner(ball);
+	SurfaceContactRelation ball_contact(ball, {&wall_boundary});
+	ContactRelation ball_observer_contact(ball_observer, {&ball});
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.

@@ -194,7 +194,7 @@ namespace SPH
 				  RelaxationOfAllDiffusionSpeciesInner<SolidParticles, Solid>>
 		{
 		public:
-			explicit ElectroPhysiologyDiffusionRelaxationInner(BaseBodyRelationInner &inner_relation)
+			explicit ElectroPhysiologyDiffusionRelaxationInner(BaseInnerRelation &inner_relation)
 				: RelaxationOfAllDiffusionSpeciesRK2(inner_relation){};
 			virtual ~ElectroPhysiologyDiffusionRelaxationInner(){};
 		};
@@ -207,7 +207,7 @@ namespace SPH
 				  RelaxationOfAllDiffusionSpeciesComplex<SolidParticles, Solid, SolidParticles, Solid>>
 		{
 		public:
-			explicit ElectroPhysiologyDiffusionRelaxationComplex(ComplexBodyRelation &complex_relation)
+			explicit ElectroPhysiologyDiffusionRelaxationComplex(ComplexRelation &complex_relation)
 				: RelaxationOfAllDiffusionSpeciesRK2(complex_relation){};
 			virtual ~ElectroPhysiologyDiffusionRelaxationComplex(){};
 		};

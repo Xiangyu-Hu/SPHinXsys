@@ -82,7 +82,7 @@ namespace SPH
 		class ViscousAccelerationInner : public LocalDynamics, public CompressibleFluidDataInner
 		{
 		public:
-			explicit ViscousAccelerationInner(BaseBodyRelationInner &inner_relation);
+			explicit ViscousAccelerationInner(BaseInnerRelation &inner_relation);
 			virtual ~ViscousAccelerationInner(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -120,7 +120,7 @@ namespace SPH
 		class BaseRelaxation : public LocalDynamics, public CompressibleFluidDataInner
 		{
 		public:
-			explicit BaseRelaxation(BaseBodyRelationInner &inner_relation);
+			explicit BaseRelaxation(BaseInnerRelation &inner_relation);
 			virtual ~BaseRelaxation(){};
 
 		protected:
@@ -136,7 +136,7 @@ namespace SPH
 		class BasePressureRelaxation : public BaseRelaxation
 		{
 		public:
-			explicit BasePressureRelaxation(BaseBodyRelationInner &inner_relation);
+			explicit BasePressureRelaxation(BaseInnerRelation &inner_relation);
 			virtual ~BasePressureRelaxation(){};
 			void initialization(size_t index_i, Real dt = 0.0);
 			void update(size_t index_i, Real dt = 0.0);
@@ -151,7 +151,7 @@ namespace SPH
 		class BasePressureRelaxationInner : public BasePressureRelaxation
 		{
 		public:
-			explicit BasePressureRelaxationInner(BaseBodyRelationInner &inner_relation);
+			explicit BasePressureRelaxationInner(BaseInnerRelation &inner_relation);
 			virtual ~BasePressureRelaxationInner(){};
 			RiemannSolverType riemann_solver_;
 			void interaction(size_t index_i, Real dt = 0.0);
@@ -166,7 +166,7 @@ namespace SPH
 		class BaseDensityAndEnergyRelaxation : public BaseRelaxation
 		{
 		public:
-			explicit BaseDensityAndEnergyRelaxation(BaseBodyRelationInner &inner_relation);
+			explicit BaseDensityAndEnergyRelaxation(BaseInnerRelation &inner_relation);
 			virtual ~BaseDensityAndEnergyRelaxation(){};
 			void update(size_t index_i, Real dt = 0.0);
 		};
@@ -179,7 +179,7 @@ namespace SPH
 		class BaseDensityAndEnergyRelaxationInner : public BaseDensityAndEnergyRelaxation
 		{
 		public:
-			explicit BaseDensityAndEnergyRelaxationInner(BaseBodyRelationInner &inner_relation);
+			explicit BaseDensityAndEnergyRelaxationInner(BaseInnerRelation &inner_relation);
 			virtual ~BaseDensityAndEnergyRelaxationInner(){};
 			RiemannSolverType riemann_solver_;
 			void interaction(size_t index_i, Real dt = 0.0);

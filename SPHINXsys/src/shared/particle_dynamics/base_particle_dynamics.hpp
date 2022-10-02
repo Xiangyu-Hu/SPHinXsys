@@ -15,7 +15,7 @@ namespace SPH
 	//=================================================================================================//
 	template <class ParticlesType, class ContactParticlesType, class BaseDataDelegateType>
 	DataDelegateContact<ParticlesType, ContactParticlesType, BaseDataDelegateType>::
-		DataDelegateContact(BaseBodyRelationContact &body_contact_relation)
+		DataDelegateContact(BaseContactRelation &body_contact_relation)
 		: BaseDataDelegateType(body_contact_relation.sph_body_)
 	{
 		RealBodyVector contact_sph_bodies = body_contact_relation.contact_bodies_;
@@ -29,7 +29,7 @@ namespace SPH
 	//=================================================================================================//
 	template <class ParticlesType, class ContactParticlesType, class BaseDataDelegateType>
 	void DataDelegateContact<ParticlesType, ContactParticlesType, BaseDataDelegateType>::
-		addExtraContactRelation(SPHBody &this_body, BaseBodyRelationContact &extra_contact_relation)
+		addExtraContactRelation(SPHBody &this_body, BaseContactRelation &extra_contact_relation)
 	{
 		if (&this_body != &extra_contact_relation.sph_body_)
 		{

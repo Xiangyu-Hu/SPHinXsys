@@ -96,7 +96,7 @@ int main(int ac, char *av[])
 	//	The inner relation defines the particle configuration for particles within a body.
 	//	The contact relation defines the particle configuration between the bodies.
 	//----------------------------------------------------------------------
-	BodyRelationInner wave_body_inner(wave_body);
+	InnerRelation wave_body_inner(wave_body);
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.

@@ -98,8 +98,8 @@ int main()
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner plate_body_inner(plate_body);
-	BodyRelationContact plate_observer_contact(plate_observer, {&plate_body});
+	InnerRelation plate_body_inner(plate_body);
+	ContactRelation plate_observer_contact(plate_observer, {&plate_body});
 	//----------------------------------------------------------------------
 	//	Define all numerical methods which are used in this case.
 	//----------------------------------------------------------------------

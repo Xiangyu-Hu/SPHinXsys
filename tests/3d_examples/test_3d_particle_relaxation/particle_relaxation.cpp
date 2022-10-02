@@ -62,7 +62,7 @@ int main()
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInnerVariableSmoothingLength imported_model_inner(imported_model);
+	AdaptiveInnerRelation imported_model_inner(imported_model);
 	//----------------------------------------------------------------------
 	//	Methods used for particle relaxation.
 	//----------------------------------------------------------------------

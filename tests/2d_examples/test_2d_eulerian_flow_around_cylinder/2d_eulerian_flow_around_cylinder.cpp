@@ -64,7 +64,7 @@ public:
 class FarFieldBoundary : public eulerian_weakly_compressible_fluid_dynamics::NonReflectiveBoundaryVariableCorrection
 {
 public:
-	explicit FarFieldBoundary(BaseBodyRelationInner &inner_relation)
+	explicit FarFieldBoundary(BaseInnerRelation &inner_relation)
 		: eulerian_weakly_compressible_fluid_dynamics::NonReflectiveBoundaryVariableCorrection(inner_relation)
 	{
 		rho_farfield_ = rho0_f;
@@ -114,14 +114,14 @@ int main(int ac, char *av[])
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//	Note that the same relation should be defined only once.
 	//----------------------------------------------------------------------
-	ComplexBodyRelation water_block_complex(water_block, {&cylinder});
-	BodyRelationContact cylinder_contact(cylinder, {&water_block});
+	ComplexRelation water_block_complex(water_block, {&cylinder});
+	ContactRelation cylinder_contact(cylinder, {&water_block});
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------
 	if (sph_system.run_particle_relaxation_)
 	{
-		BodyRelationInner cylinder_inner(cylinder); // extra body topology only for particle relaxation
+		InnerRelation cylinder_inner(cylinder); // extra body topology only for particle relaxation
 		//----------------------------------------------------------------------
 		//	Methods used for particle relaxation.
 		//----------------------------------------------------------------------

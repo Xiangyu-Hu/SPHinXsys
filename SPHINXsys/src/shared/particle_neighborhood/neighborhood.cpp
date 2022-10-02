@@ -91,15 +91,15 @@ namespace SPH
 		}
 	};
 	//=================================================================================================//
-	NeighborBuilderInnerVariableSmoothingLength::
-		NeighborBuilderInnerVariableSmoothingLength(SPHBody &body)
+	AdaptiveNeighborBuilderInner::
+		AdaptiveNeighborBuilderInner(SPHBody &body)
 		: NeighborBuilder(),
 		  h_ratio_(*body.getBaseParticles().getVariableByName<Real>("SmoothingLengthRatio"))
 	{
 		kernel_ = body.sph_adaptation_->getKernel();
 	}
 	//=================================================================================================//
-	void NeighborBuilderInnerVariableSmoothingLength::
+	void AdaptiveNeighborBuilderInner::
 	operator()(Neighborhood &neighborhood, const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
 	{
 		size_t index_j = std::get<0>(list_data_j);

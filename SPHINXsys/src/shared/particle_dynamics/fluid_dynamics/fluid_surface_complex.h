@@ -45,9 +45,9 @@ namespace SPH
 		class FreeSurfaceIndicationComplex : public FreeSurfaceIndicationInner, public FluidContactData
 		{
 		public:
-			FreeSurfaceIndicationComplex(BaseBodyRelationInner &inner_relation,
-										 BaseBodyRelationContact &contact_relation, Real threshold = 0.75);
-			explicit FreeSurfaceIndicationComplex(ComplexBodyRelation &complex_relation, Real threshold = 0.75);
+			FreeSurfaceIndicationComplex(BaseInnerRelation &inner_relation,
+										 BaseContactRelation &contact_relation, Real threshold = 0.75);
+			explicit FreeSurfaceIndicationComplex(ComplexRelation &complex_relation, Real threshold = 0.75);
 			virtual ~FreeSurfaceIndicationComplex(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -70,8 +70,8 @@ namespace SPH
 		class ColorFunctionGradientComplex : public ColorFunctionGradientInner, public FluidContactData
 		{
 		public:
-			ColorFunctionGradientComplex(BaseBodyRelationInner &inner_relation, BaseBodyRelationContact &contact_relation);
-			ColorFunctionGradientComplex(ComplexBodyRelation &complex_relation);
+			ColorFunctionGradientComplex(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation);
+			ColorFunctionGradientComplex(ComplexRelation &complex_relation);
 			virtual ~ColorFunctionGradientComplex(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -86,7 +86,7 @@ namespace SPH
 		class SurfaceNormWithWall : public LocalDynamics, public FSIContactData
 		{
 		public:
-			SurfaceNormWithWall(BaseBodyRelationContact &contact_relation, Real contact_angle);
+			SurfaceNormWithWall(BaseContactRelation &contact_relation, Real contact_angle);
 			virtual ~SurfaceNormWithWall(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 

@@ -53,7 +53,7 @@ namespace SPH
 
 	public:
 		ObservedQuantityRecording(const std::string &quantity_name, IOEnvironment &io_environment,
-								  BaseBodyRelationContact &contact_relation)
+								  BaseContactRelation &contact_relation)
 			: BodyStatesRecording(io_environment, contact_relation.sph_body_),
 			  observer_dynamics::ObservingAQuantity<VariableType>(contact_relation, quantity_name),
 			  observer_(contact_relation.sph_body_), plt_engine_(),

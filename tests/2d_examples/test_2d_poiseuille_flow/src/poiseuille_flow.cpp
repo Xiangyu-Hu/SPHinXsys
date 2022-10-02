@@ -100,7 +100,7 @@ int main()
 	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 	/** topology */
-	ComplexBodyRelation water_block_complex(water_block, {&wall_boundary});
+	ComplexRelation water_block_complex(water_block, {&wall_boundary});
 	/**
 	 * @brief 	Define all numerical methods which are used in this case.
 	 */

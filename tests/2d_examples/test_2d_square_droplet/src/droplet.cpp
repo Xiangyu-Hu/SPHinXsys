@@ -37,10 +37,10 @@ int main()
 	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 	/** body topology */
-	ComplexBodyRelation water_air_complex(water_block, {&air_block});
-	BodyRelationContact water_wall_contact(water_block, {&wall_boundary});
-	ComplexBodyRelation air_water_complex(air_block, {&water_block});
-	BodyRelationContact air_wall_contact(air_block, {&wall_boundary});
+	ComplexRelation water_air_complex(water_block, {&air_block});
+	ContactRelation water_wall_contact(water_block, {&wall_boundary});
+	ComplexRelation air_water_complex(air_block, {&water_block});
+	ContactRelation air_wall_contact(air_block, {&wall_boundary});
 	/**
 	 * @brief 	Define all numerical methods which are used in this case.
 	 */

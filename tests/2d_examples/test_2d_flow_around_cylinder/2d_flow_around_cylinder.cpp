@@ -47,16 +47,16 @@ int main(int ac, char *av[])
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	ComplexBodyRelation water_block_complex(water_block, {&cylinder});
-	BodyRelationContact cylinder_contact(cylinder, {&water_block});
-	BodyRelationContact fluid_observer_contact(fluid_observer, {&water_block});
+	ComplexRelation water_block_complex(water_block, {&cylinder});
+	ContactRelation cylinder_contact(cylinder, {&water_block});
+	ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------
 	if (sph_system.run_particle_relaxation_)
 	{
 		/** body topology only for particle relaxation */
-		BodyRelationInner cylinder_inner(cylinder);
+		InnerRelation cylinder_inner(cylinder);
 		//----------------------------------------------------------------------
 		//	Methods used for particle relaxation.
 		//----------------------------------------------------------------------

@@ -49,7 +49,7 @@
 namespace SPH
 {
 	class SPHSystem;
-	class SPHBodyRelation;
+	class SPHRelation;
 	class BodySurface;
 
 	/**
@@ -78,7 +78,7 @@ namespace SPH
 		Shape *body_shape_;						   /**< volumetric geometry enclosing the body */
 		SPHAdaptation *sph_adaptation_;			   /**< numerical adaptation policy */
 		BaseMaterial *base_material_;			   /**< base material for dynamic cast in DataDelegate */
-		StdVec<SPHBodyRelation *> body_relations_; /**< all contact relations centered from this body **/
+		StdVec<SPHRelation *> body_relations_; /**< all contact relations centered from this body **/
 
 		explicit SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr);
 		virtual ~SPHBody(){};

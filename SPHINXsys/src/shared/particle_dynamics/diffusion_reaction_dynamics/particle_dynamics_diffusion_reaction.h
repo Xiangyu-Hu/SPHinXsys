@@ -109,10 +109,10 @@ namespace SPH
 	public:
 		typedef BaseParticlesType InnerBaseParticlesType;
 		typedef BaseMaterialType InnerBaseMaterialType;
-		typedef BaseBodyRelationInner BodyRelationType;
+		typedef BaseInnerRelation BodyRelationType;
 		DiffusionReaction<BaseMaterialType> &diffusion_reaction_material_;
 
-		explicit RelaxationOfAllDiffusionSpeciesInner(BaseBodyRelationInner &inner_relation);
+		explicit RelaxationOfAllDiffusionSpeciesInner(BaseInnerRelation &inner_relation);
 		virtual ~RelaxationOfAllDiffusionSpeciesInner(){};
 		void interaction(size_t index_i, Real dt = 0.0);
 		void update(size_t index_i, Real dt = 0.0);
@@ -139,8 +139,8 @@ namespace SPH
 										   Real surface_area_ij, const StdVec<StdLargeVec<Real>> &species_n_k);
 
 	public:
-		typedef ComplexBodyRelation BodyRelationType;
-		explicit RelaxationOfAllDiffusionSpeciesComplex(ComplexBodyRelation &complex_relation);
+		typedef ComplexRelation BodyRelationType;
+		explicit RelaxationOfAllDiffusionSpeciesComplex(ComplexRelation &complex_relation);
 		virtual ~RelaxationOfAllDiffusionSpeciesComplex(){};
 		void interaction(size_t index_i, Real dt = 0.0);
 	};

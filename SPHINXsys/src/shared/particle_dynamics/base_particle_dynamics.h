@@ -117,7 +117,7 @@ namespace SPH
 	class DataDelegateInner : public BaseDataDelegateType
 	{
 	public:
-		explicit DataDelegateInner(BaseBodyRelationInner &body_inner_relation)
+		explicit DataDelegateInner(BaseInnerRelation &body_inner_relation)
 			: BaseDataDelegateType(body_inner_relation.sph_body_),
 			  inner_configuration_(body_inner_relation.inner_configuration_){};
 		virtual ~DataDelegateInner(){};
@@ -137,9 +137,9 @@ namespace SPH
 	class DataDelegateContact : public BaseDataDelegateType
 	{
 	public:
-		explicit DataDelegateContact(BaseBodyRelationContact &body_contact_relation);
+		explicit DataDelegateContact(BaseContactRelation &body_contact_relation);
 		virtual ~DataDelegateContact(){};
-		void addExtraContactRelation(SPHBody &this_body, BaseBodyRelationContact &extra_contact_relation);
+		void addExtraContactRelation(SPHBody &this_body, BaseContactRelation &extra_contact_relation);
 
 	protected:
 		SPHBodyVector contact_bodies_;
@@ -158,7 +158,7 @@ namespace SPH
 								public DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>
 	{
 	public:
-		explicit DataDelegateComplex(ComplexBodyRelation &body_complex_relation)
+		explicit DataDelegateComplex(ComplexRelation &body_complex_relation)
 			: DataDelegateInner<ParticlesType>(body_complex_relation.inner_relation_),
 			  DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>(body_complex_relation.contact_relation_){};
 		virtual ~DataDelegateComplex(){};
@@ -174,17 +174,17 @@ namespace SPH
 	public:
 		// template for different combination of constructing body relations
 		template <typename... Args>
-		BaseInteractionComplex(BaseBodyRelationContact &contact_relation,
-									   BaseBodyRelationInner &inner_relation, Args &&...args)
+		BaseInteractionComplex(BaseContactRelation &contact_relation,
+									   BaseInnerRelation &inner_relation, Args &&...args)
 			: InteractionInnerType(inner_relation, std::forward<Args>(args)...),
 			  ContactDataType(contact_relation){};
 		template <typename... Args>
-		BaseInteractionComplex(ComplexBodyRelation &complex_relation, Args &&...args)
+		BaseInteractionComplex(ComplexRelation &complex_relation, Args &&...args)
 			: BaseInteractionComplex(complex_relation.contact_relation_,
 											 complex_relation.inner_relation_, std::forward<Args>(args)...){};
 		template <typename... Args>
-		BaseInteractionComplex(BaseBodyRelationContact &extra_contact_relation,
-									   ComplexBodyRelation &complex_relation, Args &&...args)
+		BaseInteractionComplex(BaseContactRelation &extra_contact_relation,
+									   ComplexRelation &complex_relation, Args &&...args)
 			: BaseInteractionComplex(complex_relation, std::forward<Args>(args)...)
 		{
 			this->addExtraContactRelation(this->sph_body_, extra_contact_relation);

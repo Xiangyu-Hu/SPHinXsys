@@ -121,9 +121,9 @@ int main(int ac, char *av[])
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner beam_inner(beam);
-	SolidBodyRelationContact shell_contact(shell, {&beam});
-	SolidBodyRelationContact beam_contact(beam, {&shell});
+	InnerRelation beam_inner(beam);
+	SurfaceContactRelation shell_contact(shell, {&beam});
+	SurfaceContactRelation beam_contact(beam, {&shell});
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------
@@ -132,7 +132,7 @@ int main(int ac, char *av[])
 		//----------------------------------------------------------------------
 		//	Define body relation map used for particle relaxation.
 		//----------------------------------------------------------------------
-		BodyRelationInner shell_inner(shell);
+		InnerRelation shell_inner(shell);
 		//----------------------------------------------------------------------
 		//	Define the methods for particle relaxation for wall boundary.
 		//----------------------------------------------------------------------

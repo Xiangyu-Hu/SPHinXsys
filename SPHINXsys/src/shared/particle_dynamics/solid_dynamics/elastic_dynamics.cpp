@@ -43,7 +43,7 @@ namespace SPH
 			  n_(particles_->n_), n0_(particles_->n0_), F_(particles_->F_) {}
 		//=================================================================================================//
 		DeformationGradientTensorBySummation::
-			DeformationGradientTensorBySummation(BaseBodyRelationInner &inner_relation)
+			DeformationGradientTensorBySummation(BaseInnerRelation &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_), ElasticSolidDataInner(inner_relation),
 			  pos_(particles_->pos_), B_(particles_->B_), F_(particles_->F_) {}
 		//=================================================================================================//
@@ -65,14 +65,14 @@ namespace SPH
 		}
 		//=================================================================================================//
 		BaseElasticRelaxation::
-			BaseElasticRelaxation(BaseBodyRelationInner &inner_relation)
+			BaseElasticRelaxation(BaseInnerRelation &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_), ElasticSolidDataInner(inner_relation),
 			  rho_(particles_->rho_), mass_(particles_->mass_),
 			  pos_(particles_->pos_), vel_(particles_->vel_), acc_(particles_->acc_),
 			  B_(particles_->B_), F_(particles_->F_), dF_dt_(particles_->dF_dt_) {}
 		//=================================================================================================//
 		BaseStressRelaxationFirstHalf::
-			BaseStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation)
+			BaseStressRelaxationFirstHalf(BaseInnerRelation &inner_relation)
 			: BaseElasticRelaxation(inner_relation),
 			  elastic_solid_(particles_->elastic_solid_),
 			  acc_prior_(particles_->acc_prior_)
@@ -88,7 +88,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		StressRelaxationFirstHalf::
-			StressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation)
+			StressRelaxationFirstHalf(BaseInnerRelation &inner_relation)
 			: BaseStressRelaxationFirstHalf(inner_relation)
 		{
 			particles_->registerVariable(stress_PK1_B_, "CorrectedStressPK1");
@@ -131,7 +131,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		KirchhoffParticleStressRelaxationFirstHalf::
-			KirchhoffParticleStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation)
+			KirchhoffParticleStressRelaxationFirstHalf(BaseInnerRelation &inner_relation)
 			: StressRelaxationFirstHalf(inner_relation){};
 		//=================================================================================================//
 		void KirchhoffParticleStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
@@ -155,7 +155,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		KirchhoffStressRelaxationFirstHalf::
-			KirchhoffStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation)
+			KirchhoffStressRelaxationFirstHalf(BaseInnerRelation &inner_relation)
 			: BaseStressRelaxationFirstHalf(inner_relation)
 		{
 			particles_->registerVariable(J_to_minus_2_over_dimension_, "DeterminantTerm");

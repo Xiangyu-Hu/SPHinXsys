@@ -109,14 +109,14 @@ namespace SPH
 	};
 
 	/**
-	 * @class NeighborBuilderInnerVariableSmoothingLength
+	 * @class AdaptiveNeighborBuilderInner
 	 * @brief A inner neighbor relation functor between particles i and j
 	 * when the particles have different smoothing lengths.
 	 */
-	class NeighborBuilderInnerVariableSmoothingLength : public NeighborBuilder
+	class AdaptiveNeighborBuilderInner : public NeighborBuilder
 	{
 	public:
-		explicit NeighborBuilderInnerVariableSmoothingLength(SPHBody &body);
+		explicit AdaptiveNeighborBuilderInner(SPHBody &body);
 		void operator()(Neighborhood &neighborhood,
 						const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 

@@ -57,7 +57,7 @@ namespace SPH
 		class CorrectConfiguration : public LocalDynamics, public SolidDataInner
 		{
 		public:
-			explicit CorrectConfiguration(BaseBodyRelationInner &inner_relation);
+			explicit CorrectConfiguration(BaseInnerRelation &inner_relation);
 			virtual ~CorrectConfiguration(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 

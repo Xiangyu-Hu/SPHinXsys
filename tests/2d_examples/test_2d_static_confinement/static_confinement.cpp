@@ -120,8 +120,8 @@ int main()
 	ObserverBody fluid_observer(sph_system, "FluidObserver");
 	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	/** topology */
-	BodyRelationInner water_block_inner(water_block);
-	BodyRelationContact fluid_observer_contact(fluid_observer, {&water_block});
+	InnerRelation water_block_inner(water_block);
+	ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
 	/**
 	 * @brief 	Define all numerical methods which are used in this case.
 	 */

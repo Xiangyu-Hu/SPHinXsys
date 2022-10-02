@@ -10,7 +10,7 @@ namespace SPH
 	namespace solid_dynamics
 	{
 		//=================================================================================================//
-		FluidViscousForceOnSolid::FluidViscousForceOnSolid(BaseBodyRelationContact &contact_relation)
+		FluidViscousForceOnSolid::FluidViscousForceOnSolid(BaseContactRelation &contact_relation)
 			: LocalDynamics(contact_relation.sph_body_), FSIContactData(contact_relation),
 			  Vol_(particles_->Vol_), vel_ave_(*particles_->AverageVelocity())
 		{
@@ -55,7 +55,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		FluidViscousForceOnSolidInEuler::
-			FluidViscousForceOnSolidInEuler(BaseBodyRelationContact &contact_relation)
+			FluidViscousForceOnSolidInEuler(BaseContactRelation &contact_relation)
 			: LocalDynamics(contact_relation.sph_body_),
 			  FSIContactData(contact_relation),
 			  Vol_(particles_->Vol_), vel_ave_(*particles_->AverageVelocity())

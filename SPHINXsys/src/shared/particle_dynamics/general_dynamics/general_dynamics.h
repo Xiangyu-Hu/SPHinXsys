@@ -106,7 +106,7 @@ namespace SPH
 	class ParticleSmoothing : public LocalDynamics, public GeneralDataDelegateInner
 	{
 	public:
-		explicit ParticleSmoothing(BaseBodyRelationInner &inner_relation, const std::string &variable_name)
+		explicit ParticleSmoothing(BaseInnerRelation &inner_relation, const std::string &variable_name)
 			: LocalDynamics(inner_relation.sph_body_), GeneralDataDelegateInner(inner_relation),
 			  W0_(sph_body_.sph_adaptation_->getKernel()->W0(Vecd(0))),
 			  smoothed_(*particles_->getVariableByName<VariableType>(variable_name))

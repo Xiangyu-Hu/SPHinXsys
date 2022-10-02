@@ -54,10 +54,10 @@ namespace SPH
 		{
 		public:
 			template <class BaseBodyRelationType, typename... Args>
-			RelaxationWithWall(BaseBodyRelationContact &wall_contact_relation,
+			RelaxationWithWall(BaseContactRelation &wall_contact_relation,
 							   BaseBodyRelationType &base_body_relation, Args &&...args);
 			template <typename... Args>
-			RelaxationWithWall(ComplexBodyRelation &fluid_wall_relation, Args &&...args)
+			RelaxationWithWall(ComplexRelation &fluid_wall_relation, Args &&...args)
 				: RelaxationWithWall(fluid_wall_relation.contact_relation_,
 									 fluid_wall_relation.inner_relation_, std::forward<Args>(args)...) {}
 			virtual ~RelaxationWithWall(){};
@@ -152,7 +152,7 @@ namespace SPH
 		{
 		public:
 			template <class BaseBodyRelationType, typename... Args>
-			BaseExtendPressureRelaxationWithWall(BaseBodyRelationContact &wall_contact_relation,
+			BaseExtendPressureRelaxationWithWall(BaseContactRelation &wall_contact_relation,
 												 BaseBodyRelationType &base_body_relation,
 												 Args &&...args, Real penalty_strength = 1.0)
 				: BasePressureRelaxationWithWall<BasePressureRelaxationType>(
@@ -162,7 +162,7 @@ namespace SPH
 				this->particles_->registerVariable(non_cnsrv_acc_, "NonConservativeAcceleration");
 			};
 			template <typename... Args>
-			BaseExtendPressureRelaxationWithWall(ComplexBodyRelation &fluid_wall_relation,
+			BaseExtendPressureRelaxationWithWall(ComplexRelation &fluid_wall_relation,
 												 Args &&...args, Real penalty_strength = 1.0)
 				: BaseExtendPressureRelaxationWithWall(fluid_wall_relation.contact_relation_,
 													   fluid_wall_relation.inner_relation_,
@@ -206,7 +206,7 @@ namespace SPH
 		class PressureRelaxationWithWallOldroyd_B : public BasePressureRelaxationWithWall<PressureRelaxationInnerOldroyd_B>
 		{
 		public:
-			explicit PressureRelaxationWithWallOldroyd_B(ComplexBodyRelation &fluid_wall_relation)
+			explicit PressureRelaxationWithWallOldroyd_B(ComplexRelation &fluid_wall_relation)
 				: BasePressureRelaxationWithWall<PressureRelaxationInnerOldroyd_B>(fluid_wall_relation){};
 
 			virtual ~PressureRelaxationWithWallOldroyd_B(){};
@@ -220,7 +220,7 @@ namespace SPH
 		class DensityRelaxationWithWallOldroyd_B : public BaseDensityRelaxationWithWall<DensityRelaxationInnerOldroyd_B>
 		{
 		public:
-			explicit DensityRelaxationWithWallOldroyd_B(ComplexBodyRelation &fluid_wall_relation)
+			explicit DensityRelaxationWithWallOldroyd_B(ComplexRelation &fluid_wall_relation)
 				: BaseDensityRelaxationWithWall<DensityRelaxationInnerOldroyd_B>(fluid_wall_relation){};
 
 			virtual ~DensityRelaxationWithWallOldroyd_B(){};

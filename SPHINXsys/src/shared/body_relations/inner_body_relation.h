@@ -34,10 +34,10 @@
 namespace SPH
 {
 	/**
-	 * @class BodyRelationInner
+	 * @class InnerRelation
 	 * @brief The first concrete relation within a SPH body
 	 */
-	class BodyRelationInner : public BaseBodyRelationInner
+	class InnerRelation : public BaseInnerRelation
 	{
 	protected:
 		SearchDepthSingleResolution get_single_search_depth_;
@@ -45,46 +45,46 @@ namespace SPH
 		CellLinkedList *cell_linked_list_;
 
 	public:
-		explicit BodyRelationInner(RealBody &real_body);
-		virtual ~BodyRelationInner(){};
+		explicit InnerRelation(RealBody &real_body);
+		virtual ~InnerRelation(){};
 
 		virtual void updateConfiguration() override;
 	};
 
 	/**
-	 * @class BodyRelationInnerVariableSmoothingLength
+	 * @class AdaptiveInnerRelation
 	 * @brief The relation within a SPH body with smoothing length adaptation
 	 */
-	class BodyRelationInnerVariableSmoothingLength : public BaseBodyRelationInner
+	class AdaptiveInnerRelation : public BaseInnerRelation
 	{
 	private:
-		UniquePtrKeepers<SearchDepthVariableSmoothingLength> search_variable_smoothinglength_ptr_vector_keeper_;
+		UniquePtrKeepers<AdaptiveSearchDepth> adaptive_search_depth_ptr_vector_keeper_;
 
 	protected:
 		size_t total_levels_;
-		StdVec<SearchDepthVariableSmoothingLength *> get_multi_level_search_depth_;
-		NeighborBuilderInnerVariableSmoothingLength get_inner_neighbor_variable_smoothing_length_;
+		StdVec<AdaptiveSearchDepth *> get_multi_level_search_depth_;
+		AdaptiveNeighborBuilderInner get_adaptive_inner_neighbor_;
 		StdVec<CellLinkedList *> cell_linked_list_levels_;
 
 	public:
-		explicit BodyRelationInnerVariableSmoothingLength(RealBody &real_body);
-		virtual ~BodyRelationInnerVariableSmoothingLength(){};
+		explicit AdaptiveInnerRelation(RealBody &real_body);
+		virtual ~AdaptiveInnerRelation(){};
 
 		virtual void updateConfiguration() override;
 	};
 
 	/**
-	 * @class SolidBodyRelationSelfContact
+	 * @class SelfSurfaceContactRelation
 	 * @brief The relation for self contact of a solid body
 	 * TODO: better called BodySurfaceSelfContact
 	 */
-	class SolidBodyRelationSelfContact : public BaseBodyRelationInner
+	class SelfSurfaceContactRelation : public BaseInnerRelation
 	{
 	public:
 		BodySurfaceLayer body_surface_layer_;
 
-		explicit SolidBodyRelationSelfContact(RealBody &real_body);
-		virtual ~SolidBodyRelationSelfContact(){};
+		explicit SelfSurfaceContactRelation(RealBody &real_body);
+		virtual ~SelfSurfaceContactRelation(){};
 		BodyPartByParticle &getDynamicsRange() { return body_surface_layer_; };
 
 		virtual void updateConfiguration() override;
@@ -99,19 +99,19 @@ namespace SPH
 	};
 
 	/**
-	 * @class TreeBodyRelationInner
+	 * @class TreeInnerRelation
 	 * @brief The relation within a reduced SPH body, viz. network
 	 */
-	class TreeBodyRelationInner : public BodyRelationInner
+	class TreeInnerRelation : public InnerRelation
 	{
 	protected:
 		TreeBody &generative_tree_;
 
 	public:
-		explicit TreeBodyRelationInner(RealBody &real_body)
-			: BodyRelationInner(real_body),
+		explicit TreeInnerRelation(RealBody &real_body)
+			: InnerRelation(real_body),
 			  generative_tree_(DynamicCast<TreeBody>(this, real_body)){};
-		virtual ~TreeBodyRelationInner(){};
+		virtual ~TreeInnerRelation(){};
 
 		virtual void updateConfiguration() override;
 	};

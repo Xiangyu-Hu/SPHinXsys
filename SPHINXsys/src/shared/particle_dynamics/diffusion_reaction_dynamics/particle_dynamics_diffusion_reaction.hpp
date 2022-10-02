@@ -30,7 +30,7 @@ namespace SPH
 	//=================================================================================================//
 	template <class BaseParticlesType, class BaseMaterialType>
 	RelaxationOfAllDiffusionSpeciesInner<BaseParticlesType, BaseMaterialType>::
-		RelaxationOfAllDiffusionSpeciesInner(BaseBodyRelationInner &inner_relation)
+		RelaxationOfAllDiffusionSpeciesInner(BaseInnerRelation &inner_relation)
 		: LocalDynamics(inner_relation.sph_body_),
 		  DiffusionReactionInnerData<BaseParticlesType, BaseMaterialType>(inner_relation),
 		  diffusion_reaction_material_(this->particles_->diffusion_reaction_material_),
@@ -106,7 +106,7 @@ namespace SPH
 			  class ContactBaseParticlesType, class ContactBaseMaterialType>
 	RelaxationOfAllDiffusionSpeciesComplex<BaseParticlesType, BaseMaterialType,
 										   ContactBaseParticlesType, ContactBaseMaterialType>::
-		RelaxationOfAllDiffusionSpeciesComplex(ComplexBodyRelation &complex_relation)
+		RelaxationOfAllDiffusionSpeciesComplex(ComplexRelation &complex_relation)
 		: RelaxationOfAllDiffusionSpeciesInner<BaseParticlesType, BaseMaterialType>(complex_relation.inner_relation_),
 		  DiffusionReactionContactData<BaseParticlesType, BaseMaterialType,
 									   ContactBaseParticlesType, ContactBaseMaterialType>(complex_relation.contact_relation_),

@@ -80,7 +80,7 @@ class DiffusionRelaxation
 		  RelaxationOfAllDiffusionSpeciesInner<ElasticSolidParticles, LocallyOrthotropicMuscle>>
 {
 public:
-	explicit DiffusionRelaxation(BodyRelationInner &body_inner_relation)
+	explicit DiffusionRelaxation(InnerRelation &body_inner_relation)
 		: RelaxationOfAllDiffusionSpeciesRK2(body_inner_relation){};
 	virtual ~DiffusionRelaxation(){};
 };
@@ -295,7 +295,7 @@ int main(int ac, char *av[])
 		herat_model.defineParticlesAndMaterial<DiffusionReactionParticles<ElasticSolidParticles, LocallyOrthotropicMuscle>, FiberDirectionDiffusion>();
 		herat_model.generateParticles<ParticleGeneratorLattice>();
 		/** topology */
-		BodyRelationInner herat_model_inner(herat_model);
+		InnerRelation herat_model_inner(herat_model);
 		/** Random reset the relax solid particle position. */
 		SimpleDynamics<RandomizeParticlePosition> random_particles(herat_model);
 		/** A  Physics relaxation step. */
@@ -401,12 +401,12 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	SPHBody relation (topology) section
 	//----------------------------------------------------------------------
-	BodyRelationInner physiology_heart_inner(physiology_heart);
-	BodyRelationInner mechanics_body_inner(mechanics_heart);
-	BodyRelationContact physiology_heart_contact(physiology_heart, {&mechanics_heart});
-	BodyRelationContact mechanics_body_contact(mechanics_heart, {&physiology_heart});
-	BodyRelationContact voltage_observer_contact(voltage_observer, {&physiology_heart});
-	BodyRelationContact myocardium_observer_contact(myocardium_observer, {&mechanics_heart});
+	InnerRelation physiology_heart_inner(physiology_heart);
+	InnerRelation mechanics_body_inner(mechanics_heart);
+	ContactRelation physiology_heart_contact(physiology_heart, {&mechanics_heart});
+	ContactRelation mechanics_body_contact(mechanics_heart, {&physiology_heart});
+	ContactRelation voltage_observer_contact(voltage_observer, {&physiology_heart});
+	ContactRelation myocardium_observer_contact(myocardium_observer, {&mechanics_heart});
 	//----------------------------------------------------------------------
 	//	SPH Method section
 	//----------------------------------------------------------------------

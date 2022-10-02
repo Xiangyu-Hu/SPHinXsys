@@ -15,7 +15,7 @@ namespace SPH
 	{
 		//=================================================================================================//
 		CorrectInterpolationKernelWeights::
-			CorrectInterpolationKernelWeights(BaseBodyRelationContact &contact_relation) : 
+			CorrectInterpolationKernelWeights(BaseContactRelation &contact_relation) : 
 			LocalDynamics(contact_relation.sph_body_),
 			InterpolationContactData(contact_relation)
 		{

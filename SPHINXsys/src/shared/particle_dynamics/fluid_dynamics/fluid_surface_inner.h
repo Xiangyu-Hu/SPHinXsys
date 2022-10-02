@@ -46,7 +46,7 @@ namespace SPH
 		class FreeSurfaceIndicationInner : public LocalDynamics, public FluidDataInner
 		{
 		public:
-			explicit FreeSurfaceIndicationInner(BaseBodyRelationInner &inner_relation, Real threshold = 0.75);
+			explicit FreeSurfaceIndicationInner(BaseInnerRelation &inner_relation, Real threshold = 0.75);
 			virtual ~FreeSurfaceIndicationInner(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 			void update(size_t index_i, Real dt = 0.0);
@@ -86,7 +86,7 @@ namespace SPH
 		class DensitySummationFreeSurfaceInner : public DensitySummationInner
 		{
 		public:
-			explicit DensitySummationFreeSurfaceInner(BaseBodyRelationInner &inner_relation)
+			explicit DensitySummationFreeSurfaceInner(BaseInnerRelation &inner_relation)
 				: DensitySummationInner(inner_relation){};
 			virtual ~DensitySummationFreeSurfaceInner(){};
 
@@ -104,7 +104,7 @@ namespace SPH
 		class DensitySummationFreeStreamInner : public DensitySummationFreeSurfaceInner
 		{
 		public:
-			explicit DensitySummationFreeStreamInner(BaseBodyRelationInner &inner_relation)
+			explicit DensitySummationFreeStreamInner(BaseInnerRelation &inner_relation)
 				: DensitySummationFreeSurfaceInner(inner_relation),
 				  surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")){};
 			virtual ~DensitySummationFreeStreamInner(){};
@@ -164,7 +164,7 @@ namespace SPH
 		class ColorFunctionGradientInner : public LocalDynamics, public FluidDataInner
 		{
 		public:
-			explicit ColorFunctionGradientInner(BaseBodyRelationInner &inner_relation);
+			explicit ColorFunctionGradientInner(BaseInnerRelation &inner_relation);
 			virtual ~ColorFunctionGradientInner(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -183,7 +183,7 @@ namespace SPH
 		class ColorFunctionGradientInterpolationInner : public LocalDynamics, public FluidDataInner
 		{
 		public:
-			explicit ColorFunctionGradientInterpolationInner(BaseBodyRelationInner &inner_relation);
+			explicit ColorFunctionGradientInterpolationInner(BaseInnerRelation &inner_relation);
 			virtual ~ColorFunctionGradientInterpolationInner(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -203,8 +203,8 @@ namespace SPH
 		class SurfaceTensionAccelerationInner : public LocalDynamics, public FluidDataInner
 		{
 		public:
-			SurfaceTensionAccelerationInner(BaseBodyRelationInner &inner_relation, Real gamma);
-			explicit SurfaceTensionAccelerationInner(BaseBodyRelationInner &inner_relation);
+			SurfaceTensionAccelerationInner(BaseInnerRelation &inner_relation, Real gamma);
+			explicit SurfaceTensionAccelerationInner(BaseInnerRelation &inner_relation);
 			virtual ~SurfaceTensionAccelerationInner(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 

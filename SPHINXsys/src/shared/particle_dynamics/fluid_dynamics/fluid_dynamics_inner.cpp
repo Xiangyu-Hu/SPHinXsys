@@ -17,7 +17,7 @@ namespace SPH
 			: LocalDynamics(sph_body), FluidDataSimple(sph_body),
 			  pos_(particles_->pos_), vel_(particles_->vel_) {}
 		//=================================================================================================//
-		DensitySummationInner::DensitySummationInner(BaseBodyRelationInner &inner_relation)
+		DensitySummationInner::DensitySummationInner(BaseInnerRelation &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
 			  rho_(particles_->rho_), rho_sum_(particles_->rho_sum_), mass_(particles_->mass_),
 			  W0_(sph_body_.sph_adaptation_->getKernel()->W0(Vecd(0))),
@@ -39,7 +39,7 @@ namespace SPH
 			rho_[index_i] = ReinitializedDensity(rho_sum_[index_i], rho0_, rho_[index_i]);
 		}
 		//=================================================================================================//
-		BaseViscousAccelerationInner::BaseViscousAccelerationInner(BaseBodyRelationInner &inner_relation)
+		BaseViscousAccelerationInner::BaseViscousAccelerationInner(BaseInnerRelation &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
 			  rho_(particles_->rho_), vel_(particles_->vel_), acc_prior_(particles_->acc_prior_),
 			  mu_(particles_->fluid_.ReferenceViscosity()),
@@ -82,7 +82,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		TransportVelocityCorrectionInner::
-			TransportVelocityCorrectionInner(BaseBodyRelationInner &inner_relation, Real coefficient)
+			TransportVelocityCorrectionInner(BaseInnerRelation &inner_relation, Real coefficient)
 			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
 			  rho_(particles_->rho_), pos_(particles_->pos_),
 			  surface_indicator_(particles_->surface_indicator_), p_background_(0),
@@ -163,7 +163,7 @@ namespace SPH
 			return AdvectionTimeStepSizeForImplicitViscosity::reduce(index_i, dt);
 		}
 		//=================================================================================================//
-		VorticityInner::VorticityInner(BaseBodyRelationInner &inner_relation)
+		VorticityInner::VorticityInner(BaseInnerRelation &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
 			  vel_(particles_->vel_)
 		{
@@ -186,14 +186,14 @@ namespace SPH
 			vorticity_[index_i] = vorticity;
 		}
 		//=================================================================================================//
-		BaseRelaxation::BaseRelaxation(BaseBodyRelationInner &inner_relation)
+		BaseRelaxation::BaseRelaxation(BaseInnerRelation &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
 			  fluid_(particles_->fluid_), rho_(particles_->rho_),
 			  p_(particles_->p_), drho_dt_(particles_->drho_dt_),
 			  pos_(particles_->pos_), vel_(particles_->vel_),
 			  acc_(particles_->acc_), acc_prior_(particles_->acc_prior_) {}
 		//=================================================================================================//
-		BasePressureRelaxation::BasePressureRelaxation(BaseBodyRelationInner &inner_relation)
+		BasePressureRelaxation::BasePressureRelaxation(BaseInnerRelation &inner_relation)
 			: BaseRelaxation(inner_relation) {}
 		//=================================================================================================//
 		void BasePressureRelaxation::initialization(size_t index_i, Real dt)
@@ -230,7 +230,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		BaseDensityRelaxation::
-			BaseDensityRelaxation(BaseBodyRelationInner &inner_relation) 
+			BaseDensityRelaxation(BaseInnerRelation &inner_relation) 
 			: BaseRelaxation(inner_relation),
 			Vol_(particles_->Vol_), mass_(particles_->mass_) {}
 		//=================================================================================================//
@@ -246,7 +246,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		PressureRelaxationInnerOldroyd_B ::
-			PressureRelaxationInnerOldroyd_B(BaseBodyRelationInner &inner_relation)
+			PressureRelaxationInnerOldroyd_B(BaseInnerRelation &inner_relation)
 			: PressureRelaxationDissipativeRiemannInner(inner_relation),
 			  tau_(DynamicCast<ViscoelasticFluidParticles>(this, particles_)->tau_),
 			  dtau_dt_(DynamicCast<ViscoelasticFluidParticles>(this, particles_)->dtau_dt_) {}
@@ -277,7 +277,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		DensityRelaxationInnerOldroyd_B::
-			DensityRelaxationInnerOldroyd_B(BaseBodyRelationInner &inner_relation)
+			DensityRelaxationInnerOldroyd_B(BaseInnerRelation &inner_relation)
 			: DensityRelaxationDissipativeRiemannInner(inner_relation),
 			  oldroyd_b_fluid_(DynamicCast<Oldroyd_B_Fluid>(this, particles_->fluid_)),
 			  tau_(DynamicCast<ViscoelasticFluidParticles>(this, particles_)->tau_),

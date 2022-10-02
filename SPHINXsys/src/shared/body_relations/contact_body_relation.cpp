@@ -12,19 +12,19 @@
 namespace SPH
 {
 	//=================================================================================================//
-	BodyRelationContact::BodyRelationContact(SPHBody &sph_body, RealBodyVector contact_sph_bodies)
-		: BaseBodyRelationContact(sph_body, contact_sph_bodies)
+	ContactRelation::ContactRelation(SPHBody &sph_body, RealBodyVector contact_sph_bodies)
+		: BaseContactRelation(sph_body, contact_sph_bodies)
 	{
 		initialization();
 	}
 	//=================================================================================================//
-	BodyRelationContact::BodyRelationContact(SPHBody &sph_body, BodyPartVector contact_body_parts)
-		: BaseBodyRelationContact(sph_body, contact_body_parts)
+	ContactRelation::ContactRelation(SPHBody &sph_body, BodyPartVector contact_body_parts)
+		: BaseContactRelation(sph_body, contact_body_parts)
 	{
 		initialization();
 	}
 	//=================================================================================================//
-	void BodyRelationContact::initialization()
+	void ContactRelation::initialization()
 	{
 		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{
@@ -38,7 +38,7 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void BodyRelationContact::updateConfiguration()
+	void ContactRelation::updateConfiguration()
 	{
 		resetNeighborhoodCurrentSize();
 		size_t total_real_particles = base_particles_.total_real_particles_;
@@ -50,25 +50,25 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	SolidBodyRelationContact::SolidBodyRelationContact(SPHBody &sph_body, RealBodyVector contact_bodies)
-		: BaseBodyRelationContact(sph_body, contact_bodies),
+	SurfaceContactRelation::SurfaceContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies)
+		: BaseContactRelation(sph_body, contact_bodies),
 		  body_surface_layer_(shape_surface_ptr_keeper_.createPtr<BodySurfaceLayer>(sph_body)),
 		  body_part_particles_(body_surface_layer_->body_part_particles_)
 	{
 		initialization();
 	}
 	//=================================================================================================//
-	SolidBodyRelationContact::
-		SolidBodyRelationContact(SolidBodyRelationSelfContact &solid_body_relation_self_contact,
+	SurfaceContactRelation::
+		SurfaceContactRelation(SelfSurfaceContactRelation &solid_body_relation_self_contact,
 								 RealBodyVector contact_bodies)
-		: BaseBodyRelationContact(*solid_body_relation_self_contact.real_body_, contact_bodies),
+		: BaseContactRelation(*solid_body_relation_self_contact.real_body_, contact_bodies),
 		  body_surface_layer_(&solid_body_relation_self_contact.body_surface_layer_),
 		  body_part_particles_(body_surface_layer_->body_part_particles_)
 	{
 		initialization();
 	}
 	//=================================================================================================//
-	void SolidBodyRelationContact::resetNeighborhoodCurrentSize()
+	void SurfaceContactRelation::resetNeighborhoodCurrentSize()
 	{
 		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{
@@ -86,7 +86,7 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void SolidBodyRelationContact::initialization()
+	void SurfaceContactRelation::initialization()
 	{
 		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{
@@ -100,7 +100,7 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void SolidBodyRelationContact::updateConfiguration()
+	void SurfaceContactRelation::updateConfiguration()
 	{
 		resetNeighborhoodCurrentSize();
 		size_t total_real_particles = body_part_particles_.size();
@@ -112,18 +112,18 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	BodyRelationContactToBodyPart::BodyRelationContactToBodyPart(RealBody &real_body, BodyPartVector contact_body_parts)
-		: BodyRelationContact(real_body, contact_body_parts), contact_body_parts_(contact_body_parts)
+	ContactRelationToBodyPart::ContactRelationToBodyPart(RealBody &real_body, BodyPartVector contact_body_parts)
+		: ContactRelation(real_body, contact_body_parts), contact_body_parts_(contact_body_parts)
 	{
 		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{
 			get_part_contact_neighbors_.push_back(
-				neighbor_relation_contact_body_part_ptr_vector_keeper_
+				neighbor_builder_contact_body_part_ptr_vector_keeper_
 					.createPtr<NeighborBuilderContactBodyPart>(sph_body_, *contact_body_parts[k]));
 		}
 	}
 	//=================================================================================================//
-	void BodyRelationContactToBodyPart::updateConfiguration()
+	void ContactRelationToBodyPart::updateConfiguration()
 	{
 		size_t number_of_particles = base_particles_.total_real_particles_;
 		for (size_t k = 0; k != contact_body_parts_.size(); ++k)

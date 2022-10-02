@@ -68,7 +68,7 @@ namespace SPH
 		class DensitySummationInner : public LocalDynamics, public FluidDataInner
 		{
 		public:
-			explicit DensitySummationInner(BaseBodyRelationInner &inner_relation);
+			explicit DensitySummationInner(BaseInnerRelation &inner_relation);
 			virtual ~DensitySummationInner(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 			void update(size_t index_i, Real dt = 0.0);
@@ -86,7 +86,7 @@ namespace SPH
 		class BaseViscousAccelerationInner : public LocalDynamics, public FluidDataInner
 		{
 		public:
-			explicit BaseViscousAccelerationInner(BaseBodyRelationInner &inner_relation);
+			explicit BaseViscousAccelerationInner(BaseInnerRelation &inner_relation);
 			virtual ~BaseViscousAccelerationInner(){};
 
 		protected:
@@ -103,7 +103,7 @@ namespace SPH
 		class ViscousAccelerationInner : public BaseViscousAccelerationInner
 		{
 		public:
-			explicit ViscousAccelerationInner(BaseBodyRelationInner &inner_relation)
+			explicit ViscousAccelerationInner(BaseInnerRelation &inner_relation)
 				: BaseViscousAccelerationInner(inner_relation){};
 			virtual ~ViscousAccelerationInner(){};
 			void interaction(size_t index_i, Real dt = 0.0);
@@ -117,7 +117,7 @@ namespace SPH
 		class AngularConservativeViscousAccelerationInner : public BaseViscousAccelerationInner
 		{
 		public:
-			explicit AngularConservativeViscousAccelerationInner(BaseBodyRelationInner &inner_relation)
+			explicit AngularConservativeViscousAccelerationInner(BaseInnerRelation &inner_relation)
 				: BaseViscousAccelerationInner(inner_relation){};
 			virtual ~AngularConservativeViscousAccelerationInner(){};
 			void interaction(size_t index_i, Real dt = 0.0);
@@ -130,7 +130,7 @@ namespace SPH
 		class TransportVelocityCorrectionInner : public LocalDynamics, public FluidDataInner
 		{
 		public:
-			explicit TransportVelocityCorrectionInner(BaseBodyRelationInner &inner_relation, Real coefficient = 7.0);
+			explicit TransportVelocityCorrectionInner(BaseInnerRelation &inner_relation, Real coefficient = 7.0);
 			virtual ~TransportVelocityCorrectionInner(){};
 			virtual void setupDynamics(Real dt = 0.0) override;
 			void interaction(size_t index_i, Real dt = 0.0);
@@ -205,7 +205,7 @@ namespace SPH
 		class VorticityInner : public LocalDynamics, public FluidDataInner
 		{
 		public:
-			explicit VorticityInner(BaseBodyRelationInner &inner_relation);
+			explicit VorticityInner(BaseInnerRelation &inner_relation);
 			virtual ~VorticityInner(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -221,7 +221,7 @@ namespace SPH
 		class BaseRelaxation : public LocalDynamics, public FluidDataInner
 		{
 		public:
-			explicit BaseRelaxation(BaseBodyRelationInner &inner_relation);
+			explicit BaseRelaxation(BaseInnerRelation &inner_relation);
 			virtual ~BaseRelaxation(){};
 
 		protected:
@@ -237,7 +237,7 @@ namespace SPH
 		class BasePressureRelaxation : public BaseRelaxation
 		{
 		public:
-			explicit BasePressureRelaxation(BaseBodyRelationInner &inner_relation);
+			explicit BasePressureRelaxation(BaseInnerRelation &inner_relation);
 			virtual ~BasePressureRelaxation(){};
 			void initialization(size_t index_i, Real dt = 0.0);
 			void update(size_t index_i, Real dt = 0.0);
@@ -255,7 +255,7 @@ namespace SPH
 		class BasePressureRelaxationInner : public BasePressureRelaxation
 		{
 		public:
-			explicit BasePressureRelaxationInner(BaseBodyRelationInner &inner_relation);
+			explicit BasePressureRelaxationInner(BaseInnerRelation &inner_relation);
 			virtual ~BasePressureRelaxationInner(){};
 			RiemannSolverType riemann_solver_;
 			void interaction(size_t index_i, Real dt = 0.0);
@@ -272,7 +272,7 @@ namespace SPH
 		class BaseDensityRelaxation : public BaseRelaxation
 		{
 		public:
-			explicit BaseDensityRelaxation(BaseBodyRelationInner &inner_relation);
+			explicit BaseDensityRelaxation(BaseInnerRelation &inner_relation);
 			virtual ~BaseDensityRelaxation(){};
 			virtual void initialization(size_t index_i, Real dt = 0.0);
 			virtual void update(size_t index_i, Real dt = 0.0);
@@ -289,7 +289,7 @@ namespace SPH
 		class BaseDensityRelaxationInner : public BaseDensityRelaxation
 		{
 		public:
-			explicit BaseDensityRelaxationInner(BaseBodyRelationInner &inner_relation);
+			explicit BaseDensityRelaxationInner(BaseInnerRelation &inner_relation);
 			virtual ~BaseDensityRelaxationInner(){};
 			RiemannSolverType riemann_solver_;
 			void interaction(size_t index_i, Real dt = 0.0);
@@ -306,7 +306,7 @@ namespace SPH
 		class PressureRelaxationInnerOldroyd_B : public PressureRelaxationDissipativeRiemannInner
 		{
 		public:
-			explicit PressureRelaxationInnerOldroyd_B(BaseBodyRelationInner &inner_relation);
+			explicit PressureRelaxationInnerOldroyd_B(BaseInnerRelation &inner_relation);
 			virtual ~PressureRelaxationInnerOldroyd_B(){};
 			void initialization(size_t index_i, Real dt = 0.0);
 			void interaction(size_t index_i, Real dt = 0.0);
@@ -322,7 +322,7 @@ namespace SPH
 		class DensityRelaxationInnerOldroyd_B : public DensityRelaxationDissipativeRiemannInner
 		{
 		public:
-			explicit DensityRelaxationInnerOldroyd_B(BaseBodyRelationInner &inner_relation);
+			explicit DensityRelaxationInnerOldroyd_B(BaseInnerRelation &inner_relation);
 			virtual ~DensityRelaxationInnerOldroyd_B(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 			void update(size_t index_i, Real dt = 0.0);

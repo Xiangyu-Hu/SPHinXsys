@@ -107,7 +107,7 @@ namespace SPH
 		class DeformationGradientTensorBySummation : public LocalDynamics, public ElasticSolidDataInner
 		{
 		public:
-			explicit DeformationGradientTensorBySummation(BaseBodyRelationInner &inner_relation);
+			explicit DeformationGradientTensorBySummation(BaseInnerRelation &inner_relation);
 			virtual ~DeformationGradientTensorBySummation(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -123,7 +123,7 @@ namespace SPH
 		class BaseElasticRelaxation : public LocalDynamics, public ElasticSolidDataInner
 		{
 		public:
-			explicit BaseElasticRelaxation(BaseBodyRelationInner &inner_relation);
+			explicit BaseElasticRelaxation(BaseInnerRelation &inner_relation);
 			virtual ~BaseElasticRelaxation(){};
 
 		protected:
@@ -140,7 +140,7 @@ namespace SPH
 		class BaseStressRelaxationFirstHalf : public BaseElasticRelaxation
 		{
 		public:
-			explicit BaseStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation);
+			explicit BaseStressRelaxationFirstHalf(BaseInnerRelation &inner_relation);
 			virtual ~BaseStressRelaxationFirstHalf(){};
 			void update(size_t index_i, Real dt = 0.0);
 
@@ -159,7 +159,7 @@ namespace SPH
 		class StressRelaxationFirstHalf : public BaseStressRelaxationFirstHalf
 		{
 		public:
-			explicit StressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation);
+			explicit StressRelaxationFirstHalf(BaseInnerRelation &inner_relation);
 			virtual ~StressRelaxationFirstHalf(){};
 			void initialization(size_t index_i, Real dt = 0.0);
 			void interaction(size_t index_i, Real dt = 0.0);
@@ -176,7 +176,7 @@ namespace SPH
 		class KirchhoffParticleStressRelaxationFirstHalf : public StressRelaxationFirstHalf
 		{
 		public:
-			explicit KirchhoffParticleStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation);
+			explicit KirchhoffParticleStressRelaxationFirstHalf(BaseInnerRelation &inner_relation);
 			virtual ~KirchhoffParticleStressRelaxationFirstHalf(){};
 			void initialization(size_t index_i, Real dt = 0.0);
 
@@ -202,7 +202,7 @@ namespace SPH
 		class KirchhoffStressRelaxationFirstHalf : public BaseStressRelaxationFirstHalf
 		{
 		public:
-			explicit KirchhoffStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation);
+			explicit KirchhoffStressRelaxationFirstHalf(BaseInnerRelation &inner_relation);
 			virtual ~KirchhoffStressRelaxationFirstHalf(){};
 			void initialization(size_t index_i, Real dt = 0.0);
 			void interaction(size_t index_i, Real dt = 0.0);
@@ -222,7 +222,7 @@ namespace SPH
 		class StressRelaxationSecondHalf : public BaseElasticRelaxation
 		{
 		public:
-			explicit StressRelaxationSecondHalf(BaseBodyRelationInner &inner_relation)
+			explicit StressRelaxationSecondHalf(BaseInnerRelation &inner_relation)
 				: BaseElasticRelaxation(inner_relation){};
 			virtual ~StressRelaxationSecondHalf(){};
 			void initialization(size_t index_i, Real dt = 0.0);

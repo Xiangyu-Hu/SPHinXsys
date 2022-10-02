@@ -88,9 +88,9 @@ int main(int ac, char *av[])
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner coil_inner(coil);
-	SolidBodyRelationSelfContact coil_self_contact(coil);
-	SolidBodyRelationContact coil_contact(coil_self_contact, {&stationary_plate});
+	InnerRelation coil_inner(coil);
+	SelfSurfaceContactRelation coil_self_contact(coil);
+	SurfaceContactRelation coil_contact(coil_self_contact, {&stationary_plate});
 	//----------------------------------------------------------------------
 	//	check whether run particle relaxation for body fitted particle distribution.
 	//----------------------------------------------------------------------

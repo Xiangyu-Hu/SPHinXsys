@@ -178,7 +178,7 @@ class ThermalRelaxationComplex
 			  FluidParticles, WeaklyCompressibleFluid, SolidParticles, Solid>>
 {
 public:
-	explicit ThermalRelaxationComplex(ComplexBodyRelation &body_complex_relation)
+	explicit ThermalRelaxationComplex(ComplexRelation &body_complex_relation)
 		: RelaxationOfAllDiffusionSpeciesRK2(body_complex_relation){};
 	virtual ~ThermalRelaxationComplex(){};
 };
@@ -240,10 +240,10 @@ int main()
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner fluid_body_inner(thermofluid_body);
-	BodyRelationInner solid_body_inner(thermosolid_body);
-	ComplexBodyRelation fluid_body_complex(fluid_body_inner, {&thermosolid_body});
-	BodyRelationContact fluid_observer_contact(temperature_observer, {&thermofluid_body});
+	InnerRelation fluid_body_inner(thermofluid_body);
+	InnerRelation solid_body_inner(thermosolid_body);
+	ComplexRelation fluid_body_complex(fluid_body_inner, {&thermosolid_body});
+	ContactRelation fluid_observer_contact(temperature_observer, {&thermofluid_body});
 
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.

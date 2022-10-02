@@ -37,27 +37,27 @@
 namespace SPH
 {
 	/**
-	 * @class BodyRelationContact
+	 * @class ContactRelation
 	 * @brief The relation between a SPH body and its contact SPH bodies
 	 */
-	class BodyRelationContact : public BaseBodyRelationContact
+	class ContactRelation : public BaseContactRelation
 	{
 	protected:
 		void initialization();
 
 	public:
-		BodyRelationContact(SPHBody &sph_body, RealBodyVector contact_bodies);
-		BodyRelationContact(SPHBody &sph_body, BodyPartVector contact_body_parts);
-		virtual ~BodyRelationContact(){};
+		ContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies);
+		ContactRelation(SPHBody &sph_body, BodyPartVector contact_body_parts);
+		virtual ~ContactRelation(){};
 		virtual void updateConfiguration() override;
 	};
 
 	/**
-	 * @class SolidBodyRelationContact
+	 * @class SurfaceContactRelation
 	 * @brief The relation between a solid body and its contact solid bodies
 	 * TODO: better called BodySurfaceContact
 	 */
-	class SolidBodyRelationContact : public BaseBodyRelationContact
+	class SurfaceContactRelation : public BaseContactRelation
 	{
 	private:
 		UniquePtrKeeper<BodySurfaceLayer> shape_surface_ptr_keeper_;
@@ -65,10 +65,10 @@ namespace SPH
 	public:
 		BodySurfaceLayer *body_surface_layer_;
 
-		SolidBodyRelationContact(SPHBody &sph_body, RealBodyVector contact_bodies);
-		SolidBodyRelationContact(SolidBodyRelationSelfContact &solid_body_relation_self_contact,
+		SurfaceContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies);
+		SurfaceContactRelation(SelfSurfaceContactRelation &solid_body_relation_self_contact,
 								 RealBodyVector contact_bodies);
-		virtual ~SolidBodyRelationContact(){};
+		virtual ~SurfaceContactRelation(){};
 		BodyPartByParticle &getDynamicsRange() { return *body_surface_layer_; };
 
 		virtual void updateConfiguration() override;
@@ -81,20 +81,20 @@ namespace SPH
 	};
 
 	/**
-	 * @class BodyRelationContactToBodyPart
+	 * @class ContactRelationToBodyPart
 	 * @brief The relation between a SPH body and a vector of body parts.
 	 */
-	class BodyRelationContactToBodyPart : public BodyRelationContact
+	class ContactRelationToBodyPart : public ContactRelation
 	{
 	protected:
-		UniquePtrKeepers<NeighborBuilderContactBodyPart> neighbor_relation_contact_body_part_ptr_vector_keeper_;
+		UniquePtrKeepers<NeighborBuilderContactBodyPart> neighbor_builder_contact_body_part_ptr_vector_keeper_;
 
 	public:
 		BodyPartVector contact_body_parts_;
 		StdVec<NeighborBuilderContactBodyPart *> get_part_contact_neighbors_;
 
-		BodyRelationContactToBodyPart(RealBody &real_body, BodyPartVector contact_body_parts);
-		virtual ~BodyRelationContactToBodyPart(){};
+		ContactRelationToBodyPart(RealBody &real_body, BodyPartVector contact_body_parts);
+		virtual ~ContactRelationToBodyPart(){};
 
 		virtual void updateConfiguration() override;
 	};

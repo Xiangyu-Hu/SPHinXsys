@@ -147,8 +147,8 @@ int main(int ac, char *av[])
 	 *  The contact map gives the data connections between the bodies
 	 *  basically the the range of bodies to build neighbor particle lists
 	 */
-	BodyRelationInner plate_body_inner(plate_body);
-	BodyRelationContact plate_observer_contact(plate_observer, {&plate_body});
+	InnerRelation plate_body_inner(plate_body);
+	ContactRelation plate_observer_contact(plate_observer, {&plate_body});
 
 	/** Common particle dynamics. */
 	SimpleDynamics<TimeStepInitialization> initialize_external_force(plate_body, 

@@ -17,7 +17,7 @@ namespace SPH
 		template <class BaseRelaxationType>
 		template <class BaseBodyRelationType, typename... Args>
 		RelaxationWithWall<BaseRelaxationType>::
-			RelaxationWithWall(BaseBodyRelationContact &wall_contact_relation,
+			RelaxationWithWall(BaseContactRelation &wall_contact_relation,
 							   BaseBodyRelationType &base_body_relation, Args &&...args)
 			: BaseRelaxationType(base_body_relation, std::forward<Args>(args)...),
 			  FluidWallData(wall_contact_relation)

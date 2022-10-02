@@ -48,7 +48,7 @@ namespace SPH
 		class SelfContactDensitySummation : public LocalDynamics, public SolidDataInner
 		{
 		public:
-			explicit SelfContactDensitySummation(SolidBodyRelationSelfContact &self_contact_relation);
+			explicit SelfContactDensitySummation(SelfSurfaceContactRelation &self_contact_relation);
 			virtual ~SelfContactDensitySummation(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -65,7 +65,7 @@ namespace SPH
 		class ContactDensitySummation : public LocalDynamics, public ContactDynamicsData
 		{
 		public:
-			explicit ContactDensitySummation(SolidBodyRelationContact &solid_body_contact_relation);
+			explicit ContactDensitySummation(SurfaceContactRelation &solid_body_contact_relation);
 			virtual ~ContactDensitySummation(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -84,7 +84,7 @@ namespace SPH
 		class ShellContactDensity : public LocalDynamics, public ContactDynamicsData
 		{
 		public:
-			explicit ShellContactDensity(SolidBodyRelationContact &solid_body_contact_relation);
+			explicit ShellContactDensity(SurfaceContactRelation &solid_body_contact_relation);
 			virtual ~ShellContactDensity(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -114,7 +114,7 @@ namespace SPH
 		class SelfContactForce : public LocalDynamics, public SolidDataInner
 		{
 		public:
-			explicit SelfContactForce(SolidBodyRelationSelfContact &self_contact_relation);
+			explicit SelfContactForce(SelfSurfaceContactRelation &self_contact_relation);
 			virtual ~SelfContactForce(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -132,7 +132,7 @@ namespace SPH
 		class ContactForce : public LocalDynamics, public ContactDynamicsData
 		{
 		public:
-			explicit ContactForce(SolidBodyRelationContact &solid_body_contact_relation);
+			explicit ContactForce(SurfaceContactRelation &solid_body_contact_relation);
 			virtual ~ContactForce(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -153,7 +153,7 @@ namespace SPH
 		class ContactForceFromWall : public LocalDynamics, public ContactWithWallData
 		{
 		public:
-			explicit ContactForceFromWall(SolidBodyRelationContact &solid_body_contact_relation);
+			explicit ContactForceFromWall(SurfaceContactRelation &solid_body_contact_relation);
 			virtual ~ContactForceFromWall(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -170,7 +170,7 @@ namespace SPH
 		class ContactForceToWall : public LocalDynamics, public ContactDynamicsData
 		{
 		public:
-			explicit ContactForceToWall(SolidBodyRelationContact &solid_body_contact_relation);
+			explicit ContactForceToWall(SurfaceContactRelation &solid_body_contact_relation);
 			virtual ~ContactForceToWall(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -191,7 +191,7 @@ namespace SPH
 		class PairwiseFrictionFromWall : public LocalDynamics, public ContactWithWallData
 		{
 		public:
-			PairwiseFrictionFromWall(BaseBodyRelationContact &contact_relation, Real eta);
+			PairwiseFrictionFromWall(BaseContactRelation &contact_relation, Real eta);
 			virtual ~PairwiseFrictionFromWall(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -211,7 +211,7 @@ namespace SPH
 		class DynamicContactForceWithWall : public LocalDynamics, public ContactDynamicsData
 		{
 		public:
-			explicit DynamicContactForceWithWall(SolidBodyRelationContact &solid_body_contact_relation, Real penalty_strength = 1.0);
+			explicit DynamicContactForceWithWall(SurfaceContactRelation &solid_body_contact_relation, Real penalty_strength = 1.0);
 			virtual ~DynamicContactForceWithWall(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 

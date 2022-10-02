@@ -41,9 +41,9 @@ int main(int ac, char *av[])
 	my_observer.generateParticles<ColumnObserverParticleGenerator>();
 
 	/**body relation topology */
-	BodyRelationInner column_inner(column);
-	BodyRelationContact my_observer_contact(my_observer, {&column});
-	SolidBodyRelationContact column_wall_contact(column, {&wall});
+	InnerRelation column_inner(column);
+	ContactRelation my_observer_contact(my_observer, {&column});
+	SurfaceContactRelation column_wall_contact(column, {&wall});
 	/**define simple data file input and outputs functions. */
 	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
 

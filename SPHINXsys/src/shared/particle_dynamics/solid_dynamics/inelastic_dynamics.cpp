@@ -13,7 +13,7 @@ namespace SPH
 	{
 		//=================================================================================================//
 		PlasticStressRelaxationFirstHalf::
-			PlasticStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation) :
+			PlasticStressRelaxationFirstHalf(BaseInnerRelation &inner_relation) :
 			StressRelaxationFirstHalf(inner_relation),
 			plastic_solid_(DynamicCast<PlasticSolid>(this, elastic_solid_))
 		{

@@ -33,7 +33,7 @@ namespace SPH
 			  rho_(particles_->rho_), E_(particles_->E_), p_(particles_->p_),
 			  gamma_(particles_->compressible_fluid_.HeatCapacityRatio()) {}
 		//=================================================================================================//
-		ViscousAccelerationInner::ViscousAccelerationInner(BaseBodyRelationInner &inner_relation)
+		ViscousAccelerationInner::ViscousAccelerationInner(BaseInnerRelation &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_), CompressibleFluidDataInner(inner_relation),
 			  Vol_(particles_->Vol_), rho_(particles_->rho_), p_(particles_->p_),
 			  mass_(particles_->mass_), dE_dt_prior_(particles_->dE_dt_prior_),
@@ -79,7 +79,7 @@ namespace SPH
 			return 0.6 * smoothing_length_ / (reduced_value + TinyReal);
 		}
 		//=================================================================================================//
-		BaseRelaxation::BaseRelaxation(BaseBodyRelationInner &inner_relation)
+		BaseRelaxation::BaseRelaxation(BaseInnerRelation &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_), CompressibleFluidDataInner(inner_relation),
 			  compressible_fluid_(particles_->compressible_fluid_),
 			  Vol_(particles_->Vol_), rho_(particles_->rho_), p_(particles_->p_),
@@ -89,7 +89,7 @@ namespace SPH
 			  dmom_dt_(particles_->dmom_dt_), dmom_dt_prior_(particles_->dmom_dt_prior_) {}
 		//=================================================================================================//
 		BasePressureRelaxation::
-			BasePressureRelaxation(BaseBodyRelationInner &inner_relation)
+			BasePressureRelaxation(BaseInnerRelation &inner_relation)
 			: BaseRelaxation(inner_relation) {}
 		//=================================================================================================//
 		void BasePressureRelaxation::initialization(size_t index_i, Real dt)
@@ -107,7 +107,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		BaseDensityAndEnergyRelaxation::
-			BaseDensityAndEnergyRelaxation(BaseBodyRelationInner &inner_relation)
+			BaseDensityAndEnergyRelaxation(BaseInnerRelation &inner_relation)
 			: BaseRelaxation(inner_relation) {}
 		//=================================================================================================//
 		void BaseDensityAndEnergyRelaxation::update(size_t index_i, Real dt)

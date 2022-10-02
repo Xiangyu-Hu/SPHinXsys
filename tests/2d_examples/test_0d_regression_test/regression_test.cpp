@@ -157,7 +157,7 @@ class DiffusionBodyRelaxation
 		  RelaxationOfAllDiffusionSpeciesInner<SolidParticles, Solid>>
 {
 public:
-	explicit DiffusionBodyRelaxation(BodyRelationInner &body_inner_relation)
+	explicit DiffusionBodyRelaxation(InnerRelation &body_inner_relation)
 		: RelaxationOfAllDiffusionSpeciesRK2(body_inner_relation){};
 	virtual ~DiffusionBodyRelaxation(){};
 };
@@ -207,8 +207,8 @@ int main()
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner diffusion_body_inner_relation(diffusion_body);
-	BodyRelationContact temperature_observer_contact(temperature_observer, {&diffusion_body});
+	InnerRelation diffusion_body_inner_relation(diffusion_body);
+	ContactRelation temperature_observer_contact(temperature_observer, {&diffusion_body});
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.

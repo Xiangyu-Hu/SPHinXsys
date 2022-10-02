@@ -48,7 +48,7 @@ namespace SPH
 		class FluidViscousForceOnSolid : public LocalDynamics, public FSIContactData
 		{
 		public:
-			explicit FluidViscousForceOnSolid(BaseBodyRelationContact &contact_relation);
+			explicit FluidViscousForceOnSolid(BaseContactRelation &contact_relation);
 			virtual ~FluidViscousForceOnSolid(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 			StdLargeVec<Vecd> &getViscousForceFromFluid() { return viscous_force_from_fluid_; };
@@ -71,7 +71,7 @@ namespace SPH
 		class FluidViscousForceOnSolidInEuler : public LocalDynamics, public FSIContactData
 		{
 		public:
-			explicit FluidViscousForceOnSolidInEuler(BaseBodyRelationContact &contact_relation);
+			explicit FluidViscousForceOnSolidInEuler(BaseContactRelation &contact_relation);
 			virtual ~FluidViscousForceOnSolidInEuler(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 			StdLargeVec<Vecd> &getViscousForceFromFluid() { return viscous_force_from_fluid_; };
@@ -95,7 +95,7 @@ namespace SPH
 		class FluidAngularConservativeViscousForceOnSolid : public FluidViscousForceOnSolid
 		{
 		public:
-			explicit FluidAngularConservativeViscousForceOnSolid(BaseBodyRelationContact &contact_relation)
+			explicit FluidAngularConservativeViscousForceOnSolid(BaseContactRelation &contact_relation)
 				: FluidViscousForceOnSolid(contact_relation){};
 			virtual ~FluidAngularConservativeViscousForceOnSolid(){};
 
@@ -114,7 +114,7 @@ namespace SPH
 		class BaseFluidPressureForceOnSolid : public LocalDynamics, public FSIContactData
 		{
 		public:
-			explicit BaseFluidPressureForceOnSolid(BaseBodyRelationContact &contact_relation)
+			explicit BaseFluidPressureForceOnSolid(BaseContactRelation &contact_relation)
 				: LocalDynamics(contact_relation.sph_body_), FSIContactData(contact_relation),
 				  Vol_(particles_->Vol_), vel_ave_(*particles_->AverageVelocity()),
 				  acc_prior_(particles_->acc_prior_),
@@ -188,7 +188,7 @@ namespace SPH
 		class BaseFluidPressureForceOnSolidInEuler : public LocalDynamics, public FSIContactData
 		{
 		public:
-			explicit BaseFluidPressureForceOnSolidInEuler(BaseBodyRelationContact &contact_relation)
+			explicit BaseFluidPressureForceOnSolidInEuler(BaseContactRelation &contact_relation)
 				: LocalDynamics(contact_relation.sph_body_),
 				  FSIContactData(contact_relation),
 				  Vol_(particles_->Vol_), vel_ave_(*particles_->AverageVelocity()),
@@ -264,7 +264,7 @@ namespace SPH
 		{
 		public:
 			template <class ViscousForceOnSolidType>
-			BaseFluidForceOnSolidUpdate(BaseBodyRelationContact &contact_relation,
+			BaseFluidForceOnSolidUpdate(BaseContactRelation &contact_relation,
 										ViscousForceOnSolidType &viscous_force_on_solid)
 				: PressureForceType(contact_relation),
 				  viscous_force_from_fluid_(viscous_force_on_solid.getViscousForceFromFluid()){};

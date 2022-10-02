@@ -52,7 +52,7 @@ int main(int ac, char *av[])
 		herat_model.defineParticlesAndMaterial<DiffusionReactionParticles<ElasticSolidParticles, LocallyOrthotropicMuscle>, FiberDirectionDiffusion>();
 		herat_model.generateParticles<ParticleGeneratorLattice>();
 		/** topology */
-		BodyRelationInner herat_model_inner(herat_model);
+		InnerRelation herat_model_inner(herat_model);
 		/** Random reset the relax solid particle position. */
 		SimpleDynamics<RandomizeParticlePosition> random_particles(herat_model);
 		/** A  Physics relaxation step. */
@@ -166,14 +166,14 @@ int main(int ac, char *av[])
 	myocardium_observer.generateParticles<HeartObserverParticleGenerator>();
 
 	/** topology */
-	BodyRelationInner physiology_heart_inner(physiology_heart);
-	BodyRelationInner mechanics_heart_inner(mechanics_heart);
-	BodyRelationContact physiology_heart_contact(physiology_heart, {&mechanics_heart});
-	BodyRelationContact mechanics_heart_contact(mechanics_heart, {&physiology_heart});
-	BodyRelationContact voltage_observer_contact(voltage_observer, {&physiology_heart});
-	BodyRelationContact myocardium_observer_contact(myocardium_observer, {&mechanics_heart});
-	ComplexBodyRelation physiology_heart_complex(physiology_heart, {&pkj_leaves});
-	TreeBodyRelationInner pkj_inner(pkj_body);
+	InnerRelation physiology_heart_inner(physiology_heart);
+	InnerRelation mechanics_heart_inner(mechanics_heart);
+	ContactRelation physiology_heart_contact(physiology_heart, {&mechanics_heart});
+	ContactRelation mechanics_heart_contact(mechanics_heart, {&physiology_heart});
+	ContactRelation voltage_observer_contact(voltage_observer, {&physiology_heart});
+	ContactRelation myocardium_observer_contact(myocardium_observer, {&mechanics_heart});
+	ComplexRelation physiology_heart_complex(physiology_heart, {&pkj_leaves});
+	TreeInnerRelation pkj_inner(pkj_body);
 
 	/** Corrected configuration. */
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> correct_configuration_excitation(physiology_heart_inner);

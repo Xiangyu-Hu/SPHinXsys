@@ -114,8 +114,8 @@ int main()
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	ComplexBodyRelation water_body_complex(water_body, {&wall});
-	BodyRelationContact fluid_observer_contact_relation(fluid_observer, {&water_body});
+	ComplexRelation water_body_complex(water_body, {&wall});
+	ContactRelation fluid_observer_contact_relation(fluid_observer, {&water_body});
 	//----------------------------------------------------------------------
 	//	Define all numerical methods which are used in this case.
 	//----------------------------------------------------------------------

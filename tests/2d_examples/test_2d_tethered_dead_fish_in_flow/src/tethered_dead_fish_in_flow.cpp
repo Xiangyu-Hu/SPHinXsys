@@ -244,11 +244,11 @@ int main(int ac, char *av[])
 	ObserverBody fish_observer(system, "Observer");
 	fish_observer.generateParticles<FishObserverParticleGenerator>();
 	/** topology */
-	BodyRelationInner water_block_inner(water_block);
-	BodyRelationInner fish_body_inner(fish_body);
-	ComplexBodyRelation water_block_complex(water_block_inner, {&wall_boundary, &fish_body});
-	BodyRelationContact fish_body_contact(fish_body, {&water_block});
-	BodyRelationContact fish_observer_contact(fish_observer, {&fish_body});
+	InnerRelation water_block_inner(water_block);
+	InnerRelation fish_body_inner(fish_body);
+	ComplexRelation water_block_complex(water_block_inner, {&wall_boundary, &fish_body});
+	ContactRelation fish_body_contact(fish_body, {&water_block});
+	ContactRelation fish_observer_contact(fish_observer, {&fish_body});
 
 	BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
 	ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceOnSolid>> write_total_force_on_fish(io_environment, fish_body);
