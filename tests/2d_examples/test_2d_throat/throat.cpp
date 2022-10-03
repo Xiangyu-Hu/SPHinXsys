@@ -162,9 +162,9 @@ int main(int ac, char *av[])
 	// time step size with considering sound wave speed
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(fluid_block);
 	// pressure relaxation using verlet time stepping
-	Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallOldroyd_B> pressure_relaxation(fluid_block_complex);
+	Dynamics1Level<fluid_dynamics::Oldroyd_BIntegration1stHalfWithWall> pressure_relaxation(fluid_block_complex);
 	pressure_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);
-	Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallOldroyd_B> density_relaxation(fluid_block_complex);
+	Dynamics1Level<fluid_dynamics::Oldroyd_BIntegration2ndHalfWithWall> density_relaxation(fluid_block_complex);
 	density_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);
 	// define external force
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);

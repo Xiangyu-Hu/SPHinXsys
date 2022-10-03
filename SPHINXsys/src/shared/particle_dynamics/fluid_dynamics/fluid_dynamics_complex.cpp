@@ -37,7 +37,7 @@ namespace SPH
 				pos_[index_i] += acceleration_trans * dt * dt * 0.5;
 		}
 		//=================================================================================================//
-		void Integration1stHalfWithWallOldroyd_B::interaction(size_t index_i, Real dt)
+		void Oldroyd_BIntegration1stHalfWithWall::interaction(size_t index_i, Real dt)
 		{
 			BaseIntegration1stHalfWithWall<Oldroyd_BIntegration1stHalf>::interaction(index_i, dt);
 
@@ -60,7 +60,7 @@ namespace SPH
 			acc_[index_i] += acceleration;
 		}
 		//=================================================================================================//
-		void Integration2ndHalfWithWallOldroyd_B::interaction(size_t index_i, Real dt)
+		void Oldroyd_BIntegration2ndHalfWithWall::interaction(size_t index_i, Real dt)
 		{
 			BaseIntegration2ndHalfWithWall<Oldroyd_BIntegration2ndHalf>::interaction(index_i, dt);
 

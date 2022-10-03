@@ -200,30 +200,30 @@ namespace SPH
 		using Integration2ndHalfRiemannWithWall = BaseIntegration2ndHalfWithWall<Integration2ndHalfRiemann>;
 
 		/**
-		 * @class Integration1stHalfWithWallOldroyd_B
+		 * @class Oldroyd_BIntegration1stHalfWithWall
 		 * @brief  first half of the pressure relaxation scheme using Riemann solver.
 		 */
-		class Integration1stHalfWithWallOldroyd_B : public BaseIntegration1stHalfWithWall<Oldroyd_BIntegration1stHalf>
+		class Oldroyd_BIntegration1stHalfWithWall : public BaseIntegration1stHalfWithWall<Oldroyd_BIntegration1stHalf>
 		{
 		public:
-			explicit Integration1stHalfWithWallOldroyd_B(ComplexRelation &fluid_wall_relation)
+			explicit Oldroyd_BIntegration1stHalfWithWall(ComplexRelation &fluid_wall_relation)
 				: BaseIntegration1stHalfWithWall<Oldroyd_BIntegration1stHalf>(fluid_wall_relation){};
 
-			virtual ~Integration1stHalfWithWallOldroyd_B(){};
+			virtual ~Oldroyd_BIntegration1stHalfWithWall(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
-		 * @class Integration2ndHalfWithWallOldroyd_B
+		 * @class Oldroyd_BIntegration2ndHalfWithWall
 		 * @brief  second half of the pressure relaxation scheme using Riemann solver.
 		 */
-		class Integration2ndHalfWithWallOldroyd_B : public BaseIntegration2ndHalfWithWall<Oldroyd_BIntegration2ndHalf>
+		class Oldroyd_BIntegration2ndHalfWithWall : public BaseIntegration2ndHalfWithWall<Oldroyd_BIntegration2ndHalf>
 		{
 		public:
-			explicit Integration2ndHalfWithWallOldroyd_B(ComplexRelation &fluid_wall_relation)
+			explicit Oldroyd_BIntegration2ndHalfWithWall(ComplexRelation &fluid_wall_relation)
 				: BaseIntegration2ndHalfWithWall<Oldroyd_BIntegration2ndHalf>(fluid_wall_relation){};
 
-			virtual ~Integration2ndHalfWithWallOldroyd_B(){};
+			virtual ~Oldroyd_BIntegration2ndHalfWithWall(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 		};
 	}
