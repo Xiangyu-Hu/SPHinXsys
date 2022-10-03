@@ -226,23 +226,44 @@ namespace SPH
 	};
 
 	/**
+	 * @class BaseRelaxationOfAllReactions
+	 * @brief Base class for computing the reaction process of all species
+	 */
+	template <int NUM_SPECIES, class BaseParticlesType, class BaseMaterialType>
+	class BaseRelaxationOfAllReactions
+		: public LocalDynamics,
+		  public DiffusionReactionSimpleData<NUM_SPECIES, BaseParticlesType, BaseMaterialType>
+	{
+		BaseReactionModel<NUM_SPECIES> *species_reaction_;
+		typedef std::array<Real, NUM_SPECIES> LocalSpecies;
+		StdVec<StdLargeVec<Real>> &species_n_;
+		IndexVector &reactive_species_;
+		UpdateAReactionSpecies updateAReactionSpecies;
+		void loadLocalSpecies(LocalSpecies &local_species, size_t index_i);
+		void applyGlobalSpecies(LocalSpecies &local_species, size_t index_i);
+
+	public:
+		explicit BaseRelaxationOfAllReactions(SPHBody &sph_body);
+		virtual ~BaseRelaxationOfAllReactions(){};
+
+	protected:
+		void advanceForwardStep(size_t index_i, Real dt);
+		void advanceBackwardStep(size_t index_i, Real dt);
+	};
+
+	/**
 	 * @class RelaxationOfAllReactionsForward
 	 * @brief Compute the reaction process of all species by forward splitting
 	 */
 	template <int NUM_SPECIES, class BaseParticlesType, class BaseMaterialType>
 	class RelaxationOfAllReactionsForward
-		: public LocalDynamics,
-		  public DiffusionReactionSimpleData<NUM_SPECIES, BaseParticlesType, BaseMaterialType>
+		: public BaseRelaxationOfAllReactions<NUM_SPECIES, BaseParticlesType, BaseMaterialType>
 	{
-		BaseReactionModel<NUM_SPECIES> *species_reaction_;
-		StdVec<StdLargeVec<Real>> &species_n_;
-		UpdateAReactionSpecies updateAReactionSpecies;
-
 	public:
-		explicit RelaxationOfAllReactionsForward(SPHBody &sph_body);
+		RelaxationOfAllReactionsForward(SPHBody &sph_body)
+			: BaseRelaxationOfAllReactions<NUM_SPECIES, BaseParticlesType, BaseMaterialType>(sph_body){};
 		virtual ~RelaxationOfAllReactionsForward(){};
-
-		void update(size_t index_i, Real dt = 0.0);
+		void update(size_t index_i, Real dt = 0.0) { this->advanceForwardStep(index_i, dt); };
 	};
 
 	/**
@@ -251,18 +272,13 @@ namespace SPH
 	 */
 	template <int NUM_SPECIES, class BaseParticlesType, class BaseMaterialType>
 	class RelaxationOfAllReactionsBackward
-		: public LocalDynamics,
-		  public DiffusionReactionSimpleData<NUM_SPECIES, BaseParticlesType, BaseMaterialType>
+		: public BaseRelaxationOfAllReactions<NUM_SPECIES, BaseParticlesType, BaseMaterialType>
 	{
-		BaseReactionModel<NUM_SPECIES> *species_reaction_;
-		StdVec<StdLargeVec<Real>> &species_n_;
-		UpdateAReactionSpecies updateAReactionSpecies;
-
 	public:
-		explicit RelaxationOfAllReactionsBackward(SPHBody &sph_body);
+		explicit RelaxationOfAllReactionsBackward(SPHBody &sph_body)
+			: BaseRelaxationOfAllReactions<NUM_SPECIES, BaseParticlesType, BaseMaterialType>(sph_body){};
 		virtual ~RelaxationOfAllReactionsBackward(){};
-
-		void update(size_t index_i, Real dt = 0.0);
+		void update(size_t index_i, Real dt = 0.0) { this->advanceBackwardStep(index_i, dt); };
 	};
 
 	/**
