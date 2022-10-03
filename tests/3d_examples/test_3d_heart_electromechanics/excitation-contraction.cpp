@@ -35,7 +35,7 @@ Real b0[4] = {7.209, 20.417, 11.176, 9.466};
 Real poisson = 0.4995;
 Real bulk_modulus = 2.0 * a0[0] * (1.0 + poisson) / (3.0 * (1.0 - 2.0 * poisson));
 /** Electrophysiology parameters. */
-StdVec<std::string> species_name_list{"Phi"};
+std::array<std::string, 1> species_name_list{"Phi"};
 Real diffusion_coff = 0.8;
 Real bias_coff = 0.0;
 /** Electrophysiology parameters. */
@@ -65,10 +65,10 @@ public:
 //----------------------------------------------------------------------
 //	Setup diffusion material properties.
 //----------------------------------------------------------------------
-class FiberDirectionDiffusion : public DiffusionReaction<LocallyOrthotropicMuscle>
+class FiberDirectionDiffusion : public DiffusionReaction<1, LocallyOrthotropicMuscle>
 {
 public:
-	FiberDirectionDiffusion() : DiffusionReaction<LocallyOrthotropicMuscle>(
+	FiberDirectionDiffusion() : DiffusionReaction<1, LocallyOrthotropicMuscle>(
 									species_name_list, rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0)
 	{
 		initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi", diffusion_coff);
@@ -77,7 +77,7 @@ public:
 /** Set diffusion relaxation method. */
 class DiffusionRelaxation
 	: public RelaxationOfAllDiffusionSpeciesRK2<
-		  RelaxationOfAllDiffusionSpeciesInner<ElasticSolidParticles, LocallyOrthotropicMuscle>>
+		  RelaxationOfAllDiffusionSpeciesInner<1, ElasticSolidParticles, LocallyOrthotropicMuscle>>
 {
 public:
 	explicit DiffusionRelaxation(InnerRelation &body_inner_relation)
@@ -86,11 +86,11 @@ public:
 };
 /** Imposing diffusion boundary condition */
 class DiffusionBCs
-	: public DiffusionReactionSpeciesConstraint<ElasticSolidParticles, LocallyOrthotropicMuscle>
+	: public DiffusionReactionSpeciesConstraint<1, ElasticSolidParticles, LocallyOrthotropicMuscle>
 {
 public:
 	DiffusionBCs(BodyPartByParticle &body_part, const std::string &species_name)
-		: DiffusionReactionSpeciesConstraint<ElasticSolidParticles, LocallyOrthotropicMuscle>(body_part, species_name),
+		: DiffusionReactionSpeciesConstraint<1, ElasticSolidParticles, LocallyOrthotropicMuscle>(body_part, species_name),
 		  pos_(particles_->pos_){};
 	virtual ~DiffusionBCs(){};
 
@@ -108,7 +108,7 @@ public:
 		}
 		else
 		{
-			if (pos_[index_i][1] < - sph_body_.sph_adaptation_->ReferenceSpacing())
+			if (pos_[index_i][1] < -sph_body_.sph_adaptation_->ReferenceSpacing())
 				species_[index_i] = 0.0;
 		}
 	};
@@ -118,10 +118,10 @@ protected:
 };
 /** Compute Fiber and Sheet direction after diffusion */
 class ComputeFiberAndSheetDirections
-	: public DiffusionBasedMapping<ElasticSolidParticles, LocallyOrthotropicMuscle>
+	: public DiffusionBasedMapping<1, ElasticSolidParticles, LocallyOrthotropicMuscle>
 {
 protected:
-	DiffusionReaction<LocallyOrthotropicMuscle> &diffusion_reaction_material_;
+	DiffusionReaction<1, LocallyOrthotropicMuscle> &diffusion_reaction_material_;
 	size_t phi_;
 	Real beta_epi_, beta_endo_;
 	/** We define the centerline vector, which is parallel to the ventricular centerline and pointing  apex-to-base.*/
@@ -129,8 +129,8 @@ protected:
 
 public:
 	explicit ComputeFiberAndSheetDirections(SPHBody &sph_body)
-		: DiffusionBasedMapping<ElasticSolidParticles, LocallyOrthotropicMuscle>(sph_body),
-			  diffusion_reaction_material_(particles_->diffusion_reaction_material_)
+		: DiffusionBasedMapping<1, ElasticSolidParticles, LocallyOrthotropicMuscle>(sph_body),
+		  diffusion_reaction_material_(particles_->diffusion_reaction_material_)
 
 	{
 		phi_ = diffusion_reaction_material_.SpeciesIndexMap()["Phi"];
@@ -163,7 +163,7 @@ public:
 		Vecd f_0 = cos(beta) * cd_norm + sin(beta) * SimTK::cross(face_norm, cd_norm) +
 				   dot(face_norm, cd_norm) * (1.0 - cos(beta)) * face_norm;
 
-		if (pos_[index_i][1] < - sph_body_.sph_adaptation_->ReferenceSpacing())
+		if (pos_[index_i][1] < -sph_body_.sph_adaptation_->ReferenceSpacing())
 		{
 			diffusion_reaction_material_.local_f0_[index_i] = f_0 / (f_0.norm() + 1.0e-15);
 			diffusion_reaction_material_.local_s0_[index_i] = face_norm;
@@ -292,7 +292,8 @@ int main(int ac, char *av[])
 	{
 		SolidBody herat_model(system, makeShared<Heart>("HeartModel"));
 		herat_model.defineBodyLevelSetShape()->writeLevelSet(herat_model);
-		herat_model.defineParticlesAndMaterial<DiffusionReactionParticles<ElasticSolidParticles, LocallyOrthotropicMuscle>, FiberDirectionDiffusion>();
+		herat_model.defineParticlesAndMaterial<
+			DiffusionReactionParticles<1, ElasticSolidParticles, LocallyOrthotropicMuscle>, FiberDirectionDiffusion>();
 		herat_model.generateParticles<ParticleGeneratorLattice>();
 		/** topology */
 		InnerRelation herat_model_inner(herat_model);
@@ -301,7 +302,7 @@ int main(int ac, char *av[])
 		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(herat_model_inner);
 		/** Time step for diffusion. */
-		GetDiffusionTimeStepSize<ElasticSolidParticles, LocallyOrthotropicMuscle> get_time_step_size(herat_model);
+		GetDiffusionTimeStepSize<1, ElasticSolidParticles, LocallyOrthotropicMuscle> get_time_step_size(herat_model);
 		/** Diffusion process for diffusion body. */
 		DiffusionRelaxation diffusion_relaxation(herat_model_inner);
 		/** Compute the fiber and sheet after diffusion. */

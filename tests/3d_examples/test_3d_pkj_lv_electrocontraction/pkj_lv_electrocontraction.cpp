@@ -49,7 +49,7 @@ int main(int ac, char *av[])
 	{
 		SolidBody herat_model(system, makeShared<Heart>("HeartModel"));
 		herat_model.defineBodyLevelSetShape()->writeLevelSet(herat_model);
-		herat_model.defineParticlesAndMaterial<DiffusionReactionParticles<ElasticSolidParticles, LocallyOrthotropicMuscle>, FiberDirectionDiffusion>();
+		herat_model.defineParticlesAndMaterial<DiffusionReactionParticles<1, ElasticSolidParticles, LocallyOrthotropicMuscle>, FiberDirectionDiffusion>();
 		herat_model.generateParticles<ParticleGeneratorLattice>();
 		/** topology */
 		InnerRelation herat_model_inner(herat_model);
@@ -58,7 +58,7 @@ int main(int ac, char *av[])
 		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(herat_model_inner);
 		/** Time step for diffusion. */
-		GetDiffusionTimeStepSize<ElasticSolidParticles, LocallyOrthotropicMuscle> get_time_step_size(herat_model);
+		GetDiffusionTimeStepSize<1, ElasticSolidParticles, LocallyOrthotropicMuscle> get_time_step_size(herat_model);
 		/** Diffusion process for diffusion body. */
 		DiffusionRelaxation diffusion_relaxation(herat_model_inner);
 		/** Compute the fiber and sheet after diffusion. */

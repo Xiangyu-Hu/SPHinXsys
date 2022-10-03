@@ -251,53 +251,66 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template <int NUM_SPECIES, class BaseParticlesType, class BaseMaterialType>
-	RelaxationOfAllReactionsForward<NUM_SPECIES, BaseParticlesType, BaseMaterialType>::
-		RelaxationOfAllReactionsForward(SPHBody &sph_body)
+	BaseRelaxationOfAllReactions<NUM_SPECIES, BaseParticlesType, BaseMaterialType>::
+		BaseRelaxationOfAllReactions(SPHBody &sph_body)
 		: LocalDynamics(sph_body),
 		  DiffusionReactionSimpleData<NUM_SPECIES, BaseParticlesType, BaseMaterialType>(sph_body),
-		  species_n_(this->particles_->species_n_)
-	{
-		species_reaction_ = this->particles_->diffusion_reaction_material_.SpeciesReaction();
-	}
+		  species_n_(this->particles_->species_n_),
+		  species_reaction_(this->particles_->diffusion_reaction_material_.SpeciesReaction()),
+		  reactive_species_(species_reaction_->reactive_species_) {}
 	//=================================================================================================//
 	template <int NUM_SPECIES, class BaseParticlesType, class BaseMaterialType>
-	void RelaxationOfAllReactionsForward<NUM_SPECIES, BaseParticlesType, BaseMaterialType>::
-		update(size_t index_i, Real dt)
+	void BaseRelaxationOfAllReactions<NUM_SPECIES, BaseParticlesType, BaseMaterialType>::
+		loadLocalSpecies(LocalSpecies &local_species, size_t index_i)
 	{
-		IndexVector &reactive_species = species_reaction_->reactive_species_;
-
-		for (size_t m = 0; m != reactive_species.size(); ++m)
+		for (size_t m = 0; m != reactive_species_.size(); ++m)
 		{
-			size_t k = reactive_species[m];
-			Real production_rate = species_reaction_->get_production_rates_[k](species_n_, index_i);
-			Real loss_rate = species_reaction_->get_loss_rates_[k](species_n_, index_i);
-			species_n_[k][index_i] = updateAReactionSpecies(species_n_[k][index_i], production_rate, loss_rate, dt);
+			size_t k = reactive_species_[m];
+			local_species[k] = species_n_[k][index_i];
 		}
 	}
 	//=================================================================================================//
 	template <int NUM_SPECIES, class BaseParticlesType, class BaseMaterialType>
-	RelaxationOfAllReactionsBackward<NUM_SPECIES, BaseParticlesType, BaseMaterialType>::
-		RelaxationOfAllReactionsBackward(SPHBody &sph_body)
-		: LocalDynamics(sph_body),
-		  DiffusionReactionSimpleData<NUM_SPECIES, BaseParticlesType, BaseMaterialType>(sph_body),
-		  species_n_(this->particles_->species_n_)
+	void BaseRelaxationOfAllReactions<NUM_SPECIES, BaseParticlesType, BaseMaterialType>::
+		applyGlobalSpecies(LocalSpecies &local_species, size_t index_i)
 	{
-		species_reaction_ = this->particles_->diffusion_reaction_material_.SpeciesReaction();
+		for (size_t m = 0; m != reactive_species_.size(); ++m)
+		{
+			size_t k = reactive_species_[m];
+			species_n_[k][index_i] = local_species[k];
+		}
 	}
 	//=================================================================================================//
 	template <int NUM_SPECIES, class BaseParticlesType, class BaseMaterialType>
-	void RelaxationOfAllReactionsBackward<NUM_SPECIES, BaseParticlesType, BaseMaterialType>::
-		update(size_t index_i, Real dt)
+	void BaseRelaxationOfAllReactions<NUM_SPECIES, BaseParticlesType, BaseMaterialType>::
+		advanceForwardStep(size_t index_i, Real dt)
 	{
-		IndexVector &reactive_species = species_reaction_->reactive_species_;
-
-		for (size_t m = reactive_species.size(); m != 0; --m)
+		LocalSpecies local_species;
+		loadLocalSpecies(local_species, index_i);
+		for (size_t m = 0; m != reactive_species_.size(); ++m)
 		{
-			size_t k = reactive_species[m - 1];
-			Real production_rate = species_reaction_->get_production_rates_[k](species_n_, index_i);
-			Real loss_rate = species_reaction_->get_loss_rates_[k](species_n_, index_i);
-			species_n_[k][index_i] = updateAReactionSpecies(species_n_[k][index_i], production_rate, loss_rate, dt);
+			size_t k = reactive_species_[m];
+			Real production_rate = species_reaction_->get_production_rates_[k](local_species);
+			Real loss_rate = species_reaction_->get_loss_rates_[k](local_species);
+			local_species[k] = updateAReactionSpecies(local_species[k], production_rate, loss_rate, dt);
 		}
+		applyGlobalSpecies(local_species, index_i);
+	}
+	//=================================================================================================//
+	template <int NUM_SPECIES, class BaseParticlesType, class BaseMaterialType>
+	void BaseRelaxationOfAllReactions<NUM_SPECIES, BaseParticlesType, BaseMaterialType>::
+		advanceBackwardStep(size_t index_i, Real dt)
+	{
+		LocalSpecies local_species;
+		loadLocalSpecies(local_species, index_i);
+		for (size_t m = reactive_species_.size(); m != 0; --m)
+		{
+			size_t k = reactive_species_[m - 1];
+			Real production_rate = species_reaction_->get_production_rates_[k](local_species);
+			Real loss_rate = species_reaction_->get_loss_rates_[k](local_species);
+			local_species[k] = updateAReactionSpecies(local_species[k], production_rate, loss_rate, dt);
+		}
+		applyGlobalSpecies(local_species, index_i);
 	}
 	//=================================================================================================//
 }
