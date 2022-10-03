@@ -95,11 +95,11 @@ public:
 //----------------------------------------------------------------------
 //	Setup heat conduction material properties for diffusion fluid body
 //----------------------------------------------------------------------
-class ThermofluidBodyMaterial : public DiffusionReaction<1, WeaklyCompressibleFluid>
+class ThermofluidBodyMaterial : public DiffusionReaction<WeaklyCompressibleFluid>
 {
 public:
 	ThermofluidBodyMaterial()
-		: DiffusionReaction<1, WeaklyCompressibleFluid>({"Phi"}, rho0_f, c_f, mu_f)
+		: DiffusionReaction<WeaklyCompressibleFluid>({"Phi"}, rho0_f, c_f, mu_f)
 	{
 		initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi", diffusion_coff);
 	};
@@ -107,10 +107,10 @@ public:
 //----------------------------------------------------------------------
 //	Setup heat conduction material properties for diffusion solid body
 //----------------------------------------------------------------------
-class ThermosolidBodyMaterial : public DiffusionReaction<1, Solid>
+class ThermosolidBodyMaterial : public DiffusionReaction<Solid>
 {
 public:
-	ThermosolidBodyMaterial() : DiffusionReaction<1, Solid>({"Phi"})
+	ThermosolidBodyMaterial() : DiffusionReaction<Solid>({"Phi"})
 	{
 		// only default property is given, as no heat transfer within solid considered here.
 		initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi");
@@ -120,14 +120,14 @@ public:
 //	Application dependent solid body initial condition
 //----------------------------------------------------------------------
 class ThermosolidBodyInitialCondition
-	: public DiffusionReactionInitialCondition<1, SolidParticles, Solid>
+	: public DiffusionReactionInitialCondition<SolidParticles, Solid>
 {
 protected:
 	size_t phi_;
 
 public:
 	explicit ThermosolidBodyInitialCondition(SPHBody &sph_body)
-		: DiffusionReactionInitialCondition<1, SolidParticles, Solid>(sph_body)
+		: DiffusionReactionInitialCondition<SolidParticles, Solid>(sph_body)
 	{
 		phi_ = particles_->diffusion_reaction_material_.SpeciesIndexMap()["Phi"];
 	};
@@ -149,14 +149,14 @@ public:
 //	Application dependent fluid body initial condition
 //----------------------------------------------------------------------
 class ThermofluidBodyInitialCondition
-	: public DiffusionReactionInitialCondition<1, FluidParticles, WeaklyCompressibleFluid>
+	: public DiffusionReactionInitialCondition<FluidParticles, WeaklyCompressibleFluid>
 {
 protected:
 	size_t phi_;
 
 public:
 	explicit ThermofluidBodyInitialCondition(SPHBody &sph_body)
-		: DiffusionReactionInitialCondition<1, FluidParticles, WeaklyCompressibleFluid>(sph_body)
+		: DiffusionReactionInitialCondition<FluidParticles, WeaklyCompressibleFluid>(sph_body)
 	{
 		phi_ = particles_->diffusion_reaction_material_.SpeciesIndexMap()["Phi"];
 	};
@@ -174,7 +174,7 @@ public:
 //----------------------------------------------------------------------
 class ThermalRelaxationComplex
 	: public RelaxationOfAllDiffusionSpeciesRK2<
-		  RelaxationOfAllDiffusionSpeciesComplex<1, FluidParticles, WeaklyCompressibleFluid, SolidParticles, Solid>>
+		  RelaxationOfAllDiffusionSpeciesComplex<FluidParticles, WeaklyCompressibleFluid, SolidParticles, Solid>>
 {
 public:
 	explicit ThermalRelaxationComplex(ComplexRelation &body_complex_relation)
@@ -225,11 +225,11 @@ int main()
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	FluidBody thermofluid_body(system, makeShared<ThermofluidBody>("ThermofluidBody"));
-	thermofluid_body.defineParticlesAndMaterial<DiffusionReactionParticles<1, FluidParticles, WeaklyCompressibleFluid>, ThermofluidBodyMaterial>();
+	thermofluid_body.defineParticlesAndMaterial<DiffusionReactionParticles<FluidParticles, WeaklyCompressibleFluid>, ThermofluidBodyMaterial>();
 	thermofluid_body.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody thermosolid_body(system, makeShared<ThermosolidBody>("ThermosolidBody"));
-	thermosolid_body.defineParticlesAndMaterial<DiffusionReactionParticles<1, SolidParticles, Solid>, ThermosolidBodyMaterial>();
+	thermosolid_body.defineParticlesAndMaterial<DiffusionReactionParticles<SolidParticles, Solid>, ThermosolidBodyMaterial>();
 	thermosolid_body.generateParticles<ParticleGeneratorLattice>();
 
 	ObserverBody temperature_observer(system, "FluidObserver");
@@ -261,7 +261,7 @@ int main()
 	/** Time step size with considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step(thermofluid_body);
 	/** Time step size calculation. */
-	GetDiffusionTimeStepSize<1, FluidParticles, WeaklyCompressibleFluid> get_thermal_time_step(thermofluid_body);
+	GetDiffusionTimeStepSize<FluidParticles, WeaklyCompressibleFluid> get_thermal_time_step(thermofluid_body);
 	/** Diffusion process between two diffusion bodies. */
 	ThermalRelaxationComplex thermal_relaxation_complex(fluid_body_complex);
 	/** Pressure relaxation using verlet time stepping. */

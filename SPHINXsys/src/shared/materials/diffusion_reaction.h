@@ -193,7 +193,7 @@ namespace SPH
 	 * @class DiffusionReaction
 	 * @brief Complex material for diffusion or/and reactions.
 	 */
-	template <int NUM_SPECIES, class BaseMaterialType = BaseMaterial>
+	template <class BaseMaterialType = BaseMaterial, int NUM_SPECIES = 1>
 	class DiffusionReaction : public BaseMaterialType
 	{
 	private:
@@ -269,7 +269,7 @@ namespace SPH
 					species_indexes_map_[diffusion_species_name], std::forward<ConstructorArgs>(args)...));
 		};
 
-		virtual DiffusionReaction<NUM_SPECIES, BaseMaterialType> *ThisObjectPtr() override { return this; };
+		virtual DiffusionReaction<BaseMaterialType, NUM_SPECIES> *ThisObjectPtr() override { return this; };
 	};
 }
 #endif // DIFFUSION_REACTION_H

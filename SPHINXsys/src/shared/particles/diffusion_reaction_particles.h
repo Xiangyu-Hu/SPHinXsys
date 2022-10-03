@@ -41,7 +41,7 @@ namespace SPH
 	 * @class DiffusionReactionParticles
 	 * @brief A group of particles with diffusion or/and reactions particle data.
 	 */
-	template <int NUM_SPECIES, class BaseParticlesType, class BaseMaterialType>
+	template <class BaseParticlesType, class BaseMaterialType = BaseMaterial, int NUM_SPECIES = 1>
 	class DiffusionReactionParticles : public BaseParticlesType
 	{
 	protected:
@@ -52,11 +52,10 @@ namespace SPH
 	public:
 		StdVec<StdLargeVec<Real>> species_n_;	 /**< array of diffusion/reaction scalars */
 		StdVec<StdLargeVec<Real>> diffusion_dt_; /**< array of the time derivative of diffusion species */
-		DiffusionReaction<NUM_SPECIES, BaseMaterialType> &diffusion_reaction_material_;
-		typedef std::array<Real, NUM_SPECIES> LocalSpecies;
+		DiffusionReaction<BaseMaterialType, NUM_SPECIES> &diffusion_reaction_material_;
 
 		DiffusionReactionParticles(SPHBody &sph_body,
-								   DiffusionReaction<NUM_SPECIES, BaseMaterialType> *diffusion_reaction_material)
+								   DiffusionReaction<BaseMaterialType, NUM_SPECIES> *diffusion_reaction_material)
 			: BaseParticlesType(sph_body, diffusion_reaction_material),
 			  number_of_species_(diffusion_reaction_material->NumberOfSpecies()),
 			  number_of_diffusion_species_(diffusion_reaction_material->NumberOfSpeciesDiffusion()),
@@ -97,7 +96,7 @@ namespace SPH
 			}
 		};
 
-		virtual DiffusionReactionParticles<NUM_SPECIES, BaseParticlesType, BaseMaterialType> *ThisObjectPtr() override { return this; };
+		virtual DiffusionReactionParticles<BaseParticlesType, BaseMaterialType, NUM_SPECIES> *ThisObjectPtr() override { return this; };
 	};
 }
 #endif // DIFFUSION_REACTION_PARTICLES_H

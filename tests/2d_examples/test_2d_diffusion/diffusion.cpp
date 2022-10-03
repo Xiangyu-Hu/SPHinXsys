@@ -40,10 +40,10 @@ public:
 //----------------------------------------------------------------------
 //	Setup diffusion material properties.
 //----------------------------------------------------------------------
-class DiffusionMaterial : public DiffusionReaction<1, Solid>
+class DiffusionMaterial : public DiffusionReaction<Solid>
 {
 public:
-	DiffusionMaterial() : DiffusionReaction<1, Solid>(species_name_list)
+	DiffusionMaterial() : DiffusionReaction<Solid>(species_name_list)
 	{
 		initializeAnDiffusion<DirectionalDiffusion>("Phi", "Phi", diffusion_coff, bias_coff, bias_direction);
 	};
@@ -52,14 +52,14 @@ public:
 //	Application dependent initial condition.
 //----------------------------------------------------------------------
 class DiffusionInitialCondition
-	: public DiffusionReactionInitialCondition<1, SolidParticles, Solid>
+	: public DiffusionReactionInitialCondition<SolidParticles, Solid>
 {
 protected:
 	size_t phi_;
 
 public:
 	explicit DiffusionInitialCondition(SPHBody &sph_body)
-		: DiffusionReactionInitialCondition<1, SolidParticles, Solid>(sph_body)
+		: DiffusionReactionInitialCondition<SolidParticles, Solid>(sph_body)
 	{
 		phi_ = particles_->diffusion_reaction_material_.SpeciesIndexMap()["Phi"];
 	};
@@ -82,7 +82,7 @@ public:
 //----------------------------------------------------------------------
 class DiffusionBodyRelaxation
 	: public RelaxationOfAllDiffusionSpeciesRK2<
-		  RelaxationOfAllDiffusionSpeciesInner<1, SolidParticles, Solid>>
+		  RelaxationOfAllDiffusionSpeciesInner<SolidParticles, Solid>>
 {
 public:
 	explicit DiffusionBodyRelaxation(InnerRelation &body_inner_relation)
@@ -123,7 +123,7 @@ int main()
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	SolidBody diffusion_body(sph_system, makeShared<DiffusionBlock>("DiffusionBlock"));
-	diffusion_body.defineParticlesAndMaterial<DiffusionReactionParticles<1, SolidParticles, Solid>, DiffusionMaterial>();
+	diffusion_body.defineParticlesAndMaterial<DiffusionReactionParticles<SolidParticles, Solid>, DiffusionMaterial>();
 	diffusion_body.generateParticles<ParticleGeneratorLattice>();
 	//----------------------------------------------------------------------
 	//	Particle and body creation of fluid observers.
@@ -144,7 +144,7 @@ int main()
 	DiffusionBodyRelaxation diffusion_relaxation(diffusion_body_inner_relation);
 	SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> correct_configuration(diffusion_body_inner_relation);
-	GetDiffusionTimeStepSize<1, SolidParticles, Solid> get_time_step_size(diffusion_body);
+	GetDiffusionTimeStepSize<SolidParticles, Solid> get_time_step_size(diffusion_body);
 	PeriodicConditionUsingCellLinkedList periodic_condition_y(diffusion_body, diffusion_body.getBodyShapeBounds(), yAxis);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.

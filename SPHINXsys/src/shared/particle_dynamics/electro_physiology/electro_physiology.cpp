@@ -67,7 +67,7 @@ namespace SPH
 	MonoFieldElectroPhysiology::
 		MonoFieldElectroPhysiology(ElectroPhysiologyReaction &electro_physiology_reaction,
 								   Real diff_cf, Real bias_diff_cf, Vecd bias_direction)
-		: DiffusionReaction<3, Solid>(electro_physiology_reaction, electro_physiology_reaction.getSpeciesNameList())
+		: DiffusionReaction<Solid, 3>(electro_physiology_reaction, electro_physiology_reaction.getSpeciesNameList())
 	{
 		material_type_name_ = "MonoFieldElectroPhysiology";
 		initializeAnDiffusion<DirectionalDiffusion>("Voltage", "Voltage", diff_cf, bias_diff_cf, bias_direction);
@@ -76,7 +76,7 @@ namespace SPH
 	LocalMonoFieldElectroPhysiology::
 		LocalMonoFieldElectroPhysiology(ElectroPhysiologyReaction &electro_physiology_reaction,
 										Real diff_cf, Real bias_diff_cf, Vecd bias_direction)
-		: DiffusionReaction<3, Solid>(electro_physiology_reaction, electro_physiology_reaction.getSpeciesNameList())
+		: DiffusionReaction<Solid, 3>(electro_physiology_reaction, electro_physiology_reaction.getSpeciesNameList())
 	{
 		material_type_name_ = "LocalMonoFieldElectroPhysiology";
 		initializeAnDiffusion<LocalDirectionalDiffusion>("Voltage", "Voltage", diff_cf, bias_diff_cf, bias_direction);
@@ -88,11 +88,11 @@ namespace SPH
 	}
 	//=================================================================================================//
 	ElectroPhysiologyParticles::ElectroPhysiologyParticles(
-		SPHBody &sph_body, DiffusionReaction<3, Solid> *diffusion_reaction_material)
-		: DiffusionReactionParticles<3, SolidParticles, Solid>(sph_body, diffusion_reaction_material) {}
+		SPHBody &sph_body, DiffusionReaction<Solid, 3> *diffusion_reaction_material)
+		: DiffusionReactionParticles<SolidParticles, Solid, 3>(sph_body, diffusion_reaction_material) {}
 	//=================================================================================================//
 	ElectroPhysiologyReducedParticles::ElectroPhysiologyReducedParticles(
-		SPHBody &sph_body, DiffusionReaction<3, Solid> *diffusion_reaction_material)
-		: DiffusionReactionParticles<3, SolidParticles, Solid>(sph_body, diffusion_reaction_material) {}
+		SPHBody &sph_body, DiffusionReaction<Solid, 3> *diffusion_reaction_material)
+		: DiffusionReactionParticles<SolidParticles, Solid, 3>(sph_body, diffusion_reaction_material) {}
 	//=================================================================================================//
 }
