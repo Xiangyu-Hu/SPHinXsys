@@ -35,24 +35,25 @@
 
 namespace SPH
 {
-	class ElectroPhysiologyReaction : public BaseReactionModel
+	class ElectroPhysiologyReaction : public BaseReactionModel<3>
 	{
 	protected:
 		Real k_a_;
 		size_t voltage_;
 		size_t gate_variable_;
 		size_t active_contraction_stress_;
+		using LocalSpecies = BaseReactionModel<3>::LocalSpecies;
 
-		virtual Real getProductionRateIonicCurrent(StdVec<StdLargeVec<Real>> &species, size_t particle_i) = 0;
-		virtual Real getLossRateIonicCurrent(StdVec<StdLargeVec<Real>> &species, size_t particle_i) = 0;
-		virtual Real getProductionRateGateVariable(StdVec<StdLargeVec<Real>> &species, size_t particle_i) = 0;
-		virtual Real getLossRateGateVariable(StdVec<StdLargeVec<Real>> &species, size_t particle_i) = 0;
-		virtual Real getProductionActiveContractionStress(StdVec<StdLargeVec<Real>> &species, size_t particle_i);
-		virtual Real getLossRateActiveContractionStress(StdVec<StdLargeVec<Real>> &species, size_t particle_i);
+		virtual Real getProductionRateIonicCurrent(LocalSpecies &species) = 0;
+		virtual Real getLossRateIonicCurrent(LocalSpecies &species) = 0;
+		virtual Real getProductionRateGateVariable(LocalSpecies &species) = 0;
+		virtual Real getLossRateGateVariable(LocalSpecies &species) = 0;
+		virtual Real getProductionActiveContractionStress(LocalSpecies &species);
+		virtual Real getLossRateActiveContractionStress(LocalSpecies &species);
 
 	public:
 		explicit ElectroPhysiologyReaction(Real k_a)
-			: BaseReactionModel({"Voltage", "GateVariable", "ActiveContractionStress"}),
+			: BaseReactionModel<3>({"Voltage", "GateVariable", "ActiveContractionStress"}),
 			  k_a_(k_a), voltage_(species_indexes_map_["Voltage"]),
 			  gate_variable_(species_indexes_map_["GateVariable"]),
 			  active_contraction_stress_(species_indexes_map_["ActiveContractionStress"])
@@ -77,10 +78,10 @@ namespace SPH
 		/** Parameters for two variable cell model. */
 		Real k_, a_, b_, mu_1_, mu_2_, epsilon_, c_m_;
 
-		virtual Real getProductionRateIonicCurrent(StdVec<StdLargeVec<Real>> &species, size_t particle_i) override;
-		virtual Real getLossRateIonicCurrent(StdVec<StdLargeVec<Real>> &species, size_t particle_i) override;
-		virtual Real getProductionRateGateVariable(StdVec<StdLargeVec<Real>> &species, size_t particle_i) override;
-		virtual Real getLossRateGateVariable(StdVec<StdLargeVec<Real>> &species, size_t particle_i) override;
+		virtual Real getProductionRateIonicCurrent(LocalSpecies &species) override;
+		virtual Real getLossRateIonicCurrent(LocalSpecies &species) override;
+		virtual Real getProductionRateGateVariable(LocalSpecies &species) override;
+		virtual Real getLossRateGateVariable(LocalSpecies &species) override;
 
 	public:
 		explicit AlievPanfilowModel(Real k_a, Real c_m, Real k, Real a, Real b, Real mu_1, Real mu_2, Real epsilon)
@@ -96,7 +97,7 @@ namespace SPH
 	 * @class MonoFieldElectroPhysiology
 	 * @brief material class for electro_physiology.
 	 */
-	class MonoFieldElectroPhysiology : public DiffusionReaction<Solid>
+	class MonoFieldElectroPhysiology : public DiffusionReaction<3, Solid>
 	{
 	public:
 		explicit MonoFieldElectroPhysiology(ElectroPhysiologyReaction &electro_physiology_reaction,
@@ -108,7 +109,7 @@ namespace SPH
 	 * @class LocalMonoFieldElectroPhysiology
 	 * @brief material class for electro_physiology with locally oriented fibers.
 	 */
-	class LocalMonoFieldElectroPhysiology : public DiffusionReaction<Solid>
+	class LocalMonoFieldElectroPhysiology : public DiffusionReaction<3, Solid>
 	{
 	public:
 		explicit LocalMonoFieldElectroPhysiology(ElectroPhysiologyReaction &electro_physiology_reaction,
@@ -123,10 +124,10 @@ namespace SPH
 	 * @brief A group of particles with electrophysiology particle data.
 	 */
 	class ElectroPhysiologyParticles
-		: public DiffusionReactionParticles<SolidParticles, Solid>
+		: public DiffusionReactionParticles<3, SolidParticles, Solid>
 	{
 	public:
-		ElectroPhysiologyParticles(SPHBody &sph_body, DiffusionReaction<Solid> *diffusion_reaction_material);
+		ElectroPhysiologyParticles(SPHBody &sph_body, DiffusionReaction<3, Solid> *diffusion_reaction_material);
 		virtual ~ElectroPhysiologyParticles(){};
 		virtual ElectroPhysiologyParticles *ThisObjectPtr() override { return this; };
 	};
@@ -135,11 +136,11 @@ namespace SPH
 	 * @brief A group of reduced particles with electrophysiology particle data.
 	 */
 	class ElectroPhysiologyReducedParticles
-		: public DiffusionReactionParticles<SolidParticles, Solid>
+		: public DiffusionReactionParticles<3, SolidParticles, Solid>
 	{
 	public:
 		/** Constructor. */
-		ElectroPhysiologyReducedParticles(SPHBody &sph_body, DiffusionReaction<Solid> *diffusion_reaction_material);
+		ElectroPhysiologyReducedParticles(SPHBody &sph_body, DiffusionReaction<3, Solid> *diffusion_reaction_material);
 		/** Destructor. */
 		virtual ~ElectroPhysiologyReducedParticles(){};
 		virtual ElectroPhysiologyReducedParticles *ThisObjectPtr() override { return this; };
@@ -152,8 +153,8 @@ namespace SPH
 
 	namespace electro_physiology
 	{
-		typedef DiffusionReactionSimpleData<SolidParticles, Solid> ElectroPhysiologyDataDelegateSimple;
-		typedef DiffusionReactionInnerData<SolidParticles, Solid> ElectroPhysiologyDataDelegateInner;
+		typedef DiffusionReactionSimpleData<3, SolidParticles, Solid> ElectroPhysiologyDataDelegateSimple;
+		typedef DiffusionReactionInnerData<3, SolidParticles, Solid> ElectroPhysiologyDataDelegateInner;
 		/**
 		 * @class ElectroPhysiologyInitialCondition
 		 * @brief  set initial condition for a muscle body
@@ -178,11 +179,11 @@ namespace SPH
 		 * @brief Computing the time step size from diffusion criteria
 		 */
 		class GetElectroPhysiologyTimeStepSize
-			: public GetDiffusionTimeStepSize<SolidParticles, Solid>
+			: public GetDiffusionTimeStepSize<3, SolidParticles, Solid>
 		{
 		public:
 			explicit GetElectroPhysiologyTimeStepSize(RealBody &real_body)
-				: GetDiffusionTimeStepSize<SolidParticles, Solid>(real_body){};
+				: GetDiffusionTimeStepSize<3, SolidParticles, Solid>(real_body){};
 			virtual ~GetElectroPhysiologyTimeStepSize(){};
 		};
 		/**
@@ -191,7 +192,7 @@ namespace SPH
 		 */
 		class ElectroPhysiologyDiffusionRelaxationInner
 			: public RelaxationOfAllDiffusionSpeciesRK2<
-				  RelaxationOfAllDiffusionSpeciesInner<SolidParticles, Solid>>
+				  RelaxationOfAllDiffusionSpeciesInner<3, SolidParticles, Solid>>
 		{
 		public:
 			explicit ElectroPhysiologyDiffusionRelaxationInner(BaseInnerRelation &inner_relation)
@@ -204,7 +205,7 @@ namespace SPH
 		 */
 		class ElectroPhysiologyDiffusionRelaxationComplex
 			: public RelaxationOfAllDiffusionSpeciesRK2<
-				  RelaxationOfAllDiffusionSpeciesComplex<SolidParticles, Solid, SolidParticles, Solid>>
+				  RelaxationOfAllDiffusionSpeciesComplex<3, SolidParticles, Solid, SolidParticles, Solid>>
 		{
 		public:
 			explicit ElectroPhysiologyDiffusionRelaxationComplex(ComplexRelation &complex_relation)
@@ -214,10 +215,10 @@ namespace SPH
 
 		/** Solve the reaction ODE equation of trans-membrane potential	using forward sweeping */
 		using ElectroPhysiologyReactionRelaxationForward =
-			SimpleDynamics<RelaxationOfAllReactionsForward<SolidParticles, Solid>>;
+			SimpleDynamics<RelaxationOfAllReactionsForward<3, SolidParticles, Solid>>;
 		/** Solve the reaction ODE equation of trans-membrane potential	using backward sweeping */
 		using ElectroPhysiologyReactionRelaxationBackward =
-			SimpleDynamics<RelaxationOfAllReactionsBackward<SolidParticles, Solid>>;
+			SimpleDynamics<RelaxationOfAllReactionsBackward<3, SolidParticles, Solid>>;
 	}
 }
 #endif // ELECTRO_PHYSIOLOGY_H
