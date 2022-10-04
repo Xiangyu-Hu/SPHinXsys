@@ -129,7 +129,7 @@ namespace SPH
 		/** get a registered variable from particles by its name. return by pointer so that return nullptr if fail. */
 		template <typename VariableType>
 		StdLargeVec<VariableType> *getVariableByName(const std::string &variable_name);
-
+        
 		/** add a variable into a particle vairable name list */
 		template <typename VariableType>
 		void addAVariableNameToList(ParticleVariableList &variable_name_list, const std::string &variable_name);
@@ -138,9 +138,12 @@ namespace SPH
 		template <typename VariableType>
 		void addAVariableToWrite(const std::string &variable_name);
 
-		/** add a derived variable into the list for state output */
-		template <class DerivedVariableMethod>
-		void addDerivedVariableToWrite();
+        /** add a derived variable */
+        template <class DerivedVariableMethod, class... Ts>
+		void addDerivedVariable(Ts&&...);
+        /** add a derived variable into the list for state output */
+		template <class DerivedVariableMethod, class... Ts>
+		void addDerivedVariableToWrite(Ts&&...);
 
 		/** add a variable into the list for restart */
 		template <typename VariableType>
