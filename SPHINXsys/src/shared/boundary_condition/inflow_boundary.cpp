@@ -55,12 +55,12 @@ namespace SPH
         particle_functor_ = std::bind(&PartSimpleDynamicsByParticleWithFace::Update, this, _1, _2);
     }
 
-    InflowInjectingWithFace::InflowInjectingWithFace(FluidBody &fluid_body, BodyRegionByParticleWithFace &body_part, size_t body_buffer_width)
+    InflowInjectingWithFace::InflowInjectingWithFace(FluidBody &fluid_body, BodyRegionByParticleWithFace &body_part, size_t body_buffer_width, Real radius)
         : PartSimpleDynamicsByParticleWithFace(fluid_body, body_part),
           DataDelegateSimple<FluidBody, FluidParticles, Fluid>(fluid_body),
           body_part_(body_part),
           pos_n_(particles_->pos_n_), rho_n_(particles_->rho_n_), p_(particles_->p_),
-          periodic_translation_(body_part.getRegionWidth())
+          periodic_translation_(body_part.getRegionWidth()), radius_(radius)
     {
         size_t total_body_buffer_particles = body_part_particles_.size() * body_buffer_width;
         particles_->addBufferParticles(total_body_buffer_particles);
@@ -70,8 +70,10 @@ namespace SPH
     void InflowInjectingWithFace::checking_bound_(size_t unsorted_index_i, Real dt)
     {
         size_t sorted_index_i = sorted_id_[unsorted_index_i];
-        if (body_part_.getSignedDistance(pos_n_[sorted_index_i]) > periodic_translation_)
+        // if (body_part_.getSignedDistance(pos_n_[sorted_index_i]) > periodic_translation_)
+        if (body_part_.insertParticle(pos_n_[sorted_index_i],periodic_translation_))
         {
+         
             if (particles_->total_real_particles_ >= particles_->real_particles_bound_)
             {
                 std::cout << "InflowInjectingWithFace::checking_bound_: \n"
@@ -84,7 +86,11 @@ namespace SPH
             /** Realize the buffer particle by increasing the number of real particle in the body.  */
             particles_->total_real_particles_ += 1;
             /** Periodic bounding. */
+            std::cout<<"p2 = App.Vector("<<pos_n_[sorted_index_i][0]<<","<<pos_n_[sorted_index_i][1]<<","<<pos_n_[sorted_index_i][2]<<")*1000"<<std::endl;
+            std::cout<<"point2 = Draft.make_point(p2, color=(0.5, 0.3, 0.6))"<<std::endl;
             pos_n_[sorted_index_i] -= periodic_translation_ * body_part_.getDirectionToFluid();
+            std::cout<<"p2 = App.Vector("<<pos_n_[sorted_index_i][0]<<","<<pos_n_[sorted_index_i][1]<<","<<pos_n_[sorted_index_i][2]<<")*1000"<<std::endl;
+            std::cout<<"point2 = Draft.make_point(p2)"<<std::endl;
         }
     }
 
@@ -114,7 +120,8 @@ namespace SPH
 
     void VelocityInflowConditionWithFace::Update(size_t index_i, Real dt)
     {
-        vel_n_[index_i] = getTargetVelocity(pos_n_[index_i], vel_n_[index_i]);
+        if(body_part_.inDomain(pos_n_[index_i],body_part_.getRegionWidth()))
+            vel_n_[index_i] = getTargetVelocity(pos_n_[index_i], vel_n_[index_i]);
     }
 
 } // namespace SPH

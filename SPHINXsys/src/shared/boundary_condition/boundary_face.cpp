@@ -27,7 +27,7 @@ namespace SPH
     {
     }
     SegmentFace::SegmentFace(const Vecd& direction, const Vecd& center, Real radius)
-    : center_(center), direction_(direction.normalize()) 
+    : center_(center), direction_(direction.normalize()), radius_(radius)
     {
         Vecd default_normal(1.0,0.0,0.0);
         // calculate rotation matrix from defualt_normal to direction_
@@ -80,10 +80,10 @@ namespace SPH
         // defualt boundary points 
         Vecd RU1(0., 1, 0), RD1(0., -1, 0), LU1(0., 0, 1), LD1(0., 0, -1);
         // rotate and translate defualt boundary points
-        RU1 = rotationMatrix1*RU1*radius*1+ center_;
-        RD1 = rotationMatrix1*RD1*radius*1+ center_;
-        LU1 = rotationMatrix1*LU1*radius*1+ center_;
-        LD1 = rotationMatrix1*LD1*radius*1+ center_;
+        RU1 = rotationMatrix1*RU1*radius_*1+ center_;
+        RD1 = rotationMatrix1*RD1*radius_*1+ center_;
+        LU1 = rotationMatrix1*LU1*radius_*1+ center_;
+        LD1 = rotationMatrix1*LD1*radius_*1+ center_;
         StdVec<SPH::Vecd> inlet_bound_points{RU1,RD1,LU1,LD1};
         
         boundary_points_ = inlet_bound_points;
@@ -91,7 +91,7 @@ namespace SPH
     }
 
     BodyRegionWithFace::BodyRegionWithFace(RealBody &real_body, SegmentFace &segment_face, Real scale)
-        : segment_face_(segment_face)
+        : segment_face_(segment_face),radius_(segment_face.Radius())
     {
         region_width_ = scale * real_body.sph_adaptation_->getKernel()->CutOffRadius();
 
@@ -103,6 +103,38 @@ namespace SPH
         Real d = dot((point - segment_face_.center()), segment_face_.direction());
         return d;
     }
+    /* The radius here represents the distance from the point to the line (consisting of the center and the direction.)
+    *  The periodic_translation_ here represents the projected distance from the point to the line (consisting of the center and the direction.)
+    *  we need d > periodic_translation_ and r < radius
+    *        o(point)
+    *       /|
+    *      / | r
+    *     /  |
+    *    /_d_|_____> direction  
+    *   o(center)   
+    */
+    bool BodyRegionWithFace::insertParticle(const Vecd &point, Real periodic_translation) const
+    {
+        Real d = dot((point - segment_face_.center()), segment_face_.direction());
+        if(d<periodic_translation)
+            return false;
+        Real r2 = dot((point - segment_face_.center()), (point - segment_face_.center())) - d*d;
+        if(r2>radius_*radius_)
+            return false;
+        return true;
+    }
+
+    bool BodyRegionWithFace::inDomain(const Vecd &point, Real periodic_translation) const
+    {
+        Real d = dot((point - segment_face_.center()), segment_face_.direction());
+        if(d>periodic_translation)
+            return false;
+        Real r2 = dot((point - segment_face_.center()), (point - segment_face_.center())) - d*d;
+        if(r2>radius_*radius_)
+            return false;
+        return true;
+    }  
+
 
     void BodyRegionWithFace::calculate_region_bounds()
     {

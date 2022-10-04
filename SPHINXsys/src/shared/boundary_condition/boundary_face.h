@@ -65,10 +65,16 @@ namespace SPH
             return center_;
         }
 
+        const Real& Radius() const
+        {
+            return radius_;
+        }
+
     private:
         StdVec<Vecd> boundary_points_;
         Vecd direction_;
         Vecd center_;
+        Real radius_;
     };
 
     /**
@@ -96,16 +102,20 @@ namespace SPH
          * @return Real                 Signed distance
          */
         Real getSignedDistance(const Vecd& position) const;
+        bool insertParticle(const Vecd &point, Real periodic_translation) const;
+        bool inDomain(const Vecd &point, Real periodic_translation) const;
+
 
         const Vecd& getDirectionToFluid() const
         {
             return segment_face_.direction();
         }
-
+        
     protected:
         SegmentFace& segment_face_;
         Real region_width_;
         BoundingBox region_bounds;
+        Real radius_;
 
     private:
         /**

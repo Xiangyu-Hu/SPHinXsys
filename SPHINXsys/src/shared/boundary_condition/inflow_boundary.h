@@ -85,7 +85,7 @@ namespace SPH
         public DataDelegateSimple<FluidBody, FluidParticles, Fluid>
     {
     public:
-        explicit InflowInjectingWithFace(FluidBody& fluid_body, BodyRegionByParticleWithFace& body_part, size_t body_buffer_width);
+        explicit InflowInjectingWithFace(FluidBody& fluid_body, BodyRegionByParticleWithFace& body_part, size_t body_buffer_width, Real radius);
         virtual ~InflowInjectingWithFace() {}
         /** This class is only implemented in sequential due to memory conflicts. */
         virtual void parallel_exec(Real dt = 0.0) override { exec(); };
@@ -95,6 +95,7 @@ namespace SPH
         StdLargeVec<Vecd>& pos_n_;
         StdLargeVec<Real>& rho_n_, & p_;
         Real periodic_translation_;
+        Real radius_;
         virtual void checking_bound_(size_t unsorted_index_i, Real dt = 0.0);
         virtual void Update(size_t unsorted_index_i, Real dt = 0.0) override
         {
