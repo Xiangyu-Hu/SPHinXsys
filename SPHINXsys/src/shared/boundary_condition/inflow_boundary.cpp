@@ -86,11 +86,11 @@ namespace SPH
             /** Realize the buffer particle by increasing the number of real particle in the body.  */
             particles_->total_real_particles_ += 1;
             /** Periodic bounding. */
-            std::cout<<"p2 = App.Vector("<<pos_n_[sorted_index_i][0]<<","<<pos_n_[sorted_index_i][1]<<","<<pos_n_[sorted_index_i][2]<<")*1000"<<std::endl;
-            std::cout<<"point2 = Draft.make_point(p2, color=(0.5, 0.3, 0.6))"<<std::endl;
+            // std::cout<<"p2 = App.Vector("<<pos_n_[sorted_index_i][0]<<","<<pos_n_[sorted_index_i][1]<<","<<pos_n_[sorted_index_i][2]<<")*1000"<<std::endl;
+            // std::cout<<"point2 = Draft.make_point(p2, color=(0.5, 0.3, 0.6))"<<std::endl;
             pos_n_[sorted_index_i] -= periodic_translation_ * body_part_.getDirectionToFluid();
-            std::cout<<"p2 = App.Vector("<<pos_n_[sorted_index_i][0]<<","<<pos_n_[sorted_index_i][1]<<","<<pos_n_[sorted_index_i][2]<<")*1000"<<std::endl;
-            std::cout<<"point2 = Draft.make_point(p2)"<<std::endl;
+            // std::cout<<"p2 = App.Vector("<<pos_n_[sorted_index_i][0]<<","<<pos_n_[sorted_index_i][1]<<","<<pos_n_[sorted_index_i][2]<<")*1000"<<std::endl;
+            // std::cout<<"point2 = Draft.make_point(p2)"<<std::endl;
         }
     }
 
