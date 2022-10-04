@@ -87,9 +87,9 @@ namespace SPH
         if (all_variable_maps_[type_index].find(variable_name) != all_variable_maps_[type_index].end())
             return std::get<type_index>(all_particle_data_)[all_variable_maps_[type_index][variable_name]];
 
-        std::cout << "\n Error: the variable '" << variable_name << "' is not registered!" << std::endl;
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-        exit(1);
+        std::cerr << "\n Error: the variable '" << variable_name << "' is not registered!" << std::endl;
+        std::cerr << __FILE__ << ':' << __LINE__ << std::endl;
+        assert(false);
         return nullptr;
     }
     //=================================================================================================//
@@ -127,13 +127,20 @@ namespace SPH
         addAVariableNameToList<VariableType>(variables_to_write_, variable_name);
     }
     //=================================================================================================//
-    template <class DerivedVariableMethod>
-    void BaseParticles::addDerivedVariableToWrite()
+    template <class DerivedVariableMethod, class... Ts>
+    void BaseParticles::addDerivedVariableToWrite(Ts&&... args)
     {
-        SimpleDynamics<DerivedVariableMethod> *derived_data = derived_particle_data_.createPtr<SimpleDynamics<DerivedVariableMethod>>(*sph_body_);
+        SimpleDynamics<DerivedVariableMethod> *derived_data = derived_particle_data_.createPtr<SimpleDynamics<DerivedVariableMethod>>(*sph_body_,std::forward<Ts>(args)...);
         derived_variables_.push_back(derived_data);
         using DerivedVariableType = typename DerivedVariableMethod::DerivedVariableType;
         addAVariableNameToList<DerivedVariableType>(variables_to_write_, derived_data->LocalDynamics().variable_name_);
+    }
+    //=================================================================================================//
+    template <class DerivedVariableMethod, class... Ts>
+    void BaseParticles::addDerivedVariable(Ts&&... args)
+    {
+        SimpleDynamics<DerivedVariableMethod> *derived_data = derived_particle_data_.createPtr<SimpleDynamics<DerivedVariableMethod>>(*sph_body_,std::forward<Ts>(args)...);
+        derived_variables_.push_back(derived_data);
     }
     //=================================================================================================//
     template <typename VariableType>
@@ -229,24 +236,24 @@ namespace SPH
         output_stream << "   <PointData  Vectors=\"vector\">\n";
 
         // write sorted particles ID
-        output_stream << "    <DataArray Name=\"SortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
-        output_stream << "    ";
-        for (size_t i = 0; i != total_real_particles; ++i)
-        {
-            output_stream << i << " ";
-        }
-        output_stream << std::endl;
-        output_stream << "    </DataArray>\n";
+        // output_stream << "    <DataArray Name=\"SortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
+        // output_stream << "    ";
+        // for (size_t i = 0; i != total_real_particles; ++i)
+        // {
+        //     output_stream << i << " ";
+        // }
+        // output_stream << std::endl;
+        // output_stream << "    </DataArray>\n";
 
         // write unsorted particles ID
-        output_stream << "    <DataArray Name=\"UnsortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
-        output_stream << "    ";
-        for (size_t i = 0; i != total_real_particles; ++i)
-        {
-            output_stream << unsorted_id_[i] << " ";
-        }
-        output_stream << std::endl;
-        output_stream << "    </DataArray>\n";
+        // output_stream << "    <DataArray Name=\"UnsortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
+        // output_stream << "    ";
+        // for (size_t i = 0; i != total_real_particles; ++i)
+        // {
+        //     output_stream << unsorted_id_[i] << " ";
+        // }
+        // output_stream << std::endl;
+        // output_stream << "    </DataArray>\n";
 
         // compute derived particle variables
         for (ParticleDynamics<void> *derived_variable : derived_variables_)
