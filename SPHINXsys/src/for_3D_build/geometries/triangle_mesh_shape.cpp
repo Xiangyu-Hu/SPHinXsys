@@ -22,7 +22,7 @@ namespace SPH
 	bool TriangleMeshShape::checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED)
 	{
 		SimTK::Vec2 uv_coordinate;
-		bool inside = false; //note that direct prediction is not reliable sometime.
+		bool inside = false; // note that direct prediction is not reliable sometime.
 		int face_id;
 		Vec3d closest_pnt = triangle_mesh_->findNearestPoint(probe_point, inside, face_id, uv_coordinate);
 		Vec3d from_face_to_pnt = probe_point - closest_pnt;
@@ -31,14 +31,22 @@ namespace SPH
 		SimTK::UnitVec3 face_normal = triangle_mesh_->getFaceNormal(face_id);
 		Real cosine_angle = SimTK::dot(face_normal, direction_to_pnt);
 
+		int ite = 0;
 		while (ABS(cosine_angle) < Eps)
 		{
 			Vec3d jittered = probe_point; // jittering
 			for (int l = 0; l != probe_point.size(); ++l)
-				jittered[l] = probe_point[l] + (((Real)rand() / (RAND_MAX)) - 0.5) * distance_to_pnt * 0.1;
+				jittered[l] = probe_point[l] + (((Real)rand() / (RAND_MAX)) - 0.5) * (Eps + distance_to_pnt * 0.1);
 			Vec3d from_face_to_jittered = jittered - closest_pnt;
 			Vec3d direction_to_jittered = from_face_to_jittered / (from_face_to_jittered.norm() + TinyReal);
 			cosine_angle = SimTK::dot(face_normal, direction_to_jittered);
+
+			ite++;
+			if (ite > 100)
+			{
+				std::cout << "\n Error: TriangleMeshShape::checkContain not bale to check contain!  " << std::endl;
+				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+			}
 		}
 
 		return cosine_angle < 0.0 ? true : false;
