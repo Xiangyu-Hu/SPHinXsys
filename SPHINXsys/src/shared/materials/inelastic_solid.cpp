@@ -12,10 +12,10 @@ namespace SPH
 	//=================================================================================================//
 	void HardeningPlasticSolid::initializePlasticParameters()
 	{
-		base_particles_->registerAVariable(inverse_plastic_strain_, "InversePlasticRightCauchyStrain", Matd(1.0));
-		base_particles_->registerAVariable(hardening_parameter_, "HardeningParameter");
-		base_particles_->addAVariableToRestart<Matd>("InversePlasticRightCauchyStrain");
-		base_particles_->addAVariableToRestart<Real>("HardeningParameter");
+		base_particles_->registerVariable(inverse_plastic_strain_, "InversePlasticRightCauchyStrain", Matd(1.0));
+		base_particles_->registerVariable(hardening_parameter_, "HardeningParameter");
+		base_particles_->addVariableToRestart<Matd>("InversePlasticRightCauchyStrain");
+		base_particles_->addVariableToRestart<Real>("HardeningParameter");
 	}
 	//=================================================================================================//
 	void HardeningPlasticSolid::assignBaseParticles(BaseParticles *base_particles)

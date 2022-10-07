@@ -45,7 +45,7 @@ namespace SPH
 		{
 			TransportVelocityCorrectionInner::Interaction(index_i, dt);
 
-			Real rho_i = rho_n_[index_i];
+			Real rho_i = rho_[index_i];
 
 			Vecd acceleration_trans(0);
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
@@ -64,14 +64,14 @@ namespace SPH
 
 			/** correcting particle position */
 			if (surface_indicator_[index_i] == 0)
-				pos_n_[index_i] += acceleration_trans * dt * dt * 0.5;
+				pos_[index_i] += acceleration_trans * dt * dt * 0.5;
 		}
 		//=================================================================================================//
 		void PressureRelaxationWithWallOldroyd_B::Interaction(size_t index_i, Real dt)
 		{
 			PressureRelaxation<PressureRelaxationInnerOldroyd_B>::Interaction(index_i, dt);
 
-			Real rho_i = rho_n_[index_i];
+			Real rho_i = rho_[index_i];
 			Matd tau_i = tau_[index_i];
 
 			Vecd acceleration(0);
@@ -88,14 +88,14 @@ namespace SPH
 				}
 			}
 
-			dvel_dt_[index_i] += acceleration;
+			acc_[index_i] += acceleration;
 		}
 		//=================================================================================================//
 		void DensityRelaxationWithWallOldroyd_B::Interaction(size_t index_i, Real dt)
 		{
 			DensityRelaxation<DensityRelaxationInnerOldroyd_B>::Interaction(index_i, dt);
 
-			Vecd vel_i = vel_n_[index_i];
+			Vecd vel_i = vel_[index_i];
 			Matd tau_i = tau_[index_i];
 
 			Matd stress_rate(0);

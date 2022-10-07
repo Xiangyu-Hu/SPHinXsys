@@ -78,7 +78,7 @@ class SphinxsysRegressionTest:
         print('Start copy the reload file...')
         command = "cp -r reload bin"
         os.system(self.enter_sphinxsys_case_folder + command)
-        print('Copying threload file is finished...')
+        print('Copying the reload file is finished...')
 
     def run_particle_relaxation(self) -> None:
         print('Start particle relaxation for the simulation...')

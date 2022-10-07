@@ -73,23 +73,22 @@ int main()
 	 * This section define all numerical methods will be used in this case.
 	 */
 	/** initialize a time step */
-	TimeStepInitialization myocardium_initialize_gravity(myocardium_body);
+	TimeStepInitialization myocardium_initialize_time_step(myocardium_body);
 	Gravity gravity(Vecd(-100.0, 0.0, 0.0));
-	TimeStepInitialization plate_initialize_gravity(moving_plate, gravity);
+	TimeStepInitialization plate_initialize_time_step(moving_plate, gravity);
 	/** Corrected configuration. */
 	solid_dynamics::CorrectConfiguration corrected_configuration(myocardium_body_inner);
 	solid_dynamics::CorrectConfiguration corrected_configuration_2(moving_plate_inner);
 	/** active and passive stress relaxation. */
-	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half(myocardium_body_inner);
+	solid_dynamics::KirchhoffStressRelaxationFirstHalf stress_relaxation_first_half(myocardium_body_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(myocardium_body_inner);
-	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half_2(moving_plate_inner);
+	solid_dynamics::KirchhoffStressRelaxationFirstHalf stress_relaxation_first_half_2(moving_plate_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half_2(moving_plate_inner);
 	//stress_relaxation_first_half_2.post_processes_(spring_constraint);
 	/** Algorithms for solid-solid contact. */
 	solid_dynamics::ContactDensitySummation myocardium_update_contact_density(myocardium_plate_contact);
-	solid_dynamics::ContactForce myocardium_compute_solid_contact_forces(myocardium_plate_contact);
-	/** Algorithms for solid-solid contact. */
 	solid_dynamics::ContactDensitySummation plate_update_contact_density(plate_myocardium_contact);
+	solid_dynamics::ContactForce myocardium_compute_solid_contact_forces(myocardium_plate_contact);
 	solid_dynamics::ContactForce plate_compute_solid_contact_forces(plate_myocardium_contact);
 
 	/** Constrain the holder. */
@@ -109,7 +108,7 @@ int main()
 	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
 
 	/**
-	 * From here the time stepping begines.
+	 * From here the time stepping begins.
 	 * Set the starting time.
 	 */
 	GlobalStaticVariables::physical_time_ = 0.0;
@@ -142,8 +141,8 @@ int main()
 						  << dt << "\n";
 			}
 			/** Gravity. */
-			myocardium_initialize_gravity.parallel_exec();
-			plate_initialize_gravity.parallel_exec();
+			myocardium_initialize_time_step.parallel_exec();
+			plate_initialize_time_step.parallel_exec();
 
 			spring_constraint.parallel_exec();
 

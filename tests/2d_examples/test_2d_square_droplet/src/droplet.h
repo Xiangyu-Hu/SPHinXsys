@@ -16,8 +16,8 @@ using namespace SPH;
  */
 Real DL = 2.0;						   /**< Tank length. */
 Real DH = 2.0;						   /**< Tank height. */
-Real LL = 1.0;						   /**< Liquid colume length. */
-Real LH = 1.0;						   /**< Liquid colume height. */
+Real LL = 1.0;						   /**< Liquid column length. */
+Real LH = 1.0;						   /**< Liquid column height. */
 Real particle_spacing_ref = DL / 40.0; /**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 2;	   /**< Extending width for BCs. */
 /** Domain bounds of the system. */

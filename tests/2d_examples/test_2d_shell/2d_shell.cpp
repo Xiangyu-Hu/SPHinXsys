@@ -47,7 +47,7 @@ public:
 					 cos(50.0 / 180.0 * Pi + (i + 0.5 - BWD) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number_mid_surface);
 			Real y = radius_mid_surface *
 					 sin(50.0 / 180.0 * Pi + (i + 0.5 - BWD) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number_mid_surface);
-			initializePositionAndVolume(Vecd(x, y), particle_spacing_ref);
+			initializePositionAndVolumetricMeasure(Vecd(x, y), particle_spacing_ref);
 			Vec2d normal_direction = Vec2d(x / radius_mid_surface, y / radius_mid_surface);
 			initializeSurfaceProperties(normal_direction, thickness);
 		}
@@ -68,7 +68,7 @@ public:
 private:
 	void tagManually(size_t index_i)
 	{
-		if (base_particles_->pos_n_[index_i][0] < -radius_mid_surface * cos(50.0 / 180.0 * Pi) || base_particles_->pos_n_[index_i][0] > radius_mid_surface * cos(50.0 / 180.0 * Pi))
+		if (base_particles_->pos_[index_i][0] < -radius_mid_surface * cos(50.0 / 180.0 * Pi) || base_particles_->pos_[index_i][0] > radius_mid_surface * cos(50.0 / 180.0 * Pi))
 		{
 			body_part_particles_.push_back(index_i);
 		}

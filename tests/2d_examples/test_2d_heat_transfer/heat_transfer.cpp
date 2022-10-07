@@ -112,7 +112,7 @@ class ThermosolidBodyMaterial : public DiffusionReaction<Solid>
 public:
 	ThermosolidBodyMaterial() : DiffusionReaction<Solid>({"Phi"})
 	{
-		// only default property is gieven, as no heat transfer within solid considered here.
+		// only default property is given, as no heat transfer within solid considered here.
 		initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi");
 	};
 };
@@ -128,12 +128,12 @@ protected:
 	void Update(size_t index_i, Real dt) override
 	{
 
-		if (-BW <= pos_n_[index_i][1] && pos_n_[index_i][1] <= 0.0)
+		if (-BW <= pos_[index_i][1] && pos_[index_i][1] <= 0.0)
 		{
 			species_n_[phi_][index_i] = phi_lower_wall;
 		}
 
-		if (DH <= pos_n_[index_i][1] && pos_n_[index_i][1] <= DH + BW)
+		if (DH <= pos_[index_i][1] && pos_[index_i][1] <= DH + BW)
 		{
 			species_n_[phi_][index_i] = phi_upper_wall;
 		}
@@ -158,7 +158,7 @@ protected:
 	void Update(size_t index_i, Real dt) override
 	{
 
-		if (0 <= pos_n_[index_i][1] && pos_n_[index_i][1] <= DH)
+		if (0 <= pos_[index_i][1] && pos_[index_i][1] <= DH)
 		{
 			species_n_[phi_][index_i] = phi_fluid_initial;
 		}
@@ -176,7 +176,7 @@ public:
 //----------------------------------------------------------------------
 class ThermalRelaxationComplex
 	: public RelaxationOfAllDiffusionSpeciesRK2<
-		  RelaxationOfAllDiffussionSpeciesComplex<
+		  RelaxationOfAllDiffusionSpeciesComplex<
 			  FluidBody, FluidParticles, WeaklyCompressibleFluid, SolidBody, SolidParticles, Solid>>
 {
 public:
@@ -251,7 +251,7 @@ int main()
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition(thermofluid_body, xAxis);
+	PeriodicConditionUsingCellLinkedList periodic_condition(thermofluid_body, thermofluid_body.getBodyShapeBounds(), xAxis);
 	ThermosolidBodyInitialCondition thermosolid_condition(thermosolid_body);
 	ThermofluidBodyInitialCondition thermofluid_initial_condition(thermofluid_body);
 	SimpleDynamics<NormalDirectionFromBodyShape> thermosolid_body_normal_direction(thermosolid_body);

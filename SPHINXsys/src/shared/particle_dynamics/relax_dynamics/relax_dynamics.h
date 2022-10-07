@@ -33,7 +33,7 @@
 #include "all_particle_dynamics.h"
 #include "base_kernel.h"
 #include "cell_linked_list.h"
-#include "body_relation.h"
+#include "all_body_relations.h"
 #include "general_dynamics.h"
 
 namespace SPH
@@ -62,7 +62,7 @@ namespace SPH
 			virtual ~GetTimeStepSizeSquare(){};
 
 		protected:
-			StdLargeVec<Vecd> &dvel_dt_;
+			StdLargeVec<Vecd> &acc_;
 			Real h_ref_;
 			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
 			Real OutputResult(Real reduced_value) override;
@@ -82,15 +82,15 @@ namespace SPH
 
 		protected:
 			StdLargeVec<Real> &Vol_;
-			StdLargeVec<Vecd> &dvel_dt_;
-			StdLargeVec<Vecd> &pos_n_;
+			StdLargeVec<Vecd> &acc_;
+			StdLargeVec<Vecd> &pos_;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
-		* @class RelaxationAccelerationInnerWithLevelSetCorrection
-		* @brief we constrain particles to a level function representing the interface.
-		*/
+		 * @class RelaxationAccelerationInnerWithLevelSetCorrection
+		 * @brief we constrain particles to a level function representing the interface.
+		 */
 		class RelaxationAccelerationInnerWithLevelSetCorrection : public RelaxationAccelerationInner
 		{
 		public:
@@ -115,7 +115,7 @@ namespace SPH
 			virtual ~UpdateParticlePosition(){};
 
 		protected:
-			StdLargeVec<Vecd> &pos_n_, &dvel_dt_;
+			StdLargeVec<Vecd> &pos_, &acc_;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
@@ -132,7 +132,7 @@ namespace SPH
 
 		protected:
 			StdLargeVec<Real> &h_ratio_, &Vol_;
-			StdLargeVec<Vecd> &pos_n_;
+			StdLargeVec<Vecd> &pos_;
 			Shape &body_shape_;
 			Kernel &kernel_;
 			ParticleSpacingByBodyShape *particle_spacing_by_body_shape_;
@@ -155,7 +155,7 @@ namespace SPH
 
 		protected:
 			StdLargeVec<Real> &Vol_;
-			StdLargeVec<Vecd> &dvel_dt_, &pos_n_;
+			StdLargeVec<Vecd> &acc_, &pos_;
 			StdVec<StdLargeVec<Real> *> contact_Vol_;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
@@ -163,7 +163,7 @@ namespace SPH
 		/**
 		 * @class ShapeSurfaceBounding
 		 * @brief constrain surface particles by
-		 * map contrained particles to geometry face and
+		 * map constrained particles to geometry face and
 		 * r = r + phi * norm (vector distance to face)
 		 */
 		class ShapeSurfaceBounding : public PartDynamicsByCell,
@@ -174,7 +174,7 @@ namespace SPH
 			virtual ~ShapeSurfaceBounding(){};
 
 		protected:
-			StdLargeVec<Vecd> &pos_n_;
+			StdLargeVec<Vecd> &pos_;
 			LevelSetShape *level_set_shape_;
 			Real constrained_distance_;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
@@ -183,7 +183,7 @@ namespace SPH
 		/**
 		 * @class ConstraintSurfaceParticles
 		 * @brief constrain surface particles by
-		 * map contrained particles to geometry face and
+		 * map constrained particles to geometry face and
 		 * r = r + phi * norm (vector distance to face)
 		 */
 		class ConstraintSurfaceParticles : public PartSimpleDynamicsByParticle,
@@ -195,7 +195,7 @@ namespace SPH
 
 		protected:
 			Real constrained_distance_;
-			StdLargeVec<Vecd> &pos_n_;
+			StdLargeVec<Vecd> &pos_;
 			LevelSetShape *level_set_shape_;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
@@ -285,7 +285,7 @@ namespace SPH
 			virtual ~ShellMidSurfaceBounding(){};
 
 		protected:
-			StdLargeVec<Vecd> &pos_n_;
+			StdLargeVec<Vecd> &pos_;
 			Real constrained_distance_;
 			LevelSetShape *level_set_shape_;
 			Real particle_spacing_ref_, thickness_, level_set_refinement_ratio_;
@@ -294,7 +294,7 @@ namespace SPH
 
 		/**
 		 * @class ShellNormalDirectionPrediction
-		 * @brief prodict the normal direction of shell particles.
+		 * @brief predict the normal direction of shell particles.
 		 */
 		class ShellNormalDirectionPrediction : public ParticleDynamics<void>
 		{
@@ -317,7 +317,7 @@ namespace SPH
 			{
 				Real thickness_;
 				LevelSetShape *level_set_shape_;
-				StdLargeVec<Vecd> &pos_n_, &n_, n_temp_;
+				StdLargeVec<Vecd> &pos_, &n_, n_temp_;
 
 			public:
 				NormalPrediction(SPHBody &sph_body, Real thickness);

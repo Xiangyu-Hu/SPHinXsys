@@ -23,7 +23,7 @@
 /**
  * @file geometric_shape.h
  * @brief Here, we define shapes represented directly by geometric elements.
- * @details The simbody conact geometry is used.
+ * @details The simbody contact geometry is used.
  * @author	Xiangyu Hu
  */
 

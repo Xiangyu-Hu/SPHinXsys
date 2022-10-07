@@ -46,8 +46,8 @@ namespace SPH
 		{
 		public:
 			FreeSurfaceIndicationComplex(BaseBodyRelationInner &inner_relation,
-										 BaseBodyRelationContact &contact_relation, Real thereshold = 0.75);
-			explicit FreeSurfaceIndicationComplex(ComplexBodyRelation &complex_relation, Real thereshold = 0.75);
+										 BaseBodyRelationContact &contact_relation, Real threshold = 0.75);
+			explicit FreeSurfaceIndicationComplex(ComplexBodyRelation &complex_relation, Real threshold = 0.75);
 			virtual ~FreeSurfaceIndicationComplex(){};
 
 		protected:

@@ -22,7 +22,7 @@
  * --------------------------------------------------------------------------*/
 /**
  * @file 	fluid_particles_variable.h
- * @brief 	Here, we define the algorithm classes for computing derived solid dynamics varabales. 
+ * @brief 	Here, we define the algorithm classes for computing derived solid dynamics variables. 
  * @details These variable can be added into variable list for state output.   
  * @author	Xiangyu Hu
  */

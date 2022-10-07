@@ -63,7 +63,7 @@ namespace SPH
 		protected:
 			StdVec<Real> wall_inv_rho_0_;
 			StdVec<StdLargeVec<Real> *> wall_mass_, wall_Vol_;
-			StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_dvel_dt_ave_, wall_n_;
+			StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_acc_ave_, wall_n_;
 		};
 
 		/**
@@ -133,8 +133,8 @@ namespace SPH
 		* @brief template density relaxation scheme without using different Riemann solvers.
 		* The difference from the free surface version is that no Riemann problem is applied
 		*/
-		template <class BaseDensityAndenergyRelaxationType>
-		class DensityAndEnergyRelaxation : public RelaxationWithWall<BaseDensityAndenergyRelaxationType>
+		template <class BaseDensityAndEnergyRelaxationType>
+		class DensityAndEnergyRelaxation : public RelaxationWithWall<BaseDensityAndEnergyRelaxationType>
 		{
 		public:
 			// template for different combination of constructing body relations
@@ -148,8 +148,8 @@ namespace SPH
 		};
 
 		/** template interface class for different density relaxation schemes */
-		template <class BaseDensityAndenergyRelaxationType>
-		class BaseDensityAndEnergyRelaxationWithWall : public DensityAndEnergyRelaxation<BaseDensityAndenergyRelaxationType>
+		template <class BaseDensityAndEnergyRelaxationType>
+		class BaseDensityAndEnergyRelaxationWithWall : public DensityAndEnergyRelaxation<BaseDensityAndEnergyRelaxationType>
 		{
 		public:
 			explicit BaseDensityAndEnergyRelaxationWithWall(ComplexBodyRelation &fluid_wall_relation);

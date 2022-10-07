@@ -64,7 +64,7 @@ namespace SPH
 		protected:
 			StdVec<Real> wall_inv_rho0_;
 			StdVec<StdLargeVec<Real> *> wall_mass_, wall_Vol_;
-			StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_dvel_dt_ave_, wall_n_;
+			StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_acc_ave_, wall_n_;
 		};
 
 		/**
@@ -177,8 +177,8 @@ namespace SPH
 		{
 		public:
 			FreeSurfaceIndicationComplex(BaseBodyRelationInner &inner_relation,
-				BaseBodyRelationContact &contact_relation, Real thereshold = 0.75);
-			explicit FreeSurfaceIndicationComplex(ComplexBodyRelation &complex_relation, Real thereshold = 0.75);
+				BaseBodyRelationContact &contact_relation, Real threshold = 0.75);
+			explicit FreeSurfaceIndicationComplex(ComplexBodyRelation &complex_relation, Real threshold = 0.75);
 			virtual ~FreeSurfaceIndicationComplex() {};
 
 		protected:

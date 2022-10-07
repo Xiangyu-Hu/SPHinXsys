@@ -22,7 +22,7 @@
 * --------------------------------------------------------------------------*/
 /**
  * @file 	active_muscle_dynamics.h
- * @brief 	In is file, we declear muscle dynamics which is driven by an external injection of energy. 
+ * @brief 	In is file, we declare muscle dynamics which is driven by an external injection of energy. 
  * @author 	Chi Zhang and Xiangyu Hu
  * @version 0.3.1
  *			Here, we need identify the physical differences between electrophysiology and active muscle.
@@ -62,7 +62,7 @@ namespace SPH
 			explicit MuscleActivation(SolidBody &solid_body);
 			virtual ~MuscleActivation() {};
 		protected:
-			StdLargeVec<Vecd>& pos_0_;
+			StdLargeVec<Vecd>& pos0_;
 			StdLargeVec<Real>& active_contraction_stress_;
 		};
 
@@ -79,7 +79,7 @@ namespace SPH
 			void setUpSpringStiffness(Vecd stiffness){stiffness_ = stiffness;}
 		protected:
 			StdLargeVec<Real>& mass_;
-			StdLargeVec<Vecd>& pos_n_, & pos_0_, & vel_n_;
+			StdLargeVec<Vecd>& pos_, & pos0_, & vel_;
 			Vecd stiffness_;
 			virtual Vecd getAcceleration(Vecd& disp, Real mass);
 			virtual void Update(size_t index_i, Real dt = 0.0) override;

@@ -2,7 +2,7 @@
 * @file 	fsi2.h
 * @brief 	This is the case file for the test of fluid - structure interaction.
 * @details  We consider a flow - induced vibration of an elastic beam behind a cylinder in 2D.
-* @author 	Xiangyu Hu, Chi Zhangand Luhui Han
+* @author 	Xiangyu Hu, Chi Zhang and Luhui Han
 */
 
 #ifndef FSI2_CASE_H
@@ -104,7 +104,7 @@ std::vector<Vecd> createInnerWallShape()
 Vec2d buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
 Vec2d buffer_translation = Vec2d(-DL_sponge, 0.0) + buffer_halfsize;
 //----------------------------------------------------------------------
-//	Define case dependent geometrices
+//	Define case dependent geometries
 //----------------------------------------------------------------------
 class WaterBlock : public MultiPolygonShape
 {

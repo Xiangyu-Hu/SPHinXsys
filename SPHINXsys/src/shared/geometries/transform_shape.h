@@ -1,6 +1,6 @@
 /**
  * @file transform_shape.h
- * @brief tranformation related class for geometries.
+ * @brief transformation related class for geometries.
  * @author	Xiangyu Hu
  */
 

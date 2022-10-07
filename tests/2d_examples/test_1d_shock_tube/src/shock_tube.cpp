@@ -52,25 +52,25 @@ public:
 protected:
 	void Update(size_t index_i, Real dt) override
 	{
-		if (pos_n_[index_i][0] < DL / 10.0)
+		if (pos_[index_i][0] < DL / 10.0)
 		{
 			// initial left state pressure,momentum and energy profile
-			rho_n_[index_i] = rho0_l;
+			rho_[index_i] = rho0_l;
 			p_[index_i] = p_l;
 			Real rho_e = p_[index_i] / (gamma_ - 1.0);
-			vel_n_[index_i] = velocity_l;
+			vel_[index_i] = velocity_l;
 			mom_[index_i] = rho0_l * velocity_l;
-			E_[index_i] = rho_e + 0.5 * rho_n_[index_i] * vel_n_[index_i].normSqr();
+			E_[index_i] = rho_e + 0.5 * rho_[index_i] * vel_[index_i].normSqr();
 		}
-		if (pos_n_[index_i][0] > DL / 10.0)
+		if (pos_[index_i][0] > DL / 10.0)
 		{
 			// initial right state pressure,momentum and energy profile
-			rho_n_[index_i] = rho0_r;
+			rho_[index_i] = rho0_r;
 			p_[index_i] = p_r;
 			Real rho_e = p_[index_i] / (gamma_ - 1.0);
-			vel_n_[index_i] = velocity_r;
+			vel_[index_i] = velocity_r;
 			mom_[index_i] = rho0_r * velocity_r;
-			E_[index_i] = rho_e + 0.5 * rho_n_[index_i] * vel_n_[index_i].normSqr();
+			E_[index_i] = rho_e + 0.5 * rho_[index_i] * vel_[index_i].normSqr();
 		}
 	}
 };
@@ -108,7 +108,7 @@ int main(int ac, char *av[])
 	// Initialize particle acceleration.
 	eulerian_compressible_fluid_dynamics::CompressibleFlowTimeStepInitialization initialize_wave_step(wave_body);
 	// Periodic BCs in y direction.
-	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition_y(wave_body, yAxis);
+	PeriodicConditionUsingCellLinkedList periodic_condition_y(wave_body, wave_body.getBodyShapeBounds(), yAxis);
 	// Time step size with considering sound wave speed.
 	eulerian_compressible_fluid_dynamics::AcousticTimeStepSize get_wave_time_step_size(wave_body);
 	// Pressure, density and energy relaxation algorithm by use HLLC Riemann solver.

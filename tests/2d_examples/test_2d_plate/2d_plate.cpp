@@ -48,7 +48,7 @@ public:
 		for (int i = 0; i < (particle_number + 2 * BWD); i++)
 		{
 			Real x = resolution_ref * i - BW + resolution_ref * 0.5;
-			initializePositionAndVolume(Vecd(x, 0.0), resolution_ref);
+			initializePositionAndVolumetricMeasure(Vecd(x, 0.0), resolution_ref);
 			initializeSurfaceProperties(n_0, thickness);
 		}
 	};
@@ -68,7 +68,7 @@ public:
 private:
 	void tagManually(size_t index_i)
 	{
-		if (base_particles_->pos_n_[index_i][0] < 0.0 || base_particles_->pos_n_[index_i][0] > PL)
+		if (base_particles_->pos_[index_i][0] < 0.0 || base_particles_->pos_[index_i][0] > PL)
 		{
 			body_part_particles_.push_back(index_i);
 		}

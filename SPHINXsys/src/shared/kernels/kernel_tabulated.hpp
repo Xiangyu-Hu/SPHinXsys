@@ -1,5 +1,5 @@
 /**
- * @file kerneltabulated.hpp
+ * @file kernel_tabulated.hpp
  * @brief This is the class for tabulated kernels using template.
  * @details This kernel tabulate a kernel function
  * so that computing any kernel will have cost the same amount of time.

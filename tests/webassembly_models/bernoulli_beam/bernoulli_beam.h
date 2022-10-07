@@ -38,7 +38,7 @@ StructuralSimulationInput createSimulationInput(const BernoulliBeamInput& input,
 		material
 	};
 
-	/** INPUT DECLERATION */
+	/** INPUT DECLARATION */
 	StructuralSimulationInput inputStructuralSim = {
 		input.relative_input_path,
 		imported_stl_list,
