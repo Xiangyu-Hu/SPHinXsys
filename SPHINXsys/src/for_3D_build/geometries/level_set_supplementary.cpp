@@ -118,6 +118,35 @@ namespace SPH
 				}
 	}
 	//=================================================================================================//
+	void LevelSetDataPackage::stepDiffusionLevelSetSign()
+	{
+		for (int i = AddressBufferWidth(); i != OperationUpperBound(); ++i)
+			for (int j = AddressBufferWidth(); j != OperationUpperBound(); ++j)
+				for (int k = AddressBufferWidth(); k != OperationUpperBound(); ++k)
+				{
+					// near interface cells are not considered
+					if (abs(*near_interface_id_addrs_[i][j][k]) > 1)
+					{
+						Real phi_0 = *phi_addrs_[i][j][k];
+						for (int l = -1; l != 2; ++l)
+							for (int m = -1; m != 2; ++m)
+								for (int n = -1; n != 2; ++n)
+								{
+									int index_x = i + l;
+									int index_y = j + m;
+									int index_z = k + n;
+									int near_interface_id = *near_interface_id_addrs_[index_x][index_y][index_z];
+									if (abs(near_interface_id) == 1)
+									{
+										*near_interface_id_addrs_[i][j][k] = near_interface_id;
+										*phi_addrs_[i][j][k] = near_interface_id == 1 ? fabs(phi_0) : -fabs(phi_0);
+										break;
+									}
+								}
+					}
+				}
+	}
+	//=================================================================================================//
 	void LevelSetDataPackage::markNearInterface(Real small_shift_factor)
 	{
 		Real small_shift = small_shift_factor * grid_spacing_;
@@ -138,36 +167,39 @@ namespace SPH
 					Real phi_0 = *phi_addrs_[i][j][k];
 					int near_interface_id = phi_0 > 0.0 ? 2 : -2;
 
-					Real phi_average_0 = corner_averages[i][j][k];
-					// find inner and outer cut cells
-					for (int l = 0; l != 2; ++l)
-						for (int m = 0; m != 2; ++m)
-							for (int n = 0; n != 2; ++n)
-							{
-								int index_x = i + l;
-								int index_y = j + m;
-								int index_z = k + n;
-								Real phi_average = corner_averages[index_x][index_y][index_z];
-								if ((phi_average_0 - small_shift) * (phi_average - small_shift) < 0.0)
-									near_interface_id = 1;
-								if ((phi_average_0 + small_shift) * (phi_average + small_shift) < 0.0)
-									near_interface_id = -1;
-							}
-					// find zero cut cells
-					for (int l = 0; l != 2; ++l)
-						for (int m = 0; m != 2; ++m)
-							for (int n = 0; n != 2; ++n)
-							{
-								int index_x = i + l;
-								int index_y = j + m;
-								int index_z = k + n;
-								Real phi_average = corner_averages[index_x][index_y][index_z];
-								if (phi_average_0 * phi_average < 0.0)
-									near_interface_id = 0;
-							}
-					// find cells between cut cells
-					if (fabs(phi_0) < small_shift && abs(near_interface_id) != 1)
-						near_interface_id = 0;
+					if (fabs(phi_0) < small_shift)
+					{
+						Real phi_average_0 = corner_averages[i][j][k];
+						// find inner and outer cut cells
+						for (int l = 0; l != 2; ++l)
+							for (int m = 0; m != 2; ++m)
+								for (int n = 0; n != 2; ++n)
+								{
+									int index_x = i + l;
+									int index_y = j + m;
+									int index_z = k + n;
+									Real phi_average = corner_averages[index_x][index_y][index_z];
+									if ((phi_average_0 - small_shift) * (phi_average - small_shift) < 0.0)
+										near_interface_id = 1;
+									if ((phi_average_0 + small_shift) * (phi_average + small_shift) < 0.0)
+										near_interface_id = -1;
+								}
+						// find zero cut cells
+						for (int l = 0; l != 2; ++l)
+							for (int m = 0; m != 2; ++m)
+								for (int n = 0; n != 2; ++n)
+								{
+									int index_x = i + l;
+									int index_y = j + m;
+									int index_z = k + n;
+									Real phi_average = corner_averages[index_x][index_y][index_z];
+									if (phi_average_0 * phi_average < 0.0)
+										near_interface_id = 0;
+								}
+						// find cells between cut cells
+						if (fabs(phi_0) < small_shift && abs(near_interface_id) != 1)
+							near_interface_id = 0;
+					}
 
 					// assign this is to package
 					*near_interface_id_addrs_[i][j][k] = near_interface_id;
@@ -491,6 +523,6 @@ namespace SPH
 						  });
 
 		finishDataPackages();
-	}	
+	}
 	//=============================================================================================//
 }

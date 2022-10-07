@@ -12,29 +12,29 @@ using namespace SPH;
 //	Setting for the first geometry.
 //	To use this, please commenting the setting for the second geometry.
 //----------------------------------------------------------------------
-// std::string full_path_to_file = "./input/SPHinXsys.stl";
+std::string full_path_to_file = "./input/SPHinXsys.stl";
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-// Vec3d domain_lower_bound(-2.3, -0.1, -0.3);
-// Vec3d domain_upper_bound(2.3, 4.5, 0.3);
-// Vecd translation(0.0, 0.0, 0.0);
-// Real scaling = 1.0;
+Vec3d domain_lower_bound(-2.3, -0.1, -0.3);
+Vec3d domain_upper_bound(2.3, 4.5, 0.3);
+Vecd translation(0.0, 0.0, 0.0);
+Real scaling = 1.0;
 //----------------------------------------------------------------------
 //	Setting for the second geometry.
 //	To use this, please commenting the setting for the first geometry.
 //----------------------------------------------------------------------
-std::string full_path_to_file = "./input/triangle_prism.stl";
+// std::string full_path_to_file = "./input/triangle_prism.stl";
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 0.75; /**Tank width. */
-Real DH = 1.3;	/**Tank height. */
-Real DW = 1.2;	/**Tank width. */
+/*Real DL = 0.75; // Tank width.
+Real DH = 1.3;	// Tank height.
+Real DW = 1.2;	// Tank width.
 Vec3d domain_lower_bound(-0.2, -0.2, -0.2);
 Vec3d domain_upper_bound(DL, DH, DW);
 Vecd translation(0.5 * DL, 0.5 * DH, 0.5 * DW);
-Real scaling = 2.5;
+Real scaling = 2.5; */
 //----------------------------------------------------------------------
 //	Below are common parts for the two test geometries.
 //----------------------------------------------------------------------
@@ -66,7 +66,7 @@ int main()
 	//----------------------------------------------------------------------
 	RealBody imported_model(system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
 	// level set shape is used for particle relaxation
-	imported_model.defineBodyLevelSetShape()->writeLevelSet(imported_model);
+	imported_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(imported_model);
 	imported_model.defineParticlesAndMaterial();
 	imported_model.generateParticles<ParticleGeneratorLattice>();
 	//----------------------------------------------------------------------

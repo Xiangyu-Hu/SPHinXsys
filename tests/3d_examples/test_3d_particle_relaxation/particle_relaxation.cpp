@@ -48,7 +48,7 @@ int main()
 	//----------------------------------------------------------------------
 	RealBody imported_model(system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
 	imported_model.defineAdaptation<ParticleSpacingByBodyShape>(1.15, 1.0, 3);
-	imported_model.defineBodyLevelSetShape()->writeLevelSet(imported_model);
+	imported_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(imported_model);
 	imported_model.defineParticlesAndMaterial();
 	imported_model.generateParticles<ParticleGeneratorMultiResolution>();
 	imported_model.addBodyStateForRecording<Real>("SmoothingLengthRatio");

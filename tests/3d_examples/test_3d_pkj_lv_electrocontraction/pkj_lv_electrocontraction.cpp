@@ -48,7 +48,7 @@ int main(int ac, char *av[])
 	if (system.run_particle_relaxation_)
 	{
 		SolidBody herat_model(system, makeShared<Heart>("HeartModel"));
-		herat_model.defineBodyLevelSetShape()->writeLevelSet(herat_model);
+		herat_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(herat_model);
 		herat_model.defineParticlesAndMaterial<DiffusionReactionParticles<ElasticSolidParticles, LocallyOrthotropicMuscle>, FiberDirectionDiffusion>();
 		herat_model.generateParticles<ParticleGeneratorLattice>();
 		/** topology */

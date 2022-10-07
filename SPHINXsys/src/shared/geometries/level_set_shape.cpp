@@ -34,6 +34,12 @@ namespace SPH
 		return this;
 	}
 	//=================================================================================================//
+	LevelSetShape *LevelSetShape::correctLevelSetSign(Real small_shift_factor)
+	{
+		level_set_->correctTopology(small_shift_factor);
+		return this;
+	}
+	//=================================================================================================//
 	bool LevelSetShape::checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED)
 	{
 		return level_set_->probeSignedDistance(probe_point) < 0.0 ? true : false;
