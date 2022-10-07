@@ -32,7 +32,7 @@ namespace SPH
 		Real cosine_angle = SimTK::dot(face_normal, direction_to_pnt);
 
 		int ite = 0;
-		while (ABS(cosine_angle) < Eps)
+		while (fabs(cosine_angle) < Eps)
 		{
 			Vec3d jittered = probe_point; // jittering
 			for (int l = 0; l != probe_point.size(); ++l)
