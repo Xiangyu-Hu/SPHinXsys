@@ -42,7 +42,7 @@ int main()
 	/** Creating body, materials and particles. */
 	SolidBody pipe_body(system, makeShared<Pipe>("PipeBody"));
 	pipe_body.defineAdaptation<SPHAdaptation>(1.15, 1.0);
-	pipe_body.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(pipe_body);
+	pipe_body.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(io_environment);
 	//here dummy linear elastic solid is use because no solid dynamics in particle relaxation
 	pipe_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
 	pipe_body.generateParticles<ThickSurfaceParticleGeneratorLattice>(thickness);
@@ -51,7 +51,7 @@ int main()
 	 * @brief define simple data file input and outputs functions.
 	 */
 	BodyStatesRecordingToVtp write_real_body_states(io_environment, {pipe_body});
-	MeshRecordingToPlt write_mesh_cell_linked_list(io_environment, pipe_body, pipe_body.cell_linked_list_);
+	MeshRecordingToPlt write_mesh_cell_linked_list(io_environment, pipe_body.cell_linked_list_);
 
 	/** Set body contact map
 	 *  The contact map gives the data connections between the bodies
