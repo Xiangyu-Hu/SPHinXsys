@@ -12,14 +12,17 @@
 namespace SPH
 {
 	//=================================================================================================//
-	SPHBody::SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr)
-		: sph_system_(sph_system), newly_updated_(true),
+	SPHBody::SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr, const std::string &body_name)
+		: sph_system_(sph_system), body_name_(body_name), newly_updated_(true),
 		  body_shape_(shape_ptr_keeper_.assignPtr(shape_ptr)),
 		  sph_adaptation_(sph_adaptation_ptr_keeper_.createPtr<SPHAdaptation>(*this)),
 		  base_material_(nullptr), base_particles_(nullptr)
 	{
 		sph_system_.sph_bodies_.push_back(this);
 	}
+	//=================================================================================================//
+	SPHBody::SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr)
+		: SPHBody(sph_system, shape_ptr, shape_ptr->getName()) {}
 	//=================================================================================================//
 	BoundingBox SPHBody::getSPHSystemBounds()
 	{
@@ -92,18 +95,6 @@ namespace SPH
 	void SPHBody::readFromXmlForReloadParticle(std::string &filefullpath)
 	{
 		base_particles_->readFromXmlForReloadParticle(filefullpath);
-	}
-	//=================================================================================================//
-	RealBody::RealBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr)
-		: SPHBody(sph_system, shape_ptr),
-		  system_domain_bounds_(this->getSPHSystem().system_domain_bounds_),
-		  use_split_cell_lists_(false), iteration_count_(1)
-	{
-		sph_system.real_bodies_.push_back(this);
-		size_t number_of_split_cell_lists = powerN(3, Vecd(0).size());
-		split_cell_lists_.resize(number_of_split_cell_lists);
-		cell_linked_list_ = cell_linked_list_keeper_.movePtr(
-			sph_adaptation_->createCellLinkedList(system_domain_bounds_, *this));
 	}
 	//=================================================================================================//
 	void RealBody::assignBaseParticles(BaseParticles *base_particles)

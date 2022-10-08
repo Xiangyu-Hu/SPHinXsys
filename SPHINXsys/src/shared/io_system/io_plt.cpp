@@ -58,13 +58,11 @@ namespace SPH
 		}
 	}
 	//=============================================================================================//
-	MeshRecordingToPlt ::MeshRecordingToPlt(IOEnvironment &io_environment, SPHBody &body, BaseMeshField *mesh_field)
-		: BodyStatesRecording(io_environment, body), mesh_field_(mesh_field)
-	{
-		filefullpath_ = io_environment_.output_folder_ + "/" + body.getName() + "_" + mesh_field_->Name() + ".dat";
-	}
+	MeshRecordingToPlt ::MeshRecordingToPlt(IOEnvironment &io_environment, BaseMeshField *mesh_field)
+		: BaseIO(io_environment), mesh_field_(mesh_field),
+		filefullpath_(io_environment_.output_folder_ + "/" + mesh_field_->Name() + ".dat") {}
 	//=============================================================================================//
-	void MeshRecordingToPlt::writeWithFileName(const std::string &sequence)
+	void MeshRecordingToPlt::writeToFile(size_t iteration_step)
 	{
 		std::ofstream out_file(filefullpath_.c_str(), std::ios::app);
 		mesh_field_->writeMeshFieldToPlt(out_file);
