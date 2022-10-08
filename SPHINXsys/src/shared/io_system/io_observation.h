@@ -62,7 +62,7 @@ namespace SPH
 			  quantity_name_(quantity_name)
 		{
 			/** Output for .dat file. */
-			filefullpath_output_ = io_environment_.output_folder_ + "/" + dynamics_range_name_ + "_" + quantity_name + "_" + io_environment_.restart_step_ + ".dat";
+			filefullpath_output_ = io_environment_.output_folder_ + "/" + dynamics_range_name_ + "_" + quantity_name + ".dat";
 			std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
 			out_file << "run_time"
 					 << "   ";
@@ -123,7 +123,7 @@ namespace SPH
 			  quantity_name_(reduce_method_.QuantityName())
 		{
 			/** output for .dat file. */
-			filefullpath_output_ = io_environment_.output_folder_ + "/" + dynamics_range_name_ + "_" + quantity_name_ + "_" + io_environment_.restart_step_ + ".dat";
+			filefullpath_output_ = io_environment_.output_folder_ + "/" + dynamics_range_name_ + "_" + quantity_name_ + ".dat";
 			std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
 			out_file << "\"run_time\""
 					 << "   ";

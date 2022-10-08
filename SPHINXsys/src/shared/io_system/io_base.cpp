@@ -8,20 +8,6 @@
 
 #include "sph_system.h"
 
-namespace
-{
-	/**
-	 * @brief Convert any input to string and pad the output with zeros
-	 * @todo Use external library for general string formatting, e.g. abseil, fmt library, or std::format
-	 */
-	template <typename T>
-	std::string padValueWithZeros(T &&value, size_t max_string_width = 10)
-	{
-		std::ostringstream s_time;
-		s_time << std::setw(max_string_width) << std::setfill('0') << value;
-		return s_time.str();
-	}
-}
 namespace SPH
 {
 	//=============================================================================================//
@@ -56,8 +42,6 @@ namespace SPH
 			}
 		}
 
-		restart_step_ = padValueWithZeros(sph_system.restart_step_);
-
 		sph_system.io_environment_ = this;
 	}
 	//=============================================================================================//
@@ -66,10 +50,15 @@ namespace SPH
 		return parameterization_io_ptr_keeper_.createRef<ParameterizationIO>(input_folder_);
 	}
 	//=============================================================================================//
-	std::string BodyStatesIO::convertPhysicalTimeToString(Real convertPhysicalTimeToStream)
+	std::string BaseIO::convertPhysicalTimeToString(Real convertPhysicalTimeToStream)
 	{
 		int i_time = int(GlobalStaticVariables::physical_time_ * 1.0e6);
 		return padValueWithZeros(i_time);
+	}
+	//=============================================================================================//
+	void BodyStatesRecording::writeToFile()
+	{
+		writeWithFileName(convertPhysicalTimeToString(GlobalStaticVariables::physical_time_));
 	}
 	//=============================================================================================//
 	void BodyStatesRecording::writeToFile(size_t iteration_step)
@@ -77,63 +66,42 @@ namespace SPH
 		writeWithFileName(padValueWithZeros(iteration_step));
 	};
 	//=============================================================================================//
-	ReloadParticleIO::ReloadParticleIO(IOEnvironment &io_environment, SPHBodyVector bodies) : BodyStatesIO(io_environment, bodies)
+	ReloadParticleIO::ReloadParticleIO(IOEnvironment &io_environment, SPHBody &sph_body,
+									   const std::string &given_body_name)
+		: BaseIO(io_environment), sph_body_(sph_body),
+		  filefullpath_(io_environment.reload_folder_ + "/" + given_body_name + "_rld.xml")
 	{
 		if (!fs::exists(io_environment.reload_folder_))
 		{
 			fs::create_directory(io_environment.reload_folder_);
 		}
-
-		std::transform(bodies.begin(), bodies.end(), std::back_inserter(file_paths_),
-					   [&](SPHBody *body) -> std::string
-					   { return io_environment.reload_folder_ + "/" + body->getName() + "_rld.xml"; });
-	};
-	//=============================================================================================//
-	ReloadParticleIO::ReloadParticleIO(IOEnvironment &io_environment, SPHBodyVector bodies,
-									   const StdVec<std::string> &given_body_names)
-		: ReloadParticleIO(io_environment, bodies)
-	{
-		std::transform(given_body_names.begin(), given_body_names.end(), file_paths_.begin(),
-					   [&](const std::string &body_name) -> std::string
-					   { return io_environment.reload_folder_ + "/" + body_name + "_rld.xml"; });
 	}
+	//=============================================================================================//
+	ReloadParticleIO::ReloadParticleIO(IOEnvironment &io_environment, SPHBody &sph_body)
+		: ReloadParticleIO(io_environment, sph_body, sph_body.getName()) {}
 	//=============================================================================================//
 	void ReloadParticleIO::writeToFile(size_t iteration_step)
 	{
-		for (size_t i = 0; i < bodies_.size(); ++i)
-		{
-			std::string filefullpath = file_paths_[i];
-
-			if (fs::exists(filefullpath))
-			{
-				fs::remove(filefullpath);
-			}
-			bodies_[i]->writeToXmlForReloadParticle(filefullpath);
-		}
+		sph_body_.writeToXmlForReloadParticle(filefullpath_);
 	}
 	//=============================================================================================//
 	void ReloadParticleIO::readFromFile(size_t restart_step)
 	{
-		std::cout << "\n Reloading particles from files." << std::endl;
-		for (size_t i = 0; i < bodies_.size(); ++i)
+		std::cout << "\n Reloading particles from file." << std::endl;
+		if (!fs::exists(filefullpath_))
 		{
-			std::string filefullpath = file_paths_[i];
-
-			if (!fs::exists(filefullpath))
-			{
-				std::cout << "\n Error: the input file:" << filefullpath << " is not exists." << std::endl;
-				std::cout << "\n You need first to run particle relaxation, which generates file for reloading." << std::endl;
-				std::cout << "\n Please check the tutorial of SPHinXsys library from www.sphinxsys.org." << std::endl;
-				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-				exit(1);
-			}
-
-			bodies_[i]->readFromXmlForReloadParticle(filefullpath);
+			std::cout << "\n Error: the input file:" << filefullpath_ << " is not exists." << std::endl;
+			std::cout << "\n You need first to run particle relaxation, which generates file for reloading." << std::endl;
+			std::cout << "\n Please check the tutorial of SPHinXsys library from www.sphinxsys.org." << std::endl;
+			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+			exit(1);
 		}
+		sph_body_.readFromXmlForReloadParticle(filefullpath_);
 	}
 	//=============================================================================================//
 	RestartIO::RestartIO(IOEnvironment &io_environment, SPHBodyVector bodies)
-		: BodyStatesIO(io_environment, bodies), overall_file_path_(io_environment.restart_folder_ + "/Restart_time_")
+		: BodyStatesRecording(io_environment, bodies),
+		  overall_file_path_(io_environment.restart_folder_ + "/Restart_time_")
 	{
 		std::transform(bodies.begin(), bodies.end(), std::back_inserter(file_paths_),
 					   [&](SPHBody *body) -> std::string
@@ -199,17 +167,14 @@ namespace SPH
 	}
 	//=================================================================================================//
 	ReloadMaterialParameterIO::
-		ReloadMaterialParameterIO(IOEnvironment &io_environment, SPHBody &sph_body)
-		: io_environment_(io_environment), base_material_(*sph_body.base_material_),
-		  file_path_(io_environment.reload_folder_ + "/Material_" +
-					 base_material_.LocalParametersName() + "_rld.xml") {}
-	//=================================================================================================//
-	ReloadMaterialParameterIO::
 		ReloadMaterialParameterIO(IOEnvironment &io_environment, SPHBody &sph_body,
 								  const std::string &given_parameters_name)
-		: io_environment_(io_environment), base_material_(*sph_body.base_material_),
-		  file_path_(io_environment.reload_folder_ + "/Material_" +
-					 given_parameters_name + "_rld.xml") {}
+		: ReloadParticleIO(io_environment, sph_body, given_parameters_name),
+		  base_material_(*sph_body.base_material_) {}
+	//=================================================================================================//
+	ReloadMaterialParameterIO::
+		ReloadMaterialParameterIO(IOEnvironment &io_environment, SPHBody &sph_body)
+		: ReloadMaterialParameterIO(io_environment, sph_body, sph_body.base_material_->LocalParametersName()) {}
 	//=================================================================================================//
 	void ReloadMaterialParameterIO::writeToFile(size_t iteration_step)
 	{
@@ -219,22 +184,22 @@ namespace SPH
 			fs::create_directory(reload_material_folder);
 		}
 
-		if (fs::exists(file_path_))
+		if (fs::exists(filefullpath_))
 		{
-			fs::remove(file_path_);
+			fs::remove(filefullpath_);
 		}
-		base_material_.writeToXmlForReloadLocalParameters(file_path_);
+		base_material_.writeToXmlForReloadLocalParameters(filefullpath_);
 	}
 	//=================================================================================================//
 	void ReloadMaterialParameterIO::readFromFile(size_t restart_step)
 	{
-		if (!fs::exists(file_path_))
+		if (!fs::exists(filefullpath_))
 		{
-			std::cout << "\n Error: the reloading material property file:" << file_path_ << " is not exists" << std::endl;
+			std::cout << "\n Error: the reloading material property file:" << filefullpath_ << " is not exists" << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 			exit(1);
 		}
-		base_material_.readFromXmlForLocalParameters(file_path_);
+		base_material_.readFromXmlForLocalParameters(filefullpath_);
 	}
 	//=================================================================================================//
 }

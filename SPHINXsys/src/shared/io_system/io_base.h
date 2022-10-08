@@ -60,62 +60,65 @@ namespace SPH
 		UniquePtrKeeper<ParameterizationIO> parameterization_io_ptr_keeper_;
 
 	public:
-		explicit IOEnvironment(SPHSystem &sph_system, bool delete_output = true);
-		virtual ~IOEnvironment(){};
-
 		SPHSystem &sph_system_;
 		std::string input_folder_;
 		std::string output_folder_;
 		std::string restart_folder_;
 		std::string reload_folder_;
-		std::string restart_step_;
 
+		explicit IOEnvironment(SPHSystem &sph_system, bool delete_output = true);
+		virtual ~IOEnvironment(){};
 		ParameterizationIO &defineParameterizationIO();
 	};
 
 	/**
-	 * @class BodyStatesIO
-	 * @brief base class for write and read body states.
+	 * @class BaseIO
+	 * @brief base class for write and read.
 	 */
-	class BodyStatesIO
+	class BaseIO
 	{
+	public:
+		explicit BaseIO(IOEnvironment &io_environment)
+			: io_environment_(io_environment){};
+		virtual ~BaseIO(){};
+
+		/** write with filename indicated by iteration step */
+		virtual void writeToFile(size_t iteration_step) = 0;
+
 	protected:
 		IOEnvironment &io_environment_;
-		SPHBodyVector bodies_;
 
 		std::string convertPhysicalTimeToString(Real physical_time);
 
-	public:
-		BodyStatesIO(IOEnvironment &io_environment, SPHBody &body)
-			: io_environment_(io_environment), bodies_({&body}){};
-		BodyStatesIO(IOEnvironment &io_environment, SPHBodyVector bodies)
-			: io_environment_(io_environment), bodies_(bodies){};
-		virtual ~BodyStatesIO(){};
+		template <typename T>
+		std::string padValueWithZeros(T &&value, size_t max_string_width = 10)
+		{
+			std::ostringstream s_time;
+			s_time << std::setw(max_string_width) << std::setfill('0') << value;
+			return s_time.str();
+		}
 	};
 
 	/**
 	 * @class BodyStatesRecording
 	 * @brief base class for write body states.
 	 */
-	class BodyStatesRecording : public BodyStatesIO
+	class BodyStatesRecording : public BaseIO
 	{
 	public:
-		BodyStatesRecording(IOEnvironment &io_environment, SPHBody &body)
-			: BodyStatesIO(io_environment, body){};
 		BodyStatesRecording(IOEnvironment &io_environment, SPHBodyVector bodies)
-			: BodyStatesIO(io_environment, bodies){};
+			: BaseIO(io_environment), bodies_(bodies){};
+		BodyStatesRecording(IOEnvironment &io_environment, SPHBody &body)
+			: BodyStatesRecording(io_environment, {&body}){};
 		virtual ~BodyStatesRecording(){};
-
 		/** write with filename indicated by physical time */
-		void writeToFile()
-		{
-			writeWithFileName(convertPhysicalTimeToString(GlobalStaticVariables::physical_time_));
-		};
-
+		void writeToFile();
 		/** write with filename indicated by iteration step */
-		virtual void writeToFile(size_t iteration_step);
+		virtual void writeToFile(size_t iteration_step) override;
 
 	protected:
+		SPHBodyVector bodies_;
+
 		virtual void writeWithFileName(const std::string &sequence) = 0;
 	};
 
@@ -123,17 +126,18 @@ namespace SPH
 	 * @class ReloadParticleIO
 	 * @brief Write the reload particles file in XML format.
 	 */
-	class ReloadParticleIO : public BodyStatesIO
+	class ReloadParticleIO : public BaseIO
 	{
 	protected:
-		StdVec<std::string> file_paths_;
+		SPHBody &sph_body_;
+		std::string filefullpath_;
 
 	public:
-		ReloadParticleIO(IOEnvironment &io_environment, SPHBodyVector bodies);
-		ReloadParticleIO(IOEnvironment &io_environment, SPHBodyVector bodies, const StdVec<std::string> &given_body_names);
+		ReloadParticleIO(IOEnvironment &io_environment, SPHBody &sph_body);
+		ReloadParticleIO(IOEnvironment &io_environment, SPHBody &sph_body, const std::string &given_body_name);
 		virtual ~ReloadParticleIO(){};
 
-		virtual void writeToFile(size_t iteration_step = 0);
+		virtual void writeToFile(size_t iteration_step = 0) override;
 		virtual void readFromFile(size_t iteration_step = 0);
 	};
 
@@ -141,7 +145,7 @@ namespace SPH
 	 * @class RestartIO
 	 * @brief Write the restart file in XML format.
 	 */
-	class RestartIO : public BodyStatesIO
+	class RestartIO : public BodyStatesRecording
 	{
 	protected:
 		std::string overall_file_path_;
@@ -153,8 +157,9 @@ namespace SPH
 		RestartIO(IOEnvironment &io_environment, SPHBodyVector bodies);
 		virtual ~RestartIO(){};
 
-		virtual void writeToFile(size_t iteration_step = 0);
+		virtual void writeToFile(size_t iteration_step = 0) override;
 		virtual void readFromFile(size_t iteration_step = 0);
+
 		virtual Real readRestartFiles(size_t restart_step)
 		{
 			readFromFile(restart_step);
@@ -166,12 +171,10 @@ namespace SPH
 	 * @class ReloadMaterialParameterIO
 	 * @brief For write  and read material property.
 	 */
-	class ReloadMaterialParameterIO
+	class ReloadMaterialParameterIO : public ReloadParticleIO
 	{
 	protected:
-		IOEnvironment &io_environment_;
 		BaseMaterial &base_material_;
-		std::string file_path_;
 
 	public:
 		ReloadMaterialParameterIO(IOEnvironment &io_environment, SPHBody &sph_body);
@@ -179,7 +182,7 @@ namespace SPH
 								  const std::string &given_parameters_name);
 		virtual ~ReloadMaterialParameterIO(){};
 
-		virtual void writeToFile(size_t iteration_step = 0);
-		virtual void readFromFile(size_t iteration_step = 0);
+		virtual void writeToFile(size_t iteration_step = 0) override;
+		virtual void readFromFile(size_t iteration_step = 0) override;
 	};
 }
