@@ -73,8 +73,8 @@ namespace SPH
 	class MeshRecordingToPlt : public BaseIO
 	{
 	protected:
-		std::string filefullpath_;
 		BaseMeshField *mesh_field_;
+		std::string filefullpath_;
 
 	public:
 		MeshRecordingToPlt(IOEnvironment &io_environment, BaseMeshField *mesh_field);

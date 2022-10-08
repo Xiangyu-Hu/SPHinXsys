@@ -67,8 +67,8 @@ namespace SPH
 		Real number_density_max_;
 
 	public:
-		SPHAdaptation(Real resolution_ref, Real h_spacing_ratio = 1.3, Real system_refinement_ratio = 1.0);
-		SPHAdaptation(SPHBody &sph_body, Real h_spacing_ratio = 1.3, Real system_refinement_ratio = 1.0);
+		explicit SPHAdaptation(Real resolution_ref, Real h_spacing_ratio = 1.3, Real system_refinement_ratio = 1.0);
+		explicit SPHAdaptation(SPHBody &sph_body, Real h_spacing_ratio = 1.3, Real system_refinement_ratio = 1.0);
 		virtual ~SPHAdaptation(){};
 
 		int LocalRefinementLevel() { return local_refinement_level_; };

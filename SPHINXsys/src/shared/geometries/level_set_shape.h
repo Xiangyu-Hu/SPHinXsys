@@ -47,6 +47,7 @@ namespace SPH
 	{
 	private:
 		UniquePtrKeeper<BaseLevelSet> level_set_keeper_;
+		SharedPtr<SPHAdaptation> sph_adaptation_;
 
 	public:
 		/** refinement_ratio is between body reference resolution and level set resolution */
