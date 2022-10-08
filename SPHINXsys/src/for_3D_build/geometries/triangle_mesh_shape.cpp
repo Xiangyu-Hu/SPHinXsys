@@ -36,7 +36,7 @@ namespace SPH
 		{
 			Vec3d jittered = probe_point; // jittering
 			for (int l = 0; l != probe_point.size(); ++l)
-				jittered[l] = probe_point[l] + (((Real)rand() / (RAND_MAX)) - 0.5) * (Eps + distance_to_pnt * 0.1);
+				jittered[l] = probe_point[l] + (((Real)rand() / (RAND_MAX)) - 0.5) * (SqrtEps + distance_to_pnt * 0.1);
 			Vec3d from_face_to_jittered = jittered - closest_pnt;
 			Vec3d direction_to_jittered = from_face_to_jittered / (from_face_to_jittered.norm() + TinyReal);
 			cosine_angle = SimTK::dot(face_normal, direction_to_jittered);
@@ -46,6 +46,7 @@ namespace SPH
 			{
 				std::cout << "\n Error: TriangleMeshShape::checkContain not bale to check contain!  " << std::endl;
 				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+				exit(1);
 			}
 		}
 
