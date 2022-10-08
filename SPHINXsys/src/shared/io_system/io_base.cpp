@@ -136,7 +136,7 @@ namespace SPH
 	ReloadParticleIO::ReloadParticleIO(IOEnvironment &io_environment, SPHBodyVector bodies)
 		: BaseIO(io_environment), bodies_(bodies)
 	{
-		std::transform(bodies.begin(), bodies.end(), file_paths_.begin(),
+		std::transform(bodies.begin(), bodies.end(), std::back_inserter(file_paths_),
 					   [&](SPHBody *body) -> std::string
 					   { return io_environment.reload_folder_ + "/" + body->getName() + "_rld.xml"; });
 	}
