@@ -123,31 +123,13 @@ namespace SPH
 	};
 
 	/**
-	 * @class ReloadParticleIO
-	 * @brief Write the reload particles file in XML format.
-	 */
-	class ReloadParticleIO : public BaseIO
-	{
-	protected:
-		SPHBody &sph_body_;
-		std::string filefullpath_;
-
-	public:
-		ReloadParticleIO(IOEnvironment &io_environment, SPHBody &sph_body);
-		ReloadParticleIO(IOEnvironment &io_environment, SPHBody &sph_body, const std::string &given_body_name);
-		virtual ~ReloadParticleIO(){};
-
-		virtual void writeToFile(size_t iteration_step = 0) override;
-		virtual void readFromFile(size_t iteration_step = 0);
-	};
-
-	/**
 	 * @class RestartIO
 	 * @brief Write the restart file in XML format.
 	 */
-	class RestartIO : public BodyStatesRecording
+	class RestartIO : public BaseIO
 	{
 	protected:
+		SPHBodyVector bodies_;
 		std::string overall_file_path_;
 		StdVec<std::string> file_paths_;
 
@@ -167,6 +149,27 @@ namespace SPH
 		};
 	};
 
+
+	/**
+	 * @class ReloadParticleIO
+	 * @brief Write the reload particles file in XML format.
+	 */
+	class ReloadParticleIO : public BaseIO
+	{
+	protected:
+		SPHBodyVector bodies_;
+		StdVec<std::string> file_paths_;
+
+	public:
+		ReloadParticleIO(IOEnvironment &io_environment, SPHBodyVector bodies);
+		ReloadParticleIO(IOEnvironment &io_environment, SPHBody &sph_body);
+		ReloadParticleIO(IOEnvironment &io_environment, SPHBody &sph_body, const std::string &given_body_name);
+		virtual ~ReloadParticleIO(){};
+
+		virtual void writeToFile(size_t iteration_step = 0) override;
+		virtual void readFromFile(size_t iteration_step = 0);
+	};
+
 	/**
 	 * @class ReloadMaterialParameterIO
 	 * @brief For write  and read material property.
@@ -174,7 +177,7 @@ namespace SPH
 	class ReloadMaterialParameterIO : public ReloadParticleIO
 	{
 	protected:
-		BaseMaterial &base_material_;
+		MaterialVector materials_;
 
 	public:
 		ReloadMaterialParameterIO(IOEnvironment &io_environment, SPHBody &sph_body);

@@ -84,7 +84,7 @@ int main(int ac, char *av[])
 	}
 	else
 	{
-		ball.defineBodyLevelSetShape()->writeLevelSet(ball);
+		ball.defineBodyLevelSetShape()->writeLevelSet(io_environment);
 		ball.generateParticles<ParticleGeneratorLattice>();
 	}
 	//----------------------------------------------------------------------
@@ -105,7 +105,7 @@ int main(int ac, char *av[])
 		//	Output for particle relaxation.
 		//----------------------------------------------------------------------
 		BodyStatesRecordingToVtp write_relaxed_particles(io_environment, sph_system.real_bodies_);
-		ReloadParticleIO write_particle_reload_files(io_environment, {&ball});
+		ReloadParticleIO write_particle_reload_files(io_environment, ball);
 		//----------------------------------------------------------------------
 		//	Particle relaxation starts here.
 		//----------------------------------------------------------------------

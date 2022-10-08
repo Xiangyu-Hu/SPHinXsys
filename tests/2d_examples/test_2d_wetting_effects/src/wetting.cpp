@@ -90,8 +90,6 @@ int main()
 	//----------------------------------------------------------------------
 	/** Output the body states. */
 	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
-	/** Output the body states for restart simulation. */
-	RestartIO restart_io(io_environment, sph_system.real_bodies_);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
@@ -99,20 +97,6 @@ int main()
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
 	wall_boundary_normal_direction.parallel_exec();
-	//----------------------------------------------------------------------
-	//	Load restart file if necessary.
-	//----------------------------------------------------------------------
-	/** If the starting time is not zero, please setup the restart time step ro read in restart states. */
-	if (sph_system.restart_step_ != 0)
-	{
-		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.restart_step_);
-		water_block.updateCellLinkedListWithParticleSort(100);
-		air_block.updateCellLinkedListWithParticleSort(100);
-		water_air_complex.updateConfiguration();
-		water_wall_contact.updateConfiguration();
-		air_water_complex.updateConfiguration();
-		air_wall_contact.updateConfiguration();
-	}
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
@@ -192,9 +176,6 @@ int main()
 				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
 						  << GlobalStaticVariables::physical_time_
 						  << "	Dt = " << Dt << "	dt = " << dt << "\n";
-
-				if (number_of_iterations % restart_output_interval == 0)
-					restart_io.writeToFile(number_of_iterations);
 			}
 			number_of_iterations++;
 

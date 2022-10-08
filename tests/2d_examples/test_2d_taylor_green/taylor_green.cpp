@@ -110,7 +110,7 @@ int main(int ac, char *av[])
 	//	and regression tests of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
-	ReloadParticleIO write_particle_reload_files(io_environment, {&water_block});
+	ReloadParticleIO write_particle_reload_files(io_environment, water_block);
 	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
 		write_total_mechanical_energy(io_environment, water_block);
 	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<MaximumSpeed>>>
