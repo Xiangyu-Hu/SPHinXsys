@@ -65,7 +65,7 @@ int main(int ac, char *av[])
 		/** Write the body state to Vtp file. */
 		BodyStatesRecordingToVtp write_inserted_body_to_vtp(io_environment, {&cylinder});
 		/** Write the particle reload files. */
-		ReloadParticleIO write_particle_reload_files(io_environment, {&cylinder});
+		ReloadParticleIO write_particle_reload_files(io_environment, cylinder);
 		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(cylinder_inner);
 		//----------------------------------------------------------------------
@@ -133,7 +133,6 @@ int main(int ac, char *av[])
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
-	RestartIO restart_io(io_environment, sph_system.real_bodies_);
 	RegressionTestTimeAveraged<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalViscousForceOnSolid>>>
 		write_total_viscous_force_on_inserted_body(io_environment, cylinder);
 	ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalViscousForceOnSolid>>
@@ -213,9 +212,6 @@ int main(int ac, char *av[])
 				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
 						  << GlobalStaticVariables::physical_time_
 						  << "	Dt = " << Dt << "	Dt / dt = " << inner_ite_dt << "\n";
-
-				if (number_of_iterations % restart_output_interval == 0 && number_of_iterations != sph_system.restart_step_)
-					restart_io.writeToFile(number_of_iterations);
 			}
 			number_of_iterations++;
 

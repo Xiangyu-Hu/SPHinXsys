@@ -12,25 +12,39 @@
 namespace SPH
 {
 	//=================================================================================================//
+	LevelSetShape::
+		LevelSetShape(Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation, Real refinement_ratio)
+		: Shape(shape.getName()), sph_adaptation_(sph_adaptation),
+		  level_set_(level_set_keeper_.movePtr(sph_adaptation->createLevelSet(shape, refinement_ratio)))
+	{
+		bounding_box_ = shape.getBounds();
+		is_bounds_found_ = true;
+	}
+	//=================================================================================================//
 	LevelSetShape::LevelSetShape(SPHBody &sph_body, Shape &shape, Real refinement_ratio)
-		: Shape(shape.getName()),
-		  level_set_(level_set_keeper_.movePtr(
+		: Shape(shape.getName()), 
+		level_set_(level_set_keeper_.movePtr(
 			  sph_body.sph_adaptation_->createLevelSet(shape, refinement_ratio)))
 	{
 		bounding_box_ = shape.getBounds();
 		is_bounds_found_ = true;
 	}
 	//=================================================================================================//
-	void LevelSetShape::writeLevelSet(SPHBody &sph_body)
+	void LevelSetShape::writeLevelSet(IOEnvironment &io_environment)
 	{
-		IOEnvironment *io_environment = sph_body.getSPHSystem().io_environment_;
-		MeshRecordingToPlt write_level_set_to_plt(*io_environment, sph_body, level_set_);
+		MeshRecordingToPlt write_level_set_to_plt(io_environment, level_set_);
 		write_level_set_to_plt.writeToFile(0);
 	}
 	//=================================================================================================//
 	LevelSetShape *LevelSetShape::cleanLevelSet(Real small_shift_factor)
 	{
 		level_set_->cleanInterface(small_shift_factor);
+		return this;
+	}
+	//=================================================================================================//
+	LevelSetShape *LevelSetShape::correctLevelSetSign(Real small_shift_factor)
+	{
+		level_set_->correctTopology(small_shift_factor);
 		return this;
 	}
 	//=================================================================================================//

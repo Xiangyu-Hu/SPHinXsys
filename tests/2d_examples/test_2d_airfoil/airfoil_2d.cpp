@@ -53,7 +53,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	RealBody airfoil(system, makeShared<ImportModel>("AirFoil"));
 	airfoil.defineAdaptation<ParticleSpacingByBodyShape>(1.15, 1.0, 3);
-	airfoil.defineBodyLevelSetShape()->cleanLevelSet()->writeLevelSet(airfoil);
+	airfoil.defineBodyLevelSetShape()->cleanLevelSet()->writeLevelSet(io_environment);
 	airfoil.defineParticlesAndMaterial();
 	airfoil.generateParticles<ParticleGeneratorMultiResolution>();
 	airfoil.addBodyStateForRecording<Real>("SmoothingLengthRatio");
@@ -61,7 +61,7 @@ int main(int ac, char *av[])
 	//	Define outputs functions.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp airfoil_recording_to_vtp(io_environment, {&airfoil});
-	MeshRecordingToPlt cell_linked_list_recording(io_environment, airfoil, airfoil.cell_linked_list_);
+	MeshRecordingToPlt cell_linked_list_recording(io_environment, airfoil.cell_linked_list_);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies,

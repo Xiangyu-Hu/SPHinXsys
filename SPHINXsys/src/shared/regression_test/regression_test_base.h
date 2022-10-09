@@ -89,7 +89,7 @@ namespace SPH
 		 {
 			 input_folder_path_ = this->io_environment_.input_folder_;
 			 in_output_filefullpath_ = input_folder_path_ + "/" + this->dynamics_range_name_ 
-				 + "_" + this->quantity_name_ + "_" + this->io_environment_.restart_step_ + ".xml";
+				 + "_" + this->quantity_name_ + ".xml";
 			 result_filefullpath_ = input_folder_path_ + "/" + this->dynamics_range_name_
 				 + "_" + this->quantity_name_ + "_result.xml";
 			 runtimes_filefullpath_ = input_folder_path_ + "/" + this->dynamics_range_name_

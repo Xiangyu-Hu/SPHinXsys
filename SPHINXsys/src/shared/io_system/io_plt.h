@@ -70,15 +70,15 @@ namespace SPH
 	 * @class MeshRecordingToPlt
 	 * @brief  write the background mesh data for relax body
 	 */
-	class MeshRecordingToPlt : public BodyStatesRecording
+	class MeshRecordingToPlt : public BaseIO
 	{
 	protected:
-		std::string filefullpath_;
 		BaseMeshField *mesh_field_;
-		virtual void writeWithFileName(const std::string &sequence) override;
+		std::string filefullpath_;
 
 	public:
-		MeshRecordingToPlt(IOEnvironment &io_environment, SPHBody &body, BaseMeshField *mesh_field);
+		MeshRecordingToPlt(IOEnvironment &io_environment, BaseMeshField *mesh_field);
 		virtual ~MeshRecordingToPlt(){};
+		virtual void writeToFile(size_t iteration_step = 0) override;
 	};
 }

@@ -137,11 +137,26 @@ namespace SPH
 							 { redistanceInterfaceForAPackage(inner_data_pkgs_[i]); });
 	}
 	//=================================================================================================//
+	void LevelSet::diffuseLevelSetSign()
+	{
+		package_parallel_for(inner_data_pkgs_, [&](size_t i)
+							 { inner_data_pkgs_[i]->stepDiffusionLevelSetSign(); });
+	}
+	//=================================================================================================//
 	void LevelSet::cleanInterface(Real small_shift_factor)
 	{
 		markNearInterface(small_shift_factor);
 		redistanceInterface();
 		reinitializeLevelSet();
+		updateLevelSetGradient();
+		updateKernelIntegrals();
+	}
+	//=============================================================================================//
+	void LevelSet::correctTopology(Real small_shift_factor)
+	{
+		markNearInterface(small_shift_factor);
+		for (size_t i = 0; i != 10; ++i)
+			diffuseLevelSetSign();
 		updateLevelSetGradient();
 		updateKernelIntegrals();
 	}
@@ -258,6 +273,11 @@ namespace SPH
 	void MultilevelLevelSet::cleanInterface(Real small_shift_factor)
 	{
 		mesh_levels_.back()->cleanInterface(small_shift_factor);
+	}
+	//=============================================================================================//
+	void MultilevelLevelSet::correctTopology(Real small_shift_factor)
+	{
+		mesh_levels_.back()->correctTopology(small_shift_factor);
 	}
 	//=============================================================================================//
 	Real MultilevelLevelSet::probeSignedDistance(const Vecd &position)

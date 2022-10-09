@@ -42,7 +42,7 @@ int main(int ac, char *av[])
 
 	SolidBody insert_body(sph_system, makeShared<Insert>("InsertedBody"));
 	insert_body.defineAdaptationRatios(1.15, 2.0);
-	insert_body.defineBodyLevelSetShape()->writeLevelSet(insert_body);
+	insert_body.defineBodyLevelSetShape()->writeLevelSet(io_environment);
 	insert_body.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
 		? insert_body.generateParticles<ParticleGeneratorReload>(io_environment, insert_body.getName())

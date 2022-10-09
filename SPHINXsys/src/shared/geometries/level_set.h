@@ -73,6 +73,7 @@ namespace SPH
 		void computeKernelIntegrals(LevelSet &level_set);
 		void computeLevelSetGradient();
 		void stepReinitialization();
+		void stepDiffusionLevelSetSign();
 		void markNearInterface(Real small_shift_factor);
 	};
 
@@ -87,6 +88,7 @@ namespace SPH
 		virtual ~BaseLevelSet(){};
 
 		virtual void cleanInterface(Real small_shift_factor) = 0;
+		virtual void correctTopology(Real small_shift_factor) = 0;
 		virtual bool probeIsWithinMeshBound(const Vecd &position) = 0;
 		virtual Real probeSignedDistance(const Vecd &position) = 0;
 		virtual Vecd probeNormalDirection(const Vecd &position) = 0;
@@ -125,6 +127,7 @@ namespace SPH
 		virtual ~LevelSet(){};
 
 		virtual void cleanInterface(Real small_shift_factor) override;
+		virtual void correctTopology(Real small_shift_factor) override;
 		virtual bool probeIsWithinMeshBound(const Vecd &position) override;
 		virtual Real probeSignedDistance(const Vecd &position) override;
 		virtual Vecd probeNormalDirection(const Vecd &position) override;
@@ -143,6 +146,7 @@ namespace SPH
 		void reinitializeLevelSet();
 		void markNearInterface(Real small_shift_factor);
 		void redistanceInterface();
+		void diffuseLevelSetSign();
 		void updateLevelSetGradient();
 		void updateKernelIntegrals();
 		void redistanceInterfaceForAPackage(LevelSetDataPackage *core_data_pkg);
@@ -180,6 +184,7 @@ namespace SPH
 		virtual ~MultilevelLevelSet(){};
 
 		virtual void cleanInterface(Real small_shift_factor) override;
+		virtual void correctTopology(Real small_shift_factor) override;
 		virtual bool probeIsWithinMeshBound(const Vecd &position) override;
 		virtual Real probeSignedDistance(const Vecd &position) override;
 		virtual Vecd probeNormalDirection(const Vecd &position) override;

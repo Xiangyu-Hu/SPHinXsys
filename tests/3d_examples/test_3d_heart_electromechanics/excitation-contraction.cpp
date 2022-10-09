@@ -291,7 +291,7 @@ int main(int ac, char *av[])
 	if (system.run_particle_relaxation_)
 	{
 		SolidBody herat_model(system, makeShared<Heart>("HeartModel"));
-		herat_model.defineBodyLevelSetShape()->writeLevelSet(herat_model);
+		herat_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(io_environment);
 		herat_model.defineParticlesAndMaterial<
 			DiffusionReactionParticles<ElasticSolidParticles, LocallyOrthotropicMuscle>, FiberDirectionDiffusion>();
 		herat_model.generateParticles<ParticleGeneratorLattice>();
@@ -310,7 +310,7 @@ int main(int ac, char *av[])
 		/** Write the body state to Vtp file. */
 		BodyStatesRecordingToVtp write_herat_model_state_to_vtp(io_environment, {herat_model});
 		/** Write the particle reload files. */
-		ReloadParticleIO write_particle_reload_files(io_environment, {&herat_model}, {"HeartModel"});
+		ReloadParticleIO write_particle_reload_files(io_environment, herat_model, {"HeartModel"});
 		/** Write material property to xml file. */
 		ReloadMaterialParameterIO write_material_property(io_environment, herat_model, "FiberDirection");
 		//----------------------------------------------------------------------

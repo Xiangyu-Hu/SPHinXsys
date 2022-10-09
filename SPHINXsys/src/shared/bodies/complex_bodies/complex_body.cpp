@@ -14,12 +14,6 @@
 namespace SPH
 {
 	//=================================================================================================//
-	TreeBody::TreeBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr)
-		: SecondaryStructure(), RealBody(sph_system, shape_ptr), last_branch_id_(0)
-	{
-		root_ = branches_ptr_keeper_.createPtr<Branch>(this);
-	}
-	//=================================================================================================//
 	void TreeBody::buildParticleConfiguration(ParticleConfiguration &particle_configuration)
 	{
 		/** First branch
