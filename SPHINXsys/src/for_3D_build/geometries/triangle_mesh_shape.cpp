@@ -44,7 +44,7 @@ namespace SPH
 			ite++;
 			if (ite > 100)
 			{
-				std::cout << "\n Error: TriangleMeshShape::checkContain not bale to check contain!  " << std::endl;
+				std::cout << "\n Error: TriangleMeshShape::checkContain not able to achieve!  " << std::endl;
 				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 				exit(1);
 			}

@@ -1,6 +1,6 @@
 /**
  * @file 	fluid_surface_inner.hpp
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #pragma once

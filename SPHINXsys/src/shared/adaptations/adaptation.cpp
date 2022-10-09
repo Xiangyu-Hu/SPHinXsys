@@ -25,14 +25,12 @@ namespace SPH
 		  h_ref_(h_spacing_ratio_ * spacing_ref_),
 		  kernel_ptr_(makeUnique<KernelWendlandC2>(h_ref_)),
 		  spacing_min_(this->RefinedSpacing(spacing_ref_, local_refinement_level_)),
-		  h_ratio_max_(powerN(2.0, local_refinement_level_)),
-		  number_density_max_(this->computeReferenceNumberDensity(Vecd(0), h_ratio_max_)){};
+		  h_ratio_max_(powerN(2.0, local_refinement_level_)){};
 	//=================================================================================================//
 	SPHAdaptation::SPHAdaptation(SPHBody &sph_body, Real h_spacing_ratio, Real system_refinement_ratio)
 		: SPHAdaptation(sph_body.getSPHSystem().resolution_ref_, h_spacing_ratio, system_refinement_ratio){};
 	//=================================================================================================//
-	Real SPHAdaptation::
-		RefinedSpacing(Real coarse_particle_spacing, int refinement_level)
+	Real SPHAdaptation::RefinedSpacing(Real coarse_particle_spacing, int refinement_level)
 	{
 		return coarse_particle_spacing / powerN(2.0, refinement_level);
 	}
@@ -113,7 +111,6 @@ namespace SPH
 		local_refinement_level_ = local_refinement_level;
 		spacing_min_ = RefinedSpacing(spacing_ref_, local_refinement_level_);
 		h_ratio_max_ = powerN(2.0, local_refinement_level_);
-		number_density_max_ = computeReferenceNumberDensity(Vecd(0), h_ratio_max_);
 	}
 	//=================================================================================================//
 	size_t ParticleWithLocalRefinement::getCellLinkedListTotalLevel()

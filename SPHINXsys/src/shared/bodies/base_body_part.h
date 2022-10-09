@@ -25,7 +25,7 @@
  * @brief 	This is the base classes of body parts.
  * @details	There two main type of body parts. One is part by particle.
  * 			The other is part by cell.
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang and Xiangyu Hu
  */
 
 #ifndef BASE_BODY_PART_H

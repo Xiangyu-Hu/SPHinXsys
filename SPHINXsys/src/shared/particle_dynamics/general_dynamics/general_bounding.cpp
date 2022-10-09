@@ -1,6 +1,6 @@
 /**
  * @file 	general_bounding.cpp
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang and Xiangyu Hu
  */
 
 #include "general_bounding.h"

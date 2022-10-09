@@ -23,7 +23,7 @@
 /**
  * @file 	general_bounding.h
  * @brief 	This is the particle dynamics for domain bounding
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef GENERAL_BOUNDING_H

@@ -39,7 +39,7 @@
  *			and is recognized by particle dynamics with the signature functions, like update, initialization and interaction.
  *			DynamicsRange define and range of particles for the dynamics.
  *			The default range is the entire body. Other ranges are BodyPartByParticle and BodyPartByCell.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef PARTICLE_DYNAMICS_ALGORITHMS_H

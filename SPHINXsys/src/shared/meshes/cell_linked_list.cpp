@@ -1,6 +1,6 @@
 /**
  * @file 	cell_linked_list.cpp
- * @author	Yongchuan Yu, Chi ZHang and Xiangyu Hu
+ * @author	Yongchuan Yu, Chi Zhang and Xiangyu Hu
  */
 
 #include "cell_linked_list.h"

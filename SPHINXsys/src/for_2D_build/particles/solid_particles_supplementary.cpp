@@ -1,6 +1,6 @@
 /**
  * @file 	solid_particles_supplementary.cpp
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang and Xiangyu Hu
  */
 
 #include "solid_particles.h"

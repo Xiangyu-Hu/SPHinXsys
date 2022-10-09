@@ -23,7 +23,7 @@
 /**
  * @file    solid_body.h
  * @brief 	This is the class for bodies used for solid BCs or Elastic structure.
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang and Xiangyu Hu
  */
 
 #ifndef SOLID_BODY_H

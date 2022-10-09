@@ -113,7 +113,6 @@ namespace SPH
 		virtual ~BodyStatesRecording(){};
 		/** write with filename indicated by physical time */
 		void writeToFile();
-		/** write with filename indicated by iteration step */
 		virtual void writeToFile(size_t iteration_step) override;
 
 	protected:
@@ -124,14 +123,14 @@ namespace SPH
 
 	/**
 	 * @class RestartIO
-	 * @brief Write the restart file in XML format.
+	 * @brief Write and read the restart files in XML format.
 	 */
 	class RestartIO : public BaseIO
 	{
 	protected:
 		SPHBodyVector bodies_;
 		std::string overall_file_path_;
-		StdVec<std::string> file_paths_;
+		StdVec<std::string> file_names_;
 
 		Real readRestartTime(size_t restart_step);
 
@@ -152,13 +151,13 @@ namespace SPH
 
 	/**
 	 * @class ReloadParticleIO
-	 * @brief Write the reload particles file in XML format.
+	 * @brief Write and read the particle-reloading files in XML format.
 	 */
 	class ReloadParticleIO : public BaseIO
 	{
 	protected:
 		SPHBodyVector bodies_;
-		StdVec<std::string> file_paths_;
+		StdVec<std::string> file_names_;
 
 	public:
 		ReloadParticleIO(IOEnvironment &io_environment, SPHBodyVector bodies);
@@ -172,7 +171,7 @@ namespace SPH
 
 	/**
 	 * @class ReloadMaterialParameterIO
-	 * @brief For write  and read material property.
+	 * @brief For write and read material property in XML format.
 	 */
 	class ReloadMaterialParameterIO : public ReloadParticleIO
 	{

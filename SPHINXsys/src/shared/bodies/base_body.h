@@ -29,7 +29,7 @@
  * 			such as intersection, should be produced first.
  * 			Then, all shapes used in body definition should be either contain
  * 			or not contain each other. Partial overlap between them are not permitted.
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang and Xiangyu Hu
  */
 
 #ifndef BASE_BODY_H
@@ -56,7 +56,7 @@ namespace SPH
 	 * @class SPHBody
 	 * @brief SPHBody is a base body with basic data and functions.
 	 *		  Its derived class can be a real fluid body, a real deformable solid body,
-	 *        a static or moving solid body or a fictitious body.
+	 *        a static or moving solid body or an observer body.
 	 * 		  Note that only real bodies have cell linked list.
 	 */
 	class SPHBody
@@ -98,6 +98,10 @@ namespace SPH
 		bool checkNewlyUpdated() { return newly_updated_; };
 		BoundingBox getBodyShapeBounds();
 		BoundingBox getSPHSystemBounds();
+		/** This will be called in BaseParticle constructor
+		 * and is important because particles are not defined in SPHBody constructor.  */
+		virtual void assignBaseParticles(BaseParticles *base_particles);
+		void allocateConfigurationMemoriesForBufferParticles();
 		//----------------------------------------------------------------------
 		//		Object factory template functions
 		//----------------------------------------------------------------------
@@ -145,11 +149,6 @@ namespace SPH
 			base_particles_->initializeOtherVariables();
 			base_material_->assignBaseParticles(base_particles_);
 		};
-
-		/** This will be called in BaseParticle constructor
-		 * and is important because particles are not defined in SPHBody constructor.  */
-		virtual void assignBaseParticles(BaseParticles *base_particles);
-		void allocateConfigurationMemoriesForBufferParticles();
 
 		template <typename VariableType>
 		void addBodyStateForRecording(const std::string &variable_name)
@@ -209,18 +208,17 @@ namespace SPH
 			cell_linked_list_ = cell_linked_list_keeper_.movePtr(
 				sph_adaptation_->createCellLinkedList(system_domain_bounds_, *this));
 		};
-
 		virtual ~RealBody(){};
-
 		void setUseSplitCellLists() { use_split_cell_lists_ = true; };
 		bool getUseSplitCellLists() { return use_split_cell_lists_; };
 		SplitCellLists &getSplitCellLists() { return split_cell_lists_; };
 		/** This will be called in BaseParticle constructor
-		 * and is important because particles are not defined in FluidBody constructor.  */
+		 * and is important because particles are not defined in RealBody constructor.  */
 		virtual void assignBaseParticles(BaseParticles *base_particles) override;
 		virtual void sortParticleWithCellLinkedList();
 		void updateCellLinkedList();
 		void updateCellLinkedListWithParticleSort(size_t particle_sort_period);
+		virtual void defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0) override;
 		//----------------------------------------------------------------------
 		//		Object factory template functions
 		//----------------------------------------------------------------------
@@ -232,8 +230,6 @@ namespace SPH
 			cell_linked_list_ = cell_linked_list_keeper_.movePtr(
 				sph_adaptation_->createCellLinkedList(system_domain_bounds_, *this));
 		};
-
-		virtual void defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0) override;
 	};
 }
 #endif // BASE_BODY_H

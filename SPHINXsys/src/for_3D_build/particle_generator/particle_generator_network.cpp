@@ -1,6 +1,6 @@
 /**
  * @file 	particle_generator_network.cpp
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 #include "sph_system.h"
 #include "particle_generator_network.h"

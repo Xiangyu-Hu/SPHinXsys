@@ -1,7 +1,7 @@
 
 /**
  * @file 	io_plt.cpp
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang and Xiangyu Hu
  */
 
 #include "io_plt.h"
@@ -41,17 +41,14 @@ namespace SPH
 		{
 			if (body->checkNewlyUpdated())
 			{
-				std::string filefullpath = io_environment_.output_folder_ + "/SPHBody_" + body->getName() + "_" + sequence + ".plt";
+				std::string filefullpath = io_environment_.output_folder_ +
+										   "/SPHBody_" + body->getName() + "_" + sequence + ".plt";
 				if (fs::exists(filefullpath))
 				{
 					fs::remove(filefullpath);
 				}
 				std::ofstream out_file(filefullpath.c_str(), std::ios::trunc);
-
-				// begin of the plt file writing
-
 				body->writeParticlesToPltFile(out_file);
-
 				out_file.close();
 			}
 			body->setNotNewlyUpdated();
@@ -60,7 +57,7 @@ namespace SPH
 	//=============================================================================================//
 	MeshRecordingToPlt ::MeshRecordingToPlt(IOEnvironment &io_environment, BaseMeshField *mesh_field)
 		: BaseIO(io_environment), mesh_field_(mesh_field),
-		filefullpath_(io_environment_.output_folder_ + "/" + mesh_field->Name() + ".dat") {}
+		  filefullpath_(io_environment_.output_folder_ + "/" + mesh_field->Name() + ".dat") {}
 	//=============================================================================================//
 	void MeshRecordingToPlt::writeToFile(size_t iteration_step)
 	{

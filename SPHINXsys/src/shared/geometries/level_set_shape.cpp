@@ -1,6 +1,6 @@
 /**
  * @file 	level_set_shape.cpp
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #include "level_set_shape.h"

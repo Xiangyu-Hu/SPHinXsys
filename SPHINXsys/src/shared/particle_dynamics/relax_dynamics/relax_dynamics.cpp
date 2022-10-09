@@ -1,6 +1,6 @@
 /**
  * @file 	relax_dynamics.cpp
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang and Xiangyu Hu
  */
 
 #include "relax_dynamics.h"

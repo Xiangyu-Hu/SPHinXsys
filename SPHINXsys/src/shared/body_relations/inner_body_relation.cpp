@@ -1,6 +1,6 @@
 /**
  * @file 	inner_body_relation.cpp
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #include "inner_body_relation.h"

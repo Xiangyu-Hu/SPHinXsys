@@ -1,7 +1,7 @@
 /**
  * @file 	base_particle_dynamics.hpp
  * @brief 	This is the implementation of the template class for 3D build
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef BASE_PARTICLE_DYNAMICS_HPP

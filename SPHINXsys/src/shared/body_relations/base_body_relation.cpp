@@ -1,6 +1,6 @@
 /**
  * @file 	base_body_relation.cpp
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #include "base_body_relation.h"

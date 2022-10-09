@@ -1,6 +1,6 @@
 /**
  * @file 	base_mesh.cpp
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang and Xiangyu Hu
  */
 
 #include "base_mesh.h"

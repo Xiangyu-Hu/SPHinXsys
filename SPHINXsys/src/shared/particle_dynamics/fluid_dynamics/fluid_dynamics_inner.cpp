@@ -1,6 +1,6 @@
 /**
  * @file 	fluid_dynamics.cpp
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #include "fluid_dynamics_inner.h"

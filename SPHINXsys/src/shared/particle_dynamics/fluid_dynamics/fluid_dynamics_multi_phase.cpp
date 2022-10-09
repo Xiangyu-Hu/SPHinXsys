@@ -1,6 +1,6 @@
 /**
  * @file 	fluid_dynamics_multi_phase.cpp
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #include "fluid_dynamics_multi_phase.h"

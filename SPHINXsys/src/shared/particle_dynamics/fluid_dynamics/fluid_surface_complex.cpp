@@ -1,6 +1,6 @@
 /**
  * @file 	fluid_surface_complex.cpp
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #include "fluid_surface_complex.h"

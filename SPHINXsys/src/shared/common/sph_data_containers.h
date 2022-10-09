@@ -1,7 +1,7 @@
 /**
  * @file 	sph_data_containers.h
  * @brief 	Set up of basic data structure.
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang and Xiangyu Hu
  */
 
 #ifndef SPH_DATA_CONTAINERS_H

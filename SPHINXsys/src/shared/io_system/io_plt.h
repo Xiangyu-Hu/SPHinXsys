@@ -68,7 +68,7 @@ namespace SPH
 
 	/**
 	 * @class MeshRecordingToPlt
-	 * @brief  write the background mesh data for relax body
+	 * @brief  write the mesh data in Tecplot format
 	 */
 	class MeshRecordingToPlt : public BaseIO
 	{

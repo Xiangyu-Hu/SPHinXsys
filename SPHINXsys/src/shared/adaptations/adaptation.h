@@ -63,8 +63,6 @@ namespace SPH
 		UniquePtr<Kernel> kernel_ptr_; /**< unique pointer of kernel function owned this class */
 		Real spacing_min_;			   /**< minimum particle spacing determined by local refinement level */
 		Real h_ratio_max_;			   /**< the ratio between the reference smoothing length to the minimum smoothing length */
-		Real number_density_min_;
-		Real number_density_max_;
 
 	public:
 		explicit SPHAdaptation(Real resolution_ref, Real h_spacing_ratio = 1.3, Real system_refinement_ratio = 1.0);
@@ -76,11 +74,6 @@ namespace SPH
 		Real ReferenceSmoothingLength() { return h_ref_; };
 		Kernel *getKernel() { return kernel_ptr_.get(); };
 		void resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
-		template <class KernelType, typename... ConstructorArgs>
-		void resetKernel(ConstructorArgs &&...args)
-		{
-			kernel_ptr_.reset(new KernelType(h_ref_, std::forward<ConstructorArgs>(args)...));
-		};
 		Real MinimumSpacing() { return spacing_min_; };
 		Real computeReferenceNumberDensity(Vec2d zero, Real h_ratio);
 		Real computeReferenceNumberDensity(Vec3d zero, Real h_ratio);
@@ -89,6 +82,12 @@ namespace SPH
 
 		virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, RealBody &real_body);
 		virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio);
+
+		template <class KernelType, typename... ConstructorArgs>
+		void resetKernel(ConstructorArgs &&...args)
+		{
+			kernel_ptr_.reset(new KernelType(h_ref_, std::forward<ConstructorArgs>(args)...));
+		};
 
 	protected:
 		Real RefinedSpacing(Real coarse_particle_spacing, int refinement_level);
