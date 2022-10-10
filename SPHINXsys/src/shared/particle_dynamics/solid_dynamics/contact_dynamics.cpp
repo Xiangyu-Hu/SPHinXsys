@@ -28,8 +28,8 @@ namespace SPH
                 self_contact_density_ = new StdLargeVec<Real>;
                 particles_->registerVariable(*self_contact_density_, "SelfContactDensity");
             }
-			Real dp_1 = self_contact_relation.sph_body_->sph_adaptation_->ReferenceSpacing();
-			offset_W_ij_ = self_contact_relation.sph_body_->sph_adaptation_->getKernel()->W(dp_1, Vecd(0.0));
+			Real dp_1 = self_contact_relation.sph_body_.sph_adaptation_->ReferenceSpacing();
+			offset_W_ij_ = self_contact_relation.sph_body_.sph_adaptation_->getKernel()->W(dp_1, Vecd(0.0));
 		}
 		//=================================================================================================//
 		void SelfContactDensitySummation::interaction(size_t index_i, Real dt)

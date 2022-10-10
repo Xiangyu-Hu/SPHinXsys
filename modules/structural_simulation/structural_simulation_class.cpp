@@ -459,7 +459,7 @@ void StructuralSimulation::initializeForceInBodyRegion()
 				imported_stl_list_[body_index]
 		#endif // __EMSCRIPTEN__
         ));
-		force_in_body_region_.emplace_back(make_shared<solid_dynamics::ForceInBodyRegion>(*solid_body_list_[body_index]->getSolidBodyFromMesh(), *bp, force, end_time));
+		force_in_body_region_.emplace_back(make_shared<SimpleDynamics<solid_dynamics::ForceInBodyRegion, BodyRegionByParticle>>(*bp, force, end_time));
 	}
 }
 
@@ -542,7 +542,7 @@ void StructuralSimulation::initializeConstrainSolidBodyRegion()
 				imported_stl_list_[body_index]
 		#endif // __EMSCRIPTEN__
         ));
-		fixed_constraint_region_.emplace_back(make_shared<solid_dynamics::ConstrainSolidBodyRegion>(*solid_body_list_[body_index]->getSolidBodyFromMesh(), *bp));
+		fixed_constraint_region_.emplace_back(make_shared<SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle>>(*bp));
 	}
 }
 
