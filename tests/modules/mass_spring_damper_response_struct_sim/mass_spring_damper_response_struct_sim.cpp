@@ -20,8 +20,8 @@ TEST(StructuralSimulation, MassSpringDamperResponse)
 	std::vector<std::string> imported_stl_list = { "ball_mass.stl" };
 	std::vector<Vec3d> translation_list = { Vec3d(0) };
 	std::vector<Real> resolution_list = { resolution_mass};
-	SharedPtr<LinearElasticSolid> material = makeShared<LinearElasticSolid>(rho_0, Youngs_modulus, poisson);
-	std::vector<SharedPtr<LinearElasticSolid>> material_model_list = { material };
+	SharedPtr<SaintVenantKirchhoffSolid> material = makeShared<SaintVenantKirchhoffSolid>(rho_0, Youngs_modulus, poisson);
+	std::vector<SharedPtr<SaintVenantKirchhoffSolid>> material_model_list = { material };
 	/** INPUT DECLARATION */
 	StructuralSimulationInput input
 	{

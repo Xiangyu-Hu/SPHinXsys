@@ -40,8 +40,7 @@ int main(int ac, char *av[])
 #ifdef BOOST_AVAILABLE
 	system.handleCommandlineOptions(ac, av);
 #endif
-	/** in- and output environment. */
-	InOutput in_output(system);
+	IOEnvironment io_environment(system);
 	//----------------------------------------------------------------------
 	//	SPH Particle relaxation section
 	//----------------------------------------------------------------------
@@ -55,7 +54,7 @@ int main(int ac, char *av[])
 		/** topology */
 		BodyRelationInner herat_model_inner(herat_model);
 		/** Random reset the relax solid particle position. */
-		RandomizeParticlePosition random_particles(herat_model);
+		SimpleDynamics<RandomizeParticlePosition> random_particles(herat_model);
 		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(herat_model_inner);
 		/** Time step for diffusion. */
@@ -63,13 +62,13 @@ int main(int ac, char *av[])
 		/** Diffusion process for diffusion body. */
 		DiffusionRelaxation diffusion_relaxation(herat_model_inner);
 		/** Compute the fiber and sheet after diffusion. */
-		ComputeFiberAndSheetDirections compute_fiber_sheet(herat_model);
+		SimpleDynamics<ComputeFiberAndSheetDirections> compute_fiber_sheet(herat_model);
 		/** Write the body state to Vtp file. */
-		BodyStatesRecordingToVtp write_herat_model_state_to_vtp(in_output, {herat_model});
+		BodyStatesRecordingToVtp write_herat_model_state_to_vtp(io_environment, {herat_model});
 		/** Write the particle reload files. */
-		ReloadParticleIO write_particle_reload_files(in_output, {&herat_model}, {"HeartModel"});
+		ReloadParticleIO write_particle_reload_files(io_environment, {&herat_model}, {"HeartModel"});
 		/** Write material property to xml file. */
-		ReloadMaterialParameterIO write_material_property(in_output, herat_model.base_material_, "FiberDirection");
+		ReloadMaterialParameterIO write_material_property(io_environment, herat_model.base_material_, "FiberDirection");
 		//----------------------------------------------------------------------
 		//	Physics relaxation starts here.
 		//----------------------------------------------------------------------
@@ -95,8 +94,8 @@ int main(int ac, char *av[])
 
 		BodySurface surface_part(herat_model);
 		/** constraint boundary condition for diffusion. */
-		DiffusionBCs impose_diffusion_bc(herat_model, surface_part);
-		impose_diffusion_bc.parallel_exec();
+		SimpleDynamics<DiffusionBCs, BodySurface> impose_diffusion_bc(surface_part, "Phi");
+			impose_diffusion_bc.parallel_exec();
 
 		write_herat_model_state_to_vtp.writeToFile(ite);
 
@@ -130,7 +129,7 @@ int main(int ac, char *av[])
 	physiology_heart.defineParticlesAndMaterial<
 		ElectroPhysiologyParticles, LocalMonoFieldElectroPhysiology>(muscle_reaction_model, diffusion_coff, bias_coff, fiber_direction);
 	(!system.run_particle_relaxation_ && system.reload_particles_)
-		? physiology_heart.generateParticles<ParticleGeneratorReload>(in_output, "HeartModel")
+		? physiology_heart.generateParticles<ParticleGeneratorReload>(io_environment, "HeartModel")
 		: physiology_heart.generateParticles<ParticleGeneratorLattice>();
 
 	/** create a SPH body, material and particles */
@@ -138,14 +137,14 @@ int main(int ac, char *av[])
 	mechanics_heart.defineParticlesAndMaterial<
 		ElasticSolidParticles, ActiveMuscle<LocallyOrthotropicMuscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
 	(!system.run_particle_relaxation_ && system.reload_particles_)
-		? mechanics_heart.generateParticles<ParticleGeneratorReload>(in_output, "HeartModel")
+		? mechanics_heart.generateParticles<ParticleGeneratorReload>(io_environment, "HeartModel")
 		: mechanics_heart.generateParticles<ParticleGeneratorLattice>();
 
 	/** check whether reload material properties. */
 	if (!system.run_particle_relaxation_ && system.reload_particles_)
 	{
-		ReloadMaterialParameterIO read_physiology_heart_fiber(in_output, physiology_heart.base_material_, "FiberDirection");
-		ReloadMaterialParameterIO read_mechanics_heart_fiber(in_output, mechanics_heart.base_material_, "FiberDirection");
+		ReloadMaterialParameterIO read_physiology_heart_fiber(io_environment, physiology_heart.base_material_, "FiberDirection");
+		ReloadMaterialParameterIO read_mechanics_heart_fiber(io_environment, mechanics_heart.base_material_, "FiberDirection");
 		read_mechanics_heart_fiber.readFromFile();
 		read_physiology_heart_fiber.readFromFile();
 	} 
@@ -177,7 +176,7 @@ int main(int ac, char *av[])
 	TreeBodyRelationInner pkj_inner(pkj_body);
 
 	/** Corrected configuration. */
-	solid_dynamics::CorrectConfiguration correct_configuration_excitation(physiology_heart_inner);
+	InteractionDynamics<solid_dynamics::CorrectConfiguration> correct_configuration_excitation(physiology_heart_inner);
 	/** Time step size calculation. */
 	electro_physiology::GetElectroPhysiologyTimeStepSize get_myocardium_physiology_time_step(physiology_heart);
 	/** Diffusion process for diffusion body. */
@@ -193,32 +192,32 @@ int main(int ac, char *av[])
 	electro_physiology::ElectroPhysiologyReactionRelaxationForward pkj_reaction_relaxation_forward(pkj_body);
 	electro_physiology::ElectroPhysiologyReactionRelaxationBackward pkj_reaction_relaxation_backward(pkj_body);
 	/**IO for observer.*/
-	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
-	ObservedQuantityRecording<Real> write_voltage("Voltage", in_output, voltage_observer_contact);
-	ObservedQuantityRecording<Vecd> write_displacement("Position", in_output, myocardium_observer_contact);
+	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
+	ObservedQuantityRecording<Real> write_voltage("Voltage", io_environment, voltage_observer_contact);
+	ObservedQuantityRecording<Vecd> write_displacement("Position", io_environment, myocardium_observer_contact);
 	/**Apply the Iron stimulus.*/
-	ApplyStimulusCurrentToMyocardium apply_stimulus_myocardium(physiology_heart);
-	ApplyStimulusCurrentToPKJ apply_stimulus_pkj(pkj_body);
+	SimpleDynamics<ApplyStimulusCurrentToMyocardium> apply_stimulus_myocardium(physiology_heart);
+	SimpleDynamics<ApplyStimulusCurrentToPKJ> apply_stimulus_pkj(pkj_body);
 	/** Active mechanics. */
-	solid_dynamics::CorrectConfiguration correct_configuration_contraction(mechanics_heart_inner);
+	InteractionDynamics<solid_dynamics::CorrectConfiguration> correct_configuration_contraction(mechanics_heart_inner);
 	/** Observer Dynamics */
-	observer_dynamics::CorrectInterpolationKernelWeights
+	InteractionDynamics<observer_dynamics::CorrectInterpolationKernelWeights>
 		correct_kernel_weights_for_interpolation(mechanics_heart_contact);
 	/** Interpolate the active contract stress from electrophysiology body. */
-	observer_dynamics::InterpolatingAQuantity<Real>
+	InteractionDynamics<observer_dynamics::InterpolatingAQuantity<Real>>
 		active_stress_interpolation(mechanics_heart_contact, "ActiveContractionStress", "ActiveContractionStress");
 	/** Interpolate the particle position in physiology_heart  from mechanics_heart. */
-	observer_dynamics::InterpolatingAQuantity<Vecd>
+	InteractionDynamics<observer_dynamics::InterpolatingAQuantity<Vecd>>
 		interpolation_particle_position(physiology_heart_contact, "Position", "Position");
 	/** Time step size calculation. */
-	solid_dynamics::AcousticTimeStepSize get_mechanics_time_step(mechanics_heart);
+	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> get_mechanics_time_step(mechanics_heart);
 	/** active and passive stress relaxation. */
-	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half(mechanics_heart_inner);
-	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(mechanics_heart_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> stress_relaxation_first_half(mechanics_heart_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half(mechanics_heart_inner);
 	/** Constrain region of the inserted body. */
 	MuscleBaseShapeParameters muscle_base_parameters;
 	BodyRegionByParticle muscle_base(mechanics_heart,  makeShared<TriangleMeshShapeBrick>(muscle_base_parameters, "Holder"));
-	solid_dynamics::ConstrainSolidBodyRegion constrain_holder(mechanics_heart, muscle_base);
+	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_holder(muscle_base);
 	/** 
 	 * Pre-simulation. 
 	 */
@@ -238,8 +237,8 @@ int main(int ac, char *av[])
 	int screen_output_interval = 10;
 	int ite = 0;
 	int reaction_step = 2;
-	Real End_Time = 80;
-	Real Ouput_T = End_Time / 200.0;
+	Real end_time = 80;
+	Real Ouput_T = end_time / 200.0;
 	Real Observer_time = 0.01 * Ouput_T;
 	Real dt_myocardium = 0.0;
 	Real dt_pkj = 0.0;
@@ -250,7 +249,7 @@ int main(int ac, char *av[])
 	cout << "Main Loop Starts Here : "
 		 << "\n";
 	/** Main loop starts here. */
-	while (GlobalStaticVariables::physical_time_ < End_Time)
+	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
 		while (integration_time < Ouput_T)
@@ -334,7 +333,7 @@ int main(int ac, char *av[])
 					if (dt_myocardium - dt_muscle_sum < dt_muscle)
 						dt_muscle = dt_myocardium - dt_muscle_sum;
 					stress_relaxation_first_half.parallel_exec(dt_muscle);
-					constrain_holder.parallel_exec(dt_muscle);
+					constraint_holder.parallel_exec(dt_muscle);
 					stress_relaxation_second_half.parallel_exec(dt_muscle);
 					dt_muscle_sum += dt_muscle;
 				}

@@ -5,11 +5,8 @@
  *			Before the particles are generated, we clean the sharp corners and other unresolvable surfaces.
  * @author 	Yongchuan Yu and Xiangyu Hu
  */
-
 #include "sphinxsys.h"
-
 using namespace SPH;
-
 //----------------------------------------------------------------------
 //	Set the file path to the data file.
 //----------------------------------------------------------------------
@@ -46,14 +43,11 @@ int main(int ac, char *av[])
 	//	Build up -- a SPHSystem
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, resolution_ref);
-	/** Tag for run particle relaxation for the initial body fitted distribution. */
-	system.run_particle_relaxation_ = true;
-// handle command line arguments
+	system.run_particle_relaxation_ = true; //tag to run particle relaxation when no commandline option
 #ifdef BOOST_AVAILABLE
 	system.handleCommandlineOptions(ac, av);
 #endif
-	/** output environment. */
-	InOutput in_output(system);
+	IOEnvironment io_environment(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
@@ -64,10 +58,10 @@ int main(int ac, char *av[])
 	airfoil.generateParticles<ParticleGeneratorMultiResolution>();
 	airfoil.addBodyStateForRecording<Real>("SmoothingLengthRatio");
 	//----------------------------------------------------------------------
-	//	Define simple file input and outputs functions.
+	//	Define outputs functions.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp airfoil_recording_to_vtp(in_output, {&airfoil});
-	MeshRecordingToPlt cell_linked_list_recording(in_output, airfoil, airfoil.cell_linked_list_);
+	BodyStatesRecordingToVtp airfoil_recording_to_vtp(io_environment, {&airfoil});
+	MeshRecordingToPlt cell_linked_list_recording(io_environment, airfoil, airfoil.cell_linked_list_);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies,
@@ -77,9 +71,9 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Methods used for particle relaxation.
 	//----------------------------------------------------------------------
-	RandomizeParticlePosition random_airfoil_particles(airfoil);
+	SimpleDynamics<RandomizeParticlePosition> random_airfoil_particles(airfoil);
 	relax_dynamics::RelaxationStepInner relaxation_step_inner(airfoil_inner, true);
-	relax_dynamics::UpdateSmoothingLengthRatioByBodyShape update_smoothing_length_ratio(airfoil);
+	SimpleDynamics<relax_dynamics::UpdateSmoothingLengthRatioByBodyShape> update_smoothing_length_ratio(airfoil);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
@@ -104,11 +98,11 @@ int main(int ac, char *av[])
 		ite_p += 1;
 		if (ite_p % 100 == 0)
 		{
-			std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the airfoil N = " << ite_p << "\n";
+			std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite_p << "\n";
 			airfoil_recording_to_vtp.writeToFile(ite_p);
 		}
 	}
-	std::cout << "The physics relaxation process of airfoil finish !" << std::endl;
+	std::cout << "The physics relaxation process finished !" << std::endl;
 
 	return 0;
 }

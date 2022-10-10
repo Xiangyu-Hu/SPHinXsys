@@ -304,6 +304,9 @@ namespace SPH
 	using SimTK::Infinity;
 	using SimTK::TinyReal;
 	constexpr size_t MaxSize_t = std::numeric_limits<size_t>::max();
+	constexpr double MinRealNumber = std::numeric_limits<double>::min();
+	constexpr double MaxRealNumber = std::numeric_limits<double>::max();
+
 
 	// vector with float point number
 	using Vec2d = SimTK::Vec2;

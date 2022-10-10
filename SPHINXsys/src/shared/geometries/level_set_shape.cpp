@@ -12,10 +12,10 @@
 namespace SPH
 {
 	//=================================================================================================//
-	LevelSetShape::LevelSetShape(SPHBody *sph_body, Shape &shape, Real refinement_ratio)
+	LevelSetShape::LevelSetShape(SPHBody &sph_body, Shape &shape, Real refinement_ratio)
 		: Shape(shape.getName()),
 		  level_set_(level_set_keeper_.movePtr(
-			  sph_body->sph_adaptation_->createLevelSet(shape, refinement_ratio)))
+			  sph_body.sph_adaptation_->createLevelSet(shape, refinement_ratio)))
 	{
 		bounding_box_ = shape.getBounds();
 		is_bounds_found_ = true;
@@ -23,8 +23,8 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSetShape::writeLevelSet(SPHBody &sph_body)
 	{
-		InOutput *in_output = sph_body.getSPHSystem().in_output_;
-		MeshRecordingToPlt write_level_set_to_plt(*in_output, sph_body, level_set_);
+		IOEnvironment *io_environment = sph_body.getSPHSystem().io_environment_;
+		MeshRecordingToPlt write_level_set_to_plt(*io_environment, sph_body, level_set_);
 		write_level_set_to_plt.writeToFile(0);
 	}
 	//=================================================================================================//
@@ -34,16 +34,16 @@ namespace SPH
 		return this;
 	}
 	//=================================================================================================//
-	bool LevelSetShape::checkContain(const Vecd &input_pnt, bool BOUNDARY_INCLUDED)
+	bool LevelSetShape::checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED)
 	{
-		return level_set_->probeSignedDistance(input_pnt) < 0.0 ? true : false;
+		return level_set_->probeSignedDistance(probe_point) < 0.0 ? true : false;
 	}
 	//=================================================================================================//
-	Vecd LevelSetShape::findClosestPoint(const Vecd &input_pnt)
+	Vecd LevelSetShape::findClosestPoint(const Vecd &probe_point)
 	{
-		Real phi = level_set_->probeSignedDistance(input_pnt);
-		Vecd normal = level_set_->probeNormalDirection(input_pnt);
-		return input_pnt - phi * normal;
+		Real phi = level_set_->probeSignedDistance(probe_point);
+		Vecd normal = level_set_->probeNormalDirection(probe_point);
+		return probe_point - phi * normal;
 	}
 	//=================================================================================================//
 	BoundingBox LevelSetShape::findBounds()
@@ -57,19 +57,19 @@ namespace SPH
 		return bounding_box_;
 	}
 	//=================================================================================================//
-	Vecd LevelSetShape::findLevelSetGradient(const Vecd &input_pnt)
+	Vecd LevelSetShape::findLevelSetGradient(const Vecd &probe_point)
 	{
-		return level_set_->probeLevelSetGradient(input_pnt);
+		return level_set_->probeLevelSetGradient(probe_point);
 	}
 	//=================================================================================================//
-	Real LevelSetShape::computeKernelIntegral(const Vecd &input_pnt, Real h_ratio)
+	Real LevelSetShape::computeKernelIntegral(const Vecd &probe_point, Real h_ratio)
 	{
-		return level_set_->probeKernelIntegral(input_pnt, h_ratio);
+		return level_set_->probeKernelIntegral(probe_point, h_ratio);
 	}
 	//=================================================================================================//
-	Vecd LevelSetShape::computeKernelGradientIntegral(const Vecd &input_pnt, Real h_ratio)
+	Vecd LevelSetShape::computeKernelGradientIntegral(const Vecd &probe_point, Real h_ratio)
 	{
-		return level_set_->probeKernelGradientIntegral(input_pnt, h_ratio);
+		return level_set_->probeKernelGradientIntegral(probe_point, h_ratio);
 	}
 	//=================================================================================================//
 }

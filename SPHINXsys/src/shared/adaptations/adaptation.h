@@ -67,7 +67,7 @@ namespace SPH
 		Real number_density_max_;
 
 	public:
-		explicit SPHAdaptation(SPHBody *sph_body, Real h_spacing_ratio = 1.3, Real system_refinement_ratio = 1.0);
+		explicit SPHAdaptation(SPHBody &sph_body, Real h_spacing_ratio = 1.3, Real system_refinement_ratio = 1.0);
 		virtual ~SPHAdaptation(){};
 
 		int LocalRefinementLevel() { return local_refinement_level_; };
@@ -104,7 +104,7 @@ namespace SPH
 	public:
 		StdLargeVec<Real> h_ratio_; /**< the ratio between reference smoothing length to variable smoothing length */
 
-		ParticleWithLocalRefinement(SPHBody *sph_body, Real h_spacing_ratio_,
+		ParticleWithLocalRefinement(SPHBody &sph_body, Real h_spacing_ratio_,
 									Real system_refinement_ratio,
 									int local_refinement_level);
 		virtual ~ParticleWithLocalRefinement(){};
@@ -128,7 +128,7 @@ namespace SPH
 	class ParticleSpacingByBodyShape : public ParticleWithLocalRefinement
 	{
 	public:
-		ParticleSpacingByBodyShape(SPHBody *sph_body, Real smoothing_length_ratio,
+		ParticleSpacingByBodyShape(SPHBody &sph_body, Real smoothing_length_ratio,
 								   Real system_refinement_ratio,
 								   int local_refinement_level);
 		virtual ~ParticleSpacingByBodyShape(){};

@@ -34,6 +34,8 @@
 
 namespace SPH
 {
+ 
+ 	typedef blocked_range<size_t> IndexRange;
     /** Generalized data assemble type */
     template <template <typename DataType> typename DataContainerType>
     using GeneralDataAssemble = std::tuple<StdVec<DataContainerType<Real> *>,

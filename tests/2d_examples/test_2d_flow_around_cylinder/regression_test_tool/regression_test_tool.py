@@ -21,7 +21,6 @@ sphinxsys = SphinxsysRegressionTest(case_name, body_name, parameter_name)
 
 while True:
     print("Now start a new run......")
-    sphinxsys.
     sphinxsys.run_particle_relaxation()
     sphinxsys.run_case()
     number_of_run_times += 1

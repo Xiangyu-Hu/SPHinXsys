@@ -19,7 +19,7 @@ namespace SPH
 	namespace solid_dynamics
 	{
 		//=========================================================================================//
-		void UpdateElasticNormalDirection::Update(size_t index_i, Real dt)
+		void UpdateElasticNormalDirection::update(size_t index_i, Real dt)
 		{
 			Matd& F = F_[index_i];
 			Mat3d R;
@@ -37,7 +37,7 @@ namespace SPH
 			n_[index_i] = R * n0_[index_i];
 		}
 		//=================================================================================================//
-		void ConstrainSolidBodyPartBySimBody::Update(size_t index_i, Real dt)
+		void ConstraintBySimBody::update(size_t index_i, Real dt)
 		{
 			Vec3 rr, pos, vel, acc;
 			rr = pos0_[index_i] - initial_mobod_origin_location_;
@@ -53,8 +53,7 @@ namespace SPH
 			n_[index_i] = (mobod_.getBodyRotation(*simbody_state_) * n0_[index_i]);
 		}
 		//=================================================================================================//
-		SimTK::SpatialVec TotalForceOnSolidBodyPartForSimBody
-			::ReduceFunction(size_t index_i, Real dt)
+		SimTK::SpatialVec TotalForceForSimBody::reduce(size_t index_i, Real dt)
 		{
 			Vec3 force_from_particle = (acc_[index_i] + acc_prior_[index_i]) * mass_[index_i];
 			Vec3 displacement(0);

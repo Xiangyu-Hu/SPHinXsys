@@ -17,11 +17,10 @@ namespace SPH
 		//=================================================================================================//
 		CorrectConfiguration::
 			CorrectConfiguration(BaseBodyRelationInner &inner_relation)
-			: InteractionDynamics(*inner_relation.sph_body_),
-			  SolidDataInner(inner_relation),
+			: LocalDynamics(inner_relation.sph_body_), SolidDataInner(inner_relation),
 			  Vol_(particles_->Vol_), B_(particles_->B_) {}
 		//=================================================================================================//
-		void CorrectConfiguration::Interaction(size_t index_i, Real dt)
+		void CorrectConfiguration::interaction(size_t index_i, Real dt)
 		{
 			Matd local_configuration(Eps); // a small number added to diagonal to avoid divide zero
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];

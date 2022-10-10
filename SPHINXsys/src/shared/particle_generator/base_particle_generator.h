@@ -40,7 +40,7 @@ namespace SPH
 
 	class SPHBody;
 	class BaseParticles;
-	class InOutput;
+	class IOEnvironment;
 
 	/**
 	 * @class BaseParticleGenerator
@@ -123,7 +123,7 @@ namespace SPH
 		std::string file_path_;
 
 	public:
-		ParticleGeneratorReload(SPHBody &sph_body, InOutput &in_output, const std::string &reload_body_name);
+		ParticleGeneratorReload(SPHBody &sph_body, IOEnvironment &io_environment, const std::string &reload_body_name);
 		virtual ~ParticleGeneratorReload(){};
 		virtual void initializeGeometricVariables() override;
 	};

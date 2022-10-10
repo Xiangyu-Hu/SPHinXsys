@@ -55,16 +55,16 @@ class DepolarizationInitialCondition
 protected:
 	size_t voltage_;
 
-	void Update(size_t index_i, Real dt) override
-	{
-		species_n_[voltage_][index_i] = exp(-4.0 * ((pos_[index_i][0] - 1.0) * (pos_[index_i][0] - 1.0) + pos_[index_i][1] * pos_[index_i][1]));
-	};
-
 public:
-	explicit DepolarizationInitialCondition(SolidBody &muscle)
-		: electro_physiology::ElectroPhysiologyInitialCondition(muscle)
+	explicit DepolarizationInitialCondition(SPHBody &sph_body)
+		: electro_physiology::ElectroPhysiologyInitialCondition(sph_body)
 	{
 		voltage_ = material_->SpeciesIndexMap()["Voltage"];
+	};
+
+	void update(size_t index_i, Real dt)
+	{
+		species_n_[voltage_][index_i] = exp(-4.0 * ((pos_[index_i][0] - 1.0) * (pos_[index_i][0] - 1.0) + pos_[index_i][1] * pos_[index_i][1]));
 	};
 };
 //----------------------------------------------------------------------
@@ -76,8 +76,7 @@ int main()
 	//	Build up the environment of a SPHSystem.
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, resolution_ref);
-	/** output environment. */
-	InOutput in_output(system);
+	IOEnvironment io_environment(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
@@ -100,8 +99,8 @@ int main()
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	DepolarizationInitialCondition initialization(muscle_body);
-	solid_dynamics::CorrectConfiguration correct_configuration(muscle_body_inner_relation);
+	SimpleDynamics<DepolarizationInitialCondition> initialization(muscle_body);
+	InteractionDynamics<solid_dynamics::CorrectConfiguration> correct_configuration(muscle_body_inner_relation);
 	electro_physiology::GetElectroPhysiologyTimeStepSize get_time_step_size(muscle_body);
 	// Diffusion process for diffusion body.
 	electro_physiology::ElectroPhysiologyDiffusionRelaxationInner diffusion_relaxation(muscle_body_inner_relation);
@@ -111,9 +110,9 @@ int main()
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
 	RegressionTestEnsembleAveraged<ObservedQuantityRecording<Real>>
-		write_recorded_voltage("Voltage", in_output, voltage_observer_contact_relation);
+		write_recorded_voltage("Voltage", io_environment, voltage_observer_contact_relation);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
@@ -132,9 +131,9 @@ int main()
 	//----------------------------------------------------------------------
 	int ite = 0;
 	Real T0 = 8.0;
-	Real End_Time = T0;
-	Real D_Time = 0.5;		 /**< Time period for output */
-	Real Dt = 0.01 * D_Time; /**< Time period for data observing */
+	Real end_time = T0;
+	Real output_interval = 0.5;		 /**< Time period for output */
+	Real Dt = 0.01 * output_interval; /**< Time period for data observing */
 	Real dt = 0.0;
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
@@ -144,10 +143,10 @@ int main()
 	//----------------------------------------------------------------------
 	//	Main loop starts here.
 	//----------------------------------------------------------------------
-	while (GlobalStaticVariables::physical_time_ < End_Time)
+	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
-		while (integration_time < D_Time)
+		while (integration_time < output_interval)
 		{
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)

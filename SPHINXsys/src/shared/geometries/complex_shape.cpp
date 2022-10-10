@@ -7,52 +7,52 @@
 namespace SPH
 {
 	//=================================================================================================//
-	bool AlignedBoxShape::checkInBounds(int axis, const Vecd &point)
+	bool AlignedBoxShape::checkInBounds(int axis, const Vecd &probe_point)
 	{
-		Vecd point_origin = transformd_.shiftBaseStationToFrame(point);
-		return point_origin[axis] >= -halfsize_[axis] && point_origin[axis] <= halfsize_[axis]
+		Vecd position_in_frame = transformd_.shiftBaseStationToFrame(probe_point);
+		return position_in_frame[axis] >= -halfsize_[axis] && position_in_frame[axis] <= halfsize_[axis]
 				   ? true
 				   : false;
 	}
 	//=================================================================================================//
-	bool AlignedBoxShape::checkUpperBound(int axis, const Vecd &point)
+	bool AlignedBoxShape::checkUpperBound(int axis, const Vecd &probe_point)
 	{
-		Vecd point_origin = transformd_.shiftBaseStationToFrame(point);
-		return point_origin[axis] > halfsize_[axis] ? true : false;
+		Vecd position_in_frame = transformd_.shiftBaseStationToFrame(probe_point);
+		return position_in_frame[axis] > halfsize_[axis] ? true : false;
 	}
 	//=================================================================================================//
-	bool AlignedBoxShape::checkLowerBound(int axis, const Vecd &point)
+	bool AlignedBoxShape::checkLowerBound(int axis, const Vecd &probe_point)
 	{
-		Vecd point_origin = transformd_.shiftBaseStationToFrame(point);
-		return point_origin[axis] < -halfsize_[axis] ? true : false;
+		Vecd position_in_frame = transformd_.shiftBaseStationToFrame(probe_point);
+		return position_in_frame[axis] < -halfsize_[axis] ? true : false;
 	}
 	//=================================================================================================//
-	bool AlignedBoxShape::checkNearUpperBound(int axis, const Vecd &point, Real threshold)
+	bool AlignedBoxShape::checkNearUpperBound(int axis, const Vecd &probe_point, Real threshold)
 	{
-		Vecd point_origin = transformd_.shiftBaseStationToFrame(point);
-		return ABS(point_origin[axis] - halfsize_[axis]) <= threshold ? true : false;
+		Vecd position_in_frame = transformd_.shiftBaseStationToFrame(probe_point);
+		return ABS(position_in_frame[axis] - halfsize_[axis]) <= threshold ? true : false;
 	}
 	//=================================================================================================//
-	bool AlignedBoxShape::checkNearLowerBound(int axis, const Vecd &point, Real threshold)
+	bool AlignedBoxShape::checkNearLowerBound(int axis, const Vecd &probe_point, Real threshold)
 	{
-		Vecd point_origin = transformd_.shiftBaseStationToFrame(point);
-		return ABS(point_origin[axis] + halfsize_[axis]) <= threshold ? true : false;
+		Vecd position_in_frame = transformd_.shiftBaseStationToFrame(probe_point);
+		return ABS(position_in_frame[axis] + halfsize_[axis]) <= threshold ? true : false;
 	}
 	//=================================================================================================//
-	Vecd AlignedBoxShape::getUpperPeriodic(int axis, const Vecd &point)
+	Vecd AlignedBoxShape::getUpperPeriodic(int axis, const Vecd &probe_point)
 	{
-		Vecd point_origin = transformd_.shiftBaseStationToFrame(point);
+		Vecd position_in_frame = transformd_.shiftBaseStationToFrame(probe_point);
 		Vecd shift(0);
 		shift[axis] -= 2.0 * halfsize_[axis];
-		return transformd_.shiftFrameStationToBase(point_origin + shift);
+		return transformd_.shiftFrameStationToBase(position_in_frame + shift);
 	}
 	//=================================================================================================//
-	Vecd AlignedBoxShape::getLowerPeriodic(int axis, const Vecd &point)
+	Vecd AlignedBoxShape::getLowerPeriodic(int axis, const Vecd &probe_point)
 	{
-		Vecd point_origin = transformd_.shiftBaseStationToFrame(point);
+		Vecd position_in_frame = transformd_.shiftBaseStationToFrame(probe_point);
 		Vecd shift(0);
 		shift[axis] += 2.0 * halfsize_[axis];
-		return transformd_.shiftFrameStationToBase(point_origin + shift);
+		return transformd_.shiftFrameStationToBase(position_in_frame + shift);
 	}
 	//=================================================================================================//
 }

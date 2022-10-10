@@ -35,7 +35,7 @@ else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         add_test(NAME ${PROJECT_NAME} COMMAND bash ${EXECUTABLE_OUTPUT_PATH}/run_test.sh
                 WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-
+set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "periodic boundary, Eulerian")
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")

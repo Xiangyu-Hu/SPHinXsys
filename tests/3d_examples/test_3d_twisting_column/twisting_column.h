@@ -1,8 +1,8 @@
 /**
-* @file 	twisting_column.h
-* @brief 	This is the case setup for twisting_column.cpp.
-* @author 	Chi Zhang and Xiangyu Hu
-*/
+ * @file 	twisting_column.h
+ * @brief 	This is the case setup for twisting_column.cpp.
+ * @author 	Chi Zhang and Xiangyu Hu
+ */
 #ifndef TEST_3D_TWISTING_COLUMN_CASE_H
 #define TEST_3D_TWISTING_COLUMN_CASE_H
 
@@ -54,11 +54,10 @@ class InitialCondition
 	: public solid_dynamics::ElasticDynamicsInitialCondition
 {
 public:
-	explicit InitialCondition(SolidBody &body)
-		: solid_dynamics::ElasticDynamicsInitialCondition(body){};
+	explicit InitialCondition(SPHBody &sph_body)
+		: solid_dynamics::ElasticDynamicsInitialCondition(sph_body){};
 
-protected:
-	void Update(size_t index_i, Real dt) override
+	void update(size_t index_i, Real dt)
 	{
 		Real x = pos_[index_i][0];
 		Real y = pos_[index_i][1];
@@ -74,4 +73,4 @@ protected:
 		}
 	};
 };
-#endif //TEST_3D_TWISTING_COLUMN_CASE_H
+#endif // TEST_3D_TWISTING_COLUMN_CASE_H

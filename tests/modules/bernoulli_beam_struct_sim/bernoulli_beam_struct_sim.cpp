@@ -17,8 +17,8 @@ TEST(BernoulliBeam20x, Pressure)
 	std::vector<std::string> imported_stl_list = { "bernoulli_beam_20x.stl" };
 	std::vector<Vec3d> translation_list = { Vec3d(0) };
 	std::vector<Real> resolution_list = { 10.0 / 6.0 };
-	SharedPtr<LinearElasticSolid> material = makeShared<LinearElasticSolid>(rho_0, Youngs_modulus, poisson);
-	std::vector<SharedPtr<LinearElasticSolid>> material_model_list = { material };
+	SharedPtr<SaintVenantKirchhoffSolid> material = makeShared<SaintVenantKirchhoffSolid>(rho_0, Youngs_modulus, poisson);
+	std::vector<SharedPtr<SaintVenantKirchhoffSolid>> material_model_list = { material };
 
 	SharedPtr<TriangleMeshShapeSTL> specimen = makeShared<TriangleMeshShapeSTL>("./input/bernoulli_beam_20x.stl", Vec3d(0), scale_stl, "bernoulli_beam_20x");
 	BoundingBox fixation = specimen->getBounds();
