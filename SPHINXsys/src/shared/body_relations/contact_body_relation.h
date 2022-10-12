@@ -55,6 +55,28 @@ namespace SPH
 	};
 
 	/**
+	* @class ContactBodyRelationMultiLevelMeshCellLinkedLists
+	* @brief The relation between a SPH body and its contact SPH bodies in Multi-level Mesh
+	*/
+	class BodyRelationContactMultiLevelCellLinkedLists : public BaseBodyRelationContact
+	{
+	private:
+		UniquePtrKeepers<SearchDepthVariableSmoothingLength> search_variable_smoothinglength_ptr_vector_keeper_;
+	protected:
+		SPHBodyParticlesIndex get_particle_index_;
+		StdVec<NeighborRelationContact*> get_contact_neighbors_;
+		StdVec<SearchDepthVariableSmoothingLength*> get_multi_level_search_range_;
+		StdVec<CellLinkedList*> cell_linked_list_levels_;
+		size_t total_levels_;
+
+	public:
+		BodyRelationContactMultiLevelCellLinkedLists(SPHBody& body, RealBodyVector contact_bodies);
+		virtual ~BodyRelationContactMultiLevelCellLinkedLists() {};
+
+		virtual void updateConfiguration() override;
+	};
+	
+	/**
 	 * @class SolidBodyRelationContact
 	 * @brief The relation between a solid body and its contact solid bodies
 	 * TODO: better called BodySurfaceContact

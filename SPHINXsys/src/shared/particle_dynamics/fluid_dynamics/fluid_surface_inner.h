@@ -99,6 +99,23 @@ namespace SPH
 		};
 
 		/**
+		 * @class DensitySummationFreeSurfaceInnerVariableSmoothingLength
+		 * @brief computing density by summation with a re-normalization for free surface flows with variable smoothing length
+		 */
+		class DensitySummationFreeSurfaceInnerVariableSmoothingLength : public DensitySummationInnerVariableSmoothingLength
+		{
+		public:
+			DensitySummationFreeSurfaceInnerVariableSmoothingLength(BaseBodyRelationInner& inner_relation) :
+				DensitySummationInnerVariableSmoothingLength(inner_relation) {};
+			virtual ~DensitySummationFreeSurfaceInnerVariableSmoothingLength() {};
+		protected:
+			virtual Real ReinitializedDensity(Real rho_sum, Real rho_0, Real rho_n) override
+			{
+				return rho_sum + SMAX(0.0, (rho_n - rho_sum)) * rho_0 / rho_n;
+			};
+		};
+		
+		/**
 		 * @class DensitySummationFreeStreamInner
 		 * @brief The density is smoothed if the particle is near fluid surface.
 		 */

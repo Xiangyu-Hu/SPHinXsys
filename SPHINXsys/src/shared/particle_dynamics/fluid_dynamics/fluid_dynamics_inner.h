@@ -80,6 +80,24 @@ namespace SPH
 		};
 
 		/**
+		* @class DensitySummationInnerVariableSmoothingLength
+		* @brief  computing density by summation with variable smoothing length
+		*/
+		class DensitySummationInnerVariableSmoothingLength: public DensitySummationInner
+		{
+		public:
+			explicit DensitySummationInnerVariableSmoothingLength(BaseBodyRelationInner& inner_relation);
+			virtual ~DensitySummationInnerVariableSmoothingLength() {};
+
+			void interaction(size_t index_i, Real dt = 0.0);
+		protected:
+			StdLargeVec<Real>&h_ratio_;
+			StdLargeVec<Real> inv_sigma0_;
+			SPHBody* sph_body_;
+			virtual void setupDynamics(Real dt = 0.0) override;
+		};
+		
+		/**
 		 * @class BaseViscousAccelerationInner
 		 * @brief Base class for the viscosity force induced acceleration
 		 */
@@ -161,6 +179,17 @@ namespace SPH
 			Real reduce(size_t index_i, Real dt = 0.0);
 			virtual Real outputResult(Real reduced_value) override;
 		};
+		
+		/**
+		* @class AcousticTimeStepSizeVariableSmoothingLength
+		* @brief Computing the acoustic time step size with variable smoothing length
+		*/
+		class AcousticTimeStepSizeVariableSmoothingLength : public AcousticTimeStepSize
+		{
+		public:
+			explicit AcousticTimeStepSizeVariableSmoothingLength(SPHBody &sph_body);
+			virtual ~AcousticTimeStepSizeVariableSmoothingLength() {};
+		};
 
 		/**
 		 * @class AdvectionTimeStepSizeForImplicitViscosity
@@ -191,6 +220,17 @@ namespace SPH
 			virtual ~AdvectionTimeStepSize(){};
 
 			Real reduce(size_t index_i, Real dt = 0.0);
+		};
+
+		/**
+		* @class AdvectionTimeStepSizeVariableSmoothingLength
+		* @brief Computing the advection time step size with variable smoothing length
+		*/
+		class AdvectionTimeStepSizeVariableSmoothingLength : public AdvectionTimeStepSize
+		{
+		public:
+			explicit AdvectionTimeStepSizeVariableSmoothingLength(SPHBody &sph_body, Real U_max);
+			virtual ~AdvectionTimeStepSizeVariableSmoothingLength() {};
 		};
 
 		/**
