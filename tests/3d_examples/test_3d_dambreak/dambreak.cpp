@@ -112,7 +112,7 @@ int main(int ac, char *av[])
 	//	and regression tests of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_water_block_states(io_environment, system.real_bodies_);
-	RegressionTestEnsembleAveraged<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
+	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
 		write_water_mechanical_energy(io_environment, water_block, gravity_ptr);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
 		write_recorded_water_pressure("Pressure", io_environment, fluid_observer_contact);
@@ -194,7 +194,7 @@ int main(int ac, char *av[])
 
 	if (system.generate_regression_data_)
 	{
-		write_water_mechanical_energy.generateDataBase(1.0e-3, 1.0e-3);
+		write_water_mechanical_energy.generateDataBase(1.0e-3);
 		write_recorded_water_pressure.generateDataBase(1.0e-3);
 	}
 	else
