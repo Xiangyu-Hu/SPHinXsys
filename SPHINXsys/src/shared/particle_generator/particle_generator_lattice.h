@@ -40,6 +40,7 @@ namespace SPH
 	class Shape;
 	class ParticleSpacingByBodyShape;
 	class ShellParticles;
+	class ParticleSplitAndMerge;
 
 	/**
 	 * @class BaseParticleGeneratorLattice
@@ -88,6 +89,23 @@ namespace SPH
 		virtual void initializeSmoothingLengthRatio(Real local_spacing);
 	};
 
+	/**
+	 * @class ParticleGeneratorVariableSmoothingLength
+	 * @brief generate particles from lattice positions for a body.
+	 */
+	class ParticleGeneratorVariableSmoothingLength : public ParticleGeneratorLattice
+	{
+	public:
+		explicit ParticleGeneratorVariableSmoothingLength(SPHBody &sph_body);
+		virtual ~ParticleGeneratorVariableSmoothingLength() {};
+
+	protected:
+		ParticleSplitAndMerge *particle_adaptation_;
+		StdLargeVec<Real> &h_ratio_;
+
+		virtual void initializePositionAndVolumetricMeasure(const Vecd &position, Real volume) override;
+	};
+	
 	/**
 	 * @class ThickSurfaceParticleGeneratorLattice
 	 * @brief Generate thick surface particles from lattice positions for a thin structure defined by a body shape.

@@ -88,8 +88,33 @@ namespace SPH
 		using DensitySummationComplex = DensitySummation<DensitySummationInner>;
 
 		/**
-		 * @class BaseViscousAccelerationWithWall
-		 * @brief template class viscous acceleration together with wall boundary condition
+		* @class DensitySummationVariableSmoothingLength
+		* @brief computing density by summation considering  contribution from contact bodies
+		*/
+		template <class DensitySummationInnerVariableSmoothingLengthType>
+		class DensitySummationVariableSmoothingLength : public ParticleDynamicsComplex<DensitySummationInnerVariableSmoothingLengthType, FluidContactData>
+		{
+		public:
+			DensitySummationVariableSmoothingLength(BaseBodyRelationInner &inner_relation, BaseBodyRelationContact &contact_relation);
+			explicit DensitySummationVariableSmoothingLength(ComplexBodyRelation &complex_relation);
+			DensitySummationVariableSmoothingLength(ComplexBodyRelation &complex_relation, BaseBodyRelationContact &extra_contact_relation);
+			virtual ~DensitySummationVariableSmoothingLength() {};
+	
+			void interaction(size_t index_i, Real dt = 0.0);
+
+		protected:
+			StdVec<Real> contact_inv_rho0_;
+			StdVec<StdLargeVec<Real> *> contact_mass_;
+
+			virtual void prepareContactData() override;
+		};
+		/** the case with variable smoothing length without free surface */
+		using DensitySummationComplexVariableSmoothingLength = DensitySummationVariableSmoothingLength<DensitySummationInnerVariableSmoothingLength>;
+
+
+		/**
+		 * @class ViscousWithWall
+		 * @brief  template class viscous acceleration with wall boundary
 		 */
 		template <class ViscousAccelerationInnerType>
 		class BaseViscousAccelerationWithWall : public InteractionWithWall<ViscousAccelerationInnerType>

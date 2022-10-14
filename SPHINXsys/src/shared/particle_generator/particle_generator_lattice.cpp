@@ -53,6 +53,21 @@ namespace SPH
 		h_ratio_.push_back(particle_adaptation_->ReferenceSpacing() / local_spacing);
 	}
 	//=================================================================================================//
+	ParticleGeneratorVariableSmoothingLength::ParticleGeneratorVariableSmoothingLength(SPHBody &sph_body)
+		: ParticleGeneratorLattice(sph_body),
+		particle_adaptation_(DynamicCast<ParticleSplitAndMerge>(this, sph_body.sph_adaptation_)),
+		h_ratio_(particle_adaptation_->registerSmoothingLengthRatio(base_particles_))
+	{
+		lattice_spacing_ = particle_adaptation_->InitialSpacing();
+	}
+	//=================================================================================================//
+	void ParticleGeneratorVariableSmoothingLength::
+		initializePositionAndVolumetricMeasure(const Vecd &position, Real volume)
+	{
+		ParticleGeneratorLattice::initializePositionAndVolumetricMeasure(position, volume);
+		h_ratio_.push_back(1.0);
+	}
+	//=================================================================================================//
 	ThickSurfaceParticleGeneratorLattice::
 		ThickSurfaceParticleGeneratorLattice(SPHBody &sph_body, Real global_avg_thickness)
 		: BaseParticleGeneratorLattice(sph_body), SurfaceParticleGenerator(sph_body),

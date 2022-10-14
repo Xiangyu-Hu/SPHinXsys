@@ -9,7 +9,7 @@
 #include "sph_system.h"
 #include "all_kernels.h"
 #include "base_body.h"
-#include "base_particles.h"
+#include "base_particles.hpp"
 #include "base_particle_dynamics.h"
 #include "mesh_with_data_packages.hpp"
 #include "vector_functions.h"
@@ -160,6 +160,95 @@ namespace SPH
 			target_spacing = weight * spacing_min_ + (1.0 - weight) * spacing_ref_;
 		}
 		return target_spacing;
+	}
+	//=================================================================================================//
+	ParticleSplitAndMerge::ParticleSplitAndMerge(SPHBody &sph_body, Real h_spacing_ratio,
+		Real system_resolution_ratio, int local_refinement_level) :
+		ParticleWithLocalRefinement(sph_body, h_spacing_ratio, system_resolution_ratio, local_refinement_level)
+	{
+		local_refinement_level_ = local_refinement_level;
+		spacing_min_ = RefinedSpacing(spacing_ref_, local_refinement_level_);
+		spacing_initial_ = spacing_ref_;
+		Real spacing_ratio_min_ = powerN(1.0 / sqrt(2.0), local_refinement_level_);
+		h_ratio_max_ = powerN(sqrt(2.0), local_refinement_level_);
+		number_density_max_ = computeReferenceNumberDensity(Vecd(0), h_ratio_max_);
+	};
+	//=================================================================================================//
+	size_t ParticleSplitAndMerge::getCellLinkedListTotalLevel()
+	{
+		return size_t(local_refinement_level_);
+	}
+	//=================================================================================================//
+	size_t ParticleSplitAndMerge::getLevelSetTotalLevel()
+	{
+		return getCellLinkedListTotalLevel() + 1;
+	}
+	//=================================================================================================//
+	UniquePtr<BaseCellLinkedList> ParticleSplitAndMerge::
+		createCellLinkedList(const BoundingBox &domain_bounds, RealBody &real_body)
+	{
+		return makeUnique<MultilevelCellLinkedList>(domain_bounds, kernel_ptr_->CutOffRadius(),
+			getCellLinkedListTotalLevel(), real_body, *this);
+	}
+	//=================================================================================================//
+	UniquePtr<BaseLevelSet> ParticleSplitAndMerge::createLevelSet(Shape &shape, Real refinement_ratio)
+	{
+		return makeUnique<MultilevelLevelSet>(shape.getBounds(), ReferenceSpacing() / refinement_ratio,
+			getLevelSetTotalLevel(), shape, *this);
+	}
+	//=================================================================================================//
+	StdLargeVec<Real> & ParticleSplitAndMerge::
+		registerSmoothingLengthRatio(BaseParticles *base_particles)
+	{
+		h_ratio_=ParticleWithLocalRefinement::registerSmoothingLengthRatio(base_particles);
+
+		base_particles->registerSortableVariable<Real>("VolumetricMeasure");
+		base_particles->registerSortableVariable<Real>("SmoothingLengthRatio");
+		base_particles->addVariableToWrite<Real>("SmoothingLengthRatio");
+		base_particles->addVariableToWrite<Real>("VolumetricMeasure");
+
+		return h_ratio_;
+	}
+	//=================================================================================================//
+	bool ParticleSplitAndMerge::checkLocation(BodyRegionByCell& refinement_area, Vecd position, Real volume)
+	{
+		BoundingBox body_domain_bounds_ = refinement_area.body_part_shape_.getBounds();
+		int bound_number = 0;
+		for (int axis_direction = 0; axis_direction != Dimensions; ++axis_direction)
+		{
+			Real particle_spacing = pow(volume, 1.0 / Dimensions);
+			if (position[axis_direction] > (body_domain_bounds_.first[axis_direction] + particle_spacing)
+				&& position[axis_direction] < (body_domain_bounds_.second[axis_direction] - particle_spacing))  bound_number += 1;
+		}
+		if (bound_number != Dimensions) return false;
+	}
+	//=================================================================================================//
+	bool ParticleSplitAndMerge::splitResolutionCheck(Real volume, Real min_volume)
+	{
+		return volume - 1.2*min_volume > Eps ? true : false;
+	}
+	//=================================================================================================//
+	bool ParticleSplitAndMerge::mergeResolutionCheck(Real volume)
+	{
+		return volume - 1.2*powerN(spacing_min_, Dimensions) < Eps ? true : false;
+	}
+	//=================================================================================================//
+	Real ParticleSplitAndMerge::
+		RefinedSpacing(Real coarse_particle_spacing, int local_refinement_level)
+	{
+		Real refinement_number = powerN(2.0, local_refinement_level);
+		Real spacing_ratio = pow(refinement_number, 1.0 / Dimensions);
+		return coarse_particle_spacing / spacing_ratio;
+	}
+	//=================================================================================================//
+	Vec2d ParticleSplitAndMerge::splittingPattern(Vec2d pos, Real particle_spacing, Real delta)
+	{
+		return { pos[0] + 0.5 * particle_spacing * cos(delta), pos[1] + 0.5 * particle_spacing * sin(delta) };
+	}
+	//=================================================================================================//
+	Vec3d ParticleSplitAndMerge::splittingPattern(Vec3d pos, Real particle_spacing, Real delta)
+	{
+		return { pos[0] + 0.5 * particle_spacing * cos(delta), pos[1] + 0.5 * particle_spacing * sin(delta), pos[2] };
 	}
 	//=================================================================================================//
 }

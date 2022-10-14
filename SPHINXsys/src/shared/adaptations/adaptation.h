@@ -44,6 +44,7 @@ namespace SPH
 	class Kernel;
 	class BaseParticles;
 	class BaseLevelSet;
+	class BodyRegionByCell;
 
 	/**
 	 * @class SPHAdaptation
@@ -133,6 +134,37 @@ namespace SPH
 		virtual ~ParticleSpacingByBodyShape(){};
 
 		Real getLocalSpacing(Shape &shape, const Vecd &position);
+	};
+	
+	/**
+	 * @class ParticleSplitAndMerge
+	 * @brief adaptive resolutions with particle splitting and merging technique.
+	*/
+
+	class ParticleSplitAndMerge : public  ParticleWithLocalRefinement
+	{
+	public:
+		ParticleSplitAndMerge(SPHBody &sph_body, Real h_spacing_ratio_,
+			Real system_resolution_ratio, int local_refinement_level);
+		virtual ~ParticleSplitAndMerge() {};
+
+		size_t getCellLinkedListTotalLevel();
+		size_t getLevelSetTotalLevel();
+		virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, RealBody &real_body) override;
+		virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio) override;
+		StdLargeVec<Real> &registerSmoothingLengthRatio(BaseParticles *base_particles);
+		virtual bool checkLocation(BodyRegionByCell &refinement_area, Vecd position, Real volume);
+		virtual bool splitResolutionCheck(Real volume, Real min_volume);
+		virtual bool mergeResolutionCheck(Real volume);
+		Real RefinedSpacing(Real coarse_particle_spacing, int local_refinement_level) ;
+		virtual Vec2d splittingPattern(Vec2d pos, Real particle_spacing, Real delta);
+		virtual Vec3d splittingPattern(Vec3d pos, Real particle_spacing, Real delta);
+		Real InitialSpacing() { return spacing_initial_; };
+
+		StdLargeVec<Real> total_split_error_;
+		StdLargeVec<Real> total_merge_error_;
+	protected:
+		Real spacing_initial_;
 	};
 }
 #endif // ADAPTATION_H

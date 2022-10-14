@@ -49,6 +49,37 @@ namespace SPH
 				*get_search_depths_[k], *get_contact_neighbors_[k]);
 		}
 	}
+	//=================================================================================================////=================================================================================================//
+	BodyRelationContactMultiLevelCellLinkedLists::BodyRelationContactMultiLevelCellLinkedLists(SPHBody& sph_body, RealBodyVector contact_sph_bodies)
+		: BaseBodyRelationContact(sph_body, contact_sph_bodies)
+	{
+		for (size_t k = 0; k != contact_bodies_.size(); ++k) {
+			MultilevelCellLinkedList* target_multi_level_mesh_cell_linked_lists_ =
+				dynamic_cast<MultilevelCellLinkedList*>(contact_bodies_[k]->cell_linked_list_);
+			cell_linked_list_levels_ = target_multi_level_mesh_cell_linked_lists_->getMeshLevels();
+			total_levels_ = cell_linked_list_levels_.size();
+
+			for (size_t l = 0; l != total_levels_; ++l) {
+				get_multi_level_search_range_.push_back(
+					new SearchDepthVariableSmoothingLength(*contact_sph_bodies[k], cell_linked_list_levels_[l]));
+			}
+			get_contact_neighbors_.push_back(new NeighborRelationContact(sph_body, *contact_sph_bodies[k]));
+
+		}
+
+	}
+	//=================================================================================================//
+	void BodyRelationContactMultiLevelCellLinkedLists::updateConfiguration()
+	{
+		resetNeighborhoodCurrentSize();
+		size_t total_real_particles = base_particles_->total_real_particles_;
+		for (size_t k = 0; k != contact_bodies_.size(); ++k) {
+			for (size_t l = 0; l != total_levels_; ++l) {
+				cell_linked_list_levels_[l]->searchNeighborsByParticles(base_particles_->total_real_particles_,
+					*base_particles_, contact_configuration_[k], get_particle_index_, *get_multi_level_search_range_[l], *get_contact_neighbors_[k]);
+			}
+		}
+	}
 	//=================================================================================================//
 	SurfaceContactRelation::SurfaceContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies)
 		: BaseContactRelation(sph_body, contact_bodies),

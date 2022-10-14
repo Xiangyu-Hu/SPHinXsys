@@ -75,6 +75,59 @@ namespace SPH
 			this->rho_sum_[index_i] += sigma * this->rho0_ * this->inv_sigma0_;
 		}
 		//=================================================================================================//
+		template <class DensitySummationInnerVariableSmoothingLengthType>
+		DensitySummationVariableSmoothingLength<DensitySummationInnerVariableSmoothingLengthType>::
+			DensitySummationVariableSmoothingLength(BaseBodyRelationInner &inner_relation, BaseBodyRelationContact &contact_relation)
+			: ParticleDynamicsComplex<DensitySummationInnerVariableSmoothingLengthType, FluidContactData>(inner_relation, contact_relation)
+		{
+			prepareContactData();
+		}
+		//=================================================================================================//
+		template <class DensitySummationInnerVariableSmoothingLengthType>
+		DensitySummationVariableSmoothingLength<DensitySummationInnerVariableSmoothingLengthType>::
+			DensitySummationVariableSmoothingLength(ComplexBodyRelation &complex_relation)
+			: DensitySummationVariableSmoothingLength(complex_relation.inner_relation_, complex_relation.contact_relation_) {}
+		//=================================================================================================//
+		template <class DensitySummationInnerVariableSmoothingLengthType>
+		DensitySummationVariableSmoothingLength<DensitySummationInnerVariableSmoothingLengthType>::
+			DensitySummationVariableSmoothingLength(ComplexBodyRelation &complex_relation, BaseBodyRelationContact &extra_contact_relation)
+			: ParticleDynamicsComplex<DensitySummationInnerVariableSmoothingLengthType, FluidContactData>(complex_relation, extra_contact_relation)
+		{
+			prepareContactData();
+		}
+		//=================================================================================================//
+		template <class DensitySummationInnerVariableSmoothingLengthType>
+		void DensitySummationVariableSmoothingLength<DensitySummationInnerVariableSmoothingLengthType>::prepareContactData()
+		{
+			for (size_t k = 0; k != this->contact_particles_.size(); ++k)
+			{
+				Real rho0_k = this->contact_particles_[k]->rho0_;
+				contact_inv_rho0_.push_back(1.0 / rho0_k);
+				contact_mass_.push_back(&(this->contact_particles_[k]->mass_));
+			}
+		}
+		//=================================================================================================//
+		template <class DensitySummationInnerVariableSmoothingLengthType>
+		void DensitySummationVariableSmoothingLength<DensitySummationInnerVariableSmoothingLengthType>::interaction(size_t index_i, Real dt)
+		{
+			DensitySummationInnerVariableSmoothingLengthType::interaction(index_i, dt);
+
+			/** Contact interaction. */
+			Real sigma(0.0);
+			Real inv_Vol_0_i = this->rho0_ / this->mass_[index_i];
+			for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
+			{
+				StdLargeVec<Real> &contact_mass_k = *(this->contact_mass_[k]);
+				Real contact_inv_rho0_k = contact_inv_rho0_[k];
+				Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
+				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+				{
+					sigma += contact_neighborhood.W_ij_[n] * inv_Vol_0_i * contact_inv_rho0_k * contact_mass_k[contact_neighborhood.j_[n]];
+				}
+			}
+			this->rho_sum_[index_i] += sigma * this->rho0_ * this->inv_sigma0_[index_i];
+		}
+		//=================================================================================================//
 		template <class ViscousAccelerationInnerType>
 		void BaseViscousAccelerationWithWall<ViscousAccelerationInnerType>::interaction(size_t index_i, Real dt)
 		{

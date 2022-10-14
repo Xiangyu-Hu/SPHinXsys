@@ -39,7 +39,31 @@ namespace SPH
 			rho_[index_i] = ReinitializedDensity(rho_sum_[index_i], rho0_, rho_[index_i]);
 		}
 		//=================================================================================================//
-		BaseViscousAccelerationInner::BaseViscousAccelerationInner(BaseInnerRelation &inner_relation)
+		DensitySummationInnerVariableSmoothingLength::DensitySummationInnerVariableSmoothingLength(BaseBodyRelationInner& inner_relation) :
+			DensitySummationInner(inner_relation), sph_body_(&inner_relation.sph_body_),
+			h_ratio_(dynamic_cast<ParticleWithLocalRefinement&>(*inner_relation.sph_body_.sph_adaptation_).h_ratio_) {}
+		//=================================================================================================//
+		void DensitySummationInnerVariableSmoothingLength::setupDynamics(Real dt)
+		{
+			inv_sigma0_.resize(rho_.size());
+		}
+		//=================================================================================================//
+		void DensitySummationInnerVariableSmoothingLength::interaction(size_t index_i, Real dt)
+		{
+			inv_sigma0_[index_i]=1.0 / sph_body_->sph_adaptation_->computeReferenceNumberDensity(Vecd(0), h_ratio_[index_i]);
+			Real sigma_i = sph_body_->sph_adaptation_->getKernel()->W0(h_ratio_[index_i], Vecd(0));
+			Real sigma_mass = mass_[index_i];
+			Real inv_Vol_i = rho0_ / mass_[index_i];
+
+			/** Inner interaction. */
+			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n) 
+				sigma_i += inner_neighborhood.W_ij_[n] * inv_Vol_i*mass_[inner_neighborhood.j_[n]] / rho0_;
+
+			rho_sum_[index_i] = sigma_i * rho0_ *inv_sigma0_[index_i];
+		}
+		//=================================================================================================//
+		BaseViscousAccelerationInner::BaseViscousAccelerationInner(BaseBodyRelationInner &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
 			  rho_(particles_->rho_), vel_(particles_->vel_), acc_prior_(particles_->acc_prior_),
 			  mu_(particles_->fluid_.ReferenceViscosity()),
@@ -131,6 +155,13 @@ namespace SPH
 			return acousticCFL_ * smoothing_length_ / (reduced_value + TinyReal);
 		}
 		//=================================================================================================//
+		AcousticTimeStepSizeVariableSmoothingLength::AcousticTimeStepSizeVariableSmoothingLength(SPHBody &sph_body)
+			: AcousticTimeStepSize(sph_body)
+		{
+			smoothing_length_ = sph_body.sph_adaptation_->ReferenceSmoothingLength() * 
+				sph_body.sph_adaptation_->MinimumSpacing() / sph_body.sph_adaptation_->ReferenceSpacing();
+		}
+		//=================================================================================================//
 		AdvectionTimeStepSizeForImplicitViscosity::
 			AdvectionTimeStepSizeForImplicitViscosity(SPHBody &sph_body, Real U_max, Real advectionCFL)
 			: LocalDynamicsReduce<Real, ReduceMax>(sph_body, U_max * U_max),
@@ -163,7 +194,14 @@ namespace SPH
 			return AdvectionTimeStepSizeForImplicitViscosity::reduce(index_i, dt);
 		}
 		//=================================================================================================//
-		VorticityInner::VorticityInner(BaseInnerRelation &inner_relation)
+		AdvectionTimeStepSizeVariableSmoothingLength::AdvectionTimeStepSizeVariableSmoothingLength(SPHBody &sph_body, Real U_max)
+			: AdvectionTimeStepSize(sph_body, U_max)
+		{
+			smoothing_length_ = sph_body.sph_adaptation_->ReferenceSmoothingLength() * 
+				sph_body.sph_adaptation_->MinimumSpacing() / sph_body.sph_adaptation_->ReferenceSpacing();
+		}
+		//=================================================================================================//
+		VorticityInner::VorticityInner(BaseBodyRelationInner &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
 			  vel_(particles_->vel_)
 		{

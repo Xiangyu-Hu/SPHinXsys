@@ -62,6 +62,8 @@ namespace SPH
 		using DensitySummationFreeSurfaceComplex = DensitySummation<DensitySummationFreeSurfaceInner>;
 		/** the case with free stream */
 		using DensitySummationFreeStreamComplex = DensitySummation<DensitySummationFreeStreamInner>;
+		/** the case with variable smoothing length */
+		using DensitySummationFreeSurfaceComplexVariableSmoothingLength = DensitySummationVariableSmoothingLength<DensitySummationFreeSurfaceInnerVariableSmoothingLength>;
 
 		/**
 		 * @class ColorFunctionGradientComplex
