@@ -31,7 +31,7 @@ namespace SPH
 	ParticleGeneratorMultiResolution::ParticleGeneratorMultiResolution(SPHBody &sph_body)
 		: ParticleGeneratorLattice(sph_body),
 		  particle_adaptation_(DynamicCast<ParticleSpacingByBodyShape>(this, sph_body.sph_adaptation_)),
-		  h_ratio_(particle_adaptation_->registerSmoothingLengthRatio(base_particles_))
+		  h_ratio_(*base_particles_.getVariableByName<Real>("SmoothingLengthRatio"))
 	{
 		lattice_spacing_ = particle_adaptation_->MinimumSpacing();
 	}
@@ -53,15 +53,12 @@ namespace SPH
 		h_ratio_.push_back(particle_adaptation_->ReferenceSpacing() / local_spacing);
 	}
 	//=================================================================================================//
-	ParticleGeneratorVariableSmoothingLength::ParticleGeneratorVariableSmoothingLength(SPHBody &sph_body)
+	ParticleGeneratorSplitAndMerge::ParticleGeneratorSplitAndMerge(SPHBody &sph_body)
 		: ParticleGeneratorLattice(sph_body),
 		particle_adaptation_(DynamicCast<ParticleSplitAndMerge>(this, sph_body.sph_adaptation_)),
-		h_ratio_(particle_adaptation_->registerSmoothingLengthRatio(base_particles_))
-	{
-		lattice_spacing_ = particle_adaptation_->InitialSpacing();
-	}
+		h_ratio_(*base_particles_.getVariableByName<Real>("SmoothingLengthRatio")){}
 	//=================================================================================================//
-	void ParticleGeneratorVariableSmoothingLength::
+	void ParticleGeneratorSplitAndMerge::
 		initializePositionAndVolumetricMeasure(const Vecd &position, Real volume)
 	{
 		ParticleGeneratorLattice::initializePositionAndVolumetricMeasure(position, volume);

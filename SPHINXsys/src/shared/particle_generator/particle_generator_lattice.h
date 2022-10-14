@@ -90,14 +90,14 @@ namespace SPH
 	};
 
 	/**
-	 * @class ParticleGeneratorVariableSmoothingLength
+	 * @class ParticleGeneratorSplitAndMerge
 	 * @brief generate particles from lattice positions for a body.
 	 */
-	class ParticleGeneratorVariableSmoothingLength : public ParticleGeneratorLattice
+	class ParticleGeneratorSplitAndMerge : public ParticleGeneratorLattice
 	{
 	public:
-		explicit ParticleGeneratorVariableSmoothingLength(SPHBody &sph_body);
-		virtual ~ParticleGeneratorVariableSmoothingLength() {};
+		explicit ParticleGeneratorSplitAndMerge(SPHBody &sph_body);
+		virtual ~ParticleGeneratorSplitAndMerge() {};
 
 	protected:
 		ParticleSplitAndMerge *particle_adaptation_;

@@ -91,7 +91,7 @@ int main(int ac, char *av[])
 			Transform2d(water_block_translation), water_block_halfsize, "WaterBody"));
 	water_block.defineAdaptation<ParticleSplitAndMerge>(1.3, 1.0, 1.0);
 	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
-	water_block.generateParticles<ParticleGeneratorVariableSmoothingLength>();
+	water_block.generateParticles<ParticleGeneratorSplitAndMerge>();
 
 	SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
 	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();

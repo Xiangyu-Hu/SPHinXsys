@@ -81,6 +81,7 @@ namespace SPH
 		Real ReferenceNumberDensity();
 		virtual Real SmoothingLengthRatio(size_t particle_index_i) { return 1.0; };
 
+		virtual void registerAdaptationVariables(BaseParticles &base_particles){};
 		virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, RealBody &real_body);
 		virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio);
 
@@ -91,7 +92,7 @@ namespace SPH
 		};
 
 	protected:
-		Real RefinedSpacing(Real coarse_particle_spacing, int refinement_level);
+		virtual Real RefinedSpacing(Real coarse_particle_spacing, int refinement_level);
 	};
 
 	/**
@@ -116,7 +117,7 @@ namespace SPH
 			return h_ratio_[particle_index_i];
 		};
 
-		StdLargeVec<Real> &registerSmoothingLengthRatio(BaseParticles &base_particles);
+		virtual void registerAdaptationVariables(BaseParticles &base_particles) override;
 		virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, RealBody &real_body) override;
 		virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio) override;
 	};
@@ -135,36 +136,31 @@ namespace SPH
 
 		Real getLocalSpacing(Shape &shape, const Vecd &position);
 	};
-	
+
 	/**
 	 * @class ParticleSplitAndMerge
 	 * @brief adaptive resolutions with particle splitting and merging technique.
-	*/
+	 */
 
-	class ParticleSplitAndMerge : public  ParticleWithLocalRefinement
+	class ParticleSplitAndMerge : public ParticleWithLocalRefinement
 	{
 	public:
-		ParticleSplitAndMerge(SPHBody &sph_body, Real h_spacing_ratio_,
-			Real system_resolution_ratio, int local_refinement_level);
-		virtual ~ParticleSplitAndMerge() {};
+		StdLargeVec<Real> total_split_error_;
+		StdLargeVec<Real> total_merge_error_;
 
-		size_t getCellLinkedListTotalLevel();
-		size_t getLevelSetTotalLevel();
-		virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, RealBody &real_body) override;
-		virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio) override;
-		StdLargeVec<Real> &registerSmoothingLengthRatio(BaseParticles &base_particles);
+		ParticleSplitAndMerge(SPHBody &sph_body, Real h_spacing_ratio_,
+							  Real system_resolution_ratio, int local_refinement_level);
+		virtual ~ParticleSplitAndMerge(){};
+
+		virtual void registerAdaptationVariables(BaseParticles &base_particles) override;
 		virtual bool checkLocation(BodyRegionByCell &refinement_area, Vecd position, Real volume);
 		virtual bool splitResolutionCheck(Real volume, Real min_volume);
 		virtual bool mergeResolutionCheck(Real volume);
-		Real RefinedSpacing(Real coarse_particle_spacing, int local_refinement_level) ;
 		virtual Vec2d splittingPattern(Vec2d pos, Real particle_spacing, Real delta);
 		virtual Vec3d splittingPattern(Vec3d pos, Real particle_spacing, Real delta);
-		Real InitialSpacing() { return spacing_initial_; };
 
-		StdLargeVec<Real> total_split_error_;
-		StdLargeVec<Real> total_merge_error_;
 	protected:
-		Real spacing_initial_;
+		virtual Real RefinedSpacing(Real coarse_particle_spacing, int local_refinement_level) override;
 	};
 }
 #endif // ADAPTATION_H
