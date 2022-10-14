@@ -55,11 +55,11 @@ namespace SPH
 		public:
 			template <class BaseBodyRelationType, typename... Args>
 			InteractionWithWall(BaseContactRelation &wall_contact_relation,
-							   BaseBodyRelationType &base_body_relation, Args &&...args);
+								BaseBodyRelationType &base_body_relation, Args &&...args);
 			template <typename... Args>
 			InteractionWithWall(ComplexRelation &fluid_wall_relation, Args &&...args)
 				: InteractionWithWall(fluid_wall_relation.contact_relation_,
-									 fluid_wall_relation.inner_relation_, std::forward<Args>(args)...) {}
+									  fluid_wall_relation.inner_relation_, std::forward<Args>(args)...) {}
 			virtual ~InteractionWithWall(){};
 
 		protected:
@@ -88,29 +88,27 @@ namespace SPH
 		using DensitySummationComplex = DensitySummation<DensitySummationInner>;
 
 		/**
-		* @class DensitySummationVariableSmoothingLength
-		* @brief computing density by summation considering  contribution from contact bodies
-		*/
+		 * @class DensitySummationVariableSmoothingLength
+		 * @brief computing density by summation considering  contribution from contact bodies
+		 */
 		template <class DensitySummationInnerVariableSmoothingLengthType>
-		class DensitySummationVariableSmoothingLength : public ParticleDynamicsComplex<DensitySummationInnerVariableSmoothingLengthType, FluidContactData>
+		class DensitySummationVariableSmoothingLength
+			: public BaseInteractionComplex<DensitySummationInnerVariableSmoothingLengthType, FluidContactData>
 		{
 		public:
-			DensitySummationVariableSmoothingLength(BaseBodyRelationInner &inner_relation, BaseBodyRelationContact &contact_relation);
-			explicit DensitySummationVariableSmoothingLength(ComplexBodyRelation &complex_relation);
-			DensitySummationVariableSmoothingLength(ComplexBodyRelation &complex_relation, BaseBodyRelationContact &extra_contact_relation);
-			virtual ~DensitySummationVariableSmoothingLength() {};
-	
+			template <typename... Args>
+			DensitySummationVariableSmoothingLength(Args &&...args);
+			virtual ~DensitySummationVariableSmoothingLength(){};
+
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdVec<Real> contact_inv_rho0_;
 			StdVec<StdLargeVec<Real> *> contact_mass_;
-
-			virtual void prepareContactData() override;
 		};
 		/** the case with variable smoothing length without free surface */
-		using DensitySummationComplexVariableSmoothingLength = DensitySummationVariableSmoothingLength<DensitySummationInnerVariableSmoothingLength>;
-
+		using DensitySummationComplexVariableSmoothingLength =
+			DensitySummationVariableSmoothingLength<DensitySummationInnerVariableSmoothingLength>;
 
 		/**
 		 * @class ViscousWithWall

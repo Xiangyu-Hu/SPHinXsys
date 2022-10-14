@@ -1,6 +1,6 @@
 /**
- * @file 	Dambreak.cpp
- * @brief 	2D dambreak example.
+ * @file 	dambreak_split_merge.cpp
+ * @brief 	2D dambreak example with split and merge particles.
  * @details This is the one of the basic test cases, also the first case for
  * 			understanding SPH method for fluid simulation.
  * @author 	Luhui Han, Chi Zhang and Xiangyu Hu
@@ -101,16 +101,16 @@ int main(int ac, char *av[])
 	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 
 	/** topology */
-	BodyRelationInnerVariableSmoothingLength water_inner(water_block);
-	ComplexBodyRelation water_block_complex(water_inner, { &wall_boundary });
-	BodyRelationContactMultiLevelCellLinkedLists fluid_observer_contact(fluid_observer, { &water_block });
+	AdaptiveInnerRelation water_inner(water_block);
+	ComplexRelation water_block_complex(water_inner, { &wall_boundary });
+	AdaptiveContactRelation fluid_observer_contact(fluid_observer, { &water_block });
 
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	Dynamics1Level<fluid_dynamics::PressureRelaxationRiemannWithWall> fluid_pressure_relaxation(water_block_complex);
-	Dynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> fluid_density_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> fluid_pressure_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_block_complex);
 
 	BodyRegionByCell refinement_area(water_block, makeShared<MultiPolygonShape>(createRefinementArea()));
 	InteractionWithUpdate < SplitWithMinimumDensityErrorWithWall>  particle_split_(water_block_complex, refinement_area, 8000);
@@ -129,7 +129,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp  body_states_recording(io_environment, sph_system.real_bodies_);
 	RestartIO restart_io(io_environment, sph_system.real_bodies_);
-	RegressionTestDynamicTimeWarping<BodyReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
+	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
 		write_water_mechanical_energy(io_environment, water_block, gravity_ptr);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
 		write_recorded_water_pressure("Pressure", io_environment, fluid_observer_contact);

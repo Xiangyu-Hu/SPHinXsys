@@ -41,7 +41,6 @@ namespace SPH
 	void ContactRelation::updateConfiguration()
 	{
 		resetNeighborhoodCurrentSize();
-		size_t total_real_particles = base_particles_.total_real_particles_;
 		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{
 			target_cell_linked_lists_[k]->searchNeighborsByParticles(
@@ -50,33 +49,41 @@ namespace SPH
 		}
 	}
 	//=================================================================================================////=================================================================================================//
-	BodyRelationContactMultiLevelCellLinkedLists::BodyRelationContactMultiLevelCellLinkedLists(SPHBody& sph_body, RealBodyVector contact_sph_bodies)
-		: BaseBodyRelationContact(sph_body, contact_sph_bodies)
+	AdaptiveContactRelation::AdaptiveContactRelation(SPHBody &sph_body, RealBodyVector contact_sph_bodies)
+		: BaseContactRelation(sph_body, contact_sph_bodies)
 	{
-		for (size_t k = 0; k != contact_bodies_.size(); ++k) {
-			MultilevelCellLinkedList* target_multi_level_mesh_cell_linked_lists_ =
-				dynamic_cast<MultilevelCellLinkedList*>(contact_bodies_[k]->cell_linked_list_);
-			cell_linked_list_levels_ = target_multi_level_mesh_cell_linked_lists_->getMeshLevels();
-			total_levels_ = cell_linked_list_levels_.size();
+		cell_linked_list_levels_.resize(contact_bodies_.size());
+		get_multi_level_search_range_.resize(contact_bodies_.size());
 
-			for (size_t l = 0; l != total_levels_; ++l) {
-				get_multi_level_search_range_.push_back(
-					new SearchDepthVariableSmoothingLength(*contact_sph_bodies[k], cell_linked_list_levels_[l]));
+		for (size_t k = 0; k != contact_bodies_.size(); ++k)
+		{
+			MultilevelCellLinkedList *target_multi_level_mesh_cell_linked_lists_ =
+				dynamic_cast<MultilevelCellLinkedList *>(contact_bodies_[k]->cell_linked_list_);
+			cell_linked_list_levels_[k] = target_multi_level_mesh_cell_linked_lists_->getMeshLevels();
+
+			for (size_t l = 0; l != cell_linked_list_levels_[k].size(); ++l)
+			{
+				get_multi_level_search_range_[k].push_back(
+					adaptive_search_depth_ptr_vector_keeper_.createPtr<AdaptiveSearchDepth>(
+						*contact_sph_bodies[k], cell_linked_list_levels_[k][l]));
 			}
-			get_contact_neighbors_.push_back(new NeighborRelationContact(sph_body, *contact_sph_bodies[k]));
 
+			get_contact_neighbors_.push_back(
+				neighbor_relation_contact_ptr_vector_keeper_.createPtr<NeighborBuilderContact>(
+					sph_body, *contact_sph_bodies[k]));
 		}
-
 	}
 	//=================================================================================================//
-	void BodyRelationContactMultiLevelCellLinkedLists::updateConfiguration()
+	void AdaptiveContactRelation::updateConfiguration()
 	{
 		resetNeighborhoodCurrentSize();
-		size_t total_real_particles = base_particles_->total_real_particles_;
-		for (size_t k = 0; k != contact_bodies_.size(); ++k) {
-			for (size_t l = 0; l != total_levels_; ++l) {
-				cell_linked_list_levels_[l]->searchNeighborsByParticles(base_particles_->total_real_particles_,
-					*base_particles_, contact_configuration_[k], get_particle_index_, *get_multi_level_search_range_[l], *get_contact_neighbors_[k]);
+		for (size_t k = 0; k != contact_bodies_.size(); ++k)
+		{
+			for (size_t l = 0; l != cell_linked_list_levels_[k].size(); ++l)
+			{
+				cell_linked_list_levels_[k][l]->searchNeighborsByParticles(
+					sph_body_, contact_configuration_[k],
+					*get_multi_level_search_range_[k][l], *get_contact_neighbors_[k]);
 			}
 		}
 	}
@@ -91,7 +98,7 @@ namespace SPH
 	//=================================================================================================//
 	SurfaceContactRelation::
 		SurfaceContactRelation(SelfSurfaceContactRelation &solid_body_relation_self_contact,
-								 RealBodyVector contact_bodies)
+							   RealBodyVector contact_bodies)
 		: BaseContactRelation(*solid_body_relation_self_contact.real_body_, contact_bodies),
 		  body_surface_layer_(&solid_body_relation_self_contact.body_surface_layer_),
 		  body_part_particles_(body_surface_layer_->body_part_particles_)

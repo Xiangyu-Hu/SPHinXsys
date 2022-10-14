@@ -53,29 +53,27 @@ namespace SPH
 	};
 
 	/**
-	* @class ContactBodyRelationMultiLevelMeshCellLinkedLists
-	* @brief The relation between a SPH body and its contact SPH bodies in Multi-level Mesh
-	*/
-	class BodyRelationContactMultiLevelCellLinkedLists : public BaseBodyRelationContact
+	 * @class AdaptiveContactRelation
+	 * @brief The relation between a SPH body and its contact SPH bodies in Multi-level Mesh
+	 */
+	class AdaptiveContactRelation : public BaseContactRelation
 	{
 	private:
-		UniquePtrKeepers<SearchDepthVariableSmoothingLength> search_variable_smoothinglength_ptr_vector_keeper_;
+		UniquePtrKeepers<AdaptiveSearchDepth> adaptive_search_depth_ptr_vector_keeper_;
+
 	protected:
-		SPHBodyParticlesIndex get_particle_index_;
-		StdVec<NeighborRelationContact*> get_contact_neighbors_;
-		StdVec<SearchDepthVariableSmoothingLength*> get_multi_level_search_range_;
-		StdVec<CellLinkedList*> cell_linked_list_levels_;
-		size_t total_levels_;
+		StdVec<StdVec<AdaptiveSearchDepth *>> get_multi_level_search_range_;
+		StdVec<StdVec<CellLinkedList *>> cell_linked_list_levels_;
 
 	public:
-		BodyRelationContactMultiLevelCellLinkedLists(SPHBody& body, RealBodyVector contact_bodies);
-		virtual ~BodyRelationContactMultiLevelCellLinkedLists() {};
+		AdaptiveContactRelation(SPHBody &body, RealBodyVector contact_bodies);
+		virtual ~AdaptiveContactRelation(){};
 
 		virtual void updateConfiguration() override;
 	};
-	
+
 	/**
-	 * @class SolidBodyRelationContact
+	 * @class SurfaceContactRelation
 	 * @brief The relation between a solid body and its contact solid bodies
 	 * TODO: better called BodySurfaceContact
 	 */
@@ -89,7 +87,7 @@ namespace SPH
 
 		SurfaceContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies);
 		SurfaceContactRelation(SelfSurfaceContactRelation &solid_body_relation_self_contact,
-								 RealBodyVector contact_bodies);
+							   RealBodyVector contact_bodies);
 		virtual ~SurfaceContactRelation(){};
 		BodyPartByParticle &getDynamicsRange() { return *body_surface_layer_; };
 

@@ -18,7 +18,7 @@ namespace SPH
 		template <class BaseBodyRelationType, typename... Args>
 		InteractionWithWall<BaseIntegrationType>::
 			InteractionWithWall(BaseContactRelation &wall_contact_relation,
-							   BaseBodyRelationType &base_body_relation, Args &&...args)
+								BaseBodyRelationType &base_body_relation, Args &&...args)
 			: BaseIntegrationType(base_body_relation, std::forward<Args>(args)...),
 			  FluidWallData(wall_contact_relation)
 		{
@@ -76,28 +76,11 @@ namespace SPH
 		}
 		//=================================================================================================//
 		template <class DensitySummationInnerVariableSmoothingLengthType>
+		template <typename... Args>
 		DensitySummationVariableSmoothingLength<DensitySummationInnerVariableSmoothingLengthType>::
-			DensitySummationVariableSmoothingLength(BaseBodyRelationInner &inner_relation, BaseBodyRelationContact &contact_relation)
-			: ParticleDynamicsComplex<DensitySummationInnerVariableSmoothingLengthType, FluidContactData>(inner_relation, contact_relation)
-		{
-			prepareContactData();
-		}
-		//=================================================================================================//
-		template <class DensitySummationInnerVariableSmoothingLengthType>
-		DensitySummationVariableSmoothingLength<DensitySummationInnerVariableSmoothingLengthType>::
-			DensitySummationVariableSmoothingLength(ComplexBodyRelation &complex_relation)
-			: DensitySummationVariableSmoothingLength(complex_relation.inner_relation_, complex_relation.contact_relation_) {}
-		//=================================================================================================//
-		template <class DensitySummationInnerVariableSmoothingLengthType>
-		DensitySummationVariableSmoothingLength<DensitySummationInnerVariableSmoothingLengthType>::
-			DensitySummationVariableSmoothingLength(ComplexBodyRelation &complex_relation, BaseBodyRelationContact &extra_contact_relation)
-			: ParticleDynamicsComplex<DensitySummationInnerVariableSmoothingLengthType, FluidContactData>(complex_relation, extra_contact_relation)
-		{
-			prepareContactData();
-		}
-		//=================================================================================================//
-		template <class DensitySummationInnerVariableSmoothingLengthType>
-		void DensitySummationVariableSmoothingLength<DensitySummationInnerVariableSmoothingLengthType>::prepareContactData()
+			DensitySummationVariableSmoothingLength(Args &&...args)
+			: BaseInteractionComplex<DensitySummationInnerVariableSmoothingLengthType,
+									 FluidContactData>(std::forward<Args>(args)...)
 		{
 			for (size_t k = 0; k != this->contact_particles_.size(); ++k)
 			{

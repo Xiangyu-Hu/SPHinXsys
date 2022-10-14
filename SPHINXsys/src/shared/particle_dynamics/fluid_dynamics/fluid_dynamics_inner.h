@@ -86,7 +86,7 @@ namespace SPH
 		class DensitySummationInnerVariableSmoothingLength: public DensitySummationInner
 		{
 		public:
-			explicit DensitySummationInnerVariableSmoothingLength(BaseBodyRelationInner& inner_relation);
+			explicit DensitySummationInnerVariableSmoothingLength(BaseInnerRelation& inner_relation);
 			virtual ~DensitySummationInnerVariableSmoothingLength() {};
 
 			void interaction(size_t index_i, Real dt = 0.0);

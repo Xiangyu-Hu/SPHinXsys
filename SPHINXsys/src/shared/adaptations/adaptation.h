@@ -152,7 +152,7 @@ namespace SPH
 		size_t getLevelSetTotalLevel();
 		virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, RealBody &real_body) override;
 		virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio) override;
-		StdLargeVec<Real> &registerSmoothingLengthRatio(BaseParticles *base_particles);
+		StdLargeVec<Real> &registerSmoothingLengthRatio(BaseParticles &base_particles);
 		virtual bool checkLocation(BodyRegionByCell &refinement_area, Vecd position, Real volume);
 		virtual bool splitResolutionCheck(Real volume, Real min_volume);
 		virtual bool mergeResolutionCheck(Real volume);

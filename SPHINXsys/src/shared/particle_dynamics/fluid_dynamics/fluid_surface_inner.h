@@ -104,7 +104,7 @@ namespace SPH
 		class DensitySummationFreeSurfaceInnerVariableSmoothingLength : public DensitySummationInnerVariableSmoothingLength
 		{
 		public:
-			DensitySummationFreeSurfaceInnerVariableSmoothingLength(BaseBodyRelationInner& inner_relation) :
+			DensitySummationFreeSurfaceInnerVariableSmoothingLength(BaseInnerRelation& inner_relation) :
 				DensitySummationInnerVariableSmoothingLength(inner_relation) {};
 			virtual ~DensitySummationFreeSurfaceInnerVariableSmoothingLength() {};
 		protected:

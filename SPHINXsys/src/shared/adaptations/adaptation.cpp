@@ -171,7 +171,6 @@ namespace SPH
 		spacing_initial_ = spacing_ref_;
 		Real spacing_ratio_min_ = powerN(1.0 / sqrt(2.0), local_refinement_level_);
 		h_ratio_max_ = powerN(sqrt(2.0), local_refinement_level_);
-		number_density_max_ = computeReferenceNumberDensity(Vecd(0), h_ratio_max_);
 	};
 	//=================================================================================================//
 	size_t ParticleSplitAndMerge::getCellLinkedListTotalLevel()
@@ -198,14 +197,14 @@ namespace SPH
 	}
 	//=================================================================================================//
 	StdLargeVec<Real> & ParticleSplitAndMerge::
-		registerSmoothingLengthRatio(BaseParticles *base_particles)
+		registerSmoothingLengthRatio(BaseParticles &base_particles)
 	{
 		h_ratio_=ParticleWithLocalRefinement::registerSmoothingLengthRatio(base_particles);
 
-		base_particles->registerSortableVariable<Real>("VolumetricMeasure");
-		base_particles->registerSortableVariable<Real>("SmoothingLengthRatio");
-		base_particles->addVariableToWrite<Real>("SmoothingLengthRatio");
-		base_particles->addVariableToWrite<Real>("VolumetricMeasure");
+		base_particles.registerSortableVariable<Real>("VolumetricMeasure");
+		base_particles.registerSortableVariable<Real>("SmoothingLengthRatio");
+		base_particles.addVariableToWrite<Real>("SmoothingLengthRatio");
+		base_particles.addVariableToWrite<Real>("VolumetricMeasure");
 
 		return h_ratio_;
 	}
