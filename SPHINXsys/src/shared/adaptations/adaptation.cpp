@@ -190,8 +190,7 @@ namespace SPH
 				position[axis_direction] < (body_domain_bounds_.second[axis_direction] - particle_spacing))
 				bound_number += 1;
 		}
-		if (bound_number != Dimensions)
-			return false;
+		return bound_number != Dimensions ? false : true;
 	}
 	//=================================================================================================//
 	bool ParticleSplitAndMerge::splitResolutionCheck(Real volume, Real min_volume)
