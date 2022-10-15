@@ -27,7 +27,7 @@ namespace SPH
 	using SolidBodyVector = StdVec<SolidBody *>;
 	using RealBodyVector = StdVec<RealBody *>;
 	using BodyPartVector = StdVec<BodyPart *>;
-
+	
 	using IndexVector = StdVec<size_t>;
 	using ConcurrentIndexVector = ConcurrentVec<size_t>;
 

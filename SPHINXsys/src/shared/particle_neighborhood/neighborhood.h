@@ -40,6 +40,7 @@ namespace SPH
 
 	class SPHBody;
 	class BodyPart;
+	class SPHAdaptation;
 
 	/**
 	 * @class Neighborhood
@@ -154,17 +155,17 @@ namespace SPH
 	};
 
 	/**
-	 * @class NeighborBuilderSolidContact
+	 * @class NeighborBuilderSurfaceContact
 	 * @brief A solid contact neighbor relation functor between particles i and j.
 	 */
-	class NeighborBuilderSolidContact : public NeighborBuilderContact
+	class NeighborBuilderSurfaceContact : public NeighborBuilderContact
 	{
 	private:
 		UniquePtrKeeper<Kernel> kernel_keeper_;
 
 	public:
-		NeighborBuilderSolidContact(SPHBody &body, SPHBody &contact_body);
-		virtual ~NeighborBuilderSolidContact(){};
+		NeighborBuilderSurfaceContact(SPHBody &body, SPHBody &contact_body);
+		virtual ~NeighborBuilderSurfaceContact(){};
 	};
 
 	/**
@@ -182,5 +183,24 @@ namespace SPH
 	protected:
 		StdLargeVec<int> part_indicator_; /**< indicator of the body part */
 	};
+
+	/**
+	 * @class AdaptiveNeighborBuilderContact
+	 * @brief A contact neighbor relation functor between particles i and j
+	 * when the particles have different smoothing lengths.
+	 */
+	class AdaptiveNeighborBuilderContact : public NeighborBuilder
+	{
+	public:
+		explicit AdaptiveNeighborBuilderContact(SPHBody &body, SPHBody &contact_body);
+		virtual ~AdaptiveNeighborBuilderContact(){};
+		void operator()(Neighborhood &neighborhood,
+						const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
+
+	protected:
+		SPHAdaptation &adaptation_, &contact_adaptation_;
+		Real relative_h_ref_;
+	};
+
 }
 #endif // NEIGHBORHOOD_H

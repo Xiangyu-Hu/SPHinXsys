@@ -58,11 +58,11 @@ namespace SPH
 	class AdaptiveInnerRelation : public BaseInnerRelation
 	{
 	private:
-		UniquePtrKeepers<AdaptiveSearchDepth> adaptive_search_depth_ptr_vector_keeper_;
+		UniquePtrKeepers<SearchDepthAdaptive> adaptive_search_depth_ptr_vector_keeper_;
 
 	protected:
 		size_t total_levels_;
-		StdVec<AdaptiveSearchDepth *> get_multi_level_search_depth_;
+		StdVec<SearchDepthAdaptive *> get_multi_level_search_depth_;
 		AdaptiveNeighborBuilderInner get_adaptive_inner_neighbor_;
 		StdVec<CellLinkedList *> cell_linked_list_levels_;
 

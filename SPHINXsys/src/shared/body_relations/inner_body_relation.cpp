@@ -36,7 +36,7 @@ namespace SPH
 		{
 			get_multi_level_search_depth_.push_back(
 				adaptive_search_depth_ptr_vector_keeper_
-					.createPtr<AdaptiveSearchDepth>(real_body, cell_linked_list_levels_[l]));
+					.createPtr<SearchDepthAdaptive>(real_body, cell_linked_list_levels_[l]));
 		}
 	}
 	//=================================================================================================//

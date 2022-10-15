@@ -6,11 +6,11 @@
  * @author 	Luhui Han, Chi Zhang and Xiangyu Hu
  * @version 0.1
  */
- /**
-  * @brief 	SPHinXsys Library.
-  */
+/**
+ * @brief 	SPHinXsys Library.
+ */
 #include "sphinxsys.h"
-  /**
+/**
  * @brief Namespace cite here.
  */
 using namespace SPH;
@@ -25,14 +25,14 @@ Real particle_spacing_ref = 0.04;	/**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4; /**< Extending width for boundary conditions. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 // observer location
-StdVec<Vecd> observation_location = { Vecd(DL, 0.2) };
- /**
-  * @brief Material properties of the fluid.
-  */
-Real rho0_f = 1.0;						/**< Reference density of fluid. */
-Real gravity_g = 1.0;					/**< Gravity force of fluid. */
-Real U_max = 2.0*sqrt(gravity_g*LH);	/**< Characteristic velocity. */
-Real c_f = 10.0* U_max;					/**< Reference sound speed. */
+StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
+/**
+ * @brief Material properties of the fluid.
+ */
+Real rho0_f = 1.0;						 /**< Reference density of fluid. */
+Real gravity_g = 1.0;					 /**< Gravity force of fluid. */
+Real U_max = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
+Real c_f = 10.0 * U_max;				 /**< Reference sound speed. */
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
 //----------------------------------------------------------------------
@@ -88,7 +88,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	FluidBody water_block(
 		sph_system, makeShared<TransformShape<GeometricShapeBox>>(
-			Transform2d(water_block_translation), water_block_halfsize, "WaterBody"));
+						Transform2d(water_block_translation), water_block_halfsize, "WaterBody"));
 	water_block.defineAdaptation<ParticleSplitAndMerge>(1.3, 1.0, 1.0);
 	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
 	water_block.generateParticles<ParticleGeneratorSplitAndMerge>();
@@ -102,32 +102,33 @@ int main(int ac, char *av[])
 
 	/** topology */
 	AdaptiveInnerRelation water_inner(water_block);
-	ComplexRelation water_block_complex(water_inner, { &wall_boundary });
-	AdaptiveContactRelation fluid_observer_contact(fluid_observer, { &water_block });
+	AdaptiveContactRelation water_contact(water_block, {&wall_boundary});
+	ComplexRelation water_complex(water_inner, water_contact);
+	AdaptiveContactRelation fluid_observer_contact(fluid_observer, {&water_block});
 
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> fluid_pressure_relaxation(water_block_complex);
-	Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> fluid_pressure_relaxation(water_complex);
+	Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_complex);
 
 	BodyRegionByCell refinement_area(water_block, makeShared<MultiPolygonShape>(createRefinementArea()));
-	InteractionWithUpdate < SplitWithMinimumDensityErrorWithWall>  particle_split_(water_block_complex, refinement_area, 8000);
-	InteractionDynamics < MergeWithMinimumDensityErrorWithWall> particle_merge_(water_block_complex, refinement_area);
-	InteractionWithUpdate < fluid_dynamics::DensitySummationFreeSurfaceComplexVariableSmoothingLength> fluid_density_by_summation(water_block_complex);
-	
+	InteractionWithUpdate<SplitWithMinimumDensityErrorWithWall> particle_split_(water_complex, refinement_area, 8000);
+	InteractionDynamics<MergeWithMinimumDensityErrorWithWall> particle_merge_(water_complex, refinement_area);
+	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplexVariableSmoothingLength> fluid_density_by_summation(water_complex);
+
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
 	SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block, gravity_ptr);
-	ReduceDynamics < fluid_dynamics::AdvectionTimeStepSizeVariableSmoothingLength> fluid_advection_time_step(water_block, U_max);
-	ReduceDynamics < fluid_dynamics::AcousticTimeStepSizeVariableSmoothingLength> fluid_acoustic_time_step(water_block);
+	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSizeVariableSmoothingLength> fluid_advection_time_step(water_block, U_max);
+	ReduceDynamics<fluid_dynamics::AcousticTimeStepSizeVariableSmoothingLength> fluid_acoustic_time_step(water_block);
 
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations, observations
 	//	and regression tests of the simulation.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp  body_states_recording(io_environment, sph_system.real_bodies_);
+	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
 	RestartIO restart_io(io_environment, sph_system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
 		write_water_mechanical_energy(io_environment, water_block, gravity_ptr);
@@ -147,7 +148,7 @@ int main(int ac, char *av[])
 	{
 		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.restart_step_);
 		water_block.updateCellLinkedList();
-		water_block_complex.updateConfiguration();
+		water_complex.updateConfiguration();
 		fluid_observer_contact.updateConfiguration();
 	}
 	//----------------------------------------------------------------------
@@ -160,7 +161,7 @@ int main(int ac, char *av[])
 	Real End_Time = 20.0; /**< End time. */
 	Real D_Time = 0.1;	  /**< Time stamps for output of body states. */
 	Real dt = 0.0;		  /**< Default acoustic time step sizes. */
-	int  refinement_interval = 1;
+	int refinement_interval = 1;
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
 	//----------------------------------------------------------------------
@@ -210,8 +211,8 @@ int main(int ac, char *av[])
 			if (number_of_iterations % screen_output_interval == 0)
 			{
 				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-					<< GlobalStaticVariables::physical_time_
-					<< "	Dt = " << Dt << "	dt = " << dt << "\n";
+						  << GlobalStaticVariables::physical_time_
+						  << "	Dt = " << Dt << "	dt = " << dt << "\n";
 
 				if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.restart_step_)
 				{
@@ -224,14 +225,15 @@ int main(int ac, char *av[])
 			number_of_iterations++;
 
 			/** Particle Refinement */
-			if (number_of_iterations % refinement_interval == 0) {
+			if (number_of_iterations % refinement_interval == 0)
+			{
 				particle_split_.exec();
 				particle_merge_.exec();
 			}
 			/** Update cell linked list and configuration. */
 			time_instance = tick_count::now();
 			water_block.updateCellLinkedList();
-			water_block_complex.updateConfiguration();
+			water_complex.updateConfiguration();
 			fluid_observer_contact.updateConfiguration();
 			interval_updating_configuration += tick_count::now() - time_instance;
 		}
@@ -246,20 +248,19 @@ int main(int ac, char *av[])
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds()
-		<< " seconds." << std::endl;
+			  << " seconds." << std::endl;
 	std::cout << std::fixed << std::setprecision(9) << "interval_computing_time_step ="
-		<< interval_computing_time_step.seconds() << "\n";
+			  << interval_computing_time_step.seconds() << "\n";
 	std::cout << std::fixed << std::setprecision(9) << "interval_computing_fluid_pressure_relaxation = "
-		<< interval_computing_fluid_pressure_relaxation.seconds() << "\n";
+			  << interval_computing_fluid_pressure_relaxation.seconds() << "\n";
 	std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
-		<< interval_updating_configuration.seconds() << "\n";
+			  << interval_updating_configuration.seconds() << "\n";
 
-/*	if (sph_system.restart_step_ == 0)
-	{
-		write_water_mechanical_energy.newResultTest();
-		write_recorded_water_pressure.newResultTest();
-	} */
+	/*	if (sph_system.restart_step_ == 0)
+		{
+			write_water_mechanical_energy.newResultTest();
+			write_recorded_water_pressure.newResultTest();
+		} */
 
 	return 0;
 };
-

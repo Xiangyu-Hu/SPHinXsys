@@ -37,18 +37,99 @@
 namespace SPH
 {
 	/**
+	 * @class ContactRelationCrossResolution
+	 * @brief The relation between a SPH body and its contact SPH bodies
+	 */
+	class ContactRelationCrossResolution : public BaseContactRelation
+	{
+	protected:
+		UniquePtrKeepers<SearchDepthCrossResolution> search_depth_ptrs_keeper_;
+
+	public:
+		template <typename... Args>
+		ContactRelationCrossResolution(SPHBody &sph_body, Args &&...args)
+			: BaseContactRelation(sph_body, std::forward<Args>(args)...)
+		{
+			for (size_t k = 0; k != contact_bodies_.size(); ++k)
+			{
+				CellLinkedList *target_cell_linked_list =
+					DynamicCast<CellLinkedList>(this, contact_bodies_[k]->cell_linked_list_);
+				target_cell_linked_lists_.push_back(target_cell_linked_list);
+				get_search_depths_.push_back(
+					search_depth_ptrs_keeper_.createPtr<SearchDepthCrossResolution>(
+						sph_body_, target_cell_linked_list));
+			}
+		};
+		virtual ~ContactRelationCrossResolution(){};
+
+	protected:
+		StdVec<CellLinkedList *> target_cell_linked_lists_;
+		StdVec<SearchDepthCrossResolution *> get_search_depths_;
+	};
+
+	/**
 	 * @class ContactRelation
 	 * @brief The relation between a SPH body and its contact SPH bodies
 	 */
-	class ContactRelation : public BaseContactRelation
+	class ContactRelation : public ContactRelationCrossResolution
 	{
 	protected:
-		void initialization();
+		UniquePtrKeepers<NeighborBuilderContact> neighbor_builder_contact_ptrs_keeper_;
 
 	public:
 		ContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies);
-		ContactRelation(SPHBody &sph_body, BodyPartVector contact_body_parts);
 		virtual ~ContactRelation(){};
+		virtual void updateConfiguration() override;
+
+	protected:
+		StdVec<NeighborBuilderContact *> get_contact_neighbors_;
+	};
+
+	/**
+	 * @class SurfaceContactRelation
+	 * @brief The relation between a solid body and its contact solid bodies
+	 * TODO: better called BodySurfaceContact
+	 */
+	class SurfaceContactRelation : public ContactRelationCrossResolution
+	{
+	protected:
+		UniquePtrKeepers<NeighborBuilderSurfaceContact> neighbor_builder_contact_ptrs_keeper_;
+		UniquePtrKeeper<BodySurfaceLayer> shape_surface_ptr_keeper_;
+
+	public:
+		BodySurfaceLayer *body_surface_layer_;
+
+		SurfaceContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies);
+		SurfaceContactRelation(SelfSurfaceContactRelation &solid_body_relation_self_contact,
+							   RealBodyVector contact_bodies)
+			: SurfaceContactRelation(*solid_body_relation_self_contact.real_body_, contact_bodies){};
+		virtual ~SurfaceContactRelation(){};
+		BodyPartByParticle &getDynamicsRange() { return *body_surface_layer_; };
+
+		virtual void updateConfiguration() override;
+
+	protected:
+		IndexVector &body_part_particles_;
+		StdVec<NeighborBuilderSurfaceContact *> get_contact_neighbors_;
+
+		virtual void resetNeighborhoodCurrentSize() override;
+	};
+
+	/**
+	 * @class ContactRelationToBodyPart
+	 * @brief The relation between a SPH body and a vector of body parts.
+	 */
+	class ContactRelationToBodyPart : public ContactRelationCrossResolution
+	{
+	protected:
+		UniquePtrKeepers<NeighborBuilderContactBodyPart> neighbor_builder_contact_ptrs_keeper_;
+
+	public:
+		StdVec<NeighborBuilderContactBodyPart *> get_part_contact_neighbors_;
+
+		ContactRelationToBodyPart(SPHBody &sph_body, BodyPartVector contact_body_parts_);
+		virtual ~ContactRelationToBodyPart(){};
+
 		virtual void updateConfiguration() override;
 	};
 
@@ -59,62 +140,17 @@ namespace SPH
 	class AdaptiveContactRelation : public BaseContactRelation
 	{
 	private:
-		UniquePtrKeepers<AdaptiveSearchDepth> adaptive_search_depth_ptr_vector_keeper_;
+		UniquePtrKeepers<SearchDepthAdaptiveContact> adaptive_search_depth_ptr_vector_keeper_;
+		UniquePtrKeepers<AdaptiveNeighborBuilderContact> neighbor_builder_contact_adaptive_ptr_vector_keeper_;
 
 	protected:
-		StdVec<StdVec<AdaptiveSearchDepth *>> get_multi_level_search_range_;
+		StdVec<StdVec<SearchDepthAdaptiveContact *>> get_multi_level_search_range_;
 		StdVec<StdVec<CellLinkedList *>> cell_linked_list_levels_;
+		StdVec<StdVec<AdaptiveNeighborBuilderContact *>> get_contact_neighbors_adaptive_;
 
 	public:
 		AdaptiveContactRelation(SPHBody &body, RealBodyVector contact_bodies);
 		virtual ~AdaptiveContactRelation(){};
-
-		virtual void updateConfiguration() override;
-	};
-
-	/**
-	 * @class SurfaceContactRelation
-	 * @brief The relation between a solid body and its contact solid bodies
-	 * TODO: better called BodySurfaceContact
-	 */
-	class SurfaceContactRelation : public BaseContactRelation
-	{
-	private:
-		UniquePtrKeeper<BodySurfaceLayer> shape_surface_ptr_keeper_;
-
-	public:
-		BodySurfaceLayer *body_surface_layer_;
-
-		SurfaceContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies);
-		SurfaceContactRelation(SelfSurfaceContactRelation &solid_body_relation_self_contact,
-							   RealBodyVector contact_bodies);
-		virtual ~SurfaceContactRelation(){};
-		BodyPartByParticle &getDynamicsRange() { return *body_surface_layer_; };
-
-		virtual void updateConfiguration() override;
-
-	protected:
-		IndexVector &body_part_particles_;
-
-		void initialization();
-		virtual void resetNeighborhoodCurrentSize() override;
-	};
-
-	/**
-	 * @class ContactRelationToBodyPart
-	 * @brief The relation between a SPH body and a vector of body parts.
-	 */
-	class ContactRelationToBodyPart : public ContactRelation
-	{
-	protected:
-		UniquePtrKeepers<NeighborBuilderContactBodyPart> neighbor_builder_contact_body_part_ptr_vector_keeper_;
-
-	public:
-		BodyPartVector contact_body_parts_;
-		StdVec<NeighborBuilderContactBodyPart *> get_part_contact_neighbors_;
-
-		ContactRelationToBodyPart(RealBody &real_body, BodyPartVector contact_body_parts);
-		virtual ~ContactRelationToBodyPart(){};
 
 		virtual void updateConfiguration() override;
 	};

@@ -29,6 +29,7 @@ namespace SPH
 		: BaseCellLinkedList(real_body, sph_adaptation), Mesh(tentative_bounds, grid_spacing, 2)
 	{
 		allocateMeshDataMatrix();
+		single_cell_linked_list_level_.push_back(this);
 	}
 	//=================================================================================================//
 	void CellLinkedList::UpdateCellLists(BaseParticles &base_particles)

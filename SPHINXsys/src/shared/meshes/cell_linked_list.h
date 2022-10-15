@@ -43,6 +43,7 @@ namespace SPH
 	class BaseParticles;
 	class Kernel;
 	class SPHAdaptation;
+	class CellLinkedList;
 
 	/**
 	 * @class BaseCellLinkedList
@@ -64,6 +65,8 @@ namespace SPH
 		BaseCellLinkedList(RealBody &real_body, SPHAdaptation &sph_adaptation);
 		virtual ~BaseCellLinkedList(){};
 
+		/** access concrete cell linked list levels*/
+		virtual StdVec<CellLinkedList *> CellLinkedListLevels() = 0;
 		/** update the cell lists */
 		virtual void UpdateCellLists(BaseParticles &base_particles) = 0;
 		/** Insert a cell-linked_list entry to the concurrent index list. */
@@ -89,6 +92,8 @@ namespace SPH
 	 */
 	class CellLinkedList : public BaseCellLinkedList, public Mesh
 	{
+		StdVec<CellLinkedList *> single_cell_linked_list_level_;
+
 	protected:
 		/** using concurrent vectors due to writing conflicts when building the list */
 		MeshDataMatrix<ConcurrentIndexVector> cell_index_lists_;
@@ -115,6 +120,7 @@ namespace SPH
 		virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, BoundingBox &bounding_bounds, int axis) override;
 		virtual void tagOneSideBoundingCells(CellLists &cell_data_lists, BoundingBox &bounding_bounds, int axis, bool positive) override;
 		virtual void writeMeshFieldToPlt(std::ofstream &output_file) override;
+		virtual StdVec<CellLinkedList *> CellLinkedListLevels() {return single_cell_linked_list_level_;};
 
 		/** generalized particle search algorithm */
 		template <class DynamicsRange, typename GetSearchDepth, typename GetNeighborRelation>
@@ -148,6 +154,7 @@ namespace SPH
 		virtual void tagBodyPartByCell(ConcurrentIndexesInCells &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
 		virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, BoundingBox &bounding_bounds, int axis) override{};
 		virtual void tagOneSideBoundingCells(CellLists &cell_data_lists, BoundingBox &bounding_bounds, int axis, bool positive) override{};
+		virtual StdVec<CellLinkedList *> CellLinkedListLevels() {return getMeshLevels();};
 	};
 }
 #endif // MESH_CELL_LINKED_LIST_H
