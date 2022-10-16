@@ -52,32 +52,32 @@ namespace SPH
 		};
 		virtual ~ComputeDensityErrorInner(){};
 
-		Vecd getPositionFromDensityError(StdVec<size_t> original_indices_, StdVec<Vecd> new_pos_,
+		Vecd getPositionFromDensityError(StdVec<size_t> original_indices, StdVec<Vecd> new_positions,
 										 StdVec<size_t> new_indices_, Real min_distance, Real max_distance);
 		virtual void initializeDensityError();
 
 		StdLargeVec<Real> density_error_;
-		StdLargeVec<bool> tag_split;
+		StdLargeVec<bool> tag_split_;
 
 	protected:
 		ParticleSplitAndMerge *particle_adaptation_;
 		StdLargeVec<Real> &h_ratio_;
-		Vecd E_cof = Vecd(0.0);
-		Real sigma_E = 0.0;
-		Real E_cof_sigma = 0.0;
-		StdVec<Vecd> grad_newIndex;
-		StdVec<Vecd> dW_newIndex;
-		StdVec<Real> sign_newIndex;
+		Vecd E_cof_ = Vecd(0.0);
+		Real sigma_E_ = 0.0;
+		Real E_cof_sigma_ = 0.0;
+		StdVec<Vecd> grad_new_indices_;
+		StdVec<Vecd> dW_new_indices_;
+		StdVec<Real> sign_new_indices_;
 
 		virtual Vecd computeKernelGradient(size_t index_rho);
-		virtual Real computeNewGeneratedParticleDensity(size_t index_rho, Vecd new_pos);
-		virtual Vecd getPosition(StdVec<size_t> original_indices_, StdVec<Vecd> new_pos_, StdVec<size_t> new_index_);
-		virtual void densityErrorOfNewGeneratedParticles(StdVec<size_t> new_index_, StdVec<Vecd> new_pos_);
-		virtual void densityErrorOfNeighborParticles(StdVec<size_t> new_index_, StdVec<size_t> original_indices_, StdVec<Vecd> new_pos_);
+		virtual Real computeNewGeneratedParticleDensity(size_t index_rho, Vecd position);
+		virtual Vecd getPosition(StdVec<size_t> original_indices, StdVec<Vecd> new_positions, StdVec<size_t> new_indices);
+		virtual void densityErrorOfNewGeneratedParticles(StdVec<size_t> new_indices, StdVec<Vecd> new_positions);
+		virtual void densityErrorOfNeighborParticles(StdVec<size_t> new_indices, StdVec<size_t> original_indices, StdVec<Vecd> new_positions);
 		virtual Real computeKernelWeightBetweenParticles(Real h_ratio, Vecd displacement, Real Vol_ratio = 1.0);
 		virtual Vecd computeKernelWeightGradientBetweenParticles(Real h_ratio_min, Vecd displacement, Real Vol);
 		virtual void computeDensityErrorOnNeighborParticles(Neighborhood &neighborhood, size_t index_rho,
-															StdVec<size_t> original_indices_, StdVec<Vecd> new_pos_);
+															StdVec<size_t> original_indices, StdVec<Vecd> new_positions);
 		virtual Vecd positionLimitation(Vecd displacement, Real min_distance, Real max_distance);
 	};
 
@@ -103,9 +103,9 @@ namespace SPH
 		StdVec<StdLargeVec<Real> *> contact_Vol_;
 
 		virtual Vecd computeKernelGradient(size_t index_rho) override;
-		virtual Real computeNewGeneratedParticleDensity(size_t index_rho, Vecd new_pos) override;
-		virtual void densityErrorOfNeighborParticles(StdVec<size_t> new_index_, StdVec<size_t> original_indices_,
-													 StdVec<Vecd> new_pos_) override;
+		virtual Real computeNewGeneratedParticleDensity(size_t index_rho, Vecd position) override;
+		virtual void densityErrorOfNeighborParticles(StdVec<size_t> new_indices, StdVec<size_t> original_indices,
+													 StdVec<Vecd> new_positions) override;
 	};
 	/**
 	 * @class ParticleRefinementWithPrescribedArea
@@ -267,7 +267,7 @@ namespace SPH
 		virtual void setupDynamics(Real dt) override;
 		virtual void mergingModel(StdVec<size_t> merge_index) override;
 		virtual bool mergeCriteria(Neighborhood &inner_neighborhood, Vecd position, Real volume) override;
-		virtual Vecd getMergingPosition(StdVec<size_t> new_index_, StdVec<size_t> merge_indices);
+		virtual Vecd getMergingPosition(StdVec<size_t> new_indices, StdVec<size_t> merge_indices);
 		virtual Real angularMomentumConservation(size_t index_center, StdVec<size_t> merge_indices);
 		virtual void kineticEnergyConservation(StdVec<size_t> merge_indices);
 		virtual void updateNewlyMergingParticle(size_t index_center, StdVec<size_t> new_indexs, Vecd pos_split);
