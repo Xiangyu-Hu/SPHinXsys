@@ -12,6 +12,7 @@ namespace SPH
 	ParticleSplitWithPrescribedArea::
 		ParticleSplitWithPrescribedArea(SPHBody &sph_body, BodyRegionByCell &refinement_area, size_t body_buffer_width)
 		: LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+		  rho0_inv_(1.0 / particles_->rho0_),
 		  Vol_(particles_->Vol_), pos_(particles_->pos_), rho_(particles_->rho_),
 		  mass_(particles_->mass_), refinement_area_(&refinement_area),
 		  h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio"))
@@ -23,42 +24,43 @@ namespace SPH
 	//=================================================================================================//
 	void ParticleSplitWithPrescribedArea::interaction(size_t index_i, Real dt)
 	{
-		Real Vol_i = mass_[index_i] / particles_->rho0_;
-		if (splitCriteria(pos_[index_i], Vol_i))
+		if (splitCriteria(index_i))
 		{
-			splittingModel(index_i);
+			StdVec<size_t> new_indices;
+			splittingModel(index_i, new_indices);
 		}
 	}
 	//=================================================================================================//
-	bool ParticleSplitWithPrescribedArea::splitCriteria(Vecd position, Real volume)
+	bool ParticleSplitWithPrescribedArea::splitCriteria(size_t index_i)
 	{
+		Real non_deformed_volume = mass_[index_i] * rho0_inv_;
+		Vecd &position = pos_[index_i];
 		// minimum resolution in high resolution area
 		Real high_resolution_volume = powerN(particle_adaptation_->MinimumSpacing(), Dimensions);
 		// minimum resolution in low resolution area
 		Real low_resolution_volume = powerN(particle_adaptation_->ReferenceSpacing(), Dimensions);
 
-		bool high_resolution_spacing_check = particle_adaptation_->splitResolutionCheck(volume, high_resolution_volume);
-		bool low_resolution_spacing_check = particle_adaptation_->splitResolutionCheck(volume, low_resolution_volume);
+		bool high_resolution_spacing_check = particle_adaptation_->splitResolutionCheck(non_deformed_volume, high_resolution_volume);
+		bool low_resolution_spacing_check = particle_adaptation_->splitResolutionCheck(non_deformed_volume, low_resolution_volume);
 		bool high_resolution_check = false;
 		bool low_resolution_check = false;
 
 		if (high_resolution_spacing_check)
-			low_resolution_check = particle_adaptation_->checkLocation(*refinement_area_, position, volume);
+			low_resolution_check = particle_adaptation_->checkLocation(*refinement_area_, position, non_deformed_volume);
 
 		if (low_resolution_spacing_check)
-			low_resolution_check = !particle_adaptation_->checkLocation(*refinement_area_, position, volume);
+			low_resolution_check = !particle_adaptation_->checkLocation(*refinement_area_, position, non_deformed_volume);
 
 		return (high_resolution_check || low_resolution_check) ? true : false;
 	}
 	//=================================================================================================//
-	void ParticleSplitWithPrescribedArea::splittingModel(size_t index_i)
+	void ParticleSplitWithPrescribedArea::splittingModel(size_t index_i, StdVec<size_t> &new_indices)
 	{
 		size_t particle_real_number = particles_->total_real_particles_ + particle_number_change;
 		particles_->copyFromAnotherParticle(particle_real_number, index_i);
-		new_indices_.clear();
-		new_indices_.push_back(index_i);
-		new_indices_.push_back(particle_real_number);
-		Vecd pos_splitting = getSplittingPosition(new_indices_);
+		new_indices.push_back(index_i);
+		new_indices.push_back(particle_real_number);
+		Vecd pos_splitting = getSplittingPosition(new_indices);
 		updateNewlySplittingParticle(index_i, particle_real_number, pos_splitting);
 
 		particle_number_change += 1;
@@ -98,13 +100,13 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	Vecd ParticleSplitWithPrescribedArea::getSplittingPosition(StdVec<size_t> new_indices_)
+	Vecd ParticleSplitWithPrescribedArea::getSplittingPosition(const StdVec<size_t> &new_indices)
 	{
-		srand(int(new_indices_[0]));
+		srand(int(new_indices[0]));
 		Real delta_random = 0 + 2.0 * Pi * rand() / RAND_MAX * (2.0 * Pi - 0);
-		Vecd pos_ = particles_->pos_[new_indices_[0]];
+		Vecd pos_ = particles_->pos_[new_indices[0]];
 		Real delta = delta_random + Pi;
-		Real Vol_split = Vol_[new_indices_[0]] / 2.0;
+		Real Vol_split = Vol_[new_indices[0]] / 2.0;
 		Real particle_spacing_j = pow(Vol_split, 1.0 / (Real)Dimensions);
 
 		return particle_adaptation_->splittingPattern(pos_, particle_spacing_j, delta);
@@ -120,7 +122,7 @@ namespace SPH
 		particles_->pos_[index_new] = pos_split;
 	}
 	//=================================================================================================//
-	Vecd SplitWithMinimumDensityErrorInner::getSplittingPosition(StdVec<size_t> new_indices)
+	Vecd SplitWithMinimumDensityErrorInner::getSplittingPosition(const StdVec<size_t> &new_indices)
 	{
 		StdVec<size_t> original_indices;
 		StdVec<Vecd> new_positions;
@@ -335,7 +337,7 @@ namespace SPH
 	Vecd MergeWithMinimumDensityErrorInner::
 		getMergingPosition(const StdVec<size_t> &new_indices, const StdVec<size_t> &merge_indices)
 	{
-		StdVec<Vecd> new_positions;
+		StdVec<Vecd> initial_new_positions;
 		size_t index_center = new_indices[0];
 		Real particle_spacing = pow(Vol_[index_center] / 2.0, 1.0 / (Real)Dimensions);
 		Real distance_min = 0.2 * particle_spacing; // angularMomentumConservation(index_center, merge_indices);
@@ -344,13 +346,13 @@ namespace SPH
 		Vecd position = pos_[merge_indices[0]] - pos_[index_center];
 		Vecd pos_j = pos_[merge_indices[0]]; // pos_[index_center] + distance_min * position / (position.norm() + TinyReal);
 		Vecd pos_i = 2.0 * pos_[index_center] - pos_j;
-		new_positions.push_back(pos_i);
-		new_positions.push_back(pos_j);
+		initial_new_positions.push_back(pos_i);
+		initial_new_positions.push_back(pos_j);
 		compute_density_error.tag_split_[new_indices[0]] = true;
 		compute_density_error.tag_split_[new_indices[1]] = true;
 
 		Vecd position_final = compute_density_error.getPositionFromDensityError(
-			merge_indices, new_positions, new_indices, distance_min, distance_max);
+			merge_indices, initial_new_positions, new_indices, distance_min, distance_max);
 		for (size_t n = 0; n != new_indices.size(); ++n)
 			particle_adaptation_->total_merge_error_[new_indices[n]] = compute_density_error.density_error_[new_indices[n]];
 		return position_final;
@@ -444,9 +446,10 @@ namespace SPH
 	}
 	//================================================================================================ =//
 	Vecd ComputeDensityErrorInner::
-		getPositionFromDensityError(StdVec<size_t> original_indices, StdVec<Vecd> new_positions,
-									StdVec<size_t> new_indices, Real min_distance, Real max_distance)
+		getPositionFromDensityError(const StdVec<size_t> &original_indices, const StdVec<Vecd> &initial_new_positions,
+									const StdVec<size_t> &new_indices, Real min_distance, Real max_distance)
 	{
+		StdVec<Vecd> new_positions = initial_new_positions;
 		size_t index_center = new_indices[0];
 		Vecd pos_final = new_positions[0];
 		Vecd pos_iteration = new_positions[0];
@@ -494,7 +497,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	Vecd ComputeDensityErrorInner::
-		getPosition(StdVec<size_t> original_indices, StdVec<Vecd> new_positions, StdVec<size_t> new_indices)
+		getPosition(const StdVec<size_t> &original_indices, const StdVec<Vecd> &new_positions, const StdVec<size_t> &new_indices)
 	{
 		E_cof_sigma_ = 0.0;
 		sigma_E_ = 0.0;
@@ -512,7 +515,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void ComputeDensityErrorInner::
-		densityErrorOfNewGeneratedParticles(StdVec<size_t> new_indices, StdVec<Vecd> new_positions)
+		densityErrorOfNewGeneratedParticles(const StdVec<size_t> &new_indices, const StdVec<Vecd> &new_positions)
 	{
 		sign_new_indices_.clear();
 		size_t index_rho = new_indices[0];
@@ -604,7 +607,7 @@ namespace SPH
 	//=================================================================================================//
 	void ComputeDensityErrorInner::
 		computeDensityErrorOnNeighborParticles(Neighborhood &neighborhood, size_t index_rho,
-											   StdVec<size_t> original_indices, StdVec<Vecd> new_positions)
+											   const StdVec<size_t> &original_indices, const StdVec<Vecd> &new_positions)
 	{
 		Real Vol_newIndex = particles_->Vol_[index_rho] / 2.0;
 		Real h_newIndex = pow(particles_->Vol_[index_rho] / Vol_newIndex, 1.0 / (Real)Dimensions);
@@ -650,8 +653,8 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void ComputeDensityErrorInner::
-		densityErrorOfNeighborParticles(StdVec<size_t> new_indices,
-										StdVec<size_t> original_indices, StdVec<Vecd> new_positions)
+		densityErrorOfNeighborParticles(const StdVec<size_t> &new_indices,
+										const StdVec<size_t> &original_indices, const StdVec<Vecd> &new_positions)
 	{
 		Neighborhood &neighborhood = inner_configuration_[new_indices[0]];
 		computeDensityErrorOnNeighborParticles(neighborhood, new_indices[0], original_indices, new_positions);
@@ -679,8 +682,8 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void ComputeDensityErrorWithWall::
-		densityErrorOfNeighborParticles(StdVec<size_t> new_indices,
-										StdVec<size_t> original_indices, StdVec<Vecd> new_positions)
+		densityErrorOfNeighborParticles(const StdVec<size_t> &new_indices,
+										const StdVec<size_t> &original_indices, const StdVec<Vecd> &new_positions)
 	{
 		ComputeDensityErrorInner::densityErrorOfNeighborParticles(new_indices, original_indices, new_positions);
 		for (size_t k = 0; k != contact_bodies_.size(); ++k)

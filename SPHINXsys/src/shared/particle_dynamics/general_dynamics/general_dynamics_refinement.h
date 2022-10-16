@@ -52,8 +52,8 @@ namespace SPH
 		};
 		virtual ~ComputeDensityErrorInner(){};
 
-		Vecd getPositionFromDensityError(StdVec<size_t> original_indices, StdVec<Vecd> new_positions,
-										 StdVec<size_t> new_indices_, Real min_distance, Real max_distance);
+		Vecd getPositionFromDensityError(const StdVec<size_t> &original_indices, const StdVec<Vecd> &initial_new_positions,
+										 const StdVec<size_t> &new_indices, Real min_distance, Real max_distance);
 		virtual void initializeDensityError();
 
 		StdLargeVec<Real> density_error_;
@@ -71,13 +71,13 @@ namespace SPH
 
 		virtual Vecd computeKernelGradient(size_t index_rho);
 		virtual Real computeNewGeneratedParticleDensity(size_t index_rho, Vecd position);
-		virtual Vecd getPosition(StdVec<size_t> original_indices, StdVec<Vecd> new_positions, StdVec<size_t> new_indices);
-		virtual void densityErrorOfNewGeneratedParticles(StdVec<size_t> new_indices, StdVec<Vecd> new_positions);
-		virtual void densityErrorOfNeighborParticles(StdVec<size_t> new_indices, StdVec<size_t> original_indices, StdVec<Vecd> new_positions);
+		virtual Vecd getPosition(const StdVec<size_t> &original_indices, const StdVec<Vecd> &new_positions, const StdVec<size_t> &new_indices);
+		virtual void densityErrorOfNewGeneratedParticles(const StdVec<size_t> &new_indices, const StdVec<Vecd> &new_positions);
+		virtual void densityErrorOfNeighborParticles(const StdVec<size_t> &new_indices, const StdVec<size_t> &original_indices, const StdVec<Vecd> &new_positions);
 		virtual Real computeKernelWeightBetweenParticles(Real h_ratio, Vecd displacement, Real Vol_ratio = 1.0);
 		virtual Vecd computeKernelWeightGradientBetweenParticles(Real h_ratio_min, Vecd displacement, Real Vol);
 		virtual void computeDensityErrorOnNeighborParticles(Neighborhood &neighborhood, size_t index_rho,
-															StdVec<size_t> original_indices, StdVec<Vecd> new_positions);
+															const StdVec<size_t> &original_indices, const StdVec<Vecd> &new_positions);
 		virtual Vecd positionLimitation(Vecd displacement, Real min_distance, Real max_distance);
 	};
 
@@ -104,8 +104,8 @@ namespace SPH
 
 		virtual Vecd computeKernelGradient(size_t index_rho) override;
 		virtual Real computeNewGeneratedParticleDensity(size_t index_rho, Vecd position) override;
-		virtual void densityErrorOfNeighborParticles(StdVec<size_t> new_indices, StdVec<size_t> original_indices,
-													 StdVec<Vecd> new_positions) override;
+		virtual void densityErrorOfNeighborParticles(const StdVec<size_t> &new_indices, const StdVec<size_t> &original_indices,
+													 const StdVec<Vecd> &new_positions) override;
 	};
 	/**
 	 * @class ParticleRefinementWithPrescribedArea
@@ -116,13 +116,12 @@ namespace SPH
 	public:
 		ParticleSplitWithPrescribedArea(SPHBody &sph_body, BodyRegionByCell &refinement_area, size_t body_buffer_width);
 		virtual ~ParticleSplitWithPrescribedArea(){};
-
-		StdVec<size_t> new_indices_;
 		void interaction(size_t index_i, Real dt = 0.0);
 		void update(size_t index_i, Real dt = 0.0);
 
 	protected:
 		BodyRegionByCell *refinement_area_;
+		Real rho0_inv_;
 		StdLargeVec<Vecd> &pos_;
 		StdLargeVec<Real> &Vol_;
 		StdLargeVec<Real> &mass_;
@@ -135,9 +134,9 @@ namespace SPH
 		size_t particle_number_change = 0;
 
 		virtual void setupDynamics(Real dt) override;
-		virtual void splittingModel(size_t index_i);
-		virtual bool splitCriteria(Vecd position, Real volume);
-		virtual Vecd getSplittingPosition(StdVec<size_t> new_indices_);
+		virtual bool splitCriteria(size_t index_i);
+		virtual void splittingModel(size_t index_i, StdVec<size_t> &new_indices);
+		virtual Vecd getSplittingPosition(const StdVec<size_t> &new_indices);
 		virtual void updateNewlySplittingParticle(size_t index_i, size_t index_j, Vecd pos_split);
 	};
 
@@ -162,7 +161,7 @@ namespace SPH
 	protected:
 		ComputeDensityErrorInner compute_density_error;
 
-		virtual Vecd getSplittingPosition(StdVec<size_t> new_indices_) override;
+		virtual Vecd getSplittingPosition(const StdVec<size_t> &new_indices) override;
 		virtual void setupDynamics(Real dt) override;
 	};
 
