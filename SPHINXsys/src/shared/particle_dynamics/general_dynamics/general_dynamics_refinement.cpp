@@ -10,15 +10,15 @@ namespace SPH
 {
 	//=================================================================================================//
 	ParticleSplitWithPrescribedArea::
-		ParticleSplitWithPrescribedArea(SPHBody &body, BodyRegionByCell &refinement_area, size_t body_buffer_width)
-		: LocalDynamics(body), GeneralDataDelegateSimple(body),
-		  body_(&body), Vol_(particles_->Vol_), pos_(particles_->pos_), rho_(particles_->rho_),
+		ParticleSplitWithPrescribedArea(SPHBody &sph_body, BodyRegionByCell &refinement_area, size_t body_buffer_width)
+		: LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+		  Vol_(particles_->Vol_), pos_(particles_->pos_), rho_(particles_->rho_),
 		  mass_(particles_->mass_), refinement_area_(&refinement_area),
 		  h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio"))
 	{
 		particles_->addBufferParticles(body_buffer_width);
-		body_->allocateConfigurationMemoriesForBufferParticles();
-		particle_adaptation_ = DynamicCast<ParticleSplitAndMerge>(this, body.sph_adaptation_);
+		sph_body.allocateConfigurationMemoriesForBufferParticles();
+		particle_adaptation_ = DynamicCast<ParticleSplitAndMerge>(this, sph_body.sph_adaptation_);
 	}
 	//=================================================================================================//
 	void ParticleSplitWithPrescribedArea::interaction(size_t index_i, Real dt)
@@ -110,12 +110,13 @@ namespace SPH
 		return particle_adaptation_->splittingPattern(pos_, particle_spacing_j, delta);
 	}
 	//=================================================================================================//
-	void ParticleSplitWithPrescribedArea::updateNewlySplittingParticle(size_t index_center, size_t index_new, Vecd pos_split)
+	void ParticleSplitWithPrescribedArea::
+		updateNewlySplittingParticle(size_t index_center, size_t index_new, Vecd pos_split)
 	{
 		mass_[index_new] = 0.5 * mass_[index_center];
 		Vol_[index_new] = mass_[index_new] / particles_->rho0_;
 		Real particle_spacing_j = pow(Vol_[index_new], 1.0 / (Real)Dimensions);
-		h_ratio_[index_new] = body_->sph_adaptation_->ReferenceSpacing() / particle_spacing_j;
+		h_ratio_[index_new] = sph_body_.sph_adaptation_->ReferenceSpacing() / particle_spacing_j;
 		particles_->pos_[index_new] = pos_split;
 	}
 	//=================================================================================================//
@@ -131,7 +132,8 @@ namespace SPH
 		new_positions.push_back(pos_i);
 		new_positions.push_back(pos_j);
 
-		Vecd position = compute_density_error.getPositionFromDensityError(original_indices, new_positions, new_indices, 0.2 * particle_spacing, 0.65 * particle_spacing);
+		Vecd position = compute_density_error.getPositionFromDensityError(
+			original_indices, new_positions, new_indices, 0.2 * particle_spacing, 0.65 * particle_spacing);
 		for (size_t n = 0; n != new_indices.size(); ++n)
 			particle_adaptation_->total_split_error_[new_indices[n]] = compute_density_error.density_error_[new_indices[n]];
 		return position;
@@ -158,7 +160,8 @@ namespace SPH
 		ParticleSplitWithPrescribedArea::update(index_i, dt);
 	}
 	//=================================================================================================//
-	ParticleMergeWithPrescribedArea::ParticleMergeWithPrescribedArea(BaseInnerRelation &inner_relation, BodyRegionByCell &refinement_area)
+	ParticleMergeWithPrescribedArea::
+		ParticleMergeWithPrescribedArea(BaseInnerRelation &inner_relation, BodyRegionByCell &refinement_area)
 		: LocalDynamics(inner_relation.sph_body_), GeneralDataDelegateInner(inner_relation),
 		  rho0_inv_(1.0 / particles_->rho0_),
 		  Vol_(particles_->Vol_), pos_(particles_->pos_), rho_(particles_->rho_),
@@ -184,7 +187,7 @@ namespace SPH
 	{
 		if (!tag_merged_[index_i])
 		{
-			StdVec<size_t> merge_indices; //three particles for merging to two
+			StdVec<size_t> merge_indices; // three particles for merging to two
 			if (mergeCriteria(index_i, merge_indices))
 			{
 				merge_indices.push_back(index_i);
@@ -258,7 +261,8 @@ namespace SPH
 		particles_->total_real_particles_ -= merge_change_number;
 	}
 	//=================================================================================================//
-	void ParticleMergeWithPrescribedArea::updateMergedParticleInformation(size_t merged_index, const StdVec<size_t> &merge_indices)
+	void ParticleMergeWithPrescribedArea::
+		updateMergedParticleInformation(size_t merged_index, const StdVec<size_t> &merge_indices)
 	{
 		StdVec<Real> merge_mass_;
 		Real total_mass = 0.0;
@@ -313,22 +317,23 @@ namespace SPH
 	//=================================================================================================//
 	void MergeWithMinimumDensityErrorInner::mergingModel(const StdVec<size_t> &merge_indices)
 	{
-		StdVec<size_t> new_indices; //the first and third particles
+		StdVec<size_t> new_indices; // the first and third particles
 		new_indices.push_back(merge_indices[0]);
 		new_indices.push_back(merge_indices[merge_indices.size() - 1]);
 
-		size_t temporary_index = particles_->total_real_particles_; //the first buffer particle as temporary
+		size_t temporary_index = particles_->total_real_particles_; // the first buffer particle as temporary
 		updateMergedParticleInformation(temporary_index, merge_indices);
 		Vecd pos_merging = getMergingPosition(new_indices, merge_indices);
 		updateNewlyMergingParticle(temporary_index, new_indices, pos_merging);
 		kineticEnergyConservation(merge_indices);
-		
-		//the follow for deleting the second particle
+
+		// the follow for deleting the second particle
 		particles_->copyFromAnotherParticle(merge_indices[1], particles_->total_real_particles_ - 1);
 		particles_->total_real_particles_ -= 1;
 	}
 	//=================================================================================================//
-	Vecd MergeWithMinimumDensityErrorInner::getMergingPosition(StdVec<size_t> new_indices, const StdVec<size_t> &merge_indices)
+	Vecd MergeWithMinimumDensityErrorInner::
+		getMergingPosition(const StdVec<size_t> &new_indices, const StdVec<size_t> &merge_indices)
 	{
 		StdVec<Vecd> new_positions;
 		size_t index_center = new_indices[0];
@@ -344,23 +349,24 @@ namespace SPH
 		compute_density_error.tag_split_[new_indices[0]] = true;
 		compute_density_error.tag_split_[new_indices[1]] = true;
 
-		Vecd position_final = compute_density_error.getPositionFromDensityError(merge_indices, new_positions, new_indices, distance_min, distance_max);
+		Vecd position_final = compute_density_error.getPositionFromDensityError(
+			merge_indices, new_positions, new_indices, distance_min, distance_max);
 		for (size_t n = 0; n != new_indices.size(); ++n)
 			particle_adaptation_->total_merge_error_[new_indices[n]] = compute_density_error.density_error_[new_indices[n]];
 		return position_final;
 	}
 	//=================================================================================================//
-	void MergeWithMinimumDensityErrorInner::updateNewlyMergingParticle(size_t index_center, StdVec<size_t> new_indexs, Vecd pos_split)
+	void MergeWithMinimumDensityErrorInner::updateNewlyMergingParticle(size_t index_center, const StdVec<size_t> &new_indices, Vecd pos_split)
 	{
-		for (size_t n = 0; n != new_indexs.size(); ++n)
+		for (size_t n = 0; n != new_indices.size(); ++n)
 		{
-			mass_[new_indexs[n]] = 0.5 * mass_[index_center];
-			Vol_[new_indexs[n]] = mass_[new_indexs[n]] / particles_->rho0_;
-			Real particle_spacing_j = pow(Vol_[new_indexs[n]], 1.0 / (Real)Dimensions);
-			h_ratio_[new_indexs[n]] = sph_body_.sph_adaptation_->ReferenceSpacing() / particle_spacing_j;
+			mass_[new_indices[n]] = 0.5 * mass_[index_center];
+			Vol_[new_indices[n]] = mass_[new_indices[n]] / particles_->rho0_;
+			Real particle_spacing_j = pow(Vol_[new_indices[n]], 1.0 / (Real)Dimensions);
+			h_ratio_[new_indices[n]] = sph_body_.sph_adaptation_->ReferenceSpacing() / particle_spacing_j;
 		}
-		pos_[new_indexs[0]] = pos_split;
-		pos_[new_indexs[1]] = 2.0 * pos_[index_center] - pos_[new_indexs[0]];
+		pos_[new_indices[0]] = pos_split;
+		pos_[new_indices[1]] = 2.0 * pos_[index_center] - pos_[new_indices[0]];
 	}
 	//=================================================================================================//
 	Real MergeWithMinimumDensityErrorInner::angularMomentumConservation(size_t index_center, const StdVec<size_t> &merge_indices)
@@ -385,13 +391,15 @@ namespace SPH
 	//=================================================================================================//
 	void MergeWithMinimumDensityErrorInner::kineticEnergyConservation(const StdVec<size_t> &merge_indices)
 	{
-		Real E_total = 0.5 * (2.0 * vel_n_[merge_indices[0]].normSqr() + vel_n_[merge_indices[1]].normSqr() + vel_n_[merge_indices[2]].normSqr());
+		Real E_total = 0.5 * (2.0 * vel_n_[merge_indices[0]].normSqr() +
+							  vel_n_[merge_indices[1]].normSqr() + vel_n_[merge_indices[2]].normSqr());
 		Vecd linear_m = 0.5 * (2.0 * vel_n_[merge_indices[0]] + vel_n_[merge_indices[1]] + vel_n_[merge_indices[2]]);
 		Real angular_m = rotation * 2.0;
 		if (ABS(pos_[merge_indices[0]][1]) > TinyReal && ABS(pos_[merge_indices[0]][0]) > TinyReal)
 		{
 			Real cof1 = pos_[merge_indices[0]][1] / (pos_[merge_indices[0]][0] + TinyReal);
-			Real cof2 = (-linear_m[0] * pos_[merge_indices[0]][1] + linear_m[1] * pos_[merge_indices[0]][0] + angular_m) / (2.0 * pos_[merge_indices[0]][0] + TinyReal);
+			Real cof2 = (-linear_m[0] * pos_[merge_indices[0]][1] + linear_m[1] * pos_[merge_indices[0]][0] + angular_m) /
+						(2.0 * pos_[merge_indices[0]][0] + TinyReal);
 			Real a = 2.0 * (cof1 * cof1 + 1.0);
 			Real b = 4.0 * cof1 * cof2 - 2.0 * linear_m[0] - 2.0 * cof1 * linear_m[1];
 			Real c = 2.0 * cof2 * cof2 - E_total - 2.0 * cof2 * linear_m[1] + linear_m.normSqr();
@@ -408,7 +416,8 @@ namespace SPH
 			vel_n_[merge_indices[0]][1] = 0.5 * (angular_m / (pos_[merge_indices[0]][0] + TinyReal) + linear_m[1]);
 			Real a = 2.0;
 			Real b = -2.0 * linear_m[0];
-			Real c = -E_total + linear_m.normSqr() - 2.0 * vel_n_[merge_indices[0]][1] * linear_m[1] + 2.0 * vel_n_[merge_indices[0]][1] * vel_n_[merge_indices[0]][1];
+			Real c = -E_total + linear_m.normSqr() - 2.0 * vel_n_[merge_indices[0]][1] * linear_m[1] +
+					 2.0 * vel_n_[merge_indices[0]][1] * vel_n_[merge_indices[0]][1];
 			if ((b * b - 4.0 * a * c) >= 0.0)
 				vel_n_[merge_indices[0]][0] = (-b + sqrt(b * b - 4.0 * a * c)) / (2.0 * a + TinyReal);
 			else
@@ -421,7 +430,8 @@ namespace SPH
 			vel_n_[merge_indices[0]][0] = 0.5 * (-angular_m / (pos_[merge_indices[0]][1] + TinyReal) + linear_m[0]);
 			Real a = 2.0;
 			Real b = -2.0 * linear_m[1];
-			Real c = -E_total + linear_m.normSqr() - 2.0 * vel_n_[merge_indices[0]][0] * linear_m[0] + 2.0 * vel_n_[merge_indices[0]][0] * vel_n_[merge_indices[0]][0];
+			Real c = -E_total + linear_m.normSqr() - 2.0 * vel_n_[merge_indices[0]][0] * linear_m[0] +
+					 2.0 * vel_n_[merge_indices[0]][0] * vel_n_[merge_indices[0]][0];
 			if ((b * b - 4.0 * a * c) >= 0.0)
 				vel_n_[merge_indices[0]][1] = (-b + sqrt(b * b - 4.0 * a * c)) / (2.0 * a + TinyReal);
 			else
@@ -433,8 +443,9 @@ namespace SPH
 		vel_n_[merge_indices[1]][1] = linear_m[1] - vel_n_[merge_indices[0]][1];
 	}
 	//================================================================================================ =//
-	Vecd ComputeDensityErrorInner::getPositionFromDensityError(StdVec<size_t> original_indices, StdVec<Vecd> new_positions,
-															   StdVec<size_t> new_indices, Real min_distance, Real max_distance)
+	Vecd ComputeDensityErrorInner::
+		getPositionFromDensityError(StdVec<size_t> original_indices, StdVec<Vecd> new_positions,
+									StdVec<size_t> new_indices, Real min_distance, Real max_distance)
 	{
 		size_t index_center = new_indices[0];
 		Vecd pos_final = new_positions[0];
@@ -470,7 +481,7 @@ namespace SPH
 
 		return pos_final;
 	}
-	//================================================================================================ =//
+	//=================================================================================================//
 	Vecd ComputeDensityErrorInner::positionLimitation(Vecd displacement, Real min_distance, Real max_distance)
 	{
 		Vecd modify_displacement = displacement;
@@ -481,8 +492,9 @@ namespace SPH
 
 		return modify_displacement;
 	}
-	//================================================================================================ =//
-	Vecd ComputeDensityErrorInner::getPosition(StdVec<size_t> original_indices, StdVec<Vecd> new_positions, StdVec<size_t> new_indices)
+	//=================================================================================================//
+	Vecd ComputeDensityErrorInner::
+		getPosition(StdVec<size_t> original_indices, StdVec<Vecd> new_positions, StdVec<size_t> new_indices)
 	{
 		E_cof_sigma_ = 0.0;
 		sigma_E_ = 0.0;
@@ -499,7 +511,8 @@ namespace SPH
 		return update_position;
 	}
 	//=================================================================================================//
-	void ComputeDensityErrorInner::densityErrorOfNewGeneratedParticles(StdVec<size_t> new_indices, StdVec<Vecd> new_positions)
+	void ComputeDensityErrorInner::
+		densityErrorOfNewGeneratedParticles(StdVec<size_t> new_indices, StdVec<Vecd> new_positions)
 	{
 		sign_new_indices_.clear();
 		size_t index_rho = new_indices[0];
@@ -530,7 +543,8 @@ namespace SPH
 		return grad_kernel;
 	}
 	//=================================================================================================//
-	Real ComputeDensityErrorInner::computeKernelWeightBetweenParticles(Real h_ratio, Vecd displacement, Real Vol_ratio)
+	Real ComputeDensityErrorInner::
+		computeKernelWeightBetweenParticles(Real h_ratio, Vecd displacement, Real Vol_ratio)
 	{
 		Real distance = displacement.norm();
 		Kernel *kernel_ptr_ = particle_adaptation_->getKernel();
@@ -542,7 +556,8 @@ namespace SPH
 		return kernel_weight;
 	}
 	//=================================================================================================//
-	Vecd ComputeDensityErrorInner::computeKernelWeightGradientBetweenParticles(Real h_ratio_min, Vecd displacement, Real Vol)
+	Vecd ComputeDensityErrorInner::
+		computeKernelWeightGradientBetweenParticles(Real h_ratio_min, Vecd displacement, Real Vol)
 	{
 		Real distance = displacement.norm();
 		Vecd e_ij = displacement / (distance + TinyReal);

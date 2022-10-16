@@ -114,7 +114,7 @@ namespace SPH
 	class ParticleSplitWithPrescribedArea : public LocalDynamics, public GeneralDataDelegateSimple
 	{
 	public:
-		ParticleSplitWithPrescribedArea(SPHBody &body, BodyRegionByCell &refinement_area, size_t body_buffer_width);
+		ParticleSplitWithPrescribedArea(SPHBody &sph_body, BodyRegionByCell &refinement_area, size_t body_buffer_width);
 		virtual ~ParticleSplitWithPrescribedArea(){};
 
 		StdVec<size_t> new_indices_;
@@ -122,7 +122,6 @@ namespace SPH
 		void update(size_t index_i, Real dt = 0.0);
 
 	protected:
-		SPHBody *body_;
 		BodyRegionByCell *refinement_area_;
 		StdLargeVec<Vecd> &pos_;
 		StdLargeVec<Real> &Vol_;
@@ -264,10 +263,10 @@ namespace SPH
 		virtual void setupDynamics(Real dt) override;
 		virtual void mergingModel(const StdVec<size_t> &merge_indices) override;
 		virtual bool mergeCriteria(size_t index_i, StdVec<size_t> &merge_indices) override;
-		virtual Vecd getMergingPosition(StdVec<size_t> new_indices, const StdVec<size_t> &merge_indices);
+		virtual Vecd getMergingPosition(const StdVec<size_t> &new_indices, const StdVec<size_t> &merge_indices);
 		virtual Real angularMomentumConservation(size_t index_center, const StdVec<size_t> &merge_indices);
 		virtual void kineticEnergyConservation(const StdVec<size_t> &merge_indices);
-		virtual void updateNewlyMergingParticle(size_t index_center, StdVec<size_t> new_indexs, Vecd pos_split);
+		virtual void updateNewlyMergingParticle(size_t index_center, const StdVec<size_t> &new_indices, Vecd pos_split);
 	};
 
 	/**
