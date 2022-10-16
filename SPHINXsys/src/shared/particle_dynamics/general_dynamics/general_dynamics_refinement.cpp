@@ -160,9 +160,10 @@ namespace SPH
 	//=================================================================================================//
 	ParticleMergeWithPrescribedArea::ParticleMergeWithPrescribedArea(BaseInnerRelation &inner_relation, BodyRegionByCell &refinement_area)
 		: LocalDynamics(inner_relation.sph_body_), GeneralDataDelegateInner(inner_relation),
-		  sph_body_(inner_relation.sph_body_), Vol_(particles_->Vol_), pos_(particles_->pos_), rho_(particles_->rho_),
+		  rho0_inv_(1.0 / particles_->rho0_),
+		  Vol_(particles_->Vol_), pos_(particles_->pos_), rho_(particles_->rho_),
 		  mass_(particles_->mass_), all_particle_data_(particles_->all_particle_data_),
-		  inner_relation_(inner_relation), vel_n_(particles_->vel_),
+		  vel_n_(particles_->vel_),
 		  refinement_area_(&refinement_area),
 		  h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio"))
 	{
@@ -181,29 +182,32 @@ namespace SPH
 	//=================================================================================================//
 	void ParticleMergeWithPrescribedArea::interaction(size_t index_i, Real dt)
 	{
-		Real Vol_i = mass_[index_i] / particles_->rho0_;
 		if (!tag_merged_[index_i])
-			if (mergeCriteria(inner_configuration_[index_i], pos_[index_i], Vol_i))
+		{
+			StdVec<size_t> merge_indices;
+			if (mergeCriteria(index_i, merge_indices))
 			{
-				merge_indices_.push_back(index_i);
+				merge_indices.push_back(index_i);
 				tag_merged_[index_i] = true;
-				mergingModel(merge_indices_);
+				mergingModel(merge_indices);
 			}
+		}
 	}
 	//=================================================================================================//
-	bool ParticleMergeWithPrescribedArea::mergeCriteria(Neighborhood &inner_neighborhood, Vecd position, Real volume)
+	bool ParticleMergeWithPrescribedArea::mergeCriteria(size_t index_i, StdVec<size_t> &merge_indices)
 	{
-		bool resolution_check = particle_adaptation_->mergeResolutionCheck(volume);
-		Real particle_spacing = pow(volume, 1.0 / Dimensions);
+		Real non_deformed_volume = mass_[index_i] * rho0_inv_;
+		bool resolution_check = particle_adaptation_->mergeResolutionCheck(non_deformed_volume);
+		Real particle_spacing = pow(non_deformed_volume, 1.0 / Dimensions);
 		Real search_threshold = 1.2;
 		Real search_distance = search_threshold * particle_spacing;
 		if (resolution_check)
 		{
-			merge_indices_.clear();
-			bool neighbor_check = findMergeParticles(inner_neighborhood, position, particle_spacing, search_distance);
+			bool neighbor_check = findMergeParticles(index_i, merge_indices, particle_spacing, search_distance);
 			if (neighbor_check)
 			{
-				bool location_check = !particle_adaptation_->checkLocation(*refinement_area_, position, volume);
+				Vecd &position = pos_[index_i];
+				bool location_check = !particle_adaptation_->checkLocation(*refinement_area_, position, non_deformed_volume);
 				if (location_check)
 					return true;
 			}
@@ -211,8 +215,11 @@ namespace SPH
 		return false;
 	}
 	//=================================================================================================//
-	bool ParticleMergeWithPrescribedArea::findMergeParticles(Neighborhood &inner_neighborhood, Vecd position, Real search_size, Real search_distance)
+	bool ParticleMergeWithPrescribedArea::
+		findMergeParticles(size_t index_i, StdVec<size_t> &merge_indices, Real search_size, Real search_distance)
 	{
+		Vecd &position = pos_[index_i];
+		const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 		for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 		{
 			size_t index_j = inner_neighborhood.j_[n];
@@ -226,14 +233,14 @@ namespace SPH
 					{
 						if (!resolution_check)
 						{
-							merge_indices_.push_back(index_j);
+							merge_indices.push_back(index_j);
 							tag_merged_[index_j] = true;
 							return true;
 						}
 					}
 					else if (resolution_check)
 					{
-						merge_indices_.push_back(index_j);
+						merge_indices.push_back(index_j);
 						tag_merged_[index_j] = true;
 						return true;
 					}
@@ -242,7 +249,7 @@ namespace SPH
 		return false;
 	}
 	//=================================================================================================//
-	void ParticleMergeWithPrescribedArea::mergingModel(StdVec<size_t> merge_indices)
+	void ParticleMergeWithPrescribedArea::mergingModel(const StdVec<size_t> &merge_indices)
 	{
 		updateMergedParticleInformation(particles_->total_real_particles_, merge_indices);
 		size_t merge_change_number = merge_indices.size() - 1;
@@ -251,7 +258,7 @@ namespace SPH
 		particles_->total_real_particles_ -= merge_change_number;
 	}
 	//=================================================================================================//
-	void ParticleMergeWithPrescribedArea::updateMergedParticleInformation(size_t merged_index, StdVec<size_t> merge_indices)
+	void ParticleMergeWithPrescribedArea::updateMergedParticleInformation(size_t merged_index, const StdVec<size_t> &merge_indices)
 	{
 		StdVec<Real> merge_mass_;
 		Real total_mass = 0.0;
@@ -280,22 +287,23 @@ namespace SPH
 		particle_adaptation_->total_merge_error_.resize(particles_->real_particles_bound_);
 	}
 	//=================================================================================================//
-	bool MergeWithMinimumDensityErrorInner::mergeCriteria(Neighborhood &inner_neighborhood, Vecd position, Real volume)
+	bool MergeWithMinimumDensityErrorInner::mergeCriteria(size_t index_i, StdVec<size_t> &merge_indices)
 	{
-		bool resolution_check = particle_adaptation_->mergeResolutionCheck(volume);
-		Real particle_spacing_small = pow(volume, 1.0 / Dimensions);
-		Real particle_spacing_large = pow(volume * 2.0, 1.0 / Dimensions);
+		Real non_deformed_volume = mass_[index_i] * rho0_inv_;
+		bool resolution_check = particle_adaptation_->mergeResolutionCheck(non_deformed_volume);
+		Real particle_spacing_small = pow(non_deformed_volume, 1.0 / Dimensions);
+		Real particle_spacing_large = pow(non_deformed_volume * 2.0, 1.0 / Dimensions);
 		Real search_threshold = 1.2;
 		Real search_distance_small = search_threshold * particle_spacing_small;
 		Real search_distance_large = search_threshold * particle_spacing_large;
 		if (resolution_check)
 		{
-			merge_indices_.clear();
-			bool neighbor_check_large = findMergeParticles(inner_neighborhood, position, particle_spacing_large, search_distance_large);
-			bool neighbor_check_small = findMergeParticles(inner_neighborhood, position, particle_spacing_small, search_distance_small);
+			bool neighbor_check_large = findMergeParticles(index_i, merge_indices, particle_spacing_large, search_distance_large);
+			bool neighbor_check_small = findMergeParticles(index_i, merge_indices, particle_spacing_small, search_distance_small);
 			if (neighbor_check_large && neighbor_check_small)
 			{
-				bool location_check = !particle_adaptation_->checkLocation(*refinement_area_, position, volume);
+				Vecd &position = pos_[index_i];
+				bool location_check = !particle_adaptation_->checkLocation(*refinement_area_, position, non_deformed_volume);
 				if (location_check)
 					return true;
 			}
@@ -303,7 +311,7 @@ namespace SPH
 		return false;
 	}
 	//=================================================================================================//
-	void MergeWithMinimumDensityErrorInner::mergingModel(StdVec<size_t> merge_indices)
+	void MergeWithMinimumDensityErrorInner::mergingModel(const StdVec<size_t> &merge_indices)
 	{
 		updateMergedParticleInformation(particles_->total_real_particles_, merge_indices);
 		StdVec<size_t> new_indices;
@@ -321,7 +329,7 @@ namespace SPH
 		particles_->total_real_particles_ -= 1;
 	}
 	//=================================================================================================//
-	Vecd MergeWithMinimumDensityErrorInner::getMergingPosition(StdVec<size_t> new_indices, StdVec<size_t> merge_indices)
+	Vecd MergeWithMinimumDensityErrorInner::getMergingPosition(StdVec<size_t> new_indices, const StdVec<size_t> &merge_indices)
 	{
 		StdVec<Vecd> new_positions;
 		size_t index_center = new_indices[0];
@@ -356,7 +364,7 @@ namespace SPH
 		pos_[new_indexs[1]] = 2.0 * pos_[index_center] - pos_[new_indexs[0]];
 	}
 	//=================================================================================================//
-	Real MergeWithMinimumDensityErrorInner::angularMomentumConservation(size_t index_center, StdVec<size_t> merge_indices)
+	Real MergeWithMinimumDensityErrorInner::angularMomentumConservation(size_t index_center, const StdVec<size_t> &merge_indices)
 	{
 		rotation = 0.0;
 		Real mass = 0.0;
@@ -376,7 +384,7 @@ namespace SPH
 		return distance_min;
 	}
 	//=================================================================================================//
-	void MergeWithMinimumDensityErrorInner::kineticEnergyConservation(StdVec<size_t> merge_indices)
+	void MergeWithMinimumDensityErrorInner::kineticEnergyConservation(const StdVec<size_t> &merge_indices)
 	{
 		Real E_total = 0.5 * (2.0 * vel_n_[merge_indices[0]].normSqr() + vel_n_[merge_indices[1]].normSqr() + vel_n_[merge_indices[2]].normSqr());
 		Vecd linear_m = 0.5 * (2.0 * vel_n_[merge_indices[0]] + vel_n_[merge_indices[1]] + vel_n_[merge_indices[2]]);

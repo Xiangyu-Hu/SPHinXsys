@@ -197,9 +197,8 @@ namespace SPH
 
 	protected:
 		BodyRegionByCell *refinement_area_;
-		SPHBody &sph_body_;
-		BaseInnerRelation &inner_relation_;
 		ParticleData &all_particle_data_;
+		Real rho0_inv_;
 		StdLargeVec<Vecd> &pos_;
 		StdLargeVec<Real> &Vol_;
 		StdLargeVec<Real> &mass_;
@@ -208,20 +207,18 @@ namespace SPH
 		ParticleSplitAndMerge *particle_adaptation_;
 		StdLargeVec<Real> &rho_;
 		StdLargeVec<Vecd> &vel_n_;
-
-		StdVec<size_t> merge_indices_;
 		StdLargeVec<bool> tag_merged_;
 
 		virtual void setupDynamics(Real dt) override;
-		virtual void mergingModel(StdVec<size_t> merge_index);
-		virtual bool mergeCriteria(Neighborhood &inner_neighborhood, Vecd position, Real volume);
-		bool findMergeParticles(Neighborhood &inner_neighborhood, Vecd position, Real search_size, Real search_distance);
-		virtual void updateMergedParticleInformation(size_t merged_index, StdVec<size_t> merge_index);
+		virtual void mergingModel(const StdVec<size_t> &merge_indices);
+		virtual bool mergeCriteria(size_t index_i, StdVec<size_t> &merge_indices);
+		bool findMergeParticles(size_t index_i, StdVec<size_t> &merge_indices, Real search_size, Real search_distance);
+		virtual void updateMergedParticleInformation(size_t merged_index, const StdVec<size_t> &merge_indices);
 
 		template <typename VariableType>
 		struct mergeParticleDataValue
 		{
-			void operator()(ParticleData &particle_data, size_t merged_index, StdVec<size_t> merge_indices, StdVec<Real> merge_mass)
+			void operator()(ParticleData &particle_data, size_t merged_index, const StdVec<size_t> &merge_indices, StdVec<Real> merge_mass)
 			{
 				Real total_mass = 0.0;
 				for (size_t k = 0; k != merge_indices.size(); ++k)
@@ -265,11 +262,11 @@ namespace SPH
 		size_t merge_change_number = 0;
 
 		virtual void setupDynamics(Real dt) override;
-		virtual void mergingModel(StdVec<size_t> merge_index) override;
-		virtual bool mergeCriteria(Neighborhood &inner_neighborhood, Vecd position, Real volume) override;
-		virtual Vecd getMergingPosition(StdVec<size_t> new_indices, StdVec<size_t> merge_indices);
-		virtual Real angularMomentumConservation(size_t index_center, StdVec<size_t> merge_indices);
-		virtual void kineticEnergyConservation(StdVec<size_t> merge_indices);
+		virtual void mergingModel(const StdVec<size_t> &merge_indices) override;
+		virtual bool mergeCriteria(size_t index_i, StdVec<size_t> &merge_indices) override;
+		virtual Vecd getMergingPosition(StdVec<size_t> new_indices, const StdVec<size_t> &merge_indices);
+		virtual Real angularMomentumConservation(size_t index_center, const StdVec<size_t> &merge_indices);
+		virtual void kineticEnergyConservation(const StdVec<size_t> &merge_indices);
 		virtual void updateNewlyMergingParticle(size_t index_center, StdVec<size_t> new_indexs, Vecd pos_split);
 	};
 
