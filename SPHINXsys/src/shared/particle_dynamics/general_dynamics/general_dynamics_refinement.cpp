@@ -184,7 +184,7 @@ namespace SPH
 	{
 		if (!tag_merged_[index_i])
 		{
-			StdVec<size_t> merge_indices;
+			StdVec<size_t> merge_indices; //three particles for merging to two
 			if (mergeCriteria(index_i, merge_indices))
 			{
 				merge_indices.push_back(index_i);
@@ -313,18 +313,17 @@ namespace SPH
 	//=================================================================================================//
 	void MergeWithMinimumDensityErrorInner::mergingModel(const StdVec<size_t> &merge_indices)
 	{
-		updateMergedParticleInformation(particles_->total_real_particles_, merge_indices);
-		StdVec<size_t> new_indices;
+		StdVec<size_t> new_indices; //the first and third particles
 		new_indices.push_back(merge_indices[0]);
 		new_indices.push_back(merge_indices[merge_indices.size() - 1]);
 
+		size_t temporary_index = particles_->total_real_particles_; //the first buffer particle as temporary
+		updateMergedParticleInformation(temporary_index, merge_indices);
 		Vecd pos_merging = getMergingPosition(new_indices, merge_indices);
-		StdVec<size_t> new_indexs;
-		new_indexs.push_back(merge_indices[0]);
-		new_indexs.push_back(merge_indices[merge_indices.size() - 1]);
-		updateNewlyMergingParticle(particles_->total_real_particles_, new_indexs, pos_merging);
+		updateNewlyMergingParticle(temporary_index, new_indices, pos_merging);
 		kineticEnergyConservation(merge_indices);
-
+		
+		//the follow for deleting the second particle
 		particles_->copyFromAnotherParticle(merge_indices[1], particles_->total_real_particles_ - 1);
 		particles_->total_real_particles_ -= 1;
 	}
