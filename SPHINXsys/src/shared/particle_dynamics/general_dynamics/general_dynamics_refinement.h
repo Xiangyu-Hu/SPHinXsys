@@ -70,7 +70,7 @@ namespace SPH
 		StdVec<Real> sign_new_indices_;
 
 		virtual Vecd computeKernelGradient(size_t index_rho);
-		virtual Real computeNewGeneratedParticleDensity(size_t index_rho, Vecd position);
+		virtual Real computeNewGeneratedParticleDensity(size_t index_rho, const Vecd &position);
 		virtual Vecd getPosition(const StdVec<size_t> &original_indices, const StdVec<Vecd> &new_positions, const StdVec<size_t> &new_indices);
 		virtual void densityErrorOfNewGeneratedParticles(const StdVec<size_t> &new_indices, const StdVec<Vecd> &new_positions);
 		virtual void densityErrorOfNeighborParticles(const StdVec<size_t> &new_indices, const StdVec<size_t> &original_indices, const StdVec<Vecd> &new_positions);
@@ -103,7 +103,7 @@ namespace SPH
 		StdVec<StdLargeVec<Real> *> contact_Vol_;
 
 		virtual Vecd computeKernelGradient(size_t index_rho) override;
-		virtual Real computeNewGeneratedParticleDensity(size_t index_rho, Vecd position) override;
+		virtual Real computeNewGeneratedParticleDensity(size_t index_rho, const Vecd &position) override;
 		virtual void densityErrorOfNeighborParticles(const StdVec<size_t> &new_indices, const StdVec<size_t> &original_indices,
 													 const StdVec<Vecd> &new_positions) override;
 	};
