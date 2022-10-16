@@ -185,9 +185,9 @@ namespace SPH
 		if (!tag_merged_[index_i])
 			if (mergeCriteria(inner_configuration_[index_i], pos_[index_i], Vol_i))
 			{
-				merge_indices.push_back(index_i);
+				merge_indices_.push_back(index_i);
 				tag_merged_[index_i] = true;
-				mergingModel(merge_indices);
+				mergingModel(merge_indices_);
 			}
 	}
 	//=================================================================================================//
@@ -199,7 +199,7 @@ namespace SPH
 		Real search_distance = search_threshold * particle_spacing;
 		if (resolution_check)
 		{
-			merge_indices.clear();
+			merge_indices_.clear();
 			bool neighbor_check = findMergeParticles(inner_neighborhood, position, particle_spacing, search_distance);
 			if (neighbor_check)
 			{
@@ -226,14 +226,14 @@ namespace SPH
 					{
 						if (!resolution_check)
 						{
-							merge_indices.push_back(index_j);
+							merge_indices_.push_back(index_j);
 							tag_merged_[index_j] = true;
 							return true;
 						}
 					}
 					else if (resolution_check)
 					{
-						merge_indices.push_back(index_j);
+						merge_indices_.push_back(index_j);
 						tag_merged_[index_j] = true;
 						return true;
 					}
@@ -290,7 +290,7 @@ namespace SPH
 		Real search_distance_large = search_threshold * particle_spacing_large;
 		if (resolution_check)
 		{
-			merge_indices.clear();
+			merge_indices_.clear();
 			bool neighbor_check_large = findMergeParticles(inner_neighborhood, position, particle_spacing_large, search_distance_large);
 			bool neighbor_check_small = findMergeParticles(inner_neighborhood, position, particle_spacing_small, search_distance_small);
 			if (neighbor_check_large && neighbor_check_small)

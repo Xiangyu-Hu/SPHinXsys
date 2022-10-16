@@ -209,7 +209,7 @@ namespace SPH
 		StdLargeVec<Real> &rho_;
 		StdLargeVec<Vecd> &vel_n_;
 
-		StdVec<size_t> merge_indices;
+		StdVec<size_t> merge_indices_;
 		StdLargeVec<bool> tag_merged_;
 
 		virtual void setupDynamics(Real dt) override;
