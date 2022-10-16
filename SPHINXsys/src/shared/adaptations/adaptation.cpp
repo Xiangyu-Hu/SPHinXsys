@@ -173,7 +173,6 @@ namespace SPH
 	{
 		ParticleWithLocalRefinement::registerAdaptationVariables(base_particles);
 
-		base_particles.registerSortableVariable<Real>("VolumetricMeasure");
 		base_particles.registerSortableVariable<Real>("SmoothingLengthRatio");
 		base_particles.addVariableToWrite<Real>("SmoothingLengthRatio");
 		base_particles.addVariableToWrite<Real>("VolumetricMeasure");

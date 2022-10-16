@@ -232,7 +232,7 @@ int main(int ac, char *av[])
 			}
 			/** Update cell linked list and configuration. */
 			time_instance = tick_count::now();
-			water_block.updateCellLinkedList();
+			water_block.updateCellLinkedListWithParticleSort(100);
 			water_complex.updateConfiguration();
 			fluid_observer_contact.updateConfiguration();
 			interval_updating_configuration += tick_count::now() - time_instance;
