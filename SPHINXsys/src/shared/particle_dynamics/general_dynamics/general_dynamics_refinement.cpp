@@ -191,7 +191,7 @@ namespace SPH
 			}
 	}
 	//=================================================================================================//
-	bool ParticleMergeWithPrescribedArea::mergeCriteria(Neighborhood inner_neighborhood, Vecd position, Real volume)
+	bool ParticleMergeWithPrescribedArea::mergeCriteria(Neighborhood &inner_neighborhood, Vecd position, Real volume)
 	{
 		bool resolution_check = particle_adaptation_->mergeResolutionCheck(volume);
 		Real particle_spacing = pow(volume, 1.0 / Dimensions);
@@ -211,7 +211,7 @@ namespace SPH
 		return false;
 	}
 	//=================================================================================================//
-	bool ParticleMergeWithPrescribedArea::findMergeParticles(Neighborhood inner_neighborhood, Vecd position, Real search_size, Real search_distance)
+	bool ParticleMergeWithPrescribedArea::findMergeParticles(Neighborhood &inner_neighborhood, Vecd position, Real search_size, Real search_distance)
 	{
 		for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 		{
@@ -280,7 +280,7 @@ namespace SPH
 		particle_adaptation_->total_merge_error_.resize(particles_->real_particles_bound_);
 	}
 	//=================================================================================================//
-	bool MergeWithMinimumDensityErrorInner::mergeCriteria(Neighborhood inner_neighborhood, Vecd position, Real volume)
+	bool MergeWithMinimumDensityErrorInner::mergeCriteria(Neighborhood &inner_neighborhood, Vecd position, Real volume)
 	{
 		bool resolution_check = particle_adaptation_->mergeResolutionCheck(volume);
 		Real particle_spacing_small = pow(volume, 1.0 / Dimensions);

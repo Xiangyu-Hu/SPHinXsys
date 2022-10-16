@@ -214,8 +214,8 @@ namespace SPH
 
 		virtual void setupDynamics(Real dt) override;
 		virtual void mergingModel(StdVec<size_t> merge_index);
-		virtual bool mergeCriteria(Neighborhood inner_neighborhood, Vecd position, Real volume);
-		bool findMergeParticles(Neighborhood inner_neighborhood, Vecd position, Real search_size, Real search_distance);
+		virtual bool mergeCriteria(Neighborhood &inner_neighborhood, Vecd position, Real volume);
+		bool findMergeParticles(Neighborhood &inner_neighborhood, Vecd position, Real search_size, Real search_distance);
 		virtual void updateMergedParticleInformation(size_t merged_index, StdVec<size_t> merge_index);
 
 		template <typename VariableType>
@@ -266,7 +266,7 @@ namespace SPH
 
 		virtual void setupDynamics(Real dt) override;
 		virtual void mergingModel(StdVec<size_t> merge_index) override;
-		virtual bool mergeCriteria(Neighborhood inner_neighborhood, Vecd position, Real volume) override;
+		virtual bool mergeCriteria(Neighborhood &inner_neighborhood, Vecd position, Real volume) override;
 		virtual Vecd getMergingPosition(StdVec<size_t> new_index_, StdVec<size_t> merge_indices);
 		virtual Real angularMomentumConservation(size_t index_center, StdVec<size_t> merge_indices);
 		virtual void kineticEnergyConservation(StdVec<size_t> merge_indices);
