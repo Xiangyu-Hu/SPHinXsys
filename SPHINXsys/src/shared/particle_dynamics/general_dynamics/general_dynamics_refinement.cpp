@@ -512,7 +512,7 @@ namespace SPH
 	//=================================================================================================//
 	Vecd ComputeDensityErrorInner::computeKernelGradient(size_t index_rho)
 	{
-		Neighborhood &inner_neighborhood = inner_relation_.inner_configuration_[index_rho];
+		Neighborhood &inner_neighborhood = inner_configuration_[index_rho];
 		Vecd grad_kernel = Vecd(0);
 		for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 		{
@@ -565,7 +565,7 @@ namespace SPH
 		sigma_newIndex += computeKernelWeightBetweenParticles(h_newIndex, displacement);
 
 		Vecd grad_sigma = Vecd(0.0);
-		Neighborhood &inner_neighborhood = inner_relation_.inner_configuration_[index_rho];
+		Neighborhood &inner_neighborhood = inner_configuration_[index_rho];
 		for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 		{
 			Vecd displacement = new_pos - particles_->pos_[inner_neighborhood.j_[n]];
@@ -631,7 +631,7 @@ namespace SPH
 		densityErrorOfNeighborParticles(StdVec<size_t> new_index_,
 										StdVec<size_t> original_indices_, StdVec<Vecd> new_pos_)
 	{
-		Neighborhood &neighborhood = inner_relation_.inner_configuration_[new_index_[0]];
+		Neighborhood &neighborhood = inner_configuration_[new_index_[0]];
 		computeDensityErrorOnNeighborParticles(neighborhood, new_index_[0], original_indices_, new_pos_);
 	}
 	//================================================================================================ =//
@@ -644,8 +644,8 @@ namespace SPH
 	Vecd ComputeDensityErrorWithWall::computeKernelGradient(size_t index_rho)
 	{
 		Vecd grad_kernel = ComputeDensityErrorInner::computeKernelGradient(index_rho);
-		Neighborhood &contact_neighborhood = complex_relation_.inner_configuration_[index_rho];
-		for (size_t k = 0; k != complex_relation_.contact_bodies_.size(); ++k)
+		Neighborhood &contact_neighborhood = inner_configuration_[index_rho];
+		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{
 			StdLargeVec<Real> &Vol_j = *(contact_Vol_[k]);
 			for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -661,9 +661,9 @@ namespace SPH
 										StdVec<size_t> original_indices_, StdVec<Vecd> new_pos_)
 	{
 		ComputeDensityErrorInner::densityErrorOfNeighborParticles(new_index_, original_indices_, new_pos_);
-		for (size_t k = 0; k != complex_relation_.contact_bodies_.size(); ++k)
+		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{
-			Neighborhood &neighborhood = complex_relation_.contact_configuration_[k][new_index_[0]];
+			Neighborhood &neighborhood = (*contact_configuration_[k])[new_index_[0]];
 			computeDensityErrorOnNeighborParticles(neighborhood, new_index_[0], original_indices_, new_pos_);
 		}
 	}
@@ -677,9 +677,9 @@ namespace SPH
 		Real sigma_inner = ComputeDensityErrorInner::computeNewGeneratedParticleDensity(index_rho, new_pos);
 		Vecd grad_sigma = Vecd(0.0);
 		Real sigma_newIndex = 0.0;
-		for (size_t k = 0; k != complex_relation_.contact_bodies_.size(); ++k)
+		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{
-			Neighborhood &contact_neighborhood = complex_relation_.contact_configuration_[k][index_rho];
+			Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_rho];
 			for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 			{
 				Vecd displacement = new_pos - particles_->pos_[contact_neighborhood.j_[n]];

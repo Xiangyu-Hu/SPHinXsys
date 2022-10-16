@@ -34,21 +34,19 @@ namespace SPH
 {
 	class LevelSetComplexShape;
 	class ParticleSplitAndMerge;
-	typedef DataDelegateContact<BaseParticles, BaseParticles, DataDelegateEmptyBase> GeneralDataDelegateContact;
 
 	/**
 	 * @class ComputeDensityErrorInner
 	 * @brief compute error of particle splitting and merging
 	 */
-	class ComputeDensityErrorInner : public GeneralDataDelegateSimple
+	class ComputeDensityErrorInner : public GeneralDataDelegateInner
 	{
 	public:
-		ComputeDensityErrorInner(BaseInnerRelation &body_inner_relation)
-			: GeneralDataDelegateSimple(body_inner_relation.sph_body_),
-			  inner_relation_(body_inner_relation),
+		ComputeDensityErrorInner(BaseInnerRelation &inner_relation)
+			: GeneralDataDelegateInner(inner_relation),
 			  h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio"))
 		{
-			particle_adaptation_ = DynamicCast<ParticleSplitAndMerge>(this, body_inner_relation.sph_body_.sph_adaptation_);
+			particle_adaptation_ = DynamicCast<ParticleSplitAndMerge>(this, inner_relation.sph_body_.sph_adaptation_);
 			density_error_.resize(particles_->real_particles_bound_);
 			particles_->addVariableToWrite<Real>("Density");
 		};
@@ -62,10 +60,8 @@ namespace SPH
 		StdLargeVec<bool> tag_split;
 
 	protected:
-		StdLargeVec<Real> &h_ratio_;
-		BaseInnerRelation &inner_relation_;
 		ParticleSplitAndMerge *particle_adaptation_;
-
+		StdLargeVec<Real> &h_ratio_;
 		Vecd E_cof = Vecd(0.0);
 		Real sigma_E = 0.0;
 		Real E_cof_sigma = 0.0;
@@ -89,22 +85,21 @@ namespace SPH
 	 * @class ComputeDensityErrorWithWall
 	 * @brief compute error of particle splitting and merging
 	 */
-	class ComputeDensityErrorWithWall : public ComputeDensityErrorInner
+	class ComputeDensityErrorWithWall : public ComputeDensityErrorInner, public GeneralDataDelegateContact
 	{
 	public:
 		ComputeDensityErrorWithWall(ComplexRelation &complex_relation)
 			: ComputeDensityErrorInner(complex_relation.inner_relation_),
-			  complex_relation_(complex_relation)
+			  GeneralDataDelegateContact(complex_relation.contact_relation_)
 		{
-			for (size_t k = 0; k != complex_relation_.contact_bodies_.size(); ++k)
+			for (size_t k = 0; k != contact_bodies_.size(); ++k)
 			{
-				contact_Vol_.push_back(&(complex_relation_.contact_bodies_[k]->getBaseParticles().Vol_));
+				contact_Vol_.push_back(&(contact_bodies_[k]->getBaseParticles().Vol_));
 			}
 		};
 		virtual ~ComputeDensityErrorWithWall(){};
 
 	protected:
-		ComplexRelation &complex_relation_;
 		StdVec<StdLargeVec<Real> *> contact_Vol_;
 
 		virtual Vecd computeKernelGradient(size_t index_rho) override;
@@ -154,9 +149,9 @@ namespace SPH
 	class SplitWithMinimumDensityErrorInner : public ParticleSplitWithPrescribedArea
 	{
 	public:
-		SplitWithMinimumDensityErrorInner(BaseInnerRelation &body_inner_relation, BodyRegionByCell &refinement_area, size_t body_buffer_width)
-			: ParticleSplitWithPrescribedArea(body_inner_relation.sph_body_, refinement_area, body_buffer_width),
-			  compute_density_error(body_inner_relation)
+		SplitWithMinimumDensityErrorInner(BaseInnerRelation &inner_relation, BodyRegionByCell &refinement_area, size_t body_buffer_width)
+			: ParticleSplitWithPrescribedArea(inner_relation.sph_body_, refinement_area, body_buffer_width),
+			  compute_density_error(inner_relation)
 		{
 			particles_->registerVariable(particle_adaptation_->total_split_error_, "SplitDensityError", 0.0);
 			// base_particles->addVariableToWrite<Real>("SplitDensityError");
@@ -195,7 +190,7 @@ namespace SPH
 	class ParticleMergeWithPrescribedArea : public LocalDynamics, public GeneralDataDelegateInner
 	{
 	public:
-		ParticleMergeWithPrescribedArea(BaseInnerRelation &body_inner_relation, BodyRegionByCell &refinement_area);
+		ParticleMergeWithPrescribedArea(BaseInnerRelation &inner_relation, BodyRegionByCell &refinement_area);
 		virtual ~ParticleMergeWithPrescribedArea(){};
 
 		void interaction(size_t index_i, Real dt = 0.0);
@@ -253,9 +248,9 @@ namespace SPH
 	class MergeWithMinimumDensityErrorInner : public ParticleMergeWithPrescribedArea
 	{
 	public:
-		MergeWithMinimumDensityErrorInner(BaseInnerRelation &body_inner_relation, BodyRegionByCell &refinement_area)
-			: ParticleMergeWithPrescribedArea(body_inner_relation, refinement_area),
-			  compute_density_error(body_inner_relation){};
+		MergeWithMinimumDensityErrorInner(BaseInnerRelation &inner_relation, BodyRegionByCell &refinement_area)
+			: ParticleMergeWithPrescribedArea(inner_relation, refinement_area),
+			  compute_density_error(inner_relation){};
 		virtual ~MergeWithMinimumDensityErrorInner(){};
 
 		void interaction(size_t index_i, Real dt = 0.0)
