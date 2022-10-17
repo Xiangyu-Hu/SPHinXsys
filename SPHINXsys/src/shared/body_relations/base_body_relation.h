@@ -91,7 +91,7 @@ namespace SPH
 			  kernel_(*sph_body.sph_adaptation_->getKernel()){};
 		int operator()(size_t particle_index) const
 		{
-			return 1 + (int)floor(kernel_.CutOffRadius(sph_adaptation_.SmoothingLengthRatio(particle_index) * inv_grid_spacing_));
+			return 1 + (int)floor(kernel_.CutOffRadius(sph_adaptation_.SmoothingLengthRatio(particle_index)) * inv_grid_spacing_);
 		};
 	};
 
