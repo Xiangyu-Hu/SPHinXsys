@@ -123,9 +123,12 @@ namespace SPH
 		return getCellLinkedListTotalLevel() + 1;
 	}
 	//=================================================================================================//
-	void ParticleWithLocalRefinement::registerAdaptationVariables(BaseParticles &base_particles)
+	StdLargeVec<Real> &ParticleWithLocalRefinement::
+		registerSmoothingLengthRatio(BaseParticles &base_particles)
 	{
 		base_particles.registerVariable(h_ratio_, "SmoothingLengthRatio", 1.0);
+		base_particles.registerSortableVariable<Real>("SmoothingLengthRatio");
+		return h_ratio_;
 	}
 	//=================================================================================================//
 	UniquePtr<BaseCellLinkedList> ParticleWithLocalRefinement::
@@ -168,15 +171,6 @@ namespace SPH
 		spacing_min_ = RefinedSpacing(spacing_ref_, local_refinement_level_);
 		h_ratio_max_ = powerN(sqrt(2.0), local_refinement_level_);
 	};
-	//=================================================================================================//
-	void ParticleSplitAndMerge::registerAdaptationVariables(BaseParticles &base_particles)
-	{
-		ParticleWithLocalRefinement::registerAdaptationVariables(base_particles);
-
-		base_particles.registerSortableVariable<Real>("SmoothingLengthRatio");
-		base_particles.addVariableToWrite<Real>("SmoothingLengthRatio");
-		base_particles.addVariableToWrite<Real>("VolumetricMeasure");
-	}
 	//=================================================================================================//
 	bool ParticleSplitAndMerge::checkLocation(BodyRegionByCell &refinement_area, Vecd position, Real volume)
 	{

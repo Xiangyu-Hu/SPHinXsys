@@ -67,7 +67,6 @@ namespace SPH
 	public:
 		explicit ParticleGeneratorLattice(SPHBody &sph_body);
 		virtual ~ParticleGeneratorLattice(){};
-
 		virtual void initializeGeometricVariables() override;
 	};
 

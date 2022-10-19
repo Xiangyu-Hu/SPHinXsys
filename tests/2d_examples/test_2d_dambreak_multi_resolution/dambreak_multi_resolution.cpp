@@ -92,6 +92,8 @@ int main(int ac, char *av[])
 	water_block.defineAdaptation<ParticleSplitAndMerge>(1.3, 1.0, 1.0);
 	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
 	water_block.generateParticles<ParticleGeneratorSplitAndMerge>();
+	water_block.addBodyStateForRecording<Real>("SmoothingLengthRatio");
+	water_block.addBodyStateForRecording<Real>("VolumetricMeasure");
 
 	SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
 	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();

@@ -112,12 +112,12 @@ namespace SPH
 
 		size_t getCellLinkedListTotalLevel();
 		size_t getLevelSetTotalLevel();
+		StdLargeVec<Real> &registerSmoothingLengthRatio(BaseParticles &base_particles);
 		virtual Real SmoothingLengthRatio(size_t particle_index_i) override
 		{
 			return h_ratio_[particle_index_i];
 		};
 
-		virtual void registerAdaptationVariables(BaseParticles &base_particles) override;
 		virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, RealBody &real_body) override;
 		virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio) override;
 	};
@@ -152,7 +152,6 @@ namespace SPH
 							  Real system_resolution_ratio, int local_refinement_level);
 		virtual ~ParticleSplitAndMerge(){};
 
-		virtual void registerAdaptationVariables(BaseParticles &base_particles) override;
 		virtual bool checkLocation(BodyRegionByCell &refinement_area, Vecd position, Real volume);
 		virtual bool splitResolutionCheck(Real volume, Real min_volume);
 		virtual bool mergeResolutionCheck(Real volume);
