@@ -97,6 +97,17 @@ namespace SPH
 		base_particles_->readFromXmlForReloadParticle(filefullpath);
 	}
 	//=================================================================================================//
+	BaseCellLinkedList &RealBody::getCellLinkedList()
+	{
+		if (!cell_linked_list_created_)
+		{
+			cell_linked_list_ptr_ = std::move(
+				sph_adaptation_->createCellLinkedList(system_domain_bounds_, *this));
+			cell_linked_list_created_ = true;
+		}
+		return *cell_linked_list_ptr_.get();
+	}
+	//=================================================================================================//
 	void RealBody::assignBaseParticles(BaseParticles *base_particles)
 	{
 		SPHBody::assignBaseParticles(base_particles);
@@ -106,13 +117,13 @@ namespace SPH
 	{
 		StdLargeVec<size_t> &sequence = base_particles_->sequence_;
 		size_t size = base_particles_->total_real_particles_;
-		cell_linked_list_->computingSequence(*base_particles_);
+		getCellLinkedList().computingSequence(*base_particles_);
 		base_particles_->particle_sorting_.sortingParticleData(sequence.data(), size);
 	}
 	//=================================================================================================//
 	void RealBody::updateCellLinkedList()
 	{
-		cell_linked_list_->UpdateCellLists(*base_particles_);
+		getCellLinkedList().UpdateCellLists(*base_particles_);
 		base_particles_->total_ghost_particles_ = 0;
 	}
 	//=================================================================================================//
@@ -127,8 +138,6 @@ namespace SPH
 	void RealBody::defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio)
 	{
 		sph_adaptation_->resetAdaptationRatios(h_spacing_ratio, new_system_refinement_ratio);
-		cell_linked_list_ = cell_linked_list_keeper_.movePtr(
-			sph_adaptation_->createCellLinkedList(system_domain_bounds_, *this));
 	}
 	//=================================================================================================//
 }

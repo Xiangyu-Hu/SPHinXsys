@@ -56,7 +56,7 @@ int main()
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_imported_model_to_vtp(io_environment, {imported_model});
-	MeshRecordingToPlt cell_linked_list_recording(io_environment, imported_model.cell_linked_list_);
+	MeshRecordingToPlt cell_linked_list_recording(io_environment, imported_model.getCellLinkedList());
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.

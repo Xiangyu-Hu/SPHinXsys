@@ -42,7 +42,7 @@ namespace SPH
 	protected:
 		SearchDepthSingleResolution get_single_search_depth_;
 		NeighborBuilderInner get_inner_neighbor_;
-		CellLinkedList *cell_linked_list_;
+		CellLinkedList &cell_linked_list_;
 
 	public:
 		explicit InnerRelation(RealBody &real_body);
@@ -93,7 +93,7 @@ namespace SPH
 		IndexVector &body_part_particles_;
 		SearchDepthSingleResolution get_single_search_depth_;
 		NeighborBuilderSelfContact get_self_contact_neighbor_;
-		CellLinkedList *cell_linked_list_;
+		CellLinkedList &cell_linked_list_;
 
 		virtual void resetNeighborhoodCurrentSize() override;
 	};

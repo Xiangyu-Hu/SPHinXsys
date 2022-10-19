@@ -108,7 +108,7 @@ namespace SPH
 
 		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{
-			cell_linked_list_levels_[k] = contact_bodies_[k]->cell_linked_list_->CellLinkedListLevels();
+			cell_linked_list_levels_[k] = contact_bodies_[k]->getCellLinkedList().CellLinkedListLevels();
 
 			for (size_t l = 0; l != cell_linked_list_levels_[k].size(); ++l)
 			{

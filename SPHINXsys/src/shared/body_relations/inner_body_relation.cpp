@@ -13,12 +13,12 @@ namespace SPH
 	//=================================================================================================//
 	InnerRelation::InnerRelation(RealBody &real_body)
 		: BaseInnerRelation(real_body), get_inner_neighbor_(real_body),
-		  cell_linked_list_(DynamicCast<CellLinkedList>(this, real_body.cell_linked_list_)) {}
+		  cell_linked_list_(DynamicCast<CellLinkedList>(this, real_body.getCellLinkedList())) {}
 	//=================================================================================================//
 	void InnerRelation::updateConfiguration()
 	{
 		resetNeighborhoodCurrentSize();
-		cell_linked_list_->searchNeighborsByParticles(
+		cell_linked_list_.searchNeighborsByParticles(
 			sph_body_, inner_configuration_,
 			get_single_search_depth_, get_inner_neighbor_);
 	}
@@ -28,9 +28,9 @@ namespace SPH
 		: BaseInnerRelation(real_body), total_levels_(0),
 		  get_adaptive_inner_neighbor_(real_body)
 	{
-		MultilevelCellLinkedList *multi_level_cell_linked_list =
-			DynamicCast<MultilevelCellLinkedList>(this, real_body.cell_linked_list_);
-		cell_linked_list_levels_ = multi_level_cell_linked_list->getMeshLevels();
+		MultilevelCellLinkedList &multi_level_cell_linked_list =
+			DynamicCast<MultilevelCellLinkedList>(this, real_body.getCellLinkedList());
+		cell_linked_list_levels_ = multi_level_cell_linked_list.getMeshLevels();
 		total_levels_ = cell_linked_list_levels_.size();
 		for (size_t l = 0; l != total_levels_; ++l)
 		{
@@ -57,7 +57,7 @@ namespace SPH
 		  body_surface_layer_(real_body),
 		  body_part_particles_(body_surface_layer_.body_part_particles_),
 		  get_self_contact_neighbor_(real_body),
-		  cell_linked_list_(DynamicCast<CellLinkedList>(this, real_body.cell_linked_list_)) {}
+		  cell_linked_list_(DynamicCast<CellLinkedList>(this, real_body.getCellLinkedList())) {}
 	//=================================================================================================//
 	void SelfSurfaceContactRelation::resetNeighborhoodCurrentSize()
 	{
@@ -78,7 +78,7 @@ namespace SPH
 	{
 		resetNeighborhoodCurrentSize();
 		size_t total_real_particles = body_part_particles_.size();
-		cell_linked_list_->searchNeighborsByParticles(
+		cell_linked_list_.searchNeighborsByParticles(
 			body_surface_layer_, inner_configuration_,
 			get_single_search_depth_, get_self_contact_neighbor_);
 	}

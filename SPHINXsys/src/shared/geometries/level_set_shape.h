@@ -69,7 +69,7 @@ namespace SPH
 		void writeLevelSet(IOEnvironment &io_environment);
 
 	protected:
-		BaseLevelSet *level_set_; /**< narrow bounded level set mesh. */
+		BaseLevelSet &level_set_; /**< narrow bounded level set mesh. */
 
 		virtual BoundingBox findBounds() override;
 	};

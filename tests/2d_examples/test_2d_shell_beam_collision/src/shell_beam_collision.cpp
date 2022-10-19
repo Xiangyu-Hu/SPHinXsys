@@ -145,7 +145,7 @@ int main(int ac, char *av[])
 		//	Output for particle relaxation.
 		//----------------------------------------------------------------------
 		BodyStatesRecordingToVtp write_relaxed_particles(io_environment, sph_system.real_bodies_);
-		MeshRecordingToPlt write_mesh_cell_linked_list(io_environment, shell.cell_linked_list_);
+		MeshRecordingToPlt write_mesh_cell_linked_list(io_environment, shell.getCellLinkedList());
 		ReloadParticleIO write_particle_reload_files(io_environment, {&shell});
 		//----------------------------------------------------------------------
 		//	Particle relaxation starts here.

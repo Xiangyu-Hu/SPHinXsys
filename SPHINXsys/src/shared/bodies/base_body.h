@@ -181,7 +181,7 @@ namespace SPH
 	class RealBody : public SPHBody
 	{
 	private:
-		UniquePtrKeeper<BaseCellLinkedList> cell_linked_list_keeper_;
+		UniquePtr<BaseCellLinkedList> cell_linked_list_ptr_;
 		BoundingBox system_domain_bounds_;
 		/**
 		 * @brief particle by cells lists is for parallel splitting algorithm.
@@ -192,23 +192,22 @@ namespace SPH
 		SplitCellLists split_cell_lists_;
 		bool use_split_cell_lists_;
 		size_t iteration_count_;
+		bool cell_linked_list_created_;
 
 	public:
-		BaseCellLinkedList *cell_linked_list_; /**< Cell linked mesh of this body. */
-
 		template <typename... ConstructorArgs>
 		RealBody(ConstructorArgs &&...args)
 			: SPHBody(std::forward<ConstructorArgs>(args)...),
 			  system_domain_bounds_(this->getSPHSystem().system_domain_bounds_),
-			  use_split_cell_lists_(false), iteration_count_(1)
+			  use_split_cell_lists_(false), iteration_count_(1),
+			  cell_linked_list_created_(false)
 		{
 			this->getSPHSystem().real_bodies_.push_back(this);
 			size_t number_of_split_cell_lists = powerN(3, Vecd(0).size());
 			split_cell_lists_.resize(number_of_split_cell_lists);
-			cell_linked_list_ = cell_linked_list_keeper_.movePtr(
-				sph_adaptation_->createCellLinkedList(system_domain_bounds_, *this));
 		};
 		virtual ~RealBody(){};
+		BaseCellLinkedList &getCellLinkedList();
 		void setUseSplitCellLists() { use_split_cell_lists_ = true; };
 		bool getUseSplitCellLists() { return use_split_cell_lists_; };
 		SplitCellLists &getSplitCellLists() { return split_cell_lists_; };
@@ -227,8 +226,6 @@ namespace SPH
 		{
 			sph_adaptation_ = sph_adaptation_ptr_keeper_
 								  .createPtr<AdaptationType>(*this, std::forward<ConstructorArgs>(args)...);
-			cell_linked_list_ = cell_linked_list_keeper_.movePtr(
-				sph_adaptation_->createCellLinkedList(system_domain_bounds_, *this));
 		};
 	};
 }
