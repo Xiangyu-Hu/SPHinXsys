@@ -62,12 +62,10 @@ namespace SPH
 	class SPHBody
 	{
 	private:
-		UniquePtrKeeper<BaseMaterial> base_material_ptr_keeper_;
-		UniquePtrKeeper<BaseParticles> base_particles_ptr_keeper_;
 		SharedPtrKeeper<Shape> shape_ptr_keeper_;
-
-	protected:
 		UniquePtrKeeper<SPHAdaptation> sph_adaptation_ptr_keeper_;
+		UniquePtrKeeper<BaseParticles> base_particles_ptr_keeper_;
+		UniquePtrKeeper<BaseMaterial> base_material_ptr_keeper_;
 
 	protected:
 		std::string body_name_;
@@ -98,14 +96,18 @@ namespace SPH
 		bool checkNewlyUpdated() { return newly_updated_; };
 		BoundingBox getBodyShapeBounds();
 		BoundingBox getSPHSystemBounds();
-		/** This will be called in BaseParticle constructor
-		 * and is important because particles are not defined in SPHBody constructor.  */
-		virtual void assignBaseParticles(BaseParticles *base_particles);
 		void allocateConfigurationMemoriesForBufferParticles();
 		//----------------------------------------------------------------------
 		//		Object factory template functions
 		//----------------------------------------------------------------------
 		virtual void defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
+
+		template <class AdaptationType, typename... ConstructorArgs>
+		void defineAdaptation(ConstructorArgs &&...args)
+		{
+			sph_adaptation_ = sph_adaptation_ptr_keeper_
+								  .createPtr<AdaptationType>(*this, std::forward<ConstructorArgs>(args)...);
+		};
 
 		template <typename... ConstructorArgs>
 		LevelSetShape *defineComponentLevelSetShape(const std::string &shape_name, ConstructorArgs &&...args)
@@ -182,7 +184,6 @@ namespace SPH
 	{
 	private:
 		UniquePtr<BaseCellLinkedList> cell_linked_list_ptr_;
-		BoundingBox system_domain_bounds_;
 		/**
 		 * @brief particle by cells lists is for parallel splitting algorithm.
 		 * All particles in each cell are collected together.
@@ -198,7 +199,6 @@ namespace SPH
 		template <typename... ConstructorArgs>
 		RealBody(ConstructorArgs &&...args)
 			: SPHBody(std::forward<ConstructorArgs>(args)...),
-			  system_domain_bounds_(this->getSPHSystem().system_domain_bounds_),
 			  use_split_cell_lists_(false), iteration_count_(1),
 			  cell_linked_list_created_(false)
 		{
@@ -211,21 +211,8 @@ namespace SPH
 		void setUseSplitCellLists() { use_split_cell_lists_ = true; };
 		bool getUseSplitCellLists() { return use_split_cell_lists_; };
 		SplitCellLists &getSplitCellLists() { return split_cell_lists_; };
-		/** This will be called in BaseParticle constructor
-		 * and is important because particles are not defined in RealBody constructor.  */
-		virtual void assignBaseParticles(BaseParticles *base_particles) override;
-		virtual void sortParticleWithCellLinkedList();
 		void updateCellLinkedList();
 		void updateCellLinkedListWithParticleSort(size_t particle_sort_period);
-		//----------------------------------------------------------------------
-		//		Object factory template functions
-		//----------------------------------------------------------------------
-		template <class AdaptationType, typename... ConstructorArgs>
-		void defineAdaptation(ConstructorArgs &&...args)
-		{
-			sph_adaptation_ = sph_adaptation_ptr_keeper_
-								  .createPtr<AdaptationType>(*this, std::forward<ConstructorArgs>(args)...);
-		};
 	};
 }
 #endif // BASE_BODY_H

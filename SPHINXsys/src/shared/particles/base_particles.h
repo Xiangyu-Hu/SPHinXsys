@@ -165,6 +165,10 @@ namespace SPH
 		template <typename VariableType>
 		void registerSortableVariable(const std::string &variable_name);
 
+		/** sort particles */
+		template <typename SequenceMethod>
+		void sortParticles(SequenceMethod &sequence_method);
+
 		SPHBody &getSPHBody() { return sph_body_; };
 		/** initialize other variables  based one geometric variables and material */
 		virtual void initializeOtherVariables();

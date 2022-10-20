@@ -24,7 +24,6 @@ namespace SPH
 		  restart_xml_engine_("xml_restart", "particles"),
 		  reload_xml_engine_("xml_particle_reload", "particles")
 	{
-		sph_body.assignBaseParticles(this);
 		//----------------------------------------------------------------------
 		//		register geometric data only
 		//----------------------------------------------------------------------

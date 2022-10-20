@@ -34,11 +34,6 @@ namespace SPH
 		return sph_system_;
 	}
 	//=================================================================================================//
-	void SPHBody::assignBaseParticles(BaseParticles *base_particles)
-	{
-		base_particles_ = base_particles;
-	}
-	//=================================================================================================//
 	void SPHBody::allocateConfigurationMemoriesForBufferParticles()
 	{
 		for (size_t i = 0; i < body_relations_.size(); i++)
@@ -102,23 +97,10 @@ namespace SPH
 		if (!cell_linked_list_created_)
 		{
 			cell_linked_list_ptr_ = std::move(
-				sph_adaptation_->createCellLinkedList(system_domain_bounds_, *this));
+				sph_adaptation_->createCellLinkedList(getSPHSystemBounds(), *this));
 			cell_linked_list_created_ = true;
 		}
 		return *cell_linked_list_ptr_.get();
-	}
-	//=================================================================================================//
-	void RealBody::assignBaseParticles(BaseParticles *base_particles)
-	{
-		SPHBody::assignBaseParticles(base_particles);
-	}
-	//=================================================================================================//
-	void RealBody::sortParticleWithCellLinkedList()
-	{
-		StdLargeVec<size_t> &sequence = base_particles_->sequence_;
-		size_t size = base_particles_->total_real_particles_;
-		getCellLinkedList().computingSequence(*base_particles_);
-		base_particles_->particle_sorting_.sortingParticleData(sequence.data(), size);
 	}
 	//=================================================================================================//
 	void RealBody::updateCellLinkedList()
@@ -130,7 +112,10 @@ namespace SPH
 	void RealBody::updateCellLinkedListWithParticleSort(size_t particle_sorting_period)
 	{
 		if (iteration_count_ % particle_sorting_period == 0)
-			sortParticleWithCellLinkedList();
+		{
+			base_particles_->sortParticles(getCellLinkedList());
+		}
+
 		iteration_count_++;
 		updateCellLinkedList();
 	}
