@@ -135,9 +135,4 @@ namespace SPH
 		updateCellLinkedList();
 	}
 	//=================================================================================================//
-	void RealBody::defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio)
-	{
-		sph_adaptation_->resetAdaptationRatios(h_spacing_ratio, new_system_refinement_ratio);
-	}
-	//=================================================================================================//
 }

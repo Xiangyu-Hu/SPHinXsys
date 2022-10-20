@@ -81,7 +81,6 @@ namespace SPH
 		Real ReferenceNumberDensity();
 		virtual Real SmoothingLengthRatio(size_t particle_index_i) { return 1.0; };
 
-		virtual void registerAdaptationVariables(BaseParticles &base_particles){};
 		virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, RealBody &real_body);
 		virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio);
 
