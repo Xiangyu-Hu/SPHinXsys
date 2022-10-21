@@ -1,8 +1,3 @@
-/**
- * @file 	weakly_compressible_fluid.cpp
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
- */
-
 #include "weakly_compressible_fluid.h"
 
 namespace SPH

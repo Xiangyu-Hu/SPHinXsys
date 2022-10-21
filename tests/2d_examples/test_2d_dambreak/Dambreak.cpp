@@ -14,7 +14,7 @@ Real DL = 5.366;					/**< Water tank length. */
 Real DH = 5.366;					/**< Water tank height. */
 Real LL = 2.0;						/**< Water column length. */
 Real LH = 1.0;						/**< Water column height. */
-Real particle_spacing_ref = 0.025;	/**< Initial reference particle spacing. */
+Real particle_spacing_ref = 0.05;	/**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4; /**< Thickness of tank wall. */
 //----------------------------------------------------------------------
 //	Material parameters.
@@ -71,7 +71,7 @@ int main(int ac, char *av[])
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 	wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
 
-	ObserverBody fluid_observer(sph_system, "FluidObserver");
+	ProbeBody fluid_observer(sph_system, "FluidObserver");
 	StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
 	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	//----------------------------------------------------------------------
@@ -97,7 +97,7 @@ int main(int ac, char *av[])
 	//	Define the methods for I/O operations, observations
 	//	and regression tests of the simulation.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
+	BodyStatesRecordingToPlt body_states_recording(io_environment, sph_system.real_bodies_);
 	RestartIO restart_io(io_environment, sph_system.real_bodies_);
 	RegressionTestDynamicTimeWarping<BodyReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
 		write_water_mechanical_energy(io_environment, water_block, gravity_ptr);

@@ -1,29 +1,33 @@
 /* -------------------------------------------------------------------------*
  *								SPHinXsys									*
- * --------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
  * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic *
+ * physical accurate simulation and aims to model coupled industrial dynamic*
  * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
  * (smoothed particle hydrodynamics), a meshless computational method using	*
  * particle discretization.													*
  *																			*
  * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
- * and HU1527/12-1.															*
- *                                                                           *
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and Hu1527/12-4												*
+ *                                                                          *
  * Portions copyright (c) 2017-2020 Technical University of Munich and		*
  * the authors' affiliations.												*
- *                                                                           *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
- * not use this file except in compliance with the License. You may obtain a *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
- *                                                                           *
- * --------------------------------------------------------------------------*/
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	fluid_structure_interaction.h
  * @brief 	Here, we define the algorithm classes for fluid structure interaction.
  * @author	Chi ZHang and Xiangyu Hu
+ * @version	1.0
+ *			Try to implement EIGEN libaary for base vector, matrix and 
+ *			linear algebra operation.  
+ *			-- Chi ZHANG
  */
 
 #ifndef FLUID_STRUCTURE_INTERACTION_H
@@ -42,8 +46,7 @@ namespace SPH
 		typedef DataDelegateSimple<SolidBody, SolidParticles, Solid> SolidDataSimple;
 		typedef DataDelegateContact<SolidBody, SolidParticles, Solid, FluidBody, FluidParticles, Fluid> FSIContactData;
 		typedef DataDelegateContact<SolidBody, SolidParticles, Solid, EulerianFluidBody,
-									FluidParticles, Fluid>
-			EFSIContactData; // EFSIContactData=Eulerian Fluid contact Data
+									FluidParticles, Fluid> EFSIContactData; // Eulerian Fluid contact Data
 
 		/**
 		 * @class FluidViscousForceOnSolid
@@ -158,7 +161,7 @@ namespace SPH
 						size_t index_j = contact_neighborhood.j_[n];
 						Vecd e_ij = contact_neighborhood.e_ij_[n];
 						Real r_ij = contact_neighborhood.r_ij_[n];
-						Real face_wall_external_acceleration = dot((acc_prior_k[index_j] - acc_ave_i), e_ij);
+						Real face_wall_external_acceleration = (acc_prior_k[index_j] - acc_ave_i).dot(e_ij);
 						Real p_in_wall = p_k[index_j] + rho_n_k[index_j] * r_ij * SMAX(0.0, face_wall_external_acceleration);
 						Real rho_in_wall = fluid_k->DensityFromPressure(p_in_wall);
 						Vecd vel_in_wall = 2.0 * vel_ave_i - vel_n_k[index_j];
@@ -219,7 +222,7 @@ namespace SPH
 				const Vecd &vel_ave_i = vel_ave_[index_i];
 				const Vecd &n_i = n_[index_i];
 
-				Vecd force(0);
+				Vecd force = Vecd::Zero();
 				for (size_t k = 0; k < contact_configuration_.size(); ++k)
 				{
 					StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);

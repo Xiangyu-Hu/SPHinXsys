@@ -1,6 +1,34 @@
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and Hu1527/12-4												*
+ *                                                                          *
+ * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	dynamic_time_warping_method.hpp
- * @author	Bo Zhang and Xiangyu Hu
+ * @brief 	Classes for the comparison between validated and tested results
+          	with dynamic time warping method.
+ * @author	Bo Zhang , Chi ZHang and Xiangyu Hu
+ * @version	1.0
+ *			Try to implement EIGEN libaary for base vector, matrix and 
+ *			linear algebra operation.  
+ *			-- Chi ZHANG
  */
 
 #pragma once
@@ -20,21 +48,13 @@ namespace SPH
 	template<class ObserveMethodType>
 	Real RegressionTestDynamicTimeWarping<ObserveMethodType>::calculatePNorm(Vecd variable_a, Vecd variable_b)
 	{
-		Real distance = 0;
-		for (int dimension_index = 0; dimension_index < variable_a.size(); ++dimension_index)
-			distance = std::pow(std::abs(variable_a[dimension_index] - variable_b[dimension_index]), 2);
-		return std::pow(distance, 0.5);
+		return (variable_a - variable_b).cwiseAbs().sum();
 	};
 	//=================================================================================================//
 	template<class ObserveMethodType>
 	Real RegressionTestDynamicTimeWarping<ObserveMethodType>::calculatePNorm(Matd variable_a, Matd variable_b)
 	{
-		/** the current method is TBD. */
-		Real distance = 0;
-		for (int dimension_index_i = 0; dimension_index_i != variable_a.size(); ++dimension_index_i)
-			for (int dimension_index_j = 0; dimension_index_j != variable_a.size(); ++dimension_index_j)
-				distance = std::pow(std::abs(variable_a[dimension_index_i][dimension_index_j] - variable_b[dimension_index_i][dimension_index_j]), 2);
-		return std::pow(distance, 0.5);
+		return (variable_a - variable_b).cwiseAbs().sum();
 	};
 	//=================================================================================================//
 	template<class ObserveMethodType>
@@ -119,7 +139,10 @@ namespace SPH
 	//=================================================================================================//
 	template<class ObserveMethodType>
 	void RegressionTestDynamicTimeWarping<ObserveMethodType>::writeDTWDistanceToXml()
-	{
+	{/**
+ * @file 	dynamic_time_warping_method.hpp
+ * @author	Bo Zhang and Xiangyu Hu
+ */
 		SimTK::Xml::Element DTWElement = dtw_distance_xml_engine_out_.root_element_;
 		dtw_distance_xml_engine_out_.addChildToElement(DTWElement, "DTWDistance");
 		SimTK::Xml::element_iterator ele_ite = DTWElement.element_begin();

@@ -40,7 +40,7 @@ int main(int ac, char *av[])
 		? cylinder.generateParticles<ParticleGeneratorReload>(io_environment, cylinder.getName())
 		: cylinder.generateParticles<ParticleGeneratorLattice>();
 
-	ObserverBody fluid_observer(sph_system, "FluidObserver");
+	ProbeBody fluid_observer(sph_system, "FluidObserver");
 	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_locations);
 	//----------------------------------------------------------------------
 	//	Define body relation map.

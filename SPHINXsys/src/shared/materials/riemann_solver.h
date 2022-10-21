@@ -1,29 +1,33 @@
 /* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and Hu1527/12-4												*
+ *                                                                          *
+ * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	riemann_solvers.h
- * @brief 	This is the collection of Riemann solvers.
- * @author	Xiangyu Hu
+ * @brief 	This is the collection of Riemann solvers. 
+ * @author	Chi ZHang and Xiangyu Hu
+ * @version	1.0
+ *			Try to implement EIGEN libaary for base vector, matrix and 
+ *			linear algebra operation.  
+ *			-- Chi ZHANG
  */
 
 #ifndef RIEMANN_SOLVER_H
@@ -33,6 +37,10 @@
 
 namespace SPH
 {
+	/**
+	 * @struct FluidState
+	 * @brief  Struct for stored states of Riemann solver in weakly-compressbile flow. 
+	 */
 	struct FluidState
 	{
 		Vecd &vel_;
@@ -41,6 +49,10 @@ namespace SPH
 			: vel_(vel), rho_(rho), p_(p){};
 	};
 
+	/**
+	 * @struct CompressibleFluidState
+	 * @brief  Struct for stored states of Riemann solver in compressible flow. 
+	 */
 	struct CompressibleFluidState : FluidState
 	{
 		Real &E_;
@@ -51,6 +63,10 @@ namespace SPH
 	class Fluid;
 	class CompressibleFluid;
 
+	/**
+	 * @struct NoRiemannSolver
+	 * @brief  Central difference scheme without Riemann flux. 
+	 */
 	class NoRiemannSolver
 	{
 		Fluid &fluid_l_, &fluid_r_;
@@ -61,6 +77,10 @@ namespace SPH
 		Vecd getVStar(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
 	};
 
+	/**
+	 * @struct BaseAcousticRiemannSolver
+	 * @brief  Base class for Acoustic Riemann sovler.  
+	 */
 	class BaseAcousticRiemannSolver
 	{
 	protected:
@@ -71,6 +91,11 @@ namespace SPH
 		inline void prepareSolver(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i,
 								  Real &ul, Real &ur, Real &rhol_cl, Real &rhor_cr);
 	};
+
+	/**
+	 * @struct AcousticRiemannSolver
+	 * @brief  Acoustic Riemann sovler with dissipation limiter(Ref: https://doi.org/10.1016/j.jcp.2017.01.027).  
+	 */
 	class AcousticRiemannSolver : public BaseAcousticRiemannSolver
 	{
 	public:
@@ -79,6 +104,10 @@ namespace SPH
 		Vecd getVStar(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
 	};
 
+	/**
+	 * @struct DissipativeRiemannSolver
+	 * @brief  Acoustic Riemann sovler without dissipation limiter(Ref: https://doi.org/10.1016/j.jcp.2017.01.027).  
+	 */
 	class DissipativeRiemannSolver : public BaseAcousticRiemannSolver
 	{
 	public:
@@ -87,6 +116,10 @@ namespace SPH
 		Vecd getVStar(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
 	};
 
+	/**
+	 * @struct HLLCRiemannSolverInWeaklyCompressibleFluid
+	 * @brief  HLLC Riemann for weakly-compressible flow. 
+	 */
 	class HLLCRiemannSolverInWeaklyCompressibleFluid
 	{
 		Fluid& fluid_i_, &fluid_j_;
@@ -97,6 +130,10 @@ namespace SPH
 		FluidState getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
 	};
 
+	/**
+	 * @struct HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid
+	 * @brief  HLLC Riemann with dissipation limiter for weakly-compressible flow. 
+	 */
 	class HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid
 	{
 		Fluid& fluid_i_, &fluid_j_;
@@ -107,6 +144,10 @@ namespace SPH
 		FluidState getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
 	};
 
+	/**
+	 * @struct HLLCRiemannSolver
+	 * @brief  HLLC Riemann solver. 
+	 */
 	class HLLCRiemannSolver
 	{
 		CompressibleFluid &compressible_fluid_i_, &compressible_fluid_j_;
@@ -117,6 +158,10 @@ namespace SPH
 		CompressibleFluidState getInterfaceState(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &direction_to_i);
 	};
 
+	/**
+	 * @struct HLLCRiemannSolver
+	 * @brief  HLLC Riemann solver with dissipation limiter. 
+	 */
 	class HLLCWithLimiterRiemannSolver
 	{
 		CompressibleFluid &compressible_fluid_i_, &compressible_fluid_j_;

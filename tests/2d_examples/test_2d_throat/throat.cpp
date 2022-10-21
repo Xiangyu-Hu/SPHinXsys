@@ -139,7 +139,7 @@ int main(int ac, char *av[])
 	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
-	ObserverBody fluid_observer(system, "FluidObserver");
+	ProbeBody fluid_observer(system, "FluidObserver");
 	StdVec<Vecd> observation_location = {Vecd(0)};
 	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	//----------------------------------------------------------------------

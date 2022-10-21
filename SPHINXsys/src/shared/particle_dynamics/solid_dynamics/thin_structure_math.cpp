@@ -1,58 +1,45 @@
-/**
- * @file 	thin_structure_math.cpp
- * @author	Dong Wu, Chi ZHang and Xiangyu Hu
- * @version	0.1
- */
-
 #include "thin_structure_math.h"
-
-using namespace SimTK;
 
 namespace SPH
 {
+	//=====================================================================================================//
 	namespace thin_structure_dynamics
 	{
 		//=================================================================================================//
 		Vec2d getVectorAfterThinStructureRotation(const Vec2d &initial_vector, const Vec2d &rotation_angles)
 		{
 			/**The rotation matrix. */
-			Mat2d rotation_matrix(0.0);
-			rotation_matrix[0][0] = cos(rotation_angles[0]);
-			rotation_matrix[0][1] = sin(rotation_angles[0]);
-			rotation_matrix[1][0] = -rotation_matrix[0][1];
-			rotation_matrix[1][1] = rotation_matrix[0][0];
+			Mat2d rotation_matrix{
+				{cos(rotation_angles[0]), sin(rotation_angles[0])}, 	// First row
+				{-sin(rotation_angles[0]),cos(rotation_angles[0])},		//Secdon row
+			};
 
 			return rotation_matrix * initial_vector;
 		}
 		//=================================================================================================//
 		Vec3d getVectorAfterThinStructureRotation(const Vec3d &initial_vector, const Vec3d &rotation_angles)
 		{
-			/**The rotation matrix about the X-axis. */
-			Mat3d rotation_matrix_x(0.0);
-			rotation_matrix_x[0][0] = 1.0;
-			rotation_matrix_x[1][1] = cos(rotation_angles[0]);
-			rotation_matrix_x[1][2] = -sin(rotation_angles[0]);
-			rotation_matrix_x[2][1] = -rotation_matrix_x[1][2];
-			rotation_matrix_x[2][2] = rotation_matrix_x[1][1];
-			/**The rotation matrix about the Y-axis. */
-			Mat3d rotation_matrix_y(0.0);
-			rotation_matrix_y[0][0] = cos(rotation_angles[1]);
-			rotation_matrix_y[0][2] = sin(rotation_angles[1]);
-			rotation_matrix_y[1][1] = 1.0;
-			rotation_matrix_y[2][0] = -rotation_matrix_y[0][2];
-			rotation_matrix_y[2][2] = rotation_matrix_y[0][0];
+			/**The rotation matrix is the rotation aroud Y-axis \times rotation aroud X-axis. */
+			Mat3d rotation_matrix = Mat3d{
+				{cos(rotation_angles[1]), 0.0, sin(rotation_angles[1])},
+				{0.0, 1.0, 0.0},
+				{-sin(rotation_angles[1]),0.0, cos(rotation_angles[1])},
+			} * Mat3d{
+				{1.0, 0.0, 0.0},
+				{0.0, cos(rotation_angles[0]), -sin(rotation_angles[0])},
+				{0.0, sin(rotation_angles[0]),  cos(rotation_angles[0])},
+			};
 
-			return rotation_matrix_y * rotation_matrix_x * initial_vector;
+			return rotation_matrix * initial_vector;
 		}
 		//=================================================================================================//
 		Vec2d getVectorChangeRateAfterThinStructureRotation(const Vec2d &initial_vector, const Vec2d &rotation_angles, const Vec2d &angular_vel)
 		{
 			/**The derivative of the rotation matrix. */
-			Mat2d drotation_matrix_dt(0.0);
-			drotation_matrix_dt[0][0] = -sin(rotation_angles[0]) * angular_vel[0];
-			drotation_matrix_dt[0][1] = cos(rotation_angles[0]) * angular_vel[0];
-			drotation_matrix_dt[1][0] = -drotation_matrix_dt[0][1];
-			drotation_matrix_dt[1][1] = drotation_matrix_dt[0][0];
+			Mat2d drotation_matrix_dt{
+				{-sin(rotation_angles[0]) * angular_vel[0], cos(rotation_angles[0]) * angular_vel[0]},
+				{-cos(rotation_angles[0]) * angular_vel[0],-sin(rotation_angles[0]) * angular_vel[0]},
+			};
 
 			return drotation_matrix_dt * initial_vector;
 		}
@@ -60,39 +47,36 @@ namespace SPH
 		Vec3d getVectorChangeRateAfterThinStructureRotation(const Vec3d &initial_vector, const Vec3d &rotation_angles, const Vec3d &angular_vel)
 		{
 			/**The rotation matrix about the X-axis. */
-			Mat3d rotation_matrix_x(0.0);
-			rotation_matrix_x[0][0] = 1.0;
-			rotation_matrix_x[1][1] = cos(rotation_angles[0]);
-			rotation_matrix_x[1][2] = -sin(rotation_angles[0]);
-			rotation_matrix_x[2][1] = -rotation_matrix_x[1][2];
-			rotation_matrix_x[2][2] = rotation_matrix_x[1][1];
+			Mat3d rotation_matrix_x{
+				{1.0, 0.0, 0.0},
+				{0.0, cos(rotation_angles[0]), -sin(rotation_angles[0])},
+				{0.0, sin(rotation_angles[0]), cos(rotation_angles[0])},
+			};
 			/**The rotation matrix about the Y-axis. */
-			Mat3d rotation_matrix_y(0.0);
-			rotation_matrix_y[0][0] = cos(rotation_angles[1]);
-			rotation_matrix_y[0][2] = sin(rotation_angles[1]);
-			rotation_matrix_y[1][1] = 1.0;
-			rotation_matrix_y[2][0] = -rotation_matrix_y[0][2];
-			rotation_matrix_y[2][2] = rotation_matrix_y[0][0];
-
+			Mat3d rotation_matrix_y{
+				{cos(rotation_angles[1]), 0.0, sin(rotation_angles[1])},
+				{0.0, 1.0, 0.0},
+				{-sin(rotation_angles[1]), 0.0, cos(rotation_angles[1])},
+			};
 			/**The derivative of the rotation matrix of the X-axis. */
-			Mat3d drotation_matrix_x_dt(0.0);
-			drotation_matrix_x_dt[1][1] = -sin(rotation_angles[0]) * angular_vel[0];
-			drotation_matrix_x_dt[1][2] = -cos(rotation_angles[0]) * angular_vel[0];
-			drotation_matrix_x_dt[2][1] = -drotation_matrix_x_dt[1][2];
-			drotation_matrix_x_dt[2][2] = drotation_matrix_x_dt[1][1];
+			Mat3d drotation_matrix_x_dt{
+				{0.0, 0.0, 0.0},
+				{0.0,-sin(rotation_angles[0]) * angular_vel[0],-cos(rotation_angles[0]) * angular_vel[0]},
+				{0.0, cos(rotation_angles[0]) * angular_vel[0], sin(rotation_angles[0]) * angular_vel[0]},
+			};
 			/**The derivative of the rotation matrix of the Y-axis. */
-			Mat3d drotation_matrix_y_dt(0.0);
-			drotation_matrix_y_dt[0][0] = -sin(rotation_angles[1]) * angular_vel[1];
-			drotation_matrix_y_dt[0][2] = cos(rotation_angles[1]) * angular_vel[1];
-			drotation_matrix_y_dt[2][0] = -drotation_matrix_y_dt[0][2];
-			drotation_matrix_y_dt[2][2] = drotation_matrix_y_dt[0][0];
+			Mat3d drotation_matrix_y_dt{
+				{-sin(rotation_angles[1]) * angular_vel[1], 0.0, cos(rotation_angles[1]) * angular_vel[1]},
+				{0.0, 0.0, 0.0},
+				{-cos(rotation_angles[1]) * angular_vel[1], 0.0,-sin(rotation_angles[1]) * angular_vel[1]},
+			};
 
 			return (drotation_matrix_y_dt * rotation_matrix_x + rotation_matrix_y * drotation_matrix_x_dt)* initial_vector;
 		}
 		//=================================================================================================//
 		Vec2d getRotationFromPseudoNormalForFiniteDeformation(const Vec2d &dpseudo_n_d2t, const Vec2d &rotation, const Vec2d &angular_vel, Real dt)
 		{
-			Vec2d dangular_vel_dt(0.0);
+			Vec2d dangular_vel_dt = Vec2d::Zero();
 			dangular_vel_dt[0] = -(dpseudo_n_d2t[0] + sin(rotation[0]) * powerN(angular_vel[0], 2))
 								 / (2 * sin(rotation[0]) * angular_vel[0] * dt - cos(rotation[0]));
 			return dangular_vel_dt;
@@ -100,7 +84,7 @@ namespace SPH
 		//=================================================================================================//
 		Vec3d getRotationFromPseudoNormalForFiniteDeformation(const Vec3d &dpseudo_n_d2t, const Vec3d &rotation, const Vec3d &angular_vel, Real dt)
 		{
-			Vec3d dangular_vel_dt(0.0);
+			Vec3d dangular_vel_dt = Vec3d::Zero();
 			dangular_vel_dt[0] = (dpseudo_n_d2t[1] - sin(rotation[0]) * powerN(angular_vel[0], 2))
 								 / (2 * sin(rotation[0]) * angular_vel[0] * dt - cos(rotation[0]));
 			dangular_vel_dt[1] = (dpseudo_n_d2t[0] + cos(rotation[0]) * sin(rotation[1])
@@ -117,14 +101,14 @@ namespace SPH
 		//=================================================================================================//
 		Vec2d getRotationFromPseudoNormalForSmallDeformation(const Vec2d &dpseudo_n_d2t, const Vec2d &rotation, const Vec2d &angular_vel, Real dt)
 		{
-			Vec2d dangular_vel_dt(0.0);
+			Vec2d dangular_vel_dt = Vec2d::Zero();
 			dangular_vel_dt[0] = dpseudo_n_d2t[0];
 			return dangular_vel_dt;
 		}
 		//=================================================================================================//
 		Vec3d getRotationFromPseudoNormalForSmallDeformation(const Vec3d &dpseudo_n_d2t, const Vec3d &rotation, const Vec3d &angular_vel, Real dt)
 		{
-			Vec3d dangular_vel_dt(0.0);
+			Vec3d dangular_vel_dt = Vec3d::Zero();
 			dangular_vel_dt[0] = -dpseudo_n_d2t[1];
 			dangular_vel_dt[1] = dpseudo_n_d2t[0];
 			return dangular_vel_dt;
@@ -139,7 +123,7 @@ namespace SPH
 		//=================================================================================================//
 		Vec3d getNormalFromDeformationGradientTensor(const Mat3d &F)
 		{
-			Vec3d n = F.col(0) % F.col(1);
+			Vec3d n = Vec3d::Ones();// (F(0,0) % F(1,0), F(0,1) % F(1,1), F(0,2) % F(1,2));
 			n = n / (n.norm() + Eps);
 			return n;
 		}
@@ -167,16 +151,16 @@ namespace SPH
 			Vecd f3 = v2 / 3.0 + 5.0 * v3 / 6.0 - v4 / 6.0;
 
 			Real epsilon = 1.0e-6;
-			Real s1 = dot(v2 - v3, v2 - v3) + epsilon;
-			Real s2 = dot(v2 - v1, v2 - v1) + epsilon;
-			Real s3 = dot(3.0 * v2 - 4.0 * v3 + v4, 3.0 * v2 - 4.0 * v3 + v4) / 4.0
-					  + 13.0 * dot(v2 - 2.0 * v3 + v4, v2 - 2.0 * v3 + v4) / 12.0 + epsilon;
-			Real s12 = 13.0 * dot(v1 - 2.0 * v2 + v3, v1 - 2.0 * v2 + v3) / 12.0
-					   + dot(v1 - v3, v1 - v3) / 4.0 + epsilon;
-			Real s4 = (dot(v1, 6649.0 * v1 - 30414.0 * v2 + 23094.0 * v3 - 5978.0 * v4)
-					   + 3.0 * dot(v2, 13667.0 * v2 - 23534.0 * v3 + 6338.0 * v4)
-					   + 3.0 * dot(v3, 11147.0 * v3 - 6458.0 * v4)
-					   + 3169.0 * dot(v4, v4)) / 2880.0;
+			Real s1 = (v2 - v3).dot(v2 - v3) + epsilon;
+			Real s2 = (v2 - v1).dot(v2 - v1) + epsilon;
+			Real s3 = (3.0 * v2 - 4.0 * v3 + v4).dot(3.0 * v2 - 4.0 * v3 + v4) / 4.0
+					  + 13.0 * (v2 - 2.0 * v3 + v4).dot(v2 - 2.0 * v3 + v4) / 12.0 + epsilon;
+			Real s12 = 13.0 * (v1 - 2.0 * v2 + v3).dot(v1 - 2.0 * v2 + v3) / 12.0
+					   + (v1 - v3).dot(v1 - v3) / 4.0 + epsilon;
+			Real s4 = (v1.dot(6649.0 * v1 - 30414.0 * v2 + 23094.0 * v3 - 5978.0 * v4)
+					   + 3.0 * v2.dot(13667.0 * v2 - 23534.0 * v3 + 6338.0 * v4)
+					   + 3.0 * v3.dot(11147.0 * v3 - 6458.0 * v4)
+					   + 3169.0 * v4.dot(v4)) / 2880.0;
 			Real tau_4 = s4 - 0.5 * (s1 + s2);
 
 			Real alpha_1 = (1.0 + (tau_4 / s1) * (tau_4 / s12)) / 3.0;
@@ -213,33 +197,33 @@ namespace SPH
 		//=================================================================================================//
 		Vec2d getRotationJump(const Vec2d &pseudo_n_jump, const Mat2d &transformation_matrix)
 		{
-			Vec2d local_rotation_jump(0.0);
+			Vec2d local_rotation_jump =  Vec2d::Zero();
 			Vec2d local_pseuodo_n_jump = transformation_matrix * pseudo_n_jump;
 			local_rotation_jump[0] = local_pseuodo_n_jump[0];
-			return ~transformation_matrix * local_rotation_jump;
+			return transformation_matrix.transpose() * local_rotation_jump;
 		}
 		//=================================================================================================//
 		Vec3d getRotationJump(const Vec3d &pseudo_n_jump, const Mat3d &transformation_matrix)
 		{
-			Vec3d local_rotation_jump(0.0);
+			Vec3d local_rotation_jump = Vec3d::Zero();
 			Vec3d local_pseuodo_n_jump = transformation_matrix * pseudo_n_jump;
 			local_rotation_jump[0] = local_pseuodo_n_jump[0];
 			local_rotation_jump[1] = local_pseuodo_n_jump[1];
-			return ~transformation_matrix * local_rotation_jump;
+			return transformation_matrix.transpose() * local_rotation_jump;
 		}
 		//=================================================================================================//
 		Mat2d getCorrectedAlmansiStrain(const Mat2d &current_local_almansi_strain, const Real &nu_)
 		{
 			Mat2d corrected_almansi_strain = current_local_almansi_strain;
-			corrected_almansi_strain[1][1] = -nu_ * corrected_almansi_strain[0][0] / (1.0 - nu_);
+			corrected_almansi_strain(1,1) = -nu_ * current_local_almansi_strain(0,0) / (1.0 - nu_);
 			return corrected_almansi_strain;
 		}
 		//=================================================================================================//
 		Mat3d getCorrectedAlmansiStrain(const Mat3d &current_local_almansi_strain, const Real &nu_)
 		{
 			Mat3d corrected_almansi_strain = current_local_almansi_strain;
-			corrected_almansi_strain[2][2]
-				= -nu_ * (corrected_almansi_strain[0][0] + corrected_almansi_strain[1][1]) / (1.0 - nu_);
+			corrected_almansi_strain(2,2)
+				= -nu_ * (current_local_almansi_strain(0,0) + current_local_almansi_strain(1,1)) / (1.0 - nu_);
 			return corrected_almansi_strain;
 		}
 		//=================================================================================================//

@@ -1,5 +1,3 @@
-// common functions used by 3d buildings only
-
 #include "particle_generator_lattice.h"
 
 #include "complex_shape.h"

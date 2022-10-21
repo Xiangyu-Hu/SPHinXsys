@@ -12,13 +12,13 @@
 #include "polar_decomposition_3x3.h"
 
 using namespace polar;
-using namespace SimTK;
 
 namespace SPH
 {
+	//=====================================================================================================//
 	namespace solid_dynamics
 	{
-		//=========================================================================================//
+		//=================================================================================================//
 		void UpdateElasticNormalDirection::update(size_t index_i, Real dt)
 		{
 			Matd& F = F_[index_i];
@@ -39,8 +39,9 @@ namespace SPH
 		//=================================================================================================//
 		void ConstraintBySimBody::update(size_t index_i, Real dt)
 		{
-			Vec3 rr, pos, vel, acc;
-			rr = pos0_[index_i] - initial_mobod_origin_location_;
+			/** Change to SimTK::Vector. */
+			SimTK::Vec3 rr, pos, vel, acc;
+			rr = SimTK::Vec3(pos0_[index_i][0], pos0_[index_i][1] ,pos0_[index_i][2]) - initial_mobod_origin_location_;
 			mobod_.findStationLocationVelocityAndAccelerationInGround(*simbody_state_, rr, pos, vel, acc);
 			/** this is how we calculate the particle position in after transform of MBbody.
 			 * const SimTK::Rotation&  R_GB = mobod_.getBodyRotation(simbody_state);
@@ -48,20 +49,24 @@ namespace SPH
 			 * const SimTK::Vec3 r = R_GB * rr; // re-express station vector p_BS in G (15 flops)
 			 * base_particle_data_i.pos_ = (p_GB + r);
 			 */
-			pos_[index_i] = pos;
-			vel_[index_i] = vel;
-			n_[index_i] = (mobod_.getBodyRotation(*simbody_state_) * n0_[index_i]);
+			SimTK::Vec3 n  = (mobod_.getBodyRotation(*simbody_state_) * SimTK::Vec3(n0_[index_i][0], n0_[index_i][1], n0_[index_i][2]));
+			/** Change vector to egien. */
+			pos_[index_i] = Vecd(pos[0], pos[1], pos[2]);
+			vel_[index_i] = Vecd(vel[0], vel[1], vel[2]);
+			n_[index_i] = Vecd(n[0], n[1], n[2]);
 		}
 		//=================================================================================================//
 		SimTK::SpatialVec TotalForceForSimBody::reduce(size_t index_i, Real dt)
 		{
-			Vec3 force_from_particle = (acc_[index_i] + acc_prior_[index_i]) * mass_[index_i];
-			Vec3 displacement(0);
-			displacement = pos_[index_i] - current_mobod_origin_location_;
-			Vec3 torque_from_particle = cross(displacement, force_from_particle);
+			Vecd force = (acc_[index_i] + acc_prior_[index_i]) * mass_[index_i];
+			/** Change to SimTK::Vector. */
+			SimTK::Vec3 force_from_particle(force[0], force[1], force[2]);
+			SimTK::Vec3 displacement = SimTK::Vec3(pos_[index_i][0], pos_[index_i][1], pos_[index_i][2]) - current_mobod_origin_location_;
+			SimTK::Vec3 torque_from_particle = SimTK::cross(displacement, force_from_particle);
 
 			return SimTK::SpatialVec(torque_from_particle, force_from_particle);
 		}
 		//=================================================================================================//	
 	}
+	//=====================================================================================================//
 }

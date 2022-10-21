@@ -1,17 +1,11 @@
-/**
- * @file 	elastic_dynamics.cpp
- * @author	Luhui Han, Chi Zhang and Xiangyu Hu
- */
-
 #include "elastic_dynamics.h"
 #include "general_dynamics.h"
 
 #include <numeric>
 
-using namespace SimTK;
-
 namespace SPH
 {
+//=========================================================================================================//
 	namespace solid_dynamics
 	{
 		//=================================================================================================//
@@ -30,20 +24,17 @@ namespace SPH
 							   smoothing_length_ / (c0_ + vel_[index_i].norm()));
 		}
 		//=================================================================================================//
-		ElasticDynamicsInitialCondition::
-			ElasticDynamicsInitialCondition(SPHBody &sph_body)
+		ElasticDynamicsInitialCondition::ElasticDynamicsInitialCondition(SPHBody &sph_body)
 			: LocalDynamics(sph_body),
 			  ElasticSolidDataSimple(sph_body),
 			  pos_(particles_->pos_), vel_(particles_->vel_) {}
 		//=================================================================================================//
-		UpdateElasticNormalDirection::
-			UpdateElasticNormalDirection(SPHBody &sph_body)
+		UpdateElasticNormalDirection::UpdateElasticNormalDirection(SPHBody &sph_body)
 			: LocalDynamics(sph_body),
 			  ElasticSolidDataSimple(sph_body),
 			  n_(particles_->n_), n0_(particles_->n0_), F_(particles_->F_) {}
 		//=================================================================================================//
-		DeformationGradientTensorBySummation::
-			DeformationGradientTensorBySummation(BaseBodyRelationInner &inner_relation)
+		DeformationGradientTensorBySummation::DeformationGradientTensorBySummation(BaseBodyRelationInner &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_), ElasticSolidDataInner(inner_relation),
 			  Vol_(particles_->Vol_), pos_(particles_->pos_),
 			  B_(particles_->B_), F_(particles_->F_) {}
@@ -52,29 +43,27 @@ namespace SPH
 		{
 			Vecd &pos_n_i = pos_[index_i];
 
-			Matd deformation(0.0);
+			Matd deformation = Matd::Identity();
 			Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = inner_neighborhood.j_[n];
 
 				Vecd gradW_ij = inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n];
-				deformation -= Vol_[index_j] * SimTK::outer((pos_n_i - pos_[index_j]), gradW_ij);
+				deformation -= Vol_[index_j] * (pos_n_i - pos_[index_j]) * gradW_ij.transpose();
 			}
 
 			F_[index_i] = deformation * B_[index_i];
 		}
 		//=================================================================================================//
-		BaseElasticRelaxation::
-			BaseElasticRelaxation(BaseBodyRelationInner &inner_relation)
+		BaseElasticRelaxation::BaseElasticRelaxation(BaseBodyRelationInner &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_),
 			  ElasticSolidDataInner(inner_relation), Vol_(particles_->Vol_),
 			  rho_(particles_->rho_), mass_(particles_->mass_),
 			  pos_(particles_->pos_), vel_(particles_->vel_), acc_(particles_->acc_),
 			  B_(particles_->B_), F_(particles_->F_), dF_dt_(particles_->dF_dt_) {}
 		//=================================================================================================//
-		BaseStressRelaxationFirstHalf::
-			BaseStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation)
+		BaseStressRelaxationFirstHalf::BaseStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation)
 			: BaseElasticRelaxation(inner_relation),
 			  acc_prior_(particles_->acc_prior_)
 		{
@@ -88,8 +77,7 @@ namespace SPH
 			vel_[index_i] += (acc_prior_[index_i] + acc_[index_i]) * dt;
 		}
 		//=================================================================================================//
-		StressRelaxationFirstHalf::
-			StressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation)
+		StressRelaxationFirstHalf::StressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation)
 			: BaseStressRelaxationFirstHalf(inner_relation)
 		{
 			particles_->registerVariable(stress_PK1_B_, "CorrectedStressPK1");
@@ -100,7 +88,7 @@ namespace SPH
 		{
 			pos_[index_i] += vel_[index_i] * dt * 0.5;
 			F_[index_i] += dF_dt_[index_i] * dt * 0.5;
-			rho_[index_i] = rho0_ / det(F_[index_i]);
+			rho_[index_i] = rho0_ / F_[index_i].determinant();
 			// obtain the first Piola-Kirchhoff stress from the second Piola-Kirchhoff stress
 			// it seems using reproducing correction here increases convergence rate near the free surface
 			stress_PK1_B_[index_i] = F_[index_i] * material_->StressPK2(F_[index_i], index_i) * B_[index_i];
@@ -109,7 +97,7 @@ namespace SPH
 		void StressRelaxationFirstHalf::interaction(size_t index_i, Real dt)
 		{
 			// including gravity and force from fluid
-			Vecd acceleration(0);
+			Vecd acceleration = Vecd::Zero();
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
@@ -119,13 +107,13 @@ namespace SPH
 				Real dim_r_ij_1 = Dimensions / r_ij;
 				Vecd pos_jump = pos_[index_i] - pos_[index_j];
 				Vecd vel_jump = vel_[index_i] - vel_[index_j];
-				Real strain_rate = SimTK::dot(pos_jump, vel_jump) * dim_r_ij_1 * dim_r_ij_1;
+				Real strain_rate = dim_r_ij_1 * dim_r_ij_1 * pos_jump.dot(vel_jump);
 				Real weight = inner_neighborhood.W_ij_[n] * inv_W0_;
 				Matd numerical_stress_ij =
 					0.5 * (F_[index_i] + F_[index_j]) * material_->PairNumericalDamping(strain_rate, smoothing_length_);
-				acceleration += (stress_PK1_B_[index_i] + stress_PK1_B_[index_j] +
-								 numerical_dissipation_factor_ * weight * numerical_stress_ij) *
-								inner_neighborhood.dW_ij_[n] * e_ij * Vol_[index_j] * inv_rho0_;
+				acceleration += inv_rho0_ *  Vol_[index_j] * inner_neighborhood.dW_ij_[n] *
+								(stress_PK1_B_[index_i] + stress_PK1_B_[index_j] +
+								 	numerical_dissipation_factor_ * weight * numerical_stress_ij) * e_ij;
 			}
 
 			acc_[index_i] = acceleration;
@@ -139,20 +127,19 @@ namespace SPH
 		{
 			pos_[index_i] += vel_[index_i] * dt * 0.5;
 			F_[index_i] += dF_dt_[index_i] * dt * 0.5;
-			rho_[index_i] = rho0_ / det(F_[index_i]);
-			Real J = det(F_[index_i]);
+			rho_[index_i] = rho0_ / F_[index_i].determinant();
+			Real J = F_[index_i].determinant();
 			Real one_over_J = 1.0 / J;
 			rho_[index_i] = rho0_ * one_over_J;
 			Real J_to_minus_2_over_dimension = pow(one_over_J, 2.0 * one_over_dimensions_);
-			Matd normalized_b = (F_[index_i] * ~F_[index_i]) * J_to_minus_2_over_dimension;
-			Matd deviatoric_b = normalized_b - Matd(1.0) * normalized_b.trace() * one_over_dimensions_;
-			Matd inverse_F_T = ~SimTK::inverse(F_[index_i]);
+			Matd normalized_b = (F_[index_i] * F_[index_i].transpose()) * J_to_minus_2_over_dimension;
+			Matd deviatoric_b = normalized_b - Matd::Identity() * normalized_b.trace() * one_over_dimensions_;
+			Matd inverse_F_T = F_[index_i].inverse().transpose();
 			// obtain the first Piola-Kirchhoff stress from the Kirchhoff stress
 			// it seems using reproducing correction here increases convergence rate
 			// near the free surface however, this correction is not used for the numerical dissipation
-			stress_PK1_B_[index_i] = (Matd(1.0) * material_->VolumetricKirchhoff(J) +
-									  material_->DeviatoricKirchhoff(deviatoric_b)) *
-									 inverse_F_T * B_[index_i];
+			stress_PK1_B_[index_i] = ( Matd::Identity() * material_->VolumetricKirchhoff(J) +
+									  	material_->DeviatoricKirchhoff(deviatoric_b) ) * inverse_F_T * B_[index_i];
 		}
 		//=================================================================================================//
 		KirchhoffStressRelaxationFirstHalf::
@@ -168,22 +155,21 @@ namespace SPH
 		{
 			pos_[index_i] += vel_[index_i] * dt * 0.5;
 			F_[index_i] += dF_dt_[index_i] * dt * 0.5;
-			Real J = det(F_[index_i]);
+			Real J = F_[index_i].determinant();
 			Real one_over_J = 1.0 / J;
 			rho_[index_i] = rho0_ * one_over_J;
 			J_to_minus_2_over_dimension_[index_i] = pow(one_over_J * one_over_J, one_over_dimensions_);
-			inverse_F_T_[index_i] = ~SimTK::inverse(F_[index_i]);
-			stress_on_particle_[index_i] =
-				inverse_F_T_[index_i] * (material_->VolumetricKirchhoff(J) -
-										 correction_factor_ * material_->ShearModulus() *
-											 J_to_minus_2_over_dimension_[index_i] * (F_[index_i] * ~F_[index_i]).trace() * one_over_dimensions_) +
-				material_->NumericalDampingLeftCauchy(F_[index_i], dF_dt_[index_i], smoothing_length_, index_i) * inverse_F_T_[index_i];
+			inverse_F_T_[index_i] = F_[index_i].inverse().transpose();
+			stress_on_particle_[index_i] = inverse_F_T_[index_i] * 
+				(material_->VolumetricKirchhoff(J) - correction_factor_ * material_->ShearModulus() *
+				 J_to_minus_2_over_dimension_[index_i] * (F_[index_i] * F_[index_i].transpose()).trace() * one_over_dimensions_) 
+				+ material_->NumericalDampingLeftCauchy(F_[index_i], dF_dt_[index_i], smoothing_length_, index_i) * inverse_F_T_[index_i];
 		}
 		//=================================================================================================//
 		void KirchhoffStressRelaxationFirstHalf::interaction(size_t index_i, Real dt)
 		{
 			// including gravity and force from fluid
-			Vecd acceleration(0);
+			Vecd acceleration = Vecd::Zero();
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
@@ -206,15 +192,14 @@ namespace SPH
 		{
 			const Vecd &vel_n_i = vel_[index_i];
 
-			Matd deformation_gradient_change_rate(0);
+			Matd deformation_gradient_change_rate = Matd::Zero();
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = inner_neighborhood.j_[n];
 
 				Vecd gradW_ij = inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n];
-				deformation_gradient_change_rate -=
-					Vol_[index_j] * SimTK::outer((vel_n_i - vel_[index_j]), gradW_ij);
+				deformation_gradient_change_rate -= Vol_[index_j] * (vel_n_i - vel_[index_j]) * gradW_ij.transpose();
 			}
 
 			dF_dt_[index_i] = deformation_gradient_change_rate * B_[index_i];

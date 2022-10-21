@@ -123,7 +123,7 @@ int main(int ac, char *av[])
 	beam_body.generateParticles<ParticleGeneratorLattice>();
 
 	// Define Observer
-	ObserverBody beam_observer(system, "BeamObserver");
+	ProbeBody beam_observer(system, "BeamObserver");
 	beam_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	/** topology */
 	BodyRelationInner beam_body_inner(beam_body);

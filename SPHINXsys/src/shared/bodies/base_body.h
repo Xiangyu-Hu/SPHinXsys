@@ -1,25 +1,25 @@
-/* -----------------------------------------------------------------------------*
- *                               SPHinXsys                                      *
- * -----------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
- * physical accurate simulation and aims to model coupled industrial dynamic    *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
- * (smoothed particle hydrodynamics), a meshless computational method using     *
- * particle discretization.                                                     *
- *                                                                              *
- * SPHinXsys is partially funded by German Research Foundation                  *
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
- * HU1527/12-1 and HU1527/12-4.                                                 *
- *                                                                              *
- * Portions copyright (c) 2017-2022 Technical University of Munich and          *
- * the authors' affiliations.                                                   *
- *                                                                              *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
- * not use this file except in compliance with the License. You may obtain a    *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
- *                                                                              *
- * -----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and Hu1527/12-4												*
+ *                                                                          *
+ * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	base_body.h
  * @brief 	These are the base classes of SPH bodies. The RealBody is for
@@ -29,7 +29,11 @@
  * 			such as intersection, should be produced first.
  * 			Then, all shapes used in body definition should be either contain
  * 			or not contain each other. Partial overlap between them are not permitted.
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Chi ZHang and Xiangyu Hu
+ * @version	1.0
+ *			Try to implement EIGEN libaary for base vector, matrix and 
+ *			linear algebra operation.  
+ *			-- Chi ZHANG
  */
 
 #ifndef BASE_BODY_H
@@ -94,9 +98,7 @@ namespace SPH
 		bool checkNewlyUpdated() { return newly_updated_; };
 		BoundingBox getBodyShapeBounds();
 		BoundingBox getSPHSystemBounds();
-		//----------------------------------------------------------------------
-		//		Object factory template functions
-		//----------------------------------------------------------------------
+		/** Object factory template functions. */
 		virtual void defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
 
 		template <typename... ConstructorArgs>
@@ -206,9 +208,7 @@ namespace SPH
 		virtual void sortParticleWithCellLinkedList();
 		void updateCellLinkedList();
 		void updateCellLinkedListWithParticleSort(size_t particle_sort_period);
-		//----------------------------------------------------------------------
-		//		Object factory template functions
-		//----------------------------------------------------------------------
+		/** Object factory template functions. */
 		template <class AdaptationType, typename... ConstructorArgs>
 		void defineAdaptation(ConstructorArgs &&...args)
 		{

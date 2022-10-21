@@ -1,33 +1,39 @@
-/* -----------------------------------------------------------------------------*
- *                               SPHinXsys                                      *
- * -----------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
- * physical accurate simulation and aims to model coupled industrial dynamic    *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
- * (smoothed particle hydrodynamics), a meshless computational method using     *
- * particle discretization.                                                     *
- *                                                                              *
- * SPHinXsys is partially funded by German Research Foundation                  *
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
- * HU1527/12-1 and HU1527/12-4.                                                 *
- *                                                                              *
- * Portions copyright (c) 2017-2022 Technical University of Munich and          *
- * the authors' affiliations.                                                   *
- *                                                                              *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
- * not use this file except in compliance with the License. You may obtain a    *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
- *                                                                              *
- * -----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and Hu1527/12-4												*
+ *                                                                          *
+ * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
-* @file 	elastic_solid.h
-* @brief 	These are classes for define properties of elastic solid materials.
-*			These classes are based on isotropic linear elastic solid.
-* 			Several more complex materials, including neo-Hookean, FENE neo-Hookean
-*			and anisotropic muscle, are derived from the basic elastic solid class.
-* @author	Xiangyu Hu and Chi Zhang
-*/
+ * @file 	elastic_solid.h
+ * @brief 	These are classes for define properties of elastic solid materials.
+ *			These classes are based on isotropic linear elastic solid.
+ * 			Several more complex materials, including neo-Hookean, FENE neo-Hookean
+ *			and anisotropic muscle, are derived from the basic elastic solid class. 
+ * @author	Chi ZHang and Xiangyu Hu
+ * @version	1.0
+ *			Try to implement EIGEN libaary for base vector, matrix and 
+ *			linear algebra operation.  
+ *			Move the defination of OrthotropicSolid class to for_3D_Build folder
+ *			As its only for 3D problems. 
+ *			-- Chi ZHANG
+ */
 
 #ifndef ELASTIC_SOLID_H
 #define ELASTIC_SOLID_H
@@ -39,7 +45,7 @@ namespace SPH
 {
 	/**
 	* @class ElasticSolid
-	* @brief Abstract class for a generalized elastic solid
+	* @brief Abstract class for elastic solid material. 
 	*/
 	class ElasticSolid : public Solid
 	{
@@ -55,9 +61,8 @@ namespace SPH
 		void setSoundSpeeds();
 
 	public:
-		explicit ElasticSolid(Real rho0)
-			: Solid(rho0), c0_(0.0), ct0_(0.0), cs0_(0.0),
-			  E0_(0.0), G0_(0.0), K0_(0.0), nu_(0.0)
+		explicit ElasticSolid(Real rho0): Solid(rho0), c0_(0.0), ct0_(0.0), cs0_(0.0),
+			E0_(0.0), G0_(0.0), K0_(0.0), nu_(0.0)
 		{
 			material_type_name_ = "ElasticSolid";
 		};
@@ -96,7 +101,7 @@ namespace SPH
 	/**
 	* @class LinearElasticSolid
 	* @brief Isotropic linear elastic solid.
-	* Note that only basic parameters are used to set ElasticSolid parameters 
+	* 		 Note that only basic parameters are used to set ElasticSolid parameters 
 	*/
 	class LinearElasticSolid : public ElasticSolid
 	{
@@ -126,8 +131,8 @@ namespace SPH
 	/**
 	* @class SaintVenantKirchhoffSolid
 	* @brief Every thing same as linear elastic but assume 
-	* finite deformation (geometry nonlinearity). 
-	* It is the simplest hyper-elastic material model.
+	* 		 finite deformation (geometry nonlinearity). 
+	* 		 It is the simplest hyper-elastic material model.
 	*/
 	class SaintVenantKirchhoffSolid : public LinearElasticSolid
 	{
@@ -252,8 +257,8 @@ namespace SPH
 		explicit Muscle(Real rho0, Real bulk_modulus,
 						const Vecd &f0, const Vecd &s0, const Real (&a0)[4], const Real (&b0)[4])
 			: NeoHookeanSolid(rho0, this->getYoungsModulus(bulk_modulus, a0, b0), this->getPoissonRatio(bulk_modulus, a0, b0)),
-			  f0_(f0), s0_(s0), f0f0_(SimTK::outer(f0_, f0_)), s0s0_(SimTK::outer(s0_, s0_)),
-			  f0s0_(SimTK::outer(f0_, s0_))
+			  f0_(f0), s0_(s0), f0f0_(f0_ * f0_.transpose()), s0s0_(s0_ * s0_.transpose()),
+			  f0s0_(f0_ * s0_.transpose())
 		{
 			material_type_name_ = "Muscle";
 			std::copy(a0, a0 + 4, a0_);
@@ -285,10 +290,10 @@ namespace SPH
 	/**
 	* @class LocallyOrthotropicMuscle
 	* @brief muscle model is a anisotropic material in which
-	* there are local fiber direction and cross-fiber sheet direction.
-	* the model here is from
-	* Holzapfel and Ogden, 2009, Phil. Trans. R. Soc. 367:3445-3475
-	* we consider a neo-Hookean model for the background isotropic contribution.
+	* 		 there are local fiber direction and cross-fiber sheet direction.
+	* 		 the model here is from
+	* 		 Holzapfel and Ogden, 2009, Phil. Trans. R. Soc. 367:3445-3475
+	* 		 we consider a neo-Hookean model for the background isotropic contribution.
 	*/
 	class LocallyOrthotropicMuscle : public Muscle
 	{
@@ -304,7 +309,7 @@ namespace SPH
 		StdLargeVec<Vecd> local_s0_; /**< local sheet direction. */
 
 		explicit LocallyOrthotropicMuscle(Real rho0, Real bulk_modulus,
-						const Vecd &f0, const Vecd &s0, const Real (&a0)[4], const Real (&b0)[4])
+				const Vecd &f0, const Vecd &s0, const Real (&a0)[4], const Real (&b0)[4])
 			: Muscle(rho0, bulk_modulus, f0, s0, a0, b0)
 		{
 			material_type_name_ = "LocallyOrthotropicMuscle";

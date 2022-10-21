@@ -1,8 +1,3 @@
-/**
- * @file 	base_body_part.cpp
- * @brief 	Here, Functions belong to base body part are given.
- * @author	Chi ZHang and Xiangyu Hu
- */
 #include "base_body_part.h"
 
 #include "base_particles.hpp"

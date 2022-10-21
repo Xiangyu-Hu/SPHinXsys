@@ -91,7 +91,7 @@ int main()
 	plate_body.generateParticles<PlateParticleGenerator>();
 	plate_body.addBodyStateForRecording<Vecd>("PriorAcceleration");
 
-	ObserverBody plate_observer(system, "PlateObserver");
+	ProbeBody plate_observer(system, "PlateObserver");
 	plate_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	//----------------------------------------------------------------------
 	//	Define body relation map.

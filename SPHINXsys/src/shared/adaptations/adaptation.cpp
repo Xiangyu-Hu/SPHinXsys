@@ -1,9 +1,3 @@
-/**
- * @file sph_adaptation.cpp
- * @brief Definition of functions declared in adaptation.h
- * @author	Xiangyu Hu and Chi Zhang
- */
-
 #include "adaptation.h"
 
 #include "sph_system.h"
@@ -26,7 +20,7 @@ namespace SPH
 		  kernel_ptr_(makeUnique<KernelWendlandC2>(h_ref_)),
 		  spacing_min_(this->RefinedSpacing(spacing_ref_, local_refinement_level_)),
 		  h_ratio_max_(powerN(2.0, local_refinement_level_)),
-		  number_density_max_(this->computeReferenceNumberDensity(Vecd(0), h_ratio_max_)){};
+		  number_density_max_(this->computeReferenceNumberDensity(h_ratio_max_)){};
 	//=================================================================================================//
 	Real SPHAdaptation::
 		RefinedSpacing(Real coarse_particle_spacing, int refinement_level)
@@ -34,45 +28,9 @@ namespace SPH
 		return coarse_particle_spacing / powerN(2.0, refinement_level);
 	}
 	//=================================================================================================//
-	Real SPHAdaptation::computeReferenceNumberDensity(Vec2d zero, Real h_ratio)
-	{
-		Real sigma(0);
-		Real cutoff_radius = kernel_ptr_->CutOffRadius(h_ratio);
-		Real particle_spacing = ReferenceSpacing() / h_ratio;
-		int search_depth = int(cutoff_radius / particle_spacing) + 1;
-		for (int j = -search_depth; j <= search_depth; ++j)
-			for (int i = -search_depth; i <= search_depth; ++i)
-			{
-				Vec2d particle_location(Real(i) * particle_spacing, Real(j) * particle_spacing);
-				Real distance = particle_location.norm();
-				if (distance < cutoff_radius)
-					sigma += kernel_ptr_->W(h_ratio, distance, particle_location);
-			}
-		return sigma;
-	}
-	//=================================================================================================//
-	Real SPHAdaptation::computeReferenceNumberDensity(Vec3d zero, Real h_ratio)
-	{
-		Real sigma(0);
-		Real cutoff_radius = kernel_ptr_->CutOffRadius(h_ratio);
-		Real particle_spacing = ReferenceSpacing() / h_ratio;
-		int search_depth = int(cutoff_radius / particle_spacing) + 1;
-		for (int k = -search_depth; k <= search_depth; ++k)
-			for (int j = -search_depth; j <= search_depth; ++j)
-				for (int i = -search_depth; i <= search_depth; ++i)
-				{
-					Vec3d particle_location(Real(i) * particle_spacing,
-											Real(j) * particle_spacing, Real(k) * particle_spacing);
-					Real distance = particle_location.norm();
-					if (distance < cutoff_radius)
-						sigma += kernel_ptr_->W(h_ratio, distance, particle_location);
-				}
-		return sigma;
-	}
-	//=================================================================================================//
 	Real SPHAdaptation::ReferenceNumberDensity()
 	{
-		return computeReferenceNumberDensity(Vecd(0), 1.0);
+		return computeReferenceNumberDensity(1.0);
 	}
 	//=================================================================================================//
 	void SPHAdaptation::resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio)
@@ -110,7 +68,7 @@ namespace SPH
 		local_refinement_level_ = local_refinement_level;
 		spacing_min_ = RefinedSpacing(spacing_ref_, local_refinement_level_);
 		h_ratio_max_ = powerN(2.0, local_refinement_level_);
-		number_density_max_ = computeReferenceNumberDensity(Vecd(0), h_ratio_max_);
+		number_density_max_ = computeReferenceNumberDensity(h_ratio_max_);
 	}
 	//=================================================================================================//
 	size_t ParticleWithLocalRefinement::getCellLinkedListTotalLevel()

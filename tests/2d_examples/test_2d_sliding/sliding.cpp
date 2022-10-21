@@ -82,7 +82,7 @@ int main(int ac, char *av[])
 	wall_boundary.defineParticlesAndMaterial<SolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
-	ObserverBody cube_observer(sph_system, "CubeObserver");
+	ProbeBody cube_observer(sph_system, "CubeObserver");
 	cube_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	//----------------------------------------------------------------------
 	//	Define body relation map.

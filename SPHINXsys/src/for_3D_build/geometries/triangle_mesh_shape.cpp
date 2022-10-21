@@ -3,8 +3,7 @@
 namespace SPH
 {
 	//=================================================================================================//
-	SimTK::ContactGeometry::TriangleMesh *TriangleMeshShape::
-		generateTriangleMesh(const SimTK::PolygonalMesh &poly_mesh)
+	SimTK::ContactGeometry::TriangleMesh *TriangleMeshShape::generateTriangleMesh(const SimTK::PolygonalMesh &poly_mesh)
 	{
 		SimTK::ContactGeometry::TriangleMesh *triangle_mesh;
 		triangle_mesh = triangle_mesh_ptr_keeper_.createPtr<SimTK::ContactGeometry::TriangleMesh>(poly_mesh);
@@ -19,13 +18,14 @@ namespace SPH
 		return triangle_mesh;
 	}
 	//=================================================================================================//
-	bool TriangleMeshShape::checkContain(const Vec3d &pnt, bool BOUNDARY_INCLUDED)
+	bool TriangleMeshShape::checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED)
 	{
 
+		SimTK::Vec3 in_pnt(pnt[0], pnt[1], pnt[2]);
 		SimTK::Vec2 uv_coordinate;
 		bool inside = false;
 		int face_id;
-		Vec3d closest_pnt = triangle_mesh_->findNearestPoint(pnt, inside, face_id, uv_coordinate);
+		SimTK::Vec3 closest_pnt = triangle_mesh_->findNearestPoint(in_pnt, inside, face_id, uv_coordinate);
 
 		StdVec<int> neighbor_face(4);
 		neighbor_face[0] = face_id;
@@ -37,7 +37,7 @@ namespace SPH
 			neighbor_face[i] = face != face_id ? face : triangle_mesh_->getEdgeFace(edge, 1);
 		}
 
-		Vec3d from_face_to_pnt = pnt - closest_pnt;
+		SimTK::Vec3 from_face_to_pnt = in_pnt - closest_pnt;
 		Real sum_weights = 0.0;
 		Real weighted_dot_product = 0.0;
 		for (int i = 0; i < 4; i++)
@@ -65,44 +65,42 @@ namespace SPH
 		return weighted_inside;
 	}
 	//=================================================================================================//
-	Vec3d TriangleMeshShape::findClosestPoint(const Vec3d &probe_point)
+	Vecd TriangleMeshShape::findClosestPoint(const Vecd &probe_point)
 	{
 		bool inside = false;
 		int face_id;
-		SimTK::Vec2 normal;
-		Vec3d closest_pnt;
-		closest_pnt = triangle_mesh_->findNearestPoint(probe_point, inside, face_id, normal);
+		SimTK::Vec3 normal;
+		SimTK::Vec3 closest_pnt = triangle_mesh_->findNearestPoint(SimTK::Vec3(probe_point[0], probe_point[1], probe_point[2]), inside, face_id, normal);
 		if (face_id < 0 && face_id > triangle_mesh_->getNumFaces())
 		{
 			std::cout << "\n Error the nearest point is not valid" << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 			throw;
 		}
-		return closest_pnt;
+		return Vecd(closest_pnt[0], closest_pnt[1], closest_pnt[2]);
 	}
 	//=================================================================================================//
 	BoundingBox TriangleMeshShape::findBounds()
 	{
 		int number_of_vertices = triangle_mesh_->getNumVertices();
 		//initial reference values
-		Vec3d lower_bound = Vec3d(Infinity);
-		Vec3d upper_bound = Vec3d(-Infinity);
+		SimTK::Vec3 lower_bound = SimTK::Vec3(Infinity);
+		SimTK::Vec3 upper_bound = SimTK::Vec3(-Infinity);
 
 		for (int i = 0; i != number_of_vertices; ++i)
 		{
-			Vec3d vertex_position = triangle_mesh_->getVertexPosition(i);
+			SimTK::Vec3 vertex_position = triangle_mesh_->getVertexPosition(i);
 			for (int j = 0; j != 3; ++j)
 			{
 				lower_bound[j] = SMIN(lower_bound[j], vertex_position[j]);
 				upper_bound[j] = SMAX(upper_bound[j], vertex_position[j]);
 			}
 		}
-		return BoundingBox(lower_bound, upper_bound);
+		return BoundingBox(Vecd(lower_bound[0],lower_bound[1],lower_bound[2]), Vecd(upper_bound[0],upper_bound[1], upper_bound[2]));
 	}
 	//=================================================================================================//
-	TriangleMeshShapeSTL::
-		TriangleMeshShapeSTL(const std::string &filepathname, Vec3d translation, Real scale_factor,
-							 const std::string &shape_name)
+	TriangleMeshShapeSTL::TriangleMeshShapeSTL(const std::string &filepathname, Vecd translation, Real scale_factor,
+			const std::string &shape_name)
 		: TriangleMeshShape(shape_name)
 	{
 		if (!fs::exists(filepathname))
@@ -114,11 +112,11 @@ namespace SPH
 		SimTK::PolygonalMesh polymesh;
 		polymesh.loadStlFile(filepathname);
 		polymesh.scaleMesh(scale_factor);
-		triangle_mesh_ = generateTriangleMesh(polymesh.transformMesh(translation));
+		triangle_mesh_ = generateTriangleMesh(polymesh.transformMesh(SimTK::Vec3(translation[0], translation[1], translation[2])));
 	}
 	//=================================================================================================//
 	TriangleMeshShapeSTL::TriangleMeshShapeSTL(const std::string &filepathname, Mat3d rotation,
-												Vec3d translation, Real scale_factor, const std::string &shape_name)
+			Vecd translation, Real scale_factor, const std::string &shape_name)
 		: TriangleMeshShape(shape_name)
 	{
 		if (!fs::exists(filepathname))
@@ -131,52 +129,50 @@ namespace SPH
 		polymesh.loadStlFile(filepathname);
 
         polymesh.scaleMesh(scale_factor);
-        SimTK::Transform_<Real> transform( SimTK::Rotation_<Real>(rotation), translation );
+        SimTK::Transform_<Real> transform( SimTK::Rotation_<Real>(rotation), SimTK::Vec3(translation[0], translation[1], translation[2])) );
 		triangle_mesh_ = generateTriangleMesh(polymesh.transformMesh(transform));
 	}
 	//=================================================================================================//
 	#ifdef __EMSCRIPTEN__	
-	TriangleMeshShapeSTL::TriangleMeshShapeSTL(const uint8_t* buffer, Vec3d translation, Real scale_factor, const std::string &shape_name)
+	TriangleMeshShapeSTL::TriangleMeshShapeSTL(const uint8_t* buffer, Vecd translation, Real scale_factor, 
+			const std::string &shape_name)
 		: TriangleMeshShape(shape_name)
 	{
 		SimTK::PolygonalMesh polymesh;
 		polymesh.loadStlBuffer(buffer);
 		polymesh.scaleMesh(scale_factor);
-		triangle_mesh_ = generateTriangleMesh(polymesh.transformMesh(translation));
+		triangle_mesh_ = generateTriangleMesh(polymesh.transformMesh(SimTK::Vec3(translation[0], translation[1], translation[2])));
 	}
 	#endif
 	//=================================================================================================//
-	TriangleMeshShapeBrick::
-		TriangleMeshShapeBrick(Vec3d halfsize, int resolution, Vec3d translation,
-							   const std::string &shape_name)
+	TriangleMeshShapeBrick::TriangleMeshShapeBrick(Vecd halfsize, int resolution, Vecd translation,
+			const std::string &shape_name)
 		: TriangleMeshShape(shape_name)
 	{
-		SimTK::PolygonalMesh polymesh = SimTK::PolygonalMesh::createBrickMesh(halfsize, resolution);
-		triangle_mesh_ = generateTriangleMesh(polymesh.transformMesh(translation));
+		SimTK::PolygonalMesh polymesh = SimTK::PolygonalMesh::createBrickMesh(SimTK::Vec3(halfsize[0], halfsize[1], halfsize[2])), resolution);
+		triangle_mesh_ = generateTriangleMesh( polymesh.transformMesh(SimTK::Vec3(translation[0], translation[1], translation[2])) );
 	}
 	//=================================================================================================//
-	TriangleMeshShapeBrick::
-		TriangleMeshShapeBrick(const TriangleMeshShapeBrick::ShapeParameters &shape_parameters,
-							   const std::string &shape_name)
+	TriangleMeshShapeBrick::TriangleMeshShapeBrick(const TriangleMeshShapeBrick::ShapeParameters &shape_parameters,
+			const std::string &shape_name)
 		: TriangleMeshShapeBrick(shape_parameters.halfsize_, shape_parameters.resolution_,
 								 shape_parameters.translation_, shape_name) {}
 	//=================================================================================================//
-	TriangleMeshShapeSphere::TriangleMeshShapeSphere(Real radius, int resolution, Vec3d translation,
-												   const std::string &shape_name)
+	TriangleMeshShapeSphere::TriangleMeshShapeSphere(Real radius, int resolution, Vecd translation,
+			const std::string &shape_name)
 		: TriangleMeshShape(shape_name)
 	{
 		SimTK::PolygonalMesh polymesh = SimTK::PolygonalMesh::createSphereMesh(radius, resolution);
-		triangle_mesh_ = generateTriangleMesh(polymesh.transformMesh(translation));
+		triangle_mesh_ = generateTriangleMesh(polymesh.transformMesh( SimTK::Vec3(translation[0], translation[1], translation[2]) ));
 	}
 	//=================================================================================================//
-	TriangleMeshShapeCylinder::
-		TriangleMeshShapeCylinder(SimTK::UnitVec3 axis, Real radius, Real halflength, int resolution,
-								  Vec3d translation, const std::string &shape_name)
+	TriangleMeshShapeCylinder::TriangleMeshShapeCylinder(SimTK::UnitVec3 axis, Real radius, Real halflength, int resolution,
+			Vecd translation, const std::string &shape_name)
 		: TriangleMeshShape(shape_name)
 	{
 		SimTK::PolygonalMesh polymesh =
 			SimTK::PolygonalMesh::createCylinderMesh(axis, radius, halflength, resolution);
-		triangle_mesh_ = generateTriangleMesh(polymesh.transformMesh(translation));
+		triangle_mesh_ = generateTriangleMesh(polymesh.transformMesh( SimTK::Vec3(translation[0], translation[1], translation[2]) ));
 	}
 	//=================================================================================================//
 }

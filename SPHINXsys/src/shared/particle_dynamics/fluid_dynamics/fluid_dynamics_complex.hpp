@@ -1,23 +1,49 @@
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and Hu1527/12-4												*
+ *                                                                          *
+ * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	fluid_dynamics_complex.hpp
+ * @brief 	Here, we define the algorithm classes for complex fluid dynamics,
+ * 			which is involving with either solid walls (with suffix WithWall)
+ * 			or/and other bodies treated as wall for the fluid (with suffix Complex).
  * @author	Chi ZHang and Xiangyu Hu
+ * @version	1.0
+ *			Try to implement EIGEN libaary for base vector, matrix and 
+ *			linear algebra operation.  
+ *			-- Chi ZHANG
  */
-
 #pragma once
 
 #include "fluid_dynamics_complex.h"
 
-//=================================================================================================//
 namespace SPH
 {
-	//=================================================================================================//
+	//=====================================================================================================//
 	namespace fluid_dynamics
 	{
 		//=================================================================================================//
 		template <class BaseRelaxationType>
 		template <class BaseBodyRelationType>
-		RelaxationWithWall<BaseRelaxationType>::
-			RelaxationWithWall(BaseBodyRelationType &base_body_relation,
+		RelaxationWithWall<BaseRelaxationType>::RelaxationWithWall(BaseBodyRelationType &base_body_relation,
 							   BaseBodyRelationContact &wall_contact_relation)
 			: BaseRelaxationType(base_body_relation), FluidWallData(wall_contact_relation)
 		{
@@ -41,21 +67,20 @@ namespace SPH
 		}
 		//=================================================================================================//
 		template <class DensitySummationInnerType>
-		DensitySummation<DensitySummationInnerType>::
-			DensitySummation(BaseBodyRelationInner &inner_relation, BaseBodyRelationContact &contact_relation)
+		DensitySummation<DensitySummationInnerType>::DensitySummation(BaseBodyRelationInner &inner_relation, 
+																	  BaseBodyRelationContact &contact_relation)
 			: ParticleDynamicsComplex<DensitySummationInnerType, FluidContactData>(inner_relation, contact_relation)
 		{
 			prepareContactData();
 		}
 		//=================================================================================================//
 		template <class DensitySummationInnerType>
-		DensitySummation<DensitySummationInnerType>::
-			DensitySummation(ComplexBodyRelation &complex_relation)
+		DensitySummation<DensitySummationInnerType>::DensitySummation(ComplexBodyRelation &complex_relation)
 			: DensitySummation(complex_relation.inner_relation_, complex_relation.contact_relation_) {}
 		//=================================================================================================//
 		template <class DensitySummationInnerType>
-		DensitySummation<DensitySummationInnerType>::
-			DensitySummation(ComplexBodyRelation &complex_relation, BaseBodyRelationContact &extra_contact_relation)
+		DensitySummation<DensitySummationInnerType>::DensitySummation(ComplexBodyRelation &complex_relation, 
+																	  BaseBodyRelationContact &extra_contact_relation)
 			: ParticleDynamicsComplex<DensitySummationInnerType, FluidContactData>(complex_relation, extra_contact_relation)
 		{
 			prepareContactData();
@@ -95,9 +120,8 @@ namespace SPH
 		//=================================================================================================//
 		template <class ViscousAccelerationInnerType>
 		template <class BaseBodyRelationType>
-		ViscousWithWall<ViscousAccelerationInnerType>::
-			ViscousWithWall(BaseBodyRelationType &base_body_relation,
-							BaseBodyRelationContact &wall_contact_relation)
+		ViscousWithWall<ViscousAccelerationInnerType>::ViscousWithWall(BaseBodyRelationType &base_body_relation,
+																 	   BaseBodyRelationContact &wall_contact_relation)
 			: RelaxationWithWall<ViscousAccelerationInnerType>(base_body_relation, wall_contact_relation) {}
 		//=================================================================================================//
 		template <class ViscousAccelerationInnerType>
@@ -108,7 +132,8 @@ namespace SPH
 			Real rho_i = this->rho_[index_i];
 			const Vecd &vel_i = this->vel_[index_i];
 
-			Vecd acceleration(0), vel_derivative(0);
+			Vecd acceleration = Vecd::Zero();
+			Vecd vel_derivative = Vecd::Zero();
 			for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
 			{
 				StdLargeVec<Real> &Vol_k = *(this->wall_Vol_[k]);
@@ -160,7 +185,7 @@ namespace SPH
 			FluidState state_i(this->rho_[index_i], this->vel_[index_i], this->p_[index_i]);
 			Vecd acc_prior_i = computeNonConservativeAcceleration(index_i);
 
-			Vecd acceleration(0.0);
+			Vecd acceleration = Vecd::Zero();
 			for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
 			{
 				StdLargeVec<Real> &Vol_k = *(this->wall_Vol_[k]);
@@ -175,7 +200,7 @@ namespace SPH
 					Real dW_ij = wall_neighborhood.dW_ij_[n];
 					Real r_ij = wall_neighborhood.r_ij_[n];
 
-					Real face_wall_external_acceleration = dot((acc_prior_i - acc_ave_k[index_j]), -e_ij);
+					Real face_wall_external_acceleration = (acc_prior_i - acc_ave_k[index_j]).dot(-e_ij);
 					Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - state_i.vel_;
 					Real p_in_wall = state_i.p_ + state_i.rho_ * r_ij * SMAX(0.0, face_wall_external_acceleration);
 					Real rho_in_wall = this->material_->DensityFromPressure(p_in_wall);
@@ -208,7 +233,7 @@ namespace SPH
 		void ExtendPressureRelaxation<BasePressureRelaxationType>::initialization(size_t index_i, Real dt)
 		{
 			BasePressureRelaxationType::initialization(index_i, dt);
-			non_cnsrv_acc_[index_i] = Vecd(0);
+			non_cnsrv_acc_[index_i] = Vecd::Zero();
 		}
 		//=================================================================================================//
 		template <class BasePressureRelaxationType>
@@ -218,7 +243,7 @@ namespace SPH
 
 			Real rho_i = this->rho_[index_i];
 			Real penalty_pressure = this->p_[index_i];
-			Vecd acceleration(0);
+			Vecd acceleration = Vecd::Zero();
 			for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
 			{
 				Real particle_spacing_j1 = 1.0 / FluidWallData::contact_bodies_[k]->sph_adaptation_->ReferenceSpacing();
@@ -237,7 +262,7 @@ namespace SPH
 					Vecd &n_j = n_k[index_j];
 
 					/** penalty method to prevent particle running into boundary */
-					Real projection = dot(e_ij, n_j);
+					Real projection = e_ij.dot(n_j);
 					Real delta = 2.0 * projection * r_ij * particle_spacing_j1;
 					Real beta = delta < 1.0 ? (1.0 - delta) * (1.0 - delta) * particle_spacing_ratio2 : 0.0;
 					//penalty must be positive so that the penalty force is pointed to fluid inner domain
@@ -329,13 +354,13 @@ namespace SPH
 					Real r_ij = wall_neighborhood.r_ij_[n];
 					Real dW_ij = wall_neighborhood.dW_ij_[n];
 
-					Real face_wall_external_acceleration = dot((acc_prior_i - acc_ave_k[index_j]), -e_ij);
+					Real face_wall_external_acceleration = (acc_prior_i - acc_ave_k[index_j]).dot(-e_ij);
 					Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - state_i.vel_;
 					Real p_in_wall = state_i.p_ + state_i.rho_ * r_ij * SMAX(0.0, face_wall_external_acceleration);
 					Real rho_in_wall = this->material_->DensityFromPressure(p_in_wall);
 					FluidState state_j(rho_in_wall, vel_in_wall, p_in_wall);
 					Vecd vel_star = this->riemann_solver_.getVStar(state_i, state_j, n_k[index_j]);
-					density_change_rate += 2.0 * state_i.rho_ * Vol_k[index_j] * dot(state_i.vel_ - vel_star, e_ij) * dW_ij;
+					density_change_rate += 2.0 * state_i.rho_ * Vol_k[index_j] * (state_i.vel_ - vel_star).dot(e_ij) * dW_ij;
 				}
 			}
 			this->drho_dt_[index_i] += density_change_rate;

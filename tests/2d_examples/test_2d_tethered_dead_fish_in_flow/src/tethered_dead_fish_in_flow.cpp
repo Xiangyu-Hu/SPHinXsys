@@ -241,7 +241,7 @@ int main(int ac, char *av[])
 	/**
 	 * @brief   Particle and body creation of fish observer.
 	 */
-	ObserverBody fish_observer(system, "Observer");
+	ProbeBody fish_observer(system, "Observer");
 	fish_observer.generateParticles<FishObserverParticleGenerator>();
 	/** topology */
 	BodyRelationInner water_block_inner(water_block);

@@ -1,13 +1,8 @@
-/**
- * @file 	fluid_surface_inner.cpp
- * @author	Chi ZHang and Xiangyu Hu
- */
-
 #include "fluid_surface_inner.hpp"
 
 namespace SPH
 {
-    //=================================================================================================//
+    //=====================================================================================================//
     namespace fluid_dynamics
     {
         //=================================================================================================//
@@ -114,7 +109,7 @@ namespace SPH
         //=================================================================================================//
         void ColorFunctionGradientInner::interaction(size_t index_i, Real dt)
         {
-            Vecd gradient(0);
+            Vecd gradient = Vecd::Zero();
             const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
             if (pos_div_[index_i] < threshold_by_dimensions_)
             {
@@ -143,7 +138,7 @@ namespace SPH
         //=================================================================================================//
         void ColorFunctionGradientInterpolationInner::interaction(size_t index_i, Real dt)
         {
-            Vecd grad(0);
+            Vecd grad = Vecd::Zero();
             Real weight(0);
             Real total_weight(0);
             if (surface_indicator_[index_i] == 1 && pos_div_[index_i] > threshold_by_dimensions_)
@@ -193,7 +188,7 @@ namespace SPH
                     {
                         Vecd n_j = surface_norm_[index_j];
                         Vecd n_ij = n_i - n_j;
-                        curvature -= inner_neighborhood.dW_ij_[n] * Vol_[index_j] * dot(n_ij, inner_neighborhood.e_ij_[n]);
+                        curvature -= inner_neighborhood.dW_ij_[n] * Vol_[index_j] * n_ij.dot(inner_neighborhood.e_ij_[n]);
                         pos_div -= inner_neighborhood.dW_ij_[n] * inner_neighborhood.r_ij_[n] * Vol_[index_j];
                     }
                 }

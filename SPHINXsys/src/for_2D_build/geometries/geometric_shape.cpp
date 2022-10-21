@@ -1,8 +1,3 @@
-/**
- * @file 	geometric_shape.cpp
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
- */
-
 #include "geometric_shape.h"
 
 namespace SPH
@@ -29,7 +24,6 @@ namespace SPH
     Vec2d GeometricShapeBox::findClosestPoint(const Vec2d &pnt)
     {
         return multi_polygon_.findClosestPoint(pnt);
-        ;
     }
     //=================================================================================================//
     BoundingBox GeometricShapeBox::findBounds()

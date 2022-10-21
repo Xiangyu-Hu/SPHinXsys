@@ -1,9 +1,3 @@
-/**
- * @file 	particle_dynamics_dissipation.hpp
- * @brief 	This is the particle dynamics applicable for all type bodies
- * @author	Chi ZHang and Xiangyu Hu
- */
-
 #ifndef PARTICLE_DYNAMICS_DISSIPATION_HPP
 #define PARTICLE_DYNAMICS_DISSIPATION_HPP
 
@@ -13,11 +7,9 @@ namespace SPH
 {
 	//=================================================================================================//
 	template <typename VariableType>
-	DampingBySplittingInner<VariableType>::
-		DampingBySplittingInner(BaseBodyRelationInner &inner_relation,
-								const std::string &variable_name, Real eta)
-		: LocalDynamics(inner_relation.sph_body_),
-		  DissipationDataInner(inner_relation), eta_(eta),
+	DampingBySplittingInner<VariableType>::DampingBySplittingInner(BaseBodyRelationInner &inner_relation,
+																	const std::string &variable_name, Real eta)
+		: LocalDynamics(inner_relation.sph_body_), DissipationDataInner(inner_relation), eta_(eta),
 		  Vol_(particles_->Vol_), mass_(particles_->mass_),
 		  variable_(*particles_->getVariableByName<VariableType>(variable_name)) {}
 	//=================================================================================================//

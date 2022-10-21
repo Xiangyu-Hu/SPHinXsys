@@ -1,8 +1,3 @@
-/**
- * @file neighboring_particles.cpp
- * @author	Xiangyu Hu and Chi Zhang
- */
-
 #include "neighbor_relation.h"
 
 #include "complex_body.h"
@@ -56,9 +51,8 @@ namespace SPH
 		neighborhood.allocated_size_++;
 	}
 	//=================================================================================================//
-	void NeighborRelation::
-		initializeRelation(Neighborhood &neighborhood, Real &distance,
-						   Vecd &displacement, size_t j_index, Real i_h_ratio, Real h_ratio_min) const
+	void NeighborRelation::initializeRelation(Neighborhood &neighborhood, Real &distance,
+						   					Vecd &displacement, size_t j_index, Real i_h_ratio, Real h_ratio_min) const
 	{
 		size_t current_size = neighborhood.current_size_;
 		neighborhood.j_[current_size] = j_index;
@@ -88,10 +82,8 @@ namespace SPH
 		}
 	};
 	//=================================================================================================//
-	NeighborRelationInnerVariableSmoothingLength::
-		NeighborRelationInnerVariableSmoothingLength(SPHBody &body)
-		: NeighborRelation(),
-		  h_ratio_(*body.base_particles_->getVariableByName<Real>("SmoothingLengthRatio"))
+	NeighborRelationInnerVariableSmoothingLength::NeighborRelationInnerVariableSmoothingLength(SPHBody &body)
+		: NeighborRelation(),h_ratio_(*body.base_particles_->getVariableByName<Real>("SmoothingLengthRatio"))
 	{
 		kernel_ = body.sph_adaptation_->getKernel();
 	}
@@ -112,10 +104,8 @@ namespace SPH
 		}
 	};
 	//=================================================================================================//
-	NeighborRelationSelfContact::
-		NeighborRelationSelfContact(SPHBody &body)
-		: NeighborRelation(),
-		  pos0_(*body.base_particles_->getVariableByName<Vecd>("InitialPosition"))
+	NeighborRelationSelfContact::NeighborRelationSelfContact(SPHBody &body)
+		: NeighborRelation(),pos0_(*body.base_particles_->getVariableByName<Vecd>("InitialPosition"))
 	{
 		kernel_ = body.sph_adaptation_->getKernel();
 	}
@@ -134,8 +124,8 @@ namespace SPH
 		}
 	};
 	//=================================================================================================//
-	NeighborRelationContact::
-		NeighborRelationContact(SPHBody &body, SPHBody &contact_body) : NeighborRelation()
+	NeighborRelationContact::NeighborRelationContact(SPHBody &body, SPHBody &contact_body) 
+		: NeighborRelation()
 	{
 		Kernel *source_kernel = body.sph_adaptation_->getKernel();
 		Kernel *target_kernel = contact_body.sph_adaptation_->getKernel();
@@ -163,8 +153,8 @@ namespace SPH
 		kernel_ = kernel_keeper_.createPtr<KernelWendlandC2>(0.5 * (source_smoothing_length + target_smoothing_length));
 	}
 	//=================================================================================================//
-	NeighborRelationContactBodyPart::
-		NeighborRelationContactBodyPart(SPHBody &body, BodyPart &contact_body_part) : NeighborRelation()
+	NeighborRelationContactBodyPart::NeighborRelationContactBodyPart(SPHBody &body, BodyPart &contact_body_part) 
+		: NeighborRelation()
 	{
 		contact_body_part.getSPHBody().base_particles_->registerVariable(part_indicator_, "BodyPartByParticleIndicator");
 		Kernel *source_kernel = body.sph_adaptation_->getKernel();

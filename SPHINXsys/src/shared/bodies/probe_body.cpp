@@ -1,9 +1,4 @@
-/**
- * @file 	observer.cpp
- * @brief 	Here, Functions belong to BaseBody, RealBody and FictitiousBody are given.
- * @author	Chi ZHang and Xiangyu Hu
- */
-#include "observer_body.h"
+#include "probe_body.h"
 
 #include "sph_system.h"
 #include "base_particles.hpp"
@@ -11,14 +6,14 @@
 namespace SPH
 {
     //=================================================================================================//
-    ObserverBody::ObserverBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr)
+    ProbeBody::ProbeBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr)
         : SPHBody(sph_system, shape_ptr)
     {
         defineParticlesAndMaterial();
         sph_system.observation_bodies_.push_back(this);
     }
     //=================================================================================================//
-    ObserverBody::ObserverBody(SPHSystem &sph_system, const std::string &name)
-        : ObserverBody(sph_system, makeShared<DefaultShape>(name)) {}
+    ProbeBody::ProbeBody(SPHSystem &sph_system, const std::string &name)
+        : ProbeBody(sph_system, makeShared<DefaultShape>(name)) {}
     //=================================================================================================//
 }

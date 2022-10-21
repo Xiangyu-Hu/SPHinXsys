@@ -158,7 +158,7 @@ int main()
 	gate.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	gate.generateParticles<ParticleGeneratorLattice>();
 
-	ObserverBody gate_observer(system, "Observer");
+	ProbeBody gate_observer(system, "Observer");
 	gate_observer.defineAdaptationRatios(1.15, 2.0);
 	gate_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	//----------------------------------------------------------------------

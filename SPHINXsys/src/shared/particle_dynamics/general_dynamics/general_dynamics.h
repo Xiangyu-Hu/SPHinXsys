@@ -40,9 +40,8 @@ namespace SPH
 {
 	typedef DataDelegateSimple<SPHBody, BaseParticles, BaseMaterial> GeneralDataDelegateSimple;
 	typedef DataDelegateInner<SPHBody, BaseParticles, BaseMaterial> GeneralDataDelegateInner;
-	typedef DataDelegateContact<SPHBody, BaseParticles, BaseMaterial,
-								SPHBody, BaseParticles, BaseMaterial, DataDelegateEmptyBase>
-		GeneralDataDelegateContact;
+	typedef DataDelegateContact<SPHBody, BaseParticles, BaseMaterial,SPHBody, BaseParticles, BaseMaterial, DataDelegateEmptyBase>
+			GeneralDataDelegateContact;
 
 	/**
 	 * @class BaseTimeStepInitialization
@@ -74,7 +73,7 @@ namespace SPH
 		StdLargeVec<Vecd> &pos_, &acc_prior_;
 
 	public:
-		TimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0)));
+		TimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd::Zero()));
 		virtual ~TimeStepInitialization(){};
 
 		void update(size_t index_i, Real dt = 0.0);
@@ -109,9 +108,10 @@ namespace SPH
 	public:
 		explicit ParticleSmoothing(BaseBodyRelationInner &inner_relation, const std::string &variable_name)
 			: LocalDynamics(inner_relation.sph_body_), GeneralDataDelegateInner(inner_relation),
-			  W0_(body_->sph_adaptation_->getKernel()->W0(Vecd(0))),
+			  W0_(body_->sph_adaptation_->getKernel()->W0(zero_vec)),
 			  smoothed_(*particles_->getVariableByName<VariableType>(variable_name))
-		{
+		{	
+			Vecd zero = Vecd::Zero();
 			particles_->registerVariable(temp_, variable_name + "_temp");
 		}
 
@@ -243,7 +243,7 @@ namespace SPH
 
 	public:
 		explicit QuantitySummation(SPHBody &sph_body, const std::string &variable_name)
-			: LocalDynamicsReduce<VariableType, ReduceSum<VariableType>>(sph_body, VariableType(0)),
+			: LocalDynamicsReduce<VariableType, ReduceSum<VariableType>>(sph_body, DataTypeInitializer<VariableType>::zero),
 			  GeneralDataDelegateSimple(sph_body),
 			  variable_(*this->particles_->getVariableByName<VariableType>(variable_name))
 		{
@@ -299,7 +299,7 @@ namespace SPH
 		Gravity *gravity_;
 
 	public:
-		TotalMechanicalEnergy(SPHBody &sph_body, SharedPtr<Gravity> = makeShared<Gravity>(Vecd(0)));
+		TotalMechanicalEnergy(SPHBody &sph_body, SharedPtr<Gravity> = makeShared<Gravity>( Vecd::Zero() ));
 		virtual ~TotalMechanicalEnergy(){};
 
 		Real reduce(size_t index_i, Real dt = 0.0);

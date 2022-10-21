@@ -1,29 +1,33 @@
 /* -------------------------------------------------------------------------*
  *								SPHinXsys									*
- * --------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
  * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic *
+ * physical accurate simulation and aims to model coupled industrial dynamic*
  * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
  * (smoothed particle hydrodynamics), a meshless computational method using	*
  * particle discretization.													*
  *																			*
  * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
- * and HU1527/12-1.															*
- *                                                                           *
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and Hu1527/12-4												*
+ *                                                                          *
  * Portions copyright (c) 2017-2020 Technical University of Munich and		*
  * the authors' affiliations.												*
- *                                                                           *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
- * not use this file except in compliance with the License. You may obtain a *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
- *                                                                           *
- * --------------------------------------------------------------------------*/
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	solid_particles.h
  * @brief 	This is the derived class of base particles.
- * @author	Xiangyu Hu and Chi Zhang
+ * @author	Chi ZHang, Dong Wu and Xiangyu Hu
+ * @version	1.0
+ *			Try to implement EIGEN libaary for base vector, matrix and 
+ *			linear algebra operation.  
+ *			-- Chi ZHANG
  */
 
 #ifndef SOLID_PARTICLES_H
@@ -36,9 +40,9 @@
 #include "particle_generator_lattice.h"
 namespace SPH
 {
-	//----------------------------------------------------------------------
-	//		pre-claimed classes
-	//----------------------------------------------------------------------
+	/**
+	 *	pre-claimed classes
+	 */
 	class Solid;
 	class ElasticSolid;
 
@@ -63,9 +67,9 @@ namespace SPH
 		virtual StdLargeVec<Vecd> *AverageVelocity() { return &vel_; };
 		/** Get wall average acceleration when interacting with fluid. */
 		virtual StdLargeVec<Vecd> *AverageAcceleration() { return &acc_; };
-
+		/** Intialized variables for solid particles. */
 		virtual void initializeOtherVariables() override;
-
+		/** Return this pointer. */
 		virtual SolidParticles *ThisObjectPtr() override { return this; };
 	};
 
@@ -81,48 +85,50 @@ namespace SPH
 
 		StdLargeVec<Matd> F_;	  /**<  deformation tensor */
 		StdLargeVec<Matd> dF_dt_; /**<  deformation tensor change rate */
-		//----------------------------------------------------------------------
-		//		for fluid-structure interaction (FSI)
-		//----------------------------------------------------------------------
+		/**-
+		 *	for fluid-structure interaction (FSI)
+		 */
 		StdLargeVec<Vecd> vel_ave_; /**<  fluid time-step averaged particle velocity */
 		StdLargeVec<Vecd> acc_ave_; /**<  fluid time-step averaged particle acceleration */
 
-		// STRAIN
+		/** Return the Lagrange strain. */
 		Matd getGreenLagrangeStrain(size_t particle_i);
-		/**< Computing principal strain - returns the principal strains in descending order (starting from the largest) */
+		/** Computing principal strain - returns the principal strains in descending order (starting from the largest) */
 		Vecd getPrincipalStrains(size_t particle_i);
-		/**< Computing von Mises equivalent strain from a static (constant) formulation. */
+		/** Computing von Mises equivalent strain from a static (constant) formulation. */
 		Real getVonMisesStrain(size_t particle_i);
-		/**< Computing von Mises equivalent strain from a "dynamic" formulation. This depends on the Poisson's ratio (from commercial FEM software Help). */
+		/** Computing von Mises equivalent strain from a "dynamic" formulation. This depends on the Poisson's ratio (from commercial FEM software Help). */
 		Real getVonMisesStrainDynamic(size_t particle_i, Real poisson);
-
-		/**< Computing von Mises strain for all particles. - "static" or "dynamic"*/
+		/** Computing von Mises strain for all particles. - "static" or "dynamic"*/
 		StdLargeVec<Real> getVonMisesStrainVector(std::string strain_measure = "static");
-		/**< Computing maximum von Mises strain from all particles. - "static" or "dynamic" */
+		/** Computing maximum von Mises strain from all particles. - "static" or "dynamic" */
 		Real getVonMisesStrainMax(std::string strain_measure = "static");
+		/** Return the max pincipal strain. */
 		Real getPrincipalStrainMax();
-
-		// STRESS
+		/** get the Cauchy stress. */
 		Matd getStressCauchy(size_t particle_i);
+		/** get the PK2 stress. */
 		Matd getStressPK2(size_t particle_i);
-		/**< Computing principal_stresses - returns the principal stresses in descending order (starting from the largest) */
+		/** Computing principal_stresses - returns the principal stresses in descending order (starting from the largest) */
 		Vecd getPrincipalStresses(size_t particle_i);
-		/**< Computing von_Mises_stress - "Cauchy" or "PK2" decided based on the stress_measure_ */
+		/** Computing von_Mises_stress - "Cauchy" or "PK2" decided based on the stress_measure_ */
 		Real getVonMisesStress(size_t particle_i);
-
-		/**< Computing von Mises stress for all particles. - "Cauchy" or "PK2" decided based on the stress_measure_ */
+		/** Computing von Mises stress for all particles. - "Cauchy" or "PK2" decided based on the stress_measure_ */
 		StdLargeVec<Real> getVonMisesStressVector();
-		/**< Computing maximum von Mises stress from all particles. - "Cauchy" or "PK2" decided based on the stress_measure_ */
+		/** Computing maximum von Mises stress from all particles. - "Cauchy" or "PK2" decided based on the stress_measure_ */
 		Real getVonMisesStressMax();
 		Real getPrincipalStressMax();
 
-		/**< Computing displacement. */
+		/** Computing displacement. */
 		Vecd displacement(size_t particle_i);
+		/** Retrun the displacement. */
 		StdLargeVec<Vecd> getDisplacement();
+		/** get the max displacement. */
 		Real getMaxDisplacement();
 
 		/**< Computing normal vector. */
 		Vecd normal(size_t particle_i);
+		/** get the normal vector. */
 		StdLargeVec<Vecd> getNormal();
 
 		/** relevant stress measure */
@@ -133,7 +139,9 @@ namespace SPH
 		/** Get wall average acceleration when interacting with fluid. */
 		virtual StdLargeVec<Vecd> *AverageAcceleration() { return &acc_ave_; };
 
+		/** Initialize the variables for elastic particle. */
 		virtual void initializeOtherVariables() override;
+		/** Return this pointer. */
 		virtual ElasticSolidParticles *ThisObjectPtr() override { return this; };
 
 	protected:
@@ -150,37 +158,39 @@ namespace SPH
 		ShellParticles(SPHBody &sph_body, ElasticSolid *elastic_solid);
 		virtual ~ShellParticles(){};
 
-		Real thickness_ref_;
-		StdLargeVec<Matd> transformation_matrix_; /**< initial transformation matrix from global to local coordinates */
-		StdLargeVec<Real> thickness_;			  /**< shell thickness */
-		//----------------------------------------------------------------------
-		//	extra generalized coordinates in global coordinate
-		//----------------------------------------------------------------------
+		Real thickness_ref_;						/**< Shell thickness. */
+		StdLargeVec<Matd> transformation_matrix_; 	/**< initial transformation matrix from global to local coordinates */
+		StdLargeVec<Real> thickness_;			  	/**< shell thickness */
+		/**
+		 *	extra generalized coordinates in global coordinate
+		 */
 		StdLargeVec<Vecd> pseudo_n_;	  /**< current pseudo-normal vector */
 		StdLargeVec<Vecd> dpseudo_n_dt_;  /**< pseudo-normal vector change rate */
 		StdLargeVec<Vecd> dpseudo_n_d2t_; /**< pseudo-normal vector second order time derivation */
-		//----------------------------------------------------------------------
-		//	extra generalized coordinate and velocity in local coordinate
-		//----------------------------------------------------------------------
+		/**
+		 *	extra generalized coordinate and velocity in local coordinate
+		 */
 		StdLargeVec<Vecd> rotation_;		/**< rotation angle of the initial normal respective to each axis */
 		StdLargeVec<Vecd> angular_vel_;		/**< angular velocity respective to each axis */
 		StdLargeVec<Vecd> dangular_vel_dt_; /**< angular acceleration of respective to each axis*/
-		//----------------------------------------------------------------------
-		//	extra deformation and deformation rate in local coordinate
-		//----------------------------------------------------------------------
+		/**
+		 *	extra deformation and deformation rate in local coordinate
+		 */
 		StdLargeVec<Matd> F_bending_;	  /**< bending deformation gradient	*/
 		StdLargeVec<Matd> dF_bending_dt_; /**< bending deformation gradient change rate	*/
-		//----------------------------------------------------------------------
-		//	extra stress for pair interaction in global coordinate
-		//----------------------------------------------------------------------
+		/**
+		 *	extra stress for pair interaction in global coordinate
+		 */
 		StdLargeVec<Vecd> global_shear_stress_; /**< global shear stress */
 		StdLargeVec<Matd> global_stress_;		/**<  global stress for pair interaction */
 		StdLargeVec<Matd> global_moment_;		/**<  global bending moment for pair interaction */
-
+		/** get particle volumne. */
 		virtual Real ParticleVolume(size_t index_i) { return Vol_[index_i] * thickness_[index_i]; }
+		/** get particle mass. */
 		virtual Real ParticleMass(size_t index_i) { return mass_[index_i] * thickness_[index_i]; }
-
+		/** Initialize variable for shell particles. */
 		virtual void initializeOtherVariables() override;
+		/** Return this pointer. */
 		virtual ShellParticles *ThisObjectPtr() override { return this; };
 	};
 }

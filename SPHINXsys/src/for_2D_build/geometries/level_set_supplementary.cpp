@@ -1,8 +1,3 @@
-/**
- * @file 	level_set_supplementary.cpp
- * @author	Luhui Han, Chi ZHang, Yongchuan Yu and Xiangyu Hu
- */
-
 #include "level_set.h"
 #include "mesh_with_data_packages.hpp"
 #include "base_kernel.h"
@@ -10,7 +5,6 @@
 #include "base_particle_dynamics.h"
 #include "base_body.h"
 
-//=================================================================================================//
 namespace SPH
 {
 	//=============================================================================================//
@@ -20,9 +14,9 @@ namespace SPH
 			for (int j = 0; j != PackageSize(); ++j)
 			{
 				phi_[i][j] = far_field_level_set;
-				phi_gradient_[i][j] = Vecd(1.0);
+				phi_gradient_[i][j] = Vecd::Ones();
 				kernel_weight_[i][j] = far_field_level_set < 0.0 ? 0 : 1.0;
-				kernel_gradient_[i][j] = Vecd(0.0);
+				kernel_gradient_[i][j] = Vecd::Zero();
 				near_interface_id_[i][j] = far_field_level_set < 0.0 ? -2 : 2;
 			}
 	}
@@ -32,7 +26,7 @@ namespace SPH
 		for (int i = 0; i != PackageSize(); ++i)
 			for (int j = 0; j != PackageSize(); ++j)
 			{
-				Vec2d position = DataLowerBound() + Vec2d(i, j) * grid_spacing_;
+				Vecd position = DataLowerBound() + Vecd(i, j) * grid_spacing_;
 				phi_[i][j] = shape.findSignedDistance(position);
 				near_interface_id_[i][j] = phi_[i][j] < 0.0 ? -2 : 2;
 			}
@@ -43,7 +37,7 @@ namespace SPH
 		for (int i = 0; i != PackageSize(); ++i)
 			for (int j = 0; j != PackageSize(); ++j)
 			{
-				Vec2d position = DataLowerBound() + Vec2d(i, j) * grid_spacing_;
+				Vecd position = DataLowerBound() + Vecd(i, j) * grid_spacing_;
 				kernel_weight_[i][j] = level_set.computeKernelIntegral(position);
 				kernel_gradient_[i][j] = level_set.computeKernelGradientIntegral(position);
 			}
@@ -54,12 +48,12 @@ namespace SPH
 		for (int i = AddressBufferWidth(); i != OperationUpperBound(); ++i)
 			for (int j = AddressBufferWidth(); j != OperationUpperBound(); ++j)
 			{
-				// only reinitialize non cut cells
+				/** Only reinitialize non cut cells. */
 				if (*near_interface_id_addrs_[i][j] != 0)
 				{
 					Real phi_0 = *phi_addrs_[i][j];
 					Real s = phi_0 / sqrt(phi_0 * phi_0 + grid_spacing_ * grid_spacing_);
-					// x direction
+					/* x direction. */
 					Real dv_xp = (*phi_addrs_[i + 1][j] - phi_0);
 					Real dv_xn = (phi_0 - *phi_addrs_[i - 1][j]);
 					Real dv_x = dv_xp;
@@ -75,7 +69,7 @@ namespace SPH
 						if (ss > 0.0)
 							dv_x = dv_xn;
 					}
-					// y direction
+					/** y direction. */
 					Real dv_yp = (*phi_addrs_[i][j + 1] - phi_0);
 					Real dv_yn = (phi_0 - *phi_addrs_[i][j - 1]);
 					Real dv_y = dv_yp;
@@ -91,7 +85,7 @@ namespace SPH
 						if (ss > 0.0)
 							dv_y = dv_yn;
 					}
-					// time stepping
+					/* time stepping. */
 					*phi_addrs_[i][j] -= 0.5 * s * (sqrt(dv_x * dv_x + dv_y * dv_y) - grid_spacing_);
 				}
 			}
@@ -100,7 +94,7 @@ namespace SPH
 	void LevelSetDataPackage::markNearInterface(Real small_shift_factor)
 	{
 		Real small_shift = small_shift_factor * grid_spacing_;
-		// corner averages, note that the first row and first column are not used
+		/** Corner averages, note that the first row and first column are not used. */
 		PackageTemporaryData<Real> corner_averages;
 		for (int i = 1; i != AddressSize(); ++i)
 			for (int j = 1; j != AddressSize(); ++j)
@@ -111,12 +105,12 @@ namespace SPH
 		for (int i = AddressBufferWidth(); i != OperationUpperBound(); ++i)
 			for (int j = AddressBufferWidth(); j != OperationUpperBound(); ++j)
 			{
-				// first assume far cells
+				/* First assume far cells. */
 				Real phi_0 = *phi_addrs_[i][j];
 				int near_interface_id = phi_0 > 0.0 ? 2 : -2;
 
 				Real phi_average_0 = corner_averages[i][j];
-				// find outer cut cells by comparing the sign of corner averages
+				/* Find outer cut cells by comparing the sign of corner averages. */
 				for (int l = 0; l != 2; ++l)
 					for (int m = 0; m != 2; ++m)
 					{
@@ -129,7 +123,7 @@ namespace SPH
 							near_interface_id = -1;
 					}
 
-				// find zero cut cells by comparing the sign of corner averages
+				/* Find zero cut cells by comparing the sign of corner averages. */
 				for (int l = 0; l != 2; ++l)
 					for (int m = 0; m != 2; ++m)
 					{
@@ -140,11 +134,11 @@ namespace SPH
 							near_interface_id = 0;
 					}
 
-				// find cells between cut cells
+				/* Find cells between cut cells. */
 				if (fabs(phi_0) < small_shift && abs(near_interface_id) != 1)
 					near_interface_id = 0;
 
-				// assign this to package
+				/* Assign this to package. */
 				*near_interface_id_addrs_[i][j] = near_interface_id;
 			}
 	}
@@ -210,9 +204,10 @@ namespace SPH
 								}
 							}
 						*core_data_pkg->phi_addrs_[i][j] = -min_distance_p;
-						// this immediate switch of near interface id
-						// does not intervening with the identification of unresolved interface
-						// based on the assumption that positive false_and negative bands are not close to each other
+						/** This immediate switch of near interface id
+						 *  does not intervening with the identification of unresolved interface
+						 * 	based on the assumption that positive false_and negative bands are not close to each other. 
+						 */
 						*core_data_pkg->near_interface_id_addrs_[i][j] = -1;
 					}
 					if (negative_band == false)
@@ -234,9 +229,10 @@ namespace SPH
 								}
 							}
 						*core_data_pkg->phi_addrs_[i][j] = min_distance_n;
-						// this immediate switch of near interface id
-						// does not intervening with the identification of unresolved interface
-						// based on the assumption that positive false_and negative bands are not close to each other
+						/** This immediate switch of near interface id
+						 * does not intervening with the identification of unresolved interface
+						 * based on the assumption that positive false_and negative bands are not close to each other. 
+						 */
 						*core_data_pkg->near_interface_id_addrs_[i][j] = 1;
 					}
 				}
@@ -368,7 +364,7 @@ namespace SPH
 		Real cutoff_radius = kernel_.CutOffRadius(global_h_ratio_);
 		Real threshold = cutoff_radius + data_spacing_; // consider that interface's half width is the data spacing
 
-		Real integral(0.0);
+		Real integral(0);
 		if (fabs(phi) < threshold)
 		{
 			Vecu global_index_ = global_mesh_.CellIndexFromPosition(position);
@@ -398,7 +394,7 @@ namespace SPH
 		Real cutoff_radius = kernel_.CutOffRadius(global_h_ratio_);
 		Real threshold = cutoff_radius + data_spacing_;
 
-		Vecd integral(0.0);
+		Vecd integral = Vecd::Zero();
 		if (fabs(phi) < threshold)
 		{
 			Vecu global_index_ = global_mesh_.CellIndexFromPosition(position);

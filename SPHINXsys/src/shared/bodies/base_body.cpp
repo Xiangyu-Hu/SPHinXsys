@@ -1,8 +1,3 @@
-/**
- * @file 	base_body.cpp
- * @brief 	Here, Functions belong to BaseBody, RealBody and FictitiousBody are given.
- * @author	Chi ZHang and Xiangyu Hu
- */
 #include "base_body.h"
 
 #include "sph_system.h"
@@ -106,7 +101,7 @@ namespace SPH
 		  iteration_count_(1)
 	{
 		sph_system.real_bodies_.push_back(this);
-		size_t number_of_split_cell_lists = powerN(3, Vecd(0).size());
+		size_t number_of_split_cell_lists = powerN(3, Vecd::Zero().size());
 		split_cell_lists_.resize(number_of_split_cell_lists);
 		cell_linked_list_ = cell_linked_list_keeper_.movePtr(
 			sph_adaptation_->createCellLinkedList(system_domain_bounds_, *this));

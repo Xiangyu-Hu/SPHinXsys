@@ -1,29 +1,34 @@
 /* -------------------------------------------------------------------------*
  *								SPHinXsys									*
- * --------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
  * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic *
+ * physical accurate simulation and aims to model coupled industrial dynamic*
  * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
  * (smoothed particle hydrodynamics), a meshless computational method using	*
  * particle discretization.													*
  *																			*
  * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
- * and HU1527/12-1.															*
- *                                                                           *
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and Hu1527/12-4												*
+ *                                                                          *
  * Portions copyright (c) 2017-2020 Technical University of Munich and		*
  * the authors' affiliations.												*
- *                                                                           *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
- * not use this file except in compliance with the License. You may obtain a *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
- *                                                                           *
- * --------------------------------------------------------------------------*/
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	base_particles.hpp
  * @brief 	This is the implementation of the template functions in base_particles.h
- * @author	Xiangyu Hu
+ * @author	Chi ZHang and Xiangyu Hu
+ * @version	1.0
+ *			Try to implement EIGEN libaary for base vector, matrix and 
+ *			linear algebra operation.  
+ *          It seems a bug at function registerVariable with variable_addrs[i] = initialization;
+ *			-- Chi ZHANG
  */
 
 #ifndef BASE_PARTICLES_HPP
@@ -32,6 +37,7 @@
 #include "base_particles.h"
 #include "particle_dynamics_algorithms.h"
 
+//=====================================================================================================//
 namespace SPH
 {
     //=================================================================================================//
@@ -41,10 +47,11 @@ namespace SPH
                          const std::string &variable_name, VariableType initial_value)
     {
         constexpr int type_index = DataTypeIndex<VariableType>::value;
+        VariableType init_value = DataTypeInitializer<VariableType>::zero;
 
         if (all_variable_maps_[type_index].find(variable_name) == all_variable_maps_[type_index].end())
         {
-            variable_addrs.resize(real_particles_bound_, initial_value);
+            variable_addrs.resize(real_particles_bound_, init_value);
             std::get<type_index>(all_particle_data_).push_back(&variable_addrs);
             all_variable_maps_[type_index].insert(make_pair(variable_name, std::get<type_index>(all_particle_data_).size() - 1));
         }
@@ -57,8 +64,7 @@ namespace SPH
     }
     //=================================================================================================//
     template <typename VariableType, class InitializationFunction>
-    void BaseParticles::
-        registerVariable(StdLargeVec<VariableType> &variable_addrs,
+    void BaseParticles::registerVariable(StdLargeVec<VariableType> &variable_addrs,
                          const std::string &variable_name, const InitializationFunction &initialization)
     {
         constexpr int type_index = DataTypeIndex<VariableType>::value;
@@ -66,7 +72,7 @@ namespace SPH
         registerVariable(variable_addrs, variable_name);
         for (size_t i = 0; i != real_particles_bound_; ++i)
         {
-            variable_addrs[i] = initialization(i);
+            variable_addrs[i] = initialization(i);  //Here, lambda function is applied for initialization. 
         }
     }
     //=================================================================================================//
@@ -174,7 +180,7 @@ namespace SPH
         constexpr int type_index = DataTypeIndex<VariableType>::value;
 
         for (size_t i = 0; i != std::get<type_index>(particle_data).size(); ++i)
-            std::get<type_index>(particle_data)[i]->resize(new_size, VariableType(0));
+            std::get<type_index>(particle_data)[i]->resize(new_size, DataTypeInitializer<VariableType>::zero);
     }
     //=================================================================================================//
     template <typename VariableType>
@@ -184,7 +190,7 @@ namespace SPH
         constexpr int type_index = DataTypeIndex<VariableType>::value;
 
         for (size_t i = 0; i != std::get<type_index>(particle_data).size(); ++i)
-            std::get<type_index>(particle_data)[i]->push_back(VariableType(0));
+            std::get<type_index>(particle_data)[i]->push_back(DataTypeInitializer<VariableType>::zero);
     }
     //=================================================================================================//
     template <typename VariableType>
@@ -250,7 +256,7 @@ namespace SPH
         {
             std::string variable_name = name_index.first;
             StdLargeVec<Matd> &variable = *(std::get<2>(all_particle_data_)[name_index.second]);
-            output_stream << "    <DataArray Name=\"" << variable_name << "\" type=\"Float32\"  NumberOfComponents=\"9\" Format=\"ascii\">\n";
+            output_stream << "    <DataArray Name=\"" << variable_name << " \" type= \"Float32 \"  NumberOfComponents=\"9\" Format=\"ascii\">\n";
             output_stream << "    ";
             for (size_t i = 0; i != total_real_particles; ++i)
             {
@@ -270,7 +276,7 @@ namespace SPH
         {
             std::string variable_name = name_index.first;
             StdLargeVec<Vecd> &variable = *(std::get<1>(all_particle_data_)[name_index.second]);
-            output_stream << "    <DataArray Name=\"" << variable_name << "\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
+            output_stream << "    <DataArray Name=\"" << variable_name << "\" type=\"Float32\"NumberOfComponents=\"3\" Format=\"ascii\">\n";
             output_stream << "    ";
             for (size_t i = 0; i != total_real_particles; ++i)
             {

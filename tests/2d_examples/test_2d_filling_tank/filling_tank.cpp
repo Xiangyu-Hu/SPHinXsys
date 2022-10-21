@@ -107,7 +107,7 @@ int main()
 	wall.defineParticlesAndMaterial<SolidParticles, Solid>();
 	wall.generateParticles<ParticleGeneratorLattice>();
 
-	ObserverBody fluid_observer(system, "FluidObserver");
+	ProbeBody fluid_observer(system, "FluidObserver");
 	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	//----------------------------------------------------------------------
 	//	Define body relation map.

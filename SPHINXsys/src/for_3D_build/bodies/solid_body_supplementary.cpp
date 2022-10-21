@@ -12,7 +12,7 @@ namespace SPH
 	void SolidBodyPartForSimbody::setMassProperties()
 	{
 		Real body_part_volume(0);
-		initial_mass_center_ = Vec3d(0);
+		initial_mass_center_ = Vec3d::Zero();
 		for (size_t i = 0; i < body_part_particles_.size(); ++i)
 		{
 			size_t index_i = body_part_particles_[i];
@@ -26,8 +26,8 @@ namespace SPH
 		initial_mass_center_ /= body_part_volume;
 
 		//computing unit inertia
-		Vec3d inertia_moments(0);
-		Vec3d inertia_products(0);
+		Vec3d inertia_moments = Vec3d::Zero();
+		Vec3d inertia_products = Vec3d::Zero();
 		for (size_t i = 0; i < body_part_particles_.size(); ++i)
 		{
 			size_t index_i = body_part_particles_[i];
@@ -46,7 +46,7 @@ namespace SPH
 		inertia_products /= body_part_volume;
 
 		body_part_mass_properties_ = mass_properties_ptr_keeper_.createPtr<SimTK::MassProperties>(
-			body_part_volume * solid_body_density_, Vec3d(0), SimTK::UnitInertia(inertia_moments, inertia_products));
+			body_part_volume * solid_body_density_, Vec3d::Zero(), SimTK::UnitInertia(inertia_moments, inertia_products));
 	}
 	//=================================================================================================//
 }

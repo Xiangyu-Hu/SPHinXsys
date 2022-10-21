@@ -1,15 +1,10 @@
-/**
- * @file solid_particles_variable.cpp
- * @author	Xiangyu Hu
- */
 #include "solid_particles_variable.h"
 #include "elastic_solid.h"
 
 namespace SPH
 {
     //=============================================================================================//
-    Displacement::Displacement(SPHBody &sph_body)
-        : BaseDerivedVariable<Vecd>(sph_body, "Displacement"), SolidDataSimple(sph_body),
+    Displacement::Displacement(SPHBody &sph_body): BaseDerivedVariable<Vecd>(sph_body, "Displacement"), SolidDataSimple(sph_body),
         LocalDynamics(sph_body), pos_(particles_->pos_), pos0_(particles_->pos0_) {}
     //=============================================================================================//
     void Displacement::update(size_t index_i, Real dt)
@@ -17,10 +12,9 @@ namespace SPH
         derived_variable_[index_i] = pos_[index_i] - pos0_[index_i];
     }
     //=============================================================================================//
-    OffsetInitialPosition::
-        OffsetInitialPosition(SPHBody &sph_body, Vecd &offset)
-        : SolidDataSimple(sph_body), offset_(offset),
-        LocalDynamics(sph_body), pos_(particles_->pos_), pos0_(particles_->pos0_) {}
+    OffsetInitialPosition:: OffsetInitialPosition(SPHBody &sph_body, Vecd &offset)
+        : SolidDataSimple(sph_body), offset_(offset), LocalDynamics(sph_body), pos_(particles_->pos_), 
+        pos0_(particles_->pos0_) {}
     //=============================================================================================//
     void OffsetInitialPosition::update(size_t index_i, Real dt)
     {
@@ -28,8 +22,7 @@ namespace SPH
         pos0_[index_i] += offset_;
     }
     //=============================================================================================//
-    TranslationAndRotation::
-        TranslationAndRotation(SPHBody &sph_body, Transformd &transform)
+    TranslationAndRotation::TranslationAndRotation(SPHBody &sph_body, Transformd &transform)
         : SolidDataSimple(sph_body), LocalDynamics(sph_body), transform_(transform),
           pos_(particles_->pos_), pos0_(particles_->pos0_) {}
     //=============================================================================================//
@@ -39,8 +32,7 @@ namespace SPH
         pos0_[index_i] = transform_.shiftFrameStationToBase(pos0_[index_i]);
     }
     //=============================================================================================//
-    NormalDirectionFromBodyShape::
-        NormalDirectionFromBodyShape(SPHBody &sph_body)
+    NormalDirectionFromBodyShape::NormalDirectionFromBodyShape(SPHBody &sph_body)
         : SolidDataSimple(sph_body), LocalDynamics(sph_body), body_shape_(*sph_body.body_shape_),
           pos_(particles_->pos_), n_(particles_->n_), n0_(particles_->n0_) {}
     //=============================================================================================//
@@ -51,8 +43,7 @@ namespace SPH
         n0_[index_i] = normal_direction;
     }
     //=============================================================================================//
-    NormalDirectionFromShapeAndOp::
-        NormalDirectionFromShapeAndOp(SPHBody &sph_body, const std::string &shape_name)
+    NormalDirectionFromShapeAndOp::NormalDirectionFromShapeAndOp(SPHBody &sph_body, const std::string &shape_name)
         : SolidDataSimple(sph_body), LocalDynamics(sph_body), 
           shape_and_op_(DynamicCast<ComplexShape>(this, sph_body.body_shape_)->getShapeAndOpByName(shape_name)),
           shape_(shape_and_op_->first),
@@ -73,7 +64,7 @@ namespace SPH
     void GreenLagrangeStrain::update(size_t index_i, Real dt)
     {
         Matd F = F_[index_i];
-        derived_variable_[index_i] = 0.5 * (~F * F - Matd(1.0));
+        derived_variable_[index_i] = 0.5 * (F.transpose() * F - Matd::Identity());
     }
     //=============================================================================================//
     VonMisesStress::VonMisesStress(SPHBody &sph_body)

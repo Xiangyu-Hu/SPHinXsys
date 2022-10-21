@@ -1,28 +1,8 @@
-
-/**
- * @file 	in_output.cpp
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
- */
-
 #include "in_output.h"
 #include "all_bodies.h"
 #include "level_set.h"
 #include "sph_system.h"
 
-namespace
-{
-	/**
-	 * @brief Convert any input to string and pad the output with zeros
-	 * @todo Use external library for general string formatting, e.g. abseil, fmt library, or std::format
-	 */
-	template <typename T>
-	std::string padValueWithZeros(T &&value, size_t max_string_width = 10)
-	{
-		std::ostringstream s_time;
-		s_time << std::setw(max_string_width) << std::setfill('0') << value;
-		return s_time.str();
-	}
-}
 namespace SPH
 {
 	//=============================================================================================//

@@ -93,7 +93,7 @@ int main(int ac, char *av[])
 		return 0;
 	}
 
-	ObserverBody ball_observer(sph_system, "BallObserver");
+	ProbeBody ball_observer(sph_system, "BallObserver");
 	ball_observer.generateParticles<ObserverParticleGenerator>(beam_observation_location);
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.

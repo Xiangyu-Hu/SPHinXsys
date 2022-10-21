@@ -233,7 +233,7 @@ int main()
 	thermosolid_body.defineParticlesAndMaterial<DiffusionReactionParticles<SolidParticles>, ThermosolidBodyMaterial>();
 	thermosolid_body.generateParticles<ParticleGeneratorLattice>();
 
-	ObserverBody temperature_observer(system, "FluidObserver");
+	ProbeBody temperature_observer(system, "FluidObserver");
 	temperature_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	//----------------------------------------------------------------------
 	//	Define body relation map.

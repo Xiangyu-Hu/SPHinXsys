@@ -1,12 +1,8 @@
-/**
- * @file 	fluid_structure_interaction.cpp
- * @author	Luhui Han, Chi Zhang and Xiangyu Hu
- */
-
 #include "fluid_structure_interaction.h"
 
 namespace SPH
 {
+	//=====================================================================================================//
 	namespace solid_dynamics
 	{
 		//=================================================================================================//
@@ -31,7 +27,7 @@ namespace SPH
 			Real Vol_i = Vol_[index_i];
 			const Vecd &vel_ave_i = vel_ave_[index_i];
 
-			Vecd force(0);
+			Vecd force = Vecd::Zero();
 			/** Contact interaction. */
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
@@ -78,7 +74,7 @@ namespace SPH
 			Real Vol_i = Vol_[index_i];
 			const Vecd &vel_ave_i = vel_ave_[index_i];
 
-			Vecd force(0);
+			Vecd force = Vecd::Zero();
 			/** Contact interaction. */
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
@@ -107,7 +103,7 @@ namespace SPH
 			Real Vol_i = Vol_[index_i];
 			const Vecd &vel_ave_i = vel_ave_[index_i];
 
-			Vecd force(0);
+			Vecd force = Vecd::Zero();
 			/** Contact interaction. */
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
@@ -122,8 +118,7 @@ namespace SPH
 					size_t index_j = contact_neighborhood.j_[n];
 
 					/** The following viscous force is given in Monaghan 2005 (Rep. Prog. Phys.) */
-					Real v_r_ij = dot(vel_ave_i - vel_n_k[index_j],
-									  contact_neighborhood.r_ij_[n] * contact_neighborhood.e_ij_[n]);
+					Real v_r_ij =  contact_neighborhood.r_ij_[n] * (vel_ave_i - vel_n_k[index_j]).dot(contact_neighborhood.e_ij_[n]);
 					Real vel_difference = 0.0 * (vel_ave_i - vel_n_k[index_j]).norm() * contact_neighborhood.r_ij_[n];
 					Real eta_ij = 8.0 * SMAX(mu_k, rho_n_k[index_j] * vel_difference) * v_r_ij /
 								  (contact_neighborhood.r_ij_[n] * contact_neighborhood.r_ij_[n] + 0.01 * smoothing_length_k);
@@ -135,7 +130,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		TotalViscousForceOnSolid ::TotalViscousForceOnSolid(SPHBody &sph_body)
-			: LocalDynamicsReduce<Vecd, ReduceSum<Vecd>>(sph_body, Vecd(0)),
+			: LocalDynamicsReduce<Vecd, ReduceSum<Vecd>>(sph_body, Vecd::Zero()),
 			  SolidDataSimple(sph_body),
 			  viscous_force_from_fluid_(*particles_->getVariableByName<Vecd>("ViscousForceFromFluid"))
 		{
@@ -148,7 +143,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		TotalForceOnSolid::TotalForceOnSolid(SPHBody &sph_body)
-			: LocalDynamicsReduce<Vecd, ReduceSum<Vecd>>(sph_body, Vecd(0)),
+			: LocalDynamicsReduce<Vecd, ReduceSum<Vecd>>(sph_body, Vecd::Zero()),
 			  SolidDataSimple(sph_body),
 			  force_from_fluid_(*particles_->getVariableByName<Vecd>("ForceFromFluid"))
 		{

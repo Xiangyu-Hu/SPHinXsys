@@ -20,7 +20,7 @@ int main()
 	column.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
 	column.generateParticles<ParticleGeneratorLattice>();
 	/** Define Observer. */
-	ObserverBody my_observer(system, "MyObserver");
+	ProbeBody my_observer(system, "MyObserver");
 	my_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	/**body relation topology */
 	BodyRelationInner column_inner(column);

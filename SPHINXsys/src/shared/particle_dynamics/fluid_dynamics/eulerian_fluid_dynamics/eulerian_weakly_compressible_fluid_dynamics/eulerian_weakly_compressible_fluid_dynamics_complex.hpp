@@ -1,6 +1,35 @@
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and Hu1527/12-4												*
+ *                                                                          *
+ * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	eulerian_weakly_compressible_fluid_dynamics_complex.hpp
- * @author	Zhentong Wang, Chi Zhang and  Xiangyu Hu
+ * @brief 	Here, we define the algorithm classes for complex weakly compressible fluid dynamics,
+ * 			which is involving with either solid walls (with suffix WithWall)
+ * 			or/and other bodies treated as wall for the fluid (with suffix Complex).
+ * @author	Zhentong Wang, Chi ZHang and Xiangyu Hu
+ * @version	1.0
+ *			Try to implement EIGEN libaary for base vector, matrix and 
+ *			linear algebra operation.  
+ *			-- Chi ZHANG
  */
 
 #ifndef EULERIAN_WEAKLY_COMPRESSIBLE_FLUID_DYNAMICS_COMPLEX_HPP
@@ -8,10 +37,9 @@
 
 #include "eulerian_weakly_compressible_fluid_dynamics_complex.h"
 
- //=================================================================================================//
 namespace SPH
 {
-	//=================================================================================================//
+	//=====================================================================================================//
 	namespace eulerian_weakly_compressible_fluid_dynamics
 	{
 		//=================================================================================================//
@@ -56,7 +84,8 @@ namespace SPH
 			Real rho_i = this->rho_[index_i];
 			const Vecd &vel_i = this->vel_[index_i];
 
-			Vecd acceleration(0), vel_derivative(0);
+			Vecd acceleration = Vecd::Zero();
+			Vecd vel_derivative = Vecd::Zero();
 			for (size_t k = 0; k < WCFluidWallData::contact_configuration_.size(); ++k)
 			{
 				StdLargeVec<Real> &Vol_k = *(this->wall_Vol_[k]);
@@ -107,7 +136,7 @@ namespace SPH
 
 			FluidState state_i(this->rho_[index_i], this->vel_[index_i], this->p_[index_i]);
 
-			Vecd momentum_change_rate(0.0);
+			Vecd momentum_change_rate = Vecd::Zero();
 			for (size_t k = 0; k < WCFluidWallData::contact_configuration_.size(); ++k)
 			{
 				StdLargeVec<Real> &Vol_k = *(this->wall_Vol_[k]);
@@ -128,8 +157,8 @@ namespace SPH
 					Real p_star = interface_state.p_;
 					Vecd vel_star = interface_state.vel_;
 					Real rho_star = this->material_->DensityFromPressure(p_star);
-					momentum_change_rate -= 2.0 * Vol_k[index_j] *
-						(SimTK::outer(rho_star * vel_star, vel_star) + p_star * Matd(1.0)) * e_ij * dW_ij;
+					momentum_change_rate -= 2.0 * Vol_k[index_j] * dW_ij *
+						(rho_star * vel_star * vel_star.transpose() + p_star * Matd::Identity()) * e_ij;
 				}
 			}
 			this->dmom_dt_[index_i] += momentum_change_rate;
@@ -189,7 +218,7 @@ namespace SPH
 					Real p_star = interface_state.p_;
 					Vecd vel_star = interface_state.vel_;
 					Real rho_star = this->material_->DensityFromPressure(p_star);
-					density_change_rate -= 2.0 * Vol_k[index_j] * dot(rho_star * vel_star, e_ij) * dW_ij;
+					density_change_rate -= 2.0 * Vol_k[index_j] * dW_ij * rho_star * vel_star.dot(e_ij);
 				}
 			}
 			this->drho_dt_[index_i] += density_change_rate;

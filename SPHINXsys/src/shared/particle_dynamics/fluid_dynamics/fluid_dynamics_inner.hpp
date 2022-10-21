@@ -1,16 +1,43 @@
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and Hu1527/12-4												*
+ *                                                                          *
+ * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	fluid_dynamics_inner.hpp
+ * @brief 	Here, we define the algorithm classes for fluid dynamics within the body.
+ * @details 	We consider here weakly compressible fluids. The algorithms may be
+ * 			different for free surface flow and the one without free surface.
  * @author	Chi ZHang and Xiangyu Hu
+ * @version	1.0
+ *			Try to implement EIGEN libaary for base vector, matrix and 
+ *			linear algebra operation.  
+ *			-- Chi ZHANG
  */
-
 #pragma once
 
 #include "fluid_dynamics_inner.h"
 
-//=================================================================================================//
 namespace SPH
 {
-	//=================================================================================================//
+	//=====================================================================================================//
 	namespace fluid_dynamics
 	{
 		//=================================================================================================//
@@ -59,7 +86,7 @@ namespace SPH
 
 				FluidState state_j(rho_[index_j], vel_[index_j], p_[index_j]);
 				Vecd vel_star = riemann_solver_.getVStar(state_i, state_j, e_ij);
-				density_change_rate += 2.0 * state_i.rho_ * Vol_[index_j] * dot(state_i.vel_ - vel_star, e_ij) * dW_ij;
+				density_change_rate += 2.0 * state_i.rho_ * Vol_[index_j] * (state_i.vel_ - vel_star).dot(e_ij) * dW_ij;
 			}
 			drho_dt_[index_i] = density_change_rate;
 		};

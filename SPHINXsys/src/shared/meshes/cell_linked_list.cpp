@@ -1,8 +1,3 @@
-/**
- * @file 	cell_linked_list.cpp
- * @author	Yongchuan Yu, Chi ZHang and Xiangyu Hu
- */
-
 #include "cell_linked_list.h"
 #include "base_kernel.h"
 #include "base_body.h"
@@ -13,11 +8,8 @@
 namespace SPH
 {
 	//=================================================================================================//
-	BaseCellLinkedList::
-		BaseCellLinkedList(RealBody &real_body, SPHAdaptation &sph_adaptation)
-		: BaseMeshField("CellLinkedList"),
-		  real_body_(real_body), kernel_(*sph_adaptation.getKernel()),
-		  base_particles_(nullptr) {}
+	BaseCellLinkedList::BaseCellLinkedList(RealBody &real_body, SPHAdaptation &sph_adaptation)
+		: BaseMeshField("CellLinkedList"),real_body_(real_body), kernel_(*sph_adaptation.getKernel()), base_particles_(nullptr) {}
 	//=================================================================================================//
 	void BaseCellLinkedList::clearSplitCellLists(SplitCellLists &split_cell_lists)
 	{
@@ -25,8 +17,7 @@ namespace SPH
 			split_cell_lists[i].clear();
 	}
 	//=================================================================================================//
-	CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
-								   RealBody &real_body, SPHAdaptation &sph_adaptation)
+	CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing, RealBody &real_body, SPHAdaptation &sph_adaptation)
 		: BaseCellLinkedList(real_body, sph_adaptation), Mesh(tentative_bounds, grid_spacing, 2)
 	{
 		allocateMeshDataMatrix();
@@ -77,11 +68,10 @@ namespace SPH
 			ap);
 	}
 	//=================================================================================================//
-	MultilevelCellLinkedList::
-		MultilevelCellLinkedList(BoundingBox tentative_bounds, Real reference_grid_spacing,
-								 size_t total_levels, RealBody &real_body, SPHAdaptation &sph_adaptation)
+	MultilevelCellLinkedList::MultilevelCellLinkedList(BoundingBox tentative_bounds, Real reference_grid_spacing,
+							size_t total_levels, RealBody &real_body, SPHAdaptation &sph_adaptation)
 		: MultilevelMesh<BaseCellLinkedList, CellLinkedList, RefinedMesh<CellLinkedList>>(
-			  tentative_bounds, reference_grid_spacing, total_levels, real_body, sph_adaptation),
+			  				tentative_bounds, reference_grid_spacing, total_levels, real_body, sph_adaptation),
 		  h_ratio_(DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->h_ratio_) {}
 	//=================================================================================================//
 	size_t MultilevelCellLinkedList::getMeshLevel(Real particle_cutoff_radius)
@@ -96,15 +86,13 @@ namespace SPH
 		return 999; // means an error in level searching
 	};
 	//=================================================================================================//
-	void MultilevelCellLinkedList::
-		insertACellLinkedParticleIndex(size_t particle_index, const Vecd &particle_position)
+	void MultilevelCellLinkedList::insertACellLinkedParticleIndex(size_t particle_index, const Vecd &particle_position)
 	{
 		size_t level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[particle_index]));
 		mesh_levels_[level]->insertACellLinkedParticleIndex(particle_index, particle_position);
 	}
 	//=================================================================================================//
-	void MultilevelCellLinkedList::
-		InsertACellLinkedListDataEntry(size_t particle_index, const Vecd &particle_position)
+	void MultilevelCellLinkedList::InsertACellLinkedListDataEntry(size_t particle_index, const Vecd &particle_position)
 	{
 		size_t level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[particle_index]));
 		mesh_levels_[level]->InsertACellLinkedListDataEntry(particle_index, particle_position);
@@ -149,8 +137,7 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void MultilevelCellLinkedList::
-		tagBodyPartByCell(CellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included)
+	void MultilevelCellLinkedList::tagBodyPartByCell(CellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included)
 	{
 		for (size_t l = 0; l != total_levels_; ++l)
 		{

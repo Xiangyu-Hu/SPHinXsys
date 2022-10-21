@@ -1,9 +1,3 @@
-/**
- * @file 	xml.cpp
- * @brief 	XML functions are defined here
- * @author	Bo Zhang, Chi Zhang and Xiangyu Hu
- */
-
 #include "xml_engine.h"
 
 namespace SPH
@@ -29,7 +23,7 @@ namespace SPH
 	void XmlEngine::setAttributeToElement(const SimTK::Xml::element_iterator &ele_ite,
 										  const std::string &attrib_name, const Matd &value)
 	{
-		int num_dim = value.nrow();
+		int num_dim = value.rows();
 		SimTK::Array_<Real> array_(num_dim * num_dim);
 		for (int i = 0; i < num_dim; i++)
 			for (int j = 0; j < num_dim; j++)

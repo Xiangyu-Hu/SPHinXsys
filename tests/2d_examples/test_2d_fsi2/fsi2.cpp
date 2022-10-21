@@ -48,9 +48,9 @@ int main(int ac, char *av[])
 		? insert_body.generateParticles<ParticleGeneratorReload>(io_environment, insert_body.getName())
 		: insert_body.generateParticles<ParticleGeneratorLattice>();
 
-	ObserverBody beam_observer(sph_system, "BeamObserver");
+	ProbeBody beam_observer(sph_system, "BeamObserver");
 	beam_observer.generateParticles<ObserverParticleGenerator>(beam_observation_location);
-	ObserverBody fluid_observer(sph_system, "FluidObserver");
+	ProbeBody fluid_observer(sph_system, "FluidObserver");
 	fluid_observer.generateParticles<FluidObserverParticleGenerator>();
 	//----------------------------------------------------------------------
 	//	Define body relation map.

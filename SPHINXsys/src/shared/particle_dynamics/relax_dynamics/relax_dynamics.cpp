@@ -1,18 +1,12 @@
-/**
- * @file 	relax_dynamics.cpp
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
- */
-
 #include "relax_dynamics.h"
 #include "base_particles.hpp"
 #include "particle_generator_lattice.h"
 #include "level_set_shape.h"
 
-using namespace SimTK;
-//=================================================================================================//
+//========================================================================================================//
 namespace SPH
 {
-	//=================================================================================================//
+	//=====================================================================================================//
 	namespace relax_dynamics
 	{
 		//=================================================================================================//
@@ -37,7 +31,7 @@ namespace SPH
 		//=================================================================================================//
 		void RelaxationAccelerationInner::interaction(size_t index_i, Real dt)
 		{
-			Vecd acceleration(0);
+			Vecd acceleration = Vecd::Zero();
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
@@ -99,7 +93,7 @@ namespace SPH
 		//=================================================================================================//
 		void RelaxationAccelerationComplex::interaction(size_t index_i, Real dt)
 		{
-			Vecd acceleration(0);
+			Vecd acceleration = Vecd::Zero();
 			Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
@@ -260,7 +254,7 @@ namespace SPH
 		{
 			Vecd none_normalized_normal = level_set_shape_->findLevelSetGradient(pos_[index_i]);
 			Vecd normal = level_set_shape_->findNormalDirection(pos_[index_i]);
-			Real factor = none_normalized_normal.normSqr() / level_set_refinement_ratio_;
+			Real factor = none_normalized_normal.squaredNorm() / level_set_refinement_ratio_;
 			pos_[index_i] -= factor * constrained_distance_ * normal;
 		}
 		//=================================================================================================//
@@ -350,7 +344,7 @@ namespace SPH
 		bool ShellNormalDirectionPrediction::
 			PredictionConvergenceCheck::reduce(size_t index_i, Real dt)
 		{
-			return SimTK::dot(n_[index_i], n_temp_[index_i]) > convergence_criterion_;
+			return n_[index_i].dot(n_temp_[index_i]) > convergence_criterion_;
 		}
 		//=================================================================================================//
 		ShellNormalDirectionPrediction::ConsistencyCorrection::
@@ -359,7 +353,7 @@ namespace SPH
 			  consistency_criterion_(consistency_criterion),
 			  n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
 		{
-			particles_->registerVariable(updated_indicator_, "UpdatedIndicator", 0);
+			particles_->registerVariable(updated_indicator_, "UpdatedIndicator", [&](size_t i) -> int {return 0;});
 			updated_indicator_[particles_->total_real_particles_ / 3] = 1;
 		}
 		//=================================================================================================//
@@ -376,9 +370,9 @@ namespace SPH
 					if (updated_indicator_[index_j] == 0)
 					{
 						updated_indicator_[index_j] = 1;
-						if (SimTK::dot(n_[index_i], n_[index_j]) < consistency_criterion_)
+						if (n_[index_i].dot(n_[index_j]) < consistency_criterion_)
 						{
-							if (SimTK::dot(n_[index_i], -n_[index_j]) < consistency_criterion_)
+							if (n_[index_i].dot(-n_[index_j]) < consistency_criterion_)
 							{
 								n_[index_j] = n_[index_i];
 								updated_indicator_[index_j] = 2;

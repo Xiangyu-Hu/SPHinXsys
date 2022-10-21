@@ -71,7 +71,7 @@ int main(int ac, char *av[])
 	cantilever_body.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
 	cantilever_body.generateParticles<ParticleGeneratorLattice>();
 	/** Define Observer. */
-	ObserverBody cantilever_observer(system, "CantileverObserver");
+	ProbeBody cantilever_observer(system, "CantileverObserver");
 	cantilever_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 
 	/** topology */

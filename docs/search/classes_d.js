@@ -2,7 +2,7 @@ var searchData=
 [
   ['observedquantityrecording',['ObservedQuantityRecording',['../class_s_p_h_1_1_observed_quantity_recording.html',1,'SPH']]],
   ['observemethodtype',['ObserveMethodType',['../class_observe_method_type.html',1,'']]],
-  ['observerbody',['ObserverBody',['../class_s_p_h_1_1_observer_body.html',1,'SPH']]],
+  ['ProbeBody',['ProbeBody',['../class_s_p_h_1_1_probe_body.html',1,'SPH']]],
   ['observerparticlegenerator',['ObserverParticleGenerator',['../class_s_p_h_1_1_observer_particle_generator.html',1,'SPH']]],
   ['observerparticles',['ObserverParticles',['../class_s_p_h_1_1_observer_particles.html',1,'SPH']]],
   ['observingaquantity',['ObservingAQuantity',['../class_s_p_h_1_1observer__dynamics_1_1_observing_a_quantity.html',1,'SPH::observer_dynamics']]],

@@ -200,7 +200,7 @@ int main()
 	//----------------------------------------------------------------------
 	//	Observer body
 	//----------------------------------------------------------------------
-	ObserverBody temperature_observer(sph_system, "TemperatureObserver");
+	ProbeBody temperature_observer(sph_system, "TemperatureObserver");
 	temperature_observer.generateParticles<TemperatureObserverParticleGenerator>();
 	//----------------------------------------------------------------------
 	//	Define body relation map.

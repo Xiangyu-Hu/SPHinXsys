@@ -1,31 +1,36 @@
 /* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and Hu1527/12-4												*
+ *                                                                          *
+ * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	neighbor_relation.h
  * @brief 	There are the classes for neighboring particles. 
- * It saves the information for carrying out pair
- * interaction, and also considered as the topology of the particles.
+ * 			It saves the information for carrying out pair
+ * 			interaction, and also considered as the topology of the particles.
  * @author	Xiangyu Hu and Chi Zhang
+ * @author	Chi ZHang and Xiangyu Hu
+ * @version	1.0
+ *			Try to implement EIGEN libaary for base vector, matrix and 
+ *			linear algebra operation.  
+ *			-- Chi ZHANG
  */
 
 #ifndef NEIGHBOR_RELATION_H
@@ -47,18 +52,18 @@ namespace SPH
 	class Neighborhood
 	{
 	public:
-		size_t current_size_;	/**< the current number of neighbors */
-		size_t allocated_size_; /**< the limit of neighbors does not require memory allocation  */
+		size_t current_size_;		/**< the current number of neighbors */
+		size_t allocated_size_; 	/**< the limit of neighbors does not require memory allocation  */
 
-		StdLargeVec<size_t> j_;	  /**< index of the neighbor particle. */
-		StdLargeVec<Real> W_ij_;  /**< kernel value or particle volume contribution */
-		StdLargeVec<Real> dW_ij_; /**< derivative of kernel function or inter-particle surface contribution */
-		StdLargeVec<Real> r_ij_;  /**< distance between j and i. */
-		StdLargeVec<Vecd> e_ij_;  /**< unit vector pointing from j to i or inter-particle surface direction */
+		StdLargeVec<size_t> j_;	  	/**< index of the neighbor particle. */
+		StdLargeVec<Real> W_ij_;  	/**< kernel value or particle volume contribution */
+		StdLargeVec<Real> dW_ij_; 	/**< derivative of kernel function or inter-particle surface contribution */
+		StdLargeVec<Real> r_ij_;  	/**< distance between j and i. */
+		StdLargeVec<Vecd> e_ij_;  	/**< unit vector pointing from j to i or inter-particle surface direction */
 
 		Neighborhood() : current_size_(0), allocated_size_(0){};
 		~Neighborhood(){};
-
+		/** Remove a neighbor particle. */
 		void removeANeighbor(size_t neighbor_n);
 	};
 
@@ -75,18 +80,22 @@ namespace SPH
 	{
 	protected:
 		Kernel *kernel_;
-		//----------------------------------------------------------------------
-		//	Below are for constant smoothing length.
-		//----------------------------------------------------------------------
+		/** 
+		 * Below are for constant smoothing length.
+		 */
+		/** Create a relation of neighbor hood in constant smoohting length. */
 		void createRelation(Neighborhood &neighborhood, Real &distance,
 							Vecd &displacement, size_t j_index) const;
+		/** Initialize a relation of neighbor hood in constant smoohting length. */
 		void initializeRelation(Neighborhood &neighborhood, Real &distance,
 								Vecd &displacement, size_t j_index) const;
-		//----------------------------------------------------------------------
-		//	Below are for variable smoothing length.
-		//----------------------------------------------------------------------
+		/**
+		 *	Below are for variable smoothing length.
+		 */
+		/** Create a relation of neighbor hood in constant smoohting length. */
 		void createRelation(Neighborhood &neighborhood, Real &distance,
 							Vecd &displacement, size_t j_index, Real i_h_ratio, Real h_ratio_min) const;
+		/** Initialize a relation of neighbor hood in constant smoohting length. */
 		void initializeRelation(Neighborhood &neighborhood, Real &distance,
 								Vecd &displacement, size_t j_index, Real i_h_ratio, Real h_ratio_min) const;
 
@@ -119,7 +128,7 @@ namespace SPH
 						Vecd &displacement, size_t i_index, size_t j_index) const;
 
 	protected:
-		StdLargeVec<Real> &h_ratio_;
+		StdLargeVec<Real> &h_ratio_;	/**< smoothing length ratio. */
 	};
 
 	/**
@@ -135,7 +144,7 @@ namespace SPH
 						Vecd &displacement, size_t i_index, size_t j_index) const;
 
 	protected:
-		StdLargeVec<Vecd> &pos0_;
+		StdLargeVec<Vecd> &pos0_;	/**< Initial position. */
 	};
 
 	/**
@@ -178,7 +187,7 @@ namespace SPH
 						Vecd &displacement, size_t i_index, size_t j_index) const;
 
 	protected:
-		StdLargeVec<int> part_indicator_; /**< indicator of the body part */
+		StdLargeVec<int> part_indicator_; 	/**< indicator of the body part */
 	};
 }
 #endif //NEIGHBOR_RELATION_H

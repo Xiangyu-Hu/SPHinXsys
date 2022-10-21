@@ -1,11 +1,4 @@
-/**
- * @file 	vector_functions.cpp
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
- * @version	0.1
- */
-
 #include "vector_functions.h"
-#include <Eigen/Eigenvalues>
 //=================================================================================================//
 namespace SPH
 {
@@ -20,38 +13,6 @@ namespace SPH
 	{
 		return Vec3d(1.0, 0.0, 0.0);
 	};
-	//=================================================================================================//
-	Real getMaxAbsoluteElement(const Vec2d &input)
-	{
-		Real max = 0.0;
-		for (int n = 0; n != input.size(); n++)
-			max = SMAX(fabs(input[n]), max);
-		return max;
-	}
-	//=================================================================================================//
-	Real getMaxAbsoluteElement(const Vec3d &input)
-	{
-		Real max = 0.0;
-		for (int n = 0; n != input.size(); n++)
-			max = SMAX(fabs(input[n]), max);
-		return max;
-	}
-	//=================================================================================================//
-	Real getMinAbsoluteElement(const Vec2d &input)
-	{
-		Real min = SimTK::Infinity;
-		for (int n = 0; n != input.size(); n++)
-			min = SMIN(fabs(input[n]), min);
-		return min;
-	}
-	//=================================================================================================//
-	Real getMinAbsoluteElement(const Vec3d &input)
-	{
-		Real min = SimTK::Infinity;
-		for (int n = 0; n != input.size(); n++)
-			min = SMIN(fabs(input[n]), min);
-		return min;
-	}
 	//=================================================================================================//
 	Vec3d upgradeToVector3D(const Real &input)
 	{
@@ -70,9 +31,8 @@ namespace SPH
 	//=================================================================================================//
 	Mat3d upgradeToMatrix3D(const Mat2d &input)
 	{
-		Mat3d output(0);
-		output.col(0) = upgradeToVector3D(input.col(0));
-		output.col(1) = upgradeToVector3D(input.col(1));
+		Mat3d output = Mat3d::Zero();
+		output.block<2,2>(0,0) = input; 
 		return output;
 	}
 	//=================================================================================================//
@@ -83,9 +43,9 @@ namespace SPH
 	//=================================================================================================//
 	Mat2d getInverse(const Mat2d &A)
 	{
-		Mat2d minv(0);
-		SimTK::Real det = A(0, 0) * A(1, 1) - A(0, 1) * A(1, 0);
-		SimTK::Real invdet = 1.0 / det;
+		Mat2d minv = Mat2d::Zero();
+		Real det = A(0, 0) * A(1, 1) - A(0, 1) * A(1, 0);
+		Real invdet = 1.0 / det;
 		minv(0, 0) = A(1, 1) * invdet;
 		minv(0, 1) = -A(0, 1) * invdet;
 		minv(1, 0) = -A(1, 0) * invdet;
@@ -95,12 +55,12 @@ namespace SPH
 	//=================================================================================================//
 	Mat3d getInverse(const Mat3d &A)
 	{
-		SimTK::Real det = A(0, 0) * (A(1, 1) * A(2, 2) - A(2, 1) * A(1, 2)) -
+		Real det = A(0, 0) * (A(1, 1) * A(2, 2) - A(2, 1) * A(1, 2)) -
 						  A(0, 1) * (A(1, 0) * A(2, 2) - A(1, 2) * A(2, 0)) +
 						  A(0, 2) * (A(1, 0) * A(2, 1) - A(1, 1) * A(2, 0));
 
-		SimTK::Real invdet = 1 / det;
-		Mat3d minv(0); // inverse of matrix m
+		Real invdet = 1 / det;
+		Mat3d minv = Mat3d::Zero();
 		minv(0, 0) = (A(1, 1) * A(2, 2) - A(2, 1) * A(1, 2)) * invdet;
 		minv(0, 1) = (A(0, 2) * A(2, 1) - A(0, 1) * A(2, 2)) * invdet;
 		minv(0, 2) = (A(0, 1) * A(1, 2) - A(0, 2) * A(1, 1)) * invdet;
@@ -116,7 +76,7 @@ namespace SPH
 	//=================================================================================================//
 	Mat2d getAverageValue(const Mat2d &A, const Mat2d &B)
 	{
-		Mat2d C(1.0);
+		Mat2d C = Mat2d::Identity();
 		for (int i = 0; i < 2; i++)
 		{
 			for (int j = 0; j < 2; j++)
@@ -129,7 +89,7 @@ namespace SPH
 	//=================================================================================================//
 	Mat3d getAverageValue(const Mat3d &A, const Mat3d &B)
 	{
-		Mat3d C(1.0);
+		Mat3d C = Mat3d::Identity();
 		for (int i = 0; i < 3; i++)
 		{
 			for (int j = 0; j < 3; j++)
@@ -142,7 +102,7 @@ namespace SPH
 	//=================================================================================================//
 	Mat2d inverseCholeskyDecomposition(const Mat2d &A)
 	{
-		Mat2d lower(0);
+		Mat2d lower = Mat2d::Zero();
 		int n = 2;
 		/** Decomposing a matrix into Lower Triangular. */
 		for (int i = 0; i < n; i++)
@@ -164,13 +124,13 @@ namespace SPH
 				}
 			}
 		}
-		Mat2d inverse_lower = getInverse(lower);
-		return inverse_lower;
+
+		return lower.inverse();
 	}
 	//=================================================================================================//
 	Mat3d inverseCholeskyDecomposition(const Mat3d &A)
 	{
-		Mat3d lower(0);
+		Mat3d lower = Mat3d::Zero();
 		int n = 3;
 		/** Decomposing a matrix into Lower Triangular. */
 		for (int i = 0; i < n; i++)
@@ -192,53 +152,53 @@ namespace SPH
 				}
 			}
 		}
-		Mat3d inverse_lower = getInverse(lower);
-		return inverse_lower;
+
+		return lower.inverse();
 	}
 	//=================================================================================================//
 	Mat2d getTransformationMatrix(const Vec2d &direction_of_y)
 	{
-		Mat2d transformation_matrix(0.0);
-		transformation_matrix[0][0] = direction_of_y[1];
-		transformation_matrix[0][1] = -direction_of_y[0];
-		transformation_matrix[1][0] = direction_of_y[0];
-		transformation_matrix[1][1] = direction_of_y[1];
+		Mat2d transformation_matrix = Mat2d::Zero();
+		transformation_matrix(0,0) = direction_of_y[1];
+		transformation_matrix(0,1) = -direction_of_y[0];
+		transformation_matrix(1,0) = direction_of_y[0];
+		transformation_matrix(1,1) = direction_of_y[1];
 
 		return transformation_matrix;
 	}
 	//=================================================================================================//
 	Mat3d getTransformationMatrix(const Vec3d &direction_of_z)
 	{
-		Mat3d transformation_matrix(0.0);
+		Mat3d transformation_matrix = Mat3d::Zero();
 		Real temp = 1.0 + direction_of_z[2];
 		Real fraction = temp / (temp * temp + Eps);
-		transformation_matrix[0][0] = direction_of_z[2] + powerN(direction_of_z[1], 2) * fraction;
-		transformation_matrix[0][1] = -direction_of_z[0] * direction_of_z[1] * fraction;
-		transformation_matrix[0][2] = -direction_of_z[0];
-		transformation_matrix[1][0] = transformation_matrix[0][1];
-		transformation_matrix[1][1] = direction_of_z[2] + powerN(direction_of_z[0], 2) * fraction;
-		transformation_matrix[1][2] = -direction_of_z[1];
-		transformation_matrix[2][0] = direction_of_z[0];
-		transformation_matrix[2][1] = direction_of_z[1];
-		transformation_matrix[2][2] = direction_of_z[2];
+		transformation_matrix(0,0) = direction_of_z[2] + powerN(direction_of_z[1], 2) * fraction;
+		transformation_matrix(0,1) = -direction_of_z[0] * direction_of_z[1] * fraction;
+		transformation_matrix(0,2) = -direction_of_z[0];
+		transformation_matrix(1,0) = transformation_matrix(0,1);
+		transformation_matrix(1,1) = direction_of_z[2] + powerN(direction_of_z[0], 2) * fraction;
+		transformation_matrix(1,2) = -direction_of_z[1];
+		transformation_matrix(2,0) = direction_of_z[0];
+		transformation_matrix(2,1) = direction_of_z[1]; 
+		transformation_matrix(2,2) = direction_of_z[2];
 
 		return transformation_matrix;
 	}
 	//=================================================================================================//
 	Mat2d getDiagonal(const Mat2d &A)
 	{
-		Mat2d diag(1.0);
-		diag[0][0] = A[0][0];
-		diag[1][1] = A[1][1];
+		Mat2d diag = Mat2d::Identity();
+		diag(0,0) = A(0,0);
+		diag(1,1) = A(1,1);
 
 		return diag;
 	}
 	Mat3d getDiagonal(const Mat3d &A)
 	{
-		Mat3d diag(1.0);
-		diag[0][0] = A[0][0];
-		diag[1][1] = A[1][1];
-		diag[2][2] = A[2][2];
+		Mat3d diag =  Mat3d::Identity();
+		diag(0,0) = A(0,0);
+		diag(1,1) = A(1,1);
+		diag(2,2) = A(2,2);
 
 		return diag;
 	}
@@ -250,7 +210,7 @@ namespace SPH
 		{
 			for(int j=0; j < 2; j++)
 			{
-				product += Matrix1[i][j] * Matrix2[i][j];
+				product += Matrix1(i,j) * Matrix2(i,j);
 			}
 		}
 		return product;
@@ -262,7 +222,7 @@ namespace SPH
 		{
 			for(int j=0; j < 3; j++)
 			{
-				product += Matrix1[i][j] * Matrix2[i][j];
+				product += Matrix1(i,j) * Matrix2(i,j);
 			}
 		}
 		return product;
@@ -352,14 +312,7 @@ namespace SPH
 	//=================================================================================================//
 	Vec2d getPrincipalValuesFromMatrix(const Mat2d& A)
 	{
-		int n = 2;
-		Eigen::MatrixXd matrix(n,n);
-		for(int row=0;row<n;row++) {
-			for(int col=0;col<n;col++)  {
-				matrix(row,col) = A[row][col];
-			}
-		}
-		Eigen::ComplexEigenSolver<Eigen::MatrixXd> ces(matrix, /* computeEigenvectors = */ false);
+		Eigen::EigenSolver<Eigen::MatrixXd> ces(A, /* computeEigenvectors = */ false);
 		auto eigen_values = ces.eigenvalues();
 
 		std::vector<Real> sorted_values = {
@@ -375,14 +328,7 @@ namespace SPH
 	//=================================================================================================//
 	Vec3d getPrincipalValuesFromMatrix(const Mat3d& A)
 	{
-		int n = 3;
-		Eigen::MatrixXd matrix(n,n);
-		for(int row=0;row<n;row++) {
-			for(int col=0;col<n;col++)  {
-				matrix(row,col) = A[row][col];
-			}
-		}
-		Eigen::ComplexEigenSolver<Eigen::MatrixXd> ces(matrix, /* computeEigenvectors = */ false);
+		Eigen::EigenSolver<Eigen::MatrixXd> ces(A, /* computeEigenvectors = */ false);
 		auto eigen_values = ces.eigenvalues();
 
 		std::vector<Real> sorted_values = {
@@ -399,7 +345,17 @@ namespace SPH
 	//=================================================================================================//
 	Real MinimumDimension(const BoundingBox &bbox)
 	{
-		return getMinAbsoluteElement(bbox.second - bbox.first);
+		return (bbox.second_ - bbox.first_).cwiseAbs().minCoeff();
+	}
+	//=================================================================================================//
+	Real getCrossProduct(const Vec2d &vector_1, const Vec2d &vector_2)
+	{
+		return vector_1[1] * vector_2[0] - vector_1[0] * vector_2[1];
+	}
+	//=================================================================================================//
+	Vec3d getCrossProduct(const Vec3d &vector_1, const Vec3d &vector_2)
+	{	// Eigen corss product for only have 3D vector
+		return vector_1.cross(vector_2);
 	}
 	//=================================================================================================//	
 }
