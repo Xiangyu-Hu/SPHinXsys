@@ -1,13 +1,146 @@
 /**
- * @file 	general_dynamics_refinement.cpp
+ * @file 	general_life_time_dynamics.cpp
  * @author	Yijie Sun and Xiangyu Hu
  */
 
-#include "general_dynamics_refinement.h"
+#include "general_life_time_dynamics.h"
 #include "level_set_shape.h"
 
 namespace SPH
 {
+	//=================================================================================================//
+	ParticleRefinementInPrescribedRegion::
+		ParticleRefinementInPrescribedRegion(SPHBody &sph_body, size_t body_buffer_width, Shape &refinement_region)
+		: BaseParticleSplit<IndexPosition>(sph_body, body_buffer_width),
+		  rho0_inv_(1.0 / particles_->rho0_),
+		  rho_(particles_->rho_), pos_(particles_->pos_), Vol_(particles_->Vol_),
+		  mass_(particles_->mass_), refinement_region_bounds_(refinement_region.getBounds()),
+		  h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio"))
+	{
+		particles_->addBufferParticles(body_buffer_width);
+		sph_body.allocateConfigurationMemoriesForBufferParticles();
+	}
+	//=================================================================================================//
+	void ParticleRefinementInPrescribedRegion::setupDynamics(Real dt)
+	{
+		split_parameters_.clear();
+	}
+	//=================================================================================================//
+	void ParticleRefinementInPrescribedRegion::interaction(size_t index_i, Real dt)
+	{
+		if (checkSplit(index_i))
+		{
+			StdVec<size_t> new_indices;
+			split_parameters_.push_back(computingSplit(index_i));
+		}
+	}
+	//=================================================================================================//
+	bool ParticleRefinementInPrescribedRegion::checkSplit(size_t index_i)
+	{
+		Real non_deformed_volume = mass_[index_i] * rho0_inv_;
+		Vecd &position = pos_[index_i];
+
+		bool is_split_allowed = particle_adaptation_.isSplitAllowed(non_deformed_volume);
+		bool is_split_inside = checkLocation(refinement_region_bounds_, position, non_deformed_volume);
+		bool high_resolution_check = false;
+		bool low_resolution_check = false;
+
+		return (is_split_allowed || is_split_inside) ? true : false;
+	}
+	//=================================================================================================//
+	bool ParticleRefinementInPrescribedRegion::
+		checkLocation(const BoundingBox &refinement_region_bounds, Vecd position, Real volume)
+	{
+		int bound_number = 0;
+		for (int axis_direction = 0; axis_direction != Dimensions; ++axis_direction)
+		{
+			Real particle_spacing = pow(volume, 1.0 / Dimensions);
+			if (position[axis_direction] > (refinement_region_bounds.first[axis_direction] + particle_spacing) &&
+				position[axis_direction] < (refinement_region_bounds.second[axis_direction] - particle_spacing))
+				bound_number += 1;
+		}
+		return bound_number != Dimensions ? false : true;
+	}
+	//=================================================================================================//
+	void ParticleSplitWithPrescribedArea::splittingModel(size_t index_i, StdVec<size_t> &new_indices)
+	{
+		size_t particle_real_number = particles_->total_real_particles_ + particle_number_change;
+		particles_->copyFromAnotherParticle(particle_real_number, index_i);
+		new_indices.push_back(index_i);
+		new_indices.push_back(particle_real_number);
+		Vecd pos_splitting = getSplittingPosition(new_indices);
+		updateNewlySplittingParticle(index_i, particle_real_number, pos_splitting);
+
+		particle_number_change += 1;
+		split_position_.push_back(2.0 * pos_[index_i] - pos_splitting);
+		split_index_.push_back(Vecu(index_i, particle_real_number));
+	}
+	//=================================================================================================//
+	void ParticleSplitWithPrescribedArea::update(size_t index_i, Real dt)
+	{
+		for (size_t num = 0; num != particle_number_change; ++num)
+		{
+			if (index_i == split_index_[num][0])
+			{
+				size_t index_i = split_index_[num][0];
+				size_t index_j = split_index_[num][1];
+				pos_[index_i] = split_position_[num];
+				mass_[index_i] = mass_[index_j];
+				Vol_[index_i] = Vol_[index_j];
+				h_ratio_[index_i] = h_ratio_[index_j];
+
+				particles_->total_real_particles_ += 1;
+				if (particles_->total_real_particles_ >= particles_->real_particles_bound_)
+				{
+					std::cout << "ParticleSplitWithPrescribedArea: \n"
+							  << "Not enough body buffer particles! Exit the code."
+							  << "\n";
+					exit(0);
+				}
+			}
+		}
+	}
+	//=================================================================================================//
+	Vecd ParticleSplitWithPrescribedArea::getSplittingPosition(const StdVec<size_t> &new_indices)
+	{
+		srand(int(new_indices[0]));
+		Real delta_random = 0 + 2.0 * Pi * rand() / RAND_MAX * (2.0 * Pi - 0);
+		Vecd pos_ = particles_->pos_[new_indices[0]];
+		Real delta = delta_random + Pi;
+		Real Vol_split = Vol_[new_indices[0]] / 2.0;
+		Real particle_spacing_j = pow(Vol_split, 1.0 / (Real)Dimensions);
+
+		return particle_adaptation_->splittingPattern(pos_, particle_spacing_j, delta);
+	}
+	//=================================================================================================//
+	void ParticleSplitWithPrescribedArea::
+		updateNewlySplittingParticle(size_t index_center, size_t index_new, Vecd pos_split)
+	{
+		mass_[index_new] = 0.5 * mass_[index_center];
+		Vol_[index_new] = mass_[index_new] / particles_->rho0_;
+		Real particle_spacing_j = pow(Vol_[index_new], 1.0 / (Real)Dimensions);
+		h_ratio_[index_new] = sph_body_.sph_adaptation_->ReferenceSpacing() / particle_spacing_j;
+		particles_->pos_[index_new] = pos_split;
+	}
+	//=================================================================================================//
+	Vecd SplitWithMinimumDensityErrorInner::getSplittingPosition(const StdVec<size_t> &new_indices)
+	{
+		StdVec<size_t> original_indices;
+		StdVec<Vecd> new_positions;
+		size_t index_i = new_indices[0];
+		original_indices.push_back(index_i);
+		Real particle_spacing = pow(Vol_[index_i] / 2.0, 1.0 / (Real)Dimensions);
+		Vecd pos_j = particle_adaptation_->splittingPattern(pos_[index_i], particle_spacing, 0.25 * Pi);
+		Vecd pos_i = 2.0 * pos_[index_i] - pos_j;
+		new_positions.push_back(pos_i);
+		new_positions.push_back(pos_j);
+
+		Vecd position = compute_density_error.getPositionFromDensityError(
+			original_indices, new_positions, new_indices, 0.2 * particle_spacing, 0.65 * particle_spacing);
+		for (size_t n = 0; n != new_indices.size(); ++n)
+			particle_adaptation_->total_split_error_[new_indices[n]] = compute_density_error.density_error_[new_indices[n]];
+		return position;
+	}
 	//================================================================================================ =//
 	Vecd ComputeDensityErrorInner::
 		getPositionFromDensityError(const StdVec<size_t> &original_indices, const StdVec<Vecd> &initial_new_positions,
@@ -284,138 +417,6 @@ namespace SPH
 		grad_new_indices_[grad_new_indices_.size() - 1] += grad_sigma;
 		sigma_newIndex = sigma_newIndex * particles_->rho0_ * inv_sigma_0 + sigma_inner;
 		return sigma_newIndex;
-	}
-	//=================================================================================================//
-	ParticleSplitWithPrescribedArea::
-		ParticleSplitWithPrescribedArea(SPHBody &sph_body, BodyRegionByCell &refinement_area, size_t body_buffer_width)
-		: LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
-		  rho0_inv_(1.0 / particles_->rho0_),
-		  Vol_(particles_->Vol_), pos_(particles_->pos_), rho_(particles_->rho_),
-		  mass_(particles_->mass_), refinement_area_(&refinement_area),
-		  h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio"))
-	{
-		particles_->addBufferParticles(body_buffer_width);
-		sph_body.allocateConfigurationMemoriesForBufferParticles();
-		particle_adaptation_ = DynamicCast<ParticleSplitAndMerge>(this, sph_body.sph_adaptation_);
-	}
-	//=================================================================================================//
-	void ParticleSplitWithPrescribedArea::interaction(size_t index_i, Real dt)
-	{
-		if (splitCriteria(index_i))
-		{
-			StdVec<size_t> new_indices;
-			splittingModel(index_i, new_indices);
-		}
-	}
-	//=================================================================================================//
-	bool ParticleSplitWithPrescribedArea::splitCriteria(size_t index_i)
-	{
-		Real non_deformed_volume = mass_[index_i] * rho0_inv_;
-		Vecd &position = pos_[index_i];
-		// minimum resolution in high resolution area
-		Real high_resolution_volume = powerN(particle_adaptation_->MinimumSpacing(), Dimensions);
-		// minimum resolution in low resolution area
-		Real low_resolution_volume = powerN(particle_adaptation_->ReferenceSpacing(), Dimensions);
-
-		bool high_resolution_spacing_check = particle_adaptation_->splitResolutionCheck(non_deformed_volume, high_resolution_volume);
-		bool low_resolution_spacing_check = particle_adaptation_->splitResolutionCheck(non_deformed_volume, low_resolution_volume);
-		bool high_resolution_check = false;
-		bool low_resolution_check = false;
-
-		if (high_resolution_spacing_check)
-			low_resolution_check = particle_adaptation_->checkLocation(*refinement_area_, position, non_deformed_volume);
-
-		if (low_resolution_spacing_check)
-			low_resolution_check = !particle_adaptation_->checkLocation(*refinement_area_, position, non_deformed_volume);
-
-		return (high_resolution_check || low_resolution_check) ? true : false;
-	}
-	//=================================================================================================//
-	void ParticleSplitWithPrescribedArea::splittingModel(size_t index_i, StdVec<size_t> &new_indices)
-	{
-		size_t particle_real_number = particles_->total_real_particles_ + particle_number_change;
-		particles_->copyFromAnotherParticle(particle_real_number, index_i);
-		new_indices.push_back(index_i);
-		new_indices.push_back(particle_real_number);
-		Vecd pos_splitting = getSplittingPosition(new_indices);
-		updateNewlySplittingParticle(index_i, particle_real_number, pos_splitting);
-
-		particle_number_change += 1;
-		split_position_.push_back(2.0 * pos_[index_i] - pos_splitting);
-		split_index_.push_back(Vecu(index_i, particle_real_number));
-	}
-	//=================================================================================================//
-	void ParticleSplitWithPrescribedArea::setupDynamics(Real dt)
-	{
-		split_index_.clear();
-		split_position_.clear();
-		particle_number_change = 0;
-	}
-	//=================================================================================================//
-	void ParticleSplitWithPrescribedArea::update(size_t index_i, Real dt)
-	{
-		for (size_t num = 0; num != particle_number_change; ++num)
-		{
-			if (index_i == split_index_[num][0])
-			{
-				size_t index_i = split_index_[num][0];
-				size_t index_j = split_index_[num][1];
-				pos_[index_i] = split_position_[num];
-				mass_[index_i] = mass_[index_j];
-				Vol_[index_i] = Vol_[index_j];
-				h_ratio_[index_i] = h_ratio_[index_j];
-
-				particles_->total_real_particles_ += 1;
-				if (particles_->total_real_particles_ >= particles_->real_particles_bound_)
-				{
-					std::cout << "ParticleSplitWithPrescribedArea: \n"
-							  << "Not enough body buffer particles! Exit the code."
-							  << "\n";
-					exit(0);
-				}
-			}
-		}
-	}
-	//=================================================================================================//
-	Vecd ParticleSplitWithPrescribedArea::getSplittingPosition(const StdVec<size_t> &new_indices)
-	{
-		srand(int(new_indices[0]));
-		Real delta_random = 0 + 2.0 * Pi * rand() / RAND_MAX * (2.0 * Pi - 0);
-		Vecd pos_ = particles_->pos_[new_indices[0]];
-		Real delta = delta_random + Pi;
-		Real Vol_split = Vol_[new_indices[0]] / 2.0;
-		Real particle_spacing_j = pow(Vol_split, 1.0 / (Real)Dimensions);
-
-		return particle_adaptation_->splittingPattern(pos_, particle_spacing_j, delta);
-	}
-	//=================================================================================================//
-	void ParticleSplitWithPrescribedArea::
-		updateNewlySplittingParticle(size_t index_center, size_t index_new, Vecd pos_split)
-	{
-		mass_[index_new] = 0.5 * mass_[index_center];
-		Vol_[index_new] = mass_[index_new] / particles_->rho0_;
-		Real particle_spacing_j = pow(Vol_[index_new], 1.0 / (Real)Dimensions);
-		h_ratio_[index_new] = sph_body_.sph_adaptation_->ReferenceSpacing() / particle_spacing_j;
-		particles_->pos_[index_new] = pos_split;
-	}
-	//=================================================================================================//
-	Vecd SplitWithMinimumDensityErrorInner::getSplittingPosition(const StdVec<size_t> &new_indices)
-	{
-		StdVec<size_t> original_indices;
-		StdVec<Vecd> new_positions;
-		size_t index_i = new_indices[0];
-		original_indices.push_back(index_i);
-		Real particle_spacing = pow(Vol_[index_i] / 2.0, 1.0 / (Real)Dimensions);
-		Vecd pos_j = particle_adaptation_->splittingPattern(pos_[index_i], particle_spacing, 0.25 * Pi);
-		Vecd pos_i = 2.0 * pos_[index_i] - pos_j;
-		new_positions.push_back(pos_i);
-		new_positions.push_back(pos_j);
-
-		Vecd position = compute_density_error.getPositionFromDensityError(
-			original_indices, new_positions, new_indices, 0.2 * particle_spacing, 0.65 * particle_spacing);
-		for (size_t n = 0; n != new_indices.size(); ++n)
-			particle_adaptation_->total_split_error_[new_indices[n]] = compute_density_error.density_error_[new_indices[n]];
-		return position;
 	}
 	//=================================================================================================//
 	void SplitWithMinimumDensityErrorInner::setupDynamics(Real dt)

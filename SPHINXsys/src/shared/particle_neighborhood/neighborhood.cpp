@@ -23,7 +23,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void NeighborBuilder::createNeighbor(Neighborhood &neighborhood, const Real &distance,
-										 const Vecd &displacement, size_t index_j, const Real Vol_j)
+										 const Vecd &displacement, size_t index_j, const Real &Vol_j)
 	{
 		neighborhood.j_.push_back(index_j);
 		neighborhood.W_ij_.push_back(kernel_->W(distance, displacement));
@@ -34,7 +34,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void NeighborBuilder::initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
-											 const Vecd &displacement, size_t index_j, const Real Vol_j)
+											 const Vecd &displacement, size_t index_j, const Real &Vol_j)
 	{
 		size_t current_size = neighborhood.current_size_;
 		neighborhood.j_[current_size] = index_j;
@@ -45,7 +45,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void NeighborBuilder::createNeighbor(Neighborhood &neighborhood, const Real &distance,
-										 const Vecd &displacement, size_t index_j, const Real Vol_j,
+										 const Vecd &displacement, size_t index_j, const Real &Vol_j,
 										 Real i_h_ratio, Real h_ratio_min)
 	{
 		neighborhood.j_.push_back(index_j);
@@ -58,7 +58,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void NeighborBuilder::initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
-											 const Vecd &displacement, size_t index_j, const Real Vol_j,
+											 const Vecd &displacement, size_t index_j, const Real &Vol_j,
 											 Real i_h_ratio, Real h_ratio_min)
 	{
 		size_t current_size = neighborhood.current_size_;
@@ -91,15 +91,15 @@ namespace SPH
 		}
 	};
 	//=================================================================================================//
-	AdaptiveNeighborBuilderInner::
-		AdaptiveNeighborBuilderInner(SPHBody &body)
+	NeighborBuilderInnerAdaptive::
+		NeighborBuilderInnerAdaptive(SPHBody &body)
 		: NeighborBuilder(),
 		  h_ratio_(*body.getBaseParticles().getVariableByName<Real>("SmoothingLengthRatio"))
 	{
 		kernel_ = body.sph_adaptation_->getKernel();
 	}
 	//=================================================================================================//
-	void AdaptiveNeighborBuilderInner::
+	void NeighborBuilderInnerAdaptive::
 	operator()(Neighborhood &neighborhood, const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
 	{
 		size_t index_j = std::get<0>(list_data_j);
@@ -204,15 +204,15 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	AdaptiveNeighborBuilderContact::
-		AdaptiveNeighborBuilderContact(SPHBody &body, SPHBody &contact_body)
+	NeighborBuilderContactAdaptive::
+		NeighborBuilderContactAdaptive(SPHBody &body, SPHBody &contact_body)
 		: NeighborBuilder(), adaptation_(*body.sph_adaptation_), contact_adaptation_(*contact_body.sph_adaptation_),
 		  relative_h_ref_(adaptation_.ReferenceSmoothingLength() / contact_adaptation_.ReferenceSmoothingLength())
 	{
 		kernel_ = adaptation_.getKernel();
 	}
 	//=================================================================================================//
-	void AdaptiveNeighborBuilderContact::operator()(Neighborhood &neighborhood,
+	void NeighborBuilderContactAdaptive::operator()(Neighborhood &neighborhood,
 													const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
 	{
 		size_t index_j = std::get<0>(list_data_j);

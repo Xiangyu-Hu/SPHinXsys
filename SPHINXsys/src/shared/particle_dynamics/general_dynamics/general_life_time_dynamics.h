@@ -21,7 +21,7 @@
  *                                                                              *
  * -----------------------------------------------------------------------------*/
 /**
- * @file 	general_dynamics_confinement.h
+ * @file 	general_life_time_dynamics.h
  * @brief 	This is the particle dynamics applicable for all type bodies
  * @author	Yijie Sun and Xiangyu Hu
  */
@@ -34,6 +34,76 @@ namespace SPH
 {
 	class LevelSetComplexShape;
 	class ParticleSplitAndMerge;
+
+	/**
+	 * @class BaseParticleSplit
+	 * @brief Base class for particle split.
+	 */
+	template <typename SplitParameters>
+	class BaseParticleSplit : public LocalDynamics, public GeneralDataDelegateSimple
+	{
+	public:
+		BaseParticleSplit(SPHBody &sph_body, size_t body_buffer_width);
+		virtual ~BaseParticleSplit(){};
+
+	protected:
+		ParticleSplitAndMerge &particle_adaptation_;
+		ConcurrentVec<SplitParameters> split_parameters_;
+
+		virtual bool checkSplit(size_t index_i) = 0;
+		virtual SplitParameters computingSplit(size_t index_i) = 0;
+		virtual void execSplit(const SplitParameters &split_parameters) = 0;
+	};
+
+	/**
+	 * @class BaseParticleMerge
+	 * @brief Base class for particle merge.
+	 */
+	template <typename MergeParameters>
+	class BaseParticleMerge : public LocalDynamics, public GeneralDataDelegateSimple
+	{
+	public:
+		BaseParticleMerge(SPHBody &sph_body, size_t body_buffer_width);
+		virtual ~BaseParticleMerge(){};
+
+	protected:
+		ParticleSplitAndMerge &particle_adaptation_;
+		ConcurrentVec<MergeParameters> merge_parameters_;
+
+		virtual bool checkMerge(size_t index_i) = 0;
+		virtual MergeParameters computingMerge(size_t index_i) = 0;
+		virtual void execMerge(const MergeParameters &split_parameters) = 0;
+	};
+
+	typedef std::pair<size_t, Vecd> IndexPosition;
+	/**
+	 * @class ParticleRefinementInPrescribedRegion
+	 * @brief particle split in prescribed region.
+	 */
+	class ParticleRefinementInPrescribedRegion : BaseParticleSplit<IndexPosition>
+	{
+	public:
+		ParticleRefinementInPrescribedRegion(SPHBody &sph_body, size_t body_buffer_width, Shape &refinement_region);
+		virtual ~ParticleRefinementInPrescribedRegion(){};
+		void interaction(size_t index_i, Real dt = 0.0);
+		void update(size_t index_i, Real dt = 0.0);
+
+	protected:
+		BoundingBox refinement_region_bounds_;
+		Real rho0_inv_;
+
+		StdLargeVec<Real> &rho_;
+		StdLargeVec<Vecd> &pos_;
+		StdLargeVec<Real> &mass_;
+		StdLargeVec<Real> &Vol_;
+		StdLargeVec<Real> &h_ratio_; /**< the ratio between reference smoothing length to variable smoothing length */
+
+		virtual void setupDynamics(Real dt) override;
+		virtual bool checkSplit(size_t index_i) override;
+		virtual IndexPosition computingSplit(size_t index_i) override;
+		virtual void execSplit(const IndexPosition &split_parameters) override;
+		virtual bool checkLocation(const BoundingBox &refinement_region_bounds, Vecd position, Real volume);
+	};
 
 	/**
 	 * @class ComputeDensityErrorInner
