@@ -46,7 +46,7 @@ int main()
 	//----------------------------------------------------------------------
 	RealBody imported_model(system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
 	imported_model.defineAdaptation<ParticleSpacingByBodyShape>(1.15, 1.0, 2);
-	imported_model.defineBodyLevelSetShape()->writeLevelSet(imported_model);
+	imported_model.defineBodyLevelSetShape()->writeLevelSet(io_environment);
 	imported_model.defineParticlesAndMaterial();
 	imported_model.generateParticles<ParticleGeneratorMultiResolution>();
 	imported_model.addBodyStateForRecording<Real>("SmoothingLengthRatio");
@@ -54,14 +54,14 @@ int main()
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_imported_model_to_vtp(io_environment, {imported_model});
-	MeshRecordingToPlt cell_linked_list_recording(io_environment, imported_model, imported_model.cell_linked_list_);
+	MeshRecordingToPlt cell_linked_list_recording(io_environment, imported_model.cell_linked_list_);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInnerVariableSmoothingLength imported_model_inner(imported_model);
-	// BaseBodyRelationInner* imported_model_inner(imported_model);
+	AdaptiveInnerRelation imported_model_inner(imported_model);
+	// BaseInnerRelation* imported_model_inner(imported_model);
 	//----------------------------------------------------------------------
 	//	Methods used for particle relaxation.
 	//----------------------------------------------------------------------

@@ -55,7 +55,7 @@ namespace SPH
 		virtual void initializeGeometricVariables() = 0;
 
 	protected:
-		BaseParticles *base_particles_;
+		BaseParticles &base_particles_;
 		StdLargeVec<Vecd> &pos_;		   /**< current position */
 		StdLargeVec<size_t> &unsorted_id_; /**< original particle ids */
 		virtual void initializePosition(const Vecd &position);
@@ -97,7 +97,7 @@ namespace SPH
 	/**
 	 * @class ObserverParticleGenerator
 	 * @brief Generate particle directly from position-and-volume data.
-	 * @details The values of PositionsVolumes will be given in the derived class.
+	 * @details The values of positions will be given in the derived class.
 	 */
 	class ObserverParticleGenerator : public ParticleGenerator
 	{

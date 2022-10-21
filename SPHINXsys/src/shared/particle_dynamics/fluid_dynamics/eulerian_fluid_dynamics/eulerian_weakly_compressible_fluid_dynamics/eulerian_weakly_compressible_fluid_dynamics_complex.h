@@ -39,31 +39,26 @@ namespace SPH
 {
 	namespace eulerian_weakly_compressible_fluid_dynamics
 	{
-		typedef DataDelegateContact<EulerianFluidBody, WeaklyCompressibleFluidParticles, Fluid,
-									SolidBody, SolidParticles, Solid, DataDelegateEmptyBase>
+		typedef DataDelegateContact<WeaklyCompressibleFluidParticles, SolidParticles, DataDelegateEmptyBase>
 			WCFluidWallData;
-		typedef DataDelegateContact<EulerianFluidBody, WeaklyCompressibleFluidParticles, Fluid,
-									SPHBody, BaseParticles, BaseMaterial, DataDelegateEmptyBase>
+		typedef DataDelegateContact<WeaklyCompressibleFluidParticles, BaseParticles, DataDelegateEmptyBase>
 			WCFluidContactData;
-		typedef DataDelegateContact<EulerianFluidBody, WeaklyCompressibleFluidParticles, Fluid,
-									SolidBody, SolidParticles, Solid>
-			WCFSIContactData;
+		typedef DataDelegateContact<WeaklyCompressibleFluidParticles, SolidParticles> WCFSIContactData;
 		/**
-		 * @class RelaxationWithWall
+		 * @class InteractionWithWall
 		 * @brief Abstract base class for general relaxation algorithms with wall
 		 */
-		template <class BaseRelaxationType>
-		class RelaxationWithWall : public BaseRelaxationType, public WCFluidWallData
+		template <class BaseIntegrationType>
+		class InteractionWithWall : public BaseIntegrationType, public WCFluidWallData
 		{
 		public:
 			template <class BaseBodyRelationType>
-			RelaxationWithWall(BaseBodyRelationType &base_body_relation,
-							   BaseBodyRelationContact &wall_contact_relation);
-			virtual ~RelaxationWithWall(){};
+			InteractionWithWall(BaseBodyRelationType &base_body_relation,
+							   BaseContactRelation &wall_contact_relation);
+			virtual ~InteractionWithWall(){};
 
 		protected:
 			StdVec<Real> wall_inv_rho0_;
-			StdVec<StdLargeVec<Real> *> wall_mass_, wall_Vol_;
 			StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_acc_ave_, wall_n_;
 		};
 
@@ -72,13 +67,13 @@ namespace SPH
 		 * @brief  template class viscous acceleration with wall boundary
 		 */
 		template <class BaseViscousAccelerationType>
-		class ViscousWithWall : public RelaxationWithWall<BaseViscousAccelerationType>
+		class ViscousWithWall : public InteractionWithWall<BaseViscousAccelerationType>
 		{
 		public:
 			// template for different combination of constructing body relations
 			template <class BaseBodyRelationType>
 			ViscousWithWall(BaseBodyRelationType &base_body_relation,
-							BaseBodyRelationContact &wall_contact_relation);
+							BaseContactRelation &wall_contact_relation);
 			virtual ~ViscousWithWall(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 		};
@@ -88,76 +83,59 @@ namespace SPH
 		class BaseViscousAccelerationWithWall : public BaseViscousAccelerationType
 		{
 		public:
-			explicit BaseViscousAccelerationWithWall(ComplexBodyRelation &fluid_wall_relation);
-			BaseViscousAccelerationWithWall(BaseBodyRelationInner &fluid_inner_relation,
-											BaseBodyRelationContact &wall_contact_relation);
-			BaseViscousAccelerationWithWall(ComplexBodyRelation &fluid_complex_relation,
-											BaseBodyRelationContact &wall_contact_relation);
+			explicit BaseViscousAccelerationWithWall(ComplexRelation &fluid_wall_relation);
+			BaseViscousAccelerationWithWall(BaseInnerRelation &fluid_inner_relation,
+											BaseContactRelation &wall_contact_relation);
+			BaseViscousAccelerationWithWall(ComplexRelation &fluid_complex_relation,
+											BaseContactRelation &wall_contact_relation);
 		};
 		using ViscousAccelerationWithWall = BaseViscousAccelerationWithWall<ViscousWithWall<ViscousAccelerationInner>>;
 
 		/**
-		 * @class PressureRelaxation
+		 * @class Integration1stHalf
 		 * @brief  template class pressure relaxation scheme with wall boundary
 		 */
-		template <class BasePressureRelaxationType>
-		class PressureRelaxation : public RelaxationWithWall<BasePressureRelaxationType>
+		template <class BaseIntegration1stHalfType>
+		class BaseIntegration1stHalfWithWall : public InteractionWithWall<BaseIntegration1stHalfType>
 		{
 		public:
 			// template for different combination of constructing body relations
 			template <class BaseBodyRelationType>
-			PressureRelaxation(BaseBodyRelationType &base_body_relation,
-							   BaseBodyRelationContact &wall_contact_relation);
-			virtual ~PressureRelaxation(){};
+			BaseIntegration1stHalfWithWall(BaseBodyRelationType &base_body_relation,
+										   BaseContactRelation &wall_contact_relation);
+			explicit BaseIntegration1stHalfWithWall(ComplexRelation &fluid_wall_relation)
+				: BaseIntegration1stHalfWithWall(fluid_wall_relation.inner_relation_,
+												 fluid_wall_relation.contact_relation_){};
+			virtual ~BaseIntegration1stHalfWithWall(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 		};
 
-		/** template interface class for different pressure relaxation with wall schemes */
-		template <class BasePressureRelaxationType>
-		class BasePressureRelaxationWithWall : public BasePressureRelaxationType
-		{
-		public:
-			explicit BasePressureRelaxationWithWall(ComplexBodyRelation &fluid_wall_relation);
-			BasePressureRelaxationWithWall(BaseBodyRelationInner &fluid_inner_relation,
-										   BaseBodyRelationContact &wall_contact_relation);
-			BasePressureRelaxationWithWall(ComplexBodyRelation &fluid_complex_relation,
-										   BaseBodyRelationContact &wall_contact_relation);
-		};
-		using PressureRelaxationWithWall = BasePressureRelaxationWithWall<PressureRelaxation<PressureRelaxationInner>>;
-		using PressureRelaxationAcousticRiemannWithWall = BasePressureRelaxationWithWall<PressureRelaxation<PressureRelaxationAcousticRiemannInner>>;
-		using PressureRelaxationHLLCRiemannWithWall = BasePressureRelaxationWithWall<PressureRelaxation<PressureRelaxationHLLCRiemannInner>>;
-		using PressureRelaxationHLLCRiemannWithLimiterWithWall = BasePressureRelaxationWithWall<PressureRelaxation<PressureRelaxationHLLCWithLimiterRiemannInner>>;
+		using Integration1stHalfWithWall = BaseIntegration1stHalfWithWall<Integration1stHalf>;
+		using Integration1stHalfAcousticRiemannWithWall = BaseIntegration1stHalfWithWall<Integration1stHalfAcousticRiemann>;
+		using Integration1stHalfHLLCRiemannWithWall = BaseIntegration1stHalfWithWall<Integration1stHalfHLLCRiemann>;
+		using Integration1stHalfHLLCRiemannWithLimiterWithWall = BaseIntegration1stHalfWithWall<Integration1stHalfHLLCWithLimiterRiemann>;
 
 		/**
-		 * @class DensityRelaxation
+		 * @class Integration2ndHalf
 		 * @brief template density relaxation scheme without using different Riemann solvers.
 		 * The difference from the free surface version is that no Riemann problem is applied
 		 */
-		template <class BaseDensityAndEnergyRelaxationType>
-		class DensityAndEnergyRelaxation : public RelaxationWithWall<BaseDensityAndEnergyRelaxationType>
+		template <class BaseIntegration2ndHalfType>
+		class BaseIntegration2ndHalfWithWall : public InteractionWithWall<BaseIntegration2ndHalfType>
 		{
 		public:
 			// template for different combination of constructing body relations
 			template <class BaseBodyRelationType>
-			DensityAndEnergyRelaxation(BaseBodyRelationType &base_body_relation,
-									   BaseBodyRelationContact &wall_contact_relation);
-			virtual ~DensityAndEnergyRelaxation(){};
+			BaseIntegration2ndHalfWithWall(BaseBodyRelationType &base_body_relation,
+							   BaseContactRelation &wall_contact_relation);
+			explicit BaseIntegration2ndHalfWithWall(ComplexRelation &fluid_wall_relation)
+				: BaseIntegration2ndHalfWithWall(fluid_wall_relation.inner_relation_,
+												 fluid_wall_relation.contact_relation_){};
+			virtual ~BaseIntegration2ndHalfWithWall(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 		};
-
-		/** template interface class for different density relaxation schemes */
-		template <class BaseDensityAndEnergyRelaxationType>
-		class BaseDensityAndEnergyRelaxationWithWall : public DensityAndEnergyRelaxation<BaseDensityAndEnergyRelaxationType>
-		{
-		public:
-			explicit BaseDensityAndEnergyRelaxationWithWall(ComplexBodyRelation &fluid_wall_relation);
-			BaseDensityAndEnergyRelaxationWithWall(BaseBodyRelationInner &fluid_inner_relation,
-												   BaseBodyRelationContact &wall_contact_relation);
-			BaseDensityAndEnergyRelaxationWithWall(ComplexBodyRelation &fluid_complex_relation,
-												   BaseBodyRelationContact &wall_contact_relation);
-		};
-		using DensityAndEnergyRelaxationAcousticRiemannWithWall = BaseDensityAndEnergyRelaxationWithWall<DensityAndEnergyRelaxationAcousticRiemannInner>;
-		using DensityAndEnergyRelaxationHLLCRiemannWithWall = BaseDensityAndEnergyRelaxationWithWall<DensityAndEnergyRelaxationHLLCRiemannInner>;
-		using DensityAndEnergyRelaxationHLLCRiemannWithLimiterWithWall = BaseDensityAndEnergyRelaxationWithWall<DensityAndEnergyRelaxationHLLCWithLimiterRiemannInner>;
+		using Integration2ndHalfAcousticRiemannWithWall = BaseIntegration2ndHalfWithWall<Integration2ndHalfAcousticRiemann>;
+		using Integration2ndHalfHLLCRiemannWithWall = BaseIntegration2ndHalfWithWall<Integration2ndHalfHLLCRiemann>;
+		using Integration2ndHalfHLLCRiemannWithLimiterWithWall = BaseIntegration2ndHalfWithWall<Integration2ndHalfHLLCWithLimiterRiemann>;
 	}
 }

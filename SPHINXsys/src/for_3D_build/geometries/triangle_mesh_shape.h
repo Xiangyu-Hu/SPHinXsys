@@ -23,8 +23,7 @@
 /**
 * @file 	triangle_mesh_shape.h
 * @brief 	Here, we define the 3D geometric algorithms. they are based on the polymesh. 
-* @details 	The idea is to define complex geometry by passing stl, obj or other 
-*			polymesh files. TODO: the translation needs to be generalized into transform.
+* @details 	The idea is to define complex geometry by passing stl, obj or other polymesh files.
 * @author	Chi ZHang and Xiangyu Hu
 */
 
@@ -64,7 +63,7 @@ namespace SPH
 
             };
 
-		virtual bool checkContain(const Vec3d &pnt, bool BOUNDARY_INCLUDED = true) override;
+		virtual bool checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED = true) override;
 		virtual Vec3d findClosestPoint(const Vec3d &probe_point) override;
 
 		SimTK::ContactGeometry::TriangleMesh *getTriangleMesh() { return triangle_mesh_; };

@@ -129,8 +129,9 @@ namespace SPH
             void update(size_t unsorted_index_i, Real dt = 0.0);
 
         protected:
-            StdLargeVec<Vecd> &pos_, &vel_;
-            StdLargeVec<Real> &rho_, &p_;
+            Fluid &fluid_;
+            StdLargeVec<Vecd> &pos_, &vel_, &acc_;
+            StdLargeVec<Real> &rho_, &p_, &drho_dt_;
             /** inflow pressure condition */
             Real inflow_pressure_;
             Real rho0_;
@@ -145,7 +146,7 @@ namespace SPH
         /**
          * @class EmitterInflowInjection
          * @brief Inject particles into the computational domain.
-         * Note that the axis is at the local coordinate and upper bound direction is 
+         * Note that the axis is at the local coordinate and upper bound direction is
          * the local positive direction.
          */
         class EmitterInflowInjection : public LocalDynamics, public FluidDataSimple
@@ -159,6 +160,7 @@ namespace SPH
 
         protected:
             std::mutex mutex_switch_to_real_; /**< mutex exclusion for memory conflict */
+            Fluid &fluid_;
             StdLargeVec<Vecd> &pos_;
             StdLargeVec<Real> &rho_, &p_;
             const int axis_; /**< the axis direction for bounding*/
@@ -182,7 +184,7 @@ namespace SPH
             StdLargeVec<Vecd> &pos_;
             const int axis_; /**< the axis direction for bounding*/
             AlignedBoxShape &aligned_box_;
-         };
+        };
 
         /**
          * @class StaticConfinementDensity
@@ -203,17 +205,18 @@ namespace SPH
         };
 
         /**
-         * @class StaticConfinementPressureRelaxation
+         * @class StaticConfinementIntegration1stHalf
          * @brief static confinement condition for pressure relaxation
          */
-        class StaticConfinementPressureRelaxation : public LocalDynamics, public FluidDataSimple
+        class StaticConfinementIntegration1stHalf : public LocalDynamics, public FluidDataSimple
         {
         public:
-            StaticConfinementPressureRelaxation(NearShapeSurface &near_surface);
-            virtual ~StaticConfinementPressureRelaxation(){};
+            StaticConfinementIntegration1stHalf(NearShapeSurface &near_surface);
+            virtual ~StaticConfinementIntegration1stHalf(){};
             void update(size_t index_i, Real dt = 0.0);
 
         protected:
+            Fluid &fluid_;
             StdLargeVec<Real> &rho_, &p_;
             StdLargeVec<Vecd> &pos_, &vel_, &acc_;
             LevelSetShape *level_set_shape_;
@@ -221,17 +224,18 @@ namespace SPH
         };
 
         /**
-         * @class StaticConfinementDensityRelaxation
+         * @class StaticConfinementIntegration2ndHalf
          * @brief static confinement condition for density relaxation
          */
-        class StaticConfinementDensityRelaxation : public LocalDynamics, public FluidDataSimple
+        class StaticConfinementIntegration2ndHalf : public LocalDynamics, public FluidDataSimple
         {
         public:
-            StaticConfinementDensityRelaxation(NearShapeSurface &near_surface);
-            virtual ~StaticConfinementDensityRelaxation(){};
+            StaticConfinementIntegration2ndHalf(NearShapeSurface &near_surface);
+            virtual ~StaticConfinementIntegration2ndHalf(){};
             void update(size_t index_i, Real dt = 0.0);
 
         protected:
+            Fluid &fluid_;
             StdLargeVec<Real> &rho_, &p_, &drho_dt_;
             StdLargeVec<Vecd> &pos_, &vel_;
             LevelSetShape *level_set_shape_;
@@ -246,8 +250,8 @@ namespace SPH
         {
         public:
             SimpleDynamics<StaticConfinementDensity, NearShapeSurface> density_summation_;
-            SimpleDynamics<StaticConfinementPressureRelaxation, NearShapeSurface> pressure_relaxation_;
-            SimpleDynamics<StaticConfinementDensityRelaxation, NearShapeSurface> density_relaxation_;
+            SimpleDynamics<StaticConfinementIntegration1stHalf, NearShapeSurface> pressure_relaxation_;
+            SimpleDynamics<StaticConfinementIntegration2ndHalf, NearShapeSurface> density_relaxation_;
 
             StaticConfinement(NearShapeSurface &near_surface);
             virtual ~StaticConfinement(){};

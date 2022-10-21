@@ -36,6 +36,7 @@
 #define BASE_BODY_H
 
 #include "base_data_package.h"
+#include "sph_system.h"
 #include "sph_data_containers.h"
 #include "adaptation.h"
 #include "cell_linked_list.h"
@@ -48,8 +49,7 @@
 
 namespace SPH
 {
-	class SPHSystem;
-	class SPHBodyRelation;
+	class SPHRelation;
 	class BodySurface;
 
 	/**
@@ -70,24 +70,28 @@ namespace SPH
 		UniquePtrKeeper<SPHAdaptation> sph_adaptation_ptr_keeper_;
 
 	protected:
+		std::string body_name_;
 		SPHSystem &sph_system_;
-		bool newly_updated_; /**< whether this body is in a newly updated state */
+		bool newly_updated_;			/**< whether this body is in a newly updated state */
+		BaseParticles *base_particles_; /**< Base particles for dynamic cast DataDelegate  */
 
 	public:
-		Shape *body_shape_;						   /**< volumetric geometry enclosing the body */
-		SPHAdaptation *sph_adaptation_;			   /**< numerical adaptation policy */
-		BaseMaterial *base_material_;			   /**< base material for dynamic cast in DataDelegate */
-		BaseParticles *base_particles_;			   /**< Base particles for dynamic cast DataDelegate  */
-		StdVec<SPHBodyRelation *> body_relations_; /**< all contact relations centered from this body **/
+		Shape *body_shape_;					   /**< volumetric geometry enclosing the body */
+		SPHAdaptation *sph_adaptation_;		   /**< numerical adaptation policy */
+		BaseMaterial *base_material_;		   /**< base material for dynamic cast in DataDelegate */
+		StdVec<SPHRelation *> body_relations_; /**< all contact relations centered from this body **/
 
-		explicit SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr);
+		SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr, const std::string &body_name);
+		SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr);
 		virtual ~SPHBody(){};
 
-		std::string getName() { return body_shape_->getName(); };
+		std::string getName() { return body_name_; };
 		SPHSystem &getSPHSystem();
 		SPHBody &getSPHBody() { return *this; };
+		BaseParticles &getBaseParticles() { return *base_particles_; };
 		size_t &LoopRange() { return base_particles_->total_real_particles_; };
 		size_t SizeOfLoopRange() { return base_particles_->total_real_particles_; };
+		size_t getParticleIndex(size_t index_i) { return index_i; };
 		Real getSPHBodyResolutionRef() { return sph_adaptation_->ReferenceSpacing(); };
 		void setNewlyUpdated() { newly_updated_ = true; };
 		void setNotNewlyUpdated() { newly_updated_ = false; };
@@ -191,10 +195,21 @@ namespace SPH
 		size_t iteration_count_;
 
 	public:
-		ParticleSorting particle_sorting_;
 		BaseCellLinkedList *cell_linked_list_; /**< Cell linked mesh of this body. */
 
-		explicit RealBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr);
+		template <typename... ConstructorArgs>
+		RealBody(ConstructorArgs &&...args)
+			: SPHBody(std::forward<ConstructorArgs>(args)...),
+			  system_domain_bounds_(this->getSPHSystem().system_domain_bounds_),
+			  use_split_cell_lists_(false), iteration_count_(1)
+		{
+			this->getSPHSystem().real_bodies_.push_back(this);
+			size_t number_of_split_cell_lists = powerN(3, Vecd(0).size());
+			split_cell_lists_.resize(number_of_split_cell_lists);
+			cell_linked_list_ = cell_linked_list_keeper_.movePtr(
+				sph_adaptation_->createCellLinkedList(system_domain_bounds_, *this));
+		};
+
 		virtual ~RealBody(){};
 
 		void setUseSplitCellLists() { use_split_cell_lists_ = true; };

@@ -24,7 +24,7 @@ int main(int ac, char *av[])
 	/** create a body with corresponding material, particles and reaction model. */
 	SolidBody column(system, makeShared<Column>("Column"));
 	column.defineAdaptationRatios(1.3, 1.0);
-	column.defineBodyLevelSetShape()->writeLevelSet(column);
+	column.defineBodyLevelSetShape()->writeLevelSet(io_environment);
 	column.defineParticlesAndMaterial<ElasticSolidParticles, HardeningPlasticSolid>(
 		rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus);
 	(!system.run_particle_relaxation_ && system.reload_particles_)
@@ -41,9 +41,9 @@ int main(int ac, char *av[])
 	my_observer.generateParticles<ColumnObserverParticleGenerator>();
 
 	/**body relation topology */
-	BodyRelationInner column_inner(column);
-	BodyRelationContact my_observer_contact(my_observer, {&column});
-	SolidBodyRelationContact column_wall_contact(column, {&wall});
+	InnerRelation column_inner(column);
+	ContactRelation my_observer_contact(my_observer, {&column});
+	SurfaceContactRelation column_wall_contact(column, {&wall});
 	/**define simple data file input and outputs functions. */
 	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
 
@@ -58,7 +58,7 @@ int main(int ac, char *av[])
 		BodyStatesRecordingToVtp write_column_to_vtp(io_environment, column);
 		/** Write the particle reload files. */
 
-		ReloadParticleIO write_particle_reload_files(io_environment, {&column});
+		ReloadParticleIO write_particle_reload_files(io_environment, column);
 		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(column_inner);
 		/**

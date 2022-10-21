@@ -64,7 +64,7 @@ public:
 class FarFieldBoundary : public eulerian_weakly_compressible_fluid_dynamics::NonReflectiveBoundaryVariableCorrection
 {
 public:
-	explicit FarFieldBoundary(BaseBodyRelationInner &inner_relation)
+	explicit FarFieldBoundary(BaseInnerRelation &inner_relation)
 		: eulerian_weakly_compressible_fluid_dynamics::NonReflectiveBoundaryVariableCorrection(inner_relation)
 	{
 		rho_farfield_ = rho0_f;
@@ -114,14 +114,14 @@ int main(int ac, char *av[])
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//	Note that the same relation should be defined only once.
 	//----------------------------------------------------------------------
-	ComplexBodyRelation water_block_complex(water_block, {&cylinder});
-	BodyRelationContact cylinder_contact(cylinder, {&water_block});
+	ComplexRelation water_block_complex(water_block, {&cylinder});
+	ContactRelation cylinder_contact(cylinder, {&water_block});
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------
 	if (sph_system.run_particle_relaxation_)
 	{
-		BodyRelationInner cylinder_inner(cylinder); // extra body topology only for particle relaxation
+		InnerRelation cylinder_inner(cylinder); // extra body topology only for particle relaxation
 		//----------------------------------------------------------------------
 		//	Methods used for particle relaxation.
 		//----------------------------------------------------------------------
@@ -165,8 +165,8 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	SimpleDynamics<eulerian_weakly_compressible_fluid_dynamics::EulerianFlowTimeStepInitialization> initialize_a_fluid_step(water_block);
 	SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
-	Dynamics1Level<eulerian_weakly_compressible_fluid_dynamics::PressureRelaxationHLLCRiemannWithLimiterWithWall> pressure_relaxation(water_block_complex);
-	InteractionWithUpdate<eulerian_weakly_compressible_fluid_dynamics::DensityAndEnergyRelaxationHLLCRiemannWithLimiterWithWall> density_relaxation(water_block_complex);
+	Dynamics1Level<eulerian_weakly_compressible_fluid_dynamics::Integration1stHalfHLLCRiemannWithLimiterWithWall> pressure_relaxation(water_block_complex);
+	InteractionWithUpdate<eulerian_weakly_compressible_fluid_dynamics::Integration2ndHalfHLLCRiemannWithLimiterWithWall> density_relaxation(water_block_complex);
 	InteractionDynamics<eulerian_weakly_compressible_fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	ReduceDynamics<eulerian_weakly_compressible_fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	InteractionWithUpdate<fluid_dynamics::FreeSurfaceIndicationComplex> surface_indicator(water_block_complex.inner_relation_, water_block_complex.contact_relation_);
@@ -180,11 +180,11 @@ int main(int ac, char *av[])
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
-	RegressionTestTimeAveraged<BodyReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalViscousForceOnSolid>>>
+	RegressionTestTimeAveraged<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalViscousForceOnSolid>>>
 		write_total_viscous_force_on_inserted_body(io_environment, cylinder);
-	BodyReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceOnSolid>>
+	ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceOnSolid>>
 		write_total_force_on_inserted_body(io_environment, cylinder);
-	BodyReducedQuantityRecording<ReduceDynamics<MaximumSpeed>> write_maximum_speed(io_environment, water_block);
+	ReducedQuantityRecording<ReduceDynamics<MaximumSpeed>> write_maximum_speed(io_environment, water_block);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.

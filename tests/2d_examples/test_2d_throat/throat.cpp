@@ -147,9 +147,9 @@ int main(int ac, char *av[])
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner fluid_block_inner(fluid_block);
-	ComplexBodyRelation fluid_block_complex(fluid_block_inner, {&wall_boundary});
-	BodyRelationContact fluid_observer_contact(fluid_observer, {&fluid_block});
+	InnerRelation fluid_block_inner(fluid_block);
+	ComplexRelation fluid_block_complex(fluid_block_inner, {&wall_boundary});
+	ContactRelation fluid_observer_contact(fluid_observer, {&fluid_block});
 	//-------------------------------------------------------------------
 	// this section define all numerical methods will be used in this case
 	//-------------------------------------------------------------------
@@ -162,9 +162,9 @@ int main(int ac, char *av[])
 	// time step size with considering sound wave speed
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(fluid_block);
 	// pressure relaxation using verlet time stepping
-	Dynamics1Level<fluid_dynamics::PressureRelaxationWithWallOldroyd_B> pressure_relaxation(fluid_block_complex);
+	Dynamics1Level<fluid_dynamics::Oldroyd_BIntegration1stHalfWithWall> pressure_relaxation(fluid_block_complex);
 	pressure_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);
-	Dynamics1Level<fluid_dynamics::DensityRelaxationWithWallOldroyd_B> density_relaxation(fluid_block_complex);
+	Dynamics1Level<fluid_dynamics::Oldroyd_BIntegration2ndHalfWithWall> density_relaxation(fluid_block_complex);
 	density_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);
 	// define external force
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
@@ -182,7 +182,7 @@ int main(int ac, char *av[])
 	//	and regression tests of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
-	RegressionTestDynamicTimeWarping<BodyReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
+	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
 		write_fluid_mechanical_energy(io_environment, fluid_block);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
 		write_recorded_fluid_pressure("Pressure", io_environment, fluid_observer_contact);

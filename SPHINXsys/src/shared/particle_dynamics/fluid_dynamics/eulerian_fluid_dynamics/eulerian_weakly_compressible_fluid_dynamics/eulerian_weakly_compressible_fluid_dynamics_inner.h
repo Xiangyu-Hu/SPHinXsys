@@ -42,8 +42,8 @@ namespace SPH
 {
 	namespace eulerian_weakly_compressible_fluid_dynamics
 	{
-		typedef DataDelegateSimple<EulerianFluidBody, WeaklyCompressibleFluidParticles, Fluid> EulerianWeaklyCompressibleFluidDataSimple;
-		typedef DataDelegateInner<EulerianFluidBody, WeaklyCompressibleFluidParticles, Fluid> EulerianWeaklyCompressibleFluidDataInner;
+		typedef DataDelegateSimple<WeaklyCompressibleFluidParticles> EulerianWeaklyCompressibleFluidDataSimple;
+		typedef DataDelegateInner<WeaklyCompressibleFluidParticles> EulerianWeaklyCompressibleFluidDataInner;
 
 		class EulerianFlowTimeStepInitialization
 			: public BaseTimeStepInitialization,
@@ -69,7 +69,7 @@ namespace SPH
 			  public EulerianWeaklyCompressibleFluidDataInner
 		{
 		public:
-			explicit ViscousAccelerationInner(BaseBodyRelationInner &inner_relation);
+			explicit ViscousAccelerationInner(BaseInnerRelation &inner_relation);
 			virtual ~ViscousAccelerationInner(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -88,6 +88,7 @@ namespace SPH
 									 public EulerianWeaklyCompressibleFluidDataSimple
 		{
 		protected:
+			Fluid &fluid_;
 			StdLargeVec<Real> &rho_, &p_;
 			StdLargeVec<Vecd> &vel_;
 			Real smoothing_length_;
@@ -101,85 +102,62 @@ namespace SPH
 		};
 
 		/**
-		 * @class BaseRelaxation
+		 * @class BaseIntegration
 		 * @brief Pure abstract base class for all fluid relaxation schemes
 		 */
-		class BaseRelaxation : public LocalDynamics, public EulerianWeaklyCompressibleFluidDataInner
+		class BaseIntegration : public LocalDynamics, public EulerianWeaklyCompressibleFluidDataInner
 		{
 		public:
-			explicit BaseRelaxation(BaseBodyRelationInner &inner_relation);
-			virtual ~BaseRelaxation(){};
+			explicit BaseIntegration(BaseInnerRelation &inner_relation);
+			virtual ~BaseIntegration(){};
 
 		protected:
+			Fluid &fluid_;
 			StdLargeVec<Real> &Vol_, &mass_, &rho_, &p_, &drho_dt_;
 			StdLargeVec<Vecd> &vel_, &mom_, &dmom_dt_, &dmom_dt_prior_;
 		};
 
 		/**
-		 * @class BasePressureRelaxation
-		 * @brief Abstract base class for all pressure relaxation schemes
-		 */
-		class BasePressureRelaxation : public BaseRelaxation
-		{
-		public:
-			explicit BasePressureRelaxation(BaseBodyRelationInner &inner_relation);
-			virtual ~BasePressureRelaxation(){};
-			void initialization(size_t index_i, Real dt = 0.0);
-			void update(size_t index_i, Real dt = 0.0);
-		};
-
-		/**
-		 * @class BasePressureRelaxationInner
+		 * @class BaseIntegration1stHalf
 		 * @brief Template class for pressure relaxation scheme with the Riemann solver
 		 * as template variable
 		 */
 		template <class RiemannSolverType>
-		class BasePressureRelaxationInner : public BasePressureRelaxation
+		class BaseIntegration1stHalf : public BaseIntegration
 		{
 		public:
-			explicit BasePressureRelaxationInner(BaseBodyRelationInner &inner_relation);
-			virtual ~BasePressureRelaxationInner(){};
+			explicit BaseIntegration1stHalf(BaseInnerRelation &inner_relation);
+			virtual ~BaseIntegration1stHalf(){};
 			RiemannSolverType riemann_solver_;
-			void interaction(size_t index_i, Real dt = 0.0) ;
-		};
-		using PressureRelaxationInner = BasePressureRelaxationInner<NoRiemannSolver>;
-		/** define the mostly used pressure relaxation scheme using Riemann solver */
-		using PressureRelaxationAcousticRiemannInner = BasePressureRelaxationInner<AcousticRiemannSolver>;
-		using PressureRelaxationHLLCRiemannInner = BasePressureRelaxationInner<HLLCRiemannSolverInWeaklyCompressibleFluid>;
-		using PressureRelaxationHLLCWithLimiterRiemannInner = BasePressureRelaxationInner<HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid>;
-
-		/**
-		 * @class BaseDensityRelaxation
-		 * @brief Abstract base class for all density relaxation schemes
-		 */
-		class BaseDensityAndEnergyRelaxation : public BaseRelaxation
-		{
-		public:
-			explicit BaseDensityAndEnergyRelaxation(BaseBodyRelationInner &inner_relation);
-			virtual ~BaseDensityAndEnergyRelaxation(){};
-
-		protected:
+			void initialization(size_t index_i, Real dt = 0.0);
+			void interaction(size_t index_i, Real dt = 0.0);
 			void update(size_t index_i, Real dt = 0.0);
 		};
+		using Integration1stHalf = BaseIntegration1stHalf<NoRiemannSolver>;
+		/** define the mostly used pressure relaxation scheme using Riemann solver */
+		using Integration1stHalfAcousticRiemann = BaseIntegration1stHalf<AcousticRiemannSolver>;
+		using Integration1stHalfHLLCRiemann = BaseIntegration1stHalf<HLLCRiemannSolverInWeaklyCompressibleFluid>;
+		using Integration1stHalfHLLCWithLimiterRiemann = BaseIntegration1stHalf<HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid>;
 
 		/**
-		 * @class DensityRelaxationInner
+		 * @class Integration2ndHalf
 		 * @brief  Template density relaxation scheme with different Riemann solver
 		 */
 		template <class RiemannSolverType>
-		class BaseDensityAndEnergyRelaxationInner : public BaseDensityAndEnergyRelaxation
+		class BaseIntegration2ndHalf : public BaseIntegration
 		{
 		public:
-			explicit BaseDensityAndEnergyRelaxationInner(BaseBodyRelationInner &inner_relation);
-			virtual ~BaseDensityAndEnergyRelaxationInner(){};
+			explicit BaseIntegration2ndHalf(BaseInnerRelation &inner_relation);
+			virtual ~BaseIntegration2ndHalf(){};
 			RiemannSolverType riemann_solver_;
 			void interaction(size_t index_i, Real dt = 0.0);
+			void update(size_t index_i, Real dt = 0.0);
 		};
-		using DensityAndEnergyRelaxationInner = BaseDensityAndEnergyRelaxationInner<NoRiemannSolver>;
+		using Integration2ndHalf = BaseIntegration2ndHalf<NoRiemannSolver>;
 		/** define the mostly used density relaxation scheme using Riemann solver */
-		using DensityAndEnergyRelaxationAcousticRiemannInner = BaseDensityAndEnergyRelaxationInner<AcousticRiemannSolver>;
-		using DensityAndEnergyRelaxationHLLCRiemannInner = BaseDensityAndEnergyRelaxationInner<HLLCRiemannSolverInWeaklyCompressibleFluid>;
-		using DensityAndEnergyRelaxationHLLCWithLimiterRiemannInner = BaseDensityAndEnergyRelaxationInner<HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid>;
+		using Integration2ndHalfAcousticRiemann = BaseIntegration2ndHalf<AcousticRiemannSolver>;
+		using Integration2ndHalfHLLCRiemann = BaseIntegration2ndHalf<HLLCRiemannSolverInWeaklyCompressibleFluid>;
+		using Integration2ndHalfHLLCWithLimiterRiemann = BaseIntegration2ndHalf<HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid>;
 
 		/**
 		 * @class NonReflectiveBoundaryVariableCorrection
@@ -189,7 +167,7 @@ namespace SPH
 		class NonReflectiveBoundaryVariableCorrection : public LocalDynamics, public EulerianWeaklyCompressibleFluidDataInner
 		{
 		public:
-			NonReflectiveBoundaryVariableCorrection(BaseBodyRelationInner &inner_relation)
+			NonReflectiveBoundaryVariableCorrection(BaseInnerRelation &inner_relation)
 				: LocalDynamics(inner_relation.sph_body_), EulerianWeaklyCompressibleFluidDataInner(inner_relation),
 				  rho_(particles_->rho_), p_(particles_->p_), vel_(particles_->vel_),
 				  mom_(particles_->mom_), pos_(particles_->pos_), mass_(particles_->mass_), Vol_(particles_->Vol_),

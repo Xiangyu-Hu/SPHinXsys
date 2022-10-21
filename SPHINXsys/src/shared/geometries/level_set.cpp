@@ -5,6 +5,7 @@
 
 #include "level_set.h"
 #include "adaptation.h"
+
 #include "mesh_with_data_packages.hpp"
 
 namespace SPH
@@ -62,42 +63,21 @@ namespace SPH
 		initializeASingularDataPackage(far_field_distance);
 	}
 	//=================================================================================================//
-	LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing,
-					   Shape &shape, SPHAdaptation &sph_adaptation)
-		: LevelSet(tentative_bounds, data_spacing, 4, shape, sph_adaptation)
-	{
-		MeshFunctor initialize_data_in_a_cell = std::bind(&LevelSet::initializeDataInACell, this, _1, _2);
-		MeshIterator_parallel(Vecu(0), number_of_cells_, initialize_data_in_a_cell);
-		finishDataPackages();
-	}
-	//=================================================================================================//
-	void LevelSet::finishDataPackages()
-	{
-		MeshFunctor tag_a_cell_inner_pkg = std::bind(&LevelSet::tagACellIsInnerPackage, this, _1, _2);
-		MeshIterator_parallel(Vecu(0), number_of_cells_, tag_a_cell_inner_pkg);
-		MeshFunctor initial_address_in_a_cell = std::bind(&LevelSet::initializeAddressesInACell, this, _1, _2);
-		MeshIterator_parallel(Vecu(0), number_of_cells_, initial_address_in_a_cell);
-		updateLevelSetGradient();
-		updateKernelIntegrals();
-	}
-	//=================================================================================================//
-	void LevelSet::initializeAddressesInACell(const Vecu &cell_index, Real dt)
+	void LevelSet::initializeAddressesInACell(const Vecu &cell_index)
 	{
 		initializePackageAddressesInACell(cell_index);
 	}
 	//=================================================================================================//
 	void LevelSet::updateLevelSetGradient()
 	{
-		PackageFunctor<void, LevelSetDataPackage> update_none_normalized_normal_diraction =
-			std::bind(&LevelSet::updateLevelSetGradientForAPackage, this, _1, _2);
-		PackageIterator_parallel<LevelSetDataPackage>(inner_data_pkgs_, update_none_normalized_normal_diraction);
+		package_parallel_for(inner_data_pkgs_, [&](size_t i)
+							 { inner_data_pkgs_[i]->computeLevelSetGradient(); });
 	}
 	//=================================================================================================//
 	void LevelSet::updateKernelIntegrals()
 	{
-		PackageFunctor<void, LevelSetDataPackage> update_kernel_value =
-			std::bind(&LevelSet::updateKernelIntegralsForAPackage, this, _1, _2);
-		PackageIterator_parallel<LevelSetDataPackage>(inner_data_pkgs_, update_kernel_value);
+		package_parallel_for(inner_data_pkgs_, [&](size_t i)
+							 { inner_data_pkgs_[i]->computeKernelIntegrals(*this); });
 	}
 	//=================================================================================================//
 	Vecd LevelSet::probeNormalDirection(const Vecd &position)
@@ -138,50 +118,29 @@ namespace SPH
 		return probeMesh<Vecd, LevelSetDataPackage::PackageDataAddress<Vecd>,
 						 &LevelSetDataPackage::kernel_gradient_addrs_>(position);
 	}
-	//=================================================================================================//
-	void LevelSet::
-		updateLevelSetGradientForAPackage(LevelSetDataPackage *inner_data_pkg, Real dt)
-	{
-		inner_data_pkg->computeLevelSetGradient();
-	}
-	//=================================================================================================//
-	void LevelSet::
-		updateKernelIntegralsForAPackage(LevelSetDataPackage *inner_data_pkg, Real dt)
-	{
-		inner_data_pkg->computeKernelIntegrals(*this);
-	}
-	//=================================================================================================//
-	void LevelSet::
-		stepReinitializationForAPackage(LevelSetDataPackage *inner_data_pkg, Real dt)
-	{
-		inner_data_pkg->stepReinitialization();
-	}
 	//=============================================================================================//
 	void LevelSet::reinitializeLevelSet()
 	{
-		PackageFunctor<void, LevelSetDataPackage> reinitialize_levelset =
-			std::bind(&LevelSet::stepReinitializationForAPackage, this, _1, _2);
-		for (size_t i = 0; i < 50; ++i)
-			PackageIterator_parallel<LevelSetDataPackage>(inner_data_pkgs_, reinitialize_levelset);
+		package_parallel_for(inner_data_pkgs_, [&](size_t i)
+							 { inner_data_pkgs_[i]->stepReinitialization(); });
 	}
 	//=================================================================================================//
 	void LevelSet::markNearInterface(Real small_shift_factor)
 	{
-		PackageFunctor<void, LevelSetDataPackage> mark_cutcell_by_levelset =
-			std::bind(&LevelSet::markNearInterfaceForAPackage, this, _1, _2);
-		PackageIterator_parallel<LevelSetDataPackage>(core_data_pkgs_, mark_cutcell_by_levelset, small_shift_factor);
-	}
-	//=================================================================================================//
-	void LevelSet::markNearInterfaceForAPackage(LevelSetDataPackage *core_data_pkg, Real small_shift_factor)
-	{
-		core_data_pkg->markNearInterface(small_shift_factor);
+		package_parallel_for(inner_data_pkgs_, [&](size_t i)
+							 { inner_data_pkgs_[i]->markNearInterface(small_shift_factor); });
 	}
 	//=================================================================================================//
 	void LevelSet::redistanceInterface()
 	{
-		PackageFunctor<void, LevelSetDataPackage> clean_levelset =
-			std::bind(&LevelSet::redistanceInterfaceForAPackage, this, _1, _2);
-		PackageIterator_parallel<LevelSetDataPackage>(core_data_pkgs_, clean_levelset);
+		package_parallel_for(inner_data_pkgs_, [&](size_t i)
+							 { redistanceInterfaceForAPackage(inner_data_pkgs_[i]); });
+	}
+	//=================================================================================================//
+	void LevelSet::diffuseLevelSetSign()
+	{
+		package_parallel_for(inner_data_pkgs_, [&](size_t i)
+							 { inner_data_pkgs_[i]->stepDiffusionLevelSetSign(); });
 	}
 	//=================================================================================================//
 	void LevelSet::cleanInterface(Real small_shift_factor)
@@ -189,6 +148,15 @@ namespace SPH
 		markNearInterface(small_shift_factor);
 		redistanceInterface();
 		reinitializeLevelSet();
+		updateLevelSetGradient();
+		updateKernelIntegrals();
+	}
+	//=============================================================================================//
+	void LevelSet::correctTopology(Real small_shift_factor)
+	{
+		markNearInterface(small_shift_factor);
+		for (size_t i = 0; i != 10; ++i)
+			diffuseLevelSetSign();
 		updateLevelSetGradient();
 		updateKernelIntegrals();
 	}
@@ -221,7 +189,7 @@ namespace SPH
 		return &new_data_pkg;
 	}
 	//=================================================================================================//
-	void LevelSet::initializeDataInACell(const Vecu &cell_index, Real dt)
+	void LevelSet::initializeDataInACell(const Vecu &cell_index)
 	{
 		Vecd cell_position = CellPositionFromIndex(cell_index);
 		Real signed_distance = shape_.findSignedDistance(cell_position);
@@ -241,7 +209,7 @@ namespace SPH
 		}
 	}
 	//=============================================================================================//
-	void LevelSet::tagACellIsInnerPackage(const Vecu &cell_index, Real dt)
+	void LevelSet::tagACellIsInnerPackage(const Vecu &cell_index)
 	{
 		bool is_inner_pkg = isInnerPackage(cell_index);
 
@@ -263,16 +231,7 @@ namespace SPH
 		}
 	}
 	//=============================================================================================//
-	RefinedLevelSet::RefinedLevelSet(BoundingBox tentative_bounds, LevelSet &coarse_level_set,
-									 Shape &shape, SPHAdaptation &sph_adaptation)
-		: RefinedMesh(tentative_bounds, coarse_level_set, 4, shape, sph_adaptation)
-	{
-		MeshFunctor initialize_data_in_a_cell = std::bind(&RefinedLevelSet::initializeDataInACellFromCoarse, this, _1, _2);
-		MeshIterator_parallel(Vecu(0), number_of_cells_, initialize_data_in_a_cell);
-		finishDataPackages();
-	}
-	//=============================================================================================//
-	void RefinedLevelSet::initializeDataInACellFromCoarse(const Vecu &cell_index, Real dt)
+	void RefinedLevelSet::initializeDataInACellFromCoarse(const Vecu &cell_index)
 	{
 		Vecd cell_position = CellPositionFromIndex(cell_index);
 		LevelSetDataPackage *singular_data_pkg = coarse_mesh_.probeSignedDistance(cell_position) < 0.0
@@ -314,6 +273,11 @@ namespace SPH
 	void MultilevelLevelSet::cleanInterface(Real small_shift_factor)
 	{
 		mesh_levels_.back()->cleanInterface(small_shift_factor);
+	}
+	//=============================================================================================//
+	void MultilevelLevelSet::correctTopology(Real small_shift_factor)
+	{
+		mesh_levels_.back()->correctTopology(small_shift_factor);
 	}
 	//=============================================================================================//
 	Real MultilevelLevelSet::probeSignedDistance(const Vecd &position)

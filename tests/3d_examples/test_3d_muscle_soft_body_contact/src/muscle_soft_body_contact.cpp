@@ -65,10 +65,10 @@ int main()
 	moving_plate.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
 	moving_plate.generateParticles<ParticleGeneratorLattice>();
 	/** topology */
-	BodyRelationInner myocardium_body_inner(myocardium_body);
-	BodyRelationInner moving_plate_inner(moving_plate);
-	SolidBodyRelationContact myocardium_plate_contact(myocardium_body, {&moving_plate});
-	SolidBodyRelationContact plate_myocardium_contact(moving_plate, {&myocardium_body});
+	InnerRelation myocardium_body_inner(myocardium_body);
+	InnerRelation moving_plate_inner(moving_plate);
+	SurfaceContactRelation myocardium_plate_contact(myocardium_body, {&moving_plate});
+	SurfaceContactRelation plate_myocardium_contact(moving_plate, {&myocardium_body});
 	/** 
 	 * This section define all numerical methods will be used in this case.
 	 */

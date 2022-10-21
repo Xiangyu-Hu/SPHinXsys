@@ -166,10 +166,10 @@ int main()
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	ComplexBodyRelation water_block_complex_relation(water_block, RealBodyVector{&wall_boundary, &gate});
-	BodyRelationInner gate_inner_relation(gate);
-	BodyRelationContact gate_water_contact_relation(gate, {&water_block});
-	BodyRelationContact gate_observer_contact_relation(gate_observer, {&gate});
+	ComplexRelation water_block_complex_relation(water_block, RealBodyVector{&wall_boundary, &gate});
+	InnerRelation gate_inner_relation(gate);
+	ContactRelation gate_water_contact_relation(gate, {&water_block});
+	ContactRelation gate_observer_contact_relation(gate_observer, {&gate});
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
@@ -177,8 +177,8 @@ int main()
 	//----------------------------------------------------------------------
 	//	Algorithms of fluid dynamics.
 	//----------------------------------------------------------------------
-	Dynamics1Level<fluid_dynamics::PressureRelaxationRiemannWithWall> pressure_relaxation(water_block_complex_relation);
-	Dynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(water_block_complex_relation);
+	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex_relation);
+	Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> density_relaxation(water_block_complex_relation);
 	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_density_by_summation(water_block_complex_relation);
 	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);

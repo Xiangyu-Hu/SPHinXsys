@@ -47,8 +47,8 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		for general solid dynamics
 		//----------------------------------------------------------------------
-		typedef DataDelegateSimple<SolidBody, SolidParticles, Solid> SolidDataSimple;
-		typedef DataDelegateInner<SolidBody, SolidParticles, Solid> SolidDataInner;
+		typedef DataDelegateSimple<SolidParticles> SolidDataSimple;
+		typedef DataDelegateInner<SolidParticles> SolidDataInner;
 
 		/**
 		* @class CorrectConfiguration
@@ -57,12 +57,11 @@ namespace SPH
 		class CorrectConfiguration : public LocalDynamics, public SolidDataInner
 		{
 		public:
-			explicit CorrectConfiguration(BaseBodyRelationInner &inner_relation);
+			explicit CorrectConfiguration(BaseInnerRelation &inner_relation);
 			virtual ~CorrectConfiguration(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			StdLargeVec<Real> &Vol_;
 			StdLargeVec<Matd> &B_;
 		};
 	}

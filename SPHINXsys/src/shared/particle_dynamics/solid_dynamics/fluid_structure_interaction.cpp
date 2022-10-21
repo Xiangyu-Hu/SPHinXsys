@@ -10,18 +10,18 @@ namespace SPH
 	namespace solid_dynamics
 	{
 		//=================================================================================================//
-		FluidViscousForceOnSolid::FluidViscousForceOnSolid(BaseBodyRelationContact &contact_relation)
+		FluidViscousForceOnSolid::FluidViscousForceOnSolid(BaseContactRelation &contact_relation)
 			: LocalDynamics(contact_relation.sph_body_), FSIContactData(contact_relation),
 			  Vol_(particles_->Vol_), vel_ave_(*particles_->AverageVelocity())
 		{
 			particles_->registerVariable(viscous_force_from_fluid_, "ViscousForceFromFluid");
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
-				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
+				contact_fluids_.push_back(&contact_particles_[k]->fluid_);
 				contact_rho_n_.push_back(&(contact_particles_[k]->rho_));
 				contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
 
-				mu_.push_back(contact_material_[k]->ReferenceViscosity());
+				mu_.push_back(contact_fluids_[k]->ReferenceViscosity());
 				smoothing_length_.push_back(contact_bodies_[k]->sph_adaptation_->ReferenceSmoothingLength());
 			}
 		}
@@ -37,7 +37,6 @@ namespace SPH
 			{
 				Real mu_k = mu_[k];
 				Real smoothing_length_k = smoothing_length_[k];
-				StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
 				StdLargeVec<Vecd> &vel_n_k = *(contact_vel_n_[k]);
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -48,7 +47,7 @@ namespace SPH
 										  (contact_neighborhood.r_ij_[n] + 0.01 * smoothing_length_k);
 
 					force += 2.0 * mu_k * vel_derivative *
-							 Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n];
+							 Vol_i * contact_neighborhood.dW_ijV_j_[n];
 				}
 			}
 
@@ -56,19 +55,19 @@ namespace SPH
 		}
 		//=================================================================================================//
 		FluidViscousForceOnSolidInEuler::
-			FluidViscousForceOnSolidInEuler(BaseBodyRelationContact &contact_relation)
+			FluidViscousForceOnSolidInEuler(BaseContactRelation &contact_relation)
 			: LocalDynamics(contact_relation.sph_body_),
-			  EFSIContactData(contact_relation),
+			  FSIContactData(contact_relation),
 			  Vol_(particles_->Vol_), vel_ave_(*particles_->AverageVelocity())
 		{
 			particles_->registerVariable(viscous_force_from_fluid_, "ViscousForceFromFluid");
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
-				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
+				contact_fluids_.push_back(&contact_particles_[k]->fluid_);
 				contact_rho_n_.push_back(&(contact_particles_[k]->rho_));
 				contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
 
-				mu_.push_back(contact_material_[k]->ReferenceViscosity());
+				mu_.push_back(contact_fluids_[k]->ReferenceViscosity());
 				smoothing_length_.push_back(contact_bodies_[k]->sph_adaptation_->ReferenceSmoothingLength());
 			}
 		}
@@ -84,7 +83,6 @@ namespace SPH
 			{
 				Real mu_k = mu_[k];
 				Real smoothing_length_k = smoothing_length_[k];
-				StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
 				StdLargeVec<Vecd> &vel_n_k = *(contact_vel_n_[k]);
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -95,7 +93,7 @@ namespace SPH
 										  (contact_neighborhood.r_ij_[n] + 0.01 * smoothing_length_k);
 
 					force += 2.0 * mu_k * vel_derivative *
-							 Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n];
+							 Vol_i * contact_neighborhood.dW_ijV_j_[n];
 				}
 			}
 
@@ -113,7 +111,6 @@ namespace SPH
 			{
 				Real mu_k = mu_[k];
 				Real smoothing_length_k = smoothing_length_[k];
-				StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
 				StdLargeVec<Real> &rho_n_k = *(contact_rho_n_[k]);
 				StdLargeVec<Vecd> &vel_n_k = *(contact_vel_n_[k]);
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
@@ -127,7 +124,7 @@ namespace SPH
 					Real vel_difference = 0.0 * (vel_ave_i - vel_n_k[index_j]).norm() * contact_neighborhood.r_ij_[n];
 					Real eta_ij = 8.0 * SMAX(mu_k, rho_n_k[index_j] * vel_difference) * v_r_ij /
 								  (contact_neighborhood.r_ij_[n] * contact_neighborhood.r_ij_[n] + 0.01 * smoothing_length_k);
-					force += eta_ij * Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n] * contact_neighborhood.e_ij_[n];
+					force += eta_ij * Vol_i * contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
 				}
 			}
 
@@ -189,7 +186,7 @@ namespace SPH
 			: initialize_displacement_(solid_body, pos_temp_),
 			  update_averages_(solid_body, pos_temp_)
 		{
-			solid_body.base_particles_->registerVariable(pos_temp_, "TemporaryPosition");
+			solid_body.getBaseParticles().registerVariable(pos_temp_, "TemporaryPosition");
 		}
 		//=================================================================================================//
 	}

@@ -8,7 +8,7 @@
 #include "level_set.h"
 #include "base_body.h"
 #include "base_particles.h"
-#include "in_output.h"
+#include "io_all.h"
 //=================================================================================================//
 namespace SPH
 {
@@ -26,7 +26,7 @@ namespace SPH
 		Vecd end_direction = displacement / (displacement.norm() + TinyReal);
 		// add particle to the first branch of the tree
 		growAParticleOnBranch(tree_->root_, starting_pnt_, end_direction);
-		cell_linked_list_->InsertACellLinkedListDataEntry(0, pos_[0]);
+		cell_linked_list_->InsertListDataEntry(0, pos_[0], segment_length_);
 	}
 	//=================================================================================================//
 	void ParticleGeneratorNetwork::
@@ -50,8 +50,8 @@ namespace SPH
 			downwind[i] += shift[i];
 			ListData up_nearest_list = cell_linked_list_->findNearestListDataEntry(upwind);
 			ListData down_nearest_list = cell_linked_list_->findNearestListDataEntry(downwind);
-			upgrad[i] = up_nearest_list.first != MaxSize_t ? (upwind - up_nearest_list.second).norm() / 2.0 * delta : 1.0;
-			downgrad[i] = down_nearest_list.first != MaxSize_t ? (downwind - down_nearest_list.second).norm() / 2.0 * delta : 1.0;
+			upgrad[i] = std::get<0>(up_nearest_list) != MaxSize_t ? (upwind - std::get<1>(up_nearest_list)).norm() / 2.0 * delta : 1.0;
+			downgrad[i] = std::get<0>(down_nearest_list) != MaxSize_t ? (downwind - std::get<1>(down_nearest_list)).norm() / 2.0 * delta : 1.0;
 		}
 		return downgrad - upgrad;
 	}
@@ -75,7 +75,7 @@ namespace SPH
 
 		collision = extraCheck(new_point);
 
-		size_t edge_location = tree_->BranchLocation(nearest_neighbor.first);
+		size_t edge_location = tree_->BranchLocation(std::get<0>(nearest_neighbor));
 		if (edge_location == parent_id)
 			is_family = true;
 		for (const size_t &brother_branch : tree_->branches_[parent_id]->out_edge_)
@@ -88,7 +88,7 @@ namespace SPH
 
 		if (!is_family)
 		{
-			Real min_distance = (new_point - nearest_neighbor.second).norm();
+			Real min_distance = (new_point - std::get<1>(nearest_neighbor)).norm();
 			if (min_distance < 5.0 * segment_length_)
 				collision = true;
 		}
@@ -154,7 +154,7 @@ namespace SPH
 
 			for (const size_t &particle_idx : new_branch->inner_particles_)
 			{
-				cell_linked_list_->InsertACellLinkedListDataEntry(particle_idx, pos_[particle_idx]);
+				cell_linked_list_->InsertListDataEntry(particle_idx, pos_[particle_idx], segment_length_);
 			}
 		}
 
@@ -230,7 +230,7 @@ namespace SPH
 			write_states.writeToFile(ite);
 		}
 
-		std::cout << base_particles_->total_real_particles_ << " Particles has been successfully created!" << std::endl;
+		std::cout << base_particles_.total_real_particles_ << " Particles has been successfully created!" << std::endl;
 	}
 	//=================================================================================================//
 }

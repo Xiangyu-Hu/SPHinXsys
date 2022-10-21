@@ -51,6 +51,7 @@ namespace SPH
 		StdLargeVec<Real> drho_dt_;			 /**< density change rate */
 		StdLargeVec<Real> rho_sum_;			 /**< number density */
 		StdLargeVec<int> surface_indicator_; /**< free surface indicator */
+		Fluid &fluid_;
 
 		FluidParticles(SPHBody &sph_body, Fluid *fluid);
 		virtual ~FluidParticles(){};
@@ -68,6 +69,7 @@ namespace SPH
 	public:
 		StdLargeVec<Matd> tau_;		/**<  elastic stress */
 		StdLargeVec<Matd> dtau_dt_; /**<  change rate of elastic stress */
+		Oldroyd_B_Fluid &oldroyd_b_fluid_; 
 
 		ViscoelasticFluidParticles(SPHBody &sph_body, Oldroyd_B_Fluid *oldroyd_b_fluid);
 		virtual ~ViscoelasticFluidParticles(){};
@@ -89,6 +91,7 @@ namespace SPH
 		StdLargeVec<Real> E_;	  /**< total energy per unit volume */
 		StdLargeVec<Real> dE_dt_; /**< change rate of total energy */
 		StdLargeVec<Real> dE_dt_prior_;
+		CompressibleFluid &compressible_fluid_;
 
 		CompressibleFluidParticles(SPHBody &sph_body, CompressibleFluid *compressible_fluid);
 		virtual ~CompressibleFluidParticles(){};

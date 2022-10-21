@@ -14,7 +14,7 @@ namespace SPH
 {
 	//=================================================================================================//
 	FluidParticles::FluidParticles(SPHBody &sph_body, Fluid *fluid)
-		: BaseParticles(sph_body, fluid) {}
+		: BaseParticles(sph_body, fluid), fluid_(*fluid) {}
 	//=================================================================================================//
 	void FluidParticles::initializeOtherVariables()
 	{
@@ -40,7 +40,8 @@ namespace SPH
 	//=================================================================================================//
 	ViscoelasticFluidParticles::
 		ViscoelasticFluidParticles(SPHBody &sph_body, Oldroyd_B_Fluid *oldroyd_b_fluid)
-		: FluidParticles(sph_body, oldroyd_b_fluid) {}
+		: FluidParticles(sph_body, oldroyd_b_fluid),
+		oldroyd_b_fluid_(*oldroyd_b_fluid) {}
 	//=================================================================================================//
 	void ViscoelasticFluidParticles::initializeOtherVariables()
 	{
@@ -60,7 +61,8 @@ namespace SPH
 	//=================================================================================================//
 	CompressibleFluidParticles::
 		CompressibleFluidParticles(SPHBody &sph_body, CompressibleFluid *compressible_fluid)
-		: FluidParticles(sph_body, compressible_fluid) {}
+		: FluidParticles(sph_body, compressible_fluid),
+		compressible_fluid_(*compressible_fluid) {}
 	//=================================================================================================//
 	void CompressibleFluidParticles::initializeOtherVariables()
 	{

@@ -68,7 +68,7 @@ public:
 private:
 	void tagManually(size_t index_i)
 	{
-		if (base_particles_->pos_[index_i][0] < -radius_mid_surface * cos(50.0 / 180.0 * Pi) || base_particles_->pos_[index_i][0] > radius_mid_surface * cos(50.0 / 180.0 * Pi))
+		if (base_particles_.pos_[index_i][0] < -radius_mid_surface * cos(50.0 / 180.0 * Pi) || base_particles_.pos_[index_i][0] > radius_mid_surface * cos(50.0 / 180.0 * Pi))
 		{
 			body_part_particles_.push_back(index_i);
 		}
@@ -110,8 +110,8 @@ int main()
 	 *  The contact map gives the data connections between the bodies
 	 *  basically the the range of bodies to build neighbor particle lists
 	 */
-	BodyRelationInner cylinder_body_inner(cylinder_body);
-	BodyRelationContact cylinder_observer_contact(cylinder_observer, {&cylinder_body});
+	InnerRelation cylinder_body_inner(cylinder_body);
+	ContactRelation cylinder_observer_contact(cylinder_observer, {&cylinder_body});
 
 	/** Common particle dynamics. */
 	SimpleDynamics<TimeStepInitialization> initialize_external_force(

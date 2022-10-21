@@ -12,19 +12,19 @@
 namespace SPH
 {
 	//=================================================================================================//
-	BodyRelationContact::BodyRelationContact(SPHBody &sph_body, RealBodyVector contact_sph_bodies)
-		: BaseBodyRelationContact(sph_body, contact_sph_bodies)
+	ContactRelation::ContactRelation(SPHBody &sph_body, RealBodyVector contact_sph_bodies)
+		: BaseContactRelation(sph_body, contact_sph_bodies)
 	{
 		initialization();
 	}
 	//=================================================================================================//
-	BodyRelationContact::BodyRelationContact(SPHBody &sph_body, BodyPartVector contact_body_parts)
-		: BaseBodyRelationContact(sph_body, contact_body_parts)
+	ContactRelation::ContactRelation(SPHBody &sph_body, BodyPartVector contact_body_parts)
+		: BaseContactRelation(sph_body, contact_body_parts)
 	{
 		initialization();
 	}
 	//=================================================================================================//
-	void BodyRelationContact::initialization()
+	void ContactRelation::initialization()
 	{
 		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{
@@ -34,45 +34,41 @@ namespace SPH
 			get_search_depths_.push_back(
 				search_depth_multi_resolution_ptr_vector_keeper_.createPtr<SearchDepthMultiResolution>(sph_body_, target_cell_linked_list));
 			get_contact_neighbors_.push_back(
-				neighbor_relation_contact_ptr_vector_keeper_.createPtr<NeighborRelationContact>(sph_body_, *contact_bodies_[k]));
+				neighbor_relation_contact_ptr_vector_keeper_.createPtr<NeighborBuilderContact>(sph_body_, *contact_bodies_[k]));
 		}
 	}
 	//=================================================================================================//
-	void BodyRelationContact::updateConfiguration()
+	void ContactRelation::updateConfiguration()
 	{
 		resetNeighborhoodCurrentSize();
-		size_t total_real_particles = base_particles_->total_real_particles_;
+		size_t total_real_particles = base_particles_.total_real_particles_;
 		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{
-			target_cell_linked_lists_[k]
-				->searchNeighborsByParticles(total_real_particles,
-											 *base_particles_, contact_configuration_[k],
-											 get_particle_index_, *get_search_depths_[k],
-											 *get_contact_neighbors_[k]);
+			target_cell_linked_lists_[k]->searchNeighborsByParticles(
+				sph_body_, contact_configuration_[k],
+				*get_search_depths_[k], *get_contact_neighbors_[k]);
 		}
 	}
 	//=================================================================================================//
-	SolidBodyRelationContact::SolidBodyRelationContact(SPHBody &sph_body, RealBodyVector contact_bodies)
-		: BaseBodyRelationContact(sph_body, contact_bodies),
+	SurfaceContactRelation::SurfaceContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies)
+		: BaseContactRelation(sph_body, contact_bodies),
 		  body_surface_layer_(shape_surface_ptr_keeper_.createPtr<BodySurfaceLayer>(sph_body)),
-		  body_part_particles_(body_surface_layer_->body_part_particles_),
-		  get_body_part_particle_index_(body_part_particles_)
+		  body_part_particles_(body_surface_layer_->body_part_particles_)
 	{
 		initialization();
 	}
 	//=================================================================================================//
-	SolidBodyRelationContact::
-		SolidBodyRelationContact(SolidBodyRelationSelfContact &solid_body_relation_self_contact,
+	SurfaceContactRelation::
+		SurfaceContactRelation(SelfSurfaceContactRelation &solid_body_relation_self_contact,
 								 RealBodyVector contact_bodies)
-		: BaseBodyRelationContact(*solid_body_relation_self_contact.real_body_, contact_bodies),
+		: BaseContactRelation(*solid_body_relation_self_contact.real_body_, contact_bodies),
 		  body_surface_layer_(&solid_body_relation_self_contact.body_surface_layer_),
-		  body_part_particles_(body_surface_layer_->body_part_particles_),
-		  get_body_part_particle_index_(body_part_particles_)
+		  body_part_particles_(body_surface_layer_->body_part_particles_)
 	{
 		initialization();
 	}
 	//=================================================================================================//
-	void SolidBodyRelationContact::resetNeighborhoodCurrentSize()
+	void SurfaceContactRelation::resetNeighborhoodCurrentSize()
 	{
 		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{
@@ -82,7 +78,7 @@ namespace SPH
 				{
 					for (size_t num = r.begin(); num != r.end(); ++num)
 					{
-						size_t index_i = get_body_part_particle_index_(num);
+						size_t index_i = body_surface_layer_->getParticleIndex(num);
 						contact_configuration_[k][index_i].current_size_ = 0;
 					}
 				},
@@ -90,7 +86,7 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void SolidBodyRelationContact::initialization()
+	void SurfaceContactRelation::initialization()
 	{
 		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{
@@ -100,45 +96,41 @@ namespace SPH
 			get_search_depths_.push_back(
 				search_depth_multi_resolution_ptr_vector_keeper_.createPtr<SearchDepthMultiResolution>(sph_body_, target_cell_linked_list));
 			get_contact_neighbors_.push_back(
-				neighbor_relation_contact_ptr_vector_keeper_.createPtr<NeighborRelationSolidContact>(sph_body_, *contact_bodies_[k]));
+				neighbor_relation_contact_ptr_vector_keeper_.createPtr<NeighborBuilderSolidContact>(sph_body_, *contact_bodies_[k]));
 		}
 	}
 	//=================================================================================================//
-	void SolidBodyRelationContact::updateConfiguration()
+	void SurfaceContactRelation::updateConfiguration()
 	{
 		resetNeighborhoodCurrentSize();
 		size_t total_real_particles = body_part_particles_.size();
 		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{
-			target_cell_linked_lists_[k]
-				->searchNeighborsByParticles(total_real_particles,
-											 *base_particles_, contact_configuration_[k],
-											 get_body_part_particle_index_, *get_search_depths_[k],
-											 *get_contact_neighbors_[k]);
+			target_cell_linked_lists_[k]->searchNeighborsByParticles(
+				*body_surface_layer_, contact_configuration_[k],
+				*get_search_depths_[k], *get_contact_neighbors_[k]);
 		}
 	}
 	//=================================================================================================//
-	BodyRelationContactToBodyPart::BodyRelationContactToBodyPart(RealBody &real_body, BodyPartVector contact_body_parts)
-		: BodyRelationContact(real_body, contact_body_parts), contact_body_parts_(contact_body_parts)
+	ContactRelationToBodyPart::ContactRelationToBodyPart(RealBody &real_body, BodyPartVector contact_body_parts)
+		: ContactRelation(real_body, contact_body_parts), contact_body_parts_(contact_body_parts)
 	{
 		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{
 			get_part_contact_neighbors_.push_back(
-				neighbor_relation_contact_body_part_ptr_vector_keeper_
-					.createPtr<NeighborRelationContactBodyPart>(sph_body_, *contact_body_parts[k]));
+				neighbor_builder_contact_body_part_ptr_vector_keeper_
+					.createPtr<NeighborBuilderContactBodyPart>(sph_body_, *contact_body_parts[k]));
 		}
 	}
 	//=================================================================================================//
-	void BodyRelationContactToBodyPart::updateConfiguration()
+	void ContactRelationToBodyPart::updateConfiguration()
 	{
-		size_t number_of_particles = base_particles_->total_real_particles_;
+		size_t number_of_particles = base_particles_.total_real_particles_;
 		for (size_t k = 0; k != contact_body_parts_.size(); ++k)
 		{
-			target_cell_linked_lists_[k]
-				->searchNeighborsByParticles(number_of_particles,
-											 *base_particles_, contact_configuration_[k],
-											 get_particle_index_, *get_search_depths_[k],
-											 *get_part_contact_neighbors_[k]);
+			target_cell_linked_lists_[k]->searchNeighborsByParticles(
+				sph_body_, contact_configuration_[k],
+				*get_search_depths_[k], *get_part_contact_neighbors_[k]);
 		}
 	}
 	//=================================================================================================//

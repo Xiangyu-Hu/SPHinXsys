@@ -120,8 +120,8 @@ int main()
 	ObserverBody fluid_observer(sph_system, "FluidObserver");
 	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	/** topology */
-	BodyRelationInner water_block_inner(water_block);
-	BodyRelationContact fluid_observer_contact(fluid_observer, {&water_block});
+	InnerRelation water_block_inner(water_block);
+	ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
 	/**
 	 * @brief 	Define all numerical methods which are used in this case.
 	 */
@@ -143,8 +143,8 @@ int main()
 	/** Time step size with considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	/** Pressure relaxation algorithm by using position verlet time stepping. */
-	Dynamics1Level<fluid_dynamics::PressureRelaxationRiemannInner> pressure_relaxation(water_block_inner);
-	Dynamics1Level<fluid_dynamics::DensityRelaxationRiemannInner> density_relaxation(water_block_inner);
+	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemann> pressure_relaxation(water_block_inner);
+	Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemann> density_relaxation(water_block_inner);
 	/** Confinement condition for wall and structure. */
 	NearShapeSurface near_surface(water_block, makeShared<WallAndStructure>("WallAndStructure"));
 	fluid_dynamics::StaticConfinement confinement_condition(near_surface);
@@ -159,7 +159,7 @@ int main()
 	/** Output the body states for restart simulation. */
 	RestartIO restart_io(io_environment, sph_system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
-	RegressionTestDynamicTimeWarping<BodyReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
+	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
 		write_water_mechanical_energy(io_environment, water_block, gravity_ptr);
 	/** output the observed data from fluid body. */
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>

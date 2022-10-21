@@ -70,7 +70,7 @@ int main(int ac, char *av[])
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	SolidBody coil(system, makeShared<Coil>("Coil"));
-	coil.defineBodyLevelSetShape()->writeLevelSet(coil);
+	coil.defineBodyLevelSetShape()->writeLevelSet(io_environment);
 	coil.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
 	(!system.run_particle_relaxation_ && system.reload_particles_)
 		? coil.generateParticles<ParticleGeneratorReload>(io_environment, coil.getName())
@@ -88,9 +88,9 @@ int main(int ac, char *av[])
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner coil_inner(coil);
-	SolidBodyRelationSelfContact coil_self_contact(coil);
-	SolidBodyRelationContact coil_contact(coil_self_contact, {&stationary_plate});
+	InnerRelation coil_inner(coil);
+	SelfSurfaceContactRelation coil_self_contact(coil);
+	SurfaceContactRelation coil_contact(coil_self_contact, {&stationary_plate});
 	//----------------------------------------------------------------------
 	//	check whether run particle relaxation for body fitted particle distribution.
 	//----------------------------------------------------------------------
@@ -102,7 +102,7 @@ int main(int ac, char *av[])
 		// Random reset the insert body particle position.
 		SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(coil);
 		// Write the particle reload files.
-		ReloadParticleIO write_particle_reload_files(io_environment, {&coil});
+		ReloadParticleIO write_particle_reload_files(io_environment, coil);
 		// A  Physics relaxation step.
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(coil_inner);
 		//----------------------------------------------------------------------

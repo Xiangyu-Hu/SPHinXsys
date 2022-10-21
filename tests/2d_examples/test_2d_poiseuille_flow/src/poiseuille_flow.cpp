@@ -85,8 +85,6 @@ int main()
 	SPHSystem system(system_domain_bounds, resolution_ref);
 	/** Set the starting time. */
 	GlobalStaticVariables::physical_time_ = 0.0;
-	/** Tag for computation from restart files. 0: not from restart files. */
-	system.restart_step_ = 0;
 	/**
 	 * @brief Material property, particles and body creation of fluid.
 	 */
@@ -100,7 +98,7 @@ int main()
 	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 	/** topology */
-	ComplexBodyRelation water_block_complex(water_block, {&wall_boundary});
+	ComplexRelation water_block_complex(water_block, {&wall_boundary});
 	/**
 	 * @brief 	Define all numerical methods which are used in this case.
 	 */
@@ -123,9 +121,9 @@ int main()
 	/** Time step size with considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	/** Pressure relaxation algorithm without Riemann solver for viscous flows. */
-	Dynamics1Level<fluid_dynamics::PressureRelaxationWithWall> pressure_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
 	/** Pressure relaxation algorithm by using position verlet time stepping. */
-	Dynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(water_block_complex);
 	/** Computing viscous acceleration. */
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	/** Impose transport velocity. */
@@ -136,8 +134,6 @@ int main()
 	IOEnvironment io_environment(system);
 	/** Output the body states. */
 	BodyStatesRecordingToVtp body_states_recording(io_environment, system.real_bodies_);
-	/** Output the body states for restart simulation. */
-	RestartIO restart_io(io_environment, system.real_bodies_);
 	/**
 	 * @brief Setup geometry and initial conditions.
 	 */
@@ -199,9 +195,6 @@ int main()
 				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
 						  << GlobalStaticVariables::physical_time_
 						  << "	Dt = " << Dt << "	dt = " << dt << "\n";
-
-				if (number_of_iterations % restart_output_interval == 0)
-					restart_io.writeToFile(number_of_iterations);
 			}
 			number_of_iterations++;
 			/** Update cell linked list and configuration. */

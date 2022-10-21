@@ -66,9 +66,9 @@ int main()
 	moving_plate.defineParticlesAndMaterial<SolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	moving_plate.generateParticles<ParticleGeneratorLattice>();
 	/** topology */
-	BodyRelationInner myocardium_body_inner(myocardium_body);
-	SolidBodyRelationContact myocardium_plate_contact(myocardium_body, {&moving_plate});
-	SolidBodyRelationContact plate_myocardium_contact(moving_plate, {&myocardium_body});
+	InnerRelation myocardium_body_inner(myocardium_body);
+	SurfaceContactRelation myocardium_plate_contact(myocardium_body, {&moving_plate});
+	SurfaceContactRelation plate_myocardium_contact(moving_plate, {&myocardium_body});
 	/** 
 	 * This section define all numerical methods will be used in this case.
 	 */

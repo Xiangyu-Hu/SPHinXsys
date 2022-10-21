@@ -50,7 +50,7 @@ int main()
 	IOEnvironment io_environment(system);
 	/** Creat a body, corresponding material and particles. */
 	TreeBody tree_on_sphere(system, makeShared<GeometricShapeBall>(Vec3d(0), 1.0, "Sphere"));
-	tree_on_sphere.defineBodyLevelSetShape()->writeLevelSet(tree_on_sphere);
+	tree_on_sphere.defineBodyLevelSetShape()->writeLevelSet(io_environment);
 	tree_on_sphere.defineParticlesAndMaterial();
 	tree_on_sphere.generateParticles<ParticleGeneratorNetwork>(starting_point, second_point, iteration_levels, grad_factor);
 	/** Write particle data. */

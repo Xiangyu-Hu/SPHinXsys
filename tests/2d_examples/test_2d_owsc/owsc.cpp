@@ -36,12 +36,12 @@ int main()
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner water_block_inner(water_block);
-	BodyRelationInner flap_inner(flap);
-	ComplexBodyRelation water_block_complex(water_block_inner, {&wall_boundary, &flap});
-	BodyRelationContact flap_contact(flap, {&water_block});
-	BodyRelationContact observer_contact_with_water(observer, {&water_block});
-	BodyRelationContact observer_contact_with_flap(observer, {&flap});
+	InnerRelation water_block_inner(water_block);
+	InnerRelation flap_inner(flap);
+	ComplexRelation water_block_complex(water_block_inner, {&wall_boundary, &flap});
+	ContactRelation flap_contact(flap, {&water_block});
+	ContactRelation observer_contact_with_water(observer, {&water_block});
+	ContactRelation observer_contact_with_flap(observer, {&flap});
 	//----------------------------------------------------------------------
 	//	Define all numerical methods which are used in this case.
 	//----------------------------------------------------------------------
@@ -60,8 +60,8 @@ int main()
 	/** time step size with considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	/** pressure relaxation using Verlet time stepping. */
-	Dynamics1Level<fluid_dynamics::PressureRelaxationRiemannWithWall> pressure_relaxation(water_block_complex);
-	Dynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> density_relaxation(water_block_complex);
 	/** Computing viscous acceleration. */
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	/** Inflow boundary condition. */
@@ -158,20 +158,20 @@ int main()
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<
-		BodyReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceOnSolid>>> write_total_force_on_flap(io_environment, flap);
+		ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceOnSolid>>> write_total_force_on_flap(io_environment, flap);
 	WriteSimBodyPinData write_flap_pin_data(io_environment, integ, pin_spot);
 	
 	/** WaveProbes. */
 	BodyRegionByCell wave_probe_buffer_no_4(water_block, makeShared<MultiPolygonShape>(createWaveProbeShape4(), "WaveProbe_04"));
-	BodyReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight, BodyRegionByCell>>
+	ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight, BodyRegionByCell>>
 		wave_probe_4(io_environment, wave_probe_buffer_no_4);
 
 	BodyRegionByCell wave_probe_buffer_no_5(water_block, makeShared<MultiPolygonShape>(createWaveProbeShape5(), "WaveProbe_05"));
-	BodyReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight, BodyRegionByCell>>
+	ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight, BodyRegionByCell>>
 		wave_probe_5(io_environment, wave_probe_buffer_no_5);
 
 	BodyRegionByCell wave_probe_buffer_no_12(water_block, makeShared<MultiPolygonShape>(createWaveProbeShape12(), "WaveProbe_12"));
-	BodyReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight, BodyRegionByCell>>
+	ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight, BodyRegionByCell>>
 		wave_probe_12(io_environment, wave_probe_buffer_no_12);
 	
 	/** Pressure probe. */

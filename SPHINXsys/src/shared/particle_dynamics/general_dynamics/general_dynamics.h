@@ -38,10 +38,9 @@
 
 namespace SPH
 {
-	typedef DataDelegateSimple<SPHBody, BaseParticles, BaseMaterial> GeneralDataDelegateSimple;
-	typedef DataDelegateInner<SPHBody, BaseParticles, BaseMaterial> GeneralDataDelegateInner;
-	typedef DataDelegateContact<SPHBody, BaseParticles, BaseMaterial,
-								SPHBody, BaseParticles, BaseMaterial, DataDelegateEmptyBase>
+	typedef DataDelegateSimple<BaseParticles> GeneralDataDelegateSimple;
+	typedef DataDelegateInner<BaseParticles> GeneralDataDelegateInner;
+	typedef DataDelegateContact<BaseParticles, BaseParticles, DataDelegateEmptyBase>
 		GeneralDataDelegateContact;
 
 	/**
@@ -107,9 +106,9 @@ namespace SPH
 	class ParticleSmoothing : public LocalDynamics, public GeneralDataDelegateInner
 	{
 	public:
-		explicit ParticleSmoothing(BaseBodyRelationInner &inner_relation, const std::string &variable_name)
+		explicit ParticleSmoothing(BaseInnerRelation &inner_relation, const std::string &variable_name)
 			: LocalDynamics(inner_relation.sph_body_), GeneralDataDelegateInner(inner_relation),
-			  W0_(body_->sph_adaptation_->getKernel()->W0(Vecd(0))),
+			  W0_(sph_body_.sph_adaptation_->getKernel()->W0(Vecd(0))),
 			  smoothed_(*particles_->getVariableByName<VariableType>(variable_name))
 		{
 			particles_->registerVariable(temp_, variable_name + "_temp");

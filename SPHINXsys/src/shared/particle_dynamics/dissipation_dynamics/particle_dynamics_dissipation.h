@@ -23,8 +23,11 @@
 /**
  * @file 	particle_dynamics_dissipation.h
  * @brief 	Here are the classes for damping the magnitude of
- * 			any variables.
- * Note that, currently, these classes works only in single resolution.
+ * any variables. Note that the damping coefficient has density dimension.
+ * Also note that, currently, these classes works only in single resolution.
+ * TODO: we may need to take the dimension of density away from eta 
+ * (i.e. using kinematic parameters only ) and replace the particle mass with 
+ * particle volume, so that the method is more generalized. 
  * @author	Chi Zhang and Xiangyu Hu
  */
 
@@ -35,12 +38,10 @@
 
 namespace SPH
 {
-	typedef DataDelegateInner<SPHBody, BaseParticles, BaseMaterial> DissipationDataInner;
-	typedef DataDelegateContact<SPHBody, BaseParticles, BaseMaterial,
-								SPHBody, BaseParticles, BaseMaterial, DataDelegateEmptyBase>
+	typedef DataDelegateInner<BaseParticles> DissipationDataInner;
+	typedef DataDelegateContact<BaseParticles, BaseParticles, DataDelegateEmptyBase>
 		DissipationDataContact;
-	typedef DataDelegateContact<SPHBody, BaseParticles, BaseMaterial,
-								SolidBody, SolidParticles, Solid, DataDelegateEmptyBase>
+	typedef DataDelegateContact<BaseParticles, SolidParticles, DataDelegateEmptyBase>
 		DissipationDataWithWall;
 
 	template <typename VariableType>
@@ -64,7 +65,7 @@ namespace SPH
 	{
 	protected:
 	public:
-		DampingBySplittingInner(BaseBodyRelationInner &inner_relation, const std::string &variable_name, Real eta);
+		DampingBySplittingInner(BaseInnerRelation &inner_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingBySplittingInner(){};
 		void interaction(size_t index_i, Real dt = 0.0);
 
@@ -81,7 +82,7 @@ namespace SPH
 	class DampingBySplittingComplex : public DampingBySplittingInner<VariableType>, public DissipationDataContact
 	{
 	public:
-		DampingBySplittingComplex(ComplexBodyRelation &complex_relation, const std::string &variable_name, Real eta);
+		DampingBySplittingComplex(ComplexRelation &complex_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingBySplittingComplex(){};
 
 	protected:
@@ -99,7 +100,7 @@ namespace SPH
 	class DampingBySplittingWithWall : public BaseDampingBySplittingType<VariableType>, public DissipationDataWithWall
 	{
 	public:
-		DampingBySplittingWithWall(ComplexBodyRelation &complex_wall_relation, const std::string &variable_name, Real eta);
+		DampingBySplittingWithWall(ComplexRelation &complex_wall_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingBySplittingWithWall(){};
 
 	protected:
@@ -122,7 +123,7 @@ namespace SPH
 	class DampingPairwiseInner : public LocalDynamics, public DissipationDataInner
 	{
 	public:
-		DampingPairwiseInner(BaseBodyRelationInner &inner_relation, const std::string &variable_name, Real eta);
+		DampingPairwiseInner(BaseInnerRelation &inner_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingPairwiseInner(){};
 		void interaction(size_t index_i, Real dt = 0.0);
 
@@ -136,9 +137,9 @@ namespace SPH
 	class DampingPairwiseComplex : public DampingPairwiseInner<VariableType>, public DissipationDataContact
 	{
 	public:
-		DampingPairwiseComplex(BaseBodyRelationInner &inner_relation,
-							   BaseBodyRelationContact &contact_relation, const std::string &variable_name, Real eta);
-		DampingPairwiseComplex(ComplexBodyRelation &complex_relation, const std::string &variable_name, Real eta);
+		DampingPairwiseComplex(BaseInnerRelation &inner_relation,
+							   BaseContactRelation &contact_relation, const std::string &variable_name, Real eta);
+		DampingPairwiseComplex(ComplexRelation &complex_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingPairwiseComplex(){};
 		void interaction(size_t index_i, Real dt = 0.0);
 
@@ -158,9 +159,9 @@ namespace SPH
 									public DissipationDataWithWall
 	{
 	public:
-		DampingPairwiseWithWall(BaseBodyRelationInner &inner_relation,
-								BaseBodyRelationContact &contact_relation, const std::string &variable_name, Real eta);
-		DampingPairwiseWithWall(ComplexBodyRelation &complex_wall_relation, const std::string &variable_name, Real eta);
+		DampingPairwiseWithWall(BaseInnerRelation &inner_relation,
+								BaseContactRelation &contact_relation, const std::string &variable_name, Real eta);
+		DampingPairwiseWithWall(ComplexRelation &complex_wall_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingPairwiseWithWall(){};
 		void interaction(size_t index_i, Real dt = 0.0);
 
@@ -176,11 +177,10 @@ namespace SPH
 	 */
 	template <typename VariableType>
 	class DampingPairwiseFromWall : public LocalDynamics,
-									public DataDelegateContact<SPHBody, BaseParticles, BaseMaterial,
-															   SolidBody, SolidParticles, Solid>
+									public DataDelegateContact<BaseParticles, SolidParticles>
 	{
 	public:
-		DampingPairwiseFromWall(BaseBodyRelationContact &contact_relation, const std::string &variable_name, Real eta);
+		DampingPairwiseFromWall(BaseContactRelation &contact_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingPairwiseFromWall(){};
 		void interaction(size_t index_i, Real dt = 0.0);
 

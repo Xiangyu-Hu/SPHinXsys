@@ -3,20 +3,20 @@
 namespace SPH
 {
     //=================================================================================================//
-    bool GeometricShape::checkContain(const Vec3d &pnt, bool BOUNDARY_INCLUDED)
+    bool GeometricShape::checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED)
     {
         SimTK::UnitVec3 normal;
         bool inside = false;
-        contact_geometry_->findNearestPoint(pnt, inside, normal);
+        contact_geometry_->findNearestPoint(probe_point, inside, normal);
 
         return inside;
     }
     //=================================================================================================//
-    Vec3d GeometricShape::findClosestPoint(const Vec3d &pnt)
+    Vec3d GeometricShape::findClosestPoint(const Vec3d &probe_point)
     {
         SimTK::UnitVec3 normal;
         bool inside = false;
-        return contact_geometry_->findNearestPoint(pnt, inside, normal);
+        return contact_geometry_->findNearestPoint(probe_point, inside, normal);
     }
     //=================================================================================================//
     GeometricShapeBox::
@@ -26,15 +26,15 @@ namespace SPH
         contact_geometry_ = &brick_;
     }
     //=================================================================================================//
-    bool GeometricShapeBox::checkContain(const Vec3d &pnt, bool BOUNDARY_INCLUDED)
+    bool GeometricShapeBox::checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED)
     {
-        return brick_.getGeoBox().containsPoint(pnt);
+        return brick_.getGeoBox().containsPoint(probe_point);
     }
     //=================================================================================================//
-    Vec3d GeometricShapeBox::findClosestPoint(const Vec3d &pnt)
+    Vec3d GeometricShapeBox::findClosestPoint(const Vec3d &probe_point)
     {
         bool inside = false;
-        return brick_.getGeoBox().findClosestPointOnSurface(pnt, inside);
+        return brick_.getGeoBox().findClosestPointOnSurface(probe_point, inside);
     }
     //=================================================================================================//
     BoundingBox GeometricShapeBox::findBounds()
@@ -49,19 +49,19 @@ namespace SPH
         contact_geometry_ = &sphere_;
     }
     //=================================================================================================//
-    bool GeometricShapeBall::checkContain(const Vec3d &pnt, bool BOUNDARY_INCLUDED)
+    bool GeometricShapeBall::checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED)
     {
-        return (pnt - center_).norm() < sphere_.getRadius();
+        return (probe_point - center_).norm() < sphere_.getRadius();
     }
     //=================================================================================================//
-    Vec3d GeometricShapeBall::findClosestPoint(const Vec3d &pnt)
+    Vec3d GeometricShapeBall::findClosestPoint(const Vec3d &probe_point)
     {
-        Vec3d displacement = pnt - center_;
+        Vec3d displacement = probe_point - center_;
         Real distance = displacement.norm();
         Real cosine0 = (SGN(displacement[0]) * (ABS(displacement[0])) + TinyReal) / (distance + TinyReal);
         Real cosine1 = displacement[1] / (distance + TinyReal);
         Real cosine2 = displacement[2] / (distance + TinyReal);
-        return pnt + (sphere_.getRadius() - distance) * Vec3d(cosine0, cosine1, cosine2);
+        return probe_point + (sphere_.getRadius() - distance) * Vec3d(cosine0, cosine1, cosine2);
     }
     //=================================================================================================//
     BoundingBox GeometricShapeBall::findBounds()

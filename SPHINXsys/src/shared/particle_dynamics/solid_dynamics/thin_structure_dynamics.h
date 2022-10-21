@@ -41,8 +41,8 @@ namespace SPH
 {
 	namespace thin_structure_dynamics
 	{
-		typedef DataDelegateSimple<SolidBody, ShellParticles, ElasticSolid> ShellDataSimple;
-		typedef DataDelegateInner<SolidBody, ShellParticles, ElasticSolid> ShellDataInner;
+		typedef DataDelegateSimple<ShellParticles> ShellDataSimple;
+		typedef DataDelegateInner<ShellParticles> ShellDataInner;
 
 		/**
 		 * @class ShellDynamicsInitialCondition
@@ -88,12 +88,11 @@ namespace SPH
 		class ShellCorrectConfiguration : public LocalDynamics, public ShellDataInner
 		{
 		public:
-			explicit ShellCorrectConfiguration(BaseBodyRelationInner &inner_relation);
+			explicit ShellCorrectConfiguration(BaseInnerRelation &inner_relation);
 			virtual ~ShellCorrectConfiguration(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			StdLargeVec<Real> &Vol_;
 			StdLargeVec<Matd> &B_;
 			StdLargeVec<Vecd> &n0_;
 			StdLargeVec<Matd> &transformation_matrix_;
@@ -107,12 +106,11 @@ namespace SPH
 		class ShellDeformationGradientTensor : public LocalDynamics, public ShellDataInner
 		{
 		public:
-			explicit ShellDeformationGradientTensor(BaseBodyRelationInner &inner_relation);
+			explicit ShellDeformationGradientTensor(BaseInnerRelation &inner_relation);
 			virtual ~ShellDeformationGradientTensor(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			StdLargeVec<Real> &Vol_;
 			StdLargeVec<Vecd> &pos_, &pseudo_n_, &n0_;
 			StdLargeVec<Matd> &B_, &F_, &F_bending_;
 			StdLargeVec<Matd> &transformation_matrix_;
@@ -125,11 +123,11 @@ namespace SPH
 		class BaseShellRelaxation : public LocalDynamics, public ShellDataInner
 		{
 		public:
-			explicit BaseShellRelaxation(BaseBodyRelationInner &inner_relation);
+			explicit BaseShellRelaxation(BaseInnerRelation &inner_relation);
 			virtual ~BaseShellRelaxation(){};
 
 		protected:
-			StdLargeVec<Real> &Vol_, &rho_, &mass_, &thickness_;
+			StdLargeVec<Real> &rho_, &thickness_;
 			StdLargeVec<Vecd> &pos_, &vel_, &acc_, &acc_prior_;
 			StdLargeVec<Vecd> &n0_, &pseudo_n_, &dpseudo_n_dt_, &dpseudo_n_d2t_, &rotation_,
 				&angular_vel_, dangular_vel_dt_;
@@ -145,7 +143,7 @@ namespace SPH
 		class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
 		{
 		public:
-			explicit ShellStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation,
+			explicit ShellStressRelaxationFirstHalf(BaseInnerRelation &inner_relation,
 													int number_of_gaussian_points = 3, bool hourglass_control = false);
 			virtual ~ShellStressRelaxationFirstHalf(){};
 			void initialization(size_t index_i, Real dt = 0.0);
@@ -153,12 +151,13 @@ namespace SPH
 			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
+			ElasticSolid &elastic_solid_;
 			Real rho0_, inv_rho0_;
 			StdLargeVec<Matd> &global_stress_, &global_moment_;
 			StdLargeVec<Vecd> &global_shear_stress_, &n_;
 			Real smoothing_length_, E0_, G0_, nu_, hourglass_control_factor_;
 			bool hourglass_control_;
-			const Real inv_W0_ = 1.0 / body_->sph_adaptation_->getKernel()->W0(Vecd(0));
+			const Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(Vecd(0));
 			const Real shear_correction_factor_ = 5.0 / 6.0;
 
 			const StdVec<Real> three_gaussian_points_ = {0.0, 0.7745966692414834, -0.7745966692414834};
@@ -178,7 +177,7 @@ namespace SPH
 		class ShellStressRelaxationSecondHalf : public BaseShellRelaxation
 		{
 		public:
-			explicit ShellStressRelaxationSecondHalf(BaseBodyRelationInner &inner_relation)
+			explicit ShellStressRelaxationSecondHalf(BaseInnerRelation &inner_relation)
 				: BaseShellRelaxation(inner_relation){};
 			virtual ~ShellStressRelaxationSecondHalf(){};
 			void initialization(size_t index_i, Real dt = 0.0);
@@ -243,7 +242,7 @@ namespace SPH
 			Real time_to_full_external_force_;
 			Real particle_spacing_ref_, h_spacing_ratio_;
 			StdLargeVec<Vecd> &pos0_, &acc_prior_;
-			StdLargeVec<Real> &Vol_, &mass_, &thickness_;
+			StdLargeVec<Real> &thickness_;
 			std::vector<StdLargeVec<Real>> weight_;
 			std::vector<Real> sum_of_weight_;
 
