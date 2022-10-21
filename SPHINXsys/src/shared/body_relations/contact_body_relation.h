@@ -43,7 +43,7 @@ namespace SPH
 	class ContactRelationCrossResolution : public BaseContactRelation
 	{
 	protected:
-		UniquePtrKeepers<SearchDepthCrossResolution> search_depth_ptrs_keeper_;
+		UniquePtrKeepers<SearchDepthContact> search_depth_ptrs_keeper_;
 
 	public:
 		template <typename... Args>
@@ -56,7 +56,7 @@ namespace SPH
 					DynamicCast<CellLinkedList>(this, &contact_bodies_[k]->getCellLinkedList());
 				target_cell_linked_lists_.push_back(target_cell_linked_list);
 				get_search_depths_.push_back(
-					search_depth_ptrs_keeper_.createPtr<SearchDepthCrossResolution>(
+					search_depth_ptrs_keeper_.createPtr<SearchDepthContact>(
 						sph_body_, target_cell_linked_list));
 			}
 		};
@@ -64,7 +64,7 @@ namespace SPH
 
 	protected:
 		StdVec<CellLinkedList *> target_cell_linked_lists_;
-		StdVec<SearchDepthCrossResolution *> get_search_depths_;
+		StdVec<SearchDepthContact *> get_search_depths_;
 	};
 
 	/**

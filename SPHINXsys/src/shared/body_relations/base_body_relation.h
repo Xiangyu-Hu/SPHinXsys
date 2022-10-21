@@ -46,10 +46,10 @@ namespace SPH
 	/** @brief a small functor for obtaining search depth across resolution
 	 * @details Note that the search depth is defined on the target cell linked list.
 	 */
-	struct SearchDepthCrossResolution
+	struct SearchDepthContact
 	{
 		int search_depth_;
-		SearchDepthCrossResolution(SPHBody &sph_body, CellLinkedList *target_cell_linked_list)
+		SearchDepthContact(SPHBody &sph_body, CellLinkedList *target_cell_linked_list)
 			: search_depth_(1)
 		{
 			Real inv_grid_spacing_ = 1.0 / target_cell_linked_list->GridSpacing();
