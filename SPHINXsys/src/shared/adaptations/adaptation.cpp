@@ -163,32 +163,32 @@ namespace SPH
 		return target_spacing;
 	}
 	//=================================================================================================//
-	ParticleSplitAndMerge::ParticleSplitAndMerge(SPHBody &sph_body, Real h_spacing_ratio,
-												 Real system_resolution_ratio, int local_refinement_level)
-		: ParticleWithLocalRefinement(sph_body, h_spacing_ratio, system_resolution_ratio, local_refinement_level)
-	{
-		local_refinement_level_ = local_refinement_level;
-		spacing_min_ = MostRefinedSpacing(spacing_ref_, local_refinement_level_);
-		h_ratio_max_ = powerN(sqrt(2.0), local_refinement_level_);
-	};
+	ParticleWithLifeTime::ParticleWithLifeTime(SPHBody &sph_body, Real h_spacing_ratio,
+											   Real system_resolution_ratio, int local_refinement_level)
+		: ParticleWithLocalRefinement(sph_body, h_spacing_ratio,
+									  system_resolution_ratio, local_refinement_level){};
 	//=================================================================================================//
-	bool ParticleSplitAndMerge::checkLocation(BodyRegionByCell &refinement_area, Vecd position, Real volume)
+	StdLargeVec<int> &ParticleWithLifeTime::registerLifeIndicator(BaseParticles &base_particles)
 	{
-		BoundingBox body_domain_bounds_ = refinement_area.body_part_shape_.getBounds();
-		int bound_number = 0;
-		for (int axis_direction = 0; axis_direction != Dimensions; ++axis_direction)
-		{
-			Real particle_spacing = pow(volume, 1.0 / Dimensions);
-			if (position[axis_direction] > (body_domain_bounds_.first[axis_direction] + particle_spacing) &&
-				position[axis_direction] < (body_domain_bounds_.second[axis_direction] - particle_spacing))
-				bound_number += 1;
-		}
-		return bound_number != Dimensions ? false : true;
+		base_particles.registerVariable(life_indicator_, "LifeIndicator", 1);
+		base_particles.registerSortableVariable<int>("LifeIndicator");
+		return life_indicator_;
 	}
 	//=================================================================================================//
-	bool ParticleSplitAndMerge::splitResolutionCheck(Real volume, Real min_volume)
+	ParticleSplitAndMerge::ParticleSplitAndMerge(SPHBody &sph_body, Real h_spacing_ratio,
+												 Real system_resolution_ratio, int local_refinement_level)
+		: ParticleWithLifeTime(sph_body, h_spacing_ratio,
+							   system_resolution_ratio, local_refinement_level)
 	{
-		return volume - 1.2 * min_volume > Eps ? true : false;
+		spacing_min_ = MostRefinedSpacing(spacing_ref_, local_refinement_level_);
+		h_ratio_max_ = powerN(sqrt(2.0), local_refinement_level_);
+		minimum_volume_ = powerN(spacing_min_, Dimensions);
+		maximum_volume_ = powerN(spacing_ref_, Dimensions);
+	};
+	//=================================================================================================//
+	bool ParticleSplitAndMerge::isSplitAllowed(Real current_volume)
+	{
+		return volume - 2.0 * minimum_volume_ > Eps ? true : false;
 	}
 	//=================================================================================================//
 	bool ParticleSplitAndMerge::mergeResolutionCheck(Real volume)

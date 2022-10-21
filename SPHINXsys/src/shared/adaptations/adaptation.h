@@ -137,27 +137,43 @@ namespace SPH
 	};
 
 	/**
+	 * @class ParticleWithLifeTime
+	 * @brief particles may have life-time events.
+	 */
+
+	class ParticleWithLifeTime : public ParticleWithLocalRefinement
+	{
+	public:
+		ParticleWithLifeTime(SPHBody &sph_body, Real h_spacing_ratio_,
+							 Real system_resolution_ratio, int local_refinement_level);
+		virtual ~ParticleWithLifeTime(){};
+		StdLargeVec<int> &registerLifeIndicator(BaseParticles &base_particles);
+
+	protected:
+		StdLargeVec<int> life_indicator_; /**< 0: dead, 1: alive, ... */
+	};
+
+	/**
 	 * @class ParticleSplitAndMerge
 	 * @brief adaptive resolutions with particle splitting and merging technique.
 	 */
 
-	class ParticleSplitAndMerge : public ParticleWithLocalRefinement
+	class ParticleSplitAndMerge : public ParticleWithLifeTime
 	{
 	public:
-		StdLargeVec<Real> total_split_error_;
-		StdLargeVec<Real> total_merge_error_;
-
 		ParticleSplitAndMerge(SPHBody &sph_body, Real h_spacing_ratio_,
 							  Real system_resolution_ratio, int local_refinement_level);
 		virtual ~ParticleSplitAndMerge(){};
 
-		virtual bool checkLocation(BodyRegionByCell &refinement_area, Vecd position, Real volume);
-		virtual bool splitResolutionCheck(Real volume, Real min_volume);
+		virtual bool isSplitAllowed(Real current_volume);
 		virtual bool mergeResolutionCheck(Real volume);
 		virtual Vec2d splittingPattern(Vec2d pos, Real particle_spacing, Real delta);
 		virtual Vec3d splittingPattern(Vec3d pos, Real particle_spacing, Real delta);
 
 	protected:
+		Real minimum_volume_;
+		Real maximum_volume_;
+
 		virtual Real MostRefinedSpacing(Real coarse_particle_spacing, int local_refinement_level) override;
 	};
 }
