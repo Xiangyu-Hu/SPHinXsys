@@ -24,13 +24,13 @@ namespace SPH
 		  spacing_ref_(resolution_ref / system_refinement_ratio_),
 		  h_ref_(h_spacing_ratio_ * spacing_ref_),
 		  kernel_ptr_(makeUnique<KernelWendlandC2>(h_ref_)),
-		  spacing_min_(this->RefinedSpacing(spacing_ref_, local_refinement_level_)),
+		  spacing_min_(this->MostRefinedSpacing(spacing_ref_, local_refinement_level_)),
 		  h_ratio_max_(powerN(2.0, local_refinement_level_)){};
 	//=================================================================================================//
 	SPHAdaptation::SPHAdaptation(SPHBody &sph_body, Real h_spacing_ratio, Real system_refinement_ratio)
 		: SPHAdaptation(sph_body.getSPHSystem().resolution_ref_, h_spacing_ratio, system_refinement_ratio){};
 	//=================================================================================================//
-	Real SPHAdaptation::RefinedSpacing(Real coarse_particle_spacing, int refinement_level)
+	Real SPHAdaptation::MostRefinedSpacing(Real coarse_particle_spacing, int refinement_level)
 	{
 		return coarse_particle_spacing / powerN(2.0, refinement_level);
 	}
@@ -83,7 +83,7 @@ namespace SPH
 		system_refinement_ratio_ = new_system_refinement_ratio;
 		h_ref_ = h_spacing_ratio_ * spacing_ref_;
 		kernel_ptr_.reset(new KernelWendlandC2(h_ref_));
-		spacing_min_ = RefinedSpacing(spacing_ref_, local_refinement_level_);
+		spacing_min_ = MostRefinedSpacing(spacing_ref_, local_refinement_level_);
 	}
 	//=================================================================================================//
 	UniquePtr<BaseCellLinkedList> SPHAdaptation::
@@ -109,7 +109,7 @@ namespace SPH
 		: SPHAdaptation(sph_body, h_spacing_ratio, system_refinement_ratio)
 	{
 		local_refinement_level_ = local_refinement_level;
-		spacing_min_ = RefinedSpacing(spacing_ref_, local_refinement_level_);
+		spacing_min_ = MostRefinedSpacing(spacing_ref_, local_refinement_level_);
 		h_ratio_max_ = powerN(2.0, local_refinement_level_);
 	}
 	//=================================================================================================//
@@ -168,7 +168,7 @@ namespace SPH
 		: ParticleWithLocalRefinement(sph_body, h_spacing_ratio, system_resolution_ratio, local_refinement_level)
 	{
 		local_refinement_level_ = local_refinement_level;
-		spacing_min_ = RefinedSpacing(spacing_ref_, local_refinement_level_);
+		spacing_min_ = MostRefinedSpacing(spacing_ref_, local_refinement_level_);
 		h_ratio_max_ = powerN(sqrt(2.0), local_refinement_level_);
 	};
 	//=================================================================================================//
@@ -196,7 +196,7 @@ namespace SPH
 		return volume - 1.2 * powerN(spacing_min_, Dimensions) < Eps ? true : false;
 	}
 	//=================================================================================================//
-	Real ParticleSplitAndMerge::RefinedSpacing(Real coarse_particle_spacing, int local_refinement_level)
+	Real ParticleSplitAndMerge::MostRefinedSpacing(Real coarse_particle_spacing, int local_refinement_level)
 	{
 		Real refinement_number = powerN(2.0, local_refinement_level);
 		Real spacing_ratio = pow(refinement_number, 1.0 / Dimensions);

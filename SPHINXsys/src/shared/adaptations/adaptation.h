@@ -91,7 +91,7 @@ namespace SPH
 		};
 
 	protected:
-		virtual Real RefinedSpacing(Real coarse_particle_spacing, int refinement_level);
+		virtual Real MostRefinedSpacing(Real coarse_particle_spacing, int refinement_level);
 	};
 
 	/**
@@ -158,7 +158,7 @@ namespace SPH
 		virtual Vec3d splittingPattern(Vec3d pos, Real particle_spacing, Real delta);
 
 	protected:
-		virtual Real RefinedSpacing(Real coarse_particle_spacing, int local_refinement_level) override;
+		virtual Real MostRefinedSpacing(Real coarse_particle_spacing, int local_refinement_level) override;
 	};
 }
 #endif // ADAPTATION_H

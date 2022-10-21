@@ -119,7 +119,7 @@ namespace SPH
 
 				get_contact_neighbors_adaptive_[k].push_back(
 					neighbor_builder_contact_adaptive_ptr_vector_keeper_
-						.createPtr<AdaptiveNeighborBuilderContact>(
+						.createPtr<NeighborBuilderContactAdaptive>(
 							sph_body, *contact_sph_bodies[k]));
 			}
 		}

@@ -71,7 +71,7 @@ namespace SPH
 
 	/**
 	 * @class NeighborBuilder
-	 * @brief Base class for building neighbor between particles i and j.
+	 * @brief Base class for building a neighbor particle j around particles i.
 	 */
 	class NeighborBuilder
 	{
@@ -81,16 +81,16 @@ namespace SPH
 		//	Below are for constant smoothing length.
 		//----------------------------------------------------------------------
 		void createNeighbor(Neighborhood &neighborhood, const Real &distance,
-							const Vecd &displacement, size_t j_index, const Real Vol_j);
+							const Vecd &displacement, size_t j_index, const Real &Vol_j);
 		void initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
-								const Vecd &displacement, size_t j_index, const Real Vol_j);
+								const Vecd &displacement, size_t j_index, const Real &Vol_j);
 		//----------------------------------------------------------------------
 		//	Below are for variable smoothing length.
 		//----------------------------------------------------------------------
 		void createNeighbor(Neighborhood &neighborhood, const Real &distance,
-							const Vecd &displacement, size_t j_index, const Real Vol_j, Real i_h_ratio, Real h_ratio_min);
+							const Vecd &displacement, size_t j_index, const Real &Vol_j, Real i_h_ratio, Real h_ratio_min);
 		void initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
-								const Vecd &displacement, size_t j_index, const Real Vol_j, Real i_h_ratio, Real h_ratio_min);
+								const Vecd &displacement, size_t j_index, const Real &Vol_j, Real i_h_ratio, Real h_ratio_min);
 
 	public:
 		NeighborBuilder() : kernel_(nullptr){};
@@ -99,7 +99,7 @@ namespace SPH
 
 	/**
 	 * @class NeighborBuilderInner
-	 * @brief A inner neighbor relation functor between particles i and j.
+	 * @brief A inner neighbor builder functor.
 	 */
 	class NeighborBuilderInner : public NeighborBuilder
 	{
@@ -110,14 +110,13 @@ namespace SPH
 	};
 
 	/**
-	 * @class AdaptiveNeighborBuilderInner
-	 * @brief A inner neighbor relation functor between particles i and j
-	 * when the particles have different smoothing lengths.
+	 * @class NeighborBuilderInnerAdaptive
+	 * @brief A inner neighbor builder functor when the particles have different smoothing lengths.
 	 */
-	class AdaptiveNeighborBuilderInner : public NeighborBuilder
+	class NeighborBuilderInnerAdaptive : public NeighborBuilder
 	{
 	public:
-		explicit AdaptiveNeighborBuilderInner(SPHBody &body);
+		explicit NeighborBuilderInnerAdaptive(SPHBody &body);
 		void operator()(Neighborhood &neighborhood,
 						const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 
@@ -127,7 +126,7 @@ namespace SPH
 
 	/**
 	 * @class NeighborBuilderSelfContact
-	 * @brief A self-contact neighbor builder between particles i and j.
+	 * @brief A self-contact neighbor builder functor.
 	 */
 	class NeighborBuilderSelfContact : public NeighborBuilder
 	{
@@ -143,7 +142,7 @@ namespace SPH
 
 	/**
 	 * @class NeighborBuilderContact
-	 * @brief A contact neighbor relation functor between particles i and j.
+	 * @brief A contact neighbor builder functor for contact relation.
 	 */
 	class NeighborBuilderContact : public NeighborBuilder
 	{
@@ -156,7 +155,7 @@ namespace SPH
 
 	/**
 	 * @class NeighborBuilderSurfaceContact
-	 * @brief A solid contact neighbor relation functor between particles i and j.
+	 * @brief A solid contact neighbor builder functor when bodies having surface contact.
 	 */
 	class NeighborBuilderSurfaceContact : public NeighborBuilderContact
 	{
@@ -170,7 +169,7 @@ namespace SPH
 
 	/**
 	 * @class NeighborBuilderContactBodyPart
-	 * @brief A contact neighbor relation functor between particles i and j.
+	 * @brief A contact neighbor builder functor when particles j belongs a body part.
 	 */
 	class NeighborBuilderContactBodyPart : public NeighborBuilder
 	{
@@ -185,15 +184,14 @@ namespace SPH
 	};
 
 	/**
-	 * @class AdaptiveNeighborBuilderContact
-	 * @brief A contact neighbor relation functor between particles i and j
-	 * when the particles have different smoothing lengths.
+	 * @class NeighborBuilderContactAdaptive
+	 * @brief A contact neighbor builder functor when the particles have different smoothing lengths.
 	 */
-	class AdaptiveNeighborBuilderContact : public NeighborBuilder
+	class NeighborBuilderContactAdaptive : public NeighborBuilder
 	{
 	public:
-		explicit AdaptiveNeighborBuilderContact(SPHBody &body, SPHBody &contact_body);
-		virtual ~AdaptiveNeighborBuilderContact(){};
+		explicit NeighborBuilderContactAdaptive(SPHBody &body, SPHBody &contact_body);
+		virtual ~NeighborBuilderContactAdaptive(){};
 		void operator()(Neighborhood &neighborhood,
 						const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 

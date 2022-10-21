@@ -141,12 +141,12 @@ namespace SPH
 	{
 	private:
 		UniquePtrKeepers<SearchDepthAdaptiveContact> adaptive_search_depth_ptr_vector_keeper_;
-		UniquePtrKeepers<AdaptiveNeighborBuilderContact> neighbor_builder_contact_adaptive_ptr_vector_keeper_;
+		UniquePtrKeepers<NeighborBuilderContactAdaptive> neighbor_builder_contact_adaptive_ptr_vector_keeper_;
 
 	protected:
 		StdVec<StdVec<SearchDepthAdaptiveContact *>> get_multi_level_search_range_;
 		StdVec<StdVec<CellLinkedList *>> cell_linked_list_levels_;
-		StdVec<StdVec<AdaptiveNeighborBuilderContact *>> get_contact_neighbors_adaptive_;
+		StdVec<StdVec<NeighborBuilderContactAdaptive *>> get_contact_neighbors_adaptive_;
 
 	public:
 		AdaptiveContactRelation(SPHBody &body, RealBodyVector contact_bodies);

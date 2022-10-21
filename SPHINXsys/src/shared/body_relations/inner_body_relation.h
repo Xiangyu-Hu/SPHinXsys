@@ -63,7 +63,7 @@ namespace SPH
 	protected:
 		size_t total_levels_;
 		StdVec<SearchDepthAdaptive *> get_multi_level_search_depth_;
-		AdaptiveNeighborBuilderInner get_adaptive_inner_neighbor_;
+		NeighborBuilderInnerAdaptive get_adaptive_inner_neighbor_;
 		StdVec<CellLinkedList *> cell_linked_list_levels_;
 
 	public:
