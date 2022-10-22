@@ -120,7 +120,7 @@ int main(int ac, char *av[])
 	SimpleDynamics<RefinementInPrescribedRegion> particle_split_(water_block, 8000, split_region);
 	BodyRegionByCell refinement_area(water_block, makeShared<MultiPolygonShape>(createRefinementArea()));
 	InteractionDynamics<MergeWithMinimumDensityErrorWithWall> particle_merge_(water_complex, refinement_area);
-	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplexVariableSmoothingLength> fluid_density_by_summation(water_complex);
+	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplexAdaptive> fluid_density_by_summation(water_complex);
 
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
@@ -165,7 +165,7 @@ int main(int ac, char *av[])
 	Real End_Time = 20.0; /**< End time. */
 	Real D_Time = 0.1;	  /**< Time stamps for output of body states. */
 	Real dt = 0.0;		  /**< Default acoustic time step sizes. */
-	int refinement_interval = 10;
+	int refinement_interval = 1;
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
 	//----------------------------------------------------------------------
@@ -194,7 +194,7 @@ int main(int ac, char *av[])
 			time_instance = tick_count::now();
 			fluid_step_initialization.parallel_exec();
 			Real Dt = fluid_advection_time_step.parallel_exec();
-			fluid_density_by_summation.parallel_exec();
+			fluid_density_by_summation.exec();
 			interval_computing_time_step += tick_count::now() - time_instance;
 
 			time_instance = tick_count::now();

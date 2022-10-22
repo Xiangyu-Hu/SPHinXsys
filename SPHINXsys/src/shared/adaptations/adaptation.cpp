@@ -114,6 +114,28 @@ namespace SPH
 		h_ratio_max_ = powerN(2.0, local_refinement_level_);
 	}
 	//=================================================================================================//
+	StdVec<Real> ParticleWithLocalRefinement::setReferenceNumberDensityLevels(int local_refinement_level)
+	{
+		StdVec<Real> sigma0_levels(local_refinement_level + 1);
+		Real increment = (h_ratio_max_ - 1.0) / Real(local_refinement_level);
+
+		for (int level = 0; level != sigma0_levels.size(); ++level)
+		{
+			sigma0_levels[level] = computeReferenceNumberDensity(Vecd(0), 1.0 + increment * Real(level));
+		}
+
+		return sigma0_levels;
+	}
+	//=================================================================================================//
+	Real ParticleWithLocalRefinement::getReferenceNumberDensity(Real smoothing_length_ratio)
+	{
+		Real ratio = (smoothing_length_ratio - 1.0) * Real(local_refinement_level_) / (h_ratio_max_ - 1.0);
+		int level = (int)floor(ratio);
+		Real fraction = ratio - Real(level);
+
+		return sigma0_[level] * fraction + (1.0 - fraction) * sigma0_[level + 1];
+	}
+	//=================================================================================================//
 	size_t ParticleWithLocalRefinement::getCellLinkedListTotalLevel()
 	{
 		return size_t(local_refinement_level_);
@@ -182,9 +204,10 @@ namespace SPH
 							   system_resolution_ratio, local_refinement_level)
 	{
 		spacing_min_ = MostRefinedSpacing(spacing_ref_, local_refinement_level_);
-		h_ratio_max_ = h_ref_ * spacing_ref_ / spacing_min_;
+		h_ratio_max_ = spacing_ref_ / spacing_min_;
 		minimum_volume_ = powerN(spacing_min_, Dimensions);
 		maximum_volume_ = powerN(spacing_ref_, Dimensions);
+		sigma0_ = setReferenceNumberDensityLevels(local_refinement_level);
 	};
 	//=================================================================================================//
 	bool ParticleSplitAndMerge::isSplitAllowed(Real current_volume)

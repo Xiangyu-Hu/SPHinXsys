@@ -88,17 +88,17 @@ namespace SPH
 		using DensitySummationComplex = DensitySummation<DensitySummationInner>;
 
 		/**
-		 * @class DensitySummationVariableSmoothingLength
+		 * @class DensitySummationAdaptive
 		 * @brief computing density by summation considering  contribution from contact bodies
 		 */
-		template <class DensitySummationInnerVariableSmoothingLengthType>
-		class DensitySummationVariableSmoothingLength
-			: public BaseInteractionComplex<DensitySummationInnerVariableSmoothingLengthType, FluidContactData>
+		template <class DensitySummationInnerAdaptiveType>
+		class DensitySummationAdaptive
+			: public BaseInteractionComplex<DensitySummationInnerAdaptiveType, FluidContactData>
 		{
 		public:
 			template <typename... Args>
-			DensitySummationVariableSmoothingLength(Args &&...args);
-			virtual ~DensitySummationVariableSmoothingLength(){};
+			DensitySummationAdaptive(Args &&...args);
+			virtual ~DensitySummationAdaptive(){};
 
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -107,8 +107,7 @@ namespace SPH
 			StdVec<StdLargeVec<Real> *> contact_mass_;
 		};
 		/** the case with variable smoothing length without free surface */
-		using DensitySummationComplexVariableSmoothingLength =
-			DensitySummationVariableSmoothingLength<DensitySummationInnerVariableSmoothingLength>;
+		using DensitySummationComplexAdaptive = DensitySummationAdaptive<DensitySummationInnerAdaptive>;
 
 		/**
 		 * @class ViscousWithWall

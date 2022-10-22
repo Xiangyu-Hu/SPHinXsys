@@ -75,11 +75,11 @@ namespace SPH
 			this->rho_sum_[index_i] += sigma * this->rho0_ * this->inv_sigma0_;
 		}
 		//=================================================================================================//
-		template <class DensitySummationInnerVariableSmoothingLengthType>
+		template <class DensitySummationInnerAdaptiveType>
 		template <typename... Args>
-		DensitySummationVariableSmoothingLength<DensitySummationInnerVariableSmoothingLengthType>::
-			DensitySummationVariableSmoothingLength(Args &&...args)
-			: BaseInteractionComplex<DensitySummationInnerVariableSmoothingLengthType,
+		DensitySummationAdaptive<DensitySummationInnerAdaptiveType>::
+			DensitySummationAdaptive(Args &&...args)
+			: BaseInteractionComplex<DensitySummationInnerAdaptiveType,
 									 FluidContactData>(std::forward<Args>(args)...)
 		{
 			for (size_t k = 0; k != this->contact_particles_.size(); ++k)
@@ -90,10 +90,10 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		template <class DensitySummationInnerVariableSmoothingLengthType>
-		void DensitySummationVariableSmoothingLength<DensitySummationInnerVariableSmoothingLengthType>::interaction(size_t index_i, Real dt)
+		template <class DensitySummationInnerAdaptiveType>
+		void DensitySummationAdaptive<DensitySummationInnerAdaptiveType>::interaction(size_t index_i, Real dt)
 		{
-			DensitySummationInnerVariableSmoothingLengthType::interaction(index_i, dt);
+			DensitySummationInnerAdaptiveType::interaction(index_i, dt);
 
 			/** Contact interaction. */
 			Real sigma(0.0);
@@ -108,7 +108,7 @@ namespace SPH
 					sigma += contact_neighborhood.W_ij_[n] * inv_Vol_0_i * contact_inv_rho0_k * contact_mass_k[contact_neighborhood.j_[n]];
 				}
 			}
-			this->rho_sum_[index_i] += sigma * this->rho0_ * this->inv_sigma0_[index_i];
+			this->rho_sum_[index_i] += sigma * this->rho0_;
 		}
 		//=================================================================================================//
 		template <class ViscousAccelerationInnerType>

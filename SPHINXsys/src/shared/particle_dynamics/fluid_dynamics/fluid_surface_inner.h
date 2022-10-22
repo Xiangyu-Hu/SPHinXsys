@@ -80,15 +80,17 @@ namespace SPH
 			SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIndicationInner>;
 
 		/**
-		 * @class DensitySummationFreeSurfaceInner
+		 * @class DensitySummationFreeSurface
 		 * @brief computing density by summation with a re-normalization for free surface flows
 		 */
-		class DensitySummationFreeSurfaceInner : public DensitySummationInner
+		template <class DensitySummationType>
+		class DensitySummationFreeSurface : public DensitySummationType
 		{
 		public:
-			explicit DensitySummationFreeSurfaceInner(BaseInnerRelation &inner_relation)
-				: DensitySummationInner(inner_relation){};
-			virtual ~DensitySummationFreeSurfaceInner(){};
+			template <typename... ConstructorArgs>
+			explicit DensitySummationFreeSurface(ConstructorArgs &&...args)
+				: DensitySummationType(std::forward<ConstructorArgs>(args)...){};
+			virtual ~DensitySummationFreeSurface(){};
 
 		protected:
 			virtual Real ReinitializedDensity(Real rho_sum, Real rho_0, Real rho_n) override
@@ -97,23 +99,9 @@ namespace SPH
 			};
 		};
 
-		/**
-		 * @class DensitySummationFreeSurfaceInnerVariableSmoothingLength
-		 * @brief computing density by summation with a re-normalization for free surface flows with variable smoothing length
-		 */
-		class DensitySummationFreeSurfaceInnerVariableSmoothingLength : public DensitySummationInnerVariableSmoothingLength
-		{
-		public:
-			DensitySummationFreeSurfaceInnerVariableSmoothingLength(BaseInnerRelation& inner_relation) :
-				DensitySummationInnerVariableSmoothingLength(inner_relation) {};
-			virtual ~DensitySummationFreeSurfaceInnerVariableSmoothingLength() {};
-		protected:
-			virtual Real ReinitializedDensity(Real rho_sum, Real rho_0, Real rho_n) override
-			{
-				return rho_sum + SMAX(0.0, (rho_n - rho_sum)) * rho_0 / rho_n;
-			};
-		};
-		
+		using DensitySummationFreeSurfaceInner = DensitySummationFreeSurface<DensitySummationInner>;
+		using DensitySummationFreeSurfaceInnerAdaptive = DensitySummationFreeSurface<DensitySummationInnerAdaptive>;
+
 		/**
 		 * @class DensitySummationFreeStreamInner
 		 * @brief The density is smoothed if the particle is near fluid surface.

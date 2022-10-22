@@ -39,20 +39,16 @@ namespace SPH
 			rho_[index_i] = ReinitializedDensity(rho_sum_[index_i], rho0_, rho_[index_i]);
 		}
 		//=================================================================================================//
-		DensitySummationInnerVariableSmoothingLength::
-			DensitySummationInnerVariableSmoothingLength(BaseInnerRelation &inner_relation)
-			: DensitySummationInner(inner_relation), sph_body_(&inner_relation.sph_body_),
-			  h_ratio_(dynamic_cast<ParticleWithLocalRefinement &>(*inner_relation.sph_body_.sph_adaptation_).h_ratio_) {}
+		DensitySummationInnerAdaptive::
+			DensitySummationInnerAdaptive(BaseInnerRelation &inner_relation)
+			: DensitySummationInner(inner_relation),
+			  particle_with_local_refinement_(DynamicCast<ParticleWithLocalRefinement>(this, *sph_body_.sph_adaptation_)),
+			  kernel_(*particle_with_local_refinement_.getKernel()),
+			  h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")) {}
 		//=================================================================================================//
-		void DensitySummationInnerVariableSmoothingLength::setupDynamics(Real dt)
+		void DensitySummationInnerAdaptive::interaction(size_t index_i, Real dt)
 		{
-			inv_sigma0_.resize(rho_.size());
-		}
-		//=================================================================================================//
-		void DensitySummationInnerVariableSmoothingLength::interaction(size_t index_i, Real dt)
-		{
-			inv_sigma0_[index_i] = 1.0 / sph_body_->sph_adaptation_->computeReferenceNumberDensity(Vecd(0), h_ratio_[index_i]);
-			Real sigma_i = sph_body_->sph_adaptation_->getKernel()->W0(h_ratio_[index_i], Vecd(0));
+			Real sigma_i = kernel_.W0(h_ratio_[index_i], Vecd(0));
 			Real sigma_mass = mass_[index_i];
 			Real inv_Vol_i = rho0_ / mass_[index_i];
 
@@ -61,7 +57,13 @@ namespace SPH
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 				sigma_i += inner_neighborhood.W_ij_[n] * inv_Vol_i * mass_[inner_neighborhood.j_[n]] / rho0_;
 
-			rho_sum_[index_i] = sigma_i * rho0_ * inv_sigma0_[index_i];
+			rho_sum_[index_i] = sigma_i * rho0_;
+		}
+		//=================================================================================================//
+		void DensitySummationInnerAdaptive::update(size_t index_i, Real dt)
+		{
+			rho_sum_[index_i] /= particle_with_local_refinement_.getReferenceNumberDensity(h_ratio_[index_i]);
+			rho_[index_i] = ReinitializedDensity(rho_sum_[index_i], rho0_, rho_[index_i]);
 		}
 		//=================================================================================================//
 		BaseViscousAccelerationInner::BaseViscousAccelerationInner(BaseInnerRelation &inner_relation)

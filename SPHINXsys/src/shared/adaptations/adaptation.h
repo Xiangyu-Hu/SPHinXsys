@@ -112,6 +112,7 @@ namespace SPH
 		virtual size_t getCellLinkedListTotalLevel();
 		size_t getLevelSetTotalLevel();
 		StdLargeVec<Real> &registerSmoothingLengthRatio(BaseParticles &base_particles);
+		Real getReferenceNumberDensity(Real smoothing_length_ratio);
 		virtual Real SmoothingLengthRatio(size_t particle_index_i) override
 		{
 			return h_ratio_[particle_index_i];
@@ -119,6 +120,10 @@ namespace SPH
 
 		virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, RealBody &real_body) override;
 		virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio) override;
+
+	protected:
+		StdVec<Real> sigma0_;
+		StdVec<Real> setReferenceNumberDensityLevels(int local_refinement_level);
 	};
 
 	/**
