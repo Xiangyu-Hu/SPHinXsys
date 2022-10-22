@@ -115,8 +115,9 @@ int main(int ac, char *av[])
 	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> fluid_pressure_relaxation(water_complex);
 	Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_complex);
 
+	MultiPolygonShape split_region(createRefinementArea());
+	SimpleDynamics<RefinementInPrescribedRegion> particle_split_(water_block, 8000, split_region);
 	BodyRegionByCell refinement_area(water_block, makeShared<MultiPolygonShape>(createRefinementArea()));
-	InteractionWithUpdate<SplitWithMinimumDensityErrorWithWall> particle_split_(water_complex, refinement_area, 8000);
 	InteractionDynamics<MergeWithMinimumDensityErrorWithWall> particle_merge_(water_complex, refinement_area);
 	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplexVariableSmoothingLength> fluid_density_by_summation(water_complex);
 

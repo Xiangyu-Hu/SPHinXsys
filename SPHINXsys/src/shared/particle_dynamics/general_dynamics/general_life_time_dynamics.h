@@ -36,72 +36,90 @@ namespace SPH
 	class ParticleSplitAndMerge;
 
 	/**
-	 * @class BaseParticleSplit
+	 * @class BaseLifeTimeDynamics
 	 * @brief Base class for particle split.
 	 */
-	template <typename SplitParameters>
-	class BaseParticleSplit : public LocalDynamics, public GeneralDataDelegateSimple
+	class BaseLifeTimeDynamics : public LocalDynamics, public GeneralDataDelegateSimple
 	{
 	public:
-		BaseParticleSplit(SPHBody &sph_body, size_t body_buffer_width);
-		virtual ~BaseParticleSplit(){};
+		BaseLifeTimeDynamics(SPHBody &sph_body);
+		virtual ~BaseLifeTimeDynamics(){};
 
 	protected:
-		ParticleSplitAndMerge &particle_adaptation_;
-		ConcurrentVec<SplitParameters> split_parameters_;
-
-		virtual bool checkSplit(size_t index_i) = 0;
-		virtual SplitParameters computingSplit(size_t index_i) = 0;
-		virtual void execSplit(const SplitParameters &split_parameters) = 0;
+		ParticleWithLifeTime &particle_life_time_;
+		Real rho0_inv_;
+		StdLargeVec<Real> &rho_;
+		StdLargeVec<Vecd> &pos_;
+		StdLargeVec<Real> &mass_;
+		StdLargeVec<Real> &Vol_;
+		StdLargeVec<Real> &h_ratio_;
+		StdLargeVec<int> &life_indicator_;
 	};
 
 	/**
-	 * @class BaseParticleMerge
+	 * @class BaseSplitDynamics
+	 * @brief Base class for particle split.
+	 */
+	template <typename SplitParameters>
+	class BaseSplitDynamics : public BaseLifeTimeDynamics
+	{
+	public:
+		BaseSplitDynamics(SPHBody &sph_body, size_t body_buffer_width)
+			: BaseLifeTimeDynamics(sph_body),
+			  particle_split_(DynamicCast<ParticleSplitAndMerge>(this, particle_life_time_))
+		{
+			particles_->addBufferParticles(body_buffer_width);
+			sph_body_.allocateConfigurationMemoriesForBufferParticles();
+		};
+		virtual ~BaseSplitDynamics(){};
+
+	protected:
+		ParticleSplitAndMerge &particle_split_;
+
+		virtual bool checkSplit(size_t index_i) = 0;
+		virtual SplitParameters execFirstSplit(size_t index_i) = 0;
+		virtual void execOtherSplit(size_t index_i, const SplitParameters &split_parameters) = 0;
+	};
+
+	/**
+	 * @class BaseMergeDynamics
 	 * @brief Base class for particle merge.
 	 */
 	template <typename MergeParameters>
-	class BaseParticleMerge : public LocalDynamics, public GeneralDataDelegateSimple
+	class BaseMergeDynamics : public BaseLifeTimeDynamics
 	{
 	public:
-		BaseParticleMerge(SPHBody &sph_body, size_t body_buffer_width);
-		virtual ~BaseParticleMerge(){};
+		BaseMergeDynamics(SPHBody &sph_body, size_t body_buffer_width)
+			: BaseLifeTimeDynamics(sph_body),
+			  particle_merge_(DynamicCast<ParticleSplitAndMerge>(this, particle_life_time_)){};
+		virtual ~BaseMergeDynamics(){};
 
 	protected:
-		ParticleSplitAndMerge &particle_adaptation_;
-		ConcurrentVec<MergeParameters> merge_parameters_;
+		ParticleSplitAndMerge &particle_merge_;
 
 		virtual bool checkMerge(size_t index_i) = 0;
 		virtual MergeParameters computingMerge(size_t index_i) = 0;
 		virtual void execMerge(const MergeParameters &split_parameters) = 0;
 	};
 
-	typedef std::pair<size_t, Vecd> IndexPosition;
 	/**
-	 * @class ParticleRefinementInPrescribedRegion
+	 * @class RefinementInPrescribedRegion
 	 * @brief particle split in prescribed region.
 	 */
-	class ParticleRefinementInPrescribedRegion : BaseParticleSplit<IndexPosition>
+	class RefinementInPrescribedRegion : public BaseSplitDynamics<Vecd>
 	{
 	public:
-		ParticleRefinementInPrescribedRegion(SPHBody &sph_body, size_t body_buffer_width, Shape &refinement_region);
-		virtual ~ParticleRefinementInPrescribedRegion(){};
-		void interaction(size_t index_i, Real dt = 0.0);
+		RefinementInPrescribedRegion(SPHBody &sph_body, size_t body_buffer_width, Shape &refinement_region);
+		virtual ~RefinementInPrescribedRegion(){};
 		void update(size_t index_i, Real dt = 0.0);
 
 	protected:
+		std::mutex mutex_split_; /**< mutex exclusion for memory conflict */
 		BoundingBox refinement_region_bounds_;
-		Real rho0_inv_;
 
-		StdLargeVec<Real> &rho_;
-		StdLargeVec<Vecd> &pos_;
-		StdLargeVec<Real> &mass_;
-		StdLargeVec<Real> &Vol_;
-		StdLargeVec<Real> &h_ratio_; /**< the ratio between reference smoothing length to variable smoothing length */
-
-		virtual void setupDynamics(Real dt) override;
 		virtual bool checkSplit(size_t index_i) override;
-		virtual IndexPosition computingSplit(size_t index_i) override;
-		virtual void execSplit(const IndexPosition &split_parameters) override;
+		virtual Vecd execFirstSplit(size_t index_i) override;
+		virtual void execOtherSplit(size_t index_i, const Vecd &split_shift) override;
 		virtual bool checkLocation(const BoundingBox &refinement_region_bounds, Vecd position, Real volume);
 	};
 
@@ -177,79 +195,6 @@ namespace SPH
 		virtual void densityErrorOfNeighborParticles(const StdVec<size_t> &new_indices, const StdVec<size_t> &original_indices,
 													 const StdVec<Vecd> &new_positions) override;
 	};
-	/**
-	 * @class ParticleRefinementWithPrescribedArea
-	 * @brief particle split in prescribed area.
-	 */
-	class ParticleSplitWithPrescribedArea : public LocalDynamics, public GeneralDataDelegateSimple
-	{
-	public:
-		ParticleSplitWithPrescribedArea(SPHBody &sph_body, BodyRegionByCell &refinement_area, size_t body_buffer_width);
-		virtual ~ParticleSplitWithPrescribedArea(){};
-		void interaction(size_t index_i, Real dt = 0.0);
-		void update(size_t index_i, Real dt = 0.0);
-
-	protected:
-		BodyRegionByCell *refinement_area_;
-		Real rho0_inv_;
-		StdLargeVec<Vecd> &pos_;
-		StdLargeVec<Real> &Vol_;
-		StdLargeVec<Real> &mass_;
-		ParticleSplitAndMerge *particle_adaptation_;
-		StdLargeVec<Real> &h_ratio_; /**< the ratio between reference smoothing length to variable smoothing length */
-		StdLargeVec<Real> &rho_;
-
-		StdVec<Vecd> split_position_;
-		StdVec<Vecu> split_index_;
-		size_t particle_number_change = 0;
-
-		virtual void setupDynamics(Real dt) override;
-		virtual bool splitCriteria(size_t index_i);
-		virtual void splittingModel(size_t index_i, StdVec<size_t> &new_indices);
-		virtual Vecd getSplittingPosition(const StdVec<size_t> &new_indices);
-		virtual void updateNewlySplittingParticle(size_t index_i, size_t index_j, Vecd pos_split);
-	};
-
-	/**
-	 * @class SplitWithMinimumDensityErrorInner
-	 * @brief split particles with minimum density error.
-	 */
-	class SplitWithMinimumDensityErrorInner : public ParticleSplitWithPrescribedArea
-	{
-	public:
-		SplitWithMinimumDensityErrorInner(BaseInnerRelation &inner_relation, BodyRegionByCell &refinement_area, size_t body_buffer_width)
-			: ParticleSplitWithPrescribedArea(inner_relation.sph_body_, refinement_area, body_buffer_width),
-			  compute_density_error(inner_relation)
-		{
-			particles_->registerVariable(particle_adaptation_->total_split_error_, "SplitDensityError", 0.0);
-			// base_particles->addVariableToWrite<Real>("SplitDensityError");
-		};
-		virtual ~SplitWithMinimumDensityErrorInner(){};
-
-		void update(size_t index_i, Real dt = 0.0);
-
-	protected:
-		ComputeDensityErrorInner compute_density_error;
-
-		virtual Vecd getSplittingPosition(const StdVec<size_t> &new_indices) override;
-		virtual void setupDynamics(Real dt) override;
-	};
-
-	/**
-	 * @class SplitWithMinimumDensityErrorWithWall
-	 * @brief split particles with minimum density error.
-	 */
-	class SplitWithMinimumDensityErrorWithWall : public SplitWithMinimumDensityErrorInner
-	{
-	public:
-		SplitWithMinimumDensityErrorWithWall(ComplexRelation &complex_relation, BodyRegionByCell &refinement_area, size_t body_buffer_width)
-			: SplitWithMinimumDensityErrorInner(complex_relation.inner_relation_, refinement_area, body_buffer_width),
-			  compute_density_error(complex_relation){};
-		virtual ~SplitWithMinimumDensityErrorWithWall(){};
-
-	protected:
-		ComputeDensityErrorWithWall compute_density_error;
-	};
 
 	/**
 	 * @class ParticleMergeWithPrescribedArea
@@ -276,6 +221,7 @@ namespace SPH
 		StdLargeVec<Real> &rho_;
 		StdLargeVec<Vecd> &vel_n_;
 		StdLargeVec<bool> tag_merged_;
+		StdLargeVec<Real> total_merge_error_;
 
 		virtual void setupDynamics(Real dt) override;
 		virtual void mergingModel(const StdVec<size_t> &merge_indices);

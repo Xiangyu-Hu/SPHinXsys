@@ -84,6 +84,7 @@ namespace SPH
 		h_ref_ = h_spacing_ratio_ * spacing_ref_;
 		kernel_ptr_.reset(new KernelWendlandC2(h_ref_));
 		spacing_min_ = MostRefinedSpacing(spacing_ref_, local_refinement_level_);
+		h_ratio_max_ = h_ref_ * spacing_ref_ / spacing_min_;
 	}
 	//=================================================================================================//
 	UniquePtr<BaseCellLinkedList> SPHAdaptation::
@@ -181,14 +182,14 @@ namespace SPH
 							   system_resolution_ratio, local_refinement_level)
 	{
 		spacing_min_ = MostRefinedSpacing(spacing_ref_, local_refinement_level_);
-		h_ratio_max_ = powerN(sqrt(2.0), local_refinement_level_);
+		h_ratio_max_ = h_ref_ * spacing_ref_ / spacing_min_;
 		minimum_volume_ = powerN(spacing_min_, Dimensions);
 		maximum_volume_ = powerN(spacing_ref_, Dimensions);
 	};
 	//=================================================================================================//
 	bool ParticleSplitAndMerge::isSplitAllowed(Real current_volume)
 	{
-		return volume - 2.0 * minimum_volume_ > Eps ? true : false;
+		return current_volume - 2.0 * minimum_volume_ > -Eps ? true : false;
 	}
 	//=================================================================================================//
 	bool ParticleSplitAndMerge::mergeResolutionCheck(Real volume)
@@ -196,11 +197,24 @@ namespace SPH
 		return volume - 1.2 * powerN(spacing_min_, Dimensions) < Eps ? true : false;
 	}
 	//=================================================================================================//
+	void ParticleSplitAndMerge::
+		resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio)
+	{
+		ParticleWithLifeTime::resetAdaptationRatios(h_spacing_ratio, new_system_refinement_ratio);
+		minimum_volume_ = powerN(spacing_min_, Dimensions);
+		maximum_volume_ = powerN(spacing_ref_, Dimensions);
+	}
+	//=================================================================================================//
 	Real ParticleSplitAndMerge::MostRefinedSpacing(Real coarse_particle_spacing, int local_refinement_level)
 	{
-		Real refinement_number = powerN(2.0, local_refinement_level);
-		Real spacing_ratio = pow(refinement_number, 1.0 / Dimensions);
+		Real minimum_spacing_particles = powerN(2.0, local_refinement_level);
+		Real spacing_ratio = pow(minimum_spacing_particles, 1.0 / Dimensions);
 		return coarse_particle_spacing / spacing_ratio;
+	}
+	//=================================================================================================//
+	size_t ParticleSplitAndMerge::getCellLinkedListTotalLevel()
+	{
+		return 1 + (int)floor(log2(spacing_ref_ / spacing_min_));
 	}
 	//=================================================================================================//
 	Vec2d ParticleSplitAndMerge::splittingPattern(Vec2d pos, Real particle_spacing, Real delta)
@@ -211,6 +225,20 @@ namespace SPH
 	Vec3d ParticleSplitAndMerge::splittingPattern(Vec3d pos, Real particle_spacing, Real delta)
 	{
 		return {pos[0] + 0.5 * particle_spacing * cos(delta), pos[1] + 0.5 * particle_spacing * sin(delta), pos[2]};
+	}
+	//=================================================================================================//
+	bool ParticleSplitAndMerge::checkLocation(BodyRegionByCell &refinement_area, Vecd position, Real volume)
+	{
+		BoundingBox body_domain_bounds_ = refinement_area.body_part_shape_.getBounds();
+		int bound_number = 0;
+		for (int axis_direction = 0; axis_direction != Dimensions; ++axis_direction)
+		{
+			Real particle_spacing = pow(volume, 1.0 / Dimensions);
+			if (position[axis_direction] > (body_domain_bounds_.first[axis_direction] + particle_spacing) &&
+				position[axis_direction] < (body_domain_bounds_.second[axis_direction] - particle_spacing))
+				bound_number += 1;
+		}
+		return bound_number != Dimensions ? false : true;
 	}
 	//=================================================================================================//
 }

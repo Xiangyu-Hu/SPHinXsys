@@ -74,12 +74,12 @@ namespace SPH
 		Real ReferenceSpacing() { return spacing_ref_; };
 		Real ReferenceSmoothingLength() { return h_ref_; };
 		Kernel *getKernel() { return kernel_ptr_.get(); };
-		void resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
 		Real MinimumSpacing() { return spacing_min_; };
 		Real computeReferenceNumberDensity(Vec2d zero, Real h_ratio);
 		Real computeReferenceNumberDensity(Vec3d zero, Real h_ratio);
 		Real ReferenceNumberDensity();
 		virtual Real SmoothingLengthRatio(size_t particle_index_i) { return 1.0; };
+		virtual void resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
 
 		virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, RealBody &real_body);
 		virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio);
@@ -109,7 +109,7 @@ namespace SPH
 									int local_refinement_level);
 		virtual ~ParticleWithLocalRefinement(){};
 
-		size_t getCellLinkedListTotalLevel();
+		virtual size_t getCellLinkedListTotalLevel();
 		size_t getLevelSetTotalLevel();
 		StdLargeVec<Real> &registerSmoothingLengthRatio(BaseParticles &base_particles);
 		virtual Real SmoothingLengthRatio(size_t particle_index_i) override
@@ -164,17 +164,20 @@ namespace SPH
 		ParticleSplitAndMerge(SPHBody &sph_body, Real h_spacing_ratio_,
 							  Real system_resolution_ratio, int local_refinement_level);
 		virtual ~ParticleSplitAndMerge(){};
+		void resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
 
 		virtual bool isSplitAllowed(Real current_volume);
 		virtual bool mergeResolutionCheck(Real volume);
 		virtual Vec2d splittingPattern(Vec2d pos, Real particle_spacing, Real delta);
 		virtual Vec3d splittingPattern(Vec3d pos, Real particle_spacing, Real delta);
+		virtual bool checkLocation(BodyRegionByCell &refinement_area, Vecd position, Real volume);
 
 	protected:
 		Real minimum_volume_;
 		Real maximum_volume_;
 
 		virtual Real MostRefinedSpacing(Real coarse_particle_spacing, int local_refinement_level) override;
+		virtual size_t getCellLinkedListTotalLevel() override;
 	};
 }
 #endif // ADAPTATION_H

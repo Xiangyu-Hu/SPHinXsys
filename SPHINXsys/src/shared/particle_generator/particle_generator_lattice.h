@@ -101,6 +101,7 @@ namespace SPH
 	protected:
 		ParticleSplitAndMerge *particle_adaptation_;
 		StdLargeVec<Real> &h_ratio_;
+		StdLargeVec<int> &life_indicator_;
 
 		virtual void initializePositionAndVolumetricMeasure(const Vecd &position, Real volume) override;
 	};
