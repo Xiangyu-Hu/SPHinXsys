@@ -164,7 +164,7 @@ namespace SPH
 		ParticleSplitAndMerge(SPHBody &sph_body, Real h_spacing_ratio_,
 							  Real system_resolution_ratio, int local_refinement_level);
 		virtual ~ParticleSplitAndMerge(){};
-		void resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
+		void resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0) override;
 
 		virtual bool isSplitAllowed(Real current_volume);
 		virtual bool mergeResolutionCheck(Real volume);

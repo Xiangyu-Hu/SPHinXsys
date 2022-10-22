@@ -111,11 +111,15 @@ namespace SPH
 	public:
 		RefinementInPrescribedRegion(SPHBody &sph_body, size_t body_buffer_width, Shape &refinement_region);
 		virtual ~RefinementInPrescribedRegion(){};
+		virtual void setupDynamics(Real dt = 0.0) override;
 		void update(size_t index_i, Real dt = 0.0);
 
 	protected:
 		std::mutex mutex_split_; /**< mutex exclusion for memory conflict */
 		BoundingBox refinement_region_bounds_;
+		std::random_device random_device_;
+		std::mt19937 random_seed_;
+		std::normal_distribution<Real> normal_distribution_;
 
 		virtual bool checkSplit(size_t index_i) override;
 		virtual Vecd execFirstSplit(size_t index_i) override;

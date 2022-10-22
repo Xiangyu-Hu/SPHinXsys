@@ -94,6 +94,7 @@ int main(int ac, char *av[])
 	water_block.generateParticles<ParticleGeneratorSplitAndMerge>();
 	water_block.addBodyStateForRecording<Real>("SmoothingLengthRatio");
 	water_block.addBodyStateForRecording<Real>("VolumetricMeasure");
+	water_block.addBodyStateForRecording<int>("LifeIndicator");
 
 	SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
 	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
@@ -164,7 +165,7 @@ int main(int ac, char *av[])
 	Real End_Time = 20.0; /**< End time. */
 	Real D_Time = 0.1;	  /**< Time stamps for output of body states. */
 	Real dt = 0.0;		  /**< Default acoustic time step sizes. */
-	int refinement_interval = 1;
+	int refinement_interval = 10;
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
 	//----------------------------------------------------------------------
@@ -230,7 +231,7 @@ int main(int ac, char *av[])
 			/** Particle Refinement */
 			if (number_of_iterations % refinement_interval == 0)
 			{
-				particle_split_.exec();
+				particle_split_.parallel_exec();
 				particle_merge_.exec();
 			}
 			/** Update cell linked list and configuration. */

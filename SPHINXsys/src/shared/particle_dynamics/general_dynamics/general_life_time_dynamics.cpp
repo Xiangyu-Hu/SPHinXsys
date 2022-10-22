@@ -16,14 +16,20 @@ namespace SPH
 		  particle_life_time_(DynamicCast<ParticleWithLifeTime>(this, *sph_body.sph_adaptation_)),
 		  rho0_inv_(1.0 / particles_->rho0_),
 		  rho_(particles_->rho_), pos_(particles_->pos_), Vol_(particles_->Vol_),
-		  mass_(particles_->mass_), 
+		  mass_(particles_->mass_),
 		  h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")),
 		  life_indicator_(*particles_->getVariableByName<int>("LifeIndicator")) {}
 	//=================================================================================================//
 	RefinementInPrescribedRegion::
 		RefinementInPrescribedRegion(SPHBody &sph_body, size_t body_buffer_width, Shape &refinement_region)
 		: BaseSplitDynamics<Vecd>(sph_body, body_buffer_width),
-		refinement_region_bounds_(refinement_region.getBounds()) {}
+		  refinement_region_bounds_(refinement_region.getBounds()),
+		  normal_distribution_(0, 1) {}
+	//=================================================================================================//
+	void RefinementInPrescribedRegion::setupDynamics(Real dt)
+	{
+		random_seed_ = std::mt19937(random_device_());
+	}
 	//=================================================================================================//
 	void RefinementInPrescribedRegion::update(size_t index_i, Real dt)
 	{
@@ -40,10 +46,8 @@ namespace SPH
 	bool RefinementInPrescribedRegion::checkSplit(size_t index_i)
 	{
 		Real non_deformed_volume = mass_[index_i] * rho0_inv_;
-		Vecd &position = pos_[index_i];
-
 		bool is_split_allowed = particle_split_.isSplitAllowed(non_deformed_volume);
-		bool is_split_inside = checkLocation(refinement_region_bounds_, position, non_deformed_volume);
+		bool is_split_inside = checkLocation(refinement_region_bounds_, pos_[index_i], non_deformed_volume);
 
 		return (is_split_allowed && is_split_inside) ? true : false;
 	}
@@ -67,13 +71,13 @@ namespace SPH
 		mass_[index_i] *= 0.5;
 		Real split_volume = Vol_[index_i] * 0.5;
 		Vol_[index_i] = split_volume;
-		Real split_spacing = pow(Vol_[index_i] / 2.0, 1.0 / (Real)Dimensions);
+		Real split_spacing = pow(split_volume, 1.0 / (Real)Dimensions);
 		h_ratio_[index_i] = particle_split_.ReferenceSpacing() / split_spacing;
 
 		Vecd shift(0);
 		for (int k = 0; k < Dimensions; ++k)
 		{
-			shift[k] = (((double)rand() / (RAND_MAX)) - 0.5);
+			shift[k] = normal_distribution_(random_seed_);
 		}
 
 		return 0.5 * split_spacing * shift / (shift.norm() + TinyReal);
