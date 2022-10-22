@@ -116,6 +116,7 @@ namespace SPH
 	//=================================================================================================//
 	StdVec<Real> ParticleWithLocalRefinement::setReferenceNumberDensityLevels(int local_refinement_level)
 	{
+		//TODO: to test if the number of levels is sufficient for accuracy
 		StdVec<Real> sigma0_levels(local_refinement_level + 1);
 		Real increment = (h_ratio_max_ - 1.0) / Real(local_refinement_level);
 
@@ -133,7 +134,7 @@ namespace SPH
 		int level = (int)floor(ratio);
 		Real fraction = ratio - Real(level);
 
-		return sigma0_[level] * fraction + (1.0 - fraction) * sigma0_[level + 1];
+		return sigma0_[level] * (1.0 - fraction) + fraction * sigma0_[level + 1];
 	}
 	//=================================================================================================//
 	size_t ParticleWithLocalRefinement::getCellLinkedListTotalLevel()

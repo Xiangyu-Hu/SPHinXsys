@@ -17,11 +17,15 @@ namespace SPH
 			: LocalDynamics(sph_body), FluidDataSimple(sph_body),
 			  pos_(particles_->pos_), vel_(particles_->vel_) {}
 		//=================================================================================================//
-		DensitySummationInner::DensitySummationInner(BaseInnerRelation &inner_relation)
+		BaseDensitySummationInner::BaseDensitySummationInner(BaseInnerRelation &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
 			  rho_(particles_->rho_), rho_sum_(particles_->rho_sum_), mass_(particles_->mass_),
+			  rho0_(particles_->rho0_) {}
+		//=================================================================================================//
+		DensitySummationInner::DensitySummationInner(BaseInnerRelation &inner_relation)
+			: BaseDensitySummationInner(inner_relation),
 			  W0_(sph_body_.sph_adaptation_->getKernel()->W0(Vecd(0))),
-			  rho0_(particles_->rho0_), inv_sigma0_(1.0 / particles_->sigma0_) {}
+			  inv_sigma0_(1.0 / particles_->sigma0_) {}
 		//=================================================================================================//
 		void DensitySummationInner::interaction(size_t index_i, Real dt)
 		{
@@ -41,7 +45,7 @@ namespace SPH
 		//=================================================================================================//
 		DensitySummationInnerAdaptive::
 			DensitySummationInnerAdaptive(BaseInnerRelation &inner_relation)
-			: DensitySummationInner(inner_relation),
+			: BaseDensitySummationInner(inner_relation),
 			  particle_with_local_refinement_(DynamicCast<ParticleWithLocalRefinement>(this, *sph_body_.sph_adaptation_)),
 			  kernel_(*particle_with_local_refinement_.getKernel()),
 			  h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")) {}
@@ -49,11 +53,10 @@ namespace SPH
 		void DensitySummationInnerAdaptive::interaction(size_t index_i, Real dt)
 		{
 			Real sigma_i = kernel_.W0(h_ratio_[index_i], Vecd(0));
-			Real sigma_mass = mass_[index_i];
 			Real inv_Vol_i = rho0_ / mass_[index_i];
 
 			/** Inner interaction. */
-			Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 				sigma_i += inner_neighborhood.W_ij_[n] * inv_Vol_i * mass_[inner_neighborhood.j_[n]] / rho0_;
 

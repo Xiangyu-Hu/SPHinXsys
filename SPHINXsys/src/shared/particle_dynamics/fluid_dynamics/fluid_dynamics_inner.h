@@ -62,10 +62,26 @@ namespace SPH
 		};
 
 		/**
+		 * @class BaseDensitySummationInner
+		 * @brief Base class computing density by summation
+		 */
+		class BaseDensitySummationInner : public LocalDynamics, public FluidDataInner
+		{
+		public:
+			explicit BaseDensitySummationInner(BaseInnerRelation &inner_relation);
+			virtual ~BaseDensitySummationInner(){};
+
+		protected:
+			Real rho0_;
+			StdLargeVec<Real> &rho_, &rho_sum_, &mass_;
+			virtual Real ReinitializedDensity(Real rho_sum, Real rho_0, Real rho_n) = 0;
+		};
+
+		/**
 		 * @class DensitySummationInner
 		 * @brief  computing density by summation
 		 */
-		class DensitySummationInner : public LocalDynamics, public FluidDataInner
+		class DensitySummationInner : public BaseDensitySummationInner
 		{
 		public:
 			explicit DensitySummationInner(BaseInnerRelation &inner_relation);
@@ -74,16 +90,15 @@ namespace SPH
 			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
-			Real W0_, rho0_, inv_sigma0_;
-			StdLargeVec<Real> &rho_, &rho_sum_, &mass_;
-			virtual Real ReinitializedDensity(Real rho_sum, Real rho_0, Real rho_n) { return rho_sum; };
+			Real W0_, inv_sigma0_;
+			virtual Real ReinitializedDensity(Real rho_sum, Real rho_0, Real rho_n) override { return rho_sum; };
 		};
 
 		/**
 		 * @class DensitySummationInnerAdaptive
 		 * @brief  computing density by summation with variable smoothing length
 		 */
-		class DensitySummationInnerAdaptive : public DensitySummationInner
+		class DensitySummationInnerAdaptive : public BaseDensitySummationInner
 		{
 		public:
 			explicit DensitySummationInnerAdaptive(BaseInnerRelation &inner_relation);

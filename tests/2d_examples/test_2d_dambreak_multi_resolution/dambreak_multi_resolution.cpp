@@ -194,7 +194,7 @@ int main(int ac, char *av[])
 			time_instance = tick_count::now();
 			fluid_step_initialization.parallel_exec();
 			Real Dt = fluid_advection_time_step.parallel_exec();
-			fluid_density_by_summation.exec();
+			fluid_density_by_summation.parallel_exec();
 			interval_computing_time_step += tick_count::now() - time_instance;
 
 			time_instance = tick_count::now();
