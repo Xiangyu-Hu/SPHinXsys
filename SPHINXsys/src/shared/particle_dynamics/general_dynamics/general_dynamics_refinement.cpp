@@ -312,23 +312,10 @@ namespace SPH
 	{
 		Real non_deformed_volume = mass_[index_i] * rho0_inv_;
 		Vecd &position = pos_[index_i];
-		// minimum resolution in high resolution area
-		Real high_resolution_volume = powerN(particle_adaptation_->MinimumSpacing(), Dimensions);
-		// minimum resolution in low resolution area
-		Real low_resolution_volume = powerN(particle_adaptation_->ReferenceSpacing(), Dimensions);
+		bool is_split_allowed = particle_adaptation_->isSplitAllowed(non_deformed_volume);
+		bool is_split_inside = particle_adaptation_->checkLocation(*refinement_area_, position, non_deformed_volume);
 
-		bool high_resolution_spacing_check = particle_adaptation_->splitResolutionCheck(non_deformed_volume, high_resolution_volume);
-		bool low_resolution_spacing_check = particle_adaptation_->splitResolutionCheck(non_deformed_volume, low_resolution_volume);
-		bool high_resolution_check = false;
-		bool low_resolution_check = false;
-
-		if (high_resolution_spacing_check)
-			low_resolution_check = particle_adaptation_->checkLocation(*refinement_area_, position, non_deformed_volume);
-
-		if (low_resolution_spacing_check)
-			low_resolution_check = !particle_adaptation_->checkLocation(*refinement_area_, position, non_deformed_volume);
-
-		return (high_resolution_check || low_resolution_check) ? true : false;
+		return (is_split_allowed && is_split_inside) ? true : false;
 	}
 	//=================================================================================================//
 	void ParticleSplitWithPrescribedArea::splittingModel(size_t index_i, StdVec<size_t> &new_indices)
