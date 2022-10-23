@@ -146,7 +146,7 @@ namespace SPH
 			: LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
 			  FluidDataSimple(sph_body), fluid_(particles_->fluid_), rho_(particles_->rho_),
 			  p_(particles_->p_), vel_(particles_->vel_),
-			  smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()),
+			  smoothing_length_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
 			  acousticCFL_(acousticCFL) {}
 		//=================================================================================================//
 		Real AcousticTimeStepSize::reduce(size_t index_i, Real dt)
@@ -158,21 +158,14 @@ namespace SPH
 		{
 			// since the particle does not change its configuration in pressure relaxation step
 			// I chose a time-step size according to Eulerian method
-			return acousticCFL_ * smoothing_length_ / (reduced_value + TinyReal);
-		}
-		//=================================================================================================//
-		AcousticTimeStepSizeVariableSmoothingLength::AcousticTimeStepSizeVariableSmoothingLength(SPHBody &sph_body)
-			: AcousticTimeStepSize(sph_body)
-		{
-			smoothing_length_ = sph_body.sph_adaptation_->ReferenceSmoothingLength() *
-								sph_body.sph_adaptation_->MinimumSpacing() / sph_body.sph_adaptation_->ReferenceSpacing();
+			return acousticCFL_ * smoothing_length_min_ / (reduced_value + TinyReal);
 		}
 		//=================================================================================================//
 		AdvectionTimeStepSizeForImplicitViscosity::
 			AdvectionTimeStepSizeForImplicitViscosity(SPHBody &sph_body, Real U_max, Real advectionCFL)
 			: LocalDynamicsReduce<Real, ReduceMax>(sph_body, U_max * U_max),
 			  FluidDataSimple(sph_body), vel_(particles_->vel_),
-			  smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()),
+			  smoothing_length_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
 			  advectionCFL_(advectionCFL) {}
 		//=================================================================================================//
 		Real AdvectionTimeStepSizeForImplicitViscosity::reduce(size_t index_i, Real dt)
@@ -184,27 +177,20 @@ namespace SPH
 		{
 			Real speed_max = sqrt(reduced_value);
 			particles_->speed_max_ = speed_max;
-			return advectionCFL_ * smoothing_length_ / (speed_max + TinyReal);
+			return advectionCFL_ * smoothing_length_min_ / (speed_max + TinyReal);
 		}
 		//=================================================================================================//
 		AdvectionTimeStepSize::AdvectionTimeStepSize(SPHBody &sph_body, Real U_max, Real advectionCFL)
 			: AdvectionTimeStepSizeForImplicitViscosity(sph_body, U_max, advectionCFL),
 			  fluid_(particles_->fluid_)
 		{
-			Real viscous_speed = fluid_.ReferenceViscosity() / fluid_.ReferenceDensity() / smoothing_length_;
+			Real viscous_speed = fluid_.ReferenceViscosity() / fluid_.ReferenceDensity() / smoothing_length_min_;
 			reference_ = SMAX(viscous_speed * viscous_speed, reference_);
 		}
 		//=================================================================================================//
 		Real AdvectionTimeStepSize::reduce(size_t index_i, Real dt)
 		{
 			return AdvectionTimeStepSizeForImplicitViscosity::reduce(index_i, dt);
-		}
-		//=================================================================================================//
-		AdvectionTimeStepSizeVariableSmoothingLength::AdvectionTimeStepSizeVariableSmoothingLength(SPHBody &sph_body, Real U_max)
-			: AdvectionTimeStepSize(sph_body, U_max)
-		{
-			smoothing_length_ = sph_body.sph_adaptation_->ReferenceSmoothingLength() *
-								sph_body.sph_adaptation_->MinimumSpacing() / sph_body.sph_adaptation_->ReferenceSpacing();
 		}
 		//=================================================================================================//
 		VorticityInner::VorticityInner(BaseInnerRelation &inner_relation)

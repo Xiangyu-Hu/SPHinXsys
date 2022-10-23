@@ -72,9 +72,10 @@ namespace SPH
 
 		int LocalRefinementLevel() { return local_refinement_level_; };
 		Real ReferenceSpacing() { return spacing_ref_; };
-		Real ReferenceSmoothingLength() { return h_ref_; };
-		Kernel *getKernel() { return kernel_ptr_.get(); };
 		Real MinimumSpacing() { return spacing_min_; };
+		Real ReferenceSmoothingLength() { return h_ref_; };
+		Real MinimumSmoothingLength() { return h_ref_ / h_ratio_max_; };
+		Kernel *getKernel() { return kernel_ptr_.get(); };
 		Real computeReferenceNumberDensity(Vec2d zero, Real h_ratio);
 		Real computeReferenceNumberDensity(Vec3d zero, Real h_ratio);
 		Real ReferenceNumberDensity();

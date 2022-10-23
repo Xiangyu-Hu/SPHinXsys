@@ -192,19 +192,8 @@ namespace SPH
 			Fluid &fluid_;
 			StdLargeVec<Real> &rho_, &p_;
 			StdLargeVec<Vecd> &vel_;
-			Real smoothing_length_;
+			Real smoothing_length_min_;
 			Real acousticCFL_;
-		};
-
-		/**
-		 * @class AcousticTimeStepSizeVariableSmoothingLength
-		 * @brief Computing the acoustic time step size with variable smoothing length
-		 */
-		class AcousticTimeStepSizeVariableSmoothingLength : public AcousticTimeStepSize
-		{
-		public:
-			explicit AcousticTimeStepSizeVariableSmoothingLength(SPHBody &sph_body);
-			virtual ~AcousticTimeStepSizeVariableSmoothingLength(){};
 		};
 
 		/**
@@ -223,7 +212,7 @@ namespace SPH
 			virtual Real outputResult(Real reduced_value) override;
 
 		protected:
-			Real smoothing_length_;
+			Real smoothing_length_min_;
 			StdLargeVec<Vecd> &vel_;
 			Real advectionCFL_;
 		};
@@ -241,17 +230,6 @@ namespace SPH
 
 		protected:
 			Fluid &fluid_;
-		};
-
-		/**
-		 * @class AdvectionTimeStepSizeVariableSmoothingLength
-		 * @brief Computing the advection time step size with variable smoothing length
-		 */
-		class AdvectionTimeStepSizeVariableSmoothingLength : public AdvectionTimeStepSize
-		{
-		public:
-			explicit AdvectionTimeStepSizeVariableSmoothingLength(SPHBody &sph_body, Real U_max);
-			virtual ~AdvectionTimeStepSizeVariableSmoothingLength(){};
 		};
 
 		/**
