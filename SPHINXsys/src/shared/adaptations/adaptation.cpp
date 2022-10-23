@@ -216,11 +216,6 @@ namespace SPH
 		return current_volume - 2.0 * minimum_volume_ > -Eps ? true : false;
 	}
 	//=================================================================================================//
-	bool ParticleSplitAndMerge::splitResolutionCheck(Real volume, Real min_volume)
-	{
-		return volume - 1.2 * min_volume > Eps ? true : false;
-	}
-	//=================================================================================================//
 	bool ParticleSplitAndMerge::mergeResolutionCheck(Real volume)
 	{
 		return volume - 1.2 * powerN(spacing_min_, Dimensions) < Eps ? true : false;
@@ -254,20 +249,6 @@ namespace SPH
 	Vec3d ParticleSplitAndMerge::splittingPattern(Vec3d pos, Real particle_spacing, Real delta)
 	{
 		return {pos[0] + 0.5 * particle_spacing * cos(delta), pos[1] + 0.5 * particle_spacing * sin(delta), pos[2]};
-	}
-	//=================================================================================================//
-	bool ParticleSplitAndMerge::checkLocation(BodyRegionByCell &refinement_area, Vecd position, Real volume)
-	{
-		BoundingBox body_domain_bounds_ = refinement_area.body_part_shape_.getBounds();
-		int bound_number = 0;
-		for (int axis_direction = 0; axis_direction != Dimensions; ++axis_direction)
-		{
-			Real particle_spacing = pow(volume, 1.0 / Dimensions);
-			if (position[axis_direction] > (body_domain_bounds_.first[axis_direction] + particle_spacing) &&
-				position[axis_direction] < (body_domain_bounds_.second[axis_direction] - particle_spacing))
-				bound_number += 1;
-		}
-		return bound_number != Dimensions ? false : true;
 	}
 	//=================================================================================================//
 }

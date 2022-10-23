@@ -22,8 +22,8 @@
  * -----------------------------------------------------------------------------*/
 /**
  * @file 	general_life_time_dynamics.h
- * @brief 	This is the particle dynamics applicable for all type bodies
- * @author	Yijie Sun and Xiangyu Hu
+ * @brief 	Classes on life time related events.
+ * @author	Xiangyu Hu
  */
 
 #pragma once

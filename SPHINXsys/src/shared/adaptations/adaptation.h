@@ -173,11 +173,9 @@ namespace SPH
 		void resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0) override;
 
 		virtual bool isSplitAllowed(Real current_volume);
-		virtual bool splitResolutionCheck(Real volume, Real min_volume);
 		virtual bool mergeResolutionCheck(Real volume);
 		virtual Vec2d splittingPattern(Vec2d pos, Real particle_spacing, Real delta);
 		virtual Vec3d splittingPattern(Vec3d pos, Real particle_spacing, Real delta);
-		virtual bool checkLocation(BodyRegionByCell &refinement_area, Vecd position, Real volume);
 
 	protected:
 		Real minimum_volume_;
