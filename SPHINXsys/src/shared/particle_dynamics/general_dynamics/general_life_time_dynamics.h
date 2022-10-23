@@ -34,7 +34,7 @@ namespace SPH
 {
 	/**
 	 * @class BaseLifeTimeDynamics
-	 * @brief Base class for particle split.
+	 * @brief Base class for particle life time events.
 	 */
 	class BaseLifeTimeDynamics : public LocalDynamics, public GeneralDataDelegateSimple
 	{

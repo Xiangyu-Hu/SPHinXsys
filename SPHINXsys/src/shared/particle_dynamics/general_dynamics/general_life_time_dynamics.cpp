@@ -6,7 +6,6 @@
 #include "general_life_time_dynamics.h"
 
 #include "base_particles.hpp"
-#include "level_set_shape.h"
 
 namespace SPH
 {
