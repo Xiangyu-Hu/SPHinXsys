@@ -216,6 +216,11 @@ namespace SPH
 		return current_volume - 2.0 * minimum_volume_ > -Eps ? true : false;
 	}
 	//=================================================================================================//
+	bool ParticleSplitAndMerge::splitResolutionCheck(Real volume, Real min_volume)
+	{
+		return volume - 1.2 * min_volume > Eps ? true : false;
+	}
+	//=================================================================================================//
 	bool ParticleSplitAndMerge::mergeResolutionCheck(Real volume)
 	{
 		return volume - 1.2 * powerN(spacing_min_, Dimensions) < Eps ? true : false;
