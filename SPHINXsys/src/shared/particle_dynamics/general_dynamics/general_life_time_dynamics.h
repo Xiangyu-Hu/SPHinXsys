@@ -39,18 +39,17 @@ namespace SPH
 	class BaseLifeTimeDynamics : public LocalDynamics, public GeneralDataDelegateSimple
 	{
 	public:
-		BaseLifeTimeDynamics(SPHBody &sph_body);
+		explicit BaseLifeTimeDynamics(SPHBody &sph_body);
 		virtual ~BaseLifeTimeDynamics(){};
 
 	protected:
-		ParticleWithLifeTime &particle_life_time_;
+		ParticleSplitAndMerge &particle_split_merge_;
 		Real rho0_inv_;
 		StdLargeVec<Real> &rho_;
 		StdLargeVec<Vecd> &pos_;
 		StdLargeVec<Real> &mass_;
 		StdLargeVec<Real> &Vol_;
 		StdLargeVec<Real> &h_ratio_;
-		StdLargeVec<int> &life_indicator_;
 	};
 
 	/**
@@ -62,8 +61,7 @@ namespace SPH
 	{
 	public:
 		BaseSplitDynamics(SPHBody &sph_body, size_t body_buffer_width)
-			: BaseLifeTimeDynamics(sph_body),
-			  particle_split_(DynamicCast<ParticleSplitAndMerge>(this, particle_life_time_))
+			: BaseLifeTimeDynamics(sph_body)
 		{
 			particles_->addBufferParticles(body_buffer_width);
 			sph_body_.allocateConfigurationMemoriesForBufferParticles();
@@ -71,8 +69,6 @@ namespace SPH
 		virtual ~BaseSplitDynamics(){};
 
 	protected:
-		ParticleSplitAndMerge &particle_split_;
-
 		virtual bool checkSplit(size_t index_i) = 0;
 		virtual SplitParameters execFirstSplit(size_t index_i) = 0;
 		virtual void execOtherSplit(size_t index_i, const SplitParameters &split_parameters) = 0;

@@ -187,21 +187,9 @@ namespace SPH
 		return target_spacing;
 	}
 	//=================================================================================================//
-	ParticleWithLifeTime::ParticleWithLifeTime(SPHBody &sph_body, Real h_spacing_ratio,
-											   Real system_resolution_ratio, int local_refinement_level)
-		: ParticleWithLocalRefinement(sph_body, h_spacing_ratio,
-									  system_resolution_ratio, local_refinement_level){};
-	//=================================================================================================//
-	StdLargeVec<int> &ParticleWithLifeTime::registerLifeIndicator(BaseParticles &base_particles)
-	{
-		base_particles.registerVariable(life_indicator_, "LifeIndicator", 1);
-		base_particles.registerSortableVariable<int>("LifeIndicator");
-		return life_indicator_;
-	}
-	//=================================================================================================//
 	ParticleSplitAndMerge::ParticleSplitAndMerge(SPHBody &sph_body, Real h_spacing_ratio,
 												 Real system_resolution_ratio, int local_refinement_level)
-		: ParticleWithLifeTime(sph_body, h_spacing_ratio,
+		: ParticleWithLocalRefinement(sph_body, h_spacing_ratio,
 							   system_resolution_ratio, local_refinement_level)
 	{
 		spacing_min_ = MostRefinedSpacing(spacing_ref_, local_refinement_level_);
@@ -224,7 +212,7 @@ namespace SPH
 	void ParticleSplitAndMerge::
 		resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio)
 	{
-		ParticleWithLifeTime::resetAdaptationRatios(h_spacing_ratio, new_system_refinement_ratio);
+		ParticleWithLocalRefinement::resetAdaptationRatios(h_spacing_ratio, new_system_refinement_ratio);
 		minimum_volume_ = powerN(spacing_min_, Dimensions);
 		maximum_volume_ = powerN(spacing_ref_, Dimensions);
 	}

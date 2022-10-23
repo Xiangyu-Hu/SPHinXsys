@@ -1,6 +1,6 @@
 /**
  * @file 	general_life_time_dynamics.cpp
- * @author	Yijie Sun and Xiangyu Hu
+ * @author	Xiangyu Hu
  */
 
 #include "general_life_time_dynamics.h"
@@ -13,12 +13,11 @@ namespace SPH
 	//=================================================================================================//
 	BaseLifeTimeDynamics::BaseLifeTimeDynamics(SPHBody &sph_body)
 		: LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
-		  particle_life_time_(DynamicCast<ParticleWithLifeTime>(this, *sph_body.sph_adaptation_)),
+		  particle_split_merge_(DynamicCast<ParticleSplitAndMerge>(this, *sph_body.sph_adaptation_)),
 		  rho0_inv_(1.0 / particles_->rho0_),
 		  rho_(particles_->rho_), pos_(particles_->pos_), Vol_(particles_->Vol_),
 		  mass_(particles_->mass_),
-		  h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")),
-		  life_indicator_(*particles_->getVariableByName<int>("LifeIndicator")) {}
+		  h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")) {}
 	//=================================================================================================//
 	RefinementInPrescribedRegion::
 		RefinementInPrescribedRegion(SPHBody &sph_body, size_t body_buffer_width, Shape &refinement_region)
@@ -46,7 +45,7 @@ namespace SPH
 	bool RefinementInPrescribedRegion::checkSplit(size_t index_i)
 	{
 		Real non_deformed_volume = mass_[index_i] * rho0_inv_;
-		bool is_split_allowed = particle_split_.isSplitAllowed(non_deformed_volume);
+		bool is_split_allowed = particle_split_merge_.isSplitAllowed(non_deformed_volume);
 		bool is_split_inside = checkLocation(refinement_region_bounds_, pos_[index_i], non_deformed_volume);
 
 		return (is_split_allowed && is_split_inside) ? true : false;
@@ -72,7 +71,7 @@ namespace SPH
 		Real split_volume = Vol_[index_i] * 0.5;
 		Vol_[index_i] = split_volume;
 		Real split_spacing = pow(split_volume, 1.0 / (Real)Dimensions);
-		h_ratio_[index_i] = particle_split_.ReferenceSpacing() / split_spacing;
+		h_ratio_[index_i] = particle_split_merge_.ReferenceSpacing() / split_spacing;
 
 		Vecd shift(0);
 		for (int k = 0; k < Dimensions; ++k)

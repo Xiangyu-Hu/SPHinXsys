@@ -94,8 +94,7 @@ int main(int ac, char *av[])
 	water_block.generateParticles<ParticleGeneratorSplitAndMerge>();
 	water_block.addBodyStateForRecording<Real>("SmoothingLengthRatio");
 	water_block.addBodyStateForRecording<Real>("VolumetricMeasure");
-	water_block.addBodyStateForRecording<int>("LifeIndicator");
-
+	
 	SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
 	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();

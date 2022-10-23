@@ -56,15 +56,13 @@ namespace SPH
 	ParticleGeneratorSplitAndMerge::ParticleGeneratorSplitAndMerge(SPHBody &sph_body)
 		: ParticleGeneratorLattice(sph_body),
 		  particle_adaptation_(DynamicCast<ParticleSplitAndMerge>(this, sph_body.sph_adaptation_)),
-		  h_ratio_(particle_adaptation_->registerSmoothingLengthRatio(base_particles_)),
-		  life_indicator_(particle_adaptation_->registerLifeIndicator(base_particles_)) {}
+		  h_ratio_(particle_adaptation_->registerSmoothingLengthRatio(base_particles_)) {}
 	//=================================================================================================//
 	void ParticleGeneratorSplitAndMerge::
 		initializePositionAndVolumetricMeasure(const Vecd &position, Real volume)
 	{
 		ParticleGeneratorLattice::initializePositionAndVolumetricMeasure(position, volume);
 		h_ratio_.push_back(1.0);
-		life_indicator_.push_back(1);
 	}
 	//=================================================================================================//
 	ThickSurfaceParticleGeneratorLattice::

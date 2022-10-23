@@ -143,28 +143,11 @@ namespace SPH
 	};
 
 	/**
-	 * @class ParticleWithLifeTime
-	 * @brief particles may have life-time events.
-	 */
-
-	class ParticleWithLifeTime : public ParticleWithLocalRefinement
-	{
-	public:
-		ParticleWithLifeTime(SPHBody &sph_body, Real h_spacing_ratio_,
-							 Real system_resolution_ratio, int local_refinement_level);
-		virtual ~ParticleWithLifeTime(){};
-		StdLargeVec<int> &registerLifeIndicator(BaseParticles &base_particles);
-
-	protected:
-		StdLargeVec<int> life_indicator_; /**< 0: dead, 1: alive, ... */
-	};
-
-	/**
 	 * @class ParticleSplitAndMerge
 	 * @brief adaptive resolutions with particle splitting and merging technique.
 	 */
 
-	class ParticleSplitAndMerge : public ParticleWithLifeTime
+	class ParticleSplitAndMerge : public ParticleWithLocalRefinement
 	{
 	public:
 		ParticleSplitAndMerge(SPHBody &sph_body, Real h_spacing_ratio_,
