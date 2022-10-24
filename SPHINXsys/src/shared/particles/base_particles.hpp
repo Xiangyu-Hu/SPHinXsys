@@ -47,11 +47,11 @@ namespace SPH
                          const std::string &variable_name, VariableType initial_value)
     {
         constexpr int type_index = DataTypeIndex<VariableType>::value;
-        VariableType init_value = DataTypeInitializer<VariableType>::zero;
+        //VariableType init_value = DataTypeInitializer<VariableType>::zero;
 
         if (all_variable_maps_[type_index].find(variable_name) == all_variable_maps_[type_index].end())
         {
-            variable_addrs.resize(real_particles_bound_, init_value);
+            variable_addrs.resize(real_particles_bound_, initial_value);
             std::get<type_index>(all_particle_data_).push_back(&variable_addrs);
             all_variable_maps_[type_index].insert(make_pair(variable_name, std::get<type_index>(all_particle_data_).size() - 1));
         }
@@ -251,37 +251,16 @@ namespace SPH
             derived_variable->parallel_exec();
         }
 
-        // write matrices
-        for (std::pair<std::string, size_t> &name_index : variables_to_write_[2])
+        // write integers
+        for (std::pair<std::string, size_t> &name_index : variables_to_write_[3])
         {
             std::string variable_name = name_index.first;
-            StdLargeVec<Matd> &variable = *(std::get<2>(all_particle_data_)[name_index.second]);
-            output_stream << "    <DataArray Name=\"" << variable_name << " \" type= \"Float32 \"  NumberOfComponents=\"9\" Format=\"ascii\">\n";
+            StdLargeVec<int> &variable = *(std::get<3>(all_particle_data_)[name_index.second]);
+            output_stream << "    <DataArray Name=\"" << variable_name << "\" type=\"Int32\" Format=\"ascii\">\n";
             output_stream << "    ";
             for (size_t i = 0; i != total_real_particles; ++i)
             {
-                Mat3d matrix_value = upgradeToMatrix3D(variable[i]);
-                for (int k = 0; k != 3; ++k)
-                {
-                    Vec3d col_vector = matrix_value.col(k);
-                    output_stream << std::fixed << std::setprecision(9) << col_vector[0] << " " << col_vector[1] << " " << col_vector[2] << " ";
-                }
-            }
-            output_stream << std::endl;
-            output_stream << "    </DataArray>\n";
-        }
-
-        // write vectors
-        for (std::pair<std::string, size_t> &name_index : variables_to_write_[1])
-        {
-            std::string variable_name = name_index.first;
-            StdLargeVec<Vecd> &variable = *(std::get<1>(all_particle_data_)[name_index.second]);
-            output_stream << "    <DataArray Name=\"" << variable_name << "\" type=\"Float32\"NumberOfComponents=\"3\" Format=\"ascii\">\n";
-            output_stream << "    ";
-            for (size_t i = 0; i != total_real_particles; ++i)
-            {
-                Vec3d vector_value = upgradeToVector3D(variable[i]);
-                output_stream << std::fixed << std::setprecision(9) << vector_value[0] << " " << vector_value[1] << " " << vector_value[2] << " ";
+                output_stream << std::fixed << std::setprecision(9) << variable[i] << " ";
             }
             output_stream << std::endl;
             output_stream << "    </DataArray>\n";
@@ -302,20 +281,43 @@ namespace SPH
             output_stream << "    </DataArray>\n";
         }
 
-        // write integers
-        for (std::pair<std::string, size_t> &name_index : variables_to_write_[3])
+        // write vectors
+        for (std::pair<std::string, size_t> &name_index : variables_to_write_[1])
         {
             std::string variable_name = name_index.first;
-            StdLargeVec<int> &variable = *(std::get<3>(all_particle_data_)[name_index.second]);
-            output_stream << "    <DataArray Name=\"" << variable_name << "\" type=\"Int32\" Format=\"ascii\">\n";
+            StdLargeVec<Vecd> &variable = *(std::get<1>(all_particle_data_)[name_index.second]);
+            output_stream << "    <DataArray Name=\"" << variable_name << "\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
             output_stream << "    ";
             for (size_t i = 0; i != total_real_particles; ++i)
             {
-                output_stream << std::fixed << std::setprecision(9) << variable[i] << " ";
+                Vec3d vector_value = upgradeToVector3D(variable[i]);
+                output_stream << std::fixed << std::setprecision(9) << vector_value[0] << " " << vector_value[1] << " " << vector_value[2] << " ";
             }
             output_stream << std::endl;
             output_stream << "    </DataArray>\n";
         }
+
+
+        // // write matrices
+        // for (std::pair<std::string, size_t> &name_index : variables_to_write_[2])
+        // {
+        //     std::string variable_name = name_index.first;
+        //     StdLargeVec<Matd> &variable = *(std::get<2>(all_particle_data_)[name_index.second]);
+        //     output_stream << "    <DataArray Name=\"" << variable_name << " \" type= \"Float32 \"  NumberOfComponents=\"9\" Format=\"ascii\">\n";
+        //     output_stream << "    ";
+        //     for (size_t i = 0; i != total_real_particles; ++i)
+        //     {
+        //         Mat3d matrix_value = upgradeToMatrix3D(variable[i]);
+        //         for (int k = 0; k != 3; ++k)
+        //         {
+        //             Vec3d col_vector = matrix_value.col(k);
+        //             output_stream << std::fixed << std::setprecision(9) << col_vector[0] << " " << col_vector[1] << " " << col_vector[2] << " ";
+        //         }
+        //     }
+        //     output_stream << std::endl;
+        //     output_stream << "    </DataArray>\n";
+        // }
+
     }
     //=================================================================================================//
     template <typename VariableType>
