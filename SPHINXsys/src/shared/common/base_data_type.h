@@ -82,12 +82,12 @@ namespace SPH
 	{
 		static inline DataType zero;
 	};
-	template<> int DataTypeInitializer<int>::zero = 0;
-	template<> Real DataTypeInitializer<Real>::zero = 0.0;
-	template<> Vec2d DataTypeInitializer<Vec2d>::zero = Vec2d::Zero();
-	template<> Vec3d DataTypeInitializer<Vec3d>::zero = Vec3d::Zero();
-	template<> Mat2d DataTypeInitializer<Mat2d>::zero = Mat2d::Zero();
-	template<> Mat3d DataTypeInitializer<Mat3d>::zero = Mat3d::Zero();
+	template<> struct DataTypeInitializer<int>   {static inline int   zero = 0;};
+	template<> struct DataTypeInitializer<Real>  {static inline Real  zero = 0.0;};
+	template<> struct DataTypeInitializer<Vec2d> {static inline Vec2d zero = Vec2d::Zero();};
+	template<> struct DataTypeInitializer<Vec3d> {static inline Vec3d zero = Vec3d::Zero();};
+	template<> struct DataTypeInitializer<Mat2d> {static inline Mat2d zero = Mat2d::Zero();};
+	template<> struct DataTypeInitializer<Mat3d> {static inline Mat3d zero = Mat3d::Zero();};
 	/** Type trait for data type index. */
 	template <typename T>
 	struct DataTypeIndex
@@ -255,6 +255,48 @@ namespace SPH
 			return xformBaseVecToFrame(target - translation_);
 		};
 	};
+	
+	using Transform3d = SimTK::Transform;
+
+	/**
+	 * @class Transform3d
+	 * @brief Using the SimTK::Transform from simbody library. 
+	 */
+	// class Transform3d
+	// {
+	// private:
+	// 	Vec3d translation_;
+	// 	SimTK::Transform simtk_transform_;
+
+	// public:
+	// 	Transform3d() : rotation_(Rotation3d(0)), translation_(Vec3d(0)){};
+	// 	explicit Transform3d(const Vec3d &translation) : rotation_(Rotation3d(0)), translation_(translation){};
+	// 	explicit Transform3d(const Rotation3d &rotation, const Vec3d &translation = Vec2d(0))
+	// 		: rotation_(rotation), translation_(translation){};
+
+	// 	/** Forward rotation. */
+	// 	Vec3d xformFrameVecToBase(const Vec3d &origin)
+	// 	{
+	// 		return rotation_.xformFrameVecToBase(origin);
+	// 	};
+
+	// 	/** Forward transformation. Note that the rotation operation is carried out first. */
+	// 	Vec3d shiftFrameStationToBase(const Vec3d &origin)
+	// 	{
+	// 		return translation_ + xformFrameVecToBase(origin);
+	// 	};
+
+	// 	/** Inverse rotation. */
+	// 	Vec3d xformBaseVecToFrame(const Vec3d &target)
+	// 	{
+	// 		return rotation_.xformBaseVecToFrame(target);
+	// 	};
+
+	// 	/** Inverse transformation. Note that the inverse translation operation is carried out first. */
+	// 	Vec3d shiftBaseStationToFrame(const Vec3d &target)
+	// 	{
+	// 		return xformBaseVecToFrame(target - translation_);
+	// 	};
 
 	/**
 	 * @brief Convert any input to string and pad the output with zeros
@@ -268,11 +310,6 @@ namespace SPH
 		return s_time.str();
 	}
 	
-	/**
-	 * @class Transform3d
-	 * @brief Coordinate transform in 3D from SimTK
-	 */
-	using Transform3d = SimTK::Transform;
 	/** Constant parameters. */
 	const Real Pi = Real(M_PI);
 	const Real Eps = 2.22045e-16;

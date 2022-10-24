@@ -57,9 +57,10 @@ namespace SPH {
 	const Real one_over_dimensions_ = 1.0 / (Real)Dimensions;
 
 	/** correction matrix, only works for thin structure dynamics. */
-	const Matd reduced_unit_matrix = { {1, 0, 0}, 
-									   {0, 1, 0}, 
-									   {0, 0, 0},};
+	const Matd reduced_unit_matrix{ {1, 0, 0}, // 0 row
+									{0, 1, 0}, // 1 row
+									{0, 0, 0}, // 2 row
+								  };
 	/** initial local normal, only works for thin structure dynamics. */
 	const Vecd local_pseudo_n_0 = Vecd(0.0, 0.0, 1.0);
 
