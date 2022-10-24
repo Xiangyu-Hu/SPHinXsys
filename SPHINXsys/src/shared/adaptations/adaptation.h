@@ -62,6 +62,7 @@ namespace SPH
 		Real spacing_ref_;			   /**< reference particle spacing used to determine local particle spacing */
 		Real h_ref_;				   /**< reference smoothing length */
 		UniquePtr<Kernel> kernel_ptr_; /**< unique pointer of kernel function owned this class */
+		Real sigma0_ref_;			   /**< Reference number density dependent on h_spacing_ratio_ only */
 		Real spacing_min_;			   /**< minimum particle spacing determined by local refinement level */
 		Real h_ratio_max_;			   /**< the ratio between the reference smoothing length to the minimum smoothing length */
 
@@ -76,9 +77,9 @@ namespace SPH
 		Real ReferenceSmoothingLength() { return h_ref_; };
 		Real MinimumSmoothingLength() { return h_ref_ / h_ratio_max_; };
 		Kernel *getKernel() { return kernel_ptr_.get(); };
-		Real computeReferenceNumberDensity(Vec2d zero, Real h_ratio);
-		Real computeReferenceNumberDensity(Vec3d zero, Real h_ratio);
-		Real ReferenceNumberDensity();
+		Real computeReferenceNumberDensity(Vec2d zero);
+		Real computeReferenceNumberDensity(Vec3d zero);
+		Real ReferenceNumberDensity(Real smoothing_length_ratio = 1.0);
 		virtual Real SmoothingLengthRatio(size_t particle_index_i) { return 1.0; };
 		virtual void resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
 
@@ -89,6 +90,7 @@ namespace SPH
 		void resetKernel(ConstructorArgs &&...args)
 		{
 			kernel_ptr_.reset(new KernelType(h_ref_, std::forward<ConstructorArgs>(args)...));
+			sigma0_ref_ = computeReferenceNumberDensity(Vecd(0));
 		};
 
 	protected:
@@ -113,7 +115,6 @@ namespace SPH
 		virtual size_t getCellLinkedListTotalLevel();
 		size_t getLevelSetTotalLevel();
 		StdLargeVec<Real> &registerSmoothingLengthRatio(BaseParticles &base_particles);
-		Real getReferenceNumberDensity(Real smoothing_length_ratio);
 		virtual Real SmoothingLengthRatio(size_t particle_index_i) override
 		{
 			return h_ratio_[particle_index_i];
@@ -121,10 +122,6 @@ namespace SPH
 
 		virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, RealBody &real_body) override;
 		virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio) override;
-
-	protected:
-		StdVec<Real> sigma0_;
-		StdVec<Real> setReferenceNumberDensityLevels(int local_refinement_level);
 	};
 
 	/**

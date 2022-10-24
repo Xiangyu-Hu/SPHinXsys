@@ -147,7 +147,7 @@ namespace SPH
         Real h_newIndex = pow(particles_->Vol_[index_rho] / Vol_newIndex, 1.0 / (Real)Dimensions);
 
         Real W0 = particle_adaptation_.getKernel()->W0(h_newIndex, Vecd(0));
-        Real inv_sigma_0 = 1.0 / particle_adaptation_.computeReferenceNumberDensity(Vecd(0), h_newIndex);
+        Real inv_sigma_0 = 1.0 / particle_adaptation_.ReferenceNumberDensity(h_newIndex);
         Real sigma_newIndex = W0;
 
         Vecd displacement = 2.0 * (position - particles_->pos_[index_rho]);
@@ -182,7 +182,7 @@ namespace SPH
             Real h_ratio_j = h_ratio_[neighborhood.j_[k]];
             Vecd pos_j = particles_->pos_[neighborhood.j_[k]];
             Real Vol_j = particles_->mass_[neighborhood.j_[k]] / particles_->rho0_;
-            Real inv_sigma_j = 1.0 / particle_adaptation_.computeReferenceNumberDensity(Vecd(0), h_ratio_j);
+            Real inv_sigma_j = 1.0 / particle_adaptation_.ReferenceNumberDensity(h_ratio_j);
             Real sigma_split_j = 0.0;
 
             for (size_t n = 0; n != original_indices.size(); ++n)
@@ -264,7 +264,7 @@ namespace SPH
         Real Vol_newIndex = particles_->Vol_[index_rho] / 2.0;
         Real h_newIndex = pow(particles_->Vol_[index_rho] / Vol_newIndex, 1.0 / (Real)Dimensions);
 
-        Real inv_sigma_0 = 1.0 / particle_adaptation_.computeReferenceNumberDensity(Vecd(0), h_newIndex);
+        Real inv_sigma_0 = 1.0 / particle_adaptation_.ReferenceNumberDensity(h_newIndex);
         Real sigma_inner = ComputeDensityErrorInner::computeNewGeneratedParticleDensity(index_rho, position);
         Vecd grad_sigma = Vecd(0.0);
         Real sigma_newIndex = 0.0;

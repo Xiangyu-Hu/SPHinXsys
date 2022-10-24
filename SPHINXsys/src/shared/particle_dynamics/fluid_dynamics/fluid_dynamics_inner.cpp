@@ -65,7 +65,7 @@ namespace SPH
 		//=================================================================================================//
 		void DensitySummationInnerAdaptive::update(size_t index_i, Real dt)
 		{
-			rho_sum_[index_i] /= particle_with_local_refinement_.getReferenceNumberDensity(h_ratio_[index_i]);
+			rho_sum_[index_i] /= particle_with_local_refinement_.ReferenceNumberDensity(h_ratio_[index_i]);
 			rho_[index_i] = ReinitializedDensity(rho_sum_[index_i], rho0_, rho_[index_i]);
 		}
 		//=================================================================================================//
