@@ -58,7 +58,7 @@ namespace SPH
 	{
 	public:
 		explicit ImageShape(const std::string &shape_name)
-			: Shape(shape_name), translation_(Vecd::Zero()), rotation_(Matd::Indentity()),
+			: Shape(shape_name), translation_(Vecd::Zero()), rotation_(Matd::Identity()),
 			  max_distance_(-INFINITY), min_distance_(INFINITY){};
 
 		virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;

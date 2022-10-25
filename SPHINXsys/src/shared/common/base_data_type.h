@@ -256,47 +256,67 @@ namespace SPH
 		};
 	};
 	
-	using Transform3d = SimTK::Transform;
-
 	/**
 	 * @class Transform3d
-	 * @brief Using the SimTK::Transform from simbody library. 
+	 * @brief Wrapper for SimTK::Transform
+	 * Note that the rotation is around the frame (or local) origin.
 	 */
-	// class Transform3d
-	// {
-	// private:
-	// 	Vec3d translation_;
-	// 	SimTK::Transform simtk_transform_;
+	class Transform3d
+	{
+	private:
+		Mat3d rotation_;
+		Vec3d translation_;
+		SimTK::Transform transform_;
 
-	// public:
-	// 	Transform3d() : rotation_(Rotation3d(0)), translation_(Vec3d(0)){};
-	// 	explicit Transform3d(const Vec3d &translation) : rotation_(Rotation3d(0)), translation_(translation){};
-	// 	explicit Transform3d(const Rotation3d &rotation, const Vec3d &translation = Vec2d(0))
-	// 		: rotation_(rotation), translation_(translation){};
+	public:
+		Transform3d() : rotation_(Mat3d::Zero()), translation_(Vec3d::Zero())
+		{
+			// Default constructor gives an identity transform. 
+			transform_ = SimTK::Transform();
+		};
+		explicit Transform3d(const Vec3d &translation) : rotation_(Mat3d::Zero()), translation_(translation)
+		{
+			//Construct or default-convert a translation (expressed as a Vec3) into a transform with that translation and a zero rotation. 
+			transform_ = SimTK::Transform(SimTK::Vec3(translation[0],translation[1], translation[2]));
+		};
+		explicit Transform3d(const Mat3d &rotation, const Vec3d &translation = Vec3d::Zero())
+			: rotation_(rotation), translation_(translation)
+		{
+			//Combine a rotation and a translation into a transform. 
+			transform_ = SimTK::Transform(SimTK::Rotation_<Real>(SimTK::Mat33(rotation(0,0), rotation(0,1), rotation(0,2), 
+						 							   rotation(1,0), rotation(1,1), rotation(1,2), 
+						 							   rotation(2,0), rotation(2,1), rotation(2,2))), 
+										SimTK::Vec3(translation[0],translation[1], translation[2]));
+		};
 
-	// 	/** Forward rotation. */
-	// 	Vec3d xformFrameVecToBase(const Vec3d &origin)
-	// 	{
-	// 		return rotation_.xformFrameVecToBase(origin);
-	// 	};
+		/** Forward rotation. */
+		Vec3d xformFrameVecToBase(const Vec3d &origin)
+		{
+			SimTK::Vec3 x_to_base = transform_.xformFrameVecToBase(SimTK::Vec3(origin[0],origin[1],origin[2]));
+			return Vec3d(x_to_base[0],x_to_base[1],x_to_base[2]);
+		};
 
-	// 	/** Forward transformation. Note that the rotation operation is carried out first. */
-	// 	Vec3d shiftFrameStationToBase(const Vec3d &origin)
-	// 	{
-	// 		return translation_ + xformFrameVecToBase(origin);
-	// 	};
+		/** Forward transformation. Note that the rotation operation is carried out first. */
+		Vec3d shiftFrameStationToBase(const Vec3d &origin)
+		{
+			SimTK::Vec3 frame_to_base = transform_.shiftFrameStationToBase(SimTK::Vec3(origin[0],origin[1],origin[2]));
+			return Vec3d(frame_to_base[0], frame_to_base[1], frame_to_base[2]);
+		};
 
-	// 	/** Inverse rotation. */
-	// 	Vec3d xformBaseVecToFrame(const Vec3d &target)
-	// 	{
-	// 		return rotation_.xformBaseVecToFrame(target);
-	// 	};
+		/** Inverse rotation. */
+		Vec3d xformBaseVecToFrame(const Vec3d &target)
+		{
+			SimTK::Vec3 base_to_frame = transform_.xformBaseVecToFrame(SimTK::Vec3(target[0],target[1],target[2]));
+			return Vec3d(base_to_frame[0], base_to_frame[1], base_to_frame[2]);
+		};
 
-	// 	/** Inverse transformation. Note that the inverse translation operation is carried out first. */
-	// 	Vec3d shiftBaseStationToFrame(const Vec3d &target)
-	// 	{
-	// 		return xformBaseVecToFrame(target - translation_);
-	// 	};
+		/** Inverse transformation. Note that the inverse translation operation is carried out first. */
+		Vec3d shiftBaseStationToFrame(const Vec3d &target)
+		{
+			SimTK::Vec3 base_to_base = transform_.shiftBaseStationToFrame(SimTK::Vec3(target[0],target[1],target[2]));
+			return Vec3d(base_to_base[0], base_to_base[1], base_to_base[2]);
+		};
+	};
 
 	/**
 	 * @brief Convert any input to string and pad the output with zeros

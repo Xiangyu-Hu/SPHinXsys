@@ -1,8 +1,3 @@
-/**
- * @file 	base_body_supplementary.cpp
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
- */
-
 #include "solid_body.h"
 #include "solid_particles.h"
 

@@ -219,7 +219,7 @@ namespace SPH {
 	{
 		std::vector<int> neighbors;
 
-		Vec3d image_coord = transformMatrix_.invert()*(probe_point - offset_);
+		Vec3d image_coord = transformMatrix_.inverse()*(probe_point - offset_);
 		// std::cout <<"findNeighbor of " << probe_point << " ........... " << image_coord << std::endl;
 
 		int z = int(floor(image_coord[2]));
