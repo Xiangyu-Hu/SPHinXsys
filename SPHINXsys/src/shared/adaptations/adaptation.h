@@ -77,8 +77,6 @@ namespace SPH
 		Real ReferenceSmoothingLength() { return h_ref_; };
 		Real MinimumSmoothingLength() { return h_ref_ / h_ratio_max_; };
 		Kernel *getKernel() { return kernel_ptr_.get(); };
-		Real computeReferenceNumberDensity(Vec2d zero);
-		Real computeReferenceNumberDensity(Vec3d zero);
 		Real ReferenceNumberDensity(Real smoothing_length_ratio = 1.0);
 		virtual Real SmoothingLengthRatio(size_t particle_index_i) { return 1.0; };
 		virtual void resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
@@ -94,6 +92,8 @@ namespace SPH
 		};
 
 	protected:
+		Real computeReferenceNumberDensity(Vec2d zero);
+		Real computeReferenceNumberDensity(Vec3d zero);
 		virtual Real MostRefinedSpacing(Real coarse_particle_spacing, int refinement_level);
 	};
 
