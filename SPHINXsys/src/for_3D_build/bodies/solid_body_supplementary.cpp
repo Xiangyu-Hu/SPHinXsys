@@ -29,7 +29,8 @@ namespace SPH
 			Vecd particle_position = solid_particles_->pos0_[index_i];
 			Real particle_volume = solid_particles_->Vol_[index_i];
 
-			Vec3d displacement = (particle_position - initial_mass_center_);
+			Vec3d displacement = particle_position - initial_mass_center_;
+
 			inertia_moments[0] += particle_volume * (displacement[1] * displacement[1] + displacement[2] * displacement[2]);
 			inertia_moments[1] += particle_volume * (displacement[0] * displacement[0] + displacement[2] * displacement[2]);
 			inertia_moments[2] += particle_volume * (displacement[0] * displacement[0] + displacement[1] * displacement[1]);
@@ -41,7 +42,9 @@ namespace SPH
 		inertia_products /= body_part_volume;
 
 		body_part_mass_properties_ = mass_properties_ptr_keeper_.createPtr<SimTK::MassProperties>(
-			body_part_volume * solid_body_density_, Vec3d::Zero(), SimTK::UnitInertia(inertia_moments, inertia_products));
+			body_part_volume * solid_body_density_, SimTK::Vec3(0), 
+			SimTK::UnitInertia(SimTK::Vec3(inertia_moments[0],inertia_moments[1],inertia_moments[2]), 
+							   SimTK::Vec3(inertia_products[0],inertia_products[1],inertia_products[2])));
 	}
 	//=================================================================================================//
 }

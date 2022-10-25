@@ -396,8 +396,8 @@ namespace SPH {
 	BoundingBox ImageMHD<T, nDims>::findBounds()
 	{
 		//initial reference values
-		Vec3d lower_bound = Vec3d(Infinity);
-		Vec3d upper_bound = Vec3d(-Infinity);
+		Vec3d lower_bound = Infinity * Vec3d::Ones();
+		Vec3d upper_bound = - Infinity * Vec3d::Ones();
 
 		for (int z = 0; z < depth_ + 1; z++)
 		{
@@ -468,7 +468,7 @@ namespace SPH {
 		}
 		else
 		{
-			return Vec3d(1.0, 1.0, 1.0).normalized();
+			return Vec3d::Ones();
 		}
 	}
 

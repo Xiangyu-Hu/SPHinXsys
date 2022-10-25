@@ -69,8 +69,8 @@ namespace SPH
 	{
 		bool inside = false;
 		int face_id;
-		SimTK::Vec3 normal;
-		SimTK::Vec3 closest_pnt = triangle_mesh_->findNearestPoint(SimTK::Vec3(probe_point[0], probe_point[1], probe_point[2]), inside, face_id, normal);
+		SimTK::Vec2 norm;
+		SimTK::Vec3 closest_pnt = triangle_mesh_->findNearestPoint(SimTK::Vec3(probe_point[0], probe_point[1], probe_point[2]), inside, face_id, norm);
 		if (face_id < 0 && face_id > triangle_mesh_->getNumFaces())
 		{
 			std::cout << "\n Error the nearest point is not valid" << std::endl;
@@ -129,7 +129,10 @@ namespace SPH
 		polymesh.loadStlFile(filepathname);
 
         polymesh.scaleMesh(scale_factor);
-        SimTK::Transform_<Real> transform( SimTK::Rotation_<Real>(rotation), SimTK::Vec3(translation[0], translation[1], translation[2])) );
+        SimTK::Transform_<Real> transform( SimTK::Rotation_<Real>(SimTK::Mat33(rotation(0,0), rotation(0,1), rotation(0,2), 
+						 							   						   rotation(1,0), rotation(1,1), rotation(1,2), 
+						 							   						   rotation(2,0), rotation(2,1), rotation(2,2))), 
+									SimTK::Vec3(translation[0], translation[1], translation[2]) );
 		triangle_mesh_ = generateTriangleMesh(polymesh.transformMesh(transform));
 	}
 	//=================================================================================================//
@@ -149,7 +152,7 @@ namespace SPH
 			const std::string &shape_name)
 		: TriangleMeshShape(shape_name)
 	{
-		SimTK::PolygonalMesh polymesh = SimTK::PolygonalMesh::createBrickMesh(SimTK::Vec3(halfsize[0], halfsize[1], halfsize[2])), resolution);
+		SimTK::PolygonalMesh polymesh = SimTK::PolygonalMesh::createBrickMesh(SimTK::Vec3(halfsize[0], halfsize[1], halfsize[2]), resolution);
 		triangle_mesh_ = generateTriangleMesh( polymesh.transformMesh(SimTK::Vec3(translation[0], translation[1], translation[2])) );
 	}
 	//=================================================================================================//

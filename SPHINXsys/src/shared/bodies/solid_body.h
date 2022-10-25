@@ -67,7 +67,7 @@ namespace SPH
 		UniquePtrKeeper<SimTK::MassProperties> mass_properties_ptr_keeper_;
 
 	public:
-		SimTK::Vec3 initial_mass_center_; /**< This is the vector defined by Simbody, careful conversion is need. */
+		Vecd initial_mass_center_;
 		SimTK::MassProperties *body_part_mass_properties_;
 
 		SolidBodyPartForSimbody(SPHBody &body, SharedPtr<Shape> shape_ptr);
