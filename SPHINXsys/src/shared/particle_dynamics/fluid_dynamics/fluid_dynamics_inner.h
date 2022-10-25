@@ -107,7 +107,7 @@ namespace SPH
 			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
-			ParticleWithLocalRefinement &particle_with_local_refinement_;
+			SPHAdaptation &sph_adaptation_;
 			Kernel &kernel_;
 			StdLargeVec<Real> &h_ratio_;
 		};

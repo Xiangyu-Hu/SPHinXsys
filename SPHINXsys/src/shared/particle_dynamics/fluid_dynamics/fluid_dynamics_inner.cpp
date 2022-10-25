@@ -46,8 +46,8 @@ namespace SPH
 		DensitySummationInnerAdaptive::
 			DensitySummationInnerAdaptive(BaseInnerRelation &inner_relation)
 			: BaseDensitySummationInner(inner_relation),
-			  particle_with_local_refinement_(DynamicCast<ParticleWithLocalRefinement>(this, *sph_body_.sph_adaptation_)),
-			  kernel_(*particle_with_local_refinement_.getKernel()),
+			  sph_adaptation_(*sph_body_.sph_adaptation_),
+			  kernel_(*sph_adaptation_.getKernel()),
 			  h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")) {}
 		//=================================================================================================//
 		void DensitySummationInnerAdaptive::interaction(size_t index_i, Real dt)
@@ -65,7 +65,7 @@ namespace SPH
 		//=================================================================================================//
 		void DensitySummationInnerAdaptive::update(size_t index_i, Real dt)
 		{
-			rho_sum_[index_i] /= particle_with_local_refinement_.ReferenceNumberDensity(h_ratio_[index_i]);
+			rho_sum_[index_i] /= sph_adaptation_.ReferenceNumberDensity(h_ratio_[index_i]);
 			rho_[index_i] = ReinitializedDensity(rho_sum_[index_i], rho0_, rho_[index_i]);
 		}
 		//=================================================================================================//
