@@ -52,15 +52,13 @@ namespace SPH
 		//=================================================================================================//
 		void DensitySummationInnerAdaptive::interaction(size_t index_i, Real dt)
 		{
-			Real sigma_i = kernel_.W0(h_ratio_[index_i], Vecd(0));
-			Real inv_Vol_i = rho0_ / mass_[index_i];
+			Real sigma_i = mass_[index_i] * kernel_.W0(h_ratio_[index_i], Vecd(0));
 
-			/** Inner interaction. */
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-				sigma_i += inner_neighborhood.W_ij_[n] * inv_Vol_i * mass_[inner_neighborhood.j_[n]] / rho0_;
+				sigma_i += inner_neighborhood.W_ij_[n] * mass_[inner_neighborhood.j_[n]];
 
-			rho_sum_[index_i] = sigma_i * rho0_;
+			rho_sum_[index_i] = sigma_i * rho0_ / mass_[index_i];
 		}
 		//=================================================================================================//
 		void DensitySummationInnerAdaptive::update(size_t index_i, Real dt)

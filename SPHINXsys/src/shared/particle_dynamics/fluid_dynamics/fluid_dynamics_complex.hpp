@@ -95,9 +95,8 @@ namespace SPH
 		{
 			DensitySummationInnerAdaptiveType::interaction(index_i, dt);
 
-			/** Contact interaction. */
 			Real sigma(0.0);
-			Real inv_Vol_0_i = this->rho0_ / this->mass_[index_i];
+			Real inv_Vol0_i = this->rho0_ / this->mass_[index_i];
 			for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 			{
 				StdLargeVec<Real> &contact_mass_k = *(this->contact_mass_[k]);
@@ -105,9 +104,11 @@ namespace SPH
 				Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
-					sigma += contact_neighborhood.W_ij_[n] * inv_Vol_0_i * contact_inv_rho0_k * contact_mass_k[contact_neighborhood.j_[n]];
+					sigma += contact_neighborhood.W_ij_[n] * inv_Vol0_i *
+							 contact_inv_rho0_k * contact_mass_k[contact_neighborhood.j_[n]];
 				}
 			}
+
 			this->rho_sum_[index_i] += sigma * this->rho0_;
 		}
 		//=================================================================================================//
