@@ -100,8 +100,6 @@ namespace SPH
 		//----------------------------------------------------------------------
 		// Global information for all particles
 		//----------------------------------------------------------------------
-		Real rho0_;		 /**< reference density*/
-		Real sigma0_;	 /**< reference number density. */
 		Real speed_max_; /**< Maximum particle speed. */
 		//----------------------------------------------------------------------
 		// Global information for defining particle groups

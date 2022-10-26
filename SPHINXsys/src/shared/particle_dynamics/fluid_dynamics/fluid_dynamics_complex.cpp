@@ -16,8 +16,6 @@ namespace SPH
 		{
 			TransportVelocityCorrectionInner::interaction(index_i, dt);
 
-			Real rho_i = rho_[index_i];
-
 			Vecd acceleration_trans(0);
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
@@ -28,13 +26,13 @@ namespace SPH
 					Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
 
 					// acceleration for transport velocity
-					acceleration_trans -= 2.0 * p_background_ * nablaW_ijV_j / rho_i;
+					acceleration_trans -= 2.0 * nablaW_ijV_j;
 				}
 			}
 
 			/** correcting particle position */
 			if (surface_indicator_[index_i] == 0)
-				pos_[index_i] += acceleration_trans * dt * dt * 0.5;
+				pos_[index_i] += coefficient_ * smoothing_length_sqr_ * acceleration_trans;
 		}
 		//=================================================================================================//
 		void Oldroyd_BIntegration1stHalfWithWall::interaction(size_t index_i, Real dt)

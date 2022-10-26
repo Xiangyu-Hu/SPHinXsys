@@ -20,12 +20,12 @@ namespace SPH
 		BaseDensitySummationInner::BaseDensitySummationInner(BaseInnerRelation &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
 			  rho_(particles_->rho_), rho_sum_(particles_->rho_sum_), mass_(particles_->mass_),
-			  rho0_(particles_->rho0_) {}
+			  rho0_(sph_body_.base_material_->ReferenceDensity()) {}
 		//=================================================================================================//
 		DensitySummationInner::DensitySummationInner(BaseInnerRelation &inner_relation)
 			: BaseDensitySummationInner(inner_relation),
 			  W0_(sph_body_.sph_adaptation_->getKernel()->W0(Vecd(0))),
-			  inv_sigma0_(1.0 / particles_->sigma0_) {}
+			  inv_sigma0_(1.0 / sph_body_.sph_adaptation_->ReferenceNumberDensity()) {}
 		//=================================================================================================//
 		void DensitySummationInner::interaction(size_t index_i, Real dt)
 		{
@@ -112,16 +112,9 @@ namespace SPH
 		TransportVelocityCorrectionInner::
 			TransportVelocityCorrectionInner(BaseInnerRelation &inner_relation, Real coefficient)
 			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
-			  rho_(particles_->rho_), pos_(particles_->pos_),
-			  surface_indicator_(particles_->surface_indicator_), p_background_(0),
+			  pos_(particles_->pos_), surface_indicator_(particles_->surface_indicator_),
+			  smoothing_length_sqr_(powerN(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
 			  coefficient_(coefficient) {}
-		//=================================================================================================//
-		void TransportVelocityCorrectionInner::setupDynamics(Real dt)
-		{
-			Real speed_max = particles_->speed_max_;
-			Real density = particles_->fluid_.ReferenceDensity();
-			p_background_ = coefficient_ * density * speed_max * speed_max;
-		}
 		//=================================================================================================//
 		void TransportVelocityCorrectionInner::interaction(size_t index_i, Real dt)
 		{
@@ -133,11 +126,11 @@ namespace SPH
 				Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
 
 				// acceleration for transport velocity
-				acceleration_trans -= 2.0 * p_background_ * nablaW_ijV_j;
+				acceleration_trans -= 2.0 * nablaW_ijV_j;
 			}
 
 			if (surface_indicator_[index_i] == 0)
-				pos_[index_i] += 0.5 * acceleration_trans * dt * dt / rho_[index_i];
+				pos_[index_i] += coefficient_ * smoothing_length_sqr_ * acceleration_trans;
 		}
 		//=================================================================================================//
 		AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL)

@@ -163,16 +163,14 @@ namespace SPH
 		class TransportVelocityCorrectionInner : public LocalDynamics, public FluidDataInner
 		{
 		public:
-			explicit TransportVelocityCorrectionInner(BaseInnerRelation &inner_relation, Real coefficient = 7.0);
+			explicit TransportVelocityCorrectionInner(BaseInnerRelation &inner_relation, Real coefficient = 0.25);
 			virtual ~TransportVelocityCorrectionInner(){};
-			virtual void setupDynamics(Real dt = 0.0) override;
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			StdLargeVec<Real> &rho_;
 			StdLargeVec<Vecd> &pos_;
 			StdLargeVec<int> &surface_indicator_;
-			Real p_background_;
+			Real smoothing_length_sqr_;
 			const Real coefficient_;
 		};
 

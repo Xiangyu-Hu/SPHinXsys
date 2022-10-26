@@ -39,11 +39,12 @@ namespace SPH
      * @class ComputeDensityErrorInner
      * @brief compute error of particle splitting and merging
      */
-    class ComputeDensityErrorInner : public GeneralDataDelegateInner
+    class ComputeDensityErrorInner : public LocalDynamics, public GeneralDataDelegateInner
     {
     public:
         ComputeDensityErrorInner(BaseInnerRelation &inner_relation)
-            : GeneralDataDelegateInner(inner_relation),
+            : LocalDynamics(inner_relation.sph_body_), GeneralDataDelegateInner(inner_relation),
+              rho0_(sph_body_.base_material_->ReferenceDensity()),
               h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")),
               particle_adaptation_(DynamicCast<ParticleSplitAndMerge>(this, *inner_relation.sph_body_.sph_adaptation_))
         {
@@ -61,6 +62,7 @@ namespace SPH
 
     protected:
         ParticleSplitAndMerge &particle_adaptation_;
+        Real rho0_;
         StdLargeVec<Real> &h_ratio_;
         Vecd E_cof_ = Vecd(0.0);
         Real sigma_E_ = 0.0;
@@ -121,7 +123,7 @@ namespace SPH
     protected:
         BoundingBox refinement_region_bounds_;
         ParticleSplitAndMerge &particle_adaptation_;
-        Real rho0_inv_;
+        Real inv_rho0_;
         StdLargeVec<Vecd> &pos_;
         StdLargeVec<Real> &Vol_;
         StdLargeVec<Real> &mass_;
@@ -165,19 +167,19 @@ namespace SPH
     public:
         SplitWithMinimumDensityErrorInner(BaseInnerRelation &inner_relation, Shape &refinement_region, size_t body_buffer_width)
             : ParticleSplitWithPrescribedArea(inner_relation.sph_body_, refinement_region, body_buffer_width),
-			  compute_density_error(inner_relation)
-            {
-                particles_->registerVariable(total_split_error_, "SplitDensityError", 0.0);
-            };
-            virtual ~SplitWithMinimumDensityErrorInner(){};
+              compute_density_error(inner_relation)
+        {
+            particles_->registerVariable(total_split_error_, "SplitDensityError", 0.0);
+        };
+        virtual ~SplitWithMinimumDensityErrorInner(){};
 
-            void update(size_t index_i, Real dt = 0.0);
+        void update(size_t index_i, Real dt = 0.0);
 
-        protected:
-            ComputeDensityErrorInner compute_density_error;
+    protected:
+        ComputeDensityErrorInner compute_density_error;
 
-            virtual Vecd getSplittingPosition(const StdVec<size_t> &new_indices) override;
-            virtual void setupDynamics(Real dt) override;
+        virtual Vecd getSplittingPosition(const StdVec<size_t> &new_indices) override;
+        virtual void setupDynamics(Real dt) override;
     };
 
     /**

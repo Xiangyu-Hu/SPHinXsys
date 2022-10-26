@@ -19,7 +19,7 @@ namespace SPH
         Vecd pos_iteration = new_positions[0];
         Real residual = 1.0e-4;
         int iteration = 0;
-        Real error_sum_min = particles_->rho0_ * 10.0;
+        Real error_sum_min = rho0_ * 10.0;
         Real temp_E = 0.0;
 
         while (iteration < 100)
@@ -104,7 +104,7 @@ namespace SPH
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
         {
             grad_kernel += inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n] *
-                           particles_->mass_[inner_neighborhood.j_[n]] / particles_->rho0_ /
+                           particles_->mass_[inner_neighborhood.j_[n]] / rho0_ /
                            particles_->Vol_[inner_neighborhood.j_[n]];
         }
         return grad_kernel;
@@ -160,13 +160,13 @@ namespace SPH
         {
             Vecd displacement = position - particles_->pos_[inner_neighborhood.j_[n]];
             Real h_ratio_min = SMIN(h_ratio_[inner_neighborhood.j_[n]], h_newIndex);
-            Real Vol_j = particles_->mass_[inner_neighborhood.j_[n]] / particles_->rho0_;
+            Real Vol_j = particles_->mass_[inner_neighborhood.j_[n]] / rho0_;
             Real Vol_ratio = Vol_j / Vol_newIndex;
             sigma_newIndex += computeKernelWeightBetweenParticles(h_newIndex, displacement, Vol_ratio);
             grad_sigma += computeKernelWeightGradientBetweenParticles(h_ratio_min, displacement, Vol_j);
         }
         grad_new_indices_.push_back(grad_sigma);
-        sigma_newIndex = sigma_newIndex * particles_->rho0_ * inv_sigma_0;
+        sigma_newIndex = sigma_newIndex * rho0_ * inv_sigma_0;
         return sigma_newIndex;
     }
     //=================================================================================================//
@@ -181,7 +181,7 @@ namespace SPH
         {
             Real h_ratio_j = h_ratio_[neighborhood.j_[k]];
             Vecd pos_j = particles_->pos_[neighborhood.j_[k]];
-            Real Vol_j = particles_->mass_[neighborhood.j_[k]] / particles_->rho0_;
+            Real Vol_j = particles_->mass_[neighborhood.j_[k]] / rho0_;
             Real inv_sigma_j = 1.0 / particle_adaptation_.ReferenceNumberDensity(h_ratio_j);
             Real sigma_split_j = 0.0;
 
@@ -206,7 +206,7 @@ namespace SPH
                 grad_sigma_j.push_back(computeKernelWeightGradientBetweenParticles(h_ratio_min, displacement, Vol_newIndex));
             }
 
-            sigma_split_j = sigma_split_j * particles_->rho0_ * inv_sigma_j;
+            sigma_split_j = sigma_split_j * rho0_ * inv_sigma_j;
 
             Real sign = sigma_split_j / (ABS(sigma_split_j) + TinyReal);
             sigma_co_j += sign * (grad_sigma_j[0] + grad_sigma_j[1]);
@@ -275,14 +275,14 @@ namespace SPH
             {
                 Vecd displacement = position - particles_->pos_[contact_neighborhood.j_[n]];
                 Real h_ratio_min = SMIN(h_ratio_[contact_neighborhood.j_[n]], h_newIndex);
-                Real Vol_j = particles_->mass_[contact_neighborhood.j_[n]] / particles_->rho0_;
+                Real Vol_j = particles_->mass_[contact_neighborhood.j_[n]] / rho0_;
                 Real Vol_ratio = Vol_j / Vol_newIndex;
                 sigma_newIndex += computeKernelWeightBetweenParticles(h_newIndex, displacement, Vol_ratio);
                 grad_sigma += computeKernelWeightGradientBetweenParticles(h_ratio_min, displacement, Vol_j);
             }
         }
         grad_new_indices_[grad_new_indices_.size() - 1] += grad_sigma;
-        sigma_newIndex = sigma_newIndex * particles_->rho0_ * inv_sigma_0 + sigma_inner;
+        sigma_newIndex = sigma_newIndex * rho0_ * inv_sigma_0 + sigma_inner;
         return sigma_newIndex;
     }
     //=================================================================================================//
@@ -291,25 +291,25 @@ namespace SPH
         : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
           particle_adaptation_(DynamicCast<ParticleSplitAndMerge>(this, *sph_body.sph_adaptation_)),
           refinement_region_bounds_(refinement_region.getBounds()),
-          rho0_inv_(1.0 / particles_->rho0_),
+          inv_rho0_(1.0 / sph_body_.base_material_->ReferenceDensity()),
           Vol_(particles_->Vol_), pos_(particles_->pos_), rho_(particles_->rho_),
           mass_(particles_->mass_),
           h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")) {}
- 	//=================================================================================================//
-	bool ParticleRefinementWithPrescribedArea::
-		checkLocation(const BoundingBox &refinement_region_bounds, Vecd position, Real volume)
-	{
-		int bound_number = 0;
-		for (int axis_direction = 0; axis_direction != Dimensions; ++axis_direction)
-		{
-			Real particle_spacing = pow(volume, 1.0 / Dimensions);
-			if (position[axis_direction] > (refinement_region_bounds.first[axis_direction] + particle_spacing) &&
-				position[axis_direction] < (refinement_region_bounds.second[axis_direction] - particle_spacing))
-				bound_number += 1;
-		}
-		return bound_number != Dimensions ? false : true;
-	}
-   //=================================================================================================//
+    //=================================================================================================//
+    bool ParticleRefinementWithPrescribedArea::
+        checkLocation(const BoundingBox &refinement_region_bounds, Vecd position, Real volume)
+    {
+        int bound_number = 0;
+        for (int axis_direction = 0; axis_direction != Dimensions; ++axis_direction)
+        {
+            Real particle_spacing = pow(volume, 1.0 / Dimensions);
+            if (position[axis_direction] > (refinement_region_bounds.first[axis_direction] + particle_spacing) &&
+                position[axis_direction] < (refinement_region_bounds.second[axis_direction] - particle_spacing))
+                bound_number += 1;
+        }
+        return bound_number != Dimensions ? false : true;
+    }
+    //=================================================================================================//
     ParticleSplitWithPrescribedArea::
         ParticleSplitWithPrescribedArea(SPHBody &sph_body, Shape &refinement_region, size_t body_buffer_width)
         : ParticleRefinementWithPrescribedArea(sph_body, refinement_region)
@@ -329,7 +329,7 @@ namespace SPH
     //=================================================================================================//
     bool ParticleSplitWithPrescribedArea::splitCriteria(size_t index_i)
     {
-        Real non_deformed_volume = mass_[index_i] * rho0_inv_;
+        Real non_deformed_volume = mass_[index_i] * inv_rho0_;
         Vecd &position = pos_[index_i];
         bool is_split_allowed = particle_adaptation_.isSplitAllowed(non_deformed_volume);
         bool is_split_inside = checkLocation(refinement_region_bounds_, position, non_deformed_volume);
@@ -399,7 +399,7 @@ namespace SPH
         updateNewlySplittingParticle(size_t index_center, size_t index_new, Vecd pos_split)
     {
         mass_[index_new] = 0.5 * mass_[index_center];
-        Vol_[index_new] = mass_[index_new] / particles_->rho0_;
+        Vol_[index_new] = mass_[index_new] * inv_rho0_;
         Real particle_spacing_j = pow(Vol_[index_new], 1.0 / (Real)Dimensions);
         h_ratio_[index_new] = sph_body_.sph_adaptation_->ReferenceSpacing() / particle_spacing_j;
         particles_->pos_[index_new] = pos_split;
@@ -478,7 +478,7 @@ namespace SPH
     //=================================================================================================//
     bool ParticleMergeWithPrescribedArea::mergeCriteria(size_t index_i, StdVec<size_t> &merge_indices)
     {
-        Real non_deformed_volume = mass_[index_i] * rho0_inv_;
+        Real non_deformed_volume = mass_[index_i] * inv_rho0_;
         bool resolution_check = particle_adaptation_.mergeResolutionCheck(non_deformed_volume);
         Real particle_spacing = pow(non_deformed_volume, 1.0 / Dimensions);
         Real search_threshold = 1.2;
@@ -506,7 +506,7 @@ namespace SPH
         {
             size_t index_j = inner_neighborhood.j_[n];
             Real distance_ = (particles_->pos_[index_j] - position).norm();
-            Real Vol_j = mass_[index_j] / particles_->rho0_;
+            Real Vol_j = mass_[index_j] * inv_rho0_;
             if (!tag_merged_[index_j])
                 if (distance_ < search_distance)
                 {
@@ -552,7 +552,7 @@ namespace SPH
         }
         merge_particle_value_(all_particle_data_, merged_index, merge_indices, merge_mass_);
         mass_[merged_index] = total_mass;
-        Vol_[merged_index] = mass_[merged_index] / particles_->rho0_;
+        Vol_[merged_index] = mass_[merged_index] * inv_rho0_;
         Real particle_spacing = pow(Vol_[merged_index], 1.0 / Dimensions);
         h_ratio_[merged_index] = sph_body_.sph_adaptation_->ReferenceSpacing() / particle_spacing;
     }
@@ -571,7 +571,7 @@ namespace SPH
     //=================================================================================================//
     bool MergeWithMinimumDensityErrorInner::mergeCriteria(size_t index_i, StdVec<size_t> &merge_indices)
     {
-        Real non_deformed_volume = mass_[index_i] * rho0_inv_;
+        Real non_deformed_volume = mass_[index_i] * inv_rho0_;
         bool resolution_check = particle_adaptation_.mergeResolutionCheck(non_deformed_volume);
         Real particle_spacing_small = pow(non_deformed_volume, 1.0 / Dimensions);
         Real particle_spacing_large = pow(non_deformed_volume * 2.0, 1.0 / Dimensions);
@@ -639,7 +639,7 @@ namespace SPH
         for (size_t n = 0; n != new_indices.size(); ++n)
         {
             mass_[new_indices[n]] = 0.5 * mass_[index_center];
-            Vol_[new_indices[n]] = mass_[new_indices[n]] / particles_->rho0_;
+            Vol_[new_indices[n]] = mass_[new_indices[n]] * inv_rho0_;
             Real particle_spacing_j = pow(Vol_[new_indices[n]], 1.0 / (Real)Dimensions);
             h_ratio_[new_indices[n]] = sph_body_.sph_adaptation_->ReferenceSpacing() / particle_spacing_j;
         }

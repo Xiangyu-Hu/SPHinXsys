@@ -13,7 +13,7 @@ namespace SPH
 	BaseLifeTimeDynamics::BaseLifeTimeDynamics(SPHBody &sph_body)
 		: LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
 		  particle_split_merge_(DynamicCast<ParticleSplitAndMerge>(this, *sph_body.sph_adaptation_)),
-		  rho0_inv_(1.0 / particles_->rho0_),
+		  inv_rho0_(1.0 / sph_body_.base_material_->ReferenceDensity()),
 		  rho_(particles_->rho_), pos_(particles_->pos_), Vol_(particles_->Vol_),
 		  mass_(particles_->mass_),
 		  h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")) {}
@@ -43,7 +43,7 @@ namespace SPH
 	//=================================================================================================//
 	bool RefinementInPrescribedRegion::checkSplit(size_t index_i)
 	{
-		Real non_deformed_volume = mass_[index_i] * rho0_inv_;
+		Real non_deformed_volume = mass_[index_i] * inv_rho0_;
 		bool is_split_allowed = particle_split_merge_.isSplitAllowed(non_deformed_volume);
 		bool is_split_inside = checkLocation(refinement_region_bounds_, pos_[index_i], non_deformed_volume);
 

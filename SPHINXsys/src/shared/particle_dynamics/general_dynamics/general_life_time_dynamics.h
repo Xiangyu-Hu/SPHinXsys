@@ -44,7 +44,7 @@ namespace SPH
 
 	protected:
 		ParticleSplitAndMerge &particle_split_merge_;
-		Real rho0_inv_;
+		Real inv_rho0_;
 		StdLargeVec<Real> &rho_;
 		StdLargeVec<Vecd> &pos_;
 		StdLargeVec<Real> &mass_;
