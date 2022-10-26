@@ -98,10 +98,6 @@ namespace SPH
 		StdLargeVec<Real> mass_; /**< particle massive measure, also referred to mass per-unit thickness of surface particle and mass per-unit cross-section area of linear particle */
 		BaseMaterial &base_material_;
 		//----------------------------------------------------------------------
-		// Global information for all particles
-		//----------------------------------------------------------------------
-		Real speed_max_; /**< Maximum particle speed. */
-		//----------------------------------------------------------------------
 		// Global information for defining particle groups
 		//----------------------------------------------------------------------
 		size_t total_real_particles_;

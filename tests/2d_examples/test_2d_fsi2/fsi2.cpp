@@ -216,7 +216,7 @@ int main(int ac, char *av[])
 			initialize_a_fluid_step.parallel_exec();
 			Real Dt = get_fluid_advection_time_step_size.parallel_exec();
 			update_density_by_summation.parallel_exec();
-			viscous_acceleration_and_transport_correction.parallel_exec(Dt);
+			viscous_acceleration_and_transport_correction.parallel_exec();
 
 			/** FSI for viscous force. */
 			viscous_force_on_solid.parallel_exec();

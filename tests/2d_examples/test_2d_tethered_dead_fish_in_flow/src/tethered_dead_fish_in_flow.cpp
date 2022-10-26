@@ -456,7 +456,7 @@ int main(int ac, char *av[])
 			Real Dt = get_fluid_advection_time_step_size.parallel_exec();
 			update_density_by_summation.parallel_exec();
 			viscous_acceleration.parallel_exec();
-			transport_velocity_correction.parallel_exec(Dt);
+			transport_velocity_correction.parallel_exec();
 			/** Viscous force exerting on fish body. */
 			viscous_force_on_fish_body.parallel_exec();
 			/** Update normal direction on fish body. */

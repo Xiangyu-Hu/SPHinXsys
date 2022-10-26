@@ -211,7 +211,7 @@ int main(int ac, char *av[])
 			inlet_outlet_surface_particle_indicator.parallel_exec();
 			update_density_by_summation.parallel_exec();
 			viscous_acceleration.parallel_exec();
-			transport_velocity_correction.parallel_exec(Dt);
+			transport_velocity_correction.parallel_exec();
 
 			/** Dynamics including pressure relaxation. */
 			Real relaxation_time = 0.0;

@@ -167,7 +167,6 @@ namespace SPH
 		Real AdvectionTimeStepSizeForImplicitViscosity::outputResult(Real reduced_value)
 		{
 			Real speed_max = sqrt(reduced_value);
-			particles_->speed_max_ = speed_max;
 			return advectionCFL_ * smoothing_length_min_ / (speed_max + TinyReal);
 		}
 		//=================================================================================================//
