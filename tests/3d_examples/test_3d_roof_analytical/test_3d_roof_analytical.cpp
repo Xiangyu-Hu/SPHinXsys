@@ -13,15 +13,15 @@ using namespace SPH;
 /**
  * @brief Basic geometry parameters and numerical setup.
  */
-Real radius = 24.875;								/** Radius of the inner boundary of the cylinder. */
 Real height = 50.0;									/** Height of the cylinder. */
 Real thickness = 0.25;								/** Thickness of the cylinder. */
-Real radius_mid_surface = radius + thickness / 2.0; /** Radius of the mid surface. */
+Real radius_mid_surface = 25; /** Radius of the mid surface. */
+Real radius = radius_mid_surface - thickness / 2.0;								/** Radius of the inner boundary of the cylinder. */
 int particle_number = 16;							/** Particle number in the peripheral direction. */
 /** Initial reference particle spacing. */
-Real particle_spacing_ref = 2.0 * radius_mid_surface * Pi * 80.0 / 360.0 / (Real)particle_number;
+Real dp = 2.0 * radius_mid_surface * Pi * 80.0 / 360.0 / (Real)particle_number;
 int BWD = 1;								/** Width of the boundary layer measured by number of particles. */
-Real BW = particle_spacing_ref * (Real)BWD; /** Boundary width, determined by specific layer of boundary particles. */
+Real BW = dp * (Real)BWD; /** Boundary width, determined by specific layer of boundary particles. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec3d(-radius - thickness, 0.0, -radius - thickness),
 								 Vec3d(radius + thickness + BW, height, radius + thickness));
@@ -29,23 +29,17 @@ BoundingBox system_domain_bounds(Vec3d(-radius - thickness, 0.0, -radius - thick
 StdVec<Vecd> observation_location = {Vecd(radius_mid_surface * cos(5.0 / 18.0 * Pi), 0.5 * height, radius_mid_surface *sin(5.0 / 18.0 * Pi))};
 
 /** For material properties of the solid. */
-Real rho0_s = 36.0;				 /** Normalized density. */
+Real rho0_s = 36.7347;				 /** Normalized density. */
 Real Youngs_modulus = 4.32e8;	 /** Normalized Youngs Modulus. */
-Real poisson = 0.0;				 /** Poisson ratio. */
+Real poisson = 0.3;				 /** Poisson ratio. */
 Real physical_viscosity = 7.0e3; /** physical damping, here we choose the same value as numerical viscosity. */
 
 Real time_to_full_external_force = 0.1;
-Real gravitational_acceleration = -10.0;
+Real gravitational_acceleration = -9.8066;
 
 Real observed_quantity_0 = 0.0;
 Real observed_quantity_n = 0.0;
 Real displ_max_reference = 0.3024;
-TEST(Plate, MaxDisplacement)
-{
-	Real displ_max = observed_quantity_0 - observed_quantity_n;
-	EXPECT_NEAR(displ_max, displ_max_reference, displ_max_reference * 0.1);
-	std::cout << "displ_max: " << displ_max << std::endl;
-}
 
 /** Define application dependent particle generator for thin structure. */
 class CylinderParticleGenerator : public SurfaceParticleGenerator
@@ -57,12 +51,12 @@ public:
 		// the cylinder and boundary
 		for (int i = 0; i < particle_number; i++)
 		{
-			for (int j = 0; j < (height / particle_spacing_ref + 2 * BWD - 1); j++)
+			for (int j = 0; j < (height / dp + 2 * BWD - 1); j++)
 			{
 				Real x = radius_mid_surface * cos(50.0 / 180.0 * Pi + (i + 0.5) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number);
-				Real y = particle_spacing_ref * j - BW + particle_spacing_ref * 0.5;
+				Real y = dp * j - BW + dp * 0.5;
 				Real z = radius_mid_surface * sin(50.0 / 180.0 * Pi + (i + 0.5) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number);
-				initializePositionAndVolumetricMeasure(Vecd(x, y, z), particle_spacing_ref * particle_spacing_ref);
+				initializePositionAndVolumetricMeasure(Vecd(x, y, z), dp * dp);
 				Vecd n_0 = Vec3d(x / radius_mid_surface, 0.0, z / radius_mid_surface);
 				initializeSurfaceProperties(n_0, thickness);
 			}
@@ -84,7 +78,7 @@ public:
 private:
 	void tagManually(size_t index_i)
 	{
-		if (base_particles_.pos_[index_i][1] < 0.0 || base_particles_.pos_[index_i][1] > height - 0.5 * particle_spacing_ref)
+		if (base_particles_.pos_[index_i][1] < 0.0 || base_particles_.pos_[index_i][1] > height - 0.5 * dp)
 		{
 			body_part_particles_.push_back(index_i);
 		}
@@ -113,7 +107,7 @@ public:
 int main(int ac, char *av[])
 {
 	/** Setup the system. */
-	SPHSystem system(system_domain_bounds, particle_spacing_ref);
+	SPHSystem system(system_domain_bounds, dp);
 
 	/** Create a Cylinder body. */
 	SolidBody cylinder_body(system, makeShared<DefaultShape>("CylinderBody"));
