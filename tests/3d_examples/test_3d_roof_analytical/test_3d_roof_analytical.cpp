@@ -1,225 +1,95 @@
 /**
- * @file 	3d_roof.cpp
- * @brief 	This is the benchmark test of the shell.
- * @details  We consider the deformation of a cylindrical surface.
- * @author 	Dong Wu, Chi Zhang and Xiangyu Hu
- * @ref 	doi.org/10.1007/s00466-017-1498-9, doi.org/10.1016/0045-7825(89)90098-4
+ * @file 	3d_roof_analytical.cpp
+ * @brief 	Shell verificaiton  incl. refinement study
+ * @details Roof shell verification case with relaxed shell particles
+ * @author 	Bence Rochlitz
+ * @ref 	ANSYS Workbench Verification Manual, Release 15.0, November 2013, VMMECH069: Barrel Vault Roof Under Self Weight
  */
+
 #include "sphinxsys.h"
 #include <gtest/gtest.h>
 
 using namespace SPH;
 
-/**
- * @brief Basic geometry parameters and numerical setup.
- */
-Real height = 50.0;									/** Height of the cylinder. */
-Real thickness = 0.25;								/** Thickness of the cylinder. */
-Real radius_mid_surface = 25; /** Radius of the mid surface. */
-Real radius = radius_mid_surface - thickness / 2.0;								/** Radius of the inner boundary of the cylinder. */
-int particle_number = 16;							/** Particle number in the peripheral direction. */
-/** Initial reference particle spacing. */
-Real dp = 2.0 * radius_mid_surface * Pi * 80.0 / 360.0 / (Real)particle_number;
-int BWD = 1;								/** Width of the boundary layer measured by number of particles. */
-Real BW = dp * (Real)BWD; /** Boundary width, determined by specific layer of boundary particles. */
-/** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec3d(-radius - thickness, 0.0, -radius - thickness),
-								 Vec3d(radius + thickness + BW, height, radius + thickness));
-// Observer location
-StdVec<Vecd> observation_location = {Vecd(radius_mid_surface * cos(5.0 / 18.0 * Pi), 0.5 * height, radius_mid_surface *sin(5.0 / 18.0 * Pi))};
+Real to_rad(Real angle){return angle*Pi/180;}
+static const int simtk_res = 20;
 
-/** For material properties of the solid. */
-Real rho0_s = 36.7347;				 /** Normalized density. */
-Real Youngs_modulus = 4.32e8;	 /** Normalized Youngs Modulus. */
-Real poisson = 0.3;				 /** Poisson ratio. */
-Real physical_viscosity = 7.0e3; /** physical damping, here we choose the same value as numerical viscosity. */
-
-Real time_to_full_external_force = 0.1;
-Real gravitational_acceleration = -9.8066;
-
-Real observed_quantity_0 = 0.0;
-Real observed_quantity_n = 0.0;
-Real displ_max_reference = 0.3024;
-
-/** Define application dependent particle generator for thin structure. */
-class CylinderParticleGenerator : public SurfaceParticleGenerator
+void relax_shell(RealBody& plate_body, Real thickness, Real level_set_refinement_ratio)
 {
-public:
-	explicit CylinderParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
-	virtual void initializeGeometricVariables() override
+	// BUG: apparently only works if dp < thickness, otherwise ShellNormalDirectionPrediction::correctNormalDirection() throws error
+
+	InnerRelation imported_model_inner(plate_body);
+	SimpleDynamics<RandomizeParticlePosition> random_imported_model_particles(plate_body);
+	relax_dynamics::ShellRelaxationStepInner relaxation_step_inner(imported_model_inner, thickness, level_set_refinement_ratio);
+	relax_dynamics::ShellNormalDirectionPrediction shell_normal_prediction(imported_model_inner, thickness);	
+	//----------------------------------------------------------------------
+	//	Particle relaxation starts here.
+	//----------------------------------------------------------------------
+	random_imported_model_particles.parallel_exec(0.25);
+	relaxation_step_inner.mid_surface_bounding_.parallel_exec();
+	plate_body.updateCellLinkedList();
+	//----------------------------------------------------------------------
+	//	Particle relaxation time stepping start here.
+	//----------------------------------------------------------------------
+	int ite_p = 0;
+	while (ite_p < 1000)
 	{
-		// the cylinder and boundary
-		for (int i = 0; i < particle_number; i++)
+		if (ite_p % 100 == 0)
 		{
-			for (int j = 0; j < (height / dp + 2 * BWD - 1); j++)
-			{
-				Real x = radius_mid_surface * cos(50.0 / 180.0 * Pi + (i + 0.5) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number);
-				Real y = dp * j - BW + dp * 0.5;
-				Real z = radius_mid_surface * sin(50.0 / 180.0 * Pi + (i + 0.5) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number);
-				initializePositionAndVolumetricMeasure(Vecd(x, y, z), dp * dp);
-				Vecd n_0 = Vec3d(x / radius_mid_surface, 0.0, z / radius_mid_surface);
-				initializeSurfaceProperties(n_0, thickness);
-			}
+			std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
 		}
+		relaxation_step_inner.parallel_exec();
+		ite_p += 1;
 	}
-};
-/** Define the boundary geometry. */
-class BoundaryGeometry : public BodyPartByParticle
-{
-public:
-	BoundaryGeometry(SPHBody &body, const std::string &body_part_name)
-		: BodyPartByParticle(body, body_part_name)
-	{
-		TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometry::tagManually, this, _1);
-		tagParticles(tagging_particle_method);
-	};
-	virtual ~BoundaryGeometry(){};
+	shell_normal_prediction.exec();
+	std::cout << "The physics relaxation process of imported model finish !" << std::endl;
+}
 
-private:
-	void tagManually(size_t index_i)
-	{
-		if (base_particles_.pos_[index_i][1] < 0.0 || base_particles_.pos_[index_i][1] > height - 0.5 * dp)
-		{
-			body_part_particles_.push_back(index_i);
-		}
-	};
-};
-
-/**
- * define time dependent external force
- */
-class TimeDependentExternalForce : public Gravity
-{
-public:
-	explicit TimeDependentExternalForce(Vecd external_force)
-		: Gravity(external_force) {}
-	virtual Vecd InducedAcceleration(Vecd &position) override
-	{
-		Real current_time = GlobalStaticVariables::physical_time_;
-		return current_time < time_to_full_external_force
-				   ? current_time * global_acceleration_ / time_to_full_external_force
-				   : global_acceleration_;
-	}
-};
-/**
- *  The main program
- */
 int main(int ac, char *av[])
 {
-	/** Setup the system. */
-	SPHSystem system(system_domain_bounds, dp);
+	// main geometric parameters
+	Real radius = 25;
+	Real length = 50;
+	Real thickness = 0.25;
+	Real teta = 40;
+	Real arc = radius*to_rad(teta);
+	// resolution
+	Real dp = 2;
+	// plate dimensions
+	Vec3d plate_dim(2*arc+dp, fake_th, length+dp);
+	// material
+	Real rho = 36.7347;
+	Real E = 4.32e8;
+	Real mu = 0.3;
+	auto material = makeShared<LinearElasticSolid>(rho, E, mu);
 
-	/** Create a Cylinder body. */
-	SolidBody cylinder_body(system, makeShared<DefaultShape>("CylinderBody"));
-	cylinder_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-	cylinder_body.generateParticles<CylinderParticleGenerator>();
-	/** Define Observer. */
-	ObserverBody cylinder_observer(system, "CylinderObserver");
-	cylinder_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+	{// generate particle positions
+		// 1. to create the roof geometry we create the initial shell particles based on a plate
+		// 2. then we warp the plate according to the given radius and angle
 
-	/** Set body contact map
-	 *  The contact map gives the data connections between the bodies
-	 *  basically the the range of bodies to build neighbor particle lists
-	 */
-	InnerRelation cylinder_body_inner(cylinder_body);
-	ContactRelation cylinder_observer_contact(cylinder_observer, {&cylinder_body});
+		// 1. Plate
+		// fake thickness for fast levelset generation - we just need particle positions
+		Real fake_th = 4;
+		Real level_set_refinement_ratio = dp / (0.1 * fake_th);
+		// shape
+		auto plate_shape = makeShared<ComplexShape>("plate_shape");
+		plate_shape->add<TriangleMeshShapeBrick>(plate_dim/2, simtk_res, Vec3d(0));
+		BoundingBox bb(plate_shape->getBounds());
+		SPHSystem system(bb, dp);
+		// body and particles
+		RealBody plate_body(system, plate_shape);
+		plate_body.defineBodyLevelSetShape(level_set_refinement_ratio)->correctLevelSetSign();
+		plate_body.defineParticlesWithMaterial<ShellParticles>(material.get());
+		plate_body.generateParticles<ThickSurfaceParticleGeneratorLattice>(fake_th);
+		relax_shell(plate_body, fake_th, level_set_refinement_ratio);
+		// output
+		IOEnvironment io_env(system);
+		BodyStatesRecordingToVtp vtp_output(io_env, {plate_body});
+		vtp_output.writeToFile();
 
-	/** Common particle dynamics. */
-	SimpleDynamics<TimeStepInitialization> initialize_external_force(cylinder_body, 
-		makeShared<TimeDependentExternalForce>(Vec3d(0.0, 0.0, gravitational_acceleration)));
-
-	/**
-	 * This section define all numerical methods will be used in this case.
-	 */
-	/** Corrected configuration. */
-	InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration>
-		corrected_configuration(cylinder_body_inner);
-	/** Time step size calculation. */
-	ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(cylinder_body);
-	/** stress relaxation. */
-	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf>
-		stress_relaxation_first_half(cylinder_body_inner);
-	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf>
-		stress_relaxation_second_half(cylinder_body_inner);
-	BoundaryGeometry boundary_geometry(cylinder_body, "BoundaryGeometry");
-	SimpleDynamics<solid_dynamics::FixedInAxisDirection, BoundaryGeometry> constrain_holder(boundary_geometry, Vecd(0.0, 1.0, 0.0));
-	DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vecd>>>
-		cylinder_position_damping(0.2, cylinder_body_inner, "Velocity", physical_viscosity);
-	DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vecd>>>
-		cylinder_rotation_damping(0.2, cylinder_body_inner, "AngularVelocity", physical_viscosity);
-	/** Output */
-	IOEnvironment io_environment(system);
-	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		write_cylinder_max_displacement("Position", io_environment, cylinder_observer_contact);
-
-	/** Apply initial condition. */
-	system.initializeSystemCellLinkedLists();
-	system.initializeSystemConfigurations();
-	corrected_configuration.parallel_exec();
-
-	/**
-	 * From here the time stepping begins.
-	 * Set the starting time.
-	 */
-	GlobalStaticVariables::physical_time_ = 0.0;
-	write_states.writeToFile(0);
-	write_cylinder_max_displacement.writeToFile(0);
-	observed_quantity_0 = (*write_cylinder_max_displacement.getObservedQuantity())[0][2];
-
-	/** Setup physical parameters. */
-	int ite = 0;
-	Real end_time = 2.0;
-	Real output_period = end_time / 100.0;
-	Real dt = 0.0;
-	/** Statistics for computing time. */
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
-	/**
-	 * Main loop
-	 */
-	while (GlobalStaticVariables::physical_time_ < end_time)
-	{
-		Real integral_time = 0.0;
-		while (integral_time < output_period)
-		{
-			if (ite % 100 == 0)
-			{
-				std::cout << "N=" << ite << " Time: "
-						  << GlobalStaticVariables::physical_time_ << "	dt: "
-						  << dt << "\n";
-				write_states.writeToFile(100);
-			}
-			dt = 0.1 * computing_time_step_size.parallel_exec();
-			initialize_external_force.parallel_exec(dt);
-			stress_relaxation_first_half.parallel_exec(dt);
-
-			constrain_holder.parallel_exec();
-			cylinder_position_damping.parallel_exec(dt);
-			cylinder_rotation_damping.parallel_exec(dt);
-			constrain_holder.parallel_exec();
-
-			stress_relaxation_second_half.parallel_exec(dt);
-
-			ite++;
-			integral_time += dt;
-			GlobalStaticVariables::physical_time_ += dt;
-		}
-		write_cylinder_max_displacement.writeToFile(ite);
-		tick_count t2 = tick_count::now();
-		write_states.writeToFile();
-		tick_count t3 = tick_count::now();
-		interval += t3 - t2;
+		// 2. Warping
+		
 	}
-	tick_count t4 = tick_count::now();
-
-	tick_count::interval_t tt;
-	tt = t4 - t1 - interval;
-	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-
-	write_cylinder_max_displacement.newResultTest();
-	observed_quantity_n = (*write_cylinder_max_displacement.getObservedQuantity())[0][2];
-
-	testing::InitGoogleTest(&ac, av);
-	return RUN_ALL_TESTS();
+	
+	return 0;
 }
