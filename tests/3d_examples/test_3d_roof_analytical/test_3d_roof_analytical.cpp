@@ -12,7 +12,7 @@
 using namespace SPH;
 
 Real to_rad(Real angle){return angle*Pi/180;}
-static const int simtk_res = 20;
+static const int simtk_res = 1;
 
 void relax_shell(RealBody& plate_body, Real thickness, Real level_set_refinement_ratio)
 {
@@ -55,8 +55,7 @@ int main(int ac, char *av[])
 	Real arc = radius*to_rad(teta);
 	// resolution
 	Real dp = 2;
-	// plate dimensions
-	Vec3d plate_dim(2*arc+dp, fake_th, length+dp);
+
 	// material
 	Real rho = 36.7347;
 	Real E = 4.32e8;
@@ -71,11 +70,12 @@ int main(int ac, char *av[])
 		// fake thickness for fast levelset generation - we just need particle positions
 		Real fake_th = 4;
 		Real level_set_refinement_ratio = dp / (0.1 * fake_th);
+		// plate dimensions
+		Vec3d plate_dim(2*arc+dp, fake_th, length+dp);
 		// shape
 		auto plate_shape = makeShared<ComplexShape>("plate_shape");
 		plate_shape->add<TriangleMeshShapeBrick>(plate_dim/2, simtk_res, Vec3d(0));
-		BoundingBox bb(plate_shape->getBounds());
-		SPHSystem system(bb, dp);
+		SPHSystem system(plate_shape->getBounds(), dp);
 		// body and particles
 		RealBody plate_body(system, plate_shape);
 		plate_body.defineBodyLevelSetShape(level_set_refinement_ratio)->correctLevelSetSign();
@@ -88,7 +88,7 @@ int main(int ac, char *av[])
 		vtp_output.writeToFile();
 
 		// 2. Warping
-		
+
 	}
 	
 	return 0;
