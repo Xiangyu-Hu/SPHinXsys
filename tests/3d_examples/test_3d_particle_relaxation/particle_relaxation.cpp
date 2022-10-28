@@ -47,7 +47,7 @@ int main()
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	RealBody imported_model(system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
-	imported_model.defineAdaptation<ParticleSpacingByBodyShape>(1.15, 1.0, 3);
+	imported_model.defineAdaptation<ParticleRefinementNearSurface>(1.15, 1.0, 3);
 	imported_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(io_environment);
 	imported_model.defineParticlesAndMaterial();
 	imported_model.generateParticles<ParticleGeneratorMultiResolution>();

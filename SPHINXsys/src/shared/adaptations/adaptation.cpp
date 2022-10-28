@@ -144,16 +144,9 @@ namespace SPH
 											  getLevelSetTotalLevel(), shape, *this);
 	}
 	//=================================================================================================//
-	ParticleSpacingByBodyShape::
-		ParticleSpacingByBodyShape(SPHBody &sph_body, Real smoothing_length_ratio,
-								   Real system_refinement_ratio, int local_refinement_level)
-		: ParticleWithLocalRefinement(sph_body, smoothing_length_ratio,
-									  system_refinement_ratio, local_refinement_level){};
-	//=================================================================================================//
-	Real ParticleSpacingByBodyShape::getLocalSpacing(Shape &shape, const Vecd &position)
+	Real ParticleRefinementByShape::smoothedSpacing(const Real &measure, const Real &transition_thickness)
 	{
-		Real phi = fabs(shape.findSignedDistance(position));
-		Real ratio_ref = phi / (2.0 * spacing_ref_);
+		Real ratio_ref = measure / (2.0 * transition_thickness);
 		Real target_spacing = spacing_ref_;
 		if (ratio_ref < kernel_ptr_->KernelSize())
 		{
@@ -163,10 +156,22 @@ namespace SPH
 		return target_spacing;
 	}
 	//=================================================================================================//
+	Real ParticleRefinementNearSurface::getLocalSpacing(Shape &shape, const Vecd &position)
+	{
+		Real phi = fabs(shape.findSignedDistance(position));
+		return smoothedSpacing(phi, spacing_ref_);
+	}
+	//=================================================================================================//
+	Real ParticleRefinementWithinShape::getLocalSpacing(Shape &shape, const Vecd &position)
+	{
+		Real phi = shape.findSignedDistance(position);
+		return phi < 0.0 ? spacing_min_ : smoothedSpacing(phi, spacing_ref_);
+	}
+	//=================================================================================================//
 	ParticleSplitAndMerge::ParticleSplitAndMerge(SPHBody &sph_body, Real h_spacing_ratio,
 												 Real system_resolution_ratio, int local_refinement_level)
 		: ParticleWithLocalRefinement(sph_body, h_spacing_ratio,
-							   system_resolution_ratio, local_refinement_level)
+									  system_resolution_ratio, local_refinement_level)
 	{
 		spacing_min_ = MostRefinedSpacing(spacing_ref_, local_refinement_level_);
 		h_ratio_max_ = spacing_ref_ / spacing_min_;

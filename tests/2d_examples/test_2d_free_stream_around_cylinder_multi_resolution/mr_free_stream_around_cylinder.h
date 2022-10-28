@@ -1,9 +1,9 @@
 /**
-* @file 	freestream_flow_around_cylinder_case.h
-* @brief 	This is the case file for the test of free-stream boundary condition.
-* @details  We consider a flow pass the cylinder with freestream boundary condition in 2D.
-* @author 	Xiangyu Hu, Shuoguo Zhang
-*/
+ * @file 	freestream_flow_around_cylinder_case.h
+ * @brief 	This is the case file for the test of free-stream boundary condition.
+ * @details  We consider a flow pass the cylinder with freestream boundary condition in 2D.
+ * @author 	Xiangyu Hu, Shuoguo Zhang
+ */
 
 #include "sphinxsys.h"
 using namespace SPH;
@@ -27,17 +27,17 @@ StdVec<Vecd> observation_locations = {point_coordinate_1, point_coordinate_2, po
 //----------------------------------------------------------------------
 //	Global parameters on the fluid properties
 //----------------------------------------------------------------------
-Real rho0_f = 1.0;											/**< Density. */
-Real U_f = 1.0;												/**< Characteristic velocity. */
-Real c_f = 10.0 * U_f;										/**< Speed of sound. */
-Real Re = 100.0;											/**< Reynolds number. */
+Real rho0_f = 1.0;											  /**< Density. */
+Real U_f = 1.0;												  /**< Characteristic velocity. */
+Real c_f = 10.0 * U_f;										  /**< Speed of sound. */
+Real Re = 100.0;											  /**< Reynolds number. */
 Real mu_f = rho0_f * U_f * (2.0 * insert_circle_radius) / Re; /**< Dynamics viscosity. */
 //----------------------------------------------------------------------
 //	define geometry of SPH bodies
 //----------------------------------------------------------------------
 //	water block shape
-std::vector<Vecd> water_block_shape {
-Vecd(-DL_sponge, 0.0),Vecd(-DL_sponge, DH), Vecd(DL, DH), Vecd(DL, 0.0), Vecd(-DL_sponge, 0.0)};
+std::vector<Vecd> water_block_shape{
+	Vecd(-DL_sponge, 0.0), Vecd(-DL_sponge, DH), Vecd(DL, DH), Vecd(DL, 0.0), Vecd(-DL_sponge, 0.0)};
 Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH);
 Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize;
 Vec2d emitter_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
@@ -48,13 +48,15 @@ Vec2d disposer_translation = Vec2d(DL, DH + 0.25 * DH) - disposer_halfsize;
 //----------------------------------------------------------------------
 //	Define case dependent geometries
 //----------------------------------------------------------------------
-class WaterBlock : public MultiPolygonShape
+class WaterBlock : public ComplexShape
 {
 public:
-	explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
+	explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
-		multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
+		MultiPolygon outer_boundary(water_block_shape);
+		add<MultiPolygonShape>(outer_boundary, "OuterBoundary");
+		MultiPolygon circle(insert_circle_center, insert_circle_radius, 100);
+		subtract<MultiPolygonShape>(circle);
 	}
 };
 class Cylinder : public MultiPolygonShape
@@ -75,7 +77,7 @@ class EmitterBufferInflowCondition : public fluid_dynamics::InflowVelocityCondit
 public:
 	EmitterBufferInflowCondition(BodyAlignedBoxByCell &aligned_box_part)
 		: InflowVelocityCondition(aligned_box_part),
-		u_ave_(0), u_ref_(U_f), t_ref_(2.0) {}
+		  u_ave_(0), u_ref_(U_f), t_ref_(2.0) {}
 
 	Vecd getPrescribedVelocity(Vecd &position, Vecd &velocity) override
 	{

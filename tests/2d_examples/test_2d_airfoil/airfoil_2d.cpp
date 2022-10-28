@@ -52,7 +52,7 @@ int main(int ac, char *av[])
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	RealBody airfoil(system, makeShared<ImportModel>("AirFoil"));
-	airfoil.defineAdaptation<ParticleSpacingByBodyShape>(1.15, 1.0, 3);
+	airfoil.defineAdaptation<ParticleRefinementNearSurface>(1.15, 1.0, 3);
 	airfoil.defineBodyLevelSetShape()->cleanLevelSet()->writeLevelSet(io_environment);
 	airfoil.defineParticlesAndMaterial();
 	airfoil.generateParticles<ParticleGeneratorMultiResolution>();

@@ -30,7 +30,7 @@ namespace SPH
 	//=================================================================================================//
 	ParticleGeneratorMultiResolution::ParticleGeneratorMultiResolution(SPHBody &sph_body)
 		: ParticleGeneratorLattice(sph_body),
-		  particle_adaptation_(DynamicCast<ParticleSpacingByBodyShape>(this, sph_body.sph_adaptation_)),
+		  particle_adaptation_(DynamicCast<ParticleRefinementNearSurface>(this, sph_body.sph_adaptation_)),
 		  h_ratio_(particle_adaptation_->registerSmoothingLengthRatio(base_particles_))
 	{
 		lattice_spacing_ = particle_adaptation_->MinimumSpacing();

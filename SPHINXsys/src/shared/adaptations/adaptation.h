@@ -125,16 +125,16 @@ namespace SPH
 	};
 
 	/**
-	 * @class ParticleSpacingByShape
+	 * @class ParticleRefinementByShape
 	 * @brief Adaptive resolutions within a SPH body according to the distance to the body surface.
 	 */
-	class ParticleSpacingByShape : public ParticleWithLocalRefinement
+	class ParticleRefinementByShape : public ParticleWithLocalRefinement
 	{
 	public:
-		ParticleSpacingByShape(SPHBody &sph_body, Real smoothing_length_ratio,
-							   Real system_refinement_ratio,
-							   int local_refinement_level);
-		virtual ~ParticleSpacingByShape(){};
+		template <typename... ConstructorArgs>
+		ParticleRefinementByShape(ConstructorArgs &&...args)
+			: ParticleWithLocalRefinement(std::forward<ConstructorArgs>(args)...){};
+		virtual ~ParticleRefinementByShape(){};
 
 		virtual Real getLocalSpacing(Shape &shape, const Vecd &position) = 0;
 
@@ -143,18 +143,33 @@ namespace SPH
 	};
 
 	/**
-	 * @class ParticleSpacingByBodyShape
+	 * @class ParticleRefinementNearSurface
 	 * @brief Adaptive resolutions within a SPH body according to the distance to the body surface.
 	 */
-	class ParticleSpacingByBodyShape : public ParticleWithLocalRefinement
+	class ParticleRefinementNearSurface : public ParticleRefinementByShape
 	{
 	public:
-		ParticleSpacingByBodyShape(SPHBody &sph_body, Real smoothing_length_ratio,
-								   Real system_refinement_ratio,
-								   int local_refinement_level);
-		virtual ~ParticleSpacingByBodyShape(){};
+		template <typename... ConstructorArgs>
+		ParticleRefinementNearSurface(ConstructorArgs &&...args)
+			: ParticleRefinementByShape(std::forward<ConstructorArgs>(args)...){};
+		virtual ~ParticleRefinementNearSurface(){};
 
-		Real getLocalSpacing(Shape &shape, const Vecd &position);
+		virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override;
+	};
+
+	/**
+	 * @class ParticleRefinementWithinShape
+	 * @brief Adaptive resolutions within a SPH body according to the distance to the body surface.
+	 */
+	class ParticleRefinementWithinShape : public ParticleRefinementByShape
+	{
+	public:
+		template <typename... ConstructorArgs>
+		ParticleRefinementWithinShape(ConstructorArgs &&...args)
+			: ParticleRefinementByShape(std::forward<ConstructorArgs>(args)...){};
+		virtual ~ParticleRefinementWithinShape(){};
+
+		virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override;
 	};
 
 	/**
