@@ -145,12 +145,13 @@ int main(int ac, char *av[])
 	auto material = makeShared<SaintVenantKirchhoffSolid>(rho, E, mu);
 	Real physical_viscosity = 7e3;
 	// gravity
-	Vec3d gravity = -9.8066*radial_vec/100;
+	Vec3d gravity = -9.8066*radial_vec;
 	Real time_to_full_external_force = 0.1;
 	// system bounding box
 	BoundingBox bb_system;
 
 	// Option A: generating particles from plate and warping
+	// BUG: edge particle density is too high, ShellNormalDirectionPrediction randomly throws error or not
 	auto shell_particles_warped_plate = [&]()
 	{// generate particle positions
 		// 1. to create the roof geometry we create the initial shell particles based on a plate
@@ -197,6 +198,7 @@ int main(int ac, char *av[])
 	};
 
 	// Option B: generating particles from stl
+	// BUG: edge particle density is too high
 	auto shell_particles_stl = [&]()
 	{
 		Real thickness_temp = 4; // 2 or 4
@@ -222,8 +224,12 @@ int main(int ac, char *av[])
 	};
 
 	// Option C: generating particles from predefined positions from obj file
-	StdVec<Vec3d> obj_vertices = read_obj_vertices("input/shell_50mm_80d_1mm.obj");
-	bb_system = get_particles_bounding_box(obj_vertices);
+	StdVec<Vec3d> obj_vertices = read_obj_vertices("input/shell_50mm_80d_1mm.txt"); // dp = 1
+	BoundingBox obj_vertices_bb = get_particles_bounding_box(obj_vertices); // store this
+	bb_system = obj_vertices_bb;
+	// just making sure nothing leaves the bounding box
+	bb_system.first += Vec3d(-5);
+	bb_system.second += Vec3d(5);
 
 	// shell
 	auto shell_shape = makeShared<ComplexShape>("shell_shape");
@@ -252,8 +258,8 @@ int main(int ac, char *av[])
 	{// brute force finding the edges
 		IndexVector ids;
 		for (size_t i = 0; i < shell_body.getBaseParticles().pos_.size(); ++i)
-			if (shell_body.getBaseParticles().pos_[i][length_axis] < bb_system.first[length_axis]+dp/2 ||
-				shell_body.getBaseParticles().pos_[i][length_axis] > bb_system.second[length_axis]-dp/2)
+			if (shell_body.getBaseParticles().pos_[i][length_axis] < obj_vertices_bb.first[length_axis]+dp/2 ||
+				shell_body.getBaseParticles().pos_[i][length_axis] > obj_vertices_bb.second[length_axis]-dp/2)
 					ids.push_back(i);
 		return ids;
 	}();
@@ -291,7 +297,7 @@ int main(int ac, char *av[])
 			Real integral_time = 0.0;
 			while (integral_time < output_period)
 			{
-				if (ite % 100 == 0)
+				if (ite % 1000 == 0)
 				{
 					std::cout << "N=" << ite << " Time: "
 							<< GlobalStaticVariables::physical_time_ << "	dt: "
@@ -318,7 +324,7 @@ int main(int ac, char *av[])
 				GlobalStaticVariables::physical_time_ += dt;
 
 				{// checking if any position has become nan
-					// BUG: damping throws nan error it seems
+					// BUG: damping throws nan error it seems - regardless of particle generation method
 					for (const auto& pos: shell_body.getBaseParticles().pos_)
 						if (std::isnan(pos[0]) || std::isnan(pos[1]) || std::isnan(pos[2]))
 							throw std::runtime_error("position has become nan");
