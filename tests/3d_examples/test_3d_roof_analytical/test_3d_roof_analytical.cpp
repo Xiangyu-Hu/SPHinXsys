@@ -49,11 +49,11 @@ class TimeDependentExternalForce : public Gravity
 {
 	Real time_to_full_external_force_;
 public:
-	explicit TimeDependentExternalForce(Vecd external_force, Real time_to_full_external_force)
+	explicit TimeDependentExternalForce(Vec3d external_force, Real time_to_full_external_force)
 		: Gravity(external_force),
 		time_to_full_external_force_(time_to_full_external_force)
 		{};
-	virtual Vecd InducedAcceleration(Vecd &position) override
+	virtual Vec3d InducedAcceleration(Vec3d &position) override
 	{
 		Real current_time = GlobalStaticVariables::physical_time_;
 		return current_time < time_to_full_external_force_
@@ -119,12 +119,12 @@ int main(int ac, char *av[])
 	Real arc = radius*to_rad(teta);
 	Vec3d center(0,-radius,0);
 	// resolution
-	Real dp = 2;
+	Real dp = 1;
 	// material
 	Real rho = 36.7347;
 	Real E = 4.32e8;
 	Real mu = 0.0;
-	auto material = makeShared<LinearElasticSolid>(rho, E, mu);
+	auto material = makeShared<SaintVenantKirchhoffSolid>(rho, E, mu);
 	Real physical_viscosity = 7e3;
 	// gravity
 	Vec3d gravity = -9.8066*radial_vec;
@@ -137,7 +137,7 @@ int main(int ac, char *av[])
 
 		// 1. Plate
 		// fake thickness for fast levelset generation - we just need particle positions
-		Real fake_th = 4;
+		Real fake_th = dp*2;
 		Real level_set_refinement_ratio = dp / (0.1 * fake_th);
 		// plate dimensions
 		Vec3d plate_dim(2*arc+dp, fake_th, length+dp);
@@ -182,6 +182,7 @@ int main(int ac, char *av[])
 	shell_body.generateParticles<ShellRoofParticleGenerator>(shell_particles, center, dp, thickness);
 	// output
 	IOEnvironment io_env(system, false);
+	shell_body.addBodyStateForRecording<Vec3d>("NormalDirection");
 	BodyStatesRecordingToVtp vtp_output(io_env, {shell_body});
 	vtp_output.writeToFile(0);
 
@@ -198,17 +199,17 @@ int main(int ac, char *av[])
 	{// brute force finding the edges
 		IndexVector ids;
 		for (size_t i = 0; i < shell_body.getBaseParticles().pos_.size(); ++i)
-			if (shell_body.getBaseParticles().pos_[length_axis] < bb.first[length_axis]+dp/2 ||
-				shell_body.getBaseParticles().pos_[length_axis] > bb.second[length_axis]-dp/2)
+			if (shell_body.getBaseParticles().pos_[i][length_axis] < bb.first[length_axis]+dp/2 ||
+				shell_body.getBaseParticles().pos_[i][length_axis] > bb.second[length_axis]-dp/2)
 					ids.push_back(i);
 		return ids;
 	}();
 	constrained_edges.body_part_particles_ = constrained_edge_ids;
 
 	SimpleDynamics<solid_dynamics::FixedInAxisDirection, BodyPartByParticle> constrain_holder(constrained_edges, length_vec);
-	DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vecd>>>
+	DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
 		shell_position_damping(0.2, shell_body_inner, "Velocity", physical_viscosity);
-	DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vecd>>>
+	DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
 		shell_rotation_damping(0.2, shell_body_inner, "AngularVelocity", physical_viscosity);
 
 	/** Apply initial condition. */
@@ -229,36 +230,65 @@ int main(int ac, char *av[])
 	/**
 	 * Main loop
 	 */
-	while (GlobalStaticVariables::physical_time_ < end_time)
+	Real max_dt = 0.0;
+	try
 	{
-		Real integral_time = 0.0;
-		while (integral_time < output_period)
+		while (GlobalStaticVariables::physical_time_ < end_time)
 		{
-			if (ite % 100 == 0)
+			Real integral_time = 0.0;
+			while (integral_time < output_period)
 			{
-				std::cout << "N=" << ite << " Time: "
-						  << GlobalStaticVariables::physical_time_ << "	dt: "
-						  << dt << "\n";
+				if (ite % 100 == 0)
+				{
+					std::cout << "N=" << ite << " Time: "
+							<< GlobalStaticVariables::physical_time_ << "	dt: "
+							<< dt << "\n";
+				}
+				dt = 0.1 * computing_time_step_size.parallel_exec();
+				{// checking for excessive time step reduction
+					if (dt > max_dt) max_dt = dt;
+					if (dt < max_dt/1e3) throw std::runtime_error("time step decreased too much");
+				}
+				initialize_external_force.parallel_exec(dt);
+				stress_relaxation_first_half.parallel_exec(dt);
+
+				constrain_holder.parallel_exec();
+				// shell_position_damping.parallel_exec(dt);
+				// shell_rotation_damping.parallel_exec(dt);
+				constrain_holder.parallel_exec();
+
+				stress_relaxation_second_half.parallel_exec(dt);
+
+				++ite;
+				integral_time += dt;
+				GlobalStaticVariables::physical_time_ += dt;
+
+				{// checking if any position has become nan
+					// BUG: damping throws nan error it seems
+					for (const auto& pos: shell_body.getBaseParticles().pos_)
+						if (std::isnan(pos[0]) || std::isnan(pos[1]) || std::isnan(pos[2]))
+							throw std::runtime_error("position has become nan");
+				}
 			}
-			dt = 0.1 * computing_time_step_size.parallel_exec();
-			initialize_external_force.parallel_exec(dt);
-			stress_relaxation_first_half.parallel_exec(dt);
+			{// output displacement
+				auto elastic_particles = dynamic_cast<ElasticSolidParticles*>(&shell_body.getBaseParticles());
+				std::cout << "max displacement: " << elastic_particles->getMaxDisplacement() << std::endl;
+			}
+			vtp_output.writeToFile(ite);
+		}
+		tick_count::interval_t tt = tick_count::now()-t1;
+		std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-			constrain_holder.parallel_exec();
-			shell_position_damping.parallel_exec(dt);
-			shell_rotation_damping.parallel_exec(dt);
-			constrain_holder.parallel_exec();
-
-			stress_relaxation_second_half.parallel_exec(dt);
-
-			ite++;
-			integral_time += dt;
-			GlobalStaticVariables::physical_time_ += dt;
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+		{// output displacement
+			auto elastic_particles = dynamic_cast<ElasticSolidParticles*>(&shell_body.getBaseParticles());
+			std::cout << "max displacement: " << elastic_particles->getMaxDisplacement() << std::endl;
 		}
 		vtp_output.writeToFile(ite);
 	}
-	tick_count::interval_t tt = tick_count::now()-t1;
-	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	return 0;
 }
