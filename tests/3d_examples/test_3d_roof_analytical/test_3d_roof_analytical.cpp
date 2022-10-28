@@ -103,6 +103,24 @@ SPH::BoundingBox get_particles_bounding_box(const VectorType& pos)
     return SPH::BoundingBox(lower, upper);
 }
 
+StdVec<Vec3d> read_obj_vertices(const std::string& file_name)
+{
+	std::cout << "read_obj_vertices started" << std::endl;
+	StdVec<Vec3d> pos_0;
+    std::ifstream myfile(file_name, std::ios_base::in);
+	if(!myfile.is_open()) throw std::runtime_error("read_obj_vertices: file doesn't exist");
+    while (!myfile.eof())
+    {
+		Real x, y, z;
+		myfile >> x;
+		myfile >> y;
+		myfile >> z;
+		pos_0.push_back({x,y,z});
+    }
+	std::cout << "read_obj_vertices finished" << std::endl;
+	return pos_0;
+}
+
 int main(int ac, char *av[])
 {
 	// main geometric parameters
@@ -127,20 +145,23 @@ int main(int ac, char *av[])
 	auto material = makeShared<SaintVenantKirchhoffSolid>(rho, E, mu);
 	Real physical_viscosity = 7e3;
 	// gravity
-	Vec3d gravity = -9.8066*radial_vec;
+	Vec3d gravity = -9.8066*radial_vec/100;
 	Real time_to_full_external_force = 0.1;
+	// system bounding box
+	BoundingBox bb_system;
 
-	auto shell_particles = [&]()
+	// Option A: generating particles from plate and warping
+	auto shell_particles_warped_plate = [&]()
 	{// generate particle positions
 		// 1. to create the roof geometry we create the initial shell particles based on a plate
 		// 2. then we warp the plate according to the given radius and angle
 
 		// 1. Plate
 		// fake thickness for fast levelset generation - we just need particle positions
-		Real fake_th = dp*2;
-		Real level_set_refinement_ratio = dp / (0.1 * fake_th);
+		Real thickness_temp = dp*2;
+		Real level_set_refinement_ratio = dp / (0.1 * thickness_temp);
 		// plate dimensions
-		Vec3d plate_dim(2*arc+dp, fake_th, length+dp);
+		Vec3d plate_dim(2*arc+dp, thickness_temp, length+dp);
 		// shape
 		auto plate_shape = makeShared<ComplexShape>("plate_shape");
 		plate_shape->add<TriangleMeshShapeBrick>(plate_dim/2, simtk_res, Vec3d(0));
@@ -149,8 +170,8 @@ int main(int ac, char *av[])
 		RealBody plate_body(system, plate_shape);
 		plate_body.defineBodyLevelSetShape(level_set_refinement_ratio)->correctLevelSetSign();
 		plate_body.defineParticlesWithMaterial<ShellParticles>(material.get());
-		plate_body.generateParticles<ThickSurfaceParticleGeneratorLattice>(fake_th);
-		relax_shell(plate_body, fake_th, level_set_refinement_ratio);
+		plate_body.generateParticles<ThickSurfaceParticleGeneratorLattice>(thickness_temp);
+		relax_shell(plate_body, thickness_temp, level_set_refinement_ratio);
 		// output
 		IOEnvironment io_env(system);
 		BodyStatesRecordingToVtp vtp_output(io_env, {plate_body});
@@ -170,18 +191,50 @@ int main(int ac, char *av[])
 		StdVec<Vec3d> pos_0;
 		pos_0.reserve(plate_body.getBaseParticles().pos_.size());
 		for (const auto& pos: plate_body.getBaseParticles().pos_) pos_0.push_back(warping_transform(pos));
+		// update bb_system and return
+		bb_system = get_particles_bounding_box(pos_0);
 		return pos_0;
-	}();
+	};
+
+	// Option B: generating particles from stl
+	auto shell_particles_stl = [&]()
+	{
+		Real thickness_temp = 4; // 2 or 4
+		std::string stl_path = "input/shell_50mm_80d_" + std::to_string(int(thickness_temp)) + "mm.stl";
+		Real level_set_refinement_ratio = dp / (0.1 * thickness_temp);
+		// shape
+		auto plate_shape = makeShared<ComplexShape>("plate_shape_stl");
+		plate_shape->add<TriangleMeshShapeSTL>(stl_path, Vec3d(0), 1);
+		bb_system = plate_shape->getBounds();
+		SPHSystem system(bb_system, dp);
+		// body and particles
+		RealBody plate_body(system, plate_shape);
+		plate_body.defineBodyLevelSetShape(level_set_refinement_ratio)->correctLevelSetSign();
+		plate_body.defineParticlesWithMaterial<ShellParticles>(material.get());
+		plate_body.generateParticles<ThickSurfaceParticleGeneratorLattice>(thickness_temp);
+		relax_shell(plate_body, thickness_temp, level_set_refinement_ratio);
+		// output
+		IOEnvironment io_env(system, false);
+		BodyStatesRecordingToVtp vtp_output(io_env, {plate_body});
+		vtp_output.writeToFile(0);
+
+		return plate_body.getBaseParticles().pos_;
+	};
+
+	// Option C: generating particles from predefined positions from obj file
+	StdVec<Vec3d> obj_vertices = read_obj_vertices("input/shell_50mm_80d_1mm.obj");
+	bb_system = get_particles_bounding_box(obj_vertices);
+
+	// shell
+	auto shell_shape = makeShared<ComplexShape>("shell_shape");
 
 	// starting the actual simulation
-	BoundingBox bb(get_particles_bounding_box(shell_particles));
-	SPHSystem system(bb, dp);
-	// shell
-	SolidBody shell_body(system, makeShared<DefaultShape>("shell_body"));
+	SPHSystem system(bb_system, dp);
+	SolidBody shell_body(system, shell_shape);
 	shell_body.defineParticlesWithMaterial<ShellParticles>(material.get());
-	shell_body.generateParticles<ShellRoofParticleGenerator>(shell_particles, center, dp, thickness);
+	shell_body.generateParticles<ShellRoofParticleGenerator>(obj_vertices, center, dp, thickness);
 	// output
-	IOEnvironment io_env(system, false);
+	IOEnvironment io_env(system, true);
 	shell_body.addBodyStateForRecording<Vec3d>("NormalDirection");
 	BodyStatesRecordingToVtp vtp_output(io_env, {shell_body});
 	vtp_output.writeToFile(0);
@@ -199,8 +252,8 @@ int main(int ac, char *av[])
 	{// brute force finding the edges
 		IndexVector ids;
 		for (size_t i = 0; i < shell_body.getBaseParticles().pos_.size(); ++i)
-			if (shell_body.getBaseParticles().pos_[i][length_axis] < bb.first[length_axis]+dp/2 ||
-				shell_body.getBaseParticles().pos_[i][length_axis] > bb.second[length_axis]-dp/2)
+			if (shell_body.getBaseParticles().pos_[i][length_axis] < bb_system.first[length_axis]+dp/2 ||
+				shell_body.getBaseParticles().pos_[i][length_axis] > bb_system.second[length_axis]-dp/2)
 					ids.push_back(i);
 		return ids;
 	}();
@@ -244,19 +297,20 @@ int main(int ac, char *av[])
 							<< GlobalStaticVariables::physical_time_ << "	dt: "
 							<< dt << "\n";
 				}
+
+				initialize_external_force.parallel_exec(dt);
+
 				dt = 0.1 * computing_time_step_size.parallel_exec();
 				{// checking for excessive time step reduction
 					if (dt > max_dt) max_dt = dt;
 					if (dt < max_dt/1e3) throw std::runtime_error("time step decreased too much");
 				}
-				initialize_external_force.parallel_exec(dt);
+				
 				stress_relaxation_first_half.parallel_exec(dt);
-
 				constrain_holder.parallel_exec();
 				// shell_position_damping.parallel_exec(dt);
 				// shell_rotation_damping.parallel_exec(dt);
 				constrain_holder.parallel_exec();
-
 				stress_relaxation_second_half.parallel_exec(dt);
 
 				++ite;
