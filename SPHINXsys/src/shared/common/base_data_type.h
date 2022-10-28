@@ -57,8 +57,21 @@ namespace SPH
 	 * Matrix<T, 2, 1>::Identity  return {1,0}
 	 * Matrix<T, 2, 2>::Identity  return {{1,0},
 	 *								      {0,1},}
-	 * Matrix<T, n, n>::Ones  Set all element to One. 						
+	 * Matrix<T, n, n>::Ones  Set all element to One. 
+	 * Enable Vectorization using CXX_FLAGS = -Ofast -march=native 
+	 * -m : 
+	 * These ‘-m’ options are defined for the x86 family of computers.
+	 * -march=cpu-type
+     * Generate instructions for the machine type cpu-type. In contrast to -mtune=cpu-type, 
+	 * which merely tunes the generated code for the specified cpu-type, -march=cpu-type allows GCC to generate code that 
+	 * may not run at all on processors other than the one indicated. 
+	 * Specifying -march=cpu-type implies -mtune=cpu-type, except where noted otherwise.
+     * The choices for cpu-type are:
+     * ‘native’ -> This selects the CPU to generate code for at compilation time by determining the processor type of the compiling machine. 
+	 * 			Using -march=native enables all instruction subsets supported by the local machine (hence the result might not run on different machines). 
+	 * 			Using -mtune=native produces code optimized for the local machine under the constraints of the selected instruction set.
 	 */
+	 
 	using Real = double;
 	/** Vector with integers. */
 	using Vec2i = Eigen::Matrix<int, 2, 1>;
