@@ -132,11 +132,12 @@ namespace SPH
 	{
 	public:
 		ParticleSpacingByShape(SPHBody &sph_body, Real smoothing_length_ratio,
-								   Real system_refinement_ratio,
-								   int local_refinement_level);
+							   Real system_refinement_ratio,
+							   int local_refinement_level);
 		virtual ~ParticleSpacingByShape(){};
 
 		virtual Real getLocalSpacing(Shape &shape, const Vecd &position) = 0;
+
 	protected:
 		Real smoothedSpacing(const Real &measure, const Real &transition_thickness);
 	};
