@@ -95,48 +95,24 @@ namespace SPH
 	{
 		static inline DataType zero;
 	};
-	template<> struct DataTypeInitializer<int>   {static inline int   zero = 0;};
-	template<> struct DataTypeInitializer<Real>  {static inline Real  zero = 0.0;};
-	template<> struct DataTypeInitializer<Vec2d> {static inline Vec2d zero = Vec2d::Zero();};
-	template<> struct DataTypeInitializer<Vec3d> {static inline Vec3d zero = Vec3d::Zero();};
-	template<> struct DataTypeInitializer<Mat2d> {static inline Mat2d zero = Mat2d::Zero();};
-	template<> struct DataTypeInitializer<Mat3d> {static inline Mat3d zero = Mat3d::Zero();};
+	template<> struct DataTypeInitializer<int>   { static inline int   zero = 0; };
+	template<> struct DataTypeInitializer<Real>  { static inline Real  zero = 0.0; };
+	template<> struct DataTypeInitializer<Vec2d> { static inline Vec2d zero = Vec2d::Zero(); };
+	template<> struct DataTypeInitializer<Vec3d> { static inline Vec3d zero = Vec3d::Zero(); };
+	template<> struct DataTypeInitializer<Mat2d> { static inline Mat2d zero = Mat2d::Zero(); };
+	template<> struct DataTypeInitializer<Mat3d> { static inline Mat3d zero = Mat3d::Zero(); };
 	/** Type trait for data type index. */
 	template <typename T>
 	struct DataTypeIndex
 	{
 		static constexpr int value = std::numeric_limits<int>::max();
 	};
-	template <>
-	struct DataTypeIndex<Real>
-	{
-		static constexpr int value = 0;
-	};
-	template <>
-	struct DataTypeIndex<Vec2d>
-	{
-		static constexpr int value = 1;
-	};
-	template <>
-	struct DataTypeIndex<Vec3d>
-	{
-		static constexpr int value = 1;
-	};
-	template <>
-	struct DataTypeIndex<Mat2d>
-	{
-		static constexpr int value = 2;
-	};
-	template <>
-	struct DataTypeIndex<Mat3d>
-	{
-		static constexpr int value = 2;
-	};
-	template <>
-	struct DataTypeIndex<int>
-	{
-		static constexpr int value = 3;
-	};
+	template<> struct DataTypeIndex<Real>{  static constexpr int value = 0; };
+	template<> struct DataTypeIndex<Vec2d>{ static constexpr int value = 1; };
+	template<> struct DataTypeIndex<Vec3d>{ static constexpr int value = 1; };
+	template<> struct DataTypeIndex<Mat2d>{ static constexpr int value = 2; };
+	template<> struct DataTypeIndex<Mat3d>{ static constexpr int value = 2; };
+	template<> struct DataTypeIndex<int>{   static constexpr int value = 3; };
 	/** Verbal boolean for positive and negative axis directions. */
 	const int xAxis = 0;
 	const int yAxis = 1;
