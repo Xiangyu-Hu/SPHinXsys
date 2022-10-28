@@ -122,22 +122,23 @@ namespace SPH
 		};
 
 		/**
-		 * @class UpdateSmoothingLengthRatioByBodyShape
+		 * @class UpdateSmoothingLengthRatioByShape
 		 * @brief update the particle smoothing length ratio
 		 */
-		class UpdateSmoothingLengthRatioByBodyShape : public LocalDynamics,
+		class UpdateSmoothingLengthRatioByShape : public LocalDynamics,
 													  public RelaxDataDelegateSimple
 		{
 		protected:
 			StdLargeVec<Real> &h_ratio_, &Vol_;
 			StdLargeVec<Vecd> &pos_;
-			Shape &body_shape_;
-			ParticleRefinementByShape *particle_spacing_by_body_shape_;
+			Shape &target_shape_;
+			ParticleRefinementByShape *particle_adaptation_;
 			Real reference_spacing_;
 
 		public:
-			explicit UpdateSmoothingLengthRatioByBodyShape(SPHBody &sph_body);
-			virtual ~UpdateSmoothingLengthRatioByBodyShape(){};
+			UpdateSmoothingLengthRatioByShape(SPHBody &sph_body, Shape &target_shape);
+			explicit UpdateSmoothingLengthRatioByShape(SPHBody &sph_body);
+			virtual ~UpdateSmoothingLengthRatioByShape(){};
 
 			void update(size_t index_i, Real dt = 0.0);
 		};

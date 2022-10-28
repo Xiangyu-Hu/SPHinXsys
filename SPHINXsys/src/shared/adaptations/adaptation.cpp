@@ -144,13 +144,6 @@ namespace SPH
 											  getLevelSetTotalLevel(), shape, *this);
 	}
 	//=================================================================================================//
-	ParticleRefinementByShape::
-		ParticleRefinementByShape(SPHBody &sph_body, Real h_spacing_ratio_,
-								  Real system_refinement_ratio, int local_refinement_level)
-		: ParticleWithLocalRefinement(sph_body, h_spacing_ratio_,
-									  system_refinement_ratio, local_refinement_level),
-		  target_shape_(*sph_body.body_shape_) {}
-	//=================================================================================================//
 	Real ParticleRefinementByShape::smoothedSpacing(const Real &measure, const Real &transition_thickness)
 	{
 		Real ratio_ref = measure / (2.0 * transition_thickness);
@@ -163,15 +156,15 @@ namespace SPH
 		return target_spacing;
 	}
 	//=================================================================================================//
-	Real ParticleRefinementNearSurface::getLocalSpacingByShape(const Vecd &position)
+	Real ParticleRefinementNearSurface::getLocalSpacing(Shape &shape, const Vecd &position)
 	{
-		Real phi = fabs(target_shape_.findSignedDistance(position));
+		Real phi = fabs(shape.findSignedDistance(position));
 		return smoothedSpacing(phi, spacing_ref_);
 	}
 	//=================================================================================================//
-	Real ParticleRefinementWithinShape::getLocalSpacingByShape(const Vecd &position)
+	Real ParticleRefinementWithinShape::getLocalSpacing(Shape &shape, const Vecd &position)
 	{
-		Real phi = target_shape_.findSignedDistance(position);
+		Real phi = shape.findSignedDistance(position);
 		return phi < 0.0 ? spacing_min_ : smoothedSpacing(phi, spacing_ref_);
 	}
 	//=================================================================================================//

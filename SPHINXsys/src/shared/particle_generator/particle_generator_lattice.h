@@ -77,10 +77,12 @@ namespace SPH
 	class ParticleGeneratorMultiResolution : public ParticleGeneratorLattice
 	{
 	public:
+		ParticleGeneratorMultiResolution(SPHBody &sph_body, Shape &target_shape);
 		explicit ParticleGeneratorMultiResolution(SPHBody &sph_body);
 		virtual ~ParticleGeneratorMultiResolution(){};
 
 	protected:
+		Shape &target_shape_;
 		ParticleRefinementByShape *particle_adaptation_;
 		StdLargeVec<Real> &h_ratio_;
 
@@ -96,7 +98,7 @@ namespace SPH
 	{
 	public:
 		explicit ParticleGeneratorSplitAndMerge(SPHBody &sph_body);
-		virtual ~ParticleGeneratorSplitAndMerge() {};
+		virtual ~ParticleGeneratorSplitAndMerge(){};
 
 	protected:
 		ParticleSplitAndMerge *particle_adaptation_;
@@ -104,12 +106,12 @@ namespace SPH
 
 		virtual void initializePositionAndVolumetricMeasure(const Vecd &position, Real volume) override;
 	};
-	
+
 	/**
 	 * @class ThickSurfaceParticleGeneratorLattice
 	 * @brief Generate thick surface particles from lattice positions for a thin structure defined by a body shape.
-	 * @details Here, a thick surface is defined as that the thickness is equal or larger than the proposed particle spacing. 
-	 * Note that, this class should not be used for generating the thin surface particles, 
+	 * @details Here, a thick surface is defined as that the thickness is equal or larger than the proposed particle spacing.
+	 * Note that, this class should not be used for generating the thin surface particles,
 	 * which may be better generated from a geometric surface directly.
 	 */
 	class ThickSurfaceParticleGeneratorLattice : public BaseParticleGeneratorLattice, public SurfaceParticleGenerator

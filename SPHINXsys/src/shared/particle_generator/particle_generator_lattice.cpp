@@ -28,18 +28,21 @@ namespace SPH
 	ParticleGeneratorLattice::ParticleGeneratorLattice(SPHBody &sph_body)
 		: BaseParticleGeneratorLattice(sph_body), ParticleGenerator(sph_body) {}
 	//=================================================================================================//
-	ParticleGeneratorMultiResolution::ParticleGeneratorMultiResolution(SPHBody &sph_body)
-		: ParticleGeneratorLattice(sph_body),
+	ParticleGeneratorMultiResolution::ParticleGeneratorMultiResolution(SPHBody &sph_body, Shape &target_shape)
+		: ParticleGeneratorLattice(sph_body), target_shape_(target_shape),
 		  particle_adaptation_(DynamicCast<ParticleRefinementByShape>(this, sph_body.sph_adaptation_)),
 		  h_ratio_(particle_adaptation_->registerSmoothingLengthRatio(base_particles_))
 	{
 		lattice_spacing_ = particle_adaptation_->MinimumSpacing();
 	}
 	//=================================================================================================//
+	ParticleGeneratorMultiResolution::ParticleGeneratorMultiResolution(SPHBody &sph_body)
+	: ParticleGeneratorMultiResolution(sph_body, *sph_body.body_shape_){}
+	//=================================================================================================//
 	void ParticleGeneratorMultiResolution::
 		initializePositionAndVolumetricMeasure(const Vecd &position, Real volume)
 	{
-		Real local_particle_spacing = particle_adaptation_->getLocalSpacingByShape(position);
+		Real local_particle_spacing = particle_adaptation_->getLocalSpacing(target_shape_, position);
 		Real local_particle_volume_ratio = powerN(lattice_spacing_ / local_particle_spacing, Dimensions);
 		if ((double)rand() / (RAND_MAX) < local_particle_volume_ratio)
 		{

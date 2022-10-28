@@ -30,12 +30,12 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
 	MultiPolygonShape refinement_region(MultiPolygon(water_block_shape), "RefinementRegion");
-	water_block.defineAdaptation<ParticleRefinementWithinShape>(refinement_region, 1.3, 1.0, 2);
+	water_block.defineAdaptation<ParticleRefinementWithinShape>(1.3, 1.0, 2);
 	water_block.defineComponentLevelSetShape("OuterBoundary");
 	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
 		? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getName())
-		: water_block.generateParticles<ParticleGeneratorMultiResolution>();
+		: water_block.generateParticles<ParticleGeneratorMultiResolution>(refinement_region);
 
 	SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));
 	cylinder.defineAdaptationRatios(1.15, 4.0);
@@ -74,7 +74,7 @@ int main(int ac, char *av[])
 		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(cylinder_inner);
 		relax_dynamics::RelaxationStepComplex relaxation_step_complex(water_block_complex, "OuterBoundary", true);
-		SimpleDynamics<relax_dynamics::UpdateSmoothingLengthRatioByBodyShape> update_smoothing_length_ratio(water_block);
+		SimpleDynamics<relax_dynamics::UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(water_block, refinement_region);
 		//----------------------------------------------------------------------
 		//	Particle relaxation starts here.
 		//----------------------------------------------------------------------
