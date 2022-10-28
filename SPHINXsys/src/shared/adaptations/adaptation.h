@@ -132,13 +132,17 @@ namespace SPH
 	{
 	public:
 		template <typename... ConstructorArgs>
-		ParticleRefinementByShape(ConstructorArgs &&...args)
-			: ParticleWithLocalRefinement(std::forward<ConstructorArgs>(args)...){};
+		ParticleRefinementByShape(SPHBody &sph_body, Shape &target_shape, ConstructorArgs &&...args)
+			: ParticleWithLocalRefinement(sph_body, std::forward<ConstructorArgs>(args)...),
+			  target_shape_(target_shape){};
+		ParticleRefinementByShape(SPHBody &sph_body, Real h_spacing_ratio_,
+								  Real system_refinement_ratio, int local_refinement_level);
 		virtual ~ParticleRefinementByShape(){};
 
-		virtual Real getLocalSpacing(Shape &shape, const Vecd &position) = 0;
+		virtual Real getLocalSpacingByShape(const Vecd &position) = 0;
 
 	protected:
+		Shape &target_shape_;
 		Real smoothedSpacing(const Real &measure, const Real &transition_thickness);
 	};
 
@@ -154,7 +158,7 @@ namespace SPH
 			: ParticleRefinementByShape(std::forward<ConstructorArgs>(args)...){};
 		virtual ~ParticleRefinementNearSurface(){};
 
-		virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override;
+		virtual Real getLocalSpacingByShape(const Vecd &position) override;
 	};
 
 	/**
@@ -169,7 +173,7 @@ namespace SPH
 			: ParticleRefinementByShape(std::forward<ConstructorArgs>(args)...){};
 		virtual ~ParticleRefinementWithinShape(){};
 
-		virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override;
+		virtual Real getLocalSpacingByShape(const Vecd &position) override;
 	};
 
 	/**

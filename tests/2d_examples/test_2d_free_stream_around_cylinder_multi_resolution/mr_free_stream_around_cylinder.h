@@ -12,7 +12,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DL = 30.0;								  /**< Channel length. */
 Real DH = 16.0;								  /**< Channel height. */
-Real particle_spacing_ref = 0.2;			  /**< Initial reference particle spacing. */
+Real particle_spacing_ref = 0.4;			  /**< Initial reference particle spacing. */
 Real DL_sponge = particle_spacing_ref * 20.0; /**< Sponge region to impose emitter. */
 Real BW = 4.0 * particle_spacing_ref;		  /**< Sponge region to impose injection. */
 Vec2d insert_circle_center(10.0, 0.5 * DH);	  /**< Location of the cylinder center. */
@@ -35,9 +35,10 @@ Real mu_f = rho0_f * U_f * (2.0 * insert_circle_radius) / Re; /**< Dynamics visc
 //----------------------------------------------------------------------
 //	define geometry of SPH bodies
 //----------------------------------------------------------------------
-//	water block shape
 std::vector<Vecd> water_block_shape{
 	Vecd(-DL_sponge, 0.0), Vecd(-DL_sponge, DH), Vecd(DL, DH), Vecd(DL, 0.0), Vecd(-DL_sponge, 0.0)};
+std::vector<Vecd> initial_refinement_region{
+	Vecd(-DL_sponge - BW, 5.0), Vecd(-DL_sponge - BW, 11.0), Vecd(DL + BW, 11.0), Vecd(DL + BW, 5.0), Vecd(-DL_sponge -BW, 5.0)};
 Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH);
 Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize;
 Vec2d emitter_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);

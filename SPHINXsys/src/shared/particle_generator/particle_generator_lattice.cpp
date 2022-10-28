@@ -30,7 +30,7 @@ namespace SPH
 	//=================================================================================================//
 	ParticleGeneratorMultiResolution::ParticleGeneratorMultiResolution(SPHBody &sph_body)
 		: ParticleGeneratorLattice(sph_body),
-		  particle_adaptation_(DynamicCast<ParticleRefinementNearSurface>(this, sph_body.sph_adaptation_)),
+		  particle_adaptation_(DynamicCast<ParticleRefinementByShape>(this, sph_body.sph_adaptation_)),
 		  h_ratio_(particle_adaptation_->registerSmoothingLengthRatio(base_particles_))
 	{
 		lattice_spacing_ = particle_adaptation_->MinimumSpacing();
@@ -39,7 +39,7 @@ namespace SPH
 	void ParticleGeneratorMultiResolution::
 		initializePositionAndVolumetricMeasure(const Vecd &position, Real volume)
 	{
-		Real local_particle_spacing = particle_adaptation_->getLocalSpacing(body_shape_, position);
+		Real local_particle_spacing = particle_adaptation_->getLocalSpacingByShape(position);
 		Real local_particle_volume_ratio = powerN(lattice_spacing_ / local_particle_spacing, Dimensions);
 		if ((double)rand() / (RAND_MAX) < local_particle_volume_ratio)
 		{

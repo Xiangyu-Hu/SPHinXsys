@@ -17,9 +17,9 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
 	/** Tag for run particle relaxation for the initial body fitted distribution. */
-	sph_system.run_particle_relaxation_ = false;
+	sph_system.run_particle_relaxation_ = true;
 	/** Tag for computation start with relaxed body fitted particles distribution. */
-	sph_system.reload_particles_ = true;
+	sph_system.reload_particles_ = false;
 	/** Tag for computation from restart files. 0: start with initial condition. */
 	sph_system.restart_step_ = 0;
 	/** handle command line arguments. */
@@ -29,14 +29,16 @@ int main(int ac, char *av[])
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
+	MultiPolygonShape refinement_region(MultiPolygon(water_block_shape), "RefinementRegion");
+	water_block.defineAdaptation<ParticleRefinementWithinShape>(refinement_region, 1.3, 1.0, 2);
 	water_block.defineComponentLevelSetShape("OuterBoundary");
 	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
 		? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getName())
-		: water_block.generateParticles<ParticleGeneratorLattice>();
+		: water_block.generateParticles<ParticleGeneratorMultiResolution>();
 
 	SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));
-	cylinder.defineAdaptationRatios(1.15, 2.0);
+	cylinder.defineAdaptationRatios(1.15, 4.0);
 	cylinder.defineBodyLevelSetShape();
 	cylinder.defineParticlesAndMaterial<SolidParticles, Solid>();
 	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
@@ -50,10 +52,10 @@ int main(int ac, char *av[])
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	InnerRelation water_block_inner(water_block);
-	ComplexRelation water_block_complex(water_block_inner, {&cylinder});
-	ContactRelation cylinder_contact(cylinder, {&water_block});
-	ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
+	AdaptiveInnerRelation water_block_inner(water_block);
+	AdaptiveContactRelation water_contact(water_block, {&cylinder});
+	ComplexRelation water_block_complex(water_block_inner, water_contact);
+	AdaptiveContactRelation fluid_observer_contact(fluid_observer, {&water_block});
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------
@@ -72,6 +74,7 @@ int main(int ac, char *av[])
 		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(cylinder_inner);
 		relax_dynamics::RelaxationStepComplex relaxation_step_complex(water_block_complex, "OuterBoundary", true);
+		SimpleDynamics<relax_dynamics::UpdateSmoothingLengthRatioByBodyShape> update_smoothing_length_ratio(water_block);
 		//----------------------------------------------------------------------
 		//	Particle relaxation starts here.
 		//----------------------------------------------------------------------
@@ -87,6 +90,7 @@ int main(int ac, char *av[])
 		while (ite_p < 1000)
 		{
 			relaxation_step_inner.parallel_exec();
+			update_smoothing_length_ratio.parallel_exec();
 			relaxation_step_complex.parallel_exec();
 			ite_p += 1;
 			if (ite_p % 200 == 0)

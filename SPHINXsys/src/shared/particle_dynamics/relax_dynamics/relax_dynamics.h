@@ -132,7 +132,7 @@ namespace SPH
 			StdLargeVec<Real> &h_ratio_, &Vol_;
 			StdLargeVec<Vecd> &pos_;
 			Shape &body_shape_;
-			ParticleRefinementNearSurface *particle_spacing_by_body_shape_;
+			ParticleRefinementByShape *particle_spacing_by_body_shape_;
 			Real reference_spacing_;
 
 		public:

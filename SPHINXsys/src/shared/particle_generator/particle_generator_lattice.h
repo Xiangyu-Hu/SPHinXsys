@@ -38,7 +38,7 @@ namespace SPH
 {
 
 	class Shape;
-	class ParticleRefinementNearSurface;
+	class ParticleRefinementByShape;
 	class ShellParticles;
 	class ParticleSplitAndMerge;
 
@@ -81,7 +81,7 @@ namespace SPH
 		virtual ~ParticleGeneratorMultiResolution(){};
 
 	protected:
-		ParticleRefinementNearSurface *particle_adaptation_;
+		ParticleRefinementByShape *particle_adaptation_;
 		StdLargeVec<Real> &h_ratio_;
 
 		virtual void initializePositionAndVolumetricMeasure(const Vecd &position, Real volume) override;

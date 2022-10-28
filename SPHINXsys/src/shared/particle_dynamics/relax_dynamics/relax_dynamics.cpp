@@ -75,12 +75,12 @@ namespace SPH
 			: LocalDynamics(sph_body), RelaxDataDelegateSimple(sph_body),
 			  h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")),
 			  Vol_(particles_->Vol_), pos_(particles_->pos_), body_shape_(*sph_body.body_shape_),
-			  particle_spacing_by_body_shape_(DynamicCast<ParticleRefinementNearSurface>(this, sph_body.sph_adaptation_)),
+			  particle_spacing_by_body_shape_(DynamicCast<ParticleRefinementByShape>(this, sph_body.sph_adaptation_)),
 			  reference_spacing_(particle_spacing_by_body_shape_->ReferenceSpacing()) {}
 		//=================================================================================================//
 		void UpdateSmoothingLengthRatioByBodyShape::update(size_t index_i, Real dt_square)
 		{
-			Real local_spacing = particle_spacing_by_body_shape_->getLocalSpacing(body_shape_, pos_[index_i]);
+			Real local_spacing = particle_spacing_by_body_shape_->getLocalSpacingByShape(pos_[index_i]);
 			h_ratio_[index_i] = reference_spacing_ / local_spacing;
 			Vol_[index_i] = powerN(local_spacing, Dimensions);
 		}
