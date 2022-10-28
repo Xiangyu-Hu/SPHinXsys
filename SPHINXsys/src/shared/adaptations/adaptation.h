@@ -125,6 +125,23 @@ namespace SPH
 	};
 
 	/**
+	 * @class ParticleSpacingByShape
+	 * @brief Adaptive resolutions within a SPH body according to the distance to the body surface.
+	 */
+	class ParticleSpacingByShape : public ParticleWithLocalRefinement
+	{
+	public:
+		ParticleSpacingByShape(SPHBody &sph_body, Real smoothing_length_ratio,
+								   Real system_refinement_ratio,
+								   int local_refinement_level);
+		virtual ~ParticleSpacingByShape(){};
+
+		virtual Real getLocalSpacing(Shape &shape, const Vecd &position) = 0;
+	protected:
+		Real smoothedSpacing(const Real &measure, const Real &transition_thickness);
+	};
+
+	/**
 	 * @class ParticleSpacingByBodyShape
 	 * @brief Adaptive resolutions within a SPH body according to the distance to the body surface.
 	 */
