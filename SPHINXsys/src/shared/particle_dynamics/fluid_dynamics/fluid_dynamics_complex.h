@@ -143,6 +143,22 @@ namespace SPH
 		};
 
 		/**
+		 * @class TransportVelocityCorrectionComplexAdaptive
+		 * @brief  transport velocity correction considering the contribution from contact bodies
+		 */
+		class TransportVelocityCorrectionComplexAdaptive
+			: public BaseInteractionComplex<TransportVelocityCorrectionInnerAdaptive, FluidContactData>
+		{
+		public:
+			template <typename... Args>
+			TransportVelocityCorrectionComplexAdaptive(Args &&...args)
+				: BaseInteractionComplex<TransportVelocityCorrectionInnerAdaptive, FluidContactData>(
+					  std::forward<Args>(args)...){};
+			virtual ~TransportVelocityCorrectionComplexAdaptive(){};
+			void interaction(size_t index_i, Real dt = 0.0);
+		};
+
+		/**
 		 * @class BaseIntegration1stHalfWithWall
 		 * @brief  template class pressure relaxation scheme together with wall boundary
 		 */

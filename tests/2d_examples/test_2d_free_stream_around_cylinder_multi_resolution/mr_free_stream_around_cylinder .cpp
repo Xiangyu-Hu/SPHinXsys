@@ -127,10 +127,11 @@ int main(int ac, char *av[])
 	InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex>
 		free_stream_surface_indicator(water_block_complex);
 	/** Evaluation of density by freestream approach. */
-	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplexAdaptive> update_fluid_density(water_block_complex);
+	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplexAdaptive> update_fluid_density(water_block_complex);
 	/** We can output a method-specific particle data for debug */
 	water_block.addBodyStateForRecording<Real>("Pressure");
 	water_block.addBodyStateForRecording<int>("SurfaceIndicator");
+	water_block.addBodyStateForRecording<Real>("VolumetricMeasure");
 	/** Time step size without considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
 	/** Time step size with considering sound wave speed. */
@@ -146,7 +147,8 @@ int main(int ac, char *av[])
 	/** Computing viscous acceleration. */
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	/** Apply transport velocity formulation. */
-	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> transport_velocity_correction(water_block_complex);
+	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplexAdaptive> 
+		transport_velocity_correction(water_block_complex);
 	/** compute the vorticity. */
 	InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_inner);
 	//----------------------------------------------------------------------

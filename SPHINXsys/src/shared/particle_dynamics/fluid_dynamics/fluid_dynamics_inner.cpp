@@ -64,7 +64,7 @@ namespace SPH
 		void DensitySummationInnerAdaptive::update(size_t index_i, Real dt)
 		{
 			rho_sum_[index_i] /= sph_adaptation_.ReferenceNumberDensity(h_ratio_[index_i]);
-			rho_[index_i] = ReinitializedDensity(rho_sum_[index_i], rho0_, rho_[index_i]);
+//			rho_[index_i] = ReinitializedDensity(rho_sum_[index_i], rho0_, rho_[index_i]);
 		}
 		//=================================================================================================//
 		BaseViscousAccelerationInner::BaseViscousAccelerationInner(BaseInnerRelation &inner_relation)
@@ -131,6 +131,34 @@ namespace SPH
 
 			if (surface_indicator_[index_i] == 0)
 				pos_[index_i] += coefficient_ * smoothing_length_sqr_ * acceleration_trans;
+		}
+		//=================================================================================================//
+		TransportVelocityCorrectionInnerAdaptive::
+			TransportVelocityCorrectionInnerAdaptive(BaseInnerRelation &inner_relation, Real coefficient)
+			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
+			  sph_adaptation_(*sph_body_.sph_adaptation_),
+			  pos_(particles_->pos_), surface_indicator_(particles_->surface_indicator_),
+			  smoothing_length_sqr_(powerN(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
+			  coefficient_(coefficient) {}
+		//=================================================================================================//
+		void TransportVelocityCorrectionInnerAdaptive::interaction(size_t index_i, Real dt)
+		{
+			Vecd acceleration_trans(0);
+			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+			{
+				size_t index_j = inner_neighborhood.j_[n];
+				Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+
+				// acceleration for transport velocity
+				acceleration_trans -= 2.0 * nablaW_ijV_j;
+			}
+
+			if (surface_indicator_[index_i] == 0)
+			{
+				Real inv_h_ratio = 1.0 / sph_adaptation_.SmoothingLengthRatio(index_i);
+				pos_[index_i] += coefficient_ * smoothing_length_sqr_ * inv_h_ratio * inv_h_ratio * acceleration_trans;
+			}
 		}
 		//=================================================================================================//
 		AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL)

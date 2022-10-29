@@ -175,6 +175,25 @@ namespace SPH
 		};
 
 		/**
+		 * @class TransportVelocityCorrectionInner
+		 * @brief transport velocity correction
+		 */
+		class TransportVelocityCorrectionInnerAdaptive : public LocalDynamics, public FluidDataInner
+		{
+		public:
+			explicit TransportVelocityCorrectionInnerAdaptive(BaseInnerRelation &inner_relation, Real coefficient = 0.2);
+			virtual ~TransportVelocityCorrectionInnerAdaptive(){};
+			void interaction(size_t index_i, Real dt = 0.0);
+
+		protected:
+			SPHAdaptation &sph_adaptation_;
+			StdLargeVec<Vecd> &pos_;
+			StdLargeVec<int> &surface_indicator_;
+			Real smoothing_length_sqr_;
+			const Real coefficient_;
+		};
+
+		/**
 		 * @class AcousticTimeStepSize
 		 * @brief Computing the acoustic time step size
 		 */
