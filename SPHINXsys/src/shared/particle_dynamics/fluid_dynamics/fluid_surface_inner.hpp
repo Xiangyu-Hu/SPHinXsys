@@ -66,6 +66,12 @@ namespace SPH
 			previous_surface_indicator_[index_i] = this->surface_indicator_[index_i];
 		}
 		//=================================================================================================//
+		template <class DensitySummationType>
+		void DensitySummationFreeSurface<DensitySummationType>::update(size_t index_i, Real dt)
+		{
+			this->rho_[index_i] = ReinitializedDensity(this->rho_sum_[index_i], this->rho0_, this->rho_[index_i]);
+		}
+		//=================================================================================================//
 		template <class DensitySummationFreeSurfaceType>
 		template <typename... ConstructorArgs>
 		DensitySummationFreeStream<DensitySummationFreeSurfaceType>::
@@ -76,8 +82,6 @@ namespace SPH
 		template <class DensitySummationFreeSurfaceType>
 		void DensitySummationFreeStream<DensitySummationFreeSurfaceType>::update(size_t index_i, Real dt)
 		{
-			DensitySummationFreeSurfaceType::BulkDensitySummation::update(index_i, dt);
-
 			if (this->rho_sum_[index_i] < this->rho0_ && isNearSurface(index_i))
 			{
 				this->rho_[index_i] = this->ReinitializedDensity(this->rho_sum_[index_i], this->rho0_, this->rho_[index_i]);

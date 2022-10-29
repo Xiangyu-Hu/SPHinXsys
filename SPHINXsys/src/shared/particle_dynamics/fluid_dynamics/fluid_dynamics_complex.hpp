@@ -42,9 +42,9 @@ namespace SPH
 		//=================================================================================================//
 		template <class DensitySummationInnerType>
 		template <typename... Args>
-		DensitySummation<DensitySummationInnerType>::DensitySummation(Args &&...args)
-			: BaseInteractionComplex<DensitySummationInnerType, FluidContactData>(
-				  std::forward<Args>(args)...)
+		BaseDensitySummationComplex<DensitySummationInnerType>::
+			BaseDensitySummationComplex(Args &&...args)
+			: BaseInteractionComplex<DensitySummationInnerType, FluidContactData>(std::forward<Args>(args)...)
 		{
 			for (size_t k = 0; k != this->contact_particles_.size(); ++k)
 			{
@@ -55,13 +55,9 @@ namespace SPH
 		};
 		//=================================================================================================//
 		template <class DensitySummationInnerType>
-		void DensitySummation<DensitySummationInnerType>::interaction(size_t index_i, Real dt)
+		Real BaseDensitySummationComplex<DensitySummationInnerType>::ContactSummation(size_t index_i)
 		{
-			DensitySummationInnerType::interaction(index_i, dt);
-
-			/** Contact interaction. */
 			Real sigma(0.0);
-			Real inv_Vol_0_i = this->rho0_ / this->mass_[index_i];
 			for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 			{
 				StdLargeVec<Real> &contact_mass_k = *(this->contact_mass_[k]);
@@ -69,48 +65,11 @@ namespace SPH
 				Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
-					sigma += contact_neighborhood.W_ij_[n] * inv_Vol_0_i * contact_inv_rho0_k * contact_mass_k[contact_neighborhood.j_[n]];
+					sigma += contact_neighborhood.W_ij_[n] * contact_inv_rho0_k * contact_mass_k[contact_neighborhood.j_[n]];
 				}
 			}
-			this->rho_sum_[index_i] += sigma * this->rho0_ * this->inv_sigma0_;
-		}
-		//=================================================================================================//
-		template <class DensitySummationInnerAdaptiveType>
-		template <typename... Args>
-		DensitySummationAdaptive<DensitySummationInnerAdaptiveType>::
-			DensitySummationAdaptive(Args &&...args)
-			: BaseInteractionComplex<DensitySummationInnerAdaptiveType,
-									 FluidContactData>(std::forward<Args>(args)...)
-		{
-			for (size_t k = 0; k != this->contact_particles_.size(); ++k)
-			{
-				Real rho0_k = this->contact_bodies_[k]->base_material_->ReferenceDensity();
-				contact_inv_rho0_.push_back(1.0 / rho0_k);
-				contact_mass_.push_back(&(this->contact_particles_[k]->mass_));
-			}
-		}
-		//=================================================================================================//
-		template <class DensitySummationInnerAdaptiveType>
-		void DensitySummationAdaptive<DensitySummationInnerAdaptiveType>::interaction(size_t index_i, Real dt)
-		{
-			DensitySummationInnerAdaptiveType::interaction(index_i, dt);
-
-			Real sigma(0.0);
-			Real inv_Vol0_i = this->rho0_ / this->mass_[index_i];
-			for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
-			{
-				StdLargeVec<Real> &contact_mass_k = *(this->contact_mass_[k]);
-				Real contact_inv_rho0_k = contact_inv_rho0_[k];
-				Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
-				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-				{
-					sigma += contact_neighborhood.W_ij_[n] * inv_Vol0_i *
-							 contact_inv_rho0_k * contact_mass_k[contact_neighborhood.j_[n]];
-				}
-			}
-
-			this->rho_sum_[index_i] += sigma * this->rho0_;
-		}
+			return sigma;
+		};
 		//=================================================================================================//
 		template <class ViscousAccelerationInnerType>
 		void BaseViscousAccelerationWithWall<ViscousAccelerationInnerType>::interaction(size_t index_i, Real dt)

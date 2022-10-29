@@ -22,6 +22,11 @@ namespace SPH
 			  rho_(particles_->rho_), rho_sum_(particles_->rho_sum_), mass_(particles_->mass_),
 			  rho0_(sph_body_.base_material_->ReferenceDensity()) {}
 		//=================================================================================================//
+		void BaseDensitySummationInner::update(size_t index_i, Real dt)
+		{
+			rho_[index_i] = rho_sum_[index_i];
+		}
+		//=================================================================================================//
 		DensitySummationInner::DensitySummationInner(BaseInnerRelation &inner_relation)
 			: BaseDensitySummationInner(inner_relation),
 			  W0_(sph_body_.sph_adaptation_->getKernel()->W0(Vecd(0))),
@@ -29,18 +34,12 @@ namespace SPH
 		//=================================================================================================//
 		void DensitySummationInner::interaction(size_t index_i, Real dt)
 		{
-			/** Inner interaction. */
 			Real sigma = W0_;
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 				sigma += inner_neighborhood.W_ij_[n];
 
 			rho_sum_[index_i] = sigma * rho0_ * inv_sigma0_;
-		}
-		//=================================================================================================//
-		void DensitySummationInner::update(size_t index_i, Real dt)
-		{
-			rho_[index_i] = ReinitializedDensity(rho_sum_[index_i], rho0_, rho_[index_i]);
 		}
 		//=================================================================================================//
 		DensitySummationInnerAdaptive::
@@ -53,18 +52,12 @@ namespace SPH
 		void DensitySummationInnerAdaptive::interaction(size_t index_i, Real dt)
 		{
 			Real sigma_i = mass_[index_i] * kernel_.W0(h_ratio_[index_i], Vecd(0));
-
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 				sigma_i += inner_neighborhood.W_ij_[n] * mass_[inner_neighborhood.j_[n]];
 
-			rho_sum_[index_i] = sigma_i * rho0_ / mass_[index_i];
-		}
-		//=================================================================================================//
-		void DensitySummationInnerAdaptive::update(size_t index_i, Real dt)
-		{
-			rho_sum_[index_i] /= sph_adaptation_.ReferenceNumberDensity(h_ratio_[index_i]);
-//			rho_[index_i] = ReinitializedDensity(rho_sum_[index_i], rho0_, rho_[index_i]);
+			rho_sum_[index_i] = sigma_i * rho0_ / mass_[index_i] /
+								sph_adaptation_.ReferenceNumberDensity(h_ratio_[index_i]);
 		}
 		//=================================================================================================//
 		BaseViscousAccelerationInner::BaseViscousAccelerationInner(BaseInnerRelation &inner_relation)

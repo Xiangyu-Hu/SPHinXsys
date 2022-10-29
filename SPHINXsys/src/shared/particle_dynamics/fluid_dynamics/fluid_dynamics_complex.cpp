@@ -12,6 +12,21 @@ namespace SPH
 	namespace fluid_dynamics
 	{
 		//=================================================================================================//
+		void DensitySummationComplex::interaction(size_t index_i, Real dt)
+		{
+			BaseDensitySummationComplex<DensitySummationInner>::interaction(index_i, dt);
+			Real sigma = BaseDensitySummationComplex<DensitySummationInner>::ContactSummation(index_i);
+			rho_sum_[index_i] += sigma * rho0_ * rho0_ * inv_sigma0_ / mass_[index_i];
+		}
+		//=================================================================================================//
+		void DensitySummationComplexAdaptive::interaction(size_t index_i, Real dt)
+		{
+			BaseDensitySummationComplex<DensitySummationInnerAdaptive>::interaction(index_i, dt);
+			Real sigma = BaseDensitySummationComplex<DensitySummationInnerAdaptive>::ContactSummation(index_i);
+			rho_sum_[index_i] += sigma * rho0_ * rho0_ / mass_[index_i] /
+								 sph_adaptation_.ReferenceNumberDensity(h_ratio_[index_i]);
+		}
+		//=================================================================================================//
 		void TransportVelocityCorrectionComplex::interaction(size_t index_i, Real dt)
 		{
 			TransportVelocityCorrectionInner::interaction(index_i, dt);

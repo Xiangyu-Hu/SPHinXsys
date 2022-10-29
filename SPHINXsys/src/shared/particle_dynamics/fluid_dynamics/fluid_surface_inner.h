@@ -91,10 +91,10 @@ namespace SPH
 			explicit DensitySummationFreeSurface(ConstructorArgs &&...args)
 				: DensitySummationType(std::forward<ConstructorArgs>(args)...){};
 			virtual ~DensitySummationFreeSurface(){};
+			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
-			typedef DensitySummationType BulkDensitySummation;
-			virtual Real ReinitializedDensity(Real rho_sum, Real rho_0, Real rho_n) override
+			Real ReinitializedDensity(Real rho_sum, Real rho_0, Real rho_n)
 			{
 				return rho_sum + SMAX(0.0, (rho_n - rho_sum)) * rho_0 / rho_n;
 			};

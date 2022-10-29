@@ -58,9 +58,8 @@ namespace SPH
 		using SpatialTemporalFreeSurfaceIdentificationComplex =
 			SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIndicationComplex>;
 
-		/** the case with free surface */
-		using DensitySummationFreeSurfaceComplex = DensitySummation<DensitySummationFreeSurfaceInner>;
-		/** the case with free stream */
+		/** the cases with free surface and freestream */
+		using DensitySummationFreeSurfaceComplex = DensitySummationFreeSurface<DensitySummationComplex>;
 		using DensitySummationFreeStreamComplex = DensitySummationFreeStream<DensitySummationFreeSurfaceComplex>;
 		/** the case with variable smoothing length */
 		using DensitySummationFreeSurfaceComplexAdaptive = DensitySummationFreeSurface<DensitySummationComplexAdaptive>;

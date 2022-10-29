@@ -70,11 +70,11 @@ namespace SPH
 		public:
 			explicit BaseDensitySummationInner(BaseInnerRelation &inner_relation);
 			virtual ~BaseDensitySummationInner(){};
+			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
 			Real rho0_;
 			StdLargeVec<Real> &rho_, &rho_sum_, &mass_;
-			virtual Real ReinitializedDensity(Real rho_sum, Real rho_0, Real rho_n) = 0;
 		};
 
 		/**
@@ -87,11 +87,9 @@ namespace SPH
 			explicit DensitySummationInner(BaseInnerRelation &inner_relation);
 			virtual ~DensitySummationInner(){};
 			void interaction(size_t index_i, Real dt = 0.0);
-			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
 			Real W0_, inv_sigma0_;
-			virtual Real ReinitializedDensity(Real rho_sum, Real rho_0, Real rho_n) override { return rho_sum; };
 		};
 
 		/**
@@ -104,7 +102,6 @@ namespace SPH
 			explicit DensitySummationInnerAdaptive(BaseInnerRelation &inner_relation);
 			virtual ~DensitySummationInnerAdaptive(){};
 			void interaction(size_t index_i, Real dt = 0.0);
-			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
 			SPHAdaptation &sph_adaptation_;
