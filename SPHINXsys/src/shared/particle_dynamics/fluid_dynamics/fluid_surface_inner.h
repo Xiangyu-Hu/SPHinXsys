@@ -103,16 +103,18 @@ namespace SPH
 		using DensitySummationFreeSurfaceInnerAdaptive = DensitySummationFreeSurface<DensitySummationInnerAdaptive>;
 
 		/**
-		 * @class DensitySummationFreeStreamInner
+		 * @class DensitySummationFreeStream
 		 * @brief The density is smoothed if the particle is near fluid surface.
 		 */
-		class DensitySummationFreeStreamInner : public DensitySummationFreeSurfaceInner
+		template <class DensitySummationFreeSurfaceType>
+		class DensitySummationFreeStream : public DensitySummationFreeSurfaceType
 		{
 		public:
-			explicit DensitySummationFreeStreamInner(BaseInnerRelation &inner_relation)
-				: DensitySummationFreeSurfaceInner(inner_relation),
+			template <typename... ConstructorArgs>
+			explicit DensitySummationFreeStream(ConstructorArgs &&...args)
+				: DensitySummationFreeSurfaceType(std::forward<ConstructorArgs>(args)...),
 				  surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")){};
-			virtual ~DensitySummationFreeStreamInner(){};
+			virtual ~DensitySummationFreeStream(){};
 			void update(size_t index_i, Real dt = 0.0);
 
 		protected:

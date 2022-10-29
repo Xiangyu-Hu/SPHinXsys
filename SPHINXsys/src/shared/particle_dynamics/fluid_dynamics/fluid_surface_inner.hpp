@@ -66,6 +66,39 @@ namespace SPH
 			previous_surface_indicator_[index_i] = this->surface_indicator_[index_i];
 		}
 		//=================================================================================================//
+		template <class DensitySummationFreeSurfaceType>
+		void DensitySummationFreeStream<DensitySummationFreeSurfaceType>::update(size_t index_i, Real dt)
+		{
+			if (rho_sum_[index_i] < rho0_ && isNearSurface(index_i))
+			{
+				rho_[index_i] = ReinitializedDensity(rho_sum_[index_i], rho0_, rho_[index_i]);
+			}
+			else
+			{
+				rho_[index_i] = rho_sum_[index_i];
+			}
+		}
+		//=================================================================================================//
+		template <class DensitySummationFreeSurfaceType>
+		bool DensitySummationFreeStream<DensitySummationFreeSurfaceType>::isNearSurface(size_t index_i)
+		{
+			bool is_near_surface = true;
+			if (surface_indicator_[index_i] != 1)
+			{
+				is_near_surface = false;
+				const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+				for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+				{
+					if (surface_indicator_[inner_neighborhood.j_[n]] == 1)
+					{
+						is_near_surface = true;
+						break;
+					}
+				}
+			}
+			return is_near_surface;
+		}
+		//=================================================================================================//
 	}
 	//=================================================================================================//
 }

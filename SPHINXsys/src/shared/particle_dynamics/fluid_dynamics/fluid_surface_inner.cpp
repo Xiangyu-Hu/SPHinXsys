@@ -50,37 +50,6 @@ namespace SPH
             surface_indicator_[index_i] = is_free_surface ? 1 : 0;
         }
         //=================================================================================================//
-        void DensitySummationFreeStreamInner::update(size_t index_i, Real dt)
-        {
-            if (rho_sum_[index_i] < rho0_ && isNearSurface(index_i))
-            {
-                rho_[index_i] = ReinitializedDensity(rho_sum_[index_i], rho0_, rho_[index_i]);
-            }
-            else
-            {
-                rho_[index_i] = rho_sum_[index_i];
-            }
-         }
-        //=================================================================================================//
-        bool DensitySummationFreeStreamInner::isNearSurface(size_t index_i)
-        {
-            bool is_near_surface = true;
-            if (surface_indicator_[index_i] != 1)
-            {
-                is_near_surface = false;
-                const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-                for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-                {
-                    if (surface_indicator_[inner_neighborhood.j_[n]] == 1)
-                    {
-                        is_near_surface = true;
-                        break;
-                    }
-                }
-            }
-            return is_near_surface;
-        }
-        //=================================================================================================//
         FreeStreamBoundaryVelocityCorrection::FreeStreamBoundaryVelocityCorrection(SPHBody &sph_body)
             : LocalDynamics(sph_body), FluidDataSimple(sph_body),
               u_ref_(1.0), t_ref_(2.0), rho_ref_(particles_->fluid_.ReferenceDensity()),

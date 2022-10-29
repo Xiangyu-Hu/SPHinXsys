@@ -76,7 +76,7 @@ namespace SPH
 		{
 		public:
 			template <typename... Args>
-			DensitySummation(Args &&...args);
+			explicit DensitySummation(Args &&...args);
 			virtual ~DensitySummation(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -97,7 +97,7 @@ namespace SPH
 		{
 		public:
 			template <typename... Args>
-			DensitySummationAdaptive(Args &&...args);
+			explicit DensitySummationAdaptive(Args &&...args);
 			virtual ~DensitySummationAdaptive(){};
 
 			void interaction(size_t index_i, Real dt = 0.0);
