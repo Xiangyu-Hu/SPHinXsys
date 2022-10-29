@@ -122,6 +122,10 @@ namespace SPH
 
 		virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, RealBody &real_body) override;
 		virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio) override;
+
+	protected:
+		Real finest_spacing_bound_;	  /**< the adaptation bound for finest particles */
+		Real coarsest_spacing_bound_; /**< the adaptation bound for coarsest particles */
 	};
 
 	/**

@@ -111,6 +111,9 @@ namespace SPH
 		local_refinement_level_ = local_refinement_level;
 		spacing_min_ = MostRefinedSpacing(spacing_ref_, local_refinement_level_);
 		h_ratio_max_ = powerN(2.0, local_refinement_level_);
+		// To ensure that the adaptation strictly within all level set and mesh cell linked list levels
+		finest_spacing_bound_ = spacing_min_ + Eps;
+		coarsest_spacing_bound_ = spacing_ref_ - Eps;
 	}
 	//=================================================================================================//
 	size_t ParticleWithLocalRefinement::getCellLinkedListTotalLevel()
@@ -147,11 +150,11 @@ namespace SPH
 	Real ParticleRefinementByShape::smoothedSpacing(const Real &measure, const Real &transition_thickness)
 	{
 		Real ratio_ref = measure / (2.0 * transition_thickness);
-		Real target_spacing = spacing_ref_;
+		Real target_spacing = coarsest_spacing_bound_;
 		if (ratio_ref < kernel_ptr_->KernelSize())
 		{
 			Real weight = kernel_ptr_->W_1D(ratio_ref) / kernel_ptr_->W_1D(0.0);
-			target_spacing = weight * spacing_min_ + (1.0 - weight) * spacing_ref_;
+			target_spacing = weight * finest_spacing_bound_ + (1.0 - weight) * coarsest_spacing_bound_;
 		}
 		return target_spacing;
 	}
@@ -165,7 +168,7 @@ namespace SPH
 	Real ParticleRefinementWithinShape::getLocalSpacing(Shape &shape, const Vecd &position)
 	{
 		Real phi = shape.findSignedDistance(position);
-		return phi < 0.0 ? spacing_min_ : smoothedSpacing(phi, 2.0 * spacing_ref_);
+		return phi < 0.0 ? finest_spacing_bound_ : smoothedSpacing(phi, 2.0 * spacing_ref_);
 	}
 	//=================================================================================================//
 	ParticleSplitAndMerge::ParticleSplitAndMerge(SPHBody &sph_body, Real h_spacing_ratio,
