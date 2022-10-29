@@ -192,15 +192,8 @@ namespace SPH
 		{
 			RelaxationAccelerationComplex::interaction(index_i, dt);
 
-			for (size_t k = 0; k < contact_configuration_.size(); ++k)
-			{
-				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
-				if (contact_neighborhood.current_size_ == 0)
-				{
-					acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(
-											   pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
-				}
-			}
+			acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(
+									   pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
 		}
 		//=================================================================================================//
 		RelaxationStepComplex::RelaxationStepComplex(ComplexRelation &body_complex_relation,

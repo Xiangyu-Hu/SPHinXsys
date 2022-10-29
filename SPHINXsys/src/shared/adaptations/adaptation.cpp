@@ -165,7 +165,7 @@ namespace SPH
 	Real ParticleRefinementWithinShape::getLocalSpacing(Shape &shape, const Vecd &position)
 	{
 		Real phi = shape.findSignedDistance(position);
-		return phi < 0.0 ? spacing_min_ : smoothedSpacing(phi, spacing_ref_);
+		return phi < 0.0 ? spacing_min_ : smoothedSpacing(phi, 2.0 * spacing_ref_);
 	}
 	//=================================================================================================//
 	ParticleSplitAndMerge::ParticleSplitAndMerge(SPHBody &sph_body, Real h_spacing_ratio,

@@ -29,10 +29,10 @@ int main(int ac, char *av[])
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-	MultiPolygonShape refinement_region(MultiPolygon(water_block_shape), "RefinementRegion");
-	water_block.defineAdaptation<ParticleRefinementWithinShape>(1.3, 1.0, 2);
+	water_block.defineAdaptation<ParticleRefinementWithinShape>(1.3, 1.0, 1);
 	water_block.defineComponentLevelSetShape("OuterBoundary");
 	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+	MultiPolygonShape refinement_region(MultiPolygon(initial_refinement_region), "RefinementRegion");
 	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
 		? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getName())
 		: water_block.generateParticles<ParticleGeneratorMultiResolution>(refinement_region);
@@ -55,7 +55,6 @@ int main(int ac, char *av[])
 	AdaptiveInnerRelation water_block_inner(water_block);
 	AdaptiveContactRelation water_contact(water_block, {&cylinder});
 	ComplexRelation water_block_complex(water_block_inner, water_contact);
-	AdaptiveContactRelation fluid_observer_contact(fluid_observer, {&water_block});
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------
@@ -73,8 +72,8 @@ int main(int ac, char *av[])
 		ReloadParticleIO write_real_body_particle_reload_files(io_environment, sph_system.real_bodies_);
 		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(cylinder_inner);
-		relax_dynamics::RelaxationStepComplex relaxation_step_complex(water_block_complex, "OuterBoundary", true);
-		SimpleDynamics<relax_dynamics::UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(water_block, refinement_region);
+		relax_dynamics::RelaxationStepComplex relaxation_step_complex(water_block_complex, "OuterBoundary");
+//		SimpleDynamics<relax_dynamics::UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(water_block, refinement_region);
 		//----------------------------------------------------------------------
 		//	Particle relaxation starts here.
 		//----------------------------------------------------------------------
@@ -90,8 +89,8 @@ int main(int ac, char *av[])
 		while (ite_p < 1000)
 		{
 			relaxation_step_inner.parallel_exec();
-			update_smoothing_length_ratio.parallel_exec();
-			relaxation_step_complex.parallel_exec();
+//			update_smoothing_length_ratio.parallel_exec();
+			relaxation_step_complex.exec();
 			ite_p += 1;
 			if (ite_p % 200 == 0)
 			{
