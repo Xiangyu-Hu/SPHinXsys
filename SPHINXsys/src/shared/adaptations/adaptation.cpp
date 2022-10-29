@@ -126,12 +126,13 @@ namespace SPH
 		return getCellLinkedListTotalLevel() + 1;
 	}
 	//=================================================================================================//
-	StdLargeVec<Real> &ParticleWithLocalRefinement::
-		registerSmoothingLengthRatio(BaseParticles &base_particles)
+	void ParticleWithLocalRefinement::registerAdaptationVariables(BaseParticles &base_particles)
 	{
+		SPHAdaptation::registerAdaptationVariables(base_particles);
+
 		base_particles.registerVariable(h_ratio_, "SmoothingLengthRatio", 1.0);
 		base_particles.registerSortableVariable<Real>("SmoothingLengthRatio");
-		return h_ratio_;
+		base_particles.addVariableToReload<Real>("SmoothingLengthRatio");
 	}
 	//=================================================================================================//
 	UniquePtr<BaseCellLinkedList> ParticleWithLocalRefinement::

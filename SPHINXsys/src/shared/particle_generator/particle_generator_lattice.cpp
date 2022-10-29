@@ -31,7 +31,7 @@ namespace SPH
 	ParticleGeneratorMultiResolution::ParticleGeneratorMultiResolution(SPHBody &sph_body, Shape &target_shape)
 		: ParticleGeneratorLattice(sph_body), target_shape_(target_shape),
 		  particle_adaptation_(DynamicCast<ParticleRefinementByShape>(this, sph_body.sph_adaptation_)),
-		  h_ratio_(particle_adaptation_->registerSmoothingLengthRatio(base_particles_))
+		  h_ratio_(*base_particles_.getVariableByName<Real>("SmoothingLengthRatio"))
 	{
 		lattice_spacing_ = particle_adaptation_->MinimumSpacing();
 	}
@@ -59,7 +59,7 @@ namespace SPH
 	ParticleGeneratorSplitAndMerge::ParticleGeneratorSplitAndMerge(SPHBody &sph_body)
 		: ParticleGeneratorLattice(sph_body),
 		  particle_adaptation_(DynamicCast<ParticleSplitAndMerge>(this, sph_body.sph_adaptation_)),
-		  h_ratio_(particle_adaptation_->registerSmoothingLengthRatio(base_particles_)) {}
+		  h_ratio_(*base_particles_.getVariableByName<Real>("SmoothingLengthRatio")) {}
 	//=================================================================================================//
 	void ParticleGeneratorSplitAndMerge::
 		initializePositionAndVolumetricMeasure(const Vecd &position, Real volume)

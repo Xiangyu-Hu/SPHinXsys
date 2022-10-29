@@ -91,15 +91,15 @@ int main(int ac, char *av[])
 		{
 			relaxation_step_inner.parallel_exec();
 			update_smoothing_length_ratio.parallel_exec();
-			relaxation_step_complex.exec();
+			relaxation_step_complex.parallel_exec();
 			ite_p += 1;
 			if (ite_p % 200 == 0)
 			{
-				cout << fixed << setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
+				cout << fixed << setprecision(9) << "Relaxation steps N = " << ite_p << "\n";
 				write_real_body_states.writeToFile(ite_p);
 			}
 		}
-		std::cout << "The physics relaxation process of inserted body finish !" << std::endl;
+		std::cout << "The physics relaxation process finished !" << std::endl;
 		/** Output results. */
 		write_real_body_particle_reload_files.writeToFile(0);
 		return 0;
