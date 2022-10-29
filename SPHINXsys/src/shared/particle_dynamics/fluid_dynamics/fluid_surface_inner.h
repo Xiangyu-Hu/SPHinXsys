@@ -111,9 +111,7 @@ namespace SPH
 		{
 		public:
 			template <typename... ConstructorArgs>
-			explicit DensitySummationFreeStream(ConstructorArgs &&...args)
-				: DensitySummationFreeSurfaceType(std::forward<ConstructorArgs>(args)...),
-				  surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")){};
+			explicit DensitySummationFreeStream(ConstructorArgs &&...args);
 			virtual ~DensitySummationFreeStream(){};
 			void update(size_t index_i, Real dt = 0.0);
 
