@@ -291,9 +291,9 @@ namespace SPH
 				deformation_gradient_change_rate_part_one -= SimTK::outer((vel_n_i - vel_[index_j]), gradW_ijV_j);
 				deformation_gradient_change_rate_part_two -= SimTK::outer((dpseudo_n_dt_i - dpseudo_n_dt_[index_j]), gradW_ijV_j);
 			}
-			dF_dt_[index_i] = transformation_matrix_i * deformation_gradient_change_rate_part_one * (~transformation_matrix_i) * B_[index_i];
+			dF_dt_[index_i] = transformation_matrix_i * deformation_gradient_change_rate_part_one * (~transformation_matrix_i);
 			dF_dt_[index_i].col(Dimensions - 1) = transformation_matrix_i * dpseudo_n_dt_[index_i];
-			dF_bending_dt_[index_i] = transformation_matrix_i * deformation_gradient_change_rate_part_two * (~transformation_matrix_i) * B_[index_i];
+			dF_bending_dt_[index_i] = transformation_matrix_i * deformation_gradient_change_rate_part_two * (~transformation_matrix_i);
 		}
 		//=================================================================================================//
 		void ShellStressRelaxationSecondHalf::update(size_t index_i, Real dt)

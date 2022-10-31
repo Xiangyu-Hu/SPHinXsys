@@ -90,11 +90,11 @@ public:
 };
 
 template<typename VectorType>
-SPH::BoundingBox get_particles_bounding_box(const VectorType& pos)
+SPH::BoundingBox get_particles_bounding_box(const VectorType& pos_0)
 {
-    SPH::Vec3d lower(pos[0]);
-    SPH::Vec3d upper(pos[0]);
-    for (const auto& pos: pos){
+    SPH::Vec3d lower(pos_0[0]);
+    SPH::Vec3d upper(pos_0[0]);
+    for (const auto& pos: pos_0){
         for (int i=0; i<3; i++){
             if (lower[i] > pos[i]) lower[i] = pos[i];
             if (upper[i] < pos[i]) upper[i] = pos[i];
@@ -141,9 +141,10 @@ int main(int ac, char *av[])
 	// material
 	Real rho = 36.7347;
 	Real E = 4.32e8;
-	Real mu = 0.0;
+	Real mu = 0.3;
 	auto material = makeShared<SaintVenantKirchhoffSolid>(rho, E, mu);
-	Real physical_viscosity = 7e3;
+	Real physical_viscosity = 7e3; // where is this value coming from?
+	std::cout << "physical_viscosity: " << physical_viscosity << std::endl;
 	// gravity
 	Vec3d gravity = -9.8066*radial_vec;
 	Real time_to_full_external_force = 0.1;
@@ -225,6 +226,21 @@ int main(int ac, char *av[])
 
 	// Option C: generating particles from predefined positions from obj file
 	StdVec<Vec3d> obj_vertices = read_obj_vertices("input/shell_50mm_80d_1mm.txt"); // dp = 1
+	auto flatten_transform = [&](StdVec<Vec3d>& pos_0)
+	{// editing input vector - non-const input!
+		for (auto& pos: pos_0)
+		{
+			// get the arc length at the x coordinate and set it as new x coordinate
+			Real angle = std::asin(pos[tangential_axis]/radius);
+			pos[tangential_axis] = angle*radius;
+			// y will be 0
+			pos[radial_axis] = 0;
+			// z stays as is
+		}
+	};
+	// transform to flat plate
+	// flatten_transform(obj_vertices);
+	// find out BoundingBox
 	BoundingBox obj_vertices_bb = get_particles_bounding_box(obj_vertices); // store this
 	bb_system = obj_vertices_bb;
 	// just making sure nothing leaves the bounding box
@@ -250,7 +266,7 @@ int main(int ac, char *av[])
 	SimpleDynamics<TimeStepInitialization> initialize_external_force(shell_body, makeShared<TimeDependentExternalForce>(gravity,time_to_full_external_force));
 	InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(shell_body_inner);
 	ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(shell_body);
-	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(shell_body_inner);
+	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(shell_body_inner, 3, false);
 	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(shell_body_inner);
 
 	BodyPartByParticle constrained_edges(shell_body, "constrained_edges");
@@ -314,7 +330,7 @@ int main(int ac, char *av[])
 				
 				stress_relaxation_first_half.parallel_exec(dt);
 				constrain_holder.parallel_exec();
-				// shell_position_damping.parallel_exec(dt);
+				// shell_velocity_damping.parallel_exec(dt);
 				// shell_rotation_damping.parallel_exec(dt);
 				constrain_holder.parallel_exec();
 				stress_relaxation_second_half.parallel_exec(dt);
@@ -322,6 +338,8 @@ int main(int ac, char *av[])
 				++ite;
 				integral_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
+
+				// shell_body.updateCellLinkedList();
 
 				{// checking if any position has become nan
 					// BUG: damping throws nan error it seems - regardless of particle generation method
