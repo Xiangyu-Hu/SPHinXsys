@@ -45,35 +45,18 @@ void relax_shell(RealBody& plate_body, Real thickness, Real level_set_refinement
 	std::cout << "The physics relaxation process of imported model finish !" << std::endl;
 }
 
-class TimeDependentExternalForce : public Gravity
-{
-	Real time_to_full_external_force_;
-public:
-	explicit TimeDependentExternalForce(Vec3d external_force, Real time_to_full_external_force)
-		: Gravity(external_force),
-		time_to_full_external_force_(time_to_full_external_force)
-		{};
-	virtual Vec3d InducedAcceleration(Vec3d &position) override
-	{
-		Real current_time = GlobalStaticVariables::physical_time_;
-		return current_time < time_to_full_external_force_
-				   ? current_time * global_acceleration_ / time_to_full_external_force_
-				   : global_acceleration_;
-	}
-};
-
 class ShellRoofParticleGenerator : public SurfaceParticleGenerator
 {
 	const StdVec<Vec3d>& pos_0_;
 	const Vec3d center_;
-	const Real dp_square_;
+	const Real particel_area_;
 	const Real thickness_;
 public:
-	explicit ShellRoofParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d>& pos_0, const Vec3d& center, Real dp, Real thickness)
+	explicit ShellRoofParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d>& pos_0, const Vec3d& center, Real particel_area, Real thickness)
 		: SurfaceParticleGenerator(sph_body),
 		pos_0_(pos_0),
 		center_(center),
-		dp_square_(dp*dp),
+		particel_area_(particel_area),
 		thickness_(thickness)
 		{};
 	virtual void initializeGeometricVariables() override
@@ -83,7 +66,7 @@ public:
 			// creating the normal direction - z coordinate is always zero
 			Vec3d center_to_pos = pos-center_;
 			center_to_pos[2] = 0;
-			initializePositionAndVolumetricMeasure(pos, dp_square_);
+			initializePositionAndVolumetricMeasure(pos, particel_area_);
 			initializeSurfaceProperties(center_to_pos.normalize(), thickness_);
 		}
 	}
@@ -202,108 +185,23 @@ int main(int ac, char *av[])
 	point_B.pos_0 = Vec3d(0);
 	// resolution
 	Real dp = 1;
+	const int dp_cm = dp*100;
+	Real total_area = (50+dp)*2*(arc+dp); // accounting for particles being on the edges
+	std::cout << "total_area: " << total_area << std::endl;
 	// material
 	Real rho = 36.7347;
 	Real E = 4.32e8;
 	Real mu = 0.3;
 	auto material = makeShared<SaintVenantKirchhoffSolid>(rho, E, mu);
 	Real physical_viscosity = 7e3; // where is this value coming from?
-	std::cout << "physical_viscosity: " << physical_viscosity << std::endl;
 	// gravity
 	Vec3d gravity = -9.8066*radial_vec;
-	Real time_to_full_external_force = 0.1;
 	// system bounding box
 	BoundingBox bb_system;
 
-	// Option A: generating particles from plate and warping
-	// BUG: edge particle density is too high, ShellNormalDirectionPrediction randomly throws error or not
-	auto shell_particles_warped_plate = [&]()
-	{// generate particle positions
-		// 1. to create the roof geometry we create the initial shell particles based on a plate
-		// 2. then we warp the plate according to the given radius and angle
-
-		// 1. Plate
-		// fake thickness for fast levelset generation - we just need particle positions
-		Real thickness_temp = dp*2;
-		Real level_set_refinement_ratio = dp / (0.1 * thickness_temp);
-		// plate dimensions
-		Vec3d plate_dim(2*arc+dp, thickness_temp, length+dp);
-		// shape
-		auto plate_shape = makeShared<ComplexShape>("plate_shape");
-		plate_shape->add<TriangleMeshShapeBrick>(plate_dim/2, simtk_res, Vec3d(0));
-		SPHSystem system(plate_shape->getBounds(), dp);
-		// body and particles
-		RealBody plate_body(system, plate_shape);
-		plate_body.defineBodyLevelSetShape(level_set_refinement_ratio)->correctLevelSetSign();
-		plate_body.defineParticlesWithMaterial<ShellParticles>(material.get());
-		plate_body.generateParticles<ThickSurfaceParticleGeneratorLattice>(thickness_temp);
-		relax_shell(plate_body, thickness_temp, level_set_refinement_ratio);
-		// output
-		IOEnvironment io_env(system);
-		BodyStatesRecordingToVtp vtp_output(io_env, {plate_body});
-		vtp_output.writeToFile(0);
-
-		// 2. Warping
-		// creating a curved shell from the plate based on the arc length at each particle
-		auto warping_transform = [&](const Vec3d& pos)
-		{
-			// take the x coordinate as arc length
-			Real angle = pos[tangential_axis]/radius;
-			// transfer x, y coordinates, keep z as is
-			Real x_new = radius*std::sin(angle);
-			Real y_new = radius*std::cos(angle)-radius;
-			return Vec3d(x_new, y_new, pos[length_axis]);
-		};
-		StdVec<Vec3d> pos_0;
-		pos_0.reserve(plate_body.getBaseParticles().pos_.size());
-		for (const auto& pos: plate_body.getBaseParticles().pos_) pos_0.push_back(warping_transform(pos));
-		// update bb_system and return
-		bb_system = get_particles_bounding_box(pos_0);
-		return pos_0;
-	};
-
-	// Option B: generating particles from stl
-	// BUG: edge particle density is too high
-	auto shell_particles_stl = [&]()
-	{
-		Real thickness_temp = 4; // 2 or 4
-		std::string stl_path = "input/shell_50mm_80d_" + std::to_string(int(thickness_temp)) + "mm.stl";
-		Real level_set_refinement_ratio = dp / (0.1 * thickness_temp);
-		// shape
-		auto plate_shape = makeShared<ComplexShape>("plate_shape_stl");
-		plate_shape->add<TriangleMeshShapeSTL>(stl_path, Vec3d(0), 1);
-		bb_system = plate_shape->getBounds();
-		SPHSystem system(bb_system, dp);
-		// body and particles
-		RealBody plate_body(system, plate_shape);
-		plate_body.defineBodyLevelSetShape(level_set_refinement_ratio)->correctLevelSetSign();
-		plate_body.defineParticlesWithMaterial<ShellParticles>(material.get());
-		plate_body.generateParticles<ThickSurfaceParticleGeneratorLattice>(thickness_temp);
-		relax_shell(plate_body, thickness_temp, level_set_refinement_ratio);
-		// output
-		IOEnvironment io_env(system, false);
-		BodyStatesRecordingToVtp vtp_output(io_env, {plate_body});
-		vtp_output.writeToFile(0);
-
-		return plate_body.getBaseParticles().pos_;
-	};
-
-	// Option C: generating particles from predefined positions from obj file
-	StdVec<Vec3d> obj_vertices = read_obj_vertices("input/shell_50mm_80d_1mm.txt"); // dp = 1
-	// transform to flat plate
-	auto flatten_transform = [&](StdVec<Vec3d>& pos_0)
-	{// editing input vector - non-const input!
-		for (auto& pos: pos_0)
-		{
-			// get the arc length at the x coordinate and set it as new x coordinate
-			Real angle = std::asin(pos[tangential_axis]/radius);
-			pos[tangential_axis] = angle*radius;
-			// y will be 0
-			pos[radial_axis] = 0;
-			// z stays as is
-		}
-	};
-	// flatten_transform(obj_vertices);
+	// generating particles from predefined positions from obj file
+	StdVec<Vec3d> obj_vertices = read_obj_vertices("input/shell_50mm_80d_" + std::to_string(dp_cm) + "cm.txt");
+	Real particle_area = total_area / obj_vertices.size();
 	// find out BoundingBox
 	BoundingBox obj_vertices_bb = get_particles_bounding_box(obj_vertices); // store this
 	bb_system = obj_vertices_bb;
@@ -320,7 +218,7 @@ int main(int ac, char *av[])
 	SPHSystem system(bb_system, dp);
 	SolidBody shell_body(system, shell_shape);
 	shell_body.defineParticlesWithMaterial<ShellParticles>(material.get());
-	shell_body.generateParticles<ShellRoofParticleGenerator>(obj_vertices, center, dp, thickness);
+	shell_body.generateParticles<ShellRoofParticleGenerator>(obj_vertices, center, particle_area, thickness);
 	auto shell_particles = dynamic_cast<ShellParticles*>(&shell_body.getBaseParticles());
 	// output
 	IOEnvironment io_env(system, true);
@@ -389,6 +287,7 @@ int main(int ac, char *av[])
 	corrected_configuration.parallel_exec();
 
 	{// tests on initialization
+		// checking particle distances - avoid bugs of reading file
 		Real min_rij = Infinity;
 		for (size_t index_i = 0; index_i < shell_particles->pos0_.size(); ++index_i)
 		{
@@ -397,6 +296,14 @@ int main(int ac, char *av[])
 				if (inner_neighborhood.r_ij_[n] < min_rij) min_rij = inner_neighborhood.r_ij_[n];
 		}
 		EXPECT_GT(min_rij, dp/2);
+
+		// test volume
+		Real total_volume = std::accumulate(shell_particles->Vol_.begin(), shell_particles->Vol_.end(), 0.0);
+		std::cout << "total_volume: " << total_volume << std::endl;
+		Real total_mass = std::accumulate(shell_particles->mass_.begin(), shell_particles->mass_.end(), 0.0);
+		std::cout << "total_mass: " << total_mass << std::endl;
+		EXPECT_FLOAT_EQ(total_volume, total_area);
+		EXPECT_FLOAT_EQ(total_mass, total_area*rho);
 	}
 
 	/**
@@ -429,7 +336,7 @@ int main(int ac, char *av[])
 
 				initialize_external_force.parallel_exec(dt);
 
-				dt = 0.2 * computing_time_step_size.parallel_exec();
+				dt = thickness/dp * computing_time_step_size.parallel_exec();
 				{// checking for excessive time step reduction
 					if (dt > max_dt) max_dt = dt;
 					if (dt < max_dt/1e3) throw std::runtime_error("time step decreased too much");
@@ -437,8 +344,8 @@ int main(int ac, char *av[])
 				
 				stress_relaxation_first_half.parallel_exec(dt);
 				constrain_holder.parallel_exec();
-				// shell_velocity_damping.parallel_exec(dt);
-				// shell_rotation_damping.parallel_exec(dt);
+				shell_velocity_damping.exec(dt);
+				shell_rotation_damping.parallel_exec(dt);
 				constrain_holder.parallel_exec();
 				stress_relaxation_second_half.parallel_exec(dt);
 
@@ -449,13 +356,12 @@ int main(int ac, char *av[])
 				// shell_body.updateCellLinkedList();
 
 				{// checking if any position has become nan
-					// BUG: damping throws nan error it seems - regardless of particle generation method
 					for (const auto& pos: shell_body.getBaseParticles().pos_)
 						if (std::isnan(pos[0]) || std::isnan(pos[1]) || std::isnan(pos[2]))
 							throw std::runtime_error("position has become nan");
 				}
 			}
-			{// output displacement
+			{// output data
 				std::cout << "max displacement: " << shell_particles->getMaxDisplacement() << std::endl;
 			}
 			vtp_output.writeToFile(ite);
@@ -475,6 +381,17 @@ int main(int ac, char *av[])
 		point_B.interpolate(*shell_particles);
 		point_A.write_data();
 		point_B.write_data();
+	}
+	{// testing final values
+		Real displ_y_A = -0.3019;
+		Real displ_x_A = -0.1593;
+		Real stress_z_A_top = 215570;
+		Real stress_z_A_bottom = 340700;
+		Real stress_angle_B_top = 191230;
+		Real stress_angle_B_bottom = -218740;
+
+		EXPECT_NEAR(point_A.displacement[radial_axis], displ_y_A, displ_y_A*1e-2);
+		EXPECT_NEAR(point_A.displacement[tangential_axis], displ_x_A, displ_x_A*1e-2);
 	}
 
 	return 0;
