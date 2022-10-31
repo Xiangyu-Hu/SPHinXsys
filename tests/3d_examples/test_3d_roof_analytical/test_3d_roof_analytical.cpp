@@ -90,17 +90,17 @@ public:
 };
 
 template<typename VectorType>
-SPH::BoundingBox get_particles_bounding_box(const VectorType& pos_0)
+BoundingBox get_particles_bounding_box(const VectorType& pos_0)
 {
-    SPH::Vec3d lower(pos_0[0]);
-    SPH::Vec3d upper(pos_0[0]);
+    Vec3d lower(pos_0[0]);
+    Vec3d upper(pos_0[0]);
     for (const auto& pos: pos_0){
         for (int i=0; i<3; i++){
             if (lower[i] > pos[i]) lower[i] = pos[i];
             if (upper[i] < pos[i]) upper[i] = pos[i];
         }
     }
-    return SPH::BoundingBox(lower, upper);
+    return BoundingBox(lower, upper);
 }
 
 StdVec<Vec3d> read_obj_vertices(const std::string& file_name)
@@ -121,6 +121,55 @@ StdVec<Vec3d> read_obj_vertices(const std::string& file_name)
 	return pos_0;
 }
 
+template<typename VariableType>
+VariableType interpolate_observer(ShellParticles& particles, const IndexVector& neighbor_ids, const Vec3d& observer_pos_0, const std::string& variable_name)
+{
+	Kernel* kernel_ptr = particles.getSPHBody().sph_adaptation_->getKernel();
+	Real smoothing_length = particles.getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
+    // std::cout << "smoothing_length: " << smoothing_length << std::endl;
+	VariableType vector_sum(0);
+	Real kernel_sum = 0;
+	auto variable = *particles.getVariableByName<VariableType>(variable_name);
+	for (auto id: neighbor_ids)
+	{
+		Real distance = (particles.pos0_[id] - observer_pos_0).norm();
+		Real kernel = kernel_ptr->W_3D(distance/smoothing_length);
+		kernel_sum += kernel;
+		vector_sum += kernel*(variable[id]);
+	}
+	// std::cout << "kernel_sum: " << kernel_sum << std::endl;
+	// std::cout << "vector_sum: " << vector_sum << std::endl;
+	vector_sum /= kernel_sum;
+	// std::cout << "vector_sum normalized: " << vector_sum << std::endl;
+	return vector_sum;
+}
+
+struct observer_point_shell
+{
+	Vec3d pos_0;
+	IndexVector neighbor_ids;
+	Vec3d pos_n;
+	Vec3d displacement;
+	Vec3d global_shear_stress;
+	Mat3d global_stress;
+
+	void interpolate(ShellParticles& particles)
+	{
+		pos_n = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, "Position");
+		displacement = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, "Displacement");
+		global_shear_stress = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, "GlobalShearStress");
+		global_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, "GlobalStress");
+	}
+
+	void write_data() const
+	{
+		std::cout << "pos_n: " << pos_n << std::endl;
+		std::cout << "displacement: " << displacement << std::endl;
+		std::cout << "global_shear_stress: " << global_shear_stress << std::endl;
+		std::cout << "global_stress: " << global_stress << std::endl;
+	}
+};
+
 int main(int ac, char *av[])
 {
 	// main geometric parameters
@@ -134,8 +183,14 @@ int main(int ac, char *av[])
 	Real length = 50;
 	Real thickness = 0.25;
 	Real teta = 40;
-	Real arc = radius*to_rad(teta);
+	Real teta_radian = to_rad(teta);
+	Real arc = radius*teta_radian;
 	Vec3d center(0,-radius,0);
+	// oberserver points A and B
+	observer_point_shell point_A;
+	observer_point_shell point_B;
+	point_A.pos_0 = Vec3d(radius*std::sin(teta_radian), radius*std::cos(teta_radian)-radius, 0);
+	point_B.pos_0 = Vec3d(0);
 	// resolution
 	Real dp = 1;
 	// material
@@ -263,6 +318,35 @@ int main(int ac, char *av[])
 	shell_body.addBodyStateForRecording<Vec3d>("NormalDirection");
 	BodyStatesRecordingToVtp vtp_output(io_env, {shell_body});
 	vtp_output.writeToFile(0);
+	// observer points A & B
+	point_A.neighbor_ids = [&]()
+	{// only neighbors on the edges
+		IndexVector ids;
+		Real smoothing_length = shell_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
+		Real x_min = std::abs(point_A.pos_0[tangential_axis]) - dp/2;
+		for (size_t i = 0; i < shell_particles->pos0_.size(); ++i)
+		{
+			if ((shell_particles->pos0_[i] - point_A.pos_0).norm() < smoothing_length &&
+					std::abs(shell_particles->pos0_[i][tangential_axis]) > x_min)
+				ids.push_back(i);
+		}
+		return ids;
+	}();
+	point_B.neighbor_ids = [&]()
+	{// full neighborhood
+		IndexVector ids;
+		Real smoothing_length = shell_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
+		for (size_t i = 0; i < shell_particles->pos0_.size(); ++i)
+		{
+			if ((shell_particles->pos0_[i] - point_B.pos_0).norm() < smoothing_length)
+				ids.push_back(i);
+		}
+		return ids;
+	}();
+	point_A.interpolate(*shell_particles);
+	point_B.interpolate(*shell_particles);
+	point_A.write_data();
+	point_B.write_data();
 
 	// methods
 	InnerRelation shell_body_inner(shell_body);
@@ -363,11 +447,14 @@ int main(int ac, char *av[])
 	catch(const std::exception& e)
 	{
 		std::cerr << e.what() << '\n';
-		{// output displacement
-			auto shell_particles = dynamic_cast<ElasticSolidParticles*>(&shell_body.getBaseParticles());
-			std::cout << "max displacement: " << shell_particles->getMaxDisplacement() << std::endl;
-		}
 		vtp_output.writeToFile(ite);
+	}
+	{// output data
+		std::cout << "max displacement: " << shell_particles->getMaxDisplacement() << std::endl;
+		point_A.interpolate(*shell_particles);
+		point_B.interpolate(*shell_particles);
+		point_A.write_data();
+		point_B.write_data();
 	}
 
 	return 0;
