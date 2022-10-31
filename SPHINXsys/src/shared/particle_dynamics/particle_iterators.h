@@ -31,6 +31,7 @@
 
 #include "base_data_package.h"
 #include "sph_data_containers.h"
+#include "cell_linked_list.h"
 
 namespace SPH
 {
