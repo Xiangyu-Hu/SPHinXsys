@@ -23,8 +23,9 @@
 /**
  * @file 	fluid_dynamics_inner.h
  * @brief 	Here, we define the algorithm classes for fluid dynamics within the body.
- * @details 	We consider here weakly compressible fluids. The algorithms may be
- * 			different for free surface flow and the one without free surface.
+ * @details We consider here weakly compressible fluids.
+ * 			Note that, as these are local dynamics which are combined with particle dynamics
+ * 			algorithms as template, the name-hiding is used for functions in the derived classes.
  * @author	Chi Zhang and Xiangyu Hu
  */
 
@@ -63,7 +64,7 @@ namespace SPH
 
 		/**
 		 * @class BaseDensitySummationInner
-		 * @brief Base class computing density by summation
+		 * @brief Base class for computing density by summation
 		 */
 		class BaseDensitySummationInner : public LocalDynamics, public FluidDataInner
 		{

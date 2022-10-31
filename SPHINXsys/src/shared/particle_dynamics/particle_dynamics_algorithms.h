@@ -373,52 +373,5 @@ namespace SPH
 								  { this->update(i, dt); });
 		};
 	};
-
-	/**
-	 * @class CombinedLocalDynamics
-	 * @brief This is the class for combining multiple local interaction dynamics,
-	 * which share the particle loop but are independent from each other,
-	 * aiming to increase computing intensity under the data caching environment
-	 */
-	template <typename... MultipleLocalDynamics>
-	class CombinedLocalInteraction;
-
-	template <>
-	class CombinedLocalInteraction<> : public LocalDynamics
-	{
-	public:
-		template <class BodyRelationType>
-		CombinedLocalInteraction(BodyRelationType &body_relation) : LocalDynamics(body_relation.getDynamicsRange()){};
-
-		void interaction(size_t index_i, Real dt = 0.0){};
-	};
-
-	template <class FirstLocalDynamics, class... OtherLocalDynamics>
-	class CombinedLocalInteraction<FirstLocalDynamics, OtherLocalDynamics...> : public LocalDynamics
-	{
-	protected:
-		FirstLocalDynamics first_local_dynamics_;
-		CombinedLocalInteraction<OtherLocalDynamics...> other_local_dynamics_;
-
-	public:
-		template <typename BodyRelationType, typename... FirstArgs, typename... OtherArgs>
-		CombinedLocalInteraction(BodyRelationType &body_relation, FirstArgs &&...first_args, OtherArgs &&...other_args)
-			: LocalDynamics(body_relation.getDynamicsRange()),
-			  first_local_dynamics_(body_relation, std::forward<FirstArgs>(first_args)...),
-			  other_local_dynamics_(body_relation, std::forward<OtherArgs>(other_args)...){};
-
-		virtual void setupDynamics(Real dt = 0.0) override
-		{
-			first_local_dynamics_.setupDynamics(dt);
-			other_local_dynamics_.setupDynamics(dt);
-		};
-
-		void interaction(size_t index_i, Real dt = 0.0)
-		{
-			first_local_dynamics_.interaction(index_i, dt);
-			other_local_dynamics_.interaction(index_i, dt);
-		};
-	};
-
 }
 #endif // PARTICLE_DYNAMICS_ALGORITHMS_H
