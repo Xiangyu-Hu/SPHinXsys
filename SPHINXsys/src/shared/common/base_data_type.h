@@ -28,6 +28,9 @@
  *			Try to implement EIGEN libaary for base vector, matrix and 
  *			linear algebra operation.  
  *			-- Chi ZHANG
+ * @version 1.0
+ *		    Replace the self-fined bounding box with the AlignedBox from eigen. 
+ *		   	Further implementation to be done ...
  */
 
 #ifndef BASE_DATA_TYPE_H
@@ -44,6 +47,8 @@
 #include <Eigen/Core>
 #include <Eigen/Dense>
 #include <Eigen/Eigenvalues>
+#include <Eigen/Geometry> 
+#include <Eigen/Cholesky>
 
 #include "Simbody.h"
 #include "SimTKcommon.h"
@@ -74,22 +79,27 @@ namespace SPH
 	 
 	using Real = double;
 	/** Vector with integers. */
-	using Vec2i = Eigen::Matrix<int, 2, 1>;
-	using Vec3i = Eigen::Matrix<int, 3, 1>;
+	using Vec2i = Eigen::Matrix< int, 2, 1 >;
+	using Vec3i = Eigen::Matrix< int, 3, 1 >;
 	/** Vector with unsigned int. */
-	using Vec2u = Eigen::Matrix<size_t, 2, 1>;
-	using Vec3u = Eigen::Matrix<size_t, 3, 1>;
-	/** Useful float point constants. */
-	constexpr size_t MaxSize_t = std::numeric_limits<size_t>::max();
-	constexpr double MinRealNumber = std::numeric_limits<double>::min();
-	constexpr double MaxRealNumber = std::numeric_limits<double>::max();
+	using Vec2u = Eigen::Matrix< size_t, 2, 1 >;
+	using Vec3u = Eigen::Matrix< size_t, 3, 1 >;
 	/** Vector with float point number.*/
-	using Vec2d = Eigen::Matrix<Real, 2, 1>;
-	using Vec3d = Eigen::Matrix<Real, 3, 1>;
+	using Vec2d = Eigen::Matrix< Real, 2, 1 >;
+	using Vec3d = Eigen::Matrix< Real, 3, 1 >;
 	/** Small, 2*2 and 3*3, matrix with float point number. */
-	using Mat2d = Eigen::Matrix<Real, 2, 2>;
-	using Mat3d = Eigen::Matrix<Real, 3, 3>;
+	using Mat2d = Eigen::Matrix< Real, 2, 2 >;
+	using Mat3d = Eigen::Matrix< Real, 3, 3 >;
+	/** AlignedBox */
+	using AlignedBox2d = Eigen::AlignedBox< Real, 2 >;
+	using AlignedBox3d = Eigen::AlignedBox< Real, 3 >;
 	/** Unified initialize to zero for all data type. */
+	/**
+	 * NOTE: Eigen::Matrix<> constexpr constructor? 
+	 * Currently, there are no constexpr constructors/methods in Eigen. 
+	 * And implementing this would be very complicated (for any non-trivial methods), 
+	 * e.g., because SIMD functions are not easy to handle. 
+	 */
 	template <typename DataType> 
 	struct DataTypeInitializer
 	{
@@ -113,6 +123,10 @@ namespace SPH
 	template<> struct DataTypeIndex<Mat2d>{ static constexpr int value = 2; };
 	template<> struct DataTypeIndex<Mat3d>{ static constexpr int value = 2; };
 	template<> struct DataTypeIndex<int>{   static constexpr int value = 3; };
+	/** Useful float point constants. */
+	constexpr size_t MaxSize_t = std::numeric_limits<size_t>::max();
+	constexpr double MinRealNumber = std::numeric_limits<double>::min();
+	constexpr double MaxRealNumber = std::numeric_limits<double>::max();
 	/** Verbal boolean for positive and negative axis directions. */
 	const int xAxis = 0;
 	const int yAxis = 1;

@@ -28,6 +28,9 @@
 *			Try to implement EIGEN libaary for base vector, matrix and 
 *			linear algebra operation.  
 *			-- Chi ZHANG
+* @version  1.0
+*		    Replace the self-fined bounding box with the AlignedBox from eigen. 
+*		   	Further implementation to be done ...
 */
 #ifndef DATA_TYPE_3D_H
 #define DATA_TYPE_3D_H
@@ -39,6 +42,7 @@ namespace SPH {
 	using Vecu = Vec3u;
 	using Vecd = Vec3d;
 	using Matd = Mat3d;
+	using AlignedBox = AlignedBox3d;
 	using AngularVecd = Vec3d;
 	using Transformd = Transform3d;
 
