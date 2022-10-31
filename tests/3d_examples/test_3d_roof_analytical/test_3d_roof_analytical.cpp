@@ -106,17 +106,26 @@ BoundingBox get_particles_bounding_box(const VectorType& pos_0)
 StdVec<Vec3d> read_obj_vertices(const std::string& file_name)
 {
 	std::cout << "read_obj_vertices started" << std::endl;
-	StdVec<Vec3d> pos_0;
+
     std::ifstream myfile(file_name, std::ios_base::in);
 	if(!myfile.is_open()) throw std::runtime_error("read_obj_vertices: file doesn't exist");
-    while (!myfile.eof())
+
+	StdVec<Vec3d> pos_0;
+	Vec3d particle(0);
+	unsigned int count = 0;
+	Real value = 0;
+
+    while (myfile >> value)
     {
-		Real x, y, z;
-		myfile >> x;
-		myfile >> y;
-		myfile >> z;
-		pos_0.push_back({x,y,z});
+        particle[count] = value;
+		++count;
+		if (count % 3 == 0)
+		{
+			count = 0;
+			pos_0.push_back(particle);
+		}
     }
+
 	std::cout << "read_obj_vertices finished" << std::endl;
 	return pos_0;
 }
@@ -370,7 +379,7 @@ int main(int ac, char *av[])
 
 	SimpleDynamics<solid_dynamics::FixedInAxisDirection, BodyPartByParticle> constrain_holder(constrained_edges, length_vec);
 	DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
-		shell_position_damping(0.2, shell_body_inner, "Velocity", physical_viscosity);
+		shell_velocity_damping(0.2, shell_body_inner, "Velocity", physical_viscosity);
 	DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
 		shell_rotation_damping(0.2, shell_body_inner, "AngularVelocity", physical_viscosity);
 
@@ -378,6 +387,17 @@ int main(int ac, char *av[])
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
 	corrected_configuration.parallel_exec();
+
+	{// tests on initialization
+		Real min_rij = Infinity;
+		for (size_t index_i = 0; index_i < shell_particles->pos0_.size(); ++index_i)
+		{
+			Neighborhood &inner_neighborhood = shell_body_inner.inner_configuration_[index_i];
+			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+				if (inner_neighborhood.r_ij_[n] < min_rij) min_rij = inner_neighborhood.r_ij_[n];
+		}
+		EXPECT_GT(min_rij, dp/2);
+	}
 
 	/**
 	 * From here the time stepping begins.
