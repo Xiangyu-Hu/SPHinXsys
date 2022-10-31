@@ -145,7 +145,7 @@ namespace SPH
 				const Vecd &vel_ave_i = vel_ave_[index_i];
 				const Vecd &n_i = n_[index_i];
 
-				Vecd force(0);
+				Vecd force = Vecd::Zero();
 				for (size_t k = 0; k < contact_configuration_.size(); ++k)
 				{
 					StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
