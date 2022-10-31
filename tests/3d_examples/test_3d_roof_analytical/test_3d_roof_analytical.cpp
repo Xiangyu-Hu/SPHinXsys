@@ -226,6 +226,7 @@ int main(int ac, char *av[])
 
 	// Option C: generating particles from predefined positions from obj file
 	StdVec<Vec3d> obj_vertices = read_obj_vertices("input/shell_50mm_80d_1mm.txt"); // dp = 1
+	// transform to flat plate
 	auto flatten_transform = [&](StdVec<Vec3d>& pos_0)
 	{// editing input vector - non-const input!
 		for (auto& pos: pos_0)
@@ -238,7 +239,6 @@ int main(int ac, char *av[])
 			// z stays as is
 		}
 	};
-	// transform to flat plate
 	// flatten_transform(obj_vertices);
 	// find out BoundingBox
 	BoundingBox obj_vertices_bb = get_particles_bounding_box(obj_vertices); // store this
@@ -246,6 +246,8 @@ int main(int ac, char *av[])
 	// just making sure nothing leaves the bounding box
 	bb_system.first += Vec3d(-5);
 	bb_system.second += Vec3d(5);
+	std::cout << "bb_system.first: " << bb_system.first << std::endl;
+	std::cout << "bb_system.second: " << bb_system.second << std::endl;
 
 	// shell
 	auto shell_shape = makeShared<ComplexShape>("shell_shape");
@@ -255,6 +257,7 @@ int main(int ac, char *av[])
 	SolidBody shell_body(system, shell_shape);
 	shell_body.defineParticlesWithMaterial<ShellParticles>(material.get());
 	shell_body.generateParticles<ShellRoofParticleGenerator>(obj_vertices, center, dp, thickness);
+	auto shell_particles = dynamic_cast<ShellParticles*>(&shell_body.getBaseParticles());
 	// output
 	IOEnvironment io_env(system, true);
 	shell_body.addBodyStateForRecording<Vec3d>("NormalDirection");
@@ -263,7 +266,7 @@ int main(int ac, char *av[])
 
 	// methods
 	InnerRelation shell_body_inner(shell_body);
-	SimpleDynamics<TimeStepInitialization> initialize_external_force(shell_body, makeShared<TimeDependentExternalForce>(gravity,time_to_full_external_force));
+	SimpleDynamics<TimeStepInitialization> initialize_external_force(shell_body, makeShared<Gravity>(gravity));
 	InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(shell_body_inner);
 	ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(shell_body);
 	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(shell_body_inner, 3, false);
@@ -322,7 +325,7 @@ int main(int ac, char *av[])
 
 				initialize_external_force.parallel_exec(dt);
 
-				dt = 0.1 * computing_time_step_size.parallel_exec();
+				dt = 0.2 * computing_time_step_size.parallel_exec();
 				{// checking for excessive time step reduction
 					if (dt > max_dt) max_dt = dt;
 					if (dt < max_dt/1e3) throw std::runtime_error("time step decreased too much");
@@ -349,8 +352,7 @@ int main(int ac, char *av[])
 				}
 			}
 			{// output displacement
-				auto elastic_particles = dynamic_cast<ElasticSolidParticles*>(&shell_body.getBaseParticles());
-				std::cout << "max displacement: " << elastic_particles->getMaxDisplacement() << std::endl;
+				std::cout << "max displacement: " << shell_particles->getMaxDisplacement() << std::endl;
 			}
 			vtp_output.writeToFile(ite);
 		}
@@ -362,8 +364,8 @@ int main(int ac, char *av[])
 	{
 		std::cerr << e.what() << '\n';
 		{// output displacement
-			auto elastic_particles = dynamic_cast<ElasticSolidParticles*>(&shell_body.getBaseParticles());
-			std::cout << "max displacement: " << elastic_particles->getMaxDisplacement() << std::endl;
+			auto shell_particles = dynamic_cast<ElasticSolidParticles*>(&shell_body.getBaseParticles());
+			std::cout << "max displacement: " << shell_particles->getMaxDisplacement() << std::endl;
 		}
 		vtp_output.writeToFile(ite);
 	}
