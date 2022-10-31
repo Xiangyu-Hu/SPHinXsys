@@ -49,8 +49,68 @@
 #include "base_local_dynamics.h"
 #include "base_particle_dynamics.hpp"
 
+#include <type_traits>
+
 namespace SPH
 {
+	// SFINAE test
+	template <typename T>
+	class has_update
+	{
+	private:
+		typedef char YesType[1];
+		typedef char NoType[2];
+
+		template <typename C>
+		static YesType &test(decltype(&C::update));
+		template <typename C>
+		static NoType &test(...);
+
+	public:
+		enum
+		{
+			value = sizeof(test<T>(0)) == sizeof(YesType)
+		};
+	};
+
+	template <typename T>
+	class has_initialize
+	{
+	private:
+		typedef char YesType[1];
+		typedef char NoType[2];
+
+		template <typename C>
+		static YesType &test(decltype(&C::initialize));
+		template <typename C>
+		static NoType &test(...);
+
+	public:
+		enum
+		{
+			value = sizeof(test<T>(0)) == sizeof(YesType)
+		};
+	};
+
+	template <typename T>
+	class has_interaction
+	{
+	private:
+		typedef char YesType[1];
+		typedef char NoType[2];
+
+		template <typename C>
+		static YesType &test(decltype(&C::interaction));
+		template <typename C>
+		static NoType &test(...);
+
+	public:
+		enum
+		{
+			value = sizeof(test<T>(0)) == sizeof(YesType)
+		};
+	};
+
 	/**
 	 * @class SimpleDynamics
 	 * @brief Simple particle dynamics without considering particle interaction
@@ -64,7 +124,15 @@ namespace SPH
 		template <class DerivedDynamicsRange, typename... Args>
 		SimpleDynamics(DerivedDynamicsRange &derived_dynamics_range, Args &&...args)
 			: LocalDynamicsType(derived_dynamics_range, std::forward<Args>(args)...),
-			  BaseDynamics<void>(), dynamics_range_(derived_dynamics_range){};
+			  BaseDynamics<void>(), dynamics_range_(derived_dynamics_range)
+		{
+			if (has_initialize<LocalDynamicsType>::value || has_interaction<LocalDynamicsType>::value)
+			{
+				std::cout << "\n SimpleDynamics " << typeid(*this).name() << " does not match LocalDynamics!" << std::endl;
+				std::cout << "\n Please check if the LocalDynamics function update or initialization is not used!" << std::endl;
+				exit(1);
+			}
+		};
 		virtual ~SimpleDynamics(){};
 
 		virtual void exec(Real dt = 0.0) override
