@@ -409,7 +409,7 @@ return_data bending_circular_plate(int dp_ratio)
 		Real deflection_ref = -0.08736*inch_to_m;
 		Real stress_max_ref = 7200*psi_to_pa;
 
-		EXPECT_NEAR(point_center.displacement[sym_axis], deflection_ref, deflection_ref*1e-2);
+		EXPECT_NEAR(std::abs(point_center.displacement[sym_axis]), std::abs(deflection_ref), std::abs(deflection_ref)*10e-2);
 		// EXPECT_NEAR(point_center.stress_max, stress_max_ref, stress_max_ref*1e-2);
 	}
 	return_data data;
