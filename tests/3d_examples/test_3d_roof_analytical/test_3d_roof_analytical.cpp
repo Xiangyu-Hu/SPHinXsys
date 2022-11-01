@@ -455,6 +455,6 @@ TEST(roof_under_self_weight, parametric_dp)
 int main(int argc, char* argv[])
 {	
 	testing::InitGoogleTest(&argc, argv);
-	testing::GTEST_FLAG(filter) = "roof_under_self_weight.parametric_dp";
+	testing::GTEST_FLAG(filter) = "roof_under_self_weight.dp_1";
 	return RUN_ALL_TESTS();
 }

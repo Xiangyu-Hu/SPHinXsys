@@ -8,54 +8,21 @@
 
 #include "sphinxsys.h"
 #include <gtest/gtest.h>
-#include "matplotlibcpp.h"
 
 using namespace SPH;
 
-Real to_rad(Real angle){return angle*Pi/180;}
 static const Real psi_to_pa = 6894.75729;
 static const Real inch_to_m = 0.0254;
 static const Real lb_to_kg = 0.45359237;
 
-void relax_shell(RealBody& plate_body, Real thickness, Real level_set_refinement_ratio)
-{
-	// BUG: apparently only works if dp > thickness, otherwise ShellNormalDirectionPrediction::correctNormalDirection() throws error
-
-	InnerRelation imported_model_inner(plate_body);
-	SimpleDynamics<RandomizeParticlePosition> random_imported_model_particles(plate_body);
-	relax_dynamics::ShellRelaxationStepInner relaxation_step_inner(imported_model_inner, thickness, level_set_refinement_ratio);
-	relax_dynamics::ShellNormalDirectionPrediction shell_normal_prediction(imported_model_inner, thickness);	
-	//----------------------------------------------------------------------
-	//	Particle relaxation starts here.
-	//----------------------------------------------------------------------
-	random_imported_model_particles.parallel_exec(0.25);
-	relaxation_step_inner.mid_surface_bounding_.parallel_exec();
-	plate_body.updateCellLinkedList();
-	//----------------------------------------------------------------------
-	//	Particle relaxation time stepping start here.
-	//----------------------------------------------------------------------
-	int ite_p = 0;
-	while (ite_p < 1000)
-	{
-		if (ite_p % 100 == 0)
-		{
-			std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
-		}
-		relaxation_step_inner.parallel_exec();
-		ite_p += 1;
-	}
-	shell_normal_prediction.exec();
-	std::cout << "The physics relaxation process of imported model finish !" << std::endl;
-}
-
-class ShellRoofParticleGenerator : public SurfaceParticleGenerator
+class ShellCircleParticleGenerator : public SurfaceParticleGenerator
 {
 	const StdVec<Vec3d>& pos_0_;
 	const Vec3d normal_;
 	const Real particel_area_;
 	const Real thickness_;
 public:
-	explicit ShellRoofParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d>& pos_0, const Vec3d& normal, Real particel_area, Real thickness)
+	explicit ShellCircleParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d>& pos_0, const Vec3d& normal, Real particel_area, Real thickness)
 		: SurfaceParticleGenerator(sph_body),
 		pos_0_(pos_0),
 		normal_(normal),
@@ -234,7 +201,7 @@ return_data bending_circular_plate(int dp_ratio)
 	SPHSystem system(bb_system, dp);
 	SolidBody shell_body(system, shell_shape);
 	shell_body.defineParticlesWithMaterial<ShellParticles>(material.get());
-	shell_body.generateParticles<ShellRoofParticleGenerator>(obj_vertices, sym_vec, particle_area, thickness);
+	shell_body.generateParticles<ShellCircleParticleGenerator>(obj_vertices, sym_vec, particle_area, thickness);
 	auto shell_particles = dynamic_cast<ShellParticles*>(&shell_body.getBaseParticles());
 	// output
 	IOEnvironment io_env(system, false);
@@ -320,8 +287,6 @@ return_data bending_circular_plate(int dp_ratio)
 	 * Main loop
 	 */
 	Real max_dt = 0.0;
-	// recording - not pushed to GitHub due to lack of matplotlib there
-	StdVec<Real> time, max_displacement, center_deflection;
 	try
 	{
 		while (GlobalStaticVariables::physical_time_ < end_time)
@@ -372,23 +337,6 @@ return_data bending_circular_plate(int dp_ratio)
 				max_displacement.push_back(shell_particles->getMaxDisplacement());
 				point_center.interpolate(*shell_particles);
 				center_deflection.push_back(point_center.displacement[sym_axis]);
-			}
-			{// plotting - not pushed to GitHub due to lack of matplotlib there
-				matplotlibcpp::figure();
-				matplotlibcpp::figure_size(1200, 780);
-				matplotlibcpp::plot(time, max_displacement);
-				matplotlibcpp::xlabel("time [s]");
-				matplotlibcpp::ylabel("max_displacement [m]");
-				matplotlibcpp::save("max_displacement.png");
-				matplotlibcpp::close();
-
-				matplotlibcpp::figure();
-				matplotlibcpp::figure_size(1200, 780);
-				matplotlibcpp::plot(time, center_deflection);
-				matplotlibcpp::xlabel("time [s]");
-				matplotlibcpp::ylabel("center_deflection [m]");
-				matplotlibcpp::save("center_deflection.png");
-				matplotlibcpp::close();
 			}
 		}
 		tick_count::interval_t tt = tick_count::now()-t1;
