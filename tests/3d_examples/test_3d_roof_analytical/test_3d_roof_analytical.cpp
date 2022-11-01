@@ -114,26 +114,26 @@ StdVec<Vec3d> read_obj_vertices(const std::string& file_name)
 }
 
 template<typename VariableType>
-VariableType interpolate_observer(ShellParticles& particles, const IndexVector& neighbor_ids, const Vec3d& observer_pos_0, const std::string& variable_name)
+VariableType interpolate_observer(
+	ShellParticles& particles,
+	const IndexVector& neighbor_ids,
+	const Vec3d& observer_pos_0,
+	std::function<VariableType(size_t)> get_variable_value
+)
 {
 	Kernel* kernel_ptr = particles.getSPHBody().sph_adaptation_->getKernel();
 	Real smoothing_length = particles.getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
-    // std::cout << "smoothing_length: " << smoothing_length << std::endl;
-	VariableType vector_sum(0);
+	VariableType variable_sum(0);
 	Real kernel_sum = 0;
-	auto variable = *particles.getVariableByName<VariableType>(variable_name);
 	for (auto id: neighbor_ids)
 	{
 		Real distance = (particles.pos0_[id] - observer_pos_0).norm();
 		Real kernel = kernel_ptr->W_3D(distance/smoothing_length);
 		kernel_sum += kernel;
-		vector_sum += kernel*(variable[id]);
+		variable_sum += kernel*(get_variable_value(id));
 	}
-	// std::cout << "kernel_sum: " << kernel_sum << std::endl;
-	// std::cout << "vector_sum: " << vector_sum << std::endl;
-	vector_sum /= kernel_sum;
-	// std::cout << "vector_sum normalized: " << vector_sum << std::endl;
-	return vector_sum;
+	variable_sum /= kernel_sum;
+	return variable_sum;
 }
 
 struct observer_point_shell
@@ -144,21 +144,37 @@ struct observer_point_shell
 	Vec3d displacement;
 	Vec3d global_shear_stress;
 	Mat3d global_stress;
+	Mat3d def_gradient;
+	Mat3d pk2_stress;
+	Mat3d cauchy_stress;
 
 	void interpolate(ShellParticles& particles)
 	{
-		pos_n = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, "Position");
-		displacement = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, "Displacement");
-		global_shear_stress = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, "GlobalShearStress");
-		global_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, "GlobalStress");
+		pos_n = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id){return (*particles.getVariableByName<Vec3d>("Position"))[id];});
+		displacement = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id){return (*particles.getVariableByName<Vec3d>("Displacement"))[id];});
+		global_shear_stress = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id){return (*particles.getVariableByName<Vec3d>("GlobalShearStress"))[id];});
+		global_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id){return (*particles.getVariableByName<Mat3d>("GlobalStress"))[id];});
+		def_gradient = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id){return (*particles.getVariableByName<Mat3d>("DeformationGradient"))[id];});
+		pk2_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id){
+			Mat3d F = (*particles.getVariableByName<Mat3d>("DeformationGradient"))[id];
+			return particles.elastic_solid_.StressPK2(F, id);
+		});
+		cauchy_stress = (1.0 / det(def_gradient)) * def_gradient * pk2_stress * ~def_gradient;
 	}
 
 	void write_data() const
 	{
+		Vec3d z_dir(0,0,1);
+		std::cout << std::endl << "===================================================" << std::endl;
 		std::cout << "pos_n: " << pos_n << std::endl;
 		std::cout << "displacement: " << displacement << std::endl;
 		std::cout << "global_shear_stress: " << global_shear_stress << std::endl;
 		std::cout << "global_stress: " << global_stress << std::endl;
+		std::cout << "pk2_stress: " << pk2_stress << std::endl;
+		std::cout << "pk2_z_dir: " << SimTK::dot(z_dir,pk2_stress*z_dir) << std::endl;
+		std::cout << "cauchy_stress: " << cauchy_stress << std::endl;
+		std::cout << "cauchy_z_dir: " << SimTK::dot(z_dir,cauchy_stress*z_dir) << std::endl;
+		std::cout << "===================================================" << std::endl << std::endl;
 	}
 };
 
@@ -192,7 +208,7 @@ int main(int ac, char *av[])
 	Real rho = 36.7347;
 	Real E = 4.32e8;
 	Real mu = 0.3;
-	auto material = makeShared<SaintVenantKirchhoffSolid>(rho, E, mu);
+	auto material = makeShared<LinearElasticSolid>(rho, E, mu);
 	Real physical_viscosity = 7e3; // where is this value coming from?
 	// gravity
 	Vec3d gravity = -9.8066*radial_vec;
@@ -336,7 +352,7 @@ int main(int ac, char *av[])
 
 				initialize_external_force.parallel_exec(dt);
 
-				dt = thickness/dp * computing_time_step_size.parallel_exec();
+				dt = std::min(thickness/dp, 1.0) * computing_time_step_size.parallel_exec();
 				{// checking for excessive time step reduction
 					if (dt > max_dt) max_dt = dt;
 					if (dt < max_dt/1e3) throw std::runtime_error("time step decreased too much");
