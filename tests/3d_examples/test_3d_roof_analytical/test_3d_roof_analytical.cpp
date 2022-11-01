@@ -1,5 +1,5 @@
 /**
- * @file 	3d_roof_analytical.cpp
+ * @file 	test_3d_roof_analytical.cpp
  * @brief 	Shell verificaiton  incl. refinement study
  * @details Roof shell verification case with relaxed shell particles
  * @author 	Bence Rochlitz
@@ -188,7 +188,7 @@ struct return_data
 		std::ofstream myfile;
 		myfile.open(file_name);
 		myfile << "displ_y_A; displ_x_A\n";
-		myfile << displ_y_A << ";" << displ_x_A << "\n";
+		myfile << displ_y_A << "; " << displ_x_A << "\n";
 		myfile.close();
 	}
 };
@@ -366,7 +366,7 @@ return_data roof_under_self_weight(Real dp)
 
 				initialize_external_force.parallel_exec(dt);
 
-				dt = std::min(thickness/dp, 1.0) * computing_time_step_size.parallel_exec();
+				dt = std::min(thickness/dp, 0.5) * computing_time_step_size.parallel_exec();
 				{// checking for excessive time step reduction
 					if (dt > max_dt) max_dt = dt;
 					if (dt < max_dt/1e3) throw std::runtime_error("time step decreased too much");
@@ -436,6 +436,7 @@ TEST(roof_under_self_weight, dp_1)
 
 	Real dp = 1;
 	auto data = roof_under_self_weight(dp);
+	data.write_data_to_txt("roof_under_self_weight" + std::to_string(int(dp*100)) + "cm.txt");
 }
 
 TEST(roof_under_self_weight, parametric_dp)
