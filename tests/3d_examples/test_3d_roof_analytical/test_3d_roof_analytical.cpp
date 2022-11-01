@@ -178,7 +178,22 @@ struct observer_point_shell
 	}
 };
 
-int main(int ac, char *av[])
+struct return_data
+{
+	Real displ_y_A;
+	Real displ_x_A;
+
+	void write_data_to_txt(const std::string& file_name) const
+	{
+		std::ofstream myfile;
+		myfile.open(file_name);
+		myfile << "displ_y_A; displ_x_A\n";
+		myfile << displ_y_A << ";" << displ_x_A << "\n";
+		myfile.close();
+	}
+};
+
+return_data roof_under_self_weight(Real dp)
 {
 	// main geometric parameters
 	Vec3d tangential_vec(1,0,0);
@@ -200,7 +215,6 @@ int main(int ac, char *av[])
 	point_A.pos_0 = Vec3d(radius*std::sin(teta_radian), radius*std::cos(teta_radian)-radius, 0);
 	point_B.pos_0 = Vec3d(0);
 	// resolution
-	Real dp = 1;
 	const int dp_cm = dp*100;
 	Real total_area = (50+dp)*2*(arc+dp); // accounting for particles being on the edges
 	std::cout << "total_area: " << total_area << std::endl;
@@ -228,7 +242,7 @@ int main(int ac, char *av[])
 	std::cout << "bb_system.second: " << bb_system.second << std::endl;
 
 	// shell
-	auto shell_shape = makeShared<ComplexShape>("shell_shape");
+	auto shell_shape = makeShared<ComplexShape>("shell_shape" + std::to_string(dp_cm)); // keep all data for parameter study
 
 	// starting the actual simulation
 	SPHSystem system(bb_system, dp);
@@ -237,7 +251,7 @@ int main(int ac, char *av[])
 	shell_body.generateParticles<ShellRoofParticleGenerator>(obj_vertices, center, particle_area, thickness);
 	auto shell_particles = dynamic_cast<ShellParticles*>(&shell_body.getBaseParticles());
 	// output
-	IOEnvironment io_env(system, true);
+	IOEnvironment io_env(system, false);
 	shell_body.addBodyStateForRecording<Vec3d>("NormalDirection");
 	BodyStatesRecordingToVtp vtp_output(io_env, {shell_body});
 	vtp_output.writeToFile(0);
@@ -409,6 +423,37 @@ int main(int ac, char *av[])
 		EXPECT_NEAR(point_A.displacement[radial_axis], displ_y_A, displ_y_A*1e-2);
 		EXPECT_NEAR(point_A.displacement[tangential_axis], displ_x_A, displ_x_A*1e-2);
 	}
+	return_data data;
+	data.displ_y_A = point_A.displacement[radial_axis];
+	data.displ_x_A = point_A.displacement[tangential_axis];
+	return data;
+}
 
-	return 0;
+TEST(roof_under_self_weight, dp_1)
+{
+	fs::remove_all("output");
+	fs::create_directory("output");
+
+	Real dp = 1;
+	auto data = roof_under_self_weight(dp);
+}
+
+TEST(roof_under_self_weight, parametric_dp)
+{
+	fs::remove_all("output");
+	fs::create_directory("output");
+
+	StdVec<Real> dp_vec = {4,2,1,0.5,0.25};
+	for (auto dp: dp_vec)
+	{
+		auto data = roof_under_self_weight(dp);
+		data.write_data_to_txt("roof_under_self_weight" + std::to_string(int(dp*100)) + "cm.txt");
+	}
+}
+
+int main(int argc, char* argv[])
+{	
+	testing::InitGoogleTest(&argc, argv);
+	testing::GTEST_FLAG(filter) = "roof_under_self_weight.parametric_dp";
+	return RUN_ALL_TESTS();
 }
