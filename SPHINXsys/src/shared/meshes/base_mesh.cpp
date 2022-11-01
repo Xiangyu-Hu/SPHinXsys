@@ -72,13 +72,13 @@ namespace SPH
 	//=================================================================================================//
 	Mesh::Mesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width)
 		: BaseMesh(tentative_bounds, grid_spacing, buffer_width)
-		, number_of_cells_(this->NumberOfCellsFromNumberOfGridPoints(this->NumberOfGridPoints()))
-		, buffer_width_(buffer_width) 
+		, number_of_cells_{this->NumberOfCellsFromNumberOfGridPoints(this->NumberOfGridPoints())}
+		, buffer_width_{buffer_width}
 	{}
 	//=================================================================================================//
 	Mesh::Mesh(Vecd mesh_lower_bound, Vecu number_of_cells, Real grid_spacing)
 		: BaseMesh()
-		, number_of_cells_(number_of_cells)
+		, number_of_cells_{number_of_cells}
 	{
 		mesh_lower_bound_ = mesh_lower_bound;
 		grid_spacing_ = grid_spacing;

@@ -54,12 +54,9 @@ namespace SPH
 	class CellList
 	{
 	public:
-		/** using concurrent vectors due to writing conflicts when building the list */
-		ConcurrentIndexVector concurrent_particle_indexes_;
-		/** non-concurrent cell linked list rewritten for building neighbor list */
-		ListDataVector cell_list_data_;
-		/** the index vector for real particles. */
-		IndexVector real_particle_indexes_;
+		ConcurrentIndexVector concurrent_particle_indexes_; /** using concurrent vectors due to writing conflicts when building the list */
+		ListDataVector cell_list_data_;						/** non-concurrent cell linked list rewritten for building neighbor list */
+		IndexVector real_particle_indexes_;					/** the index vector for real particles. */
 
 		CellList();
 		~CellList(){};
@@ -72,8 +69,8 @@ namespace SPH
 	class BaseCellLinkedList : public BaseMeshField
 	{
 	protected:
-		RealBody &real_body_; 	/** The ptr to the relevant SPH body. */
-		Kernel &kernel_;		/** The ptr to the relevant Kernel function. */
+		RealBody &real_body_; 			/** The ptr to the relevant SPH body. */
+		Kernel &kernel_;				/** The ptr to the relevant Kernel function. */
 		BaseParticles *base_particles_;	/** The ptr to the relevant particles. */
 
 		/** clear split cell lists in this mesh*/
@@ -175,7 +172,8 @@ namespace SPH
 	class MultilevelCellLinkedList : public MultilevelMesh<BaseCellLinkedList, CellLinkedList, RefinedMesh<CellLinkedList>>
 	{
 	protected:
-		StdLargeVec<Real> &h_ratio_;
+		StdLargeVec<Real>& h_ratio_;	/**< Smoothing length for each level. */
+		/** Update split cell list. */
 		virtual void updateSplitCellLists(SplitCellLists &split_cell_lists) override{};
 		/** determine mesh level from particle cutoff radius */
 		inline size_t getMeshLevel(Real particle_cutoff_radius);
