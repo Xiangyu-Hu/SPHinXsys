@@ -264,6 +264,7 @@ namespace SPH
 		/** This function probe a mesh value */
 		template <class DataType, typename PackageDataAddressType, PackageDataAddressType GridDataPackageType::*MemPtr>
 		DataType probeMesh(const Vecd &position);
+		
 		virtual Real DataSpacing() override { return data_spacing_; };
 
 	protected:

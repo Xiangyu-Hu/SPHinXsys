@@ -67,11 +67,11 @@ namespace SPH
 	class BaseMesh
 	{
 	protected:
-		Vecd mesh_lower_bound_;		 /**< mesh lower bound as reference coordinate */
-		Real grid_spacing_;			 /**< grid_spacing */
-		Vecu number_of_grid_points_; /**< number of grid points by dimension */
+		Vecd mesh_lower_bound_{Vecd::Zero()};		/**< mesh lower bound as reference coordinate */
+		Real grid_spacing_{1.0};			 			/**< grid_spacing */
+		Vecu number_of_grid_points_{Vecu::Zero()}; 	/**< number of grid points by dimension */
 	public:
-		BaseMesh();
+		BaseMesh() = default;
 		explicit BaseMesh(Vecu number_of_grid_points);
 		BaseMesh(Vecd mesh_lower_bound, Real grid_spacing, Vecu number_of_grid_points);
 		BaseMesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width);
@@ -120,14 +120,16 @@ namespace SPH
 	class Mesh : public BaseMesh
 	{
 	protected:
-		size_t buffer_width_;  /**< buffer width to avoid bound check.*/
-		Vecu number_of_cells_; /**< number of cells by dimension */
+		Vecu number_of_cells_{Vecu::Zero()}; 	/**< number of cells by dimension */
+		size_t buffer_width_{0};  				/**< buffer width to avoid bound check.*/
+
 		/** Copy mesh proerties to another mesh. */
 		void copyMeshProperties(Mesh *another_mesh);
 	public:
 		Mesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width);
 		Mesh(Vecd mesh_lower_bound, Vecu number_of_cells, Real grid_spacing);
 		virtual ~Mesh(){};
+
 		/** Return number of cell in each directoin, i.e., x-, y- and z-axis.*/
 		Vecu NumberOfCells() { return number_of_cells_; };
 		/** Return the buffer size. */
@@ -143,7 +145,7 @@ namespace SPH
 	class BaseMeshField
 	{
 	protected:
-		std::string name_;
+		std::string name_{};
 
 	public:
 		explicit BaseMeshField(const std::string &name) : name_(name){};
@@ -165,7 +167,9 @@ namespace SPH
 	public:
 		template <typename... Args>
 		RefinedMesh(BoundingBox tentative_bounds, CoarseMeshType &coarse_mesh, Args &&...args)
-			: CoarseMeshType(tentative_bounds, 0.5 * coarse_mesh.DataSpacing(), std::forward<Args>(args)...), coarse_mesh_(coarse_mesh){};
+			: CoarseMeshType(tentative_bounds, 0.5 * coarse_mesh.DataSpacing(), std::forward<Args>(args)...)
+			, coarse_mesh_(coarse_mesh)
+		{};
 		virtual ~RefinedMesh(){};
 
 	protected:
@@ -193,7 +197,8 @@ namespace SPH
 		 */
 		template <typename... Args>
 		MultilevelMesh(BoundingBox tentative_bounds, Real reference_spacing, size_t total_levels, Args &&...args)
-			: MeshFieldType(std::forward<Args>(args)...), total_levels_(total_levels)
+			: MeshFieldType(std::forward<Args>(args)...)
+			, total_levels_(total_levels)
 		{
 			Real coarsest_spacing = reference_spacing;
 			mesh_levels_.push_back(
@@ -209,6 +214,7 @@ namespace SPH
 			}
 		};
 		virtual ~MultilevelMesh(){};
+		
 		/** Return the mesh at different level. */
 		StdVec<CoarsestMeshType *> getMeshLevels() { return mesh_levels_; };
 		/** Write mesh data to file. */

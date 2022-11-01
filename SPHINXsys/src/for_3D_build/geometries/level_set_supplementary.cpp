@@ -421,7 +421,7 @@ namespace SPH
 		Real cutoff_radius = kernel_.CutOffRadius(global_h_ratio_);
 		Real threshold = cutoff_radius + data_spacing_;
 
-		Vecd integral(0);
+		Vecd integral = Vecd::Zero();
 		if (fabs(phi) < threshold)
 		{
 			Vecu global_index_ = global_mesh_.CellIndexFromPosition(position);

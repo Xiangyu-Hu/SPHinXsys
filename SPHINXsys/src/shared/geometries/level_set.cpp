@@ -62,16 +62,16 @@ namespace SPH
 		: LevelSet(tentative_bounds, data_spacing, 4, shape, sph_adaptation)
 	{
 		MeshFunctor initialize_data_in_a_cell = std::bind(&LevelSet::initializeDataInACell, this, _1, _2);
-		MeshIterator_parallel(Vecu(0), number_of_cells_, initialize_data_in_a_cell);
+		MeshIterator_parallel(Vecu::Zero(), number_of_cells_, initialize_data_in_a_cell);
 		finishDataPackages();
 	}
 	//=================================================================================================//
 	void LevelSet::finishDataPackages()
 	{
 		MeshFunctor tag_a_cell_inner_pkg = std::bind(&LevelSet::tagACellIsInnerPackage, this, _1, _2);
-		MeshIterator_parallel(Vecu(0), number_of_cells_, tag_a_cell_inner_pkg);
+		MeshIterator_parallel(Vecu::Zero(), number_of_cells_, tag_a_cell_inner_pkg);
 		MeshFunctor initial_address_in_a_cell = std::bind(&LevelSet::initializeAddressesInACell, this, _1, _2);
-		MeshIterator_parallel(Vecu(0), number_of_cells_, initial_address_in_a_cell);
+		MeshIterator_parallel(Vecu::Zero(), number_of_cells_, initial_address_in_a_cell);
 		updateLevelSetGradient();
 		updateKernelIntegrals();
 	}
@@ -263,7 +263,7 @@ namespace SPH
 		: RefinedMesh(tentative_bounds, coarse_level_set, 4, shape, sph_adaptation)
 	{
 		MeshFunctor initialize_data_in_a_cell = std::bind(&RefinedLevelSet::initializeDataInACellFromCoarse, this, _1, _2);
-		MeshIterator_parallel(Vecu(0), number_of_cells_, initialize_data_in_a_cell);
+		MeshIterator_parallel(Vecu::Zero(), number_of_cells_, initialize_data_in_a_cell);
 		finishDataPackages();
 	}
 	//=============================================================================================//

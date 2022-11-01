@@ -165,7 +165,7 @@ namespace SPH
 		//=================================================================================================//
 		ForceInBodyRegion:: ForceInBodyRegion(BodyPartByParticle &body_part, Vecd force, Real end_time)
 			: LocalDynamics(body_part.getSPHBody()), SolidDataSimple(sph_body_),
-			  pos0_(particles_->pos0_), acc_prior_(particles_->acc_prior_), acceleration_(0), end_time_(end_time)
+			  pos0_(particles_->pos0_), acc_prior_(particles_->acc_prior_), acceleration_(Vecd::Zero()), end_time_(end_time)
 		{
 			Real total_mass_in_region(0);
 			for (size_t particle_i : body_part.body_part_particles_)
