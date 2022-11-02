@@ -90,7 +90,7 @@ namespace SPH
 
 		protected:
 			Solid &solid_;
-			StdLargeVec<Real> contact_density_;
+			StdLargeVec<Real>* contact_density_;
 			StdVec<StdLargeVec<Vecd> *> contact_pos_;
 			StdLargeVec<Vecd> &pos_;
 

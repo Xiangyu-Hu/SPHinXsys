@@ -260,7 +260,7 @@ namespace SPH
 		SwapSortableParticleData swap_sortable_particle_data_;
 		CompareParticleSequence compare_;
 		tbb::interface9::QuickSortParticleRange<
-			size_t *, CompareParticleSequence, SwapSortableParticleData> *quick_sort_particle_range_;
+			size_t *, CompareParticleSequence, SwapSortableParticleData> quick_sort_particle_range_;
 		tbb::interface9::QuickSortParticleBody<
 			size_t *, CompareParticleSequence, SwapSortableParticleData>
 			quick_sort_particle_body_;
