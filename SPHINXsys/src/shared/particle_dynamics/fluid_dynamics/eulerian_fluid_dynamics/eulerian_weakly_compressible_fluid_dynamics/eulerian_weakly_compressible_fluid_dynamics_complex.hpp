@@ -15,12 +15,12 @@ namespace SPH
 	namespace eulerian_weakly_compressible_fluid_dynamics
 	{
 		//=================================================================================================//
-		template<class BaseRelaxationType>
+		template<class BaseIntegrationType>
 		template<class BaseBodyRelationType>
-		RelaxationWithWall<BaseRelaxationType>::
-			RelaxationWithWall(BaseBodyRelationType &base_body_relation,
-				BaseBodyRelationContact &wall_contact_relation) :
-			BaseRelaxationType(base_body_relation), WCFluidWallData(wall_contact_relation)
+		InteractionWithWall<BaseIntegrationType>::
+			InteractionWithWall(BaseBodyRelationType &base_body_relation,
+				BaseContactRelation &wall_contact_relation) :
+			BaseIntegrationType(base_body_relation), WCFluidWallData(wall_contact_relation)
 		{
 			if (&base_body_relation.sph_body_ != &wall_contact_relation.sph_body_)
 			{
@@ -33,8 +33,6 @@ namespace SPH
 			{
 				Real rho_0_k = WCFluidWallData::contact_particles_[k]->rho0_;
 				wall_inv_rho0_.push_back(1.0 / rho_0_k);
-				wall_mass_.push_back(&(WCFluidWallData::contact_particles_[k]->mass_));
-				wall_Vol_.push_back(&(WCFluidWallData::contact_particles_[k]->Vol_));
 				wall_vel_ave_.push_back(WCFluidWallData::contact_particles_[k]->AverageVelocity());
 				wall_acc_ave_.push_back(WCFluidWallData::contact_particles_[k]->AverageAcceleration());
 				wall_n_.push_back(&(WCFluidWallData::contact_particles_[k]->n_));
@@ -45,8 +43,8 @@ namespace SPH
 		template <class BaseBodyRelationType>
 		ViscousWithWall<BaseViscousAccelerationType>::
 			ViscousWithWall(BaseBodyRelationType &base_body_relation,
-				BaseBodyRelationContact &wall_contact_relation)
-			: RelaxationWithWall<BaseViscousAccelerationType>(base_body_relation, wall_contact_relation) {}
+				BaseContactRelation &wall_contact_relation)
+			: InteractionWithWall<BaseViscousAccelerationType>(base_body_relation, wall_contact_relation) {}
 		//=================================================================================================//
 		template <class BaseViscousAccelerationType>
 		void ViscousWithWall<BaseViscousAccelerationType>::interaction(size_t index_i, Real dt)
@@ -59,7 +57,6 @@ namespace SPH
 			Vecd acceleration(0), vel_derivative(0);
 			for (size_t k = 0; k < WCFluidWallData::contact_configuration_.size(); ++k)
 			{
-				StdLargeVec<Real> &Vol_k = *(this->wall_Vol_[k]);
 				StdLargeVec<Vecd> &vel_ave_k = *(this->wall_vel_ave_[k]);
 				Neighborhood &contact_neighborhood = (*WCFluidWallData::contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -68,7 +65,7 @@ namespace SPH
 					Real r_ij = contact_neighborhood.r_ij_[n];
 
 					vel_derivative = 2.0 * (vel_i - vel_ave_k[index_j]) / (r_ij + 0.01 * this->smoothing_length_);
-					acceleration += 2.0 * this->mu_ * vel_derivative * contact_neighborhood.dW_ij_[n] * Vol_k[index_j] / rho_i;
+					acceleration += 2.0 * this->mu_ * vel_derivative * contact_neighborhood.dW_ijV_j_[n] / rho_i;
 				}
 			}
 
@@ -77,47 +74,46 @@ namespace SPH
 		//=================================================================================================//
 		template <class BaseViscousAccelerationType>
 		BaseViscousAccelerationWithWall<BaseViscousAccelerationType>::
-			BaseViscousAccelerationWithWall(ComplexBodyRelation &fluid_wall_relation)
+			BaseViscousAccelerationWithWall(ComplexRelation &fluid_wall_relation)
 			: BaseViscousAccelerationType(fluid_wall_relation.inner_relation_,
 				fluid_wall_relation.contact_relation_) {}
 		//=================================================================================================//
 		template <class BaseViscousAccelerationType>
 		BaseViscousAccelerationWithWall<BaseViscousAccelerationType>::
-			BaseViscousAccelerationWithWall(BaseBodyRelationInner &fluid_inner_relation,
-				BaseBodyRelationContact &wall_contact_relation)
+			BaseViscousAccelerationWithWall(BaseInnerRelation &fluid_inner_relation,
+				BaseContactRelation &wall_contact_relation)
 			: BaseViscousAccelerationType(fluid_inner_relation, wall_contact_relation) {}
 		//=================================================================================================//
 		template <class BaseViscousAccelerationType>
 		BaseViscousAccelerationWithWall<BaseViscousAccelerationType>::
-			BaseViscousAccelerationWithWall(ComplexBodyRelation &fluid_complex_relation,
-				BaseBodyRelationContact &wall_contact_relation)
+			BaseViscousAccelerationWithWall(ComplexRelation &fluid_complex_relation,
+				BaseContactRelation &wall_contact_relation)
 			: BaseViscousAccelerationType(fluid_complex_relation, wall_contact_relation) {}
 		//=================================================================================================//
-		template <class BasePressureRelaxationType>
+		template <class BaseIntegration1stHalfType>
 		template <class BaseBodyRelationType>
-		PressureRelaxation<BasePressureRelaxationType>::
-			PressureRelaxation(BaseBodyRelationType &base_body_relation,
-				BaseBodyRelationContact &wall_contact_relation)
-			: RelaxationWithWall<BasePressureRelaxationType>(base_body_relation, wall_contact_relation) {}
+		BaseIntegration1stHalfWithWall<BaseIntegration1stHalfType>::
+			BaseIntegration1stHalfWithWall(BaseBodyRelationType &base_body_relation,
+				BaseContactRelation &wall_contact_relation)
+			: InteractionWithWall<BaseIntegration1stHalfType>(base_body_relation, wall_contact_relation) {}
 		//=================================================================================================//
-		template <class BasePressureRelaxationType>
-		void PressureRelaxation<BasePressureRelaxationType>::interaction(size_t index_i, Real dt)
+		template <class BaseIntegration1stHalfType>
+		void BaseIntegration1stHalfWithWall<BaseIntegration1stHalfType>::interaction(size_t index_i, Real dt)
 		{
-			BasePressureRelaxationType::interaction(index_i, dt);
+			BaseIntegration1stHalfType::interaction(index_i, dt);
 
 			FluidState state_i(this->rho_[index_i], this->vel_[index_i], this->p_[index_i]);
 
 			Vecd momentum_change_rate(0.0);
 			for (size_t k = 0; k < WCFluidWallData::contact_configuration_.size(); ++k)
 			{
-				StdLargeVec<Real> &Vol_k = *(this->wall_Vol_[k]);
 				StdLargeVec<Vecd> &n_k = *(this->wall_n_[k]);
 				Neighborhood &wall_neighborhood = (*WCFluidWallData::contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
 				{
 					size_t index_j = wall_neighborhood.j_[n];
 					Vecd &e_ij = wall_neighborhood.e_ij_[n];
-					Real dW_ij = wall_neighborhood.dW_ij_[n];
+					Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
 					Real r_ij = wall_neighborhood.r_ij_[n];
 
 					Vecd vel_in_wall = -state_i.vel_;
@@ -127,51 +123,29 @@ namespace SPH
 					FluidState interface_state = this->riemann_solver_.getInterfaceState(state_i, state_j, n_k[index_j]);
 					Real p_star = interface_state.p_;
 					Vecd vel_star = interface_state.vel_;
-					Real rho_star = this->material_->DensityFromPressure(p_star);
-					momentum_change_rate -= 2.0 * Vol_k[index_j] *
-						(SimTK::outer(rho_star * vel_star, vel_star) + p_star * Matd(1.0)) * e_ij * dW_ij;
+					Real rho_star = this->fluid_.DensityFromPressure(p_star);
+					momentum_change_rate -= 2.0 * (SimTK::outer(rho_star * vel_star, vel_star) + p_star * Matd(1.0)) * e_ij * dW_ijV_j;
 				}
 			}
 			this->dmom_dt_[index_i] += momentum_change_rate;
 		}
 		//=================================================================================================//
-		template <class BasePressureRelaxationType>
-		BasePressureRelaxationWithWall<BasePressureRelaxationType>::
-			BasePressureRelaxationWithWall(ComplexBodyRelation &fluid_wall_relation)
-			: BasePressureRelaxationType(fluid_wall_relation.inner_relation_,
-				fluid_wall_relation.contact_relation_) {}
-		//=================================================================================================//
-		template <class BasePressureRelaxationType>
-		BasePressureRelaxationWithWall<BasePressureRelaxationType>::
-			BasePressureRelaxationWithWall(BaseBodyRelationInner &fluid_inner_relation,
-				BaseBodyRelationContact &wall_contact_relation)
-			: BasePressureRelaxationType(fluid_inner_relation,
-				wall_contact_relation) {}
-		//=================================================================================================//
-		template <class BasePressureRelaxationType>
-		BasePressureRelaxationWithWall<BasePressureRelaxationType>::
-			BasePressureRelaxationWithWall(ComplexBodyRelation &fluid_complex_relation,
-				BaseBodyRelationContact &wall_contact_relation)
-			: BasePressureRelaxationType(fluid_complex_relation,
-				wall_contact_relation) {}
-		//=================================================================================================//
-		template <class BaseDensityAndEnergyRelaxationType>
+		template <class BaseIntegration2ndHalfType>
 		template <class BaseBodyRelationType>
-		DensityAndEnergyRelaxation<BaseDensityAndEnergyRelaxationType>::
-			DensityAndEnergyRelaxation(BaseBodyRelationType &base_body_relation,
-				BaseBodyRelationContact &wall_contact_relation)
-			: RelaxationWithWall<BaseDensityAndEnergyRelaxationType>(base_body_relation, wall_contact_relation) {}
+		BaseIntegration2ndHalfWithWall<BaseIntegration2ndHalfType>::
+			BaseIntegration2ndHalfWithWall(BaseBodyRelationType &base_body_relation,
+				BaseContactRelation &wall_contact_relation)
+			: InteractionWithWall<BaseIntegration2ndHalfType>(base_body_relation, wall_contact_relation) {}
 		//=================================================================================================//
-		template <class BaseDensityAndEnergyRelaxationType>
-		void DensityAndEnergyRelaxation<BaseDensityAndEnergyRelaxationType>::interaction(size_t index_i, Real dt)
+		template <class BaseIntegration2ndHalfType>
+		void BaseIntegration2ndHalfWithWall<BaseIntegration2ndHalfType>::interaction(size_t index_i, Real dt)
 		{
-			BaseDensityAndEnergyRelaxationType::interaction(index_i, dt);
+			BaseIntegration2ndHalfType::interaction(index_i, dt);
 
 			FluidState state_i(this->rho_[index_i], this->vel_[index_i], this->p_[index_i]);
 			Real density_change_rate = 0.0;
 			for (size_t k = 0; k < WCFluidWallData::contact_configuration_.size(); ++k)
 			{
-				StdLargeVec<Real> &Vol_k = *(this->wall_Vol_[k]);
 				StdLargeVec<Vecd> &n_k = *(this->wall_n_[k]);
 				Neighborhood &wall_neighborhood = (*WCFluidWallData::contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
@@ -179,7 +153,7 @@ namespace SPH
 					size_t index_j = wall_neighborhood.j_[n];
 					Vecd &e_ij = wall_neighborhood.e_ij_[n];
 					Real r_ij = wall_neighborhood.r_ij_[n];
-					Real dW_ij = wall_neighborhood.dW_ij_[n];
+					Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
 
 					Vecd vel_in_wall = -state_i.vel_;
 					Real p_in_wall = state_i.p_;
@@ -188,31 +162,12 @@ namespace SPH
 					FluidState interface_state = this->riemann_solver_.getInterfaceState(state_i, state_j, n_k[index_j]);
 					Real p_star = interface_state.p_;
 					Vecd vel_star = interface_state.vel_;
-					Real rho_star = this->material_->DensityFromPressure(p_star);
-					density_change_rate -= 2.0 * Vol_k[index_j] * dot(rho_star * vel_star, e_ij) * dW_ij;
+					Real rho_star = this->fluid_.DensityFromPressure(p_star);
+					density_change_rate -= 2.0 * dot(rho_star * vel_star, e_ij) * dW_ijV_j;
 				}
 			}
 			this->drho_dt_[index_i] += density_change_rate;
 		}
-		//=================================================================================================//
-		template <class BaseDensityAndEnergyRelaxationType>
-		BaseDensityAndEnergyRelaxationWithWall<BaseDensityAndEnergyRelaxationType>::
-			BaseDensityAndEnergyRelaxationWithWall(ComplexBodyRelation &fluid_wall_relation)
-			: DensityAndEnergyRelaxation<BaseDensityAndEnergyRelaxationType>(fluid_wall_relation.inner_relation_,
-				fluid_wall_relation.contact_relation_) {}
-		//=================================================================================================//
-		template <class BaseDensityAndEnergyRelaxationType>
-		BaseDensityAndEnergyRelaxationWithWall<BaseDensityAndEnergyRelaxationType>::
-			BaseDensityAndEnergyRelaxationWithWall(BaseBodyRelationInner &fluid_inner_relation,
-				BaseBodyRelationContact &wall_contact_relation)
-			: DensityAndEnergyRelaxation<BaseDensityAndEnergyRelaxationType>(fluid_inner_relation,
-				wall_contact_relation) {}
-		//=================================================================================================//
-		template <class BaseDensityAndEnergyRelaxationType>
-		BaseDensityAndEnergyRelaxationWithWall<BaseDensityAndEnergyRelaxationType>::
-			BaseDensityAndEnergyRelaxationWithWall(ComplexBodyRelation &fluid_complex_relation,
-				BaseBodyRelationContact &wall_contact_relation)
-			: DensityAndEnergyRelaxation<BaseDensityAndEnergyRelaxationType>(fluid_complex_relation, wall_contact_relation) {}
 		//=================================================================================================//
 	}
 	//=================================================================================================//

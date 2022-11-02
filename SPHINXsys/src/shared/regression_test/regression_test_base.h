@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include "in_output.h"
+#include "io_all.h"
 #include "xml_engine.h"
 #include "all_physical_dynamics.h"
 
@@ -89,7 +89,7 @@ namespace SPH
 		 {
 			 input_folder_path_ = this->io_environment_.input_folder_;
 			 in_output_filefullpath_ = input_folder_path_ + "/" + this->dynamics_range_name_ 
-				 + "_" + this->quantity_name_ + "_" + this->io_environment_.restart_step_ + ".xml";
+				 + "_" + this->quantity_name_ + ".xml";
 			 result_filefullpath_ = input_folder_path_ + "/" + this->dynamics_range_name_
 				 + "_" + this->quantity_name_ + "_result.xml";
 			 runtimes_filefullpath_ = input_folder_path_ + "/" + this->dynamics_range_name_
@@ -114,11 +114,11 @@ namespace SPH
 
 		 void writeToXml(ObservedQuantityRecording<VariableType>* observe_method, size_t iteration = 0);
 		 template <typename ReduceType>
-		 void writeToXml(BodyReducedQuantityRecording<ReduceType>* reduce_method, size_t iteration = 0);
+		 void writeToXml(ReducedQuantityRecording<ReduceType>* reduce_method, size_t iteration = 0);
 		 /* read current result from xml file into xml memory. */
 		 void readFromXml(ObservedQuantityRecording<VariableType>* observe_method);
 		 template <typename ReduceType>
-		 void readFromXml(BodyReducedQuantityRecording<ReduceType>* reduce_method);
+		 void readFromXml(ReducedQuantityRecording<ReduceType>* reduce_method);
 
 		 void transposeTheIndex();  /** transpose the current result (from snapshot*observation to observation*snapshot). */
 		 void readResultFromXml(); /** read the result from the .xml file. (all result) */

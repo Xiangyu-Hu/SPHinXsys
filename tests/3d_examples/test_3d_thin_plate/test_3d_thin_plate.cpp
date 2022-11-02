@@ -83,7 +83,7 @@ public:
 private:
 	void tagManually(size_t index_i)
 	{
-		if (base_particles_->pos_[index_i][1] < 0.0 || base_particles_->pos_[index_i][1] > PH)
+		if (base_particles_.pos_[index_i][1] < 0.0 || base_particles_.pos_[index_i][1] > PH)
 		{
 			body_part_particles_.push_back(index_i);
 		}
@@ -103,7 +103,7 @@ public:
 private:
 	void tagManually(size_t index_i)
 	{
-		if (base_particles_->pos_[index_i][0] < 0.0 || base_particles_->pos_[index_i][0] > PL)
+		if (base_particles_.pos_[index_i][0] < 0.0 || base_particles_.pos_[index_i][0] > PL)
 		{
 			body_part_particles_.push_back(index_i);
 		}
@@ -147,8 +147,8 @@ int main(int ac, char *av[])
 	 *  The contact map gives the data connections between the bodies
 	 *  basically the the range of bodies to build neighbor particle lists
 	 */
-	BodyRelationInner plate_body_inner(plate_body);
-	BodyRelationContact plate_observer_contact(plate_observer, {&plate_body});
+	InnerRelation plate_body_inner(plate_body);
+	ContactRelation plate_observer_contact(plate_observer, {&plate_body});
 
 	/** Common particle dynamics. */
 	SimpleDynamics<TimeStepInitialization> initialize_external_force(plate_body, 

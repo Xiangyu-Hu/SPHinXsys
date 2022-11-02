@@ -56,7 +56,7 @@ int main()
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner input_body_inner(input_body);
+	InnerRelation input_body_inner(input_body);
 	//----------------------------------------------------------------------
 	//	Methods used for particle relaxation.
 	//----------------------------------------------------------------------
@@ -66,7 +66,7 @@ int main()
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp input_body_recording_to_vtp(io_environment, input_body);
-	MeshRecordingToPlt cell_linked_list_recording(io_environment, input_body, input_body.cell_linked_list_);
+	MeshRecordingToPlt cell_linked_list_recording(io_environment, input_body.cell_linked_list_);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.

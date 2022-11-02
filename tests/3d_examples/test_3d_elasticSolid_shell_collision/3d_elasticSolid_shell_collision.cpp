@@ -84,7 +84,7 @@ int main(int ac, char *av[])
 	}
 	else
 	{
-		ball.defineBodyLevelSetShape()->writeLevelSet(ball);
+		ball.defineBodyLevelSetShape()->writeLevelSet(io_environment);
 		ball.generateParticles<ParticleGeneratorLattice>();
 	}
 	//----------------------------------------------------------------------
@@ -95,7 +95,7 @@ int main(int ac, char *av[])
 		//----------------------------------------------------------------------
 		//	Define body relation map used for particle relaxation.
 		//----------------------------------------------------------------------
-		BodyRelationInner ball_inner(ball);
+		InnerRelation ball_inner(ball);
 		//----------------------------------------------------------------------
 		//	Define the methods for particle relaxation for ball.
 		//----------------------------------------------------------------------
@@ -105,7 +105,7 @@ int main(int ac, char *av[])
 		//	Output for particle relaxation.
 		//----------------------------------------------------------------------
 		BodyStatesRecordingToVtp write_relaxed_particles(io_environment, sph_system.real_bodies_);
-		ReloadParticleIO write_particle_reload_files(io_environment, {&ball});
+		ReloadParticleIO write_particle_reload_files(io_environment, ball);
 		//----------------------------------------------------------------------
 		//	Particle relaxation starts here.
 		//----------------------------------------------------------------------
@@ -135,8 +135,8 @@ int main(int ac, char *av[])
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner ball_inner(ball);
-	SolidBodyRelationContact ball_contact(ball, {&shell});
+	InnerRelation ball_inner(ball);
+	SurfaceContactRelation ball_contact(ball, {&shell});
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.

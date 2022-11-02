@@ -222,11 +222,11 @@ int main()
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner water_block_inner(water_block);
-	BodyRelationInner gate_inner(gate);
-	ComplexBodyRelation water_block_complex(water_block_inner, {&wall_boundary, &gate});
-	BodyRelationContact gate_contact(gate, {&water_block});
-	BodyRelationContact gate_observer_contact(gate_observer, {&gate});
+	InnerRelation water_block_inner(water_block);
+	InnerRelation gate_inner(gate);
+	ComplexRelation water_block_complex(water_block_inner, {&wall_boundary, &gate});
+	ContactRelation gate_contact(gate, {&water_block});
+	ContactRelation gate_observer_contact(gate_observer, {&gate});
 	//----------------------------------------------------------------------
 	//	Define all numerical methods which are used in this case.
 	//----------------------------------------------------------------------
@@ -239,8 +239,8 @@ int main()
 	/** Compute time step size with considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	/** Pressure relaxation using verlet time stepping. */
-	Dynamics1Level<fluid_dynamics::PressureRelaxationWithWall> pressure_relaxation(water_block_complex);
-	Dynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(water_block_complex);
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	DampingWithRandomChoice<InteractionSplit<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>>
 		fluid_damping(0.2, water_block_complex, "Velocity", mu_f);
@@ -265,8 +265,6 @@ int main()
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
-	/** Output body states for visualization. */
-	BodyStatesRecordingToPlt rite_real_body_states_to_plt(io_environment, system.real_bodies_);
 	/** Output body states for visualization. */
 	BodyStatesRecordingToVtp write_real_body_states_to_vtp(io_environment, system.real_bodies_);
 	/** Output the observed displacement of gate free end. */

@@ -335,10 +335,10 @@ namespace SPH
     //=================================================================================================//
     template <typename VariableType>
     BaseDerivedVariable<VariableType>::
-        BaseDerivedVariable(const SPHBody &sph_body, const std::string &variable_name)
+        BaseDerivedVariable(SPHBody &sph_body, const std::string &variable_name)
         : variable_name_(variable_name)
     {
-        sph_body.base_particles_->registerVariable(derived_variable_, variable_name_);
+        sph_body.getBaseParticles().registerVariable(derived_variable_, variable_name_);
     };
     //=================================================================================================//
 }

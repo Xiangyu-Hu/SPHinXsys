@@ -15,7 +15,7 @@ namespace SPH
 	{
 		//=================================================================================================//
 		CorrectInterpolationKernelWeights::
-			CorrectInterpolationKernelWeights(BaseBodyRelationContact &contact_relation) : 
+			CorrectInterpolationKernelWeights(BaseContactRelation &contact_relation) : 
 			LocalDynamics(contact_relation.sph_body_),
 			InterpolationContactData(contact_relation)
 		{
@@ -39,10 +39,10 @@ namespace SPH
 					size_t index_j = contact_neighborhood.j_[n];
 					Real weight_j = contact_neighborhood.W_ij_[n] * Vol_k[index_j];
 					Vecd r_ji = -contact_neighborhood.r_ij_[n] * contact_neighborhood.e_ij_[n];
-					Vecd gradW_ij = contact_neighborhood.dW_ij_[n] * contact_neighborhood.e_ij_[n];
+					Vecd gradW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
 
 					weight_correction += r_ji * weight_j;
-					local_configuration += Vol_k[index_j] * SimTK::outer(r_ji, gradW_ij);
+					local_configuration += SimTK::outer(r_ji, gradW_ijV_j);
 				}
 			}
 
@@ -58,7 +58,7 @@ namespace SPH
 					Vecd normalized_weight_correction = B_ * weight_correction;
 					contact_neighborhood.W_ij_[n] 
 						-= dot(normalized_weight_correction, contact_neighborhood.e_ij_[n])
-						 * contact_neighborhood.dW_ij_[n];
+						 * contact_neighborhood.dW_ijV_j_[n];
 				}
 			}
 		}

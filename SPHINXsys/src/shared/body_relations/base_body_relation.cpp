@@ -10,26 +10,26 @@
 namespace SPH
 {
 	//=================================================================================================//
-	SPHBodyRelation::SPHBodyRelation(SPHBody &sph_body)
-		: sph_body_(sph_body), base_particles_(sph_body.base_particles_) {}
+	SPHRelation::SPHRelation(SPHBody &sph_body)
+		: sph_body_(sph_body), base_particles_(sph_body.getBaseParticles()) {}
 	//=================================================================================================//
-	BaseBodyRelationInner::BaseBodyRelationInner(RealBody &real_body)
-		: SPHBodyRelation(real_body), real_body_(&real_body)
+	BaseInnerRelation::BaseInnerRelation(RealBody &real_body)
+		: SPHRelation(real_body), real_body_(&real_body)
 	{
 		subscribeToBody();
 		updateConfigurationMemories();
 	}
 	//=================================================================================================//
-	void BaseBodyRelationInner::updateConfigurationMemories()
+	void BaseInnerRelation::updateConfigurationMemories()
 	{
-		size_t updated_size = sph_body_.base_particles_->real_particles_bound_;
+		size_t updated_size = base_particles_.real_particles_bound_;
 		inner_configuration_.resize(updated_size, Neighborhood());
 	}
 	//=================================================================================================//
-	void BaseBodyRelationInner::resetNeighborhoodCurrentSize()
+	void BaseInnerRelation::resetNeighborhoodCurrentSize()
 	{
 		parallel_for(
-			blocked_range<size_t>(0, base_particles_->total_real_particles_),
+			blocked_range<size_t>(0, base_particles_.total_real_particles_),
 			[&](const blocked_range<size_t> &r)
 			{
 				for (size_t num = r.begin(); num != r.end(); ++num)
@@ -40,15 +40,15 @@ namespace SPH
 			ap);
 	}
 	//=================================================================================================//
-	BaseBodyRelationContact::BaseBodyRelationContact(SPHBody &sph_body, RealBodyVector contact_sph_bodies)
-		: SPHBodyRelation(sph_body), contact_bodies_(contact_sph_bodies)
+	BaseContactRelation::BaseContactRelation(SPHBody &sph_body, RealBodyVector contact_sph_bodies)
+		: SPHRelation(sph_body), contact_bodies_(contact_sph_bodies)
 	{
 		subscribeToBody();
 		updateConfigurationMemories();
 	}
 	//=================================================================================================//
-	BaseBodyRelationContact::BaseBodyRelationContact(SPHBody &sph_body, BodyPartVector contact_body_parts)
-		: SPHBodyRelation(sph_body)
+	BaseContactRelation::BaseContactRelation(SPHBody &sph_body, BodyPartVector contact_body_parts)
+		: SPHRelation(sph_body)
 	{
 		for (size_t k = 0; k != contact_body_parts.size(); ++k)
 		{
@@ -58,9 +58,9 @@ namespace SPH
 		updateConfigurationMemories();
 	}
 	//=================================================================================================//
-	void BaseBodyRelationContact::updateConfigurationMemories()
+	void BaseContactRelation::updateConfigurationMemories()
 	{
-		size_t updated_size = sph_body_.base_particles_->real_particles_bound_;
+		size_t updated_size = base_particles_.real_particles_bound_;
 		contact_configuration_.resize(contact_bodies_.size());
 		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{
@@ -68,12 +68,12 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void BaseBodyRelationContact::resetNeighborhoodCurrentSize()
+	void BaseContactRelation::resetNeighborhoodCurrentSize()
 	{
 		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{
 			parallel_for(
-				blocked_range<size_t>(0, base_particles_->total_real_particles_),
+				blocked_range<size_t>(0, base_particles_.total_real_particles_),
 				[&](const blocked_range<size_t> &r)
 				{
 					for (size_t num = r.begin(); num != r.end(); ++num)

@@ -67,6 +67,7 @@ namespace SPH
 		Real number_density_max_;
 
 	public:
+		explicit SPHAdaptation(Real resolution_ref, Real h_spacing_ratio = 1.3, Real system_refinement_ratio = 1.0);
 		explicit SPHAdaptation(SPHBody &sph_body, Real h_spacing_ratio = 1.3, Real system_refinement_ratio = 1.0);
 		virtual ~SPHAdaptation(){};
 
@@ -97,7 +98,6 @@ namespace SPH
 	 * @class ParticleWithLocalRefinement
 	 * @brief Base class for particle with local refinement.
 	 * @details Different refinement strategies will be used in derived classes.
-	 * TODO: I should justify whether define h_ratio_ in this class is proper or not.
 	 */
 	class ParticleWithLocalRefinement : public SPHAdaptation
 	{
@@ -116,7 +116,7 @@ namespace SPH
 			return h_ratio_[particle_index_i];
 		};
 
-		StdLargeVec<Real> &registerSmoothingLengthRatio(BaseParticles *base_particles);
+		StdLargeVec<Real> &registerSmoothingLengthRatio(BaseParticles &base_particles);
 		virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, RealBody &real_body) override;
 		virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio) override;
 	};

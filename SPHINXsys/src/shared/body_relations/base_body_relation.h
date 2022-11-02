@@ -32,26 +32,11 @@
 #include "complex_body.h"
 #include "base_particles.h"
 #include "cell_linked_list.h"
-#include "neighbor_relation.h"
+#include "neighborhood.h"
 #include "base_geometry.h"
 
 namespace SPH
 {
-	/** a small functor for obtaining particle index for container index */
-	struct SPHBodyParticlesIndex
-	{
-		size_t operator()(size_t particle_index) const { return particle_index; };
-	};
-
-	/** a small functor for obtaining particle index for body part container index */
-	struct BodyPartParticlesIndex
-	{
-		IndexVector &body_part_particles_;
-		explicit BodyPartParticlesIndex(IndexVector &body_part_particles)
-			: body_part_particles_(body_part_particles){};
-		size_t operator()(size_t particle_entry) const { return body_part_particles_[particle_entry]; };
-	};
-
 	/** a small functor for obtaining search range for the simplest case */
 	struct SearchDepthSingleResolution
 	{
@@ -77,15 +62,15 @@ namespace SPH
 	/** @brief a small functor for obtaining search depth for variable smoothing length
 	 * @details Note that the search depth is defined on the target cell linked list.
 	 */
-	struct SearchDepthVariableSmoothingLength
+	struct AdaptiveSearchDepth
 	{
 		Real inv_grid_spacing_;
 		Kernel *kernel_;
 		StdLargeVec<Real> &h_ratio_;
-		SearchDepthVariableSmoothingLength(SPHBody &sph_body, CellLinkedList *target_cell_linked_list)
+		AdaptiveSearchDepth(SPHBody &sph_body, CellLinkedList *target_cell_linked_list)
 			: inv_grid_spacing_(1.0 / target_cell_linked_list->GridSpacing()),
 			  kernel_(sph_body.sph_adaptation_->getKernel()),
-			  h_ratio_(*sph_body.base_particles_->getVariableByName<Real>("SmoothingLengthRatio")){};
+			  h_ratio_(*sph_body.getBaseParticles().getVariableByName<Real>("SmoothingLengthRatio")){};
 		int operator()(size_t particle_index) const
 		{
 			return 1 + (int)floor(kernel_->CutOffRadius(h_ratio_[particle_index]) * inv_grid_spacing_);
@@ -93,18 +78,18 @@ namespace SPH
 	};
 
 	/**
-	 * @class SPHBodyRelation
+	 * @class SPHRelation
 	 * @brief The abstract class for all relations within a SPH body or with its contact SPH bodies
 	 */
-	class SPHBodyRelation
+	class SPHRelation
 	{
 	public:
 		SPHBody &sph_body_;
-		BaseParticles *base_particles_;
+		BaseParticles &base_particles_;
 		SPHBody &getDynamicsRange() { return sph_body_; };
 
-		explicit SPHBodyRelation(SPHBody &sph_body);
-		virtual ~SPHBodyRelation(){};
+		explicit SPHRelation(SPHBody &sph_body);
+		virtual ~SPHRelation(){};
 
 		void subscribeToBody() { sph_body_.body_relations_.push_back(this); };
 		virtual void updateConfigurationMemories() = 0;
@@ -112,10 +97,10 @@ namespace SPH
 	};
 
 	/**
-	 * @class BaseBodyRelationInner
+	 * @class BaseInnerRelation
 	 * @brief The abstract relation within a SPH body
 	 */
-	class BaseBodyRelationInner : public SPHBodyRelation
+	class BaseInnerRelation : public SPHRelation
 	{
 	protected:
 		virtual void resetNeighborhoodCurrentSize();
@@ -123,26 +108,26 @@ namespace SPH
 	public:
 		RealBody *real_body_;
 		ParticleConfiguration inner_configuration_; /**< inner configuration for the neighbor relations. */
-		explicit BaseBodyRelationInner(RealBody &real_body);
-		virtual ~BaseBodyRelationInner(){};
+		explicit BaseInnerRelation(RealBody &real_body);
+		virtual ~BaseInnerRelation(){};
 
 		virtual void updateConfigurationMemories() override;
 	};
 
 	/**
-	 * @class BaseBodyRelationContact
+	 * @class BaseContactRelation
 	 * @brief The base relation between a SPH body and its contact SPH bodies
 	 */
-	class BaseBodyRelationContact : public SPHBodyRelation
+	class BaseContactRelation : public SPHRelation
 	{
 	protected:
 		UniquePtrKeepers<SearchDepthMultiResolution> search_depth_multi_resolution_ptr_vector_keeper_;
-		UniquePtrKeepers<NeighborRelationContact> neighbor_relation_contact_ptr_vector_keeper_;
+		UniquePtrKeepers<NeighborBuilderContact> neighbor_relation_contact_ptr_vector_keeper_;
 
 	protected:
 		StdVec<CellLinkedList *> target_cell_linked_lists_;
 		StdVec<SearchDepthMultiResolution *> get_search_depths_;
-		StdVec<NeighborRelationContact *> get_contact_neighbors_;
+		StdVec<NeighborBuilderContact *> get_contact_neighbors_;
 
 		virtual void resetNeighborhoodCurrentSize();
 
@@ -150,9 +135,9 @@ namespace SPH
 		RealBodyVector contact_bodies_;
 		ContactParticleConfiguration contact_configuration_; /**< Configurations for particle interaction between bodies. */
 
-		BaseBodyRelationContact(SPHBody &sph_body, RealBodyVector contact_bodies);
-		BaseBodyRelationContact(SPHBody &sph_body, BodyPartVector contact_body_parts);
-		virtual ~BaseBodyRelationContact(){};
+		BaseContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies);
+		BaseContactRelation(SPHBody &sph_body, BodyPartVector contact_body_parts);
+		virtual ~BaseContactRelation(){};
 
 		virtual void updateConfigurationMemories() override;
 	};

@@ -36,7 +36,7 @@
 
 namespace SPH
 {
-
+	class IOEnvironment;
 	class SPHBody;
 
 	/**
@@ -47,10 +47,13 @@ namespace SPH
 	{
 	private:
 		UniquePtrKeeper<BaseLevelSet> level_set_keeper_;
+		SharedPtr<SPHAdaptation> sph_adaptation_;
 
 	public:
 		/** refinement_ratio is between body reference resolution and level set resolution */
+		LevelSetShape(Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation, Real refinement_ratio = 1.0);
 		LevelSetShape(SPHBody &sph_body, Shape &shape, Real refinement_ratio = 1.0);
+
 		virtual ~LevelSetShape(){};
 
 		virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;
@@ -61,7 +64,8 @@ namespace SPH
 		Vecd computeKernelGradientIntegral(const Vecd &probe_point, Real h_ratio = 1.0);
 		/** small_shift_factor = 1.0 by default, can be increased for difficult geometries for smoothing */
 		LevelSetShape *cleanLevelSet(Real small_shift_factor = 1.0);
-		void writeLevelSet(SPHBody &sph_body);
+		LevelSetShape *correctLevelSetSign(Real small_shift_factor = 1.0);
+		void writeLevelSet(IOEnvironment &io_environment);
 
 	protected:
 		BaseLevelSet *level_set_; /**< narrow bounded level set mesh. */

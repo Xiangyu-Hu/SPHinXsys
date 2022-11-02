@@ -89,17 +89,20 @@ namespace SPH
 	class Fluid : public BaseMaterial
 	{
 	protected:
-		Real mu_; /**< reference sound speed, viscosity. */
+		Real c0_; /**< reference sound speed and pressure */
+		Real mu_; /**< reference viscosity. */
 
 	public:
-		explicit Fluid(Real rho0, Real mu)
-			: BaseMaterial(rho0), mu_(mu)
+		explicit Fluid(Real rho0, Real c0, Real mu)
+			: BaseMaterial(rho0), c0_(c0), mu_(mu)
 		{
 			material_type_name_ = "Fluid";
 		};
+		Fluid(Real rho0, Real mu) : Fluid(rho0, 1.0, mu) {}
 		virtual ~Fluid(){};
 
 		Real ReferenceViscosity() { return mu_; };
+		Real ReferenceSoundSpeed() { return c0_; };
 		virtual Real getPressure(Real rho) = 0;
 		virtual Real getPressure(Real rho, Real rho_e) { return getPressure(rho); };
 		virtual Real DensityFromPressure(Real p) = 0;

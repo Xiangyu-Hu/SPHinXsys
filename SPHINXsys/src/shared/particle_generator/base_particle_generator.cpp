@@ -7,18 +7,18 @@
 
 #include "base_body.h"
 #include "base_particles.h"
-#include "in_output.h"
+#include "io_all.h"
 
 namespace SPH
 {
 	//=================================================================================================//
 	BaseParticleGenerator::BaseParticleGenerator(SPHBody &sph_body)
-		: base_particles_(sph_body.base_particles_),
-		  pos_(base_particles_->pos_), unsorted_id_(base_particles_->unsorted_id_)
+		: base_particles_(sph_body.getBaseParticles()),
+		  pos_(base_particles_.pos_), unsorted_id_(base_particles_.unsorted_id_)
 	{
-		if (sph_body.base_particles_ == nullptr || sph_body.base_material_ == nullptr)
+		if (sph_body.base_material_ == nullptr)
 		{
-			std::cout << "\n Error: Particles or Materials have not been defined yet!" << std::endl;
+			std::cout << "\n Error: Materials have not been defined yet!" << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 			exit(1);
 		}
@@ -27,12 +27,12 @@ namespace SPH
 	void BaseParticleGenerator::initializePosition(const Vecd &position)
 	{
 		pos_.push_back(position);
-		unsorted_id_.push_back(base_particles_->total_real_particles_);
-		base_particles_->total_real_particles_++;
+		unsorted_id_.push_back(base_particles_.total_real_particles_);
+		base_particles_.total_real_particles_++;
 	}
 	//=================================================================================================//
 	ParticleGenerator::ParticleGenerator(SPHBody &sph_body)
-		: BaseParticleGenerator(sph_body), Vol_(base_particles_->Vol_) {}
+		: BaseParticleGenerator(sph_body), Vol_(base_particles_.Vol_) {}
 	//=================================================================================================//
 	void ParticleGenerator::
 		initializePositionAndVolumetricMeasure(const Vecd &position, Real volumetric_measure)
@@ -43,8 +43,8 @@ namespace SPH
 	//=================================================================================================//
 	SurfaceParticleGenerator::SurfaceParticleGenerator(SPHBody &sph_body)
 		: ParticleGenerator(sph_body),
-		  n_(*base_particles_->getVariableByName<Vecd>("NormalDirection")),
-		  thickness_(*base_particles_->getVariableByName<Real>("Thickness"))
+		  n_(*base_particles_.getVariableByName<Vecd>("NormalDirection")),
+		  thickness_(*base_particles_.getVariableByName<Real>("Thickness"))
 	{
 		sph_body.sph_adaptation_->getKernel()->reduceOnce();
 	}
@@ -79,7 +79,7 @@ namespace SPH
 	//=================================================================================================//
 	void ParticleGeneratorReload::initializeGeometricVariables()
 	{
-		base_particles_->readFromXmlForReloadParticle(file_path_);
+		base_particles_.readFromXmlForReloadParticle(file_path_);
 	}
 	//=================================================================================================//
 }

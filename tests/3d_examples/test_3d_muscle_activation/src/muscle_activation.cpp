@@ -70,7 +70,7 @@ int main()
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner myocardium_muscle_body_inner(myocardium_muscle_body);
+	InnerRelation myocardium_muscle_body_inner(myocardium_muscle_body);
 	//----------------------------------------------------------------------
 	//	Define the numerical methods used in the simulation.
 	//	Note that there may be data dependence on the sequence of constructions.

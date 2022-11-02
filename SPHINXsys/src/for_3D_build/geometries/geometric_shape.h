@@ -22,8 +22,8 @@
  * --------------------------------------------------------------------------*/
 /**
  * @file geometric_shape.h
- * @brief Here, we define shapes represented directly by geometric elements.
- * @details The simbody contact geometry is used.
+ * @brief Here, we define simple shapes represented directly by geometric elements.
+ * @details These shape are suitable to define boundary regions or buffers.
  * @author	Xiangyu Hu
  */
 
@@ -41,8 +41,8 @@ namespace SPH
 		explicit GeometricShape(const std::string &shape_name)
 			: Shape(shape_name), contact_geometry_(nullptr){};
 
-		virtual bool checkContain(const Vec3d &pnt, bool BOUNDARY_INCLUDED = true) override;
-		virtual Vec3d findClosestPoint(const Vec3d &pnt) override;
+		virtual bool checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED = true) override;
+		virtual Vec3d findClosestPoint(const Vec3d &probe_point) override;
 
 		SimTK::ContactGeometry *getContactGeometry() { return contact_geometry_; };
 
@@ -60,8 +60,8 @@ namespace SPH
 								   const std::string &shape_name = "GeometricShapeBox");
 		virtual ~GeometricShapeBox(){};
 
-		virtual bool checkContain(const Vec3d &pnt, bool BOUNDARY_INCLUDED = true) override;
-		virtual Vec3d findClosestPoint(const Vec3d &pnt) override;
+		virtual bool checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED = true) override;
+		virtual Vec3d findClosestPoint(const Vec3d &probe_point) override;
 
 	protected:
 		Vec3d halfsize_;
@@ -80,8 +80,8 @@ namespace SPH
 									const std::string &shape_name = "GeometricShapeBall");
 		virtual ~GeometricShapeBall(){};
 
-		virtual bool checkContain(const Vec3d &pnt, bool BOUNDARY_INCLUDED = true) override;
-		virtual Vec3d findClosestPoint(const Vec3d &pnt) override;
+		virtual bool checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED = true) override;
+		virtual Vec3d findClosestPoint(const Vec3d &probe_point) override;
 
 	protected:
 		virtual BoundingBox findBounds() override;

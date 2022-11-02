@@ -46,13 +46,6 @@ using namespace std::placeholders;
 
 namespace SPH
 {
-	/** Functor for operation on the mesh. */
-	typedef std::function<void(const Vecu &, Real)> MeshFunctor;
-	/** Iterator on the mesh by looping index. sequential computing. */
-	void MeshIterator(const Vecu &index_begin, const Vecu &index_end, MeshFunctor &mesh_functor, Real dt = 0.0);
-	/** Iterator on the mesh by looping index. parallel computing. */
-	void MeshIterator_parallel(const Vecu &index_begin, const Vecu &index_end, MeshFunctor &mesh_functor, Real dt = 0.0);
-
 	/**
 	 * @class BaseMesh
 	 * @brief Base class for all structured meshes which may be grid or cell based.

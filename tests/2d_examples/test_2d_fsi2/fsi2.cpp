@@ -42,7 +42,7 @@ int main(int ac, char *av[])
 
 	SolidBody insert_body(sph_system, makeShared<Insert>("InsertedBody"));
 	insert_body.defineAdaptationRatios(1.15, 2.0);
-	insert_body.defineBodyLevelSetShape()->writeLevelSet(insert_body);
+	insert_body.defineBodyLevelSetShape()->writeLevelSet(io_environment);
 	insert_body.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
 		? insert_body.generateParticles<ParticleGeneratorReload>(io_environment, insert_body.getName())
@@ -57,11 +57,11 @@ int main(int ac, char *av[])
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner insert_body_inner(insert_body);
-	ComplexBodyRelation water_block_complex(water_block, RealBodyVector{&wall_boundary, &insert_body});
-	BodyRelationContact insert_body_contact(insert_body, {&water_block});
-	BodyRelationContact beam_observer_contact(beam_observer, {&insert_body});
-	BodyRelationContact fluid_observer_contact(fluid_observer, {&water_block});
+	InnerRelation insert_body_inner(insert_body);
+	ComplexRelation water_block_complex(water_block, RealBodyVector{&wall_boundary, &insert_body});
+	ContactRelation insert_body_contact(insert_body, {&water_block});
+	ContactRelation beam_observer_contact(beam_observer, {&insert_body});
+	ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------
@@ -117,8 +117,8 @@ int main(int ac, char *av[])
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	/** Pressure relaxation using verlet time stepping. */
 	/** Here, we do not use Riemann solver for pressure as the flow is viscous. */
-	Dynamics1Level<fluid_dynamics::PressureRelaxationWithWall> pressure_relaxation(water_block_complex);
-	Dynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(water_block_complex);
 	/** viscous acceleration and transport velocity correction can be combined because they are independent dynamics. */
 	InteractionDynamics<CombinedLocalInteraction<
 		fluid_dynamics::ViscousAccelerationWithWall,
@@ -163,7 +163,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
 	RestartIO restart_io(io_environment, sph_system.real_bodies_);
-	RegressionTestTimeAveraged<BodyReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalViscousForceOnSolid>>>
+	RegressionTestTimeAveraged<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalViscousForceOnSolid>>>
 		write_total_viscous_force_on_insert_body(io_environment, insert_body);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
 		write_beam_tip_displacement("Position", io_environment, beam_observer_contact);

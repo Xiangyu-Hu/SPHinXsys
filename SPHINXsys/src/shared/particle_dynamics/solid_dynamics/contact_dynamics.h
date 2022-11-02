@@ -38,8 +38,8 @@ namespace SPH
 	class Kernel;
 	namespace solid_dynamics
 	{
-		typedef DataDelegateContact<SolidBody, SolidParticles, Solid, SolidBody, SolidParticles, Solid> ContactDynamicsData;
-		typedef DataDelegateContact<SolidBody, SolidParticles, ElasticSolid, SolidBody, SolidParticles, Solid> ContactWithWallData;
+		typedef DataDelegateContact<SolidParticles, SolidParticles> ContactDynamicsData;
+		typedef DataDelegateContact<SolidParticles, SolidParticles> ContactWithWallData;
 
 		/**
 		 * @class SelfContactDensitySummation
@@ -48,7 +48,7 @@ namespace SPH
 		class SelfContactDensitySummation : public LocalDynamics, public SolidDataInner
 		{
 		public:
-			explicit SelfContactDensitySummation(SolidBodyRelationSelfContact &self_contact_relation);
+			explicit SelfContactDensitySummation(SelfSurfaceContactRelation &self_contact_relation);
 			virtual ~SelfContactDensitySummation(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -65,7 +65,7 @@ namespace SPH
 		class ContactDensitySummation : public LocalDynamics, public ContactDynamicsData
 		{
 		public:
-			explicit ContactDensitySummation(SolidBodyRelationContact &solid_body_contact_relation);
+			explicit ContactDensitySummation(SurfaceContactRelation &solid_body_contact_relation);
 			virtual ~ContactDensitySummation(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -84,12 +84,13 @@ namespace SPH
 		class ShellContactDensity : public LocalDynamics, public ContactDynamicsData
 		{
 		public:
-			explicit ShellContactDensity(SolidBodyRelationContact &solid_body_contact_relation);
+			explicit ShellContactDensity(SurfaceContactRelation &solid_body_contact_relation);
 			virtual ~ShellContactDensity(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			StdLargeVec<Real>* contact_density_;
+			Solid &solid_;
+			StdLargeVec<Real> contact_density_;
 			StdVec<StdLargeVec<Vecd> *> contact_pos_;
 			StdLargeVec<Vecd> &pos_;
 
@@ -113,11 +114,12 @@ namespace SPH
 		class SelfContactForce : public LocalDynamics, public SolidDataInner
 		{
 		public:
-			explicit SelfContactForce(SolidBodyRelationSelfContact &self_contact_relation);
+			explicit SelfContactForce(SelfSurfaceContactRelation &self_contact_relation);
 			virtual ~SelfContactForce(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
+			Solid &solid_;
 			StdLargeVec<Real> &mass_, &self_contact_density_, &Vol_;
 			StdLargeVec<Vecd> &acc_prior_, &vel_;
 			Real contact_impedance_;
@@ -130,14 +132,16 @@ namespace SPH
 		class ContactForce : public LocalDynamics, public ContactDynamicsData
 		{
 		public:
-			explicit ContactForce(SolidBodyRelationContact &solid_body_contact_relation);
+			explicit ContactForce(SurfaceContactRelation &solid_body_contact_relation);
 			virtual ~ContactForce(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
+			Solid &solid_;
 			StdLargeVec<Real> &contact_density_, &Vol_, &mass_;
 			StdLargeVec<Vecd> &acc_prior_;
-			StdVec<StdLargeVec<Real> *> contact_contact_density_, contact_Vol_;
+			StdVec<Solid *> contact_solids_;
+			StdVec<StdLargeVec<Real> *> contact_contact_density_;
 		};
 
 		/**
@@ -149,14 +153,14 @@ namespace SPH
 		class ContactForceFromWall : public LocalDynamics, public ContactWithWallData
 		{
 		public:
-			explicit ContactForceFromWall(SolidBodyRelationContact &solid_body_contact_relation);
+			explicit ContactForceFromWall(SurfaceContactRelation &solid_body_contact_relation);
 			virtual ~ContactForceFromWall(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
+			Solid &solid_;
 			StdLargeVec<Real> &contact_density_, &Vol_, &mass_;
 			StdLargeVec<Vecd> &acc_prior_;
-			StdVec<StdLargeVec<Real> *> contact_Vol_;
 		};
 
 		/**
@@ -166,14 +170,15 @@ namespace SPH
 		class ContactForceToWall : public LocalDynamics, public ContactDynamicsData
 		{
 		public:
-			explicit ContactForceToWall(SolidBodyRelationContact &solid_body_contact_relation);
+			explicit ContactForceToWall(SurfaceContactRelation &solid_body_contact_relation);
 			virtual ~ContactForceToWall(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Real> &Vol_, &mass_;
 			StdLargeVec<Vecd> &acc_prior_;
-			StdVec<StdLargeVec<Real> *> contact_contact_density_, contact_Vol_;
+			StdVec<Solid *> contact_solids_;
+			StdVec<StdLargeVec<Real> *> contact_contact_density_;
 		};
 
 		/**
@@ -186,7 +191,7 @@ namespace SPH
 		class PairwiseFrictionFromWall : public LocalDynamics, public ContactWithWallData
 		{
 		public:
-			PairwiseFrictionFromWall(BaseBodyRelationContact &contact_relation, Real eta);
+			PairwiseFrictionFromWall(BaseContactRelation &contact_relation, Real eta);
 			virtual ~PairwiseFrictionFromWall(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -194,7 +199,6 @@ namespace SPH
 			Real eta_; /**< friction coefficient */
 			StdLargeVec<Real> &Vol_, &mass_;
 			StdLargeVec<Vecd> &vel_;
-			StdVec<StdLargeVec<Real> *> wall_Vol_;
 			StdVec<StdLargeVec<Vecd> *> wall_vel_n_, wall_n_;
 		};
 
@@ -207,14 +211,14 @@ namespace SPH
 		class DynamicContactForceWithWall : public LocalDynamics, public ContactDynamicsData
 		{
 		public:
-			explicit DynamicContactForceWithWall(SolidBodyRelationContact &solid_body_contact_relation, Real penalty_strength = 1.0);
+			explicit DynamicContactForceWithWall(SurfaceContactRelation &solid_body_contact_relation, Real penalty_strength = 1.0);
 			virtual ~DynamicContactForceWithWall(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
+			Solid &solid_;
 			StdLargeVec<Real> &Vol_, &mass_;
 			StdLargeVec<Vecd> &vel_, &acc_prior_;
-			StdVec<StdLargeVec<Real> *> contact_Vol_;
 			StdVec<StdLargeVec<Vecd> *> contact_vel_n_, contact_n_;
 			Real penalty_strength_;
 			Real impedance_, reference_pressure_;

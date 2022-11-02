@@ -5,6 +5,7 @@
 
 #include "level_set.h"
 #include "mesh_with_data_packages.hpp"
+#include "mesh_iterators.hpp"
 #include "base_kernel.h"
 #include "base_particles.h"
 #include "base_particle_dynamics.h"
@@ -57,12 +58,12 @@ namespace SPH
 			for (int j = AddressBufferWidth(); j != OperationUpperBound(); ++j)
 				for (int k = AddressBufferWidth(); k != OperationUpperBound(); ++k)
 				{
-					//only reinitialize non cut cells
+					// only reinitialize non cut cells
 					if (*near_interface_id_addrs_[i][j][k] != 0)
 					{
 						Real phi_0 = *phi_addrs_[i][j][k];
 						Real s = phi_0 / sqrt(phi_0 * phi_0 + grid_spacing_ * grid_spacing_);
-						//x direction
+						// x direction
 						Real dv_xp = (*phi_addrs_[i + 1][j][k] - phi_0);
 						Real dv_xn = (phi_0 - *phi_addrs_[i - 1][j][k]);
 						Real dv_x = dv_xp;
@@ -78,7 +79,7 @@ namespace SPH
 							if (ss > 0.0)
 								dv_x = dv_xn;
 						}
-						//y direction
+						// y direction
 						Real dv_yp = (*phi_addrs_[i][j + 1][k] - phi_0);
 						Real dv_yn = (phi_0 - *phi_addrs_[i][j - 1][k]);
 						Real dv_y = dv_yp;
@@ -94,7 +95,7 @@ namespace SPH
 							if (ss > 0.0)
 								dv_y = dv_yn;
 						}
-						//z direction
+						// z direction
 						Real dv_zp = (*phi_addrs_[i][j][k + 1] - phi_0);
 						Real dv_zn = (phi_0 - *phi_addrs_[i][j][k - 1]);
 						Real dv_z = dv_zp;
@@ -110,9 +111,38 @@ namespace SPH
 							if (ss > 0.0)
 								dv_z = dv_zn;
 						}
-						//time stepping
+						// time stepping
 						*phi_addrs_[i][j][k] -=
 							0.3 * s * (sqrt(dv_x * dv_x + dv_y * dv_y + dv_z * dv_z) - grid_spacing_);
+					}
+				}
+	}
+	//=================================================================================================//
+	void LevelSetDataPackage::stepDiffusionLevelSetSign()
+	{
+		for (int i = AddressBufferWidth(); i != OperationUpperBound(); ++i)
+			for (int j = AddressBufferWidth(); j != OperationUpperBound(); ++j)
+				for (int k = AddressBufferWidth(); k != OperationUpperBound(); ++k)
+				{
+					// near interface cells are not considered
+					if (abs(*near_interface_id_addrs_[i][j][k]) > 1)
+					{
+						Real phi_0 = *phi_addrs_[i][j][k];
+						for (int l = -1; l != 2; ++l)
+							for (int m = -1; m != 2; ++m)
+								for (int n = -1; n != 2; ++n)
+								{
+									int index_x = i + l;
+									int index_y = j + m;
+									int index_z = k + n;
+									int near_interface_id = *near_interface_id_addrs_[index_x][index_y][index_z];
+									if (abs(near_interface_id) == 1)
+									{
+										*near_interface_id_addrs_[i][j][k] = near_interface_id;
+										*phi_addrs_[i][j][k] = near_interface_id == 1 ? fabs(phi_0) : -fabs(phi_0);
+										break;
+									}
+								}
 					}
 				}
 	}
@@ -120,7 +150,7 @@ namespace SPH
 	void LevelSetDataPackage::markNearInterface(Real small_shift_factor)
 	{
 		Real small_shift = small_shift_factor * grid_spacing_;
-		//corner averages, note that the first row and first column are not used
+		// corner averages, note that the first row and first column are not used
 		PackageTemporaryData<Real> corner_averages;
 		for (int i = 1; i != AddressSize(); ++i)
 			for (int j = 1; j != AddressSize(); ++j)
@@ -133,44 +163,78 @@ namespace SPH
 			for (int j = AddressBufferWidth(); j != OperationUpperBound(); ++j)
 				for (int k = AddressBufferWidth(); k != OperationUpperBound(); ++k)
 				{
-					//first assume far cells
+					// first assume far cells
 					Real phi_0 = *phi_addrs_[i][j][k];
 					int near_interface_id = phi_0 > 0.0 ? 2 : -2;
 
-					Real phi_average_0 = corner_averages[i][j][k];
-					//find inner and outer cut cells
-					for (int l = 0; l != 2; ++l)
-						for (int m = 0; m != 2; ++m)
-							for (int n = 0; n != 2; ++n)
-							{
-								int index_x = i + l;
-								int index_y = j + m;
-								int index_z = k + n;
-								Real phi_average = corner_averages[index_x][index_y][index_z];
-								if ((phi_average_0 - small_shift) * (phi_average - small_shift) < 0.0)
-									near_interface_id = 1;
-								if ((phi_average_0 + small_shift) * (phi_average + small_shift) < 0.0)
-									near_interface_id = -1;
-							}
-					//find zero cut cells
-					for (int l = 0; l != 2; ++l)
-						for (int m = 0; m != 2; ++m)
-							for (int n = 0; n != 2; ++n)
-							{
-								int index_x = i + l;
-								int index_y = j + m;
-								int index_z = k + n;
-								Real phi_average = corner_averages[index_x][index_y][index_z];
-								if (phi_average_0 * phi_average < 0.0)
-									near_interface_id = 0;
-							}
-					//find cells between cut cells
-					if (fabs(phi_0) < small_shift && abs(near_interface_id) != 1)
-						near_interface_id = 0;
+					if (fabs(phi_0) < small_shift)
+					{
+						Real phi_average_0 = corner_averages[i][j][k];
+						// find inner and outer cut cells
+						for (int l = 0; l != 2; ++l)
+							for (int m = 0; m != 2; ++m)
+								for (int n = 0; n != 2; ++n)
+								{
+									int index_x = i + l;
+									int index_y = j + m;
+									int index_z = k + n;
+									Real phi_average = corner_averages[index_x][index_y][index_z];
+									if ((phi_average_0 - small_shift) * (phi_average - small_shift) < 0.0)
+										near_interface_id = 1;
+									if ((phi_average_0 + small_shift) * (phi_average + small_shift) < 0.0)
+										near_interface_id = -1;
+								}
+						// find zero cut cells
+						for (int l = 0; l != 2; ++l)
+							for (int m = 0; m != 2; ++m)
+								for (int n = 0; n != 2; ++n)
+								{
+									int index_x = i + l;
+									int index_y = j + m;
+									int index_z = k + n;
+									Real phi_average = corner_averages[index_x][index_y][index_z];
+									if (phi_average_0 * phi_average < 0.0)
+										near_interface_id = 0;
+								}
+						// find cells between cut cells
+						if (fabs(phi_0) < small_shift && abs(near_interface_id) != 1)
+							near_interface_id = 0;
+					}
 
-					//assign this is to package
+					// assign this is to package
 					*near_interface_id_addrs_[i][j][k] = near_interface_id;
 				}
+	}
+	//=================================================================================================//
+	LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing,
+					   Shape &shape, SPHAdaptation &sph_adaptation)
+		: LevelSet(tentative_bounds, data_spacing, 4, shape, sph_adaptation)
+	{
+		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
+						  [&](size_t i, size_t j, size_t k)
+						  {
+							  initializeDataInACell(Vecu(i, j, k));
+						  });
+
+		finishDataPackages();
+	}
+	//=================================================================================================//
+	void LevelSet::finishDataPackages()
+	{
+		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
+						  [&](size_t i, size_t j, size_t k)
+						  {
+							  tagACellIsInnerPackage(Vecu(i, j, k));
+						  });
+
+		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
+						  [&](size_t i, size_t j, size_t k)
+						  {
+							  initializePackageAddressesInACell(Vecu(i, j, k));
+						  });
+
+		updateLevelSetGradient();
+		updateKernelIntegrals();
 	}
 	//=================================================================================================//
 	bool LevelSet::isWithinCorePackage(Vecd position)
@@ -192,9 +256,9 @@ namespace SPH
 					if (data_pkg_addrs_[l][m][n]->is_core_pkg_)
 						is_inner_pkg = true;
 		return is_inner_pkg;
-	}	
+	}
 	//=================================================================================================//
-	void LevelSet::redistanceInterfaceForAPackage(LevelSetDataPackage *core_data_pkg, Real dt)
+	void LevelSet::redistanceInterfaceForAPackage(LevelSetDataPackage *core_data_pkg)
 	{
 		int l = (int)core_data_pkg->pkg_index_[0];
 		int m = (int)core_data_pkg->pkg_index_[1];
@@ -446,6 +510,19 @@ namespace SPH
 					}
 		}
 		return integral * data_spacing_ * data_spacing_ * data_spacing_;
+	}
+	//=============================================================================================//
+	RefinedLevelSet::RefinedLevelSet(BoundingBox tentative_bounds, LevelSet &coarse_level_set,
+									 Shape &shape, SPHAdaptation &sph_adaptation)
+		: RefinedMesh(tentative_bounds, coarse_level_set, 4, shape, sph_adaptation)
+	{
+		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
+						  [&](size_t i, size_t j, size_t k)
+						  {
+							  initializeDataInACellFromCoarse(Vecu(i, j, k));
+						  });
+
+		finishDataPackages();
 	}
 	//=============================================================================================//
 }

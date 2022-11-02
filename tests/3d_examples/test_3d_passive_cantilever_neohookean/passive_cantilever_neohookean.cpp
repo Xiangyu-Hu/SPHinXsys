@@ -75,8 +75,8 @@ int main(int ac, char *av[])
 	cantilever_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 
 	/** topology */
-	BodyRelationInner cantilever_body_inner(cantilever_body);
-	BodyRelationContact cantilever_observer_contact(cantilever_observer, {&cantilever_body});
+	InnerRelation cantilever_body_inner(cantilever_body);
+	ContactRelation cantilever_observer_contact(cantilever_observer, {&cantilever_body});
 
 	//-------- common particle dynamics ----------------------------------------
 	SimpleDynamics<TimeStepInitialization>

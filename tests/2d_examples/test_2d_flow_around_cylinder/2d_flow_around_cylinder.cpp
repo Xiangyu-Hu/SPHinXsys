@@ -47,16 +47,16 @@ int main(int ac, char *av[])
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	ComplexBodyRelation water_block_complex(water_block, {&cylinder});
-	BodyRelationContact cylinder_contact(cylinder, {&water_block});
-	BodyRelationContact fluid_observer_contact(fluid_observer, {&water_block});
+	ComplexRelation water_block_complex(water_block, {&cylinder});
+	ContactRelation cylinder_contact(cylinder, {&water_block});
+	ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------
 	if (sph_system.run_particle_relaxation_)
 	{
 		/** body topology only for particle relaxation */
-		BodyRelationInner cylinder_inner(cylinder);
+		InnerRelation cylinder_inner(cylinder);
 		//----------------------------------------------------------------------
 		//	Methods used for particle relaxation.
 		//----------------------------------------------------------------------
@@ -65,7 +65,7 @@ int main(int ac, char *av[])
 		/** Write the body state to Vtp file. */
 		BodyStatesRecordingToVtp write_inserted_body_to_vtp(io_environment, {&cylinder});
 		/** Write the particle reload files. */
-		ReloadParticleIO write_particle_reload_files(io_environment, {&cylinder});
+		ReloadParticleIO write_particle_reload_files(io_environment, cylinder);
 		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(cylinder_inner);
 		//----------------------------------------------------------------------
@@ -111,8 +111,8 @@ int main(int ac, char *av[])
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	/** Pressure relaxation using Verlet time stepping. */
 	/** Here, we do not use Riemann solver for pressure as the flow is viscous. */
-	Dynamics1Level<fluid_dynamics::PressureRelaxationWithWall> pressure_relaxation(water_block_complex);
-	Dynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(water_block_complex);
 	/** Computing viscous acceleration with wall. */
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	/** Impose transport velocity. */
@@ -133,10 +133,9 @@ int main(int ac, char *av[])
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
-	RestartIO restart_io(io_environment, sph_system.real_bodies_);
-	RegressionTestTimeAveraged<BodyReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalViscousForceOnSolid>>>
+	RegressionTestTimeAveraged<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalViscousForceOnSolid>>>
 		write_total_viscous_force_on_inserted_body(io_environment, cylinder);
-	BodyReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalViscousForceOnSolid>>
+	ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalViscousForceOnSolid>>
 		write_total_force_on_inserted_body(io_environment, cylinder);
 	ObservedQuantityRecording<Vecd>
 		write_fluid_velocity("Velocity", io_environment, fluid_observer_contact);
@@ -213,9 +212,6 @@ int main(int ac, char *av[])
 				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
 						  << GlobalStaticVariables::physical_time_
 						  << "	Dt = " << Dt << "	Dt / dt = " << inner_ite_dt << "\n";
-
-				if (number_of_iterations % restart_output_interval == 0 && number_of_iterations != sph_system.restart_step_)
-					restart_io.writeToFile(number_of_iterations);
 			}
 			number_of_iterations++;
 

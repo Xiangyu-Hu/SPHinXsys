@@ -37,10 +37,10 @@ int main()
 	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 	/** body topology */
-	ComplexBodyRelation water_air_complex(water_block, {&air_block});
-	BodyRelationContact water_wall_contact(water_block, {&wall_boundary});
-	ComplexBodyRelation air_water_complex(air_block, {&water_block});
-	BodyRelationContact air_wall_contact(air_block, {&wall_boundary});
+	ComplexRelation water_air_complex(water_block, {&air_block});
+	ContactRelation water_wall_contact(water_block, {&wall_boundary});
+	ComplexRelation air_water_complex(air_block, {&water_block});
+	ContactRelation air_wall_contact(air_block, {&wall_boundary});
 	/**
 	 * @brief 	Define all numerical methods which are used in this case.
 	 */
@@ -53,11 +53,11 @@ int main()
 	 */
 	/** Evaluation of density by summation approach. */
 	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex>
-		update_water_density_by_summation(water_air_complex.inner_relation_, water_wall_contact);
+		update_water_density_by_summation(water_wall_contact, water_air_complex.inner_relation_);
 	InteractionWithUpdate<fluid_dynamics::DensitySummationComplex>
-		update_air_density_by_summation(air_water_complex, air_wall_contact);
+		update_air_density_by_summation(air_wall_contact, air_water_complex);
 	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex>
-		air_transport_correction(air_water_complex, air_wall_contact);
+		air_transport_correction(air_wall_contact, air_water_complex);
 	/** Time step size without considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_water_advection_time_step_size(water_block, U_max);
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_air_advection_time_step_size(air_block, U_max);
@@ -65,18 +65,18 @@ int main()
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_water_time_step_size(water_block);
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_air_time_step_size(air_block);
 	/** Pressure relaxation for water by using position verlet time stepping. */
-	Dynamics1Level<fluid_dynamics::PressureRelaxationRiemannWithWall>
-		water_pressure_relaxation(water_air_complex.inner_relation_, water_wall_contact);
-	Dynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall>
-		water_density_relaxation(water_air_complex.inner_relation_, water_wall_contact);
+	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall>
+		water_pressure_relaxation(water_wall_contact, water_air_complex.inner_relation_);
+	Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall>
+		water_density_relaxation(water_wall_contact, water_air_complex.inner_relation_);
 	/** Extend Pressure relaxation is used for air. */
-	Dynamics1Level<fluid_dynamics::ExtendMultiPhasePressureRelaxationRiemannWithWall>
-		air_pressure_relaxation(air_water_complex, air_wall_contact, 2.0);
-	Dynamics1Level<fluid_dynamics::MultiPhaseDensityRelaxationRiemannWithWall>
-		air_density_relaxation(air_water_complex, air_wall_contact);
+	Dynamics1Level<fluid_dynamics::ExtendMultiPhaseIntegration1stHalfRiemannWithWall>
+		air_pressure_relaxation(air_wall_contact, air_water_complex, 2.0);
+	Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfRiemannWithWall>
+		air_density_relaxation(air_wall_contact, air_water_complex);
 	/** Viscous acceleration. */
-	InteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhaseWithWall> air_viscous_acceleration(air_water_complex, air_wall_contact);
-	InteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhaseWithWall> water_viscous_acceleration(water_air_complex, water_wall_contact);
+	InteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhaseWithWall> air_viscous_acceleration(air_wall_contact, air_water_complex);
+	InteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhaseWithWall> water_viscous_acceleration(water_wall_contact, water_air_complex);
 	/** Surface tension. */
 	InteractionWithUpdate<fluid_dynamics::FreeSurfaceIndicationInner> surface_detection(water_air_complex.inner_relation_);
 	InteractionDynamics<fluid_dynamics::ColorFunctionGradientInner> color_gradient(water_air_complex.inner_relation_);

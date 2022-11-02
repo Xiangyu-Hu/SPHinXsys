@@ -49,7 +49,7 @@ int main(int ac, char *av[])
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	RealBody imported_model(system, makeShared<ImportedShellModel>("ImportedShellModel"));
-	imported_model.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(imported_model);
+	imported_model.defineBodyLevelSetShape(level_set_refinement_ratio)->correctLevelSetSign()->writeLevelSet(io_environment);
 	//here dummy linear elastic solid is use because no solid dynamics in particle relaxation
 	imported_model.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
 	imported_model.generateParticles<ThickSurfaceParticleGeneratorLattice>(thickness);
@@ -58,13 +58,13 @@ int main(int ac, char *av[])
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_imported_model_to_vtp(io_environment, {imported_model});
-	MeshRecordingToPlt write_mesh_cell_linked_list(io_environment, imported_model, imported_model.cell_linked_list_);
+	MeshRecordingToPlt write_mesh_cell_linked_list(io_environment, imported_model.cell_linked_list_);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner imported_model_inner(imported_model);
+	InnerRelation imported_model_inner(imported_model);
 	//----------------------------------------------------------------------
 	//	Methods used for particle relaxation.
 	//----------------------------------------------------------------------

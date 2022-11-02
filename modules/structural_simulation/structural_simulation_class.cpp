@@ -64,7 +64,7 @@ void expandBoundingBox(BoundingBox *original, BoundingBox *additional)
 void relaxParticlesSingleResolution(IOEnvironment &io_environment,
 									bool write_particle_relaxation_data,
 									SolidBody &solid_body_from_mesh,
-									BodyRelationInner &solid_body_from_mesh_inner)
+									InnerRelation &solid_body_from_mesh_inner)
 {
 	BodyStatesRecordingToVtp write_solid_body_from_mesh_to_vtp(io_environment, solid_body_from_mesh);
 
@@ -117,11 +117,11 @@ std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>> generateAndRelaxParticlesFromMe
 	if (particle_relaxation)
 	{
 		IOEnvironment io_environment(system);
-		BodyRelationInner inner_relation(model);
+		InnerRelation inner_relation(model);
 		relaxParticlesSingleResolution(io_environment, write_particle_relaxation_data, model, inner_relation);
 	}
 
-	return std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>>(model.base_particles_->pos_, model.base_particles_->Vol_);
+	return std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>>(model.getBaseParticles().pos_, model.getBaseParticles().Vol_);
 }
 
 BodyPartByParticle *createBodyPartFromMesh(SPHBody &body, const StlList &stl_list, size_t body_index, SharedPtr<TriangleMeshShape> tmesh)
@@ -352,8 +352,8 @@ void StructuralSimulation::initializeContactBetweenTwoBodies(int first, int seco
 	SolidBodyFromMesh *first_body = solid_body_list_[first]->getSolidBodyFromMesh();
 	SolidBodyFromMesh *second_body = solid_body_list_[second]->getSolidBodyFromMesh();
 
-	contact_list_.emplace_back(make_shared<SolidBodyRelationContact>(*first_body, RealBodyVector({second_body})));
-	contact_list_.emplace_back(make_shared<SolidBodyRelationContact>(*second_body, RealBodyVector({first_body})));
+	contact_list_.emplace_back(make_shared<SurfaceContactRelation>(*first_body, RealBodyVector({second_body})));
+	contact_list_.emplace_back(make_shared<SurfaceContactRelation>(*second_body, RealBodyVector({first_body})));
 
 	int last = contact_list_.size() - 1;
 	contact_density_list_.push_back(make_shared<InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle>>(*contact_list_[last - 1]));
@@ -379,7 +379,7 @@ void StructuralSimulation::initializeAllContacts()
 			target_list.emplace_back(solid_body_list_[target_i]->getSolidBodyFromMesh());
 		}
 
-		contact_list_.emplace_back(make_shared<SolidBodyRelationContact>(*contact_body, target_list));
+		contact_list_.emplace_back(make_shared<SurfaceContactRelation>(*contact_body, target_list));
 		int last = contact_list_.size() - 1;
 		contact_density_list_.emplace_back(make_shared<InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle>>(*contact_list_[last]));
 		contact_force_list_.emplace_back(make_shared<InteractionDynamics<solid_dynamics::ContactForce, BodyPartByParticle>>(*contact_list_[last]));

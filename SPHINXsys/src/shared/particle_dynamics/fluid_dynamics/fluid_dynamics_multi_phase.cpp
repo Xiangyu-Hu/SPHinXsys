@@ -12,8 +12,8 @@ namespace SPH
 	namespace fluid_dynamics
 	{
 		//=================================================================================================//
-		ViscousAccelerationMultiPhase::ViscousAccelerationMultiPhase(BaseBodyRelationInner &inner_relation,
-																	 BaseBodyRelationContact &contact_relation)
+		ViscousAccelerationMultiPhase::ViscousAccelerationMultiPhase(BaseInnerRelation &inner_relation,
+																	 BaseContactRelation &contact_relation)
 			: ViscousAccelerationInner(inner_relation), MultiPhaseContactData(contact_relation)
 		{
 			if (&inner_relation.sph_body_ != &contact_relation.sph_body_)
@@ -25,13 +25,14 @@ namespace SPH
 
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
-				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
+				contact_fluids_.push_back(&contact_particles_[k]->fluid_);
 				contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
+
 			}
 		}
 		//=================================================================================================//
 		ViscousAccelerationMultiPhase::
-			ViscousAccelerationMultiPhase(ComplexBodyRelation &complex_relation)
+			ViscousAccelerationMultiPhase(ComplexRelation &complex_relation)
 			: ViscousAccelerationMultiPhase(complex_relation.inner_relation_,
 											complex_relation.contact_relation_) {}
 		//=================================================================================================//
@@ -45,8 +46,7 @@ namespace SPH
 			Vecd acceleration(0), vel_derivative(0);
 			for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 			{
-				Real mu_j = this->contact_material_[k]->ReferenceViscosity();
-				StdLargeVec<Real> &Vol_k = *(this->contact_Vol_[k]);
+				Real mu_j = this->contact_fluids_[k]->ReferenceViscosity();
 				StdLargeVec<Vecd> &vel_k = *(this->contact_vel_n_[k]);
 				Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -58,7 +58,7 @@ namespace SPH
 									 (r_ij + 0.01 * this->smoothing_length_);
 					Real mu_ij = 2.0 * this->mu_ * mu_j / (this->mu_ + mu_j);
 					acceleration += 2.0 * mu_ij * vel_derivative *
-									contact_neighborhood.dW_ij_[n] * Vol_k[index_j] / rho_i;
+									contact_neighborhood.dW_ijV_j_[n] / rho_i;
 				}
 			}
 
@@ -66,7 +66,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		MultiPhaseColorFunctionGradient::
-			MultiPhaseColorFunctionGradient(BaseBodyRelationContact &contact_relation)
+			MultiPhaseColorFunctionGradient(BaseContactRelation &contact_relation)
 			: LocalDynamics(contact_relation.sph_body_), MultiPhaseData(contact_relation),
 			  rho0_(particles_->rho0_), Vol_(particles_->Vol_),
 			  pos_div_(*particles_->getVariableByName<Real>("PositionDivergence")),
@@ -84,24 +84,23 @@ namespace SPH
 		//=================================================================================================//
 		void MultiPhaseColorFunctionGradient::interaction(size_t index_i, Real dt)
 		{
-			Real vol_i = Vol_[index_i];
+			Real Vol_i = Vol_[index_i];
 			Vecd gradient(0.0);
 			if (surface_indicator_[index_i])
 			{
 				for (size_t k = 0; k < contact_configuration_.size(); ++k)
 				{
 					Real rho0_k = contact_rho0_[k];
-					StdLargeVec<Real> &contact_vol_k = *(contact_Vol_[k]);
+					StdLargeVec<Real> &contact_Vol_k = *(contact_Vol_[k]);
 					Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 					for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 					{
 						size_t index_j = contact_neighborhood.j_[n];
 						/** Norm of interface.*/
 						Real rho_ij = rho0_ / (rho0_ + rho0_k);
-						Real area_ij = (vol_i * vol_i +
-										contact_vol_k[index_j] * contact_vol_k[index_j]) *
-									   contact_neighborhood.dW_ij_[n];
-						gradient += rho_ij * area_ij * contact_neighborhood.e_ij_[n] / vol_i;
+						Real area_ij = (Vol_i * Vol_i + contact_Vol_k[index_j] * contact_Vol_k[index_j]) *
+									   contact_neighborhood.dW_ijV_j_[n] / contact_Vol_k[index_j];
+						gradient += rho_ij * area_ij * contact_neighborhood.e_ij_[n] / Vol_i;
 					}
 				}
 			}

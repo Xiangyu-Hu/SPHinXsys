@@ -50,7 +50,7 @@ public:
 		  acc_prior(particles_->acc_prior_),
 		  force_arr_(f_arr),
 		  mass_n_(particles_->mass_),
-		  vol_(particles_->Vol_),
+		  Vol_(particles_->Vol_),
 		  F_(particles_->F_),
 		  particles_num_(body_part.body_part_particles_.size())
 	{
@@ -81,7 +81,7 @@ protected:
 	StdLargeVec<Vecd> &acc_prior;
 	StdLargeVec<Real> &mass_n_;
 	StdLargeVec<Real> area_0_;
-	StdLargeVec<Real> &vol_;
+	StdLargeVec<Real> &Vol_;
 	StdLargeVec<Matd> &F_;
 
 	StdVec<array<Real, 2>> force_arr_;
@@ -126,8 +126,8 @@ int main(int ac, char *av[])
 	ObserverBody beam_observer(system, "BeamObserver");
 	beam_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	/** topology */
-	BodyRelationInner beam_body_inner(beam_body);
-	BodyRelationContact beam_observer_contact(beam_observer, {&beam_body});
+	InnerRelation beam_body_inner(beam_body);
+	ContactRelation beam_observer_contact(beam_observer, {&beam_body});
 	/** initialize a time step */
 	SimpleDynamics<TimeStepInitialization> beam_initialize(beam_body);
 

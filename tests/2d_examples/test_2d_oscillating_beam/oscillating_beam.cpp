@@ -75,7 +75,7 @@ public:
 		Real x = pos_[index_i][0] / PL;
 		if (x > 0.0)
 		{
-			vel_[index_i][1] = vf * material_->ReferenceSoundSpeed() *
+			vel_[index_i][1] = vf * particles_->elastic_solid_.ReferenceSoundSpeed() *
 							   (M * (cos(kl * x) - cosh(kl * x)) - N * (sin(kl * x) - sinh(kl * x))) / Q;
 		}
 	};
@@ -117,8 +117,8 @@ int main(int ac, char *av[])
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner beam_body_inner(beam_body);
-	BodyRelationContact beam_observer_contact(beam_observer, {&beam_body});
+	InnerRelation beam_body_inner(beam_body);
+	ContactRelation beam_observer_contact(beam_observer, {&beam_body});
 	//-----------------------------------------------------------------------------
 	// this section define all numerical methods will be used in this case
 	//-----------------------------------------------------------------------------
