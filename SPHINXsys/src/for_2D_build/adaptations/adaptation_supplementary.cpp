@@ -1,4 +1,4 @@
-#include "solid_particles.h"
+#include "adaptation.h"
 
 namespace SPH
 {

@@ -41,6 +41,7 @@ namespace SPH
 {
 	class LevelSet;
 	class Kernel;
+
 	/**
 	 * @class LevelSetDataPackage
 	 * @brief Fixed memory level set data packed in a package.
@@ -51,14 +52,15 @@ namespace SPH
 	{
 	public:
 		bool is_core_pkg_;					 /**< If true, the package is near to zero level set. */
-		PackageData<Real> phi_;				 /**< the level set or signed distance. */
-		PackageDataAddress<Real> phi_addrs_; /**< address for the level set. */
+		PackageData<Real> phi_;				 
+		PackageDataAddress<Real> phi_addrs_; 
 		PackageData<Vecd> phi_gradient_;
 		PackageDataAddress<Vecd> phi_gradient_addrs_;
 		PackageData<Real> kernel_weight_;
 		PackageDataAddress<Real> kernel_weight_addrs_;
 		PackageData<Vecd> kernel_gradient_;
 		PackageDataAddress<Vecd> kernel_gradient_addrs_;
+
 		/** mark the near interface cells. 0 for zero level set cut cells,
 		 * -1 and 1 for negative and positive cut cells,
 		 * 0 can also be for other cells in the region closed
@@ -121,11 +123,16 @@ namespace SPH
 		Real global_h_ratio_;
 
 		/** This constructor only initialize far field. */
-		LevelSet(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size,
-				 Shape &shape, SPHAdaptation &sph_adaptation);
+		LevelSet(BoundingBox tentative_bounds
+				, Real data_spacing
+				, size_t buffer_size
+				, Shape &shape
+				, SPHAdaptation &sph_adaptation);
 		/** This constructor generate inner packages too. */
-		LevelSet(BoundingBox tentative_bounds, Real data_spacing,
-				 Shape &shape, SPHAdaptation &sph_adaptation);
+		LevelSet(BoundingBox tentative_bounds
+				, Real data_spacing
+				, Shape &shape
+				, SPHAdaptation &sph_adaptation);
 		virtual ~LevelSet(){};
 
 		virtual void cleanInterface(Real small_shift_factor) override;
@@ -168,8 +175,11 @@ namespace SPH
 	class RefinedLevelSet : public RefinedMesh<LevelSet>
 	{
 	public:
-		RefinedLevelSet(BoundingBox tentative_bounds, LevelSet &coarse_level_set,
-						Shape &shape, SPHAdaptation &sph_adaptation);
+		RefinedLevelSet(BoundingBox tentative_bounds
+					   , LevelSet &coarse_level_set
+					   , Shape &shape
+					   , SPHAdaptation &sph_adaptation
+					   );
 		virtual ~RefinedLevelSet(){};
 
 	protected:
@@ -183,8 +193,12 @@ namespace SPH
 	class MultilevelLevelSet : public MultilevelMesh<BaseLevelSet, LevelSet, RefinedLevelSet>
 	{
 	public:
-		MultilevelLevelSet(BoundingBox tentative_bounds, Real reference_data_spacing,
-						   size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation);
+		MultilevelLevelSet(BoundingBox tentative_bounds
+						  , Real reference_data_spacing
+						  , size_t total_levels
+						  , Shape &shape
+						  , SPHAdaptation &sph_adaptation
+						  );
 		virtual ~MultilevelLevelSet(){};
 
 		virtual void cleanInterface(Real small_shift_factor) override;

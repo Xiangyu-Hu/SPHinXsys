@@ -113,6 +113,7 @@ namespace SPH
 		{
 			LevelSetShape *levelset_shape =
 				shape_ptr_keeper_.resetPtr<LevelSetShape>(*this, *body_shape_, std::forward<ConstructorArgs>(args)...);
+
 			body_shape_ = levelset_shape;
 			return levelset_shape;
 		};

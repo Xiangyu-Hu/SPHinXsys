@@ -11,9 +11,11 @@ namespace SPH
 	{
 		//=================================================================================================//
 		GetTimeStepSizeSquare::GetTimeStepSizeSquare(SPHBody &sph_body)
-			: LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
-			  RelaxDataDelegateSimple(sph_body), acc_(particles_->acc_),
-			  h_ref_(sph_body.sph_adaptation_->ReferenceSmoothingLength()) {}
+			: LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0))
+			, RelaxDataDelegateSimple(sph_body)
+			, acc_(particles_->acc_)
+			, h_ref_(sph_body.sph_adaptation_->ReferenceSmoothingLength()) 
+		{}
 		//=================================================================================================//
 		Real GetTimeStepSizeSquare::reduce(size_t index_i, Real dt)
 		{
@@ -26,8 +28,12 @@ namespace SPH
 		}
 		//=================================================================================================//
 		RelaxationAccelerationInner::RelaxationAccelerationInner(BaseBodyRelationInner &inner_relation)
-			: LocalDynamics(inner_relation.sph_body_), RelaxDataDelegateInner(inner_relation),
-			  Vol_(particles_->Vol_), acc_(particles_->acc_), pos_(particles_->pos_) {}
+			: LocalDynamics(inner_relation.sph_body_)
+			, RelaxDataDelegateInner(inner_relation)
+			, Vol_(particles_->Vol_)
+			, acc_(particles_->acc_)
+			, pos_(particles_->pos_) 
+		{}
 		//=================================================================================================//
 		void RelaxationAccelerationInner::interaction(size_t index_i, Real dt)
 		{
@@ -41,9 +47,9 @@ namespace SPH
 			acc_[index_i] = acceleration;
 		}
 		//=================================================================================================//
-		RelaxationAccelerationInnerWithLevelSetCorrection::
-			RelaxationAccelerationInnerWithLevelSetCorrection(BaseBodyRelationInner &inner_relation)
-			: RelaxationAccelerationInner(inner_relation), sph_adaptation_(sph_body_.sph_adaptation_)
+		RelaxationAccelerationInnerWithLevelSetCorrection::RelaxationAccelerationInnerWithLevelSetCorrection(BaseBodyRelationInner &inner_relation)
+			: RelaxationAccelerationInner(inner_relation)
+			, sph_adaptation_(sph_body_.sph_adaptation_)
 		{
 			level_set_shape_ = DynamicCast<LevelSetShape>(this, body_->body_shape_);
 		}
@@ -56,9 +62,12 @@ namespace SPH
 		}
 		//=================================================================================================//
 		UpdateParticlePosition::UpdateParticlePosition(SPHBody &sph_body)
-			: LocalDynamics(sph_body), RelaxDataDelegateSimple(sph_body),
-			  sph_adaptation_(sph_body.sph_adaptation_),
-			  pos_(particles_->pos_), acc_(particles_->acc_) {}
+			: LocalDynamics(sph_body)
+			, RelaxDataDelegateSimple(sph_body)
+			, sph_adaptation_(sph_body.sph_adaptation_)
+			, pos_(particles_->pos_)
+			, acc_(particles_->acc_) 
+		{}
 		//=================================================================================================//
 		void UpdateParticlePosition::update(size_t index_i, Real dt_square)
 		{
@@ -79,11 +88,12 @@ namespace SPH
 			Vol_[index_i] = powerN(local_spacing, Dimensions);
 		}
 		//=================================================================================================//
-		RelaxationAccelerationComplex::
-			RelaxationAccelerationComplex(ComplexBodyRelation &complex_relation)
-			: LocalDynamics(complex_relation.sph_body_),
-			  RelaxDataDelegateComplex(complex_relation),
-			  Vol_(particles_->Vol_), acc_(particles_->acc_), pos_(particles_->pos_)
+		RelaxationAccelerationComplex::RelaxationAccelerationComplex(ComplexBodyRelation &complex_relation)
+			: LocalDynamics(complex_relation.sph_body_)
+			, RelaxDataDelegateComplex(complex_relation)
+			, Vol_(particles_->Vol_)
+			, acc_(particles_->acc_)
+			, pos_(particles_->pos_)
 		{
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
@@ -117,11 +127,11 @@ namespace SPH
 			acc_[index_i] = acceleration;
 		}
 		//=================================================================================================//
-		ShapeSurfaceBounding::
-			ShapeSurfaceBounding(NearShapeSurface &near_shape_surface)
-			: LocalDynamics(near_shape_surface.getSPHBody()), RelaxDataDelegateSimple(sph_body_),
-			  pos_(particles_->pos_),
-			  constrained_distance_(0.5 * sph_body_.sph_adaptation_->MinimumSpacing())
+		ShapeSurfaceBounding::ShapeSurfaceBounding(NearShapeSurface &near_shape_surface)
+			: LocalDynamics(near_shape_surface.getSPHBody())
+			, RelaxDataDelegateSimple(sph_body_)
+			, pos_(particles_->pos_)
+			, constrained_distance_(0.5 * sph_body_.sph_adaptation_->MinimumSpacing())
 		{
 			level_set_shape_ = &near_shape_surface.level_set_shape_;
 		}
@@ -137,12 +147,14 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		RelaxationStepInner::
-			RelaxationStepInner(BaseBodyRelationInner &inner_relation, bool level_set_correction)
-			: BaseDynamics<void>(), real_body_(inner_relation.real_body_),
-			  inner_relation_(inner_relation), near_shape_surface_(*real_body_),
-			  get_time_step_square_(*real_body_), update_particle_position_(*real_body_),
-			  surface_bounding_(near_shape_surface_)
+		RelaxationStepInner::RelaxationStepInner(BaseBodyRelationInner &inner_relation, bool level_set_correction)
+			: BaseDynamics<void>()
+			, real_body_(inner_relation.real_body_)
+			, inner_relation_(inner_relation)
+			, near_shape_surface_(*real_body_)
+			, get_time_step_square_(*real_body_)
+			, update_particle_position_(*real_body_)
+			, surface_bounding_(near_shape_surface_)
 		{
 			if (!level_set_correction)
 			{
@@ -176,10 +188,9 @@ namespace SPH
 			surface_bounding_.parallel_exec();
 		}
 		//=================================================================================================//
-		RelaxationAccelerationComplexWithLevelSetCorrection::
-			RelaxationAccelerationComplexWithLevelSetCorrection(ComplexBodyRelation &body_complex_relation, const std::string &shape_name)
-			: RelaxationAccelerationComplex(body_complex_relation),
-			  sph_adaptation_(sph_body_.sph_adaptation_)
+		RelaxationAccelerationComplexWithLevelSetCorrection::RelaxationAccelerationComplexWithLevelSetCorrection(ComplexBodyRelation &body_complex_relation, const std::string &shape_name)
+			: RelaxationAccelerationComplex(body_complex_relation)
+			, sph_adaptation_(sph_body_.sph_adaptation_)
 		{
 			ComplexShape &complex_shape = DynamicCast<ComplexShape>(this, *body_->body_shape_);
 			level_set_shape_ = DynamicCast<LevelSetShape>(this, complex_shape.getShapeByName(shape_name));
@@ -200,14 +211,14 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		RelaxationStepComplex::RelaxationStepComplex(ComplexBodyRelation &body_complex_relation,
-													 const std::string &shape_name, bool level_set_correction)
-			: BaseDynamics<void>(),
-			  real_body_(body_complex_relation.inner_relation_.real_body_),
-			  complex_relation_(body_complex_relation),
-			  near_shape_surface_(*real_body_, shape_name),
-			  get_time_step_square_(*real_body_), update_particle_position_(*real_body_),
-			  surface_bounding_(near_shape_surface_)
+		RelaxationStepComplex::RelaxationStepComplex(ComplexBodyRelation &body_complex_relation, const std::string &shape_name, bool level_set_correction)
+			: BaseDynamics<void>()
+			, real_body_(body_complex_relation.inner_relation_.real_body_)
+			, complex_relation_(body_complex_relation)
+			, near_shape_surface_(*real_body_, shape_name)
+			, get_time_step_square_(*real_body_)
+			, update_particle_position_(*real_body_)
+			, surface_bounding_(near_shape_surface_)
 		{
 			if (!level_set_correction)
 			{
@@ -241,14 +252,15 @@ namespace SPH
 			surface_bounding_.parallel_exec();
 		}
 		//=================================================================================================//
-		ShellMidSurfaceBounding::
-			ShellMidSurfaceBounding(NearShapeSurface &body_part, BaseBodyRelationInner &inner_relation,
-									Real thickness, Real level_set_refinement_ratio)
-			: LocalDynamics(body_part.getSPHBody()), RelaxDataDelegateInner(inner_relation),
-			  pos_(particles_->pos_), constrained_distance_(0.5 * sph_body_.sph_adaptation_->MinimumSpacing()),
-			  particle_spacing_ref_(sph_body_.sph_adaptation_->MinimumSpacing()),
-			  thickness_(thickness), level_set_refinement_ratio_(level_set_refinement_ratio),
-			  level_set_shape_(DynamicCast<LevelSetShape>(this, body_->body_shape_)) {}
+		ShellMidSurfaceBounding::ShellMidSurfaceBounding(NearShapeSurface &body_part, BaseBodyRelationInner &inner_relation, Real thickness, Real level_set_refinement_ratio)
+			: LocalDynamics(body_part.getSPHBody())
+			, RelaxDataDelegateInner(inner_relation)
+			, pos_(particles_->pos_)
+			, constrained_distance_(0.5 * sph_body_.sph_adaptation_->MinimumSpacing())
+			, particle_spacing_ref_(sph_body_.sph_adaptation_->MinimumSpacing())
+			, thickness_(thickness), level_set_refinement_ratio_(level_set_refinement_ratio)
+			, level_set_shape_(DynamicCast<LevelSetShape>(this, body_->body_shape_)) 
+		{}
 		//=================================================================================================//
 		void ShellMidSurfaceBounding::update(size_t index_i, Real dt)
 		{
@@ -258,17 +270,16 @@ namespace SPH
 			pos_[index_i] -= factor * constrained_distance_ * normal;
 		}
 		//=================================================================================================//
-		ShellNormalDirectionPrediction::
-			ShellNormalDirectionPrediction(BaseBodyRelationInner &inner_relation,
-										   Real thickness, Real consistency_criterion)
-			: BaseDynamics<void>(),
-			  convergence_criterion_(cos(0.01 * Pi)),
-			  consistency_criterion_(consistency_criterion),
-			  normal_prediction_(inner_relation.sph_body_, thickness),
-			  normal_prediction_convergence_check_(inner_relation.sph_body_, convergence_criterion_),
-			  consistency_correction_(inner_relation, consistency_criterion_),
-			  consistency_updated_check_(inner_relation.sph_body_),
-			  smoothing_normal_(inner_relation) {}
+		ShellNormalDirectionPrediction::ShellNormalDirectionPrediction(BaseBodyRelationInner &inner_relation, Real thickness, Real consistency_criterion)
+			: BaseDynamics<void>()
+			, convergence_criterion_(cos(0.01 * Pi))
+			, consistency_criterion_(consistency_criterion)
+			, normal_prediction_(inner_relation.sph_body_, thickness)
+			, normal_prediction_convergence_check_(inner_relation.sph_body_, convergence_criterion_)
+			, consistency_correction_(inner_relation, consistency_criterion_)
+			, consistency_updated_check_(inner_relation.sph_body_)
+			, smoothing_normal_(inner_relation) 
+		{}
 		//=================================================================================================//
 		void ShellNormalDirectionPrediction::exec(Real dt)
 		{
@@ -317,15 +328,14 @@ namespace SPH
 			std::cout << "\n Information: normal consistency updated after '" << ite_updated << "' steps." << std::endl;
 		}
 		//=================================================================================================//
-		ShellNormalDirectionPrediction::NormalPrediction::
-			NormalPrediction(SPHBody &sph_body, Real thickness)
-			: RelaxDataDelegateSimple(sph_body), LocalDynamics(sph_body), thickness_(thickness),
-			  level_set_shape_(DynamicCast<LevelSetShape>(this, sph_body.body_shape_)),
-			  pos_(particles_->pos_), n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
+		ShellNormalDirectionPrediction::NormalPrediction::NormalPrediction(SPHBody &sph_body, Real thickness)
+			: RelaxDataDelegateSimple(sph_body)
+			, LocalDynamics(sph_body), thickness_(thickness)
+			, level_set_shape_(DynamicCast<LevelSetShape>(this, sph_body.body_shape_))
+			, pos_(particles_->pos_)
+			, n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
 		{
-			particles_->registerVariable(n_temp_, "PreviousNormalDirection",
-										 [&](size_t i) -> Vecd
-										 { return n_[i]; });
+			particles_->registerVariable(n_temp_, "PreviousNormalDirection", [&](size_t i) -> Vecd { return n_[i]; });
 		}
 		//=================================================================================================//
 		void ShellNormalDirectionPrediction::NormalPrediction::update(size_t index_i, Real dt)
@@ -334,31 +344,29 @@ namespace SPH
 			n_[index_i] = level_set_shape_->findNormalDirection(pos_[index_i] + 0.3 * thickness_ * n_temp_[index_i]);
 		}
 		//=================================================================================================//
-		ShellNormalDirectionPrediction::PredictionConvergenceCheck::
-			PredictionConvergenceCheck(SPHBody &sph_body, Real convergence_criterion)
-			: LocalDynamicsReduce<bool, ReduceAND>(sph_body, true),
-			  RelaxDataDelegateSimple(sph_body), convergence_criterion_(convergence_criterion),
-			  n_(*particles_->getVariableByName<Vecd>("NormalDirection")),
-			  n_temp_(*particles_->getVariableByName<Vecd>("PreviousNormalDirection")) {}
+		ShellNormalDirectionPrediction::PredictionConvergenceCheck::PredictionConvergenceCheck(SPHBody &sph_body, Real convergence_criterion)
+			: LocalDynamicsReduce<bool, ReduceAND>(sph_body, true)
+			, RelaxDataDelegateSimple(sph_body), convergence_criterion_(convergence_criterion)
+			, n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
+			, n_temp_(*particles_->getVariableByName<Vecd>("PreviousNormalDirection")) 
+		{}
 		//=================================================================================================//
-		bool ShellNormalDirectionPrediction::
-			PredictionConvergenceCheck::reduce(size_t index_i, Real dt)
+		bool ShellNormalDirectionPrediction::PredictionConvergenceCheck::reduce(size_t index_i, Real dt)
 		{
 			return n_[index_i].dot(n_temp_[index_i]) > convergence_criterion_;
 		}
 		//=================================================================================================//
-		ShellNormalDirectionPrediction::ConsistencyCorrection::
-			ConsistencyCorrection(BaseBodyRelationInner &inner_relation, Real consistency_criterion)
-			: LocalDynamics(inner_relation.sph_body_), RelaxDataDelegateInner(inner_relation),
-			  consistency_criterion_(consistency_criterion),
-			  n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
+		ShellNormalDirectionPrediction::ConsistencyCorrection::ConsistencyCorrection(BaseBodyRelationInner &inner_relation, Real consistency_criterion)
+			: LocalDynamics(inner_relation.sph_body_)
+			, RelaxDataDelegateInner(inner_relation)
+			, consistency_criterion_(consistency_criterion)
+			, n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
 		{
 			particles_->registerVariable(updated_indicator_, "UpdatedIndicator", [&](size_t i) -> int {return 0;});
 			updated_indicator_[particles_->total_real_particles_ / 3] = 1;
 		}
 		//=================================================================================================//
-		void ShellNormalDirectionPrediction::
-			ConsistencyCorrection::interaction(size_t index_i, Real dt)
+		void ShellNormalDirectionPrediction::ConsistencyCorrection::interaction(size_t index_i, Real dt)
 		{
 			mutex_modify_neighbor_.lock();
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -389,21 +397,20 @@ namespace SPH
 			mutex_modify_neighbor_.unlock();
 		}
 		//=================================================================================================//
-		ShellNormalDirectionPrediction::ConsistencyUpdatedCheck::
-			ConsistencyUpdatedCheck(SPHBody &sph_body)
-			: LocalDynamicsReduce<bool, ReduceAND>(sph_body, true),
-			  RelaxDataDelegateSimple(sph_body),
-			  updated_indicator_(*particles_->getVariableByName<int>("UpdatedIndicator")) {}
+		ShellNormalDirectionPrediction::ConsistencyUpdatedCheck::ConsistencyUpdatedCheck(SPHBody &sph_body)
+			: LocalDynamicsReduce<bool, ReduceAND>(sph_body, true)
+			,  RelaxDataDelegateSimple(sph_body)
+			,  updated_indicator_(*particles_->getVariableByName<int>("UpdatedIndicator")) 
+		{}
 		//=================================================================================================//
-		bool ShellNormalDirectionPrediction::
-			ConsistencyUpdatedCheck::reduce(size_t index_i, Real dt)
+		bool ShellNormalDirectionPrediction::ConsistencyUpdatedCheck::reduce(size_t index_i, Real dt)
 		{
 			return updated_indicator_[index_i] != 0;
 		}
 		//=================================================================================================//
-		ShellNormalDirectionPrediction::SmoothingNormal::
-			SmoothingNormal(BaseBodyRelationInner &inner_relation)
-			: ParticleSmoothing<Vecd>(inner_relation, "NormalDirection"){};
+		ShellNormalDirectionPrediction::SmoothingNormal::SmoothingNormal(BaseBodyRelationInner &inner_relation)
+			: ParticleSmoothing<Vecd>(inner_relation, "NormalDirection")
+		{};
 		//=================================================================================================//
 		void ShellNormalDirectionPrediction::SmoothingNormal::update(size_t index_i, Real dt)
 		{
@@ -411,13 +418,11 @@ namespace SPH
 			smoothed_[index_i] /= temp_[index_i].norm() + TinyReal;
 		}
 		//=================================================================================================//
-		ShellRelaxationStepInner::
-			ShellRelaxationStepInner(BaseBodyRelationInner &inner_relation, Real thickness,
-									 Real level_set_refinement_ratio, bool level_set_correction)
-			: RelaxationStepInner(inner_relation, level_set_correction),
-			  update_shell_particle_position_(*real_body_),
-			  mid_surface_bounding_(near_shape_surface_, inner_relation,
-									thickness, level_set_refinement_ratio) {}
+		ShellRelaxationStepInner::ShellRelaxationStepInner(BaseBodyRelationInner &inner_relation, Real thickness, Real level_set_refinement_ratio, bool level_set_correction)
+			: RelaxationStepInner(inner_relation, level_set_correction)
+			,  update_shell_particle_position_(*real_body_)
+			,  mid_surface_bounding_(near_shape_surface_, inner_relation, thickness, level_set_refinement_ratio) 
+		{}
 		//=================================================================================================//
 		void ShellRelaxationStepInner::exec(Real ite_p)
 		{

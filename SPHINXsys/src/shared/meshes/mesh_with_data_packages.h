@@ -118,10 +118,10 @@ namespace SPH
 	class BaseDataPackage
 	{
 	public:
-		Vecu pkg_index_;	/**< index of this data package on the background mesh, Vecu(0) if it is not on the mesh. */
-		bool is_inner_pkg_; /**< If true, its data package is on the background mesh. */
+		Vecu pkg_index_{Vecu::Zero()};	/**< index of this data package on the background mesh, Vecu(0) if it is not on the mesh. */
+		bool is_inner_pkg_{false}; /**< If true, its data package is on the background mesh. */
 
-		BaseDataPackage() : pkg_index_(Vecu::Zero()), is_inner_pkg_(false){};
+		BaseDataPackage() = default;
 		virtual ~BaseDataPackage(){};
 	};
 
@@ -148,8 +148,10 @@ namespace SPH
 		template <typename DataType>
 		using PackageTemporaryData = PackageDataMatrix<DataType, ADDRS_SIZE>;
 
-		GridDataPackage() : BaseDataPackage(), BaseMesh(Vecu(ADDRS_SIZE)){};
+		/** Constructor. */
+		GridDataPackage() : BaseDataPackage(), BaseMesh(ADDRS_SIZE * Vecu::Ones()){};
 		virtual ~GridDataPackage(){};
+
 		/** Return the package size. */
 		constexpr int PackageSize() { return PKG_SIZE; };
 		/** Return the address size. */
@@ -163,7 +165,7 @@ namespace SPH
 		/** initialize package mesh geometric information. */
 		void initializePackageGeometry(const Vecd &pkg_lower_bound, Real data_spacing)
 		{
-			mesh_lower_bound_ = pkg_lower_bound - data_spacing * Vecd::Ones() * ((Real)AddressBufferWidth() - 0.5);
+			mesh_lower_bound_ = pkg_lower_bound - data_spacing * ((Real)AddressBufferWidth() - 0.5) * Vecd::Ones() ;
 			grid_spacing_ = data_spacing;
 		};
 		/** This function probes by applying bi and tri-linear interpolation within the package. */
@@ -181,8 +183,7 @@ namespace SPH
 	protected:
 		/** register a variable defined in a class (can be non-particle class) */
 		template <typename DataType>
-		void registerPackageData(PackageData<DataType> &pkg_data,
-								 PackageDataAddress<DataType> &pkg_data_addrs)
+		void registerPackageData(PackageData<DataType> &pkg_data, PackageDataAddress<DataType> &pkg_data_addrs)
 		{
 			constexpr int type_index = DataTypeIndex<DataType>::value;
 			std::get<type_index>(all_pkg_data_).push_back(&pkg_data);
@@ -249,10 +250,10 @@ namespace SPH
 
 		template <typename... Args>
 		explicit MeshWithGridDataPackages(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size, Args &&...args)
-			: MeshFieldType(std::forward<Args>(args)...),
-			  Mesh(tentative_bounds, GridDataPackageType().PackageSize() * data_spacing, buffer_size),
-			  data_spacing_(data_spacing),
-			  global_mesh_(this->mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, this->number_of_cells_ * pkg_size_)
+			: MeshFieldType(std::forward<Args>(args)...)
+			, Mesh(tentative_bounds, GridDataPackageType().PackageSize() * data_spacing, buffer_size)
+			, data_spacing_{data_spacing}
+			, global_mesh_(this->mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, this->number_of_cells_ * pkg_size_)
 		{
 			allocateMeshDataMatrix();
 		};

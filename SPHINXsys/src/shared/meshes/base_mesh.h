@@ -183,27 +183,22 @@ namespace SPH
 	template <class MeshFieldType, class CoarsestMeshType, class RefinedMeshType>
 	class MultilevelMesh : public MeshFieldType
 	{
-	private:
-		UniquePtrKeepers<CoarsestMeshType> mesh_level_ptr_vector_keeper_;
-
-	protected:
-		size_t total_levels_; 						/**< level 0 is the coarsest */
-		StdVec<CoarsestMeshType *> mesh_levels_;	/**< Mesh in different coarse level. */
-
 	public:
 		/**
 		 * Template parameter pack is used with rvalue reference and perfect forwarding to keep 
 		 * the type of arguments when called by another function with template parameter pack too. 
 		 */
 		template <typename... Args>
-		MultilevelMesh(BoundingBox tentative_bounds, Real reference_spacing, size_t total_levels, Args &&...args)
+		MultilevelMesh(BoundingBox tentative_bounds
+					  , Real reference_spacing
+					  , size_t total_levels
+					  , Args &&...args)
 			: MeshFieldType(std::forward<Args>(args)...)
 			, total_levels_(total_levels)
 		{
-			Real coarsest_spacing = reference_spacing;
 			mesh_levels_.push_back(
 				mesh_level_ptr_vector_keeper_
-					.template createPtr<CoarsestMeshType>(tentative_bounds, coarsest_spacing, std::forward<Args>(args)...));
+					.template createPtr<CoarsestMeshType>(tentative_bounds, reference_spacing, std::forward<Args>(args)...));
 
 			for (size_t level = 1; level != total_levels_; ++level)
 			{
@@ -214,7 +209,15 @@ namespace SPH
 			}
 		};
 		virtual ~MultilevelMesh(){};
-		
+
+	private:
+		UniquePtrKeepers<CoarsestMeshType> mesh_level_ptr_vector_keeper_;
+
+	protected:
+		size_t total_levels_; 						/**< level 0 is the coarsest */
+		StdVec<CoarsestMeshType *> mesh_levels_;	/**< Mesh in different coarse level. */
+
+	public:
 		/** Return the mesh at different level. */
 		StdVec<CoarsestMeshType *> getMeshLevels() { return mesh_levels_; };
 		/** Write mesh data to file. */

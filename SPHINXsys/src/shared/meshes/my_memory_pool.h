@@ -76,7 +76,7 @@ public:
 		// my_pool.recycle();
 	};
 	/**  Prepare an available node. */
-	T *malloc()
+	T* malloc()
 	{
 		if (free_list.empty())
 		{
@@ -85,13 +85,13 @@ public:
 		}
 		else
 		{
-			T *result = free_list.front();
+			T* result = free_list.front();
 			free_list.pop_front();
 			return result;
 		}
 	};
 	/** Relinquish an unused node. */
-	void free(T *ptr)
+	void free(T* ptr)
 	{
 		free_list.push_back(ptr);
 	};

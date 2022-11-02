@@ -113,8 +113,8 @@ namespace SPH
 	DataType GridDataPackage<PKG_SIZE, ADDRS_SIZE>::
 		CornerAverage(PackageDataAddress<DataType> &pkg_data_addrs, Veci addrs_index, Veci corner_direction)
 	{
-		DataType average(0);
-		//DataType average = DataTypeInitializer<DataType>::zero;
+		//DataType average(0);
+		DataType average = DataTypeInitializer<DataType>::zero;
 		for (int i = 0; i != 2; ++i)
 			for (int j = 0; j != 2; ++j)
 			{
@@ -195,7 +195,7 @@ namespace SPH
 	//=================================================================================================//
 	template <class MeshFieldType, class GridDataPackageType>
 	void MeshWithGridDataPackages<MeshFieldType, GridDataPackageType>::
-		assignDataPackageAddress(const Vecu &cell_index, GridDataPackageType *data_pkg)
+		assignDataPackageAddress(const Vecu& cell_index, GridDataPackageType* data_pkg)
 	{
 		data_pkg_addrs_[cell_index[0]][cell_index[1]] = data_pkg;
 	}

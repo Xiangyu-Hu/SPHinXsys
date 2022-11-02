@@ -31,7 +31,7 @@ TEST(test_GeometricShapeBox, test_closest_point)
 {
 	TransformShape<GeometricShapeBox> inner_wall_box(Transform2d(inner_wall_translation), inner_wall_halfsize);
 
-	EXPECT_LE(getMaxAbsoluteElement(inner_wall_box.findClosestPoint(test_point) - Vec2d(0.1, 0.0)), tolerance);
+	EXPECT_LE((inner_wall_box.findClosestPoint(test_point) - Vec2d(0.1, 0.0)).cwiseAbs().maxCoeff(), tolerance);
 }
 
 TEST(test_Complex_GeometricShapeBox, test_contain)
@@ -45,14 +45,14 @@ TEST(test_Complex_GeometricShapeBox, test_closest_point)
 {
 	WallBoundary wall_boundary("WallBoundary");
 
-	EXPECT_LE(getMaxAbsoluteElement(wall_boundary.findClosestPoint(test_point) -  Vec2d(0.1, 0.0)), tolerance);
+	EXPECT_LE((wall_boundary.findClosestPoint(test_point) -  Vec2d(0.1, 0.0)).cwiseAbs().maxCoeff(), tolerance);
 }
 
 TEST(test_Complex_GeometricShapeBox, test_normal_direction)
 {
 	WallBoundary wall_boundary("WallBoundary");
 
-	EXPECT_LE(getMaxAbsoluteElement(wall_boundary.findNormalDirection(test_point) - Vec2d(0.0, 1.0)), tolerance);
+	EXPECT_LE((wall_boundary.findNormalDirection(test_point) - Vec2d(0.0, 1.0)).cwiseAbs().maxCoeff(), tolerance);
 }
 
 int main(int argc, char *argv[])

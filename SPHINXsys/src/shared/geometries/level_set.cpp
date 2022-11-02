@@ -23,8 +23,9 @@ namespace SPH
 	}
 	//=================================================================================================//
 	BaseLevelSet ::BaseLevelSet(Shape &shape, SPHAdaptation &sph_adaptation)
-		: BaseMeshField("LevelSet"),
-		  shape_(shape), sph_adaptation_(sph_adaptation)
+		: BaseMeshField("LevelSet")
+		, shape_(shape)
+		, sph_adaptation_(sph_adaptation)
 	{
 		if (!shape_.isValid())
 		{
@@ -45,24 +46,22 @@ namespace SPH
 		return heaviside;
 	}
 	//=================================================================================================//
-	LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size,
-					   Shape &shape, SPHAdaptation &sph_adaptation)
-		: MeshWithGridDataPackages<BaseLevelSet, LevelSetDataPackage>(tentative_bounds, data_spacing, buffer_size,
-																	  shape, sph_adaptation),
-		  global_h_ratio_(sph_adaptation.ReferenceSpacing() / data_spacing),
-		  kernel_(*sph_adaptation.getKernel())
+	LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size, Shape &shape, SPHAdaptation &sph_adaptation)
+		: MeshWithGridDataPackages<BaseLevelSet, LevelSetDataPackage>(tentative_bounds, data_spacing, buffer_size, shape, sph_adaptation)
+		, global_h_ratio_(sph_adaptation.ReferenceSpacing() / data_spacing)
+		, kernel_(*sph_adaptation.getKernel())
 	{
 		Real far_field_distance = grid_spacing_ * (Real)buffer_width_;
 		initializeASingularDataPackage(-far_field_distance);
 		initializeASingularDataPackage(far_field_distance);
 	}
 	//=================================================================================================//
-	LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing,
-					   Shape &shape, SPHAdaptation &sph_adaptation)
+	LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing, Shape &shape, SPHAdaptation &sph_adaptation)
 		: LevelSet(tentative_bounds, data_spacing, 4, shape, sph_adaptation)
 	{
 		MeshFunctor initialize_data_in_a_cell = std::bind(&LevelSet::initializeDataInACell, this, _1, _2);
 		MeshIterator_parallel(Vecu::Zero(), number_of_cells_, initialize_data_in_a_cell);
+
 		finishDataPackages();
 	}
 	//=================================================================================================//
@@ -92,6 +91,7 @@ namespace SPH
 	{
 		PackageFunctor<void, LevelSetDataPackage> update_kernel_value =
 			std::bind(&LevelSet::updateKernelIntegralsForAPackage, this, _1, _2);
+
 		PackageIterator_parallel<LevelSetDataPackage>(inner_data_pkgs_, update_kernel_value);
 	}
 	//=================================================================================================//
@@ -140,8 +140,7 @@ namespace SPH
 		inner_data_pkg->computeLevelSetGradient();
 	}
 	//=================================================================================================//
-	void LevelSet::
-		updateKernelIntegralsForAPackage(LevelSetDataPackage *inner_data_pkg, Real dt)
+	void LevelSet::updateKernelIntegralsForAPackage(LevelSetDataPackage *inner_data_pkg, Real dt)
 	{
 		inner_data_pkg->computeKernelIntegrals(*this);
 	}
@@ -202,18 +201,19 @@ namespace SPH
 		return is_bounded;
 	}
 	//=================================================================================================//
-	LevelSetDataPackage *LevelSet::createDataPackage(const Vecu &cell_index, const Vecd &cell_position)
+	LevelSetDataPackage* LevelSet::createDataPackage(const Vecu &cell_index, const Vecd &cell_position)
 	{
 		mutex_my_pool.lock();
-		LevelSetDataPackage &new_data_pkg = *data_pkg_pool_.malloc();
+		LevelSetDataPackage* new_data_pkg = data_pkg_pool_.malloc();
 		mutex_my_pool.unlock();
-		new_data_pkg.registerAllVariables();
+
+		new_data_pkg->registerAllVariables();
 		Vecd pkg_lower_bound = GridPositionFromCellPosition(cell_position);
-		new_data_pkg.initializePackageGeometry(pkg_lower_bound, data_spacing_);
-		new_data_pkg.initializeBasicData(shape_);
-		new_data_pkg.pkg_index_ = cell_index;
-		assignDataPackageAddress(cell_index, &new_data_pkg);
-		return &new_data_pkg;
+		new_data_pkg->initializePackageGeometry(pkg_lower_bound, data_spacing_);
+		new_data_pkg->initializeBasicData(shape_);
+		new_data_pkg->pkg_index_ = cell_index;
+		assignDataPackageAddress(cell_index, new_data_pkg);
+		return new_data_pkg;
 	}
 	//=================================================================================================//
 	void LevelSet::initializeDataInACell(const Vecu &cell_index, Real dt)
@@ -222,6 +222,7 @@ namespace SPH
 		Real signed_distance = shape_.findSignedDistance(cell_position);
 		Vecd normal_direction = shape_.findNormalDirection(cell_position);
 		Real measure = (signed_distance * normal_direction).cwiseAbs().maxCoeff();
+		
 		if (measure < grid_spacing_)
 		{
 			LevelSetDataPackage *new_data_pkg = createDataPackage(cell_index, cell_position);
@@ -288,10 +289,9 @@ namespace SPH
 		}
 	}
 	//=============================================================================================//
-	MultilevelLevelSet::MultilevelLevelSet(BoundingBox tentative_bounds, Real reference_data_spacing,
-						   size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation)
-		: MultilevelMesh<BaseLevelSet, LevelSet, RefinedLevelSet>(tentative_bounds, reference_data_spacing,
-																  total_levels, shape, sph_adaptation) {}
+	MultilevelLevelSet::MultilevelLevelSet(BoundingBox tentative_bounds, Real reference_data_spacing, size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation)
+		: MultilevelMesh<BaseLevelSet, LevelSet, RefinedLevelSet>(tentative_bounds, reference_data_spacing, total_levels, shape, sph_adaptation) 
+	{}
 	//=================================================================================================//
 	size_t MultilevelLevelSet::getMeshLevel(Real h_ratio)
 	{

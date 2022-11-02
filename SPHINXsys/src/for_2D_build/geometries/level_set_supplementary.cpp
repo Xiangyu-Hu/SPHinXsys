@@ -26,7 +26,7 @@ namespace SPH
 		for (int i = 0; i != PackageSize(); ++i)
 			for (int j = 0; j != PackageSize(); ++j)
 			{
-				Vecd position = DataLowerBound() + Vecd(i, j) * grid_spacing_;
+				Vecd position = DataLowerBound() + Vecd(Real(i), Real(j)) * grid_spacing_;
 				phi_[i][j] = shape.findSignedDistance(position);
 				near_interface_id_[i][j] = phi_[i][j] < 0.0 ? -2 : 2;
 			}
@@ -37,7 +37,7 @@ namespace SPH
 		for (int i = 0; i != PackageSize(); ++i)
 			for (int j = 0; j != PackageSize(); ++j)
 			{
-				Vecd position = DataLowerBound() + Vecd(i, j) * grid_spacing_;
+				Vec2d position = DataLowerBound() + Vec2d(Real(i), Real(j)) * grid_spacing_;
 				kernel_weight_[i][j] = level_set.computeKernelIntegral(position);
 				kernel_gradient_[i][j] = level_set.computeKernelGradientIntegral(position);
 			}
