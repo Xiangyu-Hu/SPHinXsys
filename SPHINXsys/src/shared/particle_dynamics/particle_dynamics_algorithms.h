@@ -31,6 +31,11 @@
  *			InteractionSplit is InteractionDynamics but using spliting algorithm;
  *			InteractionWithUpdate is with particle interaction with its neighbors and then update their states;
  *			Dynamics1Level is the most complex dynamics, has successive three steps: initialization, interaction and update.
+ *			In order to avoid misusing of the above algorithms, type traits are used to make sure that the matching between
+ *			the algorithm and local dynamics. For example, the LocalDynamics which matches InteractionDynamics must have
+ *			the function interaction() but should not have the function update() or initialize().
+ *			The existence of the latter suggests that more complex algorithms,
+ *			such as InteractionWithUpdate or Dynamics1Level should be used.
  *			There are 2 classes for the second type.
  *			ReduceDynamics carries out a reduce operation through the particles.
  *			ReduceAverage further computes average of a ReduceDynamics for summation.
@@ -126,12 +131,9 @@ namespace SPH
 			: LocalDynamicsType(derived_dynamics_range, std::forward<Args>(args)...),
 			  BaseDynamics<void>(), dynamics_range_(derived_dynamics_range)
 		{
-			if (has_initialize<LocalDynamicsType>::value || has_interaction<LocalDynamicsType>::value)
-			{
-				std::cout << "\n SimpleDynamics " << typeid(*this).name() << " does not match LocalDynamics!" << std::endl;
-				std::cout << "\n Please check if LocalDynamics has function update or interaction but not used!" << std::endl;
-				exit(1);
-			}
+			static_assert(!has_initialize<LocalDynamicsType>::value &&
+							  !has_interaction<LocalDynamicsType>::value,
+						  "LocalDynamicsType does not fulfill SimpleDynamics requirements");
 		};
 		virtual ~SimpleDynamics(){};
 
@@ -288,6 +290,9 @@ namespace SPH
 			  split_cell_lists_(real_body_.getSplitCellLists())
 		{
 			real_body_.setUseSplitCellLists();
+			static_assert(!has_initialize<LocalDynamicsType>::value &&
+							  !has_update<LocalDynamicsType>::value,
+						  "LocalDynamicsType does not fulfill InteractionSplit requirements");
 		};
 		virtual ~InteractionSplit(){};
 
@@ -335,12 +340,9 @@ namespace SPH
 		InteractionDynamics(BodyRelationType &body_relation, Args &&...args)
 			: InteractionDynamics(true, body_relation, std::forward<Args>(args)...)
 		{
-			if (has_initialize<LocalDynamicsType>::value || has_update<LocalDynamicsType>::value)
-			{
-				std::cout << "\n InteractionDynamics " << typeid(*this).name() << " does not match LocalDynamics!" << std::endl;
-				std::cout << "\n Please check if LocalDynamics has the function initialization or update but not used!" << std::endl;
-				exit(1);
-			}
+			static_assert(!has_initialize<LocalDynamicsType>::value &&
+							  !has_update<LocalDynamicsType>::value,
+						  "LocalDynamicsType does not fulfill InteractionDynamics requirements");
 		};
 		virtual ~InteractionDynamics(){};
 
@@ -389,12 +391,8 @@ namespace SPH
 		InteractionWithUpdate(BodyRelationType &body_relation, Args &&...args)
 			: InteractionWithUpdate(true, body_relation, std::forward<Args>(args)...)
 		{
-			if (has_initialize<LocalDynamicsType>::value)
-			{
-				std::cout << "\n InteractionWithUpdate " << typeid(*this).name() << " does not match LocalDynamics!" << std::endl;
-				std::cout << "\n Please check if LocalDynamics has function initialization but not used!" << std::endl;
-				exit(1);
-			}
+			static_assert(!has_initialize<LocalDynamicsType>::value,
+						  "LocalDynamicsType does not fulfill InteractionWithUpdate requirements");
 		}
 		virtual ~InteractionWithUpdate(){};
 
