@@ -137,10 +137,11 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 	// pressure boundary condition
 	auto apply_pressure = [&]()
 	{
+		Real pressure_MPa = pressure * std::pow(unit_mm, 2);
 		for (size_t i = 0; i < shell_particles->acc_prior_.size(); ++i)
 		{
 			// opposite to normals
-			shell_particles->acc_prior_[i] -= pressure * shell_particles->Vol_[i] / shell_particles->ParticleMass(i) * shell_particles->n_[i];
+			shell_particles->acc_prior_[i] -= pressure_MPa * shell_particles->Vol_[i] / shell_particles->ParticleMass(i) * shell_particles->n_[i];
 		}
 	};
 
@@ -171,9 +172,9 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 		{// checking particle distances - avoid bugs of reading file
 			Real min_rij = Infinity;
 			Real max_rij = 0;
-			for (size_t index_i = 0; index_i < shell_particles->pos0_.size(); ++index_i)
+			for (size_t i = 0; i < shell_particles->pos0_.size(); ++i)
 			{
-				Neighborhood &inner_neighborhood = shell_body_inner.inner_configuration_[index_i];
+				Neighborhood &inner_neighborhood = shell_body_inner.inner_configuration_[i];
 				for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 				{
 					Real r_ij = inner_neighborhood.r_ij_[n];
@@ -289,16 +290,15 @@ TEST(sphere_compression, dp_1)
 	sphere_compression(dp_ratio, pressure, gravity_z);
 }
 
-// TEST(sphere_compression, parametric_dp)
+// TEST(sphere_compression, dp_1)
 // {
 // 	fs::remove_all("output");
 // 	fs::create_directory("output");
 
-// 	StdVec<int> dp_vec = {4,2,1};
-// 	for (auto dp_ratio: dp_vec)
-// 	{
-// 		sphere_compression(dp_ratio);
-// 	}
+// 	int dp_ratio = 2;
+// 	Real pressure = 1e5; // Pa
+// 	Real gravity_z = 0; // m/s
+// 	sphere_compression(dp_ratio, pressure, gravity_z);
 // }
 
 int main(int argc, char* argv[])
