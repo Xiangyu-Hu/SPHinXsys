@@ -115,7 +115,7 @@ namespace SPH
 		//=================================================================================================//
 		ShellStressRelaxationFirstHalf::
 			ShellStressRelaxationFirstHalf(BaseInnerRelation &inner_relation,
-										   int number_of_gaussian_points, bool hourglass_control)
+										   int number_of_gaussian_points, bool hourglass_control, Real hourglass_control_factor)
 			: BaseShellRelaxation(inner_relation),
 			  elastic_solid_(particles_->elastic_solid_),
 			  global_stress_(particles_->global_stress_),
@@ -149,7 +149,7 @@ namespace SPH
 			}
 			else
 			{
-				hourglass_control_factor_ = 1.0e-4;
+				hourglass_control_factor_ = hourglass_control_factor;
 			}
 		}
 		//=================================================================================================//
@@ -291,7 +291,7 @@ namespace SPH
 				deformation_gradient_change_rate_part_one -= SimTK::outer((vel_n_i - vel_[index_j]), gradW_ijV_j);
 				deformation_gradient_change_rate_part_two -= SimTK::outer((dpseudo_n_dt_i - dpseudo_n_dt_[index_j]), gradW_ijV_j);
 			}
-			dF_dt_[index_i] = transformation_matrix_i * deformation_gradient_change_rate_part_one * (~transformation_matrix_i);
+			dF_dt_[index_i] = transformation_matrix_i * deformation_gradient_change_rate_part_one * (~transformation_matrix_i) * B_[index_i];
 			dF_dt_[index_i].col(Dimensions - 1) = transformation_matrix_i * dpseudo_n_dt_[index_i];
 			dF_bending_dt_[index_i] = transformation_matrix_i * deformation_gradient_change_rate_part_two * (~transformation_matrix_i) * B_[index_i];
 		}

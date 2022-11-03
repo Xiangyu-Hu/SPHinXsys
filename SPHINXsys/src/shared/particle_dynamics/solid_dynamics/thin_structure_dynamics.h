@@ -144,7 +144,7 @@ namespace SPH
 		{
 		public:
 			explicit ShellStressRelaxationFirstHalf(BaseInnerRelation &inner_relation,
-													int number_of_gaussian_points = 3, bool hourglass_control = false);
+													int number_of_gaussian_points = 3, bool hourglass_control = false, Real hourglass_control_factor = 1e-4);
 			virtual ~ShellStressRelaxationFirstHalf(){};
 			void initialization(size_t index_i, Real dt = 0.0);
 			void interaction(size_t index_i, Real dt = 0.0);
