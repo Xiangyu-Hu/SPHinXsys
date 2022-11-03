@@ -39,7 +39,7 @@
  *			and is recognized by particle dynamics with the signature functions, like update, initialization and interaction.
  *			DynamicsRange define and range of particles for the dynamics.
  *			The default range is the entire body. Other ranges are BodyPartByParticle and BodyPartByCell.
- * @author	Chi Zhang and Xiangyu Hu
+ * @author	Chi Zhang, Fabien Pean and Xiangyu Hu
  */
 
 #ifndef PARTICLE_DYNAMICS_ALGORITHMS_H
@@ -129,7 +129,7 @@ namespace SPH
 			if (has_initialize<LocalDynamicsType>::value || has_interaction<LocalDynamicsType>::value)
 			{
 				std::cout << "\n SimpleDynamics " << typeid(*this).name() << " does not match LocalDynamics!" << std::endl;
-				std::cout << "\n Please check if the LocalDynamics function update or initialization is not used!" << std::endl;
+				std::cout << "\n Please check if LocalDynamics has function update or interaction but not used!" << std::endl;
 				exit(1);
 			}
 		};
@@ -333,8 +333,15 @@ namespace SPH
 	public:
 		template <class BodyRelationType, typename... Args>
 		InteractionDynamics(BodyRelationType &body_relation, Args &&...args)
-			: BaseInteractionDynamics<LocalDynamicsType>(body_relation, std::forward<Args>(args)...),
-			  dynamics_range_(body_relation.getDynamicsRange()){};
+			: InteractionDynamics(true, body_relation, std::forward<Args>(args)...)
+		{
+			if (has_initialize<LocalDynamicsType>::value || has_update<LocalDynamicsType>::value)
+			{
+				std::cout << "\n InteractionDynamics " << typeid(*this).name() << " does not match LocalDynamics!" << std::endl;
+				std::cout << "\n Please check if LocalDynamics has the function initialization or update but not used!" << std::endl;
+				exit(1);
+			}
+		};
 		virtual ~InteractionDynamics(){};
 
 		virtual void runInteractionStep(Real dt) override
@@ -362,6 +369,12 @@ namespace SPH
 			for (size_t k = 0; k < this->post_processes_.size(); ++k)
 				this->post_processes_[k]->parallel_exec(dt);
 		}
+
+	protected:
+		template <class BodyRelationType, typename... Args>
+		InteractionDynamics(bool mostDerived, BodyRelationType &body_relation, Args &&...args)
+			: BaseInteractionDynamics<LocalDynamicsType>(body_relation, std::forward<Args>(args)...),
+			  dynamics_range_(body_relation.getDynamicsRange()){};
 	};
 
 	/**
@@ -374,7 +387,15 @@ namespace SPH
 	public:
 		template <class BodyRelationType, typename... Args>
 		InteractionWithUpdate(BodyRelationType &body_relation, Args &&...args)
-			: InteractionDynamics<LocalDynamicsType, DynamicsRange>(body_relation, std::forward<Args>(args)...) {}
+			: InteractionWithUpdate(true, body_relation, std::forward<Args>(args)...)
+		{
+			if (has_initialize<LocalDynamicsType>::value)
+			{
+				std::cout << "\n InteractionWithUpdate " << typeid(*this).name() << " does not match LocalDynamics!" << std::endl;
+				std::cout << "\n Please check if LocalDynamics has function initialization but not used!" << std::endl;
+				exit(1);
+			}
+		}
 		virtual ~InteractionWithUpdate(){};
 
 		virtual void exec(Real dt = 0.0) override
@@ -392,6 +413,12 @@ namespace SPH
 								  [&](size_t i)
 								  { this->update(i, dt); });
 		};
+
+	protected:
+		template <class BodyRelationType, typename... Args>
+		InteractionWithUpdate(bool mostDerived, BodyRelationType &body_relation, Args &&...args)
+			: InteractionDynamics<LocalDynamicsType, DynamicsRange>(
+				  false, body_relation, std::forward<Args>(args)...) {}
 	};
 
 	/**
@@ -406,7 +433,8 @@ namespace SPH
 	public:
 		template <class BodyRelationType, typename... Args>
 		Dynamics1Level(BodyRelationType &body_relation, Args &&...args)
-			: InteractionWithUpdate<LocalDynamicsType, DynamicsRange>(body_relation, std::forward<Args>(args)...) {}
+			: InteractionWithUpdate<LocalDynamicsType, DynamicsRange>(
+				  false, body_relation, std::forward<Args>(args)...) {}
 		virtual ~Dynamics1Level(){};
 
 		virtual void exec(Real dt = 0.0) override
