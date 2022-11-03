@@ -84,6 +84,12 @@ namespace SPH
 			SimTK::Xml::Attribute attr_(attrib_name, SimTK::String(value));
 			ele_ite->setAttributeValue(attr_.getName(), attr_.getValue());
 		};
+		/** Adds attribute of type int vector to an xml element. */
+		void setAttributeToElement(const SimTK::Xml::element_iterator &ele_ite, const std::string &attrib_name, const Veci &value);		
+		/** Adds attribute of type unsigned int vector to an xml element. */
+		void setAttributeToElement(const SimTK::Xml::element_iterator &ele_ite, const std::string &attrib_name, const Vecu &value);
+		/** Adds attribute of type vector to an xml element. */
+		void setAttributeToElement(const SimTK::Xml::element_iterator &ele_ite, const std::string &attrib_name, const Vecd &value);
 		/** Adds attribute of type matrix to an xml element. */
 		void setAttributeToElement(const SimTK::Xml::element_iterator &ele_ite, const std::string &attrib_name, const Matd &value);
 
@@ -94,8 +100,16 @@ namespace SPH
 			std::string value_in_string = ele_ite_->getRequiredAttributeValue(attrib_name);
 			value = SimTK::convertStringTo<T>(value_in_string);
 		};
-		/** Get the required int attribute value of an element */
-		void getRequiredAttributeMatrixValue(SimTK::Xml::element_iterator &ele_ite_, const std::string &attrib_name, Matd &value);
+		/** Get the required int vector attribute value of an element */
+		void getRequiredAttributeValue(SimTK::Xml::element_iterator &ele_ite_, const std::string &attrib_name, Veci &value);
+		/** Get the required unsigned int vector attribute value of an element */
+		void getRequiredAttributeValue(SimTK::Xml::element_iterator &ele_ite_, const std::string &attrib_name, Vecu &value);
+		/** Get the required Real vector attribute value of an element */
+		void getRequiredAttributeValue(SimTK::Xml::element_iterator &ele_ite_, const std::string &attrib_name, Vecd &value);
+		/** Get the required matrix attribute value of an element */
+		void getRequiredAttributeValue(SimTK::Xml::element_iterator &ele_ite_, const std::string &attrib_name, Matd &value);
+		/** Get the required matrix attribute value of an element */
+		void getRequiredAttributeMatrixValue(SimTK::Xml::element_iterator &ele_ite_, const std::string &attrib_name, Matd &value);		
 
 		/** Write to XML file */
 		void writeToXmlFile(const std::string &filefullpath);

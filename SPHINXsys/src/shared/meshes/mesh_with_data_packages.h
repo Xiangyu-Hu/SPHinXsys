@@ -137,6 +137,13 @@ namespace SPH
 	class GridDataPackage : public BaseDataPackage, public BaseMesh
 	{
 	public:
+		/** Constructor. */
+		GridDataPackage() 
+			: BaseDataPackage()
+			, BaseMesh(ADDRS_SIZE * Vecu::Ones())
+		{};
+		virtual ~GridDataPackage(){};
+
 		template <typename DataType>
 		using PackageData = PackageDataMatrix<DataType, PKG_SIZE>;
 		template <typename DataType>
@@ -147,10 +154,6 @@ namespace SPH
 		/** Matrix data for temporary usage. Note that it is array with ADDRS_SIZE.  */
 		template <typename DataType>
 		using PackageTemporaryData = PackageDataMatrix<DataType, ADDRS_SIZE>;
-
-		/** Constructor. */
-		GridDataPackage() : BaseDataPackage(), BaseMesh(ADDRS_SIZE * Vecu::Ones()){};
-		virtual ~GridDataPackage(){};
 
 		/** Return the package size. */
 		constexpr int PackageSize() { return PKG_SIZE; };
@@ -253,7 +256,7 @@ namespace SPH
 			: MeshFieldType(std::forward<Args>(args)...)
 			, Mesh(tentative_bounds, GridDataPackageType().PackageSize() * data_spacing, buffer_size)
 			, data_spacing_{data_spacing}
-			, global_mesh_(this->mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, this->number_of_cells_ * pkg_size_)
+			, global_mesh_{this->mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, this->number_of_cells_ * pkg_size_}
 		{
 			allocateMeshDataMatrix();
 		};
