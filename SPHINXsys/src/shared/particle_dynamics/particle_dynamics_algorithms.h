@@ -58,62 +58,35 @@
 
 namespace SPH
 {
-	// SFINAE test
-	template <typename T>
-	class has_update
+	template <class T, class = void>
+	struct has_initialize : std::false_type
 	{
-	private:
-		typedef char YesType[1];
-		typedef char NoType[2];
-
-		template <typename C>
-		static YesType &test(decltype(&C::update));
-		template <typename C>
-		static NoType &test(...);
-
-	public:
-		enum
-		{
-			value = sizeof(test<T>(0)) == sizeof(YesType)
-		};
 	};
 
-	template <typename T>
-	class has_initialize
+	template <class T>
+	struct has_initialize<T, std::void_t<decltype(&T::initialize)>> : std::true_type
 	{
-	private:
-		typedef char YesType[1];
-		typedef char NoType[2];
-
-		template <typename C>
-		static YesType &test(decltype(&C::initialize));
-		template <typename C>
-		static NoType &test(...);
-
-	public:
-		enum
-		{
-			value = sizeof(test<T>(0)) == sizeof(YesType)
-		};
 	};
 
-	template <typename T>
-	class has_interaction
+	
+	template <class T, class = void>
+	struct has_interaction : std::false_type
 	{
-	private:
-		typedef char YesType[1];
-		typedef char NoType[2];
+	};
 
-		template <typename C>
-		static YesType &test(decltype(&C::interaction));
-		template <typename C>
-		static NoType &test(...);
+	template <class T>
+	struct has_interaction<T, std::void_t<decltype(&T::interaction)>> : std::true_type
+	{
+	};
+	
+	template <class T, class = void>
+	struct has_update : std::false_type
+	{
+	};
 
-	public:
-		enum
-		{
-			value = sizeof(test<T>(0)) == sizeof(YesType)
-		};
+	template <class T>
+	struct has_update<T, std::void_t<decltype(&T::update)>> : std::true_type
+	{
 	};
 
 	/**
