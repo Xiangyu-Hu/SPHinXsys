@@ -53,63 +53,18 @@
 
 namespace SPH
 {
-	// SFINAE test
-	template <typename T>
-	class has_update
-	{
-	private:
-		typedef char YesType[1];
-		typedef char NoType[2];
+    namespace traits
+    {
+        template<class T, class = void>
+        struct has_update : std::false_type{};
+        template<class T>
+        struct has_update<T, std::void_t<decltype(std::declval<T>().update())>> : std::true_type{};
 
-		template <typename C>
-		static YesType &test(decltype(&C::update));
-		template <typename C>
-		static NoType &test(...);
-
-	public:
-		enum
-		{
-			value = sizeof(test<T>(0)) == sizeof(YesType)
-		};
-	};
-
-	template <typename T>
-	class has_initialize
-	{
-	private:
-		typedef char YesType[1];
-		typedef char NoType[2];
-
-		template <typename C>
-		static YesType &test(decltype(&C::initialize));
-		template <typename C>
-		static NoType &test(...);
-
-	public:
-		enum
-		{
-			value = sizeof(test<T>(0)) == sizeof(YesType)
-		};
-	};
-
-	template <typename T>
-	class has_interaction
-	{
-	private:
-		typedef char YesType[1];
-		typedef char NoType[2];
-
-		template <typename C>
-		static YesType &test(decltype(&C::interaction));
-		template <typename C>
-		static NoType &test(...);
-
-	public:
-		enum
-		{
-			value = sizeof(test<T>(0)) == sizeof(YesType)
-		};
-	};
+        template<class T, class = void>
+        struct has_interaction : std::false_type{};
+        template<class T>
+        struct has_interaction<T, std::void_t<decltype(std::declval<T>().interaction())>> : std::true_type{};
+    }
 
 	/**
 	 * @class SimpleDynamics
@@ -126,12 +81,7 @@ namespace SPH
 			: LocalDynamicsType(derived_dynamics_range, std::forward<Args>(args)...),
 			  BaseDynamics<void>(), dynamics_range_(derived_dynamics_range)
 		{
-			if (has_initialize<LocalDynamicsType>::value || has_interaction<LocalDynamicsType>::value)
-			{
-				std::cout << "\n SimpleDynamics " << typeid(*this).name() << " does not match LocalDynamics!" << std::endl;
-				std::cout << "\n Please check if the LocalDynamics function update or initialization is not used!" << std::endl;
-				exit(1);
-			}
+			static_assert (!traits::has_update<LocalDynamicsType>::value && !traits::has_interaction<LocalDynamicsType>::value, "LocalDynamicsType does not fulfill SimpleDynamics requirements");
 		};
 		virtual ~SimpleDynamics(){};
 
