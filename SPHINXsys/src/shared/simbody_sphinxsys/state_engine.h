@@ -77,16 +77,22 @@ namespace SPH {
         class StateVariable {
         public:
             /** Constructor and destructor. */
-            StateVariable() :name_(""), owner_(nullptr),
-                subsysindex_(SimTK::InvalidIndex),
-                varindex_(SimTK::InvalidIndex),
-                sysyindex_(SimTK::InvalidIndex) {}
-            explicit StateVariable(std::string& name,    /**< state var name. */
-                StateEngine& owner,                    /**< owning component. */
-                SimTK::SubsystemIndex subsys,          /**< subsystem for allocation. */
-                int varindex)                          /**< variable's index in subsystem.*/
-                : name_(name), owner_(&owner), subsysindex_(subsys),
-                varindex_(varindex), sysyindex_(SimTK::InvalidIndex) {}
+            StateVariable() 
+                : name_("")
+                , owner_(nullptr)
+                , subsysindex_(SimTK::InvalidIndex)
+                , varindex_(SimTK::InvalidIndex)
+                , sysyindex_(SimTK::InvalidIndex) 
+            {}
+
+            explicit StateVariable(std::string& name, StateEngine& owner, SimTK::SubsystemIndex subsys, int varindex)                        
+                : name_(name)
+                , owner_(&owner)
+                , subsysindex_(subsys)
+                , varindex_(varindex)
+                , sysyindex_(SimTK::InvalidIndex) 
+            {}
+            
             virtual ~StateVariable() {}
 
             std::string& getName() { return name_; }

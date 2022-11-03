@@ -130,7 +130,7 @@ int main()
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
 	int ite = 0;
-	Real T0 = 8.0;
+	Real T0 = 16.0;
 	Real end_time = T0;
 	Real output_interval = 0.5;		 /**< Time period for output */
 	Real Dt = 0.01 * output_interval; /**< Time period for data observing */

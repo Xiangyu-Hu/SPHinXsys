@@ -62,7 +62,7 @@ public:
 						   cos(2.0 * Pi * pos_[index_i][1]);
 		mom_[index_i] = rho_[index_i] * vel_[index_i];
 		Real rho_e = p_[index_i] / (gamma_ - 1.0);
-		E_[index_i] = rho_e + 0.5 * rho_[index_i] * vel_[index_i].normSqr();
+		E_[index_i] = rho_e + 0.5 * rho_[index_i] * vel_[index_i].squaredNorm();
 	}
 };
 //----------------------------------------------------------------------
