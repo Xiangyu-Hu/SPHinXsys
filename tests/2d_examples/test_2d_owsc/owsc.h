@@ -33,7 +33,7 @@ BoundingBox system_domain_bounds(Vec2d(-DL_Extra - BW, -BW), Vec2d(DL + BW, DH +
 // the offset that the rubber flap shifted above the tank
 // Real flap_off = Flap_x - 0.5 * Flap_width + DL_Extra + BW;
 // Real off_set = particle_spacing_ref + floor(flap_off / particle_spacing_ref) * particle_spacing_ref - flap_off;
-Vec2d offset = Vec2d(0.0);
+Vec2d offset = Vec2d::Zero();
 
 // water block parameters
 Vec2d Water_lb(0.0, 0.0);	  // left bottom
