@@ -77,48 +77,57 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ShellContactDensity::ShellContactDensity(SolidBodyRelationContact &solid_body_contact_relation)
-			: LocalDynamics(solid_body_contact_relation.sph_body_),
-			  ContactDynamicsData(solid_body_contact_relation), pos_(particles_->pos_),
-			  kernel_(solid_body_contact_relation.sph_body_.sph_adaptation_->getKernel()),
-			  spacing_ref_(solid_body_contact_relation.sph_body_.sph_adaptation_->ReferenceSpacing())
+			: LocalDynamics(solid_body_contact_relation.sph_body_)
+			, ContactDynamicsData(solid_body_contact_relation)
+			, pos_(particles_->pos_)
+			, kernel_(solid_body_contact_relation.sph_body_.sph_adaptation_->getKernel())
+			, particle_spacing_(solid_body_contact_relation.sph_body_.sph_adaptation_->ReferenceSpacing())
+			, calibration_factor_(StdVec<Real>(contact_configuration_.size(), 0.0))
+			, contact_h_ratio_(StdVec<Real>(contact_configuration_.size(), 0.0))
+			, offset_W_ij_(StdVec<Real>(contact_configuration_.size(), 0.0))
+			, contact_particle_spacing_(StdVec<Real>(contact_configuration_.size(), 0.0))
 		{
 			particles_->registerVariable(contact_density_, "ContactDensity");
+
+			Real dp_1 = solid_body_contact_relation.sph_body_.sph_adaptation_->ReferenceSpacing();
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
+				Real dp_2 = solid_body_contact_relation.contact_bodies_[k]->sph_adaptation_->ReferenceSpacing();
+				contact_particle_spacing_[k] = 0.5 * dp_1 + 0.5 * dp_2;
+				contact_h_ratio_[k] = dp_1 / contact_particle_spacing_[k];
+				offset_W_ij_[k] = kernel_->W(contact_h_ratio_[k], contact_particle_spacing_[k], zero_vec);
+				
+				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
+				contact_n_.push_back(&(contact_particles_[k]->n_));
 				contact_pos_.push_back(&(contact_particles_[k]->pos_));
 			}
-		}
-		//=================================================================================================//
-		void ShellContactDensity::interaction(size_t index_i, Real dt)
-		{
-			/** shell contact interaction. */
-			Real sigma = 0.0;
-			const int dimension = Vecd::Zero().size();
-			/** a calibration factor to avoid particle penetration into shell structure */
-			boundary_factor_ = material_->ReferenceDensity() /
-							   (kernel_->SmoothingLength() * kernel_->W0(zero_vec) * Pi * std::pow(kernel_->CutOffRadius(), dimension - 1));
 
-			// const Real dp_2 = 0.5 * spacing_ref_;
-			// for (size_t k = 0; k < contact_configuration_.size(); ++k)
-			// {
-			// 	StdLargeVec<Vecd> &contact_pos_k = *(contact_pos_[k]);
-			// 	Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
-			// 	for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-			// 	{
-			// 		const Vecd contact_pos_j = contact_pos_k[contact_neighborhood.j_[n]];
-
-			// 		const Vecd dp_2_t_0 = pos_[index_i] - Vecd(dp_2 * x_0, dp_2 * x_0) - contact_pos_j;
-			// 		const Vecd dp_2_t_1 = pos_[index_i] - Vecd(dp_2 * x_1, dp_2 * x_1) - contact_pos_j;
-			// 		const Vecd dp_2_t_2 = pos_[index_i] - Vecd(dp_2 * x_2, dp_2 * x_2) - contact_pos_j;
-
-			// 		const Real W_rij_t_0 = kernel_->W(dp_2_t_0.norm(), dp_2_t_0);
-			// 		const Real W_rij_t_1 = kernel_->W(dp_2_t_1.norm(), dp_2_t_1);
-			// 		const Real W_rij_t_2 = kernel_->W(dp_2_t_2.norm(), dp_2_t_2);
-
-			// 		sigma += (w_0 * W_rij_t_0 + w_1 * W_rij_t_1 + w_2 * W_rij_t_2) * dp_2;
-			// 	}
-			// }
-			contact_density_[index_i] = sigma * boundary_factor_ * kernel_->SmoothingLength();
+			Real contact_max_;
+			Real contact_smoothing_length;
+			for (size_t k = 0; k < contact_configuration_.size(); ++k)
+			{
+				contact_smoothing_length = kernel_->SmoothingLength() / contact_h_ratio_[k];
+				for (int i = 0; i != 3; ++i)
+				{
+					if (Dimensions == 2)
+					{
+						contact_max_ = 2.0 *
+							(kernel_->W(contact_h_ratio_[k], three_gaussian_points_[i] * contact_particle_spacing_[k] * 0.5 + contact_particle_spacing_[k] * 0.5, Vec2d{0,0})
+								- offset_W_ij_[k])
+							* contact_particle_spacing_[k] * 0.5 * three_gaussian_weights_[i];
+					}
+					else
+					{
+						contact_max_ =
+							(kernel_->W(contact_h_ratio_[k], three_gaussian_points_[i] * contact_particle_spacing_[k] * 0.5 + contact_particle_spacing_[k] * 0.5, Vec3d{0,0,0})
+								- offset_W_ij_[k])
+							* 2.0 * Pi * (three_gaussian_points_[i] * contact_particle_spacing_[k] * 0.5 + contact_particle_spacing_[k] * 0.5)
+							* contact_particle_spacing_[k] * 0.5 * three_gaussian_weights_[i];
+					}
+				}
+				/** a calibration factor to avoid particle penetration into shell structure */
+				calibration_factor_[k] = material_->ReferenceDensity() / (contact_max_ + Eps);
+			}
 		}
 		//=================================================================================================//
 		SelfContactForce::

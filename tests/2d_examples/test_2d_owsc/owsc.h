@@ -270,21 +270,21 @@ class WaveMaking : public solid_dynamics::BaseMotionConstraint
 
 	Vecd getDisplacement(const Real &time)
 	{
-		Vecd displacement(0);
+		Vecd displacement{Vecd::Zero()};
 		displacement[0] = 0.5 * wave_stroke_ * sin(wave_freq_ * time);
 		return displacement;
 	}
 
 	Vec2d getVelocity(const Real &time)
 	{
-		Vec2d velocity(0);
+		Vec2d velocity{Vecd::Zero()};
 		velocity[0] = 0.5 * wave_stroke_ * wave_freq_ * cos(wave_freq_ * time);
 		return velocity;
 	}
 
 	Vec2d getAcceleration(const Real &time)
 	{
-		Vec2d acceleration(0);
+		Vec2d acceleration{Vecd::Zero()};
 		acceleration[0] = -0.5 * wave_stroke_ * wave_freq_ * wave_freq_ * sin(wave_freq_ * time);
 		return acceleration;
 	}
