@@ -1,7 +1,7 @@
 
 /**
  * @file 	io_vtk.cpp
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang and Xiangyu Hu
  */
 
 #include "io_vtk.h"

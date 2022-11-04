@@ -1,6 +1,6 @@
 /**
  * @file 	fluid_dynamics.cpp
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #include "fluid_dynamics_inner.h"
@@ -17,15 +17,23 @@ namespace SPH
 			: LocalDynamics(sph_body), FluidDataSimple(sph_body),
 			  pos_(particles_->pos_), vel_(particles_->vel_) {}
 		//=================================================================================================//
-		DensitySummationInner::DensitySummationInner(BaseInnerRelation &inner_relation)
+		BaseDensitySummationInner::BaseDensitySummationInner(BaseInnerRelation &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
 			  rho_(particles_->rho_), rho_sum_(particles_->rho_sum_), mass_(particles_->mass_),
+			  rho0_(sph_body_.base_material_->ReferenceDensity()) {}
+		//=================================================================================================//
+		void BaseDensitySummationInner::update(size_t index_i, Real dt)
+		{
+			rho_[index_i] = rho_sum_[index_i];
+		}
+		//=================================================================================================//
+		DensitySummationInner::DensitySummationInner(BaseInnerRelation &inner_relation)
+			: BaseDensitySummationInner(inner_relation),
 			  W0_(sph_body_.sph_adaptation_->getKernel()->W0(Vecd(0))),
-			  rho0_(particles_->rho0_), inv_sigma0_(1.0 / particles_->sigma0_) {}
+			  inv_sigma0_(1.0 / sph_body_.sph_adaptation_->ReferenceNumberDensity()) {}
 		//=================================================================================================//
 		void DensitySummationInner::interaction(size_t index_i, Real dt)
 		{
-			/** Inner interaction. */
 			Real sigma = W0_;
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -34,9 +42,22 @@ namespace SPH
 			rho_sum_[index_i] = sigma * rho0_ * inv_sigma0_;
 		}
 		//=================================================================================================//
-		void DensitySummationInner::update(size_t index_i, Real dt)
+		DensitySummationInnerAdaptive::
+			DensitySummationInnerAdaptive(BaseInnerRelation &inner_relation)
+			: BaseDensitySummationInner(inner_relation),
+			  sph_adaptation_(*sph_body_.sph_adaptation_),
+			  kernel_(*sph_adaptation_.getKernel()),
+			  h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")) {}
+		//=================================================================================================//
+		void DensitySummationInnerAdaptive::interaction(size_t index_i, Real dt)
 		{
-			rho_[index_i] = ReinitializedDensity(rho_sum_[index_i], rho0_, rho_[index_i]);
+			Real sigma_i = mass_[index_i] * kernel_.W0(h_ratio_[index_i], Vecd(0));
+			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+				sigma_i += inner_neighborhood.W_ij_[n] * mass_[inner_neighborhood.j_[n]];
+
+			rho_sum_[index_i] = sigma_i * rho0_ / mass_[index_i] /
+								sph_adaptation_.ReferenceNumberDensity(h_ratio_[index_i]);
 		}
 		//=================================================================================================//
 		BaseViscousAccelerationInner::BaseViscousAccelerationInner(BaseInnerRelation &inner_relation)
@@ -84,16 +105,9 @@ namespace SPH
 		TransportVelocityCorrectionInner::
 			TransportVelocityCorrectionInner(BaseInnerRelation &inner_relation, Real coefficient)
 			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
-			  rho_(particles_->rho_), pos_(particles_->pos_),
-			  surface_indicator_(particles_->surface_indicator_), p_background_(0),
+			  pos_(particles_->pos_), surface_indicator_(particles_->surface_indicator_),
+			  smoothing_length_sqr_(powerN(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
 			  coefficient_(coefficient) {}
-		//=================================================================================================//
-		void TransportVelocityCorrectionInner::setupDynamics(Real dt)
-		{
-			Real speed_max = particles_->speed_max_;
-			Real density = particles_->fluid_.ReferenceDensity();
-			p_background_ = coefficient_ * density * speed_max * speed_max;
-		}
 		//=================================================================================================//
 		void TransportVelocityCorrectionInner::interaction(size_t index_i, Real dt)
 		{
@@ -105,18 +119,46 @@ namespace SPH
 				Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
 
 				// acceleration for transport velocity
-				acceleration_trans -= 2.0 * p_background_ * nablaW_ijV_j;
+				acceleration_trans -= 2.0 * nablaW_ijV_j;
 			}
 
 			if (surface_indicator_[index_i] == 0)
-				pos_[index_i] += 0.5 * acceleration_trans * dt * dt / rho_[index_i];
+				pos_[index_i] += coefficient_ * smoothing_length_sqr_ * acceleration_trans;
+		}
+		//=================================================================================================//
+		TransportVelocityCorrectionInnerAdaptive::
+			TransportVelocityCorrectionInnerAdaptive(BaseInnerRelation &inner_relation, Real coefficient)
+			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
+			  sph_adaptation_(*sph_body_.sph_adaptation_),
+			  pos_(particles_->pos_), surface_indicator_(particles_->surface_indicator_),
+			  smoothing_length_sqr_(powerN(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
+			  coefficient_(coefficient) {}
+		//=================================================================================================//
+		void TransportVelocityCorrectionInnerAdaptive::interaction(size_t index_i, Real dt)
+		{
+			Vecd acceleration_trans(0);
+			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+			{
+				size_t index_j = inner_neighborhood.j_[n];
+				Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+
+				// acceleration for transport velocity
+				acceleration_trans -= 2.0 * nablaW_ijV_j;
+			}
+
+			if (surface_indicator_[index_i] == 0)
+			{
+				Real inv_h_ratio = 1.0 / sph_adaptation_.SmoothingLengthRatio(index_i);
+				pos_[index_i] += coefficient_ * smoothing_length_sqr_ * inv_h_ratio * inv_h_ratio * acceleration_trans;
+			}
 		}
 		//=================================================================================================//
 		AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL)
 			: LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
 			  FluidDataSimple(sph_body), fluid_(particles_->fluid_), rho_(particles_->rho_),
 			  p_(particles_->p_), vel_(particles_->vel_),
-			  smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()),
+			  smoothing_length_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
 			  acousticCFL_(acousticCFL) {}
 		//=================================================================================================//
 		Real AcousticTimeStepSize::reduce(size_t index_i, Real dt)
@@ -128,14 +170,14 @@ namespace SPH
 		{
 			// since the particle does not change its configuration in pressure relaxation step
 			// I chose a time-step size according to Eulerian method
-			return acousticCFL_ * smoothing_length_ / (reduced_value + TinyReal);
+			return acousticCFL_ * smoothing_length_min_ / (reduced_value + TinyReal);
 		}
 		//=================================================================================================//
 		AdvectionTimeStepSizeForImplicitViscosity::
 			AdvectionTimeStepSizeForImplicitViscosity(SPHBody &sph_body, Real U_max, Real advectionCFL)
 			: LocalDynamicsReduce<Real, ReduceMax>(sph_body, U_max * U_max),
 			  FluidDataSimple(sph_body), vel_(particles_->vel_),
-			  smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()),
+			  smoothing_length_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
 			  advectionCFL_(advectionCFL) {}
 		//=================================================================================================//
 		Real AdvectionTimeStepSizeForImplicitViscosity::reduce(size_t index_i, Real dt)
@@ -146,15 +188,14 @@ namespace SPH
 		Real AdvectionTimeStepSizeForImplicitViscosity::outputResult(Real reduced_value)
 		{
 			Real speed_max = sqrt(reduced_value);
-			particles_->speed_max_ = speed_max;
-			return advectionCFL_ * smoothing_length_ / (speed_max + TinyReal);
+			return advectionCFL_ * smoothing_length_min_ / (speed_max + TinyReal);
 		}
 		//=================================================================================================//
 		AdvectionTimeStepSize::AdvectionTimeStepSize(SPHBody &sph_body, Real U_max, Real advectionCFL)
 			: AdvectionTimeStepSizeForImplicitViscosity(sph_body, U_max, advectionCFL),
 			  fluid_(particles_->fluid_)
 		{
-			Real viscous_speed = fluid_.ReferenceViscosity() / fluid_.ReferenceDensity() / smoothing_length_;
+			Real viscous_speed = fluid_.ReferenceViscosity() / fluid_.ReferenceDensity() / smoothing_length_min_;
 			reference_ = SMAX(viscous_speed * viscous_speed, reference_);
 		}
 		//=================================================================================================//

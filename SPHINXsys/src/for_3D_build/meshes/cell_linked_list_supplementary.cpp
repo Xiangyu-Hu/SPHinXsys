@@ -1,6 +1,6 @@
 /**
  * @file 	cell_linked_list_supplementary.cpp
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang and Xiangyu Hu
  */
 
 #include "cell_linked_list.h"

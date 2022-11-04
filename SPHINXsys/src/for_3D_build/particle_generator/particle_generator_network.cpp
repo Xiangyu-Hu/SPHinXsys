@@ -1,6 +1,6 @@
 /**
  * @file 	particle_generator_network.cpp
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 #include "sph_system.h"
 #include "particle_generator_network.h"
@@ -19,14 +19,14 @@ namespace SPH
 		  n_it_(iterator), fascicles_(true), segments_in_branch_(10),
 		  segment_length_(sph_body.sph_adaptation_->ReferenceSpacing()),
 		  grad_factor_(grad_factor), sph_body_(sph_body), body_shape_(*sph_body.body_shape_),
-		  cell_linked_list_(DynamicCast<RealBody>(this, sph_body).cell_linked_list_),
+		  cell_linked_list_(DynamicCast<RealBody>(this, sph_body).getCellLinkedList()),
 		  tree_(DynamicCast<TreeBody>(this, &sph_body))
 	{
 		Vecd displacement = second_pnt_ - starting_pnt_;
 		Vecd end_direction = displacement / (displacement.norm() + TinyReal);
 		// add particle to the first branch of the tree
 		growAParticleOnBranch(tree_->root_, starting_pnt_, end_direction);
-		cell_linked_list_->InsertListDataEntry(0, pos_[0], segment_length_);
+		cell_linked_list_.InsertListDataEntry(0, pos_[0], segment_length_);
 	}
 	//=================================================================================================//
 	void ParticleGeneratorNetwork::
@@ -48,8 +48,8 @@ namespace SPH
 			Vecd downwind = pt;
 			upwind[i] -= shift[i];
 			downwind[i] += shift[i];
-			ListData up_nearest_list = cell_linked_list_->findNearestListDataEntry(upwind);
-			ListData down_nearest_list = cell_linked_list_->findNearestListDataEntry(downwind);
+			ListData up_nearest_list = cell_linked_list_.findNearestListDataEntry(upwind);
+			ListData down_nearest_list = cell_linked_list_.findNearestListDataEntry(downwind);
 			upgrad[i] = std::get<0>(up_nearest_list) != MaxSize_t ? (upwind - std::get<1>(up_nearest_list)).norm() / 2.0 * delta : 1.0;
 			downgrad[i] = std::get<0>(down_nearest_list) != MaxSize_t ? (downwind - std::get<1>(down_nearest_list)).norm() / 2.0 * delta : 1.0;
 		}
@@ -118,7 +118,7 @@ namespace SPH
 		Vecd end_point = init_point;
 
 		Vecd new_point = createATentativeNewBranchPoint(end_point, end_direction);
-		if (!isCollision(new_point, cell_linked_list_->findNearestListDataEntry(new_point), parent_id))
+		if (!isCollision(new_point, cell_linked_list_.findNearestListDataEntry(new_point), parent_id))
 		{
 			is_valid = true;
 			TreeBody::Branch *new_branch = tree_->createANewBranch(parent_id);
@@ -136,7 +136,7 @@ namespace SPH
 				end_point = new_point;
 
 				new_point = createATentativeNewBranchPoint(end_point, end_direction);
-				if (isCollision(new_point, cell_linked_list_->findNearestListDataEntry(new_point), parent_id))
+				if (isCollision(new_point, cell_linked_list_.findNearestListDataEntry(new_point), parent_id))
 				{
 					new_branch->is_terminated_ = true;
 					std::cout << "Branch Collision Detected, Break! " << std::endl;
@@ -154,7 +154,7 @@ namespace SPH
 
 			for (const size_t &particle_idx : new_branch->inner_particles_)
 			{
-				cell_linked_list_->InsertListDataEntry(particle_idx, pos_[particle_idx], segment_length_);
+				cell_linked_list_.InsertListDataEntry(particle_idx, pos_[particle_idx], segment_length_);
 			}
 		}
 

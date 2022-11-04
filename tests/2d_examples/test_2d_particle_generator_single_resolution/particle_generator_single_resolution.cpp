@@ -66,7 +66,7 @@ int main()
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp input_body_recording_to_vtp(io_environment, input_body);
-	MeshRecordingToPlt cell_linked_list_recording(io_environment, input_body.cell_linked_list_);
+	MeshRecordingToPlt cell_linked_list_recording(io_environment, input_body.getCellLinkedList());
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.

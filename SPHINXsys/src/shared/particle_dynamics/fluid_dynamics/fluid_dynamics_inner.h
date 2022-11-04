@@ -1,31 +1,32 @@
-/* -------------------------------------------------------------------------*
- *								SPHinXsys									*
- * --------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
- * (smoothed particle hydrodynamics), a meshless computational method using	*
- * particle discretization.													*
- *																			*
- * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
- * and HU1527/12-1.															*
- *                                                                           *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
- * the authors' affiliations.												*
- *                                                                           *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
- * not use this file except in compliance with the License. You may obtain a *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
- *                                                                           *
- * --------------------------------------------------------------------------*/
+/* -----------------------------------------------------------------------------*
+ *                               SPHinXsys                                      *
+ * -----------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
+ * physical accurate simulation and aims to model coupled industrial dynamic    *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
+ * (smoothed particle hydrodynamics), a meshless computational method using     *
+ * particle discretization.                                                     *
+ *                                                                              *
+ * SPHinXsys is partially funded by German Research Foundation                  *
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
+ * HU1527/12-1 and HU1527/12-4.                                                 *
+ *                                                                              *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and          *
+ * the authors' affiliations.                                                   *
+ *                                                                              *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
+ * not use this file except in compliance with the License. You may obtain a    *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
+ *                                                                              *
+ * -----------------------------------------------------------------------------*/
 /**
  * @file 	fluid_dynamics_inner.h
  * @brief 	Here, we define the algorithm classes for fluid dynamics within the body.
- * @details 	We consider here weakly compressible fluids. The algorithms may be
- * 			different for free surface flow and the one without free surface.
- * @author	Chi ZHang and Xiangyu Hu
+ * @details We consider here weakly compressible fluids.
+ * 			Note that, as these are local dynamics which are combined with particle dynamics
+ * 			algorithms as template, the name-hiding is used for functions in the derived classes.
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef FLUID_DYNAMICS_INNER_H
@@ -62,21 +63,51 @@ namespace SPH
 		};
 
 		/**
+		 * @class BaseDensitySummationInner
+		 * @brief Base class for computing density by summation
+		 */
+		class BaseDensitySummationInner : public LocalDynamics, public FluidDataInner
+		{
+		public:
+			explicit BaseDensitySummationInner(BaseInnerRelation &inner_relation);
+			virtual ~BaseDensitySummationInner(){};
+			void update(size_t index_i, Real dt = 0.0);
+
+		protected:
+			Real rho0_;
+			StdLargeVec<Real> &rho_, &rho_sum_, &mass_;
+		};
+
+		/**
 		 * @class DensitySummationInner
 		 * @brief  computing density by summation
 		 */
-		class DensitySummationInner : public LocalDynamics, public FluidDataInner
+		class DensitySummationInner : public BaseDensitySummationInner
 		{
 		public:
 			explicit DensitySummationInner(BaseInnerRelation &inner_relation);
 			virtual ~DensitySummationInner(){};
 			void interaction(size_t index_i, Real dt = 0.0);
-			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
-			Real W0_, rho0_, inv_sigma0_;
-			StdLargeVec<Real> &rho_, &rho_sum_, &mass_;
-			virtual Real ReinitializedDensity(Real rho_sum, Real rho_0, Real rho_n) { return rho_sum; };
+			Real W0_, inv_sigma0_;
+		};
+
+		/**
+		 * @class DensitySummationInnerAdaptive
+		 * @brief  computing density by summation with variable smoothing length
+		 */
+		class DensitySummationInnerAdaptive : public BaseDensitySummationInner
+		{
+		public:
+			explicit DensitySummationInnerAdaptive(BaseInnerRelation &inner_relation);
+			virtual ~DensitySummationInnerAdaptive(){};
+			void interaction(size_t index_i, Real dt = 0.0);
+
+		protected:
+			SPHAdaptation &sph_adaptation_;
+			Kernel &kernel_;
+			StdLargeVec<Real> &h_ratio_;
 		};
 
 		/**
@@ -130,16 +161,33 @@ namespace SPH
 		class TransportVelocityCorrectionInner : public LocalDynamics, public FluidDataInner
 		{
 		public:
-			explicit TransportVelocityCorrectionInner(BaseInnerRelation &inner_relation, Real coefficient = 7.0);
+			explicit TransportVelocityCorrectionInner(BaseInnerRelation &inner_relation, Real coefficient = 0.2);
 			virtual ~TransportVelocityCorrectionInner(){};
-			virtual void setupDynamics(Real dt = 0.0) override;
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			StdLargeVec<Real> &rho_;
 			StdLargeVec<Vecd> &pos_;
 			StdLargeVec<int> &surface_indicator_;
-			Real p_background_;
+			Real smoothing_length_sqr_;
+			const Real coefficient_;
+		};
+
+		/**
+		 * @class TransportVelocityCorrectionInner
+		 * @brief transport velocity correction
+		 */
+		class TransportVelocityCorrectionInnerAdaptive : public LocalDynamics, public FluidDataInner
+		{
+		public:
+			explicit TransportVelocityCorrectionInnerAdaptive(BaseInnerRelation &inner_relation, Real coefficient = 0.2);
+			virtual ~TransportVelocityCorrectionInnerAdaptive(){};
+			void interaction(size_t index_i, Real dt = 0.0);
+
+		protected:
+			SPHAdaptation &sph_adaptation_;
+			StdLargeVec<Vecd> &pos_;
+			StdLargeVec<int> &surface_indicator_;
+			Real smoothing_length_sqr_;
 			const Real coefficient_;
 		};
 
@@ -159,7 +207,7 @@ namespace SPH
 			Fluid &fluid_;
 			StdLargeVec<Real> &rho_, &p_;
 			StdLargeVec<Vecd> &vel_;
-			Real smoothing_length_;
+			Real smoothing_length_min_;
 			Real acousticCFL_;
 		};
 
@@ -179,7 +227,7 @@ namespace SPH
 			virtual Real outputResult(Real reduced_value) override;
 
 		protected:
-			Real smoothing_length_;
+			Real smoothing_length_min_;
 			StdLargeVec<Vecd> &vel_;
 			Real advectionCFL_;
 		};

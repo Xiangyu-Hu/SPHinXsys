@@ -1,6 +1,6 @@
 /**
  * @file 	base_body_relation.cpp
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #include "base_body_relation.h"
@@ -9,6 +9,17 @@
 
 namespace SPH
 {
+	//=================================================================================================//
+	RealBodyVector BodyPartsToRealBodies(BodyPartVector body_parts)
+	{
+		RealBodyVector real_bodies;
+
+		for (size_t k = 0; k != body_parts.size(); ++k)
+		{
+			real_bodies.push_back(DynamicCast<RealBody>(body_parts[k], &body_parts[k]->getSPHBody()));
+		}
+		return real_bodies;
+	}
 	//=================================================================================================//
 	SPHRelation::SPHRelation(SPHBody &sph_body)
 		: sph_body_(sph_body), base_particles_(sph_body.getBaseParticles()) {}
@@ -43,17 +54,6 @@ namespace SPH
 	BaseContactRelation::BaseContactRelation(SPHBody &sph_body, RealBodyVector contact_sph_bodies)
 		: SPHRelation(sph_body), contact_bodies_(contact_sph_bodies)
 	{
-		subscribeToBody();
-		updateConfigurationMemories();
-	}
-	//=================================================================================================//
-	BaseContactRelation::BaseContactRelation(SPHBody &sph_body, BodyPartVector contact_body_parts)
-		: SPHRelation(sph_body)
-	{
-		for (size_t k = 0; k != contact_body_parts.size(); ++k)
-		{
-			contact_bodies_.push_back(DynamicCast<RealBody>(this, &contact_body_parts[k]->getSPHBody()));
-		}
 		subscribeToBody();
 		updateConfigurationMemories();
 	}

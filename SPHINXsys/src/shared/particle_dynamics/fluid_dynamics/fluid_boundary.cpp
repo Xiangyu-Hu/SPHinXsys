@@ -1,6 +1,6 @@
 /**
  * @file 	fluid_boundary.cpp
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #include "fluid_boundary.h"
@@ -125,7 +125,8 @@ namespace SPH
 		//=================================================================================================//
 		StaticConfinementDensity::StaticConfinementDensity(NearShapeSurface &near_surface)
 			: LocalDynamics(near_surface.getSPHBody()), FluidDataSimple(sph_body_),
-			  rho0_(particles_->rho0_), inv_sigma0_(1.0 / particles_->sigma0_),
+			  rho0_(sph_body_.base_material_->ReferenceDensity()), 
+			  inv_sigma0_(1.0 / sph_body_.sph_adaptation_->ReferenceNumberDensity()),
 			  mass_(particles_->mass_), rho_sum_(particles_->rho_sum_), pos_(particles_->pos_),
 			  level_set_shape_(&near_surface.level_set_shape_) {}
 		//=================================================================================================//

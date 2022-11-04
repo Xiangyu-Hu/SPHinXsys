@@ -1,6 +1,6 @@
 /**
  * @file 	level_set_supplementary.cpp
- * @author	Luhui Han, Chi ZHang, Yongchuan Yu and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang, Yongchuan Yu and Xiangyu Hu
  */
 
 #include "level_set.h"

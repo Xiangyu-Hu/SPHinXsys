@@ -147,7 +147,7 @@ int main()
 			update_water_density_by_summation.parallel_exec();
 			update_air_density_by_summation.parallel_exec();
 
-			air_transport_correction.parallel_exec(Dt);
+			air_transport_correction.parallel_exec();
 
 			interval_computing_time_step += tick_count::now() - time_instance;
 

@@ -68,16 +68,16 @@ namespace SPH
 
 	/**
 	 * @class MeshRecordingToPlt
-	 * @brief  write the background mesh data for relax body
+	 * @brief  write the mesh data in Tecplot format
 	 */
 	class MeshRecordingToPlt : public BaseIO
 	{
 	protected:
-		BaseMeshField *mesh_field_;
+		BaseMeshField &mesh_field_;
 		std::string filefullpath_;
 
 	public:
-		MeshRecordingToPlt(IOEnvironment &io_environment, BaseMeshField *mesh_field);
+		MeshRecordingToPlt(IOEnvironment &io_environment, BaseMeshField &mesh_field);
 		virtual ~MeshRecordingToPlt(){};
 		virtual void writeToFile(size_t iteration_step = 0) override;
 	};

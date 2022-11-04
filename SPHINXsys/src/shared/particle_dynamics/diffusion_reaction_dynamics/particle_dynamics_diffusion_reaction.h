@@ -24,7 +24,7 @@
  * @file 	particle_dynamics_diffusion_reaction.h
  * @brief 	This is the particle dynamics applicable for all type bodies
  * 			TODO: there is an issue on applying corrected configuration for contact bodies.
- * @author	Xiaojing Tang, Chi ZHang and Xiangyu Hu
+ * @author	Xiaojing Tang, Chi Zhang and Xiangyu Hu
  */
 
 #ifndef PARTICLE_DYNAMICS_DIFFUSION_REACTION_H

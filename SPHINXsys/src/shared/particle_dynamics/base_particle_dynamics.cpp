@@ -1,6 +1,6 @@
 /**
  * @file 	base_particle_dynamics.cpp
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang and Xiangyu Hu
  */
 #include "base_particle_dynamics.h"
 #include "cell_linked_list.h"

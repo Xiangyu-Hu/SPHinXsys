@@ -1,7 +1,7 @@
 /**
  * @file 	sph_data_containers.h
  * @brief 	Set up of basic data structure.
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang and Xiangyu Hu
  */
 
 #ifndef SPH_DATA_CONTAINERS_H
@@ -27,7 +27,7 @@ namespace SPH
 	using SolidBodyVector = StdVec<SolidBody *>;
 	using RealBodyVector = StdVec<RealBody *>;
 	using BodyPartVector = StdVec<BodyPart *>;
-
+	
 	using IndexVector = StdVec<size_t>;
 	using ConcurrentIndexVector = ConcurrentVec<size_t>;
 

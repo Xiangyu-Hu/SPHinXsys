@@ -1,6 +1,6 @@
 /**
  * @file 	thin_structure_math.cpp
- * @author	Dong Wu, Chi ZHang and Xiangyu Hu
+ * @author	Dong Wu, Chi Zhang and Xiangyu Hu
  * @version	0.1
  */
 

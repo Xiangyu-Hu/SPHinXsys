@@ -1,6 +1,6 @@
 /**
  * @file 	fluid_body.cpp
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang and Xiangyu Hu
  */
 
 #include "fluid_body.h"
