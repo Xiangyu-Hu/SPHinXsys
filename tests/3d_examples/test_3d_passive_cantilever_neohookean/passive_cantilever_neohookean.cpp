@@ -36,8 +36,8 @@ class Cantilever : public ComplexShape
 public:
 	explicit Cantilever(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		add<TransformShape<GeometricShapeBox>>(translation_cantilever, halfsize_cantilever);
-		add<TransformShape<GeometricShapeBox>>(translation_holder, halfsize_holder);
+		add<TransformShape<GeometricShapeBox>>(Transformd(translation_cantilever), halfsize_cantilever);
+		add<TransformShape<GeometricShapeBox>>(Transformd(translation_holder), halfsize_holder);
 	}
 };
 /**
@@ -100,7 +100,7 @@ int main(int ac, char *av[])
 		stress_relaxation_second_half(cantilever_body_inner);
 	/** Constrain the holder. */
 	BodyRegionByParticle holder(cantilever_body,
-								makeShared<TransformShape<GeometricShapeBox>>(translation_holder, halfsize_holder, "Holder"));
+								makeShared<TransformShape<GeometricShapeBox>>(Transformd(translation_holder), halfsize_holder, "Holder"));
 	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_holder(holder);
 	DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
 		muscle_damping(0.1, cantilever_body_inner, "Velocity", physical_viscosity);

@@ -64,10 +64,10 @@ public:
 		// pulling direction, i.e. positive z direction
 		Vecd normal(0, 0, 1);
 		// compute the new normal direction
-		const Vecd current_normal = ~SimTK::inverse(F_[index_i]) * normal;
+		const Vecd current_normal = F_[index_i].inverse().transpose() * normal;
 		const Real current_normal_norm = current_normal.norm();
 
-		Real J = SimTK::det(F_[index_i]);
+		Real J = F_[index_i].determinant();
 		// using Nanson’s relation to compute the new area of the surface particle.
 		// current_area * current_normal = det(F) * trans(inverse(F)) * area_0 * normal	   =>
 		// current_area = J * area_0 * norm(trans(inverse(F)) * normal)   =>
