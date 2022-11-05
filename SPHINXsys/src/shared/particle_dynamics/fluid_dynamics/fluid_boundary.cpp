@@ -11,33 +11,6 @@ namespace SPH
 	namespace fluid_dynamics
 	{
 		//=================================================================================================//
-		BaseFlowBoundaryCondition::BaseFlowBoundaryCondition(BodyPartByCell &body_part)
-			: LocalDynamics(body_part.getSPHBody()), FluidDataSimple(sph_body_),
-			  rho_(particles_->rho_), p_(particles_->p_),
-			  pos_(particles_->pos_), vel_(particles_->vel_){};
-		//=================================================================================================//
-		FlowVelocityBuffer::FlowVelocityBuffer(BodyPartByCell &body_part, Real relaxation_rate)
-			: BaseFlowBoundaryCondition(body_part), relaxation_rate_(relaxation_rate){};
-		//=================================================================================================//
-		void FlowVelocityBuffer::update(size_t index_i, Real dt)
-		{
-			vel_[index_i] += relaxation_rate_ * (getTargetVelocity(pos_[index_i], vel_[index_i]) - vel_[index_i]);
-		}
-		//=================================================================================================//
-		InflowVelocityCondition::InflowVelocityCondition(BodyAlignedBoxByCell &aligned_box_part)
-			: BaseFlowBoundaryCondition(aligned_box_part),
-			  transform_(aligned_box_part.aligned_box_.getTransform()),
-			  halfsize_(aligned_box_part.aligned_box_.HalfSize()) {}
-		//=================================================================================================//
-		void InflowVelocityCondition::update(size_t index_i, Real dt)
-		{
-			Vecd frame_position = transform_.shiftBaseStationToFrame(pos_[index_i]);
-			Vecd frame_velocity = transform_.xformBaseVecToFrame(vel_[index_i]);
-			Vecd prescribed_velocity =
-				transform_.xformFrameVecToBase(getPrescribedVelocity(frame_position, frame_velocity));
-			vel_[index_i] = prescribed_velocity;
-		}
-		//=================================================================================================//
 		DampingBoundaryCondition::DampingBoundaryCondition(BodyRegionByCell &body_part)
 			: BaseFlowBoundaryCondition(body_part), strength_(5.0),
 			  damping_zone_bounds_(body_part.body_part_shape_.getBounds()){};

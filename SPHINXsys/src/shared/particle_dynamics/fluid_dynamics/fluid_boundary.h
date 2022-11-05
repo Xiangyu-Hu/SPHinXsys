@@ -44,7 +44,10 @@ namespace SPH
         class BaseFlowBoundaryCondition : public LocalDynamics, public FluidDataSimple
         {
         public:
-            BaseFlowBoundaryCondition(BodyPartByCell &body_part);
+            BaseFlowBoundaryCondition(BodyPartByCell &body_part)
+                : LocalDynamics(body_part.getSPHBody()), FluidDataSimple(sph_body_),
+                  rho_(particles_->rho_), p_(particles_->p_),
+                  pos_(particles_->pos_), vel_(particles_->vel_){};
             virtual ~BaseFlowBoundaryCondition(){};
 
         protected:
@@ -58,40 +61,88 @@ namespace SPH
          * This technique will be used for applying several boundary conditions,
          * such as freestream, inflow, damping boundary conditions.
          */
+        template <typename TargetVelocity>
         class FlowVelocityBuffer : public BaseFlowBoundaryCondition
         {
         public:
-            FlowVelocityBuffer(BodyPartByCell &body_part, Real relaxation_rate = 0.3);
+            FlowVelocityBuffer(BodyPartByCell &body_part, Real relaxation_rate = 0.3)
+                : BaseFlowBoundaryCondition(body_part),
+                  relaxation_rate_(relaxation_rate), target_velocity(){};
             virtual ~FlowVelocityBuffer(){};
-            void update(size_t index_i, Real dt = 0.0);
+
+            void update(size_t index_i, Real dt = 0.0)
+            {
+                vel_[index_i] += relaxation_rate_ * (target_velocity(pos_[index_i], vel_[index_i]) - vel_[index_i]);
+            };
 
         protected:
             /** default value is 0.3 suggests reaching target profile in several time steps */
             Real relaxation_rate_;
-
-            /** Profile to be defined in applications,
-             * argument parameters and return value are in frame (local) coordinate */
-            virtual Vecd getTargetVelocity(Vecd &position, Vecd &velocity) = 0;
+            TargetVelocity target_velocity;
         };
 
         /**
          * @class InflowVelocityCondition
          * @brief Inflow boundary condition which imposes directly to a given velocity profile.
          */
+        template <typename TargetVelocity>
         class InflowVelocityCondition : public BaseFlowBoundaryCondition
         {
         public:
-            InflowVelocityCondition(BodyAlignedBoxByCell &aligned_box_part);
+            InflowVelocityCondition(BodyAlignedBoxByCell &aligned_box_part)
+                : BaseFlowBoundaryCondition(aligned_box_part),
+                  transform_(aligned_box_part.aligned_box_.getTransform()),
+                  halfsize_(aligned_box_part.aligned_box_.HalfSize()),
+                  target_velocity(){};
             virtual ~InflowVelocityCondition(){};
-            void update(size_t index_i, Real dt = 0.0);
+
+            void update(size_t index_i, Real dt = 0.0)
+            {
+                Vecd frame_position = transform_.shiftBaseStationToFrame(pos_[index_i]);
+                Vecd frame_velocity = transform_.xformBaseVecToFrame(vel_[index_i]);
+                Vecd prescribed_velocity =
+                    transform_.xformFrameVecToBase(target_velocity(frame_position, frame_velocity));
+                vel_[index_i] = prescribed_velocity;
+            };
 
         protected:
             Transformd &transform_;
             Vecd halfsize_;
+            TargetVelocity target_velocity;
+        };
 
-            /** Inflow profile to be defined in applications,
-             * argument parameters and return value are in frame (local) coordinate */
-            virtual Vecd getPrescribedVelocity(Vecd &position, Vecd &velocity) = 0;
+        /**
+         * @class FarFieldVelocityCorrection
+         * @brief this function is applied to freestream flows
+         * @brief modify the velocity of free surface particles with far-field velocity
+         */
+        template <typename TargetVelocity>
+        class FarFieldVelocityCorrection : public LocalDynamics, public FluidDataSimple
+        {
+        protected:
+            Real u_ref_, t_ref_, rho_ref_;
+            StdLargeVec<Real> &rho_sum;
+            StdLargeVec<Vecd> &pos_, &vel_;
+            StdLargeVec<int> &surface_indicator_;
+            TargetVelocity target_velocity;
+
+        public:
+            explicit FarFieldVelocityCorrection(SPHBody &sph_body)
+                : LocalDynamics(sph_body), FluidDataSimple(sph_body),
+                  u_ref_(1.0), t_ref_(2.0), rho_ref_(particles_->fluid_.ReferenceDensity()),
+                  rho_sum(particles_->rho_sum_), pos_(particles_->pos_), vel_(particles_->vel_),
+                  surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")),
+                  target_velocity(){};
+            virtual ~FarFieldVelocityCorrection(){};
+
+            void update(size_t index_i, Real dt = 0.0)
+            {
+                if (surface_indicator_[index_i] == 1)
+                {
+                    Vecd u_freestream = target_velocity(pos_[index_i], vel_[index_i]);
+                    vel_[index_i] = u_freestream + SMIN(rho_sum[index_i], rho_ref_) * (vel_[index_i] - u_freestream) / rho_ref_;
+                }
+            };
         };
 
         /**

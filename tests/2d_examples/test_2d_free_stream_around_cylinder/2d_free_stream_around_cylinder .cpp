@@ -106,7 +106,7 @@ int main(int ac, char *av[])
 	/** Emitter buffer inflow condition. */
 	BodyAlignedBoxByCell emitter_buffer(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(emitter_buffer_translation)), emitter_buffer_halfsize));
-	SimpleDynamics<EmitterBufferInflowCondition, BodyAlignedBoxByCell> emitter_buffer_inflow_condition(emitter_buffer);
+	SimpleDynamics<fluid_dynamics::FlowVelocityBuffer<FarFieldVelocity>, BodyAlignedBoxByCell> emitter_buffer_inflow_condition(emitter_buffer, 0.7);
 	BodyAlignedBoxByCell disposer(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(disposer_translation)), disposer_halfsize));
 	SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion, BodyAlignedBoxByCell> disposer_outflow_deletion(disposer, 0);
@@ -123,7 +123,7 @@ int main(int ac, char *av[])
 	/** Time step size with considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	/** modify the velocity of boundary particles with free-stream velocity. */
-	SimpleDynamics<fluid_dynamics::FreeStreamBoundaryVelocityCorrection> velocity_boundary_condition_constraint(water_block);
+	SimpleDynamics<fluid_dynamics::FarFieldVelocityCorrection<FarFieldVelocity>> velocity_boundary_condition_constraint(water_block);
 	/** Pressure relaxation. */
 	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
 	/** correct the velocity of boundary particles with free-stream velocity through the post process of pressure relaxation. */
