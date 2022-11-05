@@ -69,34 +69,20 @@ public:
 	}
 };
 //----------------------------------------------------------------------
-//	Define emitter buffer inflow boundary condition
+//	Free-stream velocity
 //----------------------------------------------------------------------
-class EmitterBufferInflowCondition : public fluid_dynamics::FlowVelocityBuffer
+struct FreeStreamVelocity
 {
-	Real u_ave_, u_ref_, t_ref_;
+	Real u_ref_, t_ref_;
 
-public:
-	explicit EmitterBufferInflowCondition(BodyAlignedBoxByCell &aligned_box_part)
-		: FlowVelocityBuffer(aligned_box_part, 0.1),
-		  u_ave_(0), u_ref_(U_f), t_ref_(2.0) {}
+	FreeStreamVelocity() : u_ref_(U_f), t_ref_(2.0) {}
 
-	Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
+	Vecd operator()(Vecd &position, Vecd &velocity)
 	{
-		Real u = velocity[0];
-		Real v = velocity[1];
-
-		if (position[0] < 0.0)
-		{
-			u = u_ave_;
-			v = 0.0;
-		}
-		return Vecd(u, v);
-	}
-
-	void setupDynamics(Real dt = 0.0) override
-	{
+		Vecd target_velocity(0);
 		Real run_time = GlobalStaticVariables::physical_time_;
-		u_ave_ = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
+		target_velocity[0] = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
+		return target_velocity;
 	}
 };
 //----------------------------------------------------------------------

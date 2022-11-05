@@ -66,19 +66,20 @@ public:
 	}
 };
 //----------------------------------------------------------------------
-//	Far-field velocity
+//	Free-stream velocity
 //----------------------------------------------------------------------
-struct FarFieldVelocity
+struct FreeStreamVelocity
 {
-	Real u_ave_, u_ref_, t_ref_;
+	Real u_ref_, t_ref_;
 
-	FarFieldVelocity() : u_ave_(0), u_ref_(U_f), t_ref_(2.0) {}
+	FreeStreamVelocity() : u_ref_(U_f), t_ref_(2.0) {}
 
 	Vecd operator()(Vecd &position, Vecd &velocity)
 	{
+		Vecd target_velocity(0);
 		Real run_time = GlobalStaticVariables::physical_time_;
-		u_ave_ = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
-		return Vecd(u_ave_, 0.0);
+		target_velocity[0] = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
+		return target_velocity;
 	}
 };
 //----------------------------------------------------------------------
