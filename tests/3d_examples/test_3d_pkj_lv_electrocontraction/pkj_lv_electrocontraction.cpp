@@ -207,13 +207,13 @@ int main(int ac, char *av[])
 	/** Active mechanics. */
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> correct_configuration_contraction(mechanics_heart_inner);
 	/** Observer Dynamics */
-	InteractionDynamics<observer_dynamics::CorrectInterpolationKernelWeights>
+	InteractionDynamics<CorrectInterpolationKernelWeights>
 		correct_kernel_weights_for_interpolation(mechanics_heart_contact);
 	/** Interpolate the active contract stress from electrophysiology body. */
-	InteractionDynamics<observer_dynamics::InterpolatingAQuantity<Real>>
+	InteractionDynamics<InterpolatingAQuantity<Real>>
 		active_stress_interpolation(mechanics_heart_contact, "ActiveContractionStress", "ActiveContractionStress");
 	/** Interpolate the particle position in physiology_heart  from mechanics_heart. */
-	InteractionDynamics<observer_dynamics::InterpolatingAQuantity<Vecd>>
+	InteractionDynamics<InterpolatingAQuantity<Vecd>>
 		interpolation_particle_position(physiology_heart_contact, "Position", "Position");
 	/** Time step size calculation. */
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> get_mechanics_time_step(mechanics_heart);

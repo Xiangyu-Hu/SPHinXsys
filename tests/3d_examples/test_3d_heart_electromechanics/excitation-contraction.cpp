@@ -425,13 +425,13 @@ int main(int ac, char *av[])
 	SimpleDynamics<ApplyStimulusCurrentSII> apply_stimulus_s2(physiology_heart);
 	// Active mechanics.
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> correct_configuration_contraction(mechanics_body_inner);
-	InteractionDynamics<observer_dynamics::CorrectInterpolationKernelWeights> correct_kernel_weights_for_interpolation(mechanics_body_contact);
+	InteractionDynamics<CorrectInterpolationKernelWeights> correct_kernel_weights_for_interpolation(mechanics_body_contact);
 	/** Interpolate the active contract stress from electrophysiology body. */
-	InteractionDynamics<observer_dynamics::InterpolatingAQuantity<Real>>
+	InteractionDynamics<InterpolatingAQuantity<Real>>
 		active_stress_interpolation(mechanics_body_contact, "ActiveContractionStress", "ActiveContractionStress");
 	/** Interpolate the particle position in physiology_heart  from mechanics_heart. */
 	// TODO: this is a bug, we should interpolate displacement other than position.
-	InteractionDynamics<observer_dynamics::InterpolatingAQuantity<Vecd>>
+	InteractionDynamics<InterpolatingAQuantity<Vecd>>
 		interpolation_particle_position(physiology_heart_contact, "Position", "Position");
 	/** Time step size calculation. */
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> get_mechanics_time_step(mechanics_heart);
