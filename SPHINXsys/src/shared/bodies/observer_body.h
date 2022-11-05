@@ -24,7 +24,7 @@
  * @file 	observer_body.h
  * @brief 	An observer body is designed 
  * for observing a real body and recording the observed results via observation dynamics.
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang and Xiangyu Hu
  */
 
 #ifndef OBSERVER_BODY_H

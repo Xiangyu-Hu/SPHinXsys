@@ -23,7 +23,7 @@
 /**
  * @file level_set_shape.h
  * @brief Here, we define geometry based on level set technique.
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang and Xiangyu Hu
  */
 
 #ifndef LEVEL_SET_SHAPE_H
@@ -64,11 +64,12 @@ namespace SPH
 		Vecd computeKernelGradientIntegral(const Vecd &probe_point, Real h_ratio = 1.0);
 		/** small_shift_factor = 1.0 by default, can be increased for difficult geometries for smoothing */
 		LevelSetShape *cleanLevelSet(Real small_shift_factor = 1.0);
+		/** required to build level set from triangular mesh in stl file format. */
 		LevelSetShape *correctLevelSetSign(Real small_shift_factor = 1.0);
 		void writeLevelSet(IOEnvironment &io_environment);
 
 	protected:
-		BaseLevelSet *level_set_; /**< narrow bounded level set mesh. */
+		BaseLevelSet &level_set_; /**< narrow bounded level set mesh. */
 
 		virtual BoundingBox findBounds() override;
 	};

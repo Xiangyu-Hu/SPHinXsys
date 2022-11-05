@@ -128,7 +128,6 @@ int main(int ac, char *av[])
 		SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(cylinder);
 		SimpleDynamics<RandomizeParticlePosition> random_water_body_particles(water_block);
 		BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
-		;
 		ReloadParticleIO write_real_body_particle_reload_files(io_environment, sph_system.real_bodies_);
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(cylinder_inner, true);
 		relax_dynamics::RelaxationStepComplex relaxation_step_complex(water_block_complex, "OuterBoundary", true);

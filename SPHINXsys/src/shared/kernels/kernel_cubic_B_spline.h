@@ -25,7 +25,7 @@
 * @brief This is the class for cubic_B_spline kernel.
 * @details  This kernel has compact support of 2h.
 * The smoothing length h can be variable when variable h functions are applied.
-* @author	Zhentong Wang, Luhui Han, Chi ZHang and Xiangyu Hu
+* @author	Zhentong Wang, Luhui Han, Chi Zhang and Xiangyu Hu
 */
 
 

@@ -167,6 +167,13 @@ namespace SPH
         }
     }
     //=================================================================================================//
+    template <typename SequenceMethod>
+    void BaseParticles::sortParticles(SequenceMethod &sequence_method)
+    {
+        StdLargeVec<size_t> &sequence = sequence_method.computingSequence(*this);
+        particle_sorting_.sortingParticleData(sequence.data(), total_real_particles_);
+    }
+    //=================================================================================================//
     template <typename VariableType>
     void BaseParticles::resizeParticleData<VariableType>::
     operator()(ParticleData &particle_data, size_t new_size) const

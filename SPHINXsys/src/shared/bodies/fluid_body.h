@@ -23,7 +23,7 @@
 /**
  * @file    fluid_body.h
  * @brief 	This is the class for bodies used for fluid.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef FLUID_BODY_H

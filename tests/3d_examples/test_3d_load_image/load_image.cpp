@@ -45,7 +45,7 @@ int main()
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	RealBody imported_model(system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
-	imported_model.defineAdaptation<ParticleSpacingByBodyShape>(1.15, 1.0, 2);
+	imported_model.defineAdaptation<ParticleRefinementNearSurface>(1.15, 1.0, 2);
 	imported_model.defineBodyLevelSetShape()->writeLevelSet(io_environment);
 	imported_model.defineParticlesAndMaterial();
 	imported_model.generateParticles<ParticleGeneratorMultiResolution>();
@@ -54,7 +54,7 @@ int main()
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_imported_model_to_vtp(io_environment, {imported_model});
-	MeshRecordingToPlt cell_linked_list_recording(io_environment, imported_model.cell_linked_list_);
+	MeshRecordingToPlt cell_linked_list_recording(io_environment, imported_model.getCellLinkedList());
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
@@ -69,7 +69,7 @@ int main()
 	/** A  Physics relaxation step. */
 	// relax_dynamics::RelaxationStepInner relaxation_step_inner(imported_model_inner.get(), true);
 	relax_dynamics::RelaxationStepInner relaxation_step_inner(imported_model_inner, true);
-	SimpleDynamics<relax_dynamics::UpdateSmoothingLengthRatioByBodyShape> update_smoothing_length_ratio(imported_model);
+	SimpleDynamics<relax_dynamics::UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(imported_model);
 	//----------------------------------------------------------------------
 	//	Particle relaxation starts here.
 	//----------------------------------------------------------------------

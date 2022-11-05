@@ -1,7 +1,7 @@
 
 /**
  * @file 	io_base.cpp
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang and Xiangyu Hu
  */
 
 #include "io_base.h"
@@ -75,7 +75,7 @@ namespace SPH
 		: BaseIO(io_environment), bodies_(bodies),
 		  overall_file_path_(io_environment.restart_folder_ + "/Restart_time_")
 	{
-		std::transform(bodies.begin(), bodies.end(), std::back_inserter(file_paths_),
+		std::transform(bodies.begin(), bodies.end(), std::back_inserter(file_names_),
 					   [&](SPHBody *body) -> std::string
 					   { return io_environment.restart_folder_ + "/SPHBody_" + body->getName() + "_rst_"; });
 	}
@@ -93,7 +93,7 @@ namespace SPH
 
 		for (size_t i = 0; i < bodies_.size(); ++i)
 		{
-			std::string filefullpath = file_paths_[i] + padValueWithZeros(iteration_step) + ".xml";
+			std::string filefullpath = file_names_[i] + padValueWithZeros(iteration_step) + ".xml";
 
 			if (fs::exists(filefullpath))
 			{
@@ -125,7 +125,7 @@ namespace SPH
 	{
 		for (size_t i = 0; i < bodies_.size(); ++i)
 		{
-			std::string filefullpath = file_paths_[i] + padValueWithZeros(restart_step) + ".xml";
+			std::string filefullpath = file_names_[i] + padValueWithZeros(restart_step) + ".xml";
 
 			if (!fs::exists(filefullpath))
 			{
@@ -141,7 +141,7 @@ namespace SPH
 	ReloadParticleIO::ReloadParticleIO(IOEnvironment &io_environment, SPHBodyVector bodies)
 		: BaseIO(io_environment), bodies_(bodies)
 	{
-		std::transform(bodies.begin(), bodies.end(), std::back_inserter(file_paths_),
+		std::transform(bodies.begin(), bodies.end(), std::back_inserter(file_names_),
 					   [&](SPHBody *body) -> std::string
 					   { return io_environment.reload_folder_ + "/" + body->getName() + "_rld.xml"; });
 	}
@@ -150,7 +150,7 @@ namespace SPH
 									   const std::string &given_body_name)
 		: BaseIO(io_environment), bodies_({&sph_body})
 	{
-		file_paths_.push_back(io_environment.reload_folder_ + "/" + given_body_name + "_rld.xml");
+		file_names_.push_back(io_environment.reload_folder_ + "/" + given_body_name + "_rld.xml");
 	}
 	//=============================================================================================//
 	ReloadParticleIO::ReloadParticleIO(IOEnvironment &io_environment, SPHBody &sph_body)
@@ -160,7 +160,7 @@ namespace SPH
 	{
 		for (size_t i = 0; i < bodies_.size(); ++i)
 		{
-			std::string filefullpath = file_paths_[i];
+			std::string filefullpath = file_names_[i];
 
 			if (fs::exists(filefullpath))
 			{
@@ -175,7 +175,7 @@ namespace SPH
 		std::cout << "\n Reloading particles from files." << std::endl;
 		for (size_t i = 0; i < bodies_.size(); ++i)
 		{
-			std::string filefullpath = file_paths_[i];
+			std::string filefullpath = file_names_[i];
 
 			if (!fs::exists(filefullpath))
 			{
@@ -208,7 +208,7 @@ namespace SPH
 
 		for (size_t i = 0; i < materials_.size(); ++i)
 		{
-			materials_[i]->writeToXmlForReloadLocalParameters(file_paths_[i]);
+			materials_[i]->writeToXmlForReloadLocalParameters(file_names_[i]);
 		}
 	}
 	//=================================================================================================//
@@ -216,7 +216,7 @@ namespace SPH
 	{
 		for (size_t i = 0; i < materials_.size(); ++i)
 		{
-			std::string filefullpath = file_paths_[i];
+			std::string filefullpath = file_names_[i];
 
 			if (!fs::exists(filefullpath))
 			{
@@ -225,7 +225,7 @@ namespace SPH
 				exit(1);
 			}
 
-			materials_[i]->readFromXmlForLocalParameters(file_paths_[i]);
+			materials_[i]->readFromXmlForLocalParameters(file_names_[i]);
 		}
 	}
 	//=================================================================================================//

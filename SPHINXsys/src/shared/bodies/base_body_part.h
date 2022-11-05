@@ -25,7 +25,7 @@
  * @brief 	This is the base classes of body parts.
  * @details	There two main type of body parts. One is part by particle.
  * 			The other is part by cell.
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang and Xiangyu Hu
  */
 
 #ifndef BASE_BODY_PART_H
@@ -109,11 +109,11 @@ namespace SPH
 		size_t SizeOfLoopRange();
 
 		BodyPartByCell(RealBody &real_body, const std::string &body_part_name)
-			: BodyPart(real_body, body_part_name), cell_linked_list_(real_body.cell_linked_list_){};
+			: BodyPart(real_body, body_part_name), cell_linked_list_(real_body.getCellLinkedList()){};
 		virtual ~BodyPartByCell(){};
 
 	protected:
-		BaseCellLinkedList *cell_linked_list_;
+		BaseCellLinkedList &cell_linked_list_;
 		typedef std::function<bool(Vecd, Real)> TaggingCellMethod;
 		void tagCells(TaggingCellMethod &tagging_cell_method);
 	};

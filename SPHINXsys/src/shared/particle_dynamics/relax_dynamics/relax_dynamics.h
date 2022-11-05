@@ -1,30 +1,30 @@
-/* -------------------------------------------------------------------------*
- *								SPHinXsys									*
- * --------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
- * (smoothed particle hydrodynamics), a meshless computational method using	*
- * particle discretization.													*
- *																			*
- * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
- * and HU1527/12-1.															*
- *                                                                           *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
- * the authors' affiliations.												*
- *                                                                           *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
- * not use this file except in compliance with the License. You may obtain a *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
- *                                                                           *
- * --------------------------------------------------------------------------*/
+/* -----------------------------------------------------------------------------*
+ *                               SPHinXsys                                      *
+ * -----------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
+ * physical accurate simulation and aims to model coupled industrial dynamic    *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
+ * (smoothed particle hydrodynamics), a meshless computational method using     *
+ * particle discretization.                                                     *
+ *                                                                              *
+ * SPHinXsys is partially funded by German Research Foundation                  *
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
+ * HU1527/12-1 and HU1527/12-4.                                                 *
+ *                                                                              *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and          *
+ * the authors' affiliations.                                                   *
+ *                                                                              *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
+ * not use this file except in compliance with the License. You may obtain a    *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
+ *                                                                              *
+ * -----------------------------------------------------------------------------*/
 /**
  * @file 	relax_dynamics.h
  * @brief 	This is the classes of particle relaxation in order to produce body fitted
  * 			initial particle distribution.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef RELAX_DYNAMICS_H
@@ -122,22 +122,23 @@ namespace SPH
 		};
 
 		/**
-		 * @class UpdateSmoothingLengthRatioByBodyShape
+		 * @class UpdateSmoothingLengthRatioByShape
 		 * @brief update the particle smoothing length ratio
 		 */
-		class UpdateSmoothingLengthRatioByBodyShape : public LocalDynamics,
+		class UpdateSmoothingLengthRatioByShape : public LocalDynamics,
 													  public RelaxDataDelegateSimple
 		{
 		protected:
 			StdLargeVec<Real> &h_ratio_, &Vol_;
 			StdLargeVec<Vecd> &pos_;
-			Shape &body_shape_;
-			ParticleSpacingByBodyShape *particle_spacing_by_body_shape_;
+			Shape &target_shape_;
+			ParticleRefinementByShape *particle_adaptation_;
 			Real reference_spacing_;
 
 		public:
-			explicit UpdateSmoothingLengthRatioByBodyShape(SPHBody &sph_body);
-			virtual ~UpdateSmoothingLengthRatioByBodyShape(){};
+			UpdateSmoothingLengthRatioByShape(SPHBody &sph_body, Shape &target_shape);
+			explicit UpdateSmoothingLengthRatioByShape(SPHBody &sph_body);
+			virtual ~UpdateSmoothingLengthRatioByShape(){};
 
 			void update(size_t index_i, Real dt = 0.0);
 		};

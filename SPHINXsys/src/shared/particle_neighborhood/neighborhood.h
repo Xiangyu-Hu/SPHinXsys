@@ -1,25 +1,25 @@
-/* -------------------------------------------------------------------------*
- *								SPHinXsys									*
- * --------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
- * (smoothed particle hydrodynamics), a meshless computational method using	*
- * particle discretization.													*
- *																			*
- * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
- * and HU1527/12-1.															*
- *                                                                           *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
- * the authors' affiliations.												*
- *                                                                           *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
- * not use this file except in compliance with the License. You may obtain a *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
- *                                                                           *
- * --------------------------------------------------------------------------*/
+/* -----------------------------------------------------------------------------*
+ *                               SPHinXsys                                      *
+ * -----------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
+ * physical accurate simulation and aims to model coupled industrial dynamic    *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
+ * (smoothed particle hydrodynamics), a meshless computational method using     *
+ * particle discretization.                                                     *
+ *                                                                              *
+ * SPHinXsys is partially funded by German Research Foundation                  *
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
+ * HU1527/12-1 and HU1527/12-4.                                                 *
+ *                                                                              *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and          *
+ * the authors' affiliations.                                                   *
+ *                                                                              *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
+ * not use this file except in compliance with the License. You may obtain a    *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
+ *                                                                              *
+ * -----------------------------------------------------------------------------*/
 /**
  * @file 	neighborhood.h
  * @brief 	There are the classes for particle neighborhood.
@@ -40,6 +40,7 @@ namespace SPH
 
 	class SPHBody;
 	class BodyPart;
+	class SPHAdaptation;
 
 	/**
 	 * @class Neighborhood
@@ -70,7 +71,7 @@ namespace SPH
 
 	/**
 	 * @class NeighborBuilder
-	 * @brief Base class for building neighbor between particles i and j.
+	 * @brief Base class for building a neighbor particle j around particles i.
 	 */
 	class NeighborBuilder
 	{
@@ -80,16 +81,16 @@ namespace SPH
 		//	Below are for constant smoothing length.
 		//----------------------------------------------------------------------
 		void createNeighbor(Neighborhood &neighborhood, const Real &distance,
-							const Vecd &displacement, size_t j_index, const Real Vol_j);
+							const Vecd &displacement, size_t j_index, const Real &Vol_j);
 		void initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
-								const Vecd &displacement, size_t j_index, const Real Vol_j);
+								const Vecd &displacement, size_t j_index, const Real &Vol_j);
 		//----------------------------------------------------------------------
 		//	Below are for variable smoothing length.
 		//----------------------------------------------------------------------
 		void createNeighbor(Neighborhood &neighborhood, const Real &distance,
-							const Vecd &displacement, size_t j_index, const Real Vol_j, Real i_h_ratio, Real h_ratio_min);
+							const Vecd &displacement, size_t j_index, const Real &Vol_j, Real i_h_ratio, Real h_ratio_min);
 		void initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
-								const Vecd &displacement, size_t j_index, const Real Vol_j, Real i_h_ratio, Real h_ratio_min);
+								const Vecd &displacement, size_t j_index, const Real &Vol_j, Real i_h_ratio, Real h_ratio_min);
 
 	public:
 		NeighborBuilder() : kernel_(nullptr){};
@@ -98,7 +99,7 @@ namespace SPH
 
 	/**
 	 * @class NeighborBuilderInner
-	 * @brief A inner neighbor relation functor between particles i and j.
+	 * @brief A inner neighbor builder functor.
 	 */
 	class NeighborBuilderInner : public NeighborBuilder
 	{
@@ -109,14 +110,13 @@ namespace SPH
 	};
 
 	/**
-	 * @class AdaptiveNeighborBuilderInner
-	 * @brief A inner neighbor relation functor between particles i and j
-	 * when the particles have different smoothing lengths.
+	 * @class NeighborBuilderInnerAdaptive
+	 * @brief A inner neighbor builder functor when the particles have different smoothing lengths.
 	 */
-	class AdaptiveNeighborBuilderInner : public NeighborBuilder
+	class NeighborBuilderInnerAdaptive : public NeighborBuilder
 	{
 	public:
-		explicit AdaptiveNeighborBuilderInner(SPHBody &body);
+		explicit NeighborBuilderInnerAdaptive(SPHBody &body);
 		void operator()(Neighborhood &neighborhood,
 						const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
 
@@ -126,7 +126,7 @@ namespace SPH
 
 	/**
 	 * @class NeighborBuilderSelfContact
-	 * @brief A self-contact neighbor builder between particles i and j.
+	 * @brief A self-contact neighbor builder functor.
 	 */
 	class NeighborBuilderSelfContact : public NeighborBuilder
 	{
@@ -142,7 +142,7 @@ namespace SPH
 
 	/**
 	 * @class NeighborBuilderContact
-	 * @brief A contact neighbor relation functor between particles i and j.
+	 * @brief A contact neighbor builder functor for contact relation.
 	 */
 	class NeighborBuilderContact : public NeighborBuilder
 	{
@@ -154,22 +154,22 @@ namespace SPH
 	};
 
 	/**
-	 * @class NeighborBuilderSolidContact
-	 * @brief A solid contact neighbor relation functor between particles i and j.
+	 * @class NeighborBuilderSurfaceContact
+	 * @brief A solid contact neighbor builder functor when bodies having surface contact.
 	 */
-	class NeighborBuilderSolidContact : public NeighborBuilderContact
+	class NeighborBuilderSurfaceContact : public NeighborBuilderContact
 	{
 	private:
 		UniquePtrKeeper<Kernel> kernel_keeper_;
 
 	public:
-		NeighborBuilderSolidContact(SPHBody &body, SPHBody &contact_body);
-		virtual ~NeighborBuilderSolidContact(){};
+		NeighborBuilderSurfaceContact(SPHBody &body, SPHBody &contact_body);
+		virtual ~NeighborBuilderSurfaceContact(){};
 	};
 
 	/**
 	 * @class NeighborBuilderContactBodyPart
-	 * @brief A contact neighbor relation functor between particles i and j.
+	 * @brief A contact neighbor builder functor when particles j belongs a body part.
 	 */
 	class NeighborBuilderContactBodyPart : public NeighborBuilder
 	{
@@ -182,5 +182,23 @@ namespace SPH
 	protected:
 		StdLargeVec<int> part_indicator_; /**< indicator of the body part */
 	};
+
+	/**
+	 * @class NeighborBuilderContactAdaptive
+	 * @brief A contact neighbor builder functor when the particles have different smoothing lengths.
+	 */
+	class NeighborBuilderContactAdaptive : public NeighborBuilder
+	{
+	public:
+		explicit NeighborBuilderContactAdaptive(SPHBody &body, SPHBody &contact_body);
+		virtual ~NeighborBuilderContactAdaptive(){};
+		void operator()(Neighborhood &neighborhood,
+						const Vecd &pos_i, size_t index_i, const ListData &list_data_j);
+
+	protected:
+		SPHAdaptation &adaptation_, &contact_adaptation_;
+		Real relative_h_ref_;
+	};
+
 }
 #endif // NEIGHBORHOOD_H

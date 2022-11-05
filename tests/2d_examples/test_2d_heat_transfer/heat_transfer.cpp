@@ -330,7 +330,7 @@ int main()
 			Real Dt = get_fluid_advection_time_step.parallel_exec();
 			update_density_by_summation.parallel_exec();
 			viscous_acceleration.parallel_exec();
-			transport_velocity_correction.parallel_exec(Dt);
+			transport_velocity_correction.parallel_exec();
 
 			size_t inner_ite_dt = 0;
 			Real relaxation_time = 0.0;

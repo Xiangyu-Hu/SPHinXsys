@@ -24,7 +24,7 @@
  * @file 	particle_generator_network.h
  * @brief 	This is a class of particle generator, which generates particles
  * 			with in network or tree form.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef PARTICLE_GENERATOR_NETWORK_H
@@ -63,7 +63,7 @@ namespace SPH
 		Real fascicle_ratio_ = 15.0;						/**< ratio of length  of the fascicles. Include one per fascicle to include.*/
 		SPHBody &sph_body_;
 		Shape &body_shape_;
-		BaseCellLinkedList *cell_linked_list_;
+		BaseCellLinkedList &cell_linked_list_;
 		TreeBody *tree_;
 		/**
 		 *@brief Get the gradient from nearest points, for imposing repulsive force.

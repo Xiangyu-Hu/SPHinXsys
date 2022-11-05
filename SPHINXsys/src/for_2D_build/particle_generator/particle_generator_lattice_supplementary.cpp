@@ -1,6 +1,6 @@
 /**
  * @file 	particle_generator_lattice_supplementary.cpp
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang and Xiangyu Hu
  */
 
 #include "particle_generator_lattice.h"

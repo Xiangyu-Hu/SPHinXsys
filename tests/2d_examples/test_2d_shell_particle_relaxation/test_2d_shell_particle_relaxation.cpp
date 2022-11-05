@@ -51,7 +51,7 @@ int main()
 	 * @brief define simple data file input and outputs functions.
 	 */
 	BodyStatesRecordingToVtp write_real_body_states(io_environment, {pipe_body});
-	MeshRecordingToPlt write_mesh_cell_linked_list(io_environment, pipe_body.cell_linked_list_);
+	MeshRecordingToPlt write_mesh_cell_linked_list(io_environment, pipe_body.getCellLinkedList());
 
 	/** Set body contact map
 	 *  The contact map gives the data connections between the bodies

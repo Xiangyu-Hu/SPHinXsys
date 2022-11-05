@@ -31,6 +31,11 @@
  *			InteractionSplit is InteractionDynamics but using spliting algorithm;
  *			InteractionWithUpdate is with particle interaction with its neighbors and then update their states;
  *			Dynamics1Level is the most complex dynamics, has successive three steps: initialization, interaction and update.
+ *			In order to avoid misusing of the above algorithms, type traits are used to make sure that the matching between
+ *			the algorithm and local dynamics. For example, the LocalDynamics which matches InteractionDynamics must have
+ *			the function interaction() but should not have the function update() or initialize().
+ *			The existence of the latter suggests that more complex algorithms,
+ *			such as InteractionWithUpdate or Dynamics1Level should be used.
  *			There are 2 classes for the second type.
  *			ReduceDynamics carries out a reduce operation through the particles.
  *			ReduceAverage further computes average of a ReduceDynamics for summation.
@@ -39,7 +44,7 @@
  *			and is recognized by particle dynamics with the signature functions, like update, initialization and interaction.
  *			DynamicsRange define and range of particles for the dynamics.
  *			The default range is the entire body. Other ranges are BodyPartByParticle and BodyPartByCell.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang, Fabien Pean and Xiangyu Hu
  */
 
 #ifndef PARTICLE_DYNAMICS_ALGORITHMS_H
@@ -49,8 +54,41 @@
 #include "base_local_dynamics.h"
 #include "base_particle_dynamics.hpp"
 
+#include <type_traits>
+
 namespace SPH
 {
+	template <class T, class = void>
+	struct has_initialize : std::false_type
+	{
+	};
+
+	template <class T>
+	struct has_initialize<T, std::void_t<decltype(&T::initialize)>> : std::true_type
+	{
+	};
+
+	
+	template <class T, class = void>
+	struct has_interaction : std::false_type
+	{
+	};
+
+	template <class T>
+	struct has_interaction<T, std::void_t<decltype(&T::interaction)>> : std::true_type
+	{
+	};
+	
+	template <class T, class = void>
+	struct has_update : std::false_type
+	{
+	};
+
+	template <class T>
+	struct has_update<T, std::void_t<decltype(&T::update)>> : std::true_type
+	{
+	};
+
 	/**
 	 * @class SimpleDynamics
 	 * @brief Simple particle dynamics without considering particle interaction
@@ -64,7 +102,12 @@ namespace SPH
 		template <class DerivedDynamicsRange, typename... Args>
 		SimpleDynamics(DerivedDynamicsRange &derived_dynamics_range, Args &&...args)
 			: LocalDynamicsType(derived_dynamics_range, std::forward<Args>(args)...),
-			  BaseDynamics<void>(), dynamics_range_(derived_dynamics_range){};
+			  BaseDynamics<void>(), dynamics_range_(derived_dynamics_range)
+		{
+			static_assert(!has_initialize<LocalDynamicsType>::value &&
+							  !has_interaction<LocalDynamicsType>::value,
+						  "LocalDynamicsType does not fulfill SimpleDynamics requirements");
+		};
 		virtual ~SimpleDynamics(){};
 
 		virtual void exec(Real dt = 0.0) override
@@ -220,6 +263,9 @@ namespace SPH
 			  split_cell_lists_(real_body_.getSplitCellLists())
 		{
 			real_body_.setUseSplitCellLists();
+			static_assert(!has_initialize<LocalDynamicsType>::value &&
+							  !has_update<LocalDynamicsType>::value,
+						  "LocalDynamicsType does not fulfill InteractionSplit requirements");
 		};
 		virtual ~InteractionSplit(){};
 
@@ -265,8 +311,12 @@ namespace SPH
 	public:
 		template <class BodyRelationType, typename... Args>
 		InteractionDynamics(BodyRelationType &body_relation, Args &&...args)
-			: BaseInteractionDynamics<LocalDynamicsType>(body_relation, std::forward<Args>(args)...),
-			  dynamics_range_(body_relation.getDynamicsRange()){};
+			: InteractionDynamics(true, body_relation, std::forward<Args>(args)...)
+		{
+			static_assert(!has_initialize<LocalDynamicsType>::value &&
+							  !has_update<LocalDynamicsType>::value,
+						  "LocalDynamicsType does not fulfill InteractionDynamics requirements");
+		};
 		virtual ~InteractionDynamics(){};
 
 		virtual void runInteractionStep(Real dt) override
@@ -294,6 +344,12 @@ namespace SPH
 			for (size_t k = 0; k < this->post_processes_.size(); ++k)
 				this->post_processes_[k]->parallel_exec(dt);
 		}
+
+	protected:
+		template <class BodyRelationType, typename... Args>
+		InteractionDynamics(bool mostDerived, BodyRelationType &body_relation, Args &&...args)
+			: BaseInteractionDynamics<LocalDynamicsType>(body_relation, std::forward<Args>(args)...),
+			  dynamics_range_(body_relation.getDynamicsRange()){};
 	};
 
 	/**
@@ -306,7 +362,11 @@ namespace SPH
 	public:
 		template <class BodyRelationType, typename... Args>
 		InteractionWithUpdate(BodyRelationType &body_relation, Args &&...args)
-			: InteractionDynamics<LocalDynamicsType, DynamicsRange>(body_relation, std::forward<Args>(args)...) {}
+			: InteractionWithUpdate(true, body_relation, std::forward<Args>(args)...)
+		{
+			static_assert(!has_initialize<LocalDynamicsType>::value,
+						  "LocalDynamicsType does not fulfill InteractionWithUpdate requirements");
+		}
 		virtual ~InteractionWithUpdate(){};
 
 		virtual void exec(Real dt = 0.0) override
@@ -324,6 +384,12 @@ namespace SPH
 								  [&](size_t i)
 								  { this->update(i, dt); });
 		};
+
+	protected:
+		template <class BodyRelationType, typename... Args>
+		InteractionWithUpdate(bool mostDerived, BodyRelationType &body_relation, Args &&...args)
+			: InteractionDynamics<LocalDynamicsType, DynamicsRange>(
+				  false, body_relation, std::forward<Args>(args)...) {}
 	};
 
 	/**
@@ -338,7 +404,8 @@ namespace SPH
 	public:
 		template <class BodyRelationType, typename... Args>
 		Dynamics1Level(BodyRelationType &body_relation, Args &&...args)
-			: InteractionWithUpdate<LocalDynamicsType, DynamicsRange>(body_relation, std::forward<Args>(args)...) {}
+			: InteractionWithUpdate<LocalDynamicsType, DynamicsRange>(
+				  false, body_relation, std::forward<Args>(args)...) {}
 		virtual ~Dynamics1Level(){};
 
 		virtual void exec(Real dt = 0.0) override
@@ -373,52 +440,5 @@ namespace SPH
 								  { this->update(i, dt); });
 		};
 	};
-
-	/**
-	 * @class CombinedLocalDynamics
-	 * @brief This is the class for combining multiple local interaction dynamics,
-	 * which share the particle loop but are independent from each other,
-	 * aiming to increase computing intensity under the data caching environment
-	 */
-	template <typename... MultipleLocalDynamics>
-	class CombinedLocalInteraction;
-
-	template <>
-	class CombinedLocalInteraction<> : public LocalDynamics
-	{
-	public:
-		template <class BodyRelationType>
-		CombinedLocalInteraction(BodyRelationType &body_relation) : LocalDynamics(body_relation.getDynamicsRange()){};
-
-		void interaction(size_t index_i, Real dt = 0.0){};
-	};
-
-	template <class FirstLocalDynamics, class... OtherLocalDynamics>
-	class CombinedLocalInteraction<FirstLocalDynamics, OtherLocalDynamics...> : public LocalDynamics
-	{
-	protected:
-		FirstLocalDynamics first_local_dynamics_;
-		CombinedLocalInteraction<OtherLocalDynamics...> other_local_dynamics_;
-
-	public:
-		template <typename BodyRelationType, typename... FirstArgs, typename... OtherArgs>
-		CombinedLocalInteraction(BodyRelationType &body_relation, FirstArgs &&...first_args, OtherArgs &&...other_args)
-			: LocalDynamics(body_relation.getDynamicsRange()),
-			  first_local_dynamics_(body_relation, std::forward<FirstArgs>(first_args)...),
-			  other_local_dynamics_(body_relation, std::forward<OtherArgs>(other_args)...){};
-
-		virtual void setupDynamics(Real dt = 0.0) override
-		{
-			first_local_dynamics_.setupDynamics(dt);
-			other_local_dynamics_.setupDynamics(dt);
-		};
-
-		void interaction(size_t index_i, Real dt = 0.0)
-		{
-			first_local_dynamics_.interaction(index_i, dt);
-			other_local_dynamics_.interaction(index_i, dt);
-		};
-	};
-
 }
 #endif // PARTICLE_DYNAMICS_ALGORITHMS_H
