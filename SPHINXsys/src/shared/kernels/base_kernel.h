@@ -91,9 +91,9 @@ namespace SPH
 		/** Calculates the kernel value for the given displacement of two particles
 		 * r_ij pointing from particle j to particle i
 		 */
-		virtual Real W(const Real &r_ij, const Real &displacement) const;
-		virtual Real W(const Real &r_ij, const Vec2d &displacement) const;
-		virtual Real W(const Real &r_ij, const Vec3d &displacement) const;
+		Real W(const Real &r_ij, const Real &displacement) const;
+		Real W(const Real &r_ij, const Vec2d &displacement) const;
+		Real W(const Real &r_ij, const Vec3d &displacement) const;
 
 		/** this value could be use to calculate the value of W
 		 * they are realized in specific kernel implementations
@@ -103,16 +103,16 @@ namespace SPH
 		virtual Real W_3D(const Real q) const = 0;
 
 		/** Calculates the kernel value at the origin **/
-		virtual Real W0(const Real &point_i) const { return factor_W_1D_; };
-		virtual Real W0(const Vec2d &point_i) const { return factor_W_2D_; };
-		virtual Real W0(const Vec3d &point_i) const { return factor_W_3D_; };
+		Real W0(const Real &point_i) const { return factor_W_1D_; };
+		Real W0(const Vec2d &point_i) const { return factor_W_2D_; };
+		Real W0(const Vec3d &point_i) const { return factor_W_3D_; };
 
 		/** Calculates the kernel derivation for
 		 * the given distance of two particles
 		 */
-		virtual Real dW(const Real &r_ij, const Real &displacement) const;
-		virtual Real dW(const Real &r_ij, const Vec2d &displacement) const;
-		virtual Real dW(const Real &r_ij, const Vec3d &displacement) const;
+		Real dW(const Real &r_ij, const Real &displacement) const;
+		Real dW(const Real &r_ij, const Vec2d &displacement) const;
+		Real dW(const Real &r_ij, const Vec3d &displacement) const;
 
 		/** this value could be use to calculate the value of dW
 		 * they are realized in specific kernel implementations
@@ -124,9 +124,9 @@ namespace SPH
 		/** Calculates the kernel second order derivation for
 		 * the given distance of two particles
 		 */
-		virtual Real d2W(const Real &r_ij, const Real &displacement) const;
-		virtual Real d2W(const Real &r_ij, const Vec2d &displacement) const;
-		virtual Real d2W(const Real &r_ij, const Vec3d &displacement) const;
+		Real d2W(const Real &r_ij, const Real &displacement) const;
+		Real d2W(const Real &r_ij, const Vec2d &displacement) const;
+		Real d2W(const Real &r_ij, const Vec3d &displacement) const;
 
 		/** this value could be use to calculate the value of d2W
 		 * they are realized in specific kernel implementations

@@ -88,7 +88,6 @@ namespace SPH
 	/**
 	 * @class SurfaceContactRelation
 	 * @brief The relation between a solid body and its contact solid bodies
-	 * TODO: better called BodySurfaceContact
 	 */
 	class SurfaceContactRelation : public ContactRelationCrossResolution
 	{
