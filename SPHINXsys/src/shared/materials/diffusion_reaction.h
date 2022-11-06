@@ -159,7 +159,6 @@ namespace SPH
 	/**
 	 * @class BaseReactionModel
 	 * @brief Base class for all reaction models.
-	 * TODO: this model has big cache issue. to be improved.
 	 */
 	template <int NUM_SPECIES>
 	class BaseReactionModel
