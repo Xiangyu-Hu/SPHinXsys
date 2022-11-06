@@ -11,6 +11,19 @@ namespace SPH
 	namespace fluid_dynamics
 	{
 		//=================================================================================================//
+		BaseFlowBoundaryCondition::BaseFlowBoundaryCondition(BodyPartByCell &body_part)
+			: LocalDynamics(body_part.getSPHBody()), FluidDataSimple(sph_body_),
+			  rho_(particles_->rho_), p_(particles_->p_),
+			  pos_(particles_->pos_), vel_(particles_->vel_){};
+		//=================================================================================================//
+		FlowVelocityBuffer::FlowVelocityBuffer(BodyPartByCell &body_part, Real relaxation_rate)
+			: BaseFlowBoundaryCondition(body_part), relaxation_rate_(relaxation_rate){};
+		//=================================================================================================//
+		void FlowVelocityBuffer::update(size_t index_i, Real dt)
+		{
+			vel_[index_i] += relaxation_rate_ * (getTargetVelocity(pos_[index_i], vel_[index_i]) - vel_[index_i]);
+		}
+		//=================================================================================================//
 		DampingBoundaryCondition::DampingBoundaryCondition(BodyRegionByCell &body_part)
 			: BaseFlowBoundaryCondition(body_part), strength_(5.0),
 			  damping_zone_bounds_(body_part.body_part_shape_.getBounds()){};
@@ -98,7 +111,7 @@ namespace SPH
 		//=================================================================================================//
 		StaticConfinementDensity::StaticConfinementDensity(NearShapeSurface &near_surface)
 			: LocalDynamics(near_surface.getSPHBody()), FluidDataSimple(sph_body_),
-			  rho0_(sph_body_.base_material_->ReferenceDensity()), 
+			  rho0_(sph_body_.base_material_->ReferenceDensity()),
 			  inv_sigma0_(1.0 / sph_body_.sph_adaptation_->ReferenceNumberDensity()),
 			  mass_(particles_->mass_), rho_sum_(particles_->rho_sum_), pos_(particles_->pos_),
 			  level_set_shape_(&near_surface.level_set_shape_) {}

@@ -129,7 +129,7 @@ int main(int ac, char *av[])
 	/** Inflow boundary condition. */
 	BodyAlignedBoxByCell inflow_buffer(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(buffer_translation)), buffer_halfsize));
-	SimpleDynamics<ParabolicInflow, BodyAlignedBoxByCell> parabolic_inflow(inflow_buffer);
+	SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>, BodyAlignedBoxByCell> parabolic_inflow(inflow_buffer);
 	/** Periodic BCs in x direction. */
 	PeriodicConditionUsingCellLinkedList periodic_condition(water_block, water_block.getBodyShapeBounds(), xAxis);
 	//----------------------------------------------------------------------
@@ -141,7 +141,7 @@ int main(int ac, char *av[])
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> insert_body_corrected_configuration(insert_body_inner);
 	/** Compute the force exerted on solid body due to fluid pressure and viscosity. */
 	InteractionDynamics<solid_dynamics::FluidViscousForceOnSolid> viscous_force_on_solid(insert_body_contact);
-	InteractionDynamics<solid_dynamics::FluidForceOnSolidUpdate> 
+	InteractionDynamics<solid_dynamics::FluidForceOnSolidUpdate>
 		fluid_force_on_solid_update(insert_body_contact, viscous_force_on_solid);
 	/** Compute the average velocity of the insert body. */
 	solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(insert_body);

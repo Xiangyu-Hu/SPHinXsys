@@ -167,34 +167,31 @@ public:
 		positions_.push_back(Vecd(cx + fish_length - resolution_ref, cy));
 	}
 };
-/**
- * Inflow boundary condition.
- */
-class ParabolicInflow : public fluid_dynamics::InflowVelocityCondition
+//----------------------------------------------------------------------
+//	Inflow velocity
+//----------------------------------------------------------------------
+struct InflowVelocity
 {
-	Real u_ave_, u_ref_, t_ref;
+	Real u_ref_, t_ref_;
+	AlignedBoxShape &aligned_box_;
+	Vecd halfsize_;
 
-public:
-	ParabolicInflow(BodyAlignedBoxByCell &aligned_box_part)
-		: InflowVelocityCondition(aligned_box_part),
-		  u_ave_(0), u_ref_(1.0), t_ref(4.0) {}
+	template <class BoundaryConditionType>
+	InflowVelocity(BoundaryConditionType &boundary_condition)
+		: u_ref_(U_f), t_ref_(2.0),
+		  aligned_box_(boundary_condition.getAlignedBox()),
+		  halfsize_(aligned_box_.HalfSize()) {}
 
-	Vecd getPrescribedVelocity(Vecd &position, Vecd &velocity) override
+	Vecd operator()(Vecd &position, Vecd &velocity)
 	{
-		Real u = velocity[0];
-		Real v = velocity[1];
-		if (position[0] < 0.0)
-		{
-			u = 6.0 * u_ave_ * position[1] * (DH - position[1]) / DH / DH;
-			v = 0.0;
-		}
-		return Vecd(u, v);
-	}
-
-	void setupDynamics(Real dt = 0.0) override
-	{
+		Vecd target_velocity = velocity;
 		Real run_time = GlobalStaticVariables::physical_time_;
-		u_ave_ = run_time < t_ref ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref)) : u_ref_;
+		Real u_ave = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
+		if (aligned_box_.checkInBounds(0, position))
+		{
+			target_velocity[0] = 1.5 * u_ave * (1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
+		}
+		return target_velocity;
 	}
 };
 /**
@@ -330,7 +327,7 @@ int main(int ac, char *av[])
 	/** Inflow boundary condition. */
 	BodyAlignedBoxByCell inflow_buffer(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(buffer_translation)), buffer_halfsize));
-	SimpleDynamics<ParabolicInflow, BodyAlignedBoxByCell> parabolic_inflow(inflow_buffer);
+	SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>, BodyAlignedBoxByCell> parabolic_inflow(inflow_buffer);
 
 	/**
 	 * Fluid structure interaction model.

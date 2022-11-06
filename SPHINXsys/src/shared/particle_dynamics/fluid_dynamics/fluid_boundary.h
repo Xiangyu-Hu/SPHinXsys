@@ -44,10 +44,7 @@ namespace SPH
         class BaseFlowBoundaryCondition : public LocalDynamics, public FluidDataSimple
         {
         public:
-            BaseFlowBoundaryCondition(BodyPartByCell &body_part)
-                : LocalDynamics(body_part.getSPHBody()), FluidDataSimple(sph_body_),
-                  rho_(particles_->rho_), p_(particles_->p_),
-                  pos_(particles_->pos_), vel_(particles_->vel_){};
+            BaseFlowBoundaryCondition(BodyPartByCell &body_part);
             virtual ~BaseFlowBoundaryCondition(){};
 
         protected:
@@ -61,24 +58,20 @@ namespace SPH
          * This technique will be used for applying several boundary conditions,
          * such as freestream, inflow, damping boundary conditions.
          */
-        template <typename TargetVelocity>
         class FlowVelocityBuffer : public BaseFlowBoundaryCondition
         {
         public:
-            explicit FlowVelocityBuffer(BodyPartByCell &body_part, Real relaxation_rate = 0.3)
-                : BaseFlowBoundaryCondition(body_part),
-                  relaxation_rate_(relaxation_rate), target_velocity(){};
+            FlowVelocityBuffer(BodyPartByCell &body_part, Real relaxation_rate = 0.3);
             virtual ~FlowVelocityBuffer(){};
-
-            void update(size_t index_i, Real dt = 0.0)
-            {
-                vel_[index_i] += relaxation_rate_ * (target_velocity(pos_[index_i], vel_[index_i]) - vel_[index_i]);
-            };
+            void update(size_t index_i, Real dt = 0.0);
 
         protected:
             /** default value is 0.3 suggests reaching target profile in several time steps */
             Real relaxation_rate_;
-            TargetVelocity target_velocity;
+
+            /** Profile to be defined in applications,
+             * argument parameters and return value are in frame (local) coordinate */
+            virtual Vecd getTargetVelocity(Vecd &position, Vecd &velocity) = 0;
         };
 
         /**
@@ -94,11 +87,11 @@ namespace SPH
             /** default parameter indicates prescribe velocity */
             explicit InflowVelocityCondition(BodyAlignedBoxByCell &aligned_box_part, Real relaxation_rate = 1.0)
                 : BaseFlowBoundaryCondition(aligned_box_part),
-                  relaxation_rate_(relaxation_rate),
-                  transform_(aligned_box_part.aligned_box_.getTransform()),
-                  halfsize_(aligned_box_part.aligned_box_.HalfSize()),
-                  target_velocity(){};
+                  relaxation_rate_(relaxation_rate), aligned_box_(aligned_box_part.aligned_box_),
+                  transform_(aligned_box_.getTransform()), halfsize_(aligned_box_.HalfSize()),
+                  target_velocity(*this){};
             virtual ~InflowVelocityCondition(){};
+            AlignedBoxShape &getAlignedBox() { return aligned_box_; };
 
             void update(size_t index_i, Real dt = 0.0)
             {
@@ -111,6 +104,7 @@ namespace SPH
 
         protected:
             Real relaxation_rate_;
+            AlignedBoxShape &aligned_box_;
             Transformd &transform_;
             Vecd halfsize_;
             TargetVelocity target_velocity;
@@ -139,7 +133,7 @@ namespace SPH
                   transform_(transform), rho_ref_(particles_->fluid_.ReferenceDensity()),
                   rho_sum(particles_->rho_sum_), pos_(particles_->pos_), vel_(particles_->vel_),
                   surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")),
-                  target_velocity(){};
+                  target_velocity(*this){};
             virtual ~FreeStreamVelocityCorrection(){};
 
             void update(size_t index_i, Real dt = 0.0)

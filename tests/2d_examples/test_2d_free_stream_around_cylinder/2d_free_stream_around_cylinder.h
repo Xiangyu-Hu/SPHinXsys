@@ -72,7 +72,9 @@ struct FreeStreamVelocity
 {
 	Real u_ref_, t_ref_;
 
-	FreeStreamVelocity() : u_ref_(U_f), t_ref_(2.0) {}
+	template <class BoundaryConditionType>
+	FreeStreamVelocity(BoundaryConditionType &boundary_condition)
+		: u_ref_(U_f), t_ref_(2.0) {}
 
 	Vecd operator()(Vecd &position, Vecd &velocity)
 	{

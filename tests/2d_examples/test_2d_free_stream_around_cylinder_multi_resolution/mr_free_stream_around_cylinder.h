@@ -38,7 +38,7 @@ Real mu_f = rho0_f * U_f * (2.0 * insert_circle_radius) / Re; /**< Dynamics visc
 std::vector<Vecd> water_block_shape{
 	Vecd(-DL_sponge, 0.0), Vecd(-DL_sponge, DH), Vecd(DL, DH), Vecd(DL, 0.0), Vecd(-DL_sponge, 0.0)};
 std::vector<Vecd> initial_refinement_region{
-	Vecd(-DL_sponge - BW, 5.0), Vecd(-DL_sponge - BW, 11.0), Vecd(DL + BW, 11.0), Vecd(DL + BW, 5.0), Vecd(-DL_sponge -BW, 5.0)};
+	Vecd(-DL_sponge - BW, 5.0), Vecd(-DL_sponge - BW, 11.0), Vecd(DL + BW, 11.0), Vecd(DL + BW, 5.0), Vecd(-DL_sponge - BW, 5.0)};
 Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH);
 Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize;
 Vec2d emitter_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
@@ -75,7 +75,9 @@ struct FreeStreamVelocity
 {
 	Real u_ref_, t_ref_;
 
-	FreeStreamVelocity() : u_ref_(U_f), t_ref_(2.0) {}
+	template <class BoundaryConditionType>
+	FreeStreamVelocity(BoundaryConditionType &boundary_condition)
+		: u_ref_(U_f), t_ref_(2.0) {}
 
 	Vecd operator()(Vecd &position, Vecd &velocity)
 	{
