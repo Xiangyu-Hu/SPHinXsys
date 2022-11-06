@@ -1,5 +1,5 @@
 /**
- * @file 	freestream_flow_around_cylinder_case.h
+ * @file 	freestream_flow_around_cylinder.h
  * @brief 	This is the case file for the test of free-stream boundary condition.
  * @details  We consider a flow pass the cylinder with freestream boundary condition in 2D.
  * @author 	Xiangyu Hu, Shuoguo Zhang
@@ -17,8 +17,6 @@ Real DL_sponge = particle_spacing_ref * 20.0; /**< Sponge region to impose emitt
 Real BW = 4.0 * particle_spacing_ref;		  /**< Sponge region to impose injection. */
 Vec2d insert_circle_center(10.0, 0.5 * DH);	  /**< Location of the cylinder center. */
 Real insert_circle_radius = 1.0;			  /**< Radius of the cylinder. */
-/** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-DL_sponge, -0.25 * DH), Vec2d(DL, 1.25 * DH));
 // Observation locations
 Vec2d point_coordinate_1(3.0, 5.0);
 Vec2d point_coordinate_2(4.0, 5.0);

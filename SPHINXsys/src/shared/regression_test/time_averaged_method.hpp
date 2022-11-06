@@ -572,6 +572,7 @@ namespace SPH
 			std::cout << "The meanvalue of " << this->quantity_name_ << " are not converged " << count_not_converged_m << " times." << endl;
 			return false;
 		}
+		return false;
 	};
 	//=================================================================================================//	
 	template<class ObserveMethodType>

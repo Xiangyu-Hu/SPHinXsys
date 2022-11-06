@@ -74,8 +74,8 @@ namespace SPH
 		template <class BaseViscousAccelerationType>
 		BaseViscousAccelerationWithWall<BaseViscousAccelerationType>::
 			BaseViscousAccelerationWithWall(ComplexRelation &fluid_wall_relation)
-			: BaseViscousAccelerationType(fluid_wall_relation.inner_relation_,
-										  fluid_wall_relation.contact_relation_) {}
+			: BaseViscousAccelerationType(fluid_wall_relation.getInnerRelation(),
+										  fluid_wall_relation.getContactRelation()) {}
 		//=================================================================================================//
 		template <class BaseViscousAccelerationType>
 		BaseViscousAccelerationWithWall<BaseViscousAccelerationType>::

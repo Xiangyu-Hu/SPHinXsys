@@ -53,7 +53,7 @@ int main()
 	 */
 	/** Evaluation of density by summation approach. */
 	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex>
-		update_water_density_by_summation(water_wall_contact, water_air_complex.inner_relation_);
+		update_water_density_by_summation(water_wall_contact, water_air_complex.getInnerRelation());
 	InteractionWithUpdate<fluid_dynamics::DensitySummationComplex>
 		update_air_density_by_summation(air_wall_contact, air_water_complex);
 	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex>
@@ -66,9 +66,9 @@ int main()
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_air_time_step_size(air_block);
 	/** Pressure relaxation for water by using position verlet time stepping. */
 	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall>
-		water_pressure_relaxation(water_wall_contact, water_air_complex.inner_relation_);
+		water_pressure_relaxation(water_wall_contact, water_air_complex.getInnerRelation());
 	Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall>
-		water_density_relaxation(water_wall_contact, water_air_complex.inner_relation_);
+		water_density_relaxation(water_wall_contact, water_air_complex.getInnerRelation());
 	/** Extend Pressure relaxation is used for air. */
 	Dynamics1Level<fluid_dynamics::ExtendMultiPhaseIntegration1stHalfRiemannWithWall>
 		air_pressure_relaxation(air_wall_contact, air_water_complex, 2.0);
@@ -78,10 +78,10 @@ int main()
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhaseWithWall> air_viscous_acceleration(air_wall_contact, air_water_complex);
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhaseWithWall> water_viscous_acceleration(water_wall_contact, water_air_complex);
 	/** Surface tension. */
-	InteractionWithUpdate<fluid_dynamics::FreeSurfaceIndicationInner> surface_detection(water_air_complex.inner_relation_);
-	InteractionDynamics<fluid_dynamics::ColorFunctionGradientInner> color_gradient(water_air_complex.inner_relation_);
-	InteractionDynamics<fluid_dynamics::ColorFunctionGradientInterpolationInner> color_gradient_interpolation(water_air_complex.inner_relation_);
-	InteractionDynamics<fluid_dynamics::SurfaceTensionAccelerationInner> surface_tension_acceleration(water_air_complex.inner_relation_, 1.0);
+	InteractionWithUpdate<fluid_dynamics::FreeSurfaceIndicationInner> surface_detection(water_air_complex.getInnerRelation());
+	InteractionDynamics<fluid_dynamics::ColorFunctionGradientInner> color_gradient(water_air_complex.getInnerRelation());
+	InteractionDynamics<fluid_dynamics::ColorFunctionGradientInterpolationInner> color_gradient_interpolation(water_air_complex.getInnerRelation());
+	InteractionDynamics<fluid_dynamics::SurfaceTensionAccelerationInner> surface_tension_acceleration(water_air_complex.getInnerRelation(), 1.0);
 	/**
 	 * @brief Output.
 	 */
@@ -97,7 +97,7 @@ int main()
 	/**
 	 * @brief 	Basic parameters.
 	 */
-	size_t number_of_iterations = sph_system.restart_step_;
+	size_t number_of_iterations = 0;
 	int screen_output_interval = 100;
 	Real end_time = 1.0;
 	Real output_interval = 0.02;	 /**< Time stamps for output of body states. */

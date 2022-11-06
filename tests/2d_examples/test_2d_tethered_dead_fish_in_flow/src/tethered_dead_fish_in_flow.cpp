@@ -204,11 +204,9 @@ int main(int ac, char *av[])
 	 */
 	SPHSystem system(system_domain_bounds, resolution_ref);
 	/** Tag for run particle relaxation for the initial body fitted distribution. */
-	system.run_particle_relaxation_ = false;
+	system.setRunParticleRelaxation(false);
 	/** Tag for computation start with relaxed body fitted particles distribution. */
-	system.reload_particles_ = true;
-	/** Tag for computation from restart files. 0: start with initial condition. */
-	system.restart_step_ = 0;
+	system.setReloadParticles(true);
 	system.handleCommandlineOptions(ac, av);
 	IOEnvironment io_environment(system);
 
@@ -232,7 +230,7 @@ int main(int ac, char *av[])
 	fish_body.defineBodyLevelSetShape();
 	fish_body.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
 	// Using relaxed particle distribution if needed
-	(!system.run_particle_relaxation_ && system.reload_particles_)
+	(!system.RunParticleRelaxation() && system.ReloadParticles())
 		? fish_body.generateParticles<ParticleGeneratorReload>(io_environment, fish_body.getName())
 		: fish_body.generateParticles<ParticleGeneratorLattice>();
 	/**
@@ -252,7 +250,7 @@ int main(int ac, char *av[])
 	ObservedQuantityRecording<Vecd> write_fish_displacement("Position", io_environment, fish_observer_contact);
 
 	/** check whether run particle relaxation for body fitted particle distribution. */
-	if (system.run_particle_relaxation_)
+	if (system.RunParticleRelaxation())
 	{
 		/**
 		 * @brief 	Methods used for particle relaxation.
@@ -270,7 +268,7 @@ int main(int ac, char *av[])
 		 * @brief 	Particle relaxation starts here.
 		 */
 		random_fish_body_particles.parallel_exec(0.25);
-		relaxation_step_inner.surface_bounding_.parallel_exec();
+		relaxation_step_inner.SurfaceBounding().parallel_exec();
 		write_fish_body.writeToFile();
 
 		/** relax particles of the insert body. */

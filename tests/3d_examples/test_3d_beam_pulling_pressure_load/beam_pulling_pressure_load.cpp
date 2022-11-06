@@ -101,6 +101,7 @@ protected:
 			else if (time > force_arr_.back()[0])
 				return force_arr_.back()[1];
 		}
+		return 0.0;
 	}
 };
 
@@ -237,7 +238,7 @@ int main(int ac, char *av[])
 	}
 	else
 	{
-		write_beam_stress.newResultTest(); 
+		write_beam_stress.newResultTest();
 	}
 
 	return 0;

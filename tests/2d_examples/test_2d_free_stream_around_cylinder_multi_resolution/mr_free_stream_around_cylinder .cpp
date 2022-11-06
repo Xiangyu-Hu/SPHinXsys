@@ -1,7 +1,5 @@
 /**
- * @file 	freestream_flow_around_cylinder_case.h
- * @brief 	This is the case file for the test of free-stream flow.
- * @details  We consider a flow pass the cylinder with freestream boundary condition in 2D.
+ * @file 	mr_freestream_flow_around_cylinder.cpp
  * @author 	Xiangyu Hu, Shuoguo Zhang
  */
 
@@ -15,13 +13,12 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Build up the environment of a SPHSystem with global controls.
 	//----------------------------------------------------------------------
+	BoundingBox system_domain_bounds(Vec2d(-DL_sponge, -0.25 * DH), Vec2d(DL, 1.25 * DH));
 	SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
 	/** Tag for run particle relaxation for the initial body fitted distribution. */
-	sph_system.run_particle_relaxation_ = false;
+	sph_system.setRunParticleRelaxation(false);
 	/** Tag for computation start with relaxed body fitted particles distribution. */
-	sph_system.reload_particles_ = true;
-	/** Tag for computation from restart files. 0: start with initial condition. */
-	sph_system.restart_step_ = 0;
+	sph_system.setReloadParticles(true);
 	/** handle command line arguments. */
 	sph_system.handleCommandlineOptions(ac, av);
 	IOEnvironment io_environment(sph_system);
@@ -33,7 +30,7 @@ int main(int ac, char *av[])
 	water_block.defineComponentLevelSetShape("OuterBoundary")->writeLevelSet(io_environment);
 	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	MultiPolygonShape refinement_region(MultiPolygon(initial_refinement_region), "RefinementRegion");
-	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
+	(!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
 		? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getName())
 		: water_block.generateParticles<ParticleGeneratorMultiResolution>(refinement_region);
 	water_block.addBodyStateForRecording<Real>("SmoothingLengthRatio");
@@ -42,7 +39,7 @@ int main(int ac, char *av[])
 	cylinder.defineAdaptationRatios(1.15, 4.0);
 	cylinder.defineBodyLevelSetShape();
 	cylinder.defineParticlesAndMaterial<SolidParticles, Solid>();
-	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
+	(!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
 		? cylinder.generateParticles<ParticleGeneratorReload>(io_environment, cylinder.getName())
 		: cylinder.generateParticles<ParticleGeneratorLattice>();
 
@@ -61,7 +58,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------
-	if (sph_system.run_particle_relaxation_)
+	if (sph_system.RunParticleRelaxation())
 	{
 		/** body topology only for particle relaxation */
 		InnerRelation cylinder_inner(cylinder);
@@ -82,8 +79,8 @@ int main(int ac, char *av[])
 		//----------------------------------------------------------------------
 		random_inserted_body_particles.parallel_exec(0.25);
 		random_water_body_particles.parallel_exec(0.25);
-		relaxation_step_inner.surface_bounding_.parallel_exec();
-		relaxation_step_complex.surface_bounding_.parallel_exec();
+		relaxation_step_inner.SurfaceBounding().parallel_exec();
+		relaxation_step_complex.SurfaceBounding().parallel_exec();
 		write_real_body_states.writeToFile(0);
 		//----------------------------------------------------------------------
 		//	Relax particles of the insert body.
@@ -162,7 +159,6 @@ int main(int ac, char *av[])
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
-	RestartIO restart_io(io_environment, sph_system.real_bodies_);
 	ObservedQuantityRecording<Vecd>
 		write_fluid_velocity("Velocity", io_environment, fluid_observer_contact);
 	RegressionTestTimeAveraged<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalViscousForceOnSolid>>>
@@ -186,7 +182,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Setup computing and initial conditions.
 	//----------------------------------------------------------------------
-	size_t number_of_iterations = sph_system.restart_step_;
+	size_t number_of_iterations = 0;
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
 	Real end_time = 200.0;
@@ -238,9 +234,6 @@ int main(int ac, char *av[])
 				cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
 					 << GlobalStaticVariables::physical_time_
 					 << "	Dt = " << Dt << "	Dt / dt = " << inner_ite_dt << "\n";
-
-				if (number_of_iterations % restart_output_interval == 0 && number_of_iterations != sph_system.restart_step_)
-					restart_io.writeToFile(number_of_iterations);
 			}
 			number_of_iterations++;
 
