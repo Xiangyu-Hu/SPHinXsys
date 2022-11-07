@@ -46,7 +46,9 @@ namespace SPH
 	class ComplexShape : public BinaryShapes
 	{
 	public:
-		explicit ComplexShape(const std::string &shape_name) : BinaryShapes(shape_name){};
+		explicit ComplexShape(const std::string &shape_name) 
+			: BinaryShapes(shape_name)
+		{};
 		virtual ~ComplexShape(){};
 
 		template <typename... ConstructorArgs>
@@ -73,13 +75,15 @@ namespace SPH
 		/** construct directly */
 		template <typename... Args>
 		explicit AlignedBoxShape(const Transformd &transformd, Args &&...args)
-			: TransformShape<GeometricShapeBox>(transformd, std::forward<Args>(args)...){};
+			: TransformShape<GeometricShapeBox>(transformd, std::forward<Args>(args)...)
+		{};
 		/** construct from a shape already has aligned boundaries */
 		template <typename... Args>
 		explicit AlignedBoxShape(const Shape &shape, Args &&...args)
 			: TransformShape<GeometricShapeBox>(
-				  Transformd(0.5 * (shape.bounding_box_.second_ + shape.bounding_box_.first_)),
-				  0.5 * (shape.bounding_box_.second_ - shape.bounding_box_.first_), std::forward<Args>(args)...){};
+				Transformd(0.5 * (shape.bounding_box_.second_ + shape.bounding_box_.first_)),
+				0.5 * (shape.bounding_box_.second_ - shape.bounding_box_.first_), std::forward<Args>(args)...)
+		{};
 
 		Vecd HalfSize() { return halfsize_; }
 		bool checkInBounds(int axis, const Vecd &probe_point);

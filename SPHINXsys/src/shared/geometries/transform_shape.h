@@ -51,8 +51,10 @@ namespace SPH
         /** template constructor for general shapes. */
         template <typename... ConstructorArgs>
         explicit TransformShape(const Transformd &transformd, ConstructorArgs &&...args)
-            : BaseShapeType(std::forward<ConstructorArgs>(args)...),
-              transformd_(transformd){};
+            : BaseShapeType(std::forward<ConstructorArgs>(args)...)
+            , transformd_(transformd)
+        {};
+
         virtual ~TransformShape(){};
 
         /** variable transform is introduced here */
@@ -64,6 +66,7 @@ namespace SPH
             Vecd input_pnt_origin = transformd_.shiftBaseStationToFrame(probe_point);
             return BaseShapeType::checkContain(input_pnt_origin);
         };
+        
         virtual Vecd findClosestPoint(const Vecd &probe_point) override
         {
             Vecd input_pnt_origin = transformd_.shiftBaseStationToFrame(probe_point);

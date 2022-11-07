@@ -152,11 +152,15 @@ namespace SPH
 		/** constructor without specifying a leading-in edge */
 		template <class EdgeStructureType>
 		explicit Edge(EdgeStructureType *structure)
-			: id_(structure->ContainerSize()), in_edge_(MaxSize_t){};
+			: id_(structure->ContainerSize())
+			, in_edge_(MaxSize_t)
+		{};
 		/** constructor with specifying a leading-in edge */
 		template <class EdgeStructureType>
 		Edge(InEdgeType in_edge, EdgeStructureType *structure)
-			: id_(structure->ContainerSize()), in_edge_(in_edge){};
+			: id_(structure->ContainerSize())
+			, in_edge_(in_edge)
+		{};
 		virtual ~Edge(){};
 
 		size_t id_;			   /**< id of this edge */
