@@ -194,7 +194,7 @@ namespace SPH
 
 	protected:
 		inline size_t getProbeLevel(const Vecd &position);
-		inline size_t getMeshLevel(Real h_ratio);
+		inline size_t getCoarseLevel(Real h_ratio);
 	};
 }
 #endif // LEVEL_SET_H

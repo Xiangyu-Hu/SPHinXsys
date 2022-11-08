@@ -46,10 +46,10 @@ namespace SPH
 	/** @brief a small functor for obtaining search depth across resolution
 	 * @details Note that the search depth is defined on the target cell linked list.
 	 */
-	struct SearchDepthMultiResolution
+	struct SearchDepthContact
 	{
 		int search_depth_;
-		SearchDepthMultiResolution(SPHBody &sph_body, CellLinkedList *target_cell_linked_list)
+		SearchDepthContact(SPHBody &sph_body, CellLinkedList *target_cell_linked_list)
 			: search_depth_(1)
 		{
 			Real inv_grid_spacing_ = 1.0 / target_cell_linked_list->GridSpacing();
@@ -62,12 +62,12 @@ namespace SPH
 	/** @brief a small functor for obtaining search depth for variable smoothing length
 	 * @details Note that the search depth is defined on the target cell linked list.
 	 */
-	struct AdaptiveSearchDepth
+	struct SearchDepthAdaptive
 	{
 		Real inv_grid_spacing_;
 		Kernel *kernel_;
 		StdLargeVec<Real> &h_ratio_;
-		AdaptiveSearchDepth(SPHBody &sph_body, CellLinkedList *target_cell_linked_list)
+		SearchDepthAdaptive(SPHBody &sph_body, CellLinkedList *target_cell_linked_list)
 			: inv_grid_spacing_(1.0 / target_cell_linked_list->GridSpacing()),
 			  kernel_(sph_body.sph_adaptation_->getKernel()),
 			  h_ratio_(*sph_body.getBaseParticles().getVariableByName<Real>("SmoothingLengthRatio")){};
@@ -76,6 +76,27 @@ namespace SPH
 			return 1 + (int)floor(kernel_->CutOffRadius(h_ratio_[particle_index]) * inv_grid_spacing_);
 		};
 	};
+
+	/** @brief a small functor for obtaining search depth for variable smoothing length
+	 * @details Note that this is only for building contact neighbor relation.
+	 */
+	struct SearchDepthAdaptiveContact
+	{
+		Real inv_grid_spacing_;
+		SPHAdaptation &sph_adaptation_;
+		Kernel &kernel_;
+		SearchDepthAdaptiveContact(SPHBody &sph_body, CellLinkedList *target_cell_linked_list)
+			: inv_grid_spacing_(1.0 / target_cell_linked_list->GridSpacing()),
+			  sph_adaptation_(*sph_body.sph_adaptation_),
+			  kernel_(*sph_body.sph_adaptation_->getKernel()){};
+		int operator()(size_t particle_index) const
+		{
+			return 1 + (int)floor(kernel_.CutOffRadius(sph_adaptation_.SmoothingLengthRatio(particle_index)) * inv_grid_spacing_);
+		};
+	};
+
+	/** Transfer body parts to real bodies. **/
+	RealBodyVector BodyPartsToRealBodies(BodyPartVector body_parts);
 
 	/**
 	 * @class SPHRelation
@@ -121,14 +142,6 @@ namespace SPH
 	class BaseContactRelation : public SPHRelation
 	{
 	protected:
-		UniquePtrKeepers<SearchDepthMultiResolution> search_depth_multi_resolution_ptr_vector_keeper_;
-		UniquePtrKeepers<NeighborBuilderContact> neighbor_relation_contact_ptr_vector_keeper_;
-
-	protected:
-		StdVec<CellLinkedList *> target_cell_linked_lists_;
-		StdVec<SearchDepthMultiResolution *> get_search_depths_;
-		StdVec<NeighborBuilderContact *> get_contact_neighbors_;
-
 		virtual void resetNeighborhoodCurrentSize();
 
 	public:
@@ -136,7 +149,8 @@ namespace SPH
 		ContactParticleConfiguration contact_configuration_; /**< Configurations for particle interaction between bodies. */
 
 		BaseContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies);
-		BaseContactRelation(SPHBody &sph_body, BodyPartVector contact_body_parts);
+		BaseContactRelation(SPHBody &sph_body, BodyPartVector contact_body_parts)
+			: BaseContactRelation(sph_body, BodyPartsToRealBodies(contact_body_parts)){};
 		virtual ~BaseContactRelation(){};
 
 		virtual void updateConfigurationMemories() override;

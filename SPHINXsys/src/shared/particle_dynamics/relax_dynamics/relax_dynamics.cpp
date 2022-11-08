@@ -1,6 +1,6 @@
 /**
  * @file 	relax_dynamics.cpp
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang and Xiangyu Hu
  */
 
 #include "relax_dynamics.h"
@@ -71,16 +71,20 @@ namespace SPH
 			pos_[index_i] += acc_[index_i] * dt_square * 0.5 / sph_adaptation_->SmoothingLengthRatio(index_i);
 		}
 		//=================================================================================================//
-		UpdateSmoothingLengthRatioByBodyShape::UpdateSmoothingLengthRatioByBodyShape(SPHBody &sph_body)
+		UpdateSmoothingLengthRatioByShape::
+			UpdateSmoothingLengthRatioByShape(SPHBody &sph_body, Shape &target_shape)
 			: LocalDynamics(sph_body), RelaxDataDelegateSimple(sph_body),
 			  h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")),
-			  Vol_(particles_->Vol_), pos_(particles_->pos_), body_shape_(*sph_body.body_shape_),
-			  particle_spacing_by_body_shape_(DynamicCast<ParticleSpacingByBodyShape>(this, sph_body.sph_adaptation_)),
-			  reference_spacing_(particle_spacing_by_body_shape_->ReferenceSpacing()) {}
+			  Vol_(particles_->Vol_), pos_(particles_->pos_), target_shape_(target_shape),
+			  particle_adaptation_(DynamicCast<ParticleRefinementByShape>(this, sph_body.sph_adaptation_)),
+			  reference_spacing_(particle_adaptation_->ReferenceSpacing()) {}
 		//=================================================================================================//
-		void UpdateSmoothingLengthRatioByBodyShape::update(size_t index_i, Real dt_square)
+		UpdateSmoothingLengthRatioByShape::UpdateSmoothingLengthRatioByShape(SPHBody &sph_body)
+			: UpdateSmoothingLengthRatioByShape(sph_body, *sph_body.body_shape_) {}
+		//=================================================================================================//
+		void UpdateSmoothingLengthRatioByShape::update(size_t index_i, Real dt_square)
 		{
-			Real local_spacing = particle_spacing_by_body_shape_->getLocalSpacing(body_shape_, pos_[index_i]);
+			Real local_spacing = particle_adaptation_->getLocalSpacing(target_shape_, pos_[index_i]);
 			h_ratio_[index_i] = reference_spacing_ / local_spacing;
 			Vol_[index_i] = powerN(local_spacing, Dimensions);
 		}
@@ -188,15 +192,8 @@ namespace SPH
 		{
 			RelaxationAccelerationComplex::interaction(index_i, dt);
 
-			for (size_t k = 0; k < contact_configuration_.size(); ++k)
-			{
-				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
-				if (contact_neighborhood.current_size_ == 0)
-				{
-					acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(
-											   pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
-				}
-			}
+			acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(
+									   pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
 		}
 		//=================================================================================================//
 		RelaxationStepComplex::RelaxationStepComplex(ComplexRelation &body_complex_relation,

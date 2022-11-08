@@ -1,7 +1,7 @@
 /**
  * @file 	base_body_part.cpp
  * @brief 	Here, Functions belong to base body part are given.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 #include "base_body_part.h"
 
@@ -29,7 +29,7 @@ namespace SPH
 	//=================================================================================================//
 	void BodyPartByCell::tagCells(TaggingCellMethod &tagging_cell_method)
 	{
-		cell_linked_list_->tagBodyPartByCell(body_part_cells_, tagging_cell_method);
+		cell_linked_list_.tagBodyPartByCell(body_part_cells_, tagging_cell_method);
 	}
 	//=================================================================================================//
 	BodyRegionByParticle::

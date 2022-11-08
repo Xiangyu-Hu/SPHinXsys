@@ -1,25 +1,25 @@
-/* -------------------------------------------------------------------------*
- *								SPHinXsys									*
- * --------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
- * (smoothed particle hydrodynamics), a meshless computational method using	*
- * particle discretization.													*
- *																			*
- * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
- * and HU1527/12-1.															*
- *                                                                           *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
- * the authors' affiliations.												*
- *                                                                           *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
- * not use this file except in compliance with the License. You may obtain a *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
- *                                                                           *
- * --------------------------------------------------------------------------*/
+/* -----------------------------------------------------------------------------*
+ *                               SPHinXsys                                      *
+ * -----------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
+ * physical accurate simulation and aims to model coupled industrial dynamic    *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
+ * (smoothed particle hydrodynamics), a meshless computational method using     *
+ * particle discretization.                                                     *
+ *                                                                              *
+ * SPHinXsys is partially funded by German Research Foundation                  *
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
+ * HU1527/12-1 and HU1527/12-4.                                                 *
+ *                                                                              *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and          *
+ * the authors' affiliations.                                                   *
+ *                                                                              *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
+ * not use this file except in compliance with the License. You may obtain a    *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
+ *                                                                              *
+ * -----------------------------------------------------------------------------*/
 /**
  * @file 	fluid_surface_inner.h
  * @brief 	Here, we define the algorithm classes for fluid surfaces.
@@ -80,34 +80,40 @@ namespace SPH
 			SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIndicationInner>;
 
 		/**
-		 * @class DensitySummationFreeSurfaceInner
+		 * @class DensitySummationFreeSurface
 		 * @brief computing density by summation with a re-normalization for free surface flows
 		 */
-		class DensitySummationFreeSurfaceInner : public DensitySummationInner
+		template <class DensitySummationType>
+		class DensitySummationFreeSurface : public DensitySummationType
 		{
 		public:
-			explicit DensitySummationFreeSurfaceInner(BaseInnerRelation &inner_relation)
-				: DensitySummationInner(inner_relation){};
-			virtual ~DensitySummationFreeSurfaceInner(){};
+			template <typename... ConstructorArgs>
+			explicit DensitySummationFreeSurface(ConstructorArgs &&...args)
+				: DensitySummationType(std::forward<ConstructorArgs>(args)...){};
+			virtual ~DensitySummationFreeSurface(){};
+			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
-			virtual Real ReinitializedDensity(Real rho_sum, Real rho_0, Real rho_n) override
+			Real ReinitializedDensity(Real rho_sum, Real rho_0, Real rho_n)
 			{
 				return rho_sum + SMAX(0.0, (rho_n - rho_sum)) * rho_0 / rho_n;
 			};
 		};
 
+		using DensitySummationFreeSurfaceInner = DensitySummationFreeSurface<DensitySummationInner>;
+		using DensitySummationFreeSurfaceInnerAdaptive = DensitySummationFreeSurface<DensitySummationInnerAdaptive>;
+
 		/**
-		 * @class DensitySummationFreeStreamInner
+		 * @class DensitySummationFreeStream
 		 * @brief The density is smoothed if the particle is near fluid surface.
 		 */
-		class DensitySummationFreeStreamInner : public DensitySummationFreeSurfaceInner
+		template <class DensitySummationFreeSurfaceType>
+		class DensitySummationFreeStream : public DensitySummationFreeSurfaceType
 		{
 		public:
-			explicit DensitySummationFreeStreamInner(BaseInnerRelation &inner_relation)
-				: DensitySummationFreeSurfaceInner(inner_relation),
-				  surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")){};
-			virtual ~DensitySummationFreeStreamInner(){};
+			template <typename... ConstructorArgs>
+			explicit DensitySummationFreeStream(ConstructorArgs &&...args);
+			virtual ~DensitySummationFreeStream(){};
 			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
@@ -138,7 +144,6 @@ namespace SPH
 		/**
 		 * @class FreeSurfaceHeight
 		 * @brief Probe the free surface profile for a fluid body part by reduced operation.
-		 * TODO: this class can be generalized
 		 */
 		class FreeSurfaceHeight : public LocalDynamicsReduce<Real, ReduceMax>,
 								  public FluidDataSimple

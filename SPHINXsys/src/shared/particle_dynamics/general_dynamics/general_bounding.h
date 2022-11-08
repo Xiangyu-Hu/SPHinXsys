@@ -23,7 +23,7 @@
 /**
  * @file 	general_bounding.h
  * @brief 	This is the particle dynamics for domain bounding
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef GENERAL_BOUNDING_H
@@ -47,7 +47,7 @@ namespace SPH
 		const int axis_;			  /**< the axis directions for bounding*/
 		BoundingBox bounding_bounds_; /**< lower and upper bound for checking. */
 		StdLargeVec<Vecd> &pos_;
-		BaseCellLinkedList *cell_linked_list_;
+		BaseCellLinkedList &cell_linked_list_;
 		Real cut_off_radius_max_; /**< maximum cut off radius to avoid boundary particle depletion */
 
 	public:

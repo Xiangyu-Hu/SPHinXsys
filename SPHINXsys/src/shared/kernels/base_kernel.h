@@ -1,32 +1,32 @@
-/* -------------------------------------------------------------------------*
- *								SPHinXsys									*
- * --------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
- * (smoothed particle hydrodynamics), a meshless computational method using	*
- * particle discretization.													*
- *																			*
- * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
- * and HU1527/12-1.															*
- *                                                                           *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
- * the authors' affiliations.												*
- *                                                                           *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
- * not use this file except in compliance with the License. You may obtain a *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
- *                                                                           *
- * --------------------------------------------------------------------------*/
+/* -----------------------------------------------------------------------------*
+ *                               SPHinXsys                                      *
+ * -----------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
+ * physical accurate simulation and aims to model coupled industrial dynamic    *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
+ * (smoothed particle hydrodynamics), a meshless computational method using     *
+ * particle discretization.                                                     *
+ *                                                                              *
+ * SPHinXsys is partially funded by German Research Foundation                  *
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
+ * HU1527/12-1 and HU1527/12-4.                                                 *
+ *                                                                              *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and          *
+ * the authors' affiliations.                                                   *
+ *                                                                              *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
+ * not use this file except in compliance with the License. You may obtain a    *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
+ *                                                                              *
+ * -----------------------------------------------------------------------------*/
 /**
  * @file 	base_kernel.h
  * @brief 	This is the base classes of kernel functions.  Implementation will be
  *			implemented in derived classes. The kernal function define the relevance
  * 			between two neighboring particles. Basically, the further the two
  *			particles, the less relevance they have.
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang and Xiangyu Hu
  * @version	0.1
  * @version  0.3.0
  *			Add the reduced kernel for reduced dynamics of linear structure.
@@ -91,9 +91,9 @@ namespace SPH
 		/** Calculates the kernel value for the given displacement of two particles
 		 * r_ij pointing from particle j to particle i
 		 */
-		virtual Real W(const Real &r_ij, const Real &displacement) const;
-		virtual Real W(const Real &r_ij, const Vec2d &displacement) const;
-		virtual Real W(const Real &r_ij, const Vec3d &displacement) const;
+		Real W(const Real &r_ij, const Real &displacement) const;
+		Real W(const Real &r_ij, const Vec2d &displacement) const;
+		Real W(const Real &r_ij, const Vec3d &displacement) const;
 
 		/** this value could be use to calculate the value of W
 		 * they are realized in specific kernel implementations
@@ -103,16 +103,16 @@ namespace SPH
 		virtual Real W_3D(const Real q) const = 0;
 
 		/** Calculates the kernel value at the origin **/
-		virtual Real W0(const Real &point_i) const { return factor_W_1D_; };
-		virtual Real W0(const Vec2d &point_i) const { return factor_W_2D_; };
-		virtual Real W0(const Vec3d &point_i) const { return factor_W_3D_; };
+		Real W0(const Real &point_i) const { return factor_W_1D_; };
+		Real W0(const Vec2d &point_i) const { return factor_W_2D_; };
+		Real W0(const Vec3d &point_i) const { return factor_W_3D_; };
 
 		/** Calculates the kernel derivation for
 		 * the given distance of two particles
 		 */
-		virtual Real dW(const Real &r_ij, const Real &displacement) const;
-		virtual Real dW(const Real &r_ij, const Vec2d &displacement) const;
-		virtual Real dW(const Real &r_ij, const Vec3d &displacement) const;
+		Real dW(const Real &r_ij, const Real &displacement) const;
+		Real dW(const Real &r_ij, const Vec2d &displacement) const;
+		Real dW(const Real &r_ij, const Vec3d &displacement) const;
 
 		/** this value could be use to calculate the value of dW
 		 * they are realized in specific kernel implementations
@@ -124,9 +124,9 @@ namespace SPH
 		/** Calculates the kernel second order derivation for
 		 * the given distance of two particles
 		 */
-		virtual Real d2W(const Real &r_ij, const Real &displacement) const;
-		virtual Real d2W(const Real &r_ij, const Vec2d &displacement) const;
-		virtual Real d2W(const Real &r_ij, const Vec3d &displacement) const;
+		Real d2W(const Real &r_ij, const Real &displacement) const;
+		Real d2W(const Real &r_ij, const Vec2d &displacement) const;
+		Real d2W(const Real &r_ij, const Vec3d &displacement) const;
 
 		/** this value could be use to calculate the value of d2W
 		 * they are realized in specific kernel implementations

@@ -1,6 +1,6 @@
 /**
  * @file 	fluid_dynamics_multi_phase.cpp
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #include "fluid_dynamics_multi_phase.h"
@@ -27,7 +27,6 @@ namespace SPH
 			{
 				contact_fluids_.push_back(&contact_particles_[k]->fluid_);
 				contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
-
 			}
 		}
 		//=================================================================================================//
@@ -68,7 +67,7 @@ namespace SPH
 		MultiPhaseColorFunctionGradient::
 			MultiPhaseColorFunctionGradient(BaseContactRelation &contact_relation)
 			: LocalDynamics(contact_relation.sph_body_), MultiPhaseData(contact_relation),
-			  rho0_(particles_->rho0_), Vol_(particles_->Vol_),
+			  rho0_(sph_body_.base_material_->ReferenceDensity()), Vol_(particles_->Vol_),
 			  pos_div_(*particles_->getVariableByName<Real>("PositionDivergence")),
 			  surface_indicator_(particles_->surface_indicator_)
 		{
@@ -76,7 +75,7 @@ namespace SPH
 			particles_->registerVariable(surface_norm_, "SurfaceNormal");
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
-				Real rho0_k = contact_particles_[k]->rho0_;
+				Real rho0_k = contact_bodies_[k]->base_material_->ReferenceDensity();
 				contact_rho0_.push_back(rho0_k);
 				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
 			}

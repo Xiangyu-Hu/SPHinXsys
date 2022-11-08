@@ -42,7 +42,7 @@ namespace SPH
 	protected:
 		SearchDepthSingleResolution get_single_search_depth_;
 		NeighborBuilderInner get_inner_neighbor_;
-		CellLinkedList *cell_linked_list_;
+		CellLinkedList &cell_linked_list_;
 
 	public:
 		explicit InnerRelation(RealBody &real_body);
@@ -58,12 +58,12 @@ namespace SPH
 	class AdaptiveInnerRelation : public BaseInnerRelation
 	{
 	private:
-		UniquePtrKeepers<AdaptiveSearchDepth> adaptive_search_depth_ptr_vector_keeper_;
+		UniquePtrKeepers<SearchDepthAdaptive> adaptive_search_depth_ptr_vector_keeper_;
 
 	protected:
 		size_t total_levels_;
-		StdVec<AdaptiveSearchDepth *> get_multi_level_search_depth_;
-		AdaptiveNeighborBuilderInner get_adaptive_inner_neighbor_;
+		StdVec<SearchDepthAdaptive *> get_multi_level_search_depth_;
+		NeighborBuilderInnerAdaptive get_adaptive_inner_neighbor_;
 		StdVec<CellLinkedList *> cell_linked_list_levels_;
 
 	public:
@@ -76,7 +76,6 @@ namespace SPH
 	/**
 	 * @class SelfSurfaceContactRelation
 	 * @brief The relation for self contact of a solid body
-	 * TODO: better called BodySurfaceSelfContact
 	 */
 	class SelfSurfaceContactRelation : public BaseInnerRelation
 	{
@@ -93,7 +92,7 @@ namespace SPH
 		IndexVector &body_part_particles_;
 		SearchDepthSingleResolution get_single_search_depth_;
 		NeighborBuilderSelfContact get_self_contact_neighbor_;
-		CellLinkedList *cell_linked_list_;
+		CellLinkedList &cell_linked_list_;
 
 		virtual void resetNeighborhoodCurrentSize() override;
 	};

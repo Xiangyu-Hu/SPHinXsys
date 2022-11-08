@@ -1,6 +1,6 @@
 /**
  * @file 	kernel_cubic_B_spline.cpp
- * @author	Zhentong Wang, Luhui Han, Chi ZHang, Yongchuan Yu and Xiangyu Hu
+ * @author	Zhentong Wang, Luhui Han, Chi Zhang, Yongchuan Yu and Xiangyu Hu
  */
 #include "kernel_cubic_B_spline.h"
 

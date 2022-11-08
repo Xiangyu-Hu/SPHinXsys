@@ -195,7 +195,7 @@ int main(int ac, char *av[])
 			free_stream_surface_indicator.parallel_exec();
 			update_fluid_density.parallel_exec();
 			viscous_acceleration.parallel_exec();
-			transport_velocity_correction.parallel_exec(Dt);
+			transport_velocity_correction.parallel_exec();
 
 			/** FSI for viscous force. */
 			fluid_viscous_force_on_inserted_body.parallel_exec();

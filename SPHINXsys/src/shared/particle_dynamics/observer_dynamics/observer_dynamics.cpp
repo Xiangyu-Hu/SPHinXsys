@@ -1,7 +1,7 @@
 /**
  * @file 	observer_dynamics.cpp
  * @brief 	Here, Functions defined in observer_dynamics.h are detailed.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #include "observer_dynamics.h"

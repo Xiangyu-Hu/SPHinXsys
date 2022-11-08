@@ -15,16 +15,13 @@ namespace SPH
 {
 	//=================================================================================================//
 	BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
-		: base_material_(*base_material),
-		  rho0_(base_material->ReferenceDensity()),
-		  sigma0_(sph_body.sph_adaptation_->ReferenceNumberDensity()), speed_max_(0.0),
-		  total_real_particles_(0), real_particles_bound_(0), total_ghost_particles_(0),
+		: base_material_(*base_material), total_real_particles_(0),
+		  real_particles_bound_(0), total_ghost_particles_(0),
 		  particle_sorting_(*this),
 		  sph_body_(sph_body), body_name_(sph_body.getName()),
 		  restart_xml_engine_("xml_restart", "particles"),
 		  reload_xml_engine_("xml_particle_reload", "particles")
 	{
-		sph_body.assignBaseParticles(this);
 		//----------------------------------------------------------------------
 		//		register geometric data only
 		//----------------------------------------------------------------------
@@ -46,7 +43,7 @@ namespace SPH
 		registerVariable(vel_, "Velocity");
 		registerVariable(acc_, "Acceleration");
 		registerVariable(acc_prior_, "PriorAcceleration");
-		registerVariable(rho_, "Density", rho0_);
+		registerVariable(rho_, "Density", base_material_.ReferenceDensity());
 		registerVariable(mass_, "MassiveMeasure");
 		//----------------------------------------------------------------------
 		//		add basic output particle data

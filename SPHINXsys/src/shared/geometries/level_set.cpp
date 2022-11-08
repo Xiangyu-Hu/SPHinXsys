@@ -1,6 +1,6 @@
 /**
  * @file 	level_set.cpp
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang and Xiangyu Hu
  */
 
 #include "level_set.h"
@@ -258,10 +258,10 @@ namespace SPH
 		: MultilevelMesh<BaseLevelSet, LevelSet, RefinedLevelSet>(tentative_bounds, reference_data_spacing,
 																  total_levels, shape, sph_adaptation) {}
 	//=================================================================================================//
-	size_t MultilevelLevelSet::getMeshLevel(Real h_ratio)
+	size_t MultilevelLevelSet::getCoarseLevel(Real h_ratio)
 	{
 		for (size_t level = total_levels_; level != 0; --level)
-			if (h_ratio - mesh_levels_[level - 1]->global_h_ratio_ > -Eps)
+			if (h_ratio > mesh_levels_[level - 1]->global_h_ratio_)
 				return level - 1; // jump out the loop!
 
 		std::cout << "\n Error: LevelSet level searching out of bound!" << std::endl;
@@ -305,7 +305,7 @@ namespace SPH
 	//=================================================================================================//
 	Real MultilevelLevelSet::probeKernelIntegral(const Vecd &position, Real h_ratio)
 	{
-		size_t coarse_level = getMeshLevel(h_ratio);
+		size_t coarse_level = getCoarseLevel(h_ratio);
 		Real alpha = (mesh_levels_[coarse_level + 1]->global_h_ratio_ - h_ratio) /
 					 (mesh_levels_[coarse_level + 1]->global_h_ratio_ - mesh_levels_[coarse_level]->global_h_ratio_);
 		Real coarse_level_value = mesh_levels_[coarse_level]->probeKernelIntegral(position);
@@ -316,7 +316,7 @@ namespace SPH
 	//=================================================================================================//
 	Vecd MultilevelLevelSet::probeKernelGradientIntegral(const Vecd &position, Real h_ratio)
 	{
-		size_t coarse_level = getMeshLevel(h_ratio);
+		size_t coarse_level = getCoarseLevel(h_ratio);
 		Real alpha = (mesh_levels_[coarse_level + 1]->global_h_ratio_ - h_ratio) /
 					 (mesh_levels_[coarse_level + 1]->global_h_ratio_ - mesh_levels_[coarse_level]->global_h_ratio_);
 		Vecd coarse_level_value = mesh_levels_[coarse_level]->probeKernelGradientIntegral(position);

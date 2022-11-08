@@ -1,6 +1,6 @@
 /**
  * @file 	fluid_dynamics_inner.hpp
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #pragma once

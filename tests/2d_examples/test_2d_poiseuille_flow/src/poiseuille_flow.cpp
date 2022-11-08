@@ -174,7 +174,7 @@ int main()
 			Real Dt = get_fluid_advection_time_step_size.parallel_exec();
 			update_density_by_summation.parallel_exec();
 			//viscous_acceleration.parallel_exec();
-			transport_velocity_correction.parallel_exec(Dt);
+			transport_velocity_correction.parallel_exec();
 			interval_computing_time_step += tick_count::now() - time_instance;
 			/** Dynamics including pressure relaxation. */
 			time_instance = tick_count::now();

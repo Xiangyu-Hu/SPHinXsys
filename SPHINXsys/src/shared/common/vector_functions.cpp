@@ -1,6 +1,6 @@
 /**
  * @file 	vector_functions.cpp
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang and Xiangyu Hu
  * @version	0.1
  */
 

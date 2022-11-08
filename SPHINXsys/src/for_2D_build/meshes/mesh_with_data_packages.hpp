@@ -1,7 +1,7 @@
 /**
  * @file 	base_mesh.hpp
  * @brief 	This is the implementation of the template function and class for base mesh
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef MESH_WITH_DATA_PACKAGES_2D_HPP

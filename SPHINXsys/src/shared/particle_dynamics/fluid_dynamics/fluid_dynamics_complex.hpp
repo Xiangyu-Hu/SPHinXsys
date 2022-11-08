@@ -1,6 +1,6 @@
 /**
  * @file 	fluid_dynamics_complex.hpp
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #pragma once
@@ -18,7 +18,7 @@ namespace SPH
 		template <class BaseBodyRelationType, typename... Args>
 		InteractionWithWall<BaseIntegrationType>::
 			InteractionWithWall(BaseContactRelation &wall_contact_relation,
-							   BaseBodyRelationType &base_body_relation, Args &&...args)
+								BaseBodyRelationType &base_body_relation, Args &&...args)
 			: BaseIntegrationType(base_body_relation, std::forward<Args>(args)...),
 			  FluidWallData(wall_contact_relation)
 		{
@@ -31,7 +31,7 @@ namespace SPH
 
 			for (size_t k = 0; k != FluidWallData::contact_particles_.size(); ++k)
 			{
-				Real rho0_k = FluidWallData::contact_particles_[k]->rho0_;
+				Real rho0_k = FluidWallData::contact_bodies_[k]->base_material_->ReferenceDensity();
 				wall_inv_rho0_.push_back(1.0 / rho0_k);
 				wall_mass_.push_back(&(FluidWallData::contact_particles_[k]->mass_));
 				wall_vel_ave_.push_back(FluidWallData::contact_particles_[k]->AverageVelocity());
@@ -42,26 +42,22 @@ namespace SPH
 		//=================================================================================================//
 		template <class DensitySummationInnerType>
 		template <typename... Args>
-		DensitySummation<DensitySummationInnerType>::DensitySummation(Args &&...args)
-			: BaseInteractionComplex<DensitySummationInnerType, FluidContactData>(
-				  std::forward<Args>(args)...)
+		BaseDensitySummationComplex<DensitySummationInnerType>::
+			BaseDensitySummationComplex(Args &&...args)
+			: BaseInteractionComplex<DensitySummationInnerType, FluidContactData>(std::forward<Args>(args)...)
 		{
 			for (size_t k = 0; k != this->contact_particles_.size(); ++k)
 			{
-				Real rho0_k = this->contact_particles_[k]->rho0_;
+				Real rho0_k = this->contact_bodies_[k]->base_material_->ReferenceDensity();
 				contact_inv_rho0_.push_back(1.0 / rho0_k);
 				contact_mass_.push_back(&(this->contact_particles_[k]->mass_));
 			}
 		};
 		//=================================================================================================//
 		template <class DensitySummationInnerType>
-		void DensitySummation<DensitySummationInnerType>::interaction(size_t index_i, Real dt)
+		Real BaseDensitySummationComplex<DensitySummationInnerType>::ContactSummation(size_t index_i)
 		{
-			DensitySummationInnerType::interaction(index_i, dt);
-
-			/** Contact interaction. */
 			Real sigma(0.0);
-			Real inv_Vol_0_i = this->rho0_ / this->mass_[index_i];
 			for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 			{
 				StdLargeVec<Real> &contact_mass_k = *(this->contact_mass_[k]);
@@ -69,11 +65,11 @@ namespace SPH
 				Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
-					sigma += contact_neighborhood.W_ij_[n] * inv_Vol_0_i * contact_inv_rho0_k * contact_mass_k[contact_neighborhood.j_[n]];
+					sigma += contact_neighborhood.W_ij_[n] * contact_inv_rho0_k * contact_mass_k[contact_neighborhood.j_[n]];
 				}
 			}
-			this->rho_sum_[index_i] += sigma * this->rho0_ * this->inv_sigma0_;
-		}
+			return sigma;
+		};
 		//=================================================================================================//
 		template <class ViscousAccelerationInnerType>
 		void BaseViscousAccelerationWithWall<ViscousAccelerationInnerType>::interaction(size_t index_i, Real dt)

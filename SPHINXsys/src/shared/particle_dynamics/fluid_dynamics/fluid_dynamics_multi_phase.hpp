@@ -1,6 +1,6 @@
 /**
  * @file 	fluid_dynamics_multi_phase.hpp
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #pragma once
@@ -107,7 +107,7 @@ namespace SPH
 		template <class Integration2ndHalfType>
 		BaseMultiPhaseIntegration2ndHalf<Integration2ndHalfType>::
 			BaseMultiPhaseIntegration2ndHalf(BaseInnerRelation &inner_relation,
-											BaseContactRelation &contact_relation)
+											 BaseContactRelation &contact_relation)
 			: RelaxationMultiPhase<Integration2ndHalfType>(inner_relation, contact_relation)
 		{
 			for (size_t k = 0; k != this->contact_particles_.size(); ++k)
@@ -141,13 +141,14 @@ namespace SPH
 					Vecd &e_ij = contact_neighborhood.e_ij_[n];
 					Real dW_ijV_j = contact_neighborhood.dW_ijV_j_[n];
 
-					Vecd vel_ave = riemann_solver_k.AverageV(this->vel_[index_j], vel_k[index_j]);
+					Vecd vel_ave = riemann_solver_k.AverageV(this->vel_[index_i], vel_k[index_j]);
 					density_change_rate += 2.0 * SimTK::dot(this->vel_[index_i] - vel_ave, e_ij) * dW_ijV_j;
 					Real u_jump = u_jump = SimTK::dot(this->vel_[index_i] - vel_k[index_j], e_ij);
 					p_dissipation += riemann_solver_k.DissipativePJump(u_jump) * dW_ijV_j * e_ij;
 				}
 			}
 			this->drho_dt_[index_i] += density_change_rate * this->rho_[index_i];
+			this->acc_[index_i] += p_dissipation / this->rho_[index_i];
 		}
 		//=================================================================================================//
 	}

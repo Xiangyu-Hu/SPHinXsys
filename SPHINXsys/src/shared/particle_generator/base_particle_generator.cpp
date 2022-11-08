@@ -1,6 +1,6 @@
 /**
  * @file 	base_particle_generator.cpp
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang and Xiangyu Hu
  */
 
 #include "base_particle_generator.h"
@@ -44,10 +44,7 @@ namespace SPH
 	SurfaceParticleGenerator::SurfaceParticleGenerator(SPHBody &sph_body)
 		: ParticleGenerator(sph_body),
 		  n_(*base_particles_.getVariableByName<Vecd>("NormalDirection")),
-		  thickness_(*base_particles_.getVariableByName<Real>("Thickness"))
-	{
-		sph_body.sph_adaptation_->getKernel()->reduceOnce();
-	}
+		  thickness_(*base_particles_.getVariableByName<Real>("Thickness")) {}
 	//=================================================================================================//
 	void SurfaceParticleGenerator::initializeSurfaceProperties(const Vecd &surface_normal, Real thickness)
 	{

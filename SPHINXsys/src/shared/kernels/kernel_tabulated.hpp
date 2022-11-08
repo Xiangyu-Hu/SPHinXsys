@@ -3,7 +3,7 @@
  * @brief This is the class for tabulated kernels using template.
  * @details This kernel tabulate a kernel function
  * so that computing any kernel will have cost the same amount of time.
- * @author	Yongchuan Yu, Massoud Rezevand, Chi ZHang and Xiangyu Hu
+ * @author	Yongchuan Yu, Massoud Rezevand, Chi Zhang and Xiangyu Hu
  */
 
 #ifndef KERNEL_TABULATED_HPP
@@ -35,7 +35,10 @@ namespace SPH
 			Real fraction_2 = fraction_1 - dq_;			// fraction_2 correspond to i+1
 			Real fraction_3 = fraction_1 - 2 * dq_;		////fraction_3 correspond to i+2
 
-			return ((fraction_1 * fraction_2 * fraction_3) / delta_q_0_ * data[i - 1] + (fraction_0 * fraction_2 * fraction_3) / delta_q_1_ * data[i] + (fraction_0 * fraction_1 * fraction_3) / delta_q_2_ * data[i + 1] + (fraction_0 * fraction_1 * fraction_2) / delta_q_3_ * data[i + 2]);
+			return (fraction_1 * fraction_2 * fraction_3) / delta_q_0_ * data[i - 1] +
+				   (fraction_0 * fraction_2 * fraction_3) / delta_q_1_ * data[i] +
+				   (fraction_0 * fraction_1 * fraction_3) / delta_q_2_ * data[i + 1] +
+				   (fraction_0 * fraction_1 * fraction_2) / delta_q_3_ * data[i + 2];
 		};
 
 	public:

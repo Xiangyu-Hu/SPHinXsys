@@ -1,6 +1,6 @@
 /**
  * @file 	compressible_fluid.cpp
- * @author	Luhui Han, Chi ZHang ,Xiangyu Hu and Zhentong Wang
+ * @author	Luhui Han, Chi Zhang ,Xiangyu Hu and Zhentong Wang
  */
 
 #include "compressible_fluid.h"

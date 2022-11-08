@@ -8,19 +8,18 @@
 
 #include "eulerian_weakly_compressible_fluid_dynamics_complex.h"
 
- //=================================================================================================//
+//=================================================================================================//
 namespace SPH
 {
 	//=================================================================================================//
 	namespace eulerian_weakly_compressible_fluid_dynamics
 	{
 		//=================================================================================================//
-		template<class BaseIntegrationType>
-		template<class BaseBodyRelationType>
+		template <class BaseIntegrationType>
+		template <class BaseBodyRelationType>
 		InteractionWithWall<BaseIntegrationType>::
 			InteractionWithWall(BaseBodyRelationType &base_body_relation,
-				BaseContactRelation &wall_contact_relation) :
-			BaseIntegrationType(base_body_relation), WCFluidWallData(wall_contact_relation)
+								BaseContactRelation &wall_contact_relation) : BaseIntegrationType(base_body_relation), WCFluidWallData(wall_contact_relation)
 		{
 			if (&base_body_relation.sph_body_ != &wall_contact_relation.sph_body_)
 			{
@@ -31,7 +30,7 @@ namespace SPH
 
 			for (size_t k = 0; k != WCFluidWallData::contact_particles_.size(); ++k)
 			{
-				Real rho_0_k = WCFluidWallData::contact_particles_[k]->rho0_;
+				Real rho_0_k = WCFluidWallData::contact_bodies_[k]->base_material_->ReferenceDensity();
 				wall_inv_rho0_.push_back(1.0 / rho_0_k);
 				wall_vel_ave_.push_back(WCFluidWallData::contact_particles_[k]->AverageVelocity());
 				wall_acc_ave_.push_back(WCFluidWallData::contact_particles_[k]->AverageAcceleration());
@@ -43,7 +42,7 @@ namespace SPH
 		template <class BaseBodyRelationType>
 		ViscousWithWall<BaseViscousAccelerationType>::
 			ViscousWithWall(BaseBodyRelationType &base_body_relation,
-				BaseContactRelation &wall_contact_relation)
+							BaseContactRelation &wall_contact_relation)
 			: InteractionWithWall<BaseViscousAccelerationType>(base_body_relation, wall_contact_relation) {}
 		//=================================================================================================//
 		template <class BaseViscousAccelerationType>
@@ -76,25 +75,25 @@ namespace SPH
 		BaseViscousAccelerationWithWall<BaseViscousAccelerationType>::
 			BaseViscousAccelerationWithWall(ComplexRelation &fluid_wall_relation)
 			: BaseViscousAccelerationType(fluid_wall_relation.inner_relation_,
-				fluid_wall_relation.contact_relation_) {}
+										  fluid_wall_relation.contact_relation_) {}
 		//=================================================================================================//
 		template <class BaseViscousAccelerationType>
 		BaseViscousAccelerationWithWall<BaseViscousAccelerationType>::
 			BaseViscousAccelerationWithWall(BaseInnerRelation &fluid_inner_relation,
-				BaseContactRelation &wall_contact_relation)
+											BaseContactRelation &wall_contact_relation)
 			: BaseViscousAccelerationType(fluid_inner_relation, wall_contact_relation) {}
 		//=================================================================================================//
 		template <class BaseViscousAccelerationType>
 		BaseViscousAccelerationWithWall<BaseViscousAccelerationType>::
 			BaseViscousAccelerationWithWall(ComplexRelation &fluid_complex_relation,
-				BaseContactRelation &wall_contact_relation)
+											BaseContactRelation &wall_contact_relation)
 			: BaseViscousAccelerationType(fluid_complex_relation, wall_contact_relation) {}
 		//=================================================================================================//
 		template <class BaseIntegration1stHalfType>
 		template <class BaseBodyRelationType>
 		BaseIntegration1stHalfWithWall<BaseIntegration1stHalfType>::
 			BaseIntegration1stHalfWithWall(BaseBodyRelationType &base_body_relation,
-				BaseContactRelation &wall_contact_relation)
+										   BaseContactRelation &wall_contact_relation)
 			: InteractionWithWall<BaseIntegration1stHalfType>(base_body_relation, wall_contact_relation) {}
 		//=================================================================================================//
 		template <class BaseIntegration1stHalfType>
@@ -134,7 +133,7 @@ namespace SPH
 		template <class BaseBodyRelationType>
 		BaseIntegration2ndHalfWithWall<BaseIntegration2ndHalfType>::
 			BaseIntegration2ndHalfWithWall(BaseBodyRelationType &base_body_relation,
-				BaseContactRelation &wall_contact_relation)
+										   BaseContactRelation &wall_contact_relation)
 			: InteractionWithWall<BaseIntegration2ndHalfType>(base_body_relation, wall_contact_relation) {}
 		//=================================================================================================//
 		template <class BaseIntegration2ndHalfType>
@@ -172,5 +171,5 @@ namespace SPH
 	}
 	//=================================================================================================//
 }
-#endif //EULERIAN_WEAKLY_COMPRESSIBLE_FLUID_DYNAMICS_COMPLEX_HPP
+#endif // EULERIAN_WEAKLY_COMPRESSIBLE_FLUID_DYNAMICS_COMPLEX_HPP
 //=================================================================================================//

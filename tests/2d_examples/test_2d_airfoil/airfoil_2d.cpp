@@ -52,7 +52,7 @@ int main(int ac, char *av[])
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	RealBody airfoil(system, makeShared<ImportModel>("AirFoil"));
-	airfoil.defineAdaptation<ParticleSpacingByBodyShape>(1.15, 1.0, 3);
+	airfoil.defineAdaptation<ParticleRefinementNearSurface>(1.15, 1.0, 3);
 	airfoil.defineBodyLevelSetShape()->cleanLevelSet()->writeLevelSet(io_environment);
 	airfoil.defineParticlesAndMaterial();
 	airfoil.generateParticles<ParticleGeneratorMultiResolution>();
@@ -61,7 +61,7 @@ int main(int ac, char *av[])
 	//	Define outputs functions.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp airfoil_recording_to_vtp(io_environment, {&airfoil});
-	MeshRecordingToPlt cell_linked_list_recording(io_environment, airfoil.cell_linked_list_);
+	MeshRecordingToPlt cell_linked_list_recording(io_environment, airfoil.getCellLinkedList());
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies,
@@ -73,7 +73,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	SimpleDynamics<RandomizeParticlePosition> random_airfoil_particles(airfoil);
 	relax_dynamics::RelaxationStepInner relaxation_step_inner(airfoil_inner, true);
-	SimpleDynamics<relax_dynamics::UpdateSmoothingLengthRatioByBodyShape> update_smoothing_length_ratio(airfoil);
+	SimpleDynamics<relax_dynamics::UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(airfoil);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.

@@ -1,26 +1,25 @@
-/* -------------------------------------------------------------------------*
- *								SPHinXsys									*
- * --------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
- * (smoothed particle hydrodynamics), a meshless computational method using	*
- * particle discretization.													*
- *																			*
- * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
- * and HU1527/12-1.															*
- *                                                                           *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
- * the authors' affiliations.												*
- *                                                                           *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
- * not use this file except in compliance with the License. You may obtain a *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
- *                                                                           *
- * --------------------------------------------------------------------------*/
-
+/* -----------------------------------------------------------------------------*
+ *                               SPHinXsys                                      *
+ * -----------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
+ * physical accurate simulation and aims to model coupled industrial dynamic    *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
+ * (smoothed particle hydrodynamics), a meshless computational method using     *
+ * particle discretization.                                                     *
+ *                                                                              *
+ * SPHinXsys is partially funded by German Research Foundation                  *
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
+ * HU1527/12-1 and HU1527/12-4.                                                 *
+ *                                                                              *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and          *
+ * the authors' affiliations.                                                   *
+ *                                                                              *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
+ * not use this file except in compliance with the License. You may obtain a    *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
+ *                                                                              *
+ * -----------------------------------------------------------------------------*/
 /**
  * @file cell_linked_list.h
  * @brief Here gives the classes for managing cell linked lists. This is the basic class
@@ -44,6 +43,7 @@ namespace SPH
 	class BaseParticles;
 	class Kernel;
 	class SPHAdaptation;
+	class CellLinkedList;
 
 	/**
 	 * @class BaseCellLinkedList
@@ -65,6 +65,8 @@ namespace SPH
 		BaseCellLinkedList(RealBody &real_body, SPHAdaptation &sph_adaptation);
 		virtual ~BaseCellLinkedList(){};
 
+		/** access concrete cell linked list levels*/
+		virtual StdVec<CellLinkedList *> CellLinkedListLevels() = 0;
 		/** update the cell lists */
 		virtual void UpdateCellLists(BaseParticles &base_particles) = 0;
 		/** Insert a cell-linked_list entry to the concurrent index list. */
@@ -74,7 +76,7 @@ namespace SPH
 		/** find the nearest list data entry */
 		virtual ListData findNearestListDataEntry(const Vecd &position) = 0;
 		/** computing the sequence which indicate the order of sorted particle data */
-		virtual void computingSequence(BaseParticles &base_particles) = 0;
+		virtual StdLargeVec<size_t> &computingSequence(BaseParticles &base_particles) = 0;
 		/** Tag body part by cell, call by body part */
 		virtual void tagBodyPartByCell(ConcurrentIndexesInCells &cell_lists, std::function<bool(Vecd, Real)> &check_included) = 0;
 		/** Tag domain bounding cells in an axis direction, called by domain bounding classes */
@@ -90,6 +92,8 @@ namespace SPH
 	 */
 	class CellLinkedList : public BaseCellLinkedList, public Mesh
 	{
+		StdVec<CellLinkedList *> single_cell_linked_list_level_;
+
 	protected:
 		/** using concurrent vectors due to writing conflicts when building the list */
 		MeshDataMatrix<ConcurrentIndexVector> cell_index_lists_;
@@ -111,11 +115,12 @@ namespace SPH
 		void insertParticleIndex(size_t particle_index, const Vecd &particle_position) override;
 		void InsertListDataEntry(size_t particle_index, const Vecd &particle_position, Real volumetric) override;
 		virtual ListData findNearestListDataEntry(const Vecd &position) override;
-		virtual void computingSequence(BaseParticles &base_particles) override;
+		virtual StdLargeVec<size_t> &computingSequence(BaseParticles &base_particles) override;
 		virtual void tagBodyPartByCell(ConcurrentIndexesInCells &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
 		virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, BoundingBox &bounding_bounds, int axis) override;
 		virtual void tagOneSideBoundingCells(CellLists &cell_data_lists, BoundingBox &bounding_bounds, int axis, bool positive) override;
 		virtual void writeMeshFieldToPlt(std::ofstream &output_file) override;
+		virtual StdVec<CellLinkedList *> CellLinkedListLevels() { return single_cell_linked_list_level_; };
 
 		/** generalized particle search algorithm */
 		template <class DynamicsRange, typename GetSearchDepth, typename GetNeighborRelation>
@@ -145,10 +150,11 @@ namespace SPH
 		void insertParticleIndex(size_t particle_index, const Vecd &particle_position) override;
 		void InsertListDataEntry(size_t particle_index, const Vecd &particle_position, Real volumetric) override;
 		virtual ListData findNearestListDataEntry(const Vecd &position) override { return ListData(0, Vecd(0), 0); };
-		virtual void computingSequence(BaseParticles &base_particles) override{};
+		virtual StdLargeVec<size_t> &computingSequence(BaseParticles &base_particles) override;
 		virtual void tagBodyPartByCell(ConcurrentIndexesInCells &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
 		virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, BoundingBox &bounding_bounds, int axis) override{};
 		virtual void tagOneSideBoundingCells(CellLists &cell_data_lists, BoundingBox &bounding_bounds, int axis, bool positive) override{};
+		virtual StdVec<CellLinkedList *> CellLinkedListLevels() { return getMeshLevels(); };
 	};
 }
 #endif // MESH_CELL_LINKED_LIST_H

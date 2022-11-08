@@ -1,6 +1,6 @@
 /**
  * @file 	fluid_dynamics_complex.cpp
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #include "fluid_dynamics_complex.h"
@@ -12,11 +12,24 @@ namespace SPH
 	namespace fluid_dynamics
 	{
 		//=================================================================================================//
+		void DensitySummationComplex::interaction(size_t index_i, Real dt)
+		{
+			BaseDensitySummationComplex<DensitySummationInner>::interaction(index_i, dt);
+			Real sigma = BaseDensitySummationComplex<DensitySummationInner>::ContactSummation(index_i);
+			rho_sum_[index_i] += sigma * rho0_ * rho0_ * inv_sigma0_ / mass_[index_i];
+		}
+		//=================================================================================================//
+		void DensitySummationComplexAdaptive::interaction(size_t index_i, Real dt)
+		{
+			BaseDensitySummationComplex<DensitySummationInnerAdaptive>::interaction(index_i, dt);
+			Real sigma = BaseDensitySummationComplex<DensitySummationInnerAdaptive>::ContactSummation(index_i);
+			rho_sum_[index_i] += sigma * rho0_ * rho0_ / mass_[index_i] /
+								 sph_adaptation_.ReferenceNumberDensity(h_ratio_[index_i]);
+		}
+		//=================================================================================================//
 		void TransportVelocityCorrectionComplex::interaction(size_t index_i, Real dt)
 		{
 			TransportVelocityCorrectionInner::interaction(index_i, dt);
-
-			Real rho_i = rho_[index_i];
 
 			Vecd acceleration_trans(0);
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
@@ -28,13 +41,39 @@ namespace SPH
 					Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
 
 					// acceleration for transport velocity
-					acceleration_trans -= 2.0 * p_background_ * nablaW_ijV_j / rho_i;
+					acceleration_trans -= 2.0 * nablaW_ijV_j;
 				}
 			}
 
 			/** correcting particle position */
 			if (surface_indicator_[index_i] == 0)
-				pos_[index_i] += acceleration_trans * dt * dt * 0.5;
+				pos_[index_i] += coefficient_ * smoothing_length_sqr_ * acceleration_trans;
+		}
+		//=================================================================================================//
+		void TransportVelocityCorrectionComplexAdaptive::interaction(size_t index_i, Real dt)
+		{
+			TransportVelocityCorrectionInnerAdaptive::interaction(index_i, dt);
+
+			Vecd acceleration_trans(0);
+			for (size_t k = 0; k < contact_configuration_.size(); ++k)
+			{
+				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+				{
+					size_t index_j = contact_neighborhood.j_[n];
+					Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
+
+					// acceleration for transport velocity
+					acceleration_trans -= 2.0 * nablaW_ijV_j;
+				}
+			}
+
+			/** correcting particle position */
+			if (surface_indicator_[index_i] == 0)
+			{
+				Real inv_h_ratio = 1.0 / sph_adaptation_.SmoothingLengthRatio(index_i);
+				pos_[index_i] += coefficient_ * smoothing_length_sqr_ * inv_h_ratio * inv_h_ratio * acceleration_trans;
+			}
 		}
 		//=================================================================================================//
 		void Oldroyd_BIntegration1stHalfWithWall::interaction(size_t index_i, Real dt)

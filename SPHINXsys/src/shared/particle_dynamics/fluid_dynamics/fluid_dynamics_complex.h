@@ -25,7 +25,7 @@
  * @brief Here, we define the algorithm classes for complex fluid dynamics,
  * which is involving with either solid walls (with suffix WithWall)
  * or/and other bodies treated as wall for the fluid (with suffix Complex).
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef FLUID_DYNAMICS_COMPLEX_H
@@ -55,11 +55,11 @@ namespace SPH
 		public:
 			template <class BaseBodyRelationType, typename... Args>
 			InteractionWithWall(BaseContactRelation &wall_contact_relation,
-							   BaseBodyRelationType &base_body_relation, Args &&...args);
+								BaseBodyRelationType &base_body_relation, Args &&...args);
 			template <typename... Args>
 			InteractionWithWall(ComplexRelation &fluid_wall_relation, Args &&...args)
 				: InteractionWithWall(fluid_wall_relation.contact_relation_,
-									 fluid_wall_relation.inner_relation_, std::forward<Args>(args)...) {}
+									  fluid_wall_relation.inner_relation_, std::forward<Args>(args)...) {}
 			virtual ~InteractionWithWall(){};
 
 		protected:
@@ -67,29 +67,60 @@ namespace SPH
 			StdVec<StdLargeVec<Real> *> wall_mass_;
 			StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_acc_ave_, wall_n_;
 		};
+
 		/**
 		 * @class DensitySummation
 		 * @brief computing density by summation considering contribution from contact bodies
 		 */
 		template <class DensitySummationInnerType>
-		class DensitySummation : public BaseInteractionComplex<DensitySummationInnerType, FluidContactData>
+		class BaseDensitySummationComplex
+			: public BaseInteractionComplex<DensitySummationInnerType, FluidContactData>
 		{
 		public:
 			template <typename... Args>
-			DensitySummation(Args &&...args);
-			virtual ~DensitySummation(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+			explicit BaseDensitySummationComplex(Args &&...args);
+			virtual ~BaseDensitySummationComplex(){};
 
 		protected:
 			StdVec<Real> contact_inv_rho0_;
 			StdVec<StdLargeVec<Real> *> contact_mass_;
+
+			Real ContactSummation(size_t index_i);
 		};
-		/** the instance without considering free surface */
-		using DensitySummationComplex = DensitySummation<DensitySummationInner>;
 
 		/**
-		 * @class BaseViscousAccelerationWithWall
-		 * @brief template class viscous acceleration together with wall boundary condition
+		 * @class DensitySummationComplex
+		 * @brief computing density by summation considering contribution from contact bodies
+		 */
+		class DensitySummationComplex
+			: public BaseDensitySummationComplex<DensitySummationInner>
+		{
+		public:
+			template <typename... Args>
+			explicit DensitySummationComplex(Args &&...args)
+				: BaseDensitySummationComplex<DensitySummationInner>(std::forward<Args>(args)...){};
+			virtual ~DensitySummationComplex(){};
+			void interaction(size_t index_i, Real dt = 0.0);
+		};
+
+		/**
+		 * @class DensitySummationComplexAdaptive
+		 * @brief computing density by summation considering  contribution from contact bodies
+		 */
+		class DensitySummationComplexAdaptive
+			: public BaseDensitySummationComplex<DensitySummationInnerAdaptive>
+		{
+		public:
+			template <typename... Args>
+			explicit DensitySummationComplexAdaptive(Args &&...args)
+			: BaseDensitySummationComplex<DensitySummationInnerAdaptive>(std::forward<Args>(args)...){};
+			virtual ~DensitySummationComplexAdaptive(){};
+			void interaction(size_t index_i, Real dt = 0.0);
+		};
+
+		/**
+		 * @class ViscousWithWall
+		 * @brief  template class viscous acceleration with wall boundary
 		 */
 		template <class ViscousAccelerationInnerType>
 		class BaseViscousAccelerationWithWall : public InteractionWithWall<ViscousAccelerationInnerType>
@@ -117,6 +148,22 @@ namespace SPH
 				: BaseInteractionComplex<TransportVelocityCorrectionInner, FluidContactData>(
 					  std::forward<Args>(args)...){};
 			virtual ~TransportVelocityCorrectionComplex(){};
+			void interaction(size_t index_i, Real dt = 0.0);
+		};
+
+		/**
+		 * @class TransportVelocityCorrectionComplexAdaptive
+		 * @brief  transport velocity correction considering the contribution from contact bodies
+		 */
+		class TransportVelocityCorrectionComplexAdaptive
+			: public BaseInteractionComplex<TransportVelocityCorrectionInnerAdaptive, FluidContactData>
+		{
+		public:
+			template <typename... Args>
+			TransportVelocityCorrectionComplexAdaptive(Args &&...args)
+				: BaseInteractionComplex<TransportVelocityCorrectionInnerAdaptive, FluidContactData>(
+					  std::forward<Args>(args)...){};
+			virtual ~TransportVelocityCorrectionComplexAdaptive(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 		};
 

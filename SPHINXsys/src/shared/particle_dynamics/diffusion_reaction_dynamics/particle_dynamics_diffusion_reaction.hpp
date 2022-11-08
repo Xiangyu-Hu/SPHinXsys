@@ -1,6 +1,6 @@
 /**
  * @file 	particle_dynamics_diffusion_reaction.hpp
- * @author	Xiaojing Tang, Chi ZHang and Xiangyu Hu
+ * @author	Xiaojing Tang, Chi Zhang and Xiangyu Hu
  */
 
 #ifndef PARTICLE_DYNAMICS_DIFFUSION_REACTION_HPP
