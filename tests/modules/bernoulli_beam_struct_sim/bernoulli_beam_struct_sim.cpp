@@ -22,7 +22,7 @@ TEST(BernoulliBeam20x, Pressure)
 
 	SharedPtr<TriangleMeshShapeSTL> specimen = makeShared<TriangleMeshShapeSTL>("./input/bernoulli_beam_20x.stl", Vec3d(0), scale_stl, "bernoulli_beam_20x");
 	BoundingBox fixation = specimen->getBounds();
-	fixation.second[0] = fixation.first[0] + 0.01;
+	fixation.second_[0] = fixation.first_[0] + 0.01;
 	
 	StructuralSimulationInput input
 	{

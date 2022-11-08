@@ -60,7 +60,7 @@ class SolidBodyFromMesh : public SolidBody
 {
 public:
 	SolidBodyFromMesh(SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
-				  SharedPtr<SaintVenantKirchhoffSolid> material_model, StdLargeVec<Vecd> &pos_0, StdLargeVec<Real> &volume);
+				  SharedPtr<SaintVenantKirchhoffSolid> material_model, StdLargeVec<Vec3d> &pos_0, StdLargeVec<Real> &volume);
 	~SolidBodyFromMesh(){};
 };
 
@@ -68,7 +68,7 @@ class SolidBodyForSimulation
 {
 private:
 	SolidBodyFromMesh solid_body_from_mesh_;
-	BodyRelationInner inner_body_relation_;
+	InnerRelation inner_body_relation_;
 
 	SimpleDynamics<NormalDirectionFromBodyShape> initial_normal_direction_;
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> correct_configuration_;
@@ -80,12 +80,12 @@ public:
 	// no particle reload --> direct generator
 	SolidBodyForSimulation(
 		SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
-		Real physical_viscosity, SharedPtr<SaintVenantKirchhoffSolid> material_model, StdLargeVec<Vecd> &pos_0, StdLargeVec<Real> &volume);
+		Real physical_viscosity, SharedPtr<SaintVenantKirchhoffSolid> material_model, StdLargeVec<Vec3d> &pos_0, StdLargeVec<Real> &volume);
 	~SolidBodyForSimulation(){};
 
 	SolidBodyFromMesh *getSolidBodyFromMesh() { return &solid_body_from_mesh_; };
-	ElasticSolidParticles *getElasticSolidParticles() { return DynamicCast<ElasticSolidParticles>(this, solid_body_from_mesh_.base_particles_); };
-	BodyRelationInner *getInnerBodyRelation() { return &inner_body_relation_; };
+	ElasticSolidParticles *getElasticSolidParticles() { return DynamicCast<ElasticSolidParticles>(this, &solid_body_from_mesh_.getBaseParticles()); };
+	InnerRelation *getInnerBodyRelation() { return &inner_body_relation_; };
 
 	SimpleDynamics<NormalDirectionFromBodyShape> *getInitialNormalDirection() { return &initial_normal_direction_; };
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> *getCorrectConfiguration() { return &correct_configuration_; };
@@ -100,7 +100,7 @@ void relaxParticlesSingleResolution(IOEnvironment &io_environment,
 									bool write_particles_to_file,
 									SolidBodyFromMesh &solid_body_from_mesh,
 									ElasticSolidParticles &solid_body_from_mesh_particles,
-									BodyRelationInner &solid_body_from_mesh_inner);
+									InnerRelation &solid_body_from_mesh_inner);
 
 static inline Real getPhysicalViscosityGeneral(Real rho, Real youngs_modulus, Real length_scale, Real shape_constant = 1.0)
 {
@@ -158,7 +158,7 @@ public:
 class StructuralSimulation
 {
 private:
-	UniquePtrKeepers<SolidBodyRelationContact> contact_relation_ptr_keeper_;
+	UniquePtrKeepers<SurfaceContactRelation> contact_relation_ptr_keeper_;
 	UniquePtrKeepers<Gravity> gravity_ptr_keeper_;
 	UniquePtrKeepers<BodyPartFromMesh> body_part_tri_mesh_ptr_keeper_;
 
@@ -186,7 +186,7 @@ protected:
 	vector<shared_ptr<SolidBodyForSimulation>> solid_body_list_;
 	vector<shared_ptr<SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection>>> particle_normal_update_;
 
-	vector<shared_ptr<SolidBodyRelationContact>> contact_list_;
+	vector<shared_ptr<SurfaceContactRelation>> contact_list_;
 	vector<shared_ptr<InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle>>> contact_density_list_;
 	vector<shared_ptr<InteractionDynamics<solid_dynamics::ContactForce, BodyPartByParticle>>> contact_force_list_;
 
