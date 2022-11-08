@@ -238,11 +238,14 @@ namespace SPH
 					Real r_ij = inner_neighborhood.r_ij_[n];
 					Real dim_inv_r_ij = Dimensions / r_ij;
 					Real weight = inner_neighborhood.W_ij_[n] * inv_W0_;
-					Vecd pos_jump = getLinearVariableJump(e_ij, r_ij, pos_[index_i], F_[index_i], pos_[index_j], F_[index_j]);
+					Vecd pos_jump = getLinearVariableJump(e_ij, r_ij, pos_[index_i], ~transformation_matrix_[index_i] * F_[index_i] * transformation_matrix_[index_i],
+						pos_[index_j], ~transformation_matrix_[index_j] * F_[index_j] * transformation_matrix_[index_j]);
 					acceleration += hourglass_control_factor_ * weight * E0_ * pos_jump * dim_inv_r_ij * inner_neighborhood.dW_ijV_j_[n] * thickness_[index_i];
 
 					Vecd pseudo_n_jump = getLinearVariableJump(e_ij, r_ij, pseudo_n_[index_i] - n0_[index_i],
-															   F_bending_[index_i], pseudo_n_[index_j] - n0_[index_j], F_bending_[index_j]);
+						~transformation_matrix_[index_i] * F_bending_[index_i] * transformation_matrix_[index_i],
+						pseudo_n_[index_j] - n0_[index_j],
+						~transformation_matrix_[index_j] * F_bending_[index_j] * transformation_matrix_[index_j]);
 					Vecd rotation_jump = getRotationJump(pseudo_n_jump, transformation_matrix_[index_i]);
 					pseudo_normal_acceleration += hourglass_control_factor_ / 3.0 * weight * Dimensions * r_ij * G0_ * rotation_jump * inner_neighborhood.dW_ijV_j_[n] * thickness_[index_i];
 				}
