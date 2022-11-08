@@ -167,7 +167,7 @@ namespace SPH
 		void BaseExtendIntegration1stHalfWithWall<BaseIntegration1stHalfType>::initialization(size_t index_i, Real dt)
 		{
 			BaseIntegration1stHalfType::initialization(index_i, dt);
-			non_cnsrv_acc_[index_i] = Vecd(0);
+			non_cnsrv_acc_[index_i] = Vecd::Zero();
 		}
 		//=================================================================================================//
 		template <class BaseIntegration1stHalfType>

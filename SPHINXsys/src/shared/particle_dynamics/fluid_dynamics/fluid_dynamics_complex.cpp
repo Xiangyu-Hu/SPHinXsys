@@ -49,7 +49,7 @@ namespace SPH
 		{
 			TransportVelocityCorrectionInnerAdaptive::interaction(index_i, dt);
 
-			Vecd acceleration_trans(0);
+			Vecd acceleration_trans = Vecd::Zero();
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];

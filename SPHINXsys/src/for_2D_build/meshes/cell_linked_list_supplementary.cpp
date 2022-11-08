@@ -11,7 +11,7 @@ namespace SPH
 		Allocate2dArray(cell_index_lists_, number_of_cells_);
 		Allocate2dArray(cell_data_lists_, number_of_cells_);
 
-		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
+		mesh_parallel_for(MeshRange(Vecu::Zero(), number_of_cells_),
 						  [&](size_t i, size_t j)
 						  {
 							  cell_index_lists_[i][j].reserve(12);
@@ -27,7 +27,7 @@ namespace SPH
 	//=================================================================================================//
 	void CellLinkedList::clearCellLists()
 	{
-		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
+		mesh_parallel_for(MeshRange(Vecu::Zero(), number_of_cells_),
 						  [&](size_t i, size_t j)
 						  {
 							  cell_index_lists_[i][j].clear();
@@ -38,7 +38,7 @@ namespace SPH
 	{
 		StdLargeVec<Vecd> &pos = base_particles.pos_;
 		StdLargeVec<Real> &Vol = base_particles.Vol_;
-		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
+		mesh_parallel_for(MeshRange(Vecu::Zero(), number_of_cells_),
 						  [&](size_t i, size_t j)
 						  {
 							  cell_data_lists_[i][j].clear();

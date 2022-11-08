@@ -153,7 +153,7 @@ namespace SPH
 			Integration2ndHalfType::interaction(index_i, dt);
 
 			Real density_change_rate = 0.0;
-			Vecd p_dissipation(0);
+			Vecd p_dissipation = Vecd::Zero();
 			for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 			{
 				StdLargeVec<Real> &rho_k = *(this->contact_rho_n_[k]);

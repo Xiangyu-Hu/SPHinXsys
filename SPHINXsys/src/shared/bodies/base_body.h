@@ -209,7 +209,7 @@ namespace SPH
 			  cell_linked_list_created_(false)
 		{
 			this->getSPHSystem().real_bodies_.push_back(this);
-			size_t number_of_split_cell_lists = powerN(3, Vecd(0).size());
+			size_t number_of_split_cell_lists = powerN(3, Vecd::Zero().size());
 			split_cell_lists_.resize(number_of_split_cell_lists);
 		};
 		virtual ~RealBody(){};

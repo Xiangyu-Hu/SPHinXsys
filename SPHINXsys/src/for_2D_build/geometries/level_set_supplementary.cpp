@@ -176,7 +176,7 @@ namespace SPH
 					   Shape &shape, SPHAdaptation &sph_adaptation)
 		: LevelSet(tentative_bounds, data_spacing, 4, shape, sph_adaptation)
 	{
-		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
+		mesh_parallel_for(MeshRange(Vecu::Zero(), number_of_cells_),
 						  [&](size_t i, size_t j)
 						  {
 							  initializeDataInACell(Vecu(i, j));
@@ -187,13 +187,13 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSet::finishDataPackages()
 	{
-		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
+		mesh_parallel_for(MeshRange(Vecu::Zero(), number_of_cells_),
 						  [&](size_t i, size_t j)
 						  {
 							  tagACellIsInnerPackage(Vecu(i, j));
 						  });
 
-		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
+		mesh_parallel_for(MeshRange(Vecu::Zero(), number_of_cells_),
 						  [&](size_t i, size_t j)
 						  {
 							  initializePackageAddressesInACell(Vecu(i, j));
@@ -482,7 +482,7 @@ namespace SPH
 									 Shape &shape, SPHAdaptation &sph_adaptation)
 		: RefinedMesh(tentative_bounds, coarse_level_set, 4, shape, sph_adaptation)
 	{
-		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
+		mesh_parallel_for(MeshRange(Vecu::Zero(), number_of_cells_),
 						  [&](size_t i, size_t j)
 						  {
 							  initializeDataInACellFromCoarse(Vecu(i, j));

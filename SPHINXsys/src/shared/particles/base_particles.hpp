@@ -47,7 +47,6 @@ namespace SPH
                          const std::string &variable_name, VariableType initial_value)
     {
         constexpr int type_index = DataTypeIndex<VariableType>::value;
-        //VariableType init_value = DataTypeInitializer<VariableType>::zero;
 
         if (all_variable_maps_[type_index].find(variable_name) == all_variable_maps_[type_index].end())
         {

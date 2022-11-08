@@ -24,7 +24,7 @@ namespace SPH
 		//=================================================================================================//
 		DensitySummationInner::DensitySummationInner(BaseInnerRelation &inner_relation)
 			: BaseDensitySummationInner(inner_relation),
-			  W0_(sph_body_.sph_adaptation_->getKernel()->W0(Vecd(0))),
+			  W0_(sph_body_.sph_adaptation_->getKernel()->W0( zero_vec )),
 			  inv_sigma0_(1.0 / sph_body_.sph_adaptation_->ReferenceNumberDensity()) {}
 		//=================================================================================================//
 		void DensitySummationInner::interaction(size_t index_i, Real dt)
@@ -46,7 +46,7 @@ namespace SPH
 		//=================================================================================================//
 		void DensitySummationInnerAdaptive::interaction(size_t index_i, Real dt)
 		{
-			Real sigma_i = mass_[index_i] * kernel_.W0(h_ratio_[index_i], Vecd(0));
+			Real sigma_i = mass_[index_i] * kernel_.W0( h_ratio_[index_i], zero_vec );
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 				sigma_i += inner_neighborhood.W_ij_[n] * mass_[inner_neighborhood.j_[n]];
@@ -132,7 +132,7 @@ namespace SPH
 		//=================================================================================================//
 		void TransportVelocityCorrectionInnerAdaptive::interaction(size_t index_i, Real dt)
 		{
-			Vecd acceleration_trans(0);
+			Vecd acceleration_trans = Vecd::Zero();
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
@@ -210,7 +210,7 @@ namespace SPH
 		//=================================================================================================//
 		void VorticityInner::interaction(size_t index_i, Real dt)
 		{
-			AngularVecd vorticity(0);
+			AngularVecd vorticity = DataTypeInitializer<AngularVecd>::zero;
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
@@ -285,7 +285,7 @@ namespace SPH
 				size_t index_j = inner_neighborhood.j_[n];
 				Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
 
-				Matd velocity_gradient = - Vol_[index_j] * (vel_[index_i] - vel_[index_j]) * nablaW_ijV_j.transpose();
+				Matd velocity_gradient = - (vel_[index_i] - vel_[index_j]) * nablaW_ijV_j.transpose();
 				stress_rate += velocity_gradient.transpose() * tau_i + tau_i * velocity_gradient - tau_i / lambda_ +
 							   (velocity_gradient.transpose() + velocity_gradient) * mu_p_ / lambda_;
 			}

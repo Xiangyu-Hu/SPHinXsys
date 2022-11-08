@@ -172,7 +172,6 @@ int main(int ac, char *av[])
 				relaxation_time += acoustic_dt;
 				integration_time += acoustic_dt;
 				GlobalStaticVariables::physical_time_ += acoustic_dt;
-				
 			}
 			interval_computing_fluid_pressure_relaxation += tick_count::now() - time_instance;
 
@@ -200,9 +199,9 @@ int main(int ac, char *av[])
 			fluid_observer_contact.updateConfiguration();
 			interval_updating_configuration += tick_count::now() - time_instance;
 		}
-
-		tick_count t2 = tick_count::now();
+		
 		body_states_recording.writeToFile();
+		tick_count t2 = tick_count::now();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}

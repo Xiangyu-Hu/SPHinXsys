@@ -78,7 +78,7 @@ namespace SPH
 		template <class RiemannSolverType>
 		void BaseIntegration1stHalf<RiemannSolverType>::interaction(size_t index_i, Real dt)
 		{
-			Vecd acceleration(0);
+			Vecd acceleration =  Vecd::Zero();
 			Real rho_dissipation(0);
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -116,7 +116,7 @@ namespace SPH
 		void BaseIntegration2ndHalf<RiemannSolverType>::interaction(size_t index_i, Real dt)
 		{
 			Real density_change_rate(0);
-			Vecd p_dissipation(0);
+			Vecd p_dissipation = Vecd::Zero();
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
