@@ -175,7 +175,7 @@ int main(int ac, char *av[])
 
 	/** Setup physical parameters. */
 	int ite = 0;
-	Real end_time = 2.0;
+	Real end_time = 1.0;
 	Real output_period = end_time / 100.0;
 	Real dt = 0.0;
 	/** Statistics for computing time. */
