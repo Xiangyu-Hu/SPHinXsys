@@ -35,7 +35,6 @@
 
 #include "base_data_package.h"
 #include "sph_data_containers.h"
-#include "base_particles.h"
 
 /** this is a reformulation of tbb parallel_sort for particle data */
 namespace tbb
@@ -209,9 +208,7 @@ namespace tbb
  */
 namespace SPH
 {
-
-	class RealBody;
-	class BaseCellLinkedList;
+	class BaseParticles;
 
 	/**
 	 * @class swapParticleDataValue
@@ -258,7 +255,7 @@ namespace SPH
 		DataAssembleOperation<swapParticleDataValue> swap_particle_data_value_;
 
 	public:
-		explicit SwapSortableParticleData(BaseParticles *base_particles);
+		explicit SwapSortableParticleData(BaseParticles &base_particles);
 		~SwapSortableParticleData(){};
 
 		/** the operator overload for swapping particle data.
@@ -273,34 +270,27 @@ namespace SPH
 	 */
 	class ParticleSorting
 	{
-	private:
-		UniquePtrKeeper<SwapSortableParticleData> swap_particle_ptr_keeper_;
-		UniquePtrKeeper<
-			tbb::interface9::internal::QuickSortParticleRange<size_t *, CompareParticleSequence, SwapSortableParticleData>>
-			quick_sort_particle_range_ptr_keeper_;
-
 	protected:
-		BaseParticles *base_particles_;
+		BaseParticles &base_particles_;
 
 		/** using pointer because it is constructed after particles. */
-		SwapSortableParticleData *swap_sortable_particle_data_;
+		SwapSortableParticleData swap_sortable_particle_data_;
 		CompareParticleSequence compare_;
 		tbb::interface9::internal::QuickSortParticleRange<
-			size_t *, CompareParticleSequence, SwapSortableParticleData> *quick_sort_particle_range_;
+			size_t *, CompareParticleSequence, SwapSortableParticleData>
+			quick_sort_particle_range_;
 		tbb::interface9::internal::QuickSortParticleBody<
 			size_t *, CompareParticleSequence, SwapSortableParticleData>
 			quick_sort_particle_body_;
 
 	public:
-		/** the construction is before particles. */
-		explicit ParticleSorting(RealBody *real_body);
+		// the construction is before particles
+		explicit ParticleSorting(BaseParticles &base_particles);
 		virtual ~ParticleSorting(){};
-
-		void assignBaseParticles(BaseParticles *base_particles);
 		/** sorting particle data according to the cell location of particles */
 		virtual void sortingParticleData(size_t *begin, size_t size);
 		/** update the reference of sorted data from unsorted data */
 		virtual void updateSortedId();
 	};
 }
-#endif //PARTICLE_SORTING_H
+#endif // PARTICLE_SORTING_H

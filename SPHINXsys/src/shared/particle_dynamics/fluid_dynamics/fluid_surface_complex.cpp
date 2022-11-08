@@ -7,20 +7,20 @@ namespace SPH
 	{
 		//=================================================================================================//
 		FreeSurfaceIndicationComplex::
-			FreeSurfaceIndicationComplex(BaseBodyRelationInner &inner_relation,
-										 BaseBodyRelationContact &contact_relation, Real threshold)
+			FreeSurfaceIndicationComplex(BaseInnerRelation &inner_relation,
+										 BaseContactRelation &contact_relation, Real threshold)
 			: FreeSurfaceIndicationInner(inner_relation, threshold), FluidContactData(contact_relation)
 		{
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
-				Real rho0_k = contact_particles_[k]->rho0_;
+				Real rho0_k = contact_bodies_[k]->base_material_->ReferenceDensity();
 				contact_inv_rho0_.push_back(1.0 / rho0_k);
 				contact_mass_.push_back(&(contact_particles_[k]->mass_));
 			}
 		}
 		//=================================================================================================//
 		FreeSurfaceIndicationComplex::
-			FreeSurfaceIndicationComplex(ComplexBodyRelation &complex_relation, Real threshold)
+			FreeSurfaceIndicationComplex(ComplexRelation &complex_relation, Real threshold)
 			: FreeSurfaceIndicationComplex(complex_relation.inner_relation_,
 										   complex_relation.contact_relation_, threshold) {}
 		//=================================================================================================//
@@ -31,20 +31,17 @@ namespace SPH
 			Real pos_div = 0.0;
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
-				StdLargeVec<Real> &contact_mass_k = *(contact_mass_[k]);
-				Real contact_inv_rho0_k = contact_inv_rho0_[k];
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
-					pos_div -= contact_neighborhood.dW_ij_[n] * contact_neighborhood.r_ij_[n] *
-							   contact_inv_rho0_k * contact_mass_k[contact_neighborhood.j_[n]];
+					pos_div -= contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.r_ij_[n];
 				}
 			}
 			pos_div_[index_i] += pos_div;
 		}
 		//=================================================================================================//
-		ColorFunctionGradientComplex::ColorFunctionGradientComplex(BaseBodyRelationInner &inner_relation,
-																   BaseBodyRelationContact &contact_relation)
+		ColorFunctionGradientComplex::ColorFunctionGradientComplex(BaseInnerRelation &inner_relation,
+																   BaseContactRelation &contact_relation)
 			: ColorFunctionGradientInner(inner_relation), FluidContactData(contact_relation)
 		{
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
@@ -53,7 +50,7 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		ColorFunctionGradientComplex::ColorFunctionGradientComplex(ComplexBodyRelation &complex_relation)
+		ColorFunctionGradientComplex::ColorFunctionGradientComplex(ComplexRelation &complex_relation)
 			: ColorFunctionGradientComplex(complex_relation.inner_relation_,
 										   complex_relation.contact_relation_) {}
 		//=================================================================================================//
@@ -66,12 +63,11 @@ namespace SPH
 			{
 				for (size_t k = 0; k < contact_configuration_.size(); ++k)
 				{
-					StdLargeVec<Real> &contact_vol_k = *(contact_Vol_[k]);
+					StdLargeVec<Real> &contact_Vol_k = *(contact_Vol_[k]);
 					Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 					for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 					{
-						gradient -= contact_neighborhood.dW_ij_[n] * contact_neighborhood.e_ij_[n] *
-									contact_vol_k[contact_neighborhood.j_[n]];
+						gradient -= contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
 					}
 				}
 			}
@@ -79,7 +75,7 @@ namespace SPH
 			surface_norm_[index_i] = color_grad_[index_i] / (color_grad_[index_i].norm() + TinyReal);
 		}
 		//=================================================================================================//
-		SurfaceNormWithWall::SurfaceNormWithWall(BaseBodyRelationContact &contact_relation, Real contact_angle)
+		SurfaceNormWithWall::SurfaceNormWithWall(BaseContactRelation &contact_relation, Real contact_angle)
 			: LocalDynamics(contact_relation.sph_body_), FSIContactData(contact_relation),
 			  contact_angle_(contact_angle),
 			  surface_indicator_(particles_->surface_indicator_),

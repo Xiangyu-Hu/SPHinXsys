@@ -6,9 +6,9 @@
 namespace SPH
 {
 	//=================================================================================================//
-	ComplexBodyRelation::
-		ComplexBodyRelation(BaseBodyRelationInner &inner_relation, BaseBodyRelationContact &contact_relation)
-		: SPHBodyRelation(inner_relation.sph_body_),
+	ComplexRelation::
+		ComplexRelation(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation)
+		: SPHRelation(inner_relation.sph_body_),
 		  inner_relation_(inner_relation),
 		  contact_relation_(contact_relation),
 		  contact_bodies_(contact_relation_.contact_bodies_),
@@ -18,11 +18,11 @@ namespace SPH
 		updateConfigurationMemories();
 	}
 	//=================================================================================================//
-	ComplexBodyRelation::ComplexBodyRelation(RealBody &real_body, RealBodyVector contact_bodies)
-		: SPHBodyRelation(real_body),
-		  inner_relation_(base_body_relation_inner_ptr_keeper_.createRef<BodyRelationInner>(real_body)),
-		  contact_relation_(base_body_relation_contact_ptr_keeper_
-								.createRef<BodyRelationContact>(real_body, contact_bodies)),
+	ComplexRelation::ComplexRelation(RealBody &real_body, RealBodyVector contact_bodies)
+		: SPHRelation(real_body),
+		  inner_relation_(base_inner_relation_ptr_keeper_.createRef<InnerRelation>(real_body)),
+		  contact_relation_(base_contact_relation_ptr_keeper_
+								.createRef<ContactRelation>(real_body, contact_bodies)),
 		  contact_bodies_(contact_relation_.contact_bodies_),
 		  inner_configuration_(inner_relation_.inner_configuration_),
 		  contact_configuration_(contact_relation_.contact_configuration_)
@@ -30,11 +30,11 @@ namespace SPH
 		updateConfigurationMemories();
 	}
 	//=================================================================================================//
-	ComplexBodyRelation::
-		ComplexBodyRelation(BaseBodyRelationInner &inner_relation, RealBodyVector contact_bodies)
-		: SPHBodyRelation(inner_relation.sph_body_),
+	ComplexRelation::
+		ComplexRelation(BaseInnerRelation &inner_relation, RealBodyVector contact_bodies)
+		: SPHRelation(inner_relation.sph_body_),
 		  inner_relation_(inner_relation),
-		  contact_relation_(base_body_relation_contact_ptr_keeper_.createRef<BodyRelationContact>(
+		  contact_relation_(base_contact_relation_ptr_keeper_.createRef<ContactRelation>(
 			  DynamicCast<RealBody>(this, sph_body_), contact_bodies)),
 		  contact_bodies_(contact_relation_.contact_bodies_),
 		  inner_configuration_(inner_relation_.inner_configuration_),
@@ -43,11 +43,11 @@ namespace SPH
 		updateConfigurationMemories();
 	}
 	//=================================================================================================//
-	ComplexBodyRelation::ComplexBodyRelation(RealBody &real_body, BodyPartVector contact_body_parts)
-		: SPHBodyRelation(real_body),
-		  inner_relation_(base_body_relation_inner_ptr_keeper_.createRef<BodyRelationInner>(real_body)),
-		  contact_relation_(base_body_relation_contact_ptr_keeper_
-								.createRef<BodyRelationContactToBodyPart>(real_body, contact_body_parts)),
+	ComplexRelation::ComplexRelation(RealBody &real_body, BodyPartVector contact_body_parts)
+		: SPHRelation(real_body),
+		  inner_relation_(base_inner_relation_ptr_keeper_.createRef<InnerRelation>(real_body)),
+		  contact_relation_(base_contact_relation_ptr_keeper_
+								.createRef<ContactRelationToBodyPart>(real_body, contact_body_parts)),
 		  contact_bodies_(contact_relation_.contact_bodies_),
 		  inner_configuration_(inner_relation_.inner_configuration_),
 		  contact_configuration_(contact_relation_.contact_configuration_)
@@ -55,13 +55,13 @@ namespace SPH
 		updateConfigurationMemories();
 	}
 	//=================================================================================================//
-	void ComplexBodyRelation::updateConfigurationMemories()
+	void ComplexRelation::updateConfigurationMemories()
 	{
 		inner_relation_.updateConfigurationMemories();
 		contact_relation_.updateConfigurationMemories();
 	}
 	//=================================================================================================//
-	void ComplexBodyRelation::updateConfiguration()
+	void ComplexRelation::updateConfiguration()
 	{
 		inner_relation_.updateConfiguration();
 		contact_relation_.updateConfiguration();

@@ -81,8 +81,8 @@ int main()
 	cantilever_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 
 	/** topology */
-	BodyRelationInner cantilever_body_inner(cantilever_body);
-	BodyRelationContact cantilever_observer_contact(cantilever_observer, {&cantilever_body});
+	InnerRelation cantilever_body_inner(cantilever_body);
+	ContactRelation cantilever_observer_contact(cantilever_observer, {&cantilever_body});
 
 	/** 
 	 * This section define all numerical methods will be used in this case.

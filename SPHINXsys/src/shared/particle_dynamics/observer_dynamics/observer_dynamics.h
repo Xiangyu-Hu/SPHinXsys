@@ -43,7 +43,7 @@ namespace SPH
 {
 	namespace observer_dynamics //TODO: this namespace seems not necessary, these dynamics seems belong to general dynamics
 	{
-		typedef DataDelegateContact<SPHBody, BaseParticles, BaseMaterial, SPHBody, BaseParticles, BaseMaterial> InterpolationContactData;
+		typedef DataDelegateContact<BaseParticles, BaseParticles> InterpolationContactData;
 
 		/**
 		 * @class BaseInterpolation
@@ -55,7 +55,7 @@ namespace SPH
 		public:
 			StdLargeVec<VariableType>*  interpolated_quantities_;
 
-			explicit BaseInterpolation(BaseBodyRelationContact &contact_relation, const std::string &variable_name)
+			explicit BaseInterpolation(BaseContactRelation &contact_relation, const std::string &variable_name)
 				: LocalDynamics(contact_relation.sph_body_), InterpolationContactData(contact_relation),
 				  interpolated_quantities_(nullptr)
 			{
@@ -104,7 +104,7 @@ namespace SPH
 		class InterpolatingAQuantity : public BaseInterpolation<VariableType>
 		{
 		public:
-			explicit InterpolatingAQuantity(BaseBodyRelationContact &contact_relation,
+			explicit InterpolatingAQuantity(BaseContactRelation &contact_relation,
 											const std::string &interpolated_variable, const std::string &target_variable)
 				: BaseInterpolation<VariableType>(contact_relation, target_variable)
 			{
@@ -122,7 +122,7 @@ namespace SPH
 		class ObservingAQuantity : public InteractionDynamics<BaseInterpolation<VariableType>>
 		{
 		public:
-			explicit ObservingAQuantity(BaseBodyRelationContact &contact_relation, const std::string &variable_name)
+			explicit ObservingAQuantity(BaseContactRelation &contact_relation, const std::string &variable_name)
 				: InteractionDynamics<BaseInterpolation<VariableType>>(contact_relation, variable_name)
 			{
 				this->interpolated_quantities_ = registerObservedQuantity(variable_name);
@@ -155,7 +155,7 @@ namespace SPH
 												  public InterpolationContactData
 		{
 		public:
-			explicit CorrectInterpolationKernelWeights(BaseBodyRelationContact &contact_relation);
+			explicit CorrectInterpolationKernelWeights(BaseContactRelation &contact_relation);
 			virtual ~CorrectInterpolationKernelWeights(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 

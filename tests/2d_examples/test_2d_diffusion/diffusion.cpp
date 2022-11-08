@@ -19,7 +19,7 @@ Real diffusion_coff = 1.0e-4;
 Real bias_coff = 0.0;
 Real alpha = Pi / 6.0;
 Vec2d bias_direction(cos(alpha), sin(alpha));
-StdVec<std::string> species_name_list{"Phi"};
+std::array<std::string, 1> species_name_list{"Phi"};
 //----------------------------------------------------------------------
 //	Geometric shapes used in the case.
 //----------------------------------------------------------------------
@@ -52,16 +52,16 @@ public:
 //	Application dependent initial condition.
 //----------------------------------------------------------------------
 class DiffusionInitialCondition
-	: public DiffusionReactionInitialCondition<SolidBody, SolidParticles, Solid>
+	: public DiffusionReactionInitialCondition<SolidParticles, Solid>
 {
 protected:
 	size_t phi_;
 
 public:
 	explicit DiffusionInitialCondition(SPHBody &sph_body)
-		: DiffusionReactionInitialCondition<SolidBody, SolidParticles, Solid>(sph_body)
+		: DiffusionReactionInitialCondition<SolidParticles, Solid>(sph_body)
 	{
-		phi_ = material_->SpeciesIndexMap()["Phi"];
+		phi_ = particles_->diffusion_reaction_material_.SpeciesIndexMap()["Phi"];
 	};
 
 	void update(size_t index_i, Real dt)
@@ -82,10 +82,10 @@ public:
 //----------------------------------------------------------------------
 class DiffusionBodyRelaxation
 	: public RelaxationOfAllDiffusionSpeciesRK2<
-		  RelaxationOfAllDiffusionSpeciesInner<SolidBody, SolidParticles, Solid>>
+		  RelaxationOfAllDiffusionSpeciesInner<SolidParticles, Solid>>
 {
 public:
-	explicit DiffusionBodyRelaxation(BodyRelationInner &body_inner_relation)
+	explicit DiffusionBodyRelaxation(InnerRelation &body_inner_relation)
 		: RelaxationOfAllDiffusionSpeciesRK2(body_inner_relation){};
 	virtual ~DiffusionBodyRelaxation(){};
 };
@@ -95,7 +95,8 @@ public:
 class TemperatureObserverParticleGenerator : public ObserverParticleGenerator
 {
 public:
-	explicit TemperatureObserverParticleGenerator(SPHBody &sph_body) : ObserverParticleGenerator(sph_body)
+	explicit TemperatureObserverParticleGenerator(SPHBody &sph_body) 
+	: ObserverParticleGenerator(sph_body)
 	{
 		size_t number_of_observation_points = 11;
 		Real range_of_measure = 0.9 * L;
@@ -122,7 +123,7 @@ int main()
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	SolidBody diffusion_body(sph_system, makeShared<DiffusionBlock>("DiffusionBlock"));
-	diffusion_body.defineParticlesAndMaterial<DiffusionReactionParticles<SolidParticles>, DiffusionMaterial>();
+	diffusion_body.defineParticlesAndMaterial<DiffusionReactionParticles<SolidParticles, Solid>, DiffusionMaterial>();
 	diffusion_body.generateParticles<ParticleGeneratorLattice>();
 	//----------------------------------------------------------------------
 	//	Particle and body creation of fluid observers.
@@ -134,8 +135,8 @@ int main()
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner diffusion_body_inner_relation(diffusion_body);
-	BodyRelationContact temperature_observer_contact(temperature_observer, {&diffusion_body});
+	InnerRelation diffusion_body_inner_relation(diffusion_body);
+	ContactRelation temperature_observer_contact(temperature_observer, {&diffusion_body});
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
@@ -143,7 +144,7 @@ int main()
 	DiffusionBodyRelaxation diffusion_relaxation(diffusion_body_inner_relation);
 	SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> correct_configuration(diffusion_body_inner_relation);
-	GetDiffusionTimeStepSize<SolidBody, SolidParticles, Solid> get_time_step_size(diffusion_body);
+	GetDiffusionTimeStepSize<SolidParticles, Solid> get_time_step_size(diffusion_body);
 	PeriodicConditionUsingCellLinkedList periodic_condition_y(diffusion_body, diffusion_body.getBodyShapeBounds(), yAxis);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.

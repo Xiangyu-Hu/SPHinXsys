@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
  *  HU1527/12-1 and Hu1527/12-4												*
  *                                                                          *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
  * the authors' affiliations.												*
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
@@ -45,13 +45,12 @@ namespace SPH
                                    const std::string &shape_name = "GeometricShapeBox");
         virtual ~GeometricShapeBox(){};
 
-        virtual bool checkContain(const Vec2d &pnt, bool BOUNDARY_INCLUDED = true) override;
-        virtual Vec2d findClosestPoint(const Vec2d &pnt) override;
+        virtual bool checkContain(const Vec2d &probe_point, bool BOUNDARY_INCLUDED = true) override;
+        virtual Vec2d findClosestPoint(const Vec2d &probe_point) override;
 
     protected:
         Vec2d halfsize_;
-   		MultiPolygon multi_polygon_;
-
+        MultiPolygon multi_polygon_;
 
         virtual BoundingBox findBounds() override;
     };
@@ -66,9 +65,9 @@ namespace SPH
                                     const std::string &shape_name = "GeometricShapeBall");
         virtual ~GeometricShapeBall(){};
 
-        virtual bool checkContain(const Vec2d &pnt, bool BOUNDARY_INCLUDED = true) override;
-        virtual Vec2d findClosestPoint(const Vec2d &pnt) override;
- 
+        virtual bool checkContain(const Vec2d &probe_point, bool BOUNDARY_INCLUDED = true) override;
+        virtual Vec2d findClosestPoint(const Vec2d &probe_point) override;
+
     protected:
         virtual BoundingBox findBounds() override;
     };

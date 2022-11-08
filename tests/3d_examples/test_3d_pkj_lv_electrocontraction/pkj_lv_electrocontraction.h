@@ -35,7 +35,7 @@
  *			Pressure pa = g * (mm)^(-1) * (ms)^(-2)
  *			diffusion d = (mm)^(2) * (ms)^(-2)
  *@version 0.3
- *			Here, the coupling with Purkinje network will be condcuted.
+ *			Here, the coupling with Purkinje network will be conducted.
  */
 #pragma once
 #include "sphinxsys.h"
@@ -46,7 +46,7 @@ std::string full_path_to_lv = "./input/leftventricle.stl";
 Real length_scale = 1.0;
 Real time_scale = 1.0 / 12.9;
 Real stress_scale = 1.0e-6;
-/** Paremeters and physical properties. */
+/** Parameters and physical properties. */
 Vec3d domain_lower_bound(-90.0 * length_scale, -40.0 * length_scale, -80.0 * length_scale);
 Vec3d domain_upper_bound(40.0 * length_scale, 30.0 * length_scale, 50.0 * length_scale);
 Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 100.0;
@@ -63,11 +63,11 @@ Real b0[4] = {7.209, 20.417, 11.176, 9.466};
 Real poisson = 0.4995;
 Real bulk_modulus = 2.0 * a0[0] * (1.0 + poisson) / (3.0 * (1.0 - 2.0 * poisson));
 /** Electrophysiology parameters. */
-Real acceleration_factor = 27.5; /** Acceleration factor for fast dissuion on purkinje network. */
+Real acceleration_factor = 27.5; /** Acceleration factor for fast diffusion on purkinje network. */
 Real diffusion_coff = 0.8;
 Real bias_coff = 0.0;
 /** Electrophysiology parameters. */
-StdVec<std::string> species_name_list{"Phi"};
+std::array<std::string, 1> species_name_list{"Phi"};
 Real c_m = 1.0;
 Real k = 8.0;
 Real a = 0.01;
@@ -109,26 +109,26 @@ public:
 /** Set diffusion relaxation. */
 class DiffusionRelaxation
 	: public RelaxationOfAllDiffusionSpeciesRK2<
-		  RelaxationOfAllDiffusionSpeciesInner<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>>
+		  RelaxationOfAllDiffusionSpeciesInner<ElasticSolidParticles, LocallyOrthotropicMuscle>>
 {
 public:
-	explicit DiffusionRelaxation(BodyRelationInner &body_inner_relation)
+	explicit DiffusionRelaxation(InnerRelation &body_inner_relation)
 		: RelaxationOfAllDiffusionSpeciesRK2(body_inner_relation){};
 	virtual ~DiffusionRelaxation(){};
 };
 /** Imposing diffusion boundary condition */
 class DiffusionBCs
-	: public DiffusionReactionSpeciesConstraint<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>
+	: public DiffusionReactionSpeciesConstraint<ElasticSolidParticles, LocallyOrthotropicMuscle>
 {
 public:
 	DiffusionBCs(BodyPartByParticle &body_part, const std::string &species_name)
-		: DiffusionReactionSpeciesConstraint<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>(body_part, species_name),
+		: DiffusionReactionSpeciesConstraint<ElasticSolidParticles, LocallyOrthotropicMuscle>(body_part, species_name),
 		  pos_(particles_->pos_){};
 	virtual ~DiffusionBCs(){};
-	
+
 	void update(size_t index_i, Real dt = 0.0)
 	{
-		Vecd dist_2_face = body_->body_shape_->findNormalDirection(pos_[index_i]);
+		Vecd dist_2_face = sph_body_.body_shape_->findNormalDirection(pos_[index_i]);
 		Vecd face_norm = dist_2_face / (dist_2_face.norm() + 1.0e-15);
 
 		Vecd center_norm = pos_[index_i] / (pos_[index_i].norm() + 1.0e-15);
@@ -140,7 +140,7 @@ public:
 		}
 		else
 		{
-			if (pos_[index_i][1] < -body_->sph_adaptation_->ReferenceSpacing())
+			if (pos_[index_i][1] < - sph_body_.sph_adaptation_->ReferenceSpacing())
 				species_[index_i] = 0.0;
 		}
 	};
@@ -151,9 +151,10 @@ protected:
 
 /** Compute Fiber and Sheet direction after diffusion */
 class ComputeFiberAndSheetDirections
-	: public DiffusionBasedMapping<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>
+	: public DiffusionBasedMapping<ElasticSolidParticles, LocallyOrthotropicMuscle>
 {
 protected:
+	DiffusionReaction<LocallyOrthotropicMuscle> &diffusion_reaction_material_;
 	size_t phi_;
 	Real beta_epi_, beta_endo_;
 	/** We define the centerline vector, which is parallel to the ventricular centerline and pointing  apex-to-base.*/
@@ -161,9 +162,11 @@ protected:
 
 public:
 	explicit ComputeFiberAndSheetDirections(SPHBody &sph_body)
-		: DiffusionBasedMapping<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>(sph_body)
+		: DiffusionBasedMapping<ElasticSolidParticles, LocallyOrthotropicMuscle>(sph_body),
+		  diffusion_reaction_material_(particles_->diffusion_reaction_material_)
+
 	{
-		phi_ = material_->SpeciesIndexMap()["Phi"];
+		phi_ = diffusion_reaction_material_.SpeciesIndexMap()["Phi"];
 		center_line_ = Vecd(0.0, 1.0, 0.0);
 		beta_epi_ = -(70.0 / 180.0) * M_PI;
 		beta_endo_ = (80.0 / 180.0) * M_PI;
@@ -177,7 +180,7 @@ public:
 		 * 		Present  doi.org/10.1016/j.cma.2016.05.031
 		 */
 		/** Probe the face norm from Levelset field. */
-		Vecd dist_2_face = body_->body_shape_->findNormalDirection(pos_[index_i]);
+		Vecd dist_2_face = sph_body_.body_shape_->findNormalDirection(pos_[index_i]);
 		Vecd face_norm = dist_2_face / (dist_2_face.norm() + 1.0e-15);
 		Vecd center_norm = pos_[index_i] / (pos_[index_i].norm() + 1.0e-15);
 		if (face_norm.dot(center_norm) <= 0.0)
@@ -193,15 +196,15 @@ public:
 		Vecd f_0 = cos(beta) * cd_norm + sin(beta) * getCrossProduct(face_norm, cd_norm) +
 				   face_norm.dot(cd_norm) * (1.0 - cos(beta)) * face_norm;
 
-		if (pos_[index_i][2] < 2.0 * body_->sph_adaptation_->ReferenceSpacing())
+		if (pos_[index_i][2] < 2.0 * sph_body_.sph_adaptation_->ReferenceSpacing())
 		{
-			material_->local_f0_[index_i] = f_0 / (f_0.norm() + 1.0e-15);
-			material_->local_s0_[index_i] = face_norm;
+			diffusion_reaction_material_.local_f0_[index_i] = f_0 / (f_0.norm() + 1.0e-15);
+			diffusion_reaction_material_.local_s0_[index_i] = face_norm;
 		}
 		else
 		{
-			material_->local_f0_[index_i] = Vecd(0);
-			material_->local_s0_[index_i] = Vecd(0);
+			diffusion_reaction_material_.local_f0_[index_i] = Vecd(0);
+			diffusion_reaction_material_.local_s0_[index_i] = Vecd(0);
 		}
 	};
 };
@@ -232,7 +235,7 @@ public:
 	explicit ApplyStimulusCurrentToMyocardium(SPHBody &sph_body)
 		: electro_physiology::ElectroPhysiologyInitialCondition(sph_body)
 	{
-		voltage_ = material_->SpeciesIndexMap()["Voltage"];
+		voltage_ = particles_->diffusion_reaction_material_.SpeciesIndexMap()["Voltage"];
 	};
 
 	void update(size_t index_i, Real dt)
@@ -276,7 +279,7 @@ public:
 	explicit ApplyStimulusCurrentToPKJ(SPHBody &sph_body)
 		: electro_physiology::ElectroPhysiologyInitialCondition(sph_body)
 	{
-		voltage_ = material_->SpeciesIndexMap()["Voltage"];
+		voltage_ = particles_->diffusion_reaction_material_.SpeciesIndexMap()["Voltage"];
 	};
 
 	void update(size_t index_i, Real dt)

@@ -10,9 +10,9 @@
  *																			*
  * SPHinXsys is partially funded by German Research Foundation				*
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
- *  HU1527/12-1 and Hu1527/12-4												*
+ *  HU1527/12-1 and HU1527/12-4												*
  *                                                                          *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
  * the authors' affiliations.												*
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
@@ -37,7 +37,7 @@
 #define MESH_CELL_LINKED_LIST_H
 
 #include "base_mesh.h"
-#include "neighbor_relation.h"
+#include "neighborhood.h"
 
 namespace SPH
 {
@@ -47,20 +47,7 @@ namespace SPH
 	class BaseParticles;
 	class Kernel;
 	class SPHAdaptation;
-	/**
-	 * @class CellList
-	 * @brief Struct of Cell list for data store. 
-	 */
-	class CellList
-	{
-	public:
-		ConcurrentIndexVector concurrent_particle_indexes_; /** using concurrent vectors due to writing conflicts when building the list */
-		ListDataVector cell_list_data_;						/** non-concurrent cell linked list rewritten for building neighbor list */
-		IndexVector real_particle_indexes_;					/** the index vector for real particles. */
-
-		CellList();
-		~CellList(){};
-	};
+	class CellLinkedList;
 
 	/**
 	 * @class BaseCellLinkedList
@@ -69,9 +56,8 @@ namespace SPH
 	class BaseCellLinkedList : public BaseMeshField
 	{
 	protected:
-		RealBody &real_body_; 			/** The ptr to the relevant SPH body. */
-		Kernel &kernel_;				/** The ptr to the relevant Kernel function. */
-		BaseParticles *base_particles_;	/** The ptr to the relevant particles. */
+		RealBody &real_body_;
+		Kernel &kernel_;
 
 		/** clear split cell lists in this mesh*/
 		virtual void clearSplitCellLists(SplitCellLists &split_cell_lists);
@@ -82,25 +68,24 @@ namespace SPH
 		BaseCellLinkedList(RealBody &real_body, SPHAdaptation &sph_adaptation);
 		virtual ~BaseCellLinkedList(){};
 
-		/** Assign base particles to the mesh cell linked list,
-		 * and is important because particles are not defined in the constructor.  */
-		virtual void assignBaseParticles(BaseParticles *base_particles) = 0;
+		/** access concrete cell linked list levels*/
+		virtual StdVec<CellLinkedList *> CellLinkedListLevels() = 0;
 		/** update the cell lists */
-		virtual void UpdateCellLists() = 0;
+		virtual void UpdateCellLists(BaseParticles &base_particles) = 0;
 		/** Insert a cell-linked_list entry to the concurrent index list. */
-		virtual void insertACellLinkedParticleIndex(size_t particle_index, const Vecd &particle_position) = 0;
+		virtual void insertParticleIndex(size_t particle_index, const Vecd &particle_position) = 0;
 		/** Insert a cell-linked_list entry of the index and particle position pair. */
-		virtual void InsertACellLinkedListDataEntry(size_t particle_index, const Vecd &particle_position) = 0;
+		virtual void InsertListDataEntry(size_t particle_index, const Vecd &particle_position, Real volumetric) = 0;
 		/** find the nearest list data entry */
 		virtual ListData findNearestListDataEntry(const Vecd &position) = 0;
 		/** computing the sequence which indicate the order of sorted particle data */
-		virtual void computingSequence(StdLargeVec<size_t> &sequence) = 0;
+		virtual StdLargeVec<size_t> &computingSequence(BaseParticles &base_particles) = 0;
 		/** Tag body part by cell, call by body part */
-		virtual void tagBodyPartByCell(CellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) = 0;
+		virtual void tagBodyPartByCell(ConcurrentIndexesInCells &cell_lists, std::function<bool(Vecd, Real)> &check_included) = 0;
 		/** Tag domain bounding cells in an axis direction, called by domain bounding classes */
-		virtual void tagBoundingCells(StdVec<CellLists> &cell_lists, BoundingBox &bounding_bounds, int axis) = 0;
+		virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, BoundingBox &bounding_bounds, int axis) = 0;
 		/** Tag domain bounding cells in one side, called by mirror boundary condition */
-		virtual void tagOneSideBoundingCells(CellLists &cell_lists, BoundingBox &bounding_bounds, int axis, bool positive) = 0;
+		virtual void tagOneSideBoundingCells(CellLists &cell_data_lists, BoundingBox &bounding_bounds, int axis, bool positive) = 0;
 	};
 
 	/**
@@ -110,11 +95,14 @@ namespace SPH
 	 */
 	class CellLinkedList : public BaseCellLinkedList, public Mesh
 	{
+		StdVec<CellLinkedList *> single_cell_linked_list_level_;
+
 	protected:
-		/** The array for of mesh cells, i.e. mesh data.
-		 * Within each cell, a list is saved with the indexes of particles.*/
-		MeshDataMatrix<CellList> cell_linked_lists_;
-		/** Update the cell link lists. */
+		/** using concurrent vectors due to writing conflicts when building the list */
+		MeshDataMatrix<ConcurrentIndexVector> cell_index_lists_;
+		/** non-concurrent list data rewritten for building neighbor list */
+		MeshDataMatrix<ListDataVector> cell_data_lists_;
+
 		virtual void updateSplitCellLists(SplitCellLists &split_cell_lists) override;
 
 	public:
@@ -123,45 +111,23 @@ namespace SPH
 
 		void allocateMeshDataMatrix(); /**< allocate memories for addresses of data packages. */
 		void deleteMeshDataMatrix();   /**< delete memories for addresses of data packages. */
-		/** Assign the relevant particles. */
-		virtual void assignBaseParticles(BaseParticles *base_particles) override;
-		/** Clear the lists. */
 		void clearCellLists();
-		/** Update the list data. */
-		void UpdateCellListData();
-		/** Update the cell lists. */
-		virtual void UpdateCellLists() override;
-		/** Insert a cell-linked_list entry to the concurrent index list. */
-		void insertACellLinkedParticleIndex(size_t particle_index, const Vecd &particle_position) override;
-		/** Insert a cell-linked_list entry of the index and particle position pair. */
-		void InsertACellLinkedListDataEntry(size_t particle_index, const Vecd &particle_position) override;
-		/** find the nearest list data entry */
+		void UpdateCellListData(BaseParticles &base_particles);
+		virtual void UpdateCellLists(BaseParticles &base_particles) override;
+		void insertParticleIndex(size_t particle_index, const Vecd &particle_position) override;
+		void InsertListDataEntry(size_t particle_index, const Vecd &particle_position, Real volumetric) override;
 		virtual ListData findNearestListDataEntry(const Vecd &position) override;
-		/** computing the sequence which indicate the order of sorted particle data */
-		virtual void computingSequence(StdLargeVec<size_t> &sequence) override;
-		/** Tag body part by cell, call by body part */
-		virtual void tagBodyPartByCell(CellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
-		/** Tag domain bounding cells in an axis direction, called by domain bounding classes */
-		virtual void tagBoundingCells(StdVec<CellLists> &cell_lists, BoundingBox &bounding_bounds, int axis) override;
-		/** Tag domain bounding cells in one side, called by mirror boundary condition */
-		virtual void tagOneSideBoundingCells(CellLists &cell_lists, BoundingBox &bounding_bounds, int axis, bool positive) override;
-		/** Write the mesh field data to plt format. */
+		virtual StdLargeVec<size_t> &computingSequence(BaseParticles &base_particles) override;
+		virtual void tagBodyPartByCell(ConcurrentIndexesInCells &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
+		virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, BoundingBox &bounding_bounds, int axis) override;
+		virtual void tagOneSideBoundingCells(CellLists &cell_data_lists, BoundingBox &bounding_bounds, int axis, bool positive) override;
 		virtual void writeMeshFieldToPlt(std::ofstream &output_file) override;
+		virtual StdVec<CellLinkedList *> CellLinkedListLevels() { return single_cell_linked_list_level_; };
 
-		/** Generalized particle search algorithm */
-		template <typename GetParticleIndex, typename GetSearchDepth, typename GetNeighborRelation>
-		void searchNeighborsByParticles(size_t total_real_particles, BaseParticles &source_particles,
-										ParticleConfiguration &particle_configuration, GetParticleIndex &get_particle_index,
+		/** generalized particle search algorithm */
+		template <class DynamicsRange, typename GetSearchDepth, typename GetNeighborRelation>
+		void searchNeighborsByParticles(DynamicsRange &dynamics_range, ParticleConfiguration &particle_configuration,
 										GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation);
-
-		/** Generalized particle search algorithm for searching body part */
-		template <typename GetParticleIndex, typename GetSearchDepth, typename GetNeighborRelation, typename PartParticleCheck>
-		void searchNeighborPartsByParticles(size_t total_real_particles, BaseParticles &source_particles,
-											ParticleConfiguration &particle_configuration, GetParticleIndex &get_particle_index,
-											GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation,
-											PartParticleCheck &part_check);
-		/** Return the Cell list. */
-		MeshDataMatrix<CellList> getCellLists() const { return cell_linked_lists_; }
 	};
 
 	/**
@@ -182,24 +148,16 @@ namespace SPH
 		MultilevelCellLinkedList(BoundingBox tentative_bounds, Real reference_grid_spacing,
 								 size_t total_levels, RealBody &real_body, SPHAdaptation &sph_adaptation);
 		virtual ~MultilevelCellLinkedList(){};
-		/** Assign the relevant particles. */
-		virtual void assignBaseParticles(BaseParticles *base_particles) override;
-		/** Update the lists. */
-		virtual void UpdateCellLists() override;
-		/** Insert a cell-linked_list entry to the concurrent index list. */
-		void insertACellLinkedParticleIndex(size_t particle_index, const Vecd &particle_position) override;
-		/** Insert a cell-linked_list entry of the index and particle position pair. */
-		void InsertACellLinkedListDataEntry(size_t particle_index, const Vecd &particle_position) override;
-		/** find the nearest list data entry */
-		virtual ListData findNearestListDataEntry(const Vecd &position) override { return ListData(0, Vecd::Zero()); };
-		/** computing the sequence which indicate the order of sorted particle data */
-		virtual void computingSequence(StdLargeVec<size_t> &sequence) override{};
-		/** Tag body part by cell, call by body part */
-		virtual void tagBodyPartByCell(CellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
-		/** Tag domain bounding cells in an axis direction, called by domain bounding classes */
-		virtual void tagBoundingCells(StdVec<CellLists> &cell_lists, BoundingBox &bounding_bounds, int axis) override{};
-		/** Tag domain bounding cells in one side, called by mirror boundary condition */
-		virtual void tagOneSideBoundingCells(CellLists &cell_lists, BoundingBox &bounding_bounds, int axis, bool positive) override{};
+
+		virtual void UpdateCellLists(BaseParticles &base_particles) override;
+		void insertParticleIndex(size_t particle_index, const Vecd &particle_position) override;
+		void InsertListDataEntry(size_t particle_index, const Vecd &particle_position, Real volumetric) override;
+		virtual ListData findNearestListDataEntry(const Vecd &position) override { return ListData(0, Vecd::Zero(), 0); };
+		virtual StdLargeVec<size_t> &computingSequence(BaseParticles &base_particles) override;
+		virtual void tagBodyPartByCell(ConcurrentIndexesInCells &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
+		virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, BoundingBox &bounding_bounds, int axis) override{};
+		virtual void tagOneSideBoundingCells(CellLists &cell_data_lists, BoundingBox &bounding_bounds, int axis, bool positive) override{};
+		virtual StdVec<CellLinkedList *> CellLinkedListLevels() { return getMeshLevels(); };
 	};
 }
 #endif // MESH_CELL_LINKED_LIST_H

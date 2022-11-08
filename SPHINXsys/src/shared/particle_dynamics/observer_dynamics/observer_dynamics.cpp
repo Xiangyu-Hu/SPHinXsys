@@ -8,7 +8,7 @@ namespace SPH
 	{
 		//=================================================================================================//
 		CorrectInterpolationKernelWeights::
-			CorrectInterpolationKernelWeights(BaseBodyRelationContact &contact_relation) : 
+			CorrectInterpolationKernelWeights(BaseContactRelation &contact_relation) : 
 			LocalDynamics(contact_relation.sph_body_),
 			InterpolationContactData(contact_relation)
 		{
@@ -32,10 +32,10 @@ namespace SPH
 					size_t index_j = contact_neighborhood.j_[n];
 					Real weight_j = contact_neighborhood.W_ij_[n] * Vol_k[index_j];
 					Vecd r_ji = -contact_neighborhood.r_ij_[n] * contact_neighborhood.e_ij_[n];
-					Vecd gradW_ij = contact_neighborhood.dW_ij_[n] * contact_neighborhood.e_ij_[n];
+					Vecd gradW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
 
 					weight_correction += weight_j * r_ji;
-					local_configuration += Vol_k[index_j] * r_ji * gradW_ij.transpose();
+					local_configuration += r_ji * gradW_ijV_j.transpose();
 				}
 			}
 
@@ -48,7 +48,7 @@ namespace SPH
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
 					Vecd normalized_weight_correction = B_ * weight_correction;
-					contact_neighborhood.W_ij_[n] -=  contact_neighborhood.dW_ij_[n] * 
+					contact_neighborhood.W_ij_[n] -=  contact_neighborhood.dW_ijV_j_[n] * 
 													normalized_weight_correction.dot(contact_neighborhood.e_ij_[n]);
 				}
 			}

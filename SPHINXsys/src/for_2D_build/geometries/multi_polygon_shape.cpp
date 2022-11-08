@@ -174,15 +174,15 @@ namespace SPH
 		addAPolygon(coordinates, op);
 	}
 	//=================================================================================================//
-	bool MultiPolygon::checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED /*= true*/)
+	bool MultiPolygon::checkContain(const Vec2d &probe_point, bool BOUNDARY_INCLUDED /*= true*/)
 	{
 		if (BOUNDARY_INCLUDED)
 		{
-			return covered_by(model::d2::point_xy<Real>(pnt[0], pnt[1]), multi_poly_);
+			return covered_by(model::d2::point_xy<Real>(probe_point[0], probe_point[1]), multi_poly_);
 		}
 		else
 		{
-			return within(model::d2::point_xy<Real>(pnt[0], pnt[1]), multi_poly_);
+			return within(model::d2::point_xy<Real>(probe_point[0], probe_point[1]), multi_poly_);
 		}
 	}
 	//=================================================================================================//

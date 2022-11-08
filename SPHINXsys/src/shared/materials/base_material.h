@@ -10,9 +10,9 @@
  *																			*
  * SPHinXsys is partially funded by German Research Foundation				*
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
- *  HU1527/12-1 and Hu1527/12-4												*
+ *  HU1527/12-1 and HU1527/12-4												*
  *                                                                          *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
  * the authors' affiliations.												*
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
@@ -94,16 +94,20 @@ namespace SPH
 	class Fluid : public BaseMaterial
 	{
 	protected:
+		Real c0_; /**< reference sound speed and pressure */
 		Real mu_; /**< reference viscosity. */
 
 	public:
-		explicit Fluid(Real rho0, Real mu): BaseMaterial(rho0), mu_(mu)
+		explicit Fluid(Real rho0, Real c0, Real mu)
+			: BaseMaterial(rho0), c0_(c0), mu_(mu)
 		{
 			material_type_name_ = "Fluid";
 		};
+		Fluid(Real rho0, Real mu) : Fluid(rho0, 1.0, mu) {}
 		virtual ~Fluid(){};
 
 		Real ReferenceViscosity() { return mu_; };
+		Real ReferenceSoundSpeed() { return c0_; };
 		virtual Real getPressure(Real rho) = 0;
 		virtual Real getPressure(Real rho, Real rho_e) { return getPressure(rho); };
 		virtual Real DensityFromPressure(Real p) = 0;

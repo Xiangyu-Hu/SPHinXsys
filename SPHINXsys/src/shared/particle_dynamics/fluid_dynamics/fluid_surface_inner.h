@@ -50,14 +50,13 @@ namespace SPH
 		class FreeSurfaceIndicationInner : public LocalDynamics, public FluidDataInner
 		{
 		public:
-			explicit FreeSurfaceIndicationInner(BaseBodyRelationInner &inner_relation, Real threshold = 0.75);
+			explicit FreeSurfaceIndicationInner(BaseInnerRelation &inner_relation, Real threshold = 0.75);
 			virtual ~FreeSurfaceIndicationInner(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
 			Real threshold_by_dimensions_;
-			StdLargeVec<Real> &Vol_;
 			StdLargeVec<int> &surface_indicator_;
 			StdLargeVec<Real> pos_div_;
 			Real smoothing_length_;
@@ -85,34 +84,40 @@ namespace SPH
 			SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIndicationInner>;
 
 		/**
-		 * @class DensitySummationFreeSurfaceInner
+		 * @class DensitySummationFreeSurface
 		 * @brief computing density by summation with a re-normalization for free surface flows
 		 */
-		class DensitySummationFreeSurfaceInner : public DensitySummationInner
+		template <class DensitySummationType>
+		class DensitySummationFreeSurface : public DensitySummationType
 		{
 		public:
-			explicit DensitySummationFreeSurfaceInner(BaseBodyRelationInner &inner_relation)
-				: DensitySummationInner(inner_relation){};
-			virtual ~DensitySummationFreeSurfaceInner(){};
+			template <typename... ConstructorArgs>
+			explicit DensitySummationFreeSurface(ConstructorArgs &&...args)
+				: DensitySummationType(std::forward<ConstructorArgs>(args)...){};
+			virtual ~DensitySummationFreeSurface(){};
+			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
-			virtual Real ReinitializedDensity(Real rho_sum, Real rho_0, Real rho_n) override
+			Real ReinitializedDensity(Real rho_sum, Real rho_0, Real rho_n)
 			{
 				return rho_sum + SMAX(0.0, (rho_n - rho_sum)) * rho_0 / rho_n;
 			};
 		};
 
+		using DensitySummationFreeSurfaceInner = DensitySummationFreeSurface<DensitySummationInner>;
+		using DensitySummationFreeSurfaceInnerAdaptive = DensitySummationFreeSurface<DensitySummationInnerAdaptive>;
+
 		/**
-		 * @class DensitySummationFreeStreamInner
+		 * @class DensitySummationFreeStream
 		 * @brief The density is smoothed if the particle is near fluid surface.
 		 */
-		class DensitySummationFreeStreamInner : public DensitySummationFreeSurfaceInner
+		template <class DensitySummationFreeSurfaceType>
+		class DensitySummationFreeStream : public DensitySummationFreeSurfaceType
 		{
 		public:
-			explicit DensitySummationFreeStreamInner(BaseBodyRelationInner &inner_relation)
-				: DensitySummationFreeSurfaceInner(inner_relation),
-				  surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")){};
-			virtual ~DensitySummationFreeStreamInner(){};
+			template <typename... ConstructorArgs>
+			explicit DensitySummationFreeStream(ConstructorArgs &&...args);
+			virtual ~DensitySummationFreeStream(){};
 			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
@@ -143,7 +148,6 @@ namespace SPH
 		/**
 		 * @class FreeSurfaceHeight
 		 * @brief Probe the free surface profile for a fluid body part by reduced operation.
-		 * TODO: this class can be generalized
 		 */
 		class FreeSurfaceHeight : public LocalDynamicsReduce<Real, ReduceMax>,
 								  public FluidDataSimple
@@ -169,13 +173,12 @@ namespace SPH
 		class ColorFunctionGradientInner : public LocalDynamics, public FluidDataInner
 		{
 		public:
-			explicit ColorFunctionGradientInner(BaseBodyRelationInner &inner_relation);
+			explicit ColorFunctionGradientInner(BaseInnerRelation &inner_relation);
 			virtual ~ColorFunctionGradientInner(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			Real threshold_by_dimensions_;
-			StdLargeVec<Real> &Vol_;
 			StdLargeVec<int> &surface_indicator_;
 			StdLargeVec<Vecd> color_grad_;
 			StdLargeVec<Vecd> surface_norm_;
@@ -189,7 +192,7 @@ namespace SPH
 		class ColorFunctionGradientInterpolationInner : public LocalDynamics, public FluidDataInner
 		{
 		public:
-			explicit ColorFunctionGradientInterpolationInner(BaseBodyRelationInner &inner_relation);
+			explicit ColorFunctionGradientInterpolationInner(BaseInnerRelation &inner_relation);
 			virtual ~ColorFunctionGradientInterpolationInner(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -209,8 +212,8 @@ namespace SPH
 		class SurfaceTensionAccelerationInner : public LocalDynamics, public FluidDataInner
 		{
 		public:
-			SurfaceTensionAccelerationInner(BaseBodyRelationInner &inner_relation, Real gamma);
-			explicit SurfaceTensionAccelerationInner(BaseBodyRelationInner &inner_relation);
+			SurfaceTensionAccelerationInner(BaseInnerRelation &inner_relation, Real gamma);
+			explicit SurfaceTensionAccelerationInner(BaseInnerRelation &inner_relation);
 			virtual ~SurfaceTensionAccelerationInner(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 

@@ -8,8 +8,9 @@
 
 namespace SPH
 {
-	//=================================================================================================//
-	SolidParticles::SolidParticles(SPHBody &sph_body, Solid *solid): BaseParticles(sph_body, solid) {}
+	//=============================================================================================//
+	SolidParticles::SolidParticles(SPHBody &sph_body, Solid *solid)
+		: BaseParticles(sph_body, solid), solid_(*solid) {}
 	//=================================================================================================//
 	void SolidParticles::initializeOtherVariables()
 	{
@@ -20,13 +21,15 @@ namespace SPH
 		registerVariable(B_, "CorrectionMatrix", [&](size_t i) -> Matd { return Matd::Identity();});
 	} 
 	//=================================================================================================//
-	Vecd SolidParticles::getKernelGradient(size_t index_i, size_t index_j, Real dW_ij, Vecd &e_ij)
+	Vecd SolidParticles::getKernelGradient(size_t index_i, size_t index_j, Real dW_ijV_j, Vecd &e_ij)
 	{
-		return 0.5 * dW_ij * (B_[index_i] + B_[index_j]) * e_ij;
+		return 0.5 * dW_ijV_j * (B_[index_i] + B_[index_j]) * e_ij;
 	}
 	//=============================================================================================//
-	ElasticSolidParticles::ElasticSolidParticles(SPHBody &sph_body, ElasticSolid *elastic_solid)
-		: SolidParticles(sph_body, elastic_solid), elastic_solid_(elastic_solid) {}
+	ElasticSolidParticles::
+		ElasticSolidParticles(SPHBody &sph_body, ElasticSolid *elastic_solid)
+		: SolidParticles(sph_body, elastic_solid),
+		  elastic_solid_(*elastic_solid) {}
 	//=================================================================================================//
 	void ElasticSolidParticles::initializeOtherVariables()
 	{
@@ -53,8 +56,8 @@ namespace SPH
 		addDerivedVariableToWrite<VonMisesStress>();
 		addDerivedVariableToWrite<VonMisesStrain>();
 		addVariableToRestart<Matd>("DeformationGradient");
-		
-		stress_measure_ = elastic_solid_->getRelevantStressMeasureName();
+		// get which stress measure is relevant for the material
+		stress_measure_ = elastic_solid_.getRelevantStressMeasureName();
 	}
 	//=================================================================================================//
 	Matd ElasticSolidParticles::getGreenLagrangeStrain(size_t particle_i)
@@ -72,25 +75,28 @@ namespace SPH
 	Matd ElasticSolidParticles::getStressCauchy(size_t particle_i)
 	{
 		Matd F = F_[particle_i];
-		Matd stress_PK2 = elastic_solid_->StressPK2(F, particle_i);
+		Matd stress_PK2 = elastic_solid_.StressPK2(F, particle_i);
 		return (1.0 / F.determinant()) * F * stress_PK2 * F.transpose();
 	}
 	//=================================================================================================//
 	Matd ElasticSolidParticles::getStressPK2(size_t particle_i)
 	{
-		return elastic_solid_->StressPK2(F_[particle_i], particle_i);
+		return elastic_solid_.StressPK2(F_[particle_i], particle_i);
 	}
 	//=================================================================================================//
 	Vecd ElasticSolidParticles::getPrincipalStresses(size_t particle_i)
 	{
 		Matd sigma;
-		if (stress_measure_ == "Cauchy") 
+		if (stress_measure_ == "Cauchy")
 		{
-			sigma = getStressCauchy(particle_i); 
-		} else if (stress_measure_ == "PK2") 
+			sigma = getStressCauchy(particle_i); // Cauchy stress
+		}
+		else if (stress_measure_ == "PK2")
 		{
-			sigma = getStressPK2(particle_i); 
-		} else {
+			sigma = getStressPK2(particle_i); // Second Piola-Kirchhoff stress
+		}
+		else
+		{
 			throw std::runtime_error("get_Principal_stresses: wrong input");
 		}
 
@@ -100,13 +106,16 @@ namespace SPH
 	Real ElasticSolidParticles::getVonMisesStress(size_t particle_i)
 	{
 		Matd sigma;
-		if (stress_measure_ == "Cauchy") 
+		if (stress_measure_ == "Cauchy")
 		{
-			sigma = getStressCauchy(particle_i); 
-		} else if (stress_measure_ == "PK2") 
+			sigma = getStressCauchy(particle_i); // Cauchy stress
+		}
+		else if (stress_measure_ == "PK2")
 		{
-			sigma = getStressPK2(particle_i);
-		} else {
+			sigma = getStressPK2(particle_i); // Second Piola-Kirchhoff stress
+		}
+		else
+		{
 			throw std::runtime_error("get_von_Mises_stress: wrong input");
 		}
 
@@ -125,7 +134,7 @@ namespace SPH
 			}
 			else if (strain_measure == "dynamic")
 			{
-				strain = getVonMisesStrainDynamic(index_i, elastic_solid_->PoissonRatio());
+				strain = getVonMisesStrainDynamic(index_i, elastic_solid_.PoissonRatio());
 			}
 			else
 			{
@@ -150,7 +159,7 @@ namespace SPH
 			}
 			else if (strain_measure == "dynamic")
 			{
-				strain = getVonMisesStrainDynamic(index_i, elastic_solid_->PoissonRatio());
+				strain = getVonMisesStrainDynamic(index_i, elastic_solid_.PoissonRatio());
 			}
 			else
 			{
@@ -243,9 +252,13 @@ namespace SPH
 	ShellParticles::ShellParticles(SPHBody &sph_body, ElasticSolid *elastic_solid)
 		: ElasticSolidParticles(sph_body, elastic_solid), thickness_ref_(1.0)
 	{
-		/**
-		 *register geometric data only
-		 */
+		//----------------------------------------------------------------------
+		//		modify kernel function for surface particles
+		//----------------------------------------------------------------------
+		sph_body.sph_adaptation_->getKernel()->reduceOnce();
+		//----------------------------------------------------------------------
+		//		register geometric data only
+		//----------------------------------------------------------------------
 		registerVariable(n_, "NormalDirection");
 		registerVariable(thickness_, "Thickness");
 		/**

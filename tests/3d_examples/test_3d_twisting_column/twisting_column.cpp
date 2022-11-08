@@ -23,8 +23,8 @@ int main()
 	ProbeBody my_observer(system, "MyObserver");
 	my_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	/**body relation topology */
-	BodyRelationInner column_inner(column);
-	BodyRelationContact my_observer_contact(my_observer, {&column});
+	InnerRelation column_inner(column);
+	ContactRelation my_observer_contact(my_observer, {&column});
 	//----------------------------------------------------------------------
 	//	All numerical methods will be used in this case.
 	//----------------------------------------------------------------------

@@ -338,6 +338,7 @@ namespace SPH
 	const Real Eps = 2.22045e-16;
 	const Real TinyReal = 2.71051e-20;
 	const Real Infinity = std::numeric_limits<double>::max();
+	const Real SqrtEps = 1.0e-8;
 }
 
 #endif // BASE_DATA_TYPE_H

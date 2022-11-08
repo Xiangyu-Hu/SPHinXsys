@@ -66,7 +66,7 @@ int main(int ac, char *av[])
 	}
 	else
 	{
-		ball.defineBodyLevelSetShape()->writeLevelSet(ball);
+		ball.defineBodyLevelSetShape()->writeLevelSet(io_environment);
 		ball.generateParticles<ParticleGeneratorLattice>();
 	}
 
@@ -83,7 +83,7 @@ int main(int ac, char *av[])
 	}
 	else
 	{
-		wall_boundary.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(wall_boundary);
+		wall_boundary.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(io_environment);
 		wall_boundary.generateParticles<ThickSurfaceParticleGeneratorLattice>(thickness);
 	}
 
@@ -103,8 +103,8 @@ int main(int ac, char *av[])
 		//----------------------------------------------------------------------
 		//	Define body relation map used for particle relaxation.
 		//----------------------------------------------------------------------
-		BodyRelationInner ball_inner(ball);
-		BodyRelationInner wall_boundary_inner(wall_boundary);
+		InnerRelation ball_inner(ball);
+		InnerRelation wall_boundary_inner(wall_boundary);
 		//----------------------------------------------------------------------
 		//	Define the methods for particle relaxation for ball.
 		//----------------------------------------------------------------------
@@ -122,8 +122,8 @@ int main(int ac, char *av[])
 		//	Output for particle relaxation.
 		//----------------------------------------------------------------------
 		BodyStatesRecordingToVtp write_relaxed_particles(io_environment, sph_system.real_bodies_);
-		MeshRecordingToPlt write_mesh_cell_linked_list(io_environment, wall_boundary, wall_boundary.cell_linked_list_);
-		ReloadParticleIO write_particle_reload_files(io_environment, {&ball, &wall_boundary});
+		MeshRecordingToPlt write_mesh_cell_linked_list(io_environment, wall_boundary.getCellLinkedList());
+		ReloadParticleIO write_particle_reload(io_environment, {&ball, &wall_boundary});
 		//----------------------------------------------------------------------
 		//	Particle relaxation starts here.
 		//----------------------------------------------------------------------
@@ -154,7 +154,7 @@ int main(int ac, char *av[])
 		std::cout << "The physics relaxation process of ball particles finish !" << std::endl;
 		shell_normal_prediction.exec();
 		write_relaxed_particles.writeToFile(ite);
-		write_particle_reload_files.writeToFile(0);
+		write_particle_reload.writeToFile(0);
 		return 0;
 	}
 	//----------------------------------------------------------------------
@@ -162,9 +162,9 @@ int main(int ac, char *av[])
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner ball_inner(ball);
-	SolidBodyRelationContact ball_contact(ball, {&wall_boundary});
-	BodyRelationContact ball_observer_contact(ball_observer, {&ball});
+	InnerRelation ball_inner(ball);
+	SurfaceContactRelation ball_contact(ball, {&wall_boundary});
+	ContactRelation ball_observer_contact(ball_observer, {&ball});
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.

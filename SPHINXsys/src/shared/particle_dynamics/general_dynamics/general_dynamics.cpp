@@ -13,7 +13,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	RandomizeParticlePosition::RandomizeParticlePosition(SPHBody &sph_body)
-		: LocalDynamics(sph_body), DataDelegateSimple<SPHBody, BaseParticles>(sph_body),
+		: LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
 		  pos_(particles_->pos_), randomize_scale_(sph_body.sph_adaptation_->MinimumSpacing()) {}
 	//=================================================================================================//
 	void RandomizeParticlePosition::update(size_t index_i, Real dt)

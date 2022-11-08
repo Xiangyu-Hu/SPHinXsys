@@ -173,6 +173,13 @@ namespace SPH
         }
     }
     //=================================================================================================//
+    template <typename SequenceMethod>
+    void BaseParticles::sortParticles(SequenceMethod &sequence_method)
+    {
+        StdLargeVec<size_t> &sequence = sequence_method.computingSequence(*this);
+        particle_sorting_.sortingParticleData(sequence.data(), total_real_particles_);
+    }
+    //=================================================================================================//
     template <typename VariableType>
     void BaseParticles::resizeParticleData<VariableType>::
     operator()(ParticleData &particle_data, size_t new_size) const
@@ -346,10 +353,10 @@ namespace SPH
     //=================================================================================================//
     template <typename VariableType>
     BaseDerivedVariable<VariableType>::
-        BaseDerivedVariable(const SPHBody &sph_body, const std::string &variable_name)
+        BaseDerivedVariable(SPHBody &sph_body, const std::string &variable_name)
         : variable_name_(variable_name)
     {
-        sph_body.base_particles_->registerVariable(derived_variable_, variable_name_);
+        sph_body.getBaseParticles().registerVariable(derived_variable_, variable_name_);
     };
     //=================================================================================================//
 }

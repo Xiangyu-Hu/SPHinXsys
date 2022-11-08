@@ -47,9 +47,11 @@ namespace SPH
 		EmitterInflowCondition::
 			EmitterInflowCondition(BodyAlignedBoxByParticle &aligned_box_part)
 			: LocalDynamics(aligned_box_part.getSPHBody()), FluidDataSimple(sph_body_),
-			  pos_(particles_->pos_), vel_(particles_->vel_),
-			  rho_(particles_->rho_), p_(particles_->p_), inflow_pressure_(0),
-			  rho0_(material_->ReferenceDensity()), aligned_box_(aligned_box_part.aligned_box_),
+			  fluid_(particles_->fluid_),
+			  pos_(particles_->pos_), vel_(particles_->vel_), acc_(particles_->acc_),
+			  rho_(particles_->rho_), p_(particles_->p_), drho_dt_(particles_->drho_dt_),
+			  inflow_pressure_(0), rho0_(fluid_.ReferenceDensity()),
+			  aligned_box_(aligned_box_part.aligned_box_),
 			  updated_transform_(aligned_box_.getTransform()),
 			  old_transform_(updated_transform_) {}
 		//=================================================================================================//
@@ -61,12 +63,13 @@ namespace SPH
 			pos_[sorted_index_i] = updated_transform_.shiftFrameStationToBase(frame_position);
 			vel_[sorted_index_i] = updated_transform_.xformFrameVecToBase(getTargetVelocity(frame_position, frame_velocity));
 			rho_[sorted_index_i] = rho0_;
-			p_[sorted_index_i] = material_->getPressure(rho_[sorted_index_i]);
+			p_[sorted_index_i] = fluid_.getPressure(rho0_);
 		}
 		//=================================================================================================//
 		EmitterInflowInjection::EmitterInflowInjection(BodyAlignedBoxByParticle &aligned_box_part,
 													   size_t body_buffer_width, int axis)
 			: LocalDynamics(aligned_box_part.getSPHBody()), FluidDataSimple(sph_body_),
+			  fluid_(particles_->fluid_),
 			  pos_(particles_->pos_), rho_(particles_->rho_), p_(particles_->p_),
 			  axis_(axis), aligned_box_(aligned_box_part.aligned_box_)
 		{
@@ -95,8 +98,8 @@ namespace SPH
 				mutex_switch_to_real_.unlock();
 				/** Periodic bounding. */
 				pos_[sorted_index_i] = aligned_box_.getUpperPeriodic(axis_, pos_[sorted_index_i]);
-				rho_[sorted_index_i] = material_->ReferenceDensity();
-				p_[sorted_index_i] = material_->getPressure(rho_[sorted_index_i]);
+				rho_[sorted_index_i] = fluid_.ReferenceDensity();
+				p_[sorted_index_i] = fluid_.getPressure(rho_[sorted_index_i]);
 			}
 		}
 		//=================================================================================================//
@@ -117,7 +120,8 @@ namespace SPH
 		//=================================================================================================//
 		StaticConfinementDensity::StaticConfinementDensity(NearShapeSurface &near_surface)
 			: LocalDynamics(near_surface.getSPHBody()), FluidDataSimple(sph_body_),
-			  rho0_(particles_->rho0_), inv_sigma0_(1.0 / particles_->sigma0_),
+			  rho0_(sph_body_.base_material_->ReferenceDensity()), 
+			  inv_sigma0_(1.0 / sph_body_.sph_adaptation_->ReferenceNumberDensity()),
 			  mass_(particles_->mass_), rho_sum_(particles_->rho_sum_), pos_(particles_->pos_),
 			  level_set_shape_(&near_surface.level_set_shape_) {}
 		//=================================================================================================//
@@ -128,47 +132,36 @@ namespace SPH
 				level_set_shape_->computeKernelIntegral(pos_[index_i]) * inv_Vol_0_i * rho0_ * inv_sigma0_;
 		}
 		//=================================================================================================//
-		StaticConfinementPressureRelaxation::StaticConfinementPressureRelaxation(NearShapeSurface &near_surface)
+		StaticConfinementIntegration1stHalf::StaticConfinementIntegration1stHalf(NearShapeSurface &near_surface)
 			: LocalDynamics(near_surface.getSPHBody()), FluidDataSimple(sph_body_),
+			  fluid_(particles_->fluid_),
 			  rho_(particles_->rho_), p_(particles_->p_),
 			  pos_(particles_->pos_), vel_(particles_->vel_),
 			  acc_(particles_->acc_),
 			  level_set_shape_(&near_surface.level_set_shape_),
-			  riemann_solver_(*material_, *material_) {}
+			  riemann_solver_(fluid_, fluid_) {}
 		//=================================================================================================//
-		void StaticConfinementPressureRelaxation::update(size_t index_i, Real dt)
+		void StaticConfinementIntegration1stHalf::update(size_t index_i, Real dt)
 		{
 			Vecd kernel_gradient = level_set_shape_->computeKernelGradientIntegral(pos_[index_i]);
 			Vecd normal_to_fluid = -kernel_gradient / (kernel_gradient.norm() + TinyReal);
-
-			FluidState state(rho_[index_i], vel_[index_i], p_[index_i]);
-			Vecd vel_in_wall = -state.vel_;
-			FluidState state_in_wall(rho_[index_i], vel_in_wall, p_[index_i]);
-
-			// always solving one-side Riemann problem for wall boundaries
-			Real p_star = riemann_solver_.getPStar(state, state_in_wall, normal_to_fluid);
-			acc_[index_i] -= 2.0 * p_star * kernel_gradient / state.rho_;
+			acc_[index_i] -= 2.0 * p_[index_i] * kernel_gradient / rho_[index_i];
 		}
 		//=================================================================================================//
-		StaticConfinementDensityRelaxation::StaticConfinementDensityRelaxation(NearShapeSurface &near_surface)
+		StaticConfinementIntegration2ndHalf::StaticConfinementIntegration2ndHalf(NearShapeSurface &near_surface)
 			: LocalDynamics(near_surface.getSPHBody()), FluidDataSimple(sph_body_),
+			  fluid_(particles_->fluid_),
 			  rho_(particles_->rho_), p_(particles_->p_), drho_dt_(particles_->drho_dt_),
 			  pos_(particles_->pos_), vel_(particles_->vel_),
 			  level_set_shape_(&near_surface.level_set_shape_),
-			  riemann_solver_(*material_, *material_) {}
+			  riemann_solver_(fluid_, fluid_) {}
 		//=================================================================================================//
-		void StaticConfinementDensityRelaxation::update(size_t index_i, Real dt)
+		void StaticConfinementIntegration2ndHalf::update(size_t index_i, Real dt)
 		{
 			Vecd kernel_gradient = level_set_shape_->computeKernelGradientIntegral(pos_[index_i]);
 			Vecd normal_to_fluid = -kernel_gradient / (kernel_gradient.norm() + TinyReal);
-
-			FluidState state(rho_[index_i], vel_[index_i], p_[index_i]);
-			Vecd vel_in_wall = -state.vel_;
-			FluidState state_in_wall(rho_[index_i], vel_in_wall, p_[index_i]);
-
-			// always solving one-side Riemann problem for wall boundaries
-			Vecd vel_star = riemann_solver_.getVStar(state, state_in_wall, normal_to_fluid);
-			drho_dt_[index_i] += 2.0 * state.rho_ * (state.vel_ - vel_star).dot(kernel_gradient);
+			Vecd vel_in_wall = -vel_[index_i];
+			drho_dt_[index_i] += rho_[index_i] * (vel_[index_i] - vel_in_wall).dot(kernel_gradient);
 		}
 		//=================================================================================================//
 		StaticConfinement::StaticConfinement(NearShapeSurface &near_surface)

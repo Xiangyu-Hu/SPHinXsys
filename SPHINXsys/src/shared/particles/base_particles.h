@@ -39,6 +39,7 @@
 #include "sph_data_containers.h"
 #include "base_material.h"
 #include "xml_engine.h"
+#include "particle_sorting.h"
 
 #include <fstream>
 
@@ -99,21 +100,16 @@ namespace SPH
 		StdLargeVec<Real> Vol_;	 /**< particle volumetric measure, also referred to area of surface particle and length of linear particle */
 		StdLargeVec<Real> rho_;	 /**< particle density */
 		StdLargeVec<Real> mass_; /**< particle massive measure, also referred to mass per-unit thickness of surface particle and mass per-unit cross-section area of linear particle */
-		/**
-		 * Global information for all particles
-		 */
-		Real rho0_;		 /**< reference density*/
-		Real sigma0_;	 /**< reference number density. */
-		Real speed_max_; /**< Maximum particle speed. */
-		/**
-		 * Global information for defining particle groups
-		 */
-		size_t total_real_particles_;	/**< Total real particles. */
-		size_t real_particles_bound_; 	/**< Maximum possible number of real particles. Also the start index of ghost particles. */
-		size_t total_ghost_particles_;	/**< Total ghost particles. */
-		/**
-		 *		Generalized particle data for parameterized management
-		 */
+		BaseMaterial &base_material_;
+		//----------------------------------------------------------------------
+		// Global information for defining particle groups
+		//----------------------------------------------------------------------
+		size_t total_real_particles_;
+		size_t real_particles_bound_; /**< Maximum possible number of real particles. Also the start index of ghost particles. */
+		size_t total_ghost_particles_;
+		//----------------------------------------------------------------------
+		//		Generalized particle data for parameterized management
+		//----------------------------------------------------------------------
 		ParticleData all_particle_data_;
 		ParticleDataMap all_variable_maps_;
 		StdVec<BaseDynamics<void> *> derived_variables_;
@@ -153,11 +149,16 @@ namespace SPH
 		StdLargeVec<size_t> sequence_;	  /**< the sequence referred for sorting. */
 		ParticleData sortable_data_;
 		ParticleDataMap sortable_variable_maps_;
+		ParticleSorting particle_sorting_;
 
 		/** register an already defined variable as sortable */
 		template <typename VariableType>
 		void registerSortableVariable(const std::string &variable_name);
-		/** Return the relevant body. */
+
+		/** sort particles */
+		template <typename SequenceMethod>
+		void sortParticles(SequenceMethod &sequence_method);
+
 		SPHBody &getSPHBody() { return sph_body_; };
 		/** initialize other variables  based one geometric variables and material */
 		virtual void initializeOtherVariables();
@@ -193,9 +194,9 @@ namespace SPH
 		/** BaseParticle ptr. */
 		virtual BaseParticles *ThisObjectPtr() { return this; };
 		/** Get the kernel gradient in weak form. */
-		virtual Vecd getKernelGradient(size_t index_i, size_t index_j, Real dW_ij, Vecd &e_ij)
+		virtual Vecd getKernelGradient(size_t index_i, size_t index_j, Real dW_ijV_j, Vecd &e_ij)
 		{
-			return dW_ij * e_ij;
+			return dW_ijV_j * e_ij;
 		};
 		/** Return total particle acceleration. */
 		virtual Vecd ParticleTotalAcceleration(size_t index_i) { return acc_[index_i] + acc_prior_[index_i]; }
@@ -278,7 +279,7 @@ namespace SPH
 		using DerivedVariableType = VariableType;
 		std::string variable_name_;
 
-		BaseDerivedVariable(const SPHBody &sph_body, const std::string &variable_name);
+		BaseDerivedVariable(SPHBody &sph_body, const std::string &variable_name);
 		virtual ~BaseDerivedVariable(){};
 
 	protected:

@@ -46,8 +46,8 @@ namespace SPH
 {
 	namespace eulerian_compressible_fluid_dynamics
 	{
-		typedef DataDelegateSimple<EulerianFluidBody, CompressibleFluidParticles, CompressibleFluid> CompressibleFluidDataSimple;
-		typedef DataDelegateInner<EulerianFluidBody, CompressibleFluidParticles, CompressibleFluid> CompressibleFluidDataInner;
+		typedef DataDelegateSimple<CompressibleFluidParticles> CompressibleFluidDataSimple;
+		typedef DataDelegateInner<CompressibleFluidParticles> CompressibleFluidDataInner;
 
 		class CompressibleFlowTimeStepInitialization : public BaseTimeStepInitialization, public CompressibleFluidDataSimple
 		{
@@ -86,7 +86,7 @@ namespace SPH
 		class ViscousAccelerationInner : public LocalDynamics, public CompressibleFluidDataInner
 		{
 		public:
-			explicit ViscousAccelerationInner(BaseBodyRelationInner &inner_relation);
+			explicit ViscousAccelerationInner(BaseInnerRelation &inner_relation);
 			virtual ~ViscousAccelerationInner(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -104,6 +104,7 @@ namespace SPH
 		class AcousticTimeStepSize : public LocalDynamicsReduce<Real, ReduceMax>, public CompressibleFluidDataSimple
 		{
 		protected:
+			CompressibleFluid &compressible_fluid_;
 			StdLargeVec<Real> &rho_, &p_;
 			StdLargeVec<Vecd> &vel_;
 			Real smoothing_length_;
@@ -117,76 +118,55 @@ namespace SPH
 		};
 
 		/**
-		 * @class BaseRelaxation
+		 * @class BaseIntegration
 		 * @brief Pure abstract base class for all fluid relaxation schemes
 		 */
-		class BaseRelaxation : public LocalDynamics, public CompressibleFluidDataInner
+		class BaseIntegration : public LocalDynamics, public CompressibleFluidDataInner
 		{
 		public:
-			explicit BaseRelaxation(BaseBodyRelationInner &inner_relation);
-			virtual ~BaseRelaxation(){};
+			explicit BaseIntegration(BaseInnerRelation &inner_relation);
+			virtual ~BaseIntegration(){};
 
 		protected:
+			CompressibleFluid &compressible_fluid_;
 			StdLargeVec<Real> &Vol_, &rho_, &p_, &drho_dt_, &E_, &dE_dt_, &dE_dt_prior_;
 			StdLargeVec<Vecd> &vel_, &mom_, &dmom_dt_, &dmom_dt_prior_;
 		};
 
 		/**
-		 * @class BasePressureRelaxation
-		 * @brief Abstract base class for all pressure relaxation schemes
-		 */
-		class BasePressureRelaxation : public BaseRelaxation
-		{
-		public:
-			explicit BasePressureRelaxation(BaseBodyRelationInner &inner_relation);
-			virtual ~BasePressureRelaxation(){};
-			void initialization(size_t index_i, Real dt = 0.0);
-			void update(size_t index_i, Real dt = 0.0);
-		};
-
-		/**
-		 * @class BasePressureRelaxationInner
+		 * @class BaseIntegration1stHalf
 		 * @brief Template class for pressure relaxation scheme with the Riemann solver
 		 * as template variable
 		 */
 		template <class RiemannSolverType>
-		class BasePressureRelaxationInner : public BasePressureRelaxation
+		class BaseIntegration1stHalf : public BaseIntegration
 		{
 		public:
-			explicit BasePressureRelaxationInner(BaseBodyRelationInner &inner_relation);
-			virtual ~BasePressureRelaxationInner(){};
+			explicit BaseIntegration1stHalf(BaseInnerRelation &inner_relation);
+			virtual ~BaseIntegration1stHalf(){};
 			RiemannSolverType riemann_solver_;
+			void initialization(size_t index_i, Real dt = 0.0);
 			void interaction(size_t index_i, Real dt = 0.0);
-		};
-		using PressureRelaxationHLLCRiemannInner = BasePressureRelaxationInner<HLLCRiemannSolver>;
-		using PressureRelaxationHLLCWithLimiterRiemannInner = BasePressureRelaxationInner<HLLCWithLimiterRiemannSolver>;
-
-		/**
-		 * @class BaseDensityAndEnergyRelaxation
-		 * @brief Abstract base class for all density relaxation schemes
-		 */
-		class BaseDensityAndEnergyRelaxation : public BaseRelaxation
-		{
-		public:
-			explicit BaseDensityAndEnergyRelaxation(BaseBodyRelationInner &inner_relation);
-			virtual ~BaseDensityAndEnergyRelaxation(){};
 			void update(size_t index_i, Real dt = 0.0);
 		};
+		using Integration1stHalfHLLCRiemann = BaseIntegration1stHalf<HLLCRiemannSolver>;
+		using Integration1stHalfHLLCWithLimiterRiemann = BaseIntegration1stHalf<HLLCWithLimiterRiemannSolver>;
 
 		/**
-		 * @class BaseDensityAndEnergyRelaxationInner
+		 * @class BaseIntegration2ndHalf
 		 * @brief  Template density relaxation scheme in HLLC Riemann solver with and without limiter
 		 */
 		template <class RiemannSolverType>
-		class BaseDensityAndEnergyRelaxationInner : public BaseDensityAndEnergyRelaxation
+		class BaseIntegration2ndHalf : public BaseIntegration
 		{
 		public:
-			explicit BaseDensityAndEnergyRelaxationInner(BaseBodyRelationInner &inner_relation);
-			virtual ~BaseDensityAndEnergyRelaxationInner(){};
+			explicit BaseIntegration2ndHalf(BaseInnerRelation &inner_relation);
+			virtual ~BaseIntegration2ndHalf(){};
 			RiemannSolverType riemann_solver_;
 			void interaction(size_t index_i, Real dt = 0.0);
+			void update(size_t index_i, Real dt = 0.0);
 		};
-		using DensityAndEnergyRelaxationHLLCRiemannInner = BaseDensityAndEnergyRelaxationInner<HLLCRiemannSolver>;
-		using DensityAndEnergyRelaxationHLLCWithLimiterRiemannInner = BaseDensityAndEnergyRelaxationInner<HLLCWithLimiterRiemannSolver>;
+		using Integration2ndHalfHLLCRiemann = BaseIntegration2ndHalf<HLLCRiemannSolver>;
+		using Integration2ndHalfHLLCWithLimiterRiemann = BaseIntegration2ndHalf<HLLCWithLimiterRiemannSolver>;
 	}
 }

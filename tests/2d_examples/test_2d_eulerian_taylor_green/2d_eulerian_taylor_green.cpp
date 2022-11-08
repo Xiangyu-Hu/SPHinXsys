@@ -91,7 +91,7 @@ int main(int ac, char *av[])
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner water_body_inner(water_body);
+	InnerRelation water_body_inner(water_body);
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
@@ -108,8 +108,8 @@ int main(int ac, char *av[])
 	ReduceDynamics<eulerian_compressible_fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_body);
 	/** Pressure relaxation algorithm by using verlet time stepping. */
 	/** Here, we can use HLLC with Limiter Riemann solver for pressure relaxation and density and energy relaxation  */
-	Dynamics1Level<eulerian_compressible_fluid_dynamics::PressureRelaxationHLLCWithLimiterRiemannInner> pressure_relaxation(water_body_inner);
-	InteractionWithUpdate<eulerian_compressible_fluid_dynamics::DensityAndEnergyRelaxationHLLCWithLimiterRiemannInner> density_and_energy_relaxation(water_body_inner);
+	Dynamics1Level<eulerian_compressible_fluid_dynamics::Integration1stHalfHLLCWithLimiterRiemann> pressure_relaxation(water_body_inner);
+	InteractionWithUpdate<eulerian_compressible_fluid_dynamics::Integration2ndHalfHLLCWithLimiterRiemann> density_and_energy_relaxation(water_body_inner);
 	/** Computing viscous acceleration. */
 	InteractionDynamics<eulerian_compressible_fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_body_inner);
 	//----------------------------------------------------------------------
@@ -120,10 +120,10 @@ int main(int ac, char *av[])
 	/** Output the body states for restart simulation. */
 	RestartIO restart_io(io_environment, sph_system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
-	RegressionTestEnsembleAveraged<BodyReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
+	RegressionTestEnsembleAveraged<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
 		write_total_mechanical_energy(io_environment, water_body);
 	/** Output the maximum speed of the fluid body. */
-	RegressionTestEnsembleAveraged<BodyReducedQuantityRecording<ReduceDynamics<MaximumSpeed>>>
+	RegressionTestEnsembleAveraged<ReducedQuantityRecording<ReduceDynamics<MaximumSpeed>>>
 		write_maximum_speed(io_environment, water_body);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration

@@ -18,51 +18,39 @@ namespace SPH
 		return triangle_mesh;
 	}
 	//=================================================================================================//
-	bool TriangleMeshShape::checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED)
+	bool TriangleMeshShape::checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED)
 	{
-
-		SimTK::Vec3 in_pnt(pnt[0], pnt[1], pnt[2]);
 		SimTK::Vec2 uv_coordinate;
-		bool inside = false;
+		bool inside = false; // note that direct prediction is not reliable sometime.
 		int face_id;
-		SimTK::Vec3 closest_pnt = triangle_mesh_->findNearestPoint(in_pnt, inside, face_id, uv_coordinate);
 
-		StdVec<int> neighbor_face(4);
-		neighbor_face[0] = face_id;
-		/** go through the neighbor faces. */
-		for (int i = 1; i < 4; i++)
+		SimTK::Vec3 closest_pnt = triangle_mesh_->findNearestPoint(SimTK::Vec3(probe_point[0], probe_point[1], probe_point[2]), inside, face_id, uv_coordinate);
+		SimTK::Vec3 from_face_to_pnt = SimTK::Vec3(probe_point[0], probe_point[1], probe_point[2]) - closest_pnt;
+		Real distance_to_pnt = from_face_to_pnt.norm();
+		SimTK::Vec3 direction_to_pnt = from_face_to_pnt / (distance_to_pnt + TinyReal);
+		SimTK::UnitVec3 face_normal = triangle_mesh_->getFaceNormal(face_id);
+		Real cosine_angle = SimTK::dot(face_normal, direction_to_pnt);
+
+		int ite = 0;
+		while (fabs(cosine_angle) < Eps)
 		{
-			int edge = triangle_mesh_->getFaceEdge(face_id, i - 1);
-			int face = triangle_mesh_->getEdgeFace(edge, 0);
-			neighbor_face[i] = face != face_id ? face : triangle_mesh_->getEdgeFace(edge, 1);
+			Vec3d jittered = probe_point; // jittering
+			for (int l = 0; l != probe_point.size(); ++l)
+				jittered[l] = probe_point[l] + (((Real)rand() / (RAND_MAX)) - 0.5) * (SqrtEps + distance_to_pnt * 0.1);
+			Vec3d from_face_to_jittered = jittered - Vec3d(closest_pnt[0], closest_pnt[1], closest_pnt[2]);
+			Vec3d direction_to_jittered = from_face_to_jittered / (from_face_to_jittered.norm() + TinyReal);
+			cosine_angle = Vec3d(face_normal[0], face_normal[1], face_normal[2]).dot(direction_to_jittered);
+
+			ite++;
+			if (ite > 100)
+			{
+				std::cout << "\n Error: TriangleMeshShape::checkContain not able to achieve!  " << std::endl;
+				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+				exit(1);
+			}
 		}
 
-		SimTK::Vec3 from_face_to_pnt = in_pnt - closest_pnt;
-		Real sum_weights = 0.0;
-		Real weighted_dot_product = 0.0;
-		for (int i = 0; i < 4; i++)
-		{
-			SimTK::UnitVec3 normal_direction = triangle_mesh_->getFaceNormal(neighbor_face[i]);
-			Real dot_product = dot(normal_direction, from_face_to_pnt);
-			Real weight = dot_product * dot_product;
-			weighted_dot_product += weight * dot_product;
-			sum_weights += weight;
-		}
-
-		weighted_dot_product /= sum_weights;
-
-		bool weighted_inside = false;
-		if (weighted_dot_product < 0.0)
-			weighted_inside = true;
-
-		if (face_id < 0 && face_id > triangle_mesh_->getNumFaces())
-		{
-			std::cout << "\n Error the nearest point is not valid" << std::endl;
-			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-			throw;
-		}
-
-		return weighted_inside;
+		return cosine_angle < 0.0 ? true : false;
 	}
 	//=================================================================================================//
 	Vecd TriangleMeshShape::findClosestPoint(const Vecd &probe_point)
@@ -116,7 +104,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	TriangleMeshShapeSTL::TriangleMeshShapeSTL(const std::string &filepathname, Mat3d rotation,
-			Vecd translation, Real scale_factor, const std::string &shape_name)
+											   Vec3d translation, Real scale_factor, const std::string &shape_name)
 		: TriangleMeshShape(shape_name)
 	{
 		if (!fs::exists(filepathname))
@@ -146,7 +134,7 @@ namespace SPH
 		polymesh.scaleMesh(scale_factor);
 		triangle_mesh_ = generateTriangleMesh(polymesh.transformMesh(SimTK::Vec3(translation[0], translation[1], translation[2])));
 	}
-	#endif
+#endif
 	//=================================================================================================//
 	TriangleMeshShapeBrick::TriangleMeshShapeBrick(Vecd halfsize, int resolution, Vecd translation,
 			const std::string &shape_name)
@@ -161,8 +149,8 @@ namespace SPH
 		: TriangleMeshShapeBrick(shape_parameters.halfsize_, shape_parameters.resolution_,
 								 shape_parameters.translation_, shape_name) {}
 	//=================================================================================================//
-	TriangleMeshShapeSphere::TriangleMeshShapeSphere(Real radius, int resolution, Vecd translation,
-			const std::string &shape_name)
+	TriangleMeshShapeSphere::TriangleMeshShapeSphere(Real radius, int resolution, Vec3d translation,
+													 const std::string &shape_name)
 		: TriangleMeshShape(shape_name)
 	{
 		SimTK::PolygonalMesh polymesh = SimTK::PolygonalMesh::createSphereMesh(radius, resolution);

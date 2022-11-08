@@ -10,9 +10,9 @@
  *																			*
  * SPHinXsys is partially funded by German Research Foundation				*
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
- *  HU1527/12-1 and Hu1527/12-4												*
+ *  HU1527/12-1 and HU1527/12-4												*
  *                                                                          *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
  * the authors' affiliations.												*
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
@@ -42,6 +42,7 @@ namespace SPH
      * @class TransformShape
      * @brief A template shape in which coordinate transformation is applied
      * before or/and after access the interface functions.
+     * Note that this is more suitable to apply for simple geometric shapes.
      */
     template <class BaseShapeType>
     class TransformShape : public BaseShapeType

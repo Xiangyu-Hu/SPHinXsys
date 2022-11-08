@@ -10,9 +10,9 @@
  *																			*
  * SPHinXsys is partially funded by German Research Foundation				*
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
- *  HU1527/12-1 and Hu1527/12-4												*
+ *  HU1527/12-1 and HU1527/12-4												*
  *                                                                          *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
  * the authors' affiliations.												*
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
@@ -44,8 +44,8 @@ namespace SPH
 		explicit GeometricShape(const std::string &shape_name)
 			: Shape(shape_name), contact_geometry_(nullptr){};
 
-		virtual bool checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED = true) override;
-		virtual Vecd findClosestPoint(const Vecd &pnt) override;
+		virtual bool checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED = true) override;
+		virtual Vec3d findClosestPoint(const Vec3d &probe_point) override;
 
 		SimTK::ContactGeometry *getContactGeometry() { return contact_geometry_; };
 
@@ -63,8 +63,8 @@ namespace SPH
 								   const std::string &shape_name = "GeometricShapeBox");
 		virtual ~GeometricShapeBox(){};
 
-		virtual bool checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED = true) override;
-		virtual Vecd findClosestPoint(const Vecd &pnt) override;
+		virtual bool checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED = true) override;
+		virtual Vec3d findClosestPoint(const Vec3d &probe_point) override;
 
 	protected:
 		Vecd halfsize_;
@@ -83,8 +83,8 @@ namespace SPH
 									const std::string &shape_name = "GeometricShapeBall");
 		virtual ~GeometricShapeBall(){};
 
-		virtual bool checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED = true) override;
-		virtual Vecd findClosestPoint(const Vecd &pnt) override;
+		virtual bool checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED = true) override;
+		virtual Vec3d findClosestPoint(const Vec3d &probe_point) override;
 
 	protected:
 		virtual BoundingBox findBounds() override;

@@ -10,9 +10,9 @@
  *																			*
  * SPHinXsys is partially funded by German Research Foundation				*
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
- *  HU1527/12-1 and Hu1527/12-4												*
+ *  HU1527/12-1 and HU1527/12-4												*
  *                                                                          *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
  * the authors' affiliations.												*
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
@@ -46,8 +46,11 @@ namespace SPH
 {
 	namespace solid_dynamics
 	{
-		typedef DataDelegateSimple<SolidBody, ElasticSolidParticles, ElasticSolid> ElasticSolidDataSimple;
-		typedef DataDelegateInner<SolidBody, ElasticSolidParticles, ElasticSolid> ElasticSolidDataInner;
+		//----------------------------------------------------------------------
+		//		for elastic solid dynamics
+		//----------------------------------------------------------------------
+		typedef DataDelegateSimple<ElasticSolidParticles> ElasticSolidDataSimple;
+		typedef DataDelegateInner<ElasticSolidParticles> ElasticSolidDataInner;
 
 		/**
 		 * @class ElasticDynamicsInitialCondition
@@ -108,12 +111,11 @@ namespace SPH
 		class DeformationGradientTensorBySummation : public LocalDynamics, public ElasticSolidDataInner
 		{
 		public:
-			explicit DeformationGradientTensorBySummation(BaseBodyRelationInner &inner_relation);
+			explicit DeformationGradientTensorBySummation(BaseInnerRelation &inner_relation);
 			virtual ~DeformationGradientTensorBySummation(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			StdLargeVec<Real> &Vol_;
 			StdLargeVec<Vecd> &pos_;
 			StdLargeVec<Matd> &B_, &F_;
 		};
@@ -125,11 +127,11 @@ namespace SPH
 		class BaseElasticRelaxation : public LocalDynamics, public ElasticSolidDataInner
 		{
 		public:
-			explicit BaseElasticRelaxation(BaseBodyRelationInner &inner_relation);
+			explicit BaseElasticRelaxation(BaseInnerRelation &inner_relation);
 			virtual ~BaseElasticRelaxation(){};
 
 		protected:
-			StdLargeVec<Real> &Vol_, &rho_, &mass_;
+			StdLargeVec<Real> &rho_, &mass_;
 			StdLargeVec<Vecd> &pos_, &vel_, &acc_;
 			StdLargeVec<Matd> &B_, &F_, &dF_dt_;
 		};
@@ -142,11 +144,12 @@ namespace SPH
 		class BaseStressRelaxationFirstHalf : public BaseElasticRelaxation
 		{
 		public:
-			explicit BaseStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation);
+			explicit BaseStressRelaxationFirstHalf(BaseInnerRelation &inner_relation);
 			virtual ~BaseStressRelaxationFirstHalf(){};
 			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
+			ElasticSolid &elastic_solid_;
 			Real rho0_, inv_rho0_;
 			StdLargeVec<Vecd> &acc_prior_;
 			Real smoothing_length_;
@@ -160,7 +163,7 @@ namespace SPH
 		class StressRelaxationFirstHalf : public BaseStressRelaxationFirstHalf
 		{
 		public:
-			explicit StressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation);
+			explicit StressRelaxationFirstHalf(BaseInnerRelation &inner_relation);
 			virtual ~StressRelaxationFirstHalf(){};
 			void initialization(size_t index_i, Real dt = 0.0);
 			void interaction(size_t index_i, Real dt = 0.0);
@@ -168,7 +171,7 @@ namespace SPH
 		protected:
 			StdLargeVec<Matd> stress_PK1_B_;
 			Real numerical_dissipation_factor_;
-			Real inv_W0_ = 1.0 / body_->sph_adaptation_->getKernel()->W0(zero_vec);
+			Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(zero_vec);
 		};
 
 		/**
@@ -177,7 +180,7 @@ namespace SPH
 		class KirchhoffParticleStressRelaxationFirstHalf : public StressRelaxationFirstHalf
 		{
 		public:
-			explicit KirchhoffParticleStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation);
+			explicit KirchhoffParticleStressRelaxationFirstHalf(BaseInnerRelation &inner_relation);
 			virtual ~KirchhoffParticleStressRelaxationFirstHalf(){};
 			void initialization(size_t index_i, Real dt = 0.0);
 		};
@@ -200,7 +203,7 @@ namespace SPH
 		class KirchhoffStressRelaxationFirstHalf : public BaseStressRelaxationFirstHalf
 		{
 		public:
-			explicit KirchhoffStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation);
+			explicit KirchhoffStressRelaxationFirstHalf(BaseInnerRelation &inner_relation);
 			virtual ~KirchhoffStressRelaxationFirstHalf(){};
 			void initialization(size_t index_i, Real dt = 0.0);
 			void interaction(size_t index_i, Real dt = 0.0);
@@ -219,7 +222,7 @@ namespace SPH
 		class StressRelaxationSecondHalf : public BaseElasticRelaxation
 		{
 		public:
-			explicit StressRelaxationSecondHalf(BaseBodyRelationInner &inner_relation)
+			explicit StressRelaxationSecondHalf(BaseInnerRelation &inner_relation)
 				: BaseElasticRelaxation(inner_relation){};
 			virtual ~StressRelaxationSecondHalf(){};
 			void initialization(size_t index_i, Real dt = 0.0);

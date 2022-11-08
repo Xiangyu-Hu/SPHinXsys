@@ -5,9 +5,10 @@ namespace SPH
 	//=================================================================================================//
 	BoundingAlongAxis::BoundingAlongAxis(RealBody &real_body, BoundingBox bounding_bounds, int axis)
 		: BaseDynamics<void>(), LocalDynamics(real_body),
-		  DataDelegateSimple<SPHBody, BaseParticles>(real_body),
-		  axis_(axis), bounding_bounds_(bounding_bounds), pos_(particles_->pos_),
-		  cell_linked_list_(real_body.cell_linked_list_),
+		  GeneralDataDelegateSimple(real_body),
+		  axis_(axis), bounding_bounds_(bounding_bounds),
+		  pos_(particles_->pos_),
+		  cell_linked_list_(real_body.getCellLinkedList()),
 		  cut_off_radius_max_(real_body.sph_adaptation_->getKernel()->CutOffRadius()) {}
 	//=================================================================================================//
 	Vecd BasePeriodicCondition::setPeriodicTranslation(BoundingBox &bounding_bounds, int axis)
@@ -21,9 +22,9 @@ namespace SPH
 	BasePeriodicCondition::BasePeriodicCondition(RealBody &real_body, BoundingBox bounding_bounds, int axis)
 		: periodic_translation_(setPeriodicTranslation(bounding_bounds, axis))
 	{
-		bound_cells_.resize(2);
-		BaseCellLinkedList *cell_linked_list = real_body.cell_linked_list_;
-		cell_linked_list->tagBoundingCells(bound_cells_, bounding_bounds, axis);
+		bound_cells_data_.resize(2);
+		BaseCellLinkedList &cell_linked_list = real_body.getCellLinkedList();
+		cell_linked_list.tagBoundingCells(bound_cells_data_, bounding_bounds, axis);
 		if (periodic_translation_.norm() < real_body.sph_adaptation_->ReferenceSpacing())
 		{
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
@@ -48,67 +49,61 @@ namespace SPH
 	{
 		setupDynamics(dt);
 
-		particle_for(
-			bound_cells_[0],
-			[&](size_t i, Real delta)
-			{ checkLowerBound(i, delta); },
-			dt);
+		particle_for(bound_cells_data_[0].first,
+					 [&](size_t i)
+					 { checkLowerBound(i, dt); });
 
-		particle_for(
-			bound_cells_[1],
-			[&](size_t i, Real delta)
-			{ checkUpperBound(i, delta); },
-			dt);
+		particle_for(bound_cells_data_[1].first,
+					 [&](size_t i)
+					 { checkUpperBound(i, dt); });
 	}
 	//=================================================================================================//
 	void BasePeriodicCondition::PeriodicBounding::parallel_exec(Real dt)
 	{
 		setupDynamics(dt);
 
-		particle_parallel_for(
-			bound_cells_[0],
-			[&](size_t i, Real delta)
-			{ checkLowerBound(i, delta); },
-			dt);
+		particle_parallel_for(bound_cells_data_[0].first,
+							  [&](size_t i)
+							  { checkLowerBound(i, dt); });
 
-		particle_parallel_for(
-			bound_cells_[1],
-			[&](size_t i, Real delta)
-			{ checkUpperBound(i, delta); },
-			dt);
+		particle_parallel_for(bound_cells_data_[1].first,
+							  [&](size_t i)
+							  { checkUpperBound(i, dt); });
 	}
 	//=================================================================================================//
-	void PeriodicConditionUsingCellLinkedList::PeriodicCellLinkedList::checkUpperBound(CellList *cell_list, Real dt)
+	void PeriodicConditionUsingCellLinkedList::
+		PeriodicCellLinkedList::checkUpperBound(ListDataVector &cell_list_data, Real dt)
 	{
-		ListDataVector &cell_list_data = cell_list->cell_list_data_;
 		for (size_t num = 0; num < cell_list_data.size(); ++num)
 		{
-			Vecd particle_position = cell_list_data[num].second;
+			Vecd particle_position = std::get<1>(cell_list_data[num]);
 			if (particle_position[axis_] < bounding_bounds_.second_[axis_] &&
 				particle_position[axis_] > (bounding_bounds_.second_[axis_] - cut_off_radius_max_))
 			{
 				Vecd translated_position = particle_position - periodic_translation_;
 				/** insert ghost particle to cell linked list */
 				mutex_cell_list_entry_.lock();
-				cell_linked_list_->InsertACellLinkedListDataEntry(cell_list_data[num].first, translated_position);
+				cell_linked_list_.InsertListDataEntry(std::get<0>(cell_list_data[num]),
+													   translated_position, std::get<2>(cell_list_data[num]));
 				mutex_cell_list_entry_.unlock();
 			}
 		}
 	}
 	//=================================================================================================//
-	void PeriodicConditionUsingCellLinkedList::PeriodicCellLinkedList::checkLowerBound(CellList *cell_list, Real dt)
+	void PeriodicConditionUsingCellLinkedList::
+		PeriodicCellLinkedList::checkLowerBound(ListDataVector &cell_list_data, Real dt)
 	{
-		ListDataVector &cell_list_data = cell_list->cell_list_data_;
 		for (size_t num = 0; num < cell_list_data.size(); ++num)
 		{
-			Vecd particle_position = cell_list_data[num].second;
+			Vecd particle_position = std::get<1>(cell_list_data[num]);
 			if (particle_position[axis_] > bounding_bounds_.first_[axis_] &&
 				particle_position[axis_] < (bounding_bounds_.first_[axis_] + cut_off_radius_max_))
 			{
 				Vecd translated_position = particle_position + periodic_translation_;
 				/** insert ghost particle to cell linked list */
 				mutex_cell_list_entry_.lock();
-				cell_linked_list_->InsertACellLinkedListDataEntry(cell_list_data[num].first, translated_position);
+				cell_linked_list_.InsertListDataEntry(std::get<0>(cell_list_data[num]),
+													   translated_position, std::get<2>(cell_list_data[num]));
 				mutex_cell_list_entry_.unlock();
 			}
 		}
@@ -118,34 +113,26 @@ namespace SPH
 	{
 		setupDynamics(dt);
 
-		cell_list_for(
-			bound_cells_[0],
-			[&](CellList *cell_ist, Real delta)
-			{ checkLowerBound(cell_ist, delta); },
-			dt);
+		cell_list_for(bound_cells_data_[0].second,
+					  [&](ListDataVector *cell_ist)
+					  { checkLowerBound(*cell_ist, dt); });
 
-		cell_list_for(
-			bound_cells_[1],
-			[&](CellList *cell_ist, Real delta)
-			{ checkUpperBound(cell_ist, delta); },
-			dt);
+		cell_list_for(bound_cells_data_[1].second,
+					  [&](ListDataVector *cell_ist)
+					  { checkUpperBound(*cell_ist, dt); });
 	}
 	//=================================================================================================//
 	void PeriodicConditionUsingCellLinkedList::PeriodicCellLinkedList::parallel_exec(Real dt)
 	{
 		setupDynamics(dt);
 
-		cell_list_parallel_for(
-			bound_cells_[0],
-			[&](CellList *cell_ist, Real delta)
-			{ checkLowerBound(cell_ist, delta); },
-			dt);
+		cell_list_parallel_for(bound_cells_data_[0].second,
+							   [&](ListDataVector *cell_ist)
+							   { checkLowerBound(*cell_ist, dt); });
 
-		cell_list_parallel_for(
-			bound_cells_[1],
-			[&](CellList *cell_ist, Real delta)
-			{ checkUpperBound(cell_ist, delta); },
-			dt);
+		cell_list_parallel_for(bound_cells_data_[1].second,
+							   [&](ListDataVector *cell_ist)
+							   { checkUpperBound(*cell_ist, dt); });
 	}
 	//=================================================================================================//
 	void PeriodicConditionUsingGhostParticles::CreatPeriodicGhostParticles::setupDynamics(Real dt)
@@ -157,6 +144,7 @@ namespace SPH
 	void PeriodicConditionUsingGhostParticles::CreatPeriodicGhostParticles::checkLowerBound(size_t index_i, Real dt)
 	{
 		Vecd particle_position = pos_[index_i];
+		Real particle_volumetric = Vol_[index_i];
 		if (particle_position[axis_] > bounding_bounds_.first_[axis_] &&
 			particle_position[axis_] < (bounding_bounds_.first_[axis_] + cut_off_radius_max_))
 		{
@@ -165,7 +153,8 @@ namespace SPH
 			ghost_particles_[0].push_back(ghost_particle_index);
 			pos_[ghost_particle_index] = particle_position + periodic_translation_;
 			/** insert ghost particle to cell linked list */
-			cell_linked_list_->InsertACellLinkedListDataEntry(ghost_particle_index, pos_[ghost_particle_index]);
+			cell_linked_list_.InsertListDataEntry(ghost_particle_index,
+												   pos_[ghost_particle_index], particle_volumetric);
 			mutex_create_ghost_particle_.unlock();
 		}
 	}
@@ -173,6 +162,7 @@ namespace SPH
 	void PeriodicConditionUsingGhostParticles::CreatPeriodicGhostParticles::checkUpperBound(size_t index_i, Real dt)
 	{
 		Vecd particle_position = pos_[index_i];
+		Real particle_volumetric = Vol_[index_i];
 		if (particle_position[axis_] < bounding_bounds_.second_[axis_] &&
 			particle_position[axis_] > (bounding_bounds_.second_[axis_] - cut_off_radius_max_))
 		{
@@ -181,7 +171,8 @@ namespace SPH
 			ghost_particles_[1].push_back(ghost_particle_index);
 			pos_[ghost_particle_index] = particle_position - periodic_translation_;
 			/** insert ghost particle to cell linked list */
-			cell_linked_list_->InsertACellLinkedListDataEntry(ghost_particle_index, pos_[ghost_particle_index]);
+			cell_linked_list_.InsertListDataEntry(ghost_particle_index,
+												   pos_[ghost_particle_index], particle_volumetric);
 			mutex_create_ghost_particle_.unlock();
 		}
 	}
@@ -202,39 +193,33 @@ namespace SPH
 	{
 		setupDynamics(dt);
 
-		particle_for(
-			ghost_particles_[0],
-			[&](size_t i, Real delta)
-			{ checkLowerBound(i, delta); },
-			dt);
+		particle_for(ghost_particles_[0],
+					 [&](size_t i)
+					 { checkLowerBound(i, dt); });
 
-		particle_for(
-			ghost_particles_[1],
-			[&](size_t i, Real delta)
-			{ checkUpperBound(i, delta); },
-			dt);
+		particle_for(ghost_particles_[1],
+					 [&](size_t i)
+					 { checkUpperBound(i, dt); });
 	}
 	//=================================================================================================//
 	void PeriodicConditionUsingGhostParticles::UpdatePeriodicGhostParticles::parallel_exec(Real dt)
 	{
 		setupDynamics(dt);
 
-		particle_parallel_for(
-			ghost_particles_[0],
-			[&](size_t i, Real delta)
-			{ checkLowerBound(i, delta); },
-			dt);
+		particle_parallel_for(ghost_particles_[0],
+							  [&](size_t i)
+							  { checkLowerBound(i, dt); });
 
-		particle_parallel_for(
-			ghost_particles_[1],
-			[&](size_t i, Real delta)
-			{ checkUpperBound(i, delta); },
-			dt);
+		particle_parallel_for(ghost_particles_[1],
+							  [&](size_t i)
+							  { checkUpperBound(i, dt); });
 	}
 	//=================================================================================================//
-	MirrorConditionAlongAxis::MirrorBounding::MirrorBounding(CellLists &bound_cells, RealBody &real_body,
-			BoundingBox bounding_bounds, int axis, bool positive)
-		: BoundingAlongAxis(real_body, bounding_bounds, axis),bound_cells_(bound_cells), vel_(particles_->vel_)
+	MirrorConditionAlongAxis::MirrorBounding::
+		MirrorBounding(CellLists bound_cells_data, RealBody &real_body,
+					   BoundingBox bounding_bounds, int axis, bool positive)
+		: BoundingAlongAxis(real_body, bounding_bounds, axis),
+		  bound_cells_data_(bound_cells_data), vel_(particles_->vel_)
 	{
 		checking_bound_ =
 			positive ? std::bind(&MirrorConditionAlongAxis::MirrorBounding::checkUpperBound, this, _1, _2)
@@ -242,15 +227,19 @@ namespace SPH
 	}
 	//=================================================================================================//
 	MirrorConditionAlongAxis::CreatingMirrorGhostParticles::
-		CreatingMirrorGhostParticles(IndexVector &ghost_particles, CellLists &bound_cells, RealBody &real_body,
+		CreatingMirrorGhostParticles(IndexVector &ghost_particles,
+									 CellLists bound_cells_data,
+									 RealBody &real_body,
 									 BoundingBox bounding_bounds, int axis, bool positive)
-		: MirrorBounding(bound_cells, real_body, bounding_bounds, axis, positive),
+		: MirrorBounding(bound_cells_data, real_body, bounding_bounds, axis, positive),
 		  ghost_particles_(ghost_particles) {}
 	//=================================================================================================//
 	MirrorConditionAlongAxis::UpdatingMirrorGhostStates::
-		UpdatingMirrorGhostStates(IndexVector &ghost_particles, CellLists &bound_cells, RealBody &real_body,
+		UpdatingMirrorGhostStates(IndexVector &ghost_particles,
+								  CellLists bound_cells_data, RealBody &real_body,
 								  BoundingBox bounding_bounds, int axis, bool positive)
-		: MirrorBounding(bound_cells, real_body, bounding_bounds, axis, positive), ghost_particles_(ghost_particles)
+		: MirrorBounding(bound_cells_data, real_body, bounding_bounds, axis, positive),
+		  ghost_particles_(ghost_particles)
 	{
 		checking_bound_update_ =
 			positive ? std::bind(&MirrorConditionAlongAxis::UpdatingMirrorGhostStates::checkUpperBound, this, _1, _2)
@@ -283,26 +272,28 @@ namespace SPH
 	void MirrorConditionAlongAxis::MirrorBounding::exec(Real dt)
 	{
 		setupDynamics(dt);
-		for (size_t i = 0; i != bound_cells_.size(); ++i)
+		DataListsInCells &cell_list_data = bound_cells_data_.second;
+		for (size_t i = 0; i != cell_list_data.size(); ++i)
 		{
-			ListDataVector &list_data = bound_cells_[i]->cell_list_data_;
+			ListDataVector &list_data = *cell_list_data[i];
 			for (size_t num = 0; num < list_data.size(); ++num)
-				checking_bound_(list_data[num].first, dt);
+				checking_bound_(std::get<0>(list_data[num]), dt);
 		}
 	}
 	//=================================================================================================//
 	void MirrorConditionAlongAxis::MirrorBounding ::parallel_exec(Real dt)
 	{
 		setupDynamics(dt);
+		DataListsInCells &cell_list_data = bound_cells_data_.second;
 		parallel_for(
-			blocked_range<size_t>(0, bound_cells_.size()),
+			blocked_range<size_t>(0, cell_list_data.size()),
 			[&](const blocked_range<size_t> &r)
 			{
 				for (size_t i = r.begin(); i < r.end(); ++i)
 				{
-					ListDataVector &list_data = bound_cells_[i]->cell_list_data_;
+					ListDataVector &list_data = *cell_list_data[i];
 					for (size_t num = 0; num < list_data.size(); ++num)
-						checking_bound_(list_data[num].first, dt);
+						checking_bound_(std::get<0>(list_data[num]), dt);
 				}
 			},
 			ap);
@@ -319,8 +310,10 @@ namespace SPH
 			/** mirror boundary condition */
 			mirrorAlongAxis(expected_particle_index, bounding_bounds_.first_, axis_);
 			Vecd translated_position = particles_->pos_[expected_particle_index];
+			Real particle_volumetric = particles_->Vol_[expected_particle_index];
 			/** insert ghost particle to cell linked list */
-			cell_linked_list_->InsertACellLinkedListDataEntry(expected_particle_index, translated_position);
+			cell_linked_list_.InsertListDataEntry(
+				expected_particle_index, translated_position, particle_volumetric);
 		}
 	}
 	//=================================================================================================//
@@ -335,8 +328,10 @@ namespace SPH
 			/** mirror boundary condition */
 			mirrorAlongAxis(expected_particle_index, bounding_bounds_.second_, axis_);
 			Vecd translated_position = particles_->pos_[expected_particle_index];
+			Real particle_volumetric = particles_->Vol_[expected_particle_index];
 			/** insert ghost particle to cell linked list */
-			cell_linked_list_->InsertACellLinkedListDataEntry(expected_particle_index, translated_position);
+			cell_linked_list_.InsertListDataEntry(
+				expected_particle_index, translated_position, particle_volumetric);
 		}
 	}
 	//=================================================================================================//

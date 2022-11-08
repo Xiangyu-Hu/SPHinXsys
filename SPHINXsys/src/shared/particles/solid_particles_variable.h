@@ -41,7 +41,10 @@
 
 namespace SPH
 {
-	typedef DataDelegateSimple<RealBody, SolidParticles, Solid> SolidDataSimple;
+	//----------------------------------------------------------------------
+	//		for general solid dynamics variables
+	//----------------------------------------------------------------------
+	typedef DataDelegateSimple<SolidParticles> SolidDataSimple;
 
 	/**
 	 * @class Displacement
@@ -130,11 +133,11 @@ namespace SPH
 		StdLargeVec<Vecd> &pos_, &n_, &n0_;
 	};
 
-	typedef DataDelegateSimple<RealBody, ElasticSolidParticles, ElasticSolid> ElasticSolidDataSimple;
-	/**
-	 * @class GreenLagrangeStrain
-	 * @brief Computing gree Lagrange strain. 
-	 */
+	//----------------------------------------------------------------------
+	//		for general elastic solid dynamics variables
+	//----------------------------------------------------------------------
+	typedef DataDelegateSimple<ElasticSolidParticles> ElasticSolidDataSimple;
+
 	class GreenLagrangeStrain : public BaseDerivedVariable<Matd>,
 								public ElasticSolidDataSimple,
 								public LocalDynamics
@@ -165,6 +168,7 @@ namespace SPH
 		Real rho0_;
 		StdLargeVec<Real> &rho_;
 		StdLargeVec<Matd> &F_;
+		ElasticSolid &elastic_solid_;
 	};
 
 	/**

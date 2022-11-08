@@ -10,9 +10,9 @@
  *																			*
  * SPHinXsys is partially funded by German Research Foundation				*
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
- *  HU1527/12-1 and Hu1527/12-4												*
+ *  HU1527/12-1 and HU1527/12-4												*
  *                                                                          *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
  * the authors' affiliations.												*
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
@@ -48,9 +48,11 @@ namespace SPH
 
 	namespace relax_dynamics
 	{
-		typedef DataDelegateSimple<SPHBody, BaseParticles> RelaxDataDelegateSimple;
-		typedef DataDelegateInner<SPHBody, BaseParticles> RelaxDataDelegateInner;
-		typedef DataDelegateComplex<SPHBody, BaseParticles, BaseMaterial, SPHBody, BaseParticles> RelaxDataDelegateComplex;
+		typedef DataDelegateSimple<BaseParticles> RelaxDataDelegateSimple;
+
+		typedef DataDelegateInner<BaseParticles> RelaxDataDelegateInner;
+
+		typedef DataDelegateComplex<BaseParticles, BaseParticles> RelaxDataDelegateComplex;
 
 		/**
 		 * @class GetTimeStepSizeSquare
@@ -81,12 +83,11 @@ namespace SPH
 		class RelaxationAccelerationInner : public LocalDynamics, public RelaxDataDelegateInner
 		{
 		public:
-			explicit RelaxationAccelerationInner(BaseBodyRelationInner &inner_relation);
+			explicit RelaxationAccelerationInner(BaseInnerRelation &inner_relation);
 			virtual ~RelaxationAccelerationInner(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			StdLargeVec<Real> &Vol_;
 			StdLargeVec<Vecd> &acc_, &pos_;
 		};
 
@@ -98,7 +99,7 @@ namespace SPH
 		{
 		public:
 			explicit RelaxationAccelerationInnerWithLevelSetCorrection(
-				BaseBodyRelationInner &inner_relation);
+				BaseInnerRelation &inner_relation);
 			virtual ~RelaxationAccelerationInnerWithLevelSetCorrection(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -126,22 +127,23 @@ namespace SPH
 		};
 
 		/**
-		 * @class UpdateSmoothingLengthRatioByBodyShape
+		 * @class UpdateSmoothingLengthRatioByShape
 		 * @brief update the particle smoothing length ratio
 		 */
-		class UpdateSmoothingLengthRatioByBodyShape : public LocalDynamics,
+		class UpdateSmoothingLengthRatioByShape : public LocalDynamics,
 													  public RelaxDataDelegateSimple
 		{
 		protected:
 			StdLargeVec<Real> &h_ratio_, &Vol_;
 			StdLargeVec<Vecd> &pos_;
-			Shape &body_shape_;
-			ParticleSpacingByBodyShape *particle_spacing_by_body_shape_;
+			Shape &target_shape_;
+			ParticleRefinementByShape *particle_adaptation_;
 			Real reference_spacing_;
 
 		public:
-			explicit UpdateSmoothingLengthRatioByBodyShape(SPHBody &sph_body);
-			virtual ~UpdateSmoothingLengthRatioByBodyShape(){};
+			UpdateSmoothingLengthRatioByShape(SPHBody &sph_body, Shape &target_shape);
+			explicit UpdateSmoothingLengthRatioByShape(SPHBody &sph_body);
+			virtual ~UpdateSmoothingLengthRatioByShape(){};
 
 			void update(size_t index_i, Real dt = 0.0);
 		};
@@ -156,14 +158,12 @@ namespace SPH
 											  public RelaxDataDelegateComplex
 		{
 		public:
-			explicit RelaxationAccelerationComplex(ComplexBodyRelation &body_complex_relation);
+			explicit RelaxationAccelerationComplex(ComplexRelation &body_complex_relation);
 			virtual ~RelaxationAccelerationComplex(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			StdLargeVec<Real> &Vol_;
 			StdLargeVec<Vecd> &acc_, &pos_;
-			StdVec<StdLargeVec<Real> *> contact_Vol_;
 		};
 
 		/**
@@ -194,11 +194,11 @@ namespace SPH
 		{
 		protected:
 			RealBody *real_body_;
-			BaseBodyRelationInner &inner_relation_;
+			BaseInnerRelation &inner_relation_;
 			NearShapeSurface near_shape_surface_;
 
 		public:
-			explicit RelaxationStepInner(BaseBodyRelationInner &inner_relation,
+			explicit RelaxationStepInner(BaseInnerRelation &inner_relation,
 										 bool level_set_correction = false);
 			virtual ~RelaxationStepInner(){};
 
@@ -222,7 +222,7 @@ namespace SPH
 		{
 		public:
 			RelaxationAccelerationComplexWithLevelSetCorrection(
-				ComplexBodyRelation &body_complex_relation, const std::string &shape_name);
+				ComplexRelation &body_complex_relation, const std::string &shape_name);
 			virtual ~RelaxationAccelerationComplexWithLevelSetCorrection(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -239,11 +239,11 @@ namespace SPH
 		{
 		protected:
 			RealBody *real_body_;
-			ComplexBodyRelation &complex_relation_;
+			ComplexRelation &complex_relation_;
 			NearShapeSurface near_shape_surface_;
 
 		public:
-			explicit RelaxationStepComplex(ComplexBodyRelation &body_complex_relation,
+			explicit RelaxationStepComplex(ComplexRelation &body_complex_relation,
 										   const std::string &shape_name, bool level_set_correction = false);
 			virtual ~RelaxationStepComplex(){};
 
@@ -267,7 +267,7 @@ namespace SPH
 										public RelaxDataDelegateInner
 		{
 		public:
-			ShellMidSurfaceBounding(NearShapeSurface &body_part, BaseBodyRelationInner &inner_relation,
+			ShellMidSurfaceBounding(NearShapeSurface &body_part, BaseInnerRelation &inner_relation,
 									Real thickness, Real level_set_refinement_ratio);
 			virtual ~ShellMidSurfaceBounding(){};
 			void update(size_t index_i, Real dt = 0.0);
@@ -292,7 +292,7 @@ namespace SPH
 			void correctNormalDirection();
 
 		public:
-			explicit ShellNormalDirectionPrediction(BaseBodyRelationInner &inner_relation,
+			explicit ShellNormalDirectionPrediction(BaseInnerRelation &inner_relation,
 													Real thickness, Real consistency_criterion = cos(Pi / 20.0));
 			virtual ~ShellNormalDirectionPrediction(){};
 
@@ -329,7 +329,7 @@ namespace SPH
 			class ConsistencyCorrection : public LocalDynamics, public RelaxDataDelegateInner
 			{
 			public:
-				explicit ConsistencyCorrection(BaseBodyRelationInner &inner_relation, Real consistency_criterion);
+				explicit ConsistencyCorrection(BaseInnerRelation &inner_relation, Real consistency_criterion);
 				virtual ~ConsistencyCorrection(){};
 				void interaction(size_t index_i, Real dt = 0.0);
 
@@ -356,7 +356,7 @@ namespace SPH
 			class SmoothingNormal : public ParticleSmoothing<Vecd>
 			{
 			public:
-				explicit SmoothingNormal(BaseBodyRelationInner &inner_relation);
+				explicit SmoothingNormal(BaseInnerRelation &inner_relation);
 				virtual ~SmoothingNormal(){};
 				void update(size_t index_i, Real dt = 0.0);
 
@@ -377,7 +377,7 @@ namespace SPH
 		class ShellRelaxationStepInner : public RelaxationStepInner
 		{
 		public:
-			explicit ShellRelaxationStepInner(BaseBodyRelationInner &inner_relation, Real thickness,
+			explicit ShellRelaxationStepInner(BaseInnerRelation &inner_relation, Real thickness,
 											  Real level_set_refinement_ratio, bool level_set_correction = false);
 			virtual ~ShellRelaxationStepInner(){};
 

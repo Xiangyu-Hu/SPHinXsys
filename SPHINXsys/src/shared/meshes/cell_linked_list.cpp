@@ -4,16 +4,15 @@
 #include "adaptation.h"
 #include "base_particles.h"
 #include "base_particle_dynamics.h"
+#include "particle_iterators.h"
 
 namespace SPH
 {
 	//=================================================================================================//
-	BaseCellLinkedList::BaseCellLinkedList(RealBody &real_body, SPHAdaptation &sph_adaptation)
-		: BaseMeshField("CellLinkedList")
-		, real_body_(real_body)
-		, kernel_(*sph_adaptation.getKernel())
-		, base_particles_(nullptr) 
-	{}
+	BaseCellLinkedList::
+		BaseCellLinkedList(RealBody &real_body, SPHAdaptation &sph_adaptation)
+		: BaseMeshField("CellLinkedList"),
+		  real_body_(real_body), kernel_(*sph_adaptation.getKernel()) {}
 	//=================================================================================================//
 	void BaseCellLinkedList::clearSplitCellLists(SplitCellLists &split_cell_lists)
 	{
@@ -26,25 +25,26 @@ namespace SPH
 		, Mesh(tentative_bounds, grid_spacing, 2)
 	{
 		allocateMeshDataMatrix();
+		single_cell_linked_list_level_.push_back(this);
 	}
 	//=================================================================================================//
-	void CellLinkedList::UpdateCellLists()
+	void CellLinkedList::UpdateCellLists(BaseParticles &base_particles)
 	{
 		clearCellLists();
-		StdLargeVec<Vecd> &pos_n = base_particles_->pos_;
-		size_t total_real_particles = base_particles_->total_real_particles_;
+		StdLargeVec<Vecd> &pos_n = base_particles.pos_;
+		size_t total_real_particles = base_particles.total_real_particles_;
 		parallel_for(
 			blocked_range<size_t>(0, total_real_particles),
 			[&](const blocked_range<size_t> &r)
 			{
 				for (size_t i = r.begin(); i != r.end(); ++i)
 				{
-					insertACellLinkedParticleIndex(i, pos_n[i]);
+					insertParticleIndex(i, pos_n[i]);
 				}
 			},
 			ap);
 
-		UpdateCellListData();
+		UpdateCellListData(base_particles);
 
 		if (real_body_.getUseSplitCellLists())
 		{
@@ -52,25 +52,14 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void CellLinkedList::assignBaseParticles(BaseParticles *base_particles)
+	StdLargeVec<size_t> &CellLinkedList::computingSequence(BaseParticles &base_particles)
 	{
-		base_particles_ = base_particles;
-	};
-	//=================================================================================================//
-	void CellLinkedList::computingSequence(StdLargeVec<size_t> &sequence)
-	{
-		StdLargeVec<Vecd> &positions = base_particles_->pos_;
-		size_t total_real_particles = base_particles_->total_real_particles_;
-		parallel_for(
-			blocked_range<size_t>(0, total_real_particles),
-			[&](const blocked_range<size_t> &r)
-			{
-				for (size_t i = r.begin(); i != r.end(); ++i)
-				{
-					sequence[i] = transferMeshIndexToMortonOrder(CellIndexFromPosition(positions[i]));
-				}
-			},
-			ap);
+		StdLargeVec<Vecd> &pos = base_particles.pos_;
+		StdLargeVec<size_t> &sequence = base_particles.sequence_;
+		size_t total_real_particles = base_particles.total_real_particles_;
+		particle_parallel_for(total_real_particles, [&](size_t i)
+							  { sequence[i] = transferMeshIndexToMortonOrder(CellIndexFromPosition(pos[i])); });
+		return sequence;
 	}
 	//=================================================================================================//
 	MultilevelCellLinkedList::MultilevelCellLinkedList(BoundingBox tentative_bounds, Real reference_grid_spacing,
@@ -92,34 +81,27 @@ namespace SPH
 		return 999; // means an error in level searching
 	};
 	//=================================================================================================//
-	void MultilevelCellLinkedList::insertACellLinkedParticleIndex(size_t particle_index, const Vecd &particle_position)
+	void MultilevelCellLinkedList::
+		insertParticleIndex(size_t particle_index, const Vecd &particle_position)
 	{
 		size_t level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[particle_index]));
-		mesh_levels_[level]->insertACellLinkedParticleIndex(particle_index, particle_position);
+		mesh_levels_[level]->insertParticleIndex(particle_index, particle_position);
 	}
 	//=================================================================================================//
-	void MultilevelCellLinkedList::InsertACellLinkedListDataEntry(size_t particle_index, const Vecd &particle_position)
+	void MultilevelCellLinkedList::
+		InsertListDataEntry(size_t particle_index, const Vecd &particle_position, Real volumetric)
 	{
 		size_t level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[particle_index]));
-		mesh_levels_[level]->InsertACellLinkedListDataEntry(particle_index, particle_position);
+		mesh_levels_[level]->InsertListDataEntry(particle_index, particle_position, volumetric);
 	}
 	//=================================================================================================//
-	void MultilevelCellLinkedList::assignBaseParticles(BaseParticles *base_particles)
-	{
-		base_particles_ = base_particles;
-		for (size_t l = 0; l != total_levels_; ++l)
-		{
-			mesh_levels_[l]->assignBaseParticles(base_particles);
-		}
-	};
-	//=================================================================================================//
-	void MultilevelCellLinkedList::UpdateCellLists()
+	void MultilevelCellLinkedList::UpdateCellLists(BaseParticles &base_particles)
 	{
 		for (size_t level = 0; level != total_levels_; ++level)
 			mesh_levels_[level]->clearCellLists();
 
-		StdLargeVec<Vecd> &pos_n = base_particles_->pos_;
-		size_t total_real_particles = base_particles_->total_real_particles_;
+		StdLargeVec<Vecd> &pos_n = base_particles.pos_;
+		size_t total_real_particles = base_particles.total_real_particles_;
 		// rebuild the corresponding particle list.
 		parallel_for(
 			blocked_range<size_t>(0, total_real_particles),
@@ -127,14 +109,14 @@ namespace SPH
 			{
 				for (size_t i = r.begin(); i != r.end(); ++i)
 				{
-					insertACellLinkedParticleIndex(i, pos_n[i]);
+					insertParticleIndex(i, pos_n[i]);
 				}
 			},
 			ap);
 
 		for (size_t level = 0; level != total_levels_; ++level)
 		{
-			mesh_levels_[level]->UpdateCellListData();
+			mesh_levels_[level]->UpdateCellListData(base_particles);
 		}
 
 		if (real_body_.getUseSplitCellLists())
@@ -143,7 +125,23 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void MultilevelCellLinkedList::tagBodyPartByCell(CellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included)
+	StdLargeVec<size_t> &MultilevelCellLinkedList::computingSequence(BaseParticles &base_particles)
+	{
+		StdLargeVec<Vecd> &pos = base_particles.pos_;
+		StdLargeVec<size_t> &sequence = base_particles.sequence_;
+		size_t total_real_particles = base_particles.total_real_particles_;
+		particle_parallel_for(total_real_particles, [&](size_t i)
+							  {
+								  size_t level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[i]));
+								  sequence[i] = mesh_levels_[level]->transferMeshIndexToMortonOrder(
+									  mesh_levels_[level]->CellIndexFromPosition(pos[i]));
+							  });
+
+		return sequence;
+	}
+	//=================================================================================================//
+	void MultilevelCellLinkedList::
+		tagBodyPartByCell(ConcurrentIndexesInCells &cell_lists, std::function<bool(Vecd, Real)> &check_included)
 	{
 		for (size_t l = 0; l != total_levels_; ++l)
 		{

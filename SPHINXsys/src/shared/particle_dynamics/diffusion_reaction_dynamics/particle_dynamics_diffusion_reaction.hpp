@@ -39,36 +39,37 @@
 namespace SPH
 {
 	//=================================================================================================//
-	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
-	DiffusionReactionInitialCondition<BodyType, BaseParticlesType, BaseMaterialType>::
+	template <class BaseParticlesType, class BaseMaterialType, int NUM_SPECIES>
+	DiffusionReactionInitialCondition<BaseParticlesType, BaseMaterialType, NUM_SPECIES>::
 		DiffusionReactionInitialCondition(SPHBody &sph_body)
 		: LocalDynamics(sph_body),
-		  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body),
+		  DiffusionReactionSimpleData<BaseParticlesType, BaseMaterialType, NUM_SPECIES>(sph_body),
 		  pos_(this->particles_->pos_), species_n_(this->particles_->species_n_) {}
 	//=================================================================================================//
-	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
-	GetDiffusionTimeStepSize<BodyType, BaseParticlesType, BaseMaterialType>::
+	template <class BaseParticlesType, class BaseMaterialType, int NUM_SPECIES>
+	GetDiffusionTimeStepSize<BaseParticlesType, BaseMaterialType, NUM_SPECIES>::
 		GetDiffusionTimeStepSize(SPHBody &sph_body)
-		: BaseDynamics<Real>(), 
-		DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body)
+		: BaseDynamics<Real>(),
+		  DiffusionReactionSimpleData<BaseParticlesType, BaseMaterialType, NUM_SPECIES>(sph_body)
 	{
 		Real smoothing_length = sph_body.sph_adaptation_->ReferenceSmoothingLength();
-		diff_time_step_ = this->material_->getDiffusionTimeStepSize(smoothing_length);
+		diff_time_step_ = this->particles_->diffusion_reaction_material_.getDiffusionTimeStepSize(smoothing_length);
 	}
 	//=================================================================================================//
-	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
-	RelaxationOfAllDiffusionSpeciesInner<BodyType, BaseParticlesType, BaseMaterialType>::
-		RelaxationOfAllDiffusionSpeciesInner(BaseBodyRelationInner &inner_relation)
+	template <class BaseParticlesType, class BaseMaterialType, int NUM_SPECIES>
+	RelaxationOfAllDiffusionSpeciesInner<BaseParticlesType, BaseMaterialType, NUM_SPECIES>::
+		RelaxationOfAllDiffusionSpeciesInner(BaseInnerRelation &inner_relation)
 		: LocalDynamics(inner_relation.sph_body_),
-		  DiffusionReactionInnerData<BodyType, BaseParticlesType, BaseMaterialType>(inner_relation),
+		  DiffusionReactionInnerData<BaseParticlesType, BaseMaterialType, NUM_SPECIES>(inner_relation),
+		  diffusion_reaction_material_(this->particles_->diffusion_reaction_material_),
 		  species_n_(this->particles_->species_n_),
-		  diffusion_dt_(this->particles_->diffusion_dt_), Vol_(this->particles_->Vol_)
+		  diffusion_dt_(this->particles_->diffusion_dt_)
 	{
-		species_diffusion_ = this->material_->SpeciesDiffusion();
+		species_diffusion_ = this->particles_->diffusion_reaction_material_.SpeciesDiffusion();
 	}
 	//=================================================================================================//
-	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
-	void RelaxationOfAllDiffusionSpeciesInner<BodyType, BaseParticlesType, BaseMaterialType>::
+	template <class BaseParticlesType, class BaseMaterialType, int NUM_SPECIES>
+	void RelaxationOfAllDiffusionSpeciesInner<BaseParticlesType, BaseMaterialType, NUM_SPECIES>::
 		initializeDiffusionChangeRate(size_t particle_i)
 	{
 		for (size_t m = 0; m < species_diffusion_.size(); ++m)
@@ -77,8 +78,8 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
-	void RelaxationOfAllDiffusionSpeciesInner<BodyType, BaseParticlesType, BaseMaterialType>::
+	template <class BaseParticlesType, class BaseMaterialType, int NUM_SPECIES>
+	void RelaxationOfAllDiffusionSpeciesInner<BaseParticlesType, BaseMaterialType, NUM_SPECIES>::
 		getDiffusionChangeRate(size_t particle_i, size_t particle_j, Vecd &e_ij, Real surface_area_ij)
 	{
 		for (size_t m = 0; m < species_diffusion_.size(); ++m)
@@ -90,8 +91,8 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
-	void RelaxationOfAllDiffusionSpeciesInner<BodyType, BaseParticlesType, BaseMaterialType>::
+	template <class BaseParticlesType, class BaseMaterialType, int NUM_SPECIES>
+	void RelaxationOfAllDiffusionSpeciesInner<BaseParticlesType, BaseMaterialType, NUM_SPECIES>::
 		updateSpeciesDiffusion(size_t particle_i, Real dt)
 	{
 		for (size_t m = 0; m < species_diffusion_.size(); ++m)
@@ -101,57 +102,56 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
-	void RelaxationOfAllDiffusionSpeciesInner<BodyType, BaseParticlesType, BaseMaterialType>::
+	template <class BaseParticlesType, class BaseMaterialType, int NUM_SPECIES>
+	void RelaxationOfAllDiffusionSpeciesInner<BaseParticlesType, BaseMaterialType, NUM_SPECIES>::
 		interaction(size_t index_i, Real dt)
 	{
-		DiffusionReactionParticles<BaseParticlesType> *particles = this->particles_;
+		DiffusionReactionParticles<BaseParticlesType, BaseMaterialType, NUM_SPECIES> *particles = this->particles_;
 		Neighborhood &inner_neighborhood = this->inner_configuration_[index_i];
 
 		initializeDiffusionChangeRate(index_i);
 		for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 		{
 			size_t index_j = inner_neighborhood.j_[n];
-			Real dW_ij_ = inner_neighborhood.dW_ij_[n];
+			Real dW_ijV_j_ = inner_neighborhood.dW_ijV_j_[n];
 			Real r_ij_ = inner_neighborhood.r_ij_[n];
 			Vecd &e_ij = inner_neighborhood.e_ij_[n];
 
-			const Vecd &grad_ij = particles->getKernelGradient(index_i, index_j, dW_ij_, e_ij);
-			Real area_ij = 2.0 * Vol_[index_j] * grad_ij.dot(e_ij) / r_ij_;
+			const Vecd &grad_ijV_j = particles->getKernelGradient(index_i, index_j, dW_ijV_j_, e_ij);
+			Real area_ij = 2.0 * grad_ijV_j.dot(e_ij) / r_ij_;
 			getDiffusionChangeRate(index_i, index_j, e_ij, area_ij);
 		}
 	}
 	//=================================================================================================//
-	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
-	void RelaxationOfAllDiffusionSpeciesInner<BodyType, BaseParticlesType, BaseMaterialType>::
+	template <class BaseParticlesType, class BaseMaterialType, int NUM_SPECIES>
+	void RelaxationOfAllDiffusionSpeciesInner<BaseParticlesType, BaseMaterialType, NUM_SPECIES>::
 		update(size_t index_i, Real dt)
 	{
 		updateSpeciesDiffusion(index_i, dt);
 	}
 	//=================================================================================================//
-	template <class BodyType, class BaseParticlesType, class BaseMaterialType,
-			  class ContactBodyType, class ContactBaseParticlesType, class ContactBaseMaterialType>
-	RelaxationOfAllDiffusionSpeciesComplex<BodyType, BaseParticlesType, BaseMaterialType,
-											ContactBodyType, ContactBaseParticlesType, ContactBaseMaterialType>::
-		RelaxationOfAllDiffusionSpeciesComplex(ComplexBodyRelation &complex_relation)
-		: RelaxationOfAllDiffusionSpeciesInner<BodyType, BaseParticlesType, BaseMaterialType>(complex_relation.inner_relation_),
-		  DiffusionReactionContactData<BodyType, BaseParticlesType, BaseMaterialType,
-									   ContactBodyType, ContactBaseParticlesType, ContactBaseMaterialType>(complex_relation.contact_relation_),
+	template <class BaseParticlesType, class BaseMaterialType,
+			  class ContactBaseParticlesType, class ContactBaseMaterialType, int NUM_SPECIES>
+	RelaxationOfAllDiffusionSpeciesComplex<BaseParticlesType, BaseMaterialType,
+										   ContactBaseParticlesType, ContactBaseMaterialType, NUM_SPECIES>::
+		RelaxationOfAllDiffusionSpeciesComplex(ComplexRelation &complex_relation)
+		: RelaxationOfAllDiffusionSpeciesInner<BaseParticlesType, BaseMaterialType, NUM_SPECIES>(complex_relation.inner_relation_),
+		  DiffusionReactionContactData<BaseParticlesType, BaseMaterialType,
+									   ContactBaseParticlesType, ContactBaseMaterialType, NUM_SPECIES>(complex_relation.contact_relation_),
 		  species_n_(this->particles_->species_n_), diffusion_dt_(this->particles_->diffusion_dt_)
 	{
-		species_diffusion_ = this->material_->SpeciesDiffusion();
+		species_diffusion_ = this->particles_->diffusion_reaction_material_.SpeciesDiffusion();
 
 		for (size_t k = 0; k != this->contact_particles_.size(); ++k)
 		{
-			contact_Vol_.push_back(&(this->contact_particles_[k]->Vol_));
 			contact_species_n_.push_back(&(this->contact_particles_[k]->species_n_));
 		}
 	}
 	//=================================================================================================//
-	template <class BodyType, class BaseParticlesType, class BaseMaterialType,
-			  class ContactBodyType, class ContactBaseParticlesType, class ContactBaseMaterialType>
-	void RelaxationOfAllDiffusionSpeciesComplex<BodyType, BaseParticlesType, BaseMaterialType,
-												 ContactBodyType, ContactBaseParticlesType, ContactBaseMaterialType>::
+	template <class BaseParticlesType, class BaseMaterialType,
+			  class ContactBaseParticlesType, class ContactBaseMaterialType, int NUM_SPECIES>
+	void RelaxationOfAllDiffusionSpeciesComplex<BaseParticlesType, BaseMaterialType,
+												ContactBaseParticlesType, ContactBaseMaterialType, NUM_SPECIES>::
 		getDiffusionChangeRateContact(size_t particle_i, size_t particle_j, Vecd &e_ij,
 									  Real surface_area_ij, const StdVec<StdLargeVec<Real>> &species_n_k)
 	{
@@ -164,18 +164,17 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	template <class BodyType, class BaseParticlesType, class BaseMaterialType,
-			  class ContactBodyType, class ContactBaseParticlesType, class ContactBaseMaterialType>
-	void RelaxationOfAllDiffusionSpeciesComplex<BodyType, BaseParticlesType, BaseMaterialType,
-												 ContactBodyType, ContactBaseParticlesType, ContactBaseMaterialType>::
+	template <class BaseParticlesType, class BaseMaterialType,
+			  class ContactBaseParticlesType, class ContactBaseMaterialType, int NUM_SPECIES>
+	void RelaxationOfAllDiffusionSpeciesComplex<BaseParticlesType, BaseMaterialType,
+												ContactBaseParticlesType, ContactBaseMaterialType, NUM_SPECIES>::
 		interaction(size_t index_i, Real dt)
 	{
-		RelaxationOfAllDiffusionSpeciesInner<BodyType, BaseParticlesType, BaseMaterialType>::interaction(index_i, dt);
-		DiffusionReactionParticles<BaseParticlesType> *particles = this->particles_;
+		RelaxationOfAllDiffusionSpeciesInner<BaseParticlesType, BaseMaterialType, NUM_SPECIES>::interaction(index_i, dt);
+		DiffusionReactionParticles<BaseParticlesType, BaseMaterialType, NUM_SPECIES> *particles = this->particles_;
 
 		for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 		{
-			StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
 			StdVec<StdLargeVec<Real>> &species_n_k = *(contact_species_n_[k]);
 
 			Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
@@ -183,28 +182,28 @@ namespace SPH
 			{
 				size_t index_j = contact_neighborhood.j_[n];
 				Real r_ij_ = contact_neighborhood.r_ij_[n];
-				Real dW_ij_ = contact_neighborhood.dW_ij_[n];
+				Real dW_ijV_j_ = contact_neighborhood.dW_ijV_j_[n];
 				Vecd &e_ij = contact_neighborhood.e_ij_[n];
 
-				const Vecd &grad_ij = particles->getKernelGradient(index_i, index_j, dW_ij_, e_ij);
-				Real area_ij = 2.0 * Vol_k[index_j] * grad_ij.dot(e_ij) / r_ij_;
+				const Vecd &grad_ijV_j = particles->getKernelGradient(index_i, index_j, dW_ijV_j_, e_ij);
+				Real area_ij = 2.0 * grad_ijV_j.dot(e_ij) / r_ij_;
 				getDiffusionChangeRateContact(index_i, index_j, e_ij, area_ij, species_n_k);
 			}
 		}
 	}
 	//=================================================================================================//
-	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
-	InitializationRK<BodyType, BaseParticlesType, BaseMaterialType>::
+	template <class BaseParticlesType, class BaseMaterialType, int NUM_SPECIES>
+	InitializationRK<BaseParticlesType, BaseMaterialType, NUM_SPECIES>::
 		InitializationRK(SPHBody &sph_body, StdVec<StdLargeVec<Real>> &species_s)
 		: LocalDynamics(sph_body),
-		  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body),
+		  DiffusionReactionSimpleData<BaseParticlesType, BaseMaterialType, NUM_SPECIES>(sph_body),
 		  species_n_(this->particles_->species_n_), species_s_(species_s)
 	{
-		species_diffusion_ = this->material_->SpeciesDiffusion();
+		species_diffusion_ = this->particles_->diffusion_reaction_material_.SpeciesDiffusion();
 	}
 	//=================================================================================================//
-	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
-	void InitializationRK<BodyType, BaseParticlesType, BaseMaterialType>::
+	template <class BaseParticlesType, class BaseMaterialType, int NUM_SPECIES>
+	void InitializationRK<BaseParticlesType, BaseMaterialType, NUM_SPECIES>::
 		initializeIntermediateValue(size_t particle_i)
 	{
 		for (size_t m = 0; m < species_diffusion_.size(); ++m)
@@ -214,8 +213,8 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
-	void InitializationRK<BodyType, BaseParticlesType, BaseMaterialType>::
+	template <class BaseParticlesType, class BaseMaterialType, int NUM_SPECIES>
+	void InitializationRK<BaseParticlesType, BaseMaterialType, NUM_SPECIES>::
 		update(size_t index_i, Real dt)
 	{
 		initializeIntermediateValue(index_i);
@@ -229,7 +228,7 @@ namespace SPH
 		  species_n_(this->particles_->species_n_), diffusion_dt_(this->particles_->diffusion_dt_),
 		  species_s_(species_s)
 	{
-		species_diffusion_ = this->material_->SpeciesDiffusion();
+		species_diffusion_ = this->particles_->diffusion_reaction_material_.SpeciesDiffusion();
 	}
 	//=================================================================================================//
 	template <class FirstStageType>
@@ -250,7 +249,7 @@ namespace SPH
 		: BaseDynamics<void>(), rk2_initialization_(body_relation.sph_body_, species_s_),
 		  rk2_1st_stage_(body_relation), rk2_2nd_stage_(body_relation, species_s_)
 	{
-		StdVec<BaseDiffusion *> species_diffusion_ = rk2_1st_stage_.getMaterial()->SpeciesDiffusion();
+		StdVec<BaseDiffusion *> species_diffusion_ = rk2_1st_stage_.diffusion_reaction_material_.SpeciesDiffusion();
 
 		size_t number_of_diffusion_species = species_diffusion_.size();
 		species_s_.resize(number_of_diffusion_species);
@@ -279,54 +278,67 @@ namespace SPH
 		rk2_2nd_stage_.parallel_exec(dt);
 	}
 	//=================================================================================================//
-	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
-	RelaxationOfAllReactionsForward<BodyType, BaseParticlesType, BaseMaterialType>::
-		RelaxationOfAllReactionsForward(SPHBody &sph_body)
+	template <class BaseParticlesType, class BaseMaterialType, int NUM_SPECIES>
+	BaseRelaxationOfAllReactions<BaseParticlesType, BaseMaterialType, NUM_SPECIES>::
+		BaseRelaxationOfAllReactions(SPHBody &sph_body)
 		: LocalDynamics(sph_body),
-		  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body),
-		  species_n_(this->particles_->species_n_)
-	{
-		species_reaction_ = this->material_->SpeciesReaction();
-	}
+		  DiffusionReactionSimpleData<BaseParticlesType, BaseMaterialType, NUM_SPECIES>(sph_body),
+		  species_n_(this->particles_->species_n_),
+		  species_reaction_(this->particles_->diffusion_reaction_material_.SpeciesReaction()),
+		  reactive_species_(species_reaction_->reactive_species_) {}
 	//=================================================================================================//
-	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
-	void RelaxationOfAllReactionsForward<BodyType, BaseParticlesType, BaseMaterialType>::
-		update(size_t index_i, Real dt)
+	template <class BaseParticlesType, class BaseMaterialType, int NUM_SPECIES>
+	void BaseRelaxationOfAllReactions<BaseParticlesType, BaseMaterialType, NUM_SPECIES>::
+		loadLocalSpecies(LocalSpecies &local_species, size_t index_i)
 	{
-		IndexVector &reactive_species = species_reaction_->reactive_species_;
-
-		for (size_t m = 0; m != reactive_species.size(); ++m)
+		for (size_t m = 0; m != reactive_species_.size(); ++m)
 		{
-			size_t k = reactive_species[m];
-			Real production_rate = species_reaction_->get_production_rates_[k](species_n_, index_i);
-			Real loss_rate = species_reaction_->get_loss_rates_[k](species_n_, index_i);
-			species_n_[k][index_i] = updateAReactionSpecies(species_n_[k][index_i], production_rate, loss_rate, dt);
+			size_t k = reactive_species_[m];
+			local_species[k] = species_n_[k][index_i];
 		}
 	}
 	//=================================================================================================//
-	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
-	RelaxationOfAllReactionsBackward<BodyType, BaseParticlesType, BaseMaterialType>::
-		RelaxationOfAllReactionsBackward(SPHBody &sph_body)
-		: LocalDynamics(sph_body),
-		  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body),
-		  species_n_(this->particles_->species_n_)
+	template <class BaseParticlesType, class BaseMaterialType, int NUM_SPECIES>
+	void BaseRelaxationOfAllReactions<BaseParticlesType, BaseMaterialType, NUM_SPECIES>::
+		applyGlobalSpecies(LocalSpecies &local_species, size_t index_i)
 	{
-		species_reaction_ = this->material_->SpeciesReaction();
+		for (size_t m = 0; m != reactive_species_.size(); ++m)
+		{
+			size_t k = reactive_species_[m];
+			species_n_[k][index_i] = local_species[k];
+		}
 	}
 	//=================================================================================================//
-	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
-	void RelaxationOfAllReactionsBackward<BodyType, BaseParticlesType, BaseMaterialType>::
-		update(size_t index_i, Real dt)
+	template <class BaseParticlesType, class BaseMaterialType, int NUM_SPECIES>
+	void BaseRelaxationOfAllReactions<BaseParticlesType, BaseMaterialType, NUM_SPECIES>::
+		advanceForwardStep(size_t index_i, Real dt)
 	{
-		IndexVector &reactive_species = species_reaction_->reactive_species_;
-
-		for (size_t m = reactive_species.size(); m != 0; --m)
+		LocalSpecies local_species;
+		loadLocalSpecies(local_species, index_i);
+		for (size_t m = 0; m != reactive_species_.size(); ++m)
 		{
-			size_t k = reactive_species[m - 1];
-			Real production_rate = species_reaction_->get_production_rates_[k](species_n_, index_i);
-			Real loss_rate = species_reaction_->get_loss_rates_[k](species_n_, index_i);
-			species_n_[k][index_i] = updateAReactionSpecies(species_n_[k][index_i], production_rate, loss_rate, dt);
+			size_t k = reactive_species_[m];
+			Real production_rate = species_reaction_->get_production_rates_[k](local_species);
+			Real loss_rate = species_reaction_->get_loss_rates_[k](local_species);
+			local_species[k] = updateAReactionSpecies(local_species[k], production_rate, loss_rate, dt);
 		}
+		applyGlobalSpecies(local_species, index_i);
+	}
+	//=================================================================================================//
+	template <class BaseParticlesType, class BaseMaterialType, int NUM_SPECIES>
+	void BaseRelaxationOfAllReactions<BaseParticlesType, BaseMaterialType, NUM_SPECIES>::
+		advanceBackwardStep(size_t index_i, Real dt)
+	{
+		LocalSpecies local_species;
+		loadLocalSpecies(local_species, index_i);
+		for (size_t m = reactive_species_.size(); m != 0; --m)
+		{
+			size_t k = reactive_species_[m - 1];
+			Real production_rate = species_reaction_->get_production_rates_[k](local_species);
+			Real loss_rate = species_reaction_->get_loss_rates_[k](local_species);
+			local_species[k] = updateAReactionSpecies(local_species[k], production_rate, loss_rate, dt);
+		}
+		applyGlobalSpecies(local_species, index_i);
 	}
 	//=================================================================================================//
 }

@@ -38,10 +38,10 @@ int main()
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	ComplexBodyRelation water_air_complex(water_block, {&air_block});
-	BodyRelationContact water_wall_contact(water_block, {&wall_boundary});
-	ComplexBodyRelation air_water_complex(air_block, {&water_block});
-	BodyRelationContact air_wall_contact(air_block, {&wall_boundary});
+	ComplexRelation water_air_complex(water_block, {&air_block});
+	ContactRelation water_wall_contact(water_block, {&wall_boundary});
+	ComplexRelation air_water_complex(air_block, {&water_block});
+	ContactRelation air_wall_contact(air_block, {&wall_boundary});
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
@@ -52,12 +52,12 @@ int main()
 	SimpleDynamics<TimeStepInitialization> initialize_a_air_step(air_block);
 	/** Evaluation of density by summation approach. */
 	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex>
-		update_water_density_by_summation(water_air_complex.inner_relation_, water_wall_contact);
+		update_water_density_by_summation(water_wall_contact, water_air_complex.inner_relation_);
 	InteractionWithUpdate<fluid_dynamics::DensitySummationComplex>
-		update_air_density_by_summation(air_water_complex, air_wall_contact);
+		update_air_density_by_summation(air_wall_contact, air_water_complex);
 	/** transport formulation for regularizing particle distribution. */
 	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex>
-		air_transport_correction(air_water_complex, air_wall_contact);
+		air_transport_correction(air_wall_contact, air_water_complex);
 	/** Time step size without considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_water_advection_time_step_size(water_block, U_max);
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_air_advection_time_step_size(air_block, U_max);
@@ -65,15 +65,15 @@ int main()
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_water_time_step_size(water_block);
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_air_time_step_size(air_block);
 	/** Pressure relaxation for water by using position verlet time stepping. */
-	Dynamics1Level<fluid_dynamics::PressureRelaxationRiemannWithWall>
-		water_pressure_relaxation(water_air_complex.inner_relation_, water_wall_contact);
-	Dynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall>
-		water_density_relaxation(water_air_complex.inner_relation_, water_wall_contact);
+	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall>
+		water_pressure_relaxation(water_wall_contact, water_air_complex.inner_relation_);
+	Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall>
+		water_density_relaxation(water_wall_contact, water_air_complex.inner_relation_);
 	/** Extend Pressure relaxation is used for air. */
-	Dynamics1Level<fluid_dynamics::ExtendMultiPhasePressureRelaxationRiemannWithWall>
-		air_pressure_relaxation(air_water_complex, air_wall_contact, 2.0);
-	Dynamics1Level<fluid_dynamics::MultiPhaseDensityRelaxationRiemannWithWall>
-		air_density_relaxation(air_water_complex, air_wall_contact);
+	Dynamics1Level<fluid_dynamics::ExtendMultiPhaseIntegration1stHalfRiemannWithWall>
+		air_pressure_relaxation(air_wall_contact, air_water_complex, 2.0);
+	Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfRiemannWithWall>
+		air_density_relaxation(air_wall_contact, air_water_complex);
 	/** Viscous acceleration. */
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhase> air_viscous_acceleration(air_water_complex);
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhase> water_viscous_acceleration(water_air_complex);
@@ -90,8 +90,6 @@ int main()
 	//----------------------------------------------------------------------
 	/** Output the body states. */
 	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
-	/** Output the body states for restart simulation. */
-	RestartIO restart_io(io_environment, sph_system.real_bodies_);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
@@ -99,20 +97,6 @@ int main()
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
 	wall_boundary_normal_direction.parallel_exec();
-	//----------------------------------------------------------------------
-	//	Load restart file if necessary.
-	//----------------------------------------------------------------------
-	/** If the starting time is not zero, please setup the restart time step ro read in restart states. */
-	if (sph_system.restart_step_ != 0)
-	{
-		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.restart_step_);
-		water_block.updateCellLinkedListWithParticleSort(100);
-		air_block.updateCellLinkedListWithParticleSort(100);
-		water_air_complex.updateConfiguration();
-		water_wall_contact.updateConfiguration();
-		air_water_complex.updateConfiguration();
-		air_wall_contact.updateConfiguration();
-	}
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
@@ -153,7 +137,7 @@ int main()
 
 			update_water_density_by_summation.parallel_exec();
 			update_air_density_by_summation.parallel_exec();
-			air_transport_correction.parallel_exec(Dt);
+			air_transport_correction.parallel_exec();
 
 			air_viscous_acceleration.parallel_exec();
 			water_viscous_acceleration.parallel_exec();
@@ -192,9 +176,6 @@ int main()
 				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
 						  << GlobalStaticVariables::physical_time_
 						  << "	Dt = " << Dt << "	dt = " << dt << "\n";
-
-				if (number_of_iterations % restart_output_interval == 0)
-					restart_io.writeToFile(number_of_iterations);
 			}
 			number_of_iterations++;
 

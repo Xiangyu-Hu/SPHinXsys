@@ -67,7 +67,7 @@ namespace SPH
 		Real fascicle_ratio_ = 15.0;						/**< ratio of length  of the fascicles. Include one per fascicle to include.*/
 		SPHBody &sph_body_;
 		Shape &body_shape_;
-		BaseCellLinkedList *cell_linked_list_;
+		BaseCellLinkedList &cell_linked_list_;
 		TreeBody *tree_;
 		/**
 		 *@brief Get the gradient from nearest points, for imposing repulsive force.

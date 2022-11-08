@@ -10,9 +10,9 @@
  *																			*
  * SPHinXsys is partially funded by German Research Foundation				*
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
- *  HU1527/12-1 and Hu1527/12-4												*
+ *  HU1527/12-1 and HU1527/12-4												*
  *                                                                          *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
  * the authors' affiliations.												*
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
@@ -69,51 +69,48 @@ namespace SPH
 	 */
 	class NoRiemannSolver
 	{
-		Fluid &fluid_l_, &fluid_r_;
-
 	public:
-		NoRiemannSolver(Fluid &fluid_i, Fluid &fluid_j) : fluid_l_(fluid_i), fluid_r_(fluid_j){};
-		Real getPStar(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
-		Vecd getVStar(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
-	};
+		template <class FluidI, class FluidJ>
+		NoRiemannSolver(FluidI &fluid_i, FluidJ &fluid_j)
+			: rho0_i_(fluid_i.ReferenceDensity()), rho0_j_(fluid_j.ReferenceDensity()),
+			  c0_i_(fluid_i.ReferenceSoundSpeed()), c0_j_(fluid_j.ReferenceSoundSpeed()),
+			  rho0c0_i_(rho0_i_ * c0_i_), rho0c0_j_(rho0_j_ * c0_j_),
+			  inv_rho0c0_sum_(1.0 / (rho0c0_i_ + rho0c0_j_)){};
+		Real DissipativePJump(const Real &u_jump);
+		Real DissipativeUJump(const Real &p_jump);
+		Real AverageP(const Real &p_i, const Real &p_j);
+		Vecd AverageV(const Vecd &vel_i, const Vecd &vel_j);
 
-	/**
-	 * @struct BaseAcousticRiemannSolver
-	 * @brief  Base class for Acoustic Riemann sovler.  
-	 */
-	class BaseAcousticRiemannSolver
-	{
 	protected:
-		Fluid &fluid_i_, &fluid_j_;
-
-	public:
-		BaseAcousticRiemannSolver(Fluid &fluid_i, Fluid &fluid_j) : fluid_i_(fluid_i), fluid_j_(fluid_j){};
-		inline void prepareSolver(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i,
-								  Real &ul, Real &ur, Real &rhol_cl, Real &rhor_cr);
+		Real rho0_i_, rho0_j_;
+		Real c0_i_, c0_j_;
+		Real rho0c0_i_, rho0c0_j_, inv_rho0c0_sum_;
 	};
 
-	/**
-	 * @struct AcousticRiemannSolver
-	 * @brief  Acoustic Riemann sovler with dissipation limiter(Ref: https://doi.org/10.1016/j.jcp.2017.01.027).  
-	 */
-	class AcousticRiemannSolver : public BaseAcousticRiemannSolver
+	class AcousticRiemannSolver : public NoRiemannSolver
 	{
 	public:
-		AcousticRiemannSolver(Fluid &fluid_i, Fluid &fluid_j) : BaseAcousticRiemannSolver(fluid_i, fluid_j){};
-		Real getPStar(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
-		Vecd getVStar(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
+		template <class FluidI, class FluidJ>
+		AcousticRiemannSolver(FluidI &fluid_i, FluidJ &fluid_j)
+			: NoRiemannSolver(fluid_i, fluid_j),
+			  inv_rho0c0_ave_(2.0 * inv_rho0c0_sum_),
+			  rho0c0_geo_ave_(2.0 * rho0c0_i_ * rho0c0_j_ * inv_rho0c0_sum_),
+			  inv_c_ave_(0.5 * (rho0_i_ + rho0_j_) * inv_rho0c0_ave_){};
+		Real DissipativePJump(const Real &u_jump);
+		Real DissipativeUJump(const Real &p_jump);
+
+	protected:
+		Real inv_rho0c0_ave_, rho0c0_geo_ave_;
+		Real inv_c_ave_;
 	};
 
-	/**
-	 * @struct DissipativeRiemannSolver
-	 * @brief  Acoustic Riemann sovler without dissipation limiter(Ref: https://doi.org/10.1016/j.jcp.2017.01.027).  
-	 */
-	class DissipativeRiemannSolver : public BaseAcousticRiemannSolver
+	class DissipativeRiemannSolver : public AcousticRiemannSolver
 	{
 	public:
-		DissipativeRiemannSolver(Fluid &fluid_i, Fluid &fluid_j) : BaseAcousticRiemannSolver(fluid_i, fluid_j){};
-		Real getPStar(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
-		Vecd getVStar(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
+		template <class FluidI, class FluidJ>
+		DissipativeRiemannSolver(FluidI &fluid_i, FluidJ &fluid_j)
+			: AcousticRiemannSolver(fluid_i, fluid_j){};
+		Real DissipativePJump(const Real &u_jump);
 	};
 
 	/**
@@ -122,11 +119,11 @@ namespace SPH
 	 */
 	class HLLCRiemannSolverInWeaklyCompressibleFluid
 	{
-		Fluid& fluid_i_, &fluid_j_;
+		Fluid &fluid_i_, &fluid_j_;
 
 	public:
-		HLLCRiemannSolverInWeaklyCompressibleFluid(Fluid& compressible_fluid_i, Fluid& compressible_fluid_j) :
-			fluid_i_(compressible_fluid_i), fluid_j_(compressible_fluid_j) {};
+		HLLCRiemannSolverInWeaklyCompressibleFluid(Fluid &compressible_fluid_i, Fluid &compressible_fluid_j)
+			: fluid_i_(compressible_fluid_i), fluid_j_(compressible_fluid_j){};
 		FluidState getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
 	};
 
@@ -136,11 +133,10 @@ namespace SPH
 	 */
 	class HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid
 	{
-		Fluid& fluid_i_, &fluid_j_;
+		Fluid &fluid_i_, &fluid_j_;
 
 	public:
-		HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid(Fluid& compressible_fluid_i, Fluid& compressible_fluid_j) :
-			fluid_i_(compressible_fluid_i), fluid_j_(compressible_fluid_j) {};
+		HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid(Fluid &compressible_fluid_i, Fluid &compressible_fluid_j) : fluid_i_(compressible_fluid_i), fluid_j_(compressible_fluid_j){};
 		FluidState getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
 	};
 
@@ -173,4 +169,4 @@ namespace SPH
 	};
 }
 
-#endif //RIEMANN_SOLVER_H
+#endif // RIEMANN_SOLVER_H

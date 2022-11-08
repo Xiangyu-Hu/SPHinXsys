@@ -47,17 +47,17 @@ int main(int ac, char *av[])
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner water_block_inner(water_block);
-	ComplexBodyRelation water_block_complex(water_block_inner, {&cylinder});
-	BodyRelationContact cylinder_contact(cylinder, {&water_block});
-	BodyRelationContact fluid_observer_contact(fluid_observer, {&water_block});
+	InnerRelation water_block_inner(water_block);
+	ComplexRelation water_block_complex(water_block_inner, {&cylinder});
+	ContactRelation cylinder_contact(cylinder, {&water_block});
+	ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------
 	if (sph_system.run_particle_relaxation_)
 	{
 		/** body topology only for particle relaxation */
-		BodyRelationInner cylinder_inner(cylinder);
+		InnerRelation cylinder_inner(cylinder);
 		//----------------------------------------------------------------------
 		//	Methods used for particle relaxation.
 		//----------------------------------------------------------------------
@@ -125,11 +125,11 @@ int main(int ac, char *av[])
 	/** modify the velocity of boundary particles with free-stream velocity. */
 	SimpleDynamics<fluid_dynamics::FreeStreamBoundaryVelocityCorrection> velocity_boundary_condition_constraint(water_block);
 	/** Pressure relaxation. */
-	Dynamics1Level<fluid_dynamics::PressureRelaxationWithWall> pressure_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
 	/** correct the velocity of boundary particles with free-stream velocity through the post process of pressure relaxation. */
 	pressure_relaxation.post_processes_.push_back(&velocity_boundary_condition_constraint);
 	/** Density relaxation. */
-	Dynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(water_block_complex);
 	/** Computing viscous acceleration. */
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	/** Apply transport velocity formulation. */
@@ -150,9 +150,9 @@ int main(int ac, char *av[])
 	RestartIO restart_io(io_environment, sph_system.real_bodies_);
 	ObservedQuantityRecording<Vecd>
 		write_fluid_velocity("Velocity", io_environment, fluid_observer_contact);
-	RegressionTestTimeAveraged<BodyReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalViscousForceOnSolid>>>
+	RegressionTestTimeAveraged<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalViscousForceOnSolid>>>
 		write_total_viscous_force_on_inserted_body(io_environment, cylinder);
-	BodyReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceOnSolid>>
+	ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceOnSolid>>
 		write_total_force_on_inserted_body(io_environment, cylinder);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
@@ -195,7 +195,7 @@ int main(int ac, char *av[])
 			free_stream_surface_indicator.parallel_exec();
 			update_fluid_density.parallel_exec();
 			viscous_acceleration.parallel_exec();
-			transport_velocity_correction.parallel_exec(Dt);
+			transport_velocity_correction.parallel_exec();
 
 			/** FSI for viscous force. */
 			fluid_viscous_force_on_inserted_body.parallel_exec();

@@ -10,9 +10,9 @@
  *																			*
  * SPHinXsys is partially funded by German Research Foundation				*
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
- *  HU1527/12-1 and Hu1527/12-4												*
+ *  HU1527/12-1 and HU1527/12-4												*
  *                                                                          *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
  * the authors' affiliations.												*
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
@@ -40,10 +40,9 @@ namespace SPH
 {
 	namespace fluid_dynamics
 	{
-		typedef DataDelegateContact<FluidBody, FluidParticles, Fluid,
-									FluidBody, FluidParticles, Fluid, DataDelegateEmptyBase>
+		typedef DataDelegateContact<FluidParticles, FluidParticles, DataDelegateEmptyBase>
 			MultiPhaseContactData;
-		typedef DataDelegateContact<FluidBody, FluidParticles, Fluid, FluidBody, FluidParticles, Fluid> MultiPhaseData;
+		typedef DataDelegateContact<FluidParticles, FluidParticles> MultiPhaseData;
 		/**
 		 * @class ViscousAccelerationMultiPhase
 		 * @brief  the viscosity force induced acceleration
@@ -51,18 +50,18 @@ namespace SPH
 		class ViscousAccelerationMultiPhase : public ViscousAccelerationInner, public MultiPhaseContactData
 		{
 		public:
-			ViscousAccelerationMultiPhase(BaseBodyRelationInner &inner_relation,
-										  BaseBodyRelationContact &contact_relation);
-			explicit ViscousAccelerationMultiPhase(ComplexBodyRelation &complex_relation);
+			ViscousAccelerationMultiPhase(BaseInnerRelation &inner_relation,
+										  BaseContactRelation &contact_relation);
+			explicit ViscousAccelerationMultiPhase(ComplexRelation &complex_relation);
 			virtual ~ViscousAccelerationMultiPhase(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			StdVec<StdLargeVec<Real> *> contact_Vol_;
+			StdVec<Fluid *> contact_fluids_;
 			StdVec<StdLargeVec<Vecd> *> contact_vel_n_;
 		};
 		using ViscousAccelerationMultiPhaseWithWall =
-			BaseViscousAccelerationWithWall<ViscousWithWall<ViscousAccelerationMultiPhase>>;
+			BaseViscousAccelerationWithWall<ViscousAccelerationMultiPhase>;
 
 		/**
 		 * @class ViscousAccelerationMultiPhase
@@ -72,66 +71,67 @@ namespace SPH
 		class RelaxationMultiPhase : public RelaxationInnerType, public MultiPhaseContactData
 		{
 		public:
-			RelaxationMultiPhase(BaseBodyRelationInner &inner_relation,
-								 BaseBodyRelationContact &contact_relation);
+			RelaxationMultiPhase(BaseInnerRelation &inner_relation,
+								 BaseContactRelation &contact_relation);
 			virtual ~RelaxationMultiPhase(){};
 
 		protected:
-			StdVec<StdLargeVec<Real> *> contact_Vol_, contact_p_, contact_rho_n_;
+			StdVec<Fluid *> contact_fluids_;
+			StdVec<StdLargeVec<Real> *> contact_p_, contact_rho_n_;
 			StdVec<StdLargeVec<Vecd> *> contact_vel_n_;
 		};
 
 		/**
-		 * @class BasePressureRelaxationMultiPhase
+		 * @class BaseMultiPhaseIntegration1stHalf
 		 * @brief  template class for multiphase pressure relaxation scheme
 		 */
-		template <class PressureRelaxationInnerType>
-		class BasePressureRelaxationMultiPhase : public RelaxationMultiPhase<PressureRelaxationInnerType>
+		template <class Integration1stHalfType>
+		class BaseMultiPhaseIntegration1stHalf : public RelaxationMultiPhase<Integration1stHalfType>
 		{
 		public:
-			BasePressureRelaxationMultiPhase(BaseBodyRelationInner &inner_relation,
-											 BaseBodyRelationContact &contact_relation);
-			explicit BasePressureRelaxationMultiPhase(ComplexBodyRelation &complex_relation);
-			virtual ~BasePressureRelaxationMultiPhase(){};
+			BaseMultiPhaseIntegration1stHalf(BaseInnerRelation &inner_relation,
+											 BaseContactRelation &contact_relation);
+			explicit BaseMultiPhaseIntegration1stHalf(ComplexRelation &complex_relation);
+			virtual ~BaseMultiPhaseIntegration1stHalf(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			using CurrentRiemannSolver = decltype(PressureRelaxationInnerType::riemann_solver_);
+			using CurrentRiemannSolver = decltype(Integration1stHalfType::riemann_solver_);
 			StdVec<CurrentRiemannSolver> riemann_solvers_;
 			virtual Vecd computeNonConservativeAcceleration(size_t index_i) override;
 		};
-		using MultiPhasePressureRelaxation = BasePressureRelaxationMultiPhase<PressureRelaxationInner>;
-		using MultiPhasePressureRelaxationRiemann = BasePressureRelaxationMultiPhase<PressureRelaxationRiemannInner>;
+		using MultiPhaseIntegration1stHalf = BaseMultiPhaseIntegration1stHalf<Integration1stHalf>;
+		using MultiPhaseIntegration1stHalfRiemann = BaseMultiPhaseIntegration1stHalf<Integration1stHalfRiemann>;
 
-		using MultiPhasePressureRelaxationWithWall =
-			BasePressureRelaxationWithWall<PressureRelaxation<MultiPhasePressureRelaxation>>;
-		using MultiPhasePressureRelaxationRiemannWithWall =
-			BasePressureRelaxationWithWall<PressureRelaxation<MultiPhasePressureRelaxationRiemann>>;
-		using ExtendMultiPhasePressureRelaxationRiemannWithWall =
-			ExtendPressureRelaxationWithWall<ExtendPressureRelaxation<MultiPhasePressureRelaxationRiemann>>;
+		using MultiPhaseIntegration1stHalfWithWall =
+			BaseIntegration1stHalfWithWall<MultiPhaseIntegration1stHalf>;
+		using MultiPhaseIntegration1stHalfRiemannWithWall =
+			BaseIntegration1stHalfWithWall<MultiPhaseIntegration1stHalfRiemann>;
+		using ExtendMultiPhaseIntegration1stHalfRiemannWithWall =
+			BaseExtendIntegration1stHalfWithWall<MultiPhaseIntegration1stHalfRiemann>;
 
 		/**
-		 * @class BaseDensityRelaxationMultiPhase
+		 * @class BaseMultiPhaseIntegration2ndHalf
 		 * @brief  template class pressure relaxation scheme with wall boundary
 		 */
-		template <class DensityRelaxationInnerType>
-		class BaseDensityRelaxationMultiPhase : public RelaxationMultiPhase<DensityRelaxationInnerType>
+		template <class Integration2ndHalfType>
+		class BaseMultiPhaseIntegration2ndHalf : public RelaxationMultiPhase<Integration2ndHalfType>
 		{
 		public:
-			BaseDensityRelaxationMultiPhase(BaseBodyRelationInner &inner_relation,
-											BaseBodyRelationContact &contact_relation);
-			explicit BaseDensityRelaxationMultiPhase(ComplexBodyRelation &complex_relation);
-			virtual ~BaseDensityRelaxationMultiPhase(){};
+			BaseMultiPhaseIntegration2ndHalf(BaseInnerRelation &inner_relation,
+											BaseContactRelation &contact_relation);
+			explicit BaseMultiPhaseIntegration2ndHalf(ComplexRelation &complex_relation);
+			virtual ~BaseMultiPhaseIntegration2ndHalf(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			using CurrentRiemannSolver = decltype(DensityRelaxationInnerType::riemann_solver_);
+			using CurrentRiemannSolver = decltype(Integration2ndHalfType::riemann_solver_);
 			StdVec<CurrentRiemannSolver> riemann_solvers_;
 		};
-		using MultiPhaseDensityRelaxation = BaseDensityRelaxationMultiPhase<DensityRelaxationInner>;
-		using MultiPhaseDensityRelaxationRiemann = BaseDensityRelaxationMultiPhase<DensityRelaxationRiemannInner>;
-		using MultiPhaseDensityRelaxationWithWall = BaseDensityRelaxationMultiPhase<MultiPhaseDensityRelaxation>;
-		using MultiPhaseDensityRelaxationRiemannWithWall = BaseDensityRelaxationWithWall<MultiPhaseDensityRelaxationRiemann>;
+		using MultiPhaseIntegration2ndHalf = BaseMultiPhaseIntegration2ndHalf<Integration2ndHalf>;
+		using MultiPhaseIntegration2ndHalfRiemann = BaseMultiPhaseIntegration2ndHalf<Integration2ndHalfRiemann>;
+		using MultiPhaseIntegration2ndHalfWithWall = BaseMultiPhaseIntegration2ndHalf<MultiPhaseIntegration2ndHalf>;
+		using MultiPhaseIntegration2ndHalfRiemannWithWall = BaseIntegration2ndHalfWithWall<MultiPhaseIntegration2ndHalfRiemann>;
 
 		/**
 		 * @class MultiPhaseColorFunctionGradient
@@ -141,7 +141,7 @@ namespace SPH
 		class MultiPhaseColorFunctionGradient : public LocalDynamics, public MultiPhaseData
 		{
 		public:
-			explicit MultiPhaseColorFunctionGradient(BaseBodyRelationContact &contact_relation);
+			explicit MultiPhaseColorFunctionGradient(BaseContactRelation &contact_relation);
 			virtual ~MultiPhaseColorFunctionGradient(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 

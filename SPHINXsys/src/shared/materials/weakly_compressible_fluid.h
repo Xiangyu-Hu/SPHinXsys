@@ -10,9 +10,9 @@
  *																			*
  * SPHinXsys is partially funded by German Research Foundation				*
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
- *  HU1527/12-1 and Hu1527/12-4												*
+ *  HU1527/12-1 and HU1527/12-4												*
  *                                                                          *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
  * the authors' affiliations.												*
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
@@ -46,16 +46,15 @@ namespace SPH
 	class WeaklyCompressibleFluid : public Fluid
 	{
 	protected:
-		Real c0_, p0_; /**< reference sound speed and pressure */
+		Real p0_; /**< reference pressure */
 	public:
 		explicit WeaklyCompressibleFluid(Real rho0, Real c0, Real mu = 0.0)
-			: Fluid(rho0, mu), c0_(c0), p0_(rho0 * c0 * c0)
+			: Fluid(rho0, c0, mu), p0_(rho0 * c0 * c0)
 		{
 			material_type_name_ = "WeaklyCompressibleFluid";
 		};
 		virtual ~WeaklyCompressibleFluid(){};
 
-		Real ReferenceSoundSpeed() { return c0_; };
 		virtual Real getPressure(Real rho) override;
 		virtual Real DensityFromPressure(Real p) override;
 		virtual Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) override;

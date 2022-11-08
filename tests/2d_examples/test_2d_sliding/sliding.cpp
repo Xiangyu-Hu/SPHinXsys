@@ -89,9 +89,9 @@ int main(int ac, char *av[])
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner free_cube_inner(free_cube);
-	SolidBodyRelationContact free_cube_contact(free_cube, {&wall_boundary});
-	BodyRelationContact cube_observer_contact(cube_observer, {&free_cube});
+	InnerRelation free_cube_inner(free_cube);
+	SurfaceContactRelation free_cube_contact(free_cube, {&wall_boundary});
+	ContactRelation cube_observer_contact(cube_observer, {&free_cube});
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.

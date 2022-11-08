@@ -10,9 +10,9 @@
  *																			*
  * SPHinXsys is partially funded by German Research Foundation				*
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
- *  HU1527/12-1 and Hu1527/12-4												*
+ *  HU1527/12-1 and HU1527/12-4												*
  *                                                                          *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
  * the authors' affiliations.												*
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
@@ -71,15 +71,18 @@ namespace SPH
                     triangle_mesh_ = generateTriangleMesh(*mesh);
 
             };
-
-		virtual bool checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED = true) override;
-		virtual Vecd findClosestPoint(const Vecd &probe_point) override;
+		/** Only reliable when the probe point is close to the shape surface. 
+		 * Need to be combined with level set shape and sign correction to avoid artifacts
+		 * when probe distance is far from the surface. */
+		virtual bool checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED = true) override;
+		virtual Vec3d findClosestPoint(const Vec3d &probe_point) override;
 
 		SimTK::ContactGeometry::TriangleMesh *getTriangleMesh() { return triangle_mesh_; };
 
 	protected:
 		SimTK::ContactGeometry::TriangleMesh *triangle_mesh_;
 
+		/** generate triangle mesh from polymesh */
 		SimTK::ContactGeometry::TriangleMesh *generateTriangleMesh(const SimTK::PolygonalMesh &poly_mesh);
 		virtual BoundingBox findBounds() override;
 	};
@@ -91,12 +94,13 @@ namespace SPH
 	class TriangleMeshShapeSTL : public TriangleMeshShape
 	{
 	public:
-		explicit TriangleMeshShapeSTL(const std::string &file_path_name, Vecd translation, Real scale_factor,
+		explicit TriangleMeshShapeSTL(const std::string &file_path_name, Vec3d translation, Real scale_factor,
 									  const std::string &shape_name = "TriangleMeshShapeSTL");
-		explicit TriangleMeshShapeSTL(const std::string &file_path_name, Mat3d rotation, Vecd translation,
+		/** Overloaded to include rotation. */
+		explicit TriangleMeshShapeSTL(const std::string &file_path_name, Mat3d rotation, Vec3d translation,
 										Real scale_factor, const std::string &shape_name = "TriangleMeshShapeSTL");
 		#ifdef __EMSCRIPTEN__
-		TriangleMeshShapeSTL(const uint8_t* buffer, Vecd translation, Real scale_factor, const std::string &shape_name = "TriangleMeshShapeSTL");
+		TriangleMeshShapeSTL(const uint8_t* buffer, Vec3d translation, Real scale_factor, const std::string &shape_name = "TriangleMeshShapeSTL");
 		#endif
 		virtual ~TriangleMeshShapeSTL(){};
 	};
@@ -111,12 +115,12 @@ namespace SPH
 		class ShapeParameters 
 		{
 		public:
-			ShapeParameters() : halfsize_(Vecd::Zero()), resolution_(0), translation_(Vecd::Zero()) {};
-			Vecd halfsize_;
-			Vecd translation_;
+			ShapeParameters() : halfsize_(Vec3d::Zero()), resolution_(0), translation_(Vec3d::Zero()) {};
+			Vec3d halfsize_;
+			Vec3d translation_;
 			int resolution_;
 		};
-		explicit TriangleMeshShapeBrick(Vecd halfsize, int resolution, Vecd translation,
+		explicit TriangleMeshShapeBrick(Vec3d halfsize, int resolution, Vec3d translation,
 										const std::string &shape_name = "TriangleMeshShapeBrick");
 		explicit TriangleMeshShapeBrick(const TriangleMeshShapeBrick::ShapeParameters &shape_parameters,
 										const std::string &shape_name = "TriangleMeshShapeBrick");
@@ -130,7 +134,7 @@ namespace SPH
 	class TriangleMeshShapeSphere : public TriangleMeshShape
 	{
 	public:
-		explicit TriangleMeshShapeSphere(Real radius, int resolution, Vecd translation,
+		explicit TriangleMeshShapeSphere(Real radius, int resolution, Vec3d translation,
 										const std::string &shape_name = "TriangleMeshShapeSphere");
 		virtual ~TriangleMeshShapeSphere(){};
 	};
@@ -142,7 +146,7 @@ namespace SPH
 	class TriangleMeshShapeCylinder : public TriangleMeshShape
 	{
 	public:
-		explicit TriangleMeshShapeCylinder(SimTK::UnitVec3 axis, Real radius, Real halflength, int resolution, Vecd translation,
+		explicit TriangleMeshShapeCylinder(SimTK::UnitVec3 axis, Real radius, Real halflength, int resolution, Vec3d translation,
 										   const std::string &shape_name = "TriangleMeshShapeCylinder");
 		virtual ~TriangleMeshShapeCylinder(){};
 	};

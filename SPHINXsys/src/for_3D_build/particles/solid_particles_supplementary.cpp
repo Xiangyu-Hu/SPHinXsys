@@ -41,7 +41,7 @@ namespace SPH
 	{
 		Real J = rho0_ / rho_[index_i];
 		Matd F = F_[index_i];
-		Matd stress_PK1 = F * material_->StressPK2(F, index_i);
+		Matd stress_PK1 = F * elastic_solid_.StressPK2(F, index_i);
 		Matd sigma = (stress_PK1 * F.transpose()) / J;
 
 		Real sigmaxx = sigma(0, 0);

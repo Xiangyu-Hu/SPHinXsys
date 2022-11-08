@@ -47,8 +47,11 @@ namespace SPH
 {
     namespace solid_dynamics
     {
-        typedef DataDelegateSimple<SolidBody, SolidParticles, Solid> SolidDataSimple;
-        typedef DataDelegateInner<SolidBody, SolidParticles, Solid> SolidDataInner;
+        //----------------------------------------------------------------------
+        //		for general solid dynamics
+        //----------------------------------------------------------------------
+        typedef DataDelegateSimple<SolidParticles> SolidDataSimple;
+        typedef DataDelegateInner<SolidParticles> SolidDataInner;
 
         /**@class ImposeExternalForce
          * @brief impose external force on a solid body part

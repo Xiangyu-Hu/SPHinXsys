@@ -148,9 +148,9 @@ class ParabolicInflow : public fluid_dynamics::InflowVelocityCondition
 	Real u_ave_, u_ref_, t_ref;
 
 public:
-	ParabolicInflow(BodyAlignedBoxByCell &aligned_box_part)
+	explicit ParabolicInflow(BodyAlignedBoxByCell &aligned_box_part)
 		: InflowVelocityCondition(aligned_box_part),
-		  u_ave_(0), u_ref_(1.0), t_ref(2.0) {}
+		  u_ave_(0), u_ref_(U_f), t_ref(2.0) {}
 	Vecd getPrescribedVelocity(Vecd &position, Vecd &velocity) override
 	{
 		Real u = velocity[0];

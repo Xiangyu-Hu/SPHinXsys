@@ -26,7 +26,7 @@
  * @details Note that the system operation prefer these are application independent.
  * @author	Chi ZHang and Xiangyu Hu
  * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
+ *			Try to implement EIGEN libaary for base vector, matrix and sigma
  *			linear algebra operation.  
  *			-- Chi ZHANG
  */

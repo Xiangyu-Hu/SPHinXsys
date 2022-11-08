@@ -1,9 +1,9 @@
-/* ---------------------------------------------------------------------------*
+/*-----------------------------------------------------------------------------*
  *                       SPHinXsys: 3D dambreak example                        *
- * ----------------------------------------------------------------------------*
+ *-----------------------------------------------------------------------------*
  * This is the one of the basic test cases for efficient and accurate time     *
- * integration scheme investigation 							  				  *
- * ---------------------------------------------------------------------------*/
+ * integration scheme investigation                                            *
+ *-----------------------------------------------------------------------------*/
 #include "sphinxsys.h" // SPHinXsys Library.
 using namespace SPH;
 
@@ -64,7 +64,7 @@ public:
 	}
 };
 
-// the main program
+// the main program with commandline options
 int main(int ac, char *av[])
 {
 	//----------------------------------------------------------------------
@@ -93,16 +93,16 @@ int main(int ac, char *av[])
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	ComplexBodyRelation water_block_complex(water_block, {&wall_boundary});
-	BodyRelationContact fluid_observer_contact(fluid_observer, {&water_block});
+	ComplexRelation water_block_complex(water_block, {&wall_boundary});
+	ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
 	//----------------------------------------------------------------------
 	//	Define the numerical methods used in the simulation.
 	//	Note that there may be data dependence on the sequence of constructions.
 	//----------------------------------------------------------------------
 	SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vec3d(0.0, -gravity_g, 0.0));
 	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, gravity_ptr);
-	Dynamics1Level<fluid_dynamics::PressureRelaxationRiemannWithWall> pressure_relaxation(water_block_complex);
-	Dynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> density_relaxation(water_block_complex);
 	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_density_by_summation(water_block_complex);
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
@@ -112,8 +112,7 @@ int main(int ac, char *av[])
 	//	and regression tests of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_water_block_states(io_environment, system.real_bodies_);
-	RestartIO restart_io(io_environment, system.real_bodies_);
-	RegressionTestEnsembleAveraged<BodyReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
+	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
 		write_water_mechanical_energy(io_environment, water_block, gravity_ptr);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
 		write_recorded_water_pressure("Pressure", io_environment, fluid_observer_contact);
@@ -195,7 +194,7 @@ int main(int ac, char *av[])
 
 	if (system.generate_regression_data_)
 	{
-		write_water_mechanical_energy.generateDataBase(1.0e-3, 1.0e-3);
+		write_water_mechanical_energy.generateDataBase(1.0e-3);
 		write_recorded_water_pressure.generateDataBase(1.0e-3);
 	}
 	else

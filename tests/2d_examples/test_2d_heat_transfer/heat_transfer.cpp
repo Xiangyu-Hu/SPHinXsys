@@ -120,16 +120,16 @@ public:
 //	Application dependent solid body initial condition
 //----------------------------------------------------------------------
 class ThermosolidBodyInitialCondition
-	: public DiffusionReactionInitialCondition<SolidBody, SolidParticles, Solid>
+	: public DiffusionReactionInitialCondition<SolidParticles, Solid>
 {
 protected:
 	size_t phi_;
 
 public:
 	explicit ThermosolidBodyInitialCondition(SPHBody &sph_body)
-		: DiffusionReactionInitialCondition<SolidBody, SolidParticles, Solid>(sph_body)
+		: DiffusionReactionInitialCondition<SolidParticles, Solid>(sph_body)
 	{
-		phi_ = material_->SpeciesIndexMap()["Phi"];
+		phi_ = particles_->diffusion_reaction_material_.SpeciesIndexMap()["Phi"];
 	};
 
 	void update(size_t index_i, Real dt)
@@ -149,16 +149,16 @@ public:
 //	Application dependent fluid body initial condition
 //----------------------------------------------------------------------
 class ThermofluidBodyInitialCondition
-	: public DiffusionReactionInitialCondition<FluidBody, FluidParticles, WeaklyCompressibleFluid>
+	: public DiffusionReactionInitialCondition<FluidParticles, WeaklyCompressibleFluid>
 {
 protected:
 	size_t phi_;
 
 public:
 	explicit ThermofluidBodyInitialCondition(SPHBody &sph_body)
-		: DiffusionReactionInitialCondition<FluidBody, FluidParticles, WeaklyCompressibleFluid>(sph_body)
+		: DiffusionReactionInitialCondition<FluidParticles, WeaklyCompressibleFluid>(sph_body)
 	{
-		phi_ = material_->SpeciesIndexMap()["Phi"];
+		phi_ = particles_->diffusion_reaction_material_.SpeciesIndexMap()["Phi"];
 	};
 
 	void update(size_t index_i, Real dt)
@@ -174,11 +174,10 @@ public:
 //----------------------------------------------------------------------
 class ThermalRelaxationComplex
 	: public RelaxationOfAllDiffusionSpeciesRK2<
-		  RelaxationOfAllDiffusionSpeciesComplex<
-			  FluidBody, FluidParticles, WeaklyCompressibleFluid, SolidBody, SolidParticles, Solid>>
+		  RelaxationOfAllDiffusionSpeciesComplex<FluidParticles, WeaklyCompressibleFluid, SolidParticles, Solid>>
 {
 public:
-	explicit ThermalRelaxationComplex(ComplexBodyRelation &body_complex_relation)
+	explicit ThermalRelaxationComplex(ComplexRelation &body_complex_relation)
 		: RelaxationOfAllDiffusionSpeciesRK2(body_complex_relation){};
 	virtual ~ThermalRelaxationComplex(){};
 };
@@ -226,11 +225,11 @@ int main()
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	FluidBody thermofluid_body(system, makeShared<ThermofluidBody>("ThermofluidBody"));
-	thermofluid_body.defineParticlesAndMaterial<DiffusionReactionParticles<FluidParticles>, ThermofluidBodyMaterial>();
+	thermofluid_body.defineParticlesAndMaterial<DiffusionReactionParticles<FluidParticles, WeaklyCompressibleFluid>, ThermofluidBodyMaterial>();
 	thermofluid_body.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody thermosolid_body(system, makeShared<ThermosolidBody>("ThermosolidBody"));
-	thermosolid_body.defineParticlesAndMaterial<DiffusionReactionParticles<SolidParticles>, ThermosolidBodyMaterial>();
+	thermosolid_body.defineParticlesAndMaterial<DiffusionReactionParticles<SolidParticles, Solid>, ThermosolidBodyMaterial>();
 	thermosolid_body.generateParticles<ParticleGeneratorLattice>();
 
 	ProbeBody temperature_observer(system, "FluidObserver");
@@ -240,10 +239,10 @@ int main()
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner fluid_body_inner(thermofluid_body);
-	BodyRelationInner solid_body_inner(thermosolid_body);
-	ComplexBodyRelation fluid_body_complex(fluid_body_inner, {&thermosolid_body});
-	BodyRelationContact fluid_observer_contact(temperature_observer, {&thermofluid_body});
+	InnerRelation fluid_body_inner(thermofluid_body);
+	InnerRelation solid_body_inner(thermosolid_body);
+	ComplexRelation fluid_body_complex(fluid_body_inner, {&thermosolid_body});
+	ContactRelation fluid_observer_contact(temperature_observer, {&thermofluid_body});
 
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
@@ -262,13 +261,13 @@ int main()
 	/** Time step size with considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step(thermofluid_body);
 	/** Time step size calculation. */
-	GetDiffusionTimeStepSize<FluidBody, FluidParticles, WeaklyCompressibleFluid> get_thermal_time_step(thermofluid_body);
+	GetDiffusionTimeStepSize<FluidParticles, WeaklyCompressibleFluid> get_thermal_time_step(thermofluid_body);
 	/** Diffusion process between two diffusion bodies. */
 	ThermalRelaxationComplex thermal_relaxation_complex(fluid_body_complex);
 	/** Pressure relaxation using verlet time stepping. */
 	/** Here, we do not use Riemann solver for pressure as the flow is viscous. */
-	Dynamics1Level<fluid_dynamics::PressureRelaxationWithWall> pressure_relaxation(fluid_body_complex);
-	Dynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(fluid_body_complex);
+	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(fluid_body_complex);
+	Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(fluid_body_complex);
 	/** Computing viscous acceleration. */
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(fluid_body_complex);
 	/** Apply transport velocity formulation. */
@@ -331,7 +330,7 @@ int main()
 			Real Dt = get_fluid_advection_time_step.parallel_exec();
 			update_density_by_summation.parallel_exec();
 			viscous_acceleration.parallel_exec();
-			transport_velocity_correction.parallel_exec(Dt);
+			transport_velocity_correction.parallel_exec();
 
 			size_t inner_ite_dt = 0;
 			Real relaxation_time = 0.0;

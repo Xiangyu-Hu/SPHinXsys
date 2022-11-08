@@ -114,13 +114,13 @@ int main()
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	ComplexBodyRelation water_body_complex(water_body, {&wall});
-	BodyRelationContact fluid_observer_contact_relation(fluid_observer, {&water_body});
+	ComplexRelation water_body_complex(water_body, {&wall});
+	ContactRelation fluid_observer_contact_relation(fluid_observer, {&water_body});
 	//----------------------------------------------------------------------
 	//	Define all numerical methods which are used in this case.
 	//----------------------------------------------------------------------
-	Dynamics1Level<fluid_dynamics::PressureRelaxationRiemannWithWall> pressure_relaxation(water_body_complex);
-	Dynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(water_body_complex);
+	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_body_complex);
+	Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> density_relaxation(water_body_complex);
 	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_density_by_summation(water_body_complex);
 	InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex>
 		indicate_free_surface(water_body_complex);
@@ -143,7 +143,7 @@ int main()
 	IOEnvironment io_environment(system);
 	BodyStatesRecordingToVtp body_states_recording(io_environment, system.real_bodies_);
 	RestartIO restart_io(io_environment, system.real_bodies_);
-	RegressionTestDynamicTimeWarping<BodyReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
+	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
 		write_water_mechanical_energy(io_environment, water_body, gravity_ptr);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
 		write_recorded_water_pressure("Pressure", io_environment, fluid_observer_contact_relation);
@@ -193,6 +193,7 @@ int main()
 				pressure_relaxation.parallel_exec(dt);
 				inflow_condition.parallel_exec();
 				density_relaxation.parallel_exec(dt);
+				inflow_condition.parallel_exec();
 				dt = get_fluid_time_step_size.parallel_exec();
 				relaxation_time += dt;
 				integration_time += dt;
@@ -211,7 +212,7 @@ int main()
 			number_of_iterations++;
 
 			/** inflow emitter injection*/
-			emitter_injection.exec();
+			emitter_injection.parallel_exec();
 			/** Update cell linked list and configuration. */
 
 			water_body.updateCellLinkedListWithParticleSort(100);

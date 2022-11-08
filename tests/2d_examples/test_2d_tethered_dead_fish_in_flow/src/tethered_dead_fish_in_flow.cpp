@@ -244,14 +244,14 @@ int main(int ac, char *av[])
 	ProbeBody fish_observer(system, "Observer");
 	fish_observer.generateParticles<FishObserverParticleGenerator>();
 	/** topology */
-	BodyRelationInner water_block_inner(water_block);
-	BodyRelationInner fish_body_inner(fish_body);
-	ComplexBodyRelation water_block_complex(water_block_inner, {&wall_boundary, &fish_body});
-	BodyRelationContact fish_body_contact(fish_body, {&water_block});
-	BodyRelationContact fish_observer_contact(fish_observer, {&fish_body});
+	InnerRelation water_block_inner(water_block);
+	InnerRelation fish_body_inner(fish_body);
+	ComplexRelation water_block_complex(water_block_inner, {&wall_boundary, &fish_body});
+	ContactRelation fish_body_contact(fish_body, {&water_block});
+	ContactRelation fish_observer_contact(fish_observer, {&fish_body});
 
 	BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
-	BodyReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceOnSolid>> write_total_force_on_fish(io_environment, fish_body);
+	ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceOnSolid>> write_total_force_on_fish(io_environment, fish_body);
 	ObservedQuantityRecording<Vecd> write_fish_displacement("Position", io_environment, fish_observer_contact);
 
 	/** check whether run particle relaxation for body fitted particle distribution. */
@@ -319,8 +319,8 @@ int main(int ac, char *av[])
 	/** Time step size with considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	/** Pressure relaxation using verlet time stepping. */
-	Dynamics1Level<fluid_dynamics::PressureRelaxationWithWall> pressure_relaxation(water_block_complex);
-	Dynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> density_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(water_block_complex);
 	/** Computing viscous acceleration. */
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	/** Impose transport velocity formulation. */
@@ -455,7 +455,7 @@ int main(int ac, char *av[])
 			Real Dt = get_fluid_advection_time_step_size.parallel_exec();
 			update_density_by_summation.parallel_exec();
 			viscous_acceleration.parallel_exec();
-			transport_velocity_correction.parallel_exec(Dt);
+			transport_velocity_correction.parallel_exec();
 			/** Viscous force exerting on fish body. */
 			viscous_force_on_fish_body.parallel_exec();
 			/** Update normal direction on fish body. */

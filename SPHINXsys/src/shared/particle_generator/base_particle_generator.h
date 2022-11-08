@@ -10,9 +10,9 @@
  *																			*
  * SPHinXsys is partially funded by German Research Foundation				*
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
- *  HU1527/12-1 and Hu1527/12-4												*
+ *  HU1527/12-1 and HU1527/12-4												*
  *                                                                          *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
  * the authors' affiliations.												*
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
@@ -59,7 +59,7 @@ namespace SPH
 		virtual void initializeGeometricVariables() = 0;
 
 	protected:
-		BaseParticles *base_particles_;
+		BaseParticles &base_particles_;
 		StdLargeVec<Vecd> &pos_;		   /**< current position */
 		StdLargeVec<size_t> &unsorted_id_; /**< original particle ids */
 		/** Initialize particle position. */
@@ -102,7 +102,7 @@ namespace SPH
 	/**
 	 * @class ObserverParticleGenerator
 	 * @brief Generate particle directly from position-and-volume data.
-	 * @details The values of PositionsVolumes will be given in the derived class.
+	 * @details The values of positions will be given in the derived class.
 	 */
 	class ObserverParticleGenerator : public ParticleGenerator
 	{
