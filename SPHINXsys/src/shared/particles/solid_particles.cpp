@@ -100,11 +100,16 @@ namespace SPH
 	Vecd ElasticSolidParticles::getPrincipalStresses(size_t particle_i)
 	{
 		Matd sigma;
-		if (stress_measure_ == "Cauchy") {
+		if (stress_measure_ == "Cauchy")
+		{
 			sigma = getStressCauchy(particle_i); // Cauchy stress
-		} else if (stress_measure_ == "PK2") {
+		}
+		else if (stress_measure_ == "PK2")
+		{
 			sigma = getStressPK2(particle_i); // Second Piola-Kirchhoff stress
-		} else {
+		}
+		else
+		{
 			throw std::runtime_error("get_Principal_stresses: wrong input");
 		}
 
@@ -114,11 +119,16 @@ namespace SPH
 	Real ElasticSolidParticles::getVonMisesStress(size_t particle_i)
 	{
 		Matd sigma;
-		if (stress_measure_ == "Cauchy") {
+		if (stress_measure_ == "Cauchy")
+		{
 			sigma = getStressCauchy(particle_i); // Cauchy stress
-		} else if (stress_measure_ == "PK2") {
+		}
+		else if (stress_measure_ == "PK2")
+		{
 			sigma = getStressPK2(particle_i); // Second Piola-Kirchhoff stress
-		} else {
+		}
+		else
+		{
 			throw std::runtime_error("get_von_Mises_stress: wrong input");
 		}
 
@@ -252,6 +262,10 @@ namespace SPH
 	ShellParticles::ShellParticles(SPHBody &sph_body, ElasticSolid *elastic_solid)
 		: ElasticSolidParticles(sph_body, elastic_solid), thickness_ref_(1.0)
 	{
+		//----------------------------------------------------------------------
+		//		modify kernel function for surface particles
+		//----------------------------------------------------------------------
+		sph_body.sph_adaptation_->getKernel()->reduceOnce();
 		//----------------------------------------------------------------------
 		//		register geometric data only
 		//----------------------------------------------------------------------
