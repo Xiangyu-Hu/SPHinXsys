@@ -24,7 +24,7 @@
 * @file 	general_solid_dynamics.h
 * @brief 	Here, we define the algorithm classes for solid dynamics. 
 * @details 	We consider here a weakly compressible solids.   
-* @author	Luhui Han, Chi ZHang and Xiangyu Hu
+* @author	Luhui Han, Chi Zhang and Xiangyu Hu
 */
 
 #ifndef GENERAL_SOLID_DYNAMICS_H
@@ -47,38 +47,23 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		for general solid dynamics
 		//----------------------------------------------------------------------
-		typedef DataDelegateSimple<SolidBody, SolidParticles, Solid> SolidDataSimple;
-		typedef DataDelegateInner<SolidBody, SolidParticles, Solid> SolidDataInner;
-
-		/**
-		 * @class SolidDynamicsInitialCondition
-		 * @brief  set initial condition for solid fluid body
-		 * This is a abstract class to be override for case specific initial conditions.
-		 */
-		class SolidDynamicsInitialCondition : public ParticleDynamicsSimple, public SolidDataSimple
-		{
-		public:
-			explicit SolidDynamicsInitialCondition(SolidBody &solid_body)
-				: ParticleDynamicsSimple(solid_body), SolidDataSimple(solid_body){};
-			virtual ~SolidDynamicsInitialCondition(){};
-		};
+		typedef DataDelegateSimple<SolidParticles> SolidDataSimple;
+		typedef DataDelegateInner<SolidParticles> SolidDataInner;
 
 		/**
 		* @class CorrectConfiguration
 		* @brief obtain the corrected initial configuration in strong form
 		*/
-		class CorrectConfiguration : public InteractionDynamics, public SolidDataInner
+		class CorrectConfiguration : public LocalDynamics, public SolidDataInner
 		{
 		public:
-			explicit CorrectConfiguration(BaseBodyRelationInner &inner_relation);
+			explicit CorrectConfiguration(BaseInnerRelation &inner_relation);
 			virtual ~CorrectConfiguration(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			StdLargeVec<Real> &Vol_;
 			StdLargeVec<Matd> &B_;
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
-
 	}
 }
 #endif //GENERAL_SOLID_DYNAMICS_H

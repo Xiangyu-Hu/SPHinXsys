@@ -23,31 +23,31 @@ int main()
 	ObserverBody my_observer(system, "MyObserver");
 	my_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	/**body relation topology */
-	BodyRelationInner column_inner(column);
-	BodyRelationContact my_observer_contact(my_observer, {&column});
+	InnerRelation column_inner(column);
+	ContactRelation my_observer_contact(my_observer, {&column});
 	//----------------------------------------------------------------------
 	//	All numerical methods will be used in this case.
 	//----------------------------------------------------------------------
-	InitialCondition initial_condition(column);
+	SimpleDynamics<InitialCondition> initial_condition(column);
 	/** Corrected configuration. */
-	solid_dynamics::CorrectConfiguration corrected_configuration(column_inner);
+	InteractionDynamics<solid_dynamics::CorrectConfiguration> corrected_configuration(column_inner);
 	/** Time step size calculation. We use CFL = 0.5 due to the very large twisting speed. */
-	solid_dynamics::AcousticTimeStepSize computing_time_step_size(column, 0.5);
+	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(column, 0.5);
 	/** active and passive stress relaxation. */
-	solid_dynamics::KirchhoffStressRelaxationFirstHalf stress_relaxation_first_half(column_inner);
-	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(column_inner);
+	Dynamics1Level<solid_dynamics::KirchhoffStressRelaxationFirstHalf> stress_relaxation_first_half(column_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half(column_inner);
 	/** Constrain the holder. */
 	BodyRegionByParticle holder(column, makeShared<TransformShape<GeometricShapeBox>>(translation_holder, halfsize_holder, "Holder"));
-	solid_dynamics::ConstrainSolidBodyRegion constrain_holder(column, holder);
+	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_holder(holder);
 	//----------------------------------------------------------------------
 	//	Output
 	//----------------------------------------------------------------------
-	InOutput in_output(system);
-	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
+	IOEnvironment io_environment(system);
+	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		write_velocity("Velocity", in_output, my_observer_contact);
+		write_velocity("Velocity", io_environment, my_observer_contact);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		write_displacement("Position", in_output, my_observer_contact);
+		write_displacement("Position", io_environment, my_observer_contact);
 	//----------------------------------------------------------------------
 	// From here the time stepping begins.
 	//----------------------------------------------------------------------
@@ -83,7 +83,7 @@ int main()
 						  << dt << "\n";
 			}
 			stress_relaxation_first_half.parallel_exec(dt);
-			constrain_holder.parallel_exec(dt);
+			constraint_holder.parallel_exec(dt);
 			stress_relaxation_second_half.parallel_exec(dt);
 
 			ite++;

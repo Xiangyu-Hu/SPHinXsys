@@ -44,32 +44,31 @@ int main(int ac, char *av[])
 	//	Build up a SPHSystem.
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, dp_0);
-	/** output environment. */
-	InOutput in_output(system);
+	IOEnvironment io_environment(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	RealBody imported_model(system, makeShared<ImportedShellModel>("ImportedShellModel"));
-	imported_model.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(imported_model);
+	imported_model.defineBodyLevelSetShape(level_set_refinement_ratio)->correctLevelSetSign()->writeLevelSet(io_environment);
 	//here dummy linear elastic solid is use because no solid dynamics in particle relaxation
-	imported_model.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(1.0, 1.0, 0.0);
+	imported_model.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
 	imported_model.generateParticles<ThickSurfaceParticleGeneratorLattice>(thickness);
 	imported_model.addBodyStateForRecording<Vecd>("NormalDirection");
 	//----------------------------------------------------------------------
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp write_imported_model_to_vtp(in_output, {imported_model});
-	MeshRecordingToPlt write_mesh_cell_linked_list(in_output, imported_model, imported_model.cell_linked_list_);
+	BodyStatesRecordingToVtp write_imported_model_to_vtp(io_environment, {imported_model});
+	MeshRecordingToPlt write_mesh_cell_linked_list(io_environment, imported_model.getCellLinkedList());
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner imported_model_inner(imported_model);
+	InnerRelation imported_model_inner(imported_model);
 	//----------------------------------------------------------------------
 	//	Methods used for particle relaxation.
 	//----------------------------------------------------------------------
-	RandomizeParticlePosition random_imported_model_particles(imported_model);
+	SimpleDynamics<RandomizeParticlePosition> random_imported_model_particles(imported_model);
 	/** A  Physics relaxation step. */
 	relax_dynamics::ShellRelaxationStepInner relaxation_step_inner(imported_model_inner, thickness, level_set_refinement_ratio);
 	relax_dynamics::ShellNormalDirectionPrediction shell_normal_prediction(imported_model_inner, thickness);	

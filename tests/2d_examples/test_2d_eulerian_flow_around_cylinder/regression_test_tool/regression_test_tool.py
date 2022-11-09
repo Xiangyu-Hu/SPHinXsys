@@ -2,7 +2,7 @@
 import os
 import sys
 
-path = os.path.abspath('..\..\..\..\..\PythonScriptStore\RegressionTest')
+path = os.path.abspath('../../../../../PythonScriptStore/RegressionTest')
 sys.path.append(path)
 from regression_test_base_tool import SphinxsysRegressionTest
 
@@ -18,10 +18,9 @@ number_of_run_times = 0
 converged = 0
 sphinxsys = SphinxsysRegressionTest(case_name, body_name, parameter_name)
 
-
 while True:
     print("Now start a new run......")
-    sphinxsys.sphinxsys.run_particle_relaxation()
+    sphinxsys.run_particle_relaxation()
     sphinxsys.run_case()
     number_of_run_times += 1
     converged = sphinxsys.read_dat_file()

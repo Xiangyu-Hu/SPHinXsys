@@ -21,6 +21,7 @@ ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})
 
 add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME}
 	WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
+set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "particle relaxation")
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 	target_link_libraries(${PROJECT_NAME} sphinxsys_2d ${TBB_LIBRARYS} ${Simbody_LIBRARIES})

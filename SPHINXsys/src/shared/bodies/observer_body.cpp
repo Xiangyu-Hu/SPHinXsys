@@ -1,7 +1,7 @@
 /**
  * @file 	observer.cpp
  * @brief 	Here, Functions belong to BaseBody, RealBody and FictitiousBody are given.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 #include "observer_body.h"
 

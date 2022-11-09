@@ -212,12 +212,12 @@ namespace SPH {
 
 	//=================================================================================================//
 	template<typename T, int nDims>
-	std::vector<int> ImageMHD<T, nDims>::findNeighbors(const Vec3d& input_pnt, Vec3i& this_cell)
+	std::vector<int> ImageMHD<T, nDims>::findNeighbors(const Vec3d& probe_point, Vec3i& this_cell)
 	{
 		std::vector<int> neighbors;
 
-		Vec3d image_coord = transformMatrix_.invert()*(input_pnt - offset_);
-		// std::cout <<"findNeighbor of " << input_pnt << " ........... " << image_coord << std::endl;
+		Vec3d image_coord = transformMatrix_.invert()*(probe_point - offset_);
+		// std::cout <<"findNeighbor of " << probe_point << " ........... " << image_coord << std::endl;
 
 		int z = int(floor(image_coord[2]));
 		int y = int(floor(image_coord[1]));
@@ -363,10 +363,10 @@ namespace SPH {
 	}
 	//=================================================================================================//
 	template<typename T, int nDims>
-	Vec3d ImageMHD<T, nDims>::findClosestPoint(const Vec3d& input_pnt)
+	Vec3d ImageMHD<T, nDims>::findClosestPoint(const Vec3d& probe_point)
 	{
 		Vec3i this_cell;
-		std::vector<int> neighbors = findNeighbors(input_pnt, this_cell);
+		std::vector<int> neighbors = findNeighbors(probe_point, this_cell);
 		Vec3d n_sum(0.0, 0.0, 0.0);
 		double weight_sum = 0.0;
 		double d_sum = 0.0;
@@ -415,10 +415,10 @@ namespace SPH {
 	}
 
 	template<typename T, int nDims>
-	Real ImageMHD<T, nDims>::findValueAtPoint(const Vec3d& input_pnt)
+	Real ImageMHD<T, nDims>::findValueAtPoint(const Vec3d& probe_point)
 	{
 		Vec3i this_cell;
-		std::vector<int> neighbors = findNeighbors(input_pnt, this_cell);
+		std::vector<int> neighbors = findNeighbors(probe_point, this_cell);
 		double weight_sum = 0.0;
 		double d_sum = 0.0;
 		if (neighbors.size() > 0)
@@ -441,10 +441,10 @@ namespace SPH {
 	}
 	//=================================================================================================//
 	template<typename T, int nDims>
-	Vec3d ImageMHD<T, nDims>::findNormalAtPoint(const Vec3d & input_pnt)
+	Vec3d ImageMHD<T, nDims>::findNormalAtPoint(const Vec3d & probe_point)
 	{
 		Vec3i this_cell;
-		std::vector<int> neighbors = findNeighbors(input_pnt, this_cell);
+		std::vector<int> neighbors = findNeighbors(probe_point, this_cell);
 		Vec3d n_sum(0.0, 0.0, 0.0);
 		double weight_sum = 0.0;
 		double d_sum = 0.0;

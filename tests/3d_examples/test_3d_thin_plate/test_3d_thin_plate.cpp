@@ -83,7 +83,7 @@ public:
 private:
 	void tagManually(size_t index_i)
 	{
-		if (base_particles_->pos_[index_i][1] < 0.0 || base_particles_->pos_[index_i][1] > PH)
+		if (base_particles_.pos_[index_i][1] < 0.0 || base_particles_.pos_[index_i][1] > PH)
 		{
 			body_part_particles_.push_back(index_i);
 		}
@@ -103,7 +103,7 @@ public:
 private:
 	void tagManually(size_t index_i)
 	{
-		if (base_particles_->pos_[index_i][0] < 0.0 || base_particles_->pos_[index_i][0] > PL)
+		if (base_particles_.pos_[index_i][0] < 0.0 || base_particles_.pos_[index_i][0] > PL)
 		{
 			body_part_particles_.push_back(index_i);
 		}
@@ -135,7 +135,7 @@ int main(int ac, char *av[])
 
 	/** create a plate body. */
 	SolidBody plate_body(system, makeShared<DefaultShape>("PlateBody"));
-	plate_body.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	plate_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	plate_body.generateParticles<PlateParticleGenerator>();
 
 	/** Define Observer. */
@@ -147,41 +147,41 @@ int main(int ac, char *av[])
 	 *  The contact map gives the data connections between the bodies
 	 *  basically the the range of bodies to build neighbor particle lists
 	 */
-	BodyRelationInner plate_body_inner(plate_body);
-	BodyRelationContact plate_observer_contact(plate_observer, {&plate_body});
+	InnerRelation plate_body_inner(plate_body);
+	ContactRelation plate_observer_contact(plate_observer, {&plate_body});
 
 	/** Common particle dynamics. */
-	TimeDependentExternalForce external_force(Vec3d(0.0, 0.0, q / (PT * rho0_s) - gravitational_acceleration));
-	TimeStepInitialization initialize_external_force(plate_body, external_force);
+	SimpleDynamics<TimeStepInitialization> initialize_external_force(plate_body, 
+		makeShared<TimeDependentExternalForce>(Vec3d(0.0, 0.0, q / (PT * rho0_s) - gravitational_acceleration)));
 
 	/**
 	 * This section define all numerical methods will be used in this case.
 	 */
 	/** Corrected configuration. */
-	thin_structure_dynamics::ShellCorrectConfiguration
+	InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration>
 		corrected_configuration(plate_body_inner);
 	/** Time step size calculation. */
-	thin_structure_dynamics::ShellAcousticTimeStepSize computing_time_step_size(plate_body);
+	ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(plate_body);
 	/** active-passive stress relaxation. */
-	thin_structure_dynamics::ShellStressRelaxationFirstHalf
+	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf>
 		stress_relaxation_first_half(plate_body_inner);
-	thin_structure_dynamics::ShellStressRelaxationSecondHalf
+	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf>
 		stress_relaxation_second_half(plate_body_inner);
 	/** Constrain the Boundary. */
 	BoundaryGeometryParallelToXAxis boundary_geometry_x(plate_body, "BoundaryGeometryParallelToXAxis");
-	thin_structure_dynamics::ConstrainShellBodyRegionAlongAxis
-		constrain_holder_x(plate_body, boundary_geometry_x, 0);
+	SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegionAlongAxis, BoundaryGeometryParallelToXAxis>
+		constrain_holder_x(boundary_geometry_x, 0);
 	BoundaryGeometryParallelToYAxis boundary_geometry_y(plate_body, "BoundaryGeometryParallelToYAxis");
-	thin_structure_dynamics::ConstrainShellBodyRegionAlongAxis
-		constrain_holder_y(plate_body, boundary_geometry_y, 1);
-	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>
+	SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegionAlongAxis, BoundaryGeometryParallelToYAxis>
+		constrain_holder_y(boundary_geometry_y, 1);
+	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
 		plate_position_damping(0.5, plate_body_inner, "Velocity", physical_viscosity);
-	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>
+	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
 		plate_rotation_damping(0.5, plate_body_inner, "AngularVelocity", physical_viscosity);
 	/** Output */
-	InOutput in_output(system);
-	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
-	ObservedQuantityRecording<Vecd> write_plate_max_displacement("Position", in_output, plate_observer_contact);
+	IOEnvironment io_environment(system);
+	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
+	ObservedQuantityRecording<Vecd> write_plate_max_displacement("Position", io_environment, plate_observer_contact);
 
 	/** Apply initial condition. */
 	system.initializeSystemCellLinkedLists();

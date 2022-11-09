@@ -64,7 +64,7 @@ int main(int ac, char *av[])
 // handle command line arguments
 #ifdef BOOST_AVAILABLE
 	system.handleCommandlineOptions(ac, av);
-#endif	/** output environment. */
+#endif /** output environment. */
 
 	/** create a Cantilever body, corresponding material, particles and reaction model. */
 	SolidBody cantilever_body(system, makeShared<Cantilever>("CantileverBody"));
@@ -75,40 +75,40 @@ int main(int ac, char *av[])
 	cantilever_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 
 	/** topology */
-	BodyRelationInner cantilever_body_inner(cantilever_body);
-	BodyRelationContact cantilever_observer_contact(cantilever_observer, {&cantilever_body});
+	InnerRelation cantilever_body_inner(cantilever_body);
+	ContactRelation cantilever_observer_contact(cantilever_observer, {&cantilever_body});
 
 	//-------- common particle dynamics ----------------------------------------
-	TimeDependentGravity gravity(Vec3d(0.0, -gravity_g, 0.0));
-	TimeStepInitialization initialize_time_step(cantilever_body, gravity);
+	SimpleDynamics<TimeStepInitialization>
+		initialize_time_step(cantilever_body, makeShared<TimeDependentGravity>(Vec3d(0.0, -gravity_g, 0.0)));
 
 	/**
 	 * This section define all numerical methods will be used in this case.
 	 */
 	/** Corrected configuration. */
-	solid_dynamics::CorrectConfiguration
+	InteractionDynamics<solid_dynamics::CorrectConfiguration>
 		corrected_configuration(cantilever_body_inner);
 	/** Time step size calculation. */
-	solid_dynamics::AcousticTimeStepSize
+	ReduceDynamics<solid_dynamics::AcousticTimeStepSize>
 		computing_time_step_size(cantilever_body);
 	/** active and passive stress relaxation. */
-	solid_dynamics::StressRelaxationFirstHalf
+	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf>
 		stress_relaxation_first_half(cantilever_body_inner);
 	/** Setup the damping stress, if you know what you are doing. */
 	// stress_relaxation_first_step.setupDampingStressFactor(1.0);
-	solid_dynamics::StressRelaxationSecondHalf
+	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf>
 		stress_relaxation_second_half(cantilever_body_inner);
 	/** Constrain the holder. */
 	BodyRegionByParticle holder(cantilever_body,
 								makeShared<TransformShape<GeometricShapeBox>>(translation_holder, halfsize_holder, "Holder"));
-	solid_dynamics::ConstrainSolidBodyRegion constrain_holder(cantilever_body, holder);
-	DampingWithRandomChoice<DampingBySplittingInner<Vec3d>>
+	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_holder(holder);
+	DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
 		muscle_damping(0.1, cantilever_body_inner, "Velocity", physical_viscosity);
 	/** Output */
-	InOutput in_output(system);
-	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
+	IOEnvironment io_environment(system);
+	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		write_displacement("Position", in_output, cantilever_observer_contact);
+		write_displacement("Position", io_environment, cantilever_observer_contact);
 	/**
 	 * From here the time stepping begins.
 	 * Set the starting time.
@@ -144,9 +144,9 @@ int main(int ac, char *av[])
 
 			initialize_time_step.parallel_exec(); // gravity force
 			stress_relaxation_first_half.parallel_exec(dt);
-			constrain_holder.parallel_exec(dt);
+			constraint_holder.parallel_exec(dt);
 			muscle_damping.parallel_exec(dt);
-			constrain_holder.parallel_exec(dt);
+			constraint_holder.parallel_exec(dt);
 			stress_relaxation_second_half.parallel_exec(dt);
 
 			ite++;

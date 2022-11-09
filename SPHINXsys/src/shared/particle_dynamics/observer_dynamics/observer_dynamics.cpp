@@ -1,7 +1,7 @@
 /**
  * @file 	observer_dynamics.cpp
  * @brief 	Here, Functions defined in observer_dynamics.h are detailed.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #include "observer_dynamics.h"
@@ -15,8 +15,8 @@ namespace SPH
 	{
 		//=================================================================================================//
 		CorrectInterpolationKernelWeights::
-			CorrectInterpolationKernelWeights(BaseBodyRelationContact &contact_relation) : 
-			InteractionDynamics(*contact_relation.sph_body_),
+			CorrectInterpolationKernelWeights(BaseContactRelation &contact_relation) : 
+			LocalDynamics(contact_relation.sph_body_),
 			InterpolationContactData(contact_relation)
 		{
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
@@ -25,7 +25,7 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		void CorrectInterpolationKernelWeights::Interaction(size_t index_i, Real dt)
+		void CorrectInterpolationKernelWeights::interaction(size_t index_i, Real dt)
 		{
 			Vecd weight_correction(0.0);
 			Matd local_configuration(Eps); // small number added to diagonal to avoid divide zero
@@ -39,10 +39,10 @@ namespace SPH
 					size_t index_j = contact_neighborhood.j_[n];
 					Real weight_j = contact_neighborhood.W_ij_[n] * Vol_k[index_j];
 					Vecd r_ji = -contact_neighborhood.r_ij_[n] * contact_neighborhood.e_ij_[n];
-					Vecd gradW_ij = contact_neighborhood.dW_ij_[n] * contact_neighborhood.e_ij_[n];
+					Vecd gradW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
 
 					weight_correction += r_ji * weight_j;
-					local_configuration += Vol_k[index_j] * SimTK::outer(r_ji, gradW_ij);
+					local_configuration += SimTK::outer(r_ji, gradW_ijV_j);
 				}
 			}
 
@@ -58,7 +58,7 @@ namespace SPH
 					Vecd normalized_weight_correction = B_ * weight_correction;
 					contact_neighborhood.W_ij_[n] 
 						-= dot(normalized_weight_correction, contact_neighborhood.e_ij_[n])
-						 * contact_neighborhood.dW_ij_[n];
+						 * contact_neighborhood.dW_ijV_j_[n];
 				}
 			}
 		}

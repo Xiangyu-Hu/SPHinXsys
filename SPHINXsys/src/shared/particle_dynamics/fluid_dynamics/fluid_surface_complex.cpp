@@ -1,6 +1,6 @@
 /**
  * @file 	fluid_surface_complex.cpp
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #include "fluid_surface_complex.h"
@@ -12,44 +12,41 @@ namespace SPH
 	{
 		//=================================================================================================//
 		FreeSurfaceIndicationComplex::
-			FreeSurfaceIndicationComplex(BaseBodyRelationInner &inner_relation,
-										 BaseBodyRelationContact &contact_relation, Real threshold)
+			FreeSurfaceIndicationComplex(BaseInnerRelation &inner_relation,
+										 BaseContactRelation &contact_relation, Real threshold)
 			: FreeSurfaceIndicationInner(inner_relation, threshold), FluidContactData(contact_relation)
 		{
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
-				Real rho0_k = contact_particles_[k]->rho0_;
+				Real rho0_k = contact_bodies_[k]->base_material_->ReferenceDensity();
 				contact_inv_rho0_.push_back(1.0 / rho0_k);
 				contact_mass_.push_back(&(contact_particles_[k]->mass_));
 			}
 		}
 		//=================================================================================================//
 		FreeSurfaceIndicationComplex::
-			FreeSurfaceIndicationComplex(ComplexBodyRelation &complex_relation, Real threshold)
+			FreeSurfaceIndicationComplex(ComplexRelation &complex_relation, Real threshold)
 			: FreeSurfaceIndicationComplex(complex_relation.inner_relation_,
 										   complex_relation.contact_relation_, threshold) {}
 		//=================================================================================================//
-		void FreeSurfaceIndicationComplex::Interaction(size_t index_i, Real dt)
+		void FreeSurfaceIndicationComplex::interaction(size_t index_i, Real dt)
 		{
-			FreeSurfaceIndicationInner::Interaction(index_i, dt);
+			FreeSurfaceIndicationInner::interaction(index_i, dt);
 
 			Real pos_div = 0.0;
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
-				StdLargeVec<Real> &contact_mass_k = *(contact_mass_[k]);
-				Real contact_inv_rho0_k = contact_inv_rho0_[k];
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
-					pos_div -= contact_neighborhood.dW_ij_[n] * contact_neighborhood.r_ij_[n] *
-							   contact_inv_rho0_k * contact_mass_k[contact_neighborhood.j_[n]];
+					pos_div -= contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.r_ij_[n];
 				}
 			}
 			pos_div_[index_i] += pos_div;
 		}
 		//=================================================================================================//
-		ColorFunctionGradientComplex::ColorFunctionGradientComplex(BaseBodyRelationInner &inner_relation,
-																   BaseBodyRelationContact &contact_relation)
+		ColorFunctionGradientComplex::ColorFunctionGradientComplex(BaseInnerRelation &inner_relation,
+																   BaseContactRelation &contact_relation)
 			: ColorFunctionGradientInner(inner_relation), FluidContactData(contact_relation)
 		{
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
@@ -58,25 +55,24 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		ColorFunctionGradientComplex::ColorFunctionGradientComplex(ComplexBodyRelation &complex_relation)
+		ColorFunctionGradientComplex::ColorFunctionGradientComplex(ComplexRelation &complex_relation)
 			: ColorFunctionGradientComplex(complex_relation.inner_relation_,
 										   complex_relation.contact_relation_) {}
 		//=================================================================================================//
-		void ColorFunctionGradientComplex::Interaction(size_t index_i, Real dt)
+		void ColorFunctionGradientComplex::interaction(size_t index_i, Real dt)
 		{
-			ColorFunctionGradientInner::Interaction(index_i, dt);
+			ColorFunctionGradientInner::interaction(index_i, dt);
 
 			Vecd gradient(0.0);
 			if (pos_div_[index_i] < threshold_by_dimensions_)
 			{
 				for (size_t k = 0; k < contact_configuration_.size(); ++k)
 				{
-					StdLargeVec<Real> &contact_vol_k = *(contact_Vol_[k]);
+					StdLargeVec<Real> &contact_Vol_k = *(contact_Vol_[k]);
 					Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 					for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 					{
-						gradient -= contact_neighborhood.dW_ij_[n] * contact_neighborhood.e_ij_[n] *
-									contact_vol_k[contact_neighborhood.j_[n]];
+						gradient -= contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
 					}
 				}
 			}
@@ -84,22 +80,22 @@ namespace SPH
 			surface_norm_[index_i] = color_grad_[index_i] / (color_grad_[index_i].norm() + TinyReal);
 		}
 		//=================================================================================================//
-		SurfaceNormWithWall::SurfaceNormWithWall(BaseBodyRelationContact &contact_relation, Real contact_angle)
-			: InteractionDynamics(*contact_relation.sph_body_), FSIContactData(contact_relation),
+		SurfaceNormWithWall::SurfaceNormWithWall(BaseContactRelation &contact_relation, Real contact_angle)
+			: LocalDynamics(contact_relation.sph_body_), FSIContactData(contact_relation),
 			  contact_angle_(contact_angle),
 			  surface_indicator_(particles_->surface_indicator_),
 			  surface_norm_(*particles_->getVariableByName<Vecd>("SurfaceNormal")),
 			  pos_div_(*particles_->getVariableByName<Real>("PositionDivergence"))
 		{
-			particle_spacing_ = contact_relation.sph_body_->sph_adaptation_->ReferenceSpacing();
-			smoothing_length_ = contact_relation.sph_body_->sph_adaptation_->ReferenceSmoothingLength();
+			particle_spacing_ = contact_relation.sph_body_.sph_adaptation_->ReferenceSpacing();
+			smoothing_length_ = contact_relation.sph_body_.sph_adaptation_->ReferenceSmoothingLength();
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				wall_n_.push_back(&(contact_particles_[k]->n_));
 			}
 		}
 		//=================================================================================================//
-		void SurfaceNormWithWall::Interaction(size_t index_i, Real dt)
+		void SurfaceNormWithWall::interaction(size_t index_i, Real dt)
 		{
 			Real large_dist(1.0e6);
 			Vecd n_i = surface_norm_[index_i];

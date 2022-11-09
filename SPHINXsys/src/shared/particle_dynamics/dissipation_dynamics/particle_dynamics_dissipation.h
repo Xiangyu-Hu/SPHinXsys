@@ -1,28 +1,33 @@
-/* -------------------------------------------------------------------------*
- *								SPHinXsys									*
- * --------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
- * (smoothed particle hydrodynamics), a meshless computational method using	*
- * particle discretization.													*
- *																			*
- * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
- * and HU1527/12-1.															*
- *                                                                           *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
- * the authors' affiliations.												*
- *                                                                           *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
- * not use this file except in compliance with the License. You may obtain a *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
- *                                                                           *
- * --------------------------------------------------------------------------*/
+/* -----------------------------------------------------------------------------*
+ *                               SPHinXsys                                      *
+ * -----------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
+ * physical accurate simulation and aims to model coupled industrial dynamic    *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
+ * (smoothed particle hydrodynamics), a meshless computational method using     *
+ * particle discretization.                                                     *
+ *                                                                              *
+ * SPHinXsys is partially funded by German Research Foundation                  *
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
+ * HU1527/12-1 and HU1527/12-4.                                                 *
+ *                                                                              *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and          *
+ * the authors' affiliations.                                                   *
+ *                                                                              *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
+ * not use this file except in compliance with the License. You may obtain a    *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
+ *                                                                              *
+ * -----------------------------------------------------------------------------*/
 /**
  * @file 	particle_dynamics_dissipation.h
- * @brief 	This is the particle dynamics applicable for all type bodies
+ * @brief 	Here are the classes for damping the magnitude of
+ * any variables. Note that the damping coefficient has density dimension.
+ * Also note that, currently, these classes works only in single resolution.
+ * TODO: we may need to take the dimension of density away from eta 
+ * (i.e. using kinematic parameters only ) and replace the particle mass with 
+ * particle volume, so that the method is more generalized. 
  * @author	Chi Zhang and Xiangyu Hu
  */
 
@@ -33,12 +38,10 @@
 
 namespace SPH
 {
-	typedef DataDelegateInner<SPHBody, BaseParticles, BaseMaterial> DissipationDataInner;
-	typedef DataDelegateContact<SPHBody, BaseParticles, BaseMaterial,
-								SPHBody, BaseParticles, BaseMaterial, DataDelegateEmptyBase>
+	typedef DataDelegateInner<BaseParticles> DissipationDataInner;
+	typedef DataDelegateContact<BaseParticles, BaseParticles, DataDelegateEmptyBase>
 		DissipationDataContact;
-	typedef DataDelegateContact<SPHBody, BaseParticles, BaseMaterial,
-								SolidBody, SolidParticles, Solid, DataDelegateEmptyBase>
+	typedef DataDelegateContact<BaseParticles, SolidParticles, DataDelegateEmptyBase>
 		DissipationDataWithWall;
 
 	template <typename VariableType>
@@ -58,13 +61,13 @@ namespace SPH
 	 * because the splitting partition only works in this case.
 	 */
 	template <typename VariableType>
-	class DampingBySplittingInner : public InteractionDynamicsSplitting, public DissipationDataInner
+	class DampingBySplittingInner : public LocalDynamics, public DissipationDataInner
 	{
 	protected:
 	public:
-		DampingBySplittingInner(BaseBodyRelationInner &inner_relation, const std::string &variable_name, Real eta);
+		DampingBySplittingInner(BaseInnerRelation &inner_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingBySplittingInner(){};
-		void resetDampingCoefficient(Real reset_ratio) { eta_ *= reset_ratio; };
+		void interaction(size_t index_i, Real dt = 0.0);
 
 	protected:
 		Real eta_; /**< damping coefficient */
@@ -73,14 +76,13 @@ namespace SPH
 
 		virtual ErrorAndParameters<VariableType> computeErrorAndParameters(size_t index_i, Real dt = 0.0);
 		virtual void updateStates(size_t index_i, Real dt, const ErrorAndParameters<VariableType> &error_and_parameters);
-		virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 	};
 
 	template <typename VariableType>
 	class DampingBySplittingComplex : public DampingBySplittingInner<VariableType>, public DissipationDataContact
 	{
 	public:
-		DampingBySplittingComplex(ComplexBodyRelation &complex_relation, const std::string &variable_name, Real eta);
+		DampingBySplittingComplex(ComplexRelation &complex_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingBySplittingComplex(){};
 
 	protected:
@@ -98,7 +100,7 @@ namespace SPH
 	class DampingBySplittingWithWall : public BaseDampingBySplittingType<VariableType>, public DissipationDataWithWall
 	{
 	public:
-		DampingBySplittingWithWall(ComplexBodyRelation &complex_wall_relation, const std::string &variable_name, Real eta);
+		DampingBySplittingWithWall(ComplexRelation &complex_wall_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingBySplittingWithWall(){};
 
 	protected:
@@ -118,32 +120,28 @@ namespace SPH
 	 * because the splitting partition only works in this case.
 	 */
 	template <typename VariableType>
-	class DampingPairwiseInner : public InteractionDynamicsSplitting, public DissipationDataInner
+	class DampingPairwiseInner : public LocalDynamics, public DissipationDataInner
 	{
 	public:
-		DampingPairwiseInner(BaseBodyRelationInner &inner_relation, const std::string &variable_name, Real eta);
+		DampingPairwiseInner(BaseInnerRelation &inner_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingPairwiseInner(){};
-		void resetDampingCoefficient(Real reset_ratio) { eta_ *= reset_ratio; };
+		void interaction(size_t index_i, Real dt = 0.0);
 
 	protected:
 		StdLargeVec<Real> &Vol_, &mass_;
 		StdLargeVec<VariableType> &variable_;
 		Real eta_; /**< damping coefficient */
-
-		virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 	};
 
 	template <typename VariableType>
 	class DampingPairwiseComplex : public DampingPairwiseInner<VariableType>, public DissipationDataContact
 	{
 	public:
-		DampingPairwiseComplex(BaseBodyRelationInner &inner_relation,
-							   BaseBodyRelationContact &contact_relation, const std::string &variable_name, Real eta);
-		DampingPairwiseComplex(ComplexBodyRelation &complex_relation, const std::string &variable_name, Real eta);
+		DampingPairwiseComplex(BaseInnerRelation &inner_relation,
+							   BaseContactRelation &contact_relation, const std::string &variable_name, Real eta);
+		DampingPairwiseComplex(ComplexRelation &complex_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingPairwiseComplex(){};
-
-	protected:
-		virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+		void interaction(size_t index_i, Real dt = 0.0);
 
 	private:
 		StdVec<StdLargeVec<Real> *> contact_Vol_, contact_mass_;
@@ -161,13 +159,11 @@ namespace SPH
 									public DissipationDataWithWall
 	{
 	public:
-		DampingPairwiseWithWall(BaseBodyRelationInner &inner_relation,
-								BaseBodyRelationContact &contact_relation, const std::string &variable_name, Real eta);
-		DampingPairwiseWithWall(ComplexBodyRelation &complex_wall_relation, const std::string &variable_name, Real eta);
+		DampingPairwiseWithWall(BaseInnerRelation &inner_relation,
+								BaseContactRelation &contact_relation, const std::string &variable_name, Real eta);
+		DampingPairwiseWithWall(ComplexRelation &complex_wall_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingPairwiseWithWall(){};
-
-	protected:
-		virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+		void interaction(size_t index_i, Real dt = 0.0);
 
 	private:
 		StdVec<StdLargeVec<Real> *> wall_Vol_;
@@ -180,16 +176,13 @@ namespace SPH
 	 * and the mass of wall particle is not considered.
 	 */
 	template <typename VariableType>
-	class DampingPairwiseFromWall : public InteractionDynamicsSplitting,
-								  public DataDelegateContact<SPHBody, BaseParticles, BaseMaterial,
-															 SolidBody, SolidParticles, Solid>
+	class DampingPairwiseFromWall : public LocalDynamics,
+									public DataDelegateContact<BaseParticles, SolidParticles>
 	{
 	public:
-		DampingPairwiseFromWall(BaseBodyRelationContact &contact_relation, const std::string &variable_name, Real eta);
+		DampingPairwiseFromWall(BaseContactRelation &contact_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingPairwiseFromWall(){};
-
-	protected:
-		virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+		void interaction(size_t index_i, Real dt = 0.0);
 
 	private:
 		Real eta_; /**< damping coefficient */

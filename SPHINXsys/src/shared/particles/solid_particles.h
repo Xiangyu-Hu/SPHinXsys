@@ -1,25 +1,25 @@
-/* -------------------------------------------------------------------------*
- *								SPHinXsys									*
- * --------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
- * (smoothed particle hydrodynamics), a meshless computational method using	*
- * particle discretization.													*
- *																			*
- * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
- * and HU1527/12-1.															*
- *                                                                           *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
- * the authors' affiliations.												*
- *                                                                           *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
- * not use this file except in compliance with the License. You may obtain a *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
- *                                                                           *
- * --------------------------------------------------------------------------*/
+/* -----------------------------------------------------------------------------*
+ *                               SPHinXsys                                      *
+ * -----------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
+ * physical accurate simulation and aims to model coupled industrial dynamic    *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
+ * (smoothed particle hydrodynamics), a meshless computational method using     *
+ * particle discretization.                                                     *
+ *                                                                              *
+ * SPHinXsys is partially funded by German Research Foundation                  *
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
+ * HU1527/12-1 and HU1527/12-4.                                                 *
+ *                                                                              *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and          *
+ * the authors' affiliations.                                                   *
+ *                                                                              *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
+ * not use this file except in compliance with the License. You may obtain a    *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
+ *                                                                              *
+ * -----------------------------------------------------------------------------*/
 /**
  * @file 	solid_particles.h
  * @brief 	This is the derived class of base particles.
@@ -56,9 +56,10 @@ namespace SPH
 		StdLargeVec<Vecd> n_;	 /**< normal direction */
 		StdLargeVec<Vecd> n0_;	 /**< initial normal direction */
 		StdLargeVec<Matd> B_;	 /**< configuration correction for linear reproducing */
+		Solid &solid_;
 
 		/** Get the kernel gradient in weak form. */
-		virtual Vecd getKernelGradient(size_t index_i, size_t index_j, Real dW_ij, Vecd &e_ij) override;
+		virtual Vecd getKernelGradient(size_t index_i, size_t index_j, Real dW_ijV_j, Vecd &e_ij) override;
 		/** Get wall average velocity when interacting with fluid. */
 		virtual StdLargeVec<Vecd> *AverageVelocity() { return &vel_; };
 		/** Get wall average acceleration when interacting with fluid. */
@@ -81,6 +82,7 @@ namespace SPH
 
 		StdLargeVec<Matd> F_;	  /**<  deformation tensor */
 		StdLargeVec<Matd> dF_dt_; /**<  deformation tensor change rate */
+		ElasticSolid &elastic_solid_;
 		//----------------------------------------------------------------------
 		//		for fluid-structure interaction (FSI)
 		//----------------------------------------------------------------------
@@ -134,11 +136,6 @@ namespace SPH
 
 		virtual void initializeOtherVariables() override;
 		virtual ElasticSolidParticles *ThisObjectPtr() override { return this; };
-
-        inline ElasticSolid *getMaterial() { return elastic_solid_; }
-
-	protected:
-		ElasticSolid *elastic_solid_;
 	};
 
 	/**

@@ -73,6 +73,7 @@ namespace SPH
 		void computeKernelIntegrals(LevelSet &level_set);
 		void computeLevelSetGradient();
 		void stepReinitialization();
+		void stepDiffusionLevelSetSign();
 		void markNearInterface(Real small_shift_factor);
 	};
 
@@ -87,6 +88,7 @@ namespace SPH
 		virtual ~BaseLevelSet(){};
 
 		virtual void cleanInterface(Real small_shift_factor) = 0;
+		virtual void correctTopology(Real small_shift_factor) = 0;
 		virtual bool probeIsWithinMeshBound(const Vecd &position) = 0;
 		virtual Real probeSignedDistance(const Vecd &position) = 0;
 		virtual Vecd probeNormalDirection(const Vecd &position) = 0;
@@ -113,7 +115,7 @@ namespace SPH
 		: public MeshWithGridDataPackages<BaseLevelSet, LevelSetDataPackage>
 	{
 	public:
-		ConcurrentVector<LevelSetDataPackage *> core_data_pkgs_; /**< packages near to zero level set. */
+		ConcurrentVec<LevelSetDataPackage *> core_data_pkgs_; /**< packages near to zero level set. */
 		Real global_h_ratio_;
 
 		// this constructor only initialize far field
@@ -125,6 +127,7 @@ namespace SPH
 		virtual ~LevelSet(){};
 
 		virtual void cleanInterface(Real small_shift_factor) override;
+		virtual void correctTopology(Real small_shift_factor) override;
 		virtual bool probeIsWithinMeshBound(const Vecd &position) override;
 		virtual Real probeSignedDistance(const Vecd &position) override;
 		virtual Vecd probeNormalDirection(const Vecd &position) override;
@@ -143,18 +146,15 @@ namespace SPH
 		void reinitializeLevelSet();
 		void markNearInterface(Real small_shift_factor);
 		void redistanceInterface();
+		void diffuseLevelSetSign();
 		void updateLevelSetGradient();
-		void updateLevelSetGradientForAPackage(LevelSetDataPackage *inner_data_pkg, Real dt = 0.0);
 		void updateKernelIntegrals();
-		void updateKernelIntegralsForAPackage(LevelSetDataPackage *inner_data_pkg, Real dt = 0.0);
-		void stepReinitializationForAPackage(LevelSetDataPackage *inner_data_pkg, Real dt = 0.0);
-		void markNearInterfaceForAPackage(LevelSetDataPackage *core_data_pkg, Real dt = 0.0);
-		void redistanceInterfaceForAPackage(LevelSetDataPackage *core_data_pkg, Real dt = 0.0);
+		void redistanceInterfaceForAPackage(LevelSetDataPackage *core_data_pkg);
 		bool isInnerPackage(const Vecu &cell_index);
 		LevelSetDataPackage *createDataPackage(const Vecu &cell_index, const Vecd &cell_position);
-		void initializeDataInACell(const Vecu &cell_index, Real dt);
-		void initializeAddressesInACell(const Vecu &cell_index, Real dt);
-		void tagACellIsInnerPackage(const Vecu &cell_index, Real dt);
+		void initializeDataInACell(const Vecu &cell_index);
+		void initializeAddressesInACell(const Vecu &cell_index);
+		void tagACellIsInnerPackage(const Vecu &cell_index);
 	};
 
 	/**
@@ -169,7 +169,7 @@ namespace SPH
 		virtual ~RefinedLevelSet(){};
 
 	protected:
-		void initializeDataInACellFromCoarse(const Vecu &cell_index, Real dt);
+		void initializeDataInACellFromCoarse(const Vecu &cell_index);
 	};
 
 	/**
@@ -184,6 +184,7 @@ namespace SPH
 		virtual ~MultilevelLevelSet(){};
 
 		virtual void cleanInterface(Real small_shift_factor) override;
+		virtual void correctTopology(Real small_shift_factor) override;
 		virtual bool probeIsWithinMeshBound(const Vecd &position) override;
 		virtual Real probeSignedDistance(const Vecd &position) override;
 		virtual Vecd probeNormalDirection(const Vecd &position) override;
@@ -193,7 +194,7 @@ namespace SPH
 
 	protected:
 		inline size_t getProbeLevel(const Vecd &position);
-		inline size_t getMeshLevel(Real h_ratio);
+		inline size_t getCoarseLevel(Real h_ratio);
 	};
 }
 #endif // LEVEL_SET_H

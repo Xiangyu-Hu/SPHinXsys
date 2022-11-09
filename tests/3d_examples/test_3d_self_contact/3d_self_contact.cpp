@@ -61,37 +61,36 @@ int main(int ac, char *av[])
 	system.run_particle_relaxation_ = false;
 	// Tag for reload initially relaxed particles.
 	system.reload_particles_ = true;
-// handle command line arguments
 #ifdef BOOST_AVAILABLE
+	// handle command line arguments
 	system.handleCommandlineOptions(ac, av);
 #endif
-	// output environment
-	InOutput in_output(system);
+	IOEnvironment io_environment(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	SolidBody coil(system, makeShared<Coil>("Coil"));
-	coil.defineBodyLevelSetShape()->writeLevelSet(coil);
+	coil.defineBodyLevelSetShape()->writeLevelSet(io_environment);
 	coil.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
 	(!system.run_particle_relaxation_ && system.reload_particles_)
-		? coil.generateParticles<ParticleGeneratorReload>(in_output, coil.getBodyName())
+		? coil.generateParticles<ParticleGeneratorReload>(io_environment, coil.getName())
 		: coil.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody stationary_plate(system, makeShared<StationaryPlate>("StationaryPlate"));
-	stationary_plate.defineParticlesAndMaterial<SolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	stationary_plate.defineParticlesAndMaterial<SolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	stationary_plate.generateParticles<ParticleGeneratorLattice>();
 	//----------------------------------------------------------------------
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner coil_inner(coil);
-	SolidBodyRelationSelfContact coil_self_contact(coil);
-	SolidBodyRelationContact coil_contact(coil_self_contact, {&stationary_plate});
+	InnerRelation coil_inner(coil);
+	SelfSurfaceContactRelation coil_self_contact(coil);
+	SurfaceContactRelation coil_contact(coil_self_contact, {&stationary_plate});
 	//----------------------------------------------------------------------
 	//	check whether run particle relaxation for body fitted particle distribution.
 	//----------------------------------------------------------------------
@@ -101,9 +100,9 @@ int main(int ac, char *av[])
 		//	Methods used for particle relaxation.
 		//----------------------------------------------------------------------
 		// Random reset the insert body particle position.
-		RandomizeParticlePosition random_inserted_body_particles(coil);
+		SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(coil);
 		// Write the particle reload files.
-		ReloadParticleIO write_particle_reload_files(in_output, {&coil});
+		ReloadParticleIO write_particle_reload_files(io_environment, coil);
 		// A  Physics relaxation step.
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(coil_inner);
 		//----------------------------------------------------------------------
@@ -134,23 +133,22 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	This section define all numerical methods will be used in this case.
 	//----------------------------------------------------------------------
-	Gravity gravity(Vecd(0.0, -1.0, 0.0));
 	// initialize a time step
-	TimeStepInitialization initialization_with_gravity(coil, gravity);
+	SimpleDynamics<TimeStepInitialization> initialization_with_gravity(coil, makeShared<Gravity>(Vecd(0.0, -1.0, 0.0)));
 	// Corrected configuration for reproducing rigid rotation.
-	solid_dynamics::CorrectConfiguration corrected_configuration(coil_inner);
+	InteractionDynamics<solid_dynamics::CorrectConfiguration> corrected_configuration(coil_inner);
 	// Time step size
-	solid_dynamics::AcousticTimeStepSize computing_time_step_size(coil);
+	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(coil);
 	// stress relaxation.
-	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half(coil_inner);
-	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(coil_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> stress_relaxation_first_half(coil_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half(coil_inner);
 	// Algorithms for solid-solid contacts.
-	solid_dynamics::ContactDensitySummation coil_update_contact_density(coil_contact);
-	solid_dynamics::ContactForceFromWall coil_compute_solid_contact_forces(coil_contact);
-	solid_dynamics::SelfContactDensitySummation coil_self_contact_density(coil_self_contact);
-	solid_dynamics::SelfContactForce coil_self_contact_forces(coil_self_contact);
+	InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle> coil_update_contact_density(coil_contact);
+	InteractionDynamics<solid_dynamics::ContactForceFromWall, BodyPartByParticle> coil_compute_solid_contact_forces(coil_contact);
+	InteractionDynamics<solid_dynamics::SelfContactDensitySummation, BodyPartByParticle> coil_self_contact_density(coil_self_contact);
+	InteractionDynamics<solid_dynamics::SelfContactForce, BodyPartByParticle> coil_self_contact_forces(coil_self_contact);
 	// Damping the velocity field for quasi-static solution
-	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>
+	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
 		coil_damping(0.2, coil_inner, "Velocity", physical_viscosity);
 	//----------------------------------------------------------------------
 	//	From here the time stepping begins.

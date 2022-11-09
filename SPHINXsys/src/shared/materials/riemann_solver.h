@@ -1,25 +1,25 @@
-/* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
+/* -----------------------------------------------------------------------------*
+ *                               SPHinXsys                                      *
+ * -----------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
+ * physical accurate simulation and aims to model coupled industrial dynamic    *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
+ * (smoothed particle hydrodynamics), a meshless computational method using     *
+ * particle discretization.                                                     *
+ *                                                                              *
+ * SPHinXsys is partially funded by German Research Foundation                  *
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
+ * HU1527/12-1 and HU1527/12-4.                                                 *
+ *                                                                              *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and          *
+ * the authors' affiliations.                                                   *
+ *                                                                              *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
+ * not use this file except in compliance with the License. You may obtain a    *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
+ *                                                                              *
+ * -----------------------------------------------------------------------------*/
 /**
  * @file 	riemann_solvers.h
  * @brief 	This is the collection of Riemann solvers.
@@ -53,57 +53,64 @@ namespace SPH
 
 	class NoRiemannSolver
 	{
-		Fluid &fluid_l_, &fluid_r_;
-
 	public:
-		NoRiemannSolver(Fluid &fluid_i, Fluid &fluid_j) : fluid_l_(fluid_i), fluid_r_(fluid_j){};
-		Real getPStar(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
-		Vecd getVStar(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
-	};
+		template <class FluidI, class FluidJ>
+		NoRiemannSolver(FluidI &fluid_i, FluidJ &fluid_j)
+			: rho0_i_(fluid_i.ReferenceDensity()), rho0_j_(fluid_j.ReferenceDensity()),
+			  rho_sum_inv_(1.0 / (rho0_i_ + rho0_j_)){};
+		Real DissipativePJump(const Real &u_jump);
+		Real DissipativeUJump(const Real &p_jump);
+		Real AverageP(const Real &p_i, const Real &p_j);
+		Vecd AverageV(const Vecd &vel_i, const Vecd &vel_j);
 
-	class BaseAcousticRiemannSolver
-	{
 	protected:
-		Fluid &fluid_i_, &fluid_j_;
-
-	public:
-		BaseAcousticRiemannSolver(Fluid &fluid_i, Fluid &fluid_j) : fluid_i_(fluid_i), fluid_j_(fluid_j){};
-		inline void prepareSolver(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i,
-								  Real &ul, Real &ur, Real &rhol_cl, Real &rhor_cr);
-	};
-	class AcousticRiemannSolver : public BaseAcousticRiemannSolver
-	{
-	public:
-		AcousticRiemannSolver(Fluid &fluid_i, Fluid &fluid_j) : BaseAcousticRiemannSolver(fluid_i, fluid_j){};
-		Real getPStar(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
-		Vecd getVStar(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
+		Real rho0_i_, rho0_j_, rho_sum_inv_;
 	};
 
-	class DissipativeRiemannSolver : public BaseAcousticRiemannSolver
+	class AcousticRiemannSolver : public NoRiemannSolver
 	{
 	public:
-		DissipativeRiemannSolver(Fluid &fluid_i, Fluid &fluid_j) : BaseAcousticRiemannSolver(fluid_i, fluid_j){};
-		Real getPStar(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
-		Vecd getVStar(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
+		template <class FluidI, class FluidJ>
+		AcousticRiemannSolver(FluidI &fluid_i, FluidJ &fluid_j)
+			: NoRiemannSolver(fluid_i, fluid_j),
+			  c0_i_(fluid_i.ReferenceSoundSpeed()), c0_j_(fluid_j.ReferenceSoundSpeed()),
+			  rhoc_ave_inv_(2.0 / (rho0_i_ * c0_i_ + rho0_j_ * c0_j_)),
+			  c_ave_inv_(0.5 * (rho0_i_ + rho0_j_) * rhoc_ave_inv_),
+			  rhoc_ave_(rho0_i_ * c0_i_ * rho0_j_ * c0_j_ * rhoc_ave_inv_){};
+		Real DissipativePJump(const Real &u_jump);
+		Real DissipativeUJump(const Real &p_jump);
+
+	protected:
+		Real c0_i_, c0_j_;
+		Real rhoc_ave_inv_, c_ave_inv_;
+		Real rhoc_ave_;
+	};
+
+	class DissipativeRiemannSolver : public AcousticRiemannSolver
+	{
+	public:
+		template <class FluidI, class FluidJ>
+		DissipativeRiemannSolver(FluidI &fluid_i, FluidJ &fluid_j)
+			: AcousticRiemannSolver(fluid_i, fluid_j){};
+		Real DissipativePJump(const Real &u_jump);
 	};
 
 	class HLLCRiemannSolverInWeaklyCompressibleFluid
 	{
-		Fluid& fluid_i_, &fluid_j_;
+		Fluid &fluid_i_, &fluid_j_;
 
 	public:
-		HLLCRiemannSolverInWeaklyCompressibleFluid(Fluid& compressible_fluid_i, Fluid& compressible_fluid_j) :
-			fluid_i_(compressible_fluid_i), fluid_j_(compressible_fluid_j) {};
+		HLLCRiemannSolverInWeaklyCompressibleFluid(Fluid &compressible_fluid_i, Fluid &compressible_fluid_j)
+			: fluid_i_(compressible_fluid_i), fluid_j_(compressible_fluid_j){};
 		FluidState getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
 	};
 
 	class HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid
 	{
-		Fluid& fluid_i_, &fluid_j_;
+		Fluid &fluid_i_, &fluid_j_;
 
 	public:
-		HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid(Fluid& compressible_fluid_i, Fluid& compressible_fluid_j) :
-			fluid_i_(compressible_fluid_i), fluid_j_(compressible_fluid_j) {};
+		HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid(Fluid &compressible_fluid_i, Fluid &compressible_fluid_j) : fluid_i_(compressible_fluid_i), fluid_j_(compressible_fluid_j){};
 		FluidState getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
 	};
 
@@ -128,4 +135,4 @@ namespace SPH
 	};
 }
 
-#endif //RIEMANN_SOLVER_H
+#endif // RIEMANN_SOLVER_H

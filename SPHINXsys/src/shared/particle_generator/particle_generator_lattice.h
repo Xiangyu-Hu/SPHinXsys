@@ -1,25 +1,25 @@
-/* -------------------------------------------------------------------------*
- *								SPHinXsys									*
- * --------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
- * (smoothed particle hydrodynamics), a meshless computational method using	*
- * particle discretization.													*
- *																			*
- * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
- * and HU1527/12-1.															*
- *                                                                           *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
- * the authors' affiliations.												*
- *                                                                           *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
- * not use this file except in compliance with the License. You may obtain a *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
- *                                                                           *
- * --------------------------------------------------------------------------*/
+/* -----------------------------------------------------------------------------*
+ *                               SPHinXsys                                      *
+ * -----------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
+ * physical accurate simulation and aims to model coupled industrial dynamic    *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
+ * (smoothed particle hydrodynamics), a meshless computational method using     *
+ * particle discretization.                                                     *
+ *                                                                              *
+ * SPHinXsys is partially funded by German Research Foundation                  *
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
+ * HU1527/12-1 and HU1527/12-4.                                                 *
+ *                                                                              *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and          *
+ * the authors' affiliations.                                                   *
+ *                                                                              *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
+ * not use this file except in compliance with the License. You may obtain a    *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
+ *                                                                              *
+ * -----------------------------------------------------------------------------*/
 /**
  * @file 	particle_generator_lattice.h
  * @brief 	This is the base class of particle generator, which generates particles
@@ -38,8 +38,9 @@ namespace SPH
 {
 
 	class Shape;
-	class ParticleSpacingByBodyShape;
+	class ParticleRefinementByShape;
 	class ShellParticles;
+	class ParticleSplitAndMerge;
 
 	/**
 	 * @class BaseParticleGeneratorLattice
@@ -66,7 +67,6 @@ namespace SPH
 	public:
 		explicit ParticleGeneratorLattice(SPHBody &sph_body);
 		virtual ~ParticleGeneratorLattice(){};
-
 		virtual void initializeGeometricVariables() override;
 	};
 
@@ -77,11 +77,13 @@ namespace SPH
 	class ParticleGeneratorMultiResolution : public ParticleGeneratorLattice
 	{
 	public:
+		ParticleGeneratorMultiResolution(SPHBody &sph_body, Shape &target_shape);
 		explicit ParticleGeneratorMultiResolution(SPHBody &sph_body);
 		virtual ~ParticleGeneratorMultiResolution(){};
 
 	protected:
-		ParticleSpacingByBodyShape *particle_adaptation_;
+		Shape &target_shape_;
+		ParticleRefinementByShape *particle_adaptation_;
 		StdLargeVec<Real> &h_ratio_;
 
 		virtual void initializePositionAndVolumetricMeasure(const Vecd &position, Real volume) override;
@@ -89,10 +91,27 @@ namespace SPH
 	};
 
 	/**
+	 * @class ParticleGeneratorSplitAndMerge
+	 * @brief generate particles from lattice positions for a body.
+	 */
+	class ParticleGeneratorSplitAndMerge : public ParticleGeneratorLattice
+	{
+	public:
+		explicit ParticleGeneratorSplitAndMerge(SPHBody &sph_body);
+		virtual ~ParticleGeneratorSplitAndMerge(){};
+
+	protected:
+		ParticleSplitAndMerge *particle_adaptation_;
+		StdLargeVec<Real> &h_ratio_;
+
+		virtual void initializePositionAndVolumetricMeasure(const Vecd &position, Real volume) override;
+	};
+
+	/**
 	 * @class ThickSurfaceParticleGeneratorLattice
 	 * @brief Generate thick surface particles from lattice positions for a thin structure defined by a body shape.
-	 * @details Here, a thick surface is defined as that the thickness is equal or larger than the proposed particle spacing. 
-	 * Note that, this class should not be used for generating the thin surface particles, 
+	 * @details Here, a thick surface is defined as that the thickness is equal or larger than the proposed particle spacing.
+	 * Note that, this class should not be used for generating the thin surface particles,
 	 * which may be better generated from a geometric surface directly.
 	 */
 	class ThickSurfaceParticleGeneratorLattice : public BaseParticleGeneratorLattice, public SurfaceParticleGenerator

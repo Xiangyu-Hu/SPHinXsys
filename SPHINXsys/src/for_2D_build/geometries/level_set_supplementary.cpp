@@ -1,10 +1,12 @@
 /**
  * @file 	level_set_supplementary.cpp
- * @author	Luhui Han, Chi ZHang, Yongchuan Yu and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang, Yongchuan Yu and Xiangyu Hu
  */
 
 #include "level_set.h"
+
 #include "mesh_with_data_packages.hpp"
+#include "mesh_iterators.hpp"
 #include "base_kernel.h"
 #include "base_particles.h"
 #include "base_particle_dynamics.h"
@@ -97,6 +99,33 @@ namespace SPH
 			}
 	}
 	//=================================================================================================//
+	void LevelSetDataPackage::stepDiffusionLevelSetSign()
+	{
+		for (int i = AddressBufferWidth(); i != OperationUpperBound(); ++i)
+			for (int j = AddressBufferWidth(); j != OperationUpperBound(); ++j)
+				for (int k = AddressBufferWidth(); k != OperationUpperBound(); ++k)
+				{
+					// near interface cells are not considered
+					if (abs(*near_interface_id_addrs_[i][j]) > 1)
+					{
+						Real phi_0 = *phi_addrs_[i][j];
+						for (int l = -1; l != 2; ++l)
+							for (int m = -1; m != 2; ++m)
+							{
+								int index_x = i + l;
+								int index_y = j + m;
+								int near_interface_id = *near_interface_id_addrs_[index_x][index_y];
+								if (abs(near_interface_id) == 1)
+								{
+									*near_interface_id_addrs_[i][j] = near_interface_id;
+									*phi_addrs_[i][j] = near_interface_id == 1 ? fabs(phi_0) : -fabs(phi_0);
+									break;
+								}
+							}
+					}
+				}
+	}
+	//=================================================================================================//
 	void LevelSetDataPackage::markNearInterface(Real small_shift_factor)
 	{
 		Real small_shift = small_shift_factor * grid_spacing_;
@@ -149,6 +178,37 @@ namespace SPH
 			}
 	}
 	//=================================================================================================//
+	LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing,
+					   Shape &shape, SPHAdaptation &sph_adaptation)
+		: LevelSet(tentative_bounds, data_spacing, 4, shape, sph_adaptation)
+	{
+		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
+						  [&](size_t i, size_t j)
+						  {
+							  initializeDataInACell(Vecu(i, j));
+						  });
+
+		finishDataPackages();
+	}
+	//=================================================================================================//
+	void LevelSet::finishDataPackages()
+	{
+		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
+						  [&](size_t i, size_t j)
+						  {
+							  tagACellIsInnerPackage(Vecu(i, j));
+						  });
+
+		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
+						  [&](size_t i, size_t j)
+						  {
+							  initializePackageAddressesInACell(Vecu(i, j));
+						  });
+
+		updateLevelSetGradient();
+		updateKernelIntegrals();
+	}
+	//=================================================================================================//
 	bool LevelSet::isWithinCorePackage(Vecd position)
 	{
 		Vecu cell_index = CellIndexFromPosition(position);
@@ -168,7 +228,7 @@ namespace SPH
 		return is_inner_pkg;
 	}
 	//=================================================================================================//
-	void LevelSet::redistanceInterfaceForAPackage(LevelSetDataPackage *core_data_pkg, Real dt)
+	void LevelSet::redistanceInterfaceForAPackage(LevelSetDataPackage *core_data_pkg)
 	{
 		int l = (int)core_data_pkg->pkg_index_[0];
 		int m = (int)core_data_pkg->pkg_index_[1];
@@ -420,6 +480,19 @@ namespace SPH
 		}
 
 		return integral * data_spacing_ * data_spacing_;
+	}
+	//=============================================================================================//
+	RefinedLevelSet::RefinedLevelSet(BoundingBox tentative_bounds, LevelSet &coarse_level_set,
+									 Shape &shape, SPHAdaptation &sph_adaptation)
+		: RefinedMesh(tentative_bounds, coarse_level_set, 4, shape, sph_adaptation)
+	{
+		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
+						  [&](size_t i, size_t j)
+						  {
+							  initializeDataInACellFromCoarse(Vecu(i, j));
+						  });
+
+		finishDataPackages();
 	}
 	//=============================================================================================//
 }

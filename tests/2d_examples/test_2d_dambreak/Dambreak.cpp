@@ -1,42 +1,40 @@
 /**
- * @file 	Dambreak.cpp
- * @brief 	2D dambreak example.
- * @details This is the one of the basic test cases, also the first case for
+ * @file	dambreak.cpp
+ * @brief	2D dambreak example.
+ * @details	This is the one of the basic test cases, also the first case for
  * 			understanding SPH method for fluid simulation.
- * @author 	Luhui Han, Chi Zhang and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang and Xiangyu Hu
  */
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 5.366;					/**< Tank length. */
-Real DH = 5.366;					/**< Tank height. */
-Real LL = 2.0;						/**< Liquid column length. */
-Real LH = 1.0;						/**< Liquid column height. */
+Real DL = 5.366;					/**< Water tank length. */
+Real DH = 5.366;					/**< Water tank height. */
+Real LL = 2.0;						/**< Water column length. */
+Real LH = 1.0;						/**< Water column height. */
 Real particle_spacing_ref = 0.025;	/**< Initial reference particle spacing. */
-Real BW = particle_spacing_ref * 4; /**< Extending width for boundary conditions. */
-BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
-// observer location
-StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
+Real BW = particle_spacing_ref * 4; /**< Thickness of tank wall. */
 //----------------------------------------------------------------------
-//	Material properties of the fluid.
+//	Material parameters.
 //----------------------------------------------------------------------
 Real rho0_f = 1.0;						 /**< Reference density of fluid. */
-Real gravity_g = 1.0;					 /**< Gravity force of fluid. */
+Real gravity_g = 1.0;					 /**< Gravity. */
 Real U_max = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
 Real c_f = 10.0 * U_max;				 /**< Reference sound speed. */
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
 //----------------------------------------------------------------------
-Vec2d water_block_halfsize = Vec2d(0.5 * LL, 0.5 * LH); // local center at origin:
-Vec2d water_block_translation = water_block_halfsize;
+Vec2d water_block_halfsize = Vec2d(0.5 * LL, 0.5 * LH); // local center at origin
+Vec2d water_block_translation = water_block_halfsize;	// translation to global coordinates
 Vec2d outer_wall_halfsize = Vec2d(0.5 * DL + BW, 0.5 * DH + BW);
 Vec2d outer_wall_translation = Vec2d(-BW, -BW) + outer_wall_halfsize;
 Vec2d inner_wall_halfsize = Vec2d(0.5 * DL, 0.5 * DH);
 Vec2d inner_wall_translation = inner_wall_halfsize;
 //----------------------------------------------------------------------
-//	Complex for wall boundary
+//	Complex shape for wall boundary, note that no partial overlap is allowed
+//	for the shapes in a complex shape.
 //----------------------------------------------------------------------
 class WallBoundary : public ComplexShape
 {
@@ -46,19 +44,19 @@ public:
 		add<TransformShape<GeometricShapeBox>>(Transform2d(outer_wall_translation), outer_wall_halfsize);
 		subtract<TransformShape<GeometricShapeBox>>(Transform2d(inner_wall_translation), inner_wall_halfsize);
 	}
-}; 
+};
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
 int main(int ac, char *av[])
 {
 	//----------------------------------------------------------------------
-	//	Build up the environment of a SPHSystem.
+	//	Build up an SPHSystem.
 	//----------------------------------------------------------------------
+	BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 	SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
 	sph_system.handleCommandlineOptions(ac, av);
-	/** I/O environment. */
-	InOutput in_output(sph_system);
+	IOEnvironment io_environment(sph_system);
 	//----------------------------------------------------------------------
 	//	Creating bodies with corresponding materials and particles.
 	//----------------------------------------------------------------------
@@ -74,36 +72,37 @@ int main(int ac, char *av[])
 	wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
 
 	ObserverBody fluid_observer(sph_system, "FluidObserver");
+	StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
 	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	ComplexBodyRelation water_block_complex(water_block, {&wall_boundary});
-	BodyRelationContact fluid_observer_contact(fluid_observer, {&water_block});
+	ComplexRelation water_block_complex(water_block, {&wall_boundary});
+	ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
 	//----------------------------------------------------------------------
-	//	Define the main numerical methods used in the simulation.
-	//	Note that there may be data dependence on the constructors of these methods.
+	//	Define the numerical methods used in the simulation.
+	//	Note that there may be data dependence on the sequence of constructions.
 	//----------------------------------------------------------------------
-	Gravity gravity(Vecd(0.0, -gravity_g));
+	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> fluid_pressure_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_block_complex);
+	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> fluid_density_by_summation(water_block_complex);
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-	TimeStepInitialization fluid_step_initialization(water_block, gravity);
-	fluid_dynamics::DensitySummationFreeSurfaceComplex fluid_density_by_summation(water_block_complex);
-	fluid_dynamics::AdvectionTimeStepSize fluid_advection_time_step(water_block, U_max);
-	fluid_dynamics::AcousticTimeStepSize fluid_acoustic_time_step(water_block);
-	fluid_dynamics::PressureRelaxationRiemannWithWall fluid_pressure_relaxation(water_block_complex);
-	fluid_dynamics::DensityRelaxationRiemannWithWall fluid_density_relaxation(water_block_complex);
+	SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
+	SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block, gravity_ptr);
+	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_max);
+	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations, observations
 	//	and regression tests of the simulation.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp body_states_recording(in_output, sph_system.real_bodies_);
-	RestartIO restart_io(in_output, sph_system.real_bodies_);
-	RegressionTestDynamicTimeWarping<BodyReducedQuantityRecording<TotalMechanicalEnergy>>
-		write_water_mechanical_energy(in_output, water_block, gravity);
+	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
+	RestartIO restart_io(io_environment, sph_system.real_bodies_);
+	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
+		write_water_mechanical_energy(io_environment, water_block, gravity_ptr);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-		write_recorded_water_pressure("Pressure", in_output, fluid_observer_contact);
+		write_recorded_water_pressure("Pressure", io_environment, fluid_observer_contact);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
@@ -128,9 +127,8 @@ int main(int ac, char *av[])
 	int screen_output_interval = 100;
 	int observation_sample_interval = screen_output_interval * 2;
 	int restart_output_interval = screen_output_interval * 10;
-	Real End_Time = 20.0; /**< End time. */
-	Real D_Time = 0.1;	  /**< Time stamps for output of body states. */
-	Real dt = 0.0;		  /**< Default acoustic time step sizes. */
+	Real end_time = 20.0;
+	Real output_interval = 0.1;
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
 	//----------------------------------------------------------------------
@@ -149,30 +147,31 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Main loop starts here.
 	//----------------------------------------------------------------------
-	while (GlobalStaticVariables::physical_time_ < End_Time)
+	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
 		/** Integrate time (loop) until the next output time. */
-		while (integration_time < D_Time)
+		while (integration_time < output_interval)
 		{
 			/** outer loop for dual-time criteria time-stepping. */
 			time_instance = tick_count::now();
 			fluid_step_initialization.parallel_exec();
-			Real Dt = fluid_advection_time_step.parallel_exec();
+			Real advection_dt = fluid_advection_time_step.parallel_exec();
 			fluid_density_by_summation.parallel_exec();
 			interval_computing_time_step += tick_count::now() - time_instance;
 
 			time_instance = tick_count::now();
 			Real relaxation_time = 0.0;
-			while (relaxation_time < Dt)
+			Real acoustic_dt = 0.0;
+			while (relaxation_time < advection_dt)
 			{
 				/** inner loop for dual-time criteria time-stepping.  */
-				fluid_pressure_relaxation.parallel_exec(dt);
-				fluid_density_relaxation.parallel_exec(dt);
-				dt = fluid_acoustic_time_step.parallel_exec();
-				relaxation_time += dt;
-				integration_time += dt;
-				GlobalStaticVariables::physical_time_ += dt;
+				acoustic_dt = fluid_acoustic_time_step.parallel_exec();
+				fluid_pressure_relaxation.parallel_exec(acoustic_dt);
+				fluid_density_relaxation.parallel_exec(acoustic_dt);
+				relaxation_time += acoustic_dt;
+				integration_time += acoustic_dt;
+				GlobalStaticVariables::physical_time_ += acoustic_dt;
 			}
 			interval_computing_fluid_pressure_relaxation += tick_count::now() - time_instance;
 
@@ -181,7 +180,7 @@ int main(int ac, char *av[])
 			{
 				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
 						  << GlobalStaticVariables::physical_time_
-						  << "	Dt = " << Dt << "	dt = " << dt << "\n";
+						  << "	advection_dt = " << advection_dt << "	acoustic_dt = " << acoustic_dt << "\n";
 
 				if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.restart_step_)
 				{
@@ -195,7 +194,7 @@ int main(int ac, char *av[])
 
 			/** Update cell linked list and configuration. */
 			time_instance = tick_count::now();
-			water_block.updateCellLinkedList();
+			water_block.updateCellLinkedListWithParticleSort(100);
 			water_block_complex.updateConfiguration();
 			fluid_observer_contact.updateConfiguration();
 			interval_updating_configuration += tick_count::now() - time_instance;
@@ -219,7 +218,12 @@ int main(int ac, char *av[])
 	std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
 			  << interval_updating_configuration.seconds() << "\n";
 
-	if (sph_system.restart_step_ == 0)
+	if (sph_system.generate_regression_data_)
+	{
+		write_water_mechanical_energy.generateDataBase(1.0e-3);
+		write_recorded_water_pressure.generateDataBase(1.0e-3);
+	}
+	else if (sph_system.restart_step_ == 0)
 	{
 		write_water_mechanical_energy.newResultTest();
 		write_recorded_water_pressure.newResultTest();

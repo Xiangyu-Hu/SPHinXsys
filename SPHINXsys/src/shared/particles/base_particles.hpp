@@ -118,10 +118,10 @@ namespace SPH
     template <class DerivedVariableMethod>
     void BaseParticles::addDerivedVariableToWrite()
     {
-        SimpleDynamics<DerivedVariableMethod> *derived_data = derived_particle_data_.createPtr<SimpleDynamics<DerivedVariableMethod>>(*sph_body_);
+        SimpleDynamics<DerivedVariableMethod> *derived_data = derived_particle_data_.createPtr<SimpleDynamics<DerivedVariableMethod>>(sph_body_);
         derived_variables_.push_back(derived_data);
         using DerivedVariableType = typename DerivedVariableMethod::DerivedVariableType;
-        addVariableNameToList<DerivedVariableType>(variables_to_write_, derived_data->LocalDynamics().variable_name_);
+        addVariableNameToList<DerivedVariableType>(variables_to_write_, derived_data->variable_name_);
     }
     //=================================================================================================//
     template <typename VariableType>
@@ -162,6 +162,13 @@ namespace SPH
             std::cout << "\n Warning: the variable '" << variable_name << "' is already a sortable variable!" << std::endl;
             std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         }
+    }
+    //=================================================================================================//
+    template <typename SequenceMethod>
+    void BaseParticles::sortParticles(SequenceMethod &sequence_method)
+    {
+        StdLargeVec<size_t> &sequence = sequence_method.computingSequence(*this);
+        particle_sorting_.sortingParticleData(sequence.data(), total_real_particles_);
     }
     //=================================================================================================//
     template <typename VariableType>
@@ -237,7 +244,7 @@ namespace SPH
         output_stream << "    </DataArray>\n";
 
         // compute derived particle variables
-        for (ParticleDynamics<void> *derived_variable : derived_variables_)
+        for (auto &derived_variable : derived_variables_)
         {
             derived_variable->parallel_exec();
         }
@@ -335,10 +342,10 @@ namespace SPH
     //=================================================================================================//
     template <typename VariableType>
     BaseDerivedVariable<VariableType>::
-        BaseDerivedVariable(const SPHBody &sph_body, const std::string &variable_name)
+        BaseDerivedVariable(SPHBody &sph_body, const std::string &variable_name)
         : variable_name_(variable_name)
     {
-        sph_body.base_particles_->registerVariable(derived_variable_, variable_name_);
+        sph_body.getBaseParticles().registerVariable(derived_variable_, variable_name_);
     };
     //=================================================================================================//
 }

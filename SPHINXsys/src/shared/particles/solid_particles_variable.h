@@ -21,11 +21,11 @@
  *                                                                              *
  * -----------------------------------------------------------------------------*/
 /**
-* @file 	solid_particle_variable.h
-* @brief 	Here, we define the algorithm classes for computing derived solid dynamics variables. 
-* @details 	These variable can be added into variable list for state output.   
-* @author	Xiangyu Hu
-*/
+ * @file 	solid_particle_variable.h
+ * @brief 	Here, we define the algorithm classes for computing derived solid dynamics variables.
+ * @details 	These variable can be added into variable list for state output.
+ * @author	Xiangyu Hu
+ */
 
 #ifndef SOLID_PARTICLES_VARIABLE_H
 #define SOLID_PARTICLES_VARIABLE_H
@@ -40,13 +40,15 @@ namespace SPH
 	//----------------------------------------------------------------------
 	//		for general solid dynamics variables
 	//----------------------------------------------------------------------
-	typedef DataDelegateSimple<RealBody, SolidParticles, Solid> SolidDataSimple;
+	typedef DataDelegateSimple<SolidParticles> SolidDataSimple;
 
 	/**
 	 * @class Displacement
 	 * @brief computing displacement from current and initial particle position
 	 */
-	class Displacement : public BaseDerivedVariable<Vecd>, public SolidDataSimple
+	class Displacement : public BaseDerivedVariable<Vecd>,
+						 public SolidDataSimple,
+						 public LocalDynamics
 	{
 	public:
 		explicit Displacement(SPHBody &sph_body);
@@ -61,7 +63,7 @@ namespace SPH
 	 * @class OffsetInitialPosition
 	 * @brief offset initial particle position
 	 */
-	class OffsetInitialPosition : public SolidDataSimple
+	class OffsetInitialPosition : public SolidDataSimple, public LocalDynamics
 	{
 	public:
 		explicit OffsetInitialPosition(SPHBody &sph_body, Vecd &offset);
@@ -77,7 +79,7 @@ namespace SPH
 	 * @class TranslationAndRotation
 	 * @brief transformation on particle position and rotation
 	 */
-	class TranslationAndRotation : public SolidDataSimple
+	class TranslationAndRotation : public SolidDataSimple, public LocalDynamics
 	{
 	public:
 		explicit TranslationAndRotation(SPHBody &sph_body, Transformd &transform);
@@ -93,7 +95,7 @@ namespace SPH
 	 * @class NormalDirectionFromBodyShape
 	 * @brief normal direction at particles
 	 */
-	class NormalDirectionFromBodyShape : public SolidDataSimple
+	class NormalDirectionFromBodyShape : public SolidDataSimple, public LocalDynamics
 	{
 	public:
 		explicit NormalDirectionFromBodyShape(SPHBody &sph_body);
@@ -104,12 +106,12 @@ namespace SPH
 		Shape &body_shape_;
 		StdLargeVec<Vecd> &pos_, &n_, &n0_;
 	};
-	
+
 	/**
 	 * @class NormalDirectionFromBodyShape
 	 * @brief normal direction at particles
 	 */
-	class NormalDirectionFromShapeAndOp : public SolidDataSimple
+	class NormalDirectionFromShapeAndOp : public SolidDataSimple, public LocalDynamics
 	{
 	public:
 		explicit NormalDirectionFromShapeAndOp(SPHBody &sph_body, const std::string &shape_name);
@@ -126,9 +128,11 @@ namespace SPH
 	//----------------------------------------------------------------------
 	//		for general elastic solid dynamics variables
 	//----------------------------------------------------------------------
-	typedef DataDelegateSimple<RealBody, ElasticSolidParticles, ElasticSolid> ElasticSolidDataSimple;
+	typedef DataDelegateSimple<ElasticSolidParticles> ElasticSolidDataSimple;
 
-	class GreenLagrangeStrain : public BaseDerivedVariable<Matd>, public ElasticSolidDataSimple
+	class GreenLagrangeStrain : public BaseDerivedVariable<Matd>,
+								public ElasticSolidDataSimple,
+								public LocalDynamics
 	{
 	public:
 		explicit GreenLagrangeStrain(SPHBody &sph_body);
@@ -143,7 +147,9 @@ namespace SPH
 	 * @class VonMisesStress
 	 * @brief computing von_Mises_stress
 	 */
-	class VonMisesStress : public BaseDerivedVariable<Real>, public ElasticSolidDataSimple
+	class VonMisesStress : public BaseDerivedVariable<Real>,
+						   public ElasticSolidDataSimple,
+						   public LocalDynamics
 	{
 	public:
 		explicit VonMisesStress(SPHBody &sph_body);
@@ -154,9 +160,12 @@ namespace SPH
 		Real rho0_;
 		StdLargeVec<Real> &rho_;
 		StdLargeVec<Matd> &F_;
+		ElasticSolid &elastic_solid_;
 	};
 
-	class VonMisesStrain : public BaseDerivedVariable<Real>, public ElasticSolidDataSimple
+	class VonMisesStrain : public BaseDerivedVariable<Real>,
+						   public ElasticSolidDataSimple,
+						   public LocalDynamics
 	{
 	public:
 		explicit VonMisesStrain(SPHBody &sph_body);
@@ -164,14 +173,17 @@ namespace SPH
 		void update(size_t index_i, Real dt = 0.0);
 	};
 
-	class VonMisesStrainDynamic : public BaseDerivedVariable<Real>, public ElasticSolidDataSimple
+	class VonMisesStrainDynamic : public BaseDerivedVariable<Real>,
+								  public ElasticSolidDataSimple,
+								  public LocalDynamics
 	{
 	public:
 		explicit VonMisesStrainDynamic(SPHBody &sph_body);
 		virtual ~VonMisesStrainDynamic(){};
 		void update(size_t index_i, Real dt = 0.0);
+
 	protected:
 		Real poisson_ratio_;
 	};
 }
-#endif //SOLID_PARTICLES_VARIABLE_H
+#endif // SOLID_PARTICLES_VARIABLE_H

@@ -1,25 +1,25 @@
-/* -------------------------------------------------------------------------*
- *								SPHinXsys									*
- * --------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
- * (smoothed particle hydrodynamics), a meshless computational method using	*
- * particle discretization.													*
- *																			*
- * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
- * and HU1527/12-1.															*
- *                                                                           *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
- * the authors' affiliations.												*
- *                                                                           *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
- * not use this file except in compliance with the License. You may obtain a *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
- *                                                                           *
- * --------------------------------------------------------------------------*/
+/* -----------------------------------------------------------------------------*
+ *                               SPHinXsys                                      *
+ * -----------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
+ * physical accurate simulation and aims to model coupled industrial dynamic    *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
+ * (smoothed particle hydrodynamics), a meshless computational method using     *
+ * particle discretization.                                                     *
+ *                                                                              *
+ * SPHinXsys is partially funded by German Research Foundation                  *
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
+ * HU1527/12-1 and HU1527/12-4.                                                 *
+ *                                                                              *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and          *
+ * the authors' affiliations.                                                   *
+ *                                                                              *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
+ * not use this file except in compliance with the License. You may obtain a    *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
+ *                                                                              *
+ * -----------------------------------------------------------------------------*/
 /**
  * @file 	fluid_particles.h
  * @brief 	This is the derived class of base particle.
@@ -51,6 +51,7 @@ namespace SPH
 		StdLargeVec<Real> drho_dt_;			 /**< density change rate */
 		StdLargeVec<Real> rho_sum_;			 /**< number density */
 		StdLargeVec<int> surface_indicator_; /**< free surface indicator */
+		Fluid &fluid_;
 
 		FluidParticles(SPHBody &sph_body, Fluid *fluid);
 		virtual ~FluidParticles(){};
@@ -68,6 +69,7 @@ namespace SPH
 	public:
 		StdLargeVec<Matd> tau_;		/**<  elastic stress */
 		StdLargeVec<Matd> dtau_dt_; /**<  change rate of elastic stress */
+		Oldroyd_B_Fluid &oldroyd_b_fluid_; 
 
 		ViscoelasticFluidParticles(SPHBody &sph_body, Oldroyd_B_Fluid *oldroyd_b_fluid);
 		virtual ~ViscoelasticFluidParticles(){};
@@ -89,6 +91,7 @@ namespace SPH
 		StdLargeVec<Real> E_;	  /**< total energy per unit volume */
 		StdLargeVec<Real> dE_dt_; /**< change rate of total energy */
 		StdLargeVec<Real> dE_dt_prior_;
+		CompressibleFluid &compressible_fluid_;
 
 		CompressibleFluidParticles(SPHBody &sph_body, CompressibleFluid *compressible_fluid);
 		virtual ~CompressibleFluidParticles(){};

@@ -68,7 +68,7 @@ public:
 private:
 	void tagManually(size_t index_i)
 	{
-		if (base_particles_->pos_[index_i][0] < 0.0 || base_particles_->pos_[index_i][0] > PL)
+		if (base_particles_.pos_[index_i][0] < 0.0 || base_particles_.pos_[index_i][0] > PL)
 		{
 			body_part_particles_.push_back(index_i);
 		}
@@ -87,7 +87,7 @@ int main()
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	SolidBody plate_body(system, makeShared<DefaultShape>("PlateBody"));
-	plate_body.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	plate_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	plate_body.generateParticles<PlateParticleGenerator>();
 	plate_body.addBodyStateForRecording<Vecd>("PriorAcceleration");
 
@@ -98,34 +98,34 @@ int main()
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner plate_body_inner(plate_body);
-	BodyRelationContact plate_observer_contact(plate_observer, {&plate_body});
+	InnerRelation plate_body_inner(plate_body);
+	ContactRelation plate_observer_contact(plate_observer, {&plate_body});
 	//----------------------------------------------------------------------
 	//	Define all numerical methods which are used in this case.
 	//----------------------------------------------------------------------
 	/** Corrected configuration. */
-	thin_structure_dynamics::ShellCorrectConfiguration corrected_configuration(plate_body_inner);
+	InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(plate_body_inner);
 	/** Time step size. */
-	thin_structure_dynamics::ShellAcousticTimeStepSize computing_time_step_size(plate_body);
+	ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(plate_body);
 	/** stress relaxation. */
-	thin_structure_dynamics::ShellStressRelaxationFirstHalf stress_relaxation_first_half(plate_body_inner, 3, true);
-	thin_structure_dynamics::ShellStressRelaxationSecondHalf stress_relaxation_second_half(plate_body_inner);
-	thin_structure_dynamics::DistributingPointForcesToShell
+	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(plate_body_inner, 3, true);
+	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(plate_body_inner);
+	SimpleDynamics<thin_structure_dynamics::DistributingPointForcesToShell>
 		apply_point_force(plate_body, point_force, reference_position, time_to_full_external_force, resolution_ref);
 	/** Constrain the Boundary. */
 	BoundaryGeometry boundary_geometry(plate_body, "BoundaryGeometry");
-	thin_structure_dynamics::ConstrainShellBodyRegion constrain_holder(plate_body, boundary_geometry);
-	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
+	SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion, BoundaryGeometry> constrain_holder(boundary_geometry);
+	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
 		plate_position_damping(0.2, plate_body_inner, "Velocity", physical_viscosity);
-	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
+	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
 		plate_rotation_damping(0.2, plate_body_inner, "AngularVelocity", physical_viscosity);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
-	InOutput in_output(system);
-	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
+	IOEnvironment io_environment(system);
+	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		write_plate_max_displacement("Position", in_output, plate_observer_contact);
+		write_plate_max_displacement("Position", io_environment, plate_observer_contact); //TODO: using ensemble better
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
@@ -133,7 +133,6 @@ int main()
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
 	corrected_configuration.parallel_exec();
-	apply_point_force.getWeight();
 	//----------------------------------------------------------------------
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
@@ -163,7 +162,6 @@ int main()
 						  << GlobalStaticVariables::physical_time_ << "	dt: "
 						  << dt << "\n";
 			}
-			apply_point_force.getForce();
 			apply_point_force.parallel_exec(dt);
 			stress_relaxation_first_half.parallel_exec(dt);
 			constrain_holder.parallel_exec(dt);

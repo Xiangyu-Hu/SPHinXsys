@@ -1,6 +1,6 @@
 /**
  * @file 	solid_particles_supplementary.cpp
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang and Xiangyu Hu
  */
 
 #include "solid_particles.h"
@@ -28,23 +28,23 @@ namespace SPH
 					2.0 * (std::pow(epsilonxy, 2.0) + std::pow(epsilonyz, 2.0) + std::pow(epsilonxz, 2.0)));
 	}
 	//=================================================================================================//
-	Real ElasticSolidParticles::getVonMisesStrainDynamic(size_t particle_i, Real poisson) //not tested in 2D
+	Real ElasticSolidParticles::getVonMisesStrainDynamic(size_t particle_i, Real poisson) // not tested in 2D
 	{
 		Mat2d F = F_[particle_i];
-		Mat2d epsilon = 0.5 * (~F * F - Matd(1.0)); //calculation of the Green-Lagrange strain tensor
-		
+		Mat2d epsilon = 0.5 * (~F * F - Matd(1.0)); // calculation of the Green-Lagrange strain tensor
+
 		Vec2d principal_strains = getPrincipalValuesFromMatrix(epsilon);
 		Real eps_1 = principal_strains[0];
 		Real eps_2 = principal_strains[1];
 
-		return 1.0/(1.0 + poisson) * std::sqrt(0.5 * (powerN(eps_1 - eps_2, 2)));
+		return 1.0 / (1.0 + poisson) * std::sqrt(0.5 * (powerN(eps_1 - eps_2, 2)));
 	}
 	//=============================================================================================//
 	void VonMisesStress::update(size_t index_i, Real dt)
 	{
 		Real J = rho0_ / rho_[index_i];
 		Mat2d F = F_[index_i];
-		Mat2d stress_PK1 = F * material_->StressPK2(F, index_i);
+		Mat2d stress_PK1 = F * elastic_solid_.StressPK2(F, index_i);
 		Mat2d sigma = (stress_PK1 * ~F) / J;
 
 		Real sigmaxx = sigma(0, 0);

@@ -16,25 +16,24 @@ int main(int ac, char *av[])
 	SPHSystem system(system_domain_bounds, particle_spacing_ref);
 	system.run_particle_relaxation_ = false;
 	system.reload_particles_ = true;
-// handle command line arguments
 #ifdef BOOST_AVAILABLE
 	system.handleCommandlineOptions(ac, av);
 #endif
-	InOutput in_output(system);
+	IOEnvironment io_environment(system);
 
 	/** create a body with corresponding material, particles and reaction model. */
 	SolidBody column(system, makeShared<Column>("Column"));
-	column.sph_adaptation_->resetAdaptationRatios(1.3, 1.0);
-	column.defineBodyLevelSetShape()->writeLevelSet(column);
+	column.defineAdaptationRatios(1.3, 1.0);
+	column.defineBodyLevelSetShape()->writeLevelSet(io_environment);
 	column.defineParticlesAndMaterial<ElasticSolidParticles, HardeningPlasticSolid>(
 		rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus);
 	(!system.run_particle_relaxation_ && system.reload_particles_)
-		? column.generateParticles<ParticleGeneratorReload>(in_output, column.getBodyName())
+		? column.generateParticles<ParticleGeneratorReload>(io_environment, column.getName())
 		: column.generateParticles<ParticleGeneratorLattice>();
 	column.addBodyStateForRecording<Vecd>("NormalDirection");
 
 	SolidBody wall(system, makeShared<Wall>("Wall"));
-	wall.defineParticlesAndMaterial<SolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	wall.defineParticlesAndMaterial<SolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	wall.generateParticles<ParticleGeneratorLattice>();
 
 	/** Define Observer. */
@@ -42,11 +41,11 @@ int main(int ac, char *av[])
 	my_observer.generateParticles<ColumnObserverParticleGenerator>();
 
 	/**body relation topology */
-	BodyRelationInner column_inner(column);
-	BodyRelationContact my_observer_contact(my_observer, {&column});
-	SolidBodyRelationContact column_wall_contact(column, {&wall});
+	InnerRelation column_inner(column);
+	ContactRelation my_observer_contact(my_observer, {&column});
+	SurfaceContactRelation column_wall_contact(column, {&wall});
 	/**define simple data file input and outputs functions. */
-	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
 
 	if (system.run_particle_relaxation_)
 	{
@@ -54,12 +53,12 @@ int main(int ac, char *av[])
 		 * @brief 	Methods used for particle relaxation.
 		 */
 		/** Random reset the insert body particle position. */
-		RandomizeParticlePosition random_column_particles(column);
+		SimpleDynamics<RandomizeParticlePosition> random_column_particles(column);
 		/** Write the body state to Vtp file. */
-		BodyStatesRecordingToVtp write_column_to_vtp(in_output, column);
+		BodyStatesRecordingToVtp write_column_to_vtp(io_environment, column);
 		/** Write the particle reload files. */
 
-		ReloadParticleIO write_particle_reload_files(in_output, {&column});
+		ReloadParticleIO write_particle_reload_files(io_environment, column);
 		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(column_inner);
 		/**
@@ -89,25 +88,20 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	All numerical methods will be used in this case.
 	//----------------------------------------------------------------------
+	Dynamics1Level<solid_dynamics::PlasticStressRelaxationFirstHalf> stress_relaxation_first_half(column_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half(column_inner);
+	InteractionDynamics<solid_dynamics::DynamicContactForceWithWall, BodyPartByParticle> column_wall_contact_force(column_wall_contact);
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
-	InitialCondition initial_condition(column);
-	/** Corrected configuration. */
-	solid_dynamics::CorrectConfiguration corrected_configuration(column_inner);
-	/** Time step size calculation with given CFL number. */
-	solid_dynamics::AcousticTimeStepSize computing_time_step_size(column, 0.3);
-
-	/** stress and deformation relaxation. */
-	solid_dynamics::PlasticStressRelaxationFirstHalf stress_relaxation_first_half(column_inner);
-	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(column_inner);
-	solid_dynamics::DynamicContactForceWithWall column_wall_contact_force(column_wall_contact);
-
+	SimpleDynamics<InitialCondition> initial_condition(column);
+	InteractionDynamics<solid_dynamics::CorrectConfiguration> corrected_configuration(column_inner);
+	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(column, 0.3);
 	//----------------------------------------------------------------------
 	//	Output
 	//----------------------------------------------------------------------
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		write_velocity("Velocity", in_output, my_observer_contact);
+		write_velocity("Velocity", io_environment, my_observer_contact);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		write_displacement("Position", in_output, my_observer_contact);
+		write_displacement("Position", io_environment, my_observer_contact);
 
 	//----------------------------------------------------------------------
 	// From here the time stepping begins.

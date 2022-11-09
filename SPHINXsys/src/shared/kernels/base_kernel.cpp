@@ -1,6 +1,6 @@
 /**
  * @file 	base_kernel.cpp
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang and Xiangyu Hu
  */
 
 #include "base_kernel.h"
@@ -18,11 +18,12 @@ namespace SPH
 		  h_factor_dW_3D_(std::bind(&Kernel::factordW3D, this, _1)),
 		  h_factor_d2W_1D_(std::bind(&Kernel::factord2W1D, this, _1)),
 		  h_factor_d2W_2D_(std::bind(&Kernel::factord2W2D, this, _1)),
-		  h_factor_d2W_3D_(std::bind(&Kernel::factord2W3D, this, _1)) {};
+		  h_factor_d2W_3D_(std::bind(&Kernel::factord2W3D, this, _1)){};
 	//=================================================================================================//
 	void Kernel::setDerivativeParameters()
 	{
 		cutoff_radius_ref_ = KernelSize() * h_;
+		cutoff_radius_sqr_ = cutoff_radius_ref_ * cutoff_radius_ref_;
 		factor_dW_1D_ = inv_h_ * factor_W_1D_;
 		factor_dW_2D_ = inv_h_ * factor_W_2D_;
 		factor_dW_3D_ = inv_h_ * factor_W_3D_;

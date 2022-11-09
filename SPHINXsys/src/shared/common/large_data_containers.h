@@ -38,12 +38,14 @@
 #include <array>
 
 using namespace tbb;
-static tbb::affinity_partitioner ap;
 
 namespace SPH {
 
+	static tbb::affinity_partitioner ap;
+	typedef tbb::blocked_range<size_t> IndexRange;
+
 	template <typename T>
-	using LargeVec = tbb::concurrent_vector<T>;
+	using ConcurrentVec = tbb::concurrent_vector<T>;
 
 	template <typename T>
 	using StdLargeVec = std::vector<T, cache_aligned_allocator<T>>;

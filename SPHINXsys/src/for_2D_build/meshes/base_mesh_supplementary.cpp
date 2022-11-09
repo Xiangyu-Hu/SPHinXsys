@@ -1,33 +1,12 @@
 /**
  * @file 	base_mesh_supplementary.cpp
- * @author	Luhui Han, Chi ZHang, Yongchuan Yu and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang, Yongchuan Yu and Xiangyu Hu
  */
 
 #include "base_mesh.h"
 
 //=================================================================================================//
 namespace SPH {
-	//=============================================================================================//
-	void MeshIterator(const Vecu &index_begin, const Vecu &index_end, MeshFunctor& mesh_functor, Real dt)
-	{
-		for (size_t i = index_begin[0]; i != index_end[0]; ++i)
-			for (size_t j = index_begin[1]; j != index_end[1]; ++j) {
-				mesh_functor(Vecu(i, j), dt);
-			}
-	}
-	//=============================================================================================//
-	void MeshIterator_parallel(const Vecu &index_begin, const Vecu &index_end, MeshFunctor& mesh_functor, Real dt)
-	{
-		parallel_for(blocked_range2d<size_t>
-			(index_begin[0], index_end[0], index_begin[1], index_end[1]),
-			[&](const blocked_range2d<size_t>& r) {
-				for (size_t i = r.rows().begin(); i != r.rows().end(); ++i)
-					for (size_t j = r.cols().begin(); j != r.cols().end(); ++j)
-					{
-						mesh_functor(Vecu(i, j), dt);
-					}
-			}, ap);
-	}
 	//=============================================================================================//
 	Vecu BaseMesh::transfer1DtoMeshIndex(const Vecu &number_of_mesh_indexes, size_t i)
 	{

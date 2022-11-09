@@ -23,8 +23,8 @@
 /**
  * @file    solid_body.h
  * @brief 	This is the class for bodies used for solid BCs or Elastic structure.
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
-  */
+ * @author	Luhui Han, Chi Zhang and Xiangyu Hu
+ */
 
 #ifndef SOLID_BODY_H
 #define SOLID_BODY_H
@@ -46,7 +46,13 @@ namespace SPH
 	class SolidBody : public RealBody
 	{
 	public:
-		SolidBody(SPHSystem &system, SharedPtr<Shape> shape_ptr);
+		template <typename... ConstructorArgs>
+		SolidBody(ConstructorArgs &&...args)
+			: RealBody(std::forward<ConstructorArgs>(args)...)
+		{
+			sph_system_.solid_bodies_.push_back(this);
+			defineAdaptation<SPHAdaptation>(1.15);
+		};
 		virtual ~SolidBody(){};
 		virtual SolidBody *ThisObjectPtr() override { return this; };
 	};
@@ -72,8 +78,9 @@ namespace SPH
 	protected:
 		Real solid_body_density_;
 		SolidParticles *solid_particles_;
+
 	private:
-		void setMassProperties();	
+		void setMassProperties();
 	};
 }
-#endif //SOLID_BODY_H
+#endif // SOLID_BODY_H

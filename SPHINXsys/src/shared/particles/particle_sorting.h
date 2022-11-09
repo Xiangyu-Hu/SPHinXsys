@@ -1,26 +1,25 @@
-/* -------------------------------------------------------------------------*
- *								SPHinXsys									*
- * --------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
- * (smoothed particle hydrodynamics), a meshless computational method using	*
- * particle discretization.													*
- *																			*
- * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
- * and HU1527/12-1.															*
- *                                                                           *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
- * the authors' affiliations.												*
- *                                                                           *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
- * not use this file except in compliance with the License. You may obtain a *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
- *                                                                           *
- * --------------------------------------------------------------------------*/
-
+/* -----------------------------------------------------------------------------*
+ *                               SPHinXsys                                      *
+ * -----------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
+ * physical accurate simulation and aims to model coupled industrial dynamic    *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
+ * (smoothed particle hydrodynamics), a meshless computational method using     *
+ * particle discretization.                                                     *
+ *                                                                              *
+ * SPHinXsys is partially funded by German Research Foundation                  *
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
+ * HU1527/12-1 and HU1527/12-4.                                                 *
+ *                                                                              *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and          *
+ * the authors' affiliations.                                                   *
+ *                                                                              *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
+ * not use this file except in compliance with the License. You may obtain a    *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
+ *                                                                              *
+ * -----------------------------------------------------------------------------*/
 /**
  * @file particle_sorting.h
  * @brief Here gives the classes for particle sorting.
@@ -32,7 +31,6 @@
 
 #include "base_data_package.h"
 #include "sph_data_containers.h"
-#include "base_particles.h"
 
 /** this is a reformulation of tbb parallel_sort for particle data */
 namespace tbb
@@ -196,9 +194,7 @@ namespace tbb
 
 namespace SPH
 {
-
-	class RealBody;
-	class BaseCellLinkedList;
+	class BaseParticles;
 
 	template <typename VariableType>
 	struct swapParticleDataValue
@@ -241,7 +237,7 @@ namespace SPH
 		DataAssembleOperation<swapParticleDataValue> swap_particle_data_value_;
 
 	public:
-		explicit SwapSortableParticleData(BaseParticles *base_particles);
+		explicit SwapSortableParticleData(BaseParticles &base_particles);
 		~SwapSortableParticleData(){};
 
 		/** the operator overload for swapping particle data.
@@ -256,34 +252,26 @@ namespace SPH
 	 */
 	class ParticleSorting
 	{
-	private:
-		UniquePtrKeeper<SwapSortableParticleData> swap_particle_ptr_keeper_;
-		UniquePtrKeeper<
-			tbb::interface9::QuickSortParticleRange<size_t *, CompareParticleSequence, SwapSortableParticleData>>
-			quick_sort_particle_range_ptr_keeper_;
-
 	protected:
-		BaseParticles *base_particles_;
+		BaseParticles &base_particles_;
 
 		/** using pointer because it is constructed after particles. */
-		SwapSortableParticleData *swap_sortable_particle_data_;
+		SwapSortableParticleData swap_sortable_particle_data_;
 		CompareParticleSequence compare_;
 		tbb::interface9::QuickSortParticleRange<
-			size_t *, CompareParticleSequence, SwapSortableParticleData> *quick_sort_particle_range_;
+			size_t *, CompareParticleSequence, SwapSortableParticleData> quick_sort_particle_range_;
 		tbb::interface9::QuickSortParticleBody<
 			size_t *, CompareParticleSequence, SwapSortableParticleData>
 			quick_sort_particle_body_;
 
 	public:
 		// the construction is before particles
-		explicit ParticleSorting(RealBody *real_body);
+		explicit ParticleSorting(BaseParticles &base_particles);
 		virtual ~ParticleSorting(){};
-
-		void assignBaseParticles(BaseParticles *base_particles);
 		/** sorting particle data according to the cell location of particles */
 		virtual void sortingParticleData(size_t *begin, size_t size);
 		/** update the reference of sorted data from unsorted data */
 		virtual void updateSortedId();
 	};
 }
-#endif //PARTICLE_SORTING_H
+#endif // PARTICLE_SORTING_H

@@ -21,16 +21,10 @@
  *                                                                              *
  * -----------------------------------------------------------------------------*/
 /**
- * @file 	base_body.h
- * @brief 	This is the base classes of SPH bodies. The real body is for
- *			that with cell linked list and the fictitious one does not.
- * 			Before the definition of the SPH bodies, the shapes with complex
- *			geometries, i.e. those are produced by advanced binary operation,
- * 			such as intersection, should be produced first.
- * 			Then, all shapes used in body definition should be either contain
- * 			or not contain each other.
- *			Partial overlap between them are not permitted.
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @file 	observer_body.h
+ * @brief 	An observer body is designed 
+ * for observing a real body and recording the observed results via observation dynamics.
+ * @author	Luhui Han, Chi Zhang and Xiangyu Hu
  */
 
 #ifndef OBSERVER_BODY_H

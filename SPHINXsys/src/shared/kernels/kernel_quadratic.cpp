@@ -1,6 +1,6 @@
 /**
  * @file 	kernel_hyperbolic.cpp
- * @author	Luhui Han, Chi ZHang, Yongchuan Yu and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang, Yongchuan Yu and Xiangyu Hu
  */
 
 #include "kernel_quadratic.h"

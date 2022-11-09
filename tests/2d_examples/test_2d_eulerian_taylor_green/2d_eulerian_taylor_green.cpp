@@ -48,19 +48,18 @@ class TaylorGreenInitialCondition
 	: public eulerian_compressible_fluid_dynamics::CompressibleFluidInitialCondition
 {
 public:
-	explicit TaylorGreenInitialCondition(EulerianFluidBody &water)
-		: eulerian_compressible_fluid_dynamics::CompressibleFluidInitialCondition(water){};
+	explicit TaylorGreenInitialCondition(SPHBody &sph_body)
+		: eulerian_compressible_fluid_dynamics::CompressibleFluidInitialCondition(sph_body){};
 
-protected:
-	void Update(size_t index_i, Real dt) override
+	void update(size_t index_i, Real dt)
 	{
 		/** initial momentum and energy profile */
 		rho_[index_i] = rho0_f;
 		p_[index_i] = pow(c_f, 2) * rho_[index_i] / gamma_;
 		vel_[index_i][0] = -cos(2.0 * Pi * pos_[index_i][0]) *
-							 sin(2.0 * Pi * pos_[index_i][1]);
+						   sin(2.0 * Pi * pos_[index_i][1]);
 		vel_[index_i][1] = sin(2.0 * Pi * pos_[index_i][0]) *
-							 cos(2.0 * Pi * pos_[index_i][1]);
+						   cos(2.0 * Pi * pos_[index_i][1]);
 		mom_[index_i] = rho_[index_i] * vel_[index_i];
 		Real rho_e = p_[index_i] / (gamma_ - 1.0);
 		E_[index_i] = rho_e + 0.5 * rho_[index_i] * vel_[index_i].normSqr();
@@ -79,9 +78,7 @@ int main(int ac, char *av[])
 	GlobalStaticVariables::physical_time_ = 0.0;
 	/** Tag for computation from restart files. 0: not from restart files. */
 	sph_system.restart_step_ = 0;
-	/** output environment. */
-	InOutput in_output(sph_system);
-	//handle command line arguments
+	IOEnvironment io_environment(sph_system);
 	sph_system.handleCommandlineOptions(ac, av);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
@@ -94,68 +91,57 @@ int main(int ac, char *av[])
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner water_body_inner(water_body);
+	InnerRelation water_body_inner(water_body);
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
 	/** Initial condition with momentum and energy field */
-	TaylorGreenInitialCondition initial_condition(water_body);
+	SimpleDynamics<TaylorGreenInitialCondition> initial_condition(water_body);
 	/** Initialize a time step. */
-	eulerian_compressible_fluid_dynamics::CompressibleFlowTimeStepInitialization time_step_initialization(water_body);
+	SimpleDynamics<eulerian_compressible_fluid_dynamics::CompressibleFlowTimeStepInitialization> time_step_initialization(water_body);
 	/** Periodic BCs in x direction. */
 	PeriodicConditionUsingCellLinkedList periodic_condition_x(water_body, water_body.getBodyShapeBounds(), xAxis);
 	/** Periodic BCs in y direction. */
 	PeriodicConditionUsingCellLinkedList periodic_condition_y(water_body, water_body.getBodyShapeBounds(), yAxis);
 	/** Time step size with considering sound wave speed. */
-	eulerian_compressible_fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_body);
+	ReduceDynamics<eulerian_compressible_fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_body);
 	/** Pressure relaxation algorithm by using verlet time stepping. */
 	/** Here, we can use HLLC with Limiter Riemann solver for pressure relaxation and density and energy relaxation  */
-	eulerian_compressible_fluid_dynamics::PressureRelaxationHLLCWithLimiterRiemannInner pressure_relaxation(water_body_inner);
-	eulerian_compressible_fluid_dynamics::DensityAndEnergyRelaxationHLLCWithLimiterRiemannInner density_and_energy_relaxation(water_body_inner);
+	Dynamics1Level<eulerian_compressible_fluid_dynamics::Integration1stHalfHLLCWithLimiterRiemann> pressure_relaxation(water_body_inner);
+	InteractionWithUpdate<eulerian_compressible_fluid_dynamics::Integration2ndHalfHLLCWithLimiterRiemann> density_and_energy_relaxation(water_body_inner);
 	/** Computing viscous acceleration. */
-	eulerian_compressible_fluid_dynamics::ViscousAccelerationInner viscous_acceleration(water_body_inner);
+	InteractionDynamics<eulerian_compressible_fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_body_inner);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	/** Output the body states. */
-	BodyStatesRecordingToVtp body_states_recording(in_output, sph_system.real_bodies_);
+	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
 	/** Output the body states for restart simulation. */
-	RestartIO restart_io(in_output, sph_system.real_bodies_);
+	RestartIO restart_io(io_environment, sph_system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
-	RegressionTestEnsembleAveraged<BodyReducedQuantityRecording<TotalMechanicalEnergy>>
-		write_total_mechanical_energy(in_output, water_body);
+	RegressionTestEnsembleAveraged<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
+		write_total_mechanical_energy(io_environment, water_body);
 	/** Output the maximum speed of the fluid body. */
-	RegressionTestEnsembleAveraged<BodyReducedQuantityRecording<MaximumSpeed>>
-		write_maximum_speed(in_output, water_body);
+	RegressionTestEnsembleAveraged<ReducedQuantityRecording<ReduceDynamics<MaximumSpeed>>>
+		write_maximum_speed(io_environment, water_body);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
 	//----------------------------------------------------------------------
-	initial_condition.exec();
 	sph_system.initializeSystemCellLinkedLists();
 	periodic_condition_x.update_cell_linked_list_.parallel_exec();
 	periodic_condition_y.update_cell_linked_list_.parallel_exec();
 	sph_system.initializeSystemConfigurations();
-	//----------------------------------------------------------------------
-	//	Load restart file if necessary.
-	//----------------------------------------------------------------------
-	if (sph_system.restart_step_ != 0)
-	{
-		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.restart_step_);
-		water_body.updateCellLinkedList();
-		periodic_condition_x.update_cell_linked_list_.parallel_exec();
-		periodic_condition_y.update_cell_linked_list_.parallel_exec();
-		water_body_inner.updateConfiguration();
-	}
+	initial_condition.parallel_exec();
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
 	size_t number_of_iterations = sph_system.restart_step_;
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
-	Real End_Time = 5.0; /**< End time. */
-	Real D_Time = 0.1;	 /**< Time stamps for output of body states. */
+	Real end_time = 5.0;
+	Real output_interval = 0.1; /**< Time stamps for output of body states. */
 	/** statistics for computing CPU time. */
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
@@ -169,11 +155,11 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Main loop starts here.
 	//----------------------------------------------------------------------
-	while (GlobalStaticVariables::physical_time_ < End_Time)
+	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
 		/** Integrate time (loop) until the next output time. */
-		while (integration_time < D_Time)
+		while (integration_time < output_interval)
 		{
 			/** Acceleration due to viscous force. */
 			time_step_initialization.parallel_exec();

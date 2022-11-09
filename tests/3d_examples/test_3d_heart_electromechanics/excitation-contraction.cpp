@@ -11,7 +11,7 @@
  *			diffusion d = (mm)^(2) * (ms)^(-2)
  */
 #include "sphinxsys.h" // SPHinXsys Library.
-using namespace SPH; // Namespace cite here.
+using namespace SPH;   // Namespace cite here.
 /** Geometry parameter. */
 /** Set the file path to the stl file. */
 std::string full_path_to_stl_file = "./input/heart-new.stl";
@@ -35,7 +35,7 @@ Real b0[4] = {7.209, 20.417, 11.176, 9.466};
 Real poisson = 0.4995;
 Real bulk_modulus = 2.0 * a0[0] * (1.0 + poisson) / (3.0 * (1.0 - 2.0 * poisson));
 /** Electrophysiology parameters. */
-StdVec<std::string> species_name_list{"Phi"};
+std::array<std::string, 1> species_name_list{"Phi"};
 Real diffusion_coff = 0.8;
 Real bias_coff = 0.0;
 /** Electrophysiology parameters. */
@@ -77,22 +77,26 @@ public:
 /** Set diffusion relaxation method. */
 class DiffusionRelaxation
 	: public RelaxationOfAllDiffusionSpeciesRK2<
-		  RelaxationOfAllDiffusionSpeciesInner<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>>
+		  RelaxationOfAllDiffusionSpeciesInner<ElasticSolidParticles, LocallyOrthotropicMuscle>>
 {
 public:
-	explicit DiffusionRelaxation(BodyRelationInner &body_inner_relation)
+	explicit DiffusionRelaxation(InnerRelation &body_inner_relation)
 		: RelaxationOfAllDiffusionSpeciesRK2(body_inner_relation){};
 	virtual ~DiffusionRelaxation(){};
 };
 /** Imposing diffusion boundary condition */
 class DiffusionBCs
-	: public ConstrainDiffusionBodyRegion<SolidBody, ElasticSolidParticles, BodySurface, LocallyOrthotropicMuscle>
+	: public DiffusionReactionSpeciesConstraint<ElasticSolidParticles, LocallyOrthotropicMuscle>
 {
-protected:
-	size_t phi_;
-	virtual void Update(size_t index_i, Real dt = 0.0) override
+public:
+	DiffusionBCs(BodyPartByParticle &body_part, const std::string &species_name)
+		: DiffusionReactionSpeciesConstraint<ElasticSolidParticles, LocallyOrthotropicMuscle>(body_part, species_name),
+		  pos_(particles_->pos_){};
+	virtual ~DiffusionBCs(){};
+
+	void update(size_t index_i, Real dt = 0.0)
 	{
-		Vecd dist_2_face = body_->body_shape_->findNormalDirection(pos_[index_i]);
+		Vecd dist_2_face = sph_body_.body_shape_->findNormalDirection(pos_[index_i]);
 		Vecd face_norm = dist_2_face / (dist_2_face.norm() + 1.0e-15);
 
 		Vecd center_norm = pos_[index_i] / (pos_[index_i].norm() + 1.0e-15);
@@ -100,40 +104,50 @@ protected:
 		Real angle = dot(face_norm, center_norm);
 		if (angle >= 0.0)
 		{
-			species_n_[phi_][index_i] = 1.0;
+			species_[index_i] = 1.0;
 		}
 		else
 		{
-			if (pos_[index_i][1] < -body_->sph_adaptation_->ReferenceSpacing())
-				species_n_[phi_][index_i] = 0.0;
+			if (pos_[index_i][1] < -sph_body_.sph_adaptation_->ReferenceSpacing())
+				species_[index_i] = 0.0;
 		}
 	};
 
-public:
-	DiffusionBCs(SolidBody &body, BodySurface &body_part)
-		: ConstrainDiffusionBodyRegion<SolidBody, ElasticSolidParticles, BodySurface, LocallyOrthotropicMuscle>(body, body_part)
-	{
-		phi_ = material_->SpeciesIndexMap()["Phi"];
-	};
-	virtual ~DiffusionBCs(){};
+protected:
+	StdLargeVec<Vecd> &pos_;
 };
 /** Compute Fiber and Sheet direction after diffusion */
 class ComputeFiberAndSheetDirections
-	: public DiffusionBasedMapping<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>
+	: public DiffusionBasedMapping<ElasticSolidParticles, LocallyOrthotropicMuscle>
 {
 protected:
+	DiffusionReaction<LocallyOrthotropicMuscle> &diffusion_reaction_material_;
 	size_t phi_;
 	Real beta_epi_, beta_endo_;
 	/** We define the centerline vector, which is parallel to the ventricular centerline and pointing  apex-to-base.*/
 	Vecd center_line_;
-	virtual void Update(size_t index_i, Real dt = 0.0) override
+
+public:
+	explicit ComputeFiberAndSheetDirections(SPHBody &sph_body)
+		: DiffusionBasedMapping<ElasticSolidParticles, LocallyOrthotropicMuscle>(sph_body),
+		  diffusion_reaction_material_(particles_->diffusion_reaction_material_)
+
+	{
+		phi_ = diffusion_reaction_material_.SpeciesIndexMap()["Phi"];
+		center_line_ = Vecd(0.0, 1.0, 0.0);
+		beta_epi_ = -(70.0 / 180.0) * M_PI;
+		beta_endo_ = (80.0 / 180.0) * M_PI;
+	};
+	virtual ~ComputeFiberAndSheetDirections(){};
+
+	void update(size_t index_i, Real dt = 0.0)
 	{
 		/**
 		 * Ref: original doi.org/10.1016/j.euromechsol.2013.10.009
 		 * 		Present  doi.org/10.1016/j.cma.2016.05.031
 		 */
 		/** Probe the face norm from Levelset field. */
-		Vecd dist_2_face = body_->body_shape_->findNormalDirection(pos_[index_i]);
+		Vecd dist_2_face = sph_body_.body_shape_->findNormalDirection(pos_[index_i]);
 		Vecd face_norm = dist_2_face / (dist_2_face.norm() + 1.0e-15);
 		Vecd center_norm = pos_[index_i] / (pos_[index_i].norm() + 1.0e-15);
 		if (dot(face_norm, center_norm) <= 0.0)
@@ -149,28 +163,17 @@ protected:
 		Vecd f_0 = cos(beta) * cd_norm + sin(beta) * SimTK::cross(face_norm, cd_norm) +
 				   dot(face_norm, cd_norm) * (1.0 - cos(beta)) * face_norm;
 
-		if (pos_[index_i][1] < -body_->sph_adaptation_->ReferenceSpacing())
+		if (pos_[index_i][1] < -sph_body_.sph_adaptation_->ReferenceSpacing())
 		{
-			material_->local_f0_[index_i] = f_0 / (f_0.norm() + 1.0e-15);
-			material_->local_s0_[index_i] = face_norm;
+			diffusion_reaction_material_.local_f0_[index_i] = f_0 / (f_0.norm() + 1.0e-15);
+			diffusion_reaction_material_.local_s0_[index_i] = face_norm;
 		}
 		else
 		{
-			material_->local_f0_[index_i] = Vecd(0);
-			material_->local_s0_[index_i] = Vecd(0);
+			diffusion_reaction_material_.local_f0_[index_i] = Vecd(0);
+			diffusion_reaction_material_.local_s0_[index_i] = Vecd(0);
 		}
 	};
-
-public:
-	explicit ComputeFiberAndSheetDirections(SolidBody &body)
-		: DiffusionBasedMapping<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>(body)
-	{
-		phi_ = material_->SpeciesIndexMap()["Phi"];
-		center_line_ = Vecd(0.0, 1.0, 0.0);
-		beta_epi_ = -(70.0 / 180.0) * M_PI;
-		beta_endo_ = (80.0 / 180.0) * M_PI;
-	};
-	virtual ~ComputeFiberAndSheetDirections(){};
 };
 //	define shape parameters which will be used for the constrained body part.
 class MuscleBaseShapeParameters : public TriangleMeshShapeBrick::ShapeParameters
@@ -192,7 +195,14 @@ class ApplyStimulusCurrentSI
 protected:
 	size_t voltage_;
 
-	void Update(size_t index_i, Real dt) override
+public:
+	explicit ApplyStimulusCurrentSI(SPHBody &sph_body)
+		: electro_physiology::ElectroPhysiologyInitialCondition(sph_body)
+	{
+		voltage_ = particles_->diffusion_reaction_material_.SpeciesIndexMap()["Voltage"];
+	};
+
+	void update(size_t index_i, Real dt)
 	{
 		if (-30.0 * length_scale <= pos_[index_i][0] && pos_[index_i][0] <= -15.0 * length_scale)
 		{
@@ -205,13 +215,6 @@ protected:
 			}
 		}
 	};
-
-public:
-	explicit ApplyStimulusCurrentSI(SolidBody &muscle)
-		: electro_physiology::ElectroPhysiologyInitialCondition(muscle)
-	{
-		voltage_ = material_->SpeciesIndexMap()["Voltage"];
-	};
 };
 /**
  * application dependent initial condition
@@ -222,7 +225,14 @@ class ApplyStimulusCurrentSII
 protected:
 	size_t voltage_;
 
-	void Update(size_t index_i, Real dt) override
+public:
+	explicit ApplyStimulusCurrentSII(SPHBody &sph_body)
+		: electro_physiology::ElectroPhysiologyInitialCondition(sph_body)
+	{
+		voltage_ = particles_->diffusion_reaction_material_.SpeciesIndexMap()["Voltage"];
+	};
+
+	void update(size_t index_i, Real dt)
 	{
 		if (0.0 <= pos_[index_i][0] && pos_[index_i][0] <= 6.0 * length_scale)
 		{
@@ -234,13 +244,6 @@ protected:
 				}
 			}
 		}
-	};
-
-public:
-	explicit ApplyStimulusCurrentSII(SolidBody &muscle)
-		: electro_physiology::ElectroPhysiologyInitialCondition(muscle)
-	{
-		voltage_ = material_->SpeciesIndexMap()["Voltage"];
 	};
 };
 /**
@@ -280,8 +283,7 @@ int main(int ac, char *av[])
 #ifdef BOOST_AVAILABLE
 	system.handleCommandlineOptions(ac, av);
 #endif
-	/** in- and output environment. */
-	InOutput in_output(system);
+	IOEnvironment io_environment(system);
 	//----------------------------------------------------------------------
 	//	SPH Particle relaxation section
 	//----------------------------------------------------------------------
@@ -289,27 +291,28 @@ int main(int ac, char *av[])
 	if (system.run_particle_relaxation_)
 	{
 		SolidBody herat_model(system, makeShared<Heart>("HeartModel"));
-		herat_model.defineBodyLevelSetShape()->writeLevelSet(herat_model);
-		herat_model.defineParticlesAndMaterial<DiffusionReactionParticles<ElasticSolidParticles>, FiberDirectionDiffusion>();
+		herat_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(io_environment);
+		herat_model.defineParticlesAndMaterial<
+			DiffusionReactionParticles<ElasticSolidParticles, LocallyOrthotropicMuscle>, FiberDirectionDiffusion>();
 		herat_model.generateParticles<ParticleGeneratorLattice>();
 		/** topology */
-		BodyRelationInner herat_model_inner(herat_model);
+		InnerRelation herat_model_inner(herat_model);
 		/** Random reset the relax solid particle position. */
-		RandomizeParticlePosition random_particles(herat_model);
+		SimpleDynamics<RandomizeParticlePosition> random_particles(herat_model);
 		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(herat_model_inner);
 		/** Time step for diffusion. */
-		GetDiffusionTimeStepSize<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle> get_time_step_size(herat_model);
+		GetDiffusionTimeStepSize<ElasticSolidParticles, LocallyOrthotropicMuscle> get_time_step_size(herat_model);
 		/** Diffusion process for diffusion body. */
 		DiffusionRelaxation diffusion_relaxation(herat_model_inner);
 		/** Compute the fiber and sheet after diffusion. */
-		ComputeFiberAndSheetDirections compute_fiber_sheet(herat_model);
+		SimpleDynamics<ComputeFiberAndSheetDirections> compute_fiber_sheet(herat_model);
 		/** Write the body state to Vtp file. */
-		BodyStatesRecordingToVtp write_herat_model_state_to_vtp(in_output, {herat_model});
+		BodyStatesRecordingToVtp write_herat_model_state_to_vtp(io_environment, {herat_model});
 		/** Write the particle reload files. */
-		ReloadParticleIO write_particle_reload_files(in_output, {&herat_model}, {"HeartModel"});
+		ReloadParticleIO write_particle_reload_files(io_environment, herat_model, {"HeartModel"});
 		/** Write material property to xml file. */
-		ReloadMaterialParameterIO write_material_property(in_output, herat_model.base_material_, "FiberDirection");
+		ReloadMaterialParameterIO write_material_property(io_environment, herat_model, "FiberDirection");
 		//----------------------------------------------------------------------
 		//	Physics relaxation starts here.
 		//----------------------------------------------------------------------
@@ -335,7 +338,7 @@ int main(int ac, char *av[])
 
 		BodySurface surface_part(herat_model);
 		/** constraint boundary condition for diffusion. */
-		DiffusionBCs impose_diffusion_bc(herat_model, surface_part);
+		SimpleDynamics<DiffusionBCs, BodySurface> impose_diffusion_bc(surface_part, "Phi");
 		impose_diffusion_bc.parallel_exec();
 
 		write_herat_model_state_to_vtp.writeToFile(ite);
@@ -370,7 +373,7 @@ int main(int ac, char *av[])
 	physiology_heart.defineParticlesAndMaterial<
 		ElectroPhysiologyParticles, LocalMonoFieldElectroPhysiology>(muscle_reaction_model, diffusion_coff, bias_coff, fiber_direction);
 	(!system.run_particle_relaxation_ && system.reload_particles_)
-		? physiology_heart.generateParticles<ParticleGeneratorReload>(in_output, "HeartModel")
+		? physiology_heart.generateParticles<ParticleGeneratorReload>(io_environment, "HeartModel")
 		: physiology_heart.generateParticles<ParticleGeneratorLattice>();
 
 	/** create a SPH body, material and particles */
@@ -378,14 +381,14 @@ int main(int ac, char *av[])
 	mechanics_heart.defineParticlesAndMaterial<
 		ElasticSolidParticles, ActiveMuscle<LocallyOrthotropicMuscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
 	(!system.run_particle_relaxation_ && system.reload_particles_)
-		? mechanics_heart.generateParticles<ParticleGeneratorReload>(in_output, "HeartModel")
+		? mechanics_heart.generateParticles<ParticleGeneratorReload>(io_environment, "HeartModel")
 		: mechanics_heart.generateParticles<ParticleGeneratorLattice>();
 
 	/** check whether reload material properties. */
 	if (!system.run_particle_relaxation_ && system.reload_particles_)
 	{
-		ReloadMaterialParameterIO read_physiology_heart_fiber(in_output, physiology_heart.base_material_, "FiberDirection");
-		ReloadMaterialParameterIO read_mechanics_heart_fiber(in_output, mechanics_heart.base_material_, "FiberDirection");
+		ReloadMaterialParameterIO read_physiology_heart_fiber(io_environment, physiology_heart, "FiberDirection");
+		ReloadMaterialParameterIO read_mechanics_heart_fiber(io_environment, mechanics_heart, "FiberDirection");
 		read_mechanics_heart_fiber.readFromFile();
 		read_physiology_heart_fiber.readFromFile();
 	}
@@ -399,17 +402,17 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	SPHBody relation (topology) section
 	//----------------------------------------------------------------------
-	BodyRelationInner physiology_heart_inner(physiology_heart);
-	BodyRelationInner mechanics_body_inner(mechanics_heart);
-	BodyRelationContact physiology_heart_contact(physiology_heart, {&mechanics_heart});
-	BodyRelationContact mechanics_body_contact(mechanics_heart, {&physiology_heart});
-	BodyRelationContact voltage_observer_contact(voltage_observer, {&physiology_heart});
-	BodyRelationContact myocardium_observer_contact(myocardium_observer, {&mechanics_heart});
+	InnerRelation physiology_heart_inner(physiology_heart);
+	InnerRelation mechanics_body_inner(mechanics_heart);
+	ContactRelation physiology_heart_contact(physiology_heart, {&mechanics_heart});
+	ContactRelation mechanics_body_contact(mechanics_heart, {&physiology_heart});
+	ContactRelation voltage_observer_contact(voltage_observer, {&physiology_heart});
+	ContactRelation myocardium_observer_contact(myocardium_observer, {&mechanics_heart});
 	//----------------------------------------------------------------------
 	//	SPH Method section
 	//----------------------------------------------------------------------
 	// Corrected configuration.
-	solid_dynamics::CorrectConfiguration correct_configuration_excitation(physiology_heart_inner);
+	InteractionDynamics<solid_dynamics::CorrectConfiguration> correct_configuration_excitation(physiology_heart_inner);
 	// Time step size calculation.
 	electro_physiology::GetElectroPhysiologyTimeStepSize get_physiology_time_step(physiology_heart);
 	// Diffusion process for diffusion body.
@@ -418,34 +421,35 @@ int main(int ac, char *av[])
 	electro_physiology::ElectroPhysiologyReactionRelaxationForward reaction_relaxation_forward(physiology_heart);
 	electro_physiology::ElectroPhysiologyReactionRelaxationBackward reaction_relaxation_backward(physiology_heart);
 	//	Apply the Iron stimulus.
-	ApplyStimulusCurrentSI apply_stimulus_s1(physiology_heart);
-	ApplyStimulusCurrentSII apply_stimulus_s2(physiology_heart);
+	SimpleDynamics<ApplyStimulusCurrentSI> apply_stimulus_s1(physiology_heart);
+	SimpleDynamics<ApplyStimulusCurrentSII> apply_stimulus_s2(physiology_heart);
 	// Active mechanics.
-	solid_dynamics::CorrectConfiguration correct_configuration_contraction(mechanics_body_inner);
-	observer_dynamics::CorrectInterpolationKernelWeights correct_kernel_weights_for_interpolation(mechanics_body_contact);
+	InteractionDynamics<solid_dynamics::CorrectConfiguration> correct_configuration_contraction(mechanics_body_inner);
+	InteractionDynamics<observer_dynamics::CorrectInterpolationKernelWeights> correct_kernel_weights_for_interpolation(mechanics_body_contact);
 	/** Interpolate the active contract stress from electrophysiology body. */
-	observer_dynamics::InterpolatingAQuantity<Real>
+	InteractionDynamics<observer_dynamics::InterpolatingAQuantity<Real>>
 		active_stress_interpolation(mechanics_body_contact, "ActiveContractionStress", "ActiveContractionStress");
 	/** Interpolate the particle position in physiology_heart  from mechanics_heart. */
-	observer_dynamics::InterpolatingAQuantity<Vecd>
+	// TODO: this is a bug, we should interpolate displacement other than position.
+	InteractionDynamics<observer_dynamics::InterpolatingAQuantity<Vecd>>
 		interpolation_particle_position(physiology_heart_contact, "Position", "Position");
 	/** Time step size calculation. */
-	solid_dynamics::AcousticTimeStepSize get_mechanics_time_step(mechanics_heart);
+	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> get_mechanics_time_step(mechanics_heart);
 	/** active and passive stress relaxation. */
-	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half(mechanics_body_inner);
-	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(mechanics_body_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> stress_relaxation_first_half(mechanics_body_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half(mechanics_body_inner);
 	/** Constrain region of the inserted body. */
 	MuscleBaseShapeParameters muscle_base_parameters;
 	BodyRegionByParticle muscle_base(mechanics_heart, makeShared<TriangleMeshShapeBrick>(muscle_base_parameters, "Holder"));
-	solid_dynamics::ConstrainSolidBodyRegion constrain_holder(mechanics_heart, muscle_base);
+	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_holder(muscle_base);
 	//----------------------------------------------------------------------
 	//	SPH Output section
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-		write_voltage("Voltage", in_output, voltage_observer_contact);
+		write_voltage("Voltage", io_environment, voltage_observer_contact);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		write_displacement("Position", in_output, myocardium_observer_contact);
+		write_displacement("Position", io_environment, myocardium_observer_contact);
 	//----------------------------------------------------------------------
 	//	 Pre-simulation.
 	//----------------------------------------------------------------------
@@ -464,8 +468,8 @@ int main(int ac, char *av[])
 	int screen_output_interval = 10;
 	int ite = 0;
 	int reaction_step = 2;
-	Real End_Time = 100;
-	Real Ouput_T = End_Time / 200.0;
+	Real end_time = 100;
+	Real Ouput_T = end_time / 200.0;
 	Real Observer_time = 0.01 * Ouput_T;
 	Real dt = 0.0;	 /**< Default acoustic time step sizes for physiology. */
 	Real dt_s = 0.0; /**< Default acoustic time step sizes for mechanics. */
@@ -475,7 +479,7 @@ int main(int ac, char *av[])
 	std::cout << "Main Loop Starts Here : "
 			  << "\n";
 	/** Main loop starts here. */
-	while (GlobalStaticVariables::physical_time_ < End_Time)
+	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
 		while (integration_time < Ouput_T)
@@ -529,7 +533,7 @@ int main(int ac, char *av[])
 					if (dt - dt_s_sum < dt_s)
 						dt_s = dt - dt_s_sum;
 					stress_relaxation_first_half.parallel_exec(dt_s);
-					constrain_holder.parallel_exec(dt_s);
+					constraint_holder.parallel_exec(dt_s);
 					stress_relaxation_second_half.parallel_exec(dt_s);
 					dt_s_sum += dt_s;
 				}

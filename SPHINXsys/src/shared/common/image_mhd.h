@@ -122,10 +122,10 @@ namespace SPH {
 		Real get_min_value() { return min_value_; };
 		Real get_max_value() { return max_value_; };
 
-		Vec3d findClosestPoint(const Vec3d& input_pnt);
+		Vec3d findClosestPoint(const Vec3d& probe_point);
 		BoundingBox findBounds();
-		Real findValueAtPoint(const Vec3d& input_pnt);
-		Vec3d findNormalAtPoint(const Vec3d & input_pnt);
+		Real findValueAtPoint(const Vec3d& probe_point);
+		Vec3d findNormalAtPoint(const Vec3d & probe_point);
 
 		void write(std::string filename, Output_Mode=BINARY);
 
@@ -151,7 +151,7 @@ namespace SPH {
 		Real max_value_;
 		T *data_;
 
-		std::vector<int> findNeighbors(const Vec3d& input_pnt, Vec3i& this_cell);
+		std::vector<int> findNeighbors(const Vec3d& probe_point, Vec3i& this_cell);
 		Vec3d computeGradientAtCell(int i);
 		Vec3d computeNormalAtCell(int i);
 		T getValueAtCell(int i);

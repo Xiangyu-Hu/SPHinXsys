@@ -84,7 +84,7 @@ public:
 private:
 	void tagManually(size_t index_i)
 	{
-		if (base_particles_->pos_[index_i][1] < 0.0 || base_particles_->pos_[index_i][1] > height - 0.5 * particle_spacing_ref)
+		if (base_particles_.pos_[index_i][1] < 0.0 || base_particles_.pos_[index_i][1] > height - 0.5 * particle_spacing_ref)
 		{
 			body_part_particles_.push_back(index_i);
 		}
@@ -117,7 +117,7 @@ int main(int ac, char *av[])
 
 	/** Create a Cylinder body. */
 	SolidBody cylinder_body(system, makeShared<DefaultShape>("CylinderBody"));
-	cylinder_body.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	cylinder_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	cylinder_body.generateParticles<CylinderParticleGenerator>();
 	/** Define Observer. */
 	ObserverBody cylinder_observer(system, "CylinderObserver");
@@ -127,38 +127,37 @@ int main(int ac, char *av[])
 	 *  The contact map gives the data connections between the bodies
 	 *  basically the the range of bodies to build neighbor particle lists
 	 */
-	BodyRelationInner cylinder_body_inner(cylinder_body);
-	BodyRelationContact cylinder_observer_contact(cylinder_observer, {&cylinder_body});
+	InnerRelation cylinder_body_inner(cylinder_body);
+	ContactRelation cylinder_observer_contact(cylinder_observer, {&cylinder_body});
 
 	/** Common particle dynamics. */
-	TimeDependentExternalForce external_force(Vec3d(0.0, 0.0, gravitational_acceleration));
-	TimeStepInitialization initialize_external_force(cylinder_body, external_force);
+	SimpleDynamics<TimeStepInitialization> initialize_external_force(cylinder_body, 
+		makeShared<TimeDependentExternalForce>(Vec3d(0.0, 0.0, gravitational_acceleration)));
 
 	/**
 	 * This section define all numerical methods will be used in this case.
 	 */
 	/** Corrected configuration. */
-	thin_structure_dynamics::ShellCorrectConfiguration
+	InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration>
 		corrected_configuration(cylinder_body_inner);
 	/** Time step size calculation. */
-	thin_structure_dynamics::ShellAcousticTimeStepSize computing_time_step_size(cylinder_body);
+	ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(cylinder_body);
 	/** stress relaxation. */
-	thin_structure_dynamics::ShellStressRelaxationFirstHalf
+	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf>
 		stress_relaxation_first_half(cylinder_body_inner);
-	thin_structure_dynamics::ShellStressRelaxationSecondHalf
+	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf>
 		stress_relaxation_second_half(cylinder_body_inner);
 	BoundaryGeometry boundary_geometry(cylinder_body, "BoundaryGeometry");
-	solid_dynamics::ConstrainSolidBodyRegionVelocity
-		constrain_holder(cylinder_body, boundary_geometry, Vecd(0.0, 1.0, 0.0));
-	DampingWithRandomChoice<DampingBySplittingInner<Vecd>>
+	SimpleDynamics<solid_dynamics::FixedInAxisDirection, BoundaryGeometry> constrain_holder(boundary_geometry, Vecd(0.0, 1.0, 0.0));
+	DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vecd>>>
 		cylinder_position_damping(0.2, cylinder_body_inner, "Velocity", physical_viscosity);
-	DampingWithRandomChoice<DampingBySplittingInner<Vecd>>
+	DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vecd>>>
 		cylinder_rotation_damping(0.2, cylinder_body_inner, "AngularVelocity", physical_viscosity);
 	/** Output */
-	InOutput in_output(system);
-	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
+	IOEnvironment io_environment(system);
+	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		write_cylinder_max_displacement("Position", in_output, cylinder_observer_contact);
+		write_cylinder_max_displacement("Position", io_environment, cylinder_observer_contact);
 
 	/** Apply initial condition. */
 	system.initializeSystemCellLinkedLists();

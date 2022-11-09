@@ -15,7 +15,7 @@ namespace SPH
 {
 	//=============================================================================================//
 	SolidParticles::SolidParticles(SPHBody &sph_body, Solid *solid)
-		: BaseParticles(sph_body, solid) {}
+		: BaseParticles(sph_body, solid), solid_(*solid) {}
 	//=================================================================================================//
 	void SolidParticles::initializeOtherVariables()
 	{
@@ -33,15 +33,15 @@ namespace SPH
 		registerVariable(B_, "CorrectionMatrix", Matd(1.0));
 	}
 	//=================================================================================================//
-	Vecd SolidParticles::getKernelGradient(size_t index_i, size_t index_j, Real dW_ij, Vecd &e_ij)
+	Vecd SolidParticles::getKernelGradient(size_t index_i, size_t index_j, Real dW_ijV_j, Vecd &e_ij)
 	{
-		return 0.5 * dW_ij * (B_[index_i] + B_[index_j]) * e_ij;
+		return 0.5 * dW_ijV_j * (B_[index_i] + B_[index_j]) * e_ij;
 	}
 	//=============================================================================================//
 	ElasticSolidParticles::
 		ElasticSolidParticles(SPHBody &sph_body, ElasticSolid *elastic_solid)
 		: SolidParticles(sph_body, elastic_solid),
-		  elastic_solid_(elastic_solid) {}
+		  elastic_solid_(*elastic_solid) {}
 	//=================================================================================================//
 	void ElasticSolidParticles::initializeOtherVariables()
 	{
@@ -70,7 +70,7 @@ namespace SPH
 		addDerivedVariableToWrite<VonMisesStrain>();
 		addVariableToRestart<Matd>("DeformationGradient");
 		// get which stress measure is relevant for the material
-		stress_measure_ = elastic_solid_->getRelevantStressMeasureName();
+		stress_measure_ = elastic_solid_.getRelevantStressMeasureName();
 	}
 	//=================================================================================================//
 	Matd ElasticSolidParticles::getGreenLagrangeStrain(size_t particle_i)
@@ -88,13 +88,13 @@ namespace SPH
 	Matd ElasticSolidParticles::getStressCauchy(size_t particle_i)
 	{
 		Matd F = F_[particle_i];
-		Matd stress_PK2 = elastic_solid_->StressPK2(F, particle_i);
+		Matd stress_PK2 = elastic_solid_.StressPK2(F, particle_i);
 		return (1.0 / det(F)) * F * stress_PK2 * ~F;
 	}
 	//=================================================================================================//
 	Matd ElasticSolidParticles::getStressPK2(size_t particle_i)
 	{
-		return elastic_solid_->StressPK2(F_[particle_i], particle_i);
+		return elastic_solid_.StressPK2(F_[particle_i], particle_i);
 	}
 	//=================================================================================================//
 	Vecd ElasticSolidParticles::getPrincipalStresses(size_t particle_i)
@@ -137,7 +137,7 @@ namespace SPH
 			}
 			else if (strain_measure == "dynamic")
 			{
-				strain = getVonMisesStrainDynamic(index_i, elastic_solid_->PoissonRatio());
+				strain = getVonMisesStrainDynamic(index_i, elastic_solid_.PoissonRatio());
 			}
 			else
 			{
@@ -160,7 +160,7 @@ namespace SPH
 			}
 			else if (strain_measure == "dynamic")
 			{
-				strain = getVonMisesStrainDynamic(index_i, elastic_solid_->PoissonRatio());
+				strain = getVonMisesStrainDynamic(index_i, elastic_solid_.PoissonRatio());
 			}
 			else
 			{

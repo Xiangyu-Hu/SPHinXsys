@@ -1,6 +1,6 @@
 /**
  * @file 	geometric_shape.cpp
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Luhui Han, Chi Zhang and Xiangyu Hu
  */
 
 #include "geometric_shape.h"
@@ -21,14 +21,14 @@ namespace SPH
         }
     }
     //=================================================================================================//
-    bool GeometricShapeBox::checkContain(const Vec2d &pnt, bool BOUNDARY_INCLUDED)
+    bool GeometricShapeBox::checkContain(const Vec2d &probe_point, bool BOUNDARY_INCLUDED)
     {
-        return ABS(pnt[0]) < halfsize_[0] && ABS(pnt[1]) < halfsize_[1];
+        return ABS(probe_point[0]) < halfsize_[0] && ABS(probe_point[1]) < halfsize_[1];
     }
     //=================================================================================================//
-    Vec2d GeometricShapeBox::findClosestPoint(const Vec2d &pnt)
+    Vec2d GeometricShapeBox::findClosestPoint(const Vec2d &probe_point)
     {
-        return multi_polygon_.findClosestPoint(pnt);
+        return multi_polygon_.findClosestPoint(probe_point);
         ;
     }
     //=================================================================================================//
@@ -41,18 +41,18 @@ namespace SPH
                                            const std::string &shape_name)
         : Shape(shape_name), center_(center), radius_(radius) {}
     //=================================================================================================//
-    bool GeometricShapeBall::checkContain(const Vec2d &pnt, bool BOUNDARY_INCLUDED)
+    bool GeometricShapeBall::checkContain(const Vec2d &probe_point, bool BOUNDARY_INCLUDED)
     {
-        return (pnt - center_).norm() < radius_;
+        return (probe_point - center_).norm() < radius_;
     }
     //=================================================================================================//
-    Vec2d GeometricShapeBall::findClosestPoint(const Vec2d &pnt)
+    Vec2d GeometricShapeBall::findClosestPoint(const Vec2d &probe_point)
     {
-        Vec2d displacement = pnt - center_;
+        Vec2d displacement = probe_point - center_;
         Real distance = displacement.norm();
         Real cosine = (SGN(displacement[0]) * (ABS(displacement[0])) + TinyReal) / (distance + TinyReal);
         Real sine = displacement[1] / (distance + TinyReal);
-        return pnt + (radius_ - distance) * Vec2d(cosine, sine);
+        return probe_point + (radius_ - distance) * Vec2d(cosine, sine);
     }
     //=================================================================================================//
     BoundingBox GeometricShapeBall::findBounds()
