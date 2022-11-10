@@ -24,10 +24,6 @@
  * @file 	level_set_shape.h
  * @brief 	Here, we define geometry based on level set technique.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef LEVEL_SET_SHAPE_H

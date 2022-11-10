@@ -24,10 +24,6 @@
  * @file 	image_shape.h
  * @brief 	Geometry processing with image shape.
  * @author	Yijin Mao, Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef IMAGE_SHAPE_3D_H

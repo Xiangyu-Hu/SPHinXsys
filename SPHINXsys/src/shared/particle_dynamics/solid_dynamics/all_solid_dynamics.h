@@ -25,10 +25,6 @@
  * @brief   This is the header file that user code should include to pick up all
  *          solid dynamics used in SPHinXsys. 
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #pragma once

@@ -26,10 +26,6 @@
  * 			any variables.
  * 			Note that, currently, these classes works only in single resolution.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef PARTICLE_DYNAMICS_DISSIPATION_H

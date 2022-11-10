@@ -30,10 +30,6 @@
  *          handles all of the bookkeeping of system indices and provides convenience
  *          access to variable values (incl. derivatives) via their names as strings.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef STATE_ENGINE_SIMBODY_H

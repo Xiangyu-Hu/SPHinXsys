@@ -24,13 +24,6 @@
  * @file 	base_data_type.h
  * @brief 	This is the date type definition for SPHinXsys. 
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
- * @version 1.0
- *		    Replace the self-fined bounding box with the AlignedBox from eigen. 
- *		   	Further implementation to be done ...
  */
 
 #ifndef BASE_DATA_TYPE_H

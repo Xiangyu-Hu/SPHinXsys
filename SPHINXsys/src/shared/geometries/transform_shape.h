@@ -24,10 +24,6 @@
  * @file 	transform_shape.h
  * @brief 	transformation related class for geometries.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef TRANSFORM_SHAPE_H

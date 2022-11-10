@@ -26,10 +26,6 @@
  * @details 	We consider here weakly compressible fluids. The algorithms may be
  * 			different for free surface flow and the one without free surface.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef FLUID_DYNAMICS_INNER_H

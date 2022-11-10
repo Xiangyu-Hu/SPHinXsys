@@ -24,10 +24,6 @@
  * @file 	large_data-container.h
  * @brief 	Data container for large vector, e.g. particle data. 
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 #ifndef LARGE_DATA_CONTAINER_H
 #define LARGE_DATA_CONTAINER_H

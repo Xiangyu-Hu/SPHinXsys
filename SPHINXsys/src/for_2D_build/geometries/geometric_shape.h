@@ -24,10 +24,6 @@
  * @file 	geometric_shape.h
  * @brief 	Here, we define shapes represented directly by geometric elements.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef GEOMETRIC_SHAPE_H

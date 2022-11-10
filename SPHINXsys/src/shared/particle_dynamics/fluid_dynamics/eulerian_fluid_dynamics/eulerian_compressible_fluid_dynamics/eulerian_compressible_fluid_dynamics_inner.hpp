@@ -25,10 +25,6 @@
  * @brief 	Here, we define the algorithm classes for eulerian fluid dynamics within the body.
  * @details We consider here compressible fluids.
  * @author	Zhentong Wang, Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef EULERIAN_COMPRESSIBLE_FLUID_DYNAMICS_INNER_HPP

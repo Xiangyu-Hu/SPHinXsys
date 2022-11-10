@@ -26,10 +26,6 @@
  * 			interaction between particles. These interactions are used to define  
  *			differential operators for surface forces or fluxes in continuum mechanics
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef BASE_PARTICLE_DYNAMICS_H

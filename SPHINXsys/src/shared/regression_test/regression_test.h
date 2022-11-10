@@ -21,14 +21,10 @@
  *                                                                          *
  * ------------------------------------------------------------------------*/
 /**
-* @file     regression_test.h
-* @brief    This is the header file that user code should include to pick up all 
-*           the regression test method used in SPHinXsys.
+ * @file     regression_test.h
+ * @brief    This is the header file that user code should include to pick up all 
+ *           the regression test method used in SPHinXsys.
  * @author	Bo Zhang , Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #pragma once

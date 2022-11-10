@@ -24,10 +24,6 @@
  * @file 	riemann_solvers.h
  * @brief 	This is the collection of Riemann solvers. 
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef RIEMANN_SOLVER_H

@@ -24,10 +24,6 @@
  * @file 	image_mesh_shape.h
  * @brief 	Immage process for geometry representation. 
  * @author	Yijin Mao
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef IMAGE_MHD_HPP

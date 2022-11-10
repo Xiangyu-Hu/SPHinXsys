@@ -24,10 +24,6 @@
  * @file 	general_dynamics.h
  * @brief 	This is the particle dynamics applicable for all type bodies
  * @author	Chi Zhang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef GENERAL_DYNAMICS_H

@@ -24,10 +24,6 @@
  * @file 	base_body_relation.h
  * @brief 	Base classes on body and particle topology relations.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
  
 #ifndef BASE_BODY_RELATION_H

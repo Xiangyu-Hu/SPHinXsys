@@ -25,10 +25,6 @@
  * @brief 	Here, we define the algorithm classes for thin structure dynamics.
  * @details We consider here a weakly compressible solids.
  * @author	Dong Wu, Chi Zhang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef THIN_STRUCTURE_DYNAMICS_H

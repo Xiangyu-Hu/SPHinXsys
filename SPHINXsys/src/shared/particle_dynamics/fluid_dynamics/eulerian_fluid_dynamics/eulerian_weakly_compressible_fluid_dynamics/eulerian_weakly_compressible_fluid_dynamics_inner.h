@@ -26,10 +26,6 @@
  * @details We consider here weakly compressible fluids.
  *			TODO: It seems that the eulerian and Lagrangian formulation can be merged together
  * @author	Zhentong Wang, Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #pragma once

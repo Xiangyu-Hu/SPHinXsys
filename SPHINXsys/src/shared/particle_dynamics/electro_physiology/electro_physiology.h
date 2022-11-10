@@ -25,10 +25,6 @@
  * @brief 	In is file, we declaim the dynamics relevant to electrophysiology,
  * 			including diffusion, reaction and muscle activation.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef ELECTRO_PHYSIOLOGY_H

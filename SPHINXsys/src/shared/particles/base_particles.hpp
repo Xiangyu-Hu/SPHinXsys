@@ -24,11 +24,6 @@
  * @file 	base_particles.hpp
  * @brief 	This is the implementation of the template functions in base_particles.h
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *          It seems a bug at function registerVariable with variable_addrs[i] = initialization;
- *			-- Chi ZHANG
  */
 
 #ifndef BASE_PARTICLES_HPP

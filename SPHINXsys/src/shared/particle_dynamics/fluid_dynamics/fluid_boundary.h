@@ -25,10 +25,6 @@
  * @brief 	Here, we define the boundary condition classes for fluid dynamics.
  * @details The boundary conditions very often based on different types of buffers.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef FLUID_BOUNDARY_H

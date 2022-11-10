@@ -26,10 +26,6 @@
  *			is saved in separated large vectors. Each derived class will introduce several extra
  * 			vectors for the new data. Note that there is no class of single particle.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef BASE_PARTICLES_H

@@ -24,10 +24,6 @@
  * @file 	kernel_laguerre_gauss.h
  * @brief 	This is the class for laguerre gauss kernel. 
  * @author	Zhentong Wang, Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef KERNEL_LAGUERRE_GAUSS_H

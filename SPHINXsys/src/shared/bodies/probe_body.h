@@ -31,11 +31,6 @@
  * 			or not contain each other.
  *			Partial overlap between them are not permitted.
  * @author	Chi ZHang and Xiangyu Hu
-* @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- * @note	This body is changed from ObserverBody
- *			-- Chi ZHANG
  */
 
 #ifndef PROBE_BODY_H

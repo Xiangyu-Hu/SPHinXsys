@@ -26,10 +26,6 @@
 * @details 	The idea is to define complex geometry by passing stl, obj or other 
 *			polymesh files. TODO: the translation needs to be generalized into transform.
 * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef TRIANGULAR_MESH_SHAPE_H

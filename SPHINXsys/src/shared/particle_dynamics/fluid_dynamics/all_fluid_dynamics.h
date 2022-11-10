@@ -28,10 +28,6 @@
  *          then algorithm interacting with wall is defined, further algorithms 
  *          for multiphase flow interaction built upon these basic algorithms.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #pragma once

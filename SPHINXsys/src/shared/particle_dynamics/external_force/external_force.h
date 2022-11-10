@@ -25,10 +25,6 @@
  * @brief 	Here, we define the base external force class.
  * @details The simple derived classes, such as gravity will be defined in applications.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef EXTERNAL_FORCE_H

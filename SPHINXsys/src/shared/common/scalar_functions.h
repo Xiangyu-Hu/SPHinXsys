@@ -24,10 +24,6 @@
  * @file 	scalar_functions.h
  * @brief 	Base scalar function definition.  
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 #ifndef SCALAR_FUNCTIONS_H
 #define SCALAR_FUNCTIONS_H

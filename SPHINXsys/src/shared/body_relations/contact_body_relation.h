@@ -26,10 +26,6 @@
  * 			and the corresponding local topologies (particle configurations)
  * 			are constructed in these classes.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef CONTACT_BODY_RELATION_H

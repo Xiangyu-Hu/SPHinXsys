@@ -27,12 +27,6 @@
  * 			Several more complex materials, including neo-Hookean, FENE neo-Hookean
  *			and anisotropic muscle, are derived from the basic elastic solid class. 
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			Move the defination of OrthotropicSolid class to for_3D_Build folder
- *			As its only for 3D problems. 
- *			-- Chi ZHANG
  */
 
 #ifndef ELASTIC_SOLID_H

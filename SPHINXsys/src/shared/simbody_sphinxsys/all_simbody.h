@@ -24,10 +24,6 @@
  * @file    all_simbody.h
  * @brief   headers for SimBody engien. 
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef ALL_SIMBODY_H

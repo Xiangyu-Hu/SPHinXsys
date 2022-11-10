@@ -24,10 +24,6 @@
  * @file 	all_particle_generator.h
  * @brief 	Head file for all particle generator. 
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef ALL_PARTICLE_GENERATORS_3D_H

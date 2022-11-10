@@ -25,10 +25,6 @@
  * @brief 	Define the base classes Shape, BinaryShape and Edge,
  * 			which are the base classes for all geometries.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef BASE_GEOMETRY_H

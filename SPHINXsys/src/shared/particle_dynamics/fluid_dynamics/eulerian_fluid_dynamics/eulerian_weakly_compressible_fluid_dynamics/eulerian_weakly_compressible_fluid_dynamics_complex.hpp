@@ -26,10 +26,6 @@
  * 			which is involving with either solid walls (with suffix WithWall)
  * 			or/and other bodies treated as wall for the fluid (with suffix Complex).
  * @author	Zhentong Wang, Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef EULERIAN_WEAKLY_COMPRESSIBLE_FLUID_DYNAMICS_COMPLEX_HPP

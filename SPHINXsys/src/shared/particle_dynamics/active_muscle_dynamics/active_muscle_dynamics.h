@@ -24,16 +24,6 @@
  * @file 	active_muscle_dynamics.h
  * @brief 	In is file, we declare muscle dynamics which is driven by an external injection of energy.
  * @author	Chi ZHang and Xiangyu Hu
- * @version 0.3.1
- *			Here, we need identify the physical differences between electrophysiology and active muscle.
- *			The former is on the diffusion and electro-chemical reaction happens in tissue.
- *			The latter is for muscle dynamics which is driven by an external injection of energy.
- *			As the naming of class, function and variables in this code need be based on physics.
- *			We will identify physical differences by properly choosing names.
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef ACTIVE_MUSCLE_DYNAMICS_H

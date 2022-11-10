@@ -24,10 +24,7 @@
  * @file 	constraint_dynamics.h
  * @brief 	Here, we define the algorithm classes for solid dynamics.
  * @details We consider here a weakly compressible solids.
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
+ * @author	Chi ZHang and Xiangyu Hu
  */
 
 #ifndef CONSTRAINT_DYNAMICS_H

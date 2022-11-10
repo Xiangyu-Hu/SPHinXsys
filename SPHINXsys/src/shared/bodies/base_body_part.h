@@ -25,10 +25,6 @@
  * @brief 	This is the base classes of body parts.
  * @details	There two main type of body parts. One is part by particle.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
  
 #ifndef BASE_BODY_PART_H

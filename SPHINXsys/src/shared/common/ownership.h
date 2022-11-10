@@ -36,10 +36,6 @@
  * 			the smart pointer is used only when the memory is allocated.
  *          After that, we take reference or raw pointer out and use them as observer.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 #ifndef OWNERSHIP_H
 #define OWNERSHIP_H

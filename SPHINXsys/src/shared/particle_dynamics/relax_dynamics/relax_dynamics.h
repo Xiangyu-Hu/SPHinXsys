@@ -25,11 +25,6 @@
  * @brief 	This is the classes of particle relaxation in order to produce body fitted
  * 			initial particle distribution.
  * @author	Chi ZHang and Xiangyu Hu
- * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef RELAX_DYNAMICS_H

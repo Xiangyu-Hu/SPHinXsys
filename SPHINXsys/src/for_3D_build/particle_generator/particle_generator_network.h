@@ -25,10 +25,6 @@
  * @brief 	This is a class of particle generator, which generates particles
  * 			with in network or tree form.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef PARTICLE_GENERATOR_NETWORK_H

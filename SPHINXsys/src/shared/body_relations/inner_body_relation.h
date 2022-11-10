@@ -24,10 +24,6 @@
  * @file 	inner_body_relation.h
  * @brief 	The topological relations within the body.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef INNER_BODY_RELATION_H

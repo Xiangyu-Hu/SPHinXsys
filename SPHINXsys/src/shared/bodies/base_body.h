@@ -30,10 +30,6 @@
  * 			Then, all shapes used in body definition should be either contain
  * 			or not contain each other. Partial overlap between them are not permitted.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef BASE_BODY_H

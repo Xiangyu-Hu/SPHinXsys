@@ -24,10 +24,6 @@
  * @file 	particle_iterators.h
  * @brief 	This is for the base functions for particle iterator.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef PARTICLE_ITERATORS_H

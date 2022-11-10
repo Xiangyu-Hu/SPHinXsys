@@ -27,10 +27,6 @@
  * @details The eulerian fluid dynamics algorithms begin for fluid bulk without boundary condition,
  *          then algorithm interacting with wall is defined.
  * @author	Zhentong Wang, Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #pragma once

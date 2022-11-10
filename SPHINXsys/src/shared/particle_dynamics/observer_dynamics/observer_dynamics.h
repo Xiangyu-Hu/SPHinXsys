@@ -25,10 +25,6 @@
  * @brief 	There are the classes for observing and recording the state of the flow or
  *			solid in given locations. Mostly, this is done by an interpolation algorithm.   
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef OBSERVER_DYNAMICS_H

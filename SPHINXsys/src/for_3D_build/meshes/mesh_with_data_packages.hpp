@@ -25,10 +25,6 @@
  * @brief 	This class is designed to save memory and increase computational efficiency on mesh.
  *			TODO: the connection between successive meshes in refined mesh should enhanced.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef MESH_WITH_DATA_PACKAGES_3D_HPP

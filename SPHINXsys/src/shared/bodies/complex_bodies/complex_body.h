@@ -27,10 +27,6 @@
  * 			The secondary structure will be used or even created by the corresponding
  * 			particle generator.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef COMPLEX_BODY_H

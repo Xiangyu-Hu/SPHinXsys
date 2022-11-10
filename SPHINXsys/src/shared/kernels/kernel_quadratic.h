@@ -24,16 +24,6 @@
  * @file 	kernel_quadratic.h
  * @brief 	Here, we define quadratic kernel functions but not fully implemented it yet.
  * @author	Chi ZHang and Xiangyu Hu
- * @version 0.1 
- *			This kernel function is very simple. 
- * 			I put here because some references use it for solid dynamics.
- * 			However, I am quite skeptical on it application in fluid dynamics, 
- * 			in which the first order consistency correction is not applied.
- *			Xiangyu HU
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef KERNEL_QUADRATIC_H

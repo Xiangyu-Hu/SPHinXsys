@@ -24,12 +24,6 @@
  * @file 	thin_structure_math.h
  * @brief 	Here, we define the math operation for thin structure dynamics. 
  * @author	Dong Wu and Xiangyu Hu
- * @version	0.1
- *			Base math for shell dynamics. 
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef THIN_STRUCTURE_MATH_H

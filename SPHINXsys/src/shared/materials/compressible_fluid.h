@@ -25,10 +25,6 @@
  * @brief 	Describe the compressible fluid which is used 
  * 			model compressible fluids. Here, we have ideal gas equation of states. 
  * @author	Chi ZHang, Zhentong Wang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #pragma once

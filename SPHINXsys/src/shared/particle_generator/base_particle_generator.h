@@ -26,10 +26,6 @@
  * 			with given positions and volumes. The direct generator simply generate
  * 			particle with given position and volume.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef BASE_PARTICLE_GENERATOR_H

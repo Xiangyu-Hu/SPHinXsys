@@ -24,10 +24,6 @@
  * @file    all_particle_dynamics.h
  * @brief   Head file for all particle dynamics. 
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef ALL_PARTICLE_DYNAMICS_H

@@ -23,11 +23,7 @@
 /**
  * @file 	general_life_time_dynamics.h
  * @brief 	Classes on life time related events.
- * @author	Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #pragma once

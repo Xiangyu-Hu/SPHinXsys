@@ -25,10 +25,6 @@
  * @brief 	This is for the base classes of local particle dynamics, which describe the
  * 			dynamics of a particle.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef BASE_LOCAL_DYNAMICS_H

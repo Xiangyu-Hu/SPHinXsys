@@ -24,14 +24,6 @@
  * @file 	kernel_tabulated.hpp
  * @brief 	This is the class for tabulated kernels using template.
  * @author	Yongchuan Yu, Massoud Rezevand, Chi ZHang and Xiangyu Hu
- * @version 0.1
- *			This kernel tabulate a kernel function
- * 			so that computing any kernel will have cost the same amount of time.
- *			Yongchuan Yu, Massoud Rezevand, Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef KERNEL_TABULATED_HPP

@@ -25,10 +25,6 @@
  * @brief 	Here, we define the a container of different type of shapes, which allow
  * 			the boolean operation between the different type of shapes. The shapes
  * 			can be defined previously and add to this complex shapes container.
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef COMPLEX_SHAPE_H

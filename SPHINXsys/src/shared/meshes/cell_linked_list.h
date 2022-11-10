@@ -27,10 +27,6 @@
  * @details The cell linked list saves for each body a list of particles
  * 			located within the cell.
  * @author	Chi ZHang, Yongchuan and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef MESH_CELL_LINKED_LIST_H

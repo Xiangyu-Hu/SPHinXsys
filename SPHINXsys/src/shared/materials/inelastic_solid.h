@@ -27,10 +27,6 @@
  * 			Several more complex materials, including neo-hookean, FENE noe-hookean
  *			and anisotropic muscle, are derived from the basic elastic solid class.
  * @author	Xiangyu Hu and Chi Zhang
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 #pragma once
 

@@ -24,10 +24,6 @@
  * @file 	level_set.h
  * @brief 	Level set is a function which is defined as signed distance to a surface or interface.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef LEVEL_SET_H

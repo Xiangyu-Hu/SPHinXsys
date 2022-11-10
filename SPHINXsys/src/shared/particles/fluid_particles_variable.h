@@ -25,11 +25,6 @@
  * @brief 	Here, we define the algorithm classes for computing derived solid dynamics variables. 
  * @details These variable can be added into variable list for state output.  
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
- *          TO BE ADDED. 
  */
 
 #ifndef FLUID_PARTICLES_VARIABLE_H

@@ -24,10 +24,6 @@
  * @file 	vector_functions.h
  * @brief 	Basic functions for vector type data. 
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 #ifndef SMALL_VECTORS_H
 #define SMALL_VECTORS_H

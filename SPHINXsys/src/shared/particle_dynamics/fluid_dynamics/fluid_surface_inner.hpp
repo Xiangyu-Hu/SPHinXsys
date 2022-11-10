@@ -25,10 +25,6 @@
  * @brief 	Here, we define the algorithm classes for fluid surfaces.
  * @details Fluid indicators are mainly used here to classify different region in a fluid.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #pragma once

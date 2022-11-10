@@ -25,10 +25,6 @@
  * @brief 	This is the base classes for introducing the parameterization 
  *			of a class or method.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef SPHINXSYS_PARAMETERIZATION_H

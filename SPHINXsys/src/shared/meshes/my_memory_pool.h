@@ -28,10 +28,6 @@
  *			The latter must satisfy the subset of the allocator requirements from the [allocator.requirements] ISO C++ Standard section. 
  *			A memory_pool meet the Memory Pool named requirement.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef MY_MEMORY_POOL_H

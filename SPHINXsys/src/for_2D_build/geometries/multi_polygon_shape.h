@@ -30,10 +30,6 @@
 * 			This strict requirement suggests that complex shapes should be finished
 * 			already in modeling using related binary operations before it is included.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0multi_poly_
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef MULTI_POLYGON_SHAPE_H

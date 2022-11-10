@@ -26,10 +26,6 @@
  * 			model incompressible fluids. Here, we have included several equation of states.
  * 			Futhermore, A typical non-newtonian fluid model is included.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef WEAKLY_COMPRESSIBLE_FLUID_H

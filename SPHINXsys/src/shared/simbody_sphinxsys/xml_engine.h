@@ -24,10 +24,6 @@
  * @file 	xml_engine.h
  * @brief 	XML class for xml input and output, this is GUI of simbody xml parser.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
  
 #ifndef XML_ENGINE_SIMBODY_H

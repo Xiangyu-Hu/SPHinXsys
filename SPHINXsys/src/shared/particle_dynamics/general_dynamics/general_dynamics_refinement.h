@@ -24,10 +24,6 @@
  * @file 	general_dynamics_refinement.h
  * @brief 	TODO: these classes should be improved on easy understanding and proper memory usage.
  * @author	Yijie Sun and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #pragma once

@@ -24,10 +24,6 @@
  * @file 	kernel_cubic_B_spline.h
  * @brief 	This is the class for cubic_B_spline kernel.
  * @author	Zhentong Wang, Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef KERNEL_CUBIC_B_SPLINE_H

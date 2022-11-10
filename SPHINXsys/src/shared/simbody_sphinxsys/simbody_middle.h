@@ -24,10 +24,6 @@
  * @file 	simbody_middle.h
  * @brief 	file to include Simbody headers and suppress their warnings
  * @author	Wen-Yang Chu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef SIMBODY_MIDDLE_H

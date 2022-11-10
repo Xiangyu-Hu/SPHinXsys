@@ -24,14 +24,6 @@
  * @file 	base_data_type.h
  * @brief 	This is the class for Wenland kernel. 
  * @author	Chi ZHang and Xiangyu Hu
- * @version 0.1
- *			NThis kernel has compact support of 2h.
- * 			The smoothing length h can be variable when variable h functions are applied.
- *			Luhui Han, Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef KERNEL_WENLAND_C2_H

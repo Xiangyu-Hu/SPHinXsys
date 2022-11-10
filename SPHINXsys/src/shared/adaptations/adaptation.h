@@ -24,10 +24,6 @@
  * @file 	adaptation.h
  * @brief 	Adaptiation scheme for particle in multi-resolution scenario.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef ADAPTATION_H

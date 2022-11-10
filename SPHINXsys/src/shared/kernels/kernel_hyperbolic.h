@@ -28,10 +28,6 @@
  * 			at the origin. However, it is also found that such kernels give bad density
  * 			predictions. Therefore, the application of this kernel should be clarified.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 

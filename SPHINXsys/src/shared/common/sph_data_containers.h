@@ -24,10 +24,6 @@
  * @file 	sph_data_containers.h
  * @brief 	Set up of basic data structure.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef SPH_DATA_CONTAINERS_H

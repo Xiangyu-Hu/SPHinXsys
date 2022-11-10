@@ -23,12 +23,8 @@
 /**
  * @file 	time_averaged_method.h
  * @brief 	Classes for the comparison between validated and tested results
-          	with time-averaged meanvalue and variance method.
+ *        	with time-averaged meanvalue and variance method.
  * @author	Bo Zhang , Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #pragma once

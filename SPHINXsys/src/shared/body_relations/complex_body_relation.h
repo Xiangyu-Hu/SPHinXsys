@@ -24,10 +24,6 @@
  * @file 	complex_body_relation.h
  * @brief 	The topological relations within one body and to other bodies.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
  
 #ifndef COMPLEX_BODY_RELATION_H

@@ -24,10 +24,6 @@
  * @file 	base_data_package.h
  * @brief 	Base data package for the libaray. 
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 #ifndef BASE_DATA_PACKAGE_H
 #define BASE_DATA_PACKAGE_H

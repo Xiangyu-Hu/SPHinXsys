@@ -45,10 +45,6 @@
  *			DynamicsRange define and range of particles for the dynamics.
  *			The default range is the entire body. Other ranges are BodyPartByParticle and BodyPartByCell.
  * @author	Chi Zhang, Fabien Pean and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef PARTICLE_DYNAMICS_ALGORITHMS_H

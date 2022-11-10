@@ -27,14 +27,6 @@
 * 			between two neighboring particles. Basically, the further the two
 *			particles, the less relevance they have.     
 * @author	Chi ZHang and Xiangyu Hu
-* @version	0.1
-* @version  0.3.0 
-*			Add the reduced kernel for reduced dynamics of linear structure.
-*			-- Chi ZHANG
-* @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
 */
 
 

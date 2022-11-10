@@ -24,10 +24,6 @@
  * @file 	all_kernelas.h
  * @brief 	Headers for all kernels. 
  * @author	Chi ZHang and Xiangyu Hu
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef ALL_KERNELS_H

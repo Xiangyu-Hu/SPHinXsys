@@ -26,10 +26,6 @@
  *          the dynamics is characterized by diffusion equation and reactive source terms.
  *			Typical physical processes are diffusion, heat conduction
  *			and chemical and biological reactions.
- * @version	1.0
- *			Try to implement EIGEN libaary for base vector, matrix and 
- *			linear algebra operation.  
- *			-- Chi ZHANG
  */
 
 #ifndef DIFFUSION_REACTION_H
