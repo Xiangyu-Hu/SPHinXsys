@@ -30,8 +30,8 @@
  *			-- Chi ZHANG
  */
 
-#ifndef ARRAY_SIMBODY_H
-#define ARRAY_SIMBODY_H
+#ifndef ARRAY_H
+#define ARRAY_H
 
 #include "base_data_package.h"
 
@@ -669,4 +669,4 @@ namespace SPH {
 	}; /** ended of class Array. */
 
 }
-#endif //ARRAY_SIMBODY_H
+#endif //ARRAY_H

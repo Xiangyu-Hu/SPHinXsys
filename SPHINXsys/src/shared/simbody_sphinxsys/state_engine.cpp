@@ -261,9 +261,17 @@ namespace SPH {
                 simbody_xml_engine_.setAttributeToElement(ele_ite, ele_name, mobod_u);
             }
             SimTK::Vec3 transform_ = mobod.getBodyTransform(state_).p();
-            // Converte SimTK::Vec3 to Vecd in SPHinXsys. 
-            simbody_xml_engine_.setAttributeToElement(ele_ite, "Transform", Vec3d(transform_[0],transform_[1],transform_[2]));
 
+            Vecd transform = Vecd::Zero();
+            if constexpr (Dimensions == 2)
+            {
+                transform = Vecd(transform_[0], transform_[1]);
+            } else if constexpr (Dimensions == 3)
+            {
+                transform = Vecd(transform_[0], transform_[1], transform_[2]);
+            }
+
+            simbody_xml_engine_.setAttributeToElement(ele_ite, "Transform", transform);
             ++ele_ite;
         }
         std::string filefullpath = restart_folder_ + "/Simbody_Rst_" + std::to_string(ite_rst_) + ".xml";
@@ -306,13 +314,23 @@ namespace SPH {
                     for (int i = 0; i < num_u_; i++)
                     {
                         std::string attr_name = "UIndx_" + std::to_string(i);
-                        simbody_xml_engine_.getRequiredAttributeValue<Real>(ele_ite_, attr_name, u_tmp_);
+                        simbody_xml_engine_.getRequiredAttributeValue(ele_ite_, attr_name, u_tmp_);
                         mobod.setOneU(state_, SimTK::UIndex(i), u_tmp_);
                     }
                 }
-                Vec3d transform_ = Vec3d::Zero();
-                simbody_xml_engine_.getRequiredAttributeValue<Vec3d>(ele_ite_, "Transform", transform_);
-                mobod.setQToFitTransform(state_, SimTK::Transform(SimTK::Vec3(transform_[0], transform_[1], transform_[2])));
+                Vecd transform = Vecd::Zero();
+                simbody_xml_engine_.getRequiredAttributeValue(ele_ite_, "Transform", transform);
+
+                SimTK::Vec3 transform_; 
+                if(Dimensions == 2)
+                {
+                    transform_ = SimTK::Vec3(transform[0],transform[1], 0);
+                }else
+                {
+                    transform_ = SimTK::Vec3(transform[0],transform[1], transform[2]);
+                }
+
+                mobod.setQToFitTransform(state_, SimTK::Transform(transform_));
 
                 num_mobod++;
             }

@@ -117,7 +117,7 @@ namespace SPH
 				for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
 				{
 					std::string attribute_name_ = this->quantity_name_ + "_" + std::to_string(observation_index);
-					dtw_distance_xml_engine_in_.getRequiredAttributeValue<Real>(ele_ite, attribute_name_, dtw_distance_[observation_index]);
+					dtw_distance_xml_engine_in_.getRequiredAttributeValue(ele_ite, attribute_name_, dtw_distance_[observation_index]);
 				}
 		}
 	};
@@ -139,10 +139,7 @@ namespace SPH
 	//=================================================================================================//
 	template<class ObserveMethodType>
 	void RegressionTestDynamicTimeWarping<ObserveMethodType>::writeDTWDistanceToXml()
-	{/**
- * @file 	dynamic_time_warping_method.hpp
- * @author	Bo Zhang and Xiangyu Hu
- */
+	{
 		SimTK::Xml::Element DTWElement = dtw_distance_xml_engine_out_.root_element_;
 		dtw_distance_xml_engine_out_.addChildToElement(DTWElement, "DTWDistance");
 		SimTK::Xml::element_iterator ele_ite = DTWElement.element_begin();
