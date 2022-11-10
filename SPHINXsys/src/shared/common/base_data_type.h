@@ -35,6 +35,7 @@
 #include <algorithm>
 #include <vector>
 #include <map>
+#include <limits>
 
 namespace SPH
 {

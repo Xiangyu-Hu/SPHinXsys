@@ -25,7 +25,7 @@ endif()
 
 if(BUILD_3D_EXAMPLES)
 	ADD_SUBDIRECTORY(3d_examples)
-	ADD_SUBDIRECTORY(webassembly_models)
+	#ADD_SUBDIRECTORY(webassembly_models)
 endif()
 
 STRING( REGEX REPLACE ".*/(.*)" "\\1" CURRENT_FOLDER ${CMAKE_CURRENT_SOURCE_DIR} )

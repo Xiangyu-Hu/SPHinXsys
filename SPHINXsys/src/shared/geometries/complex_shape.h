@@ -32,7 +32,7 @@
 #define COMPLEX_SHAPE_H
 
 #include "base_geometry.h"
-
+#include "level_set_shape.h"
 #include "geometric_shape.h"
 #include "transform_shape.h"
 
@@ -73,10 +73,10 @@ namespace SPH
 			: TransformShape<GeometricShapeBox>(transformd, std::forward<Args>(args)...){};
 		/** construct from a shape already has aligned boundaries */
 		template <typename... Args>
-		explicit AlignedBoxShape(const Shape &shape, Args &&...args)
+		explicit AlignedBoxShape(Shape &shape, Args &&...args)
 			: TransformShape<GeometricShapeBox>(
-				  Transformd(0.5 * (shape.bounding_box_.second + shape.bounding_box_.first)),
-				  0.5 * (shape.bounding_box_.second - shape.bounding_box_.first), std::forward<Args>(args)...){};
+				  Transformd(0.5 * (shape.getBounds().second + shape.getBounds().first)),
+				  0.5 * (shape.getBounds().second - shape.getBounds().first), std::forward<Args>(args)...){};
 
 		Vecd HalfSize() { return halfsize_; }
 		bool checkInBounds(int axis, const Vecd &probe_point);

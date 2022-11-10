@@ -21,7 +21,13 @@ namespace SPH
 			: LocalDynamics(self_contact_relation.sph_body_), SolidDataInner(self_contact_relation),
 			  mass_(particles_->mass_)
 		{
-			particles_->registerVariable(self_contact_density_, "SelfContactDensity");
+            if(auto ptr = particles_->getVariableByName<Real>("SelfContactDensity"))
+                self_contact_density_ = ptr;
+            else
+            {
+                self_contact_density_ = new StdLargeVec<Real>;
+                particles_->registerVariable(*self_contact_density_, "SelfContactDensity");
+            }
 			Real dp_1 = self_contact_relation.sph_body_.sph_adaptation_->ReferenceSpacing();
 			offset_W_ij_ = self_contact_relation.sph_body_.sph_adaptation_->getKernel()->W(dp_1, Vecd(0.0));
 		}
@@ -35,7 +41,7 @@ namespace SPH
 				Real corrected_W_ij = std::max(inner_neighborhood.W_ij_[n] - offset_W_ij_, 0.0);
 				sigma += corrected_W_ij * mass_[inner_neighborhood.j_[n]];
 			}
-			self_contact_density_[index_i] = sigma;
+			(*self_contact_density_)[index_i] = sigma;
 		}
 		//=================================================================================================//
 		ContactDensitySummation::
@@ -44,7 +50,14 @@ namespace SPH
 			  ContactDynamicsData(solid_body_contact_relation), mass_(particles_->mass_),
 			  offset_W_ij_(StdVec<Real>(contact_configuration_.size(), 0.0))
 		{
-			particles_->registerVariable(contact_density_, "ContactDensity");
+            if(auto ptr = particles_->getVariableByName<Real>("ContactDensity"))
+                contact_density_ = ptr;
+            else
+            {
+                contact_density_ = new StdLargeVec<Real>;
+                particles_->registerVariable(*contact_density_, "ContactDensity");
+            }
+
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				contact_mass_.push_back(&(contact_particles_[k]->mass_));
@@ -79,7 +92,7 @@ namespace SPH
 					sigma += corrected_W_ij * contact_mass_k[contact_neighborhood.j_[n]];
 				}
 			}
-			contact_density_[index_i] = sigma;
+			(*contact_density_)[index_i] = sigma;
 		}
 		//=================================================================================================//
 		ShellContactDensity::ShellContactDensity(SurfaceContactRelation &solid_body_contact_relation)
@@ -89,7 +102,13 @@ namespace SPH
 			  kernel_(solid_body_contact_relation.sph_body_.sph_adaptation_->getKernel()),
 			  spacing_ref_(solid_body_contact_relation.sph_body_.sph_adaptation_->ReferenceSpacing())
 		{
-			particles_->registerVariable(contact_density_, "ContactDensity");
+            if(auto ptr = particles_->getVariableByName<Real>("ContactDensity"))
+                contact_density_ = ptr;
+            else
+            {
+                contact_density_ = new StdLargeVec<Real>;
+                particles_->registerVariable(*contact_density_, "ContactDensity");
+            }
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				contact_pos_.push_back(&(contact_particles_[k]->pos_));
@@ -126,7 +145,7 @@ namespace SPH
 					sigma += (w_0 * W_rij_t_0 + w_1 * W_rij_t_1 + w_2 * W_rij_t_2) * dp_2;
 				}
 			}
-			contact_density_[index_i] = sigma * boundary_factor_ * kernel_->SmoothingLength();
+            (*contact_density_)[index_i] = sigma* boundary_factor_ * kernel_->SmoothingLength();
 		}
 		//=================================================================================================//
 		SelfContactForce::

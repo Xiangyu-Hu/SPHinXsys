@@ -200,11 +200,11 @@ namespace SPH
 			sph_body_.setNewlyUpdated();
 			write_states.writeToFile(ite);
 		}
-
+        std::mt19937 rng;
 		for (size_t i = 0; i != n_it_; i++)
 		{
 			new_branches_to_grow.clear();
-			random_shuffle(branches_to_grow.begin(), branches_to_grow.end());
+			std::shuffle(branches_to_grow.begin(), branches_to_grow.end(),rng);
 			for (size_t j = 0; j != branches_to_grow.size(); j++)
 			{
 				size_t grow_id = branches_to_grow[j];

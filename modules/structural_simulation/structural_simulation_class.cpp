@@ -16,7 +16,7 @@ BodyPartFromMesh::BodyPartFromMesh(SPHBody &body, SharedPtr<TriangleMeshShape> t
 	: BodyRegionByParticle(body, triangle_mesh_shape_ptr)
 {
 	// set the body domain bounds because it is not set by default
-	BoundingBox bounds = body_part_shape_.getBounds();
+	BoundingBox bounds = triangle_mesh_shape_ptr->getBounds();
 	setBodyPartBounds(bounds);
 }
 
@@ -452,7 +452,13 @@ void StructuralSimulation::initializeForceInBodyRegion()
 		int resolution(20);
 		// create the triangle mesh of the box
 		BodyPartFromMesh *bp = body_part_tri_mesh_ptr_keeper_.createPtr<BodyPartFromMesh>(
-			*solid_body_list_[body_index]->getSolidBodyFromMesh(), makeShared<TriangleMeshShapeBrick>(halfsize_bbox, resolution, center, imported_stl_list_[body_index]));
+			*solid_body_list_[body_index]->getSolidBodyFromMesh(), makeShared<TriangleMeshShapeBrick>(halfsize_bbox, resolution, center, 
+        #ifdef __EMSCRIPTEN__
+				imported_stl_list_[body_index].name
+		#else // __EMSCRIPTEN__		
+				imported_stl_list_[body_index]
+		#endif // __EMSCRIPTEN__
+        ));
 		force_in_body_region_.emplace_back(make_shared<SimpleDynamics<solid_dynamics::ForceInBodyRegion, BodyRegionByParticle>>(*bp, force, end_time));
 	}
 }
@@ -529,7 +535,13 @@ void StructuralSimulation::initializeConstrainSolidBodyRegion()
 		int resolution(20);
 		// create the triangle mesh of the box
 		BodyPartFromMesh *bp = body_part_tri_mesh_ptr_keeper_.createPtr<BodyPartFromMesh>(
-			*solid_body_list_[body_index]->getSolidBodyFromMesh(), makeShared<TriangleMeshShapeBrick>(halfsize_bbox, resolution, center, imported_stl_list_[body_index]));
+			*solid_body_list_[body_index]->getSolidBodyFromMesh(), makeShared<TriangleMeshShapeBrick>(halfsize_bbox, resolution, center, 
+        #ifdef __EMSCRIPTEN__
+				imported_stl_list_[body_index].name
+		#else // __EMSCRIPTEN__		
+				imported_stl_list_[body_index]
+		#endif // __EMSCRIPTEN__
+        ));
 		fixed_constraint_region_.emplace_back(make_shared<SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle>>(*bp));
 	}
 }

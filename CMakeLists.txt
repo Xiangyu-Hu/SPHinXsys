@@ -23,7 +23,6 @@ if(EMSCRIPTEN)
     add_definitions(-D__EIGEN__)
     add_definitions(-D__EMSCRIPTEN__)
 
-    remove_definitions(-DTBB_2021_2_0)
     set(TBB_ROOT ${SPHINXSYS_PROJECT_DIR}/3rd_party/wasmtbb)
     include_directories("${TBB_ROOT}/include")
     set(OBJDIR "${TBB_ROOT}/build/linux_wasm32_emscripten_emscripten_wasm32_release")
