@@ -144,7 +144,6 @@ namespace SPH
 		/**
 		 * @class FreeSurfaceHeight
 		 * @brief Probe the free surface profile for a fluid body part by reduced operation.
-		 * TODO: this class can be generalized
 		 */
 		class FreeSurfaceHeight : public LocalDynamicsReduce<Real, ReduceMax>,
 								  public FluidDataSimple
