@@ -507,7 +507,7 @@ TEST(roof_under_self_weight, lattice)
 
 	Real radius_mid_surface = 25.0;
 
-	StdVec<int> particle_number_vec = {16};//, 32, 64, 128, 256
+	StdVec<int> particle_number_vec = {16, 32, 64, 128, 256};
 	for (auto particle_number: particle_number_vec)
 	{
 		try
@@ -546,6 +546,6 @@ TEST(roof_under_self_weight, parametric_dp)
 int main(int argc, char* argv[])
 {	
 	testing::InitGoogleTest(&argc, argv);
-	testing::GTEST_FLAG(filter) = "roof_under_self_weight.dp_2";
+	testing::GTEST_FLAG(filter) = "roof_under_self_weight.parametric_dp";
 	return RUN_ALL_TESTS();
 }
