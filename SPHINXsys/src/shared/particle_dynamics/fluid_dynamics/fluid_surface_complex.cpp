@@ -26,8 +26,8 @@ namespace SPH
 		//=================================================================================================//
 		FreeSurfaceIndicationComplex::
 			FreeSurfaceIndicationComplex(ComplexRelation &complex_relation, Real threshold)
-			: FreeSurfaceIndicationComplex(complex_relation.inner_relation_,
-										   complex_relation.contact_relation_, threshold) {}
+			: FreeSurfaceIndicationComplex(complex_relation.getInnerRelation(),
+										   complex_relation.getContactRelation(), threshold) {}
 		//=================================================================================================//
 		void FreeSurfaceIndicationComplex::interaction(size_t index_i, Real dt)
 		{
@@ -56,8 +56,8 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ColorFunctionGradientComplex::ColorFunctionGradientComplex(ComplexRelation &complex_relation)
-			: ColorFunctionGradientComplex(complex_relation.inner_relation_,
-										   complex_relation.contact_relation_) {}
+			: ColorFunctionGradientComplex(complex_relation.getInnerRelation(),
+										   complex_relation.getContactRelation()) {}
 		//=================================================================================================//
 		void ColorFunctionGradientComplex::interaction(size_t index_i, Real dt)
 		{

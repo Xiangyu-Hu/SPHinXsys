@@ -2,17 +2,14 @@
 #ifndef ALL_PHYSICAL_DYNAMICS_H
 #define ALL_PHYSICAL_DYNAMICS_H
 
-
-
 /** @file
-This is the header file that user code should include to pick up all 
+This is the header file that user code should include to pick up all
 particle dynamics capabilities. **/
 
 #include "external_force.h"
 #include "all_general_dynamics.h"
 #include "all_fluid_dynamics.h"
 #include "all_solid_dynamics.h"
-#include "observer_dynamics.h"
 #include "relax_dynamics.h"
 #include "electro_physiology.h"
 #include "active_muscle_dynamics.h"
@@ -21,5 +18,4 @@ particle dynamics capabilities. **/
 #include "particle_dynamics_dissipation.h"
 #include "particle_dynamics_dissipation.hpp"
 
-
-#endif //ALL_PHYSICAL_DYNAMICS_H
+#endif // ALL_PHYSICAL_DYNAMICS_H

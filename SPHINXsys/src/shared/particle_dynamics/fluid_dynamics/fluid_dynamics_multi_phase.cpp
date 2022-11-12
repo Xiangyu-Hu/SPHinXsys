@@ -32,8 +32,8 @@ namespace SPH
 		//=================================================================================================//
 		ViscousAccelerationMultiPhase::
 			ViscousAccelerationMultiPhase(ComplexRelation &complex_relation)
-			: ViscousAccelerationMultiPhase(complex_relation.inner_relation_,
-											complex_relation.contact_relation_) {}
+			: ViscousAccelerationMultiPhase(complex_relation.getInnerRelation(),
+											complex_relation.getContactRelation()) {}
 		//=================================================================================================//
 		void ViscousAccelerationMultiPhase::interaction(size_t index_i, Real dt)
 		{

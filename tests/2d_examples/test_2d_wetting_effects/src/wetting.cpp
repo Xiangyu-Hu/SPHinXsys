@@ -16,8 +16,6 @@ int main()
 	SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
 	/** Set the starting time. */
 	GlobalStaticVariables::physical_time_ = 0.0;
-	/** Tag for computation from restart files. 0: not from restart files. */
-	sph_system.restart_step_ = 0;
 	IOEnvironment io_environment(sph_system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
@@ -52,7 +50,7 @@ int main()
 	SimpleDynamics<TimeStepInitialization> initialize_a_air_step(air_block);
 	/** Evaluation of density by summation approach. */
 	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex>
-		update_water_density_by_summation(water_wall_contact, water_air_complex.inner_relation_);
+		update_water_density_by_summation(water_wall_contact, water_air_complex.getInnerRelation());
 	InteractionWithUpdate<fluid_dynamics::DensitySummationComplex>
 		update_air_density_by_summation(air_wall_contact, air_water_complex);
 	/** transport formulation for regularizing particle distribution. */
@@ -66,9 +64,9 @@ int main()
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_air_time_step_size(air_block);
 	/** Pressure relaxation for water by using position verlet time stepping. */
 	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall>
-		water_pressure_relaxation(water_wall_contact, water_air_complex.inner_relation_);
+		water_pressure_relaxation(water_wall_contact, water_air_complex.getInnerRelation());
 	Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall>
-		water_density_relaxation(water_wall_contact, water_air_complex.inner_relation_);
+		water_density_relaxation(water_wall_contact, water_air_complex.getInnerRelation());
 	/** Extend Pressure relaxation is used for air. */
 	Dynamics1Level<fluid_dynamics::ExtendMultiPhaseIntegration1stHalfRiemannWithWall>
 		air_pressure_relaxation(air_wall_contact, air_water_complex, 2.0);
@@ -78,10 +76,10 @@ int main()
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhase> air_viscous_acceleration(air_water_complex);
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhase> water_viscous_acceleration(water_air_complex);
 	/** Surface tension and wetting effects. */
-	InteractionWithUpdate<fluid_dynamics::FreeSurfaceIndicationComplex> surface_detection(water_air_complex.inner_relation_, water_wall_contact);
-	InteractionDynamics<fluid_dynamics::ColorFunctionGradientComplex> color_gradient(water_air_complex.inner_relation_, water_wall_contact);
-	InteractionDynamics<fluid_dynamics::ColorFunctionGradientInterpolationInner> color_gradient_interpolation(water_air_complex.inner_relation_);
-	InteractionDynamics<fluid_dynamics::SurfaceTensionAccelerationInner> surface_tension_acceleration(water_air_complex.inner_relation_, tension_force);
+	InteractionWithUpdate<fluid_dynamics::FreeSurfaceIndicationComplex> surface_detection(water_air_complex.getInnerRelation(), water_wall_contact);
+	InteractionDynamics<fluid_dynamics::ColorFunctionGradientComplex> color_gradient(water_air_complex.getInnerRelation(), water_wall_contact);
+	InteractionDynamics<fluid_dynamics::ColorFunctionGradientInterpolationInner> color_gradient_interpolation(water_air_complex.getInnerRelation());
+	InteractionDynamics<fluid_dynamics::SurfaceTensionAccelerationInner> surface_tension_acceleration(water_air_complex.getInnerRelation(), tension_force);
 	/** Wetting effects. */
 	InteractionDynamics<fluid_dynamics::SurfaceNormWithWall> wetting_norm(water_wall_contact, contact_angle);
 	//----------------------------------------------------------------------
@@ -100,7 +98,7 @@ int main()
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
-	size_t number_of_iterations = sph_system.restart_step_;
+	size_t number_of_iterations = 0;
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
 	Real end_time = 5.0;				  /**< End time. */

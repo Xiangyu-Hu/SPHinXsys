@@ -45,9 +45,13 @@ namespace SPH
 		UniquePtrKeeper<BaseInnerRelation> base_inner_relation_ptr_keeper_;
 		UniquePtrKeeper<BaseContactRelation> base_contact_relation_ptr_keeper_;
 
-	public:
+	protected:
 		BaseInnerRelation &inner_relation_;
 		BaseContactRelation &contact_relation_;
+
+	public:
+		BaseInnerRelation &getInnerRelation() { return inner_relation_; };
+		BaseContactRelation &getContactRelation() { return contact_relation_; };
 		RealBodyVector contact_bodies_;
 		ParticleConfiguration &inner_configuration_;
 		ContactParticleConfiguration &contact_configuration_;
@@ -62,4 +66,4 @@ namespace SPH
 		virtual void updateConfiguration() override;
 	};
 }
-#endif //COMPLEX_BODY_RELATION_H
+#endif // COMPLEX_BODY_RELATION_H

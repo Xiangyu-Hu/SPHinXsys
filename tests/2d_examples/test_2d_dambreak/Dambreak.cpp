@@ -113,9 +113,9 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Load restart file if necessary.
 	//----------------------------------------------------------------------
-	if (sph_system.restart_step_ != 0)
+	if (sph_system.RestartStep() != 0)
 	{
-		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.restart_step_);
+		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.RestartStep());
 		water_block.updateCellLinkedList();
 		water_block_complex.updateConfiguration();
 		fluid_observer_contact.updateConfiguration();
@@ -123,7 +123,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
-	size_t number_of_iterations = sph_system.restart_step_;
+	size_t number_of_iterations = sph_system.RestartStep();
 	int screen_output_interval = 100;
 	int observation_sample_interval = screen_output_interval * 2;
 	int restart_output_interval = screen_output_interval * 10;
@@ -182,7 +182,7 @@ int main(int ac, char *av[])
 						  << GlobalStaticVariables::physical_time_
 						  << "	advection_dt = " << advection_dt << "	acoustic_dt = " << acoustic_dt << "\n";
 
-				if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.restart_step_)
+				if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
 				{
 					write_water_mechanical_energy.writeToFile(number_of_iterations);
 					write_recorded_water_pressure.writeToFile(number_of_iterations);
@@ -223,7 +223,7 @@ int main(int ac, char *av[])
 		write_water_mechanical_energy.generateDataBase(1.0e-3);
 		write_recorded_water_pressure.generateDataBase(1.0e-3);
 	}
-	else if (sph_system.restart_step_ == 0)
+	else if (sph_system.RestartStep() == 0)
 	{
 		write_water_mechanical_energy.newResultTest();
 		write_recorded_water_pressure.newResultTest();

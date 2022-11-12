@@ -72,7 +72,7 @@ int main()
 	//	and case specified initial condition if necessary.
 	//----------------------------------------------------------------------
 	random_input_body_particles.parallel_exec(0.25);
-	relaxation_step_inner.surface_bounding_.parallel_exec();
+	relaxation_step_inner.SurfaceBounding().parallel_exec();
 	input_body.updateCellLinkedList();
 	//----------------------------------------------------------------------
 	//	First output before the simulation.

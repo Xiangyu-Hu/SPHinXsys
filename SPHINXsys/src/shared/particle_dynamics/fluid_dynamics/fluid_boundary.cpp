@@ -24,20 +24,6 @@ namespace SPH
 			vel_[index_i] += relaxation_rate_ * (getTargetVelocity(pos_[index_i], vel_[index_i]) - vel_[index_i]);
 		}
 		//=================================================================================================//
-		InflowVelocityCondition::InflowVelocityCondition(BodyAlignedBoxByCell &aligned_box_part)
-			: BaseFlowBoundaryCondition(aligned_box_part),
-			  transform_(aligned_box_part.aligned_box_.getTransform()),
-			  halfsize_(aligned_box_part.aligned_box_.HalfSize()) {}
-		//=================================================================================================//
-		void InflowVelocityCondition::update(size_t index_i, Real dt)
-		{
-			Vecd frame_position = transform_.shiftBaseStationToFrame(pos_[index_i]);
-			Vecd frame_velocity = transform_.xformBaseVecToFrame(vel_[index_i]);
-			Vecd prescribed_velocity =
-				transform_.xformFrameVecToBase(getPrescribedVelocity(frame_position, frame_velocity));
-			vel_[index_i] = prescribed_velocity;
-		}
-		//=================================================================================================//
 		DampingBoundaryCondition::DampingBoundaryCondition(BodyRegionByCell &body_part)
 			: BaseFlowBoundaryCondition(body_part), strength_(5.0),
 			  damping_zone_bounds_(body_part.body_part_shape_.getBounds()){};
@@ -125,7 +111,7 @@ namespace SPH
 		//=================================================================================================//
 		StaticConfinementDensity::StaticConfinementDensity(NearShapeSurface &near_surface)
 			: LocalDynamics(near_surface.getSPHBody()), FluidDataSimple(sph_body_),
-			  rho0_(sph_body_.base_material_->ReferenceDensity()), 
+			  rho0_(sph_body_.base_material_->ReferenceDensity()),
 			  inv_sigma0_(1.0 / sph_body_.sph_adaptation_->ReferenceNumberDensity()),
 			  mass_(particles_->mass_), rho_sum_(particles_->rho_sum_), pos_(particles_->pos_),
 			  level_set_shape_(&near_surface.level_set_shape_) {}
