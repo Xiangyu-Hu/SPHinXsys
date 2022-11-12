@@ -497,8 +497,8 @@ namespace SPH
 					for (int k = -3; k != 4; ++k)
 					{
 						Vecu neighbor_index = Vecu(global_index_[0] + i, global_index_[1] + j, global_index_[2] + k);
-						Real phi_neighbor = DataValueFromGlobalIndex<Real, LevelSetDataPackage::PackageData<Real>,
-																	 &LevelSetDataPackage::phi_>(neighbor_index);
+						Real phi_neighbor = DataValueFromGlobalIndex<
+							Real, LevelSetDataPackage::PackageData<Real>, &LevelSetDataPackage::phi_>(neighbor_index);
 						if (phi_neighbor > -data_spacing_)
 						{
 							Vecd displacement = position - global_mesh_.GridPositionFromIndex(neighbor_index);
