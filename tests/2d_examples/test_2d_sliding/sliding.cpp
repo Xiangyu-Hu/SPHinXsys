@@ -105,8 +105,8 @@ int main(int ac, char *av[])
 	/** Time step size. */
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> free_cube_get_time_step_size(free_cube);
 	/** stress relaxation for the solid body. */
-	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> free_cube_stress_relaxation_first_half(free_cube_inner);
-	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> free_cube_stress_relaxation_second_half(free_cube_inner);
+	Dynamics1Level<solid_dynamics::Integration1stHalf> free_cube_stress_relaxation_first_half(free_cube_inner);
+	Dynamics1Level<solid_dynamics::Integration2ndHalf> free_cube_stress_relaxation_second_half(free_cube_inner);
 	/** Algorithms for solid-solid contact. */
 	InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle> free_cube_update_contact_density(free_cube_contact);
 	InteractionDynamics<solid_dynamics::ContactForceFromWall, BodyPartByParticle> free_cube_compute_solid_contact_forces(free_cube_contact);

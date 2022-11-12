@@ -12,15 +12,15 @@ namespace SPH
 	namespace solid_dynamics
 	{
 		//=================================================================================================//
-		PlasticStressRelaxationFirstHalf::
-			PlasticStressRelaxationFirstHalf(BaseInnerRelation &inner_relation) :
-			StressRelaxationFirstHalf(inner_relation),
+		PlasticIntegration1stHalf::
+			PlasticIntegration1stHalf(BaseInnerRelation &inner_relation) :
+			Integration1stHalf(inner_relation),
 			plastic_solid_(DynamicCast<PlasticSolid>(this, elastic_solid_))
 		{
 			numerical_dissipation_factor_ = 0.5;
 		}
 		//=================================================================================================//
-		void PlasticStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
+		void PlasticIntegration1stHalf::initialization(size_t index_i, Real dt)
 		{
 			pos_[index_i] += vel_[index_i] * dt * 0.5;
 			F_[index_i] += dF_dt_[index_i] * dt * 0.5;
