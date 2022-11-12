@@ -10,7 +10,7 @@ namespace SPH
 	//=================================================================================================//
 	SimTK::Vec3 EigenToSimTK(const Vec3d &eigen_vector)
 	{
-		return SimTK::Vec3(eigen_vector[0], eigen_vector[1], eigen_vector[3]);
+		return SimTK::Vec3(eigen_vector[0], eigen_vector[1], eigen_vector[2]);
 	}
 	//=================================================================================================//
 	Vec2d SimTKToEigen(const SimTK::Vec2 &simTK_vector)
