@@ -14,7 +14,7 @@ Real DL = 5.366;					/**< Water tank length. */
 Real DH = 5.366;					/**< Water tank height. */
 Real LL = 2.0;						/**< Water column length. */
 Real LH = 1.0;						/**< Water column height. */
-Real particle_spacing_ref = 0.05;	/**< Initial reference particle spacing. */
+Real particle_spacing_ref = 0.025;	/**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4; /**< Thickness of tank wall. */
 //----------------------------------------------------------------------
 //	Material parameters.
@@ -199,7 +199,7 @@ int main(int ac, char *av[])
 			fluid_observer_contact.updateConfiguration();
 			interval_updating_configuration += tick_count::now() - time_instance;
 		}
-		
+
 		body_states_recording.writeToFile();
 		tick_count t2 = tick_count::now();
 		tick_count t3 = tick_count::now();

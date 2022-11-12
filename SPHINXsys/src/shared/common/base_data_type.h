@@ -22,7 +22,7 @@
  * ------------------------------------------------------------------------*/
 /**
  * @file 	base_data_type.h
- * @brief 	This is the date type definition for SPHinXsys. 
+ * @brief 	This is the date type definition for SPHinXsys.
  * @author	Chi ZHang and Xiangyu Hu
  */
 
@@ -40,7 +40,7 @@
 #include <Eigen/Core>
 #include <Eigen/Dense>
 #include <Eigen/Eigenvalues>
-#include <Eigen/Geometry> 
+#include <Eigen/Geometry>
 #include <Eigen/Cholesky>
 
 #include "Simbody.h"
@@ -55,67 +55,115 @@ namespace SPH
 	 * Matrix<T, 2, 1>::Identity  return {1,0}
 	 * Matrix<T, 2, 2>::Identity  return {{1,0},
 	 *								      {0,1},}
-	 * Matrix<T, n, n>::Ones  Set all element to One. 
-	 * Enable Vectorization using CXX_FLAGS = -Ofast -march=native 
-	 * -m : 
+	 * Matrix<T, n, n>::Ones  Set all element to One.
+	 * Enable Vectorization using CXX_FLAGS = -Ofast -march=native
+	 * -m :
 	 * These ‘-m’ options are defined for the x86 family of computers.
 	 * -march=cpu-type
-     * Generate instructions for the machine type cpu-type. In contrast to -mtune=cpu-type, 
-	 * which merely tunes the generated code for the specified cpu-type, -march=cpu-type allows GCC to generate code that 
-	 * may not run at all on processors other than the one indicated. 
+	 * Generate instructions for the machine type cpu-type. In contrast to -mtune=cpu-type,
+	 * which merely tunes the generated code for the specified cpu-type, -march=cpu-type allows GCC to generate code that
+	 * may not run at all on processors other than the one indicated.
 	 * Specifying -march=cpu-type implies -mtune=cpu-type, except where noted otherwise.
-     * The choices for cpu-type are:
-     * ‘native’ -> This selects the CPU to generate code for at compilation time by determining the processor type of the compiling machine. 
-	 * 			Using -march=native enables all instruction subsets supported by the local machine (hence the result might not run on different machines). 
+	 * The choices for cpu-type are:
+	 * ‘native’ -> This selects the CPU to generate code for at compilation time by determining the processor type of the compiling machine.
+	 * 			Using -march=native enables all instruction subsets supported by the local machine (hence the result might not run on different machines).
 	 * 			Using -mtune=native produces code optimized for the local machine under the constraints of the selected instruction set.
 	 */
-	 
+
 	using Real = double;
 	/** Vector with integers. */
-	using Vec2i = Eigen::Matrix< int, 2, 1 >;
-	using Vec3i = Eigen::Matrix< int, 3, 1 >;
+	using Vec2i = Eigen::Matrix<int, 2, 1>;
+	using Vec3i = Eigen::Matrix<int, 3, 1>;
 	/** Vector with unsigned int. */
-	using Vec2u = Eigen::Matrix< size_t, 2, 1 >;
-	using Vec3u = Eigen::Matrix< size_t, 3, 1 >;
+	using Vec2u = Eigen::Matrix<size_t, 2, 1>;
+	using Vec3u = Eigen::Matrix<size_t, 3, 1>;
 	/** Vector with float point number.*/
-	using Vec2d = Eigen::Matrix< Real, 2, 1 >;
-	using Vec3d = Eigen::Matrix< Real, 3, 1 >;
+	using Vec2d = Eigen::Matrix<Real, 2, 1>;
+	using Vec3d = Eigen::Matrix<Real, 3, 1>;
 	/** Small, 2*2 and 3*3, matrix with float point number. */
-	using Mat2d = Eigen::Matrix< Real, 2, 2 >;
-	using Mat3d = Eigen::Matrix< Real, 3, 3 >;
+	using Mat2d = Eigen::Matrix<Real, 2, 2>;
+	using Mat3d = Eigen::Matrix<Real, 3, 3>;
 	/** AlignedBox */
-	using AlignedBox2d = Eigen::AlignedBox< Real, 2 >;
-	using AlignedBox3d = Eigen::AlignedBox< Real, 3 >;
+	using AlignedBox2d = Eigen::AlignedBox<Real, 2>;
+	using AlignedBox3d = Eigen::AlignedBox<Real, 3>;
 	/** Unified initialize to zero for all data type. */
 	/**
-	 * NOTE: Eigen::Matrix<> constexpr constructor? 
-	 * Currently, there are no constexpr constructors/methods in Eigen. 
-	 * And implementing this would be very complicated (for any non-trivial methods), 
-	 * e.g., because SIMD functions are not easy to handle. 
+	 * NOTE: Eigen::Matrix<> constexpr constructor?
+	 * Currently, there are no constexpr constructors/methods in Eigen.
+	 * And implementing this would be very complicated (for any non-trivial methods),
+	 * e.g., because SIMD functions are not easy to handle.
 	 */
-	template <typename DataType> 
+	template <typename DataType>
 	struct DataTypeInitializer
 	{
 		static inline DataType zero;
 	};
-	template<> struct DataTypeInitializer<int>   { static inline int   zero = 0; };
-	template<> struct DataTypeInitializer<Real>  { static inline Real  zero = 0.0; };
-	template<> struct DataTypeInitializer<Vec2d> { static inline Vec2d zero = Vec2d::Zero(); };
-	template<> struct DataTypeInitializer<Vec3d> { static inline Vec3d zero = Vec3d::Zero(); };
-	template<> struct DataTypeInitializer<Mat2d> { static inline Mat2d zero = Mat2d::Zero(); };
-	template<> struct DataTypeInitializer<Mat3d> { static inline Mat3d zero = Mat3d::Zero(); };
+	template <>
+	struct DataTypeInitializer<Real>
+	{
+		static inline Real zero = 0.0;
+	};
+	template <>
+	struct DataTypeInitializer<Vec2d>
+	{
+		static inline Vec2d zero = Vec2d::Zero();
+	};
+	template <>
+	struct DataTypeInitializer<Vec3d>
+	{
+		static inline Vec3d zero = Vec3d::Zero();
+	};
+	template <>
+	struct DataTypeInitializer<Mat2d>
+	{
+		static inline Mat2d zero = Mat2d::Zero();
+	};
+	template <>
+	struct DataTypeInitializer<Mat3d>
+	{
+		static inline Mat3d zero = Mat3d::Zero();
+	};
+	template <>
+	struct DataTypeInitializer<int>
+	{
+		static inline int zero = 0;
+	};
 	/** Type trait for data type index. */
 	template <typename T>
 	struct DataTypeIndex
 	{
 		static constexpr int value = std::numeric_limits<int>::max();
 	};
-	template<> struct DataTypeIndex<Real>{  static constexpr int value = 0; };
-	template<> struct DataTypeIndex<Vec2d>{ static constexpr int value = 1; };
-	template<> struct DataTypeIndex<Vec3d>{ static constexpr int value = 1; };
-	template<> struct DataTypeIndex<Mat2d>{ static constexpr int value = 2; };
-	template<> struct DataTypeIndex<Mat3d>{ static constexpr int value = 2; };
-	template<> struct DataTypeIndex<int>{   static constexpr int value = 3; };
+	template <>
+	struct DataTypeIndex<Real>
+	{
+		static constexpr int value = 0;
+	};
+	template <>
+	struct DataTypeIndex<Vec2d>
+	{
+		static constexpr int value = 1;
+	};
+	template <>
+	struct DataTypeIndex<Vec3d>
+	{
+		static constexpr int value = 1;
+	};
+	template <>
+	struct DataTypeIndex<Mat2d>
+	{
+		static constexpr int value = 2;
+	};
+	template <>
+	struct DataTypeIndex<Mat3d>
+	{
+		static constexpr int value = 2;
+	};
+	template <>
+	struct DataTypeIndex<int>
+	{
+		static constexpr int value = 3;
+	};
 	/** Useful float point constants. */
 	constexpr size_t MaxSize_t = std::numeric_limits<size_t>::max();
 	constexpr double MinRealNumber = std::numeric_limits<double>::min();
@@ -182,7 +230,7 @@ namespace SPH
 		}
 		return bb;
 	}
-		/**
+	/**
 	 * @class Rotation2d
 	 * @brief Rotation Coordinate transform (around the origin)
 	 * in 2D with an angle.
@@ -251,7 +299,7 @@ namespace SPH
 			return xformBaseVecToFrame(target - translation_);
 		};
 	};
-	
+
 	/**
 	 * @class Transform3d
 	 * @brief Wrapper for SimTK::Transform
@@ -267,49 +315,49 @@ namespace SPH
 	public:
 		Transform3d() : rotation_(Mat3d::Zero()), translation_(Vec3d::Zero())
 		{
-			// Default constructor gives an identity transform. 
+			// Default constructor gives an identity transform.
 			transform_ = SimTK::Transform();
 		};
 		explicit Transform3d(const Vec3d &translation) : rotation_(Mat3d::Zero()), translation_(translation)
 		{
-			//Construct or default-convert a translation (expressed as a Vec3) into a transform with that translation and a zero rotation. 
-			transform_ = SimTK::Transform(SimTK::Vec3(translation[0],translation[1], translation[2]));
+			// Construct or default-convert a translation (expressed as a Vec3) into a transform with that translation and a zero rotation.
+			transform_ = SimTK::Transform(SimTK::Vec3(translation[0], translation[1], translation[2]));
 		};
 		explicit Transform3d(const Mat3d &rotation, const Vec3d &translation = Vec3d::Zero())
 			: rotation_(rotation), translation_(translation)
 		{
-			//Combine a rotation and a translation into a transform. 
-			transform_ = SimTK::Transform(SimTK::Rotation_<Real>(SimTK::Mat33(rotation(0,0), rotation(0,1), rotation(0,2), 
-						 							   rotation(1,0), rotation(1,1), rotation(1,2), 
-						 							   rotation(2,0), rotation(2,1), rotation(2,2))), 
-										SimTK::Vec3(translation[0],translation[1], translation[2]));
+			// Combine a rotation and a translation into a transform.
+			transform_ = SimTK::Transform(SimTK::Rotation_<Real>(SimTK::Mat33(rotation(0, 0), rotation(0, 1), rotation(0, 2),
+																			  rotation(1, 0), rotation(1, 1), rotation(1, 2),
+																			  rotation(2, 0), rotation(2, 1), rotation(2, 2))),
+										  SimTK::Vec3(translation[0], translation[1], translation[2]));
 		};
 
 		/** Forward rotation. */
 		Vec3d xformFrameVecToBase(const Vec3d &origin)
 		{
-			SimTK::Vec3 x_to_base = transform_.xformFrameVecToBase(SimTK::Vec3(origin[0],origin[1],origin[2]));
-			return Vec3d(x_to_base[0],x_to_base[1],x_to_base[2]);
+			SimTK::Vec3 x_to_base = transform_.xformFrameVecToBase(SimTK::Vec3(origin[0], origin[1], origin[2]));
+			return Vec3d(x_to_base[0], x_to_base[1], x_to_base[2]);
 		};
 
 		/** Forward transformation. Note that the rotation operation is carried out first. */
 		Vec3d shiftFrameStationToBase(const Vec3d &origin)
 		{
-			SimTK::Vec3 frame_to_base = transform_.shiftFrameStationToBase(SimTK::Vec3(origin[0],origin[1],origin[2]));
+			SimTK::Vec3 frame_to_base = transform_.shiftFrameStationToBase(SimTK::Vec3(origin[0], origin[1], origin[2]));
 			return Vec3d(frame_to_base[0], frame_to_base[1], frame_to_base[2]);
 		};
 
 		/** Inverse rotation. */
 		Vec3d xformBaseVecToFrame(const Vec3d &target)
 		{
-			SimTK::Vec3 base_to_frame = transform_.xformBaseVecToFrame(SimTK::Vec3(target[0],target[1],target[2]));
+			SimTK::Vec3 base_to_frame = transform_.xformBaseVecToFrame(SimTK::Vec3(target[0], target[1], target[2]));
 			return Vec3d(base_to_frame[0], base_to_frame[1], base_to_frame[2]);
 		};
 
 		/** Inverse transformation. Note that the inverse translation operation is carried out first. */
 		Vec3d shiftBaseStationToFrame(const Vec3d &target)
 		{
-			SimTK::Vec3 base_to_base = transform_.shiftBaseStationToFrame(SimTK::Vec3(target[0],target[1],target[2]));
+			SimTK::Vec3 base_to_base = transform_.shiftBaseStationToFrame(SimTK::Vec3(target[0], target[1], target[2]));
 			return Vec3d(base_to_base[0], base_to_base[1], base_to_base[2]);
 		};
 	};
@@ -325,7 +373,7 @@ namespace SPH
 		s_time << std::setw(max_string_width) << std::setfill('0') << value;
 		return s_time.str();
 	}
-	
+
 	/** Constant parameters. */
 	const Real Pi = Real(M_PI);
 	const Real Eps = 2.22045e-16;

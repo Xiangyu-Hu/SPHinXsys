@@ -39,6 +39,7 @@ namespace SPH {
 	using AlignedBox = AlignedBox2d;
 	using AngularVecd = Real;
 	using Transformd = Transform2d;
+	using SimTKVecd = SimTK::Vec2;
 
 	using  BoundingBox = BaseBoundingBox<Vec2d>;
 
