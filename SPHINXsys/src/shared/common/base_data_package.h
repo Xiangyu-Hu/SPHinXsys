@@ -34,14 +34,21 @@
 
 namespace SPH
 {
- 
- 	typedef blocked_range<size_t> IndexRange;
+
+    typedef blocked_range<size_t> IndexRange;
     /** Generalized data assemble type */
     template <template <typename DataType> typename DataContainerType>
     using GeneralDataAssemble = std::tuple<StdVec<DataContainerType<Real> *>,
                                            StdVec<DataContainerType<Vecd> *>,
                                            StdVec<DataContainerType<Matd> *>,
                                            StdVec<DataContainerType<int> *>>;
+
+    /** Generalized data package type in which all data saved */
+    template <template <typename DataType> typename DataContainerType>
+    using GeneralDataPackage = std::tuple<StdVec<DataContainerType<Real>>,
+                                          StdVec<DataContainerType<Vecd>>,
+                                          StdVec<DataContainerType<Matd>>,
+                                          StdVec<DataContainerType<int>>>;
 
     /** a type irrelevant operation on all data in a data assemble  */
     template <template <typename VariableType> typename OperationType>

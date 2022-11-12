@@ -43,33 +43,43 @@ namespace SPH
     {
         bool isRegistered_;
         size_t index_in_container_;
-        const std::sting variable_name_;
+        const std::string variable_name_;
         const DataType default_value_;
 
     public:
-        DiscreteVariable(const std::string &variable_name, const DataType &default_value)
-            : isRegistered_(false), data_index_in_container_(MaxSize_t),
-              variable_name_(variable_name), default_value_(default_value){};
+        DiscreteVariable(GeneralDataAssemble<DiscreteVariable> &extra_variables,
+                         const std::string &variable_name, const DataType &default_value)
+            : isRegistered_(false), index_in_container_(MaxSize_t),
+              variable_name_(variable_name), default_value_(default_value)
+        {
+            addToVariableAssemble(extra_variables);
+        };
         virtual ~DiscreteVariable(){};
 
         DataType DefaultValue() { return default_value_; };
+
+        void setRegistered(size_t index_in_container)
+        {
+            isRegistered_ = true;
+            index_in_container_ = index_in_container;
+        };
 
         size_t IndexInContainer()
         {
             if (!isRegistered_)
             {
-                std::cout << "\n Error: the variable:" << variable_name_ << " is registered!" << std::endl;
+                std::cout << "\n Error: the discrete variable: " << variable_name_ << " is not registered!" << std::endl;
                 std::cout << __FILE__ << ':' << __LINE__ << std::endl;
                 exit(1);
             }
             return index_in_container_;
         };
 
-        template <class ContainerType, typename InitializationFunction>
-        void registerToContainer(ContainerType &container, const InitializationFunction &initialization)
+    protected:
+        void addToVariableAssemble(GeneralDataAssemble<DiscreteVariable> &extra_variables)
         {
-            index_in_container_ = container.registerDiscreteVariable(variable_name_, initialization);
-            isRegistered_ = true;
+            constexpr int type_index = DataTypeIndex<DataType>::value;
+            std::get<type_index>(extra_variables).push_back(this);
         };
     };
 }

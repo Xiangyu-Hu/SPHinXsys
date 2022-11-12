@@ -97,6 +97,9 @@ namespace SPH
 		virtual Vecd probeKernelGradientIntegral(const Vecd &position, Real h_ratio = 1.0) = 0;
 
 	protected:
+		GeneralDataAssemble<DiscreteVariable> extra_variables_;
+		DiscreteVariable<Real> kernel_weight_;
+		DiscreteVariable<Vecd> kernel_gradient_;
 		Shape &shape_; /**< the geometry is described by the level set. */
 		SPHAdaptation &sph_adaptation_;
 

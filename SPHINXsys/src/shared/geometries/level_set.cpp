@@ -30,6 +30,8 @@ namespace SPH
 	//=================================================================================================//
 	BaseLevelSet ::BaseLevelSet(Shape &shape, SPHAdaptation &sph_adaptation)
 		: BaseMeshField("LevelSet"),
+		  kernel_weight_(extra_variables_, "KernelWeight", 0.0),
+		  kernel_gradient_(extra_variables_, "KernelGradient", Vecd(0)),
 		  shape_(shape), sph_adaptation_(sph_adaptation)
 	{
 		if (!shape_.isValid())

@@ -31,6 +31,7 @@
 #define MESH_WITH_DATA_PACKAGES_H
 
 #include "base_mesh.h"
+#include "base_variables.h"
 #include "my_memory_pool.h"
 
 #include <fstream>
@@ -103,6 +104,9 @@ namespace SPH
 		GeneralDataAssemble<PackageData> all_pkg_data_;
 		GeneralDataAssemble<PackageDataAddress> all_pkg_data_addrs_;
 
+		GeneralDataPackage<PackageData> extra_pkg_data_;
+		GeneralDataPackage<PackageDataAddress> extra_pkg_data_addrs_;
+
 		/** Matrix data for temporary usage. Note that it is array with ADDRS_SIZE.  */
 		template <typename DataType>
 		using PackageTemporaryData = PackageDataMatrix<DataType, ADDRS_SIZE>;
@@ -163,6 +167,23 @@ namespace SPH
 		};
 		DataAssembleOperation<assignPackageDataAddress> assign_pkg_data_addrs_;
 
+		template <typename DataType>
+		struct initializeExtaVariables
+		{
+			void operator()(const GeneralDataAssemble<DiscreteVariable> &extra_variables)
+			{
+				constexpr int type_index = DataTypeIndex<DataType>::value;
+				for (const DiscreteVariable<DataType> &data_variables : std::get<type_index>(extra_variables))
+				{
+					StdVec<PackageData<DataType>> &data = std::get<type_index>(extra_pkg_data_);
+					data_variables->setRegistered(data.size());
+					data.emplace_back(PackageData<DataType>());
+					data.back.fill(data_variables->DefaultValue());
+					std::get<type_index>(extra_pkg_data_addrs_).emplace_back(PackageDataAddress<DataType>());
+				}
+			};
+		};
+
 		/** obtain averaged value at a corner of a data cell */
 		template <typename DataType>
 		DataType CornerAverage(PackageDataAddress<DataType> &pkg_data_addrs, Veci addrs_index, Veci corner_direction);
@@ -177,6 +198,8 @@ namespace SPH
 		{
 			assign_pkg_data_addrs_(all_pkg_data_addrs_, addrs_index, src_pkg->all_pkg_data_, data_index);
 		};
+
+		DataAssembleOperation<initializePackageDataAddress> initialize_extra_variables_;
 	};
 
 	/**
@@ -242,6 +265,15 @@ namespace SPH
 			new_data_pkg->initializeSingularData(std::forward<ConstructorArgs>(args)...);
 			new_data_pkg->initializeSingularDataAddress();
 			singular_data_pkgs_addrs_.push_back(new_data_pkg);
+		};
+
+		template <typename... ConstructorArgs>
+		void initializeASingularDataPackageExtraVariables(
+			const GeneralDataAssemble<DiscreteVariable> &all_variables, ConstructorArgs &&...args)
+		{
+			for (const GridDataPackageType &data_pkg : singular_data_pkgs_addrs_)
+			{
+			}
 		};
 
 		void assignDataPackageAddress(const Vecu &cell_index, GridDataPackageType *data_pkg);
