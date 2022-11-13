@@ -126,6 +126,13 @@ namespace SPH
 			mesh_lower_bound_ = pkg_lower_bound - Vecd(data_spacing) * ((Real)AddressBufferWidth() - 0.5);
 			grid_spacing_ = data_spacing;
 		};
+		/** access specific package data from discrete variable */
+		template <typename DataType>
+		PackageData<DataType> &getPackageData(DiscreteVariable<DataType> &discrete_variable)
+		{
+			constexpr int type_index = DataTypeIndex<DataType>::value;
+			return std::get<type_index>(extra_pkg_data_)[discrete_variable.IndexInContainer()];
+		};
 		/** This function probes by applying bi and tri-linear interpolation within the package. */
 		template <typename DataType>
 		DataType probeDataPackage(PackageDataAddress<DataType> &pkg_data_addrs, const Vecd &position);
@@ -148,6 +155,7 @@ namespace SPH
 			std::get<type_index>(all_pkg_data_).push_back(&pkg_data);
 			std::get<type_index>(all_pkg_data_addrs_).push_back(&pkg_data_addrs);
 		};
+
 		/** set the initial package data address within a derived class constructor */
 		template <typename DataType>
 		struct initializePackageDataAddress
@@ -168,21 +176,23 @@ namespace SPH
 		DataAssembleOperation<assignPackageDataAddress> assign_pkg_data_addrs_;
 
 		template <typename DataType>
-		struct initializeExtaVariables
+		struct ExtaVariablesAllocation
 		{
-			void operator()(const GeneralDataAssemble<DiscreteVariable> &extra_variables)
+			void operator()(GeneralDataPackage<PackageData> extra_pkg_data,
+							GeneralDataPackage<PackageDataAddress> extra_pkg_data_addrs,
+							const GeneralDataAssemble<DiscreteVariable> &extra_variables)
 			{
 				constexpr int type_index = DataTypeIndex<DataType>::value;
-				for (const DiscreteVariable<DataType> &data_variables : std::get<type_index>(extra_variables))
+				for (auto discrete_variable : std::get<type_index>(extra_variables))
 				{
-					StdVec<PackageData<DataType>> &data = std::get<type_index>(extra_pkg_data_);
-					data_variables->setRegistered(data.size());
-					data.emplace_back(PackageData<DataType>());
-					data.back.fill(data_variables->DefaultValue());
-					std::get<type_index>(extra_pkg_data_addrs_).emplace_back(PackageDataAddress<DataType>());
+					StdVec<PackageData<DataType>> &type_data = std::get<type_index>(extra_pkg_data);
+					discrete_variable->setRegistered(type_data.size());
+					type_data.emplace_back(PackageData<DataType>());
+					std::get<type_index>(extra_pkg_data_addrs).emplace_back(PackageDataAddress<DataType>());
 				}
 			};
 		};
+		DataAssembleOperation<ExtaVariablesAllocation> allocate_extra_variables_;
 
 		/** obtain averaged value at a corner of a data cell */
 		template <typename DataType>
@@ -199,7 +209,10 @@ namespace SPH
 			assign_pkg_data_addrs_(all_pkg_data_addrs_, addrs_index, src_pkg->all_pkg_data_, data_index);
 		};
 
-		DataAssembleOperation<initializePackageDataAddress> initialize_extra_variables_;
+		void allocateExtraVariables(const GeneralDataAssemble<DiscreteVariable> &extra_variables)
+		{
+			allocate_extra_variables_(extra_pkg_data_, extra_pkg_data_addrs_, extra_variables);
+		};
 	};
 
 	/**
@@ -257,23 +270,17 @@ namespace SPH
 		 * For example, when level set is considered. The first value for inner far-field and second for outer far-field */
 		StdVec<GridDataPackageType *> singular_data_pkgs_addrs_;
 
-		template <typename... ConstructorArgs>
-		void initializeASingularDataPackage(ConstructorArgs &&...args)
+		template <typename InitializeSingularData>
+		void initializeASingularDataPackage(
+			const GeneralDataAssemble<DiscreteVariable> &all_variables,
+			const InitializeSingularData &initialize_singular_data)
 		{
 			GridDataPackageType *new_data_pkg = data_pkg_pool_.malloc();
 			new_data_pkg->registerAllVariables();
-			new_data_pkg->initializeSingularData(std::forward<ConstructorArgs>(args)...);
+			new_data_pkg->allocateExtraVariables(all_variables);
+			initialize_singular_data(*new_data_pkg);
 			new_data_pkg->initializeSingularDataAddress();
 			singular_data_pkgs_addrs_.push_back(new_data_pkg);
-		};
-
-		template <typename... ConstructorArgs>
-		void initializeASingularDataPackageExtraVariables(
-			const GeneralDataAssemble<DiscreteVariable> &all_variables, ConstructorArgs &&...args)
-		{
-			for (const GridDataPackageType &data_pkg : singular_data_pkgs_addrs_)
-			{
-			}
 		};
 
 		void assignDataPackageAddress(const Vecu &cell_index, GridDataPackageType *data_pkg);

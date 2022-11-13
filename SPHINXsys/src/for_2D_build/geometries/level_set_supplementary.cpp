@@ -191,6 +191,24 @@ namespace SPH
 		finishDataPackages();
 	}
 	//=================================================================================================//
+	void LevelSet::initializeSingularData(LevelSetDataPackage &data_pkg, Real far_field_level_set)
+	{
+		auto kernel_weight = data_pkg.getPackageData(kernel_weight_);
+		auto kernel_gradient = data_pkg.getPackageData(kernel_gradient_);
+
+		for (int i = 0; i != data_pkg.PackageSize(); ++i)
+			for (int j = 0; j != data_pkg.PackageSize(); ++j)
+			{
+				data_pkg.phi_[i][j] = far_field_level_set;
+				data_pkg.phi_gradient_[i][j] = Vecd(1.0);
+				data_pkg.kernel_weight_[i][j] = far_field_level_set < 0.0 ? 0 : 1.0;
+				data_pkg.kernel_gradient_[i][j] = Vecd(0.0);
+				data_pkg.near_interface_id_[i][j] = far_field_level_set < 0.0 ? -2 : 2;
+				kernel_weight[i][j] = 0.0;
+				kernel_gradient[i][j] = Vec2d(0);
+			}
+	}
+	//=================================================================================================//
 	void LevelSet::finishDataPackages()
 	{
 		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),

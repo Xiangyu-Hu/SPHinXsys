@@ -61,8 +61,10 @@ namespace SPH
 		  kernel_(*sph_adaptation.getKernel())
 	{
 		Real far_field_distance = grid_spacing_ * (Real)buffer_width_;
-		initializeASingularDataPackage(-far_field_distance);
-		initializeASingularDataPackage(far_field_distance);
+		initializeASingularDataPackage(extra_variables_, [&](LevelSetDataPackage &data_pkg)
+									   { initializeSingularData(data_pkg, -far_field_distance); });
+		initializeASingularDataPackage(extra_variables_, [&](LevelSetDataPackage &data_pkg)
+									   { initializeSingularData(data_pkg, far_field_distance); });
 	}
 	//=================================================================================================//
 	void LevelSet::initializeAddressesInACell(const Vecu &cell_index)

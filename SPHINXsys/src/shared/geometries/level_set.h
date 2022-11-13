@@ -114,8 +114,7 @@ namespace SPH
 	 * but within the data package, the data is grid-based.
 	 * Note that the level set data is initialized after the constructor.
 	 */
-	class LevelSet
-		: public MeshWithGridDataPackages<BaseLevelSet, LevelSetDataPackage>
+	class LevelSet : public MeshWithGridDataPackages<BaseLevelSet, LevelSetDataPackage>
 	{
 	public:
 		ConcurrentVec<LevelSetDataPackage *> core_data_pkgs_; /**< packages near to zero level set. */
@@ -144,6 +143,8 @@ namespace SPH
 
 	protected:
 		Kernel &kernel_;
+
+		void initializeSingularData(LevelSetDataPackage &data_pkg, Real far_field_level_set);
 
 		void finishDataPackages();
 		void reinitializeLevelSet();
