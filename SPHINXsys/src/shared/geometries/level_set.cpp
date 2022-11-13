@@ -118,14 +118,12 @@ namespace SPH
 	//=================================================================================================//
 	Real LevelSet::probeKernelIntegral(const Vecd &position, Real h_ratio)
 	{
-		return probeMesh<Real, LevelSetDataPackage::PackageDataAddress<Real>,
-						 &LevelSetDataPackage::kernel_weight_addrs_>(position);
+		return probeMesh(kernel_weight_, position);
 	}
 	//=================================================================================================//
 	Vecd LevelSet::probeKernelGradientIntegral(const Vecd &position, Real h_ratio)
 	{
-		return probeMesh<Vecd, LevelSetDataPackage::PackageDataAddress<Vecd>,
-						 &LevelSetDataPackage::kernel_gradient_addrs_>(position);
+		return probeMesh(kernel_gradient_, position);
 	}
 	//=============================================================================================//
 	void LevelSet::reinitializeLevelSet()

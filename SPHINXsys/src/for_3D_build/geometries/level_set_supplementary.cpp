@@ -221,8 +221,8 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSet::initializeSingularData(LevelSetDataPackage &data_pkg, Real far_field_level_set)
 	{
-		auto kernel_weight = data_pkg.getPackageData(kernel_weight_);
-		auto kernel_gradient = data_pkg.getPackageData(kernel_gradient_);
+		auto &kernel_weight = data_pkg.getPackageData(kernel_weight_);
+		auto &kernel_gradient = data_pkg.getPackageData(kernel_gradient_);
 
 		for (int i = 0; i != data_pkg.PackageSize(); ++i)
 			for (int j = 0; j != data_pkg.PackageSize(); ++j)
@@ -240,8 +240,8 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSet::computeKernelIntegrals(LevelSetDataPackage &data_pkg)
 	{
-		auto kernel_weight = data_pkg.getPackageData(kernel_weight_);
-		auto kernel_gradient = data_pkg.getPackageData(kernel_gradient_);
+		auto &kernel_weight = data_pkg.getPackageData(kernel_weight_);
+		auto &kernel_gradient = data_pkg.getPackageData(kernel_gradient_);
 
 		for (int i = 0; i != data_pkg.PackageSize(); ++i)
 			for (int j = 0; j != data_pkg.PackageSize(); ++j)

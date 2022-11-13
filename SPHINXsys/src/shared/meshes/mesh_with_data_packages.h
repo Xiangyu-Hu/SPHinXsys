@@ -133,6 +133,13 @@ namespace SPH
 			constexpr int type_index = DataTypeIndex<DataType>::value;
 			return std::get<type_index>(extra_pkg_data_)[discrete_variable.IndexInContainer()];
 		};
+		/** access specific package data from discrete variable */
+		template <typename DataType>
+		PackageDataAddress<DataType> &getPackageDataAddress(DiscreteVariable<DataType> &discrete_variable)
+		{
+			constexpr int type_index = DataTypeIndex<DataType>::value;
+			return std::get<type_index>(extra_pkg_data_addrs_)[discrete_variable.IndexInContainer()];
+		};
 		/** This function probes by applying bi and tri-linear interpolation within the package. */
 		template <typename DataType>
 		DataType probeDataPackage(PackageDataAddress<DataType> &pkg_data_addrs, const Vecd &position);
@@ -268,6 +275,8 @@ namespace SPH
 		/** This function probe a mesh value */
 		template <class DataType, typename PackageDataAddressType, PackageDataAddressType GridDataPackageType::*MemPtr>
 		DataType probeMesh(const Vecd &position);
+		template <class DataType>
+		DataType probeMesh(DiscreteVariable<DataType> &discrete_variable, const Vecd &position);
 		virtual Real DataSpacing() override { return data_spacing_; };
 
 	protected:

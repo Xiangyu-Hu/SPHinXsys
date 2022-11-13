@@ -225,6 +225,22 @@ namespace SPH
 									   : *pkg_data_addrs[0][0][0];
 	}
 	//=================================================================================================//
+	template <class MeshFieldType, class GridDataPackageType>
+	template <class DataType>
+	DataType MeshWithGridDataPackages<MeshFieldType, GridDataPackageType>::
+		probeMesh(DiscreteVariable<DataType> &discrete_variable, const Vecd &position)
+	{
+		Vecu grid_index = CellIndexFromPosition(position);
+		size_t i = grid_index[0];
+		size_t j = grid_index[1];
+		size_t k = grid_index[2];
+
+		GridDataPackageType *data_pkg = data_pkg_addrs_[i][j][k];
+		auto &pkg_data_addrs = data_pkg->getPackageDataAddress(discrete_variable);
+		return data_pkg->is_inner_pkg_ ? data_pkg->GridDataPackageType::template probeDataPackage<DataType>(pkg_data_addrs, position)
+									   : *pkg_data_addrs[0][0][0];
+	}
+	//=================================================================================================//
 }
 //=================================================================================================//
 #endif // MESH_WITH_DATA_PACKAGES_3D_HPP
