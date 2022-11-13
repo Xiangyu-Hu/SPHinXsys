@@ -189,8 +189,8 @@ namespace SPH
 		template <typename DataType>
 		struct ExtaVariablesAllocation
 		{
-			void operator()(GeneralDataPackage<PackageData> extra_pkg_data,
-							GeneralDataPackage<PackageDataAddress> extra_pkg_data_addrs,
+			void operator()(GeneralDataPackage<PackageData> &extra_pkg_data,
+							GeneralDataPackage<PackageDataAddress> &extra_pkg_data_addrs,
 							const GeneralDataAssemble<DiscreteVariable> &extra_variables)
 			{
 				constexpr int type_index = DataTypeIndex<DataType>::value;
