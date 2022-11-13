@@ -175,6 +175,17 @@ namespace SPH
 		};
 		DataAssembleOperation<assignPackageDataAddress> assign_pkg_data_addrs_;
 
+		/** assign address for extra package data when the package is an inner one */
+		template <typename DataType>
+		struct assignExtraPackageDataAddress
+		{
+			void operator()(GeneralDataPackage<PackageDataAddress> &all_pkg_data_addrs,
+							const Vecu &addrs_index,
+							GeneralDataPackage<PackageData> &all_pkg_data,
+							const Vecu &data_index);
+		};
+		DataAssembleOperation<assignExtraPackageDataAddress> assign_extra_pkg_data_addrs_;
+
 		template <typename DataType>
 		struct ExtaVariablesAllocation
 		{
@@ -187,8 +198,8 @@ namespace SPH
 				{
 					StdVec<PackageData<DataType>> &type_data = std::get<type_index>(extra_pkg_data);
 					discrete_variable->setRegistered(type_data.size());
-					type_data.emplace_back(PackageData<DataType>());
-					std::get<type_index>(extra_pkg_data_addrs).emplace_back(PackageDataAddress<DataType>());
+					type_data.push_back(PackageData<DataType>());
+					std::get<type_index>(extra_pkg_data_addrs).push_back(PackageDataAddress<DataType>());
 				}
 			};
 		};
@@ -207,6 +218,7 @@ namespace SPH
 		void assignAllPackageDataAddress(const Vecu &addrs_index, GridDataPackage *src_pkg, const Vecu &data_index)
 		{
 			assign_pkg_data_addrs_(all_pkg_data_addrs_, addrs_index, src_pkg->all_pkg_data_, data_index);
+			assign_extra_pkg_data_addrs_(extra_pkg_data_addrs_, addrs_index, src_pkg->extra_pkg_data_, data_index);
 		};
 
 		void allocateExtraVariables(const GeneralDataAssemble<DiscreteVariable> &extra_variables)

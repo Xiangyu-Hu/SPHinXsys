@@ -204,8 +204,22 @@ namespace SPH
 				data_pkg.kernel_weight_[i][j] = far_field_level_set < 0.0 ? 0 : 1.0;
 				data_pkg.kernel_gradient_[i][j] = Vecd(0.0);
 				data_pkg.near_interface_id_[i][j] = far_field_level_set < 0.0 ? -2 : 2;
-				kernel_weight[i][j] = 0.0;
-				kernel_gradient[i][j] = Vec2d(0);
+				kernel_weight[i][j] = kernel_weight_.DefaultValue();
+				kernel_gradient[i][j] = kernel_gradient_.DefaultValue();
+			}
+	}
+	//=================================================================================================//
+	void LevelSet::computeKernelIntegrals(LevelSetDataPackage &data_pkg)
+	{
+		auto kernel_weight = data_pkg.getPackageData(kernel_weight_);
+		auto kernel_gradient = data_pkg.getPackageData(kernel_gradient_);
+
+		for (int i = 0; i != data_pkg.PackageSize(); ++i)
+			for (int j = 0; j != data_pkg.PackageSize(); ++j)
+			{
+				Vec2d position = data_pkg.DataLowerBound() + Vec2d(i, j) * grid_spacing_;
+				kernel_weight[i][j] = computeKernelIntegral(position);
+				kernel_gradient[i][j] = computeKernelGradientIntegral(position);
 			}
 	}
 	//=================================================================================================//

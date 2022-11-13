@@ -55,8 +55,8 @@ namespace SPH
 	//=================================================================================================//
 	LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size,
 					   Shape &shape, SPHAdaptation &sph_adaptation)
-		: MeshWithGridDataPackages<BaseLevelSet, LevelSetDataPackage>(tentative_bounds, data_spacing, buffer_size,
-																	  shape, sph_adaptation),
+		: MeshWithGridDataPackages<BaseLevelSet, LevelSetDataPackage>(
+			  tentative_bounds, data_spacing, buffer_size, shape, sph_adaptation),
 		  global_h_ratio_(sph_adaptation.ReferenceSpacing() / data_spacing),
 		  kernel_(*sph_adaptation.getKernel())
 	{
@@ -80,8 +80,13 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSet::updateKernelIntegrals()
 	{
-		package_parallel_for(inner_data_pkgs_, [&](size_t i)
-							 { inner_data_pkgs_[i]->computeKernelIntegrals(*this); });
+		//		package_parallel_for(inner_data_pkgs_,
+		package_for(inner_data_pkgs_,
+					[&](size_t i)
+					{
+						inner_data_pkgs_[i]->computeKernelIntegrals(*this);
+						computeKernelIntegrals(*inner_data_pkgs_[i]);
+					});
 	}
 	//=================================================================================================//
 	Vecd LevelSet::probeNormalDirection(const Vecd &position)
@@ -185,6 +190,7 @@ namespace SPH
 		LevelSetDataPackage &new_data_pkg = *data_pkg_pool_.malloc();
 		mutex_my_pool.unlock();
 		new_data_pkg.registerAllVariables();
+		new_data_pkg.allocateExtraVariables(extra_variables_);
 		Vecd pkg_lower_bound = GridPositionFromCellPosition(cell_position);
 		new_data_pkg.initializePackageGeometry(pkg_lower_bound, data_spacing_);
 		new_data_pkg.initializeBasicData(shape_);

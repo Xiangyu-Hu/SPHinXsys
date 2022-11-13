@@ -238,6 +238,21 @@ namespace SPH
 				}
 	}
 	//=================================================================================================//
+	void LevelSet::computeKernelIntegrals(LevelSetDataPackage &data_pkg)
+	{
+		auto kernel_weight = data_pkg.getPackageData(kernel_weight_);
+		auto kernel_gradient = data_pkg.getPackageData(kernel_gradient_);
+
+		for (int i = 0; i != data_pkg.PackageSize(); ++i)
+			for (int j = 0; j != data_pkg.PackageSize(); ++j)
+				for (int k = 0; k != data_pkg.PackageSize(); ++k)
+				{
+					Vec3d position = data_pkg.DataLowerBound() + Vec3d(i, j, k) * grid_spacing_;
+					kernel_weight[i][j][k] = computeKernelIntegral(position);
+					kernel_gradient[i][j][k] = computeKernelGradientIntegral(position);
+				}
+	}
+	//=================================================================================================//
 	void LevelSet::finishDataPackages()
 	{
 		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),

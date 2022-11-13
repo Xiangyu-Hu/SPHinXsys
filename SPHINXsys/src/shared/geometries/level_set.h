@@ -145,7 +145,8 @@ namespace SPH
 		Kernel &kernel_;
 
 		void initializeSingularData(LevelSetDataPackage &data_pkg, Real far_field_level_set);
-
+		void computeKernelIntegrals(LevelSetDataPackage &data_pkg);
+		
 		void finishDataPackages();
 		void reinitializeLevelSet();
 		void markNearInterface(Real small_shift_factor);
