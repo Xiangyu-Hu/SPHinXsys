@@ -97,9 +97,6 @@ namespace SPH
 		virtual Vecd probeKernelGradientIntegral(const Vecd &position, Real h_ratio = 1.0) = 0;
 
 	protected:
-		GeneralDataAssemble<DiscreteVariable> extra_variables_;
-		DiscreteVariable<Real> kernel_weight_;
-		DiscreteVariable<Vecd> kernel_gradient_;
 		Shape &shape_; /**< the geometry is described by the level set. */
 		SPHAdaptation &sph_adaptation_;
 
@@ -142,11 +139,14 @@ namespace SPH
 		Vecd computeKernelGradientIntegral(const Vecd &position);
 
 	protected:
+		DiscreteVariableAssemble extra_variables_;
+		DiscreteVariable<Real> kernel_weight_;
+		DiscreteVariable<Vecd> kernel_gradient_;
 		Kernel &kernel_;
 
 		void initializeSingularData(LevelSetDataPackage &data_pkg, Real far_field_level_set);
 		void computeKernelIntegrals(LevelSetDataPackage &data_pkg);
-		
+
 		void finishDataPackages();
 		void reinitializeLevelSet();
 		void markNearInterface(Real small_shift_factor);

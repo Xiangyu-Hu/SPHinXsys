@@ -30,8 +30,6 @@ namespace SPH
 	//=================================================================================================//
 	BaseLevelSet ::BaseLevelSet(Shape &shape, SPHAdaptation &sph_adaptation)
 		: BaseMeshField("LevelSet"),
-		  kernel_weight_(extra_variables_, "KernelWeight", 0.0),
-		  kernel_gradient_(extra_variables_, "KernelGradient", Vecd(0)),
 		  shape_(shape), sph_adaptation_(sph_adaptation)
 	{
 		if (!shape_.isValid())
@@ -58,6 +56,8 @@ namespace SPH
 		: MeshWithGridDataPackages<BaseLevelSet, LevelSetDataPackage>(
 			  tentative_bounds, data_spacing, buffer_size, shape, sph_adaptation),
 		  global_h_ratio_(sph_adaptation.ReferenceSpacing() / data_spacing),
+		  kernel_weight_(extra_variables_, "KernelWeight", 0.0),
+		  kernel_gradient_(extra_variables_, "KernelGradient", Vecd(0)),
 		  kernel_(*sph_adaptation.getKernel())
 	{
 		Real far_field_distance = grid_spacing_ * (Real)buffer_width_;

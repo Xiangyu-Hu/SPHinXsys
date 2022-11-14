@@ -34,6 +34,11 @@
 
 namespace SPH
 {
+    template <typename DataType>
+    class DiscreteVariable;
+
+    typedef GeneralDataAssemble<DiscreteVariable> DiscreteVariableAssemble;
+
     /**
      * @class DiscreteVariable
      * @brief template base class for all discrete variables.
@@ -41,45 +46,29 @@ namespace SPH
     template <typename DataType>
     class DiscreteVariable
     {
-        bool isRegistered_;
-        size_t index_in_container_;
         const std::string variable_name_;
         const DataType default_value_;
+        size_t index_in_container_;
 
     public:
-        DiscreteVariable(GeneralDataAssemble<DiscreteVariable> &extra_variables,
+        DiscreteVariable(DiscreteVariableAssemble &variable_assemble,
                          const std::string &variable_name, const DataType &default_value)
-            : isRegistered_(false), index_in_container_(MaxSize_t),
-              variable_name_(variable_name), default_value_(default_value)
+            : variable_name_(variable_name), default_value_(default_value),
+              index_in_container_(MaxSize_t)
         {
-            addToVariableAssemble(extra_variables);
+            addTo(variable_assemble);
         };
         virtual ~DiscreteVariable(){};
-
-        DataType DefaultValue() { return default_value_; };
-
-        void setRegistered(size_t index_in_container)
-        {
-            isRegistered_ = true;
-            index_in_container_ = index_in_container;
-        };
-
-        size_t IndexInContainer()
-        {
-            if (!isRegistered_)
-            {
-                std::cout << "\n Error: the discrete variable: " << variable_name_ << " is not registered!" << std::endl;
-                std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-                exit(1);
-            }
-            return index_in_container_;
-        };
+        DataType DefaultValue() const { return default_value_; };
+        size_t IndexInContainer() const { return index_in_container_; };
 
     protected:
-        void addToVariableAssemble(GeneralDataAssemble<DiscreteVariable> &extra_variables)
+        void addTo(DiscreteVariableAssemble &variable_assemble)
         {
             constexpr int type_index = DataTypeIndex<DataType>::value;
-            std::get<type_index>(extra_variables).push_back(this);
+            auto &type_variables = std::get<type_index>(variable_assemble);
+            index_in_container_ = type_variables.size();
+            type_variables.push_back(this);
         };
     };
 }

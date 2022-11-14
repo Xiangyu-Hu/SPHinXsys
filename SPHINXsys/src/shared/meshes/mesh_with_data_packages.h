@@ -198,16 +198,12 @@ namespace SPH
 		{
 			void operator()(GeneralDataPackage<PackageData> &extra_pkg_data,
 							GeneralDataPackage<PackageDataAddress> &extra_pkg_data_addrs,
-							const GeneralDataAssemble<DiscreteVariable> &extra_variables)
+							const DiscreteVariableAssemble &extra_variables)
 			{
 				constexpr int type_index = DataTypeIndex<DataType>::value;
-				for (auto discrete_variable : std::get<type_index>(extra_variables))
-				{
-					StdVec<PackageData<DataType>> &type_data = std::get<type_index>(extra_pkg_data);
-					discrete_variable->setRegistered(type_data.size());
-					type_data.push_back(PackageData<DataType>());
-					std::get<type_index>(extra_pkg_data_addrs).push_back(PackageDataAddress<DataType>());
-				}
+				size_t total_variables = std::get<type_index>(extra_variables).size();
+				std::get<type_index>(extra_pkg_data).resize(total_variables);
+				std::get<type_index>(extra_pkg_data_addrs).resize(total_variables);
 			};
 		};
 		DataAssembleOperation<ExtaVariablesAllocation> allocate_extra_variables_;
@@ -228,7 +224,7 @@ namespace SPH
 			assign_extra_pkg_data_addrs_(extra_pkg_data_addrs_, addrs_index, src_pkg->extra_pkg_data_, data_index);
 		};
 
-		void allocateExtraVariables(const GeneralDataAssemble<DiscreteVariable> &extra_variables)
+		void allocateExtraVariables(const DiscreteVariableAssemble &extra_variables)
 		{
 			allocate_extra_variables_(extra_pkg_data_, extra_pkg_data_addrs_, extra_variables);
 		};
