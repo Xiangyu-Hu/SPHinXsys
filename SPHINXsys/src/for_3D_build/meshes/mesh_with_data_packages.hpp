@@ -228,7 +228,7 @@ namespace SPH
 	template <class MeshFieldType, class GridDataPackageType>
 	template <class DataType>
 	DataType MeshWithGridDataPackages<MeshFieldType, GridDataPackageType>::
-		probeMesh(DiscreteVariable<DataType> &discrete_variable, const Vecd &position)
+		probeMesh(const DiscreteVariable<DataType> &discrete_variable, const Vecd &position)
 	{
 		Vecu grid_index = CellIndexFromPosition(position);
 		size_t i = grid_index[0];

@@ -128,14 +128,14 @@ namespace SPH
 		};
 		/** access specific package data from discrete variable */
 		template <typename DataType>
-		PackageData<DataType> &getPackageData(DiscreteVariable<DataType> &discrete_variable)
+		PackageData<DataType> &getPackageData(const DiscreteVariable<DataType> &discrete_variable)
 		{
 			constexpr int type_index = DataTypeIndex<DataType>::value;
 			return std::get<type_index>(extra_pkg_data_)[discrete_variable.IndexInContainer()];
 		};
 		/** access specific package data from discrete variable */
 		template <typename DataType>
-		PackageDataAddress<DataType> &getPackageDataAddress(DiscreteVariable<DataType> &discrete_variable)
+		PackageDataAddress<DataType> &getPackageDataAddress(const DiscreteVariable<DataType> &discrete_variable)
 		{
 			constexpr int type_index = DataTypeIndex<DataType>::value;
 			return std::get<type_index>(extra_pkg_data_addrs_)[discrete_variable.IndexInContainer()];
@@ -272,7 +272,7 @@ namespace SPH
 		template <class DataType, typename PackageDataAddressType, PackageDataAddressType GridDataPackageType::*MemPtr>
 		DataType probeMesh(const Vecd &position);
 		template <class DataType>
-		DataType probeMesh(DiscreteVariable<DataType> &discrete_variable, const Vecd &position);
+		DataType probeMesh(const DiscreteVariable<DataType> &discrete_variable, const Vecd &position);
 		virtual Real DataSpacing() override { return data_spacing_; };
 
 	protected:

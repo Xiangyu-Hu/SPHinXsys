@@ -204,8 +204,8 @@ namespace SPH
 				data_pkg.kernel_weight_[i][j] = far_field_level_set < 0.0 ? 0 : 1.0;
 				data_pkg.kernel_gradient_[i][j] = Vecd(0.0);
 				data_pkg.near_interface_id_[i][j] = far_field_level_set < 0.0 ? -2 : 2;
-				kernel_weight[i][j] = kernel_weight_.DefaultValue();
-				kernel_gradient[i][j] = kernel_gradient_.DefaultValue();
+				kernel_weight[i][j] = kernel_weight_.InitializeValue();
+				kernel_gradient[i][j] = kernel_gradient_.InitializeValue();
 			}
 	}
 	//=================================================================================================//

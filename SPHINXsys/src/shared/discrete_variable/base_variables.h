@@ -46,29 +46,29 @@ namespace SPH
     template <typename DataType>
     class DiscreteVariable
     {
-        const std::string variable_name_;
-        const DataType default_value_;
+        const std::string name_;
+        const DataType initialize_value_;
         size_t index_in_container_;
 
     public:
         DiscreteVariable(DiscreteVariableAssemble &variable_assemble,
-                         const std::string &variable_name, const DataType &default_value)
-            : variable_name_(variable_name), default_value_(default_value),
+                         const std::string &name, const DataType &value)
+            : name_(name), initialize_value_(value),
               index_in_container_(MaxSize_t)
         {
             addTo(variable_assemble);
         };
         virtual ~DiscreteVariable(){};
-        DataType DefaultValue() const { return default_value_; };
+        DataType InitializeValue() const { return initialize_value_; };
         size_t IndexInContainer() const { return index_in_container_; };
 
     protected:
         void addTo(DiscreteVariableAssemble &variable_assemble)
         {
             constexpr int type_index = DataTypeIndex<DataType>::value;
-            auto &type_variables = std::get<type_index>(variable_assemble);
-            index_in_container_ = type_variables.size();
-            type_variables.push_back(this);
+            auto &variable_container = std::get<type_index>(variable_assemble);
+            index_in_container_ = variable_container.size();
+            variable_container.push_back(this);
         };
     };
 }
