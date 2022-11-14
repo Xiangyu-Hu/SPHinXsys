@@ -38,6 +38,8 @@ namespace SPH
     class DiscreteVariable;
 
     typedef GeneralDataAssemble<DiscreteVariable> DiscreteVariableAssemble;
+    const bool isSharableVariable = true;
+    const bool notSharableVariable = false;
 
     /**
      * @class DiscreteVariable
@@ -47,29 +49,58 @@ namespace SPH
     class DiscreteVariable
     {
         const std::string name_;
-        const DataType initialize_value_;
         size_t index_in_container_;
 
     public:
         DiscreteVariable(DiscreteVariableAssemble &variable_assemble,
-                         const std::string &name, const DataType &value)
-            : name_(name), initialize_value_(value),
-              index_in_container_(MaxSize_t)
+                         const std::string &name, bool is_sharable = false)
+            : name_(name), index_in_container_(MaxSize_t)
         {
-            addTo(variable_assemble);
+            addTo(variable_assemble, is_sharable);
         };
         virtual ~DiscreteVariable(){};
-        DataType InitializeValue() const { return initialize_value_; };
         size_t IndexInContainer() const { return index_in_container_; };
+        std::string VariableName() const { return name_; };
 
     protected:
-        void addTo(DiscreteVariableAssemble &variable_assemble)
+        void addTo(DiscreteVariableAssemble &variable_assemble, bool is_sharable)
         {
             constexpr int type_index = DataTypeIndex<DataType>::value;
             auto &variable_container = std::get<type_index>(variable_assemble);
-            index_in_container_ = variable_container.size();
-            variable_container.push_back(this);
+            size_t exist_index = ExistIndexInContainer(variable_container);
+            index_in_container_ = exist_index;
+
+            if (exist_index == variable_container.size())
+            {
+                variable_container.push_back(this);
+            }
+            else
+            {
+                if (!is_sharable)
+                {
+                    std::cout << "\n Error: the variable name: " << name_ << " is already used!" << std::endl;
+                    std::cout << "\n Please check if " << name_ << " is a sharable variable." << std::endl;
+                    std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+                    exit(1);
+                }
+            }
         };
+
+    private:
+        template <typename VariableContainer>
+        size_t ExistIndexInContainer(const VariableContainer &variable_container)
+        {
+            size_t i = 0;
+            while (i != variable_container.size())
+            {
+                if (variable_container[i]->VariableName() == name_)
+                {
+                    return i;
+                }
+                ++i;
+            }
+            return variable_container.size();
+        }
     };
 }
 #endif // BASE_VARIABLES_H
