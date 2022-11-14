@@ -53,7 +53,7 @@ namespace SPH
 
     public:
         DiscreteVariable(DiscreteVariableAssemble &variable_assemble,
-                         const std::string &name, bool is_sharable = false)
+                         const std::string &name, bool is_sharable = notSharableVariable)
             : name_(name), index_in_container_(MaxSize_t)
         {
             addTo(variable_assemble, is_sharable);
@@ -67,7 +67,7 @@ namespace SPH
         {
             constexpr int type_index = DataTypeIndex<DataType>::value;
             auto &variable_container = std::get<type_index>(variable_assemble);
-            size_t exist_index = ExistIndexInContainer(variable_container);
+            size_t exist_index = findExistIndex(variable_container);
             index_in_container_ = exist_index;
 
             if (exist_index == variable_container.size())
@@ -88,7 +88,7 @@ namespace SPH
 
     private:
         template <typename VariableContainer>
-        size_t ExistIndexInContainer(const VariableContainer &variable_container)
+        size_t findExistIndex(const VariableContainer &variable_container)
         {
             size_t i = 0;
             while (i != variable_container.size())
