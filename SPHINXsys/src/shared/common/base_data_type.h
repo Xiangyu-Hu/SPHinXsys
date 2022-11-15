@@ -395,7 +395,7 @@ namespace SPH
 	bool operator==(const BaseBoundingBox<T> &bb1, const BaseBoundingBox<T> &bb2)
 	{
 		return bb1.first == bb2.first && bb1.second == bb2.second ? true : false;
-	};
+	}
 
 	template <class BoundingBoxType>
 	BoundingBoxType getIntersectionOfBoundingBoxes(const BoundingBoxType &bb1, const BoundingBoxType &bb2)
