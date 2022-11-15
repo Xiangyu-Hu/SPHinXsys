@@ -90,27 +90,26 @@ namespace SPH
 	{
 		for (int i = AddressBufferWidth(); i != OperationUpperBound(); ++i)
 			for (int j = AddressBufferWidth(); j != OperationUpperBound(); ++j)
-				for (int k = AddressBufferWidth(); k != OperationUpperBound(); ++k)
+			{
+				// near interface cells are not considered
+				if (abs(*near_interface_id_addrs_[i][j]) > 1)
 				{
-					// near interface cells are not considered
-					if (abs(*near_interface_id_addrs_[i][j]) > 1)
-					{
-						Real phi_0 = *phi_addrs_[i][j];
-						for (int l = -1; l != 2; ++l)
-							for (int m = -1; m != 2; ++m)
+					Real phi_0 = *phi_addrs_[i][j];
+					for (int l = -1; l != 2; ++l)
+						for (int m = -1; m != 2; ++m)
+						{
+							int index_x = i + l;
+							int index_y = j + m;
+							int near_interface_id = *near_interface_id_addrs_[index_x][index_y];
+							if (abs(near_interface_id) == 1)
 							{
-								int index_x = i + l;
-								int index_y = j + m;
-								int near_interface_id = *near_interface_id_addrs_[index_x][index_y];
-								if (abs(near_interface_id) == 1)
-								{
-									*near_interface_id_addrs_[i][j] = near_interface_id;
-									*phi_addrs_[i][j] = near_interface_id == 1 ? fabs(phi_0) : -fabs(phi_0);
-									break;
-								}
+								*near_interface_id_addrs_[i][j] = near_interface_id;
+								*phi_addrs_[i][j] = near_interface_id == 1 ? fabs(phi_0) : -fabs(phi_0);
+								break;
 							}
-					}
+						}
 				}
+			}
 	}
 	//=================================================================================================//
 	void LevelSetDataPackage::markNearInterface(Real small_shift_factor)
