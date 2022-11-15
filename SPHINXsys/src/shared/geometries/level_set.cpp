@@ -18,8 +18,6 @@ namespace SPH
 	{
 		registerPackageData(phi_, phi_addrs_);
 		registerPackageData(phi_gradient_, phi_gradient_addrs_);
-		registerPackageData(kernel_weight_, kernel_weight_addrs_);
-		registerPackageData(kernel_gradient_, kernel_gradient_addrs_);
 		registerPackageData(near_interface_id_, near_interface_id_addrs_);
 	}
 	//=================================================================================================//

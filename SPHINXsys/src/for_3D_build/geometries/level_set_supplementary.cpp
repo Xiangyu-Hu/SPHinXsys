@@ -22,8 +22,6 @@ namespace SPH
 				{
 					phi_[i][j][k] = far_field_level_set;
 					phi_gradient_[i][j][k] = Vecd(1.0);
-					kernel_weight_[i][j][k] = far_field_level_set < 0.0 ? 0 : 1.0;
-					kernel_gradient_[i][j][k] = Vecd(0.0);
 					near_interface_id_[i][j][k] = far_field_level_set < 0.0 ? -2 : 2;
 				}
 	}
@@ -37,18 +35,6 @@ namespace SPH
 					Vec3d position = DataLowerBound() + Vec3d(i, j, k) * grid_spacing_;
 					phi_[i][j][k] = shape.findSignedDistance(position);
 					near_interface_id_[i][j][k] = phi_[i][j][k] < 0.0 ? -2 : 2;
-				}
-	}
-	//=================================================================================================//
-	void LevelSetDataPackage::computeKernelIntegrals(LevelSet &level_set)
-	{
-		for (int i = 0; i != PackageSize(); ++i)
-			for (int j = 0; j != PackageSize(); ++j)
-				for (int k = 0; k != PackageSize(); ++k)
-				{
-					Vec3d position = DataLowerBound() + Vec3d(i, j, k) * grid_spacing_;
-					kernel_weight_[i][j][k] = level_set.computeKernelIntegral(position);
-					kernel_gradient_[i][j][k] = level_set.computeKernelGradientIntegral(position);
 				}
 	}
 	//=================================================================================================//
@@ -230,26 +216,9 @@ namespace SPH
 				{
 					data_pkg.phi_[i][j][k] = far_field_level_set;
 					data_pkg.phi_gradient_[i][j][k] = Vecd(1.0);
-					data_pkg.kernel_weight_[i][j][k] = far_field_level_set < 0.0 ? 0 : 1.0;
-					data_pkg.kernel_gradient_[i][j][k] = Vecd(0.0);
 					data_pkg.near_interface_id_[i][j][k] = far_field_level_set < 0.0 ? -2 : 2;
-					kernel_weight[i][j][k] = 0.0;
+					kernel_weight[i][j][k] = far_field_level_set < 0.0 ? 0 : 1.0;
 					kernel_gradient[i][j][k] = Vec3d(0);
-				}
-	}
-	//=================================================================================================//
-	void LevelSet::computeKernelIntegrals(LevelSetDataPackage &data_pkg)
-	{
-		auto &kernel_weight = data_pkg.getPackageData(kernel_weight_);
-		auto &kernel_gradient = data_pkg.getPackageData(kernel_gradient_);
-
-		for (int i = 0; i != data_pkg.PackageSize(); ++i)
-			for (int j = 0; j != data_pkg.PackageSize(); ++j)
-				for (int k = 0; k != data_pkg.PackageSize(); ++k)
-				{
-					Vec3d position = data_pkg.DataLowerBound() + Vec3d(i, j, k) * data_pkg.GridSpacing();
-					kernel_weight[i][j][k] = computeKernelIntegral(position);
-					kernel_gradient[i][j][k] = computeKernelGradientIntegral(position);
 				}
 	}
 	//=================================================================================================//

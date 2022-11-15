@@ -307,6 +307,11 @@ namespace SPH
 		/** This function find the value of data from its index from global mesh. */
 		template <typename DataType, typename PackageDataType, PackageDataType GridDataPackageType::*MemPtr>
 		DataType DataValueFromGlobalIndex(const Vecu &global_grid_index);
+		/** This function find the value of data from its index from global mesh. */
+		template <typename DataType>
+		DataType DataValueFromGlobalIndex(const DiscreteVariable<DataType> &discrete_variable,
+										  const Vecu &global_grid_index);
+
 		void initializePackageAddressesInACell(const Vecu &cell_index);
 		/** find related cell index and data index for a data package address matrix */
 		std::pair<int, int> CellShiftAndDataIndex(int data_addrs_index_component)

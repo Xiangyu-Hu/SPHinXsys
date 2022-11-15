@@ -51,10 +51,6 @@ namespace SPH
 		PackageDataAddress<Real> phi_addrs_; /**< address for the level set. */
 		PackageData<Vecd> phi_gradient_;
 		PackageDataAddress<Vecd> phi_gradient_addrs_;
-		PackageData<Real> kernel_weight_;
-		PackageDataAddress<Real> kernel_weight_addrs_;
-		PackageData<Vecd> kernel_gradient_;
-		PackageDataAddress<Vecd> kernel_gradient_addrs_;
 		/** mark the near interface cells. 0 for zero level set cut cells,
 		 * -1 and 1 for negative and positive cut cells,
 		 * 0 can also be for other cells in the region closed
@@ -70,7 +66,6 @@ namespace SPH
 		void registerAllVariables();
 		void initializeSingularData(Real far_field_level_set);
 		void initializeBasicData(Shape &shape);
-		void computeKernelIntegrals(LevelSet &level_set);
 		void computeLevelSetGradient();
 		void stepReinitialization();
 		void stepDiffusionLevelSetSign();
@@ -145,7 +140,6 @@ namespace SPH
 		Kernel &kernel_;
 
 		void initializeSingularData(LevelSetDataPackage &data_pkg, Real far_field_level_set);
-		void computeKernelIntegrals(LevelSetDataPackage &data_pkg);
 
 		void finishDataPackages();
 		void reinitializeLevelSet();

@@ -164,6 +164,24 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template <class MeshFieldType, class GridDataPackageType>
+	template <typename DataType>
+	DataType MeshWithGridDataPackages<MeshFieldType, GridDataPackageType>::
+		DataValueFromGlobalIndex(const DiscreteVariable<DataType> &discrete_variable,
+								 const Vecu &global_grid_index)
+	{
+		Vecu pkg_index_(0);
+		Vecu local_data_index(0);
+		for (int n = 0; n != 2; n++)
+		{
+			size_t cell_index_in_this_direction = global_grid_index[n] / pkg_size_;
+			pkg_index_[n] = cell_index_in_this_direction;
+			local_data_index[n] = global_grid_index[n] - cell_index_in_this_direction * pkg_size_;
+		}
+		auto &data = data_pkg_addrs_[pkg_index_[0]][pkg_index_[1]]->getPackageData(discrete_variable);
+		return data[local_data_index[0]][local_data_index[1]];
+	}
+	//=================================================================================================//
+	template <class MeshFieldType, class GridDataPackageType>
 	void MeshWithGridDataPackages<MeshFieldType, GridDataPackageType>::
 		initializePackageAddressesInACell(const Vecu &cell_index)
 	{
