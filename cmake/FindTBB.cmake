@@ -257,16 +257,14 @@ ELSE()
     endif()  
 ENDIF()
 
-set(TBB_LIBRARYS ${TBB_LIBS})
-
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(TBB DEFAULT_MSG 
-  TBB_INCLUDE_DIR TBB_LIB_DIR TBB_LIBRARYS)
+  TBB_INCLUDE_DIR TBB_LIB_DIR TBB_LIBS)
 
 #=============================================================================
 
 if(TBB_FOUND)
-  set(TBB_LIBRARYS ${TBB_LIBRARYS} )
+  set(TBB_LIBRARIES ${TBB_LIBS} )
   set(TBB_INCLUDE_DIR ${TBB_INCLUDE_DIR} )
   set(TBB_LIB_DIR ${TBB_LIB_DIR} )
   set(TBB_DEFINITIONS)
@@ -277,5 +275,5 @@ unset(TBB_LIB_DIR_TEMP CACHE)
 mark_as_advanced(
     TBB_INCLUDE_DIR
     TBB_LIB_DIR
-    TBB_LIBRARYS
+    TBB_LIBRARIES
 )

@@ -70,5 +70,5 @@ if(NOT BUILD_WITH_SIMBODY) # link Simbody if not built by the project
 	target_link_libraries(${PROJECT_NAME} ${Simbody_LIBRARIES})
 endif()
 if(NOT BUILD_WITH_ONETBB) # link TBB if not built by the project
-	target_link_libraries(${PROJECT_NAME} ${TBB_LIBRARYS})
+	target_link_libraries(${PROJECT_NAME} ${TBB_LIBRARIES})
 endif()
