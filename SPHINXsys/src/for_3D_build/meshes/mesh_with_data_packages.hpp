@@ -69,6 +69,22 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template <int PKG_SIZE, int ADDRS_SIZE>
+	template <typename DataType, typename FunctionByPosition>
+	void GridDataPackage<PKG_SIZE, ADDRS_SIZE>::
+		assignByPosition(const DiscreteVariable<DataType> &discrete_variable,
+						 const FunctionByPosition &function_by_position)
+	{
+		auto &pkg_data = getPackageData(discrete_variable);
+		for (int i = 0; i != PKG_SIZE; ++i)
+			for (int j = 0; j != PKG_SIZE; ++j)
+				for (int k = 0; k != PKG_SIZE; ++k)
+				{
+					Vec3d position = DataLowerBound() + Vec3d(i, j, k) * grid_spacing_;
+					pkg_data[i][j][k] = function_by_position(position);
+				}
+	}
+	//=================================================================================================//
+	template <int PKG_SIZE, int ADDRS_SIZE>
 	template <typename DataType>
 	void GridDataPackage<PKG_SIZE, ADDRS_SIZE>::initializePackageDataAddress<DataType>::
 	operator()(GeneralDataAssemble<PackageData> &all_pkg_data,

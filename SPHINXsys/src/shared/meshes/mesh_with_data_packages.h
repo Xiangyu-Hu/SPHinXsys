@@ -151,6 +151,8 @@ namespace SPH
 		template <typename InDataType, typename OutDataType>
 		void computeNormalizedGradient(PackageDataAddress<InDataType> &in_pkg_data_addrs,
 									   PackageDataAddress<OutDataType> out_pkg_data_addrs, Real dt = 0.0);
+		template <typename DataType, typename FunctionByPosition>
+		void assignByPosition(const DiscreteVariable<DataType> &discrete_variable, const FunctionByPosition &function_by_position);
 
 	protected:
 		/** register a variable defined in a class (can be non-particle class) */
