@@ -352,7 +352,7 @@ namespace SPH
 					<< ". So this variable will not be tested due to its tiny effect." << endl;
 				continue;
 			}
-			Real relative_value_ = ABS((meanvalue[observation_index] - local_meanvalue[observation_index]) / meanvalue[observation_index]);
+			Real relative_value_ = ABS((meanvalue[observation_index] - local_meanvalue[observation_index]) / (meanvalue[observation_index] + TinyReal));
 			if (relative_value_ > 0.1 || variance_new_[observation_index] > (1.01 * variance[observation_index]))
 			{
 				std::cout << this->quantity_name_ << "[" << observation_index << "] is beyond the exception !" << endl;
@@ -385,7 +385,7 @@ namespace SPH
 							  << local_meanvalue[observation_index][i] << ". So this variable will not be tested due to its tiny effect." << endl;
 					continue;
 				}
-				Real relative_value_ = ABS((meanvalue[observation_index][i] - local_meanvalue[observation_index][i]) / meanvalue[observation_index][i]);
+				Real relative_value_ = ABS((meanvalue[observation_index][i] - local_meanvalue[observation_index][i]) / (meanvalue[observation_index][i] + TinyReal));
 				if (relative_value_ > 0.1 || (variance_new_[observation_index][i] > 1.01 * variance[observation_index][i]))
 				{
 					std::cout << this->quantity_name_ << "[" << observation_index << "][" << i << "] is beyond the exception !" << endl;
@@ -421,7 +421,7 @@ namespace SPH
 								  << local_meanvalue[observation_index](i,j) << ". So this variable will not be tested due to its tiny effect. " << endl;
 						continue;
 					}
-					Real relative_value_ = ABS((meanvalue_[observation_index](i,j) - local_meanvalue[observation_index](i,j)) / meanvalue[observation_index](i,j));
+					Real relative_value_ = ABS((meanvalue_[observation_index](i,j) - local_meanvalue[observation_index](i,j)) / (meanvalue[observation_index](i,j) + TinyReal));
 					if (relative_value_ > 0.1 || variance_new_[observation_index](i,j) > 1.01 * variance[observation_index](i,j))
 					{
 						std::cout << this->quantity_name_ << "[" << observation_index << "][" << i << "][" << j << "] is beyond the exception !" << endl;

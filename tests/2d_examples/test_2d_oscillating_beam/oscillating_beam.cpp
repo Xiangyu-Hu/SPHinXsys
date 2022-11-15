@@ -213,7 +213,7 @@ int main(int ac, char *av[])
 	if (system.generate_regression_data_)
 	{
 		// The lift force at the cylinder is very small and not important in this case.
-		write_beam_tip_displacement.generateDataBase({1.0e-2, 1.0e-2}, {1.0e-2, 1.0e-2});
+		write_beam_tip_displacement.generateDataBase(Vec2d(1.0e-2, 1.0e-2), Vec2d(1.0e-2, 1.0e-2));
 	}
 	else
 	{
