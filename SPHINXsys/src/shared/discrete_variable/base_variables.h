@@ -36,11 +36,9 @@ namespace SPH
 {
     template <typename DataType>
     class DiscreteVariable;
-
+    const bool sharableVariable = true;
     typedef GeneralDataAssemble<DiscreteVariable> DiscreteVariableAssemble;
-    const bool isSharableVariable = true;
-    const bool notSharableVariable = false;
-
+    
     /**
      * @class DiscreteVariable
      * @brief template base class for all discrete variables.
@@ -53,7 +51,7 @@ namespace SPH
 
     public:
         DiscreteVariable(DiscreteVariableAssemble &variable_assemble,
-                         const std::string &name, bool is_sharable = notSharableVariable)
+                         const std::string &name, bool is_sharable = !sharableVariable)
             : name_(name), index_in_container_(MaxSize_t)
         {
             addTo(variable_assemble, is_sharable);
@@ -78,7 +76,7 @@ namespace SPH
             {
                 if (!is_sharable)
                 {
-                    std::cout << "\n Error: the variable name: " << name_ << " is already used!" << std::endl;
+                    std::cout << "\n Error: the variable: " << name_ << " is already used!" << std::endl;
                     std::cout << "\n Please check if " << name_ << " is a sharable variable." << std::endl;
                     std::cout << __FILE__ << ':' << __LINE__ << std::endl;
                     exit(1);
