@@ -1,23 +1,53 @@
-# shared build 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake) # main (top) cmake dir
-include(Dirsearch_shared)
+file(GLOB_RECURSE SPHINXSYS_SHARED_HEADERS CONFIGURE_DEPENDS shared/*.h shared/*.hpp)
+file(GLOB_RECURSE SPHINXSYS_SHARED_SOURCES CONFIGURE_DEPENDS shared/*.cpp)
 
-## prepare dirctoriesfor head and source files
-HEADER_DIRECTORIES_SHARED(headdirs_shared)
-SOURCE_DIRECTORIES_SHARED(sourcedirs_shared)
+if(NOT SPHINXSYS_ONLY_3D)
+    add_library(sphinxsys_2d)
 
-SET(usefuldirs ${headdirs_shared} ${sourcedirs_shared})
-LIST(REMOVE_DUPLICATES usefuldirs)
+    file(GLOB_RECURSE SPHINXSYS_2D_HEADERS CONFIGURE_DEPENDS for_2D_build/*.h for_2D_build/*.hpp)
+    target_sources(sphinxsys_2d PUBLIC ${SPHINXSYS_SHARED_HEADERS} ${SPHINXSYS_2D_HEADERS})
 
-SET(usefulsubdirs ${usefuldirs})
-LIST(REMOVE_ITEM usefulsubdirs ${CMAKE_CURRENT_SOURCE_DIR})
+    foreach(FILEPATH ${SPHINXSYS_SHARED_HEADERS})
+        get_filename_component(DIR ${FILEPATH} DIRECTORY)
+        list(APPEND SPHINXSYS_2D_DIRS ${DIR})
+    endforeach()
+    foreach(FILEPATH ${SPHINXSYS_2D_HEADERS})
+        get_filename_component(DIR ${FILEPATH} DIRECTORY)
+        list(APPEND SPHINXSYS_2D_DIRS ${DIR})
+    endforeach()
+    list(REMOVE_DUPLICATES SPHINXSYS_2D_DIRS)
+    foreach(DIR ${SPHINXSYS_2D_DIRS})
+        target_include_directories(sphinxsys_2d PUBLIC $<BUILD_INTERFACE:${DIR}>)
+    endforeach()
+    target_include_directories(sphinxsys_2d PUBLIC $<INSTALL_INTERFACE:include/sphinxsys_2d>)
 
-if(NOT ONLY_3D)
-	ADD_SUBDIRECTORY(for_2D_build)
+    file(GLOB_RECURSE SPHINXSYS_2D_SOURCES CONFIGURE_DEPENDS for_2D_build/*.cpp)
+    target_sources(sphinxsys_2d PRIVATE ${SPHINXSYS_SHARED_SOURCES} ${SPHINXSYS_2D_SOURCES})
+
+    target_link_libraries(sphinxsys_2d PUBLIC sphinxsys_core)
 endif()
-ADD_SUBDIRECTORY(for_3D_build)
-ADD_SUBDIRECTORY(shared)
 
-if(BUILD_WITH_IMAGE_PROCESS)
-add_subdirectory(image_processing)
-endif()
+add_library(sphinxsys_3d)
+
+file(GLOB_RECURSE SPHINXSYS_3D_HEADERS CONFIGURE_DEPENDS for_3D_build/*.h for_3D_build/*.hpp)
+target_sources(sphinxsys_3d PUBLIC ${SPHINXSYS_SHARED_HEADERS} ${SPHINXSYS_3D_HEADERS})
+
+
+foreach(FILEPATH ${SPHINXSYS_SHARED_HEADERS})
+  get_filename_component(DIR ${FILEPATH} DIRECTORY)
+  list(APPEND SPHINXSYS_3D_DIRS ${DIR})
+endforeach()
+foreach(FILEPATH ${SPHINXSYS_3D_HEADERS})
+  get_filename_component(DIR ${FILEPATH} DIRECTORY)
+  list(APPEND SPHINXSYS_3D_DIRS ${DIR})
+endforeach()
+list(REMOVE_DUPLICATES SPHINXSYS_3D_DIRS)
+foreach(DIR ${SPHINXSYS_3D_DIRS})
+    target_include_directories(sphinxsys_3d PUBLIC $<BUILD_INTERFACE:${DIR}>)
+endforeach()
+target_include_directories(sphinxsys_3d PUBLIC $<INSTALL_INTERFACE:include/sphinxsys_3d>)
+
+file(GLOB_RECURSE SPHINXSYS_3D_SOURCES CONFIGURE_DEPENDS for_3D_build/*.cpp)
+target_sources(sphinxsys_3d PRIVATE ${SPHINXSYS_SHARED_SOURCES} ${SPHINXSYS_3D_SOURCES})
+
+target_link_libraries(sphinxsys_3d PUBLIC sphinxsys_core)
