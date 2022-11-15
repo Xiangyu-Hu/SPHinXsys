@@ -80,12 +80,13 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSet::updateKernelIntegrals()
 	{
-		package_parallel_for(inner_data_pkgs_,
-							 [&](size_t i)
-							 {
-								 inner_data_pkgs_[i]->computeKernelIntegrals(*this);
-								 computeKernelIntegrals(*inner_data_pkgs_[i]);
-							 });
+		//		package_parallel_for(inner_data_pkgs_,
+		package_for(inner_data_pkgs_,
+					[&](size_t i)
+					{
+						inner_data_pkgs_[i]->computeKernelIntegrals(*this);
+						computeKernelIntegrals(*inner_data_pkgs_[i]);
+					});
 	}
 	//=================================================================================================//
 	Vecd LevelSet::probeNormalDirection(const Vecd &position)

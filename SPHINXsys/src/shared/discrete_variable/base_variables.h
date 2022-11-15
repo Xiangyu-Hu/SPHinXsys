@@ -36,7 +36,7 @@ namespace SPH
 {
     template <typename DataType>
     class DiscreteVariable;
-    const bool sharableVariable = true;
+    const bool sharedVariable = true;
     typedef GeneralDataAssemble<DiscreteVariable> DiscreteVariableAssemble;
 
     /**
@@ -48,8 +48,8 @@ namespace SPH
     {
     public:
         DiscreteVariable(DiscreteVariableAssemble &variable_assemble,
-                         const std::string &name, bool is_sharable = !sharableVariable)
-            : name_(name), index_in_container_(initializeIndex(variable_assemble, is_sharable)){};
+                         const std::string &name, bool is_shared = !sharedVariable)
+            : name_(name), index_in_container_(initializeIndex(variable_assemble, is_shared)){};
         virtual ~DiscreteVariable(){};
         size_t IndexInContainer() const { return index_in_container_; };
         std::string VariableName() const { return name_; };
@@ -58,17 +58,17 @@ namespace SPH
         const std::string name_;
         size_t index_in_container_;
 
-        size_t initializeIndex(DiscreteVariableAssemble &variable_assemble, bool is_sharable)
+        size_t initializeIndex(DiscreteVariableAssemble &variable_assemble, bool is_shared)
         {
             constexpr int type_index = DataTypeIndex<DataType>::value;
             auto &variable_container = std::get<type_index>(variable_assemble);
-            size_t exist_index = findExistIndex(variable_container);
+            size_t determined_index = determineIndex(variable_container);
 
-            if (exist_index == variable_container.size())
+            if (determined_index == variable_container.size()) // determined a new index
             {
                 variable_container.push_back(this);
             }
-            else if (!is_sharable)
+            else if (!is_shared)
             {
                 std::cout << "\n Error: the variable: " << name_ << " is already used!" << std::endl;
                 std::cout << "\n Please check if " << name_ << " is a sharable variable." << std::endl;
@@ -76,11 +76,11 @@ namespace SPH
                 exit(1);
             }
 
-            return exist_index;
+            return determined_index;
         };
 
         template <typename VariableContainer>
-        size_t findExistIndex(const VariableContainer &variable_container)
+        size_t determineIndex(const VariableContainer &variable_container)
         {
             size_t i = 0;
             while (i != variable_container.size())

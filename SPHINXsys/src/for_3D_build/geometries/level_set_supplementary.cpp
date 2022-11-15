@@ -247,7 +247,7 @@ namespace SPH
 			for (int j = 0; j != data_pkg.PackageSize(); ++j)
 				for (int k = 0; k != data_pkg.PackageSize(); ++k)
 				{
-					Vec3d position = data_pkg.DataLowerBound() + Vec3d(i, j, k) * grid_spacing_;
+					Vec3d position = data_pkg.DataLowerBound() + Vec3d(i, j, k) * data_pkg.GridSpacing();
 					kernel_weight[i][j][k] = computeKernelIntegral(position);
 					kernel_gradient[i][j][k] = computeKernelGradientIntegral(position);
 				}
