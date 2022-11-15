@@ -324,7 +324,7 @@ namespace SPH
 					return false;
 				}
 			}
-			else if (count_not_converged_v != 0)
+			else
 			{
 				this->converged = "false";
 				this->label_for_repeat_ = 0;
@@ -332,7 +332,7 @@ namespace SPH
 				return false;
 			};
 		}
-		else if (count_not_converged_m != 0)
+		else
 		{
 			this->converged = "false";
 			this->label_for_repeat_ = 0;
