@@ -9,7 +9,7 @@ if(NOT SPH_ONLY_STATIC_BUILD)
     target_link_libraries(structural_simulation_module sphinxsys_3d)
 else()
     add_library(structural_simulation_module STATIC structural_simulation/structural_simulation_class.cpp)
-    target_link_libraries(structural_simulation_module sphinxsys_static_3d)
+    target_link_libraries(structural_simulation_module sphinxsys_3d)
 endif()
 
 target_include_directories(structural_simulation_module PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/structural_simulation ${SPHINXsysHeaderPath})
