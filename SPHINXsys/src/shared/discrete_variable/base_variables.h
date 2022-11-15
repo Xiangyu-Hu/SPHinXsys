@@ -22,9 +22,9 @@
  * -----------------------------------------------------------------------------*/
 /**
  * @file 	base_variables.h
- * @brief 	This is the base class variables used in simulation.
+ * @brief 	Here gives classes for the base variables used in simulation.
  * @details These variables are those discretized in spaces and time.
- * @author	Xiangyu Hu and Chi Zhang
+ * @author	Xiangyu Hu
  */
 
 #ifndef BASE_VARIABLES_H
@@ -38,7 +38,7 @@ namespace SPH
     class DiscreteVariable;
     const bool sharableVariable = true;
     typedef GeneralDataAssemble<DiscreteVariable> DiscreteVariableAssemble;
-    
+
     /**
      * @class DiscreteVariable
      * @brief template base class for all discrete variables.
@@ -46,45 +46,39 @@ namespace SPH
     template <typename DataType>
     class DiscreteVariable
     {
-        const std::string name_;
-        size_t index_in_container_;
-
     public:
         DiscreteVariable(DiscreteVariableAssemble &variable_assemble,
                          const std::string &name, bool is_sharable = !sharableVariable)
-            : name_(name), index_in_container_(MaxSize_t)
-        {
-            addTo(variable_assemble, is_sharable);
-        };
+            : name_(name), index_in_container_(initializeIndex(variable_assemble, is_sharable)){};
         virtual ~DiscreteVariable(){};
         size_t IndexInContainer() const { return index_in_container_; };
         std::string VariableName() const { return name_; };
 
-    protected:
-        void addTo(DiscreteVariableAssemble &variable_assemble, bool is_sharable)
+    private:
+        const std::string name_;
+        size_t index_in_container_;
+
+        size_t initializeIndex(DiscreteVariableAssemble &variable_assemble, bool is_sharable)
         {
             constexpr int type_index = DataTypeIndex<DataType>::value;
             auto &variable_container = std::get<type_index>(variable_assemble);
             size_t exist_index = findExistIndex(variable_container);
-            index_in_container_ = exist_index;
 
             if (exist_index == variable_container.size())
             {
                 variable_container.push_back(this);
             }
-            else
+            else if (!is_sharable)
             {
-                if (!is_sharable)
-                {
-                    std::cout << "\n Error: the variable: " << name_ << " is already used!" << std::endl;
-                    std::cout << "\n Please check if " << name_ << " is a sharable variable." << std::endl;
-                    std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-                    exit(1);
-                }
+                std::cout << "\n Error: the variable: " << name_ << " is already used!" << std::endl;
+                std::cout << "\n Please check if " << name_ << " is a sharable variable." << std::endl;
+                std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+                exit(1);
             }
+
+            return exist_index;
         };
 
-    private:
         template <typename VariableContainer>
         size_t findExistIndex(const VariableContainer &variable_container)
         {
