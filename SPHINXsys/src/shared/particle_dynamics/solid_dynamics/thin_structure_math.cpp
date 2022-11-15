@@ -137,16 +137,12 @@ namespace SPH
 		//=================================================================================================//
 		Vec2d getNormalFromDeformationGradientTensor(const Mat2d &F)
 		{
-			Vec2d n = Vec2d(-F.col(0)[1], F.col(0)[0]);
-			return n.normalized();
+			return Vec2d(-F.col(0)[1], F.col(0)[0]).normalized();
 		}
 		//=================================================================================================//
 		Vec3d getNormalFromDeformationGradientTensor(const Mat3d &F)
 		{
-			Vec3d vec_1 = F.col(0);
-			Vec3d vec_2 = F.col(1);
-			Vec3d n = getCrossProduct(vec_1, vec_2);
-			return n.normalized();
+			return F.col(0).cross(F.col(1)).normalized();
 		}
 		//=================================================================================================//
 		Vecd getLinearVariableJump(const Vecd &e_ij, const Real &r_ij, const Vecd &particle_i_value,
