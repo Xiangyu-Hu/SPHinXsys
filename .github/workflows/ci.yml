@@ -36,6 +36,7 @@ jobs:
           libgtest-dev \
           libtbb-dev \
           libboost-all-dev \
+          libeigen3-dev \
           liblapack-dev \
           wget \
           unzip
