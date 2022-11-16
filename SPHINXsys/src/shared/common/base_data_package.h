@@ -36,21 +36,21 @@ namespace SPH
 {
 
     typedef blocked_range<size_t> IndexRange;
-    /** Generalized data assemble type */
+    /** Generalized data container assemble type */
     template <template <typename DataType> typename DataContainerType>
-    using GeneralDataAssemble = std::tuple<StdVec<DataContainerType<Real> *>,
-                                           StdVec<DataContainerType<Vecd> *>,
-                                           StdVec<DataContainerType<Matd> *>,
-                                           StdVec<DataContainerType<int> *>>;
-
-    /** Generalized data package type in which all data saved */
+    using DataContainerAssemble =
+        std::tuple<StdVec<DataContainerType<Real>>,
+                   StdVec<DataContainerType<Vecd>>,
+                   StdVec<DataContainerType<Matd>>,
+                   StdVec<DataContainerType<int>>>;
+    /** Generalized data container address assemble type */
     template <template <typename DataType> typename DataContainerType>
-    using GeneralDataPackage = std::tuple<StdVec<DataContainerType<Real>>,
-                                          StdVec<DataContainerType<Vecd>>,
-                                          StdVec<DataContainerType<Matd>>,
-                                          StdVec<DataContainerType<int>>>;
-
-    /** a type irrelevant operation on all data in a data assemble  */
+    using DataContainerAddressAssemble =
+        std::tuple<StdVec<DataContainerType<Real> *>,
+                   StdVec<DataContainerType<Vecd> *>,
+                   StdVec<DataContainerType<Matd> *>,
+                   StdVec<DataContainerType<int> *>>;
+    /** a type irrelevant operation on the data assembles  */
     template <template <typename VariableType> typename OperationType>
     struct DataAssembleOperation
     {

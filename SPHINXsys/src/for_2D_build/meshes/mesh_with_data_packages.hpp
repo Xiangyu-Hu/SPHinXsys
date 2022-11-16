@@ -80,8 +80,8 @@ namespace SPH
 	template <int PKG_SIZE, int ADDRS_SIZE>
 	template <typename DataType>
 	void GridDataPackage<PKG_SIZE, ADDRS_SIZE>::initializePackageDataAddress<DataType>::
-	operator()(GeneralDataAssemble<PackageData> &all_pkg_data,
-			   GeneralDataAssemble<PackageDataAddress> &all_pkg_data_addrs)
+	operator()(DataContainerAddressAssemble<PackageData> &all_pkg_data,
+			   DataContainerAddressAssemble<PackageDataAddress> &all_pkg_data_addrs)
 	{
 		constexpr int type_index = DataTypeIndex<DataType>::value;
 		for (size_t l = 0; l != std::get<type_index>(all_pkg_data).size(); ++l)
@@ -115,9 +115,9 @@ namespace SPH
 	template <int PKG_SIZE, int ADDRS_SIZE>
 	template <typename DataType>
 	void GridDataPackage<PKG_SIZE, ADDRS_SIZE>::assignPackageDataAddress<DataType>::
-	operator()(GeneralDataAssemble<PackageDataAddress> &all_pkg_data_addrs,
+	operator()(DataContainerAddressAssemble<PackageDataAddress> &all_pkg_data_addrs,
 			   const Vecu &addrs_index,
-			   GeneralDataAssemble<PackageData> &all_pkg_data,
+			   DataContainerAddressAssemble<PackageData> &all_pkg_data,
 			   const Vecu &data_index)
 	{
 		constexpr int type_index = DataTypeIndex<DataType>::value;
@@ -132,9 +132,9 @@ namespace SPH
 	template <int PKG_SIZE, int ADDRS_SIZE>
 	template <typename DataType>
 	void GridDataPackage<PKG_SIZE, ADDRS_SIZE>::assignExtraPackageDataAddress<DataType>::
-	operator()(GeneralDataPackage<PackageDataAddress> &extra_pkg_data_addrs,
+	operator()(DataContainerAssemble<PackageDataAddress> &extra_pkg_data_addrs,
 			   const Vecu &addrs_index,
-			   GeneralDataPackage<PackageData> &extra_pkg_data,
+			   DataContainerAssemble<PackageData> &extra_pkg_data,
 			   const Vecu &data_index)
 	{
 		constexpr int type_index = DataTypeIndex<DataType>::value;

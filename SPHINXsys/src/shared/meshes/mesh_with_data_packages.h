@@ -101,11 +101,11 @@ namespace SPH
 		using PackageData = PackageDataMatrix<DataType, PKG_SIZE>;
 		template <typename DataType>
 		using PackageDataAddress = PackageDataMatrix<DataType *, ADDRS_SIZE>;
-		GeneralDataAssemble<PackageData> all_pkg_data_;
-		GeneralDataAssemble<PackageDataAddress> all_pkg_data_addrs_;
+		DataContainerAddressAssemble<PackageData> all_pkg_data_;
+		DataContainerAddressAssemble<PackageDataAddress> all_pkg_data_addrs_;
 
-		GeneralDataPackage<PackageData> extra_pkg_data_;
-		GeneralDataPackage<PackageDataAddress> extra_pkg_data_addrs_;
+		DataContainerAssemble<PackageData> extra_pkg_data_;
+		DataContainerAssemble<PackageDataAddress> extra_pkg_data_addrs_;
 
 		/** Matrix data for temporary usage. Note that it is array with ADDRS_SIZE.  */
 		template <typename DataType>
@@ -169,17 +169,17 @@ namespace SPH
 		template <typename DataType>
 		struct initializePackageDataAddress
 		{
-			void operator()(GeneralDataAssemble<PackageData> &all_pkg_data,
-							GeneralDataAssemble<PackageDataAddress> &all_pkg_data_addrs);
+			void operator()(DataContainerAddressAssemble<PackageData> &all_pkg_data,
+							DataContainerAddressAssemble<PackageDataAddress> &all_pkg_data_addrs);
 		};
 		DataAssembleOperation<initializePackageDataAddress> initialize_pkg_data_addrs_;
 		/** assign address for a package data when the package is an inner one */
 		template <typename DataType>
 		struct assignPackageDataAddress
 		{
-			void operator()(GeneralDataAssemble<PackageDataAddress> &all_pkg_data_addrs,
+			void operator()(DataContainerAddressAssemble<PackageDataAddress> &all_pkg_data_addrs,
 							const Vecu &addrs_index,
-							GeneralDataAssemble<PackageData> &all_pkg_data,
+							DataContainerAddressAssemble<PackageData> &all_pkg_data,
 							const Vecu &data_index);
 		};
 		DataAssembleOperation<assignPackageDataAddress> assign_pkg_data_addrs_;
@@ -188,9 +188,9 @@ namespace SPH
 		template <typename DataType>
 		struct assignExtraPackageDataAddress
 		{
-			void operator()(GeneralDataPackage<PackageDataAddress> &all_pkg_data_addrs,
+			void operator()(DataContainerAssemble<PackageDataAddress> &all_pkg_data_addrs,
 							const Vecu &addrs_index,
-							GeneralDataPackage<PackageData> &all_pkg_data,
+							DataContainerAssemble<PackageData> &all_pkg_data,
 							const Vecu &data_index);
 		};
 		DataAssembleOperation<assignExtraPackageDataAddress> assign_extra_pkg_data_addrs_;
@@ -198,8 +198,8 @@ namespace SPH
 		template <typename DataType>
 		struct ExtaVariablesAllocation
 		{
-			void operator()(GeneralDataPackage<PackageData> &extra_pkg_data,
-							GeneralDataPackage<PackageDataAddress> &extra_pkg_data_addrs,
+			void operator()(DataContainerAssemble<PackageData> &extra_pkg_data,
+							DataContainerAssemble<PackageDataAddress> &extra_pkg_data_addrs,
 							const DiscreteVariableAssemble &extra_variables)
 			{
 				constexpr int type_index = DataTypeIndex<DataType>::value;
@@ -291,7 +291,7 @@ namespace SPH
 
 		template <typename InitializeSingularData>
 		void initializeASingularDataPackage(
-			const GeneralDataAssemble<DiscreteVariable> &all_variables,
+			const DataContainerAddressAssemble<DiscreteVariable> &all_variables,
 			const InitializeSingularData &initialize_singular_data)
 		{
 			GridDataPackageType *new_data_pkg = data_pkg_pool_.malloc();

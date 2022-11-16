@@ -37,7 +37,7 @@ namespace SPH
     template <typename DataType>
     class DiscreteVariable;
     const bool sharedVariable = true;
-    typedef GeneralDataAssemble<DiscreteVariable> DiscreteVariableAssemble;
+    typedef DataContainerAddressAssemble<DiscreteVariable> DiscreteVariableAssemble;
 
     /**
      * @class DiscreteVariable

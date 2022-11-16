@@ -43,7 +43,7 @@ namespace SPH
 	using SplitCellLists = StdVec<ConcurrentCellLists>;
 
 	/** Generalized particle data type */
-	typedef GeneralDataAssemble<StdLargeVec> ParticleData;
+	typedef DataContainerAddressAssemble<StdLargeVec> ParticleData;
 	/** Generalized particle variable to index map */
 	typedef std::array<std::map<std::string, size_t>, 4> ParticleDataMap;
 	/** Generalized particle variable list */
