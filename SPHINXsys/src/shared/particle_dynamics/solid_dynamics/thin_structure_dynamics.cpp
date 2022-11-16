@@ -300,11 +300,19 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ConstrainShellBodyRegion::ConstrainShellBodyRegion(BodyPartByParticle &body_part)
-			: LocalDynamics(body_part.getSPHBody()), ShellDataSimple(sph_body_), pos_(particles_->pos_), 
-			  pos0_(particles_->pos0_), n_(particles_->n_), vel_(particles_->vel_), acc_(particles_->acc_),
-			  rotation_(particles_->rotation_), angular_vel_(particles_->angular_vel_),
-			  dangular_vel_dt_(particles_->dangular_vel_dt_), pseudo_n_(particles_->pseudo_n_), 
-			  dpseudo_n_dt_(particles_->dpseudo_n_dt_){}
+			: LocalDynamics(body_part.getSPHBody())
+			, ShellDataSimple(sph_body_)
+			, pos_(particles_->pos_)
+			, pos0_(particles_->pos0_)
+			, n_(particles_->n_)
+			, vel_(particles_->vel_)
+			, acc_(particles_->acc_)
+			, rotation_(particles_->rotation_)
+			, angular_vel_(particles_->angular_vel_)
+			, dangular_vel_dt_(particles_->dangular_vel_dt_)
+			, pseudo_n_(particles_->pseudo_n_)
+			, dpseudo_n_dt_(particles_->dpseudo_n_dt_)
+		{}
 		//=================================================================================================//
 		void ConstrainShellBodyRegion::update(size_t index_i, Real dt)
 		{
@@ -312,6 +320,7 @@ namespace SPH
 			Vecd pos_n = pos_[index_i];
 			Vecd vel_n = vel_[index_i];
 			Vecd acc = acc_[index_i];
+			
 			Vecd rotation_0 = Vecd::Zero();
 			Vecd angular_vel = Vecd::Zero();
 			Vecd dangular_vel_dt = Vecd::Zero();
@@ -328,9 +337,16 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ConstrainShellBodyRegionAlongAxis::ConstrainShellBodyRegionAlongAxis(BodyPartByParticle &body_part, int axis)
-			: LocalDynamics(body_part.getSPHBody()), ShellDataSimple(sph_body_),
-			  axis_(axis), pos_(particles_->pos_), pos0_(particles_->pos0_), vel_(particles_->vel_), acc_(particles_->acc_),
-			  rotation_(particles_->rotation_), angular_vel_(particles_->angular_vel_), dangular_vel_dt_(particles_->dangular_vel_dt_) {}
+			: LocalDynamics(body_part.getSPHBody())
+			, ShellDataSimple(sph_body_)
+			, axis_(axis), pos_(particles_->pos_)
+			, pos0_(particles_->pos0_)
+			, vel_(particles_->vel_)
+			, acc_(particles_->acc_)
+			, rotation_(particles_->rotation_)
+			, angular_vel_(particles_->angular_vel_)
+			, dangular_vel_dt_(particles_->dangular_vel_dt_) 
+		{}
 		//=================================================================================================//
 		void ConstrainShellBodyRegionAlongAxis::update(size_t index_i, Real dt)
 		{

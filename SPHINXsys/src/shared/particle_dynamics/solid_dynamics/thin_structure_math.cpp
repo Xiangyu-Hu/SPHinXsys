@@ -81,8 +81,8 @@ namespace SPH
 			/**The derivative of the rotation matrix of the X-axis. */
 			Mat3d drotation_matrix_x_dt{
 				{0.0, 0.0, 0.0},
-				{0.0,-sin_angle_x * angular_vel_x,-cos_angle_x * angular_vel_x},
-				{0.0, cos_angle_x * angular_vel_x, sin_angle_x * angular_vel_x},
+				{0.0,-sin_angle_x * angular_vel_x, -cos_angle_x * angular_vel_x},
+				{0.0, cos_angle_x * angular_vel_x, -sin_angle_x * angular_vel_x},
 			};
 			/**The derivative of the rotation matrix of the Y-axis. */
 			Mat3d drotation_matrix_y_dt{

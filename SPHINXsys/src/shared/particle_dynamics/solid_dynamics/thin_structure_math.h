@@ -10,7 +10,7 @@
  *																			*
  * SPHinXsys is partially funded by German Research Foundation				*
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
- *  HU1527/12-1 and HU1527/12-4													*
+ *  HU1527/12-1 and HU1527/12-4												*
  *                                                                          *
  * Portions copyright (c) 2017-2022 Technical University of Munich and		*
  * the authors' affiliations.												*
@@ -21,9 +21,10 @@
  *                                                                          *
  * ------------------------------------------------------------------------*/
 /**
- * @file 	thin_structure_math.h
+ * @file 	thin_structure_dynamics.h
  * @brief 	Here, we define the math operation for thin structure dynamics. 
- * @author	Dong Wu and Xiangyu Hu
+ * @details We consider here a weakly compressible solids.
+ * @author	Dong Wu, Chi Zhang and Xiangyu Hu
  */
 
 #ifndef THIN_STRUCTURE_MATH_H
