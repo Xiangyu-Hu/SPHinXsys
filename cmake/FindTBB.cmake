@@ -90,6 +90,17 @@ macro(get_debug_names PREFIX)
 endmacro()
 
 #===============================================
+# See if we have env vars to help us find tbb
+#===============================================
+macro(getenv_path VAR)
+   set(ENV_${VAR} $ENV{${VAR}})
+   # replace won't work if var is blank
+   if (ENV_${VAR})
+     string( REGEX REPLACE "\\\\" "/" ENV_${VAR} ${ENV_${VAR}} )
+   endif ()
+endmacro()
+
+#===============================================
 # Couple a set of release AND debug libraries
 #===============================================
 macro(make_library_set PREFIX)
@@ -108,7 +119,7 @@ endmacro()
 #
 
 # Get path, convert backslashes as ${ENV_${var}}
-SET(ENV_TBB_HOME, ${TBB_HOME})
+getenv_path(TBB_HOME)
 
 # initialize search paths
 set(TBB_PREFIX_PATH ${TBB_HOME} ${ENV_TBB_HOME})
