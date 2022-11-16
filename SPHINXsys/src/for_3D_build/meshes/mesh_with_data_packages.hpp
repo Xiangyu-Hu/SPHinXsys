@@ -51,24 +51,6 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template <int PKG_SIZE, int ADDRS_SIZE>
-	template <typename InDataType, typename OutDataType>
-	void GridDataPackage<PKG_SIZE, ADDRS_SIZE>::
-		computeNormalizedGradient(PackageDataAddress<InDataType> &in_pkg_data_addrs,
-								  PackageDataAddress<OutDataType> out_pkg_data_addrs, Real dt)
-	{
-		for (int i = 1; i != PKG_SIZE + 1; ++i)
-			for (int j = 1; j != PKG_SIZE + 1; ++j)
-				for (int k = 1; k != PKG_SIZE + 1; ++k)
-				{
-					Real dphidx = (*in_pkg_data_addrs[i + 1][j][k] - *in_pkg_data_addrs[i - 1][j][k]);
-					Real dphidy = (*in_pkg_data_addrs[i][j + 1][k] - *in_pkg_data_addrs[i][j - 1][k]);
-					Real dphidz = (*in_pkg_data_addrs[i][j][k + 1] - *in_pkg_data_addrs[i][j][k - 1]);
-					Vecd normal = Vecd(dphidx, dphidy, dphidz);
-					*out_pkg_data_addrs[i][j][k] = normal / (normal.norm() + TinyReal);
-				}
-	}
-	//=================================================================================================//
-	template <int PKG_SIZE, int ADDRS_SIZE>
 	template <typename DataType, typename FunctionByPosition>
 	void GridDataPackage<PKG_SIZE, ADDRS_SIZE>::
 		assignByPosition(const DiscreteVariable<DataType> &discrete_variable,

@@ -116,7 +116,7 @@ namespace SPH
 
 	/**
 	 * @class BaseMeshField
-	 * @brief Abstract base class for the field data saved on a mesh.
+	 * @brief Abstract base class for the geometric or physics field.
 	 */
 	class BaseMeshField
 	{

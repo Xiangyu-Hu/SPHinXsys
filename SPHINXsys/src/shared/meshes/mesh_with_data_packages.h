@@ -92,6 +92,7 @@ namespace SPH
 	 * note tha ADDRS_SIZE = PKG_SIZE + 2 * pkg_addrs_buffer_;
 	 * Also note that, while the mesh lower bound locates the first data address,
 	 * the data lower bound locates the first data.
+	 * The package lower bound is just in the middle of mesh and data lower bounds.
 	 */
 	template <int PKG_SIZE, int ADDRS_SIZE>
 	class GridDataPackage : public BaseDataPackage, public BaseMesh
@@ -101,19 +102,17 @@ namespace SPH
 		using PackageData = PackageDataMatrix<DataType, PKG_SIZE>;
 		template <typename DataType>
 		using PackageDataAddress = PackageDataMatrix<DataType *, ADDRS_SIZE>;
-		DataContainerAddressAssemble<PackageData> all_pkg_data_;
-		DataContainerAddressAssemble<PackageDataAddress> all_pkg_data_addrs_;
-
-		DataContainerAssemble<PackageData> extra_pkg_data_;
-		DataContainerAssemble<PackageDataAddress> extra_pkg_data_addrs_;
-
 		/** Matrix data for temporary usage. Note that it is array with ADDRS_SIZE.  */
 		template <typename DataType>
 		using PackageTemporaryData = PackageDataMatrix<DataType, ADDRS_SIZE>;
 
+		DataContainerAddressAssemble<PackageData> all_pkg_data_;
+		DataContainerAddressAssemble<PackageDataAddress> all_pkg_data_addrs_;
+		DataContainerAssemble<PackageData> extra_pkg_data_;
+		DataContainerAssemble<PackageDataAddress> extra_pkg_data_addrs_;
+
 		GridDataPackage() : BaseDataPackage(), BaseMesh(Vecu(ADDRS_SIZE)){};
 		virtual ~GridDataPackage(){};
-
 		constexpr int PackageSize() { return PKG_SIZE; };
 		constexpr int AddressSize() { return ADDRS_SIZE; };
 		constexpr int AddressBufferWidth() { return (ADDRS_SIZE - PKG_SIZE) / 2; };
@@ -126,31 +125,28 @@ namespace SPH
 			mesh_lower_bound_ = pkg_lower_bound - Vecd(data_spacing) * ((Real)AddressBufferWidth() - 0.5);
 			grid_spacing_ = data_spacing;
 		};
-		/** access specific package data from discrete variable */
+		/** access specific package data with discrete variable */
 		template <typename DataType>
 		PackageData<DataType> &getPackageData(const DiscreteVariable<DataType> &discrete_variable)
 		{
 			constexpr int type_index = DataTypeIndex<DataType>::value;
 			return std::get<type_index>(extra_pkg_data_)[discrete_variable.IndexInContainer()];
 		};
-		/** access specific package data from discrete variable */
+		/** access specific package data with discrete variable */
 		template <typename DataType>
 		PackageDataAddress<DataType> &getPackageDataAddress(const DiscreteVariable<DataType> &discrete_variable)
 		{
 			constexpr int type_index = DataTypeIndex<DataType>::value;
 			return std::get<type_index>(extra_pkg_data_addrs_)[discrete_variable.IndexInContainer()];
 		};
-		/** This function probes by applying bi and tri-linear interpolation within the package. */
+		/** probe by applying bi and tri-linear interpolation within the package. */
 		template <typename DataType>
 		DataType probeDataPackage(PackageDataAddress<DataType> &pkg_data_addrs, const Vecd &position);
-		/** This function compute gradient transform within data package */
+		/** compute gradient transform within data package */
 		template <typename InDataType, typename OutDataType>
 		void computeGradient(PackageDataAddress<InDataType> &in_pkg_data_addrs,
 							 PackageDataAddress<OutDataType> out_pkg_data_addrs, Real dt = 0.0);
-		/** This function compute normalized gradient transform within data package  */
-		template <typename InDataType, typename OutDataType>
-		void computeNormalizedGradient(PackageDataAddress<InDataType> &in_pkg_data_addrs,
-									   PackageDataAddress<OutDataType> out_pkg_data_addrs, Real dt = 0.0);
+		/** assign value to data package according to grid position */
 		template <typename DataType, typename FunctionByPosition>
 		void assignByPosition(const DiscreteVariable<DataType> &discrete_variable, const FunctionByPosition &function_by_position);
 
@@ -173,6 +169,7 @@ namespace SPH
 							DataContainerAddressAssemble<PackageDataAddress> &all_pkg_data_addrs);
 		};
 		DataAssembleOperation<initializePackageDataAddress> initialize_pkg_data_addrs_;
+
 		/** assign address for a package data when the package is an inner one */
 		template <typename DataType>
 		struct assignPackageDataAddress
@@ -195,8 +192,9 @@ namespace SPH
 		};
 		DataAssembleOperation<assignExtraPackageDataAddress> assign_extra_pkg_data_addrs_;
 
+		/** allocate memory for extra package data when the package is an inner one */
 		template <typename DataType>
-		struct ExtaVariablesAllocation
+		struct ExtraVariablesAllocation
 		{
 			void operator()(DataContainerAssemble<PackageData> &extra_pkg_data,
 							DataContainerAssemble<PackageDataAddress> &extra_pkg_data_addrs,
@@ -208,7 +206,7 @@ namespace SPH
 				std::get<type_index>(extra_pkg_data_addrs).resize(total_variables);
 			};
 		};
-		DataAssembleOperation<ExtaVariablesAllocation> allocate_extra_variables_;
+		DataAssembleOperation<ExtraVariablesAllocation> allocate_extra_variables_;
 
 		/** obtain averaged value at a corner of a data cell */
 		template <typename DataType>
@@ -234,10 +232,10 @@ namespace SPH
 
 	/**
 	 * @class MeshWithGridDataPackages
-	 * @brief Abstract class for mesh with data packages
+	 * @brief Abstract class for mesh with grid-based data packages.
 	 * @details The idea is to save sparse data on a cell-based mesh.
 	 * We say sparse data, it means that only in some inner mesh cells there are no trivial data.
-	 * A typical example is a level set field which only has meaningful values near the interface,
+	 * A typical example is a level-set field which only has meaningful values near the interface,
 	 * while the latter is in the inner region of a mesh.
 	 * In this class, only some inner mesh cells are filled with data packages.
 	 * Each data package is again a mesh, but grid based, where two sets of data are saved on its grid points.
@@ -275,6 +273,7 @@ namespace SPH
 		DataType probeMesh(const Vecd &position);
 		template <class DataType>
 		DataType probeMesh(const DiscreteVariable<DataType> &discrete_variable, const Vecd &position);
+		/** spacing between the data, which is 1/ pkg_size_ of this grid spacing */
 		virtual Real DataSpacing() override { return data_spacing_; };
 
 	protected:
@@ -307,7 +306,6 @@ namespace SPH
 		/** This function find the value of data from its index from global mesh. */
 		template <typename DataType, typename PackageDataType, PackageDataType GridDataPackageType::*MemPtr>
 		DataType DataValueFromGlobalIndex(const Vecu &global_grid_index);
-		/** This function find the value of data from its index from global mesh. */
 		template <typename DataType>
 		DataType DataValueFromGlobalIndex(const DiscreteVariable<DataType> &discrete_variable,
 										  const Vecu &global_grid_index);
