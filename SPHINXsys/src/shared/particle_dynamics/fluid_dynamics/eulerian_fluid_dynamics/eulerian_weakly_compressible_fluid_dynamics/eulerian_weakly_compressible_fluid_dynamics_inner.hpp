@@ -42,7 +42,9 @@ namespace SPH
 		//=================================================================================================//
 		template <class RiemannSolverType>
 		BaseIntegration1stHalf<RiemannSolverType>::BaseIntegration1stHalf(BaseInnerRelation &inner_relation)
-			: BaseIntegration(inner_relation), riemann_solver_(this->fluid_, this->fluid_) {}
+			: BaseIntegration(inner_relation)
+			, riemann_solver_(this->fluid_, this->fluid_) 
+		{}
 		//=================================================================================================//
 		template <class RiemannSolverType>
 		void BaseIntegration1stHalf<RiemannSolverType>::initialization(size_t index_i, Real dt)
@@ -84,7 +86,9 @@ namespace SPH
 		//=================================================================================================//
 		template <class RiemannSolverType>
 		BaseIntegration2ndHalf<RiemannSolverType>::BaseIntegration2ndHalf(BaseInnerRelation &inner_relation)
-			: BaseIntegration(inner_relation), riemann_solver_(fluid_, fluid_) {}
+			: BaseIntegration(inner_relation)
+			, riemann_solver_(fluid_, fluid_) 
+		{}
 		//=================================================================================================//
 		template <class RiemannSolverType>
 		void BaseIntegration2ndHalf<RiemannSolverType>::update(size_t index_i, Real dt)
