@@ -125,6 +125,13 @@ namespace SPH
 			mesh_lower_bound_ = pkg_lower_bound - Vecd(data_spacing) * ((Real)AddressBufferWidth() - 0.5);
 			grid_spacing_ = data_spacing;
 		};
+		/** void (non_value_returning) function iterate on all data points by value */
+		template <typename FunctionByPosition>
+		void data_for(const FunctionByPosition &function_by_data);
+		/** void (non_value_returning) function iterate on all data points by address */
+		template <typename FunctionByPosition>
+		void data_addrs_for(const FunctionByPosition &function_by_data_addrs);
+
 		/** access specific package data with discrete variable */
 		template <typename DataType>
 		PackageData<DataType> &getPackageData(const DiscreteVariable<DataType> &discrete_variable)
@@ -148,7 +155,8 @@ namespace SPH
 							 PackageDataAddress<OutDataType> out_pkg_data_addrs, Real dt = 0.0);
 		/** assign value to data package according to grid position */
 		template <typename DataType, typename FunctionByPosition>
-		void assignByPosition(const DiscreteVariable<DataType> &discrete_variable, const FunctionByPosition &function_by_position);
+		void assignByPosition(const DiscreteVariable<DataType> &discrete_variable,
+							  const FunctionByPosition &function_by_position);
 
 	protected:
 		/** register a variable defined in a class (can be non-particle class) */

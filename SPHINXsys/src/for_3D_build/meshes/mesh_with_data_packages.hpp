@@ -14,6 +14,32 @@ namespace SPH
 {
 	//=================================================================================================//
 	template <int PKG_SIZE, int ADDRS_SIZE>
+	template <typename FunctionByPosition>
+	void GridDataPackage<PKG_SIZE, ADDRS_SIZE>::
+		data_for(const FunctionByPosition &function_by_data)
+	{
+		for (int i = 0; i != PKG_SIZE; ++i)
+			for (int j = 0; j != PKG_SIZE; ++j)
+				for (int k = 0; k != PKG_SIZE; ++k)
+				{
+					function_by_data(i, j, k);
+				}
+	}
+	//=================================================================================================//
+	template <int PKG_SIZE, int ADDRS_SIZE>
+	template <typename FunctionByPosition>
+	void GridDataPackage<PKG_SIZE, ADDRS_SIZE>::
+		data_addrs_for(const FunctionByPosition &function_by_data_addrs)
+	{
+		for (int i = AddressBufferWidth(); i != OperationUpperBound(); ++i)
+			for (int j = AddressBufferWidth(); j != OperationUpperBound(); ++j)
+				for (int k = AddressBufferWidth(); k != OperationUpperBound(); ++k)
+				{
+					function_by_data_addrs(i, j, k);
+				}
+	}
+	//=================================================================================================//
+	template <int PKG_SIZE, int ADDRS_SIZE>
 	template <class DataType>
 	DataType GridDataPackage<PKG_SIZE, ADDRS_SIZE>::probeDataPackage(PackageDataAddress<DataType> &pkg_data_addrs, const Vecd &position)
 	{
@@ -65,6 +91,7 @@ namespace SPH
 					pkg_data[i][j][k] = function_by_position(position);
 				}
 	}
+
 	//=================================================================================================//
 	template <int PKG_SIZE, int ADDRS_SIZE>
 	template <typename DataType>
