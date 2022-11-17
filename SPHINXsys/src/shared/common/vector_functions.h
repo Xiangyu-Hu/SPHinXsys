@@ -48,7 +48,7 @@ namespace SPH {
 		OutVectorType out_vector(0);
 		out_vector[0] = input;
 		return out_vector;
-	};
+	}
 	template<typename OutVectorType>
 	OutVectorType upgradeVector(const Vec2d& input)
 	{
@@ -56,7 +56,7 @@ namespace SPH {
 		out_vector[0] = input[0];
 		out_vector[1] = input[1];
 		return out_vector;
-	};
+	}
 	template<typename OutVectorType>
 	OutVectorType upgradeVector(const Vec3d& input)
 	{
@@ -65,7 +65,7 @@ namespace SPH {
 		out_vector[1] = input[1];
 		out_vector[2] = input[2];
 		return out_vector;
-	};
+	}
 
 	Mat2d getInverse(const Mat2d& A);
 	Mat3d getInverse(const Mat3d& A);

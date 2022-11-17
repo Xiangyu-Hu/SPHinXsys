@@ -31,12 +31,12 @@ if(NOT SPH_ONLY_STATIC_BUILD) # usual dynamic build
 	endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 else() # static build only
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-		target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d)
+		target_link_libraries(${PROJECT_NAME} sphinxsys_3d)
 	else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-			target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d stdc++)
+			target_link_libraries(${PROJECT_NAME} sphinxsys_3d stdc++)
 		else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-			target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d stdc++ stdc++fs dl)
+			target_link_libraries(${PROJECT_NAME} sphinxsys_3d stdc++ stdc++fs dl)
 		endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 		if(DEFINED BOOST_AVAILABLE) # link Boost if available (not for Windows)
@@ -50,5 +50,5 @@ if(NOT BUILD_WITH_SIMBODY) # link Simbody if not built by the project
 endif()
 
 if(NOT BUILD_WITH_ONETBB) # link TBB if not built by the project
-	target_link_libraries(${PROJECT_NAME} ${TBB_LIBRARYS})
+	target_link_libraries(${PROJECT_NAME} ${TBB_LIBRARIES})
 endif()
