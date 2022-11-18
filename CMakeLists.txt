@@ -25,13 +25,19 @@ set(CXX_EXTENSIONS OFF) # Disable any non-standard compiler specific C++ extensi
 add_library(sphinxsys_core INTERFACE)
 target_compile_features(sphinxsys_core INTERFACE cxx_std_17)
 
+FINDLIBHOME(SIMBODY_HOME)
 find_package(SIMBODY REQUIRED)
 target_include_directories(sphinxsys_core INTERFACE ${Simbody_INCLUDE_DIR})
 target_link_directories(sphinxsys_core INTERFACE ${Simbody_LIB_DIR})
 target_link_libraries(sphinxsys_core INTERFACE ${Simbody_LIBRARIES})
 
-find_package (Eigen3 3.3 REQUIRED NO_MODULE)
-target_link_libraries (sphinxsys_core INTERFACE Eigen3::Eigen)
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+if(TARGET Eigen3::Eigen)
+    target_link_libraries (sphinxsys_core INTERFACE Eigen3::Eigen)
+else()
+    find_path(EIGEN_INCLUDE_DIR Eigen/Eigen HINTS ${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/eigen)
+    target_include_directories(sphinxsys_core INTERFACE ${EIGEN_INCLUDE_DIR})
+endif()
 
 find_package(TBB REQUIRED)
 target_include_directories(sphinxsys_core INTERFACE ${TBB_INCLUDE_DIR})
