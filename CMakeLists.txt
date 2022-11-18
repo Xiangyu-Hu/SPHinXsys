@@ -25,6 +25,7 @@ set(CXX_EXTENSIONS OFF) # Disable any non-standard compiler specific C++ extensi
 add_library(sphinxsys_core INTERFACE)
 target_compile_features(sphinxsys_core INTERFACE cxx_std_17)
 
+FINDLIBHOME(SIMBODY_HOME)
 find_package(SIMBODY REQUIRED)
 target_include_directories(sphinxsys_core INTERFACE ${Simbody_INCLUDE_DIR})
 target_link_directories(sphinxsys_core INTERFACE ${Simbody_LIB_DIR})
