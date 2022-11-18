@@ -51,37 +51,13 @@ namespace SPH
 					// x direction
 					Real dv_xp = (*phi_addrs_[i + 1][j] - phi_0);
 					Real dv_xn = (phi_0 - *phi_addrs_[i - 1][j]);
-					Real dv_x = dv_xp;
-					if (s * dv_xp >= 0.0 && s * dv_xn >= 0.0)
-						dv_x = dv_xn;
-					if (s * dv_xp <= 0.0 && s * dv_xn <= 0.0)
-						dv_x = dv_xp;
-					if (s * dv_xp > 0.0 && s * dv_xn < 0.0)
-						dv_x = 0.0;
-					if (s * dv_xp < 0.0 && s * dv_xn > 0.0)
-					{
-						Real ss = s * (fabs(dv_xp) - fabs(dv_xn)) / (dv_xp - dv_xn);
-						if (ss > 0.0)
-							dv_x = dv_xn;
-					}
 					// y direction
 					Real dv_yp = (*phi_addrs_[i][j + 1] - phi_0);
 					Real dv_yn = (phi_0 - *phi_addrs_[i][j - 1]);
-					Real dv_y = dv_yp;
-					if (s * dv_yp >= 0.0 && s * dv_yn >= 0.0)
-						dv_y = dv_yn;
-					if (s * dv_yp <= 0.0 && s * dv_yn <= 0.0)
-						dv_y = dv_yp;
-					if (s * dv_yp > 0.0 && s * dv_yn < 0.0)
-						dv_y = 0.0;
-					if (s * dv_yp < 0.0 && s * dv_yn > 0.0)
-					{
-						Real ss = s * (fabs(dv_yp) - fabs(dv_yn)) / (dv_yp - dv_yn);
-						if (ss > 0.0)
-							dv_y = dv_yn;
-					}
+					Vec2d resulted_gradient(upwindDifference(s, dv_xp, dv_xn),
+											upwindDifference(s, dv_yp, dv_yn));
 					// time stepping
-					*phi_addrs_[i][j] -= 0.5 * s * (sqrt(dv_x * dv_x + dv_y * dv_y) - grid_spacing_);
+					*phi_addrs_[i][j] -= 0.5 * s * (resulted_gradient.norm() - grid_spacing_);
 				}
 			}
 	}

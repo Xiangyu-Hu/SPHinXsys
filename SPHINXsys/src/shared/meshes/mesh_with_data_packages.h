@@ -134,6 +134,27 @@ namespace SPH
 		template <typename FunctionOnAddress>
 		void for_each_addrs(const FunctionOnAddress &function);
 
+		// upwind algorithm choosing candidate difference by the sign
+		Real upwindDifference(Real sign, Real df_p, Real df_n)
+		{
+			if (sign * df_p >= 0.0 && sign * df_n >= 0.0)
+				return df_n;
+			if (sign * df_p <= 0.0 && sign * df_n <= 0.0)
+				return df_p;
+			if (sign * df_p > 0.0 && sign * df_n < 0.0)
+				return 0.0;
+
+			Real df = df_p;
+			if (sign * df_p < 0.0 && sign * df_n > 0.0)
+			{
+				Real ss = sign * (fabs(df_p) - fabs(df_n)) / (df_p - df_n);
+				if (ss > 0.0)
+					df = df_n;
+			}
+
+			return df;
+		};
+
 		/** access specific package data with discrete variable */
 		template <typename DataType>
 		PackageData<DataType> &getPackageData(const DiscreteVariable<DataType> &discrete_variable)
