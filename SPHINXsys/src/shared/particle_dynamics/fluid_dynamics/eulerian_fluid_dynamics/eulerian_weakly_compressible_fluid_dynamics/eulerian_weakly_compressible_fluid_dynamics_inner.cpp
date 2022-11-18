@@ -1,21 +1,18 @@
 ﻿#include "eulerian_weakly_compressible_fluid_dynamics_inner.h"
 #include "eulerian_weakly_compressible_fluid_dynamics_inner.hpp"
 
-using namespace std;
-
+//=================================================================================================//
 namespace SPH
 {
-	//=====================================================================================================//
+	//=================================================================================================//
 	namespace eulerian_weakly_compressible_fluid_dynamics
 	{
 		//=================================================================================================//
-		EulerianFlowTimeStepInitialization::EulerianFlowTimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> gravity_ptr)
-			: BaseTimeStepInitialization(sph_body, gravity_ptr)
-			, EulerianWeaklyCompressibleFluidDataSimple(sph_body)
-			, rho_(particles_->rho_)
-			, pos_(particles_->pos_)
-			, dmom_dt_prior_(particles_->dmom_dt_prior_) 
-		{}
+		EulerianFlowTimeStepInitialization::
+			EulerianFlowTimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> gravity_ptr)
+			: BaseTimeStepInitialization(sph_body, gravity_ptr),
+			  EulerianWeaklyCompressibleFluidDataSimple(sph_body), rho_(particles_->rho_),
+			  pos_(particles_->pos_), dmom_dt_prior_(particles_->dmom_dt_prior_) {}
 		//=================================================================================================//
 		void EulerianFlowTimeStepInitialization::update(size_t index_i, Real dt)
 		{
@@ -23,16 +20,12 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ViscousAccelerationInner::ViscousAccelerationInner(BaseInnerRelation &inner_relation)
-			: LocalDynamics(inner_relation.sph_body_) 
-			, EulerianWeaklyCompressibleFluidDataInner(inner_relation)
-			, Vol_(particles_->Vol_)
-			, rho_(particles_->rho_)
-			, p_(particles_->p_)
-			, vel_(particles_->vel_)
-			, dmom_dt_prior_(particles_->dmom_dt_prior_)
-			, mu_(particles_->fluid_.ReferenceViscosity())
-			, smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()) 
-		{}
+			: LocalDynamics(inner_relation.sph_body_),
+			  EulerianWeaklyCompressibleFluidDataInner(inner_relation),
+			  Vol_(particles_->Vol_), rho_(particles_->rho_), p_(particles_->p_),
+			  vel_(particles_->vel_), dmom_dt_prior_(particles_->dmom_dt_prior_),
+			  mu_(particles_->fluid_.ReferenceViscosity()),
+			  smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
 		//=================================================================================================//
 		void ViscousAccelerationInner::interaction(size_t index_i, Real dt)
 		{
@@ -46,6 +39,7 @@ namespace SPH
 			{
 				size_t index_j = inner_neighborhood.j_[n];
 
+				// viscous force
 				vel_derivative = (vel_i - vel_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
 				acceleration += 2.0 * mu_ * vel_derivative * inner_neighborhood.dW_ijV_j_[n] / rho_i;
 			}
@@ -54,14 +48,11 @@ namespace SPH
 		}
 		//=================================================================================================//
 		AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body)
-			: LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0))
-			, EulerianWeaklyCompressibleFluidDataSimple(sph_body)
-			,  fluid_(particles_->fluid_)
-			, rho_(particles_->rho_)
-			,  p_(particles_->p_)
-			, vel_(particles_->vel_)
-			, smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()) 
-			{}
+			: LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
+			  EulerianWeaklyCompressibleFluidDataSimple(sph_body),
+			  fluid_(particles_->fluid_), rho_(particles_->rho_),
+			  p_(particles_->p_), vel_(particles_->vel_),
+			  smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()) {}
 		//=================================================================================================//
 		Real AcousticTimeStepSize::reduce(size_t index_i, Real dt)
 		{
@@ -76,18 +67,11 @@ namespace SPH
 		}
 		//=================================================================================================//
 		BaseIntegration::BaseIntegration(BaseInnerRelation &inner_relation)
-			: LocalDynamics(inner_relation.sph_body_), EulerianWeaklyCompressibleFluidDataInner(inner_relation)
-			, fluid_(particles_->fluid_)
-			, Vol_(particles_->Vol_)
-			, mass_(particles_->mass_)
-			, rho_(particles_->rho_)
-			, p_(particles_->p_)
-			, drho_dt_(particles_->drho_dt_)
-			, vel_(particles_->vel_)
-			, mom_(particles_->mom_)
-			, dmom_dt_(particles_->dmom_dt_)
-			, dmom_dt_prior_(particles_->dmom_dt_prior_) 
-			{}
+			: LocalDynamics(inner_relation.sph_body_),
+			  EulerianWeaklyCompressibleFluidDataInner(inner_relation), fluid_(particles_->fluid_),
+			  Vol_(particles_->Vol_), mass_(particles_->mass_), rho_(particles_->rho_),
+			  p_(particles_->p_), drho_dt_(particles_->drho_dt_), vel_(particles_->vel_), mom_(particles_->mom_),
+			  dmom_dt_(particles_->dmom_dt_), dmom_dt_prior_(particles_->dmom_dt_prior_) {}
 		//=================================================================================================//
 		void NonReflectiveBoundaryVariableCorrection::interaction(size_t index_i, Real dt)
 		{
@@ -171,9 +155,9 @@ namespace SPH
 						Vecd vel_average = vel_summation / (total_inner_neighbor_particles + TinyReal);
 						Real p_average = p_summation / (total_inner_neighbor_particles + TinyReal);
 
-						p_[index_i] = p_average + TinyReal;
-						rho_[index_i] = rho_average + TinyReal;
-						vel_[index_i] = vel_average + TinyReal * Vecd::Ones();
+						p_[index_i] = p_average;
+						rho_[index_i] = rho_average;
+						vel_[index_i] = vel_average;
 						mom_[index_i] = rho_[index_i] * vel_[index_i];
 					}
 
@@ -196,7 +180,7 @@ namespace SPH
 								inner_weight_summation += W_ij * Vol_[index_j];
 								rho_summation += rho_[index_j];
 								vel_normal_summation += vel_[index_j].dot(n_[index_i]);
-								vel_tangential_summation += vel_[index_j] - vel_[index_j].dot(n_[index_i]) * n_[index_i];
+								vel_tangential_summation += vel_[index_j] - (vel_[index_j].dot(n_[index_i])) * n_[index_i];
 								p_summation += p_[index_j];
 								total_inner_neighbor_particles += 1;
 							}

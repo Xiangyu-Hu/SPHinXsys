@@ -42,9 +42,7 @@ namespace SPH
 		//=================================================================================================//
 		template <class RiemannSolverType>
 		BaseIntegration1stHalf<RiemannSolverType>::BaseIntegration1stHalf(BaseInnerRelation &inner_relation)
-			: BaseIntegration(inner_relation)
-			, riemann_solver_(this->fluid_, this->fluid_) 
-		{}
+			: BaseIntegration(inner_relation), riemann_solver_(this->fluid_, this->fluid_) {}
 		//=================================================================================================//
 		template <class RiemannSolverType>
 		void BaseIntegration1stHalf<RiemannSolverType>::initialization(size_t index_i, Real dt)
@@ -78,17 +76,15 @@ namespace SPH
 				Vecd vel_star = interface_state.vel_;
 				Real rho_star = this->fluid_.DensityFromPressure(p_star);
 
-				momentum_change_rate -= 2.0 * dW_ijV_j *
-					(rho_star * vel_star * vel_star.transpose() + p_star * Matd::Identity()) * e_ij;
+				momentum_change_rate -= 2.0 *
+										((rho_star * vel_star) * vel_star.transpose() + p_star * Matd::Identity()) * e_ij * dW_ijV_j;
 			}
 			dmom_dt_[index_i] = momentum_change_rate;
 		}
 		//=================================================================================================//
 		template <class RiemannSolverType>
 		BaseIntegration2ndHalf<RiemannSolverType>::BaseIntegration2ndHalf(BaseInnerRelation &inner_relation)
-			: BaseIntegration(inner_relation)
-			, riemann_solver_(fluid_, fluid_) 
-		{}
+			: BaseIntegration(inner_relation), riemann_solver_(fluid_, fluid_) {}
 		//=================================================================================================//
 		template <class RiemannSolverType>
 		void BaseIntegration2ndHalf<RiemannSolverType>::update(size_t index_i, Real dt)
@@ -114,7 +110,7 @@ namespace SPH
 				Vecd vel_star = interface_state.vel_;
 				Real rho_star = this->fluid_.DensityFromPressure(p_star);
 
-				density_change_rate -= 2.0 * dW_ijV_j * rho_star * vel_star.dot(e_ij);
+				density_change_rate -= 2.0 * (rho_star * vel_star).dot(e_ij) * dW_ijV_j;
 			}
 			drho_dt_[index_i] = density_change_rate;
 		};
@@ -123,4 +119,3 @@ namespace SPH
 	//=================================================================================================//
 }
 #endif // EULERIAN_WEAKLY_COMPRESSIBLE_FLUID_DYNAMICS_INNER_HPP
-	   //=================================================================================================//
