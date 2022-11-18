@@ -47,17 +47,17 @@ namespace SPH
 				if (*near_interface_id_addrs_[i][j] != 0)
 				{
 					Real phi_0 = *phi_addrs_[i][j];
-					Real s = phi_0 / sqrt(phi_0 * phi_0 + grid_spacing_ * grid_spacing_);
+					Real sign = phi_0 / sqrt(phi_0 * phi_0 + grid_spacing_ * grid_spacing_);
 					// x direction
 					Real dv_xp = (*phi_addrs_[i + 1][j] - phi_0);
 					Real dv_xn = (phi_0 - *phi_addrs_[i - 1][j]);
 					// y direction
 					Real dv_yp = (*phi_addrs_[i][j + 1] - phi_0);
 					Real dv_yn = (phi_0 - *phi_addrs_[i][j - 1]);
-					Vec2d resulted_gradient(upwindDifference(s, dv_xp, dv_xn),
-											upwindDifference(s, dv_yp, dv_yn));
+					Vec2d resulted_gradient(upwindDifference(sign, dv_xp, dv_xn),
+											upwindDifference(sign, dv_yp, dv_yn));
 					// time stepping
-					*phi_addrs_[i][j] -= 0.5 * s * (resulted_gradient.norm() - grid_spacing_);
+					*phi_addrs_[i][j] -= 0.5 * sign * (resulted_gradient.norm() - grid_spacing_);
 				}
 			}
 	}

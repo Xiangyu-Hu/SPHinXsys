@@ -48,7 +48,7 @@ namespace SPH
 					if (*near_interface_id_addrs_[i][j][k] != 0)
 					{
 						Real phi_0 = *phi_addrs_[i][j][k];
-						Real s = phi_0 / sqrt(phi_0 * phi_0 + grid_spacing_ * grid_spacing_);
+						Real sign = phi_0 / sqrt(phi_0 * phi_0 + grid_spacing_ * grid_spacing_);
 						// x direction
 						Real dv_xp = (*phi_addrs_[i + 1][j][k] - phi_0);
 						Real dv_xn = (phi_0 - *phi_addrs_[i - 1][j][k]);
@@ -58,11 +58,11 @@ namespace SPH
 						// z direction
 						Real dv_zp = (*phi_addrs_[i][j][k + 1] - phi_0);
 						Real dv_zn = (phi_0 - *phi_addrs_[i][j][k - 1]);
-						Vec3d resulted_gradient(upwindDifference(s, dv_xp, dv_xn),
-												upwindDifference(s, dv_yp, dv_yn),
-												upwindDifference(s, dv_zp, dv_zn));
+						Vec3d resulted_gradient(upwindDifference(sign, dv_xp, dv_xn),
+												upwindDifference(sign, dv_yp, dv_yn),
+												upwindDifference(sign, dv_zp, dv_zn));
 						// time stepping
-						*phi_addrs_[i][j][k] -= 0.3 * s * (resulted_gradient.norm() - grid_spacing_);
+						*phi_addrs_[i][j][k] -= 0.3 * sign * (resulted_gradient.norm() - grid_spacing_);
 					}
 				}
 	}
