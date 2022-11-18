@@ -14,28 +14,28 @@ namespace SPH
 {
 	//=================================================================================================//
 	template <int PKG_SIZE, int ADDRS_SIZE>
-	template <typename FunctionByPosition>
+	template <typename FunctionOnData>
 	void GridDataPackage<PKG_SIZE, ADDRS_SIZE>::
-		data_for(const FunctionByPosition &function_by_data)
+		for_each_data(const FunctionOnData &function)
 	{
 		for (int i = 0; i != PKG_SIZE; ++i)
 			for (int j = 0; j != PKG_SIZE; ++j)
 				for (int k = 0; k != PKG_SIZE; ++k)
 				{
-					function_by_data(i, j, k);
+					function(i, j, k);
 				}
 	}
 	//=================================================================================================//
 	template <int PKG_SIZE, int ADDRS_SIZE>
-	template <typename FunctionByPosition>
+	template <typename FunctionOnAddress>
 	void GridDataPackage<PKG_SIZE, ADDRS_SIZE>::
-		data_addrs_for(const FunctionByPosition &function_by_data_addrs)
+		for_each_addrs(const FunctionOnAddress &function)
 	{
 		for (int i = AddressBufferWidth(); i != OperationUpperBound(); ++i)
 			for (int j = AddressBufferWidth(); j != OperationUpperBound(); ++j)
 				for (int k = AddressBufferWidth(); k != OperationUpperBound(); ++k)
 				{
-					function_by_data_addrs(i, j, k);
+					function(i, j, k);
 				}
 	}
 	//=================================================================================================//

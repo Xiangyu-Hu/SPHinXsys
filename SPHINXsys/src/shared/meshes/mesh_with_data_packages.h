@@ -125,12 +125,14 @@ namespace SPH
 			mesh_lower_bound_ = pkg_lower_bound - Vecd(data_spacing) * ((Real)AddressBufferWidth() - 0.5);
 			grid_spacing_ = data_spacing;
 		};
-		/** void (non_value_returning) function iterate on all data points by value */
-		template <typename FunctionByPosition>
-		void data_for(const FunctionByPosition &function_by_data);
-		/** void (non_value_returning) function iterate on all data points by address */
-		template <typename FunctionByPosition>
-		void data_addrs_for(const FunctionByPosition &function_by_data_addrs);
+		/** void (non_value_returning) function iterate on all data points by value,
+		 *  for function only involving the data itself. */
+		template <typename FunctionOnData>
+		void for_each_data(const FunctionOnData &function);
+		/** void (non_value_returning) function iterate on all data points by address,
+		 *  for function involving operations on data neighbors. */
+		template <typename FunctionOnAddress>
+		void for_each_addrs(const FunctionOnAddress &function);
 
 		/** access specific package data with discrete variable */
 		template <typename DataType>
