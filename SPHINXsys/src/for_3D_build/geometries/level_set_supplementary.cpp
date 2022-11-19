@@ -101,58 +101,44 @@ namespace SPH
 		Real small_shift = small_shift_factor * grid_spacing_;
 		// corner averages, note that the first row and first column are not used
 		PackageTemporaryData<Real> corner_averages;
-		for (int i = 1; i != pkg_addrs_; ++i)
-			for (int j = 1; j != pkg_addrs_; ++j)
-				for (int k = 1; k != pkg_addrs_; ++k)
+		for_each3d<1, pkg_addrs_>(
+			[&](int i, int j, int k)
+			{
+				corner_averages[i][j][k] = CornerAverage(phi_addrs_, Veci(i, j, k), Veci(-1, -1, -1));
+			});
+
+		for_each3d<addrs_buffer_width_, operation_upper_bound_>(
+			[&](int i, int j, int k)
+			{
+				// first assume far cells
+				Real phi_0 = *phi_addrs_[i][j][k];
+				int near_interface_id = phi_0 > 0.0 ? 2 : -2;
+				if (fabs(phi_0) < small_shift)
 				{
-					corner_averages[i][j][k] = CornerAverage(phi_addrs_, Veci(i, j, k), Veci(-1, -1, -1));
+					near_interface_id = 0;
+					Real phi_average_0 = corner_averages[i][j][k];
+					// find inner and outer cut cells
+					for_each3d<0, 2>(
+						[&](int l, int m, int n)
+						{
+							Real phi_average = corner_averages[i + l][j + m][k + n];
+							if ((phi_average_0 - small_shift) * (phi_average - small_shift) < 0.0)
+								near_interface_id = 1;
+							if ((phi_average_0 + small_shift) * (phi_average + small_shift) < 0.0)
+								near_interface_id = -1;
+						});
+					// find zero cut cells
+					for_each3d<0, 2>(
+						[&](int l, int m, int n)
+						{
+							Real phi_average = corner_averages[i + l][j + m][k + n];
+							if (phi_average_0 * phi_average < 0.0)
+								near_interface_id = 0;
+						});
 				}
-
-		for (int i = addrs_buffer_width_; i != operation_upper_bound_; ++i)
-			for (int j = addrs_buffer_width_; j != operation_upper_bound_; ++j)
-				for (int k = addrs_buffer_width_; k != operation_upper_bound_; ++k)
-				{
-					// first assume far cells
-					Real phi_0 = *phi_addrs_[i][j][k];
-					int near_interface_id = phi_0 > 0.0 ? 2 : -2;
-
-					if (fabs(phi_0) < small_shift)
-					{
-						Real phi_average_0 = corner_averages[i][j][k];
-						// find inner and outer cut cells
-						for (int l = 0; l != 2; ++l)
-							for (int m = 0; m != 2; ++m)
-								for (int n = 0; n != 2; ++n)
-								{
-									int index_x = i + l;
-									int index_y = j + m;
-									int index_z = k + n;
-									Real phi_average = corner_averages[index_x][index_y][index_z];
-									if ((phi_average_0 - small_shift) * (phi_average - small_shift) < 0.0)
-										near_interface_id = 1;
-									if ((phi_average_0 + small_shift) * (phi_average + small_shift) < 0.0)
-										near_interface_id = -1;
-								}
-						// find zero cut cells
-						for (int l = 0; l != 2; ++l)
-							for (int m = 0; m != 2; ++m)
-								for (int n = 0; n != 2; ++n)
-								{
-									int index_x = i + l;
-									int index_y = j + m;
-									int index_z = k + n;
-									Real phi_average = corner_averages[index_x][index_y][index_z];
-									if (phi_average_0 * phi_average < 0.0)
-										near_interface_id = 0;
-								}
-						// find cells between cut cells
-						if (fabs(phi_0) < small_shift && abs(near_interface_id) != 1)
-							near_interface_id = 0;
-					}
-
-					// assign this is to package
-					*near_interface_id_addrs_[i][j][k] = near_interface_id;
-				}
+				// assign this is to package
+				*near_interface_id_addrs_[i][j][k] = near_interface_id;
+			});
 	}
 	//=================================================================================================//
 	LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing,

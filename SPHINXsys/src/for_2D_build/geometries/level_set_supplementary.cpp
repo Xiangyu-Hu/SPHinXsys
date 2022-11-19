@@ -93,44 +93,41 @@ namespace SPH
 		Real small_shift = small_shift_factor * grid_spacing_;
 		// corner averages, note that the first row and first column are not used
 		PackageTemporaryData<Real> corner_averages;
-		square_for_each<1, pkg_addrs_>(
+		for_each2d<1, pkg_addrs_>(
 			[&](int i, int j)
 			{
 				corner_averages[i][j] = CornerAverage(phi_addrs_, Veci(i, j), Veci(-1, -1));
 			});
 
-		square_for_each<addrs_buffer_width_, operation_upper_bound_>(
+		for_each2d<addrs_buffer_width_, operation_upper_bound_>(
 			[&](int i, int j)
 			{
 				// first assume far cells
 				Real phi_0 = *phi_addrs_[i][j];
 				int near_interface_id = phi_0 > 0.0 ? 2 : -2;
-
-				Real phi_average_0 = corner_averages[i][j];
-				// find outer cut cells by comparing the sign of corner averages
-				square_for_each<0, 2>(
-					[&](int l, int m)
-					{
-						Real phi_average = corner_averages[i + l][j + m];
-						if ((phi_average_0 - small_shift) * (phi_average - small_shift) < 0.0)
-							near_interface_id = 1;
-						if ((phi_average_0 + small_shift) * (phi_average + small_shift) < 0.0)
-							near_interface_id = -1;
-					});
-
-				// find zero cut cells by comparing the sign of corner averages
-				square_for_each<0, 2>(
-					[&](int l, int m)
-					{
-						Real phi_average = corner_averages[i + l][j + m];
-						if (phi_average_0 * phi_average < 0.0)
-							near_interface_id = 0;
-					});
-
-				// find cells between cut cells
-				if (fabs(phi_0) < small_shift && abs(near_interface_id) != 1)
+				if (fabs(phi_0) < small_shift)
+				{
 					near_interface_id = 0;
-
+					Real phi_average_0 = corner_averages[i][j];
+					// find outer cut cells by comparing the sign of corner averages
+					for_each2d<0, 2>(
+						[&](int l, int m)
+						{
+							Real phi_average = corner_averages[i + l][j + m];
+							if ((phi_average_0 - small_shift) * (phi_average - small_shift) < 0.0)
+								near_interface_id = 1;
+							if ((phi_average_0 + small_shift) * (phi_average + small_shift) < 0.0)
+								near_interface_id = -1;
+						});
+					// find zero cut cells by comparing the sign of corner averages
+					for_each2d<0, 2>(
+						[&](int l, int m)
+						{
+							Real phi_average = corner_averages[i + l][j + m];
+							if (phi_average_0 * phi_average < 0.0)
+								near_interface_id = 0;
+						});
+				}
 				// assign this to package
 				*near_interface_id_addrs_[i][j] = near_interface_id;
 			});

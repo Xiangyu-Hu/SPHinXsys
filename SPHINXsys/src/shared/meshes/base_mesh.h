@@ -90,7 +90,7 @@ namespace SPH
 				}
 		};
 		template <int lower, int upper, typename FunctionOnEach>
-		inline void square_for_each(const FunctionOnEach &function)
+		inline void for_each2d(const FunctionOnEach &function)
 		{
 			for_each2d<lower, upper, lower, upper, FunctionOnEach>(function);
 		};
@@ -109,7 +109,7 @@ namespace SPH
 					}
 		};
 		template <int lower, int upper, typename FunctionOnEach>
-		inline void cube_for_each(const FunctionOnEach &function)
+		inline void for_each3d(const FunctionOnEach &function)
 		{
 			for_each3d<lower, upper, lower, upper, lower, upper, FunctionOnEach>(function);
 		};
