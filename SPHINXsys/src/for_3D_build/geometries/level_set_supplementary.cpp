@@ -40,9 +40,9 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSetDataPackage::stepReinitialization()
 	{
-		for (int i = addrs_buffer_width_; i != operation_upper_bound_; ++i)
-			for (int j = addrs_buffer_width_; j != operation_upper_bound_; ++j)
-				for (int k = addrs_buffer_width_; k != operation_upper_bound_; ++k)
+		for (int i = pkg_addrs_buffer_; i != pkg_operations_; ++i)
+			for (int j = pkg_addrs_buffer_; j != pkg_operations_; ++j)
+				for (int k = pkg_addrs_buffer_; k != pkg_operations_; ++k)
 				{
 					// only reinitialize non cut cells
 					if (*near_interface_id_addrs_[i][j][k] != 0)
@@ -69,9 +69,9 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSetDataPackage::stepDiffusionLevelSetSign()
 	{
-		for (int i = addrs_buffer_width_; i != operation_upper_bound_; ++i)
-			for (int j = addrs_buffer_width_; j != operation_upper_bound_; ++j)
-				for (int k = addrs_buffer_width_; k != operation_upper_bound_; ++k)
+		for (int i = pkg_addrs_buffer_; i != pkg_operations_; ++i)
+			for (int j = pkg_addrs_buffer_; j != pkg_operations_; ++j)
+				for (int k = pkg_addrs_buffer_; k != pkg_operations_; ++k)
 				{
 					// near interface cells are not considered
 					if (abs(*near_interface_id_addrs_[i][j][k]) > 1)
@@ -101,13 +101,13 @@ namespace SPH
 		Real small_shift = small_shift_factor * grid_spacing_;
 		// corner averages, note that the first row and first column are not used
 		PackageTemporaryData<Real> corner_averages;
-		for_each3d<1, pkg_addrs_>(
+		for_each3d<1, pkg_addrs_size_>(
 			[&](int i, int j, int k)
 			{
 				corner_averages[i][j][k] = CornerAverage(phi_addrs_, Veci(i, j, k), Veci(-1, -1, -1));
 			});
 
-		for_each3d<addrs_buffer_width_, operation_upper_bound_>(
+		for_each3d<pkg_addrs_buffer_, pkg_operations_>(
 			[&](int i, int j, int k)
 			{
 				// first assume far cells
