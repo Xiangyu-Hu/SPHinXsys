@@ -98,6 +98,10 @@ namespace SPH
 	class GridDataPackage : public BaseDataPackage, public BaseMesh
 	{
 	public:
+		static constexpr int pkg_size_ = PKG_SIZE;
+		static constexpr int pkg_addrs_ = ADDRS_SIZE;
+		static constexpr int addrs_buffer_width_ = (ADDRS_SIZE - PKG_SIZE) / 2;
+		static constexpr int operation_upper_bound_ = PKG_SIZE + addrs_buffer_width_;
 		template <typename DataType>
 		using PackageData = PackageDataMatrix<DataType, PKG_SIZE>;
 		template <typename DataType>
@@ -113,16 +117,12 @@ namespace SPH
 
 		GridDataPackage() : BaseDataPackage(), BaseMesh(Vecu(ADDRS_SIZE)){};
 		virtual ~GridDataPackage(){};
-		constexpr int PackageSize() { return PKG_SIZE; };
-		constexpr int AddressSize() { return ADDRS_SIZE; };
-		constexpr int AddressBufferWidth() { return (ADDRS_SIZE - PKG_SIZE) / 2; };
-		constexpr int OperationUpperBound() { return PKG_SIZE + AddressBufferWidth(); };
 		/** lower bound coordinate for the data as reference */
-		Vecd DataLowerBound() { return mesh_lower_bound_ + Vecd(grid_spacing_) * (Real)AddressBufferWidth(); };
+		Vecd DataLowerBound() { return mesh_lower_bound_ + Vecd(grid_spacing_) * (Real)addrs_buffer_width_; };
 		/** initialize package mesh geometric information. */
 		void initializePackageGeometry(const Vecd &pkg_lower_bound, Real data_spacing)
 		{
-			mesh_lower_bound_ = pkg_lower_bound - Vecd(data_spacing) * ((Real)AddressBufferWidth() - 0.5);
+			mesh_lower_bound_ = pkg_lower_bound - Vecd(data_spacing) * ((Real)addrs_buffer_width_ - 0.5);
 			grid_spacing_ = data_spacing;
 		};
 		/** void (non_value_returning) function iterate on all data points by value,
@@ -288,7 +288,7 @@ namespace SPH
 		template <typename... Args>
 		explicit MeshWithGridDataPackages(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size, Args &&...args)
 			: MeshFieldType(std::forward<Args>(args)...),
-			  Mesh(tentative_bounds, GridDataPackageType().PackageSize() * data_spacing, buffer_size),
+			  Mesh(tentative_bounds, GridDataPackageType().pkg_size_ * data_spacing, buffer_size),
 			  data_spacing_(data_spacing),
 			  global_mesh_(this->mesh_lower_bound_ + Vecd(data_spacing) * 0.5, data_spacing, this->number_of_cells_ * pkg_size_)
 		{
@@ -308,13 +308,13 @@ namespace SPH
 		virtual Real DataSpacing() override { return data_spacing_; };
 
 	protected:
-		Real data_spacing_;														  /**< spacing of data in the data packages*/
-		const int pkg_size_ = GridDataPackageType().PackageSize();				  /**< the size of the data package matrix*/
-		const int pkg_addrs_buffer_ = GridDataPackageType().AddressBufferWidth(); /**< the size of address buffer, a value less than the package size. */
-		const int pkg_operations_ = pkg_size_ + pkg_addrs_buffer_;				  /**< the size of operation loops. */
-		const int pkg_addrs_size_ = pkg_size_ + 2 * pkg_addrs_buffer_;			  /**< the size of address matrix in the data packages. */
-		std::mutex mutex_my_pool;												  /**< mutex exclusion for memory pool */
-		BaseMesh global_mesh_;													  /**< the mesh for the locations of all possible data points. */
+		Real data_spacing_;														 /**< spacing of data in the data packages*/
+		const int pkg_size_ = GridDataPackageType().pkg_size_;					 /**< the size of the data package matrix*/
+		const int pkg_addrs_buffer_ = GridDataPackageType().addrs_buffer_width_; /**< the size of address buffer, a value less than the package size. */
+		const int pkg_operations_ = pkg_size_ + pkg_addrs_buffer_;				 /**< the size of operation loops. */
+		const int pkg_addrs_size_ = pkg_size_ + 2 * pkg_addrs_buffer_;			 /**< the size of address matrix in the data packages. */
+		std::mutex mutex_my_pool;												 /**< mutex exclusion for memory pool */
+		BaseMesh global_mesh_;													 /**< the mesh for the locations of all possible data points. */
 		/** Singular data packages. provided for far field condition with usually only two values.
 		 * For example, when level set is considered. The first value for inner far-field and second for outer far-field */
 		StdVec<GridDataPackageType *> singular_data_pkgs_addrs_;

@@ -16,9 +16,9 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSetDataPackage::initializeSingularData(Real far_field_level_set)
 	{
-		for (int i = 0; i != PackageSize(); ++i)
-			for (int j = 0; j != PackageSize(); ++j)
-				for (int k = 0; k != PackageSize(); ++k)
+		for (int i = 0; i != pkg_size_; ++i)
+			for (int j = 0; j != pkg_size_; ++j)
+				for (int k = 0; k != pkg_size_; ++k)
 				{
 					phi_[i][j][k] = far_field_level_set;
 					phi_gradient_[i][j][k] = Vecd(1.0);
@@ -28,9 +28,9 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSetDataPackage::initializeBasicData(Shape &shape)
 	{
-		for (int i = 0; i != PackageSize(); ++i)
-			for (int j = 0; j != PackageSize(); ++j)
-				for (int k = 0; k != PackageSize(); ++k)
+		for (int i = 0; i != pkg_size_; ++i)
+			for (int j = 0; j != pkg_size_; ++j)
+				for (int k = 0; k != pkg_size_; ++k)
 				{
 					Vec3d position = DataLowerBound() + Vec3d(i, j, k) * grid_spacing_;
 					phi_[i][j][k] = shape.findSignedDistance(position);
@@ -40,9 +40,9 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSetDataPackage::stepReinitialization()
 	{
-		for (int i = AddressBufferWidth(); i != OperationUpperBound(); ++i)
-			for (int j = AddressBufferWidth(); j != OperationUpperBound(); ++j)
-				for (int k = AddressBufferWidth(); k != OperationUpperBound(); ++k)
+		for (int i = addrs_buffer_width_; i != operation_upper_bound_; ++i)
+			for (int j = addrs_buffer_width_; j != operation_upper_bound_; ++j)
+				for (int k = addrs_buffer_width_; k != operation_upper_bound_; ++k)
 				{
 					// only reinitialize non cut cells
 					if (*near_interface_id_addrs_[i][j][k] != 0)
@@ -69,9 +69,9 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSetDataPackage::stepDiffusionLevelSetSign()
 	{
-		for (int i = AddressBufferWidth(); i != OperationUpperBound(); ++i)
-			for (int j = AddressBufferWidth(); j != OperationUpperBound(); ++j)
-				for (int k = AddressBufferWidth(); k != OperationUpperBound(); ++k)
+		for (int i = addrs_buffer_width_; i != operation_upper_bound_; ++i)
+			for (int j = addrs_buffer_width_; j != operation_upper_bound_; ++j)
+				for (int k = addrs_buffer_width_; k != operation_upper_bound_; ++k)
 				{
 					// near interface cells are not considered
 					if (abs(*near_interface_id_addrs_[i][j][k]) > 1)
@@ -101,16 +101,16 @@ namespace SPH
 		Real small_shift = small_shift_factor * grid_spacing_;
 		// corner averages, note that the first row and first column are not used
 		PackageTemporaryData<Real> corner_averages;
-		for (int i = 1; i != AddressSize(); ++i)
-			for (int j = 1; j != AddressSize(); ++j)
-				for (int k = 1; k != AddressSize(); ++k)
+		for (int i = 1; i != pkg_addrs_; ++i)
+			for (int j = 1; j != pkg_addrs_; ++j)
+				for (int k = 1; k != pkg_addrs_; ++k)
 				{
 					corner_averages[i][j][k] = CornerAverage(phi_addrs_, Veci(i, j, k), Veci(-1, -1, -1));
 				}
 
-		for (int i = AddressBufferWidth(); i != OperationUpperBound(); ++i)
-			for (int j = AddressBufferWidth(); j != OperationUpperBound(); ++j)
-				for (int k = AddressBufferWidth(); k != OperationUpperBound(); ++k)
+		for (int i = addrs_buffer_width_; i != operation_upper_bound_; ++i)
+			for (int j = addrs_buffer_width_; j != operation_upper_bound_; ++j)
+				for (int k = addrs_buffer_width_; k != operation_upper_bound_; ++k)
 				{
 					// first assume far cells
 					Real phi_0 = *phi_addrs_[i][j][k];
@@ -173,9 +173,9 @@ namespace SPH
 		auto &kernel_weight = data_pkg.getPackageData(kernel_weight_);
 		auto &kernel_gradient = data_pkg.getPackageData(kernel_gradient_);
 
-		for (int i = 0; i != data_pkg.PackageSize(); ++i)
-			for (int j = 0; j != data_pkg.PackageSize(); ++j)
-				for (int k = 0; k != data_pkg.PackageSize(); ++k)
+		for (int i = 0; i != data_pkg.pkg_size_; ++i)
+			for (int j = 0; j != data_pkg.pkg_size_; ++j)
+				for (int k = 0; k != data_pkg.pkg_size_; ++k)
 				{
 					data_pkg.phi_[i][j][k] = far_field_level_set;
 					data_pkg.phi_gradient_[i][j][k] = Vecd(1.0);

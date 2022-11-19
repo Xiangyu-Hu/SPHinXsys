@@ -30,8 +30,8 @@ namespace SPH
 	void GridDataPackage<PKG_SIZE, ADDRS_SIZE>::
 		for_each_addrs(const FunctionOnAddress &function)
 	{
-		for (int i = AddressBufferWidth(); i != OperationUpperBound(); ++i)
-			for (int j = AddressBufferWidth(); j != OperationUpperBound(); ++j)
+		for (int i = addrs_buffer_width_; i != operation_upper_bound_; ++i)
+			for (int j = addrs_buffer_width_; j != operation_upper_bound_; ++j)
 			{
 				function(i, j);
 			}

@@ -21,15 +21,15 @@
  *                                                                              *
  * -----------------------------------------------------------------------------*/
 /**
-* @file 	base_mesh.h
-* @brief 	This is the base classes of mesh, which is used to describe ordered and indexed
-*			data sets.  Depending on application, there are different data 
-* 			saved on the mesh. The intersection points of mesh lines are called 
-*			grid points, the element enclosed by mesh lines (2D) or faces (3D) called 
-*			cells. The mesh line or face are also called cell faces. Grid points are
-*			also called cell corners.
-* @author	Chi Zhang and Xiangyu Hu
-*/
+ * @file 	base_mesh.h
+ * @brief 	This is the base classes of mesh, which is used to describe ordered and indexed
+ *			data sets.  Depending on application, there are different data
+ * 			saved on the mesh. The intersection points of mesh lines are called
+ *			grid points, the element enclosed by mesh lines (2D) or faces (3D) called
+ *			cells. The mesh line or face are also called cell faces. Grid points are
+ *			also called cell corners.
+ * @author	Chi Zhang and Xiangyu Hu
+ */
 
 #ifndef BASE_MESH_H
 #define BASE_MESH_H
@@ -49,7 +49,7 @@ namespace SPH
 	/**
 	 * @class BaseMesh
 	 * @brief Base class for all structured meshes which may be grid or cell based.
-	 * The basic properties of the mesh, such as lower bound, grid spacing 
+	 * The basic properties of the mesh, such as lower bound, grid spacing
 	 * and number of grid points may be determined by the derived class.
 	 * Note that there is no mesh-based data defined here.
 	 */
@@ -77,13 +77,50 @@ namespace SPH
 		Vecd CellPositionFromIndex(const Vecu &cell_index);
 		/** Note that, the lower corner grid of a cell has the same index as the cell. */
 		Vecd GridPositionFromIndex(const Vecu &grid_index);
+
+		/** iteration with void (non_value_returning) function. 2D case. */
+		template <int lower0, int upper0,
+				  int lower1, int upper1, typename FunctionOnEach>
+		inline void for_each2d(const FunctionOnEach &function)
+		{
+			for (int l = lower0; l != upper0; ++l)
+				for (int m = lower1; m != upper1; ++m)
+				{
+					function(l, m);
+				}
+		};
+		template <int lower, int upper, typename FunctionOnEach>
+		inline void square_for_each(const FunctionOnEach &function)
+		{
+			for_each2d<lower, upper, lower, upper, FunctionOnEach>(function);
+		};
+
+		/** iteration with void (non_value_returning) function. 3D case. */
+		template <int lower0, int upper0,
+				  int lower1, int upper1,
+				  int lower2, int upper2, typename FunctionOnEach>
+		inline void for_each3d(const FunctionOnEach &function)
+		{
+			for (int l = lower0; l != upper0; ++l)
+				for (int m = lower1; m != upper1; ++m)
+					for (int n = lower2; n != upper2; ++n)
+					{
+						function(l, m, n);
+					}
+		};
+		template <int lower, int upper, typename FunctionOnEach>
+		inline void cube_for_each(const FunctionOnEach &function)
+		{
+			for_each3d<lower, upper, lower, upper, lower, upper, FunctionOnEach>(function);
+		};
+
 		Vecu transfer1DtoMeshIndex(const Vecu &number_of_mesh_indexes, size_t i);
 		size_t transferMeshIndexTo1D(const Vecu &number_of_mesh_indexes, const Vecu &mesh_index);
 		/** converts mesh index into a Morton order.
-         * Interleave a 10 bit number in 32 bits, fill one bit and leave the other 2 as zeros
-         * https://stackoverflow.com/questions/18529057/
-         * produce-interleaving-bit-patterns-morton-keys-for-32-bit-64-bit-and-128bit
-         */
+		 * Interleave a 10 bit number in 32 bits, fill one bit and leave the other 2 as zeros
+		 * https://stackoverflow.com/questions/18529057/
+		 * produce-interleaving-bit-patterns-morton-keys-for-32-bit-64-bit-and-128bit
+		 */
 		size_t MortonCode(const size_t &i);
 		/** This function converts mesh index into a Morton order. */
 		size_t transferMeshIndexToMortonOrder(const Vecu &mesh_index);
@@ -91,10 +128,10 @@ namespace SPH
 
 	/**
 	 * @class Mesh
-	 * @brief Abstract base class for cell-based mesh 
+	 * @brief Abstract base class for cell-based mesh
 	 * by introducing number of cells, buffer width and mesh-based data in its derived classes.
-	 * Note that we identify the difference between grid spacing and data spacing. 
-	 * The latter is different from grid spacing when MeshWithDataPackage is considered. 
+	 * Note that we identify the difference between grid spacing and data spacing.
+	 * The latter is different from grid spacing when MeshWithDataPackage is considered.
 	 */
 	class Mesh : public BaseMesh
 	{
@@ -166,7 +203,7 @@ namespace SPH
 		StdVec<CoarsestMeshType *> mesh_levels_;
 
 	public:
-		/**template parameter pack is used with rvalue reference and perfect forwarding to keep 
+		/**template parameter pack is used with rvalue reference and perfect forwarding to keep
 		 * the type of arguments when called by another function with template parameter pack too. */
 		template <typename... Args>
 		MultilevelMesh(BoundingBox tentative_bounds, Real reference_spacing, size_t total_levels, Args &&...args)
@@ -199,4 +236,4 @@ namespace SPH
 		}
 	};
 }
-#endif //BASE_MESH_H
+#endif // BASE_MESH_H
