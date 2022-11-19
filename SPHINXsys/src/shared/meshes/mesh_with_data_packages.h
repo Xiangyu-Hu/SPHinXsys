@@ -201,6 +201,15 @@ namespace SPH
 		};
 		DataAssembleOperation<initializePackageDataAddress> initialize_pkg_data_addrs_;
 
+		/** set the initial package data address within a derived class constructor */
+		template <typename DataType>
+		struct initializeExtraPackageDataAddress
+		{
+			void operator()(DataContainerAssemble<PackageData> &all_pkg_data,
+							DataContainerAssemble<PackageDataAddress> &all_pkg_data_addrs);
+		};
+		DataAssembleOperation<initializeExtraPackageDataAddress> initialize_extra_pkg_data_addrs_;
+
 		/** assign address for a package data when the package is an inner one */
 		template <typename DataType>
 		struct assignPackageDataAddress
@@ -247,6 +256,7 @@ namespace SPH
 		void initializeSingularDataAddress()
 		{
 			initialize_pkg_data_addrs_(all_pkg_data_, all_pkg_data_addrs_);
+			initialize_extra_pkg_data_addrs_(extra_pkg_data_, extra_pkg_data_addrs_);
 		};
 
 		void assignAllPackageDataAddress(const Vecu &addrs_index, GridDataPackage *src_pkg, const Vecu &data_index)

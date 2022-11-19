@@ -115,6 +115,26 @@ namespace SPH
 	//=================================================================================================//
 	template <int PKG_SIZE, int ADDRS_SIZE>
 	template <typename DataType>
+	void GridDataPackage<PKG_SIZE, ADDRS_SIZE>::initializeExtraPackageDataAddress<DataType>::
+	operator()(DataContainerAssemble<PackageData> &extra_pkg_data,
+			   DataContainerAssemble<PackageDataAddress> &extra_pkg_data_addrs)
+	{
+		constexpr int type_index = DataTypeIndex<DataType>::value;
+		for (size_t l = 0; l != std::get<type_index>(extra_pkg_data).size(); ++l)
+		{
+			PackageData<DataType> &pkg_data = std::get<type_index>(extra_pkg_data)[l];
+			PackageDataAddress<DataType> &pkg_data_addrs = std::get<type_index>(extra_pkg_data_addrs)[l];
+			for (int i = 0; i != ADDRS_SIZE; ++i)
+				for (int j = 0; j != ADDRS_SIZE; ++j)
+					for (int k = 0; k != ADDRS_SIZE; ++k)
+					{
+						pkg_data_addrs[i][j][k] = &pkg_data[0][0][0];
+					}
+		}
+	}
+	//=================================================================================================//
+	template <int PKG_SIZE, int ADDRS_SIZE>
+	template <typename DataType>
 	void GridDataPackage<PKG_SIZE, ADDRS_SIZE>::assignPackageDataAddress<DataType>::
 	operator()(DataContainerAddressAssemble<PackageDataAddress> &all_pkg_data_addrs,
 			   const Vecu &addrs_index,
