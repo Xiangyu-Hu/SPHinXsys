@@ -48,16 +48,9 @@ namespace SPH
 				{
 					Real phi_0 = *phi_addrs_[i][j];
 					Real sign = phi_0 / sqrt(phi_0 * phi_0 + grid_spacing_ * grid_spacing_);
-					// x direction
-					Real dv_xp = (*phi_addrs_[i + 1][j] - phi_0);
-					Real dv_xn = (phi_0 - *phi_addrs_[i - 1][j]);
-					// y direction
-					Real dv_yp = (*phi_addrs_[i][j + 1] - phi_0);
-					Real dv_yn = (phi_0 - *phi_addrs_[i][j - 1]);
-					Vec2d resulted_gradient(upwindDifference(sign, dv_xp, dv_xn),
-											upwindDifference(sign, dv_yp, dv_yn));
-					// time stepping
-					*phi_addrs_[i][j] -= 0.5 * sign * (resulted_gradient.norm() - grid_spacing_);
+					Real dv_x = upwindDifference(sign, *phi_addrs_[i + 1][j] - phi_0, phi_0 - *phi_addrs_[i - 1][j]);
+					Real dv_y = upwindDifference(sign, *phi_addrs_[i][j + 1] - phi_0, phi_0 - *phi_addrs_[i][j - 1]);
+					*phi_addrs_[i][j] -= 0.5 * sign * (Vec2d(dv_x, dv_y).norm() - grid_spacing_);
 				}
 			}
 	}

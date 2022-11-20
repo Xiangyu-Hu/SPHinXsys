@@ -49,20 +49,10 @@ namespace SPH
 					{
 						Real phi_0 = *phi_addrs_[i][j][k];
 						Real sign = phi_0 / sqrt(phi_0 * phi_0 + grid_spacing_ * grid_spacing_);
-						// x direction
-						Real dv_xp = (*phi_addrs_[i + 1][j][k] - phi_0);
-						Real dv_xn = (phi_0 - *phi_addrs_[i - 1][j][k]);
-						// y direction
-						Real dv_yp = (*phi_addrs_[i][j + 1][k] - phi_0);
-						Real dv_yn = (phi_0 - *phi_addrs_[i][j - 1][k]);
-						// z direction
-						Real dv_zp = (*phi_addrs_[i][j][k + 1] - phi_0);
-						Real dv_zn = (phi_0 - *phi_addrs_[i][j][k - 1]);
-						Vec3d resulted_gradient(upwindDifference(sign, dv_xp, dv_xn),
-												upwindDifference(sign, dv_yp, dv_yn),
-												upwindDifference(sign, dv_zp, dv_zn));
-						// time stepping
-						*phi_addrs_[i][j][k] -= 0.3 * sign * (resulted_gradient.norm() - grid_spacing_);
+						Real dv_x = upwindDifference(sign, *phi_addrs_[i + 1][j][k] - phi_0, phi_0 - *phi_addrs_[i - 1][j][k]);
+						Real dv_y = upwindDifference(sign, *phi_addrs_[i][j + 1][k] - phi_0, phi_0 - *phi_addrs_[i][j - 1][k]);
+						Real dv_z = upwindDifference(sign, *phi_addrs_[i][j][k + 1] - phi_0, phi_0 - *phi_addrs_[i][j][k - 1]);
+						*phi_addrs_[i][j][k] -= 0.3 * sign * (Vec3d(dv_x, dv_y, dv_z).norm() - grid_spacing_);
 					}
 				}
 	}
