@@ -1,7 +1,7 @@
 file(GLOB_RECURSE SPHINXSYS_SHARED_HEADERS CONFIGURE_DEPENDS shared/*.h shared/*.hpp)
 file(GLOB_RECURSE SPHINXSYS_SHARED_SOURCES CONFIGURE_DEPENDS shared/*.cpp)
 
-if(NOT SPHINXSYS_ONLY_3D)
+if(SPHINXSYS_2D)
     add_library(sphinxsys_2d)
 
     file(GLOB_RECURSE SPHINXSYS_2D_HEADERS CONFIGURE_DEPENDS for_2D_build/*.h for_2D_build/*.hpp)
@@ -27,6 +27,8 @@ if(NOT SPHINXSYS_ONLY_3D)
     target_link_libraries(sphinxsys_2d PUBLIC sphinxsys_core)
 endif()
 
+if(SPHINXSYS_3D)
+
 add_library(sphinxsys_3d)
 
 file(GLOB_RECURSE SPHINXSYS_3D_HEADERS CONFIGURE_DEPENDS for_3D_build/*.h for_3D_build/*.hpp)
@@ -51,3 +53,4 @@ file(GLOB_RECURSE SPHINXSYS_3D_SOURCES CONFIGURE_DEPENDS for_3D_build/*.cpp)
 target_sources(sphinxsys_3d PRIVATE ${SPHINXSYS_SHARED_SOURCES} ${SPHINXSYS_3D_SOURCES})
 
 target_link_libraries(sphinxsys_3d PUBLIC sphinxsys_core)
+endif()
