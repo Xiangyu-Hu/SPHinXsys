@@ -110,9 +110,6 @@ namespace SPH
 			void interaction(size_t index_i, Real dt = 0.0);
 		};
 
-		using Integration1stHalfWithWall = BaseIntegration1stHalfWithWall<Integration1stHalf>;
-		using Integration1stHalfAcousticRiemannWithWall = BaseIntegration1stHalfWithWall<Integration1stHalfAcousticRiemann>;
-		using Integration1stHalfHLLCRiemannWithWall = BaseIntegration1stHalfWithWall<Integration1stHalfHLLCRiemann>;
 		using Integration1stHalfHLLCRiemannWithLimiterWithWall = BaseIntegration1stHalfWithWall<Integration1stHalfHLLCWithLimiterRiemann>;
 
 		/**
@@ -134,8 +131,7 @@ namespace SPH
 			virtual ~BaseIntegration2ndHalfWithWall(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 		};
-		using Integration2ndHalfAcousticRiemannWithWall = BaseIntegration2ndHalfWithWall<Integration2ndHalfAcousticRiemann>;
-		using Integration2ndHalfHLLCRiemannWithWall = BaseIntegration2ndHalfWithWall<Integration2ndHalfHLLCRiemann>;
+
 		using Integration2ndHalfHLLCRiemannWithLimiterWithWall = BaseIntegration2ndHalfWithWall<Integration2ndHalfHLLCWithLimiterRiemann>;
 	}
 }

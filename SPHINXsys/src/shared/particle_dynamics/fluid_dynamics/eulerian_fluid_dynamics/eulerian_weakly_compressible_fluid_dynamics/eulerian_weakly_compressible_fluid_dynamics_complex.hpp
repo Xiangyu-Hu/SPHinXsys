@@ -145,11 +145,10 @@ namespace SPH
 					Real p_in_wall = state_i.p_;
 					Real rho_in_wall = state_i.rho_;
 					FluidState state_j(rho_in_wall, vel_in_wall, p_in_wall);
-					FluidState interface_state = this->riemann_solver_.getInterfaceState(state_i, state_j, n_k[index_j]);
-					Real p_star = interface_state.p_;
-					Vecd vel_star = interface_state.vel_;
-					Real rho_star = this->fluid_.DensityFromPressure(p_star);
-					momentum_change_rate -= 2.0 * ((rho_star * vel_star) * vel_star.transpose() + p_star * Matd::Identity()) * e_ij * dW_ijV_j;
+					FluidStarState interface_state = this->riemann_solver_.getInterfaceState(state_i, state_j, n_k[index_j]);
+					Real rho_star = this->fluid_.DensityFromPressure(interface_state.p_);
+					
+					momentum_change_rate -= 2.0 * ((rho_star * interface_state.vel_) * interface_state.vel_.transpose() + interface_state.p_ * Matd::Identity()) * e_ij * dW_ijV_j;
 				}
 			}
 			this->dmom_dt_[index_i] += momentum_change_rate;
@@ -183,12 +182,12 @@ namespace SPH
 					Vecd vel_in_wall = -state_i.vel_;
 					Real p_in_wall = state_i.p_;
 					Real rho_in_wall = state_i.rho_;
+
 					FluidState state_j(rho_in_wall, vel_in_wall, p_in_wall);
-					FluidState interface_state = this->riemann_solver_.getInterfaceState(state_i, state_j, n_k[index_j]);
-					Real p_star = interface_state.p_;
-					Vecd vel_star = interface_state.vel_;
-					Real rho_star = this->fluid_.DensityFromPressure(p_star);
-					density_change_rate -= 2.0 * (rho_star * vel_star).dot(e_ij) * dW_ijV_j;
+					FluidStarState interface_state = this->riemann_solver_.getInterfaceState(state_i, state_j, n_k[index_j]);
+					Real rho_star = this->fluid_.DensityFromPressure(interface_state.p_);
+
+					density_change_rate -= 2.0 * (rho_star * interface_state.vel_).dot(e_ij) * dW_ijV_j;
 				}
 			}
 			this->drho_dt_[index_i] += density_change_rate;

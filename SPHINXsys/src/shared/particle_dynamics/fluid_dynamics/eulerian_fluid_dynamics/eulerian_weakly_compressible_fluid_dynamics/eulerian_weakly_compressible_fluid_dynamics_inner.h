@@ -61,6 +61,22 @@ namespace SPH
 		};
 
 		/**
+		 * @class CompressibleFluidInitialCondition
+		 * @brief  Set initial condition for a fluid body.
+		 * This is a abstract class to be override for case specific initial conditions
+		 */
+		class WeaklyCompressibleFluidInitialCondition : public LocalDynamics, public EulerianWeaklyCompressibleFluidDataSimple
+		{
+		public:
+			explicit WeaklyCompressibleFluidInitialCondition(SPHBody &sph_body);
+			virtual ~WeaklyCompressibleFluidInitialCondition(){};
+
+		protected:
+			StdLargeVec<Vecd> &pos_, &vel_, &mom_;
+			StdLargeVec<Real> &rho_, &p_;
+		};
+
+		/**
 		 * @class ViscousAccelerationInner
 		 * @brief  the viscosity force induced acceleration
 		 */
@@ -133,10 +149,7 @@ namespace SPH
 			void interaction(size_t index_i, Real dt = 0.0);
 			void update(size_t index_i, Real dt = 0.0);
 		};
-		using Integration1stHalf = BaseIntegration1stHalf<NoRiemannSolver>;
-		/** define the mostly used pressure relaxation scheme using Riemann solver */
-		using Integration1stHalfAcousticRiemann = BaseIntegration1stHalf<AcousticRiemannSolver>;
-		using Integration1stHalfHLLCRiemann = BaseIntegration1stHalf<HLLCRiemannSolverInWeaklyCompressibleFluid>;
+
 		using Integration1stHalfHLLCWithLimiterRiemann = BaseIntegration1stHalf<HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid>;
 
 		/**
@@ -153,10 +166,7 @@ namespace SPH
 			void interaction(size_t index_i, Real dt = 0.0);
 			void update(size_t index_i, Real dt = 0.0);
 		};
-		using Integration2ndHalf = BaseIntegration2ndHalf<NoRiemannSolver>;
-		/** define the mostly used density relaxation scheme using Riemann solver */
-		using Integration2ndHalfAcousticRiemann = BaseIntegration2ndHalf<AcousticRiemannSolver>;
-		using Integration2ndHalfHLLCRiemann = BaseIntegration2ndHalf<HLLCRiemannSolverInWeaklyCompressibleFluid>;
+
 		using Integration2ndHalfHLLCWithLimiterRiemann = BaseIntegration2ndHalf<HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid>;
 
 		/**

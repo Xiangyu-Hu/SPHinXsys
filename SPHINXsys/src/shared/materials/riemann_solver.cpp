@@ -79,7 +79,7 @@ namespace SPH
 		return interface_state;
 	}
 	//=================================================================================================//
-	FluidState HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid::
+	FluidStarState HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid::
 		getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
 	{
 		Real ul = -e_ij.dot(state_i.vel_);
@@ -119,14 +119,12 @@ namespace SPH
 			v_star = state_j.vel_;
 		}
 
-		FluidState interface_state(rho_star, v_star, p_star);
-		interface_state.vel_ = v_star;
-		interface_state.p_ = p_star;
+		FluidStarState interface_state(v_star, p_star);
 
 		return interface_state;
 	}
 	//=================================================================================================//
-	CompressibleFluidState HLLCRiemannSolver::
+	CompressibleFluidStarState HLLCRiemannSolver::
 		getInterfaceState(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &e_ij)
 	{
 		Real ul = -e_ij.dot(state_i.vel_);
@@ -167,16 +165,10 @@ namespace SPH
 			energy_star = state_j.E_;
 		}
 
-		CompressibleFluidState interface_state(rho_star, v_star, p_star, energy_star);
-		interface_state.vel_ = v_star;
-		interface_state.p_ = p_star;
-		interface_state.rho_ = rho_star;
-		interface_state.E_ = energy_star;
-
-		return interface_state;
+		return CompressibleFluidStarState(rho_star, v_star, p_star, energy_star);
 	}
 	//=================================================================================================//
-	CompressibleFluidState HLLCWithLimiterRiemannSolver::
+	CompressibleFluidStarState HLLCWithLimiterRiemannSolver::
 		getInterfaceState(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &e_ij)
 	{
 		Real ul = -e_ij.dot(state_i.vel_);
@@ -225,13 +217,7 @@ namespace SPH
 			energy_star = state_j.E_;
 		}
 
-		CompressibleFluidState interface_state(rho_star, v_star, p_star, energy_star);
-		interface_state.vel_ = v_star;
-		interface_state.p_ = p_star;
-		interface_state.rho_ = rho_star;
-		interface_state.E_ = energy_star;
-
-		return interface_state;
+		return CompressibleFluidStarState(rho_star, v_star, p_star, energy_star);
 	}
 	//=================================================================================================//
 }

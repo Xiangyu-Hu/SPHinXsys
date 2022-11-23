@@ -6,7 +6,12 @@ namespace SPH
 {
 	//=================================================================================================//
 	namespace eulerian_weakly_compressible_fluid_dynamics
-	{
+	{	//=================================================================================================//
+		WeaklyCompressibleFluidInitialCondition::
+			WeaklyCompressibleFluidInitialCondition(SPHBody &sph_body)
+			: LocalDynamics(sph_body), EulerianWeaklyCompressibleFluidDataSimple(sph_body),
+			  pos_(particles_->pos_), vel_(particles_->vel_), mom_(particles_->mom_),
+			  rho_(particles_->rho_), p_(particles_->p_) {}
 		//=================================================================================================//
 		EulerianFlowTimeStepInitialization::
 			EulerianFlowTimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> gravity_ptr)

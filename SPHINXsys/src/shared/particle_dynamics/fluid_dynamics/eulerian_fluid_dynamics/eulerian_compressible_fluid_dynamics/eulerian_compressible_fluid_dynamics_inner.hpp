@@ -71,13 +71,10 @@ namespace SPH
 				Vecd &e_ij = inner_neighborhood.e_ij_[n];
 
 				CompressibleFluidState state_j(rho_[index_j], vel_[index_j], p_[index_j], E_[index_j]);
-				CompressibleFluidState interface_state = riemann_solver_.getInterfaceState(state_i, state_j, e_ij);
-				Vecd vel_star = interface_state.vel_;
-				Real p_star = interface_state.p_;
-				Real rho_star = interface_state.rho_;
+				CompressibleFluidStarState interface_state = riemann_solver_.getInterfaceState(state_i, state_j, e_ij);
 
 				momentum_change_rate -= 2.0 * dW_ijV_j *
-										((rho_star * vel_star) * vel_star.transpose() + p_star * Matd::Identity()) * e_ij;
+										((interface_state.rho_ * interface_state.vel_) * interface_state.vel_.transpose() + interface_state.p_ * Matd::Identity()) * e_ij;
 			}
 			dmom_dt_[index_i] = momentum_change_rate;
 		}
@@ -107,15 +104,10 @@ namespace SPH
 				Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
 
 				CompressibleFluidState state_j(rho_[index_j], vel_[index_j], p_[index_j], E_[index_j]);
-				CompressibleFluidState interface_state = riemann_solver_.getInterfaceState(state_i, state_j, e_ij);
-				// Vecd vel_star = interface_state.get_state_vel();
-				Vecd vel_star = interface_state.vel_;
-				Real p_star = interface_state.p_;
-				Real rho_star = interface_state.rho_;
-				Real E_star = interface_state.E_;
+				CompressibleFluidStarState interface_state = riemann_solver_.getInterfaceState(state_i, state_j, e_ij);
 
-				density_change_rate -= 2.0 * dW_ijV_j * (rho_star * vel_star).dot(e_ij);
-				energy_change_rate -= 2.0 * dW_ijV_j * (E_star * vel_star + p_star * vel_star).dot(e_ij);
+				density_change_rate -= 2.0 * dW_ijV_j * (interface_state.rho_ * interface_state.vel_).dot(e_ij);
+				energy_change_rate -= 2.0 * dW_ijV_j * (interface_state.E_ * interface_state.vel_ + interface_state.p_ * interface_state.vel_).dot(e_ij);
 			}
 			drho_dt_[index_i] = density_change_rate;
 			dE_dt_[index_i] = energy_change_rate;
