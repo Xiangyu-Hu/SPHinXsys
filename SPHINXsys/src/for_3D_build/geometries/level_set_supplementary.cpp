@@ -16,9 +16,9 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSetDataPackage::initializeSingularData(Real far_field_level_set)
 	{
-		for (int i = 0; i != pkg_size_; ++i)
-			for (int j = 0; j != pkg_size_; ++j)
-				for (int k = 0; k != pkg_size_; ++k)
+		for (int i = 0; i != pkg_size; ++i)
+			for (int j = 0; j != pkg_size; ++j)
+				for (int k = 0; k != pkg_size; ++k)
 				{
 					phi_[i][j][k] = far_field_level_set;
 					phi_gradient_[i][j][k] = Vecd(1.0);
@@ -28,9 +28,9 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSetDataPackage::initializeBasicData(Shape &shape)
 	{
-		for (int i = 0; i != pkg_size_; ++i)
-			for (int j = 0; j != pkg_size_; ++j)
-				for (int k = 0; k != pkg_size_; ++k)
+		for (int i = 0; i != pkg_size; ++i)
+			for (int j = 0; j != pkg_size; ++j)
+				for (int k = 0; k != pkg_size; ++k)
 				{
 					Vec3d position = DataLowerBound() + Vec3d(i, j, k) * grid_spacing_;
 					phi_[i][j][k] = shape.findSignedDistance(position);
@@ -40,9 +40,9 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSetDataPackage::stepReinitialization()
 	{
-		for (int i = pkg_addrs_buffer_; i != pkg_operations_; ++i)
-			for (int j = pkg_addrs_buffer_; j != pkg_operations_; ++j)
-				for (int k = pkg_addrs_buffer_; k != pkg_operations_; ++k)
+		for (int i = pkg_addrs_buffer; i != pkg_ops_end; ++i)
+			for (int j = pkg_addrs_buffer; j != pkg_ops_end; ++j)
+				for (int k = pkg_addrs_buffer; k != pkg_ops_end; ++k)
 				{
 					// only reinitialize non cut cells
 					if (*near_interface_id_addrs_[i][j][k] != 0)
@@ -59,9 +59,9 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSetDataPackage::stepDiffusionLevelSetSign()
 	{
-		for (int i = pkg_addrs_buffer_; i != pkg_operations_; ++i)
-			for (int j = pkg_addrs_buffer_; j != pkg_operations_; ++j)
-				for (int k = pkg_addrs_buffer_; k != pkg_operations_; ++k)
+		for (int i = pkg_addrs_buffer; i != pkg_ops_end; ++i)
+			for (int j = pkg_addrs_buffer; j != pkg_ops_end; ++j)
+				for (int k = pkg_addrs_buffer; k != pkg_ops_end; ++k)
 				{
 					// near interface cells are not considered
 					if (abs(*near_interface_id_addrs_[i][j][k]) > 1)
@@ -91,13 +91,13 @@ namespace SPH
 		Real small_shift = small_shift_factor * grid_spacing_;
 		// corner averages, note that the first row and first column are not used
 		PackageTemporaryData<Real> corner_averages;
-		for_each3d<1, pkg_addrs_size_>(
+		for_each3d<1, pkg_addrs_size>(
 			[&](int i, int j, int k)
 			{
 				corner_averages[i][j][k] = CornerAverage(phi_addrs_, Veci(i, j, k), Veci(-1, -1, -1));
 			});
 
-		for_each3d<pkg_addrs_buffer_, pkg_operations_>(
+		for_each3d<pkg_addrs_buffer, pkg_ops_end>(
 			[&](int i, int j, int k)
 			{
 				// first assume far cells
@@ -149,9 +149,9 @@ namespace SPH
 		auto &kernel_weight = data_pkg.getPackageData(kernel_weight_);
 		auto &kernel_gradient = data_pkg.getPackageData(kernel_gradient_);
 
-		for (int i = 0; i != data_pkg.pkg_size_; ++i)
-			for (int j = 0; j != data_pkg.pkg_size_; ++j)
-				for (int k = 0; k != data_pkg.pkg_size_; ++k)
+		for (int i = 0; i != data_pkg.pkg_size; ++i)
+			for (int j = 0; j != data_pkg.pkg_size; ++j)
+				for (int k = 0; k != data_pkg.pkg_size; ++k)
 				{
 					data_pkg.phi_[i][j][k] = far_field_level_set;
 					data_pkg.phi_gradient_[i][j][k] = Vecd(1.0);
@@ -206,9 +206,9 @@ namespace SPH
 		int m = (int)core_data_pkg->pkg_index_[1];
 		int n = (int)core_data_pkg->pkg_index_[2];
 
-		for (int i = pkg_addrs_buffer_; i != pkg_operations_; ++i)
-			for (int j = pkg_addrs_buffer_; j != pkg_operations_; ++j)
-				for (int k = pkg_addrs_buffer_; k != pkg_operations_; ++k)
+		for (int i = pkg_addrs_buffer; i != pkg_ops_end; ++i)
+			for (int j = pkg_addrs_buffer; j != pkg_ops_end; ++j)
+				for (int k = pkg_addrs_buffer; k != pkg_ops_end; ++k)
 				{
 					int near_interface_id = *core_data_pkg->near_interface_id_addrs_[i][j][k];
 					if (near_interface_id == 0)

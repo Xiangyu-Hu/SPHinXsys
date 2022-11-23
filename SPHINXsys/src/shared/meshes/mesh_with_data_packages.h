@@ -89,40 +89,40 @@ namespace SPH
 	 * @class GridDataPackage
 	 * @brief Abstract base class for a data package
 	 * whose data are defined on the grids of a small mesh patch.
-	 * note tha ADDRS_SIZE = PKG_SIZE + 2 * pkg_addrs_buffer_;
+	 * note tha pkg_addrs_size = pkg_size + 2 * pkg_addrs_buffer;
 	 * Also note that, while the mesh lower bound locates the first data address,
 	 * the data lower bound locates the first data.
 	 * The package lower bound is just in the middle of mesh and data lower bounds.
 	 */
-	template <int PKG_SIZE, int ADDRS_SIZE>
+	template <int PKG_SIZE, int ADDRS_BUFFER>
 	class GridDataPackage : public BaseDataPackage, public BaseMesh
 	{
 	public:
-		static constexpr int pkg_size_ = PKG_SIZE;
-		static constexpr int pkg_addrs_size_ = ADDRS_SIZE;
-		static constexpr int pkg_addrs_buffer_ = (ADDRS_SIZE - PKG_SIZE) / 2;
-		static constexpr int pkg_operations_ = PKG_SIZE + pkg_addrs_buffer_;
+		static constexpr int pkg_size = PKG_SIZE;
+		static constexpr int pkg_addrs_size = PKG_SIZE + ADDRS_BUFFER * 2;
+		static constexpr int pkg_addrs_buffer = ADDRS_BUFFER;
+		static constexpr int pkg_ops_end = PKG_SIZE + pkg_addrs_buffer;
 		template <typename DataType>
 		using PackageData = PackageDataMatrix<DataType, PKG_SIZE>;
 		template <typename DataType>
-		using PackageDataAddress = PackageDataMatrix<DataType *, ADDRS_SIZE>;
-		/** Matrix data for temporary usage. Note that it is array with ADDRS_SIZE.  */
+		using PackageDataAddress = PackageDataMatrix<DataType *, pkg_addrs_size>;
+		/** Matrix data for temporary usage. Note that it is array with pkg_addrs_size.  */
 		template <typename DataType>
-		using PackageTemporaryData = PackageDataMatrix<DataType, ADDRS_SIZE>;
+		using PackageTemporaryData = PackageDataMatrix<DataType, pkg_addrs_size>;
 
 		DataContainerAddressAssemble<PackageData> all_pkg_data_;
 		DataContainerAddressAssemble<PackageDataAddress> all_pkg_data_addrs_;
 		DataContainerAssemble<PackageData> extra_pkg_data_;
 		DataContainerAssemble<PackageDataAddress> extra_pkg_data_addrs_;
 
-		GridDataPackage() : BaseDataPackage(), BaseMesh(Vecu(ADDRS_SIZE)){};
+		GridDataPackage() : BaseDataPackage(), BaseMesh(Vecu(pkg_addrs_size)){};
 		virtual ~GridDataPackage(){};
 		/** lower bound coordinate for the data as reference */
-		Vecd DataLowerBound() { return mesh_lower_bound_ + Vecd(grid_spacing_) * (Real)pkg_addrs_buffer_; };
+		Vecd DataLowerBound() { return mesh_lower_bound_ + Vecd(grid_spacing_) * (Real)pkg_addrs_buffer; };
 		/** initialize package mesh geometric information. */
 		void initializePackageGeometry(const Vecd &pkg_lower_bound, Real data_spacing)
 		{
-			mesh_lower_bound_ = pkg_lower_bound - Vecd(data_spacing) * ((Real)pkg_addrs_buffer_ - 0.5);
+			mesh_lower_bound_ = pkg_lower_bound - Vecd(data_spacing) * ((Real)pkg_addrs_buffer - 0.5);
 			grid_spacing_ = data_spacing;
 		};
 		/** void (non_value_returning) function iterate on all data points by value,
@@ -280,7 +280,7 @@ namespace SPH
 	 * while the latter is in the inner region of a mesh.
 	 * In this class, only some inner mesh cells are filled with data packages.
 	 * Each data package is again a mesh, but grid based, where two sets of data are saved on its grid points.
-	 * One is the field data of matrices with PKG_SIZE, the other is corresponding address data of matrices with ADDRS_SIZE.
+	 * One is the field data of matrices with pkg_size, the other is corresponding address data of matrices with pkg_addrs_size.
 	 * For two neighboring data packages, they share the data in the buffer which is in the overlap region.
 	 * The filling of field data is achieved first by the data matrices by the function initializeDataInACell
 	 * and then the address matrix by the function initializeAddressesInACell.
@@ -298,9 +298,9 @@ namespace SPH
 		template <typename... Args>
 		explicit MeshWithGridDataPackages(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size, Args &&...args)
 			: MeshFieldType(std::forward<Args>(args)...),
-			  Mesh(tentative_bounds, GridDataPackageType::pkg_size_ * data_spacing, buffer_size),
+			  Mesh(tentative_bounds, GridDataPackageType::pkg_size * data_spacing, buffer_size),
 			  data_spacing_(data_spacing),
-			  global_mesh_(this->mesh_lower_bound_ + Vecd(data_spacing) * 0.5, data_spacing, this->number_of_cells_ * pkg_size_)
+			  global_mesh_(this->mesh_lower_bound_ + Vecd(data_spacing) * 0.5, data_spacing, this->number_of_cells_ * pkg_size)
 		{
 			allocateMeshDataMatrix();
 		};
@@ -314,15 +314,15 @@ namespace SPH
 		DataType probeMesh(const Vecd &position);
 		template <class DataType>
 		DataType probeMesh(const DiscreteVariable<DataType> &discrete_variable, const Vecd &position);
-		/** spacing between the data, which is 1/ pkg_size_ of this grid spacing */
+		/** spacing between the data, which is 1/ pkg_size of this grid spacing */
 		virtual Real DataSpacing() override { return data_spacing_; };
 
 	protected:
 		const Real data_spacing_;														 /**< spacing of data in the data packages*/
-		static constexpr int pkg_size_ = GridDataPackageType::pkg_size_;				 /**< the size of the data package matrix*/
-		static constexpr int pkg_addrs_buffer_ = GridDataPackageType::pkg_addrs_buffer_; /**< the size of address buffer, a value less than the package size. */
-		static constexpr int pkg_operations_ = GridDataPackageType::pkg_operations_;	 /**< the size of operation loops. */
-		static constexpr int pkg_addrs_size_ = GridDataPackageType::pkg_addrs_size_;	 /**< the size of address matrix in the data packages. */
+		static constexpr int pkg_size = GridDataPackageType::pkg_size;				 /**< the size of the data package matrix*/
+		static constexpr int pkg_addrs_buffer = GridDataPackageType::pkg_addrs_buffer; /**< the size of address buffer, a value less than the package size. */
+		static constexpr int pkg_ops_end = GridDataPackageType::pkg_ops_end;	 /**< the size of operation loops. */
+		static constexpr int pkg_addrs_size = GridDataPackageType::pkg_addrs_size;	 /**< the size of address matrix in the data packages. */
 		std::mutex mutex_my_pool;														 /**< mutex exclusion for memory pool */
 		BaseMesh global_mesh_;															 /**< the mesh for the locations of all possible data points. */
 		/** Singular data packages. provided for far field condition with usually only two values.
@@ -356,9 +356,9 @@ namespace SPH
 		std::pair<int, int> CellShiftAndDataIndex(int data_addrs_index_component)
 		{
 			std::pair<int, int> shift_and_index;
-			int signed_date_index = data_addrs_index_component - pkg_addrs_buffer_;
-			shift_and_index.first = (signed_date_index + pkg_size_) / pkg_size_ - 1;
-			shift_and_index.second = signed_date_index - shift_and_index.first * pkg_size_;
+			int signed_date_index = data_addrs_index_component - pkg_addrs_buffer;
+			shift_and_index.first = (signed_date_index + pkg_size) / pkg_size - 1;
+			shift_and_index.second = signed_date_index - shift_and_index.first * pkg_size;
 			return shift_and_index;
 		}
 	};

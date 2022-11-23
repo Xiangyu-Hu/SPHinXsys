@@ -43,7 +43,7 @@ namespace SPH
 	 * Level set is the signed distance to an interface,
 	 * here, the surface of a body.
 	 */
-	class LevelSetDataPackage : public GridDataPackage<4, 6>
+	class LevelSetDataPackage : public GridDataPackage<4, 1>
 	{
 	public:
 		bool is_core_pkg_;					 /**< If true, the package is near to zero level set. */

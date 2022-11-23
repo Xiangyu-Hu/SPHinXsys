@@ -18,8 +18,8 @@ namespace SPH
 	//=============================================================================================//
 	void LevelSetDataPackage::initializeSingularData(Real far_field_level_set)
 	{
-		for (int i = 0; i != pkg_size_; ++i)
-			for (int j = 0; j != pkg_size_; ++j)
+		for (int i = 0; i != pkg_size; ++i)
+			for (int j = 0; j != pkg_size; ++j)
 			{
 				phi_[i][j] = far_field_level_set;
 				phi_gradient_[i][j] = Vecd(1.0);
@@ -29,8 +29,8 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSetDataPackage::initializeBasicData(Shape &shape)
 	{
-		for (int i = 0; i != pkg_size_; ++i)
-			for (int j = 0; j != pkg_size_; ++j)
+		for (int i = 0; i != pkg_size; ++i)
+			for (int j = 0; j != pkg_size; ++j)
 			{
 				Vec2d position = DataLowerBound() + Vec2d(i, j) * grid_spacing_;
 				phi_[i][j] = shape.findSignedDistance(position);
@@ -40,8 +40,8 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSetDataPackage::stepReinitialization()
 	{
-		for (int i = pkg_addrs_buffer_; i != pkg_operations_; ++i)
-			for (int j = pkg_addrs_buffer_; j != pkg_operations_; ++j)
+		for (int i = pkg_addrs_buffer; i != pkg_ops_end; ++i)
+			for (int j = pkg_addrs_buffer; j != pkg_ops_end; ++j)
 			{
 				// only reinitialize non cut cells
 				if (*near_interface_id_addrs_[i][j] != 0)
@@ -57,8 +57,8 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSetDataPackage::stepDiffusionLevelSetSign()
 	{
-		for (int i = pkg_addrs_buffer_; i != pkg_operations_; ++i)
-			for (int j = pkg_addrs_buffer_; j != pkg_operations_; ++j)
+		for (int i = pkg_addrs_buffer; i != pkg_ops_end; ++i)
+			for (int j = pkg_addrs_buffer; j != pkg_ops_end; ++j)
 			{
 				// near interface cells are not considered
 				if (abs(*near_interface_id_addrs_[i][j]) > 1)
@@ -86,13 +86,13 @@ namespace SPH
 		Real small_shift = small_shift_factor * grid_spacing_;
 		// corner averages, note that the first row and first column are not used
 		PackageTemporaryData<Real> corner_averages;
-		for_each2d<1, pkg_addrs_size_>(
+		for_each2d<1, pkg_addrs_size>(
 			[&](int i, int j)
 			{
 				corner_averages[i][j] = CornerAverage(phi_addrs_, Veci(i, j), Veci(-1, -1));
 			});
 
-		for_each2d<pkg_addrs_buffer_, pkg_operations_>(
+		for_each2d<pkg_addrs_buffer, pkg_ops_end>(
 			[&](int i, int j)
 			{
 				// first assume far cells
@@ -144,8 +144,8 @@ namespace SPH
 		auto &kernel_weight = data_pkg.getPackageData(kernel_weight_);
 		auto &kernel_gradient = data_pkg.getPackageData(kernel_gradient_);
 
-		for (int i = 0; i != data_pkg.pkg_size_; ++i)
-			for (int j = 0; j != data_pkg.pkg_size_; ++j)
+		for (int i = 0; i != data_pkg.pkg_size; ++i)
+			for (int j = 0; j != data_pkg.pkg_size; ++j)
 			{
 				data_pkg.phi_[i][j] = far_field_level_set;
 				data_pkg.phi_gradient_[i][j] = Vecd(1.0);
@@ -197,8 +197,8 @@ namespace SPH
 		int l = (int)core_data_pkg->pkg_index_[0];
 		int m = (int)core_data_pkg->pkg_index_[1];
 
-		for (int i = pkg_addrs_buffer_; i != pkg_operations_; ++i)
-			for (int j = pkg_addrs_buffer_; j != pkg_operations_; ++j)
+		for (int i = pkg_addrs_buffer; i != pkg_ops_end; ++i)
+			for (int j = pkg_addrs_buffer; j != pkg_ops_end; ++j)
 			{
 				int near_interface_id = *core_data_pkg->near_interface_id_addrs_[i][j];
 				if (near_interface_id == 0)

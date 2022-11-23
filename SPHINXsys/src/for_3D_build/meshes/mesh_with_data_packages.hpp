@@ -13,35 +13,35 @@
 namespace SPH
 {
 	//=================================================================================================//
-	template <int PKG_SIZE, int ADDRS_SIZE>
+	template <int PKG_SIZE, int ADDRS_BUFFER>
 	template <typename FunctionOnData>
-	void GridDataPackage<PKG_SIZE, ADDRS_SIZE>::
+	void GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::
 		for_each_data(const FunctionOnData &function)
 	{
-		for (int i = 0; i != PKG_SIZE; ++i)
-			for (int j = 0; j != PKG_SIZE; ++j)
-				for (int k = 0; k != PKG_SIZE; ++k)
+		for (int i = 0; i != pkg_size; ++i)
+			for (int j = 0; j != pkg_size; ++j)
+				for (int k = 0; k != pkg_size; ++k)
 				{
 					function(i, j, k);
 				}
 	}
 	//=================================================================================================//
-	template <int PKG_SIZE, int ADDRS_SIZE>
+	template <int PKG_SIZE, int ADDRS_BUFFER>
 	template <typename FunctionOnAddress>
-	void GridDataPackage<PKG_SIZE, ADDRS_SIZE>::
+	void GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::
 		for_each_addrs(const FunctionOnAddress &function)
 	{
-		for (int i = pkg_addrs_buffer_; i != pkg_operations_; ++i)
-			for (int j = pkg_addrs_buffer_; j != pkg_operations_; ++j)
-				for (int k = pkg_addrs_buffer_; k != pkg_operations_; ++k)
+		for (int i = pkg_addrs_buffer; i != pkg_ops_end; ++i)
+			for (int j = pkg_addrs_buffer; j != pkg_ops_end; ++j)
+				for (int k = pkg_addrs_buffer; k != pkg_ops_end; ++k)
 				{
 					function(i, j, k);
 				}
 	}
 	//=================================================================================================//
-	template <int PKG_SIZE, int ADDRS_SIZE>
+	template <int PKG_SIZE, int ADDRS_BUFFER>
 	template <class DataType>
-	DataType GridDataPackage<PKG_SIZE, ADDRS_SIZE>::probeDataPackage(PackageDataAddress<DataType> &pkg_data_addrs, const Vecd &position)
+	DataType GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::probeDataPackage(PackageDataAddress<DataType> &pkg_data_addrs, const Vecd &position)
 	{
 		Vec3u grid_idx = CellIndexFromPosition(position);
 		Vec3d grid_pos = GridPositionFromIndex(grid_idx);
@@ -59,15 +59,15 @@ namespace SPH
 		return bilinear_1 * beta[2] + bilinear_2 * alpha[2];
 	}
 	//=================================================================================================//
-	template <int PKG_SIZE, int ADDRS_SIZE>
+	template <int PKG_SIZE, int ADDRS_BUFFER>
 	template <typename InDataType, typename OutDataType>
-	void GridDataPackage<PKG_SIZE, ADDRS_SIZE>::
+	void GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::
 		computeGradient(PackageDataAddress<InDataType> &in_pkg_data_addrs,
 						PackageDataAddress<OutDataType> out_pkg_data_addrs, Real dt)
 	{
-		for (int i = 1; i != PKG_SIZE + 1; ++i)
-			for (int j = 1; j != PKG_SIZE + 1; ++j)
-				for (int k = 1; k != PKG_SIZE + 1; ++k)
+		for (int i = 1; i != pkg_size + 1; ++i)
+			for (int j = 1; j != pkg_size + 1; ++j)
+				for (int k = 1; k != pkg_size + 1; ++k)
 				{
 					Real dphidx = (*in_pkg_data_addrs[i + 1][j][k] - *in_pkg_data_addrs[i - 1][j][k]);
 					Real dphidy = (*in_pkg_data_addrs[i][j + 1][k] - *in_pkg_data_addrs[i][j - 1][k]);
@@ -76,16 +76,16 @@ namespace SPH
 				}
 	}
 	//=================================================================================================//
-	template <int PKG_SIZE, int ADDRS_SIZE>
+	template <int PKG_SIZE, int ADDRS_BUFFER>
 	template <typename DataType, typename FunctionByPosition>
-	void GridDataPackage<PKG_SIZE, ADDRS_SIZE>::
+	void GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::
 		assignByPosition(const DiscreteVariable<DataType> &discrete_variable,
 						 const FunctionByPosition &function_by_position)
 	{
 		auto &pkg_data = getPackageData(discrete_variable);
-		for (int i = 0; i != PKG_SIZE; ++i)
-			for (int j = 0; j != PKG_SIZE; ++j)
-				for (int k = 0; k != PKG_SIZE; ++k)
+		for (int i = 0; i != pkg_size; ++i)
+			for (int j = 0; j != pkg_size; ++j)
+				for (int k = 0; k != pkg_size; ++k)
 				{
 					Vec3d position = DataLowerBound() + Vec3d(i, j, k) * grid_spacing_;
 					pkg_data[i][j][k] = function_by_position(position);
@@ -93,9 +93,9 @@ namespace SPH
 	}
 
 	//=================================================================================================//
-	template <int PKG_SIZE, int ADDRS_SIZE>
+	template <int PKG_SIZE, int ADDRS_BUFFER>
 	template <typename DataType>
-	void GridDataPackage<PKG_SIZE, ADDRS_SIZE>::initializePackageDataAddress<DataType>::
+	void GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::initializePackageDataAddress<DataType>::
 	operator()(DataContainerAddressAssemble<PackageData> &all_pkg_data,
 			   DataContainerAddressAssemble<PackageDataAddress> &all_pkg_data_addrs)
 	{
@@ -104,18 +104,18 @@ namespace SPH
 		{
 			PackageData<DataType> &pkg_data = *std::get<type_index>(all_pkg_data)[l];
 			PackageDataAddress<DataType> &pkg_data_addrs = *std::get<type_index>(all_pkg_data_addrs)[l];
-			for (int i = 0; i != ADDRS_SIZE; ++i)
-				for (int j = 0; j != ADDRS_SIZE; ++j)
-					for (int k = 0; k != ADDRS_SIZE; ++k)
+			for (int i = 0; i != pkg_addrs_size; ++i)
+				for (int j = 0; j != pkg_addrs_size; ++j)
+					for (int k = 0; k != pkg_addrs_size; ++k)
 					{
 						pkg_data_addrs[i][j][k] = &pkg_data[0][0][0];
 					}
 		}
 	}
 	//=================================================================================================//
-	template <int PKG_SIZE, int ADDRS_SIZE>
+	template <int PKG_SIZE, int ADDRS_BUFFER>
 	template <typename DataType>
-	void GridDataPackage<PKG_SIZE, ADDRS_SIZE>::initializeExtraPackageDataAddress<DataType>::
+	void GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::initializeExtraPackageDataAddress<DataType>::
 	operator()(DataContainerAssemble<PackageData> &extra_pkg_data,
 			   DataContainerAssemble<PackageDataAddress> &extra_pkg_data_addrs)
 	{
@@ -124,18 +124,18 @@ namespace SPH
 		{
 			PackageData<DataType> &pkg_data = std::get<type_index>(extra_pkg_data)[l];
 			PackageDataAddress<DataType> &pkg_data_addrs = std::get<type_index>(extra_pkg_data_addrs)[l];
-			for (int i = 0; i != ADDRS_SIZE; ++i)
-				for (int j = 0; j != ADDRS_SIZE; ++j)
-					for (int k = 0; k != ADDRS_SIZE; ++k)
+			for (int i = 0; i != pkg_addrs_size; ++i)
+				for (int j = 0; j != pkg_addrs_size; ++j)
+					for (int k = 0; k != pkg_addrs_size; ++k)
 					{
 						pkg_data_addrs[i][j][k] = &pkg_data[0][0][0];
 					}
 		}
 	}
 	//=================================================================================================//
-	template <int PKG_SIZE, int ADDRS_SIZE>
+	template <int PKG_SIZE, int ADDRS_BUFFER>
 	template <typename DataType>
-	void GridDataPackage<PKG_SIZE, ADDRS_SIZE>::assignPackageDataAddress<DataType>::
+	void GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::assignPackageDataAddress<DataType>::
 	operator()(DataContainerAddressAssemble<PackageDataAddress> &all_pkg_data_addrs,
 			   const Vecu &addrs_index,
 			   DataContainerAddressAssemble<PackageData> &all_pkg_data,
@@ -150,9 +150,9 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	template <int PKG_SIZE, int ADDRS_SIZE>
+	template <int PKG_SIZE, int ADDRS_BUFFER>
 	template <typename DataType>
-	void GridDataPackage<PKG_SIZE, ADDRS_SIZE>::assignExtraPackageDataAddress<DataType>::
+	void GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::assignExtraPackageDataAddress<DataType>::
 	operator()(DataContainerAssemble<PackageDataAddress> &extra_pkg_data_addrs,
 			   const Vecu &addrs_index,
 			   DataContainerAssemble<PackageData> &extra_pkg_data,
@@ -167,9 +167,9 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	template <int PKG_SIZE, int ADDRS_SIZE>
+	template <int PKG_SIZE, int ADDRS_BUFFER>
 	template <typename DataType>
-	DataType GridDataPackage<PKG_SIZE, ADDRS_SIZE>::
+	DataType GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::
 		CornerAverage(PackageDataAddress<DataType> &pkg_data_addrs, Veci addrs_index, Veci corner_direction)
 	{
 		DataType average(0);
@@ -194,9 +194,9 @@ namespace SPH
 		Vecu local_data_index(0);
 		for (int n = 0; n != 3; n++)
 		{
-			size_t cell_index_in_this_direction = global_grid_index[n] / pkg_size_;
+			size_t cell_index_in_this_direction = global_grid_index[n] / pkg_size;
 			pkg_index_[n] = cell_index_in_this_direction;
-			local_data_index[n] = global_grid_index[n] - cell_index_in_this_direction * pkg_size_;
+			local_data_index[n] = global_grid_index[n] - cell_index_in_this_direction * pkg_size;
 		}
 		PackageDataType &data = data_pkg_addrs_[pkg_index_[0]][pkg_index_[1]][pkg_index_[2]]->*MemPtr;
 		return data[local_data_index[0]][local_data_index[1]][local_data_index[2]];
@@ -212,9 +212,9 @@ namespace SPH
 		Vecu local_data_index(0);
 		for (int n = 0; n != 3; n++)
 		{
-			size_t cell_index_in_this_direction = global_grid_index[n] / pkg_size_;
+			size_t cell_index_in_this_direction = global_grid_index[n] / pkg_size;
 			pkg_index_[n] = cell_index_in_this_direction;
-			local_data_index[n] = global_grid_index[n] - cell_index_in_this_direction * pkg_size_;
+			local_data_index[n] = global_grid_index[n] - cell_index_in_this_direction * pkg_size;
 		}
 		auto &data = data_pkg_addrs_[pkg_index_[0]][pkg_index_[1]][pkg_index_[2]]->getPackageData(discrete_variable);
 		return data[local_data_index[0]][local_data_index[1]][local_data_index[2]];
@@ -231,9 +231,9 @@ namespace SPH
 		GridDataPackageType *data_pkg = data_pkg_addrs_[i][j][k];
 		if (data_pkg->is_inner_pkg_)
 		{
-			for (int l = 0; l != pkg_addrs_size_; ++l)
-				for (int m = 0; m != pkg_addrs_size_; ++m)
-					for (int n = 0; n != pkg_addrs_size_; ++n)
+			for (int l = 0; l != pkg_addrs_size; ++l)
+				for (int m = 0; m != pkg_addrs_size; ++m)
+					for (int n = 0; n != pkg_addrs_size; ++n)
 					{
 						std::pair<int, int> x_pair = CellShiftAndDataIndex(l);
 						std::pair<int, int> y_pair = CellShiftAndDataIndex(m);

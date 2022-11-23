@@ -12,7 +12,7 @@ namespace SPH
 {
 	//=================================================================================================//
 	LevelSetDataPackage::
-		LevelSetDataPackage() : GridDataPackage<4, 6>(), is_core_pkg_(false) {}
+		LevelSetDataPackage() : GridDataPackage<4, 1>(), is_core_pkg_(false) {}
 	//=================================================================================================//
 	void LevelSetDataPackage::registerAllVariables()
 	{
