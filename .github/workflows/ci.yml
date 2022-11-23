@@ -7,26 +7,24 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
-
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+
+# A workflow is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
-    runs-on: ubuntu-20.04
-    # Steps represent a sequence of tasks that will be executed as part of the job
+
+  ###############################################################################
+
+  Linux:
+    runs-on: ubuntu-latest
+
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-      
-      - uses: mstachniuk/ci-skip@v1
-      
+      - uses: actions/checkout@v3
+            
       # Runs a set of commands using the runners shell
       - name: Build
-        if: ${{ env.CI_SKIP == 'false' }}
         run: |
           echo "This step should not be executed when commit message contains [ci skip]"        
           sudo apt-get update 
@@ -56,7 +54,6 @@ jobs:
 
       - name: Test with the first try
         id: first-try
-        if: ${{ env.CI_SKIP == 'false' }}
         run: |
           cd /home/runner/work/SPHinXsys/SPHinXsys
           cd build 
@@ -65,35 +62,31 @@ jobs:
 
       - name: Test with the second try for failed cases
         id: second-try
-        if: ${{ env.CI_SKIP == 'false' && steps.first-try.outcome == 'failure' }} 
+        if: ${{ steps.first-try.outcome == 'failure' }} 
         run: |
-          cd /home/runner/work/SPHinXsys/SPHinXsys
           cd build 
           ctest --rerun-failed --output-on-failure
         continue-on-error: true
 
       - name: Test with the third try for failed cases
         id: third-try
-        if: ${{ env.CI_SKIP == 'false' && steps.second-try.outcome == 'failure' }} 
+        if: ${{ steps.second-try.outcome == 'failure' }} 
         run: |
-          cd /home/runner/work/SPHinXsys/SPHinXsys
           cd build 
           ctest --rerun-failed --output-on-failure
         continue-on-error: true
 
       - name: Test with the fourth try for failed cases
         id: fourth-try
-        if: ${{ env.CI_SKIP == 'false' && steps.third-try.outcome == 'failure' }} 
+        if: ${{ steps.third-try.outcome == 'failure' }} 
         run: |
-          cd /home/runner/work/SPHinXsys/SPHinXsys
           cd build 
           ctest --rerun-failed --output-on-failure
         continue-on-error: true
 
       - name: Test with the last try for failed cases
-        if: ${{ env.CI_SKIP == 'false' && steps.fourth-try.outcome == 'failure' }} 
+        if: ${{ steps.fourth-try.outcome == 'failure' }} 
         run: |
-          cd /home/runner/work/SPHinXsys/SPHinXsys
           cd build 
           ctest --rerun-failed --output-on-failure
 
