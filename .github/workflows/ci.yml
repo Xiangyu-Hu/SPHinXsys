@@ -97,3 +97,75 @@ jobs:
           cd build 
           ctest --rerun-failed --output-on-failure
 
+  ###############################################################################
+
+  Windows:
+    runs-on: windows-latest
+    env:
+      VCPKG_VERSION: "2022.11.14"
+      VCPKG_DEFAULT_TRIPLET: x64-windows
+
+    steps:
+      - uses: actions/checkout@v3 # Checks-out the repository under ${{github.workspace}}
+
+      - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
+        with: 
+          committish: ${{ env.VCPKG_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          ${{github.workspace}}\vcpkg\vcpkg.exe install `
+            eigen3 `
+            tbb `
+            boost-program-options `
+            boost-geometry `
+            simbody `
+            gtest
+      
+      - name: Generate buildsystem
+        run: |
+          cmake.exe -G Ninja `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_TOOLCHAIN_FILE="${{github.workspace}}\vcpkg\scripts\buildsystems\vcpkg.cmake" `
+            -S ${{github.workspace}} `
+            -B ${{github.workspace}}\build
+      
+      - name: Build
+        run: cmake.exe --build ${{github.workspace}}\build --config Release
+
+      - name: Test with the first try
+        id: first-try
+        run: |
+          cd build 
+          ctest.exe --output-on-failure
+        continue-on-error: true
+
+      - name: Test with the second try for failed cases
+        id: second-try
+        if: ${{ steps.first-try.outcome == 'failure' }} 
+        run: |
+          cd build 
+          ctest --rerun-failed --output-on-failure
+        continue-on-error: true
+
+      - name: Test with the third try for failed cases
+        id: third-try
+        if: ${{ steps.second-try.outcome == 'failure' }} 
+        run: |
+          cd build 
+          ctest --rerun-failed --output-on-failure
+        continue-on-error: true
+
+      - name: Test with the fourth try for failed cases
+        id: fourth-try
+        if: ${{ steps.third-try.outcome == 'failure' }} 
+        run: |
+          cd build 
+          ctest --rerun-failed --output-on-failure
+        continue-on-error: true
+
+      - name: Test with the last try for failed cases
+        if: ${{ steps.fourth-try.outcome == 'failure' }} 
+        run: |
+          cd build 
+          ctest --rerun-failed --output-on-failure
