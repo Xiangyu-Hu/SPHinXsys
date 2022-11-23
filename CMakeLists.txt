@@ -45,12 +45,19 @@ else()
     # target_compile_options(sphinxsys_core INTERFACE -pedantic -Wall -Wextra) # For when one gets rid of Simbody 
 endif()
 
+set(Boost_NO_WARN_NEW_VERSIONS TRUE)    # In case your CMake version is older than the release of Boost found
+                                        # Boost geometry and program-options are old enough to afford skipping this warning
+find_package(Boost REQUIRED)
+find_path(BOOST_INCLUDE_DIR boost/geometry) # Header-only Boost libraries are not components unfortunately
+if(NOT BOOST_INCLUDE_DIR)
+    message(FATAL_ERROR "Please install Boost.Geometry library")
+endif()
+target_link_libraries(sphinxsys_core INTERFACE Boost::boost)
+find_package(Boost QUIET COMPONENTS program_options)
+if(TARGET Boost::program_options)
     target_compile_definitions(sphinxsys_core INTERFACE BOOST_AVAILABLE)
-    find_package(Boost REQUIRED COMPONENTS program_options filesystem system)
-    target_include_directories(sphinxsys_core INTERFACE ${Boost_INCLUDE_DIRS})
-    target_link_directories(sphinxsys_core INTERFACE ${Boost_LIBRARY_DIRS})
-    target_link_libraries(sphinxsys_core INTERFACE ${Boost_LIBRARIES})
-
+    target_link_libraries(sphinxsys_core INTERFACE Boost::program_options)
+endif()
 
 add_subdirectory(SPHINXsys)
 add_subdirectory(modules)
