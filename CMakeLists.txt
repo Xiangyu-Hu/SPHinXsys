@@ -13,24 +13,30 @@ option(SPHINXSYS_2D "Build sphinxsys_2d library" ON)
 option(SPHINXSYS_3D "Build sphinxsys_3d library" ON)
 option(SPHINXSYS_BUILD_TESTS "Build tests" ON)
 
-set(CMAKE_VERBOSE_MAKEFILE ON) # Enable verbose makefile for whoever use them
+set(CMAKE_VERBOSE_MAKEFILE OFF CACHE BOOL "Enable verbose compilation commands for Makefile and Ninja" FORCE) # Extra fluff needed for Ninja: https://github.com/ninja-build/ninja/issues/900
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # Generate `compile_commands.json` file which is necessary for code completioner, static analyzer, etc
 
-set(CXX_STANDARD_REQUIRED ON) # C++ standard requirement for targets is NOT optional 
-set(CXX_EXTENSIONS OFF) # Disable any non-standard compiler specific C++ extensions.
+#set(CXX_STANDARD_REQUIRED ON) # C++ standard requirement for targets is NOT optional 
+#set(CXX_EXTENSIONS OFF) # Disable any non-standard compiler specific C++ extensions.
 
 add_library(sphinxsys_core INTERFACE)
-target_compile_features(sphinxsys_core INTERFACE cxx_std_17)
+target_compile_features(sphinxsys_core INTERFACE cxx_std_17) # Requires a compiler supporting at least C++17
+set_target_properties(sphinxsys_core PROPERTIES CXX_EXTENSIONS OFF) # Disable any non-standard compiler specific C++ extensions
+#set_target_properties(sphinxsys_core PROPERTIES CXX_STANDARD_REQUIRED ON) # C++ standard requirement for targets is NOT optional
+#set_target_properties(sphinxsys_core PROPERTIES CXX_STANDARD 17) 
 
 find_package(Simbody CONFIG REQUIRED)
+# find_package(BLAS REQUIRED)
+# find_package(LAPACK CONFIG REQUIRED)
+# target_link_libraries(sphinxsys_core INTERFACE BLAS::BLAS LAPACK::LAPACK) # targets for CMake >= 3.18 
 target_link_libraries(sphinxsys_core INTERFACE SimTKmath SimTKcommon SimTKsimbody)
+target_compile_definitions(sphinxsys_core INTERFACE _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING) # Because of Simbody headers
 
 find_package(Eigen3 CONFIG REQUIRED)
 target_link_libraries (sphinxsys_core INTERFACE Eigen3::Eigen)
 
 find_package(TBB CONFIG REQUIRED)
 target_link_libraries(sphinxsys_core INTERFACE TBB::tbb TBB::tbbmalloc TBB::tbbmalloc_proxy)
-target_compile_definitions(sphinxsys_core INTERFACE TBB_SUPPRESS_DEPRECATED_MESSAGES)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES Windows)
     set_target_properties(sphinxsys_core PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON) # For correct DLL generation on Windows
