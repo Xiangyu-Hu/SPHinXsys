@@ -33,8 +33,7 @@ target_link_libraries(sphinxsys_core INTERFACE TBB::tbb TBB::tbbmalloc TBB::tbbm
 target_compile_definitions(sphinxsys_core INTERFACE TBB_SUPPRESS_DEPRECATED_MESSAGES)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES Windows)
-    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
-#    set(BUILD_SHARED_LIBS OFF)
+    set_target_properties(sphinxsys_core PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON) # For correct DLL generation on Windows
     target_compile_definitions(sphinxsys_core INTERFACE _USE_MATH_DEFINES)
     target_compile_options(sphinxsys_core INTERFACE /MP)
     target_compile_options(sphinxsys_core INTERFACE /permissive-) # /W4 /WX 
