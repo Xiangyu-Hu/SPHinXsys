@@ -160,8 +160,7 @@ namespace SPH
 			const Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(Vecd(0));
 			const Real shear_correction_factor_ = 5.0 / 6.0;
 
-			const StdVec<Real> one_gaussian_point_ = { 0.0 };
-			const StdVec<Real> one_gaussian_weight_ = { 2.0 };
+
 			const StdVec<Real> three_gaussian_points_ = {0.0, 0.7745966692414834, -0.7745966692414834};
 			const StdVec<Real> three_gaussian_weights_ = {0.8888888888888889, 0.5555555555555556, 0.5555555555555556};
 			const StdVec<Real> five_gaussian_points_ = {0.0, 0.5384693101056831, -0.5384693101056831, 0.9061798459386640, -0.9061798459386640};
