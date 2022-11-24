@@ -107,7 +107,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          ${{github.workspace}}\vcpkg\vcpkg.exe install `
+          ${{github.workspace}}\vcpkg\vcpkg.exe install --clean-after-build `
             eigen3 `
             tbb `
             boost-program-options `
@@ -123,15 +123,15 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release `
             -DCMAKE_TOOLCHAIN_FILE="${{github.workspace}}\vcpkg\scripts\buildsystems\vcpkg.cmake" `
             -S ${{github.workspace}} `
-            -B ${{github.workspace}}\build
+            -B C:\build
       
       - name: Build
-        run: cmake.exe --build ${{github.workspace}}\build --config Release
+        run: cmake.exe --build C:\build --config Release
 
       - name: Test with the first try
         id: first-try
         run: |
-          cd build 
+          cd C:\build 
           ctest.exe --output-on-failure
         continue-on-error: true
 
@@ -139,7 +139,7 @@ jobs:
         id: second-try
         if: ${{ steps.first-try.outcome == 'failure' }} 
         run: |
-          cd build 
+          cd C:\build 
           ctest --rerun-failed --output-on-failure
         continue-on-error: true
 
@@ -147,7 +147,7 @@ jobs:
         id: third-try
         if: ${{ steps.second-try.outcome == 'failure' }} 
         run: |
-          cd build 
+          cd C:\build 
           ctest --rerun-failed --output-on-failure
         continue-on-error: true
 
@@ -155,12 +155,12 @@ jobs:
         id: fourth-try
         if: ${{ steps.third-try.outcome == 'failure' }} 
         run: |
-          cd build 
+          cd C:\build 
           ctest --rerun-failed --output-on-failure
         continue-on-error: true
 
       - name: Test with the last try for failed cases
         if: ${{ steps.fourth-try.outcome == 'failure' }} 
         run: |
-          cd build 
+          cd C:\build 
           ctest --rerun-failed --output-on-failure
