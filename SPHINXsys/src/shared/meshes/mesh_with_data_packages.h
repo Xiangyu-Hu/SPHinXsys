@@ -78,11 +78,20 @@ namespace SPH
 	class BaseDataPackage
 	{
 	public:
-		Vecu pkg_index_;	/**< index of this data package on the background mesh, Vecu(0) if it is not on the mesh. */
-		bool is_inner_pkg_; /**< If true, its data package is on the background mesh. */
-
-		BaseDataPackage() : pkg_index_(0), is_inner_pkg_(false){};
+		BaseDataPackage() : cell_index_on_mesh_(0), state_indicator_(0){};
 		virtual ~BaseDataPackage(){};
+		void setInnerPackage() { state_indicator_ = 1; };
+		bool isInnerPackage() { return state_indicator_ != 0; };
+		void setCorerPackage() { state_indicator_ = 2; };
+		bool isCorePackage() { return state_indicator_ == 2; };
+		void setCellIndexOnMesh(const Vecu &cell_index) { cell_index_on_mesh_ = cell_index; }
+		Vecu CellIndexOnMesh() const { return cell_index_on_mesh_; }
+
+	protected:
+		Vecu cell_index_on_mesh_; /**< index of this data package on the background mesh, Vecu(0) if it is not on the mesh. */
+		/** reserved value: 0 not occupying background mesh, 1 occupying.
+		 *  guide to use: large magnitude for high priority of the data package. */
+		int state_indicator_;
 	};
 
 	/**
@@ -318,13 +327,13 @@ namespace SPH
 		virtual Real DataSpacing() override { return data_spacing_; };
 
 	protected:
-		const Real data_spacing_;														 /**< spacing of data in the data packages*/
-		static constexpr int pkg_size = GridDataPackageType::pkg_size;				 /**< the size of the data package matrix*/
+		const Real data_spacing_;													   /**< spacing of data in the data packages*/
+		static constexpr int pkg_size = GridDataPackageType::pkg_size;				   /**< the size of the data package matrix*/
 		static constexpr int pkg_addrs_buffer = GridDataPackageType::pkg_addrs_buffer; /**< the size of address buffer, a value less than the package size. */
-		static constexpr int pkg_ops_end = GridDataPackageType::pkg_ops_end;	 /**< the size of operation loops. */
-		static constexpr int pkg_addrs_size = GridDataPackageType::pkg_addrs_size;	 /**< the size of address matrix in the data packages. */
-		std::mutex mutex_my_pool;														 /**< mutex exclusion for memory pool */
-		BaseMesh global_mesh_;															 /**< the mesh for the locations of all possible data points. */
+		static constexpr int pkg_ops_end = GridDataPackageType::pkg_ops_end;		   /**< the size of operation loops. */
+		static constexpr int pkg_addrs_size = GridDataPackageType::pkg_addrs_size;	   /**< the size of address matrix in the data packages. */
+		std::mutex mutex_my_pool;													   /**< mutex exclusion for memory pool */
+		BaseMesh global_mesh_;														   /**< the mesh for the locations of all possible data points. */
 		/** Singular data packages. provided for far field condition with usually only two values.
 		 * For example, when level set is considered. The first value for inner far-field and second for outer far-field */
 		StdVec<GridDataPackageType *> singular_data_pkgs_addrs_;

@@ -12,7 +12,7 @@ namespace SPH
 {
 	//=================================================================================================//
 	LevelSetDataPackage::
-		LevelSetDataPackage() : GridDataPackage<4, 1>(), is_core_pkg_(false) {}
+		LevelSetDataPackage() : GridDataPackage<4, 1>() {}
 	//=================================================================================================//
 	void LevelSetDataPackage::registerAllVariables()
 	{
@@ -193,7 +193,7 @@ namespace SPH
 		Vecd pkg_lower_bound = GridPositionFromCellPosition(cell_position);
 		new_data_pkg.initializePackageGeometry(pkg_lower_bound, data_spacing_);
 		new_data_pkg.initializeBasicData(shape_);
-		new_data_pkg.pkg_index_ = cell_index;
+		new_data_pkg.setCellIndexOnMesh(cell_index);
 		assignDataPackageAddress(cell_index, &new_data_pkg);
 		return &new_data_pkg;
 	}
@@ -207,7 +207,7 @@ namespace SPH
 		if (measure < grid_spacing_)
 		{
 			LevelSetDataPackage *new_data_pkg = createDataPackage(cell_index, cell_position);
-			new_data_pkg->is_core_pkg_ = true;
+			new_data_pkg->setCorerPackage();
 			core_data_pkgs_.push_back(new_data_pkg);
 		}
 		else
@@ -220,21 +220,19 @@ namespace SPH
 	//=============================================================================================//
 	void LevelSet::tagACellIsInnerPackage(const Vecu &cell_index)
 	{
-		bool is_inner_pkg = isInnerPackage(cell_index);
-
-		if (is_inner_pkg)
+		if (isInnerPackage(cell_index))
 		{
 			LevelSetDataPackage *current_data_pkg = DataPackageFromCellIndex(cell_index);
-			if (current_data_pkg->is_core_pkg_)
+			if (current_data_pkg->isCorePackage())
 			{
-				current_data_pkg->is_inner_pkg_ = true;
+				current_data_pkg->setInnerPackage();
 				inner_data_pkgs_.push_back(current_data_pkg);
 			}
 			else
 			{
 				Vecd cell_position = CellPositionFromIndex(cell_index);
 				LevelSetDataPackage *new_data_pkg = createDataPackage(cell_index, cell_position);
-				new_data_pkg->is_inner_pkg_ = true;
+				new_data_pkg->setInnerPackage();
 				inner_data_pkgs_.push_back(new_data_pkg);
 			}
 		}
@@ -255,7 +253,7 @@ namespace SPH
 			if (measure < grid_spacing_)
 			{
 				LevelSetDataPackage *new_data_pkg = createDataPackage(cell_index, cell_position);
-				new_data_pkg->is_core_pkg_ = true;
+				new_data_pkg->setCorerPackage(); // core package
 				core_data_pkgs_.push_back(new_data_pkg);
 			}
 		}

@@ -111,7 +111,7 @@ namespace SPH
 		template <int lower, int upper, typename CheckOnEach>
 		inline Vec2i find_if2d(const CheckOnEach &function)
 		{
-			return for_each2d<lower, upper, lower, upper, CheckOnEach>(function);
+			return find_if2d<lower, upper, lower, upper, CheckOnEach>(function);
 		};
 
 		/** iteration with void (non_value_returning) function. 3D case. */

@@ -46,7 +46,6 @@ namespace SPH
 	class LevelSetDataPackage : public GridDataPackage<4, 1>
 	{
 	public:
-		bool is_core_pkg_;					 /**< If true, the package is near to zero level set. */
 		PackageData<Real> phi_;				 /**< the level set or signed distance. */
 		PackageDataAddress<Real> phi_addrs_; /**< address for the level set. */
 		PackageData<Vecd> phi_gradient_;

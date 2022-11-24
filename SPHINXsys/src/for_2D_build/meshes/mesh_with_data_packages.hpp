@@ -178,15 +178,15 @@ namespace SPH
 	DataType MeshWithGridDataPackages<MeshFieldType, GridDataPackageType>::
 		DataValueFromGlobalIndex(const Vecu &global_grid_index)
 	{
-		Vecu pkg_index_(0);
+		Vecu cell_index_on_mesh_(0);
 		Vecu local_data_index(0);
 		for (int n = 0; n != 2; n++)
 		{
 			size_t cell_index_in_this_direction = global_grid_index[n] / pkg_size;
-			pkg_index_[n] = cell_index_in_this_direction;
+			cell_index_on_mesh_[n] = cell_index_in_this_direction;
 			local_data_index[n] = global_grid_index[n] - cell_index_in_this_direction * pkg_size;
 		}
-		PackageDataType &data = data_pkg_addrs_[pkg_index_[0]][pkg_index_[1]]->*MemPtr;
+		PackageDataType &data = data_pkg_addrs_[cell_index_on_mesh_[0]][cell_index_on_mesh_[1]]->*MemPtr;
 		return data[local_data_index[0]][local_data_index[1]];
 	}
 	//=================================================================================================//
@@ -196,15 +196,15 @@ namespace SPH
 		DataValueFromGlobalIndex(const DiscreteVariable<DataType> &discrete_variable,
 								 const Vecu &global_grid_index)
 	{
-		Vecu pkg_index_(0);
+		Vecu cell_index_on_mesh_(0);
 		Vecu local_data_index(0);
 		for (int n = 0; n != 2; n++)
 		{
 			size_t cell_index_in_this_direction = global_grid_index[n] / pkg_size;
-			pkg_index_[n] = cell_index_in_this_direction;
+			cell_index_on_mesh_[n] = cell_index_in_this_direction;
 			local_data_index[n] = global_grid_index[n] - cell_index_in_this_direction * pkg_size;
 		}
-		auto &data = data_pkg_addrs_[pkg_index_[0]][pkg_index_[1]]->getPackageData(discrete_variable);
+		auto &data = data_pkg_addrs_[cell_index_on_mesh_[0]][cell_index_on_mesh_[1]]->getPackageData(discrete_variable);
 		return data[local_data_index[0]][local_data_index[1]];
 	}
 	//=================================================================================================//
@@ -216,7 +216,7 @@ namespace SPH
 		int j = (int)cell_index[1];
 
 		GridDataPackageType *data_pkg = data_pkg_addrs_[i][j];
-		if (data_pkg->is_inner_pkg_)
+		if (data_pkg->isInnerPackage())
 		{
 			for (int l = 0; l != pkg_addrs_size; ++l)
 				for (int m = 0; m != pkg_addrs_size; ++m)
@@ -267,7 +267,7 @@ namespace SPH
 
 		GridDataPackageType *data_pkg = data_pkg_addrs_[i][j];
 		PackageDataAddressType &pkg_data_addrs = data_pkg->*MemPtr;
-		return data_pkg->is_inner_pkg_ ? data_pkg->GridDataPackageType::template probeDataPackage<DataType>(pkg_data_addrs, position)
+		return data_pkg->isInnerPackage() ? data_pkg->GridDataPackageType::template probeDataPackage<DataType>(pkg_data_addrs, position)
 									   : *pkg_data_addrs[0][0];
 	}
 	//=================================================================================================//
@@ -282,7 +282,7 @@ namespace SPH
 
 		GridDataPackageType *data_pkg = data_pkg_addrs_[i][j];
 		auto &pkg_data_addrs = data_pkg->getPackageDataAddress(discrete_variable);
-		return data_pkg->is_inner_pkg_ ? data_pkg->GridDataPackageType::template probeDataPackage<DataType>(pkg_data_addrs, position)
+		return data_pkg->isInnerPackage() ? data_pkg->GridDataPackageType::template probeDataPackage<DataType>(pkg_data_addrs, position)
 									   : *pkg_data_addrs[0][0];
 	}
 	//=================================================================================================//

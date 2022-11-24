@@ -175,7 +175,7 @@ namespace SPH
 	bool LevelSet::isWithinCorePackage(Vecd position)
 	{
 		Vecu cell_index = CellIndexFromPosition(position);
-		return data_pkg_addrs_[cell_index[0]][cell_index[1]]->is_core_pkg_;
+		return data_pkg_addrs_[cell_index[0]][cell_index[1]]->isCorePackage();
 	}
 	//=============================================================================================//
 	bool LevelSet::isInnerPackage(const Vecu &cell_index)
@@ -186,15 +186,15 @@ namespace SPH
 		bool is_inner_pkg = false;
 		for (int l = SMAX(i - 1, 0); l <= SMIN(i + 1, int(number_of_cells_[0]) - 1); ++l)
 			for (int m = SMAX(j - 1, 0); m <= SMIN(j + 1, int(number_of_cells_[1]) - 1); ++m)
-				if (data_pkg_addrs_[l][m]->is_core_pkg_)
+				if (data_pkg_addrs_[l][m]->isCorePackage())
 					is_inner_pkg = true;
 		return is_inner_pkg;
 	}
 	//=================================================================================================//
 	void LevelSet::redistanceInterfaceForAPackage(LevelSetDataPackage *core_data_pkg)
 	{
-		int l = (int)core_data_pkg->pkg_index_[0];
-		int m = (int)core_data_pkg->pkg_index_[1];
+		int l = (int)core_data_pkg->CellIndexOnMesh()[0];
+		int m = (int)core_data_pkg->CellIndexOnMesh()[1];
 
 		for (int i = pkg_addrs_buffer; i != pkg_ops_end; ++i)
 			for (int j = pkg_addrs_buffer; j != pkg_ops_end; ++j)
