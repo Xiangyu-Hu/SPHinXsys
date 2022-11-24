@@ -101,6 +101,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3 # Checks-out the repository under ${{github.workspace}}
 
+      - uses: actions/setup-python@v4
+
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
         with: 
           committish: ${{ env.VCPKG_VERSION }}
