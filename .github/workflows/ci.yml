@@ -114,7 +114,9 @@ jobs:
             boost-geometry `
             simbody `
             gtest
-      
+
+      - uses: ilammy/msvc-dev-cmd@v1
+
       - name: Generate buildsystem
         run: |
           cmake.exe -G Ninja `
