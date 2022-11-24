@@ -40,50 +40,45 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSetDataPackage::stepReinitialization()
 	{
-		for (int i = pkg_addrs_buffer; i != pkg_ops_end; ++i)
-			for (int j = pkg_addrs_buffer; j != pkg_ops_end; ++j)
-				for (int k = pkg_addrs_buffer; k != pkg_ops_end; ++k)
+		for_each3d<pkg_addrs_buffer, pkg_ops_end>(
+			[&](int i, int j, int k)
+			{
+				// only reinitialize non cut cells
+				if (*near_interface_id_addrs_[i][j][k] != 0)
 				{
-					// only reinitialize non cut cells
-					if (*near_interface_id_addrs_[i][j][k] != 0)
-					{
-						Real phi_0 = *phi_addrs_[i][j][k];
-						Real sign = phi_0 / sqrt(phi_0 * phi_0 + grid_spacing_ * grid_spacing_);
-						Real dv_x = upwindDifference(sign, *phi_addrs_[i + 1][j][k] - phi_0, phi_0 - *phi_addrs_[i - 1][j][k]);
-						Real dv_y = upwindDifference(sign, *phi_addrs_[i][j + 1][k] - phi_0, phi_0 - *phi_addrs_[i][j - 1][k]);
-						Real dv_z = upwindDifference(sign, *phi_addrs_[i][j][k + 1] - phi_0, phi_0 - *phi_addrs_[i][j][k - 1]);
-						*phi_addrs_[i][j][k] -= 0.3 * sign * (Vec3d(dv_x, dv_y, dv_z).norm() - grid_spacing_);
-					}
+					Real phi_0 = *phi_addrs_[i][j][k];
+					Real sign = phi_0 / sqrt(phi_0 * phi_0 + grid_spacing_ * grid_spacing_);
+					Real dv_x = upwindDifference(sign, *phi_addrs_[i + 1][j][k] - phi_0, phi_0 - *phi_addrs_[i - 1][j][k]);
+					Real dv_y = upwindDifference(sign, *phi_addrs_[i][j + 1][k] - phi_0, phi_0 - *phi_addrs_[i][j - 1][k]);
+					Real dv_z = upwindDifference(sign, *phi_addrs_[i][j][k + 1] - phi_0, phi_0 - *phi_addrs_[i][j][k - 1]);
+					*phi_addrs_[i][j][k] -= 0.3 * sign * (Vec3d(dv_x, dv_y, dv_z).norm() - grid_spacing_);
 				}
+			});
 	}
 	//=================================================================================================//
 	void LevelSetDataPackage::stepDiffusionLevelSetSign()
 	{
-		for (int i = pkg_addrs_buffer; i != pkg_ops_end; ++i)
-			for (int j = pkg_addrs_buffer; j != pkg_ops_end; ++j)
-				for (int k = pkg_addrs_buffer; k != pkg_ops_end; ++k)
+		for_each3d<pkg_addrs_buffer, pkg_ops_end>(
+			[&](int i, int j, int k)
+			{
+				// near interface cells are not considered
+				if (abs(*near_interface_id_addrs_[i][j][k]) > 1)
 				{
-					// near interface cells are not considered
-					if (abs(*near_interface_id_addrs_[i][j][k]) > 1)
-					{
-						Real phi_0 = *phi_addrs_[i][j][k];
-						for (int l = -1; l != 2; ++l)
-							for (int m = -1; m != 2; ++m)
-								for (int n = -1; n != 2; ++n)
-								{
-									int index_x = i + l;
-									int index_y = j + m;
-									int index_z = k + n;
-									int near_interface_id = *near_interface_id_addrs_[index_x][index_y][index_z];
-									if (abs(near_interface_id) == 1)
-									{
-										*near_interface_id_addrs_[i][j][k] = near_interface_id;
-										*phi_addrs_[i][j][k] = near_interface_id == 1 ? fabs(phi_0) : -fabs(phi_0);
-										break;
-									}
-								}
-					}
+					find_if3d<-1, 2>(
+						[&](int l, int m, int n) -> bool
+						{
+							int near_interface_id = *near_interface_id_addrs_[i + l][j + m][k + n];
+							bool is_found = abs(near_interface_id) == 1;
+							if (is_found)
+							{
+								Real phi_0 = *phi_addrs_[i][j][k];
+								*near_interface_id_addrs_[i][j][k] = near_interface_id;
+								*phi_addrs_[i][j][k] = near_interface_id == 1 ? fabs(phi_0) : -fabs(phi_0);
+							}
+							return is_found;
+						});
 				}
+			});
 	}
 	//=================================================================================================//
 	void LevelSetDataPackage::markNearInterface(Real small_shift_factor)

@@ -40,8 +40,8 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSetDataPackage::stepReinitialization()
 	{
-		for (int i = pkg_addrs_buffer; i != pkg_ops_end; ++i)
-			for (int j = pkg_addrs_buffer; j != pkg_ops_end; ++j)
+		for_each2d<pkg_addrs_buffer, pkg_ops_end>(
+			[&](int i, int j)
 			{
 				// only reinitialize non cut cells
 				if (*near_interface_id_addrs_[i][j] != 0)
@@ -52,33 +52,32 @@ namespace SPH
 					Real dv_y = upwindDifference(sign, *phi_addrs_[i][j + 1] - phi_0, phi_0 - *phi_addrs_[i][j - 1]);
 					*phi_addrs_[i][j] -= 0.5 * sign * (Vec2d(dv_x, dv_y).norm() - grid_spacing_);
 				}
-			}
+			});
 	}
 	//=================================================================================================//
 	void LevelSetDataPackage::stepDiffusionLevelSetSign()
 	{
-		for (int i = pkg_addrs_buffer; i != pkg_ops_end; ++i)
-			for (int j = pkg_addrs_buffer; j != pkg_ops_end; ++j)
+		for_each2d<pkg_addrs_buffer, pkg_ops_end>(
+			[&](int i, int j)
 			{
 				// near interface cells are not considered
 				if (abs(*near_interface_id_addrs_[i][j]) > 1)
 				{
-					Real phi_0 = *phi_addrs_[i][j];
-					for (int l = -1; l != 2; ++l)
-						for (int m = -1; m != 2; ++m)
+					find_if2d<-1, 2>(
+						[&](int l, int m) -> bool
 						{
-							int index_x = i + l;
-							int index_y = j + m;
-							int near_interface_id = *near_interface_id_addrs_[index_x][index_y];
-							if (abs(near_interface_id) == 1)
+							int near_interface_id = *near_interface_id_addrs_[i + l][j + m];
+							bool is_found = abs(near_interface_id) == 1;
+							if (is_found)
 							{
+								Real phi_0 = *phi_addrs_[i][j];
 								*near_interface_id_addrs_[i][j] = near_interface_id;
 								*phi_addrs_[i][j] = near_interface_id == 1 ? fabs(phi_0) : -fabs(phi_0);
-								break;
 							}
-						}
+							return is_found;
+						});
 				}
-			}
+			});
 	}
 	//=================================================================================================//
 	void LevelSetDataPackage::markNearInterface(Real small_shift_factor)

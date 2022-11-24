@@ -95,6 +95,25 @@ namespace SPH
 			for_each2d<lower, upper, lower, upper, FunctionOnEach>(function);
 		};
 
+		/** iteration with void (non_value_returning) function. 2D case. */
+		template <int lower0, int upper0,
+				  int lower1, int upper1, typename CheckOnEach>
+		inline Vec2i find_if2d(const CheckOnEach &function)
+		{
+			for (int l = lower0; l != upper0; ++l)
+				for (int m = lower1; m != upper1; ++m)
+				{
+					if (function(l, m))
+						return Vec2i(l, m);
+				}
+			return Vec2i(upper0, upper1);
+		};
+		template <int lower, int upper, typename CheckOnEach>
+		inline Vec2i find_if2d(const CheckOnEach &function)
+		{
+			return for_each2d<lower, upper, lower, upper, CheckOnEach>(function);
+		};
+
 		/** iteration with void (non_value_returning) function. 3D case. */
 		template <int lower0, int upper0,
 				  int lower1, int upper1,
@@ -112,6 +131,27 @@ namespace SPH
 		inline void for_each3d(const FunctionOnEach &function)
 		{
 			for_each3d<lower, upper, lower, upper, lower, upper, FunctionOnEach>(function);
+		};
+
+		/** iteration with void (non_value_returning) function. 3D case. */
+		template <int lower0, int upper0,
+				  int lower1, int upper1,
+				  int lower2, int upper2, typename CheckOnEach>
+		inline Vec3i find_if3d(const CheckOnEach &function)
+		{
+			for (int l = lower0; l != upper0; ++l)
+				for (int m = lower1; m != upper1; ++m)
+					for (int n = lower2; n != upper2; ++n)
+					{
+						if (function(l, m, n))
+							return Vec3i(l, m, n);
+					}
+			return Vec3i(upper0, upper1, upper2);
+		};
+		template <int lower, int upper, typename CheckOnEach>
+		inline Vec3i find_if3d(const CheckOnEach &function)
+		{
+			return find_if3d<lower, upper, lower, upper, lower, upper, CheckOnEach>(function);
 		};
 
 		Vecu transfer1DtoMeshIndex(const Vecu &number_of_mesh_indexes, size_t i);
