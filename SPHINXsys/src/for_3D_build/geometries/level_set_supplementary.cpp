@@ -186,13 +186,14 @@ namespace SPH
 		int j = (int)cell_index[1];
 		int k = (int)cell_index[2];
 
-		bool is_inner_pkg = false;
-		for (int l = SMAX(i - 1, 0); l <= SMIN(i + 1, int(number_of_cells_[0]) - 1); ++l)
-			for (int m = SMAX(j - 1, 0); m <= SMIN(j + 1, int(number_of_cells_[1]) - 1); ++m)
-				for (int n = SMAX(k - 1, 0); n <= SMIN(k + 1, int(number_of_cells_[2]) - 1); ++n)
-					if (data_pkg_addrs_[l][m][n]->isCorePackage())
-						is_inner_pkg = true;
-		return is_inner_pkg;
+		return mesh_any_of(Vec3i(SMAX(i - 1, 0), SMAX(j - 1, 0), SMAX(k - 1, 0)),
+						   Vec3i(SMIN(i + 2, (int)number_of_cells_[0]),
+								 SMIN(j + 2, (int)number_of_cells_[1]),
+								 SMIN(k + 2, (int)number_of_cells_[2])),
+						   [&](int l, int m, int n)
+						   {
+							   return data_pkg_addrs_[l][m][n]->isCorePackage();
+						   });
 	}
 	//=================================================================================================//
 	void LevelSet::redistanceInterfaceForAPackage(LevelSetDataPackage *core_data_pkg)

@@ -55,6 +55,12 @@ namespace SPH
     {
         return mesh_find_if2d<lower, upper, lower, upper, CheckOnEach>(function);
     };
+    template <int lower, int upper, typename CheckOnEach>
+    inline bool mesh_any_of2d(const CheckOnEach &function)
+    {
+        return mesh_find_if2d<lower, upper, lower, upper, CheckOnEach>(
+                   function) != Vec2i(upper, upper);
+    };
 
     /** iteration with void (non_value_returning) function. 3D case. */
     template <int lower0, int upper0,
@@ -77,9 +83,24 @@ namespace SPH
     {
         return mesh_find_if3d<lower, upper, lower, upper, lower, upper, CheckOnEach>(function);
     };
+    template <int lower, int upper, typename CheckOnEach>
+    inline bool mesh_any_of3d(const CheckOnEach &function)
+    {
+        return mesh_find_if3d<lower, upper, lower, upper, lower, upper, CheckOnEach>(
+                   function) != Vec3i(upper, upper, upper);
+    };
+
+    template <typename FunctionOnEach>
+    void mesh_for_each(const Veci &lower, const Veci &upper, const FunctionOnEach &function);
+    template <typename FunctionOnEach>
+    Veci mesh_find_if(const Veci &lower, const Veci &upper, const FunctionOnEach &function);
+    template <typename FunctionOnEach>
+    bool mesh_any_of(const Veci &lower, const Veci &upper, const FunctionOnEach &function)
+    {
+        return mesh_find_if(lower, upper) != upper;
+    };
 
     using MeshRange = std::pair<Vecu, Vecu>;
-
     /** Iterator on the mesh by looping index. sequential computing. */
     template <typename LocalFunction, typename... Args>
     void mesh_for(const MeshRange &mesh_range, const LocalFunction &local_function, Args &&...args);

@@ -39,6 +39,29 @@ namespace SPH
         return Vec3i(upper0, upper1, upper2);
     }
     //=================================================================================================//
+    template <typename FunctionOnEach>
+    void mesh_for_each(const Vec3i &lower, const Vec3i &upper, const FunctionOnEach &function)
+    {
+        for (int l = lower[0]; l != upper[0]; ++l)
+            for (int m = lower[1]; m != upper[1]; ++m)
+                for (int n = lower[2]; n != upper[2]; ++n)
+                {
+                    function(l, m, n);
+                }
+    }
+    //=================================================================================================//
+    template <typename FunctionOnEach>
+    Vec3i mesh_find_if(const Vec3i &lower, const Vec3i &upper, const FunctionOnEach &function)
+    {
+        for (int l = lower[0]; l != upper[0]; ++l)
+            for (int m = lower[1]; m != upper[1]; ++m)
+                for (int n = lower[2]; n != upper[2]; ++n)
+                {
+                    if (function(l, m, n))
+                        return Vec3i(l, m, n);
+                }
+        return upper;
+    }
     //=================================================================================================//
     //=================================================================================================//
     template <typename LocalFunction, typename... Args>
