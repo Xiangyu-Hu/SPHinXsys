@@ -36,6 +36,7 @@ jobs:
           libgtest-dev \
           libtbb-dev \
           libboost-all-dev \
+          libeigen3-dev \
           liblapack-dev \
           wget \
           unzip
@@ -50,7 +51,7 @@ jobs:
           git submodule update --init
           mkdir build
           cd build 
-          cmake .. -DSIMBODY_HOME=/home/runner/simbody
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DSIMBODY_HOME=/home/runner/simbody
           make -j$(nproc)
 
       - name: Test with the first try

@@ -67,7 +67,7 @@ namespace SPH
 			Matd local_configuration =
 				transformation_matrix_[index_i] * global_configuration * (~transformation_matrix_[index_i]);
 			/** correction matrix is obtained from local configuration. */
-			B_[index_i] = SimTK::inverse(local_configuration) * reduced_unit_matrix;
+			B_[index_i] = getCorrectionMatrix(local_configuration);
 		}
 		//=================================================================================================//
 		ShellDeformationGradientTensor::
@@ -115,7 +115,7 @@ namespace SPH
 		//=================================================================================================//
 		ShellStressRelaxationFirstHalf::
 			ShellStressRelaxationFirstHalf(BaseInnerRelation &inner_relation,
-										   int number_of_gaussian_points, bool hourglass_control, Real hourglass_control_factor)
+										   int number_of_gaussian_points, bool hourglass_control)
 			: BaseShellRelaxation(inner_relation),
 			  elastic_solid_(particles_->elastic_solid_),
 			  global_stress_(particles_->global_stress_),
@@ -134,6 +134,10 @@ namespace SPH
 			/** Note that, only three-point and five-point Gaussian quadrature rules are defined. */
 			switch (number_of_gaussian_points)
 			{
+			case 1:
+				gaussian_point_ = one_gaussian_point_;
+				gaussian_weight_ = one_gaussian_weight_;
+				break;
 			case 5:
 				gaussian_point_ = five_gaussian_points_;
 				gaussian_weight_ = five_gaussian_weights_;
@@ -149,7 +153,7 @@ namespace SPH
 			}
 			else
 			{
-				hourglass_control_factor_ = hourglass_control_factor;
+				hourglass_control_factor_ = 1.0e-4;
 			}
 		}
 		//=================================================================================================//
@@ -238,7 +242,8 @@ namespace SPH
 					Real r_ij = inner_neighborhood.r_ij_[n];
 					Real dim_inv_r_ij = Dimensions / r_ij;
 					Real weight = inner_neighborhood.W_ij_[n] * inv_W0_;
-					Vecd pos_jump = getLinearVariableJump(e_ij, r_ij, pos_[index_i], ~transformation_matrix_[index_i] * F_[index_i] * transformation_matrix_[index_i],
+					Vecd pos_jump = getLinearVariableJump(e_ij, r_ij, pos_[index_i], 
+						~transformation_matrix_[index_i] * F_[index_i] * transformation_matrix_[index_i],
 						pos_[index_j], ~transformation_matrix_[index_j] * F_[index_j] * transformation_matrix_[index_j]);
 					acceleration += hourglass_control_factor_ * weight * E0_ * pos_jump * dim_inv_r_ij * inner_neighborhood.dW_ijV_j_[n] * thickness_[index_i];
 
@@ -308,33 +313,14 @@ namespace SPH
 		ConstrainShellBodyRegion::
 			ConstrainShellBodyRegion(BodyPartByParticle &body_part)
 			: LocalDynamics(body_part.getSPHBody()), ShellDataSimple(sph_body_),
-			  pos_(particles_->pos_), pos0_(particles_->pos0_), n_(particles_->n_),
-			  vel_(particles_->vel_), acc_(particles_->acc_),
-			  rotation_(particles_->rotation_), angular_vel_(particles_->angular_vel_),
-			  dangular_vel_dt_(particles_->dangular_vel_dt_),
-			  pseudo_n_(particles_->pseudo_n_), dpseudo_n_dt_(particles_->dpseudo_n_dt_)
+			  vel_(particles_->vel_), angular_vel_(particles_->angular_vel_)
 		{
 		}
 		//=================================================================================================//
 		void ConstrainShellBodyRegion::update(size_t index_i, Real dt)
 		{
-			Vecd pos_0 = pos0_[index_i];
-			Vecd pos_n = pos_[index_i];
-			Vecd vel_n = vel_[index_i];
-			Vecd acc = acc_[index_i];
-			Vecd rotation_0(0.0);
-			Vecd angular_vel(0.0);
-			Vecd dangular_vel_dt(0.0);
-			Vecd dpseudo_normal_dt(0.0);
-
-			pos_[index_i] = getDisplacement(pos_0, pos_n);
-			vel_[index_i] = getVelocity(pos_0, pos_n, vel_n);
-			acc_[index_i] = GetAcceleration(pos_0, pos_n, acc);
-			rotation_[index_i] = GetRotationAngle(pos_0, pos_n, rotation_0);
-			angular_vel_[index_i] = GetAngularVelocity(pos_0, pos_n, angular_vel);
-			dangular_vel_dt_[index_i] = GetAngularAcceleration(pos_0, pos_n, dangular_vel_dt);
-			pseudo_n_[index_i] = GetPseudoNormal(pos_0, pos_n, local_pseudo_n_0);
-			dpseudo_n_dt_[index_i] = GetPseudoNormalChangeRate(pos_0, pos_n, dpseudo_normal_dt);
+			vel_[index_i] = Vecd(0);
+			angular_vel_[index_i] = Vecd(0);
 		}
 		//=================================================================================================//
 		ConstrainShellBodyRegionAlongAxis::

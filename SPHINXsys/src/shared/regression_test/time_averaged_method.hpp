@@ -15,7 +15,7 @@ namespace SPH
 	void RegressionTestTimeAveraged<ObserveMethodType>::filterLocalResult(DoubleVec<Real> &current_result)
 	{
 		int scale = round(this->snapshot_ / 200);
-		std::cout << "The filter scale is " << scale * 2 << "." << endl;
+		std::cout << "The filter scale is " << scale * 2 << "." << std::endl;
 		for (int snapshot_index = 0; snapshot_index != this->snapshot_; ++snapshot_index)
 		{
 			for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
@@ -37,17 +37,17 @@ namespace SPH
 				{
 					current_result[snapshot_index][observation_index] = filter_meanvalue;
 					std::cout << "The current value of " << this->quantity_name_ << "[" << snapshot_index << "][" << observation_index << "] is " << current_result[snapshot_index][observation_index]
-						<< ", but the neighbor averaged value is " << filter_meanvalue << ", and the rate is " << current_variance / filter_variance << endl;
+						<< ", but the neighbor averaged value is " << filter_meanvalue << ", and the rate is " << current_variance / filter_variance << std::endl;
 				}
 			}
 		}
-	};
+	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
 	void RegressionTestTimeAveraged<ObserveMethodType>::filterLocalResult(DoubleVec<Vecd> &current_result)
 	{
 		int scale = round(this->snapshot_ / 200);
-		std::cout << "The filter scale is " << scale * 2 << "." << endl;
+		std::cout << "The filter scale is " << scale * 2 << "." << std::endl;
 		for (int snapshot_index = 0; snapshot_index != this->snapshot_; ++snapshot_index)
 		{
 			for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
@@ -71,18 +71,18 @@ namespace SPH
 					{
 						current_result[snapshot_index][observation_index][dimension_index] = filter_meanvalue;
 						std::cout << "The current value of " << this->quantity_name_ << "[" << snapshot_index << "][" << observation_index << "][" << dimension_index << "] is " << current_result[snapshot_index][observation_index][dimension_index]
-							<< ", but the neighbor averaged value is " << filter_meanvalue << ", and the rate is " << current_variance / filter_variance << endl;
+							<< ", but the neighbor averaged value is " << filter_meanvalue << ", and the rate is " << current_variance / filter_variance << std::endl;
 					}
 				}
 			}
 		}
-	};
+	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
 	void RegressionTestTimeAveraged<ObserveMethodType>::filterLocalResult(DoubleVec<Matd> &current_result)
 	{
 		int scale = round(this->snapshot_ / 200);
-		std::cout << "The filter scale is " << scale * 2 << "." << endl;
+		std::cout << "The filter scale is " << scale * 2 << "." << std::endl;
 		for (int snapshot_index = 0; snapshot_index != this->snapshot_; ++snapshot_index)
 		{
 			for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
@@ -108,13 +108,13 @@ namespace SPH
 						{
 							current_result[snapshot_index][observation_index][dimension_index_i][dimension_index_j] = filter_meanvalue;
 							std::cout << "The current value of " << this->quantity_name_ << "[" << snapshot_index << "][" << observation_index << "][" << dimension_index_i << "][" << dimension_index_j << "] is " << current_result[snapshot_index][observation_index][dimension_index_i][dimension_index_j]
-								<< ", but the neighbor averaged value is " << filter_meanvalue << ", and the rate is " << current_variance / filter_variance << endl;
+								<< ", but the neighbor averaged value is " << filter_meanvalue << ", and the rate is " << current_variance / filter_variance << std::endl;
 						}
 					}
 				}
 			}	
 		}
-	};
+	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
 	void RegressionTestTimeAveraged<ObserveMethodType>::searchSteadyStart(DoubleVec<Real> &current_result)
@@ -137,8 +137,8 @@ namespace SPH
 					break;
 				}
 			}
-		std::cout << "The scale is " << scale << "." << endl;
-	};
+		std::cout << "The scale is " << scale << "." << std::endl;
+	}
 	//=================================================================================================// 
 	template<class ObserveMethodType>
 	void RegressionTestTimeAveraged<ObserveMethodType>::searchSteadyStart(DoubleVec<Vecd> &current_result)
@@ -161,8 +161,8 @@ namespace SPH
 					break; /** This break just jump out of dimension iteration.  */
 				}
 			}
-		std::cout << "The scale is " << scale << "." << endl;
-	};
+		std::cout << "The scale is " << scale << "." << std::endl;
+	}
 	//=================================================================================================// 
 	template<class ObserveMethodType>
 	void RegressionTestTimeAveraged<ObserveMethodType>::searchSteadyStart(DoubleVec<Matd> &current_result)
@@ -184,8 +184,8 @@ namespace SPH
 					break; /** This break just jump out of dimension iteration.  */
 				}
 			}
-		std::cout << "The scale is " << scale << "." << endl;
-	};
+		std::cout << "The scale is " << scale << "." << std::endl;
+	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
 	void RegressionTestTimeAveraged<ObserveMethodType>::calculateNewVariance(DoubleVec<Real> &current_result, 
@@ -197,7 +197,7 @@ namespace SPH
 				variance_new[observation_index] += std::pow((current_result[observation_index][snapshot_index] - local_meanvalue[observation_index]), 2);
 			variance_new[observation_index] = SMAX((variance_new[observation_index] / (this->snapshot_ - snapshot_for_converged_)), variance[observation_index], std::pow(local_meanvalue[observation_index] * 1.0e-2, 2));
 		}
-	};
+	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
 	void RegressionTestTimeAveraged<ObserveMethodType>::calculateNewVariance(DoubleVec<Vecd> &current_result, 
@@ -210,7 +210,7 @@ namespace SPH
 					variance_new[observation_index][dimension_index] += std::pow((current_result[observation_index][snapshot_index][dimension_index] - local_meanvalue[observation_index][dimension_index]), 2);
 				variance_new[observation_index][dimension_index] = SMAX((variance_new[observation_index][dimension_index] / (this->snapshot_ - snapshot_for_converged_)), variance[observation_index][dimension_index], std::pow(local_meanvalue[observation_index][dimension_index] * 1.0e-2, 2));
 			}
-	};
+	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
 	void RegressionTestTimeAveraged<ObserveMethodType>::calculateNewVariance(DoubleVec<Matd> &current_result, 
@@ -224,10 +224,10 @@ namespace SPH
 						variance_new[observation_index][dimension_index_i][dimension_index_j] += std::pow((current_result[observation_index][snapshot_index][dimension_index_i][dimension_index_j] - local_meanvalue[observation_index][dimension_index_i][dimension_index_j]), 2);
 					variance_new[observation_index][dimension_index_i][dimension_index_j] = SMAX((variance_new[observation_index][dimension_index_i][dimension_index_j] / (this->snapshot_ - snapshot_for_converged_)), variance[observation_index][dimension_index_i][dimension_index_j], std::pow(local_meanvalue[observation_index][dimension_index_i][dimension_index_j] * 1.0e-2, 2));
 				}
-	};
+	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
-	int RegressionTestTimeAveraged<ObserveMethodType>::compareParameter(string par_name,
+	int RegressionTestTimeAveraged<ObserveMethodType>::compareParameter(std::string par_name,
 		StdVec<Real> &parameter, StdVec<Real> &parameter_new, Real &threshold)
 	{
 		int count = 0;
@@ -236,22 +236,22 @@ namespace SPH
 			if ((par_name == "meanvalue") && (ABS(parameter[observation_index]) < 0.005) && (ABS(parameter_new[observation_index]) < 0.005))
 			{
 				std::cout << "The old meanvalue is " << parameter[observation_index] << ", and the new meanvalue is " << parameter_new[observation_index]
-					<< ". So this variable will be ignored due to its tiny effect." << endl;
+					<< ". So this variable will be ignored due to its tiny effect." << std::endl;
 				continue;
 			}
 			Real relative_value_ = ABS((parameter[observation_index] - parameter_new[observation_index]) / (parameter_new[observation_index] + TinyReal));
 			if (relative_value_ > threshold)
 			{
 				std::cout << par_name << ": " << this->quantity_name_ << "[" << observation_index << "]"
-					<< " is not converged, and difference is " << relative_value_ << endl;
+					<< " is not converged, and difference is " << relative_value_ << std::endl;
 				count++;
 			}
 		}
 		return count;
-	};
+	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
-	int RegressionTestTimeAveraged<ObserveMethodType>::compareParameter(string par_name,
+	int RegressionTestTimeAveraged<ObserveMethodType>::compareParameter(std::string par_name,
 		StdVec<Vecd> &parameter, StdVec<Vecd> &parameter_new, Vecd &threshold)
 	{
 		int count = 0;
@@ -261,22 +261,22 @@ namespace SPH
 				if ((par_name == "meanvalue") && (ABS(parameter[observation_index][dimension_index]) < 0.001) && (ABS(parameter_new[observation_index][dimension_index]) < 0.001))
 				{
 					std::cout << "The old meanvalue is " << parameter[observation_index][dimension_index] << ", and the new meanvalue is " << parameter_new[observation_index][dimension_index]
-						<< ". So this variable will be ignored due to its tiny effect." << endl;
+						<< ". So this variable will be ignored due to its tiny effect." << std::endl;
 					continue;
 				}
 				Real relative_value_ = ABS((parameter[observation_index][dimension_index] - parameter_new[observation_index][dimension_index]) / (parameter_new[observation_index][dimension_index] + TinyReal));
 				if (relative_value_ > threshold[dimension_index])
 				{
 					std::cout << par_name << ": " << this->quantity_name_ << "[" << observation_index << "][" << dimension_index << "]"
-						<< " is not converged, and difference is " << relative_value_ << endl;
+						<< " is not converged, and difference is " << relative_value_ << std::endl;
 					count++;
 				}
 			}
 		return count;
-	};
+	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
-	int RegressionTestTimeAveraged<ObserveMethodType>::compareParameter(string par_name,
+	int RegressionTestTimeAveraged<ObserveMethodType>::compareParameter(std::string par_name,
 		StdVec<Matd> &parameter, StdVec<Matd> &parameter_new, Matd &threshold)
 	{
 		int count = 0;
@@ -287,19 +287,19 @@ namespace SPH
 					if ((par_name == "meanvalue") && (ABS(parameter[observation_index][dimension_index_i][dimension_index_j]) < 0.001) && (ABS(parameter_new[observation_index][dimension_index_i][dimension_index_j]) < 0.001))
 					{
 						std::cout << "The old meanvalue is " << parameter[observation_index][dimension_index_i][dimension_index_j] << ", and the new meanvalue is " << parameter_new[observation_index][dimension_index_i][dimension_index_j] 
-							<< ". So this variable will be ignored due to its tiny effect." << endl;
+							<< ". So this variable will be ignored due to its tiny effect." << std::endl;
 						continue;
 					}
 					Real relative_value_ = ABS((parameter[observation_index][dimension_index_i][dimension_index_j] - parameter_new[observation_index][dimension_index_i][dimension_index_j]) / (parameter_new[observation_index][dimension_index_i][dimension_index_j] + TinyReal));
 					if (relative_value_ > threshold[dimension_index_i][dimension_index_j])
 					{
 						std::cout << par_name << ": " << this->quantity_name_ << "[" << observation_index << "][" << dimension_index_i << "][" << dimension_index_j << "]"
-							<< " is not converged, and difference is " << relative_value_ << endl;
+							<< " is not converged, and difference is " << relative_value_ << std::endl;
 						count++;
 					}
 				}
 		return count;
-	};
+	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
 	int RegressionTestTimeAveraged<ObserveMethodType>::testNewResult(DoubleVec<Real> &current_result, 
@@ -316,20 +316,20 @@ namespace SPH
 			if ((ABS(meanvalue[observation_index]) < 0.005) && (ABS(local_meanvalue[observation_index]) < 0.005))
 			{
 				std::cout << "The old meanvalue is " << meanvalue[observation_index] << ", and the current meanvalue is " << local_meanvalue[observation_index]
-					<< ". So this variable will not be tested due to its tiny effect." << endl;
+					<< ". So this variable will not be tested due to its tiny effect." << std::endl;
 				continue;
 			}
 			Real relative_value_ = ABS((meanvalue[observation_index] - local_meanvalue[observation_index]) / meanvalue[observation_index]);
 			if (relative_value_ > 0.1 || variance_new_[observation_index] > (1.01 * variance[observation_index]))
 			{
-				std::cout << this->quantity_name_ << "[" << observation_index << "] is beyond the exception !" << endl;
-				std::cout << "The meanvalue is " << meanvalue[observation_index] << ", and the current meanvalue is " << local_meanvalue[observation_index] << endl;
-				std::cout << "The variance is " << variance[observation_index] << ", and the current variance is " << variance_new_[observation_index] << endl;
+				std::cout << this->quantity_name_ << "[" << observation_index << "] is beyond the exception !" << std::endl;
+				std::cout << "The meanvalue is " << meanvalue[observation_index] << ", and the current meanvalue is " << local_meanvalue[observation_index] << std::endl;
+				std::cout << "The variance is " << variance[observation_index] << ", and the current variance is " << variance_new_[observation_index] << std::endl;
 				count++;
 			}
 		}
 		return count;
-	};
+	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
 	int RegressionTestTimeAveraged<ObserveMethodType>::testNewResult(DoubleVec<Vecd> &current_result, 
@@ -348,21 +348,21 @@ namespace SPH
 				if ((ABS(meanvalue[observation_index][dimension_index_i]) < 0.005) && (ABS(local_meanvalue[observation_index][dimension_index_i]) < 0.005))
 				{
 					std::cout << "The old meanvalue is " << meanvalue[observation_index][dimension_index_i] << ", and the current meanvalue is " << local_meanvalue[observation_index][dimension_index_i]
-						<< ". So this variable will not be tested due to its tiny effect." << endl;
+						<< ". So this variable will not be tested due to its tiny effect." << std::endl;
 					continue;
 				}
 				Real relative_value_ = ABS((meanvalue[observation_index][dimension_index_i] - local_meanvalue[observation_index][dimension_index_i]) / meanvalue[observation_index][dimension_index_i]);
 				if (relative_value_ > 0.1 || (variance_new_[observation_index][dimension_index_i] > 1.01 * variance[observation_index][dimension_index_i]))
 				{
-					std::cout << this->quantity_name_ << "[" << observation_index << "][" << dimension_index_i << "] is beyond the exception !" << endl;
-					std::cout << "The meanvalue is " << meanvalue[observation_index][dimension_index_i] << ", and the current meanvalue is " << local_meanvalue[observation_index][dimension_index_i] << endl;
-					std::cout << "The variance is " << variance[observation_index][dimension_index_i] << ", and the new variance is " << variance_new_[observation_index][dimension_index_i] << endl;
+					std::cout << this->quantity_name_ << "[" << observation_index << "][" << dimension_index_i << "] is beyond the exception !" << std::endl;
+					std::cout << "The meanvalue is " << meanvalue[observation_index][dimension_index_i] << ", and the current meanvalue is " << local_meanvalue[observation_index][dimension_index_i] << std::endl;
+					std::cout << "The variance is " << variance[observation_index][dimension_index_i] << ", and the new variance is " << variance_new_[observation_index][dimension_index_i] << std::endl;
 					count++;
 				}
 			}
 		}
 		return count;
-	};
+	}
 	//=================================================================================================// 
 	template<class ObserveMethodType>
 	int RegressionTestTimeAveraged<ObserveMethodType>::testNewResult(DoubleVec<Matd> &current_result, 
@@ -383,29 +383,29 @@ namespace SPH
 					if ((ABS(meanvalue[observation_index][dimension_index_i][dimension_index_j]) < 0.005) && (ABS(local_meanvalue[observation_index][dimension_index_i][dimension_index_j]) < 0.005))
 					{
 						std::cout << "The old meanvalue is " << meanvalue[observation_index][dimension_index_i][dimension_index_j] << ", and the new meanvalue is " << local_meanvalue[observation_index][dimension_index_i][dimension_index_j]
-							<< ". So this variable will not be tested due to its tiny effect. " << endl;
+							<< ". So this variable will not be tested due to its tiny effect. " << std::endl;
 						continue;
 					}
 					Real relative_value_ = ABS((meanvalue_[observation_index][dimension_index_i][dimension_index_j] - local_meanvalue[observation_index][dimension_index_i][dimension_index_j]) / meanvalue[observation_index][dimension_index_i][dimension_index_j]);
 					if (relative_value_ > 0.1 || variance_new_[observation_index][dimension_index_i][dimension_index_j] > 1.01 * variance[observation_index][dimension_index_i][dimension_index_j])
 					{
-						std::cout << this->quantity_name_ << "[" << observation_index << "][" << dimension_index_i << "][" << dimension_index_j << "] is beyond the exception !" << endl;
-						std::cout << "The meanvalue is " << meanvalue[observation_index][dimension_index_i][dimension_index_j] << ", and the new meanvalue is " << local_meanvalue[observation_index][dimension_index_i][dimension_index_j] << endl;
-						std::cout << "The variance is " << variance[observation_index][dimension_index_i][dimension_index_j] << ", and the new variance is " << variance_new_[observation_index][dimension_index_i][dimension_index_j] << endl;
+						std::cout << this->quantity_name_ << "[" << observation_index << "][" << dimension_index_i << "][" << dimension_index_j << "] is beyond the exception !" << std::endl;
+						std::cout << "The meanvalue is " << meanvalue[observation_index][dimension_index_i][dimension_index_j] << ", and the new meanvalue is " << local_meanvalue[observation_index][dimension_index_i][dimension_index_j] << std::endl;
+						std::cout << "The variance is " << variance[observation_index][dimension_index_i][dimension_index_j] << ", and the new variance is " << variance_new_[observation_index][dimension_index_i][dimension_index_j] << std::endl;
 						count++;
 					}
 				}
 			}
 		}
 		return count;
-	};
+	}
 	//=================================================================================================//	
 	template<class ObserveMethodType>
 	void RegressionTestTimeAveraged<ObserveMethodType>::initializeThreshold(VariableType &threshold_mean, VariableType &threshold_variance)
 	{
 		threshold_mean_ = threshold_mean;
 		threshold_variance_ = threshold_variance;
-	};
+	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
 	void RegressionTestTimeAveraged<ObserveMethodType>::setupTheTest()
@@ -425,7 +425,7 @@ namespace SPH
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 			exit(1);
 		}
-	};
+	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
 	void RegressionTestTimeAveraged<ObserveMethodType>::readMeanVarianceFromXml()
@@ -451,15 +451,15 @@ namespace SPH
 					mean_variance_xml_engine_in_.getRequiredAttributeValue(ele_ite_variance_, attribute_name_, variance_[observation_index]);
 				}
 		}
-	};
+	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
 	void RegressionTestTimeAveraged<ObserveMethodType>::searchForStartPoint()
 	{
 		snapshot_for_converged_ = 0;
 		searchSteadyStart(this->current_result_);
-		std::cout << "The snapshot for converged is " << snapshot_for_converged_ << endl;
-	};
+		std::cout << "The snapshot for converged is " << snapshot_for_converged_ << std::endl;
+	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
 	void RegressionTestTimeAveraged<ObserveMethodType>::filterExtremeValues()
@@ -488,7 +488,7 @@ namespace SPH
 			out_file << "\n";
 			out_file.close();
 		}
-	};
+	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
 	void RegressionTestTimeAveraged<ObserveMethodType>::updateMeanVariance()
@@ -503,7 +503,7 @@ namespace SPH
 			meanvalue_new_[observation_index] = (local_meanvalue_[observation_index] + meanvalue_[observation_index] * (this->number_of_run_ - 1)) / this->number_of_run_;
 		}
 		calculateNewVariance(this->current_result_trans_, local_meanvalue_, variance_, variance_new_);
-	};
+	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
 	void RegressionTestTimeAveraged<ObserveMethodType>::writeMeanVarianceToXml()
@@ -527,7 +527,7 @@ namespace SPH
 			mean_variance_xml_engine_out_.setAttributeToElement(ele_ite_variance, attribute_name_, variance_new_[observation_index]);
 		}
 		mean_variance_xml_engine_out_.writeToXmlFile(mean_variance_filefullpath_);
-	};
+	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
 	bool RegressionTestTimeAveraged<ObserveMethodType>::compareMeanVariance()
@@ -538,14 +538,14 @@ namespace SPH
 		count_not_converged_v = this->compareParameter("variance", this->variance_, this->variance_new_, this->threshold_variance_);
 		if (count_not_converged_m == 0)
 		{
-			std::cout << "The meanvalue of " << this->quantity_name_ << " are converged now." << endl;
+			std::cout << "The meanvalue of " << this->quantity_name_ << " are converged now." << std::endl;
 			if (count_not_converged_v == 0)
 			{
 				if (this->label_for_repeat_ == 4)
 				{
 					this->converged = "true";
 					this->label_for_repeat_++;
-					std::cout << "The meanvalue and variance of " << this->quantity_name_ << " are converged enough times, and run will stop now." << endl;
+					std::cout << "The meanvalue and variance of " << this->quantity_name_ << " are converged enough times, and run will stop now." << std::endl;
 					return true;
 				}
 				else
@@ -553,26 +553,26 @@ namespace SPH
 					this->converged = "false";
 					this->label_for_repeat_++;
 					std::cout << "The variance of " << this->quantity_name_ << " are also converged, and this is the " << this->label_for_repeat_
-						<< " times. They should be converged more times to be stable." << endl;
+						<< " times. They should be converged more times to be stable." << std::endl;
 					return false;
 				}
 			}
-			else if (count_not_converged_v != 0)
+			else
 			{
 				this->converged = "false";
 				this->label_for_repeat_ = 0;
-				std::cout << "The variance of " << this->quantity_name_ << " are not converged " << count_not_converged_v << " times." << endl;
+				std::cout << "The variance of " << this->quantity_name_ << " are not converged " << count_not_converged_v << " times." << std::endl;
 				return false;
 			};
 		}
-		else if (count_not_converged_m != 0)
+		else
 		{
 			this->converged = "false";
 			this->label_for_repeat_ = 0;
-			std::cout << "The meanvalue of " << this->quantity_name_ << " are not converged " << count_not_converged_m << " times." << endl;
+			std::cout << "The meanvalue of " << this->quantity_name_ << " are not converged " << count_not_converged_m << " times." << std::endl;
 			return false;
 		}
-	};
+	}
 	//=================================================================================================//	
 	template<class ObserveMethodType>
 	void RegressionTestTimeAveraged<ObserveMethodType>::resultTest()
@@ -588,11 +588,11 @@ namespace SPH
 
 		test_wrong = testNewResult(this->current_result_, meanvalue_, local_meanvalue_, variance_);
 		if (test_wrong == 0)
-			std::cout << "The result of " << this->quantity_name_ << " is correct based on the time-averaged regression test!" << endl;
+			std::cout << "The result of " << this->quantity_name_ << " is correct based on the time-averaged regression test!" << std::endl;
 		else
 		{
-			std::cout << "There are " << test_wrong << " particles are not within the expected range." << endl;
-			std::cout << "Please try again. If it still post this conclusion, the result is not correct!" << endl;
+			std::cout << "There are " << test_wrong << " particles are not within the expected range." << std::endl;
+			std::cout << "Please try again. If it still post this conclusion, the result is not correct!" << std::endl;
 			exit(1);
 		}
 	};
