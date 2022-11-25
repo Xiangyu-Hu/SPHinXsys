@@ -97,7 +97,7 @@ namespace SPH
     template <typename FunctionOnEach>
     bool mesh_any_of(const Veci &lower, const Veci &upper, const FunctionOnEach &function)
     {
-        return mesh_find_if(lower, upper) != upper;
+        return mesh_find_if(lower, upper, function) != upper;
     };
 
     using MeshRange = std::pair<Vecu, Vecu>;
