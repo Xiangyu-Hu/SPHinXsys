@@ -246,7 +246,7 @@ namespace SPH
 		Mat2d getCorrectionMatrix(const Mat2d &local_deformation_part_one)
 		{
 			Mat2d correction_matrix(0.0);
-			correction_matrix[0][0] = 1.0 / (local_deformation_part_one[0][0] + TinyReal);
+			correction_matrix[0][0] = 1.0 / local_deformation_part_one[0][0];
 			return correction_matrix;
 		}
 		//=================================================================================================//
