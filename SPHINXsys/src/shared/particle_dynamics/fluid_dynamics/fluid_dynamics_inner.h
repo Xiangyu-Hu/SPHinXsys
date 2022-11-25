@@ -74,6 +74,7 @@ namespace SPH
 
 		protected:
 			Real rho0_;
+			Real spacing_ref_;
 			StdLargeVec<Real> &rho_, &rho_sum_, &mass_;
 		};
 

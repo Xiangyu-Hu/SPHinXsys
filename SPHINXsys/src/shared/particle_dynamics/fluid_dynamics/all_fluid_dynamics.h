@@ -40,3 +40,5 @@
 #include "fluid_boundary.h"
 #include "all_eulerian_compressible_fluid_dynamics.h"
 #include "all_eulerian_weakly_compressible_fluid_dynamics.h"
+#include "fluid_shell_interaction.h"
+#include "fluid_shell_interaction.hpp"

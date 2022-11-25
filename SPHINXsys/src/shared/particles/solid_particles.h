@@ -183,6 +183,11 @@ namespace SPH
 		virtual Real ParticleVolume(size_t index_i) { return Vol_[index_i] * thickness_[index_i]; }
 		/** get particle mass. */
 		virtual Real ParticleMass(size_t index_i) { return mass_[index_i] * thickness_[index_i]; }
+		/** Get wall average velocity when interacting with fluid. */
+		virtual StdLargeVec<Vecd> *AverageVelocity() { return &vel_ave_; };
+		/** Get wall average acceleration when interacting with fluid. */
+		virtual StdLargeVec<Vecd> *AverageAcceleration() { return &acc_ave_; };
+
 		/** Initialize variable for shell particles. */
 		virtual void initializeOtherVariables() override;
 		/** Return this pointer. */
