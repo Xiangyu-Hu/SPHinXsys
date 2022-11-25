@@ -225,7 +225,6 @@ namespace SPH
 			LevelSetDataPackage *current_data_pkg = DataPackageFromCellIndex(cell_index);
 			if (current_data_pkg->isCorePackage())
 			{
-				current_data_pkg->setInnerPackage();
 				inner_data_pkgs_.push_back(current_data_pkg);
 			}
 			else
