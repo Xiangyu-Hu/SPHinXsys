@@ -10,6 +10,9 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+env:
+  VCPKG_VERSION: "2022.11.14"
+  CTEST_PARALLEL_LEVEL: "1"
 
 # A workflow is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -17,40 +20,49 @@ jobs:
   ###############################################################################
 
   Linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
+    env:
+      VCPKG_DEFAULT_TRIPLET: x64-linux
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
-            
-      # Runs a set of commands using the runners shell
-      - name: Build
+
+      - name: Install system dependencies
         run: |
-          echo "This step should not be executed when commit message contains [ci skip]"        
-          sudo apt-get update 
-          sudo apt-get install -y apt-utils \
-          build-essential \
-          cmake \
-          libgtest-dev \
-          libtbb-dev \
-          libboost-all-dev \
-          libeigen3-dev \
-          liblapack-dev \
-          wget \
-          unzip
-          cd /home/runner/ && wget "https://github.com/Virtonomy/simbody/releases/download/Simbody-3.7.1/simbody_v3.7.1.zip"
-          unzip "simbody_v3.7.1.zip"
-          export TBB_HOME=/usr/lib/x86_64-linux-gnu
-          export BOOST_HOME=/usr/lib/x86_64-linux-gnu
-          cd /usr/src/gtest
-          sudo cmake CMakeLists.txt
-          sudo make -j$(nproc)
-          cd /home/runner/work/SPHinXsys/SPHinXsys
-          git submodule update --init
-          mkdir build
-          cd build 
-          cmake .. -DCMAKE_BUILD_TYPE=Release -DSIMBODY_HOME=/home/runner/simbody
-          make -j$(nproc)
+          sudo apt update 
+          sudo apt install -y \
+            apt-utils \
+            build-essential \
+            git \
+            cmake \
+            ninja-build \
+            python3
+
+      - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
+        with: 
+          committish: ${{ env.VCPKG_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build \
+            eigen3 \
+            tbb \
+            boost-program-options \
+            boost-geometry \
+            simbody \
+            gtest
+
+      - name: Generate buildsystem
+        run: |
+          cmake -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
+            -S ${{github.workspace}} \
+            -B ${{github.workspace}}/build
+
+      - name: Build
+        run: cmake --build build --config Release
 
       - name: Test with the first try
         id: first-try
@@ -95,7 +107,6 @@ jobs:
   Windows:
     runs-on: windows-latest
     env:
-      VCPKG_VERSION: "2022.11.14"
       VCPKG_DEFAULT_TRIPLET: x64-windows
 
     steps:
@@ -142,7 +153,7 @@ jobs:
         if: ${{ steps.first-try.outcome == 'failure' }} 
         run: |
           cd C:\build 
-          ctest --rerun-failed --output-on-failure
+          ctest.exe --rerun-failed --output-on-failure
         continue-on-error: true
 
       - name: Test with the third try for failed cases
@@ -150,7 +161,7 @@ jobs:
         if: ${{ steps.second-try.outcome == 'failure' }} 
         run: |
           cd C:\build 
-          ctest --rerun-failed --output-on-failure
+          ctest.exe --rerun-failed --output-on-failure
         continue-on-error: true
 
       - name: Test with the fourth try for failed cases
@@ -158,11 +169,11 @@ jobs:
         if: ${{ steps.third-try.outcome == 'failure' }} 
         run: |
           cd C:\build 
-          ctest --rerun-failed --output-on-failure
+          ctest.exe --rerun-failed --output-on-failure
         continue-on-error: true
 
       - name: Test with the last try for failed cases
         if: ${{ steps.fourth-try.outcome == 'failure' }} 
         run: |
           cd C:\build 
-          ctest --rerun-failed --output-on-failure
+          ctest.exe --rerun-failed --output-on-failure
