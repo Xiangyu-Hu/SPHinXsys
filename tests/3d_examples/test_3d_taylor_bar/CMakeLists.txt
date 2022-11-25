@@ -6,7 +6,7 @@ set(CMAKE_VERBOSE_MAKEFILE on)
 STRING(REGEX REPLACE ".*/(.*)" "\\1" CURRENT_FOLDER ${CMAKE_CURRENT_SOURCE_DIR})
 PROJECT("${CURRENT_FOLDER}")
 
-include(ImportSPHINXsysFromSource_for_3D_build)
+
 
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 SET(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin/")
@@ -46,12 +46,12 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
                  WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
         add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME} --r=false --i=true
                  WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
-else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+else()
         file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/run_test.sh
                 DESTINATION ${EXECUTABLE_OUTPUT_PATH})
         add_test(NAME ${PROJECT_NAME} COMMAND bash ${EXECUTABLE_OUTPUT_PATH}/run_test.sh
                 WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
-endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+endif()
 
 set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "solid_dynamics; contact")
 
@@ -60,7 +60,7 @@ if(NOT SPH_ONLY_STATIC_BUILD) # usual dynamic build
 		set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 		target_link_libraries(${PROJECT_NAME} sphinxsys_3d)
 		add_dependencies(${PROJECT_NAME} sphinxsys_3d)
-	else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+	else()
 		if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 			target_link_libraries(${PROJECT_NAME} sphinxsys_3d stdc++)
 		else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -70,12 +70,12 @@ if(NOT SPH_ONLY_STATIC_BUILD) # usual dynamic build
 		if(DEFINED BOOST_AVAILABLE) # link Boost if available (not for Windows)
 			target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})
 		endif()
-	endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+	endif()
 else() # static build only
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 		target_link_libraries(${PROJECT_NAME} sphinxsys_3d)
-	else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+	else()
 		if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 			target_link_libraries(${PROJECT_NAME} sphinxsys_3d stdc++)
 		else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -85,7 +85,7 @@ else() # static build only
 		if(DEFINED BOOST_AVAILABLE) # link Boost if available (not for Windows)
 			target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})
 		endif()
-	endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+	endif()
 endif()
 
 if(NOT BUILD_WITH_SIMBODY) # link Simbody if not built by the project

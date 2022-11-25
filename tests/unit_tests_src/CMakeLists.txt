@@ -1,3 +1,5 @@
+ADD_SUBDIRECTORY(shared)
+
 if(SPHINXSYS_2D)
 	ADD_SUBDIRECTORY(for_2D_build)
 endif()
@@ -5,5 +7,3 @@ endif()
 if(SPHINXSYS_3D)
 	ADD_SUBDIRECTORY(for_3D_build)
 endif()
-
-ADD_SUBDIRECTORY(shared)
