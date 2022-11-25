@@ -349,12 +349,6 @@ return_data bending_circular_plate(Real dp_ratio)
 				// std::cout << "max displacement: " << shell_particles->getMaxDisplacement() << std::endl;
 				vtp_output.writeToFile(ite);
 			}
-			{// recording - not pushed to GitHub due to lack of matplotlib there
-				time.push_back(GlobalStaticVariables::physical_time_);
-				max_displacement.push_back(shell_particles->getMaxDisplacement());
-				point_center.interpolate(*shell_particles);
-				center_deflection.push_back(point_center.displacement[sym_axis]);
-			}
 		}
 		tick_count::interval_t tt = tick_count::now()-t1;
 		std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
