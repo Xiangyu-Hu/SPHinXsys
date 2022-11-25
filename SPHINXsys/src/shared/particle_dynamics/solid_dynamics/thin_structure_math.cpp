@@ -243,5 +243,30 @@ namespace SPH
 			return corrected_almansi_strain;
 		}
 		//=================================================================================================//
+		Mat2d getCorrectionMatrix(const Mat2d &local_deformation_part_one)
+		{
+			Mat2d correction_matrix(0.0);
+			correction_matrix[0][0] = 1.0 / local_deformation_part_one[0][0];
+			return correction_matrix;
+		}
+		//=================================================================================================//
+		Mat3d getCorrectionMatrix(const Mat3d &local_deformation_part_one)
+		{
+			Mat2d reduced_local_deformation_part_one;
+			reduced_local_deformation_part_one[0][0] = local_deformation_part_one[0][0];
+			reduced_local_deformation_part_one[0][1] = local_deformation_part_one[0][1];
+			reduced_local_deformation_part_one[1][0] = local_deformation_part_one[1][0];
+			reduced_local_deformation_part_one[1][1] = local_deformation_part_one[1][1];
+			Mat2d reduced_correction_matrix; 
+			reduced_correction_matrix = SimTK::inverse(reduced_local_deformation_part_one); 
+			Mat3d correction_matrix(0.0); 
+			correction_matrix[0][0] = reduced_correction_matrix[0][0];
+			correction_matrix[0][1] = reduced_correction_matrix[0][1];
+			correction_matrix[1][0] = reduced_correction_matrix[1][0];
+			correction_matrix[1][1] = reduced_correction_matrix[1][1];
+
+			return correction_matrix;
+		}
+		//=================================================================================================//
 	}
 }
