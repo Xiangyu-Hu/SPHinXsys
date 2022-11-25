@@ -6,6 +6,8 @@ option(SPHINXSYS_BUILD_UNIT_TESTS "SPHINXSYS_BUILD_UNIT_TESTS" ON)
 find_package(GTest CONFIG REQUIRED)
 include(GoogleTest)
 
+target_link_libraries(sphinxsys_core INTERFACE GTest::gtest GTest::gtest_main)
+
 if(SPHINXSYS_2D AND SPHINXSYS_BUILD_2D_EXAMPLES)
 	ADD_SUBDIRECTORY(2d_examples)
 endif()
