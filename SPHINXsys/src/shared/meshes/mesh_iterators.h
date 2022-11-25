@@ -23,6 +23,9 @@
 /**
  * @file mesh_iterators.h
  * @brief This is for the base functions for mesh iterator.
+ * There are two types of functions: one is for static ranged
+ * which are defined by template parameters,
+ * the other for dynamics ranges which are input parameters.
  * @author  Xiangyu Hu
  */
 
@@ -33,6 +36,48 @@
 
 namespace SPH
 {
+    /** iteration with void (non_value_returning) function. 2D case. */
+    template <int lower0, int upper0,
+              int lower1, int upper1, typename FunctionOnEach>
+    inline void mesh_for_each2d(const FunctionOnEach &function);
+    template <int lower, int upper, typename FunctionOnEach>
+    inline void mesh_for_each2d(const FunctionOnEach &function)
+    {
+        mesh_for_each2d<lower, upper, lower, upper, FunctionOnEach>(function);
+    };
+
+    /** iteration with boolean return function. 2D case. */
+    template <int lower0, int upper0,
+              int lower1, int upper1, typename CheckOnEach>
+    inline Vec2i mesh_find_if2d(const CheckOnEach &function);
+    template <int lower, int upper, typename CheckOnEach>
+    inline Vec2i mesh_find_if2d(const CheckOnEach &function)
+    {
+        return mesh_find_if2d<lower, upper, lower, upper, CheckOnEach>(function);
+    };
+
+    /** iteration with void (non_value_returning) function. 3D case. */
+    template <int lower0, int upper0,
+              int lower1, int upper1,
+              int lower2, int upper2, typename FunctionOnEach>
+    inline void mesh_for_each3d(const FunctionOnEach &function);
+    template <int lower, int upper, typename FunctionOnEach>
+    inline void mesh_for_each3d(const FunctionOnEach &function)
+    {
+        mesh_for_each3d<lower, upper, lower, upper, lower, upper, FunctionOnEach>(function);
+    };
+
+    /** iteration with boolean return function.  3D case. */
+    template <int lower0, int upper0,
+              int lower1, int upper1,
+              int lower2, int upper2, typename CheckOnEach>
+    inline Vec3i mesh_find_if3d(const CheckOnEach &function);
+    template <int lower, int upper, typename CheckOnEach>
+    inline Vec3i mesh_find_if3d(const CheckOnEach &function)
+    {
+        return mesh_find_if3d<lower, upper, lower, upper, lower, upper, CheckOnEach>(function);
+    };
+
     using MeshRange = std::pair<Vecu, Vecu>;
 
     /** Iterator on the mesh by looping index. sequential computing. */

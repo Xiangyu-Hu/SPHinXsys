@@ -11,6 +11,36 @@
 namespace SPH
 {
     //=================================================================================================//
+    template <int lower0, int upper0,
+              int lower1, int upper1,
+              int lower2, int upper2, typename FunctionOnEach>
+    inline void mesh_for_each3d(const FunctionOnEach &function)
+    {
+        for (int l = lower0; l != upper0; ++l)
+            for (int m = lower1; m != upper1; ++m)
+                for (int n = lower2; n != upper2; ++n)
+                {
+                    function(l, m, n);
+                }
+    }
+    //=================================================================================================//
+    template <int lower0, int upper0,
+              int lower1, int upper1,
+              int lower2, int upper2, typename CheckOnEach>
+    inline Vec3i mesh_find_if3d(const CheckOnEach &function)
+    {
+        for (int l = lower0; l != upper0; ++l)
+            for (int m = lower1; m != upper1; ++m)
+                for (int n = lower2; n != upper2; ++n)
+                {
+                    if (function(l, m, n))
+                        return Vec3i(l, m, n);
+                }
+        return Vec3i(upper0, upper1, upper2);
+    }
+    //=================================================================================================//
+    //=================================================================================================//
+    //=================================================================================================//
     template <typename LocalFunction, typename... Args>
     void mesh_for(const MeshRange &mesh_range, const LocalFunction &local_function, Args &&...args)
     {

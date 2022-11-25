@@ -40,7 +40,7 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSetDataPackage::stepReinitialization()
 	{
-		for_each2d<pkg_addrs_buffer, pkg_ops_end>(
+		mesh_for_each2d<pkg_addrs_buffer, pkg_ops_end>(
 			[&](int i, int j)
 			{
 				// only reinitialize non cut cells
@@ -57,13 +57,13 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSetDataPackage::stepDiffusionLevelSetSign()
 	{
-		for_each2d<pkg_addrs_buffer, pkg_ops_end>(
+		mesh_for_each2d<pkg_addrs_buffer, pkg_ops_end>(
 			[&](int i, int j)
 			{
 				// near interface cells are not considered
 				if (abs(*near_interface_id_addrs_[i][j]) > 1)
 				{
-					find_if2d<-1, 2>(
+					mesh_find_if2d<-1, 2>(
 						[&](int l, int m) -> bool
 						{
 							int near_interface_id = *near_interface_id_addrs_[i + l][j + m];
@@ -85,13 +85,13 @@ namespace SPH
 		Real small_shift = small_shift_factor * grid_spacing_;
 		// corner averages, note that the first row and first column are not used
 		PackageTemporaryData<Real> corner_averages;
-		for_each2d<1, pkg_addrs_size>(
+		mesh_for_each2d<1, pkg_addrs_size>(
 			[&](int i, int j)
 			{
 				corner_averages[i][j] = CornerAverage(phi_addrs_, Veci(i, j), Veci(-1, -1));
 			});
 
-		for_each2d<pkg_addrs_buffer, pkg_ops_end>(
+		mesh_for_each2d<pkg_addrs_buffer, pkg_ops_end>(
 			[&](int i, int j)
 			{
 				// first assume far cells
@@ -102,7 +102,7 @@ namespace SPH
 					near_interface_id = 0;
 					Real phi_average_0 = corner_averages[i][j];
 					// find outer cut cells by comparing the sign of corner averages
-					for_each2d<0, 2>(
+					mesh_for_each2d<0, 2>(
 						[&](int l, int m)
 						{
 							Real phi_average = corner_averages[i + l][j + m];
@@ -112,7 +112,7 @@ namespace SPH
 								near_interface_id = -1;
 						});
 					// find zero cut cells by comparing the sign of corner averages
-					for_each2d<0, 2>(
+					mesh_for_each2d<0, 2>(
 						[&](int l, int m)
 						{
 							Real phi_average = corner_averages[i + l][j + m];
