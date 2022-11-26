@@ -126,7 +126,7 @@ namespace SPH
 				}
 			}
 			this->acc_[index_i] += acceleration / this->rho_[index_i];
-			this->drho_dt_[index_i] += 0.5 * rho_dissipation * this->rho_[index_i];
+			this->drho_dt_[index_i] += rho_dissipation * this->rho_[index_i];
 		}
 		//=================================================================================================//
 		template <class BaseIntegration1stHalfType>
