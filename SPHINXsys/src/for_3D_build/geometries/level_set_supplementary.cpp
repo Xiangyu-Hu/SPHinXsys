@@ -144,16 +144,15 @@ namespace SPH
 		auto &kernel_weight = data_pkg.getPackageData(kernel_weight_);
 		auto &kernel_gradient = data_pkg.getPackageData(kernel_gradient_);
 
-		for (int i = 0; i != data_pkg.pkg_size; ++i)
-			for (int j = 0; j != data_pkg.pkg_size; ++j)
-				for (int k = 0; k != data_pkg.pkg_size; ++k)
-				{
-					data_pkg.phi_[i][j][k] = far_field_level_set;
-					data_pkg.phi_gradient_[i][j][k] = Vecd(1.0);
-					data_pkg.near_interface_id_[i][j][k] = far_field_level_set < 0.0 ? -2 : 2;
-					kernel_weight[i][j][k] = far_field_level_set < 0.0 ? 0 : 1.0;
-					kernel_gradient[i][j][k] = Vec3d(0);
-				}
+		data_pkg.for_each_data(
+			[&](int i, int j, int k)
+			{
+				data_pkg.phi_[i][j][k] = far_field_level_set;
+				data_pkg.phi_gradient_[i][j][k] = Vecd(1.0);
+				data_pkg.near_interface_id_[i][j][k] = far_field_level_set < 0.0 ? -2 : 2;
+				kernel_weight[i][j][k] = far_field_level_set < 0.0 ? 0 : 1.0;
+				kernel_gradient[i][j][k] = Vec3d(0);
+			});
 	}
 	//=================================================================================================//
 	void LevelSet::finishDataPackages()
@@ -186,14 +185,15 @@ namespace SPH
 		int j = (int)cell_index[1];
 		int k = (int)cell_index[2];
 
-		return mesh_any_of(Vec3i(SMAX(i - 1, 0), SMAX(j - 1, 0), SMAX(k - 1, 0)),
-						   Vec3i(SMIN(i + 2, (int)number_of_cells_[0]),
-								 SMIN(j + 2, (int)number_of_cells_[1]),
-								 SMIN(k + 2, (int)number_of_cells_[2])),
-						   [&](int l, int m, int n)
-						   {
-							   return data_pkg_addrs_[l][m][n]->isCorePackage();
-						   });
+		return mesh_any_of(
+			Vec3i(SMAX(i - 1, 0), SMAX(j - 1, 0), SMAX(k - 1, 0)),
+			Vec3i(SMIN(i + 2, (int)number_of_cells_[0]),
+				  SMIN(j + 2, (int)number_of_cells_[1]),
+				  SMIN(k + 2, (int)number_of_cells_[2])),
+			[&](int l, int m, int n)
+			{
+				return data_pkg_addrs_[l][m][n]->isCorePackage();
+			});
 	}
 	//=================================================================================================//
 	void LevelSet::redistanceInterfaceForAPackage(LevelSetDataPackage *core_data_pkg)
@@ -202,80 +202,76 @@ namespace SPH
 		int m = (int)core_data_pkg->CellIndexOnMesh()[1];
 		int n = (int)core_data_pkg->CellIndexOnMesh()[2];
 
-		for (int i = pkg_addrs_buffer; i != pkg_ops_end; ++i)
-			for (int j = pkg_addrs_buffer; j != pkg_ops_end; ++j)
-				for (int k = pkg_addrs_buffer; k != pkg_ops_end; ++k)
+		core_data_pkg->for_each_addrs(
+			[&](int i, int j, int k)
+			{
+				int near_interface_id = *core_data_pkg->near_interface_id_addrs_[i][j][k];
+				if (near_interface_id == 0)
 				{
-					int near_interface_id = *core_data_pkg->near_interface_id_addrs_[i][j][k];
-					if (near_interface_id == 0)
+					bool positive_band = false;
+					bool negative_band = false;
+					mesh_for_each3d<-1, 2>(
+						[&](int r, int s, int t)
+						{
+							int neighbor_near_interface_id =
+								*core_data_pkg->near_interface_id_addrs_[i + r][j + s][k + t];
+							if (neighbor_near_interface_id >= 1)
+								positive_band = true;
+							if (neighbor_near_interface_id <= -1)
+								negative_band = true;
+						});
+					if (positive_band == false)
 					{
-						bool positive_band = false;
-						bool negative_band = false;
-						for (int r = -1; r < 2; ++r)
-							for (int s = -1; s < 2; ++s)
-								for (int t = -1; t < 2; ++t)
+						Real min_distance_p = 5.0 * data_spacing_;
+						mesh_for_each3d<-4, 5>(
+							[&](int x, int y, int z)
+							{
+								std::pair<int, int> x_pair = CellShiftAndDataIndex(i + x);
+								std::pair<int, int> y_pair = CellShiftAndDataIndex(j + y);
+								std::pair<int, int> z_pair = CellShiftAndDataIndex(k + z);
+								LevelSetDataPackage *neighbor_pkg = data_pkg_addrs_[l + x_pair.first][m + y_pair.first][n + z_pair.first];
+								int neighbor_near_interface_id = neighbor_pkg->near_interface_id_[x_pair.second][y_pair.second][z_pair.second];
+								if (neighbor_near_interface_id >= 1)
 								{
-									int neighbor_near_interface_id =
-										*core_data_pkg->near_interface_id_addrs_[i + r][j + s][k + t];
-									if (neighbor_near_interface_id >= 1)
-										positive_band = true;
-									if (neighbor_near_interface_id <= -1)
-										negative_band = true;
+									Real phi_p_ = neighbor_pkg->phi_[x_pair.second][y_pair.second][z_pair.second];
+									Vecd norm_to_face = neighbor_pkg->phi_gradient_[x_pair.second][y_pair.second][z_pair.second];
+									norm_to_face /= norm_to_face.norm() + TinyReal;
+									min_distance_p = SMIN(min_distance_p, (Vecd((Real)x, (Real)y, Real(z)) * data_spacing_ + phi_p_ * norm_to_face).norm());
 								}
-						if (positive_band == false)
-						{
-							Real min_distance_p = 5.0 * data_spacing_;
-							for (int x = -4; x != 5; ++x)
-								for (int y = -4; y != 5; ++y)
-									for (int z = -4; z != 5; ++z)
-									{
-										std::pair<int, int> x_pair = CellShiftAndDataIndex(i + x);
-										std::pair<int, int> y_pair = CellShiftAndDataIndex(j + y);
-										std::pair<int, int> z_pair = CellShiftAndDataIndex(k + z);
-										LevelSetDataPackage *neighbor_pkg = data_pkg_addrs_[l + x_pair.first][m + y_pair.first][n + z_pair.first];
-										int neighbor_near_interface_id = neighbor_pkg->near_interface_id_[x_pair.second][y_pair.second][z_pair.second];
-										if (neighbor_near_interface_id >= 1)
-										{
-											Real phi_p_ = neighbor_pkg->phi_[x_pair.second][y_pair.second][z_pair.second];
-											Vecd norm_to_face = neighbor_pkg->phi_gradient_[x_pair.second][y_pair.second][z_pair.second];
-											norm_to_face /= norm_to_face.norm() + TinyReal;
-											min_distance_p = SMIN(min_distance_p, (Vecd((Real)x, (Real)y, Real(z)) * data_spacing_ + phi_p_ * norm_to_face).norm());
-										}
-									}
-							*core_data_pkg->phi_addrs_[i][j][k] = -min_distance_p;
-							// this immediate switch of near interface id
-							// does not intervening with the identification of unresolved interface
-							// based on the assumption that positive false_and negative bands are not close to each other
-							*core_data_pkg->near_interface_id_addrs_[i][j][k] = -1;
-						}
-						if (negative_band == false)
-						{
-							Real min_distance_n = 5.0 * data_spacing_;
-							for (int x = -4; x != 5; ++x)
-								for (int y = -4; y != 5; ++y)
-									for (int z = -4; z != 5; ++z)
-									{
-										std::pair<int, int> x_pair = CellShiftAndDataIndex(i + x);
-										std::pair<int, int> y_pair = CellShiftAndDataIndex(j + y);
-										std::pair<int, int> z_pair = CellShiftAndDataIndex(k + z);
-										LevelSetDataPackage *neighbor_pkg = data_pkg_addrs_[l + x_pair.first][m + y_pair.first][n + z_pair.first];
-										int neighbor_near_interface_id = neighbor_pkg->near_interface_id_[x_pair.second][y_pair.second][z_pair.second];
-										if (neighbor_near_interface_id <= -1)
-										{
-											Real phi_n_ = neighbor_pkg->phi_[x_pair.second][y_pair.second][z_pair.second];
-											Vecd norm_to_face = neighbor_pkg->phi_gradient_[x_pair.second][y_pair.second][z_pair.second];
-											norm_to_face /= norm_to_face.norm() + TinyReal;
-											min_distance_n = SMIN(min_distance_n, (Vecd((Real)x, (Real)y, Real(z)) * data_spacing_ - phi_n_ * norm_to_face).norm());
-										}
-									}
-							*core_data_pkg->phi_addrs_[i][j][k] = min_distance_n;
-							// this immediate switch of near interface id
-							// does not intervening with the identification of unresolved interface
-							// based on the assumption that positive false_and negative bands are not close to each other
-							*core_data_pkg->near_interface_id_addrs_[i][j][k] = 1;
-						}
+							});
+						*core_data_pkg->phi_addrs_[i][j][k] = -min_distance_p;
+						// this immediate switch of near interface id
+						// does not intervening with the identification of unresolved interface
+						// based on the assumption that positive false_and negative bands are not close to each other
+						*core_data_pkg->near_interface_id_addrs_[i][j][k] = -1;
+					}
+					if (negative_band == false)
+					{
+						Real min_distance_n = 5.0 * data_spacing_;
+						mesh_for_each3d<-4, 5>(
+							[&](int x, int y, int z)
+							{
+								std::pair<int, int> x_pair = CellShiftAndDataIndex(i + x);
+								std::pair<int, int> y_pair = CellShiftAndDataIndex(j + y);
+								std::pair<int, int> z_pair = CellShiftAndDataIndex(k + z);
+								LevelSetDataPackage *neighbor_pkg = data_pkg_addrs_[l + x_pair.first][m + y_pair.first][n + z_pair.first];
+								int neighbor_near_interface_id = neighbor_pkg->near_interface_id_[x_pair.second][y_pair.second][z_pair.second];
+								if (neighbor_near_interface_id <= -1)
+								{
+									Real phi_n_ = neighbor_pkg->phi_[x_pair.second][y_pair.second][z_pair.second];
+									Vecd norm_to_face = neighbor_pkg->phi_gradient_[x_pair.second][y_pair.second][z_pair.second];
+									norm_to_face /= norm_to_face.norm() + TinyReal;
+									min_distance_n = SMIN(min_distance_n, (Vecd((Real)x, (Real)y, Real(z)) * data_spacing_ - phi_n_ * norm_to_face).norm());
+								}
+							});
+						*core_data_pkg->phi_addrs_[i][j][k] = min_distance_n;
+						// this immediate switch of near interface id
+						// does not intervening with the identification of unresolved interface
+						// based on the assumption that positive false_and negative bands are not close to each other
+						*core_data_pkg->near_interface_id_addrs_[i][j][k] = 1;
 					}
 				}
+			});
 	}
 	//=================================================================================================//
 	void LevelSet::writeMeshFieldToPlt(std::ofstream &output_file)
