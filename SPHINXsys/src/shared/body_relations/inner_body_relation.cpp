@@ -61,17 +61,11 @@ namespace SPH
 	//=================================================================================================//
 	void SelfSurfaceContactRelation::resetNeighborhoodCurrentSize()
 	{
-		parallel_for(
-			blocked_range<size_t>(0, body_part_particles_.size()),
-			[&](const blocked_range<size_t> &r)
-			{
-				for (size_t num = r.begin(); num != r.end(); ++num)
-				{
-					size_t index_i = body_surface_layer_.getParticleIndex(num);
-					inner_configuration_[index_i].current_size_ = 0;
-				}
-			},
-			ap);
+		particle_parallel_for(body_part_particles_,
+							  [&](size_t index_i)
+							  {
+								  inner_configuration_[index_i].current_size_ = 0;
+							  });
 	}
 	//=================================================================================================//
 	void SelfSurfaceContactRelation::updateConfiguration()

@@ -8,6 +8,8 @@
 
 #include "base_particles.h"
 #include "cell_linked_list.h"
+#include "particle_iterators.h"
+#include "mesh_iterators.hpp"
 
 namespace SPH
 {
@@ -18,32 +20,28 @@ namespace SPH
 													GetSearchDepth &get_search_depth,
 													GetNeighborRelation &get_neighbor_relation)
 	{
-		parallel_for(
-			blocked_range<size_t>(0, dynamics_range.SizeOfLoopRange()),
-			[&](const blocked_range<size_t> &r)
-			{
-				StdLargeVec<Vecd> &pos = dynamics_range.getBaseParticles().pos_;
-				for (size_t num = r.begin(); num != r.end(); ++num)
-				{
-					size_t index_i = dynamics_range.getParticleIndex(num);
-					int search_depth = get_search_depth(index_i);
-					Vecu target_cell_index = CellIndexFromPosition(pos[index_i]);
-					int i = (int)target_cell_index[0];
-					int j = (int)target_cell_index[1];
+		StdLargeVec<Vecd> &pos = dynamics_range.getBaseParticles().pos_;
+		particle_parallel_for(dynamics_range.LoopRange(),
+							  [&](size_t index_i)
+							  {
+								  int search_depth = get_search_depth(index_i);
+								  Vecu target_cell_index = CellIndexFromPosition(pos[index_i]);
+								  int i = (int)target_cell_index[0];
+								  int j = (int)target_cell_index[1];
 
-					Neighborhood &neighborhood = particle_configuration[index_i];
-					for (int l = SMAX(i - search_depth, 0); l <= SMIN(i + search_depth, int(number_of_cells_[0]) - 1); ++l)
-						for (int m = SMAX(j - search_depth, 0); m <= SMIN(j + search_depth, int(number_of_cells_[1]) - 1); ++m)
-						{
-							ListDataVector &target_particles = cell_data_lists_[l][m];
-							for (const ListData &list_data : target_particles)
-							{
-								get_neighbor_relation(neighborhood, pos[index_i], index_i, list_data);
-							}
-						}
-				}
-			},
-			ap);
+								  Neighborhood &neighborhood = particle_configuration[index_i];
+								  mesh_for_each(Vec2i(SMAX(i - search_depth, 0), SMAX(j - search_depth, 0)),
+												Vec2i(SMIN(i + search_depth + 1, (int)number_of_cells_[0]),
+													  SMIN(j + search_depth + 1, (int)number_of_cells_[1])),
+												[&](int l, int m)
+												{
+													ListDataVector &target_particles = cell_data_lists_[l][m];
+													for (const ListData &list_data : target_particles)
+													{
+														get_neighbor_relation(neighborhood, pos[index_i], index_i, list_data);
+													}
+												});
+							  });
 	}
 	//=================================================================================================//
 }

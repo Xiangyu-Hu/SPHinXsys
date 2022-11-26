@@ -40,7 +40,7 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSetDataPackage::stepReinitialization()
 	{
-		mesh_for_each2d<pkg_addrs_buffer, pkg_ops_end>(
+		for_each_addrs(
 			[&](int i, int j)
 			{
 				// only reinitialize non cut cells
@@ -57,7 +57,7 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSetDataPackage::stepDiffusionLevelSetSign()
 	{
-		mesh_for_each2d<pkg_addrs_buffer, pkg_ops_end>(
+		for_each_addrs(
 			[&](int i, int j)
 			{
 				// near interface cells are not considered
@@ -91,7 +91,7 @@ namespace SPH
 				corner_averages[i][j] = CornerAverage(phi_addrs_, Veci(i, j), Veci(-1, -1));
 			});
 
-		mesh_for_each2d<pkg_addrs_buffer, pkg_ops_end>(
+		for_each_addrs(
 			[&](int i, int j)
 			{
 				// first assume far cells
