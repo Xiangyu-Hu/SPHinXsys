@@ -35,42 +35,6 @@
 
 namespace SPH
 {
-	class LevelSet;
-	class Kernel;
-	/**
-	 * @class LevelSetDataPackage
-	 * @brief Fixed memory level set data packed in a package.
-	 * Level set is the signed distance to an interface,
-	 * here, the surface of a body.
-	 */
-	class LevelSetDataPackage : public GridDataPackage<4, 1>
-	{
-	public:
-		PackageData<Real> phi_;				 /**< the level set or signed distance. */
-		PackageDataAddress<Real> phi_addrs_; /**< address for the level set. */
-		PackageData<Vecd> phi_gradient_;
-		PackageDataAddress<Vecd> phi_gradient_addrs_;
-		/** mark the near interface cells. 0 for zero level set cut cells,
-		 * -1 and 1 for negative and positive cut cells,
-		 * 0 can also be for other cells in the region closed
-		 * by negative and positive cut cells
-		 */
-		PackageData<int> near_interface_id_;
-		PackageDataAddress<int> near_interface_id_addrs_;
-
-		/** default constructor,  data and address arrays are allocated but not initialized */
-		LevelSetDataPackage();
-		virtual ~LevelSetDataPackage(){};
-
-		void registerAllVariables();
-		void initializeSingularData(Real far_field_level_set);
-		void initializeBasicData(Shape &shape);
-		void computeLevelSetGradient();
-		void stepReinitialization();
-		void stepDiffusionLevelSetSign();
-		void markNearInterface(Real small_shift_factor);
-	};
-
 	/**
 	 * @class BaseLevelSet
 	 * @brief A abstract describes a level set field defined on a mesh.
@@ -105,9 +69,10 @@ namespace SPH
 	 * but within the data package, the data is grid-based.
 	 * Note that the level set data is initialized after the constructor.
 	 */
-	class LevelSet : public MeshWithGridDataPackages<BaseLevelSet, LevelSetDataPackage>
+	class LevelSet : public MeshWithGridDataPackages<BaseLevelSet, GridDataPackage<4, 1>>
 	{
 	public:
+		typedef GridDataPackage<4, 1> LevelSetDataPackage;
 		ConcurrentVec<LevelSetDataPackage *> core_data_pkgs_; /**< packages near to zero level set. */
 		Real global_h_ratio_;
 
@@ -134,11 +99,16 @@ namespace SPH
 
 	protected:
 		DiscreteVariableAssemble extra_variables_;
+		DiscreteVariable<Real> phi_;
+		DiscreteVariable<int> near_interface_id_;
+		DiscreteVariable<Vecd> phi_gradient_;
 		DiscreteVariable<Real> kernel_weight_;
 		DiscreteVariable<Vecd> kernel_gradient_;
 		Kernel &kernel_;
 
-		void initializeSingularData(LevelSetDataPackage &data_pkg, Real far_field_level_set);
+		void initializeDataForSingularPackage(LevelSetDataPackage *data_pkg, Real far_field_level_set);
+		void initializeBasicDataForAPackage(LevelSetDataPackage *data_pkg, Shape &shape);
+		void redistanceInterfaceForAPackage(LevelSetDataPackage *core_data_pkg);
 
 		void finishDataPackages();
 		void reinitializeLevelSet();
@@ -147,12 +117,13 @@ namespace SPH
 		void diffuseLevelSetSign();
 		void updateLevelSetGradient();
 		void updateKernelIntegrals();
-		void redistanceInterfaceForAPackage(LevelSetDataPackage *core_data_pkg);
 		bool isInnerPackage(const Vecu &cell_index);
-		LevelSetDataPackage *createDataPackage(const Vecu &cell_index, const Vecd &cell_position);
 		void initializeDataInACell(const Vecu &cell_index);
 		void initializeAddressesInACell(const Vecu &cell_index);
 		void tagACellIsInnerPackage(const Vecu &cell_index);
+
+		// upwind algorithm choosing candidate difference by the sign
+		Real upwindDifference(Real sign, Real df_p, Real df_n);
 	};
 
 	/**

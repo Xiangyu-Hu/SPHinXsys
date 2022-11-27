@@ -48,7 +48,7 @@ namespace SPH
 					 const LocalFunction &local_function, Args &&...args)
 	{
 		for (size_t i = 0; i != data_pkgs.size(); ++i)
-			local_function(i);
+			local_function(data_pkgs[i]);
 	};
 	/** Iterator on a collection of mesh data packages. parallel computing. */
 	template <class DataPackageType, typename LocalFunction, typename... Args>
@@ -61,7 +61,7 @@ namespace SPH
 			{
 				for (size_t i = r.begin(); i != r.end(); ++i)
 				{
-					local_function(i);
+					local_function(data_pkgs[i]);
 				}
 			},
 			ap);
@@ -143,27 +143,6 @@ namespace SPH
 		template <typename FunctionOnAddress>
 		void for_each_addrs(const FunctionOnAddress &function);
 
-		// upwind algorithm choosing candidate difference by the sign
-		Real upwindDifference(Real sign, Real df_p, Real df_n)
-		{
-			if (sign * df_p >= 0.0 && sign * df_n >= 0.0)
-				return df_n;
-			if (sign * df_p <= 0.0 && sign * df_n <= 0.0)
-				return df_p;
-			if (sign * df_p > 0.0 && sign * df_n < 0.0)
-				return 0.0;
-
-			Real df = df_p;
-			if (sign * df_p < 0.0 && sign * df_n > 0.0)
-			{
-				Real ss = sign * (fabs(df_p) - fabs(df_n)) / (df_p - df_n);
-				if (ss > 0.0)
-					df = df_n;
-			}
-
-			return df;
-		};
-
 		/** access specific package data with discrete variable */
 		template <typename DataType>
 		PackageData<DataType> &getPackageData(const DiscreteVariable<DataType> &discrete_variable)
@@ -189,6 +168,14 @@ namespace SPH
 		template <typename DataType, typename FunctionByPosition>
 		void assignByPosition(const DiscreteVariable<DataType> &discrete_variable,
 							  const FunctionByPosition &function_by_position);
+		/** compute gradient transform within data package */
+		template <typename InDataType, typename OutDataType>
+		void computeGradient(const DiscreteVariable<InDataType> &in_variable,
+							 const DiscreteVariable<OutDataType> &out_variable);
+		/** obtain averaged value at a corner of a data cell */
+		template <typename DataType>
+		DataType CornerAverage(PackageDataAddress<DataType> &pkg_data_addrs,
+							   Veci addrs_index, Veci corner_direction);
 
 	protected:
 		/** register a variable defined in a class (can be non-particle class) */
@@ -256,10 +243,6 @@ namespace SPH
 			};
 		};
 		DataAssembleOperation<ExtraVariablesAllocation> allocate_extra_variables_;
-
-		/** obtain averaged value at a corner of a data cell */
-		template <typename DataType>
-		DataType CornerAverage(PackageDataAddress<DataType> &pkg_data_addrs, Veci addrs_index, Veci corner_direction);
 
 	public:
 		void initializeSingularDataAddress()
@@ -344,18 +327,34 @@ namespace SPH
 			const InitializeSingularData &initialize_singular_data)
 		{
 			GridDataPackageType *new_data_pkg = data_pkg_pool_.malloc();
-			new_data_pkg->registerAllVariables();
 			new_data_pkg->allocateExtraVariables(all_variables);
-			initialize_singular_data(*new_data_pkg);
+			initialize_singular_data(new_data_pkg);
 			new_data_pkg->initializeSingularDataAddress();
 			singular_data_pkgs_addrs_.push_back(new_data_pkg);
+		};
+
+		template <typename InitializePackageData>
+		GridDataPackageType *createDataPackage(
+			const DataContainerAddressAssemble<DiscreteVariable> &all_variables,
+			const Vecu &cell_index,
+			const InitializePackageData &initialize_package_data)
+		{
+			mutex_my_pool.lock();
+			GridDataPackageType *new_data_pkg = data_pkg_pool_.malloc();
+			mutex_my_pool.unlock();
+			new_data_pkg->allocateExtraVariables(all_variables);
+			Vecd cell_position = CellPositionFromIndex(cell_index);
+			Vecd pkg_lower_bound = GridPositionFromCellPosition(cell_position);
+			new_data_pkg->initializePackageGeometry(pkg_lower_bound, data_spacing_);
+			initialize_package_data(new_data_pkg);
+			new_data_pkg->setCellIndexOnMesh(cell_index);
+			assignDataPackageAddress(cell_index, new_data_pkg);
+			return new_data_pkg;
 		};
 
 		void assignDataPackageAddress(const Vecu &cell_index, GridDataPackageType *data_pkg);
 		GridDataPackageType *DataPackageFromCellIndex(const Vecu &cell_index);
 		/** This function find the value of data from its index from global mesh. */
-		template <typename DataType, typename PackageDataType, PackageDataType GridDataPackageType::*MemPtr>
-		DataType DataValueFromGlobalIndex(const Vecu &global_grid_index);
 		template <typename DataType>
 		DataType DataValueFromGlobalIndex(const DiscreteVariable<DataType> &discrete_variable,
 										  const Vecu &global_grid_index);

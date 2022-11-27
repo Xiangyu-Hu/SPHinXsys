@@ -14,118 +14,6 @@
 namespace SPH
 {
 	//=================================================================================================//
-	void LevelSetDataPackage::initializeSingularData(Real far_field_level_set)
-	{
-		for (int i = 0; i != pkg_size; ++i)
-			for (int j = 0; j != pkg_size; ++j)
-				for (int k = 0; k != pkg_size; ++k)
-				{
-					phi_[i][j][k] = far_field_level_set;
-					phi_gradient_[i][j][k] = Vecd(1.0);
-					near_interface_id_[i][j][k] = far_field_level_set < 0.0 ? -2 : 2;
-				}
-	}
-	//=================================================================================================//
-	void LevelSetDataPackage::initializeBasicData(Shape &shape)
-	{
-		for (int i = 0; i != pkg_size; ++i)
-			for (int j = 0; j != pkg_size; ++j)
-				for (int k = 0; k != pkg_size; ++k)
-				{
-					Vec3d position = DataLowerBound() + Vec3d(i, j, k) * grid_spacing_;
-					phi_[i][j][k] = shape.findSignedDistance(position);
-					near_interface_id_[i][j][k] = phi_[i][j][k] < 0.0 ? -2 : 2;
-				}
-	}
-	//=================================================================================================//
-	void LevelSetDataPackage::stepReinitialization()
-	{
-		for_each_addrs(
-			[&](int i, int j, int k)
-			{
-				// only reinitialize non cut cells
-				if (*near_interface_id_addrs_[i][j][k] != 0)
-				{
-					Real phi_0 = *phi_addrs_[i][j][k];
-					Real sign = phi_0 / sqrt(phi_0 * phi_0 + grid_spacing_ * grid_spacing_);
-					Real dv_x = upwindDifference(sign, *phi_addrs_[i + 1][j][k] - phi_0, phi_0 - *phi_addrs_[i - 1][j][k]);
-					Real dv_y = upwindDifference(sign, *phi_addrs_[i][j + 1][k] - phi_0, phi_0 - *phi_addrs_[i][j - 1][k]);
-					Real dv_z = upwindDifference(sign, *phi_addrs_[i][j][k + 1] - phi_0, phi_0 - *phi_addrs_[i][j][k - 1]);
-					*phi_addrs_[i][j][k] -= 0.3 * sign * (Vec3d(dv_x, dv_y, dv_z).norm() - grid_spacing_);
-				}
-			});
-	}
-	//=================================================================================================//
-	void LevelSetDataPackage::stepDiffusionLevelSetSign()
-	{
-		for_each_addrs(
-			[&](int i, int j, int k)
-			{
-				// near interface cells are not considered
-				if (abs(*near_interface_id_addrs_[i][j][k]) > 1)
-				{
-					mesh_find_if3d<-1, 2>(
-						[&](int l, int m, int n) -> bool
-						{
-							int near_interface_id = *near_interface_id_addrs_[i + l][j + m][k + n];
-							bool is_found = abs(near_interface_id) == 1;
-							if (is_found)
-							{
-								Real phi_0 = *phi_addrs_[i][j][k];
-								*near_interface_id_addrs_[i][j][k] = near_interface_id;
-								*phi_addrs_[i][j][k] = near_interface_id == 1 ? fabs(phi_0) : -fabs(phi_0);
-							}
-							return is_found;
-						});
-				}
-			});
-	}
-	//=================================================================================================//
-	void LevelSetDataPackage::markNearInterface(Real small_shift_factor)
-	{
-		Real small_shift = small_shift_factor * grid_spacing_;
-		// corner averages, note that the first row and first column are not used
-		PackageTemporaryData<Real> corner_averages;
-		mesh_for_each3d<1, pkg_addrs_size>(
-			[&](int i, int j, int k)
-			{
-				corner_averages[i][j][k] = CornerAverage(phi_addrs_, Veci(i, j, k), Veci(-1, -1, -1));
-			});
-
-		for_each_addrs(
-			[&](int i, int j, int k)
-			{
-				// first assume far cells
-				Real phi_0 = *phi_addrs_[i][j][k];
-				int near_interface_id = phi_0 > 0.0 ? 2 : -2;
-				if (fabs(phi_0) < small_shift)
-				{
-					near_interface_id = 0;
-					Real phi_average_0 = corner_averages[i][j][k];
-					// find inner and outer cut cells
-					mesh_for_each3d<0, 2>(
-						[&](int l, int m, int n)
-						{
-							Real phi_average = corner_averages[i + l][j + m][k + n];
-							if ((phi_average_0 - small_shift) * (phi_average - small_shift) < 0.0)
-								near_interface_id = 1;
-							if ((phi_average_0 + small_shift) * (phi_average + small_shift) < 0.0)
-								near_interface_id = -1;
-						});
-					// find zero cut cells
-					mesh_for_each3d<0, 2>(
-						[&](int l, int m, int n)
-						{
-							Real phi_average = corner_averages[i + l][j + m][k + n];
-							if (phi_average_0 * phi_average < 0.0)
-								near_interface_id = 0;
-						});
-				}
-				// assign this is to package
-				*near_interface_id_addrs_[i][j][k] = near_interface_id;
-			});
-	}
-	//=================================================================================================//
 	LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing,
 					   Shape &shape, SPHAdaptation &sph_adaptation)
 		: LevelSet(tentative_bounds, data_spacing, 4, shape, sph_adaptation)
@@ -139,17 +27,20 @@ namespace SPH
 		finishDataPackages();
 	}
 	//=================================================================================================//
-	void LevelSet::initializeSingularData(LevelSetDataPackage &data_pkg, Real far_field_level_set)
+	void LevelSet::initializeDataForSingularPackage(LevelSetDataPackage *data_pkg, Real far_field_level_set)
 	{
-		auto &kernel_weight = data_pkg.getPackageData(kernel_weight_);
-		auto &kernel_gradient = data_pkg.getPackageData(kernel_gradient_);
+		auto &phi = data_pkg->getPackageData(phi_);
+		auto &near_interface_id = data_pkg->getPackageData(near_interface_id_);
+		auto &phi_gradient = data_pkg->getPackageData(phi_gradient_);
+		auto &kernel_weight = data_pkg->getPackageData(kernel_weight_);
+		auto &kernel_gradient = data_pkg->getPackageData(kernel_gradient_);
 
-		data_pkg.for_each_data(
+		data_pkg->for_each_data(
 			[&](int i, int j, int k)
 			{
-				data_pkg.phi_[i][j][k] = far_field_level_set;
-				data_pkg.phi_gradient_[i][j][k] = Vecd(1.0);
-				data_pkg.near_interface_id_[i][j][k] = far_field_level_set < 0.0 ? -2 : 2;
+				phi[i][j][k] = far_field_level_set;
+				near_interface_id[i][j][k] = far_field_level_set < 0.0 ? -2 : 2;
+				phi_gradient[i][j][k] = Vecd(1.0);
 				kernel_weight[i][j][k] = far_field_level_set < 0.0 ? 0 : 1.0;
 				kernel_gradient[i][j][k] = Vec3d(0);
 			});
@@ -196,16 +87,144 @@ namespace SPH
 			});
 	}
 	//=================================================================================================//
+	void LevelSet::diffuseLevelSetSign()
+	{
+		package_parallel_for(
+			inner_data_pkgs_,
+			[&](LevelSetDataPackage *data_pkg)
+			{
+				auto &phi_addrs = data_pkg->getPackageDataAddress(phi_);
+				auto &near_interface_id_addrs = data_pkg->getPackageDataAddress(near_interface_id_);
+
+				data_pkg->for_each_addrs(
+					[&](int i, int j, int k)
+					{
+						// near interface cells are not considered
+						if (abs(*near_interface_id_addrs[i][j][k]) > 1)
+						{
+							mesh_find_if3d<-1, 2>(
+								[&](int l, int m, int n) -> bool
+								{
+									int near_interface_id = *near_interface_id_addrs[i + l][j + m][k + n];
+									bool is_found = abs(near_interface_id) == 1;
+									if (is_found)
+									{
+										Real phi_0 = *phi_addrs[i][j][k];
+										*near_interface_id_addrs[i][j][k] = near_interface_id;
+										*phi_addrs[i][j][k] = near_interface_id == 1 ? fabs(phi_0) : -fabs(phi_0);
+									}
+									return is_found;
+								});
+						}
+					});
+			});
+	}
+	//=============================================================================================//
+	void LevelSet::reinitializeLevelSet()
+	{
+		package_parallel_for(
+			inner_data_pkgs_,
+			[&](LevelSetDataPackage *data_pkg)
+			{
+				auto &phi_addrs = data_pkg->getPackageDataAddress(phi_);
+				auto &near_interface_id_addrs_ = data_pkg->getPackageDataAddress(near_interface_id_);
+
+				data_pkg->for_each_addrs(
+					[&](int i, int j, int k)
+					{
+						// only reinitialize non cut cells
+						if (*near_interface_id_addrs_[i][j][k] != 0)
+						{
+							Real phi_0 = *phi_addrs[i][j][k];
+							Real sign = phi_0 / sqrt(phi_0 * phi_0 + data_spacing_ * data_spacing_);
+							Real dv_x = upwindDifference(sign, *phi_addrs[i + 1][j][k] - phi_0, phi_0 - *phi_addrs[i - 1][j][k]);
+							Real dv_y = upwindDifference(sign, *phi_addrs[i][j + 1][k] - phi_0, phi_0 - *phi_addrs[i][j - 1][k]);
+							Real dv_z = upwindDifference(sign, *phi_addrs[i][j][k + 1] - phi_0, phi_0 - *phi_addrs[i][j][k - 1]);
+							*phi_addrs[i][j][k] -= 0.3 * sign * (Vec3d(dv_x, dv_y, dv_z).norm() - data_spacing_);
+						}
+					});
+			});
+	}
+	//=================================================================================================//
+	void LevelSet::markNearInterface(Real small_shift_factor)
+	{
+		Real small_shift = small_shift_factor * data_spacing_;
+
+		package_parallel_for(
+			inner_data_pkgs_,
+			[&](LevelSetDataPackage *data_pkg)
+			{
+				auto &phi_addrs = data_pkg->getPackageDataAddress(phi_);
+				auto &near_interface_id_addrs = data_pkg->getPackageDataAddress(near_interface_id_);
+
+				// corner averages, note that the first row and first column are not used
+				LevelSetDataPackage::PackageTemporaryData<Real> corner_averages;
+				mesh_for_each3d<1, pkg_addrs_size>(
+					[&](int i, int j, int k)
+					{
+						corner_averages[i][j][k] = data_pkg->CornerAverage(phi_addrs, Veci(i, j, k), Veci(-1, -1, -1));
+					});
+
+				data_pkg->for_each_addrs(
+					[&](int i, int j, int k)
+					{
+						// first assume far cells
+						Real phi_0 = *phi_addrs[i][j][k];
+						int near_interface_id = phi_0 > 0.0 ? 2 : -2;
+						if (fabs(phi_0) < small_shift)
+						{
+							near_interface_id = 0;
+							Real phi_average_0 = corner_averages[i][j][k];
+							// find inner and outer cut cells
+							mesh_for_each3d<0, 2>(
+								[&](int l, int m, int n)
+								{
+									Real phi_average = corner_averages[i + l][j + m][k + n];
+									if ((phi_average_0 - small_shift) * (phi_average - small_shift) < 0.0)
+										near_interface_id = 1;
+									if ((phi_average_0 + small_shift) * (phi_average + small_shift) < 0.0)
+										near_interface_id = -1;
+								});
+							// find zero cut cells
+							mesh_for_each3d<0, 2>(
+								[&](int l, int m, int n)
+								{
+									Real phi_average = corner_averages[i + l][j + m][k + n];
+									if (phi_average_0 * phi_average < 0.0)
+										near_interface_id = 0;
+								});
+						}
+						// assign this is to package
+						*near_interface_id_addrs[i][j][k] = near_interface_id;
+					});
+			});
+	}
+	//=================================================================================================//
+	void LevelSet::initializeBasicDataForAPackage(LevelSetDataPackage *data_pkg, Shape &shape)
+	{
+		auto &phi = data_pkg->getPackageData(phi_);
+		auto &near_interface_id = data_pkg->getPackageData(near_interface_id_);
+		data_pkg->for_each_data(
+			[&](int i, int j, int k)
+			{
+				Vec3d position = data_pkg->DataLowerBound() + Vec3d(i, j, k) * grid_spacing_;
+				phi[i][j][k] = shape.findSignedDistance(position);
+				near_interface_id[i][j][k] = phi[i][j][k] < 0.0 ? -2 : 2;
+			});
+	}
+	//=================================================================================================//
 	void LevelSet::redistanceInterfaceForAPackage(LevelSetDataPackage *core_data_pkg)
 	{
 		int l = (int)core_data_pkg->CellIndexOnMesh()[0];
 		int m = (int)core_data_pkg->CellIndexOnMesh()[1];
 		int n = (int)core_data_pkg->CellIndexOnMesh()[2];
+		auto &phi_addrs = core_data_pkg->getPackageDataAddress(phi_);
+		auto &near_interface_id_addrs = core_data_pkg->getPackageDataAddress(near_interface_id_);
 
 		core_data_pkg->for_each_addrs(
 			[&](int i, int j, int k)
 			{
-				int near_interface_id = *core_data_pkg->near_interface_id_addrs_[i][j][k];
+				int near_interface_id = *near_interface_id_addrs[i][j][k];
 				if (near_interface_id == 0)
 				{
 					bool positive_band = false;
@@ -213,8 +232,7 @@ namespace SPH
 					mesh_for_each3d<-1, 2>(
 						[&](int r, int s, int t)
 						{
-							int neighbor_near_interface_id =
-								*core_data_pkg->near_interface_id_addrs_[i + r][j + s][k + t];
+							int neighbor_near_interface_id = *near_interface_id_addrs[i + r][j + s][k + t];
 							if (neighbor_near_interface_id >= 1)
 								positive_band = true;
 							if (neighbor_near_interface_id <= -1)
@@ -230,20 +248,22 @@ namespace SPH
 								std::pair<int, int> y_pair = CellShiftAndDataIndex(j + y);
 								std::pair<int, int> z_pair = CellShiftAndDataIndex(k + z);
 								LevelSetDataPackage *neighbor_pkg = data_pkg_addrs_[l + x_pair.first][m + y_pair.first][n + z_pair.first];
-								int neighbor_near_interface_id = neighbor_pkg->near_interface_id_[x_pair.second][y_pair.second][z_pair.second];
-								if (neighbor_near_interface_id >= 1)
+								auto &neighbor_phi = neighbor_pkg->getPackageData(phi_);
+								auto &neighbor_phi_gradient = neighbor_pkg->getPackageData(phi_gradient_);
+								auto &neighbor_near_interface_id = neighbor_pkg->getPackageData(near_interface_id_);
+								if (neighbor_near_interface_id[x_pair.second][y_pair.second][z_pair.second] >= 1)
 								{
-									Real phi_p_ = neighbor_pkg->phi_[x_pair.second][y_pair.second][z_pair.second];
-									Vecd norm_to_face = neighbor_pkg->phi_gradient_[x_pair.second][y_pair.second][z_pair.second];
+									Real phi_p_ = neighbor_phi[x_pair.second][y_pair.second][z_pair.second];
+									Vecd norm_to_face = neighbor_phi_gradient[x_pair.second][y_pair.second][z_pair.second];
 									norm_to_face /= norm_to_face.norm() + TinyReal;
 									min_distance_p = SMIN(min_distance_p, (Vecd((Real)x, (Real)y, Real(z)) * data_spacing_ + phi_p_ * norm_to_face).norm());
 								}
 							});
-						*core_data_pkg->phi_addrs_[i][j][k] = -min_distance_p;
+						*phi_addrs[i][j][k] = -min_distance_p;
 						// this immediate switch of near interface id
 						// does not intervening with the identification of unresolved interface
 						// based on the assumption that positive false_and negative bands are not close to each other
-						*core_data_pkg->near_interface_id_addrs_[i][j][k] = -1;
+						*near_interface_id_addrs[i][j][k] = -1;
 					}
 					if (negative_band == false)
 					{
@@ -255,20 +275,22 @@ namespace SPH
 								std::pair<int, int> y_pair = CellShiftAndDataIndex(j + y);
 								std::pair<int, int> z_pair = CellShiftAndDataIndex(k + z);
 								LevelSetDataPackage *neighbor_pkg = data_pkg_addrs_[l + x_pair.first][m + y_pair.first][n + z_pair.first];
-								int neighbor_near_interface_id = neighbor_pkg->near_interface_id_[x_pair.second][y_pair.second][z_pair.second];
-								if (neighbor_near_interface_id <= -1)
+								auto &neighbor_phi = neighbor_pkg->getPackageData(phi_);
+								auto &neighbor_phi_gradient = neighbor_pkg->getPackageData(phi_gradient_);
+								auto &neighbor_near_interface_id = neighbor_pkg->getPackageData(near_interface_id_);
+								if (neighbor_near_interface_id[x_pair.second][y_pair.second][z_pair.second] <= -1)
 								{
-									Real phi_n_ = neighbor_pkg->phi_[x_pair.second][y_pair.second][z_pair.second];
-									Vecd norm_to_face = neighbor_pkg->phi_gradient_[x_pair.second][y_pair.second][z_pair.second];
+									Real phi_n_ = neighbor_phi[x_pair.second][y_pair.second][z_pair.second];
+									Vecd norm_to_face = neighbor_phi_gradient[x_pair.second][y_pair.second][z_pair.second];
 									norm_to_face /= norm_to_face.norm() + TinyReal;
 									min_distance_n = SMIN(min_distance_n, (Vecd((Real)x, (Real)y, Real(z)) * data_spacing_ - phi_n_ * norm_to_face).norm());
 								}
 							});
-						*core_data_pkg->phi_addrs_[i][j][k] = min_distance_n;
+						*phi_addrs[i][j][k] = min_distance_n;
 						// this immediate switch of near interface id
 						// does not intervening with the identification of unresolved interface
 						// based on the assumption that positive false_and negative bands are not close to each other
-						*core_data_pkg->near_interface_id_addrs_[i][j][k] = 1;
+						*near_interface_id_addrs[i][j][k] = 1;
 					}
 				}
 			});
@@ -331,8 +353,7 @@ namespace SPH
 			{
 				for (size_t i = 0; i != number_of_operation[0]; ++i)
 				{
-					output_file << DataValueFromGlobalIndex<Real, LevelSetDataPackage::PackageData<Real>,
-															&LevelSetDataPackage::phi_>(Vecu(i, j, k))
+					output_file << DataValueFromGlobalIndex(phi_, Vecu(i, j, k))
 								<< " ";
 				}
 				output_file << " \n";
@@ -343,8 +364,7 @@ namespace SPH
 			{
 				for (size_t i = 0; i != number_of_operation[0]; ++i)
 				{
-					output_file << DataValueFromGlobalIndex<Vecd, LevelSetDataPackage::PackageData<Vecd>,
-															&LevelSetDataPackage::phi_gradient_>(Vecu(i, j, k))[0]
+					output_file << DataValueFromGlobalIndex(phi_gradient_, Vecu(i, j, k))[0]
 								<< " ";
 				}
 				output_file << " \n";
@@ -355,8 +375,7 @@ namespace SPH
 			{
 				for (size_t i = 0; i != number_of_operation[0]; ++i)
 				{
-					output_file << DataValueFromGlobalIndex<Vecd, LevelSetDataPackage::PackageData<Vecd>,
-															&LevelSetDataPackage::phi_gradient_>(Vecu(i, j, k))[1]
+					output_file << DataValueFromGlobalIndex(phi_gradient_, Vecu(i, j, k))[1]
 								<< " ";
 				}
 				output_file << " \n";
@@ -367,8 +386,7 @@ namespace SPH
 			{
 				for (size_t i = 0; i != number_of_operation[0]; ++i)
 				{
-					output_file << DataValueFromGlobalIndex<Vecd, LevelSetDataPackage::PackageData<Vecd>,
-															&LevelSetDataPackage::phi_gradient_>(Vecu(i, j, k))[2]
+					output_file << DataValueFromGlobalIndex(phi_gradient_, Vecu(i, j, k))[2]
 								<< " ";
 				}
 				output_file << " \n";
@@ -379,8 +397,7 @@ namespace SPH
 			{
 				for (size_t i = 0; i != number_of_operation[0]; ++i)
 				{
-					output_file << DataValueFromGlobalIndex<int, LevelSetDataPackage::PackageData<int>,
-															&LevelSetDataPackage::near_interface_id_>(Vecu(i, j, k))
+					output_file << DataValueFromGlobalIndex(near_interface_id_, Vecu(i, j, k))
 								<< " ";
 				}
 				output_file << " \n";
@@ -402,8 +419,7 @@ namespace SPH
 					for (int k = -3; k != 4; ++k)
 					{
 						Vecu neighbor_index = Vecu(global_index_[0] + i, global_index_[1] + j, global_index_[2] + k);
-						Real phi_neighbor = DataValueFromGlobalIndex<Real, LevelSetDataPackage::PackageData<Real>,
-																	 &LevelSetDataPackage::phi_>(neighbor_index);
+						Real phi_neighbor = DataValueFromGlobalIndex(phi_, neighbor_index);
 						if (phi_neighbor > -data_spacing_)
 						{
 							Vecd displacement = position - global_mesh_.GridPositionFromIndex(neighbor_index);
@@ -431,8 +447,7 @@ namespace SPH
 					for (int k = -3; k != 4; ++k)
 					{
 						Vecu neighbor_index = Vecu(global_index_[0] + i, global_index_[1] + j, global_index_[2] + k);
-						Real phi_neighbor = DataValueFromGlobalIndex<
-							Real, LevelSetDataPackage::PackageData<Real>, &LevelSetDataPackage::phi_>(neighbor_index);
+						Real phi_neighbor = DataValueFromGlobalIndex(phi_, neighbor_index);
 						if (phi_neighbor > -data_spacing_)
 						{
 							Vecd displacement = position - global_mesh_.GridPositionFromIndex(neighbor_index);
