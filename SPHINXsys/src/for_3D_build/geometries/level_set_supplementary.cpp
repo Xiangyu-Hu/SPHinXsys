@@ -207,7 +207,7 @@ namespace SPH
 		data_pkg->for_each_data(
 			[&](int i, int j, int k)
 			{
-				Vec3d position = data_pkg->DataLowerBound() + Vec3d(i, j, k) * data_spacing_;
+				Vec3d position = data_pkg->DataPosition(Vec3d(i, j, k));
 				phi[i][j][k] = shape.findSignedDistance(position);
 				near_interface_id[i][j][k] = phi[i][j][k] < 0.0 ? -2 : 2;
 			});

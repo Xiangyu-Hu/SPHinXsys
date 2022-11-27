@@ -98,7 +98,7 @@ namespace SPH
 		Vecd computeKernelGradientIntegral(const Vecd &position);
 
 	protected:
-		DiscreteVariableAssemble extra_variables_;
+		DiscreteVariableAssemble all_variables_;
 		DiscreteVariable<Real> phi_;
 		DiscreteVariable<int> near_interface_id_;
 		DiscreteVariable<Vecd> phi_gradient_;

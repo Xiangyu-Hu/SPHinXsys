@@ -39,19 +39,19 @@ namespace SPH
 		: MeshWithGridDataPackages<BaseLevelSet, GridDataPackage<4, 1>>(
 			  tentative_bounds, data_spacing, buffer_size, shape, sph_adaptation),
 		  global_h_ratio_(sph_adaptation.ReferenceSpacing() / data_spacing),
-		  phi_(extra_variables_, "Levelset"),
-		  near_interface_id_(extra_variables_, "NearInterfaceID"),
-		  phi_gradient_(extra_variables_, "LevelsetGradient"),
-		  kernel_weight_(extra_variables_, "KernelWeight"),
-		  kernel_gradient_(extra_variables_, "KernelGradient"),
+		  phi_(all_variables_, "Levelset"),
+		  near_interface_id_(all_variables_, "NearInterfaceID"),
+		  phi_gradient_(all_variables_, "LevelsetGradient"),
+		  kernel_weight_(all_variables_, "KernelWeight"),
+		  kernel_gradient_(all_variables_, "KernelGradient"),
 		  kernel_(*sph_adaptation.getKernel())
 	{
 		Real far_field_distance = grid_spacing_ * (Real)buffer_width_;
 		initializeASingularDataPackage(
-			extra_variables_, [&](LevelSetDataPackage *data_pkg)
+			all_variables_, [&](LevelSetDataPackage *data_pkg)
 			{ initializeDataForSingularPackage(data_pkg, -far_field_distance); });
 		initializeASingularDataPackage(
-			extra_variables_, [&](LevelSetDataPackage *data_pkg)
+			all_variables_, [&](LevelSetDataPackage *data_pkg)
 			{ initializeDataForSingularPackage(data_pkg, far_field_distance); });
 	}
 	//=================================================================================================//
@@ -170,12 +170,12 @@ namespace SPH
 		{
 			LevelSetDataPackage *new_data_pkg =
 				createDataPackage(
-					extra_variables_, cell_index,
+					all_variables_, cell_index,
 					[&](LevelSetDataPackage *new_data_pkg)
 					{
 						initializeBasicDataForAPackage(new_data_pkg, shape_);
 					});
-			new_data_pkg->setCorerPackage();
+			new_data_pkg->setCorePackage();
 			core_data_pkgs_.push_back(new_data_pkg);
 		}
 		else
@@ -199,7 +199,7 @@ namespace SPH
 			{
 				Vecd cell_position = CellPositionFromIndex(cell_index);
 				LevelSetDataPackage *new_data_pkg = createDataPackage(
-					extra_variables_, cell_index,
+					all_variables_, cell_index,
 					[&](LevelSetDataPackage *new_data_pkg)
 					{
 						initializeBasicDataForAPackage(new_data_pkg, shape_);
@@ -245,12 +245,12 @@ namespace SPH
 			if (measure < grid_spacing_)
 			{
 				LevelSetDataPackage *new_data_pkg = createDataPackage(
-					extra_variables_, cell_index,
+					all_variables_, cell_index,
 					[&](LevelSetDataPackage *new_data_pkg)
 					{
 						initializeBasicDataForAPackage(new_data_pkg, shape_);
 					});
-				new_data_pkg->setCorerPackage(); // core package
+				new_data_pkg->setCorePackage(); // core package
 				core_data_pkgs_.push_back(new_data_pkg);
 			}
 		}

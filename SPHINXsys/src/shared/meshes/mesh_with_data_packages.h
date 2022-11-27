@@ -82,7 +82,7 @@ namespace SPH
 		virtual ~BaseDataPackage(){};
 		void setInnerPackage() { state_indicator_ = 1; };
 		bool isInnerPackage() { return state_indicator_ != 0; };
-		void setCorerPackage() { state_indicator_ = 2; };
+		void setCorePackage() { state_indicator_ = 2; };
 		bool isCorePackage() { return state_indicator_ == 2; };
 		void setCellIndexOnMesh(const Vecu &cell_index) { cell_index_on_mesh_ = cell_index; }
 		Vecu CellIndexOnMesh() const { return cell_index_on_mesh_; }
@@ -118,16 +118,14 @@ namespace SPH
 		/** Matrix data for temporary usage. Note that it is array with pkg_addrs_size.  */
 		template <typename DataType>
 		using PackageTemporaryData = PackageDataMatrix<DataType, pkg_addrs_size>;
-
-		DataContainerAddressAssemble<PackageData> all_pkg_data_;
-		DataContainerAddressAssemble<PackageDataAddress> all_pkg_data_addrs_;
-		DataContainerAssemble<PackageData> extra_pkg_data_;
-		DataContainerAssemble<PackageDataAddress> extra_pkg_data_addrs_;
+		DataContainerAssemble<PackageData> all_pkg_data_;
+		DataContainerAssemble<PackageDataAddress> all_pkg_data_addrs_;
 
 		GridDataPackage() : BaseDataPackage(), BaseMesh(Vecu(pkg_addrs_size)){};
 		virtual ~GridDataPackage(){};
 		/** lower bound coordinate for the data as reference */
 		Vecd DataLowerBound() { return mesh_lower_bound_ + Vecd(grid_spacing_) * (Real)pkg_addrs_buffer; };
+		Vecd DataPosition(const Vecd &data_index) { return DataLowerBound() + data_index * grid_spacing_; };
 		/** initialize package mesh geometric information. */
 		void initializePackageGeometry(const Vecd &pkg_lower_bound, Real data_spacing)
 		{
@@ -148,22 +146,18 @@ namespace SPH
 		PackageData<DataType> &getPackageData(const DiscreteVariable<DataType> &discrete_variable)
 		{
 			constexpr int type_index = DataTypeIndex<DataType>::value;
-			return std::get<type_index>(extra_pkg_data_)[discrete_variable.IndexInContainer()];
+			return std::get<type_index>(all_pkg_data_)[discrete_variable.IndexInContainer()];
 		};
-		/** access specific package data with discrete variable */
+		/** access specific package data address with discrete variable */
 		template <typename DataType>
 		PackageDataAddress<DataType> &getPackageDataAddress(const DiscreteVariable<DataType> &discrete_variable)
 		{
 			constexpr int type_index = DataTypeIndex<DataType>::value;
-			return std::get<type_index>(extra_pkg_data_addrs_)[discrete_variable.IndexInContainer()];
+			return std::get<type_index>(all_pkg_data_addrs_)[discrete_variable.IndexInContainer()];
 		};
 		/** probe by applying bi and tri-linear interpolation within the package. */
 		template <typename DataType>
 		DataType probeDataPackage(PackageDataAddress<DataType> &pkg_data_addrs, const Vecd &position);
-		/** compute gradient transform within data package */
-		template <typename InDataType, typename OutDataType>
-		void computeGradient(PackageDataAddress<InDataType> &in_pkg_data_addrs,
-							 PackageDataAddress<OutDataType> out_pkg_data_addrs, Real dt = 0.0);
 		/** assign value to data package according to grid position */
 		template <typename DataType, typename FunctionByPosition>
 		void assignByPosition(const DiscreteVariable<DataType> &discrete_variable,
@@ -178,88 +172,56 @@ namespace SPH
 							   Veci addrs_index, Veci corner_direction);
 
 	protected:
-		/** register a variable defined in a class (can be non-particle class) */
-		template <typename DataType>
-		void registerPackageData(PackageData<DataType> &pkg_data,
-								 PackageDataAddress<DataType> &pkg_data_addrs)
-		{
-			constexpr int type_index = DataTypeIndex<DataType>::value;
-			std::get<type_index>(all_pkg_data_).push_back(&pkg_data);
-			std::get<type_index>(all_pkg_data_addrs_).push_back(&pkg_data_addrs);
-		};
-
 		/** set the initial package data address within a derived class constructor */
 		template <typename DataType>
-		struct initializePackageDataAddress
-		{
-			void operator()(DataContainerAddressAssemble<PackageData> &all_pkg_data,
-							DataContainerAddressAssemble<PackageDataAddress> &all_pkg_data_addrs);
-		};
-		DataAssembleOperation<initializePackageDataAddress> initialize_pkg_data_addrs_;
-
-		/** set the initial package data address within a derived class constructor */
-		template <typename DataType>
-		struct initializeExtraPackageDataAddress
+		struct initializeAllPackageDataAddress
 		{
 			void operator()(DataContainerAssemble<PackageData> &all_pkg_data,
 							DataContainerAssemble<PackageDataAddress> &all_pkg_data_addrs);
 		};
-		DataAssembleOperation<initializeExtraPackageDataAddress> initialize_extra_pkg_data_addrs_;
-
-		/** assign address for a package data when the package is an inner one */
-		template <typename DataType>
-		struct assignPackageDataAddress
-		{
-			void operator()(DataContainerAddressAssemble<PackageDataAddress> &all_pkg_data_addrs,
-							const Vecu &addrs_index,
-							DataContainerAddressAssemble<PackageData> &all_pkg_data,
-							const Vecu &data_index);
-		};
-		DataAssembleOperation<assignPackageDataAddress> assign_pkg_data_addrs_;
+		DataAssembleOperation<initializeAllPackageDataAddress> initialize_all_pkg_data_addrs_;
 
 		/** assign address for extra package data when the package is an inner one */
 		template <typename DataType>
-		struct assignExtraPackageDataAddress
+		struct AssignAllPackageDataAddress
 		{
 			void operator()(DataContainerAssemble<PackageDataAddress> &all_pkg_data_addrs,
 							const Vecu &addrs_index,
 							DataContainerAssemble<PackageData> &all_pkg_data,
 							const Vecu &data_index);
 		};
-		DataAssembleOperation<assignExtraPackageDataAddress> assign_extra_pkg_data_addrs_;
+		DataAssembleOperation<AssignAllPackageDataAddress> assign_all_pkg_data_addrs_;
 
 		/** allocate memory for extra package data when the package is an inner one */
 		template <typename DataType>
-		struct ExtraVariablesAllocation
+		struct AllVariablesAllocation
 		{
-			void operator()(DataContainerAssemble<PackageData> &extra_pkg_data,
-							DataContainerAssemble<PackageDataAddress> &extra_pkg_data_addrs,
-							const DiscreteVariableAssemble &extra_variables)
+			void operator()(DataContainerAssemble<PackageData> &all_pkg_data,
+							DataContainerAssemble<PackageDataAddress> &all_pkg_data_addrs,
+							const DiscreteVariableAssemble &all_variables)
 			{
 				constexpr int type_index = DataTypeIndex<DataType>::value;
-				size_t total_variables = std::get<type_index>(extra_variables).size();
-				std::get<type_index>(extra_pkg_data).resize(total_variables);
-				std::get<type_index>(extra_pkg_data_addrs).resize(total_variables);
+				size_t total_variables = std::get<type_index>(all_variables).size();
+				std::get<type_index>(all_pkg_data).resize(total_variables);
+				std::get<type_index>(all_pkg_data_addrs).resize(total_variables);
 			};
 		};
-		DataAssembleOperation<ExtraVariablesAllocation> allocate_extra_variables_;
+		DataAssembleOperation<AllVariablesAllocation> allocate_all_variables_;
 
 	public:
 		void initializeSingularDataAddress()
 		{
-			initialize_pkg_data_addrs_(all_pkg_data_, all_pkg_data_addrs_);
-			initialize_extra_pkg_data_addrs_(extra_pkg_data_, extra_pkg_data_addrs_);
+			initialize_all_pkg_data_addrs_(all_pkg_data_, all_pkg_data_addrs_);
 		};
 
 		void assignAllPackageDataAddress(const Vecu &addrs_index, GridDataPackage *src_pkg, const Vecu &data_index)
 		{
-			assign_pkg_data_addrs_(all_pkg_data_addrs_, addrs_index, src_pkg->all_pkg_data_, data_index);
-			assign_extra_pkg_data_addrs_(extra_pkg_data_addrs_, addrs_index, src_pkg->extra_pkg_data_, data_index);
+			assign_all_pkg_data_addrs_(all_pkg_data_addrs_, addrs_index, src_pkg->all_pkg_data_, data_index);
 		};
 
-		void allocateExtraVariables(const DiscreteVariableAssemble &extra_variables)
+		void allocateAllVariables(const DiscreteVariableAssemble &all_variables)
 		{
-			allocate_extra_variables_(extra_pkg_data_, extra_pkg_data_addrs_, extra_variables);
+			allocate_all_variables_(all_pkg_data_, all_pkg_data_addrs_, all_variables);
 		};
 	};
 
@@ -327,7 +289,7 @@ namespace SPH
 			const InitializeSingularData &initialize_singular_data)
 		{
 			GridDataPackageType *new_data_pkg = data_pkg_pool_.malloc();
-			new_data_pkg->allocateExtraVariables(all_variables);
+			new_data_pkg->allocateAllVariables(all_variables);
 			initialize_singular_data(new_data_pkg);
 			new_data_pkg->initializeSingularDataAddress();
 			singular_data_pkgs_addrs_.push_back(new_data_pkg);
@@ -342,7 +304,7 @@ namespace SPH
 			mutex_my_pool.lock();
 			GridDataPackageType *new_data_pkg = data_pkg_pool_.malloc();
 			mutex_my_pool.unlock();
-			new_data_pkg->allocateExtraVariables(all_variables);
+			new_data_pkg->allocateAllVariables(all_variables);
 			Vecd cell_position = CellPositionFromIndex(cell_index);
 			Vecd pkg_lower_bound = GridPositionFromCellPosition(cell_position);
 			new_data_pkg->initializePackageGeometry(pkg_lower_bound, data_spacing_);

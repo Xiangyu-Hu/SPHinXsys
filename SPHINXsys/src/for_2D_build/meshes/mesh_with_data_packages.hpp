@@ -58,21 +58,6 @@ namespace SPH
 	template <int PKG_SIZE, int ADDRS_BUFFER>
 	template <typename InDataType, typename OutDataType>
 	void GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::
-		computeGradient(PackageDataAddress<InDataType> &in_pkg_data_addrs,
-						PackageDataAddress<OutDataType> out_pkg_data_addrs, Real dt)
-	{
-		for (int i = 1; i != pkg_size + 1; ++i)
-			for (int j = 1; j != pkg_size + 1; ++j)
-			{
-				Real dphidx = (*in_pkg_data_addrs[i + 1][j] - *in_pkg_data_addrs[i - 1][j]);
-				Real dphidy = (*in_pkg_data_addrs[i][j + 1] - *in_pkg_data_addrs[i][j - 1]);
-				*out_pkg_data_addrs[i][j] = 0.5 * Vecd(dphidx, dphidy) / grid_spacing_;
-			}
-	}
-	//=================================================================================================//
-	template <int PKG_SIZE, int ADDRS_BUFFER>
-	template <typename InDataType, typename OutDataType>
-	void GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::
 		computeGradient(const DiscreteVariable<InDataType> &in_variable,
 						const DiscreteVariable<OutDataType> &out_variable)
 	{
@@ -98,41 +83,22 @@ namespace SPH
 		for (int i = 0; i != pkg_size; ++i)
 			for (int j = 0; j != pkg_size; ++j)
 			{
-				Vec2d position = DataLowerBound() + Vec2d(i, j) * grid_spacing_;
+				Vec2d position = DataPosition(Vec2d(i, j));
 				pkg_data[i][j] = function_by_position(position);
 			}
 	}
 	//=================================================================================================//
 	template <int PKG_SIZE, int ADDRS_BUFFER>
 	template <typename DataType>
-	void GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::initializePackageDataAddress<DataType>::
-	operator()(DataContainerAddressAssemble<PackageData> &all_pkg_data,
-			   DataContainerAddressAssemble<PackageDataAddress> &all_pkg_data_addrs)
+	void GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::initializeAllPackageDataAddress<DataType>::
+	operator()(DataContainerAssemble<PackageData> &all_pkg_data,
+			   DataContainerAssemble<PackageDataAddress> &all_pkg_data_addrs)
 	{
 		constexpr int type_index = DataTypeIndex<DataType>::value;
 		for (size_t l = 0; l != std::get<type_index>(all_pkg_data).size(); ++l)
 		{
-			PackageData<DataType> &pkg_data = *std::get<type_index>(all_pkg_data)[l];
-			PackageDataAddress<DataType> &pkg_data_addrs = *std::get<type_index>(all_pkg_data_addrs)[l];
-			for (int i = 0; i != pkg_addrs_size; ++i)
-				for (int j = 0; j != pkg_addrs_size; ++j)
-				{
-					pkg_data_addrs[i][j] = &pkg_data[0][0];
-				}
-		}
-	}
-	//=================================================================================================//
-	template <int PKG_SIZE, int ADDRS_BUFFER>
-	template <typename DataType>
-	void GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::initializeExtraPackageDataAddress<DataType>::
-	operator()(DataContainerAssemble<PackageData> &extra_pkg_data,
-			   DataContainerAssemble<PackageDataAddress> &extra_pkg_data_addrs)
-	{
-		constexpr int type_index = DataTypeIndex<DataType>::value;
-		for (size_t l = 0; l != std::get<type_index>(extra_pkg_data).size(); ++l)
-		{
-			PackageData<DataType> &pkg_data = std::get<type_index>(extra_pkg_data)[l];
-			PackageDataAddress<DataType> &pkg_data_addrs = std::get<type_index>(extra_pkg_data_addrs)[l];
+			PackageData<DataType> &pkg_data = std::get<type_index>(all_pkg_data)[l];
+			PackageDataAddress<DataType> &pkg_data_addrs = std::get<type_index>(all_pkg_data_addrs)[l];
 			for (int i = 0; i != pkg_addrs_size; ++i)
 				for (int j = 0; j != pkg_addrs_size; ++j)
 				{
@@ -159,34 +125,17 @@ namespace SPH
 	//=================================================================================================//
 	template <int PKG_SIZE, int ADDRS_BUFFER>
 	template <typename DataType>
-	void GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::assignPackageDataAddress<DataType>::
-	operator()(DataContainerAddressAssemble<PackageDataAddress> &all_pkg_data_addrs,
+	void GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::AssignAllPackageDataAddress<DataType>::
+	operator()(DataContainerAssemble<PackageDataAddress> &all_pkg_data_addrs,
 			   const Vecu &addrs_index,
-			   DataContainerAddressAssemble<PackageData> &all_pkg_data,
+			   DataContainerAssemble<PackageData> &all_pkg_data,
 			   const Vecu &data_index)
 	{
 		constexpr int type_index = DataTypeIndex<DataType>::value;
 		for (size_t l = 0; l != std::get<type_index>(all_pkg_data).size(); ++l)
 		{
-			PackageData<DataType> &pkg_data = *std::get<type_index>(all_pkg_data)[l];
-			PackageDataAddress<DataType> &pkg_data_addrs = *std::get<type_index>(all_pkg_data_addrs)[l];
-			pkg_data_addrs[addrs_index[0]][addrs_index[1]] = &pkg_data[data_index[0]][data_index[1]];
-		}
-	}
-	//=================================================================================================//
-	template <int PKG_SIZE, int ADDRS_BUFFER>
-	template <typename DataType>
-	void GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::assignExtraPackageDataAddress<DataType>::
-	operator()(DataContainerAssemble<PackageDataAddress> &extra_pkg_data_addrs,
-			   const Vecu &addrs_index,
-			   DataContainerAssemble<PackageData> &extra_pkg_data,
-			   const Vecu &data_index)
-	{
-		constexpr int type_index = DataTypeIndex<DataType>::value;
-		for (size_t l = 0; l != std::get<type_index>(extra_pkg_data).size(); ++l)
-		{
-			PackageData<DataType> &pkg_data = std::get<type_index>(extra_pkg_data)[l];
-			PackageDataAddress<DataType> &pkg_data_addrs = std::get<type_index>(extra_pkg_data_addrs)[l];
+			PackageData<DataType> &pkg_data = std::get<type_index>(all_pkg_data)[l];
+			PackageDataAddress<DataType> &pkg_data_addrs = std::get<type_index>(all_pkg_data_addrs)[l];
 			pkg_data_addrs[addrs_index[0]][addrs_index[1]] = &pkg_data[data_index[0]][data_index[1]];
 		}
 	}
