@@ -36,8 +36,8 @@ namespace SPH
 	//=================================================================================================//
 	LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size,
 					   Shape &shape, SPHAdaptation &sph_adaptation)
-		: MeshWithGridDataPackages<BaseLevelSet, GridDataPackage<4, 1>>(
-			  tentative_bounds, data_spacing, buffer_size, shape, sph_adaptation),
+		: MeshWithGridDataPackages<GridDataPackage<4, 1>>(tentative_bounds, data_spacing, buffer_size),
+		  BaseLevelSet(shape, sph_adaptation),
 		  global_h_ratio_(sph_adaptation.ReferenceSpacing() / data_spacing),
 		  phi_(all_variables_, "Levelset"),
 		  near_interface_id_(all_variables_, "NearInterfaceID"),

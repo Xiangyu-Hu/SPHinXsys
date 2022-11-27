@@ -149,9 +149,9 @@ namespace SPH
 		return average * 0.125;
 	}
 	//=================================================================================================//
-	template <class MeshFieldType, class GridDataPackageType>
+	template <class GridDataPackageType>
 	template <typename DataType>
-	DataType MeshWithGridDataPackages<MeshFieldType, GridDataPackageType>::
+	DataType MeshWithGridDataPackages<GridDataPackageType>::
 		DataValueFromGlobalIndex(const DiscreteVariable<DataType> &discrete_variable,
 								 const Vecu &global_grid_index)
 	{
@@ -167,8 +167,8 @@ namespace SPH
 		return data[local_data_index[0]][local_data_index[1]][local_data_index[2]];
 	}
 	//=================================================================================================//
-	template <class MeshFieldType, class GridDataPackageType>
-	void MeshWithGridDataPackages<MeshFieldType, GridDataPackageType>::
+	template <class GridDataPackageType>
+	void MeshWithGridDataPackages<GridDataPackageType>::
 		initializePackageAddressesInACell(const Vecu &cell_index)
 	{
 		int i = (int)cell_index[0];
@@ -194,35 +194,35 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	template <class MeshFieldType, class GridDataPackageType>
-	void MeshWithGridDataPackages<MeshFieldType, GridDataPackageType>::allocateMeshDataMatrix()
+	template <class GridDataPackageType>
+	void MeshWithGridDataPackages<GridDataPackageType>::allocateMeshDataMatrix()
 	{
 		Allocate3dArray(data_pkg_addrs_, number_of_cells_);
 	}
 	//=================================================================================================//
-	template <class MeshFieldType, class GridDataPackageType>
-	void MeshWithGridDataPackages<MeshFieldType, GridDataPackageType>::deleteMeshDataMatrix()
+	template <class GridDataPackageType>
+	void MeshWithGridDataPackages<GridDataPackageType>::deleteMeshDataMatrix()
 	{
 		Delete3dArray(data_pkg_addrs_, number_of_cells_);
 	}
 	//=================================================================================================//
-	template <class MeshFieldType, class GridDataPackageType>
-	void MeshWithGridDataPackages<MeshFieldType, GridDataPackageType>::
+	template <class GridDataPackageType>
+	void MeshWithGridDataPackages<GridDataPackageType>::
 		assignDataPackageAddress(const Vecu &cell_index, GridDataPackageType *data_pkg)
 	{
 		data_pkg_addrs_[cell_index[0]][cell_index[1]][cell_index[2]] = data_pkg;
 	}
 	//=================================================================================================//
-	template <class MeshFieldType, class GridDataPackageType>
-	GridDataPackageType *MeshWithGridDataPackages<MeshFieldType, GridDataPackageType>::
+	template <class GridDataPackageType>
+	GridDataPackageType *MeshWithGridDataPackages<GridDataPackageType>::
 		DataPackageFromCellIndex(const Vecu &cell_index)
 	{
 		return data_pkg_addrs_[cell_index[0]][cell_index[1]][cell_index[2]];
 	}
 	//=================================================================================================//
-	template <class MeshFieldType, class GridDataPackageType>
+	template <class GridDataPackageType>
 	template <class DataType, typename PackageDataAddressType, PackageDataAddressType GridDataPackageType::*MemPtr>
-	DataType MeshWithGridDataPackages<MeshFieldType, GridDataPackageType>::probeMesh(const Vecd &position)
+	DataType MeshWithGridDataPackages<GridDataPackageType>::probeMesh(const Vecd &position)
 	{
 		Vecu grid_index = CellIndexFromPosition(position);
 		size_t i = grid_index[0];
@@ -235,9 +235,9 @@ namespace SPH
 										  : *pkg_data_addrs[0][0][0];
 	}
 	//=================================================================================================//
-	template <class MeshFieldType, class GridDataPackageType>
+	template <class GridDataPackageType>
 	template <class DataType>
-	DataType MeshWithGridDataPackages<MeshFieldType, GridDataPackageType>::
+	DataType MeshWithGridDataPackages<GridDataPackageType>::
 		probeMesh(const DiscreteVariable<DataType> &discrete_variable, const Vecd &position)
 	{
 		Vecu grid_index = CellIndexFromPosition(position);

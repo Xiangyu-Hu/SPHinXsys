@@ -241,8 +241,8 @@ namespace SPH
 	 * All these data packages are indexed by a concurrent vector inner_data_pkgs_.
 	 * Note that a data package should be not near the mesh bound, otherwise one will encounter the error "out of range".
 	 */
-	template <class MeshFieldType, class GridDataPackageType>
-	class MeshWithGridDataPackages : public MeshFieldType, public Mesh
+	template <class GridDataPackageType>
+	class MeshWithGridDataPackages : public Mesh
 	{
 	public:
 		MyMemoryPool<GridDataPackageType> data_pkg_pool_;	   /**< memory pool for all packages in the mesh. */
@@ -250,9 +250,8 @@ namespace SPH
 		ConcurrentVec<GridDataPackageType *> inner_data_pkgs_; /**< Inner data packages which is able to carry out spatial operations. */
 
 		template <typename... Args>
-		explicit MeshWithGridDataPackages(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size, Args &&...args)
-			: MeshFieldType(std::forward<Args>(args)...),
-			  Mesh(tentative_bounds, GridDataPackageType::pkg_size * data_spacing, buffer_size),
+		explicit MeshWithGridDataPackages(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size)
+			: Mesh(tentative_bounds, GridDataPackageType::pkg_size * data_spacing, buffer_size),
 			  data_spacing_(data_spacing),
 			  global_mesh_(this->mesh_lower_bound_ + Vecd(data_spacing) * 0.5, data_spacing, this->number_of_cells_ * pkg_size)
 		{

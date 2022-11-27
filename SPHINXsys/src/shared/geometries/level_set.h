@@ -69,7 +69,8 @@ namespace SPH
 	 * but within the data package, the data is grid-based.
 	 * Note that the level set data is initialized after the constructor.
 	 */
-	class LevelSet : public MeshWithGridDataPackages<BaseLevelSet, GridDataPackage<4, 1>>
+	class LevelSet : public MeshWithGridDataPackages<GridDataPackage<4, 1>>,
+					 public BaseLevelSet
 	{
 	public:
 		typedef GridDataPackage<4, 1> LevelSetDataPackage;
