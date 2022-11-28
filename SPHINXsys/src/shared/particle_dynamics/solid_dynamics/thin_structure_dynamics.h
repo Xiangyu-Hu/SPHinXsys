@@ -59,7 +59,7 @@ namespace SPH
 			StdLargeVec<Vecd> &n0_, &n_, &pseudo_n_, &pos0_;
 			StdLargeVec<Matd> &transformation_matrix_;
 		};
-inverse_F_T_
+		
 		/**
 		 * @class ShellAcousticTimeStepSize
 		 * @brief Computing the acoustic time step size for shell
