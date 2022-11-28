@@ -246,8 +246,9 @@ namespace SPH
 		//=================================================================================================//
 		Mat2d getCorrectionMatrix(const Mat2d &local_deformation_part_one)
 		{
+			Real one_over_local_deformation = 1.0 / local_deformation_part_one(0,0);
 			return Mat2d{
-							{1.0 / local_deformation_part_one(0,0), 0},
+							{one_over_local_deformation, 0},
 							{0,0},
 						};
 		}

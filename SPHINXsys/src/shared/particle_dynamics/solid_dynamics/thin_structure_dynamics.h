@@ -198,19 +198,7 @@ namespace SPH
 			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
-			StdLargeVec<Vecd> &pos_, &pos0_;
-			StdLargeVec<Vecd> &n_;
-			StdLargeVec<Vecd> &vel_, &acc_;
-			StdLargeVec<Vecd> &rotation_, &angular_vel_, &dangular_vel_dt_;
-			StdLargeVec<Vecd> &pseudo_n_, &dpseudo_n_dt_;
-			virtual Vecd getDisplacement(const Vecd &pos_0, const Vecd &pos_n) { return pos_0; };
-			virtual Vecd getVelocity(const Vecd &pos_0, const Vecd &pos_n, const Vecd &vel_n) { return Vecd::Zero(); };
-			virtual Vecd GetAcceleration(const Vecd &pos_0, const Vecd &pos_n, const Vecd &acc) { return Vecd::Zero(); };
-			virtual Vecd GetRotationAngle(const Vecd &pos_0, const Vecd &pos_n, const Vecd &rotation_angles_0_) { return rotation_angles_0_; };
-			virtual Vecd GetAngularVelocity(const Vecd &pos_0, const Vecd &pos_n, const Vecd &angular_vel_) { return Vecd::Zero(); };
-			virtual Vecd GetAngularAcceleration(const Vecd &pos_0, const Vecd &pos_n, const Vecd &dangular_vel_dt_) { return Vecd::Zero(); };
-			virtual Vecd GetPseudoNormal(const Vecd &pos_0, const Vecd &pos_n, const Vecd &n_0) { return n_0; };
-			virtual Vecd GetPseudoNormalChangeRate(const Vecd &pos_0, const Vecd &pos_n, const Vecd &dpseudo_normal_dt_) { return Vecd::Zero(); };
+			StdLargeVec<Vecd> &vel_, &angular_vel_;
 		};
 
 		/**@class ConstrainShellBodyRegionAlongAxis
