@@ -1,8 +1,3 @@
-/**
- * @file 	general_life_time_dynamics.cpp
- * @author	Xiangyu Hu
- */
-
 #include "general_life_time_dynamics.h"
 
 #include "base_particles.hpp"

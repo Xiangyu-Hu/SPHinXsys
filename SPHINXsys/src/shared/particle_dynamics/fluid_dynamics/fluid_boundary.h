@@ -24,7 +24,7 @@
  * @file 	fluid_boundary.h
  * @brief 	Here, we define the boundary condition classes for fluid dynamics.
  * @details The boundary conditions very often based on different types of buffers.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef FLUID_BOUNDARY_H

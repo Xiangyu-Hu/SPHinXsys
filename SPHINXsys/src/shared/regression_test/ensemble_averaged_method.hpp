@@ -83,7 +83,7 @@ namespace SPH
 	};
 	//=================================================================================================//
 	template<class ObserveMethodType>
-	int RegressionTestEnsembleAveraged<ObserveMethodType>::compareParameter(string par_name, 
+	int RegressionTestEnsembleAveraged<ObserveMethodType>::compareParameter(std::string par_name, 
 		DoubleVec<Real> &parameter, DoubleVec<Real> &parameter_new, Real &threshold)
 	{
 		int count = 0;
@@ -95,15 +95,15 @@ namespace SPH
 				if (relative_value_ > threshold)
 				{
 					std::cout << par_name << ": " << this->quantity_name_ << "[" << observation_index << "] in " << this->element_tag_[snapshot_index]
-						<< " is not converged, and difference is " << relative_value_ << endl;
+						<< " is not converged, and difference is " << relative_value_ << std::endl;
 					count++;
 				}
 			}	
 		return count;
-	};
+	}
 	////=================================================================================================//
 	template<class ObserveMethodType>
-	int RegressionTestEnsembleAveraged<ObserveMethodType>::compareParameter(string par_name,
+	int RegressionTestEnsembleAveraged<ObserveMethodType>::compareParameter(std::string par_name,
 		DoubleVec<Vecd> &parameter, DoubleVec<Vecd> &parameter_new, Vecd &threshold)
 	{
 		int count = 0;
@@ -121,10 +121,10 @@ namespace SPH
 					}
 				}
 		return count;
-	};
+	}
 	////=================================================================================================// 
 	template<class ObserveMethodType>
-	int RegressionTestEnsembleAveraged<ObserveMethodType>::compareParameter(string par_name,
+	int RegressionTestEnsembleAveraged<ObserveMethodType>::compareParameter(std::string par_name,
 		DoubleVec<Matd> &parameter, DoubleVec<Matd> &parameter_new, Matd &threshold)
 	{
 		int count = 0;
@@ -143,7 +143,7 @@ namespace SPH
 						}
 					}
 		return count;
-	};
+	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
 	int RegressionTestEnsembleAveraged<ObserveMethodType>::testNewResult(int diff, DoubleVec<Real> &current_result,
@@ -159,13 +159,13 @@ namespace SPH
 				if (relative_value_ > 0.01)
 				{
 					std::cout << this->quantity_name_ << "[" << observation_index << "] in " << this->element_tag_[snapshot_index] << " is beyond the exception, and difference is "
-						<< relative_value_ << endl;
+						<< relative_value_ << std::endl;
 					count++;
 				}
 			}
 		}
 		return count;
-	};
+	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
 	int RegressionTestEnsembleAveraged<ObserveMethodType>::testNewResult(int diff, DoubleVec<Vecd> &current_result,
@@ -194,14 +194,14 @@ namespace SPH
 			}	
 		}
 		return count;
-	};
+	}
 	//=================================================================================================// 
 	template<class ObserveMethodType>
 	int RegressionTestEnsembleAveraged<ObserveMethodType>::testNewResult(int diff, DoubleVec<Matd> &current_result,
 		DoubleVec<Matd> &meanvalue, DoubleVec<Matd> &variance)
 	{
 		int count = 0;
-		std::cout << "The current length difference is " << diff << "." << endl;
+		std::cout << "The current length difference is " << diff << "." << std::endl;
 		for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
 		{
 			for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
@@ -224,7 +224,7 @@ namespace SPH
 			}	
 		}
 		return count;
-	};
+	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
 	void RegressionTestEnsembleAveraged<ObserveMethodType>::setupAndCorrection()
@@ -283,7 +283,7 @@ namespace SPH
 			meanvalue_ = temp;
 			variance_ = temp;
 		}
-	};
+	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
 	void RegressionTestEnsembleAveraged<ObserveMethodType>::readMeanVarianceFromXml()
@@ -300,7 +300,7 @@ namespace SPH
 					variance_element_, observation_index, this->variance_, this->quantity_name_);
 			}
 		}
-	};
+	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
 	void RegressionTestEnsembleAveraged<ObserveMethodType>::updateMeanVariance()
@@ -324,7 +324,7 @@ namespace SPH
 																	  this->current_result_[snapshot_index][observation_index] ) / this->number_of_run_;
 		/** Update the variance of the result. */
 		calculateNewVariance(this->result_, meanvalue_new_, variance_, variance_new_);
-	};
+	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
 	void RegressionTestEnsembleAveraged<ObserveMethodType>::writeMeanVarianceToXml()
@@ -338,7 +338,7 @@ namespace SPH
 		this->xmlmemory_io_.writeDataToXmlMemory(this->mean_variance_xml_engine_out_, variance_element_, this->variance_new_,
 			SMIN(this->snapshot_, this->number_of_snapshot_old_), this->observation_, this->quantity_name_, this->element_tag_);
 		this->mean_variance_xml_engine_out_.writeToXmlFile(this->mean_variance_filefullpath_);
-	};
+	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
 	bool RegressionTestEnsembleAveraged<ObserveMethodType>::compareMeanVariance()
@@ -349,14 +349,14 @@ namespace SPH
 		count_not_converged_v = compareParameter("variance", variance_, variance_new_, this->threshold_variance_);
 		if (count_not_converged_m == 0)
 		{
-			std::cout << "The meanvalue of " << this->quantity_name_ << " are converged now." << endl;
+			std::cout << "The meanvalue of " << this->quantity_name_ << " are converged now." << std::endl;
 			if (count_not_converged_v == 0)
 			{
 				if (this->label_for_repeat_ == 4)
 				{
 					this->converged = "true";
 					this->label_for_repeat_++;
-					std::cout << "The meanvalue and variance of " << this->quantity_name_ << " are converged enough times, and run will stop now." << endl;
+					std::cout << "The meanvalue and variance of " << this->quantity_name_ << " are converged enough times, and run will stop now." << std::endl;
 					return true;
 				}
 				else
@@ -364,26 +364,26 @@ namespace SPH
 					this->converged = "false";
 					this->label_for_repeat_++;
 					std::cout << "The variance of " << this->quantity_name_ << " are also converged, and this is the " << this->label_for_repeat_
-						<< " times. They should be converged more times to be stable." << endl;
+						<< " times. They should be converged more times to be stable." << std::endl;
 					return false;
 				}
 			}
-			else if (count_not_converged_v != 0)
+			else
 			{
 				this->converged = "false";
 				this->label_for_repeat_ = 0;
-				std::cout << "The variance of " << this->quantity_name_ << " are not converged " << count_not_converged_v << " times." << endl;
+				std::cout << "The variance of " << this->quantity_name_ << " are not converged " << count_not_converged_v << " times." << std::endl;
 				return false;
 			};
 		}
-		else if (count_not_converged_m != 0)
+		else
 		{
 			this->converged = "false";
 			this->label_for_repeat_ = 0;
-			std::cout << "The meanvalue of " << this->quantity_name_ << " are not converged " << count_not_converged_m << " times." << endl;
+			std::cout << "The meanvalue of " << this->quantity_name_ << " are not converged " << count_not_converged_m << " times." << std::endl;
 			return false;
 		}
-	};
+	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
 	void RegressionTestEnsembleAveraged<ObserveMethodType>::resultTest()
@@ -404,13 +404,13 @@ namespace SPH
 		}
 		/* draw the conclusion. */
 		if (test_wrong == 0)
-			std::cout << "The result of " << this->quantity_name_ << " are correct based on the ensemble averaged regression test!" << endl;
+			std::cout << "The result of " << this->quantity_name_ << " are correct based on the ensemble averaged regression test!" << std::endl;
 		else
 		{
-			std::cout << "There are " << test_wrong << " snapshots are not within the expected range." << endl;
-			std::cout << "Please try again. If it still post this conclusion, the result is not correct!" << endl;
+			std::cout << "There are " << test_wrong << " snapshots are not within the expected range." << std::endl;
+			std::cout << "Please try again. If it still post this conclusion, the result is not correct!" << std::endl;
 			exit(1);
 		}
-	};
+	}
 	//=================================================================================================//
 }

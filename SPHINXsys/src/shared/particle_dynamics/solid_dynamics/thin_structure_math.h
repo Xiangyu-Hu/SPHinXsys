@@ -83,6 +83,10 @@ namespace SPH
 		/** get the corrected Eulerian Almansi strain tensor according to plane stress problem. */
 		Mat2d getCorrectedAlmansiStrain(const Mat2d &current_local_almansi_strain, const Real &nu_);
 		Mat3d getCorrectedAlmansiStrain(const Mat3d &current_local_almansi_strain, const Real &nu_);
+
+		/** get the correction matrix. */
+		Mat2d getCorrectionMatrix(const Mat2d &local_deformation_part_one);
+		Mat3d getCorrectionMatrix(const Mat3d &local_deformation_part_one);
 	}
 }
 #endif //THIN_STRUCTURE_MATH_H

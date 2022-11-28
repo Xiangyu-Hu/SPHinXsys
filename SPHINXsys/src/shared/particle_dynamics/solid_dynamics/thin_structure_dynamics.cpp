@@ -126,6 +126,10 @@ namespace SPH
 			/** Note that, only three-point and five-point Gaussian quadrature rules are defined. */
 			switch (number_of_gaussian_points)
 			{
+			case 1:
+				gaussian_point_ = one_gaussian_point_;
+				gaussian_weight_ = one_gaussian_weight_;
+				break;
 			case 5:
 				gaussian_point_ = five_gaussian_points_;
 				gaussian_weight_ = five_gaussian_weights_;
@@ -238,7 +242,9 @@ namespace SPH
 									inner_neighborhood.dW_ijV_j_[n] * thickness_[index_i];
 
 					Vecd pseudo_n_jump = getLinearVariableJump(e_ij, r_ij, pseudo_n_[index_i] - n0_[index_i],
-															   F_bending_[index_i], pseudo_n_[index_j] - n0_[index_j], F_bending_[index_j]);
+						~transformation_matrix_[index_i] * F_bending_[index_i] * transformation_matrix_[index_i],
+						pseudo_n_[index_j] - n0_[index_j],
+						~transformation_matrix_[index_j] * F_bending_[index_j] * transformation_matrix_[index_j]);
 					Vecd rotation_jump = getRotationJump(pseudo_n_jump, transformation_matrix_[index_i]);
 					pseudo_normal_acceleration += hourglass_control_factor_ / 3.0 * weight * Dimensions * r_ij * G0_ * rotation_jump * 
 												  inner_neighborhood.dW_ijV_j_[n] * thickness_[index_i];
