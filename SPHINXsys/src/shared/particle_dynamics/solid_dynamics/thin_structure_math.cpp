@@ -244,5 +244,21 @@ namespace SPH
 			return corrected_almansi_strain;
 		}
 		//=================================================================================================//
+		Mat2d getCorrectionMatrix(const Mat2d &local_deformation_part_one)
+		{
+			Real one_over_local_deformation = 1.0 / local_deformation_part_one(0,0);
+			return Mat2d{
+							{one_over_local_deformation, 0},
+							{0,0},
+						};
+		}
+		//=================================================================================================//
+		Mat3d getCorrectionMatrix(const Mat3d &local_deformation_part_one)
+		{
+			Mat3d correction_matrix = Mat3d::Zero();
+			correction_matrix.block<2,2>(0,0) = local_deformation_part_one.block<2,2>(0,0).inverse();
+			return correction_matrix;
+		}
+		//=================================================================================================//
 	}
 }

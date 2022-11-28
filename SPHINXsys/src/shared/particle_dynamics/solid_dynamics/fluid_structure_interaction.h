@@ -23,7 +23,7 @@
 /**
  * @file 	fluid_structure_interaction.h
  * @brief 	Here, we define the algorithm classes for fluid structure interaction.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef FLUID_STRUCTURE_INTERACTION_H

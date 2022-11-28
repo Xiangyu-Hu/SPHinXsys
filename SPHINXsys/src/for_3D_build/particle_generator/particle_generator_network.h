@@ -24,7 +24,7 @@
  * @file 	particle_generator_network.h
  * @brief 	This is a class of particle generator, which generates particles
  * 			with in network or tree form.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef PARTICLE_GENERATOR_NETWORK_H

@@ -59,7 +59,7 @@ namespace SPH
 			StdLargeVec<Vecd> &n0_, &n_, &pseudo_n_, &pos0_;
 			StdLargeVec<Matd> &transformation_matrix_;
 		};
-
+		
 		/**
 		 * @class ShellAcousticTimeStepSize
 		 * @brief Computing the acoustic time step size for shell
@@ -160,6 +160,8 @@ namespace SPH
 			const Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(zero_vec);
 			const Real shear_correction_factor_ = 5.0 / 6.0;
 
+			const StdVec<Real> one_gaussian_point_ = { 0.0 };
+			const StdVec<Real> one_gaussian_weight_ = { 2.0 };
 			const StdVec<Real> three_gaussian_points_ = {0.0, 0.7745966692414834, -0.7745966692414834};
 			const StdVec<Real> three_gaussian_weights_ = {0.8888888888888889, 0.5555555555555556, 0.5555555555555556};
 			const StdVec<Real> five_gaussian_points_ = {0.0, 0.5384693101056831, -0.5384693101056831, 0.9061798459386640, -0.9061798459386640};
@@ -187,7 +189,6 @@ namespace SPH
 
 		/**@class ConstrainShellBodyRegion
 		 * @brief Fix the position and angle of a shell body part.
-		 * Note that the average values for FSI are prescribed also.
 		 */
 		class ConstrainShellBodyRegion : public LocalDynamics, public ShellDataSimple
 		{
@@ -197,19 +198,7 @@ namespace SPH
 			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
-			StdLargeVec<Vecd> &pos_, &pos0_;
-			StdLargeVec<Vecd> &n_;
-			StdLargeVec<Vecd> &vel_, &acc_;
-			StdLargeVec<Vecd> &rotation_, &angular_vel_, &dangular_vel_dt_;
-			StdLargeVec<Vecd> &pseudo_n_, &dpseudo_n_dt_;
-			virtual Vecd getDisplacement(const Vecd &pos_0, const Vecd &pos_n) { return pos_0; };
-			virtual Vecd getVelocity(const Vecd &pos_0, const Vecd &pos_n, const Vecd &vel_n) { return Vecd::Zero(); };
-			virtual Vecd GetAcceleration(const Vecd &pos_0, const Vecd &pos_n, const Vecd &acc) { return Vecd::Zero(); };
-			virtual Vecd GetRotationAngle(const Vecd &pos_0, const Vecd &pos_n, const Vecd &rotation_angles_0_) { return rotation_angles_0_; };
-			virtual Vecd GetAngularVelocity(const Vecd &pos_0, const Vecd &pos_n, const Vecd &angular_vel_) { return Vecd::Zero(); };
-			virtual Vecd GetAngularAcceleration(const Vecd &pos_0, const Vecd &pos_n, const Vecd &dangular_vel_dt_) { return Vecd::Zero(); };
-			virtual Vecd GetPseudoNormal(const Vecd &pos_0, const Vecd &pos_n, const Vecd &n_0) { return n_0; };
-			virtual Vecd GetPseudoNormalChangeRate(const Vecd &pos_0, const Vecd &pos_n, const Vecd &dpseudo_normal_dt_) { return Vecd::Zero(); };
+			StdLargeVec<Vecd> &vel_, &angular_vel_;
 		};
 
 		/**@class ConstrainShellBodyRegionAlongAxis

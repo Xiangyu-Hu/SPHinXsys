@@ -149,6 +149,11 @@ namespace SPH
 			void interaction(size_t index_i, Real dt = 0.0);
 			void update(size_t index_i, Real dt = 0.0);
 		};
+		using Integration1stHalf = BaseIntegration1stHalf<NoRiemannSolver>;
+		/** define the mostly used pressure relaxation scheme using Riemann solver */
+		using Integration1stHalfAcousticRiemann = BaseIntegration1stHalf<AcousticRiemannSolver>;
+		using Integration1stHalfHLLCRiemann = BaseIntegration1stHalf<HLLCRiemannSolverInWeaklyCompressibleFluid>;
+		using Integration1stHalfHLLCWithLimiterRiemann = BaseIntegration1stHalf<HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid>;
 
 		using Integration1stHalfHLLCWithLimiterRiemann = BaseIntegration1stHalf<HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid>;
 
@@ -166,7 +171,6 @@ namespace SPH
 			void interaction(size_t index_i, Real dt = 0.0);
 			void update(size_t index_i, Real dt = 0.0);
 		};
-
 		using Integration2ndHalfHLLCWithLimiterRiemann = BaseIntegration2ndHalf<HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid>;
 
 		/**

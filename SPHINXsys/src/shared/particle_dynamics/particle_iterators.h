@@ -102,7 +102,7 @@ namespace SPH
 				local_dynamics_function(particle_indexes[num]);
 			}
 		}
-	};
+	}
 
 	template <class LocalDynamicsFunction>
 	void particle_parallel_for(const ConcurrentIndexesInCells &body_part_cells,
@@ -183,7 +183,7 @@ namespace SPH
 				}
 			}
 		}
-	};
+	}
 
 	template <class LocalDynamicsFunction>
 	void particle_parallel_for_split(SplitCellLists &split_cell_lists,
@@ -241,7 +241,7 @@ namespace SPH
 			temp = operation(temp, local_dynamics_function(i));
 		}
 		return temp;
-	};
+	}
 
 	template <class ReturnType, typename Operation, class LocalDynamicsFunction>
 	ReturnType particle_parallel_reduce(const size_t &all_real_particles, ReturnType temp, Operation &operation,
@@ -273,7 +273,7 @@ namespace SPH
 			temp = operation(temp, local_dynamics_function(body_part_particles[i]));
 		}
 		return temp;
-	};
+	}
 
 	template <class ReturnType, typename Operation, class LocalDynamicsFunction>
 	ReturnType particle_parallel_reduce(const IndexVector &body_part_particles, ReturnType temp, Operation &operation,
@@ -312,7 +312,7 @@ namespace SPH
 		}
 
 		return temp;
-	};
+	}
 
 	template <class ReturnType, typename Operation, class LocalDynamicsFunction>
 	ReturnType particle_parallel_reduce(const ConcurrentIndexesInCells &body_part_cells, ReturnType temp, Operation &operation,
@@ -335,6 +335,6 @@ namespace SPH
 			},
 			[&](const ReturnType &x, const ReturnType &y) -> ReturnType
 			{ return operation(x, y); });
-	};
+	}
 }
 #endif // PARTICLE_ITERATORS_H

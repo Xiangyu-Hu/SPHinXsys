@@ -24,7 +24,7 @@
  * @file 	relax_dynamics.h
  * @brief 	This is the classes of particle relaxation in order to produce body fitted
  * 			initial particle distribution.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef RELAX_DYNAMICS_H
