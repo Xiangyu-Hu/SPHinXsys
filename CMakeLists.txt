@@ -29,11 +29,11 @@ find_package(Simbody CONFIG REQUIRED)
 # find_package(BLAS REQUIRED)
 # find_package(LAPACK CONFIG REQUIRED)
 # target_link_libraries(sphinxsys_core INTERFACE BLAS::BLAS LAPACK::LAPACK) # targets for CMake >= 3.18 
-target_link_libraries(sphinxsys_core INTERFACE SimTKsimbody) # SimTKsimbody = SimTKcommon + SimTKmath
+target_link_libraries(sphinxsys_core INTERFACE SimTKcommon SimTKmath SimTKsimbody)
 target_compile_definitions(sphinxsys_core INTERFACE _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING) # Because of Simbody headers
 
 find_package(Eigen3 CONFIG REQUIRED)
-target_link_libraries (sphinxsys_core INTERFACE Eigen3::Eigen)
+target_link_libraries(sphinxsys_core INTERFACE Eigen3::Eigen)
 
 find_package(TBB CONFIG REQUIRED)
 target_link_libraries(sphinxsys_core INTERFACE TBB::tbb TBB::tbbmalloc $<$<PLATFORM_ID:Windows>:TBB::tbbmalloc_proxy>) 
