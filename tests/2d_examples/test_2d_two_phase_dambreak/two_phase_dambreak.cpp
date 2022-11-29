@@ -36,7 +36,7 @@ int main()
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 	wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
 
-	ProbeBody fluid_observer(sph_system, "FluidObserver");
+	ObserverBody fluid_observer(sph_system, "FluidObserver");
 	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	//----------------------------------------------------------------------
 	//	Define body relation map.

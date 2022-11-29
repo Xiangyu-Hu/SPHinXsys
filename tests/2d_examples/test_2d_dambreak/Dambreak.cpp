@@ -71,7 +71,7 @@ int main(int ac, char *av[])
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 	wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
 
-	ProbeBody fluid_observer(sph_system, "FluidObserver");
+	ObserverBody fluid_observer(sph_system, "FluidObserver");
 	StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
 	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	//----------------------------------------------------------------------

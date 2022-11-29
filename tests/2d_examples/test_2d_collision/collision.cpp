@@ -109,9 +109,9 @@ int main(int ac, char *av[])
 	wall_boundary.defineParticlesAndMaterial<SolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
-	ProbeBody free_ball_observer(sph_system, "FreeBallObserver");
+	ObserverBody free_ball_observer(sph_system, "FreeBallObserver");
 	free_ball_observer.generateParticles<ObserverParticleGenerator>(observation_location_1);
-	ProbeBody damping_ball_observer(sph_system, "DampingBallObserver");
+	ObserverBody damping_ball_observer(sph_system, "DampingBallObserver");
 	damping_ball_observer.generateParticles<ObserverParticleGenerator>(observation_location_2);
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.

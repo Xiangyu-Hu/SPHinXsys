@@ -29,7 +29,7 @@ int main()
 	flap.defineParticlesAndMaterial<SolidParticles, Solid>(rho0_s);
 	flap.generateParticles<ParticleGeneratorLattice>();
 
-	ProbeBody observer(system, "FlapObserver");
+	ObserverBody observer(system, "FlapObserver");
 	observer.generateParticles<FlapObserverParticleGenerator>();
 	//----------------------------------------------------------------------
 	//	Define body relation map.

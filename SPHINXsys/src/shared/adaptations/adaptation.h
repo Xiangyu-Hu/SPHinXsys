@@ -88,11 +88,12 @@ namespace SPH
 		void resetKernel(ConstructorArgs &&...args)
 		{
 			kernel_ptr_.reset(new KernelType(h_ref_, std::forward<ConstructorArgs>(args)...));
-			sigma0_ref_ = computeReferenceNumberDensity(Vecd::Zero());
+			sigma0_ref_ = computeReferenceNumberDensity(zero_vec);
 		};
 
 	protected:
-		Real computeReferenceNumberDensity(Vecd zero);
+		Real computeReferenceNumberDensity(Vec2d zero);
+		Real computeReferenceNumberDensity(Vec3d zero);
 		virtual Real MostRefinedSpacing(Real coarse_particle_spacing, int refinement_level);
 	};
 

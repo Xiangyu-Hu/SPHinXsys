@@ -86,7 +86,7 @@ int main(int ac, char *av[])
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 	wall_boundary.addBodyStateForRecording<Vec3d>("NormalDirection");
 
-	ProbeBody fluid_observer(system, "FluidObserver");
+	ObserverBody fluid_observer(system, "FluidObserver");
 	fluid_observer.generateParticles<WaterObserverParticleGenerator>();
 	//----------------------------------------------------------------------
 	//	Define body relation map.

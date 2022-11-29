@@ -215,7 +215,7 @@ int main()
 	//----------------------------------------------------------------------
 	//	Particle and body creation of gate observer.
 	//----------------------------------------------------------------------
-	ProbeBody gate_observer(system, "Observer");
+	ObserverBody gate_observer(system, "Observer");
 	gate_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
