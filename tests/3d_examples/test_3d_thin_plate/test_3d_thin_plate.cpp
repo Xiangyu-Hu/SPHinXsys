@@ -139,7 +139,7 @@ int main(int ac, char *av[])
 	plate_body.generateParticles<PlateParticleGenerator>();
 
 	/** Define Observer. */
-	ProbeBody plate_observer(system, "PlateObserver");
+	ObserverBody plate_observer(system, "PlateObserver");
 	plate_observer.defineParticlesAndMaterial();
 	plate_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 

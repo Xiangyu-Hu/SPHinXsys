@@ -21,7 +21,7 @@
  *                                                                          *
  * ------------------------------------------------------------------------*/
 /**
- * @file 	probe_body.h
+ * @file 	observer_body.h
  * @brief 	This is the base classes of SPH bodies. The real body is for
  *			that with cell linked list and the fictitious one does not.
  * 			Before the definition of the SPH bodies, the shapes with complex
@@ -33,19 +33,19 @@
  * @author	Chi ZHang and Xiangyu Hu
  */
 
-#ifndef PROBE_BODY_H
-#define PROBE_BODY_H
+#ifndef OBSERVER_BODY_H
+#define OBSERVER_BODY_H
 
 #include "base_body.h"
 
 namespace SPH
 {
-	class ProbeBody : public SPHBody
+	class ObserverBody : public SPHBody
 	{
 	public:
-		ProbeBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr);
-		ProbeBody(SPHSystem &sph_system, const std::string &name);
-		virtual ~ProbeBody(){};
+		ObserverBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr);
+		ObserverBody(SPHSystem &sph_system, const std::string &name);
+		virtual ~ObserverBody(){};
 	};
 }
-#endif // PROBE_BODY_H
+#endif // OBSERVER_BODY_H

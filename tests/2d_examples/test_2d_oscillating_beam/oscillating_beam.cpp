@@ -109,7 +109,7 @@ int main(int ac, char *av[])
 	beam_body.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	beam_body.generateParticles<ParticleGeneratorLattice>();
 
-	ProbeBody beam_observer(system, "BeamObserver");
+	ObserverBody beam_observer(system, "BeamObserver");
 	beam_observer.defineAdaptationRatios(1.15, 2.0);
 	beam_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	//----------------------------------------------------------------------

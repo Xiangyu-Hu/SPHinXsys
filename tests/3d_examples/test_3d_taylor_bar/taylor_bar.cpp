@@ -37,7 +37,7 @@ int main(int ac, char *av[])
 	wall.generateParticles<ParticleGeneratorLattice>();
 
 	/** Define Observer. */
-	ProbeBody my_observer(system, "MyObserver");
+	ObserverBody my_observer(system, "MyObserver");
 	my_observer.generateParticles<ColumnObserverParticleGenerator>();
 
 	/**body relation topology */

@@ -128,7 +128,7 @@ int main()
 	//----------------------------------------------------------------------
 	//	Particle and body creation of fluid observers.
 	//----------------------------------------------------------------------
-	ProbeBody temperature_observer(sph_system, "TemperatureObserver");
+	ObserverBody temperature_observer(sph_system, "TemperatureObserver");
 	temperature_observer.generateParticles<TemperatureObserverParticleGenerator>();
 	//----------------------------------------------------------------------
 	//	Define body relation map.

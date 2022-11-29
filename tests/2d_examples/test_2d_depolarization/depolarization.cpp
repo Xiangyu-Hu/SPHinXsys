@@ -86,7 +86,7 @@ int main()
 		muscle_reaction_model, diffusion_coff, bias_coff, fiber_direction);
 	muscle_body.generateParticles<ParticleGeneratorLattice>();
 
-	ProbeBody voltage_observer(system, "VoltageObserver");
+	ObserverBody voltage_observer(system, "VoltageObserver");
 	voltage_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	//----------------------------------------------------------------------
 	//	Define body relation map.

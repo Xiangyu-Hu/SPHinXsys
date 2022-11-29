@@ -120,7 +120,7 @@ int main(int ac, char *av[])
 	cylinder_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	cylinder_body.generateParticles<CylinderParticleGenerator>();
 	/** Define Observer. */
-	ProbeBody cylinder_observer(system, "CylinderObserver");
+	ObserverBody cylinder_observer(system, "CylinderObserver");
 	cylinder_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 
 	/** Set body contact map

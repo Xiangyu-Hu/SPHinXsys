@@ -77,7 +77,7 @@ int main()
 		ElasticSolidParticles, Muscle>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
 	cantilever_body.generateParticles<ParticleGeneratorLattice>();
 	/** Define Observer. */
-	ProbeBody cantilever_observer(system, "CantileverObserver");
+	ObserverBody cantilever_observer(system, "CantileverObserver");
 	cantilever_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 
 	/** topology */

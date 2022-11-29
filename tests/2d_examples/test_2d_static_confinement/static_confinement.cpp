@@ -117,7 +117,7 @@ int main()
 	/**
 	 * @brief 	Particle and body creation of fluid observer.
 	 */
-	ProbeBody fluid_observer(sph_system, "FluidObserver");
+	ObserverBody fluid_observer(sph_system, "FluidObserver");
 	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	/** topology */
 	InnerRelation water_block_inner(water_block);
