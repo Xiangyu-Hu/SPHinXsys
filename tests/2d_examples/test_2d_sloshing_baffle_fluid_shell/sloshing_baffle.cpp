@@ -63,14 +63,16 @@ int main(int ac, char *av[])
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_max);
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
 	InteractionWithUpdate<fluid_dynamics::DensitySummationComplexWithShell> update_fluid_density_by_summation(water_shell_contact, water_wall_complex);
-	Dynamics1Level<fluid_dynamics::FluidShellIntegration1stHalfRiemannWithWall> fluid_pressure_relaxation(water_wall_contact, water_shell_complex);
-	Dynamics1Level<fluid_dynamics::FluidShellIntegration2ndHalfRiemannWithWall> fluid_density_relaxation(water_wall_contact, water_shell_complex);
+	Dynamics1Level<fluid_dynamics::FluidShellandWallIntegration1stHalfRiemann> fluid_pressure_relaxation(water_wall_contact, water_shell_complex);
+	Dynamics1Level<fluid_dynamics::FluidShellandWallIntegration2ndHalfRiemann> fluid_density_relaxation(water_wall_contact, water_shell_complex);
 	/** Algorithms for solid. */
 	ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> shell_time_step_size(shell_baffle);
 	InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> shell_corrected_configuration(baffle_inner);
 	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> shell_stress_relaxation_first(baffle_inner);
 	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> shell_stress_relaxation_second(baffle_inner);
 	/** FSI */
+	InteractionDynamics<solid_dynamics::FluidViscousForceOnShell> viscous_force_on_shell(baffle_water_contact);
+	InteractionDynamics<solid_dynamics::FluidForceOnShellUpdate> fluid_force_on_shell_update(baffle_water_contact, viscous_force_on_shell);
 	solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(shell_baffle);
 	/** constraint and damping */
 	BoundaryGeometry shell_boundary_geometry(shell_baffle, "BoundaryGeometry");
@@ -150,12 +152,15 @@ int main(int ac, char *av[])
 			fluid_step_initialization.parallel_exec();
 			//update_fluid_density_by_summation.parallel_exec();
 
+			viscous_force_on_shell.parallel_exec();
+
 			Dt = fluid_advection_time_step.parallel_exec();
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
 				/** Fluid relaxation and force computaton. */
 				fluid_pressure_relaxation.parallel_exec(dt);
+				fluid_force_on_shell_update.parallel_exec();
 				fluid_density_relaxation.parallel_exec(dt);
 
 				/** Solid dynamics time stepping. */
@@ -185,7 +190,6 @@ int main(int ac, char *av[])
 					<< "	Dt = " << Dt << "	dt = " << dt << "	dt_s = " << dt_s << "\n";
 			}
 			number_of_iterations++;
-			write_real_body_states_to_vtp.writeToFile();
 
 			/** Update cell linked list and configuration. */
 			water_block.updateCellLinkedList();
@@ -206,6 +210,8 @@ int main(int ac, char *av[])
 			write_fluid_pressure_wall.writeToFile(number_of_iterations);
 
 		}
+		write_real_body_states_to_vtp.writeToFile();
+
 		tick_count t2 = tick_count::now();
 	
 		tick_count t3 = tick_count::now();

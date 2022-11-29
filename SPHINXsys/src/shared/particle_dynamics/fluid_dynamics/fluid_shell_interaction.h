@@ -118,11 +118,11 @@ namespace SPH
 		using FluidShellIntegration1stHalf = BaseFluidShellIntegration1stHalf<Integration1stHalf>;
 		using FluidShellIntegration1stHalfRiemann = BaseFluidShellIntegration1stHalf<Integration1stHalfRiemann>;
 
-		using FluidShellIntegration1stHalfWithWall =
+		using FluidShellandWallIntegration1stHalf =
 			BaseIntegration1stHalfWithWall<FluidShellIntegration1stHalf>;
-		using FluidShellIntegration1stHalfRiemannWithWall =
+		using FluidShellandWallIntegration1stHalfRiemann =
 			BaseIntegration1stHalfWithWall<FluidShellIntegration1stHalfRiemann>;
-		using ExtendFluidShellIntegration1stHalfRiemannWithWall =
+		using ExtendFluidShellandWallIntegration1stHalfRiemann =
 			BaseExtendIntegration1stHalfWithWall<FluidShellIntegration1stHalfRiemann>;
 
 		/**
@@ -143,8 +143,27 @@ namespace SPH
 		using FluidShellIntegration2ndHalf = BaseFluidShellIntegration2ndHalf<Integration2ndHalf>;
 		using FluidShellIntegration2ndHalfRiemann = BaseFluidShellIntegration2ndHalf<Integration2ndHalfRiemann>;
 
-		using FluidShellIntegration2ndHalfWithWall = BaseIntegration2ndHalfWithWall<FluidShellIntegration2ndHalf>;
-		using FluidShellIntegration2ndHalfRiemannWithWall = BaseIntegration2ndHalfWithWall<FluidShellIntegration2ndHalfRiemann>;
+		using FluidShellandWallIntegration2ndHalf = BaseIntegration2ndHalfWithWall<FluidShellIntegration2ndHalf>;
+		using FluidShellandWallIntegration2ndHalfRiemann = BaseIntegration2ndHalfWithWall<FluidShellIntegration2ndHalfRiemann>;
+
+		/**
+		 * @class ViscousWithWall
+		 * @brief  template class viscous acceleration with wall boundary
+		 */
+		template <class ViscousAccelerationInnerType>
+		class BaseViscousAccelerationWithShell : public InteractionWithShell<ViscousAccelerationInnerType>
+		{
+		public:
+			template <typename... Args>
+			BaseViscousAccelerationWithShell(Args &&...args)
+				: BaseViscousAccelerationWithShell<ViscousAccelerationInnerType>(std::forward<Args>(args)...)
+			{};
+			virtual ~BaseViscousAccelerationWithShell(){};
+			void interaction(size_t index_i, Real dt = 0.0);
+		};
+
+		using ViscousAccelerationWithShell = BaseViscousAccelerationWithShell<ViscousAccelerationInner>;
+		using ViscousAccelerationWithShellandWall = BaseViscousAccelerationWithWall<ViscousAccelerationWithShell>;
 
     }
 }

@@ -73,6 +73,8 @@ namespace SPH
 				StdLargeVec<Vecd> &vel_ave_k = *(this->shell_vel_ave_[k]);
 				StdLargeVec<Vecd> &acc_ave_k = *(this->shell_acc_ave_[k]);
 				StdLargeVec<Vecd> &n_k = *(this->shell_n_[k]);
+				StdLargeVec<Real> &thickness_k = *(this->shell_thickness_[k]);
+
 				Neighborhood &shell_neighborhood = (*FluidShellData::contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != shell_neighborhood.current_size_; ++n)
 				{
@@ -83,8 +85,8 @@ namespace SPH
 
 					Real face_shell_external_acceleration = (acc_prior_i - acc_ave_k[index_j]).dot(-e_ij);
 					Real p_in_shell = this->p_[index_i] + this->rho_[index_i] * r_ij * SMAX(0.0, face_shell_external_acceleration);
-					acceleration -= (this->p_[index_i] + p_in_shell) * e_ij * dW_ijV_j;
-					rho_dissipation += this->riemann_solver_.DissipativeUJump(this->p_[index_i] - p_in_shell) * dW_ijV_j * this->spacing_ref_;
+					acceleration -= (this->p_[index_i] + p_in_shell) * e_ij * dW_ijV_j * thickness_k[index_j];
+					rho_dissipation += this->riemann_solver_.DissipativeUJump(this->p_[index_i] - p_in_shell) * dW_ijV_j * thickness_k[index_j];
 				}
 			}
 			this->acc_[index_i] += acceleration / this->rho_[index_i];
@@ -110,6 +112,7 @@ namespace SPH
 				StdLargeVec<Vecd> &vel_ave_k = *(this->shell_vel_ave_[k]);
 				StdLargeVec<Vecd> &acc_ave_k = *(this->shell_acc_ave_[k]);
 				StdLargeVec<Vecd> &n_k = *(this->shell_n_[k]);
+				StdLargeVec<Real> &thickness_k = *(this->shell_thickness_[k]);
 				Neighborhood &shell_neighborhood = (*FluidShellData::contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != shell_neighborhood.current_size_; ++n)
 				{
@@ -119,10 +122,38 @@ namespace SPH
 					Real dW_ijV_j = shell_neighborhood.dW_ijV_j_[n];
 
 					Vecd vel_in_shell = 2.0 * vel_ave_k[index_j] - this->vel_[index_i];
-					density_change_rate += this->spacing_ref_  * (this->vel_[index_i] - vel_in_shell).dot(e_ij) * dW_ijV_j;
+					density_change_rate += (this->vel_[index_i] - vel_in_shell).dot(e_ij) * dW_ijV_j * thickness_k[index_j] ;
 				}
 			}
 			this->drho_dt_[index_i] += density_change_rate * this->rho_[index_i];
+		}
+		//=================================================================================================//
+		template <class ViscousAccelerationInnerType>
+		void BaseViscousAccelerationWithShell<ViscousAccelerationInnerType>::interaction(size_t index_i, Real dt)
+		{
+			ViscousAccelerationInnerType::interaction(index_i, dt);
+
+			Real rho_i = this->rho_[index_i];
+			const Vecd &vel_i = this->vel_[index_i];
+
+			Vecd acceleration = Vecd::Zero();
+			Vecd vel_derivative = Vecd::Zero();
+			for (size_t k = 0; k < FluidShellData::contact_configuration_.size(); ++k)
+			{
+				StdLargeVec<Vecd> &vel_ave_k = *(this->shell_vel_ave_[k]);
+				StdLargeVec<Real> &thickness_k = *(this->shell_thickness_[k]);
+				Neighborhood &contact_neighborhood = (*FluidShellData::contact_configuration_[k])[index_i];
+				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+				{
+					size_t index_j = contact_neighborhood.j_[n];
+					Real r_ij = contact_neighborhood.r_ij_[n];
+
+					vel_derivative = 2.0 * (vel_i - vel_ave_k[index_j]) / (r_ij + 0.01 * this->smoothing_length_);
+					acceleration += 2.0 * this->mu_ * vel_derivative * contact_neighborhood.dW_ijV_j_[n] * thickness_k[index_j] / rho_i;
+				}
+			}
+
+			this->acc_prior_[index_i] += acceleration;
 		}
     	//=================================================================================================//
     }
