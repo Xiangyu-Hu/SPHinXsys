@@ -36,7 +36,7 @@ namespace SPH
 		for (int j = -search_depth; j <= search_depth; ++j)
 			for (int i = -search_depth; i <= search_depth; ++i)
 			{
-				Vec2d particle_location(Real(i) * particle_spacing, Real(j) * particle_spacing);
+				Vec2d particle_location(i * particle_spacing, j * particle_spacing);
 				Real distance = particle_location.norm();
 				if (distance < cutoff_radius)
 					sigma += kernel_ptr_->W(distance, particle_location);
@@ -54,8 +54,8 @@ namespace SPH
 			for (int j = -search_depth; j <= search_depth; ++j)
 				for (int i = -search_depth; i <= search_depth; ++i)
 				{
-					Vec3d particle_location(Real(i) * particle_spacing,
-											Real(j) * particle_spacing, Real(k) * particle_spacing);
+					Vec3d particle_location(i * particle_spacing,
+											j * particle_spacing, k * particle_spacing);
 					Real distance = particle_location.norm();
 					if (distance < cutoff_radius)
 						sigma += kernel_ptr_->W(distance, particle_location);
