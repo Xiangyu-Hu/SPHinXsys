@@ -17,11 +17,11 @@ set(CMAKE_VERBOSE_MAKEFILE OFF CACHE BOOL "Enable verbose compilation commands f
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # Generate `compile_commands.json` file which is necessary for code completioner, static analyzer, etc
 
 #set(CXX_STANDARD_REQUIRED ON) # C++ standard requirement for targets is NOT optional 
-#set(CXX_EXTENSIONS OFF) # Disable any non-standard compiler specific C++ extensions.
+set(CXX_EXTENSIONS OFF) # Disable any non-standard compiler specific C++ extensions.
 
 add_library(sphinxsys_core INTERFACE)
 target_compile_features(sphinxsys_core INTERFACE cxx_std_17) # Requires a compiler supporting at least C++17
-set_target_properties(sphinxsys_core PROPERTIES CXX_EXTENSIONS OFF) # Disable any non-standard compiler specific C++ extensions
+# Generic properties enabled for Interface target only for CMake>=3.19 #set_target_properties(sphinxsys_core PROPERTIES CXX_EXTENSIONS OFF) # Disable any non-standard compiler specific C++ extensions
 #set_target_properties(sphinxsys_core PROPERTIES CXX_STANDARD_REQUIRED ON) # C++ standard requirement for targets is NOT optional
 #set_target_properties(sphinxsys_core PROPERTIES CXX_STANDARD 17) 
 
