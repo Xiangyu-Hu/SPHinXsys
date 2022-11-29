@@ -15,7 +15,7 @@ namespace SPH
 		: h_spacing_ratio_(h_spacing_ratio), system_refinement_ratio_(system_refinement_ratio),
 		  local_refinement_level_(0), spacing_ref_(resolution_ref / system_refinement_ratio_),
 		  h_ref_(h_spacing_ratio_ * spacing_ref_), kernel_ptr_(makeUnique<KernelWendlandC2>(h_ref_)),
-		  sigma0_ref_(computeReferenceNumberDensity(zero_vec)),
+		  sigma0_ref_(computeReferenceNumberDensity(Vecd())),
 		  spacing_min_(this->MostRefinedSpacing(spacing_ref_, local_refinement_level_)),
 		  h_ratio_max_(powerN(2.0, local_refinement_level_)){};
 	//=================================================================================================//
@@ -75,7 +75,7 @@ namespace SPH
 		system_refinement_ratio_ = new_system_refinement_ratio;
 		h_ref_ = h_spacing_ratio_ * spacing_ref_;
 		kernel_ptr_.reset(new KernelWendlandC2(h_ref_));
-		sigma0_ref_ = computeReferenceNumberDensity(zero_vec);
+		sigma0_ref_ = computeReferenceNumberDensity(Vecd());
 		spacing_min_ = MostRefinedSpacing(spacing_ref_, local_refinement_level_);
 		h_ratio_max_ = h_ref_ * spacing_ref_ / spacing_min_;
 	}
