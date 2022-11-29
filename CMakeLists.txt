@@ -29,11 +29,11 @@ find_package(Simbody CONFIG REQUIRED)
 # find_package(BLAS REQUIRED)
 # find_package(LAPACK CONFIG REQUIRED)
 # target_link_libraries(sphinxsys_core INTERFACE BLAS::BLAS LAPACK::LAPACK) # targets for CMake >= 3.18 
-set(Simbody_LIBRARIES
+set(Simbody_LIBS
     $<$<BOOL:${Simbody_LIBRARIES}>:${Simbody_LIBRARIES}>               # contains "SimTKcommon SimTKmath SimTKsimbody" in triplet with dynamic linking, empty otherwise
     $<$<BOOL:${Simbody_STATIC_LIBRARIES}>:${Simbody_STATIC_LIBRARIES}> # contains "SimTKcommon_static SimTKmath_static SimTKsimbody_static" in triplet with static linking, empty otherwise
 )
-target_link_libraries(sphinxsys_core INTERFACE ${Simbody_LIBRARIES})
+target_link_libraries(sphinxsys_core INTERFACE ${Simbody_LIBS})
 target_compile_definitions(sphinxsys_core INTERFACE _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING) # Because of Simbody headers
 
 find_package(Eigen3 CONFIG REQUIRED)
