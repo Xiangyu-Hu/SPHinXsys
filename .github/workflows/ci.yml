@@ -35,6 +35,7 @@ jobs:
             apt-utils \
             build-essential \
             curl zip unzip tar `# when starting fresh on a WSL image for bootstrapping vcpkg`\
+            pkg-config `# for installing libraries with vcpkg`\
             git \
             cmake \
             ninja-build \
