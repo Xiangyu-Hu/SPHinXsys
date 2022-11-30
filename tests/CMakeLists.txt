@@ -1,6 +1,7 @@
 option(BUILD_2D_EXAMPLES "BUILD_2D_EXAMPLES" 1)
 option(BUILD_3D_EXAMPLES "BUILD_3D_EXAMPLES" 1)
 option(BUILD_UNIT_TESTS "BUILD_UNIT_TESTS" 1)
+option(USER_EXAMPLES "USER_EXAMPLES" 1)
 
 if(NOT EMSCRIPTEN)
 	find_package(GTest REQUIRED)
@@ -21,6 +22,11 @@ if(NOT EMSCRIPTEN)
 	if(NOT SPH_ONLY_STATIC_BUILD)
 		add_subdirectory(modules)
 	endif()
+
+	if(USER_EXAMPLES)
+		ADD_SUBDIRECTORY(user_examples)
+	endif()
+
 endif()
 
 if(BUILD_3D_EXAMPLES)

@@ -1,13 +1,8 @@
-/**
-* @file 	sloshing-baffle.cpp
-* @brief 	Fluid-shell interaction in sloshing flow. 
-* @details 	Here, the first fluid-shell interaction test is presented. 
-* @author 	Chi Zhang
-*/
 #include "sphinxsys.h" 
 #include "case.h"
-using namespace SPH;
-
+/**
+ * @brief 	Main program starts here.
+ */
 int main(int ac, char *av[])
 {
 	/**
@@ -37,12 +32,6 @@ int main(int ac, char *av[])
 	/** @brief 	Particle and body creation of baffle observer.*/
 	ObserverBody baffle_disp_observer(sph_system, "BaffleDispObserver");
 	baffle_disp_observer.generateParticles<ObserverParticleGenerator>(baffle_disp_probe_location);
-	/** Pressure probe on Flap. */
-	ObserverBody baffle_pressure_observer(sph_system, "BafflePressureObserver");
-	baffle_pressure_observer.generateParticles<ObserverParticleGenerator>(baffle_pressure_probe_location);
-	/** @brief 	Particle and body creation of fluid observer.*/
-	ObserverBody fluid_observer(sph_system, "Fluidobserver");
-	fluid_observer.generateParticles<ObserverParticleGenerator>(fluid_pressure_probe_location);
 	/** topology */
 	InnerRelation 	water_block_inner(water_block);
 	InnerRelation 	baffle_inner(shell_baffle);
@@ -53,10 +42,9 @@ int main(int ac, char *av[])
 	ComplexRelation water_shell_complex(water_block_inner, water_shell_contact);
 
 	ContactRelation baffle_water_contact(shell_baffle, { &water_block });
-	ContactRelation observer_contact_with_water(fluid_observer, { &water_block });
 	ContactRelation observer_contact_with_baffle(baffle_disp_observer, { &shell_baffle});
 	/** Density and wall norm. */
-	SharedPtr<VariableGravity> gravity_ptr = makeShared<VariableGravity>();
+	SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	/** Algorithm for Fluid dynamics. */
 	SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block, gravity_ptr);
@@ -68,7 +56,7 @@ int main(int ac, char *av[])
 	/** Algorithms for solid. */
 	ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> shell_time_step_size(shell_baffle);
 	InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> shell_corrected_configuration(baffle_inner);
-	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> shell_stress_relaxation_first(baffle_inner);
+	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> shell_stress_relaxation_first(baffle_inner, 5, true);
 	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> shell_stress_relaxation_second(baffle_inner);
 	/** FSI */
 	InteractionDynamics<solid_dynamics::FluidViscousForceOnShell> viscous_force_on_shell(baffle_water_contact);
@@ -86,25 +74,10 @@ int main(int ac, char *av[])
 	 */
 	BodyStatesRecordingToPlt write_real_body_states_to_plt(io_environment, sph_system.real_bodies_);
 	BodyStatesRecordingToVtp write_real_body_states_to_vtp(io_environment, sph_system.real_bodies_);
+	/** Output the observed displacement of baffle free end. */
 	/** Output the observed displacement of baffle. */
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
 		write_baffle_displacement("Position", io_environment, observer_contact_with_baffle);
-	/** Output the observed pressure of fluid. */
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-		write_fluid_pressure_wall("Pressure", io_environment, observer_contact_with_water);
-	/** WaveProbes. */
-	/** #1.*/
-	BodyRegionByCell wave_probe_buffer_no_1(water_block, makeShared<MultiPolygonShape>(CreateWaveProbeShape1(), "WaveProbe_01"));
-	ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight, BodyRegionByCell>>
-		wave_probe_1(io_environment, wave_probe_buffer_no_1);
-	/** #2.*/
-	BodyRegionByCell wave_probe_buffer_no_2(water_block, makeShared<MultiPolygonShape>(CreateWaveProbeShape2(), "WaveProbe_02"));
-	ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight, BodyRegionByCell>>
-		wave_probe_2(io_environment, wave_probe_buffer_no_2);
-	/** #3.*/
-	BodyRegionByCell wave_probe_buffer_no_3(water_block, makeShared<MultiPolygonShape>(CreateWaveProbeShape3(), "WaveProbe_03"));
-	ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight, BodyRegionByCell>>
-		wave_probe_3(io_environment, wave_probe_buffer_no_3);
 	/**
 	 * @brief The time stepping starts here.
 	 */
@@ -116,17 +89,13 @@ int main(int ac, char *av[])
 	/** Initial output. */
 	//write_real_body_states_to_plt.writeToFile(0);
 	write_real_body_states_to_vtp.writeToFile(0);
-	wave_probe_1.writeToFile(0);
-	wave_probe_2.writeToFile(0);
-	wave_probe_3.writeToFile(0);
 	write_baffle_displacement.writeToFile(0);
-	write_fluid_pressure_wall.writeToFile(0);
 	/** Time parameters. */
 	int number_of_iterations = 0;
 	int screen_output_interval = 100;
 	int observation_sample_interval = screen_output_interval * 2;
 	int restart_output_interval = screen_output_interval * 10;
-	Real End_Time = 21.0;			/**< End time. */
+	Real End_Time = 1.0;			/**< End time. */
 	Real D_Time = End_Time /200;	/**< time stamps for output. */
 	Real Dt = 0.0;					/**< Default advection time step sizes. */
 	Real dt = 0.0; 					/**< Default acoustic time step sizes. */
@@ -143,13 +112,12 @@ int main(int ac, char *av[])
 		while (integration_time < D_Time)
 		{
 			/** Acceleration due to viscous force and gravity. */
-			gravity_ptr->UpdateAcceleration();
 			fluid_step_initialization.parallel_exec();
 			update_fluid_density_by_summation.parallel_exec();
 
 			viscous_force_on_shell.parallel_exec();
 
-			Dt = 0.5 * fluid_advection_time_step.parallel_exec();
+			Dt = fluid_advection_time_step.parallel_exec();
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
@@ -176,8 +144,6 @@ int main(int ac, char *av[])
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
-
-				//write_real_body_states_to_vtp.writeToFile();
 			}
 
 			if (number_of_iterations % screen_output_interval == 0)
@@ -196,14 +162,8 @@ int main(int ac, char *av[])
 			water_wall_contact.updateConfiguration();
 			water_shell_contact.updateConfiguration();
 			baffle_water_contact.updateConfiguration();
-			observer_contact_with_water.updateConfiguration();
 
-			wave_probe_1.writeToFile(number_of_iterations);
-			wave_probe_2.writeToFile(number_of_iterations);
-			wave_probe_3.writeToFile(number_of_iterations);
 			write_baffle_displacement.writeToFile(number_of_iterations);
-			write_fluid_pressure_wall.writeToFile(number_of_iterations);
-
 		}
 		write_real_body_states_to_vtp.writeToFile();
 
