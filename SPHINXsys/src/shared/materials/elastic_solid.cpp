@@ -135,6 +135,52 @@ namespace SPH
 	{
 		return 0.5 * K0_ * (J * J - 1);
 	}
+    //=================================================================================================//
+	OrthotropicSolid::OrthotropicSolid(Real rho_0, std::array<Vecd, Dimensions> a, std::array<Real, Dimensions> E,
+									   std::array<Real, Dimensions> G, std::array<Real, Dimensions> poisson)
+		// set parameters for parent class: LinearElasticSolid
+		// we take the max. E and max. poisson to approximate the maximum of
+		// the Bulk modulus --> for time step size calculation
+		: LinearElasticSolid(rho_0, *std::max_element(E.cbegin(),E.cend()),
+							 *std::max_element(poisson.cbegin(),poisson.cend())),
+		  a_(a), E_(E), G_(G), poisson_(poisson)
+	{
+		// parameters for derived class
+		material_type_name_ = "OrthotropicSolid";
+		CalculateA0();
+		CalculateAllMu();
+		CalculateAllLambda();
+	};
+	//=================================================================================================//
+	Matd OrthotropicSolid::StressPK2(Matd &F, size_t particle_index_i)
+	{
+		Matd strain = 0.5 * (F.transpose() * F - Matd::Identity());
+		Matd stress_PK2 = Matd::Zero();
+		for (int i = 0; i < Dimensions; i++)
+		{
+			// outer sum (a{1-3})
+			Matd Summa2 = Matd::Zero();
+			for (int j = 0; j < Dimensions; j++)
+			{
+				// inner sum (b{1-3})
+				Summa2 += Lambda_(i,j) * (CalculateDoubleDotProduct(A_[i], strain) * A_[j] +
+										   CalculateDoubleDotProduct(A_[j], strain) * A_[i]);
+			}
+			stress_PK2 += Mu_[i] * (((A_[i] * strain) + (strain * A_[i])) + 1 / 2 * (Summa2));
+		}
+		return stress_PK2;
+	}
+	//=================================================================================================//
+	Real OrthotropicSolid::VolumetricKirchhoff(Real J)
+	{
+		return K0_ * J * (J - 1);
+	}
+	//=================================================================================================//
+	void OrthotropicSolid::CalculateA0()
+	{
+        for(int i = 0; i < Dimensions; ++i)
+		    A_[i] = a_[i] * a_[i].transpose();
+	}
 	//=================================================================================================//
 	Matd FeneNeoHookeanSolid::StressPK2(Matd &F, size_t particle_index_i)
 	{

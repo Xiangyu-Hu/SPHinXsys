@@ -88,7 +88,7 @@ namespace SPH
 		void resetKernel(ConstructorArgs &&...args)
 		{
 			kernel_ptr_.reset(new KernelType(h_ref_, std::forward<ConstructorArgs>(args)...));
-			sigma0_ref_ = computeReferenceNumberDensity(zero_vec);
+			sigma0_ref_ = computeReferenceNumberDensity(Vecd());
 		};
 
 	protected:

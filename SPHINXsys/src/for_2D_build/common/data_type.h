@@ -51,8 +51,8 @@ namespace SPH {
 
 	/** only works for smoothing length ratio less or equal than 1.3*/
 	constexpr int MaximumNeighborhoodSize = int(M_PI * 9);
-	const int Dimensions = 2;
-	const Real one_over_dimensions_ = 1.0 / (Real)Dimensions;
+	constexpr int Dimensions = 2;
+	constexpr Real one_over_dimensions_ = 1.0 / (Real)Dimensions;
 	/** correction matrix, only works for thin structure dynamics. */
 	const Matd reduced_unit_matrix  { 
 										{1.0, 0.0},  // First row
