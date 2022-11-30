@@ -1,7 +1,30 @@
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
- * @file 	base_mesh.hpp
- * @brief 	This is the implementation of the template function and class for base mesh
- * @author	Chi Zhang and Xiangyu Hu
+ * @file 	mesh_with_data_packages.hpp
+ * @brief 	This class is designed to save memory and increase computational efficiency on mesh.
+ *			TODO: the connection between successive meshes in refined mesh should enhanced.
+ * @author	Chi ZHang and Xiangyu Hu
  */
 
 #ifndef MESH_WITH_DATA_PACKAGES_2D_HPP
@@ -21,7 +44,7 @@ namespace SPH
 		Vecu grid_idx = CellIndexFromPosition(position);
 		Vecd grid_pos = GridPositionFromIndex(grid_idx);
 		Vecd alpha = (position - grid_pos) / grid_spacing_;
-		Vecd beta = Vec2d(1.0) - alpha;
+		Vecd beta = Vecd::Ones() - alpha;
 
 		DataType bilinear = *pkg_data_addrs[grid_idx[0]][grid_idx[1]] * beta[0] * beta[1] +
 							*pkg_data_addrs[grid_idx[0] + 1][grid_idx[1]] * alpha[0] * beta[1] +
@@ -86,7 +109,7 @@ namespace SPH
 	DataType GridDataPackage<PKG_SIZE, ADDRS_SIZE>::
 		CornerAverage(PackageDataAddress<DataType> &pkg_data_addrs, Veci addrs_index, Veci corner_direction)
 	{
-		DataType average(0);
+		DataType average = DataTypeInitializer<DataType>::zero;
 		for (int i = 0; i != 2; ++i)
 			for (int j = 0; j != 2; ++j)
 			{
@@ -118,8 +141,8 @@ namespace SPH
 	DataType MeshWithGridDataPackages<MeshFieldType, GridDataPackageType>::
 		DataValueFromGlobalIndex(const Vecu &global_grid_index)
 	{
-		Vecu pkg_index_(0);
-		Vecu local_data_index(0);
+		Vecu pkg_index_ = Vecu::Zero();
+		Vecu local_data_index = Vecu::Zero();
 		for (int n = 0; n != 2; n++)
 		{
 			size_t cell_index_in_this_direction = global_grid_index[n] / pkg_size_;
@@ -167,7 +190,7 @@ namespace SPH
 	//=================================================================================================//
 	template <class MeshFieldType, class GridDataPackageType>
 	void MeshWithGridDataPackages<MeshFieldType, GridDataPackageType>::
-		assignDataPackageAddress(const Vecu &cell_index, GridDataPackageType *data_pkg)
+		assignDataPackageAddress(const Vecu& cell_index, GridDataPackageType* data_pkg)
 	{
 		data_pkg_addrs_[cell_index[0]][cell_index[1]] = data_pkg;
 	}

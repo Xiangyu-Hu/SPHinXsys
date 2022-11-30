@@ -83,9 +83,9 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
 	/** Tag for running particle relaxation for the initially body-fitted distribution */
-	sph_system.run_particle_relaxation_ = true;
+	sph_system.run_particle_relaxation_ = false;
 	/** Tag for starting with relaxed body-fitted particles distribution */
-	sph_system.reload_particles_ = false;
+	sph_system.reload_particles_ = true;
 	/** Tag for computation from restart files. 0: start with initial condition */
 	sph_system.restart_step_ = 0;
 	sph_system.handleCommandlineOptions(ac, av);

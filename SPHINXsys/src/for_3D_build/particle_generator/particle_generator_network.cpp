@@ -1,7 +1,3 @@
-/**
- * @file 	particle_generator_network.cpp
- * @author	Chi Zhang and Xiangyu Hu
- */
 #include "sph_system.h"
 #include "particle_generator_network.h"
 #include "cell_linked_list.h"
@@ -24,13 +20,12 @@ namespace SPH
 	{
 		Vecd displacement = second_pnt_ - starting_pnt_;
 		Vecd end_direction = displacement / (displacement.norm() + TinyReal);
-		// add particle to the first branch of the tree
+		/** Add initial particle to the first branch of the tree. */
 		growAParticleOnBranch(tree_->root_, starting_pnt_, end_direction);
 		cell_linked_list_.InsertListDataEntry(0, pos_[0], segment_length_);
 	}
 	//=================================================================================================//
-	void ParticleGeneratorNetwork::
-		growAParticleOnBranch(TreeBody::Branch *branch, const Vecd &new_point, const Vecd &end_direction)
+	void ParticleGeneratorNetwork::growAParticleOnBranch(TreeBody::Branch *branch, const Vecd &new_point, const Vecd &end_direction)
 	{
 		initializePositionAndVolumetricMeasure(new_point, segment_length_);
 		tree_->branch_locations_.push_back(branch->id_);
@@ -40,8 +35,10 @@ namespace SPH
 	//=================================================================================================//
 	Vecd ParticleGeneratorNetwork::getGradientFromNearestPoints(Vecd pt, Real delta)
 	{
-		Vecd upgrad(0), downgrad(0);
-		Vecd shift(delta);
+		Vecd upgrad = Vecd::Zero();
+		Vecd downgrad = Vecd::Zero();
+		Vecd shift = delta * Vecd::Ones();
+
 		for (int i = 0; i != Dimensions; i++)
 		{
 			Vecd upwind = pt;
@@ -108,7 +105,7 @@ namespace SPH
 
 		Vecd surface_norm = body_shape_.findNormalDirection(init_point);
 		surface_norm /= surface_norm.norm() + TinyReal;
-		Vecd in_plane = -SimTK::cross(init_direction, surface_norm);
+		Vecd in_plane = -init_direction.cross(surface_norm);
 
 		Real delta = grad_factor_ * segment_length_;
 		Vecd grad = getGradientFromNearestPoints(init_point, delta);
@@ -130,7 +127,7 @@ namespace SPH
 				surface_norm /= surface_norm.norm() + TinyReal;
 				/** Project grad to surface. */
 				grad = getGradientFromNearestPoints(new_point, delta);
-				grad -= dot(grad, surface_norm) * surface_norm;
+				grad -= grad.dot(surface_norm) * surface_norm;
 				dir = (repulsivity * grad + end_direction) / ((repulsivity * grad + end_direction).norm() + TinyReal);
 				end_direction = dir;
 				end_point = new_point;

@@ -1,30 +1,30 @@
-/* -----------------------------------------------------------------------------*
- *                               SPHinXsys                                      *
- * -----------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
- * physical accurate simulation and aims to model coupled industrial dynamic    *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
- * (smoothed particle hydrodynamics), a meshless computational method using     *
- * particle discretization.                                                     *
- *                                                                              *
- * SPHinXsys is partially funded by German Research Foundation                  *
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
- * HU1527/12-1 and HU1527/12-4.                                                 *
- *                                                                              *
- * Portions copyright (c) 2017-2022 Technical University of Munich and          *
- * the authors' affiliations.                                                   *
- *                                                                              *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
- * not use this file except in compliance with the License. You may obtain a    *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
- *                                                                              *
- * -----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	contact_dynamics.h
  * @brief 	Here, we define the algorithm classes for solid contact dynamics.
- * @details 	We consider here a weakly compressible solids.
- * @author	Chi Zhang and Xiangyu Hu
+ * @details We consider here a weakly compressible solids.
+ * @author	Chi ZHang and Xiangyu Hu
  */
 
 #ifndef CONTACT_DYNAMICS_H
@@ -89,22 +89,23 @@ namespace SPH
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			Solid &solid_;
-			StdLargeVec<Real> contact_density_;
-			StdVec<StdLargeVec<Vecd> *> contact_pos_;
 			StdLargeVec<Vecd> &pos_;
+			Real particle_spacing_;
+			StdVec<Real> calibration_factor_;
+			StdVec<Real> contact_h_ratio_;
+			StdVec<Real> offset_W_ij_;
+			StdVec<Real> contact_particle_spacing_;
+			StdLargeVec<Real> contact_density_;
+			StdVec<StdLargeVec<Real> *> contact_Vol_;
+			StdVec<StdLargeVec<Vecd> *> contact_n_;
+			StdVec<StdLargeVec<Vecd> *> contact_pos_;
 
 			Kernel *kernel_;
-			Real spacing_ref_, boundary_factor_;
-
+			Solid &solid_;
 			/** Abscissas and weights for Gauss-Legendre quadrature integration with n=3 nodes */
-			Real x_0 = 0.774596669241483377035853079956;
-			Real x_1 = 0.000000000000000000000000000000;
-			Real x_2 = -x_0;
+			const StdVec<Real> three_gaussian_points_ = { -0.7745966692414834, 0.0, 0.7745966692414834 };
+			const StdVec<Real> three_gaussian_weights_ = { 0.5555555555555556, 0.8888888888888889, 0.5555555555555556 };
 
-			Real w_0 = 0.555555555555555555555555555556;
-			Real w_1 = 0.888888888888888888888888888889;
-			Real w_2 = w_0;
 		};
 
 		/**

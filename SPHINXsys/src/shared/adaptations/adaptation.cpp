@@ -1,9 +1,3 @@
-/**
- * @file sph_adaptation.cpp
- * @brief Definition of functions declared in adaptation.h
- * @author	Xiangyu Hu and Chi Zhang
- */
-
 #include "adaptation.h"
 
 #include "sph_system.h"
@@ -21,7 +15,7 @@ namespace SPH
 		: h_spacing_ratio_(h_spacing_ratio), system_refinement_ratio_(system_refinement_ratio),
 		  local_refinement_level_(0), spacing_ref_(resolution_ref / system_refinement_ratio_),
 		  h_ref_(h_spacing_ratio_ * spacing_ref_), kernel_ptr_(makeUnique<KernelWendlandC2>(h_ref_)),
-		  sigma0_ref_(computeReferenceNumberDensity(Vecd(0))),
+		  sigma0_ref_(computeReferenceNumberDensity(Vecd())),
 		  spacing_min_(this->MostRefinedSpacing(spacing_ref_, local_refinement_level_)),
 		  h_ratio_max_(powerN(2.0, local_refinement_level_)){};
 	//=================================================================================================//
@@ -42,7 +36,7 @@ namespace SPH
 		for (int j = -search_depth; j <= search_depth; ++j)
 			for (int i = -search_depth; i <= search_depth; ++i)
 			{
-				Vec2d particle_location(Real(i) * particle_spacing, Real(j) * particle_spacing);
+				Vec2d particle_location(i * particle_spacing, j * particle_spacing);
 				Real distance = particle_location.norm();
 				if (distance < cutoff_radius)
 					sigma += kernel_ptr_->W(distance, particle_location);
@@ -60,8 +54,8 @@ namespace SPH
 			for (int j = -search_depth; j <= search_depth; ++j)
 				for (int i = -search_depth; i <= search_depth; ++i)
 				{
-					Vec3d particle_location(Real(i) * particle_spacing,
-											Real(j) * particle_spacing, Real(k) * particle_spacing);
+					Vec3d particle_location(i * particle_spacing,
+											j * particle_spacing, k * particle_spacing);
 					Real distance = particle_location.norm();
 					if (distance < cutoff_radius)
 						sigma += kernel_ptr_->W(distance, particle_location);
@@ -81,7 +75,7 @@ namespace SPH
 		system_refinement_ratio_ = new_system_refinement_ratio;
 		h_ref_ = h_spacing_ratio_ * spacing_ref_;
 		kernel_ptr_.reset(new KernelWendlandC2(h_ref_));
-		sigma0_ref_ = computeReferenceNumberDensity(Vecd(0));
+		sigma0_ref_ = computeReferenceNumberDensity(Vecd());
 		spacing_min_ = MostRefinedSpacing(spacing_ref_, local_refinement_level_);
 		h_ratio_max_ = h_ref_ * spacing_ref_ / spacing_min_;
 	}

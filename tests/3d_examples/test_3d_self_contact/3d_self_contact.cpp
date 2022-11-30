@@ -45,7 +45,7 @@ public:
 	{
 		Vecd halfsize_plate(half_width + BW, 0.5 * BW, half_width + BW);
 		Vecd translation_plate(0.0, -half_width - 0.75 * BW, half_width);
-		add<TransformShape<GeometricShapeBox>>(translation_plate, halfsize_plate);
+		add<TransformShape<GeometricShapeBox>>(Transformd(translation_plate), halfsize_plate);
 	}
 };
 //----------------------------------------------------------------------

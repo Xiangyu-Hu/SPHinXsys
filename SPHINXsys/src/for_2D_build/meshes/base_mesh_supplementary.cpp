@@ -1,18 +1,12 @@
-/**
- * @file 	base_mesh_supplementary.cpp
- * @author	Luhui Han, Chi Zhang, Yongchuan Yu and Xiangyu Hu
- */
-
 #include "base_mesh.h"
 
-//=================================================================================================//
 namespace SPH {
 	//=============================================================================================//
 	Vecu BaseMesh::transfer1DtoMeshIndex(const Vecu &number_of_mesh_indexes, size_t i)
 	{
 		size_t row_size = number_of_mesh_indexes[1];
 		size_t column = i / row_size;
-		return Vec2u(column, i - column * row_size);
+		return Vecu(column, i - column * row_size);
 	}
 	//=============================================================================================//
 	size_t BaseMesh::transferMeshIndexTo1D(const Vecu &number_of_mesh_indexes, const Vecu &mesh_index)

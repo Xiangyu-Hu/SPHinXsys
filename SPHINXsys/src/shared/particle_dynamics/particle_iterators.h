@@ -1,29 +1,29 @@
-/* -----------------------------------------------------------------------------*
- *                               SPHinXsys                                      *
- * -----------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
- * physical accurate simulation and aims to model coupled industrial dynamic    *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
- * (smoothed particle hydrodynamics), a meshless computational method using     *
- * particle discretization.                                                     *
- *                                                                              *
- * SPHinXsys is partially funded by German Research Foundation                  *
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
- * HU1527/12-1 and HU1527/12-4.                                                 *
- *                                                                              *
- * Portions copyright (c) 2017-2022 Technical University of Munich and          *
- * the authors' affiliations.                                                   *
- *                                                                              *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
- * not use this file except in compliance with the License. You may obtain a    *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
- *                                                                              *
- * -----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
- * @file particle_iterators.h
- * @brief This is for the base functions for particle iterator.
- * @author  Xiangyu Hu
+ * @file 	particle_iterators.h
+ * @brief 	This is for the base functions for particle iterator.
+ * @author	Chi ZHang and Xiangyu Hu
  */
 
 #ifndef PARTICLE_ITERATORS_H
@@ -34,9 +34,9 @@
 
 namespace SPH
 {
-	//----------------------------------------------------------------------
-	//	Body-wise iterators (for sequential and parallel computing).
-	//----------------------------------------------------------------------
+	/**
+	 * Body-wise iterators (for sequential and parallel computing).
+	 */
 
 	template <class LocalDynamicsFunction>
 	void particle_for(const size_t &all_real_particles,
@@ -44,7 +44,7 @@ namespace SPH
 	{
 		for (size_t i = 0; i < all_real_particles; ++i)
 			local_dynamics_function(i);
-	}
+	};
 
 	template <class LocalDynamicsFunction>
 	void particle_parallel_for(const size_t &all_real_particles,
@@ -60,19 +60,17 @@ namespace SPH
 				}
 			},
 			ap);
-	}
-
-	//----------------------------------------------------------------------
-	//	BodypartByParticle-wise iterators (for sequential and parallel computing).
-	//----------------------------------------------------------------------
-
+	};
+	/**
+	 * Bodypart By Particle-wise iterators (for sequential and parallel computing).
+	 */
 	template <class LocalDynamicsFunction>
 	void particle_for(const IndexVector &body_part_particles,
 					  const LocalDynamicsFunction &local_dynamics_function)
 	{
 		for (size_t i = 0; i < body_part_particles.size(); ++i)
 			local_dynamics_function(body_part_particles[i]);
-	}
+	};
 
 	template <class LocalDynamicsFunction>
 	void particle_parallel_for(const IndexVector &body_part_particles,
@@ -88,12 +86,10 @@ namespace SPH
 				}
 			},
 			ap);
-	}
-
-	//----------------------------------------------------------------------
-	//	BodypartByCell-wise iterators (for sequential and parallel computing).
-	//----------------------------------------------------------------------
-
+	};
+	/** 
+	 * Bodypart By Cell-wise iterators (for sequential and parallel computing).
+	 */
 	template <class LocalDynamicsFunction>
 	void particle_for(const ConcurrentIndexesInCells &body_part_cells,
 					  const LocalDynamicsFunction &local_dynamics_function)
@@ -126,19 +122,17 @@ namespace SPH
 				}
 			},
 			ap);
-	}
-
-	//----------------------------------------------------------------------
-	//	BodypartByCell-wise iterators on cells (for sequential and parallel computing).
-	//----------------------------------------------------------------------
-
+	};
+	/**
+	 * BodypartByCell-wise iterators on cells (for sequential and parallel computing).
+	 */
 	template <class LocalDynamicsFunction>
 	void cell_list_for(const DataListsInCells &body_part_cells,
 					   const LocalDynamicsFunction &local_dynamics_function)
 	{
 		for (size_t i = 0; i != body_part_cells.size(); ++i)
 			local_dynamics_function(body_part_cells[i]);
-	}
+	};
 
 	template <class LocalDynamicsFunction>
 	void cell_list_parallel_for(const DataListsInCells &body_part_cells,
@@ -154,8 +148,10 @@ namespace SPH
 				}
 			},
 			ap);
-	}
-
+	};
+	/**
+	 * Splitting algorithm (for sequential and parallel computing).
+	 */
 	template <class LocalDynamicsFunction>
 	void particle_for_split(SplitCellLists &split_cell_lists,
 							const LocalDynamicsFunction &local_dynamics_function)
@@ -189,9 +185,6 @@ namespace SPH
 		}
 	}
 
-	//----------------------------------------------------------------------
-	//	Splitting algorithm (for sequential and parallel computing).
-	//----------------------------------------------------------------------
 	template <class LocalDynamicsFunction>
 	void particle_parallel_for_split(SplitCellLists &split_cell_lists,
 									 const LocalDynamicsFunction &local_dynamics_function)
@@ -236,11 +229,9 @@ namespace SPH
 				ap);
 		}
 	}
-
-	//----------------------------------------------------------------------
-	//	Body-wise reduce iterators (for sequential and parallel computing).
-	//----------------------------------------------------------------------
-
+	/**
+	 * Body-wise reduce iterators (for sequential and parallel computing).
+	 */
 	template <class ReturnType, typename Operation, class LocalDynamicsFunction>
 	ReturnType particle_reduce(const size_t &all_real_particles, ReturnType temp, Operation &operation,
 							   const LocalDynamicsFunction &local_dynamics_function)
@@ -269,12 +260,10 @@ namespace SPH
 			{
 				return operation(x, y);
 			});
-	}
-
-	//----------------------------------------------------------------------
-	//	BodypartByParticle-wise reduce iterators (for sequential and parallel computing).
-	//----------------------------------------------------------------------
-
+	};
+	/**
+	 * BodypartByParticle-wise reduce iterators (for sequential and parallel computing).
+	 */
 	template <class ReturnType, typename Operation, class LocalDynamicsFunction>
 	ReturnType particle_reduce(const IndexVector &body_part_particles, ReturnType temp, Operation &operation,
 							   const LocalDynamicsFunction &local_dynamics_function)
@@ -305,12 +294,10 @@ namespace SPH
 			{
 				return operation(x, y);
 			});
-	}
-
-	//----------------------------------------------------------------------
-	//	BodypartByCell-wise reduce iterators (for sequential and parallel computing).
-	//----------------------------------------------------------------------
-
+	};
+	/**
+	 * BodypartByCell-wise reduce iterators (for sequential and parallel computing).
+	 */
 	template <class ReturnType, typename Operation, class LocalDynamicsFunction>
 	ReturnType particle_reduce(const ConcurrentIndexesInCells &body_part_cells, ReturnType temp, Operation &operation,
 							   const LocalDynamicsFunction &local_dynamics_function)

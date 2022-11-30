@@ -31,7 +31,7 @@ target_include_directories(sphinxsys_core INTERFACE ${Simbody_INCLUDE_DIR})
 target_link_directories(sphinxsys_core INTERFACE ${Simbody_LIB_DIR})
 target_link_libraries(sphinxsys_core INTERFACE ${Simbody_LIBRARIES})
 
-find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(Eigen3 3.4 CONFIG QUIET)
 if(TARGET Eigen3::Eigen)
     target_link_libraries (sphinxsys_core INTERFACE Eigen3::Eigen)
 else()

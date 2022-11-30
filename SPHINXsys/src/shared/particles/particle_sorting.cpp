@@ -1,8 +1,3 @@
-/**
- * @file 	particle_sorting.cpp
- * @author	Xiangyu Hu
- */
-
 #include "particle_sorting.h"
 
 #include "base_particles.hpp"

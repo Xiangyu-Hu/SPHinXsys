@@ -133,7 +133,7 @@ public:
 
 		Vecd center_norm = pos_[index_i] / (pos_[index_i].norm() + 1.0e-15);
 
-		Real angle = dot(face_norm, center_norm);
+		Real angle = face_norm.dot(center_norm);
 		if (angle >= 0.0)
 		{
 			species_[index_i] = 1.0;
@@ -183,18 +183,18 @@ public:
 		Vecd dist_2_face = sph_body_.body_shape_->findNormalDirection(pos_[index_i]);
 		Vecd face_norm = dist_2_face / (dist_2_face.norm() + 1.0e-15);
 		Vecd center_norm = pos_[index_i] / (pos_[index_i].norm() + 1.0e-15);
-		if (dot(face_norm, center_norm) <= 0.0)
+		if (face_norm.dot(center_norm) <= 0.0)
 		{
 			face_norm = -face_norm;
 		}
 		/** Compute the centerline's projection on the plane orthogonal to face norm. */
-		Vecd circumferential_direction = SimTK::cross(center_line_, face_norm);
+		Vecd circumferential_direction = getCrossProduct(center_line_, face_norm);
 		Vecd cd_norm = circumferential_direction / (circumferential_direction.norm() + 1.0e-15);
 		/** The rotation angle is given by beta = (beta_epi - beta_endo) phi + beta_endo */
 		Real beta = (beta_epi_ - beta_endo_) * species_n_[phi_][index_i] + beta_endo_;
 		/** Compute the rotation matrix through Rodrigues rotation formulation. */
-		Vecd f_0 = cos(beta) * cd_norm + sin(beta) * SimTK::cross(face_norm, cd_norm) +
-				   dot(face_norm, cd_norm) * (1.0 - cos(beta)) * face_norm;
+		Vecd f_0 = cos(beta) * cd_norm + sin(beta) * getCrossProduct(face_norm, cd_norm) +
+				   face_norm.dot(cd_norm) * (1.0 - cos(beta)) * face_norm;
 
 		if (pos_[index_i][2] < 2.0 * sph_body_.sph_adaptation_->ReferenceSpacing())
 		{

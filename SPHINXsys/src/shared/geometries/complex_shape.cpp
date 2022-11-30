@@ -1,9 +1,5 @@
-/**
- * @file 	complex_geometries.cpp
- * @author	Yongchuan Yu and Xiangyu Hu
- */
-
 #include "complex_shape.h"
+
 namespace SPH
 {
 	//=================================================================================================//
@@ -42,7 +38,7 @@ namespace SPH
 	Vecd AlignedBoxShape::getUpperPeriodic(int axis, const Vecd &probe_point)
 	{
 		Vecd position_in_frame = transformd_.shiftBaseStationToFrame(probe_point);
-		Vecd shift(0);
+		Vecd shift = Vecd::Zero();
 		shift[axis] -= 2.0 * halfsize_[axis];
 		return transformd_.shiftFrameStationToBase(position_in_frame + shift);
 	}
@@ -50,7 +46,7 @@ namespace SPH
 	Vecd AlignedBoxShape::getLowerPeriodic(int axis, const Vecd &probe_point)
 	{
 		Vecd position_in_frame = transformd_.shiftBaseStationToFrame(probe_point);
-		Vecd shift(0);
+		Vecd shift = Vecd::Zero();
 		shift[axis] += 2.0 * halfsize_[axis];
 		return transformd_.shiftFrameStationToBase(position_in_frame + shift);
 	}

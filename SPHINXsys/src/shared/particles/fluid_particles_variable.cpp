@@ -1,8 +1,3 @@
-/**
- * @file fluid_particles_variable.cpp
- * @author	Xiangyu Hu
- */
-
 #include "fluid_particles_variable.h"
 
 namespace SPH

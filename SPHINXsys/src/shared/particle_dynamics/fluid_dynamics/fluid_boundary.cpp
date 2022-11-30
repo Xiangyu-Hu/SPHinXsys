@@ -1,8 +1,3 @@
-/**
- * @file 	fluid_boundary.cpp
- * @author	Chi Zhang and Xiangyu Hu
- */
-
 #include "fluid_boundary.h"
 
 namespace SPH
@@ -44,8 +39,8 @@ namespace SPH
 		//=================================================================================================//
 		void DampingBoundaryCondition::update(size_t index_i, Real dt)
 		{
-			Real damping_factor = (pos_[index_i][0] - damping_zone_bounds_.first[0]) /
-								  (damping_zone_bounds_.second[0] - damping_zone_bounds_.first[0]);
+			Real damping_factor = (pos_[index_i][0] - damping_zone_bounds_.first_[0]) /
+								  (damping_zone_bounds_.second_[0] - damping_zone_bounds_.first_[0]);
 			vel_[index_i] *= (1.0 - dt * strength_ * damping_factor * damping_factor);
 		}
 		//=================================================================================================//
@@ -166,7 +161,7 @@ namespace SPH
 			Vecd kernel_gradient = level_set_shape_->computeKernelGradientIntegral(pos_[index_i]);
 			Vecd normal_to_fluid = -kernel_gradient / (kernel_gradient.norm() + TinyReal);
 			Vecd vel_in_wall = -vel_[index_i];
-			drho_dt_[index_i] += rho_[index_i] * SimTK::dot(vel_[index_i] - vel_in_wall, kernel_gradient);
+			drho_dt_[index_i] += rho_[index_i] * (vel_[index_i] - vel_in_wall).dot(kernel_gradient);
 		}
 		//=================================================================================================//
 		StaticConfinement::StaticConfinement(NearShapeSurface &near_surface)

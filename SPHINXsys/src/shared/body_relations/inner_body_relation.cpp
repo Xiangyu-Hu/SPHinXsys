@@ -1,10 +1,4 @@
-/**
- * @file 	inner_body_relation.cpp
- * @author	Chi Zhang and Xiangyu Hu
- */
-
 #include "inner_body_relation.h"
-
 #include "base_particle_dynamics.h"
 #include "cell_linked_list.hpp"
 

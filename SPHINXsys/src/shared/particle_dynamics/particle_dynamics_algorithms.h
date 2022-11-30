@@ -1,25 +1,25 @@
-/* -----------------------------------------------------------------------------*
- *                               SPHinXsys                                      *
- * -----------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
- * physical accurate simulation and aims to model coupled industrial dynamic    *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
- * (smoothed particle hydrodynamics), a meshless computational method using     *
- * particle discretization.                                                     *
- *                                                                              *
- * SPHinXsys is partially funded by German Research Foundation                  *
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
- * HU1527/12-1 and HU1527/12-4.                                                 *
- *                                                                              *
- * Portions copyright (c) 2017-2022 Technical University of Munich and          *
- * the authors' affiliations.                                                   *
- *                                                                              *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
- * not use this file except in compliance with the License. You may obtain a    *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
- *                                                                              *
- * -----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	particle_dynamics_algorithms.h
  * @brief 	This is the classes for algorithms particle dynamics .
@@ -109,7 +109,7 @@ namespace SPH
 						  "LocalDynamicsType does not fulfill SimpleDynamics requirements");
 		};
 		virtual ~SimpleDynamics(){};
-
+		/** The sequential function for executing the operations on particlses. */
 		virtual void exec(Real dt = 0.0) override
 		{
 			this->setBodyUpdated();
@@ -118,7 +118,7 @@ namespace SPH
 						 [&](size_t i)
 						 { this->update(i, dt); });
 		};
-
+		/** The parallel function for executing the operations on particlses. */
 		virtual void parallel_exec(Real dt = 0.0) override
 		{
 			this->setBodyUpdated();
@@ -131,7 +131,7 @@ namespace SPH
 
 	/**
 	 * @class ReduceDynamics
-	 * @brief Template class for particle-wise reduce operation
+	 * @brief Template class for particle-wise reduce operation, summation, max or min. 
 	 */
 	template <class LocalDynamicsType, class DynamicsRange = SPHBody>
 	class ReduceDynamics : public LocalDynamicsType,
@@ -153,7 +153,7 @@ namespace SPH
 		using ReduceReturnType = ReturnType;
 		std::string QuantityName() { return this->quantity_name_; };
 		std::string DynamicsRangeName() { return dynamics_range_.getName(); };
-
+		/** The sequential function for executing the reduce operations on particlses. */
 		virtual ReturnType exec(Real dt = 0.0) override
 		{
 			this->setupDynamics(dt);
@@ -163,7 +163,7 @@ namespace SPH
 				{ return this->reduce(i, dt); });
 			return this->outputResult(temp);
 		};
-
+		/** The parallel function for executing the reduce operations on particlses. */
 		virtual ReturnType parallel_exec(Real dt = 0.0) override
 		{
 			this->setupDynamics(dt);
@@ -193,13 +193,13 @@ namespace SPH
 		ReduceAverage(DerivedDynamicsRange &derived_dynamics_range, Args &&...args)
 			: ReduceDynamics<LocalDynamicsType, DynamicsRange>(derived_dynamics_range, std::forward<Args>(args)...){};
 		virtual ~ReduceAverage(){};
-
+		/** The sequential function for executing the average operations on particlses. */
 		virtual ReturnType exec(Real dt = 0.0) override
 		{
 			ReturnType sum = ReduceDynamics<LocalDynamicsType, DynamicsRange>::exec(dt);
 			return outputAverage(sum, this->dynamics_range_.SizeOfLoopRange());
 		};
-
+		/** The parallel function for executing the average operations on particlses. */
 		virtual ReturnType parallel_exec(Real dt = 0.0) override
 		{
 			ReturnType sum = ReduceDynamics<LocalDynamicsType, DynamicsRange>::parallel_exec(dt);
@@ -225,17 +225,18 @@ namespace SPH
 		StdVec<BaseDynamics<void> *> pre_processes_;
 		/** post process such as impose constraint */
 		StdVec<BaseDynamics<void> *> post_processes_;
-
+		/** squential run the interactions teween particles. */
 		virtual void runInteractionStep(Real dt) = 0;
+		/** parallel run the interactions teween particles. */
 		virtual void parallel_runInteractionStep(Real dt) = 0;
-
+		/** The sequential function for executing the average operations on particlses and their neighbors. */
 		virtual void exec(Real dt = 0.0) override
 		{
 			this->setBodyUpdated();
 			this->setupDynamics(dt);
 			runInteractionStep(dt);
 		};
-
+		/** The parallel function for executing the average operations on particlses and their neighbors. */
 		virtual void parallel_exec(Real dt = 0.0) override
 		{
 			this->setBodyUpdated();
@@ -368,7 +369,7 @@ namespace SPH
 						  "LocalDynamicsType does not fulfill InteractionWithUpdate requirements");
 		}
 		virtual ~InteractionWithUpdate(){};
-
+		/** The sequential function for executing the average operations on particlses and their neighbors. */
 		virtual void exec(Real dt = 0.0) override
 		{
 			InteractionDynamics<LocalDynamicsType, DynamicsRange>::exec(dt);
@@ -376,7 +377,7 @@ namespace SPH
 						 [&](size_t i)
 						 { this->update(i, dt); });
 		};
-
+		/** The parallel function for executing the average operations on particlses and their neighbors. */
 		virtual void parallel_exec(Real dt = 0.0) override
 		{
 			InteractionDynamics<LocalDynamicsType, DynamicsRange>::parallel_exec(dt);
@@ -407,7 +408,7 @@ namespace SPH
 			: InteractionWithUpdate<LocalDynamicsType, DynamicsRange>(
 				  false, body_relation, std::forward<Args>(args)...) {}
 		virtual ~Dynamics1Level(){};
-
+		/** The sequential function for executing the average operations on particlses and their neighbors. */
 		virtual void exec(Real dt = 0.0) override
 		{
 			this->setBodyUpdated();
@@ -423,7 +424,7 @@ namespace SPH
 						 [&](size_t i)
 						 { this->update(i, dt); });
 		};
-
+		/** The parallel function for executing the average operations on particlses and their neighbors. */
 		virtual void parallel_exec(Real dt = 0.0) override
 		{
 			this->setBodyUpdated();

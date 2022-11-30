@@ -190,7 +190,7 @@ And then the observer body and contact map are defined.
 .. code-block:: cpp
 
 	/** Define Observer. */
-	ObserverBody beam_observer(system, "BeamObserver", makeShared<SPHAdaptation>(1.15, 2.0));
+	ProbeBody beam_observer(system, "BeamObserver", makeShared<SPHAdaptation>(1.15, 2.0));
 	//create observer particles
 	ObserverParticles observer_particles(beam_observer, makeShared<ObserverParticleGenerator>());
 

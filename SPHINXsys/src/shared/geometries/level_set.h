@@ -1,29 +1,29 @@
-/* -----------------------------------------------------------------------------*
- *                               SPHinXsys                                      *
- * -----------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
- * physical accurate simulation and aims to model coupled industrial dynamic    *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
- * (smoothed particle hydrodynamics), a meshless computational method using     *
- * particle discretization.                                                     *
- *                                                                              *
- * SPHinXsys is partially funded by German Research Foundation                  *
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
- * HU1527/12-1 and HU1527/12-4.                                                 *
- *                                                                              *
- * Portions copyright (c) 2017-2022 Technical University of Munich and          *
- * the authors' affiliations.                                                   *
- *                                                                              *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
- * not use this file except in compliance with the License. You may obtain a    *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
- *                                                                              *
- * -----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	level_set.h
  * @brief 	Level set is a function which is defined as signed distance to a surface or interface.
- * @author	Chi Zhang and Xiangyu Hu
+ * @author	Chi ZHang and Xiangyu Hu
  */
 
 #ifndef LEVEL_SET_H
@@ -37,6 +37,7 @@ namespace SPH
 {
 	class LevelSet;
 	class Kernel;
+
 	/**
 	 * @class LevelSetDataPackage
 	 * @brief Fixed memory level set data packed in a package.
@@ -47,14 +48,15 @@ namespace SPH
 	{
 	public:
 		bool is_core_pkg_;					 /**< If true, the package is near to zero level set. */
-		PackageData<Real> phi_;				 /**< the level set or signed distance. */
-		PackageDataAddress<Real> phi_addrs_; /**< address for the level set. */
+		PackageData<Real> phi_;				 
+		PackageDataAddress<Real> phi_addrs_; 
 		PackageData<Vecd> phi_gradient_;
 		PackageDataAddress<Vecd> phi_gradient_addrs_;
 		PackageData<Real> kernel_weight_;
 		PackageDataAddress<Real> kernel_weight_addrs_;
 		PackageData<Vecd> kernel_gradient_;
 		PackageDataAddress<Vecd> kernel_gradient_addrs_;
+
 		/** mark the near interface cells. 0 for zero level set cut cells,
 		 * -1 and 1 for negative and positive cut cells,
 		 * 0 can also be for other cells in the region closed
@@ -118,12 +120,17 @@ namespace SPH
 		ConcurrentVec<LevelSetDataPackage *> core_data_pkgs_; /**< packages near to zero level set. */
 		Real global_h_ratio_;
 
-		// this constructor only initialize far field
-		LevelSet(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size,
-				 Shape &shape, SPHAdaptation &sph_adaptation);
-		// this constructor generate inner packages too
-		LevelSet(BoundingBox tentative_bounds, Real data_spacing,
-				 Shape &shape, SPHAdaptation &sph_adaptation);
+		/** This constructor only initialize far field. */
+		LevelSet(BoundingBox tentative_bounds
+				, Real data_spacing
+				, size_t buffer_size
+				, Shape &shape
+				, SPHAdaptation &sph_adaptation);
+		/** This constructor generate inner packages too. */
+		LevelSet(BoundingBox tentative_bounds
+				, Real data_spacing
+				, Shape &shape
+				, SPHAdaptation &sph_adaptation);
 		virtual ~LevelSet(){};
 
 		virtual void cleanInterface(Real small_shift_factor) override;
@@ -164,8 +171,11 @@ namespace SPH
 	class RefinedLevelSet : public RefinedMesh<LevelSet>
 	{
 	public:
-		RefinedLevelSet(BoundingBox tentative_bounds, LevelSet &coarse_level_set,
-						Shape &shape, SPHAdaptation &sph_adaptation);
+		RefinedLevelSet(BoundingBox tentative_bounds
+					   , LevelSet &coarse_level_set
+					   , Shape &shape
+					   , SPHAdaptation &sph_adaptation
+					   );
 		virtual ~RefinedLevelSet(){};
 
 	protected:
@@ -179,8 +189,12 @@ namespace SPH
 	class MultilevelLevelSet : public MultilevelMesh<BaseLevelSet, LevelSet, RefinedLevelSet>
 	{
 	public:
-		MultilevelLevelSet(BoundingBox tentative_bounds, Real reference_data_spacing,
-						   size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation);
+		MultilevelLevelSet(BoundingBox tentative_bounds
+						  , Real reference_data_spacing
+						  , size_t total_levels
+						  , Shape &shape
+						  , SPHAdaptation &sph_adaptation
+						  );
 		virtual ~MultilevelLevelSet(){};
 
 		virtual void cleanInterface(Real small_shift_factor) override;

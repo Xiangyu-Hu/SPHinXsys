@@ -1,8 +1,3 @@
-/**
- * @file 	electro_physiology.cpp
- * @author 	Chi Zhang and Xiangyu Hu
- */
-
 #include "electro_physiology.h"
 
 namespace SPH

@@ -1,13 +1,35 @@
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
- * @file 	fluid_dynamics_multi_phase.hpp
- * @author	Chi Zhang and Xiangyu Hu
+ * @file fluid_dynamics_multi_phase.hpp
+ * @brief Here, we define the algorithm classes for the dynamics involving multiple fluids.
+ * @author	Chi ZHang and Xiangyu Hu
  */
 
 #pragma once
 
 #include "fluid_dynamics_multi_phase.h"
 
-//=================================================================================================//
 namespace SPH
 {
 	//=================================================================================================//
@@ -58,7 +80,7 @@ namespace SPH
 		{
 			Integration1stHalfType::interaction(index_i, dt);
 
-			Vecd acceleration(0.0);
+			Vecd acceleration = Vecd::Zero();
 			Real rho_dissipation(0);
 			for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 			{
@@ -127,7 +149,7 @@ namespace SPH
 			Integration2ndHalfType::interaction(index_i, dt);
 
 			Real density_change_rate = 0.0;
-			Vecd p_dissipation(0);
+			Vecd p_dissipation = Vecd::Zero();
 			for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 			{
 				StdLargeVec<Real> &rho_k = *(this->contact_rho_n_[k]);
@@ -142,8 +164,8 @@ namespace SPH
 					Real dW_ijV_j = contact_neighborhood.dW_ijV_j_[n];
 
 					Vecd vel_ave = riemann_solver_k.AverageV(this->vel_[index_i], vel_k[index_j]);
-					density_change_rate += 2.0 * SimTK::dot(this->vel_[index_i] - vel_ave, e_ij) * dW_ijV_j;
-					Real u_jump = u_jump = SimTK::dot(this->vel_[index_i] - vel_k[index_j], e_ij);
+					density_change_rate += 2.0 * (this->vel_[index_i] - vel_ave).dot(e_ij) * dW_ijV_j;
+					Real u_jump = u_jump = (this->vel_[index_i] - vel_k[index_j]).dot(e_ij);
 					p_dissipation += riemann_solver_k.DissipativePJump(u_jump) * dW_ijV_j * e_ij;
 				}
 			}

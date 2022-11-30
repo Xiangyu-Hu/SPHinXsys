@@ -1,8 +1,3 @@
-/**
- * @file 	level_set_supplementary.cpp
- * @author	Luhui Han, Chi Zhang Yongchuan YU and Xiangyu Hu
- */
-
 #include "level_set.h"
 #include "mesh_with_data_packages.hpp"
 #include "mesh_iterators.hpp"
@@ -21,9 +16,9 @@ namespace SPH
 				for (int k = 0; k != PackageSize(); ++k)
 				{
 					phi_[i][j][k] = far_field_level_set;
-					phi_gradient_[i][j][k] = Vecd(1.0);
+					phi_gradient_[i][j][k] = Vecd::Ones();
 					kernel_weight_[i][j][k] = far_field_level_set < 0.0 ? 0 : 1.0;
-					kernel_gradient_[i][j][k] = Vecd(0.0);
+					kernel_gradient_[i][j][k] = Vecd::Zero();
 					near_interface_id_[i][j][k] = far_field_level_set < 0.0 ? -2 : 2;
 				}
 	}
@@ -34,7 +29,7 @@ namespace SPH
 			for (int j = 0; j != PackageSize(); ++j)
 				for (int k = 0; k != PackageSize(); ++k)
 				{
-					Vec3d position = DataLowerBound() + Vec3d(i, j, k) * grid_spacing_;
+					Vecd position = DataLowerBound() + Vecd(i, j, k) * grid_spacing_;
 					phi_[i][j][k] = shape.findSignedDistance(position);
 					near_interface_id_[i][j][k] = phi_[i][j][k] < 0.0 ? -2 : 2;
 				}
@@ -46,7 +41,7 @@ namespace SPH
 			for (int j = 0; j != PackageSize(); ++j)
 				for (int k = 0; k != PackageSize(); ++k)
 				{
-					Vec3d position = DataLowerBound() + Vec3d(i, j, k) * grid_spacing_;
+					Vecd position = DataLowerBound() + Vecd(i, j, k) * grid_spacing_;
 					kernel_weight_[i][j][k] = level_set.computeKernelIntegral(position);
 					kernel_gradient_[i][j][k] = level_set.computeKernelGradientIntegral(position);
 				}
@@ -210,7 +205,7 @@ namespace SPH
 					   Shape &shape, SPHAdaptation &sph_adaptation)
 		: LevelSet(tentative_bounds, data_spacing, 4, shape, sph_adaptation)
 	{
-		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
+		mesh_parallel_for(MeshRange(Vecu::Zero(), number_of_cells_),
 						  [&](size_t i, size_t j, size_t k)
 						  {
 							  initializeDataInACell(Vecu(i, j, k));
@@ -221,13 +216,13 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSet::finishDataPackages()
 	{
-		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
+		mesh_parallel_for(MeshRange(Vecu::Zero(), number_of_cells_),
 						  [&](size_t i, size_t j, size_t k)
 						  {
 							  tagACellIsInnerPackage(Vecu(i, j, k));
 						  });
 
-		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
+		mesh_parallel_for(MeshRange(Vecu::Zero(), number_of_cells_),
 						  [&](size_t i, size_t j, size_t k)
 						  {
 							  initializePackageAddressesInACell(Vecu(i, j, k));
@@ -305,9 +300,10 @@ namespace SPH
 										}
 									}
 							*core_data_pkg->phi_addrs_[i][j][k] = -min_distance_p;
-							// this immediate switch of near interface id
-							// does not intervening with the identification of unresolved interface
-							// based on the assumption that positive false_and negative bands are not close to each other
+							/** This immediate switch of near interface id
+							 * does not intervening with the identification of unresolved interface
+							 * based on the assumption that positive false_and negative bands are not close to each other.
+							  */
 							*core_data_pkg->near_interface_id_addrs_[i][j][k] = -1;
 						}
 						if (negative_band == false)
@@ -331,9 +327,10 @@ namespace SPH
 										}
 									}
 							*core_data_pkg->phi_addrs_[i][j][k] = min_distance_n;
-							// this immediate switch of near interface id
-							// does not intervening with the identification of unresolved interface
-							// based on the assumption that positive false_and negative bands are not close to each other
+							/** This immediate switch of near interface id
+							 * does not intervening with the identification of unresolved interface
+							 * based on the assumption that positive false_and negative bands are not close to each other. 
+							 */
 							*core_data_pkg->near_interface_id_addrs_[i][j][k] = 1;
 						}
 					}
@@ -459,7 +456,7 @@ namespace SPH
 		Real cutoff_radius = kernel_.CutOffRadius(global_h_ratio_);
 		Real threshold = cutoff_radius + data_spacing_;
 
-		Real integral(0.0);
+		Real integral(0);
 		if (fabs(phi) < threshold)
 		{
 			Vecu global_index_ = global_mesh_.CellIndexFromPosition(position);
@@ -488,7 +485,7 @@ namespace SPH
 		Real cutoff_radius = kernel_.CutOffRadius(global_h_ratio_);
 		Real threshold = cutoff_radius + data_spacing_;
 
-		Vecd integral(0.0);
+		Vecd integral = Vecd::Zero();
 		if (fabs(phi) < threshold)
 		{
 			Vecu global_index_ = global_mesh_.CellIndexFromPosition(position);
@@ -516,7 +513,7 @@ namespace SPH
 									 Shape &shape, SPHAdaptation &sph_adaptation)
 		: RefinedMesh(tentative_bounds, coarse_level_set, 4, shape, sph_adaptation)
 	{
-		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
+		mesh_parallel_for(MeshRange(Vecu::Zero(), number_of_cells_),
 						  [&](size_t i, size_t j, size_t k)
 						  {
 							  initializeDataInACellFromCoarse(Vecu(i, j, k));

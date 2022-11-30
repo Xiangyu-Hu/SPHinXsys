@@ -1,25 +1,25 @@
 /* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	state_engine.h
  * @details The StateEngine class defines the interface used to add computational
@@ -29,7 +29,7 @@
  *          (state, discrete, cache, ...) to the underlying system. As such, SimbodyState
  *          handles all of the bookkeeping of system indices and provides convenience
  *          access to variable values (incl. derivatives) via their names as strings.
- * @author	Chi Zhang and Xiangyu Hu.
+ * @author	Chi ZHang and Xiangyu Hu
  */
 
 #ifndef STATE_ENGINE_SIMBODY_H
@@ -58,13 +58,9 @@ namespace SPH {
      * @class StateEngine
      */
     class StateEngine {
-        //===============================================================//
-        // PROTECTED
-        //===============================================================//
     protected:
 
         XmlEngine simbody_xml_engine_;
-
         void resizeXmlDocForSimbody(size_t input_size);
 
         /**
@@ -75,19 +71,24 @@ namespace SPH {
          *      implement the virtual methods below.
          */
         class StateVariable {
-            //friend void StateEngine::addStateVariable(StateVariable* sv);
         public:
             /** Constructor and destructor. */
-            StateVariable() :name_(""), owner_(nullptr),
-                subsysindex_(SimTK::InvalidIndex),
-                varindex_(SimTK::InvalidIndex),
-                sysyindex_(SimTK::InvalidIndex) {}
-            explicit StateVariable(std::string& name,    /**< state var name. */
-                StateEngine& owner,                    /**< owning component. */
-                SimTK::SubsystemIndex subsys,          /**< subsystem for allocation. */
-                int varindex)                          /**< variable's index in subsystem.*/
-                : name_(name), owner_(&owner), subsysindex_(subsys),
-                varindex_(varindex), sysyindex_(SimTK::InvalidIndex) {}
+            StateVariable() 
+                : name_("")
+                , owner_(nullptr)
+                , subsysindex_(SimTK::InvalidIndex)
+                , varindex_(SimTK::InvalidIndex)
+                , sysyindex_(SimTK::InvalidIndex) 
+            {}
+
+            explicit StateVariable(std::string& name, StateEngine& owner, SimTK::SubsystemIndex subsys, int varindex)                        
+                : name_(name)
+                , owner_(&owner)
+                , subsysindex_(subsys)
+                , varindex_(varindex)
+                , sysyindex_(SimTK::InvalidIndex) 
+            {}
+            
             virtual ~StateVariable() {}
 
             std::string& getName() { return name_; }
@@ -130,13 +131,10 @@ namespace SPH {
              */
             SimTK::SystemYIndex sysyindex_;
         };
-        //===============================================================//
-        // PRIVATE
-        //===============================================================//
-            /**
-             * @class AddedStateVariable
-             * @brief Class for handling state variable added (allocated) by this StateEngine.
-             */
+        /**
+         * @class AddedStateVariable
+         * @brief Class for handling state variable added (allocated) by this StateEngine.
+         */
         class AddedStateVariable : public StateVariable {
         public:
             /** Constructors adn destructors. */
@@ -196,9 +194,7 @@ namespace SPH {
             // order of allocation
             int order;
         };
-        //===============================================================//
-        // PUBLIC
-        //===============================================================//       
+      
     public:
 
         /** Add a continuous system state variable belonging to this Engine,
@@ -239,7 +235,7 @@ namespace SPH {
             using getStateVariableValue()).
         */
         void addStateVariable(StateEngine::StateVariable* statevariable);
-        //===========================================================//
+
         SimTK::DefaultSystemSubsystem& getDefaultSubsystem()
         {
             return const_cast<SimTK::DefaultSystemSubsystem&>
@@ -249,7 +245,7 @@ namespace SPH {
         {
             return getMultibodySystem().updDefaultSubsystem();
         }
-        //===========================================================//
+        
         /**
         * Get a StateVariable anywhere in the state engine, given a
         * StateVariable path.
