@@ -37,6 +37,7 @@ Real rho0_f = 1000.0;						/**< Reference density of fluid. */
 Real gravity_g = 9.81; 					    /**< Value of gravity. */
 Real U_max = 2.0*sqrt(gravity_g*L_H);		/**< Characteristic velocity. */
 Real c_f = 10.0* U_max;					    /**< Reference sound speed. */
+Real mu_f = 1.0e-6;
 /**
  * @brief Material properties of the elastic gate.
  */
@@ -118,7 +119,7 @@ public:
 	{
 		for (int i = 0; i < particle_number_mid_surface; i++)
 		{
-			Real x = Gate_x - 0.0262 + 0.0075 + 0.008 + 0.006 + 0.002 + 0.006 - 0.5 * particle_spacing_ref; //0.5, 0.75, 1.5
+			Real x = Gate_x - 0.0262 + 0.0075 + 0.008 + 0.006 + 0.002 + 0.006 - 0.4 * particle_spacing_ref; //0.5, 0.75, 1.5
 			Real y = -BW + Real(i) * particle_spacing_ref;
 			initializePositionAndVolumetricMeasure(Vecd(x, y), particle_spacing_ref);
 			Vec2d normal_direction = Vec2d(1.0, 0);

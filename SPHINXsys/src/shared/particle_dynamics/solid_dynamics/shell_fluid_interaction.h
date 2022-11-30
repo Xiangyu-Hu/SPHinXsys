@@ -58,9 +58,9 @@ namespace SPH
             StdLargeVec<Vecd> &vel_ave_;
 			StdLargeVec<Vecd> viscous_force_from_fluid_;
 
+			StdVec<Fluid *> contact_fluids_;
 			StdVec<Real> mu_;
 			StdVec<Real> smoothing_length_;
-			StdVec<Fluid *> contact_fluids_;
 
 			StdVec<StdLargeVec<Real> *> contact_rho_n_;
 			StdVec<StdLargeVec<Vecd> *> contact_vel_n_;

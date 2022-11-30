@@ -16,9 +16,9 @@ namespace SPH
 
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
-                mu_.push_back(contact_fluids_[k]->ReferenceViscosity());
-				smoothing_length_.push_back(contact_bodies_[k]->sph_adaptation_->ReferenceSmoothingLength());
 				contact_fluids_.push_back(&contact_particles_[k]->fluid_);
+				mu_.push_back(contact_fluids_[k]->ReferenceViscosity());
+				smoothing_length_.push_back(contact_bodies_[k]->sph_adaptation_->ReferenceSmoothingLength());
 
 				contact_rho_n_.push_back(&(contact_particles_[k]->rho_));
 				contact_vel_n_.push_back(&(contact_particles_[k]->vel_));

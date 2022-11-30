@@ -22,7 +22,7 @@ int main(int ac, char *av[])
 	GlobalStaticVariables::physical_time_ = 0.0;
 	/** The water block, body, material and particles container. */
 	FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
+	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	water_block.generateParticles<ParticleGeneratorLattice>();
 	 /** The wall boundary, body and particles container. */
 	SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
@@ -35,13 +35,13 @@ int main(int ac, char *av[])
 	shell_baffle.generateParticles<ShellBaffleParticleGenerator>();
 	shell_baffle.addBodyStateForRecording<Vecd>("PseudoNormal");
 	/** @brief 	Particle and body creation of baffle observer.*/
-	ProbeBody baffle_disp_observer(sph_system, "BaffleDispObserver");
+	ObserverBody baffle_disp_observer(sph_system, "BaffleDispObserver");
 	baffle_disp_observer.generateParticles<ObserverParticleGenerator>(baffle_disp_probe_location);
 	/** Pressure probe on Flap. */
-	ProbeBody baffle_pressure_observer(sph_system, "BafflePressureObserver");
+	ObserverBody baffle_pressure_observer(sph_system, "BafflePressureObserver");
 	baffle_pressure_observer.generateParticles<ObserverParticleGenerator>(baffle_pressure_probe_location);
 	/** @brief 	Particle and body creation of fluid observer.*/
-	ProbeBody fluid_observer(sph_system, "Fluidobserver");
+	ObserverBody fluid_observer(sph_system, "Fluidobserver");
 	fluid_observer.generateParticles<ObserverParticleGenerator>(fluid_pressure_probe_location);
 	/** topology */
 	InnerRelation 	water_block_inner(water_block);
@@ -62,7 +62,7 @@ int main(int ac, char *av[])
 	SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block, gravity_ptr);
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_max);
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
-	InteractionWithUpdate<fluid_dynamics::DensitySummationComplexWithShell> update_fluid_density_by_summation(water_shell_contact, water_wall_complex);
+	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_fluid_density_by_summation(water_shell_contact, water_wall_complex);
 	Dynamics1Level<fluid_dynamics::FluidShellandWallIntegration1stHalfRiemann> fluid_pressure_relaxation(water_wall_contact, water_shell_complex);
 	Dynamics1Level<fluid_dynamics::FluidShellandWallIntegration2ndHalfRiemann> fluid_density_relaxation(water_wall_contact, water_shell_complex);
 	/** Algorithms for solid. */
@@ -131,11 +131,11 @@ int main(int ac, char *av[])
 	int screen_output_interval = 100;
 	int observation_sample_interval = screen_output_interval * 2;
 	int restart_output_interval = screen_output_interval * 10;
-	Real End_Time = 20.0;		/**< End time. */
+	Real End_Time = 20.0;			/**< End time. */
 	Real D_Time = End_Time /200;	/**< time stamps for output. */
-	Real Dt = 0.0;			/**< Default advection time step sizes. */
-	Real dt = 0.0; 			/**< Default acoustic time step sizes. */
-	Real dt_s = 0.0;		/**< Default acoustic time step sizes for solid. */
+	Real Dt = 0.0;					/**< Default advection time step sizes. */
+	Real dt = 0.0; 					/**< Default acoustic time step sizes. */
+	Real dt_s = 0.0;				/**< Default acoustic time step sizes for solid. */
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
 	/**
@@ -150,7 +150,7 @@ int main(int ac, char *av[])
 			/** Acceleration due to viscous force and gravity. */
 			gravity_ptr->UpdateAcceleration();
 			fluid_step_initialization.parallel_exec();
-			//update_fluid_density_by_summation.parallel_exec();
+			update_fluid_density_by_summation.parallel_exec();
 
 			viscous_force_on_shell.parallel_exec();
 
@@ -164,23 +164,25 @@ int main(int ac, char *av[])
 				fluid_density_relaxation.parallel_exec(dt);
 
 				/** Solid dynamics time stepping. */
-				// Real dt_s_sum = 0.0;
-				// average_velocity_and_acceleration.initialize_displacement_.parallel_exec();
-				// while (dt_s_sum < dt)
-				// {
-				// 	dt_s = shell_time_step_size.parallel_exec();
-				// 	if (dt - dt_s_sum < dt_s) dt_s = dt - dt_s_sum;
-				// 	shell_stress_relaxation_first.parallel_exec(dt_s);
-				// 	baffle_constrain.parallel_exec();
-				// 	shell_stress_relaxation_second.parallel_exec(dt_s);
-				// 	dt_s_sum += dt_s;
-				// }
-				// average_velocity_and_acceleration.update_averages_.parallel_exec(dt);
+				Real dt_s_sum = 0.0;
+				average_velocity_and_acceleration.initialize_displacement_.parallel_exec();
+				while (dt_s_sum < dt)
+				{
+					dt_s = shell_time_step_size.parallel_exec();
+					if (dt - dt_s_sum < dt_s) dt_s = dt - dt_s_sum;
+					shell_stress_relaxation_first.parallel_exec(dt_s);
+					baffle_constrain.parallel_exec();
+					shell_stress_relaxation_second.parallel_exec(dt_s);
+					dt_s_sum += dt_s;
+				}
+				average_velocity_and_acceleration.update_averages_.parallel_exec(dt);
 
 				dt = fluid_acoustic_time_step.parallel_exec();
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
+
+				//write_real_body_states_to_vtp.writeToFile();
 			}
 
 			if (number_of_iterations % screen_output_interval == 0)

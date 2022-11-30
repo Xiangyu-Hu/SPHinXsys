@@ -88,7 +88,8 @@ namespace SPH
 				Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
-					sigma += contact_neighborhood.W_ij_[n] * contact_inv_rho0_k * contact_mass_k[contact_neighborhood.j_[n]];
+					Real mass = this->contact_particles_[k]->ParticleMass(contact_neighborhood.j_[n]);
+					sigma += contact_neighborhood.W_ij_[n] * contact_inv_rho0_k * mass;
 				}
 			}
 			return sigma;

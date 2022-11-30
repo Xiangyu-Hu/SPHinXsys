@@ -67,37 +67,6 @@ namespace SPH
 		};
 
 		/**
-		 * @class DensitySummationComplexWithShell
-		 * @brief computing density by summation considering contribution from contact bodies
-		 */
-		class DensitySummationComplexWithShell
-			: public BaseDensitySummationComplex<DensitySummationInner>
-		{
-		public:
-			template <typename... Args>
-			explicit DensitySummationComplexWithShell(Args &&...args)
-				: BaseDensitySummationComplex<DensitySummationInner>(std::forward<Args>(args)...){};
-			virtual ~DensitySummationComplexWithShell(){};
-			void interaction(size_t index_i, Real dt = 0.0);
-		};
-
-		/**
-		 * @class DensitySummationComplexAdaptive
-		 * @brief computing density by summation considering  contribution from contact bodies
-		 */
-		class DensitySummationComplexAdaptiveWithShell
-			: public BaseDensitySummationComplex<DensitySummationInnerAdaptive>
-		{
-		public:
-			template <typename... Args>
-			explicit DensitySummationComplexAdaptiveWithShell(Args &&...args)
-			: BaseDensitySummationComplex<DensitySummationInnerAdaptive>(std::forward<Args>(args)...){};
-			virtual ~DensitySummationComplexAdaptiveWithShell(){};
-			void interaction(size_t index_i, Real dt = 0.0);
-		};
-
-
-		/**
 		 * @class BaseFluidShellIntegration1stHalf
 		 * @brief  template class for fluid-shell pressure relaxation scheme
 		 */
