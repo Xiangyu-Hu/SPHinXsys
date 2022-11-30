@@ -198,7 +198,7 @@ namespace SPH
 	class OrthotropicSolid : public LinearElasticSolid
 	{
 	public:
-		OrthotropicSolid(Real rho_0, std::array<Vecd, 3> a, std::array<Real, 3> E, std::array<Real, 3> G, std::array<Real, 3> poisson);
+		OrthotropicSolid(Real rho_0, std::array<Vecd, Dimensions> a, std::array<Real, Dimensions> E, std::array<Real, Dimensions> G, std::array<Real, Dimensions> poisson);
 
 		/** second Piola-Kirchhoff stress related with green-lagrangian deformation tensor */
 		virtual Matd StressPK2(Matd& deformation, size_t particle_index_i) override;
@@ -207,14 +207,14 @@ namespace SPH
 
 	protected:
 		// input data
-		std::array<Vecd, 3> a_;
-		std::array<Real, 3> E_;
-		std::array<Real, 3> G_;
-		std::array<Real, 3> poisson_;
+		std::array<Vecd, Dimensions> a_;
+		std::array<Real, Dimensions> E_;
+		std::array<Real, Dimensions> G_;
+		std::array<Real, Dimensions> poisson_;
 		// calculated data
-		Real Mu_[3];
+		Real Mu_[Dimensions];
 		Matd Lambda_;
-		Matd A_[3];
+		Matd A_[Dimensions];
 
 		virtual void CalculateAllMu();
 		virtual void CalculateAllLambda();

@@ -1,59 +1,8 @@
 #include "elastic_solid.h"
 #include "base_particles.hpp"
 
-#ifdef max
-#undef max
-#endif
-
 namespace SPH
 {
-    //=================================================================================================//
-	OrthotropicSolid::OrthotropicSolid(Real rho_0, std::array<Vecd, 3> a, std::array<Real, 3> E,
-									   std::array<Real, 3> G, std::array<Real, 3> poisson)
-		// set parameters for parent class: LinearElasticSolid
-		// we take the max. E and max. poisson to approximate the maximum of
-		// the Bulk modulus --> for time step size calculation
-		: LinearElasticSolid(rho_0, std::max({E[0], E[1], E[2]}),
-							 std::max({poisson[0], poisson[1], poisson[2]})),
-		  a_(a), E_(E), G_(G), poisson_(poisson)
-	{
-		// parameters for derived class
-		material_type_name_ = "OrthotropicSolid";
-		CalculateA0();
-		CalculateAllMu();
-		CalculateAllLambda();
-	};
-	//=================================================================================================//
-	Matd OrthotropicSolid::StressPK2(Matd &F, size_t particle_index_i)
-	{
-		Matd strain = 0.5 * (F.transpose() * F - Matd::Identity());
-		Matd stress_PK2 = Matd::Zero();
-		for (int i = 0; i < 3; i++)
-		{
-			// outer sum (a{1-3})
-			Matd Summa2 = Matd::Zero();
-			for (int j = 0; j < 3; j++)
-			{
-				// inner sum (b{1-3})
-				Summa2 += Lambda_(i,j) * (CalculateDoubleDotProduct(A_[i], strain) * A_[j] +
-										   CalculateDoubleDotProduct(A_[j], strain) * A_[i]);
-			}
-			stress_PK2 += Mu_[i] * (((A_[i] * strain) + (strain * A_[i])) + 1 / 2 * (Summa2));
-		}
-		return stress_PK2;
-	}
-	//=================================================================================================//
-	Real OrthotropicSolid::VolumetricKirchhoff(Real J)
-	{
-		return K0_ * J * (J - 1);
-	}
-	//=================================================================================================//
-	void OrthotropicSolid::CalculateA0()
-	{
-		A_[0] = a_[0] * a_[0].transpose();
-		A_[1] = a_[1] * a_[1].transpose();
-		A_[2] = a_[2] * a_[2].transpose();
-	}
 	//=================================================================================================//
 	void OrthotropicSolid::CalculateAllMu()
 	{
