@@ -114,7 +114,7 @@ namespace SPH
 		/** register a variable defined in a class (can be non-particle class) */
 		template <typename VariableType>
 		void registerVariable(StdLargeVec<VariableType> &variable_addrs, const std::string &variable_name, 
-							  VariableType initial_value = DataTypeInitializer<VariableType>::zero);
+							  VariableType initial_value = ZeroData<VariableType>::value);
 		/** register a variable from a initialization function */
 		template <typename VariableType, class InitializationFunction>
 		void registerVariable(StdLargeVec<VariableType> &variable_addrs, const std::string &variable_name,

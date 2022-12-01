@@ -67,7 +67,7 @@ namespace SPH
 
 			void interaction(size_t index_i, Real dt = 0.0)
 			{
-				VariableType observed_quantity = DataTypeInitializer<VariableType>::zero;
+				VariableType observed_quantity = ZeroData<VariableType>::value;
 				Real ttl_weight(0);
 
 				for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
@@ -136,7 +136,7 @@ namespace SPH
       			constexpr int type_index = DataTypeIndex<VariableType>::value;
 				if (particles->all_variable_maps_[type_index].find(variable_name) == particles->all_variable_maps_[type_index].end())
 				{
-					particles->registerVariable(observed_quantities_, variable_name, [&](size_t i) -> VariableType {return DataTypeInitializer<VariableType>::zero;});
+					particles->registerVariable(observed_quantities_, variable_name, [&](size_t i) -> VariableType {return ZeroData<VariableType>::value;});
 					return &observed_quantities_;
 				}
 				return particles->getVariableByName<VariableType>(variable_name);

@@ -94,39 +94,19 @@ namespace SPH
 	 * e.g., because SIMD functions are not easy to handle.
 	 */
 	template <typename DataType>
-	struct DataTypeInitializer
+	struct ZeroData
 	{
-		static inline DataType zero;
+		static inline DataType value = DataType::Zero();
 	};
 	template <>
-	struct DataTypeInitializer<Real>
+	struct ZeroData<Real>
 	{
-		static inline Real zero = 0.0;
+		static inline Real value = 0.0;
 	};
 	template <>
-	struct DataTypeInitializer<Vec2d>
+	struct ZeroData<int>
 	{
-		static inline Vec2d zero = Vec2d::Zero();
-	};
-	template <>
-	struct DataTypeInitializer<Vec3d>
-	{
-		static inline Vec3d zero = Vec3d::Zero();
-	};
-	template <>
-	struct DataTypeInitializer<Mat2d>
-	{
-		static inline Mat2d zero = Mat2d::Zero();
-	};
-	template <>
-	struct DataTypeInitializer<Mat3d>
-	{
-		static inline Mat3d zero = Mat3d::Zero();
-	};
-	template <>
-	struct DataTypeInitializer<int>
-	{
-		static inline int zero = 0;
+		static inline int value = 0;
 	};
 	/** Type trait for data type index. */
 	template <typename T>

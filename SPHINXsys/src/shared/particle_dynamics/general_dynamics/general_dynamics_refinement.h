@@ -236,7 +236,7 @@ namespace SPH
                 constexpr int type_index = DataTypeIndex<VariableType>::value;
                 for (size_t i = 0; i != std::get<type_index>(particle_data).size(); ++i)
                 {
-                    VariableType particle_data_temp = DataTypeInitializer<VariableType>::zero;
+                    VariableType particle_data_temp = ZeroData<VariableType>::value;
                     for (size_t k = 0; k != merge_indices.size(); ++k)
                         particle_data_temp += merge_mass[k] * (*std::get<type_index>(particle_data)[i])[merge_indices[k]];
 
