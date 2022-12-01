@@ -83,14 +83,14 @@ namespace SPH
 		for (int i = 0; i != pkg_size; ++i)
 			for (int j = 0; j != pkg_size; ++j)
 			{
-				Vec2d position = DataPosition(Vec2d(i, j));
+				Vec2d position = DataPositionFromIndex(Vec2d(i, j));
 				pkg_data[i][j] = function_by_position(position);
 			}
 	}
 	//=================================================================================================//
 	template <int PKG_SIZE, int ADDRS_BUFFER>
 	template <typename DataType>
-	void GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::initializeAllPackageDataAddress<DataType>::
+	void GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::AssignSingularPackageDataAddress<DataType>::
 	operator()(DataContainerAssemble<PackageData> &all_pkg_data,
 			   DataContainerAssemble<PackageDataAddress> &all_pkg_data_addrs)
 	{
@@ -125,7 +125,7 @@ namespace SPH
 	//=================================================================================================//
 	template <int PKG_SIZE, int ADDRS_BUFFER>
 	template <typename DataType>
-	void GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::AssignAllPackageDataAddress<DataType>::
+	void GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::AssignPackageDataAddress<DataType>::
 	operator()(DataContainerAssemble<PackageDataAddress> &all_pkg_data_addrs,
 			   const Vecu &addrs_index,
 			   DataContainerAssemble<PackageData> &all_pkg_data,
@@ -173,7 +173,7 @@ namespace SPH
 				{
 					std::pair<int, int> x_pair = CellShiftAndDataIndex(l);
 					std::pair<int, int> y_pair = CellShiftAndDataIndex(m);
-					data_pkg->assignAllPackageDataAddress(
+					data_pkg->assignPackageDataAddress(
 						Vecu(l, m),
 						data_pkg_addrs_[i + x_pair.first][j + y_pair.first],
 						Vecu(x_pair.second, y_pair.second));
@@ -205,20 +205,6 @@ namespace SPH
 		DataPackageFromCellIndex(const Vecu &cell_index)
 	{
 		return data_pkg_addrs_[cell_index[0]][cell_index[1]];
-	}
-	//=================================================================================================//
-	template <class GridDataPackageType>
-	template <class DataType, typename PackageDataAddressType, PackageDataAddressType GridDataPackageType::*MemPtr>
-	DataType MeshWithGridDataPackages<GridDataPackageType>::probeMesh(const Vecd &position)
-	{
-		Vecu grid_index = CellIndexFromPosition(position);
-		size_t i = grid_index[0];
-		size_t j = grid_index[1];
-
-		GridDataPackageType *data_pkg = data_pkg_addrs_[i][j];
-		PackageDataAddressType &pkg_data_addrs = data_pkg->*MemPtr;
-		return data_pkg->isInnerPackage() ? data_pkg->GridDataPackageType::template probeDataPackage<DataType>(pkg_data_addrs, position)
-										  : *pkg_data_addrs[0][0];
 	}
 	//=================================================================================================//
 	template <class GridDataPackageType>

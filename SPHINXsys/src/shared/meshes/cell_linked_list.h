@@ -100,6 +100,8 @@ namespace SPH
 		/** non-concurrent list data rewritten for building neighbor list */
 		MeshDataMatrix<ListDataVector> cell_data_lists_;
 
+		void allocateMeshDataMatrix(); /**< allocate memories for addresses of data packages. */
+		void deleteMeshDataMatrix();   /**< delete memories for addresses of data packages. */
 		virtual void updateSplitCellLists(SplitCellLists &split_cell_lists) override;
 
 	public:
@@ -107,8 +109,6 @@ namespace SPH
 					   RealBody &real_body, SPHAdaptation &sph_adaptation);
 		virtual ~CellLinkedList() { deleteMeshDataMatrix(); };
 
-		void allocateMeshDataMatrix(); /**< allocate memories for addresses of data packages. */
-		void deleteMeshDataMatrix();   /**< delete memories for addresses of data packages. */
 		void clearCellLists();
 		void UpdateCellListData(BaseParticles &base_particles);
 		virtual void UpdateCellLists(BaseParticles &base_particles) override;
