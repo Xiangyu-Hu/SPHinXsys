@@ -41,6 +41,10 @@ jobs:
             ninja-build \
             python3
 
+      - uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ github.job }}
+
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
         with: 
           committish: ${{ env.VCPKG_VERSION }}
@@ -58,8 +62,9 @@ jobs:
       - name: Generate buildsystem
         run: |
           cmake -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
+            -D CMAKE_BUILD_TYPE=Release \
+            -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
+            -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -S ${{github.workspace}} \
             -B ${{github.workspace}}/build
 
@@ -113,6 +118,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3 # Checks-out the repository under ${{github.workspace}}
+      
+      - uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ github.job }}
 
       - uses: actions/setup-python@v4
 
@@ -135,8 +144,9 @@ jobs:
       - name: Generate buildsystem
         run: |
           cmake.exe -G Ninja `
-            -DCMAKE_BUILD_TYPE=Release `
-            -DCMAKE_TOOLCHAIN_FILE="${{github.workspace}}\vcpkg\scripts\buildsystems\vcpkg.cmake" `
+            -D CMAKE_BUILD_TYPE=Release `
+            -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}\vcpkg\scripts\buildsystems\vcpkg.cmake" `
+            -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache `
             -S ${{github.workspace}} `
             -B C:\build
       
