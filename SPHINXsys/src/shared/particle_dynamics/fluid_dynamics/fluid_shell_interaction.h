@@ -87,12 +87,9 @@ namespace SPH
 		using FluidShellIntegration1stHalf = BaseFluidShellIntegration1stHalf<Integration1stHalf>;
 		using FluidShellIntegration1stHalfRiemann = BaseFluidShellIntegration1stHalf<Integration1stHalfRiemann>;
 
-		using FluidShellandWallIntegration1stHalf =
-			BaseIntegration1stHalfWithWall<FluidShellIntegration1stHalf>;
-		using FluidShellandWallIntegration1stHalfRiemann =
-			BaseIntegration1stHalfWithWall<FluidShellIntegration1stHalfRiemann>;
-		using ExtendFluidShellandWallIntegration1stHalfRiemann =
-			BaseExtendIntegration1stHalfWithWall<FluidShellIntegration1stHalfRiemann>;
+		using FluidShellandWallIntegration1stHalf = BaseIntegration1stHalfWithWall<FluidShellIntegration1stHalf>;
+		using FluidShellandWallIntegration1stHalfRiemann = BaseIntegration1stHalfWithWall<FluidShellIntegration1stHalfRiemann>;
+		using ExtendFluidShellandWallIntegration1stHalfRiemann = BaseExtendIntegration1stHalfWithWall<FluidShellIntegration1stHalfRiemann>;
 
 		/**
 		 * @class BaseFluidShellIntegration2ndHalf

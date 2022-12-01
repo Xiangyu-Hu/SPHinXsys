@@ -90,7 +90,7 @@ namespace SPH
 				}
 			}
 			this->acc_[index_i] += acceleration / this->rho_[index_i];
-			this->drho_dt_[index_i] += 0.5 * rho_dissipation * this->rho_[index_i];
+			this->drho_dt_[index_i] += rho_dissipation * this->rho_[index_i];
 		}
 		//=================================================================================================//
 		template <class Integration1stHalfType>
@@ -105,6 +105,8 @@ namespace SPH
 			BaseIntegration2ndHalfType::interaction(index_i, dt);
 
 			Real density_change_rate = 0.0;
+			Vecd p_dissipation = Vecd::Zero();
+
 			for (size_t k = 0; k < FluidShellData::contact_configuration_.size(); ++k)
 			{
 				Vecd &acc_prior_i = this->acc_prior_[index_i];
@@ -120,12 +122,16 @@ namespace SPH
 					Vecd &e_ij = shell_neighborhood.e_ij_[n];
 					Real r_ij = shell_neighborhood.r_ij_[n];
 					Real dW_ijV_j = shell_neighborhood.dW_ijV_j_[n];
+					Vecd correct_n = SGN( e_ij.dot(n_k[index_j]) ) * n_k[index_j];
 
 					Vecd vel_in_shell = 2.0 * vel_ave_k[index_j] - this->vel_[index_i];
-					density_change_rate += (this->vel_[index_i] - vel_in_shell).dot(e_ij) * dW_ijV_j * thickness_k[index_j] ;
+					Real u_jump = (this->vel_[index_i] - vel_in_shell).dot(correct_n);
+					density_change_rate += u_jump * dW_ijV_j * thickness_k[index_j];
+					p_dissipation += this->riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * thickness_k[index_j] * e_ij;
 				}
 			}
 			this->drho_dt_[index_i] += density_change_rate * this->rho_[index_i];
+			this->acc_[index_i] += p_dissipation / this->rho_[index_i];
 		}
 		//=================================================================================================//
 		template <class ViscousAccelerationInnerType>

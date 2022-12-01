@@ -138,10 +138,16 @@ namespace SPH
 						size_t index_j = contact_neighborhood.j_[n];
 						Vecd e_ij = contact_neighborhood.e_ij_[n];
 						Real r_ij = contact_neighborhood.r_ij_[n];
+						Vecd correct_n = SGN( e_ij.dot(n_i) ) * n_i;
 
 						Real face_wall_external_acceleration = (acc_prior_k[index_j] - acc_ave_i).dot(e_ij);
 						Real p_in_wall = p_k[index_j] + rho_n_k[index_j] * r_ij * SMAX(0.0, face_wall_external_acceleration);
-						force -= (p_in_wall + p_k[index_j]) * e_ij * contact_neighborhood.dW_ijV_j_[n] * particles_->ParticleVolume(index_i);
+						
+						Vecd vel_in_shell = 2.0 * vel_ave_i - vel_n_k[index_j];
+						Real u_jump = (vel_n_k[index_j] - vel_in_shell).dot(correct_n);
+
+						force -= (p_in_wall + p_k[index_j] + riemann_solver_k.DissipativePJump(u_jump)) * e_ij 
+								 * contact_neighborhood.dW_ijV_j_[n] * particles_->ParticleVolume(index_i);
 					}
 				}
 				force_from_fluid_[index_i] = force;
