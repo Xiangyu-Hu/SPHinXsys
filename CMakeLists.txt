@@ -41,6 +41,9 @@ else()
 endif()
 
 #------ Dependencies
+### SIMD flags
+find_package(SIMD QUIET)
+target_compile_options(sphinxsys_core INTERFACE ${SIMD_CXX_FLAGS})
 ### Simbody
 find_package(Simbody CONFIG REQUIRED)
 set(Simbody_LIBS
