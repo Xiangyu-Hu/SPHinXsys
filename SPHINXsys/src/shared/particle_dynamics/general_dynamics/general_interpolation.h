@@ -61,7 +61,7 @@ namespace SPH
 
 		void interaction(size_t index_i, Real dt = 0.0)
 		{
-			VariableType observed_quantity(0);
+			VariableType observed_quantity = ZeroData<VariableType>::value;
 			Real ttl_weight(0);
 
 			for (size_t k = 0; k < this->contact_configuration_.size(); ++k)

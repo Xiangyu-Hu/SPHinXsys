@@ -7,9 +7,7 @@ namespace SPH
 {
 	//=================================================================================================//
 	BaseLevelSet ::BaseLevelSet(Shape &shape, SPHAdaptation &sph_adaptation)
-		: BaseMeshField("LevelSet")
-		, shape_(shape)
-		, sph_adaptation_(sph_adaptation)
+		: BaseMeshField("LevelSet"), shape_(shape), sph_adaptation_(sph_adaptation)
 	{
 		if (!shape_.isValid())
 		{
@@ -156,12 +154,12 @@ namespace SPH
 		return is_bounded;
 	}
 	//=================================================================================================//
-	LevelSetDataPackage* LevelSet::createDataPackage(const Vecu &cell_index, const Vecd &cell_position)
+	void LevelSet::initializeDataInACell(const Vecu &cell_index)
 	{
-		mutex_my_pool.lock();
-		LevelSetDataPackage* new_data_pkg = data_pkg_pool_.malloc();
-		mutex_my_pool.unlock();
-
+		Vecd cell_position = CellPositionFromIndex(cell_index);
+		Real signed_distance = shape_.findSignedDistance(cell_position);
+		Vecd normal_direction = shape_.findNormalDirection(cell_position);
+		Real measure = (signed_distance * normal_direction).cwiseAbs().maxCoeff();
 		if (measure < grid_spacing_)
 		{
 			LevelSetDataPackage *new_data_pkg =
@@ -253,8 +251,9 @@ namespace SPH
 	}
 	//=============================================================================================//
 	MultilevelLevelSet::MultilevelLevelSet(BoundingBox tentative_bounds, Real reference_data_spacing, size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation)
-		: MultilevelMesh<BaseLevelSet, LevelSet, RefinedLevelSet>(tentative_bounds, reference_data_spacing, total_levels, shape, sph_adaptation) 
-	{}
+		: MultilevelMesh<BaseLevelSet, LevelSet, RefinedLevelSet>(tentative_bounds, reference_data_spacing, total_levels, shape, sph_adaptation)
+	{
+	}
 	//=================================================================================================//
 	size_t MultilevelLevelSet::getCoarseLevel(Real h_ratio)
 	{

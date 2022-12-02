@@ -179,7 +179,7 @@ namespace SPH
 								 const Vecu &global_grid_index)
 	{
 		Vecu cell_index_on_mesh_ = Vecu::Zero();
-		Vecu local_data_index(0) = Vecu::Zero();
+		Vecu local_data_index = Vecu::Zero();
 		for (int n = 0; n != 3; n++)
 		{
 			size_t cell_index_in_this_direction = global_grid_index[n] / pkg_size;

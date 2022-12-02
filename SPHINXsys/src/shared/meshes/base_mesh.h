@@ -47,20 +47,20 @@ using namespace std::placeholders;
 namespace SPH
 {
 	/**
-<<<<<<< HEAD
-	 * @class 	BaseMesh
-	 * @brief 	Base class for all structured meshes which may be grid or cell based.
-	 * 			The basic properties of the mesh, such as lower bound, grid spacing 
-	 * 			and number of grid points may be determined by the derived class.
-	 * 			Note that there is no mesh-based data defined here.
-=======
 	 * @class BaseMesh
 	 * @brief Base class for all structured meshes which may be grid or cell based.
+	 * The basic properties of the mesh, such as lower bound, grid spacing
+	 * and number of grid points may be determined by the derived class.
+	 * Note that there is no mesh-based data defined here.
+	 */
+	class BaseMesh
+	{
 	protected:
 		Vecd mesh_lower_bound_{Vecd::Zero()};		/**< mesh lower bound as reference coordinate */
 		Real grid_spacing_{1.0};			 			/**< grid_spacing */
 		Vecu number_of_grid_points_{Vecu::Zero()}; 	/**< number of grid points by dimension */
 	public:
+		BaseMesh() = default;
 		explicit BaseMesh(Vecu number_of_grid_points);
 		BaseMesh(Vecd mesh_lower_bound, Real grid_spacing, Vecu number_of_grid_points);
 		BaseMesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width);
@@ -88,39 +88,22 @@ namespace SPH
 		Vecu transfer1DtoMeshIndex(const Vecu &number_of_mesh_indexes, size_t i);
 		/** Transfer mesh index to 1D int.  */
 		size_t transferMeshIndexTo1D(const Vecu &number_of_mesh_indexes, const Vecu &mesh_index);
-<<<<<<< HEAD
-		/** 
-		 * Converts mesh index into a Morton order.
-         * Interleave a 10 bit number in 32 bits, fill one bit and leave the other 2 as zeros
-         * https://stackoverflow.com/questions/18529057/
-         * produce-interleaving-bit-patterns-morton-keys-for-32-bit-64-bit-and-128bit
-         */
-=======
 		/** converts mesh index into a Morton order.
 		 * Interleave a 10 bit number in 32 bits, fill one bit and leave the other 2 as zeros
 		 * https://stackoverflow.com/questions/18529057/
 		 * produce-interleaving-bit-patterns-morton-keys-for-32-bit-64-bit-and-128bit
 		 */
->>>>>>> xiangyu/code_refactory
 		size_t MortonCode(const size_t &i);
 		/** Converts mesh index into a Morton order. */
 		size_t transferMeshIndexToMortonOrder(const Vecu &mesh_index);
 	};
 
 	/**
-<<<<<<< HEAD
-	 * @class 	Mesh
-	 * @brief 	Abstract base class for cell-based mesh 
-	 * 			by introducing number of cells, buffer width and mesh-based data in its derived classes.
-	 * 			Note that we identify the difference between grid spacing and data spacing. 
-	 * 			The latter is different from grid spacing when MeshWithDataPackage is considered. 
-=======
 	 * @class Mesh
 	 * @brief Abstract base class for cell-based mesh
 	 * by introducing number of cells, buffer width and mesh-based data in its derived classes.
 	 * Note that we identify the difference between grid spacing and data spacing.
 	 * The latter is different from grid spacing when MeshWithDataPackage is considered.
->>>>>>> xiangyu/code_refactory
 	 */
 	class Mesh : public BaseMesh
 	{
@@ -128,7 +111,7 @@ namespace SPH
 		Vecu number_of_cells_{Vecu::Zero()}; 	/**< number of cells by dimension */
 		size_t buffer_width_{0};  				/**< buffer width to avoid bound check.*/
 
-		/** Copy mesh proerties to another mesh. */
+		/** Copy mesh properties to another mesh. */
 		void copyMeshProperties(Mesh *another_mesh);
 	public:
 		Mesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width);
@@ -189,15 +172,8 @@ namespace SPH
 	class MultilevelMesh : public MeshFieldType
 	{
 	public:
-<<<<<<< HEAD
-		/**
-		 * Template parameter pack is used with rvalue reference and perfect forwarding to keep 
-		 * the type of arguments when called by another function with template parameter pack too. 
-		 */
-=======
 		/**template parameter pack is used with rvalue reference and perfect forwarding to keep
 		 * the type of arguments when called by another function with template parameter pack too. */
->>>>>>> xiangyu/code_refactory
 		template <typename... Args>
 		MultilevelMesh(BoundingBox tentative_bounds
 					  , Real reference_spacing

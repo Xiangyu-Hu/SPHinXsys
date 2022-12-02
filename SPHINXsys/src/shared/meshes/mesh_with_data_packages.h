@@ -119,12 +119,12 @@ namespace SPH
 		template <typename DataType>
 		using PackageTemporaryData = PackageDataMatrix<DataType, pkg_addrs_size>;
 
-		GridDataPackage() : BaseDataPackage(), BaseMesh(Vecu(pkg_addrs_size * Vecd::Ones())){};
+		GridDataPackage() : BaseDataPackage(), BaseMesh(pkg_addrs_size * Vecu::Ones()){};
 		virtual ~GridDataPackage(){};
 		Vecd DataPositionFromIndex(const Vecd &data_index) { return DataLowerBound() + data_index * grid_spacing_; };
 		void initializePackageGeometry(const Vecd &pkg_lower_bound, Real data_spacing)
 		{
-			mesh_lower_bound_ = pkg_lower_bound - Vecd(data_spacing) * ((Real)pkg_addrs_buffer - 0.5);
+			mesh_lower_bound_ = pkg_lower_bound - data_spacing * Vecd::Ones() * ((Real)pkg_addrs_buffer - 0.5);
 			grid_spacing_ = data_spacing;
 		};
 		/** void (non_value_returning) function iterate on all data points by value,
@@ -170,7 +170,7 @@ namespace SPH
 		DataContainerAssemble<PackageDataAddress> all_pkg_data_addrs_;
 
 		/** lower bound coordinate for the data as reference */
-		Vecd DataLowerBound() { return mesh_lower_bound_ + Vecd(grid_spacing_) * (Real)pkg_addrs_buffer; };
+		Vecd DataLowerBound() { return mesh_lower_bound_ + grid_spacing_ * Vecd::Ones() * (Real)pkg_addrs_buffer; };
 		/** allocate memory for all package data */
 		template <typename DataType>
 		struct AllVariablesAllocation

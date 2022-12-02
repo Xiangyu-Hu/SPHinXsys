@@ -35,9 +35,9 @@ namespace SPH
 			{
 				phi[i][j][k] = far_field_level_set;
 				near_interface_id[i][j][k] = far_field_level_set < 0.0 ? -2 : 2;
-				phi_gradient[i][j][k] = Vecd(1.0);
+				phi_gradient[i][j][k] = Vecd::Ones();
 				kernel_weight[i][j][k] = far_field_level_set < 0.0 ? 0 : 1.0;
-				kernel_gradient[i][j][k] = Vec3d(0);
+				kernel_gradient[i][j][k] = Vec3d::Zero();
 			});
 	}
 	//=================================================================================================//
@@ -294,8 +294,107 @@ namespace SPH
 	void LevelSet::writeMeshFieldToPlt(std::ofstream &output_file)
 	{
 		Vecu number_of_operation = global_mesh_.NumberOfGridPoints();
+
+		output_file << "\n";
+		output_file << "title='View'"
+					<< "\n";
+		output_file << "variables= "
+					<< "x, "
+					<< "y, "
+					<< "z, "
+					<< "phi, "
+					<< "n_x, "
+					<< "n_y, "
+					<< "n_z "
+					<< "\n";
+		output_file << "zone i=" << number_of_operation[0] << "  j=" << number_of_operation[1] << "  k=" << number_of_operation[2]
+					<< "  DATAPACKING=BLOCK  SOLUTIONTIME=" << 0 << "\n";
+
+		for (size_t k = 0; k != number_of_operation[2]; ++k)
+			for (size_t j = 0; j != number_of_operation[1]; ++j)
+			{
+				for (size_t i = 0; i != number_of_operation[0]; ++i)
+				{
+					Vecd data_position = global_mesh_.GridPositionFromIndex(Vecu(i, j, k));
+					output_file << data_position[0] << " ";
+				}
+				output_file << " \n";
+			}
+
+		for (size_t k = 0; k != number_of_operation[2]; ++k)
+			for (size_t j = 0; j != number_of_operation[1]; ++j)
+			{
+				for (size_t i = 0; i != number_of_operation[0]; ++i)
+				{
+					Vecd data_position = global_mesh_.GridPositionFromIndex(Vecu(i, j, k));
+					output_file << data_position[1] << " ";
+				}
+				output_file << " \n";
+			}
+
+		for (size_t k = 0; k != number_of_operation[2]; ++k)
+			for (size_t j = 0; j != number_of_operation[1]; ++j)
+			{
+				for (size_t i = 0; i != number_of_operation[0]; ++i)
+				{
+					Vecd data_position = global_mesh_.GridPositionFromIndex(Vecu(i, j, k));
+					output_file << data_position[2] << " ";
+				}
+				output_file << " \n";
+			}
+
+		for (size_t k = 0; k != number_of_operation[2]; ++k)
+			for (size_t j = 0; j != number_of_operation[1]; ++j)
+			{
+				for (size_t i = 0; i != number_of_operation[0]; ++i)
+				{
+					output_file << DataValueFromGlobalIndex(phi_, Vecu(i, j, k))
+								<< " ";
+				}
+				output_file << " \n";
+			}
+
+		for (size_t k = 0; k != number_of_operation[2]; ++k)
+			for (size_t j = 0; j != number_of_operation[1]; ++j)
+			{
+				for (size_t i = 0; i != number_of_operation[0]; ++i)
+				{
+					output_file << DataValueFromGlobalIndex(phi_gradient_, Vecu(i, j, k))[0]
+								<< " ";
+				}
+				output_file << " \n";
+			}
+
+		for (size_t k = 0; k != number_of_operation[2]; ++k)
+			for (size_t j = 0; j != number_of_operation[1]; ++j)
+			{
+				for (size_t i = 0; i != number_of_operation[0]; ++i)
+				{
+					output_file << DataValueFromGlobalIndex(phi_gradient_, Vecu(i, j, k))[1]
+								<< " ";
+				}
+				output_file << " \n";
+			}
+
+		for (size_t k = 0; k != number_of_operation[2]; ++k)
+			for (size_t j = 0; j != number_of_operation[1]; ++j)
+			{
+				for (size_t i = 0; i != number_of_operation[0]; ++i)
+				{
+					output_file << DataValueFromGlobalIndex(phi_gradient_, Vecu(i, j, k))[2]
+								<< " ";
+				}
+				output_file << " \n";
+			}
+
+		for (size_t k = 0; k != number_of_operation[2]; ++k)
+			for (size_t j = 0; j != number_of_operation[1]; ++j)
+			{
+				for (size_t i = 0; i != number_of_operation[0]; ++i)
+				{
 					output_file << DataValueFromGlobalIndex(near_interface_id_, Vecu(i, j, k))
 								<< " ";
+				}
 				output_file << " \n";
 			}
 	}

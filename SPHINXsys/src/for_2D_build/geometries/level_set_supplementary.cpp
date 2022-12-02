@@ -36,9 +36,9 @@ namespace SPH
 			{
 				phi[i][j] = far_field_level_set;
 				near_interface_id[i][j] = far_field_level_set < 0.0 ? -2 : 2;
-				phi_gradient[i][j] = Vecd(1.0);
+				phi_gradient[i][j] = Vecd::Ones();
 				kernel_weight[i][j] = far_field_level_set < 0.0 ? 0 : 1.0;
-				kernel_gradient[i][j] = Vec2d(0);
+				kernel_gradient[i][j] = Vec2d::Zero();
 			});
 	}
 	//=================================================================================================//

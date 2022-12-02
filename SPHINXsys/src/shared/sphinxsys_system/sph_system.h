@@ -86,16 +86,11 @@ namespace SPH
 		IOEnvironment *io_environment_; /**< io_environment setup */
 		bool generate_regression_data_; /**< run and generate or enhance the regression test data set. */
 
-		SPHBodyVector sph_bodies_;		   /**< All sph bodies. */
-		SPHBodyVector observation_bodies_; /**< The bodies without inner particle configuration. */
-		SPHBodyVector real_bodies_;		   /**< The bodies with inner particle configuration. */
-		SolidBodyVector solid_bodies_;	   /**< The bodies with inner particle configuration and acoustic time steps . */
-
 		SPHBodyVector sph_bodies_;		  		/**< All sph bodies. */
 		SPHBodyVector observation_bodies_; 		/**< The bodies without inner particle configuration. */
 		SPHBodyVector real_bodies_;		  		/**< The bodies with inner particle configuration. */
 		SolidBodyVector solid_bodies_;	  		/**< The bodies with inner particle configuration and acoustic time steps . */
-		/** Initialize cell linkes list for the SPH system. */
+		/** Initialize cell linked list for the SPH system. */
 		void initializeSystemCellLinkedLists();
 		/** Initialize particle configuration for the SPH system. */
 		void initializeSystemConfigurations();

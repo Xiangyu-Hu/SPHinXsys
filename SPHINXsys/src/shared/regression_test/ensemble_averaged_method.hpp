@@ -31,13 +31,12 @@
 
 #include "ensemble_averaged_method.h"
 
-//=================================================================================================//
 namespace SPH
 {
 	//=================================================================================================//
-	template <class ObserveMethodType>
+	template<class ObserveMethodType>
 	void RegressionTestEnsembleAveraged<ObserveMethodType>::calculateNewVariance(TripleVec<Real> &result,
-																				 DoubleVec<Real> &meanvalue_new, DoubleVec<Real> &variance, DoubleVec<Real> &variance_new)
+		DoubleVec<Real> &meanvalue_new, DoubleVec<Real> &variance, DoubleVec<Real> &variance_new)
 	{
 		for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
 			for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
@@ -50,9 +49,9 @@ namespace SPH
 				}
 	};
 	//=================================================================================================//
-	template <class ObserveMethodType>
-	void RegressionTestEnsembleAveraged<ObserveMethodType>::calculateNewVariance(TripleVec<Vecd> &result,
-																				 DoubleVec<Vecd> &meanvalue_new, DoubleVec<Vecd> &variance, DoubleVec<Vecd> &variance_new)
+	template<class ObserveMethodType>
+	void RegressionTestEnsembleAveraged<ObserveMethodType>::calculateNewVariance(TripleVec<Vecd> &result, 
+		DoubleVec<Vecd> &meanvalue_new, DoubleVec<Vecd> &variance, DoubleVec<Vecd> &variance_new)
 	{
 		for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index) 
 			for (int observation_index = 0; observation_index != this->observation_; ++observation_index) 
@@ -66,9 +65,9 @@ namespace SPH
 					}
 	};
 	//=================================================================================================//
-	template <class ObserveMethodType>
+	template<class ObserveMethodType>
 	void RegressionTestEnsembleAveraged<ObserveMethodType>::calculateNewVariance(TripleVec<Matd> &result,
-																				 DoubleVec<Matd> &meanvalue_new, DoubleVec<Matd> &variance, DoubleVec<Matd> &variance_new)
+		DoubleVec<Matd> &meanvalue_new, DoubleVec<Matd> &variance, DoubleVec<Matd> &variance_new)
 	{
 		for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
 			for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
@@ -88,7 +87,7 @@ namespace SPH
 		DoubleVec<Real> &parameter, DoubleVec<Real> &parameter_new, Real &threshold)
 	{
 		int count = 0;
-		for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
+		for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index) 
 			for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
 			{
 				Real relative_value_ = ABS( (parameter[snapshot_index][observation_index] - parameter_new[snapshot_index][observation_index]) / 
@@ -99,7 +98,7 @@ namespace SPH
 						<< " is not converged, and difference is " << relative_value_ << std::endl;
 					count++;
 				}
-			}
+			}	
 		return count;
 	}
 	////=================================================================================================//
@@ -141,7 +140,21 @@ namespace SPH
 							std::cout << par_name << ": " << this->quantity_name_ << "[" << observation_index << "][" << i << "][" << j << " ] in "
 								<< this->element_tag_[snapshot_index] << " is not converged, and difference is " << relative_value_ << endl;
 							count++;
-																		 DoubleVec<Real> &meanvalue, DoubleVec<Real> &variance)
+						}
+					}
+		return count;
+	}
+	//=================================================================================================//
+	template<class ObserveMethodType>
+	int RegressionTestEnsembleAveraged<ObserveMethodType>::testNewResult(int diff, DoubleVec<Real> &current_result,
+		DoubleVec<Real> &meanvalue, DoubleVec<Real> &variance)
+	{
+		int count = 0;
+		for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
+		{
+			for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
+			{
+				Real relative_value_ = (std::pow(current_result[snapshot_index][observation_index] - meanvalue[snapshot_index + diff][observation_index], 2) - 
 										variance[snapshot_index + diff][observation_index]) / (variance[snapshot_index + diff][observation_index] + TinyReal);
 				if (relative_value_ > 0.01)
 				{
@@ -154,9 +167,9 @@ namespace SPH
 		return count;
 	}
 	//=================================================================================================//
-	template <class ObserveMethodType>
+	template<class ObserveMethodType>
 	int RegressionTestEnsembleAveraged<ObserveMethodType>::testNewResult(int diff, DoubleVec<Vecd> &current_result,
-																		 DoubleVec<Vecd> &meanvalue, DoubleVec<Vecd> &variance)
+		DoubleVec<Vecd> &meanvalue, DoubleVec<Vecd> &variance)
 	{
 		int count = 0;
 		for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
@@ -178,14 +191,14 @@ namespace SPH
 						count++;
 					}
 				}
-			}
+			}	
 		}
 		return count;
 	}
 	//=================================================================================================// 
 	template<class ObserveMethodType>
 	int RegressionTestEnsembleAveraged<ObserveMethodType>::testNewResult(int diff, DoubleVec<Matd> &current_result,
-																		 DoubleVec<Matd> &meanvalue, DoubleVec<Matd> &variance)
+		DoubleVec<Matd> &meanvalue, DoubleVec<Matd> &variance)
 	{
 		int count = 0;
 		std::cout << "The current length difference is " << diff << "." << std::endl;
@@ -208,12 +221,12 @@ namespace SPH
 						}
 					}
 				}
-			}
+			}	
 		}
 		return count;
 	}
 	//=================================================================================================//
-	template <class ObserveMethodType>
+	template<class ObserveMethodType>
 	void RegressionTestEnsembleAveraged<ObserveMethodType>::setupAndCorrection()
 	{
 		this->snapshot_ = this->current_result_.size();
@@ -221,7 +234,7 @@ namespace SPH
 
 		if (this->number_of_run_ > 1)
 		{
-			if (this->converged == "false") /*< To identify the database generation or new result testing. */
+			if (this->converged == "false" ) /*< To identify the database generation or new result testing. */
 			{
 				if (!fs::exists(this->result_filefullpath_))
 				{
@@ -272,7 +285,7 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	template <class ObserveMethodType>
+	template<class ObserveMethodType>
 	void RegressionTestEnsembleAveraged<ObserveMethodType>::readMeanVarianceFromXml()
 	{
 		if (this->number_of_run_ > 1)
@@ -281,15 +294,15 @@ namespace SPH
 			SimTK::Xml::Element variance_element_ = this->mean_variance_xml_engine_in_.getChildElement("Variance_Element");
 			for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
 			{
+				this->xmlmemory_io_.readDataFromXmlMemory(this->mean_variance_xml_engine_in_, 
+					mean_element_, observation_index, this->meanvalue_, this->quantity_name_);
 				this->xmlmemory_io_.readDataFromXmlMemory(this->mean_variance_xml_engine_in_,
-														  mean_element_, observation_index, this->meanvalue_, this->quantity_name_);
-				this->xmlmemory_io_.readDataFromXmlMemory(this->mean_variance_xml_engine_in_,
-														  variance_element_, observation_index, this->variance_, this->quantity_name_);
+					variance_element_, observation_index, this->variance_, this->quantity_name_);
 			}
 		}
 	}
 	//=================================================================================================//
-	template <class ObserveMethodType>
+	template<class ObserveMethodType>
 	void RegressionTestEnsembleAveraged<ObserveMethodType>::updateMeanVariance()
 	{
 		/** Unify the length of result and meanvalue. */
@@ -297,7 +310,7 @@ namespace SPH
 		{
 			for (int delete_ = 0; delete_ != this->difference_; ++delete_)
 			{
-				meanvalue_.pop_back();
+				meanvalue_.pop_back(); 
 				variance_.pop_back();
 			}
 		}
@@ -313,21 +326,21 @@ namespace SPH
 		calculateNewVariance(this->result_, meanvalue_new_, variance_, variance_new_);
 	}
 	//=================================================================================================//
-	template <class ObserveMethodType>
+	template<class ObserveMethodType>
 	void RegressionTestEnsembleAveraged<ObserveMethodType>::writeMeanVarianceToXml()
 	{
 		this->mean_variance_xml_engine_out_.addElementToXmlDoc("Mean_Element");
 		SimTK::Xml::Element mean_element_ = this->mean_variance_xml_engine_out_.getChildElement("Mean_Element");
 		this->xmlmemory_io_.writeDataToXmlMemory(this->mean_variance_xml_engine_out_, mean_element_, this->meanvalue_new_,
-												 SMIN(this->snapshot_, this->number_of_snapshot_old_), this->observation_, this->quantity_name_, this->element_tag_);
+			SMIN(this->snapshot_, this->number_of_snapshot_old_), this->observation_, this->quantity_name_, this->element_tag_);
 		this->mean_variance_xml_engine_out_.addElementToXmlDoc("Variance_Element");
 		SimTK::Xml::Element variance_element_ = this->mean_variance_xml_engine_out_.getChildElement("Variance_Element");
 		this->xmlmemory_io_.writeDataToXmlMemory(this->mean_variance_xml_engine_out_, variance_element_, this->variance_new_,
-												 SMIN(this->snapshot_, this->number_of_snapshot_old_), this->observation_, this->quantity_name_, this->element_tag_);
+			SMIN(this->snapshot_, this->number_of_snapshot_old_), this->observation_, this->quantity_name_, this->element_tag_);
 		this->mean_variance_xml_engine_out_.writeToXmlFile(this->mean_variance_filefullpath_);
 	}
 	//=================================================================================================//
-	template <class ObserveMethodType>
+	template<class ObserveMethodType>
 	bool RegressionTestEnsembleAveraged<ObserveMethodType>::compareMeanVariance()
 	{
 		int count_not_converged_m = 0;
@@ -372,7 +385,7 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	template <class ObserveMethodType>
+	template<class ObserveMethodType>
 	void RegressionTestEnsembleAveraged<ObserveMethodType>::resultTest()
 	{
 		/* compare the current result to the converged mean value and variance. */
