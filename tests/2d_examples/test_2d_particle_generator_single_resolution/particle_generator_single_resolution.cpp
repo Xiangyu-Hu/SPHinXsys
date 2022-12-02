@@ -85,7 +85,7 @@ int main()
 	int ite_p = 0;
 	while (ite_p < 1000)
 	{
-		relaxation_step_inner.parallel_exec();
+		relaxation_step_inner.exec();
 		ite_p += 1;
 		if (ite_p % 100 == 0)
 		{

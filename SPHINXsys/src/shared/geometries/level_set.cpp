@@ -11,23 +11,6 @@
 namespace SPH
 {
 	//=================================================================================================//
-	LevelSetDataPackage::
-		LevelSetDataPackage() : GridDataPackage<4, 6>(), is_core_pkg_(false) {}
-	//=================================================================================================//
-	void LevelSetDataPackage::registerAllVariables()
-	{
-		registerPackageData(phi_, phi_addrs_);
-		registerPackageData(phi_gradient_, phi_gradient_addrs_);
-		registerPackageData(kernel_weight_, kernel_weight_addrs_);
-		registerPackageData(kernel_gradient_, kernel_gradient_addrs_);
-		registerPackageData(near_interface_id_, near_interface_id_addrs_);
-	}
-	//=================================================================================================//
-	void LevelSetDataPackage::computeLevelSetGradient()
-	{
-		computeGradient(phi_addrs_, phi_gradient_addrs_);
-	}
-	//=================================================================================================//
 	BaseLevelSet ::BaseLevelSet(Shape &shape, SPHAdaptation &sph_adaptation)
 		: BaseMeshField("LevelSet"),
 		  shape_(shape), sph_adaptation_(sph_adaptation)
@@ -53,14 +36,23 @@ namespace SPH
 	//=================================================================================================//
 	LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size,
 					   Shape &shape, SPHAdaptation &sph_adaptation)
-		: MeshWithGridDataPackages<BaseLevelSet, LevelSetDataPackage>(tentative_bounds, data_spacing, buffer_size,
-																	  shape, sph_adaptation),
+		: MeshWithGridDataPackages<GridDataPackage<4, 1>>(tentative_bounds, data_spacing, buffer_size),
+		  BaseLevelSet(shape, sph_adaptation),
 		  global_h_ratio_(sph_adaptation.ReferenceSpacing() / data_spacing),
+		  phi_(all_variables_, "Levelset"),
+		  near_interface_id_(all_variables_, "NearInterfaceID"),
+		  phi_gradient_(all_variables_, "LevelsetGradient"),
+		  kernel_weight_(all_variables_, "KernelWeight"),
+		  kernel_gradient_(all_variables_, "KernelGradient"),
 		  kernel_(*sph_adaptation.getKernel())
 	{
 		Real far_field_distance = grid_spacing_ * (Real)buffer_width_;
-		initializeASingularDataPackage(-far_field_distance);
-		initializeASingularDataPackage(far_field_distance);
+		initializeASingularDataPackage(
+			all_variables_, [&](LevelSetDataPackage *data_pkg)
+			{ initializeDataForSingularPackage(data_pkg, -far_field_distance); });
+		initializeASingularDataPackage(
+			all_variables_, [&](LevelSetDataPackage *data_pkg)
+			{ initializeDataForSingularPackage(data_pkg, far_field_distance); });
 	}
 	//=================================================================================================//
 	void LevelSet::initializeAddressesInACell(const Vecu &cell_index)
@@ -70,14 +62,22 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSet::updateLevelSetGradient()
 	{
-		package_parallel_for(inner_data_pkgs_, [&](size_t i)
-							 { inner_data_pkgs_[i]->computeLevelSetGradient(); });
+		package_parallel_for(inner_data_pkgs_, [&](LevelSetDataPackage *data_pkg)
+							 { data_pkg->computeGradient(phi_, phi_gradient_); });
 	}
 	//=================================================================================================//
 	void LevelSet::updateKernelIntegrals()
 	{
-		package_parallel_for(inner_data_pkgs_, [&](size_t i)
-							 { inner_data_pkgs_[i]->computeKernelIntegrals(*this); });
+		package_parallel_for(inner_data_pkgs_,
+							 [&](LevelSetDataPackage *data_pkg)
+							 {
+								 data_pkg->assignByPosition(
+									 kernel_weight_, [&](const Vecd &position) -> Real
+									 { return computeKernelIntegral(position); });
+								 data_pkg->assignByPosition(
+									 kernel_gradient_, [&](const Vecd &position) -> Vecd
+									 { return computeKernelGradientIntegral(position); });
+							 });
 	}
 	//=================================================================================================//
 	Vecd LevelSet::probeNormalDirection(const Vecd &position)
@@ -97,50 +97,35 @@ namespace SPH
 	//=================================================================================================//
 	Vecd LevelSet::probeLevelSetGradient(const Vecd &position)
 	{
-		return probeMesh<Vecd, LevelSetDataPackage::PackageDataAddress<Vecd>,
-						 &LevelSetDataPackage::phi_gradient_addrs_>(position);
+		return probeMesh(phi_gradient_, position);
 	}
 	//=================================================================================================//
 	Real LevelSet::probeSignedDistance(const Vecd &position)
 	{
-		return probeMesh<Real, LevelSetDataPackage::PackageDataAddress<Real>,
-						 &LevelSetDataPackage::phi_addrs_>(position);
+		return probeMesh(phi_, position);
 	}
 	//=================================================================================================//
 	Real LevelSet::probeKernelIntegral(const Vecd &position, Real h_ratio)
 	{
-		return probeMesh<Real, LevelSetDataPackage::PackageDataAddress<Real>,
-						 &LevelSetDataPackage::kernel_weight_addrs_>(position);
+		return probeMesh(kernel_weight_, position);
 	}
 	//=================================================================================================//
 	Vecd LevelSet::probeKernelGradientIntegral(const Vecd &position, Real h_ratio)
 	{
-		return probeMesh<Vecd, LevelSetDataPackage::PackageDataAddress<Vecd>,
-						 &LevelSetDataPackage::kernel_gradient_addrs_>(position);
-	}
-	//=============================================================================================//
-	void LevelSet::reinitializeLevelSet()
-	{
-		package_parallel_for(inner_data_pkgs_, [&](size_t i)
-							 { inner_data_pkgs_[i]->stepReinitialization(); });
-	}
-	//=================================================================================================//
-	void LevelSet::markNearInterface(Real small_shift_factor)
-	{
-		package_parallel_for(inner_data_pkgs_, [&](size_t i)
-							 { inner_data_pkgs_[i]->markNearInterface(small_shift_factor); });
+		return probeMesh(kernel_gradient_, position);
 	}
 	//=================================================================================================//
 	void LevelSet::redistanceInterface()
 	{
-		package_parallel_for(inner_data_pkgs_, [&](size_t i)
-							 { redistanceInterfaceForAPackage(inner_data_pkgs_[i]); });
-	}
-	//=================================================================================================//
-	void LevelSet::diffuseLevelSetSign()
-	{
-		package_parallel_for(inner_data_pkgs_, [&](size_t i)
-							 { inner_data_pkgs_[i]->stepDiffusionLevelSetSign(); });
+		package_parallel_for(
+			inner_data_pkgs_,
+			[&](LevelSetDataPackage *data_pkg)
+			{
+				if (data_pkg->isCorePackage())
+				{
+					redistanceInterfaceForAPackage(data_pkg);
+				}
+			});
 	}
 	//=================================================================================================//
 	void LevelSet::cleanInterface(Real small_shift_factor)
@@ -175,20 +160,6 @@ namespace SPH
 		return is_bounded;
 	}
 	//=================================================================================================//
-	LevelSetDataPackage *LevelSet::createDataPackage(const Vecu &cell_index, const Vecd &cell_position)
-	{
-		mutex_my_pool.lock();
-		LevelSetDataPackage &new_data_pkg = *data_pkg_pool_.malloc();
-		mutex_my_pool.unlock();
-		new_data_pkg.registerAllVariables();
-		Vecd pkg_lower_bound = GridPositionFromCellPosition(cell_position);
-		new_data_pkg.initializePackageGeometry(pkg_lower_bound, data_spacing_);
-		new_data_pkg.initializeBasicData(shape_);
-		new_data_pkg.pkg_index_ = cell_index;
-		assignDataPackageAddress(cell_index, &new_data_pkg);
-		return &new_data_pkg;
-	}
-	//=================================================================================================//
 	void LevelSet::initializeDataInACell(const Vecu &cell_index)
 	{
 		Vecd cell_position = CellPositionFromIndex(cell_index);
@@ -197,8 +168,14 @@ namespace SPH
 		Real measure = getMaxAbsoluteElement(normal_direction * signed_distance);
 		if (measure < grid_spacing_)
 		{
-			LevelSetDataPackage *new_data_pkg = createDataPackage(cell_index, cell_position);
-			new_data_pkg->is_core_pkg_ = true;
+			LevelSetDataPackage *new_data_pkg =
+				createDataPackage(
+					all_variables_, cell_index,
+					[&](LevelSetDataPackage *new_data_pkg)
+					{
+						initializeBasicDataForAPackage(new_data_pkg, shape_);
+					});
+			new_data_pkg->setCorePackage();
 			core_data_pkgs_.push_back(new_data_pkg);
 		}
 		else
@@ -211,24 +188,46 @@ namespace SPH
 	//=============================================================================================//
 	void LevelSet::tagACellIsInnerPackage(const Vecu &cell_index)
 	{
-		bool is_inner_pkg = isInnerPackage(cell_index);
-
-		if (is_inner_pkg)
+		if (isInnerPackage(cell_index))
 		{
 			LevelSetDataPackage *current_data_pkg = DataPackageFromCellIndex(cell_index);
-			if (current_data_pkg->is_core_pkg_)
+			if (current_data_pkg->isCorePackage())
 			{
-				current_data_pkg->is_inner_pkg_ = true;
 				inner_data_pkgs_.push_back(current_data_pkg);
 			}
 			else
 			{
 				Vecd cell_position = CellPositionFromIndex(cell_index);
-				LevelSetDataPackage *new_data_pkg = createDataPackage(cell_index, cell_position);
-				new_data_pkg->is_inner_pkg_ = true;
+				LevelSetDataPackage *new_data_pkg = createDataPackage(
+					all_variables_, cell_index,
+					[&](LevelSetDataPackage *new_data_pkg)
+					{
+						initializeBasicDataForAPackage(new_data_pkg, shape_);
+					});
+				new_data_pkg->setInnerPackage();
 				inner_data_pkgs_.push_back(new_data_pkg);
 			}
 		}
+	}
+	//=============================================================================================//
+	Real LevelSet::upwindDifference(Real sign, Real df_p, Real df_n)
+	{
+		if (sign * df_p >= 0.0 && sign * df_n >= 0.0)
+			return df_n;
+		if (sign * df_p <= 0.0 && sign * df_n <= 0.0)
+			return df_p;
+		if (sign * df_p > 0.0 && sign * df_n < 0.0)
+			return 0.0;
+
+		Real df = df_p;
+		if (sign * df_p < 0.0 && sign * df_n > 0.0)
+		{
+			Real ss = sign * (fabs(df_p) - fabs(df_n)) / (df_p - df_n);
+			if (ss > 0.0)
+				df = df_n;
+		}
+
+		return df;
 	}
 	//=============================================================================================//
 	void RefinedLevelSet::initializeDataInACellFromCoarse(const Vecu &cell_index)
@@ -245,8 +244,13 @@ namespace SPH
 			Real measure = getMaxAbsoluteElement(normal_direction * signed_distance);
 			if (measure < grid_spacing_)
 			{
-				LevelSetDataPackage *new_data_pkg = createDataPackage(cell_index, cell_position);
-				new_data_pkg->is_core_pkg_ = true;
+				LevelSetDataPackage *new_data_pkg = createDataPackage(
+					all_variables_, cell_index,
+					[&](LevelSetDataPackage *new_data_pkg)
+					{
+						initializeBasicDataForAPackage(new_data_pkg, shape_);
+					});
+				new_data_pkg->setCorePackage(); // core package
 				core_data_pkgs_.push_back(new_data_pkg);
 			}
 		}
