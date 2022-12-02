@@ -31,5 +31,6 @@
 
 #include "general_dynamics.h"
 #include "general_bounding.h"
+#include "general_interpolation.h"
 #include "general_dynamics_refinement.h"
 #include "general_life_time_dynamics.h"

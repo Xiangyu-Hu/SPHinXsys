@@ -131,9 +131,9 @@ namespace SPH
 	RelaxationOfAllDiffusionSpeciesComplex<BaseParticlesType, BaseMaterialType,
 										   ContactBaseParticlesType, ContactBaseMaterialType, NUM_SPECIES>::
 		RelaxationOfAllDiffusionSpeciesComplex(ComplexRelation &complex_relation)
-		: RelaxationOfAllDiffusionSpeciesInner<BaseParticlesType, BaseMaterialType, NUM_SPECIES>(complex_relation.inner_relation_),
+		: RelaxationOfAllDiffusionSpeciesInner<BaseParticlesType, BaseMaterialType, NUM_SPECIES>(complex_relation.getInnerRelation()),
 		  DiffusionReactionContactData<BaseParticlesType, BaseMaterialType,
-									   ContactBaseParticlesType, ContactBaseMaterialType, NUM_SPECIES>(complex_relation.contact_relation_),
+									   ContactBaseParticlesType, ContactBaseMaterialType, NUM_SPECIES>(complex_relation.getContactRelation()),
 		  species_n_(this->particles_->species_n_), diffusion_dt_(this->particles_->diffusion_dt_)
 	{
 		species_diffusion_ = this->particles_->diffusion_reaction_material_.SpeciesDiffusion();

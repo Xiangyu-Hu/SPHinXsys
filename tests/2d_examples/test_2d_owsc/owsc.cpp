@@ -178,7 +178,7 @@ int main()
 	ObservedQuantityRecording<Real> pressure_probe("Pressure", io_environment, observer_contact_with_water);
 	// Interpolate the particle position in flap to move the observer accordingly. 
 	// Seems not used? TODO: observe displacement more accurate.
-	InteractionDynamics<observer_dynamics::InterpolatingAQuantity<Vecd>>
+	InteractionDynamics<InterpolatingAQuantity<Vecd>>
 		interpolation_observer_position(observer_contact_with_flap, "Position", "Position");
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration

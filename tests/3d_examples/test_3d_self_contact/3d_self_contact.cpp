@@ -58,9 +58,9 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, resolution_ref);
 	// Tag for run particle relaxation for the initial body fitted distribution.
-	system.run_particle_relaxation_ = false;
+	system.setRunParticleRelaxation(false);
 	// Tag for reload initially relaxed particles.
-	system.reload_particles_ = true;
+	system.setReloadParticles(true);
 #ifdef BOOST_AVAILABLE
 	// handle command line arguments
 	system.handleCommandlineOptions(ac, av);
@@ -72,7 +72,7 @@ int main(int ac, char *av[])
 	SolidBody coil(system, makeShared<Coil>("Coil"));
 	coil.defineBodyLevelSetShape()->writeLevelSet(io_environment);
 	coil.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-	(!system.run_particle_relaxation_ && system.reload_particles_)
+	(!system.RunParticleRelaxation() && system.ReloadParticles())
 		? coil.generateParticles<ParticleGeneratorReload>(io_environment, coil.getName())
 		: coil.generateParticles<ParticleGeneratorLattice>();
 
@@ -94,7 +94,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	check whether run particle relaxation for body fitted particle distribution.
 	//----------------------------------------------------------------------
-	if (system.run_particle_relaxation_)
+	if (system.RunParticleRelaxation())
 	{
 		//----------------------------------------------------------------------
 		//	Methods used for particle relaxation.
@@ -109,7 +109,7 @@ int main(int ac, char *av[])
 		//	Particle relaxation starts here.
 		//----------------------------------------------------------------------
 		random_inserted_body_particles.parallel_exec(0.25);
-		relaxation_step_inner.surface_bounding_.parallel_exec();
+		relaxation_step_inner.SurfaceBounding().parallel_exec();
 		write_states.writeToFile(0);
 		//----------------------------------------------------------------------
 		//	Particle relaxation loop.
@@ -140,8 +140,8 @@ int main(int ac, char *av[])
 	// Time step size
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(coil);
 	// stress relaxation.
-	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> stress_relaxation_first_half(coil_inner);
-	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half(coil_inner);
+	Dynamics1Level<solid_dynamics::Integration1stHalf> stress_relaxation_first_half(coil_inner);
+	Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(coil_inner);
 	// Algorithms for solid-solid contacts.
 	InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle> coil_update_contact_density(coil_contact);
 	InteractionDynamics<solid_dynamics::ContactForceFromWall, BodyPartByParticle> coil_compute_solid_contact_forces(coil_contact);

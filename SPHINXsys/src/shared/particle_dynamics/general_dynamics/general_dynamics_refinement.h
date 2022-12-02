@@ -91,8 +91,8 @@ namespace SPH
     {
     public:
         ComputeDensityErrorWithWall(ComplexRelation &complex_relation)
-            : ComputeDensityErrorInner(complex_relation.inner_relation_),
-              GeneralDataDelegateContact(complex_relation.contact_relation_)
+            : ComputeDensityErrorInner(complex_relation.getInnerRelation()),
+              GeneralDataDelegateContact(complex_relation.getContactRelation())
         {
             for (size_t k = 0; k != contact_bodies_.size(); ++k)
             {
@@ -190,7 +190,7 @@ namespace SPH
     {
     public:
         SplitWithMinimumDensityErrorWithWall(ComplexRelation &complex_relation, Shape &refinement_region, size_t body_buffer_width)
-            : SplitWithMinimumDensityErrorInner(complex_relation.inner_relation_, refinement_region, body_buffer_width),
+            : SplitWithMinimumDensityErrorInner(complex_relation.getInnerRelation(), refinement_region, body_buffer_width),
               compute_density_error(complex_relation){};
         virtual ~SplitWithMinimumDensityErrorWithWall(){};
 
@@ -287,7 +287,7 @@ namespace SPH
     {
     public:
         MergeWithMinimumDensityErrorWithWall(ComplexRelation &complex_relation, Shape &refinement_region)
-            : MergeWithMinimumDensityErrorInner(complex_relation.inner_relation_, refinement_region),
+            : MergeWithMinimumDensityErrorInner(complex_relation.getInnerRelation(), refinement_region),
               compute_density_error(complex_relation){};
         virtual ~MergeWithMinimumDensityErrorWithWall(){};
 

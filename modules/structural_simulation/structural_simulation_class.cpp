@@ -78,7 +78,7 @@ void relaxParticlesSingleResolution(IOEnvironment &io_environment,
 	//	Particle relaxation starts here.
 	//----------------------------------------------------------------------
 	random_solid_body_from_mesh_particles.parallel_exec(0.25);
-	relaxation_step_inner.surface_bounding_.parallel_exec();
+	relaxation_step_inner.SurfaceBounding().parallel_exec();
 	if (write_particle_relaxation_data)
 	{
 		write_solid_body_from_mesh_to_vtp.writeToFile(0.0);
@@ -231,7 +231,7 @@ StructuralSimulation::StructuralSimulation(const StructuralSimulationInput &inpu
 	createBodyMeshList();
 	// set up the system
 	calculateSystemBoundaries();
-	system_.run_particle_relaxation_ = true;
+	system_.setRunParticleRelaxation(true);
 	// initialize solid bodies with their properties
 	initializeElasticSolidBodies();
 	// contacts

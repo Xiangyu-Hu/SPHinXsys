@@ -127,7 +127,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
-	size_t number_of_iterations = sph_system.restart_step_;
+	size_t number_of_iterations = 0;
 	int screen_output_interval = 100;
 	Real end_time = 0.2;
 	Real output_interval = 0.01;	 /**< Time stamps for output of body states. */

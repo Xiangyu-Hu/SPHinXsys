@@ -271,24 +271,17 @@ int main(int ac, char *av[])
 	//	SPHSystem section
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, dp_0);
-	/** Set the starting time. */
-	GlobalStaticVariables::physical_time_ = 0.0;
-	/** Tag for run particle relaxation for the initial body fitted distribution. */
-	system.run_particle_relaxation_ = true;
-	/** Tag for reload initially relaxed particles. */
-	system.reload_particles_ = true;
-	/** Tag for computation from restart files. 0: not from restart files. */
-	system.restart_step_ = 0;
-// handle command line arguments
+	system.setRunParticleRelaxation(true); // Tag for run particle relaxation for body-fitted distribution
+	system.setReloadParticles(true);	   // Tag for computation with save particles distribution
 #ifdef BOOST_AVAILABLE
-	system.handleCommandlineOptions(ac, av);
+	system.handleCommandlineOptions(ac, av); // handle command line arguments
 #endif
 	IOEnvironment io_environment(system);
 	//----------------------------------------------------------------------
 	//	SPH Particle relaxation section
 	//----------------------------------------------------------------------
 	/** check whether run particle relaxation for body fitted particle distribution. */
-	if (system.run_particle_relaxation_)
+	if (system.RunParticleRelaxation())
 	{
 		SolidBody herat_model(system, makeShared<Heart>("HeartModel"));
 		herat_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(io_environment);
@@ -317,7 +310,7 @@ int main(int ac, char *av[])
 		//	Physics relaxation starts here.
 		//----------------------------------------------------------------------
 		random_particles.parallel_exec(0.25);
-		relaxation_step_inner.surface_bounding_.parallel_exec();
+		relaxation_step_inner.SurfaceBounding().parallel_exec();
 		write_herat_model_state_to_vtp.writeToFile(0.0);
 		//----------------------------------------------------------------------
 		// From here the time stepping begins.
@@ -372,7 +365,7 @@ int main(int ac, char *av[])
 	AlievPanfilowModel muscle_reaction_model(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
 	physiology_heart.defineParticlesAndMaterial<
 		ElectroPhysiologyParticles, LocalMonoFieldElectroPhysiology>(muscle_reaction_model, diffusion_coff, bias_coff, fiber_direction);
-	(!system.run_particle_relaxation_ && system.reload_particles_)
+	(!system.RunParticleRelaxation() && system.ReloadParticles())
 		? physiology_heart.generateParticles<ParticleGeneratorReload>(io_environment, "HeartModel")
 		: physiology_heart.generateParticles<ParticleGeneratorLattice>();
 
@@ -380,12 +373,12 @@ int main(int ac, char *av[])
 	SolidBody mechanics_heart(system, makeShared<Heart>("MechanicalHeart"));
 	mechanics_heart.defineParticlesAndMaterial<
 		ElasticSolidParticles, ActiveMuscle<LocallyOrthotropicMuscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
-	(!system.run_particle_relaxation_ && system.reload_particles_)
+	(!system.RunParticleRelaxation() && system.ReloadParticles())
 		? mechanics_heart.generateParticles<ParticleGeneratorReload>(io_environment, "HeartModel")
 		: mechanics_heart.generateParticles<ParticleGeneratorLattice>();
 
 	/** check whether reload material properties. */
-	if (!system.run_particle_relaxation_ && system.reload_particles_)
+	if (!system.RunParticleRelaxation() && system.ReloadParticles())
 	{
 		ReloadMaterialParameterIO read_physiology_heart_fiber(io_environment, physiology_heart, "FiberDirection");
 		ReloadMaterialParameterIO read_mechanics_heart_fiber(io_environment, mechanics_heart, "FiberDirection");
@@ -425,19 +418,19 @@ int main(int ac, char *av[])
 	SimpleDynamics<ApplyStimulusCurrentSII> apply_stimulus_s2(physiology_heart);
 	// Active mechanics.
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> correct_configuration_contraction(mechanics_body_inner);
-	InteractionDynamics<observer_dynamics::CorrectInterpolationKernelWeights> correct_kernel_weights_for_interpolation(mechanics_body_contact);
+	InteractionDynamics<CorrectInterpolationKernelWeights> correct_kernel_weights_for_interpolation(mechanics_body_contact);
 	/** Interpolate the active contract stress from electrophysiology body. */
-	InteractionDynamics<observer_dynamics::InterpolatingAQuantity<Real>>
+	InteractionDynamics<InterpolatingAQuantity<Real>>
 		active_stress_interpolation(mechanics_body_contact, "ActiveContractionStress", "ActiveContractionStress");
 	/** Interpolate the particle position in physiology_heart  from mechanics_heart. */
 	// TODO: this is a bug, we should interpolate displacement other than position.
-	InteractionDynamics<observer_dynamics::InterpolatingAQuantity<Vecd>>
+	InteractionDynamics<InterpolatingAQuantity<Vecd>>
 		interpolation_particle_position(physiology_heart_contact, "Position", "Position");
 	/** Time step size calculation. */
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> get_mechanics_time_step(mechanics_heart);
 	/** active and passive stress relaxation. */
-	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> stress_relaxation_first_half(mechanics_body_inner);
-	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half(mechanics_body_inner);
+	Dynamics1Level<solid_dynamics::Integration1stHalf> stress_relaxation_first_half(mechanics_body_inner);
+	Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(mechanics_body_inner);
 	/** Constrain region of the inserted body. */
 	MuscleBaseShapeParameters muscle_base_parameters;
 	BodyRegionByParticle muscle_base(mechanics_heart, makeShared<TriangleMeshShapeBrick>(muscle_base_parameters, "Holder"));

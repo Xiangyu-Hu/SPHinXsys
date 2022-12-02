@@ -48,11 +48,9 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
 	/** Tag for running particle relaxation for the initially body-fitted distribution */
-	sph_system.run_particle_relaxation_ = false;
+	sph_system.setRunParticleRelaxation(true);
 	/** Tag for starting with relaxed body-fitted particles distribution */
-	sph_system.reload_particles_ = true;
-	/** Tag for computation from restart files. 0: start with initial condition */
-	sph_system.restart_step_ = 0;
+	sph_system.setReloadParticles(false);
 	sph_system.handleCommandlineOptions(ac, av);
 	IOEnvironment io_environment(sph_system);
 	//----------------------------------------------------------------------
@@ -60,7 +58,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	SolidBody ball(sph_system, makeShared<GeometricShapeBall>(ball_center, ball_radius, "BallBody"));
 	ball.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
+	if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
 	{
 		ball.generateParticles<ParticleGeneratorReload>(io_environment, ball.getName());
 	}
@@ -77,7 +75,7 @@ int main(int ac, char *av[])
 	wall_boundary.defineAdaptation<SPHAdaptation>(1.15, 1.0);
 	// here dummy linear elastic solid is use because no solid dynamics in particle relaxation
 	wall_boundary.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
-	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
+	if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
 	{
 		wall_boundary.generateParticles<ParticleGeneratorReload>(io_environment, wall_boundary.getName());
 	}
@@ -87,7 +85,7 @@ int main(int ac, char *av[])
 		wall_boundary.generateParticles<ThickSurfaceParticleGeneratorLattice>(thickness);
 	}
 
-	if (!sph_system.run_particle_relaxation_ && !sph_system.reload_particles_)
+	if (!sph_system.RunParticleRelaxation() && !sph_system.ReloadParticles())
 	{
 		std::cout << "Error: This case requires reload shell particles for simulation!" << std::endl;
 		return 0;
@@ -98,7 +96,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------
-	if (sph_system.run_particle_relaxation_)
+	if (sph_system.RunParticleRelaxation())
 	{
 		//----------------------------------------------------------------------
 		//	Define body relation map used for particle relaxation.
@@ -174,8 +172,8 @@ int main(int ac, char *av[])
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> ball_corrected_configuration(ball_inner);
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> ball_get_time_step_size(ball);
 	/** stress relaxation for the balls. */
-	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> ball_stress_relaxation_first_half(ball_inner);
-	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> ball_stress_relaxation_second_half(ball_inner);
+	Dynamics1Level<solid_dynamics::Integration1stHalf> ball_stress_relaxation_first_half(ball_inner);
+	Dynamics1Level<solid_dynamics::Integration2ndHalf> ball_stress_relaxation_second_half(ball_inner);
 	/** Algorithms for solid-solid contact. */
 	InteractionDynamics<solid_dynamics::ShellContactDensity, BodyPartByParticle> ball_update_contact_density(ball_contact);
 	InteractionDynamics<solid_dynamics::ContactForceFromWall, BodyPartByParticle> ball_compute_solid_contact_forces(ball_contact);
