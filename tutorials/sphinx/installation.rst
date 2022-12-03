@@ -85,7 +85,7 @@ To install the *shared* versions, do the following:
         gtest:x64-linux-dynamic
     cd ..
 
-Otherwise, please refer to the official `documentation <https://vcpkg.io/en/docs/examples/overlay-triplets-linux-dynamic.html>`_
+Otherwise, please refer to the official `vcpkg documentation <https://vcpkg.io/en/docs/examples/overlay-triplets-linux-dynamic.html>`_
 
 Building SPHinXsys
 ^^^^^^^^^^^^^^^^^^^^^
@@ -170,7 +170,7 @@ To install the *static* versions, replace the former install line by the followi
         simbody:x64-windows-static               \
         gtest:x64-windows-static
 
-For any other combination, please refer to the official `documentation <https://vcpkg.io/en/docs/users/triplets.html>`_
+For any other combination, please refer to the official `architecture documentation <https://vcpkg.io/en/docs/users/triplets.html>`_
 
 
 Building SPHinXsys with Visual Studio
