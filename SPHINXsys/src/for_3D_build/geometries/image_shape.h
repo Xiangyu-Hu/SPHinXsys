@@ -30,7 +30,6 @@
 #define IMAGE_SHAPE_3D_H
 
 #ifndef __EMSCRIPTEN__
-#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 #include "base_geometry.h"
 #include "image_mhd.h"
@@ -38,15 +37,8 @@
 #include <iostream>
 #include <string>
 #include <fstream>
-
-/** Macro for APPLE compilers*/
-#ifdef __APPLE__
-#include <boost/filesystem.hpp>
-namespace fs = boost::filesystem;
-#else
 #include <filesystem>
 namespace fs = std::filesystem;
-#endif
 
 namespace SPH
 {

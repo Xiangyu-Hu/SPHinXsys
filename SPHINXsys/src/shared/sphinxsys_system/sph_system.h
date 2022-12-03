@@ -30,8 +30,6 @@
 #ifndef SPH_SYSTEM_H
 #define SPH_SYSTEM_H
 
-#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-
 #define TBB_PREVIEW_GLOBAL_CONTROL 1
 #include <tbb/global_control.h>
 #ifdef BOOST_AVAILABLE
@@ -44,14 +42,9 @@ namespace po = boost::program_options;
 
 #include <thread>
 #include <fstream>
-/** Macro for APPLE compilers*/
-#ifdef __APPLE__
-#include <boost/filesystem.hpp>
-namespace fs = boost::filesystem;
-#else
 #include <filesystem>
 namespace fs = std::filesystem;
-#endif
+
 
 namespace SPH
 {
