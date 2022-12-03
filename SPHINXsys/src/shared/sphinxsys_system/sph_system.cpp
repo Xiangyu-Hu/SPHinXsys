@@ -1,9 +1,3 @@
-/**
- * @file sph_system.cpp
- * @brief 	Definition of all system level functions
- * @author  Xiangyu Hu, Luhui Han and Chi Zhang
- */
-
 #include "sph_system.h"
 
 #include "base_body.h"

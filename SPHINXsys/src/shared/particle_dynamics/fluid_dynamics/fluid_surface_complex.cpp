@@ -1,13 +1,8 @@
-/**
- * @file 	fluid_surface_complex.cpp
- * @author	Chi Zhang and Xiangyu Hu
- */
-
 #include "fluid_surface_complex.h"
 
 namespace SPH
 {
-	//=================================================================================================//
+	//=====================================================================================================//
 	namespace fluid_dynamics
 	{
 		//=================================================================================================//
@@ -63,7 +58,7 @@ namespace SPH
 		{
 			ColorFunctionGradientInner::interaction(index_i, dt);
 
-			Vecd gradient(0.0);
+			Vecd gradient = Vecd::Zero();
 			if (pos_div_[index_i] < threshold_by_dimensions_)
 			{
 				for (size_t k = 0; k < contact_configuration_.size(); ++k)
@@ -100,8 +95,8 @@ namespace SPH
 			Real large_dist(1.0e6);
 			Vecd n_i = surface_norm_[index_i];
 			Real smoothing_factor(1.0);
-			Vecd smooth_norm(0);
-			Vecd n_i_w(0);
+			Vecd smooth_norm = Vecd::Zero();
+			Vecd n_i_w = Vecd::Zero();
 			/** Contact interaction. */
 			if (surface_indicator_[index_i] == 1)
 			{
@@ -114,11 +109,11 @@ namespace SPH
 						size_t index_j = wall_neighborhood.j_[n];
 						if (wall_neighborhood.r_ij_[n] < large_dist)
 						{
-							Vecd n_w_t = n_i - dot(n_i, n_k[index_j]) * n_k[index_j];
+							Vecd n_w_t = n_i - n_i.dot(n_k[index_j]) * n_k[index_j];
 							Vecd n_t = n_w_t / (n_w_t.norm() + TinyReal);
 							n_i_w = n_t * sin(contact_angle_) + cos(contact_angle_) * n_k[index_j];
 							/** No change for multi-resolution. */
-							Real r_ij = wall_neighborhood.r_ij_[n] * dot(n_k[index_j], wall_neighborhood.e_ij_[n]);
+							Real r_ij = wall_neighborhood.r_ij_[n] * n_k[index_j].dot(wall_neighborhood.e_ij_[n]);
 							if (r_ij <= smoothing_length_)
 							{
 								smoothing_factor = 0.0;

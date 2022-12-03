@@ -1,8 +1,3 @@
-/**
- * @file 	base_kernel.cpp
- * @author	Luhui Han, Chi Zhang and Xiangyu Hu
- */
-
 #include "base_kernel.h"
 
 namespace SPH

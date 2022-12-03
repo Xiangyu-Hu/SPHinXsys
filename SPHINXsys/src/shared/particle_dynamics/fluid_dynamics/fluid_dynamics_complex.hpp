@@ -1,16 +1,39 @@
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	fluid_dynamics_complex.hpp
- * @author	Chi Zhang and Xiangyu Hu
+ * @brief 	Here, we define the algorithm classes for complex fluid dynamics,
+ * 			which is involving with either solid walls (with suffix WithWall)
+ * 			or/and other bodies treated as wall for the fluid (with suffix Complex).
+ * @author	Chi ZHang and Xiangyu Hu
  */
-
 #pragma once
 
 #include "fluid_dynamics_complex.h"
 
-//=================================================================================================//
 namespace SPH
 {
-	//=================================================================================================//
+	//=====================================================================================================//
 	namespace fluid_dynamics
 	{
 		//=================================================================================================//
@@ -79,7 +102,8 @@ namespace SPH
 			Real rho_i = this->rho_[index_i];
 			const Vecd &vel_i = this->vel_[index_i];
 
-			Vecd acceleration(0), vel_derivative(0);
+			Vecd acceleration = Vecd::Zero();
+			Vecd vel_derivative = Vecd::Zero();
 			for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
 			{
 				StdLargeVec<Vecd> &vel_ave_k = *(this->wall_vel_ave_[k]);
@@ -104,7 +128,7 @@ namespace SPH
 
 			Vecd acc_prior_i = computeNonConservativeAcceleration(index_i);
 
-			Vecd acceleration(0.0);
+			Vecd acceleration = Vecd::Zero();
 			Real rho_dissipation(0);
 			for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
 			{
@@ -119,7 +143,7 @@ namespace SPH
 					Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
 					Real r_ij = wall_neighborhood.r_ij_[n];
 
-					Real face_wall_external_acceleration = dot((acc_prior_i - acc_ave_k[index_j]), -e_ij);
+					Real face_wall_external_acceleration = (acc_prior_i - acc_ave_k[index_j]).dot(-e_ij);
 					Real p_in_wall = this->p_[index_i] + this->rho_[index_i] * r_ij * SMAX(0.0, face_wall_external_acceleration);
 					acceleration -= (this->p_[index_i] + p_in_wall) * e_ij * dW_ijV_j;
 					rho_dissipation += this->riemann_solver_.DissipativeUJump(this->p_[index_i] - p_in_wall) * dW_ijV_j;
@@ -139,7 +163,7 @@ namespace SPH
 		void BaseExtendIntegration1stHalfWithWall<BaseIntegration1stHalfType>::initialization(size_t index_i, Real dt)
 		{
 			BaseIntegration1stHalfType::initialization(index_i, dt);
-			non_cnsrv_acc_[index_i] = Vecd(0);
+			non_cnsrv_acc_[index_i] = Vecd::Zero();
 		}
 		//=================================================================================================//
 		template <class BaseIntegration1stHalfType>
@@ -149,7 +173,7 @@ namespace SPH
 
 			Real rho_i = this->rho_[index_i];
 			Real penalty_pressure = this->p_[index_i];
-			Vecd acceleration(0);
+			Vecd acceleration = Vecd::Zero();
 			for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
 			{
 				Real particle_spacing_j1 = 1.0 / FluidWallData::contact_bodies_[k]->sph_adaptation_->ReferenceSpacing();
@@ -167,7 +191,7 @@ namespace SPH
 					Vecd &n_j = n_k[index_j];
 
 					/** penalty method to prevent particle running into boundary */
-					Real projection = dot(e_ij, n_j);
+					Real projection = e_ij.dot(n_j);
 					Real delta = 2.0 * projection * r_ij * particle_spacing_j1;
 					Real beta = delta < 1.0 ? (1.0 - delta) * (1.0 - delta) * particle_spacing_ratio2 : 0.0;
 					// penalty must be positive so that the penalty force is pointed to fluid inner domain
@@ -211,7 +235,7 @@ namespace SPH
 					Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
 
 					Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - this->vel_[index_i];
-					density_change_rate += dot(this->vel_[index_i] - vel_in_wall, e_ij) * dW_ijV_j;
+					density_change_rate += (this->vel_[index_i] - vel_in_wall).dot(e_ij) * dW_ijV_j;
 				}
 			}
 			this->drho_dt_[index_i] += density_change_rate * this->rho_[index_i];

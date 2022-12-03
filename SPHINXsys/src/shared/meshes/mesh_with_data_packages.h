@@ -1,30 +1,30 @@
-/* -----------------------------------------------------------------------------*
- *                               SPHinXsys                                      *
- * -----------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
- * physical accurate simulation and aims to model coupled industrial dynamic    *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
- * (smoothed particle hydrodynamics), a meshless computational method using     *
- * particle discretization.                                                     *
- *                                                                              *
- * SPHinXsys is partially funded by German Research Foundation                  *
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
- * HU1527/12-1 and HU1527/12-4.                                                 *
- *                                                                              *
- * Portions copyright (c) 2017-2022 Technical University of Munich and          *
- * the authors' affiliations.                                                   *
- *                                                                              *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
- * not use this file except in compliance with the License. You may obtain a    *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
- *                                                                              *
- * -----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	mesh_with_data_packages.h
- * @brief 	This class is designed to save memory and increase computational efficiency
- *	on mesh. //TODO: the connection between successive meshes in refined mesh should enhanced.
- * @author	Chi Zhang and Xiangyu Hu
+ * @brief 	This class is designed to save memory and increase computational efficiency on mesh.
+ *			TODO: the connection between successive meshes in refined mesh should enhanced.
+ * @author	Chi ZHang and Xiangyu Hu
  */
 
 #ifndef MESH_WITH_DATA_PACKAGES_H
@@ -70,15 +70,15 @@ namespace SPH
 	/**
 	 * @class BaseDataPackage
 	 * @brief Abstract base class for a data package,
-	 * by which the data in a derived class can be on- or off-grid.
-	 * The data package can be defined in a cell of a background mesh so the pkg_index is
-	 * the cell location on the mesh.
-	 * TODO: The class will be enriched with general methods for all data packages.
+	 * 		  by which the data in a derived class can be on- or off-grid.
+	 * 		  The data package can be defined in a cell of a background mesh so the pkg_index is
+	 * 		  the cell location on the mesh.
+	 *        TODO: The class will be enriched with general methods for all data packages.
 	 */
 	class BaseDataPackage
 	{
 	public:
-		BaseDataPackage() : cell_index_on_mesh_(0), state_indicator_(0){};
+		BaseDataPackage() : state_indicator_(0){};
 		virtual ~BaseDataPackage(){};
 		void setInnerPackage() { state_indicator_ = 1; };
 		bool isInnerPackage() { return state_indicator_ != 0; };
@@ -88,7 +88,7 @@ namespace SPH
 		Vecu CellIndexOnMesh() const { return cell_index_on_mesh_; }
 
 	protected:
-		Vecu cell_index_on_mesh_; /**< index of this data package on the background mesh, Vecu(0) if it is not on the mesh. */
+		Vecu cell_index_on_mesh_{Vecu::Zero()}; /**< index of this data package on the background mesh, Vecu(0) if it is not on the mesh. */
 		/** reserved value: 0 not occupying background mesh, 1 occupying.
 		 *  guide to use: large magnitude for high priority of the data package. */
 		int state_indicator_;
@@ -119,12 +119,12 @@ namespace SPH
 		template <typename DataType>
 		using PackageTemporaryData = PackageDataMatrix<DataType, pkg_addrs_size>;
 
-		GridDataPackage() : BaseDataPackage(), BaseMesh(Vecu(pkg_addrs_size)){};
+		GridDataPackage() : BaseDataPackage(), BaseMesh(pkg_addrs_size * Vecu::Ones()){};
 		virtual ~GridDataPackage(){};
 		Vecd DataPositionFromIndex(const Vecd &data_index) { return DataLowerBound() + data_index * grid_spacing_; };
 		void initializePackageGeometry(const Vecd &pkg_lower_bound, Real data_spacing)
 		{
-			mesh_lower_bound_ = pkg_lower_bound - Vecd(data_spacing) * ((Real)pkg_addrs_buffer - 0.5);
+			mesh_lower_bound_ = pkg_lower_bound - data_spacing * Vecd::Ones() * ((Real)pkg_addrs_buffer - 0.5);
 			grid_spacing_ = data_spacing;
 		};
 		/** void (non_value_returning) function iterate on all data points by value,
@@ -170,7 +170,7 @@ namespace SPH
 		DataContainerAssemble<PackageDataAddress> all_pkg_data_addrs_;
 
 		/** lower bound coordinate for the data as reference */
-		Vecd DataLowerBound() { return mesh_lower_bound_ + Vecd(grid_spacing_) * (Real)pkg_addrs_buffer; };
+		Vecd DataLowerBound() { return mesh_lower_bound_ + grid_spacing_ * Vecd::Ones() * (Real)pkg_addrs_buffer; };
 		/** allocate memory for all package data */
 		template <typename DataType>
 		struct AllVariablesAllocation
@@ -246,7 +246,7 @@ namespace SPH
 		explicit MeshWithGridDataPackages(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size)
 			: Mesh(tentative_bounds, GridDataPackageType::pkg_size * data_spacing, buffer_size),
 			  data_spacing_(data_spacing),
-			  global_mesh_(this->mesh_lower_bound_ + Vecd(data_spacing) * 0.5, data_spacing, this->number_of_cells_ * pkg_size)
+			  global_mesh_(this->mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, this->number_of_cells_ * pkg_size)
 		{
 			allocateMeshDataMatrix();
 		};
@@ -304,9 +304,10 @@ namespace SPH
 		};
 
 		void assignDataPackageAddress(const Vecu &cell_index, GridDataPackageType *data_pkg);
+		/** Return data package with given cell index. */
 		GridDataPackageType *DataPackageFromCellIndex(const Vecu &cell_index);
 		void initializePackageAddressesInACell(const Vecu &cell_index);
-		/** find related cell index and data index for a data package address matrix */
+		/** Find related cell index and data index for a data package address matrix */
 		std::pair<int, int> CellShiftAndDataIndex(int data_addrs_index_component)
 		{
 			std::pair<int, int> shift_and_index;

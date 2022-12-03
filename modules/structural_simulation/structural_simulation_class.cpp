@@ -48,15 +48,15 @@ SolidBodyForSimulation::SolidBodyForSimulation(
 
 void expandBoundingBox(BoundingBox *original, BoundingBox *additional)
 {
-	for (int i = 0; i < original->first.size(); i++)
+	for (int i = 0; i < original->first_.size(); i++)
 	{
-		if (additional->first[i] < original->first[i])
+		if (additional->first_[i] < original->first_[i])
 		{
-			original->first[i] = additional->first[i];
+			original->first_[i] = additional->first_[i];
 		}
-		if (additional->second[i] > original->second[i])
+		if (additional->second_[i] > original->second_[i])
 		{
-			original->second[i] = additional->second[i];
+			original->second_[i] = additional->second_[i];
 		}
 	}
 }
@@ -197,7 +197,7 @@ StructuralSimulation::StructuralSimulation(const StructuralSimulationInput &inpu
 	  particle_relaxation_list_(input.particle_relaxation_list_),
 	  write_particle_relaxation_data_(input.write_particle_relaxation_data_),
 	  system_resolution_(0.0),
-	  system_(SPHSystem(BoundingBox(Vec3d(0), Vec3d(0)), system_resolution_)),
+	  system_(SPHSystem(BoundingBox(Vec3d::Zero(), Vec3d::Zero()), system_resolution_)),
 	  scale_system_boundaries_(input.scale_system_boundaries_),
 	  io_environment_(system_),
 
@@ -293,13 +293,13 @@ void StructuralSimulation::calculateSystemBoundaries()
 		expandBoundingBox(&system_.system_domain_bounds_, &additional);
 	}
 	// scale the system bounds around the center point
-	Vecd center_point = (system_.system_domain_bounds_.first + system_.system_domain_bounds_.second) * 0.5;
+	Vecd center_point = (system_.system_domain_bounds_.first_ + system_.system_domain_bounds_.second_) * 0.5;
 
-	Vecd distance_first = system_.system_domain_bounds_.first - center_point;
-	Vecd distance_second = system_.system_domain_bounds_.second - center_point;
+	Vecd distance_first = system_.system_domain_bounds_.first_ - center_point;
+	Vecd distance_second = system_.system_domain_bounds_.second_ - center_point;
 
-	system_.system_domain_bounds_.first = center_point + distance_first * scale_system_boundaries_;
-	system_.system_domain_bounds_.second = center_point + distance_second * scale_system_boundaries_;
+	system_.system_domain_bounds_.first_ = center_point + distance_first * scale_system_boundaries_;
+	system_.system_domain_bounds_.second_ = center_point + distance_second * scale_system_boundaries_;
 }
 
 void StructuralSimulation::createBodyMeshList()
@@ -442,12 +442,12 @@ void StructuralSimulation::initializeForceInBodyRegion()
 		Real end_time = get<3>(force_in_body_region_tuple_[i]);
 
 		// get the length of each side to create the box
-		Real x_side = bbox.second[0] - bbox.first[0];
-		Real y_side = bbox.second[1] - bbox.first[1];
-		Real z_side = bbox.second[2] - bbox.first[2];
+		Real x_side = bbox.second_[0] - bbox.first_[0];
+		Real y_side = bbox.second_[1] - bbox.first_[1];
+		Real z_side = bbox.second_[2] - bbox.first_[2];
 		Vec3d halfsize_bbox(0.5 * x_side, 0.5 * y_side, 0.5 * z_side);
 		// get the center point for translation from the origin
-		Vec3d center = (bbox.second + bbox.first) * 0.5;
+		Vec3d center = (bbox.second_ + bbox.first_) * 0.5;
 		// SimTK geometric modeling resolution
 		int resolution(20);
 		// create the triangle mesh of the box
@@ -519,12 +519,12 @@ void StructuralSimulation::initializeConstrainSolidBodyRegion()
 		BoundingBox bbox = body_indices_fixed_constraint_region_[i].second;
 
 		// get the length of each side to create the box
-		Real x_side = bbox.second[0] - bbox.first[0];
-		Real y_side = bbox.second[1] - bbox.first[1];
-		Real z_side = bbox.second[2] - bbox.first[2];
+		Real x_side = bbox.second_[0] - bbox.first_[0];
+		Real y_side = bbox.second_[1] - bbox.first_[1];
+		Real z_side = bbox.second_[2] - bbox.first_[2];
 		Vec3d halfsize_bbox(0.5 * x_side, 0.5 * y_side, 0.5 * z_side);
 		// get the center point for translation from the origin
-		Vec3d center = (bbox.second + bbox.first) * 0.5;
+		Vec3d center = (bbox.second_ + bbox.first_) * 0.5;
 		// SimTK geometric modeling resolution
 		int resolution(20);
 		// create the triangle mesh of the box

@@ -173,8 +173,8 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Compute the force exerted on solid body due to fluid pressure and viscosity
 	//----------------------------------------------------------------------
-	InteractionDynamics<solid_dynamics::FluidViscousForceOnSolidInEuler> viscous_force_on_solid(cylinder_contact);
-	InteractionDynamics<solid_dynamics::FluidPressureForceOnSolidHLLCWithLimiterRiemannInEuler> pressure_force_on_solid(cylinder_contact);
+	InteractionDynamics<solid_dynamics::FluidViscousForceOnSolid> viscous_force_on_solid(cylinder_contact);
+	InteractionDynamics<solid_dynamics::FluidForceOnSolidUpdate> fluid_force_on_solid_update(cylinder_contact, viscous_force_on_solid);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
@@ -242,7 +242,7 @@ int main(int ac, char *av[])
 		viscous_force_on_solid.parallel_exec(); // compute force only before output
 		write_total_viscous_force_on_inserted_body.writeToFile(number_of_iterations);
 
-		pressure_force_on_solid.parallel_exec(); // compute force only before output
+		fluid_force_on_solid_update.parallel_exec(); // compute force only before output
 		write_total_force_on_inserted_body.writeToFile(number_of_iterations);
 
 		write_maximum_speed.writeToFile(number_of_iterations);
@@ -258,7 +258,7 @@ int main(int ac, char *av[])
 	if (sph_system.generate_regression_data_)
 	{
 		// The lift force at the cylinder is very small and not important in this case.
-		write_total_viscous_force_on_inserted_body.generateDataBase({1.0e-2, 1.0e-2}, {1.0e-2, 1.0e-2});
+		write_total_viscous_force_on_inserted_body.generateDataBase(Vec2d{1.0e-2, 1.0e-2}, Vec2d{1.0e-2, 1.0e-2});
 	}
 	else
 	{

@@ -35,8 +35,8 @@ class Myocardium : public ComplexShape
 public:
 	explicit Myocardium(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		add<TransformShape<GeometricShapeBox>>(translation_myocardium, halfsize_myocardium);
-		add<TransformShape<GeometricShapeBox>>(translation_stationary_plate, halfsize_stationary_plate);
+		add<TransformShape<GeometricShapeBox>>(Transformd(translation_myocardium), halfsize_myocardium);
+		add<TransformShape<GeometricShapeBox>>(Transformd(translation_stationary_plate), halfsize_stationary_plate);
 	}
 };
 /**
@@ -47,7 +47,7 @@ class MovingPlate : public ComplexShape
 public:
 	explicit MovingPlate(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		add<TransformShape<GeometricShapeBox>>(translation_moving_plate, halfsize_moving_plate);
+		add<TransformShape<GeometricShapeBox>>(Transformd(translation_moving_plate), halfsize_moving_plate);
 	}
 };
 /**
@@ -89,7 +89,7 @@ int main()
 	InteractionDynamics<solid_dynamics::ContactForce, BodyPartByParticle> plate_compute_solid_contact_forces(plate_myocardium_contact);
 	/** Constrain the holder. */
 	BodyRegionByParticle holder(myocardium_body, 
-		makeShared<TransformShape<GeometricShapeBox>>(translation_stationary_plate, halfsize_stationary_plate, "Holder"));
+		makeShared<TransformShape<GeometricShapeBox>>(Transformd(translation_stationary_plate), halfsize_stationary_plate, "Holder"));
 	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle>	constraint_holder(holder);
 	/** Damping with the solid body*/
 	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
@@ -109,7 +109,7 @@ int main()
 	SimTK::CableTrackerSubsystem cables(MBsystem);
 	/** mass properties of the fixed spot. */
 	SolidBodyPartForSimbody plate_multibody(moving_plate, 
-		makeShared<TransformShape<GeometricShapeBox>>(translation_moving_plate, halfsize_moving_plate, "Plate"));
+		makeShared<TransformShape<GeometricShapeBox>>(Transformd(translation_moving_plate), halfsize_moving_plate, "Plate"));
 	/** Mass properties of the constrained spot. 
 	 * SimTK::MassProperties(mass, center of mass, inertia)
 	 */

@@ -1,30 +1,30 @@
-/* -----------------------------------------------------------------------------*
- *                               SPHinXsys                                      *
- * -----------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
- * physical accurate simulation and aims to model coupled industrial dynamic    *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
- * (smoothed particle hydrodynamics), a meshless computational method using     *
- * particle discretization.                                                     *
- *                                                                              *
- * SPHinXsys is partially funded by German Research Foundation                  *
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
- * HU1527/12-1 and HU1527/12-4.                                                 *
- *                                                                              *
- * Portions copyright (c) 2017-2022 Technical University of Munich and          *
- * the authors' affiliations.                                                   *
- *                                                                              *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
- * not use this file except in compliance with the License. You may obtain a    *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
- *                                                                              *
- * -----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4												*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file sph_system.h
  * @brief The SPH_System managing objects in the system level.
  * @details Note that the system operation prefer these are application independent.
- * @author  Xiangyu Hu, Luhui Han and Chi Zhang
+ * @author	Chi ZHang and Xiangyu Hu
  */
 
 #ifndef SPH_SYSTEM_H
@@ -49,18 +49,19 @@ namespace po = boost::program_options;
 #include <boost/filesystem.hpp>
 namespace fs = boost::filesystem;
 #else
-#include <experimental/filesystem>
-namespace fs = std::experimental::filesystem;
+#include <filesystem>
+namespace fs = std::filesystem;
 #endif
 
 namespace SPH
 {
 	/**
-	 * @brief Pre-claimed classes.
+	 * Pre-claimed classes.
 	 */
 	class SPHBody;
 	class IOEnvironment;
 	class ComplexShape;
+
 	/**
 	 * @class SPHSystem
 	 * @brief The SPH system managing objects in the system level.
@@ -85,14 +86,17 @@ namespace SPH
 		IOEnvironment *io_environment_; /**< io_environment setup */
 		bool generate_regression_data_; /**< run and generate or enhance the regression test data set. */
 
-		SPHBodyVector sph_bodies_;		   /**< All sph bodies. */
-		SPHBodyVector observation_bodies_; /**< The bodies without inner particle configuration. */
-		SPHBodyVector real_bodies_;		   /**< The bodies with inner particle configuration. */
-		SolidBodyVector solid_bodies_;	   /**< The bodies with inner particle configuration and acoustic time steps . */
-
+		SPHBodyVector sph_bodies_;		  		/**< All sph bodies. */
+		SPHBodyVector observation_bodies_; 		/**< The bodies without inner particle configuration. */
+		SPHBodyVector real_bodies_;		  		/**< The bodies with inner particle configuration. */
+		SolidBodyVector solid_bodies_;	  		/**< The bodies with inner particle configuration and acoustic time steps . */
+		/** Initialize cell linked list for the SPH system. */
 		void initializeSystemCellLinkedLists();
+		/** Initialize particle configuration for the SPH system. */
 		void initializeSystemConfigurations();
+		/** get the min time step from all bodies. */
 		Real getSmallestTimeStepAmongSolidBodies(Real CFL = 0.6);
+		/** Command line handle for ctest. */
 #ifdef BOOST_AVAILABLE
 		void handleCommandlineOptions(int ac, char *av[]);
 #endif

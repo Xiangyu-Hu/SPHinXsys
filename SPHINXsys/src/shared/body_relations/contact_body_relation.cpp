@@ -1,11 +1,4 @@
-/**
- * @file 	body_relation.cpp
- * @brief 	Here, Functions belong to BaseBody, RealBody and FictitiousBody are given.
- * @author	Chi Zhang and Xiangyu Hu
- */
-
 #include "contact_body_relation.h"
-
 #include "base_particle_dynamics.h"
 #include "cell_linked_list.hpp"
 

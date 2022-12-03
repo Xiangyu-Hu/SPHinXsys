@@ -200,8 +200,8 @@ int main(int ac, char *av[])
 			interval_updating_configuration += tick_count::now() - time_instance;
 		}
 
-		tick_count t2 = tick_count::now();
 		body_states_recording.writeToFile();
+		tick_count t2 = tick_count::now();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}

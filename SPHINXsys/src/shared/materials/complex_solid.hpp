@@ -1,12 +1,6 @@
-/**
- * @file 	complex_solid.hpp
- * @brief 	These are implementation of the classes for complex solids.
- * @author	Xiangyu Hu and Chi Zhang
- */
 #pragma once
 
 #include "complex_solid.h"
-
 #include "base_particles.hpp"
 
 using namespace std;

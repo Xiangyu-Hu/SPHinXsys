@@ -1,8 +1,3 @@
-/**
- * @file 	base_particle_generator.cpp
- * @author	Luhui Han, Chi Zhang and Xiangyu Hu
- */
-
 #include "base_particle_generator.h"
 
 #include "base_body.h"
@@ -34,8 +29,7 @@ namespace SPH
 	ParticleGenerator::ParticleGenerator(SPHBody &sph_body)
 		: BaseParticleGenerator(sph_body), Vol_(base_particles_.Vol_) {}
 	//=================================================================================================//
-	void ParticleGenerator::
-		initializePositionAndVolumetricMeasure(const Vecd &position, Real volumetric_measure)
+	void ParticleGenerator::initializePositionAndVolumetricMeasure(const Vecd &position, Real volumetric_measure)
 	{
 		initializePosition(position);
 		Vol_.push_back(volumetric_measure);
@@ -60,8 +54,7 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	ParticleGeneratorReload::
-		ParticleGeneratorReload(SPHBody &sph_body, IOEnvironment &io_environment, const std::string &reload_body_name)
+	ParticleGeneratorReload::ParticleGeneratorReload(SPHBody &sph_body, IOEnvironment &io_environment, const std::string &reload_body_name)
 		: ParticleGenerator(sph_body)
 	{
 		if (!fs::exists(io_environment.reload_folder_))

@@ -1,8 +1,3 @@
-/**
- * @file 	level_set.cpp
- * @author	Luhui Han, Chi Zhang and Xiangyu Hu
- */
-
 #include "level_set.h"
 #include "adaptation.h"
 
@@ -12,8 +7,7 @@ namespace SPH
 {
 	//=================================================================================================//
 	BaseLevelSet ::BaseLevelSet(Shape &shape, SPHAdaptation &sph_adaptation)
-		: BaseMeshField("LevelSet"),
-		  shape_(shape), sph_adaptation_(sph_adaptation)
+		: BaseMeshField("LevelSet"), shape_(shape), sph_adaptation_(sph_adaptation)
 	{
 		if (!shape_.isValid())
 		{
@@ -92,7 +86,7 @@ namespace SPH
 				jittered[l] += (((Real)rand() / (RAND_MAX)) - 0.5) * 0.5 * data_spacing_;
 			probed_value = probeLevelSetGradient(jittered);
 		}
-		return probed_value.normalize();
+		return probed_value.normalized();
 	}
 	//=================================================================================================//
 	Vecd LevelSet::probeLevelSetGradient(const Vecd &position)
@@ -165,7 +159,7 @@ namespace SPH
 		Vecd cell_position = CellPositionFromIndex(cell_index);
 		Real signed_distance = shape_.findSignedDistance(cell_position);
 		Vecd normal_direction = shape_.findNormalDirection(cell_position);
-		Real measure = getMaxAbsoluteElement(normal_direction * signed_distance);
+		Real measure = (signed_distance * normal_direction).cwiseAbs().maxCoeff();
 		if (measure < grid_spacing_)
 		{
 			LevelSetDataPackage *new_data_pkg =
@@ -241,7 +235,7 @@ namespace SPH
 		{
 			Real signed_distance = shape_.findSignedDistance(cell_position);
 			Vecd normal_direction = shape_.findNormalDirection(cell_position);
-			Real measure = getMaxAbsoluteElement(normal_direction * signed_distance);
+			Real measure = (signed_distance * normal_direction).cwiseAbs().maxCoeff();
 			if (measure < grid_spacing_)
 			{
 				LevelSetDataPackage *new_data_pkg = createDataPackage(
@@ -256,11 +250,10 @@ namespace SPH
 		}
 	}
 	//=============================================================================================//
-	MultilevelLevelSet::
-		MultilevelLevelSet(BoundingBox tentative_bounds, Real reference_data_spacing,
-						   size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation)
-		: MultilevelMesh<BaseLevelSet, LevelSet, RefinedLevelSet>(tentative_bounds, reference_data_spacing,
-																  total_levels, shape, sph_adaptation) {}
+	MultilevelLevelSet::MultilevelLevelSet(BoundingBox tentative_bounds, Real reference_data_spacing, size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation)
+		: MultilevelMesh<BaseLevelSet, LevelSet, RefinedLevelSet>(tentative_bounds, reference_data_spacing, total_levels, shape, sph_adaptation)
+	{
+	}
 	//=================================================================================================//
 	size_t MultilevelLevelSet::getCoarseLevel(Real h_ratio)
 	{

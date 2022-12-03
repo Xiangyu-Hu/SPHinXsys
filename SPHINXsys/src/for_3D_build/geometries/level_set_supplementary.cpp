@@ -1,8 +1,3 @@
-/**
- * @file 	level_set_supplementary.cpp
- * @author	Luhui Han, Chi Zhang Yongchuan YU and Xiangyu Hu
- */
-
 #include "level_set.h"
 #include "mesh_with_data_packages.hpp"
 #include "mesh_iterators.hpp"
@@ -18,7 +13,7 @@ namespace SPH
 					   Shape &shape, SPHAdaptation &sph_adaptation)
 		: LevelSet(tentative_bounds, data_spacing, 4, shape, sph_adaptation)
 	{
-		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
+		mesh_parallel_for(MeshRange(Vecu::Zero(), number_of_cells_),
 						  [&](size_t i, size_t j, size_t k)
 						  {
 							  initializeDataInACell(Vecu(i, j, k));
@@ -40,21 +35,21 @@ namespace SPH
 			{
 				phi[i][j][k] = far_field_level_set;
 				near_interface_id[i][j][k] = far_field_level_set < 0.0 ? -2 : 2;
-				phi_gradient[i][j][k] = Vecd(1.0);
+				phi_gradient[i][j][k] = Vecd::Ones();
 				kernel_weight[i][j][k] = far_field_level_set < 0.0 ? 0 : 1.0;
-				kernel_gradient[i][j][k] = Vec3d(0);
+				kernel_gradient[i][j][k] = Vec3d::Zero();
 			});
 	}
 	//=================================================================================================//
 	void LevelSet::finishDataPackages()
 	{
-		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
+		mesh_parallel_for(MeshRange(Vecu::Zero(), number_of_cells_),
 						  [&](size_t i, size_t j, size_t k)
 						  {
 							  tagACellIsInnerPackage(Vecu(i, j, k));
 						  });
 
-		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
+		mesh_parallel_for(MeshRange(Vecu::Zero(), number_of_cells_),
 						  [&](size_t i, size_t j, size_t k)
 						  {
 							  initializePackageAddressesInACell(Vecu(i, j, k));
@@ -410,7 +405,7 @@ namespace SPH
 		Real cutoff_radius = kernel_.CutOffRadius(global_h_ratio_);
 		Real threshold = cutoff_radius + data_spacing_;
 
-		Real integral(0.0);
+		Real integral(0);
 		if (fabs(phi) < threshold)
 		{
 			Vecu global_index_ = global_mesh_.CellIndexFromPosition(position);
@@ -438,7 +433,7 @@ namespace SPH
 		Real cutoff_radius = kernel_.CutOffRadius(global_h_ratio_);
 		Real threshold = cutoff_radius + data_spacing_;
 
-		Vecd integral(0.0);
+		Vecd integral = Vecd::Zero();
 		if (fabs(phi) < threshold)
 		{
 			Vecu global_index_ = global_mesh_.CellIndexFromPosition(position);
@@ -465,7 +460,7 @@ namespace SPH
 									 Shape &shape, SPHAdaptation &sph_adaptation)
 		: RefinedMesh(tentative_bounds, coarse_level_set, 4, shape, sph_adaptation)
 	{
-		mesh_parallel_for(MeshRange(Vecu(0), number_of_cells_),
+		mesh_parallel_for(MeshRange(Vecu::Zero(), number_of_cells_),
 						  [&](size_t i, size_t j, size_t k)
 						  {
 							  initializeDataInACellFromCoarse(Vecu(i, j, k));

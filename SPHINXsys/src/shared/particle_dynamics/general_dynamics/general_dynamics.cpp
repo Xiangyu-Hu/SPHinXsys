@@ -1,8 +1,3 @@
-/**
- * @file 	general_dynamics.cpp
- * @author	Luhui Han, Chi Zhang and Xiangyu Hu
- */
-
 #include "general_dynamics.h"
 
 namespace SPH
@@ -68,7 +63,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	PositionLowerBound::PositionLowerBound(SPHBody &sph_body)
-		: LocalDynamicsReduce<Vecd, ReduceLowerBound>(sph_body, Vecd(MaxRealNumber)),
+		: LocalDynamicsReduce<Vecd, ReduceLowerBound>(sph_body, MaxRealNumber * Vecd::Ones()),
 		  GeneralDataDelegateSimple(sph_body),
 		  pos_(particles_->pos_)
 	{
@@ -81,7 +76,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	PositionUpperBound::PositionUpperBound(SPHBody &sph_body)
-		: LocalDynamicsReduce<Vecd, ReduceUpperBound>(sph_body, Vecd(MinRealNumber)),
+		: LocalDynamicsReduce<Vecd, ReduceUpperBound>(sph_body, MinRealNumber * Vecd::Ones()),
 		  GeneralDataDelegateSimple(sph_body),
 		  pos_(particles_->pos_)
 	{
@@ -104,7 +99,7 @@ namespace SPH
 	//=================================================================================================//
 	Real TotalMechanicalEnergy::reduce(size_t index_i, Real dt)
 	{
-		return 0.5 * mass_[index_i] * vel_[index_i].normSqr() + mass_[index_i] * gravity_->getPotential(pos_[index_i]);
+		return 0.5 * mass_[index_i] * vel_[index_i].squaredNorm() + mass_[index_i] * gravity_->getPotential(pos_[index_i]);
 	}
 	//=================================================================================================//
 }

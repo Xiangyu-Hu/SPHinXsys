@@ -1,31 +1,31 @@
 /* -------------------------------------------------------------------------*
  *								SPHinXsys									*
- * --------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
  * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic *
+ * physical accurate simulation and aims to model coupled industrial dynamic*
  * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
  * (smoothed particle hydrodynamics), a meshless computational method using	*
  * particle discretization.													*
  *																			*
  * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
- * and HU1527/12-1.															*
- *                                                                           *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
  * the authors' affiliations.												*
- *                                                                           *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
- * not use this file except in compliance with the License. You may obtain a *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
- *                                                                           *
- * --------------------------------------------------------------------------*/
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
- * @file eulerian_weakly_compressible_fluid_dynamics_complex.h
- * @brief Here, we define the algorithm classes for complex weakly compressible fluid dynamics,
- * which is involving with either solid walls (with suffix WithWall)
- * or/and other bodies treated as wall for the fluid (with suffix Complex).
- * @author	Zhentong Wang,Chi Zhang and Xiangyu Hu
+ * @file 	eulerian_weakly_compressible_fluid_dynamics_complex.h
+ * @brief 	Here, we define the algorithm classes for complex weakly compressible fluid dynamics,
+ * 			which is involving with either solid walls (with suffix WithWall)
+ * 			or/and other bodies treated as wall for the fluid (with suffix Complex).
+ * @author	Zhentong Wang, Chi ZHang and Xiangyu Hu
  */
 
 #pragma once
@@ -110,9 +110,6 @@ namespace SPH
 			void interaction(size_t index_i, Real dt = 0.0);
 		};
 
-		using Integration1stHalfWithWall = BaseIntegration1stHalfWithWall<Integration1stHalf>;
-		using Integration1stHalfAcousticRiemannWithWall = BaseIntegration1stHalfWithWall<Integration1stHalfAcousticRiemann>;
-		using Integration1stHalfHLLCRiemannWithWall = BaseIntegration1stHalfWithWall<Integration1stHalfHLLCRiemann>;
 		using Integration1stHalfHLLCRiemannWithLimiterWithWall = BaseIntegration1stHalfWithWall<Integration1stHalfHLLCWithLimiterRiemann>;
 
 		/**
@@ -134,8 +131,6 @@ namespace SPH
 			virtual ~BaseIntegration2ndHalfWithWall(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 		};
-		using Integration2ndHalfAcousticRiemannWithWall = BaseIntegration2ndHalfWithWall<Integration2ndHalfAcousticRiemann>;
-		using Integration2ndHalfHLLCRiemannWithWall = BaseIntegration2ndHalfWithWall<Integration2ndHalfHLLCRiemann>;
 		using Integration2ndHalfHLLCRiemannWithLimiterWithWall = BaseIntegration2ndHalfWithWall<Integration2ndHalfHLLCWithLimiterRiemann>;
 	}
 }

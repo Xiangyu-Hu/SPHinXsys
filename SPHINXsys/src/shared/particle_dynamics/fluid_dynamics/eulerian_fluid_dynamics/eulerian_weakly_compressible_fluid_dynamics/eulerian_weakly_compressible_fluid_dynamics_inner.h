@@ -1,31 +1,31 @@
 /* -------------------------------------------------------------------------*
  *								SPHinXsys									*
- * --------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
  * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic *
+ * physical accurate simulation and aims to model coupled industrial dynamic*
  * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
  * (smoothed particle hydrodynamics), a meshless computational method using	*
  * particle discretization.													*
  *																			*
  * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
- * and HU1527/12-1.															*
- *                                                                           *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
  * the authors' affiliations.												*
- *                                                                           *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
- * not use this file except in compliance with the License. You may obtain a *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
- *                                                                           *
- * --------------------------------------------------------------------------*/
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	eulerian_weakly_compressible_fluid_dynamics_inner.h
  * @brief 	Here, we define the algorithm classes for weakly compressible fluid dynamics within the body.
- * @details 	We consider here weakly compressible fluids.
+ * @details We consider here weakly compressible fluids.
  *			TODO: It seems that the eulerian and Lagrangian formulation can be merged together
- * @author	Zhentong Wang,Chi Zhang and Xiangyu Hu
+ * @author	Zhentong Wang, Chi ZHang and Xiangyu Hu
  */
 
 #pragma once
@@ -58,6 +58,22 @@ namespace SPH
 			virtual ~EulerianFlowTimeStepInitialization(){};
 
 			void update(size_t index_i, Real dt = 0.0);
+		};
+
+		/**
+		 * @class CompressibleFluidInitialCondition
+		 * @brief  Set initial condition for a fluid body.
+		 * This is a abstract class to be override for case specific initial conditions
+		 */
+		class WeaklyCompressibleFluidInitialCondition : public LocalDynamics, public EulerianWeaklyCompressibleFluidDataSimple
+		{
+		public:
+			explicit WeaklyCompressibleFluidInitialCondition(SPHBody &sph_body);
+			virtual ~WeaklyCompressibleFluidInitialCondition(){};
+
+		protected:
+			StdLargeVec<Vecd> &pos_, &vel_, &mom_;
+			StdLargeVec<Real> &rho_, &p_;
 		};
 
 		/**
@@ -139,6 +155,8 @@ namespace SPH
 		using Integration1stHalfHLLCRiemann = BaseIntegration1stHalf<HLLCRiemannSolverInWeaklyCompressibleFluid>;
 		using Integration1stHalfHLLCWithLimiterRiemann = BaseIntegration1stHalf<HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid>;
 
+		using Integration1stHalfHLLCWithLimiterRiemann = BaseIntegration1stHalf<HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid>;
+
 		/**
 		 * @class Integration2ndHalf
 		 * @brief  Template density relaxation scheme with different Riemann solver
@@ -153,10 +171,6 @@ namespace SPH
 			void interaction(size_t index_i, Real dt = 0.0);
 			void update(size_t index_i, Real dt = 0.0);
 		};
-		using Integration2ndHalf = BaseIntegration2ndHalf<NoRiemannSolver>;
-		/** define the mostly used density relaxation scheme using Riemann solver */
-		using Integration2ndHalfAcousticRiemann = BaseIntegration2ndHalf<AcousticRiemannSolver>;
-		using Integration2ndHalfHLLCRiemann = BaseIntegration2ndHalf<HLLCRiemannSolverInWeaklyCompressibleFluid>;
 		using Integration2ndHalfHLLCWithLimiterRiemann = BaseIntegration2ndHalf<HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid>;
 
 		/**

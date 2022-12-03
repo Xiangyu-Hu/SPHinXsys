@@ -1,8 +1,3 @@
-/**
- * @file 	base_body_supplementary.cpp
- * @author	Luhui Han, Chi Zhang and Xiangyu Hu
- */
-
 #include "solid_body.h"
 #include "solid_particles.h"
 
@@ -12,7 +7,7 @@ namespace SPH
 	void SolidBodyPartForSimbody::setMassProperties()
 	{
 		Real body_part_volume(0);
-		Vecd mass_center = Vecd(0);
+		Vecd mass_center = Vecd::Zero();
 		for (size_t i = 0; i < body_part_particles_.size(); ++i)
 		{
 			size_t index_i = body_part_particles_[i];
@@ -22,7 +17,7 @@ namespace SPH
 		}
 
 		mass_center /= body_part_volume;
-		initial_mass_center_ = Vec3d(mass_center[0], mass_center[1], 0.0);
+		initial_mass_center_ = mass_center;
 
 		//computing unit inertia
 		Real Ix = 0.0;
@@ -38,14 +33,14 @@ namespace SPH
 			Ix += particle_volume * r_x * r_x;
 			Real r_y = (particle_position[0] - mass_center[0]);
 			Iy += particle_volume * r_y * r_y;
-			Iz += particle_volume * (particle_position - mass_center).normSqr();
+			Iz += particle_volume * (particle_position - mass_center).squaredNorm();
 		}
 		Ix /= body_part_volume;
 		Iy /= body_part_volume;
 		Iz /= body_part_volume;
 
 		body_part_mass_properties_ = mass_properties_ptr_keeper_.createPtr<SimTK::MassProperties>(
-			body_part_volume * solid_body_density_, Vec3d(0), SimTK::UnitInertia(Ix, Iy, Iz));
+			body_part_volume * solid_body_density_, SimTK::Vec3(0), SimTK::UnitInertia(Ix, Iy, Iz));
 	}
 	//=================================================================================================//
 }

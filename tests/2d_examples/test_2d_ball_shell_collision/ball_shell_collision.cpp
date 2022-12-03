@@ -168,7 +168,7 @@ int main(int ac, char *av[])
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
 	/** Define external force.*/
-	SimpleDynamics<TimeStepInitialization> ball_initialize_timestep(ball, makeShared<Gravity>(Vec2d(0.0, -gravity_g)));
+	SimpleDynamics<TimeStepInitialization> ball_initialize_timestep(ball, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> ball_corrected_configuration(ball_inner);
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> ball_get_time_step_size(ball);
 	/** stress relaxation for the balls. */
@@ -177,8 +177,8 @@ int main(int ac, char *av[])
 	/** Algorithms for solid-solid contact. */
 	InteractionDynamics<solid_dynamics::ShellContactDensity, BodyPartByParticle> ball_update_contact_density(ball_contact);
 	InteractionDynamics<solid_dynamics::ContactForceFromWall, BodyPartByParticle> ball_compute_solid_contact_forces(ball_contact);
-	DampingWithRandomChoice<InteractionSplit<solid_dynamics::PairwiseFrictionFromWall>> 
-		ball_friction(0.1, ball_contact, physical_viscosity);
+	// DampingWithRandomChoice<InteractionSplit<solid_dynamics::PairwiseFrictionFromWall>> 
+	// 	ball_friction(0.1, ball_contact, physical_viscosity);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
@@ -227,7 +227,7 @@ int main(int ac, char *av[])
 				ball_update_contact_density.parallel_exec();
 				ball_compute_solid_contact_forces.parallel_exec();
 				ball_stress_relaxation_first_half.parallel_exec(dt);
-				ball_friction.parallel_exec(dt);
+				//ball_friction.parallel_exec(dt);
 				ball_stress_relaxation_second_half.parallel_exec(dt);
 
 				ball.updateCellLinkedList();

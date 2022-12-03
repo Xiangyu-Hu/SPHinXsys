@@ -1,31 +1,32 @@
-/* -----------------------------------------------------------------------------*
- *                               SPHinXsys                                      *
- * -----------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
- * physical accurate simulation and aims to model coupled industrial dynamic    *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
- * (smoothed particle hydrodynamics), a meshless computational method using     *
- * particle discretization.                                                     *
- *                                                                              *
- * SPHinXsys is partially funded by German Research Foundation                  *
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
- * HU1527/12-1 and HU1527/12-4.                                                 *
- *                                                                              *
- * Portions copyright (c) 2017-2022 Technical University of Munich and          *
- * the authors' affiliations.                                                   *
- *                                                                              *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
- * not use this file except in compliance with the License. You may obtain a    *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
- *                                                                              *
- * -----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
 * @file 	triangle_mesh_shape.h
 * @brief 	Here, we define the 3D geometric algorithms. they are based on the polymesh. 
-* @details 	The idea is to define complex geometry by passing stl, obj or other polymesh files.
-* @author	Chi Zhang and Xiangyu Hu
-*/
+* @details 	The idea is to define complex geometry by passing stl, obj or other 
+*			polymesh files. TODO: the translation needs to be generalized into transform.
+* @author	Chi ZHang and Xiangyu Hu
+ */
 
 #ifndef TRIANGULAR_MESH_SHAPE_H
 #define TRIANGULAR_MESH_SHAPE_H
@@ -44,12 +45,16 @@
 #include <boost/filesystem.hpp>
 namespace fs = boost::filesystem;
 #else
-#include <experimental/filesystem>
-namespace fs = std::experimental::filesystem;
+#include <filesystem>
+namespace fs = std::filesystem;
 #endif
 
 namespace SPH
 {
+	/**
+	 * @class TriangleMeshShape
+	 * @brief Drived class for triangle shape processing. 
+	 */
 	class TriangleMeshShape : public Shape
 	{
 	private:
@@ -78,6 +83,10 @@ namespace SPH
 		virtual BoundingBox findBounds() override;
 	};
 
+	/**
+	 * @class TriangleMeshShapeSTL
+	 * @brief Input triangle mesh with stl file. 
+	 */
 	class TriangleMeshShapeSTL : public TriangleMeshShape
 	{
 	public:
@@ -87,22 +96,25 @@ namespace SPH
 		explicit TriangleMeshShapeSTL(const std::string &file_path_name, Mat3d rotation, Vec3d translation,
 										Real scale_factor, const std::string &shape_name = "TriangleMeshShapeSTL");
 		#ifdef __EMSCRIPTEN__
-		//constructor for load stl file from buffer
 		TriangleMeshShapeSTL(const uint8_t* buffer, Vec3d translation, Real scale_factor, const std::string &shape_name = "TriangleMeshShapeSTL");
 		#endif
 		virtual ~TriangleMeshShapeSTL(){};
 	};
 
+	/**
+	 * @class TriangleMeshShapeBrick
+	 * @brief Generat a brick trianle meshe using SIMBODy default shape.
+	 */
 	class TriangleMeshShapeBrick : public TriangleMeshShape
 	{
 	public:
 		class ShapeParameters 
 		{
 		public:
-			ShapeParameters() : halfsize_(0), resolution_(0), translation_(0) {};
+			ShapeParameters() : halfsize_(Vec3d::Zero()), resolution_(0), translation_(Vec3d::Zero()) {};
 			Vec3d halfsize_;
-			int resolution_;
 			Vec3d translation_;
+			int resolution_;
 		};
 		explicit TriangleMeshShapeBrick(Vec3d halfsize, int resolution, Vec3d translation,
 										const std::string &shape_name = "TriangleMeshShapeBrick");
@@ -111,6 +123,10 @@ namespace SPH
 		virtual ~TriangleMeshShapeBrick(){};
 	};
 
+	/**
+	 * @class TriangleMeshShapeSphere
+	 * @brief Generat a sphere trianle meshe using SIMBODy default shape.
+	 */
 	class TriangleMeshShapeSphere : public TriangleMeshShape
 	{
 	public:
@@ -119,6 +135,10 @@ namespace SPH
 		virtual ~TriangleMeshShapeSphere(){};
 	};
 
+	/**
+	 * @class TriangleMeshShapeCylinder
+	 * @brief Generat a cylinder trianle meshe using SIMBODy default shape.
+	 */
 	class TriangleMeshShapeCylinder : public TriangleMeshShape
 	{
 	public:

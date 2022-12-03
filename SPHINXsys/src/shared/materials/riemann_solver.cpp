@@ -1,12 +1,5 @@
-/**
- * @file 	riemann_solver.cpp
- * @author	Xiangyu Hu
- */
-
 #include "riemann_solver.h"
-
 #include "base_material.h"
-
 #include "compressible_fluid.h"
 
 namespace SPH
@@ -50,13 +43,13 @@ namespace SPH
 	FluidState HLLCRiemannSolverInWeaklyCompressibleFluid::
 		getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
 	{
-		Real ul = dot(-e_ij, state_i.vel_);
-		Real ur = dot(-e_ij, state_j.vel_);
+		Real ul = -e_ij.dot(state_i.vel_);
+		Real ur = -e_ij.dot(state_j.vel_);
 		Real s_l = ul - fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_);
 		Real s_r = ur + fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_);
 		Real s_star = (state_j.rho_ * ur * (s_r - ur) + state_i.rho_ * ul * (ul - s_l) + state_i.p_ - state_j.p_) / (state_j.rho_ * (s_r - ur) + state_i.rho_ * (ul - s_l) + TinyReal);
 		Real p_star = 0.0;
-		Vecd v_star(0);
+		Vecd v_star = Vecd::Zero();
 		Real rho_star = 0.0;
 		if (0.0 < s_l)
 		{
@@ -86,16 +79,16 @@ namespace SPH
 		return interface_state;
 	}
 	//=================================================================================================//
-	FluidState HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid::
+	FluidStarState HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid::
 		getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
 	{
-		Real ul = dot(-e_ij, state_i.vel_);
-		Real ur = dot(-e_ij, state_j.vel_);
+		Real ul = -e_ij.dot(state_i.vel_);
+		Real ur = -e_ij.dot(state_j.vel_);
 		Real s_l = ul - fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_);
 		Real s_r = ur + fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_);
 		Real s_star = (state_j.rho_ * ur * (s_r - ur) + state_i.rho_ * ul * (ul - s_l) + state_i.p_ - state_j.p_) / (state_j.rho_ * (s_r - ur) + state_i.rho_ * (ul - s_l) + TinyReal);
 		Real p_star = 0.0;
-		Vecd v_star(0);
+		Vecd v_star = Vecd::Zero();
 		Real rho_star = 0.0;
 		if (0.0 < s_l)
 		{
@@ -126,23 +119,21 @@ namespace SPH
 			v_star = state_j.vel_;
 		}
 
-		FluidState interface_state(rho_star, v_star, p_star);
-		interface_state.vel_ = v_star;
-		interface_state.p_ = p_star;
+		FluidStarState interface_state(v_star, p_star);
 
 		return interface_state;
 	}
 	//=================================================================================================//
-	CompressibleFluidState HLLCRiemannSolver::
+	CompressibleFluidStarState HLLCRiemannSolver::
 		getInterfaceState(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &e_ij)
 	{
-		Real ul = dot(-e_ij, state_i.vel_);
-		Real ur = dot(-e_ij, state_j.vel_);
+		Real ul = -e_ij.dot(state_i.vel_);
+		Real ur = -e_ij.dot(state_j.vel_);
 		Real s_l = ul - compressible_fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_);
 		Real s_r = ur + compressible_fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_);
 		Real s_star = (state_j.rho_ * ur * (s_r - ur) + state_i.rho_ * ul * (ul - s_l) + state_i.p_ - state_j.p_) / (state_j.rho_ * (s_r - ur) + state_i.rho_ * (ul - s_l));
 		Real p_star = 0.0;
-		Vecd v_star(0);
+		Vecd v_star = Vecd::Zero();
 		Real rho_star = 0.0;
 		Real energy_star = 0.0;
 		if (0.0 < s_l)
@@ -174,25 +165,19 @@ namespace SPH
 			energy_star = state_j.E_;
 		}
 
-		CompressibleFluidState interface_state(rho_star, v_star, p_star, energy_star);
-		interface_state.vel_ = v_star;
-		interface_state.p_ = p_star;
-		interface_state.rho_ = rho_star;
-		interface_state.E_ = energy_star;
-
-		return interface_state;
+		return CompressibleFluidStarState(rho_star, v_star, p_star, energy_star);
 	}
 	//=================================================================================================//
-	CompressibleFluidState HLLCWithLimiterRiemannSolver::
+	CompressibleFluidStarState HLLCWithLimiterRiemannSolver::
 		getInterfaceState(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &e_ij)
 	{
-		Real ul = dot(-e_ij, state_i.vel_);
-		Real ur = dot(-e_ij, state_j.vel_);
+		Real ul = -e_ij.dot(state_i.vel_);
+		Real ur = -e_ij.dot(state_j.vel_);
 		Real s_l = ul - compressible_fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_);
 		Real s_r = ur + compressible_fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_);
 		Real s_star = (state_j.rho_ * ur * (s_r - ur) + state_i.rho_ * ul * (ul - s_l) + state_i.p_ - state_j.p_) / (state_j.rho_ * (s_r - ur) + state_i.rho_ * (ul - s_l));
 		Real p_star = 0.0;
-		Vecd v_star(0);
+		Vecd v_star = Vecd::Zero();
 		Real rho_star = 0.0;
 		Real energy_star = 0.0;
 		if (0.0 < s_l)
@@ -232,13 +217,7 @@ namespace SPH
 			energy_star = state_j.E_;
 		}
 
-		CompressibleFluidState interface_state(rho_star, v_star, p_star, energy_star);
-		interface_state.vel_ = v_star;
-		interface_state.p_ = p_star;
-		interface_state.rho_ = rho_star;
-		interface_state.E_ = energy_star;
-
-		return interface_state;
+		return CompressibleFluidStarState(rho_star, v_star, p_star, energy_star);
 	}
 	//=================================================================================================//
 }

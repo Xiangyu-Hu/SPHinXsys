@@ -90,6 +90,17 @@ macro(get_debug_names PREFIX)
 endmacro()
 
 #===============================================
+# See if we have env vars to help us find tbb
+#===============================================
+macro(getenv_path VAR)
+   set(ENV_${VAR} $ENV{${VAR}})
+   # replace won't work if var is blank
+   if (ENV_${VAR})
+     string( REGEX REPLACE "\\\\" "/" ENV_${VAR} ${ENV_${VAR}} )
+   endif ()
+endmacro()
+
+#===============================================
 # Couple a set of release AND debug libraries
 #===============================================
 macro(make_library_set PREFIX)
@@ -108,7 +119,7 @@ endmacro()
 #
 
 # Get path, convert backslashes as ${ENV_${var}}
-SET(ENV_TBB_HOME, ${TBB_HOME})
+getenv_path(TBB_HOME)
 
 # initialize search paths
 set(TBB_PREFIX_PATH ${TBB_HOME} ${ENV_TBB_HOME})
@@ -257,16 +268,14 @@ ELSE()
     endif()  
 ENDIF()
 
-set(TBB_LIBRARYS ${TBB_LIBS})
-
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(TBB DEFAULT_MSG 
-  TBB_INCLUDE_DIR TBB_LIB_DIR TBB_LIBRARYS)
+  TBB_INCLUDE_DIR TBB_LIB_DIR TBB_LIBS)
 
 #=============================================================================
 
 if(TBB_FOUND)
-  set(TBB_LIBRARYS ${TBB_LIBRARYS} )
+  set(TBB_LIBRARIES ${TBB_LIBS} )
   set(TBB_INCLUDE_DIR ${TBB_INCLUDE_DIR} )
   set(TBB_LIB_DIR ${TBB_LIB_DIR} )
   set(TBB_DEFINITIONS)
@@ -277,5 +286,5 @@ unset(TBB_LIB_DIR_TEMP CACHE)
 mark_as_advanced(
     TBB_INCLUDE_DIR
     TBB_LIB_DIR
-    TBB_LIBRARYS
+    TBB_LIBRARIES
 )
