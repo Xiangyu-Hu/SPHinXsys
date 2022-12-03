@@ -158,7 +158,6 @@ namespace SPH
 	DataType GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::
 		CornerAverage(PackageDataAddress<DataType> &pkg_data_addrs, Veci addrs_index, Veci corner_direction)
 	{
-		//DataType average(0);
 		DataType average = ZeroData<DataType>::value;
 		for (int i = 0; i != 2; ++i)
 			for (int j = 0; j != 2; ++j)

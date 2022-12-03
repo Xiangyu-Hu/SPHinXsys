@@ -35,7 +35,7 @@ class Coil : public ComplexShape
 public:
 	explicit Coil(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		add<TriangleMeshShapeSTL>(full_path_to_file, Vecd(0), 1.0);
+		add<TriangleMeshShapeSTL>(full_path_to_file, Vecd::Zero(), 1.0);
 	}
 };
 class StationaryPlate : public ComplexShape

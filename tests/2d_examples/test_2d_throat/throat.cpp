@@ -140,7 +140,7 @@ int main(int ac, char *av[])
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
 	ObserverBody fluid_observer(system, "FluidObserver");
-	StdVec<Vecd> observation_location = {Vecd(0)};
+	StdVec<Vecd> observation_location = {Vecd::Zero()};
 	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	//----------------------------------------------------------------------
 	//	Define body relation map.

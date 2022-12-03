@@ -76,7 +76,7 @@ struct FreeStreamVelocity
 
 	Vecd operator()(Vecd &position, Vecd &velocity)
 	{
-		Vecd target_velocity(0);
+		Vecd target_velocity = Vecd::Zero();
 		Real run_time = GlobalStaticVariables::physical_time_;
 		target_velocity[0] = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
 		return target_velocity;

@@ -54,7 +54,7 @@ namespace SPH
 			StdLargeVec<Vecd> &pos_, &dmom_dt_prior_;
 
 		public:
-			EulerianFlowTimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0)));
+			EulerianFlowTimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd::Zero()));
 			virtual ~EulerianFlowTimeStepInitialization(){};
 
 			void update(size_t index_i, Real dt = 0.0);
