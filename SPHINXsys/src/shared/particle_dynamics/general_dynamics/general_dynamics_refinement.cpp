@@ -134,8 +134,8 @@ namespace SPH
         Vecd grad_kernel = Vecd::Zero();
         if (distance <= cutoff_radius)
         {
-            Real dweight = kernel_ptr_->dW(h_ratio_min, distance, displacement) * Vol;
-            grad_kernel = dweight * e_ij;
+            Real d_weight = kernel_ptr_->dW(h_ratio_min, distance, displacement) * Vol;
+            grad_kernel = d_weight * e_ij;
         }
         return grad_kernel;
     }

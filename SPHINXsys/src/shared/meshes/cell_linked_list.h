@@ -47,7 +47,7 @@ namespace SPH
 
 	/**
 	 * @class BaseCellLinkedList
-	 * @brief The Abstract class for mesh cell linked list direved from BaseMeshFied. 
+	 * @brief The Abstract class for mesh cell linked list derived from BaseMeshField. 
 	 */
 	class BaseCellLinkedList : public BaseMeshField
 	{

@@ -70,7 +70,7 @@ namespace SPH
 		Vecd MeshLowerBound() { return mesh_lower_bound_; };
 		/** Return the grid spacing. */
 		Real GridSpacing() { return grid_spacing_; };
-		/** Return the number of meshs in each direction, i.e., x-, y- and z-axis. */
+		/** Return the number of mesh in each direction, i.e., x-, y- and z-axis. */
 		Vecu NumberOfGridPoints() { return number_of_grid_points_; };
 		/** Given the cell number, return the mesh number. */
 		Vecu NumberOfGridPointsFromNumberOfCells(const Vecu &number_of_cells) { return number_of_cells + Vecu::Ones(); };
@@ -118,7 +118,7 @@ namespace SPH
 		Mesh(Vecd mesh_lower_bound, Vecu number_of_cells, Real grid_spacing);
 		virtual ~Mesh(){};
 
-		/** Return number of cell in each directoin, i.e., x-, y- and z-axis.*/
+		/** Return number of cell in each direction, i.e., x-, y- and z-axis.*/
 		Vecu NumberOfCells() { return number_of_cells_; };
 		/** Return the buffer size. */
 		size_t MeshBufferSize() { return buffer_width_; };

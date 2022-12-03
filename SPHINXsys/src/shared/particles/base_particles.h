@@ -206,8 +206,8 @@ namespace SPH
 		std::string body_name_;							/**< Name of the body. */
 		XmlEngine restart_xml_engine_;					/**< Restart XML engine. */
 		XmlEngine reload_xml_engine_;					/**< Reload XML engine. */
-		ParticleVariableList variables_to_restart_;		/**< Particel variables for restart. */
-		ParticleVariableList variables_to_reload_;		/**< Particel variables for reload. */
+		ParticleVariableList variables_to_restart_;		/**< Particle variables for restart. */
+		ParticleVariableList variables_to_reload_;		/**< Particle variables for reload. */
 		void addAParticleEntry();						/**< Add a particle entry to the particle array. */
 		/** Write header to PLT file. */
 		virtual void writePltFileHeader(std::ofstream &output_file);
@@ -231,7 +231,7 @@ namespace SPH
 		{
 			void operator()(ParticleData &particle_data, size_t this_index, size_t another_index) const;
 		};
-		/** Data assemble operatoins. */
+		/** Data assemble operations. */
 		DataAssembleOperation<resizeParticleData> resize_particle_data_;
 		DataAssembleOperation<addAParticleDataValue> add_a_particle_value_;
 		DataAssembleOperation<copyAParticleDataValue> copy_a_particle_value_;

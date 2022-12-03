@@ -22,7 +22,7 @@
  * ------------------------------------------------------------------------*/
 /**
  * @file    all_particle_dynamics.h
- * @brief   Head file for all physicsl dynamics. 
+ * @brief   Head file for all physics dynamics. 
  *          This is the header file that user code should include to pick up all 
             particle dynamics capabilities.
  * @author	Chi ZHang and Xiangyu Hu

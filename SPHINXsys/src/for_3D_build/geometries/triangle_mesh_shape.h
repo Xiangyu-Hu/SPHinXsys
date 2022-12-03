@@ -53,7 +53,7 @@ namespace SPH
 {
 	/**
 	 * @class TriangleMeshShape
-	 * @brief Drived class for triangle shape processing. 
+	 * @brief Derived class for triangle shape processing. 
 	 */
 	class TriangleMeshShape : public Shape
 	{
@@ -103,7 +103,7 @@ namespace SPH
 
 	/**
 	 * @class TriangleMeshShapeBrick
-	 * @brief Generat a brick trianle meshe using SIMBODy default shape.
+	 * @brief Generate a brick triangle mesh using SIMBODy default shape.
 	 */
 	class TriangleMeshShapeBrick : public TriangleMeshShape
 	{
@@ -125,7 +125,7 @@ namespace SPH
 
 	/**
 	 * @class TriangleMeshShapeSphere
-	 * @brief Generat a sphere trianle meshe using SIMBODy default shape.
+	 * @brief Generate a sphere triangle mesh using SIMBODy default shape.
 	 */
 	class TriangleMeshShapeSphere : public TriangleMeshShape
 	{
@@ -137,7 +137,7 @@ namespace SPH
 
 	/**
 	 * @class TriangleMeshShapeCylinder
-	 * @brief Generat a cylinder trianle meshe using SIMBODy default shape.
+	 * @brief Generate a cylinder triangle mesh using SIMBODy default shape.
 	 */
 	class TriangleMeshShapeCylinder : public TriangleMeshShape
 	{
