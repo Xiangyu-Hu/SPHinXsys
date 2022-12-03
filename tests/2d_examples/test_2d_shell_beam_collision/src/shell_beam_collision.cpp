@@ -18,7 +18,6 @@ Real level_set_refinement_ratio = resolution_ref / (0.1 * thickness);
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 Vec2d circle_center(2.0, 2.0);
 Real circle_radius = 0.5;
-Real gravity_g = 1.0;
 //----------------------------------------------------------------------
 //	Global parameters on material properties
 //----------------------------------------------------------------------
@@ -84,29 +83,27 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
 	/** Tag for running particle relaxation for the initially body-fitted distribution */
-	sph_system.run_particle_relaxation_ = true;
+	sph_system.run_particle_relaxation_ = false;
 	/** Tag for starting with relaxed body-fitted particles distribution */
-	sph_system.reload_particles_ = false;
+	sph_system.reload_particles_ = true;
 	/** Tag for computation from restart files. 0: start with initial condition */
 	sph_system.restart_step_ = 0;
-	/** Handle command line arguments. */
 	sph_system.handleCommandlineOptions(ac, av);
-	/** I/O environment. */
-	InOutput in_output(sph_system);
+	IOEnvironment io_environment(sph_system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	SolidBody shell(sph_system, makeShared<Shell>("Shell"));
 	shell.defineAdaptation<SPHAdaptation>(1.15, 1.0);
 	// here dummy linear elastic solid is use because no solid dynamics in particle relaxation
-	shell.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(1.0, 1.0, 0.0);
+	shell.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
 	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
 	{
-		shell.generateParticles<ParticleGeneratorReload>(in_output, shell.getBodyName());
+		shell.generateParticles<ParticleGeneratorReload>(io_environment, shell.getName());
 	}
 	else
 	{
-		shell.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(shell);
+		shell.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(io_environment);
 		shell.generateParticles<ThickSurfaceParticleGeneratorLattice>(thickness);
 	}
 
@@ -117,16 +114,16 @@ int main(int ac, char *av[])
 	}
 
 	SolidBody beam(sph_system, makeShared<Beam>("Beam"));
-	beam.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	beam.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	beam.generateParticles<ParticleGeneratorLattice>();
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner beam_inner(beam);
-	SolidBodyRelationContact shell_contact(shell, {&beam});
-	SolidBodyRelationContact beam_contact(beam, {&shell});
+	InnerRelation beam_inner(beam);
+	SurfaceContactRelation shell_contact(shell, {&beam});
+	SurfaceContactRelation beam_contact(beam, {&shell});
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------
@@ -135,11 +132,11 @@ int main(int ac, char *av[])
 		//----------------------------------------------------------------------
 		//	Define body relation map used for particle relaxation.
 		//----------------------------------------------------------------------
-		BodyRelationInner shell_inner(shell);
+		InnerRelation shell_inner(shell);
 		//----------------------------------------------------------------------
 		//	Define the methods for particle relaxation for wall boundary.
 		//----------------------------------------------------------------------
-		RandomizeParticlePosition shell_random_particles(shell);
+		SimpleDynamics<RandomizeParticlePosition> shell_random_particles(shell);
 		relax_dynamics::ShellRelaxationStepInner
 			relaxation_step_shell_inner(shell_inner, thickness, level_set_refinement_ratio);
 		relax_dynamics::ShellNormalDirectionPrediction shell_normal_prediction(shell_inner, thickness, cos(Pi / 3.75));
@@ -147,9 +144,9 @@ int main(int ac, char *av[])
 		//----------------------------------------------------------------------
 		//	Output for particle relaxation.
 		//----------------------------------------------------------------------
-		BodyStatesRecordingToVtp write_relaxed_particles(in_output, sph_system.real_bodies_);
-		MeshRecordingToPlt write_mesh_cell_linked_list(in_output, shell, shell.cell_linked_list_);
-		ReloadParticleIO write_particle_reload_files(in_output, {&shell});
+		BodyStatesRecordingToVtp write_relaxed_particles(io_environment, sph_system.real_bodies_);
+		MeshRecordingToPlt write_mesh_cell_linked_list(io_environment, shell.getCellLinkedList());
+		ReloadParticleIO write_particle_reload_files(io_environment, {&shell});
 		//----------------------------------------------------------------------
 		//	Particle relaxation starts here.
 		//----------------------------------------------------------------------
@@ -186,26 +183,25 @@ int main(int ac, char *av[])
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
 	/** Define external force.*/
-	Gravity gravity(Vecd(0.0, -gravity_g));
-	TimeStepInitialization beam_initialize_timestep(beam);
-	solid_dynamics::CorrectConfiguration beam_corrected_configuration(beam_inner);
-	solid_dynamics::AcousticTimeStepSize shell_get_time_step_size(beam);
+	SimpleDynamics<TimeStepInitialization> beam_initialize_timestep(beam);
+	InteractionDynamics<solid_dynamics::CorrectConfiguration> beam_corrected_configuration(beam_inner);
+	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> shell_get_time_step_size(beam);
 	/** stress relaxation for the walls. */
-	solid_dynamics::StressRelaxationFirstHalf beam_stress_relaxation_first_half(beam_inner);
-	solid_dynamics::StressRelaxationSecondHalf beam_stress_relaxation_second_half(beam_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> beam_stress_relaxation_first_half(beam_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> beam_stress_relaxation_second_half(beam_inner);
 	/** Algorithms for shell-solid contact. */
-	solid_dynamics::ContactDensitySummation beam_shell_update_contact_density(beam_contact);
-	solid_dynamics::ContactForceFromWall beam_compute_solid_contact_forces(beam_contact);
-	solid_dynamics::ContactForceToWall shell_compute_solid_contact_forces(shell_contact);
+	InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle> beam_shell_update_contact_density(beam_contact);
+	InteractionDynamics<solid_dynamics::ContactForceFromWall, BodyPartByParticle> beam_compute_solid_contact_forces(beam_contact);
+	InteractionDynamics<solid_dynamics::ContactForceToWall, BodyPartByParticle> shell_compute_solid_contact_forces(shell_contact);
 	BodyRegionByParticle holder(beam, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
-	solid_dynamics::ConstrainSolidBodyRegion constrain_holder(beam, holder);
+	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_holder(holder);
 	/** Damping with the solid body*/
-	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
+	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
 		beam_damping(0.5, beam_inner, "Velocity", physical_viscosity);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp body_states_recording(in_output, sph_system.real_bodies_);
+	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
 	//----------------------------------------------------------------------
 	/**
 	 * The multi body system from simbody.
@@ -231,10 +227,10 @@ int main(int ac, char *av[])
 	integ.setAllowInterpolation(false);
 	integ.initialize(state);
 	/** Coupling between SimBody and SPH.*/
-	solid_dynamics::TotalForceOnSolidBodyPartForSimBody
-		force_on_shell(shell, shell_multibody, MBsystem, shellMBody, force_on_bodies, integ);
-	solid_dynamics::ConstrainSolidBodyPartBySimBody
-		constraint_shell(shell, shell_multibody, MBsystem, shellMBody, force_on_bodies, integ);
+	ReduceDynamics<solid_dynamics::TotalForceForSimBody, SolidBodyPartForSimbody>
+		force_on_shell(shell_multibody, MBsystem, shellMBody, force_on_bodies, integ);
+	SimpleDynamics<solid_dynamics::ConstraintBySimBody, SolidBodyPartForSimbody>
+		constraint_shell(shell_multibody, MBsystem, shellMBody, force_on_bodies, integ);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
@@ -247,9 +243,9 @@ int main(int ac, char *av[])
 	/** Main loop. */
 	int ite = 0;
 	Real T0 = 1.0;
-	Real End_Time = T0;
-	Real D_Time = 0.01 * T0;
-	Real Dt = 0.1 * D_Time;
+	Real end_time = T0;
+	Real output_interval = 0.01 * T0;
+	Real Dt = 0.1 * output_interval;
 	Real dt = 0.0;
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
@@ -259,10 +255,10 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Main loop starts here.
 	//----------------------------------------------------------------------
-	while (GlobalStaticVariables::physical_time_ < End_Time)
+	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
-		while (integration_time < D_Time)
+		while (integration_time < output_interval)
 		{
 			beam_initialize_timestep.parallel_exec();
 			if (ite % 100 == 0)
@@ -283,9 +279,9 @@ int main(int ac, char *av[])
 			}
 
 			beam_stress_relaxation_first_half.parallel_exec(dt);
-			constrain_holder.parallel_exec(dt);
+			constraint_holder.parallel_exec(dt);
 			beam_damping.parallel_exec(dt);
-			constrain_holder.parallel_exec(dt);
+			constraint_holder.parallel_exec(dt);
 			beam_stress_relaxation_second_half.parallel_exec(dt);
 
 			shell.updateCellLinkedList();

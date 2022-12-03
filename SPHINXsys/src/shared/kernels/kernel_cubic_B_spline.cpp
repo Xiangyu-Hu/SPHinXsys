@@ -1,7 +1,3 @@
-/**
- * @file 	kernel_cubic_B_spline.cpp
- * @author	Zhentong Wang, Luhui Han, Chi ZHang, Yongchuan Yu and Xiangyu Hu
- */
 #include "kernel_cubic_B_spline.h"
 
 #include <cmath>

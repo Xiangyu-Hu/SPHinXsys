@@ -3,8 +3,10 @@
  * @brief 	This is the benchmark test of the shell.
  * @details  We consider the body force applied on a quasi-static square plate.
  * @author 	Dong Wu, Chi Zhang and Xiangyu Hu
+ * @ref 	doi.org/10.1016/j.ijnonlinmec.2014.04.009, doi.org/10.1201/9780849384165
  */
 #include "sphinxsys.h"
+#include <gtest/gtest.h>
 
 using namespace SPH;
 
@@ -15,7 +17,7 @@ Real PL = 10.0;									  /** Length of the square plate. */
 Real PH = 10.0;									  /** Width of the square plate. */
 Real PT = 1.0;									  /** Thickness of the square plate. */
 Vec3d n_0 = Vec3d(0.0, 0.0, 1.0);				  /** Pseudo-normal. */
-int particle_number = 14;						  /** Particle number in the direction of the length */
+int particle_number = 40;						  /** Particle number in the direction of the length */
 Real resolution_ref = PL / (Real)particle_number; /** Initial reference particle spacing. */
 int BWD = 1;									  /** Width of the boundary layer measured by number of particles. */
 Real BW = resolution_ref * (Real)BWD;			  /** Boundary width, determined by specific layer of boundary particles. */
@@ -35,6 +37,16 @@ Real q = 100.0 * Youngs_modulus * 1.0e-4; /** Total distributed load. */
 Real time_to_full_external_force = 0.1;
 
 Real gravitational_acceleration = 0.009646;
+
+Real observed_quantity_0(0.0);
+Real observed_quantity_n(0.0);
+Real displ_max_reference = 1.8687;
+TEST(Plate, MaxDisplacement)
+{
+	Real displ_max = observed_quantity_n - observed_quantity_0;
+	EXPECT_NEAR(displ_max, displ_max_reference, displ_max_reference * 0.1);
+	std::cout << "displ_max: " << displ_max << std::endl;
+}
 
 /** Define application dependent particle generator for thin structure. */
 class PlateParticleGenerator : public SurfaceParticleGenerator
@@ -56,24 +68,42 @@ public:
 		}
 	}
 };
-
 /** Define the boundary geometry. */
-class BoundaryGeometry : public BodyPartByParticle
+class BoundaryGeometryParallelToXAxis : public BodyPartByParticle
 {
 public:
-	BoundaryGeometry(SPHBody &body, const std::string &body_part_name)
+	BoundaryGeometryParallelToXAxis(SPHBody &body, const std::string &body_part_name)
 		: BodyPartByParticle(body, body_part_name)
 	{
-		TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometry::tagManually, this, _1);
+		TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometryParallelToXAxis::tagManually, this, _1);
 		tagParticles(tagging_particle_method);
 	};
-	virtual ~BoundaryGeometry(){};
+	virtual ~BoundaryGeometryParallelToXAxis() {};
 
 private:
 	void tagManually(size_t index_i)
 	{
-		if (base_particles_->pos_[index_i][0] < 0.0 || base_particles_->pos_[index_i][1] < 0.0 ||
-			base_particles_->pos_[index_i][0] > PL || base_particles_->pos_[index_i][1] > PH)
+		if (base_particles_.pos_[index_i][1] < 0.0 || base_particles_.pos_[index_i][1] > PH)
+		{
+			body_part_particles_.push_back(index_i);
+		}
+	};
+};
+class BoundaryGeometryParallelToYAxis : public BodyPartByParticle
+{
+public:
+	BoundaryGeometryParallelToYAxis(SPHBody &body, const std::string &body_part_name)
+		: BodyPartByParticle(body, body_part_name)
+	{
+		TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometryParallelToYAxis::tagManually, this, _1);
+		tagParticles(tagging_particle_method);
+	};
+	virtual ~BoundaryGeometryParallelToYAxis() {};
+
+private:
+	void tagManually(size_t index_i)
+	{
+		if (base_particles_.pos_[index_i][0] < 0.0 || base_particles_.pos_[index_i][0] > PL)
 		{
 			body_part_particles_.push_back(index_i);
 		}
@@ -98,14 +128,14 @@ public:
 /**
  *  The main program
  */
-int main()
+int main(int ac, char *av[])
 {
 	/** Setup the system. */
 	SPHSystem system(system_domain_bounds, resolution_ref);
 
 	/** create a plate body. */
 	SolidBody plate_body(system, makeShared<DefaultShape>("PlateBody"));
-	plate_body.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	plate_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	plate_body.generateParticles<PlateParticleGenerator>();
 
 	/** Define Observer. */
@@ -117,38 +147,41 @@ int main()
 	 *  The contact map gives the data connections between the bodies
 	 *  basically the the range of bodies to build neighbor particle lists
 	 */
-	BodyRelationInner plate_body_inner(plate_body);
-	BodyRelationContact plate_observer_contact(plate_observer, {&plate_body});
+	InnerRelation plate_body_inner(plate_body);
+	ContactRelation plate_observer_contact(plate_observer, {&plate_body});
 
 	/** Common particle dynamics. */
-	TimeDependentExternalForce external_force(Vec3d(0.0, 0.0, q / (PT * rho0_s) - gravitational_acceleration));
-	TimeStepInitialization initialize_external_force(plate_body, external_force);
+	SimpleDynamics<TimeStepInitialization> initialize_external_force(plate_body, 
+		makeShared<TimeDependentExternalForce>(Vec3d(0.0, 0.0, q / (PT * rho0_s) - gravitational_acceleration)));
 
 	/**
 	 * This section define all numerical methods will be used in this case.
 	 */
 	/** Corrected configuration. */
-	thin_structure_dynamics::ShellCorrectConfiguration
+	InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration>
 		corrected_configuration(plate_body_inner);
 	/** Time step size calculation. */
-	thin_structure_dynamics::ShellAcousticTimeStepSize computing_time_step_size(plate_body);
+	ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(plate_body);
 	/** active-passive stress relaxation. */
-	thin_structure_dynamics::ShellStressRelaxationFirstHalf
+	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf>
 		stress_relaxation_first_half(plate_body_inner);
-	thin_structure_dynamics::ShellStressRelaxationSecondHalf
+	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf>
 		stress_relaxation_second_half(plate_body_inner);
 	/** Constrain the Boundary. */
-	BoundaryGeometry boundary_geometry(plate_body, "BoundaryGeometry");
-	solid_dynamics::ConstrainSolidBodyRegion constrain_holder(plate_body, boundary_geometry);
-	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>
+	BoundaryGeometryParallelToXAxis boundary_geometry_x(plate_body, "BoundaryGeometryParallelToXAxis");
+	SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegionAlongAxis, BoundaryGeometryParallelToXAxis>
+		constrain_holder_x(boundary_geometry_x, 0);
+	BoundaryGeometryParallelToYAxis boundary_geometry_y(plate_body, "BoundaryGeometryParallelToYAxis");
+	SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegionAlongAxis, BoundaryGeometryParallelToYAxis>
+		constrain_holder_y(boundary_geometry_y, 1);
+	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
 		plate_position_damping(0.5, plate_body_inner, "Velocity", physical_viscosity);
-	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>
+	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
 		plate_rotation_damping(0.5, plate_body_inner, "AngularVelocity", physical_viscosity);
 	/** Output */
-	InOutput in_output(system);
-	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		write_plate_max_displacement("Position", in_output, plate_observer_contact);
+	IOEnvironment io_environment(system);
+	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
+	ObservedQuantityRecording<Vecd> write_plate_max_displacement("Position", io_environment, plate_observer_contact);
 
 	/** Apply initial condition. */
 	system.initializeSystemCellLinkedLists();
@@ -162,6 +195,7 @@ int main()
 	GlobalStaticVariables::physical_time_ = 0.0;
 	write_states.writeToFile(0);
 	write_plate_max_displacement.writeToFile(0);
+	observed_quantity_0 = (*write_plate_max_displacement.getObservedQuantity())[0][2];
 
 	/** Setup physical parameters. */
 	int ite = 0;
@@ -187,10 +221,12 @@ int main()
 			}
 			initialize_external_force.parallel_exec(dt);
 			stress_relaxation_first_half.parallel_exec(dt);
-			constrain_holder.parallel_exec(dt);
+			constrain_holder_x.parallel_exec(dt);
+			constrain_holder_y.parallel_exec(dt);
 			plate_position_damping.parallel_exec(dt);
 			plate_rotation_damping.parallel_exec(dt);
-			constrain_holder.parallel_exec(dt);
+			constrain_holder_x.parallel_exec(dt);
+			constrain_holder_y.parallel_exec(dt);
 			stress_relaxation_second_half.parallel_exec(dt);
 
 			ite++;
@@ -210,7 +246,8 @@ int main()
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-	write_plate_max_displacement.newResultTest();
+	observed_quantity_n = (*write_plate_max_displacement.getObservedQuantity())[0][2];
 
-	return 0;
+	testing::InitGoogleTest(&ac, av);
+	return RUN_ALL_TESTS();
 }

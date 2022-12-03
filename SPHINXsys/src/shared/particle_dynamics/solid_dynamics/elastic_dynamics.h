@@ -1,31 +1,31 @@
 /* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
-* @file 	elastic_dynamics.h
-* @brief 	Here, we define the algorithm classes for elastic solid dynamics. 
-* @details 	We consider here a weakly compressible solids.   
-* @author	Luhui Han, Chi ZHang and Xiangyu Hu
-*/
+ * @file 	elastic_dynamics.h
+ * @brief 	Here, we define the algorithm classes for elastic solid dynamics.
+ * @details 	We consider here a weakly compressible solids.
+ * @author	Chi ZHang and Xiangyu Hu
+ */
 
 #ifndef ELASTIC_DYNAMICS_H
 #define ELASTIC_DYNAMICS_H
@@ -38,32 +38,25 @@
 #include "solid_particles.h"
 #include "elastic_solid.h"
 
-
-
 namespace SPH
 {
-	template <typename VariableType>
-	class BodySummation;
-	template <typename VariableType>
-	class BodyMoment;
-
 	namespace solid_dynamics
 	{
 		//----------------------------------------------------------------------
 		//		for elastic solid dynamics
 		//----------------------------------------------------------------------
-		typedef DataDelegateSimple<SolidBody, ElasticSolidParticles, ElasticSolid> ElasticSolidDataSimple;
-		typedef DataDelegateInner<SolidBody, ElasticSolidParticles, ElasticSolid> ElasticSolidDataInner;
+		typedef DataDelegateSimple<ElasticSolidParticles> ElasticSolidDataSimple;
+		typedef DataDelegateInner<ElasticSolidParticles> ElasticSolidDataInner;
 
 		/**
 		 * @class ElasticDynamicsInitialCondition
 		 * @brief  set initial condition for a solid body with different material
 		 * This is a abstract class to be override for case specific initial conditions.
 		 */
-		class ElasticDynamicsInitialCondition : public ParticleDynamicsSimple, public ElasticSolidDataSimple
+		class ElasticDynamicsInitialCondition : public LocalDynamics, public ElasticSolidDataSimple
 		{
 		public:
-			explicit ElasticDynamicsInitialCondition(SolidBody &solid_body);
+			explicit ElasticDynamicsInitialCondition(SPHBody &sph_body);
 			virtual ~ElasticDynamicsInitialCondition(){};
 
 		protected:
@@ -71,177 +64,167 @@ namespace SPH
 		};
 
 		/**
-		* @class UpdateElasticNormalDirection
-		* @brief update particle normal directions for elastic solid
-		*/
-		class UpdateElasticNormalDirection : public ParticleDynamicsSimple, public ElasticSolidDataSimple
+		 * @class UpdateElasticNormalDirection
+		 * @brief update particle normal directions for elastic solid
+		 */
+		class UpdateElasticNormalDirection : public LocalDynamics, public ElasticSolidDataSimple
 		{
-		public:
-			explicit UpdateElasticNormalDirection(SolidBody &solid_body);
-			virtual ~UpdateElasticNormalDirection(){};
-
 		protected:
 			StdLargeVec<Vecd> &n_, &n0_;
 			StdLargeVec<Matd> &F_;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
+
+		public:
+			explicit UpdateElasticNormalDirection(SPHBody &sph_body);
+			virtual ~UpdateElasticNormalDirection(){};
+
+			void update(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
-		* @class AcousticTimeStepSize
-		* @brief Computing the acoustic time step size
-		* computing time step size
-		*/
-		class AcousticTimeStepSize : public ParticleDynamicsReduce<Real, ReduceMin>,
+		 * @class AcousticTimeStepSize
+		 * @brief Computing the acoustic time step size
+		 * computing time step size
+		 */
+		class AcousticTimeStepSize : public LocalDynamicsReduce<Real, ReduceMin>,
 									 public ElasticSolidDataSimple
 		{
-		public:
-			explicit AcousticTimeStepSize(SolidBody &solid_body, Real CFL = 0.6);
-			virtual ~AcousticTimeStepSize(){};
-
 		protected:
 			Real CFL_;
 			StdLargeVec<Vecd> &vel_, &acc_;
 			Real smoothing_length_, c0_;
-			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
+
+		public:
+			explicit AcousticTimeStepSize(SPHBody &sph_body, Real CFL = 0.6);
+			virtual ~AcousticTimeStepSize(){};
+
+			Real reduce(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
-		* @class DeformationGradientTensorBySummation
-		* @brief computing deformation gradient tensor by summation
-		*/
-		class DeformationGradientTensorBySummation : public InteractionDynamics, public ElasticSolidDataInner
+		 * @class DeformationGradientTensorBySummation
+		 * @brief computing deformation gradient tensor by summation
+		 */
+		class DeformationGradientTensorBySummation : public LocalDynamics, public ElasticSolidDataInner
 		{
 		public:
-			explicit DeformationGradientTensorBySummation(BaseBodyRelationInner &inner_relation);
+			explicit DeformationGradientTensorBySummation(BaseInnerRelation &inner_relation);
 			virtual ~DeformationGradientTensorBySummation(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			StdLargeVec<Real> &Vol_;
 			StdLargeVec<Vecd> &pos_;
 			StdLargeVec<Matd> &B_, &F_;
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
-		* @class BaseElasticRelaxation
-		* @brief base class for elastic relaxation
-		*/
-		class BaseElasticRelaxation
-			: public ParticleDynamics1Level,
-			  public ElasticSolidDataInner
+		 * @class BaseElasticRelaxation
+		 * @brief base class for elastic relaxation
+		 */
+		class BaseElasticRelaxation : public LocalDynamics, public ElasticSolidDataInner
 		{
 		public:
-			explicit BaseElasticRelaxation(BaseBodyRelationInner &inner_relation);
+			explicit BaseElasticRelaxation(BaseInnerRelation &inner_relation);
 			virtual ~BaseElasticRelaxation(){};
 
 		protected:
-			StdLargeVec<Real> &Vol_, &rho_, &mass_;
+			StdLargeVec<Real> &rho_, &mass_;
 			StdLargeVec<Vecd> &pos_, &vel_, &acc_;
 			StdLargeVec<Matd> &B_, &F_, &dF_dt_;
 		};
 
 		/**
-		* @class BaseStressRelaxationFirstHalf
-		* @brief computing stress relaxation process by verlet time stepping
-		* This is the first step
-		*/
+		 * @class BaseStressRelaxationFirstHalf
+		 * @brief computing stress relaxation process by verlet time stepping
+		 * This is the first step
+		 */
 		class BaseStressRelaxationFirstHalf : public BaseElasticRelaxation
 		{
 		public:
-			explicit BaseStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation);
+			explicit BaseStressRelaxationFirstHalf(BaseInnerRelation &inner_relation);
 			virtual ~BaseStressRelaxationFirstHalf(){};
+			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
+			ElasticSolid &elastic_solid_;
 			Real rho0_, inv_rho0_;
 			StdLargeVec<Vecd> &acc_prior_;
 			Real smoothing_length_;
-
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
-		* @class StressRelaxationFirstHalf
-		* @brief computing stress relaxation process by verlet time stepping
-		* This is the first step
-		*/
+		 * @class StressRelaxationFirstHalf
+		 * @brief computing stress relaxation process by verlet time stepping
+		 * This is the first step
+		 */
 		class StressRelaxationFirstHalf : public BaseStressRelaxationFirstHalf
 		{
 		public:
-			explicit StressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation);
+			explicit StressRelaxationFirstHalf(BaseInnerRelation &inner_relation);
 			virtual ~StressRelaxationFirstHalf(){};
+			void initialization(size_t index_i, Real dt = 0.0);
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Matd> stress_PK1_B_;
 			Real numerical_dissipation_factor_;
-			Real inv_W0_ = 1.0 / body_->sph_adaptation_->getKernel()->W0(Vecd(0));
-
-			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+			Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(zero_vec);
 		};
 
 		/**
-		* @class KirchhoffParticleStressRelaxationFirstHalf
-		*/
+		 * @class KirchhoffParticleStressRelaxationFirstHalf
+		 */
 		class KirchhoffParticleStressRelaxationFirstHalf : public StressRelaxationFirstHalf
 		{
 		public:
-			explicit KirchhoffParticleStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation);
+			explicit KirchhoffParticleStressRelaxationFirstHalf(BaseInnerRelation &inner_relation);
 			virtual ~KirchhoffParticleStressRelaxationFirstHalf(){};
-
-		protected:
-			const Real one_over_dimensions_ = 1.0 / (Real)Dimensions;
-
-			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
+			void initialization(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
-		* @class KirchhoffStressRelaxationFirstHalf
-		* @brief Decompose the stress into particle stress includes isotropic stress 
-		* and the stress due to non-homogeneous material properties.
-		* The preliminary shear stress is introduced by particle pair to avoid 
-		* spurious stress and deformation. 
-		* Note that, for the shear stress term, 
-		* due to the mismatch of the divergence contribution between 
-		* the pair-wise second-order derivative Laplacian formulation
-		* and particle-wise first-order gradient formulation, 
-		* a correction factor slight large than one is introduced.
-		* Note that, if you see time step size goes unusually small, 
-		* it may be due to the determinate of deformation matrix become negative.
-		* In this case, you may need decrease CFL number when computing time-step size.
-		*/
+		 * @class KirchhoffStressRelaxationFirstHalf
+		 * @brief Decompose the stress into particle stress includes isotropic stress
+		 * and the stress due to non-homogeneous material properties.
+		 * The preliminary shear stress is introduced by particle pair to avoid
+		 * spurious stress and deformation.
+		 * Note that, for the shear stress term,
+		 * due to the mismatch of the divergence contribution between
+		 * the pair-wise second-order derivative Laplacian formulation
+		 * and particle-wise first-order gradient formulation,
+		 * a correction factor slight large than one is introduced.
+		 * Note that, if you see time step size goes unusually small,
+		 * it may be due to the determinate of deformation matrix become negative.
+		 * In this case, you may need decrease CFL number when computing time-step size.
+		 */
 		class KirchhoffStressRelaxationFirstHalf : public BaseStressRelaxationFirstHalf
 		{
 		public:
-			explicit KirchhoffStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation);
+			explicit KirchhoffStressRelaxationFirstHalf(BaseInnerRelation &inner_relation);
 			virtual ~KirchhoffStressRelaxationFirstHalf(){};
+			void initialization(size_t index_i, Real dt = 0.0);
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Real> J_to_minus_2_over_dimension_;
 			StdLargeVec<Matd> stress_on_particle_, inverse_F_T_;
-			const Real one_over_dimensions_ = 1.0 / (Real)Dimensions;
 			const Real correction_factor_ = 1.07;
-
-			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
-		* @class StressRelaxationSecondHalf
-		* @brief computing stress relaxation process by verlet time stepping
-		* This is the second step
-		*/
+		 * @class StressRelaxationSecondHalf
+		 * @brief computing stress relaxation process by verlet time stepping
+		 * This is the second step
+		 */
 		class StressRelaxationSecondHalf : public BaseElasticRelaxation
 		{
 		public:
-			explicit StressRelaxationSecondHalf(BaseBodyRelationInner &inner_relation)
+			explicit StressRelaxationSecondHalf(BaseInnerRelation &inner_relation)
 				: BaseElasticRelaxation(inner_relation){};
 			virtual ~StressRelaxationSecondHalf(){};
-
-		protected:
-			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
+			void initialization(size_t index_i, Real dt = 0.0);
+			void interaction(size_t index_i, Real dt = 0.0);
+			void update(size_t index_i, Real dt = 0.0);
 		};
-    }
+	}
 }
-#endif //ELASTIC_DYNAMICS_H
+#endif // ELASTIC_DYNAMICS_H

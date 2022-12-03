@@ -1,5 +1,3 @@
-// common functions used by 3d buildings only
-
 #include "particle_generator_lattice.h"
 
 #include "complex_shape.h"
@@ -70,7 +68,7 @@ namespace SPH
 						{
 							Real random_real = (Real)rand() / (RAND_MAX);
 							// If the random_real is smaller than the interval, add a particle, only if we haven't reached the max. number of particles.
-							if (random_real <= interval && base_particles_->total_real_particles_ < planned_number_of_particles_)
+							if (random_real <= interval && base_particles_.total_real_particles_ < planned_number_of_particles_)
 							{
 								initializePositionAndVolumetricMeasure(particle_position, avg_particle_volume_ / global_avg_thickness_);
 								initializeSurfaceProperties(body_shape_.findNormalDirection(particle_position), global_avg_thickness_);

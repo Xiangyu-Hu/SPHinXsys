@@ -19,13 +19,13 @@
 #include "pkj_lv_electrocontraction.h"
 /** Namespace cite here. */
 using namespace SPH;
-/** 
- * The main program. 
+/**
+ * The main program.
  */
 int main(int ac, char *av[])
 {
-	/** 
-	 * Build up context -- a SPHSystem. 
+	/**
+	 * Build up context -- a SPHSystem.
 	 */
 	SPHSystem system(system_domain_bounds, dp_0);
 	/** Set the starting time. */
@@ -36,40 +36,45 @@ int main(int ac, char *av[])
 	system.reload_particles_ = false;
 	/** Tag for computation from restart files. 0: not from restart files. */
 	system.restart_step_ = 0;
-//handle command line arguments
+// handle command line arguments
 #ifdef BOOST_AVAILABLE
 	system.handleCommandlineOptions(ac, av);
 #endif
-	/** in- and output environment. */
-	InOutput in_output(system);
+	IOEnvironment io_environment(system);
+	//----------------------------------------------------------------------
+	//	Define the same level geometric shape for all bodies
+	//----------------------------------------------------------------------
+	Heart triangle_mesh_heart_model("HeartModel");
+	SharedPtr<LevelSetShape> level_set_heart_model =
+		makeShared<LevelSetShape>(triangle_mesh_heart_model, makeShared<SPHAdaptation>(dp_0));
+	level_set_heart_model->correctLevelSetSign()->writeLevelSet(io_environment);
 	//----------------------------------------------------------------------
 	//	SPH Particle relaxation section
 	//----------------------------------------------------------------------
 	/** check whether run particle relaxation for body fitted particle distribution. */
 	if (system.run_particle_relaxation_)
 	{
-		SolidBody herat_model(system, makeShared<Heart>("HeartModel"));
-		herat_model.defineBodyLevelSetShape()->writeLevelSet(herat_model);
-		herat_model.defineParticlesAndMaterial<DiffusionReactionParticles<ElasticSolidParticles>, FiberDirectionDiffusion>();
+		SolidBody herat_model(system, level_set_heart_model);
+		herat_model.defineParticlesAndMaterial<DiffusionReactionParticles<ElasticSolidParticles, LocallyOrthotropicMuscle>, FiberDirectionDiffusion>();
 		herat_model.generateParticles<ParticleGeneratorLattice>();
 		/** topology */
-		BodyRelationInner herat_model_inner(herat_model);
+		InnerRelation herat_model_inner(herat_model);
 		/** Random reset the relax solid particle position. */
-		RandomizeParticlePosition random_particles(herat_model);
+		SimpleDynamics<RandomizeParticlePosition> random_particles(herat_model);
 		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(herat_model_inner);
 		/** Time step for diffusion. */
-		GetDiffusionTimeStepSize<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle> get_time_step_size(herat_model);
+		GetDiffusionTimeStepSize<ElasticSolidParticles, LocallyOrthotropicMuscle> get_time_step_size(herat_model);
 		/** Diffusion process for diffusion body. */
 		DiffusionRelaxation diffusion_relaxation(herat_model_inner);
 		/** Compute the fiber and sheet after diffusion. */
-		ComputeFiberAndSheetDirections compute_fiber_sheet(herat_model);
+		SimpleDynamics<ComputeFiberAndSheetDirections> compute_fiber_sheet(herat_model);
 		/** Write the body state to Vtp file. */
-		BodyStatesRecordingToVtp write_herat_model_state_to_vtp(in_output, {herat_model});
+		BodyStatesRecordingToVtp write_herat_model_state_to_vtp(io_environment, {herat_model});
 		/** Write the particle reload files. */
-		ReloadParticleIO write_particle_reload_files(in_output, {&herat_model}, {"HeartModel"});
+		ReloadParticleIO write_particle_reload_files(io_environment, herat_model, "HeartModel");
 		/** Write material property to xml file. */
-		ReloadMaterialParameterIO write_material_property(in_output, herat_model.base_material_, "FiberDirection");
+		ReloadMaterialParameterIO write_material_property(io_environment, herat_model, "FiberDirection");
 		//----------------------------------------------------------------------
 		//	Physics relaxation starts here.
 		//----------------------------------------------------------------------
@@ -77,7 +82,7 @@ int main(int ac, char *av[])
 		relaxation_step_inner.surface_bounding_.parallel_exec();
 		write_herat_model_state_to_vtp.writeToFile(0.0);
 		//----------------------------------------------------------------------
-		//From here the time stepping begins.
+		// From here the time stepping begins.
 		//----------------------------------------------------------------------
 		int ite = 0;
 		int relax_step = 1000;
@@ -95,7 +100,7 @@ int main(int ac, char *av[])
 
 		BodySurface surface_part(herat_model);
 		/** constraint boundary condition for diffusion. */
-		DiffusionBCs impose_diffusion_bc(herat_model, surface_part);
+		SimpleDynamics<DiffusionBCs, BodySurface> impose_diffusion_bc(surface_part, "Phi");
 		impose_diffusion_bc.parallel_exec();
 
 		write_herat_model_state_to_vtp.writeToFile(ite);
@@ -125,37 +130,37 @@ int main(int ac, char *av[])
 	//	SPH simulation section
 	//----------------------------------------------------------------------
 	/** create a SPH body, material and particles */
-	SolidBody physiology_heart(system, makeShared<Heart>("PhysiologyHeart"));
+	SolidBody physiology_heart(system, level_set_heart_model, "PhysiologyHeart");
 	AlievPanfilowModel muscle_reaction_model(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
 	physiology_heart.defineParticlesAndMaterial<
 		ElectroPhysiologyParticles, LocalMonoFieldElectroPhysiology>(muscle_reaction_model, diffusion_coff, bias_coff, fiber_direction);
 	(!system.run_particle_relaxation_ && system.reload_particles_)
-		? physiology_heart.generateParticles<ParticleGeneratorReload>(in_output, "HeartModel")
+		? physiology_heart.generateParticles<ParticleGeneratorReload>(io_environment, "HeartModel")
 		: physiology_heart.generateParticles<ParticleGeneratorLattice>();
 
 	/** create a SPH body, material and particles */
-	SolidBody mechanics_heart(system,  makeShared<Heart>("MechanicalHeart"));
+	SolidBody mechanics_heart(system, level_set_heart_model, "MechanicalHeart");
 	mechanics_heart.defineParticlesAndMaterial<
 		ElasticSolidParticles, ActiveMuscle<LocallyOrthotropicMuscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
 	(!system.run_particle_relaxation_ && system.reload_particles_)
-		? mechanics_heart.generateParticles<ParticleGeneratorReload>(in_output, "HeartModel")
+		? mechanics_heart.generateParticles<ParticleGeneratorReload>(io_environment, "HeartModel")
 		: mechanics_heart.generateParticles<ParticleGeneratorLattice>();
 
 	/** check whether reload material properties. */
 	if (!system.run_particle_relaxation_ && system.reload_particles_)
 	{
-		ReloadMaterialParameterIO read_physiology_heart_fiber(in_output, physiology_heart.base_material_, "FiberDirection");
-		ReloadMaterialParameterIO read_mechanics_heart_fiber(in_output, mechanics_heart.base_material_, "FiberDirection");
+		ReloadMaterialParameterIO read_physiology_heart_fiber(io_environment, physiology_heart, "FiberDirection");
+		ReloadMaterialParameterIO read_mechanics_heart_fiber(io_environment, mechanics_heart, "FiberDirection");
 		read_mechanics_heart_fiber.readFromFile();
 		read_physiology_heart_fiber.readFromFile();
-	} 
+	}
 
 	/** Creat a Purkinje network for fast diffusion, material and particles */
-	TreeBody pkj_body(system, makeShared<Heart>("Purkinje"));
+	TreeBody pkj_body(system, level_set_heart_model, "Purkinje");
 	AlievPanfilowModel pkj_reaction_model(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
 	pkj_body.defineParticlesAndMaterial<
 		ElectroPhysiologyReducedParticles, MonoFieldElectroPhysiology>(
-			pkj_reaction_model, diffusion_coff * acceleration_factor, bias_coff, fiber_direction);
+		pkj_reaction_model, diffusion_coff * acceleration_factor, bias_coff, fiber_direction);
 	pkj_body.generateParticles<NetworkGeneratorWithExtraCheck>(starting_point, second_point, 50, 1.0);
 	TreeTerminates pkj_leaves(pkj_body);
 	//----------------------------------------------------------------------
@@ -167,17 +172,17 @@ int main(int ac, char *av[])
 	myocardium_observer.generateParticles<HeartObserverParticleGenerator>();
 
 	/** topology */
-	BodyRelationInner physiology_heart_inner(physiology_heart);
-	BodyRelationInner mechanics_heart_inner(mechanics_heart);
-	BodyRelationContact physiology_heart_contact(physiology_heart, {&mechanics_heart});
-	BodyRelationContact mechanics_heart_contact(mechanics_heart, {&physiology_heart});
-	BodyRelationContact voltage_observer_contact(voltage_observer, {&physiology_heart});
-	BodyRelationContact myocardium_observer_contact(myocardium_observer, {&mechanics_heart});
-	ComplexBodyRelation physiology_heart_complex(physiology_heart, {&pkj_leaves});
-	TreeBodyRelationInner pkj_inner(pkj_body);
+	InnerRelation physiology_heart_inner(physiology_heart);
+	InnerRelation mechanics_heart_inner(mechanics_heart);
+	ContactRelation physiology_heart_contact(physiology_heart, {&mechanics_heart});
+	ContactRelation mechanics_heart_contact(mechanics_heart, {&physiology_heart});
+	ContactRelation voltage_observer_contact(voltage_observer, {&physiology_heart});
+	ContactRelation myocardium_observer_contact(myocardium_observer, {&mechanics_heart});
+	ComplexRelation physiology_heart_complex(physiology_heart, {&pkj_leaves});
+	TreeInnerRelation pkj_inner(pkj_body);
 
 	/** Corrected configuration. */
-	solid_dynamics::CorrectConfiguration correct_configuration_excitation(physiology_heart_inner);
+	InteractionDynamics<solid_dynamics::CorrectConfiguration> correct_configuration_excitation(physiology_heart_inner);
 	/** Time step size calculation. */
 	electro_physiology::GetElectroPhysiologyTimeStepSize get_myocardium_physiology_time_step(physiology_heart);
 	/** Diffusion process for diffusion body. */
@@ -193,34 +198,34 @@ int main(int ac, char *av[])
 	electro_physiology::ElectroPhysiologyReactionRelaxationForward pkj_reaction_relaxation_forward(pkj_body);
 	electro_physiology::ElectroPhysiologyReactionRelaxationBackward pkj_reaction_relaxation_backward(pkj_body);
 	/**IO for observer.*/
-	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
-	ObservedQuantityRecording<Real> write_voltage("Voltage", in_output, voltage_observer_contact);
-	ObservedQuantityRecording<Vecd> write_displacement("Position", in_output, myocardium_observer_contact);
+	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
+	ObservedQuantityRecording<Real> write_voltage("Voltage", io_environment, voltage_observer_contact);
+	ObservedQuantityRecording<Vecd> write_displacement("Position", io_environment, myocardium_observer_contact);
 	/**Apply the Iron stimulus.*/
-	ApplyStimulusCurrentToMyocardium apply_stimulus_myocardium(physiology_heart);
-	ApplyStimulusCurrentToPKJ apply_stimulus_pkj(pkj_body);
+	SimpleDynamics<ApplyStimulusCurrentToMyocardium> apply_stimulus_myocardium(physiology_heart);
+	SimpleDynamics<ApplyStimulusCurrentToPKJ> apply_stimulus_pkj(pkj_body);
 	/** Active mechanics. */
-	solid_dynamics::CorrectConfiguration correct_configuration_contraction(mechanics_heart_inner);
+	InteractionDynamics<solid_dynamics::CorrectConfiguration> correct_configuration_contraction(mechanics_heart_inner);
 	/** Observer Dynamics */
-	observer_dynamics::CorrectInterpolationKernelWeights
+	InteractionDynamics<observer_dynamics::CorrectInterpolationKernelWeights>
 		correct_kernel_weights_for_interpolation(mechanics_heart_contact);
 	/** Interpolate the active contract stress from electrophysiology body. */
-	observer_dynamics::InterpolatingAQuantity<Real>
+	InteractionDynamics<observer_dynamics::InterpolatingAQuantity<Real>>
 		active_stress_interpolation(mechanics_heart_contact, "ActiveContractionStress", "ActiveContractionStress");
 	/** Interpolate the particle position in physiology_heart  from mechanics_heart. */
-	observer_dynamics::InterpolatingAQuantity<Vecd>
+	InteractionDynamics<observer_dynamics::InterpolatingAQuantity<Vecd>>
 		interpolation_particle_position(physiology_heart_contact, "Position", "Position");
 	/** Time step size calculation. */
-	solid_dynamics::AcousticTimeStepSize get_mechanics_time_step(mechanics_heart);
+	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> get_mechanics_time_step(mechanics_heart);
 	/** active and passive stress relaxation. */
-	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half(mechanics_heart_inner);
-	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(mechanics_heart_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> stress_relaxation_first_half(mechanics_heart_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half(mechanics_heart_inner);
 	/** Constrain region of the inserted body. */
 	MuscleBaseShapeParameters muscle_base_parameters;
-	BodyRegionByParticle muscle_base(mechanics_heart,  makeShared<TriangleMeshShapeBrick>(muscle_base_parameters, "Holder"));
-	solid_dynamics::ConstrainSolidBodyRegion constrain_holder(mechanics_heart, muscle_base);
-	/** 
-	 * Pre-simulation. 
+	BodyRegionByParticle muscle_base(mechanics_heart, makeShared<TriangleMeshShapeBrick>(muscle_base_parameters, "Holder"));
+	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_holder(muscle_base);
+	/**
+	 * Pre-simulation.
 	 */
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
@@ -233,13 +238,13 @@ int main(int ac, char *av[])
 	write_displacement.writeToFile(0);
 	write_states.writeToFile(0);
 	/**
-	 * main loop. 
+	 * main loop.
 	 */
 	int screen_output_interval = 10;
 	int ite = 0;
 	int reaction_step = 2;
-	Real End_Time = 80;
-	Real Ouput_T = End_Time / 200.0;
+	Real end_time = 80;
+	Real Ouput_T = end_time / 200.0;
 	Real Observer_time = 0.01 * Ouput_T;
 	Real dt_myocardium = 0.0;
 	Real dt_pkj = 0.0;
@@ -250,7 +255,7 @@ int main(int ac, char *av[])
 	cout << "Main Loop Starts Here : "
 		 << "\n";
 	/** Main loop starts here. */
-	while (GlobalStaticVariables::physical_time_ < End_Time)
+	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
 		while (integration_time < Ouput_T)
@@ -277,8 +282,8 @@ int main(int ac, char *av[])
 				while (dt_pkj_sum < dt_myocardium)
 				{
 					/**
-					 * When network generates particles, the final particle spacing, which is after particle projected in to 
-					 * complex geometry, may small than the reference one, therefore, a smaller time step size is required. 
+					 * When network generates particles, the final particle spacing, which is after particle projected in to
+					 * complex geometry, may small than the reference one, therefore, a smaller time step size is required.
 					 */
 					dt_pkj = 0.5 * get_pkj_physiology_time_step.parallel_exec();
 					if (dt_myocardium - dt_pkj_sum < dt_pkj)
@@ -297,7 +302,7 @@ int main(int ac, char *av[])
 					}
 					/** 2nd Runge-Kutta scheme for diffusion. */
 					pkj_diffusion_relaxation.parallel_exec(dt_pkj);
-					//backward reaction
+					// backward reaction
 					int ite_pkj_backward = 0;
 					while (ite_pkj_backward < reaction_step)
 					{
@@ -318,7 +323,7 @@ int main(int ac, char *av[])
 				/** 2nd Runge-Kutta scheme for diffusion. */
 				myocardium_diffusion_relaxation.parallel_exec(dt_myocardium);
 
-				//backward reaction
+				// backward reaction
 				int ite_backward = 0;
 				while (ite_backward < reaction_step)
 				{
@@ -334,7 +339,7 @@ int main(int ac, char *av[])
 					if (dt_myocardium - dt_muscle_sum < dt_muscle)
 						dt_muscle = dt_myocardium - dt_muscle_sum;
 					stress_relaxation_first_half.parallel_exec(dt_muscle);
-					constrain_holder.parallel_exec(dt_muscle);
+					constraint_holder.parallel_exec(dt_muscle);
 					stress_relaxation_second_half.parallel_exec(dt_muscle);
 					dt_muscle_sum += dt_muscle;
 				}

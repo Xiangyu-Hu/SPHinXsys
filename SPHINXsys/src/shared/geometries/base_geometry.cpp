@@ -1,9 +1,5 @@
-/**
- * @file 	base_geometry.cpp
- * @author	Yongchuan Yu and Xiangyu Hu
- */
-
 #include "base_geometry.h"
+
 namespace SPH
 {
 	//=================================================================================================//
@@ -17,35 +13,35 @@ namespace SPH
 		return bounding_box_;
 	}
 	//=================================================================================================//
-	bool Shape::checkNotFar(const Vecd &input_pnt, Real threshold)
+	bool Shape::checkNotFar(const Vecd &probe_point, Real threshold)
 	{
-		return checkContain(input_pnt) || checkNearSurface(input_pnt, threshold) ? true : false;
+		return checkContain(probe_point) || checkNearSurface(probe_point, threshold) ? true : false;
 	}
 	//=================================================================================================//
-	bool Shape::checkNearSurface(const Vecd &input_pnt, Real threshold)
-	{
-		return getMaxAbsoluteElement(input_pnt - findClosestPoint(input_pnt)) < threshold ? true : false;
+	bool Shape::checkNearSurface(const Vecd &probe_point, Real threshold)
+	{	Vecd distance = probe_point - findClosestPoint(probe_point);
+		return distance.cwiseAbs().maxCoeff() < threshold ? true : false;
 	}
 	//=================================================================================================//
-	Real Shape::findSignedDistance(const Vecd &input_pnt)
+	Real Shape::findSignedDistance(const Vecd &probe_point)
 	{
-		Real distance_to_surface = (input_pnt - findClosestPoint(input_pnt)).norm();
-		return checkContain(input_pnt) ? -distance_to_surface : distance_to_surface;
+		Real distance_to_surface = (probe_point - findClosestPoint(probe_point)).norm();
+		return checkContain(probe_point) ? -distance_to_surface : distance_to_surface;
 	}
 	//=================================================================================================//
-	Vecd Shape::findNormalDirection(const Vecd &input_pnt)
+	Vecd Shape::findNormalDirection(const Vecd &probe_point)
 	{
-		bool is_contain = checkContain(input_pnt);
-		Vecd displacement_to_surface = findClosestPoint(input_pnt) - input_pnt;
+		bool is_contain = checkContain(probe_point);
+		Vecd displacement_to_surface = findClosestPoint(probe_point) - probe_point;
 		while (displacement_to_surface.norm() < Eps)
 		{
-			Vecd jittered = input_pnt; // jittering
-			for (int l = 0; l != input_pnt.size(); ++l)
-				jittered[l] = input_pnt[l] + (((Real)rand() / (RAND_MAX)) - 0.5) * 100.0 * Eps;
+			Vecd jittered = probe_point;
+			for (int l = 0; l != probe_point.size(); ++l)
+				jittered[l] = probe_point[l] + (((Real)rand() / (RAND_MAX)) - 0.5) * 100.0 * Eps;
 			if (checkContain(jittered) == is_contain)
 				displacement_to_surface = findClosestPoint(jittered) - jittered;
 		}
-		Vecd direction_to_surface = displacement_to_surface.normalize();
+		Vecd direction_to_surface = displacement_to_surface.normalized();
 		return is_contain ? direction_to_surface : -1.0 * direction_to_surface;
 	}
 	//=================================================================================================//
@@ -57,16 +53,16 @@ namespace SPH
 	BoundingBox BinaryShapes::findBounds()
 	{
 		// initial reference values
-		Vecd lower_bound = Vecd(Infinity);
-		Vecd upper_bound = Vecd(-Infinity);
+		Vecd lower_bound =  Infinity * Vecd::Ones();
+		Vecd upper_bound = -Infinity * Vecd::Ones();
 
 		for (auto &shape_and_op : shapes_and_ops_)
 		{
 			BoundingBox shape_bounds = shape_and_op.first->getBounds();
 			for (int j = 0; j != Dimensions; ++j)
 			{
-				lower_bound[j] = SMIN(lower_bound[j], shape_bounds.first[j]);
-				upper_bound[j] = SMAX(upper_bound[j], shape_bounds.second[j]);
+				lower_bound[j] = SMIN(lower_bound[j], shape_bounds.first_[j]);
+				upper_bound[j] = SMAX(upper_bound[j], shape_bounds.second_[j]);
 			}
 		}
 		return BoundingBox(lower_bound, upper_bound);
@@ -106,19 +102,19 @@ namespace SPH
 		return exist;
 	}
 	//=================================================================================================//
-	Vecd BinaryShapes::findClosestPoint(const Vecd &input_pnt)
+	Vecd BinaryShapes::findClosestPoint(const Vecd &probe_point)
 	{
 		// a big positive number
 		Real large_number(Infinity);
 		Real dist_min = large_number;
-		Vecd pnt_closest(0);
-		Vecd pnt_found(0);
+		Vecd pnt_closest = Vecd::Zero();
+		Vecd pnt_found = Vecd::Zero();
 
 		for (auto &shape_and_op : shapes_and_ops_)
 		{
 			Shape *geometry = shape_and_op.first;
-			pnt_found = geometry->findClosestPoint(input_pnt);
-			Real dist = (input_pnt - pnt_found).norm();
+			pnt_found = geometry->findClosestPoint(probe_point);
+			Real dist = (probe_point - pnt_found).norm();
 
 			if (dist <= dist_min)
 			{

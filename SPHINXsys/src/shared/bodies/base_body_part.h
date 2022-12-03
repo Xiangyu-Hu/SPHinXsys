@@ -1,33 +1,32 @@
-/* -----------------------------------------------------------------------------*
- *                               SPHinXsys                                      *
- * -----------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
- * physical accurate simulation and aims to model coupled industrial dynamic    *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
- * (smoothed particle hydrodynamics), a meshless computational method using     *
- * particle discretization.                                                     *
- *                                                                              *
- * SPHinXsys is partially funded by German Research Foundation                  *
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
- * HU1527/12-1 and HU1527/12-4.                                                 *
- *                                                                              *
- * Portions copyright (c) 2017-2022 Technical University of Munich and          *
- * the authors' affiliations.                                                   *
- *                                                                              *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
- * not use this file except in compliance with the License. You may obtain a    *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
- *                                                                              *
- * -----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	base_body_part.h
  * @brief 	This is the base classes of body parts.
  * @details	There two main type of body parts. One is part by particle.
- * 			The other is part by cell.
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Chi ZHang and Xiangyu Hu
  */
-
+ 
 #ifndef BASE_BODY_PART_H
 #define BASE_BODY_PART_H
 
@@ -46,14 +45,14 @@ namespace SPH
 	{
 	public:
 		BodyPart(SPHBody &sph_body, const std::string &body_part_name)
-			: sph_body_(&sph_body), body_part_name_(body_part_name){};
+			: sph_body_(sph_body), body_part_name_(body_part_name){};
 		virtual ~BodyPart(){};
 
-		SPHBody *getSPHBody() { return sph_body_; };
-		std::string BodyPartName() { return body_part_name_; };
+		SPHBody &getSPHBody() { return sph_body_; };
+		std::string getName() { return body_part_name_; };
 
 	protected:
-		SPHBody *sph_body_;
+		SPHBody &sph_body_;
 		std::string body_part_name_;
 	};
 
@@ -65,10 +64,14 @@ namespace SPH
 	{
 	public:
 		IndexVector body_part_particles_; /**< Collection particle in this body part. */
+		BaseParticles &getBaseParticles() { return base_particles_; };
+		IndexVector &LoopRange() { return body_part_particles_; };
+		size_t SizeOfLoopRange() { return body_part_particles_.size(); };
+		size_t getParticleIndex(size_t entry_i) { return body_part_particles_[entry_i]; };
 
 		BodyPartByParticle(SPHBody &sph_body, const std::string &body_part_name)
-			: BodyPart(sph_body, body_part_name), base_particles_(sph_body.base_particles_),
-			  body_part_bounds_(Vecd(0), Vecd(0)), body_part_bounds_set_(false){};
+			: BodyPart(sph_body, body_part_name), base_particles_(sph_body.getBaseParticles()),
+			  body_part_bounds_(Vecd::Zero(), Vecd::Zero()), body_part_bounds_set_(false){};
 		virtual ~BodyPartByParticle(){};
 
 		void setBodyPartBounds(BoundingBox bbox)
@@ -85,7 +88,7 @@ namespace SPH
 		}
 
 	protected:
-		BaseParticles *base_particles_;
+		BaseParticles &base_particles_;
 		BoundingBox body_part_bounds_;
 		bool body_part_bounds_set_;
 
@@ -100,14 +103,16 @@ namespace SPH
 	class BodyPartByCell : public BodyPart
 	{
 	public:
-		CellLists body_part_cells_; /**< Collection of cells to indicate the body part. */
+		ConcurrentIndexesInCells body_part_cells_; /**< Collection of cells to indicate the body part. */
+		ConcurrentIndexesInCells &LoopRange() { return body_part_cells_; };
+		size_t SizeOfLoopRange();
 
 		BodyPartByCell(RealBody &real_body, const std::string &body_part_name)
-			: BodyPart(real_body, body_part_name), cell_linked_list_(real_body.cell_linked_list_){};
+			: BodyPart(real_body, body_part_name), cell_linked_list_(real_body.getCellLinkedList()){};
 		virtual ~BodyPartByCell(){};
 
 	protected:
-		BaseCellLinkedList *cell_linked_list_;
+		BaseCellLinkedList &cell_linked_list_;
 		typedef std::function<bool(Vecd, Real)> TaggingCellMethod;
 		void tagCells(TaggingCellMethod &tagging_cell_method);
 	};

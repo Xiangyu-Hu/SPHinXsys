@@ -1,22 +1,16 @@
-/**
- * @file 	fluid_dynamics_multi_phase.cpp
- * @author	Chi ZHang and Xiangyu Hu
- */
-
 #include "fluid_dynamics_multi_phase.h"
 
-//=================================================================================================//
 namespace SPH
 {
-	//=================================================================================================//
+	//=====================================================================================================//
 	namespace fluid_dynamics
 	{
 		//=================================================================================================//
-		ViscousAccelerationMultiPhase::ViscousAccelerationMultiPhase(BaseBodyRelationInner &inner_relation,
-																	 BaseBodyRelationContact &contact_relation)
+		ViscousAccelerationMultiPhase::ViscousAccelerationMultiPhase(BaseInnerRelation &inner_relation,
+																	 BaseContactRelation &contact_relation)
 			: ViscousAccelerationInner(inner_relation), MultiPhaseContactData(contact_relation)
 		{
-			if (inner_relation.sph_body_ != contact_relation.sph_body_)
+			if (&inner_relation.sph_body_ != &contact_relation.sph_body_)
 			{
 				std::cout << "\n Error: the two body_relations do not have the same source body!" << std::endl;
 				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
@@ -25,28 +19,28 @@ namespace SPH
 
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
-				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
+				contact_fluids_.push_back(&contact_particles_[k]->fluid_);
 				contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
 			}
 		}
 		//=================================================================================================//
 		ViscousAccelerationMultiPhase::
-			ViscousAccelerationMultiPhase(ComplexBodyRelation &complex_relation)
+			ViscousAccelerationMultiPhase(ComplexRelation &complex_relation)
 			: ViscousAccelerationMultiPhase(complex_relation.inner_relation_,
 											complex_relation.contact_relation_) {}
 		//=================================================================================================//
-		void ViscousAccelerationMultiPhase::Interaction(size_t index_i, Real dt)
+		void ViscousAccelerationMultiPhase::interaction(size_t index_i, Real dt)
 		{
-			ViscousAccelerationInner::Interaction(index_i, dt);
+			ViscousAccelerationInner::interaction(index_i, dt);
 
 			Real rho_i = this->rho_[index_i];
 			const Vecd &vel_i = this->vel_[index_i];
 
-			Vecd acceleration(0), vel_derivative(0);
+			Vecd acceleration = Vecd::Zero();
+			Vecd vel_derivative = Vecd::Zero();
 			for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 			{
-				Real mu_j = this->contact_material_[k]->ReferenceViscosity();
-				StdLargeVec<Real> &Vol_k = *(this->contact_Vol_[k]);
+				Real mu_j = this->contact_fluids_[k]->ReferenceViscosity();
 				StdLargeVec<Vecd> &vel_k = *(this->contact_vel_n_[k]);
 				Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -58,7 +52,7 @@ namespace SPH
 									 (r_ij + 0.01 * this->smoothing_length_);
 					Real mu_ij = 2.0 * this->mu_ * mu_j / (this->mu_ + mu_j);
 					acceleration += 2.0 * mu_ij * vel_derivative *
-									contact_neighborhood.dW_ij_[n] * Vol_k[index_j] / rho_i;
+									contact_neighborhood.dW_ijV_j_[n] / rho_i;
 				}
 			}
 
@@ -66,9 +60,9 @@ namespace SPH
 		}
 		//=================================================================================================//
 		MultiPhaseColorFunctionGradient::
-			MultiPhaseColorFunctionGradient(BaseBodyRelationContact &contact_relation)
-			: InteractionDynamics(*contact_relation.sph_body_), MultiPhaseData(contact_relation),
-			  rho0_(particles_->rho0_), Vol_(particles_->Vol_),
+			MultiPhaseColorFunctionGradient(BaseContactRelation &contact_relation)
+			: LocalDynamics(contact_relation.sph_body_), MultiPhaseData(contact_relation),
+			  rho0_(sph_body_.base_material_->ReferenceDensity()), Vol_(particles_->Vol_),
 			  pos_div_(*particles_->getVariableByName<Real>("PositionDivergence")),
 			  surface_indicator_(particles_->surface_indicator_)
 		{
@@ -76,32 +70,31 @@ namespace SPH
 			particles_->registerVariable(surface_norm_, "SurfaceNormal");
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
-				Real rho0_k = contact_particles_[k]->rho0_;
+				Real rho0_k = contact_bodies_[k]->base_material_->ReferenceDensity();
 				contact_rho0_.push_back(rho0_k);
 				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
 			}
 		}
 		//=================================================================================================//
-		void MultiPhaseColorFunctionGradient::Interaction(size_t index_i, Real dt)
+		void MultiPhaseColorFunctionGradient::interaction(size_t index_i, Real dt)
 		{
-			Real vol_i = Vol_[index_i];
-			Vecd gradient(0.0);
+			Real Vol_i = Vol_[index_i];
+			Vecd gradient = Vecd::Zero();
 			if (surface_indicator_[index_i])
 			{
 				for (size_t k = 0; k < contact_configuration_.size(); ++k)
 				{
 					Real rho0_k = contact_rho0_[k];
-					StdLargeVec<Real> &contact_vol_k = *(contact_Vol_[k]);
+					StdLargeVec<Real> &contact_Vol_k = *(contact_Vol_[k]);
 					Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 					for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 					{
 						size_t index_j = contact_neighborhood.j_[n];
 						/** Norm of interface.*/
 						Real rho_ij = rho0_ / (rho0_ + rho0_k);
-						Real area_ij = (vol_i * vol_i +
-										contact_vol_k[index_j] * contact_vol_k[index_j]) *
-									   contact_neighborhood.dW_ij_[n];
-						gradient += rho_ij * area_ij * contact_neighborhood.e_ij_[n] / vol_i;
+						Real area_ij = (Vol_i * Vol_i + contact_Vol_k[index_j] * contact_Vol_k[index_j]) *
+									   contact_neighborhood.dW_ijV_j_[n] / contact_Vol_k[index_j];
+						gradient += rho_ij * area_ij * contact_neighborhood.e_ij_[n] / Vol_i;
 					}
 				}
 			}

@@ -16,8 +16,8 @@ Real DH = particle_spacing_ref * 4;		 /**< Tube height. */
 BoundingBox system_domain_bounds(Vec2d(-2.0 / 5.0 * DL, 0.0), Vec2d(3.0 / 5.0 * DL, DH));
 Real rho0_l = 1.0;	  /**< initial density of left state. */
 Real rho0_r = 0.125;  /**< initial density of right state. */
-Vecd velocity_l(0.0); /**< initial velocity of left state. */
-Vecd velocity_r(0.0); /**< initial velocity of right state. */
+Vecd velocity_l = Vecd::Zero(); /**< initial velocity of left state. */
+Vecd velocity_r = Vecd::Zero();; /**< initial velocity of right state. */
 Real p_l = 1.0;		  /**< initial pressure of left state. */
 Real p_r = 0.1;		  /**< initial pressure of right state. */
 //----------------------------------------------------------------------
@@ -46,11 +46,10 @@ class WavesInitialCondition
 	: public eulerian_compressible_fluid_dynamics::CompressibleFluidInitialCondition
 {
 public:
-	explicit WavesInitialCondition(EulerianFluidBody &water)
-		: eulerian_compressible_fluid_dynamics::CompressibleFluidInitialCondition(water){};
+	explicit WavesInitialCondition(SPHBody &sph_body)
+		: eulerian_compressible_fluid_dynamics::CompressibleFluidInitialCondition(sph_body){};
 
-protected:
-	void Update(size_t index_i, Real dt) override
+	void update(size_t index_i, Real dt)
 	{
 		if (pos_[index_i][0] < DL / 10.0)
 		{
@@ -60,7 +59,7 @@ protected:
 			Real rho_e = p_[index_i] / (gamma_ - 1.0);
 			vel_[index_i] = velocity_l;
 			mom_[index_i] = rho0_l * velocity_l;
-			E_[index_i] = rho_e + 0.5 * rho_[index_i] * vel_[index_i].normSqr();
+			E_[index_i] = rho_e + 0.5 * rho_[index_i] * vel_[index_i].squaredNorm();
 		}
 		if (pos_[index_i][0] > DL / 10.0)
 		{
@@ -70,7 +69,7 @@ protected:
 			Real rho_e = p_[index_i] / (gamma_ - 1.0);
 			vel_[index_i] = velocity_r;
 			mom_[index_i] = rho0_r * velocity_r;
-			E_[index_i] = rho_e + 0.5 * rho_[index_i] * vel_[index_i].normSqr();
+			E_[index_i] = rho_e + 0.5 * rho_[index_i] * vel_[index_i].squaredNorm();
 		}
 	}
 };
@@ -83,10 +82,8 @@ int main(int ac, char *av[])
 	//	Build up the environment of a SPHSystem with global controls.
 	//----------------------------------------------------------------------
 	SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-	// handle command line arguments
 	sph_system.handleCommandlineOptions(ac, av);
-	// output environment.
-	InOutput in_output(sph_system);
+	IOEnvironment io_environment(sph_system);
 	//----------------------------------------------------------------------
 	//	Create body, materials and particles.
 	//----------------------------------------------------------------------
@@ -99,26 +96,26 @@ int main(int ac, char *av[])
 	//	The inner relation defines the particle configuration for particles within a body.
 	//	The contact relation defines the particle configuration between the bodies.
 	//----------------------------------------------------------------------
-	BodyRelationInner wave_body_inner(wave_body);
+	InnerRelation wave_body_inner(wave_body);
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	WavesInitialCondition waves_initial_condition(wave_body);
+	SimpleDynamics<WavesInitialCondition> waves_initial_condition(wave_body);
 	// Initialize particle acceleration.
-	eulerian_compressible_fluid_dynamics::CompressibleFlowTimeStepInitialization initialize_wave_step(wave_body);
+	SimpleDynamics<eulerian_compressible_fluid_dynamics::CompressibleFlowTimeStepInitialization> initialize_wave_step(wave_body);
 	// Periodic BCs in y direction.
-	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition_y(wave_body, yAxis);
+	PeriodicConditionUsingCellLinkedList periodic_condition_y(wave_body, wave_body.getBodyShapeBounds(), yAxis);
 	// Time step size with considering sound wave speed.
-	eulerian_compressible_fluid_dynamics::AcousticTimeStepSize get_wave_time_step_size(wave_body);
+	ReduceDynamics<eulerian_compressible_fluid_dynamics::AcousticTimeStepSize> get_wave_time_step_size(wave_body);
 	// Pressure, density and energy relaxation algorithm by use HLLC Riemann solver.
-	eulerian_compressible_fluid_dynamics::PressureRelaxationHLLCRiemannInner pressure_relaxation(wave_body_inner);
-	eulerian_compressible_fluid_dynamics::DensityAndEnergyRelaxationHLLCRiemannInner density_and_energy_relaxation(wave_body_inner);
+	Dynamics1Level<eulerian_compressible_fluid_dynamics::Integration1stHalfHLLCRiemann> pressure_relaxation(wave_body_inner);
+	InteractionWithUpdate<eulerian_compressible_fluid_dynamics::Integration2ndHalfHLLCRiemann> density_and_energy_relaxation(wave_body_inner);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations, observations of the simulation.
 	//	Regression tests are also defined here.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToPlt body_states_recording(in_output, sph_system.real_bodies_);
+	BodyStatesRecordingToPlt body_states_recording(io_environment, sph_system.real_bodies_);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
@@ -132,8 +129,8 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	size_t number_of_iterations = sph_system.restart_step_;
 	int screen_output_interval = 100;
-	Real End_Time = 0.2; /**< End time. */
-	Real D_Time = 0.01;	 /**< Time stamps for output of body states. */
+	Real end_time = 0.2;
+	Real output_interval = 0.01;	 /**< Time stamps for output of body states. */
 	//----------------------------------------------------------------------
 	// Output the start states of bodies.
 	//----------------------------------------------------------------------
@@ -146,11 +143,11 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Main loop starts here.
 	//----------------------------------------------------------------------
-	while (GlobalStaticVariables::physical_time_ < End_Time)
+	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
 		//	Integrate time (loop) until the next output time.
-		while (integration_time < D_Time)
+		while (integration_time < output_interval)
 		{
 			initialize_wave_step.parallel_exec();
 			Real dt = get_wave_time_step_size.parallel_exec();

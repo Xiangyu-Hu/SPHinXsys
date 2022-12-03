@@ -1,8 +1,3 @@
-/**
- * @file solid_particles.cpp
- * @brief Definition of functions declared in solid_particles.h
- * @author	Xiangyu Hu and Chi Zhang
- */
 #include "solid_particles.h"
 #include "solid_particles_variable.h"
 
@@ -15,96 +10,93 @@ namespace SPH
 {
 	//=============================================================================================//
 	SolidParticles::SolidParticles(SPHBody &sph_body, Solid *solid)
-		: BaseParticles(sph_body, solid) {}
+		: BaseParticles(sph_body, solid), solid_(*solid) {}
 	//=================================================================================================//
 	void SolidParticles::initializeOtherVariables()
 	{
 		BaseParticles::initializeOtherVariables();
-
-		//----------------------------------------------------------------------
-		//		register particle data
-		//----------------------------------------------------------------------
-		registerVariable(pos0_, "InitialPosition", [&](size_t i) -> Vecd
-						 { return pos_[i]; });
+		registerVariable(pos0_, "InitialPosition", [&](size_t i) -> Vecd { return pos_[i];});
 		registerVariable(n_, "NormalDirection");
-		registerVariable(n0_, "InitialNormalDirection",
-						 [&](size_t i) -> Vecd
-						 { return n_[i]; });
-		registerVariable(B_, "CorrectionMatrix", Matd(1.0));
-	}
+		registerVariable(n0_, "InitialNormalDirection", [&](size_t i) -> Vecd { return n_[i];});
+		registerVariable(B_, "CorrectionMatrix", [&](size_t i) -> Matd { return Matd::Identity();});
+	} 
 	//=================================================================================================//
-	Vecd SolidParticles::getKernelGradient(size_t index_i, size_t index_j, Real dW_ij, Vecd &e_ij)
+	Vecd SolidParticles::getKernelGradient(size_t index_i, size_t index_j, Real dW_ijV_j, Vecd &e_ij)
 	{
-		return 0.5 * dW_ij * (B_[index_i] + B_[index_j]) * e_ij;
+		return 0.5 * dW_ijV_j * (B_[index_i] + B_[index_j]) * e_ij;
 	}
 	//=============================================================================================//
 	ElasticSolidParticles::
 		ElasticSolidParticles(SPHBody &sph_body, ElasticSolid *elastic_solid)
 		: SolidParticles(sph_body, elastic_solid),
-		  elastic_solid_(elastic_solid) {}
+		  elastic_solid_(*elastic_solid) {}
 	//=================================================================================================//
 	void ElasticSolidParticles::initializeOtherVariables()
 	{
 		SolidParticles::initializeOtherVariables();
-
-		//----------------------------------------------------------------------
-		//		register particle data
-		//----------------------------------------------------------------------
-		registerVariable(F_, "DeformationGradient", Matd(1.0));
+		/**
+		 *	register particle data
+		 */
+		registerVariable(F_, "DeformationGradient", [&](size_t i) -> Matd { return Matd::Identity();});
 		registerVariable(dF_dt_, "DeformationRate");
-		//----------------------------------------------------------------------
-		//		for FSI
-		//----------------------------------------------------------------------
+		/**
+		 *	register FSI data
+		 */
 		registerVariable(vel_ave_, "AverageVelocity");
 		registerVariable(acc_ave_, "AverageAcceleration");
-		//----------------------------------------------------------------------
-		//		add restart output particle data
-		//----------------------------------------------------------------------
+		/**
+		 *	add restart output particle data
+		 */
 		addVariableToRestart<Matd>("DeformationGradient");
-		//----------------------------------------------------------------------
-		//		add basic output particle data
-		//----------------------------------------------------------------------
+		/**
+		 *	add restart output particle data
+		 */		
 		addVariableToWrite<Vecd>("NormalDirection");
 		addDerivedVariableToWrite<Displacement>();
 		addDerivedVariableToWrite<VonMisesStress>();
 		addDerivedVariableToWrite<VonMisesStrain>();
 		addVariableToRestart<Matd>("DeformationGradient");
 		// get which stress measure is relevant for the material
-		stress_measure_ = elastic_solid_->getRelevantStressMeasureName();
+		stress_measure_ = elastic_solid_.getRelevantStressMeasureName();
 	}
 	//=================================================================================================//
 	Matd ElasticSolidParticles::getGreenLagrangeStrain(size_t particle_i)
 	{
 		Matd F = F_[particle_i];
-		return 0.5 * (~F * F - Matd(1.0));
+		return 0.5 * (F.transpose() * F - Matd::Identity());
 	}
 	//=================================================================================================//
 	Vecd ElasticSolidParticles::getPrincipalStrains(size_t particle_i)
 	{
-		Matd epsilon = getGreenLagrangeStrain(particle_i); // calculation of the Green-Lagrange strain tensor
+		Matd epsilon = getGreenLagrangeStrain(particle_i); 
 		return getPrincipalValuesFromMatrix(epsilon);
 	}
 	//=================================================================================================//
 	Matd ElasticSolidParticles::getStressCauchy(size_t particle_i)
 	{
 		Matd F = F_[particle_i];
-		Matd stress_PK2 = elastic_solid_->StressPK2(F, particle_i);
-		return (1.0 / det(F)) * F * stress_PK2 * ~F;
+		Matd stress_PK2 = elastic_solid_.StressPK2(F, particle_i);
+		return (1.0 / F.determinant()) * F * stress_PK2 * F.transpose();
 	}
 	//=================================================================================================//
 	Matd ElasticSolidParticles::getStressPK2(size_t particle_i)
 	{
-		return elastic_solid_->StressPK2(F_[particle_i], particle_i);
+		return elastic_solid_.StressPK2(F_[particle_i], particle_i);
 	}
 	//=================================================================================================//
 	Vecd ElasticSolidParticles::getPrincipalStresses(size_t particle_i)
 	{
 		Matd sigma;
-		if (stress_measure_ == "Cauchy") {
+		if (stress_measure_ == "Cauchy")
+		{
 			sigma = getStressCauchy(particle_i); // Cauchy stress
-		} else if (stress_measure_ == "PK2") {
+		}
+		else if (stress_measure_ == "PK2")
+		{
 			sigma = getStressPK2(particle_i); // Second Piola-Kirchhoff stress
-		} else {
+		}
+		else
+		{
 			throw std::runtime_error("get_Principal_stresses: wrong input");
 		}
 
@@ -114,11 +106,16 @@ namespace SPH
 	Real ElasticSolidParticles::getVonMisesStress(size_t particle_i)
 	{
 		Matd sigma;
-		if (stress_measure_ == "Cauchy") {
+		if (stress_measure_ == "Cauchy")
+		{
 			sigma = getStressCauchy(particle_i); // Cauchy stress
-		} else if (stress_measure_ == "PK2") {
+		}
+		else if (stress_measure_ == "PK2")
+		{
 			sigma = getStressPK2(particle_i); // Second Piola-Kirchhoff stress
-		} else {
+		}
+		else
+		{
 			throw std::runtime_error("get_von_Mises_stress: wrong input");
 		}
 
@@ -137,14 +134,16 @@ namespace SPH
 			}
 			else if (strain_measure == "dynamic")
 			{
-				strain = getVonMisesStrainDynamic(index_i, elastic_solid_->PoissonRatio());
+				strain = getVonMisesStrainDynamic(index_i, elastic_solid_.PoissonRatio());
 			}
 			else
 			{
 				throw std::runtime_error("getVonMisesStrainVector: wrong input");
 			}
+
 			strain_vector.push_back(strain);
 		}
+
 		return strain_vector;
 	}
 	//=================================================================================================//
@@ -160,7 +159,7 @@ namespace SPH
 			}
 			else if (strain_measure == "dynamic")
 			{
-				strain = getVonMisesStrainDynamic(index_i, elastic_solid_->PoissonRatio());
+				strain = getVonMisesStrainDynamic(index_i, elastic_solid_.PoissonRatio());
 			}
 			else
 			{
@@ -177,7 +176,8 @@ namespace SPH
 		Real stress_max = 0.0;
 		for (size_t index_i = 0; index_i < pos0_.size(); index_i++)
 		{
-			Real stress = getPrincipalStresses(index_i)[0]; // take the max. component, which is the first one, this represents the max. tension
+			/** take the max. component, which is the first one, this represents the max. tension. */
+			Real stress = getPrincipalStresses(index_i)[0]; 
 			if (stress_max < stress)
 				stress_max = stress;
 		}
@@ -253,13 +253,17 @@ namespace SPH
 		: ElasticSolidParticles(sph_body, elastic_solid), thickness_ref_(1.0)
 	{
 		//----------------------------------------------------------------------
+		//		modify kernel function for surface particles
+		//----------------------------------------------------------------------
+		sph_body.sph_adaptation_->getKernel()->reduceOnce();
+		//----------------------------------------------------------------------
 		//		register geometric data only
 		//----------------------------------------------------------------------
 		registerVariable(n_, "NormalDirection");
 		registerVariable(thickness_, "Thickness");
-		//----------------------------------------------------------------------
-		//		add particle reload data
-		//----------------------------------------------------------------------
+		/**
+		 * add particle reload data
+		 */
 		addVariableNameToList<Vecd>(variables_to_reload_, "NormalDirection");
 		addVariableNameToList<Real>(variables_to_reload_, "Thickness");
 	}
@@ -267,9 +271,9 @@ namespace SPH
 	void ShellParticles::initializeOtherVariables()
 	{
 		BaseParticles::initializeOtherVariables();
-		//----------------------------------------------------------------------
-		//		register particle data
-		//----------------------------------------------------------------------
+		/** 
+		 * register particle data
+		 */
 		registerVariable(pos0_, "InitialPosition",
 						 [&](size_t i) -> Vecd
 						 { return pos_[i]; });
@@ -277,8 +281,8 @@ namespace SPH
 						 [&](size_t i) -> Vecd
 						 { return n_[i]; });
 		registerVariable(transformation_matrix_, "TransformationMatrix");
-		registerVariable(B_, "CorrectionMatrix", Matd(1.0));
-		registerVariable(F_, "DeformationGradient", Matd(1.0));
+		registerVariable(B_, "CorrectionMatrix",    [&](size_t i) -> Matd { return Matd::Identity();});
+		registerVariable(F_, "DeformationGradient", [&](size_t i) -> Matd { return Matd::Identity();});
 		registerVariable(dF_dt_, "DeformationRate");
 		registerVariable(pseudo_n_, "PseudoNormal",
 						 [&](size_t i) -> Vecd
@@ -293,30 +297,30 @@ namespace SPH
 		registerVariable(global_shear_stress_, "GlobalShearStress");
 		registerVariable(global_stress_, "GlobalStress");
 		registerVariable(global_moment_, "GlobalMoment");
-		//----------------------------------------------------------------------
-		//		for FSI
-		//----------------------------------------------------------------------
+		/** 
+		 * for FSI
+		 */
 		registerVariable(vel_ave_, "AverageVelocity");
 		registerVariable(acc_ave_, "AverageAcceleration");
-		//----------------------------------------------------------------------
-		//		add restart output particle data
-		//----------------------------------------------------------------------
+		/** 
+		 * for rotatoin. 
+		 */
 		addVariableToRestart<Matd>("DeformationGradient");
 		addVariableToRestart<Vecd>("PseudoNormal");
 		addVariableToRestart<Vecd>("Rotation");
 		addVariableToRestart<Vecd>("AngularVelocity");
-		//----------------------------------------------------------------------
-		//		add basic output particle data
-		//----------------------------------------------------------------------
+		/** 
+		 * add basic output particle data
+		 */
 		addVariableToWrite<Vecd>("NormalDirection");
 		addDerivedVariableToWrite<Displacement>();
 		addDerivedVariableToWrite<VonMisesStress>();
 		addDerivedVariableToWrite<VonMisesStrain>();
 		addVariableToRestart<Matd>("DeformationGradient");
 		addVariableToWrite<Vecd>("Rotation");
-		//----------------------------------------------------------------------
-		//		initialize transformation matrix
-		//----------------------------------------------------------------------
+		/** 
+		 * initialize transformation matrix
+		 */
 		for (size_t i = 0; i != real_particles_bound_; ++i)
 		{
 			transformation_matrix_[i] = getTransformationMatrix(n_[i]);

@@ -1,5 +1,14 @@
 # ![](SPHINXsys/logo.png) SPHinXsys
 
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Linux](https://svgshare.com/i/Zhy.svg)](https://svgshare.com/i/Zhy.svg)
+[![Windows](https://svgshare.com/i/ZhY.svg)](https://svgshare.com/i/ZhY.svg)
+[![macOS](https://svgshare.com/i/ZjP.svg)](https://svgshare.com/i/ZjP.svg)
+![ci workflow](https://github.com/Xiangyu-Hu/SPHinXsys/actions/workflows/ci.yml/badge.svg?event=push)
+[![Twitter](https://img.shields.io/twitter/url/https/twitter.com/sphinxsys.svg?style=social&label=Follow%20%40sphinxsys)](https://twitter.com/sphinxsys)
+[![YouTube](https://img.shields.io/badge/YouTube-FF0000.svg?style=flat&logo=YouTube&logoColor=white)](https://www.youtube.com/channel/UCexdJbxOn9dvim6Jg1dnCFQ)
+[![Bilibili](https://img.shields.io/badge/bilibili-%E5%93%94%E5%93%A9%E5%93%94%E5%93%A9-critical)](https://space.bilibili.com/1761273682/video)
+
 ## Description
 
 SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle Hydrodynamics for industrial compleX systems. 
@@ -11,45 +20,63 @@ SPHinXsys is a multi-physics, multi-resolution SPH library.
 Although it is not a standalone application itself, 
 many examples designated for the specific type of applications are provided.
 
-[![GitHub license](https://img.shields.io/github/license/Naereen/StrapDown.js.svg)](https://github.com/Xiangyu-Hu/SPHinXsys/LICENSE)
-[![Linux](https://svgshare.com/i/Zhy.svg)](https://svgshare.com/i/Zhy.svg)
-[![Windows](https://svgshare.com/i/ZhY.svg)](https://svgshare.com/i/ZhY.svg)
-![ci workflow](https://github.com/Xiangyu-Hu/SPHinXsys/actions/workflows/ci.yml/badge.svg?event=push)
-[![Twitter](https://img.shields.io/twitter/url/https/twitter.com/sphinxsys.svg?style=social&label=Follow%20%40sphinxsys)](https://twitter.com/sphinxsys)
-[![YouTube](https://img.shields.io/badge/YouTube-FF0000.svg?style=flat&logo=YouTube&logoColor=white)](https://www.youtube.com/channel/UCexdJbxOn9dvim6Jg1dnCFQ)
+## Examples at a glance
+
+Using SPHinXsys library, straightforward and fast multi-physics modeling can be achieved. 
+Here, we present several short examples in flow, solid dynamics, fluid structure interactions (FSI) and dynamic solid contact.
+
+<a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/2d_examples/test_2d_dambreak/Dambreak.cpp">
+<img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/dambreak.gif" height="192px"></a>
+<a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/2d_examples/test_2d_fsi2/fsi2.cpp"> 
+<img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/fsi-2d.gif" height="168px"></a>
+<a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/3d_examples/test_3d_elasticSolid_shell_collision/3d_elasticSolid_shell_collision.cpp"> 
+<img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/ball-shell.gif" height="192px"></a>
+<a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/3d_examples/test_3d_twisting_column/twisting_column.cpp"> 
+<img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/twisting.gif" height="168px"></a>
 
 ## Journal publications
 
-The algorithms in SPHinXsys are based on the following publications:
+Main Reference:
 
-1. Luhui Han and Xiangyu Hu, 
+1. C. Zhang, M. Rezavand, Y. Zhu, Y. Yu, D. Wu, W. Zhang, J. Wang, X. Hu, "SPHinXsys: an open-source multi-physics and multi-resolution library based on smoothed particle hydrodynamics", Computer Physics Communications, 267, 108066, 2021.
+
+The algorithms in SPHinXsys are based on the following publications:
+1. Chi Zhang and Yujie Zhu and Dong Wu and Nikolaus A Adams and Xiagnyu Hu, 
+"Smoothed particle hydrodynamics: Methodology development and recent achievement", 
+Journal of Hydrodynamics 34(5), 767--805, 2022 
+
+2. Luhui Han and Xiangyu Hu, 
 "SPH modeling of fluid-structure interaction", 
 Journal of Hydrodynamics, 2018: 30(1):62-69.
 
-2. Chi Zhang and Massoud Rezavand and Xiangyu Hu, 
+3. Chi Zhang and Massoud Rezavand and Xiangyu Hu, 
 "Dual-criteria time stepping for weakly compressible smoothed particle hydrodynamics", 
 Journal of Computational Physics 404 (2020) 109135
 
-3. Chi Zhang et al. 
+4. Chi Zhang et al. 
 "SPHinXsys: An open-source meshless, multi-resolution and multi-physics library",
 Software Impacts, 6 (2020) 100033
 
-4. Chi Zhang, Massoud Rezavand, Xiangyu Hu,
-"A multi-resolution SPH method for fluid-structure interactions",
+5. Chi Zhang, Massoud Rezavand, Xiangyu Hu,
+A multi-resolution SPH method for fluid-structure interactions",
 Journal of Computational Physics,  Journal of Computational Physics, 429 (2021) 110028.
 
-5. Chi Zhang, Yanji Wei, Frederic Dias, Xiangyu Hu,
+6. Chi Zhang, Yanji Wei, Frederic Dias, Xiangyu Hu,
 "An efficient fully Lagrangian solver for modeling wave interaction with oscillating wave energy converter",
 Ocean Engineering, 
 Volume 236, (2021) 109540
 
-6. Chi Zhang, Jianhang Wang, Massoud Rezavand, Dong Wu, Xiangyu Hu,
+7. Chi Zhang, Jianhang Wang, Massoud Rezavand, Dong Wu, Xiangyu Hu,
 "An integrative smoothed particle hydrodynamics framework for modeling cardiac function",
  Computer Methods in Applied Mechanics and Engineering, 381, 113847, 2021.
 
- 7. C. Zhang, M. Rezavand, Y. Zhu, Y. Yu, D. Wu, W. Zhang, J. Wang, X. Hu, "SPHinXsys: an open-source multi-physics and multi-resolution library based on smoothed particle hydrodynamics", Computer Physics Communications, 267, 108066, 2021.
+8. Yujie Zhu, Chi Zhang, Yongchuan Yu, Xiangyu Hu, "A CAD-compatible body-fitted particle generator for arbitrarily complex geometry and its application to wave-structure interaction", Journal of Hydrodynamics, 33(2), 195-206, 2021. 
 
- 8. Yujie Zhu, Chi Zhang, Yongchuan Yu, Xiangyu Hu, "A CAD-compatible body-fitted particle generator for arbitrarily complex geometry and its application to wave-structure interaction", Journal of Hydrodynamics, 33(2), 195-206, 2021.
+9. Chi Zhang, Yujie Zhu, Xiuxiu Lyu, Xiangyu Hu, "An efficient and generalized solid boundary condition for SPH: Applications to multi-phase flow and fluid–structure interaction", European Journal of Mechanics - B/Fluids, 94, 276-292, 2022. 
+
+10. Yujie Zhu, Chi Zhang, Xiangyu Hu, "A dynamic relaxation method with operator splitting and random-choice strategy for SPH", Journal of Computational Physics, 458,
+111105, 2022.
+
 
 ## Software Architecture
 

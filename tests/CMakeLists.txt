@@ -1,34 +1,25 @@
-option(BUILD_2D_EXAMPLES "BUILD_2D_EXAMPLES" 1)
-option(BUILD_3D_EXAMPLES "BUILD_3D_EXAMPLES" 1)
-option(BUILD_UNIT_TESTS "BUILD_UNIT_TESTS" 1)
+option(SPHINXSYS_BUILD_2D_EXAMPLES "SPHINXSYS_BUILD_2D_EXAMPLES" ON)
+option(SPHINXSYS_BUILD_3D_EXAMPLES "SPHINXSYS_BUILD_3D_EXAMPLES" ON)
+option(SPHINXSYS_BUILD_UNIT_TESTS  "SPHINXSYS_BUILD_UNIT_TESTS"  ON)
 
-if(NOT EMSCRIPTEN)
-	find_package(GTest REQUIRED)
-	include(GoogleTest)
+find_package(GTest CONFIG REQUIRED)
+include(GoogleTest)
 
-	if(ONLY_3D)
-		set(BUILD_2D_EXAMPLES 0)
-	endif()
+target_link_libraries(sphinxsys_core INTERFACE GTest::gtest GTest::gtest_main)
 
-	if(BUILD_2D_EXAMPLES)
-		ADD_SUBDIRECTORY(2d_examples)
-	endif()
-
-	if(BUILD_UNIT_TESTS)
-		ADD_SUBDIRECTORY(unit_tests_src)
-	endif()
-
-	if(NOT SPH_ONLY_STATIC_BUILD)
-		add_subdirectory(modules)
-	endif()
+if(SPHINXSYS_2D AND SPHINXSYS_BUILD_2D_EXAMPLES)
+	ADD_SUBDIRECTORY(2d_examples)
 endif()
 
-if(BUILD_3D_EXAMPLES)
-	ADD_SUBDIRECTORY(3d_examples)
-	ADD_SUBDIRECTORY(webassembly_models)
+if(SPHINXSYS_BUILD_UNIT_TESTS)
+	ADD_SUBDIRECTORY(unit_tests_src)
 endif()
 
-STRING( REGEX REPLACE ".*/(.*)" "\\1" CURRENT_FOLDER ${CMAKE_CURRENT_SOURCE_DIR} )
-PROJECT("${CURRENT_FOLDER}")
-
-SET(PYTHONSCRIPTSTORE ${PROJECT_NINARY_DIR}/PythonScript)
+add_subdirectory(modules)
+	
+if(SPHINXSYS_3D AND SPHINXSYS_BUILD_3D_EXAMPLES)
+    ADD_SUBDIRECTORY(3d_examples)
+    if(EMSCRIPTEN)
+        ADD_SUBDIRECTORY(webassembly_models)
+    endif()
+endif()

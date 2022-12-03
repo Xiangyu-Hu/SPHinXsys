@@ -73,13 +73,11 @@ public:
 class InletInflowCondition : public fluid_dynamics::EmitterInflowCondition
 {
 public:
-	InletInflowCondition(FluidBody &body, BodyAlignedBoxByParticle &aligned_box_part)
-		: EmitterInflowCondition(body, aligned_box_part)
-	{
-		inflow_pressure_ = 0.0;
-	}
+	InletInflowCondition(BodyAlignedBoxByParticle &aligned_box_part)
+		: EmitterInflowCondition(aligned_box_part) {}
 
-	Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
+protected:
+	virtual Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
 	{
 		return Vec2d(2.0, 0.0);
 	}
@@ -116,38 +114,39 @@ int main()
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	ComplexBodyRelation water_body_complex(water_body, {&wall});
-	BodyRelationContact fluid_observer_contact_relation(fluid_observer, {&water_body});
+	ComplexRelation water_body_complex(water_body, {&wall});
+	ContactRelation fluid_observer_contact_relation(fluid_observer, {&water_body});
 	//----------------------------------------------------------------------
 	//	Define all numerical methods which are used in this case.
 	//----------------------------------------------------------------------
-	Gravity gravity(Vecd(0.0, -gravity_g));
+	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_body_complex);
+	Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> density_relaxation(water_body_complex);
+	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_density_by_summation(water_body_complex);
+	InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex>
+		indicate_free_surface(water_body_complex);
+	water_body.addBodyStateForRecording<Real>("PositionDivergence"); // for debug
+	water_body.addBodyStateForRecording<int>("SurfaceIndicator");	 // for debug
+
+	SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
+	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_body, gravity_ptr);
+	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_body, U_f);
+	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_body);
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
-	TimeStepInitialization initialize_a_fluid_step(water_body, gravity);
-	/** Emitter. */
 	BodyAlignedBoxByParticle emitter(
 		water_body, makeShared<AlignedBoxShape>(Transform2d(inlet_translation), inlet_halfsize));
-	InletInflowCondition inflow_condition(water_body, emitter);
-	fluid_dynamics::EmitterInflowInjecting emitter_injection(water_body, emitter, 350, 0, true);
-	fluid_dynamics::DensitySummationFreeSurfaceComplex update_density_by_summation(water_body_complex);
-	fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex indicate_free_surface(water_body_complex);
-	/** We can output a method-specific particle data for debug */
-	water_body.addBodyStateForRecording<Real>("PositionDivergence");
-	water_body.addBodyStateForRecording<int>("SurfaceIndicator");
-	fluid_dynamics::AdvectionTimeStepSize get_fluid_advection_time_step_size(water_body, U_f);
-	fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_body);
-	fluid_dynamics::PressureRelaxationRiemannWithWall pressure_relaxation(water_body_complex);
-	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_body_complex);
+	SimpleDynamics<InletInflowCondition, BodyAlignedBoxByParticle> inflow_condition(emitter);
+	SimpleDynamics<fluid_dynamics::EmitterInflowInjection, BodyAlignedBoxByParticle> emitter_injection(emitter, 350, 0);
+
 	//----------------------------------------------------------------------
 	//	File Output
 	//----------------------------------------------------------------------
-	InOutput in_output(system);
-	BodyStatesRecordingToVtp body_states_recording(in_output, system.real_bodies_);
-	RestartIO restart_io(in_output, system.real_bodies_);
-	RegressionTestDynamicTimeWarping<BodyReducedQuantityRecording<TotalMechanicalEnergy>>
-		write_water_mechanical_energy(in_output, water_body, gravity);
+	IOEnvironment io_environment(system);
+	BodyStatesRecordingToVtp body_states_recording(io_environment, system.real_bodies_);
+	RestartIO restart_io(io_environment, system.real_bodies_);
+	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
+		write_water_mechanical_energy(io_environment, water_body, gravity_ptr);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-		write_recorded_water_pressure("Pressure", in_output, fluid_observer_contact_relation);
+		write_recorded_water_pressure("Pressure", io_environment, fluid_observer_contact_relation);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
@@ -157,23 +156,14 @@ int main()
 	wall_normal_direction.parallel_exec();
 	indicate_free_surface.parallel_exec();
 	//----------------------------------------------------------------------
-	//	Load restart file if necessary.
-	//----------------------------------------------------------------------
-	if (system.restart_step_ != 0)
-	{
-		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(system.restart_step_);
-		water_body.updateCellLinkedList();
-		water_body_complex.updateConfiguration();
-	}
-	//----------------------------------------------------------------------
 	//	Time stepping control parameters.
 	//----------------------------------------------------------------------
 	size_t number_of_iterations = system.restart_step_;
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
-	Real End_Time = 30.0; /**< End time. */
-	Real D_Time = 0.1;	  /**< Time stamps for output of body states. */
-	Real dt = 0.0;		  /**< Default acoustic time step sizes. */
+	Real end_time = 30.0;
+	Real output_interval = 0.1;
+	Real dt = 0.0; /**< Default acoustic time step sizes. */
 	/** statistics for computing CPU time. */
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
@@ -185,11 +175,11 @@ int main()
 	//----------------------------------------------------------------------
 	//	Main loop starts here.
 	//----------------------------------------------------------------------
-	while (GlobalStaticVariables::physical_time_ < End_Time)
+	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
 		/** Integrate time (loop) until the next output time. */
-		while (integration_time < D_Time)
+		while (integration_time < output_interval)
 		{
 			/** Acceleration due to viscous force and gravity. */
 			initialize_a_fluid_step.parallel_exec();
@@ -203,6 +193,7 @@ int main()
 				pressure_relaxation.parallel_exec(dt);
 				inflow_condition.parallel_exec();
 				density_relaxation.parallel_exec(dt);
+				inflow_condition.parallel_exec();
 				dt = get_fluid_time_step_size.parallel_exec();
 				relaxation_time += dt;
 				integration_time += dt;
@@ -221,10 +212,10 @@ int main()
 			number_of_iterations++;
 
 			/** inflow emitter injection*/
-			emitter_injection.exec();
+			emitter_injection.parallel_exec();
 			/** Update cell linked list and configuration. */
 
-			water_body.updateCellLinkedList();
+			water_body.updateCellLinkedListWithParticleSort(100);
 			water_body_complex.updateConfiguration();
 			fluid_observer_contact_relation.updateConfiguration();
 		}

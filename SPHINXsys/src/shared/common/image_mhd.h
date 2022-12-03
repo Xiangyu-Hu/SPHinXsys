@@ -1,32 +1,31 @@
 /* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
-* @file image_mesh_shape.h
-* @brief x
-* @details x
-*			x
-* @author	Yijin Mao
-*/
+ * @file 	image_mesh_shape.h
+ * @brief 	Immage process for geometry representation. 
+ * @author	Yijin Mao
+ */
+
 #ifndef IMAGE_MHD_H
 #define IMAGE_MHD_H
 
@@ -122,10 +121,10 @@ namespace SPH {
 		Real get_min_value() { return min_value_; };
 		Real get_max_value() { return max_value_; };
 
-		Vec3d findClosestPoint(const Vec3d& input_pnt);
+		Vec3d findClosestPoint(const Vec3d& probe_point);
 		BoundingBox findBounds();
-		Real findValueAtPoint(const Vec3d& input_pnt);
-		Vec3d findNormalAtPoint(const Vec3d & input_pnt);
+		Real findValueAtPoint(const Vec3d& probe_point);
+		Vec3d findNormalAtPoint(const Vec3d & probe_point);
 
 		void write(std::string filename, Output_Mode=BINARY);
 
@@ -151,7 +150,7 @@ namespace SPH {
 		Real max_value_;
 		T *data_;
 
-		std::vector<int> findNeighbors(const Vec3d& input_pnt, Vec3i& this_cell);
+		std::vector<int> findNeighbors(const Vec3d& probe_point, Vec3i& this_cell);
 		Vec3d computeGradientAtCell(int i);
 		Vec3d computeNormalAtCell(int i);
 		T getValueAtCell(int i);

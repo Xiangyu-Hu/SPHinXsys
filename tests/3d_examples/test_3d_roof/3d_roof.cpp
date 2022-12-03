@@ -3,9 +3,10 @@
  * @brief 	This is the benchmark test of the shell.
  * @details  We consider the deformation of a cylindrical surface.
  * @author 	Dong Wu, Chi Zhang and Xiangyu Hu
- * @version  0.1
+ * @ref 	doi.org/10.1007/s00466-017-1498-9, doi.org/10.1016/0045-7825(89)90098-4
  */
 #include "sphinxsys.h"
+#include <gtest/gtest.h>
 
 using namespace SPH;
 
@@ -35,6 +36,16 @@ Real physical_viscosity = 7.0e3; /** physical damping, here we choose the same v
 
 Real time_to_full_external_force = 0.1;
 Real gravitational_acceleration = -10.0;
+
+Real observed_quantity_0 = 0.0;
+Real observed_quantity_n = 0.0;
+Real displ_max_reference = 0.3024;
+TEST(Plate, MaxDisplacement)
+{
+	Real displ_max = observed_quantity_0 - observed_quantity_n;
+	EXPECT_NEAR(displ_max, displ_max_reference, displ_max_reference * 0.1);
+	std::cout << "displ_max: " << displ_max << std::endl;
+}
 
 /** Define application dependent particle generator for thin structure. */
 class CylinderParticleGenerator : public SurfaceParticleGenerator
@@ -73,7 +84,7 @@ public:
 private:
 	void tagManually(size_t index_i)
 	{
-		if (base_particles_->pos_[index_i][1] < 0.0 || base_particles_->pos_[index_i][1] > height - 0.5 * particle_spacing_ref)
+		if (base_particles_.pos_[index_i][1] < 0.0 || base_particles_.pos_[index_i][1] > height - 0.5 * particle_spacing_ref)
 		{
 			body_part_particles_.push_back(index_i);
 		}
@@ -99,14 +110,14 @@ public:
 /**
  *  The main program
  */
-int main()
+int main(int ac, char *av[])
 {
 	/** Setup the system. */
 	SPHSystem system(system_domain_bounds, particle_spacing_ref);
 
 	/** Create a Cylinder body. */
 	SolidBody cylinder_body(system, makeShared<DefaultShape>("CylinderBody"));
-	cylinder_body.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	cylinder_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	cylinder_body.generateParticles<CylinderParticleGenerator>();
 	/** Define Observer. */
 	ObserverBody cylinder_observer(system, "CylinderObserver");
@@ -116,38 +127,37 @@ int main()
 	 *  The contact map gives the data connections between the bodies
 	 *  basically the the range of bodies to build neighbor particle lists
 	 */
-	BodyRelationInner cylinder_body_inner(cylinder_body);
-	BodyRelationContact cylinder_observer_contact(cylinder_observer, {&cylinder_body});
+	InnerRelation cylinder_body_inner(cylinder_body);
+	ContactRelation cylinder_observer_contact(cylinder_observer, {&cylinder_body});
 
 	/** Common particle dynamics. */
-	TimeDependentExternalForce external_force(Vec3d(0.0, 0.0, gravitational_acceleration));
-	TimeStepInitialization initialize_external_force(cylinder_body, external_force);
+	SimpleDynamics<TimeStepInitialization> initialize_external_force(cylinder_body, 
+		makeShared<TimeDependentExternalForce>(Vec3d(0.0, 0.0, gravitational_acceleration)));
 
 	/**
 	 * This section define all numerical methods will be used in this case.
 	 */
 	/** Corrected configuration. */
-	thin_structure_dynamics::ShellCorrectConfiguration
+	InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration>
 		corrected_configuration(cylinder_body_inner);
 	/** Time step size calculation. */
-	thin_structure_dynamics::ShellAcousticTimeStepSize computing_time_step_size(cylinder_body);
+	ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(cylinder_body);
 	/** stress relaxation. */
-	thin_structure_dynamics::ShellStressRelaxationFirstHalf
+	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf>
 		stress_relaxation_first_half(cylinder_body_inner);
-	thin_structure_dynamics::ShellStressRelaxationSecondHalf
+	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf>
 		stress_relaxation_second_half(cylinder_body_inner);
 	BoundaryGeometry boundary_geometry(cylinder_body, "BoundaryGeometry");
-	solid_dynamics::ConstrainSolidBodyRegionVelocity
-		constrain_holder(cylinder_body, boundary_geometry, Vecd(0.0, 1.0, 0.0));
-	DampingWithRandomChoice<DampingBySplittingInner<Vecd>>
+	SimpleDynamics<solid_dynamics::FixedInAxisDirection, BoundaryGeometry> constrain_holder(boundary_geometry, Vecd(0.0, 1.0, 0.0));
+	DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vecd>>>
 		cylinder_position_damping(0.2, cylinder_body_inner, "Velocity", physical_viscosity);
-	DampingWithRandomChoice<DampingBySplittingInner<Vecd>>
+	DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vecd>>>
 		cylinder_rotation_damping(0.2, cylinder_body_inner, "AngularVelocity", physical_viscosity);
 	/** Output */
-	InOutput in_output(system);
-	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
+	IOEnvironment io_environment(system);
+	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		write_cylinder_max_displacement("Position", in_output, cylinder_observer_contact);
+		write_cylinder_max_displacement("Position", io_environment, cylinder_observer_contact);
 
 	/** Apply initial condition. */
 	system.initializeSystemCellLinkedLists();
@@ -161,6 +171,7 @@ int main()
 	GlobalStaticVariables::physical_time_ = 0.0;
 	write_states.writeToFile(0);
 	write_cylinder_max_displacement.writeToFile(0);
+	observed_quantity_0 = (*write_cylinder_max_displacement.getObservedQuantity())[0][2];
 
 	/** Setup physical parameters. */
 	int ite = 0;
@@ -213,6 +224,8 @@ int main()
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	write_cylinder_max_displacement.newResultTest();
+	observed_quantity_n = (*write_cylinder_max_displacement.getObservedQuantity())[0][2];
 
-	return 0;
+	testing::InitGoogleTest(&ac, av);
+	return RUN_ALL_TESTS();
 }

@@ -1,143 +1,92 @@
-#---------------------------------------
-# SPHINXSYS V.1.0.0
-#---------------------------------------
 cmake_minimum_required(VERSION 3.16)
 project(SPHINXsys VERSION 1.0.0 LANGUAGES CXX)
 
 set(SPHINXSYS_PROJECT_DIR ${PROJECT_SOURCE_DIR})
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${SPHINXSYS_PROJECT_DIR}/cmake)
+include(Common) # brings macro to current namespace
 
-###### Change settings in this file if you want to build with Simbody and/or oneTBB source code ######
-option(SPH_ONLY_STATIC_BUILD "SPH_ONLY_STATIC_BUILD" 0)
-option(ONLY_3D "ONLY_3D" 0)
-option(BUILD_WITH_SIMBODY "BUILD_WITH_SIMBODY" 0)
-option(EMSCRIPTEN "EMSCRIPTEN" 0)
-option(BUILD_SPHINXSYS_TESTS "BUILD_SPHINXSYS_TESTS" 1)
+#------ Options
+option(SPHINXSYS_2D "Build sphinxsys_2d library" ON)
+option(SPHINXSYS_3D "Build sphinxsys_3d library" ON)
+option(SPHINXSYS_BUILD_TESTS "Build tests" ON)
+option(SPHINXSYS_DEVELOPER_MODE "Build tests" ON)
 
-if(EMSCRIPTEN)
-    set(SPH_ONLY_STATIC_BUILD 1)
-    set(BUILD_WITH_SIMBODY 1)
-    set(ONLY_3D 1)
-    set(BUILD_SPHINXSYS_TESTS 1)
-    add_definitions(-D__SIMBODY_WITHOUT_LAPACK__)
-    add_definitions(-D__EIGEN__)
-    add_definitions(-D__EMSCRIPTEN__)
+#------ Global properties (Some cannot be set on INTERFACE targets)
+set(CMAKE_VERBOSE_MAKEFILE OFF CACHE BOOL "Enable verbose compilation commands for Makefile and Ninja" FORCE) # Extra fluff needed for Ninja: https://github.com/ninja-build/ninja/issues/900
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # Generate `compile_commands.json` file which is necessary for code completioner, static analyzer, etc
 
-    remove_definitions(-DTBB_2021_2_0)
-    set(TBB_ROOT ${SPHINXSYS_PROJECT_DIR}/3rd_party/wasmtbb)
-    include_directories("${TBB_ROOT}/include")
-    set(OBJDIR "${TBB_ROOT}/build/linux_wasm32_emscripten_emscripten_wasm32_release")
-    file(GLOB TBB_OBJECTS ${OBJDIR}/*.o)
+#set(CXX_STANDARD_REQUIRED ON) # C++ standard requirement for targets is NOT optional 
+set(CXX_EXTENSIONS OFF) # Disable any non-standard compiler specific C++ extensions.
+
+#------ Declare core library
+add_library(sphinxsys_core INTERFACE)
+
+#------ Local properties
+target_compile_features(sphinxsys_core INTERFACE cxx_std_17) # Requires a compiler supporting at least C++17
+### Generic properties below enabled for INTERFACE targets only for CMake>=3.19 
+#set_target_properties(sphinxsys_core PROPERTIES CXX_EXTENSIONS OFF) # Disable any non-standard compiler specific C++ extensions
+#set_target_properties(sphinxsys_core PROPERTIES CXX_STANDARD_REQUIRED ON) # C++ standard requirement for targets is NOT optional
+#set_target_properties(sphinxsys_core PROPERTIES CXX_STANDARD 17) 
+
+if(${CMAKE_SYSTEM_NAME} MATCHES Windows)
+    set_target_properties(sphinxsys_core PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON) # For correct DLL generation on Windows
+    target_compile_definitions(sphinxsys_core INTERFACE _USE_MATH_DEFINES NOMINMAX)
+    target_compile_options(sphinxsys_core INTERFACE /MP)
+    target_compile_options(sphinxsys_core INTERFACE /permissive-) 
+    # target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:/W4 /WX>) # TODO: For when one gets rid of Simbody 
 else()
-    set(BOOST_AVAILABLE 1)
-    add_definitions(-DBOOST_AVAILABLE)
+    target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Werror>)
+    # target_compile_options(sphinxsys_core INTERFACE -pedantic-errors) # TODO: after initial rework merged
+    # target_compile_options(sphinxsys_core INTERFACE  $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Wall -Wextra>) # TODO: For when one gets rid of Simbody 
 endif()
 
-if(BUILD_WITH_SIMBODY)
-    add_definitions(-D__SIMBODY_WITHOUT_LAPACK__)
-    add_definitions(-D__EIGEN__)
-    set(EIGEN_ROOT ${SPHINXSYS_PROJECT_DIR}/3rd_party/eigen)
-    message("${EIGEN_ROOT}")
-    include_directories("${EIGEN_ROOT}")
+#------ Dependencies
+### SIMD flags
+find_package(SIMD QUIET)
+target_compile_options(sphinxsys_core INTERFACE ${SIMD_CXX_FLAGS})
+### Simbody
+find_package(Simbody CONFIG REQUIRED)
+set(Simbody_LIBS
+    $<$<BOOL:${Simbody_LIBRARIES}>:${Simbody_LIBRARIES}>               # contains "SimTKcommon SimTKmath SimTKsimbody" in triplet with dynamic linking, empty otherwise
+    $<$<BOOL:${Simbody_STATIC_LIBRARIES}>:${Simbody_STATIC_LIBRARIES}> # contains "SimTKcommon_static SimTKmath_static SimTKsimbody_static" in triplet with static linking, empty otherwise
+)
+target_link_libraries(sphinxsys_core INTERFACE ${Simbody_LIBS})
+target_compile_definitions(sphinxsys_core INTERFACE _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING) # Because of Simbody headers
+### Eigen
+find_package(Eigen3 CONFIG REQUIRED)
+target_link_libraries(sphinxsys_core INTERFACE Eigen3::Eigen)
+### TBB
+find_package(TBB CONFIG REQUIRED)
+target_link_libraries(sphinxsys_core INTERFACE TBB::tbb TBB::tbbmalloc $<$<PLATFORM_ID:Windows>:TBB::tbbmalloc_proxy>) 
+### Threads
+find_package(Threads REQUIRED)
+target_link_libraries(sphinxsys_core INTERFACE Threads::Threads)
+### Boost
+set(Boost_NO_WARN_NEW_VERSIONS TRUE)    # In case your CMake version is older than the release of Boost found
+                                        # Boost geometry and program-options are old enough to afford skipping this warning
+find_package(Boost REQUIRED)
+find_path(BOOST_INCLUDE_DIR boost/geometry) # Header-only Boost libraries are not components
+if(NOT BOOST_INCLUDE_DIR)
+    message(FATAL_ERROR "Please install Boost.Geometry library")
+endif()
+target_link_libraries(sphinxsys_core INTERFACE Boost::boost)
+find_package(Boost QUIET COMPONENTS program_options)
+if(TARGET Boost::program_options)
+    target_compile_definitions(sphinxsys_core INTERFACE BOOST_AVAILABLE)
+    target_link_libraries(sphinxsys_core INTERFACE Boost::program_options)
 endif()
 
-if(SPH_ONLY_STATIC_BUILD)
-    set(BUILD_STATIC_LIBRARIES 1) # Simbody
-    set(BUILD_DYNAMIC_LIBRARIES 0) # Simbody
-endif()
-
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
-    # Set the possible values of build type for cmake-gui
-    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
-            "MinSizeRel" "RelWithDebInfo")
-endif()
-
-set(ACTIVATE_CUDA OFF CACHE BOOL "Activate CUDA?")
-if(ACTIVATE_CUDA)
-    include(CheckLanguage)
-    check_language(CUDA)
-    if(CMAKE_CUDA_COMPILER)
-      enable_language(CUDA)
-    else()
-      message(STATUS "No CUDA support!")
-    endif()
-
-    set(BUILD_GPU_ARCH "75" CACHE STRING "Define the CUDA architecture")
-    #option(BUILD_GPU_FORCE_INLINES "CUDA 7.5 AND Ubuntu 16.04 needs this enabled" OFF)
-    #string(APPEND CMAKE_CUDA_FLAGS " -arch=sm_${BUILD_GPU_ARCH} UAMMD_DEBUG")
-    string(APPEND CMAKE_CUDA_FLAGS " -arch=sm_${BUILD_GPU_ARCH}")
-
-endif()
-
-if(MSVC)
-    SET(CMAKE_CL_64 1)
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" " /MP")
-    add_definitions(-D_USE_MATH_DEFINES)
-elseif(EMSCRIPTEN)
-    # set(PRE_POST "")
-    # #set(EM_FLAGS "${PRE_POST} -fPIC -g -O0 --profiling -DUNIX -D__linux__=1 --bind -std=c++11 -s USE_PTHREADS=1 -s DISABLE_EXCEPTION_CATCHING=0")
-    # set(EM_FLAGS "${PRE_POST} -fPIC -g -O3 -DUNIX -D__linux__=1 --bind -std=c++11 -s USE_PTHREADS=1 -s DISABLE_EXCEPTION_CATCHING=0")
-    # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${EM_FLAGS}")
-    # set(EM_FLAGS " -s INITIAL_MEMORY=536870912 -s ASSERTIONS=1 -s ALLOW_MEMORY_GROWTH=0 -s ERROR_ON_UNDEFINED_SYMBOLS=1")
-    # set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${EM_FLAGS}")
-else()
-    add_compile_definitions(__linux__=1)
-    set(CMAKE_CXX_FLAGS "-w -std=c++11 -DUNIX -pthread")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
-    set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -ggdb")
-    IF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-    ELSE(${CMAKE_BUILD_TYPE} MATCHES "Debug")
-        set(CMAKE_CXX_FLAGS "-fPIC ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}")
-    ENDIF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
-endif()
-
-if(NOT BUILD_WITH_SIMBODY)
-    if(NOT MSVC)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
-    endif()
-endif()
-
-add_compile_definitions(TBB_SUPPRESS_DEPRECATED_MESSAGES=1)
-
-message("===========================================")
-message("${PROJECT_NAME}, VERSION ${PROJECT_VERSION}")
-message("Cmake build type: ${CMAKE_BUILD_TYPE}")
-message("CXX flags: ${CMAKE_CXX_FLAGS}")
-message("CUDA flags: ${CMAKE_CUDA_FLAGS}")
-message("===========================================")
-
-########### GPU - compliler flags for physical properties #############
-# 1. Turn ON if the body force is time dependent, e.g. sloshing tank 
-option(_TIMEDEPENDENT_BODYFORCE_ "Enable time dependent body force" OFF)
-if (${_TIMEDEPENDENT_BODYFORCE_})
-    add_definitions(-D_TIMEDEPENDENT_BODYFORCE_)
-endif()
-#######################################################################
-
-enable_testing()
-
-include(Common)
-include(Import3rdpartylibs)
-
-if(BUILD_WITH_SIMBODY)
-    set(simbody_root "${SPHINXSYS_PROJECT_DIR}/3rd_party/simbody")
-    add_subdirectory(${simbody_root})
-endif()
-
+#------ Setup the concrete libraries
 add_subdirectory(SPHINXsys)
+add_subdirectory(modules)
 
-if(BUILD_SPHINXSYS_TESTS)
+#------ Setup the tests
+if(SPHINXSYS_BUILD_TESTS)
+    enable_testing()
     add_subdirectory(tests)
 endif()
 
-if(ACTIVATE_CUDA)
-    add_subdirectory(cases_test_gpu)
-endif()
-
-add_subdirectory(modules)
-
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/PythonScriptStore/RegressionTest/regression_test_base_tool.py
-        DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/PythonScriptStore/RegressionTest)
+#------ Extra scripts to install
+file(COPY        ${CMAKE_CURRENT_SOURCE_DIR}/PythonScriptStore/RegressionTest/regression_test_base_tool.py
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/PythonScriptStore/RegressionTest)
         

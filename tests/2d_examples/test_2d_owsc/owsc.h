@@ -33,7 +33,7 @@ BoundingBox system_domain_bounds(Vec2d(-DL_Extra - BW, -BW), Vec2d(DL + BW, DH +
 // the offset that the rubber flap shifted above the tank
 // Real flap_off = Flap_x - 0.5 * Flap_width + DL_Extra + BW;
 // Real off_set = particle_spacing_ref + floor(flap_off / particle_spacing_ref) * particle_spacing_ref - flap_off;
-Vec2d offset = Vec2d(0.0);
+Vec2d offset = Vec2d::Zero();
 
 // water block parameters
 Vec2d Water_lb(0.0, 0.0);	  // left bottom
@@ -68,8 +68,8 @@ Real mu_f = 1.0e-6;
 
 // for material properties of the solid
 Real flap_mass = 33.04;
-Real flap_vol = 0.0579;
-Real rho0_s = flap_mass / flap_vol;
+Real flap_volume = 0.0579;
+Real rho0_s = flap_mass / flap_volume;
 
 //------------------------------------------------------------------------------
 // geometric shape elements used in the case
@@ -243,8 +243,8 @@ MultiPolygon createFlapSimbodyConstrainShape()
 class FlapSystemForSimbody : public SolidBodyPartForSimbody
 {
 public:
-	FlapSystemForSimbody(SolidBody &solid_body, SharedPtr<Shape> shape_ptr)
-		: SolidBodyPartForSimbody(solid_body, shape_ptr)
+	FlapSystemForSimbody(SPHBody &sph_body, SharedPtr<Shape> shape_ptr)
+		: SolidBodyPartForSimbody(sph_body, shape_ptr)
 	{
 		// Vecd mass_center = Vecd(7.92, 0.355); // 0.3355
 		// initial_mass_center_ = SimTK::Vec3(mass_center[0], mass_center[1], 0.0);
@@ -258,7 +258,7 @@ public:
 	}
 };
 
-class WaveMaking : public solid_dynamics::ConstrainSolidBodyRegion
+class WaveMaking : public solid_dynamics::BaseMotionConstraint
 {
 	Real model_scale_;
 	Real gravity_;
@@ -267,33 +267,26 @@ class WaveMaking : public solid_dynamics::ConstrainSolidBodyRegion
 	Real wave_period_;
 	Real wave_freq_;
 	Real wave_stroke_;
-	Real time_;
 
-	virtual Vecd getDisplacement(Vecd &pos_0, Vecd &pos_n) override
+	Vecd getDisplacement(const Real &time)
 	{
-		Vecd displacement(0);
-		displacement[0] = 0.5 * wave_stroke_ * sin(wave_freq_ * time_);
-		return pos_0 + displacement;
+		Vecd displacement{Vecd::Zero()};
+		displacement[0] = 0.5 * wave_stroke_ * sin(wave_freq_ * time);
+		return displacement;
 	}
 
-	virtual Vec2d getVelocity(Vecd &pos_0, Vecd &pos_n, Vec2d &vel_n) override
+	Vec2d getVelocity(const Real &time)
 	{
-		Vec2d velocity(0);
-		velocity[0] = 0.5 * wave_stroke_ * wave_freq_ * cos(wave_freq_ * time_);
+		Vec2d velocity{Vecd::Zero()};
+		velocity[0] = 0.5 * wave_stroke_ * wave_freq_ * cos(wave_freq_ * time);
 		return velocity;
 	}
 
-	virtual Vec2d getAcceleration(Vecd &pos_0, Vecd &pos_n, Vec2d &acc) override
+	Vec2d getAcceleration(const Real &time)
 	{
-		Vec2d acceleration(0);
-		acceleration[0] = -0.5 * wave_stroke_ * wave_freq_ * wave_freq_ * sin(wave_freq_ * time_);
+		Vec2d acceleration{Vecd::Zero()};
+		acceleration[0] = -0.5 * wave_stroke_ * wave_freq_ * wave_freq_ * sin(wave_freq_ * time);
 		return acceleration;
-	}
-
-	virtual void setupDynamics(Real dt = 0.0) override
-	{
-		body_->setNewlyUpdated();
-		time_ = GlobalStaticVariables::physical_time_;
 	}
 
 	void computeWaveStrokeAndFrequency()
@@ -331,12 +324,21 @@ class WaveMaking : public solid_dynamics::ConstrainSolidBodyRegion
 	}
 
 public:
-	WaveMaking(SolidBody &solid_body, BodyPartByParticle &constrained_region)
-		: ConstrainSolidBodyRegion(solid_body, constrained_region), time_(0.0),
-		  model_scale_(25.0), wave_height_(5.0), wave_period_(10.0), gravity_(gravity_g), water_depth_(Water_H)
+	WaveMaking(BodyPartByParticle &body_part)
+		: solid_dynamics::BaseMotionConstraint(body_part),
+		  model_scale_(25.0), wave_height_(5.0),
+		  wave_period_(10.0), gravity_(gravity_g), water_depth_(Water_H)
 	{
 		computeWaveStrokeAndFrequency();
 	}
+
+	void update(size_t index_i, Real dt = 0.0)
+	{
+		Real time = GlobalStaticVariables::physical_time_;
+		pos_[index_i] = pos0_[index_i] + getDisplacement(time);
+		vel_[index_i] = getVelocity(time);
+		acc_[index_i] = getAcceleration(time);
+	};
 };
 
 Real h = 1.3 * particle_spacing_ref;

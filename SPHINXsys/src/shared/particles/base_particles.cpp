@@ -1,8 +1,3 @@
-/**
- * @file base_particles.cpp
- * @brief Definition of functions declared in base_particles.h
- * @author	Xiangyu Hu and Chi Zhang
- */
 #include "base_particles.hpp"
 
 #include "base_body.h"
@@ -11,27 +6,26 @@
 #include "base_particle_generator.h"
 #include "xml_engine.h"
 
+//=====================================================================================================//
 namespace SPH
 {
 	//=================================================================================================//
 	BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
-		: rho0_(base_material->ReferenceDensity()),
-		  sigma0_(sph_body.sph_adaptation_->ReferenceNumberDensity()),
-		  speed_max_(0.0), signal_speed_max_(0.0),
-		  total_real_particles_(0), real_particles_bound_(0), total_ghost_particles_(0),
-		  sph_body_(&sph_body), body_name_(sph_body.getBodyName()),
+		: base_material_(*base_material), total_real_particles_(0),
+		  real_particles_bound_(0), total_ghost_particles_(0),
+		  particle_sorting_(*this),
+		  sph_body_(sph_body), body_name_(sph_body.getName()),
 		  restart_xml_engine_("xml_restart", "particles"),
 		  reload_xml_engine_("xml_particle_reload", "particles")
 	{
-		sph_body.assignBaseParticles(this);
 		//----------------------------------------------------------------------
 		//		register geometric data only
 		//----------------------------------------------------------------------
 		registerVariable(pos_, "Position");
 		registerVariable(Vol_, "VolumetricMeasure");
-		//----------------------------------------------------------------------
-		//		add particle reload data
-		//----------------------------------------------------------------------
+		/*
+		 *	add particle reload data
+		 */
 		addVariableNameToList<Vecd>(variables_to_reload_, "Position");
 		addVariableNameToList<Real>(variables_to_reload_, "VolumetricMeasure");
 	}
@@ -39,28 +33,28 @@ namespace SPH
 	void BaseParticles::initializeOtherVariables()
 	{
 		real_particles_bound_ = total_real_particles_;
-		//----------------------------------------------------------------------
-		//		register non-geometric data
-		//----------------------------------------------------------------------
+		/**
+		 *	register non-geometric data
+		 */
 		registerVariable(vel_, "Velocity");
 		registerVariable(acc_, "Acceleration");
 		registerVariable(acc_prior_, "PriorAcceleration");
-		registerVariable(rho_, "Density", rho0_);
+		registerVariable(rho_, "Density", base_material_.ReferenceDensity());
 		registerVariable(mass_, "MassiveMeasure");
-		//----------------------------------------------------------------------
-		//		add basic output particle data
-		//----------------------------------------------------------------------
+		/**
+		 *	add basic output particle data
+		 */
 		addVariableToWrite<Vecd>("Velocity");
-		//----------------------------------------------------------------------
-		//		add restart output particle data
-		//----------------------------------------------------------------------
+		/**
+		 *	add restart output particle data
+		 */
 		addVariableNameToList<Vecd>(variables_to_restart_, "Position");
 		addVariableNameToList<Vecd>(variables_to_restart_, "Velocity");
 		addVariableNameToList<Vecd>(variables_to_restart_, "Acceleration");
 		addVariableNameToList<Real>(variables_to_restart_, "VolumetricMeasure");
-		//----------------------------------------------------------------------
-		//		initial particle IDs and massive measure
-		//----------------------------------------------------------------------
+		/**
+		 *	initial particle IDs and massive measure
+		 */
 		for (size_t i = 0; i != real_particles_bound_; ++i)
 		{
 			sorted_id_.push_back(sequence_.size());
@@ -190,8 +184,8 @@ namespace SPH
 		writePltFileHeader(output_file);
 		output_file << "\n";
 
-		//compute derived particle variables
-		for (ParticleDynamics<void> *derived_variable : derived_variables_)
+		// compute derived particle variables
+		for (auto &derived_variable : derived_variables_)
 		{
 			derived_variable->parallel_exec();
 		}
@@ -370,3 +364,4 @@ namespace SPH
 	}
 	//=================================================================================================//
 }
+//=====================================================================================================//

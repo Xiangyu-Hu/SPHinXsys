@@ -1,31 +1,29 @@
 /* -------------------------------------------------------------------------*
  *								SPHinXsys									*
- * --------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
  * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic *
+ * physical accurate simulation and aims to model coupled industrial dynamic*
  * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
  * (smoothed particle hydrodynamics), a meshless computational method using	*
  * particle discretization.													*
  *																			*
  * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
- * and HU1527/12-1.															*
- *                                                                           *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
  * the authors' affiliations.												*
- *                                                                           *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
- * not use this file except in compliance with the License. You may obtain a *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
- *                                                                           *
- * --------------------------------------------------------------------------*/
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
- * @file base_geometry.h
- * @brief Shape is the base class for all geometries.
- * @details Several pure virtual functions
- * are defined here. (a) closest point on surface: to find the closest point on shape
- * surface to a given point. (b) find the lower and upper bounds.
+ * @file 	base_geometry.h
+ * @brief 	Define the base classes Shape, BinaryShape and Edge,
+ * 			which are the base classes for all geometries.
  * @author	Chi ZHang and Xiangyu Hu
  */
 
@@ -34,14 +32,13 @@
 
 #include "base_data_package.h"
 #include "sph_data_containers.h"
-
 #include <string>
 
 namespace SPH
 {
 	/**
-	 * @class ShapeBooleanOps
-	 * @brief Boolean operation for generate complex shapes
+	 * @class 	ShapeBooleanOps
+	 * @brief 	Boolean operation for generate complex shapes
 	 * @details Note that, for 2d multi polygons, all four operations are implemented.
 	 * But for binary shapes and complex shapes,
 	 * only add and sub boolean operation have been defined for right now.
@@ -58,14 +55,17 @@ namespace SPH
 	/**
 	 * @class Shape
 	 * @brief Base class for all volumetric geometries
-	 * Note that checkContain and findClosest point are  basic function,
-	 * They should not call other functions in shape.
+	 * @details Several pure virtual functions are defined here.
+	 * (a) closest point on surface: to find the closest point on shape surface to a given point.
+	 * (b) check if a point contained by the shape,
+	 * (c) and find the lower and upper bounds.
 	 */
 	class Shape
 	{
 	public:
-		explicit Shape(const std::string &shape_name)
-			: name_(shape_name), is_bounds_found_(false){};
+		BoundingBox bounding_box_;
+
+		explicit Shape(const std::string &shape_name): name_(shape_name), is_bounds_found_(false){};
 		virtual ~Shape(){};
 
 		std::string getName() { return name_; };
@@ -73,18 +73,17 @@ namespace SPH
 		BoundingBox getBounds();
 		virtual bool isValid() { return true; };
 		virtual bool checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED = true) = 0;
-		virtual Vecd findClosestPoint(const Vecd &input_pnt) = 0;
+		virtual Vecd findClosestPoint(const Vecd &probe_point) = 0;
 
-		bool checkNotFar(const Vecd &input_pnt, Real threshold);
-		bool checkNearSurface(const Vecd &input_pnt, Real threshold);
-		/** Signed distance is negative for point within the complex shape. */
-		Real findSignedDistance(const Vecd &input_pnt);
-		/** Normal direction point toward outside of the complex shape. */
-		Vecd findNormalDirection(const Vecd &input_pnt);
+		bool checkNotFar(const Vecd &probe_point, Real threshold);
+		bool checkNearSurface(const Vecd &probe_point, Real threshold);
+		/** Signed distance is negative for point within the shape. */
+		Real findSignedDistance(const Vecd &probe_point);
+		/** Normal direction point toward outside of the shape. */
+		Vecd findNormalDirection(const Vecd &probe_point);
 
 	protected:
 		std::string name_;
-		BoundingBox bounding_box_;
 		bool is_bounds_found_;
 
 		virtual BoundingBox findBounds() = 0;
@@ -94,7 +93,7 @@ namespace SPH
 	/**
 	 * @class BinaryShapes
 	 * @brief a collections of shapes with binary operations
-	 * This class so that it has ownership of all shapes by using a unique pointer vector.
+	 * This class has ownership of all shapes by using a unique pointer vector.
 	 * In this way, add or subtract a shape will call the shape's constructor other than
 	 * passing the shape pointer.
 	 */
@@ -123,7 +122,7 @@ namespace SPH
 
 		virtual bool isValid() override;
 		virtual bool checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED = true) override;
-		virtual Vecd findClosestPoint(const Vecd &input_pnt) override;
+		virtual Vecd findClosestPoint(const Vecd &probe_point) override;
 		Shape *getShapeByName(const std::string &shape_name);
 		ShapeAndOp *getShapeAndOpByName(const std::string &shape_name);
 		size_t getShapeIndexByName(const std::string &shape_name);
@@ -149,11 +148,15 @@ namespace SPH
 		/** constructor without specifying a leading-in edge */
 		template <class EdgeStructureType>
 		explicit Edge(EdgeStructureType *structure)
-			: id_(structure->ContainerSize()), in_edge_(MaxSize_t){};
+			: id_(structure->ContainerSize())
+			, in_edge_(MaxSize_t)
+		{};
 		/** constructor with specifying a leading-in edge */
 		template <class EdgeStructureType>
 		Edge(InEdgeType in_edge, EdgeStructureType *structure)
-			: id_(structure->ContainerSize()), in_edge_(in_edge){};
+			: id_(structure->ContainerSize())
+			, in_edge_(in_edge)
+		{};
 		virtual ~Edge(){};
 
 		size_t id_;			   /**< id of this edge */

@@ -19,8 +19,6 @@ Vec2d insert_circle_center(10.0, 0.5 * DH);	  /**< Location of the cylinder cent
 Real insert_circle_radius = 1.0;			  /**< Radius of the cylinder. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-DL_sponge, -0.25 * DH), Vec2d(DL, 1.25 * DH));
-/** Prescribed fluid body domain bounds*/
-BoundingBox fluid_body_domain_bounds(Vec2d(-DL_sponge, -0.25 * DH), Vec2d(DL, 1.25 * DH));
 // Observation locations
 Vec2d point_coordinate_1(3.0, 5.0);
 Vec2d point_coordinate_2(4.0, 5.0);
@@ -44,6 +42,8 @@ Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH);
 Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize;
 Vec2d emitter_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
 Vec2d emitter_buffer_translation = Vec2d(-DL_sponge, 0.0) + emitter_buffer_halfsize;
+Vec2d disposer_halfsize = Vec2d(0.5 * BW, 0.75 * DH);
+Vec2d disposer_translation = Vec2d(DL, DH + 0.25 * DH) - disposer_halfsize;
 
 //----------------------------------------------------------------------
 //	Define case dependent geometries
@@ -68,16 +68,16 @@ public:
 //----------------------------------------------------------------------
 //	Define emitter buffer inflow boundary condition
 //----------------------------------------------------------------------
-class EmitterBufferInflowCondition : public fluid_dynamics::InflowBoundaryCondition
+class EmitterBufferInflowCondition : public fluid_dynamics::InflowVelocityCondition
 {
 	Real u_ave_, u_ref_, t_ref_;
 
 public:
-	EmitterBufferInflowCondition(FluidBody &fluid_body, BodyAlignedBoxByCell &aligned_box_part)
-		: InflowBoundaryCondition(fluid_body, aligned_box_part),
+	EmitterBufferInflowCondition(BodyAlignedBoxByCell &aligned_box_part)
+		: InflowVelocityCondition(aligned_box_part),
 		u_ave_(0), u_ref_(U_f), t_ref_(2.0) {}
 
-	Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
+	Vecd getPrescribedVelocity(Vecd &position, Vecd &velocity) override
 	{
 		Real u = velocity[0];
 		Real v = velocity[1];

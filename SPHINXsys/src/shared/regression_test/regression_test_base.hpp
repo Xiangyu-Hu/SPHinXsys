@@ -1,7 +1,31 @@
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
- * @file 	regression_test_base.cpp
- * @author	Bo Zhang and Xiangyu Hu
+ * @file regression_test_base.hpp
+ * @brief Base classes for comparisons between validated and tested results.
+ * @author	Bo Zhang , Chi ZHang and Xiangyu Hu
  */
+
 #pragma once
 
 #include "regression_test_base.h"
@@ -17,7 +41,7 @@ namespace SPH
 		std::string element_name_ = "Snapshot_" + std::to_string(iteration);
 		SimTK::Xml::Element &element_ = observe_xml_engine_.root_element_;
 		observe_xml_engine_.addElementToXmlDoc(element_name_);
-		for (size_t i = 0; i != this->base_particles_->total_real_particles_; ++i)
+		for (size_t i = 0; i != this->base_particles_.total_real_particles_; ++i)
 		{
 			xmlmemory_io_.writeDataToXmlMemory(observe_xml_engine_, element_,
 				element_name_, i, (*this->interpolated_quantities_)[i], this->quantity_name_);
@@ -26,7 +50,7 @@ namespace SPH
 	//=================================================================================================//
 	template <class ObserveMethodType>
 	template <typename ReduceType>
-	void RegressionTestBase<ObserveMethodType>::writeToXml(BodyReducedQuantityRecording<ReduceType>* reduce_method, size_t iteration)
+	void RegressionTestBase<ObserveMethodType>::writeToXml(ReducedQuantityRecording<ReduceType>* reduce_method, size_t iteration)
 	{
 		std::string element_name_ = "Snapshot_" + std::to_string(iteration);
 		SimTK::Xml::Element &element_ = observe_xml_engine_.root_element_;
@@ -39,7 +63,7 @@ namespace SPH
 	void RegressionTestBase<ObserveMethodType>::readFromXml(ObservedQuantityRecording<VariableType>* observe_method)
 	{
 		observe_xml_engine_.loadXmlFile(in_output_filefullpath_);
-		size_t number_of_particle_ = this->base_particles_->total_real_particles_;
+		size_t number_of_particle_ = this->base_particles_.total_real_particles_;
 		size_t number_of_snapshot_ = std::distance(observe_xml_engine_.root_element_.element_begin(),
 			observe_xml_engine_.root_element_.element_end());
 		DoubleVec<VariableType> current_result_temp_(number_of_snapshot_, StdVec<VariableType>(number_of_particle_));
@@ -56,7 +80,7 @@ namespace SPH
 	//=================================================================================================//
 	template <class ObserveMethodType>
 	template <typename ReduceType>
-	void RegressionTestBase<ObserveMethodType>::readFromXml(BodyReducedQuantityRecording<ReduceType>* reduce_method)
+	void RegressionTestBase<ObserveMethodType>::readFromXml(ReducedQuantityRecording<ReduceType>* reduce_method)
 	{
 		observe_xml_engine_.loadXmlFile(in_output_filefullpath_);
 		size_t number_of_particle_ = 1;
@@ -128,7 +152,7 @@ namespace SPH
 	{
 		if (number_of_run_ > 1) /*only read the result from the 2nd run, because the 1st run doesn't have previous results. */
 		{
-			result_filefullpath_ = input_folder_path_ + "/" + this->body_name_ + "_" + this->quantity_name_ +
+			result_filefullpath_ = input_folder_path_ + "/" + this->dynamics_range_name_ + "_" + this->quantity_name_ +
 				"_Run_" + std::to_string(index_of_run_) + "_result.xml";
 
 			/* To identify the database generation or new result test. */
@@ -171,7 +195,7 @@ namespace SPH
 		/** write result to .xml (with different data structure to Base), here is 
 		    observation * snapshot, which can be used for TA and DTW methods. */
 		int total_snapshot_ = current_result_trans_[0].size();
-		result_filefullpath_ = input_folder_path_ + "/" + this->body_name_ + "_" + this->quantity_name_ +
+		result_filefullpath_ = input_folder_path_ + "/" + this->dynamics_range_name_ + "_" + this->quantity_name_ +
 			"_Run_" + std::to_string(index_of_run_) + "_result.xml";
 		result_xml_engine_out_.addElementToXmlDoc("Snapshot_Element");
 		SimTK::Xml::Element snapshot_element_ = result_xml_engine_out_.getChildElement("Snapshot_Element");

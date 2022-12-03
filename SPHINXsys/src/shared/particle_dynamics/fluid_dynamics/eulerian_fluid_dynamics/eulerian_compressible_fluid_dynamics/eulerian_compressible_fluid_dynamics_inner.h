@@ -1,37 +1,38 @@
 /* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
-* @file 	eulerian_compressible_fluid_dynamics_inner.h
-* @brief 	Here, we define the algorithm classes for eulerian fluid dynamics within the body. 
-* @details 	We consider here compressible fluids. 
-* @author	Zhentong Wang,Chi Zhang and Xiangyu Hu
-*/
+ * @file    eulerian_compressible_fluid_dynamics_inner.h
+ * @brief 	Here, we define the algorithm classes for eulerian fluid dynamics within the body.
+ * @details We consider here compressible fluids.
+ * @author	Zhentong Wang, Chi ZHang and Xiangyu Hu
+ */
 
 #pragma once
 
 #include "fluid_dynamics_inner.h"
 
 #include "all_particle_dynamics.h"
+#include "all_general_dynamics.h"
 #include "base_kernel.h"
 #include "external_force.h"
 #include "riemann_solver.h"
@@ -41,27 +42,20 @@ namespace SPH
 {
 	namespace eulerian_compressible_fluid_dynamics
 	{
-		typedef DataDelegateSimple<EulerianFluidBody, CompressibleFluidParticles, CompressibleFluid> CompressibleFluidDataSimple;
-		typedef DataDelegateInner<EulerianFluidBody, CompressibleFluidParticles, CompressibleFluid> CompressibleFluidDataInner;
+		typedef DataDelegateSimple<CompressibleFluidParticles> CompressibleFluidDataSimple;
+		typedef DataDelegateInner<CompressibleFluidParticles> CompressibleFluidDataInner;
 
-		class CompressibleFlowTimeStepInitialization
-			: public ParticleDynamicsSimple,
-			  public CompressibleFluidDataSimple
+		class CompressibleFlowTimeStepInitialization : public BaseTimeStepInitialization, public CompressibleFluidDataSimple
 		{
-		private:
-			UniquePtrKeeper<Gravity> gravity_ptr_keeper_;
-
-		public:
-			explicit CompressibleFlowTimeStepInitialization(SPHBody &sph_body);
-			CompressibleFlowTimeStepInitialization(SPHBody &sph_body, Gravity &gravity);
-			virtual ~CompressibleFlowTimeStepInitialization(){};
-
 		protected:
 			StdLargeVec<Real> &rho_, &dE_dt_prior_;
 			StdLargeVec<Vecd> &pos_, &vel_, &dmom_dt_prior_;
-			Gravity *gravity_;
-			virtual void setupDynamics(Real dt = 0.0) override;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
+
+		public:
+			CompressibleFlowTimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd::Zero()));
+			virtual ~CompressibleFlowTimeStepInitialization(){};
+
+			void update(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
@@ -69,12 +63,10 @@ namespace SPH
 		 * @brief  Set initial condition for a fluid body.
 		 * This is a abstract class to be override for case specific initial conditions
 		 */
-		class CompressibleFluidInitialCondition
-			: public ParticleDynamicsSimple,
-			  public CompressibleFluidDataSimple
+		class CompressibleFluidInitialCondition : public LocalDynamics, public CompressibleFluidDataSimple
 		{
 		public:
-			explicit CompressibleFluidInitialCondition(EulerianFluidBody &body);
+			explicit CompressibleFluidInitialCondition(SPHBody &sph_body);
 			virtual ~CompressibleFluidInitialCondition(){};
 
 		protected:
@@ -87,121 +79,90 @@ namespace SPH
 		 * @class ViscousAccelerationInner
 		 * @brief  the viscosity force induced acceleration
 		 */
-		class ViscousAccelerationInner
-			: public InteractionDynamics,
-			  public CompressibleFluidDataInner
+		class ViscousAccelerationInner : public LocalDynamics, public CompressibleFluidDataInner
 		{
 		public:
-			explicit ViscousAccelerationInner(BaseBodyRelationInner &inner_relation);
+			explicit ViscousAccelerationInner(BaseInnerRelation &inner_relation);
 			virtual ~ViscousAccelerationInner(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			Real mu_;
 			Real smoothing_length_;
 			StdLargeVec<Real> &Vol_, &rho_, &p_, &mass_, &dE_dt_prior_;
 			StdLargeVec<Vecd> &vel_, &dmom_dt_prior_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
-		* @class AcousticTimeStepSize
-		* @brief Computing the acoustic time step size
-		*/
-		class AcousticTimeStepSize : public ParticleDynamicsReduce<Real, ReduceMax>, public CompressibleFluidDataSimple
+		 * @class AcousticTimeStepSize
+		 * @brief Computing the acoustic time step size
+		 */
+		class AcousticTimeStepSize : public LocalDynamicsReduce<Real, ReduceMax>, public CompressibleFluidDataSimple
 		{
-		public:
-			explicit AcousticTimeStepSize(EulerianFluidBody &body);
-			virtual ~AcousticTimeStepSize(){};
-
 		protected:
+			CompressibleFluid &compressible_fluid_;
 			StdLargeVec<Real> &rho_, &p_;
 			StdLargeVec<Vecd> &vel_;
 			Real smoothing_length_;
-			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
-			Real OutputResult(Real reduced_value) override;
+
+		public:
+			explicit AcousticTimeStepSize(SPHBody &sph_body);
+			virtual ~AcousticTimeStepSize(){};
+
+			Real reduce(size_t index_i, Real dt = 0.0);
+			virtual Real outputResult(Real reduced_value) override;
 		};
 
 		/**
-		 * @class BaseRelaxation
+		 * @class BaseIntegration
 		 * @brief Pure abstract base class for all fluid relaxation schemes
 		 */
-		class BaseRelaxation : public ParticleDynamics1Level, public CompressibleFluidDataInner
+		class BaseIntegration : public LocalDynamics, public CompressibleFluidDataInner
 		{
 		public:
-			explicit BaseRelaxation(BaseBodyRelationInner &inner_relation);
-			virtual ~BaseRelaxation(){};
+			explicit BaseIntegration(BaseInnerRelation &inner_relation);
+			virtual ~BaseIntegration(){};
 
 		protected:
+			CompressibleFluid &compressible_fluid_;
 			StdLargeVec<Real> &Vol_, &rho_, &p_, &drho_dt_, &E_, &dE_dt_, &dE_dt_prior_;
 			StdLargeVec<Vecd> &vel_, &mom_, &dmom_dt_, &dmom_dt_prior_;
 		};
 
 		/**
-		 * @class BasePressureRelaxation
-		 * @brief Abstract base class for all pressure relaxation schemes
-		 */
-		class BasePressureRelaxation : public BaseRelaxation
-		{
-		public:
-			explicit BasePressureRelaxation(BaseBodyRelationInner &inner_relation);
-			virtual ~BasePressureRelaxation(){};
-
-		protected:
-			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
-		};
-
-		/**
-		 * @class BasePressureRelaxationInner
+		 * @class BaseIntegration1stHalf
 		 * @brief Template class for pressure relaxation scheme with the Riemann solver
 		 * as template variable
 		 */
 		template <class RiemannSolverType>
-		class BasePressureRelaxationInner : public BasePressureRelaxation
+		class BaseIntegration1stHalf : public BaseIntegration
 		{
 		public:
-			explicit BasePressureRelaxationInner(BaseBodyRelationInner &inner_relation);
-			virtual ~BasePressureRelaxationInner(){};
+			explicit BaseIntegration1stHalf(BaseInnerRelation &inner_relation);
+			virtual ~BaseIntegration1stHalf(){};
 			RiemannSolverType riemann_solver_;
-
-		protected:
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+			void initialization(size_t index_i, Real dt = 0.0);
+			void interaction(size_t index_i, Real dt = 0.0);
+			void update(size_t index_i, Real dt = 0.0);
 		};
-		using PressureRelaxationHLLCRiemannInner = BasePressureRelaxationInner<HLLCRiemannSolver>;
-		using PressureRelaxationHLLCWithLimiterRiemannInner = BasePressureRelaxationInner<HLLCWithLimiterRiemannSolver>;
+		using Integration1stHalfHLLCRiemann = BaseIntegration1stHalf<HLLCRiemannSolver>;
+		using Integration1stHalfHLLCWithLimiterRiemann = BaseIntegration1stHalf<HLLCWithLimiterRiemannSolver>;
 
 		/**
-		 * @class BaseDensityAndEnergyRelaxation
-		 * @brief Abstract base class for all density relaxation schemes
-		 */
-		class BaseDensityAndEnergyRelaxation : public BaseRelaxation
-		{
-		public:
-			explicit BaseDensityAndEnergyRelaxation(BaseBodyRelationInner &inner_relation);
-			virtual ~BaseDensityAndEnergyRelaxation(){};
-
-		protected:
-			virtual void Initialization(size_t index_i, Real dt = 0.0) override{};
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
-		};
-
-		/**
-		 * @class BaseDensityAndEnergyRelaxationInner
+		 * @class BaseIntegration2ndHalf
 		 * @brief  Template density relaxation scheme in HLLC Riemann solver with and without limiter
 		 */
 		template <class RiemannSolverType>
-		class BaseDensityAndEnergyRelaxationInner : public BaseDensityAndEnergyRelaxation
+		class BaseIntegration2ndHalf : public BaseIntegration
 		{
 		public:
-			explicit BaseDensityAndEnergyRelaxationInner(BaseBodyRelationInner &inner_relation);
-			virtual ~BaseDensityAndEnergyRelaxationInner(){};
+			explicit BaseIntegration2ndHalf(BaseInnerRelation &inner_relation);
+			virtual ~BaseIntegration2ndHalf(){};
 			RiemannSolverType riemann_solver_;
-
-		protected:
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+			void interaction(size_t index_i, Real dt = 0.0);
+			void update(size_t index_i, Real dt = 0.0);
 		};
-		using DensityAndEnergyRelaxationHLLCRiemannInner = BaseDensityAndEnergyRelaxationInner<HLLCRiemannSolver>;
-		using DensityAndEnergyRelaxationHLLCWithLimiterRiemannInner = BaseDensityAndEnergyRelaxationInner<HLLCWithLimiterRiemannSolver>;
+		using Integration2ndHalfHLLCRiemann = BaseIntegration2ndHalf<HLLCRiemannSolver>;
+		using Integration2ndHalfHLLCWithLimiterRiemann = BaseIntegration2ndHalf<HLLCWithLimiterRiemannSolver>;
 	}
 }

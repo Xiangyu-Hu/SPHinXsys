@@ -1,30 +1,30 @@
 /* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	observer_dynamics.h
  * @brief 	There are the classes for observing and recording the state of the flow or
  *			solid in given locations. Mostly, this is done by an interpolation algorithm.   
- * @author	Xiangyu Hu and Chi Zhang
+ * @author	Chi ZHang and Xiangyu Hu
  */
 
 #ifndef OBSERVER_DYNAMICS_H
@@ -37,22 +37,22 @@
 
 namespace SPH
 {
-	namespace observer_dynamics
+	namespace observer_dynamics //TODO: this namespace seems not necessary, these dynamics seems belong to general dynamics
 	{
-		typedef DataDelegateContact<SPHBody, BaseParticles, BaseMaterial,
-									SPHBody, BaseParticles, BaseMaterial>
-			InterpolationContactData;
+		typedef DataDelegateContact<BaseParticles, BaseParticles> InterpolationContactData;
 
 		/**
 		 * @class BaseInterpolation
 		 * @brief Base class for interpolation.
 		 */
 		template <typename VariableType>
-		class BaseInterpolation : public InteractionDynamics, public InterpolationContactData
+		class BaseInterpolation : public LocalDynamics, public InterpolationContactData
 		{
 		public:
-			explicit BaseInterpolation(BaseBodyRelationContact &contact_relation, const std::string &variable_name)
-				: InteractionDynamics(*contact_relation.sph_body_), InterpolationContactData(contact_relation),
+			StdLargeVec<VariableType>*  interpolated_quantities_;
+
+			explicit BaseInterpolation(BaseContactRelation &contact_relation, const std::string &variable_name)
+				: LocalDynamics(contact_relation.sph_body_), InterpolationContactData(contact_relation),
 				  interpolated_quantities_(nullptr)
 			{
 				for (size_t k = 0; k != this->contact_particles_.size(); ++k)
@@ -64,15 +64,10 @@ namespace SPH
 				}
 			};
 			virtual ~BaseInterpolation() {};
-			StdLargeVec<VariableType>*  interpolated_quantities_;
 
-		protected:
-			StdVec<StdLargeVec<Real>*> contact_Vol_;
-			StdVec<StdLargeVec<VariableType>*> contact_data_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override
+			void interaction(size_t index_i, Real dt = 0.0)
 			{
-				VariableType observed_quantity(0);
+				VariableType observed_quantity = DataTypeInitializer<VariableType>::zero;
 				Real ttl_weight(0);
 
 				for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
@@ -91,6 +86,10 @@ namespace SPH
 				}
 				(*interpolated_quantities_)[index_i] = observed_quantity / (ttl_weight + TinyReal);
 			};
+
+		protected:
+			StdVec<StdLargeVec<Real>*> contact_Vol_;
+			StdVec<StdLargeVec<VariableType>*> contact_data_;
 		};
 
 		/**
@@ -101,7 +100,7 @@ namespace SPH
 		class InterpolatingAQuantity : public BaseInterpolation<VariableType>
 		{
 		public:
-			explicit InterpolatingAQuantity(BaseBodyRelationContact &contact_relation,
+			explicit InterpolatingAQuantity(BaseContactRelation &contact_relation,
 											const std::string &interpolated_variable, const std::string &target_variable)
 				: BaseInterpolation<VariableType>(contact_relation, target_variable)
 			{
@@ -116,11 +115,11 @@ namespace SPH
 		 * @brief Observing a variable from contact bodies.
 		 */
 		template <typename VariableType>
-		class ObservingAQuantity : public BaseInterpolation<VariableType>
+		class ObservingAQuantity : public InteractionDynamics<BaseInterpolation<VariableType>>
 		{
 		public:
-			explicit ObservingAQuantity(BaseBodyRelationContact &contact_relation, const std::string &variable_name)
-				: BaseInterpolation<VariableType>(contact_relation, variable_name)
+			explicit ObservingAQuantity(BaseContactRelation &contact_relation, const std::string &variable_name)
+				: InteractionDynamics<BaseInterpolation<VariableType>>(contact_relation, variable_name)
 			{
 				this->interpolated_quantities_ = registerObservedQuantity(variable_name);
 			};
@@ -137,7 +136,7 @@ namespace SPH
       			constexpr int type_index = DataTypeIndex<VariableType>::value;
 				if (particles->all_variable_maps_[type_index].find(variable_name) == particles->all_variable_maps_[type_index].end())
 				{
-					particles->registerVariable(observed_quantities_, variable_name, VariableType(0));
+					particles->registerVariable(observed_quantities_, variable_name, [&](size_t i) -> VariableType {return DataTypeInitializer<VariableType>::zero;});
 					return &observed_quantities_;
 				}
 				return particles->getVariableByName<VariableType>(variable_name);
@@ -148,16 +147,16 @@ namespace SPH
 		* @class CorrectInterpolationKernelWeights
 		* @brief  correct kernel weights for interpolation between general bodies
 		*/
-		class CorrectInterpolationKernelWeights : public InteractionDynamics,
+		class CorrectInterpolationKernelWeights : public LocalDynamics,
 												  public InterpolationContactData
 		{
 		public:
-			explicit CorrectInterpolationKernelWeights(BaseBodyRelationContact &contact_relation);
+			explicit CorrectInterpolationKernelWeights(BaseContactRelation &contact_relation);
 			virtual ~CorrectInterpolationKernelWeights(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdVec<StdLargeVec<Real> *> contact_Vol_;
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 	}
 }

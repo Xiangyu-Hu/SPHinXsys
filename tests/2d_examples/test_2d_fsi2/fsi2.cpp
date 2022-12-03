@@ -28,8 +28,7 @@ int main(int ac, char *av[])
 #ifdef BOOST_AVAILABLE
 	sph_system.handleCommandlineOptions(ac, av);
 #endif
-	/** output environment. */
-	InOutput in_output(sph_system);
+	IOEnvironment io_environment(sph_system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
@@ -42,11 +41,11 @@ int main(int ac, char *av[])
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody insert_body(sph_system, makeShared<Insert>("InsertedBody"));
-	insert_body.sph_adaptation_->resetAdaptationRatios(1.15, 2.0);
-	insert_body.defineBodyLevelSetShape()->writeLevelSet(insert_body);
-	insert_body.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	insert_body.defineAdaptationRatios(1.15, 2.0);
+	insert_body.defineBodyLevelSetShape()->writeLevelSet(io_environment);
+	insert_body.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
-		? insert_body.generateParticles<ParticleGeneratorReload>(in_output, insert_body.getBodyName())
+		? insert_body.generateParticles<ParticleGeneratorReload>(io_environment, insert_body.getName())
 		: insert_body.generateParticles<ParticleGeneratorLattice>();
 
 	ObserverBody beam_observer(sph_system, "BeamObserver");
@@ -58,11 +57,11 @@ int main(int ac, char *av[])
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner insert_body_inner(insert_body);
-	ComplexBodyRelation water_block_complex(water_block, RealBodyVector{&wall_boundary, &insert_body});
-	BodyRelationContact insert_body_contact(insert_body, {&water_block});
-	BodyRelationContact beam_observer_contact(beam_observer, {&insert_body});
-	BodyRelationContact fluid_observer_contact(fluid_observer, {&water_block});
+	InnerRelation insert_body_inner(insert_body);
+	ComplexRelation water_block_complex(water_block, RealBodyVector{&wall_boundary, &insert_body});
+	ContactRelation insert_body_contact(insert_body, {&water_block});
+	ContactRelation beam_observer_contact(beam_observer, {&insert_body});
+	ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------
@@ -72,11 +71,11 @@ int main(int ac, char *av[])
 		//	Methods used for particle relaxation.
 		//----------------------------------------------------------------------
 		/** Random reset the insert body particle position. */
-		RandomizeParticlePosition random_insert_body_particles(insert_body);
+		SimpleDynamics<RandomizeParticlePosition> random_insert_body_particles(insert_body);
 		/** Write the body state to Vtp file. */
-		BodyStatesRecordingToVtp write_insert_body_to_vtp(in_output, {&insert_body});
+		BodyStatesRecordingToVtp write_insert_body_to_vtp(io_environment, {&insert_body});
 		/** Write the particle reload files. */
-		ReloadParticleIO write_particle_reload_files(in_output, {&insert_body});
+		ReloadParticleIO write_particle_reload_files(io_environment, {&insert_body});
 		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(insert_body_inner);
 		//----------------------------------------------------------------------
@@ -109,66 +108,67 @@ int main(int ac, char *av[])
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
 	/** Initialize particle acceleration. */
-	TimeStepInitialization initialize_a_fluid_step(water_block);
+	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
 	/** Evaluation of density by summation approach. */
-	fluid_dynamics::DensitySummationComplex update_density_by_summation(water_block_complex);
+	InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_complex);
 	/** Time step size without considering sound wave speed. */
-	fluid_dynamics::AdvectionTimeStepSize get_fluid_advection_time_step_size(water_block, U_f);
+	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
 	/** Time step size with considering sound wave speed. */
-	fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_block);
+	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	/** Pressure relaxation using verlet time stepping. */
 	/** Here, we do not use Riemann solver for pressure as the flow is viscous. */
-	fluid_dynamics::PressureRelaxationWithWall pressure_relaxation(water_block_complex);
-	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_block_complex);
-	/** Computing viscous acceleration. */
-	fluid_dynamics::ViscousAccelerationWithWall viscous_acceleration(water_block_complex);
-	/** Impose transport velocity. */
-	fluid_dynamics::TransportVelocityCorrectionComplex transport_velocity_correction(water_block_complex);
+	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(water_block_complex);
 	/** viscous acceleration and transport velocity correction can be combined because they are independent dynamics. */
-	CombinedInteractionDynamics viscous_acceleration_and_transport_correction(viscous_acceleration, transport_velocity_correction);
+	InteractionDynamics<CombinedLocalInteraction<
+		fluid_dynamics::ViscousAccelerationWithWall,
+		fluid_dynamics::TransportVelocityCorrectionComplex>>
+		viscous_acceleration_and_transport_correction(water_block_complex);
 	/** Computing vorticity in the flow. */
-	fluid_dynamics::VorticityInner compute_vorticity(water_block_complex.inner_relation_);
+	InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_complex.inner_relation_);
 	/** Inflow boundary condition. */
 	BodyAlignedBoxByCell inflow_buffer(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(buffer_translation)), buffer_halfsize));
-	ParabolicInflow parabolic_inflow(water_block, inflow_buffer);
+	SimpleDynamics<ParabolicInflow, BodyAlignedBoxByCell> parabolic_inflow(inflow_buffer);
 	/** Periodic BCs in x direction. */
-	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition(water_block, xAxis);
+	PeriodicConditionUsingCellLinkedList periodic_condition(water_block, water_block.getBodyShapeBounds(), xAxis);
 	//----------------------------------------------------------------------
 	//	Algorithms of FSI.
 	//----------------------------------------------------------------------
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	SimpleDynamics<NormalDirectionFromBodyShape> insert_body_normal_direction(insert_body);
 	/** Corrected configuration for the elastic insert body. */
-	solid_dynamics::CorrectConfiguration insert_body_corrected_configuration(insert_body_inner);
+	InteractionDynamics<solid_dynamics::CorrectConfiguration> insert_body_corrected_configuration(insert_body_inner);
 	/** Compute the force exerted on solid body due to fluid pressure and viscosity. */
-	solid_dynamics::FluidForceOnSolidUpdate fluid_force_on_solid_update(insert_body_contact);
+	InteractionDynamics<solid_dynamics::FluidViscousForceOnSolid> viscous_force_on_solid(insert_body_contact);
+	InteractionDynamics<solid_dynamics::FluidForceOnSolidUpdate> 
+		fluid_force_on_solid_update(insert_body_contact, viscous_force_on_solid);
 	/** Compute the average velocity of the insert body. */
 	solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(insert_body);
 	//----------------------------------------------------------------------
 	//	Algorithms of solid dynamics.
 	//----------------------------------------------------------------------
 	/** Compute time step size of elastic solid. */
-	solid_dynamics::AcousticTimeStepSize insert_body_computing_time_step_size(insert_body);
+	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> insert_body_computing_time_step_size(insert_body);
 	/** Stress relaxation for the inserted body. */
-	solid_dynamics::StressRelaxationFirstHalf insert_body_stress_relaxation_first_half(insert_body_inner);
-	solid_dynamics::StressRelaxationSecondHalf insert_body_stress_relaxation_second_half(insert_body_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> insert_body_stress_relaxation_first_half(insert_body_inner);
+	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> insert_body_stress_relaxation_second_half(insert_body_inner);
 	/** Constrain region of the inserted body. */
 	BodyRegionByParticle beam_base(insert_body, makeShared<MultiPolygonShape>(createBeamBaseShape()));
-	solid_dynamics::ConstrainSolidBodyRegion constrain_beam_base(insert_body, beam_base);
+	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_beam_base(beam_base);
 	/** Update norm .*/
-	solid_dynamics::UpdateElasticNormalDirection insert_body_update_normal(insert_body);
+	SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> insert_body_update_normal(insert_body);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp write_real_body_states(in_output, sph_system.real_bodies_);
-	RestartIO restart_io(in_output, sph_system.real_bodies_);
-	RegressionTestTimeAveraged<BodyReducedQuantityRecording<solid_dynamics::TotalViscousForceOnSolid>>
-		write_total_viscous_force_on_insert_body(in_output, insert_body);
+	BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
+	RestartIO restart_io(io_environment, sph_system.real_bodies_);
+	RegressionTestTimeAveraged<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalViscousForceOnSolid>>>
+		write_total_viscous_force_on_insert_body(io_environment, insert_body);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		write_beam_tip_displacement("Position", in_output, beam_observer_contact);
+		write_beam_tip_displacement("Position", io_environment, beam_observer_contact);
 	ObservedQuantityRecording<Vecd>
-		write_fluid_velocity("Velocity", in_output, fluid_observer_contact);
+		write_fluid_velocity("Velocity", io_environment, fluid_observer_contact);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
@@ -187,27 +187,13 @@ int main(int ac, char *av[])
 	/** computing linear reproducing configuration for the insert body. */
 	insert_body_corrected_configuration.parallel_exec();
 	//----------------------------------------------------------------------
-	//	Load restart file if necessary.
-	//----------------------------------------------------------------------
-	if (sph_system.restart_step_ != 0)
-	{
-		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.restart_step_);
-		insert_body.updateCellLinkedList();
-		water_block.updateCellLinkedList();
-		periodic_condition.update_cell_linked_list_.parallel_exec();
-		/** one need update configuration after periodic condition. */
-		water_block_complex.updateConfiguration();
-		insert_body_contact.updateConfiguration();
-		insert_body_update_normal.parallel_exec();
-	}
-	//----------------------------------------------------------------------
 	//	Setup computing and initial conditions.
 	//----------------------------------------------------------------------
 	size_t number_of_iterations = sph_system.restart_step_;
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
-	Real End_Time = 200.0;			/**< End time. */
-	Real D_Time = End_Time / 200.0; /**< time stamps for output. */
+	Real end_time = 200.0;
+	Real output_interval = end_time / 200.0;
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
 	//----------------------------------------------------------------------
@@ -221,19 +207,19 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Main loop starts here.
 	//----------------------------------------------------------------------
-	while (GlobalStaticVariables::physical_time_ < End_Time)
+	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
 		/** Integrate time (loop) until the next output time. */
-		while (integration_time < D_Time)
+		while (integration_time < output_interval)
 		{
 			initialize_a_fluid_step.parallel_exec();
 			Real Dt = get_fluid_advection_time_step_size.parallel_exec();
 			update_density_by_summation.parallel_exec();
-			viscous_acceleration_and_transport_correction.parallel_exec(Dt);
+			viscous_acceleration_and_transport_correction.parallel_exec();
 
 			/** FSI for viscous force. */
-			fluid_force_on_solid_update.viscous_force_.parallel_exec();
+			viscous_force_on_solid.parallel_exec();
 			/** Update normal direction on elastic body.*/
 			insert_body_update_normal.parallel_exec();
 			size_t inner_ite_dt = 0;
@@ -257,7 +243,7 @@ int main(int ac, char *av[])
 				{
 					Real dt_s = SMIN(insert_body_computing_time_step_size.parallel_exec(), dt - dt_s_sum);
 					insert_body_stress_relaxation_first_half.parallel_exec(dt_s);
-					constrain_beam_base.parallel_exec();
+					constraint_beam_base.parallel_exec();
 					insert_body_stress_relaxation_second_half.parallel_exec(dt_s);
 					dt_s_sum += dt_s;
 					inner_ite_dt_s++;
@@ -285,7 +271,7 @@ int main(int ac, char *av[])
 			/** Water block configuration and periodic condition. */
 			periodic_condition.bounding_.parallel_exec();
 
-			water_block.updateCellLinkedList();
+			water_block.updateCellLinkedListWithParticleSort(100);
 			periodic_condition.update_cell_linked_list_.parallel_exec();
 			water_block_complex.updateConfiguration();
 			/** one need update configuration after periodic condition. */

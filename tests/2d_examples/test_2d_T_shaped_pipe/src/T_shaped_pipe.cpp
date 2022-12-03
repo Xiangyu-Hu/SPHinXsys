@@ -16,15 +16,6 @@ Real DL1 = 0.7 * DL;				  /**< The length of the main channel. */
 Real resolution_ref = 0.15;			  /**< Initial reference particle spacing. */
 Real BW = resolution_ref * 4;		  /**< Reference size of the emitter. */
 Real DL_sponge = resolution_ref * 20; /**< Reference size of the emitter buffer to impose inflow condition. */
-/** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-DL_sponge - BW, -DH - BW), Vec2d(DL + BW, 2.0 * DH + BW));
-/** Prescribed fluid body domain bounds*/
-BoundingBox fluid_body_domain_bounds(Vec2d(-DL_sponge, -DH), Vec2d(DL + BW, 2.0 * DH));
-Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH);
-Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize;
-Vec2d inlet_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
-Vec2d inlet_buffer_translation = Vec2d(-DL_sponge, 0.0) + inlet_buffer_halfsize;
-
 //-------------------------------------------------------
 //----------------------------------------------------------------------
 //	Global parameters on the fluid properties
@@ -74,17 +65,17 @@ public:
 //----------------------------------------------------------------------
 //	Define emitter buffer inflow boundary condition
 //----------------------------------------------------------------------
-class EmitterBufferInflowCondition : public fluid_dynamics::InflowBoundaryCondition
+class EmitterBufferInflowCondition : public fluid_dynamics::InflowVelocityCondition
 {
 	Real u_ave_, u_ref_, t_ref_;
 
 public:
-	EmitterBufferInflowCondition(FluidBody &body, BodyAlignedBoxByCell &aligned_box_part)
-		: InflowBoundaryCondition(body, aligned_box_part),
+	EmitterBufferInflowCondition(BodyAlignedBoxByCell &aligned_box_part)
+		: InflowVelocityCondition(aligned_box_part),
 		  u_ave_(0), u_ref_(U_f), t_ref_(4.0) {}
 
 	// here every argument parameters and return value are in frame (local) coordinate
-	Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
+	Vecd getPrescribedVelocity(Vecd &position, Vecd &velocity) override
 	{
 		Real u = velocity[0];
 		Real v = velocity[1];
@@ -111,17 +102,16 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Build up the environment of a SPHSystem with global controls.
 	//----------------------------------------------------------------------
+	BoundingBox system_domain_bounds(Vec2d(-DL_sponge - BW, -DH - BW), Vec2d(DL + BW, 2.0 * DH + BW));
 	SPHSystem system(system_domain_bounds, resolution_ref);
 	/** Tag for computation from restart files. 0: not from restart files. */
 	system.restart_step_ = 0;
-	// handle command line arguments
 	system.handleCommandlineOptions(ac, av);
-	InOutput in_output(system);
+	IOEnvironment io_environment(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.cd
 	//----------------------------------------------------------------------
 	FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
-	water_block.setBodyDomainBounds(fluid_body_domain_bounds);
 	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	water_block.generateParticles<ParticleGeneratorLattice>();
 
@@ -133,51 +123,55 @@ int main(int ac, char *av[])
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner water_block_inner(water_block);
-	ComplexBodyRelation water_block_complex_relation(water_block_inner, {&wall_boundary});
+	InnerRelation water_block_inner(water_block);
+	ComplexRelation water_block_complex_relation(water_block_inner, {&wall_boundary});
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	/** Initialize particle acceleration. */
-	TimeStepInitialization initialize_a_fluid_step(water_block);
+	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex_relation);
+	Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(water_block_complex_relation);
+	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex_relation);
+	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> transport_velocity_correction(water_block_complex_relation);
+	InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex>
+		inlet_outlet_surface_particle_indicator(water_block_complex_relation);
+	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation(water_block_complex_relation);
+	water_block.addBodyStateForRecording<Real>("Pressure");		   // output for debug
+	water_block.addBodyStateForRecording<int>("SurfaceIndicator"); // output for debug
+
+	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
+	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
+	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-	/** Emitter. */
+
+	Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH);
+	Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize;
 	BodyAlignedBoxByParticle emitter(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(emitter_translation)), emitter_halfsize));
-	fluid_dynamics::EmitterInflowInjecting emitter_inflow_injecting(water_block, emitter, 10, 0, true);
-	/** Emitter condition. */
+	SimpleDynamics<fluid_dynamics::EmitterInflowInjection, BodyAlignedBoxByParticle> emitter_inflow_injection(emitter, 10, 0);
+
+	Vec2d inlet_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
+	Vec2d inlet_buffer_translation = Vec2d(-DL_sponge, 0.0) + inlet_buffer_halfsize;
 	BodyAlignedBoxByCell emitter_buffer(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(inlet_buffer_translation)), inlet_buffer_halfsize));
-	EmitterBufferInflowCondition emitter_buffer_inflow_condition(water_block, emitter_buffer);
-	/** time-space method to detect surface particles. */
-	fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex
-		inlet_outlet_surface_particle_indicator(water_block_complex_relation);
-	/** Evaluation of density by freestream approach. */
-	fluid_dynamics::DensitySummationFreeStreamComplex update_density_by_summation(water_block_complex_relation);
-	/** We can output a method-specific particle data for debug */
-	water_block.addBodyStateForRecording<Real>("Pressure");
-	water_block.addBodyStateForRecording<int>("SurfaceIndicator");
-	/** Time step size without considering sound wave speed. */
-	fluid_dynamics::AdvectionTimeStepSize get_fluid_advection_time_step_size(water_block, U_f);
-	/** Time step size with considering sound wave speed. */
-	fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_block);
-	/** Pressure relaxation. */
-	fluid_dynamics::PressureRelaxationWithWall pressure_relaxation(water_block_complex_relation);
-	/** Density relaxation. */
-	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_block_complex_relation);
-	/** Computing viscous acceleration. */
-	fluid_dynamics::ViscousAccelerationWithWall viscous_acceleration(water_block_complex_relation);
-	/** Impose transport velocity. */
-	fluid_dynamics::TransportVelocityCorrectionComplex transport_velocity_correction(water_block_complex_relation);
-	/** recycle real fluid particle to buffer particles at outlet. */
-	OpenBoundaryConditionInAxisDirection transfer_to_buffer_particles_lower_bound(water_block, yAxis, negativeDirection);
-	OpenBoundaryConditionInAxisDirection transfer_to_buffer_particles_upper_bound(water_block, yAxis, positiveDirection);
+	SimpleDynamics<EmitterBufferInflowCondition, BodyAlignedBoxByCell> emitter_buffer_inflow_condition(emitter_buffer);
+
+	Vec2d disposer_up_halfsize = Vec2d(0.3 * DH, 0.5 * BW);
+	Vec2d disposer_up_translation = Vec2d(DL + 0.05 * DH, 2.0 * DH) - disposer_up_halfsize;
+	BodyAlignedBoxByCell disposer_up(
+		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(disposer_up_translation)), disposer_up_halfsize));
+	SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion, BodyAlignedBoxByCell> disposer_up_outflow_deletion(disposer_up, yAxis);
+
+	Vec2d disposer_down_halfsize = disposer_up_halfsize;
+	Vec2d disposer_down_translation = Vec2d(DL1 - 0.05 * DH, - DH) + disposer_down_halfsize;
+	BodyAlignedBoxByCell disposer_down(
+		water_block, makeShared<AlignedBoxShape>(Transform2d(Rotation2d(Pi), Vec2d(disposer_down_translation)), disposer_down_halfsize));
+	SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion, BodyAlignedBoxByCell> disposer_down_outflow_deletion(disposer_down, yAxis);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp write_body_states(in_output, system.real_bodies_);
-	RestartIO restart_io(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtp write_body_states(io_environment, system.real_bodies_);
+	RestartIO restart_io(io_environment, system.real_bodies_);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
@@ -186,24 +180,14 @@ int main(int ac, char *av[])
 	system.initializeSystemConfigurations();
 	wall_boundary_normal_direction.parallel_exec();
 	//----------------------------------------------------------------------
-	//	Load restart file if necessary.
-	//----------------------------------------------------------------------
-	/** If the starting time is not zero, please setup the restart time step ro read in restart states. */
-	if (system.restart_step_ != 0)
-	{
-		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(system.restart_step_);
-		water_block.updateCellLinkedList();
-		water_block_complex_relation.updateConfiguration();
-	}
-	//----------------------------------------------------------------------
 	//	Setup computing and initial conditions.
 	//----------------------------------------------------------------------
 	size_t number_of_iterations = system.restart_step_;
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
-	Real End_Time = 100.0;			/**< End time. */
-	Real D_Time = End_Time / 200.0; /**< Time stamps for output of body states. */
-	Real dt = 0.0;					/**< Default acoustic time step sizes. */
+	Real end_time = 100.0;
+	Real output_interval = end_time / 200.0; /**< Time stamps for output of body states. */
+	Real dt = 0.0;							 /**< Default acoustic time step sizes. */
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
 	//----------------------------------------------------------------------
@@ -216,18 +200,18 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------------------------------------
 	//	Main loop starts here.
 	//----------------------------------------------------------------------------------------------------
-	while (GlobalStaticVariables::physical_time_ < End_Time)
+	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
 		/** Integrate time (loop) until the next output time. */
-		while (integration_time < D_Time)
+		while (integration_time < output_interval)
 		{
 			initialize_a_fluid_step.parallel_exec();
 			Real Dt = get_fluid_advection_time_step_size.parallel_exec();
 			inlet_outlet_surface_particle_indicator.parallel_exec();
 			update_density_by_summation.parallel_exec();
 			viscous_acceleration.parallel_exec();
-			transport_velocity_correction.parallel_exec(Dt);
+			transport_velocity_correction.parallel_exec();
 
 			/** Dynamics including pressure relaxation. */
 			Real relaxation_time = 0.0;
@@ -254,13 +238,13 @@ int main(int ac, char *av[])
 			}
 			number_of_iterations++;
 
-			/** inflow injecting*/
-			emitter_inflow_injecting.exec();
-			transfer_to_buffer_particles_lower_bound.particle_type_transfer.parallel_exec();
-			transfer_to_buffer_particles_upper_bound.particle_type_transfer.parallel_exec();
+			/** inflow injection*/
+			emitter_inflow_injection.exec();
+			disposer_up_outflow_deletion.parallel_exec();
+			disposer_down_outflow_deletion.parallel_exec();
 
 			/** Update cell linked list and configuration. */
-			water_block.updateCellLinkedList();
+			water_block.updateCellLinkedListWithParticleSort(100);
 			water_block_complex_relation.updateConfiguration();
 		}
 

@@ -7,7 +7,7 @@ using namespace SPH;
 TEST(test_GeometricShapeBox, test_findBounds)
 {
 	Vec3d halfsize(1.0, 0.5, 0.25);
-	SimTK::Transform transform(Vec3d(1.0, 0.5, 0.25));
+	Transformd transform(Vec3d(1.0, 0.5, 0.25));
 
 	TransformShape<GeometricShapeBox> brick(transform, halfsize);
 	BoundingBox box = brick.getBounds();

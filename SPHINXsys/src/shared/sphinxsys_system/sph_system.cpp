@@ -1,9 +1,3 @@
-/**
- * @file sph_system.cpp
- * @brief 	Definition of all system level functions
- * @author  Xiangyu Hu, Luhui Han and Chi Zhang
- */
-
 #include "sph_system.h"
 
 #include "base_body.h"
@@ -17,7 +11,7 @@ namespace SPH
 		: system_domain_bounds_(system_domain_bounds),
 		  resolution_ref_(resolution_ref),
 		  tbb_global_control_(tbb::global_control::max_allowed_parallelism, number_of_threads),
-		  in_output_(nullptr), restart_step_(0), run_particle_relaxation_(false),
+		  io_environment_(nullptr), restart_step_(0), run_particle_relaxation_(false),
 		  reload_particles_(false), generate_regression_data_(false) {}
 	//=================================================================================================//
 	void SPHSystem::initializeSystemCellLinkedLists()
@@ -44,7 +38,7 @@ namespace SPH
 		Real dt = Infinity;
 		for (size_t i = 0; i < solid_bodies_.size(); i++)
 		{
-			solid_dynamics::AcousticTimeStepSize computing_time_step_size(*solid_bodies_[i], CFL);
+			ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(*solid_bodies_[i], CFL);
 			Real dt_temp = computing_time_step_size.parallel_exec();
 			if (dt_temp < dt)
 				dt = dt_temp;

@@ -1,30 +1,30 @@
 /* -------------------------------------------------------------------------*
  *								SPHinXsys									*
- * --------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
  * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic *
+ * physical accurate simulation and aims to model coupled industrial dynamic*
  * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
  * (smoothed particle hydrodynamics), a meshless computational method using	*
  * particle discretization.													*
  *																			*
  * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
- * and HU1527/12-1.															*
- *                                                                           *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
  * the authors' affiliations.												*
- *                                                                           *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
- * not use this file except in compliance with the License. You may obtain a *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
- *                                                                           *
- * --------------------------------------------------------------------------*/
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	electro_physiology.h
  * @brief 	In is file, we declaim the dynamics relevant to electrophysiology,
- * including diffusion, reaction and muscle activation.
- * @author 	Chi Zhang and Xiangyu Hu
+ * 			including diffusion, reaction and muscle activation.
+ * @author	Chi ZHang and Xiangyu Hu
  */
 
 #ifndef ELECTRO_PHYSIOLOGY_H
@@ -35,7 +35,7 @@
 
 namespace SPH
 {
-	class ElectroPhysiologyReaction : public BaseReactionModel
+	class ElectroPhysiologyReaction : public BaseReactionModel<3>
 	{
 	protected:
 		Real k_a_;
@@ -43,16 +43,16 @@ namespace SPH
 		size_t gate_variable_;
 		size_t active_contraction_stress_;
 
-		virtual Real getProductionRateIonicCurrent(StdVec<StdLargeVec<Real>> &species, size_t particle_i) = 0;
-		virtual Real getLossRateIonicCurrent(StdVec<StdLargeVec<Real>> &species, size_t particle_i) = 0;
-		virtual Real getProductionRateGateVariable(StdVec<StdLargeVec<Real>> &species, size_t particle_i) = 0;
-		virtual Real getLossRateGateVariable(StdVec<StdLargeVec<Real>> &species, size_t particle_i) = 0;
-		virtual Real getProductionActiveContractionStress(StdVec<StdLargeVec<Real>> &species, size_t particle_i);
-		virtual Real getLossRateActiveContractionStress(StdVec<StdLargeVec<Real>> &species, size_t particle_i);
+		virtual Real getProductionRateIonicCurrent(LocalSpecies &species) = 0;
+		virtual Real getLossRateIonicCurrent(LocalSpecies &species) = 0;
+		virtual Real getProductionRateGateVariable(LocalSpecies &species) = 0;
+		virtual Real getLossRateGateVariable(LocalSpecies &species) = 0;
+		virtual Real getProductionActiveContractionStress(LocalSpecies &species);
+		virtual Real getLossRateActiveContractionStress(LocalSpecies &species);
 
 	public:
 		explicit ElectroPhysiologyReaction(Real k_a)
-			: BaseReactionModel({"Voltage", "GateVariable", "ActiveContractionStress"}),
+			: BaseReactionModel<3>({"Voltage", "GateVariable", "ActiveContractionStress"}),
 			  k_a_(k_a), voltage_(species_indexes_map_["Voltage"]),
 			  gate_variable_(species_indexes_map_["GateVariable"]),
 			  active_contraction_stress_(species_indexes_map_["ActiveContractionStress"])
@@ -77,10 +77,10 @@ namespace SPH
 		/** Parameters for two variable cell model. */
 		Real k_, a_, b_, mu_1_, mu_2_, epsilon_, c_m_;
 
-		virtual Real getProductionRateIonicCurrent(StdVec<StdLargeVec<Real>> &species, size_t particle_i) override;
-		virtual Real getLossRateIonicCurrent(StdVec<StdLargeVec<Real>> &species, size_t particle_i) override;
-		virtual Real getProductionRateGateVariable(StdVec<StdLargeVec<Real>> &species, size_t particle_i) override;
-		virtual Real getLossRateGateVariable(StdVec<StdLargeVec<Real>> &species, size_t particle_i) override;
+		virtual Real getProductionRateIonicCurrent(LocalSpecies &species) override;
+		virtual Real getLossRateIonicCurrent(LocalSpecies &species) override;
+		virtual Real getProductionRateGateVariable(LocalSpecies &species) override;
+		virtual Real getLossRateGateVariable(LocalSpecies &species) override;
 
 	public:
 		explicit AlievPanfilowModel(Real k_a, Real c_m, Real k, Real a, Real b, Real mu_1, Real mu_2, Real epsilon)
@@ -96,7 +96,7 @@ namespace SPH
 	 * @class MonoFieldElectroPhysiology
 	 * @brief material class for electro_physiology.
 	 */
-	class MonoFieldElectroPhysiology : public DiffusionReaction<Solid>
+	class MonoFieldElectroPhysiology : public DiffusionReaction<Solid, 3>
 	{
 	public:
 		explicit MonoFieldElectroPhysiology(ElectroPhysiologyReaction &electro_physiology_reaction,
@@ -108,7 +108,7 @@ namespace SPH
 	 * @class LocalMonoFieldElectroPhysiology
 	 * @brief material class for electro_physiology with locally oriented fibers.
 	 */
-	class LocalMonoFieldElectroPhysiology : public DiffusionReaction<Solid>
+	class LocalMonoFieldElectroPhysiology : public DiffusionReaction<Solid, 3>
 	{
 	public:
 		explicit LocalMonoFieldElectroPhysiology(ElectroPhysiologyReaction &electro_physiology_reaction,
@@ -123,10 +123,10 @@ namespace SPH
 	 * @brief A group of particles with electrophysiology particle data.
 	 */
 	class ElectroPhysiologyParticles
-		: public DiffusionReactionParticles<SolidParticles>
+		: public DiffusionReactionParticles<SolidParticles, Solid, 3>
 	{
 	public:
-		ElectroPhysiologyParticles(SPHBody &sph_body, DiffusionReaction<Solid> *diffusion_reaction_material);
+		ElectroPhysiologyParticles(SPHBody &sph_body, DiffusionReaction<Solid, 3> *diffusion_reaction_material);
 		virtual ~ElectroPhysiologyParticles(){};
 		virtual ElectroPhysiologyParticles *ThisObjectPtr() override { return this; };
 	};
@@ -135,35 +135,38 @@ namespace SPH
 	 * @brief A group of reduced particles with electrophysiology particle data.
 	 */
 	class ElectroPhysiologyReducedParticles
-		: public DiffusionReactionParticles<SolidParticles>
+		: public DiffusionReactionParticles<SolidParticles, Solid, 3>
 	{
 	public:
 		/** Constructor. */
-		ElectroPhysiologyReducedParticles(SPHBody &sph_body, DiffusionReaction<Solid> *diffusion_reaction_material);
+		ElectroPhysiologyReducedParticles(SPHBody &sph_body, DiffusionReaction<Solid, 3> *diffusion_reaction_material);
 		/** Destructor. */
 		virtual ~ElectroPhysiologyReducedParticles(){};
 		virtual ElectroPhysiologyReducedParticles *ThisObjectPtr() override { return this; };
 
-		virtual Vecd getKernelGradient(size_t particle_index_i, size_t particle_index_j, Real dW_ij, Vecd &e_ij) override
+		virtual Vecd getKernelGradient(size_t particle_index_i, size_t particle_index_j, Real dW_ijV_j, Vecd &e_ij) override
 		{
-			return dW_ij * e_ij;
+			return dW_ijV_j * e_ij;
 		};
 	};
 
 	namespace electro_physiology
 	{
-		typedef DiffusionReactionSimpleData<RealBody, SolidParticles, Solid> ElectroPhysiologyDataDelegateSimple;
-		typedef DiffusionReactionInnerData<RealBody, SolidParticles, Solid> ElectroPhysiologyDataDelegateInner;
+		typedef DiffusionReactionSimpleData<SolidParticles, Solid, 3> ElectroPhysiologyDataDelegateSimple;
+		typedef DiffusionReactionInnerData<SolidParticles, Solid, 3> ElectroPhysiologyDataDelegateInner;
 		/**
 		 * @class ElectroPhysiologyInitialCondition
 		 * @brief  set initial condition for a muscle body
 		 * This is a abstract class to be override for case specific initial conditions.
 		 */
-		class ElectroPhysiologyInitialCondition : public ParticleDynamicsSimple,
+		class ElectroPhysiologyInitialCondition : public LocalDynamics,
 												  public ElectroPhysiologyDataDelegateSimple
 		{
 		public:
-			explicit ElectroPhysiologyInitialCondition(RealBody &real_body);
+			explicit ElectroPhysiologyInitialCondition(SPHBody &sph_body)
+				: LocalDynamics(sph_body),
+				  ElectroPhysiologyDataDelegateSimple(sph_body),
+				  pos_(particles_->pos_), species_n_(particles_->species_n_){};
 			virtual ~ElectroPhysiologyInitialCondition(){};
 
 		protected:
@@ -175,11 +178,11 @@ namespace SPH
 		 * @brief Computing the time step size from diffusion criteria
 		 */
 		class GetElectroPhysiologyTimeStepSize
-			: public GetDiffusionTimeStepSize<RealBody, SolidParticles, Solid>
+			: public GetDiffusionTimeStepSize<SolidParticles, Solid, 3>
 		{
 		public:
 			explicit GetElectroPhysiologyTimeStepSize(RealBody &real_body)
-				: GetDiffusionTimeStepSize<RealBody, SolidParticles, Solid>(real_body){};
+				: GetDiffusionTimeStepSize<SolidParticles, Solid, 3>(real_body){};
 			virtual ~GetElectroPhysiologyTimeStepSize(){};
 		};
 		/**
@@ -188,10 +191,10 @@ namespace SPH
 		 */
 		class ElectroPhysiologyDiffusionRelaxationInner
 			: public RelaxationOfAllDiffusionSpeciesRK2<
-				  RelaxationOfAllDiffusionSpeciesInner<RealBody, SolidParticles, Solid>>
+				  RelaxationOfAllDiffusionSpeciesInner<SolidParticles, Solid, 3>>
 		{
 		public:
-			explicit ElectroPhysiologyDiffusionRelaxationInner(BaseBodyRelationInner &inner_relation)
+			explicit ElectroPhysiologyDiffusionRelaxationInner(BaseInnerRelation &inner_relation)
 				: RelaxationOfAllDiffusionSpeciesRK2(inner_relation){};
 			virtual ~ElectroPhysiologyDiffusionRelaxationInner(){};
 		};
@@ -201,53 +204,20 @@ namespace SPH
 		 */
 		class ElectroPhysiologyDiffusionRelaxationComplex
 			: public RelaxationOfAllDiffusionSpeciesRK2<
-				  RelaxationOfAllDiffusionSpeciesComplex<RealBody, SolidParticles, Solid, RealBody, SolidParticles, Solid>>
+				  RelaxationOfAllDiffusionSpeciesComplex<SolidParticles, Solid, SolidParticles, Solid, 3>>
 		{
 		public:
-			explicit ElectroPhysiologyDiffusionRelaxationComplex(ComplexBodyRelation &complex_relation)
+			explicit ElectroPhysiologyDiffusionRelaxationComplex(ComplexRelation &complex_relation)
 				: RelaxationOfAllDiffusionSpeciesRK2(complex_relation){};
 			virtual ~ElectroPhysiologyDiffusionRelaxationComplex(){};
 		};
-		/**
-		 * @class ElectroPhysiologyReactionRelaxationForward
-		 * @brief Solve the reaction ODE equation of trans-membrane potential
-		 * using forward sweeping
-		 */
-		class ElectroPhysiologyReactionRelaxationForward
-			: public RelaxationOfAllReactionsForward<RealBody, SolidParticles, Solid>
-		{
-		public:
-			explicit ElectroPhysiologyReactionRelaxationForward(RealBody &real_body)
-				: RelaxationOfAllReactionsForward<RealBody, SolidParticles, Solid>(real_body){};
-			virtual ~ElectroPhysiologyReactionRelaxationForward(){};
-		};
-		/**
-		 * @class ElectroPhysiologyReactionRelaxationForward
-		 * @brief Solve the reaction ODE equation of trans-membrane potential
-		 * using backward sweeping
-		 */
-		class ElectroPhysiologyReactionRelaxationBackward
-			: public RelaxationOfAllReactionsBackward<RealBody, SolidParticles, Solid>
-		{
-		public:
-			explicit ElectroPhysiologyReactionRelaxationBackward(RealBody &real_body)
-				: RelaxationOfAllReactionsBackward<RealBody, SolidParticles, Solid>(real_body){};
-			virtual ~ElectroPhysiologyReactionRelaxationBackward(){};
-		};
-		/**
-		 * @class ApplyStimulusCurrents
-		 * @brief Apply specific stimulus currents
-		 * This is a abstract class to be override for case specific implementations.
-		 */
-		class ApplyStimulusCurrents : public ParticleDynamicsSimple,
-									  public ElectroPhysiologyDataDelegateSimple
-		{
-		public:
-			explicit ApplyStimulusCurrents(RealBody &real_body)
-				: ParticleDynamicsSimple(real_body),
-				  ElectroPhysiologyDataDelegateSimple(real_body) {}
-			virtual ~ApplyStimulusCurrents(){};
-		};
+
+		/** Solve the reaction ODE equation of trans-membrane potential	using forward sweeping */
+		using ElectroPhysiologyReactionRelaxationForward =
+			SimpleDynamics<RelaxationOfAllReactionsForward<SolidParticles, Solid, 3>>;
+		/** Solve the reaction ODE equation of trans-membrane potential	using backward sweeping */
+		using ElectroPhysiologyReactionRelaxationBackward =
+			SimpleDynamics<RelaxationOfAllReactionsBackward<SolidParticles, Solid, 3>>;
 	}
 }
 #endif // ELECTRO_PHYSIOLOGY_H

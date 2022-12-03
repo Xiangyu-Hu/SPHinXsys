@@ -1,32 +1,31 @@
 /* -------------------------------------------------------------------------*
  *								SPHinXsys									*
- * --------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
  * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic *
+ * physical accurate simulation and aims to model coupled industrial dynamic*
  * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
  * (smoothed particle hydrodynamics), a meshless computational method using	*
  * particle discretization.													*
  *																			*
  * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
- * and HU1527/12-1.															*
- *                                                                           *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4												*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
  * the authors' affiliations.												*
- *                                                                           *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
- * not use this file except in compliance with the License. You may obtain a *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
- *                                                                           *
- * --------------------------------------------------------------------------*/
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	diffusion_reaction.h
  * @brief 	Describe the diffusive and reaction in which
  *          the dynamics is characterized by diffusion equation and reactive source terms.
  *			Typical physical processes are diffusion, heat conduction
  *			and chemical and biological reactions.
- * @author  Xiangyu Hu, Chi Zhang
  */
 
 #ifndef DIFFUSION_REACTION_H
@@ -106,7 +105,7 @@ namespace SPH
 							 Real diff_cf, Real bias_diff_cf, Vecd bias_direction)
 			: IsotropicDiffusion(diffusion_species_index, gradient_species_index, diff_cf),
 			  bias_direction_(bias_direction), bias_diff_cf_(bias_diff_cf),
-			  transformed_diffusivity_(1.0)
+			  transformed_diffusivity_(Matd::Identity())
 		{
 			material_type_name_ = "DirectionalDiffusion";
 			initializeDirectionalDiffusivity(diff_cf, bias_diff_cf, bias_direction);
@@ -122,7 +121,7 @@ namespace SPH
 												   size_t particle_index_j, Vecd &inter_particle_direction) override
 		{
 			Vecd grad_ij = transformed_diffusivity_ * inter_particle_direction;
-			return 1.0 / grad_ij.scalarNormSqr();
+			return 1.0 / grad_ij.squaredNorm();
 		};
 	};
 
@@ -150,7 +149,7 @@ namespace SPH
 		{
 			Matd trans_diffusivity = getAverageValue(local_transformed_diffusivity_[particle_index_i], local_transformed_diffusivity_[particle_index_j]);
 			Vecd grad_ij = trans_diffusivity * inter_particle_direction;
-			return 1.0 / grad_ij.scalarNormSqr();
+			return 1.0 / grad_ij.squaredNorm();
 		};
 		virtual void assignBaseParticles(BaseParticles *base_particles) override;
 		virtual void readFromXmlForLocalParameters(const std::string &filefullpath) override;
@@ -160,17 +159,18 @@ namespace SPH
 	 * @class BaseReactionModel
 	 * @brief Base class for all reaction models.
 	 */
+	template <int NUM_SPECIES>
 	class BaseReactionModel
 	{
-	protected:
-		/** Reaction functor . */
-		typedef std::function<Real(StdVec<StdLargeVec<Real>> &, size_t particle_i)> ReactionFunctor;
-		StdVec<std::string> species_name_list_;
-		std::map<std::string, size_t> species_indexes_map_;
-		std::string reaction_model_;
-
 	public:
-		explicit BaseReactionModel(StdVec<std::string> species_name_list)
+		typedef std::array<Real, NUM_SPECIES> LocalSpecies;
+		typedef std::array<std::string, NUM_SPECIES> SpeciesNames;
+		typedef std::function<Real(LocalSpecies &)> ReactionFunctor;
+		IndexVector reactive_species_;
+		StdVec<ReactionFunctor> get_production_rates_;
+		StdVec<ReactionFunctor> get_loss_rates_;
+
+		explicit BaseReactionModel(SpeciesNames species_name_list)
 			: reaction_model_("BaseReactionModel"), species_name_list_(species_name_list)
 		{
 			for (size_t i = 0; i != species_name_list.size(); ++i)
@@ -179,35 +179,36 @@ namespace SPH
 			}
 		};
 		virtual ~BaseReactionModel(){};
+		SpeciesNames getSpeciesNameList() { return species_name_list_; };
 
-		IndexVector reactive_species_;
-		StdVec<ReactionFunctor> get_production_rates_;
-		StdVec<ReactionFunctor> get_loss_rates_;
-
-		StdVec<std::string> getSpeciesNameList() { return species_name_list_; };
+	protected:
+		SpeciesNames species_name_list_;
+		std::map<std::string, size_t> species_indexes_map_;
+		std::string reaction_model_;
 	};
 
 	/**
 	 * @class DiffusionReaction
 	 * @brief Complex material for diffusion or/and reactions.
 	 */
-	template <class BaseMaterialType = BaseMaterial>
+	template <class BaseMaterialType = BaseMaterial, int NUM_SPECIES = 1>
 	class DiffusionReaction : public BaseMaterialType
 	{
 	private:
 		UniquePtrKeepers<BaseDiffusion> diffusion_ptr_keeper_;
 
 	protected:
-		StdVec<std::string> species_name_list_;
+		typedef std::array<std::string, NUM_SPECIES> SpeciesNames;
+		SpeciesNames species_name_list_;
 		size_t number_of_species_;
 		std::map<std::string, size_t> species_indexes_map_;
 		StdVec<BaseDiffusion *> species_diffusion_;
-		BaseReactionModel *species_reaction_;
+		BaseReactionModel<NUM_SPECIES> *species_reaction_;
 
 	public:
 		/** Constructor for material with diffusion only. */
 		template <typename... ConstructorArgs>
-		DiffusionReaction(StdVec<std::string> species_name_list, ConstructorArgs &&...args)
+		DiffusionReaction(SpeciesNames species_name_list, ConstructorArgs &&...args)
 			: BaseMaterialType(std::forward<ConstructorArgs>(args)...),
 			  species_name_list_(species_name_list),
 			  number_of_species_(species_name_list.size()),
@@ -221,8 +222,8 @@ namespace SPH
 		};
 		/** Constructor for material with diffusion and reaction. */
 		template <typename... ConstructorArgs>
-		DiffusionReaction(BaseReactionModel &species_reaction,
-						  StdVec<std::string> species_name_list, ConstructorArgs &&...args)
+		DiffusionReaction(BaseReactionModel<NUM_SPECIES> &species_reaction,
+						  SpeciesNames species_name_list, ConstructorArgs &&...args)
 			: DiffusionReaction(species_name_list, std::forward<ConstructorArgs>(args)...)
 		{
 			species_reaction_ = &species_reaction;
@@ -230,12 +231,12 @@ namespace SPH
 		};
 		virtual ~DiffusionReaction(){};
 
-		size_t NumberOfSpecies() { return number_of_species_; };
+		constexpr int NumberOfSpecies() { return NUM_SPECIES; };
 		size_t NumberOfSpeciesDiffusion() { return species_diffusion_.size(); };
 		StdVec<BaseDiffusion *> SpeciesDiffusion() { return species_diffusion_; };
-		BaseReactionModel *SpeciesReaction() { return species_reaction_; };
+		BaseReactionModel<NUM_SPECIES> *SpeciesReaction() { return species_reaction_; };
 		std::map<std::string, size_t> SpeciesIndexMap() { return species_indexes_map_; };
-		StdVec<std::string> getSpeciesNameList() { return species_name_list_; };
+		SpeciesNames getSpeciesNameList() { return species_name_list_; };
 		void assignBaseParticles(BaseParticles *base_particles) override
 		{
 			BaseMaterialType::assignBaseParticles(base_particles);
@@ -251,8 +252,7 @@ namespace SPH
 			Real diff_coff_max = 0.0;
 			for (size_t k = 0; k < species_diffusion_.size(); ++k)
 				diff_coff_max = SMAX(diff_coff_max, species_diffusion_[k]->getReferenceDiffusivity());
-			Real dimension = Real(Vecd(0).size());
-			return 0.5 * smoothing_length * smoothing_length / diff_coff_max / dimension;
+			return 0.5 * smoothing_length * smoothing_length / diff_coff_max / Real(Dimensions);
 		};
 
 		/** Initialize a diffusion material. */
@@ -266,7 +266,7 @@ namespace SPH
 					species_indexes_map_[diffusion_species_name], std::forward<ConstructorArgs>(args)...));
 		};
 
-		virtual DiffusionReaction<BaseMaterialType> *ThisObjectPtr() override { return this; };
+		virtual DiffusionReaction<BaseMaterialType, NUM_SPECIES> *ThisObjectPtr() override { return this; };
 	};
 }
 #endif // DIFFUSION_REACTION_H
