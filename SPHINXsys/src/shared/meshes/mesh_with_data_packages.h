@@ -78,7 +78,7 @@ namespace SPH
 	class BaseDataPackage
 	{
 	public:
-		BaseDataPackage() : state_indicator_(0){};
+		BaseDataPackage() : cell_index_on_mesh_(Vecu::Zero()), state_indicator_(0){};
 		virtual ~BaseDataPackage(){};
 		void setInnerPackage() { state_indicator_ = 1; };
 		bool isInnerPackage() { return state_indicator_ != 0; };
@@ -88,7 +88,7 @@ namespace SPH
 		Vecu CellIndexOnMesh() const { return cell_index_on_mesh_; }
 
 	protected:
-		Vecu cell_index_on_mesh_{Vecu::Zero()}; /**< index of this data package on the background mesh, Vecu(0) if it is not on the mesh. */
+		Vecu cell_index_on_mesh_; /**< index of this data package on the background mesh, zero if it is not on the mesh. */
 		/** reserved value: 0 not occupying background mesh, 1 occupying.
 		 *  guide to use: large magnitude for high priority of the data package. */
 		int state_indicator_;

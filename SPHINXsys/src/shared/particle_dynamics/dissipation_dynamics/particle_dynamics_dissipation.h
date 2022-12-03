@@ -46,7 +46,7 @@ namespace SPH
 	{
 		VariableType error_;
 		Real a_, c_;
-		ErrorAndParameters(Real zero = 0.0) : error_(ZeroData<VariableType>::value), a_(zero), c_(zero){};
+		ErrorAndParameters() : error_(ZeroData<VariableType>::value), a_(0), c_(0){};
 	};
 
 	/**

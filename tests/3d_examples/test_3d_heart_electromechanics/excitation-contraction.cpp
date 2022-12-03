@@ -170,8 +170,8 @@ public:
 		}
 		else
 		{
-			diffusion_reaction_material_.local_f0_[index_i] = Vecd(0);
-			diffusion_reaction_material_.local_s0_[index_i] = Vecd(0);
+			diffusion_reaction_material_.local_f0_[index_i] = Vecd::Zero();
+			diffusion_reaction_material_.local_s0_[index_i] = Vecd::Zero();
 		}
 	};
 };

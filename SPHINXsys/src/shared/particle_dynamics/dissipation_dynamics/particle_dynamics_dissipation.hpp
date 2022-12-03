@@ -22,7 +22,7 @@ namespace SPH
 		Real Vol_i = Vol_[index_i];
 		Real mass_i = mass_[index_i];
 		VariableType &variable_i = variable_[index_i];
-		ErrorAndParameters<VariableType> error_and_parameters(0);
+		ErrorAndParameters<VariableType> error_and_parameters();
 		Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 		for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 		{

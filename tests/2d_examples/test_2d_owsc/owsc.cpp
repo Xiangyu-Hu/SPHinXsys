@@ -96,7 +96,7 @@ int main()
 	 *			a privately-owned Body within the constructed MobilizedBody object.
 	 * @param[in] inboard(SimTK::Vec3) Defines the location of the joint point relative to the parent body.
 	 * @param[in] outboard(SimTK::Vec3) Defines the body's origin location to the joint point.
-	 * @note	The body's origin location can be the mass center, the the center of mass should be Vec3(0)
+	 * @note	The body's origin location can be the mass center, the the center of mass should be SimTK::Vec3(0)
 	 * 			in SimTK::MassProperties(mass, com, inertia)
 	 */
 	SimTK::MobilizedBody::Pin pin_spot(matter.Ground(), SimTK::Transform(SimTK::Vec3(7.92, 0.315, 0.0)),
