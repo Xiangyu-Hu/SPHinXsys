@@ -54,7 +54,7 @@ namespace SPH
 		virtual ~GlobalStaticVariables(){};
 
 		/** the physical time is global value for all dynamics */
-		static Real physical_time_;
+		static inline Real physical_time_ = 0.0;
 	};
 
 	/**

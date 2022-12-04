@@ -29,8 +29,6 @@
 #ifndef XML_ENGINE_SIMBODY_H
 #define XML_ENGINE_SIMBODY_H
 
-#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-
 #include "base_data_package.h"
 #include "sph_data_containers.h"
 #include "array.h"
@@ -44,13 +42,9 @@
 #include <cstdio>
 
 #include <fstream>
-#ifdef __APPLE__
-#include <boost/filesystem.hpp>
-namespace fs = boost::filesystem;
-#else
 #include <filesystem>
 namespace fs = std::filesystem;
-#endif
+
 
 namespace SPH
 {
