@@ -1,6 +1,3 @@
-#---------------------------------------
-# SPHINXSYS V.1.0.0
-#---------------------------------------
 cmake_minimum_required(VERSION 3.16)
 project(SPHINXsys VERSION 1.0.0 LANGUAGES CXX)
 
@@ -8,103 +5,88 @@ set(SPHINXSYS_PROJECT_DIR ${PROJECT_SOURCE_DIR})
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${SPHINXSYS_PROJECT_DIR}/cmake)
 include(Common) # brings macro to current namespace
 
-###### Change settings in this file if you want to build with Simbody and/or oneTBB source code ######
-option(SPH_ONLY_STATIC_BUILD "SPH_ONLY_STATIC_BUILD" 0)
-option(ONLY_3D "ONLY_3D" 0)
-option(BUILD_WITH_SIMBODY "BUILD_WITH_SIMBODY" 0)
-option(EMSCRIPTEN "EMSCRIPTEN" 0)
-option(BUILD_SPHINXSYS_TESTS "BUILD_SPHINXSYS_TESTS" 1)
+#------ Options
+option(SPHINXSYS_2D "Build sphinxsys_2d library" ON)
+option(SPHINXSYS_3D "Build sphinxsys_3d library" ON)
+option(SPHINXSYS_BUILD_TESTS "Build tests" ON)
+option(SPHINXSYS_DEVELOPER_MODE "Build tests" ON)
 
-
-set(CMAKE_VERBOSE_MAKEFILE ON) # Enable verbose makefile for whoever use them
+#------ Global properties (Some cannot be set on INTERFACE targets)
+set(CMAKE_VERBOSE_MAKEFILE OFF CACHE BOOL "Enable verbose compilation commands for Makefile and Ninja" FORCE) # Extra fluff needed for Ninja: https://github.com/ninja-build/ninja/issues/900
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # Generate `compile_commands.json` file which is necessary for code completioner, static analyzer, etc
 
-set(CXX_STANDARD_REQUIRED ON) # C++ standard requirement for targets is NOT optional 
+#set(CXX_STANDARD_REQUIRED ON) # C++ standard requirement for targets is NOT optional 
 set(CXX_EXTENSIONS OFF) # Disable any non-standard compiler specific C++ extensions.
 
+#------ Declare core library
 add_library(sphinxsys_core INTERFACE)
-target_compile_features(sphinxsys_core INTERFACE cxx_std_17)
 
-FINDLIBHOME(SIMBODY_HOME)
-find_package(SIMBODY REQUIRED)
-target_include_directories(sphinxsys_core INTERFACE ${Simbody_INCLUDE_DIR})
-target_link_directories(sphinxsys_core INTERFACE ${Simbody_LIB_DIR})
-target_link_libraries(sphinxsys_core INTERFACE ${Simbody_LIBRARIES})
+#------ Local properties
+target_compile_features(sphinxsys_core INTERFACE cxx_std_17) # Requires a compiler supporting at least C++17
+### Generic properties below enabled for INTERFACE targets only for CMake>=3.19 
+#set_target_properties(sphinxsys_core PROPERTIES CXX_EXTENSIONS OFF) # Disable any non-standard compiler specific C++ extensions
+#set_target_properties(sphinxsys_core PROPERTIES CXX_STANDARD_REQUIRED ON) # C++ standard requirement for targets is NOT optional
+#set_target_properties(sphinxsys_core PROPERTIES CXX_STANDARD 17) 
 
-find_package(Eigen3 3.4 CONFIG QUIET)
-if(TARGET Eigen3::Eigen)
-    target_link_libraries (sphinxsys_core INTERFACE Eigen3::Eigen)
-else()
-    find_path(EIGEN_INCLUDE_DIR Eigen/Eigen HINTS ${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/eigen)
-    target_include_directories(sphinxsys_core INTERFACE ${EIGEN_INCLUDE_DIR})
-endif()
-
-find_package(TBB REQUIRED)
-target_include_directories(sphinxsys_core INTERFACE ${TBB_INCLUDE_DIR})
-target_link_directories(sphinxsys_core INTERFACE ${TBB_LIB_DIR})
-target_link_libraries(sphinxsys_core INTERFACE ${TBB_LIBRARIES})
-target_compile_definitions(sphinxsys_core INTERFACE TBB_SUPPRESS_DEPRECATED_MESSAGES)
-
-
-if(MSVC)
-    target_compile_definitions(sphinxsys_core INTERFACE _USE_MATH_DEFINES)
+if(${CMAKE_SYSTEM_NAME} MATCHES Windows)
+    set_target_properties(sphinxsys_core PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON) # For correct DLL generation on Windows
+    target_compile_definitions(sphinxsys_core INTERFACE _USE_MATH_DEFINES NOMINMAX)
     target_compile_options(sphinxsys_core INTERFACE /MP)
-    target_compile_options(sphinxsys_core INTERFACE /permissive-) # /W4 /WX 
-endif()
-if(UNIX)
-    find_package(Threads REQUIRED)
-    target_link_libraries(sphinxsys_core INTERFACE Threads::Threads)
-    target_compile_options(sphinxsys_core INTERFACE -Werror)
-    # target_compile_options(sphinxsys_core INTERFACE -pedantic -Wall -Wextra) # For when one gets rid of Simbody 
-endif()
-
-if(EMSCRIPTEN)
-    set(SPH_ONLY_STATIC_BUILD 1)
-    set(BUILD_WITH_SIMBODY 1)
-    set(ONLY_3D 1)
-    set(BUILD_SPHINXSYS_TESTS 1)
-    target_compile_definitions(sphinxsys_core INTERFACE -D__SIMBODY_WITHOUT_LAPACK__)
-    target_compile_definitions(sphinxsys_core INTERFACE -D__EIGEN__)
-    target_compile_definitions(sphinxsys_core INTERFACE -D__EMSCRIPTEN__)
-
-    remove_definitions(-DTBB_2021_2_0)
-    set(TBB_ROOT ${SPHINXSYS_PROJECT_DIR}/3rd_party/wasmtbb)
-    target_include_directories(sphinxsys_core INTERFACE "${TBB_ROOT}/include")
-    set(OBJDIR "${TBB_ROOT}/build/linux_wasm32_emscripten_emscripten_wasm32_release")
-    file(GLOB TBB_OBJECTS ${OBJDIR}/*.o)
+    target_compile_options(sphinxsys_core INTERFACE /permissive-) 
+    # target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:/W4 /WX>) # TODO: For when one gets rid of Simbody 
 else()
+    target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Werror>)
+    # target_compile_options(sphinxsys_core INTERFACE -pedantic-errors) # TODO: after initial rework merged
+    # target_compile_options(sphinxsys_core INTERFACE  $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Wall -Wextra>) # TODO: For when one gets rid of Simbody 
+endif()
+
+#------ Dependencies
+### SIMD flags
+find_package(SIMD QUIET)
+target_compile_options(sphinxsys_core INTERFACE ${SIMD_CXX_FLAGS})
+### Simbody
+find_package(Simbody CONFIG REQUIRED)
+set(Simbody_LIBS
+    $<$<BOOL:${Simbody_LIBRARIES}>:${Simbody_LIBRARIES}>               # contains "SimTKcommon SimTKmath SimTKsimbody" in triplet with dynamic linking, empty otherwise
+    $<$<BOOL:${Simbody_STATIC_LIBRARIES}>:${Simbody_STATIC_LIBRARIES}> # contains "SimTKcommon_static SimTKmath_static SimTKsimbody_static" in triplet with static linking, empty otherwise
+)
+target_link_libraries(sphinxsys_core INTERFACE ${Simbody_LIBS})
+target_compile_definitions(sphinxsys_core INTERFACE _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING) # Because of Simbody headers
+### Eigen
+find_package(Eigen3 CONFIG REQUIRED)
+target_link_libraries(sphinxsys_core INTERFACE Eigen3::Eigen)
+### TBB
+find_package(TBB CONFIG REQUIRED)
+target_link_libraries(sphinxsys_core INTERFACE TBB::tbb TBB::tbbmalloc $<$<PLATFORM_ID:Windows>:TBB::tbbmalloc_proxy>) 
+### Threads
+find_package(Threads REQUIRED)
+target_link_libraries(sphinxsys_core INTERFACE Threads::Threads)
+### Boost
+set(Boost_NO_WARN_NEW_VERSIONS TRUE)    # In case your CMake version is older than the release of Boost found
+                                        # Boost geometry and program-options are old enough to afford skipping this warning
+find_package(Boost REQUIRED)
+find_path(BOOST_INCLUDE_DIR boost/geometry) # Header-only Boost libraries are not components
+if(NOT BOOST_INCLUDE_DIR)
+    message(FATAL_ERROR "Please install Boost.Geometry library")
+endif()
+target_link_libraries(sphinxsys_core INTERFACE Boost::boost)
+find_package(Boost QUIET COMPONENTS program_options)
+if(TARGET Boost::program_options)
     target_compile_definitions(sphinxsys_core INTERFACE BOOST_AVAILABLE)
-    find_package(Boost REQUIRED COMPONENTS program_options filesystem system)
-    target_include_directories(sphinxsys_core INTERFACE ${Boost_INCLUDE_DIRS})
-    target_link_directories(sphinxsys_core INTERFACE ${Boost_LIBRARY_DIRS})
-    target_link_libraries(sphinxsys_core INTERFACE ${Boost_LIBRARIES})
+    target_link_libraries(sphinxsys_core INTERFACE Boost::program_options)
 endif()
 
-if(BUILD_WITH_SIMBODY)
-    target_compile_definitions(sphinxsys_core INTERFACE -D__SIMBODY_WITHOUT_LAPACK__)
-    target_compile_definitions(sphinxsys_core INTERFACE -D__EIGEN__)
-endif()
-
-if(SPH_ONLY_STATIC_BUILD)
-    set(BUILD_STATIC_LIBRARIES 1) # Simbody
-    set(BUILD_DYNAMIC_LIBRARIES 0) # Simbody
-else()
-    set(BUILD_SHARED_LIBS 1)
-endif()
-
-if(BUILD_WITH_SIMBODY)
-    add_subdirectory(${SPHINXSYS_PROJECT_DIR}/3rd_party/simbody)
-endif()
-
+#------ Setup the concrete libraries
 add_subdirectory(SPHINXsys)
+add_subdirectory(modules)
 
-if(BUILD_SPHINXSYS_TESTS)
+#------ Setup the tests
+if(SPHINXSYS_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
 endif()
 
-add_subdirectory(modules)
-
+#------ Extra scripts to install
 file(COPY        ${CMAKE_CURRENT_SOURCE_DIR}/PythonScriptStore/RegressionTest/regression_test_base_tool.py
      DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/PythonScriptStore/RegressionTest)
         
