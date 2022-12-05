@@ -69,7 +69,7 @@ jobs:
             -B ${{github.workspace}}/build
 
       - name: Build
-        run: cmake --build build --config Release --verbose -j$(nproc)
+        run: cmake --build build --config Release --verbose
 
       - name: Test with the first try
         id: first-try
@@ -157,7 +157,7 @@ jobs:
             -B C:\build
       
       - name: Build
-        run: cmake.exe --build C:\build --config Release --verbose -j
+        run: cmake.exe --build C:\build --config Release --verbose
 
       - name: Test with the first try
         id: first-try
