@@ -122,7 +122,7 @@ namespace SPH
 		public:
 			template <typename... Args>
 			BaseViscousAccelerationWithShell(Args &&...args)
-				: BaseViscousAccelerationWithShell<ViscousAccelerationInnerType>(std::forward<Args>(args)...)
+				: InteractionWithShell<ViscousAccelerationInnerType>(std::forward<Args>(args)...)
 			{};
 			virtual ~BaseViscousAccelerationWithShell(){};
 			void interaction(size_t index_i, Real dt = 0.0);
