@@ -68,7 +68,8 @@ The following block will install the direct dependencies required by SPHinXsys i
         boost-geometry                  \
         simbody                         \
         gtest
-
+Note that, some libraries can be installed simply by apt install, such as eigen3, tbb and boost.
+It seems that only the simbody and gtest should be installed by using vcpkg.
 By default, vcpkg targets the architecture *x64* and installs the *static* version of the libraries on Linux-based systems.
 To install the *shared* versions, do the following:
 
@@ -141,7 +142,6 @@ Pre-requisites
 
 Installing dependencies
 ^^^^^^^^^^^^^^^^^^^^^^^
-
 ..  code-block:: pwsh
     
     git clone --depth 1 --branch 2022.11.14 https://www.github.com/microsoft/vcpkg
@@ -157,6 +157,8 @@ Installing dependencies
     .\vcpkg integrate install
 
 
+Please make sure that the name of the directory for cloning vcpkg has only using plain characters, 
+especially without spaces.  Otherwise, somes dependent librararies, such as tbb, can not being built successfully.
 By default, vcpkg targets the architecture *x64* and installs the *dynamic* version of the libraries on Windows system.
 To install the *static* versions, replace the former install line by the following:
 
@@ -170,7 +172,7 @@ To install the *static* versions, replace the former install line by the followi
         simbody:x64-windows-static               \
         gtest:x64-windows-static
 
-For any other combination, please refer to the official `architecture documentation <https://vcpkg.io/en/docs/users/triplets.html>`_
+For any other combination, please refer to the official `architecture documentation <https://vcpkg.io/en/docs/users/triplets.html>`_.
 
 
 Building SPHinXsys with Visual Studio
@@ -189,7 +191,8 @@ Then, just open Visual Studio and follow the procedure given `here <https://lear
 Building SPHinXsys via cmake-gui.exe
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-See the figure below. Prior configuring, you must **Add Entry** and set :code:`CMAKE_TOOLCHAIN_FILE` variable with a :code:`FILEPATH` type pointing to :code:`<workspace>\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake` 
+See the figure below. Prior configuring, you must **Add Entry** and set :code:`CMAKE_TOOLCHAIN_FILE` variable 
+with a :code:`FILEPATH` type pointing to :code:`<workspace>\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake`_.
 Then, open the solution file (:code:`.sln`) generated in the :code:`build\\` folder with Visual Studio.
 
 
