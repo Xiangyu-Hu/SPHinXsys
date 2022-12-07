@@ -92,7 +92,7 @@ public:
 			Real x = insert_circle_center[0] + insert_circle_radius + Real(i) * particle_spacing_ref - 0.5 * particle_spacing_ref;
 			Real y = insert_circle_center[1] + 0.5 * particle_spacing_ref;
             initializePositionAndVolumetricMeasure(Vecd(x, y), particle_spacing_ref);
-            Vec2d normal_direction = Vec2d(1.0, 0);
+            Vec2d normal_direction = Vec2d(0, 1.0);
             initializeSurfaceProperties(normal_direction, thickness);
 		}
 	}

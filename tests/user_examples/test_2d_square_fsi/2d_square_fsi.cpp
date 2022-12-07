@@ -79,10 +79,6 @@ int main(int ac, char *av[])
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	BoundaryGeometry shell_boundary_geometry(shell_baffle, "BoundaryGeometry");
 	SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion, BoundaryGeometry> baffle_constrain(shell_boundary_geometry);
-	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
-		baffle_position_damping(0.2, baffle_inner, "Velocity", physical_viscosity);
-	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
-		baffle_rotation_damping(0.2, baffle_inner, "AngularVelocity", physical_viscosity);
 	/** IO */
 	BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
 	RestartIO restart_io(io_environment, sph_system.real_bodies_);
@@ -98,7 +94,7 @@ int main(int ac, char *av[])
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
 	Real end_time = 400.0;
-	Real output_interval = end_time / 100.0;
+	Real output_interval = end_time / 400.0;
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
 	/** Main loop starts here. */

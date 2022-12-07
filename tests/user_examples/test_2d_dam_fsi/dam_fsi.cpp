@@ -23,12 +23,10 @@ int main(int ac, char *av[])
 	SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
 	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
-	wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
 	/** The baffle, body and particles container. */
 	SolidBody shell_baffle(sph_system, makeShared<DefaultShape>("ShellBaffle"));
 	shell_baffle.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
 	shell_baffle.generateParticles<ShellBaffleParticleGenerator>();
-	shell_baffle.addBodyStateForRecording<Vecd>("PseudoNormal");
 	/** @brief 	Particle and body creation of baffle observer.*/
 	ObserverBody baffle_disp_observer(sph_system, "BaffleDispObserver");
 	baffle_disp_observer.generateParticles<ObserverParticleGenerator>(baffle_disp_probe_location);
@@ -60,7 +58,7 @@ int main(int ac, char *av[])
 	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> shell_stress_relaxation_second(baffle_inner);
 	/** FSI */
 	InteractionDynamics<solid_dynamics::FluidViscousForceOnShell> viscous_force_on_shell(baffle_water_contact);
-	InteractionDynamics<solid_dynamics::FluidForceOnShellUpdate> fluid_force_on_shell_update(baffle_water_contact, viscous_force_on_shell);
+	InteractionDynamics<solid_dynamics::FluidForceOnShellUpdateRiemann> fluid_force_on_shell_update(baffle_water_contact, viscous_force_on_shell);
 	solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(shell_baffle);
 	/** constraint and damping */
 	BoundaryGeometry shell_boundary_geometry(shell_baffle, "BoundaryGeometry");
@@ -74,7 +72,6 @@ int main(int ac, char *av[])
 	 */
 	BodyStatesRecordingToPlt write_real_body_states_to_plt(io_environment, sph_system.real_bodies_);
 	BodyStatesRecordingToVtp write_real_body_states_to_vtp(io_environment, sph_system.real_bodies_);
-	/** Output the observed displacement of baffle free end. */
 	/** Output the observed displacement of baffle. */
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
 		write_baffle_displacement("Position", io_environment, observer_contact_with_baffle);
