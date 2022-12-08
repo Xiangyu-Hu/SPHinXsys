@@ -2,6 +2,7 @@
 #include "geometric_shape.h"
 #include "transform_shape.h"
 #include "complex_shape.h"
+#include "base_data_type.h"
 
 using namespace SPH;
 
@@ -23,15 +24,14 @@ public:
 		subtract<TransformShape<GeometricShapeBox>>(Transform2d(inner_wall_translation), inner_wall_halfsize);
 	}
 };
-
 Vec2d test_point(0.1, -0.025);
-Real tolerance = 100.0 * Eps;
+auto tolerance = [](){return 100*Eps;}; // Invalid initialization order with static libraries on GCC 9.4 requires function
 
 TEST(test_GeometricShapeBox, test_closest_point)
 {
 	TransformShape<GeometricShapeBox> inner_wall_box(Transform2d(inner_wall_translation), inner_wall_halfsize);
 
-	EXPECT_LE((inner_wall_box.findClosestPoint(test_point) - Vec2d(0.1, 0.0)).cwiseAbs().maxCoeff(), tolerance);
+	EXPECT_LE((inner_wall_box.findClosestPoint(test_point) - Vec2d(0.1, 0.0)).cwiseAbs().maxCoeff(), tolerance());
 }
 
 TEST(test_Complex_GeometricShapeBox, test_contain)
@@ -45,14 +45,14 @@ TEST(test_Complex_GeometricShapeBox, test_closest_point)
 {
 	WallBoundary wall_boundary("WallBoundary");
 
-	EXPECT_LE((wall_boundary.findClosestPoint(test_point) -  Vec2d(0.1, 0.0)).cwiseAbs().maxCoeff(), tolerance);
+	EXPECT_LE((wall_boundary.findClosestPoint(test_point) -  Vec2d(0.1, 0.0)).cwiseAbs().maxCoeff(), tolerance());
 }
 
 TEST(test_Complex_GeometricShapeBox, test_normal_direction)
 {
 	WallBoundary wall_boundary("WallBoundary");
 
-	EXPECT_LE((wall_boundary.findNormalDirection(test_point) - Vec2d(0.0, 1.0)).cwiseAbs().maxCoeff(), tolerance);
+	EXPECT_LE((wall_boundary.findNormalDirection(test_point) - Vec2d(0.0, 1.0)).cwiseAbs().maxCoeff(), tolerance());
 }
 
 int main(int argc, char *argv[])

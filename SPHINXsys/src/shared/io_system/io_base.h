@@ -27,7 +27,6 @@
  */
 
 #pragma once
-#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 #include "base_data_package.h"
 #include "sph_data_containers.h"
@@ -38,14 +37,8 @@
 #include <sstream>
 #include <iomanip>
 #include <fstream>
-/** Macro for APPLE compilers*/
-#ifdef __APPLE__
-#include <boost/filesystem.hpp>
-namespace fs = boost::filesystem;
-#else
 #include <filesystem>
 namespace fs = std::filesystem;
-#endif
 
 namespace SPH
 {
