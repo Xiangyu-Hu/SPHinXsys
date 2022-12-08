@@ -51,6 +51,7 @@ int main(int ac, char *av[])
 	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_fluid_density_by_summation(water_shell_contact, water_wall_complex);
 	Dynamics1Level<fluid_dynamics::FluidShellandWallIntegration1stHalfRiemann> fluid_pressure_relaxation(water_wall_contact, water_shell_complex);
 	Dynamics1Level<fluid_dynamics::FluidShellandWallIntegration2ndHalfRiemann> fluid_density_relaxation(water_wall_contact, water_shell_complex);
+	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithShellandWall> viscous_acceleration(water_wall_contact, water_shell_complex);
 	/** Algorithms for solid. */
 	ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> shell_time_step_size(shell_baffle);
 	InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> shell_corrected_configuration(baffle_inner);
@@ -111,7 +112,8 @@ int main(int ac, char *av[])
 			/** Acceleration due to viscous force and gravity. */
 			fluid_step_initialization.parallel_exec();
 			update_fluid_density_by_summation.parallel_exec();
-
+			viscous_acceleration.parallel_exec();
+			/** FSI */
 			viscous_force_on_shell.parallel_exec();
 
 			Dt = fluid_advection_time_step.parallel_exec();
@@ -131,6 +133,9 @@ int main(int ac, char *av[])
 					dt_s = shell_time_step_size.parallel_exec();
 					if (dt - dt_s_sum < dt_s) dt_s = dt - dt_s_sum;
 					shell_stress_relaxation_first.parallel_exec(dt_s);
+					baffle_constrain.parallel_exec();
+					baffle_position_damping.parallel_exec();
+					baffle_rotation_damping.parallel_exec();
 					baffle_constrain.parallel_exec();
 					shell_stress_relaxation_second.parallel_exec(dt_s);
 					dt_s_sum += dt_s;
