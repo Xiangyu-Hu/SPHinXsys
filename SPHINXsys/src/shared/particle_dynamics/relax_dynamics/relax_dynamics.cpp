@@ -1,25 +1,21 @@
-/**
- * @file 	relax_dynamics.cpp
- * @author	Luhui Han, Chi Zhang and Xiangyu Hu
- */
-
 #include "relax_dynamics.h"
 #include "base_particles.hpp"
 #include "particle_generator_lattice.h"
 #include "level_set_shape.h"
 
-using namespace SimTK;
-//=================================================================================================//
+//========================================================================================================//
 namespace SPH
 {
-	//=================================================================================================//
+	//=====================================================================================================//
 	namespace relax_dynamics
 	{
 		//=================================================================================================//
 		GetTimeStepSizeSquare::GetTimeStepSizeSquare(SPHBody &sph_body)
-			: LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
-			  RelaxDataDelegateSimple(sph_body), acc_(particles_->acc_),
-			  h_ref_(sph_body.sph_adaptation_->ReferenceSmoothingLength()) {}
+			: LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0))
+			, RelaxDataDelegateSimple(sph_body)
+			, acc_(particles_->acc_)
+			, h_ref_(sph_body.sph_adaptation_->ReferenceSmoothingLength()) 
+		{}
 		//=================================================================================================//
 		Real GetTimeStepSizeSquare::reduce(size_t index_i, Real dt)
 		{
@@ -37,7 +33,7 @@ namespace SPH
 		//=================================================================================================//
 		void RelaxationAccelerationInner::interaction(size_t index_i, Real dt)
 		{
-			Vecd acceleration(0);
+			Vecd acceleration = Vecd::Zero();
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
@@ -62,9 +58,12 @@ namespace SPH
 		}
 		//=================================================================================================//
 		UpdateParticlePosition::UpdateParticlePosition(SPHBody &sph_body)
-			: LocalDynamics(sph_body), RelaxDataDelegateSimple(sph_body),
-			  sph_adaptation_(sph_body.sph_adaptation_),
-			  pos_(particles_->pos_), acc_(particles_->acc_) {}
+			: LocalDynamics(sph_body)
+			, RelaxDataDelegateSimple(sph_body)
+			, sph_adaptation_(sph_body.sph_adaptation_)
+			, pos_(particles_->pos_)
+			, acc_(particles_->acc_) 
+		{}
 		//=================================================================================================//
 		void UpdateParticlePosition::update(size_t index_i, Real dt_square)
 		{
@@ -97,7 +96,7 @@ namespace SPH
 		//=================================================================================================//
 		void RelaxationAccelerationComplex::interaction(size_t index_i, Real dt)
 		{
-			Vecd acceleration(0);
+			Vecd acceleration = Vecd::Zero();
 			Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
@@ -120,11 +119,11 @@ namespace SPH
 			acc_[index_i] = acceleration;
 		}
 		//=================================================================================================//
-		ShapeSurfaceBounding::
-			ShapeSurfaceBounding(NearShapeSurface &near_shape_surface)
-			: LocalDynamics(near_shape_surface.getSPHBody()), RelaxDataDelegateSimple(sph_body_),
-			  pos_(particles_->pos_),
-			  constrained_distance_(0.5 * sph_body_.sph_adaptation_->MinimumSpacing())
+		ShapeSurfaceBounding::ShapeSurfaceBounding(NearShapeSurface &near_shape_surface)
+			: LocalDynamics(near_shape_surface.getSPHBody())
+			, RelaxDataDelegateSimple(sph_body_)
+			, pos_(particles_->pos_)
+			, constrained_distance_(0.5 * sph_body_.sph_adaptation_->MinimumSpacing())
 		{
 			level_set_shape_ = &near_shape_surface.level_set_shape_;
 		}
@@ -250,7 +249,7 @@ namespace SPH
 		{
 			Vecd none_normalized_normal = level_set_shape_->findLevelSetGradient(pos_[index_i]);
 			Vecd normal = level_set_shape_->findNormalDirection(pos_[index_i]);
-			Real factor = none_normalized_normal.normSqr() / level_set_refinement_ratio_;
+			Real factor = none_normalized_normal.squaredNorm() / level_set_refinement_ratio_;
 			pos_[index_i] -= factor * constrained_distance_ * normal;
 		}
 		//=================================================================================================//
@@ -313,15 +312,14 @@ namespace SPH
 			std::cout << "\n Information: normal consistency updated after '" << ite_updated << "' steps." << std::endl;
 		}
 		//=================================================================================================//
-		ShellNormalDirectionPrediction::NormalPrediction::
-			NormalPrediction(SPHBody &sph_body, Real thickness)
-			: RelaxDataDelegateSimple(sph_body), LocalDynamics(sph_body), thickness_(thickness),
-			  level_set_shape_(DynamicCast<LevelSetShape>(this, sph_body.body_shape_)),
-			  pos_(particles_->pos_), n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
+		ShellNormalDirectionPrediction::NormalPrediction::NormalPrediction(SPHBody &sph_body, Real thickness)
+			: RelaxDataDelegateSimple(sph_body)
+			, LocalDynamics(sph_body), thickness_(thickness)
+			, level_set_shape_(DynamicCast<LevelSetShape>(this, sph_body.body_shape_))
+			, pos_(particles_->pos_)
+			, n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
 		{
-			particles_->registerVariable(n_temp_, "PreviousNormalDirection",
-										 [&](size_t i) -> Vecd
-										 { return n_[i]; });
+			particles_->registerVariable(n_temp_, "PreviousNormalDirection", [&](size_t i) -> Vecd { return n_[i]; });
 		}
 		//=================================================================================================//
 		void ShellNormalDirectionPrediction::NormalPrediction::update(size_t index_i, Real dt)
@@ -330,17 +328,16 @@ namespace SPH
 			n_[index_i] = level_set_shape_->findNormalDirection(pos_[index_i] + 0.3 * thickness_ * n_temp_[index_i]);
 		}
 		//=================================================================================================//
-		ShellNormalDirectionPrediction::PredictionConvergenceCheck::
-			PredictionConvergenceCheck(SPHBody &sph_body, Real convergence_criterion)
-			: LocalDynamicsReduce<bool, ReduceAND>(sph_body, true),
-			  RelaxDataDelegateSimple(sph_body), convergence_criterion_(convergence_criterion),
-			  n_(*particles_->getVariableByName<Vecd>("NormalDirection")),
-			  n_temp_(*particles_->getVariableByName<Vecd>("PreviousNormalDirection")) {}
+		ShellNormalDirectionPrediction::PredictionConvergenceCheck::PredictionConvergenceCheck(SPHBody &sph_body, Real convergence_criterion)
+			: LocalDynamicsReduce<bool, ReduceAND>(sph_body, true)
+			, RelaxDataDelegateSimple(sph_body), convergence_criterion_(convergence_criterion)
+			, n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
+			, n_temp_(*particles_->getVariableByName<Vecd>("PreviousNormalDirection")) 
+		{}
 		//=================================================================================================//
-		bool ShellNormalDirectionPrediction::
-			PredictionConvergenceCheck::reduce(size_t index_i, Real dt)
+		bool ShellNormalDirectionPrediction::PredictionConvergenceCheck::reduce(size_t index_i, Real dt)
 		{
-			return SimTK::dot(n_[index_i], n_temp_[index_i]) > convergence_criterion_;
+			return n_[index_i].dot(n_temp_[index_i]) > convergence_criterion_;
 		}
 		//=================================================================================================//
 		ShellNormalDirectionPrediction::ConsistencyCorrection::
@@ -349,12 +346,11 @@ namespace SPH
 			  consistency_criterion_(consistency_criterion),
 			  n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
 		{
-			particles_->registerVariable(updated_indicator_, "UpdatedIndicator", 0);
+			particles_->registerVariable(updated_indicator_, "UpdatedIndicator", [&](size_t i) -> int {return 0;});
 			updated_indicator_[particles_->total_real_particles_ / 3] = 1;
 		}
 		//=================================================================================================//
-		void ShellNormalDirectionPrediction::
-			ConsistencyCorrection::interaction(size_t index_i, Real dt)
+		void ShellNormalDirectionPrediction::ConsistencyCorrection::interaction(size_t index_i, Real dt)
 		{
 			mutex_modify_neighbor_.lock();
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -366,9 +362,9 @@ namespace SPH
 					if (updated_indicator_[index_j] == 0)
 					{
 						updated_indicator_[index_j] = 1;
-						if (SimTK::dot(n_[index_i], n_[index_j]) < consistency_criterion_)
+						if (n_[index_i].dot(n_[index_j]) < consistency_criterion_)
 						{
-							if (SimTK::dot(n_[index_i], -n_[index_j]) < consistency_criterion_)
+							if (n_[index_i].dot(-n_[index_j]) < consistency_criterion_)
 							{
 								n_[index_j] = n_[index_i];
 								updated_indicator_[index_j] = 2;
@@ -385,14 +381,13 @@ namespace SPH
 			mutex_modify_neighbor_.unlock();
 		}
 		//=================================================================================================//
-		ShellNormalDirectionPrediction::ConsistencyUpdatedCheck::
-			ConsistencyUpdatedCheck(SPHBody &sph_body)
-			: LocalDynamicsReduce<bool, ReduceAND>(sph_body, true),
-			  RelaxDataDelegateSimple(sph_body),
-			  updated_indicator_(*particles_->getVariableByName<int>("UpdatedIndicator")) {}
+		ShellNormalDirectionPrediction::ConsistencyUpdatedCheck::ConsistencyUpdatedCheck(SPHBody &sph_body)
+			: LocalDynamicsReduce<bool, ReduceAND>(sph_body, true)
+			,  RelaxDataDelegateSimple(sph_body)
+			,  updated_indicator_(*particles_->getVariableByName<int>("UpdatedIndicator")) 
+		{}
 		//=================================================================================================//
-		bool ShellNormalDirectionPrediction::
-			ConsistencyUpdatedCheck::reduce(size_t index_i, Real dt)
+		bool ShellNormalDirectionPrediction::ConsistencyUpdatedCheck::reduce(size_t index_i, Real dt)
 		{
 			return updated_indicator_[index_i] != 0;
 		}

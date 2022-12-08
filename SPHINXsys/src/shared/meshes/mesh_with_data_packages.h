@@ -1,30 +1,30 @@
-/* -----------------------------------------------------------------------------*
- *                               SPHinXsys                                      *
- * -----------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
- * physical accurate simulation and aims to model coupled industrial dynamic    *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
- * (smoothed particle hydrodynamics), a meshless computational method using     *
- * particle discretization.                                                     *
- *                                                                              *
- * SPHinXsys is partially funded by German Research Foundation                  *
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
- * HU1527/12-1 and HU1527/12-4.                                                 *
- *                                                                              *
- * Portions copyright (c) 2017-2022 Technical University of Munich and          *
- * the authors' affiliations.                                                   *
- *                                                                              *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
- * not use this file except in compliance with the License. You may obtain a    *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
- *                                                                              *
- * -----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	mesh_with_data_packages.h
- * @brief 	This class is designed to save memory and increase computational efficiency
- *	on mesh. //TODO: the connection between successive meshes in refined mesh should enhanced.
- * @author	Chi Zhang and Xiangyu Hu
+ * @brief 	This class is designed to save memory and increase computational efficiency on mesh.
+ *			TODO: the connection between successive meshes in refined mesh should enhanced.
+ * @author	Chi ZHang and Xiangyu Hu
  */
 
 #ifndef MESH_WITH_DATA_PACKAGES_H
@@ -69,33 +69,40 @@ namespace SPH
 	/**
 	 * @class BaseDataPackage
 	 * @brief Abstract base class for a data package,
-	 * by which the data in a derived class can be on- or off-grid.
-	 * The data package can be defined in a cell of a background mesh so the pkg_index is
-	 * the cell location on the mesh.
-	 * TODO: The class will be enriched with general methods for all data packages.
+	 * 		  by which the data in a derived class can be on- or off-grid.
+	 * 		  The data package can be defined in a cell of a background mesh so the pkg_index is
+	 * 		  the cell location on the mesh.
+	 *        TODO: The class will be enriched with general methods for all data packages.
 	 */
 	class BaseDataPackage
 	{
 	public:
-		Vecu pkg_index_;	/**< index of this data package on the background mesh, Vecu(0) if it is not on the mesh. */
-		bool is_inner_pkg_; /**< If true, its data package is on the background mesh. */
+		Vecu pkg_index_{Vecu::Zero()};	/**< index of this data package on the background mesh, Vecu(0) if it is not on the mesh. */
+		bool is_inner_pkg_{false}; /**< If true, its data package is on the background mesh. */
 
-		BaseDataPackage() : pkg_index_(0), is_inner_pkg_(false){};
+		BaseDataPackage() = default;
 		virtual ~BaseDataPackage(){};
 	};
 
 	/**
 	 * @class GridDataPackage
 	 * @brief Abstract base class for a data package
-	 * whose data are defined on the grids of a small mesh patch.
-	 * note tha ADDRS_SIZE = PKG_SIZE + 2 * pkg_addrs_buffer_;
-	 * Also note that, while the mesh lower bound locates the first data address,
-	 * the data lower bound locates the first data.
+	 * 		  whose data are defined on the grids of a small mesh patch.
+	 * 		  note tha ADDRS_SIZE = PKG_SIZE + 2 * pkg_addrs_buffer_;
+	 * 		  Also note that, while the mesh lower bound locates the first data address,
+	 * 		  the data lower bound locates the first data.
 	 */
 	template <int PKG_SIZE, int ADDRS_SIZE>
 	class GridDataPackage : public BaseDataPackage, public BaseMesh
 	{
 	public:
+		/** Constructor. */
+		GridDataPackage() 
+			: BaseDataPackage()
+			, BaseMesh(ADDRS_SIZE * Vecu::Ones())
+		{};
+		virtual ~GridDataPackage(){};
+
 		template <typename DataType>
 		using PackageData = PackageDataMatrix<DataType, PKG_SIZE>;
 		template <typename DataType>
@@ -107,19 +114,20 @@ namespace SPH
 		template <typename DataType>
 		using PackageTemporaryData = PackageDataMatrix<DataType, ADDRS_SIZE>;
 
-		GridDataPackage() : BaseDataPackage(), BaseMesh(Vecu(ADDRS_SIZE)){};
-		virtual ~GridDataPackage(){};
-
+		/** Return the package size. */
 		constexpr int PackageSize() { return PKG_SIZE; };
+		/** Return the address size. */
 		constexpr int AddressSize() { return ADDRS_SIZE; };
+		/** Return the address buffer size. */
 		constexpr int AddressBufferWidth() { return (ADDRS_SIZE - PKG_SIZE) / 2; };
+		/** Return the upper bound of package operation. */
 		constexpr int OperationUpperBound() { return PKG_SIZE + AddressBufferWidth(); };
 		/** lower bound coordinate for the data as reference */
-		Vecd DataLowerBound() { return mesh_lower_bound_ + Vecd(grid_spacing_) * (Real)AddressBufferWidth(); };
+		Vecd DataLowerBound() { return mesh_lower_bound_ + grid_spacing_ * Vecd::Ones() * (Real)AddressBufferWidth(); };
 		/** initialize package mesh geometric information. */
 		void initializePackageGeometry(const Vecd &pkg_lower_bound, Real data_spacing)
 		{
-			mesh_lower_bound_ = pkg_lower_bound - Vecd(data_spacing) * ((Real)AddressBufferWidth() - 0.5);
+			mesh_lower_bound_ = pkg_lower_bound - data_spacing * ((Real)AddressBufferWidth() - 0.5) * Vecd::Ones() ;
 			grid_spacing_ = data_spacing;
 		};
 		/** This function probes by applying bi and tri-linear interpolation within the package. */
@@ -137,8 +145,7 @@ namespace SPH
 	protected:
 		/** register a variable defined in a class (can be non-particle class) */
 		template <typename DataType>
-		void registerPackageData(PackageData<DataType> &pkg_data,
-								 PackageDataAddress<DataType> &pkg_data_addrs)
+		void registerPackageData(PackageData<DataType> &pkg_data, PackageDataAddress<DataType> &pkg_data_addrs)
 		{
 			constexpr int type_index = DataTypeIndex<DataType>::value;
 			std::get<type_index>(all_pkg_data_).push_back(&pkg_data);
@@ -180,20 +187,20 @@ namespace SPH
 	};
 
 	/**
-	 * @class MeshWithGridDataPackages
-	 * @brief Abstract class for mesh with data packages
+	 * @class 	MeshWithGridDataPackages
+	 * @brief 	Abstract class for mesh with data packages
 	 * @details The idea is to save sparse data on a cell-based mesh.
-	 * We say sparse data, it means that only in some inner mesh cells there are no trivial data.
-	 * A typical example is a level set field which only has meaningful values near the interface,
-	 * while the latter is in the inner region of a mesh.
-	 * In this class, only some inner mesh cells are filled with data packages.
-	 * Each data package is again a mesh, but grid based, where two sets of data are saved on its grid points.
-	 * One is the field data of matrices with PKG_SIZE, the other is corresponding address data of matrices with ADDRS_SIZE.
-	 * For two neighboring data packages, they share the data in the buffer which is in the overlap region.
-	 * The filling of field data is achieved first by the data matrices by the function initializeDataInACell
-	 * and then the address matrix by the function initializeAddressesInACell.
-	 * All these data packages are indexed by a concurrent vector inner_data_pkgs_.
-	 * Note that a data package should be not near the mesh bound, otherwise one will encounter the error "out of range".
+	 * 			We say sparse data, it means that only in some inner mesh cells there are no trivial data.
+	 * 			A typical example is a level set field which only has meaningful values near the interface,
+	 * 			while the latter is in the inner region of a mesh.
+	 * 			In this class, only some inner mesh cells are filled with data packages.
+	 * 			Each data package is again a mesh, but grid based, where two sets of data are saved on its grid points.
+	 * 			One is the field data of matrices with PKG_SIZE, the other is corresponding address data of matrices with ADDRS_SIZE.
+	 * 			For two neighboring data packages, they share the data in the buffer which is in the overlap region.
+	 * 			The filling of field data is achieved first by the data matrices by the function initializeDataInACell
+	 * 			and then the address matrix by the function initializeAddressesInACell.
+	 * 			All these data packages are indexed by a concurrent vector inner_data_pkgs_.
+	 * 			Note that a data package should be not near the mesh bound, otherwise one will encounter the error "out of range".
 	 */
 	template <class MeshFieldType, class GridDataPackageType>
 	class MeshWithGridDataPackages : public MeshFieldType, public Mesh
@@ -205,10 +212,10 @@ namespace SPH
 
 		template <typename... Args>
 		explicit MeshWithGridDataPackages(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size, Args &&...args)
-			: MeshFieldType(std::forward<Args>(args)...),
-			  Mesh(tentative_bounds, GridDataPackageType().PackageSize() * data_spacing, buffer_size),
-			  data_spacing_(data_spacing),
-			  global_mesh_(this->mesh_lower_bound_ + Vecd(data_spacing) * 0.5, data_spacing, this->number_of_cells_ * pkg_size_)
+			: MeshFieldType(std::forward<Args>(args)...)
+			, Mesh(tentative_bounds, GridDataPackageType().PackageSize() * data_spacing, buffer_size)
+			, data_spacing_{data_spacing}
+			, global_mesh_{this->mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, this->number_of_cells_ * pkg_size_}
 		{
 			allocateMeshDataMatrix();
 		};
@@ -220,6 +227,7 @@ namespace SPH
 		/** This function probe a mesh value */
 		template <class DataType, typename PackageDataAddressType, PackageDataAddressType GridDataPackageType::*MemPtr>
 		DataType probeMesh(const Vecd &position);
+		
 		virtual Real DataSpacing() override { return data_spacing_; };
 
 	protected:
@@ -230,8 +238,10 @@ namespace SPH
 		const int pkg_addrs_size_ = pkg_size_ + 2 * pkg_addrs_buffer_;			  /**< the size of address matrix in the data packages. */
 		std::mutex mutex_my_pool;												  /**< mutex exclusion for memory pool */
 		BaseMesh global_mesh_;													  /**< the mesh for the locations of all possible data points. */
-		/** Singular data packages. provided for far field condition with usually only two values.
-		 * For example, when level set is considered. The first value for inner far-field and second for outer far-field */
+		/** 
+		 * Singular data packages. provided for far field condition with usually only two values.
+		 * For example, when level set is considered. The first value for inner far-field and second for outer far-field 
+		 */
 		StdVec<GridDataPackageType *> singular_data_pkgs_addrs_;
 
 		template <typename... ConstructorArgs>
@@ -243,14 +253,16 @@ namespace SPH
 			new_data_pkg->initializeSingularDataAddress();
 			singular_data_pkgs_addrs_.push_back(new_data_pkg);
 		};
-
+		/** Assing data package address. */
 		void assignDataPackageAddress(const Vecu &cell_index, GridDataPackageType *data_pkg);
+		/** Return data package with given cell index. */
 		GridDataPackageType *DataPackageFromCellIndex(const Vecu &cell_index);
 		/** This function find the value of data from its index from global mesh. */
 		template <typename DataType, typename PackageDataType, PackageDataType GridDataPackageType::*MemPtr>
 		DataType DataValueFromGlobalIndex(const Vecu &global_grid_index);
+		/** Initialize package address with in cell. */
 		void initializePackageAddressesInACell(const Vecu &cell_index);
-		/** find related cell index and data index for a data package address matrix */
+		/** Find related cell index and data index for a data package address matrix */
 		std::pair<int, int> CellShiftAndDataIndex(int data_addrs_index_component)
 		{
 			std::pair<int, int> shift_and_index;

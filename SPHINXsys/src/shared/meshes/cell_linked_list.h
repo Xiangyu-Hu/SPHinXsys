@@ -1,32 +1,32 @@
-/* -----------------------------------------------------------------------------*
- *                               SPHinXsys                                      *
- * -----------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
- * physical accurate simulation and aims to model coupled industrial dynamic    *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
- * (smoothed particle hydrodynamics), a meshless computational method using     *
- * particle discretization.                                                     *
- *                                                                              *
- * SPHinXsys is partially funded by German Research Foundation                  *
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
- * HU1527/12-1 and HU1527/12-4.                                                 *
- *                                                                              *
- * Portions copyright (c) 2017-2022 Technical University of Munich and          *
- * the authors' affiliations.                                                   *
- *                                                                              *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
- * not use this file except in compliance with the License. You may obtain a    *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
- *                                                                              *
- * -----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4												*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
- * @file cell_linked_list.h
- * @brief Here gives the classes for managing cell linked lists. This is the basic class
- * for building the particle configurations.
- * @details  The cell linked list saves for each body a list of particles
- * located within the cell.
- * @author	Yongchuan Yu, Chi Zhang and Xiangyu Hu
+ * @file 	cell_linked_list.h
+ * @brief 	Here gives the classes for managing cell linked lists. This is the basic class
+ * 			for building the particle configurations.
+ * @details The cell linked list saves for each body a list of particles
+ * 			located within the cell.
+ * @author	Chi ZHang, Yongchuan and Xiangyu Hu
  */
 
 #ifndef MESH_CELL_LINKED_LIST_H
@@ -47,7 +47,7 @@ namespace SPH
 
 	/**
 	 * @class BaseCellLinkedList
-	 * @brief Abstract class for mesh cell linked list.
+	 * @brief The Abstract class for mesh cell linked list direved from BaseMeshFied. 
 	 */
 	class BaseCellLinkedList : public BaseMeshField
 	{
@@ -61,7 +61,6 @@ namespace SPH
 		virtual void updateSplitCellLists(SplitCellLists &split_cell_lists) = 0;
 
 	public:
-		/** The buffer size 2 used to expand computational domain for particle searching. */
 		BaseCellLinkedList(RealBody &real_body, SPHAdaptation &sph_adaptation);
 		virtual ~BaseCellLinkedList(){};
 
@@ -88,7 +87,7 @@ namespace SPH
 	/**
 	 * @class CellLinkedList
 	 * @brief Defining a mesh cell linked list for a body.
-	 * The meshes for all bodies share the same global coordinates.
+	 * 		  The meshes for all bodies share the same global coordinates.
 	 */
 	class CellLinkedList : public BaseCellLinkedList, public Mesh
 	{
@@ -103,8 +102,7 @@ namespace SPH
 		virtual void updateSplitCellLists(SplitCellLists &split_cell_lists) override;
 
 	public:
-		CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
-					   RealBody &real_body, SPHAdaptation &sph_adaptation);
+		CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing, RealBody &real_body, SPHAdaptation &sph_adaptation);
 		virtual ~CellLinkedList() { deleteMeshDataMatrix(); };
 
 		void allocateMeshDataMatrix(); /**< allocate memories for addresses of data packages. */
@@ -131,12 +129,13 @@ namespace SPH
 	/**
 	 * @class MultilevelCellLinkedList
 	 * @brief Defining a multilevel mesh cell linked list for a body
-	 * for multi-resolution particle configuration.
+	 * 		  for multi-resolution particle configuration.
 	 */
 	class MultilevelCellLinkedList : public MultilevelMesh<BaseCellLinkedList, CellLinkedList, RefinedMesh<CellLinkedList>>
 	{
 	protected:
-		StdLargeVec<Real> &h_ratio_;
+		StdLargeVec<Real>& h_ratio_;	/**< Smoothing length for each level. */
+		/** Update split cell list. */
 		virtual void updateSplitCellLists(SplitCellLists &split_cell_lists) override{};
 		/** determine mesh level from particle cutoff radius */
 		inline size_t getMeshLevel(Real particle_cutoff_radius);
@@ -149,7 +148,7 @@ namespace SPH
 		virtual void UpdateCellLists(BaseParticles &base_particles) override;
 		void insertParticleIndex(size_t particle_index, const Vecd &particle_position) override;
 		void InsertListDataEntry(size_t particle_index, const Vecd &particle_position, Real volumetric) override;
-		virtual ListData findNearestListDataEntry(const Vecd &position) override { return ListData(0, Vecd(0), 0); };
+		virtual ListData findNearestListDataEntry(const Vecd &position) override { return ListData(0, Vecd::Zero(), 0); };
 		virtual StdLargeVec<size_t> &computingSequence(BaseParticles &base_particles) override;
 		virtual void tagBodyPartByCell(ConcurrentIndexesInCells &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
 		virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, BoundingBox &bounding_bounds, int axis) override{};

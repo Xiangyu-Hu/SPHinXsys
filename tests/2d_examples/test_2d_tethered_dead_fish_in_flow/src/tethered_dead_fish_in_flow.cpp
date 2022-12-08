@@ -26,7 +26,7 @@ Real cx = 2.0;			  /**< Center of fish in x direction. */
 Real cy = 4.0;			  /**< Center of fish in y direction. */
 Real fish_length = 3.738; /**< Length of fish. */
 Real fish_shape_resolution = resolution_ref * 0.5;
-Vec3d tethering_point(-1.0, cy, 0.0); /**< The tethering point. */
+Vecd tethering_point(-1.0, cy); /**< The tethering point. */
 /**
  * Material properties of the fluid.
  */
@@ -362,27 +362,26 @@ int main(int ac, char *av[])
 	SimTK::GeneralForceSubsystem forces(MBsystem);
 	SimTK::CableTrackerSubsystem cables(MBsystem);
 	/** Mass properties of the fixed spot. */
-	SimTK::Body::Rigid fixed_spot_info(SimTK::MassProperties(1.0, Vec3d(0), SimTK::UnitInertia(1)));
+	SimTK::Body::Rigid fixed_spot_info(SimTK::MassProperties(1.0, SimTK::Vec3(0), SimTK::UnitInertia(1)));
 	SolidBodyPartForSimbody fish_head(fish_body, makeShared<MultiPolygonShape>(createFishHeadShape(fish_body), "FishHead"));
 	/** Mass properties of the constrained spot. */
 	SimTK::Body::Rigid tethered_spot_info(*fish_head.body_part_mass_properties_);
 	/** Mobility of the fixed spot. */
-	SimTK::MobilizedBody::Weld fixed_spot(matter.Ground(), SimTK::Transform(tethering_point),
-										  fixed_spot_info, SimTK::Transform(Vec3d(0)));
+	SimTK::MobilizedBody::Weld fixed_spot( matter.Ground(), SimTK::Transform( SimTK::Vec3(tethering_point[0], tethering_point[1], 0.0) ),
+										   fixed_spot_info, SimTK::Transform(SimTK::Vec3(0)) );
 	/** Mobility of the tethered spot.
 	 * Set the mass center as the origin location of the planar mobilizer
 	 */
-	Vec3d displacement0 = fish_head.initial_mass_center_ - tethering_point;
-	SimTK::MobilizedBody::Planar tethered_spot(fixed_spot,
-											   SimTK::Transform(displacement0), tethered_spot_info, SimTK::Transform(Vec3d(0)));
+	Vecd disp0 = fish_head.initial_mass_center_ - tethering_point;
+	SimTK::MobilizedBody::Planar tethered_spot(fixed_spot, SimTK::Transform(SimTK::Vec3(disp0[0], disp0[1], 0.0)), tethered_spot_info, SimTK::Transform( SimTK::Vec3(0) ));
 	/** The tethering line give cable force.
 	 * the start point of the cable path is at the origin location of the first mobilizer body,
 	 * the end point is the tip of the fish head which has a distance to the origin
 	 * location of the second mobilizer body origin location, here, the mass center
 	 * of the fish head.
 	 */
-	Vec3d displacement_cable_end = Vec3d(cx, cy, 0.0) - fish_head.initial_mass_center_;
-	SimTK::CablePath tethering_line(cables, fixed_spot, Vec3d(0), tethered_spot, displacement_cable_end);
+	Vecd disp_cable_end = Vecd(cx, cy) - fish_head.initial_mass_center_;
+	SimTK::CablePath tethering_line(cables, fixed_spot, SimTK::Vec3(0), tethered_spot, SimTK::Vec3(disp_cable_end[0], disp_cable_end[1], 0.0) );
 	SimTK::CableSpring tethering_spring(forces, tethering_line, 100.0, 3.0, 10.0);
 
 	// discreted forces acting on the bodies

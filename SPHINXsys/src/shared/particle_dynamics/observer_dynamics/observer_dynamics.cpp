@@ -1,12 +1,5 @@
-/**
- * @file 	observer_dynamics.cpp
- * @brief 	Here, Functions defined in observer_dynamics.h are detailed.
- * @author	Chi Zhang and Xiangyu Hu
- */
-
 #include "observer_dynamics.h"
-//=================================================================================================//
-using namespace SimTK;
+
 //=================================================================================================//
 namespace SPH
 {
@@ -27,9 +20,9 @@ namespace SPH
 		//=================================================================================================//
 		void CorrectInterpolationKernelWeights::interaction(size_t index_i, Real dt)
 		{
-			Vecd weight_correction(0.0);
-			Matd local_configuration(Eps); // small number added to diagonal to avoid divide zero
-			// Compute the first order consistent kernel weights
+			Vecd weight_correction = Vecd::Zero();
+			Matd local_configuration = Eps * Matd::Identity();
+			
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
 				StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
@@ -41,14 +34,13 @@ namespace SPH
 					Vecd r_ji = -contact_neighborhood.r_ij_[n] * contact_neighborhood.e_ij_[n];
 					Vecd gradW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
 
-					weight_correction += r_ji * weight_j;
-					local_configuration += SimTK::outer(r_ji, gradW_ijV_j);
+					weight_correction += weight_j * r_ji;
+					local_configuration += r_ji * gradW_ijV_j.transpose();
 				}
 			}
 
 			// correction matrix for interacting configuration
-			Matd B_ = SimTK::inverse(local_configuration);
-
+			Matd B_ = local_configuration.inverse();
 			// Add the kernel weight correction to W_ij_ of neighboring particles.
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
@@ -56,9 +48,8 @@ namespace SPH
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
 					Vecd normalized_weight_correction = B_ * weight_correction;
-					contact_neighborhood.W_ij_[n] 
-						-= dot(normalized_weight_correction, contact_neighborhood.e_ij_[n])
-						 * contact_neighborhood.dW_ijV_j_[n];
+					contact_neighborhood.W_ij_[n] -=  contact_neighborhood.dW_ijV_j_[n] * 
+													normalized_weight_correction.dot(contact_neighborhood.e_ij_[n]);
 				}
 			}
 		}

@@ -10,7 +10,7 @@
  *                                                                              *
  * SPHinXsys is partially funded by German Research Foundation                  *
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
- * HU1527/12-1 and HU1527/12-4.                                                 *
+ * HU1527/12-1 and HU1527/12-4	.                                                 *
  *                                                                              *
  * Portions copyright (c) 2017-2022 Technical University of Munich and          *
  * the authors' affiliations.                                                   *
@@ -64,7 +64,7 @@ namespace SPH
         ParticleSplitAndMerge &particle_adaptation_;
         Real rho0_;
         StdLargeVec<Real> &h_ratio_;
-        Vecd E_cof_ = Vecd(0.0);
+        Vecd E_cof_ = Vecd::Zero();
         Real sigma_E_ = 0.0;
         Real E_cof_sigma_ = 0.0;
         StdVec<Vecd> grad_new_indices_;
@@ -236,7 +236,7 @@ namespace SPH
                 constexpr int type_index = DataTypeIndex<VariableType>::value;
                 for (size_t i = 0; i != std::get<type_index>(particle_data).size(); ++i)
                 {
-                    VariableType particle_data_temp = VariableType(0);
+                    VariableType particle_data_temp = DataTypeInitializer<VariableType>::zero;
                     for (size_t k = 0; k != merge_indices.size(); ++k)
                         particle_data_temp += merge_mass[k] * (*std::get<type_index>(particle_data)[i])[merge_indices[k]];
 

@@ -1,8 +1,3 @@
-/**
- * @file 	level_set.cpp
- * @author	Luhui Han, Chi Zhang and Xiangyu Hu
- */
-
 #include "level_set.h"
 #include "adaptation.h"
 
@@ -29,8 +24,9 @@ namespace SPH
 	}
 	//=================================================================================================//
 	BaseLevelSet ::BaseLevelSet(Shape &shape, SPHAdaptation &sph_adaptation)
-		: BaseMeshField("LevelSet"),
-		  shape_(shape), sph_adaptation_(sph_adaptation)
+		: BaseMeshField("LevelSet")
+		, shape_(shape)
+		, sph_adaptation_(sph_adaptation)
 	{
 		if (!shape_.isValid())
 		{
@@ -51,12 +47,10 @@ namespace SPH
 		return heaviside;
 	}
 	//=================================================================================================//
-	LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size,
-					   Shape &shape, SPHAdaptation &sph_adaptation)
-		: MeshWithGridDataPackages<BaseLevelSet, LevelSetDataPackage>(tentative_bounds, data_spacing, buffer_size,
-																	  shape, sph_adaptation),
-		  global_h_ratio_(sph_adaptation.ReferenceSpacing() / data_spacing),
-		  kernel_(*sph_adaptation.getKernel())
+	LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size, Shape &shape, SPHAdaptation &sph_adaptation)
+		: MeshWithGridDataPackages<BaseLevelSet, LevelSetDataPackage>(tentative_bounds, data_spacing, buffer_size, shape, sph_adaptation)
+		, global_h_ratio_(sph_adaptation.ReferenceSpacing() / data_spacing)
+		, kernel_(*sph_adaptation.getKernel())
 	{
 		Real far_field_distance = grid_spacing_ * (Real)buffer_width_;
 		initializeASingularDataPackage(-far_field_distance);
@@ -92,7 +86,7 @@ namespace SPH
 				jittered[l] += (((Real)rand() / (RAND_MAX)) - 0.5) * 0.5 * data_spacing_;
 			probed_value = probeLevelSetGradient(jittered);
 		}
-		return probed_value.normalize();
+		return probed_value.normalized();
 	}
 	//=================================================================================================//
 	Vecd LevelSet::probeLevelSetGradient(const Vecd &position)
@@ -175,18 +169,19 @@ namespace SPH
 		return is_bounded;
 	}
 	//=================================================================================================//
-	LevelSetDataPackage *LevelSet::createDataPackage(const Vecu &cell_index, const Vecd &cell_position)
+	LevelSetDataPackage* LevelSet::createDataPackage(const Vecu &cell_index, const Vecd &cell_position)
 	{
 		mutex_my_pool.lock();
-		LevelSetDataPackage &new_data_pkg = *data_pkg_pool_.malloc();
+		LevelSetDataPackage* new_data_pkg = data_pkg_pool_.malloc();
 		mutex_my_pool.unlock();
-		new_data_pkg.registerAllVariables();
+
+		new_data_pkg->registerAllVariables();
 		Vecd pkg_lower_bound = GridPositionFromCellPosition(cell_position);
-		new_data_pkg.initializePackageGeometry(pkg_lower_bound, data_spacing_);
-		new_data_pkg.initializeBasicData(shape_);
-		new_data_pkg.pkg_index_ = cell_index;
-		assignDataPackageAddress(cell_index, &new_data_pkg);
-		return &new_data_pkg;
+		new_data_pkg->initializePackageGeometry(pkg_lower_bound, data_spacing_);
+		new_data_pkg->initializeBasicData(shape_);
+		new_data_pkg->pkg_index_ = cell_index;
+		assignDataPackageAddress(cell_index, new_data_pkg);
+		return new_data_pkg;
 	}
 	//=================================================================================================//
 	void LevelSet::initializeDataInACell(const Vecu &cell_index)
@@ -194,7 +189,8 @@ namespace SPH
 		Vecd cell_position = CellPositionFromIndex(cell_index);
 		Real signed_distance = shape_.findSignedDistance(cell_position);
 		Vecd normal_direction = shape_.findNormalDirection(cell_position);
-		Real measure = getMaxAbsoluteElement(normal_direction * signed_distance);
+		Real measure = (signed_distance * normal_direction).cwiseAbs().maxCoeff();
+		
 		if (measure < grid_spacing_)
 		{
 			LevelSetDataPackage *new_data_pkg = createDataPackage(cell_index, cell_position);
@@ -242,7 +238,7 @@ namespace SPH
 		{
 			Real signed_distance = shape_.findSignedDistance(cell_position);
 			Vecd normal_direction = shape_.findNormalDirection(cell_position);
-			Real measure = getMaxAbsoluteElement(normal_direction * signed_distance);
+			Real measure = (signed_distance * normal_direction).cwiseAbs().maxCoeff();
 			if (measure < grid_spacing_)
 			{
 				LevelSetDataPackage *new_data_pkg = createDataPackage(cell_index, cell_position);
@@ -252,11 +248,9 @@ namespace SPH
 		}
 	}
 	//=============================================================================================//
-	MultilevelLevelSet::
-		MultilevelLevelSet(BoundingBox tentative_bounds, Real reference_data_spacing,
-						   size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation)
-		: MultilevelMesh<BaseLevelSet, LevelSet, RefinedLevelSet>(tentative_bounds, reference_data_spacing,
-																  total_levels, shape, sph_adaptation) {}
+	MultilevelLevelSet::MultilevelLevelSet(BoundingBox tentative_bounds, Real reference_data_spacing, size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation)
+		: MultilevelMesh<BaseLevelSet, LevelSet, RefinedLevelSet>(tentative_bounds, reference_data_spacing, total_levels, shape, sph_adaptation) 
+	{}
 	//=================================================================================================//
 	size_t MultilevelLevelSet::getCoarseLevel(Real h_ratio)
 	{

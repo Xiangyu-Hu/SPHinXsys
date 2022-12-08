@@ -1,14 +1,8 @@
-/**
- * @file 	fluid_dynamics_multi_phase.cpp
- * @author	Chi Zhang and Xiangyu Hu
- */
-
 #include "fluid_dynamics_multi_phase.h"
 
-//=================================================================================================//
 namespace SPH
 {
-	//=================================================================================================//
+	//=====================================================================================================//
 	namespace fluid_dynamics
 	{
 		//=================================================================================================//
@@ -42,7 +36,8 @@ namespace SPH
 			Real rho_i = this->rho_[index_i];
 			const Vecd &vel_i = this->vel_[index_i];
 
-			Vecd acceleration(0), vel_derivative(0);
+			Vecd acceleration = Vecd::Zero();
+			Vecd vel_derivative = Vecd::Zero();
 			for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 			{
 				Real mu_j = this->contact_fluids_[k]->ReferenceViscosity();
@@ -84,7 +79,7 @@ namespace SPH
 		void MultiPhaseColorFunctionGradient::interaction(size_t index_i, Real dt)
 		{
 			Real Vol_i = Vol_[index_i];
-			Vecd gradient(0.0);
+			Vecd gradient = Vecd::Zero();
 			if (surface_indicator_[index_i])
 			{
 				for (size_t k = 0; k < contact_configuration_.size(); ++k)

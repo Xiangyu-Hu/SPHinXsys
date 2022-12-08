@@ -16,8 +16,8 @@ Real DH = particle_spacing_ref * 4;		 /**< Tube height. */
 BoundingBox system_domain_bounds(Vec2d(-2.0 / 5.0 * DL, 0.0), Vec2d(3.0 / 5.0 * DL, DH));
 Real rho0_l = 1.0;	  /**< initial density of left state. */
 Real rho0_r = 0.125;  /**< initial density of right state. */
-Vecd velocity_l(0.0); /**< initial velocity of left state. */
-Vecd velocity_r(0.0); /**< initial velocity of right state. */
+Vecd velocity_l = Vecd::Zero(); /**< initial velocity of left state. */
+Vecd velocity_r = Vecd::Zero();; /**< initial velocity of right state. */
 Real p_l = 1.0;		  /**< initial pressure of left state. */
 Real p_r = 0.1;		  /**< initial pressure of right state. */
 //----------------------------------------------------------------------
@@ -59,7 +59,7 @@ public:
 			Real rho_e = p_[index_i] / (gamma_ - 1.0);
 			vel_[index_i] = velocity_l;
 			mom_[index_i] = rho0_l * velocity_l;
-			E_[index_i] = rho_e + 0.5 * rho_[index_i] * vel_[index_i].normSqr();
+			E_[index_i] = rho_e + 0.5 * rho_[index_i] * vel_[index_i].squaredNorm();
 		}
 		if (pos_[index_i][0] > DL / 10.0)
 		{
@@ -69,7 +69,7 @@ public:
 			Real rho_e = p_[index_i] / (gamma_ - 1.0);
 			vel_[index_i] = velocity_r;
 			mom_[index_i] = rho0_r * velocity_r;
-			E_[index_i] = rho_e + 0.5 * rho_[index_i] * vel_[index_i].normSqr();
+			E_[index_i] = rho_e + 0.5 * rho_[index_i] * vel_[index_i].squaredNorm();
 		}
 	}
 };

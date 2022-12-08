@@ -293,9 +293,9 @@ First, we provide the following program to create a system for this problem.
 		/**
 		 * @brief 	Particle and body creation of leaflet and fluid observers.
 		 */
-		ObserverBody leaflet_observer(system, "BeamObserver");
+		ProbeBody leaflet_observer(system, "BeamObserver");
 		ObserverParticles beam_observer_particles(leaflet_observer, makeShared<LeafletObserverParticleGenerator>());
-		ObserverBody fluid_observer(system, "FluidObserver");
+		ProbeBody fluid_observer(system, "FluidObserver");
 		ObserverParticles flow_observer_particles(fluid_observer, makeShared<FluidObserverParticleGenerator>());
 		/**
 		 * @brief Define body relation map.
@@ -912,9 +912,9 @@ and input/output environment is initialized.
 	/**
 	 * @brief 	Particle and body creation of leaflet and fluid observers.
 	 */
-	ObserverBody leaflet_observer(system, "BeamObserver");
+	ProbeBody leaflet_observer(system, "BeamObserver");
 	ObserverParticles beam_observer_particles(leaflet_observer, makeShared<LeafletObserverParticleGenerator>());
-	ObserverBody fluid_observer(system, "FluidObserver");
+	ProbeBody fluid_observer(system, "FluidObserver");
 	ObserverParticles flow_observer_particles(fluid_observer, makeShared<FluidObserverParticleGenerator>());
 	/**
 	 * @brief Define body relation map.

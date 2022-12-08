@@ -1,9 +1,3 @@
-/**
- * @file 	particle_dynamics_dissipation.hpp
- * @brief 	This is the particle dynamics applicable for all type bodies
- * @author	Chi Zhang and Xiangyu Hu
- */
-
 #ifndef PARTICLE_DYNAMICS_DISSIPATION_HPP
 #define PARTICLE_DYNAMICS_DISSIPATION_HPP
 

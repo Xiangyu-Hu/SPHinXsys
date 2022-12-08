@@ -1,8 +1,3 @@
-/**
- * @file 	multi_polygon_shape.cpp
- * @author	Luhui Han, Chi Zhang and Xiangyu Hu
- */
-
 #include "multi_polygon_shape.h"
 
 using namespace boost::geometry;
@@ -16,7 +11,7 @@ namespace SPH
 		addAPolygon(points, ShapeBooleanOps::add);
 	}
 	//=================================================================================================//
-	MultiPolygon::MultiPolygon(const Vec2d &center, Real radius, int resolution)
+	MultiPolygon::MultiPolygon(const Vecd &center, Real radius, int resolution)
 		: MultiPolygon()
 	{
 		addACircle(center, radius, resolution, ShapeBooleanOps::add);
@@ -27,8 +22,10 @@ namespace SPH
 								 boost_multi_poly multi_poly_op, ShapeBooleanOps boolean_op)
 	{
 		boost_multi_poly multi_poly_tmp_in = multi_poly_in;
-		// out multi-poly need to be emtpy
-		// otherwise the operation is not valid
+		/** 
+		 * Out multi-poly need to be emtpy
+		 * otherwise the operation is not valid. 
+		 */
 		boost_multi_poly multi_poly_tmp_out;
 
 		switch (boolean_op)
@@ -75,20 +72,20 @@ namespace SPH
 		multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, boost_multi_poly_op, op);
 	}
 	//=================================================================================================//
-	void MultiPolygon::addABox(Transform2d transform2d, const Vec2d &halfsize, ShapeBooleanOps op)
+	void MultiPolygon::addABox(Transform2d transform2d, const Vecd &halfsize, ShapeBooleanOps op)
 	{
-		Vec2d point0 = transform2d.shiftFrameStationToBase(-halfsize);
-		Vec2d point1 = transform2d.shiftFrameStationToBase(Vec2d(-halfsize[0], halfsize[1]));
-		Vec2d point2 = transform2d.shiftFrameStationToBase(halfsize);
-		Vec2d point3 = transform2d.shiftFrameStationToBase(Vec2d(halfsize[0], -halfsize[1]));
+		Vecd point0 = transform2d.shiftFrameStationToBase(-halfsize);
+		Vecd point1 = transform2d.shiftFrameStationToBase(Vecd(-halfsize[0], halfsize[1]));
+		Vecd point2 = transform2d.shiftFrameStationToBase(halfsize);
+		Vecd point3 = transform2d.shiftFrameStationToBase(Vecd(halfsize[0], -halfsize[1]));
 		
 		std::vector<Vecd> points = { point0, point1, point2, point3, point0};
 		addAPolygon(points, op);
 	}
 	//=================================================================================================//
-	void MultiPolygon::addACircle(const Vec2d &center, Real radius, int resolution, ShapeBooleanOps op)
+	void MultiPolygon::addACircle(const Vecd &center, Real radius, int resolution, ShapeBooleanOps op)
 	{
-		Vec2d buffer_center = center;
+		Vecd buffer_center = center;
 		Real buffer_radius = radius;
 		int buffer_res = resolution;
 
@@ -152,7 +149,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void MultiPolygon::
-		addAPolygonFromFile(std::string file_path_name, ShapeBooleanOps op, Vec2d translation, Real scale_factor)
+		addAPolygonFromFile(std::string file_path_name, ShapeBooleanOps op, Vecd translation, Real scale_factor)
 	{
 		std::fstream dataFile(file_path_name);
 		Vecd temp_point;
@@ -189,17 +186,17 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	Vec2d MultiPolygon::findClosestPoint(const Vec2d &probe_point)
+	Vecd MultiPolygon::findClosestPoint(const Vecd &probe_point)
 	{
 		typedef model::d2::point_xy<Real> pnt_type;
 		typedef model::referring_segment<model::d2::point_xy<Real>> seg_type;
-		/*
-		typedef model::segment<model::d2::point_xy<Real>> seg_type;
-		From the documentation on segment and referring_segment, the only difference between the two is that
-		referring_segment holds a reference to the points.
-		This is what is needed in a for each that modifies the segment since the points modified should be
-		reflected in the line string. In a for each that does not modify the points, it should still take a
-		reference (most likely a const reference) since it reduces the amount of copying.
+		/**
+		 * typedef model::segment<model::d2::point_xy<Real>> seg_type;
+		 * From the documentation on segment and referring_segment, the only difference between the two is that
+		 * referring_segment holds a reference to the points.
+		 * This is what is needed in a for each that modifies the segment since the points modified should be
+		 * reflected in the line string. In a for each that does not modify the points, it should still take a
+		 * reference (most likely a const reference) since it reduces the amount of copying.
 		*/
 		pnt_type input_p(probe_point[0], probe_point[1]);
 		model::segment<model::d2::point_xy<Real>> closest_seg;
@@ -223,25 +220,25 @@ namespace SPH
 		};
 		boost::geometry::for_each_segment(multi_poly_, findclosestsegment);
 
-		Vec2d p_find(0, 0);
+		Vecd p_find = Vecd::Zero();
 
 		Real x0 = boost::geometry::get<0, 0>(closest_seg);
 		Real y0 = boost::geometry::get<0, 1>(closest_seg);
 		Real x1 = boost::geometry::get<1, 0>(closest_seg);
 		Real y1 = boost::geometry::get<1, 1>(closest_seg);
-		Vec2d p_0(x0, y0);
-		Vec2d p_1(x1, y1);
-		Vec2d vec_v = p_1 - p_0;
-		Vec2d vec_w = probe_point - p_0;
+		Vecd p_0(x0, y0);
+		Vecd p_1(x1, y1);
+		Vecd vec_v = p_1 - p_0;
+		Vecd vec_w = probe_point - p_0;
 
-		Real c1 = dot(vec_v, vec_w);
+		Real c1 = vec_v.dot(vec_w);
 		if (c1 <= 0)
 		{
 			p_find = p_0;
 		}
 		else
 		{
-			Real c2 = dot(vec_v, vec_v);
+			Real c2 = vec_v.dot(vec_v);
 			if (c2 <= c1)
 			{
 				p_find = p_1;
@@ -257,7 +254,8 @@ namespace SPH
 	//=================================================================================================//
 	BoundingBox MultiPolygon::findBounds()
 	{
-		Vec2d lower_bound(0), upper_bound(0);
+		Vecd lower_bound = Vecd::Zero();
+		Vecd upper_bound = Vecd::Zero();
 		typedef boost::geometry::model::box<model::d2::point_xy<Real>> box;
 		lower_bound[0] = boost::geometry::return_envelope<box>(multi_poly_).min_corner().get<0>();
 		lower_bound[1] = boost::geometry::return_envelope<box>(multi_poly_).min_corner().get<1>();
@@ -271,12 +269,12 @@ namespace SPH
 		return multi_polygon_.getBoostMultiPoly().size() == 0 ? false : true;
 	}
 	//=================================================================================================//
-	bool MultiPolygonShape::checkContain(const Vec2d &probe_point, bool BOUNDARY_INCLUDED)
+	bool MultiPolygonShape::checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED)
 	{
 		return multi_polygon_.checkContain(probe_point, BOUNDARY_INCLUDED);
 	}
 	//=================================================================================================//
-	Vec2d MultiPolygonShape::findClosestPoint(const Vec2d &probe_point)
+	Vecd MultiPolygonShape::findClosestPoint(const Vecd &probe_point)
 	{
 		return multi_polygon_.findClosestPoint(probe_point);
 	}

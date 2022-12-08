@@ -1,7 +1,3 @@
-/**
- * @file 	kernel_laguerre_gauss.cpp
- * @author	Zhentong Wang,Chi Zhang, Yongchuan Yu and Xiangyu Hu
- */
 #include "kernel_laguerre_gauss.h"
 
 #include <cmath>

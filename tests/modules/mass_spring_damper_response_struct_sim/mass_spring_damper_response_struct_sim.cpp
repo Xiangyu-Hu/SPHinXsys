@@ -18,7 +18,7 @@ TEST(StructuralSimulation, MassSpringDamperResponse)
 	/** STL IMPORT PARAMETERS */
 	std::string relative_input_path = "./input/"; //path definition for linux
 	std::vector<std::string> imported_stl_list = { "ball_mass.stl" };
-	std::vector<Vec3d> translation_list = { Vec3d(0) };
+	std::vector<Vec3d> translation_list = { Vec3d::Zero() };
 	std::vector<Real> resolution_list = { resolution_mass};
 	SharedPtr<SaintVenantKirchhoffSolid> material = makeShared<SaintVenantKirchhoffSolid>(rho_0, Youngs_modulus, poisson);
 	std::vector<SharedPtr<SaintVenantKirchhoffSolid>> material_model_list = { material };

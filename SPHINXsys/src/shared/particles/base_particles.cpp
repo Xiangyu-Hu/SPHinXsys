@@ -1,8 +1,3 @@
-/**
- * @file base_particles.cpp
- * @brief Definition of functions declared in base_particles.h
- * @author	Xiangyu Hu and Chi Zhang
- */
 #include "base_particles.hpp"
 
 #include "base_body.h"
@@ -11,6 +6,7 @@
 #include "base_particle_generator.h"
 #include "xml_engine.h"
 
+//=====================================================================================================//
 namespace SPH
 {
 	//=================================================================================================//
@@ -27,9 +23,9 @@ namespace SPH
 		//----------------------------------------------------------------------
 		registerVariable(pos_, "Position");
 		registerVariable(Vol_, "VolumetricMeasure");
-		//----------------------------------------------------------------------
-		//		add particle reload data
-		//----------------------------------------------------------------------
+		/*
+		 *	add particle reload data
+		 */
 		addVariableNameToList<Vecd>(variables_to_reload_, "Position");
 		addVariableNameToList<Real>(variables_to_reload_, "VolumetricMeasure");
 	}
@@ -37,28 +33,28 @@ namespace SPH
 	void BaseParticles::initializeOtherVariables()
 	{
 		real_particles_bound_ = total_real_particles_;
-		//----------------------------------------------------------------------
-		//		register non-geometric data
-		//----------------------------------------------------------------------
+		/**
+		 *	register non-geometric data
+		 */
 		registerVariable(vel_, "Velocity");
 		registerVariable(acc_, "Acceleration");
 		registerVariable(acc_prior_, "PriorAcceleration");
 		registerVariable(rho_, "Density", base_material_.ReferenceDensity());
 		registerVariable(mass_, "MassiveMeasure");
-		//----------------------------------------------------------------------
-		//		add basic output particle data
-		//----------------------------------------------------------------------
+		/**
+		 *	add basic output particle data
+		 */
 		addVariableToWrite<Vecd>("Velocity");
-		//----------------------------------------------------------------------
-		//		add restart output particle data
-		//----------------------------------------------------------------------
+		/**
+		 *	add restart output particle data
+		 */
 		addVariableNameToList<Vecd>(variables_to_restart_, "Position");
 		addVariableNameToList<Vecd>(variables_to_restart_, "Velocity");
 		addVariableNameToList<Vecd>(variables_to_restart_, "Acceleration");
 		addVariableNameToList<Real>(variables_to_restart_, "VolumetricMeasure");
-		//----------------------------------------------------------------------
-		//		initial particle IDs and massive measure
-		//----------------------------------------------------------------------
+		/**
+		 *	initial particle IDs and massive measure
+		 */
 		for (size_t i = 0; i != real_particles_bound_; ++i)
 		{
 			sorted_id_.push_back(sequence_.size());
@@ -368,3 +364,4 @@ namespace SPH
 	}
 	//=================================================================================================//
 }
+//=====================================================================================================//

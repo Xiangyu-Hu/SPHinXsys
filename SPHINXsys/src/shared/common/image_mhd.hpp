@@ -1,32 +1,31 @@
 /* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
-* @file image_mhd.hpp
-* @brief x
-* @details x
-*			x
-* @author	Yijin Mao
-*/
+ * @file 	image_mesh_shape.h
+ * @brief 	Immage process for geometry representation. 
+ * @author	Yijin Mao
+ */
+
 #ifndef IMAGE_MHD_HPP
 #define IMAGE_MHD_HPP
 
@@ -44,11 +43,11 @@ namespace SPH {
 		binaryData_(true),
 		binaryDataByteOrderMSB_(false),
 		compressedData_(false),
-		transformMatrix_(Mat3d(1.0)),
-		offset_(Vec3d(0.0,0.0,0.0)),
-		centerOfRotation_(Vec3d(0.0,0.0,0.0)),
-		elementSpacing_(Vec3d(1.0,1.0,1.0)),
-		dimSize_(Vec3i(1,1,1)),
+		transformMatrix_(Matd::Identity()),
+		offset_(Vecd::Zero()),
+		centerOfRotation_(Vecd::Zero()),
+		elementSpacing_(Vecd::Ones()),
+		dimSize_(Veci::Ones()),
 		width_(dimSize_[0]),
 		height_(dimSize_[1]),
 		depth_(dimSize_[2]),
@@ -80,15 +79,15 @@ namespace SPH {
 					{
 						std::vector<std::string> values;
 						split(elements[1], ' ', values);
-						transformMatrix_[0][0] = std::stof(values[0]);
-						transformMatrix_[0][1] = std::stof(values[1]);
-						transformMatrix_[0][2] = std::stof(values[2]);
-						transformMatrix_[1][0] = std::stof(values[3]);
-						transformMatrix_[1][1] = std::stof(values[4]);
-						transformMatrix_[1][2] = std::stof(values[5]);
-						transformMatrix_[2][0] = std::stof(values[6]);
-						transformMatrix_[2][1] = std::stof(values[7]);
-						transformMatrix_[2][2] = std::stof(values[8]);
+						transformMatrix_(0,0) = std::stof(values[0]);
+						transformMatrix_(0,1) = std::stof(values[1]);
+						transformMatrix_(0,2) = std::stof(values[2]);
+						transformMatrix_(1,0) = std::stof(values[3]);
+						transformMatrix_(1,1) = std::stof(values[4]);
+						transformMatrix_(1,2) = std::stof(values[5]);
+						transformMatrix_(2,0) = std::stof(values[6]);
+						transformMatrix_(2,1) = std::stof(values[7]);
+						transformMatrix_(2,2) = std::stof(values[8]);
 					}
 					else if (elements[0].compare("Offset") == 0)
 					{
@@ -162,9 +161,9 @@ namespace SPH {
 		binaryData_(true),
 		binaryDataByteOrderMSB_(false),
 		compressedData_(false),
-		transformMatrix_(Mat3d(1.0)),
-		offset_(Vec3d(-0.5*NxNyNz[0]*spacings[0], -0.5*NxNyNz[1] * spacings[1], -0.5*NxNyNz[2] * spacings[2])),
-		centerOfRotation_(Vec3d(0.0, 0.0, 0.0)),
+		transformMatrix_(Matd::Identity()),
+		offset_(Vecd(-0.5*NxNyNz[0]*spacings[0], -0.5*NxNyNz[1] * spacings[1], -0.5*NxNyNz[2] * spacings[2])),
+		centerOfRotation_(Vecd::Zero()),
 		elementSpacing_(spacings),
 		dimSize_(NxNyNz),
 		width_(dimSize_[0]),
@@ -181,7 +180,7 @@ namespace SPH {
 		if(data_ == nullptr) 
 			data_ = new float[size_];
 
-		Vec3d center(0.5*width_, 0.5*height_, 0.5*depth_);
+		Vecd center(0.5*width_, 0.5*height_, 0.5*depth_);
 
 		for (int z = 0; z < depth_; z++)
 		{
@@ -190,7 +189,7 @@ namespace SPH {
 				for (int x = 0; x < width_; x++)
 				{
 					int index = z * width_*height_ + y * width_ + x;
-					double distance = (Vec3d(x, y, z) - center).norm() - radius;
+					double distance = (Vecd(x, y, z) - center).norm() - radius;
 					if (distance < min_value_) min_value_ = distance;
 					if (distance > max_value_) max_value_ = distance;
 					data_[index] = float(distance);
@@ -216,7 +215,7 @@ namespace SPH {
 	{
 		std::vector<int> neighbors;
 
-		Vec3d image_coord = transformMatrix_.invert()*(probe_point - offset_);
+		Vec3d image_coord = transformMatrix_.inverse()*(probe_point - offset_);
 		// std::cout <<"findNeighbor of " << probe_point << " ........... " << image_coord << std::endl;
 
 		int z = int(floor(image_coord[2]));
@@ -321,7 +320,7 @@ namespace SPH {
 	Vec3d ImageMHD<T, nDims>::computeNormalAtCell(int i)
 	{
 		Vec3d grad_phi = computeGradientAtCell(i);
-		Vec3d n = grad_phi.normalize();
+		Vec3d n = grad_phi.normalized();
 		return n;
 	}
 
@@ -367,7 +366,7 @@ namespace SPH {
 	{
 		Vec3i this_cell;
 		std::vector<int> neighbors = findNeighbors(probe_point, this_cell);
-		Vec3d n_sum(0.0, 0.0, 0.0);
+		Vec3d n_sum = Vecd::Zero();
 		double weight_sum = 0.0;
 		double d_sum = 0.0;
 		for (const int& i : neighbors)
@@ -383,7 +382,7 @@ namespace SPH {
 		Vec3d n = n_sum / (weight_sum + Eps);
 		double d = d_sum / (weight_sum + Eps);
 
-		Vec3d p_image = Vec3d(this_cell[0], this_cell[1], this_cell[2]) + n.normalize()*d;
+		Vec3d p_image = Vec3d(this_cell[0], this_cell[1], this_cell[2]) + n.normalized() * d;
 		Vec3d p = convertToPhysicalSpace(p_image);
 		return p;
 
@@ -393,8 +392,8 @@ namespace SPH {
 	BoundingBox ImageMHD<T, nDims>::findBounds()
 	{
 		//initial reference values
-		Vec3d lower_bound = Vec3d(Infinity);
-		Vec3d upper_bound = Vec3d(-Infinity);
+		Vec3d lower_bound = Infinity * Vec3d::Ones();
+		Vec3d upper_bound = - Infinity * Vec3d::Ones();
 
 		for (int z = 0; z < depth_ + 1; z++)
 		{
@@ -445,7 +444,7 @@ namespace SPH {
 	{
 		Vec3i this_cell;
 		std::vector<int> neighbors = findNeighbors(probe_point, this_cell);
-		Vec3d n_sum(0.0, 0.0, 0.0);
+		Vec3d n_sum = Vecd::Zero();
 		double weight_sum = 0.0;
 		double d_sum = 0.0;
 		if (neighbors.size() > 0)
@@ -461,11 +460,11 @@ namespace SPH {
 				d_sum = d_sum + dCj;
 			}
 			Vec3d n = n_sum / (weight_sum + Eps);
-			return n.normalize();
+			return n.normalized();
 		}
 		else
 		{
-			return Vec3d(1.0, 1.0, 1.0).normalize();
+			return Vec3d::Ones();
 		}
 	}
 
@@ -483,9 +482,9 @@ namespace SPH {
 		output_file << "BinaryDataByteOrderMSB = " << binaryDataByteOrderMSB_ << "\n";
 		output_file << "CompressedData = " << compressedData_ << "\n";
 		output_file << "TransformMatrix = "
-			<< transformMatrix_[0][0] << " " << transformMatrix_[0][1] << " " << transformMatrix_[0][2] << " "
-			<< transformMatrix_[1][0] << " " << transformMatrix_[1][1] << " " << transformMatrix_[1][2] << " "
-			<< transformMatrix_[2][0] << " " << transformMatrix_[2][1] << " " << transformMatrix_[2][2] << "\n";
+			<< transformMatrix_(0, 0) << " " << transformMatrix_(0, 1) << " " << transformMatrix_(0, 2) << " "
+			<< transformMatrix_(1, 0) << " " << transformMatrix_(1, 1) << " " << transformMatrix_(1, 2) << " "
+			<< transformMatrix_(2, 0) << " " << transformMatrix_(2, 1) << " " << transformMatrix_(2, 2) << "\n";
 		output_file << "Offset = "
 			<< offset_[0] << " " << offset_[1] << " " << offset_[2] << "\n";
 		output_file << "CenterOfRotation = "
