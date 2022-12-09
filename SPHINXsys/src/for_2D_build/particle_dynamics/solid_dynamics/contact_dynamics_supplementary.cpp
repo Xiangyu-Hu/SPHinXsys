@@ -33,7 +33,7 @@ namespace SPH
 				}
 				contact_density_i += 0.005 * sigma * calibration_factor_[k];
 			}
-			contact_density_[index_i] = contact_density_i;
+			(*contact_density_)[index_i] = contact_density_i;
 		}
     //=========================================================================================================//
     }

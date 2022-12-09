@@ -75,10 +75,11 @@ namespace SPH
 		{};
 		/** construct from a shape already has aligned boundaries */
 		template <typename... Args>
-		explicit AlignedBoxShape(Shape &shape, Args &&...args)
+		explicit AlignedBoxShape(const Shape &shape, Args &&...args)
 			: TransformShape<GeometricShapeBox>(
-				  Transformd(0.5 * (shape.getBounds().second + shape.getBounds().first)),
-				  0.5 * (shape.getBounds().second - shape.getBounds().first), std::forward<Args>(args)...){};
+				Transformd(0.5 * (shape.bounding_box_.second_ + shape.bounding_box_.first_)),
+				0.5 * (shape.bounding_box_.second_ - shape.bounding_box_.first_), std::forward<Args>(args)...)
+        {};
 
 		Vecd HalfSize() { return halfsize_; }
 		bool checkInBounds(int axis, const Vecd &probe_point);

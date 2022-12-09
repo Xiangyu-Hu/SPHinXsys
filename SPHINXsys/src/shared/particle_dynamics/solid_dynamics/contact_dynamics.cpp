@@ -108,6 +108,7 @@ namespace SPH
                 contact_density_ = new StdLargeVec<Real>;
                 particles_->registerVariable(*contact_density_, "ContactDensity");
             }
+            Real dp_1 = solid_body_contact_relation.sph_body_.sph_adaptation_->ReferenceSpacing();
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				Real dp_2 = solid_body_contact_relation.contact_bodies_[k]->sph_adaptation_->ReferenceSpacing();
@@ -146,7 +147,6 @@ namespace SPH
 				/** a calibration factor to avoid particle penetration into shell structure */
 				calibration_factor_[k] = solid_.ReferenceDensity() / (contact_max_ + Eps);
 			}
-            (*contact_density_)[index_i] = sigma* boundary_factor_ * kernel_->SmoothingLength();
 		}
 		//=================================================================================================//
 		SelfContactForce::
