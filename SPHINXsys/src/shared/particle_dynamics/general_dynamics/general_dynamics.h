@@ -243,7 +243,7 @@ namespace SPH
 
 	public:
 		explicit QuantitySummation(SPHBody &sph_body, const std::string &variable_name)
-			: LocalDynamicsReduce<VariableType, ReduceSum<VariableType>>(sph_body, DataTypeInitializer<VariableType>::zero),
+			: LocalDynamicsReduce<VariableType, ReduceSum<VariableType>>(sph_body, ZeroData<VariableType>::value),
 			  GeneralDataDelegateSimple(sph_body),
 			  variable_(*particles_->getVariableByName<VariableType>(variable_name))
 		{

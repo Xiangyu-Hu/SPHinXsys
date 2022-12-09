@@ -22,6 +22,32 @@ namespace SPH
 	{
 		return Vec3d(simTK_vector[0], simTK_vector[1], simTK_vector[2]);
 	}
+	SimTK::Mat22 EigenToSimTK(const Mat2d &eigen_matrix)
+	{
+		return SimTK::Mat22(eigen_matrix(0, 0), eigen_matrix(0, 1),
+							eigen_matrix(1, 0), eigen_matrix(1, 1));
+	}
+	//=================================================================================================//
+	SimTK::Mat33 EigenToSimTK(const Mat3d &eigen_matrix)
+	{
+		return SimTK::Mat33(eigen_matrix(0, 0), eigen_matrix(0, 1), eigen_matrix(0, 2),
+							eigen_matrix(1, 0), eigen_matrix(1, 1), eigen_matrix(1, 2),
+							eigen_matrix(2, 0), eigen_matrix(2, 1), eigen_matrix(2, 2));
+	}
+	Mat2d SimTKToEigen(const SimTK::Mat22 &simTK_matrix)
+	{
+		return Mat2d{
+			{simTK_matrix(0, 0), simTK_matrix(0, 1)},
+			{simTK_matrix(1, 0), simTK_matrix(1, 1)}};
+	}
+	//=================================================================================================//
+	Mat3d SimTKToEigen(const SimTK::Mat33 &simTK_matrix)
+	{
+		return Mat3d{
+			{simTK_matrix(0, 0), simTK_matrix(0, 1), simTK_matrix(0, 2)},
+			{simTK_matrix(1, 0), simTK_matrix(1, 1), simTK_matrix(1, 2)},
+			{simTK_matrix(2, 0), simTK_matrix(2, 1), simTK_matrix(2, 2)}};
+	}
 	//=================================================================================================//
 	Vec2d FirstAxisVector(const Vec2d &zero_vector)
 	{
@@ -323,7 +349,9 @@ namespace SPH
 		Real sigmaxz = sigma(0, 2);
 		Real sigmayz = sigma(1, 2);
 
-		return sqrt(sigmaxx * sigmaxx + sigmayy * sigmayy + sigmazz * sigmazz - sigmaxx * sigmayy - sigmaxx * sigmazz - sigmayy * sigmazz + 3.0 * (sigmaxy * sigmaxy + sigmaxz * sigmaxz + sigmayz * sigmayz));
+		return sqrt(sigmaxx * sigmaxx + sigmayy * sigmayy + sigmazz * sigmazz -
+					sigmaxx * sigmayy - sigmaxx * sigmazz - sigmayy * sigmazz +
+					3.0 * (sigmaxy * sigmaxy + sigmaxz * sigmaxz + sigmayz * sigmayz));
 	}
 	//=================================================================================================//
 	Vec2d getPrincipalValuesFromMatrix(const Mat2d &A)
@@ -357,18 +385,13 @@ namespace SPH
 		return {sorted_values[0], sorted_values[1], sorted_values[2]};
 	}
 	//=================================================================================================//
-	Real MinimumDimension(const BoundingBox &bbox)
-	{
-		return (bbox.second_ - bbox.first_).cwiseAbs().minCoeff();
-	}
-	//=================================================================================================//
 	Real getCrossProduct(const Vec2d &vector_1, const Vec2d &vector_2)
 	{
 		return vector_1[1] * vector_2[0] - vector_1[0] * vector_2[1];
 	}
 	//=================================================================================================//
 	Vec3d getCrossProduct(const Vec3d &vector_1, const Vec3d &vector_2)
-	{ // Eigen corss product for only have 3D vector
+	{ // Eigen cross product for only have 3D vector
 		return vector_1.cross(vector_2);
 	}
 	//=================================================================================================//

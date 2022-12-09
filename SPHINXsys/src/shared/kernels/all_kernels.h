@@ -21,7 +21,7 @@
  *                                                                          *
  * ------------------------------------------------------------------------*/
 /**
- * @file 	all_kernelas.h
+ * @file 	all_kernels.h
  * @brief 	Headers for all kernels. 
  * @author	Chi ZHang and Xiangyu Hu
  */

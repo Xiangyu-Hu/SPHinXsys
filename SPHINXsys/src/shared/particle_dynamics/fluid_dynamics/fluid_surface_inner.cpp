@@ -45,23 +45,6 @@ namespace SPH
             surface_indicator_[index_i] = is_free_surface ? 1 : 0;
         }
         //=================================================================================================//
-        FreeStreamBoundaryVelocityCorrection::FreeStreamBoundaryVelocityCorrection(SPHBody &sph_body)
-            : LocalDynamics(sph_body), FluidDataSimple(sph_body),
-              u_ref_(1.0), t_ref_(2.0), rho_ref_(particles_->fluid_.ReferenceDensity()),
-              rho_sum(particles_->rho_sum_), vel_(particles_->vel_),
-              surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")) {}
-        //=================================================================================================//
-        void FreeStreamBoundaryVelocityCorrection::update(size_t index_i, Real dt)
-        {
-            if (surface_indicator_[index_i] == 1)
-            {
-                // TODO: free stream condition should be summarized to a separated class.
-                Real run_time_ = GlobalStaticVariables::physical_time_;
-                Real u_freestream = run_time_ < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time_ / t_ref_)) : u_ref_;
-                vel_[index_i][0] = u_freestream + SMIN(rho_sum[index_i], rho_ref_) * (vel_[index_i][0] - u_freestream) / rho_ref_;
-            }
-        }
-        //=================================================================================================//
         ColorFunctionGradientInner::ColorFunctionGradientInner(BaseInnerRelation &inner_relation)
             : LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
               surface_indicator_(particles_->surface_indicator_),

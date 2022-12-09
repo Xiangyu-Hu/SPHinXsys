@@ -101,14 +101,14 @@ namespace SPH
 		};
 
 		/**
-		 * @class DeformationGradientTensorBySummation
+		 * @class DeformationGradientBySummation
 		 * @brief computing deformation gradient tensor by summation
 		 */
-		class DeformationGradientTensorBySummation : public LocalDynamics, public ElasticSolidDataInner
+		class DeformationGradientBySummation : public LocalDynamics, public ElasticSolidDataInner
 		{
 		public:
-			explicit DeformationGradientTensorBySummation(BaseInnerRelation &inner_relation);
-			virtual ~DeformationGradientTensorBySummation(){};
+			explicit DeformationGradientBySummation(BaseInnerRelation &inner_relation);
+			virtual ~DeformationGradientBySummation(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
@@ -117,14 +117,14 @@ namespace SPH
 		};
 
 		/**
-		 * @class BaseElasticRelaxation
+		 * @class BaseElasticIntegration
 		 * @brief base class for elastic relaxation
 		 */
-		class BaseElasticRelaxation : public LocalDynamics, public ElasticSolidDataInner
+		class BaseElasticIntegration : public LocalDynamics, public ElasticSolidDataInner
 		{
 		public:
-			explicit BaseElasticRelaxation(BaseInnerRelation &inner_relation);
-			virtual ~BaseElasticRelaxation(){};
+			explicit BaseElasticIntegration(BaseInnerRelation &inner_relation);
+			virtual ~BaseElasticIntegration(){};
 
 		protected:
 			StdLargeVec<Real> &rho_, &mass_;
@@ -133,15 +133,15 @@ namespace SPH
 		};
 
 		/**
-		 * @class BaseStressRelaxationFirstHalf
+		 * @class BaseIntegration1stHalf
 		 * @brief computing stress relaxation process by verlet time stepping
 		 * This is the first step
 		 */
-		class BaseStressRelaxationFirstHalf : public BaseElasticRelaxation
+		class BaseIntegration1stHalf : public BaseElasticIntegration
 		{
 		public:
-			explicit BaseStressRelaxationFirstHalf(BaseInnerRelation &inner_relation);
-			virtual ~BaseStressRelaxationFirstHalf(){};
+			explicit BaseIntegration1stHalf(BaseInnerRelation &inner_relation);
+			virtual ~BaseIntegration1stHalf(){};
 			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
@@ -152,15 +152,15 @@ namespace SPH
 		};
 
 		/**
-		 * @class StressRelaxationFirstHalf
+		 * @class Integration1stHalf
 		 * @brief computing stress relaxation process by verlet time stepping
 		 * This is the first step
 		 */
-		class StressRelaxationFirstHalf : public BaseStressRelaxationFirstHalf
+		class Integration1stHalf : public BaseIntegration1stHalf
 		{
 		public:
-			explicit StressRelaxationFirstHalf(BaseInnerRelation &inner_relation);
-			virtual ~StressRelaxationFirstHalf(){};
+			explicit Integration1stHalf(BaseInnerRelation &inner_relation);
+			virtual ~Integration1stHalf(){};
 			void initialization(size_t index_i, Real dt = 0.0);
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -171,18 +171,18 @@ namespace SPH
 		};
 
 		/**
-		 * @class KirchhoffParticleStressRelaxationFirstHalf
+		 * @class KirchhoffParticleIntegration1stHalf
 		 */
-		class KirchhoffParticleStressRelaxationFirstHalf : public StressRelaxationFirstHalf
+		class KirchhoffParticleIntegration1stHalf : public Integration1stHalf
 		{
 		public:
-			explicit KirchhoffParticleStressRelaxationFirstHalf(BaseInnerRelation &inner_relation);
-			virtual ~KirchhoffParticleStressRelaxationFirstHalf(){};
+			explicit KirchhoffParticleIntegration1stHalf(BaseInnerRelation &inner_relation);
+			virtual ~KirchhoffParticleIntegration1stHalf(){};
 			void initialization(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
-		 * @class KirchhoffStressRelaxationFirstHalf
+		 * @class KirchhoffIntegration1stHalf
 		 * @brief Decompose the stress into particle stress includes isotropic stress
 		 * and the stress due to non-homogeneous material properties.
 		 * The preliminary shear stress is introduced by particle pair to avoid
@@ -196,11 +196,11 @@ namespace SPH
 		 * it may be due to the determinate of deformation matrix become negative.
 		 * In this case, you may need decrease CFL number when computing time-step size.
 		 */
-		class KirchhoffStressRelaxationFirstHalf : public BaseStressRelaxationFirstHalf
+		class KirchhoffIntegration1stHalf : public BaseIntegration1stHalf
 		{
 		public:
-			explicit KirchhoffStressRelaxationFirstHalf(BaseInnerRelation &inner_relation);
-			virtual ~KirchhoffStressRelaxationFirstHalf(){};
+			explicit KirchhoffIntegration1stHalf(BaseInnerRelation &inner_relation);
+			virtual ~KirchhoffIntegration1stHalf(){};
 			void initialization(size_t index_i, Real dt = 0.0);
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -211,16 +211,16 @@ namespace SPH
 		};
 
 		/**
-		 * @class StressRelaxationSecondHalf
+		 * @class Integration2ndHalf
 		 * @brief computing stress relaxation process by verlet time stepping
 		 * This is the second step
 		 */
-		class StressRelaxationSecondHalf : public BaseElasticRelaxation
+		class Integration2ndHalf : public BaseElasticIntegration
 		{
 		public:
-			explicit StressRelaxationSecondHalf(BaseInnerRelation &inner_relation)
-				: BaseElasticRelaxation(inner_relation){};
-			virtual ~StressRelaxationSecondHalf(){};
+			explicit Integration2ndHalf(BaseInnerRelation &inner_relation)
+				: BaseElasticIntegration(inner_relation){};
+			virtual ~Integration2ndHalf(){};
 			void initialization(size_t index_i, Real dt = 0.0);
 			void interaction(size_t index_i, Real dt = 0.0);
 			void update(size_t index_i, Real dt = 0.0);

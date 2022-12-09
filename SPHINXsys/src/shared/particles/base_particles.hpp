@@ -178,7 +178,7 @@ namespace SPH
         constexpr int type_index = DataTypeIndex<VariableType>::value;
 
         for (size_t i = 0; i != std::get<type_index>(particle_data).size(); ++i)
-            std::get<type_index>(particle_data)[i]->resize(new_size, DataTypeInitializer<VariableType>::zero);
+            std::get<type_index>(particle_data)[i]->resize(new_size, ZeroData<VariableType>::value);
     }
     //=================================================================================================//
     template <typename VariableType>
@@ -188,7 +188,7 @@ namespace SPH
         constexpr int type_index = DataTypeIndex<VariableType>::value;
 
         for (size_t i = 0; i != std::get<type_index>(particle_data).size(); ++i)
-            std::get<type_index>(particle_data)[i]->push_back(DataTypeInitializer<VariableType>::zero);
+            std::get<type_index>(particle_data)[i]->push_back(ZeroData<VariableType>::value);
     }
     //=================================================================================================//
     template <typename VariableType>
