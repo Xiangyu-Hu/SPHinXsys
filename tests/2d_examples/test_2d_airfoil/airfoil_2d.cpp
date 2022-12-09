@@ -43,7 +43,7 @@ int main(int ac, char *av[])
 	//	Build up -- a SPHSystem
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, resolution_ref);
-	system.run_particle_relaxation_ = true; //tag to run particle relaxation when no commandline option
+	system.setRunParticleRelaxation(true); //tag to run particle relaxation when no commandline option
 #ifdef BOOST_AVAILABLE
 	system.handleCommandlineOptions(ac, av);
 #endif
@@ -79,7 +79,7 @@ int main(int ac, char *av[])
 	//	and case specified initial condition if necessary.
 	//----------------------------------------------------------------------
 	random_airfoil_particles.parallel_exec(0.25);
-	relaxation_step_inner.surface_bounding_.parallel_exec();
+	relaxation_step_inner.SurfaceBounding().parallel_exec();
 	update_smoothing_length_ratio.parallel_exec();
 	airfoil.updateCellLinkedList();
 	//----------------------------------------------------------------------

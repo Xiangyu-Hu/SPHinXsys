@@ -131,7 +131,6 @@ int main(int ac, char *av[])
 	//	and regression tests of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
-	RestartIO restart_io(io_environment, sph_system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
 		write_water_mechanical_energy(io_environment, water_block, gravity_ptr);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
@@ -144,19 +143,9 @@ int main(int ac, char *av[])
 	sph_system.initializeSystemConfigurations();
 	wall_boundary_normal_direction.parallel_exec();
 	//----------------------------------------------------------------------
-	//	Load restart file if necessary.
-	//----------------------------------------------------------------------
-	if (sph_system.restart_step_ != 0)
-	{
-		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.restart_step_);
-		water_block.updateCellLinkedList();
-		water_complex.updateConfiguration();
-		fluid_observer_contact.updateConfiguration();
-	}
-	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
-	size_t number_of_iterations = sph_system.restart_step_;
+	size_t number_of_iterations = 0;
 	int screen_output_interval = 100;
 	int observation_sample_interval = screen_output_interval * 2;
 	int restart_output_interval = screen_output_interval * 10;
@@ -216,13 +205,11 @@ int main(int ac, char *av[])
 						  << GlobalStaticVariables::physical_time_
 						  << "	Dt = " << Dt << "	dt = " << dt << "\n";
 
-				if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.restart_step_)
+				if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != 0)
 				{
 					write_water_mechanical_energy.writeToFile(number_of_iterations);
 					write_recorded_water_pressure.writeToFile(number_of_iterations);
 				}
-				if (number_of_iterations % restart_output_interval == 0)
-					restart_io.writeToFile(number_of_iterations);
 			}
 			number_of_iterations++;
 
@@ -258,7 +245,7 @@ int main(int ac, char *av[])
 	std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
 			  << interval_updating_configuration.seconds() << "\n";
 
-	/*	if (sph_system.restart_step_ == 0)
+	/*	if (sph_system.RestartStep() == 0)
 		{
 			write_water_mechanical_energy.newResultTest();
 			write_recorded_water_pressure.newResultTest();

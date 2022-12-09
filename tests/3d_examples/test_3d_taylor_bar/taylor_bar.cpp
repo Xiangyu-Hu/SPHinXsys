@@ -14,8 +14,8 @@ int main(int ac, char *av[])
 {
 	/** Setup the system. Please the make sure the global domain bounds are correctly defined. */
 	SPHSystem system(system_domain_bounds, particle_spacing_ref);
-	system.run_particle_relaxation_ = false;
-	system.reload_particles_ = true;
+	system.setRunParticleRelaxation(false);
+	system.setReloadParticles(true);
 #ifdef BOOST_AVAILABLE
 	system.handleCommandlineOptions(ac, av);
 #endif
@@ -27,7 +27,7 @@ int main(int ac, char *av[])
 	column.defineBodyLevelSetShape()->writeLevelSet(io_environment);
 	column.defineParticlesAndMaterial<ElasticSolidParticles, HardeningPlasticSolid>(
 		rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus);
-	(!system.run_particle_relaxation_ && system.reload_particles_)
+	(!system.RunParticleRelaxation() && system.ReloadParticles())
 		? column.generateParticles<ParticleGeneratorReload>(io_environment, column.getName())
 		: column.generateParticles<ParticleGeneratorLattice>();
 	column.addBodyStateForRecording<Vecd>("NormalDirection");
@@ -47,7 +47,7 @@ int main(int ac, char *av[])
 	/**define simple data file input and outputs functions. */
 	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
 
-	if (system.run_particle_relaxation_)
+	if (system.RunParticleRelaxation())
 	{
 		/**
 		 * @brief 	Methods used for particle relaxation.
@@ -65,7 +65,7 @@ int main(int ac, char *av[])
 		 * @brief 	Particle relaxation starts here.
 		 */
 		random_column_particles.parallel_exec(0.25);
-		relaxation_step_inner.surface_bounding_.parallel_exec();
+		relaxation_step_inner.SurfaceBounding().parallel_exec();
 		write_states.writeToFile(0.0);
 
 		/** relax particles of the insert body. */
@@ -88,8 +88,8 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	All numerical methods will be used in this case.
 	//----------------------------------------------------------------------
-	Dynamics1Level<solid_dynamics::PlasticStressRelaxationFirstHalf> stress_relaxation_first_half(column_inner);
-	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half(column_inner);
+	Dynamics1Level<solid_dynamics::PlasticIntegration1stHalf> stress_relaxation_first_half(column_inner);
+	Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(column_inner);
 	InteractionDynamics<solid_dynamics::DynamicContactForceWithWall, BodyPartByParticle> column_wall_contact_force(column_wall_contact);
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
 	SimpleDynamics<InitialCondition> initial_condition(column);

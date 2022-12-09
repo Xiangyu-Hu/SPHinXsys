@@ -126,7 +126,7 @@ namespace SPH
 		 * @brief update the particle smoothing length ratio
 		 */
 		class UpdateSmoothingLengthRatioByShape : public LocalDynamics,
-													  public RelaxDataDelegateSimple
+												  public RelaxDataDelegateSimple
 		{
 		protected:
 			StdLargeVec<Real> &h_ratio_, &Vol_;
@@ -187,23 +187,22 @@ namespace SPH
 		 */
 		class RelaxationStepInner : public BaseDynamics<void>
 		{
-		protected:
-			RealBody *real_body_;
-			BaseInnerRelation &inner_relation_;
-			NearShapeSurface near_shape_surface_;
-
 		public:
 			explicit RelaxationStepInner(BaseInnerRelation &inner_relation,
 										 bool level_set_correction = false);
 			virtual ~RelaxationStepInner(){};
+			SimpleDynamics<ShapeSurfaceBounding, NearShapeSurface> &SurfaceBounding() { return surface_bounding_; };
+			virtual void exec(Real dt = 0.0) override;
+			virtual void parallel_exec(Real dt = 0.0) override;
 
+		protected:
+			RealBody *real_body_;
+			BaseInnerRelation &inner_relation_;
+			NearShapeSurface near_shape_surface_;
 			UniquePtr<BaseDynamics<void>> relaxation_acceleration_inner_;
 			ReduceDynamics<GetTimeStepSizeSquare> get_time_step_square_;
 			SimpleDynamics<UpdateParticlePosition> update_particle_position_;
 			SimpleDynamics<ShapeSurfaceBounding, NearShapeSurface> surface_bounding_;
-
-			virtual void exec(Real dt = 0.0) override;
-			virtual void parallel_exec(Real dt = 0.0) override;
 		};
 
 		/**
@@ -232,23 +231,22 @@ namespace SPH
 		 */
 		class RelaxationStepComplex : public BaseDynamics<void>
 		{
-		protected:
-			RealBody *real_body_;
-			ComplexRelation &complex_relation_;
-			NearShapeSurface near_shape_surface_;
-
 		public:
 			explicit RelaxationStepComplex(ComplexRelation &body_complex_relation,
 										   const std::string &shape_name, bool level_set_correction = false);
 			virtual ~RelaxationStepComplex(){};
+			SimpleDynamics<ShapeSurfaceBounding, NearShapeSurface> &SurfaceBounding() { return surface_bounding_; };
+			virtual void exec(Real dt = 0.0) override;
+			virtual void parallel_exec(Real dt = 0.0) override;
 
+		protected:
+			RealBody *real_body_;
+			ComplexRelation &complex_relation_;
+			NearShapeSurface near_shape_surface_;
 			UniquePtr<BaseDynamics<void>> relaxation_acceleration_complex_;
 			ReduceDynamics<GetTimeStepSizeSquare> get_time_step_square_;
 			SimpleDynamics<UpdateParticlePosition> update_particle_position_;
 			SimpleDynamics<ShapeSurfaceBounding, NearShapeSurface> surface_bounding_;
-
-			virtual void exec(Real dt = 0.0) override;
-			virtual void parallel_exec(Real dt = 0.0) override;
 		};
 
 		/**

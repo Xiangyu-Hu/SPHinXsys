@@ -101,7 +101,7 @@ protected:
 			else if (time > force_arr_.back()[0])
 				return force_arr_.back()[1];
 		}
-        return 0;
+		return 0.0;
 	}
 };
 
@@ -140,8 +140,8 @@ int main(int ac, char *av[])
 	SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> update_beam_normal(beam_body);
 
 	/** active and passive stress relaxation. */
-	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> stress_relaxation_first_half(beam_body_inner);
-	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half(beam_body_inner);
+	Dynamics1Level<solid_dynamics::Integration1stHalf> stress_relaxation_first_half(beam_body_inner);
+	Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(beam_body_inner);
 
 	/** specify end-time for defining the force-time profile */
 	Real end_time = 1;
@@ -238,7 +238,7 @@ int main(int ac, char *av[])
 	}
 	else
 	{
-		write_beam_stress.newResultTest(); 
+		write_beam_stress.newResultTest();
 	}
 
 	return 0;

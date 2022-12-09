@@ -29,6 +29,7 @@
 #define DATA_TYPE_3D_H
 
 #include "base_data_type.h"
+#include "vector_functions.h"
 
 namespace SPH {
 	using Veci = Vec3i;

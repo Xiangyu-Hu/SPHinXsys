@@ -122,26 +122,6 @@ namespace SPH
 		};
 
 		/**
-		 * @class FreeStreamBoundaryVelocityCorrection
-		 * @brief this function is applied to freestream flows TODO: revise for general freestream condition
-		 * @brief modify the velocity of free surface particles with far-field velocity
-		 */
-		class FreeStreamBoundaryVelocityCorrection : public LocalDynamics, public FluidDataSimple
-		{
-		protected:
-			Real u_ref_, t_ref_, rho_ref_;
-			StdLargeVec<Real> &rho_sum;
-			StdLargeVec<Vecd> &vel_;
-			StdLargeVec<int> &surface_indicator_;
-
-		public:
-			explicit FreeStreamBoundaryVelocityCorrection(SPHBody &sph_body);
-			virtual ~FreeStreamBoundaryVelocityCorrection(){};
-
-			void update(size_t index_i, Real dt = 0.0);
-		};
-
-		/**
 		 * @class FreeSurfaceHeight
 		 * @brief Probe the free surface profile for a fluid body part by reduced operation.
 		 */

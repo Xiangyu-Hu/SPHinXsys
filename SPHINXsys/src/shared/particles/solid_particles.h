@@ -64,7 +64,7 @@ namespace SPH
 		virtual StdLargeVec<Vecd> *AverageVelocity() { return &vel_; };
 		/** Get wall average acceleration when interacting with fluid. */
 		virtual StdLargeVec<Vecd> *AverageAcceleration() { return &acc_; };
-		/** Intialized variables for solid particles. */
+		/** Initialized variables for solid particles. */
 		virtual void initializeOtherVariables() override;
 		/** Return this pointer. */
 		virtual SolidParticles *ThisObjectPtr() override { return this; };
@@ -101,7 +101,7 @@ namespace SPH
 		StdLargeVec<Real> getVonMisesStrainVector(std::string strain_measure = "static");
 		/** Computing maximum von Mises strain from all particles. - "static" or "dynamic" */
 		Real getVonMisesStrainMax(std::string strain_measure = "static");
-		/** Return the max pincipal strain. */
+		/** Return the max principal strain. */
 		Real getPrincipalStrainMax();
 		/** get the Cauchy stress. */
 		Matd getStressCauchy(size_t particle_i);
@@ -119,7 +119,7 @@ namespace SPH
 
 		/** Computing displacement. */
 		Vecd displacement(size_t particle_i);
-		/** Retrun the displacement. */
+		/** Return the displacement. */
 		StdLargeVec<Vecd> getDisplacement();
 		/** get the max displacement. */
 		Real getMaxDisplacement();
@@ -179,7 +179,7 @@ namespace SPH
 		StdLargeVec<Vecd> global_shear_stress_; /**< global shear stress */
 		StdLargeVec<Matd> global_stress_;		/**<  global stress for pair interaction */
 		StdLargeVec<Matd> global_moment_;		/**<  global bending moment for pair interaction */
-		/** get particle volumne. */
+		/** get particle volume. */
 		virtual Real ParticleVolume(size_t index_i) { return Vol_[index_i] * thickness_[index_i]; }
 		/** get particle mass. */
 		virtual Real ParticleMass(size_t index_i) { return mass_[index_i] * thickness_[index_i]; }

@@ -36,7 +36,7 @@ namespace SPH
 			fs::create_directory(reload_folder_);
 		}
 		
-		if (sph_system.restart_step_ == 0)
+		if (sph_system.RestartStep() == 0)
 		{
 			fs::remove_all(restart_folder_);
 			fs::create_directory(restart_folder_);

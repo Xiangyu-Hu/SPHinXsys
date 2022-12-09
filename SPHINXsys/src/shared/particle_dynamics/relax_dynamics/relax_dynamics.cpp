@@ -198,7 +198,7 @@ namespace SPH
 		RelaxationStepComplex::RelaxationStepComplex(ComplexRelation &body_complex_relation,
 													 const std::string &shape_name, bool level_set_correction)
 			: BaseDynamics<void>(),
-			  real_body_(body_complex_relation.inner_relation_.real_body_),
+			  real_body_(body_complex_relation.getInnerRelation().real_body_),
 			  complex_relation_(body_complex_relation),
 			  near_shape_surface_(*real_body_, shape_name),
 			  get_time_step_square_(*real_body_), update_particle_position_(*real_body_),
