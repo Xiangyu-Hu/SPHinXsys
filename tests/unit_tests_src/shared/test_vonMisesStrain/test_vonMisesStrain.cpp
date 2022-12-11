@@ -7,7 +7,10 @@ TEST(VonMisesStrainCalc, vonMisesStrain)
 {
     Real tolerance = 1e-6;
    
-    Matd strain_tensor_1 = Matd( Vecd(1, 2, 3), Vecd(2, 5, 6), Vecd(3, 6, 9));
+    Matd strain_tensor_1{ {1, 2, 3},
+						  {2, 5, 6},
+						  {3, 6, 9},
+	};
     
     Real epsilonxx_1 = strain_tensor_1(0, 0);
 	Real epsilonyy_1 = strain_tensor_1(1, 1);
@@ -20,7 +23,10 @@ TEST(VonMisesStrainCalc, vonMisesStrain)
 		 + 2.0 * (std::pow(epsilonxy_1, 2.0) + std::pow(epsilonyz_1, 2.0) + std::pow(epsilonxz_1, 2.0)));
     Real von_Mises_strain_ref_1 = 11.4017543;
    
-    Matd strain_tensor_2 = Matd( Vecd(-5, 9, 1), Vecd(9, 4, -7), Vecd(1, -7, -12));
+    Matd strain_tensor_2{ {-5, 9, 1},
+						  {9, 4, -7},
+						  {1, -7, -12},
+	};
     
     Real epsilonxx_2 = strain_tensor_2(0, 0);
 	Real epsilonyy_2 = strain_tensor_2(1, 1);

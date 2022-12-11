@@ -1,8 +1,0 @@
-MACRO(DIR_INC_HEADER_NAMES input_list return_list)
-    SET(name_list "")
-    foreach(filenames ${input_list})
-        get_filename_component(HEADER_NAMES ${filenames} NAME)
-        list(APPEND name_list ${HEADER_NAMES})
-    endforeach()
-    SET(${return_list} ${name_list})
-ENDMACRO()

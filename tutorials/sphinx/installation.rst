@@ -1,339 +1,206 @@
-This section describes the installation procedure of SPHinXsys. 
-
 ========================
 How to install SPHinXsys
 ========================
 
-We will start here with general information, then give platform-specific instructions in the next sections 
-("Ubuntu Linux, Windows and other Linux or Unix systems). 
+SPHinXsys is an open-source library hosted on Github https://github.com/Xiangyu-Hu/SPHinXsys.
+If you face problems about installation, want to report bugs, or any other difficulties, please report them https://github.com/Xiangyu-Hu/SPHinXsys/issues 
 
-Where can I find the downloads
-------------------------------
-
-SPHinXsys is an open-source library hosted on Githhub https://github.com/Xiangyu-Hu/SPHinXsys/.
-You can clone the master branch or download the release .zip or .tar files.
-
-What if I have a problem
--------------------------
-
-If you have problems, e.g., installing issue, bug report and contribute to the development of SPHinXsys, 
-please email to xiangyu.hu@tum.de (Xiangyu Hu) or c.zhang@tum.de (Chi Zhang).
-
-Dependencies
---------------
+Requirements
+------------
 
 SPHinXsys depends on the following:
 
-  - Cmake 3.16.0 or later. See the `Cmake <https://cmake.org/>`_ webpage.
-  - compiler: Visual Studio 2017 or later (Windows), gcc 4.9 or later (Linux)
-  - google test framework
-  - BOOST library (newest version)
-  - TBB library (newest version)
-  - linear algebra: LAPACK 3.5.0 or later and BLAS
-  - Simbody library 3.6.0 or later
-  - Eigen 3 or later
+* CMake 3.16 or later
+* C++17 compliant compiler
 
-Installation overview
----------------------
+  * Visual Studio 2017 15.7 or later (Windows)
+  * GCC 8 or later (Linux)
+* Boost libraries
+* Intel Thread Building Blocks
+* Simbody 3.6.0 or later
+* Eigen 3.4 or later
+* GoogleTest
 
-Here is the general procedure
-
-  - Set up your machine with the required prerequisites.
-  - Clone the source from githiub master branch or download the appropriate .zip package from the release page.
-  - Unzip into the installation directory (can be anywhere but we will suggest default locations).
-  - Set path and environment variables as needed.
-  - Run Cmake to configure and generate the SPHinXsys project.
-  - Make and run the test set to verify the installation.
-
-The next three sections provide the details specific to each of three platforms,
-i.e. Ubuntu Linux (recommanded), Windows and other Linux or Unix systems.
-
-You only need to read one of these sections.
-
-Installing on Ubuntu Linux
+Installing on Ubuntu
 ---------------------------------------
 
-In order for beginners to experience SPHinXsys in the Ubuntu Linux system, 
-the following installation tutorial will explain how to start from a newly 
-installed Ubuntu system, install all the required programs step by step, 
-and finally complete the installation of SPHinXsys.
-The installation is on Ubuntu 20.04 LTS with root right.
+The procedure is given for Ubuntu 20.04 LTS and considers a user having sudo privileges.
+This should be identical on any more recent versions.
+The home directory :code:`$HOME` is chosen as the working directory, adapt accordingly if it differs. 
 
-Please note that before any installation from **apt** and **apt-get**, 
-you need to run **update** or even **upgrade** command to resynchronize or update newest packages.
+Installing dependencies
+^^^^^^^^^^^^^^^^^^^^^^^
 
-In the Terminal, and type::
+In the terminal, install the required system dependencies
 
-    $ sudo apt-get update
-    $ sudo apt-get upgrade
+..  code-block:: bash
 
-to update in system packages.  
-If you have not installed **wget** for downloading files yet, 
-you can install it by typing the command below::
+        sudo apt update
+        sudo apt upgrade
+        sudo apt install -y apt-utils           # package management related utility programs
+        sudo apt install -y build-essential     # GCC compilation development suite and Make
+        sudo apt install -y curl zip unzip tar  # when starting on a barebone Ubuntu image for bootstrapping vcpkg
+        sudo apt install -y pkg-config          # for installing libraries with vcpkg
+        sudo apt install -y git                 
+        sudo apt install -y cmake               
+        sudo apt install -y ccache              # ccache is a compiler cache. It speeds up recompilation by caching previous compilations
+        sudo apt install -y python3
 
-    $ sudo apt-get update
-    $ sudo apt-get install wget
+If you want a debugger for development purposes:
 
-If you have not install **g++** compiler, 
-you can install it by installing the **build-essential** package::
+..  code-block:: bash
 
-    $ sudo apt-get install build-essential
+    sudo apt install -y gdb
 
-Make sure if you have **git**, otherwise install it on your computer by typing::
+From here, pick a workspace where the library and any dependent code will be downloaded. 
+The following block will install the direct dependencies required by SPHinXsys in user-space:
 
-    $ sudo apt-get install git
-
-If you would like to use debug module, check the **gdb** is in your computer or not by typing::
-
-    $ whereis -b gdb
-
-Normally you will find **gdb** after you install *build-essential* package,
-if not, install **gdb** by typing command below::
-
-    $ sudo apt-get install gdb
-
-Now we need to install **CMake**, if you do not have it in your system by typing::
-
-    $ sudo apt-get install cmake
-
-After the **CMake** is successfully installed, you can verify its installation and 
-also if the correct version is installed, through the following command::
-
-    $ cmake --version
-
-Now move to **LAPACK** and **BLAS**. Don't forget to move to root folder by typing::
-
-    $ cd
-
-Install Lapack and Blas by typing the command below::
-
-    $ sudo apt-get install libblas-dev liblapack-dev
-
-In the new version of **SPHinXsys**, the **Gtest** is introduced for functional test,
-to intall **Gtest**, following the stpes below::
-
-    $ sudo apt-get install libgtest-dev
-    $ cd /usr/src/gtest
-    $ sudo cmake CMakeLists.txt
-    $ sudo make
-
-Move to root folder. Comes to the **Boost** and **TBB** libraries::
-
-    $ sudo apt-get install libtbb-dev
-    $ sudo apt-get install libboost-all-dev
-
-and set the environment by::
-
-    $ echo 'export TBB_HOME=/usr/lib/x86_64-linux-gnu' >> ~/.bashrc
-    $ echo 'export BOOST_HOME=/usr/lib/x86_64-linux-gnu' >> ~/.bashrc
-
-Notice that during the installation of Boost, you might be asked to choose the aera and the city.
-
-**SPHinXsys** use **Simbody** to calculate the multi-body dynamics, thus we need to install **Simbody**.
-Here are the optional steps for visualizer of **Simbody**::
-
-    $ sudo apt-get install libglu1-mesa-dev freeglut3-dev mesa-common-dev
-    $ sudo apt-get install libxi-dev libxmu-dev
-
-Download a release version of **Simbody** by typing the commands::
-
-    $ wget https://github.com/simbody/simbody/archive/Simbody-3.7.tar.gz  
-    $ tar xvzf Simbody-3.7.tar.gz
-
-Make build and install directory::
-
-    $ mkdir $HOME/simbody-build
-    $ mkdir $HOME/simbody
-
-and go the build folder::
-
-    $ cd $HOME/simbody-build
-
-Configure and generate Make files::
-
-    $ cmake $HOME/simbody-Simbody-3.7 -DCMAKE_INSTALL_PREFIX=$HOME/simbody 
-      -DCMAKE_BUILD_TYPE=RelWithDebInfo 
-      -DBUILD_VISUALIZER=on -DBUILD_STATIC_LIBRARIES=on 
-
-Notice that the above command is a whole command, cannot be executed separately, 
-and pay attention to the space between different commands.
-
-Then build **Simbody** by::
-
-    $ make -j8
-
-Note that here the :code:`-j8` means that I use 8 cores to run in parallel.
-Please consider not to use all cores on your computer to run this command.
-
-If you want you can test **Simbody**::
-
-    $ ctest -j8
-
-Install **Simbdoy**::
-
-    $ make -j8 install
-
-Then we make **Simbody** can be found by **CMake**::
-
-    $ echo 'export SIMBODY_HOME=$HOME/simbody' >> ~/.bashrc
-
-Set environment variables::
-
-    $ echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SIMBODY_HOME/lib' >> ~/.bashrc
-    $ echo 'export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:$SIMBODY_HOME/include' >> ~/.bashrc
-
-If you want to use debug module of **Simbody** later in your work, 
-you can modify the **DCMAKE_BUILD_TYPE** equals to **Debug**, build and install **Simbody** again by::
-
-    $ cmake $HOME/simbody-Simbody-3.7 -DCMAKE_INSTALL_PREFIX=$HOME/simbody 
-      -DCMAKE_BUILD_TYPE=Debug -DBUILD_VISUALIZER=on -DBUILD_STATIC_LIBRARIES=on 
-    $ make -j8
-    $ make -j8 install
-
-Update and check environment setup before installing SPHinXsys. 
-The following commands could update the environment and report the corresponding paths::
-
-    $ source ~/.bashrc
-    $ echo $SIMBODY_HOME
-    $ echo $TBB_HOME
-    $ echo $BOOST_HOME 
-
-Now we can move to the last part, install **SPHinXsys**, don't forget to move to root folder.
-Download the latest version of **SPHinXsys** by the command below::
-
-    $ git clone https://github.com/Xiangyu-Hu/SPHinXsys.git
-
-The Eigen 3 library is a submodule in SPHinXsys.
-You can go the the folder 3rd_party to initilize the the submodule, by typing::
-
-    $ git submodule init
-    $ git submodule update
-
-to ensure eigen 3 library is ready. 
-There are two other submodules in SPHInXsys, i.e. simbody and wasmtbb, 
-these are advanced components that you do not need for now.  
-
-If you install SPHinXsys from .tar file from relase version.
-You need unzip the source and download eigen 3 source from <https://eigen.tuxfamily.org>
-and copy all files into the folder 3rd_party/eigen in SPHinXsys source.
-
-Make build directory for **SPHinXsys**::
-
-    $ mkdir $HOME/sphinxsys-build
-
-go to the build folder::
-
-    $ cd $HOME/sphinxsys-build
-
-Configure and generate Make files::
-
-    $ cmake $HOME/SPHinXsys -DCMAKE_BUILD_TYPE=RelWithDebInfo
-
-Notice that the path :code:`$HOME/SPHinXsys` should be path of SPHinXsys source code, you need to confirm it.
-
-Now you can build, test all cases of **SPHinXsys** by follwoing commands::
-
-    $ make -j7
-    $ ctest
+..  code-block:: bash
     
-Please pay attention here the :code:`ctest` without parallel execution, that is becasuse the **SPHinXsys**
-has the build-in function for parallel computing, if you run :code:`ctest` with :code:`-jx`, you may get some test 
-cases failed.
-Again, `-j7` means that I am using a 8 cores machine.  Please do not use all cores for compiling.  
+    cd $HOME
+    git clone --depth 1 --branch 2022.11.14 https://www.github.com/microsoft/vcpkg
+    cd vcpkg
+    ./bootstrap-vcpkg.sh
+    ./vcpkg install --clean-after-build \
+        eigen3                          \
+        tbb                             \
+        boost-program-options           \
+        boost-geometry                  \
+        simbody                         \
+        gtest
 
-or  you can choose a specific case for running, for example, the **2d_dambreak**::
+By default, vcpkg targets the architecture *x64* and installs the *static* version of the libraries on Linux-based systems.
+To install the *shared* versions, do the following:
 
-    $ cd $HOME/sphinxsys-build/tests/2d_examples/test_2d_dambreak
-    $ make -j7
-    $ cd bin
-    $ ./test_2d_dambreak
+..  code-block:: bash
 
-Rigth now, you have the **SPHinXsys** successfully installed in your computer, Have fun with it!
+    cd $HOME
+    cd vcpkg
+    ./vcpkg install --clean-after-build         \
+        eigen3:x64-linux-dynamic                \
+        tbb:x64-linux-dynamic                   \
+        boost-program-options:x64-linux-dynamic \
+        boost-geometry:x64-linux-dynamic        \
+        simbody:x64-linux-dynamic               \
+        gtest:x64-linux-dynamic
+    cd ..
+
+Otherwise, please refer to the official `documentation <https://vcpkg.io/en/docs/examples/overlay-triplets-linux-dynamic.html>`_
+
+Building SPHinXsys
+^^^^^^^^^^^^^^^^^^^^^
+
+..  code-block:: bash
+    
+    git clone https://github.com/Xiangyu-Hu/SPHinXsys.git sphinxsys
+    cd sphinxsys
+    cmake   -G "Unix Makefiles"                                                         \
+            -D CMAKE_BUILD_TYPE=Release                                                 \
+            -D CMAKE_TOOLCHAIN_FILE="$HOME/vcpkg/scripts/buildsystems/vcpkg.cmake"      \
+            -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache   \
+            -S .                                                                        \
+            -B ./build
+    cmake   --build build/ 
+
+Running the tests and examples
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To run the whole test suite:
+
+..  code-block:: bash
+
+    cd $HOME
+    cd sphinxsys/build
+    ctest -j 1 # Run each test sequentially because SPHinXsys uses all cores
+
+    
+Notice that :code:`ctest` **must run sequentially** because SPHinXsys already uses all available cores.
+
+For running a specific case, for example, the **2d_dambreak**:
+
+..  code-block:: bash
+
+    cd $HOME
+    cd sphinxsys/build/tests/2d_examples/test_2d_dambreak
+    make -j 7 # Where 7 is the number of parallel compilation processes, adapt according to your CPU  
+    cd bin
+    ./test_2d_dambreak
+
+
 
 Installing on Windows
 ---------------------------------------
 
-The prerequisite on Windows is that you have a c++ development environment (Visual Studio 2017 (recommanded) or later version) and a way to unzip the `.zip` package.
+Pre-requisites
+^^^^^^^^^^^^^^^^^^^^^^^^
 
-Step1: Install CMake
+* Windows 7 or newer
+* `Git <https://git-scm.com/download/win>`_
+* `Visual Studio 2017 or newer <https://visualstudio.microsoft.com/vs/community/>`_ (mainly for `Visual Studio Build Tools <https://devblogs.microsoft.com/cppblog/updates-to-visual-studio-build-tools-license-for-c-and-cpp-open-source-projects/>`_)
+* `CMake <https://cmake.org/>`_
 
-	CMake is cross-plateform project manager and generates files for a project.
+Installing dependencies
+^^^^^^^^^^^^^^^^^^^^^^^
 
-	- Install CMake on Windows and extract the file to the assigned folder, details refering to `CMake's page <https://cmake.org/>`_. 
-	- After installation, please set the CMake bin path to environmental variables (System variables).
+..  code-block:: pwsh
+    
+    git clone --depth 1 --branch 2022.11.14 https://www.github.com/microsoft/vcpkg
+    cd vcpkg
+    .\bootstrap-vcpkg.bat
+    .\vcpkg install --clean-after-build             \
+        eigen3:x64-windows                          \
+        tbb:x64-windows                             \
+        boost-program-options:x64-windows           \
+        boost-geometry:x64-windows                  \
+        simbody:x64-windows                         \
+        gtest:x64-windows
+    .\vcpkg integrate install
 
-Step2: Install Tbb
 
-	- Download TBB (Thread Building Blocks) `Tbb's page <https://github.com/oneapi-src/oneTBB/releases/tag/2019_U9>`_.
-	- Extract the file to the assigned folder.
-	- Set environment variables: TBB_HOME to the tbb directory (User variables), and set the path $TbbDirectory/bin/intel64/vc14$ to environmental variables (System variables).
+By default, vcpkg targets the architecture *x64* and installs the *dynamic* version of the libraries on Windows system.
+To install the *static* versions, replace the former install line by the following:
 
-.. figure:: figures/TBB.png
-   :width: 600 px
-   :align: center
+..  code-block:: pwsh
 
-Step3: Install Boost
+    .\vcpkg install --clean-after-build          \
+        eigen3:x64-windows-static                \
+        tbb:x64-windows-static                   \
+        boost-program-options:x64-windows-static \
+        boost-geometry:x64-windows-static        \
+        simbody:x64-windows-static               \
+        gtest:x64-windows-static
 
-	- Download Boost `Boost's page <https://sourceforge.net/projects/boost/files/boost-binaries/>`_. Choose the right version according to your visual studio verson (For VS 2017 you choose msvc-14.1-64, VS2019 msvc-14.2-64.).
-	- Extract the file to the assigned folder. 
-	- Set environment: BOOST_HOME to its directory (User variables), and the path $BoostDirectory/lib64-msvc-14.1$ to enviromental variables (System variables).
+For any other combination, please refer to the official `documentation <https://vcpkg.io/en/docs/users/triplets.html>`_
 
-.. figure:: figures/Boost_1.png
-   :width: 600 px
-   :align: center
 
-.. figure:: figures/Boost_2.png
-   :width: 600 px
-   :align: center
+Building SPHinXsys with Visual Studio
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Step4: Install Simbody
+First clone the repository:
 
-	- The installation of Simbody on Windows is refer to `Simbody's page <https://github.com/simbody/simbody#windows-using-visual-studio>`_.
-	- Extract the source and create a new build directory. 
-	- Using CMake, you will configure and generate a Visual Studio project and then open the project in Visual Studio. The install prefix you can choose the default one or other new directory. 
-	- Note that if you choose the default installation prefix (the system disk C:/), you need to run Visual Studio as administrator and then open the Simbody.sln file in the build directory instead of directly click `Open Project` in CMake GUI.
-	- Then build `ALL_BUILD` and `INSTALL` with `Debug` and `ReleaseWithDebugInfo` modes respectively in Visual Studio, refering to the following figure.
-	- After that, please set the system environment variable SIMBODY_HOME to the simbody prefix directory (User variables) and the simbody bin path to environmental variables (System variables).
-	- Note that `pthreadVC2_x64.dll` and `pthreadVC2_x64.lib` are lost in the latest Simbody version. You need to copy these two files from the old version, Simbody 3.5, and then put these files into the Simbody installation folder, $**/Simbody/bin$ and $**/Simbody/lib$. 
+..  code-block:: pwsh
+    
+    git clone https://github.com/Xiangyu-Hu/SPHinXsys.git sphinxsys
 
-.. figure:: figures/Simbody_1.png
-   :width: 600 px
-   :align: center
 
-Step5: Install Goole test
+Then, just open Visual Studio and follow the procedure given `here <https://learn.microsoft.com/en-us/cpp/build/cmake-projects-in-visual-studio>`_.
 
-	- Install google test, we download the release version from the github repository: <https://github.com/google/googletest/releases>, build and install it.
-	- For this, you will extract the source and create a new build directory. Using CMake, you will configure and generate a Visual Studio project. Be sure that, in CMake GUI, you have to click the two options: `build_shared_libs` and `install_gtest`. The install prefix you can choose the default one or other new directory. 
-	- Note that if you choose the default installation prefix (the system disk C:/), you need to run Visual Studio as administrator and then open the googletest-distribution.sln file in the build directory instead of directly click 'Open Project' in CMake GUI.
-	- Similar to the installation of Simbody, build `ALL_BUILD` and `INSTALL` with `Debug` and `ReleaseWithDebugInfo` modes respectively.
-	- Set up Windows system environment variables: GTEST_HOME with the value of the install prefix directory (User variables). Also you need add the bin directory as new path. the dll files inside need to found when running the tests.    
 
-Step6: Install Eigen
+Building SPHinXsys via cmake-gui.exe
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-	The Eigen library is a submodule in SPHinXsys.
-	If you install SPHinXsys from .zip or .tar file from relase version.
-	You need unzip the source and download eigen 3 source from <https://eigen.tuxfamily.org>
-	and copy all files into the folder 3rd_party/eigen in SPHinXsys source.
-	There are two other submodules in SPHInXsys, i.e. simbody and wasmtbb, 
-	these are advanced components that you do not need for now. 
+See the figure below. Prior configuring, you must **Add Entry** and set :code:`CMAKE_TOOLCHAIN_FILE` variable with a :code:`FILEPATH` type pointing to :code:`<workspace>\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake` 
+Then, open the solution file (:code:`.sln`) generated in the :code:`build\\` folder with Visual Studio.
 
-Step7: SPHinXsys
 
-	- Download the release version of SPHinXsys <https://github.com/Xiangyu-Hu/SPHinXsys/releases>, and then unzip it to the appropriate directory on your computer and create a new build directory.
-	- Please note that you should use simple name for the directory, especially not including number '0', which may trigger a bug in Cmake and leads to linking error in Visual Studio. 
-	- Use CMake to build project file. Configure with the option Visual Studio 2017 x64, generate the project and open the project by Visual Studio. 
-	- Using CMake for configure project as follows 
-
-.. figure:: figures/cmake-sphinxsys.png
-   :width: 600 px
-   :align: center
-
-   CMake configure SPHinXsys library
-   
-You can use Visual Studio to play with SPHinXsys. GOOD LUCK!
 
 Installing on Unix (Linux or Mac OS X)
 ---------------------------------------
+
+.. warning::
+    This section is **not** up-to-date. 
+    It must be reworked according to the new installation procedure.
+
 
 The only prerequisite on Mac OS X is that you have the developer kit installed, 
 which you probably do already.
@@ -434,26 +301,3 @@ You can play with SPHinXsys, for example run a specific test case by::
     $ ./test_2d_dambreak
 
 Right now, you can play with SPHinXsys by change the parameters. GOOD LUCK!
-
-
-Installing on Ubuntu Linux using the dependency-free version
--------------------------------------------------------------
-
-Note: Do not clone the submodules if you are using the default installation!
-
-Get all submodules, run this command in the command line of the SPHinXsys project folder::
-
-	$ git submodule update --init --recursive
-
-Edit the CMake variables to define which dependency to use. Simbody and/or TBB can be built by the project. 
-If one is not built by the project, install that dependency in the usual way as written before.
-
-	- Go to SPHinXsys/cmake/Dependency_settings.cmake
-	- Set BUILD_WITH_DEPENDENCIES to 1
-	- Set BUILD_WITH_SIMBODY to 1 if Simbody should be built by the project
-	- Set BUILD_WITH_ONETBB to 1 if TBB should be built by the project
-	- Set ONLY_3D to 1 if the 2D libraries and test cases are not needed. Note that Boost is still needed if this variable is set to 0
-	- Do not modify the other variables
-
-Build the SPHinXsys project as described in the previous section.
-

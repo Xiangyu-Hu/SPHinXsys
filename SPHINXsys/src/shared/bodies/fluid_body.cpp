@@ -1,8 +1,3 @@
-/**
- * @file 	fluid_body.cpp
- * @author	Luhui Han, Chi Zhang and Xiangyu Hu
- */
-
 #include "fluid_body.h"
 
 #include "base_material.h"

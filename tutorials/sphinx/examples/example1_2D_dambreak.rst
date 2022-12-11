@@ -113,7 +113,7 @@ in which the water wave impacts the tank wall and produces splashes.
 		WallBoundary wall_boundary(sph_system, "Wall");
 		SolidParticles wall_particles(wall_boundary);
 
-		ObserverBody fluid_observer(sph_system, "Fluidobserver");
+		ProbeBody fluid_observer(sph_system, "Fluidobserver");
 		ObserverParticles observer_particles(fluid_observer, makeShared<FluidObserverParticleGenerator>());
 		//----------------------------------------------------------------------
 		//	Define body relation map.
@@ -436,7 +436,7 @@ and input/output environment is initialized.
 	WallBoundary wall_boundary(sph_system, "Wall");
 	SolidParticles wall_particles(wall_boundary);
 
-	ObserverBody fluid_observer(sph_system, "Fluidobserver");
+	ProbeBody fluid_observer(sph_system, "Fluidobserver");
 	ObserverParticles observer_particles(fluid_observer, makeShared<FluidObserverParticleGenerator>());
 	//----------------------------------------------------------------------
 	//	Define body relation map.

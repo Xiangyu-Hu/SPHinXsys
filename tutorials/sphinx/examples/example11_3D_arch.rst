@@ -145,7 +145,7 @@ an object of :code:`SPHSystem` is created.
 	cylinder_body.generateParticles<CylinderParticleGenerator>();
 
 	/** Define Observer. */
-	ObserverBody cylinder_observer(system, "CylinderObserver");
+	ProbeBody cylinder_observer(system, "CylinderObserver");
 	cylinder_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 
 	/** Set body contact map

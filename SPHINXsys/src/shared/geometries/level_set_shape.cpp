@@ -1,8 +1,3 @@
-/**
- * @file 	level_set_shape.cpp
- * @author	Chi Zhang and Xiangyu Hu
- */
-
 #include "level_set_shape.h"
 
 #include "base_body.h"

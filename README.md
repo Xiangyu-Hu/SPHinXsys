@@ -36,36 +36,47 @@ Here, we present several short examples in flow, solid dynamics, fluid structure
 
 ## Journal publications
 
-The algorithms in SPHinXsys are based on the following publications:
+Main Reference:
 
-1. Luhui Han and Xiangyu Hu, 
+1. C. Zhang, M. Rezavand, Y. Zhu, Y. Yu, D. Wu, W. Zhang, J. Wang, X. Hu, "SPHinXsys: an open-source multi-physics and multi-resolution library based on smoothed particle hydrodynamics", Computer Physics Communications, 267, 108066, 2021.
+
+The algorithms in SPHinXsys are based on the following publications:
+1. Chi Zhang and Yujie Zhu and Dong Wu and Nikolaus A Adams and Xiagnyu Hu, 
+"Smoothed particle hydrodynamics: Methodology development and recent achievement", 
+Journal of Hydrodynamics 34(5), 767--805, 2022 
+
+2. Luhui Han and Xiangyu Hu, 
 "SPH modeling of fluid-structure interaction", 
 Journal of Hydrodynamics, 2018: 30(1):62-69.
 
-2. Chi Zhang and Massoud Rezavand and Xiangyu Hu, 
+3. Chi Zhang and Massoud Rezavand and Xiangyu Hu, 
 "Dual-criteria time stepping for weakly compressible smoothed particle hydrodynamics", 
 Journal of Computational Physics 404 (2020) 109135
 
-3. Chi Zhang et al. 
+4. Chi Zhang et al. 
 "SPHinXsys: An open-source meshless, multi-resolution and multi-physics library",
 Software Impacts, 6 (2020) 100033
 
-4. Chi Zhang, Massoud Rezavand, Xiangyu Hu,
-"A multi-resolution SPH method for fluid-structure interactions",
+5. Chi Zhang, Massoud Rezavand, Xiangyu Hu,
+A multi-resolution SPH method for fluid-structure interactions",
 Journal of Computational Physics,  Journal of Computational Physics, 429 (2021) 110028.
 
-5. Chi Zhang, Yanji Wei, Frederic Dias, Xiangyu Hu,
+6. Chi Zhang, Yanji Wei, Frederic Dias, Xiangyu Hu,
 "An efficient fully Lagrangian solver for modeling wave interaction with oscillating wave energy converter",
 Ocean Engineering, 
 Volume 236, (2021) 109540
 
-6. Chi Zhang, Jianhang Wang, Massoud Rezavand, Dong Wu, Xiangyu Hu,
+7. Chi Zhang, Jianhang Wang, Massoud Rezavand, Dong Wu, Xiangyu Hu,
 "An integrative smoothed particle hydrodynamics framework for modeling cardiac function",
  Computer Methods in Applied Mechanics and Engineering, 381, 113847, 2021.
 
- 7. C. Zhang, M. Rezavand, Y. Zhu, Y. Yu, D. Wu, W. Zhang, J. Wang, X. Hu, "SPHinXsys: an open-source multi-physics and multi-resolution library based on smoothed particle hydrodynamics", Computer Physics Communications, 267, 108066, 2021.
+8. Yujie Zhu, Chi Zhang, Yongchuan Yu, Xiangyu Hu, "A CAD-compatible body-fitted particle generator for arbitrarily complex geometry and its application to wave-structure interaction", Journal of Hydrodynamics, 33(2), 195-206, 2021. 
 
- 8. Yujie Zhu, Chi Zhang, Yongchuan Yu, Xiangyu Hu, "A CAD-compatible body-fitted particle generator for arbitrarily complex geometry and its application to wave-structure interaction", Journal of Hydrodynamics, 33(2), 195-206, 2021.
+9. Chi Zhang, Yujie Zhu, Xiuxiu Lyu, Xiangyu Hu, "An efficient and generalized solid boundary condition for SPH: Applications to multi-phase flow and fluid–structure interaction", European Journal of Mechanics - B/Fluids, 94, 276-292, 2022. 
+
+10. Yujie Zhu, Chi Zhang, Xiangyu Hu, "A dynamic relaxation method with operator splitting and random-choice strategy for SPH", Journal of Computational Physics, 458,
+111105, 2022.
+
 
 ## Software Architecture
 

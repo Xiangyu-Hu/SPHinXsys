@@ -1,10 +1,4 @@
-/**
- * @file 	generative_structures.cpp
- * @author	Xiangyu Hu
- */
-
 #include "complex_body.h"
-
 #include "base_material.h"
 #include "base_particles.h"
 #include "neighborhood.h"

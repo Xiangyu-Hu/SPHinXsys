@@ -1,7 +1,3 @@
-/**
- * @file 	kernel_wenland.cpp
- * @author	Luhui Han, Chi Zhang, Yongchuan Yu and Xiangyu Hu
- */
 #include "kernel_wenland_c2.h"
 
 #include <cmath>

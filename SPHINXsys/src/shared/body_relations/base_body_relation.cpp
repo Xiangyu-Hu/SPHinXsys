@@ -1,10 +1,4 @@
-/**
- * @file 	base_body_relation.cpp
- * @author	Chi Zhang and Xiangyu Hu
- */
-
 #include "base_body_relation.h"
-
 #include "base_particle_dynamics.h"
 
 namespace SPH

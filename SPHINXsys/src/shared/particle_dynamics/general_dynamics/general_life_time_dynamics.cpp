@@ -1,8 +1,3 @@
-/**
- * @file 	general_life_time_dynamics.cpp
- * @author	Xiangyu Hu
- */
-
 #include "general_life_time_dynamics.h"
 
 #include "base_particles.hpp"
@@ -57,8 +52,8 @@ namespace SPH
 		for (int axis_direction = 0; axis_direction != Dimensions; ++axis_direction)
 		{
 			Real particle_spacing = pow(volume, 1.0 / Dimensions);
-			if (position[axis_direction] > (refinement_region_bounds.first[axis_direction] + particle_spacing) &&
-				position[axis_direction] < (refinement_region_bounds.second[axis_direction] - particle_spacing))
+			if (position[axis_direction] > (refinement_region_bounds.first_[axis_direction] + particle_spacing) &&
+				position[axis_direction] < (refinement_region_bounds.second_[axis_direction] - particle_spacing))
 				bound_number += 1;
 		}
 		return bound_number != Dimensions ? false : true;
@@ -72,7 +67,7 @@ namespace SPH
 		Real split_spacing = pow(split_volume, 1.0 / (Real)Dimensions);
 		h_ratio_[index_i] = particle_split_merge_.ReferenceSpacing() / split_spacing;
 
-		Vecd shift(0);
+		Vecd shift = Vecd::Zero();
 		for (int k = 0; k < Dimensions; ++k)
 		{
 			shift[k] = normal_distribution_(random_seed_);

@@ -10,7 +10,7 @@
  *                                                                              *
  * SPHinXsys is partially funded by German Research Foundation                  *
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
- * HU1527/12-1 and HU1527/12-4.                                                 *
+ * HU1527/12-1 and HU1527/12-4	.                                                 *
  *                                                                              *
  * Portions copyright (c) 2017-2022 Technical University of Munich and          *
  * the authors' affiliations.                                                   *
@@ -73,7 +73,7 @@ namespace SPH
 		StdLargeVec<Vecd> &pos_, &acc_prior_;
 
 	public:
-		TimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0)));
+		TimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd::Zero()));
 		virtual ~TimeStepInitialization(){};
 
 		void update(size_t index_i, Real dt = 0.0);
@@ -108,9 +108,10 @@ namespace SPH
 	public:
 		explicit ParticleSmoothing(BaseInnerRelation &inner_relation, const std::string &variable_name)
 			: LocalDynamics(inner_relation.sph_body_), GeneralDataDelegateInner(inner_relation),
-			  W0_(sph_body_.sph_adaptation_->getKernel()->W0(Vecd(0))),
+			  W0_(sph_body_.sph_adaptation_->getKernel()->W0(zero_vec)),
 			  smoothed_(*particles_->getVariableByName<VariableType>(variable_name))
-		{
+		{	
+			Vecd zero = Vecd::Zero();
 			particles_->registerVariable(temp_, variable_name + "_temp");
 		}
 
@@ -242,7 +243,7 @@ namespace SPH
 
 	public:
 		explicit QuantitySummation(SPHBody &sph_body, const std::string &variable_name)
-			: LocalDynamicsReduce<VariableType, ReduceSum<VariableType>>(sph_body, VariableType(0)),
+			: LocalDynamicsReduce<VariableType, ReduceSum<VariableType>>(sph_body, ZeroData<VariableType>::value),
 			  GeneralDataDelegateSimple(sph_body),
 			  variable_(*this->particles_->getVariableByName<VariableType>(variable_name))
 		{
@@ -298,7 +299,7 @@ namespace SPH
 		Gravity *gravity_;
 
 	public:
-		TotalMechanicalEnergy(SPHBody &sph_body, SharedPtr<Gravity> = makeShared<Gravity>(Vecd(0)));
+		TotalMechanicalEnergy(SPHBody &sph_body, SharedPtr<Gravity> = makeShared<Gravity>( Vecd::Zero() ));
 		virtual ~TotalMechanicalEnergy(){};
 
 		Real reduce(size_t index_i, Real dt = 0.0);
