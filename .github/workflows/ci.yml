@@ -195,3 +195,95 @@ jobs:
         run: |
           cd C:\build 
           ctest.exe --rerun-failed --output-on-failure
+
+  ###############################################################################
+
+  MACOS:
+    runs-on: macOS-latest
+    env:
+      VCPKG_DEFAULT_TRIPLET: x64-osx
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+
+      - name: Install Homebrew
+        run: |
+          xcode-select --install
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          brew tap osrf/simulation 
+          brew install \
+            cmake \
+            pkg-config `# for installing libraries with vcpkg`\
+            git \
+            ninja \
+            ccache \
+            simbody 
+
+      - uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ github.job }}
+
+      - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
+        with: 
+          committish: ${{ env.VCPKG_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build \
+            eigen3 \
+            tbb \
+            boost-program-options \
+            boost-geometry \
+            gtest
+
+      - name: Generate buildsystem
+        run: |
+          cmake -G Ninja \
+            -D CMAKE_C_COMPILER=clang -D CMAKE_CXX_COMPILER=clang++ \
+            -D CMAKE_BUILD_TYPE=Release \
+            -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
+            -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -S ${{github.workspace}} \
+            -B ${{github.workspace}}/build
+
+      - name: Build
+        run: cmake --build build --config Release --verbose
+
+      - name: Test with the first try
+        id: first-try
+        run: |
+          cd /home/runner/work/SPHinXsys/SPHinXsys
+          cd build 
+          ctest  --output-on-failure
+        continue-on-error: true
+
+      - name: Test with the second try for failed cases
+        id: second-try
+        if: ${{ steps.first-try.outcome == 'failure' }} 
+        run: |
+          cd build 
+          ctest --rerun-failed --output-on-failure
+        continue-on-error: true
+
+      - name: Test with the third try for failed cases
+        id: third-try
+        if: ${{ steps.second-try.outcome == 'failure' }} 
+        run: |
+          cd build 
+          ctest --rerun-failed --output-on-failure
+        continue-on-error: true
+
+      - name: Test with the fourth try for failed cases
+        id: fourth-try
+        if: ${{ steps.third-try.outcome == 'failure' }} 
+        run: |
+          cd build 
+          ctest --rerun-failed --output-on-failure
+        continue-on-error: true
+
+      - name: Test with the last try for failed cases
+        if: ${{ steps.fourth-try.outcome == 'failure' }} 
+        run: |
+          cd build 
+          ctest --rerun-failed --output-on-failure
