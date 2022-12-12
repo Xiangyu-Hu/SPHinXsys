@@ -203,9 +203,9 @@ jobs:
       - name: Install Homebrew
         run: |
           /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          brew reinstall gfortran 
           brew install \
             cmake \
-            gfortran `# for installing simbody with vcpkg`\
             pkg-config `# for installing libraries with vcpkg`\
             git \
             ninja \
