@@ -73,7 +73,6 @@ jobs:
       - name: Test with the first try
         id: first-try
         run: |
-          cd /home/runner/work/SPHinXsys/SPHinXsys
           cd build 
           ctest  --output-on-failure
         continue-on-error: true
