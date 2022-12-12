@@ -30,7 +30,6 @@ jobs:
 
       - name: Install Homebrew
         run: |
-          xcode-select --install
           /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
           brew tap osrf/simulation 
           brew install \
