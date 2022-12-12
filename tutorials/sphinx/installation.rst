@@ -149,19 +149,25 @@ Open Git CMD, and then run the commands below one by one.
     git clone --depth 1 --branch 2022.11.14 https://www.github.com/microsoft/vcpkg
     cd vcpkg
     .\bootstrap-vcpkg.bat
-    .\vcpkg install --clean-after-build             \
+    .\vcpkg install --clean-after-build eigen3:x64-windows tbb:x64-windows boost-program-options:x64-windows boost-geometry:x64-windows simbody:x64-windows gtest:x64-windows
+    .\vcpkg integrate install
+
+You can also install it by using Git Bash. 
+In this way, you need to change the command :code:`.\bootstrap-vcpkg.bat` to :code:`./bootstrap-vcpkg.bat`,
+i.e., you need to use the slash :code:`/` instead of the backslash:code:`\`, as follows:
+..  code-block:: pwsh
+    
+    git clone --depth 1 --branch 2022.11.14 https://www.github.com/microsoft/vcpkg
+    cd vcpkg
+    ./bootstrap-vcpkg.bat
+    ./vcpkg install --clean-after-build             \
         eigen3:x64-windows                          \
         tbb:x64-windows                             \
         boost-program-options:x64-windows           \
         boost-geometry:x64-windows                  \
         simbody:x64-windows                         \
         gtest:x64-windows
-    .\vcpkg integrate install
-
-You can also install it by using Git Bash. 
-In this way, you need to change the command :code:`.\bootstrap-vcpkg.bat` to :code:`./bootstrap-vcpkg.bat`,
-i.e., you need to use the slash :code:`/` instead of the backslash:code:`\`.
-This is same for the other commands. 
+    ./vcpkg integrate install
 
 Please make sure that the name of the directory for cloning vcpkg has only using plain characters, 
 especially without spaces.  Otherwise, somes dependent librararies, such as tbb, can not being built successfully.
