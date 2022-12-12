@@ -203,14 +203,13 @@ jobs:
       - name: Install Homebrew
         run: |
           /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-          brew tap osrf/simulation 
           brew install \
             cmake \
+            gfortran `# for installing simbody with vcpkg`\
             pkg-config `# for installing libraries with vcpkg`\
             git \
             ninja \
-            ccache \
-            gfortran 
+            ccache 
 
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
