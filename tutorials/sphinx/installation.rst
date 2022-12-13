@@ -142,7 +142,7 @@ Pre-requisites
 
 Installing dependencies
 ^^^^^^^^^^^^^^^^^^^^^^^
-Open Git CMD, and then run the commands below one by one. 
+Open Windows PowerShell or Git CMD, and then run the commands below one by one. 
 (Before you run these commands, you can change the installation path by using the command :code:`cd ..`, etc.)
 ..  code-block:: pwsh
     
@@ -155,7 +155,7 @@ Open Git CMD, and then run the commands below one by one.
 You can also install it by using Git Bash. 
 In this way, you need to change the command :code:`.\bootstrap-vcpkg.bat` to :code:`./bootstrap-vcpkg.bat`,
 i.e., you need to use the slash :code:`/` instead of the backslash:code:`\`, as follows:
-..  code-block:: pwsh
+..  code-block:: bash
     
     git clone --depth 1 --branch 2022.11.14 https://www.github.com/microsoft/vcpkg
     cd vcpkg
