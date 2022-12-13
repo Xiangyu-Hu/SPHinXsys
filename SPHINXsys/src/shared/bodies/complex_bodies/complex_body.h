@@ -74,8 +74,11 @@ namespace SPH
 
 		template <typename... ConstructorArgs>
 		TreeBody(ConstructorArgs &&...args)
-			: SecondaryStructure(), RealBody(std::forward<ConstructorArgs>(args)...),
-			  last_branch_id_(0), root_(branches_ptr_keeper_.createPtr<Branch>(this)){};
+			: SecondaryStructure(), RealBody(std::forward<ConstructorArgs>(args)...)
+			, last_branch_id_(0)
+		{
+			root_ = branches_ptr_keeper_.createPtr<Branch>(this);
+		};
 		virtual ~TreeBody(){};
 
 		Branch *createANewBranch(size_t parent_id)

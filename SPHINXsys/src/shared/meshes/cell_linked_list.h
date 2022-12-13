@@ -118,7 +118,7 @@ namespace SPH
 		virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, BoundingBox &bounding_bounds, int axis) override;
 		virtual void tagOneSideBoundingCells(CellLists &cell_data_lists, BoundingBox &bounding_bounds, int axis, bool positive) override;
 		virtual void writeMeshFieldToPlt(std::ofstream &output_file) override;
-		virtual StdVec<CellLinkedList *> CellLinkedListLevels() { return single_cell_linked_list_level_; };
+		virtual StdVec<CellLinkedList *> CellLinkedListLevels() override { return single_cell_linked_list_level_; };
 
 		/** generalized particle search algorithm */
 		template <class DynamicsRange, typename GetSearchDepth, typename GetNeighborRelation>
@@ -153,7 +153,7 @@ namespace SPH
 		virtual void tagBodyPartByCell(ConcurrentIndexesInCells &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
 		virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, BoundingBox &bounding_bounds, int axis) override{};
 		virtual void tagOneSideBoundingCells(CellLists &cell_data_lists, BoundingBox &bounding_bounds, int axis, bool positive) override{};
-		virtual StdVec<CellLinkedList *> CellLinkedListLevels() { return getMeshLevels(); };
+		virtual StdVec<CellLinkedList *> CellLinkedListLevels() override { return getMeshLevels(); };
 	};
 }
 #endif // MESH_CELL_LINKED_LIST_H

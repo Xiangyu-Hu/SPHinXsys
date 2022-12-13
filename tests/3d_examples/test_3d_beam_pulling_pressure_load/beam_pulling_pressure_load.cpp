@@ -234,7 +234,7 @@ int main(int ac, char *av[])
 
 	if (system.generate_regression_data_)
 	{
-		write_beam_stress.generateDataBase({0.01}, {0.01});
+		write_beam_stress.generateDataBase(0.01, 0.01);
 	}
 	else
 	{

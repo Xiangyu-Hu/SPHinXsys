@@ -109,7 +109,7 @@ namespace SPH
 		explicit ParticleSmoothing(BaseInnerRelation &inner_relation, const std::string &variable_name)
 			: LocalDynamics(inner_relation.sph_body_), GeneralDataDelegateInner(inner_relation),
 			  W0_(sph_body_.sph_adaptation_->getKernel()->W0(zero_vec)),
-			  smoothed_(*particles_->getVariableByName<VariableType>(variable_name))
+			  smoothed_(*particles_->template getVariableByName<VariableType>(variable_name))
 		{	
 			Vecd zero = Vecd::Zero();
 			particles_->registerVariable(temp_, variable_name + "_temp");
@@ -245,7 +245,7 @@ namespace SPH
 		explicit QuantitySummation(SPHBody &sph_body, const std::string &variable_name)
 			: LocalDynamicsReduce<VariableType, ReduceSum<VariableType>>(sph_body, ZeroData<VariableType>::value),
 			  GeneralDataDelegateSimple(sph_body),
-			  variable_(*this->particles_->getVariableByName<VariableType>(variable_name))
+			  variable_(*this->particles_->template getVariableByName<VariableType>(variable_name))
 		{
 			this->quantity_name_ = variable_name + "Summation";
 		};
