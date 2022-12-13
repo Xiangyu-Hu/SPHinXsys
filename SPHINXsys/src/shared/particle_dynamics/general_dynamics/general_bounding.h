@@ -241,7 +241,7 @@ namespace SPH
 		class MirrorBounding : public BoundingAlongAxis
 		{
 		protected:
-			CellLists &bound_cells_data_;
+			CellLists &bound_cells_data_; 
 			virtual void checkLowerBound(size_t index_i, Real dt = 0.0);
 			virtual void checkUpperBound(size_t index_i, Real dt = 0.0);
 			ParticleFunctor checking_bound_;
@@ -250,7 +250,7 @@ namespace SPH
 			void mirrorAlongAxis(size_t particle_index_i, Vecd body_bound, int axis);
 
 		public:
-			MirrorBounding(CellLists bound_cells_data, RealBody &real_body,
+			MirrorBounding(CellLists &bound_cells_data, RealBody &real_body,
 						   BoundingBox bounding_bounds, int axis, bool positive);
 			virtual ~MirrorBounding(){};
 			virtual void exec(Real dt = 0.0) override;
@@ -271,7 +271,7 @@ namespace SPH
 
 		public:
 			CreatingMirrorGhostParticles(IndexVector &ghost_particles,
-										 CellLists bound_cells_data, RealBody &real_body,
+										 CellLists &bound_cells_data, RealBody &real_body,
 										 BoundingBox bounding_bounds, int axis, bool positive);
 			virtual ~CreatingMirrorGhostParticles(){};
 			/** This class is only implemented in sequential due to memory conflicts. */
@@ -292,7 +292,7 @@ namespace SPH
 
 		public:
 			UpdatingMirrorGhostStates(IndexVector &ghost_particles,
-									  CellLists bound_cells_data,
+									  CellLists &bound_cells_data,
 									  RealBody &real_body, BoundingBox bounding_bounds, int axis, bool positive);
 			virtual ~UpdatingMirrorGhostStates(){};
 
