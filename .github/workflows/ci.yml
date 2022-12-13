@@ -28,6 +28,9 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
 
+      - name: Print hardware information # To help analysis for https://github.com/Xiangyu-Hu/SPHinXsys/issues/182
+        run: lscpu
+      
       - name: Install system dependencies
         run: |
           sudo apt update 
@@ -40,7 +43,7 @@ jobs:
             cmake \
             ninja-build \
             python3
-
+      
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: ${{ github.job }}
