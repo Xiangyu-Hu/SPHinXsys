@@ -40,6 +40,7 @@ jobs:
             cmake \
             ninja-build \
             python3
+
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: ${{ github.job }}
@@ -57,6 +58,7 @@ jobs:
             boost-geometry \
             simbody \
             gtest
+
       - name: Generate buildsystem
         run: |
           cmake -G Ninja \
@@ -71,7 +73,6 @@ jobs:
       - name: Test with the first try
         id: first-try
         run: |
-          cd /home/runner/work/SPHinXsys/SPHinXsys
           cd build 
           ctest  --output-on-failure
         continue-on-error: true
@@ -105,6 +106,7 @@ jobs:
         run: |
           cd build 
           ctest --rerun-failed --output-on-failure
+
   ###############################################################################
 
   Windows:
@@ -120,6 +122,7 @@ jobs:
         run: |
           choco install ccache
           choco install ninja
+          
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: ${{ github.job }}
@@ -139,6 +142,7 @@ jobs:
             boost-geometry `
             simbody `
             gtest
+
       - uses: ilammy/msvc-dev-cmd@v1
 
       - name: Generate buildsystem
@@ -189,9 +193,10 @@ jobs:
         run: |
           cd C:\build 
           ctest.exe --rerun-failed --output-on-failure
+
   ###############################################################################
 
-  MACOS:
+  macOS:
     runs-on: macOS-latest
     env:
       VCPKG_DEFAULT_TRIPLET: x64-osx
@@ -200,16 +205,17 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
 
-      - name: Install Homebrew
+      - name: Install system dependencies
         run: |
-          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-          brew reinstall gfortran 
+          brew reinstall gfortran # to force having gfortran on PATH because github runners don't have it, just the versioned aliases, i.e. gfortran-11
+                                  # https://github.com/actions/runner-images/blob/main/images/macos/macos-12-Readme.md
+                                  # https://github.com/actions/runner-images/issues/3371#issuecomment-839882565
+                                  # https://github.com/modflowpy/install-gfortran-action and https://github.com/awvwgk/setup-fortran
           brew install \
-            cmake \
             pkg-config `# for installing libraries with vcpkg`\
             git \
-            ninja \
-            ccache 
+            cmake \
+            ninja
 
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
