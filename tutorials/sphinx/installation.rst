@@ -145,12 +145,18 @@ Installing dependencies
 ^^^^^^^^^^^^^^^^^^^^^^^
 Open Windows PowerShell or Git CMD, and then run the commands below one by one. 
 (Before you run these commands, you can change the installation path by using the command :code:`cd ..`, etc.)
+
 ..  code-block:: pwsh
     
     git clone --depth 1 --branch 2022.11.14 https://www.github.com/microsoft/vcpkg
     cd vcpkg
     .\bootstrap-vcpkg.bat
-    .\vcpkg install --clean-after-build eigen3:x64-windows tbb:x64-windows boost-program-options:x64-windows boost-geometry:x64-windows simbody:x64-windows gtest:x64-windows
+    .\vcpkg install --clean-after-build         \
+        eigen3:x64-windows                      \
+        tbb:x64-windows                         \
+        boost-program-options:x64-windows       \
+        boost-geometry:x64-windows              \
+        simbody:x64-windows gtest:x64-windows
     .\vcpkg integrate install
 
 You can also install it by using Git Bash. 
@@ -208,7 +214,7 @@ First clone the repository:
     git clone https://github.com/Xiangyu-Hu/SPHinXsys.git sphinxsys
 
 
-Then, just open Visual Studio and follow the procedure given `here <https://learn.microsoft.com/en-us/cpp/build/cmake-projects-in-visual-studio>`_.
+Then, just open Visual Studio and follow the procedure given `Visual Studio document <https://learn.microsoft.com/en-us/cpp/build/cmake-projects-in-visual-studio>`_.
 
 
 Building SPHinXsys via cmake-gui.exe
