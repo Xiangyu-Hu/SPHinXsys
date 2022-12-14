@@ -188,7 +188,7 @@ To install the *static* versions, replace the former install line by the followi
 
 For any other combination, please refer to the official `architecture documentation <https://vcpkg.io/en/docs/users/triplets.html>`_.
 
-If you have difficult to install these packages, you can use the pre-compiled vcpkg files for windows as follows:
+If you have difficulty to install these packages, you can use the pre-compiled vcpkg files for windows as follows:
 
 ..  code-block:: pwsh
  
