@@ -234,7 +234,7 @@ Then, open the solution file (:code:`.sln`) generated in the :code:`build\` fold
 Installing on macOS (latest) 
 ---------------------------------------
 The procedure is given for MAC OS 13.0.1  and clang 14.0.0 (clang-1400.0.29.202).
-With assumpation that you have installed Command Line Tools and python3. 
+With the assumption that you have installed Command Line Tools and python3. 
 
 Installing dependencies
 ^^^^^^^^^^^^^^^^^^^^^^^
