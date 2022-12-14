@@ -231,110 +231,59 @@ Then, open the solution file (:code:`.sln`) generated in the :code:`build\` fold
    CMake configures SPHinXsys library
 
 
-Installing on Unix (Linux or Mac OS X)
+Installing on macOS (latest) 
 ---------------------------------------
+The procedure is given for MAC OS 13.0.1  and clang 14.0.0 (clang-1400.0.29.202).
+With assumpation that you have installed Command Line Tools and python3. 
 
-.. warning::
-    This section is **not** up-to-date. 
-    It must be reworked according to the new installation procedure.
+Installing dependencies
+^^^^^^^^^^^^^^^^^^^^^^^
 
+In the terminal, install the required system dependencies, homebrew, with it, 
+you can install cmake, pkg-config, and others. 
+Note that gfortran is essential for lapack_reference, which is needed for simbody. 
 
-The only prerequisite on Mac OS X is that you have the developer kit installed, 
-which you probably do already.
-At a minimum, the Accelerate framework must be installed 
-because that includes Lapack ad Blas libraries on which Simbody depends. 
-If you download the developer kit, those libraries are installed as well.
+..  code-block:: bash
 
-On Linux system, LAPACK and BLAS is require, and we refer `to here
-<http://www.netlib.org/lapack/>`_ and `here
-<http://www.netlib.org/blas/>`_ for more details.
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        brew update 
+        brew install cmake
+        brew install pkg-config
+        brew install ccache
+        brew install gfortran
+        brew install ninja
 
-To install google test, in the case we have installed Cmake, if you have ROOT authority (Ubuntu)::
+From here, pick a workspace where the library and any dependent code will be downloaded. 
+The following block will install the direct dependencies required by SPHinXsys in user-space:
 
-  $ sudo apt-get install libgtest-dev
-  $ cd /usr/src/gtest/
-  $ sudo cmake CMakeLists.txt
-  $ sudo make
-  $ cd lib/
-  $ sudo cp libgtest* /usr/lib/
-
-Other wise (NO ROOT Linux)::
-
-	$ git clone https://github.com/google/googletest.git -b release-1.11.0
-	$ cd googletest  
-	$ mkdir build
-	$ cd build
-	$ cmake ../ -DCMAKE_INSTALL_PREFIX=$HOME/gtest
-	$ make -j8
-	$ make install
-
-Allow to be found by cmake::
-
-	$ echo 'export GTEST_ROOT=$HOME/gtest' >> ~/.bashrc
-
-The installation of Simbody, refers to `this link
-<https://github.com/simbody/simbody#linux-or-mac-using-make>`_.
-After installing Simbody correctly, set environment variable:
-
-  -  For Mac OS X::
-
-		$ echo 'export SIMBODY_HOME=/path/to/simbody' >> ~/.bash_profile
-
-  -  For Linux::
-
-		$ echo 'export SIMBODY_HOME=/path/to/simbody' >> ~/.bashrc
-		$ echo 'export LIBRARY_PATH=$SIMBODY_HOME/lib64:$LIBRARY_PATH' >> ~/.bashrc
-		$ echo 'export LD_LIBRARY_PATH=$LIBRARY_PATH:$LD_LIBRARY_PATH' >> ~/.bashrc
-		$ echo 'export CPLUS_INCLUDE_PATH=$SIMBODY_HOME/include:$CPLUS_INCLUDE_PATH' >> ~/.bashrc
-
-Download a release version of TBB from `their GitHub
-<https://github.com/01org/tbb/releases>`_ and then unzip it to the appropriate directory on your computer and set environment variable:
-
-  - Mac OS X::
-
-		$ echo 'export TBB_HOME=/path/to/tbb' >> ~/.bash_profile
-
-  - Linux::
-
-		$ echo 'export TBB_HOME=/path/to/tbb' >> ~/.bashrc
-
-Download a release version of BOOST from their `webpage
-<https://www.boost.org/users/download/>`_ and then unzip it to the appropriate directory on your computer and set environment variable:
-
-  - Mac OS X::
-
-		$ echo 'export BOOST_HOME=/path/to/boost' >> ~/.bash_profile
-
-  -  Linux::
-
-		$ echo 'export BOOST_HOME=/path/to/boost' >> ~/.bashrc
-
-Download the sphinxsys-linux or sphinxsys-max, and then unzip it to the appropriate directory on your computer and set environment variable \begin{itemize}
-
-  - Mac OS X::
-
-		$ echo 'export SPHINXSYS_HOME=/path/to/sphinxsyslibaray' >> ~/.bash_profile
-
-  -  Linux::
-
-		$ echo 'export SPHINXSYS_HOME=/path/to/sphinxsyslibrary' >> ~/.bashrc
-
-and then make a build directory like sphinxsys-build with the following command:: 
-
-    $ mkdir $HOME/sphinxsys-build
-    $ cd $HOME/sphinxsys-build
+..  code-block:: bash
     
-using the following commend to build the SPHinXsys and run all the tests with the following command::
+    cd $HOME
+    git clone --depth 1 --branch 2022.11.14 https://www.github.com/microsoft/vcpkg
+    cd vcpkg
+    ./bootstrap-vcpkg.sh -disableMetrics
+    ./vcpkg install --clean-after-build         \
+        eigen3:x64-osx                          \
+        tbb:x64-osx                             \
+        boost-program-options:x64-osx           \
+        boost-geometry:x64-osx                  \
+        simbody:x64-osx                         \
+        gtest:x64-osx
 
-		$ cmake /path/to/sphinxsys-alpha -DCMAKE_BUILD_TYPE=RelWithDebInfo
-		$ make -j
-		$ ctest
+Building SPHinXsys
+^^^^^^^^^^^^^^^^^^^^^
 
-You can play with SPHinXsys, for example run a specific test case by::
-  
-    $ cd /path/to/sphinxsys-build/cases_test/test_2d_dambreak
-    $ make -j 
-    $ cd /bin
-    $ ./test_2d_dambreak
+..  code-block:: bash
+    
+    git clone https://github.com/Xiangyu-Hu/SPHinXsys.git sphinxsys
+    cd sphinxsys
+    cmake   -G Ninja                                                                    \
+            -D CMAKE_BUILD_TYPE=Release                                                 \
+            -D CMAKE_C_COMPILER=clang -D CMAKE_CXX_COMPILER=clang++                     \
+            -D CMAKE_TOOLCHAIN_FILE="$HOME/vcpkg/scripts/buildsystems/vcpkg.cmake"      \
+            -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache   \
+            -S .                                                                        \
+            -B ./build
+    cmake   --build build/ 
 
-Right now, you can play with SPHinXsys by change the parameters. GOOD LUCK!
+Running the tests and examples. 
