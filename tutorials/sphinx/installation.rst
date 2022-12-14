@@ -155,6 +155,7 @@ Open Windows PowerShell or Git CMD, and then run the commands below one by one.
 You can also install it by using Git Bash. 
 In this way, you need to change the command :code:`.\bootstrap-vcpkg.bat` to :code:`./bootstrap-vcpkg.bat`,
 i.e., you need to use the slash :code:`/` instead of the backslash:code:`\`, as follows:
+
 ..  code-block:: bash
     
     git clone --depth 1 --branch 2022.11.14 https://www.github.com/microsoft/vcpkg
@@ -170,7 +171,7 @@ i.e., you need to use the slash :code:`/` instead of the backslash:code:`\`, as 
     ./vcpkg integrate install
 
 Please make sure that the name of the directory for cloning vcpkg has only using plain characters, 
-especially without spaces.  Otherwise, somes dependent librararies, such as tbb, can not being built successfully.
+especially without spaces.  Otherwise, some dependent libraries, such as tbb, can not being built successfully.
 By default, vcpkg targets the architecture *x64* and installs the *dynamic* version of the libraries on Windows system.
 To install the *static* versions, replace the former install line by the following:
 
@@ -186,6 +187,14 @@ To install the *static* versions, replace the former install line by the followi
 
 For any other combination, please refer to the official `architecture documentation <https://vcpkg.io/en/docs/users/triplets.html>`_.
 
+If you have difficult to install these packages, you can use the pre-compiled vcpkg files for windows as follows:
+
+..  code-block:: pwsh
+ 
+    git clone  https://github.com/Xiangyu-Hu/SPHinXsys_install_vcpkg_windows
+
+To the pre-compiled package, simply extract the two-volume zip file into the directory where the SPHinXsys root directory will be also located, 
+then follow the rest steps to continue.
 
 Building SPHinXsys with Visual Studio
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
