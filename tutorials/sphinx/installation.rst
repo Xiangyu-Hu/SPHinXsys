@@ -68,6 +68,7 @@ The following block will install the direct dependencies required by SPHinXsys i
         boost-geometry                  \
         simbody                         \
         gtest
+
 Note that, some libraries can be installed simply by apt install, such as eigen3, tbb and boost.
 It seems that only the simbody and gtest should be installed by using vcpkg.
 By default, vcpkg targets the architecture *x64* and installs the *static* version of the libraries on Linux-based systems.
@@ -193,7 +194,8 @@ If you have difficult to install these packages, you can use the pre-compiled vc
  
     git clone  https://github.com/Xiangyu-Hu/SPHinXsys_install_vcpkg_windows
 
-To the pre-compiled package, simply extract the two-volume zip file into the directory where the SPHinXsys root directory will be also located, 
+To use the pre-compiled package, 
+simply extract the two-volume zip file into the directory where the SPHinXsys root directory will be also located, 
 then follow the rest steps to continue.
 
 Building SPHinXsys with Visual Studio

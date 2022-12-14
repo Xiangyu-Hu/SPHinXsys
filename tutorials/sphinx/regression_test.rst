@@ -1,6 +1,6 @@
-=================================
+====================================
 Set regression test for a new case
-=================================
+====================================
 
 If you have built a new test case, and you want to put it into the source of the SPHinXsys. 
 You need to generate a converged database for regression testing first. 
