@@ -211,7 +211,7 @@ namespace SPH
 		//=================================================================================================//
 		void VorticityInner::interaction(size_t index_i, Real dt)
 		{
-			AngularVecd vorticity = DataTypeInitializer<AngularVecd>::zero;
+			AngularVecd vorticity = ZeroData<AngularVecd>::value;
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{

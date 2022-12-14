@@ -13,7 +13,7 @@ Real DL = 1.0;					  /**< box length. */
 Real DH = 1.0;					  /**< box height. */
 Real resolution_ref = 1.0 / 50.0; /**< Global reference resolution. */
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(0), Vec2d(DL, DH));
+BoundingBox system_domain_bounds(Vec2d::Zero(), Vec2d(DL, DH));
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
@@ -76,8 +76,6 @@ int main(int ac, char *av[])
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
 	/** Set the starting time. */
 	GlobalStaticVariables::physical_time_ = 0.0;
-	/** Tag for computation from restart files. 0: not from restart files. */
-	sph_system.restart_step_ = 0;
 	IOEnvironment io_environment(sph_system);
 	sph_system.handleCommandlineOptions(ac, av);
 	//----------------------------------------------------------------------
@@ -117,8 +115,6 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	/** Output the body states. */
 	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
-	/** Output the body states for restart simulation. */
-	RestartIO restart_io(io_environment, sph_system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
 	RegressionTestEnsembleAveraged<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
 		write_total_mechanical_energy(io_environment, water_body);
@@ -137,7 +133,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
-	size_t number_of_iterations = sph_system.restart_step_;
+	size_t number_of_iterations = 0;
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
 	Real end_time = 5.0;
@@ -176,11 +172,6 @@ int main(int ac, char *av[])
 				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
 						  << GlobalStaticVariables::physical_time_
 						  << "	dt = " << dt << "\n";
-
-				if (number_of_iterations % restart_output_interval == 0)
-				{
-					restart_io.writeToFile(number_of_iterations);
-				}
 			}
 			number_of_iterations++;
 		}

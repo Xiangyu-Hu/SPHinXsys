@@ -73,7 +73,7 @@ namespace SPH
 		template <class Integration1stHalfType>
 		BaseMultiPhaseIntegration1stHalf<Integration1stHalfType>::
 			BaseMultiPhaseIntegration1stHalf(ComplexRelation &complex_relation)
-			: BaseMultiPhaseIntegration1stHalf(complex_relation.inner_relation_, complex_relation.contact_relation_) {}
+			: BaseMultiPhaseIntegration1stHalf(complex_relation.getInnerRelation(), complex_relation.getContactRelation()) {}
 		//=================================================================================================//
 		template <class Integration1stHalfType>
 		void BaseMultiPhaseIntegration1stHalf<Integration1stHalfType>::interaction(size_t index_i, Real dt)
@@ -141,7 +141,7 @@ namespace SPH
 		template <class Integration2ndHalfType>
 		BaseMultiPhaseIntegration2ndHalf<Integration2ndHalfType>::
 			BaseMultiPhaseIntegration2ndHalf(ComplexRelation &complex_relation)
-			: BaseMultiPhaseIntegration2ndHalf(complex_relation.inner_relation_, complex_relation.contact_relation_) {}
+			: BaseMultiPhaseIntegration2ndHalf(complex_relation.getInnerRelation(), complex_relation.getContactRelation()) {}
 		//=================================================================================================//
 		template <class Integration2ndHalfType>
 		void BaseMultiPhaseIntegration2ndHalf<Integration2ndHalfType>::interaction(size_t index_i, Real dt)

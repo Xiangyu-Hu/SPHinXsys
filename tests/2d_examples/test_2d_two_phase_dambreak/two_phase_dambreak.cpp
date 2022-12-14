@@ -17,8 +17,6 @@ int main()
 	SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
 	/** Set the starting time. */
 	GlobalStaticVariables::physical_time_ = 0.0;
-	/** Tag for computation from restart files. 0: not from restart files. */
-	sph_system.restart_step_ = 0;
 	IOEnvironment io_environment(sph_system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
@@ -59,7 +57,7 @@ int main()
 	SimpleDynamics<TimeStepInitialization> initialize_a_air_step(air_block, gravity_ptr);
 	/** Evaluation of density by summation approach. */
 	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex>
-		update_water_density_by_summation(water_wall_contact, water_air_complex.inner_relation_);
+		update_water_density_by_summation(water_wall_contact, water_air_complex.getInnerRelation());
 	InteractionWithUpdate<fluid_dynamics::DensitySummationComplex>
 		update_air_density_by_summation(air_wall_contact, air_water_complex);
 	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex>
@@ -86,8 +84,6 @@ int main()
 	//----------------------------------------------------------------------
 	/** Output the body states. */
 	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
-	/** Output the body states for restart simulation. */
-	RestartIO restart_io(io_environment, sph_system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
 	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
 		write_water_mechanical_energy(io_environment, water_block, gravity_ptr);
@@ -112,7 +108,7 @@ int main()
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
-	size_t number_of_iterations = sph_system.restart_step_;
+	size_t number_of_iterations = 0;
 	int screen_output_interval = 100;
 	int observation_sample_interval = screen_output_interval * 2;
 	int restart_output_interval = screen_output_interval * 10;
@@ -183,8 +179,6 @@ int main()
 					write_water_mechanical_energy.writeToFile(number_of_iterations);
 					write_recorded_pressure.writeToFile(number_of_iterations);
 				}
-				if (number_of_iterations % restart_output_interval == 0)
-					restart_io.writeToFile(number_of_iterations);
 			}
 			number_of_iterations++;
 

@@ -35,7 +35,7 @@ namespace SPH
 {
 	/**
 	 * @struct FluidState
-	 * @brief  Struct for stored states of Riemann solver in weakly-compressbile flow. 
+	 * @brief  Struct for stored states of Riemann solver in weakly-compressible flow. 
 	 */
 	struct FluidState
 	{

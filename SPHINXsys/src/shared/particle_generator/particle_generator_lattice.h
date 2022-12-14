@@ -125,10 +125,10 @@ namespace SPH
 
 	protected:
 		Real total_volume_; 					/**< Total volume of body calculated from level set. */
-		Real global_avg_thickness_;				/**< Global averge thickness. */
+		Real global_avg_thickness_;				/**< Global average thickness. */
 		Real particle_spacing_;					/**< Particle spacing. */
 		Real avg_particle_volume_;				/**< Average particle volume. */
-		size_t number_of_cells_;				/**< Number of cells. */
+		size_t number_of_cells_;				/**< Number of cells enclosed by the volume. */
 		size_t planned_number_of_particles_;	/**< Number of particles in planned manner. */
 	};
 }

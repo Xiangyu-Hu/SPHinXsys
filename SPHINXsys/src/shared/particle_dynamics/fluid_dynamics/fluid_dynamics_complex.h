@@ -58,8 +58,8 @@ namespace SPH
 								BaseBodyRelationType &base_body_relation, Args &&...args);
 			template <typename... Args>
 			InteractionWithWall(ComplexRelation &fluid_wall_relation, Args &&...args)
-				: InteractionWithWall(fluid_wall_relation.contact_relation_,
-									  fluid_wall_relation.inner_relation_, std::forward<Args>(args)...) {}
+				: InteractionWithWall(fluid_wall_relation.getContactRelation(),
+									  fluid_wall_relation.getInnerRelation(), std::forward<Args>(args)...) {}
 			virtual ~InteractionWithWall(){};
 
 		protected:
@@ -211,8 +211,8 @@ namespace SPH
 			template <typename... Args>
 			BaseExtendIntegration1stHalfWithWall(ComplexRelation &fluid_wall_relation,
 												 Args &&...args, Real penalty_strength = 1.0)
-				: BaseExtendIntegration1stHalfWithWall(fluid_wall_relation.contact_relation_,
-													   fluid_wall_relation.inner_relation_,
+				: BaseExtendIntegration1stHalfWithWall(fluid_wall_relation.getContactRelation(),
+													   fluid_wall_relation.getInnerRelation(),
 													   std::forward<Args>(args)..., penalty_strength){};
 			virtual ~BaseExtendIntegration1stHalfWithWall(){};
 			void initialization(size_t index_i, Real dt = 0.0);

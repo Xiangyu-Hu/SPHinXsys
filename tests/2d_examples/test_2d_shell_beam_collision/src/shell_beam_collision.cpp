@@ -83,11 +83,9 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
 	/** Tag for running particle relaxation for the initially body-fitted distribution */
-	sph_system.run_particle_relaxation_ = false;
+	sph_system.setRunParticleRelaxation(true);
 	/** Tag for starting with relaxed body-fitted particles distribution */
-	sph_system.reload_particles_ = true;
-	/** Tag for computation from restart files. 0: start with initial condition */
-	sph_system.restart_step_ = 0;
+	sph_system.setReloadParticles(false);
 	sph_system.handleCommandlineOptions(ac, av);
 	IOEnvironment io_environment(sph_system);
 	//----------------------------------------------------------------------
@@ -97,7 +95,7 @@ int main(int ac, char *av[])
 	shell.defineAdaptation<SPHAdaptation>(1.15, 1.0);
 	// here dummy linear elastic solid is use because no solid dynamics in particle relaxation
 	shell.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
-	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
+	if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
 	{
 		shell.generateParticles<ParticleGeneratorReload>(io_environment, shell.getName());
 	}
@@ -107,7 +105,7 @@ int main(int ac, char *av[])
 		shell.generateParticles<ThickSurfaceParticleGeneratorLattice>(thickness);
 	}
 
-	if (!sph_system.run_particle_relaxation_ && !sph_system.reload_particles_)
+	if (!sph_system.RunParticleRelaxation() && !sph_system.ReloadParticles())
 	{
 		std::cout << "Error: This case requires reload shell particles for simulation!" << std::endl;
 		return 0;
@@ -127,7 +125,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------
-	if (sph_system.run_particle_relaxation_)
+	if (sph_system.RunParticleRelaxation())
 	{
 		//----------------------------------------------------------------------
 		//	Define body relation map used for particle relaxation.
@@ -187,8 +185,8 @@ int main(int ac, char *av[])
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> beam_corrected_configuration(beam_inner);
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> shell_get_time_step_size(beam);
 	/** stress relaxation for the walls. */
-	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> beam_stress_relaxation_first_half(beam_inner);
-	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> beam_stress_relaxation_second_half(beam_inner);
+	Dynamics1Level<solid_dynamics::Integration1stHalf> beam_stress_relaxation_first_half(beam_inner);
+	Dynamics1Level<solid_dynamics::Integration2ndHalf> beam_stress_relaxation_second_half(beam_inner);
 	/** Algorithms for shell-solid contact. */
 	InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle> beam_shell_update_contact_density(beam_contact);
 	InteractionDynamics<solid_dynamics::ContactForceFromWall, BodyPartByParticle> beam_compute_solid_contact_forces(beam_contact);

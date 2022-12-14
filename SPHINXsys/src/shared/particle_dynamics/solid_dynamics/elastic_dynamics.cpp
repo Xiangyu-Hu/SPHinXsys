@@ -34,12 +34,12 @@ namespace SPH
 			  ElasticSolidDataSimple(sph_body),
 			  n_(particles_->n_), n0_(particles_->n0_), F_(particles_->F_) {}
 		//=================================================================================================//
-		DeformationGradientTensorBySummation::
-			DeformationGradientTensorBySummation(BaseInnerRelation &inner_relation)
+		DeformationGradientBySummation::
+			DeformationGradientBySummation(BaseInnerRelation &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_), ElasticSolidDataInner(inner_relation),
 			  pos_(particles_->pos_), B_(particles_->B_), F_(particles_->F_) {}
 		//=================================================================================================//
-		void DeformationGradientTensorBySummation::interaction(size_t index_i, Real dt)
+		void DeformationGradientBySummation::interaction(size_t index_i, Real dt)
 		{
 			Vecd &pos_n_i = pos_[index_i];
 
@@ -56,16 +56,16 @@ namespace SPH
 			F_[index_i] = deformation * B_[index_i];
 		}
 		//=================================================================================================//
-		BaseElasticRelaxation::
-			BaseElasticRelaxation(BaseInnerRelation &inner_relation)
+		BaseElasticIntegration::
+			BaseElasticIntegration(BaseInnerRelation &inner_relation)
 			: LocalDynamics(inner_relation.sph_body_), ElasticSolidDataInner(inner_relation),
 			  rho_(particles_->rho_), mass_(particles_->mass_),
 			  pos_(particles_->pos_), vel_(particles_->vel_), acc_(particles_->acc_),
 			  B_(particles_->B_), F_(particles_->F_), dF_dt_(particles_->dF_dt_) {}
 		//=================================================================================================//
-		BaseStressRelaxationFirstHalf::
-			BaseStressRelaxationFirstHalf(BaseInnerRelation &inner_relation)
-			: BaseElasticRelaxation(inner_relation),
+		BaseIntegration1stHalf::
+			BaseIntegration1stHalf(BaseInnerRelation &inner_relation)
+			: BaseElasticIntegration(inner_relation),
 			  elastic_solid_(particles_->elastic_solid_),
 			  acc_prior_(particles_->acc_prior_)
 		{
@@ -74,20 +74,20 @@ namespace SPH
 			smoothing_length_ = sph_body_.sph_adaptation_->ReferenceSmoothingLength();
 		}
 		//=================================================================================================//
-		void BaseStressRelaxationFirstHalf::update(size_t index_i, Real dt)
+		void BaseIntegration1stHalf::update(size_t index_i, Real dt)
 		{
 			vel_[index_i] += (acc_prior_[index_i] + acc_[index_i]) * dt;
 		}
 		//=================================================================================================//
-		StressRelaxationFirstHalf::
-			StressRelaxationFirstHalf(BaseInnerRelation &inner_relation)
-			: BaseStressRelaxationFirstHalf(inner_relation)
+		Integration1stHalf::
+			Integration1stHalf(BaseInnerRelation &inner_relation)
+			: BaseIntegration1stHalf(inner_relation)
 		{
 			particles_->registerVariable(stress_PK1_B_, "CorrectedStressPK1");
 			numerical_dissipation_factor_ = 0.25;
 		}
 		//=================================================================================================//
-		void StressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
+		void Integration1stHalf::initialization(size_t index_i, Real dt)
 		{
 			pos_[index_i] += vel_[index_i] * dt * 0.5;
 			F_[index_i] += dF_dt_[index_i] * dt * 0.5;
@@ -97,7 +97,7 @@ namespace SPH
 			stress_PK1_B_[index_i] = F_[index_i] * elastic_solid_.StressPK2(F_[index_i], index_i) * B_[index_i];
 		}
 		//=================================================================================================//
-		void StressRelaxationFirstHalf::interaction(size_t index_i, Real dt)
+		void Integration1stHalf::interaction(size_t index_i, Real dt)
 		{
 			// including gravity and force from fluid
 			Vecd acceleration = Vecd::Zero();
@@ -122,11 +122,11 @@ namespace SPH
 			acc_[index_i] = acceleration;
 		}
 		//=================================================================================================//
-		KirchhoffParticleStressRelaxationFirstHalf::
-			KirchhoffParticleStressRelaxationFirstHalf(BaseInnerRelation &inner_relation)
-			: StressRelaxationFirstHalf(inner_relation){};
+		KirchhoffParticleIntegration1stHalf::
+			KirchhoffParticleIntegration1stHalf(BaseInnerRelation &inner_relation)
+			: Integration1stHalf(inner_relation){};
 		//=================================================================================================//
-		void KirchhoffParticleStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
+		void KirchhoffParticleIntegration1stHalf::initialization(size_t index_i, Real dt)
 		{
 			pos_[index_i] += vel_[index_i] * dt * 0.5;
 			F_[index_i] += dF_dt_[index_i] * dt * 0.5;
@@ -145,16 +145,16 @@ namespace SPH
 									  	elastic_solid_.DeviatoricKirchhoff(deviatoric_b) ) * inverse_F_T * B_[index_i];
 		}
 		//=================================================================================================//
-		KirchhoffStressRelaxationFirstHalf::
-			KirchhoffStressRelaxationFirstHalf(BaseInnerRelation &inner_relation)
-			: BaseStressRelaxationFirstHalf(inner_relation)
+		KirchhoffIntegration1stHalf::
+			KirchhoffIntegration1stHalf(BaseInnerRelation &inner_relation)
+			: BaseIntegration1stHalf(inner_relation)
 		{
 			particles_->registerVariable(J_to_minus_2_over_dimension_, "DeterminantTerm");
 			particles_->registerVariable(stress_on_particle_, "StressOnParticle");
 			particles_->registerVariable(inverse_F_T_, "InverseTransposedDeformation");
 		};
 		//=================================================================================================//
-		void KirchhoffStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
+		void KirchhoffIntegration1stHalf::initialization(size_t index_i, Real dt)
 		{
 			pos_[index_i] += vel_[index_i] * dt * 0.5;
 			F_[index_i] += dF_dt_[index_i] * dt * 0.5;
@@ -170,7 +170,7 @@ namespace SPH
 				+ elastic_solid_.NumericalDampingLeftCauchy(F_[index_i], dF_dt_[index_i], smoothing_length_, index_i) * inverse_F_T_[index_i];
 		}
 		//=================================================================================================//
-		void KirchhoffStressRelaxationFirstHalf::interaction(size_t index_i, Real dt)
+		void KirchhoffIntegration1stHalf::interaction(size_t index_i, Real dt)
 		{
 			// including gravity and force from fluid
 			Vecd acceleration = Vecd::Zero();
@@ -187,12 +187,12 @@ namespace SPH
 			acc_[index_i] = acceleration;
 		}
 		//=================================================================================================//
-		void StressRelaxationSecondHalf::initialization(size_t index_i, Real dt)
+		void Integration2ndHalf::initialization(size_t index_i, Real dt)
 		{
 			pos_[index_i] += vel_[index_i] * dt * 0.5;
 		}
 		//=================================================================================================//
-		void StressRelaxationSecondHalf::interaction(size_t index_i, Real dt)
+		void Integration2ndHalf::interaction(size_t index_i, Real dt)
 		{
 			const Vecd &vel_n_i = vel_[index_i];
 
@@ -209,7 +209,7 @@ namespace SPH
 			dF_dt_[index_i] = deformation_gradient_change_rate * B_[index_i];
 		}
 		//=================================================================================================//
-		void StressRelaxationSecondHalf::update(size_t index_i, Real dt)
+		void Integration2ndHalf::update(size_t index_i, Real dt)
 		{
 			F_[index_i] += dF_dt_[index_i] * dt * 0.5;
 		}

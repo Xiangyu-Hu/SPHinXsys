@@ -84,9 +84,9 @@ int main(int ac, char *av[])
 	BoundingBox system_domain_bounds(Vec2d(-DL_sponge, -DH_sponge), Vec2d(DL, DH + DH_sponge));
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
 	// Tag for run particle relaxation for the initial body fitted distribution.
-	sph_system.run_particle_relaxation_ = false;
+	sph_system.setRunParticleRelaxation(false);
 	// Tag for computation start with relaxed body fitted particles distribution.
-	sph_system.reload_particles_ = true;
+	sph_system.setReloadParticles(true);
 	// Handle command line arguments and override the tags for particle relaxation and reload.
 	sph_system.handleCommandlineOptions(ac, av);
 	IOEnvironment io_environment(sph_system);
@@ -96,7 +96,7 @@ int main(int ac, char *av[])
 	EulerianFluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
 	water_block.defineComponentLevelSetShape("OuterBoundary");
 	water_block.defineParticlesAndMaterial<WeaklyCompressibleFluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
+	(!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
 		? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getName())
 		: water_block.generateParticles<ParticleGeneratorLattice>();
 	water_block.addBodyStateForRecording<int>("SurfaceIndicator");
@@ -105,7 +105,7 @@ int main(int ac, char *av[])
 	cylinder.defineAdaptationRatios(1.15, 2.0);
 	cylinder.defineBodyLevelSetShape();
 	cylinder.defineParticlesAndMaterial<SolidParticles, Solid>();
-	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
+	(!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
 		? cylinder.generateParticles<ParticleGeneratorReload>(io_environment, cylinder.getName())
 		: cylinder.generateParticles<ParticleGeneratorLattice>();
 	//----------------------------------------------------------------------
@@ -119,7 +119,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------
-	if (sph_system.run_particle_relaxation_)
+	if (sph_system.RunParticleRelaxation())
 	{
 		InnerRelation cylinder_inner(cylinder); // extra body topology only for particle relaxation
 		//----------------------------------------------------------------------
@@ -136,8 +136,8 @@ int main(int ac, char *av[])
 		//----------------------------------------------------------------------
 		random_inserted_body_particles.parallel_exec(0.25);
 		random_water_body_particles.parallel_exec(0.25);
-		relaxation_step_inner.surface_bounding_.parallel_exec();
-		relaxation_step_complex.surface_bounding_.parallel_exec();
+		relaxation_step_inner.SurfaceBounding().parallel_exec();
+		relaxation_step_complex.SurfaceBounding().parallel_exec();
 		write_real_body_states.writeToFile(0);
 
 		int ite_p = 0;
@@ -169,7 +169,7 @@ int main(int ac, char *av[])
 	InteractionDynamics<eulerian_weakly_compressible_fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	ReduceDynamics<eulerian_weakly_compressible_fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	InteractionWithUpdate<fluid_dynamics::FreeSurfaceIndicationComplex> surface_indicator(water_block_complex);
-	InteractionDynamics<FarFieldBoundary> variable_reset_in_boundary_condition(water_block_complex.inner_relation_);
+	InteractionDynamics<FarFieldBoundary> variable_reset_in_boundary_condition(water_block_complex..getInnerRelation());
 	//----------------------------------------------------------------------
 	//	Compute the force exerted on solid body due to fluid pressure and viscosity
 	//----------------------------------------------------------------------
@@ -196,7 +196,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
-	size_t number_of_iterations = sph_system.restart_step_;
+	size_t number_of_iterations = 0;
 	int screen_output_interval = 1000;
 	Real end_time = 80.0;
 	Real output_interval = 5.0; /**< time stamps for output. */

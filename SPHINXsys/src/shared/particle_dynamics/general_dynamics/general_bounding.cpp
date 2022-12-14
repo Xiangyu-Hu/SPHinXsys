@@ -216,7 +216,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	MirrorConditionAlongAxis::MirrorBounding::
-		MirrorBounding(CellLists bound_cells_data, RealBody &real_body,
+		MirrorBounding(CellLists &bound_cells_data, RealBody &real_body,
 					   BoundingBox bounding_bounds, int axis, bool positive)
 		: BoundingAlongAxis(real_body, bounding_bounds, axis),
 		  bound_cells_data_(bound_cells_data), vel_(particles_->vel_)
@@ -228,7 +228,7 @@ namespace SPH
 	//=================================================================================================//
 	MirrorConditionAlongAxis::CreatingMirrorGhostParticles::
 		CreatingMirrorGhostParticles(IndexVector &ghost_particles,
-									 CellLists bound_cells_data,
+									 CellLists &bound_cells_data,
 									 RealBody &real_body,
 									 BoundingBox bounding_bounds, int axis, bool positive)
 		: MirrorBounding(bound_cells_data, real_body, bounding_bounds, axis, positive),
@@ -236,7 +236,7 @@ namespace SPH
 	//=================================================================================================//
 	MirrorConditionAlongAxis::UpdatingMirrorGhostStates::
 		UpdatingMirrorGhostStates(IndexVector &ghost_particles,
-								  CellLists bound_cells_data, RealBody &real_body,
+								  CellLists &bound_cells_data, RealBody &real_body,
 								  BoundingBox bounding_bounds, int axis, bool positive)
 		: MirrorBounding(bound_cells_data, real_body, bounding_bounds, axis, positive),
 		  ghost_particles_(ghost_particles)

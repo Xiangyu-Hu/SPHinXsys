@@ -159,8 +159,8 @@ namespace SPH
 	{
 	public:
 		explicit DataDelegateComplex(ComplexRelation &body_complex_relation)
-			: DataDelegateInner<ParticlesType>(body_complex_relation.inner_relation_),
-			  DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>(body_complex_relation.contact_relation_){};
+			: DataDelegateInner<ParticlesType>(body_complex_relation.getInnerRelation()),
+			  DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>(body_complex_relation.getContactRelation()){};
 		virtual ~DataDelegateComplex(){};
 	};
 
@@ -180,8 +180,8 @@ namespace SPH
 			  ContactDataType(contact_relation){};
 		template <typename... Args>
 		BaseInteractionComplex(ComplexRelation &complex_relation, Args &&...args)
-			: BaseInteractionComplex(complex_relation.contact_relation_,
-											 complex_relation.inner_relation_, std::forward<Args>(args)...){};
+			: BaseInteractionComplex(complex_relation.getContactRelation(),
+											 complex_relation.getInnerRelation(), std::forward<Args>(args)...){};
 		template <typename... Args>
 		BaseInteractionComplex(BaseContactRelation &extra_contact_relation,
 									   ComplexRelation &complex_relation, Args &&...args)

@@ -49,7 +49,7 @@ namespace SPH
 			 *  base_particle_data_i.pos_ = (p_GB + r).getSubVec<2>(0);
 			 */
 			SimTK::Vec3 n = (mobod_.getBodyRotation(*simbody_state_) * SimTK::Vec3(n0_[index_i][0], n0_[index_i][1], 0.0));
-			/** Change vector to egien. */
+			/** Change vector to eigen. */
 			pos_[index_i] = Vecd(pos[0], pos[1]);
 			vel_[index_i] = Vecd(vel[0], vel[1]);
 			n_[index_i] = Vecd(n[0], n[1]);

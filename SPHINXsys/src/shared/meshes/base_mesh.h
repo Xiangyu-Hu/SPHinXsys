@@ -23,12 +23,12 @@
 /**
  * @file 	base_mesh.h
  * @brief 	This is the base classes of mesh, which is used to describe ordered and indexed
- *			data sets.  Depending on application, there are different data 
- * 			saved on the mesh. The intersection points of mesh lines are called 
- *			grid points, the element enclosed by mesh lines (2D) or faces (3D) called 
+ *			data sets.  Depending on application, there are different data
+ * 			saved on the mesh. The intersection points of mesh lines are called
+ *			grid points, the element enclosed by mesh lines (2D) or faces (3D) called
  *			cells. The mesh line or face are also called cell faces. Grid points are
  *			also called cell corners.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef BASE_MESH_H
@@ -47,11 +47,11 @@ using namespace std::placeholders;
 namespace SPH
 {
 	/**
-	 * @class 	BaseMesh
-	 * @brief 	Base class for all structured meshes which may be grid or cell based.
-	 * 			The basic properties of the mesh, such as lower bound, grid spacing 
-	 * 			and number of grid points may be determined by the derived class.
-	 * 			Note that there is no mesh-based data defined here.
+	 * @class BaseMesh
+	 * @brief Base class for all structured meshes which may be grid or cell based.
+	 * The basic properties of the mesh, such as lower bound, grid spacing
+	 * and number of grid points may be determined by the derived class.
+	 * Note that there is no mesh-based data defined here.
 	 */
 	class BaseMesh
 	{
@@ -70,7 +70,7 @@ namespace SPH
 		Vecd MeshLowerBound() { return mesh_lower_bound_; };
 		/** Return the grid spacing. */
 		Real GridSpacing() { return grid_spacing_; };
-		/** Return the number of meshs in each direction, i.e., x-, y- and z-axis. */
+		/** Return the number of mesh in each direction, i.e., x-, y- and z-axis. */
 		Vecu NumberOfGridPoints() { return number_of_grid_points_; };
 		/** Given the cell number, return the mesh number. */
 		Vecu NumberOfGridPointsFromNumberOfCells(const Vecu &number_of_cells) { return number_of_cells + Vecu::Ones(); };
@@ -88,23 +88,22 @@ namespace SPH
 		Vecu transfer1DtoMeshIndex(const Vecu &number_of_mesh_indexes, size_t i);
 		/** Transfer mesh index to 1D int.  */
 		size_t transferMeshIndexTo1D(const Vecu &number_of_mesh_indexes, const Vecu &mesh_index);
-		/** 
-		 * Converts mesh index into a Morton order.
-         * Interleave a 10 bit number in 32 bits, fill one bit and leave the other 2 as zeros
-         * https://stackoverflow.com/questions/18529057/
-         * produce-interleaving-bit-patterns-morton-keys-for-32-bit-64-bit-and-128bit
-         */
+		/** converts mesh index into a Morton order.
+		 * Interleave a 10 bit number in 32 bits, fill one bit and leave the other 2 as zeros
+		 * https://stackoverflow.com/questions/18529057/
+		 * produce-interleaving-bit-patterns-morton-keys-for-32-bit-64-bit-and-128bit
+		 */
 		size_t MortonCode(const size_t &i);
 		/** Converts mesh index into a Morton order. */
 		size_t transferMeshIndexToMortonOrder(const Vecu &mesh_index);
 	};
 
 	/**
-	 * @class 	Mesh
-	 * @brief 	Abstract base class for cell-based mesh 
-	 * 			by introducing number of cells, buffer width and mesh-based data in its derived classes.
-	 * 			Note that we identify the difference between grid spacing and data spacing. 
-	 * 			The latter is different from grid spacing when MeshWithDataPackage is considered. 
+	 * @class Mesh
+	 * @brief Abstract base class for cell-based mesh
+	 * by introducing number of cells, buffer width and mesh-based data in its derived classes.
+	 * Note that we identify the difference between grid spacing and data spacing.
+	 * The latter is different from grid spacing when MeshWithDataPackage is considered.
 	 */
 	class Mesh : public BaseMesh
 	{
@@ -112,14 +111,14 @@ namespace SPH
 		Vecu number_of_cells_{Vecu::Zero()}; 	/**< number of cells by dimension */
 		size_t buffer_width_{0};  				/**< buffer width to avoid bound check.*/
 
-		/** Copy mesh proerties to another mesh. */
+		/** Copy mesh properties to another mesh. */
 		void copyMeshProperties(Mesh *another_mesh);
 	public:
 		Mesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width);
 		Mesh(Vecd mesh_lower_bound, Vecu number_of_cells, Real grid_spacing);
 		virtual ~Mesh(){};
 
-		/** Return number of cell in each directoin, i.e., x-, y- and z-axis.*/
+		/** Return number of cell in each direction, i.e., x-, y- and z-axis.*/
 		Vecu NumberOfCells() { return number_of_cells_; };
 		/** Return the buffer size. */
 		size_t MeshBufferSize() { return buffer_width_; };
@@ -129,7 +128,7 @@ namespace SPH
 
 	/**
 	 * @class BaseMeshField
-	 * @brief Abstract base class for the field data saved on a mesh.
+	 * @brief Abstract base class for the geometric or physics field.
 	 */
 	class BaseMeshField
 	{
@@ -173,10 +172,8 @@ namespace SPH
 	class MultilevelMesh : public MeshFieldType
 	{
 	public:
-		/**
-		 * Template parameter pack is used with rvalue reference and perfect forwarding to keep 
-		 * the type of arguments when called by another function with template parameter pack too. 
-		 */
+		/**template parameter pack is used with rvalue reference and perfect forwarding to keep
+		 * the type of arguments when called by another function with template parameter pack too. */
 		template <typename... Args>
 		MultilevelMesh(BoundingBox tentative_bounds
 					  , Real reference_spacing
@@ -219,4 +216,4 @@ namespace SPH
 		}
 	};
 }
-#endif //BASE_MESH_H
+#endif // BASE_MESH_H

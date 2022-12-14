@@ -90,7 +90,7 @@ int main()
 	//	Particle relaxation starts here.
 	//----------------------------------------------------------------------
 	random_imported_model_particles.parallel_exec(0.25);
-	relaxation_step_inner.surface_bounding_.parallel_exec();
+	relaxation_step_inner.SurfaceBounding().parallel_exec();
 	write_imported_model_to_vtp.writeToFile(0.0);
 	imported_model.updateCellLinkedList();
 	write_cell_linked_list.writeToFile(0.0);

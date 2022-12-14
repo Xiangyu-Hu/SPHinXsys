@@ -36,7 +36,7 @@ Real U_c = 0.5 * powerN(0.5 * DH, 2) * gravity_g * rho0_f / mu_f;
 Real U_f = U_c * DH / DT;
 // For low Reynolds number flow the weakly compressible formulation need to
 // consider viscosity for artificial sound speed.
-Real c_f = 10.0 * (U_f, sqrt(mu_f / rho0_f * U_f / DT));
+Real c_f = 10.0 * SMAX(U_f, sqrt(mu_f / rho0_f * U_f / DT));
 Real mu_p_f = 0.6 * mu_f;
 Real lambda_f = 10.0;
 //----------------------------------------------------------------------
@@ -140,7 +140,7 @@ int main(int ac, char *av[])
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
 	ObserverBody fluid_observer(system, "FluidObserver");
-	StdVec<Vecd> observation_location = {Vecd(0)};
+	StdVec<Vecd> observation_location = {Vecd::Zero()};
 	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
@@ -246,7 +246,7 @@ int main(int ac, char *av[])
 				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
 						  << GlobalStaticVariables::physical_time_
 						  << "	Dt = " << Dt << "	dt = " << dt << "\n";
-				if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != system.restart_step_)
+				if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != system.RestartStep())
 				{
 					write_fluid_mechanical_energy.writeToFile(number_of_iterations);
 					write_recorded_fluid_pressure.writeToFile(number_of_iterations);

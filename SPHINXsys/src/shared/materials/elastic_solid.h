@@ -168,7 +168,7 @@ namespace SPH
 	/**
 	* @class NeoHookeanSolidIncompressible
 	* @brief Neo-Hookean solid, Incompressible formulation!
-	* Currently only works with KirchhoffStressRelaxationFirstHalf, not with StressRelaxationFirstHalf
+	* Currently only works with KirchhoffIntegration1stHalf, not with Integration1stHalf
 	*/
 	class NeoHookeanSolidIncompressible : public LinearElasticSolid
 	{

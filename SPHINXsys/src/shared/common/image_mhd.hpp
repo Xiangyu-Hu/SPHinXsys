@@ -22,7 +22,7 @@
  * ------------------------------------------------------------------------*/
 /**
  * @file 	image_mesh_shape.h
- * @brief 	Immage process for geometry representation. 
+ * @brief 	Image process for geometry representation. 
  * @author	Yijin Mao
  */
 
