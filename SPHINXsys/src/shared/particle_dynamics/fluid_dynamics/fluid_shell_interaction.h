@@ -55,7 +55,7 @@ namespace SPH
 
 			template <typename... Args>
 			InteractionWithShell(ComplexRelation &fluid_shell_relation, Args &&...args)
-				: InteractionWithShell(fluid_shell_relation.contact_relation_, fluid_shell_relation.inner_relation_, std::forward<Args>(args)...) 
+				: InteractionWithShell(fluid_shell_relation.getContactRelation(), fluid_shell_relation.getInnerRelation(), std::forward<Args>(args)...) 
 			{}
 
 			virtual ~InteractionWithShell(){};

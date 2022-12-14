@@ -126,7 +126,7 @@ int main(int ac, char *av[])
 	int screen_output_interval = 100;
 	int observation_sample_interval = screen_output_interval * 2;
 	int restart_output_interval = screen_output_interval * 10;
-	Real End_Time = 21.0;			/**< End time. */
+	Real End_Time = 5.0;			/**< End time. */
 	Real D_Time = End_Time /200;	/**< time stamps for output. */
 	Real Dt = 0.0;					/**< Default advection time step sizes. */
 	Real dt = 0.0; 					/**< Default acoustic time step sizes. */
@@ -176,8 +176,6 @@ int main(int ac, char *av[])
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
-
-				//write_real_body_states_to_vtp.writeToFile();
 			}
 
 			if (number_of_iterations % screen_output_interval == 0)
@@ -217,7 +215,14 @@ int main(int ac, char *av[])
 	tt = t4 - t1 - interval;
 	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
 
-	//write_baffle_displacement.newResultTest();
+	if (sph_system.generate_regression_data_)
+	{
+		write_baffle_displacement.generateDataBase(1.0e-2);
+	}
+	else
+	{
+		write_baffle_displacement.newResultTest();
+	}
 
 	return 0;
 }
