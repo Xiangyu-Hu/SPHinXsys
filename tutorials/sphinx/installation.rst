@@ -221,7 +221,7 @@ Building SPHinXsys via cmake-gui.exe
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 See the figure below. Prior configuring, you must **Add Entry** and set :code:`CMAKE_TOOLCHAIN_FILE` variable 
-with a :code:`FILEPATH` type pointing to :code:`<workspace>\vcpkg\scripts\buildsystems\vcpkg.cmake`_.
+with a :code:`FILEPATH` type pointing to :code:`<workspace>\vcpkg\scripts\buildsystems\vcpkg.cmake`.
 Then, open the solution file (:code:`.sln`) generated in the :code:`build\` folder with Visual Studio.
 
 .. figure:: figures/CMake_configure.png
@@ -286,4 +286,8 @@ Building SPHinXsys
             -B ./build
     cmake   --build build/ 
 
-Running the tests and examples. 
+Running the tests and examples
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+They are the same as in Ubuntu Linux (See above).  
+
