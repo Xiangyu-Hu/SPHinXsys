@@ -160,7 +160,7 @@ Open Windows PowerShell or Git CMD, and then run the commands below one by one.
     .\vcpkg integrate install
 
 You can also install it by using Git Bash. 
-In this way, you need to change the command :code:`.\bootstrap-vcpkg.bat` to :code:`./bootstrap-vcpkg.bat`,
+In this way, you need to change the command :code:`.\bootstrap-vcpkg.bat` to :code:`./bootstrap-vcpkg.bat` ,
 i.e., you need to use the slash :code:`/` instead of the backslash:code:`\`, as follows:
 
 ..  code-block:: bash
@@ -192,7 +192,7 @@ To install the *static* versions, replace the former install line by the followi
         simbody:x64-windows-static               \
         gtest:x64-windows-static
 
-For any other combination, please refer to the official `architecture documentation <https://vcpkg.io/en/docs/users/triplets.html>`_.
+For any other combination, please refer to the official `architecture documentation <https://vcpkg.io/en/docs/users/triplets.html>` .
 
 If you have difficulty to install these packages, you can use the pre-compiled vcpkg files for windows as follows:
 
@@ -214,14 +214,14 @@ First clone the repository:
     git clone https://github.com/Xiangyu-Hu/SPHinXsys.git sphinxsys
 
 
-Then, just open Visual Studio and follow the procedure given `Visual Studio document <https://learn.microsoft.com/en-us/cpp/build/cmake-projects-in-visual-studio>`_.
+Then, just open Visual Studio and follow the procedure given `Visual Studio document <https://learn.microsoft.com/en-us/cpp/build/cmake-projects-in-visual-studio>` .
 
 
 Building SPHinXsys via cmake-gui.exe
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 See the figure below. Prior configuring, you must **Add Entry** and set :code:`CMAKE_TOOLCHAIN_FILE` variable 
-with a :code:`FILEPATH` type pointing to :code:`<workspace>\vcpkg\scripts\buildsystems\vcpkg.cmake`.
+with a :code:`FILEPATH` type pointing to :code:`<workspace>\vcpkg\scripts\buildsystems\vcpkg.cmake` .
 Then, open the solution file (:code:`.sln`) generated in the :code:`build\` folder with Visual Studio.
 
 .. figure:: figures/CMake_configure.png
