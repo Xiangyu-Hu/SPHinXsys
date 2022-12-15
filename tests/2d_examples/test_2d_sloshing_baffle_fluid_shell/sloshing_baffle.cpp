@@ -127,7 +127,7 @@ int main(int ac, char *av[])
 	int observation_sample_interval = screen_output_interval * 2;
 	int restart_output_interval = screen_output_interval * 10;
 	Real End_Time = 5.0;			/**< End time. */
-	Real D_Time = End_Time /200;	/**< time stamps for output. */
+	Real D_Time = End_Time /100;	/**< time stamps for output. */
 	Real Dt = 0.0;					/**< Default advection time step sizes. */
 	Real dt = 0.0; 					/**< Default acoustic time step sizes. */
 	Real dt_s = 0.0;				/**< Default acoustic time step sizes for solid. */
