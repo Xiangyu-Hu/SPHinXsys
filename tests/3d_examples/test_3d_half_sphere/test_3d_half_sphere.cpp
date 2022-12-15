@@ -10,29 +10,25 @@ using namespace SPH;
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
 Real scale = 1.0e-3;								 
-Real R = 577.0 * scale;	
-Real d = 10.41 * scale;
-Real theta = 26.67 / 180 * Pi;
-Vec3d domain_lower_bound(0.0, 508.0 * scale, 0.0);
-Vec3d domain_upper_bound(523.0 * scale, 583.0 * scale, 533.0 * scale);
-Real resolution_ref = 0.5 * d;
-Real center = 261.3234 * scale;
-Real constrained_circle = powerN(center - 1.5 * resolution_ref, 2);
+Real R = 50.0 * scale;	
+Real d = 1.0 * scale;
+Vec3d domain_lower_bound(-50.5 * scale, 0.0, -50.5 * scale);
+Vec3d domain_upper_bound(50.5 * scale, 50.5 * scale, 50.5 * scale);
+Real resolution_ref = 2.0 * d;
+Real center = 50.5 * scale;
 
 // Observer location
-StdVec<Vecd> observation_location = { Vecd(center, R, center) };
+StdVec<Vecd> observation_location = { Vecd(0.0, R, 0.0) };
 // level set resolution much higher than that of particles is required
 Real level_set_refinement_ratio = resolution_ref / (0.1 * d);
 //For material properties of the solid.
-Real rho0_s = 2618.0;
-Real Youngs_modulus = 7.24e10;
+Real rho0_s = 1000.0;
+Real Youngs_modulus = 2.0e5;
 Real poisson = 0.3;
-Real physical_viscosity = 1.0e3;
+Real physical_viscosity = 1.0e2;
 
-Real q = -4.14e6;
 Real time_to_full_external_force = 0.0;
-
-Real gravitational_acceleration = 0.0;
+Real gravity_g = 80.0;
 //----------------------------------------------------------------------
 //	Domain bounds of the system.
 //----------------------------------------------------------------------
@@ -45,7 +41,7 @@ class ImportedShellModel: public ComplexShape
 public:
 	explicit ImportedShellModel(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		add<TriangleMeshShapeSTL>("./input/cap.stl", Vecd::Zero() * scale, scale);
+		add<TriangleMeshShapeSTL>("./input/half_sphere_surface.stl", Vecd(-center, 0.0, -center), scale);
 	}
 };
 /** Define the boundary geometry. */
@@ -63,9 +59,7 @@ public:
 private:
 	void tagManually(size_t index_i)
 	{
-		if (powerN(base_particles_.pos_[index_i][0] - center, 2) 
-			+ powerN(base_particles_.pos_[index_i][2] - center, 2) > constrained_circle)
-		//if (base_particles_->pos_n_[index_i][0] < center)
+		if (base_particles_.pos_[index_i][1] < 0.75 * d)
 		{
 			body_part_particles_.push_back(index_i);
 		}
@@ -97,12 +91,11 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, resolution_ref);
 	/** Tag for running particle relaxation for the initially body-fitted distribution */
-	system.setRunParticleRelaxation(true);
+	system.setRunParticleRelaxation(false);
 	/** Tag for starting with relaxed body-fitted particles distribution */
 	system.setReloadParticles(true);
-#ifdef BOOST_AVAILABLE
+	/** Handle command line arguments. */
 	system.handleCommandlineOptions(ac, av);
-#endif
 	IOEnvironment io_environment(system);
     //----------------------------------------------------------------------
 	//	Creating body, materials and particles.
@@ -115,7 +108,8 @@ int main(int ac, char *av[])
 	}
 	else
 	{
-		plate_body.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(io_environment);
+		//plate_body.defineBodyLevelSetShape(level_set_refinement_ratio)->correctLevelSetSign()->writeLevelSet(io_environment);
+		plate_body.defineBodyLevelSetShape(level_set_refinement_ratio)->correctLevelSetSign();
 	    //here dummy linear elastic solid is use because no solid dynamics in particle relaxation
 	    plate_body.generateParticles<ThickSurfaceParticleGeneratorLattice>(d);
 	}
@@ -196,7 +190,7 @@ int main(int ac, char *av[])
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
 	SimpleDynamics<TimeStepInitialization> initialize_external_force(plate_body,
-		makeShared<TimeDependentExternalForce>(Vec3d(0.0, q / (d * rho0_s) - gravitational_acceleration, 0.0)));
+		makeShared<TimeDependentExternalForce>(Vec3d(0.0, 0.0, gravity_g)));
 
 	InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration>
 		corrected_configuration(plate_body_inner);
@@ -206,14 +200,13 @@ int main(int ac, char *av[])
 	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf>
 		stress_relaxation_second_half(plate_body_inner);
 	BoundaryGeometry boundary_geometry(plate_body, "BoundaryGeometry");
-	SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion, BoundaryGeometry> 
-		constrain_holder(boundary_geometry);
+	SimpleDynamics<solid_dynamics::FixConstraint, BoundaryGeometry> constrain_holder(boundary_geometry);
 	//solid_dynamics::ConstrainSolidBodyRegionVelocity
 	//	constrain_holder(plate_body, boundary_geometry, Vecd(1.0, 0.0, 1.0));
 	DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vecd>>>
-		cylinder_position_damping(0.1, plate_body_inner, "Velocity", physical_viscosity);
+		plate_position_damping(0.1, plate_body_inner, "Velocity", physical_viscosity);
 	DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vecd>>>
-		cylinder_rotation_damping(0.1, plate_body_inner, "AngularVelocity", physical_viscosity);
+		plate_rotation_damping(0.1, plate_body_inner, "AngularVelocity", physical_viscosity);
 
 	ObservedQuantityRecording<Vecd>
 		write_plate_max_displacement("Position", io_environment, plate_observer_contact);
@@ -228,7 +221,7 @@ int main(int ac, char *av[])
 	write_plate_max_displacement.writeToFile(0);
 
 	int ite = 0;
-	Real end_time = 0.001;
+	Real end_time = 1.0;
 	Real output_period = end_time / 100.0;
 	Real dt = 0.0;
 	tick_count t1 = tick_count::now();
@@ -248,13 +241,13 @@ int main(int ac, char *av[])
 			initialize_external_force.parallel_exec(dt);
 			stress_relaxation_first_half.parallel_exec(dt);
 			constrain_holder.parallel_exec(dt);
-			//plate_position_damping.parallel_exec(dt);
-			//plate_rotation_damping.parallel_exec(dt);
-			//constrain_holder.parallel_exec(dt);
+			plate_position_damping.parallel_exec(dt);
+			plate_rotation_damping.parallel_exec(dt);
+			constrain_holder.parallel_exec(dt);
 			stress_relaxation_second_half.parallel_exec(dt);
 
 			ite++;
-			dt = computing_time_step_size.parallel_exec();
+			dt = 0.004 * computing_time_step_size.parallel_exec();
 			integral_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
 		}

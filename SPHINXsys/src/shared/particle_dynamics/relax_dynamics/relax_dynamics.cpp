@@ -249,7 +249,7 @@ namespace SPH
 		{
 			Vecd none_normalized_normal = level_set_shape_->findLevelSetGradient(pos_[index_i]);
 			Vecd normal = level_set_shape_->findNormalDirection(pos_[index_i]);
-			Real factor = none_normalized_normal.squaredNorm() / level_set_refinement_ratio_;
+			Real factor = none_normalized_normal.squaredNorm() / 5.0;
 			pos_[index_i] -= factor * constrained_distance_ * normal;
 		}
 		//=================================================================================================//
