@@ -3,7 +3,7 @@ option(SPHINXSYS_BUILD_3D_EXAMPLES "SPHINXSYS_BUILD_3D_EXAMPLES" ON)
 option(SPHINXSYS_BUILD_UNIT_TESTS  "SPHINXSYS_BUILD_UNIT_TESTS"  ON)
 option(SPHINXSYS_BUILD_USER_TESTS  "SPHINXSYS_BUILD_USER_TESTS"  ON)
 
-find_package(GTest REQUIRED)
+find_package(GTest CONFIG REQUIRED)
 include(GoogleTest)
 
 target_link_libraries(sphinxsys_core INTERFACE GTest::gtest GTest::gtest_main)
