@@ -51,6 +51,7 @@ jobs:
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
         with: 
           committish: ${{ env.VCPKG_VERSION }}
+          cache-version: ${{ github.run_attempt }}
 
       - name: Install dependencies
         run: |
