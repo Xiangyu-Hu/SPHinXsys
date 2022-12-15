@@ -115,8 +115,8 @@ namespace SPH
 				error_and_parameters.a_ += parameter_b;
 				error_and_parameters.c_ += parameter_b * parameter_b;
 			}
-			return error_and_parameters;
 		}
+		return error_and_parameters;
 	}
 	//=================================================================================================//
 	template <typename VariableType>
@@ -144,11 +144,11 @@ namespace SPH
 				Real parameter_b = 2.0 * this->eta_ * contact_neighborhood.dW_ijV_j_[n] * Vol_i * dt / contact_neighborhood.r_ij_[n];
 
 				// predicted quantity at particle j
-				VariableType variable_j = this->variable_k[index_j] - parameter_k * parameter_b;
+				VariableType variable_j = variable_k[index_j] - parameter_k * parameter_b;
 				VariableType variable_derivative = (variable_i - variable_j);
 
 				// exchange in conservation form
-				this->variable_k[index_j] -= variable_derivative * parameter_b / mass_k[index_j];
+				variable_k[index_j] -= variable_derivative * parameter_b / mass_k[index_j];
 			}
 		}
 	}
