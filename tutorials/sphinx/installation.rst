@@ -140,6 +140,7 @@ Pre-requisites
 * `Git <https://git-scm.com/download/win>`_
 * `Visual Studio 2017 or newer <https://visualstudio.microsoft.com/vs/community/>`_ (mainly for `Visual Studio Build Tools <https://devblogs.microsoft.com/cppblog/updates-to-visual-studio-build-tools-license-for-c-and-cpp-open-source-projects/>`_)
 * `CMake <https://cmake.org/>`_
+* `Python3 <https://www.python.org/>`_
 
 Installing dependencies
 ^^^^^^^^^^^^^^^^^^^^^^^
