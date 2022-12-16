@@ -145,7 +145,7 @@ namespace SPH
 			}
 			else
 			{
-				hourglass_control_factor_ = 1.0e-4;
+				hourglass_control_factor_ = 0.01;
 			}
 		}
 		//=================================================================================================//
@@ -237,7 +237,10 @@ namespace SPH
 					Real r_ij = inner_neighborhood.r_ij_[n];
 					Real dim_inv_r_ij = Dimensions / r_ij;
 					Real weight = inner_neighborhood.W_ij_[n] * inv_W0_;
-					Vecd pos_jump = getLinearVariableJump(e_ij, r_ij, pos_[index_i], F_[index_i], pos_[index_j], F_[index_j]);
+					Vecd pos_jump = getLinearVariableJump(e_ij, r_ij, pos_[index_i],
+					transformation_matrix_[index_i].transpose() * F_[index_i] * transformation_matrix_[index_i],
+					pos_[index_j],
+					transformation_matrix_[index_i].transpose() * F_[index_j] * transformation_matrix_[index_i]);
 					acceleration += hourglass_control_factor_ * weight * E0_ * pos_jump * dim_inv_r_ij * 
 									inner_neighborhood.dW_ijV_j_[n] * thickness_[index_i];
 

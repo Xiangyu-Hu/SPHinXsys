@@ -86,7 +86,7 @@ Real get_physical_viscosity_general(Real rho, Real youngs_modulus, Real length_s
 	return shape_constant/ 4.0 * std::sqrt(rho * youngs_modulus) * length_scale;
 }
 
-void sphere_compression(bool half_sphere, int dp_ratio, Real pressure, Real gravity_z)
+void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 {
 	// main geometric parameters
 	Real scale = 1;
@@ -102,20 +102,18 @@ void sphere_compression(bool half_sphere, int dp_ratio, Real pressure, Real grav
 	Real rho = 1e3 * std::pow(unit_mm, 3);
 	Real E = 5e7 * std::pow(unit_mm, 2);
 	Real mu = 0.3;
-	auto material = makeShared<LinearElasticSolid>(rho, E, mu); // NeoHookean always locks one particle with excessive strain
+	auto material = makeShared<SaintVenantKirchhoffSolid>(rho, E, mu); // NeoHookean always locks one particle with excessive strain
 	Real physical_viscosity = 7e3;
 	std::cout << "physical_viscosity: " << physical_viscosity << std::endl;
 	physical_viscosity = get_physical_viscosity_general(rho, E, thickness);
 	std::cout << "physical_viscosity: " << physical_viscosity << std::endl;
 	// pressure
-	Vec3d gravity = gravity_z*Vec3d(0,0,1)/unit_mm;
+	Vec3d gravity = gravity_z*Vec3d(1,0,0)/unit_mm;
 	// system bounding box
 	BoundingBox bb_system;
 
 	// generating particles from predefined positions from obj file
-	StdVec<Vec3d> obj_vertices;
-	if(half_sphere) obj_vertices = read_obj_vertices("input/shell_sphere_half_" + std::to_string(dp_ratio) + ".txt");
-	else obj_vertices = read_obj_vertices("input/shell_sphere_" + std::to_string(dp_ratio) + ".txt");
+	StdVec<Vec3d> obj_vertices = read_obj_vertices("input/shell_sphere_half_" + std::to_string(dp_ratio) + ".txt");
 	std::for_each(obj_vertices.begin(), obj_vertices.end(), [&](Vec3d &vec){ vec *= scale; });
 	Real particle_area = total_area / obj_vertices.size();
 	// find out BoundingBox
@@ -143,7 +141,7 @@ void sphere_compression(bool half_sphere, int dp_ratio, Real pressure, Real grav
 	SimpleDynamics<TimeStepInitialization> initialize_external_force(shell_body, makeShared<Gravity>(gravity));
 	InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(shell_body_inner);
 	ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(shell_body);
-	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(shell_body_inner, 3, false);
+	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(shell_body_inner, 3, true);
 	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(shell_body_inner);
 
 	// pressure boundary condition
@@ -215,7 +213,7 @@ void sphere_compression(bool half_sphere, int dp_ratio, Real pressure, Real grav
 	GlobalStaticVariables::physical_time_ = 0.0;
 	int ite = 0;
 	Real end_time = 1;
-	Real output_period = end_time / 100.0;
+	Real output_period = end_time / 25.0;
 	Real dt = 0.0;
 	tick_count t1 = tick_count::now();
 	/**
@@ -241,17 +239,17 @@ void sphere_compression(bool half_sphere, int dp_ratio, Real pressure, Real grav
 				initialize_external_force.parallel_exec(dt);
 				if (pressure > TinyReal) apply_pressure();
 
-				dt = std::min(thickness/dp, 0.5) * computing_time_step_size.parallel_exec();
+				dt = 0.5 * computing_time_step_size.parallel_exec();
 				{// checking for excessive time step reduction
 					if (dt > max_dt) max_dt = dt;
 					if (dt < max_dt/1e3) throw std::runtime_error("time step decreased too much, iteration: " + std::to_string(ite));
 				}
 				
 				stress_relaxation_first_half.parallel_exec(dt);
-				if(half_sphere) constrain_holder.parallel_exec();
+				constrain_holder.parallel_exec();
 				shell_velocity_damping.parallel_exec(dt);
 				shell_rotation_damping.parallel_exec(dt);
-				if(half_sphere) constrain_holder.parallel_exec();
+				constrain_holder.parallel_exec();
 				stress_relaxation_second_half.parallel_exec(dt);
 
 				++ite;
@@ -296,10 +294,10 @@ TEST(sphere_compression, half_sphere)
 	fs::remove_all("output");
 	fs::create_directory("output");
 
-	int dp_ratio = 2;
+	int dp_ratio = 1;
 	Real pressure = 0; // Pa
 	Real gravity_z = -9.8066; // m/s
-	sphere_compression(true, dp_ratio, pressure, gravity_z);
+	EXPECT_NO_THROW(sphere_compression(dp_ratio, pressure, gravity_z));
 }
 
 // TEST(sphere_compression, dp_1)
@@ -310,23 +308,11 @@ TEST(sphere_compression, half_sphere)
 // 	int dp_ratio = 2;
 // 	Real pressure = 1e5; // Pa
 // 	Real gravity_z = 0; // m/s
-// 	sphere_compression(true, dp_ratio, pressure, gravity_z);
+// 	EXPECT_NO_THROW(sphere_compression(dp_ratio, pressure, gravity_z));
 // }
-
-TEST(sphere_compression, sphere)
-{
-	fs::remove_all("output");
-	fs::create_directory("output");
-
-	int dp_ratio = 2;
-	Real pressure = 1e3; // Pa
-	Real gravity_z = 0; // m/s
-	sphere_compression(false, dp_ratio, pressure, gravity_z);
-}
 
 int main(int argc, char* argv[])
 {	
 	testing::InitGoogleTest(&argc, argv);
-	testing::GTEST_FLAG(filter) = "sphere_compression.half_sphere";
 	return RUN_ALL_TESTS();
 }
