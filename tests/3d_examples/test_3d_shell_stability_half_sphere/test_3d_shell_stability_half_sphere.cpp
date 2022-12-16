@@ -31,7 +31,7 @@ public:
 		{
 			Vec3d center_to_pos = pos-center_;
 			initializePositionAndVolumetricMeasure(pos, particel_area_);
-			initializeSurfaceProperties(center_to_pos.normalize(), thickness_);
+			initializeSurfaceProperties(center_to_pos.normalized(), thickness_);
 		}
 	}
 };
@@ -120,10 +120,8 @@ void sphere_compression(bool half_sphere, int dp_ratio, Real pressure, Real grav
 	Real particle_area = total_area / obj_vertices.size();
 	// find out BoundingBox
 	bb_system = get_particles_bounding_box(obj_vertices);
-	bb_system.first -= Vec3d(5*scale);
-	bb_system.second += Vec3d(5*scale);
-	std::cout << "bb_system.first: " << bb_system.first << std::endl;
-	std::cout << "bb_system.second: " << bb_system.second << std::endl;
+	std::cout << "bb_system.first_: " << bb_system.first_ << std::endl;
+	std::cout << "bb_system.second_: " << bb_system.second_ << std::endl;
 
 	// shell
 	auto shell_shape = makeShared<ComplexShape>("shell_shape" + std::to_string(dp_ratio)); // keep all data for parameter study

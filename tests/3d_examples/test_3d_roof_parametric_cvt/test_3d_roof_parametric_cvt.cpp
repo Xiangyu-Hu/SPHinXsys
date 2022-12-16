@@ -66,7 +66,7 @@ public:
 			Vec3d center_to_pos = pos-center_;
 			center_to_pos[2] = 0;
 			initializePositionAndVolumetricMeasure(pos, particel_area_);
-			initializeSurfaceProperties(center_to_pos.normalize(), thickness_);
+			initializeSurfaceProperties(center_to_pos.normalized(), thickness_);
 		}
 	}
 };
@@ -122,7 +122,7 @@ VariableType interpolate_observer(
 {
 	Kernel* kernel_ptr = particles.getSPHBody().sph_adaptation_->getKernel();
 	Real smoothing_length = particles.getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
-	VariableType variable_sum(0);
+	VariableType variable_sum;
 	Real kernel_sum = 0;
 	for (auto id: neighbor_ids)
 	{
@@ -158,7 +158,7 @@ struct observer_point_shell
 			Mat3d F = (*particles.getVariableByName<Mat3d>("DeformationGradient"))[id];
 			return particles.elastic_solid_.StressPK2(F, id);
 		});
-		cauchy_stress = (1.0 / det(def_gradient)) * def_gradient * pk2_stress * ~def_gradient;
+		cauchy_stress = (1.0 / def_gradient.determinant()) * def_gradient * pk2_stress * def_gradient.transpose();
 	}
 
 	void write_data() const
@@ -170,9 +170,9 @@ struct observer_point_shell
 		std::cout << "global_shear_stress: " << global_shear_stress << std::endl;
 		std::cout << "global_stress: " << global_stress << std::endl;
 		std::cout << "pk2_stress: " << pk2_stress << std::endl;
-		std::cout << "pk2_z_dir: " << SimTK::dot(z_dir,pk2_stress*z_dir) << std::endl;
+		std::cout << "pk2_z_dir: " << z_dir.dot(pk2_stress*z_dir) << std::endl;
 		std::cout << "cauchy_stress: " << cauchy_stress << std::endl;
-		std::cout << "cauchy_z_dir: " << SimTK::dot(z_dir,cauchy_stress*z_dir) << std::endl;
+		std::cout << "cauchy_z_dir: " << z_dir.dot(cauchy_stress*z_dir) << std::endl;
 		std::cout << "===================================================" << std::endl << std::endl;
 	}
 };
@@ -301,8 +301,8 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 	auto shell_particles = dynamic_cast<ShellParticles*>(&shell_body.getBaseParticles());
 	bb_system = get_particles_bounding_box(shell_particles->pos_);
 	system.system_domain_bounds_ = bb_system;
-	std::cout << "bb_system.first: " << bb_system.first << std::endl;
-	std::cout << "bb_system.second: " << bb_system.second << std::endl;
+	std::cout << "bb_system.first_: " << bb_system.first_ << std::endl;
+	std::cout << "bb_system.second_: " << bb_system.second_ << std::endl;
 	{// recalculate the volume/area after knowing the particle positions
 		// for (auto& vol: shell_particles->Vol_) vol = total_area / shell_particles->total_real_particles_;
 		// for (auto& mass: shell_particles->mass_) mass = total_area*rho / shell_particles->total_real_particles_;
@@ -355,8 +355,8 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 	{// brute force finding the edges
 		IndexVector ids;
 		for (size_t i = 0; i < shell_body.getBaseParticles().pos_.size(); ++i)
-			if (shell_body.getBaseParticles().pos_[i][length_axis] < bb_system.first[length_axis]+dp/2 ||
-				shell_body.getBaseParticles().pos_[i][length_axis] > bb_system.second[length_axis]-dp/2)
+			if (shell_body.getBaseParticles().pos_[i][length_axis] < bb_system.first_[length_axis]+dp/2 ||
+				shell_body.getBaseParticles().pos_[i][length_axis] > bb_system.second_[length_axis]-dp/2)
 					ids.push_back(i);
 		return ids;
 	}();

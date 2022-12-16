@@ -90,7 +90,7 @@ VariableType interpolate_observer(
 {
 	Kernel* kernel_ptr = particles.getSPHBody().sph_adaptation_->getKernel();
 	Real smoothing_length = particles.getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
-	VariableType variable_sum(0);
+	VariableType variable_sum;
 	Real kernel_sum = 0;
 	for (auto id: neighbor_ids)
 	{
@@ -126,7 +126,7 @@ struct observer_point_shell
 			Mat3d F = (*particles.getVariableByName<Mat3d>("DeformationGradient"))[id];
 			return particles.elastic_solid_.StressPK2(F, id);
 		});
-		cauchy_stress = (1.0 / det(def_gradient)) * def_gradient * pk2_stress * ~def_gradient;
+		cauchy_stress = (1.0 / def_gradient.determinant()) * def_gradient * pk2_stress * def_gradient.transpose();
 	}
 
 	void write_data() const
@@ -138,9 +138,9 @@ struct observer_point_shell
 		std::cout << "global_shear_stress: " << global_shear_stress << std::endl;
 		std::cout << "global_stress: " << global_stress << std::endl;
 		std::cout << "pk2_stress: " << pk2_stress << std::endl;
-		std::cout << "pk2_z_dir: " << SimTK::dot(z_dir,pk2_stress*z_dir) << std::endl;
+		std::cout << "pk2_z_dir: " << z_dir.dot(pk2_stress*z_dir) << std::endl;
 		std::cout << "cauchy_stress: " << cauchy_stress << std::endl;
-		std::cout << "cauchy_z_dir: " << SimTK::dot(z_dir,cauchy_stress*z_dir) << std::endl;
+		std::cout << "cauchy_z_dir: " << z_dir.dot(cauchy_stress*z_dir) << std::endl;
 		std::cout << "===================================================" << std::endl << std::endl;
 	}
 };
@@ -209,8 +209,8 @@ return_data bending_circular_plate(Real dp_ratio)
 	Real particle_area = total_area / obj_vertices.size();
 	// find out BoundingBox
 	bb_system = get_particles_bounding_box(obj_vertices);
-	std::cout << "bb_system.first: " << bb_system.first << std::endl;
-	std::cout << "bb_system.second: " << bb_system.second << std::endl;
+	std::cout << "bb_system.first_: " << bb_system.first_ << std::endl;
+	std::cout << "bb_system.second_: " << bb_system.second_ << std::endl;
 
 	// shell
 	auto shell_shape = makeShared<ComplexShape>("shell_shape" + std::to_string(int(dp_ratio*1e3))); // keep all data for parameter study
