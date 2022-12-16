@@ -30,8 +30,8 @@ public:
 	explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
 	{
 		Vecd halfsize_water(0.5 * LL, 0.5 * LH, 0.5 * LW);
-		SimTK::Transform translation_water(halfsize_water);
-		add<TransformShape<GeometricShapeBox>>(translation_water, halfsize_water);
+		Transformd translation_water(halfsize_water);
+		add<TransformShape<GeometricShapeBox>>(Transformd(translation_water), halfsize_water);
 	}
 };
 //	define the static solid wall boundary shape
@@ -42,9 +42,9 @@ public:
 	{
 		Vecd halfsize_outer(0.5 * DL + BW, 0.5 * DH + BW, 0.5 * DW + BW);
 		Vecd halfsize_inner(0.5 * DL, 0.5 * DH, 0.5 * DW);
-		SimTK::Transform translation_wall(halfsize_inner);
-		add<TransformShape<GeometricShapeBox>>(translation_wall, halfsize_outer);
-		subtract<TransformShape<GeometricShapeBox>>(translation_wall, halfsize_inner);
+		Transformd translation_wall(halfsize_inner);
+		add<TransformShape<GeometricShapeBox>>(Transformd(translation_wall), halfsize_outer);
+		subtract<TransformShape<GeometricShapeBox>>(Transformd(translation_wall), halfsize_inner);
 	}
 };
 
@@ -126,7 +126,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
-	size_t number_of_iterations = system.restart_step_;
+	size_t number_of_iterations = system.RestartStep();
 	int screen_output_interval = 100;
 	Real end_time = 20.0;
 	Real output_interval = end_time / 20.0;

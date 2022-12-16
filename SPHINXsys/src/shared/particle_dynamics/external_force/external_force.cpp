@@ -1,9 +1,5 @@
-/**
- * @file 	external_force.cpp
- * @author	Luhui Han, Chi Zhang and Xiangyu Hu
- */
 #include "external_force.h"
-//=================================================================================================//
+
 namespace SPH {
 //=================================================================================================//
 	ExternalForce::ExternalForce() {}
@@ -19,7 +15,7 @@ namespace SPH {
 	//=================================================================================================//
 	Real Gravity::getPotential(Vecd& position)
 	{
-		return dot(InducedAcceleration(position), zero_potential_reference_ - position);
+		return InducedAcceleration(position).dot(zero_potential_reference_ - position);
 	}
 	//=================================================================================================//
 }

@@ -1,36 +1,25 @@
-/**
- * @file 	loading_dynamics.cpp
- * @author	Luhui Han, Chi Zhang and Xiangyu Hu
- */
-
 #include "loading_dynamics.h"
 #include "general_dynamics.h"
 
 #include <numeric>
 
-using namespace SimTK;
-
 namespace SPH
 {
+	//=====================================================================================================//
 	namespace solid_dynamics
 	{
 		//=================================================================================================//
 		ImposeExternalForce::ImposeExternalForce(SPHBody &sph_body)
-			: LocalDynamics(sph_body), SolidDataSimple(sph_body),
-			  pos0_(particles_->pos0_), vel_(particles_->vel_) {}
+			: LocalDynamics(sph_body), SolidDataSimple(sph_body), pos0_(particles_->pos0_), vel_(particles_->vel_) {}
 		//=================================================================================================//
 		void ImposeExternalForce::update(size_t index_i, Real dt)
 		{
 			vel_[index_i] += dt * getAcceleration(pos0_[index_i]);
 		}
 		//=================================================================================================//
-		SpringDamperConstraintParticleWise::
-			SpringDamperConstraintParticleWise(SPHBody &sph_body, Vecd stiffness, Real damping_ratio)
-			: LocalDynamics(sph_body), SolidDataSimple(sph_body),
-			  pos_(particles_->pos_),
-			  pos0_(particles_->pos0_),
-			  vel_(particles_->vel_),
-			  acc_prior_(particles_->acc_prior_)
+		SpringDamperConstraintParticleWise::SpringDamperConstraintParticleWise(SPHBody &sph_body, Vecd stiffness, Real damping_ratio)
+			: LocalDynamics(sph_body), SolidDataSimple(sph_body), pos_(particles_->pos_), pos0_(particles_->pos0_),
+			  vel_(particles_->vel_), acc_prior_(particles_->acc_prior_)
 		{
 			// scale stiffness and damping by mass here, so it's not necessary in each iteration
 			stiffness_ = stiffness / std::accumulate(&particles_->mass_[0], &particles_->mass_[particles_->total_real_particles_], 0.0);
@@ -39,7 +28,7 @@ namespace SPH
 		//=================================================================================================//
 		Vecd SpringDamperConstraintParticleWise::getSpringForce(size_t index_i, Vecd &disp)
 		{
-			Vecd spring_force(0);
+			Vecd spring_force = Vecd::Zero();
 			for (int i = 0; i < disp.size(); i++)
 			{
 				spring_force[i] = -stiffness_[i] * disp[i];
@@ -49,7 +38,7 @@ namespace SPH
 		//=================================================================================================//
 		Vecd SpringDamperConstraintParticleWise::getDampingForce(size_t index_i)
 		{
-			Vecd damping_force(0);
+			Vecd damping_force = Vecd::Zero();
 			for (int i = 0; i < vel_[index_i].size(); i++)
 			{
 				damping_force[i] = -damping_coeff_[i] * vel_[index_i][i];
@@ -64,29 +53,19 @@ namespace SPH
 			acc_prior_[index_i] += getDampingForce(index_i);
 		}
 		//=================================================================================================//
-		SpringNormalOnSurfaceParticles::
-			SpringNormalOnSurfaceParticles(SPHBody &sph_body, bool outer_surface,
+		SpringNormalOnSurfaceParticles::SpringNormalOnSurfaceParticles(SPHBody &sph_body, bool outer_surface,
 										   Vecd source_point, Real stiffness, Real damping_ratio)
-			: LocalDynamics(sph_body), SolidDataSimple(sph_body),
-			  pos_(particles_->pos_),
-			  pos0_(particles_->pos0_),
-			  n_(particles_->n_),
-			  n0_(particles_->n0_),
-			  vel_(particles_->vel_),
-			  acc_prior_(particles_->acc_prior_),
-			  mass_(particles_->mass_),
+			: LocalDynamics(sph_body), SolidDataSimple(sph_body),pos_(particles_->pos_),
+			  pos0_(particles_->pos0_), n_(particles_->n_), n0_(particles_->n0_), vel_(particles_->vel_),
+			  acc_prior_(particles_->acc_prior_), mass_(particles_->mass_),
 			  apply_spring_force_to_particle_(StdLargeVec<bool>(pos0_.size(), false))
 		{
-			// get the surface layer of particles
 			BodySurface surface_layer(sph_body);
-			// select which particles the spring is applied to
+			
 			for (size_t particle_i : surface_layer.body_part_particles_)
 			{
-				// vector to the source point from the particle
 				Vecd vector_to_particle = source_point - pos0_[particle_i];
-				// normal of the particle
 				Vecd normal = n0_[particle_i];
-				// get the cos of the angle between the vector and the normal
 				Real cos_theta = getCosineOfAngleBetweenTwoVectors(vector_to_particle, normal);
 				// if outer surface, the normals close an angle greater than 90°
 				// if the angle is greater than 90°, we apply the spring force to the surface particle
@@ -111,11 +90,8 @@ namespace SPH
 		//=================================================================================================//
 		Vecd SpringNormalOnSurfaceParticles::getSpringForce(size_t index_i, Vecd disp)
 		{
-			// normal of the particle
 			Vecd normal = particles_->n0_[index_i];
-			// get the normal portion of the displacement, which is parallel to the normal of particles, meaning it is the normal vector * scalar
 			Vecd normal_disp = getVectorProjectionOfVector(disp, normal);
-
 			Vecd spring_force_vector = -stiffness_ * normal_disp;
 
 			return spring_force_vector;
@@ -123,13 +99,9 @@ namespace SPH
 		//=================================================================================================//
 		Vecd SpringNormalOnSurfaceParticles::getDampingForce(size_t index_i)
 		{
-			// normal of the particle
 			Vecd normal = particles_->n0_[index_i];
-			// velocity of the particle
 			Vecd velocity_n = vel_[index_i];
-			// get the normal portion of the velocity, which is parallel to the normal of particles, meaning it is the normal vector * scalar
 			Vecd normal_vel = getVectorProjectionOfVector(velocity_n, normal);
-
 			Vecd damping_force_vector = -damping_coeff_ * normal_vel;
 
 			return damping_force_vector;
@@ -145,17 +117,11 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		SpringOnSurfaceParticles::
-			SpringOnSurfaceParticles(SPHBody &sph_body, Real stiffness, Real damping_ratio)
-			: LocalDynamics(sph_body), SolidDataSimple(sph_body),
-			  pos_(particles_->pos_),
-			  pos0_(particles_->pos0_),
-			  vel_(particles_->vel_),
-			  acc_prior_(particles_->acc_prior_),
-			  mass_(particles_->mass_),
+		SpringOnSurfaceParticles::SpringOnSurfaceParticles(SPHBody &sph_body, Real stiffness, Real damping_ratio)
+			: LocalDynamics(sph_body), SolidDataSimple(sph_body), pos_(particles_->pos_), pos0_(particles_->pos0_),
+			  vel_(particles_->vel_), acc_prior_(particles_->acc_prior_), mass_(particles_->mass_),
 			  apply_spring_force_to_particle_(StdLargeVec<bool>(pos0_.size(), false))
 		{
-			// get the surface layer of particles
 			BodySurface surface_layer(sph_body);
 			// select which particles the spring is applied to
 			// if the particle is in the surface layer, the force is applied
@@ -185,13 +151,9 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		AccelerationForBodyPartInBoundingBox::
-			AccelerationForBodyPartInBoundingBox(SPHBody &sph_body, BoundingBox &bounding_box, Vecd acceleration)
-			: LocalDynamics(sph_body), SolidDataSimple(sph_body),
-			  pos_(particles_->pos_),
-			  acc_prior_(particles_->acc_prior_),
-			  bounding_box_(bounding_box),
-			  acceleration_(acceleration) {}
+		AccelerationForBodyPartInBoundingBox::AccelerationForBodyPartInBoundingBox(SPHBody &sph_body, BoundingBox &bounding_box, Vecd acceleration)
+			: LocalDynamics(sph_body), SolidDataSimple(sph_body), pos_(particles_->pos_),
+			  acc_prior_(particles_->acc_prior_), bounding_box_(bounding_box), acceleration_(acceleration) {}
 		//=================================================================================================//
 		void AccelerationForBodyPartInBoundingBox::update(size_t index_i, Real dt)
 		{
@@ -201,13 +163,10 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		ForceInBodyRegion::
-			ForceInBodyRegion(BodyPartByParticle &body_part, Vecd force, Real end_time)
+		ForceInBodyRegion:: ForceInBodyRegion(BodyPartByParticle &body_part, Vecd force, Real end_time)
 			: LocalDynamics(body_part.getSPHBody()), SolidDataSimple(sph_body_),
-			  pos0_(particles_->pos0_), acc_prior_(particles_->acc_prior_),
-			  acceleration_(0), end_time_(end_time)
+			  pos0_(particles_->pos0_), acc_prior_(particles_->acc_prior_), acceleration_(Vecd::Zero()), end_time_(end_time)
 		{
-			// calculate acceleration: force / total mass
 			Real total_mass_in_region(0);
 			for (size_t particle_i : body_part.body_part_particles_)
 				total_mass_in_region += particles_->mass_[particle_i];
@@ -220,27 +179,19 @@ namespace SPH
 			acc_prior_[index_i] = acceleration_ * time_factor;
 		}
 		//=================================================================================================//
-		SurfacePressureFromSource::
-			SurfacePressureFromSource(BodyPartByParticle &body_part, Vecd source_point, StdVec<std::array<Real, 2>> pressure_over_time)
+		SurfacePressureFromSource:: SurfacePressureFromSource(BodyPartByParticle &body_part, Vecd source_point, 
+															  StdVec<std::array<Real, 2>> pressure_over_time)
 			: LocalDynamics(body_part.getSPHBody()), SolidDataSimple(sph_body_),
-			  pos0_(particles_->pos0_),
-			  n_(particles_->n_),
-			  acc_prior_(particles_->acc_prior_),
-			  mass_(particles_->mass_),
-			  pressure_over_time_(pressure_over_time),
-			  // set apply_pressure_to_particle_ to false for each particle
+			  pos0_(particles_->pos0_), n_(particles_->n_), acc_prior_(particles_->acc_prior_),
+			  mass_(particles_->mass_), pressure_over_time_(pressure_over_time),
 			  apply_pressure_to_particle_(StdLargeVec<bool>(pos0_.size(), false))
 		{
-			// get the surface layer of particles
 			BodySurface surface_layer(sph_body_);
-			// select which particles the pressure is applied to
+
 			for (size_t particle_i : surface_layer.body_part_particles_)
 			{
-				// vector to the source point from the particle
 				Vecd vector_to_particle = source_point - particles_->pos0_[particle_i];
-				// normal of the particle
 				Vecd normal = particles_->n0_[particle_i];
-				// get the cos of the angle between the vector and the normal
 				Real cos_theta = getCosineOfAngleBetweenTwoVectors(vector_to_particle, normal);
 				// if the angle is less than 90°, we apply the pressure to the surface particle
 				// ignore exactly perpendicular surfaces
@@ -259,7 +210,6 @@ namespace SPH
 				return pressure_over_time_[pressure_over_time_.size() - 1][1];
 
 			int interval = 0;
-			// find out the interval
 			for (size_t i = 0; i < pressure_over_time_.size(); i++)
 			{
 				if (GlobalStaticVariables::physical_time_ < pressure_over_time_[i][0])
@@ -284,8 +234,6 @@ namespace SPH
 		{
 			if (apply_pressure_to_particle_[index_i])
 			{
-				// get the surface area of the particle, assuming it has a cubic volume
-				// acceleration is particle force / particle mass
 				Real area = std::pow(particles_->Vol_[index_i], 2.0 / 3.0);
 				Real acc_from_pressure = getPressure() * area / mass_[index_i];
 				// vector is made by multiplying it with the surface normal

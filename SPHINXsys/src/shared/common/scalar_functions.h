@@ -1,25 +1,30 @@
 /* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
+/**
+ * @file 	scalar_functions.h
+ * @brief 	Base scalar function definition.  
+ * @author	Chi ZHang and Xiangyu Hu
+ */
 #ifndef SCALAR_FUNCTIONS_H
 #define SCALAR_FUNCTIONS_H
 
@@ -42,7 +47,6 @@ namespace SPH {
 		return x * x * x;
 	}
 
-	//Get the nth power
 	template<class T>
 	T powerN(const T& a, int n)
 	{
@@ -52,7 +56,6 @@ namespace SPH {
 		return res;
 	}
 
-	//Get the minimum
 	template<class T>
 	inline T SMIN(T a1, T a2)
 	{
@@ -83,7 +86,6 @@ namespace SPH {
 		return SMIN(SMIN(a1, a2), SMIN(a3, a4), SMIN(a5, a6));
 	}
 
-	//Get the maximum
 	template<class T>
 	inline T SMAX(T a1, T a2)
 	{
@@ -132,7 +134,6 @@ namespace SPH {
 		}
 	}
 
-	//Get the absolute
 	template<class T>
 	inline T ABS(const T& x)
 	{
@@ -144,6 +145,7 @@ namespace SPH {
 	{
 		return (x < 0) ? -1 : ((x > 0) ? 1 : 0);
 	}
+	
 	/** Heaviside step function */
 	template<class T>
 	inline T HSF(const T& x)

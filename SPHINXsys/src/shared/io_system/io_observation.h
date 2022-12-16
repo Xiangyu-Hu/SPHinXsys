@@ -10,7 +10,7 @@
  *                                                                              *
  * SPHinXsys is partially funded by German Research Foundation                  *
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
- * HU1527/12-1 and HU1527/12-4.                                                 *
+ * HU1527/12-1 and HU1527/12-4	.                                                 *
  *                                                                              *
  * Portions copyright (c) 2017-2022 Technical University of Munich and          *
  * the authors' affiliations.                                                   *
@@ -38,7 +38,7 @@ namespace SPH
 	 */
 	template <typename VariableType>
 	class ObservedQuantityRecording : public BodyStatesRecording,
-									  public observer_dynamics::ObservingAQuantity<VariableType>
+									  public ObservingAQuantity<VariableType>
 	{
 	protected:
 		SPHBody &observer_;
@@ -55,7 +55,7 @@ namespace SPH
 		ObservedQuantityRecording(const std::string &quantity_name, IOEnvironment &io_environment,
 								  BaseContactRelation &contact_relation)
 			: BodyStatesRecording(io_environment, contact_relation.sph_body_),
-			  observer_dynamics::ObservingAQuantity<VariableType>(contact_relation, quantity_name),
+			  ObservingAQuantity<VariableType>(contact_relation, quantity_name),
 			  observer_(contact_relation.sph_body_), plt_engine_(),
 			  base_particles_(observer_.getBaseParticles()), 
 			  dynamics_range_name_(contact_relation.sph_body_.getName()),

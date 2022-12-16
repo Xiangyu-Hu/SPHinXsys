@@ -1,13 +1,36 @@
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
- * @file 	ensemble_averaged_method.cpp
- * @author	Bo Zhang and Xiangyu Hu
+ * @file 	ensemble_averaged_method.hpp
+ * @brief 	Classes for the comparison between validated and tested results
+          	with ensemble-averaged mean value and variance method.
+ * @author	Bo Zhang , Chi ZHang and Xiangyu Hu
  */
 
 #pragma once
 
 #include "ensemble_averaged_method.h"
 
- //=================================================================================================//
 namespace SPH
 {
 	//=================================================================================================//
@@ -18,9 +41,13 @@ namespace SPH
 		for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
 			for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
 				for (int run_index = 0; run_index != this->number_of_run_; ++run_index)
-					variance_new[snapshot_index][observation_index] = SMAX(variance[snapshot_index][observation_index], variance_new[snapshot_index][observation_index],
-						std::pow((result[run_index][snapshot_index][observation_index] - meanvalue_new[snapshot_index][observation_index]), 2), std::pow(meanvalue_new[snapshot_index][observation_index] * 1.0e-2, 2));
-	}
+				{
+					variance_new[snapshot_index][observation_index] += SMAX(variance[snapshot_index][observation_index], 
+						variance_new[snapshot_index][observation_index],
+						std::pow((result[run_index][snapshot_index][observation_index] - meanvalue_new[snapshot_index][observation_index]), 2), 
+						std::pow(meanvalue_new[snapshot_index][observation_index] * 1.0e-2, 2) );
+				}
+	};
 	//=================================================================================================//
 	template<class ObserveMethodType>
 	void RegressionTestEnsembleAveraged<ObserveMethodType>::calculateNewVariance(TripleVec<Vecd> &result, 
@@ -29,11 +56,14 @@ namespace SPH
 		for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index) 
 			for (int observation_index = 0; observation_index != this->observation_; ++observation_index) 
 				for (int run_index = 0; run_index != this->number_of_run_; ++run_index) 
-					for (int dimension_index = 0; dimension_index != variance[0][0].size(); ++dimension_index) 
-						variance_new[snapshot_index][observation_index][dimension_index] = SMAX(variance[snapshot_index][observation_index][dimension_index], variance_new[snapshot_index][observation_index][dimension_index],
-							std::pow((result[run_index][snapshot_index][observation_index][dimension_index] - meanvalue_new[snapshot_index][observation_index][dimension_index]), 2),
-							std::pow(meanvalue_new[snapshot_index][observation_index][dimension_index] * 1.0e-2, 2));
-	}
+					for (int i = 0; i != variance[0][0].size(); ++i)
+					{
+						variance_new[snapshot_index][observation_index][i] = SMAX(variance[snapshot_index][observation_index][i], 
+							variance_new[snapshot_index][observation_index][i],
+							std::pow((result[run_index][snapshot_index][observation_index][i] - meanvalue_new[snapshot_index][observation_index][i]), 2),
+							std::pow(meanvalue_new[snapshot_index][observation_index][i] * 1.0e-2, 2) );
+					}
+	};
 	//=================================================================================================//
 	template<class ObserveMethodType>
 	void RegressionTestEnsembleAveraged<ObserveMethodType>::calculateNewVariance(TripleVec<Matd> &result,
@@ -42,12 +72,15 @@ namespace SPH
 		for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
 			for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
 				for (int run_index = 0; run_index != this->number_of_run_; ++run_index)
-					for (size_t dimension_index_i = 0; dimension_index_i != variance[0][0].size(); ++dimension_index_i)
-						for (size_t dimension_index_j = 0; dimension_index_j != variance[0][0].size(); ++dimension_index_j)
-							variance_new[snapshot_index][observation_index][dimension_index_i][dimension_index_j] = SMAX(variance[snapshot_index][observation_index][dimension_index_i][dimension_index_j], variance_new[snapshot_index][observation_index][dimension_index_i][dimension_index_j],
-								std::pow((result[run_index][snapshot_index][observation_index][dimension_index_i][dimension_index_j] - meanvalue_new[snapshot_index][observation_index][dimension_index_i][dimension_index_j]), 2),
-								std::pow(meanvalue_new[snapshot_index][observation_index][dimension_index_i][dimension_index_j] * 1.0e-2, 2));
-	}
+					for (size_t i = 0; i != variance[0][0].size(); ++i)
+						for (size_t j = 0; j != variance[0][0].size(); ++j)
+						{
+							variance_new[snapshot_index][observation_index](i,j) = SMAX(variance[snapshot_index][observation_index](i,j), 
+								variance_new[snapshot_index][observation_index](i,j),
+								std::pow((result[run_index][snapshot_index][observation_index](i,j) - meanvalue_new[snapshot_index][observation_index](i,j)), 2),
+								std::pow(meanvalue_new[snapshot_index][observation_index](i,j) * 1.0e-2, 2));
+						}
+	};
 	//=================================================================================================//
 	template<class ObserveMethodType>
 	int RegressionTestEnsembleAveraged<ObserveMethodType>::compareParameter(std::string par_name, 
@@ -57,7 +90,8 @@ namespace SPH
 		for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index) 
 			for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
 			{
-				Real relative_value_ = ABS((parameter[snapshot_index][observation_index] - parameter_new[snapshot_index][observation_index]) / (parameter_new[snapshot_index][observation_index] + TinyReal));
+				Real relative_value_ = ABS( (parameter[snapshot_index][observation_index] - parameter_new[snapshot_index][observation_index]) / 
+										    (parameter_new[snapshot_index][observation_index] + TinyReal) );
 				if (relative_value_ > threshold)
 				{
 					std::cout << par_name << ": " << this->quantity_name_ << "[" << observation_index << "] in " << this->element_tag_[snapshot_index]
@@ -75,13 +109,14 @@ namespace SPH
 		int count = 0;
 		for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index) 
 			for (int observation_index = 0; observation_index != this->observation_; ++observation_index) 
-				for (int dimension_index = 0; dimension_index != parameter[0][0].size(); ++dimension_index)
+				for (int i = 0; i != parameter[0][0].size(); ++i)
 				{
-					Real relative_value_ = ABS((parameter[snapshot_index][observation_index][dimension_index] - parameter_new[snapshot_index][observation_index][dimension_index]) / (parameter_new[snapshot_index][observation_index][dimension_index] + TinyReal));
-					if (relative_value_ > threshold[dimension_index])
+					Real relative_value_ = ABS( (parameter[snapshot_index][observation_index][i] - parameter_new[snapshot_index][observation_index][i]) / 
+												(parameter_new[snapshot_index][observation_index][i] + TinyReal) );
+					if (relative_value_ > threshold[i])
 					{
-						std::cout << par_name << ": " << this->quantity_name_ << "[" << observation_index << "][" << dimension_index << "] in " << this->element_tag_[snapshot_index]
-							<< " is not converged, and difference is " << relative_value_ << std::endl;
+						std::cout << par_name << ": " << this->quantity_name_ << "[" << observation_index << "][" << i << "] in " << this->element_tag_[snapshot_index]
+							<< " is not converged, and difference is " << relative_value_ << endl;
 						count++;
 					}
 				}
@@ -95,15 +130,15 @@ namespace SPH
 		int count = 0;
 		for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
 			for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
-				for (int dimension_index_i = 0; dimension_index_i != parameter[0][0].size(); ++dimension_index_i)
-					for (int dimension_index_j = 0; dimension_index_j != parameter[0][0].size(); ++dimension_index_j)
+				for (int i = 0; i != parameter[0][0].size(); ++i)
+					for (int j = 0; j != parameter[0][0].size(); ++j)
 					{
-						Real relative_value_ = ABS(parameter[snapshot_index][observation_index][dimension_index_i][dimension_index_j] - parameter_new[snapshot_index][observation_index][dimension_index_i][dimension_index_j])
-							/ (parameter_new[snapshot_index][observation_index][dimension_index_i][dimension_index_j] + TinyReal);
-						if (relative_value_ > threshold[dimension_index_i][dimension_index_j])
+						Real relative_value_ = ABS(parameter[snapshot_index][observation_index](i,j) - parameter_new[snapshot_index][observation_index](i,j))
+							/ (parameter_new[snapshot_index][observation_index](i,j) + TinyReal);
+						if (relative_value_ > threshold(i,j))
 						{
-							std::cout << par_name << ": " << this->quantity_name_ << "[" << observation_index << "][" << dimension_index_i << "][" << dimension_index_j << " ] in "
-								<< this->element_tag_[snapshot_index] << " is not converged, and difference is " << relative_value_ << std::endl;
+							std::cout << par_name << ": " << this->quantity_name_ << "[" << observation_index << "][" << i << "][" << j << " ] in "
+								<< this->element_tag_[snapshot_index] << " is not converged, and difference is " << relative_value_ << endl;
 							count++;
 						}
 					}
@@ -119,7 +154,8 @@ namespace SPH
 		{
 			for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
 			{
-				Real relative_value_ = (std::pow(current_result[snapshot_index][observation_index] - meanvalue[snapshot_index + diff][observation_index], 2) - variance[snapshot_index + diff][observation_index]) / variance[snapshot_index + diff][observation_index];
+				Real relative_value_ = (std::pow(current_result[snapshot_index][observation_index] - meanvalue[snapshot_index + diff][observation_index], 2) - 
+										variance[snapshot_index + diff][observation_index]) / (variance[snapshot_index + diff][observation_index] + TinyReal);
 				if (relative_value_ > 0.01)
 				{
 					std::cout << this->quantity_name_ << "[" << observation_index << "] in " << this->element_tag_[snapshot_index] << " is beyond the exception, and difference is "
@@ -140,13 +176,18 @@ namespace SPH
 		{
 			for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
 			{
-				for (int dimension_index = 0; dimension_index != meanvalue[0][0].size(); ++dimension_index)
+				for (int i = 0; i != meanvalue[0][0].size(); ++i)
 				{
-					Real relative_value_ = (std::pow(current_result[snapshot_index][observation_index][dimension_index] - meanvalue[snapshot_index + diff][observation_index][dimension_index], 2) - variance[snapshot_index + diff][observation_index][dimension_index]) / variance[snapshot_index + diff][observation_index][dimension_index];
+					Real relative_value_ = (std::pow(current_result[snapshot_index][observation_index][i] - meanvalue[snapshot_index + diff][observation_index][i], 2) - 
+											variance[snapshot_index + diff][observation_index][i]) / (variance[snapshot_index + diff][observation_index][i] + TinyReal);
 					if (relative_value_ > 0.01)
 					{
-						std::cout << this->quantity_name_ << "[" << observation_index << "][" << dimension_index << "] in " << this->element_tag_[snapshot_index] << " is beyond the exception, and difference is "
-							<< relative_value_ << std::endl;
+						std::cout << this->quantity_name_ << "[" << observation_index << "][" << i << "] in " << this->element_tag_[snapshot_index] << 
+									" is beyond the exception, and difference is "
+							<< relative_value_ << endl;
+						std::cout << "Current: " << current_result[snapshot_index][observation_index][i] << endl;
+						std::cout << "Mean " << meanvalue[snapshot_index + diff][observation_index][i] << endl;
+						std::cout << "Variance" << variance[snapshot_index + diff][observation_index][i] << endl;
 						count++;
 					}
 				}
@@ -165,15 +206,17 @@ namespace SPH
 		{
 			for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
 			{
-				for (int dimension_index_i = 0; dimension_index_i != meanvalue[0][0].size(); ++dimension_index_i)
+				for (int i = 0; i != meanvalue[0][0].size(); ++i)
 				{
-					for (int dimension_index_j = 0; dimension_index_j != meanvalue[0][0].size(); ++dimension_index_j)
+					for (int j = 0; j != meanvalue[0][0].size(); ++j)
 					{
-						Real relative_value_ = (std::pow(current_result[snapshot_index][observation_index][dimension_index_i][dimension_index_j] - meanvalue[snapshot_index + diff][observation_index][dimension_index_i][dimension_index_j], 2) - variance[snapshot_index + diff][observation_index][dimension_index_i][dimension_index_j]) / variance[snapshot_index + diff][observation_index][dimension_index_i][dimension_index_j];
+						Real relative_value_ = ( std::pow(current_result[snapshot_index][observation_index](i,j) - 
+												meanvalue[snapshot_index + diff][observation_index](i,j), 2) - 
+												variance[snapshot_index + diff][observation_index](i,j) ) / variance[snapshot_index + diff][observation_index](i,j);
 						if (relative_value_ > 0.01)
 						{
-							std::cout << this->quantity_name_ << "[" << observation_index << "][" << dimension_index_i << "] in " << this->element_tag_[snapshot_index] << " is beyond the exception, and difference is "
-								<< relative_value_ << std::endl;
+							std::cout << this->quantity_name_ << "[" << observation_index << "][" << i << "] in " << this->element_tag_[snapshot_index] << 
+										" is beyond the exception, and difference is " << relative_value_ << endl;
 							count++;
 						}
 					}
@@ -277,7 +320,8 @@ namespace SPH
 		/** update the meanvalue of the result. */
 		for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
 			for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
-				meanvalue_new_[snapshot_index][observation_index] = (meanvalue_[snapshot_index][observation_index] * (this->number_of_run_ - 1) + this->current_result_[snapshot_index][observation_index]) / this->number_of_run_;
+				meanvalue_new_[snapshot_index][observation_index] = ( meanvalue_[snapshot_index][observation_index] * (this->number_of_run_ - 1) + 
+																	  this->current_result_[snapshot_index][observation_index] ) / this->number_of_run_;
 		/** Update the variance of the result. */
 		calculateNewVariance(this->result_, meanvalue_new_, variance_, variance_new_);
 	}

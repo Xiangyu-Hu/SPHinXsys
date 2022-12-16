@@ -64,10 +64,10 @@ public:
 		// pulling direction, i.e. positive z direction
 		Vecd normal(0, 0, 1);
 		// compute the new normal direction
-		const Vecd current_normal = ~SimTK::inverse(F_[index_i]) * normal;
+		const Vecd current_normal = F_[index_i].inverse().transpose() * normal;
 		const Real current_normal_norm = current_normal.norm();
 
-		Real J = SimTK::det(F_[index_i]);
+		Real J = F_[index_i].determinant();
 		// using Nanson’s relation to compute the new area of the surface particle.
 		// current_area * current_normal = det(F) * trans(inverse(F)) * area_0 * normal	   =>
 		// current_area = J * area_0 * norm(trans(inverse(F)) * normal)   =>
@@ -101,7 +101,7 @@ protected:
 			else if (time > force_arr_.back()[0])
 				return force_arr_.back()[1];
 		}
-        return 0;
+		return 0.0;
 	}
 };
 
@@ -140,8 +140,8 @@ int main(int ac, char *av[])
 	SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> update_beam_normal(beam_body);
 
 	/** active and passive stress relaxation. */
-	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> stress_relaxation_first_half(beam_body_inner);
-	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half(beam_body_inner);
+	Dynamics1Level<solid_dynamics::Integration1stHalf> stress_relaxation_first_half(beam_body_inner);
+	Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(beam_body_inner);
 
 	/** specify end-time for defining the force-time profile */
 	Real end_time = 1;
@@ -234,11 +234,11 @@ int main(int ac, char *av[])
 
 	if (system.generate_regression_data_)
 	{
-		write_beam_stress.generateDataBase({0.01}, {0.01});
+		write_beam_stress.generateDataBase(0.01, 0.01);
 	}
 	else
 	{
-		write_beam_stress.newResultTest(); 
+		write_beam_stress.newResultTest();
 	}
 
 	return 0;

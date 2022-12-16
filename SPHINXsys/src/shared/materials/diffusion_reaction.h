@@ -1,32 +1,31 @@
-/* -----------------------------------------------------------------------------*
- *                               SPHinXsys                                      *
- * -----------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
- * physical accurate simulation and aims to model coupled industrial dynamic    *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
- * (smoothed particle hydrodynamics), a meshless computational method using     *
- * particle discretization.                                                     *
- *                                                                              *
- * SPHinXsys is partially funded by German Research Foundation                  *
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
- * HU1527/12-1 and HU1527/12-4.                                                 *
- *                                                                              *
- * Portions copyright (c) 2017-2022 Technical University of Munich and          *
- * the authors' affiliations.                                                   *
- *                                                                              *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
- * not use this file except in compliance with the License. You may obtain a    *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
- *                                                                              *
- * -----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4												*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	diffusion_reaction.h
  * @brief 	Describe the diffusive and reaction in which
  *          the dynamics is characterized by diffusion equation and reactive source terms.
  *			Typical physical processes are diffusion, heat conduction
  *			and chemical and biological reactions.
- * @author  Xiangyu Hu, Chi Zhang
  */
 
 #ifndef DIFFUSION_REACTION_H
@@ -106,7 +105,7 @@ namespace SPH
 							 Real diff_cf, Real bias_diff_cf, Vecd bias_direction)
 			: IsotropicDiffusion(diffusion_species_index, gradient_species_index, diff_cf),
 			  bias_direction_(bias_direction), bias_diff_cf_(bias_diff_cf),
-			  transformed_diffusivity_(1.0)
+			  transformed_diffusivity_(Matd::Identity())
 		{
 			material_type_name_ = "DirectionalDiffusion";
 			initializeDirectionalDiffusivity(diff_cf, bias_diff_cf, bias_direction);
@@ -122,7 +121,7 @@ namespace SPH
 												   size_t particle_index_j, Vecd &inter_particle_direction) override
 		{
 			Vecd grad_ij = transformed_diffusivity_ * inter_particle_direction;
-			return 1.0 / grad_ij.scalarNormSqr();
+			return 1.0 / grad_ij.squaredNorm();
 		};
 	};
 
@@ -150,7 +149,7 @@ namespace SPH
 		{
 			Matd trans_diffusivity = getAverageValue(local_transformed_diffusivity_[particle_index_i], local_transformed_diffusivity_[particle_index_j]);
 			Vecd grad_ij = trans_diffusivity * inter_particle_direction;
-			return 1.0 / grad_ij.scalarNormSqr();
+			return 1.0 / grad_ij.squaredNorm();
 		};
 		virtual void assignBaseParticles(BaseParticles *base_particles) override;
 		virtual void readFromXmlForLocalParameters(const std::string &filefullpath) override;
@@ -253,8 +252,7 @@ namespace SPH
 			Real diff_coff_max = 0.0;
 			for (size_t k = 0; k < species_diffusion_.size(); ++k)
 				diff_coff_max = SMAX(diff_coff_max, species_diffusion_[k]->getReferenceDiffusivity());
-			Real dimension = Real(Vecd(0).size());
-			return 0.5 * smoothing_length * smoothing_length / diff_coff_max / dimension;
+			return 0.5 * smoothing_length * smoothing_length / diff_coff_max / Real(Dimensions);
 		};
 
 		/** Initialize a diffusion material. */

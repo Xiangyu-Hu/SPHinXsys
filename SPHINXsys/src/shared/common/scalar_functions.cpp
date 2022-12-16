@@ -1,9 +1,3 @@
-/**
- * @file 	scalar_functions.cpp
- * @author	Xiangyu Hu
- * @version	0.1
- */
-
 #include "scalar_functions.h"
 //=================================================================================================//
 namespace SPH {

@@ -1,29 +1,29 @@
-/* -----------------------------------------------------------------------------*
- *                               SPHinXsys                                      *
- * -----------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
- * physical accurate simulation and aims to model coupled industrial dynamic    *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
- * (smoothed particle hydrodynamics), a meshless computational method using     *
- * particle discretization.                                                     *
- *                                                                              *
- * SPHinXsys is partially funded by German Research Foundation                  *
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
- * HU1527/12-1 and HU1527/12-4.                                                 *
- *                                                                              *
- * Portions copyright (c) 2017-2022 Technical University of Munich and          *
- * the authors' affiliations.                                                   *
- *                                                                              *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
- * not use this file except in compliance with the License. You may obtain a    *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
- *                                                                              *
- * -----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4												*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	thin_structure_dynamics.h
  * @brief 	Here, we define the algorithm classes for thin structure dynamics.
- * @details 	We consider here a weakly compressible solids.
+ * @details We consider here a weakly compressible solids.
  * @author	Dong Wu, Chi Zhang and Xiangyu Hu
  */
 
@@ -59,7 +59,7 @@ namespace SPH
 			StdLargeVec<Vecd> &n0_, &n_, &pseudo_n_, &pos0_;
 			StdLargeVec<Matd> &transformation_matrix_;
 		};
-
+		
 		/**
 		 * @class ShellAcousticTimeStepSize
 		 * @brief Computing the acoustic time step size for shell
@@ -157,7 +157,7 @@ namespace SPH
 			StdLargeVec<Vecd> &global_shear_stress_, &n_;
 			Real smoothing_length_, E0_, G0_, nu_, hourglass_control_factor_;
 			bool hourglass_control_;
-			const Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(Vecd(0));
+			const Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(zero_vec);
 			const Real shear_correction_factor_ = 5.0 / 6.0;
 
 			const StdVec<Real> one_gaussian_point_ = { 0.0 };

@@ -146,7 +146,7 @@ int main()
 	/**
 	 * @brief 	Basic parameters.
 	 */
-	size_t number_of_iterations = system.restart_step_;
+	size_t number_of_iterations = system.RestartStep();
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
 	Real end_time = 20.0;	/**< End time. */

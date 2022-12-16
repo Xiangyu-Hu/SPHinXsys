@@ -1,7 +1,3 @@
-/**
- * @file solid_particles_variable.cpp
- * @author	Xiangyu Hu
- */
 #include "solid_particles_variable.h"
 #include "elastic_solid.h"
 
@@ -28,8 +24,7 @@ namespace SPH
         pos0_[index_i] += offset_;
     }
     //=============================================================================================//
-    TranslationAndRotation::
-        TranslationAndRotation(SPHBody &sph_body, Transformd &transform)
+    TranslationAndRotation::TranslationAndRotation(SPHBody &sph_body, Transformd &transform)
         : SolidDataSimple(sph_body), LocalDynamics(sph_body), transform_(transform),
           pos_(particles_->pos_), pos0_(particles_->pos0_) {}
     //=============================================================================================//
@@ -39,8 +34,7 @@ namespace SPH
         pos0_[index_i] = transform_.shiftFrameStationToBase(pos0_[index_i]);
     }
     //=============================================================================================//
-    NormalDirectionFromBodyShape::
-        NormalDirectionFromBodyShape(SPHBody &sph_body)
+    NormalDirectionFromBodyShape::NormalDirectionFromBodyShape(SPHBody &sph_body)
         : SolidDataSimple(sph_body), LocalDynamics(sph_body), body_shape_(*sph_body.body_shape_),
           pos_(particles_->pos_), n_(particles_->n_), n0_(particles_->n0_) {}
     //=============================================================================================//
@@ -73,7 +67,7 @@ namespace SPH
     void GreenLagrangeStrain::update(size_t index_i, Real dt)
     {
         Matd F = F_[index_i];
-        derived_variable_[index_i] = 0.5 * (~F * F - Matd(1.0));
+        derived_variable_[index_i] = 0.5 * (F.transpose() * F - Matd::Identity());
     }
     //=============================================================================================//
     VonMisesStress::VonMisesStress(SPHBody &sph_body)

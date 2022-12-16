@@ -60,7 +60,7 @@ class SolidBodyFromMesh : public SolidBody
 {
 public:
 	SolidBodyFromMesh(SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
-				  SharedPtr<SaintVenantKirchhoffSolid> material_model, StdLargeVec<Vecd> &pos_0, StdLargeVec<Real> &volume);
+				  SharedPtr<SaintVenantKirchhoffSolid> material_model, StdLargeVec<Vec3d> &pos_0, StdLargeVec<Real> &volume);
 	~SolidBodyFromMesh(){};
 };
 
@@ -72,15 +72,15 @@ private:
 
 	SimpleDynamics<NormalDirectionFromBodyShape> initial_normal_direction_;
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> correct_configuration_;
-	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> stress_relaxation_first_half_;
-	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half_;
+	Dynamics1Level<solid_dynamics::Integration1stHalf> stress_relaxation_first_half_;
+	Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half_;
 	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>> damping_random_;
 
 public:
 	// no particle reload --> direct generator
 	SolidBodyForSimulation(
 		SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
-		Real physical_viscosity, SharedPtr<SaintVenantKirchhoffSolid> material_model, StdLargeVec<Vecd> &pos_0, StdLargeVec<Real> &volume);
+		Real physical_viscosity, SharedPtr<SaintVenantKirchhoffSolid> material_model, StdLargeVec<Vec3d> &pos_0, StdLargeVec<Real> &volume);
 	~SolidBodyForSimulation(){};
 
 	SolidBodyFromMesh *getSolidBodyFromMesh() { return &solid_body_from_mesh_; };
@@ -89,8 +89,8 @@ public:
 
 	SimpleDynamics<NormalDirectionFromBodyShape> *getInitialNormalDirection() { return &initial_normal_direction_; };
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> *getCorrectConfiguration() { return &correct_configuration_; };
-	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> *getStressRelaxationFirstHalf() { return &stress_relaxation_first_half_; };
-	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> *getStressRelaxationSecondHalf() { return &stress_relaxation_second_half_; };
+	Dynamics1Level<solid_dynamics::Integration1stHalf> *getStressRelaxationFirstHalf() { return &stress_relaxation_first_half_; };
+	Dynamics1Level<solid_dynamics::Integration2ndHalf> *getStressRelaxationSecondHalf() { return &stress_relaxation_second_half_; };
 	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>> *getDampingWithRandomChoice() { return &damping_random_; };
 };
 

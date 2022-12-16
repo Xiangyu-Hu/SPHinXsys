@@ -113,7 +113,7 @@ public:
 	FreeStreamCondition(BodyPartByCell &constrained_region)
 		: fluid_dynamics::FlowVelocityBuffer(constrained_region),
 		  u_ave_(0), u_ref_(U_f), t_ref(2.0) {}
-	Vecd getTargetVelocity(Vecd &position, Vecd &velocity)
+	Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
 	{
 		return Vecd(u_ave_, 0.0);
 	}
