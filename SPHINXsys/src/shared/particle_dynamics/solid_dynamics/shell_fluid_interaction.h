@@ -104,16 +104,24 @@ namespace SPH
 			{
 				particles_->registerVariable(force_from_fluid_, "ForceFromFluid");
 
-				for (size_t k = 0; k != contact_particles_.size(); ++k)
-				{
-					contact_fluids_.push_back(&contact_particles_[k]->fluid_);
-                    riemann_solvers_.push_back(RiemannSolverType(*contact_fluids_[k], *contact_fluids_[k]));
+				contact_fluids_.reserve(contact_particles_.size());
+				riemann_solvers_.reserve(contact_particles_.size());
+				contact_rho_n_.reserve(contact_particles_.size());
+				contact_p_.reserve(contact_particles_.size());
+				contact_vel_n_.reserve(contact_particles_.size());
+				contact_acc_prior_.reserve(contact_particles_.size());
 
-					contact_rho_n_.push_back(&(contact_particles_[k]->rho_));
-                    contact_p_.push_back(&(contact_particles_[k]->p_));
-					contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
-					contact_acc_prior_.push_back(&(contact_particles_[k]->acc_prior_));
+				for (const auto& cp: contact_particles_)
+				{
+					contact_fluids_.push_back(&cp->fluid_);
+                    riemann_solvers_.push_back(RiemannSolverType(cp->fluid_, cp->fluid_));
+
+					contact_rho_n_.push_back(&(cp->rho_));
+                    contact_p_.push_back(&(cp->p_));
+					contact_vel_n_.push_back(&(cp->vel_));
+					contact_acc_prior_.push_back(&(cp->acc_prior_));
 				}
+
 			};
 			virtual ~BaseFluidPressureForceOnShell(){};
 

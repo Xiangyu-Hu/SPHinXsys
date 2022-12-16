@@ -50,13 +50,17 @@ namespace SPH
 				exit(1);
 			}
 
-			spacing_ref_ = base_body_relation.sph_body_.sph_adaptation_->ReferenceSpacing();
-			for (size_t k = 0; k != FluidShellData::contact_particles_.size(); ++k)
+			shell_thickness_.reserve(FluidShellData::contact_particles_.size());
+			shell_n_.reserve(FluidShellData::contact_particles_.size());
+			shell_vel_ave_.reserve(FluidShellData::contact_particles_.size());
+			shell_acc_ave_.reserve(FluidShellData::contact_particles_.size());
+
+			for (const auto& cp: FluidShellData::contact_particles_)
 			{
-                shell_thickness_.push_back(&(FluidShellData::contact_particles_[k]->thickness_));
-				shell_n_.push_back(&(FluidShellData::contact_particles_[k]->n_));
-				shell_vel_ave_.push_back(FluidShellData::contact_particles_[k]->AverageVelocity());
-                shell_acc_ave_.push_back(FluidShellData::contact_particles_[k]->AverageAcceleration());
+				shell_thickness_.push_back(&(cp->thickness_));
+				shell_n_.push_back(&(cp->n_));
+				shell_vel_ave_.push_back(cp->AverageVelocity());
+				shell_acc_ave_.push_back(cp->AverageAcceleration());
 			}
 		}
 		//=================================================================================================//

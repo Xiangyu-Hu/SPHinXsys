@@ -435,10 +435,8 @@ namespace SPH
 		  eta_(eta), Vol_(particles_->Vol_), mass_(particles_->mass_),
 		  variable_(*particles_->getVariableByName<VariableType>(variable_name))
 	{
-		for (size_t k = 0; k != contact_particles_.size(); ++k)
-		{
-			shell_variable_.push_back(contact_particles_[k]->template getVariableByName<VariableType>(variable_name));
-		}
+		shell_variable_.reserve(contact_particles_.size());
+		for (const auto& cp: contact_particles_) shell_variable_.push_back(cp->template getVariableByName<VariableType>(variable_name));
 	}
 	//=================================================================================================//
 	template <typename VariableType>
