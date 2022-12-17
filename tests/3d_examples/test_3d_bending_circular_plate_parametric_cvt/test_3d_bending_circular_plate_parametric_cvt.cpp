@@ -90,7 +90,7 @@ VariableType interpolate_observer(
 {
 	Kernel* kernel_ptr = particles.getSPHBody().sph_adaptation_->getKernel();
 	Real smoothing_length = particles.getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
-	VariableType variable_sum;
+	VariableType variable_sum = VariableType::Zero();
 	Real kernel_sum = 0;
 	for (auto id: neighbor_ids)
 	{
@@ -99,7 +99,7 @@ VariableType interpolate_observer(
 		kernel_sum += kernel;
 		variable_sum += kernel*(get_variable_value(id));
 	}
-	variable_sum /= kernel_sum;
+	variable_sum /= (kernel_sum + TinyReal);
 	return variable_sum;
 }
 
@@ -169,7 +169,7 @@ return_data bending_circular_plate(Real dp_ratio)
 	Real thickness = 1*inch_to_m;
 	// oberserver point
 	observer_point_shell point_center;
-	point_center.pos_0 = Vec3d(0);
+	point_center.pos_0 = Vec3d::Zero();
 	// resolution
 	Real dp = dp_ratio*thickness;
 	Real total_area = (radius+dp/2)*(radius+dp/2)*Pi; // accounting for particles being on the edges
@@ -233,11 +233,12 @@ return_data bending_circular_plate(Real dp_ratio)
 		Real smoothing_length = shell_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
 		for (size_t i = 0; i < shell_particles->pos0_.size(); ++i)
 		{
-			if ((shell_particles->pos0_[i] - point_center.pos_0).norm() < smoothing_length)
+			if ((shell_particles->pos0_[i] - point_center.pos_0).norm() < 2*smoothing_length)
 				ids.push_back(i);
 		}
 		return ids;
 	}();
+	EXPECT_FALSE(point_center.neighbor_ids.empty());
 	point_center.interpolate(*shell_particles);
 
 	// methods
@@ -365,11 +366,11 @@ return_data bending_circular_plate(Real dp_ratio)
 		point_center.write_data();
 	}
 	{// testing final values
-		Real deflection_ref = -0.08736*inch_to_m;
+		Real deflection_ref = -0.08736*inch_to_m; // -0.00221894
 		Real stress_max_ref = 7200*psi_to_pa;
 		std::cout << "deflection_ref: " << deflection_ref << std::endl;
 
-		EXPECT_NEAR(std::abs(point_center.displacement[sym_axis]), std::abs(deflection_ref), std::abs(deflection_ref)*7e-2); // 7%
+		EXPECT_NEAR(std::abs(point_center.displacement[sym_axis]), std::abs(deflection_ref), std::abs(deflection_ref)*5e-2); // 5%
 		// EXPECT_NEAR(point_center.stress_max, stress_max_ref, stress_max_ref*1e-2);
 	}
 	return_data data;
@@ -378,22 +379,22 @@ return_data bending_circular_plate(Real dp_ratio)
 	return data;
 }
 
-TEST(bending_circular_plate, dp_2)
-{
+TEST(bending_circular_plate, dp_4)
+{// for CI - lowest resolution
 	fs::remove_all("output");
 	fs::create_directory("output");
 
-	int dp_ratio = 2;
+	int dp_ratio = 4;
 	auto data = bending_circular_plate(dp_ratio);
 	data.write_data_to_txt("bending_circular_plate" + std::to_string(int(dp_ratio*1e3)) + ".txt");
 }
 
-TEST(bending_circular_plate, parametric_dp)
-{
+TEST(DISABLED_bending_circular_plate, parametric_dp)
+{// for proper parameter study
 	fs::remove_all("output");
 	fs::create_directory("output");
 
-	StdVec<Real> dp_vec = {4,2,1,0.5,0.25};
+	StdVec<Real> dp_vec = {4,2,1}; // ,0.5,0.25 --> stop at thickness = dp --> dp_ratio = 1 is the highest resolution
 	for (auto dp_ratio: dp_vec)
 	{
 		auto data = bending_circular_plate(dp_ratio);
@@ -404,6 +405,5 @@ TEST(bending_circular_plate, parametric_dp)
 int main(int argc, char* argv[])
 {	
 	testing::InitGoogleTest(&argc, argv);
-	testing::GTEST_FLAG(filter) = "bending_circular_plate.dp_2";
 	return RUN_ALL_TESTS();
 }

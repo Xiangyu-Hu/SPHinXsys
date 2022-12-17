@@ -122,7 +122,7 @@ VariableType interpolate_observer(
 {
 	Kernel* kernel_ptr = particles.getSPHBody().sph_adaptation_->getKernel();
 	Real smoothing_length = particles.getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
-	VariableType variable_sum;
+	VariableType variable_sum = VariableType::Zero();
 	Real kernel_sum = 0;
 	for (auto id: neighbor_ids)
 	{
@@ -490,17 +490,17 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 	return data;
 }
 
-TEST(roof_under_self_weight, dp_2)
+TEST(DISABLED_roof_under_self_weight, dp_4)
 {
 	fs::remove_all("output");
 	fs::create_directory("output");
 
-	Real dp = 2;
+	Real dp = 4;
 	auto data = roof_under_self_weight(dp);
 	data.write_data_to_txt("roof_under_self_weight" + std::to_string(int(dp*100)) + "cm.txt");
 }
 
-TEST(roof_under_self_weight, lattice)
+TEST(DISABLED_roof_under_self_weight, lattice)
 {
 	fs::remove_all("output");
 	fs::create_directory("output");
@@ -546,6 +546,5 @@ TEST(roof_under_self_weight, parametric_dp)
 int main(int argc, char* argv[])
 {	
 	testing::InitGoogleTest(&argc, argv);
-	testing::GTEST_FLAG(filter) = "roof_under_self_weight.parametric_dp";
 	return RUN_ALL_TESTS();
 }
