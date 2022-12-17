@@ -276,17 +276,12 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 		}
 		tick_count::interval_t tt = tick_count::now()-t1;
 		std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-
+		std::cout << "max displacement: " << shell_particles->getMaxDisplacement() << std::endl;
 	}
 	catch(const std::exception& e)
 	{
-		std::cerr << e.what() << '\n';
-		vtp_output.writeToFile(ite);
-	}
-	{// output data
 		std::cout << "max displacement: " << shell_particles->getMaxDisplacement() << std::endl;
-	}
-	{// testing final values
+		throw std::runtime_error(e.what());
 	}
 }
 
