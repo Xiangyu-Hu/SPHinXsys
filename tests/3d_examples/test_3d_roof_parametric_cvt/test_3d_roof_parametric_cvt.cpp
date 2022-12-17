@@ -270,8 +270,8 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 	auto material = makeShared<LinearElasticSolid>(rho, E, mu);
 	Real physical_viscosity = 7e3;
 	std::cout << "physical_viscosity: " << physical_viscosity << std::endl;
-	physical_viscosity = get_physical_viscosity_general(rho, E, thickness);
-	std::cout << "physical_viscosity: " << physical_viscosity << std::endl;
+	// physical_viscosity = 2*get_physical_viscosity_general(rho, E, thickness);
+	// std::cout << "physical_viscosity: " << physical_viscosity << std::endl;
 	// gravity
 	Vec3d gravity = -9.8066*radial_vec;
 	// system bounding box
@@ -286,7 +286,6 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 		particle_area = total_area / obj_vertices.size();
 		// find out BoundingBox
 		bb_system = get_particles_bounding_box(obj_vertices); // store this
-
 	}
 
 	// shell
@@ -397,7 +396,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 	 */
 	GlobalStaticVariables::physical_time_ = 0.0;
 	int ite = 0;
-	Real end_time = 2.0;
+	Real end_time = 3.0;
 	Real output_period = end_time / 100.0;
 	Real dt = 0.0;
 	tick_count t1 = tick_count::now();
@@ -476,8 +475,8 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 		Real stress_angle_B_top = 191230;
 		Real stress_angle_B_bottom = -218740;
 
-		EXPECT_NEAR(point_A.displacement[radial_axis], displ_y_A, displ_y_A*10e-2); // 10%
-		EXPECT_NEAR(point_A.displacement[tangential_axis], displ_x_A, displ_x_A*15e-2); // 15%
+		EXPECT_NEAR(point_A.displacement[radial_axis], displ_y_A, displ_y_A*10e-2); // 10% - difficult accuracy due incomplete edge kernels
+		EXPECT_NEAR(point_A.displacement[tangential_axis], displ_x_A, displ_x_A*10e-2); // 10% - difficult accuracy due incomplete edge kernels
 		std::cout << "point_A y displacement: " << point_A.displacement[radial_axis] << std::endl;
 		std::cout << "point_A x displacement: " << point_A.displacement[tangential_axis] << std::endl;
 	}
@@ -490,14 +489,34 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 	return data;
 }
 
-TEST(DISABLED_roof_under_self_weight, dp_4)
-{
+TEST(roof_under_self_weight, dp_4)
+{// for CI
 	fs::remove_all("output");
 	fs::create_directory("output");
 
 	Real dp = 4;
 	auto data = roof_under_self_weight(dp);
 	data.write_data_to_txt("roof_under_self_weight" + std::to_string(int(dp*100)) + "cm.txt");
+}
+
+TEST(DISABLED_roof_under_self_weight, parametric_dp)
+{// for proper parameter study
+	fs::remove_all("output");
+	fs::create_directory("output");
+
+	StdVec<Real> dp_vec = {4,2,1}; // ,0.5,0.25
+	for (auto dp: dp_vec)
+	{
+		try
+		{
+			auto data = roof_under_self_weight(dp);
+			data.write_data_to_txt("roof_under_self_weight" + std::to_string(int(dp*100)) + "cm.txt");
+		}
+		catch(const std::exception& e)
+		{
+			std::cerr << e.what() << '\n';
+		}
+	}
 }
 
 TEST(DISABLED_roof_under_self_weight, lattice)
@@ -515,26 +534,6 @@ TEST(DISABLED_roof_under_self_weight, lattice)
 			Real dp = 2.0 * radius_mid_surface * Pi * 80.0 / 360.0 / (Real)particle_number;
 			auto data = roof_under_self_weight(dp, false, particle_number);
 			data.write_data_to_txt("roof_under_self_weight_lattice_" + std::to_string(particle_number) + ".txt");
-		}
-		catch(const std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-		}
-	}
-}
-
-TEST(roof_under_self_weight, parametric_dp)
-{
-	fs::remove_all("output");
-	fs::create_directory("output");
-
-	StdVec<Real> dp_vec = {4,2,1,0.5,0.25};
-	for (auto dp: dp_vec)
-	{
-		try
-		{
-			auto data = roof_under_self_weight(dp);
-			data.write_data_to_txt("roof_under_self_weight" + std::to_string(int(dp*100)) + "cm.txt");
 		}
 		catch(const std::exception& e)
 		{
