@@ -56,6 +56,8 @@ jobs:
       - name: Install dependencies
         run: |
           ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build \
+            openblas[dynamic-arch] `# simbody depends on blas implementation, which -march=native by default, conflicting with cache restore, hence dynamic-arch feature` \
+            # Above problem might also be resolved by adding the hash of architecture in the cache key, esp. if more package do the same
             eigen3 \
             tbb \
             boost-program-options \
