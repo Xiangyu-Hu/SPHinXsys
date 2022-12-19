@@ -213,7 +213,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 	 */
 	GlobalStaticVariables::physical_time_ = 0.0;
 	int ite = 0;
-	Real end_time = 1;
+	Real end_time = 0.5; // 1 is better
 	Real output_period = end_time / 25.0;
 	Real dt = 0.0;
 	tick_count t1 = tick_count::now();
@@ -240,7 +240,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 				initialize_external_force.parallel_exec(dt);
 				if (pressure > TinyReal) apply_pressure();
 
-				dt = 0.5 * computing_time_step_size.parallel_exec();
+				dt = 0.25 * computing_time_step_size.parallel_exec(); // constant multiplier is related to thickness/dp ratio
 				{// checking for excessive time step reduction
 					if (dt > max_dt) max_dt = dt;
 					if (dt < max_dt/1e3) throw std::runtime_error("time step decreased too much, iteration: " + std::to_string(ite));
@@ -281,6 +281,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 	catch(const std::exception& e)
 	{
 		std::cout << "max displacement: " << shell_particles->getMaxDisplacement() << std::endl;
+		vtp_output.writeToFile(ite);
 		throw std::runtime_error(e.what());
 	}
 }
@@ -290,7 +291,7 @@ TEST(sphere_compression, half_sphere)
 	fs::remove_all("output");
 	fs::create_directory("output");
 
-	int dp_ratio = 1;
+	int dp_ratio = 2; // 4, 2, 1
 	Real pressure = 0; // Pa
 	Real gravity_z = -9.8066; // m/s
 	EXPECT_NO_THROW(sphere_compression(dp_ratio, pressure, gravity_z));
