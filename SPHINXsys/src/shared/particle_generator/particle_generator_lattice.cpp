@@ -1,7 +1,3 @@
-/**
- * @file 	particle_generator_lattice.cpp
- * @author	Luhui Han, Chi Zhang and Xiangyu Hu
- */
 #include "particle_generator_lattice.h"
 
 #include "complex_shape.h"

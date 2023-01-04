@@ -43,8 +43,8 @@ class Column : public ComplexShape
 public:
 	explicit Column(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		add<TransformShape<GeometricShapeBox>>(translation_column, halfsize_column);
-		add<TransformShape<GeometricShapeBox>>(translation_holder, halfsize_holder);
+		add<TransformShape<GeometricShapeBox>>(Transformd(translation_column), halfsize_column);
+		add<TransformShape<GeometricShapeBox>>(Transformd(translation_holder), halfsize_holder);
 	}
 };
 /**

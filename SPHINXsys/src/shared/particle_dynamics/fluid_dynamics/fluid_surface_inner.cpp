@@ -1,13 +1,8 @@
-/**
- * @file 	fluid_surface_inner.cpp
- * @author	Chi Zhang and Xiangyu Hu
- */
-
 #include "fluid_surface_inner.hpp"
 
 namespace SPH
 {
-    //=================================================================================================//
+    //=====================================================================================================//
     namespace fluid_dynamics
     {
         //=================================================================================================//
@@ -50,23 +45,6 @@ namespace SPH
             surface_indicator_[index_i] = is_free_surface ? 1 : 0;
         }
         //=================================================================================================//
-        FreeStreamBoundaryVelocityCorrection::FreeStreamBoundaryVelocityCorrection(SPHBody &sph_body)
-            : LocalDynamics(sph_body), FluidDataSimple(sph_body),
-              u_ref_(1.0), t_ref_(2.0), rho_ref_(particles_->fluid_.ReferenceDensity()),
-              rho_sum(particles_->rho_sum_), vel_(particles_->vel_),
-              surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")) {}
-        //=================================================================================================//
-        void FreeStreamBoundaryVelocityCorrection::update(size_t index_i, Real dt)
-        {
-            if (surface_indicator_[index_i] == 1)
-            {
-                // TODO: free stream condition should be summarized to a separated class.
-                Real run_time_ = GlobalStaticVariables::physical_time_;
-                Real u_freestream = run_time_ < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time_ / t_ref_)) : u_ref_;
-                vel_[index_i][0] = u_freestream + SMIN(rho_sum[index_i], rho_ref_) * (vel_[index_i][0] - u_freestream) / rho_ref_;
-            }
-        }
-        //=================================================================================================//
         ColorFunctionGradientInner::ColorFunctionGradientInner(BaseInnerRelation &inner_relation)
             : LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
               surface_indicator_(particles_->surface_indicator_),
@@ -79,7 +57,7 @@ namespace SPH
         //=================================================================================================//
         void ColorFunctionGradientInner::interaction(size_t index_i, Real dt)
         {
-            Vecd gradient(0);
+            Vecd gradient = Vecd::Zero();
             const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
             if (pos_div_[index_i] < threshold_by_dimensions_)
             {
@@ -108,7 +86,7 @@ namespace SPH
         //=================================================================================================//
         void ColorFunctionGradientInterpolationInner::interaction(size_t index_i, Real dt)
         {
-            Vecd grad(0);
+            Vecd grad = Vecd::Zero();
             Real weight(0);
             Real total_weight(0);
             if (surface_indicator_[index_i] == 1 && pos_div_[index_i] > threshold_by_dimensions_)
@@ -156,7 +134,7 @@ namespace SPH
                     {
                         Vecd n_j = surface_norm_[index_j];
                         Vecd n_ij = n_i - n_j;
-                        curvature -= inner_neighborhood.dW_ijV_j_[n] * dot(n_ij, inner_neighborhood.e_ij_[n]);
+                        curvature -= inner_neighborhood.dW_ijV_j_[n] * n_ij.dot(inner_neighborhood.e_ij_[n]);
                         pos_div -= inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.r_ij_[n];
                     }
                 }

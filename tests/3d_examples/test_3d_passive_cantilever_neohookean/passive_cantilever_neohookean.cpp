@@ -36,8 +36,8 @@ class Cantilever : public ComplexShape
 public:
 	explicit Cantilever(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		add<TransformShape<GeometricShapeBox>>(translation_cantilever, halfsize_cantilever);
-		add<TransformShape<GeometricShapeBox>>(translation_holder, halfsize_holder);
+		add<TransformShape<GeometricShapeBox>>(Transformd(translation_cantilever), halfsize_cantilever);
+		add<TransformShape<GeometricShapeBox>>(Transformd(translation_holder), halfsize_holder);
 	}
 };
 /**
@@ -92,15 +92,15 @@ int main(int ac, char *av[])
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize>
 		computing_time_step_size(cantilever_body);
 	/** active and passive stress relaxation. */
-	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf>
+	Dynamics1Level<solid_dynamics::Integration1stHalf>
 		stress_relaxation_first_half(cantilever_body_inner);
 	/** Setup the damping stress, if you know what you are doing. */
 	// stress_relaxation_first_step.setupDampingStressFactor(1.0);
-	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf>
+	Dynamics1Level<solid_dynamics::Integration2ndHalf>
 		stress_relaxation_second_half(cantilever_body_inner);
 	/** Constrain the holder. */
 	BodyRegionByParticle holder(cantilever_body,
-								makeShared<TransformShape<GeometricShapeBox>>(translation_holder, halfsize_holder, "Holder"));
+								makeShared<TransformShape<GeometricShapeBox>>(Transformd(translation_holder), halfsize_holder, "Holder"));
 	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_holder(holder);
 	DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
 		muscle_damping(0.1, cantilever_body_inner, "Velocity", physical_viscosity);

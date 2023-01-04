@@ -271,7 +271,7 @@ First, we provide the following program to create a system for this problem.
 			wall_particle_generator = makeShared<ParticleGeneratorReload>(in_output, wall_boundary.getBodyName());
 		SolidParticles wall_particles(wall_boundary, wall_particle_generator);
 
-		ObserverBody fluid_observer(system, "FluidObserver");
+		ProbeBody fluid_observer(system, "FluidObserver");
 		ObserverParticles flow_observer_particles(fluid_observer, makeShared<FluidObserverParticleGenerator>());
 		/**
 		 * @brief Define body relation map.
@@ -810,7 +810,7 @@ and input/output environment is initialized.
 		wall_particle_generator = makeShared<ParticleGeneratorReload>(in_output, wall_boundary.getBodyName());
 	SolidParticles wall_particles(wall_boundary, wall_particle_generator);
 
-	ObserverBody fluid_observer(system, "FluidObserver");
+	ProbeBody fluid_observer(system, "FluidObserver");
 	ObserverParticles flow_observer_particles(fluid_observer, makeShared<FluidObserverParticleGenerator>());
 	/**
 	 * @brief Define body relation map.

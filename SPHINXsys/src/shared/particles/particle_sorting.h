@@ -1,29 +1,29 @@
-/* -----------------------------------------------------------------------------*
- *                               SPHinXsys                                      *
- * -----------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
- * physical accurate simulation and aims to model coupled industrial dynamic    *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
- * (smoothed particle hydrodynamics), a meshless computational method using     *
- * particle discretization.                                                     *
- *                                                                              *
- * SPHinXsys is partially funded by German Research Foundation                  *
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
- * HU1527/12-1 and HU1527/12-4.                                                 *
- *                                                                              *
- * Portions copyright (c) 2017-2022 Technical University of Munich and          *
- * the authors' affiliations.                                                   *
- *                                                                              *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
- * not use this file except in compliance with the License. You may obtain a    *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
- *                                                                              *
- * -----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4												*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file particle_sorting.h
  * @brief Here gives the classes for particle sorting.
- * @author	Xiangyu Hu
+ * @author	Chi ZHang and Xiangyu Hu
  */
 
 #ifndef PARTICLE_SORTING_H
@@ -32,7 +32,7 @@
 #include "base_data_package.h"
 #include "sph_data_containers.h"
 
-/** this is a reformulation of tbb parallel_sort for particle data */
+  /** this is a reformulation of tbb parallel_sort for particle data */
 namespace tbb
 {
 	namespace interface9
@@ -191,7 +191,9 @@ namespace tbb
 		};
 	}
 }
-
+/**
+ * SPH implementation. 
+ */
 namespace SPH
 {
 	class BaseParticles;
@@ -199,14 +201,14 @@ namespace SPH
 	template <typename VariableType>
 	struct swapParticleDataValue
 	{
-		void operator()(ParticleData &particle_data, size_t index_a, size_t index_b) const
+		void operator()(ParticleData& particle_data, size_t index_a, size_t index_b) const
 		{
 			constexpr int type_index = DataTypeIndex<VariableType>::value;
 
-			StdVec<StdLargeVec<VariableType> *> variables = std::get<type_index>(particle_data);
+			StdVec<StdLargeVec<VariableType>*> variables = std::get<type_index>(particle_data);
 			for (size_t i = 0; i != variables.size(); ++i)
 			{
-				StdLargeVec<VariableType> &variable = *variables[i];
+				StdLargeVec<VariableType>& variable = *variables[i];
 				std::swap(variable[index_a], variable[index_b]);
 			}
 		};
@@ -218,7 +220,7 @@ namespace SPH
 	 */
 	struct CompareParticleSequence
 	{
-		bool operator()(const size_t &x, const size_t &y) const
+		bool operator()(const size_t& x, const size_t& y) const
 		{
 			return x < y;
 		};
@@ -231,19 +233,19 @@ namespace SPH
 	class SwapSortableParticleData
 	{
 	protected:
-		StdLargeVec<size_t> &sequence_;
-		StdLargeVec<size_t> &unsorted_id_;
-		ParticleData &sortable_data_;
+		StdLargeVec<size_t>& sequence_;
+		StdLargeVec<size_t>& unsorted_id_;
+		ParticleData& sortable_data_;
 		DataAssembleOperation<swapParticleDataValue> swap_particle_data_value_;
 
 	public:
-		explicit SwapSortableParticleData(BaseParticles &base_particles);
-		~SwapSortableParticleData(){};
+		explicit SwapSortableParticleData(BaseParticles& base_particles);
+		~SwapSortableParticleData() {};
 
 		/** the operator overload for swapping particle data.
 		 *  the arguments are the same with std::iter_swap
 		 */
-		void operator()(size_t *a, size_t *b);
+		void operator()(size_t* a, size_t* b);
 	};
 
 	/**
@@ -253,7 +255,7 @@ namespace SPH
 	class ParticleSorting
 	{
 	protected:
-		BaseParticles &base_particles_;
+		BaseParticles& base_particles_;
 
 		/** using pointer because it is constructed after particles. */
 		SwapSortableParticleData swap_sortable_particle_data_;
@@ -266,10 +268,10 @@ namespace SPH
 
 	public:
 		// the construction is before particles
-		explicit ParticleSorting(BaseParticles &base_particles);
-		virtual ~ParticleSorting(){};
+		explicit ParticleSorting(BaseParticles& base_particles);
+		virtual ~ParticleSorting() {};
 		/** sorting particle data according to the cell location of particles */
-		virtual void sortingParticleData(size_t *begin, size_t size);
+		virtual void sortingParticleData(size_t* begin, size_t size);
 		/** update the reference of sorted data from unsorted data */
 		virtual void updateSortedId();
 	};

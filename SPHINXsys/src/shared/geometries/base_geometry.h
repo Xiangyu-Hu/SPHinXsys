@@ -1,30 +1,30 @@
-/* -----------------------------------------------------------------------------*
- *                               SPHinXsys                                      *
- * -----------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
- * physical accurate simulation and aims to model coupled industrial dynamic    *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
- * (smoothed particle hydrodynamics), a meshless computational method using     *
- * particle discretization.                                                     *
- *                                                                              *
- * SPHinXsys is partially funded by German Research Foundation                  *
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
- * HU1527/12-1 and HU1527/12-4.                                                 *
- *                                                                              *
- * Portions copyright (c) 2017-2022 Technical University of Munich and          *
- * the authors' affiliations.                                                   *
- *                                                                              *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
- * not use this file except in compliance with the License. You may obtain a    *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
- *                                                                              *
- * -----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
- * @file base_geometry.h
- * @brief Define the base classes Shape, BinaryShape and Edge,
- * which are the base classes for all geometries.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file 	base_geometry.h
+ * @brief 	Define the base classes Shape, BinaryShape and Edge,
+ * 			which are the base classes for all geometries.
+ * @author	Chi ZHang and Xiangyu Hu
  */
 
 #ifndef BASE_GEOMETRY_H
@@ -32,14 +32,13 @@
 
 #include "base_data_package.h"
 #include "sph_data_containers.h"
-
 #include <string>
 
 namespace SPH
 {
 	/**
-	 * @class ShapeBooleanOps
-	 * @brief Boolean operation for generate complex shapes
+	 * @class 	ShapeBooleanOps
+	 * @brief 	Boolean operation for generate complex shapes
 	 * @details Note that, for 2d multi polygons, all four operations are implemented.
 	 * But for binary shapes and complex shapes,
 	 * only add and sub boolean operation have been defined for right now.
@@ -66,8 +65,7 @@ namespace SPH
 	public:
 		BoundingBox bounding_box_;
 
-		explicit Shape(const std::string &shape_name)
-			: name_(shape_name), is_bounds_found_(false){};
+		explicit Shape(const std::string &shape_name): name_(shape_name), is_bounds_found_(false){};
 		virtual ~Shape(){};
 
 		std::string getName() { return name_; };
@@ -150,11 +148,15 @@ namespace SPH
 		/** constructor without specifying a leading-in edge */
 		template <class EdgeStructureType>
 		explicit Edge(EdgeStructureType *structure)
-			: id_(structure->ContainerSize()), in_edge_(MaxSize_t){};
+			: id_(structure->ContainerSize())
+			, in_edge_(MaxSize_t)
+		{};
 		/** constructor with specifying a leading-in edge */
 		template <class EdgeStructureType>
 		Edge(InEdgeType in_edge, EdgeStructureType *structure)
-			: id_(structure->ContainerSize()), in_edge_(in_edge){};
+			: id_(structure->ContainerSize())
+			, in_edge_(in_edge)
+		{};
 		virtual ~Edge(){};
 
 		size_t id_;			   /**< id of this edge */

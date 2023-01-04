@@ -1,13 +1,7 @@
-/**
- * @file 	statengine.cpp
- * @brief 	engine of state functions are defined here
- * @author	Chi Zhang and Xiangyu Hu
- */
-
 #include "state_engine.h"
 
 namespace SPH {
-    //===============================================================//
+//=================================================================================================//
     StateEngine::
         StateEngine(SimTK::MultibodySystem& system) :
         simbody_xml_engine_("state_xml", "mbsystem")
@@ -19,7 +13,7 @@ namespace SPH {
             fs::create_directory(restart_folder_);
         }
     }
-    //===============================================================//
+    //=============================================================================================//
     void StateEngine::InitializeState()
     {
         /** Clear cached list of all related
@@ -44,12 +38,12 @@ namespace SPH {
          */
         getMultibodySystem().realize(working_state_, SimTK::Stage::Position);
     }
-    //===============================================================//
+    //=============================================================================================//
     SimTK::MultibodySystem& StateEngine::getMultibodySystem()
     {
         return mbsystem_.getRef();
     }
-    //===============================================================//
+    //=============================================================================================//
     void StateEngine::addStateVariable(std::string  statevariablename,
         SimTK::Stage invalidatestage)
     {
@@ -68,7 +62,7 @@ namespace SPH {
         // Add it to the Component and let it take ownership
         addStateVariable(asv);
     }
-    //===============================================================//
+    //=============================================================================================//
     void StateEngine::addStateVariable(StateEngine::StateVariable* statevariable)
     {
         std::string& statevariablename = statevariable->getName();
@@ -90,7 +84,7 @@ namespace SPH {
         namedstatevariableinfo_[statevariablename] = StateVariableInfo(statevariable, order);
 
     }
-    //===============================================================//
+    //=============================================================================================//
     StateEngine::StateVariable* StateEngine::
         traverseToStateVariable(std::string& pathname)
     {
@@ -103,7 +97,7 @@ namespace SPH {
             return nullptr;
         }
     }
-    //===============================================================//.
+    //=============================================================================================//
     Array<std::string> StateEngine::getStateVariableNames()
     {
         std::map<std::string, StateVariableInfo>::const_iterator it;
@@ -118,12 +112,12 @@ namespace SPH {
         }
         return names;
     }
-    //===============================================================//
+    //=============================================================================================//
     int StateEngine::getNumOfStateVariables()
     {
         return getNumStateVariablesAddedByEngine();
     }
-    //===============================================================//
+    //=============================================================================================//
     bool StateEngine::isAllStatesVariablesListValid()
     {
         int nsv = getNumOfStateVariables();
@@ -139,7 +133,7 @@ namespace SPH {
 
         return valid;
     }
-    //===============================================================//
+    //=============================================================================================//
     SimTK::Vector StateEngine::getStateVariableValues()
     {
         int nsv = getNumOfStateVariables();
@@ -161,10 +155,7 @@ namespace SPH {
         }
         return statevariablevalues;
     }
-    //-----------------------------------------------------------------------------//
-    //                         OTHER REALIZE METHODS
-    //-----------------------------------------------------------------------------//
-        /** override virtual methods. */
+    //=============================================================================================//
     Real StateEngine::AddedStateVariable::getValue()
     {
         SimTK::ZIndex zix(getVarIndex());
@@ -179,7 +170,7 @@ namespace SPH {
         throw (msg.str());
         return SimTK::NaN;
     }
-    //===============================================================//
+    //=============================================================================================//
     void StateEngine::AddedStateVariable::setValue(Real value)
     {
         SimTK::ZIndex zix(getVarIndex());
@@ -194,20 +185,20 @@ namespace SPH {
             << getName() << "' is invalid! " << __FILE__ << __LINE__;;
         throw (msg.str());
     }
-    //===============================================================//
+    //=============================================================================================//
     double StateEngine::AddedStateVariable::
         getDerivative()
     {
         //return getCacheVariableValue<double>(state, getName()+"_deriv");
         return 0.0;
     }
-    //===============================================================//
+    //=============================================================================================//
     void StateEngine::AddedStateVariable::
         setDerivative(Real deriv)
     {
         //return setCacheVariableValue<double>(state, getName()+"_deriv", deriv);
     }
-    //===============================================================//
+    //=============================================================================================//
     void StateEngine::reporter(SimTK::State& state_)
     {
         const SimTK::SimbodyMatterSubsystem& matter_ = getMultibodySystem().getMatterSubsystem();
@@ -232,7 +223,7 @@ namespace SPH {
             std::cout << " Origin : " << mobod.getBodyOriginLocation(state_) << std::endl;
         }
     }
-    //===============================================================//
+    //=============================================================================================//
     void StateEngine::resizeXmlDocForSimbody(size_t input_size)
     {
         size_t total_elements = simbody_xml_engine_.SizeOfXmlDoc();
@@ -243,7 +234,7 @@ namespace SPH {
                 simbody_xml_engine_.addElementToXmlDoc("mbbody");
         }
     }
-    //===============================================================//
+    //=============================================================================================//
     void StateEngine::writeStateInfoToXml(int ite_rst_, const SimTK::State& state_)
     {
         const SimTK::SimbodyMatterSubsystem& matter_ = getMultibodySystem().getMatterSubsystem();
@@ -269,15 +260,24 @@ namespace SPH {
                 std::string ele_name = "UIndx_" + std::to_string(i);
                 simbody_xml_engine_.setAttributeToElement(ele_ite, ele_name, mobod_u);
             }
-            Vec3d transform_ = mobod.getBodyTransform(state_).p();
-            simbody_xml_engine_.setAttributeToElement(ele_ite, "Transform", transform_);
+            SimTK::Vec3 transform_ = mobod.getBodyTransform(state_).p();
 
+            Vecd transform = Vecd::Zero();
+            if constexpr (Dimensions == 2)
+            {
+                transform = Vecd(transform_[0], transform_[1]);
+            } else if constexpr (Dimensions == 3)
+            {
+                transform = Vecd(transform_[0], transform_[1], transform_[2]);
+            }
+
+            simbody_xml_engine_.setAttributeToElement(ele_ite, "Transform", transform);
             ++ele_ite;
         }
         std::string filefullpath = restart_folder_ + "/Simbody_Rst_" + std::to_string(ite_rst_) + ".xml";
         simbody_xml_engine_.writeToXmlFile(filefullpath);
     }
-    //===============================================================//
+    //=============================================================================================//
     SimTK::State StateEngine::readAndSetStateInfoFromXml(int ite_rst_, SimTK::MultibodySystem& system_)
     {
         std::string filefullpath = restart_folder_ + "/Simbody_Rst_" + std::to_string(ite_rst_) + ".xml";
@@ -314,12 +314,22 @@ namespace SPH {
                     for (int i = 0; i < num_u_; i++)
                     {
                         std::string attr_name = "UIndx_" + std::to_string(i);
-                        simbody_xml_engine_.getRequiredAttributeValue<Real>(ele_ite_, attr_name, u_tmp_);
+                        simbody_xml_engine_.getRequiredAttributeValue(ele_ite_, attr_name, u_tmp_);
                         mobod.setOneU(state_, SimTK::UIndex(i), u_tmp_);
                     }
                 }
-                Vec3d transform_(0);
-                simbody_xml_engine_.getRequiredAttributeValue<Vec3d>(ele_ite_, "Transform", transform_);
+                Vecd transform = Vecd::Zero();
+                simbody_xml_engine_.getRequiredAttributeValue(ele_ite_, "Transform", transform);
+
+                SimTK::Vec3 transform_; 
+                if(Dimensions == 2)
+                {
+                    transform_ = SimTK::Vec3(transform[0],transform[1], 0);
+                }else
+                {
+                    transform_ = SimTK::Vec3(transform[0],transform[1], transform[2]);
+                }
+
                 mobod.setQToFitTransform(state_, SimTK::Transform(transform_));
 
                 num_mobod++;
@@ -331,34 +341,35 @@ namespace SPH {
     //------------------------------------------------------------------------------
     //          REALIZE THE SYSTEM TO THE REQUIRED COMPUTATIONAL STAGE
     //------------------------------------------------------------------------------
+    //=============================================================================================//
     void StateEngine::realizeTime()
     {
         getMultibodySystem().realize(working_state_, SimTK::Stage::Time);
     }
-    //===============================================================//
+    //=============================================================================================//
     void StateEngine::realizePosition()
     {
         getMultibodySystem().realize(working_state_, SimTK::Stage::Position);
     }
-    //===============================================================//
+    //=============================================================================================//
     void StateEngine::realizeVelocity()
     {
         getMultibodySystem().realize(working_state_, SimTK::Stage::Velocity);
     }
-    //===============================================================//
+    //=============================================================================================//
     void StateEngine::realizeDynamics()
     {
         getMultibodySystem().realize(working_state_, SimTK::Stage::Dynamics);
     }
-    //===============================================================//
+    //=============================================================================================//
     void StateEngine::realizeAcceleration()
     {
         getMultibodySystem().realize(working_state_, SimTK::Stage::Acceleration);
     }
-    //===============================================================//
+    //=============================================================================================//
     void StateEngine::realizeReport()
     {
         getMultibodySystem().realize(working_state_, SimTK::Stage::Report);
     }
-    //===============================================================//
+    //=============================================================================================//
 }

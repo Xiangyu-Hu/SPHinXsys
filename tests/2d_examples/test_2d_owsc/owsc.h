@@ -33,7 +33,7 @@ BoundingBox system_domain_bounds(Vec2d(-DL_Extra - BW, -BW), Vec2d(DL + BW, DH +
 // the offset that the rubber flap shifted above the tank
 // Real flap_off = Flap_x - 0.5 * Flap_width + DL_Extra + BW;
 // Real off_set = particle_spacing_ref + floor(flap_off / particle_spacing_ref) * particle_spacing_ref - flap_off;
-Vec2d offset = Vec2d(0.0);
+Vec2d offset = Vec2d::Zero();
 
 // water block parameters
 Vec2d Water_lb(0.0, 0.0);	  // left bottom
@@ -270,21 +270,21 @@ class WaveMaking : public solid_dynamics::BaseMotionConstraint
 
 	Vecd getDisplacement(const Real &time)
 	{
-		Vecd displacement(0);
+		Vecd displacement{Vecd::Zero()};
 		displacement[0] = 0.5 * wave_stroke_ * sin(wave_freq_ * time);
 		return displacement;
 	}
 
 	Vec2d getVelocity(const Real &time)
 	{
-		Vec2d velocity(0);
+		Vec2d velocity{Vecd::Zero()};
 		velocity[0] = 0.5 * wave_stroke_ * wave_freq_ * cos(wave_freq_ * time);
 		return velocity;
 	}
 
 	Vec2d getAcceleration(const Real &time)
 	{
-		Vec2d acceleration(0);
+		Vec2d acceleration{Vecd::Zero()};
 		acceleration[0] = -0.5 * wave_stroke_ * wave_freq_ * wave_freq_ * sin(wave_freq_ * time);
 		return acceleration;
 	}

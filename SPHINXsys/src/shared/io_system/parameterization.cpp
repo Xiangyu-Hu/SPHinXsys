@@ -1,8 +1,3 @@
-/**
- * @file 	parameterization.cpp
- * @author	Xiangyu Hu
- */
-
 #include "parameterization.h"
 
 namespace SPH

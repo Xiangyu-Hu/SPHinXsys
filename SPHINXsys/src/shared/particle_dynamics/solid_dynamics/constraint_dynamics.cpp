@@ -1,13 +1,5 @@
-/**
- * @file 	constraint_dynamics.cpp
- * @author	Luhui Han, Chi Zhang and Xiangyu Hu
- */
-
 #include "constraint_dynamics.h"
-
 #include <numeric>
-
-using namespace SimTK;
 
 namespace SPH
 {
@@ -24,11 +16,11 @@ namespace SPH
 			: BaseMotionConstraint(body_part.getSPHBody()) {}
 		//=================================================================================================//
 		SpringConstrain::SpringConstrain(BodyPartByParticle &body_part, Real stiffness)
-			: BaseMotionConstraint(body_part), mass_(particles_->mass_), stiffness_(stiffness) {}
+			: BaseMotionConstraint(body_part), mass_(particles_->mass_), stiffness_(stiffness*Vecd::Ones()) {}
 		//=================================================================================================//
 		Vecd SpringConstrain::getAcceleration(Vecd &disp, Real mass)
 		{
-			Vecd spring_force(0);
+			Vecd spring_force = Vecd::Zero();
 			for (int i = 0; i < disp.size(); i++)
 			{
 				spring_force[i] = -stiffness_[i] * disp[i] / mass;
@@ -48,13 +40,13 @@ namespace SPH
 			  start_time_(start_time), end_time_(end_time), pos_end_center_(pos_end_center)
 		{
 			BoundingBox bounds = sph_body.getBodyShapeBounds();
-			pos_0_center_ = (bounds.first + bounds.second) * 0.5;
+			pos_0_center_ = (bounds.first_ + bounds.second_) * 0.5;
 			translation_ = pos_end_center_ - pos_0_center_;
 		}
 		//=================================================================================================//
 		Vecd PositionSolidBody::getDisplacement(size_t index_i, Real dt)
 		{
-			Vecd displacement;
+			Vecd displacement = Vecd::Zero();
 			// displacement from the initial position
 			Vecd pos_final = pos0_[index_i] + translation_;
 			displacement = (pos_final - pos_[index_i]) * dt /
@@ -70,7 +62,7 @@ namespace SPH
 				GlobalStaticVariables::physical_time_ <= end_time_)
 			{
 				pos_[index_i] = pos_[index_i] + getDisplacement(index_i, dt); // displacement from the initial position
-				vel_[index_i] = Vecd(0);
+				vel_[index_i] = Vecd::Zero();
 			}
 		}
 		//=================================================================================================//
@@ -80,12 +72,12 @@ namespace SPH
 			  start_time_(start_time), end_time_(end_time), end_scale_(end_scale)
 		{
 			BoundingBox bounds = sph_body.getBodyShapeBounds();
-			pos_0_center_ = (bounds.first + bounds.second) * 0.5;
+			pos_0_center_ = (bounds.first_ + bounds.second_) * 0.5;
 		}
 		//=================================================================================================//
 		Vecd PositionScaleSolidBody::getDisplacement(size_t index_i, Real dt)
 		{
-			Vecd displacement(0);
+			Vecd displacement = Vecd::Zero();
 			// displacement from the initial position
 			Vecd pos_final = pos_0_center_ + end_scale_ * (pos0_[index_i] - pos_0_center_);
 			displacement = (pos_final - pos_[index_i]) * dt /
@@ -100,7 +92,7 @@ namespace SPH
 				GlobalStaticVariables::physical_time_ <= end_time_)
 			{
 				pos_[index_i] = pos_[index_i] + getDisplacement(index_i, dt); // displacement from the initial position
-				vel_[index_i] = Vecd(0);
+				vel_[index_i] = Vecd::Zero();
 			}
 		}
 		//=================================================================================================//
@@ -115,7 +107,7 @@ namespace SPH
 		//=================================================================================================//
 		Vecd TranslateSolidBody::getDisplacement(size_t index_i, Real dt)
 		{
-			Vecd displacement(0);
+			Vecd displacement = Vecd::Zero();
 			displacement = (pos0_[index_i] + translation_ - pos_[index_i]) * dt / (end_time_ - GlobalStaticVariables::physical_time_);
 			return displacement;
 		}
@@ -126,18 +118,18 @@ namespace SPH
 			if (GlobalStaticVariables::physical_time_ >= start_time_ && GlobalStaticVariables::physical_time_ <= end_time_)
 			{
 				pos_[index_i] = pos_[index_i] + 0.5 * getDisplacement(index_i, dt); // displacement from the initial position, 0.5x because it's executed twice
-				vel_[index_i] = Vecd(0);
+				vel_[index_i] = Vecd::Zero();
 			}
 		}
 		//=================================================================================================//
 		ConstrainSolidBodyMassCenter::
 			ConstrainSolidBodyMassCenter(SPHBody &sph_body, Vecd constrain_direction)
 			: LocalDynamics(sph_body), SolidDataSimple(sph_body),
-			  correction_matrix_(Matd(1.0)), vel_(particles_->vel_),
+			  correction_matrix_(Matd::Identity()), vel_(particles_->vel_),
 			  compute_total_momentum_(sph_body, "Velocity")
 		{
 			for (int i = 0; i != Dimensions; ++i)
-				correction_matrix_[i][i] = constrain_direction[i];
+				correction_matrix_(i,i) = constrain_direction[i];
 			ReduceDynamics<QuantitySummation<Real>> compute_total_mass_(sph_body, "MassiveMeasure");
 			total_mass_ = compute_total_mass_.parallel_exec();
 		}
@@ -162,7 +154,7 @@ namespace SPH
 			  MBsystem_(MBsystem), mobod_(mobod), force_on_bodies_(force_on_bodies), integ_(integ)
 		{
 			simbody_state_ = &integ_.getState();
-			MBsystem_.realize(*simbody_state_, Stage::Acceleration);
+			MBsystem_.realize(*simbody_state_, SimTK::Stage::Acceleration);
 			initial_mobod_origin_location_ = mobod_.getBodyOriginLocation(*simbody_state_);
 		}
 		//=================================================================================================//
@@ -176,7 +168,7 @@ namespace SPH
 		void ConstraintBySimBody::setupDynamics(Real dt)
 		{
 			simbody_state_ = &integ_.getState();
-			MBsystem_.realize(*simbody_state_, Stage::Acceleration);
+			MBsystem_.realize(*simbody_state_, SimTK::Stage::Acceleration);
 		}
 		//=================================================================================================//
 		TotalForceForSimBody::TotalForceForSimBody(SPHBody &sph_body,
@@ -184,7 +176,7 @@ namespace SPH
 												   SimTK::MobilizedBody &mobod,
 												   SimTK::Force::DiscreteForces &force_on_bodies,
 												   SimTK::RungeKuttaMersonIntegrator &integ)
-			: LocalDynamicsReduce<SimTK::SpatialVec, ReduceSum<SimTK::SpatialVec>>(sph_body, SpatialVec(Vec3(0), Vec3(0))),
+			: LocalDynamicsReduce<SimTK::SpatialVec, ReduceSum<SimTK::SpatialVec>>(sph_body, SimTK::SpatialVec(SimTK::Vec3(0), SimTK::Vec3(0))),
 			  SolidDataSimple(sph_body), mass_(particles_->mass_),
 			  acc_(particles_->acc_), acc_prior_(particles_->acc_prior_),
 			  pos_(particles_->pos_),
@@ -203,7 +195,7 @@ namespace SPH
 		void TotalForceForSimBody::setupDynamics(Real dt)
 		{
 			simbody_state_ = &integ_.getState();
-			MBsystem_.realize(*simbody_state_, Stage::Acceleration);
+			MBsystem_.realize(*simbody_state_, SimTK::Stage::Acceleration);
 			current_mobod_origin_location_ = mobod_.getBodyOriginLocation(*simbody_state_);
 		}
 		//=================================================================================================//

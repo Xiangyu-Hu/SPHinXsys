@@ -1,16 +1,10 @@
-/**
- * @file 	eulerian_compressible_fluid_dynamics.cpp
- * @author	Zhentong Wang,Chi Zhang and Xiangyu Hu
- */
-
 #include "eulerian_compressible_fluid_dynamics_inner.h"
 
-//=================================================================================================//
 using namespace std;
-//=================================================================================================//
+//=========================================================================================================//
 namespace SPH
 {
-	//=================================================================================================//
+	//=====================================================================================================//
 	namespace eulerian_compressible_fluid_dynamics
 	{
 		//=================================================================================================//
@@ -23,7 +17,7 @@ namespace SPH
 		void CompressibleFlowTimeStepInitialization::update(size_t index_i, Real dt)
 		{
 			dmom_dt_prior_[index_i] = rho_[index_i] * gravity_->InducedAcceleration(pos_[index_i]);
-			dE_dt_prior_[index_i] = rho_[index_i] * SimTK::dot(gravity_->InducedAcceleration(pos_[index_i]), vel_[index_i]);
+			dE_dt_prior_[index_i] = rho_[index_i] * (gravity_->InducedAcceleration(pos_[index_i])).dot(vel_[index_i]);
 		}
 		//=================================================================================================//
 		CompressibleFluidInitialCondition::
@@ -46,7 +40,8 @@ namespace SPH
 			Real rho_i = rho_[index_i];
 			const Vecd &vel_i = vel_[index_i];
 
-			Vecd acceleration(0), vel_derivative(0);
+			Vecd acceleration = Vecd::Zero();
+			Vecd vel_derivative = Vecd::Zero();
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
@@ -57,7 +52,7 @@ namespace SPH
 				acceleration += 2.0 * mu_ * vel_derivative  * inner_neighborhood.dW_ijV_j_[n] / rho_i;
 			}
 			dmom_dt_prior_[index_i] += rho_[index_i] * acceleration;
-			dE_dt_prior_[index_i] += rho_[index_i] * dot(acceleration, vel_[index_i]);
+			dE_dt_prior_[index_i] += rho_[index_i] * acceleration.dot(vel_[index_i]);
 		}
 		//=================================================================================================//
 		AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body)

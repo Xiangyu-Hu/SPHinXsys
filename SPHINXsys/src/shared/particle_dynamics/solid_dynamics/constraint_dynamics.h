@@ -1,30 +1,30 @@
-/* -----------------------------------------------------------------------------*
- *                               SPHinXsys                                      *
- * -----------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
- * physical accurate simulation and aims to model coupled industrial dynamic    *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
- * (smoothed particle hydrodynamics), a meshless computational method using     *
- * particle discretization.                                                     *
- *                                                                              *
- * SPHinXsys is partially funded by German Research Foundation                  *
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
- * HU1527/12-1 and HU1527/12-4.                                                 *
- *                                                                              *
- * Portions copyright (c) 2017-2022 Technical University of Munich and          *
- * the authors' affiliations.                                                   *
- *                                                                              *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
- * not use this file except in compliance with the License. You may obtain a    *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
- *                                                                              *
- * -----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4												*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	constraint_dynamics.h
  * @brief 	Here, we define the algorithm classes for solid dynamics.
- * @details 	We consider here a weakly compressible solids.
- * @author	Luhui Han, Chi Zhang and Xiangyu Hu
+ * @details We consider here a weakly compressible solids.
+ * @author	Chi ZHang and Xiangyu Hu
  */
 
 #ifndef CONSTRAINT_DYNAMICS_H
@@ -82,7 +82,7 @@ namespace SPH
 			explicit FixConstraint(BodyPartByParticle &body_part) : BaseMotionConstraint(body_part){};
 			virtual ~FixConstraint(){};
 
-			void update(size_t index_i, Real dt = 0.0) { vel_[index_i] = Vecd(0); };
+			void update(size_t index_i, Real dt = 0.0) { vel_[index_i] = Vecd::Zero(); };
 		};
 
 		/**@class SpringConstrain
@@ -172,11 +172,11 @@ namespace SPH
 		class FixedInAxisDirection : public BaseMotionConstraint
 		{
 		public:
-			FixedInAxisDirection(BodyPartByParticle &body_part, Vecd constrained_axises = Vecd(0))
-				: BaseMotionConstraint(body_part), constrain_matrix_(Matd(1.0))
+			FixedInAxisDirection(BodyPartByParticle &body_part, Vecd constrained_axises = Vecd::Zero())
+				: BaseMotionConstraint(body_part), constrain_matrix_(Matd::Identity())
 			{
 				for (int k = 0; k != Dimensions; ++k)
-					constrain_matrix_[k][k] = constrained_axises[k];
+					constrain_matrix_(k,k) = constrained_axises[k];
 			};
 			virtual ~FixedInAxisDirection(){};
 
@@ -206,7 +206,7 @@ namespace SPH
 			virtual void setupDynamics(Real dt = 0.0) override;
 
 		public:
-			explicit ConstrainSolidBodyMassCenter(SPHBody &sph_body, Vecd constrain_direction = Vecd(1.0));
+			explicit ConstrainSolidBodyMassCenter(SPHBody &sph_body, Vecd constrain_direction = Vecd::Ones());
 			virtual ~ConstrainSolidBodyMassCenter(){};
 
 			void update(size_t index_i, Real dt = 0.0);
@@ -240,7 +240,7 @@ namespace SPH
 			SimTK::Force::DiscreteForces &force_on_bodies_;
 			SimTK::RungeKuttaMersonIntegrator &integ_;
 			const SimTK::State *simbody_state_;
-			Vec3d initial_mobod_origin_location_;
+			SimTK::Vec3 initial_mobod_origin_location_;
 		};
 
 		/**
@@ -260,7 +260,7 @@ namespace SPH
 			SimTK::Force::DiscreteForces &force_on_bodies_;
 			SimTK::RungeKuttaMersonIntegrator &integ_;
 			const SimTK::State *simbody_state_;
-			Vec3d current_mobod_origin_location_;
+			SimTK::Vec3 current_mobod_origin_location_;
 
 		public:
 			TotalForceForSimBody(SPHBody &sph_body,

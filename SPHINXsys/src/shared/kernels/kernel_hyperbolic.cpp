@@ -1,8 +1,3 @@
-/**
- * @file 	kernel_hyperbolic.cpp
- * @author	Luhui Han, Chi Zhang, Yongchuan Yu and Xiangyu Hu
- */
-
 #include "kernel_hyperbolic.h"
 
 #include <cmath>

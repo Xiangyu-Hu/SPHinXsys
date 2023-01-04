@@ -51,7 +51,7 @@ StructuralSimulationInput createSimulationInput(const BernoulliBeamInput& input,
 	};
 	inputStructuralSim.non_zero_gravity_ = std::vector<GravityPair>{GravityPair(0, Vec3d(0.0, -100.0, 0.0))}; // gravity
 
-	BoundingBox fixation(Vec3d(-0.1), Vec3d(0,0.1,0.1));
+	BoundingBox fixation(-0.1 * Vec3d::Ones(), Vec3d(0,0.1,0.1));
 	inputStructuralSim.body_indices_fixed_constraint_region_ = StdVec<ConstrainedRegionPair>{ ConstrainedRegionPair(0, fixation) };
 	inputStructuralSim.particle_relaxation_list_ = { true };
 	
