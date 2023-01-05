@@ -51,8 +51,8 @@ SharedPtr<ComplexShape> createFluid()
 {
 	auto fluid_shape = makeShared<ComplexShape>("Fluid");
 	fluid_shape->add<TriangleMeshShapeBrick>(Vec3d(DL / 2, DH / 2, DH / 2 ), resolution, translation_fluid);
-	fluid_shape->subtract<TriangleMeshShapeCylinder>(SimTK::UnitVec3(0,0,1.0), insert_cylinder_radius, DH / 2, resolution, insert_cylinder_center);
-	fluid_shape->subtract<TriangleMeshShapeBrick>(Vec3d(bl/2, bh/2 , DH / 2 ), resolution, translation_plate);
+	//fluid_shape->subtract<TriangleMeshShapeCylinder>(SimTK::UnitVec3(0,0,1.0), insert_cylinder_radius, DH / 2, resolution, insert_cylinder_center);
+	//fluid_shape->subtract<TriangleMeshShapeBrick>(Vec3d(bl/2, bh/2 , DH / 2 ), resolution, translation_plate);
 	return fluid_shape;
 }
 //WALL
