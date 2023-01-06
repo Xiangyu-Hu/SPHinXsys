@@ -15,7 +15,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DL = 11.0;							/**< Channel length. */
 Real DH = 4.1;							/**< Channel height. */
-int resolution = 10;				
+int resolution = 25;				
 Real resolution_ref = 0.2;				/**< Global reference resolution. */
 Real BW = resolution_ref * 4.0;			/**< Boundary width, determined by specific layer of boundary particles. */
 Real inflow_length = resolution_ref * 20.0;
@@ -30,15 +30,15 @@ Vecd translation_plate(insert_cylinder_center[0] + (bl + insert_cylinder_radius)
 //----------------------------------------------------------------------
 //	Global parameters on the fluid properties
 //----------------------------------------------------------------------
-Real rho0_f = 1.0;											  /**< Density. */
+Real rho0_f = 1000.0;											  /**< Density. */
 Real U_f = 1.0;												  /**< Characteristic velocity. */
-Real c_f = 10.0 * U_f;										  /**< Speed of sound. */
+Real c_f = 10.0 * U_f * 12;										  /**< Speed of sound. */
 Real Re = 100.0;											  /**< Reynolds number. */
 Real mu_f = rho0_f * U_f * (2.0 * insert_cylinder_radius) / Re; /**< Dynamics viscosity. */
 //----------------------------------------------------------------------
 //	Global parameters on the solid properties
 //----------------------------------------------------------------------
-Real rho0_s = 10.0; /**< Reference density.*/
+Real rho0_s = 10000.0; /**< Reference density.*/
 Real poisson = 0.4; /**< Poisson ratio.*/
 Real Ae = 1.4e3;	/**< Normalized Youngs Modulus. */
 Real Youngs_modulus = Ae * rho0_f * U_f * U_f;
@@ -96,8 +96,11 @@ struct FreeStreamVelocity
 		Real run_time = GlobalStaticVariables::physical_time_;
 		Real u_ave = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
 		target_velocity[0] = 6.0 * u_ave * (DH/2 - position[1]) * (DH/2 + position[1]) / DH / DH;
+		target_velocity[1] = 0.;
+		target_velocity[2] = 0.;
 		return target_velocity;
 	}
 };
+
 
 #endif // TUREK_HRON_CASE_H

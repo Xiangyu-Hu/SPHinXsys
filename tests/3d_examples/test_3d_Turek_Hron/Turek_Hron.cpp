@@ -117,10 +117,11 @@ int main(int ac, char *av[])
 	Vec3d inflow_region_translation(0.5 * inflow_length, 0.5 * DH, 0.5 * DH);
 	BodyAlignedBoxByCell inflow_region(water_block, makeShared<AlignedBoxShape>(Transform3d(Vec3d(inflow_region_translation)), inflow_region_halfsize));
 	SimpleDynamics<fluid_dynamics::InflowVelocityCondition<FreeStreamVelocity>, BodyAlignedBoxByCell> emitter_buffer_inflow_condition(inflow_region);
-	
+	// SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>, BodyAlignedBoxByCell> emitter_buffer_inflow_condition(inflow_region);
+
 	//OUTLET
 	Vec3d disposer_halfsize(0.5 * BW, 0.75 * DH, 0.75 * DH);
-	Vec3d disposer_translation(DL - 0.5 * BW, 0.5 * DH, 0.5 * DH);
+	Vec3d disposer_translation(DL - 0.5 * BW, 0.5 * DH, 0.5 * DH);	
 	BodyAlignedBoxByCell disposer(water_block, makeShared<AlignedBoxShape>(Transform3d(Vec3d(disposer_translation)), disposer_halfsize));
 	SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion, BodyAlignedBoxByCell> disposer_outflow_deletion(disposer, 0);
 	
@@ -136,12 +137,12 @@ int main(int ac, char *av[])
 	/** Time step size with considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	/** modify the velocity of boundary particles with free-stream velocity. */
-	SimpleDynamics<fluid_dynamics::FreeStreamVelocityCorrection<FreeStreamVelocity>> velocity_boundary_condition_constraint(water_block);
+	//SimpleDynamics<fluid_dynamics::FreeStreamVelocityCorrection<FreeStreamVelocity>> velocity_boundary_condition_constraint(water_block);
 	/** Pressure relaxation using verlet time stepping. */
 	/** Here, we do not use Riemann solver for pressure as the flow is viscous. */
 	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
 	/** correct the velocity of boundary particles with free-stream velocity through the post process of pressure relaxation. */
-	pressure_relaxation.post_processes_.push_back(&velocity_boundary_condition_constraint);
+	//pressure_relaxation.post_processes_.push_back(&velocity_boundary_condition_constraint);
 	/* Density relaxation*/
 	Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(water_block_complex);
 	/** viscous acceleration and transport velocity correction can be combined because they are independent dynamics. */
@@ -182,7 +183,9 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
-	//water_block.addBodyStateForRecording<int>("SurfaceIndicator");
+	water_block.addBodyStateForRecording<int>("SurfaceIndicator");
+	water_block.addBodyStateForRecording<Real>("MassiveMeasure");
+	water_block.addBodyStateForRecording<Real>("Density");
 	BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
 	//RegressionTestTimeAveraged<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalViscousForceOnSolid>>>
 	//	write_total_viscous_force_on_insert_body(io_environment, insert_body);
