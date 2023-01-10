@@ -28,9 +28,6 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
 
-      - name: Print hardware information # To help analysis for https://github.com/Xiangyu-Hu/SPHinXsys/issues/182
-        run: lscpu
-      
       - name: Install system dependencies
         run: |
           sudo apt update 
@@ -43,7 +40,7 @@ jobs:
             cmake \
             ninja-build \
             python3
-      
+
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: ${{ github.job }}
@@ -51,7 +48,6 @@ jobs:
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
         with: 
           committish: ${{ env.VCPKG_VERSION }}
-          # cache-version: ${{ github.run_attempt }}
 
       - name: Install dependencies
         run: |
@@ -74,6 +70,7 @@ jobs:
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -S ${{github.workspace}} \
             -B ${{github.workspace}}/build
+            
       - name: Build
         run: cmake --build build --config Release --verbose
 
