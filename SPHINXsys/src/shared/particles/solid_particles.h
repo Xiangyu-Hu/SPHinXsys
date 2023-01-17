@@ -183,6 +183,13 @@ namespace SPH
 		virtual Real ParticleVolume(size_t index_i) override { return Vol_[index_i] * thickness_[index_i]; }
 		/** get particle mass. */
 		virtual Real ParticleMass(size_t index_i) override { return mass_[index_i] * thickness_[index_i]; }
+		/** Return degenerated spacing. */
+		virtual Real DegeneratedSpacing(size_t index_i) override { return thickness_[index_i]; }
+		/** Get wall average velocity when interacting with fluid. */
+		virtual StdLargeVec<Vecd> *AverageVelocity() override { return &vel_ave_; };
+		/** Get wall average acceleration when interacting with fluid. */
+		virtual StdLargeVec<Vecd> *AverageAcceleration() override { return &acc_ave_; };
+
 		/** Initialize variable for shell particles. */
 		virtual void initializeOtherVariables() override;
 		/** Return this pointer. */

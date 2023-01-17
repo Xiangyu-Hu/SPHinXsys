@@ -39,24 +39,21 @@ namespace SPH
 	namespace fluid_dynamics
 	{
 		/**
-		 * @class FreeSurfaceIndicationComplex
-		 * @brief indicate the particles near the free fluid surface.
+		 * @class 	FreeSurfaceIndicationComplex
+		 * @brief  	indicate the particles near the free fluid surface.
 		 */
-		class FreeSurfaceIndicationComplex : public FreeSurfaceIndicationInner, public FluidContactData
+		class FreeSurfaceIndicationComplex
+			: public BaseInteractionComplex<FreeSurfaceIndicationInner, FluidContactData>
 		{
 		public:
-			FreeSurfaceIndicationComplex(BaseInnerRelation &inner_relation,
-										 BaseContactRelation &contact_relation, Real threshold = 0.75);
-			explicit FreeSurfaceIndicationComplex(ComplexRelation &complex_relation, Real threshold = 0.75);
+			template <typename... Args>
+			FreeSurfaceIndicationComplex(Args &&...args)
+				: BaseInteractionComplex<FreeSurfaceIndicationInner, FluidContactData>(std::forward<Args>(args)...){};
 			virtual ~FreeSurfaceIndicationComplex(){};
 			void interaction(size_t index_i, Real dt = 0.0);
-
-		protected:
-			StdVec<Real> contact_inv_rho0_;
-			StdVec<StdLargeVec<Real> *> contact_mass_;
 		};
-		using SpatialTemporalFreeSurfaceIdentificationComplex =
-			SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIndicationComplex>;
+
+		using SpatialTemporalFreeSurfaceIdentificationComplex =SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIndicationComplex>;
 
 		/** the cases with free surface and freestream */
 		using DensitySummationFreeSurfaceComplex = DensitySummationFreeSurface<DensitySummationComplex>;

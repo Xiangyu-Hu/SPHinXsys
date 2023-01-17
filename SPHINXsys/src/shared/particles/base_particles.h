@@ -200,7 +200,8 @@ namespace SPH
 		virtual Real ParticleVolume(size_t index_i) { return Vol_[index_i]; }
 		/** Return particle mass. */
 		virtual Real ParticleMass(size_t index_i) { return mass_[index_i]; }
-
+		/** Return degenerated spacing. */
+		virtual Real DegeneratedSpacing(size_t index_i) { return 1.0; }
 	protected:
 		SPHBody &sph_body_; 							/**< The body in which the particles belongs to. */
 		std::string body_name_;							/**< Name of the body. */

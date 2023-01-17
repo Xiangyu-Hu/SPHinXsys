@@ -6,24 +6,6 @@ namespace SPH
 	namespace fluid_dynamics
 	{
 		//=================================================================================================//
-		FreeSurfaceIndicationComplex::
-			FreeSurfaceIndicationComplex(BaseInnerRelation &inner_relation,
-										 BaseContactRelation &contact_relation, Real threshold)
-			: FreeSurfaceIndicationInner(inner_relation, threshold), FluidContactData(contact_relation)
-		{
-			for (size_t k = 0; k != contact_particles_.size(); ++k)
-			{
-				Real rho0_k = contact_bodies_[k]->base_material_->ReferenceDensity();
-				contact_inv_rho0_.push_back(1.0 / rho0_k);
-				contact_mass_.push_back(&(contact_particles_[k]->mass_));
-			}
-		}
-		//=================================================================================================//
-		FreeSurfaceIndicationComplex::
-			FreeSurfaceIndicationComplex(ComplexRelation &complex_relation, Real threshold)
-			: FreeSurfaceIndicationComplex(complex_relation.getInnerRelation(),
-										   complex_relation.getContactRelation(), threshold) {}
-		//=================================================================================================//
 		void FreeSurfaceIndicationComplex::interaction(size_t index_i, Real dt)
 		{
 			FreeSurfaceIndicationInner::interaction(index_i, dt);
@@ -34,7 +16,8 @@ namespace SPH
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
-					pos_div -= contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.r_ij_[n];
+					pos_div -= contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.r_ij_[n] 
+							   * this->contact_particles_[k]->DegeneratedSpacing(contact_neighborhood.j_[n]);
 				}
 			}
 			pos_div_[index_i] += pos_div;

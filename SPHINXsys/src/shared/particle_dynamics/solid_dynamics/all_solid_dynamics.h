@@ -38,3 +38,4 @@
 #include "fluid_structure_interaction.h"
 #include "thin_structure_math.h"
 #include "inelastic_dynamics.h"
+#include "shell_fluid_interaction.h"
