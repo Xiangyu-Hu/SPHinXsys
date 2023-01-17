@@ -91,8 +91,7 @@ namespace SPH
 	{
 		if (!cell_linked_list_created_)
 		{
-			cell_linked_list_ptr_ = std::move(
-				sph_adaptation_->createCellLinkedList(getSPHSystemBounds(), *this));
+			cell_linked_list_ptr_ = sph_adaptation_->createCellLinkedList(getSPHSystemBounds(), *this);
 			cell_linked_list_created_ = true;
 		}
 		return *cell_linked_list_ptr_.get();
