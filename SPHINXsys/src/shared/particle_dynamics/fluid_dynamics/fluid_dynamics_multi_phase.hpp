@@ -163,7 +163,7 @@ namespace SPH
 
 					Vecd vel_ave = riemann_solver_k.AverageV(this->vel_[index_i], vel_k[index_j]);
 					density_change_rate += 2.0 * (this->vel_[index_i] - vel_ave).dot(e_ij) * dW_ijV_j;
-					Real u_jump = u_jump = (this->vel_[index_i] - vel_k[index_j]).dot(e_ij);
+					Real u_jump = (this->vel_[index_i] - vel_k[index_j]).dot(e_ij);
 					p_dissipation += riemann_solver_k.DissipativePJump(u_jump) * dW_ijV_j * e_ij;
 				}
 			}
