@@ -89,7 +89,7 @@ namespace SPH
 				Real velocity_boundary_normal = vel_[index_i].dot(n_[index_i]);
 
 				// judge it is the inflow condition
-				if (n_[index_i][0] <= 0.0 | fabs(n_[index_i][1]) > fabs(n_[index_i][0]))
+				if (n_[index_i][0] <= 0.0 || fabs(n_[index_i][1]) > fabs(n_[index_i][0]))
 				{
 					// supersonic inflow condition
 					if (fabs(velocity_boundary_normal) >= sound_speed_)
