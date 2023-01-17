@@ -199,7 +199,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
-	int number_of_iterations = 0;
+	size_t number_of_iterations = 0;
 	int screen_output_interval = 10;
 	int observation_sample_interval = screen_output_interval * 2;
 	Real end_time = 20.0;

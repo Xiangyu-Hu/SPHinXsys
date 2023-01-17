@@ -532,7 +532,7 @@ namespace SPH
     {
         updateMergedParticleInformation(particles_->total_real_particles_, merge_indices);
         size_t merge_change_number = merge_indices.size() - 1;
-        for (size_t k = merge_change_number; k != -1; --k)
+        for (size_t k = merge_change_number; k != size_t(-1); --k)
             particles_->copyFromAnotherParticle(merge_indices[k], particles_->total_real_particles_ - (merge_change_number - k));
         particles_->total_real_particles_ -= merge_change_number;
     }

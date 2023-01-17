@@ -352,7 +352,7 @@ namespace SPH
 			  pos0_(particles_->pos0_), acc_prior_(particles_->acc_prior_),
 			  thickness_(particles_->thickness_)
 		{
-			for (int i = 0; i < point_forces_.size(); i++)
+			for (size_t i = 0; i < point_forces_.size(); i++)
 			{
 				weight_.push_back(StdLargeVec<Real>(0.0));
 				time_dependent_point_forces_.push_back(Vecd::Zero());
@@ -370,7 +370,7 @@ namespace SPH
 			Real smoothing_length = h_spacing_ratio_ * particle_spacing_ref_;
 			Real h_ratio = reference_smoothing_length / smoothing_length;
 			Real cutoff_radius_sqr = powerN(2.0 * smoothing_length, 2);
-			for (int i = 0; i < point_forces_.size(); ++i)
+			for (size_t i = 0; i < point_forces_.size(); ++i)
 			{
 				sum_of_weight_[i] = 0.0;
 				for (size_t index = 0; index < particles_->total_real_particles_; ++index)
@@ -389,7 +389,7 @@ namespace SPH
 		void DistributingPointForcesToShell::setupDynamics(Real dt)
 		{
 			Real current_time = GlobalStaticVariables::physical_time_;
-			for (int i = 0; i < point_forces_.size(); ++i)
+			for (size_t i = 0; i < point_forces_.size(); ++i)
 			{
 				time_dependent_point_forces_[i] = current_time < time_to_full_external_force_
 													  ? current_time * point_forces_[i] / time_to_full_external_force_
@@ -400,7 +400,7 @@ namespace SPH
 		void DistributingPointForcesToShell::update(size_t index_i, Real dt)
 		{
 			acc_prior_[index_i] = Vecd::Zero();
-			for (int i = 0; i < point_forces_.size(); ++i)
+			for (size_t i = 0; i < point_forces_.size(); ++i)
 			{
 				Vecd force = weight_[i][index_i] / (sum_of_weight_[i] + TinyReal) * time_dependent_point_forces_[i];
 				acc_prior_[index_i] += force / particles_->ParticleMass(index_i);
