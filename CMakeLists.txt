@@ -36,8 +36,9 @@ if(${CMAKE_SYSTEM_NAME} MATCHES Windows)
     # target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:/W4 /WX>) # TODO: For when one gets rid of Simbody 
 else()
     target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Werror>)
-    # target_compile_options(sphinxsys_core INTERFACE -pedantic-errors) # TODO: after initial rework merged
-    # target_compile_options(sphinxsys_core INTERFACE  $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Wall -Wextra>) # TODO: For when one gets rid of Simbody 
+    target_compile_options(sphinxsys_core INTERFACE  $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Wall>)
+    # target_compile_options(sphinxsys_core INTERFACE  $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Wextra>) # TODO: 
+    # target_compile_options(sphinxsys_core INTERFACE -Wpedantic) # For strict C++ standard compliance # TODO:
 endif()
 
 #------ Dependencies
