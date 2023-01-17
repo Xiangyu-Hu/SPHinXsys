@@ -15,8 +15,8 @@ option(SPHINXSYS_DEVELOPER_MODE "Build tests" ON)
 set(CMAKE_VERBOSE_MAKEFILE OFF CACHE BOOL "Enable verbose compilation commands for Makefile and Ninja" FORCE) # Extra fluff needed for Ninja: https://github.com/ninja-build/ninja/issues/900
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # Generate `compile_commands.json` file which is necessary for code completioner, static analyzer, etc
 
-#set(CXX_STANDARD_REQUIRED ON) # C++ standard requirement for targets is NOT optional 
-set(CXX_EXTENSIONS OFF) # Disable any non-standard compiler specific C++ extensions.
+#set(CMAKE_CXX_STANDARD_REQUIRED ON) # C++ standard requirement for all targets is NOT optional 
+set(CMAKE_CXX_EXTENSIONS OFF) # Disable any non-standard compiler specific C++ extensions for all targets.
 
 #------ Declare core library
 add_library(sphinxsys_core INTERFACE)
