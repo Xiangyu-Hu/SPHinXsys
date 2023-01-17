@@ -196,7 +196,7 @@ public:
 	{};
 	virtual void initializeGeometricVariables() override
 	{
-		Real radius = 24.875;								/** Radius of the inner boundary of the cylinder. */
+		// Real radius = 24.875;								/** Radius of the inner boundary of the cylinder. */
 		Real height = 50.0;									/** Height of the cylinder. */
 		Real thickness = 0.25;								/** Thickness of the cylinder. */
 		Real radius_mid_surface = 25.0; /** Radius of the mid surface. */
@@ -471,10 +471,6 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 	{// testing final values
 		Real displ_y_A = -0.3019;
 		Real displ_x_A = -0.1593;
-		Real stress_z_A_top = 215570;
-		Real stress_z_A_bottom = 340700;
-		Real stress_angle_B_top = 191230;
-		Real stress_angle_B_bottom = -218740;
 
 		EXPECT_NEAR(point_A.displacement[radial_axis], displ_y_A, std::abs(displ_y_A*10e-2)); // 10% - difficult accuracy due incomplete edge kernels
 		EXPECT_NEAR(point_A.displacement[tangential_axis], displ_x_A, std::abs(displ_x_A*10e-2)); // 10% - difficult accuracy due incomplete edge kernels

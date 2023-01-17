@@ -199,7 +199,6 @@ return_data bending_circular_plate(Real dp_ratio)
 		std::cout << "r_max: " << r_max << std::endl;
 		for (auto& vertex: obj_vertices)
 		{
-			Real r_i = vertex.norm();
 			vertex *= radius/r_max;
 		}
 		// also update dp and total area
@@ -368,7 +367,6 @@ return_data bending_circular_plate(Real dp_ratio)
 	}
 	{// testing final values
 		Real deflection_ref = -0.08736*inch_to_m; // -0.00221894
-		Real stress_max_ref = 7200*psi_to_pa;
 		std::cout << "deflection_ref: " << deflection_ref << std::endl;
 
 		EXPECT_NEAR(std::abs(point_center.displacement[sym_axis]), std::abs(deflection_ref), std::abs(deflection_ref)*5e-2); // 5%

@@ -156,7 +156,6 @@ int main()
 	size_t number_of_iterations = 0;
 	int screen_output_interval = 100;
 	int observation_sample_interval = screen_output_interval * 2;
-	int restart_output_interval = screen_output_interval * 10;
 	Real end_time = 20.0;		/**< End time. */
 	Real output_interval = 0.1; /**< Time stamps for output of body states. */
 	Real dt = 0.0;				/**< Default acoustic time step sizes. */

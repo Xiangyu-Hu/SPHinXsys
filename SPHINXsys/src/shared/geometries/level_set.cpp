@@ -191,7 +191,6 @@ namespace SPH
 			}
 			else
 			{
-				Vecd cell_position = CellPositionFromIndex(cell_index);
 				LevelSetDataPackage *new_data_pkg = createDataPackage(
 					all_variables_, cell_index,
 					[&](LevelSetDataPackage *new_data_pkg)

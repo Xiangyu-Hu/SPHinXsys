@@ -152,8 +152,6 @@ namespace SPH
 			Vecd p_dissipation = Vecd::Zero();
 			for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 			{
-				StdLargeVec<Real> &rho_k = *(this->contact_rho_n_[k]);
-				StdLargeVec<Real> &p_k = *(this->contact_p_[k]);
 				StdLargeVec<Vecd> &vel_k = *(this->contact_vel_n_[k]);
 				CurrentRiemannSolver &riemann_solver_k = riemann_solvers_[k];
 				Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];

@@ -585,7 +585,6 @@ void StructuralSimulation::initializeTranslateSolidBodyPart()
 		Real start_time = get<1>(translation_solid_body_part_tuple_[i]);
 		Real end_time = get<2>(translation_solid_body_part_tuple_[i]);
 		Vecd translation = get<3>(translation_solid_body_part_tuple_[i]);
-		BoundingBox bbox = get<4>(translation_solid_body_part_tuple_[i]);
 		BodyPartFromMesh *bp = body_part_tri_mesh_ptr_keeper_.createPtr<BodyPartFromMesh>(
 			*solid_body_list_[body_index]->getSolidBodyFromMesh(), body_mesh_list_[body_index]);
 

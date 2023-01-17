@@ -149,7 +149,6 @@ namespace SPH
 							size_t index_j = inner_neighborhood.j_[n];
 							if (surface_indicator_[index_j] != 1)
 							{
-								Real W_ij = inner_neighborhood.W_ij_[n];
 								rho_summation += rho_[index_j];
 								vel_summation += vel_[index_j];
 								p_summation += p_[index_j];
