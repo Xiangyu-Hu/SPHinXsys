@@ -278,7 +278,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 	// system bounding box
 	BoundingBox bb_system;
 	StdVec<Vec3d> obj_vertices;
-	Real particle_area;
+	Real particle_area = -1;//initialized when CVT-based mesh is used
 
 	if (cvt)
 	{
