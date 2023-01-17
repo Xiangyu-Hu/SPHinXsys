@@ -90,7 +90,7 @@ struct FreeStreamVelocity
 //----------------------------------------------------------------------
 class TimeDependentAcceleration : public Gravity
 {
-	Real du_ave_dt_, u_ref_, t_ref_;
+	Real t_ref_, u_ref_, du_ave_dt_;
 
 public:
 	explicit TimeDependentAcceleration(Vecd gravity_vector)

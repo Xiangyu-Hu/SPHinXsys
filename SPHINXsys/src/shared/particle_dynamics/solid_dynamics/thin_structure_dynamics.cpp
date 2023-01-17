@@ -17,11 +17,11 @@ namespace SPH
 			  ShellDataSimple(sph_body), CFL_(CFL), vel_(particles_->vel_), acc_(particles_->acc_),
 			  angular_vel_(particles_->angular_vel_), dangular_vel_dt_(particles_->dangular_vel_dt_),
 			  thickness_(particles_->thickness_),
-			  smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()),
 			  rho0_(particles_->elastic_solid_.ReferenceDensity()),
 			  E0_(particles_->elastic_solid_.YoungsModulus()),
 			  nu_(particles_->elastic_solid_.PoissonRatio()),
-			  c0_(particles_->elastic_solid_.ReferenceSoundSpeed()) {}
+			  c0_(particles_->elastic_solid_.ReferenceSoundSpeed()),
+			  smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()) {}
 		//=================================================================================================//
 		Real ShellAcousticTimeStepSize::reduce(size_t index_i, Real dt)
 		{
@@ -112,14 +112,14 @@ namespace SPH
 			  global_moment_(particles_->global_moment_),
 			  global_shear_stress_(particles_->global_shear_stress_),
 			  n_(particles_->n_),
-			  number_of_gaussian_points_(number_of_gaussian_points),
-			  hourglass_control_(hourglass_control),
 			  rho0_(elastic_solid_.ReferenceDensity()),
 			  inv_rho0_(1.0 / rho0_),
 			  smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
 			  E0_(elastic_solid_.YoungsModulus()),
 			  G0_(elastic_solid_.ShearModulus()),
-			  nu_(elastic_solid_.PoissonRatio())
+			  nu_(elastic_solid_.PoissonRatio()),
+			  hourglass_control_(hourglass_control),
+			  number_of_gaussian_points_(number_of_gaussian_points)
 		{
 			/** Note that, only three-point and five-point Gaussian quadrature rules are defined. */
 			switch (number_of_gaussian_points)

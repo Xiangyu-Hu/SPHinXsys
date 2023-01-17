@@ -102,7 +102,7 @@ namespace SPH
 		class ShapeParameters 
 		{
 		public:
-			ShapeParameters() : halfsize_(Vec3d::Zero()), resolution_(0), translation_(Vec3d::Zero()) {};
+			ShapeParameters() : halfsize_(Vec3d::Zero()), translation_(Vec3d::Zero()), resolution_(0) {};
 			Vec3d halfsize_;
 			Vec3d translation_;
 			int resolution_;

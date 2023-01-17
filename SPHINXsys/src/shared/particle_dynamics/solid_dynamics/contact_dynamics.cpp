@@ -80,8 +80,8 @@ namespace SPH
 			: LocalDynamics(solid_body_contact_relation.sph_body_)
 			, ContactDynamicsData(solid_body_contact_relation)
 			, solid_(particles_->solid_)
-			, pos_(particles_->pos_)
 			, kernel_(solid_body_contact_relation.sph_body_.sph_adaptation_->getKernel())
+			, pos_(particles_->pos_)
 			, particle_spacing_(solid_body_contact_relation.sph_body_.sph_adaptation_->ReferenceSpacing())
 			, calibration_factor_(StdVec<Real>(contact_configuration_.size(), 0.0))
 			, contact_h_ratio_(StdVec<Real>(contact_configuration_.size(), 0.0))
@@ -136,8 +136,8 @@ namespace SPH
 			  solid_(particles_->solid_), mass_(particles_->mass_),
 			  self_contact_density_(*particles_->getVariableByName<Real>("SelfContactDensity")),
 			  Vol_(particles_->Vol_), acc_prior_(particles_->acc_prior_),
-			  contact_impedance_(solid_.ReferenceDensity() * sqrt(solid_.ContactStiffness())),
-			  vel_(particles_->vel_) {}
+			  vel_(particles_->vel_),
+			  contact_impedance_(solid_.ReferenceDensity() * sqrt(solid_.ContactStiffness())) {}
 		//=================================================================================================//
 		void SelfContactForce::interaction(size_t index_i, Real dt)
 		{
