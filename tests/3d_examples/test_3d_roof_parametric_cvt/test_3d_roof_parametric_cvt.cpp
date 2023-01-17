@@ -49,14 +49,14 @@ class ShellRoofParticleGenerator : public SurfaceParticleGenerator
 {
 	const StdVec<Vec3d>& pos_0_;
 	const Vec3d center_;
-	const Real particel_area_;
+	const Real particle_area_;
 	const Real thickness_;
 public:
-	explicit ShellRoofParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d>& pos_0, const Vec3d& center, Real particel_area, Real thickness)
+	explicit ShellRoofParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d>& pos_0, const Vec3d& center, Real particle_area, Real thickness)
 		: SurfaceParticleGenerator(sph_body),
 		pos_0_(pos_0),
 		center_(center),
-		particel_area_(particel_area),
+		particle_area_(particle_area),
 		thickness_(thickness)
 		{};
 	virtual void initializeGeometricVariables() override
@@ -66,7 +66,7 @@ public:
 			// creating the normal direction - z coordinate is always zero
 			Vec3d center_to_pos = pos-center_;
 			center_to_pos[2] = 0;
-			initializePositionAndVolumetricMeasure(pos, particel_area_);
+			initializePositionAndVolumetricMeasure(pos, particle_area_);
 			initializeSurfaceProperties(center_to_pos.normalized(), thickness_);
 		}
 	}
