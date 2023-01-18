@@ -9,7 +9,7 @@ include(Common) # brings macro to current namespace
 option(SPHINXSYS_2D "Build sphinxsys_2d library" ON)
 option(SPHINXSYS_3D "Build sphinxsys_3d library" ON)
 option(SPHINXSYS_BUILD_TESTS "Build tests" ON)
-option(SPHINXSYS_DEVELOPER_MODE "Build tests" ON)
+option(SPHINXSYS_DEVELOPER_MODE "Developer mode has more flags active for code quality" ON)
 
 #------ Global properties (Some cannot be set on INTERFACE targets)
 set(CMAKE_VERBOSE_MAKEFILE OFF CACHE BOOL "Enable verbose compilation commands for Makefile and Ninja" FORCE) # Extra fluff needed for Ninja: https://github.com/ninja-build/ninja/issues/900
@@ -38,7 +38,7 @@ else()
     target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Werror>)
     target_compile_options(sphinxsys_core INTERFACE  $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Wall>)
     # target_compile_options(sphinxsys_core INTERFACE  $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Wextra>) # TODO: 
-    # target_compile_options(sphinxsys_core INTERFACE -Wpedantic) # For strict C++ standard compliance # TODO:
+    # target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Wpedantic>) # For strict C++ standard compliance # TODO:
 endif()
 
 #------ Dependencies
