@@ -14,7 +14,6 @@ using namespace SPH;
 
 static const Real psi_to_pa = 6894.75729;
 static const Real inch_to_m = 0.0254;
-static const Real lb_to_kg = 0.45359237;
 
 class ShellCircleParticleGenerator : public SurfaceParticleGenerator
 {
