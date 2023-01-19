@@ -35,6 +35,8 @@
 
 namespace SPH
 {
+	class SolidParticles;
+	
 	typedef DataDelegateInner<BaseParticles> DissipationDataInner;
 	typedef DataDelegateContact<BaseParticles, BaseParticles, DataDelegateEmptyBase>
 		DissipationDataContact;

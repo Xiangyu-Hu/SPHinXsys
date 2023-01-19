@@ -160,11 +160,11 @@ namespace SPH
 	 */
 	class Rotation2d
 	{
-		Real angle_, cosine_angle_, sine_angle_;
+		Real cosine_angle_, sine_angle_;
 
 	public:
 		explicit Rotation2d(Real angle)
-			: angle_(angle), cosine_angle_(std::cos(angle)), sine_angle_(std::sin(angle)){};
+			: cosine_angle_(std::cos(angle)), sine_angle_(std::sin(angle)){};
 		virtual ~Rotation2d(){};
 
 		/** Forward transformation. */

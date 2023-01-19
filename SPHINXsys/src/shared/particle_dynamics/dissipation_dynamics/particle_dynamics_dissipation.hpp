@@ -99,8 +99,6 @@ namespace SPH
 		/** Contact interaction. */
 		for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 		{
-			StdLargeVec<Real> &Vol_k = *(this->contact_Vol_[k]);
-			StdLargeVec<Real> &mass_k = *(this->contact_mass_[k]);
 			StdLargeVec<VariableType> &variable_k = *(this->contact_variable_[k]);
 			Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
 			for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -132,7 +130,6 @@ namespace SPH
 		/** Contact interaction. */
 		for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 		{
-			StdLargeVec<Real> &Vol_k = *(this->contact_Vol_[k]);
 			StdLargeVec<Real> &mass_k = *(this->contact_mass_[k]);
 			StdLargeVec<VariableType> &variable_k = *(this->contact_variable_[k]);
 			Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
@@ -182,7 +179,6 @@ namespace SPH
 		/** Contact interaction. */
 		for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 		{
-			StdLargeVec<Real> &Vol_k = *(this->wall_Vol_[k]);
 			StdLargeVec<VariableType> &variable_k = *(this->wall_variable_[k]);
 			Neighborhood &contact_neighborhood = (*DissipationDataWithWall::contact_configuration_[k])[index_i];
 			for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -282,7 +278,6 @@ namespace SPH
 		/** Contact interaction. */
 		for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 		{
-			StdLargeVec<Real> &Vol_k = *(this->contact_Vol_[k]);
 			StdLargeVec<Real> &mass_k = *(this->contact_mass_[k]);
 			StdLargeVec<VariableType> &variable_k = *(this->contact_variable_[k]);
 			Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
@@ -352,7 +347,6 @@ namespace SPH
 		/** Contact interaction. */
 		for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 		{
-			StdLargeVec<Real> &Vol_k = *(this->wall_Vol_[k]);
 			StdLargeVec<VariableType> &variable_k = *(this->wall_variable_[k]);
 			Neighborhood &contact_neighborhood = (*DissipationDataWithWall::contact_configuration_[k])[index_i];
 			// forward sweep
@@ -403,7 +397,6 @@ namespace SPH
 		/** Contact interaction. */
 		for (size_t k = 0; k < contact_configuration_.size(); ++k)
 		{
-			StdLargeVec<Real> &Vol_k = *(wall_Vol_[k]);
 			StdLargeVec<VariableType> &variable_k = *(wall_variable_[k]);
 			Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 			// forward sweep

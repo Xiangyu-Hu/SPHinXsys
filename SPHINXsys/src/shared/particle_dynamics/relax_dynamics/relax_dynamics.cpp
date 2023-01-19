@@ -37,7 +37,6 @@ namespace SPH
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
-				size_t index_j = inner_neighborhood.j_[n];
 				acceleration -= 2.0 * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
 			}
 			acc_[index_i] = acceleration;
@@ -100,7 +99,6 @@ namespace SPH
 			Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
-				size_t index_j = inner_neighborhood.j_[n];
 				acceleration -= 2.0 * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
 			}
 
@@ -110,8 +108,6 @@ namespace SPH
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
-					size_t index_j = contact_neighborhood.j_[n];
-
 					acceleration -= 2.0 * contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
 				}
 			}
@@ -149,12 +145,12 @@ namespace SPH
 			if (!level_set_correction)
 			{
 				relaxation_acceleration_inner_ =
-					std::move(makeUnique<InteractionDynamics<RelaxationAccelerationInner>>(inner_relation));
+					makeUnique<InteractionDynamics<RelaxationAccelerationInner>>(inner_relation);
 			}
 			else
 			{
 				relaxation_acceleration_inner_ =
-					std::move(makeUnique<InteractionDynamics<RelaxationAccelerationInnerWithLevelSetCorrection>>(inner_relation));
+					makeUnique<InteractionDynamics<RelaxationAccelerationInnerWithLevelSetCorrection>>(inner_relation);
 			}
 		}
 		//=================================================================================================//
@@ -207,12 +203,12 @@ namespace SPH
 			if (!level_set_correction)
 			{
 				relaxation_acceleration_complex_ =
-					std::move(makeUnique<InteractionDynamics<RelaxationAccelerationComplex>>(body_complex_relation));
+					makeUnique<InteractionDynamics<RelaxationAccelerationComplex>>(body_complex_relation);
 			}
 			else
 			{
 				relaxation_acceleration_complex_ =
-					std::move(makeUnique<InteractionDynamics<RelaxationAccelerationComplexWithLevelSetCorrection>>(body_complex_relation, shape_name));
+					makeUnique<InteractionDynamics<RelaxationAccelerationComplexWithLevelSetCorrection>>(body_complex_relation, shape_name);
 			}
 		}
 		//=================================================================================================//

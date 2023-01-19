@@ -171,7 +171,7 @@ namespace SPH
 		StdVec<ReactionFunctor> get_loss_rates_;
 
 		explicit BaseReactionModel(SpeciesNames species_name_list)
-			: reaction_model_("BaseReactionModel"), species_name_list_(species_name_list)
+			:  reaction_model_("BaseReactionModel"), species_name_list_(species_name_list) 
 		{
 			for (size_t i = 0; i != species_name_list.size(); ++i)
 			{
@@ -182,9 +182,9 @@ namespace SPH
 		SpeciesNames getSpeciesNameList() { return species_name_list_; };
 
 	protected:
+		std::string reaction_model_;
 		SpeciesNames species_name_list_;
 		std::map<std::string, size_t> species_indexes_map_;
-		std::string reaction_model_;
 	};
 
 	/**

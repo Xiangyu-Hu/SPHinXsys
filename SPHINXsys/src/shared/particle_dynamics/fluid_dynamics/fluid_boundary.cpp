@@ -130,7 +130,6 @@ namespace SPH
 		void StaticConfinementIntegration1stHalf::update(size_t index_i, Real dt)
 		{
 			Vecd kernel_gradient = level_set_shape_->computeKernelGradientIntegral(pos_[index_i]);
-			Vecd normal_to_fluid = -kernel_gradient / (kernel_gradient.norm() + TinyReal);
 			acc_[index_i] -= 2.0 * p_[index_i] * kernel_gradient / rho_[index_i];
 		}
 		//=================================================================================================//
@@ -145,7 +144,6 @@ namespace SPH
 		void StaticConfinementIntegration2ndHalf::update(size_t index_i, Real dt)
 		{
 			Vecd kernel_gradient = level_set_shape_->computeKernelGradientIntegral(pos_[index_i]);
-			Vecd normal_to_fluid = -kernel_gradient / (kernel_gradient.norm() + TinyReal);
 			Vecd vel_in_wall = -vel_[index_i];
 			drho_dt_[index_i] += rho_[index_i] * (vel_[index_i] - vel_in_wall).dot(kernel_gradient);
 		}

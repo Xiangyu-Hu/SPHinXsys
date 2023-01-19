@@ -32,8 +32,8 @@ namespace SPH
 			  Vol_(particles_->Vol_), rho_(particles_->rho_), p_(particles_->p_),
 			  mass_(particles_->mass_), dE_dt_prior_(particles_->dE_dt_prior_),
 			  vel_(particles_->vel_), dmom_dt_prior_(particles_->dmom_dt_prior_),
-			  smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
-			  mu_(particles_->compressible_fluid_.ReferenceViscosity()) {}
+			  mu_(particles_->compressible_fluid_.ReferenceViscosity()),
+		      smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
 		//=================================================================================================//
 		void ViscousAccelerationInner::interaction(size_t index_i, Real dt)
 		{

@@ -326,8 +326,8 @@ class WaveMaking : public solid_dynamics::BaseMotionConstraint
 public:
 	WaveMaking(BodyPartByParticle &body_part)
 		: solid_dynamics::BaseMotionConstraint(body_part),
-		  model_scale_(25.0), wave_height_(5.0),
-		  wave_period_(10.0), gravity_(gravity_g), water_depth_(Water_H)
+		  model_scale_(25.0), gravity_(gravity_g), water_depth_(Water_H), wave_height_(5.0),
+		  wave_period_(10.0)
 	{
 		computeWaveStrokeAndFrequency();
 	}

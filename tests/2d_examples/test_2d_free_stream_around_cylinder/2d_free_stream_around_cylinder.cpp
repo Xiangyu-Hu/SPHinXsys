@@ -1,10 +1,10 @@
 /**
- * @file 	mr_freestream_flow_around_cylinder.cpp
+ * @file 	freestream_flow_around_cylinder.cpp
  * @author 	Xiangyu Hu, Shuoguo Zhang
  */
 
 #include "sphinxsys.h"
-#include "mr_free_stream_around_cylinder.h"
+#include "2d_free_stream_around_cylinder.h"
 
 using namespace SPH;
 
@@ -26,17 +26,11 @@ int main(int ac, char *av[])
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-	water_block.defineAdaptation<ParticleRefinementWithinShape>(1.3, 1.0, 1);
-	water_block.defineComponentLevelSetShape("OuterBoundary")->writeLevelSet(io_environment);
 	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-	MultiPolygonShape refinement_region(MultiPolygon(initial_refinement_region), "RefinementRegion");
-	(!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-		? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getName())
-		: water_block.generateParticles<ParticleGeneratorMultiResolution>(refinement_region);
-	water_block.addBodyStateForRecording<Real>("SmoothingLengthRatio");
+	water_block.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));
-	cylinder.defineAdaptationRatios(1.15, 4.0);
+	cylinder.defineAdaptationRatios(1.15, 2.0);
 	cylinder.defineBodyLevelSetShape();
 	cylinder.defineParticlesAndMaterial<SolidParticles, Solid>();
 	(!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
@@ -50,11 +44,10 @@ int main(int ac, char *av[])
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	AdaptiveInnerRelation water_block_inner(water_block);
-	AdaptiveContactRelation water_contact(water_block, {&cylinder});
-	ComplexRelation water_block_complex(water_block_inner, water_contact);
-	AdaptiveContactRelation cylinder_contact(cylinder, {&water_block});
-	AdaptiveContactRelation fluid_observer_contact(fluid_observer, {&water_block});
+	InnerRelation water_block_inner(water_block);
+	ComplexRelation water_block_complex(water_block_inner, {&cylinder});
+	ContactRelation cylinder_contact(cylinder, {&water_block});
+	ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------
@@ -67,21 +60,18 @@ int main(int ac, char *av[])
 		//----------------------------------------------------------------------
 		/** Random reset the insert body particle position. */
 		SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(cylinder);
-		SimpleDynamics<RandomizeParticlePosition> random_water_body_particles(water_block);
-		BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
-		ReloadParticleIO write_real_body_particle_reload_files(io_environment, sph_system.real_bodies_);
+		/** Write the body state to Vtp file. */
+		BodyStatesRecordingToVtp write_inserted_body_to_vtp(io_environment, {&cylinder});
+		/** Write the particle reload files. */
+		ReloadParticleIO write_particle_reload_files(io_environment, {&cylinder});
 		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(cylinder_inner);
-		relax_dynamics::RelaxationStepComplex relaxation_step_complex(water_block_complex, "OuterBoundary", true);
-		SimpleDynamics<relax_dynamics::UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(water_block, refinement_region);
 		//----------------------------------------------------------------------
 		//	Particle relaxation starts here.
 		//----------------------------------------------------------------------
 		random_inserted_body_particles.parallel_exec(0.25);
-		random_water_body_particles.parallel_exec(0.25);
 		relaxation_step_inner.SurfaceBounding().parallel_exec();
-		relaxation_step_complex.SurfaceBounding().parallel_exec();
-		write_real_body_states.writeToFile(0);
+		write_inserted_body_to_vtp.writeToFile(0);
 		//----------------------------------------------------------------------
 		//	Relax particles of the insert body.
 		//----------------------------------------------------------------------
@@ -89,21 +79,18 @@ int main(int ac, char *av[])
 		while (ite_p < 1000)
 		{
 			relaxation_step_inner.parallel_exec();
-			update_smoothing_length_ratio.parallel_exec();
-			relaxation_step_complex.parallel_exec();
 			ite_p += 1;
 			if (ite_p % 200 == 0)
 			{
-				cout << fixed << setprecision(9) << "Relaxation steps N = " << ite_p << "\n";
-				write_real_body_states.writeToFile(ite_p);
+				cout << fixed << setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
+				write_inserted_body_to_vtp.writeToFile(ite_p);
 			}
 		}
-		std::cout << "The physics relaxation process finished !" << std::endl;
+		std::cout << "The physics relaxation process of inserted body finish !" << std::endl;
 		/** Output results. */
-		write_real_body_particle_reload_files.writeToFile(0);
+		write_particle_reload_files.writeToFile(0);
 		return 0;
 	}
-
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
@@ -116,7 +103,7 @@ int main(int ac, char *av[])
 	/** Emitter buffer inflow condition. */
 	BodyAlignedBoxByCell emitter_buffer(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(emitter_buffer_translation)), emitter_buffer_halfsize));
-	SimpleDynamics<fluid_dynamics::InflowVelocityCondition<FreeStreamVelocity>, BodyAlignedBoxByCell> emitter_buffer_inflow_condition(emitter_buffer, 0.1);
+	SimpleDynamics<fluid_dynamics::InflowVelocityCondition<FreeStreamVelocity>, BodyAlignedBoxByCell> emitter_buffer_inflow_condition(emitter_buffer);
 	BodyAlignedBoxByCell disposer(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(disposer_translation)), disposer_halfsize));
 	SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion, BodyAlignedBoxByCell> disposer_outflow_deletion(disposer, 0);
@@ -124,11 +111,10 @@ int main(int ac, char *av[])
 	InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex>
 		free_stream_surface_indicator(water_block_complex);
 	/** Evaluation of density by freestream approach. */
-	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplexAdaptive> update_fluid_density(water_block_complex);
+	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_fluid_density(water_block_complex);
 	/** We can output a method-specific particle data for debug */
 	water_block.addBodyStateForRecording<Real>("Pressure");
 	water_block.addBodyStateForRecording<int>("SurfaceIndicator");
-	water_block.addBodyStateForRecording<Real>("VolumetricMeasure");
 	/** Time step size without considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
 	/** Time step size with considering sound wave speed. */
@@ -144,8 +130,7 @@ int main(int ac, char *av[])
 	/** Computing viscous acceleration. */
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	/** Apply transport velocity formulation. */
-	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplexAdaptive> 
-		transport_velocity_correction(water_block_complex);
+	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> transport_velocity_correction(water_block_complex);
 	/** compute the vorticity. */
 	InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_inner);
 	//----------------------------------------------------------------------
@@ -184,7 +169,6 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	size_t number_of_iterations = 0;
 	int screen_output_interval = 100;
-	int restart_output_interval = screen_output_interval * 10;
 	Real end_time = 200.0;
 	Real output_interval = end_time / 400.0;
 	//----------------------------------------------------------------------
@@ -264,6 +248,16 @@ int main(int ac, char *av[])
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
 	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+
+	if (sph_system.generate_regression_data_)
+	{
+		// The lift force at the cylinder is very small and not important in this case.
+		write_total_viscous_force_on_inserted_body.generateDataBase({1.0e-2, 1.0e-2}, {1.0e-2, 1.0e-2});
+	}
+	else
+	{
+		write_total_viscous_force_on_inserted_body.newResultTest();
+	}
 
 	return 0;
 }

@@ -135,7 +135,6 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	size_t number_of_iterations = 0;
 	int screen_output_interval = 100;
-	int restart_output_interval = screen_output_interval * 10;
 	Real end_time = 5.0;
 	Real output_interval = 0.1; /**< Time stamps for output of body states. */
 	/** statistics for computing CPU time. */
