@@ -8,7 +8,6 @@
  * @author 	Anastazja Broniatowska
  */
 #include "sphinxsys.h"
-
 #include "Turek_Hron.h" //	case file to setup the test case
 using namespace SPH;
 
@@ -17,7 +16,7 @@ int main(int ac, char *av[])
 	//GEOMETRY
 	auto fluid_shape = createFluid();
 	auto wall_shape = createWall();
-	//auto body_shape = createInsertBody();
+	auto body_shape = createInsertBody();
 	
 	//----------------------------------------------------------------------
 	//	Build up the environment of a SPHSystem with global controls.
@@ -42,13 +41,13 @@ int main(int ac, char *av[])
 	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
-	// SolidBody insert_body(sph_system, body_shape);
-	// insert_body.defineAdaptationRatios(1.15, 2.0);
-	// insert_body.defineBodyLevelSetShape()->writeLevelSet(io_environment);
-	// insert_body.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+	SolidBody insert_body(sph_system, body_shape);
+	insert_body.defineAdaptationRatios(1.15, 1.0);
+	insert_body.defineBodyLevelSetShape()->writeLevelSet(io_environment);
+	insert_body.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
 	// (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
 	// 	? insert_body.generateParticles<ParticleGeneratorReload>(io_environment, insert_body.getName())
-	// 	: insert_body.generateParticles<ParticleGeneratorLattice>();
+	insert_body.generateParticles<ParticleGeneratorLattice>();
 
 	//----------------------------------------------------------------------
 	//	Define body relation map.
@@ -56,10 +55,10 @@ int main(int ac, char *av[])
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
 	InnerRelation water_block_inner(water_block);
-	//InnerRelation insert_body_inner(insert_body);
-	ContactRelation water_block_contact(water_block, {&wall_boundary} ); //RealBodyVector{&wall_boundary, &insert_body});
-	ComplexRelation water_block_complex(water_block_inner, water_block_contact);
-	//ContactRelation insert_body_contact(insert_body, {&water_block});
+	InnerRelation insert_body_inner(insert_body);
+	ComplexRelation water_block_complex(water_block_inner, RealBodyVector{&wall_boundary, &insert_body});
+	//ComplexRelation water_block_complex(water_block_inner, water_block_contact);
+	ContactRelation insert_body_contact(insert_body, {&water_block});
 
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
@@ -105,7 +104,7 @@ int main(int ac, char *av[])
 
 	/** Initialize particle acceleration. */
 	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
-		// INLET
+
 	// emmitter to inject particles
 	Vec3d emitter_halfsize(0.5 * BW, 0.5 * DH, 0.5 * DH);
 	Vec3d emitter_translation(0.5 * BW, 0.5 * DH, 0.5 * DH);
@@ -124,25 +123,22 @@ int main(int ac, char *av[])
 	Vec3d disposer_translation(DL - 0.5 * BW, 0.5 * DH, 0.5 * DH);	
 	BodyAlignedBoxByCell disposer(water_block, makeShared<AlignedBoxShape>(Transform3d(Vec3d(disposer_translation)), disposer_halfsize));
 	SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion, BodyAlignedBoxByCell> disposer_outflow_deletion(disposer, 0);
-	
+
 
 	/** time-space method to detect surface particles. */
 	InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex>
 		inlet_outlet_surface_particle_indicator(water_block_complex);
 
 	/** Evaluation of density by summation approach. */
-	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation(water_block_complex);
+	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_density_by_summation(water_block_complex);
 	/** Time step size without considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
 	/** Time step size with considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
-	/** modify the velocity of boundary particles with free-stream velocity. */
-	//SimpleDynamics<fluid_dynamics::FreeStreamVelocityCorrection<FreeStreamVelocity>> velocity_boundary_condition_constraint(water_block);
+	
 	/** Pressure relaxation using verlet time stepping. */
 	/** Here, we do not use Riemann solver for pressure as the flow is viscous. */
 	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
-	/** correct the velocity of boundary particles with free-stream velocity through the post process of pressure relaxation. */
-	//pressure_relaxation.post_processes_.push_back(&velocity_boundary_condition_constraint);
 	/* Density relaxation*/
 	Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(water_block_complex);
 	/** viscous acceleration and transport velocity correction can be combined because they are independent dynamics. */
@@ -157,29 +153,29 @@ int main(int ac, char *av[])
 	//	Algorithms of FSI.
 	//----------------------------------------------------------------------
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-	//SimpleDynamics<NormalDirectionFromBodyShape> insert_body_normal_direction(insert_body);
+	SimpleDynamics<NormalDirectionFromBodyShape> insert_body_normal_direction(insert_body);
 	/** Corrected configuration for the elastic insert body. */
-	//InteractionDynamics<solid_dynamics::CorrectConfiguration> insert_body_corrected_configuration(insert_body_inner);
+	InteractionDynamics<solid_dynamics::CorrectConfiguration> insert_body_corrected_configuration(insert_body_inner);
 	/** Compute the force exerted on solid body due to fluid pressure and viscosity. */
-	//InteractionDynamics<solid_dynamics::FluidViscousForceOnSolid> viscous_force_on_solid(insert_body_contact);
-	//InteractionDynamics<solid_dynamics::FluidForceOnSolidUpdate>
-	//	fluid_force_on_solid_update(insert_body_contact, viscous_force_on_solid);
+	InteractionDynamics<solid_dynamics::FluidViscousForceOnSolid> viscous_force_on_solid(insert_body_contact);
+	InteractionDynamics<solid_dynamics::FluidForceOnSolidUpdate>
+		fluid_force_on_solid_update(insert_body_contact, viscous_force_on_solid);
 	/** Compute the average velocity of the insert body. */
-	//solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(insert_body);
+	solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(insert_body);
 	//----------------------------------------------------------------------
 	//	Algorithms of solid dynamics.
 	//----------------------------------------------------------------------
 	/** Compute time step size of elastic solid. */
-	//ReduceDynamics<solid_dynamics::AcousticTimeStepSize> insert_body_computing_time_step_size(insert_body);
+	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> insert_body_computing_time_step_size(insert_body);
 	/** Stress relaxation for the inserted body. */
-	//Dynamics1Level<solid_dynamics::Integration1stHalf> insert_body_stress_relaxation_first_half(insert_body_inner);
-	//Dynamics1Level<solid_dynamics::Integration2ndHalf> insert_body_stress_relaxation_second_half(insert_body_inner);
+	Dynamics1Level<solid_dynamics::Integration1stHalf> insert_body_stress_relaxation_first_half(insert_body_inner);
+	Dynamics1Level<solid_dynamics::Integration2ndHalf> insert_body_stress_relaxation_second_half(insert_body_inner);
 	/** Constrain region of the inserted body. */
-	//auto constraint = createBeamBaseShape();
-	//BodyRegionByParticle beam_base(insert_body, constraint);
-	//SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_beam_base(beam_base);
+	auto constraint = createBeamBaseShape();
+	BodyRegionByParticle beam_base(insert_body, constraint);
+	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_beam_base(beam_base);
 	/** Update norm .*/
-	//SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> insert_body_update_normal(insert_body);
+	SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> insert_body_update_normal(insert_body);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
@@ -187,8 +183,8 @@ int main(int ac, char *av[])
 	water_block.addBodyStateForRecording<Real>("MassiveMeasure");
 	water_block.addBodyStateForRecording<Real>("Density");
 	BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
-	//RegressionTestTimeAveraged<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalViscousForceOnSolid>>>
-	//	write_total_viscous_force_on_insert_body(io_environment, insert_body);
+	RegressionTestTimeAveraged<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalViscousForceOnSolid>>>
+	write_total_viscous_force_on_insert_body(io_environment, insert_body);
 
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
@@ -196,14 +192,15 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	/** initialize cell linked lists for all bodies. */
 	sph_system.initializeSystemCellLinkedLists();
-	/** initialize configurations for all bodies. */
+
+	// /** initialize configurations for all bodies. */
 	sph_system.initializeSystemConfigurations();
 	/** computing surface normal direction for the wall. */
 	wall_boundary_normal_direction.parallel_exec();
 	/** computing surface normal direction for the insert body. */
-	//insert_body_normal_direction.parallel_exec();
+	insert_body_normal_direction.parallel_exec();
 	/** computing linear reproducing configuration for the insert body. */
-	//insert_body_corrected_configuration.parallel_exec();
+	insert_body_corrected_configuration.parallel_exec();
 	//----------------------------------------------------------------------
 	//	Setup computing and initial conditions.
 	//----------------------------------------------------------------------
@@ -237,9 +234,9 @@ int main(int ac, char *av[])
 			viscous_acceleration_and_transport_correction.parallel_exec();
 
 			/** FSI for viscous force. */
-			//viscous_force_on_solid.parallel_exec();
-			/** Update normal direction on elastic body.*/
-			//insert_body_update_normal.parallel_exec();
+			viscous_force_on_solid.parallel_exec();
+			/* Update normal direction on elastic body.*/
+			insert_body_update_normal.parallel_exec();
 			size_t inner_ite_dt = 0;
 			size_t inner_ite_dt_s = 0;
 			Real relaxation_time = 0.0;
@@ -247,26 +244,39 @@ int main(int ac, char *av[])
 			{
 				Real dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt - relaxation_time);
 				/** Fluid pressure relaxation */
+				StdLargeVec<int>& surface_indicator =*(water_block.getBaseParticles().getVariableByName<int>("SurfaceIndicator"));
+				for (size_t index = 0; index < surface_indicator.size(); ++index)
+				{
+					if (surface_indicator[index] == 1)
+					{
+						if (water_block.getBaseParticles().pos_[index][2] < 0.1)
+							water_block.getBaseParticles().pos_[index][2] = 0.1;
+						else if (water_block.getBaseParticles().pos_[index][2] > 3.9)
+							water_block.getBaseParticles().pos_[index][2] = 3.9;
+						water_block.getBaseParticles().vel_[index][2] = 0.;
+					}
+				}
+									
 				pressure_relaxation.parallel_exec(dt);
 				/** FSI for pressure force. */
-				//fluid_force_on_solid_update.parallel_exec();
+				fluid_force_on_solid_update.parallel_exec();
 				/** Fluid density relaxation */
 				density_relaxation.parallel_exec(dt);
 
 				/** Solid dynamics. */
-				// inner_ite_dt_s = 0;
-				// Real dt_s_sum = 0.0;
-				// average_velocity_and_acceleration.initialize_displacement_.parallel_exec();
-				// while (dt_s_sum < dt)
-				// {
-				// 	Real dt_s = SMIN(insert_body_computing_time_step_size.parallel_exec(), dt - dt_s_sum);
-				// 	insert_body_stress_relaxation_first_half.parallel_exec(dt_s);
-				// 	constraint_beam_base.parallel_exec();
-				// 	insert_body_stress_relaxation_second_half.parallel_exec(dt_s);
-				// 	dt_s_sum += dt_s;
-				// 	inner_ite_dt_s++;
-				// }
-				// average_velocity_and_acceleration.update_averages_.parallel_exec(dt);
+				inner_ite_dt_s = 0;
+				Real dt_s_sum = 0.0;
+				average_velocity_and_acceleration.initialize_displacement_.parallel_exec();
+				while (dt_s_sum < dt)
+				{
+					Real dt_s = SMIN(insert_body_computing_time_step_size.parallel_exec(), dt - dt_s_sum);
+					insert_body_stress_relaxation_first_half.parallel_exec(dt_s);
+					constraint_beam_base.parallel_exec();
+					insert_body_stress_relaxation_second_half.parallel_exec(dt_s);
+					dt_s_sum += dt_s;
+					inner_ite_dt_s++;
+				}
+				average_velocity_and_acceleration.update_averages_.parallel_exec(dt);
 
 				relaxation_time += dt;
 				integration_time += dt;
@@ -286,12 +296,11 @@ int main(int ac, char *av[])
 			/** Water block configuration and periodic condition. */
 			emitter_inflow_injection.parallel_exec();
 			disposer_outflow_deletion.parallel_exec();
-
 			water_block.updateCellLinkedList();
+			insert_body.updateCellLinkedList();
 			water_block_complex.updateConfiguration();
 			/** one need update configuration after periodic condition. */
-			//insert_body.updateCellLinkedList();
-			//insert_body_contact.updateConfiguration();
+			insert_body_contact.updateConfiguration();
 			/** write run-time observation into file */
 			write_real_body_states.writeToFile();
 		}
@@ -300,7 +309,7 @@ int main(int ac, char *av[])
 		/** write run-time observation into file */
 		compute_vorticity.parallel_exec();
 		write_real_body_states.writeToFile();
-		//write_total_viscous_force_on_insert_body.writeToFile(number_of_iterations);
+		write_total_viscous_force_on_insert_body.writeToFile(number_of_iterations);
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}

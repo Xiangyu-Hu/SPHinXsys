@@ -13,16 +13,16 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 11.0;							/**< Channel length. */
-Real DH = 4.1;							/**< Channel height. */
+Real DL = 6.0;							/**< Channel length. */
+Real DH = 3;							/**< Channel height. */
 int resolution = 25;				
-Real resolution_ref = 0.2;				/**< Global reference resolution. */
+Real resolution_ref = 0.1;				/**< Global reference resolution. */
 Real BW = resolution_ref * 4.0;			/**< Boundary width, determined by specific layer of boundary particles. */
 Real inflow_length = resolution_ref * 20.0;
-Vecd insert_cylinder_center(2.0, 2.0, DH /2);	/**< Location of the cylinder center. */
+Vecd insert_cylinder_center(2.0, DH /2, DH /2);	/**< Location of the cylinder center. */
 Real insert_cylinder_radius = 0.5;		/**< Radius of the cylinder. */
 /** Beam related parameters. */
-Real bh = 0.4 * insert_cylinder_radius; /**< Height of the beam. */
+Real bh = 0.2; /**< Height of the beam. */
 Real bl = 7.0 * insert_cylinder_radius; /**< Length of the beam. */
 Vecd translation_fluid(DL / 2, DH / 2, DH / 2);
 Vecd translation_plate(insert_cylinder_center[0] + (bl + insert_cylinder_radius) /2, insert_cylinder_center[1], insert_cylinder_center[2]);
@@ -51,7 +51,7 @@ SharedPtr<ComplexShape> createFluid()
 {
 	auto fluid_shape = makeShared<ComplexShape>("Fluid");
 	fluid_shape->add<TriangleMeshShapeBrick>(Vec3d(DL / 2, DH / 2, DH / 2 ), resolution, translation_fluid);
-	//fluid_shape->subtract<TriangleMeshShapeCylinder>(SimTK::UnitVec3(0,0,1.0), insert_cylinder_radius, DH / 2, resolution, insert_cylinder_center);
+	fluid_shape->subtract<TriangleMeshShapeCylinder>(SimTK::UnitVec3(0,0,1.0), insert_cylinder_radius, DH / 2.5, resolution, insert_cylinder_center);
 	//fluid_shape->subtract<TriangleMeshShapeBrick>(Vec3d(bl/2, bh/2 , DH / 2 ), resolution, translation_plate);
 	return fluid_shape;
 }
@@ -60,7 +60,7 @@ SharedPtr<ComplexShape> createWall()
 {
 	auto wall_shape = makeShared<ComplexShape>("Wall");
 	wall_shape->add<TriangleMeshShapeBrick>(Vec3d(DL / 2 + BW , DH / 2 + BW, DH / 2 + BW ), resolution, translation_fluid);
-	wall_shape->subtract<TriangleMeshShapeBrick>(Vec3d(DL / 2 + BW , DH / 2, DH / 2), resolution, translation_fluid);
+	wall_shape->subtract<TriangleMeshShapeBrick>(Vec3d(DL / 2 + BW , DH / 2 , DH / 2 + BW), resolution, translation_fluid);
 	return wall_shape;
 }
 
@@ -68,8 +68,8 @@ SharedPtr<ComplexShape> createWall()
 SharedPtr<ComplexShape> createInsertBody()
 {
 	auto insert_body = makeShared<ComplexShape>("Body");
-	insert_body->add<TriangleMeshShapeCylinder>(SimTK::UnitVec3(0,0,1.0), insert_cylinder_radius, DH / 2, resolution, insert_cylinder_center);
-	insert_body->add<TriangleMeshShapeBrick>(Vec3d(bl/2, bh/2 , DH / 2 ), resolution, translation_plate);
+	insert_body->add<TriangleMeshShapeCylinder>(SimTK::UnitVec3(0,0,1.0), insert_cylinder_radius, DH / 2.5, resolution, insert_cylinder_center);
+	//insert_body->add<TriangleMeshShapeBrick>(Vec3d(bl/2, bh/2 , DH / 2 ), resolution, translation_plate);
 	return insert_body;
 }
 
@@ -77,8 +77,8 @@ SharedPtr<ComplexShape> createInsertBody()
 SharedPtr<ComplexShape> createBeamBaseShape()
 {
 	auto constraint = makeShared<ComplexShape>("Constraint");
-	constraint->add<TriangleMeshShapeCylinder>(SimTK::UnitVec3(0,0,1.0), insert_cylinder_radius, DH / 2, resolution, insert_cylinder_center);
-	constraint->subtract<TriangleMeshShapeBrick>(Vec3d(bl/2, bh/2 , DH / 2 ), resolution, translation_plate);
+	constraint->add<TriangleMeshShapeCylinder>(SimTK::UnitVec3(0,0,1.0), insert_cylinder_radius, DH / 2.5, resolution, insert_cylinder_center);
+	//constraint->subtract<TriangleMeshShapeBrick>(Vec3d(bl/2, bh/2 , DH / 2 ), resolution, translation_plate);
 	return constraint;
 }
 
