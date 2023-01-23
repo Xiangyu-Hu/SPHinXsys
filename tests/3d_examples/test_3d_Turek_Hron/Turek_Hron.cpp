@@ -42,7 +42,7 @@ int main(int ac, char *av[])
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody insert_body(sph_system, body_shape);
-	insert_body.defineAdaptationRatios(1.15, 1.0);
+	insert_body.defineAdaptationRatios(1.15, 2.0);
 	insert_body.defineBodyLevelSetShape()->writeLevelSet(io_environment);
 	insert_body.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
 	// (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
@@ -57,7 +57,6 @@ int main(int ac, char *av[])
 	InnerRelation water_block_inner(water_block);
 	InnerRelation insert_body_inner(insert_body);
 	ComplexRelation water_block_complex(water_block_inner, RealBodyVector{&wall_boundary, &insert_body});
-	//ComplexRelation water_block_complex(water_block_inner, water_block_contact);
 	ContactRelation insert_body_contact(insert_body, {&water_block});
 
 	//----------------------------------------------------------------------
@@ -106,21 +105,21 @@ int main(int ac, char *av[])
 	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
 
 	// emmitter to inject particles
-	Vec3d emitter_halfsize(0.5 * BW, 0.5 * DH, 0.5 * DH);
-	Vec3d emitter_translation(0.5 * BW, 0.5 * DH, 0.5 * DH);
+	Vec3d emitter_halfsize(0.5 * BW, 0.5 * DH, 0.5 * DW);
+	Vec3d emitter_translation(0.5 * BW, 0.5 * DH, 0.5 * DW);
 	BodyAlignedBoxByParticle emitter(water_block, makeShared<AlignedBoxShape>(Transform3d(Vec3d(emitter_translation)), emitter_halfsize));
 	SimpleDynamics<fluid_dynamics::EmitterInflowInjection, BodyAlignedBoxByParticle> emitter_inflow_injection(emitter, 10, 0);
 	
 	// inflow region to impose velocity
-	Vec3d inflow_region_halfsize(0.5 * inflow_length, 0.5 * DH, 0.5 * DH);
-	Vec3d inflow_region_translation(0.5 * inflow_length, 0.5 * DH, 0.5 * DH);
+	Real inflow_length = resolution_ref * 20.0;
+	Vec3d inflow_region_halfsize(0.5 * inflow_length, 0.5 * DH, 0.5 * DW);
+	Vec3d inflow_region_translation(0.5 * inflow_length, 0.5 * DH, 0.5 * DW);
 	BodyAlignedBoxByCell inflow_region(water_block, makeShared<AlignedBoxShape>(Transform3d(Vec3d(inflow_region_translation)), inflow_region_halfsize));
 	SimpleDynamics<fluid_dynamics::InflowVelocityCondition<FreeStreamVelocity>, BodyAlignedBoxByCell> emitter_buffer_inflow_condition(inflow_region);
-	// SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>, BodyAlignedBoxByCell> emitter_buffer_inflow_condition(inflow_region);
 
 	//OUTLET
-	Vec3d disposer_halfsize(0.5 * BW, 0.75 * DH, 0.75 * DH);
-	Vec3d disposer_translation(DL - 0.5 * BW, 0.5 * DH, 0.5 * DH);	
+	Vec3d disposer_halfsize(0.5 * BW, 0.75 * DH, 0.75 * DW);
+	Vec3d disposer_translation(DL - 0.5 * BW, 0.5 * DH, 0.5 * DW);	
 	BodyAlignedBoxByCell disposer(water_block, makeShared<AlignedBoxShape>(Transform3d(Vec3d(disposer_translation)), disposer_halfsize));
 	SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion, BodyAlignedBoxByCell> disposer_outflow_deletion(disposer, 0);
 
@@ -249,10 +248,6 @@ int main(int ac, char *av[])
 				{
 					if (surface_indicator[index] == 1)
 					{
-						if (water_block.getBaseParticles().pos_[index][2] < 0.1)
-							water_block.getBaseParticles().pos_[index][2] = 0.1;
-						else if (water_block.getBaseParticles().pos_[index][2] > 3.9)
-							water_block.getBaseParticles().pos_[index][2] = 3.9;
 						water_block.getBaseParticles().vel_[index][2] = 0.;
 					}
 				}
