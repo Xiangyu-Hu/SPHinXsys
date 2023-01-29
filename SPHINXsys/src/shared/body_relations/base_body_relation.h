@@ -25,7 +25,7 @@
  * @brief 	Base classes on body and particle topology relations.
  * @author	Chi ZHang and Xiangyu Hu
  */
- 
+
 #ifndef BASE_BODY_RELATION_H
 #define BASE_BODY_RELATION_H
 
@@ -105,16 +105,18 @@ namespace SPH
 	class SPHRelation
 	{
 	public:
-		SPHBody &sph_body_;
 		BaseParticles &base_particles_;
 		SPHBody &getDynamicsRange() { return sph_body_; };
-
+		SPHBody &getSPHBody() { return sph_body_; };
 		explicit SPHRelation(SPHBody &sph_body);
 		virtual ~SPHRelation(){};
 
 		void subscribeToBody() { sph_body_.body_relations_.push_back(this); };
 		virtual void updateConfigurationMemories() = 0;
 		virtual void updateConfiguration() = 0;
+
+	protected:
+		SPHBody &sph_body_;
 	};
 
 	/**

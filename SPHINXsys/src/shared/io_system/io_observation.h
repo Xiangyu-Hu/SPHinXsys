@@ -54,11 +54,11 @@ namespace SPH
 	public:
 		ObservedQuantityRecording(const std::string &quantity_name, IOEnvironment &io_environment,
 								  BaseContactRelation &contact_relation)
-			: BodyStatesRecording(io_environment, contact_relation.sph_body_),
+			: BodyStatesRecording(io_environment, contact_relation.getSPHBody()),
 			  ObservingAQuantity<VariableType>(contact_relation, quantity_name),
-			  observer_(contact_relation.sph_body_), plt_engine_(),
+			  observer_(contact_relation.getSPHBody()), plt_engine_(),
 			  base_particles_(observer_.getBaseParticles()), 
-			  dynamics_range_name_(contact_relation.sph_body_.getName()),
+			  dynamics_range_name_(contact_relation.getSPHBody().getName()),
 			  quantity_name_(quantity_name)
 		{
 			/** Output for .dat file. */

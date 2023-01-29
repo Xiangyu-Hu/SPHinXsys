@@ -7,7 +7,7 @@ namespace SPH
 	{
 		//=================================================================================================//
 		FluidViscousForceOnSolid::FluidViscousForceOnSolid(BaseContactRelation &contact_relation)
-			: LocalDynamics(contact_relation.sph_body_), FSIContactData(contact_relation),
+			: LocalDynamics(contact_relation.getSPHBody()), FSIContactData(contact_relation),
 			  Vol_(particles_->Vol_), vel_ave_(*particles_->AverageVelocity())
 		{
 			particles_->registerVariable(viscous_force_from_fluid_, "ViscousForceFromFluid");

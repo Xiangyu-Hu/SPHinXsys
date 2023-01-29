@@ -115,7 +115,7 @@ namespace SPH
 		{
 		public:
 			explicit BaseFluidPressureForceOnSolid(BaseContactRelation &contact_relation)
-				: LocalDynamics(contact_relation.sph_body_), FSIContactData(contact_relation),
+				: LocalDynamics(contact_relation.getSPHBody()), FSIContactData(contact_relation),
 				  Vol_(particles_->Vol_), vel_ave_(*particles_->AverageVelocity()),
 				  acc_prior_(particles_->acc_prior_),
 				  acc_ave_(*particles_->AverageAcceleration()), n_(particles_->n_)

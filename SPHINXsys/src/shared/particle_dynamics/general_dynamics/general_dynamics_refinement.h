@@ -43,10 +43,10 @@ namespace SPH
     {
     public:
         ComputeDensityErrorInner(BaseInnerRelation &inner_relation)
-            : LocalDynamics(inner_relation.sph_body_), GeneralDataDelegateInner(inner_relation),
+            : LocalDynamics(inner_relation.getSPHBody()), GeneralDataDelegateInner(inner_relation),
               rho0_(sph_body_.base_material_->ReferenceDensity()),
               h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")),
-              particle_adaptation_(DynamicCast<ParticleSplitAndMerge>(this, *inner_relation.sph_body_.sph_adaptation_))
+              particle_adaptation_(DynamicCast<ParticleSplitAndMerge>(this, *inner_relation.getSPHBody().sph_adaptation_))
         {
             density_error_.resize(particles_->real_particles_bound_);
             particles_->addVariableToWrite<Real>("Density");
@@ -166,7 +166,7 @@ namespace SPH
     {
     public:
         SplitWithMinimumDensityErrorInner(BaseInnerRelation &inner_relation, Shape &refinement_region, size_t body_buffer_width)
-            : ParticleSplitWithPrescribedArea(inner_relation.sph_body_, refinement_region, body_buffer_width),
+            : ParticleSplitWithPrescribedArea(inner_relation.getSPHBody(), refinement_region, body_buffer_width),
               compute_density_error(inner_relation)
         {
             particles_->registerVariable(total_split_error_, "SplitDensityError", 0.0);

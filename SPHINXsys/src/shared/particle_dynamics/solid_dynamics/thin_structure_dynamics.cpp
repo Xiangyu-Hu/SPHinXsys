@@ -39,7 +39,7 @@ namespace SPH
 		//=================================================================================================//
 		ShellCorrectConfiguration::
 			ShellCorrectConfiguration(BaseInnerRelation &inner_relation)
-			: LocalDynamics(inner_relation.sph_body_), ShellDataInner(inner_relation),
+			: LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
 			  B_(particles_->B_),
 			  n0_(particles_->n0_), transformation_matrix_(particles_->transformation_matrix_) {}
 		//=================================================================================================//
@@ -64,7 +64,7 @@ namespace SPH
 		//=================================================================================================//
 		ShellDeformationGradientTensor::
 			ShellDeformationGradientTensor(BaseInnerRelation &inner_relation)
-			: LocalDynamics(inner_relation.sph_body_), ShellDataInner(inner_relation),
+			: LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
 			  pos_(particles_->pos_), pseudo_n_(particles_->pseudo_n_), n0_(particles_->n0_),
 			  B_(particles_->B_), F_(particles_->F_), F_bending_(particles_->F_bending_),
 			  transformation_matrix_(particles_->transformation_matrix_) {}
@@ -91,7 +91,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		BaseShellRelaxation::BaseShellRelaxation(BaseInnerRelation &inner_relation)
-			: LocalDynamics(inner_relation.sph_body_), ShellDataInner(inner_relation),
+			: LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
 			  rho_(particles_->rho_),
 			  thickness_(particles_->thickness_),
 			  pos_(particles_->pos_), vel_(particles_->vel_),

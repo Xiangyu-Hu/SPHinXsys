@@ -153,7 +153,7 @@ namespace SPH
 											  public RelaxDataDelegateComplex
 		{
 		public:
-			explicit RelaxationAccelerationComplex(ComplexRelation &body_complex_relation);
+			explicit RelaxationAccelerationComplex(ComplexRelation &complex_relation);
 			virtual ~RelaxationAccelerationComplex(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -216,7 +216,7 @@ namespace SPH
 		{
 		public:
 			RelaxationAccelerationComplexWithLevelSetCorrection(
-				ComplexRelation &body_complex_relation, const std::string &shape_name);
+				ComplexRelation &complex_relation, const std::string &shape_name);
 			virtual ~RelaxationAccelerationComplexWithLevelSetCorrection(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -232,7 +232,7 @@ namespace SPH
 		class RelaxationStepComplex : public BaseDynamics<void>
 		{
 		public:
-			explicit RelaxationStepComplex(ComplexRelation &body_complex_relation,
+			explicit RelaxationStepComplex(ComplexRelation &complex_relation,
 										   const std::string &shape_name, bool level_set_correction = false);
 			virtual ~RelaxationStepComplex(){};
 			SimpleDynamics<ShapeSurfaceBounding, NearShapeSurface> &SurfaceBounding() { return surface_bounding_; };

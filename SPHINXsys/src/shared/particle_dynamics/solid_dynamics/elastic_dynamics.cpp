@@ -36,7 +36,7 @@ namespace SPH
 		//=================================================================================================//
 		DeformationGradientBySummation::
 			DeformationGradientBySummation(BaseInnerRelation &inner_relation)
-			: LocalDynamics(inner_relation.sph_body_), ElasticSolidDataInner(inner_relation),
+			: LocalDynamics(inner_relation.getSPHBody()), ElasticSolidDataInner(inner_relation),
 			  pos_(particles_->pos_), B_(particles_->B_), F_(particles_->F_) {}
 		//=================================================================================================//
 		void DeformationGradientBySummation::interaction(size_t index_i, Real dt)
@@ -58,7 +58,7 @@ namespace SPH
 		//=================================================================================================//
 		BaseElasticIntegration::
 			BaseElasticIntegration(BaseInnerRelation &inner_relation)
-			: LocalDynamics(inner_relation.sph_body_), ElasticSolidDataInner(inner_relation),
+			: LocalDynamics(inner_relation.getSPHBody()), ElasticSolidDataInner(inner_relation),
 			  rho_(particles_->rho_), mass_(particles_->mass_),
 			  pos_(particles_->pos_), vel_(particles_->vel_), acc_(particles_->acc_),
 			  B_(particles_->B_), F_(particles_->F_), dF_dt_(particles_->dF_dt_) {}

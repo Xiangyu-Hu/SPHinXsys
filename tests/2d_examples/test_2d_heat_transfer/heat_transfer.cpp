@@ -177,8 +177,8 @@ class ThermalRelaxationComplex
 		  RelaxationOfAllDiffusionSpeciesComplex<FluidParticles, WeaklyCompressibleFluid, SolidParticles, Solid>>
 {
 public:
-	explicit ThermalRelaxationComplex(ComplexRelation &body_complex_relation)
-		: RelaxationOfAllDiffusionSpeciesRK2(body_complex_relation){};
+	explicit ThermalRelaxationComplex(ComplexRelation &complex_relation)
+		: RelaxationOfAllDiffusionSpeciesRK2(complex_relation){};
 	virtual ~ThermalRelaxationComplex(){};
 };
 //----------------------------------------------------------------------

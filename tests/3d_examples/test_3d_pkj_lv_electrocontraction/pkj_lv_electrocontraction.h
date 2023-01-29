@@ -112,8 +112,8 @@ class DiffusionRelaxation
 		  RelaxationOfAllDiffusionSpeciesInner<ElasticSolidParticles, LocallyOrthotropicMuscle>>
 {
 public:
-	explicit DiffusionRelaxation(InnerRelation &body_inner_relation)
-		: RelaxationOfAllDiffusionSpeciesRK2(body_inner_relation){};
+	explicit DiffusionRelaxation(InnerRelation &inner_relation)
+		: RelaxationOfAllDiffusionSpeciesRK2(inner_relation){};
 	virtual ~DiffusionRelaxation(){};
 };
 /** Imposing diffusion boundary condition */

@@ -68,7 +68,6 @@ namespace SPH
 	{
 	};
 
-	
 	template <class T, class = void>
 	struct has_interaction : std::false_type
 	{
@@ -78,7 +77,7 @@ namespace SPH
 	struct has_interaction<T, std::void_t<decltype(&T::interaction)>> : std::true_type
 	{
 	};
-	
+
 	template <class T, class = void>
 	struct has_update : std::false_type
 	{
@@ -102,7 +101,8 @@ namespace SPH
 		template <class DerivedDynamicsRange, typename... Args>
 		SimpleDynamics(DerivedDynamicsRange &derived_dynamics_range, Args &&...args)
 			: LocalDynamicsType(derived_dynamics_range, std::forward<Args>(args)...),
-			  BaseDynamics<void>(), dynamics_range_(derived_dynamics_range)
+			  BaseDynamics<void>(derived_dynamics_range.getSPHBody()),
+			  dynamics_range_(derived_dynamics_range)
 		{
 			static_assert(!has_initialize<LocalDynamicsType>::value &&
 							  !has_interaction<LocalDynamicsType>::value,
@@ -131,7 +131,7 @@ namespace SPH
 
 	/**
 	 * @class ReduceDynamics
-	 * @brief Template class for particle-wise reduce operation, summation, max or min. 
+	 * @brief Template class for particle-wise reduce operation, summation, max or min.
 	 */
 	template <class LocalDynamicsType, class DynamicsRange = SPHBody>
 	class ReduceDynamics : public LocalDynamicsType,
@@ -147,7 +147,8 @@ namespace SPH
 		template <class DerivedDynamicsRange, typename... Args>
 		ReduceDynamics(DerivedDynamicsRange &derived_dynamics_range, Args &&...args)
 			: LocalDynamicsType(derived_dynamics_range, std::forward<Args>(args)...),
-			  BaseDynamics<ReturnType>(), dynamics_range_(derived_dynamics_range){};
+			  BaseDynamics<ReturnType>(derived_dynamics_range.getSPHBody()),
+			  dynamics_range_(derived_dynamics_range){};
 		virtual ~ReduceDynamics(){};
 
 		using ReduceReturnType = ReturnType;
@@ -218,7 +219,7 @@ namespace SPH
 		template <class BodyRelationType, typename... Args>
 		BaseInteractionDynamics(BodyRelationType &body_relation, Args &&...args)
 			: LocalDynamicsType(body_relation, std::forward<Args>(args)...),
-			  BaseDynamics<void>(){};
+			  BaseDynamics<void>(body_relation.getSPHBody()){};
 		virtual ~BaseInteractionDynamics(){};
 
 		/** pre process such as update ghost state */
@@ -260,7 +261,7 @@ namespace SPH
 		template <class BodyRelationType, typename... Args>
 		InteractionSplit(BodyRelationType &body_relation, Args &&...args)
 			: BaseInteractionDynamics<LocalDynamicsType>(body_relation, std::forward<Args>(args)...),
-			  real_body_(DynamicCast<RealBody>(this, this->sph_body_)),
+			  real_body_(DynamicCast<RealBody>(this, body_relation.getSPHBody())),
 			  split_cell_lists_(real_body_.getSplitCellLists())
 		{
 			real_body_.setUseSplitCellLists();

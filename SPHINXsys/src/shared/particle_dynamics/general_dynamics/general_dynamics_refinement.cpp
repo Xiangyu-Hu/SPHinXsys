@@ -446,7 +446,7 @@ namespace SPH
     //=================================================================================================//
     ParticleMergeWithPrescribedArea::
         ParticleMergeWithPrescribedArea(BaseInnerRelation &inner_relation, Shape &refinement_region)
-        : ParticleRefinementWithPrescribedArea(inner_relation.sph_body_, refinement_region),
+        : ParticleRefinementWithPrescribedArea(inner_relation.getSPHBody(), refinement_region),
           DataDelegateInner<BaseParticles, DataDelegateEmptyBase>(inner_relation),
           all_particle_data_(particles_->all_particle_data_), vel_n_(particles_->vel_)
     {

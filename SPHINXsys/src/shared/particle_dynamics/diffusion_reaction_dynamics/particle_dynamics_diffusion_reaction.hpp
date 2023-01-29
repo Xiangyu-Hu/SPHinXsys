@@ -23,7 +23,7 @@
 /**
  * @file 	particle_dynamics_diffusion_reaction.hpp
  * @brief 	This is the particle dynamics applicable for all type bodies
- * 			TODO: there is an issue on applying corrected configuration for contact bodies.. 
+ * 			TODO: there is an issue on applying corrected configuration for contact bodies..
  * @author	Chi ZHang and Xiangyu Hu
  */
 
@@ -45,7 +45,7 @@ namespace SPH
 	template <class BaseParticlesType, class BaseMaterialType, int NUM_SPECIES>
 	GetDiffusionTimeStepSize<BaseParticlesType, BaseMaterialType, NUM_SPECIES>::
 		GetDiffusionTimeStepSize(SPHBody &sph_body)
-		: BaseDynamics<Real>(),
+		: BaseDynamics<Real>(sph_body),
 		  DiffusionReactionSimpleData<BaseParticlesType, BaseMaterialType, NUM_SPECIES>(sph_body)
 	{
 		Real smoothing_length = sph_body.sph_adaptation_->ReferenceSmoothingLength();
@@ -55,7 +55,7 @@ namespace SPH
 	template <class BaseParticlesType, class BaseMaterialType, int NUM_SPECIES>
 	RelaxationOfAllDiffusionSpeciesInner<BaseParticlesType, BaseMaterialType, NUM_SPECIES>::
 		RelaxationOfAllDiffusionSpeciesInner(BaseInnerRelation &inner_relation)
-		: LocalDynamics(inner_relation.sph_body_),
+		: LocalDynamics(inner_relation.getSPHBody()),
 		  DiffusionReactionInnerData<BaseParticlesType, BaseMaterialType, NUM_SPECIES>(inner_relation),
 		  diffusion_reaction_material_(this->particles_->diffusion_reaction_material_),
 		  species_n_(this->particles_->species_n_),
@@ -242,7 +242,7 @@ namespace SPH
 	template <class FirstStageType>
 	RelaxationOfAllDiffusionSpeciesRK2<FirstStageType>::
 		RelaxationOfAllDiffusionSpeciesRK2(typename FirstStageType::BodyRelationType &body_relation)
-		: BaseDynamics<void>(), rk2_initialization_(body_relation.sph_body_, species_s_),
+		: BaseDynamics<void>(body_relation.getSPHBody()), rk2_initialization_(body_relation.getSPHBody(), species_s_),
 		  rk2_1st_stage_(body_relation), rk2_2nd_stage_(body_relation, species_s_)
 	{
 		StdVec<BaseDiffusion *> species_diffusion_ = rk2_1st_stage_.diffusion_reaction_material_.SpeciesDiffusion();

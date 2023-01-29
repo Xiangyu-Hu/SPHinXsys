@@ -4,7 +4,7 @@ namespace SPH
 {
 	//=================================================================================================//
 	BoundingAlongAxis::BoundingAlongAxis(RealBody &real_body, BoundingBox bounding_bounds, int axis)
-		: BaseDynamics<void>(), LocalDynamics(real_body),
+		: BaseDynamics<void>(real_body), LocalDynamics(real_body),
 		  GeneralDataDelegateSimple(real_body),
 		  axis_(axis), bounding_bounds_(bounding_bounds),
 		  pos_(particles_->pos_),
@@ -84,7 +84,7 @@ namespace SPH
 				/** insert ghost particle to cell linked list */
 				mutex_cell_list_entry_.lock();
 				cell_linked_list_.InsertListDataEntry(std::get<0>(cell_list_data[num]),
-													   translated_position, std::get<2>(cell_list_data[num]));
+													  translated_position, std::get<2>(cell_list_data[num]));
 				mutex_cell_list_entry_.unlock();
 			}
 		}
@@ -103,7 +103,7 @@ namespace SPH
 				/** insert ghost particle to cell linked list */
 				mutex_cell_list_entry_.lock();
 				cell_linked_list_.InsertListDataEntry(std::get<0>(cell_list_data[num]),
-													   translated_position, std::get<2>(cell_list_data[num]));
+													  translated_position, std::get<2>(cell_list_data[num]));
 				mutex_cell_list_entry_.unlock();
 			}
 		}
@@ -154,7 +154,7 @@ namespace SPH
 			pos_[ghost_particle_index] = particle_position + periodic_translation_;
 			/** insert ghost particle to cell linked list */
 			cell_linked_list_.InsertListDataEntry(ghost_particle_index,
-												   pos_[ghost_particle_index], particle_volumetric);
+												  pos_[ghost_particle_index], particle_volumetric);
 			mutex_create_ghost_particle_.unlock();
 		}
 	}
@@ -172,7 +172,7 @@ namespace SPH
 			pos_[ghost_particle_index] = particle_position - periodic_translation_;
 			/** insert ghost particle to cell linked list */
 			cell_linked_list_.InsertListDataEntry(ghost_particle_index,
-												   pos_[ghost_particle_index], particle_volumetric);
+												  pos_[ghost_particle_index], particle_volumetric);
 			mutex_create_ghost_particle_.unlock();
 		}
 	}

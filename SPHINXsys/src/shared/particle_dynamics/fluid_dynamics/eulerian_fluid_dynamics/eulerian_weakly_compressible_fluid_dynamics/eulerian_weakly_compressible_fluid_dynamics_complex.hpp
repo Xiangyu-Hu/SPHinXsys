@@ -46,7 +46,7 @@ namespace SPH
 			InteractionWithWall(BaseBodyRelationType &base_body_relation,
 								BaseContactRelation &wall_contact_relation) : BaseIntegrationType(base_body_relation), WCFluidWallData(wall_contact_relation)
 		{
-			if (&base_body_relation.sph_body_ != &wall_contact_relation.sph_body_)
+			if (&base_body_relation.getSPHBody() != &wall_contact_relation.getSPHBody())
 			{
 				std::cout << "\n Error: the two body_relations do not have the same source body!" << std::endl;
 				std::cout << __FILE__ << ':' << __LINE__ << std::endl;

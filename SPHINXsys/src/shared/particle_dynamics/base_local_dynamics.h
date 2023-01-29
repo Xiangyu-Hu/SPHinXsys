@@ -95,15 +95,12 @@ namespace SPH
 	template <class ReturnType>
 	class BaseLocalDynamics
 	{
-	protected:
-		SPHBody &sph_body_;
-
 	public:
 		explicit BaseLocalDynamics(SPHBody &sph_body) : sph_body_(sph_body){};
 		virtual ~BaseLocalDynamics(){};
-
-		void setBodyUpdated() { sph_body_.setNewlyUpdated(); };
 		virtual ReturnType setupDynamics(Real dt = 0.0) = 0; // setup global parameters
+	protected:
+		SPHBody &sph_body_;
 	};
 
 	/**
