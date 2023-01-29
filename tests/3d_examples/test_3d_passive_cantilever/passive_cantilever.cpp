@@ -100,7 +100,7 @@ int main()
 	/** Constrain the holder. */
 	BodyRegionByParticle holder(cantilever_body, 
 		makeShared<TransformShape<GeometricShapeBox>>(Transformd(translation_holder), halfsize_holder, "Holder"));
-	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_holder(holder);
+	SimpleDynamics<solid_dynamics::FixConstraint, BodyPartByParticle> constraint_holder(holder);
 	/** Output */
 	IOEnvironment io_environment(system);
 	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);

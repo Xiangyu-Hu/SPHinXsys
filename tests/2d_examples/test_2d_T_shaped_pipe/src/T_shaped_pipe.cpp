@@ -141,25 +141,25 @@ int main(int ac, char *av[])
 	Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize;
 	BodyAlignedBoxByParticle emitter(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(emitter_translation)), emitter_halfsize));
-	SimpleDynamics<fluid_dynamics::EmitterInflowInjection, BodyAlignedBoxByParticle> emitter_inflow_injection(emitter, 10, 0);
+	SimpleDynamics<fluid_dynamics::EmitterInflowInjection, BodyPartByParticle> emitter_inflow_injection(emitter, 10, 0);
 
 	Vec2d inlet_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
 	Vec2d inlet_buffer_translation = Vec2d(-DL_sponge, 0.0) + inlet_buffer_halfsize;
 	BodyAlignedBoxByCell emitter_buffer(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(inlet_buffer_translation)), inlet_buffer_halfsize));
-	SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>, BodyAlignedBoxByCell> emitter_buffer_inflow_condition(emitter_buffer);
+	SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>, BodyPartByCell> emitter_buffer_inflow_condition(emitter_buffer);
 
 	Vec2d disposer_up_halfsize = Vec2d(0.3 * DH, 0.5 * BW);
 	Vec2d disposer_up_translation = Vec2d(DL + 0.05 * DH, 2.0 * DH) - disposer_up_halfsize;
 	BodyAlignedBoxByCell disposer_up(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(disposer_up_translation)), disposer_up_halfsize));
-	SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion, BodyAlignedBoxByCell> disposer_up_outflow_deletion(disposer_up, yAxis);
+	SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion, BodyPartByCell> disposer_up_outflow_deletion(disposer_up, yAxis);
 
 	Vec2d disposer_down_halfsize = disposer_up_halfsize;
 	Vec2d disposer_down_translation = Vec2d(DL1 - 0.05 * DH, -DH) + disposer_down_halfsize;
 	BodyAlignedBoxByCell disposer_down(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Rotation2d(Pi), Vec2d(disposer_down_translation)), disposer_down_halfsize));
-	SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion, BodyAlignedBoxByCell> disposer_down_outflow_deletion(disposer_down, yAxis);
+	SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion, BodyPartByCell> disposer_down_outflow_deletion(disposer_down, yAxis);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------

@@ -98,6 +98,7 @@ namespace SPH
 	public:
 		explicit BaseLocalDynamics(SPHBody &sph_body) : sph_body_(sph_body){};
 		virtual ~BaseLocalDynamics(){};
+		SPHBody &getSPHBody() { return sph_body_; };
 		virtual ReturnType setupDynamics(Real dt = 0.0) = 0; // setup global parameters
 	protected:
 		SPHBody &sph_body_;

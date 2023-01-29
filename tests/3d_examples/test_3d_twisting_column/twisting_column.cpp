@@ -38,7 +38,7 @@ int main()
 	Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(column_inner);
 	/** Constrain the holder. */
 	BodyRegionByParticle holder(column, makeShared<TransformShape<GeometricShapeBox>>(Transformd(translation_holder), halfsize_holder, "Holder"));
-	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_holder(holder);
+	SimpleDynamics<solid_dynamics::FixConstraint, BodyPartByParticle> constraint_holder(holder);
 	//----------------------------------------------------------------------
 	//	Output
 	//----------------------------------------------------------------------

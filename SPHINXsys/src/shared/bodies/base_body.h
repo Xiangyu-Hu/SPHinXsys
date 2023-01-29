@@ -86,6 +86,7 @@ namespace SPH
 		std::string getName() { return body_name_; };
 		SPHSystem &getSPHSystem();
 		SPHBody &getSPHBody() { return *this; };
+		SPHBody &getDynamicsRange() { return *this; };
 		BaseParticles &getBaseParticles() { return *base_particles_; };
 		size_t &LoopRange() { return base_particles_->total_real_particles_; };
 		size_t SizeOfLoopRange() { return base_particles_->total_real_particles_; };
@@ -152,7 +153,7 @@ namespace SPH
 			base_particles_->initializeOtherVariables();
 			base_material_->assignBaseParticles(base_particles_);
 		};
-			
+
 		template <typename VariableType>
 		void addBodyStateForRecording(const std::string &variable_name)
 		{

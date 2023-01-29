@@ -51,30 +51,7 @@ namespace SPH
 			explicit FluidViscousForceOnSolid(BaseContactRelation &contact_relation);
 			virtual ~FluidViscousForceOnSolid(){};
 			void interaction(size_t index_i, Real dt = 0.0);
-			StdLargeVec<Vecd> &getViscousForceFromFluid() { return viscous_force_from_fluid_; };
-
-		protected:
-			StdLargeVec<Real> &Vol_;
-			StdLargeVec<Vecd> &vel_ave_;
-			StdVec<Fluid *> contact_fluids_;
-			StdVec<StdLargeVec<Real> *> contact_rho_n_;
-			StdVec<StdLargeVec<Vecd> *> contact_vel_n_;
-			StdVec<Real> mu_;
-			StdVec<Real> smoothing_length_;
-			StdLargeVec<Vecd> viscous_force_from_fluid_;
-		};
-
-		/**
-		 * @class FluidViscousForceOnSolidInEuler
-		 * @brief Computing the viscous force from the fluid in eulerian framework
-		 */
-		class FluidViscousForceOnSolidInEuler : public LocalDynamics, public FSIContactData
-		{
-		public:
-			explicit FluidViscousForceOnSolidInEuler(BaseContactRelation &contact_relation);
-			virtual ~FluidViscousForceOnSolidInEuler(){};
-			void interaction(size_t index_i, Real dt = 0.0);
-			StdLargeVec<Vecd> &getViscousForceFromFluid() { return viscous_force_from_fluid_; };
+			StdLargeVec<Vecd> &getForceFromFluid() { return viscous_force_from_fluid_; };
 
 		protected:
 			StdLargeVec<Real> &Vol_;
@@ -132,6 +109,8 @@ namespace SPH
 				}
 			};
 			virtual ~BaseFluidPressureForceOnSolid(){};
+
+			StdLargeVec<Vecd> &getForceFromFluid() { return force_from_fluid_; };
 
 			void interaction(size_t index_i, Real dt = 0.0)
 			{
@@ -207,34 +186,28 @@ namespace SPH
 			BaseFluidForceOnSolidUpdate<FluidPressureForceOnSolidRiemann>;
 
 		/**
-		 * @class TotalViscousForceOnSolid
-		 * @brief Computing the total viscous force from fluid
-		 */
-		class TotalViscousForceOnSolid : public LocalDynamicsReduce<Vecd, ReduceSum<Vecd>>, public SolidDataSimple
-		{
-		protected:
-			StdLargeVec<Vecd> &viscous_force_from_fluid_;
-
-		public:
-			explicit TotalViscousForceOnSolid(SPHBody &sph_body);
-			virtual ~TotalViscousForceOnSolid(){};
-
-			Vecd reduce(size_t index_i, Real dt = 0.0);
-		};
-
-		/**
 		 * @class TotalForceOnSolid
-		 * @brief Computing total force from fluid.
+		 * @brief Computing the total force from fluid
 		 */
 		class TotalForceOnSolid : public LocalDynamicsReduce<Vecd, ReduceSum<Vecd>>, public SolidDataSimple
 		{
 		protected:
+			BaseDynamics<void> &force_on_solid_dynamics_;
 			StdLargeVec<Vecd> &force_from_fluid_;
 
 		public:
-			explicit TotalForceOnSolid(SPHBody &sph_body);
-			virtual ~TotalForceOnSolid(){};
+			template <class ForceOnSolidDynamicsType>
+			explicit TotalForceOnSolid(ForceOnSolidDynamicsType &force_on_solid_dynamics, const std::string &force_name)
+				: LocalDynamicsReduce<Vecd, ReduceSum<Vecd>>(force_on_solid_dynamics.getSPHBody(), Vecd::Zero()),
+				  SolidDataSimple(force_on_solid_dynamics.getSPHBody()),
+				  force_on_solid_dynamics_(force_on_solid_dynamics),
+				  force_from_fluid_(force_on_solid_dynamics.getForceFromFluid())
+			{
+				quantity_name_ = force_name;
+			};
 
+			virtual ~TotalForceOnSolid(){};
+			virtual void setupDynamics(Real dt = 0.0) override;
 			Vecd reduce(size_t index_i, Real dt = 0.0);
 		};
 

@@ -200,7 +200,7 @@ int main()
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> gate_computing_time_step_size(gate);
 
 	BodyRegionByParticle gate_constraint_part(gate, makeShared<MultiPolygonShape>(createGateConstrainShape()));
-	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> gate_constraint(gate_constraint_part);
+	SimpleDynamics<solid_dynamics::FixConstraint, BodyPartByParticle> gate_constraint(gate_constraint_part);
 	SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> gate_update_normal(gate);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.

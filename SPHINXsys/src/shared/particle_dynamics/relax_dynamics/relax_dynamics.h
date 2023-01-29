@@ -191,7 +191,7 @@ namespace SPH
 			explicit RelaxationStepInner(BaseInnerRelation &inner_relation,
 										 bool level_set_correction = false);
 			virtual ~RelaxationStepInner(){};
-			SimpleDynamics<ShapeSurfaceBounding, NearShapeSurface> &SurfaceBounding() { return surface_bounding_; };
+			SimpleDynamics<ShapeSurfaceBounding, BodyPartByCell> &SurfaceBounding() { return surface_bounding_; };
 			virtual void exec(Real dt = 0.0) override;
 			virtual void parallel_exec(Real dt = 0.0) override;
 
@@ -202,7 +202,7 @@ namespace SPH
 			UniquePtr<BaseDynamics<void>> relaxation_acceleration_inner_;
 			ReduceDynamics<GetTimeStepSizeSquare> get_time_step_square_;
 			SimpleDynamics<UpdateParticlePosition> update_particle_position_;
-			SimpleDynamics<ShapeSurfaceBounding, NearShapeSurface> surface_bounding_;
+			SimpleDynamics<ShapeSurfaceBounding, BodyPartByCell> surface_bounding_;
 		};
 
 		/**
@@ -235,7 +235,7 @@ namespace SPH
 			explicit RelaxationStepComplex(ComplexRelation &complex_relation,
 										   const std::string &shape_name, bool level_set_correction = false);
 			virtual ~RelaxationStepComplex(){};
-			SimpleDynamics<ShapeSurfaceBounding, NearShapeSurface> &SurfaceBounding() { return surface_bounding_; };
+			SimpleDynamics<ShapeSurfaceBounding, BodyPartByCell> &SurfaceBounding() { return surface_bounding_; };
 			virtual void exec(Real dt = 0.0) override;
 			virtual void parallel_exec(Real dt = 0.0) override;
 
@@ -246,7 +246,7 @@ namespace SPH
 			UniquePtr<BaseDynamics<void>> relaxation_acceleration_complex_;
 			ReduceDynamics<GetTimeStepSizeSquare> get_time_step_square_;
 			SimpleDynamics<UpdateParticlePosition> update_particle_position_;
-			SimpleDynamics<ShapeSurfaceBounding, NearShapeSurface> surface_bounding_;
+			SimpleDynamics<ShapeSurfaceBounding, BodyPartByCell> surface_bounding_;
 		};
 
 		/**
@@ -375,7 +375,7 @@ namespace SPH
 			virtual ~ShellRelaxationStepInner(){};
 
 			SimpleDynamics<UpdateParticlePosition> update_shell_particle_position_;
-			SimpleDynamics<ShellMidSurfaceBounding, NearShapeSurface> mid_surface_bounding_;
+			SimpleDynamics<ShellMidSurfaceBounding, BodyPartByCell> mid_surface_bounding_;
 
 			virtual void exec(Real dt = 0.0) override;
 			virtual void parallel_exec(Real dt = 0.0) override;

@@ -307,9 +307,9 @@ namespace SPH
         class StaticConfinement
         {
         public:
-            SimpleDynamics<StaticConfinementDensity, NearShapeSurface> density_summation_;
-            SimpleDynamics<StaticConfinementIntegration1stHalf, NearShapeSurface> pressure_relaxation_;
-            SimpleDynamics<StaticConfinementIntegration2ndHalf, NearShapeSurface> density_relaxation_;
+            SimpleDynamics<StaticConfinementDensity, BodyPartByCell> density_summation_;
+            SimpleDynamics<StaticConfinementIntegration1stHalf, BodyPartByCell> pressure_relaxation_;
+            SimpleDynamics<StaticConfinementIntegration2ndHalf, BodyPartByCell> density_relaxation_;
 
             StaticConfinement(NearShapeSurface &near_surface);
             virtual ~StaticConfinement(){};

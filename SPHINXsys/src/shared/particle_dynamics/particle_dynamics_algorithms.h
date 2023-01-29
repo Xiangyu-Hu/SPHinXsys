@@ -98,21 +98,22 @@ namespace SPH
 		DynamicsRange &dynamics_range_;
 
 	public:
-		template <class DerivedDynamicsRange, typename... Args>
-		SimpleDynamics(DerivedDynamicsRange &derived_dynamics_range, Args &&...args)
-			: LocalDynamicsType(derived_dynamics_range, std::forward<Args>(args)...),
-			  BaseDynamics<void>(derived_dynamics_range.getSPHBody()),
-			  dynamics_range_(derived_dynamics_range)
+		template <class DynamicsIdentifier, typename... Args>
+		SimpleDynamics(DynamicsIdentifier &identifier, Args &&...args)
+			: LocalDynamicsType(identifier, std::forward<Args>(args)...),
+			  BaseDynamics<void>(identifier.getSPHBody()),
+			  dynamics_range_(identifier.getDynamicsRange())
 		{
 			static_assert(!has_initialize<LocalDynamicsType>::value &&
 							  !has_interaction<LocalDynamicsType>::value,
 						  "LocalDynamicsType does not fulfill SimpleDynamics requirements");
 		};
 		virtual ~SimpleDynamics(){};
+		DynamicsRange &getDynamicsRange() { return dynamics_range_; };
 		/** The sequential function for executing the operations on particles. */
 		virtual void exec(Real dt = 0.0) override
 		{
-			this->setBodyUpdated();
+			this->setUpdated();
 			this->setupDynamics(dt);
 			particle_for(dynamics_range_.LoopRange(),
 						 [&](size_t i)
@@ -121,7 +122,7 @@ namespace SPH
 		/** The parallel function for executing the operations on particles. */
 		virtual void parallel_exec(Real dt = 0.0) override
 		{
-			this->setBodyUpdated();
+			this->setUpdated();
 			this->setupDynamics(dt);
 			particle_parallel_for(dynamics_range_.LoopRange(),
 								  [&](size_t i)
@@ -144,16 +145,17 @@ namespace SPH
 		DynamicsRange &dynamics_range_;
 
 	public:
-		template <class DerivedDynamicsRange, typename... Args>
-		ReduceDynamics(DerivedDynamicsRange &derived_dynamics_range, Args &&...args)
-			: LocalDynamicsType(derived_dynamics_range, std::forward<Args>(args)...),
-			  BaseDynamics<ReturnType>(derived_dynamics_range.getSPHBody()),
-			  dynamics_range_(derived_dynamics_range){};
+		template <class DynamicsIdentifier, typename... Args>
+		ReduceDynamics(DynamicsIdentifier &identifier, Args &&...args)
+			: LocalDynamicsType(identifier, std::forward<Args>(args)...),
+			  BaseDynamics<ReturnType>(identifier.getSPHBody()),
+			  dynamics_range_(identifier.getDynamicsRange()){};
 		virtual ~ReduceDynamics(){};
 
 		using ReduceReturnType = ReturnType;
 		std::string QuantityName() { return this->quantity_name_; };
 		std::string DynamicsRangeName() { return dynamics_range_.getName(); };
+		DynamicsRange &getDynamicsRange() { return dynamics_range_; };
 		/** The sequential function for executing the reduce operations on particles. */
 		virtual ReturnType exec(Real dt = 0.0) override
 		{
@@ -190,9 +192,9 @@ namespace SPH
 		}
 
 	public:
-		template <class DerivedDynamicsRange, typename... Args>
-		ReduceAverage(DerivedDynamicsRange &derived_dynamics_range, Args &&...args)
-			: ReduceDynamics<LocalDynamicsType, DynamicsRange>(derived_dynamics_range, std::forward<Args>(args)...){};
+		template <class DynamicsIdentifier, typename... Args>
+		ReduceAverage(DynamicsIdentifier &identifier, Args &&...args)
+			: ReduceDynamics<LocalDynamicsType, DynamicsRange>(identifier, std::forward<Args>(args)...){};
 		virtual ~ReduceAverage(){};
 		/** The sequential function for executing the average operations on particles. */
 		virtual ReturnType exec(Real dt = 0.0) override
@@ -222,6 +224,7 @@ namespace SPH
 			  BaseDynamics<void>(body_relation.getSPHBody()){};
 		virtual ~BaseInteractionDynamics(){};
 
+		SPHBody &getDynamicsRange() { return this->getSPHBody(); };
 		/** pre process such as update ghost state */
 		StdVec<BaseDynamics<void> *> pre_processes_;
 		/** post process such as impose constraint */
@@ -233,14 +236,14 @@ namespace SPH
 		/** The sequential function for executing the average operations on particles and their neighbors. */
 		virtual void exec(Real dt = 0.0) override
 		{
-			this->setBodyUpdated();
+			this->setUpdated();
 			this->setupDynamics(dt);
 			runInteractionStep(dt);
 		};
 		/** The parallel function for executing the average operations on particles and their neighbors. */
 		virtual void parallel_exec(Real dt = 0.0) override
 		{
-			this->setBodyUpdated();
+			this->setUpdated();
 			this->setupDynamics(dt);
 			parallel_runInteractionStep(dt);
 		};
@@ -412,7 +415,7 @@ namespace SPH
 		/** The sequential function for executing the average operations on particles and their neighbors. */
 		virtual void exec(Real dt = 0.0) override
 		{
-			this->setBodyUpdated();
+			this->setUpdated();
 			this->setupDynamics(dt);
 
 			particle_for(this->dynamics_range_.LoopRange(),
@@ -428,7 +431,7 @@ namespace SPH
 		/** The parallel function for executing the average operations on particles and their neighbors. */
 		virtual void parallel_exec(Real dt = 0.0) override
 		{
-			this->setBodyUpdated();
+			this->setUpdated();
 			this->setupDynamics(dt);
 
 			particle_parallel_for(this->dynamics_range_.LoopRange(),

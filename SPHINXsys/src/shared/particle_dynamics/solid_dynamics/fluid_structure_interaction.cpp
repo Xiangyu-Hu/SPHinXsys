@@ -69,7 +69,7 @@ namespace SPH
 					size_t index_j = contact_neighborhood.j_[n];
 
 					/** The following viscous force is given in Monaghan 2005 (Rep. Prog. Phys.) */
-					Real v_r_ij =  contact_neighborhood.r_ij_[n] * (vel_ave_i - vel_n_k[index_j]).dot(contact_neighborhood.e_ij_[n]);
+					Real v_r_ij = contact_neighborhood.r_ij_[n] * (vel_ave_i - vel_n_k[index_j]).dot(contact_neighborhood.e_ij_[n]);
 					Real vel_difference = 0.0 * (vel_ave_i - vel_n_k[index_j]).norm() * contact_neighborhood.r_ij_[n];
 					Real eta_ij = 8.0 * SMAX(mu_k, rho_n_k[index_j] * vel_difference) * v_r_ij /
 								  (contact_neighborhood.r_ij_[n] * contact_neighborhood.r_ij_[n] + 0.01 * smoothing_length_k);
@@ -80,25 +80,13 @@ namespace SPH
 			viscous_force_from_fluid_[index_i] = force;
 		}
 		//=================================================================================================//
-		TotalViscousForceOnSolid ::TotalViscousForceOnSolid(SPHBody &sph_body)
-			: LocalDynamicsReduce<Vecd, ReduceSum<Vecd>>(sph_body, Vecd::Zero()),
-			  SolidDataSimple(sph_body),
-			  viscous_force_from_fluid_(*particles_->getVariableByName<Vecd>("ViscousForceFromFluid"))
+		void TotalForceOnSolid::setupDynamics(Real dt)
 		{
-			quantity_name_ = "TotalViscousForceOnSolid";
-		}
-		//=================================================================================================//
-		Vecd TotalViscousForceOnSolid::reduce(size_t index_i, Real dt)
-		{
-			return viscous_force_from_fluid_[index_i];
-		}
-		//=================================================================================================//
-		TotalForceOnSolid::TotalForceOnSolid(SPHBody &sph_body)
-			: LocalDynamicsReduce<Vecd, ReduceSum<Vecd>>(sph_body, Vecd::Zero()),
-			  SolidDataSimple(sph_body),
-			  force_from_fluid_(*particles_->getVariableByName<Vecd>("ForceFromFluid"))
-		{
-			quantity_name_ = "TotalForceOnSolid";
+			if (!force_on_solid_dynamics_.checkNewlyUpdated())
+			{
+				force_on_solid_dynamics_.parallel_exec();
+			}
+			force_on_solid_dynamics_.setNotNewlyUpdated();
 		}
 		//=================================================================================================//
 		Vecd TotalForceOnSolid::reduce(size_t index_i, Real dt)

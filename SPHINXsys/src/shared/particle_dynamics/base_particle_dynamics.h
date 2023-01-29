@@ -67,9 +67,16 @@ namespace SPH
 	class BaseDynamics : public GlobalStaticVariables
 	{
 	public:
-		BaseDynamics(SPHBody &sph_body) : sph_body_(sph_body){};
+		BaseDynamics(SPHBody &sph_body)
+			: sph_body_(sph_body), is_newly_updated_(false){};
 		virtual ~BaseDynamics(){};
-		void setBodyUpdated() { sph_body_.setNewlyUpdated(); };
+		bool checkNewlyUpdated() { return is_newly_updated_; };
+		void setNotNewlyUpdated() { is_newly_updated_ = false; };
+		void setUpdated()
+		{
+			sph_body_.setNewlyUpdated();
+			is_newly_updated_ = true;
+		};
 		/** There are only functions can be called from outside,
 		 * for sequential, parallel and possible other type of execution. */
 		virtual ReturnType exec(Real dt = 0.0) = 0;
@@ -77,6 +84,7 @@ namespace SPH
 
 	private:
 		SPHBody &sph_body_;
+		bool is_newly_updated_;
 	};
 
 	/**

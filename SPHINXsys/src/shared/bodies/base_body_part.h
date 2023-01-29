@@ -65,6 +65,7 @@ namespace SPH
 	public:
 		IndexVector body_part_particles_; /**< Collection particle in this body part. */
 		BaseParticles &getBaseParticles() { return base_particles_; };
+		BodyPartByParticle &getDynamicsRange() { return *this; };
 		IndexVector &LoopRange() { return body_part_particles_; };
 		size_t SizeOfLoopRange() { return body_part_particles_.size(); };
 
@@ -104,6 +105,7 @@ namespace SPH
 	public:
 		ConcurrentIndexesInCells body_part_cells_; /**< Collection of cells to indicate the body part. */
 		ConcurrentIndexesInCells &LoopRange() { return body_part_cells_; };
+		BodyPartByCell &getDynamicsRange() { return *this; };
 		size_t SizeOfLoopRange();
 
 		BodyPartByCell(RealBody &real_body, const std::string &body_part_name)

@@ -121,7 +121,7 @@ int main(int ac, char *av[])
 	InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_complex.getInnerRelation());
 	/** free stream boundary condition. */
 	BodyRegionByCell free_stream_buffer(water_block, makeShared<MultiPolygonShape>(createBufferShape()));
-	SimpleDynamics<FreeStreamCondition, BodyRegionByCell> freestream_condition(free_stream_buffer);
+	SimpleDynamics<FreeStreamCondition, BodyPartByCell> freestream_condition(free_stream_buffer);
 	//----------------------------------------------------------------------
 	//	Algorithms of FSI.
 	//----------------------------------------------------------------------

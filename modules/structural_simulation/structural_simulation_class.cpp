@@ -453,7 +453,7 @@ void StructuralSimulation::initializeForceInBodyRegion()
 		// create the triangle mesh of the box
 		BodyPartFromMesh *bp = body_part_tri_mesh_ptr_keeper_.createPtr<BodyPartFromMesh>(
 			*solid_body_list_[body_index]->getSolidBodyFromMesh(), makeShared<TriangleMeshShapeBrick>(halfsize_bbox, resolution, center, imported_stl_list_[body_index]));
-		force_in_body_region_.emplace_back(make_shared<SimpleDynamics<solid_dynamics::ForceInBodyRegion, BodyRegionByParticle>>(*bp, force, end_time));
+		force_in_body_region_.emplace_back(make_shared<SimpleDynamics<solid_dynamics::ForceInBodyRegion, BodyPartByParticle>>(*bp, force, end_time));
 	}
 }
 
@@ -530,7 +530,7 @@ void StructuralSimulation::initializeConstrainSolidBodyRegion()
 		// create the triangle mesh of the box
 		BodyPartFromMesh *bp = body_part_tri_mesh_ptr_keeper_.createPtr<BodyPartFromMesh>(
 			*solid_body_list_[body_index]->getSolidBodyFromMesh(), makeShared<TriangleMeshShapeBrick>(halfsize_bbox, resolution, center, imported_stl_list_[body_index]));
-		fixed_constraint_region_.emplace_back(make_shared<SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle>>(*bp));
+		fixed_constraint_region_.emplace_back(make_shared<SimpleDynamics<solid_dynamics::FixConstraint, BodyPartByParticle>>(*bp));
 	}
 }
 
@@ -589,7 +589,7 @@ void StructuralSimulation::initializeTranslateSolidBodyPart()
 		BodyPartFromMesh *bp = body_part_tri_mesh_ptr_keeper_.createPtr<BodyPartFromMesh>(
 			*solid_body_list_[body_index]->getSolidBodyFromMesh(), body_mesh_list_[body_index]);
 
-		translation_solid_body_part_.emplace_back(make_shared<SimpleDynamics<solid_dynamics::TranslateSolidBody, BodyRegionByParticle>>(
+		translation_solid_body_part_.emplace_back(make_shared<SimpleDynamics<solid_dynamics::TranslateSolidBody, BodyPartByParticle>>(
 			*bp, start_time, end_time, translation));
 	}
 }

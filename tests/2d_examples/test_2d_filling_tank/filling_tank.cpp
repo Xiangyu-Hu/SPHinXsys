@@ -132,8 +132,8 @@ int main()
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
 	BodyAlignedBoxByParticle emitter(
 		water_body, makeShared<AlignedBoxShape>(Transform2d(inlet_translation), inlet_halfsize));
-	SimpleDynamics<InletInflowCondition, BodyAlignedBoxByParticle> inflow_condition(emitter);
-	SimpleDynamics<fluid_dynamics::EmitterInflowInjection, BodyAlignedBoxByParticle> emitter_injection(emitter, 350, 0);
+	SimpleDynamics<InletInflowCondition, BodyPartByParticle> inflow_condition(emitter);
+	SimpleDynamics<fluid_dynamics::EmitterInflowInjection, BodyPartByParticle> emitter_injection(emitter, 350, 0);
 
 	//----------------------------------------------------------------------
 	//	File Output

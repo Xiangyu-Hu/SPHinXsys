@@ -197,7 +197,7 @@ protected:
 	vector<shared_ptr<SimpleDynamics<solid_dynamics::AccelerationForBodyPartInBoundingBox>>> acceleration_bounding_box_;
 	vector<AccelTuple> acceleration_bounding_box_tuple_;
 	// for ForceInBodyRegion
-	vector<shared_ptr<SimpleDynamics<solid_dynamics::ForceInBodyRegion, BodyRegionByParticle>>> force_in_body_region_;
+	vector<shared_ptr<SimpleDynamics<solid_dynamics::ForceInBodyRegion, BodyPartByParticle>>> force_in_body_region_;
 	vector<ForceTuple> force_in_body_region_tuple_;
 	// for SurfacePressureFromSource
 	vector<shared_ptr<SimpleDynamics<solid_dynamics::SurfacePressureFromSource, BodyPartByParticle>>> surface_pressure_;
@@ -212,7 +212,7 @@ protected:
 	vector<shared_ptr<SimpleDynamics<solid_dynamics::FixConstraint>>> fixed_constraint_body_;
 	vector<int> body_indices_fixed_constraint_;
 	// for ConstrainSolidBodyRegion
-	vector<shared_ptr<SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle>>> fixed_constraint_region_;
+	vector<shared_ptr<SimpleDynamics<solid_dynamics::FixConstraint, BodyPartByParticle>>> fixed_constraint_region_;
 	vector<ConstrainedRegionPair> body_indices_fixed_constraint_region_;
 	// for PositionSolidBody
 	vector<shared_ptr<SimpleDynamics<solid_dynamics::PositionSolidBody>>> position_solid_body_;
@@ -224,7 +224,7 @@ protected:
 	vector<shared_ptr<SimpleDynamics<solid_dynamics::TranslateSolidBody>>> translation_solid_body_;
 	vector<TranslateSolidBodyTuple> translation_solid_body_tuple_;
 	// for TranslateSolidBodyPart
-	vector<shared_ptr<SimpleDynamics<solid_dynamics::TranslateSolidBody, BodyRegionByParticle>>> translation_solid_body_part_;
+	vector<shared_ptr<SimpleDynamics<solid_dynamics::TranslateSolidBody, BodyPartByParticle>>> translation_solid_body_part_;
 	vector<TranslateSolidBodyPartTuple> translation_solid_body_part_tuple_;
 
 	// iterators
