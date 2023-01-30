@@ -16,7 +16,7 @@ void write_csv_files(
 	myfile << parameter_1_name << ";" << parameter_2_name << ";" << parameter_3_name << "\n";
 	for (size_t i = 0; i < parameter_1.size(); ++i)
 	{
-		myfile << parameter_1[i] << ";" << parameter_2[i] << parameter_3[i] << "\n";
+		myfile << parameter_1[i] << ";" << parameter_2[i] << ";" << parameter_3[i] << "\n";
 	}
 	myfile.close();
 }

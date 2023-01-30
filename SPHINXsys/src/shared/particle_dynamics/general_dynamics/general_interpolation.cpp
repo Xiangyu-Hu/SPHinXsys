@@ -49,7 +49,7 @@ namespace SPH
 			for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 			{
 				Vecd normalized_weight_correction = B_ * weight_correction;
-				contact_neighborhood.W_ij_[n] -= contact_neighborhood.dW_ijV_j_[n] *
+				contact_neighborhood.W_ij_[n] -= contact_neighborhood.W_ij_[n] *
 												 normalized_weight_correction.dot(contact_neighborhood.e_ij_[n]);
 			}
 		}
