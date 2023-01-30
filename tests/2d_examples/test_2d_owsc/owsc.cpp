@@ -68,7 +68,7 @@ int main()
 	BodyRegionByCell damping_buffer(water_block, makeShared<MultiPolygonShape>(createDampingBufferShape()));
 	SimpleDynamics<fluid_dynamics::DampingBoundaryCondition, BodyPartByCell> damping_wave(damping_buffer);
 	/** Fluid force on flap. */
-	InteractionDynamics<solid_dynamics::FluidViscousForceOnSolid> viscous_force_on_solid(flap_contact);
+	InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(flap_contact);
 	InteractionDynamics<solid_dynamics::FluidForceOnSolidUpdate> fluid_force_on_flap(flap_contact, viscous_force_on_solid);
 	/** constrain region of the part of wall boundary. */
 	BodyRegionByParticle wave_maker(wall_boundary, makeShared<MultiPolygonShape>(createWaveMakerShape()));
@@ -158,7 +158,7 @@ int main()
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<
-		ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceOnSolid>>> 
+		ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>> 
 		write_total_force_on_flap(io_environment, fluid_force_on_flap, "TotalPressureForceOnSolid");
 	WriteSimBodyPinData write_flap_pin_data(io_environment, integ, pin_spot);
 	

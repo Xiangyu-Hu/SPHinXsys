@@ -41,76 +41,59 @@ namespace SPH
 	{
 		typedef DataDelegateSimple<SolidParticles> SolidDataSimple;
 		typedef DataDelegateContact<SolidParticles, FluidParticles> FSIContactData;
+
 		/**
-		 * @class FluidViscousForceOnSolid
-		 * @brief Computing the viscous force from the fluid
+		 * @class BaseForceFromFluid
+		 * @brief Base class for computing the forces from the fluid
 		 */
-		class FluidViscousForceOnSolid : public LocalDynamics, public FSIContactData
+		class BaseForceFromFluid : public LocalDynamics, public FSIContactData
 		{
 		public:
-			explicit FluidViscousForceOnSolid(BaseContactRelation &contact_relation);
-			virtual ~FluidViscousForceOnSolid(){};
-			void interaction(size_t index_i, Real dt = 0.0);
-			StdLargeVec<Vecd> &getForceFromFluid() { return viscous_force_from_fluid_; };
+			explicit BaseForceFromFluid(BaseContactRelation &contact_relation);
+			virtual ~BaseForceFromFluid(){};
+			StdLargeVec<Vecd> &getForceFromFluid() { return force_from_fluid_; };
 
 		protected:
 			StdLargeVec<Real> &Vol_;
-			StdLargeVec<Vecd> &vel_ave_;
 			StdVec<Fluid *> contact_fluids_;
-			StdVec<StdLargeVec<Real> *> contact_rho_n_;
+			StdLargeVec<Vecd> force_from_fluid_;
+		};
+
+		/**
+		 * @class ViscousForceFromFluid
+		 * @brief Computing the viscous force from the fluid
+		 */
+		class ViscousForceFromFluid : public BaseForceFromFluid
+		{
+		public:
+			explicit ViscousForceFromFluid(BaseContactRelation &contact_relation);
+			virtual ~ViscousForceFromFluid(){};
+			void interaction(size_t index_i, Real dt = 0.0);
+
+		protected:
+			StdLargeVec<Vecd> &vel_ave_;
 			StdVec<StdLargeVec<Vecd> *> contact_vel_n_;
 			StdVec<Real> mu_;
 			StdVec<Real> smoothing_length_;
-			StdLargeVec<Vecd> viscous_force_from_fluid_;
 		};
 
 		/**
-		 * @class FluidAngularConservativeViscousForceOnSolid
-		 * @brief Computing the viscous force from the fluid
-		 * TODO: new test for this.
-		 */
-		class FluidAngularConservativeViscousForceOnSolid : public FluidViscousForceOnSolid
-		{
-		public:
-			explicit FluidAngularConservativeViscousForceOnSolid(BaseContactRelation &contact_relation)
-				: FluidViscousForceOnSolid(contact_relation){};
-			virtual ~FluidAngularConservativeViscousForceOnSolid(){};
-
-		protected:
-			void interaction(size_t index_i, Real dt = 0.0);
-		};
-
-		/**
-		 * @class BaseFluidPressureForceOnSolid
+		 * @class BasePressureForceAccelerationFromFluid
 		 * @brief Template class fro computing the pressure force from the fluid with different Riemann solvers.
 		 * The pressure force is added on the viscous force of the latter is computed.
 		 * This class is for FSI applications to achieve smaller solid dynamics
 		 * time step size compared to the fluid dynamics
 		 */
 		template <class RiemannSolverType>
-		class BaseFluidPressureForceOnSolid : public LocalDynamics, public FSIContactData
+		class BasePressureForceAccelerationFromFluid : public BaseForceFromFluid
 		{
 		public:
-			explicit BaseFluidPressureForceOnSolid(BaseContactRelation &contact_relation)
-				: LocalDynamics(contact_relation.getSPHBody()), FSIContactData(contact_relation),
-				  Vol_(particles_->Vol_), vel_ave_(*particles_->AverageVelocity()),
-				  acc_prior_(particles_->acc_prior_),
-				  acc_ave_(*particles_->AverageAcceleration()), n_(particles_->n_)
+			explicit BasePressureForceAccelerationFromFluid(BaseContactRelation &contact_relation)
+				: BasePressureForceAccelerationFromFluid(true, contact_relation)
 			{
-				particles_->registerVariable(force_from_fluid_, "ForceFromFluid");
-				for (size_t k = 0; k != contact_particles_.size(); ++k)
-				{
-					contact_fluids_.push_back(&contact_particles_[k]->fluid_);
-					contact_rho_n_.push_back(&(contact_particles_[k]->rho_));
-					contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
-					contact_p_.push_back(&(contact_particles_[k]->p_));
-					contact_acc_prior_.push_back(&(contact_particles_[k]->acc_prior_));
-					riemann_solvers_.push_back(RiemannSolverType(*contact_fluids_[k], *contact_fluids_[k]));
-				}
+				particles_->registerVariable(force_from_fluid_, "PressureForceFromFluid");
 			};
-			virtual ~BaseFluidPressureForceOnSolid(){};
-
-			StdLargeVec<Vecd> &getForceFromFluid() { return force_from_fluid_; };
+			virtual ~BasePressureForceAccelerationFromFluid(){};
 
 			void interaction(size_t index_i, Real dt = 0.0)
 			{
@@ -144,31 +127,47 @@ namespace SPH
 			};
 
 		protected:
-			StdLargeVec<Real> &Vol_;
 			StdLargeVec<Vecd> &vel_ave_, &acc_prior_, &acc_ave_, &n_;
-			StdVec<Fluid *> contact_fluids_;
 			StdVec<StdLargeVec<Real> *> contact_rho_n_, contact_p_;
 			StdVec<StdLargeVec<Vecd> *> contact_vel_n_, contact_acc_prior_;
 			StdVec<RiemannSolverType> riemann_solvers_;
-			StdLargeVec<Vecd> force_from_fluid_; /**<  forces (including pressure and viscous) from fluid */
+
+			BasePressureForceAccelerationFromFluid(bool mostDerived, BaseContactRelation &contact_relation)
+				: BaseForceFromFluid(contact_relation),
+				  vel_ave_(*particles_->AverageVelocity()),
+				  acc_prior_(particles_->acc_prior_),
+				  acc_ave_(*particles_->AverageAcceleration()), n_(particles_->n_)
+			{
+				for (size_t k = 0; k != contact_particles_.size(); ++k)
+				{
+					contact_rho_n_.push_back(&(contact_particles_[k]->rho_));
+					contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
+					contact_p_.push_back(&(contact_particles_[k]->p_));
+					contact_acc_prior_.push_back(&(contact_particles_[k]->acc_prior_));
+					riemann_solvers_.push_back(RiemannSolverType(*contact_fluids_[k], *contact_fluids_[k]));
+				}
+			};
 		};
-		using FluidPressureForceOnSolid = BaseFluidPressureForceOnSolid<NoRiemannSolver>;
-		using FluidPressureForceOnSolidRiemann = BaseFluidPressureForceOnSolid<AcousticRiemannSolver>;
+		using PressureForceAccelerationFromFluid = BasePressureForceAccelerationFromFluid<NoRiemannSolver>;
+		using PressureForceAccelerationFromFluidRiemann = BasePressureForceAccelerationFromFluid<AcousticRiemannSolver>;
 
 		/**
-		 * @class BaseFluidForceOnSolidUpdate
+		 * @class BaseAllForceAccelerationFromFluid
 		 * @brief template class for computing force from fluid with updated viscous force
 		 */
 		template <class PressureForceType>
-		class BaseFluidForceOnSolidUpdate : public PressureForceType
+		class BaseAllForceAccelerationFromFluid : public PressureForceType
 		{
 		public:
 			template <class ViscousForceOnSolidType>
-			BaseFluidForceOnSolidUpdate(BaseContactRelation &contact_relation,
-										ViscousForceOnSolidType &viscous_force_on_solid)
-				: PressureForceType(contact_relation),
-				  viscous_force_from_fluid_(viscous_force_on_solid.getForceFromFluid()){};
-			virtual ~BaseFluidForceOnSolidUpdate(){};
+			BaseAllForceAccelerationFromFluid(BaseContactRelation &contact_relation,
+											  ViscousForceOnSolidType &viscous_force_on_solid)
+				: PressureForceType(false, contact_relation),
+				  viscous_force_from_fluid_(viscous_force_on_solid.getForceFromFluid())
+			{
+				this->particles_->registerVariable(this->force_from_fluid_, "AllForceFromFluid");
+			};
+			virtual ~BaseAllForceAccelerationFromFluid(){};
 
 			void interaction(size_t index_i, Real dt = 0.0)
 			{
@@ -180,16 +179,16 @@ namespace SPH
 		protected:
 			StdLargeVec<Vecd> &viscous_force_from_fluid_;
 		};
-		using FluidForceOnSolidUpdate =
-			BaseFluidForceOnSolidUpdate<FluidPressureForceOnSolid>;
-		using FluidForceOnSolidUpdateRiemann =
-			BaseFluidForceOnSolidUpdate<FluidPressureForceOnSolidRiemann>;
+		using AllForceAccelerationFromFluid =
+			BaseAllForceAccelerationFromFluid<PressureForceAccelerationFromFluid>;
+		using AllForceAccelerationFromFluidRiemann =
+			BaseAllForceAccelerationFromFluid<PressureForceAccelerationFromFluidRiemann>;
 
 		/**
-		 * @class TotalForceOnSolid
+		 * @class TotalForceFromFluid
 		 * @brief Computing the total force from fluid
 		 */
-		class TotalForceOnSolid : public LocalDynamicsReduce<Vecd, ReduceSum<Vecd>>, public SolidDataSimple
+		class TotalForceFromFluid : public LocalDynamicsReduce<Vecd, ReduceSum<Vecd>>
 		{
 		protected:
 			BaseDynamics<void> &force_on_solid_dynamics_;
@@ -197,16 +196,15 @@ namespace SPH
 
 		public:
 			template <class ForceOnSolidDynamicsType>
-			explicit TotalForceOnSolid(ForceOnSolidDynamicsType &force_on_solid_dynamics, const std::string &force_name)
+			explicit TotalForceFromFluid(ForceOnSolidDynamicsType &force_on_solid_dynamics, const std::string &force_name)
 				: LocalDynamicsReduce<Vecd, ReduceSum<Vecd>>(force_on_solid_dynamics.getSPHBody(), Vecd::Zero()),
-				  SolidDataSimple(force_on_solid_dynamics.getSPHBody()),
 				  force_on_solid_dynamics_(force_on_solid_dynamics),
 				  force_from_fluid_(force_on_solid_dynamics.getForceFromFluid())
 			{
 				quantity_name_ = force_name;
 			};
 
-			virtual ~TotalForceOnSolid(){};
+			virtual ~TotalForceFromFluid(){};
 			virtual void setupDynamics(Real dt = 0.0) override;
 			Vecd reduce(size_t index_i, Real dt = 0.0);
 		};
