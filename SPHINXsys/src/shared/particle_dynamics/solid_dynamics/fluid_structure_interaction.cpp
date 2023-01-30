@@ -57,11 +57,11 @@ namespace SPH
 		//=================================================================================================//
 		void TotalForceFromFluid::setupDynamics(Real dt)
 		{
-			if (!force_on_solid_dynamics_.checkNewlyUpdated())
+			if (!force_from_fluid_dynamics_.checkNewlyUpdated())
 			{
-				force_on_solid_dynamics_.parallel_exec();
+				force_from_fluid_dynamics_.parallel_exec();
 			}
-			force_on_solid_dynamics_.setNotNewlyUpdated();
+			force_from_fluid_dynamics_.setNotNewlyUpdated();
 		}
 		//=================================================================================================//
 		Vecd TotalForceFromFluid::reduce(size_t index_i, Real dt)
