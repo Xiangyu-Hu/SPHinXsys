@@ -191,15 +191,15 @@ namespace SPH
 		class TotalForceFromFluid : public LocalDynamicsReduce<Vecd, ReduceSum<Vecd>>
 		{
 		protected:
-			BaseDynamics<void> &force_on_solid_dynamics_;
+			BaseDynamics<void> &force_from_fluid_dynamics_;
 			StdLargeVec<Vecd> &force_from_fluid_;
 
 		public:
-			template <class ForceOnSolidDynamicsType>
-			explicit TotalForceFromFluid(ForceOnSolidDynamicsType &force_on_solid_dynamics, const std::string &force_name)
-				: LocalDynamicsReduce<Vecd, ReduceSum<Vecd>>(force_on_solid_dynamics.getSPHBody(), Vecd::Zero()),
-				  force_on_solid_dynamics_(force_on_solid_dynamics),
-				  force_from_fluid_(force_on_solid_dynamics.getForceFromFluid())
+			template <class ForceFromFluidDynamicsType>
+			explicit TotalForceFromFluid(ForceFromFluidDynamicsType &force_from_fluid_dynamics, const std::string &force_name)
+				: LocalDynamicsReduce<Vecd, ReduceSum<Vecd>>(force_from_fluid_dynamics.getSPHBody(), Vecd::Zero()),
+				  force_from_fluid_dynamics_(force_from_fluid_dynamics),
+				  force_from_fluid_(force_from_fluid_dynamics.getForceFromFluid())
 			{
 				quantity_name_ = force_name;
 			};
