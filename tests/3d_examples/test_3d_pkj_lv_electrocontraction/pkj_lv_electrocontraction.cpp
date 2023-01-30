@@ -98,7 +98,7 @@ int main(int ac, char *av[])
 
 		BodySurface surface_part(herat_model);
 		/** constraint boundary condition for diffusion. */
-		SimpleDynamics<DiffusionBCs, BodySurface> impose_diffusion_bc(surface_part, "Phi");
+		SimpleDynamics<DiffusionBCs, BodyPartByParticle> impose_diffusion_bc(surface_part, "Phi");
 		impose_diffusion_bc.parallel_exec();
 
 		write_herat_model_state_to_vtp.writeToFile(ite);

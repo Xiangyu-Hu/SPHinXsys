@@ -167,7 +167,7 @@ namespace SPH
 			BaseFluidForceOnSolidUpdate(BaseContactRelation &contact_relation,
 										ViscousForceOnSolidType &viscous_force_on_solid)
 				: PressureForceType(contact_relation),
-				  viscous_force_from_fluid_(viscous_force_on_solid.getViscousForceFromFluid()){};
+				  viscous_force_from_fluid_(viscous_force_on_solid.getForceFromFluid()){};
 			virtual ~BaseFluidForceOnSolidUpdate(){};
 
 			void interaction(size_t index_i, Real dt = 0.0)

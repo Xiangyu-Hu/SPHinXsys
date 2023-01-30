@@ -132,7 +132,7 @@ int main()
 		stress_relaxation_second_half(cylinder_body_inner);
 	/** Constrain the Boundary. */
 	BoundaryGeometry boundary_geometry(cylinder_body, "BoundaryGeometry");
-	SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion, BoundaryGeometry> fixed_free_rotate_shell_boundary(boundary_geometry);
+	SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion, BodyPartByParticle> fixed_free_rotate_shell_boundary(boundary_geometry);
 	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
 		cylinder_position_damping(0.2, cylinder_body_inner, "Velocity", physical_viscosity);
 	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>

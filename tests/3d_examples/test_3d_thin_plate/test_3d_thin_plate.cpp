@@ -169,10 +169,10 @@ int main(int ac, char *av[])
 		stress_relaxation_second_half(plate_body_inner);
 	/** Constrain the Boundary. */
 	BoundaryGeometryParallelToXAxis boundary_geometry_x(plate_body, "BoundaryGeometryParallelToXAxis");
-	SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegionAlongAxis, BoundaryGeometryParallelToXAxis>
+	SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegionAlongAxis, BodyPartByParticle>
 		constrain_holder_x(boundary_geometry_x, 0);
 	BoundaryGeometryParallelToYAxis boundary_geometry_y(plate_body, "BoundaryGeometryParallelToYAxis");
-	SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegionAlongAxis, BoundaryGeometryParallelToYAxis>
+	SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegionAlongAxis, BodyPartByParticle>
 		constrain_holder_y(boundary_geometry_y, 1);
 	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
 		plate_position_damping(0.5, plate_body_inner, "Velocity", physical_viscosity);

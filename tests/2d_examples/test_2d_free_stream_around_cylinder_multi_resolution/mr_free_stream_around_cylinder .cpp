@@ -161,10 +161,10 @@ int main(int ac, char *av[])
 	BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
 	ObservedQuantityRecording<Vecd>
 		write_fluid_velocity("Velocity", io_environment, fluid_observer_contact);
-	RegressionTestTimeAveraged<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalViscousForceOnSolid>>>
-		write_total_viscous_force_on_inserted_body(io_environment, cylinder);
+	RegressionTestTimeAveraged<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceOnSolid>>>
+		write_total_viscous_force_on_inserted_body(io_environment, fluid_viscous_force_on_inserted_body, "TotalViscousForceOnSolid");
 	ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceOnSolid>>
-		write_total_force_on_inserted_body(io_environment, cylinder);
+		write_total_force_on_inserted_body(io_environment, fluid_pressure_force_on_inserted_body, "TotalPressureForceOnSolid");
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
@@ -208,8 +208,6 @@ int main(int ac, char *av[])
 			viscous_acceleration.parallel_exec();
 			transport_velocity_correction.parallel_exec();
 
-			/** FSI for viscous force. */
-			fluid_viscous_force_on_inserted_body.parallel_exec();
 			size_t inner_ite_dt = 0;
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
@@ -217,8 +215,6 @@ int main(int ac, char *av[])
 				Real dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt - relaxation_time);
 				/** Fluid pressure relaxation, first half. */
 				pressure_relaxation.parallel_exec(dt);
-				/** FSI for pressure force. */
-				fluid_pressure_force_on_inserted_body.parallel_exec();
 				/** Fluid pressure relaxation, second half. */
 				density_relaxation.parallel_exec(dt);
 

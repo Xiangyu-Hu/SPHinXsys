@@ -114,7 +114,7 @@ int main()
 		apply_point_force(plate_body, point_force, reference_position, time_to_full_external_force, resolution_ref);
 	/** Constrain the Boundary. */
 	BoundaryGeometry boundary_geometry(plate_body, "BoundaryGeometry");
-	SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion, BoundaryGeometry> constrain_holder(boundary_geometry);
+	SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion, BodyPartByParticle> constrain_holder(boundary_geometry);
 	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
 		plate_position_damping(0.2, plate_body_inner, "Velocity", physical_viscosity);
 	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
