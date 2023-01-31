@@ -159,11 +159,11 @@ namespace SPH
 		class BaseAllForceAccelerationFromFluid : public PressureForceType
 		{
 		public:
-			template <class ViscousForceOnSolidType>
+			template <class ViscousForceFromFluidType>
 			BaseAllForceAccelerationFromFluid(BaseContactRelation &contact_relation,
-											  ViscousForceOnSolidType &viscous_force_on_solid)
+											  ViscousForceFromFluidType &viscous_force_from_fluid)
 				: PressureForceType(false, contact_relation),
-				  viscous_force_from_fluid_(viscous_force_on_solid.getForceFromFluid())
+				  viscous_force_from_fluid_(viscous_force_from_fluid.getForceFromFluid())
 			{
 				this->particles_->registerVariable(this->force_from_fluid_, "AllForceFromFluid");
 			};
