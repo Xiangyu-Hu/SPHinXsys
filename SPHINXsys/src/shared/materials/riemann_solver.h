@@ -67,10 +67,10 @@ namespace SPH
 
 	struct CompressibleFluidStarState : FluidStarState
 	{
-		Real E_;
 		Real rho_;
+		Real E_;
 		CompressibleFluidStarState(Real rho, Vecd vel, Real p, Real E)
-			: FluidStarState(vel, p),rho_(rho), E_(E){};
+			: FluidStarState(vel, p), rho_(rho), E_(E){};
 	};
 
 	class Fluid;

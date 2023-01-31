@@ -185,7 +185,6 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	size_t number_of_iterations = 0;
 	int screen_output_interval = 100;
-	int restart_output_interval = screen_output_interval * 10;
 	Real end_time = 200.0;
 	Real output_interval = end_time / 200.0;
 	//----------------------------------------------------------------------

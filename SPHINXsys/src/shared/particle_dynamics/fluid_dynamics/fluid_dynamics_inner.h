@@ -74,8 +74,8 @@ namespace SPH
 			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
-			Real rho0_;
 			StdLargeVec<Real> &rho_, &rho_sum_, &mass_;
+			Real rho0_;
 		};
 
 		/**
@@ -121,10 +121,10 @@ namespace SPH
 			virtual ~BaseViscousAccelerationInner(){};
 
 		protected:
-			Real mu_;
-			Real smoothing_length_;
 			StdLargeVec<Real> &rho_;
 			StdLargeVec<Vecd> &vel_, &acc_prior_;
+			Real mu_;
+			Real smoothing_length_;
 		};
 
 		/**
@@ -227,8 +227,8 @@ namespace SPH
 			virtual Real outputResult(Real reduced_value) override;
 
 		protected:
-			Real smoothing_length_min_;
 			StdLargeVec<Vecd> &vel_;
+			Real smoothing_length_min_;
 			Real advectionCFL_;
 		};
 

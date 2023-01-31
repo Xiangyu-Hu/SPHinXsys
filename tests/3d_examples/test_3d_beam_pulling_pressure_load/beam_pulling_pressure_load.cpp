@@ -48,10 +48,10 @@ public:
 		: LocalDynamics(body_part.getSPHBody()),
 		  solid_dynamics::ElasticSolidDataSimple(sph_body_),
 		  acc_prior(particles_->acc_prior_),
-		  force_arr_(f_arr),
 		  mass_n_(particles_->mass_),
 		  Vol_(particles_->Vol_),
 		  F_(particles_->F_),
+		  force_arr_(f_arr),
 		  particles_num_(body_part.body_part_particles_.size())
 	{
 		area_0_.resize(particles_->total_real_particles_);
@@ -234,7 +234,7 @@ int main(int ac, char *av[])
 
 	if (system.generate_regression_data_)
 	{
-		write_beam_stress.generateDataBase({0.01}, {0.01});
+		write_beam_stress.generateDataBase(0.01, 0.01);
 	}
 	else
 	{

@@ -13,7 +13,6 @@ namespace SPH
 
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
-				StdLargeVec<Real> &contact_Vol_k = *(contact_Vol_[k]);
 				StdLargeVec<Vecd> &contact_n_k = *(contact_n_[k]);
 				StdLargeVec<Vecd> &contact_pos_k = *(contact_pos_[k]);
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];

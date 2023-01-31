@@ -61,9 +61,9 @@ namespace SPH
         StdLargeVec<bool> tag_split_;
 
     protected:
-        ParticleSplitAndMerge &particle_adaptation_;
         Real rho0_;
         StdLargeVec<Real> &h_ratio_;
+        ParticleSplitAndMerge &particle_adaptation_;
         Vecd E_cof_ = Vecd::Zero();
         Real sigma_E_ = 0.0;
         Real E_cof_sigma_ = 0.0;
@@ -124,11 +124,11 @@ namespace SPH
         BoundingBox refinement_region_bounds_;
         ParticleSplitAndMerge &particle_adaptation_;
         Real inv_rho0_;
-        StdLargeVec<Vecd> &pos_;
         StdLargeVec<Real> &Vol_;
+        StdLargeVec<Vecd> &pos_;
+        StdLargeVec<Real> &rho_;
         StdLargeVec<Real> &mass_;
         StdLargeVec<Real> &h_ratio_; /**< the ratio between reference smoothing length to variable smoothing length */
-        StdLargeVec<Real> &rho_;
 
         virtual bool checkLocation(const BoundingBox &refinement_region_bounds, Vecd position, Real volume);
     };

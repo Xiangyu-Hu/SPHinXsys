@@ -152,8 +152,6 @@ namespace SPH
 			Vecd p_dissipation = Vecd::Zero();
 			for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 			{
-				StdLargeVec<Real> &rho_k = *(this->contact_rho_n_[k]);
-				StdLargeVec<Real> &p_k = *(this->contact_p_[k]);
 				StdLargeVec<Vecd> &vel_k = *(this->contact_vel_n_[k]);
 				CurrentRiemannSolver &riemann_solver_k = riemann_solvers_[k];
 				Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
@@ -165,7 +163,7 @@ namespace SPH
 
 					Vecd vel_ave = riemann_solver_k.AverageV(this->vel_[index_i], vel_k[index_j]);
 					density_change_rate += 2.0 * (this->vel_[index_i] - vel_ave).dot(e_ij) * dW_ijV_j;
-					Real u_jump = u_jump = (this->vel_[index_i] - vel_k[index_j]).dot(e_ij);
+					Real u_jump = (this->vel_[index_i] - vel_k[index_j]).dot(e_ij);
 					p_dissipation += riemann_solver_k.DissipativePJump(u_jump) * dW_ijV_j * e_ij;
 				}
 			}

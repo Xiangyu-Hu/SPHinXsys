@@ -68,11 +68,11 @@ namespace SPH
 										  public ShellDataSimple
 		{
 		protected:
+			Real CFL_;
 			StdLargeVec<Vecd> &vel_, &acc_, &angular_vel_, &dangular_vel_dt_;
 			StdLargeVec<Real> &thickness_;
-			Real rho0_, physical_viscosity_, E0_, nu_, c0_;
+			Real rho0_, E0_, nu_, c0_;
 			Real smoothing_length_;
-			Real CFL_;
 
 		public:
 			explicit ShellAcousticTimeStepSize(SPHBody &sph_body, Real CFL = 0.6);
@@ -152,9 +152,9 @@ namespace SPH
 
 		protected:
 			ElasticSolid &elastic_solid_;
-			Real rho0_, inv_rho0_;
 			StdLargeVec<Matd> &global_stress_, &global_moment_;
 			StdLargeVec<Vecd> &global_shear_stress_, &n_;
+			Real rho0_, inv_rho0_;
 			Real smoothing_length_, E0_, G0_, nu_, hourglass_control_factor_;
 			bool hourglass_control_;
 			const Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(zero_vec);

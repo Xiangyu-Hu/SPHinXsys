@@ -87,10 +87,10 @@ namespace SPH
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			Real mu_;
-			Real smoothing_length_;
 			StdLargeVec<Real> &Vol_, &rho_, &p_, &mass_, &dE_dt_prior_;
 			StdLargeVec<Vecd> &vel_, &dmom_dt_prior_;
+			Real mu_;
+			Real smoothing_length_;
 		};
 
 		/**

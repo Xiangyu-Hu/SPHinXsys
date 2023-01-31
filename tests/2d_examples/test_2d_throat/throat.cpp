@@ -36,7 +36,7 @@ Real U_c = 0.5 * powerN(0.5 * DH, 2) * gravity_g * rho0_f / mu_f;
 Real U_f = U_c * DH / DT;
 // For low Reynolds number flow the weakly compressible formulation need to
 // consider viscosity for artificial sound speed.
-Real c_f = 10.0 * (U_f, sqrt(mu_f / rho0_f * U_f / DT));
+Real c_f = 10.0 * SMAX(U_f, sqrt(mu_f / rho0_f * U_f / DT));
 Real mu_p_f = 0.6 * mu_f;
 Real lambda_f = 10.0;
 //----------------------------------------------------------------------
@@ -199,7 +199,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
-	int number_of_iterations = 0;
+	size_t number_of_iterations = 0;
 	int screen_output_interval = 10;
 	int observation_sample_interval = screen_output_interval * 2;
 	Real end_time = 20.0;

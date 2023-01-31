@@ -65,7 +65,6 @@ namespace SPH
 	void SelfSurfaceContactRelation::updateConfiguration()
 	{
 		resetNeighborhoodCurrentSize();
-		size_t total_real_particles = body_part_particles_.size();
 		cell_linked_list_.searchNeighborsByParticles(
 			body_surface_layer_, inner_configuration_,
 			get_single_search_depth_, get_self_contact_neighbor_);

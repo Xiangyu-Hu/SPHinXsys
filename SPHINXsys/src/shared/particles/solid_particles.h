@@ -133,9 +133,9 @@ namespace SPH
 		std::string stress_measure_;
 
 		/** Get wall average velocity when interacting with fluid. */
-		virtual StdLargeVec<Vecd> *AverageVelocity() { return &vel_ave_; };
+		virtual StdLargeVec<Vecd> *AverageVelocity() override { return &vel_ave_; };
 		/** Get wall average acceleration when interacting with fluid. */
-		virtual StdLargeVec<Vecd> *AverageAcceleration() { return &acc_ave_; };
+		virtual StdLargeVec<Vecd> *AverageAcceleration() override { return &acc_ave_; };
 
 		/** Initialize the variables for elastic particle. */
 		virtual void initializeOtherVariables() override;
@@ -180,9 +180,9 @@ namespace SPH
 		StdLargeVec<Matd> global_stress_;		/**<  global stress for pair interaction */
 		StdLargeVec<Matd> global_moment_;		/**<  global bending moment for pair interaction */
 		/** get particle volume. */
-		virtual Real ParticleVolume(size_t index_i) { return Vol_[index_i] * thickness_[index_i]; }
+		virtual Real ParticleVolume(size_t index_i) override { return Vol_[index_i] * thickness_[index_i]; }
 		/** get particle mass. */
-		virtual Real ParticleMass(size_t index_i) { return mass_[index_i] * thickness_[index_i]; }
+		virtual Real ParticleMass(size_t index_i) override { return mass_[index_i] * thickness_[index_i]; }
 		/** Initialize variable for shell particles. */
 		virtual void initializeOtherVariables() override;
 		/** Return this pointer. */

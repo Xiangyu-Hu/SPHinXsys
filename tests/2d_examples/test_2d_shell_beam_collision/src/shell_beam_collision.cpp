@@ -243,7 +243,6 @@ int main(int ac, char *av[])
 	Real T0 = 1.0;
 	Real end_time = T0;
 	Real output_interval = 0.01 * T0;
-	Real Dt = 0.1 * output_interval;
 	Real dt = 0.0;
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time

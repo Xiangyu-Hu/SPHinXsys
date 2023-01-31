@@ -19,8 +19,6 @@ namespace SPH
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
-				size_t index_j = inner_neighborhood.j_[n];
-
 				Vecd gradW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
 				Vecd r_ji = inner_neighborhood.r_ij_[n] * inner_neighborhood.e_ij_[n];
 				local_configuration -= r_ji* gradW_ijV_j.transpose();

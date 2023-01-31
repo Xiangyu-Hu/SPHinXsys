@@ -234,9 +234,9 @@ namespace SPH
 		: public LocalDynamics,
 		  public DiffusionReactionSimpleData<BaseParticlesType, BaseMaterialType, NUM_SPECIES>
 	{
-		BaseReactionModel<NUM_SPECIES> *species_reaction_;
 		typedef std::array<Real, NUM_SPECIES> LocalSpecies;
 		StdVec<StdLargeVec<Real>> &species_n_;
+		BaseReactionModel<NUM_SPECIES> *species_reaction_;
 		IndexVector &reactive_species_;
 		UpdateAReactionSpecies updateAReactionSpecies;
 		void loadLocalSpecies(LocalSpecies &local_species, size_t index_i);

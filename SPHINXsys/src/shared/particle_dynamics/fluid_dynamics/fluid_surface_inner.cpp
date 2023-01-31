@@ -63,7 +63,6 @@ namespace SPH
             {
                 for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
                 {
-                    size_t index_j = inner_neighborhood.j_[n];
                     gradient -= inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
                 }
             }

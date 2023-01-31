@@ -89,7 +89,7 @@ namespace SPH
 				Real velocity_boundary_normal = vel_[index_i].dot(n_[index_i]);
 
 				// judge it is the inflow condition
-				if (n_[index_i][0] <= 0.0 | fabs(n_[index_i][1]) > fabs(n_[index_i][0]))
+				if (n_[index_i][0] <= 0.0 || fabs(n_[index_i][1]) > fabs(n_[index_i][0]))
 				{
 					// supersonic inflow condition
 					if (fabs(velocity_boundary_normal) >= sound_speed_)
@@ -149,7 +149,6 @@ namespace SPH
 							size_t index_j = inner_neighborhood.j_[n];
 							if (surface_indicator_[index_j] != 1)
 							{
-								Real W_ij = inner_neighborhood.W_ij_[n];
 								rho_summation += rho_[index_j];
 								vel_summation += vel_[index_j];
 								p_summation += p_[index_j];

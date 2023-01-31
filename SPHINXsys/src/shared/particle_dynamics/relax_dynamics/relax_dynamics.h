@@ -268,8 +268,8 @@ namespace SPH
 		protected:
 			StdLargeVec<Vecd> &pos_;
 			Real constrained_distance_;
-			LevelSetShape *level_set_shape_;
 			Real particle_spacing_ref_, thickness_, level_set_refinement_ratio_;
+			LevelSetShape *level_set_shape_;
 		};
 
 		/**
