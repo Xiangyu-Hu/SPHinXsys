@@ -147,7 +147,7 @@ void SurfaceOperationsVentricle::init_srf_area(InnerRelation &inner_relation)
     int num = 1e5; // discretization of radius
 	Real radius = 2.0*smoothing_length;
     Real dr = radius/Real(num);
-    for(size_t i = 0; i < num; ++i)
+    for(int i = 0; i < num; ++i)
     {
         Real r = (i+0.5)*dr;
         Real kernel = kernel_ptr->W_3D(r/smoothing_length);

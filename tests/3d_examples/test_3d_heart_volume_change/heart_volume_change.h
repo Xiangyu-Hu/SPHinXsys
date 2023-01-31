@@ -4,6 +4,7 @@
  * @author 	John Benjamin, Chi Zhang and Xiangyu Hu
  */
 #include "sphinxsys.h" // SPHinXsys Library.
+#include <numeric>
 #include "TriangleMeshDistance.h" // for mesh operations
 
 using namespace SPH;
