@@ -195,12 +195,12 @@ namespace SPH
 			if (!level_set_correction)
 			{
 				relaxation_acceleration_complex_ =
-					makeUnique<InteractionDynamics<RelaxationAccelerationComplex>>(body_complex_relation);
+					makeUnique<InteractionDynamics<RelaxationAccelerationComplex>>(complex_relation);
 			}
 			else
 			{
 				relaxation_acceleration_complex_ =
-					makeUnique<InteractionDynamics<RelaxationAccelerationComplexWithLevelSetCorrection>>(body_complex_relation, shape_name);
+					makeUnique<InteractionDynamics<RelaxationAccelerationComplexWithLevelSetCorrection>>(complex_relation, shape_name);
 			}
 		}
 		//=================================================================================================//

@@ -77,16 +77,15 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ShellContactDensity::ShellContactDensity(SurfaceContactRelation &solid_body_contact_relation)
-			: LocalDynamics(solid_body_contact_relation.getSPHBody())
-			, ContactDynamicsData(solid_body_contact_relation)
-			, solid_(particles_->solid_)
-			, pos_(particles_->pos_)
-			, kernel_(solid_body_contact_relation.getSPHBody().sph_adaptation_->getKernel())
-			, particle_spacing_(solid_body_contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing())
-			, calibration_factor_(StdVec<Real>(contact_configuration_.size(), 0.0))
-			, contact_h_ratio_(StdVec<Real>(contact_configuration_.size(), 0.0))
-			, offset_W_ij_(StdVec<Real>(contact_configuration_.size(), 0.0))
-			, contact_particle_spacing_(StdVec<Real>(contact_configuration_.size(), 0.0))
+			: LocalDynamics(solid_body_contact_relation.getSPHBody()), 
+			ContactDynamicsData(solid_body_contact_relation), solid_(particles_->solid_),
+			kernel_(solid_body_contact_relation.getSPHBody().sph_adaptation_->getKernel()),
+			pos_(particles_->pos_), 
+			particle_spacing_(solid_body_contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing()), 
+			calibration_factor_(StdVec<Real>(contact_configuration_.size(), 0.0)), 
+			contact_h_ratio_(StdVec<Real>(contact_configuration_.size(), 0.0)), 
+			offset_W_ij_(StdVec<Real>(contact_configuration_.size(), 0.0)), 
+			contact_particle_spacing_(StdVec<Real>(contact_configuration_.size(), 0.0))
 		{
 			particles_->registerVariable(contact_density_, "ContactDensity");
 

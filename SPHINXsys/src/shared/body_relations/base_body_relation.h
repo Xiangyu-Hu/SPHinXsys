@@ -104,6 +104,9 @@ namespace SPH
 	 */
 	class SPHRelation
 	{
+	protected:
+		SPHBody &sph_body_;
+
 	public:
 		BaseParticles &base_particles_;
 		SPHBody &getDynamicsRange() { return sph_body_; };
@@ -114,9 +117,6 @@ namespace SPH
 		void subscribeToBody() { sph_body_.body_relations_.push_back(this); };
 		virtual void updateConfigurationMemories() = 0;
 		virtual void updateConfiguration() = 0;
-
-	protected:
-		SPHBody &sph_body_;
 	};
 
 	/**
