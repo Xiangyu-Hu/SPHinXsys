@@ -44,13 +44,13 @@ namespace SPH
 	class ElasticSolid : public Solid
 	{
 	protected:
+		Real c0_;  /*< sound wave speed */
+		Real ct0_; /*< tensile wave speed */
+		Real cs0_; /*< shear wave speed */
 		Real E0_;  /*< Youngs or tensile modules  */
 		Real G0_;  /*< shear modules  */
 		Real K0_;  /*< bulk modules  */
 		Real nu_;  /*< Poisson ratio  */
-		Real c0_;  /*< sound wave speed */
-		Real ct0_; /*< tensile wave speed */
-		Real cs0_; /*< shear wave speed */
 
 		void setSoundSpeeds();
 

@@ -15,8 +15,8 @@ namespace SPH
     //=============================================================================================//
     OffsetInitialPosition::
         OffsetInitialPosition(SPHBody &sph_body, Vecd &offset)
-        : SolidDataSimple(sph_body), offset_(offset),
-          LocalDynamics(sph_body), pos_(particles_->pos_), pos0_(particles_->pos0_) {}
+        : SolidDataSimple(sph_body), LocalDynamics(sph_body),
+         offset_(offset), pos_(particles_->pos_), pos0_(particles_->pos0_) {}
     //=============================================================================================//
     void OffsetInitialPosition::update(size_t index_i, Real dt)
     {
