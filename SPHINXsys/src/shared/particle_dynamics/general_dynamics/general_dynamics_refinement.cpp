@@ -4,6 +4,7 @@
  */
 
 #include "general_dynamics_refinement.h"
+#include "base_particles.hpp"
 #include "level_set_shape.h"
 
 namespace SPH
