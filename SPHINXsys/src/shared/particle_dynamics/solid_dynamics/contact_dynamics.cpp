@@ -81,7 +81,6 @@ namespace SPH
 			, ContactDynamicsData(solid_body_contact_relation)
 			, solid_(particles_->solid_)
 			, kernel_(solid_body_contact_relation.sph_body_.sph_adaptation_->getKernel())
-			, pos_(particles_->pos_)
 			, particle_spacing_(solid_body_contact_relation.sph_body_.sph_adaptation_->ReferenceSpacing())
 			, calibration_factor_(StdVec<Real>(contact_configuration_.size(), 0.0))
 			, contact_h_ratio_(StdVec<Real>(contact_configuration_.size(), 0.0))
@@ -99,8 +98,6 @@ namespace SPH
 				offset_W_ij_[k] = kernel_->W(contact_h_ratio_[k], contact_particle_spacing_[k], zero_vec);
 				
 				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
-				contact_n_.push_back(&(contact_particles_[k]->n_));
-				contact_pos_.push_back(&(contact_particles_[k]->pos_));
 			}
 
 			Real contact_max_;
@@ -127,6 +124,26 @@ namespace SPH
 				/** a calibration factor to avoid particle penetration into shell structure */
 				calibration_factor_[k] = solid_.ReferenceDensity() / (contact_max_ + Eps);
 			}
+		}
+		//=================================================================================================//
+		void ShellContactDensity::interaction(size_t index_i, Real dt)
+		{
+			/** shell contact interaction. */
+			Real sigma = 0.0;
+			Real contact_density_i = 0.0;
+
+			for (size_t k = 0; k < contact_configuration_.size(); ++k)
+			{
+				StdLargeVec<Real>& contact_Vol_k = *(contact_Vol_[k]);
+				Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
+				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+				{
+					Real corrected_W_ij = std::max(contact_neighborhood.W_ij_[n] - offset_W_ij_[k], 0.0);
+					sigma += corrected_W_ij * contact_Vol_k[contact_neighborhood.j_[n]];
+				}
+				contact_density_i += 0.005 * sigma * calibration_factor_[k];
+			}
+			contact_density_[index_i] = contact_density_i;
 		}
 		//=================================================================================================//
 		SelfContactForce::

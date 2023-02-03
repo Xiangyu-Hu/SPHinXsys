@@ -92,7 +92,6 @@ namespace SPH
 			Solid &solid_;
 			Kernel *kernel_;
 
-			StdLargeVec<Vecd> &pos_;
 			Real particle_spacing_;
 			StdVec<Real> calibration_factor_;
 			StdVec<Real> contact_h_ratio_;
@@ -100,8 +99,6 @@ namespace SPH
 			StdVec<Real> contact_particle_spacing_;
 			StdLargeVec<Real> contact_density_;
 			StdVec<StdLargeVec<Real> *> contact_Vol_;
-			StdVec<StdLargeVec<Vecd> *> contact_n_;
-			StdVec<StdLargeVec<Vecd> *> contact_pos_;
 
 			/** Abscissas and weights for Gauss-Legendre quadrature integration with n=3 nodes */
 			const StdVec<Real> three_gaussian_points_ = { -0.7745966692414834, 0.0, 0.7745966692414834 };
