@@ -1,4 +1,5 @@
 #include "inner_body_relation.h"
+#include "base_particles.hpp"
 #include "base_particle_dynamics.h"
 #include "cell_linked_list.hpp"
 
@@ -65,7 +66,6 @@ namespace SPH
 	void SelfSurfaceContactRelation::updateConfiguration()
 	{
 		resetNeighborhoodCurrentSize();
-		size_t total_real_particles = body_part_particles_.size();
 		cell_linked_list_.searchNeighborsByParticles(
 			body_surface_layer_, inner_configuration_,
 			get_single_search_depth_, get_self_contact_neighbor_);

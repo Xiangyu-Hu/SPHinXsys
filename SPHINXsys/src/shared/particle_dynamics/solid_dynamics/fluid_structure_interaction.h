@@ -137,18 +137,13 @@ namespace SPH
 			{
 				const Vecd &acc_ave_i = acc_ave_[index_i];
 				Real Vol_i = Vol_[index_i];
-				const Vecd &vel_ave_i = vel_ave_[index_i];
-				const Vecd &n_i = n_[index_i];
 
 				Vecd force = Vecd::Zero();
 				for (size_t k = 0; k < contact_configuration_.size(); ++k)
 				{
 					StdLargeVec<Real> &rho_n_k = *(contact_rho_n_[k]);
 					StdLargeVec<Real> &p_k = *(contact_p_[k]);
-					StdLargeVec<Vecd> &vel_n_k = *(contact_vel_n_[k]);
 					StdLargeVec<Vecd> &acc_prior_k = *(contact_acc_prior_[k]);
-					Fluid *fluid_k = contact_fluids_[k];
-					RiemannSolverType &riemann_solver_k = riemann_solvers_[k];
 					Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 					for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 					{

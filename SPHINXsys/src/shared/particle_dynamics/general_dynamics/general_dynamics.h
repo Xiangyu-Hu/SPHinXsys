@@ -111,7 +111,6 @@ namespace SPH
 			  W0_(sph_body_.sph_adaptation_->getKernel()->W0(zero_vec)),
 			  smoothed_(*particles_->template getVariableByName<VariableType>(variable_name))
 		{	
-			Vecd zero = Vecd::Zero();
 			particles_->registerVariable(temp_, variable_name + "_temp");
 		}
 

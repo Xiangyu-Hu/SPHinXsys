@@ -57,9 +57,9 @@ namespace SPH
 		RelaxationOfAllDiffusionSpeciesInner(BaseInnerRelation &inner_relation)
 		: LocalDynamics(inner_relation.sph_body_),
 		  DiffusionReactionInnerData<BaseParticlesType, BaseMaterialType, NUM_SPECIES>(inner_relation),
-		  diffusion_reaction_material_(this->particles_->diffusion_reaction_material_),
 		  species_n_(this->particles_->species_n_),
-		  diffusion_dt_(this->particles_->diffusion_dt_)
+		  diffusion_dt_(this->particles_->diffusion_dt_),
+		  diffusion_reaction_material_(this->particles_->diffusion_reaction_material_)
 	{
 		species_diffusion_ = this->particles_->diffusion_reaction_material_.SpeciesDiffusion();
 	}

@@ -93,8 +93,8 @@ namespace SPH
 			: LocalDynamics(solid_body_contact_relation.sph_body_)
 			, ContactDynamicsData(solid_body_contact_relation)
 			, solid_(particles_->solid_)
-			, pos_(particles_->pos_)
 			, kernel_(solid_body_contact_relation.sph_body_.sph_adaptation_->getKernel())
+			, pos_(particles_->pos_)
 			, particle_spacing_(solid_body_contact_relation.sph_body_.sph_adaptation_->ReferenceSpacing())
 			, calibration_factor_(StdVec<Real>(contact_configuration_.size(), 0.0))
 			, contact_h_ratio_(StdVec<Real>(contact_configuration_.size(), 0.0))
@@ -122,10 +122,8 @@ namespace SPH
 			}
 
 			Real contact_max_;
-			Real contact_smoothing_length;
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
-				contact_smoothing_length = kernel_->SmoothingLength() / contact_h_ratio_[k];
 				for (int i = 0; i != 3; ++i)
 				{
 					if (Dimensions == 2)
@@ -156,8 +154,8 @@ namespace SPH
 			  solid_(particles_->solid_), mass_(particles_->mass_),
 			  self_contact_density_(*particles_->getVariableByName<Real>("SelfContactDensity")),
 			  Vol_(particles_->Vol_), acc_prior_(particles_->acc_prior_),
-			  contact_impedance_(solid_.ReferenceDensity() * sqrt(solid_.ContactStiffness())),
-			  vel_(particles_->vel_) {}
+			  vel_(particles_->vel_),
+			  contact_impedance_(solid_.ReferenceDensity() * sqrt(solid_.ContactStiffness())) {}
 		//=================================================================================================//
 		void SelfContactForce::interaction(size_t index_i, Real dt)
 		{
@@ -238,7 +236,6 @@ namespace SPH
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
-					size_t index_j = contact_neighborhood.j_[n];
 					Vecd e_ij = contact_neighborhood.e_ij_[n];
 
 					// force due to pressure

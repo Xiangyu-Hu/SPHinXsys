@@ -61,8 +61,6 @@ namespace SPH
     void BaseParticles::registerVariable(StdLargeVec<VariableType> &variable_addrs,
                          const std::string &variable_name, const InitializationFunction &initialization)
     {
-        constexpr int type_index = DataTypeIndex<VariableType>::value;
-
         registerVariable(variable_addrs, variable_name);
         for (size_t i = 0; i != real_particles_bound_; ++i)
         {

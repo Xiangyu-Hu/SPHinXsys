@@ -139,7 +139,6 @@ namespace SPH
 					size_t index_j = wall_neighborhood.j_[n];
 					Vecd &e_ij = wall_neighborhood.e_ij_[n];
 					Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
-					Real r_ij = wall_neighborhood.r_ij_[n];
 
 					Vecd vel_in_wall = -state_i.vel_;
 					Real p_in_wall = state_i.p_;
@@ -176,7 +175,6 @@ namespace SPH
 				{
 					size_t index_j = wall_neighborhood.j_[n];
 					Vecd &e_ij = wall_neighborhood.e_ij_[n];
-					Real r_ij = wall_neighborhood.r_ij_[n];
 					Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
 
 					Vecd vel_in_wall = -state_i.vel_;
