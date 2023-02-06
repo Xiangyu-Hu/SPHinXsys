@@ -141,7 +141,8 @@ namespace SPH
 					Real corrected_W_ij = std::max(contact_neighborhood.W_ij_[n] - offset_W_ij_[k], 0.0);
 					sigma += corrected_W_ij * contact_Vol_k[contact_neighborhood.j_[n]];
 				}
-				contact_density_i += 0.005 * sigma * calibration_factor_[k];
+				constexpr Real heuristic_limiter = 0.005;
+				contact_density_i += heuristic_limiter * sigma * calibration_factor_[k];
 			}
 			contact_density_[index_i] = contact_density_i;
 		}
