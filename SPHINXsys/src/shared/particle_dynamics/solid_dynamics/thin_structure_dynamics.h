@@ -130,7 +130,7 @@ namespace SPH
 			StdLargeVec<Real> &rho_, &thickness_;
 			StdLargeVec<Vecd> &pos_, &vel_, &acc_, &acc_prior_;
 			StdLargeVec<Vecd> &n0_, &pseudo_n_, &dpseudo_n_dt_, &dpseudo_n_d2t_, &rotation_,
-				&angular_vel_, dangular_vel_dt_;
+				&angular_vel_, &dangular_vel_dt_;
 			StdLargeVec<Matd> &B_, &F_, &dF_dt_, &F_bending_, &dF_bending_dt_;
 			StdLargeVec<Matd> &transformation_matrix_;
 		};
