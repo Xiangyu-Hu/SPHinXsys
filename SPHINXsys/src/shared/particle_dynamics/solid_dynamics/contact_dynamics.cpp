@@ -142,6 +142,8 @@ namespace SPH
 					sigma += corrected_W_ij * contact_Vol_k[contact_neighborhood.j_[n]];
 				}
 				constexpr Real heuristic_limiter = 0.005;
+				// With heuristic_limiter, the maximum contact pressure is  heuristic_limiter * K. 
+				// The contact pressure applied to fewer particles than on solids, yielding high acceleration locally, which is one source of instability. Thus, we add a heuristic_limiter  to maintain enough contact pressure to prevent penetration while also maintaining stability. 
 				contact_density_i += heuristic_limiter * sigma * calibration_factor_[k];
 			}
 			contact_density_[index_i] = contact_density_i;
