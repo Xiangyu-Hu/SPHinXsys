@@ -84,12 +84,11 @@ namespace SPH
 		{
 			particles_->registerVariable(contact_density_, "ContactDensity");
 
-			Real dp = solid_body_contact_relation.sph_body_.sph_adaptation_->ReferenceSpacing();
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				Real dp_k = solid_body_contact_relation.contact_bodies_[k]->sph_adaptation_->ReferenceSpacing();
-				Real average_spacing_k = 0.5 * dp + 0.5 * dp_k;
-				Real h_ratio_k = dp / average_spacing_k;
+				Real average_spacing_k = 0.5 * particle_spacing_ + 0.5 * dp_k;
+				Real h_ratio_k = particle_spacing_ / average_spacing_k;
 				offset_W_ij_.push_back(kernel_->W(h_ratio_k, average_spacing_k, ZeroVecd));
 
 				Real contact_max;
