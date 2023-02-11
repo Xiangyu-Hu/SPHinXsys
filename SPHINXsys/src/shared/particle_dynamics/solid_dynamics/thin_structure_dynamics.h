@@ -157,7 +157,7 @@ namespace SPH
 			Real rho0_, inv_rho0_;
 			Real smoothing_length_, E0_, G0_, nu_, hourglass_control_factor_;
 			bool hourglass_control_;
-			const Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(zero_vec);
+			const Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd);
 			const Real shear_correction_factor_ = 5.0 / 6.0;
 
 			const StdVec<Real> one_gaussian_point_ = { 0.0 };

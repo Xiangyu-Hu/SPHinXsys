@@ -145,7 +145,7 @@ namespace SPH
         Real Vol_newIndex = particles_->Vol_[index_rho] / 2.0;
         Real h_newIndex = pow(particles_->Vol_[index_rho] / Vol_newIndex, 1.0 / (Real)Dimensions);
 
-        Real W0 = particle_adaptation_.getKernel()->W0(h_newIndex, zero_vec);
+        Real W0 = particle_adaptation_.getKernel()->W0(h_newIndex, ZeroVecd);
         Real inv_sigma_0 = 1.0 / particle_adaptation_.ReferenceNumberDensity(h_newIndex);
         Real sigma_newIndex = W0;
 
