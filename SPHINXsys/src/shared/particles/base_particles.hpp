@@ -297,25 +297,25 @@ namespace SPH
         }
 
 
-        // // write matrices
-        // for (std::pair<std::string, size_t> &name_index : variables_to_write_[2])
-        // {
-        //     std::string variable_name = name_index.first;
-        //     StdLargeVec<Matd> &variable = *(std::get<2>(all_particle_data_)[name_index.second]);
-        //     output_stream << "    <DataArray Name=\"" << variable_name << " \" type= \"Float32 \"  NumberOfComponents=\"9\" Format=\"ascii\">\n";
-        //     output_stream << "    ";
-        //     for (size_t i = 0; i != total_real_particles; ++i)
-        //     {
-        //         Mat3d matrix_value = upgradeToMatrix3D(variable[i]);
-        //         for (int k = 0; k != 3; ++k)
-        //         {
-        //             Vec3d col_vector = matrix_value.col(k);
-        //             output_stream << std::fixed << std::setprecision(9) << col_vector[0] << " " << col_vector[1] << " " << col_vector[2] << " ";
-        //         }
-        //     }
-        //     output_stream << std::endl;
-        //     output_stream << "    </DataArray>\n";
-        // }
+        // write matrices
+        for (std::pair<std::string, size_t> &name_index : variables_to_write_[2])
+        {
+            std::string variable_name = name_index.first;
+            StdLargeVec<Matd> &variable = *(std::get<2>(all_particle_data_)[name_index.second]);
+            output_stream << "    <DataArray Name=\"" << variable_name << "\" type= \"Float32\"  NumberOfComponents=\"9\" Format=\"ascii\">\n";
+            output_stream << "    ";
+            for (size_t i = 0; i != total_real_particles; ++i)
+            {
+                Mat3d matrix_value = upgradeToMatrix3D(variable[i]);
+                for (int k = 0; k != 3; ++k)
+                {
+                    Vec3d col_vector = matrix_value.col(k);
+                    output_stream << std::fixed << std::setprecision(9) << col_vector[0] << " " << col_vector[1] << " " << col_vector[2] << " ";
+                }
+            }
+            output_stream << std::endl;
+            output_stream << "    </DataArray>\n";
+        }
 
     }
     //=================================================================================================//

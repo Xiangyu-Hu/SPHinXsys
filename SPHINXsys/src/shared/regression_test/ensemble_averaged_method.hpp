@@ -42,7 +42,7 @@ namespace SPH
 			for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
 				for (int run_index = 0; run_index != this->number_of_run_; ++run_index)
 				{
-					variance_new[snapshot_index][observation_index] += SMAX(variance[snapshot_index][observation_index], 
+					variance_new[snapshot_index][observation_index] = SMAX(variance[snapshot_index][observation_index], 
 						variance_new[snapshot_index][observation_index],
 						std::pow((result[run_index][snapshot_index][observation_index] - meanvalue_new[snapshot_index][observation_index]), 2), 
 						std::pow(meanvalue_new[snapshot_index][observation_index] * 1.0e-2, 2) );
