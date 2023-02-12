@@ -48,20 +48,14 @@ int main(int ac, char *av[])
 	ObserverBody fluid_observer(sph_system, "FluidObserver");
 	fluid_observer.generateParticles<FluidObserverParticleGenerator>();
 	//----------------------------------------------------------------------
-	//	Define body relation map.
-	//	The contact map gives the topological connections between the bodies.
-	//	Basically the the range of bodies to build neighbor particle lists.
-	//----------------------------------------------------------------------
-	InnerRelation insert_body_inner(insert_body);
-	ComplexRelation water_block_complex(water_block, RealBodyVector{&wall_boundary, &insert_body});
-	ContactRelation insert_body_contact(insert_body, {&water_block});
-	ContactRelation beam_observer_contact(beam_observer, {&insert_body});
-	ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
-	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------
 	if (sph_system.RunParticleRelaxation())
 	{
+		//----------------------------------------------------------------------
+		//	Define body relation map used for particle relaxation.
+		//----------------------------------------------------------------------
+		InnerRelation insert_body_inner(insert_body);
 		//----------------------------------------------------------------------
 		//	Methods used for particle relaxation.
 		//----------------------------------------------------------------------
@@ -98,6 +92,16 @@ int main(int ac, char *av[])
 		write_particle_reload_files.writeToFile(0);
 		return 0;
 	}
+	//----------------------------------------------------------------------
+	//	Define body relation map.
+	//	The contact map gives the topological connections between the bodies.
+	//	Basically the the range of bodies to build neighbor particle lists.
+	//----------------------------------------------------------------------
+	InnerRelation insert_body_inner(insert_body);
+	ComplexRelation water_block_complex(water_block, RealBodyVector{&wall_boundary, &insert_body});
+	ContactRelation insert_body_contact(insert_body, {&water_block});
+	ContactRelation beam_observer_contact(beam_observer, {&insert_body});
+	ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
