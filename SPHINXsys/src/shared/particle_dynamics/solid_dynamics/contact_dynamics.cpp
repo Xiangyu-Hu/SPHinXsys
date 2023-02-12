@@ -91,14 +91,16 @@ namespace SPH
 				Real h_ratio_k = particle_spacing_ / average_spacing_k;
 				offset_W_ij_.push_back(kernel_->W(h_ratio_k, average_spacing_k, ZeroVecd));
 
-				Real contact_max;
+				Real contact_max(0.0);
+				Real contact_temp(0.0);
 				for (int l = 0; l != 3; ++l)
 				{
 					Real temp = three_gaussian_points_[l] * average_spacing_k * 0.5 + average_spacing_k * 0.5;
-					contact_max = 2.0 * (kernel_->W(h_ratio_k, temp, ZeroVecd) - offset_W_ij_[l]) *
-								  average_spacing_k * 0.5 * three_gaussian_weights_[l];
+					contact_temp = 2.0 * (kernel_->W(h_ratio_k, temp, ZeroVecd) - offset_W_ij_[l]) *
+						average_spacing_k * 0.5 * three_gaussian_weights_[l];
+					contact_max += contact_temp;
 					if (Dimensions == 3)
-						contact_max *= Pi * temp;
+						contact_max += contact_temp * Pi * temp;
 				}
 				/** a calibration factor to avoid particle penetration into shell structure */
 				calibration_factor_.push_back(solid_.ReferenceDensity() / (contact_max + Eps));
@@ -122,8 +124,8 @@ namespace SPH
 					Real corrected_W_ij = std::max(contact_neighborhood.W_ij_[n] - offset_W_ij_[k], 0.0);
 					sigma += corrected_W_ij * contact_Vol_k[contact_neighborhood.j_[n]];
 				}
-				constexpr Real heuristic_limiter = 0.005;
-				// With heuristic_limiter, the maximum contact pressure is  heuristic_limiter * K.
+				constexpr Real heuristic_limiter = 0.4;
+				// With heuristic_limiter, the maximum contact pressure is heuristic_limiter * K (Bulk modulus).
 				// The contact pressure applied to fewer particles than on solids, yielding high acceleration locally,
 				// which is one source of instability. Thus, we add a heuristic_limiter
 				// to maintain enough contact pressure to prevent penetration while also maintaining stability.
