@@ -156,25 +156,28 @@ namespace SPH
 		output_file << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " "
 					<< index_i << " ";
 
+		constexpr int type_index_int = DataTypeIndex<int>::value;
 		for (std::pair<std::string, size_t> &name_index : variables_to_write_[3])
 		{
 			std::string variable_name = name_index.first;
-			StdLargeVec<int> &variable = *(std::get<3>(all_particle_data_)[name_index.second]);
+			StdLargeVec<int> &variable = *(std::get<type_index_int>(all_particle_data_)[name_index.second]);
 			output_file << variable[index_i] << " ";
 		};
 
+		constexpr int type_index_Vecd = DataTypeIndex<Vecd>::value;
 		for (std::pair<std::string, size_t> &name_index : variables_to_write_[1])
 		{
 			std::string variable_name = name_index.first;
-			StdLargeVec<Vecd> &variable = *(std::get<1>(all_particle_data_)[name_index.second]);
+			StdLargeVec<Vecd> &variable = *(std::get<type_index_Vecd>(all_particle_data_)[name_index.second]);
 			Vec3d vector_value = upgradeToVector3D(variable[index_i]);
 			output_file << vector_value[0] << " " << vector_value[1] << " " << vector_value[2] << " ";
 		};
 
+		constexpr int type_index_Real = DataTypeIndex<Real>::value;
 		for (std::pair<std::string, size_t> &name_index : variables_to_write_[0])
 		{
 			std::string variable_name = name_index.first;
-			StdLargeVec<Real> &variable = *(std::get<0>(all_particle_data_)[name_index.second]);
+			StdLargeVec<Real> &variable = *(std::get<type_index_Real>(all_particle_data_)[name_index.second]);
 			output_file << variable[index_i] << " ";
 		};
 	}
@@ -242,10 +245,11 @@ namespace SPH
 		output_file << "    </DataArray>\n";
 
 		// write matrices
+		constexpr int type_index_Matd = DataTypeIndex<Matd>::value;
 		for (std::pair<std::string, size_t> &name_index : variables_to_write_[2])
 		{
 			std::string variable_name = name_index.first;
-			StdLargeVec<Matd> &variable = *(std::get<2>(all_particle_data_)[name_index.second]);
+			StdLargeVec<Matd> &variable = *(std::get<type_index_Matd>(all_particle_data_)[name_index.second]);
 			output_file << "    <DataArray Name=\"" << variable_name << "\" type=\"Float32\"  NumberOfComponents=\"9\" Format=\"ascii\">\n";
 			output_file << "    ";
 			for (size_t i = 0; i != total_surface_particles; ++i)
@@ -263,10 +267,11 @@ namespace SPH
 		}
 
 		// write vectors
+		constexpr int type_index_Vecd = DataTypeIndex<Vecd>::value;
 		for (std::pair<std::string, size_t> &name_index : variables_to_write_[1])
 		{
 			std::string variable_name = name_index.first;
-			StdLargeVec<Vecd> &variable = *(std::get<1>(all_particle_data_)[name_index.second]);
+			StdLargeVec<Vecd> &variable = *(std::get<type_index_Vecd>(all_particle_data_)[name_index.second]);
 			output_file << "    <DataArray Name=\"" << variable_name << "\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
 			output_file << "    ";
 			for (size_t i = 0; i != total_surface_particles; ++i)
@@ -280,10 +285,11 @@ namespace SPH
 		}
 
 		// write scalars
+		constexpr int type_index_Real = DataTypeIndex<Real>::value;
 		for (std::pair<std::string, size_t> &name_index : variables_to_write_[0])
 		{
 			std::string variable_name = name_index.first;
-			StdLargeVec<Real> &variable = *(std::get<0>(all_particle_data_)[name_index.second]);
+			StdLargeVec<Real> &variable = *(std::get<type_index_Real>(all_particle_data_)[name_index.second]);
 			output_file << "    <DataArray Name=\"" << variable_name << "\" type=\"Float32\" Format=\"ascii\">\n";
 			output_file << "    ";
 			for (size_t i = 0; i != total_surface_particles; ++i)
@@ -296,10 +302,11 @@ namespace SPH
 		}
 
 		// write integers
+		constexpr int type_index_int = DataTypeIndex<int>::value;
 		for (std::pair<std::string, size_t> &name_index : variables_to_write_[3])
 		{
 			std::string variable_name = name_index.first;
-			StdLargeVec<int> &variable = *(std::get<3>(all_particle_data_)[name_index.second]);
+			StdLargeVec<int> &variable = *(std::get<type_index_int>(all_particle_data_)[name_index.second]);
 			output_file << "    <DataArray Name=\"" << variable_name << "\" type=\"Int32\" Format=\"ascii\">\n";
 			output_file << "    ";
 			for (size_t i = 0; i != total_surface_particles; ++i)
