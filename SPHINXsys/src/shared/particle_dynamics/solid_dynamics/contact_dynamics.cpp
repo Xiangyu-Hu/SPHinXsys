@@ -98,9 +98,7 @@ namespace SPH
 					Real temp = three_gaussian_points_[l] * average_spacing_k * 0.5 + average_spacing_k * 0.5;
 					contact_temp = 2.0 * (kernel_->W(h_ratio_k, temp, ZeroVecd) - offset_W_ij_[l]) *
 						average_spacing_k * 0.5 * three_gaussian_weights_[l];
-					contact_max += contact_temp;
-					if (Dimensions == 3)
-						contact_max += contact_temp * Pi * temp;
+					contact_max += Dimensions == 2 ? contact_temp : contact_temp * Pi * temp;
 				}
 				/** a calibration factor to avoid particle penetration into shell structure */
 				calibration_factor_.push_back(solid_.ReferenceDensity() / (contact_max + Eps));
