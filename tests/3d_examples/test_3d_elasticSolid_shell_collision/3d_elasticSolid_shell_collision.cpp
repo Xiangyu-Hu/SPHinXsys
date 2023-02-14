@@ -234,7 +234,7 @@ int main(int ac, char *av[])
 
 	if (sph_system.generate_regression_data_)
 	{
-		write_ball_center_displacement.generateDataBase(0.05);
+		write_ball_center_displacement.generateDataBase(0.005);
 	}
 	else
 	{
