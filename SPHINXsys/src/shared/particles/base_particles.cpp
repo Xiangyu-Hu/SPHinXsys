@@ -157,7 +157,7 @@ namespace SPH
 					<< index_i << " ";
 
 		constexpr int type_index_int = DataTypeIndex<int>::value;
-		for (std::pair<std::string, size_t> &name_index : variables_to_write_[3])
+		for (std::pair<std::string, size_t> &name_index : variables_to_write_[type_index_int])
 		{
 			std::string variable_name = name_index.first;
 			StdLargeVec<int> &variable = *(std::get<type_index_int>(all_particle_data_)[name_index.second]);
@@ -165,7 +165,7 @@ namespace SPH
 		};
 
 		constexpr int type_index_Vecd = DataTypeIndex<Vecd>::value;
-		for (std::pair<std::string, size_t> &name_index : variables_to_write_[1])
+		for (std::pair<std::string, size_t> &name_index : variables_to_write_[type_index_Vecd])
 		{
 			std::string variable_name = name_index.first;
 			StdLargeVec<Vecd> &variable = *(std::get<type_index_Vecd>(all_particle_data_)[name_index.second]);
@@ -174,7 +174,7 @@ namespace SPH
 		};
 
 		constexpr int type_index_Real = DataTypeIndex<Real>::value;
-		for (std::pair<std::string, size_t> &name_index : variables_to_write_[0])
+		for (std::pair<std::string, size_t> &name_index : variables_to_write_[type_index_Real])
 		{
 			std::string variable_name = name_index.first;
 			StdLargeVec<Real> &variable = *(std::get<type_index_Real>(all_particle_data_)[name_index.second]);
@@ -246,7 +246,7 @@ namespace SPH
 
 		// write matrices
 		constexpr int type_index_Matd = DataTypeIndex<Matd>::value;
-		for (std::pair<std::string, size_t> &name_index : variables_to_write_[2])
+		for (std::pair<std::string, size_t> &name_index : variables_to_write_[type_index_Matd])
 		{
 			std::string variable_name = name_index.first;
 			StdLargeVec<Matd> &variable = *(std::get<type_index_Matd>(all_particle_data_)[name_index.second]);
@@ -268,7 +268,7 @@ namespace SPH
 
 		// write vectors
 		constexpr int type_index_Vecd = DataTypeIndex<Vecd>::value;
-		for (std::pair<std::string, size_t> &name_index : variables_to_write_[1])
+		for (std::pair<std::string, size_t> &name_index : variables_to_write_[type_index_Vecd])
 		{
 			std::string variable_name = name_index.first;
 			StdLargeVec<Vecd> &variable = *(std::get<type_index_Vecd>(all_particle_data_)[name_index.second]);
@@ -286,7 +286,7 @@ namespace SPH
 
 		// write scalars
 		constexpr int type_index_Real = DataTypeIndex<Real>::value;
-		for (std::pair<std::string, size_t> &name_index : variables_to_write_[0])
+		for (std::pair<std::string, size_t> &name_index : variables_to_write_[type_index_Real])
 		{
 			std::string variable_name = name_index.first;
 			StdLargeVec<Real> &variable = *(std::get<type_index_Real>(all_particle_data_)[name_index.second]);
@@ -303,7 +303,7 @@ namespace SPH
 
 		// write integers
 		constexpr int type_index_int = DataTypeIndex<int>::value;
-		for (std::pair<std::string, size_t> &name_index : variables_to_write_[3])
+		for (std::pair<std::string, size_t> &name_index : variables_to_write_[type_index_int])
 		{
 			std::string variable_name = name_index.first;
 			StdLargeVec<int> &variable = *(std::get<type_index_int>(all_particle_data_)[name_index.second]);

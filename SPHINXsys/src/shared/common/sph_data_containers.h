@@ -49,7 +49,7 @@ namespace SPH
 	using SolidBodyVector = StdVec<SolidBody *>;
 	using RealBodyVector = StdVec<RealBody *>;
 	using BodyPartVector = StdVec<BodyPart *>;
-	
+
 	using IndexVector = StdVec<size_t>;
 	using ConcurrentIndexVector = ConcurrentVec<size_t>;
 
@@ -66,11 +66,12 @@ namespace SPH
 
 	/** Generalized particle data type */
 	typedef DataContainerAddressAssemble<StdLargeVec> ParticleData;
+	constexpr size_t ParticleDataSize = std::tuple_size<ParticleData>::value;
 	/** Generalized particle variable to index map */
-	typedef std::array<std::map<std::string, size_t>, 4> ParticleDataMap;
+	typedef std::array<std::map<std::string, size_t>, ParticleDataSize> ParticleDataMap;
 	/** Generalized particle variable list */
-	typedef std::array<StdVec<std::pair<std::string, size_t>>, 4> ParticleVariableList;
-		
+	typedef std::array<StdVec<std::pair<std::string, size_t>>, ParticleDataSize> ParticleVariableList;
+
 	/** operation by looping or going through a particle data map */
 	template <typename VariableType>
 	struct loopParticleDataMap
@@ -105,6 +106,6 @@ namespace SPH
 				variable_operation(variable_name, variable);
 			}
 		};
-	};	
+	};
 }
 #endif // SPH_DATA_CONTAINERS_H
