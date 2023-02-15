@@ -92,12 +92,11 @@ namespace SPH
 				offset_W_ij_.push_back(kernel_->W(h_ratio_k, average_spacing_k, ZeroVecd));
 
 				Real contact_max(0.0);
-				Real contact_temp(0.0);
 				for (int l = 0; l != 3; ++l)
 				{
 					Real temp = three_gaussian_points_[l] * average_spacing_k * 0.5 + average_spacing_k * 0.5;
-					contact_temp = 2.0 * (kernel_->W(h_ratio_k, temp, ZeroVecd) - offset_W_ij_[l]) *
-						average_spacing_k * 0.5 * three_gaussian_weights_[l];
+					Real contact_temp = 2.0 * (kernel_->W(h_ratio_k, temp, ZeroVecd) - offset_W_ij_[l]) *
+										average_spacing_k * 0.5 * three_gaussian_weights_[l];
 					contact_max += Dimensions == 2 ? contact_temp : contact_temp * Pi * temp;
 				}
 				/** a calibration factor to avoid particle penetration into shell structure */
