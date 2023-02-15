@@ -24,7 +24,7 @@ namespace SPH
 		//=================================================================================================//
 		DensitySummationInner::DensitySummationInner(BaseInnerRelation &inner_relation)
 			: BaseDensitySummationInner(inner_relation),
-			  W0_(sph_body_.sph_adaptation_->getKernel()->W0( zero_vec )),
+			  W0_(sph_body_.sph_adaptation_->getKernel()->W0( ZeroVecd )),
 			  inv_sigma0_(1.0 / sph_body_.sph_adaptation_->ReferenceNumberDensity()) {}
 		//=================================================================================================//
 		void DensitySummationInner::interaction(size_t index_i, Real dt)
@@ -46,7 +46,7 @@ namespace SPH
 		//=================================================================================================//
 		void DensitySummationInnerAdaptive::interaction(size_t index_i, Real dt)
 		{
-			Real sigma_i = mass_[index_i] * kernel_.W0( h_ratio_[index_i], zero_vec );
+			Real sigma_i = mass_[index_i] * kernel_.W0( h_ratio_[index_i], ZeroVecd );
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 				sigma_i += inner_neighborhood.W_ij_[n] * mass_[inner_neighborhood.j_[n]];

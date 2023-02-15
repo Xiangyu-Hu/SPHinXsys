@@ -94,9 +94,7 @@ namespace SPH
 
 			Real particle_spacing_;
 			StdVec<Real> calibration_factor_;
-			StdVec<Real> contact_h_ratio_;
 			StdVec<Real> offset_W_ij_;
-			StdVec<Real> contact_particle_spacing_;
 			StdLargeVec<Real> contact_density_;
 			StdVec<StdLargeVec<Real> *> contact_Vol_;
 
