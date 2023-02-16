@@ -59,12 +59,12 @@ namespace SPH
     //=================================================================================================//
     template <typename VariableType, class InitializationFunction>
     void BaseParticles::registerVariable(StdLargeVec<VariableType> &variable_addrs,
-                         const std::string &variable_name, const InitializationFunction &initialization)
+                                         const std::string &variable_name, const InitializationFunction &initialization)
     {
         registerVariable(variable_addrs, variable_name);
         for (size_t i = 0; i != real_particles_bound_; ++i)
         {
-            variable_addrs[i] = initialization(i);  //Here, lambda function is applied for initialization. 
+            variable_addrs[i] = initialization(i); // Here, lambda function is applied for initialization.
         }
     }
     //=================================================================================================//
@@ -251,10 +251,11 @@ namespace SPH
         }
 
         // write integers
-        for (std::pair<std::string, size_t> &name_index : variables_to_write_[3])
+        constexpr int type_index_int = DataTypeIndex<int>::value;
+        for (std::pair<std::string, size_t> &name_index : variables_to_write_[type_index_int])
         {
             std::string variable_name = name_index.first;
-            StdLargeVec<int> &variable = *(std::get<3>(all_particle_data_)[name_index.second]);
+            StdLargeVec<int> &variable = *(std::get<type_index_int>(all_particle_data_)[name_index.second]);
             output_stream << "    <DataArray Name=\"" << variable_name << "\" type=\"Int32\" Format=\"ascii\">\n";
             output_stream << "    ";
             for (size_t i = 0; i != total_real_particles; ++i)
@@ -266,10 +267,11 @@ namespace SPH
         }
 
         // write scalars
-        for (std::pair<std::string, size_t> &name_index : variables_to_write_[0])
+        constexpr int type_index_Real = DataTypeIndex<Real>::value;
+        for (std::pair<std::string, size_t> &name_index : variables_to_write_[type_index_Real])
         {
             std::string variable_name = name_index.first;
-            StdLargeVec<Real> &variable = *(std::get<0>(all_particle_data_)[name_index.second]);
+            StdLargeVec<Real> &variable = *(std::get<type_index_Real>(all_particle_data_)[name_index.second]);
             output_stream << "    <DataArray Name=\"" << variable_name << "\" type=\"Float32\" Format=\"ascii\">\n";
             output_stream << "    ";
             for (size_t i = 0; i != total_real_particles; ++i)
@@ -281,10 +283,11 @@ namespace SPH
         }
 
         // write vectors
-        for (std::pair<std::string, size_t> &name_index : variables_to_write_[1])
+        constexpr int type_index_Vecd = DataTypeIndex<Vecd>::value;
+        for (std::pair<std::string, size_t> &name_index : variables_to_write_[type_index_Vecd])
         {
             std::string variable_name = name_index.first;
-            StdLargeVec<Vecd> &variable = *(std::get<1>(all_particle_data_)[name_index.second]);
+            StdLargeVec<Vecd> &variable = *(std::get<type_index_Vecd>(all_particle_data_)[name_index.second]);
             output_stream << "    <DataArray Name=\"" << variable_name << "\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
             output_stream << "    ";
             for (size_t i = 0; i != total_real_particles; ++i)
@@ -296,12 +299,12 @@ namespace SPH
             output_stream << "    </DataArray>\n";
         }
 
-
         // write matrices
-        for (std::pair<std::string, size_t> &name_index : variables_to_write_[2])
+        constexpr int type_index_Matd = DataTypeIndex<Matd>::value;
+        for (std::pair<std::string, size_t> &name_index : variables_to_write_[type_index_Matd])
         {
             std::string variable_name = name_index.first;
-            StdLargeVec<Matd> &variable = *(std::get<2>(all_particle_data_)[name_index.second]);
+            StdLargeVec<Matd> &variable = *(std::get<type_index_Matd>(all_particle_data_)[name_index.second]);
             output_stream << "    <DataArray Name=\"" << variable_name << "\" type= \"Float32\"  NumberOfComponents=\"9\" Format=\"ascii\">\n";
             output_stream << "    ";
             for (size_t i = 0; i != total_real_particles; ++i)
@@ -316,7 +319,6 @@ namespace SPH
             output_stream << std::endl;
             output_stream << "    </DataArray>\n";
         }
-
     }
     //=================================================================================================//
     template <typename VariableType>
