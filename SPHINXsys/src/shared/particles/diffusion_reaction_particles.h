@@ -84,12 +84,10 @@ namespace SPH
 				this->template addVariableToWrite<Real>(itr->first);
 			}
 
+			constexpr int type_index = DataTypeIndex<Real>::value;
 			for (size_t m = 0; m < number_of_diffusion_species_; ++m)
 			{
-				constexpr int type_index = DataTypeIndex<Real>::value;
-				/** 
-				 * register reactive change rate terms without giving variable name
-				 */
+				// register reactive change rate terms without giving variable name
 				std::get<type_index>(this->all_particle_data_).push_back(&diffusion_dt_[m]);
 				diffusion_dt_[m].resize(this->real_particles_bound_, Real(0));
 			}

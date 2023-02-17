@@ -134,9 +134,9 @@ namespace SPH
 			Real J = F_[index_i].determinant();
 			Real one_over_J = 1.0 / J;
 			rho_[index_i] = rho0_ * one_over_J;
-			Real J_to_minus_2_over_dimension = pow(one_over_J, 2.0 * one_over_dimensions_);
+			Real J_to_minus_2_over_dimension = pow(one_over_J, 2.0 * OneOverDimensions);
 			Matd normalized_b = (F_[index_i] * F_[index_i].transpose()) * J_to_minus_2_over_dimension;
-			Matd deviatoric_b = normalized_b - Matd::Identity() * normalized_b.trace() * one_over_dimensions_;
+			Matd deviatoric_b = normalized_b - Matd::Identity() * normalized_b.trace() * OneOverDimensions;
 			Matd inverse_F_T = F_[index_i].inverse().transpose();
 			// obtain the first Piola-Kirchhoff stress from the Kirchhoff stress
 			// it seems using reproducing correction here increases convergence rate
@@ -161,12 +161,12 @@ namespace SPH
 			Real J = F_[index_i].determinant();
 			Real one_over_J = 1.0 / J;
 			rho_[index_i] = rho0_ * one_over_J;
-			J_to_minus_2_over_dimension_[index_i] = pow(one_over_J * one_over_J, one_over_dimensions_);
+			J_to_minus_2_over_dimension_[index_i] = pow(one_over_J * one_over_J, OneOverDimensions);
 			
 			inverse_F_T_[index_i] = F_[index_i].inverse().transpose();
 			stress_on_particle_[index_i] = inverse_F_T_[index_i] * 
 				(elastic_solid_.VolumetricKirchhoff(J) - correction_factor_ * elastic_solid_.ShearModulus() *
-				 J_to_minus_2_over_dimension_[index_i] * (F_[index_i] * F_[index_i].transpose()).trace() * one_over_dimensions_) 
+				 J_to_minus_2_over_dimension_[index_i] * (F_[index_i] * F_[index_i].transpose()).trace() * OneOverDimensions) 
 				+ elastic_solid_.NumericalDampingLeftCauchy(F_[index_i], dF_dt_[index_i], smoothing_length_, index_i) * inverse_F_T_[index_i];
 		}
 		//=================================================================================================//

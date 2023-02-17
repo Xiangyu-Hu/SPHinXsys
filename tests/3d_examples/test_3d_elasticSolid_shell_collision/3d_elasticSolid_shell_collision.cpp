@@ -14,11 +14,13 @@ Real thickness = resolution_ref * 1.;				/**< shell thickness. */
 Real radius = 2.0;									/**< cylinder radius. */
 Real half_height = 1.0;								/** Height of the cylinder. */
 Real radius_mid_surface = radius + thickness / 2.0; /** Radius of the mid surface. */
+Vec3d ball_center(radius / 2.0, 0.0, 0.0);
 int particle_number_mid_surface = int(2.0 * radius_mid_surface * Pi * 215.0 / 360.0 / resolution_ref);
 int particle_number_height = 2 * int(half_height / resolution_ref);
 int BWD = 1; /** Width of the boundary layer measured by number of particles. */
 BoundingBox system_domain_bounds(Vec3d(-radius - thickness, -half_height - thickness, -radius - thickness),
 								 Vec3d(radius + thickness, half_height + thickness, radius + thickness));
+StdVec<Vecd> ball_observation_location = { ball_center };
 Real ball_radius = 0.5;
 Real gravity_g = 1.0;
 //----------------------------------------------------------------------
@@ -60,6 +62,7 @@ int main(int ac, char *av[])
 	//	Build up the environment of a SPHSystem with global controls.
 	//----------------------------------------------------------------------
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
+	//sph_system.generate_regression_data_ = true;
 	/** Tag for running particle relaxation for the initially body-fitted distribution */
 	sph_system.setRunParticleRelaxation(false);
 	/** Tag for starting with relaxed body-fitted particles distribution */
@@ -74,7 +77,7 @@ int main(int ac, char *av[])
 	shell.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	shell.generateParticles<CylinderParticleGenerator>();
 
-	SolidBody ball(sph_system, makeShared<GeometricShapeBall>(Vec3d(radius / 2.0, 0.0, 0.0), ball_radius, "BallBody"));
+	SolidBody ball(sph_system, makeShared<GeometricShapeBall>(ball_center, ball_radius, "BallBody"));
 	ball.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
 	if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
 	{
@@ -85,6 +88,9 @@ int main(int ac, char *av[])
 		ball.defineBodyLevelSetShape()->writeLevelSet(io_environment);
 		ball.generateParticles<ParticleGeneratorLattice>();
 	}
+
+	ObserverBody ball_observer(sph_system, "BallObserver");
+	ball_observer.generateParticles<ObserverParticleGenerator>(ball_observation_location);
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------
@@ -135,6 +141,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	InnerRelation ball_inner(ball);
 	SurfaceContactRelation ball_contact(ball, {&shell});
+	ContactRelation ball_observer_contact(ball_observer, { &ball });
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
@@ -155,6 +162,8 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
 	BodyStatesRecordingToVtp write_ball_state(io_environment, {ball});
+	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
+		write_ball_center_displacement("Position", io_environment, ball_observer_contact);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
@@ -209,6 +218,8 @@ int main(int ac, char *av[])
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
 			}
+
+			write_ball_center_displacement.writeToFile(ite);
 		}
 		tick_count t2 = tick_count::now();
 		write_ball_state.writeToFile(ite);
@@ -220,5 +231,14 @@ int main(int ac, char *av[])
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+
+	if (sph_system.generate_regression_data_)
+	{
+		write_ball_center_displacement.generateDataBase(0.005);
+	}
+	else
+	{
+		write_ball_center_displacement.newResultTest();
+	}
 	return 0;
 }

@@ -20,6 +20,81 @@ namespace SPH
 		father_element.insertNodeAfter(father_element.node_end(), SimTK::Xml::Element(child_name));
 	}
 	//=================================================================================================//
+	void XmlEngine::setAttributeToElement(const SimTK::Xml::element_iterator& ele_ite,
+		const std::string& attrib_name, const Real& value)
+	{
+		SimTK::Xml::Attribute attr_(attrib_name, SimTK::String(value));
+		ele_ite->setAttributeValue(attr_.getName(), attr_.getValue());
+	}
+	//=================================================================================================//
+	void XmlEngine::setAttributeToElement(const SimTK::Xml::element_iterator& ele_ite, 
+		const std::string& attrib_name, const int& value)
+	{
+		SimTK::Xml::Attribute attr_(attrib_name, SimTK::String(value));
+		ele_ite->setAttributeValue(attr_.getName(), attr_.getValue());
+	}
+	//=================================================================================================//
+	void XmlEngine::setAttributeToElement(const SimTK::Xml::element_iterator& ele_ite, 
+		const std::string& attrib_name, const Vec2d& value)
+	{
+		setAttributeToVectorElement<2>(ele_ite, attrib_name, value);
+	}
+	//=================================================================================================//
+	void XmlEngine::setAttributeToElement(const SimTK::Xml::element_iterator& ele_ite,
+		const std::string& attrib_name, const Vec3d& value)
+	{
+		setAttributeToVectorElement<3>(ele_ite, attrib_name, value);
+	}
+	void XmlEngine::setAttributeToElement(const SimTK::Xml::element_iterator& ele_ite, 
+		const std::string& attrib_name, const Mat2d& value)
+	{
+		setAttributeToMatrixElement<2>(ele_ite, attrib_name, value);
+	}
+	//=================================================================================================//
+	void XmlEngine::setAttributeToElement(const SimTK::Xml::element_iterator& ele_ite, 
+		const std::string& attrib_name, const Mat3d& value)
+	{
+		setAttributeToMatrixElement<3>(ele_ite, attrib_name, value);
+	}
+	//=================================================================================================//
+	void XmlEngine::getRequiredAttributeValue(SimTK::Xml::element_iterator& ele_ite_, 
+		const std::string& attrib_name, Real& value)
+	{
+		std::string value_in_string = ele_ite_->getRequiredAttributeValue(attrib_name);
+		value = SimTK::convertStringTo<Real>(value_in_string);
+	}
+	//=================================================================================================//
+	void XmlEngine::getRequiredAttributeValue(SimTK::Xml::element_iterator& ele_ite_, 
+		const std::string& attrib_name, int& value)
+	{
+		std::string value_in_string = ele_ite_->getRequiredAttributeValue(attrib_name);
+		value = SimTK::convertStringTo<int>(value_in_string);
+	}
+	//=================================================================================================//
+	void XmlEngine::getRequiredAttributeValue(SimTK::Xml::element_iterator& ele_ite_, 
+		const std::string& attrib_name, Vec2d& value)
+	{
+		getVectorAttributeValue<2>(ele_ite_, attrib_name, value);
+	}
+	//=================================================================================================//
+	void XmlEngine::getRequiredAttributeValue(SimTK::Xml::element_iterator& ele_ite_, 
+		const std::string& attrib_name, Vec3d& value)
+	{
+		getVectorAttributeValue<3>(ele_ite_, attrib_name, value);
+	}
+	//=================================================================================================//
+	void XmlEngine::getRequiredAttributeValue(SimTK::Xml::element_iterator& ele_ite_, 
+		const std::string& attrib_name, Mat2d& value)
+	{
+		getMatrixAttributeValue<2>(ele_ite_, attrib_name, value);
+	}
+	//=================================================================================================//
+	void XmlEngine::getRequiredAttributeValue(SimTK::Xml::element_iterator& ele_ite_, 
+		const std::string& attrib_name, Mat3d& value)
+	{
+		getMatrixAttributeValue<3>(ele_ite_, attrib_name, value);
+	}
+	//=================================================================================================//
 	void XmlEngine::writeToXmlFile(const std::string &filefullpath)
 	{
 		xmldoc_.writeToFile(filefullpath);

@@ -106,8 +106,8 @@ namespace SPH
 		Real J = F.determinant();
 		Matd B = (-2.0 * almansi_strain + Matd::Identity()).inverse();
 		Matd cauchy_stress = 0.5 * K0_ * (J - 1.0 / J) * Matd::Identity() +
-							 G0_ * pow(J, - 2.0 * one_over_dimensions_ - 1.0) *
-								 (B - one_over_dimensions_ * B.trace() * Matd::Identity());
+							 G0_ * pow(J, - 2.0 * OneOverDimensions - 1.0) *
+								 (B - OneOverDimensions * B.trace() * Matd::Identity());
 		return cauchy_stress;
 	}
 	//=================================================================================================//
