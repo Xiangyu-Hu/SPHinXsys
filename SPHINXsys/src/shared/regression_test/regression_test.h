@@ -36,7 +36,7 @@
 #include "ensemble_averaged_method.h"
 #include "ensemble_averaged_method.hpp"
 #include "dynamic_time_warping_method.h"
-#include "dyanmic_time_warping_method.hpp"
+#include "dynamic_time_warping_method.hpp"
 
 
 
