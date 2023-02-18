@@ -260,7 +260,7 @@ namespace SPH
 			{
 				/** Change to SimTK::Vector. */
 				SimTK::Vec3 rr, pos, vel, acc;
-				rr = EigenToSimTK(upgradeToVector3D(this->pos0_[index_i])) - initial_mobod_origin_location_;
+				rr = EigenToSimTK(upgradeToVec3d(this->pos0_[index_i])) - initial_mobod_origin_location_;
 				mobod_.findStationLocationVelocityAndAccelerationInGround(*simbody_state_, rr, pos, vel, acc);
 				/** this is how we calculate the particle position in after transform of MBbody.
 				 * const SimTK::Rotation&  R_GB = mobod_.getBodyRotation(simbody_state);
@@ -268,11 +268,11 @@ namespace SPH
 				 * const SimTK::Vec3 r = R_GB * rr; // re-express station vector p_BS in G (15 flops)
 				 * base_particle_data_i.pos_ = (p_GB + r);
 				 */
-				reduceToVecd(SimTKToEigen(pos), this->pos_[index_i]);
-				reduceToVecd(SimTKToEigen(vel), this->vel_[index_i]);
+				degradeToVecd(SimTKToEigen(pos), this->pos_[index_i]);
+				degradeToVecd(SimTKToEigen(vel), this->vel_[index_i]);
 
-				SimTK::Vec3 n = (mobod_.getBodyRotation(*simbody_state_) * EigenToSimTK(upgradeToVector3D(this->n0_[index_i])));
-				reduceToVecd(SimTKToEigen(n), this->n_[index_i]);
+				SimTK::Vec3 n = (mobod_.getBodyRotation(*simbody_state_) * EigenToSimTK(upgradeToVec3d(this->n0_[index_i])));
+				degradeToVecd(SimTKToEigen(n), this->n_[index_i]);
 			};
 
 		protected:
@@ -334,8 +334,8 @@ namespace SPH
 			SimTK::SpatialVec reduce(size_t index_i, Real dt = 0.0)
 			{
 				Vecd force = (acc_[index_i] + acc_prior_[index_i]) * mass_[index_i];
-				SimTK::Vec3 force_from_particle = EigenToSimTK(upgradeToVector3D(force));
-				SimTK::Vec3 displacement = EigenToSimTK(upgradeToVector3D(pos_[index_i])) - current_mobod_origin_location_;
+				SimTK::Vec3 force_from_particle = EigenToSimTK(upgradeToVec3d(force));
+				SimTK::Vec3 displacement = EigenToSimTK(upgradeToVec3d(pos_[index_i])) - current_mobod_origin_location_;
 				SimTK::Vec3 torque_from_particle = SimTK::cross(displacement, force_from_particle);
 
 				return SimTK::SpatialVec(torque_from_particle, force_from_particle);
