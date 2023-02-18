@@ -90,7 +90,7 @@ int main()
 	/** Constrain the holder. */
 	BodyRegionByParticle holder(myocardium_body, 
 		makeShared<TransformShape<GeometricShapeBox>>(Transformd(translation_stationary_plate), halfsize_stationary_plate, "Holder"));
-	SimpleDynamics<solid_dynamics::FixConstraint, BodyPartByParticle>	constraint_holder(holder);
+	SimpleDynamics<solid_dynamics::FixBodyPartConstraint>	constraint_holder(holder);
 	/** Damping with the solid body*/
 	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
 		muscle_damping(0.1, myocardium_body_inner, "Velocity", physical_viscosity);
@@ -129,9 +129,9 @@ int main()
 	integ.setAllowInterpolation(false);
 	integ.initialize(state);
 	/** Coupling between SimBody and SPH.*/
-	ReduceDynamics<solid_dynamics::TotalForceForSimBody, BodyPartByParticle>
+	ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody>
 		force_on_plate(plate_multibody, MBsystem, plateMBody, force_on_bodies, integ);
-	SimpleDynamics<solid_dynamics::ConstraintBySimBody, BodyPartByParticle>
+	SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody>
 		constraint_plate(plate_multibody, MBsystem, plateMBody, force_on_bodies, integ);
 	/**
 	 * From here the time stepping begins.

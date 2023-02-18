@@ -321,7 +321,7 @@ int main(int ac, char *av[])
 	/** Inflow boundary condition. */
 	BodyAlignedBoxByCell inflow_buffer(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(buffer_translation)), buffer_halfsize));
-	SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>, BodyPartByCell> parabolic_inflow(inflow_buffer);
+	SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
 
 	/**
 	 * Fluid structure interaction model.
@@ -396,9 +396,9 @@ int main(int ac, char *av[])
 	/**
 	 * Coupling between SimBody and SPH.
 	 */
-	ReduceDynamics<solid_dynamics::TotalForceForSimBody, BodyPartByParticle>
+	ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody>
 		force_on_tethered_spot(fish_head, MBsystem, tethered_spot, force_on_bodies, integ);
-	SimpleDynamics<solid_dynamics::ConstraintBySimBody, BodyPartByParticle>
+	SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody>
 		constraint_tethered_spot(fish_head, MBsystem, tethered_spot, force_on_bodies, integ);
 
 	BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);

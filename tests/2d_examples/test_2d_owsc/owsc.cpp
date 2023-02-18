@@ -66,13 +66,13 @@ int main()
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	/** Inflow boundary condition. */
 	BodyRegionByCell damping_buffer(water_block, makeShared<MultiPolygonShape>(createDampingBufferShape()));
-	SimpleDynamics<fluid_dynamics::DampingBoundaryCondition, BodyPartByCell> damping_wave(damping_buffer);
+	SimpleDynamics<fluid_dynamics::DampingBoundaryCondition> damping_wave(damping_buffer);
 	/** Fluid force on flap. */
 	InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(flap_contact);
 	InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid> fluid_force_on_flap(flap_contact, viscous_force_on_solid);
 	/** constrain region of the part of wall boundary. */
 	BodyRegionByParticle wave_maker(wall_boundary, makeShared<MultiPolygonShape>(createWaveMakerShape()));
-	SimpleDynamics<WaveMaking, BodyPartByParticle> wave_making(wave_maker);
+	SimpleDynamics<WaveMaking> wave_making(wave_maker);
 	//----------------------------------------------------------------------
 	//	Define the multi-body system
 	//----------------------------------------------------------------------
@@ -149,9 +149,9 @@ int main()
 	//----------------------------------------------------------------------
 	//	Coupling between SimBody and SPH
 	//----------------------------------------------------------------------
-	ReduceDynamics<solid_dynamics::TotalForceForSimBody, BodyPartByParticle>
+	ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody>
 		force_on_spot_flap(flap_multibody, MBsystem, pin_spot, force_on_bodies, integ);
-	SimpleDynamics<solid_dynamics::ConstraintBySimBody, BodyPartByParticle>
+	SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody>
 		constraint_spot_flap(flap_multibody, MBsystem, pin_spot, force_on_bodies, integ);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
@@ -164,15 +164,15 @@ int main()
 	
 	/** WaveProbes. */
 	BodyRegionByCell wave_probe_buffer_no_4(water_block, makeShared<MultiPolygonShape>(createWaveProbeShape4(), "WaveProbe_04"));
-	ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight, BodyPartByCell>>
+	ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight>>
 		wave_probe_4(io_environment, wave_probe_buffer_no_4);
 
 	BodyRegionByCell wave_probe_buffer_no_5(water_block, makeShared<MultiPolygonShape>(createWaveProbeShape5(), "WaveProbe_05"));
-	ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight, BodyPartByCell>>
+	ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight>>
 		wave_probe_5(io_environment, wave_probe_buffer_no_5);
 
 	BodyRegionByCell wave_probe_buffer_no_12(water_block, makeShared<MultiPolygonShape>(createWaveProbeShape12(), "WaveProbe_12"));
-	ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight, BodyPartByCell>>
+	ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight>>
 		wave_probe_12(io_environment, wave_probe_buffer_no_12);
 	
 	/** Pressure probe. */

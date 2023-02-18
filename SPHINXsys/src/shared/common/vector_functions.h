@@ -52,6 +52,11 @@ namespace SPH
 	Mat3d upgradeToMatrix3D(const Mat2d &input);
 	Mat3d upgradeToMatrix3D(const Mat3d &input);
 
+	void reduceToVecd(const Vec3d &input, Vec2d &output);
+	inline void reduceToVecd(const Vec3d &input, Vec3d &output) { output = input; };
+	void reduceToMatd(const Mat3d &input, Mat2d &output);
+	inline void reduceToMatd(const Mat3d &input, Mat3d &output) { output = input; };
+
 	Mat2d getInverse(const Mat2d &A);
 	Mat3d getInverse(const Mat3d &A);
 	Mat2d getAverageValue(const Mat2d &A, const Mat2d &B);

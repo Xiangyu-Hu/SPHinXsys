@@ -167,7 +167,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 	}();
 	constrained_edges.body_part_particles_ = constrained_edge_ids;
 
-	SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion, BodyPartByParticle> constrain_holder(constrained_edges);
+	SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> constrain_holder(constrained_edges);
 
 	DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
 		shell_velocity_damping(0.2, shell_body_inner, "Velocity", physical_viscosity);

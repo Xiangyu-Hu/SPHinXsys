@@ -66,7 +66,7 @@ namespace SPH
 		explicit RegressionTestEnsembleAveraged(ConstructorArgs &&...args) :
 			RegressionTestTimeAveraged<ObserveMethodType>(std::forward<ConstructorArgs>(args)...)
 		{
-			this->mean_variance_filefullpath_ = this->input_folder_path_ + "/" + this->dynamics_range_name_ 
+			this->mean_variance_filefullpath_ = this->input_folder_path_ + "/" + this->dynamics_identifier_name_ 
 				+ "_" + this->quantity_name_ + "_ensemble_averaged_mean_variance.xml";
 		};
 		virtual ~RegressionTestEnsembleAveraged() {};

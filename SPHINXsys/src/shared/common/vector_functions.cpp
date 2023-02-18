@@ -86,6 +86,19 @@ namespace SPH
 		return input;
 	}
 	//=================================================================================================//
+	void reduceToVecd(const Vec3d &input, Vec2d &output)
+	{
+		output[0] = input[0];
+		output[1] = input[1];
+	}
+	//=================================================================================================//
+	void reduceToMatd(const Mat3d &input, Mat2d &output)
+	{
+		for (int i = 0; i != 2; i++)
+			for (int j = 0; j != 2; j++)
+				output(i, j) = input(i, j);
+	}
+	//=================================================================================================//
 	Mat2d getInverse(const Mat2d &A)
 	{
 		Mat2d minv = Mat2d::Zero();

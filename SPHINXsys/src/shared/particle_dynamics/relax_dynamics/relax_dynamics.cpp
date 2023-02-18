@@ -111,7 +111,9 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ShapeSurfaceBounding::ShapeSurfaceBounding(NearShapeSurface &near_shape_surface)
-			: LocalDynamics(near_shape_surface.getSPHBody()), RelaxDataDelegateSimple(sph_body_), pos_(particles_->pos_), constrained_distance_(0.5 * sph_body_.sph_adaptation_->MinimumSpacing())
+			: BaseLocalDynamics<BodyPartByCell>(near_shape_surface),
+			  RelaxDataDelegateSimple(sph_body_), pos_(particles_->pos_),
+			  constrained_distance_(0.5 * sph_body_.sph_adaptation_->MinimumSpacing())
 		{
 			level_set_shape_ = &near_shape_surface.level_set_shape_;
 		}
@@ -227,7 +229,7 @@ namespace SPH
 		ShellMidSurfaceBounding::
 			ShellMidSurfaceBounding(NearShapeSurface &body_part, BaseInnerRelation &inner_relation,
 									Real thickness, Real level_set_refinement_ratio)
-			: LocalDynamics(body_part.getSPHBody()), RelaxDataDelegateInner(inner_relation),
+			: BaseLocalDynamics<BodyPartByCell>(body_part), RelaxDataDelegateInner(inner_relation),
 			  pos_(particles_->pos_), constrained_distance_(0.5 * sph_body_.sph_adaptation_->MinimumSpacing()),
 			  particle_spacing_ref_(sph_body_.sph_adaptation_->MinimumSpacing()),
 			  thickness_(thickness), level_set_refinement_ratio_(level_set_refinement_ratio),

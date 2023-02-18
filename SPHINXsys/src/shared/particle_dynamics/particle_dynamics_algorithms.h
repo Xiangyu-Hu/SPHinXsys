@@ -92,30 +92,26 @@ namespace SPH
 	 * @class SimpleDynamics
 	 * @brief Simple particle dynamics without considering particle interaction
 	 */
-	template <class LocalDynamicsType, class DynamicsRange = SPHBody>
+	template <class LocalDynamicsType>
 	class SimpleDynamics : public LocalDynamicsType, public BaseDynamics<void>
 	{
-		DynamicsRange &dynamics_range_;
-
 	public:
 		template <class DynamicsIdentifier, typename... Args>
 		SimpleDynamics(DynamicsIdentifier &identifier, Args &&...args)
 			: LocalDynamicsType(identifier, std::forward<Args>(args)...),
-			  BaseDynamics<void>(identifier.getSPHBody()),
-			  dynamics_range_(identifier.getDynamicsRange())
+			  BaseDynamics<void>(identifier.getSPHBody())
 		{
 			static_assert(!has_initialize<LocalDynamicsType>::value &&
 							  !has_interaction<LocalDynamicsType>::value,
 						  "LocalDynamicsType does not fulfill SimpleDynamics requirements");
 		};
 		virtual ~SimpleDynamics(){};
-		DynamicsRange &getDynamicsRange() { return dynamics_range_; };
 		/** The sequential function for executing the operations on particles. */
 		virtual void exec(Real dt = 0.0) override
 		{
 			this->setUpdated();
 			this->setupDynamics(dt);
-			particle_for(dynamics_range_.LoopRange(),
+			particle_for(this->identifier_.LoopRange(),
 						 [&](size_t i)
 						 { this->update(i, dt); });
 		};
@@ -124,7 +120,7 @@ namespace SPH
 		{
 			this->setUpdated();
 			this->setupDynamics(dt);
-			particle_parallel_for(dynamics_range_.LoopRange(),
+			particle_parallel_for(this->identifier_.LoopRange(),
 								  [&](size_t i)
 								  { this->update(i, dt); });
 		};
@@ -134,34 +130,29 @@ namespace SPH
 	 * @class ReduceDynamics
 	 * @brief Template class for particle-wise reduce operation, summation, max or min.
 	 */
-	template <class LocalDynamicsType, class DynamicsRange = SPHBody>
+	template <class LocalDynamicsType>
 	class ReduceDynamics : public LocalDynamicsType,
 						   public BaseDynamics<typename LocalDynamicsType::ReduceReturnType>
 
 	{
 		using ReturnType = typename LocalDynamicsType::ReduceReturnType;
 
-	protected:
-		DynamicsRange &dynamics_range_;
-
 	public:
 		template <class DynamicsIdentifier, typename... Args>
 		ReduceDynamics(DynamicsIdentifier &identifier, Args &&...args)
 			: LocalDynamicsType(identifier, std::forward<Args>(args)...),
-			  BaseDynamics<ReturnType>(identifier.getSPHBody()),
-			  dynamics_range_(identifier.getDynamicsRange()){};
+			  BaseDynamics<ReturnType>(identifier.getSPHBody()){};
 		virtual ~ReduceDynamics(){};
 
 		using ReduceReturnType = ReturnType;
 		std::string QuantityName() { return this->quantity_name_; };
-		std::string DynamicsRangeName() { return dynamics_range_.getName(); };
-		DynamicsRange &getDynamicsRange() { return dynamics_range_; };
+		std::string DynamicsIdentifierName() { return this->identifier_.getName(); };
 		/** The sequential function for executing the reduce operations on particles. */
 		virtual ReturnType exec(Real dt = 0.0) override
 		{
 			this->setupDynamics(dt);
 			ReturnType temp = particle_reduce(
-				dynamics_range_.LoopRange(), this->Reference(), this->getOperation(),
+				this->identifier_.LoopRange(), this->Reference(), this->getOperation(),
 				[&](size_t i) -> ReturnType
 				{ return this->reduce(i, dt); });
 			return this->outputResult(temp);
@@ -171,7 +162,7 @@ namespace SPH
 		{
 			this->setupDynamics(dt);
 			ReturnType temp = particle_parallel_reduce(
-				dynamics_range_.LoopRange(), this->Reference(), this->getOperation(),
+				this->identifier_.LoopRange(), this->Reference(), this->getOperation(),
 				[&](size_t i) -> ReturnType
 				{ return this->reduce(i, dt); });
 			return this->outputResult(temp);
@@ -182,8 +173,8 @@ namespace SPH
 	 * @class ReduceAverage
 	 * @brief Template class for computing particle-wise averages
 	 */
-	template <class LocalDynamicsType, class DynamicsRange = SPHBody>
-	class ReduceAverage : public ReduceDynamics<LocalDynamicsType, DynamicsRange>
+	template <class LocalDynamicsType>
+	class ReduceAverage : public ReduceDynamics<LocalDynamicsType>
 	{
 		using ReturnType = typename LocalDynamicsType::ReduceReturnType;
 		ReturnType outputAverage(ReturnType sum, size_t size_of_loop_range)
@@ -194,19 +185,19 @@ namespace SPH
 	public:
 		template <class DynamicsIdentifier, typename... Args>
 		ReduceAverage(DynamicsIdentifier &identifier, Args &&...args)
-			: ReduceDynamics<LocalDynamicsType, DynamicsRange>(identifier, std::forward<Args>(args)...){};
+			: ReduceDynamics<LocalDynamicsType>(identifier, std::forward<Args>(args)...){};
 		virtual ~ReduceAverage(){};
 		/** The sequential function for executing the average operations on particles. */
 		virtual ReturnType exec(Real dt = 0.0) override
 		{
-			ReturnType sum = ReduceDynamics<LocalDynamicsType, DynamicsRange>::exec(dt);
-			return outputAverage(sum, this->dynamics_range_.SizeOfLoopRange());
+			ReturnType sum = ReduceDynamics<LocalDynamicsType>::exec(dt);
+			return outputAverage(sum, this->identifier_.SizeOfLoopRange());
 		};
 		/** The parallel function for executing the average operations on particles. */
 		virtual ReturnType parallel_exec(Real dt = 0.0) override
 		{
-			ReturnType sum = ReduceDynamics<LocalDynamicsType, DynamicsRange>::parallel_exec(dt);
-			return outputAverage(sum, this->dynamics_range_.SizeOfLoopRange());
+			ReturnType sum = ReduceDynamics<LocalDynamicsType>::parallel_exec(dt);
+			return outputAverage(sum, this->identifier_.SizeOfLoopRange());
 		};
 	};
 
