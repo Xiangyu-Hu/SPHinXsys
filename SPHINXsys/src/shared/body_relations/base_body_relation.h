@@ -109,7 +109,6 @@ namespace SPH
 
 	public:
 		BaseParticles &base_particles_;
-		SPHBody &getDynamicsRange() { return sph_body_; };
 		SPHBody &getSPHBody() { return sph_body_; };
 		explicit SPHRelation(SPHBody &sph_body);
 		virtual ~SPHRelation(){};

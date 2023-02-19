@@ -215,7 +215,6 @@ namespace SPH
 			  BaseDynamics<void>(body_relation.getSPHBody()){};
 		virtual ~BaseInteractionDynamics(){};
 
-		SPHBody &getDynamicsRange() { return this->getSPHBody(); };
 		/** pre process such as update ghost state */
 		StdVec<BaseDynamics<void> *> pre_processes_;
 		/** post process such as impose constraint */
