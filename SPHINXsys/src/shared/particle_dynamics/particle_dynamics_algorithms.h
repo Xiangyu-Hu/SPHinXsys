@@ -298,12 +298,9 @@ namespace SPH
 	 * @class InteractionDynamics
 	 * @brief This is the class with a single step of particle interaction with other particles
 	 */
-	template <class LocalDynamicsType, class DynamicsRange = SPHBody>
+	template <class LocalDynamicsType>
 	class InteractionDynamics : public BaseInteractionDynamics<LocalDynamicsType>
 	{
-	protected:
-		DynamicsRange &dynamics_range_;
-
 	public:
 		template <class BodyRelationType, typename... Args>
 		InteractionDynamics(BodyRelationType &body_relation, Args &&...args)
@@ -320,7 +317,7 @@ namespace SPH
 			for (size_t k = 0; k < this->pre_processes_.size(); ++k)
 				this->pre_processes_[k]->exec(dt);
 
-			particle_for(dynamics_range_.LoopRange(),
+			particle_for(this->identifier_.LoopRange(),
 						 [&](size_t i)
 						 { this->interaction(i, dt); });
 
@@ -333,7 +330,7 @@ namespace SPH
 			for (size_t k = 0; k < this->pre_processes_.size(); ++k)
 				this->pre_processes_[k]->parallel_exec(dt);
 
-			particle_parallel_for(dynamics_range_.LoopRange(),
+			particle_parallel_for(this->identifier_.LoopRange(),
 								  [&](size_t i)
 								  { this->interaction(i, dt); });
 
@@ -344,16 +341,15 @@ namespace SPH
 	protected:
 		template <class BodyRelationType, typename... Args>
 		InteractionDynamics(bool mostDerived, BodyRelationType &body_relation, Args &&...args)
-			: BaseInteractionDynamics<LocalDynamicsType>(body_relation, std::forward<Args>(args)...),
-			  dynamics_range_(body_relation.getDynamicsRange()){};
+			: BaseInteractionDynamics<LocalDynamicsType>(body_relation, std::forward<Args>(args)...){};
 	};
 
 	/**
 	 * @class InteractionWithUpdate
 	 * @brief This class includes an interaction and a update steps
 	 */
-	template <class LocalDynamicsType, class DynamicsRange = SPHBody>
-	class InteractionWithUpdate : public InteractionDynamics<LocalDynamicsType, DynamicsRange>
+	template <class LocalDynamicsType>
+	class InteractionWithUpdate : public InteractionDynamics<LocalDynamicsType>
 	{
 	public:
 		template <class BodyRelationType, typename... Args>
@@ -367,16 +363,16 @@ namespace SPH
 		/** The sequential function for executing the average operations on particles and their neighbors. */
 		virtual void exec(Real dt = 0.0) override
 		{
-			InteractionDynamics<LocalDynamicsType, DynamicsRange>::exec(dt);
-			particle_for(this->dynamics_range_.LoopRange(),
+			InteractionDynamics<LocalDynamicsType>::exec(dt);
+			particle_for(this->identifier_.LoopRange(),
 						 [&](size_t i)
 						 { this->update(i, dt); });
 		};
 		/** The parallel function for executing the average operations on particles and their neighbors. */
 		virtual void parallel_exec(Real dt = 0.0) override
 		{
-			InteractionDynamics<LocalDynamicsType, DynamicsRange>::parallel_exec(dt);
-			particle_parallel_for(this->dynamics_range_.LoopRange(),
+			InteractionDynamics<LocalDynamicsType>::parallel_exec(dt);
+			particle_parallel_for(this->identifier_.LoopRange(),
 								  [&](size_t i)
 								  { this->update(i, dt); });
 		};
@@ -384,7 +380,7 @@ namespace SPH
 	protected:
 		template <class BodyRelationType, typename... Args>
 		InteractionWithUpdate(bool mostDerived, BodyRelationType &body_relation, Args &&...args)
-			: InteractionDynamics<LocalDynamicsType, DynamicsRange>(
+			: InteractionDynamics<LocalDynamicsType>(
 				  false, body_relation, std::forward<Args>(args)...) {}
 	};
 
@@ -394,13 +390,13 @@ namespace SPH
 	 * It is the most complex particle dynamics type,
 	 * and is typically for computing the main fluid and solid dynamics.
 	 */
-	template <class LocalDynamicsType, class DynamicsRange = SPHBody>
-	class Dynamics1Level : public InteractionWithUpdate<LocalDynamicsType, DynamicsRange>
+	template <class LocalDynamicsType>
+	class Dynamics1Level : public InteractionWithUpdate<LocalDynamicsType>
 	{
 	public:
 		template <class BodyRelationType, typename... Args>
 		Dynamics1Level(BodyRelationType &body_relation, Args &&...args)
-			: InteractionWithUpdate<LocalDynamicsType, DynamicsRange>(
+			: InteractionWithUpdate<LocalDynamicsType>(
 				  false, body_relation, std::forward<Args>(args)...) {}
 		virtual ~Dynamics1Level(){};
 		/** The sequential function for executing the average operations on particles and their neighbors. */
@@ -409,13 +405,13 @@ namespace SPH
 			this->setUpdated();
 			this->setupDynamics(dt);
 
-			particle_for(this->dynamics_range_.LoopRange(),
+			particle_for(this->identifier_.LoopRange(),
 						 [&](size_t i)
 						 { this->initialization(i, dt); });
 
 			this->runInteractionStep(dt);
 
-			particle_for(this->dynamics_range_.LoopRange(),
+			particle_for(this->identifier_.LoopRange(),
 						 [&](size_t i)
 						 { this->update(i, dt); });
 		};
@@ -425,13 +421,13 @@ namespace SPH
 			this->setUpdated();
 			this->setupDynamics(dt);
 
-			particle_parallel_for(this->dynamics_range_.LoopRange(),
+			particle_parallel_for(this->identifier_.LoopRange(),
 								  [&](size_t i)
 								  { this->initialization(i, dt); });
 
 			this->parallel_runInteractionStep(dt);
 
-			particle_parallel_for(this->dynamics_range_.LoopRange(),
+			particle_parallel_for(this->identifier_.LoopRange(),
 								  [&](size_t i)
 								  { this->update(i, dt); });
 		};
