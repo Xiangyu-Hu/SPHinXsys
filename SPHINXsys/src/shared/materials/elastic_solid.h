@@ -252,7 +252,7 @@ namespace SPH
 						const Vecd &f0, const Vecd &s0, const Real (&a0)[4], const Real (&b0)[4])
 			: NeoHookeanSolid(rho0, this->getYoungsModulus(bulk_modulus, a0, b0), this->getPoissonRatio(bulk_modulus, a0, b0)),
 			  f0_(f0), s0_(s0), f0f0_(f0_ * f0_.transpose()), s0s0_(s0_ * s0_.transpose()),
-			  f0s0_(f0_ * s0_.transpose())
+			  f0s0_(f0_ * s0_.transpose() + s0_ * f0_.transpose())
 		{
 			material_type_name_ = "Muscle";
 			std::copy(a0, a0 + 4, a0_);
