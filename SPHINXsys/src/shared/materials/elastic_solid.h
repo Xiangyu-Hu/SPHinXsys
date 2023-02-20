@@ -25,7 +25,7 @@
  * @brief 	These are classes for define properties of elastic solid materials.
  *			These classes are based on isotropic linear elastic solid.
  * 			Several more complex materials, including neo-Hookean, FENE neo-Hookean
- *			and anisotropic muscle, are derived from the basic elastic solid class. 
+ *			and anisotropic muscle, are derived from the basic elastic solid class.
  * @author	Chi ZHang and Xiangyu Hu
  */
 
@@ -38,9 +38,9 @@
 namespace SPH
 {
 	/**
-	* @class ElasticSolid
-	* @brief Abstract class for elastic solid material. 
-	*/
+	 * @class ElasticSolid
+	 * @brief Abstract class for elastic solid material.
+	 */
 	class ElasticSolid : public Solid
 	{
 	protected:
@@ -55,8 +55,8 @@ namespace SPH
 		void setSoundSpeeds();
 
 	public:
-		explicit ElasticSolid(Real rho0): Solid(rho0), c0_(0.0), ct0_(0.0), cs0_(0.0),
-			E0_(0.0), G0_(0.0), K0_(0.0), nu_(0.0)
+		explicit ElasticSolid(Real rho0) : Solid(rho0), c0_(0.0), ct0_(0.0), cs0_(0.0),
+										   E0_(0.0), G0_(0.0), K0_(0.0), nu_(0.0)
 		{
 			material_type_name_ = "ElasticSolid";
 		};
@@ -93,10 +93,10 @@ namespace SPH
 	};
 
 	/**
-	* @class LinearElasticSolid
-	* @brief Isotropic linear elastic solid.
-	* 		 Note that only basic parameters are used to set ElasticSolid parameters 
-	*/
+	 * @class LinearElasticSolid
+	 * @brief Isotropic linear elastic solid.
+	 * 		 Note that only basic parameters are used to set ElasticSolid parameters
+	 */
 	class LinearElasticSolid : public ElasticSolid
 	{
 	public:
@@ -123,11 +123,11 @@ namespace SPH
 	};
 
 	/**
-	* @class SaintVenantKirchhoffSolid
-	* @brief Every thing same as linear elastic but assume 
-	* 		 finite deformation (geometry nonlinearity). 
-	* 		 It is the simplest hyper-elastic material model.
-	*/
+	 * @class SaintVenantKirchhoffSolid
+	 * @brief Every thing same as linear elastic but assume
+	 * 		 finite deformation (geometry nonlinearity).
+	 * 		 It is the simplest hyper-elastic material model.
+	 */
 	class SaintVenantKirchhoffSolid : public LinearElasticSolid
 	{
 	public:
@@ -143,9 +143,9 @@ namespace SPH
 	};
 
 	/**
-	* @class NeoHookeanSolid
-	* @brief Neo-Hookean solid, Compressible formulation!
-	*/
+	 * @class NeoHookeanSolid
+	 * @brief Neo-Hookean solid, Compressible formulation!
+	 */
 	class NeoHookeanSolid : public LinearElasticSolid
 	{
 	public:
@@ -166,10 +166,10 @@ namespace SPH
 	};
 
 	/**
-	* @class NeoHookeanSolidIncompressible
-	* @brief Neo-Hookean solid, Incompressible formulation!
-	* Currently only works with KirchhoffIntegration1stHalf, not with Integration1stHalf
-	*/
+	 * @class NeoHookeanSolidIncompressible
+	 * @brief Neo-Hookean solid, Incompressible formulation!
+	 * Currently only works with KirchhoffIntegration1stHalf, not with Integration1stHalf
+	 */
 	class NeoHookeanSolidIncompressible : public LinearElasticSolid
 	{
 	public:
@@ -178,8 +178,8 @@ namespace SPH
 		{
 			material_type_name_ = "NeoHookeanSolidIncompressible";
 		};
-		virtual ~NeoHookeanSolidIncompressible() {};
-	
+		virtual ~NeoHookeanSolidIncompressible(){};
+
 		/** second Piola-Kirchhoff stress related with green-lagrangian deformation tensor */
 		virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) override;
 		virtual Matd StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i) override;
@@ -188,20 +188,22 @@ namespace SPH
 	};
 
 	/**
-	* @class OrthotropicSolid
-	* @brief Orthotropic solid - generic definition with 3 orthogonal directions + 9 independent parameters, ONLY for 3D applications
-	* @param "a" --> 3 principal direction vectors
-	* @param "E" --> 3 principal Young's moduli
-	* @param "G" --> 3 principal shear moduli
-	* @param "poisson" --> 3 principal Poisson's ratios
-	*/
+	 * @class OrthotropicSolid
+	 * @brief Generic definition with 3 orthogonal directions + 9 independent parameters, 
+	 * ONLY for 3D applications
+	 * @param "a" --> 3 principal direction vectors
+	 * @param "E" --> 3 principal Young's moduli
+	 * @param "G" --> 3 principal shear moduli
+	 * @param "poisson" --> 3 principal Poisson's ratios
+	 */
 	class OrthotropicSolid : public LinearElasticSolid
 	{
 	public:
-		OrthotropicSolid(Real rho_0, std::array<Vecd, Dimensions> a, std::array<Real, Dimensions> E, std::array<Real, Dimensions> G, std::array<Real, Dimensions> poisson);
+		OrthotropicSolid(Real rho_0, std::array<Vecd, Dimensions> a, std::array<Real, Dimensions> E,
+						 std::array<Real, Dimensions> G, std::array<Real, Dimensions> poisson);
 
 		/** second Piola-Kirchhoff stress related with green-lagrangian deformation tensor */
-		virtual Matd StressPK2(Matd& deformation, size_t particle_index_i) override;
+		virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) override;
 		/** Volumetric Kirchhoff stress determinate */
 		virtual Real VolumetricKirchhoff(Real J) override;
 
@@ -222,9 +224,9 @@ namespace SPH
 	};
 
 	/**
-	* @class FeneNeoHookeanSolid
-	* @brief Neo-Hookean solid with finite extension
-	*/
+	 * @class FeneNeoHookeanSolid
+	 * @brief Neo-Hookean solid with finite extension
+	 */
 	class FeneNeoHookeanSolid : public LinearElasticSolid
 	{
 	protected:
@@ -235,24 +237,25 @@ namespace SPH
 		{
 			material_type_name_ = "FeneNeoHookeanSolid";
 		};
-		virtual ~FeneNeoHookeanSolid() {};
-		virtual Matd StressPK2(Matd& deformation, size_t particle_index_i) override;
+		virtual ~FeneNeoHookeanSolid(){};
+		virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) override;
 		/** Define the calculation of the stress matrix for postprocessing */
 		virtual std::string getRelevantStressMeasureName() override { return "Cauchy"; };
 	};
 
 	/**
-	* @class Muscle
-	* @brief Globally orthotropic muscle. 
-	*/
+	 * @class Muscle
+	 * @brief Globally orthotropic muscle.
+	 */
 	class Muscle : public NeoHookeanSolid
 	{
 	public:
 		explicit Muscle(Real rho0, Real bulk_modulus,
 						const Vecd &f0, const Vecd &s0, const Real (&a0)[4], const Real (&b0)[4])
-			: NeoHookeanSolid(rho0, this->getYoungsModulus(bulk_modulus, a0, b0), this->getPoissonRatio(bulk_modulus, a0, b0)),
+			: NeoHookeanSolid(rho0, this->getYoungsModulus(bulk_modulus, a0, b0),
+							  this->getPoissonRatio(bulk_modulus, a0, b0)),
 			  f0_(f0), s0_(s0), f0f0_(f0_ * f0_.transpose()), s0s0_(s0_ * s0_.transpose()),
-			  f0s0_(f0_ * s0_.transpose())
+			  f0s0_(f0_ * s0_.transpose() + s0_ * f0_.transpose())
 		{
 			material_type_name_ = "Muscle";
 			std::copy(a0, a0 + 4, a0_);
@@ -282,13 +285,13 @@ namespace SPH
 	};
 
 	/**
-	* @class LocallyOrthotropicMuscle
-	* @brief muscle model is a anisotropic material in which
-	* 		 there are local fiber direction and cross-fiber sheet direction.
-	* 		 the model here is from
-	* 		 Holzapfel and Ogden, 2009, Phil. Trans. R. Soc. 367:3445-3475
-	* 		 we consider a neo-Hookean model for the background isotropic contribution.
-	*/
+	 * @class LocallyOrthotropicMuscle
+	 * @brief muscle model is a anisotropic material in which
+	 * 		 there are local fiber direction and cross-fiber sheet direction.
+	 * 		 the model here is from
+	 * 		 Holzapfel and Ogden, 2009, Phil. Trans. R. Soc. 367:3445-3475
+	 * 		 we consider a neo-Hookean model for the background isotropic contribution.
+	 */
 	class LocallyOrthotropicMuscle : public Muscle
 	{
 	protected:
@@ -303,7 +306,7 @@ namespace SPH
 		StdLargeVec<Vecd> local_s0_; /**< local sheet direction. */
 
 		explicit LocallyOrthotropicMuscle(Real rho0, Real bulk_modulus,
-				const Vecd &f0, const Vecd &s0, const Real (&a0)[4], const Real (&b0)[4])
+										  const Vecd &f0, const Vecd &s0, const Real (&a0)[4], const Real (&b0)[4])
 			: Muscle(rho0, bulk_modulus, f0, s0, a0, b0)
 		{
 			material_type_name_ = "LocallyOrthotropicMuscle";
@@ -313,10 +316,10 @@ namespace SPH
 		virtual void assignBaseParticles(BaseParticles *base_particles) override;
 		virtual Matd MuscleFiberDirection(size_t particle_index_i) override { return local_f0f0_[particle_index_i]; };
 		/** Compute the stress through Constitutive relation. */
-		virtual Matd StressPK2(Matd& deformation, size_t particle_index_i) override;
+		virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) override;
 		virtual void readFromXmlForLocalParameters(const std::string &filefullpath) override;
 		/** Define the calculation of the stress matrix for postprocessing */
 		virtual std::string getRelevantStressMeasureName() override { return "Cauchy"; };
 	};
 }
-#endif //ELASTIC_SOLID_H
+#endif // ELASTIC_SOLID_H
