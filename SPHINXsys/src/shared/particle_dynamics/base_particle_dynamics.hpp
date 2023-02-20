@@ -40,7 +40,7 @@ namespace SPH
 	template <class ParticlesType, class ContactParticlesType, class BaseDataDelegateType>
 	DataDelegateContact<ParticlesType, ContactParticlesType, BaseDataDelegateType>::
 		DataDelegateContact(BaseContactRelation &body_contact_relation)
-		: BaseDataDelegateType(body_contact_relation.sph_body_)
+		: BaseDataDelegateType(body_contact_relation.getSPHBody())
 	{
 		RealBodyVector contact_sph_bodies = body_contact_relation.contact_bodies_;
 		for (size_t i = 0; i != contact_sph_bodies.size(); ++i)
@@ -55,7 +55,7 @@ namespace SPH
 	void DataDelegateContact<ParticlesType, ContactParticlesType, BaseDataDelegateType>::
 		addExtraContactRelation(SPHBody &this_body, BaseContactRelation &extra_contact_relation)
 	{
-		if (&this_body != &extra_contact_relation.sph_body_)
+		if (&this_body != &extra_contact_relation.getSPHBody())
 		{
 			std::cout << "\n Error: the two body_relations do not have the same source body!" << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;

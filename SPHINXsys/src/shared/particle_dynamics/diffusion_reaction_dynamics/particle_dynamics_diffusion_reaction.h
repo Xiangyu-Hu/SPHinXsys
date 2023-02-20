@@ -23,7 +23,7 @@
 /**
  * @file 	particle_dynamics_diffusion_reaction.h
  * @brief 	This is the particle dynamics applicable for all type bodies
- * 			TODO: there is an issue on applying corrected configuration for contact bodies.. 
+ * 			TODO: there is an issue on applying corrected configuration for contact bodies..
  * @author	Chi ZHang and Xiangyu Hu
  */
 
@@ -285,20 +285,18 @@ namespace SPH
 	 * @class DiffusionReactionSpeciesConstraint
 	 * @brief set boundary condition for diffusion problem
 	 */
-	template <class BaseParticlesType, class BaseMaterialType, int NUM_SPECIES = 1>
+	template <class DynamicsIdentifier, class BaseParticlesType, class BaseMaterialType, int NUM_SPECIES = 1>
 	class DiffusionReactionSpeciesConstraint
-		: public LocalDynamics,
+		: public BaseLocalDynamics<DynamicsIdentifier>,
 		  public DiffusionReactionSimpleData<BaseParticlesType, BaseMaterialType, NUM_SPECIES>
 	{
 	public:
-		DiffusionReactionSpeciesConstraint(SPHBody &sph_body, const std::string &species_name)
-			: LocalDynamics(sph_body),
-			  DiffusionReactionSimpleData<BaseParticlesType, BaseMaterialType, NUM_SPECIES>(sph_body),
+		DiffusionReactionSpeciesConstraint(DynamicsIdentifier &identifier, const std::string &species_name)
+			: BaseLocalDynamics<DynamicsIdentifier>(identifier),
+			  DiffusionReactionSimpleData<BaseParticlesType, BaseMaterialType, NUM_SPECIES>(identifier.getSPHBody()),
 			  diffusion_reaction_material_(this->particles_->diffusion_reaction_material_),
 			  phi_(diffusion_reaction_material_.SpeciesIndexMap()[species_name]),
 			  species_(this->particles_->species_n_[phi_]){};
-		DiffusionReactionSpeciesConstraint(BodyPartByParticle &body_part, const std::string &species_name)
-			: DiffusionReactionSpeciesConstraint(body_part.getSPHBody(), species_name){};
 		virtual ~DiffusionReactionSpeciesConstraint(){};
 
 	protected:
@@ -334,9 +332,9 @@ namespace SPH
 	 * @brief 	Computing the total averaged parameter on the whole diffusion body.
 	 * 			TODO: need a test using this method
 	 */
-	template <class BaseParticlesType, class BaseMaterialType, int NUM_SPECIES = 1>
+	template <class DynamicsIdentifier, class BaseParticlesType, class BaseMaterialType, int NUM_SPECIES = 1>
 	class DiffusionReactionSpeciesSummation
-		: public LocalDynamicsReduce<Real, ReduceSum<Real>>,
+		: public BaseLocalDynamicsReduce<Real, ReduceSum<Real>, DynamicsIdentifier>,
 		  public DiffusionReactionSimpleData<BaseParticlesType, BaseMaterialType, NUM_SPECIES>
 	{
 	protected:
@@ -345,17 +343,15 @@ namespace SPH
 		size_t phi_;
 
 	public:
-		DiffusionReactionSpeciesSummation(SPHBody &sph_body, const std::string &species_name)
-			: LocalDynamicsReduce<Real, ReduceSum<Real>>(sph_body, Real(0)),
-			  DiffusionReactionSimpleData<BaseParticlesType, BaseMaterialType, NUM_SPECIES>(sph_body),
+		DiffusionReactionSpeciesSummation(DynamicsIdentifier &identifier, const std::string &species_name)
+			: BaseLocalDynamicsReduce<Real, ReduceSum<Real>, DynamicsIdentifier>(identifier, Real(0)),
+			  DiffusionReactionSimpleData<BaseParticlesType, BaseMaterialType, NUM_SPECIES>(identifier.getSPHBody()),
 			  diffusion_reaction_material_(this->particles_->diffusion_reaction_material_),
 			  species_n_(this->particles_->species_n_),
 			  phi_(diffusion_reaction_material_.SpeciesIndexMap()[species_name])
 		{
-			quantity_name_ = "DiffusionReactionSpeciesAverage";
+			this->quantity_name_ = "DiffusionReactionSpeciesAverage";
 		};
-		DiffusionReactionSpeciesSummation(BodyPartByParticle &body_part, const std::string &species_name)
-			: DiffusionReactionSpeciesSummation(body_part.getSPHBody(), species_name){};
 		virtual ~DiffusionReactionSpeciesSummation(){};
 
 		Real reduce(size_t index_i, Real dt = 0.0)

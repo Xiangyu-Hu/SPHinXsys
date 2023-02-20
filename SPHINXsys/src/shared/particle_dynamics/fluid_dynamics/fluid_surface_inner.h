@@ -125,7 +125,7 @@ namespace SPH
 		 * @class FreeSurfaceHeight
 		 * @brief Probe the free surface profile for a fluid body part by reduced operation.
 		 */
-		class FreeSurfaceHeight : public LocalDynamicsReduce<Real, ReduceMax>,
+		class FreeSurfaceHeight : public BaseLocalDynamicsReduce<Real, ReduceMax, BodyPartByCell>,
 								  public FluidDataSimple
 		{
 		protected:
@@ -133,7 +133,7 @@ namespace SPH
 
 		public:
 			FreeSurfaceHeight(BodyPartByCell &body_part)
-				: LocalDynamicsReduce<Real, ReduceMax>(body_part.getSPHBody(), Real(MinRealNumber)),
+				: BaseLocalDynamicsReduce<Real, ReduceMax, BodyPartByCell>(body_part, Real(MinRealNumber)),
 				  FluidDataSimple(sph_body_), pos_(particles_->pos_)
 			{
 				quantity_name_ = "FreeSurfaceHeight";

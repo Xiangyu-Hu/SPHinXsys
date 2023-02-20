@@ -88,11 +88,11 @@ namespace SPH
 			 result_xml_engine_out_("result_xml_engine_out", "result")
 		 {
 			 input_folder_path_ = this->io_environment_.input_folder_;
-			 in_output_filefullpath_ = input_folder_path_ + "/" + this->dynamics_range_name_ 
+			 in_output_filefullpath_ = input_folder_path_ + "/" + this->dynamics_identifier_name_ 
 				 + "_" + this->quantity_name_ + ".xml";
-			 result_filefullpath_ = input_folder_path_ + "/" + this->dynamics_range_name_
+			 result_filefullpath_ = input_folder_path_ + "/" + this->dynamics_identifier_name_
 				 + "_" + this->quantity_name_ + "_result.xml";
-			 runtimes_filefullpath_ = input_folder_path_ + "/" + this->dynamics_range_name_
+			 runtimes_filefullpath_ = input_folder_path_ + "/" + this->dynamics_identifier_name_
 				 + "_" + this->quantity_name_ + "_runtimes.dat";
 
 			 if (!fs::exists(runtimes_filefullpath_))

@@ -152,7 +152,7 @@ namespace SPH
 	void BaseParticles::writePltFileParticleData(std::ofstream &output_file, size_t index_i)
 	{
 		// write particle positions and index first
-		Vec3d particle_position = upgradeToVector3D(pos_[index_i]);
+		Vec3d particle_position = upgradeToVec3d(pos_[index_i]);
 		output_file << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " "
 					<< index_i << " ";
 
@@ -169,7 +169,7 @@ namespace SPH
 		{
 			std::string variable_name = name_index.first;
 			StdLargeVec<Vecd> &variable = *(std::get<type_index_Vecd>(all_particle_data_)[name_index.second]);
-			Vec3d vector_value = upgradeToVector3D(variable[index_i]);
+			Vec3d vector_value = upgradeToVec3d(variable[index_i]);
 			output_file << vector_value[0] << " " << vector_value[1] << " " << vector_value[2] << " ";
 		};
 
@@ -212,7 +212,7 @@ namespace SPH
 		for (size_t i = 0; i != total_surface_particles; ++i)
 		{
 			size_t particle_i = surface_particles.body_part_particles_[i];
-			Vec3d particle_position = upgradeToVector3D(pos_[particle_i]);
+			Vec3d particle_position = upgradeToVec3d(pos_[particle_i]);
 			output_file << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " ";
 		}
 		output_file << std::endl;
@@ -255,7 +255,7 @@ namespace SPH
 			for (size_t i = 0; i != total_surface_particles; ++i)
 			{
 				size_t particle_i = surface_particles.body_part_particles_[i];
-				Mat3d matrix_value = upgradeToMatrix3D(variable[particle_i]);
+				Mat3d matrix_value = upgradeToMat3d(variable[particle_i]);
 				for (int k = 0; k != 3; ++k)
 				{
 					Vec3d col_vector = matrix_value.col(k);
@@ -277,7 +277,7 @@ namespace SPH
 			for (size_t i = 0; i != total_surface_particles; ++i)
 			{
 				size_t particle_i = surface_particles.body_part_particles_[i];
-				Vec3d vector_value = upgradeToVector3D(variable[particle_i]);
+				Vec3d vector_value = upgradeToVec3d(variable[particle_i]);
 				output_file << std::fixed << std::setprecision(9) << vector_value[0] << " " << vector_value[1] << " " << vector_value[2] << " ";
 			}
 			output_file << std::endl;

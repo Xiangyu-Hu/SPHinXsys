@@ -38,15 +38,15 @@ using TranslateSolidBodyTuple = tuple<int, Real, Real, Vec3d>;
 using TranslateSolidBodyPartTuple = tuple<int, Real, Real, Vec3d, BoundingBox>;
 
 #ifdef __EMSCRIPTEN__
-	struct StlData
-	{
-		string name;
-		uintptr_t ptr;
-	};
+struct StlData
+{
+	string name;
+	uintptr_t ptr;
+};
 
-	using StlList = vector<StlData>;
+using StlList = vector<StlData>;
 #else
-	using StlList = vector<string>;
+using StlList = vector<string>;
 #endif
 
 class BodyPartFromMesh : public BodyRegionByParticle
@@ -60,7 +60,7 @@ class SolidBodyFromMesh : public SolidBody
 {
 public:
 	SolidBodyFromMesh(SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
-				  SharedPtr<SaintVenantKirchhoffSolid> material_model, StdLargeVec<Vec3d> &pos_0, StdLargeVec<Real> &volume);
+					  SharedPtr<SaintVenantKirchhoffSolid> material_model, StdLargeVec<Vec3d> &pos_0, StdLargeVec<Real> &volume);
 	~SolidBodyFromMesh(){};
 };
 
@@ -151,8 +151,7 @@ public:
 		vector<Real> resolution_list,
 		vector<shared_ptr<SaintVenantKirchhoffSolid>> material_model_list,
 		StdVec<Real> physical_viscosity,
-		StdVec<IndexVector> contacting_bodies_list
-	);
+		StdVec<IndexVector> contacting_bodies_list);
 };
 
 class StructuralSimulation
@@ -187,8 +186,8 @@ protected:
 	vector<shared_ptr<SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection>>> particle_normal_update_;
 
 	vector<shared_ptr<SurfaceContactRelation>> contact_list_;
-	vector<shared_ptr<InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle>>> contact_density_list_;
-	vector<shared_ptr<InteractionDynamics<solid_dynamics::ContactForce, BodyPartByParticle>>> contact_force_list_;
+	vector<shared_ptr<InteractionDynamics<solid_dynamics::ContactDensitySummation>>> contact_density_list_;
+	vector<shared_ptr<InteractionDynamics<solid_dynamics::ContactForce>>> contact_force_list_;
 
 	// for initializeATimeStep
 	vector<shared_ptr<SimpleDynamics<TimeStepInitialization>>> initialize_time_step_;
@@ -197,10 +196,10 @@ protected:
 	vector<shared_ptr<SimpleDynamics<solid_dynamics::AccelerationForBodyPartInBoundingBox>>> acceleration_bounding_box_;
 	vector<AccelTuple> acceleration_bounding_box_tuple_;
 	// for ForceInBodyRegion
-	vector<shared_ptr<SimpleDynamics<solid_dynamics::ForceInBodyRegion, BodyRegionByParticle>>> force_in_body_region_;
+	vector<shared_ptr<SimpleDynamics<solid_dynamics::ForceInBodyRegion>>> force_in_body_region_;
 	vector<ForceTuple> force_in_body_region_tuple_;
 	// for SurfacePressureFromSource
-	vector<shared_ptr<SimpleDynamics<solid_dynamics::SurfacePressureFromSource, BodyPartByParticle>>> surface_pressure_;
+	vector<shared_ptr<SimpleDynamics<solid_dynamics::SurfacePressureFromSource>>> surface_pressure_;
 	vector<PressureTuple> surface_pressure_tuple_;
 	// for SpringDamperConstraintParticleWise
 	vector<shared_ptr<SimpleDynamics<solid_dynamics::SpringDamperConstraintParticleWise>>> spring_damper_constraint_;
@@ -209,10 +208,10 @@ protected:
 	vector<shared_ptr<SimpleDynamics<solid_dynamics::SpringNormalOnSurfaceParticles>>> surface_spring_;
 	vector<SurfaceSpringTuple> surface_spring_tuple_;
 	// for ConstrainSolidBody
-	vector<shared_ptr<SimpleDynamics<solid_dynamics::FixConstraint>>> fixed_constraint_body_;
+	vector<shared_ptr<SimpleDynamics<solid_dynamics::FixBodyConstraint>>> fixed_constraint_body_;
 	vector<int> body_indices_fixed_constraint_;
 	// for ConstrainSolidBodyRegion
-	vector<shared_ptr<SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle>>> fixed_constraint_region_;
+	vector<shared_ptr<SimpleDynamics<solid_dynamics::FixBodyPartConstraint>>> fixed_constraint_region_;
 	vector<ConstrainedRegionPair> body_indices_fixed_constraint_region_;
 	// for PositionSolidBody
 	vector<shared_ptr<SimpleDynamics<solid_dynamics::PositionSolidBody>>> position_solid_body_;
@@ -224,7 +223,7 @@ protected:
 	vector<shared_ptr<SimpleDynamics<solid_dynamics::TranslateSolidBody>>> translation_solid_body_;
 	vector<TranslateSolidBodyTuple> translation_solid_body_tuple_;
 	// for TranslateSolidBodyPart
-	vector<shared_ptr<SimpleDynamics<solid_dynamics::TranslateSolidBody, BodyRegionByParticle>>> translation_solid_body_part_;
+	vector<shared_ptr<SimpleDynamics<solid_dynamics::TranslateSolidBodyPart>>> translation_solid_body_part_;
 	vector<TranslateSolidBodyPartTuple> translation_solid_body_part_tuple_;
 
 	// iterators
@@ -303,18 +302,18 @@ public:
 };
 
 class StructuralSimulationJS : public StructuralSimulation
-	{
-	public:
-		StructuralSimulationJS(const StructuralSimulationInput& input);
-		~StructuralSimulationJS() = default;
-		
-		void runSimulationFixedDuration(int number_of_steps);
-		
-		VtuStringData getVtuData();
+{
+public:
+	StructuralSimulationJS(const StructuralSimulationInput &input);
+	~StructuralSimulationJS() = default;
 
-	private:
-		BodyStatesRecordingToVtpString write_states_;
-		Real dt;
-	};
+	void runSimulationFixedDuration(int number_of_steps);
 
-#endif //SOLID_STRUCTURAL_SIMULATION_CLASS_H
+	VtuStringData getVtuData();
+
+private:
+	BodyStatesRecordingToVtpString write_states_;
+	Real dt;
+};
+
+#endif // SOLID_STRUCTURAL_SIMULATION_CLASS_H
