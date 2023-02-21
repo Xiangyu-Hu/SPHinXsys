@@ -349,7 +349,7 @@ namespace SPH
 	public:
 		template <class BodyRelationType, typename... Args>
 		InteractionWithUpdate(BodyRelationType &body_relation, Args &&...args)
-			: InteractionWithUpdate(true, body_relation, std::forward<Args>(args)...)
+			: InteractionDynamics<LocalDynamicsType>(false, body_relation, std::forward<Args>(args)...)
 		{
 			static_assert(!has_initialize<LocalDynamicsType>::value,
 						  "LocalDynamicsType does not fulfill InteractionWithUpdate requirements");
@@ -371,12 +371,6 @@ namespace SPH
 								  [&](size_t i)
 								  { this->update(i, dt); });
 		};
-
-	protected:
-		template <class BodyRelationType, typename... Args>
-		InteractionWithUpdate(bool mostDerived, BodyRelationType &body_relation, Args &&...args)
-			: InteractionDynamics<LocalDynamicsType>(
-				  false, body_relation, std::forward<Args>(args)...) {}
 	};
 
 	/**
