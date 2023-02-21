@@ -1,2 +1,2 @@
-./test_2d_free_stream_around_cylinder_multi_resolution --r=true
-./test_2d_free_stream_around_cylinder_multi_resolution  --r=false --i=true
+./test_2d_free_stream_around_cylinder_mr --r=true
+./test_2d_free_stream_around_cylinder_mr --r=false --i=true
