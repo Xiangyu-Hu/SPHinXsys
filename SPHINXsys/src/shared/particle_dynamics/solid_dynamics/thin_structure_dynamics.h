@@ -190,7 +190,7 @@ namespace SPH
 		/**@class ConstrainShellBodyRegion
 		 * @brief Fix the position and angle of a shell body part.
 		 */
-		class ConstrainShellBodyRegion : public LocalDynamics, public ShellDataSimple
+		class ConstrainShellBodyRegion : public BaseLocalDynamics<BodyPartByParticle>, public ShellDataSimple
 		{
 		public:
 			ConstrainShellBodyRegion(BodyPartByParticle &body_part);
@@ -206,7 +206,7 @@ namespace SPH
 		 * The axis must be 0 or 1.
 		 * Note that the average values for FSI are prescribed also.
 		 */
-		class ConstrainShellBodyRegionAlongAxis : public LocalDynamics, public ShellDataSimple
+		class ConstrainShellBodyRegionAlongAxis : public BaseLocalDynamics<BodyPartByParticle>, public ShellDataSimple
 		{
 		public:
 			ConstrainShellBodyRegionAlongAxis(BodyPartByParticle &body_part, int axis);

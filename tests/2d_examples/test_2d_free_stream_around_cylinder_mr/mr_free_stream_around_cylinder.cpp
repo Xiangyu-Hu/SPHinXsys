@@ -112,14 +112,14 @@ int main(int ac, char *av[])
 	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, makeShared<TimeDependentAcceleration>(Vec2d::Zero()));
 	BodyAlignedBoxByParticle emitter(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(emitter_translation)), emitter_halfsize));
-	SimpleDynamics<fluid_dynamics::EmitterInflowInjection, BodyAlignedBoxByParticle> emitter_inflow_injection(emitter, 10, 0);
+	SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, 10, 0);
 	/** Emitter buffer inflow condition. */
 	BodyAlignedBoxByCell emitter_buffer(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(emitter_buffer_translation)), emitter_buffer_halfsize));
-	SimpleDynamics<fluid_dynamics::InflowVelocityCondition<FreeStreamVelocity>, BodyAlignedBoxByCell> emitter_buffer_inflow_condition(emitter_buffer, 0.1);
+	SimpleDynamics<fluid_dynamics::InflowVelocityCondition<FreeStreamVelocity>> emitter_buffer_inflow_condition(emitter_buffer, 0.1);
 	BodyAlignedBoxByCell disposer(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(disposer_translation)), disposer_halfsize));
-	SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion, BodyAlignedBoxByCell> disposer_outflow_deletion(disposer, 0);
+	SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer, 0);
 	/** time-space method to detect surface particles. */
 	InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex>
 		free_stream_surface_indicator(water_block_complex);
@@ -153,18 +153,18 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
 	/** Compute the force exerted on solid body due to fluid pressure and viscosity. */
-	InteractionDynamics<solid_dynamics::FluidPressureForceOnSolid> fluid_pressure_force_on_inserted_body(cylinder_contact);
-	InteractionDynamics<solid_dynamics::FluidViscousForceOnSolid> fluid_viscous_force_on_inserted_body(cylinder_contact);
+	InteractionDynamics<solid_dynamics::PressureForceAccelerationFromFluid> fluid_pressure_force_on_inserted_body(cylinder_contact);
+	InteractionDynamics<solid_dynamics::ViscousForceFromFluid> fluid_viscous_force_on_inserted_body(cylinder_contact);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
 	ObservedQuantityRecording<Vecd>
 		write_fluid_velocity("Velocity", io_environment, fluid_observer_contact);
-	RegressionTestTimeAveraged<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalViscousForceOnSolid>>>
-		write_total_viscous_force_on_inserted_body(io_environment, cylinder);
-	ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceOnSolid>>
-		write_total_force_on_inserted_body(io_environment, cylinder);
+	RegressionTestTimeAveraged<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>>
+		write_total_viscous_force_on_inserted_body(io_environment, fluid_viscous_force_on_inserted_body, "TotalViscousForceOnSolid");
+	ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>
+		write_total_force_on_inserted_body(io_environment, fluid_pressure_force_on_inserted_body, "TotalPressureForceOnSolid");
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
@@ -207,8 +207,6 @@ int main(int ac, char *av[])
 			viscous_acceleration.parallel_exec();
 			transport_velocity_correction.parallel_exec();
 
-			/** FSI for viscous force. */
-			fluid_viscous_force_on_inserted_body.parallel_exec();
 			size_t inner_ite_dt = 0;
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
@@ -216,8 +214,6 @@ int main(int ac, char *av[])
 				Real dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt - relaxation_time);
 				/** Fluid pressure relaxation, first half. */
 				pressure_relaxation.parallel_exec(dt);
-				/** FSI for pressure force. */
-				fluid_pressure_force_on_inserted_body.parallel_exec();
 				/** Fluid pressure relaxation, second half. */
 				density_relaxation.parallel_exec(dt);
 

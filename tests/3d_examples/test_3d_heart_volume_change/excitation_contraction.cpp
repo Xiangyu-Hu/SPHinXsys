@@ -84,7 +84,7 @@ int main(int ac, char *av[])
 
 		BodySurface surface_part(herat_model);
 		/** constraint boundary condition for diffusion. */
-		SimpleDynamics<DiffusionBCs, BodySurface> impose_diffusion_bc(surface_part, "Phi");
+		SimpleDynamics<DiffusionBCs> impose_diffusion_bc(surface_part, "Phi");
 		impose_diffusion_bc.parallel_exec();
 
 		write_herat_model_state_to_vtp.writeToFile(ite);
@@ -191,7 +191,7 @@ int main(int ac, char *av[])
 	/** Constrain region of the inserted body. */
 	MuscleBaseShapeParameters muscle_base_parameters;
 	BodyRegionByParticle muscle_base(mechanics_heart, makeShared<TriangleMeshShapeBrick>(muscle_base_parameters, "Holder"));
-	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_holder(muscle_base);
+	SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_holder(muscle_base);
 	//----------------------------------------------------------------------
 	//	SPH Output section
 	//----------------------------------------------------------------------

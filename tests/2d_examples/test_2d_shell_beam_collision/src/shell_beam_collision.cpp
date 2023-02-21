@@ -188,11 +188,11 @@ int main(int ac, char *av[])
 	Dynamics1Level<solid_dynamics::Integration1stHalf> beam_stress_relaxation_first_half(beam_inner);
 	Dynamics1Level<solid_dynamics::Integration2ndHalf> beam_stress_relaxation_second_half(beam_inner);
 	/** Algorithms for shell-solid contact. */
-	InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle> beam_shell_update_contact_density(beam_contact);
-	InteractionDynamics<solid_dynamics::ContactForceFromWall, BodyPartByParticle> beam_compute_solid_contact_forces(beam_contact);
-	InteractionDynamics<solid_dynamics::ContactForceToWall, BodyPartByParticle> shell_compute_solid_contact_forces(shell_contact);
+	InteractionDynamics<solid_dynamics::ContactDensitySummation> beam_shell_update_contact_density(beam_contact);
+	InteractionDynamics<solid_dynamics::ContactForceFromWall> beam_compute_solid_contact_forces(beam_contact);
+	InteractionDynamics<solid_dynamics::ContactForceToWall> shell_compute_solid_contact_forces(shell_contact);
 	BodyRegionByParticle holder(beam, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
-	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_holder(holder);
+	SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_holder(holder);
 	/** Damping with the solid body*/
 	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
 		beam_damping(0.5, beam_inner, "Velocity", physical_viscosity);
@@ -225,9 +225,9 @@ int main(int ac, char *av[])
 	integ.setAllowInterpolation(false);
 	integ.initialize(state);
 	/** Coupling between SimBody and SPH.*/
-	ReduceDynamics<solid_dynamics::TotalForceForSimBody, SolidBodyPartForSimbody>
+	ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody>
 		force_on_shell(shell_multibody, MBsystem, shellMBody, force_on_bodies, integ);
-	SimpleDynamics<solid_dynamics::ConstraintBySimBody, SolidBodyPartForSimbody>
+	SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody>
 		constraint_shell(shell_multibody, MBsystem, shellMBody, force_on_bodies, integ);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration

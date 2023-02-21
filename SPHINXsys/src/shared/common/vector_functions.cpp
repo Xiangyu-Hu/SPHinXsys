@@ -59,31 +59,44 @@ namespace SPH
 		return Vec3d(1.0, 0.0, 0.0);
 	};
 	//=================================================================================================//
-	Vec3d upgradeToVector3D(const Real &input)
+	Vec3d upgradeToVec3d(const Real &input)
 	{
 		return Vec3d(input, 0.0, 0.0);
 	}
 	//=================================================================================================//
-	Vec3d upgradeToVector3D(const Vec2d &input)
+	Vec3d upgradeToVec3d(const Vec2d &input)
 	{
 		return Vec3d(input[0], input[1], 0.0);
 	}
 	//=================================================================================================//
-	Vec3d upgradeToVector3D(const Vec3d &input)
+	Vec3d upgradeToVec3d(const Vec3d &input)
 	{
 		return input;
 	}
 	//=================================================================================================//
-	Mat3d upgradeToMatrix3D(const Mat2d &input)
+	Mat3d upgradeToMat3d(const Mat2d &input)
 	{
 		Mat3d output = Mat3d::Zero();
 		output.block<2, 2>(0, 0) = input;
 		return output;
 	}
 	//=================================================================================================//
-	Mat3d upgradeToMatrix3D(const Mat3d &input)
+	Mat3d upgradeToMat3d(const Mat3d &input)
 	{
 		return input;
+	}
+	//=================================================================================================//
+	void degradeToVecd(const Vec3d &input, Vec2d &output)
+	{
+		output[0] = input[0];
+		output[1] = input[1];
+	}
+	//=================================================================================================//
+	void degradeToMatd(const Mat3d &input, Mat2d &output)
+	{
+		for (int i = 0; i != 2; i++)
+			for (int j = 0; j != 2; j++)
+				output(i, j) = input(i, j);
 	}
 	//=================================================================================================//
 	Mat2d getInverse(const Mat2d &A)

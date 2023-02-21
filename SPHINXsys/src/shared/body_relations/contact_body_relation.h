@@ -103,8 +103,6 @@ namespace SPH
 							   RealBodyVector contact_bodies)
 			: SurfaceContactRelation(*solid_body_relation_self_contact.real_body_, contact_bodies){};
 		virtual ~SurfaceContactRelation(){};
-		BodyPartByParticle &getDynamicsRange() { return *body_surface_layer_; };
-
 		virtual void updateConfiguration() override;
 
 	protected:

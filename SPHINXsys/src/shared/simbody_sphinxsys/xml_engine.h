@@ -88,12 +88,7 @@ namespace SPH
 		void setAttributeToElement(const SimTK::Xml::element_iterator &ele_ite, const std::string &attrib_name,
 								   const Eigen::Matrix<Real, DIMENSION, DIMENSION, Rest...> &value)
 		{
-			SimTK::Array_<Real, int> array_(DIMENSION * DIMENSION);
-			for (int i = 0; i < DIMENSION; i++)
-				for (int j = 0; j < DIMENSION; j++)
-					array_[i * DIMENSION + j] = value(i, j);
-
-			SimTK::Xml::Attribute attr_(attrib_name, SimTK::String(array_));
+			SimTK::Xml::Attribute attr_(attrib_name, SimTK::String(EigenToSimTK(value)));
 			ele_ite->setAttributeValue(attr_.getName(), attr_.getValue());
 		};
 
@@ -120,19 +115,7 @@ namespace SPH
 									   Eigen::Matrix<Real, DIMENSION, DIMENSION, Rest...> &value)
 		{
 			std::string value_in_string = ele_ite_->getRequiredAttributeValue(attrib_name);
-			SimTK::Array_<Real, int> array_;
-			array_ = SimTK::convertStringTo<SimTK::Array_<Real, int>>(value_in_string);
-
-			if (array_.size() != DIMENSION * DIMENSION)
-			{
-				std::cout << "\n Error: the dimension of data in XML is not valid" << std::endl;
-				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-				exit(1);
-			}
-
-			for (int i = 0; i < DIMENSION; i++)
-				for (int j = 0; j < DIMENSION; j++)
-					value(i, j) = array_[i * DIMENSION + j];
+			value = SimTKToEigen(SimTK::convertStringTo<SimTK::Mat<DIMENSION,DIMENSION>>(value_in_string));
 		};
 
 		/** Write to XML file */
