@@ -97,24 +97,25 @@ namespace SPH
 
 			void interaction(size_t index_i, Real dt = 0.0)
 			{
-				const Vecd &acc_ave_i = acc_ave_[index_i];
-				Real Vol_i = Vol_[index_i];
-
 				Vecd force = Vecd::Zero();
 				for (size_t k = 0; k < contact_configuration_.size(); ++k)
 				{
 					StdLargeVec<Real> &rho_n_k = *(contact_rho_n_[k]);
 					StdLargeVec<Real> &p_k = *(contact_p_[k]);
+					StdLargeVec<Vecd> &vel_k = *(contact_vel_n_[k]);
 					StdLargeVec<Vecd> &acc_prior_k = *(contact_acc_prior_[k]);
+					RiemannSolverType &riemann_solvers_k = riemann_solvers_[k];
 					Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 					for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 					{
 						size_t index_j = contact_neighborhood.j_[n];
 						Vecd e_ij = contact_neighborhood.e_ij_[n];
 						Real r_ij = contact_neighborhood.r_ij_[n];
-						Real face_wall_external_acceleration = (acc_prior_k[index_j] - acc_ave_i).dot(e_ij);
+						Real face_wall_external_acceleration = (acc_prior_k[index_j] - acc_ave_[index_i]).dot(e_ij);
 						Real p_in_wall = p_k[index_j] + rho_n_k[index_j] * r_ij * SMAX(0.0, face_wall_external_acceleration);
-						force -= (p_in_wall + p_k[index_j]) * e_ij * Vol_i * contact_neighborhood.dW_ijV_j_[n];
+						Real u_jump = 2.0 * (vel_k[index_j] - vel_ave_[index_i]).dot(n_[index_i]);
+						force += (riemann_solvers_k.DissipativePJump(u_jump) - (p_in_wall + p_k[index_j])) *
+								 e_ij * Vol_[index_i] * contact_neighborhood.dW_ijV_j_[n];
 					}
 				}
 				force_from_fluid_[index_i] = force;
