@@ -70,11 +70,13 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//	Add an attribute of type string to an xml element.
 		//----------------------------------------------------------------------
-		inline void setAttributeToElement(const SimTK::Xml::element_iterator &ele_ite, const std::string &attrib_name, Real value)
+		template <typename T>
+		void setAttributeToElement(const SimTK::Xml::element_iterator &ele_ite, const std::string &attrib_name, const T &value)
 		{
 			SimTK::Xml::Attribute attr_(attrib_name, SimTK::String(value));
 			ele_ite->setAttributeValue(attr_.getName(), attr_.getValue());
 		};
+
 		template <int DIMENSION, auto... Rest>
 		void setAttributeToElement(const SimTK::Xml::element_iterator &ele_ite, const std::string &attrib_name,
 								   const Eigen::Matrix<Real, DIMENSION, 1, Rest...> &value)
@@ -89,20 +91,17 @@ namespace SPH
 			SimTK::Xml::Attribute attr_(attrib_name, SimTK::String(EigenToSimTK(value)));
 			ele_ite->setAttributeValue(attr_.getName(), attr_.getValue());
 		};
-		inline void setAttributeToElement(const SimTK::Xml::element_iterator &ele_ite, const std::string &attrib_name, int value)
-		{
-			SimTK::Xml::Attribute attr_(attrib_name, SimTK::String(value));
-			ele_ite->setAttributeValue(attr_.getName(), attr_.getValue());
-		};
 
 		//----------------------------------------------------------------------
 		//	Get the required attribute value of an element.
 		//----------------------------------------------------------------------
-		inline void getRequiredAttributeValue(SimTK::Xml::element_iterator &ele_ite_, const std::string &attrib_name, Real &value)
+		template <typename T>
+		void getRequiredAttributeValue(SimTK::Xml::element_iterator &ele_ite_, const std::string &attrib_name, T &value)
 		{
 			std::string value_in_string = ele_ite_->getRequiredAttributeValue(attrib_name);
-			value = SimTK::convertStringTo<Real>(value_in_string);
+			value = SimTK::convertStringTo<T>(value_in_string);
 		};
+
 		template <int DIMENSION, auto... Rest>
 		void getRequiredAttributeValue(SimTK::Xml::element_iterator &ele_ite_, const std::string &attrib_name,
 									   Eigen::Matrix<Real, DIMENSION, 1, Rest...> &value)
@@ -110,17 +109,13 @@ namespace SPH
 			std::string value_in_string = ele_ite_->getRequiredAttributeValue(attrib_name);
 			value = SimTKToEigen(SimTK::convertStringTo<SimTK::Vec<DIMENSION>>(value_in_string));
 		};
+
 		template <int DIMENSION, auto... Rest>
 		void getRequiredAttributeValue(SimTK::Xml::element_iterator &ele_ite_, const std::string &attrib_name,
 									   Eigen::Matrix<Real, DIMENSION, DIMENSION, Rest...> &value)
 		{
 			std::string value_in_string = ele_ite_->getRequiredAttributeValue(attrib_name);
 			value = SimTKToEigen(SimTK::convertStringTo<SimTK::Mat<DIMENSION,DIMENSION>>(value_in_string));
-		};
-		inline void getRequiredAttributeValue(SimTK::Xml::element_iterator &ele_ite_, const std::string &attrib_name, int &value)
-		{
-			std::string value_in_string = ele_ite_->getRequiredAttributeValue(attrib_name);
-			value = SimTK::convertStringTo<int>(value_in_string);
 		};
 
 		/** Write to XML file */

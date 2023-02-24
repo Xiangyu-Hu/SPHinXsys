@@ -143,7 +143,7 @@ namespace SPH
 
 					Real face_wall_external_acceleration = (acc_prior_i - acc_ave_k[index_j]).dot(-e_ij);
 					Real p_in_wall = this->p_[index_i] + this->rho_[index_i] * r_ij * SMAX(0.0, face_wall_external_acceleration);
-					acceleration -= (this->p_[index_i] + p_in_wall) * e_ij * dW_ijV_j;
+					acceleration -= (this->p_[index_i] + p_in_wall) * dW_ijV_j * e_ij;
 					rho_dissipation += this->riemann_solver_.DissipativeUJump(this->p_[index_i] - p_in_wall) * dW_ijV_j;
 				}
 			}
@@ -217,9 +217,11 @@ namespace SPH
 			BaseIntegration2ndHalfType::interaction(index_i, dt);
 
 			Real density_change_rate = 0.0;
+			Vecd p_dissipation = Vecd::Zero();
 			for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
 			{
 				StdLargeVec<Vecd> &vel_ave_k = *(this->wall_vel_ave_[k]);
+				StdLargeVec<Vecd> &n_k = *(this->wall_n_[k]);
 				Neighborhood &wall_neighborhood = (*FluidWallData::contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
 				{
@@ -229,9 +231,12 @@ namespace SPH
 
 					Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - this->vel_[index_i];
 					density_change_rate += (this->vel_[index_i] - vel_in_wall).dot(e_ij) * dW_ijV_j;
+					Real u_jump = 2.0 * (this->vel_[index_i] - vel_ave_k[index_j]).dot(n_k[index_j]);
+					p_dissipation += this->riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * e_ij;
 				}
 			}
 			this->drho_dt_[index_i] += density_change_rate * this->rho_[index_i];
+			this->acc_[index_i] += p_dissipation / this->rho_[index_i];
 		}
 		//=================================================================================================//
 	}
