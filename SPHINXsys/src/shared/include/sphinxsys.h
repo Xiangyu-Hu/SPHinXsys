@@ -41,5 +41,6 @@
 #include "io_all.h"
 #include "parameterization.h"
 #include "regression_test.h"
+#include "sph_python.h"
 
 #endif //SPHINXSYS_H
