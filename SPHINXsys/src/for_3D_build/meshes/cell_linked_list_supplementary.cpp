@@ -73,14 +73,14 @@ namespace SPH
 	//=================================================================================================//
 	void CellLinkedList ::insertParticleIndex(size_t particle_index, const Vecd &particle_position)
 	{
-		Vecu cellpos = CellIndexFromPosition(particle_position);
-		cell_index_lists_[cellpos[0]][cellpos[1]][cellpos[2]].emplace_back(particle_index);
+		Vecu cell_pos = CellIndexFromPosition(particle_position);
+		cell_index_lists_[cell_pos[0]][cell_pos[1]][cell_pos[2]].emplace_back(particle_index);
 	}
 	//=================================================================================================//
 	void CellLinkedList ::InsertListDataEntry(size_t particle_index, const Vecd &particle_position, Real volumetric)
 	{
-		Vecu cellpos = CellIndexFromPosition(particle_position);
-		cell_data_lists_[cellpos[0]][cellpos[1]][cellpos[2]].emplace_back(
+		Vecu cell_pos = CellIndexFromPosition(particle_position);
+		cell_data_lists_[cell_pos[0]][cell_pos[1]][cell_pos[2]].emplace_back(
 			std::make_tuple(particle_index, particle_position, volumetric));
 	}
 	//=================================================================================================//
@@ -129,7 +129,7 @@ namespace SPH
 							for (int n = SMAX(k - 1, 0); n <= SMIN(k + 1, int(number_of_cells_[2]) - 1); ++n)
 							{
 								// all cells near or contained by the body part shape are included
-								if (check_included(CellPositionFromIndex(Vecu(l, m, n)), grid_spacing_))
+								if (check_included(Cell_PositionFromIndex(Vecu(l, m, n)), grid_spacing_))
 								{
 									is_included = true;
 								}
@@ -271,7 +271,7 @@ namespace SPH
 			{
 				for (size_t i = 0; i != number_of_operation[0]; ++i)
 				{
-					Vecd data_position = CellPositionFromIndex(Vecu(i, j, k));
+					Vecd data_position = Cell_PositionFromIndex(Vecu(i, j, k));
 					output_file << data_position[0] << " ";
 				}
 				output_file << " \n";
@@ -282,7 +282,7 @@ namespace SPH
 			{
 				for (size_t i = 0; i != number_of_operation[0]; ++i)
 				{
-					Vecd data_position = CellPositionFromIndex(Vecu(i, j, k));
+					Vecd data_position = Cell_PositionFromIndex(Vecu(i, j, k));
 					output_file << data_position[1] << " ";
 				}
 				output_file << " \n";
@@ -293,7 +293,7 @@ namespace SPH
 			{
 				for (size_t i = 0; i != number_of_operation[0]; ++i)
 				{
-					Vecd data_position = CellPositionFromIndex(Vecu(i, j, k));
+					Vecd data_position = Cell_PositionFromIndex(Vecu(i, j, k));
 					output_file << data_position[2] << " ";
 				}
 				output_file << " \n";

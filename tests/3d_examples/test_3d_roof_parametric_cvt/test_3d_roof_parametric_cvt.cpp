@@ -1,6 +1,6 @@
 /**
  * @file 	test_3d_roof_analytical.cpp
- * @brief 	Shell verificaiton  incl. refinement study
+ * @brief 	Shell verification  incl. refinement study
  * @details Roof shell verification case with relaxed shell particles
  * @author 	Bence Rochlitz
  * @ref 	ANSYS Workbench Verification Manual, Release 15.0, November 2013, VMMECH069: Barrel Vault Roof Under Self Weight
@@ -251,14 +251,14 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 	Real radius = 25;
 	Real length = 50;
 	Real thickness = 0.25;
-	Real teta = 40;
-	Real teta_radian = to_rad(teta);
-	Real arc = radius*teta_radian;
+	Real theta = 40;
+	Real theta_radian = to_rad(theta);
+	Real arc = radius*theta_radian;
 	Vec3d center(0,-radius,0);
-	// oberserver points A and B
+	// observer points A and B
 	observer_point_shell point_A;
 	observer_point_shell point_B;
-	point_A.pos_0 = Vec3d(radius*std::sin(teta_radian), radius*std::cos(teta_radian)-radius, 0);
+	point_A.pos_0 = Vec3d(radius*std::sin(theta_radian), radius*std::cos(theta_radian)-radius, 0);
 	point_B.pos_0 = Vec3d(0);
 	// resolution
 	const int dp_cm = dp*100;

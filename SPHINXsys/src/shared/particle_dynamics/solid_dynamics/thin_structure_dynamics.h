@@ -137,7 +137,7 @@ namespace SPH
 
 		/**
 		 * @class ShellStressRelaxationFirstHalf
-		 * @brief computing stress relaxation process by verlet time stepping
+		 * @brief computing stress relaxation process by Verlet time stepping
 		 * This is the first step
 		 */
 		class ShellStressRelaxationFirstHalf : public BaseShellRelaxation

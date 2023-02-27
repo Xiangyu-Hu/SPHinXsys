@@ -14,9 +14,8 @@ namespace SPH
 	{}
 	//=================================================================================================//
 	BaseMesh::BaseMesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width) 
-		: BaseMesh()
+		: BaseMesh(), grid_spacing_(grid_spacing)
 	{
-		grid_spacing_ = grid_spacing;
 		Vecd mesh_buffer = Real(buffer_width) * grid_spacing * Vecd::Ones();
 		mesh_lower_bound_ = tentative_bounds.first_ - mesh_buffer;
 		Vecd tentative_upper_bound = tentative_bounds.second_ + mesh_buffer;
