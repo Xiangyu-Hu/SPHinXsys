@@ -188,7 +188,13 @@ public:
 	}
 	
 	virtual ~Environment() {};
-
+	//----------------------------------------------------------------------
+	//	For ctest.
+	//----------------------------------------------------------------------
+	int cmakeTest()
+	{
+		return 1;
+	}
 	//----------------------------------------------------------------------
 	//	Main loop starts here.
 	//----------------------------------------------------------------------
@@ -287,5 +293,6 @@ PYBIND11_MODULE(test_2d_dambreak_python, m)
 {
 	py::class_<Environment>(m, "dambreak_from_sph_cpp")
 		.def(py::init<const int&>())
+		.def("CmakeTest", &Environment::cmakeTest)
 		.def("RunCase", &Environment::runCase);
 }

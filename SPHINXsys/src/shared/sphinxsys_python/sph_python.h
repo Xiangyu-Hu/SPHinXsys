@@ -37,6 +37,7 @@ namespace SPH {
         virtual ~SphPython() {};
 
         //*** Functions for override. ***//
+        virtual int cmakeTest() = 0;
         virtual void runCase(Real End_time) = 0;
     };
 };
