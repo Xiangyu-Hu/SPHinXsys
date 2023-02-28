@@ -24,5 +24,5 @@ pybind11_add_module(${PROJECT_NAME} ${EXECUTABLE_OUTPUT_PATH} ${DIR_SRCS} )
 set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 target_link_libraries(${PROJECT_NAME} PRIVATE sphinxsys_2d)
 
-add_test(NAME MyPybindTest COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/pybind_tool/pybind_test.py)
-set_tests_properties(MyPybindTest PROPERTIES PASS_REGULAR_EXPRESSION "1")
+add_test(NAME ${PROJECT_NAME} COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/pybind_tool/pybind_test.py)
+set_tests_properties(${PROJECT_NAME} PROPERTIES PASS_REGULAR_EXPRESSION "1")
