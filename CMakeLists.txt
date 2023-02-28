@@ -81,7 +81,7 @@ endif()
 #------ Setup the concrete libraries
 add_subdirectory(SPHINXsys)
 add_subdirectory(modules)
-add_subdirectory(3rd_party/pybind11-master) # 3rd_party
+add_subdirectory(3rd_party/pybind11) 
 
 #------ Setup the tests
 if(SPHINXSYS_BUILD_TESTS)
