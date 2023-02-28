@@ -194,9 +194,8 @@ int main(int ac, char *av[])
 				std::cout << "N=" << ite << " Time: "
 						  << GlobalStaticVariables::physical_time_ << "	dt: "
 						  << dt << "\n";
-				write_states.writeToFile(100);
 			}
-			dt = 0.1 * computing_time_step_size.parallel_exec();
+			dt = computing_time_step_size.parallel_exec();
 			initialize_external_force.parallel_exec(dt);
 			stress_relaxation_first_half.parallel_exec(dt);
 

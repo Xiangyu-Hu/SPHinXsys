@@ -12,10 +12,11 @@ namespace SPH
 			  n0_(particles_->n0_), n_(particles_->n_), pseudo_n_(particles_->pseudo_n_),
 			  pos0_(particles_->pos0_), transformation_matrix_(particles_->transformation_matrix_) {}
 		//=================================================================================================//
-		ShellAcousticTimeStepSize::ShellAcousticTimeStepSize(SPHBody &sph_body, Real CFL)
+		ShellAcousticTimeStepSize::ShellAcousticTimeStepSize(SPHBody& sph_body, Real CFL)
 			: LocalDynamicsReduce<Real, ReduceMin>(sph_body, Real(MaxRealNumber)),
-			  ShellDataSimple(sph_body), CFL_(CFL), vel_(particles_->vel_), acc_(particles_->acc_),
+			ShellDataSimple(sph_body), CFL_(CFL), vel_(particles_->vel_), acc_(particles_->acc_),
 			  angular_vel_(particles_->angular_vel_), dangular_vel_dt_(particles_->dangular_vel_dt_),
+			  acc_prior_(particles_->acc_prior_),
 			  thickness_(particles_->thickness_),
 			  rho0_(particles_->elastic_solid_.ReferenceDensity()),
 			  E0_(particles_->elastic_solid_.YoungsModulus()),
@@ -27,14 +28,14 @@ namespace SPH
 		{
 			// Since the particle does not change its configuration in pressure relaxation step,
 			// I chose a time-step size according to Eulerian method.
-			Real time_setp_0 = CFL_ * SMIN(sqrt(smoothing_length_ / (acc_[index_i].norm() + TinyReal)),
+			Real time_setp_0 = SMIN(sqrt(smoothing_length_ / ((acc_[index_i] + acc_prior_[index_i]).norm() + TinyReal)),
 										   smoothing_length_ / (c0_ + vel_[index_i].norm()));
-			Real time_setp_1 = CFL_ * SMIN(sqrt(1.0 / (dangular_vel_dt_[index_i].norm() + TinyReal)),
+			Real time_setp_1 = SMIN(sqrt(1.0 / (dangular_vel_dt_[index_i].norm() + TinyReal)),
 										   1.0 / (angular_vel_[index_i].norm() + TinyReal));
 			Real time_setp_2 = smoothing_length_ * sqrt(rho0_ * (1.0 - nu_ * nu_) / E0_ /
 														(2.0 + (Pi * Pi / 12.0) * (1.0 - nu_) *
 																   (1.0 + 1.5 * powerN(smoothing_length_ / thickness_[index_i], 2))));
-			return SMIN(time_setp_0, time_setp_1, time_setp_2);
+			return CFL_ * SMIN(time_setp_0, time_setp_1, time_setp_2);
 		}
 		//=================================================================================================//
 		ShellCorrectConfiguration::
@@ -179,12 +180,17 @@ namespace SPH
 					transformation_matrix_[index_i] * current_transformation_matrix.transpose();
 
 				/** correct Almansi strain tensor according to plane stress problem. */
-				current_local_almansi_strain = getCorrectedAlmansiStrain(current_local_almansi_strain, nu_);
+				current_local_almansi_strain = getCorrectedAlmansiStrain(current_local_almansi_strain, nu_); 
+
+				/** correct out-plane numerical damping. */
+				Matd numerical_damping = current_transformation_matrix * transformation_matrix_[index_i].transpose() * F_gaussian_point *
+					elastic_solid_.NumericalDampingRightCauchy(F_gaussian_point, dF_gaussian_point_dt, smoothing_length_, index_i)
+					* F_gaussian_point.transpose() * transformation_matrix_[index_i] * current_transformation_matrix.transpose() 
+					/ F_gaussian_point.determinant();
+				numerical_damping.col(Dimensions - 1) *= thickness_[index_i] / smoothing_length_;
 				
-				Matd cauchy_stress = elastic_solid_.StressCauchy(current_local_almansi_strain, F_gaussian_point, index_i) + 
-					current_transformation_matrix * transformation_matrix_[index_i].transpose() * F_gaussian_point * 
-					elastic_solid_.NumericalDampingRightCauchy(F_gaussian_point, dF_gaussian_point_dt, smoothing_length_, index_i) 
-					* F_gaussian_point.transpose() * transformation_matrix_[index_i] * current_transformation_matrix.transpose() / F_gaussian_point.determinant();
+				Matd cauchy_stress = elastic_solid_.StressCauchy(current_local_almansi_strain, F_gaussian_point, index_i) + numerical_damping;
+					
 
 				/** Impose modeling assumptions. */
 				cauchy_stress.col(Dimensions - 1) *= shear_correction_factor_;
@@ -247,8 +253,8 @@ namespace SPH
 						pseudo_n_[index_j] - n0_[index_j],
 						transformation_matrix_[index_j].transpose() * F_bending_[index_j] * transformation_matrix_[index_j]);
 					Vecd rotation_jump = getRotationJump(pseudo_n_jump, transformation_matrix_[index_i]);
-					pseudo_normal_acceleration += hourglass_control_factor_ / 3.0 * weight * Dimensions * r_ij * G0_ * rotation_jump * 
-												  inner_neighborhood.dW_ijV_j_[n] * thickness_[index_i];
+					pseudo_normal_acceleration += hourglass_control_factor_ * weight * G0_ * rotation_jump * dim_inv_r_ij *
+												  inner_neighborhood.dW_ijV_j_[n] * powerN(thickness_[index_i], 3);
 				}
 
 				acceleration += (global_stress_i + global_stress_[index_j]) * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
