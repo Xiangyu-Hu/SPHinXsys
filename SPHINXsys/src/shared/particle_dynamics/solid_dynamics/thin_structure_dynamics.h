@@ -69,7 +69,7 @@ namespace SPH
 		{
 		protected:
 			Real CFL_;
-			StdLargeVec<Vecd> &vel_, &acc_, &angular_vel_, &dangular_vel_dt_;
+			StdLargeVec<Vecd> &vel_, &acc_, &angular_vel_, &dangular_vel_dt_, &acc_prior_;
 			StdLargeVec<Real> &thickness_;
 			Real rho0_, E0_, nu_, c0_;
 			Real smoothing_length_;
