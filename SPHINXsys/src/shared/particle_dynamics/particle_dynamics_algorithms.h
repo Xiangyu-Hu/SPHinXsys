@@ -111,7 +111,7 @@ namespace SPH
 		{
 			this->setUpdated();
 			this->setupDynamics(dt);
-			particle_for(this->identifier_.LoopRange(),
+			particle_for(std::execution::seq, this->identifier_.LoopRange(),
 						 [&](size_t i)
 						 { this->update(i, dt); });
 		};
@@ -120,9 +120,9 @@ namespace SPH
 		{
 			this->setUpdated();
 			this->setupDynamics(dt);
-			particle_parallel_for(this->identifier_.LoopRange(),
-								  [&](size_t i)
-								  { this->update(i, dt); });
+			particle_for(std::execution::par, this->identifier_.LoopRange(),
+						 [&](size_t i)
+						 { this->update(i, dt); });
 		};
 	};
 
@@ -152,7 +152,8 @@ namespace SPH
 		{
 			this->setupDynamics(dt);
 			ReturnType temp = particle_reduce(
-				this->identifier_.LoopRange(), this->Reference(), this->getOperation(),
+				std::execution::seq, this->identifier_.LoopRange(),
+				this->Reference(), this->getOperation(),
 				[&](size_t i) -> ReturnType
 				{ return this->reduce(i, dt); });
 			return this->outputResult(temp);
@@ -162,7 +163,8 @@ namespace SPH
 		{
 			this->setupDynamics(dt);
 			ReturnType temp = particle_parallel_reduce(
-				this->identifier_.LoopRange(), this->Reference(), this->getOperation(),
+				std::execution::par, this->identifier_.LoopRange(),
+				this->Reference(), this->getOperation(),
 				[&](size_t i) -> ReturnType
 				{ return this->reduce(i, dt); });
 			return this->outputResult(temp);
@@ -288,16 +290,16 @@ namespace SPH
 		/** sequential run the main interaction step between particles. */
 		virtual void runMainStep(Real dt) override
 		{
-			particle_for_split(split_cell_lists_,
-							   [&](size_t i)
-							   { this->interaction(i, dt * 0.5); });
+			particle_for(std::execution::seq, split_cell_lists_,
+						 [&](size_t i)
+						 { this->interaction(i, dt * 0.5); });
 		}
 		/** parallel run the main interaction step between particles. */
 		virtual void parallel_runMainStep(Real dt) override
 		{
-			particle_parallel_for_split(split_cell_lists_,
-										[&](size_t i)
-										{ this->interaction(i, dt * 0.5); });
+			particle_for(std::execution::par, split_cell_lists_,
+						 [&](size_t i)
+						 { this->interaction(i, dt * 0.5); });
 		}
 	};
 
@@ -321,16 +323,16 @@ namespace SPH
 		/** sequential run the main interaction step between particles. */
 		virtual void runMainStep(Real dt) override
 		{
-			particle_for(this->identifier_.LoopRange(),
+			particle_for(std::execution::seq, this->identifier_.LoopRange(),
 						 [&](size_t i)
 						 { this->interaction(i, dt); });
 		}
 		/** parallel run the main interaction step between particles. */
 		virtual void parallel_runMainStep(Real dt) override
 		{
-			particle_parallel_for(this->identifier_.LoopRange(),
-								  [&](size_t i)
-								  { this->interaction(i, dt); });
+			particle_for(std::execution::par, this->identifier_.LoopRange(),
+						 [&](size_t i)
+						 { this->interaction(i, dt); });
 		}
 
 	protected:
@@ -359,7 +361,7 @@ namespace SPH
 		virtual void exec(Real dt = 0.0) override
 		{
 			InteractionDynamics<LocalDynamicsType>::exec(dt);
-			particle_for(this->identifier_.LoopRange(),
+			particle_for(std::execution::seq, this->identifier_.LoopRange(),
 						 [&](size_t i)
 						 { this->update(i, dt); });
 		};
@@ -367,9 +369,9 @@ namespace SPH
 		virtual void parallel_exec(Real dt = 0.0) override
 		{
 			InteractionDynamics<LocalDynamicsType>::parallel_exec(dt);
-			particle_parallel_for(this->identifier_.LoopRange(),
-								  [&](size_t i)
-								  { this->update(i, dt); });
+			particle_for(std::execution::par, this->identifier_.LoopRange(),
+						 [&](size_t i)
+						 { this->update(i, dt); });
 		};
 	};
 
@@ -394,13 +396,13 @@ namespace SPH
 			this->setUpdated();
 			this->setupDynamics(dt);
 
-			particle_for(this->identifier_.LoopRange(),
+			particle_for(std::execution::seq, this->identifier_.LoopRange(),
 						 [&](size_t i)
 						 { this->initialization(i, dt); });
 
 			InteractionDynamics<LocalDynamicsType>::runInteraction(dt);
 
-			particle_for(this->identifier_.LoopRange(),
+			particle_for(std::execution::seq, this->identifier_.LoopRange(),
 						 [&](size_t i)
 						 { this->update(i, dt); });
 		};
@@ -410,15 +412,15 @@ namespace SPH
 			this->setUpdated();
 			this->setupDynamics(dt);
 
-			particle_parallel_for(this->identifier_.LoopRange(),
-								  [&](size_t i)
-								  { this->initialization(i, dt); });
+			particle_for(std::execution::par, this->identifier_.LoopRange(),
+						 [&](size_t i)
+						 { this->initialization(i, dt); });
 
 			InteractionDynamics<LocalDynamicsType>::parallel_runInteraction(dt);
 
-			particle_parallel_for(this->identifier_.LoopRange(),
-								  [&](size_t i)
-								  { this->update(i, dt); });
+			particle_for(std::execution::par, this->identifier_.LoopRange(),
+						 [&](size_t i)
+						 { this->update(i, dt); });
 		};
 	};
 }
