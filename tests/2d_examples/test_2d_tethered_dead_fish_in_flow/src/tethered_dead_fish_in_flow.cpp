@@ -375,7 +375,7 @@ int main(int ac, char *av[])
 	SimTK::CablePath tethering_line(cables, fixed_spot, SimTK::Vec3(0), tethered_spot, SimTK::Vec3(disp_cable_end[0], disp_cable_end[1], 0.0) );
 	SimTK::CableSpring tethering_spring(forces, tethering_line, 100.0, 3.0, 10.0);
 
-	// discreted forces acting on the bodies
+	// discrete forces acting on the bodies
 	SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
 	fixed_spot_info.addDecoration(SimTK::Transform(), SimTK::DecorativeSphere(0.02));
 	tethered_spot_info.addDecoration(SimTK::Transform(), SimTK::DecorativeSphere(0.4));

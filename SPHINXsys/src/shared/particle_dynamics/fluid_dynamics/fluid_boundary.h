@@ -57,7 +57,7 @@ namespace SPH
          * @class FlowVelocityBuffer
          * @brief Flow buffer in which the particle velocity relaxes to a given target profile.
          * This technique will be used for applying several boundary conditions,
-         * such as freestream, inflow, damping boundary conditions.
+         * such as free stream, inflow, damping boundary conditions.
          */
         class FlowVelocityBuffer : public BaseFlowBoundaryCondition
         {

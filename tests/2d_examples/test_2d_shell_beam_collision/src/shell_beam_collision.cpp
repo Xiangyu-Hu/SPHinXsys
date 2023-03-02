@@ -216,7 +216,7 @@ int main(int ac, char *av[])
 		shellMBody(matter.Ground(), SimTK::Transform(SimTK::Vec3(0)), rigid_info, SimTK::Transform(SimTK::Vec3(0)));
 	/** Gravity. */
 	SimTK::Force::UniformGravity sim_gravity(forces, matter, SimTK::Vec3(Real(-150.), 0.0, 0.0));
-	/** discreted forces acting on the bodies. */
+	/** discrete forces acting on the bodies. */
 	SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
 	/** Time stepping method for multibody system.*/
 	SimTK::State state = MBsystem.realizeTopology();
