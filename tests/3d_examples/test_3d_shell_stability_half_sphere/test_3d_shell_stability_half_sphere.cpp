@@ -216,7 +216,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 	Real end_time = 0.5; // 1 is better
 	Real output_period = end_time / 25.0;
 	Real dt = 0.0;
-	tick_count t1 = tick_count::now();
+	TickCount t1 = TickCount::now();
 	/**
 	 * Main loop
 	 */
@@ -274,7 +274,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 				max_displacement.push_back(shell_particles->getMaxDisplacement());
 			}
 		}
-		TimeInterval tt = tick_count::now()-t1;
+		TimeInterval tt = TickCount::now()-t1;
 		std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 		std::cout << "max displacement: " << shell_particles->getMaxDisplacement() << std::endl;
 	}

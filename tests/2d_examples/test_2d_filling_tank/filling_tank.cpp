@@ -161,7 +161,7 @@ int main()
 	Real output_interval = 0.1;
 	Real dt = 0.0; /**< Default acoustic time step sizes. */
 	/** statistics for computing CPU time. */
-	tick_count t1 = tick_count::now();
+	TickCount t1 = TickCount::now();
 	TimeInterval interval;
 	//----------------------------------------------------------------------
 	//	First output before the main loop.
@@ -213,15 +213,15 @@ int main()
 			fluid_observer_contact_relation.updateConfiguration();
 		}
 
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		write_water_mechanical_energy.writeToFile(number_of_iterations);
 		indicate_free_surface.parallel_exec();
 		body_states_recording.writeToFile();
 		write_recorded_water_pressure.writeToFile(number_of_iterations);
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
 	TimeInterval tt;
 	tt = t4 - t1 - interval;

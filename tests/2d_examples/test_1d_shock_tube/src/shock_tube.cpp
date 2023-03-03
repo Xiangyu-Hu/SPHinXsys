@@ -138,7 +138,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Statistics for computing CPU time.
 	//----------------------------------------------------------------------
-	tick_count t1 = tick_count::now();
+	TickCount t1 = TickCount::now();
 	TimeInterval interval;
 	//----------------------------------------------------------------------
 	//	Main loop starts here.
@@ -166,12 +166,12 @@ int main(int ac, char *av[])
 			number_of_iterations++;
 		}
 
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		body_states_recording.writeToFile();
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
 	TimeInterval tt;
 	tt = t4 - t1 - interval;

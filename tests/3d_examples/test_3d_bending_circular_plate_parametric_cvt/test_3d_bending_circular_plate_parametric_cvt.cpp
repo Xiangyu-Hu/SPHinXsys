@@ -299,7 +299,7 @@ return_data bending_circular_plate(Real dp_ratio)
 	Real end_time = 0.001;
 	Real output_period = end_time / 100.0;
 	Real dt = 0.0;
-	tick_count t1 = tick_count::now();
+	TickCount t1 = TickCount::now();
 	/**
 	 * Main loop
 	 */
@@ -350,7 +350,7 @@ return_data bending_circular_plate(Real dp_ratio)
 				vtp_output.writeToFile(ite);
 			}
 		}
-		TimeInterval tt = tick_count::now()-t1;
+		TimeInterval tt = TickCount::now()-t1;
 		std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	}
