@@ -37,6 +37,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES Windows)
 else()
     target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Werror>)
     target_compile_options(sphinxsys_core INTERFACE  $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Wall>)
+    target_compile_options(sphinxsys_core INTERFACE  $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-fPIC>) # For pybind in Linux
     # target_compile_options(sphinxsys_core INTERFACE  $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Wextra>) # TODO: 
     # target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Wpedantic>) # For strict C++ standard compliance # TODO:
 endif()
@@ -80,6 +81,7 @@ endif()
 #------ Setup the concrete libraries
 add_subdirectory(SPHINXsys)
 add_subdirectory(modules)
+add_subdirectory(3rd_party/pybind11) 
 
 #------ Setup the tests
 if(SPHINXSYS_BUILD_TESTS)

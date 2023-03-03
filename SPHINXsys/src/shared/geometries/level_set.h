@@ -29,7 +29,7 @@
 #ifndef LEVEL_SET_H
 #define LEVEL_SET_H
 
-#include "mesh_with_data_packages.h"
+#include "mesh_with_data_packages.hpp"
 #include "adaptation.h"
 #include "base_geometry.h"
 

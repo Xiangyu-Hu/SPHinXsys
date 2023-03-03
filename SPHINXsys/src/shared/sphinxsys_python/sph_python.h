@@ -10,7 +10,7 @@
  *																			*
  * SPHinXsys is partially funded by German Research Foundation				*
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
- *  HU1527/12-1 and HU1527/12-4													*
+ *  HU1527/12-1 and HU1527/12-4												*
  *                                                                          *
  * Portions copyright (c) 2017-2022 Technical University of Munich and		*
  * the authors' affiliations.												*
@@ -21,26 +21,25 @@
  *                                                                          *
  * ------------------------------------------------------------------------*/
 /**
- * @file 	sphinxsys.h
- * @brief 	This is the header file that user code should include to pick up all SPHinXsys capabilities. 
- * @author	Chi ZHang and Xiangyu Hu
+ * @file sph_python.h
+ * @brief Interface for sph and pyhton code.
  */
-#ifndef SPHINXSYS_H
-#define SPHINXSYS_H
 
-#include "all_kernels.h"
-#include "all_particles.h"
-#include "all_particle_generators.h"
-#include "all_geometries.h"
-#include "all_bodies.h"
-#include "all_body_relations.h"
-#include "sph_system.h"
-#include "all_materials.h"
-#include "all_physical_dynamics.h"
-#include "all_simbody.h"
-#include "io_all.h"
-#include "parameterization.h"
-#include "regression_test.h"
-#include "sph_python.h"
+#ifndef SPH_PYTHON_H
+#define SPH_PYTHON_H
 
-#endif //SPHINXSYS_H
+namespace SPH {
+
+    class SphPython
+    {
+    public:
+        explicit SphPython() {};
+        virtual ~SphPython() {};
+
+        //*** Functions for override. ***//
+        virtual int cmakeTest() = 0;
+        virtual void runCase(Real End_time) = 0;
+    };
+};
+
+#endif // SPH_PYTHON_H
