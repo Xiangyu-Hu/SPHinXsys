@@ -29,9 +29,9 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: 'recursive'
-      - name: Update submodule
+      - name: Update pybind submodule
         run: |
-          git submodule update --init --recursive --remote
+          git submodule update --init --recursive --remote 3rd_party/pybind
           cd 3rd_party/pybind && git checkout 3cc7e42 && cd ../../
 
 
@@ -130,9 +130,9 @@ jobs:
       - uses: actions/checkout@v3 # Checks-out the repository under ${{github.workspace}}
         with:
           submodules: 'recursive'
-      - name: Update submodule
+      - name: Update pybind submodule
         run: |
-          git submodule update --init --recursive --remote
+          git submodule update --init --recursive --remote 3rd_party/pybind
           cd 3rd_party/pybind && git checkout 3cc7e42 && cd ../../
       
       - name: Update ccache and ninja # For correct caching with ccache on Windows
@@ -225,9 +225,9 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: 'recursive'
-      - name: Update submodule
+      - name: Update pybind submodule
         run: |
-          git submodule update --init --recursive --remote
+          git submodule update --init --recursive --remote 3rd_party/pybind
           cd 3rd_party/pybind && git checkout 3cc7e42 && cd ../../
 
       - name: Install system dependencies
