@@ -28,7 +28,7 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
         with:
-          submodules: 'recursive'
+          submodules: '3rd_party/pybind'
       - name: Update pybind submodule
         run: |
           git submodule update --init --recursive --remote 3rd_party/pybind
@@ -129,7 +129,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3 # Checks-out the repository under ${{github.workspace}}
         with:
-          submodules: 'recursive'
+          submodules: '3rd_party/pybind'
       - name: Update pybind submodule
         run: |
           git submodule update --init --recursive --remote 3rd_party/pybind
@@ -224,7 +224,7 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
         with:
-          submodules: 'recursive'
+          submodules: '3rd_party/pybind'
       - name: Update pybind submodule
         run: |
           git submodule update --init --recursive --remote 3rd_party/pybind
