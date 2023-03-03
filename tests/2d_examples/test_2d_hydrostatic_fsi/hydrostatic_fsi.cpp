@@ -299,7 +299,7 @@ int main()
 	Real dt = 0.0;				   /**< Default acoustic time step sizes. */
 	Real dt_s = 0.0;			   /**< Default acoustic time step sizes for solid. */
 	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TimeInterval interval;
 	//----------------------------------------------------------------------
 	//	Main loop of time stepping starts here.
 	//----------------------------------------------------------------------
@@ -367,7 +367,7 @@ int main()
 		interval += t3 - t2;
 	}
 	tick_count t4 = tick_count::now();
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 

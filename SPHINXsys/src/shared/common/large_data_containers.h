@@ -45,6 +45,9 @@ namespace SPH {
 
 	static tbb::affinity_partitioner ap;
 	typedef tbb::blocked_range<size_t> IndexRange;
+	typedef tbb::tick_count TickCount;
+	typedef tbb::tick_count::interval_t TimeInterval;
+
 
 	template <typename T>
 	using ConcurrentVec = tbb::concurrent_vector<T>;

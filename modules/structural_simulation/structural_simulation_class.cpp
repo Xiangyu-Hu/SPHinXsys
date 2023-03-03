@@ -899,7 +899,7 @@ void StructuralSimulation::runSimulation(Real end_time)
 	Real output_period = end_time / 100.0;
 	Real dt = 0.0;
 	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TimeInterval interval;
 	/** Main loop */
 	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
@@ -921,7 +921,7 @@ void StructuralSimulation::runSimulation(Real end_time)
 		interval += t3 - t2;
 	}
 	tick_count t4 = tick_count::now();
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
 }
@@ -936,7 +936,7 @@ double StructuralSimulation::runSimulationFixedDurationJS(int number_of_steps)
 	int output_period = 100;
 	Real dt = 0.0;
 	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TimeInterval interval;
 	/** Main loop */
 	while (iteration_ < number_of_steps)
 	{
@@ -953,7 +953,7 @@ double StructuralSimulation::runSimulationFixedDurationJS(int number_of_steps)
 		interval += t3 - t2;
 	}
 	tick_count t4 = tick_count::now();
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	return tt.seconds();
 }
@@ -992,7 +992,7 @@ void StructuralSimulationJS::runSimulationFixedDuration(int number_of_steps)
 		runSimulationStep(dt, integration_time);
 	}
 	tick_count t_end = tick_count::now(); // computation time monitoring
-	tick_count::interval_t t_interval = t_end - t_start;
+	TimeInterval t_interval = t_end - t_start;
 	cout << "Total time for computation: " << t_interval.seconds() << " seconds." << endl;
 }
 

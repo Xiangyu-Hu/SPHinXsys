@@ -253,7 +253,7 @@ int main(int ac, char *av[])
 	Real dt_s = 0.0; /**< Default acoustic time step sizes for mechanics. */
 	/** Statistics for computing time. */
 	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TimeInterval interval;
 	std::cout << "Main Loop Starts Here : "
 			  << "\n";
 	/** Main loop starts here. */
@@ -362,7 +362,7 @@ int main(int ac, char *av[])
 	}
 	tick_count t4 = tick_count::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
     write_csv_files("LV_results.csv", "Time", "flow_rate_LV", "delta_volume_LV", simulation_time, flow_rate_LV, delta_volume_LV);
     write_csv_files("RV_results.csv", "Time", "flow_rate_RV", "delta_volume_RV", simulation_time, flow_rate_RV, delta_volume_RV);

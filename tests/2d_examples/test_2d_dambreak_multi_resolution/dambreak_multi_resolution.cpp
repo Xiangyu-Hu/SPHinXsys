@@ -156,10 +156,10 @@ int main(int ac, char *av[])
 	//	Statistics for CPU time
 	//----------------------------------------------------------------------
 	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
-	tick_count::interval_t interval_computing_time_step;
-	tick_count::interval_t interval_computing_fluid_pressure_relaxation;
-	tick_count::interval_t interval_updating_configuration;
+	TimeInterval interval;
+	TimeInterval interval_computing_time_step;
+	TimeInterval interval_computing_fluid_pressure_relaxation;
+	TimeInterval interval_updating_configuration;
 	tick_count time_instance;
 	//----------------------------------------------------------------------
 	//	First output before the main loop.
@@ -233,7 +233,7 @@ int main(int ac, char *av[])
 	}
 	tick_count t4 = tick_count::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds()
 			  << " seconds." << std::endl;

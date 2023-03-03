@@ -148,7 +148,7 @@ int main()
 	Real dt = 0.0;
 	/** Statistics for computing time. */
 	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TimeInterval interval;
 	//----------------------------------------------------------------------
 	//	Main loop of time stepping starts here.
 	//----------------------------------------------------------------------
@@ -184,7 +184,7 @@ int main()
 	}
 	tick_count t4 = tick_count::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
