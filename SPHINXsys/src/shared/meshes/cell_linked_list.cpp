@@ -21,8 +21,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing, RealBody &real_body, SPHAdaptation &sph_adaptation)
-		: BaseCellLinkedList(real_body, sph_adaptation)
-		, Mesh(tentative_bounds, grid_spacing, 2)
+		: BaseCellLinkedList(real_body, sph_adaptation), Mesh(tentative_bounds, grid_spacing, 2)
 	{
 		allocateMeshDataMatrix();
 		single_cell_linked_list_level_.push_back(this);
@@ -57,17 +56,18 @@ namespace SPH
 		StdLargeVec<Vecd> &pos = base_particles.pos_;
 		StdLargeVec<size_t> &sequence = base_particles.sequence_;
 		size_t total_real_particles = base_particles.total_real_particles_;
-		particle_parallel_for(total_real_particles, [&](size_t i)
-							  { sequence[i] = transferMeshIndexToMortonOrder(CellIndexFromPosition(pos[i])); });
+		particle_for(execution::par, total_real_particles, [&](size_t i)
+					 { sequence[i] = transferMeshIndexToMortonOrder(CellIndexFromPosition(pos[i])); });
 		return sequence;
 	}
 	//=================================================================================================//
 	MultilevelCellLinkedList::MultilevelCellLinkedList(BoundingBox tentative_bounds, Real reference_grid_spacing,
-							size_t total_levels, RealBody &real_body, SPHAdaptation &sph_adaptation)
+													   size_t total_levels, RealBody &real_body, SPHAdaptation &sph_adaptation)
 		: MultilevelMesh<BaseCellLinkedList, CellLinkedList, RefinedMesh<CellLinkedList>>(
-			  				tentative_bounds, reference_grid_spacing, total_levels, real_body, sph_adaptation)
-		, h_ratio_(DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->h_ratio_) 
-	{}
+			  tentative_bounds, reference_grid_spacing, total_levels, real_body, sph_adaptation),
+		  h_ratio_(DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->h_ratio_)
+	{
+	}
 	//=================================================================================================//
 	size_t MultilevelCellLinkedList::getMeshLevel(Real particle_cutoff_radius)
 	{
@@ -130,12 +130,12 @@ namespace SPH
 		StdLargeVec<Vecd> &pos = base_particles.pos_;
 		StdLargeVec<size_t> &sequence = base_particles.sequence_;
 		size_t total_real_particles = base_particles.total_real_particles_;
-		particle_parallel_for(total_real_particles, [&](size_t i)
-							  {
-								  size_t level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[i]));
-								  sequence[i] = mesh_levels_[level]->transferMeshIndexToMortonOrder(
-									  mesh_levels_[level]->CellIndexFromPosition(pos[i]));
-							  });
+		particle_for(execution::par, total_real_particles,
+					 [&](size_t i)
+					 {
+						 size_t level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[i]));
+						 sequence[i] = mesh_levels_[level]->transferMeshIndexToMortonOrder(
+						 mesh_levels_[level]->CellIndexFromPosition(pos[i])); });
 
 		return sequence;
 	}
