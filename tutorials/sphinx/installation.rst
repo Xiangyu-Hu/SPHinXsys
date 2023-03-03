@@ -44,7 +44,7 @@ In the terminal, install the required system dependencies
         sudo apt install -y git                 
         sudo apt install -y cmake               
         sudo apt install -y ccache              # ccache is a compiler cache. It speeds up recompilation by caching previous compilations
-        sudo apt install -y python3
+        sudo apt install -y python3-dev
 
 If you want a debugger for development purposes:
 
