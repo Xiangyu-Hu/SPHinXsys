@@ -42,7 +42,7 @@ protected:
 //	Complex shape for wall boundary, note that no partial overlap is allowed
 //	for the shapes in a complex shape.
 //----------------------------------------------------------------------
-class WallBoundary : public ComplexShape, Parameter
+class WallBoundary : public ComplexShape, public Parameter
 {
 public:
 	explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
@@ -92,7 +92,7 @@ public:
 //----------------------------------------------------------------------
 //  Define environment.
 //----------------------------------------------------------------------
-class Environment : public SphPython, PreSettingCase
+class Environment : public SphPython, public PreSettingCase
 {
 protected:
 	//----------------------------------------------------------------------
