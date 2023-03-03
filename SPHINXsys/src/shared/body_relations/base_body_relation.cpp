@@ -34,8 +34,8 @@ namespace SPH
 	void BaseInnerRelation::resetNeighborhoodCurrentSize()
 	{
 		parallel_for(
-			blocked_range<size_t>(0, base_particles_.total_real_particles_),
-			[&](const blocked_range<size_t> &r)
+			IndexRange(0, base_particles_.total_real_particles_),
+			[&](const IndexRange &r)
 			{
 				for (size_t num = r.begin(); num != r.end(); ++num)
 				{
@@ -67,8 +67,8 @@ namespace SPH
 		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{
 			parallel_for(
-				blocked_range<size_t>(0, base_particles_.total_real_particles_),
-				[&](const blocked_range<size_t> &r)
+				IndexRange(0, base_particles_.total_real_particles_),
+				[&](const IndexRange &r)
 				{
 					for (size_t num = r.begin(); num != r.end(); ++num)
 					{
