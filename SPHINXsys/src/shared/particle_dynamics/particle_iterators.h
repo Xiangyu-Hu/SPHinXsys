@@ -205,8 +205,8 @@ namespace SPH
 		{
 			ConcurrentCellLists &cell_lists = split_cell_lists[k];
 			parallel_for(
-				blocked_range<size_t>(0, cell_lists.size()),
-				[&](const blocked_range<size_t> &r)
+				IndexRange(0, cell_lists.size()),
+				[&](const IndexRange &r)
 				{
 					for (size_t l = r.begin(); l < r.end(); ++l)
 					{
@@ -225,8 +225,8 @@ namespace SPH
 		{
 			ConcurrentCellLists &cell_lists = split_cell_lists[k - 1];
 			parallel_for(
-				blocked_range<size_t>(0, cell_lists.size()),
-				[&](const blocked_range<size_t> &r)
+				IndexRange(0, cell_lists.size()),
+				[&](const IndexRange &r)
 				{
 					for (size_t l = r.begin(); l < r.end(); ++l)
 					{

@@ -34,8 +34,8 @@ namespace SPH
 		StdLargeVec<Vecd> &pos_n = base_particles.pos_;
 		size_t total_real_particles = base_particles.total_real_particles_;
 		parallel_for(
-			blocked_range<size_t>(0, total_real_particles),
-			[&](const blocked_range<size_t> &r)
+			IndexRange(0, total_real_particles),
+			[&](const IndexRange &r)
 			{
 				for (size_t i = r.begin(); i != r.end(); ++i)
 				{
@@ -104,8 +104,8 @@ namespace SPH
 		size_t total_real_particles = base_particles.total_real_particles_;
 		// rebuild the corresponding particle list.
 		parallel_for(
-			blocked_range<size_t>(0, total_real_particles),
-			[&](const blocked_range<size_t> &r)
+			IndexRange(0, total_real_particles),
+			[&](const IndexRange &r)
 			{
 				for (size_t i = r.begin(); i != r.end(); ++i)
 				{

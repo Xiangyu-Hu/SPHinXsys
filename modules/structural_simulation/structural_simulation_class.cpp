@@ -898,8 +898,8 @@ void StructuralSimulation::runSimulation(Real end_time)
 	write_states.writeToFile(0);
 	Real output_period = end_time / 100.0;
 	Real dt = 0.0;
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 	/** Main loop */
 	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
@@ -908,7 +908,7 @@ void StructuralSimulation::runSimulation(Real end_time)
 		{
 			runSimulationStep(dt, integration_time);
 		}
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		// record data for test
 		von_mises_stress_max_.push_back(solid_body_list_[0].get()->getElasticSolidParticles()->getVonMisesStressMax());
 		von_mises_stress_particles_.push_back(solid_body_list_[0].get()->getElasticSolidParticles()->getVonMisesStressVector());
@@ -917,11 +917,11 @@ void StructuralSimulation::runSimulation(Real end_time)
 		von_mises_strain_particles_.push_back(solid_body_list_[0].get()->getElasticSolidParticles()->getVonMisesStrainVector());
 		// write data to file
 		write_states.writeToFile();
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
-	tick_count::interval_t tt;
+	TickCount t4 = TickCount::now();
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
 }
@@ -935,8 +935,8 @@ double StructuralSimulation::runSimulationFixedDurationJS(int number_of_steps)
 	write_states.writeToFile(0);
 	int output_period = 100;
 	Real dt = 0.0;
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 	/** Main loop */
 	while (iteration_ < number_of_steps)
 	{
@@ -947,13 +947,13 @@ double StructuralSimulation::runSimulationFixedDurationJS(int number_of_steps)
 			runSimulationStep(dt, integration_time);
 			output_step++;
 		}
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		write_states.writeToFile();
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
-	tick_count::interval_t tt;
+	TickCount t4 = TickCount::now();
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	return tt.seconds();
 }
@@ -984,15 +984,15 @@ StructuralSimulationJS::StructuralSimulationJS(const StructuralSimulationInput &
 void StructuralSimulationJS::runSimulationFixedDuration(int number_of_steps)
 {
 	/** Statistics for computing time. */
-	tick_count t_start = tick_count::now(); // computation time monitoring
+	TickCount t_start = TickCount::now(); // computation time monitoring
 	/** Main loop */
 	for (int i = 0; i < number_of_steps; ++i)
 	{
 		Real integration_time = 0.0;
 		runSimulationStep(dt, integration_time);
 	}
-	tick_count t_end = tick_count::now(); // computation time monitoring
-	tick_count::interval_t t_interval = t_end - t_start;
+	TickCount t_end = TickCount::now(); // computation time monitoring
+	TimeInterval t_interval = t_end - t_start;
 	cout << "Total time for computation: " << t_interval.seconds() << " seconds." << endl;
 }
 

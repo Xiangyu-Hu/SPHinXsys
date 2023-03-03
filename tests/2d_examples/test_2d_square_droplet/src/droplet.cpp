@@ -199,12 +199,12 @@ int main()
 	Real output_interval = 0.02; /**< Time stamps for output of body states. */
 	Real dt = 0.0;				 /**< Default acoustic time step sizes. */
 	/** statistics for computing CPU time. */
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
-	tick_count::interval_t interval_computing_time_step;
-	tick_count::interval_t interval_computing_pressure_relaxation;
-	tick_count::interval_t interval_updating_configuration;
-	tick_count time_instance;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
+	TimeInterval interval_computing_time_step;
+	TimeInterval interval_computing_pressure_relaxation;
+	TimeInterval interval_updating_configuration;
+	TickCount time_instance;
 	//----------------------------------------------------------------------
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
@@ -219,7 +219,7 @@ int main()
 		while (integration_time < output_interval)
 		{
 			/** Acceleration due to viscous force and gravity. */
-			time_instance = tick_count::now();
+			time_instance = TickCount::now();
 			initialize_a_water_step.parallel_exec();
 			initialize_a_air_step.parallel_exec();
 
@@ -239,10 +239,10 @@ int main()
 			color_gradient_interpolation.parallel_exec();
 			surface_tension_acceleration.parallel_exec();
 
-			interval_computing_time_step += tick_count::now() - time_instance;
+			interval_computing_time_step += TickCount::now() - time_instance;
 
 			/** Dynamics including pressure relaxation. */
-			time_instance = tick_count::now();
+			time_instance = TickCount::now();
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
@@ -260,7 +260,7 @@ int main()
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
 			}
-			interval_computing_pressure_relaxation += tick_count::now() - time_instance;
+			interval_computing_pressure_relaxation += TickCount::now() - time_instance;
 
 			if (number_of_iterations % screen_output_interval == 0)
 			{
@@ -271,7 +271,7 @@ int main()
 			number_of_iterations++;
 
 			/** Update cell linked list and configuration. */
-			time_instance = tick_count::now();
+			time_instance = TickCount::now();
 
 			water_block.updateCellLinkedListWithParticleSort(100);
 			water_air_complex.updateConfiguration();
@@ -281,17 +281,17 @@ int main()
 			air_water_complex.updateConfiguration();
 			air_wall_contact.updateConfiguration();
 
-			interval_updating_configuration += tick_count::now() - time_instance;
+			interval_updating_configuration += TickCount::now() - time_instance;
 		}
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		body_states_recording.writeToFile();
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
 
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds()
 			  << " seconds." << std::endl;

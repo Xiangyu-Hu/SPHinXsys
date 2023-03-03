@@ -252,8 +252,8 @@ int main(int ac, char *av[])
 	Real dt = 0.0;	 /**< Default acoustic time step sizes for physiology. */
 	Real dt_s = 0.0; /**< Default acoustic time step sizes for mechanics. */
 	/** Statistics for computing time. */
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 	std::cout << "Main Loop Starts Here : "
 			  << "\n";
 	/** Main loop starts here. */
@@ -354,15 +354,15 @@ int main(int ac, char *av[])
 			write_voltage.writeToFile(ite);
 			write_displacement.writeToFile(ite);
 		}
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		interpolation_particle_position.parallel_exec();
 		write_states.writeToFile();
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
     write_csv_files("LV_results.csv", "Time", "flow_rate_LV", "delta_volume_LV", simulation_time, flow_rate_LV, delta_volume_LV);
     write_csv_files("RV_results.csv", "Time", "flow_rate_RV", "delta_volume_RV", simulation_time, flow_rate_RV, delta_volume_RV);

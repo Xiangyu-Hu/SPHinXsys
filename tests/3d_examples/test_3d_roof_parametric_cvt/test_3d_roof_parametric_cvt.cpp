@@ -400,7 +400,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 	Real end_time = 3.0;
 	Real output_period = end_time / 100.0;
 	Real dt = 0.0;
-	tick_count t1 = tick_count::now();
+	TickCount t1 = TickCount::now();
 	/**
 	 * Main loop
 	 */
@@ -452,7 +452,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 			}
 			vtp_output.writeToFile(ite);
 		}
-		tick_count::interval_t tt = tick_count::now()-t1;
+		TimeInterval tt = TickCount::now()-t1;
 		std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	}

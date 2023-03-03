@@ -56,8 +56,8 @@ namespace SPH
 							  const LocalFunction &local_function, Args &&...args)
 	{
 		parallel_for(
-			blocked_range<size_t>(0, data_pkgs.size()),
-			[&](const blocked_range<size_t> &r)
+			IndexRange(0, data_pkgs.size()),
+			[&](const IndexRange &r)
 			{
 				for (size_t i = r.begin(); i != r.end(); ++i)
 				{

@@ -229,8 +229,8 @@ int main()
 	Real output_interval = end_time / 200.0;
 	Real dt = 0.0;					/**< Default acoustic time step sizes. */
 	Real dt_s = 0.0;				/**< Default acoustic time step sizes for solid. */
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 	//----------------------------------------------------------------------
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
@@ -294,13 +294,13 @@ int main()
 			/** Output the observed data. */
 			write_beam_tip_displacement.writeToFile(number_of_iterations);
 		}
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		write_real_body_states_to_vtp.writeToFile();
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
-	tick_count::interval_t tt;
+	TickCount t4 = TickCount::now();
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 

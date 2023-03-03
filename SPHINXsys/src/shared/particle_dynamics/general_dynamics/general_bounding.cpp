@@ -286,8 +286,8 @@ namespace SPH
 		setupDynamics(dt);
 		DataListsInCells &cell_list_data = bound_cells_data_.second;
 		parallel_for(
-			blocked_range<size_t>(0, cell_list_data.size()),
-			[&](const blocked_range<size_t> &r)
+			IndexRange(0, cell_list_data.size()),
+			[&](const IndexRange &r)
 			{
 				for (size_t i = r.begin(); i < r.end(); ++i)
 				{
@@ -358,8 +358,8 @@ namespace SPH
 	void MirrorConditionAlongAxis::UpdatingMirrorGhostStates ::parallel_exec(Real dt)
 	{
 		parallel_for(
-			blocked_range<size_t>(0, ghost_particles_.size()),
-			[&](const blocked_range<size_t> &r)
+			IndexRange(0, ghost_particles_.size()),
+			[&](const IndexRange &r)
 			{
 				for (size_t i = r.begin(); i < r.end(); ++i)
 				{
