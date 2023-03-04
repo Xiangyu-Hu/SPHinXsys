@@ -33,7 +33,7 @@ namespace SPH
 {
     namespace execution
     {
-        class SequentialPolicy
+        class SequencedPolicy
         {
         };
 
@@ -41,13 +41,13 @@ namespace SPH
         {
         };
 
-        class ParallelUnsequentialPolicy
+        class ParallelUnsequencedPolicy
         {
         };
 
-        inline constexpr SequentialPolicy seq{};
+        inline constexpr SequencedPolicy seq{};
         inline constexpr ParallelPolicy par{};
-        inline constexpr ParallelUnsequentialPolicy par_unseq{};
+        inline constexpr ParallelUnsequencedPolicy par_unseq{};
     }
 }
 #endif // EXECUTION_POLICY_H
