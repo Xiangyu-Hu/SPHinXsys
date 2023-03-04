@@ -177,8 +177,8 @@ class ThermalRelaxationComplex
 		  RelaxationOfAllDiffusionSpeciesComplex<FluidParticles, WeaklyCompressibleFluid, SolidParticles, Solid>>
 {
 public:
-	explicit ThermalRelaxationComplex(ComplexRelation &body_complex_relation)
-		: RelaxationOfAllDiffusionSpeciesRK2(body_complex_relation){};
+	explicit ThermalRelaxationComplex(ComplexRelation &complex_relation)
+		: RelaxationOfAllDiffusionSpeciesRK2(complex_relation){};
 	virtual ~ThermalRelaxationComplex(){};
 };
 //----------------------------------------------------------------------
@@ -275,7 +275,7 @@ int main()
 	/** Inflow boundary condition. */
 	BodyAlignedBoxByCell inflow_buffer(
 		thermofluid_body, makeShared<AlignedBoxShape>(Transform2d(Vec2d(buffer_translation)), buffer_halfsize));
-	SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>, BodyAlignedBoxByCell> parabolic_inflow(inflow_buffer);
+	SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------

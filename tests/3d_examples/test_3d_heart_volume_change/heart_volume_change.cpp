@@ -97,7 +97,7 @@ void MyocardiumSurfaces::init_surfaces(
 
 	// step 1.
 	// first layer of particles are dp/2 away from the surface
-	// mesh_offset acounts for potential surface mismatch between ventricle and myocardium mesh
+	// mesh_offset accounts for potential surface mismatch between ventricle and myocardium mesh
 	lv_ids_ = lv_mesh.get_ids_close_to_surface(particles_.pos0_, myo_surface_ids_, lv_mesh_offset + smoothing_length*0.5);
 	rv_ids_ = rv_mesh.get_ids_close_to_surface(particles_.pos0_, myo_surface_ids_, rv_mesh_offset + smoothing_length*0.5);
 	StdLargeVec<Vec3d> lv_pos; // lv particles positions

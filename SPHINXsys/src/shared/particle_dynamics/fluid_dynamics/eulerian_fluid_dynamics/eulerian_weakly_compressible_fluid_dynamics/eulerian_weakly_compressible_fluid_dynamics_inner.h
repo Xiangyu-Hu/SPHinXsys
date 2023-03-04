@@ -182,9 +182,9 @@ namespace SPH
 		{
 		public:
 			NonReflectiveBoundaryVariableCorrection(BaseInnerRelation &inner_relation)
-				: LocalDynamics(inner_relation.sph_body_), EulerianWeaklyCompressibleFluidDataInner(inner_relation),
+				: LocalDynamics(inner_relation.getSPHBody()), EulerianWeaklyCompressibleFluidDataInner(inner_relation),
 				  rho_(particles_->rho_), p_(particles_->p_), mass_(particles_->mass_), Vol_(particles_->Vol_),
-				  vel_(particles_->vel_),mom_(particles_->mom_), pos_(particles_->pos_), 
+				  vel_(particles_->vel_), mom_(particles_->mom_), pos_(particles_->pos_),
 				  surface_indicator_(particles_->surface_indicator_)
 			{
 				particles_->registerVariable(n_, "NormalDirection");

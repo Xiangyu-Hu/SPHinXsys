@@ -153,7 +153,7 @@ namespace SPH
 											  public RelaxDataDelegateComplex
 		{
 		public:
-			explicit RelaxationAccelerationComplex(ComplexRelation &body_complex_relation);
+			explicit RelaxationAccelerationComplex(ComplexRelation &complex_relation);
 			virtual ~RelaxationAccelerationComplex(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -167,7 +167,7 @@ namespace SPH
 		 * map constrained particles to geometry face and
 		 * r = r + phi * norm (vector distance to face)
 		 */
-		class ShapeSurfaceBounding : public LocalDynamics,
+		class ShapeSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>,
 									 public RelaxDataDelegateSimple
 		{
 		public:
@@ -191,7 +191,7 @@ namespace SPH
 			explicit RelaxationStepInner(BaseInnerRelation &inner_relation,
 										 bool level_set_correction = false);
 			virtual ~RelaxationStepInner(){};
-			SimpleDynamics<ShapeSurfaceBounding, NearShapeSurface> &SurfaceBounding() { return surface_bounding_; };
+			SimpleDynamics<ShapeSurfaceBounding> &SurfaceBounding() { return surface_bounding_; };
 			virtual void exec(Real dt = 0.0) override;
 			virtual void parallel_exec(Real dt = 0.0) override;
 
@@ -202,7 +202,7 @@ namespace SPH
 			UniquePtr<BaseDynamics<void>> relaxation_acceleration_inner_;
 			ReduceDynamics<GetTimeStepSizeSquare> get_time_step_square_;
 			SimpleDynamics<UpdateParticlePosition> update_particle_position_;
-			SimpleDynamics<ShapeSurfaceBounding, NearShapeSurface> surface_bounding_;
+			SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
 		};
 
 		/**
@@ -216,7 +216,7 @@ namespace SPH
 		{
 		public:
 			RelaxationAccelerationComplexWithLevelSetCorrection(
-				ComplexRelation &body_complex_relation, const std::string &shape_name);
+				ComplexRelation &complex_relation, const std::string &shape_name);
 			virtual ~RelaxationAccelerationComplexWithLevelSetCorrection(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
@@ -232,10 +232,10 @@ namespace SPH
 		class RelaxationStepComplex : public BaseDynamics<void>
 		{
 		public:
-			explicit RelaxationStepComplex(ComplexRelation &body_complex_relation,
+			explicit RelaxationStepComplex(ComplexRelation &complex_relation,
 										   const std::string &shape_name, bool level_set_correction = false);
 			virtual ~RelaxationStepComplex(){};
-			SimpleDynamics<ShapeSurfaceBounding, NearShapeSurface> &SurfaceBounding() { return surface_bounding_; };
+			SimpleDynamics<ShapeSurfaceBounding> &SurfaceBounding() { return surface_bounding_; };
 			virtual void exec(Real dt = 0.0) override;
 			virtual void parallel_exec(Real dt = 0.0) override;
 
@@ -246,7 +246,7 @@ namespace SPH
 			UniquePtr<BaseDynamics<void>> relaxation_acceleration_complex_;
 			ReduceDynamics<GetTimeStepSizeSquare> get_time_step_square_;
 			SimpleDynamics<UpdateParticlePosition> update_particle_position_;
-			SimpleDynamics<ShapeSurfaceBounding, NearShapeSurface> surface_bounding_;
+			SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
 		};
 
 		/**
@@ -256,7 +256,7 @@ namespace SPH
 		 * because if level_set_refinement_ratio > particle_spacing_ref_ / (0.05 * thickness_),
 		 * there will be no level set field.
 		 */
-		class ShellMidSurfaceBounding : public LocalDynamics,
+		class ShellMidSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>,
 										public RelaxDataDelegateInner
 		{
 		public:
@@ -375,7 +375,7 @@ namespace SPH
 			virtual ~ShellRelaxationStepInner(){};
 
 			SimpleDynamics<UpdateParticlePosition> update_shell_particle_position_;
-			SimpleDynamics<ShellMidSurfaceBounding, NearShapeSurface> mid_surface_bounding_;
+			SimpleDynamics<ShellMidSurfaceBounding> mid_surface_bounding_;
 
 			virtual void exec(Real dt = 0.0) override;
 			virtual void parallel_exec(Real dt = 0.0) override;

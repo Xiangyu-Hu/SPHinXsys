@@ -143,10 +143,10 @@ int main(int ac, char *av[])
 	Dynamics1Level<solid_dynamics::Integration1stHalf> stress_relaxation_first_half(coil_inner);
 	Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(coil_inner);
 	// Algorithms for solid-solid contacts.
-	InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle> coil_update_contact_density(coil_contact);
-	InteractionDynamics<solid_dynamics::ContactForceFromWall, BodyPartByParticle> coil_compute_solid_contact_forces(coil_contact);
-	InteractionDynamics<solid_dynamics::SelfContactDensitySummation, BodyPartByParticle> coil_self_contact_density(coil_self_contact);
-	InteractionDynamics<solid_dynamics::SelfContactForce, BodyPartByParticle> coil_self_contact_forces(coil_self_contact);
+	InteractionDynamics<solid_dynamics::ContactDensitySummation> coil_update_contact_density(coil_contact);
+	InteractionDynamics<solid_dynamics::ContactForceFromWall> coil_compute_solid_contact_forces(coil_contact);
+	InteractionDynamics<solid_dynamics::SelfContactDensitySummation> coil_self_contact_density(coil_self_contact);
+	InteractionDynamics<solid_dynamics::SelfContactForce> coil_self_contact_forces(coil_self_contact);
 	// Damping the velocity field for quasi-static solution
 	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
 		coil_damping(0.2, coil_inner, "Velocity", physical_viscosity);

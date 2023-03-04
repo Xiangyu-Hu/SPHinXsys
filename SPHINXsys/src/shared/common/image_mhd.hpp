@@ -364,7 +364,7 @@ namespace SPH {
 	template<typename T, int nDims>
 	Vec3d ImageMHD<T, nDims>::findClosestPoint(const Vec3d& probe_point)
 	{
-		Vec3i this_cell;
+		Vec3i this_cell = Vec3i::Zero();
 		std::vector<int> neighbors = findNeighbors(probe_point, this_cell);
 		Vec3d n_sum = Vecd::Zero();
 		double weight_sum = 0.0;
@@ -442,7 +442,7 @@ namespace SPH {
 	template<typename T, int nDims>
 	Vec3d ImageMHD<T, nDims>::findNormalAtPoint(const Vec3d & probe_point)
 	{
-		Vec3i this_cell;
+		Vec3i this_cell = Vec3i::Zero();
 		std::vector<int> neighbors = findNeighbors(probe_point, this_cell);
 		Vec3d n_sum = Vecd::Zero();
 		double weight_sum = 0.0;

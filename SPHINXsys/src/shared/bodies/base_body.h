@@ -152,7 +152,7 @@ namespace SPH
 			base_particles_->initializeOtherVariables();
 			base_material_->assignBaseParticles(base_particles_);
 		};
-			
+
 		template <typename VariableType>
 		void addBodyStateForRecording(const std::string &variable_name)
 		{

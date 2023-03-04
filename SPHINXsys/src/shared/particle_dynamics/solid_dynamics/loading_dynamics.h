@@ -167,7 +167,7 @@ namespace SPH
          * @class ForceInBodyRegion
          * @brief ForceInBodyRegion, distributes the force vector as acceleration among the particles in a given body part
          */
-        class ForceInBodyRegion : public LocalDynamics, public SolidDataSimple
+        class ForceInBodyRegion : public BaseLocalDynamics<BodyPartByParticle>, public SolidDataSimple
         {
         public:
             ForceInBodyRegion(BodyPartByParticle &body_part, Vecd force, Real end_time);
@@ -184,7 +184,7 @@ namespace SPH
          * @class SurfacePressureFromSource
          * @brief SurfacePressureFromSource, applies pressure on the surface particles coming from a source point
          */
-        class SurfacePressureFromSource : public LocalDynamics, public SolidDataSimple
+        class SurfacePressureFromSource : public BaseLocalDynamics<BodyPartByParticle>, public SolidDataSimple
         {
         public:
             SurfacePressureFromSource(BodyPartByParticle &body_part,

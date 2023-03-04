@@ -164,7 +164,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ForceInBodyRegion:: ForceInBodyRegion(BodyPartByParticle &body_part, Vecd force, Real end_time)
-			: LocalDynamics(body_part.getSPHBody()), SolidDataSimple(sph_body_),
+			: BaseLocalDynamics<BodyPartByParticle>(body_part), SolidDataSimple(sph_body_),
 			  pos0_(particles_->pos0_), acc_prior_(particles_->acc_prior_), acceleration_(Vecd::Zero()), end_time_(end_time)
 		{
 			Real total_mass_in_region(0);
@@ -181,7 +181,7 @@ namespace SPH
 		//=================================================================================================//
 		SurfacePressureFromSource:: SurfacePressureFromSource(BodyPartByParticle &body_part, Vecd source_point, 
 															  StdVec<std::array<Real, 2>> pressure_over_time)
-			: LocalDynamics(body_part.getSPHBody()), SolidDataSimple(sph_body_),
+			: BaseLocalDynamics<BodyPartByParticle>(body_part), SolidDataSimple(sph_body_),
 			  pos0_(particles_->pos0_), n_(particles_->n_), acc_prior_(particles_->acc_prior_),
 			  mass_(particles_->mass_), pressure_over_time_(pressure_over_time),
 			  apply_pressure_to_particle_(StdLargeVec<bool>(pos0_.size(), false))

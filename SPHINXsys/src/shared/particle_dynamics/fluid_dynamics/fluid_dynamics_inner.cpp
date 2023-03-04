@@ -13,7 +13,7 @@ namespace SPH
 			  pos_(particles_->pos_), vel_(particles_->vel_) {}
 		//=================================================================================================//
 		BaseDensitySummationInner::BaseDensitySummationInner(BaseInnerRelation &inner_relation)
-			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
+			: LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
 			  rho_(particles_->rho_), rho_sum_(particles_->rho_sum_), mass_(particles_->mass_),
 			  rho0_(sph_body_.base_material_->ReferenceDensity()) {}
 		//=================================================================================================//
@@ -24,7 +24,7 @@ namespace SPH
 		//=================================================================================================//
 		DensitySummationInner::DensitySummationInner(BaseInnerRelation &inner_relation)
 			: BaseDensitySummationInner(inner_relation),
-			  W0_(sph_body_.sph_adaptation_->getKernel()->W0( zero_vec )),
+			  W0_(sph_body_.sph_adaptation_->getKernel()->W0( ZeroVecd )),
 			  inv_sigma0_(1.0 / sph_body_.sph_adaptation_->ReferenceNumberDensity()) {}
 		//=================================================================================================//
 		void DensitySummationInner::interaction(size_t index_i, Real dt)
@@ -46,7 +46,7 @@ namespace SPH
 		//=================================================================================================//
 		void DensitySummationInnerAdaptive::interaction(size_t index_i, Real dt)
 		{
-			Real sigma_i = mass_[index_i] * kernel_.W0( h_ratio_[index_i], zero_vec );
+			Real sigma_i = mass_[index_i] * kernel_.W0( h_ratio_[index_i], ZeroVecd );
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 				sigma_i += inner_neighborhood.W_ij_[n] * mass_[inner_neighborhood.j_[n]];
@@ -56,7 +56,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		BaseViscousAccelerationInner::BaseViscousAccelerationInner(BaseInnerRelation &inner_relation)
-			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
+			: LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
 			  rho_(particles_->rho_), vel_(particles_->vel_), acc_prior_(particles_->acc_prior_),
 			  mu_(particles_->fluid_.ReferenceViscosity()),
 			  smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
@@ -100,7 +100,7 @@ namespace SPH
 		//=================================================================================================//
 		TransportVelocityCorrectionInner::
 			TransportVelocityCorrectionInner(BaseInnerRelation &inner_relation, Real coefficient)
-			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
+			: LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
 			  pos_(particles_->pos_), surface_indicator_(particles_->surface_indicator_),
 			  smoothing_length_sqr_(powerN(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
 			  coefficient_(coefficient) {}
@@ -123,7 +123,7 @@ namespace SPH
 		//=================================================================================================//
 		TransportVelocityCorrectionInnerAdaptive::
 			TransportVelocityCorrectionInnerAdaptive(BaseInnerRelation &inner_relation, Real coefficient)
-			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
+			: LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
 			  sph_adaptation_(*sph_body_.sph_adaptation_),
 			  pos_(particles_->pos_), surface_indicator_(particles_->surface_indicator_),
 			  smoothing_length_sqr_(powerN(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
@@ -199,7 +199,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		VorticityInner::VorticityInner(BaseInnerRelation &inner_relation)
-			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
+			: LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
 			  vel_(particles_->vel_)
 		{
 			particles_->registerVariable(vorticity_, "VorticityInner");
@@ -223,7 +223,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		BaseIntegration::BaseIntegration(BaseInnerRelation &inner_relation)
-			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
+			: LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
 			  fluid_(particles_->fluid_), rho_(particles_->rho_),
 			  p_(particles_->p_), drho_dt_(particles_->drho_dt_),
 			  pos_(particles_->pos_), vel_(particles_->vel_),

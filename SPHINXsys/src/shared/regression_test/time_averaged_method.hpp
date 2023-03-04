@@ -500,7 +500,7 @@ namespace SPH
 	void RegressionTestTimeAveraged<ObserveMethodType>::filterExtremeValues()
 	{
 		filterLocalResult(this->current_result_);
-		filefullpath_filter_output_ = this->input_folder_path_ + "/" + this->dynamics_range_name_
+		filefullpath_filter_output_ = this->input_folder_path_ + "/" + this->dynamics_identifier_name_
 			+ "_" + this->quantity_name_ + ".dat";
 		std::ofstream out_file(filefullpath_filter_output_.c_str(), std::ios::app);
 		out_file << "run_time" << "   ";
