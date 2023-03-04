@@ -116,7 +116,10 @@ namespace SPH
 
 		explicit RelaxationOfAllDiffusionSpeciesInner(BaseInnerRelation &inner_relation);
 		virtual ~RelaxationOfAllDiffusionSpeciesInner(){};
-		void interaction(size_t index_i, Real dt = 0.0);
+
+		template <class ExecutionPolicy> 
+		inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0);
+
 		void update(size_t index_i, Real dt = 0.0);
 	};
 
@@ -144,7 +147,9 @@ namespace SPH
 		typedef ComplexRelation BodyRelationType;
 		explicit RelaxationOfAllDiffusionSpeciesComplex(ComplexRelation &complex_relation);
 		virtual ~RelaxationOfAllDiffusionSpeciesComplex(){};
-		void interaction(size_t index_i, Real dt = 0.0);
+
+		template <class ExecutionPolicy> 
+		inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0);
 	};
 
 	/**

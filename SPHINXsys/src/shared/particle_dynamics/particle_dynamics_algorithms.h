@@ -290,14 +290,14 @@ namespace SPH
 		{
 			particle_for(execution::seq, split_cell_lists_,
 						 [&](size_t i)
-						 { this->interaction(i, dt * 0.5); });
+						 { this->interaction(execution::seq, i, dt * 0.5); });
 		}
 		/** parallel run the main interaction step between particles. */
 		virtual void parallel_runMainStep(Real dt) override
 		{
 			particle_for(execution::par, split_cell_lists_,
 						 [&](size_t i)
-						 { this->interaction(i, dt * 0.5); });
+						 { this->interaction(execution::par, i, dt * 0.5); });
 		}
 	};
 
@@ -323,14 +323,14 @@ namespace SPH
 		{
 			particle_for(execution::seq, this->identifier_.LoopRange(),
 						 [&](size_t i)
-						 { this->interaction(i, dt); });
+						 { this->interaction(execution::seq, i, dt); });
 		}
 		/** parallel run the main interaction step between particles. */
 		virtual void parallel_runMainStep(Real dt) override
 		{
 			particle_for(execution::par, this->identifier_.LoopRange(),
 						 [&](size_t i)
-						 { this->interaction(i, dt); });
+						 { this->interaction(execution::par, i, dt); });
 		}
 
 	protected:

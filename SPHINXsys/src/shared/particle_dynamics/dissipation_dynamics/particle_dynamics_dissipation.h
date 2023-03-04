@@ -66,7 +66,9 @@ namespace SPH
 	public:
 		DampingBySplittingInner(BaseInnerRelation &inner_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingBySplittingInner(){};
-		void interaction(size_t index_i, Real dt = 0.0);
+
+		template <class ExecutionPolicy> 
+		inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0);
 
 	protected:
 		Real eta_; /**< damping coefficient */
@@ -124,7 +126,9 @@ namespace SPH
 	public:
 		DampingPairwiseInner(BaseInnerRelation &inner_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingPairwiseInner(){};
-		void interaction(size_t index_i, Real dt = 0.0);
+		
+		template <class ExecutionPolicy> 
+		inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0);
 
 	protected:
 		StdLargeVec<Real> &Vol_, &mass_;
@@ -140,7 +144,9 @@ namespace SPH
 							   BaseContactRelation &contact_relation, const std::string &variable_name, Real eta);
 		DampingPairwiseComplex(ComplexRelation &complex_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingPairwiseComplex(){};
-		void interaction(size_t index_i, Real dt = 0.0);
+		
+		template <class ExecutionPolicy> 
+		inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0);
 
 	private:
 		StdVec<StdLargeVec<Real> *> contact_Vol_, contact_mass_;
@@ -162,7 +168,9 @@ namespace SPH
 								BaseContactRelation &contact_relation, const std::string &variable_name, Real eta);
 		DampingPairwiseWithWall(ComplexRelation &complex_wall_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingPairwiseWithWall(){};
-		void interaction(size_t index_i, Real dt = 0.0);
+		
+		template <class ExecutionPolicy> 
+		inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0);
 
 	private:
 		StdVec<StdLargeVec<Real> *> wall_Vol_;
@@ -181,7 +189,9 @@ namespace SPH
 	public:
 		DampingPairwiseFromWall(BaseContactRelation &contact_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingPairwiseFromWall(){};
-		void interaction(size_t index_i, Real dt = 0.0);
+		
+		template <class ExecutionPolicy> 
+		inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0);
 
 	private:
 		Real eta_; /**< damping coefficient */
