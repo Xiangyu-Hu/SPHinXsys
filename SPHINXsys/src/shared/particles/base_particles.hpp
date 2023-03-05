@@ -75,8 +75,10 @@ namespace SPH
 
         if (all_variable_maps_[type_index].find(variable_name) != all_variable_maps_[type_index].end())
             return std::get<type_index>(all_particle_data_)[all_variable_maps_[type_index][variable_name]];
-        else
-            return nullptr;
+
+        std::cout << "\n Error: the variable '" << variable_name << "' is not registered!" << std::endl;
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        return nullptr;
     }
     //=================================================================================================//
     template <typename VariableType>
