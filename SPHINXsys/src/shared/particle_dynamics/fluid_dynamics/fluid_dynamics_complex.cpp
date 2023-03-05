@@ -1,8 +1,3 @@
-/**
- * @file 	fluid_dynamics_complex.cpp
- * @author	Chi Zhang and Xiangyu Hu
- */
-
 #include "fluid_dynamics_complex.h"
 #include "fluid_dynamics_complex.hpp"
 
@@ -31,13 +26,12 @@ namespace SPH
 		{
 			TransportVelocityCorrectionInner::interaction(index_i, dt);
 
-			Vecd acceleration_trans(0);
+			Vecd acceleration_trans = Vecd::Zero();
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
-					size_t index_j = contact_neighborhood.j_[n];
 					Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
 
 					// acceleration for transport velocity
@@ -54,13 +48,12 @@ namespace SPH
 		{
 			TransportVelocityCorrectionInnerAdaptive::interaction(index_i, dt);
 
-			Vecd acceleration_trans(0);
+			Vecd acceleration_trans = Vecd::Zero();
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
-					size_t index_j = contact_neighborhood.j_[n];
 					Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
 
 					// acceleration for transport velocity
@@ -83,13 +76,12 @@ namespace SPH
 			Real rho_i = rho_[index_i];
 			Matd tau_i = tau_[index_i];
 
-			Vecd acceleration(0);
+			Vecd acceleration = Vecd::Zero();
 			for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
 			{
 				Neighborhood &wall_neighborhood = (*FluidWallData::contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
 				{
-					size_t index_j = wall_neighborhood.j_[n];
 					Vecd nablaW_ijV_j = wall_neighborhood.dW_ijV_j_[n] * wall_neighborhood.e_ij_[n];
 					/** stress boundary condition. */
 					acceleration += 2.0 * tau_i * nablaW_ijV_j / rho_i;
@@ -106,7 +98,7 @@ namespace SPH
 			Vecd vel_i = vel_[index_i];
 			Matd tau_i = tau_[index_i];
 
-			Matd stress_rate(0);
+			Matd stress_rate = Matd::Zero();
 			for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
 			{
 				StdLargeVec<Vecd> &vel_ave_k = *(wall_vel_ave_[k]);
@@ -116,9 +108,9 @@ namespace SPH
 					size_t index_j = wall_neighborhood.j_[n];
 					Vecd nablaW_ijV_j = wall_neighborhood.dW_ijV_j_[n] * wall_neighborhood.e_ij_[n];
 
-					Matd velocity_gradient = -SimTK::outer((vel_i - vel_ave_k[index_j]), nablaW_ijV_j) * 2.0;
-					stress_rate += ~velocity_gradient * tau_i + tau_i * velocity_gradient - tau_i / lambda_ +
-								   (~velocity_gradient + velocity_gradient) * mu_p_ / lambda_;
+					Matd velocity_gradient = -2.0 * (vel_i - vel_ave_k[index_j]) * nablaW_ijV_j.transpose();
+					stress_rate += velocity_gradient.transpose() * tau_i + tau_i * velocity_gradient - tau_i / lambda_ +
+								   (velocity_gradient.transpose() + velocity_gradient) * mu_p_ / lambda_;
 				}
 			}
 			dtau_dt_[index_i] += stress_rate;

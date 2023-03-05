@@ -66,13 +66,13 @@ int main()
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	/** Inflow boundary condition. */
 	BodyRegionByCell damping_buffer(water_block, makeShared<MultiPolygonShape>(createDampingBufferShape()));
-	SimpleDynamics<fluid_dynamics::DampingBoundaryCondition, BodyRegionByCell> damping_wave(damping_buffer);
+	SimpleDynamics<fluid_dynamics::DampingBoundaryCondition> damping_wave(damping_buffer);
 	/** Fluid force on flap. */
-	InteractionDynamics<solid_dynamics::FluidViscousForceOnSolid> viscous_force_on_solid(flap_contact);
-	InteractionDynamics<solid_dynamics::FluidForceOnSolidUpdate> fluid_force_on_flap(flap_contact, viscous_force_on_solid);
+	InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(flap_contact);
+	InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid> fluid_force_on_flap(flap_contact, viscous_force_on_solid);
 	/** constrain region of the part of wall boundary. */
 	BodyRegionByParticle wave_maker(wall_boundary, makeShared<MultiPolygonShape>(createWaveMakerShape()));
-	SimpleDynamics<WaveMaking, BodyRegionByParticle> wave_making(wave_maker);
+	SimpleDynamics<WaveMaking> wave_making(wave_maker);
 	//----------------------------------------------------------------------
 	//	Define the multi-body system
 	//----------------------------------------------------------------------
@@ -96,7 +96,7 @@ int main()
 	 *			a privately-owned Body within the constructed MobilizedBody object.
 	 * @param[in] inboard(SimTK::Vec3) Defines the location of the joint point relative to the parent body.
 	 * @param[in] outboard(SimTK::Vec3) Defines the body's origin location to the joint point.
-	 * @note	The body's origin location can be the mass center, the the center of mass should be Vec3(0)
+	 * @note	The body's origin location can be the mass center, the the center of mass should be SimTK::Vec3(0)
 	 * 			in SimTK::MassProperties(mass, com, inertia)
 	 */
 	SimTK::MobilizedBody::Pin pin_spot(matter.Ground(), SimTK::Transform(SimTK::Vec3(7.92, 0.315, 0.0)),
@@ -149,36 +149,37 @@ int main()
 	//----------------------------------------------------------------------
 	//	Coupling between SimBody and SPH
 	//----------------------------------------------------------------------
-	ReduceDynamics<solid_dynamics::TotalForceForSimBody, FlapSystemForSimbody>
+	ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody>
 		force_on_spot_flap(flap_multibody, MBsystem, pin_spot, force_on_bodies, integ);
-	SimpleDynamics<solid_dynamics::ConstraintBySimBody, FlapSystemForSimbody>
+	SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody>
 		constraint_spot_flap(flap_multibody, MBsystem, pin_spot, force_on_bodies, integ);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<
-		ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceOnSolid>>> write_total_force_on_flap(io_environment, flap);
+		ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>> 
+		write_total_force_on_flap(io_environment, fluid_force_on_flap, "TotalForceOnSolid");
 	WriteSimBodyPinData write_flap_pin_data(io_environment, integ, pin_spot);
 	
 	/** WaveProbes. */
 	BodyRegionByCell wave_probe_buffer_no_4(water_block, makeShared<MultiPolygonShape>(createWaveProbeShape4(), "WaveProbe_04"));
-	ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight, BodyRegionByCell>>
+	ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight>>
 		wave_probe_4(io_environment, wave_probe_buffer_no_4);
 
 	BodyRegionByCell wave_probe_buffer_no_5(water_block, makeShared<MultiPolygonShape>(createWaveProbeShape5(), "WaveProbe_05"));
-	ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight, BodyRegionByCell>>
+	ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight>>
 		wave_probe_5(io_environment, wave_probe_buffer_no_5);
 
 	BodyRegionByCell wave_probe_buffer_no_12(water_block, makeShared<MultiPolygonShape>(createWaveProbeShape12(), "WaveProbe_12"));
-	ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight, BodyRegionByCell>>
+	ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight>>
 		wave_probe_12(io_environment, wave_probe_buffer_no_12);
 	
 	/** Pressure probe. */
 	ObservedQuantityRecording<Real> pressure_probe("Pressure", io_environment, observer_contact_with_water);
 	// Interpolate the particle position in flap to move the observer accordingly. 
 	// Seems not used? TODO: observe displacement more accurate.
-	InteractionDynamics<observer_dynamics::InterpolatingAQuantity<Vecd>>
+	InteractionDynamics<InterpolatingAQuantity<Vecd>>
 		interpolation_observer_position(observer_contact_with_flap, "Position", "Position");
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration

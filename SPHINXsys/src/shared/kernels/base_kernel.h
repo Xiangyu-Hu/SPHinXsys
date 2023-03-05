@@ -1,37 +1,34 @@
-/* -----------------------------------------------------------------------------*
- *                               SPHinXsys                                      *
- * -----------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
- * physical accurate simulation and aims to model coupled industrial dynamic    *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
- * (smoothed particle hydrodynamics), a meshless computational method using     *
- * particle discretization.                                                     *
- *                                                                              *
- * SPHinXsys is partially funded by German Research Foundation                  *
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
- * HU1527/12-1 and HU1527/12-4.                                                 *
- *                                                                              *
- * Portions copyright (c) 2017-2022 Technical University of Munich and          *
- * the authors' affiliations.                                                   *
- *                                                                              *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
- * not use this file except in compliance with the License. You may obtain a    *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
- *                                                                              *
- * -----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4												*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
- * @file 	base_kernel.h
- * @brief 	This is the base classes of kernel functions.  Implementation will be
- *			implemented in derived classes. The kernal function define the relevance
- * 			between two neighboring particles. Basically, the further the two
- *			particles, the less relevance they have.
- * @author	Luhui Han, Chi Zhang and Xiangyu Hu
- * @version	0.1
- * @version  0.3.0
- *			Add the reduced kernel for reduced dynamics of linear structure.
- *			-- Chi ZHANG
- */
+* @file 	base_kernel.h
+* @brief 	This is the base classes of kernel functions.  Implementation will be
+*			implemented in derived classes. The kernal function define the relevance
+* 			between two neighboring particles. Basically, the further the two
+*			particles, the less relevance they have.     
+* @author	Chi ZHang and Xiangyu Hu
+*/
+
 
 #ifndef BASE_KERNELS_H
 #define BASE_KERNELS_H
@@ -46,16 +43,16 @@ using namespace std::placeholders;
 namespace SPH
 {
 	/**
-	 * @class Kernel
-	 * @brief Abstract base class of a general SPH kernel function which
-	 * is a smoothed Dirac delta function,
-	 * a kernel function is radial symmetric, and has a scaling factor.
-	 * Based on difference data type in 2d or 3d buildings,
-	 * the kernel is defined for 2 and 3 dimensions.
-	 * The kernel gives value one at the origin.
-	 * The naming of kernel function follows the stand SPH literature.
-	 * Currently, only constant smoothing length is applied.
-	 * Basically, one can assign different kernel for different particle interactions.
+	 * @class 	Kernel
+	 * @brief 	Abstract base class of a general SPH kernel function which
+	 * 			is a smoothed Dirac delta function,
+	 * 			a kernel function is radial symmetric, and has a scaling factor.
+	 * 			Based on difference data type in 2d or 3d buildings,
+	 * 			the kernel is defined for 2 and 3 dimensions.
+	 * 			The kernel gives value one at the origin.
+	 * 			The naming of kernel function follows the stand SPH literature.
+	 * 			Currently, only constant smoothing length is applied.
+	 * 			Basically, one can assign different kernel for different particle interactions.
 	 */
 	class Kernel
 	{
@@ -88,7 +85,8 @@ namespace SPH
 		Real FactorW2D() const { return factor_W_2D_; };
 		Real FactorW3D() const { return factor_W_3D_; };
 
-		/** Calculates the kernel value for the given displacement of two particles
+		/** 
+		 * Calculates the kernel value for the given displacement of two particles
 		 * r_ij pointing from particle j to particle i
 		 */
 		Real W(const Real &r_ij, const Real &displacement) const;

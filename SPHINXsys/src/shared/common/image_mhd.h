@@ -1,32 +1,31 @@
 /* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
-* @file image_mesh_shape.h
-* @brief x
-* @details x
-*			x
-* @author	Yijin Mao
-*/
+ * @file 	image_mesh_shape.h
+ * @brief 	Image process for geometry representation. 
+ * @author	Yijin Mao
+ */
+
 #ifndef IMAGE_MHD_H
 #define IMAGE_MHD_H
 
@@ -60,12 +59,12 @@ namespace SPH {
 	public:
 		ImageMHD() {};
 		// constructor for input files
-		ImageMHD(std::string full_path_file);
+		explicit ImageMHD(std::string full_path_file);
 		// constructor for sphere 
 		ImageMHD(Real radius, Vec3i dxdydz, Vec3d spacings);
 		~ImageMHD();
 
-		void set_objectType(std::string objectType) 
+		void set_objectType(const std::string &objectType) 
 		{ 
 			objectType_ = objectType; 
 		};
@@ -102,11 +101,11 @@ namespace SPH {
 		{ 
 			dimSize_ = dimSize; 
 		};
-		void set_anatomicalOrientation(std::string anatomicalOrientation) 
+		void set_anatomicalOrientation(const std::string &anatomicalOrientation) 
 		{
 			anatomicalOrientation_ = anatomicalOrientation;
 		};
-		void set_elementType(std::string elementType) 
+		void set_elementType(const std::string &elementType) 
 		{
 			elementType_ = elementType;
 		};

@@ -33,8 +33,8 @@ class Myocardium : public ComplexShape
 public:
 	explicit Myocardium(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		add<TransformShape<GeometricShapeBox>>(translation_myocardium, halfsize_myocardium);
-		add<TransformShape<GeometricShapeBox>>(translation_stationary_plate, halfsize_stationary_plate);
+		add<TransformShape<GeometricShapeBox>>(Transformd(translation_myocardium), halfsize_myocardium);
+		add<TransformShape<GeometricShapeBox>>(Transformd(translation_stationary_plate), halfsize_stationary_plate);
 	}
 };
 /**
@@ -45,7 +45,7 @@ class MovingPlate : public ComplexShape
 public:
 	explicit MovingPlate(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		add<TransformShape<GeometricShapeBox>>(translation_moving_plate, halfsize_moving_plate);
+		add<TransformShape<GeometricShapeBox>>(Transformd(translation_moving_plate), halfsize_moving_plate);
 	}
 };
 /**
@@ -79,21 +79,21 @@ int main()
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> corrected_configuration(myocardium_body_inner);
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> corrected_configuration_2(moving_plate_inner);
 	/** active and passive stress relaxation. */
-	Dynamics1Level<solid_dynamics::KirchhoffStressRelaxationFirstHalf> stress_relaxation_first_half(myocardium_body_inner);
-	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half(myocardium_body_inner);
-	Dynamics1Level<solid_dynamics::KirchhoffStressRelaxationFirstHalf> stress_relaxation_first_half_2(moving_plate_inner);
-	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half_2(moving_plate_inner);
+	Dynamics1Level<solid_dynamics::KirchhoffIntegration1stHalf> stress_relaxation_first_half(myocardium_body_inner);
+	Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(myocardium_body_inner);
+	Dynamics1Level<solid_dynamics::KirchhoffIntegration1stHalf> stress_relaxation_first_half_2(moving_plate_inner);
+	Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half_2(moving_plate_inner);
 	//stress_relaxation_first_half_2.post_processes_(spring_constraint);
 	/** Algorithms for solid-solid contact. */
-	InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle> myocardium_update_contact_density(myocardium_plate_contact);
-	InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle> plate_update_contact_density(plate_myocardium_contact);
-	InteractionDynamics<solid_dynamics::ContactForce, BodyPartByParticle> myocardium_compute_solid_contact_forces(myocardium_plate_contact);
-	InteractionDynamics<solid_dynamics::ContactForce, BodyPartByParticle> plate_compute_solid_contact_forces(plate_myocardium_contact);
+	InteractionDynamics<solid_dynamics::ContactDensitySummation> myocardium_update_contact_density(myocardium_plate_contact);
+	InteractionDynamics<solid_dynamics::ContactDensitySummation> plate_update_contact_density(plate_myocardium_contact);
+	InteractionDynamics<solid_dynamics::ContactForce> myocardium_compute_solid_contact_forces(myocardium_plate_contact);
+	InteractionDynamics<solid_dynamics::ContactForce> plate_compute_solid_contact_forces(plate_myocardium_contact);
 
 	/** Constrain the holder. */
 	BodyRegionByParticle holder(myocardium_body, 
-		makeShared<TransformShape<GeometricShapeBox>>(translation_stationary_plate, halfsize_stationary_plate, "Holder"));
-	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_holder(holder);
+		makeShared<TransformShape<GeometricShapeBox>>(Transformd(translation_stationary_plate), halfsize_stationary_plate, "Holder"));
+	SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_holder(holder);
 	/** Add spring constraint on the plate. */
 	SimpleDynamics<solid_dynamics::SpringDamperConstraintParticleWise> spring_constraint(moving_plate, Vecd(0.2, 0, 0), 0.01);
 

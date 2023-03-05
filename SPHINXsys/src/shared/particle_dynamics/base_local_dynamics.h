@@ -1,30 +1,30 @@
-/* -----------------------------------------------------------------------------*
- *                               SPHinXsys                                      *
- * -----------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
- * physical accurate simulation and aims to model coupled industrial dynamic    *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
- * (smoothed particle hydrodynamics), a meshless computational method using     *
- * particle discretization.                                                     *
- *                                                                              *
- * SPHinXsys is partially funded by German Research Foundation                  *
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
- * HU1527/12-1 and HU1527/12-4.                                                 *
- *                                                                              *
- * Portions copyright (c) 2017-2022 Technical University of Munich and          *
- * the authors' affiliations.                                                   *
- *                                                                              *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
- * not use this file except in compliance with the License. You may obtain a    *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
- *                                                                              *
- * -----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
- * @file base_local_dynamics.h
- * @brief This is for the base classes of local particle dynamics, which describe the
- * dynamics of a particle.
- * @author  Xiangyu Hu
+ * @file    base_local_dynamics.h
+ * @brief 	This is for the base classes of local particle dynamics, which describe the
+ * 			dynamics of a particle.
+ * @author	Chi ZHang and Xiangyu Hu
  */
 
 #ifndef BASE_LOCAL_DYNAMICS_H
@@ -92,48 +92,34 @@ namespace SPH
 	 * @class BaseLocalDynamics
 	 * @brief The new version of base class for all local particle dynamics.
 	 */
-	template <class ReturnType>
+	template <class DynamicsIdentifier>
 	class BaseLocalDynamics
 	{
-	protected:
-		SPHBody &sph_body_;
-
 	public:
-		explicit BaseLocalDynamics(SPHBody &sph_body) : sph_body_(sph_body){};
+		explicit BaseLocalDynamics(DynamicsIdentifier &identifier)
+			: identifier_(identifier), sph_body_(identifier.getSPHBody()){};
 		virtual ~BaseLocalDynamics(){};
-
-		void setBodyUpdated() { sph_body_.setNewlyUpdated(); };
-		virtual ReturnType setupDynamics(Real dt = 0.0) = 0; // setup global parameters
+		SPHBody &getSPHBody() { return sph_body_; };
+		DynamicsIdentifier &getDynamicsIdentifier() { return identifier_; };
+		virtual void setupDynamics(Real dt = 0.0){}; // setup global parameters
+	protected:
+		DynamicsIdentifier &identifier_;
+		SPHBody &sph_body_;
 	};
+	using LocalDynamics = BaseLocalDynamics<SPHBody>;
 
 	/**
-	 * @class LocalDynamics
-	 * @brief The new version of base class for all local particle dynamics,
-	 * which loops along particles.
-	 */
-	class LocalDynamics : public BaseLocalDynamics<void>
-	{
-	public:
-		explicit LocalDynamics(SPHBody &sph_body)
-			: BaseLocalDynamics<void>(sph_body){};
-		virtual ~LocalDynamics(){};
-
-		/** the function for set global parameters for the particle dynamics */
-		virtual void setupDynamics(Real dt = 0.0) override{};
-	};
-
-	/**
-	 * @class LocalDynamicsReduce
+	 * @class BaseLocalDynamicsReduce
 	 * @brief The new version of base class for all local particle dynamics.
 	 */
-	template <typename ReturnType, typename Operation>
-	class LocalDynamicsReduce : public LocalDynamics
+	template <typename ReturnType, typename Operation, class DynamicsIdentifier>
+	class BaseLocalDynamicsReduce : public BaseLocalDynamics<DynamicsIdentifier>
 	{
 	public:
-		LocalDynamicsReduce(SPHBody &sph_body, ReturnType reference)
-			: LocalDynamics(sph_body), reference_(reference),
+		BaseLocalDynamicsReduce(DynamicsIdentifier &identifier, ReturnType reference)
+			: BaseLocalDynamics<DynamicsIdentifier>(identifier), reference_(reference),
 			  quantity_name_("ReducedQuantity"){};
-		virtual ~LocalDynamicsReduce(){};
+		virtual ~BaseLocalDynamicsReduce(){};
 
 		using ReduceReturnType = ReturnType;
 		ReturnType Reference() { return reference_; };
@@ -146,5 +132,7 @@ namespace SPH
 		Operation operation_;
 		std::string quantity_name_;
 	};
+	template <typename ReturnType, typename Operation>
+	using LocalDynamicsReduce = BaseLocalDynamicsReduce<ReturnType, Operation, SPHBody>;
 }
 #endif // BASE_LOCAL_DYNAMICS_H

@@ -1,10 +1,4 @@
-/**
- * @file 	base_material.cpp
- * @author	Chi Zhang and Xiangyu Hu
- */
-
 #include "base_material.h"
-
 #include "base_particles.hpp"
 
 namespace SPH

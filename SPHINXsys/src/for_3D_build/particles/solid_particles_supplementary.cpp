@@ -11,7 +11,7 @@ namespace SPH
 	{
 
 		Mat3d F = F_[particle_i];
-		Mat3d epsilon = 0.5 * (~F * F - Matd(1.0)); // calculation of the Green-Lagrange strain tensor
+		Mat3d epsilon = 0.5 * (F.transpose() * F - Matd::Identity()); // calculation of the Green-Lagrange strain tensor
 
 		Real epsilonxx = epsilon(0, 0);
 		Real epsilonyy = epsilon(1, 1);
@@ -40,9 +40,9 @@ namespace SPH
 	void VonMisesStress::update(size_t index_i, Real dt)
 	{
 		Real J = rho0_ / rho_[index_i];
-		Mat3d F = F_[index_i];
-		Mat3d stress_PK1 = F * elastic_solid_.StressPK2(F, index_i);
-		Mat3d sigma = (stress_PK1 * ~F) / J;
+		Matd F = F_[index_i];
+		Matd stress_PK1 = F * elastic_solid_.StressPK2(F, index_i);
+		Matd sigma = (stress_PK1 * F.transpose()) / J;
 
 		Real sigmaxx = sigma(0, 0);
 		Real sigmayy = sigma(1, 1);

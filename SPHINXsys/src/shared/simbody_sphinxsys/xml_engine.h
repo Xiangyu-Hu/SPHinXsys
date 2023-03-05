@@ -1,38 +1,37 @@
-/* -----------------------------------------------------------------------------*
- *                               SPHinXsys                                      *
- * -----------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
- * physical accurate simulation and aims to model coupled industrial dynamic    *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
- * (smoothed particle hydrodynamics), a meshless computational method using     *
- * particle discretization.                                                     *
- *                                                                              *
- * SPHinXsys is partially funded by German Research Foundation                  *
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
- * HU1527/12-1 and HU1527/12-4.                                                 *
- *                                                                              *
- * Portions copyright (c) 2017-2022 Technical University of Munich and          *
- * the authors' affiliations.                                                   *
- *                                                                              *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
- * not use this file except in compliance with the License. You may obtain a    *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
- *                                                                              *
- * -----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	xml_engine.h
  * @brief 	XML class for xml input and output, this is GUI of simbody xml parser.
- * @author	Bo Zhang, Chi Zhang and Xiangyu Hu.
+ * @author	Chi ZHang and Xiangyu Hu
  */
 
 #ifndef XML_ENGINE_SIMBODY_H
 #define XML_ENGINE_SIMBODY_H
 
-#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-
 #include "base_data_package.h"
 #include "sph_data_containers.h"
+#include "array.h"
 
 #include "SimTKcommon.h"
 #include "SimTKcommon/internal/Xml.h"
@@ -43,13 +42,8 @@
 #include <cstdio>
 
 #include <fstream>
-#ifdef __APPLE__
-#include <boost/filesystem.hpp>
-namespace fs = boost::filesystem;
-#else
-#include <experimental/filesystem>
-namespace fs = std::experimental::filesystem;
-#endif
+#include <filesystem>
+namespace fs = std::filesystem;
 
 namespace SPH
 {
@@ -73,25 +67,56 @@ namespace SPH
 		/**Add child element to a given element. */
 		void addChildToElement(SimTK::Xml::Element &father_element, const std::string &child_name);
 
-		/** Add an attribute of type string to an xml element.  */
-		template <class T>
+		//----------------------------------------------------------------------
+		//	Add an attribute of type string to an xml element.
+		//----------------------------------------------------------------------
+		template <typename T>
 		void setAttributeToElement(const SimTK::Xml::element_iterator &ele_ite, const std::string &attrib_name, const T &value)
 		{
 			SimTK::Xml::Attribute attr_(attrib_name, SimTK::String(value));
 			ele_ite->setAttributeValue(attr_.getName(), attr_.getValue());
 		};
-		/** Adds attribute of type matrix to an xml element. */
-		void setAttributeToElement(const SimTK::Xml::element_iterator &ele_ite, const std::string &attrib_name, const Matd &value);
 
-		/** Get the required attribute value of an element */
-		template <class T>
+		template <int DIMENSION, auto... Rest>
+		void setAttributeToElement(const SimTK::Xml::element_iterator &ele_ite, const std::string &attrib_name,
+								   const Eigen::Matrix<Real, DIMENSION, 1, Rest...> &value)
+		{
+			SimTK::Xml::Attribute attr_(attrib_name, SimTK::String(EigenToSimTK(value)));
+			ele_ite->setAttributeValue(attr_.getName(), attr_.getValue());
+		};
+		template <int DIMENSION, auto... Rest>
+		void setAttributeToElement(const SimTK::Xml::element_iterator &ele_ite, const std::string &attrib_name,
+								   const Eigen::Matrix<Real, DIMENSION, DIMENSION, Rest...> &value)
+		{
+			SimTK::Xml::Attribute attr_(attrib_name, SimTK::String(EigenToSimTK(value)));
+			ele_ite->setAttributeValue(attr_.getName(), attr_.getValue());
+		};
+
+		//----------------------------------------------------------------------
+		//	Get the required attribute value of an element.
+		//----------------------------------------------------------------------
+		template <typename T>
 		void getRequiredAttributeValue(SimTK::Xml::element_iterator &ele_ite_, const std::string &attrib_name, T &value)
 		{
 			std::string value_in_string = ele_ite_->getRequiredAttributeValue(attrib_name);
 			value = SimTK::convertStringTo<T>(value_in_string);
 		};
-		/** Get the required int attribute value of an element */
-		void getRequiredAttributeMatrixValue(SimTK::Xml::element_iterator &ele_ite_, const std::string &attrib_name, Matd &value);
+
+		template <int DIMENSION, auto... Rest>
+		void getRequiredAttributeValue(SimTK::Xml::element_iterator &ele_ite_, const std::string &attrib_name,
+									   Eigen::Matrix<Real, DIMENSION, 1, Rest...> &value)
+		{
+			std::string value_in_string = ele_ite_->getRequiredAttributeValue(attrib_name);
+			value = SimTKToEigen(SimTK::convertStringTo<SimTK::Vec<DIMENSION>>(value_in_string));
+		};
+
+		template <int DIMENSION, auto... Rest>
+		void getRequiredAttributeValue(SimTK::Xml::element_iterator &ele_ite_, const std::string &attrib_name,
+									   Eigen::Matrix<Real, DIMENSION, DIMENSION, Rest...> &value)
+		{
+			std::string value_in_string = ele_ite_->getRequiredAttributeValue(attrib_name);
+			value = SimTKToEigen(SimTK::convertStringTo<SimTK::Mat<DIMENSION,DIMENSION>>(value_in_string));
+		};
 
 		/** Write to XML file */
 		void writeToXmlFile(const std::string &filefullpath);
@@ -154,15 +179,21 @@ namespace SPH
 			for (; ele_ite != element.element_end(); ++ele_ite)
 			{
 				std::string attribute_name_ = quantity_name + "_" + std::to_string(observation_index);
-				xml_engine.getRequiredAttributeValue<T>(ele_ite, attribute_name_, result_container[snapshot_index][observation_index]);
+				xml_engine.getRequiredAttributeValue(ele_ite, attribute_name_, result_container[snapshot_index][observation_index]);
 				snapshot_index++;
 			}
 		};
 
-		void readDataFromXmlMemory(XmlEngine &xml_engine, SimTK::Xml::Element &element,
-								   size_t observation_index, DoubleVec<Matd> &result_container, const std::string &quantity_name);
-
-		void readTagFromXmlMemory(SimTK::Xml::Element &element, StdVec<std::string> &element_tag);
+		void readTagFromXmlMemory(SimTK::Xml::Element &element, StdVec<std::string> &element_tag)
+		{
+			size_t snapshot_index = 0;
+			SimTK::Xml::element_iterator ele_ite = element.element_begin();
+			for (; ele_ite != element.element_end(); ++ele_ite)
+			{
+				element_tag[snapshot_index] = ele_ite->getElementTag();
+				snapshot_index++;
+			}
+		};
 	};
 }
 

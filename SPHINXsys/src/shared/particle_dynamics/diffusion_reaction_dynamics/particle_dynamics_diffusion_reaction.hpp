@@ -1,6 +1,30 @@
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	particle_dynamics_diffusion_reaction.hpp
- * @author	Xiaojing Tang, Chi Zhang and Xiangyu Hu
+ * @brief 	This is the particle dynamics applicable for all type bodies
+ * 			TODO: there is an issue on applying corrected configuration for contact bodies..
+ * @author	Chi ZHang and Xiangyu Hu
  */
 
 #ifndef PARTICLE_DYNAMICS_DIFFUSION_REACTION_HPP
@@ -21,7 +45,7 @@ namespace SPH
 	template <class BaseParticlesType, class BaseMaterialType, int NUM_SPECIES>
 	GetDiffusionTimeStepSize<BaseParticlesType, BaseMaterialType, NUM_SPECIES>::
 		GetDiffusionTimeStepSize(SPHBody &sph_body)
-		: BaseDynamics<Real>(),
+		: BaseDynamics<Real>(sph_body),
 		  DiffusionReactionSimpleData<BaseParticlesType, BaseMaterialType, NUM_SPECIES>(sph_body)
 	{
 		Real smoothing_length = sph_body.sph_adaptation_->ReferenceSmoothingLength();
@@ -31,11 +55,11 @@ namespace SPH
 	template <class BaseParticlesType, class BaseMaterialType, int NUM_SPECIES>
 	RelaxationOfAllDiffusionSpeciesInner<BaseParticlesType, BaseMaterialType, NUM_SPECIES>::
 		RelaxationOfAllDiffusionSpeciesInner(BaseInnerRelation &inner_relation)
-		: LocalDynamics(inner_relation.sph_body_),
+		: LocalDynamics(inner_relation.getSPHBody()),
 		  DiffusionReactionInnerData<BaseParticlesType, BaseMaterialType, NUM_SPECIES>(inner_relation),
-		  diffusion_reaction_material_(this->particles_->diffusion_reaction_material_),
 		  species_n_(this->particles_->species_n_),
-		  diffusion_dt_(this->particles_->diffusion_dt_)
+		  diffusion_dt_(this->particles_->diffusion_dt_),
+		  diffusion_reaction_material_(this->particles_->diffusion_reaction_material_)
 	{
 		species_diffusion_ = this->particles_->diffusion_reaction_material_.SpeciesDiffusion();
 	}
@@ -90,7 +114,7 @@ namespace SPH
 			Vecd &e_ij = inner_neighborhood.e_ij_[n];
 
 			const Vecd &grad_ijV_j = particles->getKernelGradient(index_i, index_j, dW_ijV_j_, e_ij);
-			Real area_ij = 2.0 * dot(grad_ijV_j, e_ij) / r_ij_;
+			Real area_ij = 2.0 * grad_ijV_j.dot(e_ij) / r_ij_;
 			getDiffusionChangeRate(index_i, index_j, e_ij, area_ij);
 		}
 	}
@@ -107,9 +131,9 @@ namespace SPH
 	RelaxationOfAllDiffusionSpeciesComplex<BaseParticlesType, BaseMaterialType,
 										   ContactBaseParticlesType, ContactBaseMaterialType, NUM_SPECIES>::
 		RelaxationOfAllDiffusionSpeciesComplex(ComplexRelation &complex_relation)
-		: RelaxationOfAllDiffusionSpeciesInner<BaseParticlesType, BaseMaterialType, NUM_SPECIES>(complex_relation.inner_relation_),
+		: RelaxationOfAllDiffusionSpeciesInner<BaseParticlesType, BaseMaterialType, NUM_SPECIES>(complex_relation.getInnerRelation()),
 		  DiffusionReactionContactData<BaseParticlesType, BaseMaterialType,
-									   ContactBaseParticlesType, ContactBaseMaterialType, NUM_SPECIES>(complex_relation.contact_relation_),
+									   ContactBaseParticlesType, ContactBaseMaterialType, NUM_SPECIES>(complex_relation.getContactRelation()),
 		  species_n_(this->particles_->species_n_), diffusion_dt_(this->particles_->diffusion_dt_)
 	{
 		species_diffusion_ = this->particles_->diffusion_reaction_material_.SpeciesDiffusion();
@@ -158,7 +182,7 @@ namespace SPH
 				Vecd &e_ij = contact_neighborhood.e_ij_[n];
 
 				const Vecd &grad_ijV_j = particles->getKernelGradient(index_i, index_j, dW_ijV_j_, e_ij);
-				Real area_ij = 2.0 * dot(grad_ijV_j, e_ij) / r_ij_;
+				Real area_ij = 2.0 * grad_ijV_j.dot(e_ij) / r_ij_;
 				getDiffusionChangeRateContact(index_i, index_j, e_ij, area_ij, species_n_k);
 			}
 		}
@@ -218,19 +242,21 @@ namespace SPH
 	template <class FirstStageType>
 	RelaxationOfAllDiffusionSpeciesRK2<FirstStageType>::
 		RelaxationOfAllDiffusionSpeciesRK2(typename FirstStageType::BodyRelationType &body_relation)
-		: BaseDynamics<void>(), rk2_initialization_(body_relation.sph_body_, species_s_),
+		: BaseDynamics<void>(body_relation.getSPHBody()), rk2_initialization_(body_relation.getSPHBody(), species_s_),
 		  rk2_1st_stage_(body_relation), rk2_2nd_stage_(body_relation, species_s_)
 	{
 		StdVec<BaseDiffusion *> species_diffusion_ = rk2_1st_stage_.diffusion_reaction_material_.SpeciesDiffusion();
 
 		size_t number_of_diffusion_species = species_diffusion_.size();
 		species_s_.resize(number_of_diffusion_species);
+
+		constexpr int type_index = DataTypeIndex<Real>::value;
 		for (size_t m = 0; m < number_of_diffusion_species; ++m)
 		{
 			// the size should be the same as that in the base particles
 			species_s_[m].resize(rk2_1st_stage_.getParticles()->real_particles_bound_);
 			// register data in base particles
-			std::get<0>(rk2_1st_stage_.getParticles()->all_particle_data_).push_back(&species_s_[m]);
+			std::get<type_index>(rk2_1st_stage_.getParticles()->all_particle_data_).push_back(&species_s_[m]);
 		}
 	}
 	//=================================================================================================//

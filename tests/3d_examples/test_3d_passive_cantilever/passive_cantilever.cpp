@@ -41,8 +41,8 @@ class Cantilever : public ComplexShape
 public:
 	explicit Cantilever(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		add<TransformShape<GeometricShapeBox>>(translation_cantilever, halfsize_cantilever);
-		add<TransformShape<GeometricShapeBox>>(translation_holder, halfsize_holder);
+		add<TransformShape<GeometricShapeBox>>(Transformd(translation_cantilever), halfsize_cantilever);
+		add<TransformShape<GeometricShapeBox>>(Transformd(translation_holder), halfsize_holder);
 	}
 };
 /**
@@ -95,12 +95,12 @@ int main()
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize>
 		computing_time_step_size(cantilever_body);
 	/** active and passive stress relaxation. */
-	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> stress_relaxation_first_half(cantilever_body_inner);
-	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half(cantilever_body_inner);
+	Dynamics1Level<solid_dynamics::Integration1stHalf> stress_relaxation_first_half(cantilever_body_inner);
+	Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(cantilever_body_inner);
 	/** Constrain the holder. */
 	BodyRegionByParticle holder(cantilever_body, 
-		makeShared<TransformShape<GeometricShapeBox>>(translation_holder, halfsize_holder, "Holder"));
-	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_holder(holder);
+		makeShared<TransformShape<GeometricShapeBox>>(Transformd(translation_holder), halfsize_holder, "Holder"));
+	SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_holder(holder);
 	/** Output */
 	IOEnvironment io_environment(system);
 	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);

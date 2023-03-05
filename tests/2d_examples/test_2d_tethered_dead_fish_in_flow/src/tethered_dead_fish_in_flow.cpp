@@ -26,7 +26,7 @@ Real cx = 2.0;			  /**< Center of fish in x direction. */
 Real cy = 4.0;			  /**< Center of fish in y direction. */
 Real fish_length = 3.738; /**< Length of fish. */
 Real fish_shape_resolution = resolution_ref * 0.5;
-Vec3d tethering_point(-1.0, cy, 0.0); /**< The tethering point. */
+Vecd tethering_point(-1.0, cy); /**< The tethering point. */
 /**
  * Material properties of the fluid.
  */
@@ -167,34 +167,31 @@ public:
 		positions_.push_back(Vecd(cx + fish_length - resolution_ref, cy));
 	}
 };
-/**
- * Inflow boundary condition.
- */
-class ParabolicInflow : public fluid_dynamics::InflowVelocityCondition
+//----------------------------------------------------------------------
+//	Inflow velocity
+//----------------------------------------------------------------------
+struct InflowVelocity
 {
-	Real u_ave_, u_ref_, t_ref;
+	Real u_ref_, t_ref_;
+	AlignedBoxShape &aligned_box_;
+	Vecd halfsize_;
 
-public:
-	ParabolicInflow(BodyAlignedBoxByCell &aligned_box_part)
-		: InflowVelocityCondition(aligned_box_part),
-		  u_ave_(0), u_ref_(1.0), t_ref(4.0) {}
+	template <class BoundaryConditionType>
+	InflowVelocity(BoundaryConditionType &boundary_condition)
+		: u_ref_(U_f), t_ref_(2.0),
+		  aligned_box_(boundary_condition.getAlignedBox()),
+		  halfsize_(aligned_box_.HalfSize()) {}
 
-	Vecd getPrescribedVelocity(Vecd &position, Vecd &velocity) override
+	Vecd operator()(Vecd &position, Vecd &velocity)
 	{
-		Real u = velocity[0];
-		Real v = velocity[1];
-		if (position[0] < 0.0)
-		{
-			u = 6.0 * u_ave_ * position[1] * (DH - position[1]) / DH / DH;
-			v = 0.0;
-		}
-		return Vecd(u, v);
-	}
-
-	void setupDynamics(Real dt = 0.0) override
-	{
+		Vecd target_velocity = velocity;
 		Real run_time = GlobalStaticVariables::physical_time_;
-		u_ave_ = run_time < t_ref ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref)) : u_ref_;
+		Real u_ave = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
+		if (aligned_box_.checkInBounds(0, position))
+		{
+			target_velocity[0] = 1.5 * u_ave * (1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
+		}
+		return target_velocity;
 	}
 };
 /**
@@ -207,11 +204,9 @@ int main(int ac, char *av[])
 	 */
 	SPHSystem system(system_domain_bounds, resolution_ref);
 	/** Tag for run particle relaxation for the initial body fitted distribution. */
-	system.run_particle_relaxation_ = false;
+	system.setRunParticleRelaxation(false);
 	/** Tag for computation start with relaxed body fitted particles distribution. */
-	system.reload_particles_ = true;
-	/** Tag for computation from restart files. 0: start with initial condition. */
-	system.restart_step_ = 0;
+	system.setReloadParticles(true);
 	system.handleCommandlineOptions(ac, av);
 	IOEnvironment io_environment(system);
 
@@ -235,7 +230,7 @@ int main(int ac, char *av[])
 	fish_body.defineBodyLevelSetShape();
 	fish_body.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
 	// Using relaxed particle distribution if needed
-	(!system.run_particle_relaxation_ && system.reload_particles_)
+	(!system.RunParticleRelaxation() && system.ReloadParticles())
 		? fish_body.generateParticles<ParticleGeneratorReload>(io_environment, fish_body.getName())
 		: fish_body.generateParticles<ParticleGeneratorLattice>();
 	/**
@@ -250,12 +245,8 @@ int main(int ac, char *av[])
 	ContactRelation fish_body_contact(fish_body, {&water_block});
 	ContactRelation fish_observer_contact(fish_observer, {&fish_body});
 
-	BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
-	ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceOnSolid>> write_total_force_on_fish(io_environment, fish_body);
-	ObservedQuantityRecording<Vecd> write_fish_displacement("Position", io_environment, fish_observer_contact);
-
 	/** check whether run particle relaxation for body fitted particle distribution. */
-	if (system.run_particle_relaxation_)
+	if (system.RunParticleRelaxation())
 	{
 		/**
 		 * @brief 	Methods used for particle relaxation.
@@ -273,7 +264,7 @@ int main(int ac, char *av[])
 		 * @brief 	Particle relaxation starts here.
 		 */
 		random_fish_body_particles.parallel_exec(0.25);
-		relaxation_step_inner.surface_bounding_.parallel_exec();
+		relaxation_step_inner.SurfaceBounding().parallel_exec();
 		write_fish_body.writeToFile();
 
 		/** relax particles of the insert body. */
@@ -330,22 +321,22 @@ int main(int ac, char *av[])
 	/** Inflow boundary condition. */
 	BodyAlignedBoxByCell inflow_buffer(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(buffer_translation)), buffer_halfsize));
-	SimpleDynamics<ParabolicInflow, BodyAlignedBoxByCell> parabolic_inflow(inflow_buffer);
+	SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
 
 	/**
 	 * Fluid structure interaction model.
 	 */
-	InteractionDynamics<solid_dynamics::FluidViscousForceOnSolid> viscous_force_on_fish_body(fish_body_contact);
-	InteractionDynamics<solid_dynamics::FluidForceOnSolidUpdate> fluid_force_on_fish_body(fish_body_contact, viscous_force_on_fish_body);
+	InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_fish_body(fish_body_contact);
+	InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid> fluid_force_on_fish_body(fish_body_contact, viscous_force_on_fish_body);
 	/**
 	 * Solid dynamics.
 	 */
 	/** Time step size calculation. */
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> fish_body_computing_time_step_size(fish_body);
 	/** Process of stress relaxation. */
-	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf>
+	Dynamics1Level<solid_dynamics::Integration1stHalf>
 		fish_body_stress_relaxation_first_half(fish_body_inner);
-	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf>
+	Dynamics1Level<solid_dynamics::Integration2ndHalf>
 		fish_body_stress_relaxation_second_half(fish_body_inner);
 	/** Update normal direction on fish body.*/
 	SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection>
@@ -362,30 +353,29 @@ int main(int ac, char *av[])
 	SimTK::GeneralForceSubsystem forces(MBsystem);
 	SimTK::CableTrackerSubsystem cables(MBsystem);
 	/** Mass properties of the fixed spot. */
-	SimTK::Body::Rigid fixed_spot_info(SimTK::MassProperties(1.0, Vec3d(0), SimTK::UnitInertia(1)));
+	SimTK::Body::Rigid fixed_spot_info(SimTK::MassProperties(1.0, SimTK::Vec3(0), SimTK::UnitInertia(1)));
 	SolidBodyPartForSimbody fish_head(fish_body, makeShared<MultiPolygonShape>(createFishHeadShape(fish_body), "FishHead"));
 	/** Mass properties of the constrained spot. */
 	SimTK::Body::Rigid tethered_spot_info(*fish_head.body_part_mass_properties_);
 	/** Mobility of the fixed spot. */
-	SimTK::MobilizedBody::Weld fixed_spot(matter.Ground(), SimTK::Transform(tethering_point),
-										  fixed_spot_info, SimTK::Transform(Vec3d(0)));
+	SimTK::MobilizedBody::Weld fixed_spot( matter.Ground(), SimTK::Transform( SimTK::Vec3(tethering_point[0], tethering_point[1], 0.0) ),
+										   fixed_spot_info, SimTK::Transform(SimTK::Vec3(0)) );
 	/** Mobility of the tethered spot.
 	 * Set the mass center as the origin location of the planar mobilizer
 	 */
-	Vec3d displacement0 = fish_head.initial_mass_center_ - tethering_point;
-	SimTK::MobilizedBody::Planar tethered_spot(fixed_spot,
-											   SimTK::Transform(displacement0), tethered_spot_info, SimTK::Transform(Vec3d(0)));
+	Vecd disp0 = fish_head.initial_mass_center_ - tethering_point;
+	SimTK::MobilizedBody::Planar tethered_spot(fixed_spot, SimTK::Transform(SimTK::Vec3(disp0[0], disp0[1], 0.0)), tethered_spot_info, SimTK::Transform( SimTK::Vec3(0) ));
 	/** The tethering line give cable force.
 	 * the start point of the cable path is at the origin location of the first mobilizer body,
 	 * the end point is the tip of the fish head which has a distance to the origin
 	 * location of the second mobilizer body origin location, here, the mass center
 	 * of the fish head.
 	 */
-	Vec3d displacement_cable_end = Vec3d(cx, cy, 0.0) - fish_head.initial_mass_center_;
-	SimTK::CablePath tethering_line(cables, fixed_spot, Vec3d(0), tethered_spot, displacement_cable_end);
+	Vecd disp_cable_end = Vecd(cx, cy) - fish_head.initial_mass_center_;
+	SimTK::CablePath tethering_line(cables, fixed_spot, SimTK::Vec3(0), tethered_spot, SimTK::Vec3(disp_cable_end[0], disp_cable_end[1], 0.0) );
 	SimTK::CableSpring tethering_spring(forces, tethering_line, 100.0, 3.0, 10.0);
 
-	// discreted forces acting on the bodies
+	// discrete forces acting on the bodies
 	SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
 	fixed_spot_info.addDecoration(SimTK::Transform(), SimTK::DecorativeSphere(0.02));
 	tethered_spot_info.addDecoration(SimTK::Transform(), SimTK::DecorativeSphere(0.4));
@@ -406,11 +396,15 @@ int main(int ac, char *av[])
 	/**
 	 * Coupling between SimBody and SPH.
 	 */
-	ReduceDynamics<solid_dynamics::TotalForceForSimBody, SolidBodyPartForSimbody>
+	ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody>
 		force_on_tethered_spot(fish_head, MBsystem, tethered_spot, force_on_bodies, integ);
-	SimpleDynamics<solid_dynamics::ConstraintBySimBody, SolidBodyPartForSimbody>
+	SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody>
 		constraint_tethered_spot(fish_head, MBsystem, tethered_spot, force_on_bodies, integ);
 
+	BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
+	ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>> 
+	write_total_force_on_fish(io_environment, fluid_force_on_fish_body, "TotalPressureForceOnSolid");
+	ObservedQuantityRecording<Vecd> write_fish_displacement("Position", io_environment, fish_observer_contact);
 	/**
 	 * Time steeping starts here.
 	 */

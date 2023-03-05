@@ -6,7 +6,7 @@
 #include "neighborhood.h"
 
 #include "complex_body.h"
-#include "base_particles.h"
+#include "base_particles.hpp"
 #include "base_particle_dynamics.h"
 
 namespace SPH
@@ -81,7 +81,7 @@ namespace SPH
 	{
 		size_t index_j = std::get<0>(list_data_j);
 		Vecd displacement = pos_i - std::get<1>(list_data_j);
-		Real distance_metric = displacement.normSqr();
+		Real distance_metric = displacement.squaredNorm();
 		if (distance_metric < kernel_->CutOffRadiusSqr() && index_i != index_j)
 		{
 			neighborhood.current_size_ >= neighborhood.allocated_size_
@@ -217,7 +217,7 @@ namespace SPH
 	{
 		size_t index_j = std::get<0>(list_data_j);
 		Vecd displacement = pos_i - std::get<1>(list_data_j);
-		Real distance_metric = displacement.normSqr();
+		Real distance_metric = displacement.squaredNorm();
 		Real i_h_ratio = adaptation_.SmoothingLengthRatio(index_i);
 		Real h_ratio_min = SMIN(i_h_ratio, relative_h_ref_ * contact_adaptation_.SmoothingLengthRatio(index_j));
 		if (distance_metric < kernel_->CutOffRadiusSqr(h_ratio_min))

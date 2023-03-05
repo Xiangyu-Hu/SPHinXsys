@@ -1,30 +1,30 @@
-/* -----------------------------------------------------------------------------*
- *                               SPHinXsys                                      *
- * -----------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
- * physical accurate simulation and aims to model coupled industrial dynamic    *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
- * (smoothed particle hydrodynamics), a meshless computational method using     *
- * particle discretization.                                                     *
- *                                                                              *
- * SPHinXsys is partially funded by German Research Foundation                  *
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
- * HU1527/12-1 and HU1527/12-4.                                                 *
- *                                                                              *
- * Portions copyright (c) 2017-2022 Technical University of Munich and          *
- * the authors' affiliations.                                                   *
- *                                                                              *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
- * not use this file except in compliance with the License. You may obtain a    *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
- *                                                                              *
- * -----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	fluid_surface_inner.h
  * @brief 	Here, we define the algorithm classes for fluid surfaces.
- * @details 	Fluid indicators are mainly used here to classify different region in a fluid.
- * @author	Chi Zhang and Xiangyu Hu
+ * @details Fluid indicators are mainly used here to classify different region in a fluid.
+ * @author	Chi ZHang and Xiangyu Hu
  */
 
 #ifndef FLUID_SURFACE_INNER_H
@@ -122,30 +122,10 @@ namespace SPH
 		};
 
 		/**
-		 * @class FreeStreamBoundaryVelocityCorrection
-		 * @brief this function is applied to freestream flows TODO: revise for general freestream condition
-		 * @brief modify the velocity of free surface particles with far-field velocity
-		 */
-		class FreeStreamBoundaryVelocityCorrection : public LocalDynamics, public FluidDataSimple
-		{
-		protected:
-			Real u_ref_, t_ref_, rho_ref_;
-			StdLargeVec<Real> &rho_sum;
-			StdLargeVec<Vecd> &vel_;
-			StdLargeVec<int> &surface_indicator_;
-
-		public:
-			explicit FreeStreamBoundaryVelocityCorrection(SPHBody &sph_body);
-			virtual ~FreeStreamBoundaryVelocityCorrection(){};
-
-			void update(size_t index_i, Real dt = 0.0);
-		};
-
-		/**
 		 * @class FreeSurfaceHeight
 		 * @brief Probe the free surface profile for a fluid body part by reduced operation.
 		 */
-		class FreeSurfaceHeight : public LocalDynamicsReduce<Real, ReduceMax>,
+		class FreeSurfaceHeight : public BaseLocalDynamicsReduce<Real, ReduceMax, BodyPartByCell>,
 								  public FluidDataSimple
 		{
 		protected:
@@ -153,7 +133,7 @@ namespace SPH
 
 		public:
 			FreeSurfaceHeight(BodyPartByCell &body_part)
-				: LocalDynamicsReduce<Real, ReduceMax>(body_part.getSPHBody(), Real(MinRealNumber)),
+				: BaseLocalDynamicsReduce<Real, ReduceMax, BodyPartByCell>(body_part, Real(MinRealNumber)),
 				  FluidDataSimple(sph_body_), pos_(particles_->pos_)
 			{
 				quantity_name_ = "FreeSurfaceHeight";
@@ -174,11 +154,11 @@ namespace SPH
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			Real threshold_by_dimensions_;
 			StdLargeVec<int> &surface_indicator_;
+			StdLargeVec<Real> &pos_div_;
+			Real threshold_by_dimensions_;
 			StdLargeVec<Vecd> color_grad_;
 			StdLargeVec<Vecd> surface_norm_;
-			StdLargeVec<Real> &pos_div_;
 		};
 
 		/**
@@ -193,12 +173,12 @@ namespace SPH
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			Real threshold_by_dimensions_;
 			StdLargeVec<Real> &Vol_;
 			StdLargeVec<int> &surface_indicator_;
 			StdLargeVec<Vecd> &color_grad_;
 			StdLargeVec<Vecd> &surface_norm_;
 			StdLargeVec<Real> &pos_div_;
+			Real threshold_by_dimensions_;
 		};
 
 		/**

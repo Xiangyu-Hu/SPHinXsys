@@ -1,9 +1,3 @@
-/**
- * @file 	particle_dynamics_dissipation.hpp
- * @brief 	This is the particle dynamics applicable for all type bodies
- * @author	Chi Zhang and Xiangyu Hu
- */
-
 #ifndef PARTICLE_DYNAMICS_DISSIPATION_HPP
 #define PARTICLE_DYNAMICS_DISSIPATION_HPP
 
@@ -16,7 +10,7 @@ namespace SPH
 	DampingBySplittingInner<VariableType>::
 		DampingBySplittingInner(BaseInnerRelation &inner_relation,
 								const std::string &variable_name, Real eta)
-		: LocalDynamics(inner_relation.sph_body_),
+		: LocalDynamics(inner_relation.getSPHBody()),
 		  DissipationDataInner(inner_relation), eta_(eta),
 		  Vol_(particles_->Vol_), mass_(particles_->mass_),
 		  variable_(*particles_->getVariableByName<VariableType>(variable_name)) {}
@@ -28,7 +22,7 @@ namespace SPH
 		Real Vol_i = Vol_[index_i];
 		Real mass_i = mass_[index_i];
 		VariableType &variable_i = variable_[index_i];
-		ErrorAndParameters<VariableType> error_and_parameters(0);
+		ErrorAndParameters<VariableType> error_and_parameters;
 		Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 		for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 		{
@@ -82,8 +76,8 @@ namespace SPH
 	DampingBySplittingComplex<VariableType>::
 		DampingBySplittingComplex(ComplexRelation &complex_relation,
 								  const std::string &variable_name, Real eta)
-		: DampingBySplittingInner<VariableType>(complex_relation.inner_relation_, variable_name, eta),
-		  DissipationDataContact(complex_relation.contact_relation_)
+		: DampingBySplittingInner<VariableType>(complex_relation.getInnerRelation(), variable_name, eta),
+		  DissipationDataContact(complex_relation.getContactRelation())
 	{
 		for (size_t k = 0; k != contact_particles_.size(); ++k)
 		{
@@ -105,8 +99,6 @@ namespace SPH
 		/** Contact interaction. */
 		for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 		{
-			StdLargeVec<Real> &Vol_k = *(this->contact_Vol_[k]);
-			StdLargeVec<Real> &mass_k = *(this->contact_mass_[k]);
 			StdLargeVec<VariableType> &variable_k = *(this->contact_variable_[k]);
 			Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
 			for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -138,7 +130,6 @@ namespace SPH
 		/** Contact interaction. */
 		for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 		{
-			StdLargeVec<Real> &Vol_k = *(this->contact_Vol_[k]);
 			StdLargeVec<Real> &mass_k = *(this->contact_mass_[k]);
 			StdLargeVec<VariableType> &variable_k = *(this->contact_variable_[k]);
 			Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
@@ -164,8 +155,8 @@ namespace SPH
 	DampingBySplittingWithWall<VariableType, BaseDampingBySplittingType>::
 		DampingBySplittingWithWall(ComplexRelation &complex_wall_relation,
 								   const std::string &variable_name, Real eta)
-		: BaseDampingBySplittingType<VariableType>(complex_wall_relation.inner_relation_, variable_name, eta),
-		  DissipationDataWithWall(complex_wall_relation.contact_relation_)
+		: BaseDampingBySplittingType<VariableType>(complex_wall_relation.getInnerRelation(), variable_name, eta),
+		  DissipationDataWithWall(complex_wall_relation.getContactRelation())
 	{
 		for (size_t k = 0; k != DissipationDataWithWall::contact_particles_.size(); ++k)
 		{
@@ -188,7 +179,6 @@ namespace SPH
 		/** Contact interaction. */
 		for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 		{
-			StdLargeVec<Real> &Vol_k = *(this->wall_Vol_[k]);
 			StdLargeVec<VariableType> &variable_k = *(this->wall_variable_[k]);
 			Neighborhood &contact_neighborhood = (*DissipationDataWithWall::contact_configuration_[k])[index_i];
 			for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -211,7 +201,7 @@ namespace SPH
 	DampingPairwiseInner<VariableType>::
 		DampingPairwiseInner(BaseInnerRelation &inner_relation,
 							 const std::string &variable_name, Real eta)
-		: LocalDynamics(inner_relation.sph_body_),
+		: LocalDynamics(inner_relation.getSPHBody()),
 		  DissipationDataInner(inner_relation),
 		  Vol_(particles_->Vol_), mass_(particles_->mass_),
 		  variable_(*particles_->getVariableByName<VariableType>(variable_name)),
@@ -271,8 +261,8 @@ namespace SPH
 	template <typename VariableType>
 	DampingPairwiseComplex<VariableType>::
 		DampingPairwiseComplex(ComplexRelation &complex_relation, const std::string &variable_name, Real eta)
-		: DampingPairwiseComplex(complex_relation.inner_relation_,
-								 complex_relation.contact_relation_, variable_name, eta) {}
+		: DampingPairwiseComplex(complex_relation.getInnerRelation(),
+								 complex_relation.getContactRelation(), variable_name, eta) {}
 	//=================================================================================================//
 	template <typename VariableType>
 	void DampingPairwiseComplex<VariableType>::interaction(size_t index_i, Real dt)
@@ -288,7 +278,6 @@ namespace SPH
 		/** Contact interaction. */
 		for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 		{
-			StdLargeVec<Real> &Vol_k = *(this->contact_Vol_[k]);
 			StdLargeVec<Real> &mass_k = *(this->contact_mass_[k]);
 			StdLargeVec<VariableType> &variable_k = *(this->contact_variable_[k]);
 			Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
@@ -339,8 +328,8 @@ namespace SPH
 			  template <typename BaseVariableType> class BaseDampingPairwiseType>
 	DampingPairwiseWithWall<VariableType, BaseDampingPairwiseType>::
 		DampingPairwiseWithWall(ComplexRelation &complex_wall_relation, const std::string &variable_name, Real eta)
-		: DampingPairwiseWithWall(complex_wall_relation.inner_relation_,
-								  complex_wall_relation.contact_relation_, variable_name, eta) {}
+		: DampingPairwiseWithWall(complex_wall_relation.getInnerRelation(),
+								  complex_wall_relation.getContactRelation(), variable_name, eta) {}
 	//=================================================================================================//
 	template <typename VariableType,
 			  template <typename BaseVariableType> class BaseDampingPairwiseType>
@@ -358,7 +347,6 @@ namespace SPH
 		/** Contact interaction. */
 		for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 		{
-			StdLargeVec<Real> &Vol_k = *(this->wall_Vol_[k]);
 			StdLargeVec<VariableType> &variable_k = *(this->wall_variable_[k]);
 			Neighborhood &contact_neighborhood = (*DissipationDataWithWall::contact_configuration_[k])[index_i];
 			// forward sweep
@@ -385,7 +373,7 @@ namespace SPH
 	template <typename VariableType>
 	DampingPairwiseFromWall<VariableType>::
 		DampingPairwiseFromWall(BaseContactRelation &contact_relation, const std::string &variable_name, Real eta)
-		: LocalDynamics(contact_relation.sph_body_),
+		: LocalDynamics(contact_relation.getSPHBody()),
 		  DataDelegateContact<BaseParticles, SolidParticles>(contact_relation),
 		  eta_(eta), Vol_(particles_->Vol_), mass_(particles_->mass_),
 		  variable_(*particles_->getVariableByName<VariableType>(variable_name))
@@ -409,7 +397,6 @@ namespace SPH
 		/** Contact interaction. */
 		for (size_t k = 0; k < contact_configuration_.size(); ++k)
 		{
-			StdLargeVec<Real> &Vol_k = *(wall_Vol_[k]);
 			StdLargeVec<VariableType> &variable_k = *(wall_variable_[k]);
 			Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 			// forward sweep

@@ -1,25 +1,25 @@
-/* -----------------------------------------------------------------------------*
- *                               SPHinXsys                                      *
- * -----------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
- * physical accurate simulation and aims to model coupled industrial dynamic    *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
- * (smoothed particle hydrodynamics), a meshless computational method using     *
- * particle discretization.                                                     *
- *                                                                              *
- * SPHinXsys is partially funded by German Research Foundation                  *
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
- * HU1527/12-1 and HU1527/12-4.                                                 *
- *                                                                              *
- * Portions copyright (c) 2017-2022 Technical University of Munich and          *
- * the authors' affiliations.                                                   *
- *                                                                              *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
- * not use this file except in compliance with the License. You may obtain a    *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
- *                                                                              *
- * -----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	fluid_dynamics_inner.h
  * @brief 	Here, we define the algorithm classes for fluid dynamics within the body.
@@ -74,8 +74,8 @@ namespace SPH
 			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
-			Real rho0_;
 			StdLargeVec<Real> &rho_, &rho_sum_, &mass_;
+			Real rho0_;
 		};
 
 		/**
@@ -121,10 +121,10 @@ namespace SPH
 			virtual ~BaseViscousAccelerationInner(){};
 
 		protected:
-			Real mu_;
-			Real smoothing_length_;
 			StdLargeVec<Real> &rho_;
 			StdLargeVec<Vecd> &vel_, &acc_prior_;
+			Real mu_;
+			Real smoothing_length_;
 		};
 
 		/**
@@ -227,8 +227,8 @@ namespace SPH
 			virtual Real outputResult(Real reduced_value) override;
 
 		protected:
-			Real smoothing_length_min_;
 			StdLargeVec<Vecd> &vel_;
+			Real smoothing_length_min_;
 			Real advectionCFL_;
 		};
 

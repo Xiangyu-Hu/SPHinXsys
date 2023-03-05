@@ -64,10 +64,10 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Build up an SPHSystem.
 	//----------------------------------------------------------------------
-	BoundingBox system_domain_bounds(Vec2d(0), Vec2d(DL, DH));
+	BoundingBox system_domain_bounds(Vec2d::Zero(), Vec2d(DL, DH));
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
 	/** Tag for computation start with relaxed body fitted particles distribution. */
-	sph_system.reload_particles_ = false;
+	sph_system.setReloadParticles(false);
 	// handle command line arguments
 	sph_system.handleCommandlineOptions(ac, av);
 	IOEnvironment io_environment(sph_system);
@@ -77,7 +77,7 @@ int main(int ac, char *av[])
 	FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
 	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	// Using relaxed particle distribution if needed
-	sph_system.reload_particles_
+	sph_system.ReloadParticles()
 		? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getName())
 		: water_block.generateParticles<ParticleGeneratorLattice>();
 	//----------------------------------------------------------------------
@@ -127,7 +127,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
-	size_t number_of_iterations = sph_system.restart_step_;
+	size_t number_of_iterations = 0;
 	int screen_output_interval = 100;
 	Real end_time = 5.0;
 	Real output_interval = 0.1; /**< Time stamps for output of body states. */
@@ -203,7 +203,7 @@ int main(int ac, char *av[])
 		write_total_mechanical_energy.generateDataBase(1.0e-3);
 		write_maximum_speed.generateDataBase(1.0e-3);
 	}
-	else if (!sph_system.reload_particles_)
+	else if (!sph_system.ReloadParticles())
 	{
 		write_total_mechanical_energy.newResultTest();
 		write_maximum_speed.newResultTest();

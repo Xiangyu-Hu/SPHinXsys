@@ -48,11 +48,9 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
 	/** Tag for running particle relaxation for the initially body-fitted distribution */
-	sph_system.run_particle_relaxation_ = true;
+	sph_system.setRunParticleRelaxation(false);
 	/** Tag for starting with relaxed body-fitted particles distribution */
-	sph_system.reload_particles_ = false;
-	/** Tag for computation from restart files. 0: start with initial condition */
-	sph_system.restart_step_ = 0;
+	sph_system.setReloadParticles(true);
 	sph_system.handleCommandlineOptions(ac, av);
 	IOEnvironment io_environment(sph_system);
 	//----------------------------------------------------------------------
@@ -60,7 +58,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	SolidBody ball(sph_system, makeShared<GeometricShapeBall>(ball_center, ball_radius, "BallBody"));
 	ball.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
+	if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
 	{
 		ball.generateParticles<ParticleGeneratorReload>(io_environment, ball.getName());
 	}
@@ -77,7 +75,7 @@ int main(int ac, char *av[])
 	wall_boundary.defineAdaptation<SPHAdaptation>(1.15, 1.0);
 	// here dummy linear elastic solid is use because no solid dynamics in particle relaxation
 	wall_boundary.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
-	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
+	if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
 	{
 		wall_boundary.generateParticles<ParticleGeneratorReload>(io_environment, wall_boundary.getName());
 	}
@@ -87,7 +85,7 @@ int main(int ac, char *av[])
 		wall_boundary.generateParticles<ThickSurfaceParticleGeneratorLattice>(thickness);
 	}
 
-	if (!sph_system.run_particle_relaxation_ && !sph_system.reload_particles_)
+	if (!sph_system.RunParticleRelaxation() && !sph_system.ReloadParticles())
 	{
 		std::cout << "Error: This case requires reload shell particles for simulation!" << std::endl;
 		return 0;
@@ -98,7 +96,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------
-	if (sph_system.run_particle_relaxation_)
+	if (sph_system.RunParticleRelaxation())
 	{
 		//----------------------------------------------------------------------
 		//	Define body relation map used for particle relaxation.
@@ -170,17 +168,17 @@ int main(int ac, char *av[])
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
 	/** Define external force.*/
-	SimpleDynamics<TimeStepInitialization> ball_initialize_timestep(ball, makeShared<Gravity>(Vec2d(0.0, -gravity_g)));
+	SimpleDynamics<TimeStepInitialization> ball_initialize_timestep(ball, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> ball_corrected_configuration(ball_inner);
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> ball_get_time_step_size(ball);
 	/** stress relaxation for the balls. */
-	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> ball_stress_relaxation_first_half(ball_inner);
-	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> ball_stress_relaxation_second_half(ball_inner);
+	Dynamics1Level<solid_dynamics::Integration1stHalf> ball_stress_relaxation_first_half(ball_inner);
+	Dynamics1Level<solid_dynamics::Integration2ndHalf> ball_stress_relaxation_second_half(ball_inner);
 	/** Algorithms for solid-solid contact. */
-	InteractionDynamics<solid_dynamics::ShellContactDensity, BodyPartByParticle> ball_update_contact_density(ball_contact);
-	InteractionDynamics<solid_dynamics::ContactForceFromWall, BodyPartByParticle> ball_compute_solid_contact_forces(ball_contact);
-	DampingWithRandomChoice<InteractionSplit<solid_dynamics::PairwiseFrictionFromWall>> 
-		ball_friction(0.1, ball_contact, physical_viscosity);
+	InteractionDynamics<solid_dynamics::ShellContactDensity> ball_update_contact_density(ball_contact);
+	InteractionDynamics<solid_dynamics::ContactForceFromWall> ball_compute_solid_contact_forces(ball_contact);
+	// DampingWithRandomChoice<InteractionSplit<solid_dynamics::PairwiseFrictionFromWall>> 
+	// 	ball_friction(0.1, ball_contact, physical_viscosity);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
@@ -229,7 +227,7 @@ int main(int ac, char *av[])
 				ball_update_contact_density.parallel_exec();
 				ball_compute_solid_contact_forces.parallel_exec();
 				ball_stress_relaxation_first_half.parallel_exec(dt);
-				ball_friction.parallel_exec(dt);
+				//ball_friction.parallel_exec(dt);
 				ball_stress_relaxation_second_half.parallel_exec(dt);
 
 				ball.updateCellLinkedList();

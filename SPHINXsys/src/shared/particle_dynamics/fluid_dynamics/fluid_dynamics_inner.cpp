@@ -1,14 +1,9 @@
-/**
- * @file 	fluid_dynamics.cpp
- * @author	Chi Zhang and Xiangyu Hu
- */
-
 #include "fluid_dynamics_inner.h"
 #include "fluid_dynamics_inner.hpp"
 
 namespace SPH
 {
-	//=================================================================================================//
+	//=====================================================================================================//
 	namespace fluid_dynamics
 	{
 		//=================================================================================================//
@@ -18,7 +13,7 @@ namespace SPH
 			  pos_(particles_->pos_), vel_(particles_->vel_) {}
 		//=================================================================================================//
 		BaseDensitySummationInner::BaseDensitySummationInner(BaseInnerRelation &inner_relation)
-			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
+			: LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
 			  rho_(particles_->rho_), rho_sum_(particles_->rho_sum_), mass_(particles_->mass_),
 			  rho0_(sph_body_.base_material_->ReferenceDensity()) {}
 		//=================================================================================================//
@@ -29,7 +24,7 @@ namespace SPH
 		//=================================================================================================//
 		DensitySummationInner::DensitySummationInner(BaseInnerRelation &inner_relation)
 			: BaseDensitySummationInner(inner_relation),
-			  W0_(sph_body_.sph_adaptation_->getKernel()->W0(Vecd(0))),
+			  W0_(sph_body_.sph_adaptation_->getKernel()->W0( ZeroVecd )),
 			  inv_sigma0_(1.0 / sph_body_.sph_adaptation_->ReferenceNumberDensity()) {}
 		//=================================================================================================//
 		void DensitySummationInner::interaction(size_t index_i, Real dt)
@@ -51,7 +46,7 @@ namespace SPH
 		//=================================================================================================//
 		void DensitySummationInnerAdaptive::interaction(size_t index_i, Real dt)
 		{
-			Real sigma_i = mass_[index_i] * kernel_.W0(h_ratio_[index_i], Vecd(0));
+			Real sigma_i = mass_[index_i] * kernel_.W0( h_ratio_[index_i], ZeroVecd );
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 				sigma_i += inner_neighborhood.W_ij_[n] * mass_[inner_neighborhood.j_[n]];
@@ -61,14 +56,15 @@ namespace SPH
 		}
 		//=================================================================================================//
 		BaseViscousAccelerationInner::BaseViscousAccelerationInner(BaseInnerRelation &inner_relation)
-			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
+			: LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
 			  rho_(particles_->rho_), vel_(particles_->vel_), acc_prior_(particles_->acc_prior_),
 			  mu_(particles_->fluid_.ReferenceViscosity()),
 			  smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
 		//=================================================================================================//
 		void ViscousAccelerationInner::interaction(size_t index_i, Real dt)
 		{
-			Vecd acceleration(0), vel_derivative(0);
+			Vecd acceleration = Vecd::Zero();
+			Vecd vel_derivative = Vecd::Zero();
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
@@ -84,7 +80,7 @@ namespace SPH
 		//=================================================================================================//
 		void AngularConservativeViscousAccelerationInner::interaction(size_t index_i, Real dt)
 		{
-			Vecd acceleration(0);
+			Vecd acceleration = Vecd::Zero();
 			Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
@@ -94,7 +90,7 @@ namespace SPH
 
 				/** The following viscous force is given in Monaghan 2005 (Rep. Prog. Phys.), it seems that
 				 * this formulation is more accurate than the previous one for Taylor-Green-Vortex flow. */
-				Real v_r_ij = dot(vel_[index_i] - vel_[index_j], r_ij * e_ij);
+				Real v_r_ij = (vel_[index_i] - vel_[index_j]).dot(r_ij * e_ij);
 				Real eta_ij = 8.0 * mu_ * v_r_ij / (r_ij * r_ij + 0.01 * smoothing_length_);
 				acceleration += eta_ij * inner_neighborhood.dW_ijV_j_[n] * e_ij;
 			}
@@ -104,18 +100,17 @@ namespace SPH
 		//=================================================================================================//
 		TransportVelocityCorrectionInner::
 			TransportVelocityCorrectionInner(BaseInnerRelation &inner_relation, Real coefficient)
-			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
+			: LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
 			  pos_(particles_->pos_), surface_indicator_(particles_->surface_indicator_),
 			  smoothing_length_sqr_(powerN(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
 			  coefficient_(coefficient) {}
 		//=================================================================================================//
 		void TransportVelocityCorrectionInner::interaction(size_t index_i, Real dt)
 		{
-			Vecd acceleration_trans(0);
+			Vecd acceleration_trans = Vecd::Zero();
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
-				size_t index_j = inner_neighborhood.j_[n];
 				Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
 
 				// acceleration for transport velocity
@@ -128,7 +123,7 @@ namespace SPH
 		//=================================================================================================//
 		TransportVelocityCorrectionInnerAdaptive::
 			TransportVelocityCorrectionInnerAdaptive(BaseInnerRelation &inner_relation, Real coefficient)
-			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
+			: LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
 			  sph_adaptation_(*sph_body_.sph_adaptation_),
 			  pos_(particles_->pos_), surface_indicator_(particles_->surface_indicator_),
 			  smoothing_length_sqr_(powerN(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
@@ -136,11 +131,10 @@ namespace SPH
 		//=================================================================================================//
 		void TransportVelocityCorrectionInnerAdaptive::interaction(size_t index_i, Real dt)
 		{
-			Vecd acceleration_trans(0);
+			Vecd acceleration_trans = Vecd::Zero();
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
-				size_t index_j = inner_neighborhood.j_[n];
 				Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
 
 				// acceleration for transport velocity
@@ -182,7 +176,7 @@ namespace SPH
 		//=================================================================================================//
 		Real AdvectionTimeStepSizeForImplicitViscosity::reduce(size_t index_i, Real dt)
 		{
-			return vel_[index_i].normSqr();
+			return vel_[index_i].squaredNorm();
 		}
 		//=================================================================================================//
 		Real AdvectionTimeStepSizeForImplicitViscosity::outputResult(Real reduced_value)
@@ -205,7 +199,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		VorticityInner::VorticityInner(BaseInnerRelation &inner_relation)
-			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
+			: LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
 			  vel_(particles_->vel_)
 		{
 			particles_->registerVariable(vorticity_, "VorticityInner");
@@ -214,21 +208,22 @@ namespace SPH
 		//=================================================================================================//
 		void VorticityInner::interaction(size_t index_i, Real dt)
 		{
-			AngularVecd vorticity(0);
+			AngularVecd vorticity = ZeroData<AngularVecd>::value;
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = inner_neighborhood.j_[n];
 
-				vorticity += SimTK::cross(vel_[index_i] - vel_[index_j], inner_neighborhood.e_ij_[n]) *
-							 inner_neighborhood.dW_ijV_j_[n];
+				Vecd vel_diff = vel_[index_i] - vel_[index_j];
+				vorticity += getCrossProduct(vel_diff, inner_neighborhood.e_ij_[n]) * inner_neighborhood.dW_ijV_j_[n];
+
 			}
 
 			vorticity_[index_i] = vorticity;
 		}
 		//=================================================================================================//
 		BaseIntegration::BaseIntegration(BaseInnerRelation &inner_relation)
-			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
+			: LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
 			  fluid_(particles_->fluid_), rho_(particles_->rho_),
 			  p_(particles_->p_), drho_dt_(particles_->drho_dt_),
 			  pos_(particles_->pos_), vel_(particles_->vel_),
@@ -251,7 +246,7 @@ namespace SPH
 		{
 			Integration1stHalfDissipativeRiemann::interaction(index_i, dt);
 
-			Vecd acceleration(0);
+			Vecd acceleration = Vecd::Zero();
 			Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
@@ -281,16 +276,16 @@ namespace SPH
 			Integration2ndHalfDissipativeRiemann::interaction(index_i, dt);
 
 			Matd tau_i = tau_[index_i];
-			Matd stress_rate(0);
+			Matd stress_rate = Matd::Zero();
 			Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = inner_neighborhood.j_[n];
 				Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
 
-				Matd velocity_gradient = -SimTK::outer((vel_[index_i] - vel_[index_j]), nablaW_ijV_j);
-				stress_rate += ~velocity_gradient * tau_i + tau_i * velocity_gradient - tau_i / lambda_ +
-							   (~velocity_gradient + velocity_gradient) * mu_p_ / lambda_;
+				Matd velocity_gradient = - (vel_[index_i] - vel_[index_j]) * nablaW_ijV_j.transpose();
+				stress_rate += velocity_gradient.transpose() * tau_i + tau_i * velocity_gradient - tau_i / lambda_ +
+							   (velocity_gradient.transpose() + velocity_gradient) * mu_p_ / lambda_;
 			}
 
 			dtau_dt_[index_i] = stress_rate;
@@ -304,6 +299,6 @@ namespace SPH
 		}
 		//=================================================================================================//
 	}
-	//=================================================================================================//
+	//=====================================================================================================//
 }
-//=================================================================================================//
+//=========================================================================================================//

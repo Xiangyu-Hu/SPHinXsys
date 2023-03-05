@@ -1,29 +1,29 @@
 /* -------------------------------------------------------------------------*
  *								SPHinXsys									*
- * --------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
  * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic *
+ * physical accurate simulation and aims to model coupled industrial dynamic*
  * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
  * (smoothed particle hydrodynamics), a meshless computational method using	*
  * particle discretization.													*
  *																			*
  * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
- * and HU1527/12-1.															*
- *                                                                           *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
  * the authors' affiliations.												*
- *                                                                           *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
- * not use this file except in compliance with the License. You may obtain a *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
- *                                                                           *
- * --------------------------------------------------------------------------*/
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	base_particles.hpp
  * @brief 	This is the implementation of the template functions in base_particles.h
- * @author	Xiangyu Hu
+ * @author	Chi ZHang and Xiangyu Hu
  */
 
 #ifndef BASE_PARTICLES_HPP
@@ -32,6 +32,7 @@
 #include "base_particles.h"
 #include "particle_dynamics_algorithms.h"
 
+//=====================================================================================================//
 namespace SPH
 {
     //=================================================================================================//
@@ -57,16 +58,13 @@ namespace SPH
     }
     //=================================================================================================//
     template <typename VariableType, class InitializationFunction>
-    void BaseParticles::
-        registerVariable(StdLargeVec<VariableType> &variable_addrs,
-                         const std::string &variable_name, const InitializationFunction &initialization)
+    void BaseParticles::registerVariable(StdLargeVec<VariableType> &variable_addrs,
+                                         const std::string &variable_name, const InitializationFunction &initialization)
     {
-        constexpr int type_index = DataTypeIndex<VariableType>::value;
-
         registerVariable(variable_addrs, variable_name);
         for (size_t i = 0; i != real_particles_bound_; ++i)
         {
-            variable_addrs[i] = initialization(i);
+            variable_addrs[i] = initialization(i); // Here, lambda function is applied for initialization.
         }
     }
     //=================================================================================================//
@@ -178,7 +176,7 @@ namespace SPH
         constexpr int type_index = DataTypeIndex<VariableType>::value;
 
         for (size_t i = 0; i != std::get<type_index>(particle_data).size(); ++i)
-            std::get<type_index>(particle_data)[i]->resize(new_size, VariableType(0));
+            std::get<type_index>(particle_data)[i]->resize(new_size, ZeroData<VariableType>::value);
     }
     //=================================================================================================//
     template <typename VariableType>
@@ -188,7 +186,7 @@ namespace SPH
         constexpr int type_index = DataTypeIndex<VariableType>::value;
 
         for (size_t i = 0; i != std::get<type_index>(particle_data).size(); ++i)
-            std::get<type_index>(particle_data)[i]->push_back(VariableType(0));
+            std::get<type_index>(particle_data)[i]->push_back(ZeroData<VariableType>::value);
     }
     //=================================================================================================//
     template <typename VariableType>
@@ -213,7 +211,7 @@ namespace SPH
         output_stream << "    ";
         for (size_t i = 0; i != total_real_particles; ++i)
         {
-            Vec3d particle_position = upgradeToVector3D(pos_[i]);
+            Vec3d particle_position = upgradeToVec3d(pos_[i]);
             output_stream << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " ";
         }
         output_stream << std::endl;
@@ -249,47 +247,28 @@ namespace SPH
             derived_variable->parallel_exec();
         }
 
-        // write matrices
-        for (std::pair<std::string, size_t> &name_index : variables_to_write_[2])
+        // write integers
+        constexpr int type_index_int = DataTypeIndex<int>::value;
+        for (std::pair<std::string, size_t> &name_index : variables_to_write_[type_index_int])
         {
             std::string variable_name = name_index.first;
-            StdLargeVec<Matd> &variable = *(std::get<2>(all_particle_data_)[name_index.second]);
-            output_stream << "    <DataArray Name=\"" << variable_name << "\" type=\"Float32\"  NumberOfComponents=\"9\" Format=\"ascii\">\n";
+            StdLargeVec<int> &variable = *(std::get<type_index_int>(all_particle_data_)[name_index.second]);
+            output_stream << "    <DataArray Name=\"" << variable_name << "\" type=\"Int32\" Format=\"ascii\">\n";
             output_stream << "    ";
             for (size_t i = 0; i != total_real_particles; ++i)
             {
-                Mat3d matrix_value = upgradeToMatrix3D(variable[i]);
-                for (int k = 0; k != 3; ++k)
-                {
-                    Vec3d col_vector = matrix_value.col(k);
-                    output_stream << std::fixed << std::setprecision(9) << col_vector[0] << " " << col_vector[1] << " " << col_vector[2] << " ";
-                }
-            }
-            output_stream << std::endl;
-            output_stream << "    </DataArray>\n";
-        }
-
-        // write vectors
-        for (std::pair<std::string, size_t> &name_index : variables_to_write_[1])
-        {
-            std::string variable_name = name_index.first;
-            StdLargeVec<Vecd> &variable = *(std::get<1>(all_particle_data_)[name_index.second]);
-            output_stream << "    <DataArray Name=\"" << variable_name << "\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
-            output_stream << "    ";
-            for (size_t i = 0; i != total_real_particles; ++i)
-            {
-                Vec3d vector_value = upgradeToVector3D(variable[i]);
-                output_stream << std::fixed << std::setprecision(9) << vector_value[0] << " " << vector_value[1] << " " << vector_value[2] << " ";
+                output_stream << std::fixed << std::setprecision(9) << variable[i] << " ";
             }
             output_stream << std::endl;
             output_stream << "    </DataArray>\n";
         }
 
         // write scalars
-        for (std::pair<std::string, size_t> &name_index : variables_to_write_[0])
+        constexpr int type_index_Real = DataTypeIndex<Real>::value;
+        for (std::pair<std::string, size_t> &name_index : variables_to_write_[type_index_Real])
         {
             std::string variable_name = name_index.first;
-            StdLargeVec<Real> &variable = *(std::get<0>(all_particle_data_)[name_index.second]);
+            StdLargeVec<Real> &variable = *(std::get<type_index_Real>(all_particle_data_)[name_index.second]);
             output_stream << "    <DataArray Name=\"" << variable_name << "\" type=\"Float32\" Format=\"ascii\">\n";
             output_stream << "    ";
             for (size_t i = 0; i != total_real_particles; ++i)
@@ -300,16 +279,39 @@ namespace SPH
             output_stream << "    </DataArray>\n";
         }
 
-        // write integers
-        for (std::pair<std::string, size_t> &name_index : variables_to_write_[3])
+        // write vectors
+        constexpr int type_index_Vecd = DataTypeIndex<Vecd>::value;
+        for (std::pair<std::string, size_t> &name_index : variables_to_write_[type_index_Vecd])
         {
             std::string variable_name = name_index.first;
-            StdLargeVec<int> &variable = *(std::get<3>(all_particle_data_)[name_index.second]);
-            output_stream << "    <DataArray Name=\"" << variable_name << "\" type=\"Int32\" Format=\"ascii\">\n";
+            StdLargeVec<Vecd> &variable = *(std::get<type_index_Vecd>(all_particle_data_)[name_index.second]);
+            output_stream << "    <DataArray Name=\"" << variable_name << "\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
             output_stream << "    ";
             for (size_t i = 0; i != total_real_particles; ++i)
             {
-                output_stream << std::fixed << std::setprecision(9) << variable[i] << " ";
+                Vec3d vector_value = upgradeToVec3d(variable[i]);
+                output_stream << std::fixed << std::setprecision(9) << vector_value[0] << " " << vector_value[1] << " " << vector_value[2] << " ";
+            }
+            output_stream << std::endl;
+            output_stream << "    </DataArray>\n";
+        }
+
+        // write matrices
+        constexpr int type_index_Matd = DataTypeIndex<Matd>::value;
+        for (std::pair<std::string, size_t> &name_index : variables_to_write_[type_index_Matd])
+        {
+            std::string variable_name = name_index.first;
+            StdLargeVec<Matd> &variable = *(std::get<type_index_Matd>(all_particle_data_)[name_index.second]);
+            output_stream << "    <DataArray Name=\"" << variable_name << "\" type= \"Float32\"  NumberOfComponents=\"9\" Format=\"ascii\">\n";
+            output_stream << "    ";
+            for (size_t i = 0; i != total_real_particles; ++i)
+            {
+                Mat3d matrix_value = upgradeToMat3d(variable[i]);
+                for (int k = 0; k != 3; ++k)
+                {
+                    Vec3d col_vector = matrix_value.col(k);
+                    output_stream << std::fixed << std::setprecision(9) << col_vector[0] << " " << col_vector[1] << " " << col_vector[2] << " ";
+                }
             }
             output_stream << std::endl;
             output_stream << "    </DataArray>\n";

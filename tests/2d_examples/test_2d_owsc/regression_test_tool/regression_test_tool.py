@@ -12,7 +12,7 @@ case name: test_2d_owsc
 
 case_name = "test_2d_owsc"
 body_name = "Flap"
-parameter_name = "TotalForceOnSolid"
+parameter_name = "TotalForceFromFluid"
 body_name_1 = "FlapObserver"
 parameter_name_1 = "Pressure"
 

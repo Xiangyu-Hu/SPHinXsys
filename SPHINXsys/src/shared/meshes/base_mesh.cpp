@@ -1,29 +1,25 @@
-/**
- * @file 	base_mesh.cpp
- * @author	Luhui Han, Chi Zhang and Xiangyu Hu
- */
-
 #include "base_mesh.h"
 
 namespace SPH
 {
 	//=================================================================================================//
-	BaseMesh::BaseMesh()
-		: mesh_lower_bound_(0), grid_spacing_(1.0), number_of_grid_points_(0){};
-	//=================================================================================================//
 	BaseMesh::BaseMesh(Vecu number_of_grid_points)
-		: mesh_lower_bound_(0), grid_spacing_(1.0), number_of_grid_points_(number_of_grid_points){};
+		: number_of_grid_points_{number_of_grid_points}
+	{};
 	//=================================================================================================//
 	BaseMesh::BaseMesh(Vecd mesh_lower_bound, Real grid_spacing, Vecu number_of_grid_points)
-		: mesh_lower_bound_(mesh_lower_bound), grid_spacing_(grid_spacing),
-		  number_of_grid_points_(number_of_grid_points) {}
+		: mesh_lower_bound_{mesh_lower_bound}
+		, grid_spacing_{grid_spacing}
+		, number_of_grid_points_{number_of_grid_points}
+	{}
 	//=================================================================================================//
-	BaseMesh::BaseMesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width) : BaseMesh()
+	BaseMesh::BaseMesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width) 
+		: BaseMesh()
 	{
 		grid_spacing_ = grid_spacing;
-		Vecd mesh_buffer = Vecd(Real(buffer_width) * grid_spacing);
-		mesh_lower_bound_ = tentative_bounds.first - mesh_buffer;
-		Vecd tentative_upper_bound = tentative_bounds.second + mesh_buffer;
+		Vecd mesh_buffer = Real(buffer_width) * grid_spacing * Vecd::Ones();
+		mesh_lower_bound_ = tentative_bounds.first_ - mesh_buffer;
+		Vecd tentative_upper_bound = tentative_bounds.second_ + mesh_buffer;
 		for (int i = 0; i != Dimensions; ++i)
 		{
 			number_of_grid_points_[i] = 
@@ -34,7 +30,7 @@ namespace SPH
 	Vecu BaseMesh::CellIndexFromPosition(const Vecd &position)
 	{
 		Vecd rltpos = position - mesh_lower_bound_;
-		Vecu cell_index(0);
+		Vecu cell_index = Vecu::Zero();
 		for (int n = 0; n < rltpos.size(); n++)
 		{
 			cell_index[n] =
@@ -75,12 +71,14 @@ namespace SPH
 	}
 	//=================================================================================================//
 	Mesh::Mesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width)
-		: BaseMesh(tentative_bounds, grid_spacing, buffer_width),
-		  buffer_width_(buffer_width),
-		  number_of_cells_(this->NumberOfCellsFromNumberOfGridPoints(this->NumberOfGridPoints())) {}
+		: BaseMesh(tentative_bounds, grid_spacing, buffer_width)
+		, number_of_cells_{this->NumberOfCellsFromNumberOfGridPoints(this->NumberOfGridPoints())}
+		, buffer_width_{buffer_width}
+	{}
 	//=================================================================================================//
 	Mesh::Mesh(Vecd mesh_lower_bound, Vecu number_of_cells, Real grid_spacing)
-		: BaseMesh(), buffer_width_(0), number_of_cells_(number_of_cells)
+		: BaseMesh()
+		, number_of_cells_{number_of_cells}
 	{
 		mesh_lower_bound_ = mesh_lower_bound;
 		grid_spacing_ = grid_spacing;

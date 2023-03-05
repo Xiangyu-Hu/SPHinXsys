@@ -81,11 +81,9 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
 	/** Tag for running particle relaxation for the initially body-fitted distribution */
-	sph_system.run_particle_relaxation_ = false;
+	sph_system.setRunParticleRelaxation(false);
 	/** Tag for starting with relaxed body-fitted particles distribution */
-	sph_system.reload_particles_ = true;
-	/** Tag for computation from restart files. 0: start with initial condition */
-	sph_system.restart_step_ = 0;
+	sph_system.setReloadParticles(true);
 	sph_system.handleCommandlineOptions(ac, av);
 	IOEnvironment io_environment(sph_system);
 	//----------------------------------------------------------------------
@@ -94,14 +92,14 @@ int main(int ac, char *av[])
 	SolidBody free_ball(sph_system, makeShared<FreeBall>("FreeBall"));
 	free_ball.defineBodyLevelSetShape();
 	free_ball.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
+	(!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
 		? free_ball.generateParticles<ParticleGeneratorReload>(io_environment, free_ball.getName())
 		: free_ball.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody damping_ball(sph_system, makeShared<DampingBall>("DampingBall"));
 	damping_ball.defineBodyLevelSetShape();
 	damping_ball.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
+	(!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
 		? damping_ball.generateParticles<ParticleGeneratorReload>(io_environment, damping_ball.getName())
 		: damping_ball.generateParticles<ParticleGeneratorLattice>();
 
@@ -116,7 +114,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------
-	if (sph_system.run_particle_relaxation_)
+	if (sph_system.RunParticleRelaxation())
 	{
 		//----------------------------------------------------------------------
 		//	Define body relation map used for particle relaxation.
@@ -184,15 +182,15 @@ int main(int ac, char *av[])
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> free_ball_get_time_step_size(free_ball);
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> damping_ball_get_time_step_size(damping_ball);
 	/** stress relaxation for the balls. */
-	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> free_ball_stress_relaxation_first_half(free_ball_inner);
-	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> free_ball_stress_relaxation_second_half(free_ball_inner);
-	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> damping_ball_stress_relaxation_first_half(damping_ball_inner);
-	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> damping_ball_stress_relaxation_second_half(damping_ball_inner);
+	Dynamics1Level<solid_dynamics::Integration1stHalf> free_ball_stress_relaxation_first_half(free_ball_inner);
+	Dynamics1Level<solid_dynamics::Integration2ndHalf> free_ball_stress_relaxation_second_half(free_ball_inner);
+	Dynamics1Level<solid_dynamics::Integration1stHalf> damping_ball_stress_relaxation_first_half(damping_ball_inner);
+	Dynamics1Level<solid_dynamics::Integration2ndHalf> damping_ball_stress_relaxation_second_half(damping_ball_inner);
 	/** Algorithms for solid-solid contact. */
-	InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle> free_ball_update_contact_density(free_ball_contact);
-	InteractionDynamics<solid_dynamics::ContactForceFromWall, BodyPartByParticle> free_ball_compute_solid_contact_forces(free_ball_contact);
-	InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle> damping_ball_update_contact_density(damping_ball_contact);
-	InteractionDynamics<solid_dynamics::ContactForceFromWall, BodyPartByParticle> damping_ball_compute_solid_contact_forces(damping_ball_contact);
+	InteractionDynamics<solid_dynamics::ContactDensitySummation> free_ball_update_contact_density(free_ball_contact);
+	InteractionDynamics<solid_dynamics::ContactForceFromWall> free_ball_compute_solid_contact_forces(free_ball_contact);
+	InteractionDynamics<solid_dynamics::ContactDensitySummation> damping_ball_update_contact_density(damping_ball_contact);
+	InteractionDynamics<solid_dynamics::ContactForceFromWall> damping_ball_compute_solid_contact_forces(damping_ball_contact);
 	/** Damping for one ball */
 	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
 		damping(0.5, damping_ball_inner, "Velocity", physical_viscosity);

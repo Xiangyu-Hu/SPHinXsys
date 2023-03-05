@@ -1,13 +1,8 @@
-/**
- * @file 	fluid_surface_complex.cpp
- * @author	Chi Zhang and Xiangyu Hu
- */
-
 #include "fluid_surface_complex.h"
 
 namespace SPH
 {
-	//=================================================================================================//
+	//=====================================================================================================//
 	namespace fluid_dynamics
 	{
 		//=================================================================================================//
@@ -26,8 +21,8 @@ namespace SPH
 		//=================================================================================================//
 		FreeSurfaceIndicationComplex::
 			FreeSurfaceIndicationComplex(ComplexRelation &complex_relation, Real threshold)
-			: FreeSurfaceIndicationComplex(complex_relation.inner_relation_,
-										   complex_relation.contact_relation_, threshold) {}
+			: FreeSurfaceIndicationComplex(complex_relation.getInnerRelation(),
+										   complex_relation.getContactRelation(), threshold) {}
 		//=================================================================================================//
 		void FreeSurfaceIndicationComplex::interaction(size_t index_i, Real dt)
 		{
@@ -56,19 +51,18 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ColorFunctionGradientComplex::ColorFunctionGradientComplex(ComplexRelation &complex_relation)
-			: ColorFunctionGradientComplex(complex_relation.inner_relation_,
-										   complex_relation.contact_relation_) {}
+			: ColorFunctionGradientComplex(complex_relation.getInnerRelation(),
+										   complex_relation.getContactRelation()) {}
 		//=================================================================================================//
 		void ColorFunctionGradientComplex::interaction(size_t index_i, Real dt)
 		{
 			ColorFunctionGradientInner::interaction(index_i, dt);
 
-			Vecd gradient(0.0);
+			Vecd gradient = Vecd::Zero();
 			if (pos_div_[index_i] < threshold_by_dimensions_)
 			{
 				for (size_t k = 0; k < contact_configuration_.size(); ++k)
 				{
-					StdLargeVec<Real> &contact_Vol_k = *(contact_Vol_[k]);
 					Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 					for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 					{
@@ -81,14 +75,14 @@ namespace SPH
 		}
 		//=================================================================================================//
 		SurfaceNormWithWall::SurfaceNormWithWall(BaseContactRelation &contact_relation, Real contact_angle)
-			: LocalDynamics(contact_relation.sph_body_), FSIContactData(contact_relation),
+			: LocalDynamics(contact_relation.getSPHBody()), FSIContactData(contact_relation),
 			  contact_angle_(contact_angle),
 			  surface_indicator_(particles_->surface_indicator_),
 			  surface_norm_(*particles_->getVariableByName<Vecd>("SurfaceNormal")),
 			  pos_div_(*particles_->getVariableByName<Real>("PositionDivergence"))
 		{
-			particle_spacing_ = contact_relation.sph_body_.sph_adaptation_->ReferenceSpacing();
-			smoothing_length_ = contact_relation.sph_body_.sph_adaptation_->ReferenceSmoothingLength();
+			particle_spacing_ = contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing();
+			smoothing_length_ = contact_relation.getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				wall_n_.push_back(&(contact_particles_[k]->n_));
@@ -100,8 +94,8 @@ namespace SPH
 			Real large_dist(1.0e6);
 			Vecd n_i = surface_norm_[index_i];
 			Real smoothing_factor(1.0);
-			Vecd smooth_norm(0);
-			Vecd n_i_w(0);
+			Vecd smooth_norm = Vecd::Zero();
+			Vecd n_i_w = Vecd::Zero();
 			/** Contact interaction. */
 			if (surface_indicator_[index_i] == 1)
 			{
@@ -114,11 +108,11 @@ namespace SPH
 						size_t index_j = wall_neighborhood.j_[n];
 						if (wall_neighborhood.r_ij_[n] < large_dist)
 						{
-							Vecd n_w_t = n_i - dot(n_i, n_k[index_j]) * n_k[index_j];
+							Vecd n_w_t = n_i - n_i.dot(n_k[index_j]) * n_k[index_j];
 							Vecd n_t = n_w_t / (n_w_t.norm() + TinyReal);
 							n_i_w = n_t * sin(contact_angle_) + cos(contact_angle_) * n_k[index_j];
 							/** No change for multi-resolution. */
-							Real r_ij = wall_neighborhood.r_ij_[n] * dot(n_k[index_j], wall_neighborhood.e_ij_[n]);
+							Real r_ij = wall_neighborhood.r_ij_[n] * n_k[index_j].dot(wall_neighborhood.e_ij_[n]);
 							if (r_ij <= smoothing_length_)
 							{
 								smoothing_factor = 0.0;

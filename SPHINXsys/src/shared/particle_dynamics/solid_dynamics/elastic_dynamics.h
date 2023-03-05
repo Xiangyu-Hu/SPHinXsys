@@ -1,30 +1,30 @@
-/* -----------------------------------------------------------------------------*
- *                               SPHinXsys                                      *
- * -----------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
- * physical accurate simulation and aims to model coupled industrial dynamic    *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
- * (smoothed particle hydrodynamics), a meshless computational method using     *
- * particle discretization.                                                     *
- *                                                                              *
- * SPHinXsys is partially funded by German Research Foundation                  *
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
- * HU1527/12-1 and HU1527/12-4.                                                 *
- *                                                                              *
- * Portions copyright (c) 2017-2022 Technical University of Munich and          *
- * the authors' affiliations.                                                   *
- *                                                                              *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
- * not use this file except in compliance with the License. You may obtain a    *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
- *                                                                              *
- * -----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	elastic_dynamics.h
  * @brief 	Here, we define the algorithm classes for elastic solid dynamics.
  * @details 	We consider here a weakly compressible solids.
- * @author	Luhui Han, Chi Zhang and Xiangyu Hu
+ * @author	Chi ZHang and Xiangyu Hu
  */
 
 #ifndef ELASTIC_DYNAMICS_H
@@ -90,7 +90,7 @@ namespace SPH
 		{
 		protected:
 			Real CFL_;
-			StdLargeVec<Vecd> &vel_, &acc_;
+			StdLargeVec<Vecd> &vel_, &acc_, &acc_prior_;
 			Real smoothing_length_, c0_;
 
 		public:
@@ -101,14 +101,14 @@ namespace SPH
 		};
 
 		/**
-		 * @class DeformationGradientTensorBySummation
+		 * @class DeformationGradientBySummation
 		 * @brief computing deformation gradient tensor by summation
 		 */
-		class DeformationGradientTensorBySummation : public LocalDynamics, public ElasticSolidDataInner
+		class DeformationGradientBySummation : public LocalDynamics, public ElasticSolidDataInner
 		{
 		public:
-			explicit DeformationGradientTensorBySummation(BaseInnerRelation &inner_relation);
-			virtual ~DeformationGradientTensorBySummation(){};
+			explicit DeformationGradientBySummation(BaseInnerRelation &inner_relation);
+			virtual ~DeformationGradientBySummation(){};
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
@@ -117,14 +117,14 @@ namespace SPH
 		};
 
 		/**
-		 * @class BaseElasticRelaxation
+		 * @class BaseElasticIntegration
 		 * @brief base class for elastic relaxation
 		 */
-		class BaseElasticRelaxation : public LocalDynamics, public ElasticSolidDataInner
+		class BaseElasticIntegration : public LocalDynamics, public ElasticSolidDataInner
 		{
 		public:
-			explicit BaseElasticRelaxation(BaseInnerRelation &inner_relation);
-			virtual ~BaseElasticRelaxation(){};
+			explicit BaseElasticIntegration(BaseInnerRelation &inner_relation);
+			virtual ~BaseElasticIntegration(){};
 
 		protected:
 			StdLargeVec<Real> &rho_, &mass_;
@@ -133,15 +133,15 @@ namespace SPH
 		};
 
 		/**
-		 * @class BaseStressRelaxationFirstHalf
+		 * @class BaseIntegration1stHalf
 		 * @brief computing stress relaxation process by verlet time stepping
 		 * This is the first step
 		 */
-		class BaseStressRelaxationFirstHalf : public BaseElasticRelaxation
+		class BaseIntegration1stHalf : public BaseElasticIntegration
 		{
 		public:
-			explicit BaseStressRelaxationFirstHalf(BaseInnerRelation &inner_relation);
-			virtual ~BaseStressRelaxationFirstHalf(){};
+			explicit BaseIntegration1stHalf(BaseInnerRelation &inner_relation);
+			virtual ~BaseIntegration1stHalf(){};
 			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
@@ -152,40 +152,37 @@ namespace SPH
 		};
 
 		/**
-		 * @class StressRelaxationFirstHalf
+		 * @class Integration1stHalf
 		 * @brief computing stress relaxation process by verlet time stepping
 		 * This is the first step
 		 */
-		class StressRelaxationFirstHalf : public BaseStressRelaxationFirstHalf
+		class Integration1stHalf : public BaseIntegration1stHalf
 		{
 		public:
-			explicit StressRelaxationFirstHalf(BaseInnerRelation &inner_relation);
-			virtual ~StressRelaxationFirstHalf(){};
+			explicit Integration1stHalf(BaseInnerRelation &inner_relation);
+			virtual ~Integration1stHalf(){};
 			void initialization(size_t index_i, Real dt = 0.0);
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Matd> stress_PK1_B_;
 			Real numerical_dissipation_factor_;
-			Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(Vecd(0));
+			Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd);
 		};
 
 		/**
-		 * @class KirchhoffParticleStressRelaxationFirstHalf
+		 * @class KirchhoffParticleIntegration1stHalf
 		 */
-		class KirchhoffParticleStressRelaxationFirstHalf : public StressRelaxationFirstHalf
+		class KirchhoffParticleIntegration1stHalf : public Integration1stHalf
 		{
 		public:
-			explicit KirchhoffParticleStressRelaxationFirstHalf(BaseInnerRelation &inner_relation);
-			virtual ~KirchhoffParticleStressRelaxationFirstHalf(){};
+			explicit KirchhoffParticleIntegration1stHalf(BaseInnerRelation &inner_relation);
+			virtual ~KirchhoffParticleIntegration1stHalf(){};
 			void initialization(size_t index_i, Real dt = 0.0);
-
-		protected:
-			const Real one_over_dimensions_ = 1.0 / (Real)Dimensions;
 		};
 
 		/**
-		 * @class KirchhoffStressRelaxationFirstHalf
+		 * @class KirchhoffIntegration1stHalf
 		 * @brief Decompose the stress into particle stress includes isotropic stress
 		 * and the stress due to non-homogeneous material properties.
 		 * The preliminary shear stress is introduced by particle pair to avoid
@@ -199,32 +196,31 @@ namespace SPH
 		 * it may be due to the determinate of deformation matrix become negative.
 		 * In this case, you may need decrease CFL number when computing time-step size.
 		 */
-		class KirchhoffStressRelaxationFirstHalf : public BaseStressRelaxationFirstHalf
+		class KirchhoffIntegration1stHalf : public BaseIntegration1stHalf
 		{
 		public:
-			explicit KirchhoffStressRelaxationFirstHalf(BaseInnerRelation &inner_relation);
-			virtual ~KirchhoffStressRelaxationFirstHalf(){};
+			explicit KirchhoffIntegration1stHalf(BaseInnerRelation &inner_relation);
+			virtual ~KirchhoffIntegration1stHalf(){};
 			void initialization(size_t index_i, Real dt = 0.0);
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Real> J_to_minus_2_over_dimension_;
 			StdLargeVec<Matd> stress_on_particle_, inverse_F_T_;
-			const Real one_over_dimensions_ = 1.0 / (Real)Dimensions;
 			const Real correction_factor_ = 1.07;
 		};
 
 		/**
-		 * @class StressRelaxationSecondHalf
+		 * @class Integration2ndHalf
 		 * @brief computing stress relaxation process by verlet time stepping
 		 * This is the second step
 		 */
-		class StressRelaxationSecondHalf : public BaseElasticRelaxation
+		class Integration2ndHalf : public BaseElasticIntegration
 		{
 		public:
-			explicit StressRelaxationSecondHalf(BaseInnerRelation &inner_relation)
-				: BaseElasticRelaxation(inner_relation){};
-			virtual ~StressRelaxationSecondHalf(){};
+			explicit Integration2ndHalf(BaseInnerRelation &inner_relation)
+				: BaseElasticIntegration(inner_relation){};
+			virtual ~Integration2ndHalf(){};
 			void initialization(size_t index_i, Real dt = 0.0);
 			void interaction(size_t index_i, Real dt = 0.0);
 			void update(size_t index_i, Real dt = 0.0);

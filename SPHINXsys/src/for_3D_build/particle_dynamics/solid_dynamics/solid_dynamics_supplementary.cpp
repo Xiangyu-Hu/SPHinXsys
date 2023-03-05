@@ -12,13 +12,13 @@
 #include "polar_decomposition_3x3.h"
 
 using namespace polar;
-using namespace SimTK;
 
 namespace SPH
 {
+	//=====================================================================================================//
 	namespace solid_dynamics
 	{
-		//=========================================================================================//
+		//=================================================================================================//
 		void UpdateElasticNormalDirection::update(size_t index_i, Real dt)
 		{
 			Matd& F = F_[index_i];
@@ -36,32 +36,7 @@ namespace SPH
 					R(i, j) = Q[i * 3 + j];
 			n_[index_i] = R * n0_[index_i];
 		}
-		//=================================================================================================//
-		void ConstraintBySimBody::update(size_t index_i, Real dt)
-		{
-			Vec3 rr, pos, vel, acc;
-			rr = pos0_[index_i] - initial_mobod_origin_location_;
-			mobod_.findStationLocationVelocityAndAccelerationInGround(*simbody_state_, rr, pos, vel, acc);
-			/** this is how we calculate the particle position in after transform of MBbody.
-			 * const SimTK::Rotation&  R_GB = mobod_.getBodyRotation(simbody_state);
-			 * const SimTK::Vec3&      p_GB = mobod_.getBodyOriginLocation(simbody_state);
-			 * const SimTK::Vec3 r = R_GB * rr; // re-express station vector p_BS in G (15 flops)
-			 * base_particle_data_i.pos_ = (p_GB + r);
-			 */
-			pos_[index_i] = pos;
-			vel_[index_i] = vel;
-			n_[index_i] = (mobod_.getBodyRotation(*simbody_state_) * n0_[index_i]);
-		}
-		//=================================================================================================//
-		SimTK::SpatialVec TotalForceForSimBody::reduce(size_t index_i, Real dt)
-		{
-			Vec3 force_from_particle = (acc_[index_i] + acc_prior_[index_i]) * mass_[index_i];
-			Vec3 displacement(0);
-			displacement = pos_[index_i] - current_mobod_origin_location_;
-			Vec3 torque_from_particle = cross(displacement, force_from_particle);
-
-			return SimTK::SpatialVec(torque_from_particle, force_from_particle);
-		}
 		//=================================================================================================//	
 	}
+	//=====================================================================================================//
 }

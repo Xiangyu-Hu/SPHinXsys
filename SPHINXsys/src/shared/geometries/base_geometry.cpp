@@ -1,9 +1,5 @@
-/**
- * @file 	base_geometry.cpp
- * @author	Yongchuan Yu and Xiangyu Hu
- */
-
 #include "base_geometry.h"
+
 namespace SPH
 {
 	//=================================================================================================//
@@ -23,8 +19,8 @@ namespace SPH
 	}
 	//=================================================================================================//
 	bool Shape::checkNearSurface(const Vecd &probe_point, Real threshold)
-	{
-		return getMaxAbsoluteElement(probe_point - findClosestPoint(probe_point)) < threshold ? true : false;
+	{	Vecd distance = probe_point - findClosestPoint(probe_point);
+		return distance.cwiseAbs().maxCoeff() < threshold ? true : false;
 	}
 	//=================================================================================================//
 	Real Shape::findSignedDistance(const Vecd &probe_point)
@@ -39,13 +35,13 @@ namespace SPH
 		Vecd displacement_to_surface = findClosestPoint(probe_point) - probe_point;
 		while (displacement_to_surface.norm() < Eps)
 		{
-			Vecd jittered = probe_point; // jittering
+			Vecd jittered = probe_point;
 			for (int l = 0; l != probe_point.size(); ++l)
 				jittered[l] = probe_point[l] + (((Real)rand() / (RAND_MAX)) - 0.5) * 100.0 * Eps;
 			if (checkContain(jittered) == is_contain)
 				displacement_to_surface = findClosestPoint(jittered) - jittered;
 		}
-		Vecd direction_to_surface = displacement_to_surface.normalize();
+		Vecd direction_to_surface = displacement_to_surface.normalized();
 		return is_contain ? direction_to_surface : -1.0 * direction_to_surface;
 	}
 	//=================================================================================================//
@@ -57,16 +53,16 @@ namespace SPH
 	BoundingBox BinaryShapes::findBounds()
 	{
 		// initial reference values
-		Vecd lower_bound = Vecd(Infinity);
-		Vecd upper_bound = Vecd(-Infinity);
+		Vecd lower_bound =  Infinity * Vecd::Ones();
+		Vecd upper_bound = -Infinity * Vecd::Ones();
 
 		for (auto &shape_and_op : shapes_and_ops_)
 		{
 			BoundingBox shape_bounds = shape_and_op.first->getBounds();
 			for (int j = 0; j != Dimensions; ++j)
 			{
-				lower_bound[j] = SMIN(lower_bound[j], shape_bounds.first[j]);
-				upper_bound[j] = SMAX(upper_bound[j], shape_bounds.second[j]);
+				lower_bound[j] = SMIN(lower_bound[j], shape_bounds.first_[j]);
+				upper_bound[j] = SMAX(upper_bound[j], shape_bounds.second_[j]);
 			}
 		}
 		return BoundingBox(lower_bound, upper_bound);
@@ -111,8 +107,8 @@ namespace SPH
 		// a big positive number
 		Real large_number(Infinity);
 		Real dist_min = large_number;
-		Vecd pnt_closest(0);
-		Vecd pnt_found(0);
+		Vecd pnt_closest = Vecd::Zero();
+		Vecd pnt_found = Vecd::Zero();
 
 		for (auto &shape_and_op : shapes_and_ops_)
 		{

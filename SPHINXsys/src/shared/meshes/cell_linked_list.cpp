@@ -1,8 +1,3 @@
-/**
- * @file 	cell_linked_list.cpp
- * @author	Yongchuan Yu, Chi Zhang and Xiangyu Hu
- */
-
 #include "cell_linked_list.h"
 #include "base_kernel.h"
 #include "base_body.h"
@@ -25,9 +20,9 @@ namespace SPH
 			split_cell_lists[i].clear();
 	}
 	//=================================================================================================//
-	CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
-								   RealBody &real_body, SPHAdaptation &sph_adaptation)
-		: BaseCellLinkedList(real_body, sph_adaptation), Mesh(tentative_bounds, grid_spacing, 2)
+	CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing, RealBody &real_body, SPHAdaptation &sph_adaptation)
+		: BaseCellLinkedList(real_body, sph_adaptation)
+		, Mesh(tentative_bounds, grid_spacing, 2)
 	{
 		allocateMeshDataMatrix();
 		single_cell_linked_list_level_.push_back(this);
@@ -67,12 +62,12 @@ namespace SPH
 		return sequence;
 	}
 	//=================================================================================================//
-	MultilevelCellLinkedList::
-		MultilevelCellLinkedList(BoundingBox tentative_bounds, Real reference_grid_spacing,
-								 size_t total_levels, RealBody &real_body, SPHAdaptation &sph_adaptation)
+	MultilevelCellLinkedList::MultilevelCellLinkedList(BoundingBox tentative_bounds, Real reference_grid_spacing,
+							size_t total_levels, RealBody &real_body, SPHAdaptation &sph_adaptation)
 		: MultilevelMesh<BaseCellLinkedList, CellLinkedList, RefinedMesh<CellLinkedList>>(
-			  tentative_bounds, reference_grid_spacing, total_levels, real_body, sph_adaptation),
-		  h_ratio_(DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->h_ratio_) {}
+			  				tentative_bounds, reference_grid_spacing, total_levels, real_body, sph_adaptation)
+		, h_ratio_(DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->h_ratio_) 
+	{}
 	//=================================================================================================//
 	size_t MultilevelCellLinkedList::getMeshLevel(Real particle_cutoff_radius)
 	{

@@ -91,8 +91,6 @@ int main()
 	SPHSystem system(system_domain_bounds, resolution_ref);
 	/** Set the starting time. */
 	GlobalStaticVariables::physical_time_ = 0.0;
-	/** Tag for computation from restart files. 0: not from restart files. */
-	system.restart_step_ = 0;
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
@@ -134,15 +132,14 @@ int main()
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
 	BodyAlignedBoxByParticle emitter(
 		water_body, makeShared<AlignedBoxShape>(Transform2d(inlet_translation), inlet_halfsize));
-	SimpleDynamics<InletInflowCondition, BodyAlignedBoxByParticle> inflow_condition(emitter);
-	SimpleDynamics<fluid_dynamics::EmitterInflowInjection, BodyAlignedBoxByParticle> emitter_injection(emitter, 350, 0);
+	SimpleDynamics<InletInflowCondition> inflow_condition(emitter);
+	SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_injection(emitter, 350, 0);
 
 	//----------------------------------------------------------------------
 	//	File Output
 	//----------------------------------------------------------------------
 	IOEnvironment io_environment(system);
 	BodyStatesRecordingToVtp body_states_recording(io_environment, system.real_bodies_);
-	RestartIO restart_io(io_environment, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
 		write_water_mechanical_energy(io_environment, water_body, gravity_ptr);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
@@ -158,9 +155,8 @@ int main()
 	//----------------------------------------------------------------------
 	//	Time stepping control parameters.
 	//----------------------------------------------------------------------
-	size_t number_of_iterations = system.restart_step_;
+	size_t number_of_iterations = system.RestartStep();
 	int screen_output_interval = 100;
-	int restart_output_interval = screen_output_interval * 10;
 	Real end_time = 30.0;
 	Real output_interval = 0.1;
 	Real dt = 0.0; /**< Default acoustic time step sizes. */
@@ -205,9 +201,6 @@ int main()
 				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
 						  << GlobalStaticVariables::physical_time_
 						  << "	Dt = " << Dt << "	dt = " << dt << "\n";
-
-				if (number_of_iterations % restart_output_interval == 0)
-					restart_io.writeToFile(number_of_iterations);
 			}
 			number_of_iterations++;
 

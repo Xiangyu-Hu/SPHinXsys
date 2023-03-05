@@ -1,7 +1,29 @@
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4													*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
  * @file 	sph_data_containers.h
  * @brief 	Set up of basic data structure.
- * @author	Luhui Han, Chi Zhang and Xiangyu Hu
+ * @author	Chi ZHang and Xiangyu Hu
  */
 
 #ifndef SPH_DATA_CONTAINERS_H
@@ -27,7 +49,7 @@ namespace SPH
 	using SolidBodyVector = StdVec<SolidBody *>;
 	using RealBodyVector = StdVec<RealBody *>;
 	using BodyPartVector = StdVec<BodyPart *>;
-	
+
 	using IndexVector = StdVec<size_t>;
 	using ConcurrentIndexVector = ConcurrentVec<size_t>;
 
@@ -43,12 +65,13 @@ namespace SPH
 	using SplitCellLists = StdVec<ConcurrentCellLists>;
 
 	/** Generalized particle data type */
-	typedef GeneralDataAssemble<StdLargeVec> ParticleData;
+	typedef DataContainerAddressAssemble<StdLargeVec> ParticleData;
+	constexpr size_t ParticleDataSize = std::tuple_size<ParticleData>::value;
 	/** Generalized particle variable to index map */
-	typedef std::array<std::map<std::string, size_t>, 4> ParticleDataMap;
+	typedef std::array<std::map<std::string, size_t>, ParticleDataSize> ParticleDataMap;
 	/** Generalized particle variable list */
-	typedef std::array<StdVec<std::pair<std::string, size_t>>, 4> ParticleVariableList;
-		
+	typedef std::array<StdVec<std::pair<std::string, size_t>>, ParticleDataSize> ParticleVariableList;
+
 	/** operation by looping or going through a particle data map */
 	template <typename VariableType>
 	struct loopParticleDataMap
@@ -83,6 +106,6 @@ namespace SPH
 				variable_operation(variable_name, variable);
 			}
 		};
-	};	
+	};
 }
 #endif // SPH_DATA_CONTAINERS_H

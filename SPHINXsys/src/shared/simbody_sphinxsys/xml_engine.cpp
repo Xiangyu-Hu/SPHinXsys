@@ -1,9 +1,3 @@
-/**
- * @file 	xml.cpp
- * @brief 	XML functions are defined here
- * @author	Bo Zhang, Chi Zhang and Xiangyu Hu
- */
-
 #include "xml_engine.h"
 
 namespace SPH
@@ -24,44 +18,6 @@ namespace SPH
 									  const std::string &child_name)
 	{
 		father_element.insertNodeAfter(father_element.node_end(), SimTK::Xml::Element(child_name));
-	}
-	//=================================================================================================//
-	void XmlEngine::setAttributeToElement(const SimTK::Xml::element_iterator &ele_ite,
-										  const std::string &attrib_name, const Matd &value)
-	{
-		int num_dim = value.nrow();
-		SimTK::Array_<Real> array_(num_dim * num_dim);
-		for (int i = 0; i < num_dim; i++)
-			for (int j = 0; j < num_dim; j++)
-				array_[i * num_dim + j] = value(i, j);
-		SimTK::Xml::Attribute attr_(attrib_name, SimTK::String(array_));
-		ele_ite->setAttributeValue(attr_.getName(), attr_.getValue());
-	}
-	//=================================================================================================//
-	void XmlEngine::getRequiredAttributeMatrixValue(SimTK::Xml::element_iterator &ele_ite_, const std::string &attrib_name, Matd &value)
-	{
-		std::string value_in_string = ele_ite_->getRequiredAttributeValue(attrib_name);
-		SimTK::Array_<Real> array_;
-		array_ = SimTK::convertStringTo<SimTK::Array_<float>>(value_in_string);
-		int num_dim_2 = array_.size();
-		int num_dim;
-		if (num_dim_2 == 4)
-		{
-			num_dim = 2;
-		}
-		else if (num_dim_2 == 9)
-		{
-			num_dim = 3;
-		}
-		else
-		{
-			std::cout << "\n Error: the input dimension of deformation tensor:" << num_dim_2 << " is not valid" << std::endl;
-			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-			exit(1);
-		}
-		for (int i = 0; i < num_dim; i++)
-			for (int j = 0; j < num_dim; j++)
-				value(i, j) = array_[i * num_dim + j];
 	}
 	//=================================================================================================//
 	void XmlEngine::writeToXmlFile(const std::string &filefullpath)
@@ -111,31 +67,6 @@ namespace SPH
 	SimTK::Xml::Element XmlEngine::getChildElement(const std::string &tag)
 	{
 		return root_element_.getOptionalElement(tag);
-	}
-	//=================================================================================================//
-	void XmlMemoryIO::readDataFromXmlMemory(XmlEngine &xml_engine, SimTK::Xml::Element &element,
-											size_t observation_index, DoubleVec<Matd> &result_container, 
-											const std::string &quantity_name)
-	{
-		size_t snapshot_index = 0;
-		SimTK::Xml::element_iterator ele_ite = element.element_begin();
-		for (; ele_ite != element.element_end(); ++ele_ite)
-		{
-			std::string attribute_name_ = quantity_name + "_" + std::to_string(observation_index);
-			xml_engine.getRequiredAttributeMatrixValue(ele_ite, attribute_name_, result_container[snapshot_index][observation_index]);
-			snapshot_index++;
-		}
-	}
-	//=================================================================================================//
-	void XmlMemoryIO::readTagFromXmlMemory(SimTK::Xml::Element &element, StdVec<std::string> &element_tag)
-	{
-		size_t snapshot_index = 0;
-		SimTK::Xml::element_iterator ele_ite = element.element_begin();
-		for (; ele_ite != element.element_end(); ++ele_ite)
-		{
-			element_tag[snapshot_index] = ele_ite->getElementTag();
-			snapshot_index++;
-		}
 	}
 	//=================================================================================================//
 }

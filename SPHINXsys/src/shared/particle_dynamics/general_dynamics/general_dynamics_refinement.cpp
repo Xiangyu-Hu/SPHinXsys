@@ -4,6 +4,7 @@
  */
 
 #include "general_dynamics_refinement.h"
+#include "base_particles.hpp"
 #include "level_set_shape.h"
 
 namespace SPH
@@ -65,11 +66,11 @@ namespace SPH
     {
         E_cof_sigma_ = 0.0;
         sigma_E_ = 0.0;
-        E_cof_ = Vecd(0.0);
+        E_cof_ = Vecd::Zero();
         densityErrorOfNewGeneratedParticles(new_indices, new_positions);
         densityErrorOfNeighborParticles(new_indices, original_indices, new_positions);
 
-        E_cof_sigma_ += dot(E_cof_, E_cof_);
+        E_cof_sigma_ += E_cof_.dot(E_cof_);
         Real cof = 1.0 / (E_cof_sigma_ + TinyReal);
         Real k = sigma_E_ * cof;
         Vecd dr = E_cof_ * k;
@@ -88,7 +89,7 @@ namespace SPH
         {
             Vecd displacement = new_positions[n] - particles_->pos_[index_rho];
             Real rho_newIndex = computeNewGeneratedParticleDensity(index_rho, new_positions[n]);
-            Real error = particles_->rho_[index_rho] - rho_newIndex + dot(grad_kernel, -displacement);
+            Real error = particles_->rho_[index_rho] - rho_newIndex + grad_kernel.dot(-displacement);
 
             sign_new_indices_.push_back(error / (ABS(error) + TinyReal));
             sigma_E_ += sign_new_indices_[n] * error;
@@ -100,7 +101,7 @@ namespace SPH
     Vecd ComputeDensityErrorInner::computeKernelGradient(size_t index_rho)
     {
         Neighborhood &inner_neighborhood = inner_configuration_[index_rho];
-        Vecd grad_kernel = Vecd(0);
+        Vecd grad_kernel = Vecd::Zero();
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
         {
             grad_kernel += inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n] *
@@ -130,12 +131,11 @@ namespace SPH
         Vecd e_ij = displacement / (distance + TinyReal);
         Kernel *kernel_ptr_ = particle_adaptation_.getKernel();
         Real cutoff_radius = kernel_ptr_->CutOffRadius(h_ratio_min);
-        Real kernel_weight = 0.0;
-        Vecd grad_kernel = Vecd(0.0);
+        Vecd grad_kernel = Vecd::Zero();
         if (distance <= cutoff_radius)
         {
-            Real dweight = kernel_ptr_->dW(h_ratio_min, distance, displacement) * Vol;
-            grad_kernel = dweight * e_ij;
+            Real d_weight = kernel_ptr_->dW(h_ratio_min, distance, displacement) * Vol;
+            grad_kernel = d_weight * e_ij;
         }
         return grad_kernel;
     }
@@ -146,7 +146,7 @@ namespace SPH
         Real Vol_newIndex = particles_->Vol_[index_rho] / 2.0;
         Real h_newIndex = pow(particles_->Vol_[index_rho] / Vol_newIndex, 1.0 / (Real)Dimensions);
 
-        Real W0 = particle_adaptation_.getKernel()->W0(h_newIndex, Vecd(0));
+        Real W0 = particle_adaptation_.getKernel()->W0(h_newIndex, ZeroVecd);
         Real inv_sigma_0 = 1.0 / particle_adaptation_.ReferenceNumberDensity(h_newIndex);
         Real sigma_newIndex = W0;
 
@@ -154,7 +154,7 @@ namespace SPH
         dW_new_indices_.push_back(computeKernelWeightGradientBetweenParticles(h_newIndex, displacement, Vol_newIndex));
         sigma_newIndex += computeKernelWeightBetweenParticles(h_newIndex, displacement);
 
-        Vecd grad_sigma = Vecd(0.0);
+        Vecd grad_sigma = Vecd::Zero();
         Neighborhood &inner_neighborhood = inner_configuration_[index_rho];
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
         {
@@ -187,14 +187,13 @@ namespace SPH
 
             for (size_t n = 0; n != original_indices.size(); ++n)
             {
-                Real h_ratio_min = SMIN(h_ratio_j, h_ratio_[original_indices[n]]);
                 Vecd displacement = pos_j - particles_->pos_[original_indices[n]];
                 Real Vol_ratio = particles_->Vol_[original_indices[n]] / Vol_j;
                 sigma_split_j += computeKernelWeightBetweenParticles(h_ratio_j, displacement, Vol_ratio);
             }
 
             StdVec<Vecd> grad_sigma_j;
-            Vecd sigma_co_j = Vecd(0);
+            Vecd sigma_co_j = Vecd::Zero();
             for (size_t n = 0; n != new_positions.size(); ++n)
             {
                 Real h_ratio_min = SMIN(h_ratio_j, h_newIndex);
@@ -213,7 +212,7 @@ namespace SPH
 
             sigma_E_ += sign * sigma_split_j;
             E_cof_ += sign * (grad_sigma_j[1] - grad_sigma_j[0]);
-            E_cof_sigma_ += dot(sigma_co_j, sigma_co_j);
+            E_cof_sigma_ += sigma_co_j.dot(sigma_co_j);
         }
     }
     //=================================================================================================//
@@ -237,7 +236,6 @@ namespace SPH
         Neighborhood &contact_neighborhood = inner_configuration_[index_rho];
         for (size_t k = 0; k != contact_bodies_.size(); ++k)
         {
-            StdLargeVec<Real> &Vol_j = *(contact_Vol_[k]);
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
             {
                 grad_kernel += contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
@@ -266,7 +264,7 @@ namespace SPH
 
         Real inv_sigma_0 = 1.0 / particle_adaptation_.ReferenceNumberDensity(h_newIndex);
         Real sigma_inner = ComputeDensityErrorInner::computeNewGeneratedParticleDensity(index_rho, position);
-        Vecd grad_sigma = Vecd(0.0);
+        Vecd grad_sigma = Vecd::Zero();
         Real sigma_newIndex = 0.0;
         for (size_t k = 0; k != contact_bodies_.size(); ++k)
         {
@@ -289,8 +287,8 @@ namespace SPH
     ParticleRefinementWithPrescribedArea::
         ParticleRefinementWithPrescribedArea(SPHBody &sph_body, Shape &refinement_region)
         : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
-          particle_adaptation_(DynamicCast<ParticleSplitAndMerge>(this, *sph_body.sph_adaptation_)),
           refinement_region_bounds_(refinement_region.getBounds()),
+          particle_adaptation_(DynamicCast<ParticleSplitAndMerge>(this, *sph_body.sph_adaptation_)),
           inv_rho0_(1.0 / sph_body_.base_material_->ReferenceDensity()),
           Vol_(particles_->Vol_), pos_(particles_->pos_), rho_(particles_->rho_),
           mass_(particles_->mass_),
@@ -303,8 +301,8 @@ namespace SPH
         for (int axis_direction = 0; axis_direction != Dimensions; ++axis_direction)
         {
             Real particle_spacing = pow(volume, 1.0 / Dimensions);
-            if (position[axis_direction] > (refinement_region_bounds.first[axis_direction] + particle_spacing) &&
-                position[axis_direction] < (refinement_region_bounds.second[axis_direction] - particle_spacing))
+            if (position[axis_direction] > (refinement_region_bounds.first_[axis_direction] + particle_spacing) &&
+                position[axis_direction] < (refinement_region_bounds.second_[axis_direction] - particle_spacing))
                 bound_number += 1;
         }
         return bound_number != Dimensions ? false : true;
@@ -446,7 +444,7 @@ namespace SPH
     //=================================================================================================//
     ParticleMergeWithPrescribedArea::
         ParticleMergeWithPrescribedArea(BaseInnerRelation &inner_relation, Shape &refinement_region)
-        : ParticleRefinementWithPrescribedArea(inner_relation.sph_body_, refinement_region),
+        : ParticleRefinementWithPrescribedArea(inner_relation.getSPHBody(), refinement_region),
           DataDelegateInner<BaseParticles, DataDelegateEmptyBase>(inner_relation),
           all_particle_data_(particles_->all_particle_data_), vel_n_(particles_->vel_)
     {
@@ -535,7 +533,7 @@ namespace SPH
     {
         updateMergedParticleInformation(particles_->total_real_particles_, merge_indices);
         size_t merge_change_number = merge_indices.size() - 1;
-        for (size_t k = merge_change_number; k != -1; --k)
+        for (size_t k = merge_change_number; k != size_t(-1); --k)
             particles_->copyFromAnotherParticle(merge_indices[k], particles_->total_real_particles_ - (merge_change_number - k));
         particles_->total_real_particles_ -= merge_change_number;
     }
@@ -619,7 +617,6 @@ namespace SPH
         Real distance_min = 0.2 * particle_spacing; // angularMomentumConservation(index_center, merge_indices);
         Real distance_max = 0.65 * particle_spacing;
 
-        Vecd position = pos_[merge_indices[0]] - pos_[index_center];
         Vecd pos_j = pos_[merge_indices[0]]; // pos_[index_center] + distance_min * position / (position.norm() + TinyReal);
         Vecd pos_i = 2.0 * pos_[index_center] - pos_j;
         initial_new_positions.push_back(pos_i);
@@ -658,10 +655,10 @@ namespace SPH
             Vecd vel = vel_n_[merge_indices[n]] - vel_n_[index_center];
             rotation += mass_[merge_indices[n]] * (pos[0] * vel[1] - pos[1] * vel[0]);
             mass += mass_[merge_indices[n]];
-            vel_square += mass_[merge_indices[n]] / mass_[index_center] * vel_n_[merge_indices[n]].normSqr();
+            vel_square += mass_[merge_indices[n]] / mass_[index_center] * vel_n_[merge_indices[n]].squaredNorm();
         }
         rotation = rotation / mass;
-        Real E = vel_square - vel_n_[index_center].normSqr();
+        Real E = vel_square - vel_n_[index_center].squaredNorm();
         Real distance_min = sqrt((rotation) * (rotation) / (ABS(E) + TinyReal));
 
         return distance_min;
@@ -669,8 +666,8 @@ namespace SPH
     //=================================================================================================//
     void MergeWithMinimumDensityErrorInner::kineticEnergyConservation(const StdVec<size_t> &merge_indices)
     {
-        Real E_total = 0.5 * (2.0 * vel_n_[merge_indices[0]].normSqr() +
-                              vel_n_[merge_indices[1]].normSqr() + vel_n_[merge_indices[2]].normSqr());
+        Real E_total = 0.5 * (2.0 * vel_n_[merge_indices[0]].squaredNorm() +
+                              vel_n_[merge_indices[1]].squaredNorm() + vel_n_[merge_indices[2]].squaredNorm());
         Vecd linear_m = 0.5 * (2.0 * vel_n_[merge_indices[0]] + vel_n_[merge_indices[1]] + vel_n_[merge_indices[2]]);
         Real angular_m = rotation * 2.0;
         if (ABS(pos_[merge_indices[0]][1]) > TinyReal && ABS(pos_[merge_indices[0]][0]) > TinyReal)
@@ -680,7 +677,7 @@ namespace SPH
                         (2.0 * pos_[merge_indices[0]][0] + TinyReal);
             Real a = 2.0 * (cof1 * cof1 + 1.0);
             Real b = 4.0 * cof1 * cof2 - 2.0 * linear_m[0] - 2.0 * cof1 * linear_m[1];
-            Real c = 2.0 * cof2 * cof2 - E_total - 2.0 * cof2 * linear_m[1] + linear_m.normSqr();
+            Real c = 2.0 * cof2 * cof2 - E_total - 2.0 * cof2 * linear_m[1] + linear_m.squaredNorm();
             if ((b * b - 4.0 * a * c) >= 0.0)
                 vel_n_[merge_indices[0]][0] = (-b + sqrt(b * b - 4.0 * a * c)) / (2.0 * a + TinyReal);
             else
@@ -694,7 +691,7 @@ namespace SPH
             vel_n_[merge_indices[0]][1] = 0.5 * (angular_m / (pos_[merge_indices[0]][0] + TinyReal) + linear_m[1]);
             Real a = 2.0;
             Real b = -2.0 * linear_m[0];
-            Real c = -E_total + linear_m.normSqr() - 2.0 * vel_n_[merge_indices[0]][1] * linear_m[1] +
+            Real c = -E_total + linear_m.squaredNorm() - 2.0 * vel_n_[merge_indices[0]][1] * linear_m[1] +
                      2.0 * vel_n_[merge_indices[0]][1] * vel_n_[merge_indices[0]][1];
             if ((b * b - 4.0 * a * c) >= 0.0)
                 vel_n_[merge_indices[0]][0] = (-b + sqrt(b * b - 4.0 * a * c)) / (2.0 * a + TinyReal);
@@ -708,7 +705,7 @@ namespace SPH
             vel_n_[merge_indices[0]][0] = 0.5 * (-angular_m / (pos_[merge_indices[0]][1] + TinyReal) + linear_m[0]);
             Real a = 2.0;
             Real b = -2.0 * linear_m[1];
-            Real c = -E_total + linear_m.normSqr() - 2.0 * vel_n_[merge_indices[0]][0] * linear_m[0] +
+            Real c = -E_total + linear_m.squaredNorm() - 2.0 * vel_n_[merge_indices[0]][0] * linear_m[0] +
                      2.0 * vel_n_[merge_indices[0]][0] * vel_n_[merge_indices[0]][0];
             if ((b * b - 4.0 * a * c) >= 0.0)
                 vel_n_[merge_indices[0]][1] = (-b + sqrt(b * b - 4.0 * a * c)) / (2.0 * a + TinyReal);

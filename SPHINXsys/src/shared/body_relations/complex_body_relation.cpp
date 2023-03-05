@@ -1,10 +1,4 @@
-/**
- * @file 	complex_body_relation.cpp
- * @author	Chi Zhang and Xiangyu Hu
- */
-
 #include "complex_body_relation.h"
-
 #include "inner_body_relation.h"
 #include "contact_body_relation.h"
 #include "base_particle_dynamics.h"
@@ -14,7 +8,7 @@ namespace SPH
 	//=================================================================================================//
 	ComplexRelation::
 		ComplexRelation(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation)
-		: SPHRelation(inner_relation.sph_body_),
+		: SPHRelation(inner_relation.getSPHBody()),
 		  inner_relation_(inner_relation),
 		  contact_relation_(contact_relation),
 		  contact_bodies_(contact_relation_.contact_bodies_),
@@ -38,7 +32,7 @@ namespace SPH
 	//=================================================================================================//
 	ComplexRelation::
 		ComplexRelation(BaseInnerRelation &inner_relation, RealBodyVector contact_bodies)
-		: SPHRelation(inner_relation.sph_body_),
+		: SPHRelation(inner_relation.getSPHBody()),
 		  inner_relation_(inner_relation),
 		  contact_relation_(base_contact_relation_ptr_keeper_.createRef<ContactRelation>(
 			  DynamicCast<RealBody>(this, sph_body_), contact_bodies)),

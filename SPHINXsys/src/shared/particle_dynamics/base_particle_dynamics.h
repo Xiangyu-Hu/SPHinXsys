@@ -1,31 +1,31 @@
-/* -----------------------------------------------------------------------------*
- *                               SPHinXsys                                      *
- * -----------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
- * physical accurate simulation and aims to model coupled industrial dynamic    *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
- * (smoothed particle hydrodynamics), a meshless computational method using     *
- * particle discretization.                                                     *
- *                                                                              *
- * SPHinXsys is partially funded by German Research Foundation                  *
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
- * HU1527/12-1 and HU1527/12-4.                                                 *
- *                                                                              *
- * Portions copyright (c) 2017-2022 Technical University of Munich and          *
- * the authors' affiliations.                                                   *
- *                                                                              *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
- * not use this file except in compliance with the License. You may obtain a    *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
- *                                                                              *
- * -----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------*
+ *								SPHinXsys									*
+ * -------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic*
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ *  HU1527/12-1 and HU1527/12-4												*
+ *                                                                          *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
+ * not use this file except in compliance with the License. You may obtain a*
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
+ *                                                                          *
+ * ------------------------------------------------------------------------*/
 /**
- * @file base_particle_dynamics.h
- * @brief This is for the base classes of particle dynamics, which describe the
- * interaction between particles. These interactions are used to define
- * differential operators for surface forces or fluxes in continuum mechanics
- * @author  Xiangyu Hu, Luhui Han and Chi Zhang
+ * @file 	base_particle_dynamics.h
+ * @brief 	This is for the base classes of particle dynamics, which describe the
+ * 			interaction between particles. These interactions are used to define
+ *			differential operators for surface forces or fluxes in continuum mechanics
+ * @author	Chi ZHang and Xiangyu Hu
  */
 
 #ifndef BASE_PARTICLE_DYNAMICS_H
@@ -54,7 +54,7 @@ namespace SPH
 		virtual ~GlobalStaticVariables(){};
 
 		/** the physical time is global value for all dynamics */
-		static Real physical_time_;
+		static inline Real physical_time_ = 0.0;
 	};
 
 	/**
@@ -67,13 +67,24 @@ namespace SPH
 	class BaseDynamics : public GlobalStaticVariables
 	{
 	public:
-		BaseDynamics(){};
+		BaseDynamics(SPHBody &sph_body)
+			: sph_body_(sph_body), is_newly_updated_(false){};
 		virtual ~BaseDynamics(){};
-
+		bool checkNewlyUpdated() { return is_newly_updated_; };
+		void setNotNewlyUpdated() { is_newly_updated_ = false; };
+		void setUpdated()
+		{
+			sph_body_.setNewlyUpdated();
+			is_newly_updated_ = true;
+		};
 		/** There are only functions can be called from outside,
 		 * for sequential, parallel and possible other type of execution. */
 		virtual ReturnType exec(Real dt = 0.0) = 0;
 		virtual ReturnType parallel_exec(Real dt = 0.0) = 0;
+
+	private:
+		SPHBody &sph_body_;
+		bool is_newly_updated_;
 	};
 
 	/**
@@ -117,9 +128,9 @@ namespace SPH
 	class DataDelegateInner : public BaseDataDelegateType
 	{
 	public:
-		explicit DataDelegateInner(BaseInnerRelation &body_inner_relation)
-			: BaseDataDelegateType(body_inner_relation.sph_body_),
-			  inner_configuration_(body_inner_relation.inner_configuration_){};
+		explicit DataDelegateInner(BaseInnerRelation &inner_relation)
+			: BaseDataDelegateType(inner_relation.getSPHBody()),
+			  inner_configuration_(inner_relation.inner_configuration_){};
 		virtual ~DataDelegateInner(){};
 
 	protected:
@@ -158,9 +169,9 @@ namespace SPH
 								public DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>
 	{
 	public:
-		explicit DataDelegateComplex(ComplexRelation &body_complex_relation)
-			: DataDelegateInner<ParticlesType>(body_complex_relation.inner_relation_),
-			  DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>(body_complex_relation.contact_relation_){};
+		explicit DataDelegateComplex(ComplexRelation &complex_relation)
+			: DataDelegateInner<ParticlesType>(complex_relation.getInnerRelation()),
+			  DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>(complex_relation.getContactRelation()){};
 		virtual ~DataDelegateComplex(){};
 	};
 
@@ -175,16 +186,16 @@ namespace SPH
 		// template for different combination of constructing body relations
 		template <typename... Args>
 		BaseInteractionComplex(BaseContactRelation &contact_relation,
-									   BaseInnerRelation &inner_relation, Args &&...args)
+							   BaseInnerRelation &inner_relation, Args &&...args)
 			: InteractionInnerType(inner_relation, std::forward<Args>(args)...),
 			  ContactDataType(contact_relation){};
 		template <typename... Args>
 		BaseInteractionComplex(ComplexRelation &complex_relation, Args &&...args)
-			: BaseInteractionComplex(complex_relation.contact_relation_,
-											 complex_relation.inner_relation_, std::forward<Args>(args)...){};
+			: BaseInteractionComplex(complex_relation.getContactRelation(),
+									 complex_relation.getInnerRelation(), std::forward<Args>(args)...){};
 		template <typename... Args>
 		BaseInteractionComplex(BaseContactRelation &extra_contact_relation,
-									   ComplexRelation &complex_relation, Args &&...args)
+							   ComplexRelation &complex_relation, Args &&...args)
 			: BaseInteractionComplex(complex_relation, std::forward<Args>(args)...)
 		{
 			this->addExtraContactRelation(this->sph_body_, extra_contact_relation);
