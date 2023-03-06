@@ -48,9 +48,9 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
 	/** Tag for running particle relaxation for the initially body-fitted distribution */
-	sph_system.setRunParticleRelaxation(true);
+	sph_system.setRunParticleRelaxation(false);
 	/** Tag for starting with relaxed body-fitted particles distribution */
-	sph_system.setReloadParticles(false);
+	sph_system.setReloadParticles(true);
 	sph_system.handleCommandlineOptions(ac, av);
 	IOEnvironment io_environment(sph_system);
 	//----------------------------------------------------------------------
@@ -175,8 +175,8 @@ int main(int ac, char *av[])
 	Dynamics1Level<solid_dynamics::Integration1stHalf> ball_stress_relaxation_first_half(ball_inner);
 	Dynamics1Level<solid_dynamics::Integration2ndHalf> ball_stress_relaxation_second_half(ball_inner);
 	/** Algorithms for solid-solid contact. */
-	InteractionDynamics<solid_dynamics::ShellContactDensity, BodyPartByParticle> ball_update_contact_density(ball_contact);
-	InteractionDynamics<solid_dynamics::ContactForceFromWall, BodyPartByParticle> ball_compute_solid_contact_forces(ball_contact);
+	InteractionDynamics<solid_dynamics::ShellContactDensity> ball_update_contact_density(ball_contact);
+	InteractionDynamics<solid_dynamics::ContactForceFromWall> ball_compute_solid_contact_forces(ball_contact);
 	// DampingWithRandomChoice<InteractionSplit<solid_dynamics::PairwiseFrictionFromWall>> 
 	// 	ball_friction(0.1, ball_contact, physical_viscosity);
 	//----------------------------------------------------------------------

@@ -245,10 +245,6 @@ int main(int ac, char *av[])
 	ContactRelation fish_body_contact(fish_body, {&water_block});
 	ContactRelation fish_observer_contact(fish_observer, {&fish_body});
 
-	BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
-	ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceOnSolid>> write_total_force_on_fish(io_environment, fish_body);
-	ObservedQuantityRecording<Vecd> write_fish_displacement("Position", io_environment, fish_observer_contact);
-
 	/** check whether run particle relaxation for body fitted particle distribution. */
 	if (system.RunParticleRelaxation())
 	{
@@ -325,13 +321,13 @@ int main(int ac, char *av[])
 	/** Inflow boundary condition. */
 	BodyAlignedBoxByCell inflow_buffer(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(buffer_translation)), buffer_halfsize));
-	SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>, BodyAlignedBoxByCell> parabolic_inflow(inflow_buffer);
+	SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
 
 	/**
 	 * Fluid structure interaction model.
 	 */
-	InteractionDynamics<solid_dynamics::FluidViscousForceOnSolid> viscous_force_on_fish_body(fish_body_contact);
-	InteractionDynamics<solid_dynamics::FluidForceOnSolidUpdate> fluid_force_on_fish_body(fish_body_contact, viscous_force_on_fish_body);
+	InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_fish_body(fish_body_contact);
+	InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid> fluid_force_on_fish_body(fish_body_contact, viscous_force_on_fish_body);
 	/**
 	 * Solid dynamics.
 	 */
@@ -379,7 +375,7 @@ int main(int ac, char *av[])
 	SimTK::CablePath tethering_line(cables, fixed_spot, SimTK::Vec3(0), tethered_spot, SimTK::Vec3(disp_cable_end[0], disp_cable_end[1], 0.0) );
 	SimTK::CableSpring tethering_spring(forces, tethering_line, 100.0, 3.0, 10.0);
 
-	// discreted forces acting on the bodies
+	// discrete forces acting on the bodies
 	SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
 	fixed_spot_info.addDecoration(SimTK::Transform(), SimTK::DecorativeSphere(0.02));
 	tethered_spot_info.addDecoration(SimTK::Transform(), SimTK::DecorativeSphere(0.4));
@@ -400,11 +396,15 @@ int main(int ac, char *av[])
 	/**
 	 * Coupling between SimBody and SPH.
 	 */
-	ReduceDynamics<solid_dynamics::TotalForceForSimBody, SolidBodyPartForSimbody>
+	ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody>
 		force_on_tethered_spot(fish_head, MBsystem, tethered_spot, force_on_bodies, integ);
-	SimpleDynamics<solid_dynamics::ConstraintBySimBody, SolidBodyPartForSimbody>
+	SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody>
 		constraint_tethered_spot(fish_head, MBsystem, tethered_spot, force_on_bodies, integ);
 
+	BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
+	ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>> 
+	write_total_force_on_fish(io_environment, fluid_force_on_fish_body, "TotalPressureForceOnSolid");
+	ObservedQuantityRecording<Vecd> write_fish_displacement("Position", io_environment, fish_observer_contact);
 	/**
 	 * Time steeping starts here.
 	 */

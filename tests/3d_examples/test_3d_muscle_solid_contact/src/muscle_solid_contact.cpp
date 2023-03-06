@@ -83,14 +83,14 @@ int main()
 	Dynamics1Level<solid_dynamics::Integration1stHalf> stress_relaxation_first_half(myocardium_body_inner);
 	Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(myocardium_body_inner);
 	/** Algorithms for solid-solid contact. */
-	InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle> myocardium_update_contact_density(myocardium_plate_contact);
-	InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle> plate_update_contact_density(plate_myocardium_contact);
-	InteractionDynamics<solid_dynamics::ContactForce, BodyPartByParticle> myocardium_compute_solid_contact_forces(myocardium_plate_contact);
-	InteractionDynamics<solid_dynamics::ContactForce, BodyPartByParticle> plate_compute_solid_contact_forces(plate_myocardium_contact);
+	InteractionDynamics<solid_dynamics::ContactDensitySummation> myocardium_update_contact_density(myocardium_plate_contact);
+	InteractionDynamics<solid_dynamics::ContactDensitySummation> plate_update_contact_density(plate_myocardium_contact);
+	InteractionDynamics<solid_dynamics::ContactForce> myocardium_compute_solid_contact_forces(myocardium_plate_contact);
+	InteractionDynamics<solid_dynamics::ContactForce> plate_compute_solid_contact_forces(plate_myocardium_contact);
 	/** Constrain the holder. */
 	BodyRegionByParticle holder(myocardium_body, 
 		makeShared<TransformShape<GeometricShapeBox>>(Transformd(translation_stationary_plate), halfsize_stationary_plate, "Holder"));
-	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle>	constraint_holder(holder);
+	SimpleDynamics<solid_dynamics::FixBodyPartConstraint>	constraint_holder(holder);
 	/** Damping with the solid body*/
 	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
 		muscle_damping(0.1, myocardium_body_inner, "Velocity", physical_viscosity);
@@ -129,9 +129,9 @@ int main()
 	integ.setAllowInterpolation(false);
 	integ.initialize(state);
 	/** Coupling between SimBody and SPH.*/
-	ReduceDynamics<solid_dynamics::TotalForceForSimBody, SolidBodyPartForSimbody>
+	ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody>
 		force_on_plate(plate_multibody, MBsystem, plateMBody, force_on_bodies, integ);
-	SimpleDynamics<solid_dynamics::ConstraintBySimBody, SolidBodyPartForSimbody>
+	SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody>
 		constraint_plate(plate_multibody, MBsystem, plateMBody, force_on_bodies, integ);
 	/**
 	 * From here the time stepping begins.

@@ -73,14 +73,14 @@ namespace SPH
 	//=================================================================================================//
 	void CellLinkedList ::insertParticleIndex(size_t particle_index, const Vecd &particle_position)
 	{
-		Vecu cellpos = CellIndexFromPosition(particle_position);
-		cell_index_lists_[cellpos[0]][cellpos[1]][cellpos[2]].emplace_back(particle_index);
+		Vecu cell_pos = CellIndexFromPosition(particle_position);
+		cell_index_lists_[cell_pos[0]][cell_pos[1]][cell_pos[2]].emplace_back(particle_index);
 	}
 	//=================================================================================================//
 	void CellLinkedList ::InsertListDataEntry(size_t particle_index, const Vecd &particle_position, Real volumetric)
 	{
-		Vecu cellpos = CellIndexFromPosition(particle_position);
-		cell_data_lists_[cellpos[0]][cellpos[1]][cellpos[2]].emplace_back(
+		Vecu cell_pos = CellIndexFromPosition(particle_position);
+		cell_data_lists_[cell_pos[0]][cell_pos[1]][cell_pos[2]].emplace_back(
 			std::make_tuple(particle_index, particle_position, volumetric));
 	}
 	//=================================================================================================//

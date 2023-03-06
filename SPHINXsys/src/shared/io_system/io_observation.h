@@ -44,7 +44,7 @@ namespace SPH
 		SPHBody &observer_;
 		PltEngine plt_engine_;
 		BaseParticles &base_particles_;
-		std::string dynamics_range_name_;
+		std::string dynamics_identifier_name_;
 		const std::string quantity_name_;
 		std::string filefullpath_output_;
 
@@ -54,15 +54,15 @@ namespace SPH
 	public:
 		ObservedQuantityRecording(const std::string &quantity_name, IOEnvironment &io_environment,
 								  BaseContactRelation &contact_relation)
-			: BodyStatesRecording(io_environment, contact_relation.sph_body_),
+			: BodyStatesRecording(io_environment, contact_relation.getSPHBody()),
 			  ObservingAQuantity<VariableType>(contact_relation, quantity_name),
-			  observer_(contact_relation.sph_body_), plt_engine_(),
+			  observer_(contact_relation.getSPHBody()), plt_engine_(),
 			  base_particles_(observer_.getBaseParticles()), 
-			  dynamics_range_name_(contact_relation.sph_body_.getName()),
+			  dynamics_identifier_name_(contact_relation.getSPHBody().getName()),
 			  quantity_name_(quantity_name)
 		{
 			/** Output for .dat file. */
-			filefullpath_output_ = io_environment_.output_folder_ + "/" + dynamics_range_name_ + "_" + quantity_name + ".dat";
+			filefullpath_output_ = io_environment_.output_folder_ + "/" + dynamics_identifier_name_ + "_" + quantity_name + ".dat";
 			std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
 			out_file << "run_time"
 					 << "   ";
@@ -106,7 +106,7 @@ namespace SPH
 		IOEnvironment &io_environment_;
 		PltEngine plt_engine_;
 		ReduceMethodType reduce_method_;
-		std::string dynamics_range_name_;
+		std::string dynamics_identifier_name_;
 		const std::string quantity_name_;
 		std::string filefullpath_output_;
 
@@ -119,11 +119,11 @@ namespace SPH
 		template <typename... ConstructorArgs>
 		ReducedQuantityRecording(IOEnvironment &io_environment, ConstructorArgs &&...args)
 			: io_environment_(io_environment), plt_engine_(), reduce_method_(std::forward<ConstructorArgs>(args)...),
-			  dynamics_range_name_(reduce_method_.DynamicsRangeName()),
+			  dynamics_identifier_name_(reduce_method_.DynamicsIdentifierName()),
 			  quantity_name_(reduce_method_.QuantityName())
 		{
 			/** output for .dat file. */
-			filefullpath_output_ = io_environment_.output_folder_ + "/" + dynamics_range_name_ + "_" + quantity_name_ + ".dat";
+			filefullpath_output_ = io_environment_.output_folder_ + "/" + dynamics_identifier_name_ + "_" + quantity_name_ + ".dat";
 			std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
 			out_file << "\"run_time\""
 					 << "   ";

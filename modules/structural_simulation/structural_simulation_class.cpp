@@ -356,11 +356,11 @@ void StructuralSimulation::initializeContactBetweenTwoBodies(int first, int seco
 	contact_list_.emplace_back(make_shared<SurfaceContactRelation>(*second_body, RealBodyVector({first_body})));
 
 	int last = contact_list_.size() - 1;
-	contact_density_list_.push_back(make_shared<InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle>>(*contact_list_[last - 1]));
-	contact_density_list_.push_back(make_shared<InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle>>(*contact_list_[last]));
+	contact_density_list_.push_back(make_shared<InteractionDynamics<solid_dynamics::ContactDensitySummation>>(*contact_list_[last - 1]));
+	contact_density_list_.push_back(make_shared<InteractionDynamics<solid_dynamics::ContactDensitySummation>>(*contact_list_[last]));
 
-	contact_force_list_.push_back(make_shared<InteractionDynamics<solid_dynamics::ContactForce, BodyPartByParticle>>(*contact_list_[last - 1]));
-	contact_force_list_.push_back(make_shared<InteractionDynamics<solid_dynamics::ContactForce, BodyPartByParticle>>(*contact_list_[last]));
+	contact_force_list_.push_back(make_shared<InteractionDynamics<solid_dynamics::ContactForce>>(*contact_list_[last - 1]));
+	contact_force_list_.push_back(make_shared<InteractionDynamics<solid_dynamics::ContactForce>>(*contact_list_[last]));
 }
 
 void StructuralSimulation::initializeAllContacts()
@@ -381,8 +381,8 @@ void StructuralSimulation::initializeAllContacts()
 
 		contact_list_.emplace_back(make_shared<SurfaceContactRelation>(*contact_body, target_list));
 		int last = contact_list_.size() - 1;
-		contact_density_list_.emplace_back(make_shared<InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle>>(*contact_list_[last]));
-		contact_force_list_.emplace_back(make_shared<InteractionDynamics<solid_dynamics::ContactForce, BodyPartByParticle>>(*contact_list_[last]));
+		contact_density_list_.emplace_back(make_shared<InteractionDynamics<solid_dynamics::ContactDensitySummation>>(*contact_list_[last]));
+		contact_force_list_.emplace_back(make_shared<InteractionDynamics<solid_dynamics::ContactForce>>(*contact_list_[last]));
 	}
 	// continue appending the lists with the time dependent contacts
 	for (size_t i = 0; i < time_dep_contacting_body_pairs_list_.size(); i++)
@@ -452,14 +452,8 @@ void StructuralSimulation::initializeForceInBodyRegion()
 		int resolution(20);
 		// create the triangle mesh of the box
 		BodyPartFromMesh *bp = body_part_tri_mesh_ptr_keeper_.createPtr<BodyPartFromMesh>(
-			*solid_body_list_[body_index]->getSolidBodyFromMesh(), makeShared<TriangleMeshShapeBrick>(halfsize_bbox, resolution, center, 
-        #ifdef __EMSCRIPTEN__
-				imported_stl_list_[body_index].name
-		#else // __EMSCRIPTEN__		
-				imported_stl_list_[body_index]
-		#endif // __EMSCRIPTEN__
-        ));
-		force_in_body_region_.emplace_back(make_shared<SimpleDynamics<solid_dynamics::ForceInBodyRegion, BodyRegionByParticle>>(*bp, force, end_time));
+			*solid_body_list_[body_index]->getSolidBodyFromMesh(), makeShared<TriangleMeshShapeBrick>(halfsize_bbox, resolution, center, imported_stl_list_[body_index]));
+		force_in_body_region_.emplace_back(make_shared<SimpleDynamics<solid_dynamics::ForceInBodyRegion>>(*bp, force, end_time));
 	}
 }
 
@@ -474,7 +468,7 @@ void StructuralSimulation::initializeSurfacePressure()
 		StdVec<array<Real, 2>> pressure_over_time = get<3>(surface_pressure_tuple_[i]);
 
 		BodyPartByParticle *bp = body_part_tri_mesh_ptr_keeper_.createPtr<BodyPartFromMesh>(*solid_body_list_[body_index]->getSolidBodyFromMesh(), tri_mesh);
-		surface_pressure_.emplace_back(make_shared<SimpleDynamics<solid_dynamics::SurfacePressureFromSource, BodyPartByParticle>>(*bp, point, pressure_over_time));
+		surface_pressure_.emplace_back(make_shared<SimpleDynamics<solid_dynamics::SurfacePressureFromSource>>(*bp, point, pressure_over_time));
 	}
 }
 
@@ -512,7 +506,7 @@ void StructuralSimulation::initializeConstrainSolidBody()
 	for (size_t i = 0; i < body_indices_fixed_constraint_.size(); i++)
 	{
 		int body_index = body_indices_fixed_constraint_[i];
-		fixed_constraint_body_.emplace_back(make_shared<SimpleDynamics<solid_dynamics::FixConstraint>>(*solid_body_list_[body_index]->getSolidBodyFromMesh()));
+		fixed_constraint_body_.emplace_back(make_shared<SimpleDynamics<solid_dynamics::FixBodyConstraint>>(*solid_body_list_[body_index]->getSolidBodyFromMesh()));
 	}
 }
 
@@ -535,14 +529,8 @@ void StructuralSimulation::initializeConstrainSolidBodyRegion()
 		int resolution(20);
 		// create the triangle mesh of the box
 		BodyPartFromMesh *bp = body_part_tri_mesh_ptr_keeper_.createPtr<BodyPartFromMesh>(
-			*solid_body_list_[body_index]->getSolidBodyFromMesh(), makeShared<TriangleMeshShapeBrick>(halfsize_bbox, resolution, center, 
-        #ifdef __EMSCRIPTEN__
-				imported_stl_list_[body_index].name
-		#else // __EMSCRIPTEN__		
-				imported_stl_list_[body_index]
-		#endif // __EMSCRIPTEN__
-        ));
-		fixed_constraint_region_.emplace_back(make_shared<SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle>>(*bp));
+			*solid_body_list_[body_index]->getSolidBodyFromMesh(), makeShared<TriangleMeshShapeBrick>(halfsize_bbox, resolution, center, imported_stl_list_[body_index]));
+		fixed_constraint_region_.emplace_back(make_shared<SimpleDynamics<solid_dynamics::FixBodyPartConstraint>>(*bp));
 	}
 }
 
@@ -600,7 +588,7 @@ void StructuralSimulation::initializeTranslateSolidBodyPart()
 		BodyPartFromMesh *bp = body_part_tri_mesh_ptr_keeper_.createPtr<BodyPartFromMesh>(
 			*solid_body_list_[body_index]->getSolidBodyFromMesh(), body_mesh_list_[body_index]);
 
-		translation_solid_body_part_.emplace_back(make_shared<SimpleDynamics<solid_dynamics::TranslateSolidBody, BodyRegionByParticle>>(
+		translation_solid_body_part_.emplace_back(make_shared<SimpleDynamics<solid_dynamics::TranslateSolidBodyPart>>(
 			*bp, start_time, end_time, translation));
 	}
 }

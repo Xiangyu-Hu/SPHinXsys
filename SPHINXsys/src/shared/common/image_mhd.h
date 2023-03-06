@@ -59,12 +59,12 @@ namespace SPH {
 	public:
 		ImageMHD() {};
 		// constructor for input files
-		ImageMHD(std::string full_path_file);
+		explicit ImageMHD(std::string full_path_file);
 		// constructor for sphere 
 		ImageMHD(Real radius, Vec3i dxdydz, Vec3d spacings);
 		~ImageMHD();
 
-		void set_objectType(std::string objectType) 
+		void set_objectType(const std::string &objectType) 
 		{ 
 			objectType_ = objectType; 
 		};
@@ -101,11 +101,11 @@ namespace SPH {
 		{ 
 			dimSize_ = dimSize; 
 		};
-		void set_anatomicalOrientation(std::string anatomicalOrientation) 
+		void set_anatomicalOrientation(const std::string &anatomicalOrientation) 
 		{
 			anatomicalOrientation_ = anatomicalOrientation;
 		};
-		void set_elementType(std::string elementType) 
+		void set_elementType(const std::string &elementType) 
 		{
 			elementType_ = elementType;
 		};

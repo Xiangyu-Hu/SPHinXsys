@@ -22,8 +22,8 @@ namespace SPH
 	Matd HardeningPlasticSolid::PlasticConstitutiveRelation(const Matd &F, size_t index_i, Real dt)
 	{
 		Matd be = F * inverse_plastic_strain_[index_i] * F.transpose();
-		Matd normalized_be = be * pow(be.determinant(), -one_over_dimensions_);
-		Real normalized_be_isentropic = normalized_be.trace() * one_over_dimensions_;
+		Matd normalized_be = be * pow(be.determinant(), -OneOverDimensions);
+		Real normalized_be_isentropic = normalized_be.trace() * OneOverDimensions;
 		Matd deviatoric_PK = DeviatoricKirchhoff(normalized_be - normalized_be_isentropic * Matd::Identity());
 		Real deviatoric_PK_norm = deviatoric_PK.norm();
 		Real trial_function = deviatoric_PK_norm -
@@ -35,7 +35,7 @@ namespace SPH
 			hardening_parameter_[index_i] += sqrt_2_over_3_ * relax_increment;
 			deviatoric_PK -= 2.0 * renormalized_shear_modulus * relax_increment * deviatoric_PK / deviatoric_PK_norm;
 			Matd relaxed_be = deviatoric_PK / G0_ + normalized_be_isentropic * Matd::Identity();
-			normalized_be = relaxed_be * pow(relaxed_be.determinant(), -one_over_dimensions_);
+			normalized_be = relaxed_be * pow(relaxed_be.determinant(), -OneOverDimensions);
 		}
 		Matd inverse_F = F.inverse();
 		Matd inverse_F_T = inverse_F.transpose();

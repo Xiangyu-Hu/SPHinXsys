@@ -146,7 +146,7 @@ namespace SPH
         Real Vol_newIndex = particles_->Vol_[index_rho] / 2.0;
         Real h_newIndex = pow(particles_->Vol_[index_rho] / Vol_newIndex, 1.0 / (Real)Dimensions);
 
-        Real W0 = particle_adaptation_.getKernel()->W0(h_newIndex, zero_vec);
+        Real W0 = particle_adaptation_.getKernel()->W0(h_newIndex, ZeroVecd);
         Real inv_sigma_0 = 1.0 / particle_adaptation_.ReferenceNumberDensity(h_newIndex);
         Real sigma_newIndex = W0;
 
@@ -444,7 +444,7 @@ namespace SPH
     //=================================================================================================//
     ParticleMergeWithPrescribedArea::
         ParticleMergeWithPrescribedArea(BaseInnerRelation &inner_relation, Shape &refinement_region)
-        : ParticleRefinementWithPrescribedArea(inner_relation.sph_body_, refinement_region),
+        : ParticleRefinementWithPrescribedArea(inner_relation.getSPHBody(), refinement_region),
           DataDelegateInner<BaseParticles, DataDelegateEmptyBase>(inner_relation),
           all_particle_data_(particles_->all_particle_data_), vel_n_(particles_->vel_)
     {

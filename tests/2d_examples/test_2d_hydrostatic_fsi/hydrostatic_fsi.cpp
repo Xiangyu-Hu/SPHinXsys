@@ -255,13 +255,13 @@ int main()
 	Dynamics1Level<solid_dynamics::Integration2ndHalf> gate_stress_relaxation_second_half(gate_inner);
 	/**Constrain a solid body part.  */
 	BodyRegionByParticle gate_constraint_part(gate, makeShared<MultiPolygonShape>(createGateConstrainShape()));
-	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> gate_constraint(gate_constraint_part);
+	SimpleDynamics<solid_dynamics::FixBodyPartConstraint> gate_constraint(gate_constraint_part);
 	/** Update the norm of elastic gate. */
 	SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> gate_update_normal(gate);
 	/** Compute the average velocity of gate. */
 	solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(gate);
 	/** Compute the force exerted on elastic gate due to fluid pressure. */
-	InteractionDynamics<solid_dynamics::FluidPressureForceOnSolid> fluid_pressure_force_on_gate(gate_contact);
+	InteractionDynamics<solid_dynamics::PressureForceAccelerationFromFluid> fluid_pressure_force_on_gate(gate_contact);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------

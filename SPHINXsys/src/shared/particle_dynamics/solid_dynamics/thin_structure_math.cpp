@@ -14,7 +14,7 @@ namespace SPH
 			
 			Mat2d rotation_matrix{
 								  {cos_angle, sin_angle}, 	// First row
-								  {-sin_angle,cos_angle},	//Secdon row
+								  {-sin_angle,cos_angle},	//Second row
 			};
 
 			return rotation_matrix * initial_vector;
@@ -22,7 +22,7 @@ namespace SPH
 		//=================================================================================================//
 		Vec3d getVectorAfterThinStructureRotation(const Vec3d &initial_vector, const Vec3d &rotation_angles)
 		{
-			/**The rotation matrix is the rotation aroud Y-axis \times rotation aroud X-axis. */
+			/**The rotation matrix is the rotation around Y-axis \times rotation around X-axis. */
 			Real sin_angle_x = sin(rotation_angles[0]);
 			Real cos_angle_x = cos(rotation_angles[0]);
 			

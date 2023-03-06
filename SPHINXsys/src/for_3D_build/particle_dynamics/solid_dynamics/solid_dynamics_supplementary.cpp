@@ -36,33 +36,6 @@ namespace SPH
 					R(i, j) = Q[i * 3 + j];
 			n_[index_i] = R * n0_[index_i];
 		}
-		//=================================================================================================//
-		void ConstraintBySimBody::update(size_t index_i, Real dt)
-		{
-			/** Change to SimTK::Vector. */
-			SimTK::Vec3 rr, pos, vel, acc;
-			rr = EigenToSimTK(pos0_[index_i]) - initial_mobod_origin_location_;
-			mobod_.findStationLocationVelocityAndAccelerationInGround(*simbody_state_, rr, pos, vel, acc);
-			/** this is how we calculate the particle position in after transform of MBbody.
-			 * const SimTK::Rotation&  R_GB = mobod_.getBodyRotation(simbody_state);
-			 * const SimTK::Vec3&      p_GB = mobod_.getBodyOriginLocation(simbody_state);
-			 * const SimTK::Vec3 r = R_GB * rr; // re-express station vector p_BS in G (15 flops)
-			 * base_particle_data_i.pos_ = (p_GB + r);
-			 */
-			pos_[index_i] = SimTKToEigen(pos);
-			vel_[index_i] = SimTKToEigen(vel);
-			n_[index_i] = SimTKToEigen(mobod_.getBodyRotation(*simbody_state_) * EigenToSimTK(n0_[index_i]));
-		}
-		//=================================================================================================//
-		SimTK::SpatialVec TotalForceForSimBody::reduce(size_t index_i, Real dt)
-		{
-			Vecd force = (acc_[index_i] + acc_prior_[index_i]) * mass_[index_i];
-			SimTK::Vec3 force_from_particle = EigenToSimTK(force);
-			SimTK::Vec3 displacement = EigenToSimTK(pos_[index_i]) - current_mobod_origin_location_;
-			SimTK::Vec3 torque_from_particle = SimTK::cross(displacement, force_from_particle);
-
-			return SimTK::SpatialVec(torque_from_particle, force_from_particle);
-		}
 		//=================================================================================================//	
 	}
 	//=====================================================================================================//
