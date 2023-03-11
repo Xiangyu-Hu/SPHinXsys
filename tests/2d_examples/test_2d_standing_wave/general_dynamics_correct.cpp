@@ -5,7 +5,7 @@ namespace SPH
 	//=================================================================================================//
 	GlobalCorrectConfigurationInner::
 		GlobalCorrectConfigurationInner(BaseInnerRelation& inner_relation)
-		: LocalDynamics(inner_relation.sph_body_), GeneralDataDelegateInner(inner_relation),
+		: LocalDynamics(inner_relation.getSPHBody()), GeneralDataDelegateInner(inner_relation),
 		Vol_(particles_->Vol_)
 	{
 		particles_->registerVariable(A_, "OriginalCorrectionMatrix");

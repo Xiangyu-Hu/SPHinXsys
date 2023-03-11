@@ -59,8 +59,6 @@ std::vector<Vecd> createWaterBlockShape()
 	std::vector<Vecd> pnts;
 	for (int n = 0; n <= Nh; n++)
 	{
-		Real lamda = 2.0;
-		Real k = 2 * PI / lamda;
 		Real x = n * Lstep;
 		Real y = 0.1 * cos(PI * x);
 
@@ -217,7 +215,7 @@ int main(int ac, char* av[])
 		write_water_mechanical_energy(io_environment, water_block, gravity_ptr);
 	/** WaveProbes. */
 	BodyRegionByCell wave_probe_buffer_(water_block, makeShared<MultiPolygonShape>(createWaveProbeShape(), "WaveProbe"));
-	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight, BodyRegionByCell>>>
+	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight>>>
 		wave_probe(io_environment, wave_probe_buffer_);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration

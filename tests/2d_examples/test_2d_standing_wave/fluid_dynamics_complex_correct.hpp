@@ -41,9 +41,7 @@ namespace SPH
 			Real rho_dissipation(0);
 			for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
 			{
-				StdLargeVec<Vecd>& vel_ave_k = *(this->wall_vel_ave_[k]);
 				StdLargeVec<Vecd>& acc_ave_k = *(this->wall_acc_ave_[k]);
-				StdLargeVec<Vecd>& n_k = *(this->wall_n_[k]);
 				Neighborhood& wall_neighborhood = (*FluidWallData::contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
 				{
