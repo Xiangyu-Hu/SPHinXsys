@@ -108,8 +108,8 @@ int main(int ac, char *av[])
 		//----------------------------------------------------------------------
 		//	Particle relaxation starts here.
 		//----------------------------------------------------------------------
-		random_inserted_body_particles.parallel_exec(0.25);
-		relaxation_step_inner.SurfaceBounding().parallel_exec();
+		random_inserted_body_particles.exec(0.25);
+		relaxation_step_inner.SurfaceBounding().exec();
 		write_states.writeToFile(0);
 		//----------------------------------------------------------------------
 		//	Particle relaxation loop.
@@ -117,7 +117,7 @@ int main(int ac, char *av[])
 		int ite_p = 0;
 		while (ite_p < 1000)
 		{
-			relaxation_step_inner.parallel_exec();
+			relaxation_step_inner.exec();
 			ite_p += 1;
 			if (ite_p % 200 == 0)
 			{
@@ -156,7 +156,7 @@ int main(int ac, char *av[])
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
 	// apply initial condition
-	corrected_configuration.parallel_exec();
+	corrected_configuration.exec();
 	write_states.writeToFile(0);
 	// Setup time stepping control parameters.
 	int ite = 0;
@@ -180,19 +180,19 @@ int main(int ac, char *av[])
 						  << GlobalStaticVariables::physical_time_ << "	dt: "
 						  << dt << "\n";
 			}
-			initialization_with_gravity.parallel_exec();
+			initialization_with_gravity.exec();
 			// contact dynamics.
-			coil_self_contact_density.parallel_exec();
-			coil_self_contact_forces.parallel_exec();
-			coil_update_contact_density.parallel_exec();
-			coil_compute_solid_contact_forces.parallel_exec();
+			coil_self_contact_density.exec();
+			coil_self_contact_forces.exec();
+			coil_update_contact_density.exec();
+			coil_compute_solid_contact_forces.exec();
 			// Stress relaxation and damping.
-			stress_relaxation_first_half.parallel_exec(dt);
-			coil_damping.parallel_exec(dt);
-			stress_relaxation_second_half.parallel_exec(dt);
+			stress_relaxation_first_half.exec(dt);
+			coil_damping.exec(dt);
+			stress_relaxation_second_half.exec(dt);
 
 			ite++;
-			dt = computing_time_step_size.parallel_exec();
+			dt = computing_time_step_size.exec();
 			integration_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
 

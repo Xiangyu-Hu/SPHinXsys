@@ -109,7 +109,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
-	wall_boundary_normal_direction.parallel_exec();
+	wall_boundary_normal_direction.exec();
 	//----------------------------------------------------------------------
 	//	Load restart file if necessary.
 	//----------------------------------------------------------------------
@@ -155,9 +155,9 @@ int main(int ac, char *av[])
 		{
 			/** outer loop for dual-time criteria time-stepping. */
 			time_instance = TickCount::now();
-			fluid_step_initialization.parallel_exec();
-			Real advection_dt = fluid_advection_time_step.parallel_exec();
-			fluid_density_by_summation.parallel_exec();
+			fluid_step_initialization.exec();
+			Real advection_dt = fluid_advection_time_step.exec();
+			fluid_density_by_summation.exec();
 			interval_computing_time_step += TickCount::now() - time_instance;
 
 			time_instance = TickCount::now();
@@ -166,9 +166,9 @@ int main(int ac, char *av[])
 			while (relaxation_time < advection_dt)
 			{
 				/** inner loop for dual-time criteria time-stepping.  */
-				acoustic_dt = fluid_acoustic_time_step.parallel_exec();
-				fluid_pressure_relaxation.parallel_exec(acoustic_dt);
-				fluid_density_relaxation.parallel_exec(acoustic_dt);
+				acoustic_dt = fluid_acoustic_time_step.exec();
+				fluid_pressure_relaxation.exec(acoustic_dt);
+				fluid_density_relaxation.exec(acoustic_dt);
 				relaxation_time += acoustic_dt;
 				integration_time += acoustic_dt;
 				GlobalStaticVariables::physical_time_ += acoustic_dt;

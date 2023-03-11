@@ -114,8 +114,8 @@ int main()
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
 	/** apply initial condition */
-	initialization.parallel_exec();
-	corrected_configuration.parallel_exec();
+	initialization.exec();
+	corrected_configuration.exec();
 	write_states.writeToFile(0);
 	write_displacement.writeToFile(0);
 	/** Setup physical parameters. */
@@ -140,12 +140,12 @@ int main()
 						  << GlobalStaticVariables::physical_time_ << "	dt: "
 						  << dt << "\n";
 			}
-			stress_relaxation_first_half.parallel_exec(dt);
-			constraint_holder.parallel_exec(dt);
-			stress_relaxation_second_half.parallel_exec(dt);
+			stress_relaxation_first_half.exec(dt);
+			constraint_holder.exec(dt);
+			stress_relaxation_second_half.exec(dt);
 
 			ite++;
-			dt = computing_time_step_size.parallel_exec();
+			dt = computing_time_step_size.exec();
 			integration_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
 		}

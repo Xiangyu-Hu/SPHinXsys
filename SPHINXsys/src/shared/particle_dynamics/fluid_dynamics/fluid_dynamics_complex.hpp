@@ -37,30 +37,27 @@ namespace SPH
 	namespace fluid_dynamics
 	{
 		//=================================================================================================//
-		template <class ExecutionPolicy>
 		void DensitySummationComplex::
-		interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+		interaction(size_t index_i, Real dt)
 		{
-			BaseDensitySummationComplex<DensitySummationInner>::interaction(execution_policy, index_i, dt);
+			BaseDensitySummationComplex<DensitySummationInner>::interaction(index_i, dt);
 			Real sigma = BaseDensitySummationComplex<DensitySummationInner>::ContactSummation(index_i);
 			rho_sum_[index_i] += sigma * rho0_ * rho0_ * inv_sigma0_ / mass_[index_i];
 		}
 		//=================================================================================================//
-		template <class ExecutionPolicy>
 		void DensitySummationComplexAdaptive::
-		interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+		interaction(size_t index_i, Real dt)
 		{
-			BaseDensitySummationComplex<DensitySummationInnerAdaptive>::interaction(execution_policy, index_i, dt);
+			BaseDensitySummationComplex<DensitySummationInnerAdaptive>::interaction(index_i, dt);
 			Real sigma = BaseDensitySummationComplex<DensitySummationInnerAdaptive>::ContactSummation(index_i);
 			rho_sum_[index_i] += sigma * rho0_ * rho0_ / mass_[index_i] /
 								 sph_adaptation_.ReferenceNumberDensity(h_ratio_[index_i]);
 		}
 		//=================================================================================================//
-		template <class ExecutionPolicy>
 		void TransportVelocityCorrectionComplex::
-		interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+		interaction(size_t index_i, Real dt)
 		{
-			TransportVelocityCorrectionInner::interaction(execution_policy, index_i, dt);
+			TransportVelocityCorrectionInner::interaction(index_i, dt);
 
 			Vecd acceleration_trans = Vecd::Zero();
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
@@ -80,11 +77,10 @@ namespace SPH
 				pos_[index_i] += coefficient_ * smoothing_length_sqr_ * acceleration_trans;
 		}
 		//=================================================================================================//
-		template <class ExecutionPolicy>
 		void TransportVelocityCorrectionComplexAdaptive::
-		interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+		interaction(size_t index_i, Real dt)
 		{
-			TransportVelocityCorrectionInnerAdaptive::interaction(execution_policy, index_i, dt);
+			TransportVelocityCorrectionInnerAdaptive::interaction(index_i, dt);
 
 			Vecd acceleration_trans = Vecd::Zero();
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
@@ -107,11 +103,10 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		template <class ExecutionPolicy>
 		void Oldroyd_BIntegration1stHalfWithWall::
-		interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+		interaction(size_t index_i, Real dt)
 		{
-			BaseIntegration1stHalfWithWall<Oldroyd_BIntegration1stHalf>::interaction(execution_policy, index_i, dt);
+			BaseIntegration1stHalfWithWall<Oldroyd_BIntegration1stHalf>::interaction(index_i, dt);
 
 			Real rho_i = rho_[index_i];
 			Matd tau_i = tau_[index_i];
@@ -131,11 +126,10 @@ namespace SPH
 			acc_[index_i] += acceleration;
 		}
 		//=================================================================================================//
-		template <class ExecutionPolicy>
 		void Oldroyd_BIntegration2ndHalfWithWall::
-		interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+		interaction(size_t index_i, Real dt)
 		{
-			BaseIntegration2ndHalfWithWall<Oldroyd_BIntegration2ndHalf>::interaction(execution_policy, index_i, dt);
+			BaseIntegration2ndHalfWithWall<Oldroyd_BIntegration2ndHalf>::interaction(index_i, dt);
 
 			Vecd vel_i = vel_[index_i];
 			Matd tau_i = tau_[index_i];
@@ -216,11 +210,10 @@ namespace SPH
 		};
 		//=================================================================================================//
 		template <class ViscousAccelerationInnerType>
-		template <class ExecutionPolicy>
 		void BaseViscousAccelerationWithWall<ViscousAccelerationInnerType>::
-		interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+		interaction(size_t index_i, Real dt)
 		{
-			ViscousAccelerationInnerType::interaction(execution_policy, index_i, dt);
+			ViscousAccelerationInnerType::interaction(index_i, dt);
 
 			Real rho_i = this->rho_[index_i];
 			const Vecd &vel_i = this->vel_[index_i];
@@ -245,11 +238,10 @@ namespace SPH
 		}
 		//=================================================================================================//
 		template <class BaseIntegration1stHalfType>
-		template <class ExecutionPolicy>
 		void BaseIntegration1stHalfWithWall<BaseIntegration1stHalfType>::
-		interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+		interaction(size_t index_i, Real dt)
 		{
-			BaseIntegration1stHalfType::interaction(execution_policy, index_i, dt);
+			BaseIntegration1stHalfType::interaction(index_i, dt);
 
 			Vecd acc_prior_i = computeNonConservativeAcceleration(index_i);
 
@@ -290,11 +282,10 @@ namespace SPH
 		}
 		//=================================================================================================//
 		template <class BaseIntegration1stHalfType>
-		template <class ExecutionPolicy>
 		void BaseExtendIntegration1stHalfWithWall<BaseIntegration1stHalfType>::
-		interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+		interaction(size_t index_i, Real dt)
 		{
-			BaseIntegration1stHalfWithWall<BaseIntegration1stHalfType>::interaction(execution_policy, index_i, dt);
+			BaseIntegration1stHalfWithWall<BaseIntegration1stHalfType>::interaction(index_i, dt);
 
 			Real rho_i = this->rho_[index_i];
 			Real penalty_pressure = this->p_[index_i];
@@ -339,11 +330,10 @@ namespace SPH
 		}
 		//=================================================================================================//
 		template <class BaseIntegration2ndHalfType>
-		template <class ExecutionPolicy>
 		void BaseIntegration2ndHalfWithWall<BaseIntegration2ndHalfType>::
-		interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+		interaction(size_t index_i, Real dt)
 		{
-			BaseIntegration2ndHalfType::interaction(execution_policy, index_i, dt);
+			BaseIntegration2ndHalfType::interaction(index_i, dt);
 
 			Real density_change_rate = 0.0;
 			Vecd p_dissipation = Vecd::Zero();

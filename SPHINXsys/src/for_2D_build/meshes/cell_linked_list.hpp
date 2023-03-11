@@ -45,7 +45,7 @@ namespace SPH
 		GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation)
 	{
 		StdLargeVec<Vecd> &pos = dynamics_range.getBaseParticles().pos_;
-		particle_for(execution::par, dynamics_range.LoopRange(),
+		particle_for(execution::ParallelPolicy::generatePolicy(), dynamics_range.LoopRange(),
 					 [&](size_t index_i)
 					 {
 						 int search_depth = get_search_depth(index_i);

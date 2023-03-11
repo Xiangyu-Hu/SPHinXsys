@@ -99,9 +99,8 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template <class BaseParticlesType, class BaseMaterialType, int NUM_SPECIES>
-	template <class ExecutionPolicy>
 	void RelaxationOfAllDiffusionSpeciesInner<BaseParticlesType, BaseMaterialType, NUM_SPECIES>::
-		interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+		interaction(size_t index_i, Real dt)
 	{
 		DiffusionReactionParticles<BaseParticlesType, BaseMaterialType, NUM_SPECIES> *particles = this->particles_;
 		Neighborhood &inner_neighborhood = this->inner_configuration_[index_i];
@@ -163,12 +162,11 @@ namespace SPH
 	//=================================================================================================//
 	template <class BaseParticlesType, class BaseMaterialType,
 			  class ContactBaseParticlesType, class ContactBaseMaterialType, int NUM_SPECIES>
-	template <class ExecutionPolicy>
 	void RelaxationOfAllDiffusionSpeciesComplex<BaseParticlesType, BaseMaterialType,
 												ContactBaseParticlesType, ContactBaseMaterialType, NUM_SPECIES>::
-		interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+		interaction(size_t index_i, Real dt)
 	{
-		RelaxationOfAllDiffusionSpeciesInner<BaseParticlesType, BaseMaterialType, NUM_SPECIES>::interaction(execution_policy, index_i, dt);
+		RelaxationOfAllDiffusionSpeciesInner<BaseParticlesType, BaseMaterialType, NUM_SPECIES>::interaction(index_i, dt);
 		DiffusionReactionParticles<BaseParticlesType, BaseMaterialType, NUM_SPECIES> *particles = this->particles_;
 
 		for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
@@ -268,14 +266,6 @@ namespace SPH
 		rk2_initialization_.exec();
 		rk2_1st_stage_.exec(dt);
 		rk2_2nd_stage_.exec(dt);
-	}
-	//=================================================================================================//
-	template <class FirstStageType>
-	void RelaxationOfAllDiffusionSpeciesRK2<FirstStageType>::parallel_exec(Real dt)
-	{
-		rk2_initialization_.parallel_exec();
-		rk2_1st_stage_.parallel_exec(dt);
-		rk2_2nd_stage_.parallel_exec(dt);
 	}
 	//=================================================================================================//
 	template <class BaseParticlesType, class BaseMaterialType, int NUM_SPECIES>

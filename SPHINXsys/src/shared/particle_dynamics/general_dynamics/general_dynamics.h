@@ -116,8 +116,7 @@ namespace SPH
 
 		virtual ~ParticleSmoothing(){};
 
-		template <class ExecutionPolicy> 
-		inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+		inline void interaction(size_t index_i, Real dt = 0.0)
 		{
 			Real weight = W0_;
 			VariableType summation = W0_ * smoothed_[index_i];

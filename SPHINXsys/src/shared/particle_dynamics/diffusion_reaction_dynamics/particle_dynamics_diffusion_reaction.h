@@ -82,7 +82,6 @@ namespace SPH
 		virtual ~GetDiffusionTimeStepSize(){};
 
 		virtual Real exec(Real dt = 0.0) override { return diff_time_step_; };
-		virtual Real parallel_exec(Real dt = 0.0) override { return exec(dt); };
 
 	protected:
 		Real diff_time_step_;
@@ -117,8 +116,7 @@ namespace SPH
 		explicit RelaxationOfAllDiffusionSpeciesInner(BaseInnerRelation &inner_relation);
 		virtual ~RelaxationOfAllDiffusionSpeciesInner(){};
 
-		template <class ExecutionPolicy> 
-		inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0);
+		inline void interaction(size_t index_i, Real dt = 0.0);
 
 		void update(size_t index_i, Real dt = 0.0);
 	};
@@ -148,8 +146,7 @@ namespace SPH
 		explicit RelaxationOfAllDiffusionSpeciesComplex(ComplexRelation &complex_relation);
 		virtual ~RelaxationOfAllDiffusionSpeciesComplex(){};
 
-		template <class ExecutionPolicy> 
-		inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0);
+		inline void interaction(size_t index_i, Real dt = 0.0);
 	};
 
 	/**
@@ -219,7 +216,6 @@ namespace SPH
 		virtual ~RelaxationOfAllDiffusionSpeciesRK2(){};
 
 		virtual void exec(Real dt = 0.0) override;
-		virtual void parallel_exec(Real dt = 0.0) override;
 	};
 
 	struct UpdateAReactionSpecies

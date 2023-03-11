@@ -122,7 +122,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	wall_boundary_normal_direction.parallel_exec();
+	wall_boundary_normal_direction.exec();
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
@@ -149,17 +149,17 @@ int main(int ac, char *av[])
 		Real integration_time = 0.0;
 		while (integration_time < output_interval)
 		{
-			initialize_a_fluid_step.parallel_exec();
-			Real Dt = get_fluid_advection_time_step_size.parallel_exec();
-			update_density_by_summation.parallel_exec();
+			initialize_a_fluid_step.exec();
+			Real Dt = get_fluid_advection_time_step_size.exec();
+			update_density_by_summation.exec();
 
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
 
-				pressure_relaxation.parallel_exec(dt);
-				density_relaxation.parallel_exec(dt);
-				dt = get_fluid_time_step_size.parallel_exec();
+				pressure_relaxation.exec(dt);
+				density_relaxation.exec(dt);
+				dt = get_fluid_time_step_size.exec();
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;

@@ -51,8 +51,7 @@ namespace SPH
 			explicit SelfContactDensitySummation(SelfSurfaceContactRelation &self_contact_relation);
 			virtual ~SelfContactDensitySummation(){};
 
-			template <class ExecutionPolicy>
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+			inline void interaction(size_t index_i, Real dt = 0.0)
 			{
 				Real sigma = 0.0;
 				const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -80,8 +79,7 @@ namespace SPH
 			explicit ContactDensitySummation(SurfaceContactRelation &solid_body_contact_relation);
 			virtual ~ContactDensitySummation(){};
 
-			template <class ExecutionPolicy>
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+			inline void interaction(size_t index_i, Real dt = 0.0)
 			{
 				/** Contact interaction. */
 				Real sigma = 0.0;
@@ -117,8 +115,7 @@ namespace SPH
 			explicit ShellContactDensity(SurfaceContactRelation &solid_body_contact_relation);
 			virtual ~ShellContactDensity(){};
 
-			template <class ExecutionPolicy>
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+			inline void interaction(size_t index_i, Real dt = 0.0)
 			{
 				/** shell contact interaction. */
 				Real sigma = 0.0;
@@ -168,8 +165,7 @@ namespace SPH
 			explicit SelfContactForce(SelfSurfaceContactRelation &self_contact_relation);
 			virtual ~SelfContactForce(){};
 
-			template <class ExecutionPolicy>
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+			inline void interaction(size_t index_i, Real dt = 0.0)
 			{
 				Real Vol_i = Vol_[index_i];
 				Vecd vel_i = vel_[index_i];
@@ -207,8 +203,7 @@ namespace SPH
 			explicit ContactForce(SurfaceContactRelation &solid_body_contact_relation);
 			virtual ~ContactForce(){};
 
-			template <class ExecutionPolicy>
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+			inline void interaction(size_t index_i, Real dt = 0.0)
 			{
 				Real Vol_i = Vol_[index_i];
 				Real p_i = contact_density_[index_i] * solid_.ContactStiffness();
@@ -253,8 +248,7 @@ namespace SPH
 			explicit ContactForceFromWall(SurfaceContactRelation &solid_body_contact_relation);
 			virtual ~ContactForceFromWall(){};
 
-			template <class ExecutionPolicy>
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+			inline void interaction(size_t index_i, Real dt = 0.0)
 			{
 				Real Vol_i = Vol_[index_i];
 				Real p_i = contact_density_[index_i] * solid_.ContactStiffness();
@@ -290,8 +284,7 @@ namespace SPH
 			explicit ContactForceToWall(SurfaceContactRelation &solid_body_contact_relation);
 			virtual ~ContactForceToWall(){};
 
-			template <class ExecutionPolicy>
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+			inline void interaction(size_t index_i, Real dt = 0.0)
 			{
 				Real Vol_i = Vol_[index_i];
 				/** Contact interaction. */
@@ -335,8 +328,7 @@ namespace SPH
 			PairwiseFrictionFromWall(BaseContactRelation &contact_relation, Real eta);
 			virtual ~PairwiseFrictionFromWall(){};
 
-			template <class ExecutionPolicy>
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+			inline void interaction(size_t index_i, Real dt = 0.0)
 			{
 				Real Vol_i = Vol_[index_i];
 				Real mass_i = mass_[index_i];
@@ -398,8 +390,7 @@ namespace SPH
 			explicit DynamicContactForceWithWall(SurfaceContactRelation &solid_body_contact_relation, Real penalty_strength = 1.0);
 			virtual ~DynamicContactForceWithWall(){};
 
-			template <class ExecutionPolicy>
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+			inline void interaction(size_t index_i, Real dt = 0.0)
 			{
 				Real Vol_i = Vol_[index_i];
 				Vecd vel_i = vel_[index_i];

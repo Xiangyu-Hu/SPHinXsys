@@ -36,11 +36,10 @@ namespace SPH
 	namespace fluid_dynamics
 	{
 		//=================================================================================================//
-		template <class ExecutionPolicy>
 		void ViscousAccelerationMultiPhase::
-			interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+			interaction(size_t index_i, Real dt)
 		{
-			ViscousAccelerationInner::interaction(execution_policy, index_i, dt);
+			ViscousAccelerationInner::interaction(index_i, dt);
 
 			Real rho_i = this->rho_[index_i];
 			const Vecd &vel_i = this->vel_[index_i];
@@ -68,9 +67,8 @@ namespace SPH
 			acc_prior_[index_i] += acceleration;
 		}
 		//=================================================================================================//
-		template <class ExecutionPolicy>
 		void MultiPhaseColorFunctionGradient::
-			interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+			interaction(size_t index_i, Real dt)
 		{
 			Real Vol_i = Vol_[index_i];
 			Vecd gradient = Vecd::Zero();
@@ -136,11 +134,10 @@ namespace SPH
 			: BaseMultiPhaseIntegration1stHalf(complex_relation.getInnerRelation(), complex_relation.getContactRelation()) {}
 		//=================================================================================================//
 		template <class Integration1stHalfType>
-		template <class ExecutionPolicy>
 		void BaseMultiPhaseIntegration1stHalf<Integration1stHalfType>::
-			interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+			interaction(size_t index_i, Real dt)
 		{
-			Integration1stHalfType::interaction(execution_policy, index_i, dt);
+			Integration1stHalfType::interaction(index_i, dt);
 
 			Vecd acceleration = Vecd::Zero();
 			Real rho_dissipation(0);
@@ -206,11 +203,10 @@ namespace SPH
 			: BaseMultiPhaseIntegration2ndHalf(complex_relation.getInnerRelation(), complex_relation.getContactRelation()) {}
 		//=================================================================================================//
 		template <class Integration2ndHalfType>
-		template <class ExecutionPolicy>
 		void BaseMultiPhaseIntegration2ndHalf<Integration2ndHalfType>::
-			interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+			interaction(size_t index_i, Real dt)
 		{
-			Integration2ndHalfType::interaction(execution_policy, index_i, dt);
+			Integration2ndHalfType::interaction(index_i, dt);
 
 			Real density_change_rate = 0.0;
 			Vecd p_dissipation = Vecd::Zero();

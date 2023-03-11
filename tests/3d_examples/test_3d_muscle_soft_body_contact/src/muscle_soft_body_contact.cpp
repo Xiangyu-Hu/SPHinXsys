@@ -114,8 +114,8 @@ int main()
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
 	/** apply initial condition */
-	corrected_configuration.parallel_exec();
-	corrected_configuration_2.parallel_exec();
+	corrected_configuration.exec();
+	corrected_configuration_2.exec();
 	write_states.writeToFile(0);
 	/** Setup physical parameters. */
 	int ite = 0;
@@ -140,28 +140,28 @@ int main()
 						  << dt << "\n";
 			}
 			/** Gravity. */
-			myocardium_initialize_time_step.parallel_exec();
-			plate_initialize_time_step.parallel_exec();
+			myocardium_initialize_time_step.exec();
+			plate_initialize_time_step.exec();
 
-			spring_constraint.parallel_exec();
+			spring_constraint.exec();
 
 			/** Contact model for myocardium. */
-			myocardium_update_contact_density.parallel_exec();
-			myocardium_compute_solid_contact_forces.parallel_exec();
+			myocardium_update_contact_density.exec();
+			myocardium_compute_solid_contact_forces.exec();
 			/** Contact model for plate. */
-			plate_update_contact_density.parallel_exec();
-			plate_compute_solid_contact_forces.parallel_exec();
+			plate_update_contact_density.exec();
+			plate_compute_solid_contact_forces.exec();
 
 			/** Stress relaxation and damping. */
-			stress_relaxation_first_half.parallel_exec(dt);
-			constraint_holder.parallel_exec(dt);
-			muscle_damping.parallel_exec(dt);
-			constraint_holder.parallel_exec(dt);
-			stress_relaxation_second_half.parallel_exec(dt);
+			stress_relaxation_first_half.exec(dt);
+			constraint_holder.exec(dt);
+			muscle_damping.exec(dt);
+			constraint_holder.exec(dt);
+			stress_relaxation_second_half.exec(dt);
 
-			stress_relaxation_first_half_2.parallel_exec(dt);
-			plate_damping.parallel_exec(dt);
-			stress_relaxation_second_half_2.parallel_exec(dt);
+			stress_relaxation_first_half_2.exec(dt);
+			plate_damping.exec(dt);
+			stress_relaxation_second_half_2.exec(dt);
 
 			ite++;
 			dt = system.getSmallestTimeStepAmongSolidBodies();

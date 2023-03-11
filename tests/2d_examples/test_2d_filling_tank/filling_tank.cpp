@@ -150,8 +150,8 @@ int main()
 	//----------------------------------------------------------------------
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	wall_normal_direction.parallel_exec();
-	indicate_free_surface.parallel_exec();
+	wall_normal_direction.exec();
+	indicate_free_surface.exec();
 	//----------------------------------------------------------------------
 	//	Time stepping control parameters.
 	//----------------------------------------------------------------------
@@ -178,19 +178,19 @@ int main()
 		while (integration_time < output_interval)
 		{
 			/** Acceleration due to viscous force and gravity. */
-			initialize_a_fluid_step.parallel_exec();
-			Real Dt = get_fluid_advection_time_step_size.parallel_exec();
-			update_density_by_summation.parallel_exec();
+			initialize_a_fluid_step.exec();
+			Real Dt = get_fluid_advection_time_step_size.exec();
+			update_density_by_summation.exec();
 
 			/** Dynamics including pressure relaxation. */
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
-				pressure_relaxation.parallel_exec(dt);
-				inflow_condition.parallel_exec();
-				density_relaxation.parallel_exec(dt);
-				inflow_condition.parallel_exec();
-				dt = get_fluid_time_step_size.parallel_exec();
+				pressure_relaxation.exec(dt);
+				inflow_condition.exec();
+				density_relaxation.exec(dt);
+				inflow_condition.exec();
+				dt = get_fluid_time_step_size.exec();
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
@@ -205,7 +205,7 @@ int main()
 			number_of_iterations++;
 
 			/** inflow emitter injection*/
-			emitter_injection.parallel_exec();
+			emitter_injection.exec();
 			/** Update cell linked list and configuration. */
 
 			water_body.updateCellLinkedListWithParticleSort(100);
@@ -215,7 +215,7 @@ int main()
 
 		TickCount t2 = TickCount::now();
 		write_water_mechanical_energy.writeToFile(number_of_iterations);
-		indicate_free_surface.parallel_exec();
+		indicate_free_surface.exec();
 		body_states_recording.writeToFile();
 		write_recorded_water_pressure.writeToFile(number_of_iterations);
 		TickCount t3 = TickCount::now();

@@ -35,19 +35,40 @@ namespace SPH
     {
         class SequencedPolicy
         {
+        public:
+            inline constexpr static SequencedPolicy generatePolicy()
+            {
+                return SequencedPolicy{};
+            };
+        };
+
+        class UnsequencedPolicy
+        {
+        public:
+            inline constexpr static UnsequencedPolicy generatePolicy()
+            {
+                return UnsequencedPolicy{};
+            };
         };
 
         class ParallelPolicy
         {
+        public:
+            inline constexpr static ParallelPolicy generatePolicy()
+            {
+                return ParallelPolicy{};
+            };
         };
 
         class ParallelUnsequencedPolicy
         {
-        };
+        public:
+            inline constexpr static ParallelUnsequencedPolicy generatePolicy()
+            {
 
-        inline constexpr SequencedPolicy seq{};
-        inline constexpr ParallelPolicy par{};
-        inline constexpr ParallelUnsequencedPolicy par_unseq{};
+                return ParallelUnsequencedPolicy{};
+            };
+        };
     }
 }
 #endif // EXECUTION_POLICY_H

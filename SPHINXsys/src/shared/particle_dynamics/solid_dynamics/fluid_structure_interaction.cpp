@@ -32,7 +32,7 @@ namespace SPH
 		{
 			if (!force_from_fluid_dynamics_.checkNewlyUpdated())
 			{
-				force_from_fluid_dynamics_.parallel_exec();
+				force_from_fluid_dynamics_.exec();
 			}
 			force_from_fluid_dynamics_.setNotNewlyUpdated();
 		}

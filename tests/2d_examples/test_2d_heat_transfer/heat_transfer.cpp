@@ -291,14 +291,14 @@ int main()
 	system.initializeSystemCellLinkedLists();
 	/** periodic condition applied after the mesh cell linked list build up
 	 * but before the configuration build up. */
-	periodic_condition.update_cell_linked_list_.parallel_exec();
+	periodic_condition.update_cell_linked_list_.exec();
 	/** initialize configurations for all bodies. */
 	system.initializeSystemConfigurations();
 	/** computing surface normal direction for the wall. */
-	thermosolid_body_normal_direction.parallel_exec();
-	thermosolid_condition.parallel_exec();
-	thermofluid_initial_condition.parallel_exec();
-	Real dt_thermal = get_thermal_time_step.parallel_exec();
+	thermosolid_body_normal_direction.exec();
+	thermosolid_condition.exec();
+	thermofluid_initial_condition.exec();
+	Real dt_thermal = get_thermal_time_step.exec();
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
@@ -324,20 +324,20 @@ int main()
 		/** Integrate time (loop) until the next output time. */
 		while (integration_time < output_interval)
 		{
-			initialize_a_fluid_step.parallel_exec();
-			Real Dt = get_fluid_advection_time_step.parallel_exec();
-			update_density_by_summation.parallel_exec();
-			viscous_acceleration.parallel_exec();
-			transport_velocity_correction.parallel_exec();
+			initialize_a_fluid_step.exec();
+			Real Dt = get_fluid_advection_time_step.exec();
+			update_density_by_summation.exec();
+			viscous_acceleration.exec();
+			transport_velocity_correction.exec();
 
 			size_t inner_ite_dt = 0;
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
-				Real dt = SMIN(SMIN(dt_thermal, get_fluid_time_step.parallel_exec()), Dt);
-				pressure_relaxation.parallel_exec(dt);
-				density_relaxation.parallel_exec(dt);
-				thermal_relaxation_complex.parallel_exec(dt);
+				Real dt = SMIN(SMIN(dt_thermal, get_fluid_time_step.exec()), Dt);
+				pressure_relaxation.exec(dt);
+				density_relaxation.exec(dt);
+				thermal_relaxation_complex.exec(dt);
 
 				relaxation_time += dt;
 				integration_time += dt;
@@ -355,14 +355,14 @@ int main()
 			number_of_iterations++;
 
 			/** Water block configuration and periodic condition. */
-			periodic_condition.bounding_.parallel_exec();
+			periodic_condition.bounding_.exec();
 			thermofluid_body.updateCellLinkedListWithParticleSort(100);
-			periodic_condition.update_cell_linked_list_.parallel_exec();
+			periodic_condition.update_cell_linked_list_.exec();
 			fluid_body_complex.updateConfiguration();
 		}
 		TickCount t2 = TickCount::now();
 		/** write run-time observation into file */
-		compute_vorticity.parallel_exec();
+		compute_vorticity.exec();
 		fluid_observer_contact.updateConfiguration();
 		write_real_body_states.writeToFile();
 		write_fluid_phi.writeToFile(number_of_iterations);

@@ -76,8 +76,8 @@ int main(int ac, char *av[])
 		//----------------------------------------------------------------------
 		//	Physics relaxation starts here.
 		//----------------------------------------------------------------------
-		random_particles.parallel_exec(0.25);
-		relaxation_step_inner.SurfaceBounding().parallel_exec();
+		random_particles.exec(0.25);
+		relaxation_step_inner.SurfaceBounding().exec();
 		write_herat_model_state_to_vtp.writeToFile(0.0);
 		//----------------------------------------------------------------------
 		// From here the time stepping begins.
@@ -87,7 +87,7 @@ int main(int ac, char *av[])
 		int diffusion_step = 100;
 		while (ite < relax_step)
 		{
-			relaxation_step_inner.parallel_exec();
+			relaxation_step_inner.exec();
 			ite++;
 			if (ite % 100 == 0)
 			{
@@ -99,15 +99,15 @@ int main(int ac, char *av[])
 		BodySurface surface_part(herat_model);
 		/** constraint boundary condition for diffusion. */
 		SimpleDynamics<DiffusionBCs> impose_diffusion_bc(surface_part, "Phi");
-		impose_diffusion_bc.parallel_exec();
+		impose_diffusion_bc.exec();
 
 		write_herat_model_state_to_vtp.writeToFile(ite);
 
-		Real dt = get_time_step_size.parallel_exec();
+		Real dt = get_time_step_size.exec();
 		while (ite <= diffusion_step + relax_step)
 		{
-			diffusion_relaxation.parallel_exec(dt);
-			impose_diffusion_bc.parallel_exec();
+			diffusion_relaxation.exec(dt);
+			impose_diffusion_bc.exec();
 			if (ite % 10 == 0)
 			{
 				std::cout << "Diffusion steps N=" << ite - relax_step << "	dt: " << dt << "\n";
@@ -118,7 +118,7 @@ int main(int ac, char *av[])
 		compute_fiber_sheet.exec();
 		ite++;
 		write_herat_model_state_to_vtp.writeToFile(ite);
-		compute_fiber_sheet.parallel_exec();
+		compute_fiber_sheet.exec();
 		write_material_property.writeToFile(0);
 		write_particle_reload_files.writeToFile(0);
 
@@ -227,9 +227,9 @@ int main(int ac, char *av[])
 	 */
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	correct_configuration_excitation.parallel_exec();
-	correct_configuration_contraction.parallel_exec();
-	correct_kernel_weights_for_interpolation.parallel_exec();
+	correct_configuration_excitation.exec();
+	correct_configuration_contraction.exec();
+	correct_kernel_weights_for_interpolation.exec();
 	/**Output global basic parameters. */
 	write_states.writeToFile(0);
 	write_voltage.writeToFile(0);
@@ -273,7 +273,7 @@ int main(int ac, char *av[])
 				// if( 0 <= GlobalStaticVariables::physical_time_
 				// 	&&  GlobalStaticVariables::physical_time_ <= 0.5)
 				// {
-				// 	apply_stimulus_myocardium.parallel_exec(dt_myocardium);
+				// 	apply_stimulus_myocardium.exec(dt_myocardium);
 				// }
 
 				Real dt_pkj_sum = 0.0;
@@ -283,28 +283,28 @@ int main(int ac, char *av[])
 					 * When network generates particles, the final particle spacing, which is after particle projected in to
 					 * complex geometry, may small than the reference one, therefore, a smaller time step size is required.
 					 */
-					dt_pkj = 0.5 * get_pkj_physiology_time_step.parallel_exec();
+					dt_pkj = 0.5 * get_pkj_physiology_time_step.exec();
 					if (dt_myocardium - dt_pkj_sum < dt_pkj)
 						dt_pkj = dt_myocardium - dt_pkj_sum;
 
 					if (0 <= GlobalStaticVariables::physical_time_ && GlobalStaticVariables::physical_time_ <= 0.5)
 					{
-						apply_stimulus_pkj.parallel_exec(dt_pkj);
+						apply_stimulus_pkj.exec(dt_pkj);
 					}
 					/**Strang splitting method. */
 					int ite_pkj_forward = 0;
 					while (ite_pkj_forward < reaction_step)
 					{
-						pkj_reaction_relaxation_forward.parallel_exec(0.5 * dt_pkj / Real(reaction_step));
+						pkj_reaction_relaxation_forward.exec(0.5 * dt_pkj / Real(reaction_step));
 						ite_pkj_forward++;
 					}
 					/** 2nd Runge-Kutta scheme for diffusion. */
-					pkj_diffusion_relaxation.parallel_exec(dt_pkj);
+					pkj_diffusion_relaxation.exec(dt_pkj);
 					// backward reaction
 					int ite_pkj_backward = 0;
 					while (ite_pkj_backward < reaction_step)
 					{
-						pkj_reaction_relaxation_backward.parallel_exec(0.5 * dt_pkj / Real(reaction_step));
+						pkj_reaction_relaxation_backward.exec(0.5 * dt_pkj / Real(reaction_step));
 						ite_pkj_backward++;
 					}
 
@@ -315,35 +315,35 @@ int main(int ac, char *av[])
 				int ite_forward = 0;
 				while (ite_forward < reaction_step)
 				{
-					myocardium_reaction_relaxation_forward.parallel_exec(0.5 * dt_myocardium / Real(reaction_step));
+					myocardium_reaction_relaxation_forward.exec(0.5 * dt_myocardium / Real(reaction_step));
 					ite_forward++;
 				}
 				/** 2nd Runge-Kutta scheme for diffusion. */
-				myocardium_diffusion_relaxation.parallel_exec(dt_myocardium);
+				myocardium_diffusion_relaxation.exec(dt_myocardium);
 
 				// backward reaction
 				int ite_backward = 0;
 				while (ite_backward < reaction_step)
 				{
-					myocardium_reaction_relaxation_backward.parallel_exec(0.5 * dt_myocardium / Real(reaction_step));
+					myocardium_reaction_relaxation_backward.exec(0.5 * dt_myocardium / Real(reaction_step));
 					ite_backward++;
 				}
 
-				active_stress_interpolation.parallel_exec();
+				active_stress_interpolation.exec();
 				Real dt_muscle_sum = 0.0;
 				while (dt_muscle_sum < dt_myocardium)
 				{
-					dt_muscle = get_mechanics_time_step.parallel_exec();
+					dt_muscle = get_mechanics_time_step.exec();
 					if (dt_myocardium - dt_muscle_sum < dt_muscle)
 						dt_muscle = dt_myocardium - dt_muscle_sum;
-					stress_relaxation_first_half.parallel_exec(dt_muscle);
-					constraint_holder.parallel_exec(dt_muscle);
-					stress_relaxation_second_half.parallel_exec(dt_muscle);
+					stress_relaxation_first_half.exec(dt_muscle);
+					constraint_holder.exec(dt_muscle);
+					stress_relaxation_second_half.exec(dt_muscle);
 					dt_muscle_sum += dt_muscle;
 				}
 
 				ite++;
-				dt_myocardium = get_myocardium_physiology_time_step.parallel_exec();
+				dt_myocardium = get_myocardium_physiology_time_step.exec();
 
 				relaxation_time += dt_myocardium;
 				integration_time += dt_myocardium;
@@ -353,7 +353,7 @@ int main(int ac, char *av[])
 			write_displacement.writeToFile(ite);
 		}
 		TickCount t2 = TickCount::now();
-		interpolation_particle_position.parallel_exec();
+		interpolation_particle_position.exec();
 		write_states.writeToFile();
 		TickCount t3 = TickCount::now();
 		interval += t3 - t2;

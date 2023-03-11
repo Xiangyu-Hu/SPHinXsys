@@ -157,9 +157,9 @@ int main()
 	//	and case specified initial condition if necessary.
 	//----------------------------------------------------------------------
 	sph_system.initializeSystemCellLinkedLists();
-	periodic_condition_y.update_cell_linked_list_.parallel_exec();
+	periodic_condition_y.update_cell_linked_list_.exec();
 	sph_system.initializeSystemConfigurations();
-	correct_configuration.parallel_exec();
+	correct_configuration.exec();
 	setup_diffusion_initial_condition.exec();
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
@@ -198,10 +198,10 @@ int main()
 							  << dt << "\n";
 				}
 
-				diffusion_relaxation.parallel_exec(dt);
+				diffusion_relaxation.exec(dt);
 
 				ite++;
-				dt = get_time_step_size.parallel_exec();
+				dt = get_time_step_size.exec();
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;

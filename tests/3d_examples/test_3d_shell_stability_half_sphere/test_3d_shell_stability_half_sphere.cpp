@@ -177,7 +177,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 	/** Apply initial condition. */
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	corrected_configuration.parallel_exec();
+	corrected_configuration.exec();
 
 	{// tests on initialization
 		{// checking particle distances - avoid bugs of reading file
@@ -237,21 +237,21 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 							<< dt << "\n";
 				}
 
-				initialize_external_force.parallel_exec(dt);
+				initialize_external_force.exec(dt);
 				if (pressure > TinyReal) apply_pressure();
 
-				dt = computing_time_step_size.parallel_exec();
+				dt = computing_time_step_size.exec();
 				{// checking for excessive time step reduction
 					if (dt > max_dt) max_dt = dt;
 					if (dt < max_dt/1e3) throw std::runtime_error("time step decreased too much, iteration: " + std::to_string(ite));
 				}
 				
-				stress_relaxation_first_half.parallel_exec(dt);
-				constrain_holder.parallel_exec();
-				shell_velocity_damping.parallel_exec(dt);
-				shell_rotation_damping.parallel_exec(dt);
-				constrain_holder.parallel_exec();
-				stress_relaxation_second_half.parallel_exec(dt);
+				stress_relaxation_first_half.exec(dt);
+				constrain_holder.exec();
+				shell_velocity_damping.exec(dt);
+				shell_rotation_damping.exec(dt);
+				constrain_holder.exec();
+				stress_relaxation_second_half.exec(dt);
 
 				++ite;
 				integral_time += dt;

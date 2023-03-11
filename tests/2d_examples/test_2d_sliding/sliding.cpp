@@ -126,11 +126,11 @@ int main(int ac, char *av[])
 	//	and case specified initial condition if necessary.
 	//----------------------------------------------------------------------
 	GlobalStaticVariables::physical_time_ = 0.0;
-	wall_boundary_rotation.parallel_exec();
-	free_cube_rotation.parallel_exec();
+	wall_boundary_rotation.exec();
+	free_cube_rotation.exec();
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
-	free_cube_corrected_configuration.parallel_exec();
+	free_cube_corrected_configuration.exec();
 	//----------------------------------------------------------------------
 	//	Initial states output.
 	//----------------------------------------------------------------------
@@ -161,23 +161,23 @@ int main(int ac, char *av[])
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
-				free_cube_initialize_timestep.parallel_exec();
+				free_cube_initialize_timestep.exec();
 				if (ite % 100 == 0)
 				{
 					std::cout << "N=" << ite << " Time: "
 							  << GlobalStaticVariables::physical_time_ << "	dt: " << dt
 							  << "\n";
 				}
-				free_cube_update_contact_density.parallel_exec();
-				free_cube_compute_solid_contact_forces.parallel_exec();
-				free_cube_stress_relaxation_first_half.parallel_exec(dt);
-				free_cube_stress_relaxation_second_half.parallel_exec(dt);
+				free_cube_update_contact_density.exec();
+				free_cube_compute_solid_contact_forces.exec();
+				free_cube_stress_relaxation_first_half.exec(dt);
+				free_cube_stress_relaxation_second_half.exec(dt);
 
 				free_cube.updateCellLinkedList();
 				free_cube_contact.updateConfiguration();
 
 				ite++;
-				dt = free_cube_get_time_step_size.parallel_exec();
+				dt = free_cube_get_time_step_size.exec();
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;

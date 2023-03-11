@@ -95,7 +95,7 @@ int main()
 	GlobalStaticVariables::physical_time_ = 0.0;
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	corrected_configuration.parallel_exec();
+	corrected_configuration.exec();
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
@@ -126,13 +126,13 @@ int main()
 						  << GlobalStaticVariables::physical_time_ << "	dt: "
 						  << dt << "\n";
 			}
-			myocardium_activation.parallel_exec(dt);
-			stress_relaxation_first_half.parallel_exec(dt);
-			constrain_holder.parallel_exec(dt);
-			stress_relaxation_second_half.parallel_exec(dt);
+			myocardium_activation.exec(dt);
+			stress_relaxation_first_half.exec(dt);
+			constrain_holder.exec(dt);
+			stress_relaxation_second_half.exec(dt);
 
 			ite++;
-			dt = computing_time_step_size.parallel_exec();
+			dt = computing_time_step_size.exec();
 			integration_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
 		}

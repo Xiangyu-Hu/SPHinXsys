@@ -125,10 +125,10 @@ int main(int ac, char *av[])
 		//----------------------------------------------------------------------
 		//	Particle relaxation starts here.
 		//----------------------------------------------------------------------
-		ball_random_particles.parallel_exec(0.25);
-		wall_boundary_random_particles.parallel_exec(0.25);
+		ball_random_particles.exec(0.25);
+		wall_boundary_random_particles.exec(0.25);
 
-		relaxation_step_wall_boundary_inner.mid_surface_bounding_.parallel_exec();
+		relaxation_step_wall_boundary_inner.mid_surface_bounding_.exec();
 		write_relaxed_particles.writeToFile(0);
 		wall_boundary.updateCellLinkedList();
 		write_mesh_cell_linked_list.writeToFile(0);
@@ -139,9 +139,9 @@ int main(int ac, char *av[])
 		int relax_step = 1000;
 		while (ite < relax_step)
 		{
-			ball_relaxation_step_inner.parallel_exec();
+			ball_relaxation_step_inner.exec();
 			for (int k = 0; k < 2; ++k)
-				relaxation_step_wall_boundary_inner.parallel_exec();
+				relaxation_step_wall_boundary_inner.exec();
 			ite += 1;
 			if (ite % 100 == 0)
 			{
@@ -191,7 +191,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
-	ball_corrected_configuration.parallel_exec();
+	ball_corrected_configuration.exec();
 
 	/** Initial states output. */
 	body_states_recording.writeToFile(0);
@@ -218,23 +218,23 @@ int main(int ac, char *av[])
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
-				ball_initialize_timestep.parallel_exec();
+				ball_initialize_timestep.exec();
 				if (ite % 100 == 0)
 				{
 					std::cout << "N=" << ite << " Time: "
 							  << GlobalStaticVariables::physical_time_ << "	dt: " << dt << "\n";
 				}
-				ball_update_contact_density.parallel_exec();
-				ball_compute_solid_contact_forces.parallel_exec();
-				ball_stress_relaxation_first_half.parallel_exec(dt);
-				//ball_friction.parallel_exec(dt);
-				ball_stress_relaxation_second_half.parallel_exec(dt);
+				ball_update_contact_density.exec();
+				ball_compute_solid_contact_forces.exec();
+				ball_stress_relaxation_first_half.exec(dt);
+				//ball_friction.exec(dt);
+				ball_stress_relaxation_second_half.exec(dt);
 
 				ball.updateCellLinkedList();
 				ball_contact.updateConfiguration();
 
 				ite++;
-				Real dt_ball = ball_get_time_step_size.parallel_exec();
+				Real dt_ball = ball_get_time_step_size.exec();
 				dt = dt_ball;
 				relaxation_time += dt;
 				integration_time += dt;

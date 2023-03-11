@@ -51,8 +51,7 @@ namespace SPH
 			explicit ViscousAccelerationMultiPhase(ComplexRelation &complex_relation);
 			virtual ~ViscousAccelerationMultiPhase(){};
 			
-			template <class ExecutionPolicy> 
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0);
+			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdVec<Fluid *> contact_fluids_;
@@ -92,8 +91,7 @@ namespace SPH
 			explicit BaseMultiPhaseIntegration1stHalf(ComplexRelation &complex_relation);
 			virtual ~BaseMultiPhaseIntegration1stHalf(){};
 			
-			template <class ExecutionPolicy> 
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0);
+			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			using CurrentRiemannSolver = decltype(Integration1stHalfType::riemann_solver_);
@@ -123,8 +121,7 @@ namespace SPH
 			explicit BaseMultiPhaseIntegration2ndHalf(ComplexRelation &complex_relation);
 			virtual ~BaseMultiPhaseIntegration2ndHalf(){};
 			
-			template <class ExecutionPolicy> 
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0);
+			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			using CurrentRiemannSolver = decltype(Integration2ndHalfType::riemann_solver_);
@@ -146,8 +143,7 @@ namespace SPH
 			explicit MultiPhaseColorFunctionGradient(BaseContactRelation &contact_relation);
 			virtual ~MultiPhaseColorFunctionGradient(){};
 			
-			template <class ExecutionPolicy> 
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0);
+			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			Real rho0_;

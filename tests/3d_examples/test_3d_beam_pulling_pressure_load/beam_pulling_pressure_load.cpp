@@ -178,7 +178,7 @@ int main(int ac, char *av[])
 	system.initializeSystemConfigurations();
 
 	/** apply initial condition */
-	corrected_configuration.parallel_exec();
+	corrected_configuration.exec();
 	write_states.writeToFile(0);
 	write_beam_stress.writeToFile(0);
 	/** Setup physical parameters. */
@@ -204,15 +204,15 @@ int main(int ac, char *av[])
 						  << dt << "\n";
 			}
 
-			beam_initialize.parallel_exec();
-			pull_force.parallel_exec(GlobalStaticVariables::physical_time_);
+			beam_initialize.exec();
+			pull_force.exec(GlobalStaticVariables::physical_time_);
 
 			/** Stress relaxation and damping. */
-			stress_relaxation_first_half.parallel_exec(dt);
-			constraint_holder.parallel_exec(dt);
-			beam_damping.parallel_exec(dt);
-			constraint_holder.parallel_exec(dt);
-			stress_relaxation_second_half.parallel_exec(dt);
+			stress_relaxation_first_half.exec(dt);
+			constraint_holder.exec(dt);
+			beam_damping.exec(dt);
+			constraint_holder.exec(dt);
+			stress_relaxation_second_half.exec(dt);
 
 			ite++;
 			dt = system.getSmallestTimeStepAmongSolidBodies();

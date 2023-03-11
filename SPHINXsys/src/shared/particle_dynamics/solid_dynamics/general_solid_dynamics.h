@@ -58,8 +58,7 @@ namespace SPH
 			explicit CorrectConfiguration(BaseInnerRelation &inner_relation);
 			virtual ~CorrectConfiguration(){};
 
-			template <class ExecutionPolicy>
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+			inline void interaction(size_t index_i, Real dt = 0.0)
 			{
 				Matd local_configuration = Eps * Matd::Identity(); // a small number added to diagonal to avoid divide zero
 				const Neighborhood &inner_neighborhood = inner_configuration_[index_i];

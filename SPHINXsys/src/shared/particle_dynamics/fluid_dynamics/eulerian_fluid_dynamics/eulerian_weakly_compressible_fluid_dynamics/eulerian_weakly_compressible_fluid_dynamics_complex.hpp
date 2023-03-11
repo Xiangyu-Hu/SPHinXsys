@@ -71,11 +71,10 @@ namespace SPH
 			: InteractionWithWall<BaseViscousAccelerationType>(base_body_relation, wall_contact_relation) {}
 		//=================================================================================================//
 		template <class BaseViscousAccelerationType>
-		template <class ExecutionPolicy>
 		void ViscousWithWall<BaseViscousAccelerationType>::
-			interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+			interaction(size_t index_i, Real dt)
 		{
-			BaseViscousAccelerationType::interaction(execution_policy, index_i, dt);
+			BaseViscousAccelerationType::interaction(index_i, dt);
 
 			Real rho_i = this->rho_[index_i];
 			const Vecd &vel_i = this->vel_[index_i];
@@ -125,11 +124,10 @@ namespace SPH
 			: InteractionWithWall<BaseIntegration1stHalfType>(base_body_relation, wall_contact_relation) {}
 		//=================================================================================================//
 		template <class BaseIntegration1stHalfType>
-		template <class ExecutionPolicy>
 		void BaseIntegration1stHalfWithWall<BaseIntegration1stHalfType>::
-			interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+			interaction(size_t index_i, Real dt)
 		{
-			BaseIntegration1stHalfType::interaction(execution_policy, index_i, dt);
+			BaseIntegration1stHalfType::interaction(index_i, dt);
 
 			FluidState state_i(this->rho_[index_i], this->vel_[index_i], this->p_[index_i]);
 
@@ -165,11 +163,10 @@ namespace SPH
 			: InteractionWithWall<BaseIntegration2ndHalfType>(base_body_relation, wall_contact_relation) {}
 		//=================================================================================================//
 		template <class BaseIntegration2ndHalfType>
-		template <class ExecutionPolicy>
 		void BaseIntegration2ndHalfWithWall<BaseIntegration2ndHalfType>::
-			interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+			interaction(size_t index_i, Real dt)
 		{
-			BaseIntegration2ndHalfType::interaction(execution_policy, index_i, dt);
+			BaseIntegration2ndHalfType::interaction(index_i, dt);
 
 			FluidState state_i(this->rho_[index_i], this->vel_[index_i], this->p_[index_i]);
 			Real density_change_rate = 0.0;

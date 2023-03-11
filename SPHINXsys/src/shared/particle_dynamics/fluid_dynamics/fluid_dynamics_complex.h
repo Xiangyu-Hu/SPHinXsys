@@ -101,8 +101,7 @@ namespace SPH
 				: BaseDensitySummationComplex<DensitySummationInner>(std::forward<Args>(args)...){};
 			virtual ~DensitySummationComplex(){};
 
-			template <class ExecutionPolicy> 
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0);
+			inline void interaction(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
@@ -118,8 +117,7 @@ namespace SPH
 			: BaseDensitySummationComplex<DensitySummationInnerAdaptive>(std::forward<Args>(args)...){};
 			virtual ~DensitySummationComplexAdaptive(){};
 			
-			template <class ExecutionPolicy> 
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0);
+			inline void interaction(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
@@ -135,8 +133,7 @@ namespace SPH
 				: InteractionWithWall<ViscousAccelerationInnerType>(std::forward<Args>(args)...){};
 			virtual ~BaseViscousAccelerationWithWall(){};
 			
-			template <class ExecutionPolicy> 
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0);
+			inline void interaction(size_t index_i, Real dt = 0.0);
 		};
 
 		using ViscousAccelerationWithWall = BaseViscousAccelerationWithWall<ViscousAccelerationInner>;
@@ -155,8 +152,7 @@ namespace SPH
 					  std::forward<Args>(args)...){};
 			virtual ~TransportVelocityCorrectionComplex(){};
 			
-			template <class ExecutionPolicy> 
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0);
+			inline void interaction(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
@@ -173,8 +169,7 @@ namespace SPH
 					  std::forward<Args>(args)...){};
 			virtual ~TransportVelocityCorrectionComplexAdaptive(){};
 			
-			template <class ExecutionPolicy> 
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0);
+			inline void interaction(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
@@ -190,8 +185,7 @@ namespace SPH
 				: InteractionWithWall<BaseIntegration1stHalfType>(std::forward<Args>(args)...){};
 			virtual ~BaseIntegration1stHalfWithWall(){};
 			
-			template <class ExecutionPolicy> 
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0);
+			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			virtual Vecd computeNonConservativeAcceleration(size_t index_i) override;
@@ -229,8 +223,7 @@ namespace SPH
 			virtual ~BaseExtendIntegration1stHalfWithWall(){};
 			void initialization(size_t index_i, Real dt = 0.0);
 			
-			template <class ExecutionPolicy> 
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0);
+			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			Real penalty_strength_;
@@ -255,8 +248,7 @@ namespace SPH
 				: InteractionWithWall<BaseIntegration2ndHalfType>(std::forward<Args>(args)...){};
 			virtual ~BaseIntegration2ndHalfWithWall(){};
 			
-			template <class ExecutionPolicy> 
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0);
+			inline void interaction(size_t index_i, Real dt = 0.0);
 		};
 
 		using Integration2ndHalfWithWall = BaseIntegration2ndHalfWithWall<Integration2ndHalf>;
@@ -274,8 +266,7 @@ namespace SPH
 
 			virtual ~Oldroyd_BIntegration1stHalfWithWall(){};
 			
-			template <class ExecutionPolicy> 
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0);
+			inline void interaction(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
@@ -290,8 +281,7 @@ namespace SPH
 
 			virtual ~Oldroyd_BIntegration2ndHalfWithWall(){};
 			
-			template <class ExecutionPolicy> 
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0);
+			inline void interaction(size_t index_i, Real dt = 0.0);
 		};
 	}
 }

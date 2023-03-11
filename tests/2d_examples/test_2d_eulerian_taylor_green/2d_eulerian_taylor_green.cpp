@@ -126,10 +126,10 @@ int main(int ac, char *av[])
 	//	and case specified initial condition if necessary.
 	//----------------------------------------------------------------------
 	sph_system.initializeSystemCellLinkedLists();
-	periodic_condition_x.update_cell_linked_list_.parallel_exec();
-	periodic_condition_y.update_cell_linked_list_.parallel_exec();
+	periodic_condition_x.update_cell_linked_list_.exec();
+	periodic_condition_y.update_cell_linked_list_.exec();
 	sph_system.initializeSystemConfigurations();
-	initial_condition.parallel_exec();
+	initial_condition.exec();
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
@@ -157,13 +157,13 @@ int main(int ac, char *av[])
 		while (integration_time < output_interval)
 		{
 			/** Acceleration due to viscous force. */
-			time_step_initialization.parallel_exec();
-			Real dt = get_fluid_time_step_size.parallel_exec();
-			viscous_acceleration.parallel_exec();
+			time_step_initialization.exec();
+			Real dt = get_fluid_time_step_size.exec();
+			viscous_acceleration.exec();
 			/** Dynamics including pressure relaxation. */
 			integration_time += dt;
-			pressure_relaxation.parallel_exec(dt);
-			density_and_energy_relaxation.parallel_exec(dt);
+			pressure_relaxation.exec(dt);
+			density_and_energy_relaxation.exec(dt);
 			GlobalStaticVariables::physical_time_ += dt;
 
 			if (number_of_iterations % screen_output_interval == 0)

@@ -133,7 +133,7 @@ int main()
 	//----------------------------------------------------------------------
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	corrected_configuration.parallel_exec();
+	corrected_configuration.exec();
 	//----------------------------------------------------------------------
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
@@ -163,16 +163,16 @@ int main()
 						  << GlobalStaticVariables::physical_time_ << "	dt: "
 						  << dt << "\n";
 			}
-			apply_point_force.parallel_exec(dt);
-			stress_relaxation_first_half.parallel_exec(dt);
-			constrain_holder.parallel_exec(dt);
-			plate_position_damping.parallel_exec(dt);
-			plate_rotation_damping.parallel_exec(dt);
-			constrain_holder.parallel_exec(dt);
-			stress_relaxation_second_half.parallel_exec(dt);
+			apply_point_force.exec(dt);
+			stress_relaxation_first_half.exec(dt);
+			constrain_holder.exec(dt);
+			plate_position_damping.exec(dt);
+			plate_rotation_damping.exec(dt);
+			constrain_holder.exec(dt);
+			stress_relaxation_second_half.exec(dt);
 
 			ite++;
-			dt = computing_time_step_size.parallel_exec();
+			dt = computing_time_step_size.exec();
 			integral_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
 		}

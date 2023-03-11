@@ -38,9 +38,8 @@ namespace SPH
 	namespace eulerian_compressible_fluid_dynamics
 	{
 		//=================================================================================================//
-		template <class ExecutionPolicy>
 		void ViscousAccelerationInner::
-			interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+			interaction(size_t index_i, Real dt)
 		{
 			Real rho_i = rho_[index_i];
 			const Vecd &vel_i = vel_[index_i];
@@ -81,9 +80,8 @@ namespace SPH
 		}
 		//=================================================================================================//
 		template <class RiemannSolverType>
-		template <class ExecutionPolicy>
 		void BaseIntegration1stHalf<RiemannSolverType>::
-			interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+			interaction(size_t index_i, Real dt)
 		{
 			CompressibleFluidState state_i(rho_[index_i], vel_[index_i], p_[index_i], E_[index_i]);
 			Vecd momentum_change_rate = dmom_dt_prior_[index_i];
@@ -115,9 +113,8 @@ namespace SPH
 		}
 		//=================================================================================================//
 		template <class RiemannSolverType>
-		template <class ExecutionPolicy>
 		void BaseIntegration2ndHalf<RiemannSolverType>::
-			interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+			interaction(size_t index_i, Real dt)
 		{
 			CompressibleFluidState state_i(rho_[index_i], vel_[index_i], p_[index_i], E_[index_i]);
 			Real density_change_rate = 0.0;

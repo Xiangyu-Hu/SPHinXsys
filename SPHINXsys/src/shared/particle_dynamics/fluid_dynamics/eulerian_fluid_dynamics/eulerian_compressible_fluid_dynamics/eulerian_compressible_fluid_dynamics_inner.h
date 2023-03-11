@@ -85,8 +85,7 @@ namespace SPH
 			explicit ViscousAccelerationInner(BaseInnerRelation &inner_relation);
 			virtual ~ViscousAccelerationInner(){};
 			
-			template <class ExecutionPolicy> 
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0);
+			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Real> &Vol_, &rho_, &p_, &mass_, &dE_dt_prior_;
@@ -145,8 +144,7 @@ namespace SPH
 			RiemannSolverType riemann_solver_;
 			void initialization(size_t index_i, Real dt = 0.0);
 			
-			template <class ExecutionPolicy> 
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0);
+			inline void interaction(size_t index_i, Real dt = 0.0);
 			
 			void update(size_t index_i, Real dt = 0.0);
 		};
@@ -165,8 +163,7 @@ namespace SPH
 			virtual ~BaseIntegration2ndHalf(){};
 			RiemannSolverType riemann_solver_;
 			
-			template <class ExecutionPolicy> 
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0);
+			inline void interaction(size_t index_i, Real dt = 0.0);
 			
 			void update(size_t index_i, Real dt = 0.0);
 		};

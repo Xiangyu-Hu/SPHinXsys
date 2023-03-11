@@ -66,9 +66,8 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template <typename VariableType>
-	template <class ExecutionPolicy>
 	void DampingBySplittingInner<VariableType>::
-		interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+		interaction(size_t index_i, Real dt)
 	{
 		ErrorAndParameters<VariableType> error_and_parameters = computeErrorAndParameters(index_i, dt);
 		updateStates(index_i, dt, error_and_parameters);
@@ -210,9 +209,8 @@ namespace SPH
 		  eta_(eta) {}
 	//=================================================================================================//
 	template <typename VariableType>
-	template <class ExecutionPolicy>
 	void DampingPairwiseInner<VariableType>::
-		interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+		interaction(size_t index_i, Real dt)
 	{
 		Real Vol_i = Vol_[index_i];
 		Real mass_i = mass_[index_i];
@@ -269,11 +267,10 @@ namespace SPH
 								 complex_relation.getContactRelation(), variable_name, eta) {}
 	//=================================================================================================//
 	template <typename VariableType>
-	template <class ExecutionPolicy>
 	void DampingPairwiseComplex<VariableType>::
-		interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+		interaction(size_t index_i, Real dt)
 	{
-		DampingPairwiseInner<VariableType>::interaction(execution_policy, index_i, dt);
+		DampingPairwiseInner<VariableType>::interaction(index_i, dt);
 
 		Real Vol_i = this->Vol_[index_i];
 		Real mass_i = this->mass_[index_i];
@@ -339,11 +336,10 @@ namespace SPH
 	//=================================================================================================//
 	template <typename VariableType,
 			  template <typename BaseVariableType> class BaseDampingPairwiseType>
-	template <class ExecutionPolicy>
 	void DampingPairwiseWithWall<VariableType, BaseDampingPairwiseType>::
-		interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+		interaction(size_t index_i, Real dt)
 	{
-		BaseDampingPairwiseType<VariableType>::interaction(execution_policy, index_i, dt);
+		BaseDampingPairwiseType<VariableType>::interaction(index_i, dt);
 
 		Real Vol_i = this->Vol_[index_i];
 		Real mass_i = this->mass_[index_i];
@@ -393,9 +389,8 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template <typename VariableType>
-	template <class ExecutionPolicy>
 	void DampingPairwiseFromWall<VariableType>::
-		interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+		interaction(size_t index_i, Real dt)
 	{
 		Real Vol_i = Vol_[index_i];
 		Real mass_i = mass_[index_i];
@@ -449,13 +444,6 @@ namespace SPH
 	{
 		if (RandomChoice())
 			DampingAlgorithmType::exec(dt);
-	}
-	//=================================================================================================//
-	template <class DampingAlgorithmType>
-	void DampingWithRandomChoice<DampingAlgorithmType>::parallel_exec(Real dt)
-	{
-		if (RandomChoice())
-			DampingAlgorithmType::parallel_exec(dt);
 	}
 	//=================================================================================================//
 }

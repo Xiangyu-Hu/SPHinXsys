@@ -69,8 +69,7 @@ namespace SPH
 			explicit ViscousForceFromFluid(BaseContactRelation &contact_relation);
 			virtual ~ViscousForceFromFluid(){};
 
-			template <class ExecutionPolicy>
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+			inline void interaction(size_t index_i, Real dt = 0.0)
 			{
 				Real Vol_i = Vol_[index_i];
 				const Vecd &vel_ave_i = vel_ave_[index_i];
@@ -122,8 +121,7 @@ namespace SPH
 			};
 			virtual ~BasePressureForceAccelerationFromFluid(){};
 
-			template <class ExecutionPolicy>
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+			inline void interaction(size_t index_i, Real dt = 0.0)
 			{
 				Vecd force = Vecd::Zero();
 				for (size_t k = 0; k < contact_configuration_.size(); ++k)
@@ -193,10 +191,9 @@ namespace SPH
 			};
 			virtual ~BaseAllForceAccelerationFromFluid(){};
 
-			template <class ExecutionPolicy>
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+			inline void interaction(size_t index_i, Real dt = 0.0)
 			{
-				PressureForceType::interaction(execution_policy, index_i, dt);
+				PressureForceType::interaction(index_i, dt);
 				this->force_from_fluid_[index_i] += viscous_force_from_fluid_[index_i];
 				this->acc_prior_[index_i] += viscous_force_from_fluid_[index_i] / this->particles_->ParticleMass(index_i);
 			};

@@ -119,8 +119,8 @@ int main()
 	//----------------------------------------------------------------------
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	initialization.parallel_exec();
-	correct_configuration.parallel_exec();
+	initialization.exec();
+	correct_configuration.exec();
 	//----------------------------------------------------------------------
 	//	Initial states output.
 	//----------------------------------------------------------------------
@@ -158,12 +158,12 @@ int main()
 							  << dt << "\n";
 				}
 				/**Strang splitting method. */
-				reaction_relaxation_forward.parallel_exec(0.5 * dt);
-				diffusion_relaxation.parallel_exec(dt);
-				reaction_relaxation_backward.parallel_exec(0.5 * dt);
+				reaction_relaxation_forward.exec(0.5 * dt);
+				diffusion_relaxation.exec(dt);
+				reaction_relaxation_backward.exec(0.5 * dt);
 
 				ite++;
-				dt = get_time_step_size.parallel_exec();
+				dt = get_time_step_size.exec();
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;

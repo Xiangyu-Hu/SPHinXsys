@@ -49,8 +49,7 @@ namespace SPH
 			explicit FreeSurfaceIndicationInner(BaseInnerRelation &inner_relation, Real threshold = 0.75);
 			virtual ~FreeSurfaceIndicationInner(){};
 			
-			template <class ExecutionPolicy> 
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0);
+			inline void interaction(size_t index_i, Real dt = 0.0);
 			
 			void update(size_t index_i, Real dt = 0.0);
 
@@ -73,8 +72,7 @@ namespace SPH
 			explicit SpatialTemporalFreeSurfaceIdentification(ConstructorArgs &&...args);
 			virtual ~SpatialTemporalFreeSurfaceIdentification(){};
 			
-			template <class ExecutionPolicy> 
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0);
+			inline void interaction(size_t index_i, Real dt = 0.0);
 			
 			void update(size_t index_i, Real dt = 0.0);
 
@@ -158,8 +156,7 @@ namespace SPH
 			explicit ColorFunctionGradientInner(BaseInnerRelation &inner_relation);
 			virtual ~ColorFunctionGradientInner(){};
 			
-			template <class ExecutionPolicy> 
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0);
+			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<int> &surface_indicator_;
@@ -179,8 +176,7 @@ namespace SPH
 			explicit ColorFunctionGradientInterpolationInner(BaseInnerRelation &inner_relation);
 			virtual ~ColorFunctionGradientInterpolationInner(){};
 			
-			template <class ExecutionPolicy> 
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0);
+			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Real> &Vol_;
@@ -202,8 +198,7 @@ namespace SPH
 			explicit SurfaceTensionAccelerationInner(BaseInnerRelation &inner_relation);
 			virtual ~SurfaceTensionAccelerationInner(){};
 			
-			template <class ExecutionPolicy> 
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0);
+			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			Real gamma_;

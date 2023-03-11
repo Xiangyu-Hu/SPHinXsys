@@ -42,7 +42,7 @@ SolidBodyForSimulation::SolidBodyForSimulation(
 	  stress_relaxation_second_half_(inner_body_relation_),
 	  damping_random_(0.2, inner_body_relation_, "Velocity", physical_viscosity)
 {
-	initial_normal_direction_.parallel_exec();
+	initial_normal_direction_.exec();
 	std::cout << "  normal initialization done" << std::endl;
 }
 
@@ -77,8 +77,8 @@ void relaxParticlesSingleResolution(IOEnvironment &io_environment,
 	//----------------------------------------------------------------------
 	//	Particle relaxation starts here.
 	//----------------------------------------------------------------------
-	random_solid_body_from_mesh_particles.parallel_exec(0.25);
-	relaxation_step_inner.SurfaceBounding().parallel_exec();
+	random_solid_body_from_mesh_particles.exec(0.25);
+	relaxation_step_inner.SurfaceBounding().exec();
 	if (write_particle_relaxation_data)
 	{
 		write_solid_body_from_mesh_to_vtp.writeToFile(0.0);
@@ -90,7 +90,7 @@ void relaxParticlesSingleResolution(IOEnvironment &io_environment,
 	int ite_p = 0;
 	while (ite_p < 1000)
 	{
-		relaxation_step_inner.parallel_exec();
+		relaxation_step_inner.exec();
 		ite_p += 1;
 		if (ite_p % 100 == 0)
 		{
@@ -597,7 +597,7 @@ void StructuralSimulation::executeInitialNormalDirection()
 {
 	for (size_t i = 0; i < solid_body_list_.size(); i++)
 	{
-		solid_body_list_[i]->getInitialNormalDirection()->parallel_exec();
+		solid_body_list_[i]->getInitialNormalDirection()->exec();
 	}
 }
 
@@ -605,7 +605,7 @@ void StructuralSimulation::executeCorrectConfiguration()
 {
 	for (size_t i = 0; i < solid_body_list_.size(); i++)
 	{
-		solid_body_list_[i]->getCorrectConfiguration()->parallel_exec();
+		solid_body_list_[i]->getCorrectConfiguration()->exec();
 	}
 }
 
@@ -613,7 +613,7 @@ void StructuralSimulation::executeUpdateElasticNormalDirection()
 {
 	for (size_t i = 0; i < particle_normal_update_.size(); i++)
 	{
-		particle_normal_update_[i]->parallel_exec();
+		particle_normal_update_[i]->exec();
 	}
 }
 
@@ -621,7 +621,7 @@ void StructuralSimulation::executeInitializeATimeStep()
 {
 	for (size_t i = 0; i < initialize_time_step_.size(); i++)
 	{
-		initialize_time_step_[i]->parallel_exec();
+		initialize_time_step_[i]->exec();
 	}
 }
 
@@ -629,7 +629,7 @@ void StructuralSimulation::executeAccelerationForBodyPartInBoundingBox()
 {
 	for (size_t i = 0; i < acceleration_bounding_box_.size(); i++)
 	{
-		acceleration_bounding_box_[i]->parallel_exec();
+		acceleration_bounding_box_[i]->exec();
 	}
 }
 
@@ -637,7 +637,7 @@ void StructuralSimulation::executeForceInBodyRegion()
 {
 	for (size_t i = 0; i < force_in_body_region_.size(); i++)
 	{
-		force_in_body_region_[i]->parallel_exec();
+		force_in_body_region_[i]->exec();
 	}
 }
 
@@ -645,7 +645,7 @@ void StructuralSimulation::executeSurfacePressure()
 {
 	for (size_t i = 0; i < surface_pressure_.size(); i++)
 	{
-		surface_pressure_[i]->parallel_exec();
+		surface_pressure_[i]->exec();
 	}
 }
 
@@ -653,7 +653,7 @@ void StructuralSimulation::executeSpringDamperConstraintParticleWise()
 {
 	for (size_t i = 0; i < spring_damper_constraint_.size(); i++)
 	{
-		spring_damper_constraint_[i]->parallel_exec();
+		spring_damper_constraint_[i]->exec();
 	}
 }
 
@@ -661,7 +661,7 @@ void StructuralSimulation::executeSpringNormalOnSurfaceParticles()
 {
 	for (size_t i = 0; i < surface_spring_.size(); i++)
 	{
-		surface_spring_[i]->parallel_exec();
+		surface_spring_[i]->exec();
 	}
 }
 
@@ -673,7 +673,7 @@ void StructuralSimulation::executeContactDensitySummation()
 	{
 		if (i < number_of_general_contacts)
 		{
-			contact_density_list_[i]->parallel_exec();
+			contact_density_list_[i]->exec();
 		}
 		else
 		{
@@ -684,7 +684,7 @@ void StructuralSimulation::executeContactDensitySummation()
 			Real end_time = time_dep_contacting_body_pairs_list_[index].second[1];
 			if (GlobalStaticVariables::physical_time_ >= start_time && GlobalStaticVariables::physical_time_ <= end_time)
 			{
-				contact_density_list_[i]->parallel_exec();
+				contact_density_list_[i]->exec();
 			}
 		}
 	}
@@ -698,7 +698,7 @@ void StructuralSimulation::executeContactForce()
 	{
 		if (i < number_of_general_contacts)
 		{
-			contact_force_list_[i]->parallel_exec();
+			contact_force_list_[i]->exec();
 		}
 		else
 		{
@@ -709,7 +709,7 @@ void StructuralSimulation::executeContactForce()
 			Real end_time = time_dep_contacting_body_pairs_list_[index].second[1];
 			if (GlobalStaticVariables::physical_time_ >= start_time && GlobalStaticVariables::physical_time_ <= end_time)
 			{
-				contact_force_list_[i]->parallel_exec();
+				contact_force_list_[i]->exec();
 			}
 		}
 	}
@@ -719,7 +719,7 @@ void StructuralSimulation::executeStressRelaxationFirstHalf(Real dt)
 {
 	for (size_t i = 0; i < solid_body_list_.size(); i++)
 	{
-		solid_body_list_[i]->getStressRelaxationFirstHalf()->parallel_exec(dt);
+		solid_body_list_[i]->getStressRelaxationFirstHalf()->exec(dt);
 	}
 }
 
@@ -727,7 +727,7 @@ void StructuralSimulation::executeConstrainSolidBody()
 {
 	for (size_t i = 0; i < fixed_constraint_body_.size(); i++)
 	{
-		fixed_constraint_body_[i]->parallel_exec();
+		fixed_constraint_body_[i]->exec();
 	}
 }
 
@@ -735,7 +735,7 @@ void StructuralSimulation::executeConstrainSolidBodyRegion()
 {
 	for (size_t i = 0; i < fixed_constraint_region_.size(); i++)
 	{
-		fixed_constraint_region_[i]->parallel_exec();
+		fixed_constraint_region_[i]->exec();
 	}
 }
 
@@ -743,7 +743,7 @@ void StructuralSimulation::executePositionSolidBody(Real dt)
 {
 	for (size_t i = 0; i < position_solid_body_.size(); i++)
 	{
-		position_solid_body_[i]->parallel_exec(dt);
+		position_solid_body_[i]->exec(dt);
 	}
 }
 
@@ -751,7 +751,7 @@ void StructuralSimulation::executePositionScaleSolidBody(Real dt)
 {
 	for (size_t i = 0; i < position_scale_solid_body_.size(); i++)
 	{
-		position_scale_solid_body_[i]->parallel_exec(dt);
+		position_scale_solid_body_[i]->exec(dt);
 	}
 }
 
@@ -759,7 +759,7 @@ void StructuralSimulation::executeTranslateSolidBody(Real dt)
 {
 	for (size_t i = 0; i < translation_solid_body_.size(); i++)
 	{
-		translation_solid_body_[i]->parallel_exec(dt);
+		translation_solid_body_[i]->exec(dt);
 	}
 }
 
@@ -767,7 +767,7 @@ void StructuralSimulation::executeTranslateSolidBodyPart(Real dt)
 {
 	for (size_t i = 0; i < translation_solid_body_part_.size(); i++)
 	{
-		translation_solid_body_part_[i]->parallel_exec(dt);
+		translation_solid_body_part_[i]->exec(dt);
 	}
 }
 
@@ -775,7 +775,7 @@ void StructuralSimulation::executeDamping(Real dt)
 {
 	for (size_t i = 0; i < solid_body_list_.size(); i++)
 	{
-		solid_body_list_[i]->getDampingWithRandomChoice()->parallel_exec(dt);
+		solid_body_list_[i]->getDampingWithRandomChoice()->exec(dt);
 	}
 }
 
@@ -783,7 +783,7 @@ void StructuralSimulation::executeStressRelaxationSecondHalf(Real dt)
 {
 	for (size_t i = 0; i < solid_body_list_.size(); i++)
 	{
-		solid_body_list_[i]->getStressRelaxationSecondHalf()->parallel_exec(dt);
+		solid_body_list_[i]->getStressRelaxationSecondHalf()->exec(dt);
 	}
 }
 

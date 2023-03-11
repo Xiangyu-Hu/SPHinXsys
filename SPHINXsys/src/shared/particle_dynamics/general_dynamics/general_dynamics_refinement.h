@@ -143,8 +143,7 @@ namespace SPH
         ParticleSplitWithPrescribedArea(SPHBody &sph_body, Shape &refinement_region, size_t body_buffer_width);
         virtual ~ParticleSplitWithPrescribedArea(){};
 
-        template <class ExecutionPolicy>
-        inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+        inline void interaction(size_t index_i, Real dt = 0.0)
         {
             if (splitCriteria(index_i))
             {
@@ -219,8 +218,7 @@ namespace SPH
         ParticleMergeWithPrescribedArea(BaseInnerRelation &inner_relation, Shape &refinement_region);
         virtual ~ParticleMergeWithPrescribedArea(){};
 
-        template <class ExecutionPolicy>
-        inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+        inline void interaction(size_t index_i, Real dt = 0.0)
         {
             if (!tag_merged_[index_i])
             {
@@ -282,10 +280,9 @@ namespace SPH
               compute_density_error(inner_relation){};
         virtual ~MergeWithMinimumDensityErrorInner(){};
 
-        template <class ExecutionPolicy>
-        inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+        inline void interaction(size_t index_i, Real dt = 0.0)
         {
-            ParticleMergeWithPrescribedArea::interaction(execution_policy, index_i, dt);
+            ParticleMergeWithPrescribedArea::interaction(index_i, dt);
         };
 
     protected:
@@ -315,10 +312,9 @@ namespace SPH
               compute_density_error(complex_relation){};
         virtual ~MergeWithMinimumDensityErrorWithWall(){};
 
-        template <class ExecutionPolicy>
-        inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+        inline void interaction(size_t index_i, Real dt = 0.0)
         {
-            MergeWithMinimumDensityErrorInner::interaction(execution_policy, index_i, dt);
+            MergeWithMinimumDensityErrorInner::interaction(index_i, dt);
         };
 
     protected:

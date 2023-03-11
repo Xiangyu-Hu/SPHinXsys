@@ -81,8 +81,7 @@ namespace SPH
 			explicit RelaxationAccelerationInner(BaseInnerRelation &inner_relation);
 			virtual ~RelaxationAccelerationInner(){};
 
-			template <class ExecutionPolicy>
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+			inline void interaction(size_t index_i, Real dt = 0.0)
 			{
 				Vecd acceleration = Vecd::Zero();
 				const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -108,10 +107,9 @@ namespace SPH
 				BaseInnerRelation &inner_relation);
 			virtual ~RelaxationAccelerationInnerWithLevelSetCorrection(){};
 
-			template <class ExecutionPolicy>
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+			inline void interaction(size_t index_i, Real dt = 0.0)
 			{
-				RelaxationAccelerationInner::interaction(execution_policy, index_i, dt);
+				RelaxationAccelerationInner::interaction(index_i, dt);
 				acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(
 										   pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
 			};
@@ -174,8 +172,7 @@ namespace SPH
 			explicit RelaxationAccelerationComplex(ComplexRelation &complex_relation);
 			virtual ~RelaxationAccelerationComplex(){};
 
-			template <class ExecutionPolicy>
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+			inline void interaction(size_t index_i, Real dt = 0.0)
 			{
 				Vecd acceleration = Vecd::Zero();
 				Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -233,7 +230,6 @@ namespace SPH
 			virtual ~RelaxationStepInner(){};
 			SimpleDynamics<ShapeSurfaceBounding> &SurfaceBounding() { return surface_bounding_; };
 			virtual void exec(Real dt = 0.0) override;
-			virtual void parallel_exec(Real dt = 0.0) override;
 
 		protected:
 			RealBody *real_body_;
@@ -259,10 +255,9 @@ namespace SPH
 				ComplexRelation &complex_relation, const std::string &shape_name);
 			virtual ~RelaxationAccelerationComplexWithLevelSetCorrection(){};
 
-			template <class ExecutionPolicy>
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+			inline void interaction(size_t index_i, Real dt = 0.0)
 			{
-				RelaxationAccelerationComplex::interaction(execution_policy, index_i, dt);
+				RelaxationAccelerationComplex::interaction(index_i, dt);
 
 				acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(
 										   pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
@@ -285,7 +280,6 @@ namespace SPH
 			virtual ~RelaxationStepComplex(){};
 			SimpleDynamics<ShapeSurfaceBounding> &SurfaceBounding() { return surface_bounding_; };
 			virtual void exec(Real dt = 0.0) override;
-			virtual void parallel_exec(Real dt = 0.0) override;
 
 		protected:
 			RealBody *real_body_;
@@ -336,9 +330,7 @@ namespace SPH
 			explicit ShellNormalDirectionPrediction(BaseInnerRelation &inner_relation,
 													Real thickness, Real consistency_criterion = cos(Pi / 20.0));
 			virtual ~ShellNormalDirectionPrediction(){};
-
 			virtual void exec(Real dt = 0.0) override;
-			virtual void parallel_exec(Real dt = 0.0) override { exec(); };
 
 		protected:
 			class NormalPrediction : public RelaxDataDelegateSimple, public LocalDynamics
@@ -373,8 +365,7 @@ namespace SPH
 				explicit ConsistencyCorrection(BaseInnerRelation &inner_relation, Real consistency_criterion);
 				virtual ~ConsistencyCorrection(){};
 
-				template <class ExecutionPolicy>
-				inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+					inline void interaction(size_t index_i, Real dt = 0.0)
 				{
 					mutex_modify_neighbor_.lock();
 					const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -437,7 +428,7 @@ namespace SPH
 
 			SimpleDynamics<NormalPrediction> normal_prediction_;
 			ReduceDynamics<PredictionConvergenceCheck> normal_prediction_convergence_check_;
-			InteractionDynamics<ConsistencyCorrection> consistency_correction_;
+			InteractionDynamics<ConsistencyCorrection, execution::SequencedPolicy> consistency_correction_;
 			ReduceDynamics<ConsistencyUpdatedCheck> consistency_updated_check_;
 			InteractionWithUpdate<SmoothingNormal> smoothing_normal_;
 		};
@@ -457,7 +448,6 @@ namespace SPH
 			SimpleDynamics<ShellMidSurfaceBounding> mid_surface_bounding_;
 
 			virtual void exec(Real dt = 0.0) override;
-			virtual void parallel_exec(Real dt = 0.0) override;
 		};
 	}
 }

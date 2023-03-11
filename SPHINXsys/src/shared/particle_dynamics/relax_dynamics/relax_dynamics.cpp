@@ -118,16 +118,6 @@ namespace SPH
 			surface_bounding_.exec();
 		}
 		//=================================================================================================//
-		void RelaxationStepInner::parallel_exec(Real dt)
-		{
-			real_body_->updateCellLinkedList();
-			inner_relation_.updateConfiguration();
-			relaxation_acceleration_inner_->parallel_exec();
-			Real dt_square = get_time_step_square_.parallel_exec();
-			update_particle_position_.parallel_exec(dt_square);
-			surface_bounding_.parallel_exec();
-		}
-		//=================================================================================================//
 		RelaxationAccelerationComplexWithLevelSetCorrection::
 			RelaxationAccelerationComplexWithLevelSetCorrection(ComplexRelation &complex_relation, const std::string &shape_name)
 			: RelaxationAccelerationComplex(complex_relation),
@@ -168,16 +158,6 @@ namespace SPH
 			surface_bounding_.exec();
 		}
 		//=================================================================================================//
-		void RelaxationStepComplex::parallel_exec(Real dt)
-		{
-			real_body_->updateCellLinkedList();
-			complex_relation_.updateConfiguration();
-			relaxation_acceleration_complex_->parallel_exec();
-			Real dt_square = get_time_step_square_.parallel_exec();
-			update_particle_position_.parallel_exec(dt_square);
-			surface_bounding_.parallel_exec();
-		}
-		//=================================================================================================//
 		ShellMidSurfaceBounding::
 			ShellMidSurfaceBounding(NearShapeSurface &body_part, BaseInnerRelation &inner_relation,
 									Real thickness, Real level_set_refinement_ratio)
@@ -212,7 +192,7 @@ namespace SPH
 			predictNormalDirection();
 			correctNormalDirection();
 			predictNormalDirection();
-			smoothing_normal_.parallel_exec();
+			smoothing_normal_.exec();
 		}
 		//=================================================================================================//
 		void ShellNormalDirectionPrediction::predictNormalDirection()
@@ -221,8 +201,8 @@ namespace SPH
 			size_t ite_predict = 0;
 			while (!prediction_convergence)
 			{
-				normal_prediction_.parallel_exec();
-				prediction_convergence = normal_prediction_convergence_check_.parallel_exec();
+				normal_prediction_.exec();
+				prediction_convergence = normal_prediction_convergence_check_.exec();
 				if (ite_predict > 100)
 				{
 					std::cout << "\n Error: class ShellNormalDirectionPrediction normal prediction not converged after 100 iterations." << std::endl;
@@ -241,8 +221,8 @@ namespace SPH
 			size_t ite_updated = 0;
 			while (!consistency_updated)
 			{
-				consistency_correction_.parallel_exec();
-				consistency_updated = consistency_updated_check_.parallel_exec();
+				consistency_correction_.exec();
+				consistency_updated = consistency_updated_check_.exec();
 				if (ite_updated > 100)
 				{
 					std::cout << "\n Error: class ShellNormalDirectionPrediction normal consistency not updated  after 100 iterations." << std::endl;
@@ -327,16 +307,6 @@ namespace SPH
 			Real dt_square = get_time_step_square_.exec();
 			update_shell_particle_position_.exec(dt_square);
 			mid_surface_bounding_.exec();
-		}
-		//=================================================================================================//
-		void ShellRelaxationStepInner::parallel_exec(Real ite_p)
-		{
-			real_body_->updateCellLinkedList();
-			inner_relation_.updateConfiguration();
-			relaxation_acceleration_inner_->parallel_exec();
-			Real dt_square = get_time_step_square_.parallel_exec();
-			update_shell_particle_position_.parallel_exec(dt_square);
-			mid_surface_bounding_.parallel_exec();
 		}
 		//=================================================================================================//
 	}

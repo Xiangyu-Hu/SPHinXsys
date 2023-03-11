@@ -72,15 +72,15 @@ namespace SPH
 		virtual ~BaseDynamics(){};
 		bool checkNewlyUpdated() { return is_newly_updated_; };
 		void setNotNewlyUpdated() { is_newly_updated_ = false; };
+
 		void setUpdated()
 		{
 			sph_body_.setNewlyUpdated();
 			is_newly_updated_ = true;
 		};
-		/** There are only functions can be called from outside,
-		 * for sequential, parallel and possible other type of execution. */
+
+		/** There is the only interface functions can be called from outside. */
 		virtual ReturnType exec(Real dt = 0.0) = 0;
-		virtual ReturnType parallel_exec(Real dt = 0.0) = 0;
 
 	private:
 		SPHBody &sph_body_;

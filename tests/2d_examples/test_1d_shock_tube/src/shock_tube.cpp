@@ -122,7 +122,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	waves_initial_condition.exec();
 	sph_system.initializeSystemCellLinkedLists();
-	periodic_condition_y.update_cell_linked_list_.parallel_exec();
+	periodic_condition_y.update_cell_linked_list_.exec();
 	sph_system.initializeSystemConfigurations();
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
@@ -149,12 +149,12 @@ int main(int ac, char *av[])
 		//	Integrate time (loop) until the next output time.
 		while (integration_time < output_interval)
 		{
-			initialize_wave_step.parallel_exec();
-			Real dt = get_wave_time_step_size.parallel_exec();
+			initialize_wave_step.exec();
+			Real dt = get_wave_time_step_size.exec();
 			// Dynamics including pressure and density and energy relaxation.
 			integration_time += dt;
-			pressure_relaxation.parallel_exec(dt);
-			density_and_energy_relaxation.parallel_exec(dt);
+			pressure_relaxation.exec(dt);
+			density_and_energy_relaxation.exec(dt);
 			GlobalStaticVariables::physical_time_ += dt;
 
 			if (number_of_iterations % screen_output_interval == 0)

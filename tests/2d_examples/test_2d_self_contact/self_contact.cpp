@@ -159,7 +159,7 @@ int main(int ac, char *av[])
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
 	beam_initial_velocity.exec();
-	beam_corrected_configuration.parallel_exec();
+	beam_corrected_configuration.exec();
 	//-----------------------------------------------------------------------------
 	// from here the time stepping begins
 	//-----------------------------------------------------------------------------
@@ -199,18 +199,18 @@ int main(int ac, char *av[])
 							  << dt << "\n";
 				}
 
-				reset_prior_acceleration.parallel_exec();
-				beam_self_contact_density.parallel_exec();
-				beam_self_contact_forces.parallel_exec();
+				reset_prior_acceleration.exec();
+				beam_self_contact_density.exec();
+				beam_self_contact_forces.exec();
 				beam_body.updateCellLinkedList();
 				beam_self_contact.updateConfiguration();
 
-				stress_relaxation_first_half.parallel_exec(dt);
-				constraint_beam_base.parallel_exec();
-				stress_relaxation_second_half.parallel_exec(dt);
+				stress_relaxation_first_half.exec(dt);
+				constraint_beam_base.exec();
+				stress_relaxation_second_half.exec(dt);
 
 				ite++;
-				dt = computing_time_step_size.parallel_exec();
+				dt = computing_time_step_size.exec();
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;

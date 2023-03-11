@@ -59,8 +59,7 @@ namespace SPH
 		};
 		virtual ~BaseInterpolation(){};
 
-		template <class ExecutionPolicy>
-		inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+		inline void interaction(size_t index_i, Real dt = 0.0)
 		{
 			VariableType observed_quantity = ZeroData<VariableType>::value;
 			Real ttl_weight(0);
@@ -149,8 +148,7 @@ namespace SPH
 		explicit CorrectInterpolationKernelWeights(BaseContactRelation &contact_relation);
 		virtual ~CorrectInterpolationKernelWeights(){};
 
-		template <class ExecutionPolicy>
-		inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+		inline void interaction(size_t index_i, Real dt = 0.0)
 		{
 			Vecd weight_correction = Vecd::Zero();
 			Matd local_configuration = Eps * Matd::Identity();

@@ -134,17 +134,17 @@ int main(int ac, char *av[])
 		//----------------------------------------------------------------------
 		//	Particle relaxation starts here.
 		//----------------------------------------------------------------------
-		random_inserted_body_particles.parallel_exec(0.25);
-		random_water_body_particles.parallel_exec(0.25);
-		relaxation_step_inner.SurfaceBounding().parallel_exec();
-		relaxation_step_complex.SurfaceBounding().parallel_exec();
+		random_inserted_body_particles.exec(0.25);
+		random_water_body_particles.exec(0.25);
+		relaxation_step_inner.SurfaceBounding().exec();
+		relaxation_step_complex.SurfaceBounding().exec();
 		write_real_body_states.writeToFile(0);
 
 		int ite_p = 0;
 		while (ite_p < 1000)
 		{
-			relaxation_step_inner.parallel_exec();
-			relaxation_step_complex.parallel_exec();
+			relaxation_step_inner.exec();
+			relaxation_step_complex.exec();
 			ite_p += 1;
 			if (ite_p % 200 == 0)
 			{
@@ -190,9 +190,9 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
-	cylinder_normal_direction.parallel_exec();
-	surface_indicator.parallel_exec();
-	variable_reset_in_boundary_condition.parallel_exec();
+	cylinder_normal_direction.exec();
+	surface_indicator.exec();
+	variable_reset_in_boundary_condition.exec();
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
@@ -217,15 +217,15 @@ int main(int ac, char *av[])
 		Real integration_time = 0.0;
 		while (integration_time < output_interval)
 		{
-			initialize_a_fluid_step.parallel_exec();
-			Real dt = get_fluid_time_step_size.parallel_exec();
-			viscous_acceleration.parallel_exec();
-			pressure_relaxation.parallel_exec(dt);
-			density_relaxation.parallel_exec(dt);
+			initialize_a_fluid_step.exec();
+			Real dt = get_fluid_time_step_size.exec();
+			viscous_acceleration.exec();
+			pressure_relaxation.exec(dt);
+			density_relaxation.exec(dt);
 
 			integration_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
-			variable_reset_in_boundary_condition.parallel_exec();
+			variable_reset_in_boundary_condition.exec();
 
 			if (number_of_iterations % screen_output_interval == 0)
 			{

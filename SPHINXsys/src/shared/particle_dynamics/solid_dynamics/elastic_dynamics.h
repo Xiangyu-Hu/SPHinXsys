@@ -110,8 +110,7 @@ namespace SPH
 			explicit DeformationGradientBySummation(BaseInnerRelation &inner_relation);
 			virtual ~DeformationGradientBySummation(){};
 
-			template <class ExecutionPolicy>
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+			inline void interaction(size_t index_i, Real dt = 0.0)
 			{
 				Vecd &pos_n_i = pos_[index_i];
 
@@ -180,8 +179,7 @@ namespace SPH
 			virtual ~Integration1stHalf(){};
 			void initialization(size_t index_i, Real dt = 0.0);
 
-			template <class ExecutionPolicy>
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+			inline void interaction(size_t index_i, Real dt = 0.0)
 			{
 				// including gravity and force from fluid
 				Vecd acceleration = Vecd::Zero();
@@ -246,8 +244,7 @@ namespace SPH
 			virtual ~KirchhoffIntegration1stHalf(){};
 			void initialization(size_t index_i, Real dt = 0.0);
 
-			template <class ExecutionPolicy>
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+			inline void interaction(size_t index_i, Real dt = 0.0)
 			{
 				// including gravity and force from fluid
 				Vecd acceleration = Vecd::Zero();
@@ -283,8 +280,7 @@ namespace SPH
 			virtual ~Integration2ndHalf(){};
 			void initialization(size_t index_i, Real dt = 0.0);
 
-			template <class ExecutionPolicy>
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+			inline void interaction(size_t index_i, Real dt = 0.0)
 			{
 				const Vecd &vel_n_i = vel_[index_i];
 

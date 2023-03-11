@@ -37,9 +37,8 @@ namespace SPH
 	namespace fluid_dynamics
 	{
 		//=================================================================================================//
-		template <class ExecutionPolicy>
 		void DensitySummationInner::
-			interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+			interaction(size_t index_i, Real dt)
 		{
 			Real sigma = W0_;
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -49,9 +48,8 @@ namespace SPH
 			rho_sum_[index_i] = sigma * rho0_ * inv_sigma0_;
 		}
 		//=================================================================================================//
-		template <class ExecutionPolicy>
 		void DensitySummationInnerAdaptive::
-			interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+			interaction(size_t index_i, Real dt)
 		{
 			Real sigma_i = mass_[index_i] * kernel_.W0(h_ratio_[index_i], ZeroVecd);
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -62,9 +60,8 @@ namespace SPH
 								sph_adaptation_.ReferenceNumberDensity(h_ratio_[index_i]);
 		}
 		//=================================================================================================//
-		template <class ExecutionPolicy>
 		void ViscousAccelerationInner::
-			interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+			interaction(size_t index_i, Real dt)
 		{
 			Vecd acceleration = Vecd::Zero();
 			Vecd vel_derivative = Vecd::Zero();
@@ -81,9 +78,8 @@ namespace SPH
 			acc_prior_[index_i] += acceleration / rho_[index_i];
 		}
 		//=================================================================================================//
-		template <class ExecutionPolicy>
 		void AngularConservativeViscousAccelerationInner::
-			interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+			interaction(size_t index_i, Real dt)
 		{
 			Vecd acceleration = Vecd::Zero();
 			Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -103,9 +99,8 @@ namespace SPH
 			acc_prior_[index_i] += acceleration / rho_[index_i];
 		}
 		//=================================================================================================//
-		template <class ExecutionPolicy>
 		void TransportVelocityCorrectionInner::
-			interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+			interaction(size_t index_i, Real dt)
 		{
 			Vecd acceleration_trans = Vecd::Zero();
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -121,8 +116,7 @@ namespace SPH
 				pos_[index_i] += coefficient_ * smoothing_length_sqr_ * acceleration_trans;
 		}
 		//=================================================================================================//
-		template <class ExecutionPolicy>
-		void VorticityInner::interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+		void VorticityInner::interaction(size_t index_i, Real dt)
 		{
 			AngularVecd vorticity = ZeroData<AngularVecd>::value;
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -137,11 +131,10 @@ namespace SPH
 			vorticity_[index_i] = vorticity;
 		}
 		//=================================================================================================//
-		template <class ExecutionPolicy>
 		void Oldroyd_BIntegration1stHalf::
-			interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+			interaction(size_t index_i, Real dt)
 		{
-			Integration1stHalfDissipativeRiemann::interaction(execution_policy, index_i, dt);
+			Integration1stHalfDissipativeRiemann::interaction(index_i, dt);
 
 			Vecd acceleration = Vecd::Zero();
 			Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -157,9 +150,8 @@ namespace SPH
 			acc_[index_i] += acceleration / rho_[index_i];
 		}
 		//=================================================================================================//
-		template <class ExecutionPolicy>
 		void TransportVelocityCorrectionInnerAdaptive::
-			interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+			interaction(size_t index_i, Real dt)
 		{
 			Vecd acceleration_trans = Vecd::Zero();
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -178,11 +170,10 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		template <class ExecutionPolicy>
 		void Oldroyd_BIntegration2ndHalf::
-			interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+			interaction(size_t index_i, Real dt)
 		{
-			Integration2ndHalfDissipativeRiemann::interaction(execution_policy, index_i, dt);
+			Integration2ndHalfDissipativeRiemann::interaction(index_i, dt);
 
 			Matd tau_i = tau_[index_i];
 			Matd stress_rate = Matd::Zero();
@@ -235,9 +226,8 @@ namespace SPH
 		}
 		//=================================================================================================//
 		template <class RiemannSolverType>
-		template <class ExecutionPolicy>
 		void BaseIntegration1stHalf<RiemannSolverType>::
-		interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+		interaction(size_t index_i, Real dt)
 		{
 			Vecd acceleration = Vecd::Zero();
 			Real rho_dissipation(0);
@@ -274,9 +264,8 @@ namespace SPH
 		}
 		//=================================================================================================//
 		template <class RiemannSolverType>
-		template <class ExecutionPolicy>
 		void BaseIntegration2ndHalf<RiemannSolverType>::
-		interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+		interaction(size_t index_i, Real dt)
 		{
 			Real density_change_rate(0);
 			Vecd p_dissipation = Vecd::Zero();

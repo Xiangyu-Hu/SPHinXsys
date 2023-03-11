@@ -96,7 +96,7 @@ int main()
 	//----------------------------------------------------------------------
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
-	inner_normal_direction.parallel_exec();
+	inner_normal_direction.exec();
 	//----------------------------------------------------------------------
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
@@ -132,17 +132,17 @@ int main()
 		{
 			/** Acceleration due to viscous force and gravity. */
 			time_instance = TickCount::now();
-			initialize_a_water_step.parallel_exec();
-			initialize_a_air_step.parallel_exec();
+			initialize_a_water_step.exec();
+			initialize_a_air_step.exec();
 
-			Real Dt_f = get_water_advection_time_step_size.parallel_exec();
-			Real Dt_a = get_air_advection_time_step_size.parallel_exec();
+			Real Dt_f = get_water_advection_time_step_size.exec();
+			Real Dt_a = get_air_advection_time_step_size.exec();
 			Real Dt = SMIN(Dt_f, Dt_a);
 
-			update_water_density_by_summation.parallel_exec();
-			update_air_density_by_summation.parallel_exec();
+			update_water_density_by_summation.exec();
+			update_air_density_by_summation.exec();
 
-			air_transport_correction.parallel_exec();
+			air_transport_correction.exec();
 
 			interval_computing_time_step += TickCount::now() - time_instance;
 
@@ -151,15 +151,15 @@ int main()
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
-				Real dt_f = get_water_time_step_size.parallel_exec();
-				Real dt_a = get_air_time_step_size.parallel_exec();
+				Real dt_f = get_water_time_step_size.exec();
+				Real dt_a = get_air_time_step_size.exec();
 				dt = SMIN(SMIN(dt_f, dt_a), Dt);
 
-				water_pressure_relaxation.parallel_exec(dt);
-				air_pressure_relaxation.parallel_exec(dt);
+				water_pressure_relaxation.exec(dt);
+				air_pressure_relaxation.exec(dt);
 
-				water_density_relaxation.parallel_exec(dt);
-				air_density_relaxation.parallel_exec(dt);
+				water_density_relaxation.exec(dt);
+				air_density_relaxation.exec(dt);
 
 				relaxation_time += dt;
 				integration_time += dt;

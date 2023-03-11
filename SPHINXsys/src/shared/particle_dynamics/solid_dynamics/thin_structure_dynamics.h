@@ -92,8 +92,7 @@ namespace SPH
 			explicit ShellCorrectConfiguration(BaseInnerRelation &inner_relation);
 			virtual ~ShellCorrectConfiguration(){};
 
-			template <class ExecutionPolicy>
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+			inline void interaction(size_t index_i, Real dt = 0.0)
 			{
 				/** A small number is added to diagonal to avoid dividing by zero. */
 				Matd global_configuration = Eps * Matd::Identity();
@@ -127,8 +126,7 @@ namespace SPH
 			explicit ShellDeformationGradientTensor(BaseInnerRelation &inner_relation);
 			virtual ~ShellDeformationGradientTensor(){};
 
-			template <class ExecutionPolicy>
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+			inline void interaction(size_t index_i, Real dt = 0.0)
 			{
 				const Vecd &pseudo_n_i = pseudo_n_[index_i];
 				const Vecd &pos_n_i = pos_[index_i];
@@ -187,8 +185,7 @@ namespace SPH
 			virtual ~ShellStressRelaxationFirstHalf(){};
 			void initialization(size_t index_i, Real dt = 0.0);
 
-			template <class ExecutionPolicy>
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+			inline void interaction(size_t index_i, Real dt = 0.0)
 			{
 				const Vecd &global_shear_stress_i = global_shear_stress_[index_i];
 				const Matd &global_stress_i = global_stress_[index_i];
@@ -271,8 +268,7 @@ namespace SPH
 			virtual ~ShellStressRelaxationSecondHalf(){};
 			void initialization(size_t index_i, Real dt = 0.0);
 
-			template <class ExecutionPolicy>
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+			inline void interaction(size_t index_i, Real dt = 0.0)
 			{
 				const Vecd &vel_n_i = vel_[index_i];
 				const Vecd &dpseudo_n_dt_i = dpseudo_n_dt_[index_i];

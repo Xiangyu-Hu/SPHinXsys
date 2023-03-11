@@ -50,10 +50,9 @@ namespace SPH
 			explicit FreeSurfaceIndicationComplex(ComplexRelation &complex_relation, Real threshold = 0.75);
 			virtual ~FreeSurfaceIndicationComplex(){};
 
-			template <class ExecutionPolicy>
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+			inline void interaction(size_t index_i, Real dt = 0.0)
 			{
-				FreeSurfaceIndicationInner::interaction(execution_policy, index_i, dt);
+				FreeSurfaceIndicationInner::interaction(index_i, dt);
 
 				Real pos_div = 0.0;
 				for (size_t k = 0; k < contact_configuration_.size(); ++k)
@@ -92,10 +91,9 @@ namespace SPH
 			ColorFunctionGradientComplex(ComplexRelation &complex_relation);
 			virtual ~ColorFunctionGradientComplex(){};
 
-			template <class ExecutionPolicy>
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+			inline void interaction(size_t index_i, Real dt = 0.0)
 			{
-				ColorFunctionGradientInner::interaction(execution_policy, index_i, dt);
+				ColorFunctionGradientInner::interaction(index_i, dt);
 
 				Vecd gradient = Vecd::Zero();
 				if (pos_div_[index_i] < threshold_by_dimensions_)
@@ -127,8 +125,7 @@ namespace SPH
 			SurfaceNormWithWall(BaseContactRelation &contact_relation, Real contact_angle);
 			virtual ~SurfaceNormWithWall(){};
 
-			template <class ExecutionPolicy>
-			inline void interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt = 0.0)
+			inline void interaction(size_t index_i, Real dt = 0.0)
 			{
 				Real large_dist(1.0e6);
 				Vecd n_i = surface_norm_[index_i];

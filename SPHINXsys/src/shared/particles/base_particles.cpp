@@ -190,7 +190,7 @@ namespace SPH
 		// compute derived particle variables
 		for (auto &derived_variable : derived_variables_)
 		{
-			derived_variable->parallel_exec();
+			derived_variable->exec();
 		}
 
 		size_t total_real_particles = total_real_particles_;

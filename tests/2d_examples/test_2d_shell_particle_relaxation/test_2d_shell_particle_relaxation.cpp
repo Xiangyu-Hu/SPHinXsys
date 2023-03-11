@@ -69,8 +69,8 @@ int main()
 	/**
 	 * @brief 	Particle relaxation starts here.
 	 */
-	random_pipe_body_particles.parallel_exec(0.25);
-	relaxation_step_pipe_body_inner.mid_surface_bounding_.parallel_exec();
+	random_pipe_body_particles.exec(0.25);
+	relaxation_step_pipe_body_inner.mid_surface_bounding_.exec();
 	write_real_body_states.writeToFile(0.0);
 	pipe_body.updateCellLinkedList();
 	write_mesh_cell_linked_list.writeToFile(0.0);
@@ -84,7 +84,7 @@ int main()
 			std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
 			write_real_body_states.writeToFile(ite_p);
 		}
-		relaxation_step_pipe_body_inner.parallel_exec();
+		relaxation_step_pipe_body_inner.exec();
 		ite_p += 1;
 	}
 	shell_normal_prediction.exec();

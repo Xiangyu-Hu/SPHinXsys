@@ -186,7 +186,7 @@ int main(int ac, char *av[])
 	/** Apply initial condition. */
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	corrected_configuration.parallel_exec();
+	corrected_configuration.exec();
 
 	/**
 	 * From here the time stepping begins.
@@ -219,18 +219,18 @@ int main(int ac, char *av[])
 						  << GlobalStaticVariables::physical_time_ << "	dt: "
 						  << dt << "\n";
 			}
-			initialize_external_force.parallel_exec(dt);
-			stress_relaxation_first_half.parallel_exec(dt);
-			constrain_holder_x.parallel_exec(dt);
-			constrain_holder_y.parallel_exec(dt);
-			plate_position_damping.parallel_exec(dt);
-			plate_rotation_damping.parallel_exec(dt);
-			constrain_holder_x.parallel_exec(dt);
-			constrain_holder_y.parallel_exec(dt);
-			stress_relaxation_second_half.parallel_exec(dt);
+			initialize_external_force.exec(dt);
+			stress_relaxation_first_half.exec(dt);
+			constrain_holder_x.exec(dt);
+			constrain_holder_y.exec(dt);
+			plate_position_damping.exec(dt);
+			plate_rotation_damping.exec(dt);
+			constrain_holder_x.exec(dt);
+			constrain_holder_y.exec(dt);
+			stress_relaxation_second_half.exec(dt);
 
 			ite++;
-			dt = computing_time_step_size.parallel_exec();
+			dt = computing_time_step_size.exec();
 			integral_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
 		}

@@ -77,10 +77,10 @@ int main(int ac, char *av[])
 		//----------------------------------------------------------------------
 		//	Particle relaxation starts here.
 		//----------------------------------------------------------------------
-		random_inserted_body_particles.parallel_exec(0.25);
-		random_water_body_particles.parallel_exec(0.25);
-		relaxation_step_inner.SurfaceBounding().parallel_exec();
-		relaxation_step_complex.SurfaceBounding().parallel_exec();
+		random_inserted_body_particles.exec(0.25);
+		random_water_body_particles.exec(0.25);
+		relaxation_step_inner.SurfaceBounding().exec();
+		relaxation_step_complex.SurfaceBounding().exec();
 		write_real_body_states.writeToFile(0);
 		//----------------------------------------------------------------------
 		//	Relax particles of the insert body.
@@ -88,9 +88,9 @@ int main(int ac, char *av[])
 		int ite_p = 0;
 		while (ite_p < 1000)
 		{
-			relaxation_step_inner.parallel_exec();
-			update_smoothing_length_ratio.parallel_exec();
-			relaxation_step_complex.parallel_exec();
+			relaxation_step_inner.exec();
+			update_smoothing_length_ratio.exec();
+			relaxation_step_complex.exec();
 			ite_p += 1;
 			if (ite_p % 200 == 0)
 			{
@@ -174,7 +174,7 @@ int main(int ac, char *av[])
 	/** initialize configurations for all bodies. */
 	sph_system.initializeSystemConfigurations();
 	/** computing surface normal direction for the insert body. */
-	cylinder_normal_direction.parallel_exec();
+	cylinder_normal_direction.exec();
 	//----------------------------------------------------------------------
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
@@ -200,27 +200,27 @@ int main(int ac, char *av[])
 		/** Integrate time (loop) until the next output time. */
 		while (integration_time < output_interval)
 		{
-			initialize_a_fluid_step.parallel_exec();
-			Real Dt = get_fluid_advection_time_step_size.parallel_exec();
-			free_stream_surface_indicator.parallel_exec();
-			update_fluid_density.parallel_exec();
-			viscous_acceleration.parallel_exec();
-			transport_velocity_correction.parallel_exec();
+			initialize_a_fluid_step.exec();
+			Real Dt = get_fluid_advection_time_step_size.exec();
+			free_stream_surface_indicator.exec();
+			update_fluid_density.exec();
+			viscous_acceleration.exec();
+			transport_velocity_correction.exec();
 
 			size_t inner_ite_dt = 0;
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
-				Real dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt - relaxation_time);
+				Real dt = SMIN(get_fluid_time_step_size.exec(), Dt - relaxation_time);
 				/** Fluid pressure relaxation, first half. */
-				pressure_relaxation.parallel_exec(dt);
+				pressure_relaxation.exec(dt);
 				/** Fluid pressure relaxation, second half. */
-				density_relaxation.parallel_exec(dt);
+				density_relaxation.exec(dt);
 
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
-				emitter_buffer_inflow_condition.parallel_exec();
+				emitter_buffer_inflow_condition.exec();
 				inner_ite_dt++;
 			}
 
@@ -233,8 +233,8 @@ int main(int ac, char *av[])
 			number_of_iterations++;
 
 			/** Water block configuration and periodic condition. */
-			emitter_inflow_injection.parallel_exec();
-			disposer_outflow_deletion.parallel_exec();
+			emitter_inflow_injection.exec();
+			disposer_outflow_deletion.exec();
 
 			water_block.updateCellLinkedListWithParticleSort(100);
 			water_block_complex.updateConfiguration();
@@ -245,7 +245,7 @@ int main(int ac, char *av[])
 
 		TickCount t2 = TickCount::now();
 		/** write run-time observation into file */
-		compute_vorticity.parallel_exec();
+		compute_vorticity.exec();
 		write_real_body_states.writeToFile();
 		write_total_viscous_force_on_inserted_body.writeToFile(number_of_iterations);
 		write_total_force_on_inserted_body.writeToFile(number_of_iterations);

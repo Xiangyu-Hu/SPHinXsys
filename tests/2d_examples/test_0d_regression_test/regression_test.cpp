@@ -239,10 +239,10 @@ int main()
 	//----------------------------------------------------------------------
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
-	correct_configuration.parallel_exec();
-	setup_diffusion_initial_condition.parallel_exec();
-	left_boundary_condition.parallel_exec();
-	other_boundary_condition.parallel_exec();
+	correct_configuration.exec();
+	setup_diffusion_initial_condition.exec();
+	left_boundary_condition.exec();
+	other_boundary_condition.exec();
 	/** Output global basic parameters. */
 	write_states.writeToFile(0);
 	write_solid_temperature.writeToFile(0);
@@ -278,11 +278,11 @@ int main()
 							  << dt << "\n";
 				}
 
-				diffusion_relaxation.parallel_exec(dt);
-				left_boundary_condition.parallel_exec();
-				other_boundary_condition.parallel_exec();
+				diffusion_relaxation.exec(dt);
+				left_boundary_condition.exec();
+				other_boundary_condition.exec();
 				ite++;
-				dt = get_time_step_size.parallel_exec();
+				dt = get_time_step_size.exec();
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;

@@ -141,7 +141,7 @@ int main()
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
 	/** apply initial condition */
-	corrected_configuration.parallel_exec();
+	corrected_configuration.exec();
 	write_states.writeToFile(0);
 	/** Setup physical parameters. */
 	int ite = 0;
@@ -166,30 +166,30 @@ int main()
 						  << dt << "\n";
 			}
 			/** Gravity. */
-			myocardium_initialize_time_step.parallel_exec();
-			moving_plate_initialize_time_step.parallel_exec();
+			myocardium_initialize_time_step.exec();
+			moving_plate_initialize_time_step.exec();
 			/** Contact model for myocardium. */
-			myocardium_update_contact_density.parallel_exec();
-			myocardium_compute_solid_contact_forces.parallel_exec();
+			myocardium_update_contact_density.exec();
+			myocardium_compute_solid_contact_forces.exec();
 			/** Contact model for plate. */
-			plate_update_contact_density.parallel_exec();
-			plate_compute_solid_contact_forces.parallel_exec();
+			plate_update_contact_density.exec();
+			plate_compute_solid_contact_forces.exec();
 			{
 				SimTK::State &state_for_update = integ.updAdvancedState();
 				force_on_bodies.clearAllBodyForces(state_for_update);
-				force_on_bodies.setOneBodyForce(state_for_update, plateMBody, force_on_plate.parallel_exec());
+				force_on_bodies.setOneBodyForce(state_for_update, plateMBody, force_on_plate.exec());
 				integ.stepBy(dt);
-				constraint_plate.parallel_exec();
+				constraint_plate.exec();
 			}
 			/** Stress relaxation and damping. */
-			stress_relaxation_first_half.parallel_exec(dt);
-			constraint_holder.parallel_exec(dt);
-			muscle_damping.parallel_exec(dt);
-			constraint_holder.parallel_exec(dt);
-			stress_relaxation_second_half.parallel_exec(dt);
+			stress_relaxation_first_half.exec(dt);
+			constraint_holder.exec(dt);
+			muscle_damping.exec(dt);
+			constraint_holder.exec(dt);
+			stress_relaxation_second_half.exec(dt);
 
 			ite++;
-			dt = computing_time_step_size.parallel_exec();
+			dt = computing_time_step_size.exec();
 			integration_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
 

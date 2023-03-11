@@ -192,10 +192,10 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	system.initializeSystemCellLinkedLists();
 	// initial periodic boundary condition
-	periodic_condition.ghost_creation_.parallel_exec();
+	periodic_condition.ghost_creation_.exec();
 	system.initializeSystemConfigurations();
 	// prepare quantities will be used once only
-	wall_boundary_normal_direction.parallel_exec();
+	wall_boundary_normal_direction.exec();
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
@@ -223,18 +223,18 @@ int main(int ac, char *av[])
 		while (integration_time < output_interval)
 		{
 
-			initialize_a_fluid_step.parallel_exec();
-			Real Dt = get_fluid_advection_time_step_size.parallel_exec();
-			update_density_by_summation.parallel_exec();
-			transport_velocity_correction.parallel_exec();
+			initialize_a_fluid_step.exec();
+			Real Dt = get_fluid_advection_time_step_size.exec();
+			update_density_by_summation.exec();
+			transport_velocity_correction.exec();
 
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
-				dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt);
-				implicit_viscous_damping.parallel_exec(dt);
-				pressure_relaxation.parallel_exec(dt);
-				density_relaxation.parallel_exec(dt);
+				dt = SMIN(get_fluid_time_step_size.exec(), Dt);
+				implicit_viscous_damping.exec(dt);
+				pressure_relaxation.exec(dt);
+				density_relaxation.exec(dt);
 
 				relaxation_time += dt;
 				integration_time += dt;
@@ -255,14 +255,14 @@ int main(int ac, char *av[])
 			number_of_iterations++;
 
 			// water block configuration and periodic condition
-			periodic_condition.bounding_.parallel_exec();
+			periodic_condition.bounding_.exec();
 			fluid_block.updateCellLinkedListWithParticleSort(100);
-			periodic_condition.ghost_creation_.parallel_exec();
+			periodic_condition.ghost_creation_.exec();
 			fluid_block_complex.updateConfiguration();
 		}
 
 		TickCount t2 = TickCount::now();
-		compute_vorticity.parallel_exec();
+		compute_vorticity.exec();
 		write_real_body_states.writeToFile();
 		TickCount t3 = TickCount::now();
 		interval += t3 - t2;

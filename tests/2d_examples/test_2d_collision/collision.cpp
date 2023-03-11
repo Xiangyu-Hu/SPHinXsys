@@ -136,8 +136,8 @@ int main(int ac, char *av[])
 		//----------------------------------------------------------------------
 		//	Particle relaxation starts here.
 		//----------------------------------------------------------------------
-		free_ball_random_particles.parallel_exec(0.25);
-		damping_ball_random_particles.parallel_exec(0.25);
+		free_ball_random_particles.exec(0.25);
+		damping_ball_random_particles.exec(0.25);
 		write_ball_state.writeToFile(0);
 		//----------------------------------------------------------------------
 		//	From here iteration for particle relaxation begins.
@@ -208,8 +208,8 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
-	free_ball_corrected_configuration.parallel_exec();
-	damping_ball_corrected_configuration.parallel_exec();
+	free_ball_corrected_configuration.exec();
+	damping_ball_corrected_configuration.exec();
 	//----------------------------------------------------------------------
 	//	Initial states output.
 	//----------------------------------------------------------------------
@@ -241,33 +241,33 @@ int main(int ac, char *av[])
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
-				free_ball_initialize_timestep.parallel_exec();
-				damping_ball_initialize_timestep.parallel_exec();
+				free_ball_initialize_timestep.exec();
+				damping_ball_initialize_timestep.exec();
 				if (ite % 100 == 0)
 				{
 					std::cout << "N=" << ite << " Time: "
 							  << GlobalStaticVariables::physical_time_ << "	dt: " << dt << "\n";
 				}
-				free_ball_update_contact_density.parallel_exec();
-				free_ball_compute_solid_contact_forces.parallel_exec();
-				free_ball_stress_relaxation_first_half.parallel_exec(dt);
-				free_ball_stress_relaxation_second_half.parallel_exec(dt);
+				free_ball_update_contact_density.exec();
+				free_ball_compute_solid_contact_forces.exec();
+				free_ball_stress_relaxation_first_half.exec(dt);
+				free_ball_stress_relaxation_second_half.exec(dt);
 
 				free_ball.updateCellLinkedList();
 				free_ball_contact.updateConfiguration();
 
-				damping_ball_update_contact_density.parallel_exec();
-				damping_ball_compute_solid_contact_forces.parallel_exec();
-				damping_ball_stress_relaxation_first_half.parallel_exec(dt);
-				damping.parallel_exec(dt);
-				damping_ball_stress_relaxation_second_half.parallel_exec(dt);
+				damping_ball_update_contact_density.exec();
+				damping_ball_compute_solid_contact_forces.exec();
+				damping_ball_stress_relaxation_first_half.exec(dt);
+				damping.exec(dt);
+				damping_ball_stress_relaxation_second_half.exec(dt);
 
 				damping_ball.updateCellLinkedList();
 				damping_ball_contact.updateConfiguration();
 
 				ite++;
-				Real dt_free = free_ball_get_time_step_size.parallel_exec();
-				Real dt_damping = damping_ball_get_time_step_size.parallel_exec();
+				Real dt_free = free_ball_get_time_step_size.exec();
+				Real dt_damping = damping_ball_get_time_step_size.exec();
 				dt = SMIN(dt_free, dt_damping);
 				relaxation_time += dt;
 				integration_time += dt;

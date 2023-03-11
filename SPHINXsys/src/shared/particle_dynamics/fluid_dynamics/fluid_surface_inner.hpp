@@ -37,9 +37,8 @@ namespace SPH
 	namespace fluid_dynamics
 	{
         //=================================================================================================//
-		template <class ExecutionPolicy>
         void FreeSurfaceIndicationInner::
-		interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+		interaction(size_t index_i, Real dt)
         {
             Real pos_div = 0.0;
             const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -50,9 +49,8 @@ namespace SPH
             pos_div_[index_i] = pos_div;
         }
         //=================================================================================================//
-		template <class ExecutionPolicy>
         void ColorFunctionGradientInner::
-		interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+		interaction(size_t index_i, Real dt)
         {
             Vecd gradient = Vecd::Zero();
             const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -67,9 +65,8 @@ namespace SPH
             surface_norm_[index_i] = gradient / (gradient.norm() + TinyReal);
         }
         //=================================================================================================//
-		template <class ExecutionPolicy>
         void ColorFunctionGradientInterpolationInner::
-		interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+		interaction(size_t index_i, Real dt)
         {
             Vecd grad = Vecd::Zero();
             Real weight(0);
@@ -93,9 +90,8 @@ namespace SPH
             }
         }
         //=================================================================================================//
- 		template <class ExecutionPolicy>
-       void SurfaceTensionAccelerationInner::
-	   interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+        void SurfaceTensionAccelerationInner::
+	   interaction(size_t index_i, Real dt)
         {
             Vecd n_i = surface_norm_[index_i];
             Real curvature(0.0);
@@ -138,11 +134,10 @@ namespace SPH
 		}
 		//=================================================================================================//
 		template <class FreeSurfaceIdentification>
-		template <class ExecutionPolicy>
 		void SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIdentification>::
-			interaction(const ExecutionPolicy &execution_policy, size_t index_i, Real dt)
+			interaction(size_t index_i, Real dt)
 		{
-			FreeSurfaceIdentification::interaction(execution_policy, index_i, dt);
+			FreeSurfaceIdentification::interaction(index_i, dt);
 
 			if (this->pos_div_[index_i] < this->threshold_by_dimensions_)
 			{
