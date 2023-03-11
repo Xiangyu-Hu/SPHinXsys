@@ -94,7 +94,7 @@ int main(int ac, char *av[])
 	water_block.generateParticles<ParticleGeneratorSplitAndMerge>();
 	water_block.addBodyStateForRecording<Real>("SmoothingLengthRatio");
 	water_block.addBodyStateForRecording<Real>("VolumetricMeasure");
-	
+
 	SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
 	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
@@ -116,8 +116,8 @@ int main(int ac, char *av[])
 	Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_complex);
 
 	MultiPolygonShape split_merge_region(createRefinementArea());
-	InteractionWithUpdate<SplitWithMinimumDensityErrorWithWall> particle_split_(water_complex, split_merge_region, 8000);
-	InteractionDynamics<MergeWithMinimumDensityErrorWithWall> particle_merge_(water_complex, split_merge_region);
+	InteractionWithUpdate<SplitWithMinimumDensityErrorWithWall, SequencedPolicy> particle_split_(water_complex, split_merge_region, 8000);
+	InteractionDynamics<MergeWithMinimumDensityErrorWithWall, SequencedPolicy> particle_merge_(water_complex, split_merge_region);
 	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplexAdaptive> fluid_density_by_summation(water_complex);
 
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
