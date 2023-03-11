@@ -1,7 +1,7 @@
 /**
  * @file 	test_3d_bending_circular_plate.cpp
- * @brief 	Shell verificaiton  incl. refinement study
- * @details Circular plaste shell verification case with relaxed shell particles
+ * @brief 	Shell verification  incl. refinement study
+ * @details Circular plastic shell verification case with relaxed shell particles
  * @author 	Bence Rochlitz
  * @ref 	ANSYS Workbench Verification Manual, Release 15.0, November 2013, VMMECH051: Bending of a Circular Plate Using Axisymmetric Elements
  */
@@ -14,27 +14,26 @@ using namespace SPH;
 
 static const Real psi_to_pa = 6894.75729;
 static const Real inch_to_m = 0.0254;
-static const Real lb_to_kg = 0.45359237;
 
 class ShellCircleParticleGenerator : public SurfaceParticleGenerator
 {
 	const StdVec<Vec3d>& pos_0_;
 	const Vec3d normal_;
-	const Real particel_area_;
+	const Real particle_area_;
 	const Real thickness_;
 public:
-	explicit ShellCircleParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d>& pos_0, const Vec3d& normal, Real particel_area, Real thickness)
+	explicit ShellCircleParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d>& pos_0, const Vec3d& normal, Real particle_area, Real thickness)
 		: SurfaceParticleGenerator(sph_body),
 		pos_0_(pos_0),
 		normal_(normal),
-		particel_area_(particel_area),
+		particle_area_(particle_area),
 		thickness_(thickness)
 		{};
 	virtual void initializeGeometricVariables() override
 	{
 		for (const auto& pos: pos_0_)
 		{
-			initializePositionAndVolumetricMeasure(pos, particel_area_);
+			initializePositionAndVolumetricMeasure(pos, particle_area_);
 			initializeSurfaceProperties(normal_, thickness_);
 		}
 	}
@@ -168,7 +167,7 @@ return_data bending_circular_plate(Real dp_ratio)
 	unsigned int sym_axis = 2;
 	Real radius = 40*inch_to_m; // 1.016 [m]
 	Real thickness = 1*inch_to_m;
-	// oberserver point
+	// observer point
 	observer_point_shell point_center;
 	point_center.pos_0 = Vec3d::Zero();
 	// resolution
@@ -199,7 +198,6 @@ return_data bending_circular_plate(Real dp_ratio)
 		std::cout << "r_max: " << r_max << std::endl;
 		for (auto& vertex: obj_vertices)
 		{
-			Real r_i = vertex.norm();
 			vertex *= radius/r_max;
 		}
 		// also update dp and total area
@@ -261,7 +259,7 @@ return_data bending_circular_plate(Real dp_ratio)
 	}();
 	constrained_edges.body_part_particles_ = constrained_edge_ids;
 
-	SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion, BodyPartByParticle> constrain_holder(constrained_edges);
+	SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> constrain_holder(constrained_edges);
 	DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
 		shell_velocity_damping(0.2, shell_body_inner, "Velocity", physical_viscosity);
 	DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
@@ -368,7 +366,6 @@ return_data bending_circular_plate(Real dp_ratio)
 	}
 	{// testing final values
 		Real deflection_ref = -0.08736*inch_to_m; // -0.00221894
-		Real stress_max_ref = 7200*psi_to_pa;
 		std::cout << "deflection_ref: " << deflection_ref << std::endl;
 
 		EXPECT_NEAR(std::abs(point_center.displacement[sym_axis]), std::abs(deflection_ref), std::abs(deflection_ref)*5e-2); // 5%

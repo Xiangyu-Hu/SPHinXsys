@@ -148,7 +148,7 @@ int main(int ac, char *av[])
 	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf>
 		stress_relaxation_second_half(cylinder_body_inner);
 	BoundaryGeometry boundary_geometry(cylinder_body, "BoundaryGeometry");
-	SimpleDynamics<solid_dynamics::FixedInAxisDirection, BoundaryGeometry> constrain_holder(boundary_geometry, Vecd(0.0, 1.0, 0.0));
+	SimpleDynamics<solid_dynamics::FixedInAxisDirection> constrain_holder(boundary_geometry, Vecd(0.0, 1.0, 0.0));
 	DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vecd>>>
 		cylinder_position_damping(0.2, cylinder_body_inner, "Velocity", physical_viscosity);
 	DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vecd>>>
@@ -194,9 +194,8 @@ int main(int ac, char *av[])
 				std::cout << "N=" << ite << " Time: "
 						  << GlobalStaticVariables::physical_time_ << "	dt: "
 						  << dt << "\n";
-				write_states.writeToFile(100);
 			}
-			dt = 0.1 * computing_time_step_size.parallel_exec();
+			dt = computing_time_step_size.parallel_exec();
 			initialize_external_force.parallel_exec(dt);
 			stress_relaxation_first_half.parallel_exec(dt);
 

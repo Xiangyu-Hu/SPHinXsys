@@ -173,16 +173,16 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Compute the force exerted on solid body due to fluid pressure and viscosity
 	//----------------------------------------------------------------------
-	InteractionDynamics<solid_dynamics::FluidViscousForceOnSolid> viscous_force_on_solid(cylinder_contact);
-	InteractionDynamics<solid_dynamics::FluidForceOnSolidUpdate> fluid_force_on_solid_update(cylinder_contact, viscous_force_on_solid);
+	InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(cylinder_contact);
+	InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid> fluid_force_on_solid_update(cylinder_contact, viscous_force_on_solid);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
-	RegressionTestTimeAveraged<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalViscousForceOnSolid>>>
-		write_total_viscous_force_on_inserted_body(io_environment, cylinder);
-	ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceOnSolid>>
-		write_total_force_on_inserted_body(io_environment, cylinder);
+	RegressionTestTimeAveraged<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>>
+		write_total_viscous_force_on_inserted_body(io_environment, viscous_force_on_solid, "TotalViscousForceOnSolid");
+	ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>
+		write_total_force_on_inserted_body(io_environment, fluid_force_on_solid_update, "TotalPressureForceOnSolid");
 	ReducedQuantityRecording<ReduceDynamics<MaximumSpeed>> write_maximum_speed(io_environment, water_block);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
@@ -239,10 +239,7 @@ int main(int ac, char *av[])
 		tick_count t2 = tick_count::now();
 		write_real_body_states.writeToFile();
 
-		viscous_force_on_solid.parallel_exec(); // compute force only before output
 		write_total_viscous_force_on_inserted_body.writeToFile(number_of_iterations);
-
-		fluid_force_on_solid_update.parallel_exec(); // compute force only before output
 		write_total_force_on_inserted_body.writeToFile(number_of_iterations);
 
 		write_maximum_speed.writeToFile(number_of_iterations);

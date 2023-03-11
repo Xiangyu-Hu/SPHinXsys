@@ -112,17 +112,17 @@ class DiffusionRelaxation
 		  RelaxationOfAllDiffusionSpeciesInner<ElasticSolidParticles, LocallyOrthotropicMuscle>>
 {
 public:
-	explicit DiffusionRelaxation(InnerRelation &body_inner_relation)
-		: RelaxationOfAllDiffusionSpeciesRK2(body_inner_relation){};
+	explicit DiffusionRelaxation(InnerRelation &inner_relation)
+		: RelaxationOfAllDiffusionSpeciesRK2(inner_relation){};
 	virtual ~DiffusionRelaxation(){};
 };
 /** Imposing diffusion boundary condition */
 class DiffusionBCs
-	: public DiffusionReactionSpeciesConstraint<ElasticSolidParticles, LocallyOrthotropicMuscle>
+	: public DiffusionReactionSpeciesConstraint<BodyPartByParticle, ElasticSolidParticles, LocallyOrthotropicMuscle>
 {
 public:
 	DiffusionBCs(BodyPartByParticle &body_part, const std::string &species_name)
-		: DiffusionReactionSpeciesConstraint<ElasticSolidParticles, LocallyOrthotropicMuscle>(body_part, species_name),
+		: DiffusionReactionSpeciesConstraint<BodyPartByParticle, ElasticSolidParticles, LocallyOrthotropicMuscle>(body_part, species_name),
 		  pos_(particles_->pos_){};
 	virtual ~DiffusionBCs(){};
 

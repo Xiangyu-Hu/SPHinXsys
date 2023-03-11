@@ -46,11 +46,16 @@ namespace SPH
 	Vec2d FirstAxisVector(const Vec2d &zero_vector);
 	Vec3d FirstAxisVector(const Vec3d &zero_vector);
 
-	Vec3d upgradeToVector3D(const Real &input);
-	Vec3d upgradeToVector3D(const Vec2d &input);
-	Vec3d upgradeToVector3D(const Vec3d &input);
-	Mat3d upgradeToMatrix3D(const Mat2d &input);
-	Mat3d upgradeToMatrix3D(const Mat3d &input);
+	Vec3d upgradeToVec3d(const Real &input);
+	Vec3d upgradeToVec3d(const Vec2d &input);
+	Vec3d upgradeToVec3d(const Vec3d &input);
+	Mat3d upgradeToMat3d(const Mat2d &input);
+	Mat3d upgradeToMat3d(const Mat3d &input);
+
+	void degradeToVecd(const Vec3d &input, Vec2d &output);
+	inline void degradeToVecd(const Vec3d &input, Vec3d &output) { output = input; };
+	void degradeToMatd(const Mat3d &input, Mat2d &output);
+	inline void degradeToMatd(const Mat3d &input, Mat3d &output) { output = input; };
 
 	Mat2d getInverse(const Mat2d &A);
 	Mat3d getInverse(const Mat3d &A);
@@ -160,11 +165,11 @@ namespace SPH
 	 */
 	class Rotation2d
 	{
-		Real angle_, cosine_angle_, sine_angle_;
+		Real cosine_angle_, sine_angle_;
 
 	public:
 		explicit Rotation2d(Real angle)
-			: angle_(angle), cosine_angle_(std::cos(angle)), sine_angle_(std::sin(angle)){};
+			: cosine_angle_(std::cos(angle)), sine_angle_(std::sin(angle)){};
 		virtual ~Rotation2d(){};
 
 		/** Forward transformation. */

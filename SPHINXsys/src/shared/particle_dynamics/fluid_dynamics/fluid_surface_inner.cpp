@@ -8,10 +8,10 @@ namespace SPH
         //=================================================================================================//
         FreeSurfaceIndicationInner::
             FreeSurfaceIndicationInner(BaseInnerRelation &inner_relation, Real threshold)
-            : LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
+            : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
               threshold_by_dimensions_(threshold * (Real)Dimensions),
               surface_indicator_(particles_->surface_indicator_),
-              smoothing_length_(inner_relation.sph_body_.sph_adaptation_->ReferenceSmoothingLength())
+              smoothing_length_(inner_relation.getSPHBody().sph_adaptation_->ReferenceSmoothingLength())
         {
             particles_->registerVariable(pos_div_, "PositionDivergence");
         }
@@ -46,7 +46,7 @@ namespace SPH
         }
         //=================================================================================================//
         ColorFunctionGradientInner::ColorFunctionGradientInner(BaseInnerRelation &inner_relation)
-            : LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
+            : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
               surface_indicator_(particles_->surface_indicator_),
               pos_div_(*particles_->getVariableByName<Real>("PositionDivergence")),
               threshold_by_dimensions_((0.75 * (Real)Dimensions))
@@ -63,7 +63,6 @@ namespace SPH
             {
                 for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
                 {
-                    size_t index_j = inner_neighborhood.j_[n];
                     gradient -= inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
                 }
             }
@@ -72,7 +71,7 @@ namespace SPH
         }
         //=================================================================================================//
         ColorFunctionGradientInterpolationInner::ColorFunctionGradientInterpolationInner(BaseInnerRelation &inner_relation)
-            : LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation), Vol_(particles_->Vol_),
+            : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation), Vol_(particles_->Vol_),
               surface_indicator_(particles_->surface_indicator_),
               color_grad_(*particles_->getVariableByName<Vecd>("ColorGradient")),
               surface_norm_(*particles_->getVariableByName<Vecd>("SurfaceNormal")),
@@ -109,7 +108,7 @@ namespace SPH
         }
         //=================================================================================================//
         SurfaceTensionAccelerationInner::SurfaceTensionAccelerationInner(BaseInnerRelation &inner_relation, Real gamma)
-            : LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
+            : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
               gamma_(gamma), Vol_(particles_->Vol_), mass_(particles_->mass_),
               acc_prior_(particles_->acc_prior_), surface_indicator_(particles_->surface_indicator_),
               color_grad_(*particles_->getVariableByName<Vecd>("ColorGradient")),

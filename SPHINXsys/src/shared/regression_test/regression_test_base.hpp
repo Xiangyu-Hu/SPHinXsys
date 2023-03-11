@@ -152,7 +152,7 @@ namespace SPH
 	{
 		if (number_of_run_ > 1) /*only read the result from the 2nd run, because the 1st run doesn't have previous results. */
 		{
-			result_filefullpath_ = input_folder_path_ + "/" + this->dynamics_range_name_ + "_" + this->quantity_name_ +
+			result_filefullpath_ = input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ +
 				"_Run_" + std::to_string(index_of_run_) + "_result.xml";
 
 			/* To identify the database generation or new result test. */
@@ -195,7 +195,7 @@ namespace SPH
 		/** write result to .xml (with different data structure to Base), here is 
 		    observation * snapshot, which can be used for TA and DTW methods. */
 		int total_snapshot_ = current_result_trans_[0].size();
-		result_filefullpath_ = input_folder_path_ + "/" + this->dynamics_range_name_ + "_" + this->quantity_name_ +
+		result_filefullpath_ = input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ +
 			"_Run_" + std::to_string(index_of_run_) + "_result.xml";
 		result_xml_engine_out_.addElementToXmlDoc("Snapshot_Element");
 		SimTK::Xml::Element snapshot_element_ = result_xml_engine_out_.getChildElement("Snapshot_Element");

@@ -22,7 +22,7 @@
  * ------------------------------------------------------------------------*/
 /**
  * @file 	base_data_package.h
- * @brief 	Base data package for the library. 
+ * @brief 	Base data package for the library.
  * @author	Chi ZHang and Xiangyu Hu
  */
 #ifndef BASE_DATA_PACKAGE_H
@@ -38,37 +38,46 @@
 
 namespace SPH
 {
+    constexpr Real OneOverDimensions = 1.0 / (Real)Dimensions;
 
     typedef blocked_range<size_t> IndexRange;
     /** Generalized data container assemble type */
     template <template <typename DataType> typename DataContainerType>
     using DataContainerAssemble =
         std::tuple<StdVec<DataContainerType<Real>>,
-                   StdVec<DataContainerType<Vecd>>,
-                   StdVec<DataContainerType<Matd>>,
+                   StdVec<DataContainerType<Vec2d>>,
+                   StdVec<DataContainerType<Vec3d>>,
+                   StdVec<DataContainerType<Mat2d>>,
+                   StdVec<DataContainerType<Mat3d>>,
                    StdVec<DataContainerType<int>>>;
     /** Generalized data container address assemble type */
     template <template <typename DataType> typename DataContainerType>
     using DataContainerAddressAssemble =
         std::tuple<StdVec<DataContainerType<Real> *>,
-                   StdVec<DataContainerType<Vecd> *>,
-                   StdVec<DataContainerType<Matd> *>,
+                   StdVec<DataContainerType<Vec2d> *>,
+                   StdVec<DataContainerType<Vec3d> *>,
+                   StdVec<DataContainerType<Mat2d> *>,
+                   StdVec<DataContainerType<Mat3d> *>,
                    StdVec<DataContainerType<int> *>>;
     /** a type irrelevant operation on the data assembles  */
     template <template <typename VariableType> typename OperationType>
     struct DataAssembleOperation
     {
         OperationType<Real> scalar_operation;
-        OperationType<Vecd> vector_operation;
-        OperationType<Matd> matrix_operation;
+        OperationType<Vec2d> vector2d_operation;
+        OperationType<Vec3d> vector3d_operation;
+        OperationType<Mat2d> matrix2d_operation;
+        OperationType<Mat3d> matrix3d_operation;
         OperationType<int> integer_operation;
 
         template <typename... OperationArgs>
         void operator()(OperationArgs &&...operation_args)
         {
             scalar_operation(std::forward<OperationArgs>(operation_args)...);
-            vector_operation(std::forward<OperationArgs>(operation_args)...);
-            matrix_operation(std::forward<OperationArgs>(operation_args)...);
+            vector2d_operation(std::forward<OperationArgs>(operation_args)...);
+            vector3d_operation(std::forward<OperationArgs>(operation_args)...);
+            matrix2d_operation(std::forward<OperationArgs>(operation_args)...);
+            matrix3d_operation(std::forward<OperationArgs>(operation_args)...);
             integer_operation(std::forward<OperationArgs>(operation_args)...);
         }
     };

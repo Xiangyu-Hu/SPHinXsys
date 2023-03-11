@@ -90,7 +90,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	Dynamics1Level<solid_dynamics::PlasticIntegration1stHalf> stress_relaxation_first_half(column_inner);
 	Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(column_inner);
-	InteractionDynamics<solid_dynamics::DynamicContactForceWithWall, BodyPartByParticle> column_wall_contact_force(column_wall_contact);
+	InteractionDynamics<solid_dynamics::DynamicContactForceWithWall> column_wall_contact_force(column_wall_contact);
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
 	SimpleDynamics<InitialCondition> initial_condition(column);
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> corrected_configuration(column_inner);

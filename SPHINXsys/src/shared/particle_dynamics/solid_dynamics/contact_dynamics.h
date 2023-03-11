@@ -89,19 +89,15 @@ namespace SPH
 			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			StdLargeVec<Vecd> &pos_;
+			Solid &solid_;
+			Kernel *kernel_;
+
 			Real particle_spacing_;
 			StdVec<Real> calibration_factor_;
-			StdVec<Real> contact_h_ratio_;
 			StdVec<Real> offset_W_ij_;
-			StdVec<Real> contact_particle_spacing_;
 			StdLargeVec<Real> contact_density_;
 			StdVec<StdLargeVec<Real> *> contact_Vol_;
-			StdVec<StdLargeVec<Vecd> *> contact_n_;
-			StdVec<StdLargeVec<Vecd> *> contact_pos_;
 
-			Kernel *kernel_;
-			Solid &solid_;
 			/** Abscissas and weights for Gauss-Legendre quadrature integration with n=3 nodes */
 			const StdVec<Real> three_gaussian_points_ = { -0.7745966692414834, 0.0, 0.7745966692414834 };
 			const StdVec<Real> three_gaussian_weights_ = { 0.5555555555555556, 0.8888888888888889, 0.5555555555555556 };

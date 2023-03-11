@@ -32,7 +32,6 @@ namespace SPH
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
-					size_t index_j = contact_neighborhood.j_[n];
 					Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
 
 					// acceleration for transport velocity
@@ -55,7 +54,6 @@ namespace SPH
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
-					size_t index_j = contact_neighborhood.j_[n];
 					Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
 
 					// acceleration for transport velocity
@@ -84,7 +82,6 @@ namespace SPH
 				Neighborhood &wall_neighborhood = (*FluidWallData::contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
 				{
-					size_t index_j = wall_neighborhood.j_[n];
 					Vecd nablaW_ijV_j = wall_neighborhood.dW_ijV_j_[n] * wall_neighborhood.e_ij_[n];
 					/** stress boundary condition. */
 					acceleration += 2.0 * tau_i * nablaW_ijV_j / rho_i;

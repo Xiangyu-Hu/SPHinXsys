@@ -47,8 +47,8 @@ namespace SPH
 		Real inv_rho0_;
 		StdLargeVec<Real> &rho_;
 		StdLargeVec<Vecd> &pos_;
-		StdLargeVec<Real> &mass_;
 		StdLargeVec<Real> &Vol_;
+		StdLargeVec<Real> &mass_;
 		StdLargeVec<Real> &h_ratio_;
 	};
 

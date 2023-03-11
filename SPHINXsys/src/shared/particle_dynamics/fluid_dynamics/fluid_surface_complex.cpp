@@ -63,7 +63,6 @@ namespace SPH
 			{
 				for (size_t k = 0; k < contact_configuration_.size(); ++k)
 				{
-					StdLargeVec<Real> &contact_Vol_k = *(contact_Vol_[k]);
 					Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 					for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 					{
@@ -76,14 +75,14 @@ namespace SPH
 		}
 		//=================================================================================================//
 		SurfaceNormWithWall::SurfaceNormWithWall(BaseContactRelation &contact_relation, Real contact_angle)
-			: LocalDynamics(contact_relation.sph_body_), FSIContactData(contact_relation),
+			: LocalDynamics(contact_relation.getSPHBody()), FSIContactData(contact_relation),
 			  contact_angle_(contact_angle),
 			  surface_indicator_(particles_->surface_indicator_),
 			  surface_norm_(*particles_->getVariableByName<Vecd>("SurfaceNormal")),
 			  pos_div_(*particles_->getVariableByName<Real>("PositionDivergence"))
 		{
-			particle_spacing_ = contact_relation.sph_body_.sph_adaptation_->ReferenceSpacing();
-			smoothing_length_ = contact_relation.sph_body_.sph_adaptation_->ReferenceSmoothingLength();
+			particle_spacing_ = contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing();
+			smoothing_length_ = contact_relation.getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				wall_n_.push_back(&(contact_particles_[k]->n_));

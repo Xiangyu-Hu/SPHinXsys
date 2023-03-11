@@ -12,7 +12,7 @@ namespace SPH
 		AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body, Real CFL)
 			: LocalDynamicsReduce<Real, ReduceMin>(sph_body, Real(MaxRealNumber)),
 			  ElasticSolidDataSimple(sph_body), CFL_(CFL),
-			  vel_(particles_->vel_), acc_(particles_->acc_),
+			  vel_(particles_->vel_), acc_(particles_->acc_), acc_prior_(particles_->acc_prior_),
 			  smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()),
 			  c0_(particles_->elastic_solid_.ReferenceSoundSpeed()) {}
 		//=================================================================================================//
@@ -20,7 +20,7 @@ namespace SPH
 		{
 			// since the particle does not change its configuration in pressure relaxation step
 			// I chose a time-step size according to Eulerian method
-			return CFL_ * SMIN(sqrt(smoothing_length_ / (acc_[index_i].norm() + TinyReal)),
+			return CFL_ * SMIN(sqrt(smoothing_length_ / ((acc_[index_i] + acc_prior_[index_i]).norm() + TinyReal)),
 							   smoothing_length_ / (c0_ + vel_[index_i].norm()));
 		}
 		//=================================================================================================//
@@ -36,7 +36,7 @@ namespace SPH
 		//=================================================================================================//
 		DeformationGradientBySummation::
 			DeformationGradientBySummation(BaseInnerRelation &inner_relation)
-			: LocalDynamics(inner_relation.sph_body_), ElasticSolidDataInner(inner_relation),
+			: LocalDynamics(inner_relation.getSPHBody()), ElasticSolidDataInner(inner_relation),
 			  pos_(particles_->pos_), B_(particles_->B_), F_(particles_->F_) {}
 		//=================================================================================================//
 		void DeformationGradientBySummation::interaction(size_t index_i, Real dt)
@@ -58,7 +58,7 @@ namespace SPH
 		//=================================================================================================//
 		BaseElasticIntegration::
 			BaseElasticIntegration(BaseInnerRelation &inner_relation)
-			: LocalDynamics(inner_relation.sph_body_), ElasticSolidDataInner(inner_relation),
+			: LocalDynamics(inner_relation.getSPHBody()), ElasticSolidDataInner(inner_relation),
 			  rho_(particles_->rho_), mass_(particles_->mass_),
 			  pos_(particles_->pos_), vel_(particles_->vel_), acc_(particles_->acc_),
 			  B_(particles_->B_), F_(particles_->F_), dF_dt_(particles_->dF_dt_) {}
@@ -134,9 +134,9 @@ namespace SPH
 			Real J = F_[index_i].determinant();
 			Real one_over_J = 1.0 / J;
 			rho_[index_i] = rho0_ * one_over_J;
-			Real J_to_minus_2_over_dimension = pow(one_over_J, 2.0 * one_over_dimensions_);
+			Real J_to_minus_2_over_dimension = pow(one_over_J, 2.0 * OneOverDimensions);
 			Matd normalized_b = (F_[index_i] * F_[index_i].transpose()) * J_to_minus_2_over_dimension;
-			Matd deviatoric_b = normalized_b - Matd::Identity() * normalized_b.trace() * one_over_dimensions_;
+			Matd deviatoric_b = normalized_b - Matd::Identity() * normalized_b.trace() * OneOverDimensions;
 			Matd inverse_F_T = F_[index_i].inverse().transpose();
 			// obtain the first Piola-Kirchhoff stress from the Kirchhoff stress
 			// it seems using reproducing correction here increases convergence rate
@@ -161,12 +161,12 @@ namespace SPH
 			Real J = F_[index_i].determinant();
 			Real one_over_J = 1.0 / J;
 			rho_[index_i] = rho0_ * one_over_J;
-			J_to_minus_2_over_dimension_[index_i] = pow(one_over_J * one_over_J, one_over_dimensions_);
+			J_to_minus_2_over_dimension_[index_i] = pow(one_over_J * one_over_J, OneOverDimensions);
 			
 			inverse_F_T_[index_i] = F_[index_i].inverse().transpose();
 			stress_on_particle_[index_i] = inverse_F_T_[index_i] * 
 				(elastic_solid_.VolumetricKirchhoff(J) - correction_factor_ * elastic_solid_.ShearModulus() *
-				 J_to_minus_2_over_dimension_[index_i] * (F_[index_i] * F_[index_i].transpose()).trace() * one_over_dimensions_) 
+				 J_to_minus_2_over_dimension_[index_i] * (F_[index_i] * F_[index_i].transpose()).trace() * OneOverDimensions) 
 				+ elastic_solid_.NumericalDampingLeftCauchy(F_[index_i], dF_dt_[index_i], smoothing_length_, index_i) * inverse_F_T_[index_i];
 		}
 		//=================================================================================================//

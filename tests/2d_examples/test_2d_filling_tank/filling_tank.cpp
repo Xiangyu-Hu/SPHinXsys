@@ -132,8 +132,8 @@ int main()
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
 	BodyAlignedBoxByParticle emitter(
 		water_body, makeShared<AlignedBoxShape>(Transform2d(inlet_translation), inlet_halfsize));
-	SimpleDynamics<InletInflowCondition, BodyAlignedBoxByParticle> inflow_condition(emitter);
-	SimpleDynamics<fluid_dynamics::EmitterInflowInjection, BodyAlignedBoxByParticle> emitter_injection(emitter, 350, 0);
+	SimpleDynamics<InletInflowCondition> inflow_condition(emitter);
+	SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_injection(emitter, 350, 0);
 
 	//----------------------------------------------------------------------
 	//	File Output
@@ -157,7 +157,6 @@ int main()
 	//----------------------------------------------------------------------
 	size_t number_of_iterations = system.RestartStep();
 	int screen_output_interval = 100;
-	int restart_output_interval = screen_output_interval * 10;
 	Real end_time = 30.0;
 	Real output_interval = 0.1;
 	Real dt = 0.0; /**< Default acoustic time step sizes. */

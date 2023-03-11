@@ -28,12 +28,12 @@ namespace SPH
 			  gamma_(particles_->compressible_fluid_.HeatCapacityRatio()) {}
 		//=================================================================================================//
 		ViscousAccelerationInner::ViscousAccelerationInner(BaseInnerRelation &inner_relation)
-			: LocalDynamics(inner_relation.sph_body_), CompressibleFluidDataInner(inner_relation),
+			: LocalDynamics(inner_relation.getSPHBody()), CompressibleFluidDataInner(inner_relation),
 			  Vol_(particles_->Vol_), rho_(particles_->rho_), p_(particles_->p_),
 			  mass_(particles_->mass_), dE_dt_prior_(particles_->dE_dt_prior_),
 			  vel_(particles_->vel_), dmom_dt_prior_(particles_->dmom_dt_prior_),
-			  smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
-			  mu_(particles_->compressible_fluid_.ReferenceViscosity()) {}
+			  mu_(particles_->compressible_fluid_.ReferenceViscosity()),
+		      smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
 		//=================================================================================================//
 		void ViscousAccelerationInner::interaction(size_t index_i, Real dt)
 		{
@@ -75,7 +75,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		BaseIntegration::BaseIntegration(BaseInnerRelation &inner_relation)
-			: LocalDynamics(inner_relation.sph_body_), CompressibleFluidDataInner(inner_relation),
+			: LocalDynamics(inner_relation.getSPHBody()), CompressibleFluidDataInner(inner_relation),
 			  compressible_fluid_(particles_->compressible_fluid_),
 			  Vol_(particles_->Vol_), rho_(particles_->rho_), p_(particles_->p_),
 			  drho_dt_(particles_->drho_dt_), E_(particles_->E_), dE_dt_(particles_->dE_dt_),

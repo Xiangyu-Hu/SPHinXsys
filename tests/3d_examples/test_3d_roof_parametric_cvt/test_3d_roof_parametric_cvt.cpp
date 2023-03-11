@@ -1,6 +1,6 @@
 /**
  * @file 	test_3d_roof_analytical.cpp
- * @brief 	Shell verificaiton  incl. refinement study
+ * @brief 	Shell verification  incl. refinement study
  * @details Roof shell verification case with relaxed shell particles
  * @author 	Bence Rochlitz
  * @ref 	ANSYS Workbench Verification Manual, Release 15.0, November 2013, VMMECH069: Barrel Vault Roof Under Self Weight
@@ -49,14 +49,14 @@ class ShellRoofParticleGenerator : public SurfaceParticleGenerator
 {
 	const StdVec<Vec3d>& pos_0_;
 	const Vec3d center_;
-	const Real particel_area_;
+	const Real particle_area_;
 	const Real thickness_;
 public:
-	explicit ShellRoofParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d>& pos_0, const Vec3d& center, Real particel_area, Real thickness)
+	explicit ShellRoofParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d>& pos_0, const Vec3d& center, Real particle_area, Real thickness)
 		: SurfaceParticleGenerator(sph_body),
 		pos_0_(pos_0),
 		center_(center),
-		particel_area_(particel_area),
+		particle_area_(particle_area),
 		thickness_(thickness)
 		{};
 	virtual void initializeGeometricVariables() override
@@ -66,7 +66,7 @@ public:
 			// creating the normal direction - z coordinate is always zero
 			Vec3d center_to_pos = pos-center_;
 			center_to_pos[2] = 0;
-			initializePositionAndVolumetricMeasure(pos, particel_area_);
+			initializePositionAndVolumetricMeasure(pos, particle_area_);
 			initializeSurfaceProperties(center_to_pos.normalized(), thickness_);
 		}
 	}
@@ -196,7 +196,7 @@ public:
 	{};
 	virtual void initializeGeometricVariables() override
 	{
-		Real radius = 24.875;								/** Radius of the inner boundary of the cylinder. */
+		// Real radius = 24.875;								/** Radius of the inner boundary of the cylinder. */
 		Real height = 50.0;									/** Height of the cylinder. */
 		Real thickness = 0.25;								/** Thickness of the cylinder. */
 		Real radius_mid_surface = 25.0; /** Radius of the mid surface. */
@@ -251,14 +251,14 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 	Real radius = 25;
 	Real length = 50;
 	Real thickness = 0.25;
-	Real teta = 40;
-	Real teta_radian = to_rad(teta);
-	Real arc = radius*teta_radian;
+	Real theta = 40;
+	Real theta_radian = to_rad(theta);
+	Real arc = radius*theta_radian;
 	Vec3d center(0,-radius,0);
-	// oberserver points A and B
+	// observer points A and B
 	observer_point_shell point_A;
 	observer_point_shell point_B;
-	point_A.pos_0 = Vec3d(radius*std::sin(teta_radian), radius*std::cos(teta_radian)-radius, 0);
+	point_A.pos_0 = Vec3d(radius*std::sin(theta_radian), radius*std::cos(theta_radian)-radius, 0);
 	point_B.pos_0 = Vec3d(0);
 	// resolution
 	const int dp_cm = dp*100;
@@ -278,7 +278,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 	// system bounding box
 	BoundingBox bb_system;
 	StdVec<Vec3d> obj_vertices;
-	Real particle_area;
+	Real particle_area = -1;//initialized when CVT-based mesh is used
 
 	if (cvt)
 	{
@@ -362,7 +362,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 	}();
 	constrained_edges.body_part_particles_ = constrained_edge_ids;
 
-	SimpleDynamics<solid_dynamics::FixedInAxisDirection, BodyPartByParticle> constrain_holder(constrained_edges, length_vec);
+	SimpleDynamics<solid_dynamics::FixedInAxisDirection> constrain_holder(constrained_edges, length_vec);
 	DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
 		shell_velocity_damping(0.2, shell_body_inner, "Velocity", physical_viscosity);
 	DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
@@ -471,10 +471,6 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 	{// testing final values
 		Real displ_y_A = -0.3019;
 		Real displ_x_A = -0.1593;
-		Real stress_z_A_top = 215570;
-		Real stress_z_A_bottom = 340700;
-		Real stress_angle_B_top = 191230;
-		Real stress_angle_B_bottom = -218740;
 
 		EXPECT_NEAR(point_A.displacement[radial_axis], displ_y_A, std::abs(displ_y_A*10e-2)); // 10% - difficult accuracy due incomplete edge kernels
 		EXPECT_NEAR(point_A.displacement[tangential_axis], displ_x_A, std::abs(displ_x_A*10e-2)); // 10% - difficult accuracy due incomplete edge kernels

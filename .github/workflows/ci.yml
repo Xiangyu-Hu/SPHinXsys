@@ -20,7 +20,7 @@ jobs:
   ###############################################################################
 
   Linux:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       VCPKG_DEFAULT_TRIPLET: x64-linux
 
@@ -51,6 +51,9 @@ jobs:
 
       - name: Install dependencies
         run: |
+          ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build openblas[dynamic-arch] 
+          # Simbody depends on (open)blas implementation, which -march=native by default, conflicting with cache restore, hence dynamic-arch feature
+          # Above problem might also be resolved by adding the hash of architecture in the cache key, esp. if more package do the same
           ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build \
             eigen3 \
             tbb \
@@ -65,8 +68,10 @@ jobs:
             -D CMAKE_BUILD_TYPE=Release \
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -D SPHINXSYS_CI=ON \
             -S ${{github.workspace}} \
             -B ${{github.workspace}}/build
+            
       - name: Build
         run: cmake --build build --config Release --verbose
 
@@ -151,6 +156,7 @@ jobs:
             -D CMAKE_BUILD_TYPE=Release `
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}\vcpkg\scripts\buildsystems\vcpkg.cmake" `
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache `
+            -D SPHINXSYS_CI=ON `
             -S ${{github.workspace}} `
             -B C:\build
       
@@ -197,7 +203,7 @@ jobs:
   ###############################################################################
 
   macOS:
-    runs-on: macOS-latest
+    runs-on: macos-12
     env:
       VCPKG_DEFAULT_TRIPLET: x64-osx
 
@@ -242,6 +248,7 @@ jobs:
             -D CMAKE_BUILD_TYPE=Release \
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -D SPHINXSYS_CI=ON \
             -S ${{github.workspace}} \
             -B ${{github.workspace}}/build
 

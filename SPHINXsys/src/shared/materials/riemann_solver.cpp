@@ -89,7 +89,6 @@ namespace SPH
 		Real s_star = (state_j.rho_ * ur * (s_r - ur) + state_i.rho_ * ul * (ul - s_l) + state_i.p_ - state_j.p_) / (state_j.rho_ * (s_r - ur) + state_i.rho_ * (ul - s_l) + TinyReal);
 		Real p_star = 0.0;
 		Vecd v_star = Vecd::Zero();
-		Real rho_star = 0.0;
 		if (0.0 < s_l)
 		{
 			p_star = state_i.p_;

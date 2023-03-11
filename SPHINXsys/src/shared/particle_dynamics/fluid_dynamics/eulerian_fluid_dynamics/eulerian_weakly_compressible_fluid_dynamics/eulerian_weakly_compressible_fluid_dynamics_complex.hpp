@@ -46,7 +46,7 @@ namespace SPH
 			InteractionWithWall(BaseBodyRelationType &base_body_relation,
 								BaseContactRelation &wall_contact_relation) : BaseIntegrationType(base_body_relation), WCFluidWallData(wall_contact_relation)
 		{
-			if (&base_body_relation.sph_body_ != &wall_contact_relation.sph_body_)
+			if (&base_body_relation.getSPHBody() != &wall_contact_relation.getSPHBody())
 			{
 				std::cout << "\n Error: the two body_relations do not have the same source body!" << std::endl;
 				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
@@ -139,7 +139,6 @@ namespace SPH
 					size_t index_j = wall_neighborhood.j_[n];
 					Vecd &e_ij = wall_neighborhood.e_ij_[n];
 					Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
-					Real r_ij = wall_neighborhood.r_ij_[n];
 
 					Vecd vel_in_wall = -state_i.vel_;
 					Real p_in_wall = state_i.p_;
@@ -176,7 +175,6 @@ namespace SPH
 				{
 					size_t index_j = wall_neighborhood.j_[n];
 					Vecd &e_ij = wall_neighborhood.e_ij_[n];
-					Real r_ij = wall_neighborhood.r_ij_[n];
 					Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
 
 					Vecd vel_in_wall = -state_i.vel_;

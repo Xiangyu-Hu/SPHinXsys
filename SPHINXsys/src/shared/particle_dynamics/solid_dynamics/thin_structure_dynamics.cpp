@@ -12,34 +12,35 @@ namespace SPH
 			  n0_(particles_->n0_), n_(particles_->n_), pseudo_n_(particles_->pseudo_n_),
 			  pos0_(particles_->pos0_), transformation_matrix_(particles_->transformation_matrix_) {}
 		//=================================================================================================//
-		ShellAcousticTimeStepSize::ShellAcousticTimeStepSize(SPHBody &sph_body, Real CFL)
+		ShellAcousticTimeStepSize::ShellAcousticTimeStepSize(SPHBody& sph_body, Real CFL)
 			: LocalDynamicsReduce<Real, ReduceMin>(sph_body, Real(MaxRealNumber)),
-			  ShellDataSimple(sph_body), CFL_(CFL), vel_(particles_->vel_), acc_(particles_->acc_),
+			ShellDataSimple(sph_body), CFL_(CFL), vel_(particles_->vel_), acc_(particles_->acc_),
 			  angular_vel_(particles_->angular_vel_), dangular_vel_dt_(particles_->dangular_vel_dt_),
+			  acc_prior_(particles_->acc_prior_),
 			  thickness_(particles_->thickness_),
-			  smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()),
 			  rho0_(particles_->elastic_solid_.ReferenceDensity()),
 			  E0_(particles_->elastic_solid_.YoungsModulus()),
 			  nu_(particles_->elastic_solid_.PoissonRatio()),
-			  c0_(particles_->elastic_solid_.ReferenceSoundSpeed()) {}
+			  c0_(particles_->elastic_solid_.ReferenceSoundSpeed()),
+			  smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()) {}
 		//=================================================================================================//
 		Real ShellAcousticTimeStepSize::reduce(size_t index_i, Real dt)
 		{
 			// Since the particle does not change its configuration in pressure relaxation step,
 			// I chose a time-step size according to Eulerian method.
-			Real time_setp_0 = CFL_ * SMIN(sqrt(smoothing_length_ / (acc_[index_i].norm() + TinyReal)),
+			Real time_setp_0 = SMIN(sqrt(smoothing_length_ / ((acc_[index_i] + acc_prior_[index_i]).norm() + TinyReal)),
 										   smoothing_length_ / (c0_ + vel_[index_i].norm()));
-			Real time_setp_1 = CFL_ * SMIN(sqrt(1.0 / (dangular_vel_dt_[index_i].norm() + TinyReal)),
+			Real time_setp_1 = SMIN(sqrt(1.0 / (dangular_vel_dt_[index_i].norm() + TinyReal)),
 										   1.0 / (angular_vel_[index_i].norm() + TinyReal));
 			Real time_setp_2 = smoothing_length_ * sqrt(rho0_ * (1.0 - nu_ * nu_) / E0_ /
 														(2.0 + (Pi * Pi / 12.0) * (1.0 - nu_) *
 																   (1.0 + 1.5 * powerN(smoothing_length_ / thickness_[index_i], 2))));
-			return SMIN(time_setp_0, time_setp_1, time_setp_2);
+			return CFL_ * SMIN(time_setp_0, time_setp_1, time_setp_2);
 		}
 		//=================================================================================================//
 		ShellCorrectConfiguration::
 			ShellCorrectConfiguration(BaseInnerRelation &inner_relation)
-			: LocalDynamics(inner_relation.sph_body_), ShellDataInner(inner_relation),
+			: LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
 			  B_(particles_->B_),
 			  n0_(particles_->n0_), transformation_matrix_(particles_->transformation_matrix_) {}
 		//=================================================================================================//
@@ -50,8 +51,6 @@ namespace SPH
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
-				size_t index_j = inner_neighborhood.j_[n];
-
 				Vecd gradW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
 				Vecd r_ji = -inner_neighborhood.r_ij_[n] * inner_neighborhood.e_ij_[n];
 				global_configuration += r_ji * gradW_ijV_j.transpose();
@@ -64,7 +63,7 @@ namespace SPH
 		//=================================================================================================//
 		ShellDeformationGradientTensor::
 			ShellDeformationGradientTensor(BaseInnerRelation &inner_relation)
-			: LocalDynamics(inner_relation.sph_body_), ShellDataInner(inner_relation),
+			: LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
 			  pos_(particles_->pos_), pseudo_n_(particles_->pseudo_n_), n0_(particles_->n0_),
 			  B_(particles_->B_), F_(particles_->F_), F_bending_(particles_->F_bending_),
 			  transformation_matrix_(particles_->transformation_matrix_) {}
@@ -91,7 +90,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		BaseShellRelaxation::BaseShellRelaxation(BaseInnerRelation &inner_relation)
-			: LocalDynamics(inner_relation.sph_body_), ShellDataInner(inner_relation),
+			: LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
 			  rho_(particles_->rho_),
 			  thickness_(particles_->thickness_),
 			  pos_(particles_->pos_), vel_(particles_->vel_),
@@ -114,14 +113,14 @@ namespace SPH
 			  global_moment_(particles_->global_moment_),
 			  global_shear_stress_(particles_->global_shear_stress_),
 			  n_(particles_->n_),
-			  number_of_gaussian_points_(number_of_gaussian_points),
-			  hourglass_control_(hourglass_control),
 			  rho0_(elastic_solid_.ReferenceDensity()),
 			  inv_rho0_(1.0 / rho0_),
 			  smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
 			  E0_(elastic_solid_.YoungsModulus()),
 			  G0_(elastic_solid_.ShearModulus()),
-			  nu_(elastic_solid_.PoissonRatio())
+			  nu_(elastic_solid_.PoissonRatio()),
+			  hourglass_control_(hourglass_control),
+			  number_of_gaussian_points_(number_of_gaussian_points)
 		{
 			/** Note that, only three-point and five-point Gaussian quadrature rules are defined. */
 			switch (number_of_gaussian_points)
@@ -181,12 +180,17 @@ namespace SPH
 					transformation_matrix_[index_i] * current_transformation_matrix.transpose();
 
 				/** correct Almansi strain tensor according to plane stress problem. */
-				current_local_almansi_strain = getCorrectedAlmansiStrain(current_local_almansi_strain, nu_);
+				current_local_almansi_strain = getCorrectedAlmansiStrain(current_local_almansi_strain, nu_); 
+
+				/** correct out-plane numerical damping. */
+				Matd numerical_damping = current_transformation_matrix * transformation_matrix_[index_i].transpose() * F_gaussian_point *
+					elastic_solid_.NumericalDampingRightCauchy(F_gaussian_point, dF_gaussian_point_dt, smoothing_length_, index_i)
+					* F_gaussian_point.transpose() * transformation_matrix_[index_i] * current_transformation_matrix.transpose() 
+					/ F_gaussian_point.determinant();
+				numerical_damping.col(Dimensions - 1) *= thickness_[index_i] / smoothing_length_;
 				
-				Matd cauchy_stress = elastic_solid_.StressCauchy(current_local_almansi_strain, F_gaussian_point, index_i) + 
-					current_transformation_matrix * transformation_matrix_[index_i].transpose() * F_gaussian_point * 
-					elastic_solid_.NumericalDampingRightCauchy(F_gaussian_point, dF_gaussian_point_dt, smoothing_length_, index_i) 
-					* F_gaussian_point.transpose() * transformation_matrix_[index_i] * current_transformation_matrix.transpose() / F_gaussian_point.determinant();
+				Matd cauchy_stress = elastic_solid_.StressCauchy(current_local_almansi_strain, F_gaussian_point, index_i) + numerical_damping;
+					
 
 				/** Impose modeling assumptions. */
 				cauchy_stress.col(Dimensions - 1) *= shear_correction_factor_;
@@ -249,8 +253,8 @@ namespace SPH
 						pseudo_n_[index_j] - n0_[index_j],
 						transformation_matrix_[index_j].transpose() * F_bending_[index_j] * transformation_matrix_[index_j]);
 					Vecd rotation_jump = getRotationJump(pseudo_n_jump, transformation_matrix_[index_i]);
-					pseudo_normal_acceleration += hourglass_control_factor_ / 3.0 * weight * Dimensions * r_ij * G0_ * rotation_jump * 
-												  inner_neighborhood.dW_ijV_j_[n] * thickness_[index_i];
+					pseudo_normal_acceleration += hourglass_control_factor_ * weight * G0_ * rotation_jump * dim_inv_r_ij *
+												  inner_neighborhood.dW_ijV_j_[n] * powerN(thickness_[index_i], 3);
 				}
 
 				acceleration += (global_stress_i + global_stress_[index_j]) * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
@@ -310,9 +314,8 @@ namespace SPH
 		//=================================================================================================//
 		ConstrainShellBodyRegion::
 			ConstrainShellBodyRegion(BodyPartByParticle &body_part)
-			: LocalDynamics(body_part.getSPHBody()), ShellDataSimple(sph_body_),
-			  vel_(particles_->vel_), angular_vel_(particles_->angular_vel_)
-		{}
+			: BaseLocalDynamics<BodyPartByParticle>(body_part), ShellDataSimple(sph_body_),
+			  vel_(particles_->vel_), angular_vel_(particles_->angular_vel_) {}
 		//=================================================================================================//
 		void ConstrainShellBodyRegion::update(size_t index_i, Real dt)
 		{
@@ -321,16 +324,10 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ConstrainShellBodyRegionAlongAxis::ConstrainShellBodyRegionAlongAxis(BodyPartByParticle &body_part, int axis)
-			: LocalDynamics(body_part.getSPHBody())
-			, ShellDataSimple(sph_body_)
-			, axis_(axis), pos_(particles_->pos_)
-			, pos0_(particles_->pos0_)
-			, vel_(particles_->vel_)
-			, acc_(particles_->acc_)
-			, rotation_(particles_->rotation_)
-			, angular_vel_(particles_->angular_vel_)
-			, dangular_vel_dt_(particles_->dangular_vel_dt_) 
-		{}
+			: BaseLocalDynamics<BodyPartByParticle>(body_part), ShellDataSimple(sph_body_), 
+			axis_(axis), pos_(particles_->pos_), pos0_(particles_->pos0_), vel_(particles_->vel_), 
+			acc_(particles_->acc_), rotation_(particles_->rotation_), angular_vel_(particles_->angular_vel_), 
+			dangular_vel_dt_(particles_->dangular_vel_dt_) {}
 		//=================================================================================================//
 		void ConstrainShellBodyRegionAlongAxis::update(size_t index_i, Real dt)
 		{
@@ -354,7 +351,7 @@ namespace SPH
 			  pos0_(particles_->pos0_), acc_prior_(particles_->acc_prior_),
 			  thickness_(particles_->thickness_)
 		{
-			for (int i = 0; i < point_forces_.size(); i++)
+			for (size_t i = 0; i < point_forces_.size(); i++)
 			{
 				weight_.push_back(StdLargeVec<Real>(0.0));
 				time_dependent_point_forces_.push_back(Vecd::Zero());
@@ -372,7 +369,7 @@ namespace SPH
 			Real smoothing_length = h_spacing_ratio_ * particle_spacing_ref_;
 			Real h_ratio = reference_smoothing_length / smoothing_length;
 			Real cutoff_radius_sqr = powerN(2.0 * smoothing_length, 2);
-			for (int i = 0; i < point_forces_.size(); ++i)
+			for (size_t i = 0; i < point_forces_.size(); ++i)
 			{
 				sum_of_weight_[i] = 0.0;
 				for (size_t index = 0; index < particles_->total_real_particles_; ++index)
@@ -391,7 +388,7 @@ namespace SPH
 		void DistributingPointForcesToShell::setupDynamics(Real dt)
 		{
 			Real current_time = GlobalStaticVariables::physical_time_;
-			for (int i = 0; i < point_forces_.size(); ++i)
+			for (size_t i = 0; i < point_forces_.size(); ++i)
 			{
 				time_dependent_point_forces_[i] = current_time < time_to_full_external_force_
 													  ? current_time * point_forces_[i] / time_to_full_external_force_
@@ -402,7 +399,7 @@ namespace SPH
 		void DistributingPointForcesToShell::update(size_t index_i, Real dt)
 		{
 			acc_prior_[index_i] = Vecd::Zero();
-			for (int i = 0; i < point_forces_.size(); ++i)
+			for (size_t i = 0; i < point_forces_.size(); ++i)
 			{
 				Vecd force = weight_[i][index_i] / (sum_of_weight_[i] + TinyReal) * time_dependent_point_forces_[i];
 				acc_prior_[index_i] += force / particles_->ParticleMass(index_i);

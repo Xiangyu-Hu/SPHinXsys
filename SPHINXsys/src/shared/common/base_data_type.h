@@ -127,22 +127,22 @@ namespace SPH
 	template <>
 	struct DataTypeIndex<Vec3d>
 	{
-		static constexpr int value = 1;
+		static constexpr int value = 2;
 	};
 	template <>
 	struct DataTypeIndex<Mat2d>
 	{
-		static constexpr int value = 2;
+		static constexpr int value = 3;
 	};
 	template <>
 	struct DataTypeIndex<Mat3d>
 	{
-		static constexpr int value = 2;
+		static constexpr int value = 4;
 	};
 	template <>
 	struct DataTypeIndex<int>
 	{
-		static constexpr int value = 3;
+		static constexpr int value = 5;
 	};
 	/** Useful float point constants. */
 	constexpr size_t MaxSize_t = std::numeric_limits<size_t>::max();
