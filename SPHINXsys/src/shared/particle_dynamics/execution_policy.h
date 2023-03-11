@@ -21,9 +21,10 @@
  *                                                                          *
  * ------------------------------------------------------------------------*/
 /**
- * @file 	exceution_policy.h
- * @brief 	This is for the base functions for particle iterator.
- * @author	Chi ZHang and Xiangyu Hu
+ * @file 	execution_policy.h
+ * @brief 	Here we define the execution policy relevant to parallel computing.
+ * @details This analog of the standard library on the same functions.
+ * @author	Xiangyu Hu
  */
 
 #ifndef EXECUTION_POLICY_H

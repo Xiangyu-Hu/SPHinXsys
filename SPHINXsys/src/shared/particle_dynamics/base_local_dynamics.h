@@ -23,7 +23,7 @@
 /**
  * @file    base_local_dynamics.h
  * @brief 	This is for the base classes of local particle dynamics, which describe the
- * 			dynamics of a particle.
+ * 			dynamics of a particle and it neighbors.
  * @author	Chi ZHang and Xiangyu Hu
  */
 
@@ -36,9 +36,6 @@
 
 namespace SPH
 {
-	/** Functor for operation on particles. */
-	typedef std::function<void(size_t, Real)> ParticleFunctor;
-
 	/** A Functor for Summation */
 	template <class ReturnType>
 	struct ReduceSum
@@ -90,7 +87,7 @@ namespace SPH
 
 	/**
 	 * @class BaseLocalDynamics
-	 * @brief The new version of base class for all local particle dynamics.
+	 * @brief The base class for all local particle dynamics.
 	 */
 	template <class DynamicsIdentifier>
 	class BaseLocalDynamics
@@ -110,7 +107,7 @@ namespace SPH
 
 	/**
 	 * @class BaseLocalDynamicsReduce
-	 * @brief The new version of base class for all local particle dynamics.
+	 * @brief The base class for all local particle dynamics for reducing.
 	 */
 	template <typename ReturnType, typename Operation, class DynamicsIdentifier>
 	class BaseLocalDynamicsReduce : public BaseLocalDynamics<DynamicsIdentifier>

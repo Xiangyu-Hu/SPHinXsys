@@ -79,7 +79,7 @@ namespace SPH
 			is_newly_updated_ = true;
 		};
 
-		/** There is the only interface functions can be called from outside. */
+		/** There is the interface functions for computing. */
 		virtual ReturnType exec(Real dt = 0.0) = 0;
 
 	private:
@@ -89,7 +89,7 @@ namespace SPH
 
 	/**
 	 * @class DataDelegateBase
-	 * @brief empty base class mixin template.
+	 * @brief empty base class for mixin template.
 	 */
 	class DataDelegateEmptyBase
 	{

@@ -171,7 +171,7 @@ namespace SPH
 		ReduceAverage(DynamicsIdentifier &identifier, Args &&...args)
 			: ReduceDynamics<LocalDynamicsType, ExecutionPolicy>(identifier, std::forward<Args>(args)...){};
 		virtual ~ReduceAverage(){};
-		/** The sequential function for executing the average operations on particles. */
+
 		virtual ReturnType exec(Real dt = 0.0) override
 		{
 			ReturnType sum = ReduceDynamics<LocalDynamicsType, ExecutionPolicy>::exec(dt);
