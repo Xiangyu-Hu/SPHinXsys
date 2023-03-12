@@ -192,64 +192,6 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void CellLinkedList::
-		tagOneSideBoundingCells(CellLists &cell_data_lists, BoundingBox &bounding_bounds, int axis, bool positive)
-	{
-		int second_axis = SecondAxis(axis);
-		int third_axis = ThirdAxis(axis);
-		Vecu body_lower_bound_cell_ = CellIndexFromPosition(bounding_bounds.first_);
-		Vecu body_upper_bound_cell_ = CellIndexFromPosition(bounding_bounds.second_);
-
-		if (positive)
-		{
-			// upper bound cells
-			for (size_t k = SMAX(int(body_lower_bound_cell_[third_axis]) - 1, 0);
-				 k < (size_t)SMIN(int(body_upper_bound_cell_[third_axis] + 2), int(number_of_cells_[third_axis])); ++k)
-			{
-
-				for (size_t j = SMAX(int(body_lower_bound_cell_[second_axis]) - 1, 0);
-					 j < (size_t)SMIN(int(body_upper_bound_cell_[second_axis] + 2), int(number_of_cells_[second_axis])); ++j)
-				{
-
-					for (size_t i = SMAX(int(body_upper_bound_cell_[axis]) - 1, 0);
-						 i <= (size_t)SMIN(int(body_upper_bound_cell_[axis] + 1), int(number_of_cells_[axis] - 1)); ++i)
-					{
-						Vecu cell_position = Vecu::Zero();
-						cell_position[axis] = i;
-						cell_position[second_axis] = j;
-						cell_position[third_axis] = k;
-						cell_data_lists.first.push_back(&cell_index_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
-						cell_data_lists.second.push_back(&cell_data_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
-					}
-				}
-			}
-		}
-		else
-		{
-			// lower bound cells
-			for (size_t k = SMAX(int(body_lower_bound_cell_[third_axis]) - 1, 0);
-				 k < (size_t)SMIN(int(body_upper_bound_cell_[third_axis] + 2), int(number_of_cells_[third_axis])); ++k)
-			{
-
-				for (size_t j = SMAX(int(body_lower_bound_cell_[second_axis]) - 1, 0);
-					 j < (size_t)SMIN(int(body_upper_bound_cell_[second_axis] + 2), int(number_of_cells_[second_axis])); ++j)
-				{
-
-					for (size_t i = SMAX(int(body_lower_bound_cell_[axis]) - 1, 0);
-						 i <= (size_t)SMIN(int(body_lower_bound_cell_[axis] + 1), int(number_of_cells_[axis] - 1)); ++i)
-					{
-						Vecu cell_position = Vecu::Zero();
-						cell_position[axis] = i;
-						cell_position[second_axis] = j;
-						cell_position[third_axis] = k;
-						cell_data_lists.first.push_back(&cell_index_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
-						cell_data_lists.second.push_back(&cell_data_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
-					}
-				}
-			}
-		}
-	}
-	//=================================================================================================//
 	void CellLinkedList::writeMeshFieldToPlt(std::ofstream &output_file)
 	{
 		Vecu number_of_operation = number_of_cells_;
