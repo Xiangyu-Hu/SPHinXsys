@@ -88,11 +88,13 @@ namespace SPH
 	{
 	};
 
+	using namespace execution;
+
 	/**
 	 * @class SimpleDynamics
 	 * @brief Simple particle dynamics without considering particle interaction
 	 */
-	template <class LocalDynamicsType>
+	template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
 	class SimpleDynamics : public LocalDynamicsType, public BaseDynamics<void>
 	{
 	public:
@@ -106,23 +108,15 @@ namespace SPH
 						  "LocalDynamicsType does not fulfill SimpleDynamics requirements");
 		};
 		virtual ~SimpleDynamics(){};
-		/** The sequential function for executing the operations on particles. */
+
 		virtual void exec(Real dt = 0.0) override
 		{
 			this->setUpdated();
 			this->setupDynamics(dt);
-			particle_for(this->identifier_.LoopRange(),
+			particle_for(ExecutionPolicy(),
+						 this->identifier_.LoopRange(),
 						 [&](size_t i)
 						 { this->update(i, dt); });
-		};
-		/** The parallel function for executing the operations on particles. */
-		virtual void parallel_exec(Real dt = 0.0) override
-		{
-			this->setUpdated();
-			this->setupDynamics(dt);
-			particle_parallel_for(this->identifier_.LoopRange(),
-								  [&](size_t i)
-								  { this->update(i, dt); });
 		};
 	};
 
@@ -130,7 +124,7 @@ namespace SPH
 	 * @class ReduceDynamics
 	 * @brief Template class for particle-wise reduce operation, summation, max or min.
 	 */
-	template <class LocalDynamicsType>
+	template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
 	class ReduceDynamics : public LocalDynamicsType,
 						   public BaseDynamics<typename LocalDynamicsType::ReduceReturnType>
 
@@ -147,24 +141,14 @@ namespace SPH
 		using ReduceReturnType = ReturnType;
 		std::string QuantityName() { return this->quantity_name_; };
 		std::string DynamicsIdentifierName() { return this->identifier_.getName(); };
-		/** The sequential function for executing the reduce operations on particles. */
+
 		virtual ReturnType exec(Real dt = 0.0) override
 		{
 			this->setupDynamics(dt);
-			ReturnType temp = particle_reduce(
-				this->identifier_.LoopRange(), this->Reference(), this->getOperation(),
-				[&](size_t i) -> ReturnType
-				{ return this->reduce(i, dt); });
-			return this->outputResult(temp);
-		};
-		/** The parallel function for executing the reduce operations on particles. */
-		virtual ReturnType parallel_exec(Real dt = 0.0) override
-		{
-			this->setupDynamics(dt);
-			ReturnType temp = particle_parallel_reduce(
-				this->identifier_.LoopRange(), this->Reference(), this->getOperation(),
-				[&](size_t i) -> ReturnType
-				{ return this->reduce(i, dt); });
+			ReturnType temp = particle_reduce(ExecutionPolicy(),
+											  this->identifier_.LoopRange(), this->Reference(), this->getOperation(),
+											  [&](size_t i) -> ReturnType
+											  { return this->reduce(i, dt); });
 			return this->outputResult(temp);
 		};
 	};
@@ -173,7 +157,7 @@ namespace SPH
 	 * @class ReduceAverage
 	 * @brief Template class for computing particle-wise averages
 	 */
-	template <class LocalDynamicsType>
+	template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
 	class ReduceAverage : public ReduceDynamics<LocalDynamicsType>
 	{
 		using ReturnType = typename LocalDynamicsType::ReduceReturnType;
@@ -185,18 +169,12 @@ namespace SPH
 	public:
 		template <class DynamicsIdentifier, typename... Args>
 		ReduceAverage(DynamicsIdentifier &identifier, Args &&...args)
-			: ReduceDynamics<LocalDynamicsType>(identifier, std::forward<Args>(args)...){};
+			: ReduceDynamics<LocalDynamicsType, ExecutionPolicy>(identifier, std::forward<Args>(args)...){};
 		virtual ~ReduceAverage(){};
-		/** The sequential function for executing the average operations on particles. */
+
 		virtual ReturnType exec(Real dt = 0.0) override
 		{
-			ReturnType sum = ReduceDynamics<LocalDynamicsType>::exec(dt);
-			return outputAverage(sum, this->identifier_.SizeOfLoopRange());
-		};
-		/** The parallel function for executing the average operations on particles. */
-		virtual ReturnType parallel_exec(Real dt = 0.0) override
-		{
-			ReturnType sum = ReduceDynamics<LocalDynamicsType>::parallel_exec(dt);
+			ReturnType sum = ReduceDynamics<LocalDynamicsType, ExecutionPolicy>::exec(dt);
 			return outputAverage(sum, this->identifier_.SizeOfLoopRange());
 		};
 	};
@@ -205,7 +183,7 @@ namespace SPH
 	 * @class BaseInteractionDynamics
 	 * @brief This is the base class for particle interaction with other particles
 	 */
-	template <class LocalDynamicsType>
+	template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
 	class BaseInteractionDynamics : public LocalDynamicsType, public BaseDynamics<void>
 	{
 	public:
@@ -219,11 +197,10 @@ namespace SPH
 		StdVec<BaseDynamics<void> *> pre_processes_;
 		/** post process such as impose constraint */
 		StdVec<BaseDynamics<void> *> post_processes_;
-		/** sequential run the main interaction step between particles. */
+		/** run the main interaction step between particles. */
 		virtual void runMainStep(Real dt) = 0;
-		/** parallel run the main interaction step between particles. */
-		virtual void parallel_runMainStep(Real dt) = 0;
-		/** sequential run the interactions between particles. */
+
+		/** run the interactions between particles. */
 		virtual void runInteraction(Real dt)
 		{
 			for (size_t k = 0; k < this->pre_processes_.size(); ++k)
@@ -234,17 +211,6 @@ namespace SPH
 			for (size_t k = 0; k < this->post_processes_.size(); ++k)
 				this->post_processes_[k]->exec(dt);
 		};
-		/** parallel run the interactions between particles. */
-		virtual void parallel_runInteraction(Real dt)
-		{
-			for (size_t k = 0; k < this->pre_processes_.size(); ++k)
-				this->pre_processes_[k]->parallel_exec(dt);
-
-			parallel_runMainStep(dt);
-
-			for (size_t k = 0; k < this->post_processes_.size(); ++k)
-				this->post_processes_[k]->parallel_exec(dt);
-		};
 
 		virtual void exec(Real dt = 0.0) override
 		{
@@ -252,21 +218,14 @@ namespace SPH
 			this->setupDynamics(dt);
 			runInteraction(dt);
 		};
-
-		virtual void parallel_exec(Real dt = 0.0) override
-		{
-			this->setUpdated();
-			this->setupDynamics(dt);
-			parallel_runInteraction(dt);
-		};
 	};
 
 	/**
 	 * @class InteractionSplit
 	 * @brief This is for the splitting algorithm
 	 */
-	template <class LocalDynamicsType>
-	class InteractionSplit : public BaseInteractionDynamics<LocalDynamicsType>
+	template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
+	class InteractionSplit : public BaseInteractionDynamics<LocalDynamicsType, ParallelPolicy>
 	{
 	protected:
 		RealBody &real_body_;
@@ -275,7 +234,7 @@ namespace SPH
 	public:
 		template <class BodyRelationType, typename... Args>
 		InteractionSplit(BodyRelationType &body_relation, Args &&...args)
-			: BaseInteractionDynamics<LocalDynamicsType>(body_relation, std::forward<Args>(args)...),
+			: BaseInteractionDynamics<LocalDynamicsType, ParallelPolicy>(body_relation, std::forward<Args>(args)...),
 			  real_body_(DynamicCast<RealBody>(this, body_relation.getSPHBody())),
 			  split_cell_lists_(real_body_.getSplitCellLists())
 		{
@@ -285,19 +244,14 @@ namespace SPH
 						  "LocalDynamicsType does not fulfill InteractionSplit requirements");
 		};
 		virtual ~InteractionSplit(){};
-		/** sequential run the main interaction step between particles. */
+
+		/** run the main interaction step between particles. */
 		virtual void runMainStep(Real dt) override
 		{
-			particle_for_split(split_cell_lists_,
-							   [&](size_t i)
-							   { this->interaction(i, dt * 0.5); });
-		}
-		/** parallel run the main interaction step between particles. */
-		virtual void parallel_runMainStep(Real dt) override
-		{
-			particle_parallel_for_split(split_cell_lists_,
-										[&](size_t i)
-										{ this->interaction(i, dt * 0.5); });
+			particle_for(ExecutionPolicy(),
+						 split_cell_lists_,
+						 [&](size_t i)
+						 { this->interaction(i, dt * 0.5); });
 		}
 	};
 
@@ -305,8 +259,8 @@ namespace SPH
 	 * @class InteractionDynamics
 	 * @brief This is the class with a single step of particle interaction with other particles
 	 */
-	template <class LocalDynamicsType>
-	class InteractionDynamics : public BaseInteractionDynamics<LocalDynamicsType>
+	template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
+	class InteractionDynamics : public BaseInteractionDynamics<LocalDynamicsType, ExecutionPolicy>
 	{
 	public:
 		template <class BodyRelationType, typename... Args>
@@ -318,38 +272,33 @@ namespace SPH
 						  "LocalDynamicsType does not fulfill InteractionDynamics requirements");
 		};
 		virtual ~InteractionDynamics(){};
-		/** sequential run the main interaction step between particles. */
+
+		/** run the main interaction step between particles. */
 		virtual void runMainStep(Real dt) override
 		{
-			particle_for(this->identifier_.LoopRange(),
+			particle_for(ExecutionPolicy(),
+						 this->identifier_.LoopRange(),
 						 [&](size_t i)
 						 { this->interaction(i, dt); });
-		}
-		/** parallel run the main interaction step between particles. */
-		virtual void parallel_runMainStep(Real dt) override
-		{
-			particle_parallel_for(this->identifier_.LoopRange(),
-								  [&](size_t i)
-								  { this->interaction(i, dt); });
 		}
 
 	protected:
 		template <class BodyRelationType, typename... Args>
 		InteractionDynamics(bool mostDerived, BodyRelationType &body_relation, Args &&...args)
-			: BaseInteractionDynamics<LocalDynamicsType>(body_relation, std::forward<Args>(args)...){};
+			: BaseInteractionDynamics<LocalDynamicsType, ExecutionPolicy>(body_relation, std::forward<Args>(args)...){};
 	};
 
 	/**
 	 * @class InteractionWithUpdate
 	 * @brief This class includes an interaction and a update steps
 	 */
-	template <class LocalDynamicsType>
-	class InteractionWithUpdate : public InteractionDynamics<LocalDynamicsType>
+	template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
+	class InteractionWithUpdate : public InteractionDynamics<LocalDynamicsType, ExecutionPolicy>
 	{
 	public:
 		template <class BodyRelationType, typename... Args>
 		InteractionWithUpdate(BodyRelationType &body_relation, Args &&...args)
-			: InteractionDynamics<LocalDynamicsType>(false, body_relation, std::forward<Args>(args)...)
+			: InteractionDynamics<LocalDynamicsType, ExecutionPolicy>(false, body_relation, std::forward<Args>(args)...)
 		{
 			static_assert(!has_initialize<LocalDynamicsType>::value,
 						  "LocalDynamicsType does not fulfill InteractionWithUpdate requirements");
@@ -358,18 +307,11 @@ namespace SPH
 
 		virtual void exec(Real dt = 0.0) override
 		{
-			InteractionDynamics<LocalDynamicsType>::exec(dt);
-			particle_for(this->identifier_.LoopRange(),
+			InteractionDynamics<LocalDynamicsType, ExecutionPolicy>::exec(dt);
+			particle_for(ExecutionPolicy(),
+						 this->identifier_.LoopRange(),
 						 [&](size_t i)
 						 { this->update(i, dt); });
-		};
-
-		virtual void parallel_exec(Real dt = 0.0) override
-		{
-			InteractionDynamics<LocalDynamicsType>::parallel_exec(dt);
-			particle_parallel_for(this->identifier_.LoopRange(),
-								  [&](size_t i)
-								  { this->update(i, dt); });
 		};
 	};
 
@@ -379,13 +321,13 @@ namespace SPH
 	 * It is the most complex particle dynamics type,
 	 * and is typically for computing the main fluid and solid dynamics.
 	 */
-	template <class LocalDynamicsType>
-	class Dynamics1Level : public InteractionDynamics<LocalDynamicsType>
+	template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
+	class Dynamics1Level : public InteractionDynamics<LocalDynamicsType, ExecutionPolicy>
 	{
 	public:
 		template <class BodyRelationType, typename... Args>
 		Dynamics1Level(BodyRelationType &body_relation, Args &&...args)
-			: InteractionDynamics<LocalDynamicsType>(
+			: InteractionDynamics<LocalDynamicsType, ExecutionPolicy>(
 				  false, body_relation, std::forward<Args>(args)...) {}
 		virtual ~Dynamics1Level(){};
 
@@ -394,31 +336,17 @@ namespace SPH
 			this->setUpdated();
 			this->setupDynamics(dt);
 
-			particle_for(this->identifier_.LoopRange(),
+			particle_for(ExecutionPolicy(),
+						 this->identifier_.LoopRange(),
 						 [&](size_t i)
 						 { this->initialization(i, dt); });
 
-			InteractionDynamics<LocalDynamicsType>::runInteraction(dt);
+			InteractionDynamics<LocalDynamicsType, ExecutionPolicy>::runInteraction(dt);
 
-			particle_for(this->identifier_.LoopRange(),
+			particle_for(ExecutionPolicy(),
+						 this->identifier_.LoopRange(),
 						 [&](size_t i)
 						 { this->update(i, dt); });
-		};
-
-		virtual void parallel_exec(Real dt = 0.0) override
-		{
-			this->setUpdated();
-			this->setupDynamics(dt);
-
-			particle_parallel_for(this->identifier_.LoopRange(),
-								  [&](size_t i)
-								  { this->initialization(i, dt); });
-
-			InteractionDynamics<LocalDynamicsType>::parallel_runInteraction(dt);
-
-			particle_parallel_for(this->identifier_.LoopRange(),
-								  [&](size_t i)
-								  { this->update(i, dt); });
 		};
 	};
 }

@@ -40,7 +40,6 @@
 
 #include <list>
 
-using namespace tbb;
 /**
  * @class MyMemoryPool
  * @brief Note that the data package T should has a default constructor.

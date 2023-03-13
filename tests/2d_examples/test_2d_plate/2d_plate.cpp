@@ -133,7 +133,7 @@ int main()
 	//----------------------------------------------------------------------
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	corrected_configuration.parallel_exec();
+	corrected_configuration.exec();
 	//----------------------------------------------------------------------
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
@@ -147,8 +147,8 @@ int main()
 	Real output_period = end_time / 100.0;
 	Real dt = 0.0;
 	/** Statistics for computing time. */
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 	//----------------------------------------------------------------------
 	//	Main loop of time stepping starts here.
 	//----------------------------------------------------------------------
@@ -163,28 +163,28 @@ int main()
 						  << GlobalStaticVariables::physical_time_ << "	dt: "
 						  << dt << "\n";
 			}
-			apply_point_force.parallel_exec(dt);
-			stress_relaxation_first_half.parallel_exec(dt);
-			constrain_holder.parallel_exec(dt);
-			plate_position_damping.parallel_exec(dt);
-			plate_rotation_damping.parallel_exec(dt);
-			constrain_holder.parallel_exec(dt);
-			stress_relaxation_second_half.parallel_exec(dt);
+			apply_point_force.exec(dt);
+			stress_relaxation_first_half.exec(dt);
+			constrain_holder.exec(dt);
+			plate_position_damping.exec(dt);
+			plate_rotation_damping.exec(dt);
+			constrain_holder.exec(dt);
+			stress_relaxation_second_half.exec(dt);
 
 			ite++;
-			dt = computing_time_step_size.parallel_exec();
+			dt = computing_time_step_size.exec();
 			integral_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
 		}
 		write_plate_max_displacement.writeToFile(ite);
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		write_states.writeToFile();
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 

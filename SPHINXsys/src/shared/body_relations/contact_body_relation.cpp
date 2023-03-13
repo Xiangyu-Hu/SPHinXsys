@@ -44,11 +44,11 @@ namespace SPH
 	{
 		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{
-			particle_parallel_for(body_part_particles_,
-								  [&](size_t index_i)
-								  {
-									  contact_configuration_[k][index_i].current_size_ = 0;
-								  });
+			particle_for(execution::ParallelPolicy(), body_part_particles_,
+						 [&](size_t index_i)
+						 {
+							 contact_configuration_[k][index_i].current_size_ = 0;
+						 });
 		}
 	}
 	//=================================================================================================//

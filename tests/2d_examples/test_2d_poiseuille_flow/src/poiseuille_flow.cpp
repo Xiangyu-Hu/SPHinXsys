@@ -138,9 +138,9 @@ int main()
 	 * @brief Setup geometry and initial conditions.
 	 */
 	system.initializeSystemCellLinkedLists();
-	periodic_condition.update_cell_linked_list_.parallel_exec();
+	periodic_condition.update_cell_linked_list_.exec();
 	system.initializeSystemConfigurations();
-	wall_boundary_normal_direction.parallel_exec();
+	wall_boundary_normal_direction.exec();
 	/** Output the start states of bodies. */
 	body_states_recording.writeToFile(0);
 	/**
@@ -152,12 +152,12 @@ int main()
 	Real Output_Time = 0.1; /**< Time stamps for output of body states. */
 	Real dt = 0.0;			/**< Default acoustic time step sizes. */
 	/** statistics for computing CPU time. */
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
-	tick_count::interval_t interval_computing_time_step;
-	tick_count::interval_t interval_computing_pressure_relaxation;
-	tick_count::interval_t interval_updating_configuration;
-	tick_count time_instance;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
+	TimeInterval interval_computing_time_step;
+	TimeInterval interval_computing_pressure_relaxation;
+	TimeInterval interval_updating_configuration;
+	TickCount time_instance;
 	/**
 	 * @brief 	Main loop starts here.
 	 */
@@ -168,27 +168,27 @@ int main()
 		while (integration_time < Output_Time)
 		{
 			/** Acceleration due to viscous force and gravity. */
-			time_instance = tick_count::now();
-			initialize_a_fluid_step.parallel_exec();
-			Real Dt = get_fluid_advection_time_step_size.parallel_exec();
-			update_density_by_summation.parallel_exec();
-			//viscous_acceleration.parallel_exec();
-			transport_velocity_correction.parallel_exec();
-			interval_computing_time_step += tick_count::now() - time_instance;
+			time_instance = TickCount::now();
+			initialize_a_fluid_step.exec();
+			Real Dt = get_fluid_advection_time_step_size.exec();
+			update_density_by_summation.exec();
+			//viscous_acceleration.exec();
+			transport_velocity_correction.exec();
+			interval_computing_time_step += TickCount::now() - time_instance;
 			/** Dynamics including pressure relaxation. */
-			time_instance = tick_count::now();
+			time_instance = TickCount::now();
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
-				dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt);
-				pressure_relaxation.parallel_exec(dt);
-				viscous_acceleration.parallel_exec(dt);
-				density_relaxation.parallel_exec(dt);
+				dt = SMIN(get_fluid_time_step_size.exec(), Dt);
+				pressure_relaxation.exec(dt);
+				viscous_acceleration.exec(dt);
+				density_relaxation.exec(dt);
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
 			}
-			interval_computing_pressure_relaxation += tick_count::now() - time_instance;
+			interval_computing_pressure_relaxation += TickCount::now() - time_instance;
 			if (number_of_iterations % screen_output_interval == 0)
 			{
 				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
@@ -197,22 +197,22 @@ int main()
 			}
 			number_of_iterations++;
 			/** Update cell linked list and configuration. */
-			time_instance = tick_count::now();
+			time_instance = TickCount::now();
 			/** Water block configuration and periodic condition. */
-			periodic_condition.bounding_.parallel_exec();
+			periodic_condition.bounding_.exec();
 			water_block.updateCellLinkedListWithParticleSort(100);
-			periodic_condition.update_cell_linked_list_.parallel_exec();
+			periodic_condition.update_cell_linked_list_.exec();
 			water_block_complex.updateConfiguration();
-			interval_updating_configuration += tick_count::now() - time_instance;
+			interval_updating_configuration += TickCount::now() - time_instance;
 		}
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		body_states_recording.writeToFile();
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds()
 			  << " seconds." << std::endl;

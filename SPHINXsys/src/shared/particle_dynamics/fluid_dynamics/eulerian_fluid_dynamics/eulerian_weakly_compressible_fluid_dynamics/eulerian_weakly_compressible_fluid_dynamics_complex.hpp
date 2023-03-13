@@ -43,8 +43,8 @@ namespace SPH
 		template <class BaseIntegrationType>
 		template <class BaseBodyRelationType>
 		InteractionWithWall<BaseIntegrationType>::
-			InteractionWithWall(BaseBodyRelationType &base_body_relation,
-								BaseContactRelation &wall_contact_relation) : BaseIntegrationType(base_body_relation), WCFluidWallData(wall_contact_relation)
+			InteractionWithWall(BaseBodyRelationType &base_body_relation, BaseContactRelation &wall_contact_relation)
+			: BaseIntegrationType(base_body_relation), WCFluidWallData(wall_contact_relation)
 		{
 			if (&base_body_relation.getSPHBody() != &wall_contact_relation.getSPHBody())
 			{
@@ -71,7 +71,8 @@ namespace SPH
 			: InteractionWithWall<BaseViscousAccelerationType>(base_body_relation, wall_contact_relation) {}
 		//=================================================================================================//
 		template <class BaseViscousAccelerationType>
-		void ViscousWithWall<BaseViscousAccelerationType>::interaction(size_t index_i, Real dt)
+		void ViscousWithWall<BaseViscousAccelerationType>::
+			interaction(size_t index_i, Real dt)
 		{
 			BaseViscousAccelerationType::interaction(index_i, dt);
 
@@ -123,7 +124,8 @@ namespace SPH
 			: InteractionWithWall<BaseIntegration1stHalfType>(base_body_relation, wall_contact_relation) {}
 		//=================================================================================================//
 		template <class BaseIntegration1stHalfType>
-		void BaseIntegration1stHalfWithWall<BaseIntegration1stHalfType>::interaction(size_t index_i, Real dt)
+		void BaseIntegration1stHalfWithWall<BaseIntegration1stHalfType>::
+			interaction(size_t index_i, Real dt)
 		{
 			BaseIntegration1stHalfType::interaction(index_i, dt);
 
@@ -146,7 +148,7 @@ namespace SPH
 					FluidState state_j(rho_in_wall, vel_in_wall, p_in_wall);
 					FluidStarState interface_state = this->riemann_solver_.getInterfaceState(state_i, state_j, n_k[index_j]);
 					Real rho_star = this->fluid_.DensityFromPressure(interface_state.p_);
-					
+
 					momentum_change_rate -= 2.0 * ((rho_star * interface_state.vel_) * interface_state.vel_.transpose() + interface_state.p_ * Matd::Identity()) * e_ij * dW_ijV_j;
 				}
 			}
@@ -161,7 +163,8 @@ namespace SPH
 			: InteractionWithWall<BaseIntegration2ndHalfType>(base_body_relation, wall_contact_relation) {}
 		//=================================================================================================//
 		template <class BaseIntegration2ndHalfType>
-		void BaseIntegration2ndHalfWithWall<BaseIntegration2ndHalfType>::interaction(size_t index_i, Real dt)
+		void BaseIntegration2ndHalfWithWall<BaseIntegration2ndHalfType>::
+			interaction(size_t index_i, Real dt)
 		{
 			BaseIntegration2ndHalfType::interaction(index_i, dt);
 

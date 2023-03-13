@@ -78,7 +78,7 @@ namespace SPH
 
 		virtual void writeWithFileName(const std::string &sequence) override
 		{
-			this->parallel_exec();
+			this->exec();
 			std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
 			out_file << GlobalStaticVariables::physical_time_ << "   ";
 			for (size_t i = 0; i != base_particles_.total_real_particles_; ++i)
@@ -137,7 +137,7 @@ namespace SPH
 		{
 			std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
 			out_file << GlobalStaticVariables::physical_time_ << "   ";
-			plt_engine_.writeAQuantity(out_file, reduce_method_.parallel_exec());
+			plt_engine_.writeAQuantity(out_file, reduce_method_.exec());
 			out_file << "\n";
 			out_file.close();
 		};

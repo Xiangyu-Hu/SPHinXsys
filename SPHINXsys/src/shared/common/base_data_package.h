@@ -40,7 +40,6 @@ namespace SPH
 {
     constexpr Real OneOverDimensions = 1.0 / (Real)Dimensions;
 
-    typedef blocked_range<size_t> IndexRange;
     /** Generalized data container assemble type */
     template <template <typename DataType> typename DataContainerType>
     using DataContainerAssemble =

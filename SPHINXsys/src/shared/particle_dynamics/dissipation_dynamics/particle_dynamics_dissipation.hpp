@@ -66,7 +66,8 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template <typename VariableType>
-	void DampingBySplittingInner<VariableType>::interaction(size_t index_i, Real dt)
+	void DampingBySplittingInner<VariableType>::
+		interaction(size_t index_i, Real dt)
 	{
 		ErrorAndParameters<VariableType> error_and_parameters = computeErrorAndParameters(index_i, dt);
 		updateStates(index_i, dt, error_and_parameters);
@@ -208,7 +209,8 @@ namespace SPH
 		  eta_(eta) {}
 	//=================================================================================================//
 	template <typename VariableType>
-	void DampingPairwiseInner<VariableType>::interaction(size_t index_i, Real dt)
+	void DampingPairwiseInner<VariableType>::
+		interaction(size_t index_i, Real dt)
 	{
 		Real Vol_i = Vol_[index_i];
 		Real mass_i = mass_[index_i];
@@ -265,7 +267,8 @@ namespace SPH
 								 complex_relation.getContactRelation(), variable_name, eta) {}
 	//=================================================================================================//
 	template <typename VariableType>
-	void DampingPairwiseComplex<VariableType>::interaction(size_t index_i, Real dt)
+	void DampingPairwiseComplex<VariableType>::
+		interaction(size_t index_i, Real dt)
 	{
 		DampingPairwiseInner<VariableType>::interaction(index_i, dt);
 
@@ -386,7 +389,8 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template <typename VariableType>
-	void DampingPairwiseFromWall<VariableType>::interaction(size_t index_i, Real dt)
+	void DampingPairwiseFromWall<VariableType>::
+		interaction(size_t index_i, Real dt)
 	{
 		Real Vol_i = Vol_[index_i];
 		Real mass_i = mass_[index_i];
@@ -424,7 +428,7 @@ namespace SPH
 	template <typename... ConstructorArgs>
 	DampingWithRandomChoice<DampingAlgorithmType>::
 		DampingWithRandomChoice(Real random_ratio, ConstructorArgs &&...args)
-		: DampingAlgorithmType(std::forward<ConstructorArgs>(args)...), random_ratio_(random_ratio) 
+		: DampingAlgorithmType(std::forward<ConstructorArgs>(args)...), random_ratio_(random_ratio)
 	{
 		this->eta_ /= random_ratio;
 	}
@@ -440,13 +444,6 @@ namespace SPH
 	{
 		if (RandomChoice())
 			DampingAlgorithmType::exec(dt);
-	}
-	//=================================================================================================//
-	template <class DampingAlgorithmType>
-	void DampingWithRandomChoice<DampingAlgorithmType>::parallel_exec(Real dt)
-	{
-		if (RandomChoice())
-			DampingAlgorithmType::parallel_exec(dt);
 	}
 	//=================================================================================================//
 }

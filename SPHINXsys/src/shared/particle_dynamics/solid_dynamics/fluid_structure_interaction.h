@@ -68,7 +68,33 @@ namespace SPH
 		public:
 			explicit ViscousForceFromFluid(BaseContactRelation &contact_relation);
 			virtual ~ViscousForceFromFluid(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+
+			inline void interaction(size_t index_i, Real dt = 0.0)
+			{
+				Real Vol_i = Vol_[index_i];
+				const Vecd &vel_ave_i = vel_ave_[index_i];
+
+				Vecd force = Vecd::Zero();
+				/** Contact interaction. */
+				for (size_t k = 0; k < contact_configuration_.size(); ++k)
+				{
+					Real mu_k = mu_[k];
+					Real smoothing_length_k = smoothing_length_[k];
+					StdLargeVec<Vecd> &vel_n_k = *(contact_vel_n_[k]);
+					Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+					for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+					{
+						size_t index_j = contact_neighborhood.j_[n];
+
+						Vecd vel_derivative = 2.0 * (vel_ave_i - vel_n_k[index_j]) /
+											  (contact_neighborhood.r_ij_[n] + 0.01 * smoothing_length_k);
+
+						force += 2.0 * mu_k * vel_derivative * Vol_i * contact_neighborhood.dW_ijV_j_[n];
+					}
+				}
+
+				force_from_fluid_[index_i] = force;
+			};
 
 		protected:
 			StdLargeVec<Vecd> &vel_ave_;
@@ -95,7 +121,7 @@ namespace SPH
 			};
 			virtual ~BasePressureForceAccelerationFromFluid(){};
 
-			void interaction(size_t index_i, Real dt = 0.0)
+			inline void interaction(size_t index_i, Real dt = 0.0)
 			{
 				Vecd force = Vecd::Zero();
 				for (size_t k = 0; k < contact_configuration_.size(); ++k)
@@ -165,7 +191,7 @@ namespace SPH
 			};
 			virtual ~BaseAllForceAccelerationFromFluid(){};
 
-			void interaction(size_t index_i, Real dt = 0.0)
+			inline void interaction(size_t index_i, Real dt = 0.0)
 			{
 				PressureForceType::interaction(index_i, dt);
 				this->force_from_fluid_[index_i] += viscous_force_from_fluid_[index_i];

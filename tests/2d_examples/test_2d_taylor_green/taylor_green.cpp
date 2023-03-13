@@ -119,10 +119,10 @@ int main(int ac, char *av[])
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
 	//----------------------------------------------------------------------
-	initial_condition.parallel_exec();
+	initial_condition.exec();
 	sph_system.initializeSystemCellLinkedLists();
-	periodic_condition_x.update_cell_linked_list_.parallel_exec();
-	periodic_condition_y.update_cell_linked_list_.parallel_exec();
+	periodic_condition_x.update_cell_linked_list_.exec();
+	periodic_condition_y.update_cell_linked_list_.exec();
 	sph_system.initializeSystemConfigurations();
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
@@ -135,8 +135,8 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
 	//----------------------------------------------------------------------
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 	//----------------------------------------------------------------------
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
@@ -147,21 +147,21 @@ int main(int ac, char *av[])
 		Real integration_time = 0.0;
 		while (integration_time < output_interval)
 		{
-			time_step_initialization.parallel_exec();
-			Real Dt = get_fluid_advection_time_step_size.parallel_exec();
-			update_density_by_summation.parallel_exec();
-			viscous_acceleration.parallel_exec();
-			transport_velocity_correction.parallel_exec();
+			time_step_initialization.exec();
+			Real Dt = get_fluid_advection_time_step_size.exec();
+			update_density_by_summation.exec();
+			viscous_acceleration.exec();
+			transport_velocity_correction.exec();
 
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
 				// avoid possible smaller acoustic time step size for viscous flow
-				dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt);
+				dt = SMIN(get_fluid_time_step_size.exec(), Dt);
 				relaxation_time += dt;
 				integration_time += dt;
-				pressure_relaxation.parallel_exec(dt);
-				density_relaxation.parallel_exec(dt);
+				pressure_relaxation.exec(dt);
+				density_relaxation.exec(dt);
 				GlobalStaticVariables::physical_time_ += dt;
 			}
 
@@ -174,24 +174,24 @@ int main(int ac, char *av[])
 			number_of_iterations++;
 
 			/** Water block configuration and periodic condition. */
-			periodic_condition_x.bounding_.parallel_exec();
-			periodic_condition_y.bounding_.parallel_exec();
+			periodic_condition_x.bounding_.exec();
+			periodic_condition_y.bounding_.exec();
 			water_block.updateCellLinkedList();
-			periodic_condition_x.update_cell_linked_list_.parallel_exec();
-			periodic_condition_y.update_cell_linked_list_.parallel_exec();
+			periodic_condition_x.update_cell_linked_list_.exec();
+			periodic_condition_y.update_cell_linked_list_.exec();
 			water_block_inner.updateConfiguration();
 		}
 
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		write_total_mechanical_energy.writeToFile(number_of_iterations);
 		write_maximum_speed.writeToFile(number_of_iterations);
 		body_states_recording.writeToFile();
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds()
 			  << " seconds." << std::endl;

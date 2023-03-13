@@ -79,10 +79,10 @@ namespace SPH
     void mesh_parallel_for(const MeshRange &mesh_range, const LocalFunction &local_function, Args &&...args)
     {
         parallel_for(
-            blocked_range3d<size_t>((mesh_range.first)[0], (mesh_range.second)[0],
+            IndexRange3d((mesh_range.first)[0], (mesh_range.second)[0],
                                     (mesh_range.first)[1], (mesh_range.second)[1],
                                     (mesh_range.first)[2], (mesh_range.second)[2]),
-            [&](const blocked_range3d<size_t> &r)
+            [&](const IndexRange3d &r)
             {
                 for (size_t i = r.pages().begin(); i != r.pages().end(); ++i)
                     for (size_t j = r.rows().begin(); j != r.rows().end(); ++j)

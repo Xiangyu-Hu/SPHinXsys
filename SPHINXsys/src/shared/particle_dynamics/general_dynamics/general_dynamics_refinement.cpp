@@ -315,15 +315,6 @@ namespace SPH
         sph_body.allocateConfigurationMemoriesForBufferParticles();
     }
     //=================================================================================================//
-    void ParticleSplitWithPrescribedArea::interaction(size_t index_i, Real dt)
-    {
-        if (splitCriteria(index_i))
-        {
-            StdVec<size_t> new_indices;
-            splittingModel(index_i, new_indices);
-        }
-    }
-    //=================================================================================================//
     bool ParticleSplitWithPrescribedArea::splitCriteria(size_t index_i)
     {
         Real non_deformed_volume = mass_[index_i] * inv_rho0_;
@@ -456,20 +447,6 @@ namespace SPH
         for (size_t index_i = 0; index_i != particles_->total_real_particles_; ++index_i)
         {
             tag_merged_.push_back(false);
-        }
-    }
-    //=================================================================================================//
-    void ParticleMergeWithPrescribedArea::interaction(size_t index_i, Real dt)
-    {
-        if (!tag_merged_[index_i])
-        {
-            StdVec<size_t> merge_indices; // three particles for merging to two
-            if (mergeCriteria(index_i, merge_indices))
-            {
-                merge_indices.push_back(index_i);
-                tag_merged_[index_i] = true;
-                mergingModel(merge_indices);
-            }
         }
     }
     //=================================================================================================//

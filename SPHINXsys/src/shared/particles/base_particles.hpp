@@ -247,7 +247,7 @@ namespace SPH
         // compute derived particle variables
         for (auto &derived_variable : derived_variables_)
         {
-            derived_variable->parallel_exec();
+            derived_variable->exec();
         }
 
         // write integers
