@@ -108,11 +108,11 @@ namespace SPH
 			{
 				setupDynamics(dt);
 
-				particle_for(ExecutionPolicy::generatePolicy(), bound_cells_data_[0].first,
+				particle_for(ExecutionPolicy(), bound_cells_data_[0].first,
 							 [&](size_t i)
 							 { checkLowerBound(i, dt); });
 
-				particle_for(ExecutionPolicy::generatePolicy(), bound_cells_data_[1].first,
+				particle_for(ExecutionPolicy(), bound_cells_data_[1].first,
 							 [&](size_t i)
 							 { checkUpperBound(i, dt); });
 			};

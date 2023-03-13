@@ -53,11 +53,11 @@ namespace SPH
 	{
 		setupDynamics(dt);
 
-		particle_for(execution::ParallelPolicy::generatePolicy(), bound_cells_data_[0].second,
+		particle_for(execution::ParallelPolicy(), bound_cells_data_[0].second,
 					 [&](ListDataVector *cell_ist)
 					 { checkLowerBound(*cell_ist, dt); });
 
-		particle_for(execution::ParallelPolicy::generatePolicy(), bound_cells_data_[1].second,
+		particle_for(execution::ParallelPolicy(), bound_cells_data_[1].second,
 					 [&](ListDataVector *cell_ist)
 					 { checkUpperBound(*cell_ist, dt); });
 	}
@@ -120,11 +120,11 @@ namespace SPH
 	{
 		setupDynamics(dt);
 
-		particle_for(execution::ParallelPolicy::generatePolicy(), ghost_particles_[0],
+		particle_for(execution::ParallelPolicy(), ghost_particles_[0],
 					 [&](size_t i)
 					 { checkLowerBound(i, dt); });
 
-		particle_for(execution::ParallelPolicy::generatePolicy(), ghost_particles_[1],
+		particle_for(execution::ParallelPolicy(), ghost_particles_[1],
 					 [&](size_t i)
 					 { checkUpperBound(i, dt); });
 	}

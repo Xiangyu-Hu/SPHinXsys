@@ -24,7 +24,7 @@
  * @file 	execution_policy.h
  * @brief 	Here we define the execution policy relevant to parallel computing.
  * @details This analog of the standard library on the same functions.
- * @author	Xiangyu Hu
+ * @author	Xiangyu Hu and  Fabien Pean
  */
 
 #ifndef EXECUTION_POLICY_H
@@ -34,42 +34,18 @@ namespace SPH
 {
     namespace execution
     {
-        class SequencedPolicy
-        {
-        public:
-            inline constexpr static SequencedPolicy generatePolicy()
-            {
-                return SequencedPolicy{};
-            };
-        };
+        class SequencedPolicy {};
 
-        class UnsequencedPolicy
-        {
-        public:
-            inline constexpr static UnsequencedPolicy generatePolicy()
-            {
-                return UnsequencedPolicy{};
-            };
-        };
+        class UnsequencedPolicy {};
 
-        class ParallelPolicy
-        {
-        public:
-            inline constexpr static ParallelPolicy generatePolicy()
-            {
-                return ParallelPolicy{};
-            };
-        };
+        class ParallelPolicy {};
 
-        class ParallelUnsequencedPolicy
-        {
-        public:
-            inline constexpr static ParallelUnsequencedPolicy generatePolicy()
-            {
+        class ParallelUnsequencedPolicy {};
 
-                return ParallelUnsequencedPolicy{};
-            };
-        };
+        inline constexpr auto seq = SequencedPolicy{};
+        inline constexpr auto unseq = UnsequencedPolicy{};
+        inline constexpr auto par = ParallelPolicy{};
+        inline constexpr auto par_unseq = ParallelUnsequencedPolicy{};
     }
 }
 #endif // EXECUTION_POLICY_H

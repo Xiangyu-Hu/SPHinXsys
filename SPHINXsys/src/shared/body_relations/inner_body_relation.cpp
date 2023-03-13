@@ -55,7 +55,7 @@ namespace SPH
 	//=================================================================================================//
 	void SelfSurfaceContactRelation::resetNeighborhoodCurrentSize()
 	{
-		particle_for(execution::ParallelPolicy::generatePolicy(), body_part_particles_,
+		particle_for(execution::ParallelPolicy(), body_part_particles_,
 					 [&](size_t index_i)
 					 {
 						 inner_configuration_[index_i].current_size_ = 0;

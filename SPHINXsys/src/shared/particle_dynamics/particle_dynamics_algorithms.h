@@ -113,7 +113,7 @@ namespace SPH
 		{
 			this->setUpdated();
 			this->setupDynamics(dt);
-			particle_for(ExecutionPolicy::generatePolicy(),
+			particle_for(ExecutionPolicy(),
 						 this->identifier_.LoopRange(),
 						 [&](size_t i)
 						 { this->update(i, dt); });
@@ -145,7 +145,7 @@ namespace SPH
 		virtual ReturnType exec(Real dt = 0.0) override
 		{
 			this->setupDynamics(dt);
-			ReturnType temp = particle_reduce(ExecutionPolicy::generatePolicy(),
+			ReturnType temp = particle_reduce(ExecutionPolicy(),
 											  this->identifier_.LoopRange(), this->Reference(), this->getOperation(),
 											  [&](size_t i) -> ReturnType
 											  { return this->reduce(i, dt); });
@@ -248,7 +248,7 @@ namespace SPH
 		/** run the main interaction step between particles. */
 		virtual void runMainStep(Real dt) override
 		{
-			particle_for(ExecutionPolicy::generatePolicy(),
+			particle_for(ExecutionPolicy(),
 						 split_cell_lists_,
 						 [&](size_t i)
 						 { this->interaction(i, dt * 0.5); });
@@ -276,7 +276,7 @@ namespace SPH
 		/** run the main interaction step between particles. */
 		virtual void runMainStep(Real dt) override
 		{
-			particle_for(ExecutionPolicy::generatePolicy(),
+			particle_for(ExecutionPolicy(),
 						 this->identifier_.LoopRange(),
 						 [&](size_t i)
 						 { this->interaction(i, dt); });
@@ -308,7 +308,7 @@ namespace SPH
 		virtual void exec(Real dt = 0.0) override
 		{
 			InteractionDynamics<LocalDynamicsType, ExecutionPolicy>::exec(dt);
-			particle_for(ExecutionPolicy::generatePolicy(),
+			particle_for(ExecutionPolicy(),
 						 this->identifier_.LoopRange(),
 						 [&](size_t i)
 						 { this->update(i, dt); });
@@ -336,14 +336,14 @@ namespace SPH
 			this->setUpdated();
 			this->setupDynamics(dt);
 
-			particle_for(ExecutionPolicy::generatePolicy(),
+			particle_for(ExecutionPolicy(),
 						 this->identifier_.LoopRange(),
 						 [&](size_t i)
 						 { this->initialization(i, dt); });
 
 			InteractionDynamics<LocalDynamicsType, ExecutionPolicy>::runInteraction(dt);
 
-			particle_for(ExecutionPolicy::generatePolicy(),
+			particle_for(ExecutionPolicy(),
 						 this->identifier_.LoopRange(),
 						 [&](size_t i)
 						 { this->update(i, dt); });
