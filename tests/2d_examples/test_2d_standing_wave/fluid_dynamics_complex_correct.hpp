@@ -35,7 +35,7 @@ namespace SPH
 		{
 			BaseIntegration1stHalfCorrectType::interaction(index_i, dt);
 
-			Vecd acc_prior_i = computeNonConservativeAcceleration(index_i);
+			Vecd acc_prior_i = this->acc_prior_[index_i];
 
 			Vecd acceleration = Vecd::Zero();
 			Real rho_dissipation(0);
@@ -59,13 +59,6 @@ namespace SPH
 			this->acc_[index_i] += acceleration / this->rho_[index_i];
 			this->drho_dt_[index_i] += rho_dissipation * this->rho_[index_i];
 		}
-		//=================================================================================================//
-		template <class BaseIntegration1stHalfCorrectType>
-		Vecd BaseIntegration1stHalfCorrectWithWall<BaseIntegration1stHalfCorrectType>::computeNonConservativeAcceleration(size_t index_i)
-		{
-			return this->acc_prior_[index_i];
-		}
-		//=================================================================================================//
 	}
 	//=================================================================================================//
 }

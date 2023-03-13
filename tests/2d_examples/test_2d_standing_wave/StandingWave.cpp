@@ -194,7 +194,7 @@ int main(int ac, char* av[])
 	//	Define the numerical methods used in the simulation.
 	//	Note that there may be data dependence on the sequence of constructions.
 	//----------------------------------------------------------------------
-	InteractionDynamics<GlobalCorrectionMatrixComplex> corrected_configuration_fluid(water_block_complex);
+	InteractionDynamics<GlobalCorrectionMatrix> corrected_configuration_fluid(water_block_complex);
 	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannCorrectWithWall> fluid_pressure_relaxation_correct(water_block_complex);
 	Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_block_complex);
 	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> fluid_density_by_summation(water_block_complex);

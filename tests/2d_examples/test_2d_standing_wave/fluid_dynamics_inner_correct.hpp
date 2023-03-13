@@ -24,6 +24,7 @@
 
 #include "fluid_dynamics_inner_correct.h"
 
+
 namespace SPH
 {
 	//=====================================================================================================//
@@ -32,32 +33,30 @@ namespace SPH
 		//=================================================================================================//
 		template <class RiemannSolverType>
 		BaseIntegration1stHalfCorrect<RiemannSolverType>::BaseIntegration1stHalfCorrect(BaseInnerRelation& inner_relation)
-			: BaseIntegration(inner_relation), riemann_solver_(fluid_, fluid_),
-			B_(*particles_->getVariableByName<Matd>("WeightedCorrectionMatrix"))
+			: BaseIntegration1stHalf<RiemannSolverType>(inner_relation),
+			B_(*this->particles_->getVariableByName<Matd>("WeightedCorrectionMatrix"))
 		{
-			particles_->registerVariable(p_B_, "CorrectedPressure");
+			this->particles_->registerVariable(p_B_, "CorrectedPressure");
 		}
 		//=================================================================================================//
 		template <class RiemannSolverType>
 		void BaseIntegration1stHalfCorrect<RiemannSolverType>::initialization(size_t index_i, Real dt)
 		{
-			rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
-			p_[index_i] = fluid_.getPressure(rho_[index_i]);
-			pos_[index_i] += vel_[index_i] * dt * 0.5;
-			p_B_[index_i] = p_[index_i] * B_[index_i];
+			BaseIntegration1stHalf<RiemannSolverType>::initialization(index_i, dt);
+			p_B_[index_i] = this->p_[index_i] * this->B_[index_i];
 		}
 		//=================================================================================================//
 		template <class RiemannSolverType>
 		void BaseIntegration1stHalfCorrect<RiemannSolverType>::update(size_t index_i, Real dt)
 		{
-			vel_[index_i] += (acc_prior_[index_i] + acc_[index_i]) * dt;
+			BaseIntegration1stHalf<RiemannSolverType>::update(index_i, dt);
 		}
 		//=================================================================================================//
 		template <class RiemannSolverType>
 		Vecd BaseIntegration1stHalfCorrect<RiemannSolverType>::computeNonConservativeAcceleration(size_t index_i)
 		{
-			Vecd acceleration = acc_prior_[index_i] * rho_[index_i];
-			const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+			Vecd acceleration = this->acc_prior_[index_i] * this->rho_[index_i];
+			const Neighborhood& inner_neighborhood = this->inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = inner_neighborhood.j_[n];
@@ -66,7 +65,7 @@ namespace SPH
 
 				acceleration += (p_B_[index_i] - p_B_[index_j]) * dW_ijV_j * e_ij;
 			}
-			return acceleration / rho_[index_i];
+			return acceleration / this->rho_[index_i];
 		}
 		//=================================================================================================//
 		template <class RiemannSolverType>
@@ -74,7 +73,7 @@ namespace SPH
 		{
 			Vecd acceleration = Vecd::Zero();
 			Real rho_dissipation(0);
-			const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+			const Neighborhood& inner_neighborhood = this->inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = inner_neighborhood.j_[n];
@@ -82,10 +81,10 @@ namespace SPH
 				const Vecd& e_ij = inner_neighborhood.e_ij_[n];
 
 				acceleration -= (p_B_[index_i] + p_B_[index_j]) * dW_ijV_j * e_ij;
-				rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_[index_j]) * dW_ijV_j;
+				rho_dissipation += this->riemann_solver_.DissipativeUJump(this->p_[index_i] - this->p_[index_j]) * dW_ijV_j;
 			}
-			acc_[index_i] += acceleration / rho_[index_i];
-			drho_dt_[index_i] = rho_dissipation * rho_[index_i];
+			this->acc_[index_i] += acceleration / this->rho_[index_i];
+			this->drho_dt_[index_i] = rho_dissipation * this->rho_[index_i];
 		}
 	}
 	//=================================================================================================//

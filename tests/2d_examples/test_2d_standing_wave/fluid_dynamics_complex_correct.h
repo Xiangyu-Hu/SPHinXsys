@@ -47,9 +47,6 @@ namespace SPH
 				: InteractionWithWall<BaseIntegration1stHalfCorrectType>(std::forward<Args>(args)...) {};
 			virtual ~BaseIntegration1stHalfCorrectWithWall() {};
 			void interaction(size_t index_i, Real dt = 0.0);
-
-		protected:
-			virtual Vecd computeNonConservativeAcceleration(size_t index_i) override;
 		};
 
 		using Integration1stHalfCorrectWithWall = BaseIntegration1stHalfCorrectWithWall<Integration1stHalfCorrect>;

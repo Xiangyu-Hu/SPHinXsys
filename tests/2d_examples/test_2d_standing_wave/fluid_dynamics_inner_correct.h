@@ -43,15 +43,16 @@ namespace SPH
 		* as template variable
 		*/
 		template <class RiemannSolverType>
-		class BaseIntegration1stHalfCorrect : public BaseIntegration
+		class BaseIntegration1stHalfCorrect : public BaseIntegration1stHalf<RiemannSolverType>
 		{
 		public:
 			explicit BaseIntegration1stHalfCorrect(BaseInnerRelation& inner_relation);
 			virtual ~BaseIntegration1stHalfCorrect() {};
-			RiemannSolverType riemann_solver_;
-			void initialization(size_t index_i, Real dt = 0.0);
-			void interaction(size_t index_i, Real dt = 0.0);
-			void update(size_t index_i, Real dt = 0.0);
+
+			using BaseIntegration1stHalf<RiemannSolverType>::BaseIntegration1stHalf;
+			void initialization(size_t index_i, Real dt);
+			void update(size_t index_i, Real dt);
+			void interaction(size_t index_i, Real dt);
 
 		protected:
 			virtual Vecd computeNonConservativeAcceleration(size_t index_i);
@@ -61,7 +62,6 @@ namespace SPH
 		using Integration1stHalfCorrect = BaseIntegration1stHalfCorrect<NoRiemannSolver>;
 		/** define the mostly used pressure relaxation scheme using Riemann solver */
 		using Integration1stHalfRiemannCorrect = BaseIntegration1stHalfCorrect<AcousticRiemannSolver>;
-		using Integration1stHalfDissipativeRiemannCorrect = BaseIntegration1stHalfCorrect<DissipativeRiemannSolver>;
 	}
 }
 #endif // FLUID_DYNAMICS_INNER_H
