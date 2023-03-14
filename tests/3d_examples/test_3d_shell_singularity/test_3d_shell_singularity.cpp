@@ -52,7 +52,7 @@ BoundingBox get_particles_bounding_box(const VectorType& pos_0)
 
 void read_obj_vertices(StdVec<Vec3d>& pos_0, StdVec<Vec3d>& n_0, const std::string& file_name)
 {
-	std::cout << "read_obj_vertices started" << std::endl;
+	std::cout << "read_obj_vertices started" << "\n";
 
     std::ifstream myfile(file_name, std::ios_base::in);
 	if(!myfile.is_open()) throw std::runtime_error("read_obj_vertices: file doesn't exist");
@@ -76,7 +76,7 @@ void read_obj_vertices(StdVec<Vec3d>& pos_0, StdVec<Vec3d>& n_0, const std::stri
 		}
     }
 
-	std::cout << "read_obj_vertices finished" << std::endl;
+	std::cout << "read_obj_vertices finished" << "\n";
 }
 
 const double get_physical_viscosity_general(const double rho, const double youngs_modulus, const double length_scale, const double shape_constant = 0.4)
@@ -107,7 +107,7 @@ void shell_bending()
 {
 	// main geometric parameters
 	const double scale = 1;
-	const double thickness = 0.2*scale; // 1 mm
+	const double thickness = 0.4*scale; // 1 mm
 
 	// boundary condition parameters
 	const double acc_max = 20 * unit_system::acceleration_unit;
@@ -119,16 +119,14 @@ void shell_bending()
 	// resolution
 	const double dp = thickness;
 	const double total_area = 858.7; // measured in Meshmixer
-	std::cout << "total_area: " << total_area << std::endl;
+	std::cout << "total_area: " << total_area << "\n";
 	// material
 	const double rho = 1e3 * unit_system::density_unit;
 	const double E = 4e5 * unit_system::pressure_unit;
 	const double mu = 0.3;
 	auto material = makeShared<LinearElasticSolid>(rho, E, mu);
-	double physical_viscosity = 7e3;
-	std::cout << "physical_viscosity: " << physical_viscosity << std::endl;
-	physical_viscosity = get_physical_viscosity_general(rho, E, thickness);
-	std::cout << "physical_viscosity: " << physical_viscosity << std::endl;
+	const double physical_viscosity = get_physical_viscosity_general(rho, E, thickness);
+	std::cout << "physical_viscosity: " << physical_viscosity << "\n";
 
 	// system bounding box
 	BoundingBox bb_system;
@@ -141,8 +139,8 @@ void shell_bending()
 	const double particle_area = total_area / obj_vertices.size();
 	// find out BoundingBox
 	bb_system = get_particles_bounding_box(obj_vertices);
-	std::cout << "bb_system.first_: " << bb_system.first_ << std::endl;
-	std::cout << "bb_system.second_: " << bb_system.second_ << std::endl;
+	std::cout << "bb_system.first_: " << bb_system.first_ << "\n";
+	std::cout << "bb_system.second_: " << bb_system.second_ << "\n";
 
 	// shell
 	auto shell_shape = makeShared<ComplexShape>("shell_shape"); // keep all data for parameter study
@@ -220,16 +218,16 @@ void shell_bending()
 					max_rij = std::max(max_rij, r_ij);
 				}
 			}
-			std::cout << "min_rij: " << min_rij << std::endl;
-			std::cout << "max_rij: " << max_rij << std::endl;
+			std::cout << "min_rij: " << min_rij << "\n";
+			std::cout << "max_rij: " << max_rij << "\n";
 			EXPECT_GT(min_rij, dp/2);
 		}
 
 		// test volume
 		const double total_volume = std::accumulate(shell_particles->Vol_.begin(), shell_particles->Vol_.end(), 0.0);
-		std::cout << "total_volume: " << total_volume << std::endl;
+		std::cout << "total_volume: " << total_volume << "\n";
 		const double total_mass = std::accumulate(shell_particles->mass_.begin(), shell_particles->mass_.end(), 0.0);
-		std::cout << "total_mass: " << total_mass << std::endl;
+		std::cout << "total_mass: " << total_mass << "\n";
 		EXPECT_FLOAT_EQ(total_volume, total_area);
 		EXPECT_FLOAT_EQ(total_mass, total_area*rho);
 	}
@@ -293,7 +291,7 @@ void shell_bending()
 				}
 			}
 			{// output data
-				std::cout << "max displacement: " << shell_particles->getMaxDisplacement() << std::endl;
+				std::cout << "max displacement: " << shell_particles->getMaxDisplacement() << "\n";
 				vtp_output.writeToFile(ite);
 			}
 			{// recording - not pushed to GitHub due to lack of matplotlib there
@@ -302,12 +300,12 @@ void shell_bending()
 			}
 		}
 		tick_count::interval_t tt = tick_count::now()-t1;
-		std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-		std::cout << "max displacement: " << shell_particles->getMaxDisplacement() << std::endl;
+		std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << "\n";
+		std::cout << "max displacement: " << shell_particles->getMaxDisplacement() << "\n";
 	}
 	catch(const std::exception& e)
 	{
-		std::cout << "max displacement: " << shell_particles->getMaxDisplacement() << std::endl;
+		std::cout << "max displacement: " << shell_particles->getMaxDisplacement() << "\n";
 		vtp_output.writeToFile(ite);
 		throw std::runtime_error(e.what());
 	}
