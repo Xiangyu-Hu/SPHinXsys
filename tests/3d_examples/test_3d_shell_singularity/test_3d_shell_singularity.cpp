@@ -124,7 +124,7 @@ void shell_bending()
 	const double rho = 1e3 * unit_system::density_unit;
 	const double E = 4e5 * unit_system::pressure_unit;
 	const double mu = 0.3;
-	auto material = makeShared<SaintVenantKirchhoffSolid>(rho, E, mu); // NeoHookean always locks one particle with excessive strain
+	auto material = makeShared<LinearElasticSolid>(rho, E, mu);
 	double physical_viscosity = 7e3;
 	std::cout << "physical_viscosity: " << physical_viscosity << std::endl;
 	physical_viscosity = get_physical_viscosity_general(rho, E, thickness);
@@ -170,7 +170,7 @@ void shell_bending()
 	// pressure boundary condition
 	auto apply_pressure = [&](ElasticSolidParticles& particles)
 	{
-		const double time_ratio = 0.5*M_PI*GlobalStaticVariables::physical_time_/end_time;
+		const double time_ratio = GlobalStaticVariables::physical_time_/end_time;
 		const double acc_temp = acc_max * time_ratio;
 
 		// force application
@@ -178,15 +178,8 @@ void shell_bending()
 		{
 			if (particles.pos0_[i][1] < height_pressure_min)
 				continue;
-
-			Vec3d pos_to_center = center - particles.pos0_[i];
-			pos_to_center[1] = 0;
 			
-			double multiplier = 1;
-			if (pos_to_center.dot(particles.n0_[i]) > 0)
-				multiplier = -1;
-
-			particles.acc_prior_[i] += multiplier * acc_temp * particles.n_[i];
+			particles.acc_prior_[i] += acc_temp * particles.n_[i];
 		}
 	};
 
@@ -291,7 +284,7 @@ void shell_bending()
 				integral_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
 
-				// shell_body.updateCellLinkedList();
+				shell_body.updateCellLinkedList();
 
 				{// checking if any position has become nan
 					for (const auto& pos: shell_body.getBaseParticles().pos_)
