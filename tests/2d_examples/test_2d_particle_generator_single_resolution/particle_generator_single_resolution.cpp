@@ -71,8 +71,8 @@ int main()
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
 	//----------------------------------------------------------------------
-	random_input_body_particles.parallel_exec(0.25);
-	relaxation_step_inner.SurfaceBounding().parallel_exec();
+	random_input_body_particles.exec(0.25);
+	relaxation_step_inner.SurfaceBounding().exec();
 	input_body.updateCellLinkedList();
 	//----------------------------------------------------------------------
 	//	First output before the simulation.

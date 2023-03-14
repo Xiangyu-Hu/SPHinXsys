@@ -157,9 +157,9 @@ int main()
 	//	and case specified initial condition if necessary.
 	//----------------------------------------------------------------------
 	sph_system.initializeSystemCellLinkedLists();
-	periodic_condition_y.update_cell_linked_list_.parallel_exec();
+	periodic_condition_y.update_cell_linked_list_.exec();
 	sph_system.initializeSystemConfigurations();
-	correct_configuration.parallel_exec();
+	correct_configuration.exec();
 	setup_diffusion_initial_condition.exec();
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
@@ -173,8 +173,8 @@ int main()
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
 	//----------------------------------------------------------------------
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 	//----------------------------------------------------------------------
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
@@ -198,25 +198,25 @@ int main()
 							  << dt << "\n";
 				}
 
-				diffusion_relaxation.parallel_exec(dt);
+				diffusion_relaxation.exec(dt);
 
 				ite++;
-				dt = get_time_step_size.parallel_exec();
+				dt = get_time_step_size.exec();
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
 			}
 		}
 
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		write_states.writeToFile();
 		write_solid_temperature.writeToFile(ite);
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 

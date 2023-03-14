@@ -268,14 +268,6 @@ namespace SPH
 		rk2_2nd_stage_.exec(dt);
 	}
 	//=================================================================================================//
-	template <class FirstStageType>
-	void RelaxationOfAllDiffusionSpeciesRK2<FirstStageType>::parallel_exec(Real dt)
-	{
-		rk2_initialization_.parallel_exec();
-		rk2_1st_stage_.parallel_exec(dt);
-		rk2_2nd_stage_.parallel_exec(dt);
-	}
-	//=================================================================================================//
 	template <class BaseParticlesType, class BaseMaterialType, int NUM_SPECIES>
 	BaseRelaxationOfAllReactions<BaseParticlesType, BaseMaterialType, NUM_SPECIES>::
 		BaseRelaxationOfAllReactions(SPHBody &sph_body)

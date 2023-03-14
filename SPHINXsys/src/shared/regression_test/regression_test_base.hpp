@@ -37,7 +37,7 @@ namespace SPH
 	template <class ObserveMethodType>
 	void RegressionTestBase<ObserveMethodType>::writeToXml(ObservedQuantityRecording<VariableType>* observe_method, size_t iteration)
 	{
-		this->parallel_exec();
+		this->exec();
 		std::string element_name_ = "Snapshot_" + std::to_string(iteration);
 		SimTK::Xml::Element &element_ = observe_xml_engine_.root_element_;
 		observe_xml_engine_.addElementToXmlDoc(element_name_);
@@ -56,7 +56,7 @@ namespace SPH
 		SimTK::Xml::Element &element_ = observe_xml_engine_.root_element_;
 		observe_xml_engine_.addElementToXmlDoc(element_name_);
 		xmlmemory_io_.writeDataToXmlMemory(observe_xml_engine_, element_,
-			element_name_, 0, this->reduce_method_.parallel_exec(), this->quantity_name_);
+			element_name_, 0, this->reduce_method_.exec(), this->quantity_name_);
 	};
 	//=================================================================================================//
 	template <class ObserveMethodType>

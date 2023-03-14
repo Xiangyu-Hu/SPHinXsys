@@ -109,13 +109,13 @@ namespace SPH
 			for (int i = 0; i != Dimensions; ++i)
 				correction_matrix_(i, i) = constrain_direction[i];
 			ReduceDynamics<QuantitySummation<Real>> compute_total_mass_(sph_body, "MassiveMeasure");
-			total_mass_ = compute_total_mass_.parallel_exec();
+			total_mass_ = compute_total_mass_.exec();
 		}
 		//=================================================================================================//
 		void ConstrainSolidBodyMassCenter::setupDynamics(Real dt)
 		{
 			velocity_correction_ =
-				correction_matrix_ * compute_total_momentum_.parallel_exec(dt) / total_mass_;
+				correction_matrix_ * compute_total_momentum_.exec(dt) / total_mass_;
 		}
 		//=================================================================================================//
 		void ConstrainSolidBodyMassCenter::update(size_t index_i, Real dt)

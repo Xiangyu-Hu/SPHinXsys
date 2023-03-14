@@ -178,7 +178,7 @@ int main(int ac, char *av[])
 	system.initializeSystemConfigurations();
 
 	/** apply initial condition */
-	corrected_configuration.parallel_exec();
+	corrected_configuration.exec();
 	write_states.writeToFile(0);
 	write_beam_stress.writeToFile(0);
 	/** Setup physical parameters. */
@@ -187,8 +187,8 @@ int main(int ac, char *av[])
 	Real dt = 0.0;
 
 	/** Statistics for computing time. */
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 	/**
 	 * Main loop
 	 */
@@ -204,31 +204,31 @@ int main(int ac, char *av[])
 						  << dt << "\n";
 			}
 
-			beam_initialize.parallel_exec();
-			pull_force.parallel_exec(GlobalStaticVariables::physical_time_);
+			beam_initialize.exec();
+			pull_force.exec(GlobalStaticVariables::physical_time_);
 
 			/** Stress relaxation and damping. */
-			stress_relaxation_first_half.parallel_exec(dt);
-			constraint_holder.parallel_exec(dt);
-			beam_damping.parallel_exec(dt);
-			constraint_holder.parallel_exec(dt);
-			stress_relaxation_second_half.parallel_exec(dt);
+			stress_relaxation_first_half.exec(dt);
+			constraint_holder.exec(dt);
+			beam_damping.exec(dt);
+			constraint_holder.exec(dt);
+			stress_relaxation_second_half.exec(dt);
 
 			ite++;
 			dt = system.getSmallestTimeStepAmongSolidBodies();
 			integration_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
 		}
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		write_beam_stress.writeToFile(ite);
 		write_states.writeToFile();
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
 
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 

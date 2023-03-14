@@ -263,15 +263,15 @@ int main(int ac, char *av[])
 		/**
 		 * @brief 	Particle relaxation starts here.
 		 */
-		random_fish_body_particles.parallel_exec(0.25);
-		relaxation_step_inner.SurfaceBounding().parallel_exec();
+		random_fish_body_particles.exec(0.25);
+		relaxation_step_inner.SurfaceBounding().exec();
 		write_fish_body.writeToFile();
 
 		/** relax particles of the insert body. */
 		int ite_p = 0;
 		while (ite_p < 1000)
 		{
-			relaxation_step_inner.parallel_exec();
+			relaxation_step_inner.exec();
 			ite_p += 1;
 			if (ite_p % 200 == 0)
 			{
@@ -415,14 +415,14 @@ int main(int ac, char *av[])
 	 * for building up of extra configuration.
 	 */
 	system.initializeSystemCellLinkedLists();
-	periodic_condition.update_cell_linked_list_.parallel_exec();
+	periodic_condition.update_cell_linked_list_.exec();
 	system.initializeSystemConfigurations();
 	/** Prepare quantities, e.g. wall normal, fish body norm,
 	 * fluid initial number density and configuration of fish particles, will be used once only.
 	 */
-	wall_boundary_normal_direction.parallel_exec();
-	fish_body_normal_direction.parallel_exec();
-	fish_body_corrected_configuration.parallel_exec();
+	wall_boundary_normal_direction.exec();
+	fish_body_normal_direction.exec();
+	fish_body_corrected_configuration.exec();
 	/** Output for initial condition. */
 	write_real_body_states.writeToFile(0);
 	write_fish_displacement.writeToFile(0);
@@ -435,8 +435,8 @@ int main(int ac, char *av[])
 	Real output_interval = end_time / 200.0;
 	Real dt = 0.0;	 /**< Default acoustic time step sizes. */
 	Real dt_s = 0.0; /**< Default acoustic time step sizes for solid. */
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 
 	/**
 	 * Main loop starts here.
@@ -446,51 +446,51 @@ int main(int ac, char *av[])
 		Real integration_time = 0.0;
 		while (integration_time < output_interval)
 		{
-			initialize_a_fluid_step.parallel_exec();
-			Real Dt = get_fluid_advection_time_step_size.parallel_exec();
-			update_density_by_summation.parallel_exec();
-			viscous_acceleration.parallel_exec();
-			transport_velocity_correction.parallel_exec();
+			initialize_a_fluid_step.exec();
+			Real Dt = get_fluid_advection_time_step_size.exec();
+			update_density_by_summation.exec();
+			viscous_acceleration.exec();
+			transport_velocity_correction.exec();
 			/** Viscous force exerting on fish body. */
-			viscous_force_on_fish_body.parallel_exec();
+			viscous_force_on_fish_body.exec();
 			/** Update normal direction on fish body. */
-			fish_body_update_normal.parallel_exec();
+			fish_body_update_normal.exec();
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
 				// note that dt needs to sufficiently large to avoid divide zero
 				// when computing solid average velocity for FSI
-				dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt);
+				dt = SMIN(get_fluid_time_step_size.exec(), Dt);
 				/** Fluid dynamics process, first half. */
-				pressure_relaxation.parallel_exec(dt);
+				pressure_relaxation.exec(dt);
 				/** Fluid pressure force exerting on fish. */
-				fluid_force_on_fish_body.parallel_exec();
+				fluid_force_on_fish_body.exec();
 				/** Fluid dynamics process, second half. */
-				density_relaxation.parallel_exec(dt);
+				density_relaxation.exec(dt);
 				/** Relax fish body by solid dynamics. */
 				Real dt_s_sum = 0.0;
-				fish_body_average_velocity.initialize_displacement_.parallel_exec();
+				fish_body_average_velocity.initialize_displacement_.exec();
 				while (dt_s_sum < dt)
 				{
-					dt_s = SMIN(fish_body_computing_time_step_size.parallel_exec(), dt - dt_s_sum);
-					fish_body_stress_relaxation_first_half.parallel_exec(dt_s);
+					dt_s = SMIN(fish_body_computing_time_step_size.exec(), dt - dt_s_sum);
+					fish_body_stress_relaxation_first_half.exec(dt_s);
 					SimTK::State &state_for_update = integ.updAdvancedState();
 					force_on_bodies.clearAllBodyForces(state_for_update);
 					force_on_bodies.setOneBodyForce(state_for_update, tethered_spot,
-													force_on_tethered_spot.parallel_exec());
+													force_on_tethered_spot.exec());
 					integ.stepBy(dt_s);
-					constraint_tethered_spot.parallel_exec();
-					fish_body_stress_relaxation_second_half.parallel_exec(dt_s);
+					constraint_tethered_spot.exec();
+					fish_body_stress_relaxation_second_half.exec(dt_s);
 					dt_s_sum += dt_s;
 				}
 				// note that dt needs to sufficiently large to avoid divide zero
-				fish_body_average_velocity.update_averages_.parallel_exec(dt);
+				fish_body_average_velocity.update_averages_.exec(dt);
 				write_total_force_on_fish.writeToFile(number_of_iterations);
 
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
-				parabolic_inflow.parallel_exec();
+				parabolic_inflow.exec();
 			}
 			if (number_of_iterations % screen_output_interval == 0)
 			{
@@ -503,24 +503,24 @@ int main(int ac, char *av[])
 			// visualize the motion of rigid body
 			viz.report(integ.getState());
 			/** Water block configuration and periodic condition. */
-			periodic_condition.bounding_.parallel_exec();
+			periodic_condition.bounding_.exec();
 			water_block.updateCellLinkedListWithParticleSort(100);
 			fish_body.updateCellLinkedList();
-			periodic_condition.update_cell_linked_list_.parallel_exec();
+			periodic_condition.update_cell_linked_list_.exec();
 			water_block_complex.updateConfiguration();
 			/** Fish body contact configuration. */
 			fish_body_contact.updateConfiguration();
 			write_fish_displacement.writeToFile(number_of_iterations);
 		}
-		tick_count t2 = tick_count::now();
-		compute_vorticity.parallel_exec();
+		TickCount t2 = TickCount::now();
+		compute_vorticity.exec();
 		write_real_body_states.writeToFile();
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 

@@ -109,7 +109,23 @@ namespace SPH
 		public:
 			explicit DeformationGradientBySummation(BaseInnerRelation &inner_relation);
 			virtual ~DeformationGradientBySummation(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+
+			inline void interaction(size_t index_i, Real dt = 0.0)
+			{
+				Vecd &pos_n_i = pos_[index_i];
+
+				Matd deformation = Matd::Identity();
+				Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+				for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+				{
+					size_t index_j = inner_neighborhood.j_[n];
+
+					Vecd gradW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+					deformation -= (pos_n_i - pos_[index_j]) * gradW_ijV_j.transpose();
+				}
+
+				F_[index_i] = deformation * B_[index_i];
+			};
 
 		protected:
 			StdLargeVec<Vecd> &pos_;
@@ -162,7 +178,32 @@ namespace SPH
 			explicit Integration1stHalf(BaseInnerRelation &inner_relation);
 			virtual ~Integration1stHalf(){};
 			void initialization(size_t index_i, Real dt = 0.0);
-			void interaction(size_t index_i, Real dt = 0.0);
+
+			inline void interaction(size_t index_i, Real dt = 0.0)
+			{
+				// including gravity and force from fluid
+				Vecd acceleration = Vecd::Zero();
+				const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+				for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+				{
+					size_t index_j = inner_neighborhood.j_[n];
+					Vecd e_ij = inner_neighborhood.e_ij_[n];
+					Real r_ij = inner_neighborhood.r_ij_[n];
+					Real dim_r_ij_1 = Dimensions / r_ij;
+					Vecd pos_jump = pos_[index_i] - pos_[index_j];
+					Vecd vel_jump = vel_[index_i] - vel_[index_j];
+					Real strain_rate = dim_r_ij_1 * dim_r_ij_1 * pos_jump.dot(vel_jump);
+					Real weight = inner_neighborhood.W_ij_[n] * inv_W0_;
+					Matd numerical_stress_ij =
+						0.5 * (F_[index_i] + F_[index_j]) * elastic_solid_.PairNumericalDamping(strain_rate, smoothing_length_);
+					acceleration += inv_rho0_ * inner_neighborhood.dW_ijV_j_[n] *
+									(stress_PK1_B_[index_i] + stress_PK1_B_[index_j] +
+									 numerical_dissipation_factor_ * weight * numerical_stress_ij) *
+									e_ij;
+				}
+
+				acc_[index_i] = acceleration;
+			};
 
 		protected:
 			StdLargeVec<Matd> stress_PK1_B_;
@@ -202,7 +243,23 @@ namespace SPH
 			explicit KirchhoffIntegration1stHalf(BaseInnerRelation &inner_relation);
 			virtual ~KirchhoffIntegration1stHalf(){};
 			void initialization(size_t index_i, Real dt = 0.0);
-			void interaction(size_t index_i, Real dt = 0.0);
+
+			inline void interaction(size_t index_i, Real dt = 0.0)
+			{
+				// including gravity and force from fluid
+				Vecd acceleration = Vecd::Zero();
+				const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+				for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+				{
+					size_t index_j = inner_neighborhood.j_[n];
+					Vecd shear_force_ij = correction_factor_ * elastic_solid_.ShearModulus() *
+										  (J_to_minus_2_over_dimension_[index_i] + J_to_minus_2_over_dimension_[index_j]) *
+										  (pos_[index_i] - pos_[index_j]) / inner_neighborhood.r_ij_[n];
+					acceleration += ((stress_on_particle_[index_i] + stress_on_particle_[index_j]) * inner_neighborhood.e_ij_[n] + shear_force_ij) *
+									inner_neighborhood.dW_ijV_j_[n] * inv_rho0_;
+				}
+				acc_[index_i] = acceleration;
+			};
 
 		protected:
 			StdLargeVec<Real> J_to_minus_2_over_dimension_;
@@ -222,7 +279,24 @@ namespace SPH
 				: BaseElasticIntegration(inner_relation){};
 			virtual ~Integration2ndHalf(){};
 			void initialization(size_t index_i, Real dt = 0.0);
-			void interaction(size_t index_i, Real dt = 0.0);
+
+			inline void interaction(size_t index_i, Real dt = 0.0)
+			{
+				const Vecd &vel_n_i = vel_[index_i];
+
+				Matd deformation_gradient_change_rate = Matd::Zero();
+				const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+				for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+				{
+					size_t index_j = inner_neighborhood.j_[n];
+
+					Vecd gradW_ij = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+					deformation_gradient_change_rate -= (vel_n_i - vel_[index_j]) * gradW_ij.transpose();
+				}
+
+				dF_dt_[index_i] = deformation_gradient_change_rate * B_[index_i];
+			};
+
 			void update(size_t index_i, Real dt = 0.0);
 		};
 	}

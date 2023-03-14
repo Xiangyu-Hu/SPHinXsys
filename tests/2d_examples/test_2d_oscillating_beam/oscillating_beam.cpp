@@ -146,7 +146,7 @@ int main(int ac, char *av[])
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
 	beam_initial_velocity.exec();
-	beam_corrected_configuration.parallel_exec();
+	beam_corrected_configuration.exec();
 	//----------------------------------------------------------------------
 	//	Setup computing time-step controls.
 	//----------------------------------------------------------------------
@@ -159,8 +159,8 @@ int main(int ac, char *av[])
 	Real dt = 0.0;					 // default acoustic time step sizes
 
 	// statistics for computing time
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 	//-----------------------------------------------------------------------------
 	// from here the time stepping begins
 	//-----------------------------------------------------------------------------
@@ -178,12 +178,12 @@ int main(int ac, char *av[])
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
-				stress_relaxation_first_half.parallel_exec(dt);
-				constraint_beam_base.parallel_exec();
-				stress_relaxation_second_half.parallel_exec(dt);
+				stress_relaxation_first_half.exec(dt);
+				constraint_beam_base.exec();
+				stress_relaxation_second_half.exec(dt);
 
 				ite++;
-				dt = computing_time_step_size.parallel_exec();
+				dt = computing_time_step_size.exec();
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
@@ -199,14 +199,14 @@ int main(int ac, char *av[])
 
 		write_beam_tip_displacement.writeToFile(ite);
 
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		write_beam_states.writeToFile();
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 

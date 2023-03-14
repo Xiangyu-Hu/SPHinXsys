@@ -38,6 +38,27 @@ namespace SPH
 	namespace eulerian_compressible_fluid_dynamics
 	{
 		//=================================================================================================//
+		void ViscousAccelerationInner::
+			interaction(size_t index_i, Real dt)
+		{
+			Real rho_i = rho_[index_i];
+			const Vecd &vel_i = vel_[index_i];
+
+			Vecd acceleration = Vecd::Zero();
+			Vecd vel_derivative = Vecd::Zero();
+			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+			{
+				size_t index_j = inner_neighborhood.j_[n];
+
+				// viscous force
+				vel_derivative = (vel_i - vel_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
+				acceleration += 2.0 * mu_ * vel_derivative * inner_neighborhood.dW_ijV_j_[n] / rho_i;
+			}
+			dmom_dt_prior_[index_i] += rho_[index_i] * acceleration;
+			dE_dt_prior_[index_i] += rho_[index_i] * acceleration.dot(vel_[index_i]);
+		}
+		//=================================================================================================//
 		template <class RiemannSolverType>
 		BaseIntegration1stHalf<RiemannSolverType>::BaseIntegration1stHalf(BaseInnerRelation &inner_relation)
 			: BaseIntegration(inner_relation), riemann_solver_(compressible_fluid_, compressible_fluid_) {}
@@ -59,7 +80,8 @@ namespace SPH
 		}
 		//=================================================================================================//
 		template <class RiemannSolverType>
-		void BaseIntegration1stHalf<RiemannSolverType>::interaction(size_t index_i, Real dt)
+		void BaseIntegration1stHalf<RiemannSolverType>::
+			interaction(size_t index_i, Real dt)
 		{
 			CompressibleFluidState state_i(rho_[index_i], vel_[index_i], p_[index_i], E_[index_i]);
 			Vecd momentum_change_rate = dmom_dt_prior_[index_i];
@@ -91,7 +113,8 @@ namespace SPH
 		}
 		//=================================================================================================//
 		template <class RiemannSolverType>
-		void BaseIntegration2ndHalf<RiemannSolverType>::interaction(size_t index_i, Real dt)
+		void BaseIntegration2ndHalf<RiemannSolverType>::
+			interaction(size_t index_i, Real dt)
 		{
 			CompressibleFluidState state_i(rho_[index_i], vel_[index_i], p_[index_i], E_[index_i]);
 			Real density_change_rate = 0.0;

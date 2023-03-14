@@ -75,8 +75,8 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Particle relaxation starts here.
 	//----------------------------------------------------------------------
-	random_imported_model_particles.parallel_exec(0.25);
-	relaxation_step_inner.mid_surface_bounding_.parallel_exec();
+	random_imported_model_particles.exec(0.25);
+	relaxation_step_inner.mid_surface_bounding_.exec();
 	write_imported_model_to_vtp.writeToFile(0.0);
 	imported_model.updateCellLinkedList();
 	write_mesh_cell_linked_list.writeToFile(0.0);
@@ -91,7 +91,7 @@ int main(int ac, char *av[])
 			std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
 			write_imported_model_to_vtp.writeToFile(ite_p);
 		}
-		relaxation_step_inner.parallel_exec();
+		relaxation_step_inner.exec();
 		ite_p += 1;
 	}
 	shell_normal_prediction.exec();

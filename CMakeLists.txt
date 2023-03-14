@@ -56,6 +56,9 @@ target_compile_definitions(sphinxsys_core INTERFACE _SILENCE_CXX17_ITERATOR_BASE
 ### Eigen
 find_package(Eigen3 CONFIG REQUIRED)
 target_link_libraries(sphinxsys_core INTERFACE Eigen3::Eigen)
+### XSIMD
+find_package(xsimd CONFIG REQUIRED)
+target_link_libraries(sphinxsys_core INTERFACE xsimd)
 ### TBB
 find_package(TBB CONFIG REQUIRED)
 target_link_libraries(sphinxsys_core INTERFACE TBB::tbb TBB::tbbmalloc $<$<PLATFORM_ID:Windows>:TBB::tbbmalloc_proxy>) 
