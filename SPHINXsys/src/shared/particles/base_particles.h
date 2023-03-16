@@ -129,8 +129,11 @@ namespace SPH
 		template <typename VariableType>
 		void addVariableToWrite(const std::string &variable_name);
 		/** add a derived variable into the list for state output */
-		template <class DerivedVariableMethod>
-		void addDerivedVariableToWrite();
+        template <class DerivedVariableMethod, class... Ts>
+		void addDerivedVariable(Ts&&...);
+        /** add a derived variable into the list for state output */
+		template <class DerivedVariableMethod, class... Ts>
+		void addDerivedVariableToWrite(Ts&&...);
 		/** add a variable into the list for restart */
 		template <typename VariableType>
 		void addVariableToRestart(const std::string &variable_name);

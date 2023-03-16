@@ -159,10 +159,16 @@ namespace SPH
 			base_particles_->template addVariableToWrite<VariableType>(variable_name);
 		};
 
-		template <class DerivedVariableMethod>
-		void addDerivedBodyStateForRecording()
+		template <class DerivedVariableMethod,typename... Args>
+		void addDerivedBodyStateForRecording(Args&&... args)
 		{
-			base_particles_->template addDerivedVariableToWrite<DerivedVariableMethod>();
+			base_particles_->template addDerivedVariableToWrite<DerivedVariableMethod>(std::forward<Args>(args)...);
+		};
+
+        template <class DerivedVariableMethod,typename... Args>
+		void addDerivedBodyState(Args&&... args)
+		{
+			base_particles_->template addDerivedVariable<DerivedVariableMethod>(std::forward<Args>(args)...);
 		};
 
 		virtual void writeParticlesToVtuFile(std::ostream &output_file);
