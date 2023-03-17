@@ -29,6 +29,7 @@
 #pragma once
 
 #include "general_dynamics.h"
+#include <array>
 
 namespace SPH
 {
@@ -157,7 +158,7 @@ namespace SPH
     protected:
         StdLargeVec<Real> total_split_error_;
         StdVec<Vecd> split_position_;
-        StdVec<Vecu> split_index_;
+        StdVec<std::array<size_t,2>> split_index_;
         size_t particle_number_change = 0;
 
         virtual void setupDynamics(Real dt) override;

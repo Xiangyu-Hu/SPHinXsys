@@ -336,7 +336,7 @@ namespace SPH
 
         particle_number_change += 1;
         split_position_.push_back(2.0 * pos_[index_i] - pos_splitting);
-        split_index_.push_back(Vecu(index_i, particle_real_number));
+        split_index_.push_back({index_i, particle_real_number});
     }
     //=================================================================================================//
     void ParticleSplitWithPrescribedArea::setupDynamics(Real dt)
