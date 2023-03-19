@@ -32,8 +32,6 @@ namespace SPH
 	//=================================================================================================//
 	void BaseParticles::initializeOtherVariables()
 	{
-		//should be determined first before register other variables
-		real_particles_bound_ = total_real_particles_;
 		//----------------------------------------------------------------------
 		//		register non-geometric data
 		//----------------------------------------------------------------------

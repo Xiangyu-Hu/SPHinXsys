@@ -30,6 +30,8 @@ namespace SPH
 	void BaseParticleGenerator::generateParticlesWithBasicVariables()
 	{
 		initializeGeometricVariables();
+		//should be determined first before register other variables
+		base_particles_.real_particles_bound_ = base_particles_.total_real_particles_;
 		base_material_.registerReloadLocalParameters(&base_particles_);
 	}
 	//=================================================================================================//
@@ -83,6 +85,8 @@ namespace SPH
 	{
 		base_material_.registerReloadLocalParameters(&base_particles_);
 		initializeGeometricVariables();
+		//should be determined first before register other variables
+		base_particles_.real_particles_bound_ = base_particles_.total_real_particles_;
 	}
 	//=================================================================================================//
 }
