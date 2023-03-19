@@ -189,7 +189,7 @@ namespace SPH
 
 	/**
 	 * @class OrthotropicSolid
-	 * @brief Generic definition with 3 orthogonal directions + 9 independent parameters, 
+	 * @brief Generic definition with 3 orthogonal directions + 9 independent parameters,
 	 * ONLY for 3D applications
 	 * @param "a" --> 3 principal direction vectors
 	 * @param "E" --> 3 principal Young's moduli
@@ -297,10 +297,6 @@ namespace SPH
 	protected:
 		StdLargeVec<Matd> local_f0f0_, local_s0s0_, local_f0s0_; /**< Sheet direction. */
 
-		/** Default initialization of the fiber and sheet directions */
-		virtual void initializeFiberAndSheet();
-		void initializeFiberAndSheetTensors();
-
 	public:
 		StdLargeVec<Vecd> local_f0_; /**< local fiber direction. */
 		StdLargeVec<Vecd> local_s0_; /**< local sheet direction. */
@@ -313,11 +309,12 @@ namespace SPH
 		};
 		virtual ~LocallyOrthotropicMuscle(){};
 
-		virtual void assignBaseParticles(BaseParticles *base_particles) override;
+		virtual void registerReloadLocalParameters(BaseParticles *base_particles) override;
+		virtual void initializeLocalParameters(BaseParticles *base_particles) override;
+
 		virtual Matd MuscleFiberDirection(size_t particle_index_i) override { return local_f0f0_[particle_index_i]; };
 		/** Compute the stress through Constitutive relation. */
 		virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) override;
-		virtual void readFromXmlForLocalParameters(const std::string &filefullpath) override;
 		/** Define the calculation of the stress matrix for postprocessing */
 		virtual std::string getRelevantStressMeasureName() override { return "Cauchy"; };
 	};

@@ -114,8 +114,6 @@ namespace SPH
 		explicit LocalMonoFieldElectroPhysiology(ElectroPhysiologyReaction &electro_physiology_reaction,
 												 Real diff_cf, Real bias_diff_cf, Vecd bias_direction);
 		virtual ~LocalMonoFieldElectroPhysiology(){};
-
-		virtual void readFromXmlForLocalParameters(const std::string &filefullpath) override;
 	};
 
 	/**

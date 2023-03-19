@@ -246,42 +246,25 @@ namespace SPH
 			   a0_[3] * I_fs * exp(b0_[3] * I_fs * I_fs) * local_f0s0_[i];
 	}
 	//=================================================================================================//
-	void LocallyOrthotropicMuscle::assignBaseParticles(BaseParticles *base_particles)
+	void LocallyOrthotropicMuscle::registerReloadLocalParameters(BaseParticles *base_particles)
 	{
-		Muscle::assignBaseParticles(base_particles);
-		initializeFiberAndSheet();
+		Muscle::registerReloadLocalParameters(base_particles);
+		base_particles->registerVariable(local_f0_, "Fiber");
+		base_particles->registerVariable(local_s0_, "Sheet");
+		base_particles->addVariableToReload<Vecd>("Fiber");
+		base_particles->addVariableToReload<Vecd>("Sheet");
 	}
 	//=================================================================================================//
-	void LocallyOrthotropicMuscle::initializeFiberAndSheet()
+	void LocallyOrthotropicMuscle::initializeLocalParameters(BaseParticles *base_particles)
 	{
-		base_particles_->registerVariable(local_f0_, "Fiber");
-		base_particles_->registerVariable(local_s0_, "Sheet");
-		base_particles_->addVariableNameToList<Vecd>(reload_local_parameters_, "Fiber");
-		base_particles_->addVariableNameToList<Vecd>(reload_local_parameters_, "Sheet");
-		initializeFiberAndSheetTensors();
-	}
-	//=================================================================================================//
-	void LocallyOrthotropicMuscle::initializeFiberAndSheetTensors()
-	{
-		base_particles_->registerVariable(local_f0f0_, "FiberFiberTensor", [&](size_t i) -> Matd
+		Muscle::initializeLocalParameters(base_particles);
+		base_particles->registerVariable(local_f0f0_, "FiberFiberTensor", [&](size_t i) -> Matd
 										  { return local_f0_[i] * local_f0_[i].transpose(); });
-		base_particles_->registerVariable(local_s0s0_, "SheetSheetTensor", [&](size_t i) -> Matd
+		base_particles->registerVariable(local_s0s0_, "SheetSheetTensor", [&](size_t i) -> Matd
 										  { return local_s0_[i] * local_s0_[i].transpose(); });
-		base_particles_->registerVariable(local_f0s0_, "FiberSheetTensor", [&](size_t i) -> Matd
+		base_particles->registerVariable(local_f0s0_, "FiberSheetTensor", [&](size_t i) -> Matd
 										  { return local_f0_[i] * local_s0_[i].transpose() +
 												   local_s0_[i] * local_f0_[i].transpose(); });
-	}
-	//=================================================================================================//
-	void LocallyOrthotropicMuscle::readFromXmlForLocalParameters(const std::string &filefullpath)
-	{
-		BaseMaterial::readFromXmlForLocalParameters(filefullpath);
-		size_t total_real_particles = base_particles_->total_real_particles_;
-		for (size_t i = 0; i != total_real_particles; i++)
-		{
-			local_f0f0_[i] = local_f0_[i] * local_f0_[i].transpose();
-			local_s0s0_[i] = local_s0_[i] * local_s0_[i].transpose();
-			local_f0s0_[i] = local_f0_[i] * local_s0_[i].transpose();
-		}
 	}
 	//=================================================================================================//
 }

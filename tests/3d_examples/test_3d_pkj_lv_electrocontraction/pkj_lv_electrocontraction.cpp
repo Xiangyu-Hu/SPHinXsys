@@ -71,8 +71,6 @@ int main(int ac, char *av[])
 		BodyStatesRecordingToVtp write_herat_model_state_to_vtp(io_environment, {herat_model});
 		/** Write the particle reload files. */
 		ReloadParticleIO write_particle_reload_files(io_environment, herat_model, "HeartModel");
-		/** Write material property to xml file. */
-		ReloadMaterialParameterIO write_material_property(io_environment, herat_model, "FiberDirection");
 		//----------------------------------------------------------------------
 		//	Physics relaxation starts here.
 		//----------------------------------------------------------------------
@@ -119,7 +117,6 @@ int main(int ac, char *av[])
 		ite++;
 		write_herat_model_state_to_vtp.writeToFile(ite);
 		compute_fiber_sheet.exec();
-		write_material_property.writeToFile(0);
 		write_particle_reload_files.writeToFile(0);
 
 		return 0;
@@ -143,15 +140,6 @@ int main(int ac, char *av[])
 	(!system.RunParticleRelaxation() && system.ReloadParticles())
 		? mechanics_heart.generateParticles<ParticleGeneratorReload>(io_environment, "HeartModel")
 		: mechanics_heart.generateParticles<ParticleGeneratorLattice>();
-
-	/** check whether reload material properties. */
-	if (!system.RunParticleRelaxation() && system.ReloadParticles())
-	{
-		ReloadMaterialParameterIO read_physiology_heart_fiber(io_environment, physiology_heart, "FiberDirection");
-		ReloadMaterialParameterIO read_mechanics_heart_fiber(io_environment, mechanics_heart, "FiberDirection");
-		read_mechanics_heart_fiber.readFromFile();
-		read_physiology_heart_fiber.readFromFile();
-	}
 
 	/** Creat a Purkinje network for fast diffusion, material and particles */
 	TreeBody pkj_body(system, level_set_heart_model, "Purkinje");

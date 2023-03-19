@@ -77,11 +77,6 @@ namespace SPH
 		initializeAnDiffusion<LocalDirectionalDiffusion>("Voltage", "Voltage", diff_cf, bias_diff_cf, bias_direction);
 	}
 	//=================================================================================================//
-	void LocalMonoFieldElectroPhysiology::readFromXmlForLocalParameters(const std::string &filefullpath)
-	{
-		species_diffusion_[0]->readFromXmlForLocalParameters(filefullpath);
-	}
-	//=================================================================================================//
 	ElectroPhysiologyParticles::ElectroPhysiologyParticles(
 		SPHBody &sph_body, DiffusionReaction<Solid, 3> *diffusion_reaction_material)
 		: DiffusionReactionParticles<SolidParticles, Solid, 3>(sph_body, diffusion_reaction_material) {}
