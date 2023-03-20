@@ -217,7 +217,7 @@ namespace SPH
 																   transformation_matrix_[index_j].transpose() * F_bending_[index_j] * transformation_matrix_[index_j]);
 						Vecd rotation_jump = getRotationJump(pseudo_n_jump, transformation_matrix_[index_i]);
 						pseudo_normal_acceleration += hourglass_control_factor_ * weight * G0_ * rotation_jump * dim_inv_r_ij *
-													  inner_neighborhood.dW_ijV_j_[n] * powerN(thickness_[index_i], 3);
+													  inner_neighborhood.dW_ijV_j_[n] * pow(thickness_[index_i], 3);
 					}
 
 					acceleration += (global_stress_i + global_stress_[index_j]) * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
@@ -225,7 +225,7 @@ namespace SPH
 				}
 
 				acc_[index_i] = acceleration * inv_rho0_ / thickness_[index_i];
-				dpseudo_n_d2t_[index_i] = pseudo_normal_acceleration * inv_rho0_ * 12.0 / powerN(thickness_[index_i], 3);
+				dpseudo_n_d2t_[index_i] = pseudo_normal_acceleration * inv_rho0_ * 12.0 / pow(thickness_[index_i], 3);
 
 				/** the relation between pseudo-normal and rotations */
 				Vecd local_dpseudo_n_d2t = transformation_matrix_[index_i] * dpseudo_n_d2t_[index_i];

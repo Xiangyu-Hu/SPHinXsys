@@ -121,7 +121,7 @@ namespace SPH
 		Matd right_cauchy = F.transpose() * F;
 		Real I_1 = right_cauchy.trace();	   // first strain invariant
 		Real I_3 = right_cauchy.determinant(); // first strain invariant
-		return G0_ * std::pow(I_3, -1.0 / 3.0) * (Matd::Identity() - 1.0 / 3.0 * I_1 * right_cauchy.inverse());
+		return G0_ * pow(I_3, -1.0 / 3.0) * (Matd::Identity() - 1.0 / 3.0 * I_1 * right_cauchy.inverse());
 	}
 	//=================================================================================================//
 	Matd NeoHookeanSolidIncompressible::

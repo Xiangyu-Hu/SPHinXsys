@@ -299,7 +299,7 @@ namespace SPH
         int bound_number = 0;
         for (int axis_direction = 0; axis_direction != Dimensions; ++axis_direction)
         {
-            Real particle_spacing = pow(volume, 1.0 / Dimensions);
+            Real particle_spacing = pow(volume, 1.0 / (Real)Dimensions);
             if (position[axis_direction] > (refinement_region_bounds.first_[axis_direction] + particle_spacing) &&
                 position[axis_direction] < (refinement_region_bounds.second_[axis_direction] - particle_spacing))
                 bound_number += 1;
@@ -454,7 +454,7 @@ namespace SPH
     {
         Real non_deformed_volume = mass_[index_i] * inv_rho0_;
         bool resolution_check = particle_adaptation_.mergeResolutionCheck(non_deformed_volume);
-        Real particle_spacing = pow(non_deformed_volume, 1.0 / Dimensions);
+        Real particle_spacing = pow(non_deformed_volume, 1.0 / (Real)Dimensions);
         Real search_threshold = 1.2;
         Real search_distance = search_threshold * particle_spacing;
         if (resolution_check)
@@ -527,7 +527,7 @@ namespace SPH
         merge_particle_value_(all_particle_data_, merged_index, merge_indices, merge_mass_);
         mass_[merged_index] = total_mass;
         Vol_[merged_index] = mass_[merged_index] * inv_rho0_;
-        Real particle_spacing = pow(Vol_[merged_index], 1.0 / Dimensions);
+        Real particle_spacing = pow(Vol_[merged_index], 1.0 / (Real)Dimensions);
         h_ratio_[merged_index] = sph_body_.sph_adaptation_->ReferenceSpacing() / particle_spacing;
     }
     //=================================================================================================//
@@ -547,8 +547,8 @@ namespace SPH
     {
         Real non_deformed_volume = mass_[index_i] * inv_rho0_;
         bool resolution_check = particle_adaptation_.mergeResolutionCheck(non_deformed_volume);
-        Real particle_spacing_small = pow(non_deformed_volume, 1.0 / Dimensions);
-        Real particle_spacing_large = pow(non_deformed_volume * 2.0, 1.0 / Dimensions);
+        Real particle_spacing_small = pow(non_deformed_volume, 1.0 / (Real)Dimensions);
+        Real particle_spacing_large = pow(non_deformed_volume * 2.0, 1.0 / (Real)Dimensions);
         Real search_threshold = 1.2;
         Real search_distance_small = search_threshold * particle_spacing_small;
         Real search_distance_large = search_threshold * particle_spacing_large;

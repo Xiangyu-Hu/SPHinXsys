@@ -11,10 +11,17 @@
 
 using namespace SPH;
 
-int main()
+int main(int ac, char *av[])
 {
 	/** Setup the system. Please the make sure the global domain bounds are correctly defined. */
 	SPHSystem system(system_domain_bounds, particle_spacing_ref);
+#ifdef BOOST_AVAILABLE
+	system.handleCommandlineOptions(ac, av);
+#endif
+	IOEnvironment io_environment(system);
+	//----------------------------------------------------------------------
+	//	Creating bodies with corresponding materials and particles.
+	//----------------------------------------------------------------------
 	/** create a body with corresponding material, particles and reaction model. */
 	SolidBody column(system, makeShared<Column>("Column"));
 	column.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
@@ -42,7 +49,6 @@ int main()
 	//----------------------------------------------------------------------
 	//	Output
 	//----------------------------------------------------------------------
-	IOEnvironment io_environment(system);
 	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
 		write_velocity("Velocity", io_environment, my_observer_contact);
@@ -104,8 +110,16 @@ int main()
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-	write_displacement.newResultTest();
-	write_velocity.newResultTest();
+	if (system.generate_regression_data_)
+	{
+		write_displacement.generateDataBase(0.005);
+		write_velocity.generateDataBase(0.005);
+	}
+	else
+	{
+		write_displacement.newResultTest();
+		write_velocity.newResultTest();
+	}
 
 	return 0;
 }
