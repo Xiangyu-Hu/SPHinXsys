@@ -3,8 +3,6 @@
 #include "complex_solid.h"
 #include "base_particles.hpp"
 
-using namespace std;
-
 namespace SPH
 {
 	//=============================================================================================//

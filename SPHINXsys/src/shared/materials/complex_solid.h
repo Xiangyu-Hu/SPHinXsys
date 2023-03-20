@@ -48,7 +48,7 @@ namespace SPH
 		virtual ~ActiveMuscle(){};
 
 		/** initialize the local properties, fiber and sheet direction. */
-		void initializeLocalParameters(BaseParticles *base_particles);
+		virtual void initializeLocalParameters(BaseParticles *base_particles) override;
 		/** compute the stress through Constitutive relation. */
 		virtual Matd StressPK2(Matd &deformation, size_t index_i) override;
 		virtual ActiveMuscle<MuscleType> *ThisObjectPtr() override { return this; };

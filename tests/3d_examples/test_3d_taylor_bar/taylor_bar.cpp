@@ -76,7 +76,7 @@ int main(int ac, char *av[])
 			ite_p += 1;
 			if (ite_p % 200 == 0)
 			{
-				std::cout << std::fixed << setprecision(9) << "Relaxation steps for the column body N = " << ite_p << "\n";
+				std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the column body N = " << ite_p << "\n";
 				write_column_to_vtp.writeToFile(ite_p);
 			}
 		}
@@ -171,7 +171,7 @@ int main(int ac, char *av[])
 
 	TimeInterval tt;
 	tt = t4 - t1 - interval;
-	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	write_displacement.newResultTest();
 	write_velocity.newResultTest();

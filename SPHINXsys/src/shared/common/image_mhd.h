@@ -105,7 +105,7 @@ namespace SPH {
 		{
 			anatomicalOrientation_ = anatomicalOrientation;
 		};
-		void set_elementType(const std::string &elementType) 
+		void set_elementType(const Image_Data_Type &elementType) 
 		{
 			elementType_ = elementType;
 		};

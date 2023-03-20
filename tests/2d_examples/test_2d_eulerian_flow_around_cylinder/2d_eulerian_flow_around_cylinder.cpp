@@ -148,7 +148,7 @@ int main(int ac, char *av[])
 			ite_p += 1;
 			if (ite_p % 200 == 0)
 			{
-				cout << fixed << setprecision(9) << "Relaxation steps N = " << ite_p << "\n";
+				std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite_p << "\n";
 				write_real_body_states.writeToFile(ite_p);
 			}
 		}
@@ -229,7 +229,7 @@ int main(int ac, char *av[])
 
 			if (number_of_iterations % screen_output_interval == 0)
 			{
-				cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
+				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
 					 << GlobalStaticVariables::physical_time_
 					 << "	dt = " << dt << "\n";
 			}
@@ -250,7 +250,7 @@ int main(int ac, char *av[])
 
 	TimeInterval tt;
 	tt = t4 - t1 - interval;
-	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	if (sph_system.generate_regression_data_)
 	{

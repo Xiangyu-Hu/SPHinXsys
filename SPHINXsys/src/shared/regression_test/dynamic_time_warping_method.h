@@ -78,7 +78,7 @@ namespace SPH
 		void resultTest(); /** test the new result if it is converged within the range. */
 
 		/** the interface for generating the priori converged result with DTW */
-		void generateDataBase(Real threshold_value, string filter = "false")
+		void generateDataBase(Real threshold_value, std::string filter = "false")
 		{
 			this->writeXmlToXmlFile();
 			this->readXmlFromXmlFile();
@@ -100,11 +100,11 @@ namespace SPH
 				compareDTWDistance(threshold_value);
 			}
 			else
-				std::cout << "The results have been converged." << endl;
+				std::cout << "The results have been converged." << std::endl;
 		};
 
 		/** the interface for generating the priori converged result with DTW. */
-		void newResultTest(string filter = "false")
+		void newResultTest(std::string filter = "false")
 		{
 			this->writeXmlToXmlFile();
 			this->readXmlFromXmlFile();
@@ -119,14 +119,14 @@ namespace SPH
 					+ "_" + this->quantity_name_ + "_Run_" + std::to_string(n) + "_result.xml";
 				if (!fs::exists(this->result_filefullpath_))
 				{
-					std::cout << "This result has not been preserved and will not be compared." << endl;
+					std::cout << "This result has not been preserved and will not be compared." << std::endl;
 					continue;
 				}
 				this->readResultFromXml(n);
 				resultTest();
 			}
 			std::cout << "The result of " << this->quantity_name_
-				<< " is correct based on the dynamic time warping regression test!" << endl;
+				<< " is correct based on the dynamic time warping regression test!" << std::endl;
 		};
 	};
 } 

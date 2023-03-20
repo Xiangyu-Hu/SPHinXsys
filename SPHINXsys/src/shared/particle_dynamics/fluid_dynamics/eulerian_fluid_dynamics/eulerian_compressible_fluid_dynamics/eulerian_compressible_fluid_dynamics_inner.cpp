@@ -1,6 +1,5 @@
 #include "eulerian_compressible_fluid_dynamics_inner.h"
 
-using namespace std;
 //=========================================================================================================//
 namespace SPH
 {

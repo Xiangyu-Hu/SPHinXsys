@@ -238,7 +238,7 @@ int main(int ac, char *av[])
 	/** Statistics for computing time. */
 	TickCount t1 = TickCount::now();
 	TimeInterval interval;
-	cout << "Main Loop Starts Here : "
+	std::cout << "Main Loop Starts Here : "
 		 << "\n";
 	/** Main loop starts here. */
 	while (GlobalStaticVariables::physical_time_ < end_time)
@@ -251,7 +251,7 @@ int main(int ac, char *av[])
 			{
 				if (ite % screen_output_interval == 0)
 				{
-					cout << fixed << setprecision(9) << "N=" << ite << "	Time = "
+					std::cout << std::fixed << std::setprecision(9) << "N=" << ite << "	Time = "
 						 << GlobalStaticVariables::physical_time_
 						 << "	dt_pkj = " << dt_pkj
 						 << "	dt_myocardium = " << dt_myocardium
@@ -350,7 +350,7 @@ int main(int ac, char *av[])
 
 	TimeInterval tt;
 	tt = t4 - t1 - interval;
-	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	return 0;
 }

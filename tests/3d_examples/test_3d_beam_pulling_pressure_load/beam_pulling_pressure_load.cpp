@@ -34,7 +34,7 @@ public:
 	Beam(const std::string &shape_name)
 		: ComplexShape(shape_name)
 	{
-		string fname_ = "./input/beam.stl";
+		std::string fname_ = "./input/beam.stl";
 		Vecd translation(0.0, 0.0, 0.0);
 		add<TriangleMeshShapeSTL>(fname_, translation, 0.001);
 	}
@@ -44,7 +44,7 @@ public:
 class LoadForce : public BaseLocalDynamics<BodyPartByParticle>, public solid_dynamics::ElasticSolidDataSimple
 {
 public:
-	LoadForce(BodyPartByParticle &body_part, StdVec<array<Real, 2>> f_arr)
+	LoadForce(BodyPartByParticle &body_part, StdVec<std::array<Real, 2>> f_arr)
 		: BaseLocalDynamics<BodyPartByParticle>(body_part),
 		  solid_dynamics::ElasticSolidDataSimple(sph_body_),
 		  acc_prior(particles_->acc_prior_),
@@ -84,7 +84,7 @@ protected:
 	StdLargeVec<Real> &Vol_;
 	StdLargeVec<Matd> &F_;
 
-	StdVec<array<Real, 2>> force_arr_;
+	StdVec<std::array<Real, 2>> force_arr_;
 	size_t particles_num_;
 
 protected:
@@ -150,13 +150,13 @@ int main(int ac, char *av[])
 	/** create a brick to tag the surface */
 	Vecd half_size_0(0.03, 0.03, resolution_ref);
 	BodyRegionByParticle load_surface(beam_body, makeShared<TriangleMeshShapeBrick>(half_size_0, 1, Vecd(0.00, 0.00, 0.1)));
-	StdVec<array<Real, 2>> force_over_time = {
+	StdVec<std::array<Real, 2>> force_over_time = {
 		{0.0, 0.0},
 		{0.1 * end_time, 0.1 * load_total_force},
 		{0.4 * end_time, load_total_force},
 		{end_time, load_total_force}};
 	SimpleDynamics<LoadForce> pull_force(load_surface, force_over_time);
-	cout << "load surface particle number: " << load_surface.body_part_particles_.size() << endl;
+	std::cout << "load surface particle number: " << load_surface.body_part_particles_.size() << std::endl;
 
 	//=== define constraint ===
 	/* create a brick to tag the region */
