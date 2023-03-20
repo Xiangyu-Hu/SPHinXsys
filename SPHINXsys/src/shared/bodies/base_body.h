@@ -148,9 +148,9 @@ namespace SPH
 		{
 			sph_adaptation_->registerAdaptationVariables(*base_particles_);
 			ParticleGeneratorType particle_generator(*this, std::forward<ConstructorArgs>(args)...);
-			particle_generator.initializeGeometricVariables();
+			particle_generator.generateParticlesWithBasicVariables();
 			base_particles_->initializeOtherVariables();
-			base_material_->assignBaseParticles(base_particles_);
+			base_material_->initializeLocalParameters(base_particles_);
 		};
 
 		template <typename VariableType>

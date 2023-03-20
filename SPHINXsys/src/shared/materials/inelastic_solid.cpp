@@ -4,19 +4,15 @@
 namespace SPH
 {
 	//=================================================================================================//
-	void HardeningPlasticSolid::initializePlasticParameters()
+	void HardeningPlasticSolid::initializeLocalParameters(BaseParticles *base_particles)
 	{
-		base_particles_->registerVariable(inverse_plastic_strain_, "InversePlasticRightCauchyStrain", 
-											[&](size_t i) -> Matd { return Matd::Identity(); });
-		base_particles_->registerVariable(hardening_parameter_, "HardeningParameter");
-		base_particles_->addVariableToRestart<Matd>("InversePlasticRightCauchyStrain");
-		base_particles_->addVariableToRestart<Real>("HardeningParameter");
-	}
-	//=================================================================================================//
-	void HardeningPlasticSolid::assignBaseParticles(BaseParticles *base_particles)
-	{
-		ElasticSolid::assignBaseParticles(base_particles);
-		initializePlasticParameters();
+		PlasticSolid::initializeLocalParameters(base_particles);
+		base_particles->registerVariable(inverse_plastic_strain_, "InversePlasticRightCauchyStrain",
+										 [&](size_t i) -> Matd
+										 { return Matd::Identity(); });
+		base_particles->registerVariable(hardening_parameter_, "HardeningParameter");
+		base_particles->addVariableToRestart<Matd>("InversePlasticRightCauchyStrain");
+		base_particles->addVariableToRestart<Real>("HardeningParameter");
 	}
 	//=================================================================================================//
 	Matd HardeningPlasticSolid::PlasticConstitutiveRelation(const Matd &F, size_t index_i, Real dt)

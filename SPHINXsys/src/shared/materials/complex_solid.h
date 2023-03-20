@@ -41,15 +41,14 @@ namespace SPH
 	{
 	protected:
 		StdLargeVec<Real> active_contraction_stress_; /**<  active contraction stress */
-		/** initialize the local properties, fiber and sheet direction. */
-		void initializeContractionStress();
 
 	public:
 		template <typename... ConstructorArgs>
 		explicit ActiveMuscle(ConstructorArgs &&...args);
 		virtual ~ActiveMuscle(){};
 
-		void assignBaseParticles(BaseParticles *base_particles) override;
+		/** initialize the local properties, fiber and sheet direction. */
+		virtual void initializeLocalParameters(BaseParticles *base_particles) override;
 		/** compute the stress through Constitutive relation. */
 		virtual Matd StressPK2(Matd &deformation, size_t index_i) override;
 		virtual ActiveMuscle<MuscleType> *ThisObjectPtr() override { return this; };

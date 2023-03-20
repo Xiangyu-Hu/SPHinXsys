@@ -135,8 +135,6 @@ namespace SPH
 		StdLargeVec<Vecd> local_bias_direction_;
 		StdLargeVec<Matd> local_transformed_diffusivity_;
 
-		void initializeFiberDirection();
-
 	public:
 		LocalDirectionalDiffusion(size_t diffusion_species_index, size_t gradient_species_index,
 								  Real diff_cf, Real bias_diff_cf, Vecd bias_direction)
@@ -145,14 +143,16 @@ namespace SPH
 			material_type_name_ = "LocalDirectionalDiffusion";
 		};
 		virtual ~LocalDirectionalDiffusion(){};
+
+		virtual void registerReloadLocalParameters(BaseParticles *base_particles) override;
+		virtual void initializeLocalParameters(BaseParticles *base_particles) override;
+
 		virtual Real getInterParticleDiffusionCoff(size_t particle_index_i, size_t particle_index_j, Vecd &inter_particle_direction) override
 		{
 			Matd trans_diffusivity = getAverageValue(local_transformed_diffusivity_[particle_index_i], local_transformed_diffusivity_[particle_index_j]);
 			Vecd grad_ij = trans_diffusivity * inter_particle_direction;
 			return 1.0 / grad_ij.squaredNorm();
 		};
-		virtual void assignBaseParticles(BaseParticles *base_particles) override;
-		virtual void readFromXmlForLocalParameters(const std::string &filefullpath) override;
 	};
 
 	/**
@@ -171,7 +171,7 @@ namespace SPH
 		StdVec<ReactionFunctor> get_loss_rates_;
 
 		explicit BaseReactionModel(SpeciesNames species_name_list)
-			:  reaction_model_("BaseReactionModel"), species_name_list_(species_name_list) 
+			: reaction_model_("BaseReactionModel"), species_name_list_(species_name_list)
 		{
 			for (size_t i = 0; i != species_name_list.size(); ++i)
 			{
@@ -237,12 +237,21 @@ namespace SPH
 		BaseReactionModel<NUM_SPECIES> *SpeciesReaction() { return species_reaction_; };
 		std::map<std::string, size_t> SpeciesIndexMap() { return species_indexes_map_; };
 		SpeciesNames getSpeciesNameList() { return species_name_list_; };
-		void assignBaseParticles(BaseParticles *base_particles) override
+
+		virtual void registerReloadLocalParameters(BaseParticles *base_particles) override
 		{
-			BaseMaterialType::assignBaseParticles(base_particles);
+			BaseMaterialType::registerReloadLocalParameters(base_particles);
 			for (size_t k = 0; k < species_diffusion_.size(); ++k)
-				species_diffusion_[k]->assignBaseParticles(base_particles);
+				species_diffusion_[k]->registerReloadLocalParameters(base_particles);
 		};
+
+		virtual void initializeLocalParameters(BaseParticles *base_particles) override
+		{
+			BaseMaterialType::initializeLocalParameters(base_particles);
+			for (size_t k = 0; k < species_diffusion_.size(); ++k)
+				species_diffusion_[k]->initializeLocalParameters(base_particles);
+		};
+
 		/**
 		 * @brief Get diffusion time step size. Here, I follow the reference:
 		 * https://www.uni-muenster.de/imperia/md/content/physik_tp/lectures/ws2016-2017/num_methods_i/heat.pdf

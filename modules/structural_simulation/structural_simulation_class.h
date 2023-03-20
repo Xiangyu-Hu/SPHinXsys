@@ -10,17 +10,14 @@
 #define SOLID_STRUCTURAL_SIMULATION_CLASS_H
 
 #include "sphinxsys.h"
-#include <algorithm>
-#include <memory>
-#include <vector>
 
 using namespace SPH;
-using namespace std;
-using GravityPair = pair<int, Vec3d>;
-using AccelTuple = tuple<int, BoundingBox, Vec3d>;
-using ForceTuple = tuple<int, BoundingBox, Vec3d, Real>;
-using PressureTuple = tuple<int, SharedPtr<TriangleMeshShape>, Vec3d, StdVec<array<Real, 2>>>;
-using SpringDamperTuple = tuple<int, Vec3d, Real>;
+
+using GravityPair = std::pair<int, Vec3d>;
+using AccelTuple =  std::tuple<int, BoundingBox, Vec3d>;
+using ForceTuple =  std::tuple<int, BoundingBox, Vec3d, Real>;
+using PressureTuple =  std::tuple<int, SharedPtr<TriangleMeshShape>, Vec3d, StdVec<std::array<Real, 2>>>;
+using SpringDamperTuple =  std::tuple<int, Vec3d, Real>;
 /**
  * @brief SurfaceSpringTuple
  * int: body index
@@ -30,12 +27,12 @@ using SpringDamperTuple = tuple<int, Vec3d, Real>;
  * Real: normal spring stiffness
  * Real: damping coefficient
  */
-using SurfaceSpringTuple = tuple<int, SharedPtr<TriangleMeshShape>, bool, Vec3d, Real, Real>;
-using ConstrainedRegionPair = pair<int, BoundingBox>;
-using PositionSolidBodyTuple = tuple<int, Real, Real, Vec3d>;
-using PositionScaleSolidBodyTuple = tuple<int, Real, Real, Real>;
-using TranslateSolidBodyTuple = tuple<int, Real, Real, Vec3d>;
-using TranslateSolidBodyPartTuple = tuple<int, Real, Real, Vec3d, BoundingBox>;
+using SurfaceSpringTuple =  std::tuple<int, SharedPtr<TriangleMeshShape>, bool, Vec3d, Real, Real>;
+using ConstrainedRegionPair = std::pair<int, BoundingBox>;
+using PositionSolidBodyTuple =  std::tuple<int, Real, Real, Vec3d>;
+using PositionScaleSolidBodyTuple =  std::tuple<int, Real, Real, Real>;
+using TranslateSolidBodyTuple =  std::tuple<int, Real, Real, Vec3d>;
+using TranslateSolidBodyPartTuple =  std::tuple<int, Real, Real, Vec3d, BoundingBox>;
 
 #ifdef __EMSCRIPTEN__
 struct StlData
@@ -44,9 +41,9 @@ struct StlData
 	uintptr_t ptr;
 };
 
-using StlList = vector<StlData>;
+using StlList = StdVec<StlData>;
 #else
-using StlList = vector<string>;
+using StlList = StdVec<std::string>;
 #endif
 
 class BodyPartFromMesh : public BodyRegionByParticle
@@ -115,41 +112,41 @@ static inline Real getPhysicalViscosityGeneral(Real rho, Real youngs_modulus, Re
 class StructuralSimulationInput
 {
 public:
-	string relative_input_path_;
+	std::string relative_input_path_;
 	StlList imported_stl_list_;
 	Real scale_stl_;
-	vector<Vec3d> translation_list_;
-	vector<Real> resolution_list_;
-	vector<SharedPtr<SaintVenantKirchhoffSolid>> material_model_list_;
+	StdVec<Vec3d> translation_list_;
+	StdVec<Real> resolution_list_;
+	StdVec<SharedPtr<SaintVenantKirchhoffSolid>> material_model_list_;
 	StdVec<Real> physical_viscosity_;
 	StdVec<IndexVector> contacting_body_pairs_list_;
-	vector<pair<array<int, 2>, array<Real, 2>>> time_dep_contacting_body_pairs_list_;
+	StdVec<std::pair<std::array<int, 2>, std::array<Real, 2>>> time_dep_contacting_body_pairs_list_;
 	// scale system boundaries
 	Real scale_system_boundaries_;
 	// particle relaxation
-	vector<bool> particle_relaxation_list_;
+	StdVec<bool> particle_relaxation_list_;
 	bool write_particle_relaxation_data_;
 	// boundary conditions
-	vector<GravityPair> non_zero_gravity_;
-	vector<AccelTuple> acceleration_bounding_box_tuple_;
-	vector<ForceTuple> force_in_body_region_tuple_;
-	vector<PressureTuple> surface_pressure_tuple_;
-	vector<SpringDamperTuple> spring_damper_tuple_;
-	vector<SurfaceSpringTuple> surface_spring_tuple_;
-	vector<int> body_indices_fixed_constraint_;
-	vector<ConstrainedRegionPair> body_indices_fixed_constraint_region_;
-	vector<PositionSolidBodyTuple> position_solid_body_tuple_;
-	vector<PositionScaleSolidBodyTuple> position_scale_solid_body_tuple_;
-	vector<TranslateSolidBodyTuple> translation_solid_body_tuple_;
-	vector<TranslateSolidBodyPartTuple> translation_solid_body_part_tuple_;
+	StdVec<GravityPair> non_zero_gravity_;
+	StdVec<AccelTuple> acceleration_bounding_box_tuple_;
+	StdVec<ForceTuple> force_in_body_region_tuple_;
+	StdVec<PressureTuple> surface_pressure_tuple_;
+	StdVec<SpringDamperTuple> spring_damper_tuple_;
+	StdVec<SurfaceSpringTuple> surface_spring_tuple_;
+	StdVec<int> body_indices_fixed_constraint_;
+	StdVec<ConstrainedRegionPair> body_indices_fixed_constraint_region_;
+	StdVec<PositionSolidBodyTuple> position_solid_body_tuple_;
+	StdVec<PositionScaleSolidBodyTuple> position_scale_solid_body_tuple_;
+	StdVec<TranslateSolidBodyTuple> translation_solid_body_tuple_;
+	StdVec<TranslateSolidBodyPartTuple> translation_solid_body_part_tuple_;
 
 	StructuralSimulationInput(
-		string relative_input_path,
+		std::string relative_input_path,
 		StlList imported_stl_list,
 		Real scale_stl,
-		vector<Vec3d> translation_list,
-		vector<Real> resolution_list,
-		vector<shared_ptr<SaintVenantKirchhoffSolid>> material_model_list,
+		StdVec<Vec3d> translation_list,
+		StdVec<Real> resolution_list,
+		StdVec<SharedPtr<SaintVenantKirchhoffSolid>> material_model_list,
 		StdVec<Real> physical_viscosity,
 		StdVec<IndexVector> contacting_bodies_list);
 };
@@ -163,17 +160,17 @@ private:
 
 protected:
 	// mandatory input
-	string relative_input_path_;
+	std::string relative_input_path_;
 	StlList imported_stl_list_;
 	Real scale_stl_;
-	vector<Vec3d> translation_list_;
-	vector<Real> resolution_list_;
-	vector<SharedPtr<TriangleMeshShape>> body_mesh_list_;
-	vector<SharedPtr<SaintVenantKirchhoffSolid>> material_model_list_;
+	StdVec<Vec3d> translation_list_;
+	StdVec<Real> resolution_list_;
+	StdVec<SharedPtr<TriangleMeshShape>> body_mesh_list_;
+	StdVec<SharedPtr<SaintVenantKirchhoffSolid>> material_model_list_;
 	StdVec<Real> physical_viscosity_;
 	StdVec<IndexVector> contacting_body_pairs_list_;
-	vector<pair<array<int, 2>, array<Real, 2>>> time_dep_contacting_body_pairs_list_; // optional: time dependent contact
-	vector<bool> particle_relaxation_list_;											  // optional: particle relaxation
+	StdVec<std::pair<std::array<int, 2>, std::array<Real, 2>>> time_dep_contacting_body_pairs_list_; // optional: time dependent contact
+	StdVec<bool> particle_relaxation_list_;											  // optional: particle relaxation
 	bool write_particle_relaxation_data_;
 
 	// internal members
@@ -182,58 +179,58 @@ protected:
 	Real scale_system_boundaries_;
 	IOEnvironment io_environment_;
 
-	vector<shared_ptr<SolidBodyForSimulation>> solid_body_list_;
-	vector<shared_ptr<SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection>>> particle_normal_update_;
+	StdVec<SharedPtr<SolidBodyForSimulation>> solid_body_list_;
+	StdVec<SharedPtr<SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection>>> particle_normal_update_;
 
-	vector<shared_ptr<SurfaceContactRelation>> contact_list_;
-	vector<shared_ptr<InteractionDynamics<solid_dynamics::ContactDensitySummation>>> contact_density_list_;
-	vector<shared_ptr<InteractionDynamics<solid_dynamics::ContactForce>>> contact_force_list_;
+	StdVec<SharedPtr<SurfaceContactRelation>> contact_list_;
+	StdVec<SharedPtr<InteractionDynamics<solid_dynamics::ContactDensitySummation>>> contact_density_list_;
+	StdVec<SharedPtr<InteractionDynamics<solid_dynamics::ContactForce>>> contact_force_list_;
 
 	// for initializeATimeStep
-	vector<shared_ptr<SimpleDynamics<TimeStepInitialization>>> initialize_time_step_;
-	vector<GravityPair> non_zero_gravity_;
+	StdVec<SharedPtr<SimpleDynamics<TimeStepInitialization>>> initialize_time_step_;
+	StdVec<GravityPair> non_zero_gravity_;
 	// for AccelerationForBodyPartInBoundingBox
-	vector<shared_ptr<SimpleDynamics<solid_dynamics::AccelerationForBodyPartInBoundingBox>>> acceleration_bounding_box_;
-	vector<AccelTuple> acceleration_bounding_box_tuple_;
+	StdVec<SharedPtr<SimpleDynamics<solid_dynamics::AccelerationForBodyPartInBoundingBox>>> acceleration_bounding_box_;
+	StdVec<AccelTuple> acceleration_bounding_box_tuple_;
 	// for ForceInBodyRegion
-	vector<shared_ptr<SimpleDynamics<solid_dynamics::ForceInBodyRegion>>> force_in_body_region_;
-	vector<ForceTuple> force_in_body_region_tuple_;
+	StdVec<SharedPtr<SimpleDynamics<solid_dynamics::ForceInBodyRegion>>> force_in_body_region_;
+	StdVec<ForceTuple> force_in_body_region_tuple_;
 	// for SurfacePressureFromSource
-	vector<shared_ptr<SimpleDynamics<solid_dynamics::SurfacePressureFromSource>>> surface_pressure_;
-	vector<PressureTuple> surface_pressure_tuple_;
+	StdVec<SharedPtr<SimpleDynamics<solid_dynamics::SurfacePressureFromSource>>> surface_pressure_;
+	StdVec<PressureTuple> surface_pressure_tuple_;
 	// for SpringDamperConstraintParticleWise
-	vector<shared_ptr<SimpleDynamics<solid_dynamics::SpringDamperConstraintParticleWise>>> spring_damper_constraint_;
-	vector<SpringDamperTuple> spring_damper_tuple_;
+	StdVec<SharedPtr<SimpleDynamics<solid_dynamics::SpringDamperConstraintParticleWise>>> spring_damper_constraint_;
+	StdVec<SpringDamperTuple> spring_damper_tuple_;
 	// for SpringNormalOnSurfaceParticles
-	vector<shared_ptr<SimpleDynamics<solid_dynamics::SpringNormalOnSurfaceParticles>>> surface_spring_;
-	vector<SurfaceSpringTuple> surface_spring_tuple_;
+	StdVec<SharedPtr<SimpleDynamics<solid_dynamics::SpringNormalOnSurfaceParticles>>> surface_spring_;
+	StdVec<SurfaceSpringTuple> surface_spring_tuple_;
 	// for ConstrainSolidBody
-	vector<shared_ptr<SimpleDynamics<solid_dynamics::FixBodyConstraint>>> fixed_constraint_body_;
-	vector<int> body_indices_fixed_constraint_;
+	StdVec<SharedPtr<SimpleDynamics<solid_dynamics::FixBodyConstraint>>> fixed_constraint_body_;
+	StdVec<int> body_indices_fixed_constraint_;
 	// for ConstrainSolidBodyRegion
-	vector<shared_ptr<SimpleDynamics<solid_dynamics::FixBodyPartConstraint>>> fixed_constraint_region_;
-	vector<ConstrainedRegionPair> body_indices_fixed_constraint_region_;
+	StdVec<SharedPtr<SimpleDynamics<solid_dynamics::FixBodyPartConstraint>>> fixed_constraint_region_;
+	StdVec<ConstrainedRegionPair> body_indices_fixed_constraint_region_;
 	// for PositionSolidBody
-	vector<shared_ptr<SimpleDynamics<solid_dynamics::PositionSolidBody>>> position_solid_body_;
-	vector<PositionSolidBodyTuple> position_solid_body_tuple_;
+	StdVec<SharedPtr<SimpleDynamics<solid_dynamics::PositionSolidBody>>> position_solid_body_;
+	StdVec<PositionSolidBodyTuple> position_solid_body_tuple_;
 	// for PositionScaleSolidBody
-	vector<shared_ptr<SimpleDynamics<solid_dynamics::PositionScaleSolidBody>>> position_scale_solid_body_;
-	vector<PositionScaleSolidBodyTuple> position_scale_solid_body_tuple_;
+	StdVec<SharedPtr<SimpleDynamics<solid_dynamics::PositionScaleSolidBody>>> position_scale_solid_body_;
+	StdVec<PositionScaleSolidBodyTuple> position_scale_solid_body_tuple_;
 	// for TranslateSolidBody
-	vector<shared_ptr<SimpleDynamics<solid_dynamics::TranslateSolidBody>>> translation_solid_body_;
-	vector<TranslateSolidBodyTuple> translation_solid_body_tuple_;
+	StdVec<SharedPtr<SimpleDynamics<solid_dynamics::TranslateSolidBody>>> translation_solid_body_;
+	StdVec<TranslateSolidBodyTuple> translation_solid_body_tuple_;
 	// for TranslateSolidBodyPart
-	vector<shared_ptr<SimpleDynamics<solid_dynamics::TranslateSolidBodyPart>>> translation_solid_body_part_;
-	vector<TranslateSolidBodyPartTuple> translation_solid_body_part_tuple_;
+	StdVec<SharedPtr<SimpleDynamics<solid_dynamics::TranslateSolidBodyPart>>> translation_solid_body_part_;
+	StdVec<TranslateSolidBodyPartTuple> translation_solid_body_part_tuple_;
 
 	// iterators
 	int iteration_;
 
 	// data storage
-	vector<Real> von_mises_stress_max_;
+	StdVec<Real> von_mises_stress_max_;
 	StdLargeVec<StdLargeVec<Real>> von_mises_stress_particles_;
 
-	vector<Real> von_mises_strain_max_;
+	StdVec<Real> von_mises_strain_max_;
 	StdLargeVec<StdLargeVec<Real>> von_mises_strain_particles_;
 
 	// for constructor, the order is important
@@ -291,7 +288,7 @@ public:
 	explicit StructuralSimulation(const StructuralSimulationInput &input);
 	~StructuralSimulation();
 
-	StdVec<shared_ptr<SolidBodyForSimulation>> get_solid_body_list_() { return solid_body_list_; };
+	StdVec<SharedPtr<SolidBodyForSimulation>> get_solid_body_list_() { return solid_body_list_; };
 	Real getMaxDisplacement(int body_index);
 
 	// For c++

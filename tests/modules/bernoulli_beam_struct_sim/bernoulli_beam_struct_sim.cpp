@@ -36,7 +36,7 @@ TEST(BernoulliBeam20x, Pressure)
 		{}
 	};
 	input.body_indices_fixed_constraint_region_ = StdVec<ConstrainedRegionPair>{ ConstrainedRegionPair(0, fixation) };
-	StdVec<array<Real, 2>> pressure_over_time = {
+	StdVec<std::array<Real, 2>> pressure_over_time = {
 		{0.0, 0.0},
 		{end_time * 0.1, pressure},
 		{end_time, pressure }

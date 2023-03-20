@@ -186,8 +186,8 @@ int main(int ac, char *av[])
 
 	TimeInterval tt;
 	tt = t4 - t1 - interval;
-	cout << "Total wall time for computation: " << tt.seconds()
-		 << " seconds." << endl;
+	std::cout << "Total wall time for computation: " << tt.seconds()
+		 << " seconds." << std::endl;
 
 	write_total_mechanical_energy.newResultTest();
 	write_maximum_speed.newResultTest();

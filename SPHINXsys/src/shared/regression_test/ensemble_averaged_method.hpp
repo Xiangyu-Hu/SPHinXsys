@@ -116,7 +116,7 @@ namespace SPH
 					if (relative_value_ > threshold[i])
 					{
 						std::cout << par_name << ": " << this->quantity_name_ << "[" << observation_index << "][" << i << "] in " << this->element_tag_[snapshot_index]
-							<< " is not converged, and difference is " << relative_value_ << endl;
+							<< " is not converged, and difference is " << relative_value_ << std::endl;
 						count++;
 					}
 				}
@@ -138,7 +138,7 @@ namespace SPH
 						if (relative_value_ > threshold(i,j))
 						{
 							std::cout << par_name << ": " << this->quantity_name_ << "[" << observation_index << "][" << i << "][" << j << " ] in "
-								<< this->element_tag_[snapshot_index] << " is not converged, and difference is " << relative_value_ << endl;
+								<< this->element_tag_[snapshot_index] << " is not converged, and difference is " << relative_value_ << std::endl;
 							count++;
 						}
 					}
@@ -184,10 +184,10 @@ namespace SPH
 					{
 						std::cout << this->quantity_name_ << "[" << observation_index << "][" << i << "] in " << this->element_tag_[snapshot_index] << 
 									" is beyond the exception, and difference is "
-							<< relative_value_ << endl;
-						std::cout << "Current: " << current_result[snapshot_index][observation_index][i] << endl;
-						std::cout << "Mean " << meanvalue[snapshot_index + diff][observation_index][i] << endl;
-						std::cout << "Variance" << variance[snapshot_index + diff][observation_index][i] << endl;
+							<< relative_value_ << std::endl;
+						std::cout << "Current: " << current_result[snapshot_index][observation_index][i] << std::endl;
+						std::cout << "Mean " << meanvalue[snapshot_index + diff][observation_index][i] << std::endl;
+						std::cout << "Variance" << variance[snapshot_index + diff][observation_index][i] << std::endl;
 						count++;
 					}
 				}
@@ -216,7 +216,7 @@ namespace SPH
 						if (relative_value_ > 0.01)
 						{
 							std::cout << this->quantity_name_ << "[" << observation_index << "][" << i << "] in " << this->element_tag_[snapshot_index] << 
-										" is beyond the exception, and difference is " << relative_value_ << endl;
+										" is beyond the exception, and difference is " << relative_value_ << std::endl;
 							count++;
 						}
 					}

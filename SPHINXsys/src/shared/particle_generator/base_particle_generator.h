@@ -53,9 +53,11 @@ namespace SPH
 		virtual ~BaseParticleGenerator(){};
 		/** Initialize geometric parameters. */
 		virtual void initializeGeometricVariables() = 0;
+		virtual void generateParticlesWithBasicVariables();
 
 	protected:
 		BaseParticles &base_particles_;
+		BaseMaterial &base_material_;
 		StdLargeVec<Vecd> &pos_;		   /**< current position */
 		StdLargeVec<size_t> &unsorted_id_; /**< original particle ids */
 		/** Initialize particle position. */
@@ -128,6 +130,7 @@ namespace SPH
 		virtual ~ParticleGeneratorReload(){};
 		/** Initialize geometrical variable for reload particles. */
 		virtual void initializeGeometricVariables() override;
+		virtual void generateParticlesWithBasicVariables() override;
 	};
 }
 #endif // BASE_PARTICLE_GENERATOR_H

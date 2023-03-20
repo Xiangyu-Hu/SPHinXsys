@@ -12,27 +12,23 @@ namespace SPH
 		transformed_diffusivity_ = inverseCholeskyDecomposition(diff_i);
 	};
 	//=================================================================================================//
-	void LocalDirectionalDiffusion::assignBaseParticles(BaseParticles *base_particles)
+	void LocalDirectionalDiffusion::registerReloadLocalParameters(BaseParticles *base_particles)
 	{
-		DirectionalDiffusion::assignBaseParticles(base_particles);
-		initializeFiberDirection();
-	};
-	//=================================================================================================//
-	void LocalDirectionalDiffusion::initializeFiberDirection()
-	{
-		base_particles_->registerVariable(local_bias_direction_, "Fiber");
-		base_particles_->addVariableNameToList<Vecd>(reload_local_parameters_, "Fiber");
+		base_particles->registerVariable(local_bias_direction_, "Fiber");
+		base_particles->addVariableToReload<Vecd>("Fiber");
 	}
 	//=================================================================================================//
-	void LocalDirectionalDiffusion::readFromXmlForLocalParameters(const std::string &filefullpath)
+	void LocalDirectionalDiffusion::initializeLocalParameters(BaseParticles *base_particles)
 	{
-		BaseMaterial::readFromXmlForLocalParameters(filefullpath);
-		size_t total_real_particles = base_particles_->total_real_particles_;
-		for (size_t i = 0; i != total_real_particles; i++)
-		{
-			Matd diff_i = diff_cf_ * Matd::Identity() + bias_diff_cf_ * local_bias_direction_[i] * local_bias_direction_[i].transpose();
-			local_transformed_diffusivity_.push_back(inverseCholeskyDecomposition(diff_i));
-		}
+		DirectionalDiffusion::initializeLocalParameters(base_particles);
+		base_particles->registerVariable(
+			local_transformed_diffusivity_, "LocalTransformedDiffusivity",
+			[&](size_t i) -> Matd
+			{
+				Matd diff_i = diff_cf_ * Matd::Identity() + bias_diff_cf_ * local_bias_direction_[i] * local_bias_direction_[i].transpose();
+				return inverseCholeskyDecomposition(diff_i);
+			});
+
 		std::cout << "\n Local diffusion parameters setup finished " << std::endl;
 	};
 	//=================================================================================================//

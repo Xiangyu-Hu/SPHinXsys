@@ -3,8 +3,6 @@
 #include "complex_solid.h"
 #include "base_particles.hpp"
 
-using namespace std;
-
 namespace SPH
 {
 	//=============================================================================================//
@@ -17,16 +15,10 @@ namespace SPH
 	}
 	//=============================================================================================//
 	template <class MuscleType>
-	void ActiveMuscle<MuscleType>::initializeContractionStress()
+	void ActiveMuscle<MuscleType>::initializeLocalParameters(BaseParticles *base_particles)
 	{
-		this->base_particles_->registerVariable(active_contraction_stress_, "ActiveContractionStress");
-	}
-	//=============================================================================================//
-	template <class MuscleType>
-	void ActiveMuscle<MuscleType>::assignBaseParticles(BaseParticles *base_particles)
-	{
-		MuscleType::assignBaseParticles(base_particles);
-		initializeContractionStress();
+		MuscleType::initializeLocalParameters(base_particles);
+		base_particles->registerVariable(active_contraction_stress_, "ActiveContractionStress");
 	}
 	//=============================================================================================//
 	template <class MuscleType>
