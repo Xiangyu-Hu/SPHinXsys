@@ -10,15 +10,7 @@ namespace SPH
 	BaseParticleGenerator::BaseParticleGenerator(SPHBody &sph_body)
 		: base_particles_(sph_body.getBaseParticles()),
 		  base_material_(base_particles_.base_material_),
-		  pos_(base_particles_.pos_), unsorted_id_(base_particles_.unsorted_id_)
-	{
-		if (&base_material_ == nullptr)
-		{
-			std::cout << "\n Error: Materials have not been defined yet!" << std::endl;
-			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-			exit(1);
-		}
-	}
+		  pos_(base_particles_.pos_), unsorted_id_(base_particles_.unsorted_id_) {}
 	//=================================================================================================//
 	void BaseParticleGenerator::initializePosition(const Vecd &position)
 	{
@@ -30,7 +22,7 @@ namespace SPH
 	void BaseParticleGenerator::generateParticlesWithBasicVariables()
 	{
 		initializeGeometricVariables();
-		//should be determined first before register other variables
+		// should be determined first before register other variables
 		base_particles_.real_particles_bound_ = base_particles_.total_real_particles_;
 		base_material_.registerReloadLocalParameters(&base_particles_);
 	}
@@ -85,7 +77,7 @@ namespace SPH
 	{
 		base_material_.registerReloadLocalParameters(&base_particles_);
 		initializeGeometricVariables();
-		//should be determined first before register other variables
+		// should be determined first before register other variables
 		base_particles_.real_particles_bound_ = base_particles_.total_real_particles_;
 	}
 	//=================================================================================================//
