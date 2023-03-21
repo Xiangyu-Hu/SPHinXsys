@@ -98,11 +98,14 @@ public:
 /**
  *  The main program
  */
-int main()
+int main(int ac, char *av[])
 {
 	/** Setup the system. */
 	SPHSystem system(system_domain_bounds, particle_spacing_ref);
-
+#ifdef BOOST_AVAILABLE
+	system.handleCommandlineOptions(ac, av);
+#endif
+	IOEnvironment io_environment(system);
 	/** create a cylinder body with shell particles and linear elasticity. */
 	SolidBody cylinder_body(system, makeShared<DefaultShape>("CylinderBody"));
 	cylinder_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
@@ -142,7 +145,6 @@ int main()
 	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vecd>>>
 		cylinder_rotation_damping(0.2, cylinder_body_inner, "AngularVelocity", physical_viscosity);
 	/** Output */
-	IOEnvironment io_environment(system);
 	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
 		write_cylinder_max_displacement("Position", io_environment, cylinder_observer_contact);
@@ -207,7 +209,14 @@ int main()
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-	write_cylinder_max_displacement.newResultTest();
+	if (system.generate_regression_data_)
+	{
+		write_cylinder_max_displacement.generateDataBase(0.005);
+	}
+	else
+	{
+		write_cylinder_max_displacement.newResultTest();
+	}
 
 	return 0;
 }
