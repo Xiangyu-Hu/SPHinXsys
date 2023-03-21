@@ -44,13 +44,13 @@ namespace SPH
 	template<class ObserveMethodType>
 	Real RegressionTestDynamicTimeWarping<ObserveMethodType>::calculatePNorm(Vecd variable_a, Vecd variable_b)
 	{
-		return (variable_a - variable_b).squaredNorm();
+		return (variable_a - variable_b).norm();
 	};
 	//=================================================================================================//
 	template<class ObserveMethodType>
 	Real RegressionTestDynamicTimeWarping<ObserveMethodType>::calculatePNorm(Matd variable_a, Matd variable_b)
 	{
-		return (variable_a - variable_b).squaredNorm();
+		return (variable_a - variable_b).norm();
 	};
 	//=================================================================================================//
 	template<class ObserveMethodType>
