@@ -27,6 +27,11 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
+      
+      - name: Initialize submodules
+        run: |
+          git submodule init
+          git submodule update
 
       - name: Install system dependencies
         run: |
@@ -150,6 +155,11 @@ jobs:
             simbody `
             gtest `
             xsimd
+            
+      - name: Initialize submodules
+        run: |
+          git submodule init
+          git submodule update
 
       - uses: ilammy/msvc-dev-cmd@v1
 
@@ -215,6 +225,11 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
+      
+      - name: Initialize submodules
+        run: |
+          git submodule init
+          git submodule update
 
       - name: Install system dependencies
         run: |
