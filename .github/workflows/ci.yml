@@ -31,7 +31,7 @@ jobs:
       - name: Initialize submodules
         run: |
           git submodule init
-          git submodule update
+          git submodule update --remote 3rd_party/pybind11
 
       - name: Install system dependencies
         run: |
@@ -129,6 +129,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3 # Checks-out the repository under ${{github.workspace}}
       
+      - name: Initialize submodules
+        run: |
+          git submodule init
+          git submodule update --remote 3rd_party/pybind11
+      
       - name: Update ccache and ninja # For correct caching with ccache on Windows
         shell: bash
         run: |
@@ -155,11 +160,6 @@ jobs:
             simbody `
             gtest `
             xsimd
-            
-      - name: Initialize submodules
-        run: |
-          git submodule init
-          git submodule update
 
       - uses: ilammy/msvc-dev-cmd@v1
 
@@ -229,7 +229,7 @@ jobs:
       - name: Initialize submodules
         run: |
           git submodule init
-          git submodule update
+          git submodule update --remote 3rd_party/pybind11
 
       - name: Install system dependencies
         run: |
