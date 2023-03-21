@@ -2,3 +2,6 @@
 	path = 3rd_party/wasmtbb
 	url = https://github.com/hpcwasm/wasmtbb.git
 	
+[submodule "3rd_party/pybind11"]
+	path = 3rd_party/pybind11
+	url = https://github.com/pybind/pybind11.git
