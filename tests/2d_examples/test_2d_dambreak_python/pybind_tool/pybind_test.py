@@ -19,10 +19,18 @@ sys.path.append(path)
 # change import depending on the project name
 import test_2d_dambreak_python as test_2d
 
-ctest = test_2d.dambreak_from_sph_cpp(0)
-result = ctest.CmakeTest()
 
-return result
+def get_cmake_result():
+    ctest = test_2d.dambreak_from_sph_cpp(0)
+    result = ctest.CmakeTest()
+    return result
+
+if __name__ == "__main__":
+    get_cmake_result()
+
+
+
+
 
 
 
