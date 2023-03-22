@@ -75,6 +75,7 @@ jobs:
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -D SPHINXSYS_CI=ON \
+            -D PYBIND11_DIR=<3rd_party/pybind11> \
             -S ${{github.workspace}} \
             -B ${{github.workspace}}/build
             
@@ -169,6 +170,7 @@ jobs:
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}\vcpkg\scripts\buildsystems\vcpkg.cmake" `
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache `
             -D SPHINXSYS_CI=ON `
+            -D PYBIND11_DIR=<3rd_party/pybind11> `
             -S ${{github.workspace}} `
             -B C:\build
       
@@ -267,6 +269,7 @@ jobs:
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -D SPHINXSYS_CI=ON \
+            -D PYBIND11_DIR=<3rd_party/pybind11> \
             -S ${{github.workspace}} \
             -B ${{github.workspace}}/build
 
