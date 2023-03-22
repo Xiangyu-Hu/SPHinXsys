@@ -90,7 +90,7 @@ namespace SPH
 	{
 		// estimate the required mesh levels
 		int total_levels = (int)log10(MinimumDimension(shape.getBounds()) / ReferenceSpacing()) + 2;
-		Real coarsest_spacing = ReferenceSpacing() * pow(2.0, (int)total_levels - 1);
+		Real coarsest_spacing = ReferenceSpacing() * pow(2.0, total_levels - 1);
 		MultilevelLevelSet coarser_level_sets(shape.getBounds(), coarsest_spacing / refinement_ratio,
 											  total_levels - 1, shape, *this);
 		// return the finest level set only
