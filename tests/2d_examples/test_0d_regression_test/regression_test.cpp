@@ -101,7 +101,7 @@ MultiPolygon createOtherSideBoundary()
 class DiffusionMaterial : public DiffusionReaction<Solid>
 {
 public:
-	DiffusionMaterial() : DiffusionReaction<Solid>({"Phi"})
+	DiffusionMaterial() : DiffusionReaction<Solid>({"Phi"}, SharedPtr<NoReaction>())
 	{
 		initializeAnDiffusion<DirectionalDiffusion>("Phi", "Phi", diffusion_coff, bias_coff, bias_direction);
 	};

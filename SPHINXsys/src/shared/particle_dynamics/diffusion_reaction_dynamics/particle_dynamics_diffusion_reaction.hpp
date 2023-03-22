@@ -308,8 +308,8 @@ namespace SPH
 		loadLocalSpecies(local_species, index_i);
 		for (size_t k = 0; k != NumReactiveSpecies; ++k)
 		{
-			Real production_rate = species_reaction_->get_production_rates_[k](local_species);
-			Real loss_rate = species_reaction_->get_loss_rates_[k](local_species);
+			Real production_rate = species_reaction_.get_production_rates_[k](local_species);
+			Real loss_rate = species_reaction_.get_loss_rates_[k](local_species);
 			local_species[k] = updateAReactionSpecies(local_species[k], production_rate, loss_rate, dt);
 		}
 		applyGlobalSpecies(local_species, index_i);
@@ -321,11 +321,12 @@ namespace SPH
 	{
 		LocalSpecies local_species;
 		loadLocalSpecies(local_species, index_i);
-		for (size_t k = NumReactiveSpecies - 1; k >= 0; --k)
+		for (size_t k = NumReactiveSpecies; k != 0; --k)
 		{
-			Real production_rate = species_reaction_->get_production_rates_[k](local_species);
-			Real loss_rate = species_reaction_->get_loss_rates_[k](local_species);
-			local_species[k] = updateAReactionSpecies(local_species[k], production_rate, loss_rate, dt);
+			size_t m = k - 1;
+			Real production_rate = species_reaction_.get_production_rates_[m](local_species);
+			Real loss_rate = species_reaction_.get_loss_rates_[m](local_species);
+			local_species[m] = updateAReactionSpecies(local_species[m], production_rate, loss_rate, dt);
 		}
 		applyGlobalSpecies(local_species, index_i);
 	}

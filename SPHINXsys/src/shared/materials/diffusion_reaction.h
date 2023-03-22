@@ -204,6 +204,7 @@ namespace SPH
 	/** explicit specialization for empty reaction model */
 	template <>
 	inline BaseReactionModel<0>::BaseReactionModel() : reaction_model_("EmptyReactionModel"){};
+	using NoReaction = BaseReactionModel<0>;
 
 	/**
 	 * @class DiffusionReaction
@@ -217,7 +218,7 @@ namespace SPH
 
 	private:
 		UniquePtrKeepers<BaseDiffusion> diffusion_ptr_keeper_;
-		UniquePtrKeeper<BaseReactionModel<0>> empty_reaction_ptr_keeper_;
+		SharedPtrKeeper<BaseReactionModel<NUM_REACTIVE_SPECIES>> reaction_ptr_keeper_;
 
 	protected:
 		typedef std::array<std::string, NUM_REACTIVE_SPECIES> ReactiveSpeciesNames;
@@ -231,9 +232,11 @@ namespace SPH
 		/** Constructor for material with diffusion and reaction. */
 		template <typename... MaterialArgs>
 		DiffusionReaction(const StdVec<std::string> &all_species_names,
-						  BaseReactionModel<NUM_REACTIVE_SPECIES> &reaction_model, MaterialArgs &&...material_args)
+						  SharedPtr<BaseReactionModel<NUM_REACTIVE_SPECIES>> reaction_model_ptr,
+						  MaterialArgs &&...material_args)
 			: BaseMaterialType(std::forward<MaterialArgs>(material_args)...),
-			  all_species_names_(all_species_names), species_reaction_(reaction_model)
+			  all_species_names_(all_species_names),
+			  species_reaction_(reaction_ptr_keeper_.assignRef(reaction_model_ptr))
 		{
 			BaseMaterialType::material_type_name_ =
 				NUM_REACTIVE_SPECIES == 0 ? "Diffusion" : "DiffusionReaction";
@@ -259,13 +262,6 @@ namespace SPH
 				}
 			}
 		};
-		/** Constructor for material with diffusion only. */
-		template <typename... MaterialArgs>
-		DiffusionReaction(const StdVec<std::string> &all_species_names, MaterialArgs &&...material_args)
-			: DiffusionReaction(all_species_names,
-								empty_reaction_ptr_keeper_.createRef<BaseReactionModel<0>>(),
-								std::forward<MaterialArgs>(material_args)...) {}
-
 		virtual ~DiffusionReaction(){};
 		size_t TotalSpecies() { return all_species_names_.size(); };
 		IndexVector &ReactiveSpecies() { return reactive_species_; };

@@ -228,7 +228,7 @@ namespace SPH
 		const static int NumReactiveSpecies = DiffusionReactionParticlesType::NumReactiveSpecies;
 		typedef std::array<Real, NumReactiveSpecies> LocalSpecies;
 		StdVec<StdLargeVec<Real> *> &reactive_species_;
-		BaseReactionModel<NumReactiveSpecies> *species_reaction_;
+		BaseReactionModel<NumReactiveSpecies> &species_reaction_;
 		UpdateAReactionSpecies updateAReactionSpecies;
 		void loadLocalSpecies(LocalSpecies &local_species, size_t index_i);
 		void applyGlobalSpecies(LocalSpecies &local_species, size_t index_i);

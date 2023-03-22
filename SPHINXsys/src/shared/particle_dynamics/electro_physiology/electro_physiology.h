@@ -92,6 +92,11 @@ namespace SPH
 		virtual ~AlievPanfilowModel(){};
 	};
 
+	// type trait for pass type template constructor
+	template <typename T>
+	struct encodeType
+	{
+	};
 	/**
 	 * @class MonoFieldElectroPhysiology
 	 * @brief material class for electro_physiology.
@@ -100,10 +105,11 @@ namespace SPH
 	{
 	public:
 		template <class DiffusionType>
-		MonoFieldElectroPhysiology(ElectroPhysiologyReaction &electro_physiology_reaction,
+		MonoFieldElectroPhysiology(SharedPtr<ElectroPhysiologyReaction> electro_physiology_reaction_ptr,
+								   encodeType<DiffusionType> empty_object,
 								   Real diff_cf, Real bias_diff_cf, Vecd bias_direction)
 			: DiffusionReaction<Solid, 3>({"Voltage", "GateVariable", "ActiveContractionStress"},
-										  electro_physiology_reaction)
+										  electro_physiology_reaction_ptr)
 		{
 			material_type_name_ = "MonoFieldElectroPhysiology";
 			initializeAnDiffusion<DiffusionType>("Voltage", "Voltage", diff_cf, bias_diff_cf, bias_direction);
@@ -119,7 +125,8 @@ namespace SPH
 		: public DiffusionReactionParticles<SolidParticles, MonoFieldElectroPhysiology>
 	{
 	public:
-		ElectroPhysiologyParticles(SPHBody &sph_body, MonoFieldElectroPhysiology *mono_field_electro_physiology);
+		ElectroPhysiologyParticles(SPHBody &sph_body, MonoFieldElectroPhysiology *mono_field_electro_physiology)
+			: DiffusionReactionParticles<SolidParticles, MonoFieldElectroPhysiology>(sph_body, mono_field_electro_physiology){};
 		virtual ~ElectroPhysiologyParticles(){};
 		virtual ElectroPhysiologyParticles *ThisObjectPtr() override { return this; };
 	};
