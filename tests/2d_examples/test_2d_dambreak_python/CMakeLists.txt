@@ -24,10 +24,7 @@ pybind11_add_module(${PROJECT_NAME} ${EXECUTABLE_OUTPUT_PATH} ${DIR_SRCS} )
 set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 target_link_libraries(${PROJECT_NAME} PRIVATE sphinxsys_2d)
 
-if(${CMAKE_SYSTEM_NAME} MATCHES Windows)
-    add_test(NAME ${PROJECT_NAME} COMMAND python3.9 ${EXECUTABLE_OUTPUT_PATH}/bind/pybind_test.py)
-else()
-    add_test(NAME ${PROJECT_NAME} COMMAND ${PYTHON_EXECUTABLE} ${EXECUTABLE_OUTPUT_PATH}/bind/pybind_test.py)
-endif()
-    set_tests_properties(${PROJECT_NAME} PROPERTIES WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH}/bind 
-        PASS_REGULAR_EXPRESSION "success")
+set(PYTHON_EXECUTABLE "C:/hostedtoolcache/windows/Python/3.9.13/x64/python3.exe")
+add_test(NAME ${PROJECT_NAME} COMMAND ${PYTHON_EXECUTABLE} ${EXECUTABLE_OUTPUT_PATH}/bind/pybind_test.py)
+set_tests_properties(${PROJECT_NAME} PROPERTIES WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH}/bind 
+    PASS_REGULAR_EXPRESSION "success")
