@@ -109,12 +109,13 @@ public:
 //----------------------------------------------------------------------
 //	Set left side boundary condition.
 //----------------------------------------------------------------------
+using DiffusionParticles = DiffusionReactionParticles<SolidParticles, DiffusionMaterial>;
 class ConstantTemperatureConstraint
-	: public DiffusionReactionSpeciesConstraint<BodyPartByParticle, SolidParticles, Solid>
+	: public DiffusionReactionSpeciesConstraint<BodyPartByParticle, DiffusionParticles>
 {
 public:
 	ConstantTemperatureConstraint(BodyPartByParticle &body_part, const std::string &species_name, Real constrained_value)
-		: DiffusionReactionSpeciesConstraint<BodyPartByParticle, SolidParticles, Solid>(body_part, species_name),
+		: DiffusionReactionSpeciesConstraint<BodyPartByParticle, DiffusionParticles>(body_part, species_name),
 		  constrained_value_(constrained_value){};
 
 	void update(size_t index_i, Real dt = 0.0)
@@ -129,16 +130,16 @@ protected:
 //	Case-dependent initial condition.
 //----------------------------------------------------------------------
 class DiffusionInitialCondition
-	: public DiffusionReactionInitialCondition<SolidParticles, Solid>
+	: public DiffusionReactionInitialCondition<DiffusionParticles>
 {
 protected:
 	size_t phi_;
 
 public:
 	explicit DiffusionInitialCondition(SPHBody &sph_body)
-		: DiffusionReactionInitialCondition<SolidParticles, Solid>(sph_body)
+		: DiffusionReactionInitialCondition<DiffusionParticles>(sph_body)
 	{
-		phi_ = particles_->diffusion_reaction_material_.SpeciesIndexMap()["Phi"];
+		phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
 	};
 
 	void update(size_t index_i, Real dt)
@@ -154,7 +155,7 @@ public:
 //----------------------------------------------------------------------
 class DiffusionBodyRelaxation
 	: public RelaxationOfAllDiffusionSpeciesRK2<
-		  RelaxationOfAllDiffusionSpeciesInner<SolidParticles, Solid>>
+		  RelaxationOfAllDiffusionSpeciesInner<DiffusionParticles>>
 {
 public:
 	explicit DiffusionBodyRelaxation(InnerRelation &inner_relation)
@@ -196,7 +197,7 @@ int main()
 	//	Create body, materials and particles.
 	//----------------------------------------------------------------------
 	SolidBody diffusion_body(sph_system, makeShared<MultiPolygonShape>(createDiffusionDomain(), "DiffusionBody"));
-	diffusion_body.defineParticlesAndMaterial<DiffusionReactionParticles<SolidParticles, Solid>, DiffusionMaterial>();
+	diffusion_body.defineParticlesAndMaterial<DiffusionParticles, DiffusionMaterial>();
 	diffusion_body.generateParticles<ParticleGeneratorLattice>();
 	//----------------------------------------------------------------------
 	//	Observer body
@@ -217,7 +218,7 @@ int main()
 	DiffusionBodyRelaxation diffusion_relaxation(diffusion_body_inner_relation);
 	SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> correct_configuration(diffusion_body_inner_relation);
-	GetDiffusionTimeStepSize<SolidParticles, Solid> get_time_step_size(diffusion_body);
+	GetDiffusionTimeStepSize<DiffusionParticles> get_time_step_size(diffusion_body);
 	BodyRegionByParticle left_boundary(diffusion_body, makeShared<MultiPolygonShape>(createLeftSideBoundary()));
 	SimpleDynamics<ConstantTemperatureConstraint> left_boundary_condition(left_boundary, "Phi", high_temperature);
 	BodyRegionByParticle other_boundary(diffusion_body, makeShared<MultiPolygonShape>(createOtherSideBoundary()));
@@ -231,7 +232,7 @@ int main()
 		write_solid_temperature("Phi", io_environment, temperature_observer_contact);
 	BodyRegionByParticle inner_domain(diffusion_body, makeShared<MultiPolygonShape>(createInnerDomain(), "InnerDomain"));
 	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<
-		ReduceAverage<DiffusionReactionSpeciesSummation<BodyPartByParticle, SolidParticles, Solid>>>>
+		ReduceAverage<DiffusionReactionSpeciesSummation<BodyPartByParticle, DiffusionParticles>>>>
 		write_solid_average_temperature_part(io_environment, inner_domain, "Phi");
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration

@@ -59,7 +59,7 @@ public:
 	explicit DepolarizationInitialCondition(SPHBody &sph_body)
 		: electro_physiology::ElectroPhysiologyInitialCondition(sph_body)
 	{
-		voltage_ = particles_->diffusion_reaction_material_.SpeciesIndexMap()["Voltage"];
+		voltage_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Voltage"];
 	};
 
 	void update(size_t index_i, Real dt)

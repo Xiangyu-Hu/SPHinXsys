@@ -135,7 +135,7 @@ public:
 		  diffusion_reaction_material_(particles_->diffusion_reaction_material_)
 
 	{
-		phi_ = diffusion_reaction_material_.SpeciesIndexMap()["Phi"];
+		phi_ = diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
 		center_line_ = Vecd(0.0, 1.0, 0.0);
 		beta_epi_ = -(70.0 / 180.0) * M_PI;
 		beta_endo_ = (80.0 / 180.0) * M_PI;
@@ -201,7 +201,7 @@ public:
 	explicit ApplyStimulusCurrentSI(SPHBody &sph_body)
 		: electro_physiology::ElectroPhysiologyInitialCondition(sph_body)
 	{
-		voltage_ = particles_->diffusion_reaction_material_.SpeciesIndexMap()["Voltage"];
+		voltage_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Voltage"];
 	};
 
 	void update(size_t index_i, Real dt)
@@ -231,7 +231,7 @@ public:
 	explicit ApplyStimulusCurrentSII(SPHBody &sph_body)
 		: electro_physiology::ElectroPhysiologyInitialCondition(sph_body)
 	{
-		voltage_ = particles_->diffusion_reaction_material_.SpeciesIndexMap()["Voltage"];
+		voltage_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Voltage"];
 	};
 
 	void update(size_t index_i, Real dt)

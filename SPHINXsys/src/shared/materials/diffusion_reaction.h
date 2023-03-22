@@ -163,80 +163,116 @@ namespace SPH
 	class BaseReactionModel
 	{
 	public:
+		const static int NumSpecies = NUM_SPECIES;
 		typedef std::array<Real, NUM_SPECIES> LocalSpecies;
 		typedef std::array<std::string, NUM_SPECIES> SpeciesNames;
 		typedef std::function<Real(LocalSpecies &)> ReactionFunctor;
-		IndexVector reactive_species_;
 		StdVec<ReactionFunctor> get_production_rates_;
 		StdVec<ReactionFunctor> get_loss_rates_;
 
-		explicit BaseReactionModel(SpeciesNames species_name_list)
-			: reaction_model_("BaseReactionModel"), species_name_list_(species_name_list)
+		BaseReactionModel()
 		{
-			for (size_t i = 0; i != species_name_list.size(); ++i)
+			std::cout << "\n Error: default constructor for non-empty reaction model!" << std::endl;
+			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+			exit(1);
+		};
+
+		explicit BaseReactionModel(const SpeciesNames &species_names)
+			: species_names_(species_names)
+		{
+			if (NUM_SPECIES == 0)
 			{
-				species_indexes_map_.insert(make_pair(species_name_list[i], i));
+				reaction_model_ = "EmptyReactionModel";
+			}
+			else
+			{
+				reaction_model_ = "BaseReactionModel";
+				for (size_t i = 0; i != species_names.size(); ++i)
+				{
+					species_indexes_map_.insert(make_pair(species_names[i], i));
+				}
 			}
 		};
 		virtual ~BaseReactionModel(){};
-		SpeciesNames getSpeciesNameList() { return species_name_list_; };
+		SpeciesNames &getSpeciesNames() { return species_names_; };
 
 	protected:
 		std::string reaction_model_;
-		SpeciesNames species_name_list_;
+		SpeciesNames species_names_;
 		std::map<std::string, size_t> species_indexes_map_;
 	};
+	/** explicit specialization for empty reaction model */
+	template <>
+	inline BaseReactionModel<0>::BaseReactionModel() : reaction_model_("EmptyReactionModel"){};
 
 	/**
 	 * @class DiffusionReaction
 	 * @brief Complex material for diffusion or/and reactions.
 	 */
-	template <class BaseMaterialType = BaseMaterial, int NUM_SPECIES = 1>
+	template <class BaseMaterialType = BaseMaterial, int NUM_REACTIVE_SPECIES = 0>
 	class DiffusionReaction : public BaseMaterialType
 	{
+	public:
+		const static int NumReactiveSpecies = NUM_REACTIVE_SPECIES;
+
 	private:
 		UniquePtrKeepers<BaseDiffusion> diffusion_ptr_keeper_;
+		UniquePtrKeeper<BaseReactionModel<0>> empty_reaction_ptr_keeper_;
 
 	protected:
-		typedef std::array<std::string, NUM_SPECIES> SpeciesNames;
-		SpeciesNames species_name_list_;
-		size_t number_of_species_;
-		std::map<std::string, size_t> species_indexes_map_;
+		typedef std::array<std::string, NUM_REACTIVE_SPECIES> ReactiveSpeciesNames;
+		StdVec<std::string> all_species_names_;
+		BaseReactionModel<NUM_REACTIVE_SPECIES> &species_reaction_;
+		std::map<std::string, size_t> all_species_indexes_map_;
 		StdVec<BaseDiffusion *> species_diffusion_;
-		BaseReactionModel<NUM_SPECIES> *species_reaction_;
+		IndexVector reactive_species_;
 
 	public:
-		/** Constructor for material with diffusion only. */
-		template <typename... ConstructorArgs>
-		DiffusionReaction(SpeciesNames species_name_list, ConstructorArgs &&...args)
-			: BaseMaterialType(std::forward<ConstructorArgs>(args)...),
-			  species_name_list_(species_name_list),
-			  number_of_species_(species_name_list.size()),
-			  species_reaction_(nullptr)
+		/** Constructor for material with diffusion and reaction. */
+		template <typename... MaterialArgs>
+		DiffusionReaction(const StdVec<std::string> &all_species_names,
+						  BaseReactionModel<NUM_REACTIVE_SPECIES> &reaction_model, MaterialArgs &&...material_args)
+			: BaseMaterialType(std::forward<MaterialArgs>(material_args)...),
+			  all_species_names_(all_species_names), species_reaction_(reaction_model)
 		{
-			BaseMaterialType::material_type_name_ = "Diffusion";
-			for (size_t i = 0; i != number_of_species_; ++i)
+			BaseMaterialType::material_type_name_ =
+				NUM_REACTIVE_SPECIES == 0 ? "Diffusion" : "DiffusionReaction";
+
+			for (size_t i = 0; i != all_species_names.size(); ++i)
 			{
-				species_indexes_map_.insert(make_pair(species_name_list[i], i));
+				all_species_indexes_map_.insert(make_pair(all_species_names[i], i));
+			}
+
+			for (size_t i = 0; i != NUM_REACTIVE_SPECIES; ++i)
+			{
+				const ReactiveSpeciesNames &reactive_species_names = species_reaction_.getSpeciesNames();
+				size_t reactive_species_index = all_species_indexes_map_[reactive_species_names[i]];
+				if (reactive_species_index != all_species_indexes_map_.size())
+				{
+					reactive_species_.push_back(reactive_species_index);
+				}
+				else
+				{
+					std::cout << "\n Error: reactive species '" << reactive_species_names[i] << "' not defined!" << std::endl;
+					std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+					exit(1);
+				}
 			}
 		};
-		/** Constructor for material with diffusion and reaction. */
-		template <typename... ConstructorArgs>
-		DiffusionReaction(BaseReactionModel<NUM_SPECIES> &species_reaction,
-						  SpeciesNames species_name_list, ConstructorArgs &&...args)
-			: DiffusionReaction(species_name_list, std::forward<ConstructorArgs>(args)...)
-		{
-			species_reaction_ = &species_reaction;
-			BaseMaterialType::material_type_name_ = "DiffusionReaction";
-		};
-		virtual ~DiffusionReaction(){};
+		/** Constructor for material with diffusion only. */
+		template <typename... MaterialArgs>
+		DiffusionReaction(const StdVec<std::string> &all_species_names, MaterialArgs &&...material_args)
+			: DiffusionReaction(all_species_names,
+								empty_reaction_ptr_keeper_.createRef<BaseReactionModel<0>>(),
+								std::forward<MaterialArgs>(material_args)...) {}
 
-		constexpr int NumberOfSpecies() { return NUM_SPECIES; };
+		virtual ~DiffusionReaction(){};
+		size_t TotalSpecies() { return all_species_names_.size(); };
+		IndexVector &ReactiveSpecies() { return reactive_species_; };
 		size_t NumberOfSpeciesDiffusion() { return species_diffusion_.size(); };
-		StdVec<BaseDiffusion *> SpeciesDiffusion() { return species_diffusion_; };
-		BaseReactionModel<NUM_SPECIES> *SpeciesReaction() { return species_reaction_; };
-		std::map<std::string, size_t> SpeciesIndexMap() { return species_indexes_map_; };
-		SpeciesNames getSpeciesNameList() { return species_name_list_; };
+		StdVec<BaseDiffusion *> &SpeciesDiffusion() { return species_diffusion_; };
+		BaseReactionModel<NUM_REACTIVE_SPECIES> &SpeciesReaction() { return species_reaction_; };
+		std::map<std::string, size_t> AllSpeciesIndexMap() { return all_species_indexes_map_; };
 
 		virtual void registerReloadLocalParameters(BaseParticles *base_particles) override
 		{
@@ -271,11 +307,11 @@ namespace SPH
 		{
 			species_diffusion_.push_back(
 				diffusion_ptr_keeper_.createPtr<DiffusionType>(
-					species_indexes_map_[diffusion_species_name],
-					species_indexes_map_[diffusion_species_name], std::forward<ConstructorArgs>(args)...));
+					all_species_indexes_map_[diffusion_species_name],
+					all_species_indexes_map_[gradient_species_name], std::forward<ConstructorArgs>(args)...));
 		};
 
-		virtual DiffusionReaction<BaseMaterialType, NUM_SPECIES> *ThisObjectPtr() override { return this; };
+		virtual DiffusionReaction<BaseMaterialType, NUM_REACTIVE_SPECIES> *ThisObjectPtr() override { return this; };
 	};
 }
 #endif // DIFFUSION_REACTION_H
