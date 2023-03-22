@@ -89,7 +89,7 @@ namespace SPH
 	UniquePtr<BaseLevelSet> SPHAdaptation::createLevelSet(Shape &shape, Real refinement_ratio)
 	{
 		// estimate the required mesh levels
-		size_t total_levels = (int)log10(MinimumDimension(shape.getBounds()) / ReferenceSpacing()) + 2;
+		int total_levels = (int)log10(MinimumDimension(shape.getBounds()) / ReferenceSpacing()) + 2;
 		Real coarsest_spacing = ReferenceSpacing() * pow(2.0, (int)total_levels - 1);
 		MultilevelLevelSet coarser_level_sets(shape.getBounds(), coarsest_spacing / refinement_ratio,
 											  total_levels - 1, shape, *this);
