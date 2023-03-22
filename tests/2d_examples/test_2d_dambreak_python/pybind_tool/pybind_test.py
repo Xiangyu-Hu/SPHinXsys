@@ -20,13 +20,16 @@ sys.path.append(path)
 import test_2d_dambreak_python as test_2d
 
 
-def get_cmake_result():
+def cmaketest():
     ctest = test_2d.dambreak_from_sph_cpp(0)
     result = ctest.CmakeTest()
-    return result
+    if result == 1:
+        print("success")
+    else:
+        print("check path: ", path)
 
 if __name__ == "__main__":
-    get_cmake_result()
+    cmaketest()
 
 
 
