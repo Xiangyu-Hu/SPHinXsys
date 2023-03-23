@@ -58,11 +58,24 @@ namespace SPH
 		RelaxationOfAllDiffusionSpeciesInner(BaseInnerRelation &inner_relation)
 		: LocalDynamics(inner_relation.getSPHBody()),
 		  DiffusionReactionInnerData<DiffusionReactionParticlesType>(inner_relation),
-		  diffusion_reaction_material_(this->particles_->diffusion_reaction_material_),
-		  all_species_(this->particles_->all_species_),
-		  diffusion_dt_(this->particles_->diffusion_dt_)
+		  species_diffusion_(this->particles_->diffusion_reaction_material_.SpeciesDiffusion())
 	{
-		species_diffusion_ = this->particles_->diffusion_reaction_material_.SpeciesDiffusion();
+		diffusion_dt_.resize(species_diffusion_.size());
+		StdVec<std::string> &all_species_names = this->particles_->AllSpeciesNames();
+		StdVec<StdLargeVec<Real>> &all_species = this->particles_->all_species_;
+		for (size_t i = 0; i != species_diffusion_.size(); ++i)
+		{
+			// add a diffusion species
+			size_t diffusion_species_index = species_diffusion_[i]->diffusion_species_index_;
+			diffusion_species_.push_back(&all_species[diffusion_species_index]);
+			// add a gradient species
+			size_t gradient_species_index = species_diffusion_[i]->gradient_species_index_;
+			gradient_species_.push_back(&all_species[gradient_species_index]);
+
+			// Register specie change rate
+			std::string &diffusion_species_name = all_species_names[diffusion_species_index];
+			this->particles_->registerVariable(diffusion_dt_[i], diffusion_species_name + "ChangeRate");
+		}
 	}
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType>
@@ -81,10 +94,11 @@ namespace SPH
 	{
 		for (size_t m = 0; m < species_diffusion_.size(); ++m)
 		{
-			Real diff_coff_ij = species_diffusion_[m]
-									->getInterParticleDiffusionCoff(particle_i, particle_j, e_ij);
+			Real diff_coff_ij =
+				species_diffusion_[m]->getInterParticleDiffusionCoff(particle_i, particle_j, e_ij);
 			size_t l = species_diffusion_[m]->gradient_species_index_;
-			Real phi_ij = all_species_[l][particle_i] - all_species_[l][particle_j];
+			StdLargeVec<Real> &gradient_species = *gradient_species_[m];
+			Real phi_ij = gradient_species[particle_i] - gradient_species[particle_j];
 			diffusion_dt_[m][particle_i] += diff_coff_ij * phi_ij * surface_area_ij;
 		}
 	}
@@ -95,8 +109,7 @@ namespace SPH
 	{
 		for (size_t m = 0; m < species_diffusion_.size(); ++m)
 		{
-			size_t k = species_diffusion_[m]->diffusion_species_index_;
-			all_species_[k][particle_i] += dt * diffusion_dt_[m][particle_i];
+			(*diffusion_species_[m])[particle_i] += dt * diffusion_dt_[m][particle_i];
 		}
 	}
 	//=================================================================================================//
@@ -136,33 +149,31 @@ namespace SPH
 			  DiffusionReactionParticlesType>(complex_relation.getInnerRelation()),
 		  DiffusionReactionContactData<
 			  DiffusionReactionParticlesType,
-			  ContactDiffusionReactionParticlesType>(complex_relation.getContactRelation()),
-		  all_species_(this->particles_->all_species_), diffusion_dt_(this->particles_->diffusion_dt_)
+			  ContactDiffusionReactionParticlesType>(complex_relation.getContactRelation())
 	{
-		species_diffusion_ = this->particles_->diffusion_reaction_material_.SpeciesDiffusion();
-
-		for (size_t k = 0; k != this->contact_particles_.size(); ++k)
-		{
-			contact_species_n_.push_back(&(this->contact_particles_[k]->all_species_));
-		}
+		contact_gradient_species_.resize(this->contact_particles_.size());
 
 		StdVec<std::string> &all_species_names = this->particles_->AllSpeciesNames();
-		for (size_t m = 0; m < species_diffusion_.size(); ++m)
+		for (size_t m = 0; m < this->species_diffusion_.size(); ++m)
 		{
-			size_t l = species_diffusion_[m]->gradient_species_index_;
-			const std::string &inner_species = all_species_names[l];
+			size_t l = this->species_diffusion_[m]->gradient_species_index_;
+			std::string &inner_species_name_m = all_species_names[l];
 			for (size_t k = 0; k != this->contact_particles_.size(); ++k)
 			{
-				StdVec<std::string> &all_species_names_k =
-					this->contact_particles_[k]->AllSpeciesNames();
-				const std::string &contact_species_k = all_species_names_k[l];
-				if (inner_species != contact_species_k)
+				size_t contact_species_index_k_m = this->contact_particles_[k]->AllSpeciesIndexMap()[inner_species_name_m];
+				StdVec<std::string> &all_contact_species_names_k = this->contact_particles_[k]->AllSpeciesNames();
+				std::string &contact_species_name_k_m = all_contact_species_names_k[contact_species_index_k_m];
+
+				if (inner_species_name_m != contact_species_name_k_m)
 				{
-					std::cout << "\n Error: inner species '" << inner_species
-							  << "' and contact species '" << contact_species_k << "' not match! " << std::endl;
+					std::cout << "\n Error: inner species '" << inner_species_name_m
+							  << "' and contact species '" << contact_species_name_k_m << "' not match! " << std::endl;
 					std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 					exit(1);
 				}
+				StdVec<StdLargeVec<Real>> &all_contact_species_k = this->contact_particles_[k]->all_species_;
+
+				contact_gradient_species_[k].push_back(&all_contact_species_k[contact_species_index_k_m]);
 			}
 		}
 	}
@@ -171,15 +182,14 @@ namespace SPH
 	void RelaxationOfAllDiffusionSpeciesComplex<
 		DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
 		getDiffusionChangeRateContact(size_t particle_i, size_t particle_j, Vecd &e_ij,
-									  Real surface_area_ij, const StdVec<StdLargeVec<Real>> &species_n_k)
+									  Real surface_area_ij, const StdVec<StdLargeVec<Real> *> &gradient_species_k)
 	{
-		for (size_t m = 0; m < species_diffusion_.size(); ++m)
+		for (size_t m = 0; m < this->species_diffusion_.size(); ++m)
 		{
-			Real diff_coff_ij = species_diffusion_[m]
-									->getInterParticleDiffusionCoff(particle_i, particle_j, e_ij);
-			size_t l = species_diffusion_[m]->gradient_species_index_;
-			Real phi_ij = all_species_[l][particle_i] - species_n_k[l][particle_j];
-			diffusion_dt_[m][particle_i] += diff_coff_ij * phi_ij * surface_area_ij;
+			Real diff_coff_ij =
+				this->species_diffusion_[m]->getInterParticleDiffusionCoff(particle_i, particle_j, e_ij);
+			Real phi_ij = (*this->diffusion_species_[m])[particle_i] - (*gradient_species_k[m])[particle_j];
+			this->diffusion_dt_[m][particle_i] += diff_coff_ij * phi_ij * surface_area_ij;
 		}
 	}
 	//=================================================================================================//
@@ -193,7 +203,7 @@ namespace SPH
 
 		for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 		{
-			StdVec<StdLargeVec<Real>> &species_n_k = *(contact_species_n_[k]);
+			StdVec<StdLargeVec<Real> *> &gradient_species_k = contact_gradient_species_[k];
 
 			Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
 			for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -205,7 +215,7 @@ namespace SPH
 
 				const Vecd &grad_ijV_j = particles->getKernelGradient(index_i, index_j, dW_ijV_j_, e_ij);
 				Real area_ij = 2.0 * grad_ijV_j.dot(e_ij) / r_ij_;
-				getDiffusionChangeRateContact(index_i, index_j, e_ij, area_ij, species_n_k);
+				getDiffusionChangeRateContact(index_i, index_j, e_ij, area_ij, gradient_species_k);
 			}
 		}
 	}
@@ -268,8 +278,7 @@ namespace SPH
 		  rk2_initialization_(body_relation.getSPHBody(), species_s_),
 		  rk2_1st_stage_(body_relation), rk2_2nd_stage_(body_relation, species_s_)
 	{
-		StdVec<BaseDiffusion *> species_diffusion_ =
-			rk2_1st_stage_.diffusion_reaction_material_.SpeciesDiffusion();
+		StdVec<BaseDiffusion *> species_diffusion_ = rk2_1st_stage_.SpeciesDiffusion();
 
 		size_t number_of_diffusion_species = species_diffusion_.size();
 		species_s_.resize(number_of_diffusion_species);

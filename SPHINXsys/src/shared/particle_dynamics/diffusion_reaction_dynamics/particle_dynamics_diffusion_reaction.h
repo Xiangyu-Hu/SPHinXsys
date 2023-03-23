@@ -92,13 +92,11 @@ namespace SPH
 		: public LocalDynamics,
 		  public DiffusionReactionInnerData<DiffusionReactionParticlesType>
 	{
-	public:
-		typename DiffusionReactionParticlesType::DiffusionReactionMaterial &diffusion_reaction_material_;
-
 	protected:
 		StdVec<BaseDiffusion *> species_diffusion_; /**< all diffusion species and diffusion relation. */
-		StdVec<StdLargeVec<Real>> &all_species_;
-		StdVec<StdLargeVec<Real>> &diffusion_dt_;
+		StdVec<StdLargeVec<Real> *> diffusion_species_;
+		StdVec<StdLargeVec<Real> *> gradient_species_;
+		StdVec<StdLargeVec<Real>> diffusion_dt_;
 
 		void initializeDiffusionChangeRate(size_t particle_i);
 		void getDiffusionChangeRate(size_t particle_i, size_t particle_j, Vecd &e_ij, Real surface_area_ij);
@@ -110,7 +108,7 @@ namespace SPH
 
 		explicit RelaxationOfAllDiffusionSpeciesInner(BaseInnerRelation &inner_relation);
 		virtual ~RelaxationOfAllDiffusionSpeciesInner(){};
-
+		StdVec<BaseDiffusion *> &SpeciesDiffusion() { return species_diffusion_; };
 		inline void interaction(size_t index_i, Real dt = 0.0);
 
 		void update(size_t index_i, Real dt = 0.0);
@@ -126,14 +124,11 @@ namespace SPH
 		  public DiffusionReactionContactData<DiffusionReactionParticlesType,
 											  ContactDiffusionReactionParticlesType>
 	{
-		StdVec<BaseDiffusion *> species_diffusion_;
-		StdVec<StdLargeVec<Real>> &all_species_;
-		StdVec<StdLargeVec<Real>> &diffusion_dt_;
-		StdVec<StdVec<StdLargeVec<Real>> *> contact_species_n_;
+		StdVec<StdVec<StdLargeVec<Real> *>> contact_gradient_species_;
 
 	protected:
 		void getDiffusionChangeRateContact(size_t particle_i, size_t particle_j, Vecd &e_ij,
-										   Real surface_area_ij, const StdVec<StdLargeVec<Real>> &species_n_k);
+										   Real surface_area_ij, const StdVec<StdLargeVec<Real> *> &gradient_species_k);
 
 	public:
 		typedef ComplexRelation BodyRelationType;
