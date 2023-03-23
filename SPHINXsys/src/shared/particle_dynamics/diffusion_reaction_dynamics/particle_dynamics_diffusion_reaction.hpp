@@ -10,7 +10,7 @@
  *																			*
  * SPHinXsys is partially funded by German Research Foundation				*
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
- *  HU1527/12-1 and HU1527/12-4													*
+ *  HU1527/12-1 and HU1527/12-4												*
  *                                                                          *
  * Portions copyright (c) 2017-2022 Technical University of Munich and		*
  * the authors' affiliations.												*
@@ -82,7 +82,7 @@ namespace SPH
 	RelaxationOfAllDiffusionSpeciesInner<DiffusionReactionParticlesType>::
 		RelaxationOfAllDiffusionSpeciesInner(BaseInnerRelation &inner_relation)
 		: BaseRelaxationOfAllDiffusionSpecies<DiffusionReactionParticlesType>(inner_relation.getSPHBody()),
-		  DataDelegateInner<DiffusionReactionParticlesType, DataDelegateEmptyBase>(inner_relation) {}
+		  DiffusionReactionInnerData<DiffusionReactionParticlesType>(inner_relation) {}
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType>
 	void RelaxationOfAllDiffusionSpeciesInner<DiffusionReactionParticlesType>::
