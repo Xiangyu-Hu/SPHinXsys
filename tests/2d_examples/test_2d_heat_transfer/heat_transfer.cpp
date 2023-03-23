@@ -138,12 +138,12 @@ public:
 	{
 		if (-BW <= pos_[index_i][1] && pos_[index_i][1] <= 0.0)
 		{
-			species_n_[phi_][index_i] = phi_lower_wall;
+			all_species_[phi_][index_i] = phi_lower_wall;
 		}
 
 		if (DH <= pos_[index_i][1] && pos_[index_i][1] <= DH + BW)
 		{
-			species_n_[phi_][index_i] = phi_upper_wall;
+			all_species_[phi_][index_i] = phi_upper_wall;
 		}
 	};
 };
@@ -167,7 +167,7 @@ public:
 	{
 		if (0 <= pos_[index_i][1] && pos_[index_i][1] <= DH)
 		{
-			species_n_[phi_][index_i] = phi_fluid_initial;
+			all_species_[phi_][index_i] = phi_fluid_initial;
 		}
 	};
 };

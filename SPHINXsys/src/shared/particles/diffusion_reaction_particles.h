@@ -49,7 +49,7 @@ namespace SPH
 		std::map<std::string, size_t> species_indexes_map_;
 
 	public:
-		StdVec<StdLargeVec<Real>> species_n_; /**< array of diffusion/reaction scalars */
+		StdVec<StdLargeVec<Real>> all_species_; /**< array of diffusion/reaction scalars */
 		StdVec<StdLargeVec<Real> *> reactive_species_;
 		StdVec<StdLargeVec<Real>> diffusion_dt_; /**< array of the time derivative of diffusion species */
 		DiffusionReactionMaterialType &diffusion_reaction_material_;
@@ -62,16 +62,17 @@ namespace SPH
 			  species_indexes_map_(diffusion_reaction_material->AllSpeciesIndexMap()),
 			  diffusion_reaction_material_(*diffusion_reaction_material)
 		{
-			species_n_.resize(total_species_);
+			all_species_.resize(total_species_);
 			diffusion_dt_.resize(diffusion_reaction_material->NumberOfSpeciesDiffusion());
 			const IndexVector &reactive_species_indexes = diffusion_reaction_material_.ReactiveSpecies();
 			for (size_t i = 0; i != reactive_species_indexes.size(); ++i)
 			{
-				reactive_species_.push_back(&species_n_[reactive_species_indexes[i]]);
+				reactive_species_.push_back(&all_species_[reactive_species_indexes[i]]);
 			}
 		};
 		virtual ~DiffusionReactionParticles(){};
 
+		StdVec<std::string> &AllSpeciesNames() { return diffusion_reaction_material_.AllSpeciesNames(); };
 		std::map<std::string, size_t> AllSpeciesIndexMap() { return species_indexes_map_; };
 
 		virtual void initializeOtherVariables() override
@@ -82,7 +83,7 @@ namespace SPH
 			for (itr = species_indexes_map_.begin(); itr != species_indexes_map_.end(); ++itr)
 			{
 				// Register a specie.
-				this->registerVariable(species_n_[itr->second], itr->first);
+				this->registerVariable(all_species_[itr->second], itr->first);
 				/** the scalars will be sorted if particle sorting is called, Note that we call a template function from a template class. */
 				this->template registerSortableVariable<Real>(itr->first);
 				/** add species to basic output particle data. */

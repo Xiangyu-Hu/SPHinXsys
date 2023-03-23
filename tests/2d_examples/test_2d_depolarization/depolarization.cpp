@@ -64,7 +64,7 @@ public:
 
 	void update(size_t index_i, Real dt)
 	{
-		species_n_[voltage_][index_i] = exp(-4.0 * ((pos_[index_i][0] - 1.0) * (pos_[index_i][0] - 1.0) + pos_[index_i][1] * pos_[index_i][1]));
+		all_species_[voltage_][index_i] = exp(-4.0 * ((pos_[index_i][0] - 1.0) * (pos_[index_i][0] - 1.0) + pos_[index_i][1] * pos_[index_i][1]));
 	};
 };
 //----------------------------------------------------------------------

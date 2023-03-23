@@ -264,6 +264,7 @@ namespace SPH
 		};
 		virtual ~DiffusionReaction(){};
 		size_t TotalSpecies() { return all_species_names_.size(); };
+		StdVec<std::string> &AllSpeciesNames() { return all_species_names_; };
 		IndexVector &ReactiveSpecies() { return reactive_species_; };
 		size_t NumberOfSpeciesDiffusion() { return species_diffusion_.size(); };
 		StdVec<BaseDiffusion *> &SpeciesDiffusion() { return species_diffusion_; };

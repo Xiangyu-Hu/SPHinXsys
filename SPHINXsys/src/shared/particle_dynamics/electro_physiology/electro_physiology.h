@@ -167,12 +167,12 @@ namespace SPH
 			explicit ElectroPhysiologyInitialCondition(SPHBody &sph_body)
 				: LocalDynamics(sph_body),
 				  ElectroPhysiologyDataDelegateSimple(sph_body),
-				  pos_(particles_->pos_), species_n_(particles_->species_n_){};
+				  pos_(particles_->pos_), all_species_(particles_->all_species_){};
 			virtual ~ElectroPhysiologyInitialCondition(){};
 
 		protected:
 			StdLargeVec<Vecd> &pos_;
-			StdVec<StdLargeVec<Real>> &species_n_;
+			StdVec<StdLargeVec<Real>> &all_species_;
 		};
 		/**
 		 * @class GetElectroPhysiologyTimeStepSize

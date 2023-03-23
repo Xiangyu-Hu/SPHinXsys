@@ -53,7 +53,7 @@ int main(int ac, char *av[])
 	if (system.RunParticleRelaxation())
 	{
 		SolidBody herat_model(system, level_set_heart_model);
-		herat_model.defineParticlesAndMaterial<DiffusionReactionParticles<ElasticSolidParticles, LocallyOrthotropicMuscle>, FiberDirectionDiffusion>();
+		herat_model.defineParticlesAndMaterial<FiberDirectionDiffusionParticles, FiberDirectionDiffusion>();
 		herat_model.generateParticles<ParticleGeneratorLattice>();
 		/** topology */
 		InnerRelation herat_model_inner(herat_model);
@@ -62,7 +62,7 @@ int main(int ac, char *av[])
 		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(herat_model_inner);
 		/** Time step for diffusion. */
-		GetDiffusionTimeStepSize<ElasticSolidParticles, LocallyOrthotropicMuscle> get_time_step_size(herat_model);
+		GetDiffusionTimeStepSize<FiberDirectionDiffusionParticles> get_time_step_size(herat_model);
 		/** Diffusion process for diffusion body. */
 		DiffusionRelaxation diffusion_relaxation(herat_model_inner);
 		/** Compute the fiber and sheet after diffusion. */
@@ -126,9 +126,10 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	/** create a SPH body, material and particles */
 	SolidBody physiology_heart(system, level_set_heart_model, "PhysiologyHeart");
-	AlievPanfilowModel muscle_reaction_model(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
+	SharedPtr<AlievPanfilowModel> muscle_reaction_model_ptr = makeShared<AlievPanfilowModel>(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
 	physiology_heart.defineParticlesAndMaterial<
-		ElectroPhysiologyParticles, LocalMonoFieldElectroPhysiology>(muscle_reaction_model, diffusion_coff, bias_coff, fiber_direction);
+		ElectroPhysiologyParticles, MonoFieldElectroPhysiology>(
+		muscle_reaction_model_ptr, encodeType<LocalDirectionalDiffusion>(), diffusion_coff, bias_coff, fiber_direction);
 	(!system.RunParticleRelaxation() && system.ReloadParticles())
 		? physiology_heart.generateParticles<ParticleGeneratorReload>(io_environment, "HeartModel")
 		: physiology_heart.generateParticles<ParticleGeneratorLattice>();
@@ -143,10 +144,10 @@ int main(int ac, char *av[])
 
 	/** Creat a Purkinje network for fast diffusion, material and particles */
 	TreeBody pkj_body(system, level_set_heart_model, "Purkinje");
-	AlievPanfilowModel pkj_reaction_model(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
+	SharedPtr<AlievPanfilowModel> pkj_reaction_model_ptr = makeShared<AlievPanfilowModel>(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
 	pkj_body.defineParticlesAndMaterial<
 		ElectroPhysiologyReducedParticles, MonoFieldElectroPhysiology>(
-		pkj_reaction_model, diffusion_coff * acceleration_factor, bias_coff, fiber_direction);
+		pkj_reaction_model_ptr, encodeType<DirectionalDiffusion>(), diffusion_coff * acceleration_factor, bias_coff, fiber_direction);
 	pkj_body.generateParticles<NetworkGeneratorWithExtraCheck>(starting_point, second_point, 50, 1.0);
 	TreeTerminates pkj_leaves(pkj_body);
 	//----------------------------------------------------------------------
@@ -239,7 +240,7 @@ int main(int ac, char *av[])
 	TickCount t1 = TickCount::now();
 	TimeInterval interval;
 	std::cout << "Main Loop Starts Here : "
-		 << "\n";
+			  << "\n";
 	/** Main loop starts here. */
 	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
@@ -252,10 +253,10 @@ int main(int ac, char *av[])
 				if (ite % screen_output_interval == 0)
 				{
 					std::cout << std::fixed << std::setprecision(9) << "N=" << ite << "	Time = "
-						 << GlobalStaticVariables::physical_time_
-						 << "	dt_pkj = " << dt_pkj
-						 << "	dt_myocardium = " << dt_myocardium
-						 << "	dt_muscle = " << dt_muscle << "\n";
+							  << GlobalStaticVariables::physical_time_
+							  << "	dt_pkj = " << dt_pkj
+							  << "	dt_myocardium = " << dt_myocardium
+							  << "	dt_muscle = " << dt_muscle << "\n";
 				}
 				/** Apply stimulus excitation. */
 				// if( 0 <= GlobalStaticVariables::physical_time_

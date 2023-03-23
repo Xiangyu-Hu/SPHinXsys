@@ -61,7 +61,7 @@ namespace SPH
 
 	protected:
 		StdLargeVec<Vecd> &pos_;
-		StdVec<StdLargeVec<Real>> &species_n_;
+		StdVec<StdLargeVec<Real>> &all_species_;
 	};
 
 	/**
@@ -97,7 +97,7 @@ namespace SPH
 
 	protected:
 		StdVec<BaseDiffusion *> species_diffusion_; /**< all diffusion species and diffusion relation. */
-		StdVec<StdLargeVec<Real>> &species_n_;
+		StdVec<StdLargeVec<Real>> &all_species_;
 		StdVec<StdLargeVec<Real>> &diffusion_dt_;
 
 		void initializeDiffusionChangeRate(size_t particle_i);
@@ -127,7 +127,7 @@ namespace SPH
 											  ContactDiffusionReactionParticlesType>
 	{
 		StdVec<BaseDiffusion *> species_diffusion_;
-		StdVec<StdLargeVec<Real>> &species_n_;
+		StdVec<StdLargeVec<Real>> &all_species_;
 		StdVec<StdLargeVec<Real>> &diffusion_dt_;
 		StdVec<StdVec<StdLargeVec<Real>> *> contact_species_n_;
 
@@ -152,7 +152,7 @@ namespace SPH
 							 public DiffusionReactionSimpleData<DiffusionReactionParticlesType>
 	{
 		StdVec<BaseDiffusion *> species_diffusion_;
-		StdVec<StdLargeVec<Real>> &species_n_, &species_s_;
+		StdVec<StdLargeVec<Real>> &all_species_, &species_s_;
 
 		void initializeIntermediateValue(size_t particle_i);
 
@@ -171,7 +171,7 @@ namespace SPH
 	class SecondStageRK2 : public FirstStageType
 	{
 		StdVec<BaseDiffusion *> species_diffusion_;
-		StdVec<StdLargeVec<Real>> &species_n_;
+		StdVec<StdLargeVec<Real>> &all_species_;
 		StdVec<StdLargeVec<Real>> &diffusion_dt_;
 
 	protected:
@@ -287,7 +287,7 @@ namespace SPH
 			  DiffusionReactionSimpleData<DiffusionReactionParticlesType>(identifier.getSPHBody()),
 			  diffusion_reaction_material_(this->particles_->diffusion_reaction_material_),
 			  phi_(diffusion_reaction_material_.AllSpeciesIndexMap()[species_name]),
-			  species_(this->particles_->species_n_[phi_]){};
+			  species_(this->particles_->all_species_[phi_]){};
 		virtual ~DiffusionReactionSpeciesConstraint(){};
 
 	protected:
@@ -310,12 +310,12 @@ namespace SPH
 		explicit DiffusionBasedMapping(SPHBody &sph_body)
 			: LocalDynamics(sph_body),
 			  DiffusionReactionSimpleData<DiffusionReactionParticlesType>(sph_body),
-			  pos_(this->particles_->pos_), species_n_(this->particles_->species_n_){};
+			  pos_(this->particles_->pos_), all_species_(this->particles_->all_species_){};
 		virtual ~DiffusionBasedMapping(){};
 
 	protected:
 		StdLargeVec<Vecd> &pos_;
-		StdVec<StdLargeVec<Real>> &species_n_;
+		StdVec<StdLargeVec<Real>> &all_species_;
 	};
 
 	/**
@@ -330,7 +330,7 @@ namespace SPH
 	{
 	protected:
 		typename DiffusionReactionParticlesType::DiffusionReactionMaterial &diffusion_reaction_material_;
-		StdVec<StdLargeVec<Real>> &species_n_;
+		StdVec<StdLargeVec<Real>> &all_species_;
 		size_t phi_;
 
 	public:
@@ -338,7 +338,7 @@ namespace SPH
 			: BaseLocalDynamicsReduce<Real, ReduceSum<Real>, DynamicsIdentifier>(identifier, Real(0)),
 			  DiffusionReactionSimpleData<DiffusionReactionParticlesType>(identifier.getSPHBody()),
 			  diffusion_reaction_material_(this->particles_->diffusion_reaction_material_),
-			  species_n_(this->particles_->species_n_),
+			  all_species_(this->particles_->all_species_),
 			  phi_(diffusion_reaction_material_.AllSpeciesIndexMap()[species_name])
 		{
 			this->quantity_name_ = "DiffusionReactionSpeciesAverage";
@@ -347,7 +347,7 @@ namespace SPH
 
 		Real reduce(size_t index_i, Real dt = 0.0)
 		{
-			return species_n_[phi_][index_i];
+			return all_species_[phi_][index_i];
 		};
 	};
 }

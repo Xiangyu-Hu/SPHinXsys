@@ -146,7 +146,7 @@ public:
 	{
 		if (pos_[index_i][0] >= 0 && pos_[index_i][0] <= L && pos_[index_i][1] >= 0 && pos_[index_i][1] <= H)
 		{
-			species_n_[phi_][index_i] = initial_temperature;
+			all_species_[phi_][index_i] = initial_temperature;
 		}
 	};
 };
