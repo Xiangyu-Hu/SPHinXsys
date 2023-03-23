@@ -84,33 +84,48 @@ namespace SPH
 	};
 
 	/**
-	 * @class RelaxationOfAllDiffusionSpeciesInner
-	 * @brief Compute the diffusion relaxation process of all species
+	 * @class BaseRelaxationOfAllDiffusionSpecies
+	 * @brief Base class for computing the diffusion relaxation process of all species
 	 */
 	template <class DiffusionReactionParticlesType>
-	class RelaxationOfAllDiffusionSpeciesInner
+	class BaseRelaxationOfAllDiffusionSpecies
 		: public LocalDynamics,
-		  public DiffusionReactionInnerData<DiffusionReactionParticlesType>
+		  public DiffusionReactionSimpleData<DiffusionReactionParticlesType>
 	{
 	protected:
 		StdVec<BaseDiffusion *> species_diffusion_; /**< all diffusion species and diffusion relation. */
 		StdVec<StdLargeVec<Real> *> diffusion_species_;
 		StdVec<StdLargeVec<Real> *> gradient_species_;
-		StdVec<StdLargeVec<Real>> diffusion_dt_;
+		StdVec<StdLargeVec<Real> *> diffusion_dt_;
 
+	public:
+		typedef DiffusionReactionParticlesType InnerParticlesType;
+
+		explicit BaseRelaxationOfAllDiffusionSpecies(SPHBody &sph_body);
+		virtual ~BaseRelaxationOfAllDiffusionSpecies(){};
+		StdVec<BaseDiffusion *> &SpeciesDiffusion() { return species_diffusion_; };
+	};
+
+	/**
+	 * @class RelaxationOfAllDiffusionSpeciesInner
+	 * @brief Compute the diffusion relaxation process of all species
+	 */
+	template <class DiffusionReactionParticlesType>
+	class RelaxationOfAllDiffusionSpeciesInner
+		: public BaseRelaxationOfAllDiffusionSpecies<DiffusionReactionParticlesType>,
+		  public DataDelegateInner<DiffusionReactionParticlesType, DataDelegateEmptyBase>
+	{
+	protected:
 		void initializeDiffusionChangeRate(size_t particle_i);
 		void getDiffusionChangeRate(size_t particle_i, size_t particle_j, Vecd &e_ij, Real surface_area_ij);
 		virtual void updateSpeciesDiffusion(size_t particle_i, Real dt);
 
 	public:
-		typedef DiffusionReactionParticlesType InnerParticlesType;
 		typedef BaseInnerRelation BodyRelationType;
 
 		explicit RelaxationOfAllDiffusionSpeciesInner(BaseInnerRelation &inner_relation);
 		virtual ~RelaxationOfAllDiffusionSpeciesInner(){};
-		StdVec<BaseDiffusion *> &SpeciesDiffusion() { return species_diffusion_; };
 		inline void interaction(size_t index_i, Real dt = 0.0);
-
 		void update(size_t index_i, Real dt = 0.0);
 	};
 
@@ -143,16 +158,13 @@ namespace SPH
 	 * @brief initialization of a runge-kutta integration scheme
 	 */
 	template <class DiffusionReactionParticlesType>
-	class InitializationRK : public LocalDynamics,
-							 public DiffusionReactionSimpleData<DiffusionReactionParticlesType>
+	class InitializationRK : public BaseRelaxationOfAllDiffusionSpecies<DiffusionReactionParticlesType>
 	{
-		StdVec<BaseDiffusion *> species_diffusion_;
-		StdVec<StdLargeVec<Real>> &all_species_, &species_s_;
-
-		void initializeIntermediateValue(size_t particle_i);
-
+		/** Intermediate Value */
+		StdVec<StdLargeVec<Real>> &diffusion_species_s_;
+	
 	public:
-		InitializationRK(SPHBody &sph_body, StdVec<StdLargeVec<Real>> &species_s);
+		InitializationRK(SPHBody &sph_body, StdVec<StdLargeVec<Real>> &diffusion_species_s);
 		virtual ~InitializationRK(){};
 
 		void update(size_t index_i, Real dt = 0.0);
@@ -165,17 +177,13 @@ namespace SPH
 	template <class FirstStageType>
 	class SecondStageRK2 : public FirstStageType
 	{
-		StdVec<BaseDiffusion *> species_diffusion_;
-		StdVec<StdLargeVec<Real>> &all_species_;
-		StdVec<StdLargeVec<Real>> &diffusion_dt_;
-
 	protected:
-		StdVec<StdLargeVec<Real>> &species_s_;
+		StdVec<StdLargeVec<Real>> &diffusion_species_s_;
 		virtual void updateSpeciesDiffusion(size_t particle_i, Real dt) override;
 
 	public:
 		SecondStageRK2(typename FirstStageType::BodyRelationType &body_relation,
-					   StdVec<StdLargeVec<Real>> &species_s);
+					   StdVec<StdLargeVec<Real>> &diffusion_species_s);
 		virtual ~SecondStageRK2(){};
 	};
 
@@ -188,13 +196,12 @@ namespace SPH
 	class RelaxationOfAllDiffusionSpeciesRK2 : public BaseDynamics<void>
 	{
 	protected:
-		StdVec<BaseDiffusion *> species_diffusion_;
 		/** Intermediate Value */
-		StdVec<StdLargeVec<Real>> species_s_;
-
+		StdVec<StdLargeVec<Real>> diffusion_species_s_;
 		SimpleDynamics<InitializationRK<typename FirstStageType::InnerParticlesType>> rk2_initialization_;
 		InteractionWithUpdate<FirstStageType> rk2_1st_stage_;
 		InteractionWithUpdate<SecondStageRK2<FirstStageType>> rk2_2nd_stage_;
+		StdVec<BaseDiffusion *> species_diffusion_;
 
 	public:
 		explicit RelaxationOfAllDiffusionSpeciesRK2(typename FirstStageType::BodyRelationType &body_relation);

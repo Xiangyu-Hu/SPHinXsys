@@ -51,7 +51,6 @@ namespace SPH
 	public:
 		StdVec<StdLargeVec<Real>> all_species_; /**< array of diffusion/reaction scalars */
 		StdVec<StdLargeVec<Real> *> reactive_species_;
-		StdVec<StdLargeVec<Real>> diffusion_dt_; /**< array of the time derivative of diffusion species */
 		DiffusionReactionMaterialType &diffusion_reaction_material_;
 		const static int NumReactiveSpecies = DiffusionReactionMaterialType::NumReactiveSpecies;
 		typedef DiffusionReactionMaterialType DiffusionReactionMaterial;
@@ -63,7 +62,6 @@ namespace SPH
 			  diffusion_reaction_material_(*diffusion_reaction_material)
 		{
 			all_species_.resize(total_species_);
-			diffusion_dt_.resize(diffusion_reaction_material->NumberOfSpeciesDiffusion());
 			const IndexVector &reactive_species_indexes = diffusion_reaction_material_.ReactiveSpecies();
 			for (size_t i = 0; i != reactive_species_indexes.size(); ++i)
 			{
@@ -88,14 +86,6 @@ namespace SPH
 				this->template registerSortableVariable<Real>(itr->first);
 				/** add species to basic output particle data. */
 				this->template addVariableToWrite<Real>(itr->first);
-			}
-
-			constexpr int type_index = DataTypeIndex<Real>::value;
-			for (size_t m = 0; m < diffusion_dt_.size(); ++m)
-			{
-				// register reactive change rate terms without giving variable name
-				std::get<type_index>(this->all_particle_data_).push_back(&diffusion_dt_[m]);
-				diffusion_dt_[m].resize(this->real_particles_bound_, Real(0));
 			}
 		};
 
