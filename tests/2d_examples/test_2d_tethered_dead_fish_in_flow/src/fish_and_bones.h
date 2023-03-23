@@ -11,13 +11,13 @@ Real outline(Real x, Real h, Real L)
 	Real a[5];
 	a[0] = 1.22 * h / L;
 	a[1] = 3.19 * h / L / L;
-	a[2] = -15.73 * h / powerN(L, 3);
-	a[3] = 21.87 * h / powerN(L, 4);
-	a[4] = -10.55 * h / powerN(L, 5);
+	a[2] = -15.73 * h / pow(L, 3);
+	a[3] = 21.87 * h / pow(L, 4);
+	a[4] = -10.55 * h / pow(L, 5);
 	Real y = 0.0;
 	for (int n = 0; n<5; n++)
 	{
-		y += a[n] * powerN(x, n + 1);
+		y += a[n] * pow(x, n + 1);
 	}
 	return y;
 }
@@ -168,7 +168,7 @@ std::vector<Vecd> CreatBoneShape(int Nh, Real ra, Real rab, Real center_x, Real 
 	for (int n = 1; n < Nh; n++)
 	{
 		Real x = headtip + n * hstep;
-		pnts.push_back(Vecd(x, rb * sqrt(1 - sqr((x - center_x) / ra)) + center_y));
+		pnts.push_back(Vecd(x, rb * sqrt(1 - pow((x - center_x) / ra, 2)) + center_y));
 	}
 	pnts.push_back(Vecd(center_x + ra, center_y));
 

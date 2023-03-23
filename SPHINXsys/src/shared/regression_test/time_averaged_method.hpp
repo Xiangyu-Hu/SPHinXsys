@@ -53,9 +53,9 @@ namespace SPH
 								   (SMIN(snapshot_index + scale, this->snapshot_) - SMAX(snapshot_index - scale, 0));
 				for (int index = SMAX(snapshot_index - scale, 0); index != SMIN(snapshot_index + scale, this->snapshot_); ++index)
 				{
-					filter_variance += std::pow(current_result[index][observation_index] - filter_meanvalue, 2);
+					filter_variance += pow(current_result[index][observation_index] - filter_meanvalue, 2);
 				}
-				Real current_variance = std::pow(current_result[snapshot_index][observation_index] - filter_meanvalue, 2);
+				Real current_variance = pow(current_result[snapshot_index][observation_index] - filter_meanvalue, 2);
 				filter_variance = (filter_variance - current_variance) / (SMIN(snapshot_index + scale, this->snapshot_) - SMAX(snapshot_index - scale, 0));
 				if (current_variance > 4 * filter_variance)
 				{
@@ -89,9 +89,9 @@ namespace SPH
 									   (SMIN(snapshot_index + scale, this->snapshot_) - SMAX(snapshot_index - scale, 0));
 					for (int index = SMAX(snapshot_index - scale, 0); index != SMIN(snapshot_index + scale, this->snapshot_); ++index)
 					{
-						filter_variance += std::pow(current_result[index][observation_index][i] - filter_meanvalue, 2);
+						filter_variance += pow(current_result[index][observation_index][i] - filter_meanvalue, 2);
 					}
-					Real current_variance = std::pow(current_result[snapshot_index][observation_index][i] - filter_meanvalue, 2);
+					Real current_variance = pow(current_result[snapshot_index][observation_index][i] - filter_meanvalue, 2);
 					filter_variance = (filter_variance - current_variance) / (SMIN(snapshot_index + scale, this->snapshot_) - SMAX(snapshot_index - scale, 0));
 					if (current_variance > 4 * filter_variance)
 					{
@@ -128,9 +128,9 @@ namespace SPH
 										   (SMIN(snapshot_index + scale, this->snapshot_) - SMAX(snapshot_index - scale, 0));
 						for (int index = SMAX(snapshot_index - scale, 0); index != SMIN(snapshot_index + scale, this->snapshot_); ++index)
 						{
-							filter_variance += std::pow(current_result[index][observation_index](i,j) - filter_meanvalue, 2);
+							filter_variance += pow(current_result[index][observation_index](i,j) - filter_meanvalue, 2);
 						}
-						Real current_variance = std::pow(current_result[snapshot_index][observation_index](i,j) - filter_meanvalue, 2);
+						Real current_variance = pow(current_result[snapshot_index][observation_index](i,j) - filter_meanvalue, 2);
 						filter_variance = (filter_variance - current_variance) / (SMIN(snapshot_index + scale, this->snapshot_) - SMAX(snapshot_index - scale, 0));
 						if (current_variance > 4 * filter_variance)
 						{
@@ -223,9 +223,9 @@ namespace SPH
 		for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
 		{
 			for (int snapshot_index = snapshot_for_converged_; snapshot_index != this->snapshot_; ++snapshot_index)
-				variance_new[observation_index] += std::pow((current_result[observation_index][snapshot_index] - local_meanvalue[observation_index]), 2);
+				variance_new[observation_index] += pow((current_result[observation_index][snapshot_index] - local_meanvalue[observation_index]), 2);
 			variance_new[observation_index] = SMAX( (variance_new[observation_index] / (this->snapshot_ - snapshot_for_converged_)), 
-												    variance[observation_index], std::pow(local_meanvalue[observation_index] * 1.0e-2, 2) );
+												    variance[observation_index], pow(local_meanvalue[observation_index] * 1.0e-2, 2) );
 		}
 	}
 	//=================================================================================================//
@@ -237,9 +237,9 @@ namespace SPH
 			for (int i = 0; i != current_result[0][0].size(); ++i)
 			{
 				for (int snapshot_index = snapshot_for_converged_; snapshot_index != this->snapshot_; ++snapshot_index)
-					variance_new[observation_index][i] += std::pow((current_result[observation_index][snapshot_index][i] - local_meanvalue[observation_index][i]), 2);
+					variance_new[observation_index][i] += pow((current_result[observation_index][snapshot_index][i] - local_meanvalue[observation_index][i]), 2);
 				variance_new[observation_index][i] = SMAX( (variance_new[observation_index][i] / (this->snapshot_ - snapshot_for_converged_)), 
-															variance[observation_index][i], std::pow(local_meanvalue[observation_index][i] * 1.0e-2, 2) );
+															variance[observation_index][i], pow(local_meanvalue[observation_index][i] * 1.0e-2, 2) );
 			}
 	}
 	//=================================================================================================//
@@ -252,9 +252,9 @@ namespace SPH
 				for (int j = 0; j != current_result[0][0].size(); ++j)
 				{
 					for (int snapshot_index = snapshot_for_converged_; snapshot_index != this->snapshot_; ++snapshot_index)
-						variance_new[observation_index](i,j) += std::pow((current_result[observation_index][snapshot_index](i,j) - local_meanvalue[observation_index](i,j)), 2);
+						variance_new[observation_index](i,j) += pow((current_result[observation_index][snapshot_index](i,j) - local_meanvalue[observation_index](i,j)), 2);
 					variance_new[observation_index](i,j) = SMAX( (variance_new[observation_index](i,j) / (this->snapshot_ - snapshot_for_converged_)), 
-																 variance[observation_index](i,j), std::pow(local_meanvalue[observation_index](i,j) * 1.0e-2, 2) );
+																 variance[observation_index](i,j), pow(local_meanvalue[observation_index](i,j) * 1.0e-2, 2) );
 				}
 	}
 	//=================================================================================================//
@@ -343,7 +343,7 @@ namespace SPH
 		{
 			for (int snapshot_index = snapshot_for_converged_; snapshot_index != this->snapshot_; ++snapshot_index)
 			{
-				variance_new_[observation_index] += std::pow((current_result[snapshot_index][observation_index] - local_meanvalue[observation_index]), 2);
+				variance_new_[observation_index] += pow((current_result[snapshot_index][observation_index] - local_meanvalue[observation_index]), 2);
 			}
 			variance_new_[observation_index] = variance_new_[observation_index] / (this->snapshot_ - snapshot_for_converged_);
 			if ((ABS(meanvalue[observation_index]) < 0.005) && (ABS(local_meanvalue[observation_index]) < 0.005))
@@ -375,7 +375,7 @@ namespace SPH
 			{
 				for (int snapshot_index = snapshot_for_converged_; snapshot_index != this->snapshot_; ++snapshot_index)
 				{
-					variance_new_[observation_index][i] += std::pow((current_result[snapshot_index][observation_index][i] - 
+					variance_new_[observation_index][i] += pow((current_result[snapshot_index][observation_index][i] - 
 																	local_meanvalue[observation_index][i]), 2);
 				}
 				variance_new_[observation_index][i] = variance_new_[observation_index][i] / (this->snapshot_ - snapshot_for_converged_);
@@ -411,7 +411,7 @@ namespace SPH
 				{
 					for (int snapshot_index = snapshot_for_converged_; snapshot_index != this->snapshot_; ++snapshot_index)
 					{
-						variance_new_[observation_index](i,j) += std::pow((current_result[snapshot_index][observation_index](i,j) - 
+						variance_new_[observation_index](i,j) += pow((current_result[snapshot_index][observation_index](i,j) - 
 																		  local_meanvalue[observation_index](i,j)), 2);
 					}
 					variance_new_[observation_index](i,j) = variance_new_[observation_index](i,j) / (this->snapshot_ - snapshot_for_converged_);

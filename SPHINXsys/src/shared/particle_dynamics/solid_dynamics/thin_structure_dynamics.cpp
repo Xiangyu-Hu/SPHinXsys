@@ -33,7 +33,7 @@ namespace SPH
 									1.0 / (angular_vel_[index_i].norm() + TinyReal));
 			Real time_setp_2 = smoothing_length_ * sqrt(rho0_ * (1.0 - nu_ * nu_) / E0_ /
 														(2.0 + (Pi * Pi / 12.0) * (1.0 - nu_) *
-																   (1.0 + 1.5 * powerN(smoothing_length_ / thickness_[index_i], 2))));
+																   (1.0 + 1.5 * pow(smoothing_length_ / thickness_[index_i], 2))));
 			return CFL_ * SMIN(time_setp_0, time_setp_1, time_setp_2);
 		}
 		//=================================================================================================//
@@ -256,7 +256,7 @@ namespace SPH
 			Real reference_smoothing_length = sph_body_.sph_adaptation_->ReferenceSmoothingLength();
 			Real smoothing_length = h_spacing_ratio_ * particle_spacing_ref_;
 			Real h_ratio = reference_smoothing_length / smoothing_length;
-			Real cutoff_radius_sqr = powerN(2.0 * smoothing_length, 2);
+			Real cutoff_radius_sqr = pow(2.0 * smoothing_length, 2);
 			for (size_t i = 0; i < point_forces_.size(); ++i)
 			{
 				sum_of_weight_[i] = 0.0;

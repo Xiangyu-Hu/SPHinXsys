@@ -16,7 +16,7 @@ namespace SPH
 	//=================================================================================================//
 	Real KernelLaguerreGauss::W_1D(const Real q) const
 	{
-		return (1.0 - powerN(q, 2) + powerN(q, 4) / 6.0) * exp(-powerN(q, 2));
+		return (1.0 - pow(q, 2) + pow(q, 4) / 6.0) * exp(-pow(q, 2));
 	}
 	//=================================================================================================//
 	Real KernelLaguerreGauss::W_2D(const Real q) const
@@ -31,7 +31,7 @@ namespace SPH
 	//=================================================================================================//
 	Real KernelLaguerreGauss::dW_1D(const Real q) const
 	{
-		return (-powerN(q, 5) / 3.0 + 8.0 * powerN(q, 3) / 3.0 - 4.0 * q) * exp(-powerN(q, 2));
+		return (-pow(q, 5) / 3.0 + 8.0 * pow(q, 3) / 3.0 - 4.0 * q) * exp(-pow(q, 2));
 	}
 	//=================================================================================================//
 	Real KernelLaguerreGauss::dW_2D(const Real q) const
@@ -46,7 +46,7 @@ namespace SPH
 	//=================================================================================================//
 	Real KernelLaguerreGauss::d2W_1D(const Real q) const
 	{
-		return (2.0 * powerN(q, 6) / 3.0 - 7.0 * powerN(q, 4) + 16.0 * powerN(q, 2) - 4.0) * exp(-powerN(q, 2));
+		return (2.0 * pow(q, 6) / 3.0 - 7.0 * pow(q, 4) + 16.0 * pow(q, 2) - 4.0) * exp(-pow(q, 2));
 	}
 	//=================================================================================================//
 	Real KernelLaguerreGauss::d2W_2D(const Real q) const

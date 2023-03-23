@@ -100,8 +100,8 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 	Real total_area = 0.5*4*Pi*radius*radius;
 	std::cout << "total_area: " << total_area << std::endl;
 	// material
-	Real rho = 1e3 * std::pow(unit_mm, 3);
-	Real E = 5e7 * std::pow(unit_mm, 2);
+	Real rho = 1e3 * pow(unit_mm, 3);
+	Real E = 5e7 * pow(unit_mm, 2);
 	Real mu = 0.3;
 	auto material = makeShared<SaintVenantKirchhoffSolid>(rho, E, mu); // NeoHookean always locks one particle with excessive strain
 	Real physical_viscosity = 7e3;
@@ -148,7 +148,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 	// pressure boundary condition
 	auto apply_pressure = [&]()
 	{
-		Real pressure_MPa = pressure * std::pow(unit_mm, 2);
+		Real pressure_MPa = pressure * pow(unit_mm, 2);
 		for (size_t i = 0; i < shell_particles->acc_prior_.size(); ++i)
 		{
 			// opposite to normals

@@ -19,8 +19,8 @@ TEST(VonMisesStrainCalc, vonMisesStrain)
 	Real epsilonxz_1 = strain_tensor_1(0, 2);
 	Real epsilonyz_1 = strain_tensor_1(1, 2);
     
-    Real von_Mises_strain_1 = sqrt( (1.0 / 3.0) * (std::pow(epsilonxx_1 - epsilonyy_1, 2.0) + std::pow(epsilonyy_1 - epsilonzz_1, 2.0) + std::pow(epsilonzz_1 - epsilonxx_1, 2.0))
-		 + 2.0 * (std::pow(epsilonxy_1, 2.0) + std::pow(epsilonyz_1, 2.0) + std::pow(epsilonxz_1, 2.0)));
+    Real von_Mises_strain_1 = sqrt( (1.0 / 3.0) * (pow(epsilonxx_1 - epsilonyy_1, 2) + pow(epsilonyy_1 - epsilonzz_1, 2) + pow(epsilonzz_1 - epsilonxx_1, 2))
+		 + 2.0 * (pow(epsilonxy_1, 2) + pow(epsilonyz_1, 2) + pow(epsilonxz_1, 2)));
     Real von_Mises_strain_ref_1 = 11.4017543;
    
     Matd strain_tensor_2{ {-5, 9, 1},
@@ -35,8 +35,8 @@ TEST(VonMisesStrainCalc, vonMisesStrain)
 	Real epsilonxz_2 = strain_tensor_2(0, 2);
 	Real epsilonyz_2 = strain_tensor_2(1, 2);
 
-    Real von_Mises_strain_2 = sqrt( (1.0 / 3.0) * (std::pow(epsilonxx_2 - epsilonyy_2, 2.0) + std::pow(epsilonyy_2 - epsilonzz_2, 2.0) + std::pow(epsilonzz_2 - epsilonxx_2, 2.0))
-		 + 2.0 * (std::pow(epsilonxy_2, 2.0) + std::pow(epsilonyz_2, 2.0) + std::pow(epsilonxz_2, 2.0)));
+    Real von_Mises_strain_2 = sqrt( (1.0 / 3.0) * (pow(epsilonxx_2 - epsilonyy_2, 2) + pow(epsilonyy_2 - epsilonzz_2, 2) + pow(epsilonzz_2 - epsilonxx_2, 2))
+		 + 2.0 * (pow(epsilonxy_2, 2) + pow(epsilonyz_2, 2) + pow(epsilonxz_2, 2)));
     Real von_Mises_strain_ref_2 = 19.7652894;
 
 	EXPECT_NEAR(von_Mises_strain_1, von_Mises_strain_ref_1, tolerance);

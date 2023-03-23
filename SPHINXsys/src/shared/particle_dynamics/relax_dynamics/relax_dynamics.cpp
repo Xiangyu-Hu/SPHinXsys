@@ -61,7 +61,7 @@ namespace SPH
 		{
 			Real local_spacing = particle_adaptation_->getLocalSpacing(target_shape_, pos_[index_i]);
 			h_ratio_[index_i] = reference_spacing_ / local_spacing;
-			Vol_[index_i] = powerN(local_spacing, Dimensions);
+			Vol_[index_i] = pow(local_spacing, Dimensions);
 		}
 		//=================================================================================================//
 		RelaxationAccelerationComplex::

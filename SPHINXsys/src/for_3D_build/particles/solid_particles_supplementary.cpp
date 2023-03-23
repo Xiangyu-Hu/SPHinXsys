@@ -20,9 +20,9 @@ namespace SPH
 		Real epsilonxz = epsilon(0, 2);
 		Real epsilonyz = epsilon(1, 2);
 
-		return sqrt((1.0 / 3.0) * (std::pow(epsilonxx - epsilonyy, 2.0) +
-								   std::pow(epsilonyy - epsilonzz, 2.0) + std::pow(epsilonzz - epsilonxx, 2.0)) +
-					2.0 * (std::pow(epsilonxy, 2.0) + std::pow(epsilonyz, 2.0) + std::pow(epsilonxz, 2.0)));
+		return sqrt((1.0 / 3.0) * (pow(epsilonxx - epsilonyy, 2) +
+								   pow(epsilonyy - epsilonzz, 2) + pow(epsilonzz - epsilonxx, 2)) +
+					2.0 * (pow(epsilonxy, 2) + pow(epsilonyz, 2) + pow(epsilonxz, 2)));
 	}
 	//=================================================================================================//
 	Real ElasticSolidParticles::getVonMisesStrainDynamic(size_t particle_i, Real poisson)
@@ -34,7 +34,7 @@ namespace SPH
 		Real eps_2 = principal_strains[1];
 		Real eps_3 = principal_strains[2];
 
-		return 1.0 / (1.0 + poisson) * std::sqrt(0.5 * (powerN(eps_1 - eps_2, 2) + powerN(eps_2 - eps_3, 2) + powerN(eps_3 - eps_1, 2)));
+		return 1.0 / (1.0 + poisson) * std::sqrt(0.5 * (pow(eps_1 - eps_2, 2) + pow(eps_2 - eps_3, 2) + pow(eps_3 - eps_1, 2)));
 	}
 	//=============================================================================================//
 	void VonMisesStress::update(size_t index_i, Real dt)
