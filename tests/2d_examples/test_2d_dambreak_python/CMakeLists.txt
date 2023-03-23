@@ -25,6 +25,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "
 target_link_libraries(${PROJECT_NAME} PRIVATE sphinxsys_2d)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES Windows)
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
     set(PYTHON_EXECUTABLE "C:/hostedtoolcache/windows/Python/3.9.13/x64/python3.exe")
     add_test(NAME ${PROJECT_NAME} COMMAND ${PYTHON_EXECUTABLE} ${EXECUTABLE_OUTPUT_PATH}/bind/pybind_test.py)
 else()
