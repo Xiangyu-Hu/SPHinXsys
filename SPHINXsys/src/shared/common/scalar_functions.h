@@ -36,27 +36,6 @@
 namespace SPH {
 
 	template<class T>
-	inline T sqr(const T& x)
-	{
-		return x * x;
-	}
-
-	template<class T>
-	inline T cube(const T& x)
-	{
-		return x * x * x;
-	}
-
-	template<class T>
-	T powerN(const T& a, int n)
-	{
-		T res = 1;
-		for (int i = 0; i < n; i++)
-			res *= a;
-		return res;
-	}
-
-	template<class T>
 	inline T SMIN(T a1, T a2)
 	{
 		return (a1 <= a2 ? a1 : a2);

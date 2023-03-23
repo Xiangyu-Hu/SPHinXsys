@@ -83,7 +83,7 @@ namespace SPH
 			}
 			// scale stiffness and damping by area here, so it's not necessary in each iteration
 			// we take the area of the first particle, assuming they are uniform
-			Real area = std::pow(particles_->Vol_[0], 2.0 / 3.0);
+			Real area = pow(particles_->Vol_[0], 2.0 / 3.0);
 			stiffness_ = stiffness * area;
 			damping_coeff_ = stiffness_ * damping_ratio;
 		}
@@ -130,7 +130,7 @@ namespace SPH
 
 			// scale stiffness and damping by area here, so it's not necessary in each iteration
 			// we take the area of the first particle, assuming they are uniform
-			Real area = std::pow(particles_->Vol_[0], 2.0 / 3.0);
+			Real area = pow(particles_->Vol_[0], 2.0 / 3.0);
 			stiffness_ = stiffness * area;
 			damping_coeff_ = stiffness_ * damping_ratio;
 		}
@@ -234,7 +234,7 @@ namespace SPH
 		{
 			if (apply_pressure_to_particle_[index_i])
 			{
-				Real area = std::pow(particles_->Vol_[index_i], 2.0 / 3.0);
+				Real area = pow(particles_->Vol_[index_i], 2.0 / 3.0);
 				Real acc_from_pressure = getPressure() * area / mass_[index_i];
 				// vector is made by multiplying it with the surface normal
 				// add the acceleration to the particle

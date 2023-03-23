@@ -97,7 +97,7 @@ namespace SPH
 		Vec2d getRotationFromPseudoNormalForFiniteDeformation(const Vec2d &dpseudo_n_d2t, const Vec2d &rotation, const Vec2d &angular_vel, Real dt)
 		{
 			Vec2d dangular_vel_dt = Vec2d::Zero();
-			dangular_vel_dt[0] = -(dpseudo_n_d2t[0] + sin(rotation[0]) * powerN(angular_vel[0], 2))
+			dangular_vel_dt[0] = -(dpseudo_n_d2t[0] + sin(rotation[0]) * pow(angular_vel[0], 2))
 								 / (2 * sin(rotation[0]) * angular_vel[0] * dt - cos(rotation[0]));
 			return dangular_vel_dt;
 		}
@@ -109,11 +109,11 @@ namespace SPH
 			Real sin_rotation_y = sin(rotation[1]);
 			Real cos_rotation_y = cos(rotation[1]);
 
-			Real angle_vel_dt_x = (dpseudo_n_d2t[1] - sin_rotation_x * powerN(angular_vel[0], 2))
+			Real angle_vel_dt_x = (dpseudo_n_d2t[1] - sin_rotation_x * pow(angular_vel[0], 2))
 								 / (2 * sin_rotation_x * angular_vel[0] * dt - cos_rotation_x);
 
 			Real angle_vel_dt_y = (dpseudo_n_d2t[0] + cos_rotation_x * sin_rotation_y
-								  * (powerN(angular_vel[0], 2) + powerN(angular_vel[1], 2))
+								  * (pow(angular_vel[0], 2) + pow(angular_vel[1], 2))
 								  + 2 * sin_rotation_x * cos_rotation_y * angular_vel[0] * angular_vel[1]
 								  + (2 * cos_rotation_x * sin_rotation_y * angular_vel[0] * dt
 								  + 2 * sin_rotation_x * cos_rotation_y * angular_vel[1] * dt

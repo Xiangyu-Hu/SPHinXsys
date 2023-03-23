@@ -43,7 +43,7 @@ namespace SPH
 			TransportVelocityCorrectionInner(BaseInnerRelation &inner_relation, Real coefficient)
 			: LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
 			  pos_(particles_->pos_), surface_indicator_(particles_->surface_indicator_),
-			  smoothing_length_sqr_(powerN(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
+			  smoothing_length_sqr_(pow(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
 			  coefficient_(coefficient) {}
 		//=================================================================================================//
 		TransportVelocityCorrectionInnerAdaptive::
@@ -51,7 +51,7 @@ namespace SPH
 			: LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
 			  sph_adaptation_(*sph_body_.sph_adaptation_),
 			  pos_(particles_->pos_), surface_indicator_(particles_->surface_indicator_),
-			  smoothing_length_sqr_(powerN(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
+			  smoothing_length_sqr_(pow(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
 			  coefficient_(coefficient) {}
 		//=================================================================================================//
 		AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL)

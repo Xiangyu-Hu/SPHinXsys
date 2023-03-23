@@ -36,27 +36,6 @@ namespace SPH
 {
 	//=================================================================================================//
 	template<class ObserveMethodType>
-	Real RegressionTestDynamicTimeWarping<ObserveMethodType>::calculatePNorm(Real variable_a, Real variable_b)
-	{
-		return std::abs(variable_a - variable_b);
-	};
-	//=================================================================================================//
-	template<class ObserveMethodType>
-	Real RegressionTestDynamicTimeWarping<ObserveMethodType>::calculatePNorm(Vecd variable_a, Vecd variable_b)
-	{
-		Real distance = 0;
-		for (int dimension_index = 0; dimension_index < variable_a.size(); ++dimension_index)
-			distance = std::pow(std::abs(variable_a[dimension_index] - variable_b[dimension_index]), 2);
-		return std::pow(distance, 0.5);
-	};
-	//=================================================================================================//
-	template<class ObserveMethodType>
-	Real RegressionTestDynamicTimeWarping<ObserveMethodType>::calculatePNorm(Matd variable_a, Matd variable_b)
-	{
-		return (variable_a - variable_b).squaredNorm();
-	};
-	//=================================================================================================//
-	template<class ObserveMethodType>
 	StdVec<Real> RegressionTestDynamicTimeWarping<ObserveMethodType>::calculateDTWDistance
 	(DoubleVec<VariableType> dataset_a_, DoubleVec<VariableType> dataset_b_)
 	{

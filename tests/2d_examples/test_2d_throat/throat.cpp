@@ -29,9 +29,9 @@ Real rho0_f = 1.0;
 Real gravity_g = 1.0; /**< Gravity force of fluid. */
 Real Re = 0.001;	  /**< Reynolds number defined in the channel */
 // obtain viscosity according planar Poiseuille flow solution in the channel
-Real mu_f = rho0_f * sqrt(0.5 * rho0_f * powerN(0.5 * DH, 3) * gravity_g / Re);
+Real mu_f = rho0_f * sqrt(0.5 * rho0_f * pow(0.5 * DH, 3) * gravity_g / Re);
 // maximum flow velocity in the channel
-Real U_c = 0.5 * powerN(0.5 * DH, 2) * gravity_g * rho0_f / mu_f;
+Real U_c = 0.5 * pow(0.5 * DH, 2) * gravity_g * rho0_f / mu_f;
 //	predicted overall maximum velocity for this case is in the throat according to incompressible condition
 Real U_f = U_c * DH / DT;
 // For low Reynolds number flow the weakly compressible formulation need to

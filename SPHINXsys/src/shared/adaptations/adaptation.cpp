@@ -17,14 +17,14 @@ namespace SPH
 		  h_ref_(h_spacing_ratio_ * spacing_ref_), kernel_ptr_(makeUnique<KernelWendlandC2>(h_ref_)),
 		  sigma0_ref_(computeReferenceNumberDensity(Vecd())),
 		  spacing_min_(this->MostRefinedSpacing(spacing_ref_, local_refinement_level_)),
-		  h_ratio_max_(powerN(2.0, local_refinement_level_)){};
+		  h_ratio_max_(pow(2.0, local_refinement_level_)){};
 	//=================================================================================================//
 	SPHAdaptation::SPHAdaptation(SPHBody &sph_body, Real h_spacing_ratio, Real system_refinement_ratio)
 		: SPHAdaptation(sph_body.getSPHSystem().resolution_ref_, h_spacing_ratio, system_refinement_ratio){};
 	//=================================================================================================//
 	Real SPHAdaptation::MostRefinedSpacing(Real coarse_particle_spacing, int refinement_level)
 	{
-		return coarse_particle_spacing / powerN(2.0, refinement_level);
+		return coarse_particle_spacing / pow(2.0, refinement_level);
 	}
 	//=================================================================================================//
 	Real SPHAdaptation::computeReferenceNumberDensity(Vec2d zero)
@@ -65,7 +65,7 @@ namespace SPH
 	//=================================================================================================//
 	Real SPHAdaptation::ReferenceNumberDensity(Real smoothing_length_ratio)
 	{
-		return sigma0_ref_ * powerN(smoothing_length_ratio, Dimensions);
+		return sigma0_ref_ * pow(smoothing_length_ratio, Dimensions);
 	}
 	//=================================================================================================//
 	void SPHAdaptation::resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio)
@@ -89,8 +89,8 @@ namespace SPH
 	UniquePtr<BaseLevelSet> SPHAdaptation::createLevelSet(Shape &shape, Real refinement_ratio)
 	{
 		// estimate the required mesh levels
-		size_t total_levels = (int)log10(MinimumDimension(shape.getBounds()) / ReferenceSpacing()) + 2;
-		Real coarsest_spacing = ReferenceSpacing() * powerN(2.0, total_levels - 1);
+		int total_levels = (int)log10(MinimumDimension(shape.getBounds()) / ReferenceSpacing()) + 2;
+		Real coarsest_spacing = ReferenceSpacing() * pow(2.0, total_levels - 1);
 		MultilevelLevelSet coarser_level_sets(shape.getBounds(), coarsest_spacing / refinement_ratio,
 											  total_levels - 1, shape, *this);
 		// return the finest level set only
@@ -104,7 +104,7 @@ namespace SPH
 	{
 		local_refinement_level_ = local_refinement_level;
 		spacing_min_ = MostRefinedSpacing(spacing_ref_, local_refinement_level_);
-		h_ratio_max_ = powerN(2.0, local_refinement_level_);
+		h_ratio_max_ = pow(2.0, local_refinement_level_);
 		// To ensure that the adaptation strictly within all level set and mesh cell linked list levels
 		finest_spacing_bound_ = spacing_min_ + Eps;
 		coarsest_spacing_bound_ = spacing_ref_ - Eps;
@@ -173,8 +173,8 @@ namespace SPH
 	{
 		spacing_min_ = MostRefinedSpacing(spacing_ref_, local_refinement_level_);
 		h_ratio_max_ = spacing_ref_ / spacing_min_;
-		minimum_volume_ = powerN(spacing_min_, Dimensions);
-		maximum_volume_ = powerN(spacing_ref_, Dimensions);
+		minimum_volume_ = pow(spacing_min_, Dimensions);
+		maximum_volume_ = pow(spacing_ref_, Dimensions);
 	};
 	//=================================================================================================//
 	bool ParticleSplitAndMerge::isSplitAllowed(Real current_volume)
@@ -184,21 +184,21 @@ namespace SPH
 	//=================================================================================================//
 	bool ParticleSplitAndMerge::mergeResolutionCheck(Real volume)
 	{
-		return volume - 1.2 * powerN(spacing_min_, Dimensions) < Eps ? true : false;
+		return volume - 1.2 * pow(spacing_min_, Dimensions) < Eps ? true : false;
 	}
 	//=================================================================================================//
 	void ParticleSplitAndMerge::
 		resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio)
 	{
 		ParticleWithLocalRefinement::resetAdaptationRatios(h_spacing_ratio, new_system_refinement_ratio);
-		minimum_volume_ = powerN(spacing_min_, Dimensions);
-		maximum_volume_ = powerN(spacing_ref_, Dimensions);
+		minimum_volume_ = pow(spacing_min_, Dimensions);
+		maximum_volume_ = pow(spacing_ref_, Dimensions);
 	}
 	//=================================================================================================//
 	Real ParticleSplitAndMerge::MostRefinedSpacing(Real coarse_particle_spacing, int local_refinement_level)
 	{
-		Real minimum_spacing_particles = powerN(2.0, local_refinement_level);
-		Real spacing_ratio = pow(minimum_spacing_particles, 1.0 / Dimensions);
+		Real minimum_spacing_particles = pow(2.0, local_refinement_level);
+		Real spacing_ratio = pow(minimum_spacing_particles, 1.0 / (Real)Dimensions);
 		return coarse_particle_spacing / spacing_ratio;
 	}
 	//=================================================================================================//

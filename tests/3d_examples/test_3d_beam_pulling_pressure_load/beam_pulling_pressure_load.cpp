@@ -56,7 +56,7 @@ public:
 	{
 		area_0_.resize(particles_->total_real_particles_);
 		for (size_t i = 0; i < particles_->total_real_particles_; ++i)
-			area_0_[i] = std::pow(particles_->Vol_[i], 2.0 / 3.0);
+			area_0_[i] = pow(particles_->Vol_[i], 2.0 / 3.0);
 	}
 
 	void update(size_t index_i, Real time = 0.0)
