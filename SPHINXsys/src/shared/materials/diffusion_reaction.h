@@ -227,6 +227,8 @@ namespace SPH
 		std::map<std::string, size_t> all_species_indexes_map_;
 		StdVec<BaseDiffusion *> species_diffusion_;
 		IndexVector reactive_species_;
+		IndexVector diffusion_species_;
+		IndexVector gradient_species_;
 
 	public:
 		/** Constructor for material with diffusion and reaction. */
@@ -266,6 +268,8 @@ namespace SPH
 		size_t TotalSpecies() { return all_species_names_.size(); };
 		StdVec<std::string> &AllSpeciesNames() { return all_species_names_; };
 		IndexVector &ReactiveSpecies() { return reactive_species_; };
+		IndexVector &DiffusionSpecies() { return diffusion_species_; };
+		IndexVector &GradientSpecies() { return gradient_species_; };
 		size_t NumberOfSpeciesDiffusion() { return species_diffusion_.size(); };
 		StdVec<BaseDiffusion *> &SpeciesDiffusion() { return species_diffusion_; };
 		BaseReactionModel<NUM_REACTIVE_SPECIES> &SpeciesReaction() { return species_reaction_; };
@@ -302,10 +306,14 @@ namespace SPH
 		void initializeAnDiffusion(const std::string &diffusion_species_name,
 								   const std::string &gradient_species_name, ConstructorArgs &&...args)
 		{
+			size_t diffusion_species_index = all_species_indexes_map_[diffusion_species_name];
+			size_t gradient_species_index = all_species_indexes_map_[gradient_species_name];
+			diffusion_species_.push_back(diffusion_species_index);
+			gradient_species_.push_back(gradient_species_index);
+
 			species_diffusion_.push_back(
 				diffusion_ptr_keeper_.createPtr<DiffusionType>(
-					all_species_indexes_map_[diffusion_species_name],
-					all_species_indexes_map_[gradient_species_name], std::forward<ConstructorArgs>(args)...));
+					diffusion_species_index, gradient_species_index, std::forward<ConstructorArgs>(args)...));
 		};
 
 		virtual DiffusionReaction<BaseMaterialType, NUM_REACTIVE_SPECIES> *ThisObjectPtr() override { return this; };

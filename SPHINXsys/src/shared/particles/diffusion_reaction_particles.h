@@ -50,6 +50,8 @@ namespace SPH
 
 	public:
 		StdVec<StdLargeVec<Real>> all_species_; /**< array of diffusion/reaction scalars */
+		StdVec<StdLargeVec<Real> *> diffusion_species_;
+		StdVec<StdLargeVec<Real> *> gradient_species_;
 		StdVec<StdLargeVec<Real> *> reactive_species_;
 		DiffusionReactionMaterialType &diffusion_reaction_material_;
 		const static int NumReactiveSpecies = DiffusionReactionMaterialType::NumReactiveSpecies;
@@ -62,6 +64,14 @@ namespace SPH
 			  diffusion_reaction_material_(*diffusion_reaction_material)
 		{
 			all_species_.resize(total_species_);
+			const IndexVector &diffusion_species_indexes = diffusion_reaction_material_.DiffusionSpecies();
+			const IndexVector &gradient_species_indexes = diffusion_reaction_material_.GradientSpecies();
+			for (size_t i = 0; i != diffusion_species_indexes.size(); ++i)
+			{
+				diffusion_species_.push_back(&all_species_[diffusion_species_indexes[i]]);
+				gradient_species_.push_back(&all_species_[gradient_species_indexes[i]]);
+			}
+
 			const IndexVector &reactive_species_indexes = diffusion_reaction_material_.ReactiveSpecies();
 			for (size_t i = 0; i != reactive_species_indexes.size(); ++i)
 			{
@@ -72,6 +82,9 @@ namespace SPH
 
 		StdVec<std::string> &AllSpeciesNames() { return diffusion_reaction_material_.AllSpeciesNames(); };
 		std::map<std::string, size_t> AllSpeciesIndexMap() { return species_indexes_map_; };
+		StdVec<StdLargeVec<Real> *> &DiffusionSpecies() { return diffusion_species_; };
+		StdVec<StdLargeVec<Real> *> &GradientSpecies() { return gradient_species_; };
+		StdVec<StdLargeVec<Real> *> &ReactiveSpecies() { return reactive_species_; };
 
 		virtual void initializeOtherVariables() override
 		{

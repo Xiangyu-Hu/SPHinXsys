@@ -54,43 +54,33 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType>
-	BaseRelaxationOfAllDiffusionSpecies<DiffusionReactionParticlesType>::
-		BaseRelaxationOfAllDiffusionSpecies(SPHBody &sph_body)
-		: LocalDynamics(sph_body),
-		  DiffusionReactionSimpleData<DiffusionReactionParticlesType>(sph_body),
-		  species_diffusion_(this->particles_->diffusion_reaction_material_.SpeciesDiffusion())
+	RelaxationOfAllDiffusionSpeciesInner<DiffusionReactionParticlesType>::
+		RelaxationOfAllDiffusionSpeciesInner(BaseInnerRelation &inner_relation)
+		: LocalDynamics(inner_relation.getSPHBody()),
+		  DiffusionReactionInnerData<DiffusionReactionParticlesType>(inner_relation),
+		  material_(this->particles_->diffusion_reaction_material_),
+		  species_diffusion_(material_.SpeciesDiffusion()),
+		  diffusion_species_(this->particles_->DiffusionSpecies()),
+		  gradient_species_(this->particles_->GradientSpecies())
 	{
 		diffusion_dt_.resize(species_diffusion_.size());
 		StdVec<std::string> &all_species_names = this->particles_->AllSpeciesNames();
-		StdVec<StdLargeVec<Real>> &all_species = this->particles_->all_species_;
+		IndexVector &diffusion_species_indexes = material_.DiffusionSpecies();
 		for (size_t i = 0; i != species_diffusion_.size(); ++i)
 		{
-			// add a diffusion species
-			size_t diffusion_species_index = species_diffusion_[i]->diffusion_species_index_;
-			diffusion_species_.push_back(&all_species[diffusion_species_index]);
-			// add a gradient species
-			size_t gradient_species_index = species_diffusion_[i]->gradient_species_index_;
-			gradient_species_.push_back(&all_species[gradient_species_index]);
-
 			// Register specie change rate as shared variable
-			std::string &diffusion_species_name = all_species_names[diffusion_species_index];
+			std::string &diffusion_species_name = all_species_names[diffusion_species_indexes[i]];
 			diffusion_dt_[i] = this->particles_->template registerSharedVariable<Real>(diffusion_species_name + "ChangeRate");
 		}
 	}
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType>
-	RelaxationOfAllDiffusionSpeciesInner<DiffusionReactionParticlesType>::
-		RelaxationOfAllDiffusionSpeciesInner(BaseInnerRelation &inner_relation)
-		: BaseRelaxationOfAllDiffusionSpecies<DiffusionReactionParticlesType>(inner_relation.getSPHBody()),
-		  DiffusionReactionInnerData<DiffusionReactionParticlesType>(inner_relation) {}
-	//=================================================================================================//
-	template <class DiffusionReactionParticlesType>
 	void RelaxationOfAllDiffusionSpeciesInner<DiffusionReactionParticlesType>::
 		initializeDiffusionChangeRate(size_t particle_i)
 	{
-		for (size_t m = 0; m < this->species_diffusion_.size(); ++m)
+		for (size_t m = 0; m < species_diffusion_.size(); ++m)
 		{
-			(*this->diffusion_dt_[m])[particle_i] = 0;
+			(*diffusion_dt_[m])[particle_i] = 0;
 		}
 	}
 	//=================================================================================================//
@@ -98,13 +88,13 @@ namespace SPH
 	void RelaxationOfAllDiffusionSpeciesInner<DiffusionReactionParticlesType>::
 		getDiffusionChangeRate(size_t particle_i, size_t particle_j, Vecd &e_ij, Real surface_area_ij)
 	{
-		for (size_t m = 0; m < this->species_diffusion_.size(); ++m)
+		for (size_t m = 0; m < species_diffusion_.size(); ++m)
 		{
 			Real diff_coff_ij =
-				this->species_diffusion_[m]->getInterParticleDiffusionCoff(particle_i, particle_j, e_ij);
-			StdLargeVec<Real> &gradient_species = *this->gradient_species_[m];
+				species_diffusion_[m]->getInterParticleDiffusionCoff(particle_i, particle_j, e_ij);
+			StdLargeVec<Real> &gradient_species = *gradient_species_[m];
 			Real phi_ij = gradient_species[particle_i] - gradient_species[particle_j];
-			(*this->diffusion_dt_[m])[particle_i] += diff_coff_ij * phi_ij * surface_area_ij;
+			(*diffusion_dt_[m])[particle_i] += diff_coff_ij * phi_ij * surface_area_ij;
 		}
 	}
 	//=================================================================================================//
@@ -112,9 +102,9 @@ namespace SPH
 	void RelaxationOfAllDiffusionSpeciesInner<DiffusionReactionParticlesType>::
 		updateSpeciesDiffusion(size_t particle_i, Real dt)
 	{
-		for (size_t m = 0; m < this->species_diffusion_.size(); ++m)
+		for (size_t m = 0; m < species_diffusion_.size(); ++m)
 		{
-			(*this->diffusion_species_[m])[particle_i] += dt * (*this->diffusion_dt_[m])[particle_i];
+			(*diffusion_species_[m])[particle_i] += dt * (*diffusion_dt_[m])[particle_i];
 		}
 	}
 	//=================================================================================================//
@@ -228,16 +218,20 @@ namespace SPH
 	template <class DiffusionReactionParticlesType>
 	InitializationRK<DiffusionReactionParticlesType>::
 		InitializationRK(SPHBody &sph_body, StdVec<StdLargeVec<Real>> &diffusion_species_s)
-		: BaseRelaxationOfAllDiffusionSpecies<DiffusionReactionParticlesType>(sph_body),
+		: LocalDynamics(sph_body),
+		  DiffusionReactionSimpleData<DiffusionReactionParticlesType>(sph_body),
+		  material_(this->particles_->diffusion_reaction_material_),
+		  species_diffusion_(material_.SpeciesDiffusion()),
+		  diffusion_species_(this->particles_->DiffusionSpecies()),
 		  diffusion_species_s_(diffusion_species_s) {}
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType>
 	void InitializationRK<DiffusionReactionParticlesType>::
 		update(size_t index_i, Real dt)
 	{
-		for (size_t m = 0; m < this->species_diffusion_.size(); ++m)
+		for (size_t m = 0; m < species_diffusion_.size(); ++m)
 		{
-			diffusion_species_s_[m][index_i] = (*this->diffusion_species_[m])[index_i];
+			diffusion_species_s_[m][index_i] = (*diffusion_species_[m])[index_i];
 		}
 	}
 	//=================================================================================================//
