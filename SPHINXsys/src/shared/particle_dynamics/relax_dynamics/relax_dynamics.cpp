@@ -115,7 +115,7 @@ namespace SPH
 			relaxation_acceleration_inner_->exec();
 			Real dt_square = get_time_step_square_.exec();
 			update_particle_position_.exec(dt_square);
-			surface_bounding_.exec();
+//			surface_bounding_.exec();
 		}
 		//=================================================================================================//
 		RelaxationAccelerationComplexWithLevelSetCorrection::

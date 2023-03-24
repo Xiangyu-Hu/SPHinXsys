@@ -22,7 +22,7 @@ namespace SPH
 		Real heaviside = 0.0;
 		Real normalized_phi = phi / half_width;
 		if (phi < half_width && phi > -half_width)
-			heaviside = (0.5 + 0.5 * normalized_phi) + 0.5 * sin(Pi * normalized_phi) / Pi;
+			heaviside = 0.5 + 0.5 * normalized_phi;
 		if (normalized_phi > 1.0)
 			heaviside = 1.0;
 		return heaviside;
@@ -62,8 +62,9 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSet::updateKernelIntegrals()
 	{
-		package_parallel_for(inner_data_pkgs_,
-							 [&](LevelSetDataPackage *data_pkg)
+//		package_parallel_for(inner_data_pkgs_,
+		package_for(inner_data_pkgs_,
+			[&](LevelSetDataPackage *data_pkg)
 							 {
 								 data_pkg->assignByPosition(
 									 kernel_weight_, [&](const Vecd &position) -> Real

@@ -427,7 +427,8 @@ namespace SPH
 	Vecd LevelSet::computeKernelGradientIntegral(const Vecd &position)
 	{
 		Real phi = probeSignedDistance(position);
-		Real cutoff_radius = kernel_.CutOffRadius(global_h_ratio_);
+		Real corrected_global_h_ratio = global_h_ratio_ * 1.01;
+		Real cutoff_radius = kernel_.CutOffRadius(corrected_global_h_ratio);
 		Real threshold = cutoff_radius + data_spacing_;
 
 		Vecd integral = Vecd::Zero();
@@ -441,11 +442,15 @@ namespace SPH
 					Real phi_neighbor = DataValueFromGlobalIndex(phi_, neighbor_index);
 					if (phi_neighbor > -data_spacing_)
 					{
-						Vecd displacement = position - global_mesh_.GridPositionFromIndex(neighbor_index);
+						Vec2d integral_position = global_mesh_.GridPositionFromIndex(neighbor_index);
+						Vec2d displacement = position - integral_position;
+						Vec2d normal_direction = probeNormalDirection(integral_position);
+						normal_direction /= normal_direction.norm() + TinyReal;
+						Real fractor = 0.5 / SMAX(ABS(normal_direction[0]), ABS(normal_direction[1]));
 						Real distance = displacement.norm();
 						if (distance < cutoff_radius)
-							integral += kernel_.dW(global_h_ratio_, distance, displacement) *
-										computeHeaviside(phi_neighbor, data_spacing_) * displacement / (distance + TinyReal);
+							integral += kernel_.dW(corrected_global_h_ratio, distance, displacement) *
+										computeHeaviside(phi_neighbor + 0.5 * data_spacing_, fractor * data_spacing_) * displacement / (distance + TinyReal);
 					}
 				}
 		}
