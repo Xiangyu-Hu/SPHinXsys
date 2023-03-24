@@ -58,8 +58,10 @@ namespace SPH
 		Shape &shape_; /**< the geometry is described by the level set. */
 		SPHAdaptation &sph_adaptation_;
 
-		/** for computing volume fraction occupied by a shape.*/
-		Real computeHeaviside(Real phi, Real half_width);
+		/** linear heaviside function.*/
+		Real Heaviside(Real phi, Real half_width);
+		/** for computing volume fraction occupied by a shape in a data cell. */
+		Real computeVolumeFraction(Real cell_center_phi_, Real data_spacing, const Vecd position);
 	};
 
 	/**

@@ -17,7 +17,7 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	Real BaseLevelSet::computeHeaviside(Real phi, Real half_width)
+	Real BaseLevelSet::Heaviside(Real phi, Real half_width)
 	{
 		Real heaviside = 0.0;
 		Real normalized_phi = phi / half_width;
@@ -26,6 +26,14 @@ namespace SPH
 		if (normalized_phi > 1.0)
 			heaviside = 1.0;
 		return heaviside;
+	}
+	//=================================================================================================//
+	Real BaseLevelSet::computeVolumeFraction(Real cell_center_phi_, Real data_spacing, const Vecd position)
+	{
+		Vecd normal_direction = probeNormalDirection(position);
+		normal_direction /= normal_direction.norm() + TinyReal;
+		Real factor = 0.5 / normal_direction.cwiseAbs().maxCoeff();
+		return Heaviside(cell_center_phi_, factor * data_spacing);
 	}
 	//=================================================================================================//
 	LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size,
@@ -62,9 +70,8 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSet::updateKernelIntegrals()
 	{
-//		package_parallel_for(inner_data_pkgs_,
-		package_for(inner_data_pkgs_,
-			[&](LevelSetDataPackage *data_pkg)
+		package_parallel_for(inner_data_pkgs_,
+							 [&](LevelSetDataPackage *data_pkg)
 							 {
 								 data_pkg->assignByPosition(
 									 kernel_weight_, [&](const Vecd &position) -> Real

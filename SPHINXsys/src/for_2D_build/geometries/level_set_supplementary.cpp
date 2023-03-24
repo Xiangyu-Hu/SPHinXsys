@@ -414,10 +414,12 @@ namespace SPH
 					Real phi_neighbor = DataValueFromGlobalIndex(phi_, neighbor_index);
 					if (phi_neighbor > -data_spacing_)
 					{
-						Vecd displacement = position - global_mesh_.GridPositionFromIndex(neighbor_index);
+						Vecd integral_position = global_mesh_.GridPositionFromIndex(neighbor_index);
+						Vecd displacement = position - integral_position;
 						Real distance = displacement.norm();
 						if (distance < cutoff_radius)
-							integral += kernel_.W(global_h_ratio_, distance, displacement) * computeHeaviside(phi_neighbor, data_spacing_);
+							integral += kernel_.W(global_h_ratio_, distance, displacement) *
+										computeVolumeFraction(phi_neighbor, data_spacing_, integral_position);
 					}
 				}
 		}
@@ -442,15 +444,13 @@ namespace SPH
 					Real phi_neighbor = DataValueFromGlobalIndex(phi_, neighbor_index);
 					if (phi_neighbor > -data_spacing_)
 					{
-						Vec2d integral_position = global_mesh_.GridPositionFromIndex(neighbor_index);
-						Vec2d displacement = position - integral_position;
-						Vec2d normal_direction = probeNormalDirection(integral_position);
-						normal_direction /= normal_direction.norm() + TinyReal;
-						Real fractor = 0.5 / SMAX(ABS(normal_direction[0]), ABS(normal_direction[1]));
+						Vecd integral_position = global_mesh_.GridPositionFromIndex(neighbor_index);
+						Vecd displacement = position - integral_position;
 						Real distance = displacement.norm();
 						if (distance < cutoff_radius)
 							integral += kernel_.dW(corrected_global_h_ratio, distance, displacement) *
-										computeHeaviside(phi_neighbor + 0.5 * data_spacing_, fractor * data_spacing_) * displacement / (distance + TinyReal);
+										computeVolumeFraction(phi_neighbor, data_spacing_, integral_position) *
+										displacement / (distance + TinyReal);
 					}
 				}
 		}
