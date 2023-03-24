@@ -45,34 +45,34 @@ namespace SPH
 	class DiffusionReactionParticles : public BaseParticlesType
 	{
 	protected:
-		size_t total_species_; /**< Total number of diffusion and reaction species . */
+		StdVec<std::string> all_species_names_;
 		std::map<std::string, size_t> species_indexes_map_;
-
-	public:
-		StdVec<StdLargeVec<Real>> all_species_; /**< array of diffusion/reaction scalars */
 		StdVec<StdLargeVec<Real> *> diffusion_species_;
 		StdVec<StdLargeVec<Real> *> gradient_species_;
 		StdVec<StdLargeVec<Real> *> reactive_species_;
+
+	public:
+		StdVec<StdLargeVec<Real>> all_species_; /**< array of diffusion/reaction scalars */
 		DiffusionReactionMaterialType &diffusion_reaction_material_;
 		const static int NumReactiveSpecies = DiffusionReactionMaterialType::NumReactiveSpecies;
 		typedef DiffusionReactionMaterialType DiffusionReactionMaterial;
 
 		DiffusionReactionParticles(SPHBody &sph_body, DiffusionReactionMaterialType *diffusion_reaction_material)
 			: BaseParticlesType(sph_body, diffusion_reaction_material),
-			  total_species_(diffusion_reaction_material->TotalSpecies()),
+			  all_species_names_(diffusion_reaction_material->AllSpeciesNames()),
 			  species_indexes_map_(diffusion_reaction_material->AllSpeciesIndexMap()),
 			  diffusion_reaction_material_(*diffusion_reaction_material)
 		{
-			all_species_.resize(total_species_);
-			const IndexVector &diffusion_species_indexes = diffusion_reaction_material_.DiffusionSpecies();
-			const IndexVector &gradient_species_indexes = diffusion_reaction_material_.GradientSpecies();
+			all_species_.resize(all_species_names_.size());
+			const IndexVector &diffusion_species_indexes = diffusion_reaction_material_.DiffusionSpeciesIndexes();
+			const IndexVector &gradient_species_indexes = diffusion_reaction_material_.GradientSpeciesIndexes();
 			for (size_t i = 0; i != diffusion_species_indexes.size(); ++i)
 			{
 				diffusion_species_.push_back(&all_species_[diffusion_species_indexes[i]]);
 				gradient_species_.push_back(&all_species_[gradient_species_indexes[i]]);
 			}
 
-			const IndexVector &reactive_species_indexes = diffusion_reaction_material_.ReactiveSpecies();
+			const IndexVector &reactive_species_indexes = diffusion_reaction_material_.ReactiveSpeciesIndexes();
 			for (size_t i = 0; i != reactive_species_indexes.size(); ++i)
 			{
 				reactive_species_.push_back(&all_species_[reactive_species_indexes[i]]);
@@ -80,7 +80,7 @@ namespace SPH
 		};
 		virtual ~DiffusionReactionParticles(){};
 
-		StdVec<std::string> &AllSpeciesNames() { return diffusion_reaction_material_.AllSpeciesNames(); };
+		StdVec<std::string> &AllSpeciesNames() { return all_species_names_; };
 		std::map<std::string, size_t> AllSpeciesIndexMap() { return species_indexes_map_; };
 		StdVec<StdLargeVec<Real> *> &DiffusionSpecies() { return diffusion_species_; };
 		StdVec<StdLargeVec<Real> *> &GradientSpecies() { return gradient_species_; };

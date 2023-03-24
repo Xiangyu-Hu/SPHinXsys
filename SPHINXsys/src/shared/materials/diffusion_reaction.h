@@ -223,12 +223,12 @@ namespace SPH
 	protected:
 		typedef std::array<std::string, NUM_REACTIVE_SPECIES> ReactiveSpeciesNames;
 		StdVec<std::string> all_species_names_;
-		BaseReactionModel<NUM_REACTIVE_SPECIES> &species_reaction_;
+		BaseReactionModel<NUM_REACTIVE_SPECIES> &reaction_model_;
 		std::map<std::string, size_t> all_species_indexes_map_;
-		StdVec<BaseDiffusion *> species_diffusion_;
-		IndexVector reactive_species_;
-		IndexVector diffusion_species_;
-		IndexVector gradient_species_;
+		StdVec<BaseDiffusion *> all_diffusions_;
+		IndexVector reactive_species_indexes_;
+		IndexVector diffusion_species_indexes_;
+		IndexVector gradient_species_indexes_;
 
 	public:
 		/** Constructor for material with diffusion and reaction. */
@@ -238,7 +238,7 @@ namespace SPH
 						  MaterialArgs &&...material_args)
 			: BaseMaterialType(std::forward<MaterialArgs>(material_args)...),
 			  all_species_names_(all_species_names),
-			  species_reaction_(reaction_ptr_keeper_.assignRef(reaction_model_ptr))
+			  reaction_model_(reaction_ptr_keeper_.assignRef(reaction_model_ptr))
 		{
 			BaseMaterialType::material_type_name_ =
 				NUM_REACTIVE_SPECIES == 0 ? "Diffusion" : "DiffusionReaction";
@@ -250,11 +250,11 @@ namespace SPH
 
 			for (size_t i = 0; i != NUM_REACTIVE_SPECIES; ++i)
 			{
-				const ReactiveSpeciesNames &reactive_species_names = species_reaction_.getSpeciesNames();
+				const ReactiveSpeciesNames &reactive_species_names = reaction_model_.getSpeciesNames();
 				size_t reactive_species_index = all_species_indexes_map_[reactive_species_names[i]];
 				if (reactive_species_index != all_species_indexes_map_.size())
 				{
-					reactive_species_.push_back(reactive_species_index);
+					reactive_species_indexes_.push_back(reactive_species_index);
 				}
 				else
 				{
@@ -265,28 +265,26 @@ namespace SPH
 			}
 		};
 		virtual ~DiffusionReaction(){};
-		size_t TotalSpecies() { return all_species_names_.size(); };
 		StdVec<std::string> &AllSpeciesNames() { return all_species_names_; };
-		IndexVector &ReactiveSpecies() { return reactive_species_; };
-		IndexVector &DiffusionSpecies() { return diffusion_species_; };
-		IndexVector &GradientSpecies() { return gradient_species_; };
-		size_t NumberOfSpeciesDiffusion() { return species_diffusion_.size(); };
-		StdVec<BaseDiffusion *> &SpeciesDiffusion() { return species_diffusion_; };
-		BaseReactionModel<NUM_REACTIVE_SPECIES> &SpeciesReaction() { return species_reaction_; };
 		std::map<std::string, size_t> AllSpeciesIndexMap() { return all_species_indexes_map_; };
+		IndexVector &ReactiveSpeciesIndexes() { return reactive_species_indexes_; };
+		IndexVector &DiffusionSpeciesIndexes() { return diffusion_species_indexes_; };
+		IndexVector &GradientSpeciesIndexes() { return gradient_species_indexes_; };
+		StdVec<BaseDiffusion *> &AllDiffusions() { return all_diffusions_; };
+		BaseReactionModel<NUM_REACTIVE_SPECIES> &ReactionModel() { return reaction_model_; };
 
 		virtual void registerReloadLocalParameters(BaseParticles *base_particles) override
 		{
 			BaseMaterialType::registerReloadLocalParameters(base_particles);
-			for (size_t k = 0; k < species_diffusion_.size(); ++k)
-				species_diffusion_[k]->registerReloadLocalParameters(base_particles);
+			for (size_t k = 0; k < all_diffusions_.size(); ++k)
+				all_diffusions_[k]->registerReloadLocalParameters(base_particles);
 		};
 
 		virtual void initializeLocalParameters(BaseParticles *base_particles) override
 		{
 			BaseMaterialType::initializeLocalParameters(base_particles);
-			for (size_t k = 0; k < species_diffusion_.size(); ++k)
-				species_diffusion_[k]->initializeLocalParameters(base_particles);
+			for (size_t k = 0; k < all_diffusions_.size(); ++k)
+				all_diffusions_[k]->initializeLocalParameters(base_particles);
 		};
 
 		/**
@@ -296,8 +294,8 @@ namespace SPH
 		Real getDiffusionTimeStepSize(Real smoothing_length)
 		{
 			Real diff_coff_max = 0.0;
-			for (size_t k = 0; k < species_diffusion_.size(); ++k)
-				diff_coff_max = SMAX(diff_coff_max, species_diffusion_[k]->getReferenceDiffusivity());
+			for (size_t k = 0; k < all_diffusions_.size(); ++k)
+				diff_coff_max = SMAX(diff_coff_max, all_diffusions_[k]->getReferenceDiffusivity());
 			return 0.5 * smoothing_length * smoothing_length / diff_coff_max / Real(Dimensions);
 		};
 
@@ -308,10 +306,10 @@ namespace SPH
 		{
 			size_t diffusion_species_index = all_species_indexes_map_[diffusion_species_name];
 			size_t gradient_species_index = all_species_indexes_map_[gradient_species_name];
-			diffusion_species_.push_back(diffusion_species_index);
-			gradient_species_.push_back(gradient_species_index);
+			diffusion_species_indexes_.push_back(diffusion_species_index);
+			gradient_species_indexes_.push_back(gradient_species_index);
 
-			species_diffusion_.push_back(
+			all_diffusions_.push_back(
 				diffusion_ptr_keeper_.createPtr<DiffusionType>(
 					diffusion_species_index, gradient_species_index, std::forward<ConstructorArgs>(args)...));
 		};

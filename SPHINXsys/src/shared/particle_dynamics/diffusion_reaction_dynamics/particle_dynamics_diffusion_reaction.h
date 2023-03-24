@@ -93,8 +93,9 @@ namespace SPH
 		  public DiffusionReactionInnerData<DiffusionReactionParticlesType>
 	{
 	protected:
-		typename DiffusionReactionParticlesType::DiffusionReactionMaterial &material_;
-		StdVec<BaseDiffusion *> &species_diffusion_;
+		typedef typename DiffusionReactionParticlesType::DiffusionReactionMaterial DiffusionReactionMaterial;
+		DiffusionReactionMaterial &material_;
+		StdVec<BaseDiffusion *> &all_diffusions_;
 		StdVec<StdLargeVec<Real> *> &diffusion_species_;
 		StdVec<StdLargeVec<Real> *> &gradient_species_;
 		StdVec<StdLargeVec<Real> *> diffusion_dt_;
@@ -109,8 +110,7 @@ namespace SPH
 
 		explicit RelaxationOfAllDiffusionSpeciesInner(BaseInnerRelation &inner_relation);
 		virtual ~RelaxationOfAllDiffusionSpeciesInner(){};
-
-		StdVec<BaseDiffusion *> &SpeciesDiffusion() { return species_diffusion_; };
+		StdVec<BaseDiffusion *> &AllDiffusions() { return material_.AllDiffusions(); };
 		inline void interaction(size_t index_i, Real dt = 0.0);
 		void update(size_t index_i, Real dt = 0.0);
 	};
@@ -150,7 +150,7 @@ namespace SPH
 	{
 	protected:
 		typename DiffusionReactionParticlesType::DiffusionReactionMaterial &material_;
-		StdVec<BaseDiffusion *> &species_diffusion_;
+		StdVec<BaseDiffusion *> &all_diffusions_;
 		StdVec<StdLargeVec<Real> *> &diffusion_species_;
 		StdVec<StdLargeVec<Real>> &diffusion_species_s_;
 
@@ -192,7 +192,7 @@ namespace SPH
 		SimpleDynamics<InitializationRK<typename FirstStageType::InnerParticlesType>> rk2_initialization_;
 		InteractionWithUpdate<FirstStageType> rk2_1st_stage_;
 		InteractionWithUpdate<SecondStageRK2<FirstStageType>> rk2_2nd_stage_;
-		StdVec<BaseDiffusion *> species_diffusion_;
+		StdVec<BaseDiffusion *> all_diffusions_;
 
 	public:
 		explicit RelaxationOfAllDiffusionSpeciesRK2(typename FirstStageType::BodyRelationType &body_relation);
@@ -221,7 +221,7 @@ namespace SPH
 		const static int NumReactiveSpecies = DiffusionReactionParticlesType::NumReactiveSpecies;
 		typedef std::array<Real, NumReactiveSpecies> LocalSpecies;
 		StdVec<StdLargeVec<Real> *> &reactive_species_;
-		BaseReactionModel<NumReactiveSpecies> &species_reaction_;
+		BaseReactionModel<NumReactiveSpecies> &reaction_model_;
 		UpdateAReactionSpecies updateAReactionSpecies;
 		void loadLocalSpecies(LocalSpecies &local_species, size_t index_i);
 		void applyGlobalSpecies(LocalSpecies &local_species, size_t index_i);
