@@ -88,13 +88,14 @@ public:
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main()
+int main(int ac, char *av[])
 {
 	//----------------------------------------------------------------------
 	//	Build up an SPHSystem.
 	//----------------------------------------------------------------------
 	BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
+	sph_system.handleCommandlineOptions(ac, av);
 	IOEnvironment io_environment(sph_system);
 	//----------------------------------------------------------------------
 	//	Creating bodies with corresponding materials and particles.
@@ -243,8 +244,16 @@ int main()
 	std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
 			  << interval_updating_configuration.seconds() << "\n";
 
-	write_water_mechanical_energy.newResultTest();
-	write_recorded_water_pressure.newResultTest();
+	if (sph_system.generate_regression_data_)
+	{
+		write_water_mechanical_energy.generateDataBase(1.0e-3);
+		write_recorded_water_pressure.generateDataBase(1.0e-3);
+	}
+	else if (sph_system.RestartStep() == 0)
+	{
+		write_water_mechanical_energy.newResultTest();
+		write_recorded_water_pressure.newResultTest();
+	}
 
 	return 0;
 }
