@@ -135,6 +135,7 @@ int main()
 	update_density_by_summation.post_processes_.push_back(&confinement_condition.density_summation_);
 	pressure_relaxation.post_processes_.push_back(&confinement_condition.pressure_relaxation_);
 	density_relaxation.post_processes_.push_back(&confinement_condition.density_relaxation_);
+	density_relaxation.post_processes_.push_back(&confinement_condition.surface_bounding_);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations, observations
 	//	and regression tests of the simulation.
