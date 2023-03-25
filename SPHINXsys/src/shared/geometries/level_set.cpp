@@ -17,17 +17,6 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	Real BaseLevelSet::Heaviside(Real phi, Real half_width)
-	{
-		Real heaviside = 0.0;
-		Real normalized_phi = phi / half_width;
-		if (phi < half_width && phi > -half_width)
-			heaviside = 0.5 + 0.5 * normalized_phi;
-		if (normalized_phi > 1.0)
-			heaviside = 1.0;
-		return heaviside;
-	}
-	//=================================================================================================//
 	Real BaseLevelSet::computeVolumeFraction(Real cell_center_phi_, Real data_spacing, const Vecd position)
 	{
 		Vecd normal_direction = probeNormalDirection(position);

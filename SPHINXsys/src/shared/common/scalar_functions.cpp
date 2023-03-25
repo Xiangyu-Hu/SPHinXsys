@@ -70,5 +70,15 @@ namespace SPH {
 		return right_state;
 	}
 	//=================================================================================================//
-
+	Real Heaviside(Real phi, Real half_width)
+	{
+		Real heaviside = 0.0;
+		Real normalized_phi = phi / half_width;
+		if (phi < half_width && phi > -half_width)
+			heaviside = 0.5 + 0.5 * normalized_phi;
+		if (normalized_phi > 1.0)
+			heaviside = 1.0;
+		return heaviside;
+	}
+	//=================================================================================================//
 }
