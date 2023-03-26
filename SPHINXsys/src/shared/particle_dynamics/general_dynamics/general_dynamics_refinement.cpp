@@ -336,7 +336,7 @@ namespace SPH
 
         particle_number_change += 1;
         split_position_.push_back(2.0 * pos_[index_i] - pos_splitting);
-        split_index_.push_back({index_i, particle_real_number});
+        split_index_.push_back(std::make_pair(index_i, particle_real_number));
     }
     //=================================================================================================//
     void ParticleSplitWithPrescribedArea::setupDynamics(Real dt)
@@ -350,10 +350,10 @@ namespace SPH
     {
         for (size_t num = 0; num != particle_number_change; ++num)
         {
-            if (index_i == split_index_[num][0])
+            if (index_i == split_index_[num].first)
             {
-                size_t index_i = split_index_[num][0];
-                size_t index_j = split_index_[num][1];
+                size_t index_i = split_index_[num].first;
+                size_t index_j = split_index_[num].second;
                 pos_[index_i] = split_position_[num];
                 mass_[index_i] = mass_[index_j];
                 Vol_[index_i] = Vol_[index_j];
@@ -423,9 +423,9 @@ namespace SPH
         total_split_error_[index_i] = compute_density_error.density_error_[index_i];
         for (size_t num = 0; num != particle_number_change; ++num)
         {
-            if (index_i == split_index_[num][0])
+            if (index_i == split_index_[num].first)
             {
-                size_t index_j = split_index_[num][1];
+                size_t index_j = split_index_[num].second;
                 total_split_error_[index_j] = compute_density_error.density_error_[index_j];
             }
         }
