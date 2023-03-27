@@ -218,7 +218,7 @@ namespace SPH
 		: public LocalDynamics,
 		  public DiffusionReactionSimpleData<DiffusionReactionParticlesType>
 	{
-		const static int NumReactiveSpecies = DiffusionReactionParticlesType::NumReactiveSpecies;
+		static constexpr int NumReactiveSpecies = DiffusionReactionParticlesType::NumReactiveSpecies;		
 		typedef std::array<Real, NumReactiveSpecies> LocalSpecies;
 		StdVec<StdLargeVec<Real> *> &reactive_species_;
 		BaseReactionModel<NumReactiveSpecies> &reaction_model_;

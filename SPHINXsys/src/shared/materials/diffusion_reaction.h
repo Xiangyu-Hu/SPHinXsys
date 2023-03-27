@@ -163,7 +163,7 @@ namespace SPH
 	class BaseReactionModel
 	{
 	public:
-		const static int NumSpecies = NUM_SPECIES;
+		static constexpr int NumSpecies = NUM_SPECIES;		
 		typedef std::array<Real, NUM_SPECIES> LocalSpecies;
 		typedef std::array<std::string, NUM_SPECIES> SpeciesNames;
 		typedef std::function<Real(LocalSpecies &)> ReactionFunctor;
@@ -180,8 +180,7 @@ namespace SPH
 		explicit BaseReactionModel(const SpeciesNames &species_names)
 			: species_names_(species_names)
 		{
-			if (NUM_SPECIES == 0)
-			{
+			if constexpr(NUM_SPECIES == 0)			{
 				reaction_model_ = "EmptyReactionModel";
 			}
 			else
@@ -214,8 +213,7 @@ namespace SPH
 	class DiffusionReaction : public BaseMaterialType
 	{
 	public:
-		const static int NumReactiveSpecies = NUM_REACTIVE_SPECIES;
-
+		static constexpr int NumReactiveSpecies = NUM_REACTIVE_SPECIES;
 	private:
 		UniquePtrKeepers<BaseDiffusion> diffusion_ptr_keeper_;
 		SharedPtrKeeper<BaseReactionModel<NUM_REACTIVE_SPECIES>> reaction_ptr_keeper_;

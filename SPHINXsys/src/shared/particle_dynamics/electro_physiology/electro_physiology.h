@@ -93,8 +93,9 @@ namespace SPH
 	};
 
 	// type trait for pass type template constructor
+	// This is a C++17 replacement to the C++20 https://en.cppreference.com/w/cpp/types/type_identity.
 	template <typename T>
-	struct encodeType
+	struct TypeIdentity
 	{
 	};
 	/**
@@ -106,7 +107,7 @@ namespace SPH
 	public:
 		template <class DiffusionType>
 		MonoFieldElectroPhysiology(SharedPtr<ElectroPhysiologyReaction> electro_physiology_reaction_ptr,
-								   encodeType<DiffusionType> empty_object,
+								   TypeIdentity<DiffusionType> empty_object,
 								   Real diff_cf, Real bias_diff_cf, Vecd bias_direction)
 			: DiffusionReaction<Solid, 3>({"Voltage", "GateVariable", "ActiveContractionStress"},
 										  electro_physiology_reaction_ptr)

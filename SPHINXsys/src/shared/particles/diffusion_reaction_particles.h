@@ -54,7 +54,7 @@ namespace SPH
 	public:
 		StdVec<StdLargeVec<Real>> all_species_; /**< array of diffusion/reaction scalars */
 		DiffusionReactionMaterialType &diffusion_reaction_material_;
-		const static int NumReactiveSpecies = DiffusionReactionMaterialType::NumReactiveSpecies;
+		static constexpr int NumReactiveSpecies = DiffusionReactionMaterialType::NumReactiveSpecies;
 		typedef DiffusionReactionMaterialType DiffusionReactionMaterial;
 
 		DiffusionReactionParticles(SPHBody &sph_body, DiffusionReactionMaterialType *diffusion_reaction_material)
