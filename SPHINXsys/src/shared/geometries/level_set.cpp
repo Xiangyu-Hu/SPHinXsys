@@ -17,12 +17,10 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	Real BaseLevelSet::computeVolumeFraction(Real cell_center_phi_, Real data_spacing, const Vecd position)
+	Real BaseLevelSet::CutCellVolumeFraction(Real phi, const Vecd &normal_direction,  Real data_spacing)
 	{
-		Vecd normal_direction = probeNormalDirection(position);
-		normal_direction /= normal_direction.norm() + TinyReal;
 		Real factor = 0.5 / normal_direction.cwiseAbs().maxCoeff();
-		return Heaviside(cell_center_phi_, factor * data_spacing);
+		return Heaviside(phi, factor * data_spacing);
 	}
 	//=================================================================================================//
 	LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size,

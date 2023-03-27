@@ -38,6 +38,8 @@ namespace SPH
 	/**
 	 * @class BaseLevelSet
 	 * @brief A abstract describes a level set field defined on a mesh.
+	 * Level set is a signed distance function to an interface where the zero level set locates.
+	 * Here, the region with negative level set is considered as the region enclose by the interface. 
 	 */
 	class BaseLevelSet : public BaseMeshField
 	{
@@ -58,8 +60,8 @@ namespace SPH
 		Shape &shape_; /**< the geometry is described by the level set. */
 		SPHAdaptation &sph_adaptation_;
 
-		/** for computing volume fraction occupied by a shape in a data cell. */
-		Real computeVolumeFraction(Real cell_center_phi_, Real data_spacing, const Vecd position);
+		/** a cut cell is a cut by the level set. */
+		Real CutCellVolumeFraction(Real phi, const Vecd &normal_direction,  Real data_spacing);
 	};
 
 	/**
