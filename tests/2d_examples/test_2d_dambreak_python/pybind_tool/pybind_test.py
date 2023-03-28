@@ -20,16 +20,24 @@ sys.path.append(path)
 import test_2d_dambreak_python as test_2d
 
 
-def cmaketest():
-    ctest = test_2d.dambreak_from_sph_cpp(0)
-    result = ctest.CmakeTest()
-    if result == 1:
-        print("success")
+def run_case():
+    parser = argparse.ArgumentParser()
+    # set case parameters
+    parser.add_argument("--restart_step", default=0, type=int)
+    parser.add_argument("--end_time", default=20, type=int)
+    case = parser.parse_args()
+    
+    # set project from class, which is set in cpp pybind module
+    project = test_2d.dambreak_from_sph_cpp(case.restart_step)
+    if project.CmakeTest() == 1:
+        project.RunCase(case.end_time)
     else:
         print("check path: ", path)
+        
+
 
 if __name__ == "__main__":
-    cmaketest()
+    run_case()
 
 
 
