@@ -32,4 +32,4 @@ else()
     add_test(NAME ${PROJECT_NAME} COMMAND ${PYTHON_EXECUTABLE} ${EXECUTABLE_OUTPUT_PATH}/bind/pybind_test.py)
 endif()
 set_tests_properties(${PROJECT_NAME} PROPERTIES WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH}/bind 
-    PASS_REGULAR_EXPRESSION "success")
+    PASS_REGULAR_EXPRESSION "The result of Pressure is correct based on the dynamic time warping regression test!")
