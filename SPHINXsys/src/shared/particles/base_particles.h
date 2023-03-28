@@ -82,7 +82,7 @@ namespace SPH
 	class BaseParticles
 	{
 	private:
-		UniquePtrKeepers<BaseDynamics<void>> derived_particle_data_; 	/**< Unique ptr for Base dynamics. */
+		UniquePtrKeepers<BaseDynamics<void>> derived_particle_data_; /**< Unique ptr for Base dynamics. */
 
 	public:
 		explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
@@ -107,18 +107,22 @@ namespace SPH
 		//		Generalized particle data for parameterized management
 		//----------------------------------------------------------------------
 		ParticleData all_particle_data_;
+		DataContainerAssemble<StdLargeVec> shared_variable_data_; // extra data for shared variables
 		ParticleDataMap all_variable_maps_;
 		StdVec<BaseDynamics<void> *> derived_variables_;
 		ParticleVariableList variables_to_write_;
 
 		/** register a variable defined in a class (can be non-particle class) */
 		template <typename VariableType>
-		void registerVariable(StdLargeVec<VariableType> &variable_addrs, const std::string &variable_name, 
+		void registerVariable(StdLargeVec<VariableType> &variable_addrs, const std::string &variable_name,
 							  VariableType initial_value = ZeroData<VariableType>::value);
 		/** register a variable from a initialization function */
 		template <typename VariableType, class InitializationFunction>
 		void registerVariable(StdLargeVec<VariableType> &variable_addrs, const std::string &variable_name,
 							  const InitializationFunction &initialization);
+		/** register a variable which may have been already defined by other and with default value only */
+		template <typename VariableType>
+		StdLargeVec<VariableType> *registerSharedVariable(const std::string &variable_name);
 		/** get a registered variable from particles by its name. return by pointer so that return nullptr if fail. */
 		template <typename VariableType>
 		StdLargeVec<VariableType> *getVariableByName(const std::string &variable_name);
@@ -202,13 +206,13 @@ namespace SPH
 		virtual Real ParticleMass(size_t index_i) { return mass_[index_i]; }
 
 	protected:
-		SPHBody &sph_body_; 							/**< The body in which the particles belongs to. */
-		std::string body_name_;							/**< Name of the body. */
-		XmlEngine restart_xml_engine_;					/**< Restart XML engine. */
-		XmlEngine reload_xml_engine_;					/**< Reload XML engine. */
-		ParticleVariableList variables_to_restart_;		/**< Particle variables for restart. */
-		ParticleVariableList variables_to_reload_;		/**< Particle variables for reload. */
-		void addAParticleEntry();						/**< Add a particle entry to the particle array. */
+		SPHBody &sph_body_;							/**< The body in which the particles belongs to. */
+		std::string body_name_;						/**< Name of the body. */
+		XmlEngine restart_xml_engine_;				/**< Restart XML engine. */
+		XmlEngine reload_xml_engine_;				/**< Reload XML engine. */
+		ParticleVariableList variables_to_restart_; /**< Particle variables for restart. */
+		ParticleVariableList variables_to_reload_;	/**< Particle variables for reload. */
+		void addAParticleEntry();					/**< Add a particle entry to the particle array. */
 		/** Write header to PLT file. */
 		virtual void writePltFileHeader(std::ofstream &output_file);
 		/** Write particle data to PLT file. */
@@ -238,7 +242,7 @@ namespace SPH
 	};
 	/**
 	 * @struct WriteAParticleVariableToXml
-	 * @brief Define a operator for writing particle variable to XML format. 
+	 * @brief Define a operator for writing particle variable to XML format.
 	 */
 	struct WriteAParticleVariableToXml
 	{
@@ -252,7 +256,7 @@ namespace SPH
 	};
 	/**
 	 * @struct ReadAParticleVariableFromXml
-	 * @brief Define a operator for reading particle variable to XML format. 
+	 * @brief Define a operator for reading particle variable to XML format.
 	 */
 	struct ReadAParticleVariableFromXml
 	{

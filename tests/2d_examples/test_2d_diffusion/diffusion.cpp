@@ -19,7 +19,6 @@ Real diffusion_coff = 1.0e-4;
 Real bias_coff = 0.0;
 Real alpha = Pi / 6.0;
 Vec2d bias_direction(cos(alpha), sin(alpha));
-std::array<std::string, 1> species_name_list{"Phi"};
 //----------------------------------------------------------------------
 //	Geometric shapes used in the case.
 //----------------------------------------------------------------------
@@ -43,25 +42,26 @@ public:
 class DiffusionMaterial : public DiffusionReaction<Solid>
 {
 public:
-	DiffusionMaterial() : DiffusionReaction<Solid>(species_name_list)
+	DiffusionMaterial() : DiffusionReaction<Solid>({"Phi"}, SharedPtr<NoReaction>())
 	{
 		initializeAnDiffusion<DirectionalDiffusion>("Phi", "Phi", diffusion_coff, bias_coff, bias_direction);
 	};
 };
+using DiffusionParticles = DiffusionReactionParticles<SolidParticles, DiffusionMaterial>;
 //----------------------------------------------------------------------
 //	Application dependent initial condition.
 //----------------------------------------------------------------------
 class DiffusionInitialCondition
-	: public DiffusionReactionInitialCondition<SolidParticles, Solid>
+	: public DiffusionReactionInitialCondition<DiffusionParticles>
 {
 protected:
 	size_t phi_;
 
 public:
 	explicit DiffusionInitialCondition(SPHBody &sph_body)
-		: DiffusionReactionInitialCondition<SolidParticles, Solid>(sph_body)
+		: DiffusionReactionInitialCondition<DiffusionParticles>(sph_body)
 	{
-		phi_ = particles_->diffusion_reaction_material_.SpeciesIndexMap()["Phi"];
+		phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
 	};
 
 	void update(size_t index_i, Real dt)
@@ -69,11 +69,11 @@ public:
 
 		if (pos_[index_i][0] >= 0.45 && pos_[index_i][0] <= 0.55)
 		{
-			species_n_[phi_][index_i] = 1.0;
+			all_species_[phi_][index_i] = 1.0;
 		}
 		if (pos_[index_i][0] >= 1.0)
 		{
-			species_n_[phi_][index_i] = exp(-2500.0 * ((pos_[index_i][0] - 1.5) * (pos_[index_i][0] - 1.5)));
+			all_species_[phi_][index_i] = exp(-2500.0 * ((pos_[index_i][0] - 1.5) * (pos_[index_i][0] - 1.5)));
 		}
 	};
 };
@@ -82,7 +82,7 @@ public:
 //----------------------------------------------------------------------
 class DiffusionBodyRelaxation
 	: public RelaxationOfAllDiffusionSpeciesRK2<
-		  RelaxationOfAllDiffusionSpeciesInner<SolidParticles, Solid>>
+		  RelaxationOfAllDiffusionSpeciesInner<DiffusionParticles>>
 {
 public:
 	explicit DiffusionBodyRelaxation(InnerRelation &inner_relation)
@@ -123,7 +123,7 @@ int main()
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	SolidBody diffusion_body(sph_system, makeShared<DiffusionBlock>("DiffusionBlock"));
-	diffusion_body.defineParticlesAndMaterial<DiffusionReactionParticles<SolidParticles, Solid>, DiffusionMaterial>();
+	diffusion_body.defineParticlesAndMaterial<DiffusionParticles, DiffusionMaterial>();
 	diffusion_body.generateParticles<ParticleGeneratorLattice>();
 	//----------------------------------------------------------------------
 	//	Particle and body creation of fluid observers.
@@ -144,7 +144,7 @@ int main()
 	DiffusionBodyRelaxation diffusion_relaxation(diffusion_body_inner_relation);
 	SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> correct_configuration(diffusion_body_inner_relation);
-	GetDiffusionTimeStepSize<SolidParticles, Solid> get_time_step_size(diffusion_body);
+	GetDiffusionTimeStepSize<DiffusionParticles> get_time_step_size(diffusion_body);
 	PeriodicConditionUsingCellLinkedList periodic_condition_y(diffusion_body, diffusion_body.getBodyShapeBounds(), yAxis);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
