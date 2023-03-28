@@ -415,13 +415,12 @@ namespace SPH
 					if (phi_neighbor > -data_spacing_)
 					{
 						Vecd phi_gradient = DataValueFromGlobalIndex(phi_gradient_, neighbor_index);
-						Vecd normal_direction = phi_gradient / (phi_gradient.norm() + TinyReal);
 						Vecd integral_position = global_mesh_.GridPositionFromIndex(neighbor_index);
 						Vecd displacement = position - integral_position;
 						Real distance = displacement.norm();
 						if (distance < cutoff_radius)
 							integral += kernel_.W(global_h_ratio_, distance, displacement) *
-										CutCellVolumeFraction(phi_neighbor, normal_direction, data_spacing_);
+										CutCellVolumeFraction(phi_neighbor, phi_gradient, data_spacing_);
 					}
 				}
 		}
@@ -431,8 +430,7 @@ namespace SPH
 	Vecd LevelSet::computeKernelGradientIntegral(const Vecd &position)
 	{
 		Real phi = probeSignedDistance(position);
-		Real corrected_global_h_ratio = global_h_ratio_ * 1.01;
-		Real cutoff_radius = kernel_.CutOffRadius(corrected_global_h_ratio);
+		Real cutoff_radius = kernel_.CutOffRadius(global_h_ratio_);
 		Real threshold = cutoff_radius + data_spacing_;
 
 		Vecd integral = Vecd::Zero();
@@ -447,13 +445,12 @@ namespace SPH
 					if (phi_neighbor > -data_spacing_)
 					{
 						Vecd phi_gradient = DataValueFromGlobalIndex(phi_gradient_, neighbor_index);
-						Vecd normal_direction = phi_gradient / (phi_gradient.norm() + TinyReal);
 						Vecd integral_position = global_mesh_.GridPositionFromIndex(neighbor_index);
 						Vecd displacement = position - integral_position;
 						Real distance = displacement.norm();
 						if (distance < cutoff_radius)
-							integral += kernel_.dW(corrected_global_h_ratio, distance, displacement) *
-										CutCellVolumeFraction(phi_neighbor, normal_direction, data_spacing_) *
+							integral += kernel_.dW(global_h_ratio_, distance, displacement) *
+										CutCellVolumeFraction(phi_neighbor, phi_gradient, data_spacing_) *
 										displacement / (distance + TinyReal);
 					}
 				}

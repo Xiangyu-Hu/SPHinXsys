@@ -61,7 +61,10 @@ namespace SPH
 		SPHAdaptation &sph_adaptation_;
 
 		/** a cut cell is a cut by the level set. */
-		Real CutCellVolumeFraction(Real phi, const Vecd &normal_direction,  Real data_spacing);
+		/** "Multi-scale modeling of compressible multi-fluid flows with conservative interface method." 
+		 * Hu, X. Y., et al., Proceedings of the Summer Program. Vol. 301. Stanford, CA, USA: 
+		 * Center for Turbulence Research, Stanford University, 2010.*/
+		Real CutCellVolumeFraction(Real phi, const Vecd &phi_gradient,  Real data_spacing);
 	};
 
 	/**
