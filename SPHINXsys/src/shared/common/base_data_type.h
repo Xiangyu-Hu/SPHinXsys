@@ -47,8 +47,6 @@
 #include "SimTKcommon.h"
 #include "SimTKmath.h"
 
-#include "scalar_functions.h"
-
 namespace SPH
 {
 	/**

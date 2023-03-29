@@ -28,7 +28,6 @@
 #ifndef BASE_DATA_PACKAGE_H
 #define BASE_DATA_PACKAGE_H
 
-#include "scalar_functions.h"
 #include "data_type.h"
 #include "array_allocation.h"
 #include "large_data_containers.h"

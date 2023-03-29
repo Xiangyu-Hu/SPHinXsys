@@ -48,7 +48,7 @@ int main()
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	RealBody input_body(system, makeShared<InputBody>("SPHInXsysLogo"));
-	input_body.defineBodyLevelSetShape();
+	input_body.defineBodyLevelSetShape()->writeLevelSet(io_environment);
 	input_body.defineParticlesAndMaterial();
 	input_body.generateParticles<ParticleGeneratorLattice>();
 	//----------------------------------------------------------------------

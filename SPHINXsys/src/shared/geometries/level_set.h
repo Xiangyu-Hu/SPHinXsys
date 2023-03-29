@@ -38,6 +38,8 @@ namespace SPH
 	/**
 	 * @class BaseLevelSet
 	 * @brief A abstract describes a level set field defined on a mesh.
+	 * Level set is a signed distance function to an interface where the zero level set locates.
+	 * Here, the region with negative level set is considered as the region enclose by the interface. 
 	 */
 	class BaseLevelSet : public BaseMeshField
 	{
@@ -58,8 +60,11 @@ namespace SPH
 		Shape &shape_; /**< the geometry is described by the level set. */
 		SPHAdaptation &sph_adaptation_;
 
-		/** for computing volume fraction occupied by a shape.*/
-		Real computeHeaviside(Real phi, Real half_width);
+		/** a cut cell is a cut by the level set. */
+		/** "Multi-scale modeling of compressible multi-fluid flows with conservative interface method." 
+		 * Hu, X. Y., et al., Proceedings of the Summer Program. Vol. 301. Stanford, CA, USA: 
+		 * Center for Turbulence Research, Stanford University, 2010.*/
+		Real CutCellVolumeFraction(Real phi, const Vecd &phi_gradient,  Real data_spacing);
 	};
 
 	/**
