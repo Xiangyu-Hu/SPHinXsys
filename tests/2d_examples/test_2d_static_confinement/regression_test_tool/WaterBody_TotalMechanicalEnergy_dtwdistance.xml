@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <dtw_distance>
+<<<<<<< HEAD
     <DTWDistance TotalMechanicalEnergy_0="0.0619131055010545" />
+=======
+    <DTWDistance TotalMechanicalEnergy_0="0.1" />
+>>>>>>> static confinement new data set
 </dtw_distance>
