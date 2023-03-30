@@ -61,7 +61,11 @@ jobs:
             boost-geometry \
             simbody \
             gtest \
-            xsimd
+ 
+      - name: Initialize submodules
+        run: |
+          git submodule init 3rd_party/xsimd
+          git submodule update --remote 3rd_party/xsimd
 
       - name: Generate buildsystem
         run: |
@@ -72,7 +76,7 @@ jobs:
             -D SPHINXSYS_CI=ON \
             -S ${{github.workspace}} \
             -B ${{github.workspace}}/build
-            
+
       - name: Build
         run: cmake --build build --config Release --verbose
 
@@ -148,7 +152,11 @@ jobs:
             boost-geometry `
             simbody `
             gtest `
-            xsimd
+ 
+       - name: Initialize submodules
+        run: |
+          git submodule init 3rd_party/xsimd
+          git submodule update --remote 3rd_party/xsimd
 
       - uses: ilammy/msvc-dev-cmd@v1
 
@@ -241,8 +249,12 @@ jobs:
             boost-program-options \
             boost-geometry \
             gtest \
-            simbody \
-            xsimd
+            simbody
+
+      - name: Initialize submodules
+        run: |
+          git submodule init 3rd_party/xsimd
+          git submodule update --remote 3rd_party/xsimd
 
       - name: Generate buildsystem
         run: |
