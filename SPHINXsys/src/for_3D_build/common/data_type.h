@@ -33,8 +33,7 @@
 #include "vector_functions.h"
 
 namespace SPH {
-	using Veci = Vec3i;
-	using Vecu = Vec3u;
+	using Arrayi = Array3i;
 	using Vecd = Vec3d;
 	using Matd = Mat3d;
 	using AlignedBox = AlignedBox3d;

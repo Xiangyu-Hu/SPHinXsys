@@ -3,11 +3,11 @@
 namespace SPH
 {
 	//=================================================================================================//
-	BaseMesh::BaseMesh(Vecu number_of_grid_points)
+	BaseMesh::BaseMesh(Arrayi number_of_grid_points)
 		: number_of_grid_points_{number_of_grid_points}
 	{};
 	//=================================================================================================//
-	BaseMesh::BaseMesh(Vecd mesh_lower_bound, Real grid_spacing, Vecu number_of_grid_points)
+	BaseMesh::BaseMesh(Vecd mesh_lower_bound, Real grid_spacing, Arrayi number_of_grid_points)
 		: mesh_lower_bound_{mesh_lower_bound}
 		, grid_spacing_{grid_spacing}
 		, number_of_grid_points_{number_of_grid_points}
@@ -27,10 +27,10 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	Vecu BaseMesh::CellIndexFromPosition(const Vecd &position)
+	Arrayi BaseMesh::CellIndexFromPosition(const Vecd &position)
 	{
 		Vecd rltpos = position - mesh_lower_bound_;
-		Vecu cell_index = Vecu::Zero();
+		Arrayi cell_index = Arrayi::Zero();
 		for (int n = 0; n < rltpos.size(); n++)
 		{
 			cell_index[n] =
@@ -39,7 +39,7 @@ namespace SPH
 		return cell_index;
 	}
 	//=================================================================================================//
-	Vecd BaseMesh::CellPositionFromIndex(const Vecu &cell_index)
+	Vecd BaseMesh::CellPositionFromIndex(const Arrayi &cell_index)
 	{
 		Vecd cell_position;
 		for (int n = 0; n < cell_position.size(); n++)
@@ -49,7 +49,7 @@ namespace SPH
 		return cell_position;
 	}
 	//=================================================================================================//
-	Vecd BaseMesh::GridPositionFromIndex(const Vecu &grid_index)
+	Vecd BaseMesh::GridPositionFromIndex(const Arrayi &grid_index)
 	{
 		Vecd grid_position;
 		for (int n = 0; n < grid_position.size(); n++)
@@ -76,7 +76,7 @@ namespace SPH
 		, buffer_width_{buffer_width}
 	{}
 	//=================================================================================================//
-	Mesh::Mesh(Vecd mesh_lower_bound, Vecu number_of_cells, Real grid_spacing)
+	Mesh::Mesh(Vecd mesh_lower_bound, Arrayi number_of_cells, Real grid_spacing)
 		: BaseMesh()
 		, number_of_cells_{number_of_cells}
 	{

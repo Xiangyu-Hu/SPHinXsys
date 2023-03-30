@@ -24,19 +24,19 @@ namespace SPH
     //=================================================================================================//
     template <int lower0, int upper0,
               int lower1, int upper1, typename CheckOnEach>
-    inline Vec2i mesh_find_if2d(const CheckOnEach &function)
+    inline Array2i mesh_find_if2d(const CheckOnEach &function)
     {
         for (int l = lower0; l != upper0; ++l)
             for (int m = lower1; m != upper1; ++m)
             {
                 if (function(l, m))
-                    return Vec2i(l, m);
+                    return Array2i(l, m);
             }
-        return Vec2i(upper0, upper1);
+        return Array2i(upper0, upper1);
     }
     //=================================================================================================//
     template <typename FunctionOnEach>
-    void mesh_for_each(const Vec2i &lower, const Vec2i &upper, const FunctionOnEach &function)
+    void mesh_for_each(const Array2i &lower, const Array2i &upper, const FunctionOnEach &function)
     {
         for (int l = lower[0]; l != upper[0]; ++l)
             for (int m = lower[1]; m != upper[1]; ++m)
@@ -46,13 +46,13 @@ namespace SPH
     }
     //=================================================================================================//
     template <typename FunctionOnEach>
-    Vec2i mesh_find_if(const Vec2i &lower, const Vec2i &upper, const FunctionOnEach &function)
+    Array2i mesh_find_if(const Array2i &lower, const Array2i &upper, const FunctionOnEach &function)
     {
         for (int l = lower[0]; l != upper[0]; ++l)
             for (int m = lower[1]; m != upper[1]; ++m)
             {
                 if (function(l, m))
-                    return Vec2i(l, m);
+                    return Array2i(l, m);
             }
         return upper;
     }

@@ -50,15 +50,15 @@ namespace SPH
 					 [&](size_t index_i)
 					 {
 						 int search_depth = get_search_depth(index_i);
-						 Vecu target_cell_index = CellIndexFromPosition(pos[index_i]);
+						 Arrayi target_cell_index = CellIndexFromPosition(pos[index_i]);
 						 int i = (int)target_cell_index[0];
 						 int j = (int)target_cell_index[1];
 						 int k = (int)target_cell_index[2];
 
 						 Neighborhood &neighborhood = particle_configuration[index_i];
 						 mesh_for_each(
-							 Vec3i(SMAX(i - search_depth, 0), SMAX(j - search_depth, 0), SMAX(k - search_depth, 0)),
-							 Vec3i(SMIN(i + search_depth + 1, (int)number_of_cells_[0]),
+							 Array3i(SMAX(i - search_depth, 0), SMAX(j - search_depth, 0), SMAX(k - search_depth, 0)),
+							 Array3i(SMIN(i + search_depth + 1, (int)number_of_cells_[0]),
 								   SMIN(j + search_depth + 1, (int)number_of_cells_[1]),
 								   SMIN(k + search_depth + 1, (int)number_of_cells_[2])),
 							 [&](int l, int m, int n)

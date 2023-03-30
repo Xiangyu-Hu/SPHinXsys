@@ -58,11 +58,11 @@ namespace SPH
 	protected:
 		Vecd mesh_lower_bound_{Vecd::Zero()};		/**< mesh lower bound as reference coordinate */
 		Real grid_spacing_{1.0};			 			/**< grid_spacing */
-		Vecu number_of_grid_points_{Vecu::Zero()}; 	/**< number of grid points by dimension */
+		Arrayi number_of_grid_points_{Arrayi::Zero()}; 	/**< number of grid points by dimension */
 	public:
 		BaseMesh() = default;
-		explicit BaseMesh(Vecu number_of_grid_points);
-		BaseMesh(Vecd mesh_lower_bound, Real grid_spacing, Vecu number_of_grid_points);
+		explicit BaseMesh(Arrayi number_of_grid_points);
+		BaseMesh(Vecd mesh_lower_bound, Real grid_spacing, Arrayi number_of_grid_points);
 		BaseMesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width);
 		virtual ~BaseMesh(){};
 
@@ -71,23 +71,23 @@ namespace SPH
 		/** Return the grid spacing. */
 		Real GridSpacing() { return grid_spacing_; };
 		/** Return the number of mesh in each direction, i.e., x-, y- and z-axis. */
-		Vecu NumberOfGridPoints() { return number_of_grid_points_; };
+		Arrayi NumberOfGridPoints() { return number_of_grid_points_; };
 		/** Given the cell number, return the mesh number. */
-		Vecu NumberOfGridPointsFromNumberOfCells(const Vecu &number_of_cells) { return number_of_cells + Vecu::Ones(); };
+		Arrayi NumberOfGridPointsFromNumberOfCells(const Arrayi &number_of_cells) { return number_of_cells + Arrayi::Ones(); };
 		/** Given the grid point number, return the cell number. */
-		Vecu NumberOfCellsFromNumberOfGridPoints(const Vecu &number_of_grid_points) { return number_of_grid_points - Vecu::Ones(); };
+		Arrayi NumberOfCellsFromNumberOfGridPoints(const Arrayi &number_of_grid_points) { return number_of_grid_points - Arrayi::Ones(); };
 		/** Given the cell position, return the grid position. */
 		Vecd GridPositionFromCellPosition(const Vecd &cell_position) { return cell_position - 0.5 * grid_spacing_ * Vecd::Ones(); };
 		/** Given the position, return the cell index. */
-		Vecu CellIndexFromPosition(const Vecd &position);
+		Arrayi CellIndexFromPosition(const Vecd &position);
 		/** Given the cell index, return the cell position. */
-		Vecd CellPositionFromIndex(const Vecu &cell_index);
+		Vecd CellPositionFromIndex(const Arrayi &cell_index);
 		/** Given the index, return the grid position. */
-		Vecd GridPositionFromIndex(const Vecu &grid_index);
+		Vecd GridPositionFromIndex(const Arrayi &grid_index);
 		/** Transfer 1D int to mesh index.  */
-		Vecu transfer1DtoMeshIndex(const Vecu &number_of_mesh_indexes, size_t i);
+		Arrayi transfer1DtoMeshIndex(const Arrayi &number_of_mesh_indexes, size_t i);
 		/** Transfer mesh index to 1D int.  */
-		size_t transferMeshIndexTo1D(const Vecu &number_of_mesh_indexes, const Vecu &mesh_index);
+		size_t transferMeshIndexTo1D(const Arrayi &number_of_mesh_indexes, const Arrayi &mesh_index);
 		/** converts mesh index into a Morton order.
 		 * Interleave a 10 bit number in 32 bits, fill one bit and leave the other 2 as zeros
 		 * https://stackoverflow.com/questions/18529057/
@@ -95,7 +95,7 @@ namespace SPH
 		 */
 		size_t MortonCode(const size_t &i);
 		/** Converts mesh index into a Morton order. */
-		size_t transferMeshIndexToMortonOrder(const Vecu &mesh_index);
+		size_t transferMeshIndexToMortonOrder(const Arrayi &mesh_index);
 	};
 
 	/**
@@ -108,18 +108,18 @@ namespace SPH
 	class Mesh : public BaseMesh
 	{
 	protected:
-		Vecu number_of_cells_{Vecu::Zero()}; 	/**< number of cells by dimension */
+		Arrayi number_of_cells_{Arrayi::Zero()}; 	/**< number of cells by dimension */
 		size_t buffer_width_{0};  				/**< buffer width to avoid bound check.*/
 
 		/** Copy mesh properties to another mesh. */
 		void copyMeshProperties(Mesh *another_mesh);
 	public:
 		Mesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width);
-		Mesh(Vecd mesh_lower_bound, Vecu number_of_cells, Real grid_spacing);
+		Mesh(Vecd mesh_lower_bound, Arrayi number_of_cells, Real grid_spacing);
 		virtual ~Mesh(){};
 
 		/** Return number of cell in each direction, i.e., x-, y- and z-axis.*/
-		Vecu NumberOfCells() { return number_of_cells_; };
+		Arrayi NumberOfCells() { return number_of_cells_; };
 		/** Return the buffer size. */
 		size_t MeshBufferSize() { return buffer_width_; };
 		/** Return the spacing for storing data. */

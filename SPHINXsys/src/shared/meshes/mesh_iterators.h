@@ -49,9 +49,9 @@ namespace SPH
     /** iteration with boolean return function. 2D case. */
     template <int lower0, int upper0,
               int lower1, int upper1, typename CheckOnEach>
-    inline Vec2i mesh_find_if2d(const CheckOnEach &function);
+    inline Array2i mesh_find_if2d(const CheckOnEach &function);
     template <int lower, int upper, typename CheckOnEach>
-    inline Vec2i mesh_find_if2d(const CheckOnEach &function)
+    inline Array2i mesh_find_if2d(const CheckOnEach &function)
     {
         return mesh_find_if2d<lower, upper, lower, upper, CheckOnEach>(function);
     };
@@ -59,7 +59,7 @@ namespace SPH
     inline bool mesh_any_of2d(const CheckOnEach &function)
     {
         return mesh_find_if2d<lower, upper, lower, upper, CheckOnEach>(
-                   function) != Vec2i(upper, upper);
+                   function) != Array2i(upper, upper);
     };
 
     /** iteration with void (non_value_returning) function. 3D case. */
@@ -77,9 +77,9 @@ namespace SPH
     template <int lower0, int upper0,
               int lower1, int upper1,
               int lower2, int upper2, typename CheckOnEach>
-    inline Vec3i mesh_find_if3d(const CheckOnEach &function);
+    inline Array3i mesh_find_if3d(const CheckOnEach &function);
     template <int lower, int upper, typename CheckOnEach>
-    inline Vec3i mesh_find_if3d(const CheckOnEach &function)
+    inline Array3i mesh_find_if3d(const CheckOnEach &function)
     {
         return mesh_find_if3d<lower, upper, lower, upper, lower, upper, CheckOnEach>(function);
     };
@@ -87,20 +87,20 @@ namespace SPH
     inline bool mesh_any_of3d(const CheckOnEach &function)
     {
         return mesh_find_if3d<lower, upper, lower, upper, lower, upper, CheckOnEach>(
-                   function) != Vec3i(upper, upper, upper);
+                   function) != Array3i(upper, upper, upper);
     };
 
     template <typename FunctionOnEach>
-    void mesh_for_each(const Veci &lower, const Veci &upper, const FunctionOnEach &function);
+    void mesh_for_each(const Arrayi &lower, const Arrayi &upper, const FunctionOnEach &function);
     template <typename FunctionOnEach>
-    Veci mesh_find_if(const Veci &lower, const Veci &upper, const FunctionOnEach &function);
+    Arrayi mesh_find_if(const Arrayi &lower, const Arrayi &upper, const FunctionOnEach &function);
     template <typename FunctionOnEach>
-    bool mesh_any_of(const Veci &lower, const Veci &upper, const FunctionOnEach &function)
+    bool mesh_any_of(const Arrayi &lower, const Arrayi &upper, const FunctionOnEach &function)
     {
-        return mesh_find_if(lower, upper, function) != upper;
+        return mesh_find_if(lower, upper, function).matrix() != upper.matrix();
     };
 
-    using MeshRange = std::pair<Vecu, Vecu>;
+    using MeshRange = std::pair<Arrayi, Arrayi>;
     /** Iterator on the mesh by looping index. sequential computing. */
     template <typename LocalFunction, typename... Args>
     void mesh_for(const MeshRange &mesh_range, const LocalFunction &local_function, Args &&...args);

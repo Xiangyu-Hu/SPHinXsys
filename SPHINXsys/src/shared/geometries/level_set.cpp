@@ -50,7 +50,7 @@ namespace SPH
 			{ initializeDataForSingularPackage(data_pkg, far_field_distance); });
 	}
 	//=================================================================================================//
-	void LevelSet::initializeAddressesInACell(const Vecu &cell_index)
+	void LevelSet::initializeAddressesInACell(const Arrayi &cell_index)
 	{
 		initializePackageAddressesInACell(cell_index);
 	}
@@ -144,7 +144,7 @@ namespace SPH
 	bool LevelSet::probeIsWithinMeshBound(const Vecd &position)
 	{
 		bool is_bounded = true;
-		Vecu cell_pos = CellIndexFromPosition(position);
+		Arrayi cell_pos = CellIndexFromPosition(position);
 		for (int i = 0; i != position.size(); ++i)
 		{
 			if (cell_pos[i] < 2)
@@ -155,7 +155,7 @@ namespace SPH
 		return is_bounded;
 	}
 	//=================================================================================================//
-	void LevelSet::initializeDataInACell(const Vecu &cell_index)
+	void LevelSet::initializeDataInACell(const Arrayi &cell_index)
 	{
 		Vecd cell_position = CellPositionFromIndex(cell_index);
 		Real signed_distance = shape_.findSignedDistance(cell_position);
@@ -181,7 +181,7 @@ namespace SPH
 		}
 	}
 	//=============================================================================================//
-	void LevelSet::tagACellIsInnerPackage(const Vecu &cell_index)
+	void LevelSet::tagACellIsInnerPackage(const Arrayi &cell_index)
 	{
 		if (isInnerPackage(cell_index))
 		{
@@ -224,7 +224,7 @@ namespace SPH
 		return df;
 	}
 	//=============================================================================================//
-	void RefinedLevelSet::initializeDataInACellFromCoarse(const Vecu &cell_index)
+	void RefinedLevelSet::initializeDataInACellFromCoarse(const Arrayi &cell_index)
 	{
 		Vecd cell_position = CellPositionFromIndex(cell_index);
 		LevelSetDataPackage *singular_data_pkg = coarse_mesh_.probeSignedDistance(cell_position) < 0.0
