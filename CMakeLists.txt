@@ -77,6 +77,11 @@ if(TARGET Boost::program_options)
     target_link_libraries(sphinxsys_core INTERFACE Boost::program_options)
 endif()
 
+### 3rd party header only libraries
+set(3RDPARTY_DIR ${PROJECT_SOURCE_DIR}/3rd_party)
+### Xsimd
+target_include_directories(sphinxsys_core INTERFACE ${3RDPARTY_DIR}/xsimd/include) 
+
 #------ Setup the concrete libraries
 add_subdirectory(SPHINXsys)
 add_subdirectory(modules)
