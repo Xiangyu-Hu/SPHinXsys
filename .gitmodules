@@ -1,8 +1,3 @@
 [submodule "3rd_party/wasmtbb"]
 	path = 3rd_party/wasmtbb
 	url = https://github.com/hpcwasm/wasmtbb.git
-
-[submodule "3rd_party/xsimd"]
-	path = 3rd_party/xsimd
-	url = https://github.com/xtensor-stack/xsimd
-
