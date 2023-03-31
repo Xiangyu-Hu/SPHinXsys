@@ -67,15 +67,9 @@ namespace SPH
 	//=============================================================================================//
 	bool LevelSet::isInnerPackage(const Arrayi &cell_index)
 	{
-		int i = (int)cell_index[0];
-		int j = (int)cell_index[1];
-		int k = (int)cell_index[2];
-
 		return mesh_any_of(
-			Array3i(SMAX(i - 1, 0), SMAX(j - 1, 0), SMAX(k - 1, 0)),
-			Array3i(SMIN(i + 2, (int)all_cells_[0]),
-				  SMIN(j + 2, (int)all_cells_[1]),
-				  SMIN(k + 2, (int)all_cells_[2])),
+			Array3i::Zero().max(cell_index - Array3i::Ones()),
+			all_cells_.min(cell_index + 2 * Array3i::Ones()),
 			[&](int l, int m, int n)
 			{
 				return data_pkg_addrs_[l][m][n]->isCorePackage();
@@ -409,23 +403,22 @@ namespace SPH
 		if (fabs(phi) < threshold)
 		{
 			Arrayi global_index_ = global_mesh_.CellIndexFromPosition(position);
-			for (int i = -3; i != 4; ++i)
-				for (int j = -3; j != 4; ++j)
-					for (int k = -3; k != 4; ++k)
+			mesh_for_each3d<-3, 4>(
+				[&](int i, int j, int k)
+				{
+					Arrayi neighbor_index = Arrayi(global_index_[0] + i, global_index_[1] + j, global_index_[2] + k);
+					Real phi_neighbor = DataValueFromGlobalIndex(phi_, neighbor_index);
+					if (phi_neighbor > -data_spacing_)
 					{
-						Arrayi neighbor_index = Arrayi(global_index_[0] + i, global_index_[1] + j, global_index_[2] + k);
-						Real phi_neighbor = DataValueFromGlobalIndex(phi_, neighbor_index);
-						if (phi_neighbor > -data_spacing_)
-						{
-							Vecd phi_gradient = DataValueFromGlobalIndex(phi_gradient_, neighbor_index);
-							Vecd integral_position = global_mesh_.GridPositionFromIndex(neighbor_index);
-							Vecd displacement = position - integral_position;
-							Real distance = displacement.norm();
-							if (distance < cutoff_radius)
-								integral += kernel_.W(global_h_ratio_, distance, displacement) *
-											CutCellVolumeFraction(phi_neighbor, phi_gradient, data_spacing_);
-						}
+						Vecd phi_gradient = DataValueFromGlobalIndex(phi_gradient_, neighbor_index);
+						Vecd integral_position = global_mesh_.GridPositionFromIndex(neighbor_index);
+						Vecd displacement = position - integral_position;
+						Real distance = displacement.norm();
+						if (distance < cutoff_radius)
+							integral += kernel_.W(global_h_ratio_, distance, displacement) *
+										CutCellVolumeFraction(phi_neighbor, phi_gradient, data_spacing_);
 					}
+				});
 		}
 		return phi > threshold ? 1.0 : integral * data_spacing_ * data_spacing_ * data_spacing_;
 	}
@@ -440,24 +433,23 @@ namespace SPH
 		if (fabs(phi) < threshold)
 		{
 			Arrayi global_index_ = global_mesh_.CellIndexFromPosition(position);
-			for (int i = -3; i != 4; ++i)
-				for (int j = -3; j != 4; ++j)
-					for (int k = -3; k != 4; ++k)
+			mesh_for_each3d<-3, 4>(
+				[&](int i, int j, int k)
+				{
+					Arrayi neighbor_index = Arrayi(global_index_[0] + i, global_index_[1] + j, global_index_[2] + k);
+					Real phi_neighbor = DataValueFromGlobalIndex(phi_, neighbor_index);
+					if (phi_neighbor > -data_spacing_)
 					{
-						Arrayi neighbor_index = Arrayi(global_index_[0] + i, global_index_[1] + j, global_index_[2] + k);
-						Real phi_neighbor = DataValueFromGlobalIndex(phi_, neighbor_index);
-						if (phi_neighbor > -data_spacing_)
-						{
-							Vecd phi_gradient = DataValueFromGlobalIndex(phi_gradient_, neighbor_index);
-							Vecd integral_position = global_mesh_.GridPositionFromIndex(neighbor_index);
-							Vecd displacement = position - integral_position;
-							Real distance = displacement.norm();
-							if (distance < cutoff_radius)
-								integral += kernel_.dW(global_h_ratio_, distance, displacement) *
-											CutCellVolumeFraction(phi_neighbor, phi_gradient, data_spacing_) *
-											displacement / (distance + TinyReal);
-						}
+						Vecd phi_gradient = DataValueFromGlobalIndex(phi_gradient_, neighbor_index);
+						Vecd integral_position = global_mesh_.GridPositionFromIndex(neighbor_index);
+						Vecd displacement = position - integral_position;
+						Real distance = displacement.norm();
+						if (distance < cutoff_radius)
+							integral += kernel_.dW(global_h_ratio_, distance, displacement) *
+										CutCellVolumeFraction(phi_neighbor, phi_gradient, data_spacing_) *
+										displacement / (distance + TinyReal);
 					}
+				});
 		}
 		return integral * data_spacing_ * data_spacing_ * data_spacing_;
 	}

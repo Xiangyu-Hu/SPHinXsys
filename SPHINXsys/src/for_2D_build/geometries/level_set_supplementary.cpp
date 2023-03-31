@@ -68,12 +68,9 @@ namespace SPH
 	//=============================================================================================//
 	bool LevelSet::isInnerPackage(const Arrayi &cell_index)
 	{
-		int i = (int)cell_index[0];
-		int j = (int)cell_index[1];
-
 		return mesh_any_of(
-			Array2i(SMAX(i - 1, 0), SMAX(j - 1, 0)),
-			Array2i(SMIN(i + 2, (int)all_cells_[0]), SMIN(j + 2, (int)all_cells_[1])),
+			Array2i::Zero().max(cell_index - Array2i::Ones()),
+			all_cells_.min(cell_index + 2 * Array2i::Ones()),
 			[&](int l, int m)
 			{
 				return data_pkg_addrs_[l][m]->isCorePackage();
@@ -407,8 +404,8 @@ namespace SPH
 		if (fabs(phi) < threshold)
 		{
 			Arrayi global_index_ = global_mesh_.CellIndexFromPosition(position);
-			for (int i = -3; i != 4; ++i)
-				for (int j = -3; j != 4; ++j)
+			mesh_for_each2d<-3, 4>(
+				[&](int i, int j)
 				{
 					Arrayi neighbor_index = Arrayi(global_index_[0] + i, global_index_[1] + j);
 					Real phi_neighbor = DataValueFromGlobalIndex(phi_, neighbor_index);
@@ -422,7 +419,7 @@ namespace SPH
 							integral += kernel_.W(global_h_ratio_, distance, displacement) *
 										CutCellVolumeFraction(phi_neighbor, phi_gradient, data_spacing_);
 					}
-				}
+				});
 		}
 		return phi > threshold ? 1.0 : integral * data_spacing_ * data_spacing_;
 	}
@@ -437,8 +434,8 @@ namespace SPH
 		if (fabs(phi) < threshold)
 		{
 			Arrayi global_index_ = global_mesh_.CellIndexFromPosition(position);
-			for (int i = -3; i != 4; ++i)
-				for (int j = -3; j != 4; ++j)
+			mesh_for_each2d<-3, 4>(
+				[&](int i, int j)
 				{
 					Arrayi neighbor_index = Arrayi(global_index_[0] + i, global_index_[1] + j);
 					Real phi_neighbor = DataValueFromGlobalIndex(phi_, neighbor_index);
@@ -453,7 +450,7 @@ namespace SPH
 										CutCellVolumeFraction(phi_neighbor, phi_gradient, data_spacing_) *
 										displacement / (distance + TinyReal);
 					}
-				}
+				});
 		}
 
 		return integral * data_spacing_ * data_spacing_;
