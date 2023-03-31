@@ -72,7 +72,7 @@ namespace SPH
     {
         parallel_for(
             IndexRange2d((mesh_range.first)[0], (mesh_range.second)[0],
-                                    (mesh_range.first)[1], (mesh_range.second)[1]),
+                         (mesh_range.first)[1], (mesh_range.second)[1]),
             [&](const IndexRange2d &r)
             {
                 for (size_t i = r.rows().begin(); i != r.rows().end(); ++i)

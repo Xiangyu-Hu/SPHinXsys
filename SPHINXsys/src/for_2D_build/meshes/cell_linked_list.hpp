@@ -54,7 +54,7 @@ namespace SPH
 						 Neighborhood &neighborhood = particle_configuration[index_i];
 						 mesh_for_each(
 							 Array2i::Zero().max(target_cell_index - search_depth * Array2i::Ones()),
-							 number_of_cells_.min(target_cell_index + (search_depth + 1) * Array2i::Ones()),
+							 all_cells_.min(target_cell_index + (search_depth + 1) * Array2i::Ones()),
 							 [&](int l, int m)
 							 {
 								 ListDataVector &target_particles = cell_data_lists_[l][m];

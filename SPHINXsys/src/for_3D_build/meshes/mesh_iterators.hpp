@@ -80,8 +80,8 @@ namespace SPH
     {
         parallel_for(
             IndexRange3d((mesh_range.first)[0], (mesh_range.second)[0],
-                                    (mesh_range.first)[1], (mesh_range.second)[1],
-                                    (mesh_range.first)[2], (mesh_range.second)[2]),
+                         (mesh_range.first)[1], (mesh_range.second)[1],
+                         (mesh_range.first)[2], (mesh_range.second)[2]),
             [&](const IndexRange3d &r)
             {
                 for (size_t i = r.pages().begin(); i != r.pages().end(); ++i)

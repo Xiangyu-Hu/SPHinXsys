@@ -70,7 +70,7 @@ namespace SPH
 		  total_volume_(0), global_avg_thickness_(global_avg_thickness),
 		  particle_spacing_(sph_body.sph_adaptation_->ReferenceSpacing()),
 		  avg_particle_volume_(pow(particle_spacing_, Dimensions - 1) * global_avg_thickness_),
-		  number_of_cells_(0), planned_number_of_particles_(0)
+		  all_cells_(0), planned_number_of_particles_(0)
 	{
 		lattice_spacing_ = global_avg_thickness_ > particle_spacing_ ? 0.5 * particle_spacing_ : 0.5 * global_avg_thickness_;
 	}

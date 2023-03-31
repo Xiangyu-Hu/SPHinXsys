@@ -13,7 +13,7 @@ namespace SPH
 	{
 		BaseMesh mesh(domain_bounds_, lattice_spacing_, 0);
 		Real particle_volume = lattice_spacing_ * lattice_spacing_ * lattice_spacing_;
-		Arrayi number_of_lattices = mesh.NumberOfCellsFromNumberOfGridPoints(mesh.NumberOfGridPoints());
+		Arrayi number_of_lattices = mesh.AllCellsFromAllGridPoints(mesh.AllGridPoints());
 		for (int i = 0; i < number_of_lattices[0]; ++i)
 			for (int j = 0; j < number_of_lattices[1]; ++j)
 				for (int k = 0; k < number_of_lattices[2]; ++k)
@@ -34,7 +34,7 @@ namespace SPH
 		// Calculate the total volume and
 		// count the number of cells inside the body volume, where we might put particles.
 		std::unique_ptr<BaseMesh> mesh(new BaseMesh(domain_bounds_, lattice_spacing_, 0));
-		Arrayi number_of_lattices = mesh->NumberOfCellsFromNumberOfGridPoints(mesh->NumberOfGridPoints());
+		Arrayi number_of_lattices = mesh->AllCellsFromAllGridPoints(mesh->AllGridPoints());
 		for (int i = 0; i < number_of_lattices[0]; ++i)
 			for (int j = 0; j < number_of_lattices[1]; ++j)
 				for (int k = 0; k < number_of_lattices[2]; ++k)
@@ -44,7 +44,7 @@ namespace SPH
 					{
 						if (body_shape_.checkContain(particle_position))
 						{
-							number_of_cells_++;
+							all_cells_++;
 							total_volume_ += lattice_spacing_ * lattice_spacing_ * lattice_spacing_;
 						}
 					}
@@ -53,7 +53,7 @@ namespace SPH
 		planned_number_of_particles_ = int(number_of_particles);
 
 		// Calculate the interval based on the number of particles.
-		Real interval = planned_number_of_particles_ / (number_of_cells_ + TinyReal);
+		Real interval = planned_number_of_particles_ / (all_cells_ + TinyReal);
 		if (interval <= 0)
 			interval = 1; // It has to be lager than 0.
 		// Add a particle in each interval, randomly. We will skip the last intervals if we already reach the number of particles.
