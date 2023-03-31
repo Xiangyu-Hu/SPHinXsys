@@ -56,13 +56,12 @@ namespace SPH
 	/** List data pair: first for indexes, second for particle position. */
 	using ListData = std::tuple<size_t, Vecd, Real>;
 	using ListDataVector = StdLargeVec<ListData>;
-	using ConcurrentIndexesInCells = StdLargeVec<ConcurrentIndexVector *>;
 	using DataListsInCells = StdLargeVec<ListDataVector *>;
-	using CellLists = std::pair<ConcurrentIndexesInCells, DataListsInCells>;
-
 	using ConcurrentCellLists = ConcurrentVec<ConcurrentIndexVector *>;
 	/** Cell list for splitting algorithms. */
 	using SplitCellLists = StdVec<ConcurrentCellLists>;
+	/** Cell list for periodic boundary condition algorithms. */
+	using CellLists = std::pair<ConcurrentCellLists, DataListsInCells>;
 
 	/** Generalized particle data type */
 	typedef DataContainerAddressAssemble<StdLargeVec> ParticleData;

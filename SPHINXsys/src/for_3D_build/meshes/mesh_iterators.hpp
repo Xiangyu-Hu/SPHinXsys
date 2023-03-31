@@ -67,9 +67,9 @@ namespace SPH
     template <typename LocalFunction, typename... Args>
     void mesh_for(const MeshRange &mesh_range, const LocalFunction &local_function, Args &&...args)
     {
-        for (size_t i = (mesh_range.first)[0]; i != (mesh_range.second)[0]; ++i)
-            for (size_t j = (mesh_range.first)[1]; j != (mesh_range.second)[1]; ++j)
-                for (size_t k = (mesh_range.first)[2]; k != (mesh_range.second)[2]; ++k)
+        for (int i = (mesh_range.first)[0]; i != (mesh_range.second)[0]; ++i)
+            for (int j = (mesh_range.first)[1]; j != (mesh_range.second)[1]; ++j)
+                for (int k = (mesh_range.first)[2]; k != (mesh_range.second)[2]; ++k)
                 {
                     local_function(i, j, k);
                 }

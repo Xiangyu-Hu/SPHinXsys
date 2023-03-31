@@ -143,7 +143,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void MultilevelCellLinkedList::
-		tagBodyPartByCell(ConcurrentIndexesInCells &cell_lists, std::function<bool(Vecd, Real)> &check_included)
+		tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included)
 	{
 		for (size_t l = 0; l != total_levels_; ++l)
 		{
