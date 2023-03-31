@@ -83,29 +83,26 @@ namespace SPH
 	//=================================================================================================//
 	ListData CellLinkedList::findNearestListDataEntry(const Vecd &position)
 	{
-		Real min_distance = Infinity;
-		ListData nearest_entry = std::make_tuple(MaxSize_t, Infinity * Vecd::Ones(), Infinity);
+		Real min_distance_sqr = Infinity;
+		ListData nearest_entry(MaxSize_t, Infinity * Vecd::Ones(), Infinity);
 
-		Array2i cell_location = CellIndexFromPosition(position);
-		int i = (int)cell_location[0];
-		int j = (int)cell_location[1];
-
-		for (int l = SMAX(i - 1, 0); l <= SMIN(i + 1, int(all_cells_[0]) - 1); ++l)
-		{
-			for (int m = SMAX(j - 1, 0); m <= SMIN(j + 1, int(all_cells_[1]) - 1); ++m)
+		Array2i cell = CellIndexFromPosition(position);
+		mesh_for_each(
+			Array2i::Zero().max(cell - Array2i::Ones()),
+			all_cells_.min(cell + 2 * Array2i::Ones()),
+			[&](int l, int m)
 			{
 				ListDataVector &target_particles = cell_data_lists_[l][m];
 				for (const ListData &list_data : target_particles)
 				{
-					Real distance = (position - std::get<1>(list_data)).norm();
-					if (distance < min_distance)
+					Real distance_sqr = (position - std::get<1>(list_data)).squaredNorm();
+					if (distance_sqr < min_distance_sqr)
 					{
-						min_distance = distance;
+						min_distance_sqr = distance_sqr;
 						nearest_entry = list_data;
 					}
 				}
-			}
-		}
+			});
 		return nearest_entry;
 	}
 	//=================================================================================================//
@@ -118,7 +115,7 @@ namespace SPH
 							  bool is_included = false;
 							  mesh_for_each(
 								  Array2i::Zero().max(Array2i(i, j) - Array2i::Ones()),
-								  all_cells_.min(Array2i(i, j) + Array2i::Ones()),
+								  all_cells_.min(Array2i(i, j) + 2 * Array2i::Ones()),
 								  [&](int l, int m)
 								  {
 									  if (check_included(CellPositionFromIndex(Array2i(l, m)), grid_spacing_))
@@ -139,29 +136,29 @@ namespace SPH
 		Array2i body_upper_bound_cell_ = CellIndexFromPosition(bounding_bounds.second_);
 
 		// lower bound cells
-		for (size_t j = SMAX(int(body_lower_bound_cell_[second_axis]) - 1, 0);
-			 j <= (size_t)SMIN(int(body_upper_bound_cell_[second_axis] + 1), int(all_cells_[second_axis] - 1)); ++j)
-			for (size_t i = SMAX(int(body_lower_bound_cell_[axis]) - 1, 0);
-				 i <= (size_t)SMIN(int(body_lower_bound_cell_[axis] + 1), int(all_cells_[axis] - 1)); ++i)
+		for (int j = SMAX(body_lower_bound_cell_[second_axis] - 1, 0);
+			 j < SMIN(body_upper_bound_cell_[second_axis] + 2, all_cells_[second_axis]); ++j)
+			for (int i = SMAX(body_lower_bound_cell_[axis] - 1, 0);
+				 i < SMIN(body_lower_bound_cell_[axis] + 2, all_cells_[axis]); ++i)
 			{
-				Array2i cell_position = Array2i::Zero();
-				cell_position[axis] = i;
-				cell_position[second_axis] = j;
-				cell_data_lists[0].first.push_back(&cell_index_lists_[cell_position[0]][cell_position[1]]);
-				cell_data_lists[0].second.push_back(&cell_data_lists_[cell_position[0]][cell_position[1]]);
+				Array2i cell = Array2i::Zero();
+				cell[axis] = i;
+				cell[second_axis] = j;
+				cell_data_lists[0].first.push_back(&cell_index_lists_[cell[0]][cell[1]]);
+				cell_data_lists[0].second.push_back(&cell_data_lists_[cell[0]][cell[1]]);
 			}
 
 		// upper bound cells
-		for (size_t j = SMAX(int(body_lower_bound_cell_[second_axis]) - 1, 0);
-			 j <= (size_t)SMIN(int(body_upper_bound_cell_[second_axis] + 1), int(all_cells_[second_axis] - 1)); ++j)
-			for (size_t i = SMAX(int(body_upper_bound_cell_[axis]) - 1, 0);
-				 i <= (size_t)SMIN(int(body_upper_bound_cell_[axis] + 1), int(all_cells_[axis] - 1)); ++i)
+		for (int j = SMAX(body_lower_bound_cell_[second_axis] - 1, 0);
+			 j < SMIN(body_upper_bound_cell_[second_axis] + 2, all_cells_[second_axis]); ++j)
+			for (int i = SMAX(body_upper_bound_cell_[axis] - 1, 0);
+				 i < SMIN(body_upper_bound_cell_[axis] + 2, all_cells_[axis]); ++i)
 			{
-				Array2i cell_position = Array2i::Zero();
-				cell_position[axis] = i;
-				cell_position[second_axis] = j;
-				cell_data_lists[1].first.push_back(&cell_index_lists_[cell_position[0]][cell_position[1]]);
-				cell_data_lists[1].second.push_back(&cell_data_lists_[cell_position[0]][cell_position[1]]);
+				Array2i cell = Array2i::Zero();
+				cell[axis] = i;
+				cell[second_axis] = j;
+				cell_data_lists[1].first.push_back(&cell_index_lists_[cell[0]][cell[1]]);
+				cell_data_lists[1].second.push_back(&cell_data_lists_[cell[0]][cell[1]]);
 			}
 	}
 	//=============================================================================================//
