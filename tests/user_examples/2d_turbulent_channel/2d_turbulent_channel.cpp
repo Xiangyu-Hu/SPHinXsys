@@ -1,258 +1,177 @@
 /**
- * @file 	two_phase_dambreak_static_confinement.cpp
- * @brief 	2D two-phase dambreak flow with level-set boundary condition.
- * @details This is the one of the basic test cases, also the first case for
- * 			understanding SPH method for multi-phase simulation.
- * @author 	Yongchuan Yu and Xiangyu Hu
+ * @file 	2d_turbulent_channel.cpp
+ * @brief 	2D_turbulent_channel flow with K-Epsilon two equations RANS model.
+ * @details This is the one of the basic test cases.
+ * @author 	Xiangyu Hu
  */
-#include "two_phase_dambreak_static_confinement.h"
+#include "2d_turbulent_channel.h"
 #include "sphinxsys.h"
-#include "fluid_boundary_static_confinement.h"
+#include "k-epsilon_turbulent_model.h"
 using namespace SPH;
 
-int main()
+int main(int ac, char* av[])
 {
 	//----------------------------------------------------------------------
-	//	Build up the environment of a SPHSystem.
+	//	Build up the environment of a SPHSystem with global controls.
 	//----------------------------------------------------------------------
-	SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-	/** Set the starting time. */
-	GlobalStaticVariables::physical_time_ = 0.0;
-	IOEnvironment io_environment(sph_system);
+	SPHSystem system(system_domain_bounds, resolution_ref);
+	system.handleCommandlineOptions(ac, av);
+	IOEnvironment io_environment(system);
 	//----------------------------------------------------------------------
-	//	Creating body, materials and particles.
+	//	Creating body, materials and particles.cd
 	//----------------------------------------------------------------------
-	FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
+	FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
+	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	water_block.generateParticles<ParticleGeneratorLattice>();
 
-	FluidBody air_block(sph_system, makeShared<AirBlock>("AirBody"));
-	air_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_a, c_f);
-	air_block.generateParticles<ParticleGeneratorLattice>();
-
-	/*SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
+	SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
 	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
-	wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");*/
 
-	ObserverBody fluid_observer(sph_system, "FluidObserver");
-	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+	ObserverBody fluid_observer(system, "FluidObserver");
+	for (int j = 0; j < num_observer_points_x; ++j)
+	{
+		for (int i = 0; i < num_observer_points; ++i)
+		{
+			observation_locations.push_back(Vecd(x_observe_start + j * observe_spacing_x,
+				i * observe_spacing + 0.5 * resolution_ref));
+		}
+	}
+	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_locations);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	ComplexRelation water_air_complex(water_block, {&air_block});
-	//ContactRelation water_wall_contact(water_block, {&wall_boundary});
-	ComplexRelation air_water_complex(air_block, {&water_block});
-	//ContactRelation air_wall_contact(air_block, {&wall_boundary});
-	ContactRelation fluid_observer_contact(fluid_observer, RealBodyVector{&water_block, &air_block});
+	InnerRelation water_block_inner(water_block);
+	ComplexRelation water_block_complex_relation(water_block_inner, { &wall_boundary });
+	ContactRelation fluid_observer_contact(fluid_observer, { &water_block });
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	/** Initialize particle acceleration. */
-	SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
-
-	//SimpleDynamics<NormalDirectionFromShapeAndOp> inner_normal_direction(wall_boundary, "InnerWall");
-
-	SimpleDynamics<TimeStepInitialization> initialize_a_water_step(water_block, gravity_ptr);
-	SimpleDynamics<TimeStepInitialization> initialize_a_air_step(air_block, gravity_ptr);
-	/** Evaluation of density by summation approach. */
-	//InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex>
-	//	update_water_density_by_summation(water_wall_contact, water_air_complex.getInnerRelation());
-	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceInner> update_water_density_by_summation(water_air_complex.getInnerRelation());
-
-	//InteractionWithUpdate<fluid_dynamics::DensitySummationComplex>
-	//	update_air_density_by_summation(air_wall_contact, air_water_complex);
-	InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_air_density_by_summation(air_water_complex);
-
-	//InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex>
-	//	air_transport_correction(air_wall_contact, air_water_complex);
-	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex>air_transport_correction(air_water_complex);
-
-	/** Time step size without considering sound wave speed. */
-	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_water_advection_time_step_size(water_block, U_max);
-	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_air_advection_time_step_size(air_block, U_max);
-	/** Time step size with considering sound wave speed. */
-	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_water_time_step_size(water_block);
-	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_air_time_step_size(air_block);
-
-	/** Pressure relaxation for water by using position verlet time stepping. */
-	//Dynamics1Level<fluid_dynamics::MultiPhaseIntegration1stHalfRiemannWithWall>
-	//	water_pressure_relaxation(water_wall_contact, water_air_complex);
-	Dynamics1Level<fluid_dynamics::MultiPhaseIntegration1stHalfRiemann> water_pressure_relaxation(water_air_complex);
-
-	//Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfRiemannWithWall>
-	//	water_density_relaxation(water_wall_contact, water_air_complex);
-	Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfRiemann> water_density_relaxation(water_air_complex);
-
-	/** Extend Pressure relaxation is used for air. */
-	//Dynamics1Level<fluid_dynamics::ExtendMultiPhaseIntegration1stHalfRiemannWithWall>
-	//	air_pressure_relaxation(air_wall_contact, air_water_complex, 2.0);
-	Dynamics1Level<fluid_dynamics::MultiPhaseIntegration1stHalfRiemann>air_pressure_relaxation(air_water_complex);
-
-	//Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfRiemannWithWall>
-	//	air_density_relaxation(air_wall_contact, air_water_complex);
-	Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfRiemann>air_density_relaxation(air_water_complex);
 	
-	/** Confinement condition for wall and structure. */
-	NearShapeSurface near_surface_water(water_block, makeShared<InnerWall>("InnerWall"));
-	near_surface_water.level_set_shape_.writeLevelSet(io_environment);
-	fluid_dynamics::StaticConfinementWithBounding confinement_condition_water(near_surface_water);
-
-	NearShapeSurface near_surface_air(air_block, makeShared<InnerWall>("InnerWall"));
-	fluid_dynamics::StaticConfinementWithPenalty confinement_condition_air(near_surface_air, c_f, 3.0);
+	//Attention! the original one does not use Riemann solver for pressure
+	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex_relation);
+	//Attention! the original one does use Riemann solver for density
+	Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(water_block_complex_relation);
 	
-	update_water_density_by_summation.post_processes_.push_back(&confinement_condition_water.density_summation_);
-	water_pressure_relaxation.post_processes_.push_back(&confinement_condition_water.pressure_relaxation_);
-	water_density_relaxation.post_processes_.push_back(&confinement_condition_water.density_relaxation_);
-	//water_density_relaxation.post_processes_.push_back(&confinement_condition_water.surface_bounding_);
+	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex_relation);
+	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> transport_velocity_correction(water_block_complex_relation);
+	InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex>
+		inlet_outlet_surface_particle_indicator(water_block_complex_relation);
+	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation(water_block_complex_relation);
+	water_block.addBodyStateForRecording<Real>("Pressure");		   // output for debug
+	water_block.addBodyStateForRecording<int>("SurfaceIndicator"); // output for debug
 
-	update_air_density_by_summation.post_processes_.push_back(&confinement_condition_air.density_summation_);
-	air_pressure_relaxation.post_processes_.push_back(&confinement_condition_air.extend_intergration_1st_half_);
-	air_density_relaxation.post_processes_.push_back(&confinement_condition_air.density_relaxation_);
-	//air_density_relaxation.post_processes_.push_back(&confinement_condition_air.surface_bounding_);
-	air_transport_correction.post_processes_.push_back(&confinement_condition_air.transport_velocity_);
+	/** Define the external force. */
+	TimeDependentAcceleration gravity(Vec2d(0.0, 0.0)); 
+	
+	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, gravity);
+	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
+	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
+	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+
+	BodyAlignedBoxByParticle emitter(
+		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(emitter_translation)), emitter_halfsize));
+	SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, 10, 0);
+
+	BodyAlignedBoxByCell emitter_buffer(
+		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(inlet_buffer_translation)), inlet_buffer_halfsize));
+	SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> emitter_buffer_inflow_condition(emitter_buffer);
+
+	Vec2d disposer_up_halfsize = Vec2d(0.5 * BW, 0.55 * DH);
+	Vec2d disposer_up_translation = Vec2d(DL - BW, -0.05 * DH) + disposer_up_halfsize;
+	BodyAlignedBoxByCell disposer_up(
+		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(disposer_up_translation)), disposer_up_halfsize));
+	SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_up_outflow_deletion(disposer_up, xAxis);
+;
 	//----------------------------------------------------------------------
-	//	Define the methods for I/O operations, observations 
-	//	and regression tests of the simulation.
+	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
-	/** Output the body states. */
-	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
-	/** Output the mechanical energy of fluid body. */
-	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
-		write_water_mechanical_energy(io_environment, water_block, gravity_ptr);
-	/** output the observed data from fluid body. */
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-		write_recorded_pressure("Pressure", io_environment, fluid_observer_contact);
+	BodyStatesRecordingToVtp write_body_states(io_environment, system.real_bodies_);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
-	//	and case specified initial condition if necessary. 
+	//	and case specified initial condition if necessary.
 	//----------------------------------------------------------------------
-	sph_system.initializeSystemCellLinkedLists();
-	sph_system.initializeSystemConfigurations();
-	//inner_normal_direction.parallel_exec();
+	system.initializeSystemCellLinkedLists();
+	system.initializeSystemConfigurations();
+	wall_boundary_normal_direction.exec();
+	//----------------------------------------------------------------------
+	//	Setup computing and initial conditions.
+	//----------------------------------------------------------------------
+	size_t number_of_iterations = system.RestartStep();
+	int screen_output_interval = 100;
+	Real end_time = 100.0;
+	Real output_interval = end_time / 200.0; /**< Time stamps for output of body states. */
+	Real dt = 0.0;							 /**< Default acoustic time step sizes. */
+	//----------------------------------------------------------------------
+	//	Statistics for CPU time
+	//----------------------------------------------------------------------
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 	//----------------------------------------------------------------------
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
- 	/** Output the start states of bodies. */
-	body_states_recording.writeToFile(0);
-	/** Output the Hydrostatic mechanical energy of fluid. */
-	write_water_mechanical_energy.writeToFile(0);
-	write_recorded_pressure.writeToFile(0);
-	//----------------------------------------------------------------------
-	//	Setup for time-stepping control
-	//----------------------------------------------------------------------
-	size_t number_of_iterations = 0;
-	int screen_output_interval = 100;
-	int observation_sample_interval = screen_output_interval * 2;
-	Real end_time = 20.0;
-	Real output_interval = 0.1;
-	Real dt = 0.0;		  /**< Default acoustic time step sizes. */
-	/** statistics for computing CPU time. */
-	TickCount t1 = TickCount::now();
-	TimeInterval interval;
-	TimeInterval interval_computing_time_step;
-	TimeInterval interval_computing_pressure_relaxation;
-	TimeInterval interval_updating_configuration;
-	TickCount time_instance;
-	//----------------------------------------------------------------------
+	write_body_states.writeToFile();
+	//----------------------------------------------------------------------------------------------------
 	//	Main loop starts here.
-	//----------------------------------------------------------------------
+	//----------------------------------------------------------------------------------------------------
 	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
 		/** Integrate time (loop) until the next output time. */
 		while (integration_time < output_interval)
 		{
-			/** Acceleration due to viscous force and gravity. */
-			time_instance = TickCount::now();
-			initialize_a_water_step.exec();
-			initialize_a_air_step.exec();
-
-			Real Dt_f = get_water_advection_time_step_size.exec();
-			Real Dt_a = get_air_advection_time_step_size.exec();
-			Real Dt = SMIN(Dt_f, Dt_a);
-
-			update_water_density_by_summation.exec();
-			update_air_density_by_summation.exec();
-
-			air_transport_correction.exec();
-
-			interval_computing_time_step += TickCount::now() - time_instance;
+			initialize_a_fluid_step.exec();
+			Real Dt = get_fluid_advection_time_step_size.exec();
+			inlet_outlet_surface_particle_indicator.exec();
+			update_density_by_summation.exec();
+			viscous_acceleration.exec();
+			transport_velocity_correction.exec();
 
 			/** Dynamics including pressure relaxation. */
-			time_instance = TickCount::now();
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
-				Real dt_f = get_water_time_step_size.exec();
-				Real dt_a = get_air_time_step_size.exec();
-				dt = SMIN(SMIN(dt_f, dt_a), Dt);
-
-				water_pressure_relaxation.exec(dt);
-				air_pressure_relaxation.exec(dt);
-
-				water_density_relaxation.exec(dt);
-				air_density_relaxation.exec(dt);
+				dt = SMIN(get_fluid_time_step_size.exec(), Dt - relaxation_time);
+				pressure_relaxation.exec(dt);
+				emitter_buffer_inflow_condition.exec();
+				density_relaxation.exec(dt);
 
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
 			}
-			interval_computing_pressure_relaxation += TickCount::now() - time_instance;
 
 			if (number_of_iterations % screen_output_interval == 0)
 			{
 				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-						  << GlobalStaticVariables::physical_time_
-						  << "	Dt = " << Dt << "	dt = " << dt << "\n";
-
-				if (number_of_iterations != 0 && number_of_iterations % observation_sample_interval == 0)
-				{
-					write_water_mechanical_energy.writeToFile(number_of_iterations);
-					write_recorded_pressure.writeToFile(number_of_iterations);
-				}
+					<< GlobalStaticVariables::physical_time_
+					<< "	Dt = " << Dt << "	dt = " << dt << "\n";
 			}
 			number_of_iterations++;
 
+			/** inflow injection*/
+			emitter_inflow_injection.exec();
+			disposer_up_outflow_deletion.exec();
+
 			/** Update cell linked list and configuration. */
-			time_instance = TickCount::now();
-
 			water_block.updateCellLinkedListWithParticleSort(100);
-			water_air_complex.updateConfiguration();
-			//water_wall_contact.updateConfiguration();
-
-			air_block.updateCellLinkedListWithParticleSort(100);
-			air_water_complex.updateConfiguration();
-			//air_wall_contact.updateConfiguration();
-
-			fluid_observer_contact.updateConfiguration();
-			interval_updating_configuration += TickCount::now() - time_instance;
+			water_block_complex_relation.updateConfiguration();
 		}
 
 		TickCount t2 = TickCount::now();
-		body_states_recording.writeToFile();
+		write_body_states.writeToFile();
 		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-
 	TickCount t4 = TickCount::now();
 
-	TickCount::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds()
-			  << " seconds." << std::endl;
-	std::cout << std::fixed << std::setprecision(9) << "interval_computing_time_step ="
-			  << interval_computing_time_step.seconds() << "\n";
-	std::cout << std::fixed << std::setprecision(9) << "interval_computing_pressure_relaxation = "
-			  << interval_computing_pressure_relaxation.seconds() << "\n";
-	std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
-			  << interval_updating_configuration.seconds() << "\n";
-
-	write_water_mechanical_energy.newResultTest();
-	write_recorded_pressure.newResultTest();
+		<< " seconds." << std::endl;
 
 	return 0;
 }
