@@ -56,6 +56,9 @@ target_compile_definitions(sphinxsys_core INTERFACE _SILENCE_CXX17_ITERATOR_BASE
 ### Eigen
 find_package(Eigen3 CONFIG REQUIRED)
 target_link_libraries(sphinxsys_core INTERFACE Eigen3::Eigen)
+### xsimd
+find_package(xsimd CONFIG REQUIRED)
+target_link_libraries(sphinxsys_core INTERFACE xsimd)
 ### TBB
 find_package(TBB CONFIG REQUIRED)
 target_link_libraries(sphinxsys_core INTERFACE TBB::tbb TBB::tbbmalloc $<$<PLATFORM_ID:Windows>:TBB::tbbmalloc_proxy>) 
@@ -77,10 +80,6 @@ if(TARGET Boost::program_options)
     target_link_libraries(sphinxsys_core INTERFACE Boost::program_options)
 endif()
 
-### 3rd party header only libraries
-set(3RDPARTY_DIR ${PROJECT_SOURCE_DIR}/3rd_party)
-### Xsimd
-target_include_directories(sphinxsys_core INTERFACE ${3RDPARTY_DIR}/xsimd/include) 
 
 #------ Setup the concrete libraries
 add_subdirectory(SPHINXsys)
