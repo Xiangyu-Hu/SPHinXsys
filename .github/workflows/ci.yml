@@ -48,6 +48,7 @@ jobs:
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
         with: 
           committish: ${{ env.VCPKG_VERSION }}
+          cache-version: ${{env.VCPKG_VERSION}}
 
       - name: Install dependencies
         run: |
@@ -138,6 +139,7 @@ jobs:
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
         with: 
           committish: ${{ env.VCPKG_VERSION }}
+          cache-version: ${{env.VCPKG_VERSION}}
 
       - name: Install dependencies
         run: |
@@ -232,6 +234,7 @@ jobs:
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
         with: 
           committish: ${{ env.VCPKG_VERSION }}
+          cache-version: ${{env.VCPKG_VERSION}}
 
       - name: Install dependencies
         run: |
