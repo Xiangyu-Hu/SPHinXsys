@@ -86,33 +86,26 @@ namespace SPH
 	//=================================================================================================//
 	ListData CellLinkedList::findNearestListDataEntry(const Vecd &position)
 	{
-		Real min_distance = Infinity;
+		Real min_distance_sqr = Infinity;
 		ListData nearest_entry = std::make_tuple(MaxSize_t, Infinity * Vecd::Ones(), Infinity);
 
-		Array3i cell_location = CellIndexFromPosition(position);
-		int i = (int)cell_location[0];
-		int j = (int)cell_location[1];
-		int k = (int)cell_location[2];
-
-		for (int l = SMAX(i - 1, 0); l <= SMIN(i + 1, int(all_cells_[0]) - 1); ++l)
-		{
-			for (int m = SMAX(j - 1, 0); m <= SMIN(j + 1, int(all_cells_[1]) - 1); ++m)
+		Array3i cell = CellIndexFromPosition(position);
+		mesh_for_each(
+			Array3i::Zero().max(cell - Array3i::Ones()),
+			all_cells_.min(cell + 2 * Array3i::Ones()),
+			[&](int l, int m, int n)
 			{
-				for (int q = SMAX(k - 1, 0); q <= SMIN(k + 1, int(all_cells_[2]) - 1); ++q)
+				ListDataVector &target_particles = cell_data_lists_[l][m][n];
+				for (const ListData &list_data : target_particles)
 				{
-					ListDataVector &target_particles = cell_data_lists_[l][m][q];
-					for (const ListData &list_data : target_particles)
+					Real distance_sqr = (position - std::get<1>(list_data)).squaredNorm();
+					if (distance_sqr < min_distance_sqr)
 					{
-						Real distance = (position - std::get<1>(list_data)).norm();
-						if (distance < min_distance)
-						{
-							min_distance = distance;
-							nearest_entry = list_data;
-						}
+						min_distance_sqr = distance_sqr;
+						nearest_entry = list_data;
 					}
 				}
-			}
-		}
+			});
 		return nearest_entry;
 	}
 	//=================================================================================================//
@@ -125,7 +118,7 @@ namespace SPH
 							  bool is_included = false;
 							  mesh_for_each(
 								  Array3i::Zero().max(Array3i(i, j, k) - Array3i::Ones()),
-								  all_cells_.min(Array3i(i, j, k) + Array3i::Ones()),
+								  all_cells_.min(Array3i(i, j, k) + 2 * Array3i::Ones()),
 								  [&](int l, int m, int n)
 								  {
 									  if (check_included(CellPositionFromIndex(Array3i(l, m, n)), grid_spacing_))
@@ -147,45 +140,41 @@ namespace SPH
 		Array3i body_upper_bound_cell_ = CellIndexFromPosition(bounding_bounds.second_);
 
 		// lower bound cells
-		for (size_t k = SMAX(int(body_lower_bound_cell_[third_axis]) - 1, 0);
-			 k < (size_t)SMIN(int(body_upper_bound_cell_[third_axis] + 2), int(all_cells_[third_axis])); ++k)
+		for (int k = SMAX(body_lower_bound_cell_[third_axis] - 1, 0);
+			 k < SMIN(body_upper_bound_cell_[third_axis] + 2, all_cells_[third_axis]); ++k)
 		{
-
-			for (size_t j = SMAX(int(body_lower_bound_cell_[second_axis]) - 1, 0);
-				 j < (size_t)SMIN(int(body_upper_bound_cell_[second_axis] + 2), int(all_cells_[second_axis])); ++j)
+			for (int j = SMAX(body_lower_bound_cell_[second_axis] - 1, 0);
+				 j < SMIN(body_upper_bound_cell_[second_axis] + 2, all_cells_[second_axis]); ++j)
 			{
-
-				for (size_t i = SMAX(int(body_lower_bound_cell_[axis]) - 1, 0);
-					 i <= (size_t)SMIN(int(body_lower_bound_cell_[axis] + 1), int(all_cells_[axis] - 1)); ++i)
+				for (int i = SMAX(body_lower_bound_cell_[axis] - 1, 0);
+					 i < SMIN(body_lower_bound_cell_[axis] + 2, all_cells_[axis]); ++i)
 				{
-					Array3i cell_position = Array3i::Zero();
-					cell_position[axis] = i;
-					cell_position[second_axis] = j;
-					cell_position[third_axis] = k;
-					cell_data_lists[0].first.push_back(&cell_index_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
-					cell_data_lists[0].second.push_back(&cell_data_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
+					Array3i cell = Array3i::Zero();
+					cell[axis] = i;
+					cell[second_axis] = j;
+					cell[third_axis] = k;
+					cell_data_lists[0].first.push_back(&cell_index_lists_[cell[0]][cell[1]][cell[2]]);
+					cell_data_lists[0].second.push_back(&cell_data_lists_[cell[0]][cell[1]][cell[2]]);
 				}
 			}
 		}
 
 		// upper bound cells
-		for (size_t k = SMAX(int(body_lower_bound_cell_[third_axis]) - 1, 0);
-			 k < (size_t)SMIN(int(body_upper_bound_cell_[third_axis] + 2), int(all_cells_[third_axis])); ++k)
+		for (int k = SMAX(body_lower_bound_cell_[third_axis] - 1, 0);
+			 k < SMIN(body_upper_bound_cell_[third_axis] + 2, all_cells_[third_axis]); ++k)
 		{
-
-			for (size_t j = SMAX(int(body_lower_bound_cell_[second_axis]) - 1, 0);
-				 j < (size_t)SMIN(int(body_upper_bound_cell_[second_axis] + 2), int(all_cells_[second_axis])); ++j)
+			for (int j = SMAX(body_lower_bound_cell_[second_axis] - 1, 0);
+				 j < SMIN(body_upper_bound_cell_[second_axis] + 2, all_cells_[second_axis]); ++j)
 			{
-
-				for (size_t i = SMAX(int(body_upper_bound_cell_[axis]) - 1, 0);
-					 i <= (size_t)SMIN(int(body_upper_bound_cell_[axis] + 1), int(all_cells_[axis] - 1)); ++i)
+				for (int i = SMAX(body_upper_bound_cell_[axis] - 1, 0);
+					 i < SMIN(body_upper_bound_cell_[axis] + 2, all_cells_[axis]); ++i)
 				{
-					Array3i cell_position = Array3i::Zero();
-					cell_position[axis] = i;
-					cell_position[second_axis] = j;
-					cell_position[third_axis] = k;
-					cell_data_lists[1].first.push_back(&cell_index_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
-					cell_data_lists[1].second.push_back(&cell_data_lists_[cell_position[0]][cell_position[1]][cell_position[2]]);
+					Array3i cell = Array3i::Zero();
+					cell[axis] = i;
+					cell[second_axis] = j;
+					cell[third_axis] = k;
+					cell_data_lists[1].first.push_back(&cell_index_lists_[cell[0]][cell[1]][cell[2]]);
+					cell_data_lists[1].second.push_back(&cell_data_lists_[cell[0]][cell[1]][cell[2]]);
 				}
 			}
 		}
