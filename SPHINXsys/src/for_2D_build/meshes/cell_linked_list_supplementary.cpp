@@ -8,11 +8,11 @@ namespace SPH
 	//=================================================================================================//
 	void CellLinkedList ::allocateMeshDataMatrix()
 	{
-		Allocate2dArray(cell_index_lists_, number_of_cells_);
-		Allocate2dArray(cell_data_lists_, number_of_cells_);
+		Allocate2dArray(cell_index_lists_, all_cells_);
+		Allocate2dArray(cell_data_lists_, all_cells_);
 
-		mesh_parallel_for(MeshRange(Arrayi::Zero(), number_of_cells_),
-						  [&](size_t i, size_t j)
+		mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
+						  [&](int i, int j)
 						  {
 							  cell_index_lists_[i][j].reserve(12);
 							  cell_data_lists_[i][j].reserve(12);
@@ -21,14 +21,14 @@ namespace SPH
 	//=================================================================================================//
 	void CellLinkedList ::deleteMeshDataMatrix()
 	{
-		Delete2dArray(cell_index_lists_, number_of_cells_);
-		Delete2dArray(cell_data_lists_, number_of_cells_);
+		Delete2dArray(cell_index_lists_, all_cells_);
+		Delete2dArray(cell_data_lists_, all_cells_);
 	}
 	//=================================================================================================//
 	void CellLinkedList::clearCellLists()
 	{
-		mesh_parallel_for(MeshRange(Arrayi::Zero(), number_of_cells_),
-						  [&](size_t i, size_t j)
+		mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
+						  [&](int i, int j)
 						  {
 							  cell_index_lists_[i][j].clear();
 						  });
@@ -38,8 +38,8 @@ namespace SPH
 	{
 		StdLargeVec<Vecd> &pos = base_particles.pos_;
 		StdLargeVec<Real> &Vol = base_particles.Vol_;
-		mesh_parallel_for(MeshRange(Arrayi::Zero(), number_of_cells_),
-						  [&](size_t i, size_t j)
+		mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
+						  [&](int i, int j)
 						  {
 							  cell_data_lists_[i][j].clear();
 							  ConcurrentIndexVector &cell_list = cell_index_lists_[i][j];
@@ -55,13 +55,13 @@ namespace SPH
 	{
 		// clear the data
 		clearSplitCellLists(split_cell_lists);
-		mesh_parallel_for(MeshRange(Arrayi::Zero(), number_of_cells_),
-						  [&](size_t i, size_t j)
+		mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
+						  [&](int i, int j)
 						  {
 							  size_t real_particles_in_cell = cell_index_lists_[i][j].size();
 							  if (real_particles_in_cell != 0)
 							  {
-								  split_cell_lists[transferMeshIndexTo1D(Arrayi(3,3), Arrayi(i % 3, j % 3))]
+								  split_cell_lists[transferMeshIndexTo1D(Arrayi(3, 3), Arrayi(i % 3, j % 3))]
 									  .push_back(&cell_index_lists_[i][j]);
 							  }
 						  });
@@ -90,9 +90,9 @@ namespace SPH
 		int i = (int)cell_location[0];
 		int j = (int)cell_location[1];
 
-		for (int l = SMAX(i - 1, 0); l <= SMIN(i + 1, int(number_of_cells_[0]) - 1); ++l)
+		for (int l = SMAX(i - 1, 0); l <= SMIN(i + 1, int(all_cells_[0]) - 1); ++l)
 		{
-			for (int m = SMAX(j - 1, 0); m <= SMIN(j + 1, int(number_of_cells_[1]) - 1); ++m)
+			for (int m = SMAX(j - 1, 0); m <= SMIN(j + 1, int(all_cells_[1]) - 1); ++m)
 			{
 				ListDataVector &target_particles = cell_data_lists_[l][m];
 				for (const ListData &list_data : target_particles)
@@ -112,12 +112,12 @@ namespace SPH
 	void CellLinkedList::
 		tagBodyPartByCell(ConcurrentIndexesInCells &cell_lists, std::function<bool(Vecd, Real)> &check_included)
 	{
-		for (int i = 0; i < (int)number_of_cells_[0]; ++i)
-			for (int j = 0; j < (int)number_of_cells_[1]; ++j)
+		for (int i = 0; i < (int)all_cells_[0]; ++i)
+			for (int j = 0; j < (int)all_cells_[1]; ++j)
 			{
 				bool is_included = false;
-				for (int k = SMAX(i - 1, 0); k <= SMIN(i + 1, int(number_of_cells_[0]) - 1); ++k)
-					for (int l = SMAX(j - 1, 0); l <= SMIN(j + 1, int(number_of_cells_[1]) - 1); ++l)
+				for (int k = SMAX(i - 1, 0); k <= SMIN(i + 1, int(all_cells_[0]) - 1); ++k)
+					for (int l = SMAX(j - 1, 0); l <= SMIN(j + 1, int(all_cells_[1]) - 1); ++l)
 					{
 						if (check_included(CellPositionFromIndex(Arrayi(k, l)), grid_spacing_))
 						{
@@ -138,9 +138,9 @@ namespace SPH
 
 		// lower bound cells
 		for (size_t j = SMAX(int(body_lower_bound_cell_[second_axis]) - 1, 0);
-			 j <= (size_t)SMIN(int(body_upper_bound_cell_[second_axis] + 1), int(number_of_cells_[second_axis] - 1)); ++j)
+			 j <= (size_t)SMIN(int(body_upper_bound_cell_[second_axis] + 1), int(all_cells_[second_axis] - 1)); ++j)
 			for (size_t i = SMAX(int(body_lower_bound_cell_[axis]) - 1, 0);
-				 i <= (size_t)SMIN(int(body_lower_bound_cell_[axis] + 1), int(number_of_cells_[axis] - 1)); ++i)
+				 i <= (size_t)SMIN(int(body_lower_bound_cell_[axis] + 1), int(all_cells_[axis] - 1)); ++i)
 			{
 				Arrayi cell_position = Arrayi::Zero();
 				cell_position[axis] = i;
@@ -151,9 +151,9 @@ namespace SPH
 
 		// upper bound cells
 		for (size_t j = SMAX(int(body_lower_bound_cell_[second_axis]) - 1, 0);
-			 j <= (size_t)SMIN(int(body_upper_bound_cell_[second_axis] + 1), int(number_of_cells_[second_axis] - 1)); ++j)
+			 j <= (size_t)SMIN(int(body_upper_bound_cell_[second_axis] + 1), int(all_cells_[second_axis] - 1)); ++j)
 			for (size_t i = SMAX(int(body_upper_bound_cell_[axis]) - 1, 0);
-				 i <= (size_t)SMIN(int(body_upper_bound_cell_[axis] + 1), int(number_of_cells_[axis] - 1)); ++i)
+				 i <= (size_t)SMIN(int(body_upper_bound_cell_[axis] + 1), int(all_cells_[axis] - 1)); ++i)
 			{
 				Arrayi cell_position = Arrayi::Zero();
 				cell_position[axis] = i;
@@ -165,7 +165,7 @@ namespace SPH
 	//=============================================================================================//
 	void CellLinkedList::writeMeshFieldToPlt(std::ofstream &output_file)
 	{
-		Arrayi number_of_operation = number_of_cells_;
+		Arrayi number_of_operation = all_cells_;
 
 		output_file << "\n";
 		output_file << "title='View'"

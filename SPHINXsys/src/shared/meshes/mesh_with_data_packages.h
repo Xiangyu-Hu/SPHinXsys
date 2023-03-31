@@ -246,7 +246,7 @@ namespace SPH
 		explicit MeshWithGridDataPackages(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size)
 			: Mesh(tentative_bounds, GridDataPackageType::pkg_size * data_spacing, buffer_size),
 			  data_spacing_(data_spacing),
-			  global_mesh_(this->mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, this->number_of_cells_ * pkg_size)
+			  global_mesh_(this->mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, this->all_cells_ * pkg_size)
 		{
 			allocateMeshDataMatrix();
 		};

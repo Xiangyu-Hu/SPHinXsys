@@ -14,7 +14,7 @@ namespace SPH
 					   Shape &shape, SPHAdaptation &sph_adaptation)
 		: LevelSet(tentative_bounds, data_spacing, 4, shape, sph_adaptation)
 	{
-		mesh_parallel_for(MeshRange(Arrayi::Zero(), number_of_cells_),
+		mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
 						  [&](size_t i, size_t j)
 						  {
 							  initializeDataInACell(Arrayi(i, j));
@@ -44,13 +44,13 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSet::finishDataPackages()
 	{
-		mesh_parallel_for(MeshRange(Arrayi::Zero(), number_of_cells_),
+		mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
 						  [&](size_t i, size_t j)
 						  {
 							  tagACellIsInnerPackage(Arrayi(i, j));
 						  });
 
-		mesh_parallel_for(MeshRange(Arrayi::Zero(), number_of_cells_),
+		mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
 						  [&](size_t i, size_t j)
 						  {
 							  initializePackageAddressesInACell(Arrayi(i, j));
@@ -73,7 +73,7 @@ namespace SPH
 
 		return mesh_any_of(
 			Array2i(SMAX(i - 1, 0), SMAX(j - 1, 0)),
-			Array2i(SMIN(i + 2, (int)number_of_cells_[0]), SMIN(j + 2, (int)number_of_cells_[1])),
+			Array2i(SMIN(i + 2, (int)all_cells_[0]), SMIN(j + 2, (int)all_cells_[1])),
 			[&](int l, int m)
 			{
 				return data_pkg_addrs_[l][m]->isCorePackage();
@@ -287,7 +287,7 @@ namespace SPH
 	//=============================================================================================//
 	void LevelSet::writeMeshFieldToPlt(std::ofstream &output_file)
 	{
-		Arrayi number_of_operation = global_mesh_.NumberOfGridPoints();
+		Arrayi number_of_operation = global_mesh_.AllGridPoints();
 
 		output_file << "\n";
 		output_file << "title='View'"
@@ -463,7 +463,7 @@ namespace SPH
 									 Shape &shape, SPHAdaptation &sph_adaptation)
 		: RefinedMesh(tentative_bounds, coarse_level_set, 4, shape, sph_adaptation)
 	{
-		mesh_parallel_for(MeshRange(Arrayi::Zero(), number_of_cells_),
+		mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
 						  [&](size_t i, size_t j)
 						  {
 							  initializeDataInACellFromCoarse(Arrayi(i, j));

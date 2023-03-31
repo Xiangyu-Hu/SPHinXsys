@@ -149,7 +149,7 @@ namespace SPH
 		{
 			if (cell_pos[i] < 2)
 				is_bounded = false;
-			if (cell_pos[i] > (number_of_cells_[i] - 2))
+			if (cell_pos[i] > (all_cells_[i] - 2))
 				is_bounded = false;
 		}
 		return is_bounded;

@@ -13,7 +13,7 @@ namespace SPH
 					   Shape &shape, SPHAdaptation &sph_adaptation)
 		: LevelSet(tentative_bounds, data_spacing, 4, shape, sph_adaptation)
 	{
-		mesh_parallel_for(MeshRange(Arrayi::Zero(), number_of_cells_),
+		mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
 						  [&](size_t i, size_t j, size_t k)
 						  {
 							  initializeDataInACell(Arrayi(i, j, k));
@@ -43,13 +43,13 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSet::finishDataPackages()
 	{
-		mesh_parallel_for(MeshRange(Arrayi::Zero(), number_of_cells_),
+		mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
 						  [&](size_t i, size_t j, size_t k)
 						  {
 							  tagACellIsInnerPackage(Arrayi(i, j, k));
 						  });
 
-		mesh_parallel_for(MeshRange(Arrayi::Zero(), number_of_cells_),
+		mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
 						  [&](size_t i, size_t j, size_t k)
 						  {
 							  initializePackageAddressesInACell(Arrayi(i, j, k));
@@ -73,9 +73,9 @@ namespace SPH
 
 		return mesh_any_of(
 			Array3i(SMAX(i - 1, 0), SMAX(j - 1, 0), SMAX(k - 1, 0)),
-			Array3i(SMIN(i + 2, (int)number_of_cells_[0]),
-				  SMIN(j + 2, (int)number_of_cells_[1]),
-				  SMIN(k + 2, (int)number_of_cells_[2])),
+			Array3i(SMIN(i + 2, (int)all_cells_[0]),
+				  SMIN(j + 2, (int)all_cells_[1]),
+				  SMIN(k + 2, (int)all_cells_[2])),
 			[&](int l, int m, int n)
 			{
 				return data_pkg_addrs_[l][m][n]->isCorePackage();
@@ -293,7 +293,7 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSet::writeMeshFieldToPlt(std::ofstream &output_file)
 	{
-		Arrayi number_of_operation = global_mesh_.NumberOfGridPoints();
+		Arrayi number_of_operation = global_mesh_.AllGridPoints();
 
 		output_file << "\n";
 		output_file << "title='View'"
@@ -466,7 +466,7 @@ namespace SPH
 									 Shape &shape, SPHAdaptation &sph_adaptation)
 		: RefinedMesh(tentative_bounds, coarse_level_set, 4, shape, sph_adaptation)
 	{
-		mesh_parallel_for(MeshRange(Arrayi::Zero(), number_of_cells_),
+		mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
 						  [&](size_t i, size_t j, size_t k)
 						  {
 							  initializeDataInACellFromCoarse(Arrayi(i, j, k));
