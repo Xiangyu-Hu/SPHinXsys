@@ -38,33 +38,35 @@ namespace SPH
 	{
 		StdLargeVec<Vecd> &pos = base_particles.pos_;
 		StdLargeVec<Real> &Vol = base_particles.Vol_;
-		mesh_parallel_for(MeshRange(Array2i::Zero(), all_cells_),
-						  [&](int i, int j)
-						  {
-							  cell_data_lists_[i][j].clear();
-							  ConcurrentIndexVector &cell_list = cell_index_lists_[i][j];
-							  for (size_t s = 0; s != cell_list.size(); ++s)
-							  {
-								  size_t index = cell_list[s];
-								  cell_data_lists_[i][j].emplace_back(std::make_tuple(index, pos[index], Vol[index]));
-							  }
-						  });
+		mesh_parallel_for(
+			MeshRange(Array2i::Zero(), all_cells_),
+			[&](int i, int j)
+			{
+				cell_data_lists_[i][j].clear();
+				ConcurrentIndexVector &cell_list = cell_index_lists_[i][j];
+				for (size_t s = 0; s != cell_list.size(); ++s)
+				{
+					size_t index = cell_list[s];
+					cell_data_lists_[i][j].emplace_back(std::make_tuple(index, pos[index], Vol[index]));
+				}
+			});
 	}
 	//=================================================================================================//
 	void CellLinkedList::updateSplitCellLists(SplitCellLists &split_cell_lists)
 	{
 		// clear the data
 		clearSplitCellLists(split_cell_lists);
-		mesh_parallel_for(MeshRange(Array2i::Zero(), all_cells_),
-						  [&](int i, int j)
-						  {
-							  size_t real_particles_in_cell = cell_index_lists_[i][j].size();
-							  if (real_particles_in_cell != 0)
-							  {
-								  split_cell_lists[transferMeshIndexTo1D(Array2i(3, 3), Array2i(i % 3, j % 3))]
-									  .push_back(&cell_index_lists_[i][j]);
-							  }
-						  });
+		mesh_parallel_for(
+			MeshRange(Array2i::Zero(), all_cells_),
+			[&](int i, int j)
+			{
+				size_t real_particles_in_cell = cell_index_lists_[i][j].size();
+				if (real_particles_in_cell != 0)
+				{
+					split_cell_lists[transferMeshIndexTo1D(Array2i(3, 3), Array2i(i % 3, j % 3))]
+						.push_back(&cell_index_lists_[i][j]);
+				}
+			});
 	}
 	//=================================================================================================//
 	void CellLinkedList ::insertParticleIndex(size_t particle_index, const Vecd &particle_position)
@@ -109,23 +111,24 @@ namespace SPH
 	void CellLinkedList::
 		tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included)
 	{
-		mesh_parallel_for(MeshRange(Array2i::Zero(), all_cells_),
-						  [&](int i, int j)
-						  {
-							  bool is_included = false;
-							  mesh_for_each(
-								  Array2i::Zero().max(Array2i(i, j) - Array2i::Ones()),
-								  all_cells_.min(Array2i(i, j) + 2 * Array2i::Ones()),
-								  [&](int l, int m)
-								  {
-									  if (check_included(CellPositionFromIndex(Array2i(l, m)), grid_spacing_))
-									  {
-										  is_included = true;
-									  }
-								  });
-							  if (is_included == true)
-								  cell_lists.push_back(&cell_index_lists_[i][j]);
-						  });
+		mesh_parallel_for(
+			MeshRange(Array2i::Zero(), all_cells_),
+			[&](int i, int j)
+			{
+				bool is_included = false;
+				mesh_for_each(
+					Array2i::Zero().max(Array2i(i, j) - Array2i::Ones()),
+					all_cells_.min(Array2i(i, j) + 2 * Array2i::Ones()),
+					[&](int l, int m)
+					{
+						if (check_included(CellPositionFromIndex(Array2i(l, m)), grid_spacing_))
+						{
+							is_included = true;
+						}
+					});
+				if (is_included == true)
+					cell_lists.push_back(&cell_index_lists_[i][j]);
+			});
 	}
 	//=================================================================================================//
 	void CellLinkedList::

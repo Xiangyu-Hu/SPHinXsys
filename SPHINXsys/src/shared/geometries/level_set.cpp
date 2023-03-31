@@ -176,7 +176,9 @@ namespace SPH
 		else
 		{
 			LevelSetDataPackage *singular_data_pkg =
-				shape_.checkContain(cell_position) ? singular_data_pkgs_addrs_[0] : singular_data_pkgs_addrs_[1];
+				shape_.checkContain(cell_position)
+					? singular_data_pkgs_addrs_[0]
+					: singular_data_pkgs_addrs_[1];
 			assignDataPackageAddress(cell_index, singular_data_pkg);
 		}
 	}
@@ -250,10 +252,11 @@ namespace SPH
 		}
 	}
 	//=============================================================================================//
-	MultilevelLevelSet::MultilevelLevelSet(BoundingBox tentative_bounds, Real reference_data_spacing, size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation)
-		: MultilevelMesh<BaseLevelSet, LevelSet, RefinedLevelSet>(tentative_bounds, reference_data_spacing, total_levels, shape, sph_adaptation)
-	{
-	}
+	MultilevelLevelSet::MultilevelLevelSet(
+		BoundingBox tentative_bounds, Real reference_data_spacing, size_t total_levels,
+		Shape &shape, SPHAdaptation &sph_adaptation)
+		: MultilevelMesh<BaseLevelSet, LevelSet, RefinedLevelSet>(
+			  tentative_bounds, reference_data_spacing, total_levels, shape, sph_adaptation) {}
 	//=================================================================================================//
 	size_t MultilevelLevelSet::getCoarseLevel(Real h_ratio)
 	{

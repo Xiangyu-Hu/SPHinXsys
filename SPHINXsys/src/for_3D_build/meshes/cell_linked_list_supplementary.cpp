@@ -43,32 +43,34 @@ namespace SPH
 	{
 		StdLargeVec<Vecd> &pos = base_particles.pos_;
 		StdLargeVec<Real> &Vol = base_particles.Vol_;
-		mesh_parallel_for(MeshRange(Array3i::Zero(), all_cells_),
-						  [&](int i, int j, int k)
-						  {
-							  cell_data_lists_[i][j][k].clear();
-							  ConcurrentIndexVector &cell_list = cell_index_lists_[i][j][k];
-							  for (size_t s = 0; s != cell_list.size(); ++s)
-							  {
-								  size_t index = cell_list[s];
-								  cell_data_lists_[i][j][k].emplace_back(std::make_tuple(index, pos[index], Vol[index]));
-							  }
-						  });
+		mesh_parallel_for(
+			MeshRange(Array3i::Zero(), all_cells_),
+			[&](int i, int j, int k)
+			{
+				cell_data_lists_[i][j][k].clear();
+				ConcurrentIndexVector &cell_list = cell_index_lists_[i][j][k];
+				for (size_t s = 0; s != cell_list.size(); ++s)
+				{
+					size_t index = cell_list[s];
+					cell_data_lists_[i][j][k].emplace_back(std::make_tuple(index, pos[index], Vol[index]));
+				}
+			});
 	}
 	//=================================================================================================//
 	void CellLinkedList::updateSplitCellLists(SplitCellLists &split_cell_lists)
 	{
 		clearSplitCellLists(split_cell_lists);
-		mesh_parallel_for(MeshRange(Array3i::Zero(), all_cells_),
-						  [&](int i, int j, int k)
-						  {
-							  size_t real_particles_in_cell = cell_index_lists_[i][j][k].size();
-							  if (real_particles_in_cell != 0)
-							  {
-								  split_cell_lists[transferMeshIndexTo1D(Array3i(3, 3, 3), Array3i(i % 3, j % 3, k % 3))]
-									  .push_back(&cell_index_lists_[i][j][k]);
-							  }
-						  });
+		mesh_parallel_for(
+			MeshRange(Array3i::Zero(), all_cells_),
+			[&](int i, int j, int k)
+			{
+				size_t real_particles_in_cell = cell_index_lists_[i][j][k].size();
+				if (real_particles_in_cell != 0)
+				{
+					split_cell_lists[transferMeshIndexTo1D(Array3i(3, 3, 3), Array3i(i % 3, j % 3, k % 3))]
+						.push_back(&cell_index_lists_[i][j][k]);
+				}
+			});
 	}
 	//=================================================================================================//
 	void CellLinkedList ::insertParticleIndex(size_t particle_index, const Vecd &particle_position)
@@ -77,7 +79,8 @@ namespace SPH
 		cell_index_lists_[cell_pos[0]][cell_pos[1]][cell_pos[2]].emplace_back(particle_index);
 	}
 	//=================================================================================================//
-	void CellLinkedList ::InsertListDataEntry(size_t particle_index, const Vecd &particle_position, Real volumetric)
+	void CellLinkedList ::InsertListDataEntry(size_t particle_index,
+											  const Vecd &particle_position, Real volumetric)
 	{
 		Array3i cell_pos = CellIndexFromPosition(particle_position);
 		cell_data_lists_[cell_pos[0]][cell_pos[1]][cell_pos[2]].emplace_back(
@@ -112,23 +115,24 @@ namespace SPH
 	void CellLinkedList::
 		tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included)
 	{
-		mesh_parallel_for(MeshRange(Array3i::Zero(), all_cells_),
-						  [&](int i, int j, int k)
-						  {
-							  bool is_included = false;
-							  mesh_for_each(
-								  Array3i::Zero().max(Array3i(i, j, k) - Array3i::Ones()),
-								  all_cells_.min(Array3i(i, j, k) + 2 * Array3i::Ones()),
-								  [&](int l, int m, int n)
-								  {
-									  if (check_included(CellPositionFromIndex(Array3i(l, m, n)), grid_spacing_))
-									  {
-										  is_included = true;
-									  }
-								  });
-							  if (is_included == true)
-								  cell_lists.push_back(&cell_index_lists_[i][j][k]);
-						  });
+		mesh_parallel_for(
+			MeshRange(Array3i::Zero(), all_cells_),
+			[&](int i, int j, int k)
+			{
+				bool is_included = false;
+				mesh_for_each(
+					Array3i::Zero().max(Array3i(i, j, k) - Array3i::Ones()),
+					all_cells_.min(Array3i(i, j, k) + 2 * Array3i::Ones()),
+					[&](int l, int m, int n)
+					{
+						if (check_included(CellPositionFromIndex(Array3i(l, m, n)), grid_spacing_))
+						{
+							is_included = true;
+						}
+					});
+				if (is_included == true)
+					cell_lists.push_back(&cell_index_lists_[i][j][k]);
+			});
 	}
 	//=================================================================================================//
 	void CellLinkedList::
