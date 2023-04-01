@@ -65,7 +65,7 @@ namespace SPH
 		 * @brief  Set initial condition for a fluid body.
 		 * This is a abstract class to be override for case specific initial conditions
 		 */
-		class WeaklyCompressibleFluidInitialCondition : public LocalDynamics, public EulerianWeaklyCompressibleFluidDataSimple
+		class WeaklyCompressibleFluidInitialCondition : public LocalDynamics<SPHBody>, public EulerianWeaklyCompressibleFluidDataSimple
 		{
 		public:
 			explicit WeaklyCompressibleFluidInitialCondition(SPHBody &sph_body);
@@ -81,7 +81,7 @@ namespace SPH
 		 * @brief  the viscosity force induced acceleration
 		 */
 		class ViscousAccelerationInner
-			: public LocalDynamics,
+			: public LocalDynamics<SPHBody>,
 			  public EulerianWeaklyCompressibleFluidDataInner
 		{
 		public:
@@ -101,7 +101,7 @@ namespace SPH
 		 * @class AcousticTimeStepSize
 		 * @brief Computing the acoustic time step size
 		 */
-		class AcousticTimeStepSize : public LocalDynamicsReduce<Real, ReduceMax>,
+		class AcousticTimeStepSize : public LocalDynamicsReduce<SPHBody, Real, ReduceMax>,
 									 public EulerianWeaklyCompressibleFluidDataSimple
 		{
 		protected:
@@ -122,7 +122,7 @@ namespace SPH
 		 * @class BaseIntegration
 		 * @brief Pure abstract base class for all fluid relaxation schemes
 		 */
-		class BaseIntegration : public LocalDynamics, public EulerianWeaklyCompressibleFluidDataInner
+		class BaseIntegration : public LocalDynamics<SPHBody>, public EulerianWeaklyCompressibleFluidDataInner
 		{
 		public:
 			explicit BaseIntegration(BaseInnerRelation &inner_relation);
@@ -183,11 +183,11 @@ namespace SPH
 		 * @brief this function is applied to non_reflective flows
 		 * @brief modify the velocity of particles with far-field velocity under non_reflective boundary condition
 		 */
-		class NonReflectiveBoundaryVariableCorrection : public LocalDynamics, public EulerianWeaklyCompressibleFluidDataInner
+		class NonReflectiveBoundaryVariableCorrection : public LocalDynamics<SPHBody>, public EulerianWeaklyCompressibleFluidDataInner
 		{
 		public:
 			NonReflectiveBoundaryVariableCorrection(BaseInnerRelation &inner_relation)
-				: LocalDynamics(inner_relation.getSPHBody()), EulerianWeaklyCompressibleFluidDataInner(inner_relation),
+				: LocalDynamics<SPHBody>(inner_relation.getSPHBody()), EulerianWeaklyCompressibleFluidDataInner(inner_relation),
 				  rho_(particles_->rho_), p_(particles_->p_), mass_(particles_->mass_), Vol_(particles_->Vol_),
 				  vel_(particles_->vel_), mom_(particles_->mom_), pos_(particles_->pos_),
 				  surface_indicator_(particles_->surface_indicator_)

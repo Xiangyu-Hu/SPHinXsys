@@ -36,7 +36,7 @@ namespace SPH
 	 * @class BaseLifeTimeDynamics
 	 * @brief Base class for particle life time events.
 	 */
-	class BaseLifeTimeDynamics : public LocalDynamics, public GeneralDataDelegateSimple
+	class BaseLifeTimeDynamics : public LocalDynamics<SPHBody>, public GeneralDataDelegateSimple
 	{
 	public:
 		explicit BaseLifeTimeDynamics(SPHBody &sph_body);

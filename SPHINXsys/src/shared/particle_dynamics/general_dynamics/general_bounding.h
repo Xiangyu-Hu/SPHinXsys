@@ -40,7 +40,7 @@ namespace SPH
 	 * The axis must be 0, 1 for 2d and 0, 1, 2 for 3d
 	 */
 	class BoundingAlongAxis : public BaseDynamics<void>,
-							  public LocalDynamics,
+							  public LocalDynamics<SPHBody>,
 							  public GeneralDataDelegateSimple
 	{
 	protected:

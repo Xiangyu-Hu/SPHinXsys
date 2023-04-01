@@ -161,12 +161,12 @@ namespace SPH
 		 * @brief  set initial condition for a muscle body
 		 * This is a abstract class to be override for case specific initial conditions.
 		 */
-		class ElectroPhysiologyInitialCondition : public LocalDynamics,
+		class ElectroPhysiologyInitialCondition : public LocalDynamics<SPHBody>,
 												  public ElectroPhysiologyDataDelegateSimple
 		{
 		public:
 			explicit ElectroPhysiologyInitialCondition(SPHBody &sph_body)
-				: LocalDynamics(sph_body),
+				: LocalDynamics<SPHBody>(sph_body),
 				  ElectroPhysiologyDataDelegateSimple(sph_body),
 				  pos_(particles_->pos_), all_species_(particles_->all_species_){};
 			virtual ~ElectroPhysiologyInitialCondition(){};

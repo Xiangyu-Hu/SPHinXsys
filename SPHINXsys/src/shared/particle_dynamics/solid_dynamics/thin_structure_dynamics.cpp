@@ -7,12 +7,12 @@ namespace SPH
 	{
 		//=================================================================================================//
 		ShellDynamicsInitialCondition::ShellDynamicsInitialCondition(SPHBody &sph_body)
-			: LocalDynamics(sph_body), ShellDataSimple(sph_body),
+			: LocalDynamics<SPHBody>(sph_body), ShellDataSimple(sph_body),
 			  n0_(particles_->n0_), n_(particles_->n_), pseudo_n_(particles_->pseudo_n_),
 			  pos0_(particles_->pos0_), transformation_matrix_(particles_->transformation_matrix_) {}
 		//=================================================================================================//
 		ShellAcousticTimeStepSize::ShellAcousticTimeStepSize(SPHBody &sph_body, Real CFL)
-			: LocalDynamicsReduce<Real, ReduceMin>(sph_body, Real(MaxRealNumber)),
+			: LocalDynamicsReduce<SPHBody, Real, ReduceMin>(sph_body, Real(MaxRealNumber)),
 			  ShellDataSimple(sph_body), CFL_(CFL), vel_(particles_->vel_), acc_(particles_->acc_),
 			  angular_vel_(particles_->angular_vel_), dangular_vel_dt_(particles_->dangular_vel_dt_),
 			  acc_prior_(particles_->acc_prior_),
@@ -39,19 +39,19 @@ namespace SPH
 		//=================================================================================================//
 		ShellCorrectConfiguration::
 			ShellCorrectConfiguration(BaseInnerRelation &inner_relation)
-			: LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
+			: LocalDynamics<SPHBody>(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
 			  B_(particles_->B_),
 			  n0_(particles_->n0_), transformation_matrix_(particles_->transformation_matrix_) {}
 		//=================================================================================================//
 		ShellDeformationGradientTensor::
 			ShellDeformationGradientTensor(BaseInnerRelation &inner_relation)
-			: LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
+			: LocalDynamics<SPHBody>(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
 			  pos_(particles_->pos_), pseudo_n_(particles_->pseudo_n_), n0_(particles_->n0_),
 			  B_(particles_->B_), F_(particles_->F_), F_bending_(particles_->F_bending_),
 			  transformation_matrix_(particles_->transformation_matrix_) {}
 		//=================================================================================================//
 		BaseShellRelaxation::BaseShellRelaxation(BaseInnerRelation &inner_relation)
-			: LocalDynamics(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
+			: LocalDynamics<SPHBody>(inner_relation.getSPHBody()), ShellDataInner(inner_relation),
 			  rho_(particles_->rho_),
 			  thickness_(particles_->thickness_),
 			  pos_(particles_->pos_), vel_(particles_->vel_),
@@ -202,7 +202,7 @@ namespace SPH
 		//=================================================================================================//
 		ConstrainShellBodyRegion::
 			ConstrainShellBodyRegion(BodyPartByParticle &body_part)
-			: BaseLocalDynamics<BodyPartByParticle>(body_part), ShellDataSimple(sph_body_),
+			: LocalDynamics<BodyPartByParticle>(body_part), ShellDataSimple(sph_body_),
 			  vel_(particles_->vel_), angular_vel_(particles_->angular_vel_) {}
 		//=================================================================================================//
 		void ConstrainShellBodyRegion::update(size_t index_i, Real dt)
@@ -212,7 +212,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ConstrainShellBodyRegionAlongAxis::ConstrainShellBodyRegionAlongAxis(BodyPartByParticle &body_part, int axis)
-			: BaseLocalDynamics<BodyPartByParticle>(body_part), ShellDataSimple(sph_body_),
+			: LocalDynamics<BodyPartByParticle>(body_part), ShellDataSimple(sph_body_),
 			  axis_(axis), pos_(particles_->pos_), pos0_(particles_->pos0_), vel_(particles_->vel_),
 			  acc_(particles_->acc_), rotation_(particles_->rotation_), angular_vel_(particles_->angular_vel_),
 			  dangular_vel_dt_(particles_->dangular_vel_dt_) {}
@@ -232,7 +232,7 @@ namespace SPH
 			DistributingPointForcesToShell(SPHBody &sph_body, std::vector<Vecd> point_forces,
 										   std::vector<Vecd> reference_positions, Real time_to_full_external_force,
 										   Real particle_spacing_ref, Real h_spacing_ratio)
-			: LocalDynamics(sph_body), ShellDataSimple(sph_body),
+			: LocalDynamics<SPHBody>(sph_body), ShellDataSimple(sph_body),
 			  point_forces_(point_forces), reference_positions_(reference_positions),
 			  time_to_full_external_force_(time_to_full_external_force),
 			  particle_spacing_ref_(particle_spacing_ref), h_spacing_ratio_(h_spacing_ratio),

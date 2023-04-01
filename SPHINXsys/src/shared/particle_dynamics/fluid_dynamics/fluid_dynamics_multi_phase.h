@@ -137,7 +137,7 @@ namespace SPH
 		 * @brief  indicate the particles near the interface of a fluid-fluid interaction and computing norm
 		 * TODO: Need a test cases for this.
 		 */
-		class MultiPhaseColorFunctionGradient : public LocalDynamics, public MultiPhaseData
+		class MultiPhaseColorFunctionGradient : public LocalDynamics<SPHBody>, public MultiPhaseData
 		{
 		public:
 			explicit MultiPhaseColorFunctionGradient(BaseContactRelation &contact_relation);

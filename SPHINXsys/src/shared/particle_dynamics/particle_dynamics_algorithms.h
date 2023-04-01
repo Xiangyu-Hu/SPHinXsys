@@ -32,14 +32,14 @@
  *			InteractionWithUpdate is with particle interaction with its neighbors and then update their states;
  *			Dynamics1Level is the most complex dynamics, has successive three steps: initialization, interaction and update.
  *			In order to avoid misusing of the above algorithms, type traits are used to make sure that the matching between
- *			the algorithm and local dynamics. For example, the LocalDynamics which matches InteractionDynamics must have
+ *			the algorithm and local dynamics. For example, the LocalDynamics<SPHBody> which matches InteractionDynamics must have
  *			the function interaction() but should not have the function update() or initialize().
  *			The existence of the latter suggests that more complex algorithms,
  *			such as InteractionWithUpdate or Dynamics1Level should be used.
  *			There are 2 classes for the second type.
  *			ReduceDynamics carries out a reduce operation through the particles.
  *			ReduceAverage further computes average of a ReduceDynamics for summation.
- *			Each particle dynamics is templated with a LocalDynamics and a DynamicsRange.
+ *			Each particle dynamics is templated with a LocalDynamics<SPHBody> and a DynamicsRange.
  *			The local dynamics defines the behavior of a single particle or with its neighbors,
  *			and is recognized by particle dynamics with the signature functions, like update, initialization and interaction.
  *			DynamicsRange define and range of particles for the dynamics.

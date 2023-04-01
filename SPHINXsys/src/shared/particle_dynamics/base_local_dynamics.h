@@ -86,16 +86,16 @@ namespace SPH
 	};
 
 	/**
-	 * @class BaseLocalDynamics
+	 * @class LocalDynamics
 	 * @brief The base class for all local particle dynamics.
 	 */
 	template <class DynamicsIdentifier>
-	class BaseLocalDynamics
+	class LocalDynamics
 	{
 	public:
-		explicit BaseLocalDynamics(DynamicsIdentifier &identifier)
+		explicit LocalDynamics(DynamicsIdentifier &identifier)
 			: identifier_(identifier), sph_body_(identifier.getSPHBody()){};
-		virtual ~BaseLocalDynamics(){};
+		virtual ~LocalDynamics(){};
 		SPHBody &getSPHBody() { return sph_body_; };
 		DynamicsIdentifier &getDynamicsIdentifier() { return identifier_; };
 		virtual void setupDynamics(Real dt = 0.0){}; // setup global parameters
@@ -103,20 +103,19 @@ namespace SPH
 		DynamicsIdentifier &identifier_;
 		SPHBody &sph_body_;
 	};
-	using LocalDynamics = BaseLocalDynamics<SPHBody>;
 
 	/**
-	 * @class BaseLocalDynamicsReduce
+	 * @class LocalDynamicsReduce
 	 * @brief The base class for all local particle dynamics for reducing.
 	 */
-	template <typename ReturnType, typename Operation, class DynamicsIdentifier>
-	class BaseLocalDynamicsReduce : public BaseLocalDynamics<DynamicsIdentifier>
+	template <class DynamicsIdentifier, typename ReturnType, typename Operation>
+	class LocalDynamicsReduce : public LocalDynamics<DynamicsIdentifier>
 	{
 	public:
-		BaseLocalDynamicsReduce(DynamicsIdentifier &identifier, ReturnType reference)
-			: BaseLocalDynamics<DynamicsIdentifier>(identifier), reference_(reference),
+		LocalDynamicsReduce(DynamicsIdentifier &identifier, ReturnType reference)
+			: LocalDynamics<DynamicsIdentifier>(identifier), reference_(reference),
 			  quantity_name_("ReducedQuantity"){};
-		virtual ~BaseLocalDynamicsReduce(){};
+		virtual ~LocalDynamicsReduce(){};
 
 		using ReduceReturnType = ReturnType;
 		ReturnType Reference() { return reference_; };
@@ -129,7 +128,5 @@ namespace SPH
 		Operation operation_;
 		std::string quantity_name_;
 	};
-	template <typename ReturnType, typename Operation>
-	using LocalDynamicsReduce = BaseLocalDynamicsReduce<ReturnType, Operation, SPHBody>;
 }
 #endif // BASE_LOCAL_DYNAMICS_H

@@ -119,7 +119,7 @@ namespace SPH
 		 * @class 	SurfaceNormWithWall
 		 * @brief  Modify surface norm when contact with wall
 		 */
-		class SurfaceNormWithWall : public LocalDynamics, public FSIContactData
+		class SurfaceNormWithWall : public LocalDynamics<SPHBody>, public FSIContactData
 		{
 		public:
 			SurfaceNormWithWall(BaseContactRelation &contact_relation, Real contact_angle);

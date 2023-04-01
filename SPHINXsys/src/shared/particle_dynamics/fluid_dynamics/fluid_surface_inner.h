@@ -43,7 +43,7 @@ namespace SPH
 		 * However, some other applications may use this function, such as transport velocity formulation,
 		 * for masking some function which is only applicable for the bulk of the fluid body.
 		 */
-		class FreeSurfaceIndicationInner : public LocalDynamics, public FluidDataInner
+		class FreeSurfaceIndicationInner : public LocalDynamics<SPHBody>, public FluidDataInner
 		{
 		public:
 			explicit FreeSurfaceIndicationInner(BaseInnerRelation &inner_relation, Real threshold = 0.75);
@@ -129,7 +129,7 @@ namespace SPH
 		 * @class FreeSurfaceHeight
 		 * @brief Probe the free surface profile for a fluid body part by reduced operation.
 		 */
-		class FreeSurfaceHeight : public BaseLocalDynamicsReduce<Real, ReduceMax, BodyPartByCell>,
+		class FreeSurfaceHeight : public LocalDynamicsReduce<BodyPartByCell, Real, ReduceMax>,
 								  public FluidDataSimple
 		{
 		protected:
@@ -137,7 +137,7 @@ namespace SPH
 
 		public:
 			FreeSurfaceHeight(BodyPartByCell &body_part)
-				: BaseLocalDynamicsReduce<Real, ReduceMax, BodyPartByCell>(body_part, Real(MinRealNumber)),
+				: LocalDynamicsReduce<BodyPartByCell, Real, ReduceMax>(body_part, Real(MinRealNumber)),
 				  FluidDataSimple(sph_body_), pos_(particles_->pos_)
 			{
 				quantity_name_ = "FreeSurfaceHeight";
@@ -150,7 +150,7 @@ namespace SPH
 		 * @class ColorFunctionGradientInner
 		 * @brief  indicate the particles near the interface of a fluid-fluid interaction and computing norm
 		 */
-		class ColorFunctionGradientInner : public LocalDynamics, public FluidDataInner
+		class ColorFunctionGradientInner : public LocalDynamics<SPHBody>, public FluidDataInner
 		{
 		public:
 			explicit ColorFunctionGradientInner(BaseInnerRelation &inner_relation);
@@ -170,7 +170,7 @@ namespace SPH
 		 * @class ColorFunctionGradientInterpolationInner
 		 * @brief
 		 */
-		class ColorFunctionGradientInterpolationInner : public LocalDynamics, public FluidDataInner
+		class ColorFunctionGradientInterpolationInner : public LocalDynamics<SPHBody>, public FluidDataInner
 		{
 		public:
 			explicit ColorFunctionGradientInterpolationInner(BaseInnerRelation &inner_relation);
@@ -191,7 +191,7 @@ namespace SPH
 		 * @class SurfaceTensionAccelerationInner
 		 * @brief  the surface force induced acceleration
 		 */
-		class SurfaceTensionAccelerationInner : public LocalDynamics, public FluidDataInner
+		class SurfaceTensionAccelerationInner : public LocalDynamics<SPHBody>, public FluidDataInner
 		{
 		public:
 			SurfaceTensionAccelerationInner(BaseInnerRelation &inner_relation, Real gamma);

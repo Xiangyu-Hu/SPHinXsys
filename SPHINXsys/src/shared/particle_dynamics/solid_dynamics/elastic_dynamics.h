@@ -53,7 +53,7 @@ namespace SPH
 		 * @brief  set initial condition for a solid body with different material
 		 * This is a abstract class to be override for case specific initial conditions.
 		 */
-		class ElasticDynamicsInitialCondition : public LocalDynamics, public ElasticSolidDataSimple
+		class ElasticDynamicsInitialCondition : public LocalDynamics<SPHBody>, public ElasticSolidDataSimple
 		{
 		public:
 			explicit ElasticDynamicsInitialCondition(SPHBody &sph_body);
@@ -67,7 +67,7 @@ namespace SPH
 		 * @class UpdateElasticNormalDirection
 		 * @brief update particle normal directions for elastic solid
 		 */
-		class UpdateElasticNormalDirection : public LocalDynamics, public ElasticSolidDataSimple
+		class UpdateElasticNormalDirection : public LocalDynamics<SPHBody>, public ElasticSolidDataSimple
 		{
 		protected:
 			StdLargeVec<Vecd> &n_, &n0_;
@@ -85,7 +85,7 @@ namespace SPH
 		 * @brief Computing the acoustic time step size
 		 * computing time step size
 		 */
-		class AcousticTimeStepSize : public LocalDynamicsReduce<Real, ReduceMin>,
+		class AcousticTimeStepSize : public LocalDynamicsReduce<SPHBody, Real, ReduceMin>,
 									 public ElasticSolidDataSimple
 		{
 		protected:
@@ -104,7 +104,7 @@ namespace SPH
 		 * @class DeformationGradientBySummation
 		 * @brief computing deformation gradient tensor by summation
 		 */
-		class DeformationGradientBySummation : public LocalDynamics, public ElasticSolidDataInner
+		class DeformationGradientBySummation : public LocalDynamics<SPHBody>, public ElasticSolidDataInner
 		{
 		public:
 			explicit DeformationGradientBySummation(BaseInnerRelation &inner_relation);
@@ -136,7 +136,7 @@ namespace SPH
 		 * @class BaseElasticIntegration
 		 * @brief base class for elastic relaxation
 		 */
-		class BaseElasticIntegration : public LocalDynamics, public ElasticSolidDataInner
+		class BaseElasticIntegration : public LocalDynamics<SPHBody>, public ElasticSolidDataInner
 		{
 		public:
 			explicit BaseElasticIntegration(BaseInnerRelation &inner_relation);

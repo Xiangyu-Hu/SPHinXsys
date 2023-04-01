@@ -9,7 +9,7 @@ namespace SPH
 	{	//=================================================================================================//
 		WeaklyCompressibleFluidInitialCondition::
 			WeaklyCompressibleFluidInitialCondition(SPHBody &sph_body)
-			: LocalDynamics(sph_body), EulerianWeaklyCompressibleFluidDataSimple(sph_body),
+			: LocalDynamics<SPHBody>(sph_body), EulerianWeaklyCompressibleFluidDataSimple(sph_body),
 			  pos_(particles_->pos_), vel_(particles_->vel_), mom_(particles_->mom_),
 			  rho_(particles_->rho_), p_(particles_->p_) {}
 		//=================================================================================================//
@@ -25,7 +25,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ViscousAccelerationInner::ViscousAccelerationInner(BaseInnerRelation &inner_relation)
-			: LocalDynamics(inner_relation.getSPHBody()),
+			: LocalDynamics<SPHBody>(inner_relation.getSPHBody()),
 			  EulerianWeaklyCompressibleFluidDataInner(inner_relation),
 			  Vol_(particles_->Vol_), rho_(particles_->rho_), p_(particles_->p_),
 			  vel_(particles_->vel_), dmom_dt_prior_(particles_->dmom_dt_prior_),
@@ -33,7 +33,7 @@ namespace SPH
 			  smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
 		//=================================================================================================//
 		AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body)
-			: LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
+			: LocalDynamicsReduce<SPHBody, Real, ReduceMax>(sph_body, Real(0)),
 			  EulerianWeaklyCompressibleFluidDataSimple(sph_body),
 			  fluid_(particles_->fluid_), rho_(particles_->rho_),
 			  p_(particles_->p_), vel_(particles_->vel_),
@@ -52,7 +52,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		BaseIntegration::BaseIntegration(BaseInnerRelation &inner_relation)
-			: LocalDynamics(inner_relation.getSPHBody()),
+			: LocalDynamics<SPHBody>(inner_relation.getSPHBody()),
 			  EulerianWeaklyCompressibleFluidDataInner(inner_relation), fluid_(particles_->fluid_),
 			  Vol_(particles_->Vol_), mass_(particles_->mass_), rho_(particles_->rho_),
 			  p_(particles_->p_), drho_dt_(particles_->drho_dt_), vel_(particles_->vel_), mom_(particles_->mom_),

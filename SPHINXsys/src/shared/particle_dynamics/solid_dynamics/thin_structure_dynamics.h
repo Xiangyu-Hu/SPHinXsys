@@ -50,7 +50,7 @@ namespace SPH
 		 * @brief  set initial condition for shell particles
 		 * This is a abstract class to be override for case specific initial conditions.
 		 */
-		class ShellDynamicsInitialCondition : public LocalDynamics, public ShellDataSimple
+		class ShellDynamicsInitialCondition : public LocalDynamics<SPHBody>, public ShellDataSimple
 		{
 		public:
 			explicit ShellDynamicsInitialCondition(SPHBody &sph_body);
@@ -65,7 +65,7 @@ namespace SPH
 		 * @class ShellAcousticTimeStepSize
 		 * @brief Computing the acoustic time step size for shell
 		 */
-		class ShellAcousticTimeStepSize : public LocalDynamicsReduce<Real, ReduceMin>,
+		class ShellAcousticTimeStepSize : public LocalDynamicsReduce<SPHBody, Real, ReduceMin>,
 										  public ShellDataSimple
 		{
 		protected:
@@ -86,7 +86,7 @@ namespace SPH
 		 * @class ShellCorrectConfiguration
 		 * @brief obtain the corrected initial configuration in strong form
 		 */
-		class ShellCorrectConfiguration : public LocalDynamics, public ShellDataInner
+		class ShellCorrectConfiguration : public LocalDynamics<SPHBody>, public ShellDataInner
 		{
 		public:
 			explicit ShellCorrectConfiguration(BaseInnerRelation &inner_relation);
@@ -120,7 +120,7 @@ namespace SPH
 		 * @brief computing deformation gradient tensor for shell
 		 * TODO: need a test case for this.
 		 */
-		class ShellDeformationGradientTensor : public LocalDynamics, public ShellDataInner
+		class ShellDeformationGradientTensor : public LocalDynamics<SPHBody>, public ShellDataInner
 		{
 		public:
 			explicit ShellDeformationGradientTensor(BaseInnerRelation &inner_relation);
@@ -157,7 +157,7 @@ namespace SPH
 		 * @class BaseShellRelaxation
 		 * @brief abstract class for preparing shell relaxation
 		 */
-		class BaseShellRelaxation : public LocalDynamics, public ShellDataInner
+		class BaseShellRelaxation : public LocalDynamics<SPHBody>, public ShellDataInner
 		{
 		public:
 			explicit BaseShellRelaxation(BaseInnerRelation &inner_relation);
@@ -296,7 +296,7 @@ namespace SPH
 		/**@class ConstrainShellBodyRegion
 		 * @brief Fix the position and angle of a shell body part.
 		 */
-		class ConstrainShellBodyRegion : public BaseLocalDynamics<BodyPartByParticle>, public ShellDataSimple
+		class ConstrainShellBodyRegion : public LocalDynamics<BodyPartByParticle>, public ShellDataSimple
 		{
 		public:
 			ConstrainShellBodyRegion(BodyPartByParticle &body_part);
@@ -312,7 +312,7 @@ namespace SPH
 		 * The axis must be 0 or 1.
 		 * Note that the average values for FSI are prescribed also.
 		 */
-		class ConstrainShellBodyRegionAlongAxis : public BaseLocalDynamics<BodyPartByParticle>, public ShellDataSimple
+		class ConstrainShellBodyRegionAlongAxis : public LocalDynamics<BodyPartByParticle>, public ShellDataSimple
 		{
 		public:
 			ConstrainShellBodyRegionAlongAxis(BodyPartByParticle &body_part, int axis);
@@ -330,7 +330,7 @@ namespace SPH
 		 * @class DistributingPointForcesToShell
 		 * @brief Distribute a series of point forces to its contact shell bodies.
 		 */
-		class DistributingPointForcesToShell : public LocalDynamics, public ShellDataSimple
+		class DistributingPointForcesToShell : public LocalDynamics<SPHBody>, public ShellDataSimple
 		{
 		protected:
 			std::vector<Vecd> point_forces_, reference_positions_, time_dependent_point_forces_;

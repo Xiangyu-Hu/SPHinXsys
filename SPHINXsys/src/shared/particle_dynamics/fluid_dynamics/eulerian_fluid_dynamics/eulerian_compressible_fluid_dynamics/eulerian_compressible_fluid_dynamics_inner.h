@@ -63,7 +63,7 @@ namespace SPH
 		 * @brief  Set initial condition for a fluid body.
 		 * This is a abstract class to be override for case specific initial conditions
 		 */
-		class CompressibleFluidInitialCondition : public LocalDynamics, public CompressibleFluidDataSimple
+		class CompressibleFluidInitialCondition : public LocalDynamics<SPHBody>, public CompressibleFluidDataSimple
 		{
 		public:
 			explicit CompressibleFluidInitialCondition(SPHBody &sph_body);
@@ -79,7 +79,7 @@ namespace SPH
 		 * @class ViscousAccelerationInner
 		 * @brief  the viscosity force induced acceleration
 		 */
-		class ViscousAccelerationInner : public LocalDynamics, public CompressibleFluidDataInner
+		class ViscousAccelerationInner : public LocalDynamics<SPHBody>, public CompressibleFluidDataInner
 		{
 		public:
 			explicit ViscousAccelerationInner(BaseInnerRelation &inner_relation);
@@ -98,7 +98,7 @@ namespace SPH
 		 * @class AcousticTimeStepSize
 		 * @brief Computing the acoustic time step size
 		 */
-		class AcousticTimeStepSize : public LocalDynamicsReduce<Real, ReduceMax>, public CompressibleFluidDataSimple
+		class AcousticTimeStepSize : public LocalDynamicsReduce<SPHBody, Real, ReduceMax>, public CompressibleFluidDataSimple
 		{
 		protected:
 			CompressibleFluid &compressible_fluid_;
@@ -118,7 +118,7 @@ namespace SPH
 		 * @class BaseIntegration
 		 * @brief Pure abstract base class for all fluid relaxation schemes
 		 */
-		class BaseIntegration : public LocalDynamics, public CompressibleFluidDataInner
+		class BaseIntegration : public LocalDynamics<SPHBody>, public CompressibleFluidDataInner
 		{
 		public:
 			explicit BaseIntegration(BaseInnerRelation &inner_relation);

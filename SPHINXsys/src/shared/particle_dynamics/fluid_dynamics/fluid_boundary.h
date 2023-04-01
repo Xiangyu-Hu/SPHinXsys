@@ -43,7 +43,7 @@ namespace SPH
          * @class BaseFlowBoundaryCondition
          * @brief Base class for all boundary conditions.
          */
-        class BaseFlowBoundaryCondition : public BaseLocalDynamics<BodyPartByCell>, public FluidDataSimple
+        class BaseFlowBoundaryCondition : public LocalDynamics<BodyPartByCell>, public FluidDataSimple
         {
         public:
             BaseFlowBoundaryCondition(BodyPartByCell &body_part);
@@ -119,7 +119,7 @@ namespace SPH
          *          i.e. x direction in local frame.
          */
         template <typename TargetVelocity>
-        class FreeStreamVelocityCorrection : public LocalDynamics, public FluidDataSimple
+        class FreeStreamVelocityCorrection : public LocalDynamics<SPHBody>, public FluidDataSimple
         {
         protected:
             Transformd transform_;
@@ -131,7 +131,7 @@ namespace SPH
 
         public:
             explicit FreeStreamVelocityCorrection(SPHBody &sph_body, const Transformd &transform = Transformd())
-                : LocalDynamics(sph_body), FluidDataSimple(sph_body),
+                : LocalDynamics<SPHBody>(sph_body), FluidDataSimple(sph_body),
                   transform_(transform), rho_ref_(particles_->fluid_.ReferenceDensity()),
                   rho_sum(particles_->rho_sum_), pos_(particles_->pos_), vel_(particles_->vel_),
                   surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")),
@@ -178,7 +178,7 @@ namespace SPH
          * @brief Inflow boundary condition imposed on an emitter, in which pressure and density profile are imposed too.
          * The body part region is required to have parallel lower- and upper-bound surfaces.
          */
-        class EmitterInflowCondition : public BaseLocalDynamics<BodyPartByParticle>, public FluidDataSimple
+        class EmitterInflowCondition : public LocalDynamics<BodyPartByParticle>, public FluidDataSimple
         {
         public:
             explicit EmitterInflowCondition(BodyAlignedBoxByParticle &aligned_box_part);
@@ -208,7 +208,7 @@ namespace SPH
          * Note that the axis is at the local coordinate and upper bound direction is
          * the local positive direction.
          */
-        class EmitterInflowInjection : public BaseLocalDynamics<BodyPartByParticle>, public FluidDataSimple
+        class EmitterInflowInjection : public LocalDynamics<BodyPartByParticle>, public FluidDataSimple
         {
         public:
             EmitterInflowInjection(BodyAlignedBoxByParticle &aligned_box_part,
@@ -230,7 +230,7 @@ namespace SPH
          * @class DisposerOutflowDeletion
          * @brief Delete particles who ruing out the computational domain.
          */
-        class DisposerOutflowDeletion : public BaseLocalDynamics<BodyPartByCell>, public FluidDataSimple
+        class DisposerOutflowDeletion : public LocalDynamics<BodyPartByCell>, public FluidDataSimple
         {
         public:
             DisposerOutflowDeletion(BodyAlignedBoxByCell &aligned_box_part, int axis);
@@ -249,7 +249,7 @@ namespace SPH
          * @class StaticConfinementDensity
          * @brief static confinement condition for density summation
          */
-        class StaticConfinementDensity : public BaseLocalDynamics<BodyPartByCell>, public FluidDataSimple
+        class StaticConfinementDensity : public LocalDynamics<BodyPartByCell>, public FluidDataSimple
         {
         public:
             StaticConfinementDensity(NearShapeSurface &near_surface);
@@ -267,7 +267,7 @@ namespace SPH
          * @class StaticConfinementIntegration1stHalf
          * @brief static confinement condition for pressure relaxation
          */
-        class StaticConfinementIntegration1stHalf : public BaseLocalDynamics<BodyPartByCell>, public FluidDataSimple
+        class StaticConfinementIntegration1stHalf : public LocalDynamics<BodyPartByCell>, public FluidDataSimple
         {
         public:
             StaticConfinementIntegration1stHalf(NearShapeSurface &near_surface);
@@ -286,7 +286,7 @@ namespace SPH
          * @class StaticConfinementIntegration2ndHalf
          * @brief static confinement condition for density relaxation
          */
-        class StaticConfinementIntegration2ndHalf : public BaseLocalDynamics<BodyPartByCell>, public FluidDataSimple
+        class StaticConfinementIntegration2ndHalf : public LocalDynamics<BodyPartByCell>, public FluidDataSimple
         {
         public:
             StaticConfinementIntegration2ndHalf(NearShapeSurface &near_surface);

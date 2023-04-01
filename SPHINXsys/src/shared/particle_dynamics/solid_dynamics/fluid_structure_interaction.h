@@ -46,7 +46,7 @@ namespace SPH
 		 * @class BaseForceFromFluid
 		 * @brief Base class for computing the forces from the fluid
 		 */
-		class BaseForceFromFluid : public LocalDynamics, public FSIContactData
+		class BaseForceFromFluid : public LocalDynamics<SPHBody>, public FSIContactData
 		{
 		public:
 			explicit BaseForceFromFluid(BaseContactRelation &contact_relation);
@@ -210,7 +210,7 @@ namespace SPH
 		 * @class TotalForceFromFluid
 		 * @brief Computing the total force from fluid
 		 */
-		class TotalForceFromFluid : public LocalDynamicsReduce<Vecd, ReduceSum<Vecd>>
+		class TotalForceFromFluid : public LocalDynamicsReduce<SPHBody, Vecd, ReduceSum<Vecd>>
 		{
 		protected:
 			BaseDynamics<void> &force_from_fluid_dynamics_;
@@ -219,7 +219,7 @@ namespace SPH
 		public:
 			template <class ForceFromFluidDynamicsType>
 			explicit TotalForceFromFluid(ForceFromFluidDynamicsType &force_from_fluid_dynamics, const std::string &force_name)
-				: LocalDynamicsReduce<Vecd, ReduceSum<Vecd>>(force_from_fluid_dynamics.getSPHBody(), Vecd::Zero()),
+				: LocalDynamicsReduce<SPHBody, Vecd, ReduceSum<Vecd>>(force_from_fluid_dynamics.getSPHBody(), Vecd::Zero()),
 				  force_from_fluid_dynamics_(force_from_fluid_dynamics),
 				  force_from_fluid_(force_from_fluid_dynamics.getForceFromFluid())
 			{
@@ -237,7 +237,7 @@ namespace SPH
 		 * This class is for FSI applications to achieve smaller solid dynamics
 		 * time step size compared to the fluid dynamics
 		 */
-		class InitializeDisplacement : public LocalDynamics, public ElasticSolidDataSimple
+		class InitializeDisplacement : public LocalDynamics<SPHBody>, public ElasticSolidDataSimple
 		{
 		protected:
 			StdLargeVec<Vecd> &pos_temp_, &pos_;
@@ -255,7 +255,7 @@ namespace SPH
 		 * This class is for FSI applications to achieve smaller solid dynamics
 		 * time step size compared to the fluid dynamics
 		 */
-		class UpdateAverageVelocityAndAcceleration : public LocalDynamics, public ElasticSolidDataSimple
+		class UpdateAverageVelocityAndAcceleration : public LocalDynamics<SPHBody>, public ElasticSolidDataSimple
 		{
 		protected:
 			StdLargeVec<Vecd> &pos_temp_, &pos_, &vel_ave_, &acc_ave_;

@@ -53,7 +53,7 @@ namespace SPH
          * @brief impose external force on a solid body part
          * by add extra acceleration
          */
-        class ImposeExternalForce : public LocalDynamics, public SolidDataSimple
+        class ImposeExternalForce : public LocalDynamics<SPHBody>, public SolidDataSimple
         {
         public:
             ImposeExternalForce(SPHBody &sph_body);
@@ -75,7 +75,7 @@ namespace SPH
          * The damping force is calculated based on the particle's current velocity.
          * Only for 3D applications
          */
-        class SpringDamperConstraintParticleWise : public LocalDynamics, public SolidDataSimple
+        class SpringDamperConstraintParticleWise : public LocalDynamics<SPHBody>, public SolidDataSimple
         {
         protected:
             StdLargeVec<Vecd> &pos_, &pos0_, &vel_, &acc_prior_;
@@ -101,7 +101,7 @@ namespace SPH
          * Only for 3D applications
          * Only for uniform surface particle size.
          */
-        class SpringNormalOnSurfaceParticles : public LocalDynamics, public SolidDataSimple
+        class SpringNormalOnSurfaceParticles : public LocalDynamics<SPHBody>, public SolidDataSimple
         {
         public:
             SpringNormalOnSurfaceParticles(SPHBody &sph_body, bool outer_surface,
@@ -130,7 +130,7 @@ namespace SPH
          * BodyPartByParticle define the ody part that the spring is applied to.
          * Only for uniform surface particle size.
          */
-        class SpringOnSurfaceParticles : public LocalDynamics, public SolidDataSimple
+        class SpringOnSurfaceParticles : public LocalDynamics<SPHBody>, public SolidDataSimple
         {
         protected:
             StdLargeVec<Vecd> &pos_, &pos0_, &vel_, &acc_prior_;
@@ -149,7 +149,7 @@ namespace SPH
          * @class AccelerationForBodyPartInBoundingBox
          * @brief Adds acceleration to the part of the body that's inside a bounding box
          */
-        class AccelerationForBodyPartInBoundingBox : public LocalDynamics, public SolidDataSimple
+        class AccelerationForBodyPartInBoundingBox : public LocalDynamics<SPHBody>, public SolidDataSimple
         {
         protected:
             StdLargeVec<Vecd> &pos_, &acc_prior_;
@@ -167,7 +167,7 @@ namespace SPH
          * @class ForceInBodyRegion
          * @brief ForceInBodyRegion, distributes the force vector as acceleration among the particles in a given body part
          */
-        class ForceInBodyRegion : public BaseLocalDynamics<BodyPartByParticle>, public SolidDataSimple
+        class ForceInBodyRegion : public LocalDynamics<BodyPartByParticle>, public SolidDataSimple
         {
         public:
             ForceInBodyRegion(BodyPartByParticle &body_part, Vecd force, Real end_time);
@@ -184,7 +184,7 @@ namespace SPH
          * @class SurfacePressureFromSource
          * @brief SurfacePressureFromSource, applies pressure on the surface particles coming from a source point
          */
-        class SurfacePressureFromSource : public BaseLocalDynamics<BodyPartByParticle>, public SolidDataSimple
+        class SurfacePressureFromSource : public LocalDynamics<BodyPartByParticle>, public SolidDataSimple
         {
         public:
             SurfacePressureFromSource(BodyPartByParticle &body_part,

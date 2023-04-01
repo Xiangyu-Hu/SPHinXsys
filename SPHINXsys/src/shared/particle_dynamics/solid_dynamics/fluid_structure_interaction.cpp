@@ -7,7 +7,7 @@ namespace SPH
 	{
 		//=================================================================================================//
 		BaseForceFromFluid::BaseForceFromFluid(BaseContactRelation &contact_relation)
-			: LocalDynamics(contact_relation.getSPHBody()), FSIContactData(contact_relation),
+			: LocalDynamics<SPHBody>(contact_relation.getSPHBody()), FSIContactData(contact_relation),
 			  Vol_(particles_->Vol_)
 		{
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
@@ -44,7 +44,7 @@ namespace SPH
 		//=================================================================================================//
 		InitializeDisplacement::
 			InitializeDisplacement(SPHBody &sph_body, StdLargeVec<Vecd> &pos_temp)
-			: LocalDynamics(sph_body), ElasticSolidDataSimple(sph_body),
+			: LocalDynamics<SPHBody>(sph_body), ElasticSolidDataSimple(sph_body),
 			  pos_temp_(pos_temp), pos_(particles_->pos_) {}
 		//=================================================================================================//
 		void InitializeDisplacement::update(size_t index_i, Real dt)
@@ -54,7 +54,7 @@ namespace SPH
 		//=================================================================================================//
 		UpdateAverageVelocityAndAcceleration::
 			UpdateAverageVelocityAndAcceleration(SPHBody &sph_body, StdLargeVec<Vecd> &pos_temp)
-			: LocalDynamics(sph_body), ElasticSolidDataSimple(sph_body),
+			: LocalDynamics<SPHBody>(sph_body), ElasticSolidDataSimple(sph_body),
 			  pos_temp_(pos_temp), pos_(particles_->pos_),
 			  vel_ave_(particles_->vel_ave_),
 			  acc_ave_(particles_->acc_ave_) {}

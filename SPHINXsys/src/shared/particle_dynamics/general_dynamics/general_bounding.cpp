@@ -4,7 +4,7 @@ namespace SPH
 {
 	//=================================================================================================//
 	BoundingAlongAxis::BoundingAlongAxis(RealBody &real_body, BoundingBox bounding_bounds, int axis)
-		: BaseDynamics<void>(real_body), LocalDynamics(real_body),
+		: BaseDynamics<void>(real_body), LocalDynamics<SPHBody>(real_body),
 		  GeneralDataDelegateSimple(real_body),
 		  axis_(axis), bounding_bounds_(bounding_bounds),
 		  pos_(particles_->pos_),

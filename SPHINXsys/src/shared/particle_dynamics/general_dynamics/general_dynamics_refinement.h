@@ -40,11 +40,11 @@ namespace SPH
      * @class ComputeDensityErrorInner
      * @brief compute error of particle splitting and merging
      */
-    class ComputeDensityErrorInner : public LocalDynamics, public GeneralDataDelegateInner
+    class ComputeDensityErrorInner : public LocalDynamics<SPHBody>, public GeneralDataDelegateInner
     {
     public:
         ComputeDensityErrorInner(BaseInnerRelation &inner_relation)
-            : LocalDynamics(inner_relation.getSPHBody()), GeneralDataDelegateInner(inner_relation),
+            : LocalDynamics<SPHBody>(inner_relation.getSPHBody()), GeneralDataDelegateInner(inner_relation),
               rho0_(sph_body_.base_material_->ReferenceDensity()),
               h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")),
               particle_adaptation_(DynamicCast<ParticleSplitAndMerge>(this, *inner_relation.getSPHBody().sph_adaptation_))
@@ -115,7 +115,7 @@ namespace SPH
      * @class ParticleRefinementWithPrescribedArea
      * @brief particle split in prescribed area.
      */
-    class ParticleRefinementWithPrescribedArea : public LocalDynamics, public GeneralDataDelegateSimple
+    class ParticleRefinementWithPrescribedArea : public LocalDynamics<SPHBody>, public GeneralDataDelegateSimple
     {
     public:
         ParticleRefinementWithPrescribedArea(SPHBody &sph_body, Shape &refinement_region);

@@ -48,7 +48,7 @@ namespace SPH
 	 */
 	class Displacement : public BaseDerivedVariable<Vecd>,
 						 public SolidDataSimple,
-						 public LocalDynamics
+						 public LocalDynamics<SPHBody>
 	{
 	public:
 		explicit Displacement(SPHBody &sph_body);
@@ -64,7 +64,7 @@ namespace SPH
 	 * @brief offset initial particle position
 	 */
 	class OffsetInitialPosition : public SolidDataSimple, 
-								  public LocalDynamics
+								  public LocalDynamics<SPHBody>
 	{
 	public:
 		explicit OffsetInitialPosition(SPHBody &sph_body, Vecd &offset);
@@ -81,7 +81,7 @@ namespace SPH
 	 * @brief transformation on particle position and rotation
 	 */
 	class TranslationAndRotation : public SolidDataSimple, 
-								   public LocalDynamics
+								   public LocalDynamics<SPHBody>
 	{
 	public:
 		explicit TranslationAndRotation(SPHBody &sph_body, Transformd &transform);
@@ -98,7 +98,7 @@ namespace SPH
 	 * @brief normal direction at particles
 	 */
 	class NormalDirectionFromBodyShape : public SolidDataSimple, 
-										 public LocalDynamics
+										 public LocalDynamics<SPHBody>
 	{
 	public:
 		explicit NormalDirectionFromBodyShape(SPHBody &sph_body);
@@ -115,7 +115,7 @@ namespace SPH
 	 * @brief normal direction at particles
 	 */
 	class NormalDirectionFromShapeAndOp : public SolidDataSimple, 
-										  public LocalDynamics
+										  public LocalDynamics<SPHBody>
 	{
 	public:
 		explicit NormalDirectionFromShapeAndOp(SPHBody &sph_body, const std::string &shape_name);
@@ -136,7 +136,7 @@ namespace SPH
 
 	class GreenLagrangeStrain : public BaseDerivedVariable<Matd>,
 								public ElasticSolidDataSimple,
-								public LocalDynamics
+								public LocalDynamics<SPHBody>
 	{
 	public:
 		explicit GreenLagrangeStrain(SPHBody &sph_body);
@@ -153,7 +153,7 @@ namespace SPH
 	 */
 	class VonMisesStress : public BaseDerivedVariable<Real>,
 						   public ElasticSolidDataSimple,
-						   public LocalDynamics
+						   public LocalDynamics<SPHBody>
 	{
 	public:
 		explicit VonMisesStress(SPHBody &sph_body);
@@ -173,7 +173,7 @@ namespace SPH
 	 */
 	class VonMisesStrain : public BaseDerivedVariable<Real>,
 						   public ElasticSolidDataSimple,
-						   public LocalDynamics
+						   public LocalDynamics<SPHBody>
 	{
 	public:
 		explicit VonMisesStrain(SPHBody &sph_body);
@@ -187,7 +187,7 @@ namespace SPH
 	 */
 	class VonMisesStrainDynamic : public BaseDerivedVariable<Real>,
 								  public ElasticSolidDataSimple,
-								  public LocalDynamics
+								  public LocalDynamics<SPHBody>
 	{
 	public:
 		explicit VonMisesStrainDynamic(SPHBody &sph_body);

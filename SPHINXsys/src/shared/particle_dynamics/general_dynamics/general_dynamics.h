@@ -47,7 +47,7 @@ namespace SPH
 	 * @class BaseTimeStepInitialization
 	 * @brief base class for time step initialization.
 	 */
-	class BaseTimeStepInitialization : public LocalDynamics
+	class BaseTimeStepInitialization : public LocalDynamics<SPHBody>
 	{
 	private:
 		SharedPtrKeeper<Gravity> gravity_ptr_keeper_;
@@ -57,7 +57,7 @@ namespace SPH
 
 	public:
 		BaseTimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> &gravity_ptr)
-			: LocalDynamics(sph_body), gravity_(gravity_ptr_keeper_.assignPtr(gravity_ptr)){};
+			: LocalDynamics<SPHBody>(sph_body), gravity_(gravity_ptr_keeper_.assignPtr(gravity_ptr)){};
 		virtual ~BaseTimeStepInitialization(){};
 	};
 
@@ -84,7 +84,7 @@ namespace SPH
 	 * @brief Randomize the initial particle position
 	 */
 	class RandomizeParticlePosition
-		: public LocalDynamics,
+		: public LocalDynamics<SPHBody>,
 		  public GeneralDataDelegateSimple
 	{
 	protected:
@@ -103,11 +103,11 @@ namespace SPH
 	 * @brief computing smoothed variable field by averaging with neighbors
 	 */
 	template <typename VariableType>
-	class ParticleSmoothing : public LocalDynamics, public GeneralDataDelegateInner
+	class ParticleSmoothing : public LocalDynamics<SPHBody>, public GeneralDataDelegateInner
 	{
 	public:
 		explicit ParticleSmoothing(BaseInnerRelation &inner_relation, const std::string &variable_name)
-			: LocalDynamics(inner_relation.getSPHBody()), GeneralDataDelegateInner(inner_relation),
+			: LocalDynamics<SPHBody>(inner_relation.getSPHBody()), GeneralDataDelegateInner(inner_relation),
 			  W0_(sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd)),
 			  smoothed_(*particles_->template getVariableByName<VariableType>(variable_name))
 		{	
@@ -144,7 +144,7 @@ namespace SPH
 	 * @class VelocityBoundCheck
 	 * @brief  check whether particle velocity within a given bound
 	 */
-	class VelocityBoundCheck : public LocalDynamicsReduce<bool, ReduceOR>,
+	class VelocityBoundCheck : public LocalDynamicsReduce<SPHBody, bool, ReduceOR>,
 							   public GeneralDataDelegateSimple
 	{
 	protected:
@@ -163,7 +163,7 @@ namespace SPH
 	 * @brief 	Get the upper front In X Direction for a SPH body
 	 *			TODO: a test using this method
 	 */
-	class UpperFrontInXDirection : public LocalDynamicsReduce<Real, ReduceMax>,
+	class UpperFrontInXDirection : public LocalDynamicsReduce<SPHBody, Real, ReduceMax>,
 								   public GeneralDataDelegateSimple
 	{
 	protected:
@@ -180,7 +180,7 @@ namespace SPH
 	 * @class MaximumSpeed
 	 * @brief Get the maximum particle speed in a SPH body
 	 */
-	class MaximumSpeed : public LocalDynamicsReduce<Real, ReduceMax>,
+	class MaximumSpeed : public LocalDynamicsReduce<SPHBody, Real, ReduceMax>,
 						 public GeneralDataDelegateSimple
 	{
 	protected:
@@ -198,7 +198,7 @@ namespace SPH
 	 * @brief	the lower bound of a body by reduced particle positions.
 	 * 			TODO: a test using this method
 	 */
-	class PositionLowerBound : public LocalDynamicsReduce<Vecd, ReduceLowerBound>,
+	class PositionLowerBound : public LocalDynamicsReduce<SPHBody, Vecd, ReduceLowerBound>,
 							   public GeneralDataDelegateSimple
 	{
 	protected:
@@ -216,7 +216,7 @@ namespace SPH
 	 * @brief	the upper bound of a body by reduced particle positions.
 	 * 			TODO: a test using this method
 	 */
-	class PositionUpperBound : public LocalDynamicsReduce<Vecd, ReduceUpperBound>,
+	class PositionUpperBound : public LocalDynamicsReduce<SPHBody, Vecd, ReduceUpperBound>,
 							   public GeneralDataDelegateSimple
 	{
 	protected:
@@ -234,7 +234,7 @@ namespace SPH
 	 * @brief Compute the summation of  a particle variable in a body
 	 */
 	template <typename VariableType>
-	class QuantitySummation : public LocalDynamicsReduce<VariableType, ReduceSum<VariableType>>,
+	class QuantitySummation : public LocalDynamicsReduce<SPHBody, VariableType, ReduceSum<VariableType>>,
 							  public GeneralDataDelegateSimple
 	{
 	protected:
@@ -242,7 +242,7 @@ namespace SPH
 
 	public:
 		explicit QuantitySummation(SPHBody &sph_body, const std::string &variable_name)
-			: LocalDynamicsReduce<VariableType, ReduceSum<VariableType>>(sph_body, ZeroData<VariableType>::value),
+			: LocalDynamicsReduce<SPHBody, VariableType, ReduceSum<VariableType>>(sph_body, ZeroData<VariableType>::value),
 			  GeneralDataDelegateSimple(sph_body),
 			  variable_(*this->particles_->template getVariableByName<VariableType>(variable_name))
 		{
@@ -286,7 +286,7 @@ namespace SPH
 	 * @brief Compute the total mechanical (kinematic and potential) energy
 	 */
 	class TotalMechanicalEnergy
-		: public LocalDynamicsReduce<Real, ReduceSum<Real>>,
+		: public LocalDynamicsReduce<SPHBody, Real, ReduceSum<Real>>,
 		  public GeneralDataDelegateSimple
 	{
 	private:

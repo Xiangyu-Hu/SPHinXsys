@@ -54,7 +54,7 @@ namespace SPH
 		 * @brief relaxation dynamics for particle initialization
 		 * computing the square of time step size
 		 */
-		class GetTimeStepSizeSquare : public LocalDynamicsReduce<Real, ReduceMax>,
+		class GetTimeStepSizeSquare : public LocalDynamicsReduce<SPHBody, Real, ReduceMax>,
 									  public RelaxDataDelegateSimple
 		{
 		protected:
@@ -75,7 +75,7 @@ namespace SPH
 		 * without considering contact interaction.
 		 * this is usually used for solid like bodies
 		 */
-		class RelaxationAccelerationInner : public LocalDynamics, public RelaxDataDelegateInner
+		class RelaxationAccelerationInner : public LocalDynamics<SPHBody>, public RelaxDataDelegateInner
 		{
 		public:
 			explicit RelaxationAccelerationInner(BaseInnerRelation &inner_relation);
@@ -123,7 +123,7 @@ namespace SPH
 		 * @class UpdateParticlePosition
 		 * @brief update the particle position for a time step
 		 */
-		class UpdateParticlePosition : public LocalDynamics,
+		class UpdateParticlePosition : public LocalDynamics<SPHBody>,
 									   public RelaxDataDelegateSimple
 		{
 		protected:
@@ -141,7 +141,7 @@ namespace SPH
 		 * @class UpdateSmoothingLengthRatioByShape
 		 * @brief update the particle smoothing length ratio
 		 */
-		class UpdateSmoothingLengthRatioByShape : public LocalDynamics,
+		class UpdateSmoothingLengthRatioByShape : public LocalDynamics<SPHBody>,
 												  public RelaxDataDelegateSimple
 		{
 		protected:
@@ -165,7 +165,7 @@ namespace SPH
 		 * with considering contact interaction
 		 * this is usually used for fluid like bodies //TODO: seems better called as Contact
 		 */
-		class RelaxationAccelerationComplex : public LocalDynamics,
+		class RelaxationAccelerationComplex : public LocalDynamics<SPHBody>,
 											  public RelaxDataDelegateComplex
 		{
 		public:
@@ -204,7 +204,7 @@ namespace SPH
 		 * map constrained particles to geometry face and
 		 * r = r + phi * norm (vector distance to face)
 		 */
-		class ShapeSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>,
+		class ShapeSurfaceBounding : public LocalDynamics<BodyPartByCell>,
 									 public RelaxDataDelegateSimple
 		{
 		public:
@@ -298,7 +298,7 @@ namespace SPH
 		 * because if level_set_refinement_ratio > particle_spacing_ref_ / (0.05 * thickness_),
 		 * there will be no level set field.
 		 */
-		class ShellMidSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>,
+		class ShellMidSurfaceBounding : public LocalDynamics<BodyPartByCell>,
 										public RelaxDataDelegateInner
 		{
 		public:
@@ -333,7 +333,7 @@ namespace SPH
 			virtual void exec(Real dt = 0.0) override;
 
 		protected:
-			class NormalPrediction : public RelaxDataDelegateSimple, public LocalDynamics
+			class NormalPrediction : public RelaxDataDelegateSimple, public LocalDynamics<SPHBody>
 			{
 				Real thickness_;
 				LevelSetShape *level_set_shape_;
@@ -345,7 +345,7 @@ namespace SPH
 				void update(size_t index_i, Real dt = 0.0);
 			};
 
-			class PredictionConvergenceCheck : public LocalDynamicsReduce<bool, ReduceAND>,
+			class PredictionConvergenceCheck : public LocalDynamicsReduce<SPHBody, bool, ReduceAND>,
 											   public RelaxDataDelegateSimple
 			{
 			protected:
@@ -359,7 +359,7 @@ namespace SPH
 				bool reduce(size_t index_i, Real dt = 0.0);
 			};
 
-			class ConsistencyCorrection : public LocalDynamics, public RelaxDataDelegateInner
+			class ConsistencyCorrection : public LocalDynamics<SPHBody>, public RelaxDataDelegateInner
 			{
 			public:
 				explicit ConsistencyCorrection(BaseInnerRelation &inner_relation, Real consistency_criterion);
@@ -403,7 +403,7 @@ namespace SPH
 				StdLargeVec<Vecd> &n_;
 			};
 
-			class ConsistencyUpdatedCheck : public LocalDynamicsReduce<bool, ReduceAND>,
+			class ConsistencyUpdatedCheck : public LocalDynamicsReduce<SPHBody, bool, ReduceAND>,
 											public RelaxDataDelegateSimple
 			{
 			protected:

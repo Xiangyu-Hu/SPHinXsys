@@ -40,13 +40,13 @@ namespace SPH
 	 * @brief Base class for interpolation.
 	 */
 	template <typename VariableType>
-	class BaseInterpolation : public LocalDynamics, public InterpolationContactData
+	class BaseInterpolation : public LocalDynamics<SPHBody>, public InterpolationContactData
 	{
 	public:
 		StdLargeVec<VariableType> *interpolated_quantities_;
 
 		explicit BaseInterpolation(BaseContactRelation &contact_relation, const std::string &variable_name)
-			: LocalDynamics(contact_relation.getSPHBody()), InterpolationContactData(contact_relation),
+			: LocalDynamics<SPHBody>(contact_relation.getSPHBody()), InterpolationContactData(contact_relation),
 			  interpolated_quantities_(nullptr)
 		{
 			for (size_t k = 0; k != this->contact_particles_.size(); ++k)
@@ -141,7 +141,7 @@ namespace SPH
 	 * @class CorrectInterpolationKernelWeights
 	 * @brief  correct kernel weights for interpolation between general bodies
 	 */
-	class CorrectInterpolationKernelWeights : public LocalDynamics,
+	class CorrectInterpolationKernelWeights : public LocalDynamics<SPHBody>,
 											  public InterpolationContactData
 	{
 	public:

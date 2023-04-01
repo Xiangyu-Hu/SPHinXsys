@@ -41,11 +41,11 @@ public:
 };
 
 /* define load*/
-class LoadForce : public BaseLocalDynamics<BodyPartByParticle>, public solid_dynamics::ElasticSolidDataSimple
+class LoadForce : public LocalDynamics<BodyPartByParticle>, public solid_dynamics::ElasticSolidDataSimple
 {
 public:
 	LoadForce(BodyPartByParticle &body_part, StdVec<std::array<Real, 2>> f_arr)
-		: BaseLocalDynamics<BodyPartByParticle>(body_part),
+		: LocalDynamics<BodyPartByParticle>(body_part),
 		  solid_dynamics::ElasticSolidDataSimple(sph_body_),
 		  acc_prior(particles_->acc_prior_),
 		  mass_n_(particles_->mass_),

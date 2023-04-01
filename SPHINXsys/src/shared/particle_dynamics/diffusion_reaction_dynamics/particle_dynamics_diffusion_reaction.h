@@ -52,7 +52,7 @@ namespace SPH
 	 */
 	template <class DiffusionReactionParticlesType>
 	class DiffusionReactionInitialCondition
-		: public LocalDynamics,
+		: public LocalDynamics<SPHBody>,
 		  public DiffusionReactionSimpleData<DiffusionReactionParticlesType>
 	{
 	public:
@@ -89,7 +89,7 @@ namespace SPH
 	 */
 	template <class DiffusionReactionParticlesType>
 	class RelaxationOfAllDiffusionSpeciesInner
-		: public LocalDynamics,
+		: public LocalDynamics<SPHBody>,
 		  public DiffusionReactionInnerData<DiffusionReactionParticlesType>
 	{
 	protected:
@@ -145,7 +145,7 @@ namespace SPH
 	 * @brief initialization of a runge-kutta integration scheme
 	 */
 	template <class DiffusionReactionParticlesType>
-	class InitializationRK : public LocalDynamics,
+	class InitializationRK : public LocalDynamics<SPHBody>,
 							 public DiffusionReactionSimpleData<DiffusionReactionParticlesType>
 	{
 	protected:
@@ -215,7 +215,7 @@ namespace SPH
 	 */
 	template <class DiffusionReactionParticlesType>
 	class BaseRelaxationOfAllReactions
-		: public LocalDynamics,
+		: public LocalDynamics<SPHBody>,
 		  public DiffusionReactionSimpleData<DiffusionReactionParticlesType>
 	{
 		static constexpr int NumReactiveSpecies = DiffusionReactionParticlesType::NumReactiveSpecies;		
@@ -271,12 +271,12 @@ namespace SPH
 	 */
 	template <class DynamicsIdentifier, class DiffusionReactionParticlesType>
 	class DiffusionReactionSpeciesConstraint
-		: public BaseLocalDynamics<DynamicsIdentifier>,
+		: public LocalDynamics<DynamicsIdentifier>,
 		  public DiffusionReactionSimpleData<DiffusionReactionParticlesType>
 	{
 	public:
 		DiffusionReactionSpeciesConstraint(DynamicsIdentifier &identifier, const std::string &species_name)
-			: BaseLocalDynamics<DynamicsIdentifier>(identifier),
+			: LocalDynamics<DynamicsIdentifier>(identifier),
 			  DiffusionReactionSimpleData<DiffusionReactionParticlesType>(identifier.getSPHBody()),
 			  phi_(this->particles_->diffusion_reaction_material_.AllSpeciesIndexMap()[species_name]),
 			  species_(this->particles_->all_species_[phi_]){};
@@ -294,12 +294,12 @@ namespace SPH
 	 */
 	template <class DiffusionReactionParticlesType>
 	class DiffusionBasedMapping
-		: public LocalDynamics,
+		: public LocalDynamics<SPHBody>,
 		  public DiffusionReactionSimpleData<DiffusionReactionParticlesType>
 	{
 	public:
 		explicit DiffusionBasedMapping(SPHBody &sph_body)
-			: LocalDynamics(sph_body),
+			: LocalDynamics<SPHBody>(sph_body),
 			  DiffusionReactionSimpleData<DiffusionReactionParticlesType>(sph_body),
 			  pos_(this->particles_->pos_), all_species_(this->particles_->all_species_){};
 		virtual ~DiffusionBasedMapping(){};
@@ -316,7 +316,7 @@ namespace SPH
 	 */
 	template <class DynamicsIdentifier, class DiffusionReactionParticlesType>
 	class DiffusionReactionSpeciesSummation
-		: public BaseLocalDynamicsReduce<Real, ReduceSum<Real>, DynamicsIdentifier>,
+		: public LocalDynamicsReduce<DynamicsIdentifier, Real, ReduceSum<Real>>,
 		  public DiffusionReactionSimpleData<DiffusionReactionParticlesType>
 	{
 	protected:
@@ -325,7 +325,7 @@ namespace SPH
 
 	public:
 		DiffusionReactionSpeciesSummation(DynamicsIdentifier &identifier, const std::string &species_name)
-			: BaseLocalDynamicsReduce<Real, ReduceSum<Real>, DynamicsIdentifier>(identifier, Real(0)),
+			: LocalDynamicsReduce<DynamicsIdentifier, Real, ReduceSum<Real>>(identifier, Real(0)),
 			  DiffusionReactionSimpleData<DiffusionReactionParticlesType>(identifier.getSPHBody()),
 			  all_species_(this->particles_->all_species_),
 			  phi_(this->particles_->diffusion_reaction_material_.AllSpeciesIndexMap()[species_name])

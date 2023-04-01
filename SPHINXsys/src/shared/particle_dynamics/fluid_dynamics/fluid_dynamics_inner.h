@@ -52,7 +52,7 @@ namespace SPH
 		 * @brief  Set initial condition for a fluid body.
 		 * This is a abstract class to be override for case specific initial conditions
 		 */
-		class FluidInitialCondition : public LocalDynamics, public FluidDataSimple
+		class FluidInitialCondition : public LocalDynamics<SPHBody>, public FluidDataSimple
 		{
 		public:
 			explicit FluidInitialCondition(SPHBody &sph_body);
@@ -66,7 +66,7 @@ namespace SPH
 		 * @class BaseDensitySummationInner
 		 * @brief Base class for computing density by summation
 		 */
-		class BaseDensitySummationInner : public LocalDynamics, public FluidDataInner
+		class BaseDensitySummationInner : public LocalDynamics<SPHBody>, public FluidDataInner
 		{
 		public:
 			explicit BaseDensitySummationInner(BaseInnerRelation &inner_relation);
@@ -116,7 +116,7 @@ namespace SPH
 		 * @class BaseViscousAccelerationInner
 		 * @brief Base class for the viscosity force induced acceleration
 		 */
-		class BaseViscousAccelerationInner : public LocalDynamics, public FluidDataInner
+		class BaseViscousAccelerationInner : public LocalDynamics<SPHBody>, public FluidDataInner
 		{
 		public:
 			explicit BaseViscousAccelerationInner(BaseInnerRelation &inner_relation);
@@ -162,7 +162,7 @@ namespace SPH
 		 * @class TransportVelocityCorrectionInner
 		 * @brief transport velocity correction
 		 */
-		class TransportVelocityCorrectionInner : public LocalDynamics, public FluidDataInner
+		class TransportVelocityCorrectionInner : public LocalDynamics<SPHBody>, public FluidDataInner
 		{
 		public:
 			explicit TransportVelocityCorrectionInner(BaseInnerRelation &inner_relation, Real coefficient = 0.2);
@@ -181,7 +181,7 @@ namespace SPH
 		 * @class TransportVelocityCorrectionInner
 		 * @brief transport velocity correction
 		 */
-		class TransportVelocityCorrectionInnerAdaptive : public LocalDynamics, public FluidDataInner
+		class TransportVelocityCorrectionInnerAdaptive : public LocalDynamics<SPHBody>, public FluidDataInner
 		{
 		public:
 			explicit TransportVelocityCorrectionInnerAdaptive(BaseInnerRelation &inner_relation, Real coefficient = 0.2);
@@ -201,7 +201,7 @@ namespace SPH
 		 * @class AcousticTimeStepSize
 		 * @brief Computing the acoustic time step size
 		 */
-		class AcousticTimeStepSize : public LocalDynamicsReduce<Real, ReduceMax>, public FluidDataSimple
+		class AcousticTimeStepSize : public LocalDynamicsReduce<SPHBody, Real, ReduceMax>, public FluidDataSimple
 		{
 		public:
 			explicit AcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL = 0.6);
@@ -222,7 +222,7 @@ namespace SPH
 		 * @brief Computing the advection time step size when viscosity is handled implicitly
 		 */
 		class AdvectionTimeStepSizeForImplicitViscosity
-			: public LocalDynamicsReduce<Real, ReduceMax>,
+			: public LocalDynamicsReduce<SPHBody, Real, ReduceMax>,
 			  public FluidDataSimple
 		{
 		public:
@@ -257,7 +257,7 @@ namespace SPH
 		 * @class VorticityInner
 		 * @brief  compute vorticity in the fluid field
 		 */
-		class VorticityInner : public LocalDynamics, public FluidDataInner
+		class VorticityInner : public LocalDynamics<SPHBody>, public FluidDataInner
 		{
 		public:
 			explicit VorticityInner(BaseInnerRelation &inner_relation);
@@ -274,7 +274,7 @@ namespace SPH
 		 * @class BaseIntegration
 		 * @brief Pure abstract base class for all fluid relaxation schemes
 		 */
-		class BaseIntegration : public LocalDynamics, public FluidDataInner
+		class BaseIntegration : public LocalDynamics<SPHBody>, public FluidDataInner
 		{
 		public:
 			explicit BaseIntegration(BaseInnerRelation &inner_relation);

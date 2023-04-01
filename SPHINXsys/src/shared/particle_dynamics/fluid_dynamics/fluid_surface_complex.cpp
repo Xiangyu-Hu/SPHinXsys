@@ -39,7 +39,7 @@ namespace SPH
 										   complex_relation.getContactRelation()) {}
 		//=================================================================================================//
 		SurfaceNormWithWall::SurfaceNormWithWall(BaseContactRelation &contact_relation, Real contact_angle)
-			: LocalDynamics(contact_relation.getSPHBody()), FSIContactData(contact_relation),
+			: LocalDynamics<SPHBody>(contact_relation.getSPHBody()), FSIContactData(contact_relation),
 			  contact_angle_(contact_angle),
 			  surface_indicator_(particles_->surface_indicator_),
 			  surface_norm_(*particles_->getVariableByName<Vecd>("SurfaceNormal")),

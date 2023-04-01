@@ -59,11 +59,11 @@ namespace SPH
 		 * 			how to achieve consistency between velocity and position constraints.
 		 */
 		template <class DynamicsIdentifier>
-		class BaseMotionConstraint : public BaseLocalDynamics<DynamicsIdentifier>, public SolidDataSimple
+		class BaseMotionConstraint : public LocalDynamics<DynamicsIdentifier>, public SolidDataSimple
 		{
 		public:
 			explicit BaseMotionConstraint(DynamicsIdentifier &identifier)
-				: BaseLocalDynamics<DynamicsIdentifier>(identifier), SolidDataSimple(identifier.getSPHBody()),
+				: LocalDynamics<DynamicsIdentifier>(identifier), SolidDataSimple(identifier.getSPHBody()),
 				  pos_(particles_->pos_), pos0_(particles_->pos0_),
 				  n_(particles_->n_), n0_(particles_->n0_),
 				  vel_(particles_->vel_), acc_(particles_->acc_){};
@@ -210,7 +210,7 @@ namespace SPH
 		 * @class ConstrainSolidBodyMassCenter
 		 * @brief Constrain the mass center of a solid body.
 		 */
-		class ConstrainSolidBodyMassCenter : public LocalDynamics, public SolidDataSimple
+		class ConstrainSolidBodyMassCenter : public LocalDynamics<SPHBody>, public SolidDataSimple
 		{
 		private:
 			Real total_mass_;
@@ -293,7 +293,7 @@ namespace SPH
 		 */
 		template <class DynamicsIdentifier>
 		class TotalForceForSimBody
-			: public BaseLocalDynamicsReduce<SimTK::SpatialVec, ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>,
+			: public LocalDynamicsReduce<DynamicsIdentifier, SimTK::SpatialVec, ReduceSum<SimTK::SpatialVec>>,
 			  public SolidDataSimple
 		{
 		protected:
@@ -312,7 +312,7 @@ namespace SPH
 								 SimTK::MobilizedBody &mobod,
 								 SimTK::Force::DiscreteForces &force_on_bodies,
 								 SimTK::RungeKuttaMersonIntegrator &integ)
-				: BaseLocalDynamicsReduce<SimTK::SpatialVec, ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>(
+				: LocalDynamicsReduce<DynamicsIdentifier, SimTK::SpatialVec, ReduceSum<SimTK::SpatialVec>>(
 					  identifier, SimTK::SpatialVec(SimTK::Vec3(0), SimTK::Vec3(0))),
 				  SolidDataSimple(identifier.getSPHBody()), mass_(particles_->mass_),
 				  acc_(particles_->acc_), acc_prior_(particles_->acc_prior_),

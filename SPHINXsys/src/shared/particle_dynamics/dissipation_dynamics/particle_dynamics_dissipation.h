@@ -60,7 +60,7 @@ namespace SPH
 	 * because the splitting partition only works in this case.
 	 */
 	template <typename VariableType>
-	class DampingBySplittingInner : public LocalDynamics, public DissipationDataInner
+	class DampingBySplittingInner : public LocalDynamics<SPHBody>, public DissipationDataInner
 	{
 	protected:
 	public:
@@ -120,7 +120,7 @@ namespace SPH
 	 * because the splitting partition only works in this case.
 	 */
 	template <typename VariableType>
-	class DampingPairwiseInner : public LocalDynamics, public DissipationDataInner
+	class DampingPairwiseInner : public LocalDynamics<SPHBody>, public DissipationDataInner
 	{
 	public:
 		DampingPairwiseInner(BaseInnerRelation &inner_relation, const std::string &variable_name, Real eta);
@@ -179,7 +179,7 @@ namespace SPH
 	 * and the mass of wall particle is not considered.
 	 */
 	template <typename VariableType>
-	class DampingPairwiseFromWall : public LocalDynamics,
+	class DampingPairwiseFromWall : public LocalDynamics<SPHBody>,
 									public DataDelegateContact<BaseParticles, SolidParticles>
 	{
 	public:

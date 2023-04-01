@@ -13,7 +13,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	RandomizeParticlePosition::RandomizeParticlePosition(SPHBody &sph_body)
-		: LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+		: LocalDynamics<SPHBody>(sph_body), GeneralDataDelegateSimple(sph_body),
 		  pos_(particles_->pos_), randomize_scale_(sph_body.sph_adaptation_->MinimumSpacing()) {}
 	//=================================================================================================//
 	void RandomizeParticlePosition::update(size_t index_i, Real dt)
@@ -27,7 +27,7 @@ namespace SPH
 	//=================================================================================================//
 	VelocityBoundCheck::
 		VelocityBoundCheck(SPHBody &sph_body, Real velocity_bound)
-		: LocalDynamicsReduce<bool, ReduceOR>(sph_body, false),
+		: LocalDynamicsReduce<SPHBody, bool, ReduceOR>(sph_body, false),
 		  GeneralDataDelegateSimple(sph_body),
 		  vel_(particles_->vel_), velocity_bound_(velocity_bound) {}
 	//=================================================================================================//
@@ -37,7 +37,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	UpperFrontInXDirection::UpperFrontInXDirection(SPHBody &sph_body)
-		: LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
+		: LocalDynamicsReduce<SPHBody, Real, ReduceMax>(sph_body, Real(0)),
 		  GeneralDataDelegateSimple(sph_body),
 		  pos_(particles_->pos_)
 	{
@@ -50,7 +50,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	MaximumSpeed::MaximumSpeed(SPHBody &sph_body)
-		: LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
+		: LocalDynamicsReduce<SPHBody, Real, ReduceMax>(sph_body, Real(0)),
 		  GeneralDataDelegateSimple(sph_body),
 		  vel_(particles_->vel_)
 	{
@@ -63,7 +63,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	PositionLowerBound::PositionLowerBound(SPHBody &sph_body)
-		: LocalDynamicsReduce<Vecd, ReduceLowerBound>(sph_body, MaxRealNumber * Vecd::Ones()),
+		: LocalDynamicsReduce<SPHBody, Vecd, ReduceLowerBound>(sph_body, MaxRealNumber * Vecd::Ones()),
 		  GeneralDataDelegateSimple(sph_body),
 		  pos_(particles_->pos_)
 	{
@@ -76,7 +76,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	PositionUpperBound::PositionUpperBound(SPHBody &sph_body)
-		: LocalDynamicsReduce<Vecd, ReduceUpperBound>(sph_body, MinRealNumber * Vecd::Ones()),
+		: LocalDynamicsReduce<SPHBody, Vecd, ReduceUpperBound>(sph_body, MinRealNumber * Vecd::Ones()),
 		  GeneralDataDelegateSimple(sph_body),
 		  pos_(particles_->pos_)
 	{
@@ -89,7 +89,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	TotalMechanicalEnergy::TotalMechanicalEnergy(SPHBody &sph_body, SharedPtr<Gravity> gravity_ptr)
-		: LocalDynamicsReduce<Real, ReduceSum<Real>>(sph_body, Real(0)),
+		: LocalDynamicsReduce<SPHBody, Real, ReduceSum<Real>>(sph_body, Real(0)),
 		  GeneralDataDelegateSimple(sph_body), mass_(particles_->mass_),
 		  vel_(particles_->vel_), pos_(particles_->pos_),
 		  gravity_(gravity_ptr_keeper_.assignPtr(gravity_ptr))

@@ -10,7 +10,7 @@ namespace SPH
 		//=================================================================================================//
 		CorrectConfiguration::
 			CorrectConfiguration(BaseInnerRelation &inner_relation)
-			: LocalDynamics(inner_relation.getSPHBody()), SolidDataInner(inner_relation),
+			: LocalDynamics<SPHBody>(inner_relation.getSPHBody()), SolidDataInner(inner_relation),
 			  B_(particles_->B_) {}
 		//=================================================================================================//
 	}

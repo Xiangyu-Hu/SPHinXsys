@@ -52,7 +52,7 @@ namespace SPH
 		 * @class CorrectConfiguration
 		 * @brief obtain the corrected initial configuration in strong form
 		 */
-		class CorrectConfiguration : public LocalDynamics, public SolidDataInner
+		class CorrectConfiguration : public LocalDynamics<SPHBody>, public SolidDataInner
 		{
 		public:
 			explicit CorrectConfiguration(BaseInnerRelation &inner_relation);

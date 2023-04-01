@@ -21,13 +21,13 @@ namespace SPH
 		//=================================================================================================//
 		CompressibleFluidInitialCondition::
 			CompressibleFluidInitialCondition(SPHBody &sph_body)
-			: LocalDynamics(sph_body), CompressibleFluidDataSimple(sph_body),
+			: LocalDynamics<SPHBody>(sph_body), CompressibleFluidDataSimple(sph_body),
 			  pos_(particles_->pos_), vel_(particles_->vel_), mom_(particles_->mom_),
 			  rho_(particles_->rho_), E_(particles_->E_), p_(particles_->p_),
 			  gamma_(particles_->compressible_fluid_.HeatCapacityRatio()) {}
 		//=================================================================================================//
 		ViscousAccelerationInner::ViscousAccelerationInner(BaseInnerRelation &inner_relation)
-			: LocalDynamics(inner_relation.getSPHBody()), CompressibleFluidDataInner(inner_relation),
+			: LocalDynamics<SPHBody>(inner_relation.getSPHBody()), CompressibleFluidDataInner(inner_relation),
 			  Vol_(particles_->Vol_), rho_(particles_->rho_), p_(particles_->p_),
 			  mass_(particles_->mass_), dE_dt_prior_(particles_->dE_dt_prior_),
 			  vel_(particles_->vel_), dmom_dt_prior_(particles_->dmom_dt_prior_),
@@ -35,7 +35,7 @@ namespace SPH
 		      smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
 		//=================================================================================================//
 		AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body)
-			: LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
+			: LocalDynamicsReduce<SPHBody, Real, ReduceMax>(sph_body, Real(0)),
 			  CompressibleFluidDataSimple(sph_body),
 			  compressible_fluid_(particles_->compressible_fluid_),
 			  rho_(particles_->rho_), p_(particles_->p_), vel_(particles_->vel_),
@@ -54,7 +54,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		BaseIntegration::BaseIntegration(BaseInnerRelation &inner_relation)
-			: LocalDynamics(inner_relation.getSPHBody()), CompressibleFluidDataInner(inner_relation),
+			: LocalDynamics<SPHBody>(inner_relation.getSPHBody()), CompressibleFluidDataInner(inner_relation),
 			  compressible_fluid_(particles_->compressible_fluid_),
 			  Vol_(particles_->Vol_), rho_(particles_->rho_), p_(particles_->p_),
 			  drho_dt_(particles_->drho_dt_), E_(particles_->E_), dE_dt_(particles_->dE_dt_),

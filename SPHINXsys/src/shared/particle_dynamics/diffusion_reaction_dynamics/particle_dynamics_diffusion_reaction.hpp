@@ -38,7 +38,7 @@ namespace SPH
 	template <class DiffusionReactionParticlesType>
 	DiffusionReactionInitialCondition<DiffusionReactionParticlesType>::
 		DiffusionReactionInitialCondition(SPHBody &sph_body)
-		: LocalDynamics(sph_body),
+		: LocalDynamics<SPHBody>(sph_body),
 		  DiffusionReactionSimpleData<DiffusionReactionParticlesType>(sph_body),
 		  pos_(this->particles_->pos_), all_species_(this->particles_->all_species_) {}
 	//=================================================================================================//
@@ -56,7 +56,7 @@ namespace SPH
 	template <class DiffusionReactionParticlesType>
 	RelaxationOfAllDiffusionSpeciesInner<DiffusionReactionParticlesType>::
 		RelaxationOfAllDiffusionSpeciesInner(BaseInnerRelation &inner_relation)
-		: LocalDynamics(inner_relation.getSPHBody()),
+		: LocalDynamics<SPHBody>(inner_relation.getSPHBody()),
 		  DiffusionReactionInnerData<DiffusionReactionParticlesType>(inner_relation),
 		  material_(this->particles_->diffusion_reaction_material_),
 		  all_diffusions_(material_.AllDiffusions()),
@@ -218,7 +218,7 @@ namespace SPH
 	template <class DiffusionReactionParticlesType>
 	InitializationRK<DiffusionReactionParticlesType>::
 		InitializationRK(SPHBody &sph_body, StdVec<StdLargeVec<Real>> &diffusion_species_s)
-		: LocalDynamics(sph_body),
+		: LocalDynamics<SPHBody>(sph_body),
 		  DiffusionReactionSimpleData<DiffusionReactionParticlesType>(sph_body),
 		  material_(this->particles_->diffusion_reaction_material_),
 		  all_diffusions_(material_.AllDiffusions()),
@@ -283,7 +283,7 @@ namespace SPH
 	template <class DiffusionReactionParticlesType>
 	BaseRelaxationOfAllReactions<DiffusionReactionParticlesType>::
 		BaseRelaxationOfAllReactions(SPHBody &sph_body)
-		: LocalDynamics(sph_body),
+		: LocalDynamics<SPHBody>(sph_body),
 		  DiffusionReactionSimpleData<DiffusionReactionParticlesType>(sph_body),
 		  reactive_species_(this->particles_->ReactiveSpecies()),
 		  reaction_model_(this->particles_->diffusion_reaction_material_.ReactionModel()) {}

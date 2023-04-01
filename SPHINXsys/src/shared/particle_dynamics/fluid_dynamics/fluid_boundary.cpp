@@ -7,7 +7,7 @@ namespace SPH
 	{
 		//=================================================================================================//
 		BaseFlowBoundaryCondition::BaseFlowBoundaryCondition(BodyPartByCell &body_part)
-			: BaseLocalDynamics<BodyPartByCell>(body_part), FluidDataSimple(sph_body_),
+			: LocalDynamics<BodyPartByCell>(body_part), FluidDataSimple(sph_body_),
 			  rho_(particles_->rho_), p_(particles_->p_),
 			  pos_(particles_->pos_), vel_(particles_->vel_){};
 		//=================================================================================================//
@@ -32,7 +32,7 @@ namespace SPH
 		//=================================================================================================//
 		EmitterInflowCondition::
 			EmitterInflowCondition(BodyAlignedBoxByParticle &aligned_box_part)
-			: BaseLocalDynamics<BodyPartByParticle>(aligned_box_part), FluidDataSimple(sph_body_),
+			: LocalDynamics<BodyPartByParticle>(aligned_box_part), FluidDataSimple(sph_body_),
 			  fluid_(particles_->fluid_),
 			  pos_(particles_->pos_), vel_(particles_->vel_), acc_(particles_->acc_),
 			  rho_(particles_->rho_), p_(particles_->p_), drho_dt_(particles_->drho_dt_),
@@ -54,7 +54,7 @@ namespace SPH
 		//=================================================================================================//
 		EmitterInflowInjection::EmitterInflowInjection(BodyAlignedBoxByParticle &aligned_box_part,
 													   size_t body_buffer_width, int axis)
-			: BaseLocalDynamics<BodyPartByParticle>(aligned_box_part), FluidDataSimple(sph_body_),
+			: LocalDynamics<BodyPartByParticle>(aligned_box_part), FluidDataSimple(sph_body_),
 			  fluid_(particles_->fluid_),
 			  pos_(particles_->pos_), rho_(particles_->rho_), p_(particles_->p_),
 			  axis_(axis), aligned_box_(aligned_box_part.aligned_box_)
@@ -91,7 +91,7 @@ namespace SPH
 		//=================================================================================================//
 		DisposerOutflowDeletion::
 			DisposerOutflowDeletion(BodyAlignedBoxByCell &aligned_box_part, int axis)
-			: BaseLocalDynamics<BodyPartByCell>(aligned_box_part), FluidDataSimple(sph_body_),
+			: LocalDynamics<BodyPartByCell>(aligned_box_part), FluidDataSimple(sph_body_),
 			  pos_(particles_->pos_), axis_(axis), aligned_box_(aligned_box_part.aligned_box_) {}
 		//=================================================================================================//
 		void DisposerOutflowDeletion::update(size_t index_i, Real dt)
@@ -105,7 +105,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		StaticConfinementDensity::StaticConfinementDensity(NearShapeSurface &near_surface)
-			: BaseLocalDynamics<BodyPartByCell>(near_surface), FluidDataSimple(sph_body_),
+			: LocalDynamics<BodyPartByCell>(near_surface), FluidDataSimple(sph_body_),
 			  rho0_(sph_body_.base_material_->ReferenceDensity()),
 			  inv_sigma0_(1.0 / sph_body_.sph_adaptation_->ReferenceNumberDensity()),
 			  mass_(particles_->mass_), rho_sum_(particles_->rho_sum_), pos_(particles_->pos_),
@@ -119,7 +119,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		StaticConfinementIntegration1stHalf::StaticConfinementIntegration1stHalf(NearShapeSurface &near_surface)
-			: BaseLocalDynamics<BodyPartByCell>(near_surface), FluidDataSimple(sph_body_),
+			: LocalDynamics<BodyPartByCell>(near_surface), FluidDataSimple(sph_body_),
 			  fluid_(particles_->fluid_),
 			  rho_(particles_->rho_), p_(particles_->p_),
 			  pos_(particles_->pos_), vel_(particles_->vel_),
@@ -134,7 +134,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		StaticConfinementIntegration2ndHalf::StaticConfinementIntegration2ndHalf(NearShapeSurface &near_surface)
-			: BaseLocalDynamics<BodyPartByCell>(near_surface), FluidDataSimple(sph_body_),
+			: LocalDynamics<BodyPartByCell>(near_surface), FluidDataSimple(sph_body_),
 			  fluid_(particles_->fluid_),
 			  rho_(particles_->rho_), p_(particles_->p_), drho_dt_(particles_->drho_dt_),
 			  pos_(particles_->pos_), vel_(particles_->vel_),

@@ -45,7 +45,7 @@ namespace SPH
 		 * @class SelfContactDensitySummation
 		 * @brief Computing the summation density due to solid self-contact model.
 		 */
-		class SelfContactDensitySummation : public LocalDynamics, public SolidDataInner
+		class SelfContactDensitySummation : public LocalDynamics<SPHBody>, public SolidDataInner
 		{
 		public:
 			explicit SelfContactDensitySummation(SelfSurfaceContactRelation &self_contact_relation);
@@ -73,7 +73,7 @@ namespace SPH
 		 * @class ContactDensitySummation
 		 * @brief Computing the summation density due to solid-solid contact model.
 		 */
-		class ContactDensitySummation : public LocalDynamics, public ContactDynamicsData
+		class ContactDensitySummation : public LocalDynamics<SPHBody>, public ContactDynamicsData
 		{
 		public:
 			explicit ContactDensitySummation(SurfaceContactRelation &solid_body_contact_relation);
@@ -109,7 +109,7 @@ namespace SPH
 		 * @brief Computing the contact density due to shell contact using a
 		 * 		 surface integral being solved by Gauss-Legendre quadrature integration.
 		 */
-		class ShellContactDensity : public LocalDynamics, public ContactDynamicsData
+		class ShellContactDensity : public LocalDynamics<SPHBody>, public ContactDynamicsData
 		{
 		public:
 			explicit ShellContactDensity(SurfaceContactRelation &solid_body_contact_relation);
@@ -159,7 +159,7 @@ namespace SPH
 		 * @class SelfContactForce
 		 * @brief Computing the self-contact force.
 		 */
-		class SelfContactForce : public LocalDynamics, public SolidDataInner
+		class SelfContactForce : public LocalDynamics<SPHBody>, public SolidDataInner
 		{
 		public:
 			explicit SelfContactForce(SelfSurfaceContactRelation &self_contact_relation);
@@ -197,7 +197,7 @@ namespace SPH
 		 * @class ContactForce
 		 * @brief Computing the contact force.
 		 */
-		class ContactForce : public LocalDynamics, public ContactDynamicsData
+		class ContactForce : public LocalDynamics<SPHBody>, public ContactDynamicsData
 		{
 		public:
 			explicit ContactForce(SurfaceContactRelation &solid_body_contact_relation);
@@ -242,7 +242,7 @@ namespace SPH
 		 *  Note that the body surface of the wall should be
 		 *  updated before computing the contact force.
 		 */
-		class ContactForceFromWall : public LocalDynamics, public ContactWithWallData
+		class ContactForceFromWall : public LocalDynamics<SPHBody>, public ContactWithWallData
 		{
 		public:
 			explicit ContactForceFromWall(SurfaceContactRelation &solid_body_contact_relation);
@@ -278,7 +278,7 @@ namespace SPH
 		 * @class ContactForceToWall
 		 * @brief Computing contact force acting on a rigid wall.
 		 */
-		class ContactForceToWall : public LocalDynamics, public ContactDynamicsData
+		class ContactForceToWall : public LocalDynamics<SPHBody>, public ContactDynamicsData
 		{
 		public:
 			explicit ContactForceToWall(SurfaceContactRelation &solid_body_contact_relation);
@@ -322,7 +322,7 @@ namespace SPH
 		 * Note that, currently, this class works only when the contact
 		 * bodies have the same resolution.
 		 */
-		class PairwiseFrictionFromWall : public LocalDynamics, public ContactWithWallData
+		class PairwiseFrictionFromWall : public LocalDynamics<SPHBody>, public ContactWithWallData
 		{
 		public:
 			PairwiseFrictionFromWall(BaseContactRelation &contact_relation, Real eta);
@@ -384,7 +384,7 @@ namespace SPH
 		 *  Note that the body surface of the wall should be
 		 *  updated before computing the contact force.
 		 */
-		class DynamicContactForceWithWall : public LocalDynamics, public ContactDynamicsData
+		class DynamicContactForceWithWall : public LocalDynamics<SPHBody>, public ContactDynamicsData
 		{
 		public:
 			explicit DynamicContactForceWithWall(SurfaceContactRelation &solid_body_contact_relation, Real penalty_strength = 1.0);
