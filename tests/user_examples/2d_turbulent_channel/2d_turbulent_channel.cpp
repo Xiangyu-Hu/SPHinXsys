@@ -56,7 +56,16 @@ int main(int ac, char* av[])
 	//Attention! the original one does use Riemann solver for density
 	Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(water_block_complex_relation);
 	
+	//Turbulent model 
+	InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelRelaxationWithWall> k_equation_relaxation(water_block_complex_relation);
+
+
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex_relation);
+	
+	
+	
+	
+	
 	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> transport_velocity_correction(water_block_complex_relation);
 	InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex>
 		inlet_outlet_surface_particle_indicator(water_block_complex_relation);
@@ -65,9 +74,9 @@ int main(int ac, char* av[])
 	water_block.addBodyStateForRecording<int>("SurfaceIndicator"); // output for debug
 
 	/** Define the external force. */
-	TimeDependentAcceleration gravity(Vec2d(0.0, 0.0)); 
-	
-	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, gravity);
+	//TimeDependentAcceleration gravity(Vec2d(0.0, 0.0)); 
+	//SharedPtr<TimeDependentAcceleration> gravity_ptr = makeShared<TimeDependentAcceleration>(Vecd(0.0, 0.0));
+	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);

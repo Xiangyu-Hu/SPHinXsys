@@ -21,138 +21,136 @@
  *                                                                          *
  * ------------------------------------------------------------------------*/
 /**
- * @file 	static_confinement.h
+ * @file 	k-epsilon_turbulent_model.h
  * @brief 	Here, we define the static confinement boundary condition classes for fluid dynamics.
  * @details     This boundary condition is based on Level-set filed.
  * @author	Yongchuan Yu and Xiangyu Hu
  */
 
-#ifndef FLUID_BOUNDARY_STATIC_COFINEMENT_H
-#define FLUID_BOUNDARY_STATIC_COFINEMENT_H
+#ifndef K_EPSILON_TURBULENT_MODEL_H
+#define K_EPSILON_TURBULENT_MODEL_H
 
 #include "fluid_dynamics_inner.h"
 #include "fluid_boundary.h"
+#include "fluid_dynamics_complex.h"
 #include <mutex>
 
 namespace SPH
 {
     namespace fluid_dynamics
     {
+		/**
+		* @class BaseTurbulentClosureCoefficient
+		* @brief  BaseTurbulentClosureCoefficient
+		*/
+		class BaseTurbulentClosureCoefficient
+		{
+		public:
+			explicit BaseTurbulentClosureCoefficient();
+			virtual ~BaseTurbulentClosureCoefficient() {};
 
-        /**
-         * @class StaticConfinementTransportVelocity
-         * @brief static confinement condition for transport velocity
-         */
-        class StaticConfinementTransportVelocity : public LocalDynamics, public FluidDataSimple
-        {
-        public:
-            StaticConfinementTransportVelocity(NearShapeSurface& near_surface, Real coefficient = 0.2);
-            virtual ~StaticConfinementTransportVelocity() {};
-            void update(size_t index_i, Real dt = 0.0);
+		protected:
+			Real Karman;
+			Real turbu_const_E;
+			Real C_mu;
+			Real TurbulentIntensity;
+			Real TurbulentLength;
 
-        protected:
-            StdLargeVec<Vecd>& pos_;
-            StdLargeVec<int>& surface_indicator_;
-            const Real coefficient_;
-            Real smoothing_length_sqr_;
-            LevelSetShape* level_set_shape_;
-        };
+			//K equation
+			Real sigma_k;
 
-        /**
-         * @class StaticConfinementViscousAcceleration
-         * @brief static confinement condition for viscous acceleration
-         */
-        class StaticConfinementViscousAcceleration : public LocalDynamics, public FluidDataSimple
-        {
-        public:
-            StaticConfinementViscousAcceleration(NearShapeSurface& near_surface);
-            virtual ~StaticConfinementViscousAcceleration() {};
-            void update(size_t index_i, Real dt = 0.0);
-
-        protected:
-            StdLargeVec<Vecd>& pos_;
-            StdLargeVec<Real>& rho_;
-            StdLargeVec<Vecd>& vel_, &acc_prior_;
-            Real mu_;
-            LevelSetShape* level_set_shape_;
-        };
+			//closure coefficients for epsilon model
+			Real C_l, C_2;
+			Real sigma_E;
 
 
-        /**
-        * @class StaticConfinementIntegration1stHalf
-        * @brief static confinement condition for pressure relaxation
-        */
-        class StaticConfinementExtendIntegration1stHalf : public LocalDynamics, public FluidDataSimple
-        {
-        public:
-            StaticConfinementExtendIntegration1stHalf(NearShapeSurface& near_surface, Real  sound_speed,  Real penalty_strength = 2.0);
-            virtual ~StaticConfinementExtendIntegration1stHalf() {};
-            void update(size_t index_i, Real dt = 0.0);
+		};
 
-        protected:
-            Real penalty_strength_, c_0_;
-            Fluid& fluid_;
-            StdLargeVec<Real>& rho_, & p_;
-            StdLargeVec<Vecd>& pos_, & vel_, & acc_;
-            LevelSetShape* level_set_shape_;
-            AcousticRiemannSolver riemann_solver_;
-        };
+		/**
+		* @class BaseTurtbulentData
+		* @brief  BaseTurtbulentData
+		*/
+		class BaseTurtbulentData : public FluidDataInner, public BaseTurbulentClosureCoefficient
+		{
+		public:
+			explicit BaseTurtbulentData(BaseInnerRelation &inner_relation);
+			virtual ~BaseTurtbulentData() {};
 
-        /**
-        * @class StaticConfinementIntegration1stHalf
-        * @brief static confinement condition for pressure relaxation
-        */
-        class StaticConfinementBounding : public LocalDynamics, public FluidDataSimple
-        {
-        public:
-            StaticConfinementBounding(NearShapeSurface& near_surface);
-            virtual ~StaticConfinementBounding() {};
-            void update(size_t index_i, Real dt = 0.0);
+		protected:
 
-        protected:
-            StdLargeVec<Vecd>& pos_;
-            LevelSetShape* level_set_shape_;
-            Real constrained_distance_;
-        };
+			Real particle_spacing_min_;
+			Real mu_;
+			StdLargeVec<Real>& Vol_, & rho_, & p_;
+			StdLargeVec<Vecd>& vel_, & acc_prior_;
+			int dimension_;
+		};
 
-        /**
-        * @class StaticConfinement
-        * @brief Static confined boundary condition for complex structures with bounding.
-        */
-         class StaticConfinementWithBounding
-         {
-         public:
+		/**
+		* @class BaseTurtbulentModel
+		* @brief  BaseTurtbulentModel
+		*/
+		class BaseTurtbulentModel : public BaseTurtbulentData, public LocalDynamics
+		{
+		public:
+			explicit BaseTurtbulentModel(BaseInnerRelation &inner_relation);
+			virtual ~BaseTurtbulentModel() {};
 
-             SimpleDynamics<StaticConfinementDensity> density_summation_;
-             SimpleDynamics<StaticConfinementIntegration1stHalf> pressure_relaxation_;
-             SimpleDynamics<StaticConfinementIntegration2ndHalf> density_relaxation_;
-             SimpleDynamics<StaticConfinementBounding> surface_bounding_;
+		protected:
+			StdLargeVec<Real> turbu_mu_;
+			StdLargeVec<Real> turbu_k_;
+			StdLargeVec<Real> turbu_epsilon_;
+			Real ProductionTermBase;
+			Real smoothing_length_;
+			StdLargeVec<Matd>& grad_calculated_;
+			StdLargeVec<Matd> Rij;
+			StdLargeVec<Matd> grad_vel_ij, transpose_grad_vel_ij;
+		};
 
 
-             StaticConfinementWithBounding(NearShapeSurface& near_surface);
-             virtual ~StaticConfinementWithBounding() {};
-         };
+
+		/**
+		* @class K_TutbulentModel
+		* @brief  K_TutbulentModel
+		*/
+		class K_TurtbulentModelInner : public BaseTurtbulentModel
+		{
+		public:
+			explicit K_TurtbulentModelInner(BaseInnerRelation &inner_relation);
+			virtual ~K_TurtbulentModelInner() {};
+
+		protected:
+			StdLargeVec<Real> dk_dt_;
+			StdLargeVec<Real> production_k_;
+			StdLargeVec<Real> lap_k_, lap_k_term_;
+			StdLargeVec<Real> temp_dW_, temp_rij_;
+
+			//only for convinience for output U
+			StdLargeVec<Real> vel_x_n_;
+
+			inline void interaction(size_t index_i, Real dt = 0.0);
+
+			void update(size_t index_i, Real dt = 0.0);
+		};
 
 
-        /**
-        * @class StaticConfinement
-        * @brief Static confined boundary condition for complex structures with penalty force for light phase.
-        */
-        class StaticConfinementWithPenalty
-        {
-        public:
+		/**
+		 * @class K_TurtbulentModelRelaxationWithWall
+		 * @brief .
+		 * The
+		 */
+		template <class BaseIntegration2ndHalfType>
+		class Base_K_TurtbulentModelWithWall : public InteractionWithWall<BaseIntegration2ndHalfType>
+		{
+		public:
+			template <typename... Args>
+			Base_K_TurtbulentModelWithWall(Args &&...args)
+				: InteractionWithWall<BaseIntegration2ndHalfType>(std::forward<Args>(args)...) {};
+			virtual ~Base_K_TurtbulentModelWithWall() {};
 
-            SimpleDynamics<StaticConfinementDensity> density_summation_;
-            SimpleDynamics<StaticConfinementIntegration1stHalf> pressure_relaxation_;
-            SimpleDynamics<StaticConfinementIntegration2ndHalf> density_relaxation_;
-            SimpleDynamics<StaticConfinementTransportVelocity> transport_velocity_;
-            SimpleDynamics<StaticConfinementViscousAcceleration> viscous_acceleration_;
-            SimpleDynamics<StaticConfinementExtendIntegration1stHalf> extend_intergration_1st_half_;
-            SimpleDynamics<StaticConfinementBounding> surface_bounding_;
+			inline void interaction(size_t index_i, Real dt = 0.0);
+		};
 
-            StaticConfinementWithPenalty(NearShapeSurface& near_surface, Real sound_speed, Real penalty_strength);
-            virtual ~StaticConfinementWithPenalty() {};
-        };
+        using K_TurtbulentModelRelaxationWithWall = Base_K_TurtbulentModelWithWall<K_TurtbulentModelInner>;
 
 
     }

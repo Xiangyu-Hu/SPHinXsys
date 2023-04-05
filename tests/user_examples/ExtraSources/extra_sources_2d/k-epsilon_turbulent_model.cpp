@@ -1,4 +1,4 @@
-#include "fluid_boundary_static_confinement.h"
+#include "k-epsilon_turbulent_model.h"
 
 namespace SPH
 {
@@ -6,95 +6,120 @@ namespace SPH
 	namespace fluid_dynamics
 	{
 		//=================================================================================================//
-		StaticConfinementTransportVelocity::StaticConfinementTransportVelocity(NearShapeSurface& near_surface, Real coefficient)
-			: LocalDynamics(near_surface.getSPHBody()), FluidDataSimple(sph_body_),
-			pos_(particles_->pos_), surface_indicator_(particles_->surface_indicator_),
-			smoothing_length_sqr_(pow(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
-			coefficient_(coefficient),
-			level_set_shape_(&near_surface.level_set_shape_) {}
+		BaseTurbulentClosureCoefficient::BaseTurbulentClosureCoefficient()
+			: Karman(0.4187), C_mu(0.09), TurbulentIntensity(1.0e-2), sigma_k(1.0),
+			C_l(1.44), C_2(1.92), sigma_E(1.3), turbu_const_E(9.793) {}
 		//=================================================================================================//
-		void StaticConfinementTransportVelocity::update(size_t index_i, Real dt)
+		BaseTurtbulentData::BaseTurtbulentData(BaseInnerRelation& inner_relation)
+			: FluidDataInner(inner_relation), BaseTurbulentClosureCoefficient(),
+			particle_spacing_min_(inner_relation.real_body_->sph_adaptation_->MinimumSpacing()),
+			Vol_(particles_->Vol_), rho_(particles_->rho_), p_(particles_->p_),
+			vel_(particles_->vel_),acc_prior_(particles_->acc_prior_),
+			mu_(particles_->fluid_.ReferenceViscosity()),dimension_(Vecd(0).size()) {}
+		//=================================================================================================//
+		BaseTurtbulentModel::BaseTurtbulentModel(BaseInnerRelation& inner_relation)
+			: LocalDynamics(inner_relation.getSPHBody()),
+			BaseTurtbulentData(inner_relation),
+			smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
+			grad_calculated_(*particles_->getVariableByName<Matd>("GradCalculated")) {}
+		//=================================================================================================//
+		K_TurtbulentModelInner::K_TurtbulentModelInner(BaseInnerRelation& inner_relation)
+			: BaseTurtbulentModel(inner_relation)
 		{
-			Vecd acceleration_trans = Vecd::Zero();
-			// acceleration for transport velocity
-			acceleration_trans -= 2.0 * level_set_shape_->computeKernelGradientIntegral(pos_[index_i]);
-			/** correcting particle position */
-			if (surface_indicator_[index_i] == 0)
-				pos_[index_i] += coefficient_ * smoothing_length_sqr_ * acceleration_trans;
-		}
-		//=================================================================================================//
-		StaticConfinementViscousAcceleration::StaticConfinementViscousAcceleration(NearShapeSurface& near_surface)
-			: LocalDynamics(near_surface.getSPHBody()), FluidDataSimple(sph_body_),
-			pos_(particles_->pos_), acc_prior_(particles_->acc_prior_), rho_(particles_->rho_),
-			mu_(particles_->fluid_.ReferenceViscosity()), vel_(particles_->vel_),
-			level_set_shape_(&near_surface.level_set_shape_) {}
-		//=================================================================================================//
-		void StaticConfinementViscousAcceleration::update(size_t index_i, Real dt)
-		{
-			Vecd acceleration = Vecd::Zero();
-			Vecd vel_derivative = Vecd::Zero();
-			Vecd vel_level_set_cell_j = Vecd::Zero();
-			/*Here we give the Level-set boundary velocity as zero, but later we need a vector to set the velocity of each level-set cell*/
-			Real phi_r_ij = abs(level_set_shape_->findSignedDistance(pos_[index_i]));
-			vel_derivative = (vel_[index_i] - vel_level_set_cell_j) / (phi_r_ij + TinyReal);
-			Vecd kernel_gradient = level_set_shape_->computeKernelGradientIntegral(pos_[index_i]);
-			acceleration += 2.0 * mu_ * kernel_gradient.norm() * vel_derivative;
-			acc_prior_[index_i] += acceleration / rho_[index_i];
-		}
-		//=================================================================================================//
-		StaticConfinementExtendIntegration1stHalf::
-			StaticConfinementExtendIntegration1stHalf(NearShapeSurface& near_surface, Real  sound_speed, Real penalty_strength)
-			: LocalDynamics(near_surface.getSPHBody()), FluidDataSimple(sph_body_),
-			fluid_(particles_->fluid_), c_0_ (sound_speed),
-			rho_(particles_->rho_), p_(particles_->p_),
-			pos_(particles_->pos_), vel_(particles_->vel_),
-			acc_(particles_->acc_),
-			level_set_shape_(&near_surface.level_set_shape_),
-			riemann_solver_(fluid_, fluid_), penalty_strength_(penalty_strength) {}
-		//=================================================================================================//
-		void StaticConfinementExtendIntegration1stHalf::update(size_t index_i, Real dt)
-		{
-			Vecd kernel_gradient = level_set_shape_->computeKernelGradientIntegral(pos_[index_i]);
-			acc_[index_i] -= 2.0 * p_[index_i] * kernel_gradient / rho_[index_i];
-			
-			Real penalty_pressure = p_[index_i];
-			Real distance_to_the_wall = abs(level_set_shape_->findSignedDistance(pos_[index_i]));
-			Real ratio = distance_to_the_wall  / (3.0 * sph_body_.sph_adaptation_->ReferenceSpacing());
-			Real penalty = ratio < 1.0 ? (1.0 - ratio) * (1.0 - ratio) * 1.0 * penalty_pressure: 0.0;
-			
-			acc_[index_i] -= 2.0 * penalty_strength_* penalty * kernel_gradient / rho_[index_i];
-		}
-		//=================================================================================================//
-		StaticConfinementBounding::StaticConfinementBounding(NearShapeSurface& near_surface)
-			: LocalDynamics(near_surface.getSPHBody()), FluidDataSimple(sph_body_),
-			pos_(particles_->pos_),
-			constrained_distance_(0.5 * sph_body_.sph_adaptation_->MinimumSpacing())
-		{
-			level_set_shape_ = &near_surface.level_set_shape_;
-		}
-		//=================================================================================================//
-		void StaticConfinementBounding::update(size_t index_i, Real dt)
-		{
-			Real phi = level_set_shape_->findSignedDistance(pos_[index_i]);
+			particles_->registerVariable(dk_dt_, "ChangeRateOfTKE");
+			particles_->registerSortableVariable<Real>("ChangeRateOfTKE");
 
-			if (phi > -constrained_distance_)
-			{
-				Vecd unit_normal = level_set_shape_->findNormalDirection(pos_[index_i]);
-				pos_[index_i] -= (phi + constrained_distance_) * unit_normal;
-			}
+			//particles_->registerAVariable(turbu_k_, "TurbulenceKineticEnergy",6.43e-9);
+			//particles_->registerAVariable(turbu_k_, "TurbulenceKineticEnergy", 0.00015);
+			particles_->registerVariable(turbu_k_, "TurbulenceKineticEnergy", 0.000180001);
+			particles_->registerSortableVariable<Real>("TurbulenceKineticEnergy");
+			particles_->addVariableToWrite<Real>("TurbulenceKineticEnergy");
+
+			particles_->registerVariable(turbu_mu_, "TurbulentViscosity", 1.0e-9);
+			particles_->registerSortableVariable<Real>("TurbulentViscosity");
+			particles_->addVariableToWrite<Real>("TurbulentViscosity");
+
+
+			//particles_->registerAVariable(turbu_epsilon_, "TurbulentDissipation", 3.72e-9);
+			//particles_->registerAVariable(turbu_epsilon_, "TurbulentDissipation", 2.156208e-5);
+			particles_->registerVariable(turbu_epsilon_, "TurbulentDissipation", 3.326679e-5);
+			particles_->registerSortableVariable<Real>("TurbulentDissipation");
+			particles_->addVariableToWrite<Real>("TurbulentDissipation");
+
+			particles_->registerVariable(grad_vel_ij, "VelocityGradient");
+			particles_->registerSortableVariable<Matd>("VelocityGradient");
+
+			particles_->registerVariable(Rij, "RenoyldShearStress");
+			particles_->registerSortableVariable<Matd>("RenoyldShearStress");
+
+			particles_->registerVariable(transpose_grad_vel_ij, "TransposeVelocityGradient");
+			particles_->registerSortableVariable<Matd>("TransposeVelocityGradient");
+
+
+			particles_->registerVariable(production_k_, "Production_K");
+			particles_->registerSortableVariable<Real>("Production_K");
+			particles_->addVariableToWrite<Real>("Production_K");
+
+			particles_->registerVariable(vel_x_n_, "Velocity_X");
+			particles_->registerSortableVariable<Real>("Velocity_X");
+
+			particles_->registerVariable(lap_k_, "Lap_K");
+			particles_->registerSortableVariable<Real>("Lap_K");
+			particles_->addVariableToWrite<Real>("Lap_K");
+
+			particles_->registerVariable(lap_k_term_, "Lap_K_term");
+			particles_->registerSortableVariable<Real>("Lap_K_term");
+			particles_->addVariableToWrite<Real>("Lap_K_term");
+
+			particles_->registerVariable(temp_dW_, "dW_term");
+			particles_->registerSortableVariable<Real>("dW_term");
+			particles_->addVariableToWrite<Real>("dW_term");
+
+			particles_->registerVariable(temp_rij_, "rij_term");
+			particles_->registerSortableVariable<Real>("rij_term");
+			particles_->addVariableToWrite<Real>("rij_term");
+
+			particles_->registerSortableVariable<int>("SurfaceIndicator");
 		}
 		//=================================================================================================//
-		StaticConfinementWithBounding::StaticConfinementWithBounding(NearShapeSurface& near_surface)
-			: density_summation_(near_surface), pressure_relaxation_(near_surface),
-			density_relaxation_(near_surface), surface_bounding_(near_surface)
-		{}
+		void K_TurtbulentModelInner::interaction(size_t index_i, Real dt)
+		{
+			Vecd vel_i = vel_[index_i];
+			Real rho_i = rho_[index_i];
+			Real turbu_mu_i = turbu_mu_[index_i];
+			Real turbu_k_i = turbu_k_[index_i];
+
+			dk_dt_[index_i] = 0.0;
+			Real k_production(0.0);
+			Real k_derivative(0.0);
+			Real k_lap(0.0);
+			Matd strain_rate = Matd::Zero();
+			Matd Re_stress = Matd::Zero();
+			Matd velocity_gradient = Matd::Zero();
+			
+			const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+			{
+				size_t index_j = inner_neighborhood.j_[n];
+				Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+				velocity_gradient += (vel_i - vel_[index_j]) * nablaW_ijV_j.transpose();
+				
+				k_derivative = (turbu_k_i - turbu_k_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
+				k_lap += 2.0 * (mu_+turbu_mu_i/sigma_k)*k_derivative * inner_neighborhood.dW_ijV_j_[n]/ rho_i;
+			}
+			strain_rate = 0.5 * (velocity_gradient.transpose() + velocity_gradient);
+			Re_stress = 2.0 * strain_rate * turbu_mu_i / rho_i - (2.0 / 3.0) * turbu_k_i * Matd::Identity();
+			Matd k_production_matrix = Re_stress * velocity_gradient.transpose();
+			k_production = k_production_matrix.sum();
+
+			dk_dt_[index_i] = k_production +turbu_epsilon_[index_i] + k_lap;
+		}
 		//=================================================================================================//
-		StaticConfinementWithPenalty::StaticConfinementWithPenalty(NearShapeSurface& near_surface, Real sound_speed, Real penalty_strength)
-			: density_summation_(near_surface), pressure_relaxation_(near_surface),
-			density_relaxation_(near_surface), transport_velocity_(near_surface),
-			viscous_acceleration_(near_surface), extend_intergration_1st_half_(near_surface, sound_speed, penalty_strength),
-			surface_bounding_(near_surface)
-		{}
+		void K_TurtbulentModelInner::update(size_t index_i, Real dt)
+		{
+			turbu_k_[index_i] += dk_dt_[index_i] * dt;
+		}
+
 	}
 	//=================================================================================================//
 }
