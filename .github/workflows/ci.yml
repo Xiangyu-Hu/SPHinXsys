@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 env:
-  VCPKG_VERSION: "2022.11.14"
+  VCPKG_VERSION: "69efe9cc2df0015f0bb2d37d55acde4a75c9a25b" # 01/04/2023
   CTEST_PARALLEL_LEVEL: "1"
 
 # A workflow is made up of one or more jobs that can run sequentially or in parallel
@@ -48,10 +48,11 @@ jobs:
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
         with: 
           committish: ${{ env.VCPKG_VERSION }}
+          cache-version: ${{env.VCPKG_VERSION}}
 
       - name: Install dependencies
         run: |
-          ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build openblas[dynamic-arch] 
+          ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build openblas[dynamic-arch] --allow-unsupported # last argument to remove after regression introduced by microsoft/vcpkg#30192 is addressed
           # Simbody depends on (open)blas implementation, which -march=native by default, conflicting with cache restore, hence dynamic-arch feature
           # Above problem might also be resolved by adding the hash of architecture in the cache key, esp. if more package do the same
           ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build \
@@ -138,6 +139,7 @@ jobs:
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
         with: 
           committish: ${{ env.VCPKG_VERSION }}
+          cache-version: ${{env.VCPKG_VERSION}}
 
       - name: Install dependencies
         run: |
@@ -232,6 +234,7 @@ jobs:
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
         with: 
           committish: ${{ env.VCPKG_VERSION }}
+          cache-version: ${{env.VCPKG_VERSION}}
 
       - name: Install dependencies
         run: |
