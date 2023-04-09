@@ -60,7 +60,9 @@ int main(int ac, char* av[])
 	
 	//Turbulent model 
 	InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelWithWall, SequencedPolicy> k_equation_relaxation(water_block_complex_relation);
-	//InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner);
+	InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelWithWall, SequencedPolicy> epsilon_equation_relaxation(water_block_complex_relation);
+
+
 
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex_relation);
 	
@@ -151,6 +153,7 @@ int main(int ac, char* av[])
 				density_relaxation.exec(dt);
 
 				k_equation_relaxation.exec(dt);
+				epsilon_equation_relaxation.exec(dt);
 
 				relaxation_time += dt;
 				integration_time += dt;

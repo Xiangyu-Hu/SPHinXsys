@@ -38,8 +38,8 @@ namespace SPH
     namespace fluid_dynamics
     {
 		/**
-		 * @class DensitySummation
-		 * @brief computing density by summation considering contribution from contact bodies
+		 * @class Base_K_TurtbulentModelComplex
+		 * @brief Base_K_TurtbulentModelComplex
 		 */
 		template <class K_TurtbulentModelInnerType>
 		class Base_K_TurtbulentModelComplex
@@ -54,13 +54,11 @@ namespace SPH
 			StdVec<StdLargeVec<Vecd>*> contact_vel_ave_;
 
 		};
-
 		/**
 		 * @class K_TurtbulentModelRelaxationWithWall
 		 * @brief .
 		 * The
 		 */
-		
 		class K_TurtbulentModelWithWall 
 			: public Base_K_TurtbulentModelComplex<K_TurtbulentModelInner>
 		{
@@ -72,8 +70,37 @@ namespace SPH
 
 			inline void interaction(size_t index_i, Real dt = 0.0);
 		};
-		
-		//using K_TurtbulentModelRelaxationWithWall = Base_K_TurtbulentModelWithWall<K_TurtbulentModelInner>;
+
+		/**
+		 * @class Base_E_TurtbulentModelComplex
+		 * @brief Base_E_TurtbulentModelComplex
+		 */
+		template <class E_TurtbulentModelInnerType>
+		class Base_E_TurtbulentModelComplex
+			: public BaseInteractionComplex<E_TurtbulentModelInnerType, FluidContactData>
+		{
+		public:
+			template <typename... Args>
+			explicit Base_E_TurtbulentModelComplex(Args &&...args);
+			virtual ~Base_E_TurtbulentModelComplex() {};
+
+		};
+		/**
+		 * @class E_TurtbulentModelRelaxationWithWall
+		 * @brief .
+		 */
+		class E_TurtbulentModelWithWall
+			: public Base_E_TurtbulentModelComplex<E_TurtbulentModelInner>
+		{
+		public:
+			template <typename... Args>
+			explicit E_TurtbulentModelWithWall(Args &&...args)
+				: Base_E_TurtbulentModelComplex<E_TurtbulentModelInner>(std::forward<Args>(args)...) {};
+			virtual ~E_TurtbulentModelWithWall() {};
+
+			inline void interaction(size_t index_i, Real dt = 0.0);
+		};
+
 
     }
 }

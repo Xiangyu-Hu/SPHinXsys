@@ -103,13 +103,28 @@ namespace SPH
 		protected:
 			StdLargeVec<Real> dk_dt_;
 			Matd velocity_gradient;
-			
-			//StdLargeVec<Real> production_k_;
-			//StdLargeVec<Real> lap_k_, lap_k_term_;
-			//StdLargeVec<Real> temp_dW_, temp_rij_;
 
-			//only for convinience for output U
-			//StdLargeVec<Real> vel_x_n_;
+			StdLargeVec<Real> k_production_;
+		};
+
+		/**
+		 * @class E_TurtbulentModelInner
+		 * @brief  E_TurtbulentModelInner
+		 */
+		class E_TurtbulentModelInner : public BaseTurtbulentModelInner
+		{
+		public:
+			explicit E_TurtbulentModelInner(BaseInnerRelation& inner_relation);
+			virtual ~E_TurtbulentModelInner() {};
+
+			inline void interaction(size_t index_i, Real dt = 0.0);
+			void update(size_t index_i, Real dt = 0.0);
+		protected:
+			StdLargeVec<Real> dE_dt_;
+			StdLargeVec<Real>& turbu_mu_;
+			StdLargeVec<Real>& turbu_k_;
+			StdLargeVec<Real>& turbu_epsilon_;
+			StdLargeVec<Real> &k_production_;
 		};
     }
 }

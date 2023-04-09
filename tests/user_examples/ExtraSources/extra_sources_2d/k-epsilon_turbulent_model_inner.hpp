@@ -66,8 +66,35 @@ namespace SPH
 				//Matd k_production_matrix = Re_stress * velocity_gradient.transpose();
 				//k_production = k_production_matrix.sum();
 
-				/** k_production will be calculated in the complex part */
+				/** k_production will be calculated in the complex part after getting the velocity contribution of wall*/
 				dk_dt_[index_i] = k_production - turbu_epsilon_[index_i] + k_lap;
+		}
+		//=================================================================================================//
+		void E_TurtbulentModelInner::
+			interaction(size_t index_i, Real dt)
+		{
+			Real rho_i = rho_[index_i];
+			Real turbu_mu_i = turbu_mu_[index_i];
+			Real turbu_k_i = turbu_k_[index_i];
+			Real turbu_epsilon_i = turbu_epsilon_[index_i];
+
+			dE_dt_[index_i] = 0.0;
+			Real epsilon_production(0.0);
+			Real epsilon_derivative(0.0);
+			Real epsilon_lap(0.0);
+			Real epsilon_dissipation(0.0);
+			const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+			{
+				size_t index_j = inner_neighborhood.j_[n];
+				epsilon_derivative = (turbu_epsilon_i - turbu_epsilon_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
+				epsilon_lap += 2.0 * (mu_ + turbu_mu_i / sigma_E) * epsilon_derivative * inner_neighborhood.dW_ijV_j_[n] / rho_i;
+			}
+			/** epsilon_production will be calculated in the complex part*/
+			epsilon_production = 0.0;
+			epsilon_dissipation = C_2 * turbu_epsilon_i * turbu_epsilon_i / turbu_k_i;
+
+			dE_dt_[index_i] = epsilon_production - epsilon_dissipation + epsilon_lap;
 		}
 		//=================================================================================================//
 	}

@@ -13,8 +13,7 @@ namespace SPH
 		BaseTurtbulentModelInner::BaseTurtbulentModelInner(BaseInnerRelation& inner_relation)
 			: LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
 			particle_spacing_min_(inner_relation.real_body_->sph_adaptation_->MinimumSpacing()),
-			 rho_(particles_->rho_), 
-			vel_(particles_->vel_), 
+			 rho_(particles_->rho_), vel_(particles_->vel_), 
 			mu_(particles_->fluid_.ReferenceViscosity()), dimension_(Vecd(0).size()), 
 			smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()){}
 		//=================================================================================================//
@@ -24,8 +23,6 @@ namespace SPH
 				particles_->registerVariable(dk_dt_, "ChangeRateOfTKE");
 				particles_->registerSortableVariable<Real>("ChangeRateOfTKE");
 
-				//particles_->registerAVariable(turbu_k_, "TurbulenceKineticEnergy",6.43e-9);
-				//particles_->registerAVariable(turbu_k_, "TurbulenceKineticEnergy", 0.00015);
 				particles_->registerVariable(turbu_k_, "TurbulenceKineticEnergy", 0.000180001);
 				particles_->registerSortableVariable<Real>("TurbulenceKineticEnergy");
 				particles_->addVariableToWrite<Real>("TurbulenceKineticEnergy");
@@ -34,12 +31,14 @@ namespace SPH
 				particles_->registerSortableVariable<Real>("TurbulentViscosity");
 				particles_->addVariableToWrite<Real>("TurbulentViscosity");
 
-
-				//particles_->registerAVariable(turbu_epsilon_, "TurbulentDissipation", 3.72e-9);
-				//particles_->registerAVariable(turbu_epsilon_, "TurbulentDissipation", 2.156208e-5);
 				particles_->registerVariable(turbu_epsilon_, "TurbulentDissipation", 3.326679e-5);
 				particles_->registerSortableVariable<Real>("TurbulentDissipation");
 				particles_->addVariableToWrite<Real>("TurbulentDissipation");
+
+				particles_->registerVariable(k_production_, "K_Production");
+				particles_->registerSortableVariable<Real>("K_Production");
+				particles_->addVariableToWrite<Real>("K_Production");
+				
 		}
 		//=================================================================================================//
 		void K_TurtbulentModelInner::update(size_t index_i, Real dt)
@@ -47,6 +46,26 @@ namespace SPH
 			turbu_k_[index_i] += dk_dt_[index_i] * dt;
 		}
 		//=================================================================================================//
+		E_TurtbulentModelInner::E_TurtbulentModelInner(BaseInnerRelation& inner_relation)
+			: BaseTurtbulentModelInner(inner_relation), 
+			k_production_(*particles_->getVariableByName<Real>("K_Production")),
+			turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
+			turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
+			turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation"))
+		{
+			particles_->registerVariable(dE_dt_, "ChangeRateOfTDR");
+			particles_->registerSortableVariable<Real>("ChangeRateOfTDR");
+		}
+		//=================================================================================================//
+		void E_TurtbulentModelInner::update(size_t index_i, Real dt)
+		{
+			turbu_epsilon_[index_i] += dE_dt_[index_i] * dt;
+		}
+		//=================================================================================================//
+
+
+
+
 	}
 	//=================================================================================================//
 }
