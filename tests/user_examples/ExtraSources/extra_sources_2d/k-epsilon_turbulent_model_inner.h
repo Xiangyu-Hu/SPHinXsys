@@ -22,17 +22,15 @@
  * ------------------------------------------------------------------------*/
 /**
  * @file 	k-epsilon_turbulent_model.h
- * @brief 	Here, we define the static confinement boundary condition classes for fluid dynamics.
- * @details     This boundary condition is based on Level-set filed.
- * @author	Yongchuan Yu and Xiangyu Hu
+ * @brief 	Here,.
+ * @details     T.
+ * @author Xiangyu Hu
  */
 
-#ifndef K_EPSILON_TURBULENT_MODEL_H
-#define K_EPSILON_TURBULENT_MODEL_H
+#ifndef K_EPSILON_TURBULENT_MODEL_INNER_H
+#define K_EPSILON_TURBULENT_MODEL_INNER_H
 
-#include "fluid_dynamics_inner.h"
-#include "fluid_boundary.h"
-#include "fluid_dynamics_complex.h"
+#include "sphinxsys.h"
 #include <mutex>
 
 namespace SPH
@@ -67,92 +65,52 @@ namespace SPH
 		};
 
 		/**
-		* @class BaseTurtbulentData
-		* @brief  BaseTurtbulentData
-		*/
-		class BaseTurtbulentData : public FluidDataInner, public BaseTurbulentClosureCoefficient
+		 * @class BaseTurtbulentModelInner
+		 * @brief BaseTurtbulentModelInner
+		 */
+		class BaseTurtbulentModelInner : public LocalDynamics, public FluidDataInner, public BaseTurbulentClosureCoefficient
 		{
 		public:
-			explicit BaseTurtbulentData(BaseInnerRelation &inner_relation);
-			virtual ~BaseTurtbulentData() {};
-
-		protected:
-
-			Real particle_spacing_min_;
-			Real mu_;
-			StdLargeVec<Real>& Vol_, & rho_, & p_;
-			StdLargeVec<Vecd>& vel_, & acc_prior_;
-			int dimension_;
-		};
-
-		/**
-		* @class BaseTurtbulentModel
-		* @brief  BaseTurtbulentModel
-		*/
-		class BaseTurtbulentModel : public BaseTurtbulentData, public LocalDynamics
-		{
-		public:
-			explicit BaseTurtbulentModel(BaseInnerRelation &inner_relation);
-			virtual ~BaseTurtbulentModel() {};
+			explicit BaseTurtbulentModelInner(BaseInnerRelation& inner_relation);
+			virtual ~BaseTurtbulentModelInner() {};
+			
 
 		protected:
 			StdLargeVec<Real> turbu_mu_;
 			StdLargeVec<Real> turbu_k_;
 			StdLargeVec<Real> turbu_epsilon_;
-			Real ProductionTermBase;
+
 			Real smoothing_length_;
-			StdLargeVec<Matd>& grad_calculated_;
-			StdLargeVec<Matd> Rij;
-			StdLargeVec<Matd> grad_vel_ij, transpose_grad_vel_ij;
+			Real particle_spacing_min_;
+			Real mu_;
+			StdLargeVec<Real> & rho_;
+			StdLargeVec<Vecd>& vel_;
+			int dimension_;
 		};
 
-
-
 		/**
-		* @class K_TutbulentModel
-		* @brief  K_TutbulentModel
-		*/
-		class K_TurtbulentModelInner : public BaseTurtbulentModel
+		 * @class K_TurtbulentModelInner
+		 * @brief  K_TurtbulentModelInner
+		 */
+		class K_TurtbulentModelInner : public BaseTurtbulentModelInner
 		{
 		public:
-			explicit K_TurtbulentModelInner(BaseInnerRelation &inner_relation);
+			explicit K_TurtbulentModelInner(BaseInnerRelation& inner_relation);
 			virtual ~K_TurtbulentModelInner() {};
 
+			inline void interaction(size_t index_i, Real dt = 0.0);
+			void update(size_t index_i, Real dt = 0.0);
 		protected:
 			StdLargeVec<Real> dk_dt_;
-			StdLargeVec<Real> production_k_;
-			StdLargeVec<Real> lap_k_, lap_k_term_;
-			StdLargeVec<Real> temp_dW_, temp_rij_;
+			Matd velocity_gradient;
+			
+			//StdLargeVec<Real> production_k_;
+			//StdLargeVec<Real> lap_k_, lap_k_term_;
+			//StdLargeVec<Real> temp_dW_, temp_rij_;
 
 			//only for convinience for output U
-			StdLargeVec<Real> vel_x_n_;
-
-			inline void interaction(size_t index_i, Real dt = 0.0);
-
-			void update(size_t index_i, Real dt = 0.0);
+			//StdLargeVec<Real> vel_x_n_;
 		};
-
-
-		/**
-		 * @class K_TurtbulentModelRelaxationWithWall
-		 * @brief .
-		 * The
-		 */
-		template <class BaseIntegration2ndHalfType>
-		class Base_K_TurtbulentModelWithWall : public InteractionWithWall<BaseIntegration2ndHalfType>
-		{
-		public:
-			template <typename... Args>
-			Base_K_TurtbulentModelWithWall(Args &&...args)
-				: InteractionWithWall<BaseIntegration2ndHalfType>(std::forward<Args>(args)...) {};
-			virtual ~Base_K_TurtbulentModelWithWall() {};
-
-			inline void interaction(size_t index_i, Real dt = 0.0);
-		};
-
-        using K_TurtbulentModelRelaxationWithWall = Base_K_TurtbulentModelWithWall<K_TurtbulentModelInner>;
-
-
     }
 }
-#endif // FLUID_BOUNDARY_STATIC_COFINEMENT_H
+#endif // K_EPSILON_TURBULENT_MODEL_INNER_H

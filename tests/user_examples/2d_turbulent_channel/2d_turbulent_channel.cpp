@@ -4,9 +4,11 @@
  * @details This is the one of the basic test cases.
  * @author 	Xiangyu Hu
  */
-#include "2d_turbulent_channel.h"
 #include "sphinxsys.h"
-#include "k-epsilon_turbulent_model.h"
+#include "2d_turbulent_channel.h"
+
+#include "k-epsilon_turbulent_model_complex.h"
+#include "k-epsilon_turbulent_model_complex.hpp"
 using namespace SPH;
 
 int main(int ac, char* av[])
@@ -57,8 +59,8 @@ int main(int ac, char* av[])
 	Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(water_block_complex_relation);
 	
 	//Turbulent model 
-	InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelRelaxationWithWall> k_equation_relaxation(water_block_complex_relation);
-
+	InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelWithWall, SequencedPolicy> k_equation_relaxation(water_block_complex_relation);
+	//InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner);
 
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex_relation);
 	
@@ -147,6 +149,8 @@ int main(int ac, char* av[])
 				pressure_relaxation.exec(dt);
 				emitter_buffer_inflow_condition.exec();
 				density_relaxation.exec(dt);
+
+				k_equation_relaxation.exec(dt);
 
 				relaxation_time += dt;
 				integration_time += dt;
