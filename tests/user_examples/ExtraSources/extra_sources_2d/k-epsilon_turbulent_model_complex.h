@@ -41,62 +41,56 @@ namespace SPH
 		 * @class Base_K_TurtbulentModelComplex
 		 * @brief Base_K_TurtbulentModelComplex
 		 */
-		template <class K_TurtbulentModelInnerType>
-		class Base_K_TurtbulentModelComplex
-			: public BaseInteractionComplex<K_TurtbulentModelInnerType, FluidContactData>
-		{
-		public:
-			template <typename... Args>
-			explicit Base_K_TurtbulentModelComplex(Args &&...args);
-			virtual ~Base_K_TurtbulentModelComplex() {};
+		//template <class K_TurtbulentModelInnerType>
+		//class Base_K_TurtbulentModelComplex
+		//	: public BaseInteractionComplex<K_TurtbulentModelInnerType, FluidContactData>
+		//{
+		//public:
+		//	template <typename... Args>
+		//	explicit Base_K_TurtbulentModelComplex(Args &&...args);
+		//	virtual ~Base_K_TurtbulentModelComplex() {};
 
-		protected:
-			StdVec<StdLargeVec<Vecd>*> contact_vel_ave_;
+		//protected:
+		//	StdVec<StdLargeVec<Vecd>*> contact_vel_ave_;
 
-		};
+		//};
 		/**
 		 * @class K_TurtbulentModelRelaxationWithWall
 		 * @brief .
 		 * The
 		 */
 		class K_TurtbulentModelWithWall 
-			: public Base_K_TurtbulentModelComplex<K_TurtbulentModelInner>
+			: public BaseInteractionComplex<K_TurtbulentModelInner, FluidContactData>
 		{
 		public:
 			template <typename... Args>
 			explicit K_TurtbulentModelWithWall(Args &&...args)
-				: Base_K_TurtbulentModelComplex<K_TurtbulentModelInner>(std::forward<Args>(args)...) {};
+				: BaseInteractionComplex<K_TurtbulentModelInner, FluidContactData>
+				(std::forward<Args>(args)...) 
+			{
+				for (size_t k = 0; k != this->contact_particles_.size(); ++k)
+				{
+					contact_vel_ave_.push_back(&(this->contact_particles_[k]->vel_));
+				}
+			};
 			virtual ~K_TurtbulentModelWithWall() {};
-
 			inline void interaction(size_t index_i, Real dt = 0.0);
+		protected:
+			StdVec<StdLargeVec<Vecd>*> contact_vel_ave_;
 		};
 
-		/**
-		 * @class Base_E_TurtbulentModelComplex
-		 * @brief Base_E_TurtbulentModelComplex
-		 */
-		template <class E_TurtbulentModelInnerType>
-		class Base_E_TurtbulentModelComplex
-			: public BaseInteractionComplex<E_TurtbulentModelInnerType, FluidContactData>
-		{
-		public:
-			template <typename... Args>
-			explicit Base_E_TurtbulentModelComplex(Args &&...args);
-			virtual ~Base_E_TurtbulentModelComplex() {};
-
-		};
 		/**
 		 * @class E_TurtbulentModelRelaxationWithWall
 		 * @brief .
 		 */
 		class E_TurtbulentModelWithWall
-			: public Base_E_TurtbulentModelComplex<E_TurtbulentModelInner>
+			: public BaseInteractionComplex<E_TurtbulentModelInner, FluidContactData>
 		{
 		public:
 			template <typename... Args>
 			explicit E_TurtbulentModelWithWall(Args &&...args)
-				: Base_E_TurtbulentModelComplex<E_TurtbulentModelInner>(std::forward<Args>(args)...) {};
-			virtual ~E_TurtbulentModelWithWall() {};
+				: BaseInteractionComplex<E_TurtbulentModelInner, FluidContactData>(
+					std::forward<Args>(args)...) {};
 
 			inline void interaction(size_t index_i, Real dt = 0.0);
 		};

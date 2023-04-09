@@ -73,6 +73,7 @@ namespace SPH
 		void E_TurtbulentModelInner::
 			interaction(size_t index_i, Real dt)
 		{
+			std::cout << "enter inner E";
 			Real rho_i = rho_[index_i];
 			Real turbu_mu_i = turbu_mu_[index_i];
 			Real turbu_k_i = turbu_k_[index_i];

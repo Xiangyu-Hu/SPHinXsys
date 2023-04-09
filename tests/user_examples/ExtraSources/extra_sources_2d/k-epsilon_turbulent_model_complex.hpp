@@ -38,7 +38,7 @@ namespace SPH
 		void K_TurtbulentModelWithWall::
 			interaction(size_t index_i, Real dt)
 		{
-			Base_K_TurtbulentModelComplex<K_TurtbulentModelInner>::interaction(index_i, dt);
+			K_TurtbulentModelInner::interaction(index_i, dt);
 			Vecd vel_i = vel_[index_i];
 			Real rho_i = rho_[index_i];
 			Real turbu_mu_i = turbu_mu_[index_i];
@@ -79,24 +79,10 @@ namespace SPH
 			
 		}
 		//=================================================================================================//
-		template <class K_TurtbulentModelInnerType>
-		template <typename... Args>
-		Base_K_TurtbulentModelComplex<K_TurtbulentModelInnerType>::
-			Base_K_TurtbulentModelComplex(Args &&...args)
-			: BaseInteractionComplex<K_TurtbulentModelInnerType, FluidContactData>(std::forward<Args>(args)...)
-		{
-			for (size_t k = 0; k != this->contact_particles_.size(); ++k)
-			{
-				contact_vel_ave_.push_back(&(this->contact_particles_[k]->vel_));
-			}
-		};
-
-
-		//=================================================================================================//
 		void E_TurtbulentModelWithWall::
 			interaction(size_t index_i, Real dt)
 		{
-			Base_E_TurtbulentModelComplex<E_TurtbulentModelInner>::interaction(index_i, dt);
+			E_TurtbulentModelInner::interaction(index_i, dt);
 			Real rho_i = rho_[index_i];
 			Real turbu_mu_i = turbu_mu_[index_i];
 			Real turbu_k_i = turbu_k_[index_i];
@@ -120,17 +106,6 @@ namespace SPH
 			/** With standard wall function, epilson on wall is zero */
 			dE_dt_[index_i] += epsilon_production - 0.0 + epsilon_lap;
 		}
-		//=================================================================================================//
-		template <class E_TurtbulentModelInnerType>
-		template <typename... Args>
-		Base_E_TurtbulentModelComplex<E_TurtbulentModelInnerType>::
-			Base_E_TurtbulentModelComplex(Args &&...args)
-			: BaseInteractionComplex<E_TurtbulentModelInnerType, FluidContactData>(std::forward<Args>(args)...){};
-		//=================================================================================================//	
-
-
-
-
 	}
 	//=================================================================================================//
 }

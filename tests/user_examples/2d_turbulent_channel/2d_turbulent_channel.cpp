@@ -61,7 +61,7 @@ int main(int ac, char* av[])
 	//Turbulent model 
 	InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelWithWall, SequencedPolicy> k_equation_relaxation(water_block_complex_relation);
 	InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelWithWall, SequencedPolicy> epsilon_equation_relaxation(water_block_complex_relation);
-
+	//InteractionDynamics<fluid_dynamics::TurbulentKineticEnergyAccelerationWithWall> turbulent_kinetic_energy_acceleration(water_block_complex_relation);
 
 
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex_relation);
