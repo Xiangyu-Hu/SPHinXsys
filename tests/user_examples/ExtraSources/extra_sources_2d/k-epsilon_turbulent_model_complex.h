@@ -94,7 +94,21 @@ namespace SPH
 
 			inline void interaction(size_t index_i, Real dt = 0.0);
 		};
+		/**
+		 * @class TurbulentKineticEnergyAccelerationWithWall
+		 * @brief .
+		 */
+		class TurbulentKineticEnergyAccelerationWithWall
+			: public BaseInteractionComplex<TurbulentKineticEnergyAccelerationInner, FluidContactData>
+		{
+		public:
+			template <typename... Args>
+			explicit TurbulentKineticEnergyAccelerationWithWall(Args &&...args)
+				: BaseInteractionComplex<TurbulentKineticEnergyAccelerationInner, FluidContactData>(
+					std::forward<Args>(args)...) {};
 
+			inline void interaction(size_t index_i, Real dt = 0.0);
+		};
 
     }
 }

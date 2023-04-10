@@ -98,6 +98,25 @@ namespace SPH
 			dE_dt_[index_i] = epsilon_production - epsilon_dissipation + epsilon_lap;
 		}
 		//=================================================================================================//
+		void TurbulentKineticEnergyAccelerationInner::interaction(size_t index_i, Real dt)
+		{
+			std::cout << "enter inner TKE";
+			Real turbu_k_i = turbu_k_[index_i];
+			Vecd acceleration = Vecd::Zero();
+			Vecd k_gradient = Vecd::Zero();
+			
+			//strong form is used
+			const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+			{
+				size_t index_j = inner_neighborhood.j_[n];
+				Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+				k_gradient += (turbu_k_i - turbu_k_[index_j]) * nablaW_ijV_j.transpose();
+				acceleration -= (2.0 / 3.0) * k_gradient;
+			}
+			acc_prior_[index_i] += acceleration;
+		}
+		//=================================================================================================//
 	}
 	//=================================================================================================//
 }

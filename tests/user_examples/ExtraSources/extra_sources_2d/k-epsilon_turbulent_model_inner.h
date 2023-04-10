@@ -126,6 +126,23 @@ namespace SPH
 			StdLargeVec<Real>& turbu_epsilon_;
 			StdLargeVec<Real> &k_production_;
 		};
+		/**
+		 * @class E_TurtbulentModelInner
+		 * @brief  E_TurtbulentModelInner
+		 */
+		class TurbulentKineticEnergyAccelerationInner : public BaseTurtbulentModelInner
+		{
+		public:
+			explicit TurbulentKineticEnergyAccelerationInner(BaseInnerRelation& inner_relation);
+			virtual ~TurbulentKineticEnergyAccelerationInner() {};
+
+			inline void interaction(size_t index_i, Real dt = 0.0);
+		protected:
+			StdLargeVec<Real>& turbu_k_;
+			StdLargeVec<Vecd>& acc_prior_;
+		};
+
+
     }
 }
 #endif // K_EPSILON_TURBULENT_MODEL_INNER_H

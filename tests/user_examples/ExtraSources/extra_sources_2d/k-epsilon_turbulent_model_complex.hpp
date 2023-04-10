@@ -106,6 +106,33 @@ namespace SPH
 			/** With standard wall function, epilson on wall is zero */
 			dE_dt_[index_i] += epsilon_production - 0.0 + epsilon_lap;
 		}
+		//=================================================================================================//
+		void TurbulentKineticEnergyAccelerationWithWall::
+			interaction(size_t index_i, Real dt)
+		{
+			TurbulentKineticEnergyAccelerationInner::interaction(index_i, dt);
+
+			Real turbu_k_i = turbu_k_[index_i];
+			Vecd acceleration = Vecd::Zero();
+			Vecd k_gradient = Vecd::Zero();
+			for (size_t k = 0; k < FluidContactData::contact_configuration_.size(); ++k)
+			{
+				Neighborhood& contact_neighborhood = (*FluidContactData::contact_configuration_[k])[index_i];
+				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+				{
+					for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+					{
+						size_t index_j = contact_neighborhood.j_[n];
+						Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
+						//the value of k on wall in this part needs discusstion!
+						k_gradient += (turbu_k_i - 0.0) * nablaW_ijV_j.transpose();
+						acceleration -= (2.0 / 3.0) * k_gradient;
+					}
+				}
+			}
+			acc_prior_[index_i] += acceleration;
+
+		}
 	}
 	//=================================================================================================//
 }

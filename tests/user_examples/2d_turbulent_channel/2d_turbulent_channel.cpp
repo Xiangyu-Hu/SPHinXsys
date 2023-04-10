@@ -61,7 +61,7 @@ int main(int ac, char* av[])
 	//Turbulent model 
 	InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelWithWall, SequencedPolicy> k_equation_relaxation(water_block_complex_relation);
 	InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelWithWall, SequencedPolicy> epsilon_equation_relaxation(water_block_complex_relation);
-	//InteractionDynamics<fluid_dynamics::TurbulentKineticEnergyAccelerationWithWall> turbulent_kinetic_energy_acceleration(water_block_complex_relation);
+	InteractionDynamics<fluid_dynamics::TurbulentKineticEnergyAccelerationWithWall, SequencedPolicy> turbulent_kinetic_energy_acceleration(water_block_complex_relation);
 
 
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex_relation);
@@ -148,6 +148,9 @@ int main(int ac, char* av[])
 			while (relaxation_time < Dt)
 			{
 				dt = SMIN(get_fluid_time_step_size.exec(), Dt - relaxation_time);
+				
+				turbulent_kinetic_energy_acceleration.exec();
+				
 				pressure_relaxation.exec(dt);
 				emitter_buffer_inflow_condition.exec();
 				density_relaxation.exec(dt);

@@ -62,6 +62,11 @@ namespace SPH
 			turbu_epsilon_[index_i] += dE_dt_[index_i] * dt;
 		}
 		//=================================================================================================//
+		TurbulentKineticEnergyAccelerationInner::
+			TurbulentKineticEnergyAccelerationInner(BaseInnerRelation& inner_relation)
+			: BaseTurtbulentModelInner(inner_relation), acc_prior_(particles_->acc_prior_),
+			turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")){}
+		//=================================================================================================//
 
 
 
