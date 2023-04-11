@@ -35,7 +35,7 @@ namespace SPH
 	namespace fluid_dynamics
 	{
 		//=================================================================================================//
-		void K_TurtbulentModelWithWall::
+		void K_TurtbulentModelComplex::
 			interaction(size_t index_i, Real dt)
 		{
 			K_TurtbulentModelInner::interaction(index_i, dt);
@@ -79,7 +79,7 @@ namespace SPH
 			
 		}
 		//=================================================================================================//
-		void E_TurtbulentModelWithWall::
+		void E_TurtbulentModelComplex::
 			interaction(size_t index_i, Real dt)
 		{
 			E_TurtbulentModelInner::interaction(index_i, dt);
@@ -107,10 +107,10 @@ namespace SPH
 			dE_dt_[index_i] += epsilon_production - 0.0 + epsilon_lap;
 		}
 		//=================================================================================================//
-		void TurbulentKineticEnergyAccelerationWithWall::
+		void TKEnergyAccComplex::
 			interaction(size_t index_i, Real dt)
 		{
-			TurbulentKineticEnergyAccelerationInner::interaction(index_i, dt);
+			TKEnergyAccInner::interaction(index_i, dt);
 
 			Real turbu_k_i = turbu_k_[index_i];
 			Vecd acceleration = Vecd::Zero();
@@ -133,11 +133,11 @@ namespace SPH
 			acc_prior_[index_i] += acceleration;
 		}
 		//=================================================================================================//
-		template <class TurbulentViscousAccelerationInnerType>
-		void BaseTurbulentViscousAccelerationWithWall<TurbulentViscousAccelerationInnerType>::
+		template <class TurbuViscousAccInnerType>
+		void BaseTurbuViscousAccWithWall<TurbuViscousAccInnerType>::
 			interaction(size_t index_i, Real dt)
 		{
-			TurbulentViscousAccelerationInnerType::interaction(index_i, dt);
+			TurbuViscousAccInnerType::interaction(index_i, dt);
 			Real turbu_mu_i = this->turbu_mu_[index_i];
 			Real rho_i = this->rho_[index_i];
 			const Vecd& vel_i = this->vel_[index_i];

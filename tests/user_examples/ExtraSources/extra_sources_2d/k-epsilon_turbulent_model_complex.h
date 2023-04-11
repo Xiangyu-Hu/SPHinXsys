@@ -42,12 +42,12 @@ namespace SPH
 		 * @brief .
 		 * The
 		 */
-		class K_TurtbulentModelWithWall 
+		class K_TurtbulentModelComplex 
 			: public BaseInteractionComplex<K_TurtbulentModelInner, FluidContactData>
 		{
 		public:
 			template <typename... Args>
-			explicit K_TurtbulentModelWithWall(Args &&...args)
+			explicit K_TurtbulentModelComplex(Args &&...args)
 				: BaseInteractionComplex<K_TurtbulentModelInner, FluidContactData>
 				(std::forward<Args>(args)...) 
 			{
@@ -56,7 +56,7 @@ namespace SPH
 					contact_vel_ave_.push_back(&(this->contact_particles_[k]->vel_));
 				}
 			};
-			virtual ~K_TurtbulentModelWithWall() {};
+			virtual ~K_TurtbulentModelComplex() {};
 			inline void interaction(size_t index_i, Real dt = 0.0);
 		protected:
 			StdVec<StdLargeVec<Vecd>*> contact_vel_ave_;
@@ -66,12 +66,12 @@ namespace SPH
 		 * @class E_TurtbulentModelRelaxationWithWall
 		 * @brief .
 		 */
-		class E_TurtbulentModelWithWall
+		class E_TurtbulentModelComplex
 			: public BaseInteractionComplex<E_TurtbulentModelInner, FluidContactData>
 		{
 		public:
 			template <typename... Args>
-			explicit E_TurtbulentModelWithWall(Args &&...args)
+			explicit E_TurtbulentModelComplex(Args &&...args)
 				: BaseInteractionComplex<E_TurtbulentModelInner, FluidContactData>(
 					std::forward<Args>(args)...) {};
 
@@ -79,16 +79,16 @@ namespace SPH
 		};
 
 		/**
-		 * @class TurbulentKineticEnergyAccelerationWithWall
+		 * @class TKEnergyAccComplex
 		 * @brief .
 		 */
-		class TurbulentKineticEnergyAccelerationWithWall
-			: public BaseInteractionComplex<TurbulentKineticEnergyAccelerationInner, FluidContactData>
+		class TKEnergyAccComplex
+			: public BaseInteractionComplex<TKEnergyAccInner, FluidContactData>
 		{
 		public:
 			template <typename... Args>
-			explicit TurbulentKineticEnergyAccelerationWithWall(Args &&...args)
-				: BaseInteractionComplex<TurbulentKineticEnergyAccelerationInner, FluidContactData>(
+			explicit TKEnergyAccComplex(Args &&...args)
+				: BaseInteractionComplex<TKEnergyAccInner, FluidContactData>(
 					std::forward<Args>(args)...) {};
 
 			inline void interaction(size_t index_i, Real dt = 0.0);
@@ -98,19 +98,19 @@ namespace SPH
 		 * @class ViscousWithWall
 		 * @brief  template class viscous acceleration with wall boundary
 		 */
-		template <class TurbulentViscousAccelerationInnerType>
-		class BaseTurbulentViscousAccelerationWithWall : public InteractionWithWall<TurbulentViscousAccelerationInnerType>
+		template <class TurbuViscousAccInnerType>
+		class BaseTurbuViscousAccWithWall : public InteractionWithWall<TurbuViscousAccInnerType>
 		{
 		public:
 			template <typename... Args>
-			BaseTurbulentViscousAccelerationWithWall(Args &&...args)
-				: InteractionWithWall<TurbulentViscousAccelerationInnerType>(std::forward<Args>(args)...) {};
-			virtual ~BaseTurbulentViscousAccelerationWithWall() {};
+			BaseTurbuViscousAccWithWall(Args &&...args)
+				: InteractionWithWall<TurbuViscousAccInnerType>(std::forward<Args>(args)...) {};
+			virtual ~BaseTurbuViscousAccWithWall() {};
 
 			inline void interaction(size_t index_i, Real dt = 0.0);
 		};
 
-		using TurbulentViscousAccelerationWithWall = BaseTurbulentViscousAccelerationWithWall<TurbulentViscousAccelerationInner>;
+		using TurbulentViscousAccelerationWithWall = BaseTurbuViscousAccWithWall<TurbuViscousAccInner>;
 
 
     }

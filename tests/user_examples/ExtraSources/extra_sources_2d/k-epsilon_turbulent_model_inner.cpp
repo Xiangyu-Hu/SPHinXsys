@@ -6,7 +6,7 @@ namespace SPH
 	namespace fluid_dynamics
 	{
 		//=================================================================================================//
-		BaseTurbulentClosureCoefficient::BaseTurbulentClosureCoefficient()
+		BaseTurbuClosureCoeff::BaseTurbuClosureCoeff()
 			: Karman(0.4187), C_mu(0.09), TurbulentIntensity(1.0e-2), sigma_k(1.0),
 			C_l(1.44), C_2(1.92), sigma_E(1.3), turbu_const_E(9.793), TurbulentLength(0.0){}
 		//=================================================================================================//
@@ -62,12 +62,12 @@ namespace SPH
 			turbu_epsilon_[index_i] += dE_dt_[index_i] * dt;
 		}
 		//=================================================================================================//
-		TurbulentKineticEnergyAccelerationInner::
-			TurbulentKineticEnergyAccelerationInner(BaseInnerRelation& inner_relation)
+		TKEnergyAccInner::
+			TKEnergyAccInner(BaseInnerRelation& inner_relation)
 			: BaseTurtbulentModelInner(inner_relation), acc_prior_(particles_->acc_prior_),
 			turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")){}
 		//=================================================================================================//
-		TurbulentViscousAccelerationInner::TurbulentViscousAccelerationInner(BaseInnerRelation& inner_relation)
+		TurbuViscousAccInner::TurbuViscousAccInner(BaseInnerRelation& inner_relation)
 			: BaseViscousAccelerationInner(inner_relation),
 			turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")) {}
 		//=================================================================================================//

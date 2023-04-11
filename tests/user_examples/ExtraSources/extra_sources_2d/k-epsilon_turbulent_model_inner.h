@@ -38,14 +38,14 @@ namespace SPH
     namespace fluid_dynamics
     {
 		/**
-		* @class BaseTurbulentClosureCoefficient
-		* @brief  BaseTurbulentClosureCoefficient
+		* @class BaseTurbuClosureCoeff
+		* @brief  BaseTurbuClosureCoeff
 		*/
-		class BaseTurbulentClosureCoefficient
+		class BaseTurbuClosureCoeff
 		{
 		public:
-			explicit BaseTurbulentClosureCoefficient();
-			virtual ~BaseTurbulentClosureCoefficient() {};
+			explicit BaseTurbuClosureCoeff();
+			virtual ~BaseTurbuClosureCoeff() {};
 
 		protected:
 			Real Karman;
@@ -68,7 +68,7 @@ namespace SPH
 		 * @class BaseTurtbulentModelInner
 		 * @brief BaseTurtbulentModelInner
 		 */
-		class BaseTurtbulentModelInner : public LocalDynamics, public FluidDataInner, public BaseTurbulentClosureCoefficient
+		class BaseTurtbulentModelInner : public LocalDynamics, public FluidDataInner, public BaseTurbuClosureCoeff
 		{
 		public:
 			explicit BaseTurtbulentModelInner(BaseInnerRelation& inner_relation);
@@ -130,11 +130,11 @@ namespace SPH
 		 * @class E_TurtbulentModelInner
 		 * @brief  E_TurtbulentModelInner
 		 */
-		class TurbulentKineticEnergyAccelerationInner : public BaseTurtbulentModelInner
+		class TKEnergyAccInner : public BaseTurtbulentModelInner
 		{
 		public:
-			explicit TurbulentKineticEnergyAccelerationInner(BaseInnerRelation& inner_relation);
-			virtual ~TurbulentKineticEnergyAccelerationInner() {};
+			explicit TKEnergyAccInner(BaseInnerRelation& inner_relation);
+			virtual ~TKEnergyAccInner() {};
 
 			inline void interaction(size_t index_i, Real dt = 0.0);
 		protected:
@@ -143,14 +143,14 @@ namespace SPH
 		};
 
 		/**
-		 * @class TurbulentViscousAccelerationInner
+		 * @class TurbuViscousAccInner
 		 * @brief  the turbulent viscosity force induced acceleration
 		 */
-		class TurbulentViscousAccelerationInner : public BaseViscousAccelerationInner
+		class TurbuViscousAccInner : public BaseViscousAccelerationInner
 		{
 		public:
-			explicit TurbulentViscousAccelerationInner(BaseInnerRelation& inner_relation) ;
-			virtual ~TurbulentViscousAccelerationInner() {};
+			explicit TurbuViscousAccInner(BaseInnerRelation& inner_relation) ;
+			virtual ~TurbuViscousAccInner() {};
 
 			inline void interaction(size_t index_i, Real dt = 0.0);
 		protected:
@@ -158,10 +158,11 @@ namespace SPH
 		};
 
 		/**
-		 * @class TurbulentViscousAccelerationInner
+		 * @class TurbuViscousAccInner
 		 * @brief  the turbulent viscosity force induced acceleration
 		 */
-		class TurbulentEddyViscosity : public LocalDynamics, public FluidDataSimple, public BaseTurbulentClosureCoefficient
+		class TurbulentEddyViscosity : public LocalDynamics, 
+			public FluidDataSimple, public BaseTurbuClosureCoeff
 		{
 		public:
 			explicit TurbulentEddyViscosity(SPHBody& sph_body);

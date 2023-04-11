@@ -98,7 +98,7 @@ namespace SPH
 			dE_dt_[index_i] = epsilon_production - epsilon_dissipation + epsilon_lap;
 		}
 		//=================================================================================================//
-		void TurbulentKineticEnergyAccelerationInner::interaction(size_t index_i, Real dt)
+		void TKEnergyAccInner::interaction(size_t index_i, Real dt)
 		{
 			Real turbu_k_i = turbu_k_[index_i];
 			Vecd acceleration = Vecd::Zero();
@@ -116,7 +116,7 @@ namespace SPH
 			acc_prior_[index_i] += acceleration;
 		}
 		//=================================================================================================//
-		void TurbulentViscousAccelerationInner::
+		void TurbuViscousAccInner::
 			interaction(size_t index_i, Real dt)
 		{
 			Real turbu_mu_i = turbu_mu_[index_i];
