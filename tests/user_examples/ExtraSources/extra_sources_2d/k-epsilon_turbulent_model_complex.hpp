@@ -131,8 +131,37 @@ namespace SPH
 				}
 			}
 			acc_prior_[index_i] += acceleration;
-
 		}
+		//=================================================================================================//
+		template <class TurbulentViscousAccelerationInnerType>
+		void BaseTurbulentViscousAccelerationWithWall<TurbulentViscousAccelerationInnerType>::
+			interaction(size_t index_i, Real dt)
+		{
+			TurbulentViscousAccelerationInnerType::interaction(index_i, dt);
+			Real turbu_mu_i = this->turbu_mu_[index_i];
+			Real rho_i = this->rho_[index_i];
+			const Vecd& vel_i = this->vel_[index_i];
+
+			Vecd acceleration = Vecd::Zero();
+			Vecd vel_derivative = Vecd::Zero();
+			for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
+			{
+				StdLargeVec<Vecd>& vel_ave_k = *(this->wall_vel_ave_[k]);
+				Neighborhood& contact_neighborhood = (*FluidWallData::contact_configuration_[k])[index_i];
+				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+				{
+					size_t index_j = contact_neighborhood.j_[n];
+					Real r_ij = contact_neighborhood.r_ij_[n];
+
+					vel_derivative = 2.0 * (vel_i - vel_ave_k[index_j]) / (r_ij + 0.01 * this->smoothing_length_);
+					acceleration += 2.0 * (this->mu_+ turbu_mu_i) * vel_derivative * contact_neighborhood.dW_ijV_j_[n] / rho_i;
+				}
+			}
+
+			this->acc_prior_[index_i] += acceleration;
+		}
+		//=================================================================================================//
+
 	}
 	//=================================================================================================//
 }

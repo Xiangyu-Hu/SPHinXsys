@@ -63,9 +63,9 @@ int main(int ac, char* av[])
 	InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelWithWall, SequencedPolicy> epsilon_equation_relaxation(water_block_complex_relation);
 	InteractionDynamics<fluid_dynamics::TurbulentKineticEnergyAccelerationWithWall, SequencedPolicy> turbulent_kinetic_energy_acceleration(water_block_complex_relation);
 
-
-	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex_relation);
-	
+	InteractionDynamics<fluid_dynamics::TurbulentViscousAccelerationWithWall> turbulent_viscous_acceleration(water_block_complex_relation);
+	//InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex_relation);
+	SimpleDynamics<fluid_dynamics::TurbulentEddyViscosity, SequencedPolicy> update_eddy_viscosity(water_block);
 	
 	
 	
@@ -140,7 +140,10 @@ int main(int ac, char* av[])
 			Real Dt = get_fluid_advection_time_step_size.exec();
 			inlet_outlet_surface_particle_indicator.exec();
 			update_density_by_summation.exec();
-			viscous_acceleration.exec();
+			
+			update_eddy_viscosity.exec();
+			turbulent_viscous_acceleration.exec();
+			//viscous_acceleration.exec();
 			transport_velocity_correction.exec();
 
 			/** Dynamics including pressure relaxation. */

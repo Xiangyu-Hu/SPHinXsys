@@ -38,23 +38,6 @@ namespace SPH
     namespace fluid_dynamics
     {
 		/**
-		 * @class Base_K_TurtbulentModelComplex
-		 * @brief Base_K_TurtbulentModelComplex
-		 */
-		//template <class K_TurtbulentModelInnerType>
-		//class Base_K_TurtbulentModelComplex
-		//	: public BaseInteractionComplex<K_TurtbulentModelInnerType, FluidContactData>
-		//{
-		//public:
-		//	template <typename... Args>
-		//	explicit Base_K_TurtbulentModelComplex(Args &&...args);
-		//	virtual ~Base_K_TurtbulentModelComplex() {};
-
-		//protected:
-		//	StdVec<StdLargeVec<Vecd>*> contact_vel_ave_;
-
-		//};
-		/**
 		 * @class K_TurtbulentModelRelaxationWithWall
 		 * @brief .
 		 * The
@@ -94,6 +77,7 @@ namespace SPH
 
 			inline void interaction(size_t index_i, Real dt = 0.0);
 		};
+
 		/**
 		 * @class TurbulentKineticEnergyAccelerationWithWall
 		 * @brief .
@@ -109,6 +93,25 @@ namespace SPH
 
 			inline void interaction(size_t index_i, Real dt = 0.0);
 		};
+
+		/**
+		 * @class ViscousWithWall
+		 * @brief  template class viscous acceleration with wall boundary
+		 */
+		template <class TurbulentViscousAccelerationInnerType>
+		class BaseTurbulentViscousAccelerationWithWall : public InteractionWithWall<TurbulentViscousAccelerationInnerType>
+		{
+		public:
+			template <typename... Args>
+			BaseTurbulentViscousAccelerationWithWall(Args &&...args)
+				: InteractionWithWall<TurbulentViscousAccelerationInnerType>(std::forward<Args>(args)...) {};
+			virtual ~BaseTurbulentViscousAccelerationWithWall() {};
+
+			inline void interaction(size_t index_i, Real dt = 0.0);
+		};
+
+		using TurbulentViscousAccelerationWithWall = BaseTurbulentViscousAccelerationWithWall<TurbulentViscousAccelerationInner>;
+
 
     }
 }

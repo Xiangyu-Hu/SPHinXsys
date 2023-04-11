@@ -100,7 +100,6 @@ namespace SPH
 		//=================================================================================================//
 		void TurbulentKineticEnergyAccelerationInner::interaction(size_t index_i, Real dt)
 		{
-			std::cout << "enter inner TKE";
 			Real turbu_k_i = turbu_k_[index_i];
 			Vecd acceleration = Vecd::Zero();
 			Vecd k_gradient = Vecd::Zero();
@@ -117,6 +116,29 @@ namespace SPH
 			acc_prior_[index_i] += acceleration;
 		}
 		//=================================================================================================//
+		void TurbulentViscousAccelerationInner::
+			interaction(size_t index_i, Real dt)
+		{
+			Real turbu_mu_i = turbu_mu_[index_i];
+			Vecd acceleration = Vecd::Zero();
+			Vecd vel_derivative = Vecd::Zero();
+			const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+			{
+				size_t index_j = inner_neighborhood.j_[n];
+
+				// viscous force
+				vel_derivative = (vel_[index_i] - vel_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
+				acceleration += 2.0 * (mu_+ turbu_mu_i) * vel_derivative * inner_neighborhood.dW_ijV_j_[n];
+			}
+
+			acc_prior_[index_i] += acceleration / rho_[index_i];
+		}
+		//=================================================================================================//
+
+
+
+
 	}
 	//=================================================================================================//
 }

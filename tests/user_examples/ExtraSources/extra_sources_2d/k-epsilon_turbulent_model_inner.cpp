@@ -67,9 +67,23 @@ namespace SPH
 			: BaseTurtbulentModelInner(inner_relation), acc_prior_(particles_->acc_prior_),
 			turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")){}
 		//=================================================================================================//
-
-
-
+		TurbulentViscousAccelerationInner::TurbulentViscousAccelerationInner(BaseInnerRelation& inner_relation)
+			: BaseViscousAccelerationInner(inner_relation),
+			turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")) {}
+		//=================================================================================================//
+		TurbulentEddyViscosity::
+			TurbulentEddyViscosity(SPHBody& sph_body)
+			: LocalDynamics(sph_body), FluidDataSimple(sph_body),
+			rho_(particles_->rho_),
+			turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
+			turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
+			turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation")){}
+		//=================================================================================================//
+		void TurbulentEddyViscosity::update(size_t index_i, Real dt)
+		{
+			turbu_mu_[index_i] = rho_[index_i] * C_mu * turbu_k_[index_i] * turbu_k_[index_i] / (turbu_epsilon_[index_i]);
+		}
+		//=================================================================================================//
 
 	}
 	//=================================================================================================//

@@ -142,6 +142,39 @@ namespace SPH
 			StdLargeVec<Vecd>& acc_prior_;
 		};
 
+		/**
+		 * @class TurbulentViscousAccelerationInner
+		 * @brief  the turbulent viscosity force induced acceleration
+		 */
+		class TurbulentViscousAccelerationInner : public BaseViscousAccelerationInner
+		{
+		public:
+			explicit TurbulentViscousAccelerationInner(BaseInnerRelation& inner_relation) ;
+			virtual ~TurbulentViscousAccelerationInner() {};
+
+			inline void interaction(size_t index_i, Real dt = 0.0);
+		protected:
+			StdLargeVec<Real>& turbu_mu_;
+		};
+
+		/**
+		 * @class TurbulentViscousAccelerationInner
+		 * @brief  the turbulent viscosity force induced acceleration
+		 */
+		class TurbulentEddyViscosity : public LocalDynamics, public FluidDataSimple, public BaseTurbulentClosureCoefficient
+		{
+		public:
+			explicit TurbulentEddyViscosity(SPHBody& sph_body);
+			virtual ~TurbulentEddyViscosity() {};
+
+			void update(size_t index_i, Real dt = 0.0);
+		protected:
+			StdLargeVec<Real>& rho_;
+			StdLargeVec<Real>& turbu_mu_;
+			StdLargeVec<Real>& turbu_k_;
+			StdLargeVec<Real>& turbu_epsilon_;
+		};
+
 
     }
 }
