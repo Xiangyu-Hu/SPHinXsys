@@ -161,7 +161,113 @@ namespace SPH
 			this->acc_prior_[index_i] += acceleration;
 		}
 		//=================================================================================================//
+		void StandardWallFunctionCorrection::interaction(size_t index_i, Real dt)
+		{
+			if (is_migrate_[index_i] == 1) //If this particle has started migrating 
+			{
+				if (is_near_wall_P2_[index_i] == 1) //if it is in P2 region
+				{
+					is_migrate_[index_i] = 1;  //keep migration status
+				}
+				else if (is_near_wall_P2_[index_i] == 0) //if it is out of P2
+				{
+					is_migrate_[index_i] = 0; //ends migration status
+				}
+			}
+			is_near_wall_P2_[index_i] = 0;
 
+			index_nearest[index_i] = 0;
+			velo_tan_[index_i] = 0.0;
+			velo_friction_[index_i] = 0.0;
+			wall_Y_plus_[index_i] = 0.0;
+			wall_Y_star_[index_i] = 0.0;
+			distance_to_wall[index_i] = 0.0;
+			is_near_wall_P1_[index_i] = 0;
+
+			Real r_wall_normal = 0.0;
+			Real r_wall_normal_temp = 0.0;
+			Real r_min = 1.0e3;
+			Real velo_fric(0.0);
+			const Vecd& vel_i = vel_[index_i];
+			Real rho_i = rho_[index_i];
+
+			Vecd e_ij_t = Vecd::Zero();
+			for (size_t k = 0; k < contact_configuration_.size(); ++k)
+			{
+				StdLargeVec<Vecd>& n_k = *(contact_n_[k]);
+
+				Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
+				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+				{
+					size_t index_j = contact_neighborhood.j_[n];
+					Real r_ij = contact_neighborhood.r_ij_[n];
+					Vecd& e_ij = contact_neighborhood.e_ij_[n];
+					Vecd& n_k_j = n_k[index_j];
+
+					//The distance to wall is 0.5L0 smaller than the rij_normal 
+					r_wall_normal_temp = abs(n_k_j.dot(r_ij * e_ij)) - 0.5 * particle_spacing_;
+					if (r_wall_normal_temp <= 0.0 + TinyReal)
+					{
+						std::cout << "r_wall_normal_temp <= 0.0" << std::endl;
+						system("pause");
+					}
+					if (r_wall_normal_temp <= intial_distance_to_wall && r_ij < r_min)
+					{
+						r_min = r_ij; //Find the nearest wall particle
+						r_wall_normal = r_wall_normal_temp;
+						distance_to_wall[index_i] = r_wall_normal;
+						index_nearest[index_i] = index_j;
+					}
+					Vecd n_k_j_nearest = n_k[index_nearest[index_i]];
+					if (dimension_ == 2)
+					{
+						e_ij_t[0] = n_k_j_nearest[1];
+						e_ij_t[1] = n_k_j_nearest[0] * (-1.0);
+						//std::cout << e_ij_t << std::endl;
+					}
+				}
+			}
+			if (r_wall_normal < 1.0 * particle_spacing_ &&
+				r_wall_normal > 0.0 * particle_spacing_ + TinyReal)
+			{
+				is_near_wall_P1_[index_i] = 1;
+				Real velo_tan = 0.0; //tangible velo for fluid particle i
+				velo_tan = abs(e_ij_t.dot(vel_i));
+				velo_tan_[index_i] = velo_tan;
+				coefficientA = 0.0;
+				coefficientB = 0.0;
+				coefficientA = velo_tan * Karman + TinyReal;
+				coefficientB = (turbu_const_E * rho_i * r_wall_normal) / mu_;
+				velo_fric = getFrictionVelo(0.0, 3.0, 1e-6);
+				checkFrictionVelo(velo_fric, 1e-2);
+
+				//for output test
+				velo_friction_[index_i] = velo_fric;
+
+			}
+			if (r_wall_normal <= 1.5 * particle_spacing_ &&
+				r_wall_normal > 1.0 * particle_spacing_)
+			{
+				is_near_wall_P2_[index_i] = 1;
+			}
+
+			if (is_near_wall_P1_[index_i] == 0 && is_near_wall_P1_pre_[index_i] == 1)
+			{
+				is_migrate_[index_i] = 1;
+				//std::cout <<  index_i << "particle starts migrating" << std::endl;
+			}
+
+			is_near_wall_P1_pre_[index_i] = 0;
+			is_near_wall_P1_pre_[index_i] = is_near_wall_P1_[index_i];
+
+			if (is_near_wall_P1_[index_i] == 1)
+			{
+				turbu_k_[index_i] = velo_fric * velo_fric / sqrt(C_mu);
+				turbu_epsilon_[index_i] = pow(C_mu, 0.75) * pow(turbu_k_[index_i], 1.5) / (Karman * r_wall_normal);
+				wall_Y_plus_[index_i] = r_wall_normal * velo_fric * rho_i / mu_;
+				wall_Y_star_[index_i] = r_wall_normal * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * rho_i / mu_;
+			}
+		}
 	}
 	//=================================================================================================//
 }

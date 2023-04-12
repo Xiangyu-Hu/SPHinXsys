@@ -95,8 +95,8 @@ namespace SPH
 		};
 
 		/**
-		 * @class ViscousWithWall
-		 * @brief  template class viscous acceleration with wall boundary
+		 * @class BaseTurbuViscousAccWithWall
+		 * @brief  template class Turbu viscous acceleration with wall boundary
 		 */
 		template <class TurbuViscousAccInnerType>
 		class BaseTurbuViscousAccWithWall : public InteractionWithWall<TurbuViscousAccInnerType>
@@ -111,6 +111,55 @@ namespace SPH
 		};
 
 		using TurbulentViscousAccelerationWithWall = BaseTurbuViscousAccWithWall<TurbuViscousAccInner>;
+
+		/**
+		* @class StandardWallFunctionCorrection
+		* @brief this function is applied to turbulent flows
+		* @brief modify the values of k and epslion near wall
+		*/
+		class StandardWallFunctionCorrection : public LocalDynamics, public FSIContactData,
+			public BaseTurbuClosureCoeff
+		{
+		public:
+			StandardWallFunctionCorrection(BaseInnerRelation& inner_relation,
+				BaseContactRelation& contact_relation);
+			explicit StandardWallFunctionCorrection(ComplexRelation& complex_relation);
+			virtual ~StandardWallFunctionCorrection() {};
+			inline void interaction(size_t index_i, Real dt = 0.0);
+		protected:
+			StdLargeVec<Real> wall_Y_plus_, wall_Y_star_;
+
+			Real intial_distance_to_wall;
+			Real particle_spacing_;
+
+			StdLargeVec<Real>& turbu_k_;
+			StdLargeVec<Real>& turbu_epsilon_;
+			StdLargeVec<Real>& turbu_mu_;
+
+			StdVec < StdLargeVec<Vecd>*>  contact_n_;
+
+			Real mu_;
+
+			StdLargeVec<int> is_near_wall_P1_, is_near_wall_P2_, is_near_wall_P1_pre_, is_migrate_;
+			StdLargeVec<Real> velo_tan_;
+			StdLargeVec<Real> velo_friction_;
+			StdLargeVec<int> index_nearest;
+			StdLargeVec<Real> distance_to_wall;
+
+			StdLargeVec<Vecd>& vel_, & pos_;
+			StdLargeVec<Real>& rho_;
+
+			int dimension_;
+			Real coefficientA, coefficientB;
+			inline Real WallFunc(Real x)
+			{
+				return coefficientA / x - log(coefficientB * x);
+			}
+			virtual Real getFrictionVelo(Real a, Real b, Real e);
+			virtual void checkFrictionVelo(Real velo_fric, Real e);
+		};
+
+
 
 
     }

@@ -83,8 +83,35 @@ namespace SPH
 		{
 			turbu_mu_[index_i] = rho_[index_i] * C_mu * turbu_k_[index_i] * turbu_k_[index_i] / (turbu_epsilon_[index_i]);
 		}
+		
 		//=================================================================================================//
+		TurbulentAdvectionTimeStepSize::TurbulentAdvectionTimeStepSize(SPHBody& sph_body, Real U_max, Real advectionCFL)
+			: LocalDynamicsReduce<Real, ReduceMax>(sph_body, U_max* U_max),FluidDataSimple(sph_body), 
+			vel_(particles_->vel_),
+			smoothing_length_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
+			advectionCFL_(advectionCFL), fluid_(particles_->fluid_),
+			turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity"))
+		{
+			Real viscous_speed = fluid_.ReferenceViscosity() / fluid_.ReferenceDensity() / smoothing_length_min_;
+			reference_ = SMAX(viscous_speed * viscous_speed, reference_);
+		}
+		//=================================================================================================//
+		Real TurbulentAdvectionTimeStepSize::reduce(size_t index_i, Real dt)
+		{
+			Real turbu_viscous_speed = (fluid_.ReferenceViscosity() + turbu_mu_[index_i]) 
+				/ fluid_.ReferenceDensity() / smoothing_length_min_;
+			Real turbu_viscous_speed_squre = turbu_viscous_speed * turbu_viscous_speed;
+			Real vel_n_squre = vel_[index_i].squaredNorm();
+			Real vel_bigger = SMAX(turbu_viscous_speed_squre, vel_n_squre);
 
+			return vel_bigger;
+		}
+		//=================================================================================================//
+		Real TurbulentAdvectionTimeStepSize::outputResult(Real reduced_value)
+		{
+			Real speed_max = sqrt(reduced_value);
+			return advectionCFL_ * smoothing_length_min_ / (speed_max + TinyReal);
+		}
 	}
 	//=================================================================================================//
 }

@@ -176,6 +176,28 @@ namespace SPH
 			StdLargeVec<Real>& turbu_epsilon_;
 		};
 
+		/**
+		 * @class TurbulentAdvectionTimeStepSize
+		 * @brief Computing the turbulent advection time step size
+		 */
+		class TurbulentAdvectionTimeStepSize : public LocalDynamicsReduce<Real, ReduceMax>,
+			public FluidDataSimple
+		{
+		public:
+			explicit TurbulentAdvectionTimeStepSize(SPHBody& sph_body, Real U_max, Real advectionCFL = 0.25);
+			virtual ~TurbulentAdvectionTimeStepSize() {};
+			Real reduce(size_t index_i, Real dt = 0.0);
+			virtual Real outputResult(Real reduced_value) override;
+		protected:
+			StdLargeVec<Vecd>& vel_;
+			Real smoothing_length_min_;
+			Real advectionCFL_;
+			StdLargeVec<Real>& turbu_mu_;
+			Fluid& fluid_;
+
+		};
+
+
 
     }
 }
