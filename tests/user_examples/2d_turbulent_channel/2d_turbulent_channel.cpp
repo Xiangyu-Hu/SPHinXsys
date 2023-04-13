@@ -59,12 +59,12 @@ int main(int ac, char* av[])
 	Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(water_block_complex_relation);
 	
 	/** Turbulent. */
-	InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelComplex, SequencedPolicy> k_equation_relaxation(water_block_complex_relation);
-	InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelComplex, SequencedPolicy> epsilon_equation_relaxation(water_block_complex_relation);
-	InteractionDynamics<fluid_dynamics::TKEnergyAccComplex, SequencedPolicy> turbulent_kinetic_energy_acceleration(water_block_complex_relation);
+	InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelComplex> k_equation_relaxation(water_block_complex_relation);
+	InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelComplex> epsilon_equation_relaxation(water_block_complex_relation);
+	InteractionDynamics<fluid_dynamics::TKEnergyAccComplex> turbulent_kinetic_energy_acceleration(water_block_complex_relation);
 	InteractionDynamics<fluid_dynamics::TurbulentViscousAccelerationWithWall> turbulent_viscous_acceleration(water_block_complex_relation);
 	//InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex_relation);
-	SimpleDynamics<fluid_dynamics::TurbulentEddyViscosity, SequencedPolicy> update_eddy_viscosity(water_block);
+	SimpleDynamics<fluid_dynamics::TurbulentEddyViscosity> update_eddy_viscosity(water_block);
 		
 	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> transport_velocity_correction(water_block_complex_relation);
 	InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex>
@@ -74,12 +74,12 @@ int main(int ac, char* av[])
 	water_block.addBodyStateForRecording<int>("SurfaceIndicator"); // output for debug
 
 	/** Define the external force for turbulent startup */
-	//TimeDependentAcceleration gravity(Vec2d(0.0, 0.0)); 
-	//SharedPtr<TimeDependentAcceleration> gravity_ptr = makeShared<TimeDependentAcceleration>(Vecd(0.0, 0.0));
-	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
+	TimeDependentAcceleration gravity(Vec2d(0.0, 0.0)); 
+	SharedPtr<TimeDependentAcceleration> gravity_ptr = makeShared<TimeDependentAcceleration>(Vecd(0.0, 0.0));
+	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, gravity_ptr);
 	
 	/** Turbulent advection time step. */
-	ReduceDynamics<fluid_dynamics::TurbulentAdvectionTimeStepSize, SequencedPolicy> get_turbulent_fluid_advection_time_step_size(water_block, U_f);
+	ReduceDynamics<fluid_dynamics::TurbulentAdvectionTimeStepSize> get_turbulent_fluid_advection_time_step_size(water_block, U_f);
 	//ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize, SequencedPolicy> get_fluid_advection_time_step_size(water_block, U_f);
 	
 	
@@ -87,7 +87,7 @@ int main(int ac, char* av[])
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 
 	/** Turbulent standard wall function needs normal vectors of wall. */
-	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection, SequencedPolicy> standard_wall_function_correction(water_block_complex_relation);
+	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block_complex_relation);
 	
 	BodyAlignedBoxByParticle emitter(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(emitter_translation)), emitter_halfsize));
@@ -96,6 +96,10 @@ int main(int ac, char* av[])
 	BodyAlignedBoxByCell emitter_buffer(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(inlet_buffer_translation)), inlet_buffer_halfsize));
 	SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> emitter_buffer_inflow_condition(emitter_buffer);
+	
+	/** Turbulent InflowTurbulentCondition.It needs characteristic Length to calculate turbulent length  */
+	SimpleDynamics<fluid_dynamics::InflowTurbulentCondition> impose_turbulent_inflow_condition(emitter_buffer,DH);
+
 
 	Vec2d disposer_up_halfsize = Vec2d(0.5 * BW, 0.55 * DH);
 	Vec2d disposer_up_translation = Vec2d(DL - BW, -0.05 * DH) + disposer_up_halfsize;
@@ -159,7 +163,10 @@ int main(int ac, char* av[])
 				turbulent_kinetic_energy_acceleration.exec();
 				
 				pressure_relaxation.exec(dt);
+
 				emitter_buffer_inflow_condition.exec();
+				impose_turbulent_inflow_condition.exec();
+
 				density_relaxation.exec(dt);
 
 				standard_wall_function_correction.exec();

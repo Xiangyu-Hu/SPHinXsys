@@ -105,7 +105,7 @@ namespace SPH
 			Real left_value = coefficientA / velo_fric;
 			Real right_value = log(coefficientB * velo_fric);
 			Real error = abs(left_value - right_value);
-			if (error > EPSILON)
+			if (error > EPSILON && GlobalStaticVariables::physical_time_>2.0)
 			{
 				std::cout << "FrictionVelocity is not accurately calcualted" << std::endl;
 				std::cout << "error=" << error << std::endl;

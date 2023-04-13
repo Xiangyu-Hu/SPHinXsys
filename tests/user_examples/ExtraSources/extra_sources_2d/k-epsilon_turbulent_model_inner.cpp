@@ -8,7 +8,7 @@ namespace SPH
 		//=================================================================================================//
 		BaseTurbuClosureCoeff::BaseTurbuClosureCoeff()
 			: Karman(0.4187), C_mu(0.09), TurbulentIntensity(1.0e-2), sigma_k(1.0),
-			C_l(1.44), C_2(1.92), sigma_E(1.3), turbu_const_E(9.793), TurbulentLength(0.0){}
+			C_l(1.44), C_2(1.92), sigma_E(1.3), turbu_const_E(9.793){}
 		//=================================================================================================//
 		BaseTurtbulentModelInner::BaseTurtbulentModelInner(BaseInnerRelation& inner_relation)
 			: LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
@@ -18,7 +18,7 @@ namespace SPH
 			smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()){}
 		//=================================================================================================//
 		K_TurtbulentModelInner::K_TurtbulentModelInner(BaseInnerRelation& inner_relation)
-			: BaseTurtbulentModelInner(inner_relation) 
+			: BaseTurtbulentModelInner(inner_relation)
 		{
 				particles_->registerVariable(dk_dt_, "ChangeRateOfTKE");
 				particles_->registerSortableVariable<Real>("ChangeRateOfTKE");
@@ -111,6 +111,49 @@ namespace SPH
 		{
 			Real speed_max = sqrt(reduced_value);
 			return advectionCFL_ * smoothing_length_min_ / (speed_max + TinyReal);
+		}
+		//=================================================================================================//
+		InflowTurbulentCondition::InflowTurbulentCondition(BodyPartByCell& body_part
+			, Real CharacteristicLength, Real relaxation_rate): 
+			BaseFlowBoundaryCondition(body_part),
+			relaxation_rate_(relaxation_rate), 
+			CharacteristicLength_(CharacteristicLength), 
+			turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
+			turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation"))
+		{
+			TurbulentLength_ = 0.07 * CharacteristicLength_ / pow(C_mu, 0.75);
+		}
+		//=================================================================================================//
+		void InflowTurbulentCondition::update(size_t index_i, Real dt)
+		{
+			Real target_in_turbu_k = getTurbulentInflowK(pos_[index_i], vel_[index_i], turbu_k_[index_i]);
+			turbu_k_[index_i] += relaxation_rate_ * (target_in_turbu_k - turbu_k_[index_i]);
+			Real target_in_turbu_E = getTurbulentInflowE(pos_[index_i], turbu_k_[index_i], turbu_epsilon_[index_i]);
+			turbu_epsilon_[index_i] += relaxation_rate_ * (target_in_turbu_E - turbu_epsilon_[index_i]);
+		}
+		//=================================================================================================//
+		Real InflowTurbulentCondition:: getTurbulentInflowK(Vecd& position, Vecd& velocity, Real& turbu_k)
+		{
+			Real u = velocity[0];
+			Real temp_in_turbu_k = 1.5 * pow((TurbulentIntensity * u), 2);
+			Real turbu_k_original = turbu_k;
+			if (position[0] < 0.0)
+			{
+				turbu_k_original = temp_in_turbu_k;
+			}
+			return turbu_k_original;
+		}
+		//=================================================================================================//
+		Real InflowTurbulentCondition::getTurbulentInflowE(Vecd& position, Real& turbu_k, Real& turbu_E)
+		{
+			//Real temp_in_turbu_E = C_mu * pow(turbu_k, 1.5) / (0.1*getTurbulentLength());
+			Real temp_in_turbu_E = pow(turbu_k, 1.5) / TurbulentLength_;
+			Real turbu_E_original = turbu_E;
+			if (position[0] < 0.0)
+			{
+				turbu_E_original = temp_in_turbu_E;
+			}
+			return turbu_E_original;
 		}
 	}
 	//=================================================================================================//

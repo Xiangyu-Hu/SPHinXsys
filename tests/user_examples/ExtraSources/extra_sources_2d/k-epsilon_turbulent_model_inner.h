@@ -52,15 +52,12 @@ namespace SPH
 			Real turbu_const_E;
 			Real C_mu;
 			Real TurbulentIntensity;
-			Real TurbulentLength;
-
 			//K equation
 			Real sigma_k;
 
 			//closure coefficients for epsilon model
 			Real C_l, C_2;
 			Real sigma_E;
-
 
 		};
 
@@ -196,7 +193,33 @@ namespace SPH
 			Fluid& fluid_;
 
 		};
+		/**
+		 * @class   InflowTurbulentCondition
+		 * @brief   Inflow boundary condition which imposes directly to a given velocity profile.
+		 *          TargetVelocity gives the velocity profile along the inflow direction,
+		 *          i.e. x direction in local frame.
+		 */
+		class InflowTurbulentCondition :public BaseFlowBoundaryCondition, public BaseTurbuClosureCoeff
+		{
+		public:
+			explicit InflowTurbulentCondition(BodyPartByCell& body_part,
+				Real CharacteristicLength, Real relaxation_rate=1.0);
+			virtual ~InflowTurbulentCondition() {};
 
+			void update(size_t index_i, Real dt = 0.0);
+
+		protected:
+			Real relaxation_rate_;
+			StdLargeVec<Real>& turbu_k_;
+			StdLargeVec<Real>& turbu_epsilon_;
+			Real TurbulentLength_;
+			Real CharacteristicLength_;
+
+			virtual Real getTurbulentInflowK(Vecd& position, Vecd& velocity, Real& turbu_k);
+			virtual Real getTurbulentInflowE(Vecd& position, Real& turbu_k, Real& turbu_E);
+
+
+		};
 
 
     }

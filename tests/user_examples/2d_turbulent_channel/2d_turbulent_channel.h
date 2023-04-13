@@ -4,6 +4,7 @@
  * @author 	Yongchuan Yu and Xiangyu Hu
  */
 #include "sphinxsys.h" // SPHinXsys Library.
+
 using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
@@ -31,8 +32,8 @@ Real rho0_f = 1.0; /**< Reference density of fluid. */
 Real U_f = 1.0;	   /**< Characteristic velocity. */
 /** Reference sound speed needs to consider the flow speed in the narrow channels. */
 Real c_f = 10.0 * U_f;
-//Real Re = 25000.0;					/**< Reynolds number. */
-Real Re = 100.0;
+Real Re = 25000.0;					/**< Reynolds number. */
+//Real Re = 100.0;
 Real mu_f = rho0_f * U_f * DH / Re; /**< Dynamics viscosity. */
 //----------------------------------------------------------------------
 //	define geometry of SPH bodies
@@ -134,55 +135,11 @@ public:
 	{
 		Real run_time_ = GlobalStaticVariables::physical_time_;
 		du_ave_dt_ = 0.5 * u_ref_ * (Pi / t_ref_) * sin(Pi * run_time_ / t_ref_);
-		//if (position[1] <0.75*DH && position[1] > 0.25*DH)
-		//{
 		return run_time_ < t_ref_ ? Vecd(du_ave_dt_, 0.0) : global_acceleration_;
-		//}
-		//else
-		//{
-		//	return global_acceleration_;
-		//}
+
 	}
 };
 //----------------------------------------------------------------------
 //	Define turbulent inflow boundary condition
 //----------------------------------------------------------------------
-//class TurbulentEmitterBufferInflowCondition : public  fluid_dynamics::TurbulentInflowCondition
-//{
-//public:
-//	TurbulentEmitterBufferInflowCondition(FluidBody& fluid_body, BodyAlignedBoxByCell& aligned_box_part)
-//		: TurbulentInflowCondition(fluid_body, aligned_box_part) {}
-//
-//	Real getTurbulentInflowK(Vecd& position, Vecd& velocity, Real& turbu_k) override
-//	{
-//		Real u = velocity[0];
-//		Real temp_in_turbu_k = 1.5 * pow((TurbulentIntensity * u), 2);
-//		//Real temp_in_turbu_k = 1.5*pow((TurbulentIntensity * U_f), 2);
-//		Real turbu_k_original = turbu_k;
-//		//std::cout << "temp_in_turbu_k=" << temp_in_turbu_k << endl;
-//		//std::cout << "turbu_k_original=" << turbu_k_original << endl;
-//		if (position[0] < 0.0)
-//		{
-//			turbu_k_original = temp_in_turbu_k;
-//		}
-//		return turbu_k_original;
-//	}
-//	Real getTurbulentInflowE(Vecd& position, Real& turbu_k, Real& turbu_E) override
-//	{
-//		//Real temp_in_turbu_E = C_mu * pow(turbu_k, 1.5) / (0.1*getTurbulentLength());
-//		Real temp_in_turbu_E = pow(turbu_k, 1.5) / (getTurbulentLength());
-//		Real turbu_E_original = turbu_E;
-//		//std::cout << "temp_in_turbu_k=" << temp_in_turbu_E << endl;
-//		//std::cout << "turbu_k_original=" << turbu_E_original << endl;
-//		if (position[0] < 0.0)
-//		{
-//			turbu_E_original = temp_in_turbu_E;
-//		}
-//		return turbu_E_original;
-//	}
-//	Real getTurbulentLength() override
-//	{
-//		return 0.07 * DH / pow(C_mu, 0.75); //Accoding to FLUNT Guide
-//		//return 0.0045*DH;
-//	}
-//};
+
