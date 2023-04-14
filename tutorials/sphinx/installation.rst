@@ -58,7 +58,7 @@ The following block will install the direct dependencies required by SPHinXsys i
 ..  code-block:: bash
     
     cd $HOME
-    git clone --depth 1 --branch 2022.11.14 https://www.github.com/microsoft/vcpkg
+    git clone https://www.github.com/microsoft/vcpkg
     cd vcpkg
     ./bootstrap-vcpkg.sh
     ./vcpkg install --clean-after-build \
@@ -149,7 +149,7 @@ Open Windows PowerShell or Git CMD, and then run the commands below one by one.
 
 ..  code-block:: pwsh
     
-    git clone --depth 1 --branch 2022.11.14 https://www.github.com/microsoft/vcpkg
+    git clone https://www.github.com/microsoft/vcpkg
     cd vcpkg
     .\bootstrap-vcpkg.bat
     .\vcpkg install --clean-after-build         \
@@ -166,7 +166,7 @@ i.e., you need to use the slash :code:`/` instead of the backslash:code:`\`, as 
 
 ..  code-block:: bash
     
-    git clone --depth 1 --branch 2022.11.14 https://www.github.com/microsoft/vcpkg
+    git clone https://www.github.com/microsoft/vcpkg
     cd vcpkg
     ./bootstrap-vcpkg.bat
     ./vcpkg install --clean-after-build             \
@@ -260,7 +260,7 @@ The following block will install the direct dependencies required by SPHinXsys i
 ..  code-block:: bash
     
     cd $HOME
-    git clone --depth 1 --branch 2022.11.14 https://www.github.com/microsoft/vcpkg
+    git clone https://www.github.com/microsoft/vcpkg
     cd vcpkg
     ./bootstrap-vcpkg.sh -disableMetrics
     ./vcpkg install --clean-after-build         \
