@@ -127,10 +127,10 @@ namespace SPH
 		void diffuseLevelSetSign();
 		void updateLevelSetGradient();
 		void updateKernelIntegrals();
-		bool isInnerPackage(const Vecu &cell_index);
-		void initializeDataInACell(const Vecu &cell_index);
-		void initializeAddressesInACell(const Vecu &cell_index);
-		void tagACellIsInnerPackage(const Vecu &cell_index);
+		bool isInnerPackage(const Arrayi &cell_index);
+		void initializeDataInACell(const Arrayi &cell_index);
+		void initializeAddressesInACell(const Arrayi &cell_index);
+		void tagACellIsInnerPackage(const Arrayi &cell_index);
 
 		// upwind algorithm choosing candidate difference by the sign
 		Real upwindDifference(Real sign, Real df_p, Real df_n);
@@ -151,7 +151,7 @@ namespace SPH
 		virtual ~RefinedLevelSet(){};
 
 	protected:
-		void initializeDataInACellFromCoarse(const Vecu &cell_index);
+		void initializeDataInACellFromCoarse(const Arrayi &cell_index);
 	};
 
 	/**

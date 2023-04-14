@@ -20,7 +20,8 @@ namespace SPH
 			split_cell_lists[i].clear();
 	}
 	//=================================================================================================//
-	CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing, RealBody &real_body, SPHAdaptation &sph_adaptation)
+	CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
+								   RealBody &real_body, SPHAdaptation &sph_adaptation)
 		: BaseCellLinkedList(real_body, sph_adaptation), Mesh(tentative_bounds, grid_spacing, 2)
 	{
 		allocateMeshDataMatrix();
@@ -61,8 +62,9 @@ namespace SPH
 		return sequence;
 	}
 	//=================================================================================================//
-	MultilevelCellLinkedList::MultilevelCellLinkedList(BoundingBox tentative_bounds, Real reference_grid_spacing,
-													   size_t total_levels, RealBody &real_body, SPHAdaptation &sph_adaptation)
+	MultilevelCellLinkedList::MultilevelCellLinkedList(
+		BoundingBox tentative_bounds, Real reference_grid_spacing,
+		size_t total_levels, RealBody &real_body, SPHAdaptation &sph_adaptation)
 		: MultilevelMesh<BaseCellLinkedList, CellLinkedList, RefinedMesh<CellLinkedList>>(
 			  tentative_bounds, reference_grid_spacing, total_levels, real_body, sph_adaptation),
 		  h_ratio_(DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->h_ratio_)
@@ -141,7 +143,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void MultilevelCellLinkedList::
-		tagBodyPartByCell(ConcurrentIndexesInCells &cell_lists, std::function<bool(Vecd, Real)> &check_included)
+		tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included)
 	{
 		for (size_t l = 0; l != total_levels_; ++l)
 		{

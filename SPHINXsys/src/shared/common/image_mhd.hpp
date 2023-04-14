@@ -47,7 +47,7 @@ namespace SPH {
 		offset_(Vecd::Zero()),
 		centerOfRotation_(Vecd::Zero()),
 		elementSpacing_(Vecd::Ones()),
-		dimSize_(Veci::Ones()),
+		dimSize_(Arrayi::Ones()),
 		width_(dimSize_[0]),
 		height_(dimSize_[1]),
 		depth_(dimSize_[2]),
@@ -155,7 +155,7 @@ namespace SPH {
 		//write(std::string("sphere-binary"),ASCII);
 	}
 	template<typename T, int nDims>
-	ImageMHD<T, nDims>::ImageMHD(Real radius, Vec3i NxNyNz, Vec3d spacings):
+	ImageMHD<T, nDims>::ImageMHD(Real radius, Array3i NxNyNz, Vec3d spacings):
 		objectType_("Image"),
 		ndims_(nDims),
 		binaryData_(true),
@@ -211,7 +211,7 @@ namespace SPH {
 
 	//=================================================================================================//
 	template<typename T, int nDims>
-	std::vector<int> ImageMHD<T, nDims>::findNeighbors(const Vec3d& probe_point, Vec3i& this_cell)
+	std::vector<int> ImageMHD<T, nDims>::findNeighbors(const Vec3d& probe_point, Array3i& this_cell)
 	{
 		std::vector<int> neighbors;
 
@@ -364,7 +364,7 @@ namespace SPH {
 	template<typename T, int nDims>
 	Vec3d ImageMHD<T, nDims>::findClosestPoint(const Vec3d& probe_point)
 	{
-		Vec3i this_cell = Vec3i::Zero();
+		Array3i this_cell = Array3i::Zero();
 		std::vector<int> neighbors = findNeighbors(probe_point, this_cell);
 		Vec3d n_sum = Vecd::Zero();
 		double weight_sum = 0.0;
@@ -416,7 +416,7 @@ namespace SPH {
 	template<typename T, int nDims>
 	Real ImageMHD<T, nDims>::findValueAtPoint(const Vec3d& probe_point)
 	{
-		Vec3i this_cell;
+		Array3i this_cell;
 		std::vector<int> neighbors = findNeighbors(probe_point, this_cell);
 		double weight_sum = 0.0;
 		double d_sum = 0.0;
@@ -442,7 +442,7 @@ namespace SPH {
 	template<typename T, int nDims>
 	Vec3d ImageMHD<T, nDims>::findNormalAtPoint(const Vec3d & probe_point)
 	{
-		Vec3i this_cell = Vec3i::Zero();
+		Array3i this_cell = Array3i::Zero();
 		std::vector<int> neighbors = findNeighbors(probe_point, this_cell);
 		Vec3d n_sum = Vecd::Zero();
 		double weight_sum = 0.0;
