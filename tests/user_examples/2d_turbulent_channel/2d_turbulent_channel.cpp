@@ -59,9 +59,9 @@ int main(int ac, char* av[])
 	Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(water_block_complex_relation);
 	
 	/** Turbulent. */
-	InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelComplex> k_equation_relaxation(water_block_complex_relation);
+	InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelComplex,SequencedPolicy> k_equation_relaxation(water_block_complex_relation);
 	InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelComplex> epsilon_equation_relaxation(water_block_complex_relation);
-	InteractionDynamics<fluid_dynamics::TKEnergyAccComplex> turbulent_kinetic_energy_acceleration(water_block_complex_relation);
+	InteractionDynamics<fluid_dynamics::TKEnergyAccComplex,  SequencedPolicy> turbulent_kinetic_energy_acceleration(water_block_complex_relation);
 	InteractionDynamics<fluid_dynamics::TurbulentViscousAccelerationWithWall> turbulent_viscous_acceleration(water_block_complex_relation);
 	//InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex_relation);
 	SimpleDynamics<fluid_dynamics::TurbulentEddyViscosity> update_eddy_viscosity(water_block);
@@ -74,31 +74,30 @@ int main(int ac, char* av[])
 	water_block.addBodyStateForRecording<int>("SurfaceIndicator"); // output for debug
 
 	/** Define the external force for turbulent startup */
-	TimeDependentAcceleration gravity(Vec2d(0.0, 0.0)); 
-	SharedPtr<TimeDependentAcceleration> gravity_ptr = makeShared<TimeDependentAcceleration>(Vecd(0.0, 0.0));
-	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, gravity_ptr);
+	//SharedPtr<TimeDependentAcceleration> gravity_ptr = makeShared<TimeDependentAcceleration>(Vecd(0.0, 0.0));
+	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
 	
 	/** Turbulent advection time step. */
 	ReduceDynamics<fluid_dynamics::TurbulentAdvectionTimeStepSize> get_turbulent_fluid_advection_time_step_size(water_block, U_f);
-	//ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize, SequencedPolicy> get_fluid_advection_time_step_size(water_block, U_f);
+	//ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
 	
 	
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 
 	/** Turbulent standard wall function needs normal vectors of wall. */
-	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block_complex_relation);
+	//InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block_complex_relation);
 	
 	BodyAlignedBoxByParticle emitter(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(emitter_translation)), emitter_halfsize));
-	SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, 10, 0);
+	SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, 50, 0);
 
 	BodyAlignedBoxByCell emitter_buffer(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(inlet_buffer_translation)), inlet_buffer_halfsize));
 	SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> emitter_buffer_inflow_condition(emitter_buffer);
 	
 	/** Turbulent InflowTurbulentCondition.It needs characteristic Length to calculate turbulent length  */
-	SimpleDynamics<fluid_dynamics::InflowTurbulentCondition> impose_turbulent_inflow_condition(emitter_buffer,DH);
+	//SimpleDynamics<fluid_dynamics::InflowTurbulentCondition> impose_turbulent_inflow_condition(emitter_buffer,DH);
 
 
 	Vec2d disposer_up_halfsize = Vec2d(0.5 * BW, 0.55 * DH);
@@ -124,7 +123,7 @@ int main(int ac, char* av[])
 	size_t number_of_iterations = system.RestartStep();
 	int screen_output_interval = 100;
 	Real end_time = 100.0;
-	Real output_interval = end_time / 200.0; /**< Time stamps for output of body states. */
+	Real output_interval = end_time / 20000.0; /**< Time stamps for output of body states. */
 	Real dt = 0.0;							 /**< Default acoustic time step sizes. */
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
@@ -138,6 +137,7 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------------------------------------
 	//	Main loop starts here.
 	//----------------------------------------------------------------------------------------------------
+	int ITER = 0;
 	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
@@ -146,6 +146,7 @@ int main(int ac, char* av[])
 		{
 			initialize_a_fluid_step.exec();
 			Real Dt = get_turbulent_fluid_advection_time_step_size.exec();
+			//Real Dt = get_fluid_advection_time_step_size.exec();
 			inlet_outlet_surface_particle_indicator.exec();
 			update_density_by_summation.exec();
 			
@@ -165,11 +166,11 @@ int main(int ac, char* av[])
 				pressure_relaxation.exec(dt);
 
 				emitter_buffer_inflow_condition.exec();
-				impose_turbulent_inflow_condition.exec();
+				//impose_turbulent_inflow_condition.exec();
 
 				density_relaxation.exec(dt);
 
-				standard_wall_function_correction.exec();
+				//standard_wall_function_correction.exec();
 				k_equation_relaxation.exec(dt);
 				epsilon_equation_relaxation.exec(dt);
 
@@ -194,6 +195,16 @@ int main(int ac, char* av[])
 			water_block.updateCellLinkedListWithParticleSort(100);
 			water_block_complex_relation.updateConfiguration();
 		}
+
+
+		ITER = ITER + 1;
+		//std::cout << "ITER=" << ITER << std::endl;
+		//if (ITER >=12)
+		//{
+		//	D_Time = End_Time / 4000.0;
+		//	//system("pause");
+		//}
+
 
 		TickCount t2 = TickCount::now();
 		write_body_states.writeToFile();

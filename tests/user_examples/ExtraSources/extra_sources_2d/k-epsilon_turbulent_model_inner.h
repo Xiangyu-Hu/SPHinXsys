@@ -99,9 +99,12 @@ namespace SPH
 			void update(size_t index_i, Real dt = 0.0);
 		protected:
 			StdLargeVec<Real> dk_dt_;
-			Matd velocity_gradient;
+			StdLargeVec<Matd>  velocity_gradient;
 
 			StdLargeVec<Real> k_production_;
+
+			//** for test */
+			StdLargeVec<Real> lap_k_, lap_k_term_;
 		};
 
 		/**

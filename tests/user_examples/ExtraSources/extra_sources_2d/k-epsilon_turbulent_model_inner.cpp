@@ -39,6 +39,21 @@ namespace SPH
 				particles_->registerSortableVariable<Real>("K_Production");
 				particles_->addVariableToWrite<Real>("K_Production");
 				
+				//** for test */
+				particles_->registerVariable(lap_k_, "Lap_K");
+				particles_->registerSortableVariable<Real>("Lap_K");
+				particles_->addVariableToWrite<Real>("Lap_K");
+
+				particles_->registerVariable(lap_k_term_, "Lap_K_term");
+				particles_->registerSortableVariable<Real>("Lap_K_term");
+				particles_->addVariableToWrite<Real>("Lap_K_term");
+
+				particles_->addVariableToWrite<Real>("ChangeRateOfTKE");
+
+				particles_->registerVariable(velocity_gradient, "Velocity_Gradient");
+				particles_->registerSortableVariable<Matd>("Velocity_Gradient");
+				particles_->addVariableToWrite<Matd>("Velocity_Gradient");
+				
 		}
 		//=================================================================================================//
 		void K_TurtbulentModelInner::update(size_t index_i, Real dt)

@@ -51,6 +51,7 @@ namespace SPH
 			Matd strain_rate = Matd::Zero();
 			Matd Re_stress = Matd::Zero();
 			//Matd velocity_gradient = Matd::Zero();
+
 			for (size_t k = 0; k < FluidContactData::contact_configuration_.size(); ++k)
 			{
 				StdLargeVec<Vecd>& vel_ave_k = *(contact_vel_ave_[k]);
@@ -59,16 +60,16 @@ namespace SPH
 				{
 					size_t index_j = contact_neighborhood.j_[n];
 					Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
-					velocity_gradient += (vel_i - vel_ave_k[index_j]) * nablaW_ijV_j.transpose();
+					//velocity_gradient[index_i] += (vel_i - vel_ave_k[index_j]) * nablaW_ijV_j.transpose();
 
 					/** With standard wall function, diffusion of k to wall is zero */
-					k_derivative = (turbu_k_i - turbu_k_i) / (contact_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
-					k_lap += 2.0 * (mu_ + turbu_mu_i / sigma_k) * k_derivative * contact_neighborhood.dW_ijV_j_[n] / rho_i;
+					k_derivative = 0.0;
+					k_lap += 0.0;
 				}
 			}
-			strain_rate = 0.5 * (velocity_gradient.transpose() + velocity_gradient);
+			strain_rate = 0.5 * (velocity_gradient[index_i].transpose() + velocity_gradient[index_i]);
 			Re_stress = 2.0 * strain_rate * turbu_mu_i / rho_i - (2.0 / 3.0) * turbu_k_i * Matd::Identity();
-			Matd k_production_matrix = Re_stress * velocity_gradient.transpose();
+			Matd k_production_matrix = Re_stress.array() * velocity_gradient[index_i].array();
 			k_production = k_production_matrix.sum();
 
 			/** With standard wall function, epilson on wall is zero */
@@ -77,6 +78,10 @@ namespace SPH
 			/** Store the production of K for the use of Epsilon euqation and output*/
 			k_production_[index_i] = k_production;
 			
+			//** for test */
+			lap_k_[index_i] += k_lap;
+			lap_k_term_[index_i] = 0.0;
+			lap_k_term_[index_i] = (mu_ + turbu_mu_i / sigma_k) * lap_k_[index_i];
 		}
 		//=================================================================================================//
 		void E_TurtbulentModelComplex::
@@ -98,8 +103,8 @@ namespace SPH
 				{
 					size_t index_j = contact_neighborhood.j_[n];
 					/** With standard wall function, diffusion of epsilon to wall is zero */
-					epsilon_derivative = (turbu_epsilon_i - turbu_epsilon_i) / (contact_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
-					epsilon_lap += 2.0 * (mu_ + turbu_mu_i / sigma_E) * epsilon_derivative * contact_neighborhood.dW_ijV_j_[n] / rho_i;
+					epsilon_derivative = 0.0;
+					epsilon_lap += 0.0;
 				}
 			}
 			epsilon_production = C_l * turbu_epsilon_i * k_production_[index_i] / turbu_k_i;
@@ -120,16 +125,14 @@ namespace SPH
 				Neighborhood& contact_neighborhood = (*FluidContactData::contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
-					for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-					{
-						size_t index_j = contact_neighborhood.j_[n];
-						Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
-						//the value of k on wall in this part needs discusstion!
-						k_gradient += (turbu_k_i - 0.0) * nablaW_ijV_j.transpose();
-						acceleration -= (2.0 / 3.0) * k_gradient;
-					}
+					size_t index_j = contact_neighborhood.j_[n];
+					Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
+					//the value of k on wall in this part needs discusstion!
+					k_gradient += (turbu_k_i - 0.0) * nablaW_ijV_j;
+					acceleration -= (2.0 / 3.0) * k_gradient;
 				}
 			}
+			//if (surface_indicator_[index_i] == 0)
 			acc_prior_[index_i] += acceleration;
 		}
 		//=================================================================================================//
