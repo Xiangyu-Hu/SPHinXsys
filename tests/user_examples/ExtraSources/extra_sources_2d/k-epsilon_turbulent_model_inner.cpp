@@ -90,14 +90,24 @@ namespace SPH
 		TurbulentEddyViscosity::
 			TurbulentEddyViscosity(SPHBody& sph_body)
 			: LocalDynamics(sph_body), FluidDataSimple(sph_body),
-			rho_(particles_->rho_),
+			rho_(particles_->rho_), wall_Y_star_(*particles_->getVariableByName<Real>("WallYstar")),
+			wall_Y_plus_(*particles_->getVariableByName<Real>("WallYplus")),
+			is_near_wall_P1_(*particles_->getVariableByName<int>("IsNearWallP1")),
+			mu_(particles_->fluid_.ReferenceViscosity()),
 			turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
 			turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
 			turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation")){}
 		//=================================================================================================//
 		void TurbulentEddyViscosity::update(size_t index_i, Real dt)
 		{
-			turbu_mu_[index_i] = rho_[index_i] * C_mu * turbu_k_[index_i] * turbu_k_[index_i] / (turbu_epsilon_[index_i]);
+			if (is_near_wall_P1_[index_i] == 0)
+			{
+				turbu_mu_[index_i] = rho_[index_i] * C_mu * turbu_k_[index_i] * turbu_k_[index_i] / (turbu_epsilon_[index_i]);
+			}
+			else //for the near wall particles, wall function effects
+			{
+				turbu_mu_[index_i] = wall_Y_star_[index_i] * mu_ * Karman / log(turbu_const_E * wall_Y_star_[index_i]);
+			}
 		}
 		
 		//=================================================================================================//

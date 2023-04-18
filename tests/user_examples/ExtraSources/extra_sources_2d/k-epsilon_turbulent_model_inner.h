@@ -177,6 +177,9 @@ namespace SPH
 			StdLargeVec<Real>& turbu_mu_;
 			StdLargeVec<Real>& turbu_k_;
 			StdLargeVec<Real>& turbu_epsilon_;
+			StdLargeVec<Real>& wall_Y_plus_, & wall_Y_star_;
+			StdLargeVec<int>& is_near_wall_P1_;
+			Real mu_;
 		};
 
 		/**
