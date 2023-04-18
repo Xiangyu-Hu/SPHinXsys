@@ -351,7 +351,7 @@ namespace SPH
 					Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - this->vel_[index_i];
 					density_change_rate += (this->vel_[index_i] - vel_in_wall).dot(e_ij) * dW_ijV_j;
 					Real u_jump = 2.0 * (this->vel_[index_i] - vel_ave_k[index_j]).dot(n_k[index_j]);
-					p_dissipation += this->riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * e_ij;
+					p_dissipation += this->riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * n_k[index_j];
 				}
 			}
 			this->drho_dt_[index_i] += density_change_rate * this->rho_[index_i];
