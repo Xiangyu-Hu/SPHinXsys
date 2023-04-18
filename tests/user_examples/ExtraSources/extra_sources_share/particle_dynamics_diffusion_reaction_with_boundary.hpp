@@ -15,9 +15,34 @@ namespace SPH
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	RelaxationOfAllDiffusionSpeciesWithDirichlet<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
 		RelaxationOfAllDiffusionSpeciesWithDirichlet(ComplexRelation& complex_relation)
-		: RelaxationOfAllDiffusionSpeciesComplex<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(complex_relation)
+		: RelaxationOfAllDiffusionSpeciesInner<DiffusionReactionParticlesType>(complex_relation.getInnerRelation()),
+		DiffusionReactionContactData<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(complex_relation.getContactRelation())
 	{
-		//contact_gradient_species_.resize(this->contact_particles_.size());
+		contact_gradient_species_.resize(this->contact_particles_.size());
+
+		StdVec<std::string>& all_species_names = this->particles_->AllSpeciesNames();
+		for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
+		{
+			size_t l = this->all_diffusions_[m]->gradient_species_index_;
+			std::string& inner_species_name_m = all_species_names[l];
+			for (size_t k = 0; k != this->contact_particles_.size(); ++k)
+			{
+				size_t contact_species_index_k_m = this->contact_particles_[k]->AllSpeciesIndexMap()[inner_species_name_m];
+				StdVec<std::string>& all_contact_species_names_k = this->contact_particles_[k]->AllSpeciesNames();
+				std::string& contact_species_name_k_m = all_contact_species_names_k[contact_species_index_k_m];
+
+				if (inner_species_name_m != contact_species_name_k_m)
+				{
+					std::cout << "\n Error: inner species '" << inner_species_name_m
+						<< "' and contact species '" << contact_species_name_k_m << "' not match! " << std::endl;
+					std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+					exit(1);
+				}
+				StdVec<StdLargeVec<Real>>& all_contact_species_k = this->contact_particles_[k]->all_species_;
+
+				contact_gradient_species_[k].push_back(&all_contact_species_k[contact_species_index_k_m]);
+			}
+		}
 	}
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
@@ -36,7 +61,7 @@ namespace SPH
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	void RelaxationOfAllDiffusionSpeciesWithDirichlet<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
-		interactionWithDirichlet(size_t index_i, Real dt)
+		interaction(size_t index_i, Real dt)
 	{
 		RelaxationOfAllDiffusionSpeciesInner<DiffusionReactionParticlesType>::interaction(index_i, dt);
 		DiffusionReactionParticlesType* particles = this->particles_;
@@ -63,7 +88,7 @@ namespace SPH
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	RelaxationOfAllDiffusionSpeciesWithNeumann<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
 		RelaxationOfAllDiffusionSpeciesWithNeumann(ComplexRelation& complex_relation)
-		: RelaxationOfAllDiffusionSpeciesComplex<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(complex_relation),
+		: RelaxationOfAllDiffusionSpeciesWithDirichlet<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(complex_relation),
 		n_(this->particles_->normal_vector_)
 	{
 		//contact_gradient_species_.resize(this->contact_particles_.size());
@@ -90,14 +115,13 @@ namespace SPH
 	{
 		for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
 		{
-			
 			(*this->diffusion_dt_[m])[particle_i] += surface_area_ij_Neumann * heat_flux_k[particle_j];
 		}
 	}
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	void RelaxationOfAllDiffusionSpeciesWithNeumann<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
-		interactionWithNeumann(size_t index_i, Real dt)
+		interaction(size_t index_i, Real dt)
 	{
 		RelaxationOfAllDiffusionSpeciesInner<DiffusionReactionParticlesType>::interaction(index_i, dt);
 		DiffusionReactionParticlesType* particles = this->particles_;
@@ -128,7 +152,7 @@ namespace SPH
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	RelaxationOfAllDiffusionSpeciesWithRobin<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
 		RelaxationOfAllDiffusionSpeciesWithRobin(ComplexRelation& complex_relation)
-		: RelaxationOfAllDiffusionSpeciesComplex<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(complex_relation),
+		: RelaxationOfAllDiffusionSpeciesWithDirichlet<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(complex_relation),
 		n_(this->particles_->normal_vector_)
 	{
 		//contact_gradient_species_.resize(this->contact_particles_.size());
@@ -164,7 +188,7 @@ namespace SPH
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	void RelaxationOfAllDiffusionSpeciesWithRobin<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
-		interactionWithRobin(size_t index_i, Real dt)
+		interaction(size_t index_i, Real dt)
 	{
 		RelaxationOfAllDiffusionSpeciesInner<DiffusionReactionParticlesType>::interaction(index_i, dt);
 		DiffusionReactionParticlesType* particles = this->particles_;

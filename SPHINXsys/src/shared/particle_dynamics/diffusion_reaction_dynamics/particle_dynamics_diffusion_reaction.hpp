@@ -217,7 +217,7 @@ namespace SPH
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType>
 	InitializationRK<DiffusionReactionParticlesType>::
-		InitializationRK(SPHBody &sph_body, StdVec<StdLargeVec<Real>> &diffusion_species_s)
+		InitializationRK(SPHBody &sph_body, StdVec<StdLargeVec<Real>*> &diffusion_species_s)
 		: LocalDynamics(sph_body),
 		  DiffusionReactionSimpleData<DiffusionReactionParticlesType>(sph_body),
 		  material_(this->particles_->diffusion_reaction_material_),
@@ -231,14 +231,14 @@ namespace SPH
 	{
 		for (size_t m = 0; m < all_diffusions_.size(); ++m)
 		{
-			diffusion_species_s_[m][index_i] = (*diffusion_species_[m])[index_i];
+			diffusion_species_s_[m][index_i] = diffusion_species_[m][index_i];
 		}
 	}
 	//=================================================================================================//
 	template <class FirstStageType>
 	SecondStageRK2<FirstStageType>::
 		SecondStageRK2(typename FirstStageType::BodyRelationType &body_relation,
-					   StdVec<StdLargeVec<Real>> &diffusion_species_s)
+					   StdVec<StdLargeVec<Real>*> &diffusion_species_s)
 		: FirstStageType(body_relation), diffusion_species_s_(diffusion_species_s) {}
 	//=================================================================================================//
 	template <class FirstStageType>
@@ -248,7 +248,7 @@ namespace SPH
 		for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
 		{
 			(*this->diffusion_species_[m])[particle_i] =
-				0.5 * diffusion_species_s_[m][particle_i] +
+				0.5 * (*diffusion_species_s_[m])[particle_i] +
 				0.5 * ((*this->diffusion_species_[m])[particle_i] + dt * (*this->diffusion_dt_[m])[particle_i]);
 		}
 	}
@@ -268,7 +268,9 @@ namespace SPH
 			// register diffusion species intermediate
 			size_t diffusion_species_index = all_diffusions_[i]->diffusion_species_index_;
 			std::string &diffusion_species_name = all_species_names[diffusion_species_index];
-			rk2_1st_stage_.getParticles()->registerVariable(diffusion_species_s_[i], diffusion_species_name + "Intermediate");
+			//rk2_1st_stage_.getParticles()->registerVariable(diffusion_species_s_[i], diffusion_species_name + "Intermediate");
+			diffusion_species_s_[i] = rk2_1st_stage_.getParticles()->template registerSharedVariable<Real>(diffusion_species_name + "Intermediate");
+			//diffusion_dt_[i] = this->particles_->template registerSharedVariable<Real>(diffusion_species_name + "ChangeRate");
 		}
 	}
 	//=================================================================================================//
