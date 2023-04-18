@@ -36,19 +36,21 @@ namespace SPH
 	 */
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	class RelaxationOfAllDiffusionSpeciesWithDirichlet
-		: public RelaxationOfAllDiffusionSpeciesComplex<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
+		: public RelaxationOfAllDiffusionSpeciesInner<DiffusionReactionParticlesType>,
+		public DiffusionReactionContactData<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
 	{
-		//StdVec<StdVec<StdLargeVec<Real>*>> contact_gradient_species_;
 	protected:
 		void getDiffusionChangeRateWithDirichlet(size_t particle_i, size_t particle_j, Vecd& e_ij, Real surface_area_ij,
 			const StdVec<StdLargeVec<Real>*>& gradient_species_k);
 
 	public:
+		StdVec<StdVec<StdLargeVec<Real>*>> contact_gradient_species_;
+
 		typedef ComplexRelation BodyRelationType;
 		explicit RelaxationOfAllDiffusionSpeciesWithDirichlet(ComplexRelation& complex_relation);
 		virtual ~RelaxationOfAllDiffusionSpeciesWithDirichlet() {};
 
-		inline void interactionWithDirichlet(size_t index_i, Real dt = 0.0);
+		inline void interaction(size_t index_i, Real dt = 0.0);
 	};
 
 	/**
@@ -57,7 +59,7 @@ namespace SPH
 	 */
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	class RelaxationOfAllDiffusionSpeciesWithNeumann
-		: public RelaxationOfAllDiffusionSpeciesComplex<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
+		: public RelaxationOfAllDiffusionSpeciesWithDirichlet<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
 	{
 		//StdVec<StdVec<StdLargeVec<Real>*>> contact_gradient_species_;
 
@@ -70,11 +72,13 @@ namespace SPH
 		void getDiffusionChangeRateWithNeumann(size_t particle_i, size_t particle_j, Real surface_area_ij_Neumann, StdLargeVec<Real>& heat_flux_k);
 
 	public:
+		//StdVec<StdLargeVec<Real>*>& GradientSpecies() { return this->contact_gradient_species_; };
+
 		typedef ComplexRelation BodyRelationType;
 		explicit RelaxationOfAllDiffusionSpeciesWithNeumann(ComplexRelation& complex_relation);
 		virtual ~RelaxationOfAllDiffusionSpeciesWithNeumann() {};
 
-		inline void interactionWithNeumann(size_t index_i, Real dt = 0.0);
+		inline void interaction(size_t index_i, Real dt = 0.0);
 	};
 
 	/**
@@ -83,7 +87,7 @@ namespace SPH
 	 */
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	class RelaxationOfAllDiffusionSpeciesWithRobin
-		: public RelaxationOfAllDiffusionSpeciesComplex<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
+		: public RelaxationOfAllDiffusionSpeciesWithDirichlet<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
 	{
 		//StdVec<StdVec<StdLargeVec<Real>*>> contact_gradient_species_;
 
@@ -98,11 +102,13 @@ namespace SPH
 		void getDiffusionChangeRateWithRobin(size_t particle_i, size_t particle_j, Real surface_area_ij_Robin, StdLargeVec<Real>& convection_k, StdLargeVec<Real>& T_infinity_k);
 
 	public:
+		//StdVec<StdLargeVec<Real>*>& GradientSpecies() { return this->contact_gradient_species_; };
+
 		typedef ComplexRelation BodyRelationType;
 		explicit RelaxationOfAllDiffusionSpeciesWithRobin(ComplexRelation& complex_relation);
 		virtual ~RelaxationOfAllDiffusionSpeciesWithRobin() {};
 
-		inline void interactionWithRobin(size_t index_i, Real dt = 0.0);
+		inline void interaction(size_t index_i, Real dt = 0.0);
 	};
 
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
