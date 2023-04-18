@@ -132,8 +132,8 @@ namespace SPH
 					acceleration -= (2.0 / 3.0) * k_gradient;
 				}
 			}
-			//if (surface_indicator_[index_i] == 0)
-			acc_prior_[index_i] += acceleration;
+			//if (surface_indicator_[index_i] == 0 && pos_[index_i][0] <= 5.95)//To prevent kernel truncation near outlet
+				acc_prior_[index_i] += acceleration;
 		}
 		//=================================================================================================//
 		template <class TurbuViscousAccInnerType>
@@ -265,7 +265,7 @@ namespace SPH
 
 			if (is_near_wall_P1_[index_i] == 1)
 			{
-				turbu_k_[index_i] = velo_fric * velo_fric / sqrt(C_mu);
+				//turbu_k_[index_i] = velo_fric * velo_fric / sqrt(C_mu);
 				turbu_epsilon_[index_i] = pow(C_mu, 0.75) * pow(turbu_k_[index_i], 1.5) / (Karman * r_wall_normal);
 				wall_Y_plus_[index_i] = r_wall_normal * velo_fric * rho_i / mu_;
 				wall_Y_star_[index_i] = r_wall_normal * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * rho_i / mu_;

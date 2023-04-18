@@ -80,6 +80,7 @@ namespace SPH
 		TKEnergyAccInner::
 			TKEnergyAccInner(BaseInnerRelation& inner_relation)
 			: BaseTurtbulentModelInner(inner_relation), acc_prior_(particles_->acc_prior_),
+			surface_indicator_(particles_->surface_indicator_), pos_(particles_->pos_),
 			turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")){}
 		//=================================================================================================//
 		TurbuViscousAccInner::TurbuViscousAccInner(BaseInnerRelation& inner_relation)

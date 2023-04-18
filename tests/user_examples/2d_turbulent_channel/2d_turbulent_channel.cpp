@@ -74,8 +74,8 @@ int main(int ac, char* av[])
 	water_block.addBodyStateForRecording<int>("SurfaceIndicator"); // output for debug
 
 	/** Define the external force for turbulent startup */
-	//SharedPtr<TimeDependentAcceleration> gravity_ptr = makeShared<TimeDependentAcceleration>(Vecd(0.0, 0.0));
-	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
+	SharedPtr<TimeDependentAcceleration> gravity_ptr = makeShared<TimeDependentAcceleration>(Vecd(0.0, 0.0));
+	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, gravity_ptr);
 	
 	/** Turbulent advection time step. */
 	ReduceDynamics<fluid_dynamics::TurbulentAdvectionTimeStepSize> get_turbulent_fluid_advection_time_step_size(water_block, U_f);
@@ -86,7 +86,7 @@ int main(int ac, char* av[])
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 
 	/** Turbulent standard wall function needs normal vectors of wall. */
-	//InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block_complex_relation);
+	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection,SequencedPolicy> standard_wall_function_correction(water_block_complex_relation);
 	
 	BodyAlignedBoxByParticle emitter(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(emitter_translation)), emitter_halfsize));
@@ -97,7 +97,7 @@ int main(int ac, char* av[])
 	SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> emitter_buffer_inflow_condition(emitter_buffer);
 	
 	/** Turbulent InflowTurbulentCondition.It needs characteristic Length to calculate turbulent length  */
-	//SimpleDynamics<fluid_dynamics::InflowTurbulentCondition> impose_turbulent_inflow_condition(emitter_buffer,DH);
+	SimpleDynamics<fluid_dynamics::InflowTurbulentCondition,SequencedPolicy> impose_turbulent_inflow_condition(emitter_buffer,DH,0.5);
 
 
 	Vec2d disposer_up_halfsize = Vec2d(0.5 * BW, 0.55 * DH);
@@ -122,8 +122,8 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	size_t number_of_iterations = system.RestartStep();
 	int screen_output_interval = 100;
-	Real end_time = 100.0;
-	Real output_interval = end_time / 20000.0; /**< Time stamps for output of body states. */
+	Real end_time = 20.0;
+	Real output_interval = end_time / 40.0; /**< Time stamps for output of body states. */
 	Real dt = 0.0;							 /**< Default acoustic time step sizes. */
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
@@ -166,17 +166,22 @@ int main(int ac, char* av[])
 				pressure_relaxation.exec(dt);
 
 				emitter_buffer_inflow_condition.exec();
-				//impose_turbulent_inflow_condition.exec();
+
+				impose_turbulent_inflow_condition.exec();
 
 				density_relaxation.exec(dt);
 
-				//standard_wall_function_correction.exec();
+				standard_wall_function_correction.exec();
+
 				k_equation_relaxation.exec(dt);
 				epsilon_equation_relaxation.exec(dt);
 
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
+
+				//write_body_states.writeToFile();
+
 			}
 
 			if (number_of_iterations % screen_output_interval == 0)

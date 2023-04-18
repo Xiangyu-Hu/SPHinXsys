@@ -140,6 +140,9 @@ namespace SPH
 		protected:
 			StdLargeVec<Real>& turbu_k_;
 			StdLargeVec<Vecd>& acc_prior_;
+
+			StdLargeVec<Vecd>& pos_;
+			StdLargeVec<int>& surface_indicator_;
 		};
 
 		/**

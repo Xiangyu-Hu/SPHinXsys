@@ -130,8 +130,8 @@ namespace SPH
 				k_gradient += (turbu_k_i - turbu_k_[index_j]) * nablaW_ijV_j;
 				acceleration -= (2.0 / 3.0) * k_gradient;
 			}
-
-			acc_prior_[index_i] += acceleration;
+			//if (surface_indicator_[index_i] == 0 && pos_[index_i][0] <= 5.95)//To prevent kernel truncation near outlet
+				acc_prior_[index_i] += acceleration;
 		}
 		//=================================================================================================//
 		void TurbuViscousAccInner::
