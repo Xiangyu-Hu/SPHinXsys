@@ -43,16 +43,28 @@ std::vector<Vecd> createThermalDomain()
 	return thermalDomainShape;
 }
 
+//std::vector<Vecd> left_temperature_region
+//{
+//	Vecd(0.3 * L, 0), Vecd(0.3 * L, BW), Vecd(0.4 * L, BW),
+//	Vecd(0.4 * L, 0), Vecd(0.3 * L, 0)
+//};
+//
+//std::vector<Vecd> right_temperature_region
+//{
+//	Vecd(0.6 * L, 0), Vecd(0.6 * L, BW), Vecd(0.7 * L, BW),
+//	Vecd(0.7 * L, 0), Vecd(0.6 * L, 0)
+//};
+
 std::vector<Vecd> left_temperature_region
 {
-	Vecd(0.3 * L, 0), Vecd(0.3 * L, BW), Vecd(0.4 * L, BW),
-	Vecd(0.4 * L, 0), Vecd(0.3 * L, 0)
+	Vecd(0.3 * L, H), Vecd(0.3 * L, H + BW), Vecd(0.4 * L, H + BW),
+	Vecd(0.4 * L, H), Vecd(0.3 * L, H)
 };
 
 std::vector<Vecd> right_temperature_region
 {
-	Vecd(0.6 * L, 0), Vecd(0.6 * L, BW), Vecd(0.7 * L, BW),
-	Vecd(0.7 * L, 0), Vecd(0.6 * L, 0)
+	Vecd(0.6 * L, H), Vecd(0.6 * L, H + BW), Vecd(0.7 * L, H + BW),
+	Vecd(0.7 * L, H), Vecd(0.6 * L, H)
 };
 
 std::vector<Vecd> heat_flux_region
@@ -73,42 +85,33 @@ public:
 	}
 };
 
-class WallBoundaryLeft : public MultiPolygonShape
+class WallBoundaryDirichlet : public MultiPolygonShape
 {
 public:
-	explicit WallBoundaryLeft(const std::string& shape_name) : MultiPolygonShape(shape_name)
+	explicit WallBoundaryDirichlet(const std::string& shape_name) : MultiPolygonShape(shape_name)
 	{
 		multi_polygon_.addAPolygon(left_temperature_region, ShapeBooleanOps::add);
-	}
-};
-
-class WallBoundaryRight : public MultiPolygonShape
-{
-public:
-	explicit WallBoundaryRight(const std::string& shape_name) : MultiPolygonShape(shape_name)
-	{
 		multi_polygon_.addAPolygon(right_temperature_region, ShapeBooleanOps::add);
 	}
 };
 
-class WallBoundaryLower : public MultiPolygonShape
+class WallBoundaryNeumann : public MultiPolygonShape
 {
 public:
-	explicit WallBoundaryLower(const std::string& shape_name) : MultiPolygonShape(shape_name)
+	explicit WallBoundaryNeumann(const std::string& shape_name) : MultiPolygonShape(shape_name)
 	{
 		multi_polygon_.addAPolygon(heat_flux_region, ShapeBooleanOps::add);
 	}
 };
 
-
-MultiPolygon createBoundayConditionRegion()
-{
-	MultiPolygon multi_polygon;
-	multi_polygon.addAPolygon(left_temperature_region, ShapeBooleanOps::add);
-	multi_polygon.addAPolygon(right_temperature_region, ShapeBooleanOps::add);
-	multi_polygon.addAPolygon(heat_flux_region, ShapeBooleanOps::add);
-	return multi_polygon;
-}
+//MultiPolygon createBoundayConditionRegion()
+//{
+//	MultiPolygon multi_polygon;
+//	multi_polygon.addAPolygon(left_temperature_region, ShapeBooleanOps::add);
+//	multi_polygon.addAPolygon(right_temperature_region, ShapeBooleanOps::add);
+//	multi_polygon.addAPolygon(heat_flux_region, ShapeBooleanOps::add);
+//	return multi_polygon;
+//}
 
 //----------------------------------------------------------------------
 //	Setup diffusion material properties. 
@@ -200,7 +203,6 @@ public:
 	virtual ~DiffusionBodyRelaxationWithDirichlet() {};
 };
 
-
 class DiffusionBodyRelaxationWithNeumann
 	:public RelaxationOfAllDiffusionSpeciesRK2<
 	RelaxationOfAllDiffusionSpeciesWithNeumann<DiffusionParticlesWithBoundary, WallParticles>>
@@ -250,17 +252,13 @@ int main(int ac, char* av[])
 	diffusion_body.defineParticlesAndMaterial<DiffusionParticlesWithBoundary, DiffusionMaterial>();
 	diffusion_body.generateParticles<ParticleGeneratorLattice>();
 
-	SolidBody wall_boundary_left(sph_system, makeShared<WallBoundaryLeft>("WallBoundaryLeft"));
-	wall_boundary_left.defineParticlesAndMaterial<WallParticles, DiffusionMaterial>();
-	wall_boundary_left.generateParticles<ParticleGeneratorLattice>();
+	SolidBody wall_boundary_Dirichlet(sph_system, makeShared<WallBoundaryDirichlet>("WallBoundaryLeft"));
+	wall_boundary_Dirichlet.defineParticlesAndMaterial<WallParticles, DiffusionMaterial>();
+	wall_boundary_Dirichlet.generateParticles<ParticleGeneratorLattice>();
 
-	SolidBody wall_boundary_right(sph_system, makeShared<WallBoundaryRight>("WallBoundaryRight"));
-	wall_boundary_right.defineParticlesAndMaterial<WallParticles, DiffusionMaterial>();
-	wall_boundary_right.generateParticles<ParticleGeneratorLattice>();
-
-	SolidBody wall_boundary_lower(sph_system, makeShared<WallBoundaryLower>("WallBoundaryLower"));
-	wall_boundary_lower.defineParticlesAndMaterial<WallParticles, DiffusionMaterial>();
-	wall_boundary_lower.generateParticles<ParticleGeneratorLattice>();
+	SolidBody wall_boundary_Neumann(sph_system, makeShared<WallBoundaryNeumann>("WallBoundaryRight"));
+	wall_boundary_Neumann.defineParticlesAndMaterial<WallParticles, DiffusionMaterial>();
+	wall_boundary_Neumann.generateParticles<ParticleGeneratorLattice>();
 
 	//----------------------------------------------------------------------
 	//	Particle and body creation of temperature observers.
@@ -272,14 +270,11 @@ int main(int ac, char* av[])
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	ComplexRelation diffusion_body_complex_left(diffusion_body, { &wall_boundary_left });
-	ComplexRelation wall_boundary_complex_left(wall_boundary_left, { &diffusion_body });
+	ComplexRelation diffusion_body_complex_Dirichlet(diffusion_body, { &wall_boundary_Dirichlet });
+	ComplexRelation wall_boundary_complex_Dirichlet(wall_boundary_Dirichlet, { &diffusion_body });
 
-	ComplexRelation diffusion_body_complex_right(diffusion_body, { &wall_boundary_right });
-	ComplexRelation wall_boundary_complex_right(wall_boundary_right, { &diffusion_body });
-
-	ComplexRelation diffusion_body_complex_lower(diffusion_body, { &wall_boundary_lower });
-	ComplexRelation wall_boundary_complex_lower(wall_boundary_lower, { &diffusion_body });
+	ComplexRelation diffusion_body_complex_Neumann(diffusion_body, { &wall_boundary_Neumann });
+	ComplexRelation wall_boundary_complex_Neumann(wall_boundary_Neumann, { &diffusion_body });
 
 	ContactRelation temperature_observer_contact(temperature_observer, { &diffusion_body });
 	//----------------------------------------------------------------------
@@ -287,9 +282,8 @@ int main(int ac, char* av[])
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
 	SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
-	SimpleDynamics<WallBoundaryInitialCondition> setup_boundary_condition_left(wall_boundary_left);
-	SimpleDynamics<WallBoundaryInitialCondition> setup_boundary_condition_right(wall_boundary_right);
-	SimpleDynamics<WallBoundaryInitialCondition> setup_boundary_condition_lower(wall_boundary_lower);
+	SimpleDynamics<WallBoundaryInitialCondition> setup_boundary_condition_Dirichlet(wall_boundary_Dirichlet);
+	SimpleDynamics<WallBoundaryInitialCondition> setup_boundary_condition_Neumann(wall_boundary_Neumann);
 	GetDiffusionTimeStepSize<DiffusionParticlesWithBoundary> get_time_step_size(diffusion_body);
 
 	//----------------------------------------------------------------------
@@ -301,17 +295,13 @@ int main(int ac, char* av[])
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	DiffusionBodyRelaxationWithDirichlet temperature_relaxation_left(diffusion_body_complex_left);
-	DiffusionBodyRelaxationWithDirichlet temperature_relaxation_right(diffusion_body_complex_right);
-	DiffusionBodyRelaxationWithNeumann temperature_relaxation_lower(diffusion_body_complex_lower);
-	InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_diffusion_body_normal_vector_left(diffusion_body_complex_left);
-	InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_wall_boundary_normal_vector_left(diffusion_body_complex_left);
+	DiffusionBodyRelaxationWithDirichlet temperature_relaxation_Dirichlet(diffusion_body_complex_Dirichlet);
+	DiffusionBodyRelaxationWithNeumann temperature_relaxation_Neumann(diffusion_body_complex_Neumann);
+	InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_diffusion_body_normal_vector_Dirichlet(diffusion_body_complex_Dirichlet);
+	InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_wall_boundary_normal_vector_Dirichlet(diffusion_body_complex_Dirichlet);
 
-	InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_diffusion_body_normal_vector_right(diffusion_body_complex_right);
-	InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_wall_boundary_normal_vector_right(diffusion_body_complex_right);
-
-	InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_diffusion_body_normal_vector_lower(diffusion_body_complex_lower);
-	InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_wall_boundary_normal_vector_lower(diffusion_body_complex_lower);
+	InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_diffusion_body_normal_vector_Neumann(diffusion_body_complex_Neumann);
+	InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_wall_boundary_normal_vector_Neumann(diffusion_body_complex_Neumann);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary. 
@@ -320,18 +310,16 @@ int main(int ac, char* av[])
 	sph_system.initializeSystemConfigurations();
 
 	setup_diffusion_initial_condition.exec();
-	setup_boundary_condition_left.exec();
-	setup_boundary_condition_right.exec();
-	setup_boundary_condition_lower.exec();
 
-	update_diffusion_body_normal_vector_left.exec();
-	update_wall_boundary_normal_vector_left.exec();
+	setup_boundary_condition_Dirichlet.exec();
+	setup_boundary_condition_Neumann.exec();
 
-	update_diffusion_body_normal_vector_right.exec();
-	update_wall_boundary_normal_vector_right.exec();
+	update_diffusion_body_normal_vector_Dirichlet.exec();
+	update_wall_boundary_normal_vector_Dirichlet.exec();
 
-	update_diffusion_body_normal_vector_lower.exec();
-	update_wall_boundary_normal_vector_lower.exec();
+	update_diffusion_body_normal_vector_Neumann.exec();
+	update_wall_boundary_normal_vector_Neumann.exec();
+
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
@@ -364,9 +352,8 @@ int main(int ac, char* av[])
 						<< dt << "\n";
 				}
 
-				temperature_relaxation_left.exec(dt);
-				temperature_relaxation_right.exec(dt);
-				temperature_relaxation_lower.exec(dt);
+				temperature_relaxation_Dirichlet.exec(dt);
+				temperature_relaxation_Neumann.exec(dt);
 
 				ite++;
 				dt = get_time_step_size.exec();
