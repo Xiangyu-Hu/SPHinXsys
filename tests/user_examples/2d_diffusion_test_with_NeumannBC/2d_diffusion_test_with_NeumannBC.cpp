@@ -43,18 +43,6 @@ std::vector<Vecd> createThermalDomain()
 	return thermalDomainShape;
 }
 
-//std::vector<Vecd> left_temperature_region
-//{
-//	Vecd(0.3 * L, 0), Vecd(0.3 * L, BW), Vecd(0.4 * L, BW),
-//	Vecd(0.4 * L, 0), Vecd(0.3 * L, 0)
-//};
-//
-//std::vector<Vecd> right_temperature_region
-//{
-//	Vecd(0.6 * L, 0), Vecd(0.6 * L, BW), Vecd(0.7 * L, BW),
-//	Vecd(0.7 * L, 0), Vecd(0.6 * L, 0)
-//};
-
 std::vector<Vecd> left_temperature_region
 {
 	Vecd(0.3 * L, H), Vecd(0.3 * L, H + BW), Vecd(0.4 * L, H + BW),
@@ -104,15 +92,6 @@ public:
 	}
 };
 
-//MultiPolygon createBoundayConditionRegion()
-//{
-//	MultiPolygon multi_polygon;
-//	multi_polygon.addAPolygon(left_temperature_region, ShapeBooleanOps::add);
-//	multi_polygon.addAPolygon(right_temperature_region, ShapeBooleanOps::add);
-//	multi_polygon.addAPolygon(heat_flux_region, ShapeBooleanOps::add);
-//	return multi_polygon;
-//}
-
 //----------------------------------------------------------------------
 //	Setup diffusion material properties. 
 //----------------------------------------------------------------------
@@ -125,31 +104,19 @@ public:
 	}
 };
 using DiffusionParticlesWithBoundary = DiffusionReactionParticlesWithBoundary<SolidParticles, DiffusionMaterial>;
-//----------------------------------------------------------------------
-//	Setup wall material properties.
-//----------------------------------------------------------------------
-//class WallMaterial : public DiffusionReaction<Solid>
-//{
-//public:
-//	WallMaterial() : DiffusionReaction<Solid>({ "Phi" }, SharedPtr<NoReaction>())
-//	{
-//		// only default property is given, as no heat transfer within solid considered here.
-//		initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi");
-//	};
-//};
 using WallParticles = DiffusionReactionParticlesWithBoundary<SolidParticles, DiffusionMaterial>;
 //----------------------------------------------------------------------
 //	Application dependent initial condition. 
 //----------------------------------------------------------------------
 class DiffusionInitialCondition
-	: public DiffusionReactionInitialCondition<DiffusionParticlesWithBoundary>
+	: public DiffusionReactionInitialConditionWithBoundary<DiffusionParticlesWithBoundary>
 {
 protected:
 	size_t phi_;
 
 public:
 	explicit DiffusionInitialCondition(SPHBody& sph_body)
-		: DiffusionReactionInitialCondition<DiffusionParticlesWithBoundary>(sph_body)
+		: DiffusionReactionInitialConditionWithBoundary<DiffusionParticlesWithBoundary>(sph_body)
 	{
 		phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
 	};
@@ -165,6 +132,13 @@ class WallBoundaryInitialCondition
 {
 protected:
 	size_t phi_;
+
+public:
+	WallBoundaryInitialCondition(SolidBody& diffusion_body) :
+		DiffusionReactionInitialConditionWithBoundary<WallParticles>(diffusion_body)
+	{
+		phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
+	}
 
 	void update(size_t index_i, Real dt)
 	{
@@ -182,24 +156,18 @@ protected:
 			heat_flux_[index_i] = heat_flux;
 		}
 	}
-public:
-	WallBoundaryInitialCondition(SolidBody& diffusion_body) :
-		DiffusionReactionInitialConditionWithBoundary<WallParticles>(diffusion_body)
-	{
-		phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
-	}
 };
 
 //----------------------------------------------------------------------
 //	Specify diffusion relaxation method. 
 //----------------------------------------------------------------------
 class DiffusionBodyRelaxationWithDirichlet
-	:public RelaxationOfAllDiffusionSpeciesRK2<
+	: public RelaxationOfAllDiffusionSpeciesRK2<
 	RelaxationOfAllDiffusionSpeciesWithDirichlet<DiffusionParticlesWithBoundary, WallParticles>>
 {
 public:
-	DiffusionBodyRelaxationWithDirichlet(ComplexRelation& body_complex_relation)
-		:RelaxationOfAllDiffusionSpeciesRK2(body_complex_relation) {};
+	explicit DiffusionBodyRelaxationWithDirichlet(ComplexRelation& body_complex_relation)
+		: RelaxationOfAllDiffusionSpeciesRK2(body_complex_relation) {};
 	virtual ~DiffusionBodyRelaxationWithDirichlet() {};
 };
 
@@ -208,8 +176,8 @@ class DiffusionBodyRelaxationWithNeumann
 	RelaxationOfAllDiffusionSpeciesWithNeumann<DiffusionParticlesWithBoundary, WallParticles>>
 {
 public:
-	DiffusionBodyRelaxationWithNeumann(ComplexRelation& body_complex_relation)
-		:RelaxationOfAllDiffusionSpeciesRK2(body_complex_relation) {};
+	explicit DiffusionBodyRelaxationWithNeumann(ComplexRelation& body_complex_relation)
+		: RelaxationOfAllDiffusionSpeciesRK2(body_complex_relation) {};
 	virtual ~DiffusionBodyRelaxationWithNeumann() {};
 };
 //----------------------------------------------------------------------
@@ -252,11 +220,11 @@ int main(int ac, char* av[])
 	diffusion_body.defineParticlesAndMaterial<DiffusionParticlesWithBoundary, DiffusionMaterial>();
 	diffusion_body.generateParticles<ParticleGeneratorLattice>();
 
-	SolidBody wall_boundary_Dirichlet(sph_system, makeShared<WallBoundaryDirichlet>("WallBoundaryLeft"));
+	SolidBody wall_boundary_Dirichlet(sph_system, makeShared<WallBoundaryDirichlet>("WallBoundaryDirichlet"));
 	wall_boundary_Dirichlet.defineParticlesAndMaterial<WallParticles, DiffusionMaterial>();
 	wall_boundary_Dirichlet.generateParticles<ParticleGeneratorLattice>();
 
-	SolidBody wall_boundary_Neumann(sph_system, makeShared<WallBoundaryNeumann>("WallBoundaryRight"));
+	SolidBody wall_boundary_Neumann(sph_system, makeShared<WallBoundaryNeumann>("WallBoundaryNeumann"));
 	wall_boundary_Neumann.defineParticlesAndMaterial<WallParticles, DiffusionMaterial>();
 	wall_boundary_Neumann.generateParticles<ParticleGeneratorLattice>();
 
@@ -297,11 +265,12 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	DiffusionBodyRelaxationWithDirichlet temperature_relaxation_Dirichlet(diffusion_body_complex_Dirichlet);
 	DiffusionBodyRelaxationWithNeumann temperature_relaxation_Neumann(diffusion_body_complex_Neumann);
+
 	InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_diffusion_body_normal_vector_Dirichlet(diffusion_body_complex_Dirichlet);
-	InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_wall_boundary_normal_vector_Dirichlet(diffusion_body_complex_Dirichlet);
+	InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_wall_boundary_normal_vector_Dirichlet(wall_boundary_complex_Dirichlet);
 
 	InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_diffusion_body_normal_vector_Neumann(diffusion_body_complex_Neumann);
-	InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_wall_boundary_normal_vector_Neumann(diffusion_body_complex_Neumann);
+	InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_wall_boundary_normal_vector_Neumann(wall_boundary_complex_Neumann);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary. 
