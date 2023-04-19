@@ -111,6 +111,10 @@ namespace SPH
 		inline void interaction(size_t index_i, Real dt = 0.0);
 	};
 
+	/**
+	 * @class UpdateUnitVectorNormalToBoundary
+	 * @brief Update the normal vector of surface.
+	 */
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	class UpdateUnitVectorNormalToBoundary
 		: public LocalDynamics,
@@ -125,5 +129,68 @@ namespace SPH
 		virtual ~UpdateUnitVectorNormalToBoundary() {};
 		void interaction(size_t index_i, Real dt = 0.0);
 	};
+
+	/**
+	 * @class InitializationRKWithBoundary
+	 * @brief initialization of a runge-kutta integration scheme
+	 */
+	template <class DiffusionReactionParticlesType>
+	class InitializationRKWithBoundary : public LocalDynamics,
+		public DiffusionReactionSimpleData<DiffusionReactionParticlesType>
+	{
+	protected:
+		typename DiffusionReactionParticlesType::DiffusionReactionMaterial& material_;
+		StdVec<BaseDiffusion*>& all_diffusions_;
+		StdVec<StdLargeVec<Real>*>& diffusion_species_;
+		StdVec<StdLargeVec<Real>*>& diffusion_species_s_;
+
+	public:
+		InitializationRKWithBoundary(SPHBody& sph_body, StdVec<StdLargeVec<Real>*>& diffusion_species_s);
+		virtual ~InitializationRKWithBoundary() {};
+
+		void update(size_t index_i, Real dt = 0.0);
+	};
+
+	/**
+	 * @class SecondStageRK2WithBoundary
+	 * @brief the second stage of the 2nd-order Runge-Kutta scheme
+	 */
+	template <class FirstStageType>
+	class SecondStageRK2WithBoundary : public FirstStageType
+	{
+	protected:
+		StdVec<StdLargeVec<Real>*>& diffusion_species_s_;
+		virtual void updateSpeciesDiffusion(size_t particle_i, Real dt) override;
+
+	public:
+		SecondStageRK2WithBoundary(typename FirstStageType::BodyRelationType& body_relation,
+			StdVec<StdLargeVec<Real>*>& diffusion_species_s);
+		virtual ~SecondStageRK2WithBoundary() {};
+	};
+
+	/**
+	 * @class RelaxationOfAllDiffusionSpeciesRK2WithBoundary
+	 * @brief Compute the diffusion relaxation process of all species
+	 * with second order Runge-Kutta time stepping
+	 */
+	template <class FirstStageType>
+	class RelaxationOfAllDiffusionSpeciesRK2WithBoundary : public BaseDynamics<void>
+	{
+	protected:
+		/** Intermediate Value */
+
+		StdVec<StdLargeVec<Real>*> diffusion_species_s_;
+		SimpleDynamics<InitializationRKWithBoundary<typename FirstStageType::InnerParticlesType>> rk2_initialization_;
+		InteractionWithUpdate<FirstStageType> rk2_1st_stage_;
+		InteractionWithUpdate<SecondStageRK2WithBoundary<FirstStageType>> rk2_2nd_stage_;
+		StdVec<BaseDiffusion*> all_diffusions_;
+
+	public:
+		explicit RelaxationOfAllDiffusionSpeciesRK2WithBoundary(typename FirstStageType::BodyRelationType& body_relation);
+		virtual ~RelaxationOfAllDiffusionSpeciesRK2WithBoundary() {};
+
+		virtual void exec(Real dt = 0.0) override;
+	};
+
 }
 #endif // PARTICLE_DYNAMICS_DIFFUSION_REACTION_WITH_BOUNDARY_H
