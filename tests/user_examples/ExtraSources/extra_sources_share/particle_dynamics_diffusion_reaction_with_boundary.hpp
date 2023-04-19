@@ -260,7 +260,7 @@ namespace SPH
 	{
 		for (size_t m = 0; m < all_diffusions_.size(); ++m)
 		{
-			(*diffusion_species_s_[m])[index_i] = (*diffusion_species_[m])[index_i];;
+			(*diffusion_species_s_[m])[index_i] = (*diffusion_species_[m])[index_i];
 		}
 	}
 	//=================================================================================================//
@@ -305,6 +305,77 @@ namespace SPH
 	//=================================================================================================//
 	template <class FirstStageType>
 	void RelaxationOfAllDiffusionSpeciesRK2WithBoundary<FirstStageType>::exec(Real dt)
+	{
+		rk2_initialization_.exec();
+		rk2_1st_stage_.exec(dt);
+		rk2_2nd_stage_.exec(dt);
+	}
+
+	//=================================================================================================//
+	template <class DiffusionReactionParticlesType>
+	InitializationRK02<DiffusionReactionParticlesType>::
+		InitializationRK02(SPHBody &sph_body, StdVec<StdLargeVec<Real>> &diffusion_species_s)
+		: LocalDynamics(sph_body),
+		  DiffusionReactionSimpleData<DiffusionReactionParticlesType>(sph_body),
+		  material_(this->particles_->diffusion_reaction_material_),
+		  all_diffusions_(material_.AllDiffusions()),
+		  diffusion_species_(this->particles_->DiffusionSpecies()),
+		  diffusion_species_s_(diffusion_species_s) {}
+	//=================================================================================================//
+	template <class DiffusionReactionParticlesType>
+	void InitializationRK02<DiffusionReactionParticlesType>::
+		update(size_t index_i, Real dt)
+	{
+		for (size_t m = 0; m < all_diffusions_.size(); ++m)
+		{
+			diffusion_species_s_[m][index_i] = (*diffusion_species_[m])[index_i];
+		}
+	}
+	//=================================================================================================//
+	template <class FirstStageType>
+	SecondStageRK202<FirstStageType>::
+		SecondStageRK202(typename FirstStageType::BodyRelationType &body_relation,
+					   StdVec<StdLargeVec<Real>> &diffusion_species_s)
+		: FirstStageType(body_relation), diffusion_species_s_(diffusion_species_s) {}
+	//=================================================================================================//
+	template <class FirstStageType>
+	void SecondStageRK202<FirstStageType>::
+		updateSpeciesDiffusion(size_t particle_i, Real dt)
+	{
+		for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
+		{
+			(*this->diffusion_species_[m])[particle_i] =
+				0.5 * diffusion_species_s_[m][particle_i] +
+				0.5 * ((*this->diffusion_species_[m])[particle_i] + dt * (*this->diffusion_dt_[m])[particle_i]);
+		}
+	}
+	//=================================================================================================//
+	template <class FirstStageType>
+	RelaxationOfAllDiffusionSpeciesRK202<FirstStageType>::
+		RelaxationOfAllDiffusionSpeciesRK202(typename FirstStageType::BodyRelationType &body_relation)
+		: BaseDynamics<void>(body_relation.getSPHBody()),
+		  rk2_initialization_(body_relation.getSPHBody(), diffusion_species_s_),
+		  rk2_1st_stage_(body_relation), rk2_2nd_stage_(body_relation, diffusion_species_s_),
+		  all_diffusions_(rk2_1st_stage_.AllDiffusions())
+	{
+		diffusion_species_s_.resize(all_diffusions_.size());
+		StdVec<std::string> &all_species_names = rk2_1st_stage_.getParticles()->AllSpeciesNames();
+		for (size_t i = 0; i != all_diffusions_.size(); ++i)
+		{
+			// register diffusion species intermediate
+			size_t diffusion_species_index = all_diffusions_[i]->diffusion_species_index_;
+			std::string &diffusion_species_name = all_species_names[diffusion_species_index];
+			diffusion_species_s_[i] = rk2_1st_stage_.getParticles()->getVariableByName<Real>(diffusion_species_name + "Intermediate"); //wrong
+			//rk2_1st_stage_.getParticles()->getVariableByName<Real>(diffusion_species_name + "Intermediate");
+
+			//rk2_1st_stage_.getParticles()->registerVariable(diffusion_species_s_[i], diffusion_species_name + "Intermediate"); //original code
+			//diffusion_species_s_[i] = rk2_1st_stage_.getParticles()->template registerSharedVariable<Real>(diffusion_species_name + "Intermediate");
+			//diffusion_dt_[i] = this->particles_->template registerSharedVariable<Real>(diffusion_species_name + "ChangeRate"); //imitative code
+		}
+	}
+	//=================================================================================================//
+	template <class FirstStageType>
+	void RelaxationOfAllDiffusionSpeciesRK202<FirstStageType>::exec(Real dt)
 	{
 		rk2_initialization_.exec();
 		rk2_1st_stage_.exec(dt);

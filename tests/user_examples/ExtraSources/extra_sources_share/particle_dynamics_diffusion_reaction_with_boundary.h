@@ -192,5 +192,67 @@ namespace SPH
 		virtual void exec(Real dt = 0.0) override;
 	};
 
+
+
+	/**
+	 * @class InitializationRK02
+	 * @brief initialization of a runge-kutta integration scheme
+	 */
+	template <class DiffusionReactionParticlesType>
+	class InitializationRK02 : public LocalDynamics,
+		public DiffusionReactionSimpleData<DiffusionReactionParticlesType>
+	{
+	protected:
+		typename DiffusionReactionParticlesType::DiffusionReactionMaterial& material_;
+		StdVec<BaseDiffusion*>& all_diffusions_;
+		StdVec<StdLargeVec<Real>*>& diffusion_species_;
+		StdVec<StdLargeVec<Real>>& diffusion_species_s_;
+
+	public:
+		InitializationRK02(SPHBody& sph_body, StdVec<StdLargeVec<Real>>& diffusion_species_s);
+		virtual ~InitializationRK02() {};
+
+		void update(size_t index_i, Real dt = 0.0);
+	};
+
+	/**
+	 * @class SecondStageRK202
+	 * @brief the second stage of the 2nd-order Runge-Kutta scheme
+	 */
+	template <class FirstStageType>
+	class SecondStageRK202 : public FirstStageType
+	{
+	protected:
+		StdVec<StdLargeVec<Real>>& diffusion_species_s_;
+		virtual void updateSpeciesDiffusion(size_t particle_i, Real dt) override;
+
+	public:
+		SecondStageRK202(typename FirstStageType::BodyRelationType& body_relation,
+			StdVec<StdLargeVec<Real>>& diffusion_species_s);
+		virtual ~SecondStageRK202() {};
+	};
+
+	/**
+	 * @class RelaxationOfAllDiffusionSpeciesRK2
+	 * @brief Compute the diffusion relaxation process of all species
+	 * with second order Runge-Kutta time stepping
+	 */
+	template <class FirstStageType>
+	class RelaxationOfAllDiffusionSpeciesRK202 : public BaseDynamics<void>
+	{
+	protected:
+		/** Intermediate Value */
+		StdVec<StdLargeVec<Real>> diffusion_species_s_;
+		SimpleDynamics<InitializationRK02<typename FirstStageType::InnerParticlesType>> rk2_initialization_;
+		InteractionWithUpdate<FirstStageType> rk2_1st_stage_;
+		InteractionWithUpdate<SecondStageRK202<FirstStageType>> rk2_2nd_stage_;
+		StdVec<BaseDiffusion*> all_diffusions_;
+
+	public:
+		explicit RelaxationOfAllDiffusionSpeciesRK202(typename FirstStageType::BodyRelationType& body_relation);
+		virtual ~RelaxationOfAllDiffusionSpeciesRK202() {};
+
+		virtual void exec(Real dt = 0.0) override;
+	};
 }
 #endif // PARTICLE_DYNAMICS_DIFFUSION_REACTION_WITH_BOUNDARY_H
