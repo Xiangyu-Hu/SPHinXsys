@@ -50,7 +50,7 @@ namespace SPH
 			{ initializeDataForSingularPackage(data_pkg, far_field_distance); });
 	}
 	//=================================================================================================//
-	void LevelSet::initializeAddressesInACell(const Vecu &cell_index)
+	void LevelSet::initializeAddressesInACell(const Arrayi &cell_index)
 	{
 		initializePackageAddressesInACell(cell_index);
 	}
@@ -144,18 +144,18 @@ namespace SPH
 	bool LevelSet::probeIsWithinMeshBound(const Vecd &position)
 	{
 		bool is_bounded = true;
-		Vecu cell_pos = CellIndexFromPosition(position);
+		Arrayi cell_pos = CellIndexFromPosition(position);
 		for (int i = 0; i != position.size(); ++i)
 		{
 			if (cell_pos[i] < 2)
 				is_bounded = false;
-			if (cell_pos[i] > (number_of_cells_[i] - 2))
+			if (cell_pos[i] > (all_cells_[i] - 2))
 				is_bounded = false;
 		}
 		return is_bounded;
 	}
 	//=================================================================================================//
-	void LevelSet::initializeDataInACell(const Vecu &cell_index)
+	void LevelSet::initializeDataInACell(const Arrayi &cell_index)
 	{
 		Vecd cell_position = CellPositionFromIndex(cell_index);
 		Real signed_distance = shape_.findSignedDistance(cell_position);
@@ -176,12 +176,14 @@ namespace SPH
 		else
 		{
 			LevelSetDataPackage *singular_data_pkg =
-				shape_.checkContain(cell_position) ? singular_data_pkgs_addrs_[0] : singular_data_pkgs_addrs_[1];
+				shape_.checkContain(cell_position)
+					? singular_data_pkgs_addrs_[0]
+					: singular_data_pkgs_addrs_[1];
 			assignDataPackageAddress(cell_index, singular_data_pkg);
 		}
 	}
 	//=============================================================================================//
-	void LevelSet::tagACellIsInnerPackage(const Vecu &cell_index)
+	void LevelSet::tagACellIsInnerPackage(const Arrayi &cell_index)
 	{
 		if (isInnerPackage(cell_index))
 		{
@@ -224,7 +226,7 @@ namespace SPH
 		return df;
 	}
 	//=============================================================================================//
-	void RefinedLevelSet::initializeDataInACellFromCoarse(const Vecu &cell_index)
+	void RefinedLevelSet::initializeDataInACellFromCoarse(const Arrayi &cell_index)
 	{
 		Vecd cell_position = CellPositionFromIndex(cell_index);
 		LevelSetDataPackage *singular_data_pkg = coarse_mesh_.probeSignedDistance(cell_position) < 0.0
@@ -250,10 +252,11 @@ namespace SPH
 		}
 	}
 	//=============================================================================================//
-	MultilevelLevelSet::MultilevelLevelSet(BoundingBox tentative_bounds, Real reference_data_spacing, size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation)
-		: MultilevelMesh<BaseLevelSet, LevelSet, RefinedLevelSet>(tentative_bounds, reference_data_spacing, total_levels, shape, sph_adaptation)
-	{
-	}
+	MultilevelLevelSet::MultilevelLevelSet(
+		BoundingBox tentative_bounds, Real reference_data_spacing, size_t total_levels,
+		Shape &shape, SPHAdaptation &sph_adaptation)
+		: MultilevelMesh<BaseLevelSet, LevelSet, RefinedLevelSet>(
+			  tentative_bounds, reference_data_spacing, total_levels, shape, sph_adaptation) {}
 	//=================================================================================================//
 	size_t MultilevelLevelSet::getCoarseLevel(Real h_ratio)
 	{

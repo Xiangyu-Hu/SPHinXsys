@@ -12,11 +12,11 @@ namespace SPH {
 	{
 		BaseMesh mesh(domain_bounds_, lattice_spacing_, 0);
 		Real particle_volume = lattice_spacing_ * lattice_spacing_;
-		Vecu number_of_lattices = mesh.NumberOfCellsFromNumberOfGridPoints(mesh.NumberOfGridPoints());
-			for (size_t i = 0; i < number_of_lattices[0]; ++i)
-				for (size_t j = 0; j < number_of_lattices[1]; ++j)
+		Arrayi number_of_lattices = mesh.AllCellsFromAllGridPoints(mesh.AllGridPoints());
+			for (int i = 0; i < number_of_lattices[0]; ++i)
+				for (int j = 0; j < number_of_lattices[1]; ++j)
 				{
-				Vecd particle_position = mesh.CellPositionFromIndex(Vecu(i,j));
+				Vecd particle_position = mesh.CellPositionFromIndex(Arrayi(i,j));
 				if (body_shape_.checkNotFar(particle_position, lattice_spacing_))
 				{
 					if (body_shape_.checkContain(particle_position))
@@ -32,15 +32,15 @@ namespace SPH {
 		// Calculate the total volume and
 		// count the number of cells inside the body volume, where we might put particles.
 		std::unique_ptr<BaseMesh> mesh(new BaseMesh(domain_bounds_, lattice_spacing_, 0));
-		Vecu number_of_lattices = mesh->NumberOfCellsFromNumberOfGridPoints(mesh->NumberOfGridPoints());
-		for (size_t i = 0; i < number_of_lattices[0]; ++i)
-			for (size_t j = 0; j < number_of_lattices[1]; ++j) {
-				Vecd particle_position = mesh->CellPositionFromIndex(Vecu(i, j));
+		Arrayi number_of_lattices = mesh->AllCellsFromAllGridPoints(mesh->AllGridPoints());
+		for (int i = 0; i < number_of_lattices[0]; ++i)
+			for (int j = 0; j < number_of_lattices[1]; ++j) {
+				Vecd particle_position = mesh->CellPositionFromIndex(Arrayi(i, j));
 				if (body_shape_.checkNotFar(particle_position, lattice_spacing_))
 				{
 					if (body_shape_.checkContain(particle_position))
 					{
-						number_of_cells_++;
+						all_cells_++;
 						total_volume_ += lattice_spacing_ * lattice_spacing_;
 					}
 				}
@@ -49,13 +49,13 @@ namespace SPH {
 		planned_number_of_particles_ = int(number_of_particles);
 
 		// Calculate the interval based on the number of particles.
-		Real interval = (Real)planned_number_of_particles_ / (Real)number_of_cells_;
+		Real interval = (Real)planned_number_of_particles_ / (Real)all_cells_;
 		if (interval <= 0) interval = 1;          // It has to be lager than 0.
 		// Add a particle in each interval, randomly. We will skip the last intervals if we already reach the number of particles
-		for (size_t i = 0; i < number_of_lattices[0]; ++i)
-			for (size_t j = 0; j < number_of_lattices[1]; ++j)
+		for (int i = 0; i < number_of_lattices[0]; ++i)
+			for (int j = 0; j < number_of_lattices[1]; ++j)
 			{
-				Vecd particle_position = mesh->CellPositionFromIndex(Vecu(i, j));
+				Vecd particle_position = mesh->CellPositionFromIndex(Arrayi(i, j));
 				if (body_shape_.checkNotFar(particle_position, lattice_spacing_))
 				{
 					if (body_shape_.checkContain(particle_position))
