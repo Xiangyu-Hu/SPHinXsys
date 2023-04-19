@@ -73,8 +73,8 @@ int main(int ac, char* av[])
 	DiffusionBodyRelaxationWithDirichlet temperature_relaxation_Dirichlet(diffusion_body_complex_Dirichlet);
 	DiffusionBodyRelaxationWithNeumann temperature_relaxation_Neumann(diffusion_body_complex_Neumann);
 
-	InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_diffusion_body_normal_vector_Dirichlet(diffusion_body_complex_Dirichlet);
-	InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_wall_boundary_normal_vector_Dirichlet(wall_boundary_complex_Dirichlet);
+	//InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_diffusion_body_normal_vector_Dirichlet(diffusion_body_complex_Dirichlet);
+	//InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_wall_boundary_normal_vector_Dirichlet(wall_boundary_complex_Dirichlet);
 
 	InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_diffusion_body_normal_vector_Neumann(diffusion_body_complex_Neumann);
 	InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_wall_boundary_normal_vector_Neumann(wall_boundary_complex_Neumann);
@@ -90,8 +90,8 @@ int main(int ac, char* av[])
 	setup_boundary_condition_Dirichlet.exec();
 	setup_boundary_condition_Neumann.exec();
 
-	update_diffusion_body_normal_vector_Dirichlet.exec();
-	update_wall_boundary_normal_vector_Dirichlet.exec();
+	//update_diffusion_body_normal_vector_Dirichlet.exec();
+	//update_wall_boundary_normal_vector_Dirichlet.exec();
 
 	update_diffusion_body_normal_vector_Neumann.exec();
 	update_wall_boundary_normal_vector_Neumann.exec();
