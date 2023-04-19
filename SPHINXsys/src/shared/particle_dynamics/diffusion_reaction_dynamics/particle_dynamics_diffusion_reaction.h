@@ -152,10 +152,10 @@ namespace SPH
 		typename DiffusionReactionParticlesType::DiffusionReactionMaterial &material_;
 		StdVec<BaseDiffusion *> &all_diffusions_;
 		StdVec<StdLargeVec<Real> *> &diffusion_species_;
-		StdVec<StdLargeVec<Real> *> &diffusion_species_s_;
+		StdVec<StdLargeVec<Real>> &diffusion_species_s_;
 
 	public:
-		InitializationRK(SPHBody &sph_body, StdVec<StdLargeVec<Real>*> &diffusion_species_s);
+		InitializationRK(SPHBody &sph_body, StdVec<StdLargeVec<Real>> &diffusion_species_s);
 		virtual ~InitializationRK(){};
 
 		void update(size_t index_i, Real dt = 0.0);
@@ -169,12 +169,12 @@ namespace SPH
 	class SecondStageRK2 : public FirstStageType
 	{
 	protected:
-		StdVec<StdLargeVec<Real> *> &diffusion_species_s_;
+		StdVec<StdLargeVec<Real>> &diffusion_species_s_;
 		virtual void updateSpeciesDiffusion(size_t particle_i, Real dt) override;
 
 	public:
 		SecondStageRK2(typename FirstStageType::BodyRelationType &body_relation,
-					   StdVec<StdLargeVec<Real> *> &diffusion_species_s);
+					   StdVec<StdLargeVec<Real>> &diffusion_species_s);
 		virtual ~SecondStageRK2(){};
 	};
 
@@ -188,8 +188,7 @@ namespace SPH
 	{
 	protected:
 		/** Intermediate Value */
-	
-		StdVec<StdLargeVec<Real>*> diffusion_species_s_;
+		StdVec<StdLargeVec<Real>> diffusion_species_s_;
 		SimpleDynamics<InitializationRK<typename FirstStageType::InnerParticlesType>> rk2_initialization_;
 		InteractionWithUpdate<FirstStageType> rk2_1st_stage_;
 		InteractionWithUpdate<SecondStageRK2<FirstStageType>> rk2_2nd_stage_;
