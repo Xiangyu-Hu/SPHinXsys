@@ -31,6 +31,7 @@
 #define CONTACT_DYNAMICS_H
 
 #include "general_solid_dynamics.h"
+#include "sph_data_containers.h"
 
 namespace SPH
 {
@@ -41,11 +42,19 @@ namespace SPH
 		typedef DataDelegateContact<SolidParticles, SolidParticles> ContactDynamicsData;
 		typedef DataDelegateContact<SolidParticles, SolidParticles> ContactWithWallData;
 
+		class ContactDensityAccessor
+		{
+		protected:
+			ContactDensityAccessor(BaseParticles& particles,const std::string &variable_name): contact_density_(*particles.registerSharedVariable<Real>(variable_name)){};
+			~ContactDensityAccessor() = default;
+			StdLargeVec<Real>& contact_density_;
+		};
+
 		/**
 		 * @class SelfContactDensitySummation
 		 * @brief Computing the summation density due to solid self-contact model.
 		 */
-		class SelfContactDensitySummation : public LocalDynamics, public SolidDataInner
+		class SelfContactDensitySummation : public ContactDensityAccessor, public LocalDynamics, public SolidDataInner
 		{
 		public:
 			explicit SelfContactDensitySummation(SelfSurfaceContactRelation &self_contact_relation);
@@ -60,11 +69,10 @@ namespace SPH
 					Real corrected_W_ij = std::max(inner_neighborhood.W_ij_[n] - offset_W_ij_, 0.0);
 					sigma += corrected_W_ij * mass_[inner_neighborhood.j_[n]];
 				}
-				self_contact_density_[index_i] = sigma;
+				contact_density_[index_i] = sigma;
 			};
 
 		protected:
-			StdLargeVec<Real> self_contact_density_;
 			StdLargeVec<Real> &mass_;
 			Real offset_W_ij_;
 		};
@@ -73,7 +81,7 @@ namespace SPH
 		 * @class ContactDensitySummation
 		 * @brief Computing the summation density due to solid-solid contact model.
 		 */
-		class ContactDensitySummation : public LocalDynamics, public ContactDynamicsData
+		class ContactDensitySummation : public ContactDensityAccessor, public LocalDynamics, public ContactDynamicsData
 		{
 		public:
 			explicit ContactDensitySummation(SurfaceContactRelation &solid_body_contact_relation);
@@ -98,7 +106,6 @@ namespace SPH
 			};
 
 		protected:
-			StdLargeVec<Real> contact_density_;
 			StdLargeVec<Real> &mass_;
 			StdVec<StdLargeVec<Real> *> contact_mass_;
 			StdVec<Real> offset_W_ij_;
@@ -109,7 +116,7 @@ namespace SPH
 		 * @brief Computing the contact density due to shell contact using a
 		 * 		 surface integral being solved by Gauss-Legendre quadrature integration.
 		 */
-		class ShellContactDensity : public LocalDynamics, public ContactDynamicsData
+		class ShellContactDensity : public ContactDensityAccessor, public LocalDynamics, public ContactDynamicsData
 		{
 		public:
 			explicit ShellContactDensity(SurfaceContactRelation &solid_body_contact_relation);
@@ -147,7 +154,6 @@ namespace SPH
 			Real particle_spacing_;
 			StdVec<Real> calibration_factor_;
 			StdVec<Real> offset_W_ij_;
-			StdLargeVec<Real> contact_density_;
 			StdVec<StdLargeVec<Real> *> contact_Vol_;
 
 			/** Abscissas and weights for Gauss-Legendre quadrature integration with n=3 nodes */
