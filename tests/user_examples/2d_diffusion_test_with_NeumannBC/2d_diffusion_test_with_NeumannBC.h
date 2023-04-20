@@ -168,22 +168,22 @@ public:
 //	Specify diffusion relaxation method. 
 //----------------------------------------------------------------------
 class DiffusionBodyRelaxationWithDirichlet
-	: public RelaxationOfAllDiffusionSpeciesRK2WithBoundary<
+	: public RelaxationOfAllDiffusionSpeciesRK2<
 	RelaxationOfAllDiffusionSpeciesWithDirichlet<DiffusionParticlesWithBoundary, WallParticles>>
 {
 public:
 	explicit DiffusionBodyRelaxationWithDirichlet(ComplexRelation& body_complex_relation)
-		: RelaxationOfAllDiffusionSpeciesRK2WithBoundary(body_complex_relation) {};
+		: RelaxationOfAllDiffusionSpeciesRK2(body_complex_relation) {};
 	virtual ~DiffusionBodyRelaxationWithDirichlet() {};
 };
 
 class DiffusionBodyRelaxationWithNeumann
-	:public RelaxationOfAllDiffusionSpeciesRK2WithBoundary<
+	:public RelaxationOfAllDiffusionSpeciesRK2<
 	RelaxationOfAllDiffusionSpeciesWithNeumann<DiffusionParticlesWithBoundary, WallParticles>>
 {
 public:
 	explicit DiffusionBodyRelaxationWithNeumann(ComplexRelation& body_complex_relation)
-		: RelaxationOfAllDiffusionSpeciesRK2WithBoundary(body_complex_relation) {};
+		: RelaxationOfAllDiffusionSpeciesRK2(body_complex_relation) {};
 	virtual ~DiffusionBodyRelaxationWithNeumann() {};
 };
 //----------------------------------------------------------------------
