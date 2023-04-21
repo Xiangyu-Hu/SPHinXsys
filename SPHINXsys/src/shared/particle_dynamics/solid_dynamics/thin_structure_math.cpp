@@ -260,5 +260,15 @@ namespace SPH
 			return correction_matrix;
 		}
 		//=================================================================================================//
+		Vec2d getPseudoNormal(const Vec2d& rotation)
+		{
+			return Vec2d(sin(rotation[0]), cos(rotation[0]));
+		}
+		//=================================================================================================//
+		Vec3d getPseudoNormal(const Vec3d& rotation)
+		{
+			return Vec3d(cos(rotation[0]) * sin(rotation[1]), -sin(rotation[0]), cos(rotation[0]) * cos(rotation[1]));
+		}
+		//=================================================================================================//
 	}
 }

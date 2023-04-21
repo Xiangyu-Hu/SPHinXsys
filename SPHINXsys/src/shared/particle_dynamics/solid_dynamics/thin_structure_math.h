@@ -87,6 +87,9 @@ namespace SPH
 		/** get the correction matrix. */
 		Mat2d getCorrectionMatrix(const Mat2d &local_deformation_part_one);
 		Mat3d getCorrectionMatrix(const Mat3d &local_deformation_part_one);
+
+		Vec2d getPseudoNormal(const Vec2d& rotation);
+		Vec3d getPseudoNormal(const Vec3d& rotation);
 	}
 }
 #endif //THIN_STRUCTURE_MATH_H
