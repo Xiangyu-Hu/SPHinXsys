@@ -58,6 +58,7 @@ namespace SPH
 			StdLargeVec<int> &surface_indicator_;
 			StdLargeVec<Real> pos_div_;
 			Real smoothing_length_;
+			void checkNearFreeSurface(size_t index_i);
 		};
 
 		/**
