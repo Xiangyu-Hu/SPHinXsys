@@ -19,21 +19,25 @@ namespace SPH
         void FreeSurfaceIndicationInner::update(size_t index_i, Real dt)
         {
             surface_indicator_[index_i] = 1;
-            if (pos_div_[index_i] > threshold_by_dimensions_)
-                checkNearFreeSurface(index_i);
+            if (pos_div_[index_i] > threshold_by_dimensions_ && !isVeryNearFreeSurface(index_i))
+                surface_indicator_[index_i] = 0;
         }
         //=================================================================================================//
-        void FreeSurfaceIndicationInner::checkNearFreeSurface(size_t index_i)
+        bool FreeSurfaceIndicationInner::isVeryNearFreeSurface(size_t index_i)
         {
+            bool is_near_surface = false;
             const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
             for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
             {
                 /** Two layer particles.*/
                 if (pos_div_[inner_neighborhood.j_[n]] < threshold_by_dimensions_ &&
                     inner_neighborhood.r_ij_[n] < smoothing_length_)
-                    return;
+                {
+                    is_near_surface = true;
+                    break;
+                }
             }
-            surface_indicator_[index_i] = 0;
+            return is_near_surface;
         }
         //=================================================================================================//
         ColorFunctionGradientInner::ColorFunctionGradientInner(BaseInnerRelation &inner_relation)

@@ -140,23 +140,27 @@ namespace SPH
 		{
 			FreeSurfaceIdentification::interaction(index_i, dt);
 
-			if (this->pos_div_[index_i] < this->threshold_by_dimensions_ && previous_surface_indicator_[index_i] != 1)
-			{
-				checkNearPreviousFreeSurface(index_i);
-			}
+			if (this->pos_div_[index_i] < this->threshold_by_dimensions_ &&
+				previous_surface_indicator_[index_i] != 1 &&
+				!isNearPreviousFreeSurface(index_i))
+				this->pos_div_[index_i] = 2.0 * this->threshold_by_dimensions_;
 		}
 		//=================================================================================================//
 		template <class FreeSurfaceIdentification>
-		void SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIdentification>::
-			checkNearPreviousFreeSurface(size_t index_i)
+		bool SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIdentification>::
+			isNearPreviousFreeSurface(size_t index_i)
 		{
+			bool is_near_surface = false;
 			const Neighborhood &inner_neighborhood = this->inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				if (previous_surface_indicator_[inner_neighborhood.j_[n]] == 1)
-					return;
+				{
+					is_near_surface = true;
+					break;
+				}
 			}
-			this->pos_div_[index_i] = 2.0 * this->threshold_by_dimensions_;
+			return is_near_surface;
 		}
 		//=================================================================================================//
 		template <class FreeSurfaceIdentification>
@@ -184,7 +188,7 @@ namespace SPH
 		template <class DensitySummationFreeSurfaceType>
 		void DensitySummationFreeStream<DensitySummationFreeSurfaceType>::update(size_t index_i, Real dt)
 		{
-			if (this->rho_sum_[index_i] < this->rho0_ && isNearSurface(index_i))
+			if (this->rho_sum_[index_i] < this->rho0_ && isNearFreeSurface(index_i))
 			{
 				this->rho_[index_i] = this->ReinitializedDensity(this->rho_sum_[index_i], this->rho0_, this->rho_[index_i]);
 			}
@@ -195,20 +199,16 @@ namespace SPH
 		}
 		//=================================================================================================//
 		template <class DensitySummationFreeSurfaceType>
-		bool DensitySummationFreeStream<DensitySummationFreeSurfaceType>::isNearSurface(size_t index_i)
+		bool DensitySummationFreeStream<DensitySummationFreeSurfaceType>::isNearFreeSurface(size_t index_i)
 		{
-			bool is_near_surface = true;
-			if (surface_indicator_[index_i] != 1)
+			bool is_near_surface = false;
+			const Neighborhood &inner_neighborhood = this->inner_configuration_[index_i];
+			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
-				is_near_surface = false;
-				const Neighborhood &inner_neighborhood = this->inner_configuration_[index_i];
-				for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+				if (surface_indicator_[inner_neighborhood.j_[n]] == 1)
 				{
-					if (surface_indicator_[inner_neighborhood.j_[n]] == 1)
-					{
-						is_near_surface = true;
-						break;
-					}
+					is_near_surface = true;
+					break;
 				}
 			}
 			return is_near_surface;
