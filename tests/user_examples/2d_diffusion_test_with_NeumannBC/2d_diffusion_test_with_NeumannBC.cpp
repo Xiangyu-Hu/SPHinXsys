@@ -45,6 +45,11 @@ int main(int ac, char* av[])
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
+	InnerRelation diffusion_body_inner_relation(diffusion_body);
+
+	ContactRelation diffusion_body_contact_Dirichlet(diffusion_body, { &wall_boundary_Dirichlet });
+	ContactRelation diffusion_body_contact_Neumann(diffusion_body, { &wall_boundary_Neumann });
+	
 	ComplexRelation diffusion_body_complex_Dirichlet(diffusion_body, { &wall_boundary_Dirichlet });
 	ComplexRelation wall_boundary_complex_Dirichlet(wall_boundary_Dirichlet, { &diffusion_body });
 
@@ -70,8 +75,8 @@ int main(int ac, char* av[])
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	DiffusionBodyRelaxationWithDirichlet temperature_relaxation_Dirichlet(diffusion_body_complex_Dirichlet);
-	DiffusionBodyRelaxationWithNeumann temperature_relaxation_Neumann(diffusion_body_complex_Neumann);
+	DiffusionBodyRelaxation temperature_relaxation(diffusion_body_inner_relation, diffusion_body_contact_Dirichlet, diffusion_body_contact_Neumann);
+	//InteractionWithUpdate<ComplexInteractionWithUpdate<DiffusionRelaxationWithDirichlet, DiffusionRelaxationWithNeumann>> temperature_relaxation(diffusion_body_complex_Dirichlet, diffusion_body_complex_Neumann);
 
 	//InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_diffusion_body_normal_vector_Dirichlet(diffusion_body_complex_Dirichlet);
 	//InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_wall_boundary_normal_vector_Dirichlet(wall_boundary_complex_Dirichlet);
@@ -128,8 +133,7 @@ int main(int ac, char* av[])
 						<< dt << "\n";
 				}
 
-				temperature_relaxation_Dirichlet.exec(dt);
-				temperature_relaxation_Neumann.exec(dt);
+				temperature_relaxation.exec(dt);
 
 				ite++;
 				dt = get_time_step_size.exec();

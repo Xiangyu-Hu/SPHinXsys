@@ -13,16 +13,27 @@ namespace SPH
 	heat_flux_(this->particles_->heat_flux_), convection_(this->particles_->convection_), T_infinity_(this->particles_->T_infinity_) {}
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
-	RelaxationOfAllDiffusionSpeciesWithDirichlet<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
-		RelaxationOfAllDiffusionSpeciesWithDirichlet(ComplexRelation& complex_relation)
-		: RelaxationOfAllDiffusionSpeciesInner<DiffusionReactionParticlesType>(complex_relation.getInnerRelation()),
-		DiffusionReactionContactData<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(complex_relation.getContactRelation())
+	RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
+		RelaxationOfAllDiffusionSpeciesSimpleContact(ContactRelation& contact_relation)
+		: LocalDynamics(contact_relation.getSPHBody()),
+		DiffusionReactionContactData<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(contact_relation),
+		material_(this->particles_->diffusion_reaction_material_),
+		all_diffusions_(material_.AllDiffusions()),
+		diffusion_species_(this->particles_->DiffusionSpecies()),
+		gradient_species_(this->particles_->GradientSpecies())
 	{
+		diffusion_dt_.resize(all_diffusions_.size());
 		contact_gradient_species_.resize(this->contact_particles_.size());
 
 		StdVec<std::string>& all_species_names = this->particles_->AllSpeciesNames();
+		IndexVector& diffusion_species_indexes = material_.DiffusionSpeciesIndexes();
+		
 		for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
 		{
+			// Register specie change rate as shared variable
+			std::string& diffusion_species_name = all_species_names[diffusion_species_indexes[m]];
+			diffusion_dt_[m] = this->particles_->template registerSharedVariable<Real>(diffusion_species_name + "ChangeRate");
+
 			size_t l = this->all_diffusions_[m]->gradient_species_index_;
 			std::string& inner_species_name_m = all_species_names[l];
 			for (size_t k = 0; k != this->contact_particles_.size(); ++k)
@@ -46,8 +57,42 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
-	void RelaxationOfAllDiffusionSpeciesWithDirichlet<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
-		getDiffusionChangeRateWithDirichlet(size_t particle_i, size_t particle_j, Vecd& e_ij,
+	void RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
+		initializeDiffusionChangeRate(size_t particle_i)
+	{
+		for (size_t m = 0; m < all_diffusions_.size(); ++m)
+		{
+			(*diffusion_dt_[m])[particle_i] = 0;
+		}
+	}
+	//=================================================================================================//
+	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
+	void RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
+		updateSpeciesDiffusion(size_t particle_i, Real dt)
+	{
+		for (size_t m = 0; m < all_diffusions_.size(); ++m)
+		{
+			(*diffusion_species_[m])[particle_i] += dt * (*diffusion_dt_[m])[particle_i];
+		}
+	}
+	////=================================================================================================//
+	//template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
+	//void RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
+	//	update(size_t index_i, Real dt)
+	//{
+	//	updateSpeciesDiffusion(index_i, dt);
+	//}
+
+	//=================================================================================================//
+	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
+	RelaxationOfAllDiffusionSpeciesDirichletContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
+		RelaxationOfAllDiffusionSpeciesDirichletContact(ContactRelation& contact_relation)
+		: RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(contact_relation)
+	{ }
+	//=================================================================================================//
+	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
+	void RelaxationOfAllDiffusionSpeciesDirichletContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
+		getDiffusionChangeRateDirichletContact(size_t particle_i, size_t particle_j, Vecd& e_ij,
 			Real surface_area_ij, const StdVec<StdLargeVec<Real>*>& gradient_species_k)
 	{
 		for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
@@ -60,10 +105,9 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
-	void RelaxationOfAllDiffusionSpeciesWithDirichlet<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
+	void RelaxationOfAllDiffusionSpeciesDirichletContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
 		interaction(size_t index_i, Real dt)
 	{
-		RelaxationOfAllDiffusionSpeciesInner<DiffusionReactionParticlesType>::interaction(index_i, dt);
 		DiffusionReactionParticlesType* particles = this->particles_;
 
 		for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
@@ -80,15 +124,15 @@ namespace SPH
 
 				const Vecd& grad_ijV_j = particles->getKernelGradient(index_i, index_j, dW_ijV_j_, e_ij);
 				Real area_ij = 2.0 * grad_ijV_j.dot(e_ij) / r_ij_;
-				getDiffusionChangeRateWithDirichlet(index_i, index_j, e_ij, area_ij, gradient_species_k);
+				getDiffusionChangeRateDirichletContact(index_i, index_j, e_ij, area_ij, gradient_species_k);
 			}
 		}
 	}
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
-	RelaxationOfAllDiffusionSpeciesWithNeumann<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
-		RelaxationOfAllDiffusionSpeciesWithNeumann(ComplexRelation& complex_relation)
-		: RelaxationOfAllDiffusionSpeciesWithDirichlet<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(complex_relation),
+	RelaxationOfAllDiffusionSpeciesNeumannContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
+		RelaxationOfAllDiffusionSpeciesNeumannContact(ContactRelation& contact_relation)
+		: RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(contact_relation),
 		n_(this->particles_->normal_vector_)
 	{
 		contact_Vol_.resize(this->contact_particles_.size());
@@ -99,7 +143,6 @@ namespace SPH
 		{
 			for (size_t k = 0; k != this->contact_particles_.size(); ++k)
 			{
-
 				contact_n_.push_back(&this->contact_particles_[k]->normal_vector_);
 				contact_Vol_.push_back(&this->contact_particles_[k]->Vol_);
 				contact_heat_flux_.push_back(&this->contact_particles_[k]->heat_flux_);
@@ -108,8 +151,8 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
-	void RelaxationOfAllDiffusionSpeciesWithNeumann<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
-		getDiffusionChangeRateWithNeumann(size_t particle_i, size_t particle_j,
+	void RelaxationOfAllDiffusionSpeciesNeumannContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
+		getDiffusionChangeRateNeumannContact(size_t particle_i, size_t particle_j,
 			Real surface_area_ij_Neumann, StdLargeVec<Real>& heat_flux_k)
 	{
 		for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
@@ -119,10 +162,9 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
-	void RelaxationOfAllDiffusionSpeciesWithNeumann<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
+	void RelaxationOfAllDiffusionSpeciesNeumannContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
 		interaction(size_t index_i, Real dt)
 	{
-		RelaxationOfAllDiffusionSpeciesInner<DiffusionReactionParticlesType>::interaction(index_i, dt);
 		DiffusionReactionParticlesType* particles = this->particles_;
 
 		for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
@@ -143,23 +185,21 @@ namespace SPH
 				const Vecd& grad_ijV_j = particles->getKernelGradient(index_i, index_j, dW_ijV_j_, e_ij);
 				Vecd n_ij = n_[index_i] - n_k[index_j];
 				Real area_ij_Neumann = grad_ijV_j.dot(n_ij);
-				getDiffusionChangeRateWithNeumann(index_i, index_j, area_ij_Neumann, heat_flux_);
+				getDiffusionChangeRateNeumannContact(index_i, index_j, area_ij_Neumann, heat_flux_);
 			}
 		}
 	}
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
-	RelaxationOfAllDiffusionSpeciesWithRobin<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
-		RelaxationOfAllDiffusionSpeciesWithRobin(ComplexRelation& complex_relation)
-		: RelaxationOfAllDiffusionSpeciesWithDirichlet<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(complex_relation),
+	RelaxationOfAllDiffusionSpeciesRobinContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
+		RelaxationOfAllDiffusionSpeciesRobinContact(ContactRelation& contact_relation)
+		: RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(contact_relation),
 		n_(this->particles_->normal_vector_)
 	{
-		//contact_gradient_species_.resize(this->contact_particles_.size());
 		contact_Vol_.resize(this->contact_particles_.size());
 		contact_convection_.resize(this->contact_particles_.size());
 		contact_T_infinity_.resize(this->contact_particles_.size());
 		contact_n_.resize(this->contact_particles_.size());
-
 
 		for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
 		{
@@ -174,8 +214,8 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
-	void RelaxationOfAllDiffusionSpeciesWithRobin<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
-		getDiffusionChangeRateWithRobin(size_t particle_i, size_t particle_j,
+	void RelaxationOfAllDiffusionSpeciesRobinContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
+		getDiffusionChangeRateRobinContact(size_t particle_i, size_t particle_j,
 			Real surface_area_ij_Robin, StdLargeVec<Real>& convection_k, StdLargeVec<Real>& T_infinity_k)
 	{
 		for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
@@ -186,10 +226,9 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
-	void RelaxationOfAllDiffusionSpeciesWithRobin<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
+	void RelaxationOfAllDiffusionSpeciesRobinContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
 		interaction(size_t index_i, Real dt)
 	{
-		RelaxationOfAllDiffusionSpeciesInner<DiffusionReactionParticlesType>::interaction(index_i, dt);
 		DiffusionReactionParticlesType* particles = this->particles_;
 
 		for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
@@ -212,9 +251,75 @@ namespace SPH
 				const Vecd& grad_ijV_j = particles->getKernelGradient(index_i, index_j, dW_ijV_j_, e_ij);
 				Vecd n_ij = n_[index_i] - n_k[index_j];
 				Real area_ij_Robin = grad_ijV_j.dot(n_ij);
-				getDiffusionChangeRateWithRobin(index_i, index_j, area_ij_Robin, convection_, T_infinity_);
+				getDiffusionChangeRateRobinContact(index_i, index_j, area_ij_Robin, convection_, T_infinity_);
 			}
 		}
+	}
+	//=================================================================================================//
+	template <class DiffusionReactionParticlesType>
+	InitializationRKComplex<DiffusionReactionParticlesType>::
+		InitializationRKComplex(StdVec<StdLargeVec<Real>>& diffusion_species_s, SPHBody& sph_body)
+		: LocalDynamics(sph_body),
+		DiffusionReactionSimpleData<DiffusionReactionParticlesType>(sph_body),
+		material_(this->particles_->diffusion_reaction_material_),
+		all_diffusions_(material_.AllDiffusions()),
+		diffusion_species_(this->particles_->DiffusionSpecies()),
+		diffusion_species_s_(diffusion_species_s) {}
+	//=================================================================================================//
+	template <class DiffusionReactionParticlesType>
+	void InitializationRKComplex<DiffusionReactionParticlesType>::
+		update(size_t index_i, Real dt)
+	{
+		for (size_t m = 0; m < all_diffusions_.size(); ++m)
+		{
+			diffusion_species_s_[m][index_i] = (*diffusion_species_[m])[index_i];
+		}
+	}
+	//=================================================================================================//
+	template <class FirstStageType>
+	SecondStageRK2Complex<FirstStageType>::
+		SecondStageRK2Complex(typename FirstStageType::BodyRelationType& body_relation,
+			StdVec<StdLargeVec<Real>>& diffusion_species_s)
+		: FirstStageType(body_relation), diffusion_species_s_(diffusion_species_s) {}
+	//=================================================================================================//
+	template <class FirstStageType>
+	void SecondStageRK2Complex<FirstStageType>::
+		updateSpeciesDiffusion(size_t particle_i, Real dt)
+	{
+		for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
+		{
+			(*this->diffusion_species_[m])[particle_i] =
+				0.5 * diffusion_species_s_[m][particle_i] +
+				0.5 * ((*this->diffusion_species_[m])[particle_i] + dt * (*this->diffusion_dt_[m])[particle_i]);
+		}
+	}
+	//=================================================================================================//
+	//template <class FirstStageType>
+	//template <typename... ContactArgsType>
+	//RelaxationOfAllDiffusionSpeciesRK2Complex<FirstStageType>::
+	//	RelaxationOfAllDiffusionSpeciesRK2Complex(typename FirstStageType::BodyRelationType& body_relation, ContactArgsType &&... ContactArgsType)
+	//	: BaseDynamics<void>(body_relation.getSPHBody()),
+	//	rk2_initialization_(body_relation.getSPHBody(), diffusion_species_s_),
+	//	rk2_1st_stage_(body_relation), rk2_2nd_stage_(body_relation, diffusion_species_s_),
+	//	all_diffusions_(rk2_1st_stage_.AllDiffusions())
+	//{
+	//	diffusion_species_s_.resize(all_diffusions_.size());
+	//	StdVec<std::string>& all_species_names = rk2_1st_stage_.getParticles()->AllSpeciesNames();
+	//	for (size_t i = 0; i != all_diffusions_.size(); ++i)
+	//	{
+	//		// register diffusion species intermediate
+	//		size_t diffusion_species_index = all_diffusions_[i]->diffusion_species_index_;
+	//		std::string& diffusion_species_name = all_species_names[diffusion_species_index];
+	//		rk2_1st_stage_.getParticles()->registerVariable(diffusion_species_s_[i], diffusion_species_name + "Intermediate");
+	//	}
+	//}
+	//=================================================================================================//
+	template <class FirstStageType>
+	void RelaxationOfAllDiffusionSpeciesRK2Complex<FirstStageType>::exec(Real dt)
+	{
+		rk2_initialization_.exec();
+		rk2_1st_stage_.exec(dt);
+		rk2_2nd_stage_.exec(dt);
 	}
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>

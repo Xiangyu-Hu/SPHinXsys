@@ -164,28 +164,21 @@ public:
 	}
 };
 
+using DiffusionRelaxationInner = RelaxationOfAllDiffusionSpeciesInner<DiffusionParticlesWithBoundary>;
+using DiffusionRelaxationWithDirichlet = RelaxationOfAllDiffusionSpeciesDirichletContact<DiffusionParticlesWithBoundary, WallParticles>;
+using DiffusionRelaxationWithNeumann = RelaxationOfAllDiffusionSpeciesNeumannContact<DiffusionParticlesWithBoundary, WallParticles>;
 //----------------------------------------------------------------------
 //	Specify diffusion relaxation method. 
 //----------------------------------------------------------------------
-class DiffusionBodyRelaxationWithDirichlet
-	: public RelaxationOfAllDiffusionSpeciesRK2<
-	RelaxationOfAllDiffusionSpeciesWithDirichlet<DiffusionParticlesWithBoundary, WallParticles>>
+class DiffusionBodyRelaxation
+	: public RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichlet, DiffusionRelaxationWithNeumann>>
 {
 public:
-	explicit DiffusionBodyRelaxationWithDirichlet(ComplexRelation& body_complex_relation)
-		: RelaxationOfAllDiffusionSpeciesRK2(body_complex_relation) {};
-	virtual ~DiffusionBodyRelaxationWithDirichlet() {};
+	explicit DiffusionBodyRelaxation(InnerRelation& inner_relation, ContactRelation& body_contact_relation_Dirichlet, ContactRelation& body_contact_relation_Neumann)
+		: RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichlet, DiffusionRelaxationWithNeumann>>(inner_relation, body_contact_relation_Dirichlet, body_contact_relation_Neumann) {};
+	virtual ~DiffusionBodyRelaxation() {};
 };
 
-class DiffusionBodyRelaxationWithNeumann
-	:public RelaxationOfAllDiffusionSpeciesRK2<
-	RelaxationOfAllDiffusionSpeciesWithNeumann<DiffusionParticlesWithBoundary, WallParticles>>
-{
-public:
-	explicit DiffusionBodyRelaxationWithNeumann(ComplexRelation& body_complex_relation)
-		: RelaxationOfAllDiffusionSpeciesRK2(body_complex_relation) {};
-	virtual ~DiffusionBodyRelaxationWithNeumann() {};
-};
 //----------------------------------------------------------------------
 //	An observer body to measure temperature at given positions. 
 //----------------------------------------------------------------------
