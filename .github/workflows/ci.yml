@@ -62,7 +62,8 @@ jobs:
             boost-geometry \
             simbody \
             gtest \
-            xsimd
+            xsimd \
+            pybind11
 
       - name: Generate buildsystem
         run: |
@@ -71,6 +72,7 @@ jobs:
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -D SPHINXSYS_CI=ON \
+            -D Python_EXECUTABLE="${{github.workspace}}/vcpkg/installed/x64-linux/tools/python3/python3.10" \
             -S ${{github.workspace}} \
             -B ${{github.workspace}}/build
             
@@ -150,7 +152,8 @@ jobs:
             boost-geometry `
             simbody `
             gtest `
-            xsimd
+            xsimd `
+            pybind11
 
       - uses: ilammy/msvc-dev-cmd@v1
 
@@ -161,6 +164,7 @@ jobs:
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}\vcpkg\scripts\buildsystems\vcpkg.cmake" `
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache `
             -D SPHINXSYS_CI=ON `
+            -D Python_EXECUTABLE="${{github.workspace}}\vcpkg\installed\x64-windows\tools\python3\python.exe" `
             -S ${{github.workspace}} `
             -B C:\build
       
@@ -245,7 +249,8 @@ jobs:
             boost-geometry \
             gtest \
             simbody \
-            xsimd
+            xsimd \
+            pybind11
 
       - name: Generate buildsystem
         run: |
@@ -255,6 +260,7 @@ jobs:
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -D SPHINXSYS_CI=ON \
+            -D Python_EXECUTABLE="${{github.workspace}}/vcpkg/installed/x64-osx/tools/python3/python3.10" \
             -S ${{github.workspace}} \
             -B ${{github.workspace}}/build
 
