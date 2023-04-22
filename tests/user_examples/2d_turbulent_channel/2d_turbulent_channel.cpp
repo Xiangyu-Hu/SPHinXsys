@@ -64,7 +64,7 @@ int main(int ac, char* av[])
 	InteractionDynamics<fluid_dynamics::TKEnergyAccComplex,  SequencedPolicy> turbulent_kinetic_energy_acceleration(water_block_complex_relation);
 	InteractionDynamics<fluid_dynamics::TurbulentViscousAccelerationWithWall> turbulent_viscous_acceleration(water_block_complex_relation);
 	//InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex_relation);
-	SimpleDynamics<fluid_dynamics::TurbulentEddyViscosity> update_eddy_viscosity(water_block);
+
 		
 	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> transport_velocity_correction(water_block_complex_relation);
 	InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex>
@@ -88,6 +88,10 @@ int main(int ac, char* av[])
 	/** Turbulent standard wall function needs normal vectors of wall. */
 	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection,SequencedPolicy> standard_wall_function_correction(water_block_complex_relation);
 	
+	/** Turbulent eddy viscosity calculation needs values of Wall Y start. */
+	SimpleDynamics<fluid_dynamics::TurbulentEddyViscosity> update_eddy_viscosity(water_block);
+	
+	
 	BodyAlignedBoxByParticle emitter(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(emitter_translation)), emitter_halfsize));
 	SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, 50, 0);
@@ -110,6 +114,11 @@ int main(int ac, char* av[])
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_body_states(io_environment, system.real_bodies_);
+	ObservedQuantityRecording<Real> write_fluid_x_velocity("Velocity_X", io_environment, fluid_observer_contact); //For test turbulent model
+	ObservedQuantityRecording<Real> write_fluid_turbu_kinetic_energy("TurbulenceKineticEnergy", io_environment, fluid_observer_contact); //For test turbulent model
+	ObservedQuantityRecording<Real> write_fluid_turbu_dissipation_rate("TurbulentDissipation", io_environment, fluid_observer_contact); //For test turbulent model
+	ObservedQuantityRecording<Real> write_fluid_turbu_viscosity("TurbulentViscosity", io_environment, fluid_observer_contact); //For test turbulent model
+
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
@@ -213,6 +222,12 @@ int main(int ac, char* av[])
 
 		TickCount t2 = TickCount::now();
 		write_body_states.writeToFile();
+		write_fluid_x_velocity.writeToFile(); //For test turbulent model
+		write_fluid_turbu_kinetic_energy.writeToFile(); //For test turbulent model
+		write_fluid_turbu_dissipation_rate.writeToFile(); //For test turbulent model
+		write_fluid_turbu_viscosity.writeToFile(); //For test turbulent model
+
+
 		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}

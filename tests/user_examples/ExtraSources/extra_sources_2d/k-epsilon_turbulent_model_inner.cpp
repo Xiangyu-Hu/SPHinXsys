@@ -53,6 +53,9 @@ namespace SPH
 				particles_->registerVariable(velocity_gradient, "Velocity_Gradient");
 				particles_->registerSortableVariable<Matd>("Velocity_Gradient");
 				particles_->addVariableToWrite<Matd>("Velocity_Gradient");
+
+				particles_->registerVariable(vel_x_, "Velocity_X");
+				particles_->registerSortableVariable<Real>("Velocity_X");
 				
 		}
 		//=================================================================================================//
@@ -100,14 +103,14 @@ namespace SPH
 		//=================================================================================================//
 		void TurbulentEddyViscosity::update(size_t index_i, Real dt)
 		{
-			if (is_near_wall_P1_[index_i] == 0)
-			{
+			//if (is_near_wall_P1_[index_i] == 0)
+			//{
 				turbu_mu_[index_i] = rho_[index_i] * C_mu * turbu_k_[index_i] * turbu_k_[index_i] / (turbu_epsilon_[index_i]);
-			}
-			else //for the near wall particles, wall function effects
-			{
-				turbu_mu_[index_i] = wall_Y_star_[index_i] * mu_ * Karman / log(turbu_const_E * wall_Y_star_[index_i]);
-			}
+			//}
+			//else //for the near wall particles, wall function effects
+			//{
+			//	turbu_mu_[index_i] = wall_Y_star_[index_i] * mu_ * Karman / log(turbu_const_E * wall_Y_star_[index_i]);
+			//}
 		}
 		
 		//=================================================================================================//

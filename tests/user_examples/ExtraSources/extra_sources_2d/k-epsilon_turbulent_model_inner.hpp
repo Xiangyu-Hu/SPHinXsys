@@ -57,7 +57,7 @@ namespace SPH
 				{
 					size_t index_j = inner_neighborhood.j_[n];
 					Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
-					velocity_gradient[index_i] += (vel_i - vel_[index_j]) * nablaW_ijV_j.transpose();
+					velocity_gradient[index_i] += -(vel_i - vel_[index_j]) * nablaW_ijV_j.transpose();
 
 					k_derivative = (turbu_k_i - turbu_k_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
 					k_lap += 2.0 * (mu_+turbu_mu_i/sigma_k)*k_derivative * inner_neighborhood.dW_ijV_j_[n]/ rho_i;

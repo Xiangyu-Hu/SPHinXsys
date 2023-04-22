@@ -104,7 +104,7 @@ namespace SPH
 			StdLargeVec<Real> k_production_;
 
 			//** for test */
-			StdLargeVec<Real> lap_k_, lap_k_term_;
+			StdLargeVec<Real> lap_k_, lap_k_term_, vel_x_;
 		};
 
 		/**

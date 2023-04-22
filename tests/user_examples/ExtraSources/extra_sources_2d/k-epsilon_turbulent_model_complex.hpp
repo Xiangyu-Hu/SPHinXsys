@@ -60,7 +60,7 @@ namespace SPH
 				{
 					size_t index_j = contact_neighborhood.j_[n];
 					Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
-					//velocity_gradient[index_i] += (vel_i - vel_ave_k[index_j]) * nablaW_ijV_j.transpose();
+					velocity_gradient[index_i] += -(vel_i - vel_ave_k[index_j]) * nablaW_ijV_j.transpose();
 
 					/** With standard wall function, diffusion of k to wall is zero */
 					k_derivative = 0.0;
