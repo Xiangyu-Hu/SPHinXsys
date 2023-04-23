@@ -258,7 +258,7 @@ namespace SPH
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType>
 	InitializationRKComplex<DiffusionReactionParticlesType>::
-		InitializationRKComplex(StdVec<StdLargeVec<Real>>& diffusion_species_s, SPHBody& sph_body)
+		InitializationRKComplex(SPHBody& sph_body, StdVec<StdLargeVec<Real>>& diffusion_species_s)
 		: LocalDynamics(sph_body),
 		DiffusionReactionSimpleData<DiffusionReactionParticlesType>(sph_body),
 		material_(this->particles_->diffusion_reaction_material_),

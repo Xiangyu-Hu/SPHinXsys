@@ -77,7 +77,7 @@ namespace SPH
 			const StdVec<StdLargeVec<Real>*>& gradient_species_k);
 
 	public:
-		typedef ComplexRelation BodyRelationType;
+		typedef ContactRelation BodyRelationType;
 		explicit RelaxationOfAllDiffusionSpeciesDirichletContact(ContactRelation& contact_relation);
 		virtual ~RelaxationOfAllDiffusionSpeciesDirichletContact() {};
 
@@ -103,7 +103,7 @@ namespace SPH
 		void getDiffusionChangeRateNeumannContact(size_t particle_i, size_t particle_j, Real surface_area_ij_Neumann, StdLargeVec<Real>& heat_flux_k);
 
 	public:
-		typedef ComplexRelation BodyRelationType;
+		typedef ContactRelation BodyRelationType;
 		explicit RelaxationOfAllDiffusionSpeciesNeumannContact(ContactRelation& contact_relation);
 		virtual ~RelaxationOfAllDiffusionSpeciesNeumannContact() {};
 
@@ -202,7 +202,7 @@ namespace SPH
 		StdVec<StdLargeVec<Real>>& diffusion_species_s_;
 
 	public:
-		InitializationRKComplex(StdVec<StdLargeVec<Real>>& diffusion_species_s, SPHBody& sph_body);
+		InitializationRKComplex(SPHBody& sph_body, StdVec<StdLargeVec<Real>>& diffusion_species_s);
 		virtual ~InitializationRKComplex() {};
 
 		void update(size_t index_i, Real dt = 0.0);
@@ -245,7 +245,7 @@ namespace SPH
 		template <typename... ContactArgsType>
 		explicit RelaxationOfAllDiffusionSpeciesRK2Complex(typename FirstStageType::BodyRelationType& body_relation, ContactArgsType &&... agrs)
 			: BaseDynamics<void>(body_relation.getSPHBody()),
-			rk2_initialization_(diffusion_species_s_, body_relation.getSPHBody(), std::forward<Args>(args)...),
+			rk2_initialization_(body_relation.getSPHBody(), diffusion_species_s_),
 			rk2_1st_stage_(body_relation),
 			rk2_2nd_stage_(body_relation, diffusion_species_s_),
 			all_diffusions_(rk2_1st_stage_.AllDiffusions())
