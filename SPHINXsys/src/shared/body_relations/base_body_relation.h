@@ -143,11 +143,12 @@ namespace SPH
 	class BaseContactRelation : public SPHRelation
 	{
 	protected:
+		UniquePtrKeepers<ParticleConfiguration> configuration_ptrs_keeper_;
 		virtual void resetNeighborhoodCurrentSize();
 
 	public:
 		RealBodyVector contact_bodies_;
-		ContactParticleConfiguration contact_configuration_; /**< Configurations for particle interaction between bodies. */
+		StdVec<ParticleConfiguration *> contact_configuration_; /**< Configurations for particle interaction between bodies. */
 
 		BaseContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies);
 		BaseContactRelation(SPHBody &sph_body, BodyPartVector contact_body_parts)

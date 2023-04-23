@@ -63,11 +63,7 @@ namespace SPH
 
 		void removeANeighbor(size_t neighbor_n);
 	};
-
-	/** Neighborhoods for all particles in a body for a inner body relation. */
 	using ParticleConfiguration = StdLargeVec<Neighborhood>;
-	/** Neighborhoods for all particles in a body for a contact body relation. */
-	using ContactParticleConfiguration = StdVec<ParticleConfiguration>;
 
 	/**
 	 * @class NeighborBuilder
