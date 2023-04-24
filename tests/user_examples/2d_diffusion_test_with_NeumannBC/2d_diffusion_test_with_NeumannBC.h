@@ -165,17 +165,18 @@ public:
 };
 
 using DiffusionRelaxationInner = RelaxationOfAllDiffusionSpeciesInner<DiffusionParticlesWithBoundary>;
-using DiffusionRelaxationWithDirichlet = RelaxationOfAllDiffusionSpeciesDirichletContact<DiffusionParticlesWithBoundary, WallParticles>;
-using DiffusionRelaxationWithNeumann = RelaxationOfAllDiffusionSpeciesNeumannContact<DiffusionParticlesWithBoundary, WallParticles>;
+using DiffusionRelaxationWithDirichlet = RelaxationOfAllDiffusionSpeciesDirichletContact<DiffusionParticlesWithBoundary, DiffusionParticlesWithBoundary>;
+using DiffusionRelaxationWithNeumann = RelaxationOfAllDiffusionSpeciesNeumannContact<DiffusionReactionParticlesWithBoundary<SolidParticles, DiffusionMaterial>, DiffusionReactionParticlesWithBoundary<SolidParticles, DiffusionMaterial>>;
 //----------------------------------------------------------------------
 //	Specify diffusion relaxation method. 
 //----------------------------------------------------------------------
+
 class DiffusionBodyRelaxation
-	: public RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichlet, DiffusionRelaxationWithNeumann>>
+	: public RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichlet>>
 {
 public:
-	explicit DiffusionBodyRelaxation(InnerRelation& inner_relation, ContactRelation& body_contact_relation_Dirichlet, ContactRelation& body_contact_relation_Neumann)
-		: RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichlet, DiffusionRelaxationWithNeumann>>(inner_relation, body_contact_relation_Dirichlet, body_contact_relation_Neumann) {};
+	explicit DiffusionBodyRelaxation(InnerRelation& inner_relation, ContactRelation& body_contact_relation_Dirichlet)
+		: RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichlet>>(inner_relation, body_contact_relation_Dirichlet) {};
 	virtual ~DiffusionBodyRelaxation() {};
 };
 

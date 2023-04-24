@@ -59,7 +59,7 @@ namespace SPH
 		virtual ~RelaxationOfAllDiffusionSpeciesSimpleContact() {};
 		StdVec<BaseDiffusion*>& AllDiffusions() { return material_.AllDiffusions(); };
 
-		virtual void interaction(size_t index_i, Real dt = 0.0) = 0;  // right or not?
+		virtual void interaction(size_t index_i, Real dt = 0.0) = 0;
 	};
 
 
@@ -177,9 +177,9 @@ namespace SPH
 
 	public:
 		template <typename... ContactArgs>
-		ComplexInteraction(BaseInnerRelation& inner_relation, BaseContactRelation& contact_relation, ContactArgs &&...contact_args)
+		ComplexInteraction(BaseInnerRelation& inner_relation, ContactArgs &&...contact_args)
 			: DiffusionRelaxationFirst(inner_relation),
-			others_diffusion_relaxation_(contact_relation, std::forward<ContactArgs>(contact_args)...) {};
+			others_diffusion_relaxation_(std::forward<ContactArgs>(contact_args)...) {};
 
 		void interaction(size_t index_i, Real dt = 0.0)
 		{
@@ -221,51 +221,11 @@ namespace SPH
 		virtual void updateSpeciesDiffusion(size_t particle_i, Real dt) override;
 
 	public:
-		SecondStageRK2Complex(StdVec<StdLargeVec<Real>>& diffusion_species_s, typename FirstStageType::BodyRelationType& body_relation);
+		template <typename... ContactArgsType>
+		SecondStageRK2Complex(StdVec<StdLargeVec<Real>>& diffusion_species_s, typename FirstStageType::BodyRelationType& body_relation, ContactArgsType &&... contact_agrs)
+			: FirstStageType(body_relation, std::forward<ContactArgsType>(contact_agrs)...), diffusion_species_s_(diffusion_species_s) {};
 		virtual ~SecondStageRK2Complex() {};
-
-		void update(size_t index_i, Real dt = 0.0); // add by Zhao
 	};
-
-	/**
-	 * @class RelaxationOfAllDiffusionSpeciesRK2Complex
-	 * @brief Compute the diffusion relaxation process of all species
-	 * with second order Runge-Kutta time stepping
-	 */
-	//template <class FirstStageType>
-	//class RelaxationOfAllDiffusionSpeciesRK2Complex : public BaseDynamics<void>
-	//{
-	//protected:
-	//	/** Intermediate Value */
-	//	StdVec<StdLargeVec<Real>> diffusion_species_s_;
-	//	SimpleDynamics<InitializationRKComplex<typename FirstStageType::InnerParticlesType>> rk2_initialization_;
-	//	InteractionWithUpdate<FirstStageType> rk2_1st_stage_;
-	//	InteractionWithUpdate<SecondStageRK2Complex<FirstStageType>> rk2_2nd_stage_;
-	//	StdVec<BaseDiffusion*> all_diffusions_;
-
-	//public:
-	//	template <typename... ContactArgsType>
-	//	explicit RelaxationOfAllDiffusionSpeciesRK2Complex(typename FirstStageType::BodyRelationType& body_relation, ContactArgsType &&... contact_agrs)
-	//		: BaseDynamics<void>(body_relation.getSPHBody()),
-	//		rk2_initialization_(body_relation.getSPHBody(), diffusion_species_s_),
-	//		rk2_1st_stage_(body_relation),
-	//		rk2_2nd_stage_(body_relation, diffusion_species_s_),
-	//		all_diffusions_(rk2_1st_stage_.AllDiffusions())
-	//	{
-	//		diffusion_species_s_.resize(all_diffusions_.size());
-	//		StdVec<std::string>& all_species_names = rk2_1st_stage_.getParticles()->AllSpeciesNames();
-	//		for (size_t i = 0; i != all_diffusions_.size(); ++i)
-	//		{
-	//			// register diffusion species intermediate
-	//			size_t diffusion_species_index = all_diffusions_[i]->diffusion_species_index_;
-	//			std::string& diffusion_species_name = all_species_names[diffusion_species_index];
-	//			rk2_1st_stage_.getParticles()->registerVariable(diffusion_species_s_[i], diffusion_species_name + "Intermediate");
-	//		}
-	//	}
-	//	virtual ~RelaxationOfAllDiffusionSpeciesRK2Complex() {};
-
-	//	virtual void exec(Real dt = 0.0) override;
-	//};
 
 	template <class FirstStageType>
 	class RelaxationOfAllDiffusionSpeciesRK2Complex : public BaseDynamics<void>
@@ -282,7 +242,7 @@ namespace SPH
 		template <typename... ContactArgsType>
 		explicit RelaxationOfAllDiffusionSpeciesRK2Complex(typename FirstStageType::BodyRelationType& body_relation, ContactArgsType &&... contact_agrs)
 			: BaseDynamics<void>(body_relation.getSPHBody()),
-			rk2_initialization_(diffusion_species_s_, body_relation.getSPHBody(), std::forward<ContactArgsType>(contact_agrs)...),
+			rk2_initialization_(diffusion_species_s_, body_relation.getSPHBody()),
 			rk2_1st_stage_(body_relation, std::forward<ContactArgsType>(contact_agrs)...),
 			rk2_2nd_stage_(diffusion_species_s_, body_relation, std::forward<ContactArgsType>(contact_agrs)...),
 			all_diffusions_(rk2_1st_stage_.AllDiffusions())
