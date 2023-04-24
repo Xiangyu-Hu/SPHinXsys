@@ -66,7 +66,7 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
+	/*template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	void RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
 		updateSpeciesDiffusion(size_t particle_i, Real dt)
 	{
@@ -74,7 +74,7 @@ namespace SPH
 		{
 			(*diffusion_species_[m])[particle_i] += dt * (*diffusion_dt_[m])[particle_i];
 		}
-	}
+	}*/
 	////=================================================================================================//
 	//template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	//void RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
@@ -258,7 +258,7 @@ namespace SPH
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType>
 	InitializationRKComplex<DiffusionReactionParticlesType>::
-		InitializationRKComplex(SPHBody& sph_body, StdVec<StdLargeVec<Real>>& diffusion_species_s)
+		InitializationRKComplex(StdVec<StdLargeVec<Real>>& diffusion_species_s, SPHBody& sph_body)
 		: LocalDynamics(sph_body),
 		DiffusionReactionSimpleData<DiffusionReactionParticlesType>(sph_body),
 		material_(this->particles_->diffusion_reaction_material_),
@@ -278,8 +278,7 @@ namespace SPH
 	//=================================================================================================//
 	template <class FirstStageType>
 	SecondStageRK2Complex<FirstStageType>::
-		SecondStageRK2Complex(typename FirstStageType::BodyRelationType& body_relation,
-			StdVec<StdLargeVec<Real>>& diffusion_species_s)
+		SecondStageRK2Complex(StdVec<StdLargeVec<Real>>& diffusion_species_s, typename FirstStageType::BodyRelationType& body_relation)
 		: FirstStageType(body_relation), diffusion_species_s_(diffusion_species_s) {}
 	//=================================================================================================//
 	template <class FirstStageType>
@@ -292,6 +291,13 @@ namespace SPH
 				0.5 * diffusion_species_s_[m][particle_i] +
 				0.5 * ((*this->diffusion_species_[m])[particle_i] + dt * (*this->diffusion_dt_[m])[particle_i]);
 		}
+	}
+	//=================================================================================================//
+	template <class FirstStageType>
+	void SecondStageRK2Complex<FirstStageType>::
+		update(size_t index_i, Real dt)
+	{
+		updateSpeciesDiffusion(index_i, dt);
 	}
 	//=================================================================================================//
 	//template <class FirstStageType>
