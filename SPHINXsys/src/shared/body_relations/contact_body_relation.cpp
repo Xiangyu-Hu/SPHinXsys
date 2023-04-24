@@ -113,7 +113,7 @@ namespace SPH
 							sph_body, *contact_sph_bodies[k]));
 			}
 		}
-		updateConfigurationMemories();
+		resizeConfiguration();
 	}
 	//=================================================================================================//
 	void AdaptiveContactRelation::updateConfiguration()

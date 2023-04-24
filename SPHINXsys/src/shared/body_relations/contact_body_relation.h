@@ -61,7 +61,7 @@ namespace SPH
 					search_depth_ptrs_keeper_.createPtr<SearchDepthContact>(
 						sph_body_, target_cell_linked_list));
 			}
-			updateConfigurationMemories();
+			resizeConfiguration();
 		};
 		virtual ~ContactRelationCrossResolution(){};
 

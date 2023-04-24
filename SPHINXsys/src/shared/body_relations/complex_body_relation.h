@@ -62,7 +62,7 @@ namespace SPH
 		ComplexRelation(RealBody &real_body, BodyPartVector contact_body_parts);
 		virtual ~ComplexRelation(){};
 
-		virtual void updateConfigurationMemories() override;
+		virtual void resizeConfiguration() override;
 		virtual void updateConfiguration() override;
 	};
 }

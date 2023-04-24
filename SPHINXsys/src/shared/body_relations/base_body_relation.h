@@ -114,7 +114,7 @@ namespace SPH
 		virtual ~SPHRelation(){};
 
 		void subscribeToBody() { sph_body_.body_relations_.push_back(this); };
-		virtual void updateConfigurationMemories() = 0;
+		virtual void resizeConfiguration() = 0;
 		virtual void updateConfiguration() = 0;
 	};
 
@@ -133,7 +133,7 @@ namespace SPH
 		explicit BaseInnerRelation(RealBody &real_body);
 		virtual ~BaseInnerRelation(){};
 
-		virtual void updateConfigurationMemories() override;
+		virtual void resizeConfiguration() override;
 	};
 
 	/**
@@ -155,7 +155,7 @@ namespace SPH
 			: BaseContactRelation(sph_body, BodyPartsToRealBodies(contact_body_parts)){};
 		virtual ~BaseContactRelation(){};
 
-		virtual void updateConfigurationMemories() override;
+		virtual void resizeConfiguration() override;
 	};
 }
 #endif // BASE_BODY_RELATION_H
