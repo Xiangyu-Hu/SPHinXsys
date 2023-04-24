@@ -38,8 +38,7 @@ jobs:
             pkg-config `# for installing libraries with vcpkg`\
             git \
             cmake \
-            ninja-build \
-            python3
+            ninja-build
 
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
@@ -134,8 +133,6 @@ jobs:
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: ${{ github.job }}
-
-      - uses: actions/setup-python@v4
 
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
         with: 
