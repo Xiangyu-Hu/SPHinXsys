@@ -18,7 +18,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # Generate `compile_commands.json` file wh
 #set(CMAKE_CXX_STANDARD_REQUIRED ON) # C++ standard requirement for all targets is NOT optional 
 set(CMAKE_CXX_EXTENSIONS OFF) # Disable any non-standard compiler specific C++ extensions for all targets.
 
-set(CMAKE_POSITION_INDEPENDENT_CODE TRUE) # Enable Position Independent Code (PIC) for a target.
+set(CMAKE_POSITION_INDEPENDENT_CODE TRUE) # Enable for all targets, needed for python modules
 
 #------ Declare core library
 add_library(sphinxsys_core INTERFACE)
@@ -78,10 +78,6 @@ if(TARGET Boost::program_options)
     target_compile_definitions(sphinxsys_core INTERFACE BOOST_AVAILABLE)
     target_link_libraries(sphinxsys_core INTERFACE Boost::program_options)
 endif()
-### Python, To ensure consistent versions between components Interpreter, Compiler, Development (or one of its sub-components) and NumPy, specify all components at the same time.
-find_package(Python 3.10 COMPONENTS Interpreter Development REQUIRED)
-### Pybind11
-find_package(pybind11 CONFIG REQUIRED)
 
 #------ Setup the concrete libraries
 add_subdirectory(SPHINXsys)

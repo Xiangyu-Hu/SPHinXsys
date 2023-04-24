@@ -1,3 +1,8 @@
+### Python, for ${Python_EXECUTABLE}
+find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+### Pybind11
+find_package(pybind11 CONFIG REQUIRED)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake) # main (top) cmake dir
 
 set(CMAKE_VERBOSE_MAKEFILE on)
