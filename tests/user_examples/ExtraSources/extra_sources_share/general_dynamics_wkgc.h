@@ -25,11 +25,11 @@ namespace SPH
 	class GlobalCorrectionMatrix : public LocalDynamics, public GeneralDataDelegateInner, public GeneralDataDelegateContact
 	{
 	public:
-		GlobalCorrectionMatrix(ComplexRelation& complex_relation, Real alpha, int beta)
+		GlobalCorrectionMatrix(ComplexRelation& complex_relation, int beta, Real alpha)
 			: LocalDynamics(complex_relation.getSPHBody()),
 			GeneralDataDelegateInner(complex_relation.getInnerRelation()),
-			GeneralDataDelegateContact(complex_relation.getContactRelation()), 
-			alpha_(alpha), beta_(beta),Vol_(particles_->Vol_)
+			GeneralDataDelegateContact(complex_relation.getContactRelation()),
+			beta_(beta), alpha_(alpha), Vol_(particles_->Vol_)
 		{
 			particles_->registerVariable(B_, "WeightedCorrectionMatrix");
 
@@ -45,10 +45,10 @@ namespace SPH
 	protected:
 		StdVec<StdLargeVec<Real>*> contact_Vol_;
 		StdVec<StdLargeVec<Real>*> contact_mass_;
+		const int beta_;
+		const Real alpha_;
 		StdLargeVec<Real>& Vol_;
 		StdLargeVec<Matd>B_;
-		const Real alpha_;
-		const int beta_;
 
 		void interaction(size_t index_i, Real dt = 0.0);
 	};
