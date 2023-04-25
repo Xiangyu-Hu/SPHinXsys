@@ -164,21 +164,25 @@ public:
 	}
 };
 
+using DiffusionRelaxationSimpleContact = RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionParticlesWithBoundary, DiffusionParticlesWithBoundary>;
+
 using DiffusionRelaxationInner = RelaxationOfAllDiffusionSpeciesInner<DiffusionParticlesWithBoundary>;
+using DiffusionRelaxationComplex = RelaxationOfAllDiffusionSpeciesComplex<DiffusionParticlesWithBoundary, DiffusionParticlesWithBoundary>;
+
 using DiffusionRelaxationWithDirichlet = RelaxationOfAllDiffusionSpeciesDirichletContact<DiffusionParticlesWithBoundary, DiffusionParticlesWithBoundary>;
 using DiffusionRelaxationWithNeumann = RelaxationOfAllDiffusionSpeciesNeumannContact<DiffusionReactionParticlesWithBoundary<SolidParticles, DiffusionMaterial>, DiffusionReactionParticlesWithBoundary<SolidParticles, DiffusionMaterial>>;
 //----------------------------------------------------------------------
 //	Specify diffusion relaxation method. 
 //----------------------------------------------------------------------
 
-class DiffusionBodyRelaxation
-	: public RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichlet>>
-{
-public:
-	explicit DiffusionBodyRelaxation(InnerRelation& inner_relation, ContactRelation& body_contact_relation_Dirichlet)
-		: RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichlet>>(inner_relation, body_contact_relation_Dirichlet) {};
-	virtual ~DiffusionBodyRelaxation() {};
-};
+//class DiffusionBodyRelaxation
+//	: public RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichlet>>
+//{
+//public:
+//	explicit DiffusionBodyRelaxation(InnerRelation& inner_relation, ContactRelation& body_contact_relation_Dirichlet)
+//		: RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichlet>>(inner_relation, body_contact_relation_Dirichlet) {};
+//	virtual ~DiffusionBodyRelaxation() {};
+//};
 
 //----------------------------------------------------------------------
 //	An observer body to measure temperature at given positions. 

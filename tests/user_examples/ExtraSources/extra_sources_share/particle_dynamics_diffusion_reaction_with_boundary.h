@@ -37,7 +37,7 @@ namespace SPH
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	class RelaxationOfAllDiffusionSpeciesSimpleContact
 		: public LocalDynamics,
-		public DiffusionReactionContactData<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
+		  public DiffusionReactionContactData<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
 	{
 	protected:
 		typedef typename DiffusionReactionParticlesType::DiffusionReactionMaterial DiffusionReactionMaterial;
@@ -45,21 +45,22 @@ namespace SPH
 		StdVec<BaseDiffusion*>& all_diffusions_;
 		StdVec<StdLargeVec<Real>*>& diffusion_species_;
 		StdVec<StdLargeVec<Real>*>& gradient_species_;
-		StdVec<StdLargeVec<Real>*> diffusion_dt_;
+		StdVec<StdLargeVec<Real>*> diffusion_dt_; //add &
 
-		void initializeDiffusionChangeRate(size_t particle_i);
+		//void initializeDiffusionChangeRate(size_t particle_i);
 		//virtual void updateSpeciesDiffusion(size_t particle_i, Real dt);
 
 	public:
 		StdVec<StdVec<StdLargeVec<Real>*>> contact_gradient_species_;
 
 		typedef DiffusionReactionParticlesType InnerParticlesType;
-		typedef ContactRelation BodyRelationType;
-		explicit RelaxationOfAllDiffusionSpeciesSimpleContact(ContactRelation& contact_relation);
+		typedef BaseContactRelation BodyRelationType;
+
+		explicit RelaxationOfAllDiffusionSpeciesSimpleContact(BaseContactRelation& contact_relation);
 		virtual ~RelaxationOfAllDiffusionSpeciesSimpleContact() {};
 		StdVec<BaseDiffusion*>& AllDiffusions() { return material_.AllDiffusions(); };
 
-		virtual void interaction(size_t index_i, Real dt = 0.0) = 0;
+		//virtual void interaction(size_t index_i, Real dt = 0.0) = 0;
 	};
 
 
