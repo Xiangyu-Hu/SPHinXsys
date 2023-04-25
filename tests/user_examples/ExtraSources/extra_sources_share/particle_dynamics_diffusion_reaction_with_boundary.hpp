@@ -14,7 +14,7 @@ namespace SPH
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
-		RelaxationOfAllDiffusionSpeciesSimpleContact(ContactRelation& contact_relation)
+		RelaxationOfAllDiffusionSpeciesSimpleContact(BaseContactRelation& contact_relation)
 		: LocalDynamics(contact_relation.getSPHBody()),
 		DiffusionReactionContactData<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(contact_relation),
 		material_(this->particles_->diffusion_reaction_material_),
@@ -56,7 +56,7 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
+	/*template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	void RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
 		initializeDiffusionChangeRate(size_t particle_i)
 	{
@@ -64,7 +64,7 @@ namespace SPH
 		{
 			(*diffusion_dt_[m])[particle_i] = 0;
 		}
-	}
+	}*/
 	//=================================================================================================//
 	/*template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	void RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::

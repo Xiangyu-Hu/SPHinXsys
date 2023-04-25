@@ -65,7 +65,6 @@ int main(int ac, char* av[])
 	SimpleDynamics<WallBoundaryInitialCondition> setup_boundary_condition_Dirichlet(wall_boundary_Dirichlet);
 	SimpleDynamics<WallBoundaryInitialCondition> setup_boundary_condition_Neumann(wall_boundary_Neumann);
 	GetDiffusionTimeStepSize<DiffusionParticlesWithBoundary> get_time_step_size(diffusion_body);
-
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
@@ -75,7 +74,13 @@ int main(int ac, char* av[])
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	DiffusionRelaxationWithDirichlet diffusion_with_dirichlet_boundary(diffusion_body_contact_Dirichlet);
+	//DiffusionRelaxationWithDirichlet diffusion_with_dirichlet_boundary(diffusion_body_contact_Dirichlet);
+
+	//DiffusionReactionContactData<DiffusionParticlesWithBoundary, DiffusionParticlesWithBoundary> contact_data(diffusion_body_contact_Dirichlet); //test
+
+	//DiffusionRelaxationComplex complex(diffusion_body_complex_Dirichlet);
+	DiffusionRelaxationSimpleContact simple(diffusion_body_contact_Dirichlet); //test
+
 	//DiffusionRelaxationWithNeumann diffusion_with_neumann_boundary(diffusion_body_contact_Neumann);
 	//DiffusionBodyRelaxation temperature_relaxation(diffusion_body_inner_relation, diffusion_body_contact_Dirichlet);
 
