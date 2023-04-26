@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<result>
+    <Snapshot_Element>
+        <Snapshot number_of_snapshot_for_local_result_="13" />
+    </Snapshot_Element>
+    <Result_Element>
+        <Particle_0 snapshot_0="9860.5411200000017" snapshot_1="9867.4969665177741" snapshot_2="9888.4036977773067" snapshot_3="9889.8431283810023" snapshot_4="9893.8602445907782" snapshot_5="9893.7498513415812" snapshot_6="9889.4621110002336" snapshot_7="9888.192708274195" snapshot_8="9887.9091653914602" snapshot_9="9891.0964792457162" snapshot_10="9885.2301480879869" snapshot_11="9885.0164982187271" snapshot_12="9884.6201432727503" />
+    </Result_Element>
+</result>
