@@ -18,7 +18,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         add_test(NAME ${PROJECT_NAME}
-                 COMMAND "cmd.exe /C .\\${PROJECT_NAME} --r=true && .\\${PROJECT_NAME} --r=false --i=true"
+                 COMMAND bash -c "$<TARGET_FILE:${PROJECT_NAME}> --r=true && $<TARGET_FILE:${PROJECT_NAME}> --r=false --i=true"
                  WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/run_test.sh
