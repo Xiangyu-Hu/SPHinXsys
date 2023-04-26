@@ -152,9 +152,11 @@ namespace SPH
 		/** add a variable into the list for restart */
 		template <typename VariableType>
 		void addVariableToRestart(const std::string &variable_name);
+		inline const ParticleVariableList& getVariablesToRestart() const {return variables_to_restart_;}
 		/** add a variable into the list for particle reload */
 		template <typename VariableType>
 		void addVariableToReload(const std::string &variable_name);
+		inline const ParticleVariableList& getVariablesToReload() const {return variables_to_reload_;}
 		/**
 		 *		Particle data for sorting
 		 */
