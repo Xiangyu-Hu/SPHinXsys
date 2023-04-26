@@ -82,7 +82,7 @@ namespace SPH
 	class BaseParticles
 	{
 	private:
-		UniquePtrKeepers<BaseDynamics<void>> derived_particle_data_; /**< Unique ptr for Base dynamics. */
+		UniquePtrsKeeper<BaseDynamics<void>> derived_particle_data_; /**< Unique ptr for Base dynamics. */
 		
 		template <typename VariableType>
 		struct AllVariablesDelete
@@ -96,11 +96,7 @@ namespace SPH
 		};
 	public:
 		explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
-		virtual ~BaseParticles()
-		{
-			DataAssembleOperation<AllVariablesDelete> delete_all_shared;
-			delete_all_shared(shared_variable_data_);
-		};
+		virtual ~BaseParticles() {};
 
 		StdLargeVec<Vecd> pos_;		  /**< particle position */
 		StdLargeVec<Vecd> vel_;		  /**< particle velocity */
@@ -121,7 +117,7 @@ namespace SPH
 		//		Generalized particle data for parameterized management
 		//----------------------------------------------------------------------
 		ParticleData all_particle_data_;
-		DataContainerAddressAssemble<StdLargeVec> shared_variable_data_; // extra data for shared variables
+		DataContainerUniquePtrAssemble<StdLargeVec> shared_variable_data_; // extra data for shared variables
 		ParticleDataMap all_variable_maps_;
 		StdVec<BaseDynamics<void> *> derived_variables_;
 		ParticleVariableList variables_to_write_;

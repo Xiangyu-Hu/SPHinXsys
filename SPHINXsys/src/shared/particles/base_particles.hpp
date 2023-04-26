@@ -74,10 +74,10 @@ namespace SPH
         constexpr int type_index = DataTypeIndex<VariableType>::value;
         if (all_variable_maps_[type_index].find(variable_name) == all_variable_maps_[type_index].end())
         {
-            auto &container = std::get<type_index>(shared_variable_data_);
-            container.emplace_back(new StdLargeVec<VariableType>());
-            registerVariable(*container.back(), variable_name);
-            return container.back();
+            UniquePtrsKeeper<StdLargeVec<VariableType>> &container = std::get<type_index>(shared_variable_data_);
+            StdLargeVec<VariableType> *contained_data = container.template createPtr<StdLargeVec<VariableType>>();
+            registerVariable(*contained_data, variable_name);
+            return contained_data;
         }
         else
         {
