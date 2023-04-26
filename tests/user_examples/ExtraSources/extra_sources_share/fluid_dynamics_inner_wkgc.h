@@ -20,8 +20,6 @@ namespace SPH
 	{
 		/**
 		* @class BaseIntegration1stHalfCorrect
-		* @brief Template class for pressure relaxation scheme with the Riemann solver
-		* as template variable
 		*/
 		template <class RiemannSolverType>
 		class BaseIntegration1stHalfCorrect : public BaseIntegration1stHalf<RiemannSolverType>
@@ -35,7 +33,6 @@ namespace SPH
 			void interaction(size_t index_i, Real dt);
 
 		protected:
-			virtual Vecd computeNonConservativeAcceleration(size_t index_i);
 			StdLargeVec<Matd> p_B_;
 			StdLargeVec<Matd>& B_;
 		};

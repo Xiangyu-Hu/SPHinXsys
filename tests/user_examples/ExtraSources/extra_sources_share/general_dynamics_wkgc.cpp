@@ -31,5 +31,6 @@ namespace SPH
 		B_[index_i] = (pow(local_configuration.determinant(), beta_) * local_configuration.inverse() + alpha_ * Matd::Identity())
 			           / (alpha_ * Matd::Identity().determinant() + pow(local_configuration.determinant(), beta_));
 	}
+	//=================================================================================================//
 }
 //=================================================================================================//

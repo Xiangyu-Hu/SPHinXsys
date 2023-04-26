@@ -35,22 +35,6 @@ namespace SPH
 		}
 		//=================================================================================================//
 		template <class RiemannSolverType>
-		Vecd BaseIntegration1stHalfCorrect<RiemannSolverType>::computeNonConservativeAcceleration(size_t index_i)
-		{
-			Vecd acceleration = this->acc_prior_[index_i] * this->rho_[index_i];
-			const Neighborhood& inner_neighborhood = this->inner_configuration_[index_i];
-			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-			{
-				size_t index_j = inner_neighborhood.j_[n];
-				Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
-				const Vecd& e_ij = inner_neighborhood.e_ij_[n];
-
-				acceleration += (p_B_[index_i] - p_B_[index_j]) * dW_ijV_j * e_ij;
-			}
-			return acceleration / this->rho_[index_i];
-		}
-		//=================================================================================================//
-		template <class RiemannSolverType>
 		void BaseIntegration1stHalfCorrect<RiemannSolverType>::interaction(size_t index_i, Real dt)
 		{
 			Vecd acceleration = Vecd::Zero();
@@ -68,6 +52,8 @@ namespace SPH
 			this->acc_[index_i] += acceleration / this->rho_[index_i];
 			this->drho_dt_[index_i] = rho_dissipation * this->rho_[index_i];
 		}
+		//=================================================================================================//
 	}
+	//=====================================================================================================//
 }
 //=================================================================================================//
