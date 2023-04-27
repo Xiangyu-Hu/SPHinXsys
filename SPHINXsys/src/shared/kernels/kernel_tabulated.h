@@ -21,13 +21,13 @@
  *                                                                          *
  * ------------------------------------------------------------------------*/
 /**
- * @file 	kernel_tabulated.hpp
+ * @file 	kernel_tabulated.h
  * @brief 	This is the class for tabulated kernels using template.
  * @author	Yongchuan Yu, Massoud Rezevand, Chi ZHang and Xiangyu Hu
  */
 
-#ifndef KERNEL_TABULATED_HPP
-#define KERNEL_TABULATED_HPP
+#ifndef KERNEL_TABULATED_H
+#define KERNEL_TABULATED_H
 
 #include "base_kernel.h"
 #include <cmath>
@@ -81,9 +81,14 @@ namespace SPH
 	//=================================================================================================//
 	template <class KernelType>
 	KernelTabulated<KernelType>::KernelTabulated(Real h, int kernel_resolution)
-		: Kernel(h, "KernelTabulated"), original_kernel_(h),
+		: Kernel(h, 2.0, 2.0 * h, "Tabulated"), original_kernel_(h),
 		  kernel_resolution_(kernel_resolution)
 	{
+		kernel_name_ += original_kernel_.Name();
+		kernel_size_ = original_kernel_.KernelSize();
+		rc_ref_ = original_kernel_.CutOffRadius();
+		rc_ref_sqr_ = original_kernel_.CutOffRadiusSqr();
+
 		factor_W_1D_ = original_kernel_.FactorW1D();
 		factor_W_2D_ = original_kernel_.FactorW2D();
 		factor_W_3D_ = original_kernel_.FactorW3D();
@@ -165,4 +170,4 @@ namespace SPH
 	}
 	//=================================================================================================//
 }
-#endif // KERNEL_TABULATED_HPP
+#endif // KERNEL_TABULATED_H
