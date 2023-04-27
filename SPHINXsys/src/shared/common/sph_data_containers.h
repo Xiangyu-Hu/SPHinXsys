@@ -98,10 +98,9 @@ namespace SPH
 						const ParticleVariableList &variable_name_list, VariableOperation &variable_operation) const
 		{
 			constexpr int type_index = DataTypeIndex<VariableType>::value;
-			for (std::pair<std::string, size_t> &name_index : variable_name_list[type_index])
+			for (const auto& [variable_name,variable_index] : variable_name_list[type_index])
 			{
-				std::string variable_name = name_index.first;
-				StdLargeVec<VariableType> &variable = *(std::get<type_index>(particle_data)[name_index.second]);
+				StdLargeVec<VariableType> &variable = *(std::get<type_index>(particle_data)[variable_index]);
 				variable_operation(variable_name, variable);
 			}
 		};
