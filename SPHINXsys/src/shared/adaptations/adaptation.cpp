@@ -78,7 +78,7 @@ namespace SPH
 		spacing_ref_ = spacing_ref_ * system_refinement_ratio_ / new_system_refinement_ratio;
 		system_refinement_ratio_ = new_system_refinement_ratio;
 		h_ref_ = h_spacing_ratio_ * spacing_ref_;
-		kernel_ptr_.reset(new KernelWendlandC2(h_ref_));
+		getKernel()->resetSmoothingLength(h_ref_);
 		sigma0_ref_ = computeReferenceNumberDensity(Vecd());
 		spacing_min_ = MostRefinedSpacing(spacing_ref_, local_refinement_level_);
 		Vol_min_ = pow(spacing_min_, Dimensions);

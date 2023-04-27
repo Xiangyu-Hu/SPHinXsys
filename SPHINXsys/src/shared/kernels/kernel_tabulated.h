@@ -81,17 +81,20 @@ namespace SPH
 	//=================================================================================================//
 	template <class KernelType>
 	KernelTabulated<KernelType>::KernelTabulated(Real h, int kernel_resolution)
-		: Kernel(h, 2.0, 2.0 * h, "Tabulated"), original_kernel_(h),
+		: Kernel(h, 2.0, 2.0, "Tabulated"), original_kernel_(h),
 		  kernel_resolution_(kernel_resolution)
 	{
 		kernel_name_ += original_kernel_.Name();
 		kernel_size_ = original_kernel_.KernelSize();
+		truncation_ = original_kernel_.Truncation();
 		rc_ref_ = original_kernel_.CutOffRadius();
 		rc_ref_sqr_ = original_kernel_.CutOffRadiusSqr();
 
 		factor_W_1D_ = original_kernel_.FactorW1D();
 		factor_W_2D_ = original_kernel_.FactorW2D();
 		factor_W_3D_ = original_kernel_.FactorW3D();
+
+		setDerivativeParameters();
 
 		dq_ = KernelSize() / Real(kernel_resolution_);
 		for (int i = 0; i < kernel_resolution_ + 4; i++)
@@ -111,8 +114,6 @@ namespace SPH
 		delta_q_1_ = dq_ * (-1.0 * dq_) * (-2.0 * dq_);
 		delta_q_2_ = (2.0 * dq_) * dq_ * (-1.0 * dq_);
 		delta_q_3_ = (3.0 * dq_) * (2.0 * dq_) * dq_;
-
-		setDerivativeParameters();
 	}
 	//=================================================================================================//
 	template <class KernelType>

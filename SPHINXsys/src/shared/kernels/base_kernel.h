@@ -57,10 +57,11 @@ namespace SPH
 	{
 	protected:
 		std::string kernel_name_;
-		const Real h_, inv_h_;	 /**< reference smoothing length and its inverse **/
+		Real h_, inv_h_;   /**< reference smoothing length and its inverse **/
 		Real kernel_size_; /**<kernel_size_ *  h_ gives the zero kernel value */
-		Real rc_ref_;		 /** reference cut off radius, beyond this kernel value is neglected. **/
-		Real rc_ref_sqr_;	 /** reference cut off radius square **/
+		Real truncation_;  /**< to obtain cut off radius */
+		Real rc_ref_;	   /** reference cut off radius, beyond this kernel value is neglected. **/
+		Real rc_ref_sqr_;  /** reference cut off radius square **/
 		/** Normalization factors for the kernel function  **/
 		Real factor_W_1D_, factor_W_2D_, factor_W_3D_;
 		/** Auxiliary factors for the derivative of kernel function  **/
@@ -76,9 +77,11 @@ namespace SPH
 		virtual ~Kernel(){};
 
 		std::string Name() const { return kernel_name_; };
+		void resetSmoothingLength(Real h);
 		Real SmoothingLength() const { return h_; };
 		/**< non-dimensional size of the kernel, generally 2.0 **/
-		virtual Real KernelSize() const { return kernel_size_; };
+		Real KernelSize() const { return kernel_size_; };
+		Real Truncation() const { return truncation_; };
 		Real CutOffRadius() const { return rc_ref_; };
 		Real CutOffRadiusSqr() const { return rc_ref_sqr_; };
 		Real FactorW1D() const { return factor_W_1D_; };
