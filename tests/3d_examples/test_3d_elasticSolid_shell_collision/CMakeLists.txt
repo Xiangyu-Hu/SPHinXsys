@@ -17,9 +17,11 @@ target_link_libraries(${PROJECT_NAME} sphinxsys_3d)
 set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
-        add_test(NAME ${PROJECT_NAME}
-                 COMMAND cmd.exe /C "$<SHELL_PATH:$<TARGET_FILE:${PROJECT_NAME}>> --r=true && $<SHELL_PATH:$<TARGET_FILE:${PROJECT_NAME}>> --r=false --i=true"
-                 WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
+        add_test(NAME ${PROJECT_NAME}_particle_relaxation COMMAND ${PROJECT_NAME} --r=true
+                 WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
+        add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME} --r=false --i=true
+                 WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
+        set_tests_properties(${PROJECT_NAME} PROPERTIES DEPENDS "${PROJECT_NAME}_particle_relaxation")
 else()
         file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/run_test.sh
                 DESTINATION ${EXECUTABLE_OUTPUT_PATH})
