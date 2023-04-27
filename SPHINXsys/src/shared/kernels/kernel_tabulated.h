@@ -64,8 +64,6 @@ namespace SPH
 	public:
 		explicit KernelTabulated(Real h, int kernel_resolution);
 
-		virtual Real KernelSize() const override { return original_kernel_.KernelSize(); };
-
 		virtual Real W_1D(const Real q) const override;
 		virtual Real W_2D(const Real q) const override;
 		virtual Real W_3D(const Real q) const override;
