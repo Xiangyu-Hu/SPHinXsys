@@ -74,15 +74,10 @@ int main(int ac, char* av[])
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	//DiffusionRelaxationWithDirichlet diffusion_with_dirichlet_boundary(diffusion_body_contact_Dirichlet);
+	//DiffusionRelaxationSimpleContact simple(diffusion_body_contact_Dirichlet); //test
+	//DiffusionRelaxationSimpleComplex simple_complex(diffusion_body_complex_Dirichlet); //test
 
-	//DiffusionReactionContactData<DiffusionParticlesWithBoundary, DiffusionParticlesWithBoundary> contact_data(diffusion_body_contact_Dirichlet); //test
-
-	//DiffusionRelaxationComplex complex(diffusion_body_complex_Dirichlet);
-	DiffusionRelaxationSimpleContact simple(diffusion_body_contact_Dirichlet); //test
-
-	//DiffusionRelaxationWithNeumann diffusion_with_neumann_boundary(diffusion_body_contact_Neumann);
-	//DiffusionBodyRelaxation temperature_relaxation(diffusion_body_inner_relation, diffusion_body_contact_Dirichlet);
+	DiffusionBodyRelaxation temperature_relaxation(diffusion_body_inner_relation, diffusion_body_complex_Dirichlet);
 
 	//InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_diffusion_body_normal_vector_Dirichlet(diffusion_body_complex_Dirichlet);
 	//InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_wall_boundary_normal_vector_Dirichlet(wall_boundary_complex_Dirichlet);

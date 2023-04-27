@@ -4,25 +4,24 @@
  * @author	Chenxi Zhao, Bo Zhang, Chi Zhang and Xiangyu Hu
  */
 
-#ifndef PARTICLE_DYNAMICS_DIFFUSION_REACTION_WITH_BOUNDARY_H
-#define PARTICLE_DYNAMICS_DIFFUSION_REACTION_WITH_BOUNDARY_H
+#ifndef PARTICLE_DYNAMICS_DIFFUSION_REACTION_WITH_BOUNDARY_COMPLEXRELATION_H
+#define PARTICLE_DYNAMICS_DIFFUSION_REACTION_WITH_BOUNDARY_COMPLEXRELATION_H
 
 #include "particle_dynamics_diffusion_reaction.h"
 
 namespace SPH
 {
-
 	/**
 	 * @class DiffusionReactionInitialCondition
 	 * @brief Pure abstract class for initial conditions
 	 */
 	template <class DiffusionReactionParticlesType>
-	class DiffusionReactionInitialConditionWithBoundary
+	class DiffusionReactionInitialConditionWithBoundaryComplexrelation
 		: public DiffusionReactionInitialCondition<DiffusionReactionParticlesType>
 	{
 	public:
-		explicit DiffusionReactionInitialConditionWithBoundary(SPHBody& sph_body);
-		virtual ~DiffusionReactionInitialConditionWithBoundary() {};
+		explicit DiffusionReactionInitialConditionWithBoundaryComplexrelation(SPHBody& sph_body);
+		virtual ~DiffusionReactionInitialConditionWithBoundaryComplexrelation() {};
 
 	protected:
 		StdLargeVec<Real>& heat_flux_;
@@ -35,8 +34,9 @@ namespace SPH
 	 * @brief Simple diffusion relaxation process between two contact bodies, which is the base class of three boundary conditions.
 	 */
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
-	class RelaxationOfAllDiffusionSpeciesSimpleContact
+	class RelaxationOfAllDiffusionSpeciesSimpleComplex
 		: public LocalDynamics,
+		  public DiffusionReactionInnerData<DiffusionReactionParticlesType>,
 		  public DiffusionReactionContactData<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
 	{
 	protected:
@@ -54,10 +54,10 @@ namespace SPH
 		StdVec<StdVec<StdLargeVec<Real>*>> contact_gradient_species_;
 
 		typedef DiffusionReactionParticlesType InnerParticlesType;
-		typedef BaseContactRelation BodyRelationType;
+		typedef ComplexRelation BodyRelationType;
 
-		explicit RelaxationOfAllDiffusionSpeciesSimpleContact(BaseContactRelation& contact_relation);
-		virtual ~RelaxationOfAllDiffusionSpeciesSimpleContact() {};
+		explicit RelaxationOfAllDiffusionSpeciesSimpleComplex(ComplexRelation& complex_relation);
+		virtual ~RelaxationOfAllDiffusionSpeciesSimpleComplex() {};
 		StdVec<BaseDiffusion*>& AllDiffusions() { return material_.AllDiffusions(); };
 
 		//virtual void interaction(size_t index_i, Real dt = 0.0) = 0;
@@ -68,19 +68,19 @@ namespace SPH
 	 * @brief Contact diffusion relaxation with Dirichlet boundary condition.
 	 */
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
-	class RelaxationOfAllDiffusionSpeciesDirichletContact
-		: public RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
+	class RelaxationOfAllDiffusionSpeciesDirichletComplex
+		: public RelaxationOfAllDiffusionSpeciesSimpleComplex<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
 	{
 		//StdVec<StdVec<StdLargeVec<Real>*>> contact_gradient_species_;
 
 	protected:
-		void getDiffusionChangeRateDirichletContact(size_t particle_i, size_t particle_j, Vecd& e_ij, Real surface_area_ij,
+		void getDiffusionChangeRateDirichletComplex(size_t particle_i, size_t particle_j, Vecd& e_ij, Real surface_area_ij,
 			const StdVec<StdLargeVec<Real>*>& gradient_species_k);
 
 	public:
 		//typedef ContactRelation BodyRelationType;
-		explicit RelaxationOfAllDiffusionSpeciesDirichletContact(ContactRelation& contact_relation);
-		virtual ~RelaxationOfAllDiffusionSpeciesDirichletContact() {};
+		explicit RelaxationOfAllDiffusionSpeciesDirichletComplex(ComplexRelation& complex_relation);
+		virtual ~RelaxationOfAllDiffusionSpeciesDirichletComplex() {};
 
 		inline void interaction(size_t index_i, Real dt = 0.0);
 	};
@@ -90,8 +90,8 @@ namespace SPH
 	 * @brief Contact diffusion relaxation with Neumann boundary condition.
 	 */
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
-	class RelaxationOfAllDiffusionSpeciesNeumannContact
-		: public RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
+	class RelaxationOfAllDiffusionSpeciesNeumannComplex
+		: public RelaxationOfAllDiffusionSpeciesSimpleComplex<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
 	{
 		//StdVec<StdVec<StdLargeVec<Real>*>> contact_gradient_species_;
 
@@ -101,12 +101,12 @@ namespace SPH
 		StdVec<StdLargeVec<Vecd>*> contact_n_;
 
 	protected:
-		void getDiffusionChangeRateNeumannContact(size_t particle_i, size_t particle_j, Real surface_area_ij_Neumann, StdLargeVec<Real>& heat_flux_k);
+		void getDiffusionChangeRateNeumannComplex(size_t particle_i, size_t particle_j, Real surface_area_ij_Neumann, StdLargeVec<Real>& heat_flux_k);
 
 	public:
 		//typedef ContactRelation BodyRelationType;
-		explicit RelaxationOfAllDiffusionSpeciesNeumannContact(ContactRelation& contact_relation);
-		virtual ~RelaxationOfAllDiffusionSpeciesNeumannContact() {};
+		explicit RelaxationOfAllDiffusionSpeciesNeumannComplex(ComplexRelation& complex_relation);
+		virtual ~RelaxationOfAllDiffusionSpeciesNeumannComplex() {};
 
 		inline void interaction(size_t index_i, Real dt = 0.0);
 	};
@@ -116,8 +116,8 @@ namespace SPH
 	 * @brief Contact diffusion relaxation with Robin boundary condition.
 	 */
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
-	class RelaxationOfAllDiffusionSpeciesRobinContact
-		: public RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
+	class RelaxationOfAllDiffusionSpeciesRobinComplex
+		: public RelaxationOfAllDiffusionSpeciesSimpleComplex<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
 	{
 		//StdVec<StdVec<StdLargeVec<Real>*>> contact_gradient_species_;
 
@@ -129,12 +129,12 @@ namespace SPH
 		StdVec<StdLargeVec<Vecd>*> contact_n_;
 
 	protected:
-		void getDiffusionChangeRateRobinContact(size_t particle_i, size_t particle_j, Real surface_area_ij_Robin, StdLargeVec<Real>& convection_k, StdLargeVec<Real>& T_infinity_k);
+		void getDiffusionChangeRateRobinComplex(size_t particle_i, size_t particle_j, Real surface_area_ij_Robin, StdLargeVec<Real>& convection_k, StdLargeVec<Real>& T_infinity_k);
 
 	public:
 		//typedef ContactRelation BodyRelationType;
-		explicit RelaxationOfAllDiffusionSpeciesRobinContact(ContactRelation& contact_relation);
-		virtual ~RelaxationOfAllDiffusionSpeciesRobinContact() {};
+		explicit RelaxationOfAllDiffusionSpeciesRobinComplex(ComplexRelation& complex_relation);
+		virtual ~RelaxationOfAllDiffusionSpeciesRobinComplex() {};
 
 		inline void interaction(size_t index_i, Real dt = 0.0);
 	};
@@ -161,12 +161,11 @@ namespace SPH
 	class ComplexInteraction<>
 	{
 	public:
-		template <class BodyRelationType>
-		ComplexInteraction(BodyRelationType& body_relation) {};
+		template <class BodyRelation>
+		ComplexInteraction(BodyRelation& body_relation) {};
 
 		void interaction(size_t index_i, Real dt = 0.0) {};
 	};
-
 
 	template <class DiffusionRelaxationFirst, class... DiffusionRelaxationOthers>
 	class ComplexInteraction<DiffusionRelaxationFirst, DiffusionRelaxationOthers...> : public DiffusionRelaxationFirst
@@ -176,10 +175,14 @@ namespace SPH
 		ComplexInteraction<DiffusionRelaxationOthers...> others_diffusion_relaxation_;
 
 	public:
-		template <typename... ContactArgs>
-		ComplexInteraction(BaseInnerRelation& inner_relation, ContactArgs &&...contact_args)
+		template <typename... ComplexArgs>
+		ComplexInteraction(BaseInnerRelation& inner_relation, ComplexArgs &&...complex_args)
 			: DiffusionRelaxationFirst(inner_relation),
-			others_diffusion_relaxation_(std::forward<ContactArgs>(contact_args)...) {};
+			others_diffusion_relaxation_(std::forward<ComplexArgs>(complex_args)...) {};
+
+		typedef typename DiffusionRelaxationFirst::InnerParticlesType InnerParticlesTypeComplex;
+		typedef typename DiffusionRelaxationFirst::BodyRelationType BodyRelationTypeComplex;
+		typedef typename DiffusionRelaxationOthers::BodyRelationType BodyRelationTypeComplex;
 
 		void interaction(size_t index_i, Real dt = 0.0)
 		{
@@ -221,9 +224,9 @@ namespace SPH
 		virtual void updateSpeciesDiffusion(size_t particle_i, Real dt) override;
 
 	public:
-		template <typename... ContactArgsType>
-		SecondStageRK2Complex(StdVec<StdLargeVec<Real>>& diffusion_species_s, typename FirstStageType::BodyRelationType& body_relation, ContactArgsType &&... contact_agrs)
-			: FirstStageType(body_relation, std::forward<ContactArgsType>(contact_agrs)...), diffusion_species_s_(diffusion_species_s) {};
+		template <typename... ComplexArgsType>
+		SecondStageRK2Complex(StdVec<StdLargeVec<Real>>& diffusion_species_s, typename FirstStageType::BodyRelationTypeComplex& body_relation, ComplexArgsType &&... complex_agrs)
+			: FirstStageType(body_relation, std::forward<ComplexArgsType>(complex_agrs)...), diffusion_species_s_(diffusion_species_s) {};
 		virtual ~SecondStageRK2Complex() {};
 	};
 
@@ -233,18 +236,18 @@ namespace SPH
 	protected:
 		/** Intermediate Value */
 		StdVec<StdLargeVec<Real>> diffusion_species_s_;
-		SimpleDynamics<InitializationRKComplex<typename FirstStageType::InnerParticlesType>> rk2_initialization_;
+		SimpleDynamics<InitializationRKComplex<typename FirstStageType::InnerParticlesTypeComplex>> rk2_initialization_;
 		InteractionWithUpdate<FirstStageType> rk2_1st_stage_;
 		InteractionWithUpdate<SecondStageRK2Complex<FirstStageType>> rk2_2nd_stage_;
 		StdVec<BaseDiffusion*> all_diffusions_;
 
 	public:
-		template <typename... ContactArgsType>
-		explicit RelaxationOfAllDiffusionSpeciesRK2Complex(typename FirstStageType::BodyRelationType& body_relation, ContactArgsType &&... contact_agrs)
+		template <typename... ComplexArgsType>
+		explicit RelaxationOfAllDiffusionSpeciesRK2Complex(typename FirstStageType::BodyRelationTypeComplex& body_relation, ComplexArgsType &&... complex_agrs)
 			: BaseDynamics<void>(body_relation.getSPHBody()),
 			rk2_initialization_(diffusion_species_s_, body_relation.getSPHBody()),
-			rk2_1st_stage_(body_relation, std::forward<ContactArgsType>(contact_agrs)...),
-			rk2_2nd_stage_(diffusion_species_s_, body_relation, std::forward<ContactArgsType>(contact_agrs)...),
+			rk2_1st_stage_(body_relation, std::forward<ComplexArgsType>(complex_agrs)...),
+			rk2_2nd_stage_(diffusion_species_s_, body_relation, std::forward<ComplexArgsType>(complex_agrs)...),
 			all_diffusions_(rk2_1st_stage_.AllDiffusions())
 		{
 			diffusion_species_s_.resize(all_diffusions_.size());
