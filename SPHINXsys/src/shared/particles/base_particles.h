@@ -84,16 +84,6 @@ namespace SPH
 	private:
 		UniquePtrsKeeper<BaseDynamics<void>> derived_particle_data_; /**< Unique ptr for Base dynamics. */
 		
-		template <typename VariableType>
-		struct AllVariablesDelete
-		{
-			void operator()(ParticleData &particle_data) const
-			{
-				constexpr int type_index = DataTypeIndex<VariableType>::value;
-				for (size_t i = 0; i != std::get<type_index>(particle_data).size(); ++i)
-					delete std::get<type_index>(particle_data)[i];
-			}
-		};
 	public:
 		explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
 		virtual ~BaseParticles() {};

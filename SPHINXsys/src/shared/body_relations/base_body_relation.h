@@ -148,7 +148,7 @@ namespace SPH
 
 	public:
 		RealBodyVector contact_bodies_;
-		StdVec<ParticleConfiguration *> contact_configuration_; /**< Configurations for particle interaction between bodies. */
+		ContactParticleConfiguration contact_configuration_; /**< Configurations for particle interaction between bodies. */
 
 		BaseContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies);
 		BaseContactRelation(SPHBody &sph_body, BodyPartVector contact_body_parts)

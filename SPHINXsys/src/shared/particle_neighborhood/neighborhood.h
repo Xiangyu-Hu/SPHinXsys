@@ -64,6 +64,7 @@ namespace SPH
 		void removeANeighbor(size_t neighbor_n);
 	};
 	using ParticleConfiguration = StdLargeVec<Neighborhood>;
+	using ContactParticleConfiguration = StdVec<ParticleConfiguration *>;
 
 	/**
 	 * @class NeighborBuilder
