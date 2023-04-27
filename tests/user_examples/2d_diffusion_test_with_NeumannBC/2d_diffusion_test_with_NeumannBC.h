@@ -9,8 +9,9 @@
 #include "sphinxsys.h"
 
 #include "diffusion_reaction_particles_with_boundary.h"
-#include "particle_dynamics_diffusion_reaction_with_boundary.h"
-#include "particle_dynamics_diffusion_reaction_with_boundary.hpp"
+//#include "particle_dynamics_diffusion_reaction_with_boundary.h"
+#include "particle_dynamics_diffusion_reaction_with_boundary_complexrelation.h"
+#include "particle_dynamics_diffusion_reaction_with_boundary_complexrelation.hpp"
 
 using namespace SPH;
 
@@ -115,14 +116,14 @@ using WallParticles = DiffusionReactionParticlesWithBoundary<SolidParticles, Dif
 //	Application dependent initial condition. 
 //----------------------------------------------------------------------
 class DiffusionInitialCondition
-	: public DiffusionReactionInitialConditionWithBoundary<DiffusionParticlesWithBoundary>
+	: public DiffusionReactionInitialConditionWithBoundaryComplexrelation<DiffusionParticlesWithBoundary>
 {
 protected:
 	size_t phi_;
 
 public:
 	explicit DiffusionInitialCondition(SPHBody& sph_body)
-		: DiffusionReactionInitialConditionWithBoundary<DiffusionParticlesWithBoundary>(sph_body)
+		: DiffusionReactionInitialConditionWithBoundaryComplexrelation<DiffusionParticlesWithBoundary>(sph_body)
 	{
 		phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
 	};
@@ -134,14 +135,14 @@ public:
 };
 
 class WallBoundaryInitialCondition
-	: public DiffusionReactionInitialConditionWithBoundary<WallParticles>
+	: public DiffusionReactionInitialConditionWithBoundaryComplexrelation<WallParticles>
 {
 protected:
 	size_t phi_;
 
 public:
 	WallBoundaryInitialCondition(SolidBody& diffusion_body) :
-		DiffusionReactionInitialConditionWithBoundary<WallParticles>(diffusion_body)
+		DiffusionReactionInitialConditionWithBoundaryComplexrelation<WallParticles>(diffusion_body)
 	{
 		phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
 	}
@@ -164,25 +165,22 @@ public:
 	}
 };
 
-using DiffusionRelaxationSimpleContact = RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionParticlesWithBoundary, DiffusionParticlesWithBoundary>;
+//using DiffusionRelaxationSimpleContact = RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionParticlesWithBoundary, DiffusionParticlesWithBoundary>;  //test
+//using DiffusionRelaxationSimpleComplex = RelaxationOfAllDiffusionSpeciesSimpleComplex<DiffusionParticlesWithBoundary, DiffusionParticlesWithBoundary>;  //test
 
 using DiffusionRelaxationInner = RelaxationOfAllDiffusionSpeciesInner<DiffusionParticlesWithBoundary>;
-using DiffusionRelaxationComplex = RelaxationOfAllDiffusionSpeciesComplex<DiffusionParticlesWithBoundary, DiffusionParticlesWithBoundary>;
-
-using DiffusionRelaxationWithDirichlet = RelaxationOfAllDiffusionSpeciesDirichletContact<DiffusionParticlesWithBoundary, DiffusionParticlesWithBoundary>;
-using DiffusionRelaxationWithNeumann = RelaxationOfAllDiffusionSpeciesNeumannContact<DiffusionReactionParticlesWithBoundary<SolidParticles, DiffusionMaterial>, DiffusionReactionParticlesWithBoundary<SolidParticles, DiffusionMaterial>>;
+using DiffusionRelaxationWithDirichletComplex = RelaxationOfAllDiffusionSpeciesDirichletComplex<DiffusionParticlesWithBoundary, WallParticles>;
 //----------------------------------------------------------------------
 //	Specify diffusion relaxation method. 
 //----------------------------------------------------------------------
-
-//class DiffusionBodyRelaxation
-//	: public RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichlet>>
-//{
-//public:
-//	explicit DiffusionBodyRelaxation(InnerRelation& inner_relation, ContactRelation& body_contact_relation_Dirichlet)
-//		: RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichlet>>(inner_relation, body_contact_relation_Dirichlet) {};
-//	virtual ~DiffusionBodyRelaxation() {};
-//};
+class DiffusionBodyRelaxation
+	: public RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletComplex>>
+{
+public:
+	explicit DiffusionBodyRelaxation(InnerRelation& inner_relation, ComplexRelation& body_complex_relation_Dirichlet)
+		: RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletComplex>>(inner_relation, body_complex_relation_Dirichlet) {};
+	virtual ~DiffusionBodyRelaxation() {};
+};
 
 //----------------------------------------------------------------------
 //	An observer body to measure temperature at given positions. 
