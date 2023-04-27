@@ -95,7 +95,7 @@ namespace SPH
 	{
 		template <typename VariableOperation>
 		void operator()(ParticleData &particle_data,
-						ParticleVariableList &variable_name_list, VariableOperation &variable_operation) const
+						const ParticleVariableList &variable_name_list, VariableOperation &variable_operation) const
 		{
 			constexpr int type_index = DataTypeIndex<VariableType>::value;
 			for (std::pair<std::string, size_t> &name_index : variable_name_list[type_index])

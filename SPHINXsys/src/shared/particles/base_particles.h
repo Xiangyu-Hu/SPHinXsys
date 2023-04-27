@@ -268,7 +268,7 @@ namespace SPH
 			: xml_engine_(xml_engine), total_real_particles_(total_real_particles){};
 
 		template <typename VariableType>
-		void operator()(std::string &variable_name, StdLargeVec<VariableType> &variable) const;
+		void operator()(const std::string &variable_name, StdLargeVec<VariableType> &variable) const;
 	};
 	/**
 	 * @struct ReadAParticleVariableFromXml
@@ -282,7 +282,7 @@ namespace SPH
 			: xml_engine_(xml_engine), total_real_particles_(total_real_particles){};
 
 		template <typename VariableType>
-		void operator()(std::string &variable_name, StdLargeVec<VariableType> &variable) const;
+		void operator()(const std::string &variable_name, StdLargeVec<VariableType> &variable) const;
 	};
 	/**
 	 * @class BaseDerivedVariable
