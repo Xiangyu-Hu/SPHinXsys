@@ -150,7 +150,7 @@ namespace SPH
 		//=================================================================================================//
 		StaticConfinement::StaticConfinement(NearShapeSurface &near_surface)
 			: density_summation_(near_surface), pressure_relaxation_(near_surface),
-			  density_relaxation_(near_surface) {}
+			  density_relaxation_(near_surface), surface_bounding_(near_surface) {}
 		//=================================================================================================//
 	}
 	//=================================================================================================//

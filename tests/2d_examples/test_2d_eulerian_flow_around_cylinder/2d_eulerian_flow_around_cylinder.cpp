@@ -134,21 +134,21 @@ int main(int ac, char *av[])
 		//----------------------------------------------------------------------
 		//	Particle relaxation starts here.
 		//----------------------------------------------------------------------
-		random_inserted_body_particles.parallel_exec(0.25);
-		random_water_body_particles.parallel_exec(0.25);
-		relaxation_step_inner.SurfaceBounding().parallel_exec();
-		relaxation_step_complex.SurfaceBounding().parallel_exec();
+		random_inserted_body_particles.exec(0.25);
+		random_water_body_particles.exec(0.25);
+		relaxation_step_inner.SurfaceBounding().exec();
+		relaxation_step_complex.SurfaceBounding().exec();
 		write_real_body_states.writeToFile(0);
 
 		int ite_p = 0;
 		while (ite_p < 1000)
 		{
-			relaxation_step_inner.parallel_exec();
-			relaxation_step_complex.parallel_exec();
+			relaxation_step_inner.exec();
+			relaxation_step_complex.exec();
 			ite_p += 1;
 			if (ite_p % 200 == 0)
 			{
-				cout << fixed << setprecision(9) << "Relaxation steps N = " << ite_p << "\n";
+				std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite_p << "\n";
 				write_real_body_states.writeToFile(ite_p);
 			}
 		}
@@ -190,9 +190,9 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
-	cylinder_normal_direction.parallel_exec();
-	surface_indicator.parallel_exec();
-	variable_reset_in_boundary_condition.parallel_exec();
+	cylinder_normal_direction.exec();
+	surface_indicator.exec();
+	variable_reset_in_boundary_condition.exec();
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
@@ -203,8 +203,8 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
 	//----------------------------------------------------------------------
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 	//----------------------------------------------------------------------
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
@@ -217,40 +217,40 @@ int main(int ac, char *av[])
 		Real integration_time = 0.0;
 		while (integration_time < output_interval)
 		{
-			initialize_a_fluid_step.parallel_exec();
-			Real dt = get_fluid_time_step_size.parallel_exec();
-			viscous_acceleration.parallel_exec();
-			pressure_relaxation.parallel_exec(dt);
-			density_relaxation.parallel_exec(dt);
+			initialize_a_fluid_step.exec();
+			Real dt = get_fluid_time_step_size.exec();
+			viscous_acceleration.exec();
+			pressure_relaxation.exec(dt);
+			density_relaxation.exec(dt);
 
 			integration_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
-			variable_reset_in_boundary_condition.parallel_exec();
+			variable_reset_in_boundary_condition.exec();
 
 			if (number_of_iterations % screen_output_interval == 0)
 			{
-				cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
+				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
 					 << GlobalStaticVariables::physical_time_
 					 << "	dt = " << dt << "\n";
 			}
 			number_of_iterations++;
 		}
 
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		write_real_body_states.writeToFile();
 
 		write_total_viscous_force_on_inserted_body.writeToFile(number_of_iterations);
 		write_total_force_on_inserted_body.writeToFile(number_of_iterations);
 
 		write_maximum_speed.writeToFile(number_of_iterations);
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
-	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	if (sph_system.generate_regression_data_)
 	{

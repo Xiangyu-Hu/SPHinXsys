@@ -25,8 +25,8 @@ void relax_shell(RealBody& plate_body, Real thickness, Real level_set_refinement
 	//----------------------------------------------------------------------
 	//	Particle relaxation starts here.
 	//----------------------------------------------------------------------
-	random_imported_model_particles.parallel_exec(0.25);
-	relaxation_step_inner.mid_surface_bounding_.parallel_exec();
+	random_imported_model_particles.exec(0.25);
+	relaxation_step_inner.mid_surface_bounding_.exec();
 	plate_body.updateCellLinkedList();
 	//----------------------------------------------------------------------
 	//	Particle relaxation time stepping start here.
@@ -38,7 +38,7 @@ void relax_shell(RealBody& plate_body, Real thickness, Real level_set_refinement
 		{
 			std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
 		}
-		relaxation_step_inner.parallel_exec();
+		relaxation_step_inner.exec();
 		ite_p += 1;
 	}
 	shell_normal_prediction.exec();
@@ -371,7 +371,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 	/** Apply initial condition. */
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	corrected_configuration.parallel_exec();
+	corrected_configuration.exec();
 
 	// TESTS on initialization
 	// checking particle distances - avoid bugs of reading file
@@ -400,7 +400,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 	Real end_time = 3.0;
 	Real output_period = end_time / 100.0;
 	Real dt = 0.0;
-	tick_count t1 = tick_count::now();
+	TickCount t1 = TickCount::now();
 	/**
 	 * Main loop
 	 */
@@ -419,20 +419,20 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 							<< dt << "\n";
 				}
 
-				initialize_external_force.parallel_exec(dt);
+				initialize_external_force.exec(dt);
 
-				dt = std::min(thickness/dp, 0.5) * computing_time_step_size.parallel_exec();
+				dt = std::min(thickness/dp, 0.5) * computing_time_step_size.exec();
 				{// checking for excessive time step reduction
 					if (dt > max_dt) max_dt = dt;
 					if (dt < max_dt/1e3) throw std::runtime_error("time step decreased too much");
 				}
 				
-				stress_relaxation_first_half.parallel_exec(dt);
-				constrain_holder.parallel_exec();
-				shell_velocity_damping.parallel_exec(dt);
-				shell_rotation_damping.parallel_exec(dt);
-				constrain_holder.parallel_exec();
-				stress_relaxation_second_half.parallel_exec(dt);
+				stress_relaxation_first_half.exec(dt);
+				constrain_holder.exec();
+				shell_velocity_damping.exec(dt);
+				shell_rotation_damping.exec(dt);
+				constrain_holder.exec();
+				stress_relaxation_second_half.exec(dt);
 
 				++ite;
 				integral_time += dt;
@@ -452,7 +452,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 			}
 			vtp_output.writeToFile(ite);
 		}
-		tick_count::interval_t tt = tick_count::now()-t1;
+		TimeInterval tt = TickCount::now()-t1;
 		std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	}

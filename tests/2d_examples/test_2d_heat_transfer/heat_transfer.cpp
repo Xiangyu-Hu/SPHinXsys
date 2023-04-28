@@ -99,49 +99,51 @@ class ThermofluidBodyMaterial : public DiffusionReaction<WeaklyCompressibleFluid
 {
 public:
 	ThermofluidBodyMaterial()
-		: DiffusionReaction<WeaklyCompressibleFluid>({"Phi"}, rho0_f, c_f, mu_f)
+		: DiffusionReaction<WeaklyCompressibleFluid>({"Phi"}, SharedPtr<NoReaction>(), rho0_f, c_f, mu_f)
 	{
 		initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi", diffusion_coff);
 	};
 };
+using DiffusionFluidParticles = DiffusionReactionParticles<FluidParticles, ThermofluidBodyMaterial>;
 //----------------------------------------------------------------------
 //	Setup heat conduction material properties for diffusion solid body
 //----------------------------------------------------------------------
 class ThermosolidBodyMaterial : public DiffusionReaction<Solid>
 {
 public:
-	ThermosolidBodyMaterial() : DiffusionReaction<Solid>({"Phi"})
+	ThermosolidBodyMaterial() : DiffusionReaction<Solid>({"Phi"}, SharedPtr<NoReaction>())
 	{
 		// only default property is given, as no heat transfer within solid considered here.
 		initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi");
 	};
 };
+using DiffusionSolidParticles = DiffusionReactionParticles<SolidParticles, ThermosolidBodyMaterial>;
 //----------------------------------------------------------------------
 //	Application dependent solid body initial condition
 //----------------------------------------------------------------------
 class ThermosolidBodyInitialCondition
-	: public DiffusionReactionInitialCondition<SolidParticles, Solid>
+	: public DiffusionReactionInitialCondition<DiffusionSolidParticles>
 {
 protected:
 	size_t phi_;
 
 public:
 	explicit ThermosolidBodyInitialCondition(SPHBody &sph_body)
-		: DiffusionReactionInitialCondition<SolidParticles, Solid>(sph_body)
+		: DiffusionReactionInitialCondition<DiffusionSolidParticles>(sph_body)
 	{
-		phi_ = particles_->diffusion_reaction_material_.SpeciesIndexMap()["Phi"];
+		phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
 	};
 
 	void update(size_t index_i, Real dt)
 	{
 		if (-BW <= pos_[index_i][1] && pos_[index_i][1] <= 0.0)
 		{
-			species_n_[phi_][index_i] = phi_lower_wall;
+			all_species_[phi_][index_i] = phi_lower_wall;
 		}
 
 		if (DH <= pos_[index_i][1] && pos_[index_i][1] <= DH + BW)
 		{
-			species_n_[phi_][index_i] = phi_upper_wall;
+			all_species_[phi_][index_i] = phi_upper_wall;
 		}
 	};
 };
@@ -149,23 +151,23 @@ public:
 //	Application dependent fluid body initial condition
 //----------------------------------------------------------------------
 class ThermofluidBodyInitialCondition
-	: public DiffusionReactionInitialCondition<FluidParticles, WeaklyCompressibleFluid>
+	: public DiffusionReactionInitialCondition<DiffusionFluidParticles>
 {
 protected:
 	size_t phi_;
 
 public:
 	explicit ThermofluidBodyInitialCondition(SPHBody &sph_body)
-		: DiffusionReactionInitialCondition<FluidParticles, WeaklyCompressibleFluid>(sph_body)
+		: DiffusionReactionInitialCondition<DiffusionFluidParticles>(sph_body)
 	{
-		phi_ = particles_->diffusion_reaction_material_.SpeciesIndexMap()["Phi"];
+		phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
 	};
 
 	void update(size_t index_i, Real dt)
 	{
 		if (0 <= pos_[index_i][1] && pos_[index_i][1] <= DH)
 		{
-			species_n_[phi_][index_i] = phi_fluid_initial;
+			all_species_[phi_][index_i] = phi_fluid_initial;
 		}
 	};
 };
@@ -174,7 +176,7 @@ public:
 //----------------------------------------------------------------------
 class ThermalRelaxationComplex
 	: public RelaxationOfAllDiffusionSpeciesRK2<
-		  RelaxationOfAllDiffusionSpeciesComplex<FluidParticles, WeaklyCompressibleFluid, SolidParticles, Solid>>
+		  RelaxationOfAllDiffusionSpeciesComplex<DiffusionFluidParticles, DiffusionSolidParticles>>
 {
 public:
 	explicit ThermalRelaxationComplex(ComplexRelation &complex_relation)
@@ -223,11 +225,11 @@ int main()
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	FluidBody thermofluid_body(system, makeShared<ThermofluidBody>("ThermofluidBody"));
-	thermofluid_body.defineParticlesAndMaterial<DiffusionReactionParticles<FluidParticles, WeaklyCompressibleFluid>, ThermofluidBodyMaterial>();
+	thermofluid_body.defineParticlesAndMaterial<DiffusionFluidParticles, ThermofluidBodyMaterial>();
 	thermofluid_body.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody thermosolid_body(system, makeShared<ThermosolidBody>("ThermosolidBody"));
-	thermosolid_body.defineParticlesAndMaterial<DiffusionReactionParticles<SolidParticles, Solid>, ThermosolidBodyMaterial>();
+	thermosolid_body.defineParticlesAndMaterial<DiffusionSolidParticles, ThermosolidBodyMaterial>();
 	thermosolid_body.generateParticles<ParticleGeneratorLattice>();
 
 	ObserverBody temperature_observer(system, "FluidObserver");
@@ -259,7 +261,7 @@ int main()
 	/** Time step size with considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step(thermofluid_body);
 	/** Time step size calculation. */
-	GetDiffusionTimeStepSize<FluidParticles, WeaklyCompressibleFluid> get_thermal_time_step(thermofluid_body);
+	GetDiffusionTimeStepSize<DiffusionFluidParticles> get_thermal_time_step(thermofluid_body);
 	/** Diffusion process between two diffusion bodies. */
 	ThermalRelaxationComplex thermal_relaxation_complex(fluid_body_complex);
 	/** Pressure relaxation using verlet time stepping. */
@@ -291,14 +293,14 @@ int main()
 	system.initializeSystemCellLinkedLists();
 	/** periodic condition applied after the mesh cell linked list build up
 	 * but before the configuration build up. */
-	periodic_condition.update_cell_linked_list_.parallel_exec();
+	periodic_condition.update_cell_linked_list_.exec();
 	/** initialize configurations for all bodies. */
 	system.initializeSystemConfigurations();
 	/** computing surface normal direction for the wall. */
-	thermosolid_body_normal_direction.parallel_exec();
-	thermosolid_condition.parallel_exec();
-	thermofluid_initial_condition.parallel_exec();
-	Real dt_thermal = get_thermal_time_step.parallel_exec();
+	thermosolid_body_normal_direction.exec();
+	thermosolid_condition.exec();
+	thermofluid_initial_condition.exec();
+	Real dt_thermal = get_thermal_time_step.exec();
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
@@ -309,8 +311,8 @@ int main()
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
 	//----------------------------------------------------------------------
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 	//----------------------------------------------------------------------
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
@@ -324,20 +326,20 @@ int main()
 		/** Integrate time (loop) until the next output time. */
 		while (integration_time < output_interval)
 		{
-			initialize_a_fluid_step.parallel_exec();
-			Real Dt = get_fluid_advection_time_step.parallel_exec();
-			update_density_by_summation.parallel_exec();
-			viscous_acceleration.parallel_exec();
-			transport_velocity_correction.parallel_exec();
+			initialize_a_fluid_step.exec();
+			Real Dt = get_fluid_advection_time_step.exec();
+			update_density_by_summation.exec();
+			viscous_acceleration.exec();
+			transport_velocity_correction.exec();
 
 			size_t inner_ite_dt = 0;
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
-				Real dt = SMIN(SMIN(dt_thermal, get_fluid_time_step.parallel_exec()), Dt);
-				pressure_relaxation.parallel_exec(dt);
-				density_relaxation.parallel_exec(dt);
-				thermal_relaxation_complex.parallel_exec(dt);
+				Real dt = SMIN(SMIN(dt_thermal, get_fluid_time_step.exec()), Dt);
+				pressure_relaxation.exec(dt);
+				density_relaxation.exec(dt);
+				thermal_relaxation_complex.exec(dt);
 
 				relaxation_time += dt;
 				integration_time += dt;
@@ -355,24 +357,24 @@ int main()
 			number_of_iterations++;
 
 			/** Water block configuration and periodic condition. */
-			periodic_condition.bounding_.parallel_exec();
+			periodic_condition.bounding_.exec();
 			thermofluid_body.updateCellLinkedListWithParticleSort(100);
-			periodic_condition.update_cell_linked_list_.parallel_exec();
+			periodic_condition.update_cell_linked_list_.exec();
 			fluid_body_complex.updateConfiguration();
 		}
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		/** write run-time observation into file */
-		compute_vorticity.parallel_exec();
+		compute_vorticity.exec();
 		fluid_observer_contact.updateConfiguration();
 		write_real_body_states.writeToFile();
 		write_fluid_phi.writeToFile(number_of_iterations);
 		write_fluid_velocity.writeToFile(number_of_iterations);
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
 
-	tick_count t4 = tick_count::now();
-	tick_count::interval_t tt;
+	TickCount t4 = TickCount::now();
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 

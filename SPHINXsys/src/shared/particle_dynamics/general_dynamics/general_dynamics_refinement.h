@@ -29,6 +29,7 @@
 #pragma once
 
 #include "general_dynamics.h"
+#include <array>
 
 namespace SPH
 {
@@ -142,13 +143,22 @@ namespace SPH
     public:
         ParticleSplitWithPrescribedArea(SPHBody &sph_body, Shape &refinement_region, size_t body_buffer_width);
         virtual ~ParticleSplitWithPrescribedArea(){};
-        void interaction(size_t index_i, Real dt = 0.0);
+
+        inline void interaction(size_t index_i, Real dt = 0.0)
+        {
+            if (splitCriteria(index_i))
+            {
+                StdVec<size_t> new_indices;
+                splittingModel(index_i, new_indices);
+            }
+        };
+
         void update(size_t index_i, Real dt = 0.0);
 
     protected:
         StdLargeVec<Real> total_split_error_;
         StdVec<Vecd> split_position_;
-        StdVec<Vecu> split_index_;
+        StdVec<std::pair<size_t,size_t>> split_index_;
         size_t particle_number_change = 0;
 
         virtual void setupDynamics(Real dt) override;
@@ -209,7 +219,19 @@ namespace SPH
         ParticleMergeWithPrescribedArea(BaseInnerRelation &inner_relation, Shape &refinement_region);
         virtual ~ParticleMergeWithPrescribedArea(){};
 
-        void interaction(size_t index_i, Real dt = 0.0);
+        inline void interaction(size_t index_i, Real dt = 0.0)
+        {
+            if (!tag_merged_[index_i])
+            {
+                StdVec<size_t> merge_indices; // three particles for merging to two
+                if (mergeCriteria(index_i, merge_indices))
+                {
+                    merge_indices.push_back(index_i);
+                    tag_merged_[index_i] = true;
+                    mergingModel(merge_indices);
+                }
+            }
+        };
 
     protected:
         ParticleData &all_particle_data_;
@@ -259,7 +281,7 @@ namespace SPH
               compute_density_error(inner_relation){};
         virtual ~MergeWithMinimumDensityErrorInner(){};
 
-        void interaction(size_t index_i, Real dt = 0.0)
+        inline void interaction(size_t index_i, Real dt = 0.0)
         {
             ParticleMergeWithPrescribedArea::interaction(index_i, dt);
         };
@@ -291,7 +313,7 @@ namespace SPH
               compute_density_error(complex_relation){};
         virtual ~MergeWithMinimumDensityErrorWithWall(){};
 
-        void interaction(size_t index_i, Real dt = 0.0)
+        inline void interaction(size_t index_i, Real dt = 0.0)
         {
             MergeWithMinimumDensityErrorInner::interaction(index_i, dt);
         };

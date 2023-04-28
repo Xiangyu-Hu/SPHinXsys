@@ -41,33 +41,50 @@ namespace SPH
 	 * @class DiffusionReactionParticles
 	 * @brief A group of particles with diffusion or/and reactions particle data.
 	 */
-	template <class BaseParticlesType, class BaseMaterialType = BaseMaterial, int NUM_SPECIES = 1>
+	template <class BaseParticlesType, class DiffusionReactionMaterialType>
 	class DiffusionReactionParticles : public BaseParticlesType
 	{
 	protected:
-		size_t number_of_species_;			 /**< Total number of diffusion and reaction species . */
-		size_t number_of_diffusion_species_; /**< Total number of diffusion species . */
+		StdVec<std::string> all_species_names_;
 		std::map<std::string, size_t> species_indexes_map_;
+		StdVec<StdLargeVec<Real> *> diffusion_species_;
+		StdVec<StdLargeVec<Real> *> gradient_species_;
+		StdVec<StdLargeVec<Real> *> reactive_species_;
 
 	public:
-		StdVec<StdLargeVec<Real>> species_n_;	 /**< array of diffusion/reaction scalars */
-		StdVec<StdLargeVec<Real>> diffusion_dt_; /**< array of the time derivative of diffusion species */
-		DiffusionReaction<BaseMaterialType, NUM_SPECIES> &diffusion_reaction_material_;
+		StdVec<StdLargeVec<Real>> all_species_; /**< array of diffusion/reaction scalars */
+		DiffusionReactionMaterialType &diffusion_reaction_material_;
+		static constexpr int NumReactiveSpecies = DiffusionReactionMaterialType::NumReactiveSpecies;
+		typedef DiffusionReactionMaterialType DiffusionReactionMaterial;
 
-		DiffusionReactionParticles(SPHBody &sph_body,
-								   DiffusionReaction<BaseMaterialType, NUM_SPECIES> *diffusion_reaction_material)
+		DiffusionReactionParticles(SPHBody &sph_body, DiffusionReactionMaterialType *diffusion_reaction_material)
 			: BaseParticlesType(sph_body, diffusion_reaction_material),
-			  number_of_species_(diffusion_reaction_material->NumberOfSpecies()),
-			  number_of_diffusion_species_(diffusion_reaction_material->NumberOfSpeciesDiffusion()),
-			  species_indexes_map_(diffusion_reaction_material->SpeciesIndexMap()),
+			  all_species_names_(diffusion_reaction_material->AllSpeciesNames()),
+			  species_indexes_map_(diffusion_reaction_material->AllSpeciesIndexMap()),
 			  diffusion_reaction_material_(*diffusion_reaction_material)
 		{
-			species_n_.resize(number_of_species_);
-			diffusion_dt_.resize(number_of_diffusion_species_);
+			all_species_.resize(all_species_names_.size());
+			const IndexVector &diffusion_species_indexes = diffusion_reaction_material_.DiffusionSpeciesIndexes();
+			const IndexVector &gradient_species_indexes = diffusion_reaction_material_.GradientSpeciesIndexes();
+			for (size_t i = 0; i != diffusion_species_indexes.size(); ++i)
+			{
+				diffusion_species_.push_back(&all_species_[diffusion_species_indexes[i]]);
+				gradient_species_.push_back(&all_species_[gradient_species_indexes[i]]);
+			}
+
+			const IndexVector &reactive_species_indexes = diffusion_reaction_material_.ReactiveSpeciesIndexes();
+			for (size_t i = 0; i != reactive_species_indexes.size(); ++i)
+			{
+				reactive_species_.push_back(&all_species_[reactive_species_indexes[i]]);
+			}
 		};
 		virtual ~DiffusionReactionParticles(){};
 
-		std::map<std::string, size_t> SpeciesIndexMap() { return species_indexes_map_; };
+		StdVec<std::string> &AllSpeciesNames() { return all_species_names_; };
+		std::map<std::string, size_t> AllSpeciesIndexMap() { return species_indexes_map_; };
+		StdVec<StdLargeVec<Real> *> &DiffusionSpecies() { return diffusion_species_; };
+		StdVec<StdLargeVec<Real> *> &GradientSpecies() { return gradient_species_; };
+		StdVec<StdLargeVec<Real> *> &ReactiveSpecies() { return reactive_species_; };
 
 		virtual void initializeOtherVariables() override
 		{
@@ -77,23 +94,15 @@ namespace SPH
 			for (itr = species_indexes_map_.begin(); itr != species_indexes_map_.end(); ++itr)
 			{
 				// Register a specie.
-				this->registerVariable(species_n_[itr->second], itr->first);
+				this->registerVariable(all_species_[itr->second], itr->first);
 				/** the scalars will be sorted if particle sorting is called, Note that we call a template function from a template class. */
 				this->template registerSortableVariable<Real>(itr->first);
 				/** add species to basic output particle data. */
 				this->template addVariableToWrite<Real>(itr->first);
 			}
-
-			constexpr int type_index = DataTypeIndex<Real>::value;
-			for (size_t m = 0; m < number_of_diffusion_species_; ++m)
-			{
-				// register reactive change rate terms without giving variable name
-				std::get<type_index>(this->all_particle_data_).push_back(&diffusion_dt_[m]);
-				diffusion_dt_[m].resize(this->real_particles_bound_, Real(0));
-			}
 		};
 
-		virtual DiffusionReactionParticles<BaseParticlesType, BaseMaterialType, NUM_SPECIES> *ThisObjectPtr() override { return this; };
+		virtual DiffusionReactionParticles<BaseParticlesType, DiffusionReactionMaterialType> *ThisObjectPtr() override { return this; };
 	};
 }
 #endif // DIFFUSION_REACTION_PARTICLES_H

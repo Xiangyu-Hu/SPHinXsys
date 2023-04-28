@@ -1,5 +1,5 @@
 #include "level_set.h"
-#include "mesh_with_data_packages.hpp"
+
 #include "mesh_iterators.hpp"
 #include "base_kernel.h"
 #include "base_particles.h"
@@ -13,10 +13,10 @@ namespace SPH
 					   Shape &shape, SPHAdaptation &sph_adaptation)
 		: LevelSet(tentative_bounds, data_spacing, 4, shape, sph_adaptation)
 	{
-		mesh_parallel_for(MeshRange(Vecu::Zero(), number_of_cells_),
+		mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
 						  [&](size_t i, size_t j, size_t k)
 						  {
-							  initializeDataInACell(Vecu(i, j, k));
+							  initializeDataInACell(Arrayi(i, j, k));
 						  });
 
 		finishDataPackages();
@@ -43,16 +43,16 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSet::finishDataPackages()
 	{
-		mesh_parallel_for(MeshRange(Vecu::Zero(), number_of_cells_),
+		mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
 						  [&](size_t i, size_t j, size_t k)
 						  {
-							  tagACellIsInnerPackage(Vecu(i, j, k));
+							  tagACellIsInnerPackage(Arrayi(i, j, k));
 						  });
 
-		mesh_parallel_for(MeshRange(Vecu::Zero(), number_of_cells_),
+		mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
 						  [&](size_t i, size_t j, size_t k)
 						  {
-							  initializePackageAddressesInACell(Vecu(i, j, k));
+							  initializePackageAddressesInACell(Arrayi(i, j, k));
 						  });
 
 		updateLevelSetGradient();
@@ -61,21 +61,15 @@ namespace SPH
 	//=================================================================================================//
 	bool LevelSet::isWithinCorePackage(Vecd position)
 	{
-		Vecu cell_index = CellIndexFromPosition(position);
+		Arrayi cell_index = CellIndexFromPosition(position);
 		return data_pkg_addrs_[cell_index[0]][cell_index[1]][cell_index[2]]->isCorePackage();
 	}
 	//=============================================================================================//
-	bool LevelSet::isInnerPackage(const Vecu &cell_index)
+	bool LevelSet::isInnerPackage(const Arrayi &cell_index)
 	{
-		int i = (int)cell_index[0];
-		int j = (int)cell_index[1];
-		int k = (int)cell_index[2];
-
 		return mesh_any_of(
-			Vec3i(SMAX(i - 1, 0), SMAX(j - 1, 0), SMAX(k - 1, 0)),
-			Vec3i(SMIN(i + 2, (int)number_of_cells_[0]),
-				  SMIN(j + 2, (int)number_of_cells_[1]),
-				  SMIN(k + 2, (int)number_of_cells_[2])),
+			Array3i::Zero().max(cell_index - Array3i::Ones()),
+			all_cells_.min(cell_index + 2 * Array3i::Ones()),
 			[&](int l, int m, int n)
 			{
 				return data_pkg_addrs_[l][m][n]->isCorePackage();
@@ -157,7 +151,7 @@ namespace SPH
 				mesh_for_each3d<1, pkg_addrs_size>(
 					[&](int i, int j, int k)
 					{
-						corner_averages[i][j][k] = data_pkg->CornerAverage(phi_addrs, Veci(i, j, k), Veci(-1, -1, -1));
+						corner_averages[i][j][k] = data_pkg->CornerAverage(phi_addrs, Arrayi(i, j, k), Arrayi(-1, -1, -1));
 					});
 
 				data_pkg->for_each_addrs(
@@ -293,7 +287,7 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSet::writeMeshFieldToPlt(std::ofstream &output_file)
 	{
-		Vecu number_of_operation = global_mesh_.NumberOfGridPoints();
+		Arrayi number_of_operation = global_mesh_.AllGridPoints();
 
 		output_file << "\n";
 		output_file << "title='View'"
@@ -310,89 +304,89 @@ namespace SPH
 		output_file << "zone i=" << number_of_operation[0] << "  j=" << number_of_operation[1] << "  k=" << number_of_operation[2]
 					<< "  DATAPACKING=BLOCK  SOLUTIONTIME=" << 0 << "\n";
 
-		for (size_t k = 0; k != number_of_operation[2]; ++k)
-			for (size_t j = 0; j != number_of_operation[1]; ++j)
+		for (int k = 0; k != number_of_operation[2]; ++k)
+			for (int j = 0; j != number_of_operation[1]; ++j)
 			{
-				for (size_t i = 0; i != number_of_operation[0]; ++i)
+				for (int i = 0; i != number_of_operation[0]; ++i)
 				{
-					Vecd data_position = global_mesh_.GridPositionFromIndex(Vecu(i, j, k));
+					Vecd data_position = global_mesh_.GridPositionFromIndex(Arrayi(i, j, k));
 					output_file << data_position[0] << " ";
 				}
 				output_file << " \n";
 			}
 
-		for (size_t k = 0; k != number_of_operation[2]; ++k)
-			for (size_t j = 0; j != number_of_operation[1]; ++j)
+		for (int k = 0; k != number_of_operation[2]; ++k)
+			for (int j = 0; j != number_of_operation[1]; ++j)
 			{
-				for (size_t i = 0; i != number_of_operation[0]; ++i)
+				for (int i = 0; i != number_of_operation[0]; ++i)
 				{
-					Vecd data_position = global_mesh_.GridPositionFromIndex(Vecu(i, j, k));
+					Vecd data_position = global_mesh_.GridPositionFromIndex(Arrayi(i, j, k));
 					output_file << data_position[1] << " ";
 				}
 				output_file << " \n";
 			}
 
-		for (size_t k = 0; k != number_of_operation[2]; ++k)
-			for (size_t j = 0; j != number_of_operation[1]; ++j)
+		for (int k = 0; k != number_of_operation[2]; ++k)
+			for (int j = 0; j != number_of_operation[1]; ++j)
 			{
-				for (size_t i = 0; i != number_of_operation[0]; ++i)
+				for (int i = 0; i != number_of_operation[0]; ++i)
 				{
-					Vecd data_position = global_mesh_.GridPositionFromIndex(Vecu(i, j, k));
+					Vecd data_position = global_mesh_.GridPositionFromIndex(Arrayi(i, j, k));
 					output_file << data_position[2] << " ";
 				}
 				output_file << " \n";
 			}
 
-		for (size_t k = 0; k != number_of_operation[2]; ++k)
-			for (size_t j = 0; j != number_of_operation[1]; ++j)
+		for (int k = 0; k != number_of_operation[2]; ++k)
+			for (int j = 0; j != number_of_operation[1]; ++j)
 			{
-				for (size_t i = 0; i != number_of_operation[0]; ++i)
+				for (int i = 0; i != number_of_operation[0]; ++i)
 				{
-					output_file << DataValueFromGlobalIndex(phi_, Vecu(i, j, k))
+					output_file << DataValueFromGlobalIndex(phi_, Arrayi(i, j, k))
 								<< " ";
 				}
 				output_file << " \n";
 			}
 
-		for (size_t k = 0; k != number_of_operation[2]; ++k)
-			for (size_t j = 0; j != number_of_operation[1]; ++j)
+		for (int k = 0; k != number_of_operation[2]; ++k)
+			for (int j = 0; j != number_of_operation[1]; ++j)
 			{
-				for (size_t i = 0; i != number_of_operation[0]; ++i)
+				for (int i = 0; i != number_of_operation[0]; ++i)
 				{
-					output_file << DataValueFromGlobalIndex(phi_gradient_, Vecu(i, j, k))[0]
+					output_file << DataValueFromGlobalIndex(phi_gradient_, Arrayi(i, j, k))[0]
 								<< " ";
 				}
 				output_file << " \n";
 			}
 
-		for (size_t k = 0; k != number_of_operation[2]; ++k)
-			for (size_t j = 0; j != number_of_operation[1]; ++j)
+		for (int k = 0; k != number_of_operation[2]; ++k)
+			for (int j = 0; j != number_of_operation[1]; ++j)
 			{
-				for (size_t i = 0; i != number_of_operation[0]; ++i)
+				for (int i = 0; i != number_of_operation[0]; ++i)
 				{
-					output_file << DataValueFromGlobalIndex(phi_gradient_, Vecu(i, j, k))[1]
+					output_file << DataValueFromGlobalIndex(phi_gradient_, Arrayi(i, j, k))[1]
 								<< " ";
 				}
 				output_file << " \n";
 			}
 
-		for (size_t k = 0; k != number_of_operation[2]; ++k)
-			for (size_t j = 0; j != number_of_operation[1]; ++j)
+		for (int k = 0; k != number_of_operation[2]; ++k)
+			for (int j = 0; j != number_of_operation[1]; ++j)
 			{
-				for (size_t i = 0; i != number_of_operation[0]; ++i)
+				for (int i = 0; i != number_of_operation[0]; ++i)
 				{
-					output_file << DataValueFromGlobalIndex(phi_gradient_, Vecu(i, j, k))[2]
+					output_file << DataValueFromGlobalIndex(phi_gradient_, Arrayi(i, j, k))[2]
 								<< " ";
 				}
 				output_file << " \n";
 			}
 
-		for (size_t k = 0; k != number_of_operation[2]; ++k)
-			for (size_t j = 0; j != number_of_operation[1]; ++j)
+		for (int k = 0; k != number_of_operation[2]; ++k)
+			for (int j = 0; j != number_of_operation[1]; ++j)
 			{
-				for (size_t i = 0; i != number_of_operation[0]; ++i)
+				for (int i = 0; i != number_of_operation[0]; ++i)
 				{
-					output_file << DataValueFromGlobalIndex(near_interface_id_, Vecu(i, j, k))
+					output_file << DataValueFromGlobalIndex(near_interface_id_, Arrayi(i, j, k))
 								<< " ";
 				}
 				output_file << " \n";
@@ -408,21 +402,23 @@ namespace SPH
 		Real integral(0);
 		if (fabs(phi) < threshold)
 		{
-			Vecu global_index_ = global_mesh_.CellIndexFromPosition(position);
-			for (int i = -3; i != 4; ++i)
-				for (int j = -3; j != 4; ++j)
-					for (int k = -3; k != 4; ++k)
+			Arrayi global_index_ = global_mesh_.CellIndexFromPosition(position);
+			mesh_for_each3d<-3, 4>(
+				[&](int i, int j, int k)
+				{
+					Arrayi neighbor_index = Arrayi(global_index_[0] + i, global_index_[1] + j, global_index_[2] + k);
+					Real phi_neighbor = DataValueFromGlobalIndex(phi_, neighbor_index);
+					if (phi_neighbor > -data_spacing_)
 					{
-						Vecu neighbor_index = Vecu(global_index_[0] + i, global_index_[1] + j, global_index_[2] + k);
-						Real phi_neighbor = DataValueFromGlobalIndex(phi_, neighbor_index);
-						if (phi_neighbor > -data_spacing_)
-						{
-							Vecd displacement = position - global_mesh_.GridPositionFromIndex(neighbor_index);
-							Real distance = displacement.norm();
-							if (distance < cutoff_radius)
-								integral += kernel_.W(global_h_ratio_, distance, displacement) * computeHeaviside(phi_neighbor, data_spacing_);
-						}
+						Vecd phi_gradient = DataValueFromGlobalIndex(phi_gradient_, neighbor_index);
+						Vecd integral_position = global_mesh_.GridPositionFromIndex(neighbor_index);
+						Vecd displacement = position - integral_position;
+						Real distance = displacement.norm();
+						if (distance < cutoff_radius)
+							integral += kernel_.W(global_h_ratio_, distance, displacement) *
+										CutCellVolumeFraction(phi_neighbor, phi_gradient, data_spacing_);
 					}
+				});
 		}
 		return phi > threshold ? 1.0 : integral * data_spacing_ * data_spacing_ * data_spacing_;
 	}
@@ -436,22 +432,24 @@ namespace SPH
 		Vecd integral = Vecd::Zero();
 		if (fabs(phi) < threshold)
 		{
-			Vecu global_index_ = global_mesh_.CellIndexFromPosition(position);
-			for (int i = -3; i != 4; ++i)
-				for (int j = -3; j != 4; ++j)
-					for (int k = -3; k != 4; ++k)
+			Arrayi global_index_ = global_mesh_.CellIndexFromPosition(position);
+			mesh_for_each3d<-3, 4>(
+				[&](int i, int j, int k)
+				{
+					Arrayi neighbor_index = Arrayi(global_index_[0] + i, global_index_[1] + j, global_index_[2] + k);
+					Real phi_neighbor = DataValueFromGlobalIndex(phi_, neighbor_index);
+					if (phi_neighbor > -data_spacing_)
 					{
-						Vecu neighbor_index = Vecu(global_index_[0] + i, global_index_[1] + j, global_index_[2] + k);
-						Real phi_neighbor = DataValueFromGlobalIndex(phi_, neighbor_index);
-						if (phi_neighbor > -data_spacing_)
-						{
-							Vecd displacement = position - global_mesh_.GridPositionFromIndex(neighbor_index);
-							Real distance = displacement.norm();
-							if (distance < cutoff_radius)
-								integral += kernel_.dW(global_h_ratio_, distance, displacement) *
-											computeHeaviside(phi_neighbor, data_spacing_) * displacement / (distance + TinyReal);
-						}
+						Vecd phi_gradient = DataValueFromGlobalIndex(phi_gradient_, neighbor_index);
+						Vecd integral_position = global_mesh_.GridPositionFromIndex(neighbor_index);
+						Vecd displacement = position - integral_position;
+						Real distance = displacement.norm();
+						if (distance < cutoff_radius)
+							integral += kernel_.dW(global_h_ratio_, distance, displacement) *
+										CutCellVolumeFraction(phi_neighbor, phi_gradient, data_spacing_) *
+										displacement / (distance + TinyReal);
 					}
+				});
 		}
 		return integral * data_spacing_ * data_spacing_ * data_spacing_;
 	}
@@ -460,10 +458,10 @@ namespace SPH
 									 Shape &shape, SPHAdaptation &sph_adaptation)
 		: RefinedMesh(tentative_bounds, coarse_level_set, 4, shape, sph_adaptation)
 	{
-		mesh_parallel_for(MeshRange(Vecu::Zero(), number_of_cells_),
+		mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
 						  [&](size_t i, size_t j, size_t k)
 						  {
-							  initializeDataInACellFromCoarse(Vecu(i, j, k));
+							  initializeDataInACellFromCoarse(Arrayi(i, j, k));
 						  });
 
 		finishDataPackages();

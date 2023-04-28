@@ -80,7 +80,17 @@ namespace SPH
 		public:
 			explicit RelaxationAccelerationInner(BaseInnerRelation &inner_relation);
 			virtual ~RelaxationAccelerationInner(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+
+			inline void interaction(size_t index_i, Real dt = 0.0)
+			{
+				Vecd acceleration = Vecd::Zero();
+				const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+				for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+				{
+					acceleration -= 2.0 * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+				}
+				acc_[index_i] = acceleration;
+			};
 
 		protected:
 			StdLargeVec<Vecd> &acc_, &pos_;
@@ -96,7 +106,13 @@ namespace SPH
 			explicit RelaxationAccelerationInnerWithLevelSetCorrection(
 				BaseInnerRelation &inner_relation);
 			virtual ~RelaxationAccelerationInnerWithLevelSetCorrection(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+
+			inline void interaction(size_t index_i, Real dt = 0.0)
+			{
+				RelaxationAccelerationInner::interaction(index_i, dt);
+				acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(
+										   pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
+			};
 
 		protected:
 			LevelSetShape *level_set_shape_;
@@ -147,7 +163,7 @@ namespace SPH
 		 * @class RelaxationAccelerationComplex
 		 * @brief compute relaxation acceleration while consider the present of contact bodies
 		 * with considering contact interaction
-		 * this is usually used for fluid like bodies
+		 * this is usually used for fluid like bodies //TODO: seems better called as Contact
 		 */
 		class RelaxationAccelerationComplex : public LocalDynamics,
 											  public RelaxDataDelegateComplex
@@ -155,7 +171,28 @@ namespace SPH
 		public:
 			explicit RelaxationAccelerationComplex(ComplexRelation &complex_relation);
 			virtual ~RelaxationAccelerationComplex(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+
+			inline void interaction(size_t index_i, Real dt = 0.0)
+			{
+				Vecd acceleration = Vecd::Zero();
+				Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+				for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+				{
+					acceleration -= 2.0 * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+				}
+
+				/** Contact interaction. */
+				for (size_t k = 0; k < contact_configuration_.size(); ++k)
+				{
+					Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+					for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+					{
+						acceleration -= 2.0 * contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
+					}
+				}
+
+				acc_[index_i] = acceleration;
+			};
 
 		protected:
 			StdLargeVec<Vecd> &acc_, &pos_;
@@ -193,7 +230,6 @@ namespace SPH
 			virtual ~RelaxationStepInner(){};
 			SimpleDynamics<ShapeSurfaceBounding> &SurfaceBounding() { return surface_bounding_; };
 			virtual void exec(Real dt = 0.0) override;
-			virtual void parallel_exec(Real dt = 0.0) override;
 
 		protected:
 			RealBody *real_body_;
@@ -218,7 +254,14 @@ namespace SPH
 			RelaxationAccelerationComplexWithLevelSetCorrection(
 				ComplexRelation &complex_relation, const std::string &shape_name);
 			virtual ~RelaxationAccelerationComplexWithLevelSetCorrection(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+
+			inline void interaction(size_t index_i, Real dt = 0.0)
+			{
+				RelaxationAccelerationComplex::interaction(index_i, dt);
+
+				acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(
+										   pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
+			};
 
 		protected:
 			LevelSetShape *level_set_shape_;
@@ -237,7 +280,6 @@ namespace SPH
 			virtual ~RelaxationStepComplex(){};
 			SimpleDynamics<ShapeSurfaceBounding> &SurfaceBounding() { return surface_bounding_; };
 			virtual void exec(Real dt = 0.0) override;
-			virtual void parallel_exec(Real dt = 0.0) override;
 
 		protected:
 			RealBody *real_body_;
@@ -288,9 +330,7 @@ namespace SPH
 			explicit ShellNormalDirectionPrediction(BaseInnerRelation &inner_relation,
 													Real thickness, Real consistency_criterion = cos(Pi / 20.0));
 			virtual ~ShellNormalDirectionPrediction(){};
-
 			virtual void exec(Real dt = 0.0) override;
-			virtual void parallel_exec(Real dt = 0.0) override { exec(); };
 
 		protected:
 			class NormalPrediction : public RelaxDataDelegateSimple, public LocalDynamics
@@ -324,7 +364,37 @@ namespace SPH
 			public:
 				explicit ConsistencyCorrection(BaseInnerRelation &inner_relation, Real consistency_criterion);
 				virtual ~ConsistencyCorrection(){};
-				void interaction(size_t index_i, Real dt = 0.0);
+
+					inline void interaction(size_t index_i, Real dt = 0.0)
+				{
+					mutex_modify_neighbor_.lock();
+					const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+					for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+					{
+						if (updated_indicator_[index_i] == 1)
+						{
+							size_t index_j = inner_neighborhood.j_[n];
+							if (updated_indicator_[index_j] == 0)
+							{
+								updated_indicator_[index_j] = 1;
+								if (n_[index_i].dot(n_[index_j]) < consistency_criterion_)
+								{
+									if (n_[index_i].dot(-n_[index_j]) < consistency_criterion_)
+									{
+										n_[index_j] = n_[index_i];
+										updated_indicator_[index_j] = 2;
+									}
+									else
+									{
+										n_[index_j] = -n_[index_j];
+										updated_indicator_[index_j] = 1;
+									}
+								}
+							}
+						}
+					}
+					mutex_modify_neighbor_.unlock();
+				};
 
 			protected:
 				std::mutex mutex_modify_neighbor_; /**< mutex exclusion for memory conflict */
@@ -358,7 +428,7 @@ namespace SPH
 
 			SimpleDynamics<NormalPrediction> normal_prediction_;
 			ReduceDynamics<PredictionConvergenceCheck> normal_prediction_convergence_check_;
-			InteractionDynamics<ConsistencyCorrection> consistency_correction_;
+			InteractionDynamics<ConsistencyCorrection, execution::SequencedPolicy> consistency_correction_;
 			ReduceDynamics<ConsistencyUpdatedCheck> consistency_updated_check_;
 			InteractionWithUpdate<SmoothingNormal> smoothing_normal_;
 		};
@@ -378,7 +448,6 @@ namespace SPH
 			SimpleDynamics<ShellMidSurfaceBounding> mid_surface_bounding_;
 
 			virtual void exec(Real dt = 0.0) override;
-			virtual void parallel_exec(Real dt = 0.0) override;
 		};
 	}
 }

@@ -43,8 +43,8 @@ namespace SPH
 		StdLargeVec<size_t> &sorted_id = base_particles_.sorted_id_;
 		size_t total_real_particles = base_particles_.total_real_particles_;
 		parallel_for(
-			blocked_range<size_t>(0, total_real_particles),
-			[&](const blocked_range<size_t> &r)
+			IndexRange(0, total_real_particles),
+			[&](const IndexRange &r)
 			{
 				for (size_t i = r.begin(); i != r.end(); ++i)
 				{

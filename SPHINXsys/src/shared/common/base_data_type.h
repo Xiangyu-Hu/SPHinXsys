@@ -48,8 +48,6 @@
 #include "SimTKcommon.h"
 #include "SimTKmath.h"
 
-#include "scalar_functions.h"
-
 namespace SPH
 {
 	/**
@@ -73,11 +71,8 @@ namespace SPH
 
 	using Real = double;
 	/** Vector with integers. */
-	using Vec2i = Eigen::Matrix<int, 2, 1>;
-	using Vec3i = Eigen::Matrix<int, 3, 1>;
-	/** Vector with unsigned int. */
-	using Vec2u = Eigen::Matrix<size_t, 2, 1>;
-	using Vec3u = Eigen::Matrix<size_t, 3, 1>;
+	using Array2i = Eigen::Array<int, 2, 1>;
+	using Array3i = Eigen::Array<int, 3, 1>;
 	/** Vector with float point number.*/
 	using Vec2d = Eigen::Matrix<Real, 2, 1>;
 	using Vec3d = Eigen::Matrix<Real, 3, 1>;

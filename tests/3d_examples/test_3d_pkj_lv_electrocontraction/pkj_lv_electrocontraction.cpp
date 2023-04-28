@@ -53,7 +53,7 @@ int main(int ac, char *av[])
 	if (system.RunParticleRelaxation())
 	{
 		SolidBody herat_model(system, level_set_heart_model);
-		herat_model.defineParticlesAndMaterial<DiffusionReactionParticles<ElasticSolidParticles, LocallyOrthotropicMuscle>, FiberDirectionDiffusion>();
+		herat_model.defineParticlesAndMaterial<FiberDirectionDiffusionParticles, FiberDirectionDiffusion>();
 		herat_model.generateParticles<ParticleGeneratorLattice>();
 		/** topology */
 		InnerRelation herat_model_inner(herat_model);
@@ -62,7 +62,7 @@ int main(int ac, char *av[])
 		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(herat_model_inner);
 		/** Time step for diffusion. */
-		GetDiffusionTimeStepSize<ElasticSolidParticles, LocallyOrthotropicMuscle> get_time_step_size(herat_model);
+		GetDiffusionTimeStepSize<FiberDirectionDiffusionParticles> get_time_step_size(herat_model);
 		/** Diffusion process for diffusion body. */
 		DiffusionRelaxation diffusion_relaxation(herat_model_inner);
 		/** Compute the fiber and sheet after diffusion. */
@@ -70,14 +70,12 @@ int main(int ac, char *av[])
 		/** Write the body state to Vtp file. */
 		BodyStatesRecordingToVtp write_herat_model_state_to_vtp(io_environment, {herat_model});
 		/** Write the particle reload files. */
-		ReloadParticleIO write_particle_reload_files(io_environment, herat_model, "HeartModel");
-		/** Write material property to xml file. */
-		ReloadMaterialParameterIO write_material_property(io_environment, herat_model, "FiberDirection");
+		ReloadParticleIO write_particle_reload_files(io_environment, herat_model);
 		//----------------------------------------------------------------------
 		//	Physics relaxation starts here.
 		//----------------------------------------------------------------------
-		random_particles.parallel_exec(0.25);
-		relaxation_step_inner.SurfaceBounding().parallel_exec();
+		random_particles.exec(0.25);
+		relaxation_step_inner.SurfaceBounding().exec();
 		write_herat_model_state_to_vtp.writeToFile(0.0);
 		//----------------------------------------------------------------------
 		// From here the time stepping begins.
@@ -87,7 +85,7 @@ int main(int ac, char *av[])
 		int diffusion_step = 100;
 		while (ite < relax_step)
 		{
-			relaxation_step_inner.parallel_exec();
+			relaxation_step_inner.exec();
 			ite++;
 			if (ite % 100 == 0)
 			{
@@ -99,15 +97,15 @@ int main(int ac, char *av[])
 		BodySurface surface_part(herat_model);
 		/** constraint boundary condition for diffusion. */
 		SimpleDynamics<DiffusionBCs> impose_diffusion_bc(surface_part, "Phi");
-		impose_diffusion_bc.parallel_exec();
+		impose_diffusion_bc.exec();
 
 		write_herat_model_state_to_vtp.writeToFile(ite);
 
-		Real dt = get_time_step_size.parallel_exec();
+		Real dt = get_time_step_size.exec();
 		while (ite <= diffusion_step + relax_step)
 		{
-			diffusion_relaxation.parallel_exec(dt);
-			impose_diffusion_bc.parallel_exec();
+			diffusion_relaxation.exec(dt);
+			impose_diffusion_bc.exec();
 			if (ite % 10 == 0)
 			{
 				std::cout << "Diffusion steps N=" << ite - relax_step << "	dt: " << dt << "\n";
@@ -118,8 +116,7 @@ int main(int ac, char *av[])
 		compute_fiber_sheet.exec();
 		ite++;
 		write_herat_model_state_to_vtp.writeToFile(ite);
-		compute_fiber_sheet.parallel_exec();
-		write_material_property.writeToFile(0);
+		compute_fiber_sheet.exec();
 		write_particle_reload_files.writeToFile(0);
 
 		return 0;
@@ -129,9 +126,10 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	/** create a SPH body, material and particles */
 	SolidBody physiology_heart(system, level_set_heart_model, "PhysiologyHeart");
-	AlievPanfilowModel muscle_reaction_model(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
+	SharedPtr<AlievPanfilowModel> muscle_reaction_model_ptr = makeShared<AlievPanfilowModel>(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
 	physiology_heart.defineParticlesAndMaterial<
-		ElectroPhysiologyParticles, LocalMonoFieldElectroPhysiology>(muscle_reaction_model, diffusion_coff, bias_coff, fiber_direction);
+		ElectroPhysiologyParticles, MonoFieldElectroPhysiology>(
+		muscle_reaction_model_ptr, TypeIdentity<LocalDirectionalDiffusion>(), diffusion_coff, bias_coff, fiber_direction);
 	(!system.RunParticleRelaxation() && system.ReloadParticles())
 		? physiology_heart.generateParticles<ParticleGeneratorReload>(io_environment, "HeartModel")
 		: physiology_heart.generateParticles<ParticleGeneratorLattice>();
@@ -144,21 +142,12 @@ int main(int ac, char *av[])
 		? mechanics_heart.generateParticles<ParticleGeneratorReload>(io_environment, "HeartModel")
 		: mechanics_heart.generateParticles<ParticleGeneratorLattice>();
 
-	/** check whether reload material properties. */
-	if (!system.RunParticleRelaxation() && system.ReloadParticles())
-	{
-		ReloadMaterialParameterIO read_physiology_heart_fiber(io_environment, physiology_heart, "FiberDirection");
-		ReloadMaterialParameterIO read_mechanics_heart_fiber(io_environment, mechanics_heart, "FiberDirection");
-		read_mechanics_heart_fiber.readFromFile();
-		read_physiology_heart_fiber.readFromFile();
-	}
-
 	/** Creat a Purkinje network for fast diffusion, material and particles */
 	TreeBody pkj_body(system, level_set_heart_model, "Purkinje");
-	AlievPanfilowModel pkj_reaction_model(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
+	SharedPtr<AlievPanfilowModel> pkj_reaction_model_ptr = makeShared<AlievPanfilowModel>(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
 	pkj_body.defineParticlesAndMaterial<
 		ElectroPhysiologyReducedParticles, MonoFieldElectroPhysiology>(
-		pkj_reaction_model, diffusion_coff * acceleration_factor, bias_coff, fiber_direction);
+		pkj_reaction_model_ptr, TypeIdentity<DirectionalDiffusion>(), diffusion_coff * acceleration_factor, bias_coff, fiber_direction);
 	pkj_body.generateParticles<NetworkGeneratorWithExtraCheck>(starting_point, second_point, 50, 1.0);
 	TreeTerminates pkj_leaves(pkj_body);
 	//----------------------------------------------------------------------
@@ -227,9 +216,9 @@ int main(int ac, char *av[])
 	 */
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	correct_configuration_excitation.parallel_exec();
-	correct_configuration_contraction.parallel_exec();
-	correct_kernel_weights_for_interpolation.parallel_exec();
+	correct_configuration_excitation.exec();
+	correct_configuration_contraction.exec();
+	correct_kernel_weights_for_interpolation.exec();
 	/**Output global basic parameters. */
 	write_states.writeToFile(0);
 	write_voltage.writeToFile(0);
@@ -248,10 +237,10 @@ int main(int ac, char *av[])
 	Real dt_pkj = 0.0;
 	Real dt_muscle = 0.0;
 	/** Statistics for computing time. */
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
-	cout << "Main Loop Starts Here : "
-		 << "\n";
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
+	std::cout << "Main Loop Starts Here : "
+			  << "\n";
 	/** Main loop starts here. */
 	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
@@ -263,17 +252,17 @@ int main(int ac, char *av[])
 			{
 				if (ite % screen_output_interval == 0)
 				{
-					cout << fixed << setprecision(9) << "N=" << ite << "	Time = "
-						 << GlobalStaticVariables::physical_time_
-						 << "	dt_pkj = " << dt_pkj
-						 << "	dt_myocardium = " << dt_myocardium
-						 << "	dt_muscle = " << dt_muscle << "\n";
+					std::cout << std::fixed << std::setprecision(9) << "N=" << ite << "	Time = "
+							  << GlobalStaticVariables::physical_time_
+							  << "	dt_pkj = " << dt_pkj
+							  << "	dt_myocardium = " << dt_myocardium
+							  << "	dt_muscle = " << dt_muscle << "\n";
 				}
 				/** Apply stimulus excitation. */
 				// if( 0 <= GlobalStaticVariables::physical_time_
 				// 	&&  GlobalStaticVariables::physical_time_ <= 0.5)
 				// {
-				// 	apply_stimulus_myocardium.parallel_exec(dt_myocardium);
+				// 	apply_stimulus_myocardium.exec(dt_myocardium);
 				// }
 
 				Real dt_pkj_sum = 0.0;
@@ -283,28 +272,28 @@ int main(int ac, char *av[])
 					 * When network generates particles, the final particle spacing, which is after particle projected in to
 					 * complex geometry, may small than the reference one, therefore, a smaller time step size is required.
 					 */
-					dt_pkj = 0.5 * get_pkj_physiology_time_step.parallel_exec();
+					dt_pkj = 0.5 * get_pkj_physiology_time_step.exec();
 					if (dt_myocardium - dt_pkj_sum < dt_pkj)
 						dt_pkj = dt_myocardium - dt_pkj_sum;
 
 					if (0 <= GlobalStaticVariables::physical_time_ && GlobalStaticVariables::physical_time_ <= 0.5)
 					{
-						apply_stimulus_pkj.parallel_exec(dt_pkj);
+						apply_stimulus_pkj.exec(dt_pkj);
 					}
 					/**Strang splitting method. */
 					int ite_pkj_forward = 0;
 					while (ite_pkj_forward < reaction_step)
 					{
-						pkj_reaction_relaxation_forward.parallel_exec(0.5 * dt_pkj / Real(reaction_step));
+						pkj_reaction_relaxation_forward.exec(0.5 * dt_pkj / Real(reaction_step));
 						ite_pkj_forward++;
 					}
 					/** 2nd Runge-Kutta scheme for diffusion. */
-					pkj_diffusion_relaxation.parallel_exec(dt_pkj);
+					pkj_diffusion_relaxation.exec(dt_pkj);
 					// backward reaction
 					int ite_pkj_backward = 0;
 					while (ite_pkj_backward < reaction_step)
 					{
-						pkj_reaction_relaxation_backward.parallel_exec(0.5 * dt_pkj / Real(reaction_step));
+						pkj_reaction_relaxation_backward.exec(0.5 * dt_pkj / Real(reaction_step));
 						ite_pkj_backward++;
 					}
 
@@ -315,35 +304,35 @@ int main(int ac, char *av[])
 				int ite_forward = 0;
 				while (ite_forward < reaction_step)
 				{
-					myocardium_reaction_relaxation_forward.parallel_exec(0.5 * dt_myocardium / Real(reaction_step));
+					myocardium_reaction_relaxation_forward.exec(0.5 * dt_myocardium / Real(reaction_step));
 					ite_forward++;
 				}
 				/** 2nd Runge-Kutta scheme for diffusion. */
-				myocardium_diffusion_relaxation.parallel_exec(dt_myocardium);
+				myocardium_diffusion_relaxation.exec(dt_myocardium);
 
 				// backward reaction
 				int ite_backward = 0;
 				while (ite_backward < reaction_step)
 				{
-					myocardium_reaction_relaxation_backward.parallel_exec(0.5 * dt_myocardium / Real(reaction_step));
+					myocardium_reaction_relaxation_backward.exec(0.5 * dt_myocardium / Real(reaction_step));
 					ite_backward++;
 				}
 
-				active_stress_interpolation.parallel_exec();
+				active_stress_interpolation.exec();
 				Real dt_muscle_sum = 0.0;
 				while (dt_muscle_sum < dt_myocardium)
 				{
-					dt_muscle = get_mechanics_time_step.parallel_exec();
+					dt_muscle = get_mechanics_time_step.exec();
 					if (dt_myocardium - dt_muscle_sum < dt_muscle)
 						dt_muscle = dt_myocardium - dt_muscle_sum;
-					stress_relaxation_first_half.parallel_exec(dt_muscle);
-					constraint_holder.parallel_exec(dt_muscle);
-					stress_relaxation_second_half.parallel_exec(dt_muscle);
+					stress_relaxation_first_half.exec(dt_muscle);
+					constraint_holder.exec(dt_muscle);
+					stress_relaxation_second_half.exec(dt_muscle);
 					dt_muscle_sum += dt_muscle;
 				}
 
 				ite++;
-				dt_myocardium = get_myocardium_physiology_time_step.parallel_exec();
+				dt_myocardium = get_myocardium_physiology_time_step.exec();
 
 				relaxation_time += dt_myocardium;
 				integration_time += dt_myocardium;
@@ -352,17 +341,17 @@ int main(int ac, char *av[])
 			write_voltage.writeToFile(ite);
 			write_displacement.writeToFile(ite);
 		}
-		tick_count t2 = tick_count::now();
-		interpolation_particle_position.parallel_exec();
+		TickCount t2 = TickCount::now();
+		interpolation_particle_position.exec();
 		write_states.writeToFile();
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
-	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	return 0;
 }

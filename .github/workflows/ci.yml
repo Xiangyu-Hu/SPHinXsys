@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 env:
-  VCPKG_VERSION: "2022.11.14"
+  VCPKG_VERSION: "69efe9cc2df0015f0bb2d37d55acde4a75c9a25b" # 01/04/2023
   CTEST_PARALLEL_LEVEL: "1"
 
 # A workflow is made up of one or more jobs that can run sequentially or in parallel
@@ -48,10 +48,11 @@ jobs:
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
         with: 
           committish: ${{ env.VCPKG_VERSION }}
+          cache-version: ${{env.VCPKG_VERSION}}
 
       - name: Install dependencies
         run: |
-          ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build openblas[dynamic-arch] 
+          ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build openblas[dynamic-arch] --allow-unsupported # last argument to remove after regression introduced by microsoft/vcpkg#30192 is addressed
           # Simbody depends on (open)blas implementation, which -march=native by default, conflicting with cache restore, hence dynamic-arch feature
           # Above problem might also be resolved by adding the hash of architecture in the cache key, esp. if more package do the same
           ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build \
@@ -60,7 +61,9 @@ jobs:
             boost-program-options \
             boost-geometry \
             simbody \
-            gtest
+            gtest \
+            xsimd \
+            pybind11
 
       - name: Generate buildsystem
         run: |
@@ -69,6 +72,7 @@ jobs:
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -D SPHINXSYS_CI=ON \
+            -D Python_EXECUTABLE="${{github.workspace}}/vcpkg/installed/x64-linux/tools/python3/python3.10" \
             -S ${{github.workspace}} \
             -B ${{github.workspace}}/build
             
@@ -137,6 +141,7 @@ jobs:
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
         with: 
           committish: ${{ env.VCPKG_VERSION }}
+          cache-version: ${{env.VCPKG_VERSION}}
 
       - name: Install dependencies
         run: |
@@ -146,7 +151,9 @@ jobs:
             boost-program-options `
             boost-geometry `
             simbody `
-            gtest
+            gtest `
+            xsimd `
+            pybind11
 
       - uses: ilammy/msvc-dev-cmd@v1
 
@@ -157,6 +164,7 @@ jobs:
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}\vcpkg\scripts\buildsystems\vcpkg.cmake" `
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache `
             -D SPHINXSYS_CI=ON `
+            -D Python_EXECUTABLE="${{github.workspace}}\vcpkg\installed\x64-windows\tools\python3\python.exe" `
             -S ${{github.workspace}} `
             -B C:\build
       
@@ -230,6 +238,7 @@ jobs:
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
         with: 
           committish: ${{ env.VCPKG_VERSION }}
+          cache-version: ${{env.VCPKG_VERSION}}
 
       - name: Install dependencies
         run: |
@@ -239,7 +248,9 @@ jobs:
             boost-program-options \
             boost-geometry \
             gtest \
-            simbody
+            simbody \
+            xsimd \
+            pybind11
 
       - name: Generate buildsystem
         run: |
@@ -249,6 +260,7 @@ jobs:
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -D SPHINXSYS_CI=ON \
+            -D Python_EXECUTABLE="${{github.workspace}}/vcpkg/installed/x64-osx/tools/python3/python3.10" \
             -S ${{github.workspace}} \
             -B ${{github.workspace}}/build
 

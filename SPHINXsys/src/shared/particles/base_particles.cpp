@@ -23,24 +23,25 @@ namespace SPH
 		//----------------------------------------------------------------------
 		registerVariable(pos_, "Position");
 		registerVariable(Vol_, "VolumetricMeasure");
-		/*
-		 *	add particle reload data
-		 */
+		//----------------------------------------------------------------------
+		//		add particle reload data on geometries
+		//----------------------------------------------------------------------
 		addVariableNameToList<Vecd>(variables_to_reload_, "Position");
 		addVariableNameToList<Real>(variables_to_reload_, "VolumetricMeasure");
 	}
 	//=================================================================================================//
 	void BaseParticles::initializeOtherVariables()
 	{
-		real_particles_bound_ = total_real_particles_;
-		/**
-		 *	register non-geometric data
-		 */
+		//----------------------------------------------------------------------
+		//		register non-geometric data
+		//----------------------------------------------------------------------
 		registerVariable(vel_, "Velocity");
 		registerVariable(acc_, "Acceleration");
 		registerVariable(acc_prior_, "PriorAcceleration");
 		registerVariable(rho_, "Density", base_material_.ReferenceDensity());
-		registerVariable(mass_, "MassiveMeasure");
+		registerVariable(mass_, "MassiveMeasure",
+						 [&](size_t i) -> Real
+						 { return rho_[i] * Vol_[i]; });
 		/**
 		 *	add basic output particle data
 		 */
@@ -52,14 +53,13 @@ namespace SPH
 		addVariableNameToList<Vecd>(variables_to_restart_, "Velocity");
 		addVariableNameToList<Vecd>(variables_to_restart_, "Acceleration");
 		addVariableNameToList<Real>(variables_to_restart_, "VolumetricMeasure");
-		/**
-		 *	initial particle IDs and massive measure
-		 */
+		//----------------------------------------------------------------------
+		//		initialize unregistered data
+		//----------------------------------------------------------------------
 		for (size_t i = 0; i != real_particles_bound_; ++i)
 		{
 			sorted_id_.push_back(sequence_.size());
 			sequence_.push_back(0);
-			mass_[i] = rho_[i] * Vol_[i];
 		}
 	}
 	//=================================================================================================//
@@ -190,7 +190,7 @@ namespace SPH
 		// compute derived particle variables
 		for (auto &derived_variable : derived_variables_)
 		{
-			derived_variable->parallel_exec();
+			derived_variable->exec();
 		}
 
 		size_t total_real_particles = total_real_particles_;

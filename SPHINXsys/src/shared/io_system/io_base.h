@@ -141,7 +141,6 @@ namespace SPH
 		};
 	};
 
-
 	/**
 	 * @class ReloadParticleIO
 	 * @brief Write and read the particle-reloading files in XML format.
@@ -160,24 +159,5 @@ namespace SPH
 
 		virtual void writeToFile(size_t iteration_step = 0) override;
 		virtual void readFromFile(size_t iteration_step = 0);
-	};
-
-	/**
-	 * @class ReloadMaterialParameterIO
-	 * @brief For write and read material property in XML format.
-	 */
-	class ReloadMaterialParameterIO : public ReloadParticleIO
-	{
-	protected:
-		MaterialVector materials_;
-
-	public:
-		ReloadMaterialParameterIO(IOEnvironment &io_environment, SPHBody &sph_body);
-		ReloadMaterialParameterIO(IOEnvironment &io_environment, SPHBody &sph_body,
-								  const std::string &given_parameters_name);
-		virtual ~ReloadMaterialParameterIO(){};
-
-		virtual void writeToFile(size_t iteration_step = 0) override;
-		virtual void readFromFile(size_t iteration_step = 0) override;
 	};
 }

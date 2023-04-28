@@ -59,12 +59,19 @@ namespace SPH
 	 * @class BasePeriodicCondition
 	 * @brief Base class for two different type periodic boundary conditions.
 	 */
+	template <class ExecutionPolicy>
 	class BasePeriodicCondition
 	{
 	protected:
 		Vecd periodic_translation_;
 		StdVec<CellLists> bound_cells_data_;
-		Vecd setPeriodicTranslation(BoundingBox &bounding_bounds, int axis);
+		Vecd setPeriodicTranslation(BoundingBox &bounding_bounds, int axis)
+		{
+			Vecd periodic_translation = Vecd::Zero();
+			periodic_translation[axis] =
+				bounding_bounds.second_[axis] - bounding_bounds.first_[axis];
+			return periodic_translation;
+		};
 
 		/**
 		 * @class PeriodicBounding
@@ -76,8 +83,17 @@ namespace SPH
 			Vecd &periodic_translation_;
 			StdVec<CellLists> &bound_cells_data_;
 
-			virtual void checkLowerBound(size_t index_i, Real dt = 0.0);
-			virtual void checkUpperBound(size_t index_i, Real dt = 0.0);
+			virtual void checkLowerBound(size_t index_i, Real dt = 0.0)
+			{
+				if (pos_[index_i][axis_] < bounding_bounds_.first_[axis_])
+					pos_[index_i][axis_] += periodic_translation_[axis_];
+			};
+
+			virtual void checkUpperBound(size_t index_i, Real dt = 0.0)
+			{
+				if (pos_[index_i][axis_] > bounding_bounds_.second_[axis_])
+					pos_[index_i][axis_] -= periodic_translation_[axis_];
+			};
 
 		public:
 			PeriodicBounding(Vecd &periodic_translation,
@@ -88,12 +104,34 @@ namespace SPH
 				  bound_cells_data_(bound_cells_data){};
 			virtual ~PeriodicBounding(){};
 
-			virtual void exec(Real dt = 0.0) override;
-			virtual void parallel_exec(Real dt = 0.0) override;
+			virtual void exec(Real dt = 0.0) override
+			{
+				setupDynamics(dt);
+
+				particle_for(ExecutionPolicy(), bound_cells_data_[0].first,
+							 [&](size_t i)
+							 { checkLowerBound(i, dt); });
+
+				particle_for(ExecutionPolicy(), bound_cells_data_[1].first,
+							 [&](size_t i)
+							 { checkUpperBound(i, dt); });
+			};
 		};
 
 	public:
-		BasePeriodicCondition(RealBody &real_body, BoundingBox bounding_bounds, int axis);
+		BasePeriodicCondition(RealBody &real_body, BoundingBox bounding_bounds, int axis)
+			: periodic_translation_(setPeriodicTranslation(bounding_bounds, axis))
+		{
+			bound_cells_data_.resize(2);
+			BaseCellLinkedList &cell_linked_list = real_body.getCellLinkedList();
+			cell_linked_list.tagBoundingCells(bound_cells_data_, bounding_bounds, axis);
+			if (periodic_translation_.norm() < real_body.sph_adaptation_->ReferenceSpacing())
+			{
+				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+				std::cout << "\n Periodic bounding failure: bounds not defined!" << std::endl;
+				exit(1);
+			}
+		};
 		virtual ~BasePeriodicCondition(){};
 	};
 
@@ -105,7 +143,7 @@ namespace SPH
 	 *	the second after the updating.
 	 *	If the exec or parallel_exec is called directly, error message will be given.
 	 */
-	class PeriodicConditionUsingCellLinkedList : public BasePeriodicCondition
+	class PeriodicConditionUsingCellLinkedList : public BasePeriodicCondition<execution::ParallelPolicy>
 	{
 	protected:
 		/**
@@ -132,12 +170,11 @@ namespace SPH
 			virtual ~PeriodicCellLinkedList(){};
 
 			virtual void exec(Real dt = 0.0) override;
-			virtual void parallel_exec(Real dt = 0.0) override;
 		};
 
 	public:
 		PeriodicConditionUsingCellLinkedList(RealBody &real_body, BoundingBox bounding_bounds, int axis)
-			: BasePeriodicCondition(real_body, bounding_bounds, axis),
+			: BasePeriodicCondition<execution::ParallelPolicy>(real_body, bounding_bounds, axis),
 			  bounding_(periodic_translation_, bound_cells_data_, real_body, bounding_bounds, axis),
 			  update_cell_linked_list_(periodic_translation_, bound_cells_data_, real_body, bounding_bounds, axis){};
 		virtual ~PeriodicConditionUsingCellLinkedList(){};
@@ -156,7 +193,7 @@ namespace SPH
 	 *  Note that, currently, this class is not for periodic condition in combined directions,
 	 *  such as periodic condition in both x and y directions.
 	 */
-	class PeriodicConditionUsingGhostParticles : public BasePeriodicCondition
+	class PeriodicConditionUsingGhostParticles : public BasePeriodicCondition<execution::ParallelPolicy>
 	{
 	protected:
 		StdVec<IndexVector> ghost_particles_;
@@ -181,7 +218,7 @@ namespace SPH
 										StdVec<IndexVector> &ghost_particles,
 										RealBody &real_body, BoundingBox bounding_bounds, int axis)
 				: PeriodicBounding(periodic_translation, bound_cells_data, real_body, bounding_bounds, axis),
-				  ghost_particles_(ghost_particles), Vol_(particles_->Vol_) {};
+				  ghost_particles_(ghost_particles), Vol_(particles_->Vol_){};
 			virtual ~CreatPeriodicGhostParticles(){};
 		};
 
@@ -206,12 +243,11 @@ namespace SPH
 			virtual ~UpdatePeriodicGhostParticles(){};
 
 			virtual void exec(Real dt = 0.0) override;
-			virtual void parallel_exec(Real dt = 0.0) override;
 		};
 
 	public:
 		PeriodicConditionUsingGhostParticles(RealBody &real_body, BoundingBox bounding_bounds, int axis)
-			: BasePeriodicCondition(real_body, bounding_bounds, axis),
+			: BasePeriodicCondition<execution::ParallelPolicy>(real_body, bounding_bounds, axis),
 			  bounding_(periodic_translation_, bound_cells_data_, real_body, bounding_bounds, axis),
 			  ghost_creation_(periodic_translation_, bound_cells_data_, ghost_particles_, real_body, bounding_bounds, axis),
 			  ghost_update_(periodic_translation_, bound_cells_data_, ghost_particles_, real_body, bounding_bounds, axis)
@@ -224,92 +260,6 @@ namespace SPH
 		PeriodicBounding bounding_;
 		CreatPeriodicGhostParticles ghost_creation_;
 		UpdatePeriodicGhostParticles ghost_update_;
-	};
-
-	/**
-	 * @class MirrorConditionAlongAxis
-	 * @brief Mirror bounding particle position and velocity in an axis direction
-	 *  Note that, currently, this class is not for mirror condition in combined directions,
-	 *  such as mirror condition in both x and y directions.
-	 */
-	class MirrorConditionAlongAxis : public BoundingAlongAxis
-	{
-	protected:
-		CellLists bound_cells_data_;
-		IndexVector ghost_particles_;
-
-		class MirrorBounding : public BoundingAlongAxis
-		{
-		protected:
-			CellLists &bound_cells_data_; 
-			virtual void checkLowerBound(size_t index_i, Real dt = 0.0);
-			virtual void checkUpperBound(size_t index_i, Real dt = 0.0);
-			ParticleFunctor checking_bound_;
-
-			StdLargeVec<Vecd> &vel_;
-			void mirrorAlongAxis(size_t particle_index_i, Vecd body_bound, int axis);
-
-		public:
-			MirrorBounding(CellLists &bound_cells_data, RealBody &real_body,
-						   BoundingBox bounding_bounds, int axis, bool positive);
-			virtual ~MirrorBounding(){};
-			virtual void exec(Real dt = 0.0) override;
-			virtual void parallel_exec(Real dt = 0.0) override;
-		};
-
-		/**
-		 * @class CreatingMirrorGhostParticles
-		 * @brief ghost particle created according to its corresponding real particle
-		 */
-		class CreatingMirrorGhostParticles : public MirrorBounding
-		{
-		protected:
-			IndexVector &ghost_particles_;
-			virtual void setupDynamics(Real dt = 0.0) override { ghost_particles_.clear(); };
-			virtual void checkLowerBound(size_t index_i, Real dt = 0.0) override;
-			virtual void checkUpperBound(size_t index_i, Real dt = 0.0) override;
-
-		public:
-			CreatingMirrorGhostParticles(IndexVector &ghost_particles,
-										 CellLists &bound_cells_data, RealBody &real_body,
-										 BoundingBox bounding_bounds, int axis, bool positive);
-			virtual ~CreatingMirrorGhostParticles(){};
-			/** This class is only implemented in sequential due to memory conflicts. */
-			virtual void parallel_exec(Real dt = 0.0) override { exec(); };
-		};
-
-		/**
-		 * @class UpdatingMirrorGhostStates
-		 * @brief the state of a ghost particle updated according to its corresponding real particle
-		 */
-		class UpdatingMirrorGhostStates : public MirrorBounding
-		{
-		protected:
-			IndexVector &ghost_particles_;
-			void checkLowerBound(size_t index_i, Real dt = 0.0) override;
-			void checkUpperBound(size_t index_i, Real dt = 0.0) override;
-			ParticleFunctor checking_bound_update_;
-
-		public:
-			UpdatingMirrorGhostStates(IndexVector &ghost_particles,
-									  CellLists &bound_cells_data,
-									  RealBody &real_body, BoundingBox bounding_bounds, int axis, bool positive);
-			virtual ~UpdatingMirrorGhostStates(){};
-
-			virtual void exec(Real dt = 0.0) override;
-			virtual void parallel_exec(Real dt = 0.0) override;
-		};
-
-	public:
-		MirrorBounding bounding_;
-		CreatingMirrorGhostParticles creating_ghost_particles_;
-		UpdatingMirrorGhostStates updating_ghost_states_;
-
-		MirrorConditionAlongAxis(RealBody &real_body, BoundingBox bounding_bounds, int axis, bool positive);
-		virtual ~MirrorConditionAlongAxis(){};
-
-		virtual void exec(Real dt = 0.0) override{};
-		virtual void parallel_exec(Real dt = 0.0) override{};
 	};
 }
 #endif // GENERAL_BOUNDING_H

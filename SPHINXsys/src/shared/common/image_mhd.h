@@ -61,7 +61,7 @@ namespace SPH {
 		// constructor for input files
 		explicit ImageMHD(std::string full_path_file);
 		// constructor for sphere 
-		ImageMHD(Real radius, Vec3i dxdydz, Vec3d spacings);
+		ImageMHD(Real radius, Array3i dxdydz, Vec3d spacings);
 		~ImageMHD();
 
 		void set_objectType(const std::string &objectType) 
@@ -105,7 +105,7 @@ namespace SPH {
 		{
 			anatomicalOrientation_ = anatomicalOrientation;
 		};
-		void set_elementType(const std::string &elementType) 
+		void set_elementType(const Image_Data_Type &elementType) 
 		{
 			elementType_ = elementType;
 		};
@@ -138,7 +138,7 @@ namespace SPH {
 		Vec3d offset_;
 		Vec3d centerOfRotation_;
 		Vec3d elementSpacing_;
-		Vec3i dimSize_;
+		Array3i dimSize_;
 		int width_;
 		int height_;
 		int depth_;
@@ -150,7 +150,7 @@ namespace SPH {
 		Real max_value_;
 		T *data_;
 
-		std::vector<int> findNeighbors(const Vec3d& probe_point, Vec3i& this_cell);
+		std::vector<int> findNeighbors(const Vec3d& probe_point, Array3i& this_cell);
 		Vec3d computeGradientAtCell(int i);
 		Vec3d computeNormalAtCell(int i);
 		T getValueAtCell(int i);

@@ -56,8 +56,8 @@ namespace SPH
 							  const LocalFunction &local_function, Args &&...args)
 	{
 		parallel_for(
-			blocked_range<size_t>(0, data_pkgs.size()),
-			[&](const blocked_range<size_t> &r)
+			IndexRange(0, data_pkgs.size()),
+			[&](const IndexRange &r)
 			{
 				for (size_t i = r.begin(); i != r.end(); ++i)
 				{
@@ -78,17 +78,17 @@ namespace SPH
 	class BaseDataPackage
 	{
 	public:
-		BaseDataPackage() : cell_index_on_mesh_(Vecu::Zero()), state_indicator_(0){};
+		BaseDataPackage() : cell_index_on_mesh_(Arrayi::Zero()), state_indicator_(0){};
 		virtual ~BaseDataPackage(){};
 		void setInnerPackage() { state_indicator_ = 1; };
 		bool isInnerPackage() { return state_indicator_ != 0; };
 		void setCorePackage() { state_indicator_ = 2; };
 		bool isCorePackage() { return state_indicator_ == 2; };
-		void setCellIndexOnMesh(const Vecu &cell_index) { cell_index_on_mesh_ = cell_index; }
-		Vecu CellIndexOnMesh() const { return cell_index_on_mesh_; }
+		void setCellIndexOnMesh(const Arrayi &cell_index) { cell_index_on_mesh_ = cell_index; }
+		Arrayi CellIndexOnMesh() const { return cell_index_on_mesh_; }
 
 	protected:
-		Vecu cell_index_on_mesh_; /**< index of this data package on the background mesh, zero if it is not on the mesh. */
+		Arrayi cell_index_on_mesh_; /**< index of this data package on the background mesh, zero if it is not on the mesh. */
 		/** reserved value: 0 not occupying background mesh, 1 occupying.
 		 *  guide to use: large magnitude for high priority of the data package. */
 		int state_indicator_;
@@ -119,7 +119,7 @@ namespace SPH
 		template <typename DataType>
 		using PackageTemporaryData = PackageDataMatrix<DataType, pkg_addrs_size>;
 
-		GridDataPackage() : BaseDataPackage(), BaseMesh(pkg_addrs_size * Vecu::Ones()){};
+		GridDataPackage() : BaseDataPackage(), BaseMesh(pkg_addrs_size * Arrayi::Ones()){};
 		virtual ~GridDataPackage(){};
 		Vecd DataPositionFromIndex(const Vecd &data_index) { return DataLowerBound() + data_index * grid_spacing_; };
 		void initializePackageGeometry(const Vecd &pkg_lower_bound, Real data_spacing)
@@ -163,7 +163,7 @@ namespace SPH
 		/** obtain averaged value at a corner of a data cell */
 		template <typename DataType>
 		DataType CornerAverage(PackageDataAddress<DataType> &pkg_data_addrs,
-							   Veci addrs_index, Veci corner_direction);
+							   Arrayi addrs_index, Arrayi corner_direction);
 
 	protected:
 		DataContainerAssemble<PackageData> all_pkg_data_;
@@ -199,9 +199,9 @@ namespace SPH
 		struct AssignPackageDataAddress
 		{
 			void operator()(DataContainerAssemble<PackageDataAddress> &all_pkg_data_addrs,
-							const Vecu &addrs_index,
+							const Arrayi &addrs_index,
 							DataContainerAssemble<PackageData> &all_pkg_data,
-							const Vecu &data_index);
+							const Arrayi &data_index);
 		};
 		DataAssembleOperation<AssignPackageDataAddress> assign_pkg_data_addrs_;
 
@@ -216,7 +216,7 @@ namespace SPH
 			assign_singular_pkg_data_addrs_(all_pkg_data_, all_pkg_data_addrs_);
 		};
 
-		void assignPackageDataAddress(const Vecu &addrs_index, GridDataPackage *src_pkg, const Vecu &data_index)
+		void assignPackageDataAddress(const Arrayi &addrs_index, GridDataPackage *src_pkg, const Arrayi &data_index)
 		{
 			assign_pkg_data_addrs_(all_pkg_data_addrs_, addrs_index, src_pkg->all_pkg_data_, data_index);
 		};
@@ -246,7 +246,7 @@ namespace SPH
 		explicit MeshWithGridDataPackages(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size)
 			: Mesh(tentative_bounds, GridDataPackageType::pkg_size * data_spacing, buffer_size),
 			  data_spacing_(data_spacing),
-			  global_mesh_(this->mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, this->number_of_cells_ * pkg_size)
+			  global_mesh_(this->mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, this->all_cells_ * pkg_size)
 		{
 			allocateMeshDataMatrix();
 		};
@@ -287,7 +287,7 @@ namespace SPH
 		template <typename InitializePackageData>
 		GridDataPackageType *createDataPackage(
 			const DataContainerAddressAssemble<DiscreteVariable> &all_variables,
-			const Vecu &cell_index,
+			const Arrayi &cell_index,
 			const InitializePackageData &initialize_package_data)
 		{
 			mutex_my_pool.lock();
@@ -303,10 +303,10 @@ namespace SPH
 			return new_data_pkg;
 		};
 
-		void assignDataPackageAddress(const Vecu &cell_index, GridDataPackageType *data_pkg);
+		void assignDataPackageAddress(const Arrayi &cell_index, GridDataPackageType *data_pkg);
 		/** Return data package with given cell index. */
-		GridDataPackageType *DataPackageFromCellIndex(const Vecu &cell_index);
-		void initializePackageAddressesInACell(const Vecu &cell_index);
+		GridDataPackageType *DataPackageFromCellIndex(const Arrayi &cell_index);
+		void initializePackageAddressesInACell(const Arrayi &cell_index);
 		/** Find related cell index and data index for a data package address matrix */
 		std::pair<int, int> CellShiftAndDataIndex(int data_addrs_index_component)
 		{
@@ -322,7 +322,7 @@ namespace SPH
 		/** This function find the value of data from its index from global mesh. */
 		template <typename DataType>
 		DataType DataValueFromGlobalIndex(const DiscreteVariable<DataType> &discrete_variable,
-										  const Vecu &global_grid_index);
+										  const Arrayi &global_grid_index);
 	};
 }
 #endif // MESH_WITH_DATA_PACKAGES_H

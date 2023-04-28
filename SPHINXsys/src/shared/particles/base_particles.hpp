@@ -69,6 +69,23 @@ namespace SPH
     }
     //=================================================================================================//
     template <typename VariableType>
+    StdLargeVec<VariableType> *BaseParticles::registerSharedVariable(const std::string &variable_name)
+    {
+        constexpr int type_index = DataTypeIndex<VariableType>::value;
+        if (all_variable_maps_[type_index].find(variable_name) == all_variable_maps_[type_index].end())
+        {
+            UniquePtrsKeeper<StdLargeVec<VariableType>> &container = std::get<type_index>(shared_variable_data_);
+            StdLargeVec<VariableType> *contained_data = container.template createPtr<StdLargeVec<VariableType>>();
+            registerVariable(*contained_data, variable_name);
+            return contained_data;
+        }
+        else
+        {
+            return std::get<type_index>(all_particle_data_)[all_variable_maps_[type_index][variable_name]];
+        }
+    }
+    //=================================================================================================//
+    template <typename VariableType>
     StdLargeVec<VariableType> *BaseParticles::getVariableByName(const std::string &variable_name)
     {
         constexpr int type_index = DataTypeIndex<VariableType>::value;
@@ -254,7 +271,7 @@ namespace SPH
         // compute derived particle variables
         for (auto &derived_variable : derived_variables_)
         {
-            derived_variable->parallel_exec();
+            derived_variable->exec();
         }
 
         // write integers

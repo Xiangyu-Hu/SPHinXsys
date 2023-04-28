@@ -44,8 +44,8 @@ namespace SPH
 				{
 					variance_new[snapshot_index][observation_index] = SMAX(variance[snapshot_index][observation_index], 
 						variance_new[snapshot_index][observation_index],
-						std::pow((result[run_index][snapshot_index][observation_index] - meanvalue_new[snapshot_index][observation_index]), 2), 
-						std::pow(meanvalue_new[snapshot_index][observation_index] * 1.0e-2, 2) );
+						pow((result[run_index][snapshot_index][observation_index] - meanvalue_new[snapshot_index][observation_index]), 2), 
+						pow(meanvalue_new[snapshot_index][observation_index] * 1.0e-2, 2) );
 				}
 	};
 	//=================================================================================================//
@@ -60,8 +60,8 @@ namespace SPH
 					{
 						variance_new[snapshot_index][observation_index][i] = SMAX(variance[snapshot_index][observation_index][i], 
 							variance_new[snapshot_index][observation_index][i],
-							std::pow((result[run_index][snapshot_index][observation_index][i] - meanvalue_new[snapshot_index][observation_index][i]), 2),
-							std::pow(meanvalue_new[snapshot_index][observation_index][i] * 1.0e-2, 2) );
+							pow((result[run_index][snapshot_index][observation_index][i] - meanvalue_new[snapshot_index][observation_index][i]), 2),
+							pow(meanvalue_new[snapshot_index][observation_index][i] * 1.0e-2, 2) );
 					}
 	};
 	//=================================================================================================//
@@ -77,8 +77,8 @@ namespace SPH
 						{
 							variance_new[snapshot_index][observation_index](i,j) = SMAX(variance[snapshot_index][observation_index](i,j), 
 								variance_new[snapshot_index][observation_index](i,j),
-								std::pow((result[run_index][snapshot_index][observation_index](i,j) - meanvalue_new[snapshot_index][observation_index](i,j)), 2),
-								std::pow(meanvalue_new[snapshot_index][observation_index](i,j) * 1.0e-2, 2));
+								pow((result[run_index][snapshot_index][observation_index](i,j) - meanvalue_new[snapshot_index][observation_index](i,j)), 2),
+								pow(meanvalue_new[snapshot_index][observation_index](i,j) * 1.0e-2, 2));
 						}
 	};
 	//=================================================================================================//
@@ -116,7 +116,7 @@ namespace SPH
 					if (relative_value_ > threshold[i])
 					{
 						std::cout << par_name << ": " << this->quantity_name_ << "[" << observation_index << "][" << i << "] in " << this->element_tag_[snapshot_index]
-							<< " is not converged, and difference is " << relative_value_ << endl;
+							<< " is not converged, and difference is " << relative_value_ << std::endl;
 						count++;
 					}
 				}
@@ -138,7 +138,7 @@ namespace SPH
 						if (relative_value_ > threshold(i,j))
 						{
 							std::cout << par_name << ": " << this->quantity_name_ << "[" << observation_index << "][" << i << "][" << j << " ] in "
-								<< this->element_tag_[snapshot_index] << " is not converged, and difference is " << relative_value_ << endl;
+								<< this->element_tag_[snapshot_index] << " is not converged, and difference is " << relative_value_ << std::endl;
 							count++;
 						}
 					}
@@ -154,7 +154,7 @@ namespace SPH
 		{
 			for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
 			{
-				Real relative_value_ = (std::pow(current_result[snapshot_index][observation_index] - meanvalue[snapshot_index + diff][observation_index], 2) - 
+				Real relative_value_ = (pow(current_result[snapshot_index][observation_index] - meanvalue[snapshot_index + diff][observation_index], 2) - 
 										variance[snapshot_index + diff][observation_index]) / (variance[snapshot_index + diff][observation_index] + TinyReal);
 				if (relative_value_ > 0.01)
 				{
@@ -178,16 +178,16 @@ namespace SPH
 			{
 				for (int i = 0; i != meanvalue[0][0].size(); ++i)
 				{
-					Real relative_value_ = (std::pow(current_result[snapshot_index][observation_index][i] - meanvalue[snapshot_index + diff][observation_index][i], 2) - 
+					Real relative_value_ = (pow(current_result[snapshot_index][observation_index][i] - meanvalue[snapshot_index + diff][observation_index][i], 2) - 
 											variance[snapshot_index + diff][observation_index][i]) / (variance[snapshot_index + diff][observation_index][i] + TinyReal);
 					if (relative_value_ > 0.01)
 					{
 						std::cout << this->quantity_name_ << "[" << observation_index << "][" << i << "] in " << this->element_tag_[snapshot_index] << 
 									" is beyond the exception, and difference is "
-							<< relative_value_ << endl;
-						std::cout << "Current: " << current_result[snapshot_index][observation_index][i] << endl;
-						std::cout << "Mean " << meanvalue[snapshot_index + diff][observation_index][i] << endl;
-						std::cout << "Variance" << variance[snapshot_index + diff][observation_index][i] << endl;
+							<< relative_value_ << std::endl;
+						std::cout << "Current: " << current_result[snapshot_index][observation_index][i] << std::endl;
+						std::cout << "Mean " << meanvalue[snapshot_index + diff][observation_index][i] << std::endl;
+						std::cout << "Variance" << variance[snapshot_index + diff][observation_index][i] << std::endl;
 						count++;
 					}
 				}
@@ -210,13 +210,13 @@ namespace SPH
 				{
 					for (int j = 0; j != meanvalue[0][0].size(); ++j)
 					{
-						Real relative_value_ = ( std::pow(current_result[snapshot_index][observation_index](i,j) - 
+						Real relative_value_ = (pow(current_result[snapshot_index][observation_index](i,j) - 
 												meanvalue[snapshot_index + diff][observation_index](i,j), 2) - 
 												variance[snapshot_index + diff][observation_index](i,j) ) / variance[snapshot_index + diff][observation_index](i,j);
 						if (relative_value_ > 0.01)
 						{
 							std::cout << this->quantity_name_ << "[" << observation_index << "][" << i << "] in " << this->element_tag_[snapshot_index] << 
-										" is beyond the exception, and difference is " << relative_value_ << endl;
+										" is beyond the exception, and difference is " << relative_value_ << std::endl;
 							count++;
 						}
 					}

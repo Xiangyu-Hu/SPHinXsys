@@ -1,6 +1,5 @@
 #include "eulerian_compressible_fluid_dynamics_inner.h"
 
-using namespace std;
 //=========================================================================================================//
 namespace SPH
 {
@@ -34,26 +33,6 @@ namespace SPH
 			  vel_(particles_->vel_), dmom_dt_prior_(particles_->dmom_dt_prior_),
 			  mu_(particles_->compressible_fluid_.ReferenceViscosity()),
 		      smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
-		//=================================================================================================//
-		void ViscousAccelerationInner::interaction(size_t index_i, Real dt)
-		{
-			Real rho_i = rho_[index_i];
-			const Vecd &vel_i = vel_[index_i];
-
-			Vecd acceleration = Vecd::Zero();
-			Vecd vel_derivative = Vecd::Zero();
-			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-			{
-				size_t index_j = inner_neighborhood.j_[n];
-
-				// viscous force
-				vel_derivative = (vel_i - vel_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
-				acceleration += 2.0 * mu_ * vel_derivative  * inner_neighborhood.dW_ijV_j_[n] / rho_i;
-			}
-			dmom_dt_prior_[index_i] += rho_[index_i] * acceleration;
-			dE_dt_prior_[index_i] += rho_[index_i] * acceleration.dot(vel_[index_i]);
-		}
 		//=================================================================================================//
 		AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body)
 			: LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),

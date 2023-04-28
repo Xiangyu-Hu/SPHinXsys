@@ -100,8 +100,8 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 	Real total_area = 0.5*4*Pi*radius*radius;
 	std::cout << "total_area: " << total_area << std::endl;
 	// material
-	Real rho = 1e3 * std::pow(unit_mm, 3);
-	Real E = 5e7 * std::pow(unit_mm, 2);
+	Real rho = 1e3 * pow(unit_mm, 3);
+	Real E = 5e7 * pow(unit_mm, 2);
 	Real mu = 0.3;
 	auto material = makeShared<SaintVenantKirchhoffSolid>(rho, E, mu); // NeoHookean always locks one particle with excessive strain
 	Real physical_viscosity = 7e3;
@@ -148,7 +148,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 	// pressure boundary condition
 	auto apply_pressure = [&]()
 	{
-		Real pressure_MPa = pressure * std::pow(unit_mm, 2);
+		Real pressure_MPa = pressure * pow(unit_mm, 2);
 		for (size_t i = 0; i < shell_particles->acc_prior_.size(); ++i)
 		{
 			// opposite to normals
@@ -177,7 +177,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 	/** Apply initial condition. */
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	corrected_configuration.parallel_exec();
+	corrected_configuration.exec();
 
 	{// tests on initialization
 		{// checking particle distances - avoid bugs of reading file
@@ -216,7 +216,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 	Real end_time = 0.5; // 1 is better
 	Real output_period = end_time / 25.0;
 	Real dt = 0.0;
-	tick_count t1 = tick_count::now();
+	TickCount t1 = TickCount::now();
 	/**
 	 * Main loop
 	 */
@@ -237,21 +237,21 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 							<< dt << "\n";
 				}
 
-				initialize_external_force.parallel_exec(dt);
+				initialize_external_force.exec(dt);
 				if (pressure > TinyReal) apply_pressure();
 
-				dt = computing_time_step_size.parallel_exec();
+				dt = computing_time_step_size.exec();
 				{// checking for excessive time step reduction
 					if (dt > max_dt) max_dt = dt;
 					if (dt < max_dt/1e3) throw std::runtime_error("time step decreased too much, iteration: " + std::to_string(ite));
 				}
 				
-				stress_relaxation_first_half.parallel_exec(dt);
-				constrain_holder.parallel_exec();
-				shell_velocity_damping.parallel_exec(dt);
-				shell_rotation_damping.parallel_exec(dt);
-				constrain_holder.parallel_exec();
-				stress_relaxation_second_half.parallel_exec(dt);
+				stress_relaxation_first_half.exec(dt);
+				constrain_holder.exec();
+				shell_velocity_damping.exec(dt);
+				shell_rotation_damping.exec(dt);
+				constrain_holder.exec();
+				stress_relaxation_second_half.exec(dt);
 
 				++ite;
 				integral_time += dt;
@@ -274,7 +274,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 				max_displacement.push_back(shell_particles->getMaxDisplacement());
 			}
 		}
-		tick_count::interval_t tt = tick_count::now()-t1;
+		TimeInterval tt = TickCount::now()-t1;
 		std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 		std::cout << "max displacement: " << shell_particles->getMaxDisplacement() << std::endl;
 	}

@@ -59,12 +59,12 @@ public:
 	explicit DepolarizationInitialCondition(SPHBody &sph_body)
 		: electro_physiology::ElectroPhysiologyInitialCondition(sph_body)
 	{
-		voltage_ = particles_->diffusion_reaction_material_.SpeciesIndexMap()["Voltage"];
+		voltage_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Voltage"];
 	};
 
 	void update(size_t index_i, Real dt)
 	{
-		species_n_[voltage_][index_i] = exp(-4.0 * ((pos_[index_i][0] - 1.0) * (pos_[index_i][0] - 1.0) + pos_[index_i][1] * pos_[index_i][1]));
+		all_species_[voltage_][index_i] = exp(-4.0 * ((pos_[index_i][0] - 1.0) * (pos_[index_i][0] - 1.0) + pos_[index_i][1] * pos_[index_i][1]));
 	};
 };
 //----------------------------------------------------------------------
@@ -81,9 +81,9 @@ int main()
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	SolidBody muscle_body(system, makeShared<MuscleBlock>("MuscleBlock"));
-	AlievPanfilowModel muscle_reaction_model(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
+	SharedPtr<AlievPanfilowModel> muscle_reaction_model_ptr = makeShared<AlievPanfilowModel>(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
 	muscle_body.defineParticlesAndMaterial<ElectroPhysiologyParticles, MonoFieldElectroPhysiology>(
-		muscle_reaction_model, diffusion_coff, bias_coff, fiber_direction);
+		muscle_reaction_model_ptr, TypeIdentity<DirectionalDiffusion>(), diffusion_coff, bias_coff, fiber_direction);
 	muscle_body.generateParticles<ParticleGeneratorLattice>();
 
 	ObserverBody voltage_observer(system, "VoltageObserver");
@@ -119,8 +119,8 @@ int main()
 	//----------------------------------------------------------------------
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	initialization.parallel_exec();
-	correct_configuration.parallel_exec();
+	initialization.exec();
+	correct_configuration.exec();
 	//----------------------------------------------------------------------
 	//	Initial states output.
 	//----------------------------------------------------------------------
@@ -132,14 +132,14 @@ int main()
 	int ite = 0;
 	Real T0 = 16.0;
 	Real end_time = T0;
-	Real output_interval = 0.5;		 /**< Time period for output */
+	Real output_interval = 0.5;		  /**< Time period for output */
 	Real Dt = 0.01 * output_interval; /**< Time period for data observing */
 	Real dt = 0.0;
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
 	//----------------------------------------------------------------------
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 	//----------------------------------------------------------------------
 	//	Main loop starts here.
 	//----------------------------------------------------------------------
@@ -158,12 +158,12 @@ int main()
 							  << dt << "\n";
 				}
 				/**Strang splitting method. */
-				reaction_relaxation_forward.parallel_exec(0.5 * dt);
-				diffusion_relaxation.parallel_exec(dt);
-				reaction_relaxation_backward.parallel_exec(0.5 * dt);
+				reaction_relaxation_forward.exec(0.5 * dt);
+				diffusion_relaxation.exec(dt);
+				reaction_relaxation_backward.exec(0.5 * dt);
 
 				ite++;
-				dt = get_time_step_size.parallel_exec();
+				dt = get_time_step_size.exec();
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
@@ -171,14 +171,14 @@ int main()
 			write_recorded_voltage.writeToFile(ite);
 		}
 
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		write_states.writeToFile();
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 

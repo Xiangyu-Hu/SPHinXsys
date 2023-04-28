@@ -71,15 +71,17 @@ class FiberDirectionDiffusion : public DiffusionReaction<LocallyOrthotropicMuscl
 {
 public:
 	FiberDirectionDiffusion() : DiffusionReaction<LocallyOrthotropicMuscle>(
-									species_name_list, rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0)
+									{"Phi"}, SharedPtr<NoReaction>(),
+									rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0)
 	{
 		initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi", diffusion_coff);
 	};
 };
+using FiberDirectionDiffusionParticles = DiffusionReactionParticles<ElasticSolidParticles, FiberDirectionDiffusion>;
 /** Set diffusion relaxation method. */
 class DiffusionRelaxation
 	: public RelaxationOfAllDiffusionSpeciesRK2<
-		  RelaxationOfAllDiffusionSpeciesInner<ElasticSolidParticles, LocallyOrthotropicMuscle>>
+		  RelaxationOfAllDiffusionSpeciesInner<FiberDirectionDiffusionParticles>>
 {
 public:
 	explicit DiffusionRelaxation(InnerRelation &body_inner_relation)
@@ -88,11 +90,11 @@ public:
 };
 /** Imposing diffusion boundary condition */
 class DiffusionBCs
-	: public DiffusionReactionSpeciesConstraint<BodyPartByParticle, ElasticSolidParticles, LocallyOrthotropicMuscle>
+	: public DiffusionReactionSpeciesConstraint<BodyPartByParticle, FiberDirectionDiffusionParticles>
 {
 public:
 	DiffusionBCs(BodyPartByParticle &body_part, const std::string &species_name)
-		: DiffusionReactionSpeciesConstraint<BodyPartByParticle, ElasticSolidParticles, LocallyOrthotropicMuscle>(body_part, species_name),
+		: DiffusionReactionSpeciesConstraint<BodyPartByParticle, FiberDirectionDiffusionParticles>(body_part, species_name),
 		  pos_(particles_->pos_){};
 	virtual ~DiffusionBCs(){};
 
@@ -120,7 +122,7 @@ protected:
 };
 /** Compute Fiber and Sheet direction after diffusion */
 class ComputeFiberAndSheetDirections
-	: public DiffusionBasedMapping<ElasticSolidParticles, LocallyOrthotropicMuscle>
+	: public DiffusionBasedMapping<FiberDirectionDiffusionParticles>
 {
 protected:
 	DiffusionReaction<LocallyOrthotropicMuscle> &diffusion_reaction_material_;
@@ -131,11 +133,11 @@ protected:
 
 public:
 	explicit ComputeFiberAndSheetDirections(SPHBody &sph_body)
-		: DiffusionBasedMapping<ElasticSolidParticles, LocallyOrthotropicMuscle>(sph_body),
+		: DiffusionBasedMapping<FiberDirectionDiffusionParticles>(sph_body),
 		  diffusion_reaction_material_(particles_->diffusion_reaction_material_)
 
 	{
-		phi_ = diffusion_reaction_material_.SpeciesIndexMap()["Phi"];
+		phi_ = diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
 		center_line_ = Vecd(0.0, 1.0, 0.0);
 		beta_epi_ = -(70.0 / 180.0) * M_PI;
 		beta_endo_ = (80.0 / 180.0) * M_PI;
@@ -160,7 +162,7 @@ public:
 		Vecd circumferential_direction = getCrossProduct(center_line_, face_norm);
 		Vecd cd_norm = circumferential_direction / (circumferential_direction.norm() + 1.0e-15);
 		/** The rotation angle is given by beta = (beta_epi - beta_endo) phi + beta_endo */
-		Real beta = (beta_epi_ - beta_endo_) * species_n_[phi_][index_i] + beta_endo_;
+		Real beta = (beta_epi_ - beta_endo_) * all_species_[phi_][index_i] + beta_endo_;
 		/** Compute the rotation matrix through Rodrigues rotation formulation. */
 		Vecd f_0 = cos(beta) * cd_norm + sin(beta) * getCrossProduct(face_norm, cd_norm) +
 				   face_norm.dot(cd_norm) * (1.0 - cos(beta)) * face_norm;
@@ -201,7 +203,7 @@ public:
 	explicit ApplyStimulusCurrentSI(SPHBody &sph_body)
 		: electro_physiology::ElectroPhysiologyInitialCondition(sph_body)
 	{
-		voltage_ = particles_->diffusion_reaction_material_.SpeciesIndexMap()["Voltage"];
+		voltage_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Voltage"];
 	};
 
 	void update(size_t index_i, Real dt)
@@ -212,7 +214,7 @@ public:
 			{
 				if (-3.0 * length_scale <= pos_[index_i][2] && pos_[index_i][2] <= 3.0 * length_scale)
 				{
-					species_n_[voltage_][index_i] = 0.92;
+					all_species_[voltage_][index_i] = 0.92;
 				}
 			}
 		}
@@ -231,7 +233,7 @@ public:
 	explicit ApplyStimulusCurrentSII(SPHBody &sph_body)
 		: electro_physiology::ElectroPhysiologyInitialCondition(sph_body)
 	{
-		voltage_ = particles_->diffusion_reaction_material_.SpeciesIndexMap()["Voltage"];
+		voltage_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Voltage"];
 	};
 
 	void update(size_t index_i, Real dt)
@@ -242,7 +244,7 @@ public:
 			{
 				if (12.0 * length_scale <= pos_[index_i][2])
 				{
-					species_n_[voltage_][index_i] = 0.95;
+					all_species_[voltage_][index_i] = 0.95;
 				}
 			}
 		}

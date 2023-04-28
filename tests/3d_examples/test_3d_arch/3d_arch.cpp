@@ -98,11 +98,14 @@ public:
 /**
  *  The main program
  */
-int main()
+int main(int ac, char *av[])
 {
 	/** Setup the system. */
 	SPHSystem system(system_domain_bounds, particle_spacing_ref);
-
+#ifdef BOOST_AVAILABLE
+	system.handleCommandlineOptions(ac, av);
+#endif
+	IOEnvironment io_environment(system);
 	/** create a cylinder body with shell particles and linear elasticity. */
 	SolidBody cylinder_body(system, makeShared<DefaultShape>("CylinderBody"));
 	cylinder_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
@@ -142,7 +145,6 @@ int main()
 	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vecd>>>
 		cylinder_rotation_damping(0.2, cylinder_body_inner, "AngularVelocity", physical_viscosity);
 	/** Output */
-	IOEnvironment io_environment(system);
 	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
 		write_cylinder_max_displacement("Position", io_environment, cylinder_observer_contact);
@@ -150,7 +152,7 @@ int main()
 	/** Apply initial condition. */
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	corrected_configuration.parallel_exec();
+	corrected_configuration.exec();
 
 	/**
 	 * From here the time stepping begins.
@@ -166,8 +168,8 @@ int main()
 	Real output_period = end_time / 100.0;
 	Real dt = 0.0;
 	/** Statistics for computing time. */
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 	/**
 	 * Main loop
 	 */
@@ -182,32 +184,39 @@ int main()
 						  << GlobalStaticVariables::physical_time_ << "	dt: "
 						  << dt << "\n";
 			}
-			initialize_external_force.parallel_exec(dt);
-			stress_relaxation_first_half.parallel_exec(dt);
-			constrain_holder.parallel_exec(dt);
-			cylinder_position_damping.parallel_exec(dt);
-			cylinder_rotation_damping.parallel_exec(dt);
-			constrain_holder.parallel_exec(dt);
-			stress_relaxation_second_half.parallel_exec(dt);
+			initialize_external_force.exec(dt);
+			stress_relaxation_first_half.exec(dt);
+			constrain_holder.exec(dt);
+			cylinder_position_damping.exec(dt);
+			cylinder_rotation_damping.exec(dt);
+			constrain_holder.exec(dt);
+			stress_relaxation_second_half.exec(dt);
 
 			ite++;
-			dt = computing_time_step_size.parallel_exec();
+			dt = computing_time_step_size.exec();
 			integral_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
 		}
 		write_cylinder_max_displacement.writeToFile(ite);
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		write_states.writeToFile();
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-	write_cylinder_max_displacement.newResultTest();
+	if (system.generate_regression_data_)
+	{
+		write_cylinder_max_displacement.generateDataBase(0.005);
+	}
+	else
+	{
+		write_cylinder_max_displacement.newResultTest();
+	}
 
 	return 0;
 }

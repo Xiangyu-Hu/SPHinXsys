@@ -70,8 +70,8 @@ int main(int ac, char *av[])
 		//----------------------------------------------------------------------
 		//	Particle relaxation starts here.
 		//----------------------------------------------------------------------
-		random_insert_body_particles.parallel_exec(0.25);
-		relaxation_step_inner.SurfaceBounding().parallel_exec();
+		random_insert_body_particles.exec(0.25);
+		relaxation_step_inner.SurfaceBounding().exec();
 		write_insert_body_to_vtp.writeToFile(0);
 		//----------------------------------------------------------------------
 		//	Relax particles of the insert body.
@@ -79,7 +79,7 @@ int main(int ac, char *av[])
 		int ite_p = 0;
 		while (ite_p < 1000)
 		{
-			relaxation_step_inner.parallel_exec();
+			relaxation_step_inner.exec();
 			ite_p += 1;
 			if (ite_p % 200 == 0)
 			{
@@ -173,15 +173,15 @@ int main(int ac, char *av[])
 	sph_system.initializeSystemCellLinkedLists();
 	/** periodic condition applied after the mesh cell linked list build up
 	 * but before the configuration build up. */
-	periodic_condition.update_cell_linked_list_.parallel_exec();
+	periodic_condition.update_cell_linked_list_.exec();
 	/** initialize configurations for all bodies. */
 	sph_system.initializeSystemConfigurations();
 	/** computing surface normal direction for the wall. */
-	wall_boundary_normal_direction.parallel_exec();
+	wall_boundary_normal_direction.exec();
 	/** computing surface normal direction for the insert body. */
-	insert_body_normal_direction.parallel_exec();
+	insert_body_normal_direction.exec();
 	/** computing linear reproducing configuration for the insert body. */
-	insert_body_corrected_configuration.parallel_exec();
+	insert_body_corrected_configuration.exec();
 	//----------------------------------------------------------------------
 	//	Setup computing and initial conditions.
 	//----------------------------------------------------------------------
@@ -192,8 +192,8 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
 	//----------------------------------------------------------------------
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 	//----------------------------------------------------------------------
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
@@ -208,48 +208,48 @@ int main(int ac, char *av[])
 		/** Integrate time (loop) until the next output time. */
 		while (integration_time < output_interval)
 		{
-			initialize_a_fluid_step.parallel_exec();
-			Real Dt = get_fluid_advection_time_step_size.parallel_exec();
-			update_density_by_summation.parallel_exec();
-			viscous_acceleration.parallel_exec();
-			transport_correction.parallel_exec();
+			initialize_a_fluid_step.exec();
+			Real Dt = get_fluid_advection_time_step_size.exec();
+			update_density_by_summation.exec();
+			viscous_acceleration.exec();
+			transport_correction.exec();
 
 			/** FSI for viscous force. */
-			viscous_force_on_solid.parallel_exec();
+			viscous_force_on_solid.exec();
 			/** Update normal direction on elastic body.*/
-			insert_body_update_normal.parallel_exec();
+			insert_body_update_normal.exec();
 			size_t inner_ite_dt = 0;
 			size_t inner_ite_dt_s = 0;
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
-				Real dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt);
+				Real dt = SMIN(get_fluid_time_step_size.exec(), Dt);
 				/** Fluid pressure relaxation */
-				pressure_relaxation.parallel_exec(dt);
+				pressure_relaxation.exec(dt);
 				/** FSI for pressure force. */
-				fluid_force_on_solid_update.parallel_exec();
+				fluid_force_on_solid_update.exec();
 				/** Fluid density relaxation */
-				density_relaxation.parallel_exec(dt);
+				density_relaxation.exec(dt);
 
 				/** Solid dynamics. */
 				inner_ite_dt_s = 0;
 				Real dt_s_sum = 0.0;
-				average_velocity_and_acceleration.initialize_displacement_.parallel_exec();
+				average_velocity_and_acceleration.initialize_displacement_.exec();
 				while (dt_s_sum < dt)
 				{
-					Real dt_s = SMIN(insert_body_computing_time_step_size.parallel_exec(), dt - dt_s_sum);
-					insert_body_stress_relaxation_first_half.parallel_exec(dt_s);
-					constraint_beam_base.parallel_exec();
-					insert_body_stress_relaxation_second_half.parallel_exec(dt_s);
+					Real dt_s = SMIN(insert_body_computing_time_step_size.exec(), dt - dt_s_sum);
+					insert_body_stress_relaxation_first_half.exec(dt_s);
+					constraint_beam_base.exec();
+					insert_body_stress_relaxation_second_half.exec(dt_s);
 					dt_s_sum += dt_s;
 					inner_ite_dt_s++;
 				}
-				average_velocity_and_acceleration.update_averages_.parallel_exec(dt);
+				average_velocity_and_acceleration.update_averages_.exec(dt);
 
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
-				parabolic_inflow.parallel_exec();
+				parabolic_inflow.exec();
 				inner_ite_dt++;
 			}
 
@@ -262,10 +262,10 @@ int main(int ac, char *av[])
 			number_of_iterations++;
 
 			/** Water block configuration and periodic condition. */
-			periodic_condition.bounding_.parallel_exec();
+			periodic_condition.bounding_.exec();
 
 			water_block.updateCellLinkedListWithParticleSort(100);
-			periodic_condition.update_cell_linked_list_.parallel_exec();
+			periodic_condition.update_cell_linked_list_.exec();
 			water_block_complex.updateConfiguration();
 			/** one need update configuration after periodic condition. */
 			insert_body.updateCellLinkedList();
@@ -274,19 +274,19 @@ int main(int ac, char *av[])
 			write_beam_tip_displacement.writeToFile(number_of_iterations);
 		}
 
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		/** write run-time observation into file */
-		compute_vorticity.parallel_exec();
+		compute_vorticity.exec();
 		write_real_body_states.writeToFile();
 		write_total_viscous_force_on_insert_body.writeToFile(number_of_iterations);
 		fluid_observer_contact.updateConfiguration();
 		write_fluid_velocity.writeToFile(number_of_iterations);
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 

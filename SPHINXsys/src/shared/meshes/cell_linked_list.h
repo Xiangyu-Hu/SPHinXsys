@@ -77,11 +77,9 @@ namespace SPH
 		/** computing the sequence which indicate the order of sorted particle data */
 		virtual StdLargeVec<size_t> &computingSequence(BaseParticles &base_particles) = 0;
 		/** Tag body part by cell, call by body part */
-		virtual void tagBodyPartByCell(ConcurrentIndexesInCells &cell_lists, std::function<bool(Vecd, Real)> &check_included) = 0;
+		virtual void tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) = 0;
 		/** Tag domain bounding cells in an axis direction, called by domain bounding classes */
 		virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, BoundingBox &bounding_bounds, int axis) = 0;
-		/** Tag domain bounding cells in one side, called by mirror boundary condition */
-		virtual void tagOneSideBoundingCells(CellLists &cell_data_lists, BoundingBox &bounding_bounds, int axis, bool positive) = 0;
 	};
 
 	/**
@@ -114,9 +112,8 @@ namespace SPH
 		void InsertListDataEntry(size_t particle_index, const Vecd &particle_position, Real volumetric) override;
 		virtual ListData findNearestListDataEntry(const Vecd &position) override;
 		virtual StdLargeVec<size_t> &computingSequence(BaseParticles &base_particles) override;
-		virtual void tagBodyPartByCell(ConcurrentIndexesInCells &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
+		virtual void tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
 		virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, BoundingBox &bounding_bounds, int axis) override;
-		virtual void tagOneSideBoundingCells(CellLists &cell_data_lists, BoundingBox &bounding_bounds, int axis, bool positive) override;
 		virtual void writeMeshFieldToPlt(std::ofstream &output_file) override;
 		virtual StdVec<CellLinkedList *> CellLinkedListLevels() override { return single_cell_linked_list_level_; };
 
@@ -150,9 +147,8 @@ namespace SPH
 		void InsertListDataEntry(size_t particle_index, const Vecd &particle_position, Real volumetric) override;
 		virtual ListData findNearestListDataEntry(const Vecd &position) override { return ListData(0, Vecd::Zero(), 0); };
 		virtual StdLargeVec<size_t> &computingSequence(BaseParticles &base_particles) override;
-		virtual void tagBodyPartByCell(ConcurrentIndexesInCells &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
+		virtual void tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
 		virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, BoundingBox &bounding_bounds, int axis) override{};
-		virtual void tagOneSideBoundingCells(CellLists &cell_data_lists, BoundingBox &bounding_bounds, int axis, bool positive) override{};
 		virtual StdVec<CellLinkedList *> CellLinkedListLevels() override { return getMeshLevels(); };
 	};
 }

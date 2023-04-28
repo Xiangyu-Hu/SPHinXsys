@@ -148,9 +148,9 @@ int main(int ac, char *av[])
 		//----------------------------------------------------------------------
 		//	Particle relaxation starts here.
 		//----------------------------------------------------------------------
-		shell_random_particles.parallel_exec(0.25);
+		shell_random_particles.exec(0.25);
 
-		relaxation_step_shell_inner.mid_surface_bounding_.parallel_exec();
+		relaxation_step_shell_inner.mid_surface_bounding_.exec();
 		write_relaxed_particles.writeToFile(0);
 		shell.updateCellLinkedList();
 		write_mesh_cell_linked_list.writeToFile(0);
@@ -162,7 +162,7 @@ int main(int ac, char *av[])
 		while (ite < relax_step)
 		{
 			for (int k = 0; k < 2; ++k)
-				relaxation_step_shell_inner.parallel_exec();
+				relaxation_step_shell_inner.exec();
 			ite += 1;
 			if (ite % 100 == 0)
 			{
@@ -235,7 +235,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
-	beam_corrected_configuration.parallel_exec();
+	beam_corrected_configuration.exec();
 	/** Initial states output. */
 	body_states_recording.writeToFile(0);
 	/** Main loop. */
@@ -247,8 +247,8 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
 	//----------------------------------------------------------------------
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 	//----------------------------------------------------------------------
 	//	Main loop starts here.
 	//----------------------------------------------------------------------
@@ -257,29 +257,29 @@ int main(int ac, char *av[])
 		Real integration_time = 0.0;
 		while (integration_time < output_interval)
 		{
-			beam_initialize_timestep.parallel_exec();
+			beam_initialize_timestep.exec();
 			if (ite % 100 == 0)
 			{
 				std::cout << "N=" << ite << " Time: "
 						  << GlobalStaticVariables::physical_time_ << "	dt: " << dt << "\n";
 			}
-			beam_shell_update_contact_density.parallel_exec();
-			beam_compute_solid_contact_forces.parallel_exec();
-			shell_compute_solid_contact_forces.parallel_exec();
+			beam_shell_update_contact_density.exec();
+			beam_compute_solid_contact_forces.exec();
+			shell_compute_solid_contact_forces.exec();
 
 			{
 				SimTK::State &state_for_update = integ.updAdvancedState();
 				force_on_bodies.clearAllBodyForces(state_for_update);
-				force_on_bodies.setOneBodyForce(state_for_update, shellMBody, force_on_shell.parallel_exec());
+				force_on_bodies.setOneBodyForce(state_for_update, shellMBody, force_on_shell.exec());
 				integ.stepBy(dt);
-				constraint_shell.parallel_exec();
+				constraint_shell.exec();
 			}
 
-			beam_stress_relaxation_first_half.parallel_exec(dt);
-			constraint_holder.parallel_exec(dt);
-			beam_damping.parallel_exec(dt);
-			constraint_holder.parallel_exec(dt);
-			beam_stress_relaxation_second_half.parallel_exec(dt);
+			beam_stress_relaxation_first_half.exec(dt);
+			constraint_holder.exec(dt);
+			beam_damping.exec(dt);
+			constraint_holder.exec(dt);
+			beam_stress_relaxation_second_half.exec(dt);
 
 			shell.updateCellLinkedList();
 			shell_contact.updateConfiguration();
@@ -287,19 +287,19 @@ int main(int ac, char *av[])
 			beam_contact.updateConfiguration();
 
 			ite++;
-			Real dt_free = shell_get_time_step_size.parallel_exec();
+			Real dt_free = shell_get_time_step_size.exec();
 			dt = dt_free;
 			integration_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
 		}
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		body_states_recording.writeToFile(ite);
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 	return 0;
