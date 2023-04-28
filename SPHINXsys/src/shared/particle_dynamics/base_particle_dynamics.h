@@ -156,7 +156,7 @@ namespace SPH
 		SPHBodyVector contact_bodies_;
 		StdVec<ContactParticlesType *> contact_particles_;
 		/** Configurations for particle interaction between bodies. */
-		ContactParticleConfiguration contact_configuration_;
+		StdVec<ParticleConfiguration *> contact_configuration_;
 	};
 
 	/**

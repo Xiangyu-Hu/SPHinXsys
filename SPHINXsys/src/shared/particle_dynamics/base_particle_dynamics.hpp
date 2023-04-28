@@ -47,7 +47,7 @@ namespace SPH
 		{
 			contact_bodies_.push_back(contact_sph_bodies[i]);
 			contact_particles_.push_back(DynamicCast<ContactParticlesType>(this, &contact_sph_bodies[i]->getBaseParticles()));
-			contact_configuration_.push_back(body_contact_relation.contact_configuration_[i]);
+			contact_configuration_.push_back(&body_contact_relation.contact_configuration_[i]);
 		}
 	}
 	//=================================================================================================//
@@ -72,7 +72,7 @@ namespace SPH
 
 		for (size_t i = 0; i != extra_contact_relation.contact_bodies_.size(); ++i)
 		{
-			contact_configuration_.push_back(extra_contact_relation.contact_configuration_[i]);
+			contact_configuration_.push_back(&extra_contact_relation.contact_configuration_[i]);
 		}
 	}
 	//=================================================================================================//

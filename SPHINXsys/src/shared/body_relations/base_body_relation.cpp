@@ -49,6 +49,7 @@ namespace SPH
 		: SPHRelation(sph_body), contact_bodies_(contact_sph_bodies)
 	{
 		subscribeToBody();
+		contact_configuration_.resize(contact_bodies_.size());
 	}
 	//=================================================================================================//
 	void BaseContactRelation::resizeConfiguration()
@@ -56,7 +57,7 @@ namespace SPH
 		size_t updated_size = base_particles_.real_particles_bound_;
 		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{
-			contact_configuration_[k]->resize(updated_size, Neighborhood());
+			contact_configuration_[k].resize(updated_size, Neighborhood());
 		}
 	}
 	//=================================================================================================//
@@ -70,7 +71,7 @@ namespace SPH
 				{
 					for (size_t num = r.begin(); num != r.end(); ++num)
 					{
-						(*contact_configuration_[k])[num].current_size_ = 0;
+						contact_configuration_[k][num].current_size_ = 0;
 					}
 				},
 				ap);

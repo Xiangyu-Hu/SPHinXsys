@@ -54,7 +54,7 @@ namespace SPH
 		BaseContactRelation &getContactRelation() { return contact_relation_; };
 		RealBodyVector contact_bodies_;
 		ParticleConfiguration &inner_configuration_;
-		ContactParticleConfiguration contact_configuration_;
+		StdVec<ParticleConfiguration> &contact_configuration_;
 
 		ComplexRelation(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation);
 		ComplexRelation(RealBody &real_body, RealBodyVector contact_bodies);

@@ -52,8 +52,6 @@ namespace SPH
 		{
 			for (size_t k = 0; k != contact_bodies_.size(); ++k)
 			{
-				contact_configuration_.push_back(
-					configuration_ptrs_keeper_.createPtr<ParticleConfiguration>());
 				CellLinkedList *target_cell_linked_list =
 					DynamicCast<CellLinkedList>(this, &contact_bodies_[k]->getCellLinkedList());
 				target_cell_linked_lists_.push_back(target_cell_linked_list);

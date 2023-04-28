@@ -22,7 +22,7 @@ namespace SPH
 		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{
 			target_cell_linked_lists_[k]->searchNeighborsByParticles(
-				sph_body_, *contact_configuration_[k],
+				sph_body_, contact_configuration_[k],
 				*get_search_depths_[k], *get_contact_neighbors_[k]);
 		}
 	}
@@ -47,7 +47,7 @@ namespace SPH
 			particle_for(execution::ParallelPolicy(), body_part_particles_,
 						 [&](size_t index_i)
 						 {
-							 (*contact_configuration_[k])[index_i].current_size_ = 0;
+							 contact_configuration_[k][index_i].current_size_ = 0;
 						 });
 		}
 	}
@@ -58,7 +58,7 @@ namespace SPH
 		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{
 			target_cell_linked_lists_[k]->searchNeighborsByParticles(
-				*body_surface_layer_, *contact_configuration_[k],
+				*body_surface_layer_, contact_configuration_[k],
 				*get_search_depths_[k], *get_contact_neighbors_[k]);
 		}
 	}
@@ -81,7 +81,7 @@ namespace SPH
 		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{
 			target_cell_linked_lists_[k]->searchNeighborsByParticles(
-				sph_body_, *contact_configuration_[k],
+				sph_body_, contact_configuration_[k],
 				*get_search_depths_[k], *get_part_contact_neighbors_[k]);
 		}
 	}
@@ -95,9 +95,6 @@ namespace SPH
 
 		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{
-			contact_configuration_.push_back(
-				configuration_ptrs_keeper_.createPtr<ParticleConfiguration>());
-
 			cell_linked_list_levels_[k] = contact_bodies_[k]->getCellLinkedList().CellLinkedListLevels();
 
 			for (size_t l = 0; l != cell_linked_list_levels_[k].size(); ++l)
@@ -124,7 +121,7 @@ namespace SPH
 			for (size_t l = 0; l != cell_linked_list_levels_[k].size(); ++l)
 			{
 				cell_linked_list_levels_[k][l]->searchNeighborsByParticles(
-					sph_body_, *contact_configuration_[k],
+					sph_body_, contact_configuration_[k],
 					*get_multi_level_search_range_[k][l], *get_contact_neighbors_adaptive_[k][l]);
 			}
 		}
