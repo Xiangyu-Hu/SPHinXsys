@@ -130,7 +130,7 @@ namespace SPH
 						Real corrected_W_ij = std::max(contact_neighborhood.W_ij_[n] - offset_W_ij_[k], 0.0);
 						sigma += corrected_W_ij * contact_Vol_k[contact_neighborhood.j_[n]];
 					}
-					constexpr Real heuristic_limiter = 0.4;
+					constexpr Real heuristic_limiter = 0.1;
 					// With heuristic_limiter, the maximum contact pressure is heuristic_limiter * K (Bulk modulus).
 					// The contact pressure applied to fewer particles than on solids, yielding high acceleration locally,
 					// which is one source of instability. Thus, we add a heuristic_limiter
