@@ -33,7 +33,7 @@ namespace SPH
 	{
 		for (size_t i = 0; i < body_relations_.size(); i++)
 		{
-			body_relations_[i]->updateConfigurationMemories();
+			body_relations_[i]->resizeConfiguration();
 		}
 	}
 	//=================================================================================================//
