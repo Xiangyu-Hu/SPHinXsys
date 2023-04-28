@@ -113,7 +113,7 @@ namespace SPH
 				for (int l = 0; l != 3; ++l)
 				{
 					Real temp = three_gaussian_points_[l] * average_spacing_k * 0.5 + average_spacing_k * 0.5;
-					Real contact_temp = 2.0 * (kernel_->W(h_ratio_k, temp, ZeroVecd) - offset_W_ij_[l]) *
+					Real contact_temp = 2.0 * (kernel_->W(h_ratio_k, temp, ZeroVecd) - offset_W_ij_[k]) *
 										average_spacing_k * 0.5 * three_gaussian_weights_[l];
 					contact_max += Dimensions == 2 ? contact_temp : contact_temp * Pi * temp;
 				}
