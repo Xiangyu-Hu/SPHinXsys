@@ -76,31 +76,6 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		void ShellContactDensity::interaction(size_t index_i, Real dt)
-		{
-			/** shell contact interaction. */
-			Real sigma = 0.0;
-			Real contact_density_i = 0.0;
-
-			for (size_t k = 0; k < contact_configuration_.size(); ++k)
-			{
-				StdLargeVec<Real> &contact_Vol_k = *(contact_Vol_[k]);
-				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
-				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-				{
-					Real corrected_W_ij = std::max(contact_neighborhood.W_ij_[n] - offset_W_ij_[k], 0.0);
-					sigma += corrected_W_ij * contact_Vol_k[contact_neighborhood.j_[n]];
-				}
-				constexpr Real heuristic_limiter = 0.4;
-				// With heuristic_limiter, the maximum contact pressure is heuristic_limiter * K (Bulk modulus).
-				// The contact pressure applied to fewer particles than on solids, yielding high acceleration locally,
-				// which is one source of instability. Thus, we add a heuristic_limiter
-				// to maintain enough contact pressure to prevent penetration while also maintaining stability.
-				contact_density_i += heuristic_limiter * sigma * calibration_factor_[k];
-			}
-			(*contact_density_)[index_i] = contact_density_i;
-		}
-		//=================================================================================================//
 		SelfContactForce::
 			SelfContactForce(SelfSurfaceContactRelation &self_contact_relation)
 			: LocalDynamics(self_contact_relation.getSPHBody()),
