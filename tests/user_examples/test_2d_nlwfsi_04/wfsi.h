@@ -182,10 +182,10 @@ Real bcmy=(rho_bp*bp_area*bp_cm[1]+
 		  rho_psp*psp_area+
 		  rho_tp*tp_area);
 Vec2d G(bcmx,bcmy);
-Real d_bp =sqrt((G[1]-bp_cm[1])*(G[1]-bp_cm[1])+(G[2]-bp_cm[2])*(G[2]-bp_cm[2]));
-Real d_ssp=sqrt((G[1]-ssp_cm[1])*(G[1]-ssp_cm[1])+(G[2]-ssp_cm[2])*(G[2]-ssp_cm[2]));
-Real d_psp=sqrt((G[1]-psp_cm[1])*(G[1]-psp_cm[1])+(G[2]-psp_cm[2])*(G[2]-psp_cm[2]));
-Real d_tp =sqrt((G[1]-tp_cm[1])*(G[1]-tp_cm[1])+(G[2]-tp_cm[2])*(G[2]-tp_cm[2]));
+Real d_bp =sqrt((G[0]-bp_cm[0])*(G[0]-bp_cm[0])+(G[1]-bp_cm[1])*(G[1]-bp_cm[1]));
+Real d_ssp=sqrt((G[0]-ssp_cm[0])*(G[0]-ssp_cm[0])+(G[1]-ssp_cm[1])*(G[1]-ssp_cm[1]));
+Real d_psp=sqrt((G[0]-psp_cm[0])*(G[0]-psp_cm[0])+(G[1]-psp_cm[1])*(G[1]-psp_cm[1]));
+Real d_tp =sqrt((G[0]-tp_cm[0])*(G[0]-tp_cm[0])+(G[1]-tp_cm[1])*(G[1]-tp_cm[1]));
 
 Real Ix = (Ibp[0]+rho_bp*bp_area*(d_bp*d_bp)+
 		   Issp[0]+rho_ssp*ssp_area*(d_ssp*d_ssp)+
@@ -445,7 +445,7 @@ class WaveMaking : public solid_dynamics::BaseMotionConstraint<BodyPartByParticl
 
 	Vecd getDisplacement(const Real &time)
 	{
-		Real dp;
+		Real dp=0;
 		for (int j=0;j<(N);j++){
 			dp = dp + 0.5*S[j]*cos(-k[j]*xf-om[j]*(time-tf));
 		};
@@ -457,7 +457,7 @@ class WaveMaking : public solid_dynamics::BaseMotionConstraint<BodyPartByParticl
 
 	Vec2d getVelocity(const Real &time)
 	{
-		Real vl;
+		Real vl=0;
 		for (int j=0;j<(N);j++){
 		vl = vl + 0.5*om[j]*S[j]*sin(-k[j]*xf-om[j]*(time-tf));
 		};
@@ -468,7 +468,7 @@ class WaveMaking : public solid_dynamics::BaseMotionConstraint<BodyPartByParticl
 
 	Vec2d getAcceleration(const Real &time)
 	{
-		Real ax;
+		Real ax=0;
 		for (int j=0;j<(N);j++){
 		ax = ax -0.5*om[j]*om[j]*S[j]*cos(-k[j]*xf-om[j]*(time-tf));
 		};
