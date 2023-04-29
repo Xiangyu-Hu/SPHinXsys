@@ -12,21 +12,22 @@ namespace SPH
 		//=================================================================================================//
 		SelfContactDensitySummation::
 			SelfContactDensitySummation(SelfSurfaceContactRelation &self_contact_relation)
-			: LocalDynamics(self_contact_relation.getSPHBody()), SolidDataInner(self_contact_relation),
+			: ContactDensityAccessor(self_contact_relation.base_particles_,"SelfContactDensity"),
+			  LocalDynamics(self_contact_relation.getSPHBody()),
+			  SolidDataInner(self_contact_relation),
 			  mass_(particles_->mass_)
 		{
-			particles_->registerVariable(self_contact_density_, "SelfContactDensity");
 			Real dp_1 = self_contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing();
 			offset_W_ij_ = self_contact_relation.getSPHBody().sph_adaptation_->getKernel()->W(dp_1, ZeroVecd);
 		}
 		//=================================================================================================//
 		ContactDensitySummation::
 			ContactDensitySummation(SurfaceContactRelation &solid_body_contact_relation)
-			: LocalDynamics(solid_body_contact_relation.getSPHBody()),
+			: ContactDensityAccessor(solid_body_contact_relation.base_particles_,"ContactDensity"), 
+			  LocalDynamics(solid_body_contact_relation.getSPHBody()),
 			  ContactDynamicsData(solid_body_contact_relation), mass_(particles_->mass_),
 			  offset_W_ij_(StdVec<Real>(contact_configuration_.size(), 0.0))
 		{
-			particles_->registerVariable(contact_density_, "ContactDensity");
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				contact_mass_.push_back(&(contact_particles_[k]->mass_));
@@ -47,13 +48,12 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ShellContactDensity::ShellContactDensity(SurfaceContactRelation &solid_body_contact_relation)
-			: LocalDynamics(solid_body_contact_relation.getSPHBody()),
+			: ContactDensityAccessor(solid_body_contact_relation.base_particles_,"ContactDensity"), 
+			  LocalDynamics(solid_body_contact_relation.getSPHBody()),
 			  ContactDynamicsData(solid_body_contact_relation), solid_(particles_->solid_),
 			  kernel_(solid_body_contact_relation.getSPHBody().sph_adaptation_->getKernel()),
 			  particle_spacing_(solid_body_contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing())
 		{
-			particles_->registerVariable(contact_density_, "ContactDensity");
-
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				Real dp_k = solid_body_contact_relation.contact_bodies_[k]->sph_adaptation_->ReferenceSpacing();

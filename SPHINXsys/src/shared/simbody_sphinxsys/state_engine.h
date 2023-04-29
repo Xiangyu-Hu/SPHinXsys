@@ -162,7 +162,7 @@ namespace SPH {
             SimTK::Stage    invalidatestage_;
         };
  
-        UniquePtrKeepers<AddedStateVariable> added_state_variable_ptr_keeper_;
+        UniquePtrsKeeper<AddedStateVariable> added_state_variable_ptr_keeper_;
         /**
          * @struct StateVariableInfo
          * @brief   To hold related info about discrete variables.

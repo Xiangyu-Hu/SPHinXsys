@@ -64,7 +64,7 @@ namespace SPH
 		class Branch;
 
 	private:
-		UniquePtrKeepers<Branch> branches_ptr_keeper_;
+		UniquePtrsKeeper<Branch> branches_ptr_keeper_;
 
 	public:
 		StdVec<Branch *> branches_;	   /**< Container of all branches */

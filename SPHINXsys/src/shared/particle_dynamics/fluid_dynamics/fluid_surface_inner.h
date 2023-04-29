@@ -58,6 +58,7 @@ namespace SPH
 			StdLargeVec<int> &surface_indicator_;
 			StdLargeVec<Real> pos_div_;
 			Real smoothing_length_;
+			bool isVeryNearFreeSurface(size_t index_i);
 		};
 
 		/**
@@ -78,7 +79,7 @@ namespace SPH
 
 		protected:
 			StdLargeVec<int> previous_surface_indicator_;
-			void checkNearPreviousFreeSurface(size_t index_i);
+			bool isNearPreviousFreeSurface(size_t index_i);
 		};
 		using SpatialTemporalFreeSurfaceIdentificationInner =
 			SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIndicationInner>;
@@ -122,7 +123,7 @@ namespace SPH
 
 		protected:
 			StdLargeVec<int> &surface_indicator_;
-			bool isNearSurface(size_t index_i);
+			bool isNearFreeSurface(size_t index_i);
 		};
 
 		/**

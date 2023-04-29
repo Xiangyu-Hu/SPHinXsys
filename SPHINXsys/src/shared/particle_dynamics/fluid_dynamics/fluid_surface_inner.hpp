@@ -36,92 +36,92 @@ namespace SPH
 	//=================================================================================================//
 	namespace fluid_dynamics
 	{
-        //=================================================================================================//
-        void FreeSurfaceIndicationInner::
-		interaction(size_t index_i, Real dt)
-        {
-            Real pos_div = 0.0;
-            const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-            for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-            {
-                pos_div -= inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.r_ij_[n];
-            }
-            pos_div_[index_i] = pos_div;
-        }
-        //=================================================================================================//
-        void ColorFunctionGradientInner::
-		interaction(size_t index_i, Real dt)
-        {
-            Vecd gradient = Vecd::Zero();
-            const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-            if (pos_div_[index_i] < threshold_by_dimensions_)
-            {
-                for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-                {
-                    gradient -= inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
-                }
-            }
-            color_grad_[index_i] = gradient;
-            surface_norm_[index_i] = gradient / (gradient.norm() + TinyReal);
-        }
-        //=================================================================================================//
-        void ColorFunctionGradientInterpolationInner::
-		interaction(size_t index_i, Real dt)
-        {
-            Vecd grad = Vecd::Zero();
-            Real weight(0);
-            Real total_weight(0);
-            if (surface_indicator_[index_i] == 1 && pos_div_[index_i] > threshold_by_dimensions_)
-            {
-                Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-                for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-                {
-                    size_t index_j = inner_neighborhood.j_[n];
-                    if (surface_indicator_[index_j] == 1 && pos_div_[index_j] < threshold_by_dimensions_)
-                    {
-                        weight = inner_neighborhood.W_ij_[n] * Vol_[index_j];
-                        grad += weight * color_grad_[index_j];
-                        total_weight += weight;
-                    }
-                }
-                Vecd grad_norm = grad / (total_weight + TinyReal);
-                color_grad_[index_i] = grad_norm;
-                surface_norm_[index_i] = grad_norm / (grad_norm.norm() + TinyReal);
-            }
-        }
-        //=================================================================================================//
-        void SurfaceTensionAccelerationInner::
-	   interaction(size_t index_i, Real dt)
-        {
-            Vecd n_i = surface_norm_[index_i];
-            Real curvature(0.0);
-            Real renormalized_curvature(0);
-            Real pos_div(0);
-            if (surface_indicator_[index_i] == 1)
-            {
-                Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-                for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-                {
-                    size_t index_j = inner_neighborhood.j_[n];
-                    if (surface_indicator_[index_j] == 1)
-                    {
-                        Vecd n_j = surface_norm_[index_j];
-                        Vecd n_ij = n_i - n_j;
-                        curvature -= inner_neighborhood.dW_ijV_j_[n] * n_ij.dot(inner_neighborhood.e_ij_[n]);
-                        pos_div -= inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.r_ij_[n];
-                    }
-                }
-            }
-            /**
-             Adami et al. 2010 has a typo in equation.
-             (dv / dt)_s = (1.0 / rho) (-sigma * k * n * delta)
-                         = (1/rho) * curvature * color_grad
-                         = (1/m) * curvature * color_grad * vol
-             */
-            renormalized_curvature = (Real)Dimensions * curvature / ABS(pos_div + TinyReal);
-            Vecd acceleration = gamma_ * renormalized_curvature * color_grad_[index_i] * Vol_[index_i];
-            acc_prior_[index_i] -= acceleration / mass_[index_i];
-        }
+		//=================================================================================================//
+		void FreeSurfaceIndicationInner::
+			interaction(size_t index_i, Real dt)
+		{
+			Real pos_div = 0.0;
+			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+			{
+				pos_div -= inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.r_ij_[n];
+			}
+			pos_div_[index_i] = pos_div;
+		}
+		//=================================================================================================//
+		void ColorFunctionGradientInner::
+			interaction(size_t index_i, Real dt)
+		{
+			Vecd gradient = Vecd::Zero();
+			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+			if (pos_div_[index_i] < threshold_by_dimensions_)
+			{
+				for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+				{
+					gradient -= inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+				}
+			}
+			color_grad_[index_i] = gradient;
+			surface_norm_[index_i] = gradient / (gradient.norm() + TinyReal);
+		}
+		//=================================================================================================//
+		void ColorFunctionGradientInterpolationInner::
+			interaction(size_t index_i, Real dt)
+		{
+			Vecd grad = Vecd::Zero();
+			Real weight(0);
+			Real total_weight(0);
+			if (surface_indicator_[index_i] == 1 && pos_div_[index_i] > threshold_by_dimensions_)
+			{
+				Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+				for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+				{
+					size_t index_j = inner_neighborhood.j_[n];
+					if (surface_indicator_[index_j] == 1 && pos_div_[index_j] < threshold_by_dimensions_)
+					{
+						weight = inner_neighborhood.W_ij_[n] * Vol_[index_j];
+						grad += weight * color_grad_[index_j];
+						total_weight += weight;
+					}
+				}
+				Vecd grad_norm = grad / (total_weight + TinyReal);
+				color_grad_[index_i] = grad_norm;
+				surface_norm_[index_i] = grad_norm / (grad_norm.norm() + TinyReal);
+			}
+		}
+		//=================================================================================================//
+		void SurfaceTensionAccelerationInner::
+			interaction(size_t index_i, Real dt)
+		{
+			Vecd n_i = surface_norm_[index_i];
+			Real curvature(0.0);
+			Real renormalized_curvature(0);
+			Real pos_div(0);
+			if (surface_indicator_[index_i] == 1)
+			{
+				Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+				for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+				{
+					size_t index_j = inner_neighborhood.j_[n];
+					if (surface_indicator_[index_j] == 1)
+					{
+						Vecd n_j = surface_norm_[index_j];
+						Vecd n_ij = n_i - n_j;
+						curvature -= inner_neighborhood.dW_ijV_j_[n] * n_ij.dot(inner_neighborhood.e_ij_[n]);
+						pos_div -= inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.r_ij_[n];
+					}
+				}
+			}
+			/**
+			 Adami et al. 2010 has a typo in equation.
+			 (dv / dt)_s = (1.0 / rho) (-sigma * k * n * delta)
+						 = (1/rho) * curvature * color_grad
+						 = (1/m) * curvature * color_grad * vol
+			 */
+			renormalized_curvature = (Real)Dimensions * curvature / ABS(pos_div + TinyReal);
+			Vecd acceleration = gamma_ * renormalized_curvature * color_grad_[index_i] * Vol_[index_i];
+			acc_prior_[index_i] -= acceleration / mass_[index_i];
+		}
 		//=================================================================================================//
 		template <class FreeSurfaceIdentification>
 		template <typename... ConstructorArgs>
@@ -129,7 +129,8 @@ namespace SPH
 			SpatialTemporalFreeSurfaceIdentification(ConstructorArgs &&...args)
 			: FreeSurfaceIdentification(std::forward<ConstructorArgs>(args)...)
 		{
-			this->particles_->registerVariable(previous_surface_indicator_, "PreviousSurfaceIndicator", [&](size_t i) -> int {return 1;});
+			this->particles_->registerVariable(previous_surface_indicator_, "PreviousSurfaceIndicator", [&](size_t i) -> int
+											   { return 1; });
 			this->particles_->template registerSortableVariable<int>("PreviousSurfaceIndicator");
 		}
 		//=================================================================================================//
@@ -139,32 +140,27 @@ namespace SPH
 		{
 			FreeSurfaceIdentification::interaction(index_i, dt);
 
-			if (this->pos_div_[index_i] < this->threshold_by_dimensions_)
-			{
-				checkNearPreviousFreeSurface(index_i);
-			}
+			if (this->pos_div_[index_i] < this->threshold_by_dimensions_ &&
+				previous_surface_indicator_[index_i] != 1 &&
+				!isNearPreviousFreeSurface(index_i))
+				this->pos_div_[index_i] = 2.0 * this->threshold_by_dimensions_;
 		}
 		//=================================================================================================//
 		template <class FreeSurfaceIdentification>
-		void SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIdentification>::
-			checkNearPreviousFreeSurface(size_t index_i)
+		bool SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIdentification>::
+			isNearPreviousFreeSurface(size_t index_i)
 		{
-			if (previous_surface_indicator_[index_i] != 1)
+			bool is_near_surface = false;
+			const Neighborhood &inner_neighborhood = this->inner_configuration_[index_i];
+			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
-				bool is_near_previous_surface = false;
-				const Neighborhood &inner_neighborhood = this->inner_configuration_[index_i];
-				for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+				if (previous_surface_indicator_[inner_neighborhood.j_[n]] == 1)
 				{
-					if (previous_surface_indicator_[inner_neighborhood.j_[n]] == 1)
-					{
-						is_near_previous_surface = true;
-					}
-				}
-				if (!is_near_previous_surface)
-				{
-					this->pos_div_[index_i] = 2.0 * this->threshold_by_dimensions_;
+					is_near_surface = true;
+					break;
 				}
 			}
+			return is_near_surface;
 		}
 		//=================================================================================================//
 		template <class FreeSurfaceIdentification>
@@ -192,7 +188,7 @@ namespace SPH
 		template <class DensitySummationFreeSurfaceType>
 		void DensitySummationFreeStream<DensitySummationFreeSurfaceType>::update(size_t index_i, Real dt)
 		{
-			if (this->rho_sum_[index_i] < this->rho0_ && isNearSurface(index_i))
+			if (this->rho_sum_[index_i] < this->rho0_ && isNearFreeSurface(index_i))
 			{
 				this->rho_[index_i] = this->ReinitializedDensity(this->rho_sum_[index_i], this->rho0_, this->rho_[index_i]);
 			}
@@ -203,20 +199,16 @@ namespace SPH
 		}
 		//=================================================================================================//
 		template <class DensitySummationFreeSurfaceType>
-		bool DensitySummationFreeStream<DensitySummationFreeSurfaceType>::isNearSurface(size_t index_i)
+		bool DensitySummationFreeStream<DensitySummationFreeSurfaceType>::isNearFreeSurface(size_t index_i)
 		{
-			bool is_near_surface = true;
-			if (surface_indicator_[index_i] != 1)
+			bool is_near_surface = false;
+			const Neighborhood &inner_neighborhood = this->inner_configuration_[index_i];
+			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
-				is_near_surface = false;
-				const Neighborhood &inner_neighborhood = this->inner_configuration_[index_i];
-				for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+				if (surface_indicator_[inner_neighborhood.j_[n]] == 1)
 				{
-					if (surface_indicator_[inner_neighborhood.j_[n]] == 1)
-					{
-						is_near_surface = true;
-						break;
-					}
+					is_near_surface = true;
+					break;
 				}
 			}
 			return is_near_surface;
