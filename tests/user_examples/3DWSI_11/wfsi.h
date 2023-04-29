@@ -29,7 +29,7 @@ Real StructureBasePlateH=0.12;
  * It is a multiple of the structure baseplate height.
  * 
  * */
-Real particle_spacing_ref = 0.05;//StructureBasePlateH;	
+Real particle_spacing_ref = 0.01;//StructureBasePlateH;	
 Real BW = particle_spacing_ref * 4.0;			/**< Extending width for BCs. */
 Real Maker_width = particle_spacing_ref * 4.0;	/**< Width of the wavemaker. */
 
@@ -453,7 +453,7 @@ class WaveMaking : public solid_dynamics::BaseMotionConstraint<BodyPartByParticl
 
 	Vec3d getDisplacement(const Real &time)
 	{
-		Real dp;
+		Real dp=0;
 		for (int jj=0;jj<(N);jj++){
 			dp = dp + 0.5*S[jj]*cos(-k[jj]*xf-om[jj]*(time-tf));
 		};
@@ -467,7 +467,7 @@ class WaveMaking : public solid_dynamics::BaseMotionConstraint<BodyPartByParticl
 
 	Vec3d getVelocity(const Real &time)
 	{
-		Real vl;
+		Real vl=0;
 		for (int jj=0;jj<(N);jj++){
 		vl = vl + 0.5*om[jj]*S[jj]*sin(-k[jj]*xf-om[jj]*(time-tf));
 		};
@@ -478,7 +478,7 @@ class WaveMaking : public solid_dynamics::BaseMotionConstraint<BodyPartByParticl
 
 	Vec3d getAcceleration(const Real &time)
 	{
-		Real ax;
+		Real ax=0;
 		for (int jj=0;jj<(N);jj++){
 		ax = ax -0.5*om[jj]*om[jj]*S[jj]*cos(-k[jj]*xf-om[jj]*(time-tf));
 		};
