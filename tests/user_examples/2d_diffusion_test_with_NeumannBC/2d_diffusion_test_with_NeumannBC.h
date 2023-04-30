@@ -9,9 +9,8 @@
 #include "sphinxsys.h"
 
 #include "diffusion_reaction_particles_with_boundary.h"
-//#include "particle_dynamics_diffusion_reaction_with_boundary.h"
-#include "particle_dynamics_diffusion_reaction_with_boundary_complexrelation.h"
-#include "particle_dynamics_diffusion_reaction_with_boundary_complexrelation.hpp"
+#include "particle_dynamics_diffusion_reaction_with_boundary.h"
+#include "particle_dynamics_diffusion_reaction_with_boundary.hpp"
 
 using namespace SPH;
 
@@ -116,14 +115,14 @@ using WallParticles = DiffusionReactionParticlesWithBoundary<SolidParticles, Dif
 //	Application dependent initial condition. 
 //----------------------------------------------------------------------
 class DiffusionInitialCondition
-	: public DiffusionReactionInitialConditionWithBoundaryComplexrelation<DiffusionParticlesWithBoundary>
+	: public DiffusionReactionInitialConditionWithBoundary<DiffusionParticlesWithBoundary>
 {
 protected:
 	size_t phi_;
 
 public:
 	explicit DiffusionInitialCondition(SPHBody& sph_body)
-		: DiffusionReactionInitialConditionWithBoundaryComplexrelation<DiffusionParticlesWithBoundary>(sph_body)
+		: DiffusionReactionInitialConditionWithBoundary<DiffusionParticlesWithBoundary>(sph_body)
 	{
 		phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
 	};
@@ -135,14 +134,14 @@ public:
 };
 
 class WallBoundaryInitialCondition
-	: public DiffusionReactionInitialConditionWithBoundaryComplexrelation<WallParticles>
+	: public DiffusionReactionInitialConditionWithBoundary<WallParticles>
 {
 protected:
 	size_t phi_;
 
 public:
 	WallBoundaryInitialCondition(SolidBody& diffusion_body) :
-		DiffusionReactionInitialConditionWithBoundaryComplexrelation<WallParticles>(diffusion_body)
+		DiffusionReactionInitialConditionWithBoundary<WallParticles>(diffusion_body)
 	{
 		phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
 	}
@@ -165,20 +164,19 @@ public:
 	}
 };
 
-//using DiffusionRelaxationSimpleContact = RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionParticlesWithBoundary, DiffusionParticlesWithBoundary>;  //test
 //using DiffusionRelaxationSimpleComplex = RelaxationOfAllDiffusionSpeciesSimpleComplex<DiffusionParticlesWithBoundary, DiffusionParticlesWithBoundary>;  //test
 
 using DiffusionRelaxationInner = RelaxationOfAllDiffusionSpeciesInner<DiffusionParticlesWithBoundary>;
-using DiffusionRelaxationWithDirichletComplex = RelaxationOfAllDiffusionSpeciesDirichletComplex<DiffusionParticlesWithBoundary, WallParticles>;
+using DiffusionRelaxationWithDirichletContact = RelaxationOfAllDiffusionSpeciesDirichletContact<DiffusionParticlesWithBoundary, WallParticles>;
 //----------------------------------------------------------------------
 //	Specify diffusion relaxation method. 
 //----------------------------------------------------------------------
 class DiffusionBodyRelaxation
-	: public RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletComplex>>
+	: public RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>
 {
 public:
-	explicit DiffusionBodyRelaxation(InnerRelation& inner_relation, ComplexRelation& body_complex_relation_Dirichlet)
-		: RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletComplex>>(inner_relation, body_complex_relation_Dirichlet) {};
+	explicit DiffusionBodyRelaxation(InnerRelation& inner_relation, ContactRelation& body_contact_relation_Dirichlet)
+		: RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>(inner_relation, body_contact_relation_Dirichlet) {};
 	virtual ~DiffusionBodyRelaxation() {};
 };
 

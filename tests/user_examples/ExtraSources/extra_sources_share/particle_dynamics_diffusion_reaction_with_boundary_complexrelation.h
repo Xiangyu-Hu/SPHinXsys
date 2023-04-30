@@ -182,7 +182,7 @@ namespace SPH
 
 		typedef typename DiffusionRelaxationFirst::InnerParticlesType InnerParticlesTypeComplex;
 		typedef typename DiffusionRelaxationFirst::BodyRelationType BodyRelationTypeComplex;
-		typedef typename DiffusionRelaxationOthers::BodyRelationType BodyRelationTypeComplex;
+		//typedef typename DiffusionRelaxationOthers::BodyRelationType BodyRelationTypeComplex;
 
 		void interaction(size_t index_i, Real dt = 0.0)
 		{
