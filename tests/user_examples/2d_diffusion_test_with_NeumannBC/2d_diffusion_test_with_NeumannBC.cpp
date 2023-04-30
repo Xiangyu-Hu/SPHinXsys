@@ -75,9 +75,10 @@ int main(int ac, char* av[])
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
 	//DiffusionRelaxationSimpleContact simple(diffusion_body_contact_Dirichlet); //test
-	//DiffusionRelaxationSimpleComplex simple_complex(diffusion_body_complex_Dirichlet); //test
+	
+	//InputFirstStageType<DiffusionRelaxationInner> input(diffusion_body_inner_relation); //test
 
-	DiffusionBodyRelaxation temperature_relaxation(diffusion_body_inner_relation, diffusion_body_complex_Dirichlet);
+	DiffusionBodyRelaxation temperature_relaxation(diffusion_body_inner_relation, diffusion_body_contact_Dirichlet);
 
 	//InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_diffusion_body_normal_vector_Dirichlet(diffusion_body_complex_Dirichlet);
 	//InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_wall_boundary_normal_vector_Dirichlet(wall_boundary_complex_Dirichlet);
