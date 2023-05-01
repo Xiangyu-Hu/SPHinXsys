@@ -138,9 +138,11 @@ namespace SPH
 		/** add a variable into the list for restart */
 		template <typename VariableType>
 		void addVariableToRestart(const std::string &variable_name);
+		inline const ParticleVariableList& getVariablesToRestart() const {return variables_to_restart_;}
 		/** add a variable into the list for particle reload */
 		template <typename VariableType>
 		void addVariableToReload(const std::string &variable_name);
+		inline const ParticleVariableList& getVariablesToReload() const {return variables_to_reload_;}
 		/**
 		 *		Particle data for sorting
 		 */
@@ -252,7 +254,7 @@ namespace SPH
 			: xml_engine_(xml_engine), total_real_particles_(total_real_particles){};
 
 		template <typename VariableType>
-		void operator()(std::string &variable_name, StdLargeVec<VariableType> &variable) const;
+		void operator()(const std::string &variable_name, StdLargeVec<VariableType> &variable) const;
 	};
 	/**
 	 * @struct ReadAParticleVariableFromXml
@@ -266,7 +268,7 @@ namespace SPH
 			: xml_engine_(xml_engine), total_real_particles_(total_real_particles){};
 
 		template <typename VariableType>
-		void operator()(std::string &variable_name, StdLargeVec<VariableType> &variable) const;
+		void operator()(const std::string &variable_name, StdLargeVec<VariableType> &variable) const;
 	};
 	/**
 	 * @class BaseDerivedVariable
