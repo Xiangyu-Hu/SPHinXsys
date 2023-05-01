@@ -23,7 +23,7 @@ namespace SPH
     //=================================================================================================//
     GeometricShapeBox::
         GeometricShapeBox(const Vecd &halfsize, const std::string &shape_name)
-        : GeometricShape(shape_name), brick_(SimTK::Vec3(halfsize[0], halfsize[1], halfsize[2])), halfsize_(halfsize)
+        : GeometricShape(shape_name), brick_(EigenToSimTK(halfsize)), halfsize_(halfsize)
     {
         contact_geometry_ = &brick_;
     }
