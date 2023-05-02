@@ -57,6 +57,16 @@ namespace SPH
                    StdVec<DataContainerType<Mat2d> *>,
                    StdVec<DataContainerType<Mat3d> *>,
                    StdVec<DataContainerType<int> *>>;
+   /** Generalized data container unique pointer assemble type */
+    template <template <typename DataType> typename DataContainerType>
+    using DataContainerUniquePtrAssemble =
+        std::tuple<UniquePtrsKeeper<DataContainerType<Real>>,
+                   UniquePtrsKeeper<DataContainerType<Vec2d>>,
+                   UniquePtrsKeeper<DataContainerType<Vec3d>>,
+                   UniquePtrsKeeper<DataContainerType<Mat2d>>,
+                   UniquePtrsKeeper<DataContainerType<Mat3d>>,
+                   UniquePtrsKeeper<DataContainerType<int>>>;
+
     /** a type irrelevant operation on the data assembles  */
     template <template <typename VariableType> typename OperationType>
     struct DataAssembleOperation

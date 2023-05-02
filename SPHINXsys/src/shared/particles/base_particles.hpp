@@ -74,10 +74,10 @@ namespace SPH
         constexpr int type_index = DataTypeIndex<VariableType>::value;
         if (all_variable_maps_[type_index].find(variable_name) == all_variable_maps_[type_index].end())
         {
-            StdVec<StdLargeVec<VariableType>> &container = std::get<type_index>(shared_variable_data_);
-            container.push_back(StdLargeVec<VariableType>());
-            registerVariable(container.back(), variable_name);
-            return &container.back();
+            UniquePtrsKeeper<StdLargeVec<VariableType>> &container = std::get<type_index>(shared_variable_data_);
+            StdLargeVec<VariableType> *contained_data = container.template createPtr<StdLargeVec<VariableType>>();
+            registerVariable(*contained_data, variable_name);
+            return contained_data;
         }
         else
         {
@@ -340,7 +340,7 @@ namespace SPH
     //=================================================================================================//
     template <typename VariableType>
     void WriteAParticleVariableToXml::
-    operator()(std::string &variable_name, StdLargeVec<VariableType> &variable) const
+    operator()(const std::string &variable_name, StdLargeVec<VariableType> &variable) const
     {
         SimTK::Xml::element_iterator ele_ite = xml_engine_.root_element_.element_begin();
         for (size_t i = 0; i != total_real_particles_; ++i)
@@ -352,7 +352,7 @@ namespace SPH
     //=================================================================================================//
     template <typename VariableType>
     void ReadAParticleVariableFromXml::
-    operator()(std::string &variable_name, StdLargeVec<VariableType> &variable) const
+    operator()(const std::string &variable_name, StdLargeVec<VariableType> &variable) const
     {
         SimTK::Xml::element_iterator ele_ite = xml_engine_.root_element_.element_begin();
         for (size_t i = 0; i != total_real_particles_; ++i)

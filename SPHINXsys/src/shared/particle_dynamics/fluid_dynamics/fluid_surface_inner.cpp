@@ -18,8 +18,14 @@ namespace SPH
         //=================================================================================================//
         void FreeSurfaceIndicationInner::update(size_t index_i, Real dt)
         {
-            bool is_free_surface = pos_div_[index_i] < threshold_by_dimensions_ ? true : false;
-
+            surface_indicator_[index_i] = 1;
+            if (pos_div_[index_i] > threshold_by_dimensions_ && !isVeryNearFreeSurface(index_i))
+                surface_indicator_[index_i] = 0;
+        }
+        //=================================================================================================//
+        bool FreeSurfaceIndicationInner::isVeryNearFreeSurface(size_t index_i)
+        {
+            bool is_near_surface = false;
             const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
             for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
             {
@@ -27,11 +33,11 @@ namespace SPH
                 if (pos_div_[inner_neighborhood.j_[n]] < threshold_by_dimensions_ &&
                     inner_neighborhood.r_ij_[n] < smoothing_length_)
                 {
-                    is_free_surface = true;
+                    is_near_surface = true;
                     break;
                 }
             }
-            surface_indicator_[index_i] = is_free_surface ? 1 : 0;
+            return is_near_surface;
         }
         //=================================================================================================//
         ColorFunctionGradientInner::ColorFunctionGradientInner(BaseInnerRelation &inner_relation)

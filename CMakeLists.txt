@@ -18,6 +18,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # Generate `compile_commands.json` file wh
 #set(CMAKE_CXX_STANDARD_REQUIRED ON) # C++ standard requirement for all targets is NOT optional 
 set(CMAKE_CXX_EXTENSIONS OFF) # Disable any non-standard compiler specific C++ extensions for all targets.
 
+set(CMAKE_POSITION_INDEPENDENT_CODE TRUE) # Enable for all targets, needed for python modules
+
 #------ Declare core library
 add_library(sphinxsys_core INTERFACE)
 

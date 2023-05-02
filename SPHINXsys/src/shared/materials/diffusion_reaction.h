@@ -215,7 +215,7 @@ namespace SPH
 	public:
 		static constexpr int NumReactiveSpecies = NUM_REACTIVE_SPECIES;
 	private:
-		UniquePtrKeepers<BaseDiffusion> diffusion_ptr_keeper_;
+		UniquePtrsKeeper<BaseDiffusion> diffusion_ptr_keeper_;
 		SharedPtrKeeper<BaseReactionModel<NUM_REACTIVE_SPECIES>> reaction_ptr_keeper_;
 
 	protected:

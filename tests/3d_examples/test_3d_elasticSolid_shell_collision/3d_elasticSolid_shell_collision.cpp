@@ -161,7 +161,7 @@ int main(int ac, char *av[])
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
-	BodyStatesRecordingToVtp write_ball_state(io_environment, {ball});
+	BodyStatesRecordingToVtp write_ball_state(io_environment, {&ball});
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
 		write_ball_center_displacement("Position", io_environment, ball_observer_contact);
 	//----------------------------------------------------------------------

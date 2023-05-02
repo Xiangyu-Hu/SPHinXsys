@@ -22,10 +22,10 @@ namespace SPH
 		: SPHRelation(real_body), real_body_(&real_body)
 	{
 		subscribeToBody();
-		updateConfigurationMemories();
+		resizeConfiguration();
 	}
 	//=================================================================================================//
-	void BaseInnerRelation::updateConfigurationMemories()
+	void BaseInnerRelation::resizeConfiguration()
 	{
 		size_t updated_size = base_particles_.real_particles_bound_;
 		inner_configuration_.resize(updated_size, Neighborhood());
@@ -49,13 +49,12 @@ namespace SPH
 		: SPHRelation(sph_body), contact_bodies_(contact_sph_bodies)
 	{
 		subscribeToBody();
-		updateConfigurationMemories();
+		contact_configuration_.resize(contact_bodies_.size());
 	}
 	//=================================================================================================//
-	void BaseContactRelation::updateConfigurationMemories()
+	void BaseContactRelation::resizeConfiguration()
 	{
 		size_t updated_size = base_particles_.real_particles_bound_;
-		contact_configuration_.resize(contact_bodies_.size());
 		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{
 			contact_configuration_[k].resize(updated_size, Neighborhood());
