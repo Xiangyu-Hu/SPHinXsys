@@ -38,8 +38,7 @@ jobs:
             pkg-config `# for installing libraries with vcpkg`\
             git \
             cmake \
-            ninja-build \
-            python3
+            ninja-build
 
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
@@ -72,7 +71,6 @@ jobs:
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -D SPHINXSYS_CI=ON \
-            -D Python_EXECUTABLE="${{github.workspace}}/vcpkg/installed/x64-linux/tools/python3/python3.10" \
             -S ${{github.workspace}} \
             -B ${{github.workspace}}/build
             
@@ -136,8 +134,6 @@ jobs:
         with:
           key: ${{ github.job }}
 
-      - uses: actions/setup-python@v4
-
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
         with: 
           committish: ${{ env.VCPKG_VERSION }}
@@ -164,7 +160,6 @@ jobs:
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}\vcpkg\scripts\buildsystems\vcpkg.cmake" `
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache `
             -D SPHINXSYS_CI=ON `
-            -D Python_EXECUTABLE="${{github.workspace}}\vcpkg\installed\x64-windows\tools\python3\python.exe" `
             -S ${{github.workspace}} `
             -B C:\build
       
@@ -260,7 +255,6 @@ jobs:
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -D SPHINXSYS_CI=ON \
-            -D Python_EXECUTABLE="${{github.workspace}}/vcpkg/installed/x64-osx/tools/python3/python3.10" \
             -S ${{github.workspace}} \
             -B ${{github.workspace}}/build
 

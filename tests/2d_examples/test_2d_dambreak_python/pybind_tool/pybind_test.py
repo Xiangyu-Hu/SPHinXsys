@@ -1,4 +1,4 @@
-# !/usr/bin/env python3
+#!/usr/bin/env python3
 import os
 import sys
 import platform
@@ -35,13 +35,5 @@ def run_case():
         print("check path: ", path)
         
 
-
 if __name__ == "__main__":
     run_case()
-
-
-
-
-
-
-
