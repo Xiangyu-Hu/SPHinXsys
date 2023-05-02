@@ -180,6 +180,24 @@ public:
 	virtual ~DiffusionBodyRelaxation() {};
 };
 
+//class DiffusionBodyRelaxation
+//	: public ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>
+//{
+//public:
+//	explicit DiffusionBodyRelaxation(InnerRelation& inner_relation, ContactRelation& body_contact_relation_Dirichlet)
+//		: ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>(inner_relation, body_contact_relation_Dirichlet) {};
+//	virtual ~DiffusionBodyRelaxation() {};
+//};
+
+//class DiffusionBodyRelaxation
+//	: public RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner>>
+//{
+//public:
+//	explicit DiffusionBodyRelaxation(InnerRelation& inner_relation)
+//		: RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner>>(inner_relation) {};
+//	virtual ~DiffusionBodyRelaxation() {};
+//};
+
 //----------------------------------------------------------------------
 //	An observer body to measure temperature at given positions. 
 //----------------------------------------------------------------------

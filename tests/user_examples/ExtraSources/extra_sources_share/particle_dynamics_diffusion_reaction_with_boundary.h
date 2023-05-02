@@ -63,7 +63,7 @@ namespace SPH
 		virtual ~RelaxationOfAllDiffusionSpeciesSimpleContact() {};
 		StdVec<BaseDiffusion*>& AllDiffusions() { return material_.AllDiffusions(); };
 
-		//virtual void interaction(size_t index_i, Real dt = 0.0) = 0;
+		virtual void interaction(size_t index_i, Real dt = 0.0) = 0;
 	};
 
 	/**
@@ -149,27 +149,15 @@ namespace SPH
 	template <typename... DiffusionRelaxationType>
 	class ComplexInteraction;
 
-	/*template <>
-	class ComplexInteraction<> : public LocalDynamics
-	{
-	public:
-		template <class BodyRelationType>
-		ComplexInteraction(BodyRelationType& body_relation)
-			: LocalDynamics(body_relation.getDynamicsRange()) {};
-
-		void interaction(size_t index_i, Real dt = 0.0) {};
-	};*/
 
 	template <>
 	class ComplexInteraction<>
 	{
 	public:
-		template <class BodyRelationType>
-		ComplexInteraction(BodyRelationType& body_relation) {};
+		ComplexInteraction() {};
 
 		void interaction(size_t index_i, Real dt = 0.0) {};
 	};
-
 
 	template <class DiffusionRelaxationFirst, class... DiffusionRelaxationOthers>
 	class ComplexInteraction<DiffusionRelaxationFirst, DiffusionRelaxationOthers...> : public DiffusionRelaxationFirst
@@ -179,10 +167,10 @@ namespace SPH
 		ComplexInteraction<DiffusionRelaxationOthers...> others_diffusion_relaxation_;
 
 	public:
-		template <typename... ContactArgs>
-		ComplexInteraction(BaseInnerRelation& inner_relation, ContactArgs &&...contact_args)
-			: DiffusionRelaxationFirst(inner_relation),
-			others_diffusion_relaxation_(std::forward<ContactArgs>(contact_args)...) {};
+		template <class FirstRelationType, typename... OtherRelationTypes>
+		explicit ComplexInteraction(FirstRelationType& body_relation, OtherRelationTypes &&...other_relations)
+			: DiffusionRelaxationFirst(body_relation),
+			others_diffusion_relaxation_(std::forward<OtherRelationTypes>(other_relations)...) {};
 
 		void interaction(size_t index_i, Real dt = 0.0)
 		{
@@ -229,23 +217,6 @@ namespace SPH
 			: FirstStageType(body_relation, std::forward<ContactArgsType>(contact_agrs)...),
 			diffusion_species_s_(diffusion_species_s) {};
 		virtual ~SecondStageRK2Complex() {};
-	};
-
-	template <class FirstStageType>
-	class InputFirstStageType : public BaseDynamics<void>
-	{
-	public:
-		StdVec<StdLargeVec<Real>> diffusion_species_s_;
-		SimpleDynamics<InitializationRKComplex<typename FirstStageType::InnerParticlesType>> rk2_initialization_;
-
-		template <typename... ContactArgsType>
-		InputFirstStageType(typename FirstStageType::BodyRelationType& body_relation, ContactArgsType &&... contact_agrs)
-			: BaseDynamics<void>(body_relation.getSPHBody()),
-			rk2_initialization_(body_relation.getSPHBody(), diffusion_species_s_)
-		{};
-		virtual ~InputFirstStageType() {};
-
-		virtual void exec(Real dt = 0.0) {};
 	};
 
 	template <class FirstStageType>
