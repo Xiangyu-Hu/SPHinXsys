@@ -67,7 +67,8 @@ The following block will install the direct dependencies required by SPHinXsys i
         boost-program-options           \
         boost-geometry                  \
         simbody                         \
-        gtest
+        gtest                           \
+        pybind11
 
 Note that, some libraries can be installed simply by apt install, such as eigen3, tbb and boost.
 It seems that only the simbody and gtest should be installed by using vcpkg.
@@ -179,7 +180,8 @@ i.e., you need to use the slash :code:`/` instead of the backslash:code:`\`, as 
         boost-program-options:x64-windows           \
         boost-geometry:x64-windows                  \
         simbody:x64-windows                         \
-        gtest:x64-windows
+        gtest:x64-windows                           \
+        pybind11:x64-windows
     ./vcpkg integrate install
 
 Please make sure that the name of the directory for cloning vcpkg has only using plain characters, 
@@ -273,7 +275,8 @@ The following block will install the direct dependencies required by SPHinXsys i
         boost-program-options:x64-osx           \
         boost-geometry:x64-osx                  \
         simbody:x64-osx                         \
-        gtest:x64-osx
+        gtest:x64-osx                           \
+        pybind11:x64-osx
 
 Building SPHinXsys
 ^^^^^^^^^^^^^^^^^^^^^
