@@ -56,33 +56,6 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	/*template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
-	void RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
-		initializeDiffusionChangeRate(size_t particle_i)
-	{
-		for (size_t m = 0; m < all_diffusions_.size(); ++m)
-		{
-			(*diffusion_dt_[m])[particle_i] = 0;
-		}
-	}*/
-	//=================================================================================================//
-	/*template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
-	void RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
-		updateSpeciesDiffusion(size_t particle_i, Real dt)
-	{
-		for (size_t m = 0; m < all_diffusions_.size(); ++m)
-		{
-			(*diffusion_species_[m])[particle_i] += dt * (*diffusion_dt_[m])[particle_i];
-		}
-	}*/
-	////=================================================================================================//
-	//template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
-	//void RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
-	//	update(size_t index_i, Real dt)
-	//{
-	//	updateSpeciesDiffusion(index_i, dt);
-	//}
-	//=================================================================================================//
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	RelaxationOfAllDiffusionSpeciesDirichletContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
 		RelaxationOfAllDiffusionSpeciesDirichletContact(ContactRelation& contact_relation)
@@ -275,11 +248,6 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	/*template <class FirstStageType>
-	SecondStageRK2Complex<FirstStageType>::
-		SecondStageRK2Complex(StdVec<StdLargeVec<Real>>& diffusion_species_s, typename FirstStageType::BodyRelationType& body_relation)
-		: FirstStageType(body_relation), diffusion_species_s_(diffusion_species_s) {}*/
-	//=================================================================================================//
 	template <class FirstStageType>
 	void SecondStageRK2Complex<FirstStageType>::
 		updateSpeciesDiffusion(size_t particle_i, Real dt)
@@ -302,10 +270,9 @@ namespace SPH
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	UpdateUnitVectorNormalToBoundary<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
-		UpdateUnitVectorNormalToBoundary(ComplexRelation& complex_relation)
-		: LocalDynamics(complex_relation.getInnerRelation().getSPHBody()),
-		DiffusionReactionInnerData<DiffusionReactionParticlesType>(complex_relation.getInnerRelation()),
-		DiffusionReactionContactData<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(complex_relation.getContactRelation()),
+		UpdateUnitVectorNormalToBoundary(ContactRelation& contact_relation)
+		: LocalDynamics(contact_relation.getSPHBody()),
+		DiffusionReactionContactDataWithBoundary<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(contact_relation),
 		normal_vector_(this->particles_->normal_vector_)
 	{}
 	//=================================================================================================//

@@ -48,10 +48,7 @@ namespace SPH
 		StdVec<BaseDiffusion*>& all_diffusions_;
 		StdVec<StdLargeVec<Real>*>& diffusion_species_;
 		StdVec<StdLargeVec<Real>*>& gradient_species_;
-		StdVec<StdLargeVec<Real>*> diffusion_dt_; //add &
-
-		//void initializeDiffusionChangeRate(size_t particle_i);
-		//virtual void updateSpeciesDiffusion(size_t particle_i, Real dt);
+		StdVec<StdLargeVec<Real>*> diffusion_dt_;
 
 	public:
 		StdVec<StdVec<StdLargeVec<Real>*>> contact_gradient_species_;
@@ -74,14 +71,11 @@ namespace SPH
 	class RelaxationOfAllDiffusionSpeciesDirichletContact
 		: public RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
 	{
-		//StdVec<StdVec<StdLargeVec<Real>*>> contact_gradient_species_;
-
 	protected:
 		void getDiffusionChangeRateDirichletContact(size_t particle_i, size_t particle_j, Vecd& e_ij, Real surface_area_ij,
 			const StdVec<StdLargeVec<Real>*>& gradient_species_k);
 
 	public:
-		//typedef ContactRelation BodyRelationType;
 		explicit RelaxationOfAllDiffusionSpeciesDirichletContact(ContactRelation& contact_relation);
 		virtual ~RelaxationOfAllDiffusionSpeciesDirichletContact() {};
 
@@ -96,8 +90,6 @@ namespace SPH
 	class RelaxationOfAllDiffusionSpeciesNeumannContact
 		: public RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
 	{
-		//StdVec<StdVec<StdLargeVec<Real>*>> contact_gradient_species_;
-
 		StdLargeVec<Vecd>& n_;
 		StdVec<StdLargeVec<Real>*> contact_Vol_;
 		StdVec<StdLargeVec<Real>*> contact_heat_flux_;
@@ -107,7 +99,6 @@ namespace SPH
 		void getDiffusionChangeRateNeumannContact(size_t particle_i, size_t particle_j, Real surface_area_ij_Neumann, StdLargeVec<Real>& heat_flux_k);
 
 	public:
-		//typedef ContactRelation BodyRelationType;
 		explicit RelaxationOfAllDiffusionSpeciesNeumannContact(ContactRelation& contact_relation);
 		virtual ~RelaxationOfAllDiffusionSpeciesNeumannContact() {};
 
@@ -122,11 +113,8 @@ namespace SPH
 	class RelaxationOfAllDiffusionSpeciesRobinContact
 		: public RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
 	{
-		//StdVec<StdVec<StdLargeVec<Real>*>> contact_gradient_species_;
-
 		StdLargeVec<Vecd>& n_;
 		StdVec<StdLargeVec<Real>*> contact_Vol_;
-
 		StdVec<StdLargeVec<Real>*> contact_convection_;
 		StdVec<StdLargeVec<Real>*> contact_T_infinity_;
 		StdVec<StdLargeVec<Vecd>*> contact_n_;
@@ -135,7 +123,6 @@ namespace SPH
 		void getDiffusionChangeRateRobinContact(size_t particle_i, size_t particle_j, Real surface_area_ij_Robin, StdLargeVec<Real>& convection_k, StdLargeVec<Real>& T_infinity_k);
 
 	public:
-		//typedef ContactRelation BodyRelationType;
 		explicit RelaxationOfAllDiffusionSpeciesRobinContact(ContactRelation& contact_relation);
 		virtual ~RelaxationOfAllDiffusionSpeciesRobinContact() {};
 
@@ -148,7 +135,6 @@ namespace SPH
 	 */
 	template <typename... DiffusionRelaxationType>
 	class ComplexInteraction;
-
 
 	template <>
 	class ComplexInteraction<>
@@ -163,7 +149,6 @@ namespace SPH
 	class ComplexInteraction<DiffusionRelaxationFirst, DiffusionRelaxationOthers...> : public DiffusionRelaxationFirst
 	{
 	protected:
-		//DiffusionRelaxationFirst first_diffusion_relaxation_;
 		ComplexInteraction<DiffusionRelaxationOthers...> others_diffusion_relaxation_;
 
 	public:
@@ -261,14 +246,13 @@ namespace SPH
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	class UpdateUnitVectorNormalToBoundary
 		: public LocalDynamics,
-		public DiffusionReactionInnerData<DiffusionReactionParticlesType>,
-		public DiffusionReactionContactData<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
+		public DiffusionReactionContactDataWithBoundary<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
 	{
 	protected:
 		StdLargeVec<Vecd>& normal_vector_;
 
 	public:
-		UpdateUnitVectorNormalToBoundary(ComplexRelation& body_complex_relation);
+		UpdateUnitVectorNormalToBoundary(ContactRelation& contact_relation);
 		virtual ~UpdateUnitVectorNormalToBoundary() {};
 		void interaction(size_t index_i, Real dt = 0.0);
 	};

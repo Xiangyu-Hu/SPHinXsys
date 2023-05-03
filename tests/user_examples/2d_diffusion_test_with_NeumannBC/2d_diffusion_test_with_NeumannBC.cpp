@@ -49,12 +49,7 @@ int main(int ac, char* av[])
 
 	ContactRelation diffusion_body_contact_Dirichlet(diffusion_body, { &wall_boundary_Dirichlet });
 	ContactRelation diffusion_body_contact_Neumann(diffusion_body, { &wall_boundary_Neumann });
-	
-	ComplexRelation diffusion_body_complex_Dirichlet(diffusion_body, { &wall_boundary_Dirichlet });
-	ComplexRelation wall_boundary_complex_Dirichlet(wall_boundary_Dirichlet, { &diffusion_body });
-
-	ComplexRelation diffusion_body_complex_Neumann(diffusion_body, { &wall_boundary_Neumann });
-	ComplexRelation wall_boundary_complex_Neumann(wall_boundary_Neumann, { &diffusion_body });
+	ContactRelation wall_boundary_contact_Neumann(wall_boundary_Neumann, { &diffusion_body });
 
 	ContactRelation temperature_observer_contact(temperature_observer, { &diffusion_body });
 	//----------------------------------------------------------------------
@@ -76,13 +71,10 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	DiffusionBodyRelaxation temperature_relaxation(diffusion_body_inner_relation, diffusion_body_contact_Neumann);
 
-	//InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_diffusion_body_normal_vector_Dirichlet(diffusion_body_complex_Dirichlet);
-	//InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_wall_boundary_normal_vector_Dirichlet(wall_boundary_complex_Dirichlet);
-
-	InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_diffusion_body_normal_vector_Neumann(diffusion_body_complex_Neumann);
-	InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_wall_boundary_normal_vector_Neumann(wall_boundary_complex_Neumann);
-	
-	//SimpleDynamics<NormalDirectionFromShapeAndOp> inner_normal_direction(wall_boundary_Neumann, "InnerWall");
+	//InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_diffusion_body_normal_vector_Neumann(diffusion_body_contact_Neumann);
+	//InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_wall_boundary_normal_vector_Neumann(wall_boundary_contact_Neumann);
+	SimpleDynamics<NormalDirectionFromBodyShape> diffusion_body_normal_direction(diffusion_body);
+	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary_Neumann);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary. 
@@ -95,12 +87,10 @@ int main(int ac, char* av[])
 	setup_boundary_condition_Dirichlet.exec();
 	setup_boundary_condition_Neumann.exec();
 
-	//update_diffusion_body_normal_vector_Dirichlet.exec();
-	//update_wall_boundary_normal_vector_Dirichlet.exec();
-
-	update_diffusion_body_normal_vector_Neumann.exec();
-	update_wall_boundary_normal_vector_Neumann.exec();
-	//inner_normal_direction.exec();
+	//update_diffusion_body_normal_vector_Neumann.exec();
+	//update_wall_boundary_normal_vector_Neumann.exec();
+	diffusion_body_normal_direction.exec();
+	wall_boundary_normal_direction.exec();
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
