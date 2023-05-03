@@ -33,6 +33,8 @@ std::array<std::string, 1> species_name_list{ "Phi" };
 Real initial_temperature = 0.0;
 Real left_temperature = 300.0;
 Real right_temperature = 350.0;
+
+//Real below_temperature = 100.0;
 Real heat_flux = 2000.0;
 //----------------------------------------------------------------------
 //	Geometric shapes used in the system.
@@ -67,6 +69,13 @@ std::vector<Vecd> heat_flux_region
 	Vecd(0.55 * L, -BW), Vecd(0.45 * L, -BW)
 };
 
+
+std::vector<Vecd> below_temperature_region
+{
+	Vecd(0.45 * L, -BW), Vecd(0.45 * L, 0), Vecd(0.55 * L, 0),
+	Vecd(0.55 * L, -BW), Vecd(0.45 * L, -BW)
+};
+
 //----------------------------------------------------------------------
 //	Define SPH bodies. 
 //----------------------------------------------------------------------
@@ -95,6 +104,7 @@ public:
 	explicit WallBoundaryNeumann(const std::string& shape_name) : MultiPolygonShape(shape_name)
 	{
 		multi_polygon_.addAPolygon(heat_flux_region, ShapeBooleanOps::add);
+		//multi_polygon_.addAPolygon(below_temperature_region, ShapeBooleanOps::add);
 	}
 };
 
@@ -164,8 +174,6 @@ public:
 	}
 };
 
-//using DiffusionRelaxationSimpleComplex = RelaxationOfAllDiffusionSpeciesSimpleComplex<DiffusionParticlesWithBoundary, DiffusionParticlesWithBoundary>;  //test
-
 using DiffusionRelaxationInner = RelaxationOfAllDiffusionSpeciesInner<DiffusionParticlesWithBoundary>;
 using DiffusionRelaxationWithDirichletContact = RelaxationOfAllDiffusionSpeciesDirichletContact<DiffusionParticlesWithBoundary, WallParticles>;
 using DiffusionRelaxationWithNeumannContact = RelaxationOfAllDiffusionSpeciesNeumannContact<DiffusionParticlesWithBoundary, WallParticles>;
@@ -180,6 +188,16 @@ public:
 		: RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithNeumannContact>>(inner_relation, body_contact_relation_Neumann) {};
 	virtual ~DiffusionBodyRelaxation() {};
 };
+
+//test inner add dirichletcontact
+//class DiffusionBodyRelaxation
+//	: public RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact, DiffusionRelaxationWithDirichletContact>>
+//{
+//public:
+//	explicit DiffusionBodyRelaxation(InnerRelation& inner_relation, ContactRelation& body_contact_relation_Dirichlet, ContactRelation& body_contact_relation_Dirichlet_add)
+//		: RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact, DiffusionRelaxationWithDirichletContact>>(inner_relation, body_contact_relation_Dirichlet, body_contact_relation_Dirichlet_add) {};
+//	virtual ~DiffusionBodyRelaxation() {};
+//};
 //----------------------------------------------------------------------
 //	An observer body to measure temperature at given positions. 
 //----------------------------------------------------------------------
