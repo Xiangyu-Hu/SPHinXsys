@@ -238,7 +238,7 @@ int main(int ac, char *av[])
 	}
 	else
 	{
-		write_beam_stress.newResultTest();
+		write_beam_stress.testResult();
 	}
 
 	return 0;

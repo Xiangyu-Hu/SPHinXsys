@@ -296,7 +296,7 @@ int main()
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-	write_total_force_on_flap.newResultTest();
+	write_total_force_on_flap.testResult();
 
 	return 0;
 }
