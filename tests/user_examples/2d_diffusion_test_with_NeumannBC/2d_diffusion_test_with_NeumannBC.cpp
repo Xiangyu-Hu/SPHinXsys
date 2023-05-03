@@ -74,18 +74,15 @@ int main(int ac, char* av[])
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	//DiffusionRelaxationSimpleContact simple(diffusion_body_contact_Dirichlet); //test
-	
-	//InputFirstStageType<DiffusionRelaxationInner> input(diffusion_body_inner_relation); //test
-
-	DiffusionBodyRelaxation temperature_relaxation(diffusion_body_inner_relation, diffusion_body_contact_Dirichlet);
-	//DiffusionBodyRelaxation temperature_relaxation(diffusion_body_inner_relation);
+	DiffusionBodyRelaxation temperature_relaxation(diffusion_body_inner_relation, diffusion_body_contact_Neumann);
 
 	//InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_diffusion_body_normal_vector_Dirichlet(diffusion_body_complex_Dirichlet);
 	//InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_wall_boundary_normal_vector_Dirichlet(wall_boundary_complex_Dirichlet);
 
 	InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_diffusion_body_normal_vector_Neumann(diffusion_body_complex_Neumann);
 	InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_wall_boundary_normal_vector_Neumann(wall_boundary_complex_Neumann);
+	
+	//SimpleDynamics<NormalDirectionFromShapeAndOp> inner_normal_direction(wall_boundary_Neumann, "InnerWall");
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary. 
@@ -103,7 +100,7 @@ int main(int ac, char* av[])
 
 	update_diffusion_body_normal_vector_Neumann.exec();
 	update_wall_boundary_normal_vector_Neumann.exec();
-
+	//inner_normal_direction.exec();
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
@@ -136,7 +133,7 @@ int main(int ac, char* av[])
 						<< dt << "\n";
 				}
 
-				//temperature_relaxation.exec(dt);
+				temperature_relaxation.exec(dt);
 
 				ite++;
 				dt = get_time_step_size.exec();

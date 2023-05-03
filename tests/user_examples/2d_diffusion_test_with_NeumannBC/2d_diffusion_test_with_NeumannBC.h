@@ -168,36 +168,18 @@ public:
 
 using DiffusionRelaxationInner = RelaxationOfAllDiffusionSpeciesInner<DiffusionParticlesWithBoundary>;
 using DiffusionRelaxationWithDirichletContact = RelaxationOfAllDiffusionSpeciesDirichletContact<DiffusionParticlesWithBoundary, WallParticles>;
+using DiffusionRelaxationWithNeumannContact = RelaxationOfAllDiffusionSpeciesNeumannContact<DiffusionParticlesWithBoundary, WallParticles>;
 //----------------------------------------------------------------------
 //	Specify diffusion relaxation method. 
 //----------------------------------------------------------------------
 class DiffusionBodyRelaxation
-	: public RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>
+	: public RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithNeumannContact>>
 {
 public:
-	explicit DiffusionBodyRelaxation(InnerRelation& inner_relation, ContactRelation& body_contact_relation_Dirichlet)
-		: RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>(inner_relation, body_contact_relation_Dirichlet) {};
+	explicit DiffusionBodyRelaxation(InnerRelation& inner_relation, ContactRelation& body_contact_relation_Neumann)
+		: RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithNeumannContact>>(inner_relation, body_contact_relation_Neumann) {};
 	virtual ~DiffusionBodyRelaxation() {};
 };
-
-//class DiffusionBodyRelaxation
-//	: public ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>
-//{
-//public:
-//	explicit DiffusionBodyRelaxation(InnerRelation& inner_relation, ContactRelation& body_contact_relation_Dirichlet)
-//		: ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>(inner_relation, body_contact_relation_Dirichlet) {};
-//	virtual ~DiffusionBodyRelaxation() {};
-//};
-
-//class DiffusionBodyRelaxation
-//	: public RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner>>
-//{
-//public:
-//	explicit DiffusionBodyRelaxation(InnerRelation& inner_relation)
-//		: RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner>>(inner_relation) {};
-//	virtual ~DiffusionBodyRelaxation() {};
-//};
-
 //----------------------------------------------------------------------
 //	An observer body to measure temperature at given positions. 
 //----------------------------------------------------------------------
