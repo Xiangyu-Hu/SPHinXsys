@@ -98,11 +98,15 @@ Building SPHinXsys
     cd sphinxsys
     cmake   -G "Unix Makefiles"                                                         \
             -D CMAKE_BUILD_TYPE=Release                                                 \
+            -D CMAKE_C_COMPILER=gcc -D CMAKE_CXX_COMPILER=g++                           \
             -D CMAKE_TOOLCHAIN_FILE="$HOME/vcpkg/scripts/buildsystems/vcpkg.cmake"      \
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache   \
             -S .                                                                        \
             -B ./build
     cmake   --build build/ 
+
+If you prefer to use other installed compiler in your Linux system, 
+you can just change :code:`gcc` and :code:`g++` to your favorite ones. 
 
 Running the tests and examples
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
