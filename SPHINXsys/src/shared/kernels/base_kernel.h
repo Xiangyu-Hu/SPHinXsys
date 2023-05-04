@@ -21,14 +21,13 @@
  *                                                                          *
  * ------------------------------------------------------------------------*/
 /**
-* @file 	base_kernel.h
-* @brief 	This is the base classes of kernel functions.  Implementation will be
-*			implemented in derived classes. The kernal function define the relevance
-* 			between two neighboring particles. Basically, the further the two
-*			particles, the less relevance they have.     
-* @author	Chi ZHang and Xiangyu Hu
-*/
-
+ * @file 	base_kernel.h
+ * @brief 	This is the base classes of kernel functions.  Implementation will be
+ *			implemented in derived classes. The kernal function define the relevance
+ * 			between two neighboring particles. Basically, the further the two
+ *			particles, the less relevance they have.
+ * @author	Chi ZHang and Xiangyu Hu
+ */
 
 #ifndef BASE_KERNELS_H
 #define BASE_KERNELS_H
@@ -57,10 +56,12 @@ namespace SPH
 	class Kernel
 	{
 	protected:
-		const std::string kernel_name_;
-		Real h_, inv_h_;		 /**< reference smoothing length and its inverse **/
-		Real cutoff_radius_ref_; /** reference cut off radius **/
-		Real cutoff_radius_sqr_; /** reference cut off radius square **/
+		std::string kernel_name_;
+		Real h_, inv_h_;   /**< reference smoothing length and its inverse **/
+		Real kernel_size_; /**<kernel_size_ *  h_ gives the zero kernel value */
+		Real truncation_;  /**< to obtain cut off radius */
+		Real rc_ref_;	   /** reference cut off radius, beyond this kernel value is neglected. **/
+		Real rc_ref_sqr_;  /** reference cut off radius square **/
 		/** Normalization factors for the kernel function  **/
 		Real factor_W_1D_, factor_W_2D_, factor_W_3D_;
 		/** Auxiliary factors for the derivative of kernel function  **/
@@ -72,20 +73,22 @@ namespace SPH
 
 	public:
 		/** empty initialization in constructor, initialization will be carried out later. */
-		explicit Kernel(Real h, const std::string &kernel_name = "Kernel");
+		explicit Kernel(Real h, Real kernel_size, Real rc_ref, const std::string &name);
 		virtual ~Kernel(){};
 
 		std::string Name() const { return kernel_name_; };
+		void resetSmoothingLength(Real h);
 		Real SmoothingLength() const { return h_; };
 		/**< non-dimensional size of the kernel, generally 2.0 **/
-		virtual Real KernelSize() const { return 2.0; };
-		Real CutOffRadius() const { return cutoff_radius_ref_; };
-		Real CutOffRadiusSqr() const { return cutoff_radius_sqr_; };
+		Real KernelSize() const { return kernel_size_; };
+		Real Truncation() const { return truncation_; };
+		Real CutOffRadius() const { return rc_ref_; };
+		Real CutOffRadiusSqr() const { return rc_ref_sqr_; };
 		Real FactorW1D() const { return factor_W_1D_; };
 		Real FactorW2D() const { return factor_W_2D_; };
 		Real FactorW3D() const { return factor_W_3D_; };
 
-		/** 
+		/**
 		 * Calculates the kernel value for the given displacement of two particles
 		 * r_ij pointing from particle j to particle i
 		 */
@@ -156,8 +159,8 @@ namespace SPH
 		Real factord2W3D(const Real &h_ratio) const { return factordW3D(h_ratio) * h_ratio; };
 
 	public:
-		Real CutOffRadius(Real h_ratio) const { return cutoff_radius_ref_ / h_ratio; };
-		Real CutOffRadiusSqr(Real h_ratio) const { return cutoff_radius_sqr_ / (h_ratio * h_ratio); };
+		Real CutOffRadius(Real h_ratio) const { return rc_ref_ / h_ratio; };
+		Real CutOffRadiusSqr(Real h_ratio) const { return rc_ref_sqr_ / (h_ratio * h_ratio); };
 
 		Real W(const Real &h_ratio, const Real &r_ij, const Real &displacement) const;
 		Real W(const Real &h_ratio, const Real &r_ij, const Vec2d &displacement) const;
