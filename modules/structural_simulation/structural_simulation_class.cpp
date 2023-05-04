@@ -16,7 +16,7 @@ BodyPartFromMesh::BodyPartFromMesh(SPHBody &body, SharedPtr<TriangleMeshShape> t
 	: BodyRegionByParticle(body, triangle_mesh_shape_ptr)
 {
 	// set the body domain bounds because it is not set by default
-	BoundingBox bounds = body_part_shape_.getBounds();
+	BoundingBox bounds = triangle_mesh_shape_ptr->getBounds();
 	setBodyPartBounds(bounds);
 }
 
