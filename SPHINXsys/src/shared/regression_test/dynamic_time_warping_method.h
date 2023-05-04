@@ -23,7 +23,7 @@
 /**
  * @file 	dynamic_time_warping_method.h
  * @brief 	Classes for the comparison between validated and tested results
-          	with dynamic time warping method.
+			with dynamic time warping method.
  * @author	Bo Zhang , Chi ZHang and Xiangyu Hu
  */
 
@@ -37,48 +37,52 @@ namespace SPH
 	 * @class RegressionTestDynamicTimeWarping
 	 * @brief the regression test is based on the dynamic time warping.
 	 */
-	template<class ObserveMethodType>
+	template <class ObserveMethodType>
 	class RegressionTestDynamicTimeWarping : public RegressionTestTimeAveraged<ObserveMethodType>
 	{
 		/*identify the variable type from the parent class. */
 		using VariableType = decltype(ObserveMethodType::type_indicator_);
 
 	protected:
-		std::string dtw_distance_filefullpath_;                    /* the path for DTW distance. */
-		XmlEngine dtw_distance_xml_engine_in_;                     /* xml engine for dtw distance input. */
-		XmlEngine dtw_distance_xml_engine_out_;                    /* xml engine for dtw distance output. */
+		std::string dtw_distance_filefullpath_; /* the path for DTW distance. */
+		XmlEngine dtw_distance_xml_engine_in_;	/* xml engine for dtw distance input. */
+		XmlEngine dtw_distance_xml_engine_out_; /* xml engine for dtw distance output. */
 
-		StdVec<Real> dtw_distance_, dtw_distance_new_;             /* the container of DTW distance between each pairs. */
+		StdVec<Real> dtw_distance_, dtw_distance_new_; /* the container of DTW distance between each pairs. */
 
 		/** the method used for calculating the p_norm. (calculateDTWDistance) */
-		Real calculatePNorm(Real variable_a, Real variable_b);
-		Real calculatePNorm(Vecd variable_a, Vecd variable_b);
-		Real calculatePNorm(Matd variable_a, Matd variable_b);
+		Real calculatePNorm(Real variable_a, Real variable_b)
+		{
+			return std::abs(variable_a - variable_b);
+		};
+		template <typename Variable>
+		Real calculatePNorm(const Variable &variable_a, const Variable variable_b)
+		{
+			return (variable_a - variable_b).norm();
+		};
 
 		/** the local constrained method used for calculating the dtw distance between two lines. */
 		StdVec<Real> calculateDTWDistance(DoubleVec<VariableType> dataset_a_, DoubleVec<VariableType> dataset_b_);
 
 	public:
-		template<typename... ConstructorArgs>
-		explicit RegressionTestDynamicTimeWarping(ConstructorArgs &&...args) :
-			RegressionTestTimeAveraged<ObserveMethodType>(std::forward<ConstructorArgs>(args)...),
-			dtw_distance_xml_engine_in_("dtw_distance_xml_engine_in", "dtw_distance"),
-			dtw_distance_xml_engine_out_("dtw_distance_xml_engine_out", "dtw_distance")
+		template <typename... ConstructorArgs>
+		explicit RegressionTestDynamicTimeWarping(ConstructorArgs &&...args) : RegressionTestTimeAveraged<ObserveMethodType>(std::forward<ConstructorArgs>(args)...),
+																			   dtw_distance_xml_engine_in_("dtw_distance_xml_engine_in", "dtw_distance"),
+																			   dtw_distance_xml_engine_out_("dtw_distance_xml_engine_out", "dtw_distance")
 		{
-			dtw_distance_filefullpath_ = this->input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_"
-				+ this->quantity_name_ + "_dtwdistance.xml";
+			dtw_distance_filefullpath_ = this->input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ + "_dtwdistance.xml";
 		};
-		virtual ~RegressionTestDynamicTimeWarping() {};
+		virtual ~RegressionTestDynamicTimeWarping(){};
 
-		void setupTheTest(); /** setup the test and defined basic variables. */
-		void readDTWDistanceFromXml(); /** read the old DTW distance from the .xml file. */
-		void updateDTWDistance(); /** update the maximum DTWDistance with the new result. */
-		void writeDTWDistanceToXml(); /* write the updated DTWDistance to .xml file.*/
+		void setupTheTest();						   /** setup the test and defined basic variables. */
+		void readDTWDistanceFromXml();				   /** read the old DTW distance from the .xml file. */
+		void updateDTWDistance();					   /** update the maximum DTWDistance with the new result. */
+		void writeDTWDistanceToXml();				   /* write the updated DTWDistance to .xml file.*/
 		bool compareDTWDistance(Real threshold_value); /* compare the DTWDistance if converged. */
-		void resultTest(); /** test the new result if it is converged within the range. */
+		void resultTest();							   /** test the new result if it is converged within the range. */
 
 		/** the interface for generating the priori converged result with DTW */
-		void generateDataBase(Real threshold_value, string filter = "false")
+		void generateDataBase(Real threshold_value, std::string filter = "false")
 		{
 			this->writeXmlToXmlFile();
 			this->readXmlFromXmlFile();
@@ -100,11 +104,11 @@ namespace SPH
 				compareDTWDistance(threshold_value);
 			}
 			else
-				std::cout << "The results have been converged." << endl;
+				std::cout << "The results have been converged." << std::endl;
 		};
 
 		/** the interface for generating the priori converged result with DTW. */
-		void newResultTest(string filter = "false")
+		void newResultTest(std::string filter = "false")
 		{
 			this->writeXmlToXmlFile();
 			this->readXmlFromXmlFile();
@@ -115,18 +119,17 @@ namespace SPH
 			readDTWDistanceFromXml();
 			for (int n = 0; n != this->number_of_run_; ++n)
 			{
-				this->result_filefullpath_ = this->input_folder_path_ + "/" + this->dynamics_identifier_name_
-					+ "_" + this->quantity_name_ + "_Run_" + std::to_string(n) + "_result.xml";
+				this->result_filefullpath_ = this->input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ + "_Run_" + std::to_string(n) + "_result.xml";
 				if (!fs::exists(this->result_filefullpath_))
 				{
-					std::cout << "This result has not been preserved and will not be compared." << endl;
+					std::cout << "This result has not been preserved and will not be compared." << std::endl;
 					continue;
 				}
 				this->readResultFromXml(n);
 				resultTest();
 			}
 			std::cout << "The result of " << this->quantity_name_
-				<< " is correct based on the dynamic time warping regression test!" << endl;
+					  << " is correct based on the dynamic time warping regression test!" << std::endl;
 		};
 	};
-} 
+}

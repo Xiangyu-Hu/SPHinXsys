@@ -65,7 +65,7 @@ namespace SPH
 	template <class DataType>
 	DataType GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::probeDataPackage(PackageDataAddress<DataType> &pkg_data_addrs, const Vecd &position)
 	{
-		Vecu grid_idx = CellIndexFromPosition(position);
+		Arrayi grid_idx = CellIndexFromPosition(position);
 		Vecd grid_pos = GridPositionFromIndex(grid_idx);
 		Vecd alpha = (position - grid_pos) / grid_spacing_;
 		Vecd beta = Vecd::Ones() - alpha;
@@ -140,9 +140,9 @@ namespace SPH
 	template <typename DataType>
 	void GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::AssignPackageDataAddress<DataType>::
 	operator()(DataContainerAssemble<PackageDataAddress> &all_pkg_data_addrs,
-			   const Vecu &addrs_index,
+			   const Arrayi &addrs_index,
 			   DataContainerAssemble<PackageData> &all_pkg_data,
-			   const Vecu &data_index)
+			   const Arrayi &data_index)
 	{
 		constexpr int type_index = DataTypeIndex<DataType>::value;
 		for (size_t l = 0; l != std::get<type_index>(all_pkg_data).size(); ++l)
@@ -156,7 +156,7 @@ namespace SPH
 	template <int PKG_SIZE, int ADDRS_BUFFER>
 	template <typename DataType>
 	DataType GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::
-		CornerAverage(PackageDataAddress<DataType> &pkg_data_addrs, Veci addrs_index, Veci corner_direction)
+		CornerAverage(PackageDataAddress<DataType> &pkg_data_addrs, Arrayi addrs_index, Arrayi corner_direction)
 	{
 		DataType average = ZeroData<DataType>::value;
 		for (int i = 0; i != 2; ++i)
@@ -175,10 +175,10 @@ namespace SPH
 	template <typename DataType>
 	DataType MeshWithGridDataPackages<GridDataPackageType>::
 		DataValueFromGlobalIndex(const DiscreteVariable<DataType> &discrete_variable,
-								 const Vecu &global_grid_index)
+								 const Arrayi &global_grid_index)
 	{
-		Vecu cell_index_on_mesh_ = Vecu::Zero();
-		Vecu local_data_index = Vecu::Zero();
+		Arrayi cell_index_on_mesh_ = Arrayi::Zero();
+		Arrayi local_data_index = Arrayi::Zero();
 		for (int n = 0; n != 3; n++)
 		{
 			size_t cell_index_in_this_direction = global_grid_index[n] / pkg_size;
@@ -191,11 +191,11 @@ namespace SPH
 	//=================================================================================================//
 	template <class GridDataPackageType>
 	void MeshWithGridDataPackages<GridDataPackageType>::
-		initializePackageAddressesInACell(const Vecu &cell_index)
+		initializePackageAddressesInACell(const Arrayi &cell_index)
 	{
-		int i = (int)cell_index[0];
-		int j = (int)cell_index[1];
-		int k = (int)cell_index[2];
+		int i = cell_index[0];
+		int j = cell_index[1];
+		int k = cell_index[2];
 
 		GridDataPackageType *data_pkg = data_pkg_addrs_[i][j][k];
 		if (data_pkg->isInnerPackage())
@@ -209,9 +209,9 @@ namespace SPH
 						std::pair<int, int> z_pair = CellShiftAndDataIndex(n);
 
 						data_pkg->assignPackageDataAddress(
-							Vecu(l, m, n),
+							Arrayi(l, m, n),
 							data_pkg_addrs_[i + x_pair.first][j + y_pair.first][k + z_pair.first],
-							Vecu(x_pair.second, y_pair.second, z_pair.second));
+							Arrayi(x_pair.second, y_pair.second, z_pair.second));
 					}
 		}
 	}
@@ -219,25 +219,25 @@ namespace SPH
 	template <class GridDataPackageType>
 	void MeshWithGridDataPackages<GridDataPackageType>::allocateMeshDataMatrix()
 	{
-		Allocate3dArray(data_pkg_addrs_, number_of_cells_);
+		Allocate3dArray(data_pkg_addrs_, all_cells_);
 	}
 	//=================================================================================================//
 	template <class GridDataPackageType>
 	void MeshWithGridDataPackages<GridDataPackageType>::deleteMeshDataMatrix()
 	{
-		Delete3dArray(data_pkg_addrs_, number_of_cells_);
+		Delete3dArray(data_pkg_addrs_, all_cells_);
 	}
 	//=================================================================================================//
 	template <class GridDataPackageType>
 	void MeshWithGridDataPackages<GridDataPackageType>::
-		assignDataPackageAddress(const Vecu &cell_index, GridDataPackageType *data_pkg)
+		assignDataPackageAddress(const Arrayi &cell_index, GridDataPackageType *data_pkg)
 	{
 		data_pkg_addrs_[cell_index[0]][cell_index[1]][cell_index[2]] = data_pkg;
 	}
 	//=================================================================================================//
 	template <class GridDataPackageType>
 	GridDataPackageType *MeshWithGridDataPackages<GridDataPackageType>::
-		DataPackageFromCellIndex(const Vecu &cell_index)
+		DataPackageFromCellIndex(const Arrayi &cell_index)
 	{
 		return data_pkg_addrs_[cell_index[0]][cell_index[1]][cell_index[2]];
 	}
@@ -247,12 +247,8 @@ namespace SPH
 	DataType MeshWithGridDataPackages<GridDataPackageType>::
 		probeMesh(const DiscreteVariable<DataType> &discrete_variable, const Vecd &position)
 	{
-		Vecu grid_index = CellIndexFromPosition(position);
-		size_t i = grid_index[0];
-		size_t j = grid_index[1];
-		size_t k = grid_index[2];
-
-		GridDataPackageType *data_pkg = data_pkg_addrs_[i][j][k];
+		Arrayi index = CellIndexFromPosition(position);
+		GridDataPackageType *data_pkg = data_pkg_addrs_[index[0]][index[1]][index[2]];
 		auto &pkg_data_addrs = data_pkg->getPackageDataAddress(discrete_variable);
 		return data_pkg->isInnerPackage() ? data_pkg->GridDataPackageType::template probeDataPackage<DataType>(pkg_data_addrs, position)
 										  : *pkg_data_addrs[0][0][0];

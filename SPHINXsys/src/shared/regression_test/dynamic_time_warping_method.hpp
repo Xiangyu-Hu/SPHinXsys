@@ -36,27 +36,6 @@ namespace SPH
 {
 	//=================================================================================================//
 	template<class ObserveMethodType>
-	Real RegressionTestDynamicTimeWarping<ObserveMethodType>::calculatePNorm(Real variable_a, Real variable_b)
-	{
-		return std::abs(variable_a - variable_b);
-	};
-	//=================================================================================================//
-	template<class ObserveMethodType>
-	Real RegressionTestDynamicTimeWarping<ObserveMethodType>::calculatePNorm(Vecd variable_a, Vecd variable_b)
-	{
-		Real distance = 0;
-		for (int dimension_index = 0; dimension_index < variable_a.size(); ++dimension_index)
-			distance = std::pow(std::abs(variable_a[dimension_index] - variable_b[dimension_index]), 2);
-		return std::pow(distance, 0.5);
-	};
-	//=================================================================================================//
-	template<class ObserveMethodType>
-	Real RegressionTestDynamicTimeWarping<ObserveMethodType>::calculatePNorm(Matd variable_a, Matd variable_b)
-	{
-		return (variable_a - variable_b).squaredNorm();
-	};
-	//=================================================================================================//
-	template<class ObserveMethodType>
 	StdVec<Real> RegressionTestDynamicTimeWarping<ObserveMethodType>::calculateDTWDistance
 	(DoubleVec<VariableType> dataset_a_, DoubleVec<VariableType> dataset_b_)
 	{
@@ -161,8 +140,8 @@ namespace SPH
 				if (std::abs(dtw_distance_[observation_index] - dtw_distance_new_[observation_index]) > threshold_value)
 				{
 					count_not_converged_++;
-					std::cout << "The DTW distance of " << this->quantity_name_ << " [" << observation_index << "] is not converged." << endl;
-					std::cout << "The old DTW distance is " << dtw_distance_[observation_index] << ", and the new DTW distance is " << dtw_distance_new_[observation_index] << "." << endl;
+					std::cout << "The DTW distance of " << this->quantity_name_ << " [" << observation_index << "] is not converged." << std::endl;
+					std::cout << "The old DTW distance is " << dtw_distance_[observation_index] << ", and the new DTW distance is " << dtw_distance_new_[observation_index] << "." << std::endl;
 				}
 			};
 
@@ -171,7 +150,7 @@ namespace SPH
 				if (this->label_for_repeat_ == 4)
 				{
 					this->converged = "true";
-					std::cout << "The DTW distance of " << this->quantity_name_ << " are converged enough times, and rum will stop now." << endl;
+					std::cout << "The DTW distance of " << this->quantity_name_ << " are converged enough times, and rum will stop now." << std::endl;
 					return true;
 				}
 				else
@@ -179,7 +158,7 @@ namespace SPH
 					this->converged = "false";
 					this->label_for_repeat_++;
 					std::cout << "The DTW distance of " << this->quantity_name_ << " are converged, and this is the " << this->label_for_repeat_
-						<< " times. They should be converged more times to be stable." << endl;
+						<< " times. They should be converged more times to be stable." << std::endl;
 				}
 			}
 			else if (count_not_converged_ != 0)
@@ -203,18 +182,18 @@ namespace SPH
 			if (dtw_distance_current_[observation_index] > 1.01 * dtw_distance_[observation_index])
 			{
 				std::cout << "The maximum distance of " << this->quantity_name_ << "[" << observation_index << "] is " << dtw_distance_[observation_index] 
-					<< ", and the current distance is " << dtw_distance_current_[observation_index] << "." << endl;
+					<< ", and the current distance is " << dtw_distance_current_[observation_index] << "." << std::endl;
 				test_wrong++;
 			}
 		};
 		if (test_wrong == 0)
 		{
-			std::cout << "The DTW distance of " << this->quantity_name_ << " between current result and this previous local result is within exception!" << endl;
+			std::cout << "The DTW distance of " << this->quantity_name_ << " between current result and this previous local result is within exception!" << std::endl;
 		}
 		else
 		{
-			std::cout << "The DTW distance of " << this->quantity_name_ << " between current result and this previous local result is beyond exception!" << endl;
-			std::cout << "Please try again. If it still post this sentence, the result is not correct!" << endl;
+			std::cout << "The DTW distance of " << this->quantity_name_ << " between current result and this previous local result is beyond exception!" << std::endl;
+			std::cout << "Please try again. If it still post this sentence, the result is not correct!" << std::endl;
 			exit(1);
 		}
 	};

@@ -185,12 +185,12 @@ int main()
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
 	//----------------------------------------------------------------------
-	flap_offset_position.parallel_exec();
+	flap_offset_position.exec();
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	wall_boundary_normal_direction.parallel_exec();
-	flap_normal_direction.parallel_exec();
-	flap_corrected_configuration.parallel_exec();
+	wall_boundary_normal_direction.exec();
+	flap_normal_direction.exec();
+	flap_corrected_configuration.exec();
 	//----------------------------------------------------------------------
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
@@ -213,8 +213,8 @@ int main()
 	Real total_time = 0.0;
 	Real relax_time = 1.0;
 	/** statistics for computing time. */
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 	//----------------------------------------------------------------------
 	//	Main loop of time stepping starts here.
 	//----------------------------------------------------------------------
@@ -223,34 +223,34 @@ int main()
 		Real integral_time = 0.0;
 		while (integral_time < output_interval)
 		{
-			initialize_time_step_to_fluid.parallel_exec();
+			initialize_time_step_to_fluid.exec();
 
-			Real Dt = get_fluid_advection_time_step_size.parallel_exec();
-			update_density_by_summation.parallel_exec();
-			viscous_acceleration.parallel_exec();
+			Real Dt = get_fluid_advection_time_step_size.exec();
+			update_density_by_summation.exec();
+			viscous_acceleration.exec();
 			/** Viscous force exerting on flap. */
-			viscous_force_on_solid.parallel_exec();
+			viscous_force_on_solid.exec();
 
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
-				pressure_relaxation.parallel_exec(dt);
-				fluid_force_on_flap.parallel_exec();
-				density_relaxation.parallel_exec(dt);
+				pressure_relaxation.exec(dt);
+				fluid_force_on_flap.exec();
+				density_relaxation.exec(dt);
 				/** coupled rigid body dynamics. */
 				if (total_time >= relax_time)
 				{
 					SimTK::State &state_for_update = integ.updAdvancedState();
 					Real angle = pin_spot.getAngle(state_for_update);
 					force_on_bodies.clearAllBodyForces(state_for_update);
-					force_on_bodies.setOneBodyForce(state_for_update, pin_spot, force_on_spot_flap.parallel_exec(angle));
+					force_on_bodies.setOneBodyForce(state_for_update, pin_spot, force_on_spot_flap.exec(angle));
 					integ.stepBy(dt);
-					constraint_spot_flap.parallel_exec();
-					wave_making.parallel_exec(dt);
+					constraint_spot_flap.exec();
+					wave_making.exec(dt);
 				}
-				interpolation_observer_position.parallel_exec();
+				interpolation_observer_position.exec();
 
-				dt = get_fluid_time_step_size.parallel_exec();
+				dt = get_fluid_time_step_size.exec();
 				relaxation_time += dt;
 				integral_time += dt;
 				total_time += dt;
@@ -266,7 +266,7 @@ int main()
 						  << "	Dt = " << Dt << "	dt = " << dt << "\n";
 			}
 			number_of_iterations++;
-			damping_wave.parallel_exec(Dt);
+			damping_wave.exec(Dt);
 			water_block.updateCellLinkedListWithParticleSort(100);
 			wall_boundary.updateCellLinkedList();
 			flap.updateCellLinkedList();
@@ -284,15 +284,15 @@ int main()
 			}
 		}
 
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		if (total_time >= relax_time)
 			write_real_body_states.writeToFile();
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 

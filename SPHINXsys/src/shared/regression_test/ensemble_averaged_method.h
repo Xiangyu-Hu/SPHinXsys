@@ -52,9 +52,9 @@ namespace SPH
 		void calculateNewVariance(TripleVec<Matd> &result, DoubleVec<Matd> &meanvalue_new, DoubleVec<Matd> &variance, DoubleVec<Matd> &variance_new);
 
 		/** the method used for comparing the meanvalue and variance. */
-		int compareParameter(string par_name, DoubleVec<Real> &parameter, DoubleVec<Real> &parameter_new, Real &threshold);
-		int compareParameter(string par_name, DoubleVec<Vecd> &parameter, DoubleVec<Vecd> &parameter_new, Vecd &threshold);
-		int compareParameter(string par_name, DoubleVec<Matd> &parameter, DoubleVec<Matd> &parameter_new, Matd &threshold);
+		int compareParameter(std::string par_name, DoubleVec<Real> &parameter, DoubleVec<Real> &parameter_new, Real &threshold);
+		int compareParameter(std::string par_name, DoubleVec<Vecd> &parameter, DoubleVec<Vecd> &parameter_new, Vecd &threshold);
+		int compareParameter(std::string par_name, DoubleVec<Matd> &parameter, DoubleVec<Matd> &parameter_new, Matd &threshold);
 		
 		/** the method used for testing the new result with meanvalue and variance. */
 		int testNewResult(int diff, DoubleVec<Real> &current_result, DoubleVec<Real> &meanvalue, DoubleVec<Real> &variance);
@@ -79,7 +79,7 @@ namespace SPH
 		void resultTest(); /** test the new result if it is converged within the range. */
 
 		/* the interface for generating the priori converged result with M&V. */
-		void generateDataBase(VariableType threshold_mean, VariableType threshold_variance, string filter = "false")
+		void generateDataBase(VariableType threshold_mean, VariableType threshold_variance, std::string filter = "false")
 		{
 			this->writeXmlToXmlFile();
 			this->readXmlFromXmlFile();
@@ -101,7 +101,7 @@ namespace SPH
 		};
 
 		/** the interface for testing new result. */
-		void newResultTest(string filter = "false")
+		void newResultTest(std::string filter = "false")
 		{
 			this->writeXmlToXmlFile();
 			this->readXmlFromXmlFile();

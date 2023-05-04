@@ -50,7 +50,8 @@ namespace SPH
 										  BaseContactRelation &contact_relation);
 			explicit ViscousAccelerationMultiPhase(ComplexRelation &complex_relation);
 			virtual ~ViscousAccelerationMultiPhase(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdVec<Fluid *> contact_fluids_;
@@ -89,7 +90,8 @@ namespace SPH
 											 BaseContactRelation &contact_relation);
 			explicit BaseMultiPhaseIntegration1stHalf(ComplexRelation &complex_relation);
 			virtual ~BaseMultiPhaseIntegration1stHalf(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			using CurrentRiemannSolver = decltype(Integration1stHalfType::riemann_solver_);
@@ -118,7 +120,8 @@ namespace SPH
 											BaseContactRelation &contact_relation);
 			explicit BaseMultiPhaseIntegration2ndHalf(ComplexRelation &complex_relation);
 			virtual ~BaseMultiPhaseIntegration2ndHalf(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			using CurrentRiemannSolver = decltype(Integration2ndHalfType::riemann_solver_);
@@ -139,7 +142,8 @@ namespace SPH
 		public:
 			explicit MultiPhaseColorFunctionGradient(BaseContactRelation &contact_relation);
 			virtual ~MultiPhaseColorFunctionGradient(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			Real rho0_;

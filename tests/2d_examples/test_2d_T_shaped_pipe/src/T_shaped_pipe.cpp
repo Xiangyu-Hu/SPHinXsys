@@ -170,7 +170,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	wall_boundary_normal_direction.parallel_exec();
+	wall_boundary_normal_direction.exec();
 	//----------------------------------------------------------------------
 	//	Setup computing and initial conditions.
 	//----------------------------------------------------------------------
@@ -182,8 +182,8 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
 	//----------------------------------------------------------------------
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 	//----------------------------------------------------------------------
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
@@ -197,21 +197,21 @@ int main(int ac, char *av[])
 		/** Integrate time (loop) until the next output time. */
 		while (integration_time < output_interval)
 		{
-			initialize_a_fluid_step.parallel_exec();
-			Real Dt = get_fluid_advection_time_step_size.parallel_exec();
-			inlet_outlet_surface_particle_indicator.parallel_exec();
-			update_density_by_summation.parallel_exec();
-			viscous_acceleration.parallel_exec();
-			transport_velocity_correction.parallel_exec();
+			initialize_a_fluid_step.exec();
+			Real Dt = get_fluid_advection_time_step_size.exec();
+			inlet_outlet_surface_particle_indicator.exec();
+			update_density_by_summation.exec();
+			viscous_acceleration.exec();
+			transport_velocity_correction.exec();
 
 			/** Dynamics including pressure relaxation. */
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
-				dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt - relaxation_time);
-				pressure_relaxation.parallel_exec(dt);
+				dt = SMIN(get_fluid_time_step_size.exec(), Dt - relaxation_time);
+				pressure_relaxation.exec(dt);
 				emitter_buffer_inflow_condition.exec();
-				density_relaxation.parallel_exec(dt);
+				density_relaxation.exec(dt);
 
 				relaxation_time += dt;
 				integration_time += dt;
@@ -228,22 +228,22 @@ int main(int ac, char *av[])
 
 			/** inflow injection*/
 			emitter_inflow_injection.exec();
-			disposer_up_outflow_deletion.parallel_exec();
-			disposer_down_outflow_deletion.parallel_exec();
+			disposer_up_outflow_deletion.exec();
+			disposer_down_outflow_deletion.exec();
 
 			/** Update cell linked list and configuration. */
 			water_block.updateCellLinkedListWithParticleSort(100);
 			water_block_complex_relation.updateConfiguration();
 		}
 
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		write_body_states.writeToFile();
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds()
 			  << " seconds." << std::endl;

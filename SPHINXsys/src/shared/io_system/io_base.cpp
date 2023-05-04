@@ -188,45 +188,4 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	ReloadMaterialParameterIO::
-		ReloadMaterialParameterIO(IOEnvironment &io_environment, SPHBody &sph_body,
-								  const std::string &given_parameters_name)
-		: ReloadParticleIO(io_environment, sph_body, given_parameters_name),
-		  materials_({sph_body.base_material_}) {}
-	//=================================================================================================//
-	ReloadMaterialParameterIO::
-		ReloadMaterialParameterIO(IOEnvironment &io_environment, SPHBody &sph_body)
-		: ReloadMaterialParameterIO(io_environment, sph_body, sph_body.base_material_->LocalParametersName()) {}
-	//=================================================================================================//
-	void ReloadMaterialParameterIO::writeToFile(size_t iteration_step)
-	{
-		std::string reload_material_folder = io_environment_.reload_folder_;
-		if (!fs::exists(reload_material_folder))
-		{
-			fs::create_directory(reload_material_folder);
-		}
-
-		for (size_t i = 0; i < materials_.size(); ++i)
-		{
-			materials_[i]->writeToXmlForReloadLocalParameters(file_names_[i]);
-		}
-	}
-	//=================================================================================================//
-	void ReloadMaterialParameterIO::readFromFile(size_t restart_step)
-	{
-		for (size_t i = 0; i < materials_.size(); ++i)
-		{
-			std::string filefullpath = file_names_[i];
-
-			if (!fs::exists(filefullpath))
-			{
-				std::cout << "\nError: the reloading material property file:" << filefullpath << " is not exists" << std::endl;
-				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-				exit(1);
-			}
-
-			materials_[i]->readFromXmlForLocalParameters(file_names_[i]);
-		}
-	}
-	//=================================================================================================//
 }

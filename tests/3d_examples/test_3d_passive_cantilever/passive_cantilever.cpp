@@ -114,8 +114,8 @@ int main()
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
 	/** apply initial condition */
-	initialization.parallel_exec();
-	corrected_configuration.parallel_exec();
+	initialization.exec();
+	corrected_configuration.exec();
 	write_states.writeToFile(0);
 	write_displacement.writeToFile(0);
 	/** Setup physical parameters. */
@@ -124,8 +124,8 @@ int main()
 	Real output_period = end_time / 100.0;
 	Real dt = 0.0;
 	/** Statistics for computing time. */
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 	/**
 	 * Main loop
 	 */
@@ -140,24 +140,24 @@ int main()
 						  << GlobalStaticVariables::physical_time_ << "	dt: "
 						  << dt << "\n";
 			}
-			stress_relaxation_first_half.parallel_exec(dt);
-			constraint_holder.parallel_exec(dt);
-			stress_relaxation_second_half.parallel_exec(dt);
+			stress_relaxation_first_half.exec(dt);
+			constraint_holder.exec(dt);
+			stress_relaxation_second_half.exec(dt);
 
 			ite++;
-			dt = computing_time_step_size.parallel_exec();
+			dt = computing_time_step_size.exec();
 			integration_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
 		}
 		write_displacement.writeToFile(ite);
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		write_states.writeToFile();
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 

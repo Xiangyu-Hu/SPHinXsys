@@ -84,7 +84,8 @@ namespace SPH
 		public:
 			explicit ViscousAccelerationInner(BaseInnerRelation &inner_relation);
 			virtual ~ViscousAccelerationInner(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Real> &Vol_, &rho_, &p_, &mass_, &dE_dt_prior_;
@@ -142,7 +143,9 @@ namespace SPH
 			virtual ~BaseIntegration1stHalf(){};
 			RiemannSolverType riemann_solver_;
 			void initialization(size_t index_i, Real dt = 0.0);
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
+			
 			void update(size_t index_i, Real dt = 0.0);
 		};
 		using Integration1stHalfHLLCRiemann = BaseIntegration1stHalf<HLLCRiemannSolver>;
@@ -159,7 +162,9 @@ namespace SPH
 			explicit BaseIntegration2ndHalf(BaseInnerRelation &inner_relation);
 			virtual ~BaseIntegration2ndHalf(){};
 			RiemannSolverType riemann_solver_;
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
+			
 			void update(size_t index_i, Real dt = 0.0);
 		};
 		using Integration2ndHalfHLLCRiemann = BaseIntegration2ndHalf<HLLCRiemannSolver>;

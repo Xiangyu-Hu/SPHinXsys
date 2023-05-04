@@ -230,11 +230,11 @@ namespace SPH
 		Mat3d transformation_matrix = Mat3d::Zero();
 		Real temp = 1.0 + direction_of_z[2];
 		Real fraction = temp / (temp * temp + Eps);
-		transformation_matrix(0, 0) = direction_of_z[2] + powerN(direction_of_z[1], 2) * fraction;
+		transformation_matrix(0, 0) = direction_of_z[2] + pow(direction_of_z[1], 2) * fraction;
 		transformation_matrix(0, 1) = -direction_of_z[0] * direction_of_z[1] * fraction;
 		transformation_matrix(0, 2) = -direction_of_z[0];
 		transformation_matrix(1, 0) = transformation_matrix(0, 1);
-		transformation_matrix(1, 1) = direction_of_z[2] + powerN(direction_of_z[0], 2) * fraction;
+		transformation_matrix(1, 1) = direction_of_z[2] + pow(direction_of_z[0], 2) * fraction;
 		transformation_matrix(1, 2) = -direction_of_z[1];
 		transformation_matrix(2, 0) = direction_of_z[0];
 		transformation_matrix(2, 1) = direction_of_z[1];
@@ -316,7 +316,7 @@ namespace SPH
 	{
 		// get the projection of the vector_1 on vector 2, which is parallel to the vector_2, meaning it is the vector_2 * scalar
 		Real dot_product_1 = 0.0;
-		Real dot_product_2 = std::pow(vector_2.norm(), 2.0);
+		Real dot_product_2 = vector_2.squaredNorm();
 		for (int i = 0; i < vector_1.size(); i++)
 		{
 			dot_product_1 += vector_1[i] * vector_2[i];
@@ -332,7 +332,7 @@ namespace SPH
 	{
 		// get the projection of the vector_1 on vector 2, which is parallel to the vector_2, meaning it is the vector_2 * scalar
 		Real dot_product_1 = 0.0;
-		Real dot_product_2 = std::pow(vector_2.norm(), 2.0);
+		Real dot_product_2 = vector_2.squaredNorm();
 		for (int i = 0; i < vector_1.size(); i++)
 		{
 			dot_product_1 += vector_1[i] * vector_2[i];

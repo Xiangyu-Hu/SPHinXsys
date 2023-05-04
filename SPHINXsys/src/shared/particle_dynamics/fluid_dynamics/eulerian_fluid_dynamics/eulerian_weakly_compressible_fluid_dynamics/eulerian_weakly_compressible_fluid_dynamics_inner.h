@@ -87,7 +87,8 @@ namespace SPH
 		public:
 			explicit ViscousAccelerationInner(BaseInnerRelation &inner_relation);
 			virtual ~ViscousAccelerationInner(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Real> &Vol_, &rho_, &p_;
@@ -146,7 +147,9 @@ namespace SPH
 			virtual ~BaseIntegration1stHalf(){};
 			RiemannSolverType riemann_solver_;
 			void initialization(size_t index_i, Real dt = 0.0);
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
+			
 			void update(size_t index_i, Real dt = 0.0);
 		};
 		using Integration1stHalf = BaseIntegration1stHalf<NoRiemannSolver>;
@@ -168,7 +171,9 @@ namespace SPH
 			explicit BaseIntegration2ndHalf(BaseInnerRelation &inner_relation);
 			virtual ~BaseIntegration2ndHalf(){};
 			RiemannSolverType riemann_solver_;
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
+			
 			void update(size_t index_i, Real dt = 0.0);
 		};
 		using Integration2ndHalfHLLCWithLimiterRiemann = BaseIntegration2ndHalf<HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid>;
@@ -190,7 +195,8 @@ namespace SPH
 				particles_->registerVariable(n_, "NormalDirection");
 			};
 			virtual ~NonReflectiveBoundaryVariableCorrection(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			Real p_farfield_, rho_farfield_, gamma_, sound_speed_;

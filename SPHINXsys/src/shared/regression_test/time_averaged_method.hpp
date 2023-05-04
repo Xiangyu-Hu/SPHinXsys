@@ -53,16 +53,16 @@ namespace SPH
 								   (SMIN(snapshot_index + scale, this->snapshot_) - SMAX(snapshot_index - scale, 0));
 				for (int index = SMAX(snapshot_index - scale, 0); index != SMIN(snapshot_index + scale, this->snapshot_); ++index)
 				{
-					filter_variance += std::pow(current_result[index][observation_index] - filter_meanvalue, 2);
+					filter_variance += pow(current_result[index][observation_index] - filter_meanvalue, 2);
 				}
-				Real current_variance = std::pow(current_result[snapshot_index][observation_index] - filter_meanvalue, 2);
+				Real current_variance = pow(current_result[snapshot_index][observation_index] - filter_meanvalue, 2);
 				filter_variance = (filter_variance - current_variance) / (SMIN(snapshot_index + scale, this->snapshot_) - SMAX(snapshot_index - scale, 0));
 				if (current_variance > 4 * filter_variance)
 				{
 					current_result[snapshot_index][observation_index] = filter_meanvalue;
 					std::cout << "The current value of " << this->quantity_name_ << "[" << snapshot_index << "][" << observation_index << "] is " 
 							  << current_result[snapshot_index][observation_index]
-						      << ", but the neighbor averaged value is " << filter_meanvalue << ", and the rate is " << current_variance / filter_variance << endl;
+						      << ", but the neighbor averaged value is " << filter_meanvalue << ", and the rate is " << current_variance / filter_variance << std::endl;
 				}
 			}
 		}
@@ -89,16 +89,16 @@ namespace SPH
 									   (SMIN(snapshot_index + scale, this->snapshot_) - SMAX(snapshot_index - scale, 0));
 					for (int index = SMAX(snapshot_index - scale, 0); index != SMIN(snapshot_index + scale, this->snapshot_); ++index)
 					{
-						filter_variance += std::pow(current_result[index][observation_index][i] - filter_meanvalue, 2);
+						filter_variance += pow(current_result[index][observation_index][i] - filter_meanvalue, 2);
 					}
-					Real current_variance = std::pow(current_result[snapshot_index][observation_index][i] - filter_meanvalue, 2);
+					Real current_variance = pow(current_result[snapshot_index][observation_index][i] - filter_meanvalue, 2);
 					filter_variance = (filter_variance - current_variance) / (SMIN(snapshot_index + scale, this->snapshot_) - SMAX(snapshot_index - scale, 0));
 					if (current_variance > 4 * filter_variance)
 					{
 						current_result[snapshot_index][observation_index][i] = filter_meanvalue;
 						std::cout << "The current value of " << this->quantity_name_ << "[" << snapshot_index << "][" << observation_index << "][" << i << "] is " 
 								  << current_result[snapshot_index][observation_index][i]
-								  << ", but the neighbor averaged value is " << filter_meanvalue << ", and the rate is " << current_variance / filter_variance << endl;
+								  << ", but the neighbor averaged value is " << filter_meanvalue << ", and the rate is " << current_variance / filter_variance << std::endl;
 					}
 				}
 			}
@@ -128,16 +128,16 @@ namespace SPH
 										   (SMIN(snapshot_index + scale, this->snapshot_) - SMAX(snapshot_index - scale, 0));
 						for (int index = SMAX(snapshot_index - scale, 0); index != SMIN(snapshot_index + scale, this->snapshot_); ++index)
 						{
-							filter_variance += std::pow(current_result[index][observation_index](i,j) - filter_meanvalue, 2);
+							filter_variance += pow(current_result[index][observation_index](i,j) - filter_meanvalue, 2);
 						}
-						Real current_variance = std::pow(current_result[snapshot_index][observation_index](i,j) - filter_meanvalue, 2);
+						Real current_variance = pow(current_result[snapshot_index][observation_index](i,j) - filter_meanvalue, 2);
 						filter_variance = (filter_variance - current_variance) / (SMIN(snapshot_index + scale, this->snapshot_) - SMAX(snapshot_index - scale, 0));
 						if (current_variance > 4 * filter_variance)
 						{
 							current_result[snapshot_index][observation_index](i,j) = filter_meanvalue;
 							std::cout << "The current value of " << this->quantity_name_ << "[" << snapshot_index << "][" 
 									  << observation_index << "][" << i << "][" << j << "] is " << current_result[snapshot_index][observation_index](i,j)
-									  << ", but the neighbor averaged value is " << filter_meanvalue << ", and the rate is " << current_variance / filter_variance << endl;
+									  << ", but the neighbor averaged value is " << filter_meanvalue << ", and the rate is " << current_variance / filter_variance << std::endl;
 						}
 					}
 				}
@@ -223,9 +223,9 @@ namespace SPH
 		for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
 		{
 			for (int snapshot_index = snapshot_for_converged_; snapshot_index != this->snapshot_; ++snapshot_index)
-				variance_new[observation_index] += std::pow((current_result[observation_index][snapshot_index] - local_meanvalue[observation_index]), 2);
+				variance_new[observation_index] += pow((current_result[observation_index][snapshot_index] - local_meanvalue[observation_index]), 2);
 			variance_new[observation_index] = SMAX( (variance_new[observation_index] / (this->snapshot_ - snapshot_for_converged_)), 
-												    variance[observation_index], std::pow(local_meanvalue[observation_index] * 1.0e-2, 2) );
+												    variance[observation_index], pow(local_meanvalue[observation_index] * 1.0e-2, 2) );
 		}
 	}
 	//=================================================================================================//
@@ -237,9 +237,9 @@ namespace SPH
 			for (int i = 0; i != current_result[0][0].size(); ++i)
 			{
 				for (int snapshot_index = snapshot_for_converged_; snapshot_index != this->snapshot_; ++snapshot_index)
-					variance_new[observation_index][i] += std::pow((current_result[observation_index][snapshot_index][i] - local_meanvalue[observation_index][i]), 2);
+					variance_new[observation_index][i] += pow((current_result[observation_index][snapshot_index][i] - local_meanvalue[observation_index][i]), 2);
 				variance_new[observation_index][i] = SMAX( (variance_new[observation_index][i] / (this->snapshot_ - snapshot_for_converged_)), 
-															variance[observation_index][i], std::pow(local_meanvalue[observation_index][i] * 1.0e-2, 2) );
+															variance[observation_index][i], pow(local_meanvalue[observation_index][i] * 1.0e-2, 2) );
 			}
 	}
 	//=================================================================================================//
@@ -252,9 +252,9 @@ namespace SPH
 				for (int j = 0; j != current_result[0][0].size(); ++j)
 				{
 					for (int snapshot_index = snapshot_for_converged_; snapshot_index != this->snapshot_; ++snapshot_index)
-						variance_new[observation_index](i,j) += std::pow((current_result[observation_index][snapshot_index](i,j) - local_meanvalue[observation_index](i,j)), 2);
+						variance_new[observation_index](i,j) += pow((current_result[observation_index][snapshot_index](i,j) - local_meanvalue[observation_index](i,j)), 2);
 					variance_new[observation_index](i,j) = SMAX( (variance_new[observation_index](i,j) / (this->snapshot_ - snapshot_for_converged_)), 
-																 variance[observation_index](i,j), std::pow(local_meanvalue[observation_index](i,j) * 1.0e-2, 2) );
+																 variance[observation_index](i,j), pow(local_meanvalue[observation_index](i,j) * 1.0e-2, 2) );
 				}
 	}
 	//=================================================================================================//
@@ -293,14 +293,14 @@ namespace SPH
 				if ((par_name == "meanvalue") && (ABS(parameter[observation_index][i]) < 0.001) && (ABS(parameter_new[observation_index][i]) < 0.001))
 				{
 					std::cout << "The old meanvalue is " << parameter[observation_index][i] << ", and the new meanvalue is " << parameter_new[observation_index][i]
-						<< ". So this variable will be ignored due to its tiny effect." << endl;
+						<< ". So this variable will be ignored due to its tiny effect." << std::endl;
 					continue;
 				}
 				Real relative_value_ = ABS((parameter[observation_index][i] - parameter_new[observation_index][i]) / (parameter_new[observation_index][i] + TinyReal));
 				if (relative_value_ > threshold[i])
 				{
 					std::cout << par_name << ": " << this->quantity_name_ << "[" << observation_index << "][" << i << "]"
-						<< " is not converged, and difference is " << relative_value_ << endl;
+						<< " is not converged, and difference is " << relative_value_ << std::endl;
 					count++;
 				}
 			}
@@ -319,7 +319,7 @@ namespace SPH
 					if ((par_name == "meanvalue") && (ABS(parameter[observation_index](i,j)) < 0.001) && (ABS(parameter_new[observation_index](i,j)) < 0.001) )
 					{
 						std::cout << "The old meanvalue is " << parameter[observation_index](i,j) << ", and the new meanvalue is " 
-								  << parameter_new[observation_index](i,j) << ". So this variable will be ignored due to its tiny effect." << endl;
+								  << parameter_new[observation_index](i,j) << ". So this variable will be ignored due to its tiny effect." << std::endl;
 						continue;
 					}
 					Real relative_value_ = ABS((parameter[observation_index](i,j) - parameter_new[observation_index](i,j)) / 
@@ -327,7 +327,7 @@ namespace SPH
 					if (relative_value_ > threshold(i,j))
 					{
 						std::cout << par_name << ": " << this->quantity_name_ << "[" << observation_index << "][" << i << "][" << j << "]"
-							<< " is not converged, and difference is " << relative_value_ << endl;
+							<< " is not converged, and difference is " << relative_value_ << std::endl;
 						count++;
 					}
 				}
@@ -343,7 +343,7 @@ namespace SPH
 		{
 			for (int snapshot_index = snapshot_for_converged_; snapshot_index != this->snapshot_; ++snapshot_index)
 			{
-				variance_new_[observation_index] += std::pow((current_result[snapshot_index][observation_index] - local_meanvalue[observation_index]), 2);
+				variance_new_[observation_index] += pow((current_result[snapshot_index][observation_index] - local_meanvalue[observation_index]), 2);
 			}
 			variance_new_[observation_index] = variance_new_[observation_index] / (this->snapshot_ - snapshot_for_converged_);
 			if ((ABS(meanvalue[observation_index]) < 0.005) && (ABS(local_meanvalue[observation_index]) < 0.005))
@@ -375,22 +375,22 @@ namespace SPH
 			{
 				for (int snapshot_index = snapshot_for_converged_; snapshot_index != this->snapshot_; ++snapshot_index)
 				{
-					variance_new_[observation_index][i] += std::pow((current_result[snapshot_index][observation_index][i] - 
+					variance_new_[observation_index][i] += pow((current_result[snapshot_index][observation_index][i] - 
 																	local_meanvalue[observation_index][i]), 2);
 				}
 				variance_new_[observation_index][i] = variance_new_[observation_index][i] / (this->snapshot_ - snapshot_for_converged_);
 				if ((ABS(meanvalue[observation_index][i]) < 0.005) && (ABS(local_meanvalue[observation_index][i]) < 0.005))
 				{
 					std::cout << "The old meanvalue is " << meanvalue[observation_index][i] << ", and the current meanvalue is " 
-							  << local_meanvalue[observation_index][i] << ". So this variable will not be tested due to its tiny effect." << endl;
+							  << local_meanvalue[observation_index][i] << ". So this variable will not be tested due to its tiny effect." << std::endl;
 					continue;
 				}
 				Real relative_value_ = ABS((meanvalue[observation_index][i] - local_meanvalue[observation_index][i]) / (meanvalue[observation_index][i] + TinyReal));
 				if (relative_value_ > 0.1 || (variance_new_[observation_index][i] > 1.01 * variance[observation_index][i]))
 				{
-					std::cout << this->quantity_name_ << "[" << observation_index << "][" << i << "] is beyond the exception !" << endl;
-					std::cout << "The meanvalue is " << meanvalue[observation_index][i] << ", and the current meanvalue is " << local_meanvalue[observation_index][i] << endl;
-					std::cout << "The variance is " << variance[observation_index][i] << ", and the new variance is " << variance_new_[observation_index][i] << endl;
+					std::cout << this->quantity_name_ << "[" << observation_index << "][" << i << "] is beyond the exception !" << std::endl;
+					std::cout << "The meanvalue is " << meanvalue[observation_index][i] << ", and the current meanvalue is " << local_meanvalue[observation_index][i] << std::endl;
+					std::cout << "The variance is " << variance[observation_index][i] << ", and the new variance is " << variance_new_[observation_index][i] << std::endl;
 					count++;
 				}
 			}
@@ -411,22 +411,22 @@ namespace SPH
 				{
 					for (int snapshot_index = snapshot_for_converged_; snapshot_index != this->snapshot_; ++snapshot_index)
 					{
-						variance_new_[observation_index](i,j) += std::pow((current_result[snapshot_index][observation_index](i,j) - 
+						variance_new_[observation_index](i,j) += pow((current_result[snapshot_index][observation_index](i,j) - 
 																		  local_meanvalue[observation_index](i,j)), 2);
 					}
 					variance_new_[observation_index](i,j) = variance_new_[observation_index](i,j) / (this->snapshot_ - snapshot_for_converged_);
 					if ((ABS(meanvalue[observation_index](i,j)) < 0.005) && (ABS(local_meanvalue[observation_index](i,j)) < 0.005))
 					{
 						std::cout << "The old meanvalue is " << meanvalue[observation_index](i,j) << ", and the new meanvalue is " 
-								  << local_meanvalue[observation_index](i,j) << ". So this variable will not be tested due to its tiny effect. " << endl;
+								  << local_meanvalue[observation_index](i,j) << ". So this variable will not be tested due to its tiny effect. " << std::endl;
 						continue;
 					}
 					Real relative_value_ = ABS((meanvalue_[observation_index](i,j) - local_meanvalue[observation_index](i,j)) / (meanvalue[observation_index](i,j) + TinyReal));
 					if (relative_value_ > 0.1 || variance_new_[observation_index](i,j) > 1.01 * variance[observation_index](i,j))
 					{
-						std::cout << this->quantity_name_ << "[" << observation_index << "][" << i << "][" << j << "] is beyond the exception !" << endl;
-						std::cout << "The meanvalue is " << meanvalue[observation_index](i,j) << ", and the new meanvalue is " << local_meanvalue[observation_index](i,j) << endl;
-						std::cout << "The variance is " << variance[observation_index](i,j) << ", and the new variance is " << variance_new_[observation_index](i,j) << endl;
+						std::cout << this->quantity_name_ << "[" << observation_index << "][" << i << "][" << j << "] is beyond the exception !" << std::endl;
+						std::cout << "The meanvalue is " << meanvalue[observation_index](i,j) << ", and the new meanvalue is " << local_meanvalue[observation_index](i,j) << std::endl;
+						std::cout << "The variance is " << variance[observation_index](i,j) << ", and the new variance is " << variance_new_[observation_index](i,j) << std::endl;
 						count++;
 					}
 				}

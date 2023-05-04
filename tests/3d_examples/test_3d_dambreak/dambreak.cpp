@@ -122,7 +122,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	wall_boundary_normal_direction.parallel_exec();
+	wall_boundary_normal_direction.exec();
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
@@ -134,8 +134,8 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
 	//----------------------------------------------------------------------
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 	//----------------------------------------------------------------------
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
@@ -149,17 +149,17 @@ int main(int ac, char *av[])
 		Real integration_time = 0.0;
 		while (integration_time < output_interval)
 		{
-			initialize_a_fluid_step.parallel_exec();
-			Real Dt = get_fluid_advection_time_step_size.parallel_exec();
-			update_density_by_summation.parallel_exec();
+			initialize_a_fluid_step.exec();
+			Real Dt = get_fluid_advection_time_step_size.exec();
+			update_density_by_summation.exec();
 
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
 
-				pressure_relaxation.parallel_exec(dt);
-				density_relaxation.parallel_exec(dt);
-				dt = get_fluid_time_step_size.parallel_exec();
+				pressure_relaxation.exec(dt);
+				density_relaxation.exec(dt);
+				dt = get_fluid_time_step_size.exec();
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
@@ -181,14 +181,14 @@ int main(int ac, char *av[])
 
 		write_water_mechanical_energy.writeToFile(number_of_iterations);
 
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		write_water_block_states.writeToFile();
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 

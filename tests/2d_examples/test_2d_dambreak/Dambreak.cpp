@@ -109,7 +109,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
-	wall_boundary_normal_direction.parallel_exec();
+	wall_boundary_normal_direction.exec();
 	//----------------------------------------------------------------------
 	//	Load restart file if necessary.
 	//----------------------------------------------------------------------
@@ -132,12 +132,12 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
 	//----------------------------------------------------------------------
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
-	tick_count::interval_t interval_computing_time_step;
-	tick_count::interval_t interval_computing_fluid_pressure_relaxation;
-	tick_count::interval_t interval_updating_configuration;
-	tick_count time_instance;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
+	TimeInterval interval_computing_time_step;
+	TimeInterval interval_computing_fluid_pressure_relaxation;
+	TimeInterval interval_updating_configuration;
+	TickCount time_instance;
 	//----------------------------------------------------------------------
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
@@ -154,26 +154,26 @@ int main(int ac, char *av[])
 		while (integration_time < output_interval)
 		{
 			/** outer loop for dual-time criteria time-stepping. */
-			time_instance = tick_count::now();
-			fluid_step_initialization.parallel_exec();
-			Real advection_dt = fluid_advection_time_step.parallel_exec();
-			fluid_density_by_summation.parallel_exec();
-			interval_computing_time_step += tick_count::now() - time_instance;
+			time_instance = TickCount::now();
+			fluid_step_initialization.exec();
+			Real advection_dt = fluid_advection_time_step.exec();
+			fluid_density_by_summation.exec();
+			interval_computing_time_step += TickCount::now() - time_instance;
 
-			time_instance = tick_count::now();
+			time_instance = TickCount::now();
 			Real relaxation_time = 0.0;
 			Real acoustic_dt = 0.0;
 			while (relaxation_time < advection_dt)
 			{
 				/** inner loop for dual-time criteria time-stepping.  */
-				acoustic_dt = fluid_acoustic_time_step.parallel_exec();
-				fluid_pressure_relaxation.parallel_exec(acoustic_dt);
-				fluid_density_relaxation.parallel_exec(acoustic_dt);
+				acoustic_dt = fluid_acoustic_time_step.exec();
+				fluid_pressure_relaxation.exec(acoustic_dt);
+				fluid_density_relaxation.exec(acoustic_dt);
 				relaxation_time += acoustic_dt;
 				integration_time += acoustic_dt;
 				GlobalStaticVariables::physical_time_ += acoustic_dt;
 			}
-			interval_computing_fluid_pressure_relaxation += tick_count::now() - time_instance;
+			interval_computing_fluid_pressure_relaxation += TickCount::now() - time_instance;
 
 			/** screen output, write body reduced values and restart files  */
 			if (number_of_iterations % screen_output_interval == 0)
@@ -193,21 +193,21 @@ int main(int ac, char *av[])
 			number_of_iterations++;
 
 			/** Update cell linked list and configuration. */
-			time_instance = tick_count::now();
+			time_instance = TickCount::now();
 			water_block.updateCellLinkedListWithParticleSort(100);
 			water_block_complex.updateConfiguration();
 			fluid_observer_contact.updateConfiguration();
-			interval_updating_configuration += tick_count::now() - time_instance;
+			interval_updating_configuration += TickCount::now() - time_instance;
 		}
 
 		body_states_recording.writeToFile();
-		tick_count t2 = tick_count::now();
-		tick_count t3 = tick_count::now();
+		TickCount t2 = TickCount::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds()
 			  << " seconds." << std::endl;

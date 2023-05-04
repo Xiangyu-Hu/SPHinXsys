@@ -63,7 +63,7 @@ public:
 		Real y = pos_[index_i][1];
 		Real z = pos_[index_i][2];
 		Real angular_velocity = angular_0 * sin((M_PI * x) / (2.0 * PL));
-		Real local_radius = sqrt(pow(y, 2.0) + pow(z, 2.0));
+		Real local_radius = sqrt(pow(y, 2) + pow(z, 2));
 		Real angular = atan2(y, z);
 
 		if (x > 0.0)

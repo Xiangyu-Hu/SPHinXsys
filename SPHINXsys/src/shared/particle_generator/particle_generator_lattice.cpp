@@ -39,7 +39,7 @@ namespace SPH
 		initializePositionAndVolumetricMeasure(const Vecd &position, Real volume)
 	{
 		Real local_particle_spacing = particle_adaptation_->getLocalSpacing(target_shape_, position);
-		Real local_particle_volume_ratio = powerN(lattice_spacing_ / local_particle_spacing, Dimensions);
+		Real local_particle_volume_ratio = pow(lattice_spacing_ / local_particle_spacing, Dimensions);
 		if ((double)rand() / (RAND_MAX) < local_particle_volume_ratio)
 		{
 			ParticleGeneratorLattice::initializePositionAndVolumetricMeasure(position, volume / local_particle_volume_ratio);
@@ -69,8 +69,8 @@ namespace SPH
 		: BaseParticleGeneratorLattice(sph_body), SurfaceParticleGenerator(sph_body),
 		  total_volume_(0), global_avg_thickness_(global_avg_thickness),
 		  particle_spacing_(sph_body.sph_adaptation_->ReferenceSpacing()),
-		  avg_particle_volume_(powerN(particle_spacing_, Dimensions - 1) * global_avg_thickness_),
-		  number_of_cells_(0), planned_number_of_particles_(0)
+		  avg_particle_volume_(pow(particle_spacing_, Dimensions - 1) * global_avg_thickness_),
+		  all_cells_(0), planned_number_of_particles_(0)
 	{
 		lattice_spacing_ = global_avg_thickness_ > particle_spacing_ ? 0.5 * particle_spacing_ : 0.5 * global_avg_thickness_;
 	}

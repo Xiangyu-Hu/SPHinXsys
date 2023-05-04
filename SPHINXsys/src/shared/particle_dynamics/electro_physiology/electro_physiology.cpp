@@ -5,10 +5,6 @@ namespace SPH
 	//=================================================================================================//
 	void ElectroPhysiologyReaction::initializeElectroPhysiologyReaction()
 	{
-		reactive_species_.push_back(voltage_);
-		reactive_species_.push_back(gate_variable_);
-		reactive_species_.push_back(active_contraction_stress_);
-
 		get_production_rates_.push_back(std::bind(&ElectroPhysiologyReaction::getProductionRateIonicCurrent, this, _1));
 		get_production_rates_.push_back(std::bind(&ElectroPhysiologyReaction::getProductionRateGateVariable, this, _1));
 		get_production_rates_.push_back(std::bind(&ElectroPhysiologyReaction::getProductionActiveContractionStress, this, _1));
@@ -58,36 +54,5 @@ namespace SPH
 		Real gate_variable = species[gate_variable_];
 		return epsilon_ + mu_1_ * gate_variable / (mu_2_ + voltage + Eps);
 	}
-	//=================================================================================================//
-	MonoFieldElectroPhysiology::
-		MonoFieldElectroPhysiology(ElectroPhysiologyReaction &electro_physiology_reaction,
-								   Real diff_cf, Real bias_diff_cf, Vecd bias_direction)
-		: DiffusionReaction<Solid, 3>(electro_physiology_reaction, electro_physiology_reaction.getSpeciesNameList())
-	{
-		material_type_name_ = "MonoFieldElectroPhysiology";
-		initializeAnDiffusion<DirectionalDiffusion>("Voltage", "Voltage", diff_cf, bias_diff_cf, bias_direction);
-	};
-	//=================================================================================================//
-	LocalMonoFieldElectroPhysiology::
-		LocalMonoFieldElectroPhysiology(ElectroPhysiologyReaction &electro_physiology_reaction,
-										Real diff_cf, Real bias_diff_cf, Vecd bias_direction)
-		: DiffusionReaction<Solid, 3>(electro_physiology_reaction, electro_physiology_reaction.getSpeciesNameList())
-	{
-		material_type_name_ = "LocalMonoFieldElectroPhysiology";
-		initializeAnDiffusion<LocalDirectionalDiffusion>("Voltage", "Voltage", diff_cf, bias_diff_cf, bias_direction);
-	}
-	//=================================================================================================//
-	void LocalMonoFieldElectroPhysiology::readFromXmlForLocalParameters(const std::string &filefullpath)
-	{
-		species_diffusion_[0]->readFromXmlForLocalParameters(filefullpath);
-	}
-	//=================================================================================================//
-	ElectroPhysiologyParticles::ElectroPhysiologyParticles(
-		SPHBody &sph_body, DiffusionReaction<Solid, 3> *diffusion_reaction_material)
-		: DiffusionReactionParticles<SolidParticles, Solid, 3>(sph_body, diffusion_reaction_material) {}
-	//=================================================================================================//
-	ElectroPhysiologyReducedParticles::ElectroPhysiologyReducedParticles(
-		SPHBody &sph_body, DiffusionReaction<Solid, 3> *diffusion_reaction_material)
-		: DiffusionReactionParticles<SolidParticles, Solid, 3>(sph_body, diffusion_reaction_material) {}
 	//=================================================================================================//
 }

@@ -132,7 +132,7 @@ namespace SPH
 	{
 		for (auto check_body : check_bodies_)
 		{
-			out_of_bound_ = out_of_bound_ || check_body->parallel_exec();
+			out_of_bound_ = out_of_bound_ || check_body->exec();
 		}
 
 		if (out_of_bound_)

@@ -15,7 +15,7 @@ namespace SPH
 		  inner_configuration_(inner_relation_.inner_configuration_),
 		  contact_configuration_(contact_relation_.contact_configuration_)
 	{
-		updateConfigurationMemories();
+		resizeConfiguration();
 	}
 	//=================================================================================================//
 	ComplexRelation::ComplexRelation(RealBody &real_body, RealBodyVector contact_bodies)
@@ -27,7 +27,7 @@ namespace SPH
 		  inner_configuration_(inner_relation_.inner_configuration_),
 		  contact_configuration_(contact_relation_.contact_configuration_)
 	{
-		updateConfigurationMemories();
+		resizeConfiguration();
 	}
 	//=================================================================================================//
 	ComplexRelation::
@@ -40,7 +40,7 @@ namespace SPH
 		  inner_configuration_(inner_relation_.inner_configuration_),
 		  contact_configuration_(contact_relation_.contact_configuration_)
 	{
-		updateConfigurationMemories();
+		resizeConfiguration();
 	}
 	//=================================================================================================//
 	ComplexRelation::ComplexRelation(RealBody &real_body, BodyPartVector contact_body_parts)
@@ -52,13 +52,13 @@ namespace SPH
 		  inner_configuration_(inner_relation_.inner_configuration_),
 		  contact_configuration_(contact_relation_.contact_configuration_)
 	{
-		updateConfigurationMemories();
+		resizeConfiguration();
 	}
 	//=================================================================================================//
-	void ComplexRelation::updateConfigurationMemories()
+	void ComplexRelation::resizeConfiguration()
 	{
-		inner_relation_.updateConfigurationMemories();
-		contact_relation_.updateConfigurationMemories();
+		inner_relation_.resizeConfiguration();
+		contact_relation_.resizeConfiguration();
 	}
 	//=================================================================================================//
 	void ComplexRelation::updateConfiguration()

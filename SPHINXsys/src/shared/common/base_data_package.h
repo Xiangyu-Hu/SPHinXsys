@@ -28,7 +28,6 @@
 #ifndef BASE_DATA_PACKAGE_H
 #define BASE_DATA_PACKAGE_H
 
-#include "scalar_functions.h"
 #include "data_type.h"
 #include "array_allocation.h"
 #include "large_data_containers.h"
@@ -40,7 +39,6 @@ namespace SPH
 {
     constexpr Real OneOverDimensions = 1.0 / (Real)Dimensions;
 
-    typedef blocked_range<size_t> IndexRange;
     /** Generalized data container assemble type */
     template <template <typename DataType> typename DataContainerType>
     using DataContainerAssemble =
@@ -59,6 +57,16 @@ namespace SPH
                    StdVec<DataContainerType<Mat2d> *>,
                    StdVec<DataContainerType<Mat3d> *>,
                    StdVec<DataContainerType<int> *>>;
+   /** Generalized data container unique pointer assemble type */
+    template <template <typename DataType> typename DataContainerType>
+    using DataContainerUniquePtrAssemble =
+        std::tuple<UniquePtrsKeeper<DataContainerType<Real>>,
+                   UniquePtrsKeeper<DataContainerType<Vec2d>>,
+                   UniquePtrsKeeper<DataContainerType<Vec3d>>,
+                   UniquePtrsKeeper<DataContainerType<Mat2d>>,
+                   UniquePtrsKeeper<DataContainerType<Mat3d>>,
+                   UniquePtrsKeeper<DataContainerType<int>>>;
+
     /** a type irrelevant operation on the data assembles  */
     template <template <typename VariableType> typename OperationType>
     struct DataAssembleOperation

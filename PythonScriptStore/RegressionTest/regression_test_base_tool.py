@@ -89,7 +89,7 @@ class SphinxsysRegressionTest:
     def run_particle_relaxation(self) -> None:
         print('Start particle relaxation for the simulation...')
         command = f".{os.sep}{self.sphinxsys_case_name} --r=true"
-        os.system(self.enter_sphinxsys_exec_folder)
+        os.chdir(self.sphinxsys_exec_path)
         os.system(command)
         print('Simulating case is finished...')
 
@@ -97,7 +97,7 @@ class SphinxsysRegressionTest:
         print('Start case simulation...')
         print(self.enter_sphinxsys_exec_folder)
         command = f".{os.sep}{self.sphinxsys_case_name} --r=false --i=true --rt=true"
-        os.system(self.enter_sphinxsys_exec_folder)
+        os.chdir(self.sphinxsys_exec_path)
         os.system(command)
         print('Simulating case is finished...')
 

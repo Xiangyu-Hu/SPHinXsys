@@ -32,6 +32,7 @@
 
 #include "fluid_dynamics_inner.h"
 
+#include "relax_dynamics.h"
 #include <mutex>
 
 namespace SPH
@@ -310,6 +311,7 @@ namespace SPH
             SimpleDynamics<StaticConfinementDensity> density_summation_;
             SimpleDynamics<StaticConfinementIntegration1stHalf> pressure_relaxation_;
             SimpleDynamics<StaticConfinementIntegration2ndHalf> density_relaxation_;
+           SimpleDynamics<relax_dynamics::ShapeSurfaceBounding> surface_bounding_;
 
             StaticConfinement(NearShapeSurface &near_surface);
             virtual ~StaticConfinement(){};

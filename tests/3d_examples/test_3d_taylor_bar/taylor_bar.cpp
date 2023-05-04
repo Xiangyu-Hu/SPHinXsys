@@ -64,19 +64,19 @@ int main(int ac, char *av[])
 		/**
 		 * @brief 	Particle relaxation starts here.
 		 */
-		random_column_particles.parallel_exec(0.25);
-		relaxation_step_inner.SurfaceBounding().parallel_exec();
+		random_column_particles.exec(0.25);
+		relaxation_step_inner.SurfaceBounding().exec();
 		write_states.writeToFile(0.0);
 
 		/** relax particles of the insert body. */
 		int ite_p = 0;
 		while (ite_p < 1000)
 		{
-			relaxation_step_inner.parallel_exec();
+			relaxation_step_inner.exec();
 			ite_p += 1;
 			if (ite_p % 200 == 0)
 			{
-				std::cout << std::fixed << setprecision(9) << "Relaxation steps for the column body N = " << ite_p << "\n";
+				std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the column body N = " << ite_p << "\n";
 				write_column_to_vtp.writeToFile(ite_p);
 			}
 		}
@@ -109,9 +109,9 @@ int main(int ac, char *av[])
 	GlobalStaticVariables::physical_time_ = 0.0;
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	wall_normal_direction.parallel_exec();
-	corrected_configuration.parallel_exec();
-	initial_condition.parallel_exec();
+	wall_normal_direction.exec();
+	corrected_configuration.exec();
+	initial_condition.exec();
 	//----------------------------------------------------------------------
 	// Setup time-stepping related simulation parameters.
 	//----------------------------------------------------------------------
@@ -122,8 +122,8 @@ int main(int ac, char *av[])
 	Real output_period = 1.0e-6; // anyway 50 write_states files in total
 	Real dt = 0.0;
 	/** Statistics for computing time. */
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 	//----------------------------------------------------------------------
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
@@ -150,28 +150,28 @@ int main(int ac, char *av[])
 					write_velocity.writeToFile(ite);
 				}
 			}
-			column_wall_contact_force.parallel_exec(dt);
-			stress_relaxation_first_half.parallel_exec(dt);
-			stress_relaxation_second_half.parallel_exec(dt);
+			column_wall_contact_force.exec(dt);
+			stress_relaxation_first_half.exec(dt);
+			stress_relaxation_second_half.exec(dt);
 
 			column.updateCellLinkedList();
 			column_wall_contact.updateConfiguration();
 
 			ite++;
-			dt = computing_time_step_size.parallel_exec();
+			dt = computing_time_step_size.exec();
 			integration_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
 		}
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		write_states.writeToFile();
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
-	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	write_displacement.newResultTest();
 	write_velocity.newResultTest();

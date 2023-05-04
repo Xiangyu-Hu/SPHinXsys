@@ -78,9 +78,9 @@ int main(int ac, char *av[])
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
 	//----------------------------------------------------------------------
-	random_airfoil_particles.parallel_exec(0.25);
-	relaxation_step_inner.SurfaceBounding().parallel_exec();
-	update_smoothing_length_ratio.parallel_exec();
+	random_airfoil_particles.exec(0.25);
+	relaxation_step_inner.SurfaceBounding().exec();
+	update_smoothing_length_ratio.exec();
 	airfoil.updateCellLinkedList();
 	//----------------------------------------------------------------------
 	//	First output before the simulation.
@@ -93,8 +93,8 @@ int main(int ac, char *av[])
 	int ite_p = 0;
 	while (ite_p < 2000)
 	{
-		update_smoothing_length_ratio.parallel_exec();
-		relaxation_step_inner.parallel_exec();
+		update_smoothing_length_ratio.exec();
+		relaxation_step_inner.exec();
 		ite_p += 1;
 		if (ite_p % 100 == 0)
 		{

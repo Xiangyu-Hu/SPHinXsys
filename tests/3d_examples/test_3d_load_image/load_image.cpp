@@ -73,9 +73,9 @@ int main()
 	//----------------------------------------------------------------------
 	//	Particle relaxation starts here.
 	//----------------------------------------------------------------------
-	random_imported_model_particles.parallel_exec(0.25);
-	relaxation_step_inner.SurfaceBounding().parallel_exec();
-	update_smoothing_length_ratio.parallel_exec();
+	random_imported_model_particles.exec(0.25);
+	relaxation_step_inner.SurfaceBounding().exec();
+	update_smoothing_length_ratio.exec();
 	write_imported_model_to_vtp.writeToFile();
 	imported_model.updateCellLinkedList();
 	cell_linked_list_recording.writeToFile(0);
@@ -85,8 +85,8 @@ int main()
 	int ite_p = 0;
 	while (ite_p < 1000)
 	{
-		// update_smoothing_length_ratio.parallel_exec();
-		relaxation_step_inner.parallel_exec();
+		// update_smoothing_length_ratio.exec();
+		relaxation_step_inner.exec();
 		ite_p += 1;
 		if (ite_p % 100 == 0)
 		{

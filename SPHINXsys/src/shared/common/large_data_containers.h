@@ -41,18 +41,22 @@
 
 #include <array>
 
-using namespace tbb;
-
 namespace SPH {
 
 	static tbb::affinity_partitioner ap;
 	typedef tbb::blocked_range<size_t> IndexRange;
+	typedef tbb::blocked_range2d<size_t> IndexRange2d;
+	typedef tbb::blocked_range3d<size_t> IndexRange3d;
+
+	typedef tbb::tick_count TickCount;
+	typedef tbb::tick_count::interval_t TimeInterval;
+
 
 	template <typename T>
 	using ConcurrentVec = tbb::concurrent_vector<T>;
 
 	template <typename T>
-	using StdLargeVec = std::vector<T, cache_aligned_allocator<T>>;
+	using StdLargeVec = std::vector<T, tbb::cache_aligned_allocator<T>>;
 
 	template <typename T>
 	using StdVec = std::vector<T>;

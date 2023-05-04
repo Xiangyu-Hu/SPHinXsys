@@ -48,7 +48,9 @@ namespace SPH
 		public:
 			explicit FreeSurfaceIndicationInner(BaseInnerRelation &inner_relation, Real threshold = 0.75);
 			virtual ~FreeSurfaceIndicationInner(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
+			
 			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
@@ -56,6 +58,7 @@ namespace SPH
 			StdLargeVec<int> &surface_indicator_;
 			StdLargeVec<Real> pos_div_;
 			Real smoothing_length_;
+			bool isVeryNearFreeSurface(size_t index_i);
 		};
 
 		/**
@@ -69,12 +72,14 @@ namespace SPH
 			template <typename... ConstructorArgs>
 			explicit SpatialTemporalFreeSurfaceIdentification(ConstructorArgs &&...args);
 			virtual ~SpatialTemporalFreeSurfaceIdentification(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
+			
 			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<int> previous_surface_indicator_;
-			void checkNearPreviousFreeSurface(size_t index_i);
+			bool isNearPreviousFreeSurface(size_t index_i);
 		};
 		using SpatialTemporalFreeSurfaceIdentificationInner =
 			SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIndicationInner>;
@@ -118,7 +123,7 @@ namespace SPH
 
 		protected:
 			StdLargeVec<int> &surface_indicator_;
-			bool isNearSurface(size_t index_i);
+			bool isNearFreeSurface(size_t index_i);
 		};
 
 		/**
@@ -151,7 +156,8 @@ namespace SPH
 		public:
 			explicit ColorFunctionGradientInner(BaseInnerRelation &inner_relation);
 			virtual ~ColorFunctionGradientInner(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<int> &surface_indicator_;
@@ -170,7 +176,8 @@ namespace SPH
 		public:
 			explicit ColorFunctionGradientInterpolationInner(BaseInnerRelation &inner_relation);
 			virtual ~ColorFunctionGradientInterpolationInner(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Real> &Vol_;
@@ -191,7 +198,8 @@ namespace SPH
 			SurfaceTensionAccelerationInner(BaseInnerRelation &inner_relation, Real gamma);
 			explicit SurfaceTensionAccelerationInner(BaseInnerRelation &inner_relation);
 			virtual ~SurfaceTensionAccelerationInner(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			Real gamma_;

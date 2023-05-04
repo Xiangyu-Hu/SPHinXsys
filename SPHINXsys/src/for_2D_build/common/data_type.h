@@ -30,11 +30,11 @@
 #define DATA_TYPE_2D_H
 
 #include "base_data_type.h"
+#include "scalar_functions.h"
 #include "vector_functions.h"
 
 namespace SPH {
-	using Veci = Vec2i;
-	using Vecu = Vec2u;
+	using Arrayi = Array2i;
 	using Vecd = Vec2d;
 	using Matd = Mat2d;
 	using AlignedBox = AlignedBox2d;

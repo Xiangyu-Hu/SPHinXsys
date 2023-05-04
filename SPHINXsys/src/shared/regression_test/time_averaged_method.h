@@ -70,9 +70,9 @@ namespace SPH
 		void calculateNewVariance(DoubleVec<Matd> &current_result, StdVec<Matd> &local_meanvalue, StdVec<Matd> &variance, StdVec<Matd> &variance_new);
 
 		/** the method used for comparing the meanvalue and variance. */
-		int compareParameter(string par_name, StdVec<Real> &parameter, StdVec<Real> &parameter_new, Real &threshold);
-		int compareParameter(string par_name, StdVec<Vecd> &parameter, StdVec<Vecd> &parameter_new, Vecd &threshold);
-		int compareParameter(string par_name, StdVec<Matd> &parameter, StdVec<Matd> &parameter_new, Matd &threshold);
+		int compareParameter(std::string par_name, StdVec<Real> &parameter, StdVec<Real> &parameter_new, Real &threshold);
+		int compareParameter(std::string par_name, StdVec<Vecd> &parameter, StdVec<Vecd> &parameter_new, Vecd &threshold);
+		int compareParameter(std::string par_name, StdVec<Matd> &parameter, StdVec<Matd> &parameter_new, Matd &threshold);
 
 		/** the method used for testing the new result with meanvalue and variance. */
 		int testNewResult(DoubleVec<Real> &current_result, StdVec<Real> &meanvalue, StdVec<Real> &local_meanvalue, StdVec<Real> &variance);
@@ -103,7 +103,7 @@ namespace SPH
 		void resultTest();  /** test the new result if it is converged within the range. */
 
 		/* the interface for generating the priori converged result with time-averaged meanvalue and variance. */
-		void generateDataBase(VariableType threshold_mean, VariableType threshold_variance, string filter = "false")
+		void generateDataBase(VariableType threshold_mean, VariableType threshold_variance, std::string filter = "false")
 		{
 			this->writeXmlToXmlFile(); /* currently defined in in_output. */
 			this->readXmlFromXmlFile();/* currently defined in in_output. */
@@ -122,11 +122,11 @@ namespace SPH
 				compareMeanVariance(); /* To identify whether the current mean and variance are converged or not.*/
 			}
 			else
-				std::cout << "The results have been converged." << endl;
+				std::cout << "The results have been converged." << std::endl;
 		};
 
 		/** the interface for testing new result. */
-		void newResultTest(string filter = "false")
+		void newResultTest(std::string filter = "false")
 		{
 			this->writeXmlToXmlFile(); /* currently defined in in_output. */
 			this->readXmlFromXmlFile(); /* currently defined in in_output. */

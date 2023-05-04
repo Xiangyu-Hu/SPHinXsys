@@ -100,7 +100,8 @@ namespace SPH
 			explicit DensitySummationComplex(Args &&...args)
 				: BaseDensitySummationComplex<DensitySummationInner>(std::forward<Args>(args)...){};
 			virtual ~DensitySummationComplex(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+
+			inline void interaction(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
@@ -115,7 +116,8 @@ namespace SPH
 			explicit DensitySummationComplexAdaptive(Args &&...args)
 			: BaseDensitySummationComplex<DensitySummationInnerAdaptive>(std::forward<Args>(args)...){};
 			virtual ~DensitySummationComplexAdaptive(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
@@ -130,7 +132,8 @@ namespace SPH
 			BaseViscousAccelerationWithWall(Args &&...args)
 				: InteractionWithWall<ViscousAccelerationInnerType>(std::forward<Args>(args)...){};
 			virtual ~BaseViscousAccelerationWithWall(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
 		};
 
 		using ViscousAccelerationWithWall = BaseViscousAccelerationWithWall<ViscousAccelerationInner>;
@@ -148,7 +151,8 @@ namespace SPH
 				: BaseInteractionComplex<TransportVelocityCorrectionInner, FluidContactData>(
 					  std::forward<Args>(args)...){};
 			virtual ~TransportVelocityCorrectionComplex(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
@@ -164,7 +168,8 @@ namespace SPH
 				: BaseInteractionComplex<TransportVelocityCorrectionInnerAdaptive, FluidContactData>(
 					  std::forward<Args>(args)...){};
 			virtual ~TransportVelocityCorrectionComplexAdaptive(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
@@ -179,7 +184,8 @@ namespace SPH
 			BaseIntegration1stHalfWithWall(Args &&...args)
 				: InteractionWithWall<BaseIntegration1stHalfType>(std::forward<Args>(args)...){};
 			virtual ~BaseIntegration1stHalfWithWall(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			virtual Vecd computeNonConservativeAcceleration(size_t index_i) override;
@@ -216,7 +222,8 @@ namespace SPH
 													   std::forward<Args>(args)..., penalty_strength){};
 			virtual ~BaseExtendIntegration1stHalfWithWall(){};
 			void initialization(size_t index_i, Real dt = 0.0);
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			Real penalty_strength_;
@@ -240,7 +247,8 @@ namespace SPH
 			BaseIntegration2ndHalfWithWall(Args &&...args)
 				: InteractionWithWall<BaseIntegration2ndHalfType>(std::forward<Args>(args)...){};
 			virtual ~BaseIntegration2ndHalfWithWall(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
 		};
 
 		using Integration2ndHalfWithWall = BaseIntegration2ndHalfWithWall<Integration2ndHalf>;
@@ -257,7 +265,8 @@ namespace SPH
 				: BaseIntegration1stHalfWithWall<Oldroyd_BIntegration1stHalf>(fluid_wall_relation){};
 
 			virtual ~Oldroyd_BIntegration1stHalfWithWall(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
@@ -271,7 +280,8 @@ namespace SPH
 				: BaseIntegration2ndHalfWithWall<Oldroyd_BIntegration2ndHalf>(fluid_wall_relation){};
 
 			virtual ~Oldroyd_BIntegration2ndHalfWithWall(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
 		};
 	}
 }

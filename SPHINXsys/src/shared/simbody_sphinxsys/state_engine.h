@@ -39,7 +39,6 @@
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 #include "base_data_package.h"
-#include "array.h"
 #include "exception.h"
 #include "all_simbody.h"
 
@@ -163,7 +162,7 @@ namespace SPH {
             SimTK::Stage    invalidatestage_;
         };
  
-        UniquePtrKeepers<AddedStateVariable> added_state_variable_ptr_keeper_;
+        UniquePtrsKeeper<AddedStateVariable> added_state_variable_ptr_keeper_;
         /**
          * @struct StateVariableInfo
          * @brief   To hold related info about discrete variables.
@@ -306,7 +305,7 @@ namespace SPH {
         /**
          * Get the names of "continuous" state variables maintained by the Engine
          */
-        Array<std::string> getStateVariableNames();
+        StdVec<std::string> getStateVariableNames();
         /**
         * Get all values of the state variables allocated by this StateEngine.
         *
