@@ -91,7 +91,7 @@ namespace SPH
 		: public RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
 	{
 		StdLargeVec<Vecd>& n_;
-		StdVec<StdLargeVec<Real>*> contact_Vol_;
+		//StdVec<StdLargeVec<Real>*> contact_Vol_;
 		StdVec<StdLargeVec<Real>*> contact_heat_flux_;
 		StdVec<StdLargeVec<Vecd>*> contact_n_;
 
@@ -237,24 +237,6 @@ namespace SPH
 		virtual ~RelaxationOfAllDiffusionSpeciesRK2Complex() {};
 
 		virtual void exec(Real dt = 0.0) override;
-	};
-
-	/**
-	 * @class UpdateUnitVectorNormalToBoundary
-	 * @brief Update the normal vector of surface.
-	 */
-	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
-	class UpdateUnitVectorNormalToBoundary
-		: public LocalDynamics,
-		public DiffusionReactionContactDataWithBoundary<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
-	{
-	protected:
-		StdLargeVec<Vecd>& normal_vector_;
-
-	public:
-		UpdateUnitVectorNormalToBoundary(ContactRelation& contact_relation);
-		virtual ~UpdateUnitVectorNormalToBoundary() {};
-		void interaction(size_t index_i, Real dt = 0.0);
 	};
 }
 #endif // PARTICLE_DYNAMICS_DIFFUSION_REACTION_WITH_BOUNDARY_H

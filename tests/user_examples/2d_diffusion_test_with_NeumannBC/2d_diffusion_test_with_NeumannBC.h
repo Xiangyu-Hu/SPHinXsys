@@ -35,7 +35,12 @@ Real left_temperature = 300.0;
 Real right_temperature = 350.0;
 
 //Real below_temperature = 100.0;
-Real heat_flux = 2000.0;
+
+Real heat_flux = 900.0;
+
+//Real T_infinity = 100.0;
+//Real convection = 100.0;
+
 //----------------------------------------------------------------------
 //	Geometric shapes used in the system.
 //----------------------------------------------------------------------
@@ -69,13 +74,6 @@ std::vector<Vecd> heat_flux_region
 	Vecd(0.55 * L, -BW), Vecd(0.45 * L, -BW)
 };
 
-
-std::vector<Vecd> below_temperature_region
-{
-	Vecd(0.45 * L, -BW), Vecd(0.45 * L, 0), Vecd(0.55 * L, 0),
-	Vecd(0.55 * L, -BW), Vecd(0.45 * L, -BW)
-};
-
 //----------------------------------------------------------------------
 //	Define SPH bodies. 
 //----------------------------------------------------------------------
@@ -104,7 +102,6 @@ public:
 	explicit WallBoundaryNeumann(const std::string& shape_name) : MultiPolygonShape(shape_name)
 	{
 		multi_polygon_.addAPolygon(heat_flux_region, ShapeBooleanOps::add);
-		//multi_polygon_.addAPolygon(below_temperature_region, ShapeBooleanOps::add);
 	}
 };
 
@@ -139,7 +136,7 @@ public:
 
 	void update(size_t index_i, Real dt)
 	{
-		all_species_[phi_][index_i] = 400 + 50 * (double)rand() / RAND_MAX;
+		all_species_[phi_][index_i] = 200 + 50 * (double)rand() / RAND_MAX;
 	};
 };
 
@@ -170,6 +167,8 @@ public:
 		if (pos_[index_i][1] < 0 && pos_[index_i][0] > 0.45 * L && pos_[index_i][0] < 0.55 * L)
 		{
 			heat_flux_[index_i] = heat_flux;
+			//T_infinity_[index_i] = T_infinity;
+			//convection_[index_i] = convection;
 		}
 	}
 };
@@ -177,25 +176,26 @@ public:
 using DiffusionRelaxationInner = RelaxationOfAllDiffusionSpeciesInner<DiffusionParticlesWithBoundary>;
 using DiffusionRelaxationWithDirichletContact = RelaxationOfAllDiffusionSpeciesDirichletContact<DiffusionParticlesWithBoundary, WallParticles>;
 using DiffusionRelaxationWithNeumannContact = RelaxationOfAllDiffusionSpeciesNeumannContact<DiffusionParticlesWithBoundary, WallParticles>;
+//using DiffusionRelaxationWithRobinContact = RelaxationOfAllDiffusionSpeciesRobinContact<DiffusionParticlesWithBoundary, WallParticles>;
 //----------------------------------------------------------------------
 //	Specify diffusion relaxation method. 
 //----------------------------------------------------------------------
 class DiffusionBodyRelaxation
-	: public RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithNeumannContact>>
+	: public RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact, DiffusionRelaxationWithNeumannContact>>
 {
 public:
-	explicit DiffusionBodyRelaxation(InnerRelation& inner_relation, ContactRelation& body_contact_relation_Neumann)
-		: RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithNeumannContact>>(inner_relation, body_contact_relation_Neumann) {};
+	explicit DiffusionBodyRelaxation(InnerRelation& inner_relation, ContactRelation& body_contact_relation_Dirichlet, ContactRelation& body_contact_relation_Neumann)
+		: RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact, DiffusionRelaxationWithNeumannContact>>(inner_relation, body_contact_relation_Dirichlet, body_contact_relation_Neumann) {};
 	virtual ~DiffusionBodyRelaxation() {};
 };
 
-//test inner add dirichletcontact
+//test inner add dirichlet and robin
 //class DiffusionBodyRelaxation
-//	: public RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact, DiffusionRelaxationWithDirichletContact>>
+//	: public RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact, DiffusionRelaxationWithRobinContact>>
 //{
 //public:
-//	explicit DiffusionBodyRelaxation(InnerRelation& inner_relation, ContactRelation& body_contact_relation_Dirichlet, ContactRelation& body_contact_relation_Dirichlet_add)
-//		: RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact, DiffusionRelaxationWithDirichletContact>>(inner_relation, body_contact_relation_Dirichlet, body_contact_relation_Dirichlet_add) {};
+//	explicit DiffusionBodyRelaxation(InnerRelation& inner_relation, ContactRelation& body_contact_relation_Dirichlet, ContactRelation& body_contact_relation_Robin)
+//		: RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact, DiffusionRelaxationWithRobinContact>>(inner_relation, body_contact_relation_Dirichlet, body_contact_relation_Robin) {};
 //	virtual ~DiffusionBodyRelaxation() {};
 //};
 //----------------------------------------------------------------------
