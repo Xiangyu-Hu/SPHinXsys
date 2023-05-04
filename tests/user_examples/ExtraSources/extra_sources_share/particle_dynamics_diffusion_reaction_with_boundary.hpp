@@ -59,8 +59,7 @@ namespace SPH
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	RelaxationOfAllDiffusionSpeciesDirichletContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
 		RelaxationOfAllDiffusionSpeciesDirichletContact(ContactRelation& contact_relation)
-		: RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(contact_relation)
-	{ }
+		: RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(contact_relation) {}
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	void RelaxationOfAllDiffusionSpeciesDirichletContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
@@ -105,19 +104,17 @@ namespace SPH
 	RelaxationOfAllDiffusionSpeciesNeumannContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
 		RelaxationOfAllDiffusionSpeciesNeumannContact(ContactRelation& contact_relation)
 		: RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(contact_relation),
-		n_(this->particles_->normal_vector_)
+		n_(this->particles_->n_)
 	{
-		contact_Vol_.resize(this->contact_particles_.size());
-		contact_heat_flux_.resize(this->contact_particles_.size());
-		contact_n_.resize(this->contact_particles_.size());
+		//contact_heat_flux_.resize(this->contact_particles_.size());
+		//contact_n_.resize(this->contact_particles_.size());
 
 		for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
 		{
 			for (size_t k = 0; k != this->contact_particles_.size(); ++k)
 			{
-				contact_n_.push_back(&this->contact_particles_[k]->normal_vector_);
-				contact_Vol_.push_back(&this->contact_particles_[k]->Vol_);
-				contact_heat_flux_.push_back(&this->contact_particles_[k]->heat_flux_);
+				contact_n_.push_back(&(this->contact_particles_[k]->n_));
+				contact_heat_flux_.push_back(&(this->contact_particles_[k]->heat_flux_));
 			}
 		}
 	}
@@ -157,6 +154,7 @@ namespace SPH
 				const Vecd& grad_ijV_j = particles->getKernelGradient(index_i, index_j, dW_ijV_j_, e_ij);
 				Vecd n_ij = n_[index_i] - n_k[index_j];
 				Real area_ij_Neumann = grad_ijV_j.dot(n_ij);
+				//Real area_ij_Neumann = 1.0;
 				getDiffusionChangeRateNeumannContact(index_i, index_j, area_ij_Neumann, heat_flux_);
 			}
 		}
@@ -166,21 +164,19 @@ namespace SPH
 	RelaxationOfAllDiffusionSpeciesRobinContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
 		RelaxationOfAllDiffusionSpeciesRobinContact(ContactRelation& contact_relation)
 		: RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(contact_relation),
-		n_(this->particles_->normal_vector_)
+		n_(this->particles_->n_)
 	{
-		contact_Vol_.resize(this->contact_particles_.size());
-		contact_convection_.resize(this->contact_particles_.size());
-		contact_T_infinity_.resize(this->contact_particles_.size());
-		contact_n_.resize(this->contact_particles_.size());
+		//contact_convection_.resize(this->contact_particles_.size());
+		//contact_T_infinity_.resize(this->contact_particles_.size());
+		//contact_n_.resize(this->contact_particles_.size());
 
 		for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
 		{
 			for (size_t k = 0; k != this->contact_particles_.size(); ++k)
 			{
-				contact_n_.push_back(&this->contact_particles_[k]->normal_vector_);
-				contact_Vol_.push_back(&this->contact_particles_[k]->Vol_);
-				contact_convection_.push_back(&this->contact_particles_[k]->convection_);
-				contact_T_infinity_.push_back(&this->contact_particles_[k]->T_infinity_);
+				contact_n_.push_back(&(this->contact_particles_[k]->n_));
+				contact_convection_.push_back(&(this->contact_particles_[k]->convection_));
+				contact_T_infinity_.push_back(&(this->contact_particles_[k]->T_infinity_));
 			}
 		}
 	}
@@ -266,31 +262,6 @@ namespace SPH
 		rk2_initialization_.exec();
 		rk2_1st_stage_.exec(dt);
 		rk2_2nd_stage_.exec(dt);
-	}
-	//=================================================================================================//
-	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
-	UpdateUnitVectorNormalToBoundary<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
-		UpdateUnitVectorNormalToBoundary(ContactRelation& contact_relation)
-		: LocalDynamics(contact_relation.getSPHBody()),
-		DiffusionReactionContactDataWithBoundary<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(contact_relation),
-		normal_vector_(this->particles_->normal_vector_)
-	{}
-	//=================================================================================================//
-	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
-	void UpdateUnitVectorNormalToBoundary<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
-		interaction(size_t index_i, Real dt)
-	{
-		for (size_t k = 0; k != this->contact_configuration_.size(); ++k)
-		{
-			Neighborhood& contact_neighborhood = (*this->contact_configuration_[k])[index_i];
-			for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-			{
-				Real& dW_ijV_j_ = contact_neighborhood.dW_ijV_j_[n];
-				Vecd& e_ij_ = contact_neighborhood.e_ij_[n];
-				normal_vector_[index_i] += dW_ijV_j_ * e_ij_;
-			}
-		}
-		normal_vector_[index_i] = normal_vector_[index_i] / (normal_vector_[index_i].norm() + TinyReal);
 	}
 }
 #endif // PARTICLE_DYNAMICS_DIFFUSION_REACTION_WITH_BOUNDARY_HPP

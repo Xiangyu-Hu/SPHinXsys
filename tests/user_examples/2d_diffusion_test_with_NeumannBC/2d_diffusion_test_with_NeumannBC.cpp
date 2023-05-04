@@ -69,10 +69,8 @@ int main(int ac, char* av[])
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	DiffusionBodyRelaxation temperature_relaxation(diffusion_body_inner_relation, diffusion_body_contact_Neumann);
+	DiffusionBodyRelaxation temperature_relaxation(diffusion_body_inner_relation, diffusion_body_contact_Dirichlet, diffusion_body_contact_Neumann);
 
-	//InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_diffusion_body_normal_vector_Neumann(diffusion_body_contact_Neumann);
-	//InteractionDynamics<UpdateUnitVectorNormalToBoundary<DiffusionParticlesWithBoundary, WallParticles>> update_wall_boundary_normal_vector_Neumann(wall_boundary_contact_Neumann);
 	SimpleDynamics<NormalDirectionFromBodyShape> diffusion_body_normal_direction(diffusion_body);
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary_Neumann);
 	//----------------------------------------------------------------------
@@ -87,8 +85,6 @@ int main(int ac, char* av[])
 	setup_boundary_condition_Dirichlet.exec();
 	setup_boundary_condition_Neumann.exec();
 
-	//update_diffusion_body_normal_vector_Neumann.exec();
-	//update_wall_boundary_normal_vector_Neumann.exec();
 	diffusion_body_normal_direction.exec();
 	wall_boundary_normal_direction.exec();
 	//----------------------------------------------------------------------
