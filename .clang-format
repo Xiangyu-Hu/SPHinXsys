@@ -1,0 +1,6 @@
+UseTab: (VS Code current setting)
+IndentWidth: (VS Code current setting)
+BreakBeforeBraces: Allman
+AllowShortIfStatementsOnASingleLine: false
+IndentCaseLabels: false
+ColumnLimit: 0
