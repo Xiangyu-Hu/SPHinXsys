@@ -6,7 +6,7 @@ namespace SPH
 {
 	//=================================================================================================//
 	KernelCubicBSpline::KernelCubicBSpline(Real h)
-		: Kernel(h, "CubicBSpline")
+		: Kernel(h, 2.0, 2.0, "CubicBSpline")
 	{
 		factor_W_1D_ = inv_h_ * 2.0 / 3.0;
 		factor_W_2D_ = inv_h_ * inv_h_ * 10.0 / (7.0 * Pi);

@@ -6,7 +6,7 @@ namespace SPH
 {
 	//=================================================================================================//
 	KernelQuadratic::KernelQuadratic(Real h)
-		: Kernel(h, "QuadraticKernel")
+		: Kernel(h, 2.0, 2.0, "QuadraticKernel")
 	{
 		factor_W_1D_ = inv_h_ / 7.0;
 		factor_W_2D_ = inv_h_ * inv_h_ / (3.0 * Pi);
