@@ -1,5 +1,5 @@
-UseTab: (VS Code current setting)
-IndentWidth: (VS Code current setting)
+UseTab: false
+IndentWidth: 4
 BreakBeforeBraces: Allman
 AllowShortIfStatementsOnASingleLine: false
 IndentCaseLabels: false
