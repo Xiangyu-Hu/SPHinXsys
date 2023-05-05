@@ -36,7 +36,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES Windows)
     target_compile_options(sphinxsys_core INTERFACE /MP)
     target_compile_options(sphinxsys_core INTERFACE /permissive-) 
     # target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:/W4 /WX>) # TODO: For when one gets rid of Simbody 
-else()
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Werror>)
     target_compile_options(sphinxsys_core INTERFACE  $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Wall>)
     # target_compile_options(sphinxsys_core INTERFACE  $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Wextra>) # TODO: 

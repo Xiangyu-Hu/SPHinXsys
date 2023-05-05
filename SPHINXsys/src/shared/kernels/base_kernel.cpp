@@ -3,8 +3,9 @@
 namespace SPH
 {
 	//=================================================================================================//
-	Kernel::Kernel(Real h, const std::string &kernel_name)
-		: kernel_name_(kernel_name), h_(h), inv_h_(1.0 / h),
+	Kernel::Kernel(Real h, Real kernel_size, Real truncation, const std::string &name)
+		: kernel_name_(name), h_(h), inv_h_(1.0 / h), kernel_size_(kernel_size),
+		  truncation_(truncation), rc_ref_(truncation * h), rc_ref_sqr_(rc_ref_ * rc_ref_),
 		  h_factor_W_1D_(std::bind(&Kernel::factorW1D, this, _1)),
 		  h_factor_W_2D_(std::bind(&Kernel::factorW2D, this, _1)),
 		  h_factor_W_3D_(std::bind(&Kernel::factorW3D, this, _1)),
@@ -17,14 +18,27 @@ namespace SPH
 	//=================================================================================================//
 	void Kernel::setDerivativeParameters()
 	{
-		cutoff_radius_ref_ = KernelSize() * h_;
-		cutoff_radius_sqr_ = cutoff_radius_ref_ * cutoff_radius_ref_;
 		factor_dW_1D_ = inv_h_ * factor_W_1D_;
 		factor_dW_2D_ = inv_h_ * factor_W_2D_;
 		factor_dW_3D_ = inv_h_ * factor_W_3D_;
 		factor_d2W_1D_ = inv_h_ * factor_dW_1D_;
 		factor_d2W_2D_ = inv_h_ * factor_dW_2D_;
 		factor_d2W_3D_ = inv_h_ * factor_dW_3D_;
+	}
+	//=================================================================================================//
+	void Kernel::resetSmoothingLength(Real h)
+	{
+		Real ratio = h_ / h;
+		h_ /= ratio;
+		inv_h_ *= ratio;
+		rc_ref_ /= ratio;
+		rc_ref_sqr_ /= ratio * ratio;
+
+		factor_W_1D_ *= ratio;
+		factor_W_2D_ *= ratio * ratio;
+		factor_W_3D_ *= ratio * ratio * ratio;
+
+		setDerivativeParameters();
 	}
 	//=================================================================================================//
 	Real Kernel::W(const Real &r_ij, const Real &displacement) const

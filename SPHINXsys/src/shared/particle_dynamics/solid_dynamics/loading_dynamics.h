@@ -138,11 +138,11 @@ namespace SPH
             Real stiffness_;
             Real damping_coeff_; // damping component parallel to the spring force component
             StdLargeVec<bool> apply_spring_force_to_particle_;
-            StdLargeVec<bool> &GetApplySpringForceToParticle() { return apply_spring_force_to_particle_; }
 
         public:
             SpringOnSurfaceParticles(SPHBody &sph_body, Real stiffness, Real damping_ratio = 0.05);
-
+            
+            const StdLargeVec<bool> &GetApplySpringForceToParticle() { return apply_spring_force_to_particle_; }
             void update(size_t index_i, Real dt = 0.0);
         };
         /**

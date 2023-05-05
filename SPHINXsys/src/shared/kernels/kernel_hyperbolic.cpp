@@ -6,7 +6,7 @@ namespace SPH
 {
 	//=================================================================================================//
 	KernelHyperbolic::KernelHyperbolic(Real h)
-		: Kernel(h, "HyperbolicKernel")
+		: Kernel(h, 2.0, 2.0, "HyperbolicKernel")
 	{
 		factor_W_1D_ = inv_h_ / 7.0;
 		factor_W_2D_ = inv_h_ * inv_h_ / (3.0 * Pi);

@@ -93,9 +93,9 @@ namespace SPH
         if (all_variable_maps_[type_index].find(variable_name) != all_variable_maps_[type_index].end())
             return std::get<type_index>(all_particle_data_)[all_variable_maps_[type_index][variable_name]];
 
-        std::cout << "\n Error: the variable '" << variable_name << "' is not registered!" << std::endl;
+        std::cout << "\nWarning: the variable '" << variable_name << "' is not registered!\n";
+        std::cout << "This warning might be acceptable if the variable is registered later.\n";
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-        exit(1);
         return nullptr;
     }
     //=================================================================================================//
@@ -133,13 +133,20 @@ namespace SPH
         addVariableNameToList<VariableType>(variables_to_write_, variable_name);
     }
     //=================================================================================================//
-    template <class DerivedVariableMethod>
-    void BaseParticles::addDerivedVariableToWrite()
+    template <class DerivedVariableMethod, class... Ts>
+    void BaseParticles::addDerivedVariableToWrite(Ts&&... args)
     {
-        SimpleDynamics<DerivedVariableMethod> *derived_data = derived_particle_data_.createPtr<SimpleDynamics<DerivedVariableMethod>>(sph_body_);
+        SimpleDynamics<DerivedVariableMethod> *derived_data = derived_particle_data_.createPtr<SimpleDynamics<DerivedVariableMethod>>(sph_body_, std::forward<Ts>(args)...);
         derived_variables_.push_back(derived_data);
         using DerivedVariableType = typename DerivedVariableMethod::DerivedVariableType;
         addVariableNameToList<DerivedVariableType>(variables_to_write_, derived_data->variable_name_);
+    }
+    //=================================================================================================//
+    template <class DerivedVariableMethod, class... Ts>
+    void BaseParticles::addDerivedVariable(Ts&&... args)
+    {
+        SimpleDynamics<DerivedVariableMethod> *derived_data = derived_particle_data_.createPtr<SimpleDynamics<DerivedVariableMethod>>(sph_body_, std::forward<Ts>(args)...);
+        derived_variables_.push_back(derived_data);
     }
     //=================================================================================================//
     template <typename VariableType>
