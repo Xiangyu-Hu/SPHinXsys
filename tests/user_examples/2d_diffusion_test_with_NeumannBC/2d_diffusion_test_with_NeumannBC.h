@@ -7,16 +7,15 @@
 #define DIFFUSION_TEST_WITH_NEUMANNBC_H
 
 #include "sphinxsys.h"
-
 #include "diffusion_reaction_particles_with_boundary.h"
 #include "particle_dynamics_diffusion_reaction_with_boundary.h"
 #include "particle_dynamics_diffusion_reaction_with_boundary.hpp"
 
 using namespace SPH;
 
- //----------------------------------------------------------------------
- //	Basic geometry parameters and numerical setup.
- //----------------------------------------------------------------------
+//----------------------------------------------------------------------
+//	Basic geometry parameters and numerical setup.
+//----------------------------------------------------------------------
 Real L = 1.0;
 Real H = 1.0;
 Real resolution_ref = H / 100.0;
@@ -33,14 +32,7 @@ std::array<std::string, 1> species_name_list{ "Phi" };
 Real initial_temperature = 0.0;
 Real left_temperature = 300.0;
 Real right_temperature = 350.0;
-
-//Real below_temperature = 100.0;
-
 Real heat_flux = 900.0;
-
-//Real T_infinity = 100.0;
-//Real convection = 100.0;
-
 //----------------------------------------------------------------------
 //	Geometric shapes used in the system.
 //----------------------------------------------------------------------
@@ -167,8 +159,6 @@ public:
 		if (pos_[index_i][1] < 0 && pos_[index_i][0] > 0.45 * L && pos_[index_i][0] < 0.55 * L)
 		{
 			heat_flux_[index_i] = heat_flux;
-			//T_infinity_[index_i] = T_infinity;
-			//convection_[index_i] = convection;
 		}
 	}
 };
@@ -176,7 +166,6 @@ public:
 using DiffusionRelaxationInner = RelaxationOfAllDiffusionSpeciesInner<DiffusionParticlesWithBoundary>;
 using DiffusionRelaxationWithDirichletContact = RelaxationOfAllDiffusionSpeciesDirichletContact<DiffusionParticlesWithBoundary, WallParticles>;
 using DiffusionRelaxationWithNeumannContact = RelaxationOfAllDiffusionSpeciesNeumannContact<DiffusionParticlesWithBoundary, WallParticles>;
-//using DiffusionRelaxationWithRobinContact = RelaxationOfAllDiffusionSpeciesRobinContact<DiffusionParticlesWithBoundary, WallParticles>;
 //----------------------------------------------------------------------
 //	Specify diffusion relaxation method. 
 //----------------------------------------------------------------------
@@ -188,16 +177,6 @@ public:
 		: RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact, DiffusionRelaxationWithNeumannContact>>(inner_relation, body_contact_relation_Dirichlet, body_contact_relation_Neumann) {};
 	virtual ~DiffusionBodyRelaxation() {};
 };
-
-//test inner add dirichlet and robin
-//class DiffusionBodyRelaxation
-//	: public RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact, DiffusionRelaxationWithRobinContact>>
-//{
-//public:
-//	explicit DiffusionBodyRelaxation(InnerRelation& inner_relation, ContactRelation& body_contact_relation_Dirichlet, ContactRelation& body_contact_relation_Robin)
-//		: RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact, DiffusionRelaxationWithRobinContact>>(inner_relation, body_contact_relation_Dirichlet, body_contact_relation_Robin) {};
-//	virtual ~DiffusionBodyRelaxation() {};
-//};
 //----------------------------------------------------------------------
 //	An observer body to measure temperature at given positions. 
 //----------------------------------------------------------------------
@@ -207,7 +186,7 @@ public:
 	TemperatureObserverParticleGenerator(SPHBody& sph_body) : ObserverParticleGenerator(sph_body)
 	{
 		/** A line of measuring points at the middle line. */
-		size_t number_of_observation_points = 11;
+		size_t number_of_observation_points = 5;
 		Real range_of_measure = L;
 		Real start_of_measure = 0;
 

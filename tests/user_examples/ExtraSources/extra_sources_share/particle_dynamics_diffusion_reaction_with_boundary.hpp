@@ -106,9 +106,6 @@ namespace SPH
 		: RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(contact_relation),
 		n_(this->particles_->n_)
 	{
-		//contact_heat_flux_.resize(this->contact_particles_.size());
-		//contact_n_.resize(this->contact_particles_.size());
-
 		for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
 		{
 			for (size_t k = 0; k != this->contact_particles_.size(); ++k)
@@ -154,7 +151,6 @@ namespace SPH
 				const Vecd& grad_ijV_j = particles->getKernelGradient(index_i, index_j, dW_ijV_j_, e_ij);
 				Vecd n_ij = n_[index_i] - n_k[index_j];
 				Real area_ij_Neumann = grad_ijV_j.dot(n_ij);
-				//Real area_ij_Neumann = 1.0;
 				getDiffusionChangeRateNeumannContact(index_i, index_j, area_ij_Neumann, heat_flux_);
 			}
 		}
@@ -166,10 +162,6 @@ namespace SPH
 		: RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(contact_relation),
 		n_(this->particles_->n_)
 	{
-		//contact_convection_.resize(this->contact_particles_.size());
-		//contact_T_infinity_.resize(this->contact_particles_.size());
-		//contact_n_.resize(this->contact_particles_.size());
-
 		for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
 		{
 			for (size_t k = 0; k != this->contact_particles_.size(); ++k)

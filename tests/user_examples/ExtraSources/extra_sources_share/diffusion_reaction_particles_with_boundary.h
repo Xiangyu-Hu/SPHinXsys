@@ -15,7 +15,6 @@
 
 namespace SPH
 {
-
 	/**
 	 * @class DiffusionReactionParticlesWithBoundary
 	 * @brief A group of particles with diffusion or/and reactions particle data.
@@ -24,7 +23,6 @@ namespace SPH
 	class DiffusionReactionParticlesWithBoundary : public DiffusionReactionParticles<BaseParticlesType, DiffusionReactionMaterialType>
 	{
 	public:
-		//StdLargeVec<Vecd> normal_vector_; /**< normal vector for Neumann or Robin boundary conditions */
 		StdLargeVec<Real> heat_flux_; /**< heat flux for Neumann boundary condition */
 		StdLargeVec<Real> convection_; /**< convection for Robin boundary condition */
 		StdLargeVec<Real> T_infinity_; /**< T_infinity for Robin boundary condition */
@@ -32,7 +30,6 @@ namespace SPH
 		DiffusionReactionParticlesWithBoundary(SPHBody& sph_body, DiffusionReactionMaterialType* diffusion_reaction_material)
 			: DiffusionReactionParticles<BaseParticlesType, DiffusionReactionMaterialType>(sph_body, diffusion_reaction_material)
 		{
-			//normal_vector_.resize(this->all_species_.size());
 			heat_flux_.resize(this->all_species_.size());
 			convection_.resize(this->all_species_.size());
 			T_infinity_.resize(this->all_species_.size());
@@ -42,9 +39,6 @@ namespace SPH
 		virtual void initializeOtherVariables() override
 		{
 			DiffusionReactionParticles<BaseParticlesType, DiffusionReactionMaterialType>::initializeOtherVariables();
-
-			//this->registerVariable(normal_vector_, "UnitNormalVector");
-			//this->template addVariableToWrite<Vecd>("UnitNormalVector");
 			
 			this->registerVariable(heat_flux_, "HeatFlux");
 			this->template addVariableToWrite<Real>("HeatFlux");

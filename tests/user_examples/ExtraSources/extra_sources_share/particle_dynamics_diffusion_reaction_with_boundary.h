@@ -17,7 +17,7 @@ namespace SPH
 
 	/**
 	 * @class DiffusionReactionInitialCondition
-	 * @brief Pure abstract class for initial conditions
+	 * @brief Pure abstract class for initial conditions.
 	 */
 	template <class DiffusionReactionParticlesType>
 	class DiffusionReactionInitialConditionWithBoundary
@@ -91,7 +91,6 @@ namespace SPH
 		: public RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
 	{
 		StdLargeVec<Vecd>& n_;
-		//StdVec<StdLargeVec<Real>*> contact_Vol_;
 		StdVec<StdLargeVec<Real>*> contact_heat_flux_;
 		StdVec<StdLargeVec<Vecd>*> contact_n_;
 
@@ -114,7 +113,6 @@ namespace SPH
 		: public RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
 	{
 		StdLargeVec<Vecd>& n_;
-		StdVec<StdLargeVec<Real>*> contact_Vol_;
 		StdVec<StdLargeVec<Real>*> contact_convection_;
 		StdVec<StdLargeVec<Real>*> contact_T_infinity_;
 		StdVec<StdLargeVec<Vecd>*> contact_n_;
@@ -131,7 +129,7 @@ namespace SPH
 
 	/**
 	 * @class ComplexInteraction
-	 * @brief
+	 * @brief A class that integrates multiple boundary conditions.
 	 */
 	template <typename... DiffusionRelaxationType>
 	class ComplexInteraction;
@@ -166,7 +164,7 @@ namespace SPH
 
 	/**
 	 * @class InitializationRKComplex
-	 * @brief initialization of a runge-kutta integration scheme
+	 * @brief Initialization of a runge-kutta integration scheme.
 	 */
 	template <class DiffusionReactionParticlesType>
 	class InitializationRKComplex : public LocalDynamics,
@@ -187,7 +185,7 @@ namespace SPH
 
 	/**
 	 * @class SecondStageRK2Complex
-	 * @brief the second stage of the 2nd-order Runge-Kutta scheme
+	 * @brief The second stage of the 2nd-order Runge-Kutta scheme.
 	 */
 	template <class FirstStageType>
 	class SecondStageRK2Complex : public FirstStageType
@@ -228,7 +226,7 @@ namespace SPH
 			StdVec<std::string>& all_species_names = rk2_1st_stage_.getParticles()->AllSpeciesNames();
 			for (size_t i = 0; i != all_diffusions_.size(); ++i)
 			{
-				// register diffusion species intermediate
+				// Register diffusion species intermediate
 				size_t diffusion_species_index = all_diffusions_[i]->diffusion_species_index_;
 				std::string& diffusion_species_name = all_species_names[diffusion_species_index];
 				rk2_1st_stage_.getParticles()->registerVariable(diffusion_species_s_[i], diffusion_species_name + "Intermediate");
