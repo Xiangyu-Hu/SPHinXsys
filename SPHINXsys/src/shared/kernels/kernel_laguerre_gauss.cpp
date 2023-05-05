@@ -6,7 +6,7 @@ namespace SPH
 {
 	//=================================================================================================//
 	KernelLaguerreGauss::KernelLaguerreGauss(Real h)
-		: Kernel(h, "LaguerreGauss")
+		: Kernel(h, 2.0, 2.0, "LaguerreGauss")
 	{
 		factor_W_1D_ = inv_h_ * 8.0 / (5.0 * pow(Pi, 0.5));
 		factor_W_2D_ = inv_h_ * inv_h_ * 3.0 / Pi;
