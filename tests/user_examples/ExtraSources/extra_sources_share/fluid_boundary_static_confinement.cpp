@@ -9,8 +9,8 @@ namespace SPH
 		StaticConfinementTransportVelocity::StaticConfinementTransportVelocity(NearShapeSurface& near_surface, Real coefficient)
 			: LocalDynamics(near_surface.getSPHBody()), FluidDataSimple(sph_body_),
 			pos_(particles_->pos_), surface_indicator_(particles_->surface_indicator_),
-			smoothing_length_sqr_(pow(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
 			coefficient_(coefficient),
+			smoothing_length_sqr_(pow(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
 			level_set_shape_(&near_surface.level_set_shape_) {}
 		//=================================================================================================//
 		void StaticConfinementTransportVelocity::update(size_t index_i, Real dt)
@@ -25,8 +25,8 @@ namespace SPH
 		//=================================================================================================//
 		StaticConfinementViscousAcceleration::StaticConfinementViscousAcceleration(NearShapeSurface& near_surface)
 			: LocalDynamics(near_surface.getSPHBody()), FluidDataSimple(sph_body_),
-			pos_(particles_->pos_), acc_prior_(particles_->acc_prior_), rho_(particles_->rho_),
-			mu_(particles_->fluid_.ReferenceViscosity()), vel_(particles_->vel_),
+			pos_(particles_->pos_), rho_(particles_->rho_), vel_(particles_->vel_),
+			acc_prior_(particles_->acc_prior_),mu_(particles_->fluid_.ReferenceViscosity()),
 			level_set_shape_(&near_surface.level_set_shape_) {}
 		//=================================================================================================//
 		void StaticConfinementViscousAcceleration::update(size_t index_i, Real dt)
@@ -45,12 +45,12 @@ namespace SPH
 		StaticConfinementExtendIntegration1stHalf::
 			StaticConfinementExtendIntegration1stHalf(NearShapeSurface& near_surface, Real  sound_speed, Real penalty_strength)
 			: LocalDynamics(near_surface.getSPHBody()), FluidDataSimple(sph_body_),
-			fluid_(particles_->fluid_), c_0_ (sound_speed),
+			fluid_(particles_->fluid_),
 			rho_(particles_->rho_), p_(particles_->p_),
 			pos_(particles_->pos_), vel_(particles_->vel_),
 			acc_(particles_->acc_),
 			level_set_shape_(&near_surface.level_set_shape_),
-			riemann_solver_(fluid_, fluid_), penalty_strength_(penalty_strength) {}
+			riemann_solver_(fluid_, fluid_), penalty_strength_(penalty_strength), c_0_ (sound_speed){}
 		//=================================================================================================//
 		void StaticConfinementExtendIntegration1stHalf::update(size_t index_i, Real dt)
 		{
