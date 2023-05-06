@@ -28,7 +28,7 @@
 #include "polar_decomposition_3x3_matrix.h"
 
 #include <algorithm>
-
+#include <limits>
 
 namespace polar
 {

@@ -22,7 +22,7 @@
  * ------------------------------------------------------------------------*/
 /**
  * @file 	image_mesh_shape.h
- * @brief 	Immage process for geometry representation. 
+ * @brief 	Image process for geometry representation. 
  * @author	Yijin Mao
  */
 
@@ -59,12 +59,12 @@ namespace SPH {
 	public:
 		ImageMHD() {};
 		// constructor for input files
-		ImageMHD(std::string full_path_file);
+		explicit ImageMHD(std::string full_path_file);
 		// constructor for sphere 
-		ImageMHD(Real radius, Vec3i dxdydz, Vec3d spacings);
+		ImageMHD(Real radius, Array3i dxdydz, Vec3d spacings);
 		~ImageMHD();
 
-		void set_objectType(std::string objectType) 
+		void set_objectType(const std::string &objectType) 
 		{ 
 			objectType_ = objectType; 
 		};
@@ -101,11 +101,11 @@ namespace SPH {
 		{ 
 			dimSize_ = dimSize; 
 		};
-		void set_anatomicalOrientation(std::string anatomicalOrientation) 
+		void set_anatomicalOrientation(const std::string &anatomicalOrientation) 
 		{
 			anatomicalOrientation_ = anatomicalOrientation;
 		};
-		void set_elementType(std::string elementType) 
+		void set_elementType(const Image_Data_Type &elementType) 
 		{
 			elementType_ = elementType;
 		};
@@ -138,7 +138,7 @@ namespace SPH {
 		Vec3d offset_;
 		Vec3d centerOfRotation_;
 		Vec3d elementSpacing_;
-		Vec3i dimSize_;
+		Array3i dimSize_;
 		int width_;
 		int height_;
 		int depth_;
@@ -150,7 +150,7 @@ namespace SPH {
 		Real max_value_;
 		T *data_;
 
-		std::vector<int> findNeighbors(const Vec3d& probe_point, Vec3i& this_cell);
+		std::vector<int> findNeighbors(const Vec3d& probe_point, Array3i& this_cell);
 		Vec3d computeGradientAtCell(int i);
 		Vec3d computeNormalAtCell(int i);
 		T getValueAtCell(int i);

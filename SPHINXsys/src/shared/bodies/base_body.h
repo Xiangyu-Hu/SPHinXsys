@@ -68,8 +68,8 @@ namespace SPH
 		UniquePtrKeeper<BaseMaterial> base_material_ptr_keeper_;
 
 	protected:
-		std::string body_name_;
 		SPHSystem &sph_system_;
+		std::string body_name_;
 		bool newly_updated_;			/**< whether this body is in a newly updated state */
 		BaseParticles *base_particles_; /**< Base particles for dynamic cast DataDelegate  */
 
@@ -89,7 +89,6 @@ namespace SPH
 		BaseParticles &getBaseParticles() { return *base_particles_; };
 		size_t &LoopRange() { return base_particles_->total_real_particles_; };
 		size_t SizeOfLoopRange() { return base_particles_->total_real_particles_; };
-		size_t getParticleIndex(size_t index_i) { return index_i; };
 		Real getSPHBodyResolutionRef() { return sph_adaptation_->ReferenceSpacing(); };
 		void setNewlyUpdated() { newly_updated_ = true; };
 		void setNotNewlyUpdated() { newly_updated_ = false; };
@@ -149,21 +148,27 @@ namespace SPH
 		{
 			sph_adaptation_->registerAdaptationVariables(*base_particles_);
 			ParticleGeneratorType particle_generator(*this, std::forward<ConstructorArgs>(args)...);
-			particle_generator.initializeGeometricVariables();
+			particle_generator.generateParticlesWithBasicVariables();
 			base_particles_->initializeOtherVariables();
-			base_material_->assignBaseParticles(base_particles_);
+			base_material_->initializeLocalParameters(base_particles_);
 		};
-			
+
 		template <typename VariableType>
 		void addBodyStateForRecording(const std::string &variable_name)
 		{
 			base_particles_->template addVariableToWrite<VariableType>(variable_name);
 		};
 
-		template <class DerivedVariableMethod>
-		void addDerivedBodyStateForRecording()
+		template <class DerivedVariableMethod,typename... Args>
+		void addDerivedBodyStateForRecording(Args&&... args)
 		{
-			base_particles_->template addDerivedVariableToWrite<DerivedVariableMethod>();
+			base_particles_->template addDerivedVariableToWrite<DerivedVariableMethod>(std::forward<Args>(args)...);
+		};
+
+        template <class DerivedVariableMethod,typename... Args>
+		void addDerivedBodyState(Args&&... args)
+		{
+			base_particles_->template addDerivedVariable<DerivedVariableMethod>(std::forward<Args>(args)...);
 		};
 
 		virtual void writeParticlesToVtuFile(std::ostream &output_file);
@@ -205,7 +210,7 @@ namespace SPH
 			  cell_linked_list_created_(false)
 		{
 			this->getSPHSystem().real_bodies_.push_back(this);
-			size_t number_of_split_cell_lists = powerN(3, Vecd::Zero().size());
+			size_t number_of_split_cell_lists = pow(3, Dimensions);
 			split_cell_lists_.resize(number_of_split_cell_lists);
 		};
 		virtual ~RealBody(){};

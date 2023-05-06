@@ -29,6 +29,7 @@
 #pragma once
 
 #include "general_dynamics.h"
+#include <array>
 
 namespace SPH
 {
@@ -43,10 +44,10 @@ namespace SPH
     {
     public:
         ComputeDensityErrorInner(BaseInnerRelation &inner_relation)
-            : LocalDynamics(inner_relation.sph_body_), GeneralDataDelegateInner(inner_relation),
+            : LocalDynamics(inner_relation.getSPHBody()), GeneralDataDelegateInner(inner_relation),
               rho0_(sph_body_.base_material_->ReferenceDensity()),
               h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")),
-              particle_adaptation_(DynamicCast<ParticleSplitAndMerge>(this, *inner_relation.sph_body_.sph_adaptation_))
+              particle_adaptation_(DynamicCast<ParticleSplitAndMerge>(this, *inner_relation.getSPHBody().sph_adaptation_))
         {
             density_error_.resize(particles_->real_particles_bound_);
             particles_->addVariableToWrite<Real>("Density");
@@ -61,9 +62,9 @@ namespace SPH
         StdLargeVec<bool> tag_split_;
 
     protected:
-        ParticleSplitAndMerge &particle_adaptation_;
         Real rho0_;
         StdLargeVec<Real> &h_ratio_;
+        ParticleSplitAndMerge &particle_adaptation_;
         Vecd E_cof_ = Vecd::Zero();
         Real sigma_E_ = 0.0;
         Real E_cof_sigma_ = 0.0;
@@ -91,8 +92,8 @@ namespace SPH
     {
     public:
         ComputeDensityErrorWithWall(ComplexRelation &complex_relation)
-            : ComputeDensityErrorInner(complex_relation.inner_relation_),
-              GeneralDataDelegateContact(complex_relation.contact_relation_)
+            : ComputeDensityErrorInner(complex_relation.getInnerRelation()),
+              GeneralDataDelegateContact(complex_relation.getContactRelation())
         {
             for (size_t k = 0; k != contact_bodies_.size(); ++k)
             {
@@ -124,11 +125,11 @@ namespace SPH
         BoundingBox refinement_region_bounds_;
         ParticleSplitAndMerge &particle_adaptation_;
         Real inv_rho0_;
-        StdLargeVec<Vecd> &pos_;
         StdLargeVec<Real> &Vol_;
+        StdLargeVec<Vecd> &pos_;
+        StdLargeVec<Real> &rho_;
         StdLargeVec<Real> &mass_;
         StdLargeVec<Real> &h_ratio_; /**< the ratio between reference smoothing length to variable smoothing length */
-        StdLargeVec<Real> &rho_;
 
         virtual bool checkLocation(const BoundingBox &refinement_region_bounds, Vecd position, Real volume);
     };
@@ -142,13 +143,22 @@ namespace SPH
     public:
         ParticleSplitWithPrescribedArea(SPHBody &sph_body, Shape &refinement_region, size_t body_buffer_width);
         virtual ~ParticleSplitWithPrescribedArea(){};
-        void interaction(size_t index_i, Real dt = 0.0);
+
+        inline void interaction(size_t index_i, Real dt = 0.0)
+        {
+            if (splitCriteria(index_i))
+            {
+                StdVec<size_t> new_indices;
+                splittingModel(index_i, new_indices);
+            }
+        };
+
         void update(size_t index_i, Real dt = 0.0);
 
     protected:
         StdLargeVec<Real> total_split_error_;
         StdVec<Vecd> split_position_;
-        StdVec<Vecu> split_index_;
+        StdVec<std::pair<size_t,size_t>> split_index_;
         size_t particle_number_change = 0;
 
         virtual void setupDynamics(Real dt) override;
@@ -166,7 +176,7 @@ namespace SPH
     {
     public:
         SplitWithMinimumDensityErrorInner(BaseInnerRelation &inner_relation, Shape &refinement_region, size_t body_buffer_width)
-            : ParticleSplitWithPrescribedArea(inner_relation.sph_body_, refinement_region, body_buffer_width),
+            : ParticleSplitWithPrescribedArea(inner_relation.getSPHBody(), refinement_region, body_buffer_width),
               compute_density_error(inner_relation)
         {
             particles_->registerVariable(total_split_error_, "SplitDensityError", 0.0);
@@ -190,7 +200,7 @@ namespace SPH
     {
     public:
         SplitWithMinimumDensityErrorWithWall(ComplexRelation &complex_relation, Shape &refinement_region, size_t body_buffer_width)
-            : SplitWithMinimumDensityErrorInner(complex_relation.inner_relation_, refinement_region, body_buffer_width),
+            : SplitWithMinimumDensityErrorInner(complex_relation.getInnerRelation(), refinement_region, body_buffer_width),
               compute_density_error(complex_relation){};
         virtual ~SplitWithMinimumDensityErrorWithWall(){};
 
@@ -209,7 +219,19 @@ namespace SPH
         ParticleMergeWithPrescribedArea(BaseInnerRelation &inner_relation, Shape &refinement_region);
         virtual ~ParticleMergeWithPrescribedArea(){};
 
-        void interaction(size_t index_i, Real dt = 0.0);
+        inline void interaction(size_t index_i, Real dt = 0.0)
+        {
+            if (!tag_merged_[index_i])
+            {
+                StdVec<size_t> merge_indices; // three particles for merging to two
+                if (mergeCriteria(index_i, merge_indices))
+                {
+                    merge_indices.push_back(index_i);
+                    tag_merged_[index_i] = true;
+                    mergingModel(merge_indices);
+                }
+            }
+        };
 
     protected:
         ParticleData &all_particle_data_;
@@ -236,7 +258,7 @@ namespace SPH
                 constexpr int type_index = DataTypeIndex<VariableType>::value;
                 for (size_t i = 0; i != std::get<type_index>(particle_data).size(); ++i)
                 {
-                    VariableType particle_data_temp = DataTypeInitializer<VariableType>::zero;
+                    VariableType particle_data_temp = ZeroData<VariableType>::value;
                     for (size_t k = 0; k != merge_indices.size(); ++k)
                         particle_data_temp += merge_mass[k] * (*std::get<type_index>(particle_data)[i])[merge_indices[k]];
 
@@ -259,7 +281,7 @@ namespace SPH
               compute_density_error(inner_relation){};
         virtual ~MergeWithMinimumDensityErrorInner(){};
 
-        void interaction(size_t index_i, Real dt = 0.0)
+        inline void interaction(size_t index_i, Real dt = 0.0)
         {
             ParticleMergeWithPrescribedArea::interaction(index_i, dt);
         };
@@ -287,11 +309,11 @@ namespace SPH
     {
     public:
         MergeWithMinimumDensityErrorWithWall(ComplexRelation &complex_relation, Shape &refinement_region)
-            : MergeWithMinimumDensityErrorInner(complex_relation.inner_relation_, refinement_region),
+            : MergeWithMinimumDensityErrorInner(complex_relation.getInnerRelation(), refinement_region),
               compute_density_error(complex_relation){};
         virtual ~MergeWithMinimumDensityErrorWithWall(){};
 
-        void interaction(size_t index_i, Real dt = 0.0)
+        inline void interaction(size_t index_i, Real dt = 0.0)
         {
             MergeWithMinimumDensityErrorInner::interaction(index_i, dt);
         };

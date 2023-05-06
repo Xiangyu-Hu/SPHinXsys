@@ -57,10 +57,6 @@ using namespace boost::geometry;
 
 namespace SPH
 {
-
-	/**
-	 * @brief preclaimed classes.
-	 */
 	class Kernel;
 
 	typedef model::polygon<model::d2::point_xy<Real>> boost_poly;

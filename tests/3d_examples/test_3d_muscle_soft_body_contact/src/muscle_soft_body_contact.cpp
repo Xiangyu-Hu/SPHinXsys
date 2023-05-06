@@ -79,21 +79,21 @@ int main()
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> corrected_configuration(myocardium_body_inner);
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> corrected_configuration_2(moving_plate_inner);
 	/** active and passive stress relaxation. */
-	Dynamics1Level<solid_dynamics::KirchhoffStressRelaxationFirstHalf> stress_relaxation_first_half(myocardium_body_inner);
-	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half(myocardium_body_inner);
-	Dynamics1Level<solid_dynamics::KirchhoffStressRelaxationFirstHalf> stress_relaxation_first_half_2(moving_plate_inner);
-	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half_2(moving_plate_inner);
+	Dynamics1Level<solid_dynamics::KirchhoffIntegration1stHalf> stress_relaxation_first_half(myocardium_body_inner);
+	Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(myocardium_body_inner);
+	Dynamics1Level<solid_dynamics::KirchhoffIntegration1stHalf> stress_relaxation_first_half_2(moving_plate_inner);
+	Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half_2(moving_plate_inner);
 	//stress_relaxation_first_half_2.post_processes_(spring_constraint);
 	/** Algorithms for solid-solid contact. */
-	InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle> myocardium_update_contact_density(myocardium_plate_contact);
-	InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle> plate_update_contact_density(plate_myocardium_contact);
-	InteractionDynamics<solid_dynamics::ContactForce, BodyPartByParticle> myocardium_compute_solid_contact_forces(myocardium_plate_contact);
-	InteractionDynamics<solid_dynamics::ContactForce, BodyPartByParticle> plate_compute_solid_contact_forces(plate_myocardium_contact);
+	InteractionDynamics<solid_dynamics::ContactDensitySummation> myocardium_update_contact_density(myocardium_plate_contact);
+	InteractionDynamics<solid_dynamics::ContactDensitySummation> plate_update_contact_density(plate_myocardium_contact);
+	InteractionDynamics<solid_dynamics::ContactForce> myocardium_compute_solid_contact_forces(myocardium_plate_contact);
+	InteractionDynamics<solid_dynamics::ContactForce> plate_compute_solid_contact_forces(plate_myocardium_contact);
 
 	/** Constrain the holder. */
 	BodyRegionByParticle holder(myocardium_body, 
 		makeShared<TransformShape<GeometricShapeBox>>(Transformd(translation_stationary_plate), halfsize_stationary_plate, "Holder"));
-	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_holder(holder);
+	SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_holder(holder);
 	/** Add spring constraint on the plate. */
 	SimpleDynamics<solid_dynamics::SpringDamperConstraintParticleWise> spring_constraint(moving_plate, Vecd(0.2, 0, 0), 0.01);
 
@@ -114,8 +114,8 @@ int main()
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
 	/** apply initial condition */
-	corrected_configuration.parallel_exec();
-	corrected_configuration_2.parallel_exec();
+	corrected_configuration.exec();
+	corrected_configuration_2.exec();
 	write_states.writeToFile(0);
 	/** Setup physical parameters. */
 	int ite = 0;
@@ -123,8 +123,8 @@ int main()
 	Real output_period = end_time / 100.0;
 	Real dt = 0.0;
 	/** Statistics for computing time. */
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 	/**
 	 * Main loop
 	 */
@@ -140,28 +140,28 @@ int main()
 						  << dt << "\n";
 			}
 			/** Gravity. */
-			myocardium_initialize_time_step.parallel_exec();
-			plate_initialize_time_step.parallel_exec();
+			myocardium_initialize_time_step.exec();
+			plate_initialize_time_step.exec();
 
-			spring_constraint.parallel_exec();
+			spring_constraint.exec();
 
 			/** Contact model for myocardium. */
-			myocardium_update_contact_density.parallel_exec();
-			myocardium_compute_solid_contact_forces.parallel_exec();
+			myocardium_update_contact_density.exec();
+			myocardium_compute_solid_contact_forces.exec();
 			/** Contact model for plate. */
-			plate_update_contact_density.parallel_exec();
-			plate_compute_solid_contact_forces.parallel_exec();
+			plate_update_contact_density.exec();
+			plate_compute_solid_contact_forces.exec();
 
 			/** Stress relaxation and damping. */
-			stress_relaxation_first_half.parallel_exec(dt);
-			constraint_holder.parallel_exec(dt);
-			muscle_damping.parallel_exec(dt);
-			constraint_holder.parallel_exec(dt);
-			stress_relaxation_second_half.parallel_exec(dt);
+			stress_relaxation_first_half.exec(dt);
+			constraint_holder.exec(dt);
+			muscle_damping.exec(dt);
+			constraint_holder.exec(dt);
+			stress_relaxation_second_half.exec(dt);
 
-			stress_relaxation_first_half_2.parallel_exec(dt);
-			plate_damping.parallel_exec(dt);
-			stress_relaxation_second_half_2.parallel_exec(dt);
+			stress_relaxation_first_half_2.exec(dt);
+			plate_damping.exec(dt);
+			stress_relaxation_second_half_2.exec(dt);
 
 			ite++;
 			dt = system.getSmallestTimeStepAmongSolidBodies();
@@ -174,14 +174,14 @@ int main()
 			myocardium_plate_contact.updateConfiguration();
 			plate_myocardium_contact.updateConfiguration();
 		}
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		write_states.writeToFile();
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 

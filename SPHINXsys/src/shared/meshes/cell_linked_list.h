@@ -47,7 +47,7 @@ namespace SPH
 
 	/**
 	 * @class BaseCellLinkedList
-	 * @brief The Abstract class for mesh cell linked list direved from BaseMeshFied. 
+	 * @brief The Abstract class for mesh cell linked list derived from BaseMeshField. 
 	 */
 	class BaseCellLinkedList : public BaseMeshField
 	{
@@ -77,11 +77,9 @@ namespace SPH
 		/** computing the sequence which indicate the order of sorted particle data */
 		virtual StdLargeVec<size_t> &computingSequence(BaseParticles &base_particles) = 0;
 		/** Tag body part by cell, call by body part */
-		virtual void tagBodyPartByCell(ConcurrentIndexesInCells &cell_lists, std::function<bool(Vecd, Real)> &check_included) = 0;
+		virtual void tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) = 0;
 		/** Tag domain bounding cells in an axis direction, called by domain bounding classes */
 		virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, BoundingBox &bounding_bounds, int axis) = 0;
-		/** Tag domain bounding cells in one side, called by mirror boundary condition */
-		virtual void tagOneSideBoundingCells(CellLists &cell_data_lists, BoundingBox &bounding_bounds, int axis, bool positive) = 0;
 	};
 
 	/**
@@ -99,14 +97,14 @@ namespace SPH
 		/** non-concurrent list data rewritten for building neighbor list */
 		MeshDataMatrix<ListDataVector> cell_data_lists_;
 
+		void allocateMeshDataMatrix(); /**< allocate memories for addresses of data packages. */
+		void deleteMeshDataMatrix();   /**< delete memories for addresses of data packages. */
 		virtual void updateSplitCellLists(SplitCellLists &split_cell_lists) override;
 
 	public:
 		CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing, RealBody &real_body, SPHAdaptation &sph_adaptation);
 		virtual ~CellLinkedList() { deleteMeshDataMatrix(); };
 
-		void allocateMeshDataMatrix(); /**< allocate memories for addresses of data packages. */
-		void deleteMeshDataMatrix();   /**< delete memories for addresses of data packages. */
 		void clearCellLists();
 		void UpdateCellListData(BaseParticles &base_particles);
 		virtual void UpdateCellLists(BaseParticles &base_particles) override;
@@ -114,11 +112,10 @@ namespace SPH
 		void InsertListDataEntry(size_t particle_index, const Vecd &particle_position, Real volumetric) override;
 		virtual ListData findNearestListDataEntry(const Vecd &position) override;
 		virtual StdLargeVec<size_t> &computingSequence(BaseParticles &base_particles) override;
-		virtual void tagBodyPartByCell(ConcurrentIndexesInCells &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
+		virtual void tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
 		virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, BoundingBox &bounding_bounds, int axis) override;
-		virtual void tagOneSideBoundingCells(CellLists &cell_data_lists, BoundingBox &bounding_bounds, int axis, bool positive) override;
 		virtual void writeMeshFieldToPlt(std::ofstream &output_file) override;
-		virtual StdVec<CellLinkedList *> CellLinkedListLevels() { return single_cell_linked_list_level_; };
+		virtual StdVec<CellLinkedList *> CellLinkedListLevels() override { return single_cell_linked_list_level_; };
 
 		/** generalized particle search algorithm */
 		template <class DynamicsRange, typename GetSearchDepth, typename GetNeighborRelation>
@@ -150,10 +147,9 @@ namespace SPH
 		void InsertListDataEntry(size_t particle_index, const Vecd &particle_position, Real volumetric) override;
 		virtual ListData findNearestListDataEntry(const Vecd &position) override { return ListData(0, Vecd::Zero(), 0); };
 		virtual StdLargeVec<size_t> &computingSequence(BaseParticles &base_particles) override;
-		virtual void tagBodyPartByCell(ConcurrentIndexesInCells &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
+		virtual void tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
 		virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, BoundingBox &bounding_bounds, int axis) override{};
-		virtual void tagOneSideBoundingCells(CellLists &cell_data_lists, BoundingBox &bounding_bounds, int axis, bool positive) override{};
-		virtual StdVec<CellLinkedList *> CellLinkedListLevels() { return getMeshLevels(); };
+		virtual StdVec<CellLinkedList *> CellLinkedListLevels() override { return getMeshLevels(); };
 	};
 }
 #endif // MESH_CELL_LINKED_LIST_H

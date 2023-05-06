@@ -48,7 +48,9 @@ namespace SPH
 		public:
 			explicit FreeSurfaceIndicationInner(BaseInnerRelation &inner_relation, Real threshold = 0.75);
 			virtual ~FreeSurfaceIndicationInner(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
+			
 			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
@@ -56,6 +58,7 @@ namespace SPH
 			StdLargeVec<int> &surface_indicator_;
 			StdLargeVec<Real> pos_div_;
 			Real smoothing_length_;
+			bool isVeryNearFreeSurface(size_t index_i);
 		};
 
 		/**
@@ -69,12 +72,14 @@ namespace SPH
 			template <typename... ConstructorArgs>
 			explicit SpatialTemporalFreeSurfaceIdentification(ConstructorArgs &&...args);
 			virtual ~SpatialTemporalFreeSurfaceIdentification(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
+			
 			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<int> previous_surface_indicator_;
-			void checkNearPreviousFreeSurface(size_t index_i);
+			bool isNearPreviousFreeSurface(size_t index_i);
 		};
 		using SpatialTemporalFreeSurfaceIdentificationInner =
 			SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIndicationInner>;
@@ -118,34 +123,14 @@ namespace SPH
 
 		protected:
 			StdLargeVec<int> &surface_indicator_;
-			bool isNearSurface(size_t index_i);
-		};
-
-		/**
-		 * @class FreeStreamBoundaryVelocityCorrection
-		 * @brief this function is applied to freestream flows TODO: revise for general freestream condition
-		 * @brief modify the velocity of free surface particles with far-field velocity
-		 */
-		class FreeStreamBoundaryVelocityCorrection : public LocalDynamics, public FluidDataSimple
-		{
-		protected:
-			Real u_ref_, t_ref_, rho_ref_;
-			StdLargeVec<Real> &rho_sum;
-			StdLargeVec<Vecd> &vel_;
-			StdLargeVec<int> &surface_indicator_;
-
-		public:
-			explicit FreeStreamBoundaryVelocityCorrection(SPHBody &sph_body);
-			virtual ~FreeStreamBoundaryVelocityCorrection(){};
-
-			void update(size_t index_i, Real dt = 0.0);
+			bool isNearFreeSurface(size_t index_i);
 		};
 
 		/**
 		 * @class FreeSurfaceHeight
 		 * @brief Probe the free surface profile for a fluid body part by reduced operation.
 		 */
-		class FreeSurfaceHeight : public LocalDynamicsReduce<Real, ReduceMax>,
+		class FreeSurfaceHeight : public BaseLocalDynamicsReduce<Real, ReduceMax, BodyPartByCell>,
 								  public FluidDataSimple
 		{
 		protected:
@@ -153,7 +138,7 @@ namespace SPH
 
 		public:
 			FreeSurfaceHeight(BodyPartByCell &body_part)
-				: LocalDynamicsReduce<Real, ReduceMax>(body_part.getSPHBody(), Real(MinRealNumber)),
+				: BaseLocalDynamicsReduce<Real, ReduceMax, BodyPartByCell>(body_part, Real(MinRealNumber)),
 				  FluidDataSimple(sph_body_), pos_(particles_->pos_)
 			{
 				quantity_name_ = "FreeSurfaceHeight";
@@ -171,14 +156,15 @@ namespace SPH
 		public:
 			explicit ColorFunctionGradientInner(BaseInnerRelation &inner_relation);
 			virtual ~ColorFunctionGradientInner(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			Real threshold_by_dimensions_;
 			StdLargeVec<int> &surface_indicator_;
+			StdLargeVec<Real> &pos_div_;
+			Real threshold_by_dimensions_;
 			StdLargeVec<Vecd> color_grad_;
 			StdLargeVec<Vecd> surface_norm_;
-			StdLargeVec<Real> &pos_div_;
 		};
 
 		/**
@@ -190,15 +176,16 @@ namespace SPH
 		public:
 			explicit ColorFunctionGradientInterpolationInner(BaseInnerRelation &inner_relation);
 			virtual ~ColorFunctionGradientInterpolationInner(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			Real threshold_by_dimensions_;
 			StdLargeVec<Real> &Vol_;
 			StdLargeVec<int> &surface_indicator_;
 			StdLargeVec<Vecd> &color_grad_;
 			StdLargeVec<Vecd> &surface_norm_;
 			StdLargeVec<Real> &pos_div_;
+			Real threshold_by_dimensions_;
 		};
 
 		/**
@@ -211,7 +198,8 @@ namespace SPH
 			SurfaceTensionAccelerationInner(BaseInnerRelation &inner_relation, Real gamma);
 			explicit SurfaceTensionAccelerationInner(BaseInnerRelation &inner_relation);
 			virtual ~SurfaceTensionAccelerationInner(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			Real gamma_;

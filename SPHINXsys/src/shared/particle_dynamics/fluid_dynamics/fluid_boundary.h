@@ -32,6 +32,7 @@
 
 #include "fluid_dynamics_inner.h"
 
+#include "relax_dynamics.h"
 #include <mutex>
 
 namespace SPH
@@ -42,7 +43,7 @@ namespace SPH
          * @class BaseFlowBoundaryCondition
          * @brief Base class for all boundary conditions.
          */
-        class BaseFlowBoundaryCondition : public LocalDynamics, public FluidDataSimple
+        class BaseFlowBoundaryCondition : public BaseLocalDynamics<BodyPartByCell>, public FluidDataSimple
         {
         public:
             BaseFlowBoundaryCondition(BodyPartByCell &body_part);
@@ -57,7 +58,7 @@ namespace SPH
          * @class FlowVelocityBuffer
          * @brief Flow buffer in which the particle velocity relaxes to a given target profile.
          * This technique will be used for applying several boundary conditions,
-         * such as freestream, inflow, damping boundary conditions.
+         * such as free stream, inflow, damping boundary conditions.
          */
         class FlowVelocityBuffer : public BaseFlowBoundaryCondition
         {
@@ -76,23 +77,80 @@ namespace SPH
         };
 
         /**
-         * @class InflowVelocityCondition
-         * @brief Inflow boundary condition which imposes directly to a given velocity profile.
+         * @class   InflowVelocityCondition
+         * @brief   Inflow boundary condition which imposes directly to a given velocity profile.
+         *          TargetVelocity gives the velocity profile along the inflow direction,
+         *          i.e. x direction in local frame.
          */
+        template <typename TargetVelocity>
         class InflowVelocityCondition : public BaseFlowBoundaryCondition
         {
         public:
-            InflowVelocityCondition(BodyAlignedBoxByCell &aligned_box_part);
+            /** default parameter indicates prescribe velocity */
+            explicit InflowVelocityCondition(BodyAlignedBoxByCell &aligned_box_part, Real relaxation_rate = 1.0)
+                : BaseFlowBoundaryCondition(aligned_box_part),
+                  relaxation_rate_(relaxation_rate), aligned_box_(aligned_box_part.aligned_box_),
+                  transform_(aligned_box_.getTransform()), halfsize_(aligned_box_.HalfSize()),
+                  target_velocity(*this){};
             virtual ~InflowVelocityCondition(){};
-            void update(size_t index_i, Real dt = 0.0);
+            AlignedBoxShape &getAlignedBox() { return aligned_box_; };
+
+            void update(size_t index_i, Real dt = 0.0)
+            {
+                Vecd frame_position = transform_.shiftBaseStationToFrame(pos_[index_i]);
+                Vecd frame_velocity = transform_.xformBaseVecToFrame(vel_[index_i]);
+                Vecd relaxed_frame_velocity = target_velocity(frame_position, frame_velocity) * relaxation_rate_ +
+                                              frame_velocity * (1.0 - relaxation_rate_);
+                vel_[index_i] = transform_.xformFrameVecToBase(relaxed_frame_velocity);
+            };
 
         protected:
+            Real relaxation_rate_;
+            AlignedBoxShape &aligned_box_;
             Transformd &transform_;
             Vecd halfsize_;
+            TargetVelocity target_velocity;
+        };
 
-            /** Inflow profile to be defined in applications,
-             * argument parameters and return value are in frame (local) coordinate */
-            virtual Vecd getPrescribedVelocity(Vecd &position, Vecd &velocity) = 0;
+        /**
+         * @class   FreeStreamVelocityCorrection
+         * @brief   modify the velocity of free surface particles with far-field velocity
+         *          TargetVelocity gives the velocity profile along the free-stream direction,
+         *          i.e. x direction in local frame.
+         */
+        template <typename TargetVelocity>
+        class FreeStreamVelocityCorrection : public LocalDynamics, public FluidDataSimple
+        {
+        protected:
+            Transformd transform_;
+            Real rho_ref_;
+            StdLargeVec<Real> &rho_sum;
+            StdLargeVec<Vecd> &pos_, &vel_;
+            StdLargeVec<int> &surface_indicator_;
+            TargetVelocity target_velocity;
+
+        public:
+            explicit FreeStreamVelocityCorrection(SPHBody &sph_body, const Transformd &transform = Transformd())
+                : LocalDynamics(sph_body), FluidDataSimple(sph_body),
+                  transform_(transform), rho_ref_(particles_->fluid_.ReferenceDensity()),
+                  rho_sum(particles_->rho_sum_), pos_(particles_->pos_), vel_(particles_->vel_),
+                  surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")),
+                  target_velocity(*this){};
+            virtual ~FreeStreamVelocityCorrection(){};
+
+            void update(size_t index_i, Real dt = 0.0)
+            {
+                if (surface_indicator_[index_i] == 1)
+                {
+                    Vecd frame_position = transform_.shiftBaseStationToFrame(pos_[index_i]);
+                    Vecd frame_velocity = transform_.xformBaseVecToFrame(vel_[index_i]);
+                    Real frame_u_stream_direction = frame_velocity[0];
+                    Real u_freestream = target_velocity(frame_position, frame_velocity)[0];
+                    frame_velocity[0] = u_freestream + (frame_u_stream_direction - u_freestream) *
+                                                           SMIN(rho_sum[index_i], rho_ref_) / rho_ref_;
+                    vel_[index_i] = transform_.xformFrameVecToBase(frame_velocity);
+                }
+            };
         };
 
         /**
@@ -105,7 +163,7 @@ namespace SPH
         class DampingBoundaryCondition : public BaseFlowBoundaryCondition
         {
         public:
-            DampingBoundaryCondition(BodyRegionByCell &body_part);
+            explicit DampingBoundaryCondition(BodyRegionByCell &body_part);
             virtual ~DampingBoundaryCondition(){};
             void update(size_t index_particle_i, Real dt = 0.0);
 
@@ -120,7 +178,7 @@ namespace SPH
          * @brief Inflow boundary condition imposed on an emitter, in which pressure and density profile are imposed too.
          * The body part region is required to have parallel lower- and upper-bound surfaces.
          */
-        class EmitterInflowCondition : public LocalDynamics, public FluidDataSimple
+        class EmitterInflowCondition : public BaseLocalDynamics<BodyPartByParticle>, public FluidDataSimple
         {
         public:
             explicit EmitterInflowCondition(BodyAlignedBoxByParticle &aligned_box_part);
@@ -150,7 +208,7 @@ namespace SPH
          * Note that the axis is at the local coordinate and upper bound direction is
          * the local positive direction.
          */
-        class EmitterInflowInjection : public LocalDynamics, public FluidDataSimple
+        class EmitterInflowInjection : public BaseLocalDynamics<BodyPartByParticle>, public FluidDataSimple
         {
         public:
             EmitterInflowInjection(BodyAlignedBoxByParticle &aligned_box_part,
@@ -172,7 +230,7 @@ namespace SPH
          * @class DisposerOutflowDeletion
          * @brief Delete particles who ruing out the computational domain.
          */
-        class DisposerOutflowDeletion : public LocalDynamics, public FluidDataSimple
+        class DisposerOutflowDeletion : public BaseLocalDynamics<BodyPartByCell>, public FluidDataSimple
         {
         public:
             DisposerOutflowDeletion(BodyAlignedBoxByCell &aligned_box_part, int axis);
@@ -191,7 +249,7 @@ namespace SPH
          * @class StaticConfinementDensity
          * @brief static confinement condition for density summation
          */
-        class StaticConfinementDensity : public LocalDynamics, public FluidDataSimple
+        class StaticConfinementDensity : public BaseLocalDynamics<BodyPartByCell>, public FluidDataSimple
         {
         public:
             StaticConfinementDensity(NearShapeSurface &near_surface);
@@ -209,7 +267,7 @@ namespace SPH
          * @class StaticConfinementIntegration1stHalf
          * @brief static confinement condition for pressure relaxation
          */
-        class StaticConfinementIntegration1stHalf : public LocalDynamics, public FluidDataSimple
+        class StaticConfinementIntegration1stHalf : public BaseLocalDynamics<BodyPartByCell>, public FluidDataSimple
         {
         public:
             StaticConfinementIntegration1stHalf(NearShapeSurface &near_surface);
@@ -228,7 +286,7 @@ namespace SPH
          * @class StaticConfinementIntegration2ndHalf
          * @brief static confinement condition for density relaxation
          */
-        class StaticConfinementIntegration2ndHalf : public LocalDynamics, public FluidDataSimple
+        class StaticConfinementIntegration2ndHalf : public BaseLocalDynamics<BodyPartByCell>, public FluidDataSimple
         {
         public:
             StaticConfinementIntegration2ndHalf(NearShapeSurface &near_surface);
@@ -250,9 +308,10 @@ namespace SPH
         class StaticConfinement
         {
         public:
-            SimpleDynamics<StaticConfinementDensity, NearShapeSurface> density_summation_;
-            SimpleDynamics<StaticConfinementIntegration1stHalf, NearShapeSurface> pressure_relaxation_;
-            SimpleDynamics<StaticConfinementIntegration2ndHalf, NearShapeSurface> density_relaxation_;
+            SimpleDynamics<StaticConfinementDensity> density_summation_;
+            SimpleDynamics<StaticConfinementIntegration1stHalf> pressure_relaxation_;
+            SimpleDynamics<StaticConfinementIntegration2ndHalf> density_relaxation_;
+           SimpleDynamics<relax_dynamics::ShapeSurfaceBounding> surface_bounding_;
 
             StaticConfinement(NearShapeSurface &near_surface);
             virtual ~StaticConfinement(){};

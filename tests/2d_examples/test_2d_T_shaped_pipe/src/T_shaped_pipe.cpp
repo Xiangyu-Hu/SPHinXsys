@@ -63,35 +63,30 @@ public:
 	}
 };
 //----------------------------------------------------------------------
-//	Define emitter buffer inflow boundary condition
+//	Inflow velocity
 //----------------------------------------------------------------------
-class EmitterBufferInflowCondition : public fluid_dynamics::InflowVelocityCondition
+struct InflowVelocity
 {
-	Real u_ave_, u_ref_, t_ref_;
+	Real u_ref_, t_ref_;
+	AlignedBoxShape &aligned_box_;
+	Vecd halfsize_;
 
-public:
-	EmitterBufferInflowCondition(BodyAlignedBoxByCell &aligned_box_part)
-		: InflowVelocityCondition(aligned_box_part),
-		  u_ave_(0), u_ref_(U_f), t_ref_(4.0) {}
+	template <class BoundaryConditionType>
+	InflowVelocity(BoundaryConditionType &boundary_condition)
+		: u_ref_(U_f), t_ref_(2.0),
+		  aligned_box_(boundary_condition.getAlignedBox()),
+		  halfsize_(aligned_box_.HalfSize()) {}
 
-	// here every argument parameters and return value are in frame (local) coordinate
-	Vecd getPrescribedVelocity(Vecd &position, Vecd &velocity) override
+	Vecd operator()(Vecd &position, Vecd &velocity)
 	{
-		Real u = velocity[0];
-		Real v = velocity[1];
-
-		if (position[0] < halfsize_[0])
-		{
-			u = 1.5 * u_ave_ * (1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
-			v = 0.0;
-		}
-		return Vec2d(u, v);
-	}
-
-	void setupDynamics(Real dt = 0.0) override
-	{
+		Vecd target_velocity = velocity;
 		Real run_time = GlobalStaticVariables::physical_time_;
-		u_ave_ = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
+		Real u_ave = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
+		if (aligned_box_.checkInBounds(0, position))
+		{
+			target_velocity[0] = 1.5 * u_ave * (1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
+		}
+		return target_velocity;
 	}
 };
 //-----------------------------------------------------------------------------------------------------------
@@ -104,8 +99,6 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	BoundingBox system_domain_bounds(Vec2d(-DL_sponge - BW, -DH - BW), Vec2d(DL + BW, 2.0 * DH + BW));
 	SPHSystem system(system_domain_bounds, resolution_ref);
-	/** Tag for computation from restart files. 0: not from restart files. */
-	system.restart_step_ = 0;
 	system.handleCommandlineOptions(ac, av);
 	IOEnvironment io_environment(system);
 	//----------------------------------------------------------------------
@@ -148,51 +141,49 @@ int main(int ac, char *av[])
 	Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize;
 	BodyAlignedBoxByParticle emitter(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(emitter_translation)), emitter_halfsize));
-	SimpleDynamics<fluid_dynamics::EmitterInflowInjection, BodyAlignedBoxByParticle> emitter_inflow_injection(emitter, 10, 0);
+	SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, 10, 0);
 
 	Vec2d inlet_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
 	Vec2d inlet_buffer_translation = Vec2d(-DL_sponge, 0.0) + inlet_buffer_halfsize;
 	BodyAlignedBoxByCell emitter_buffer(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(inlet_buffer_translation)), inlet_buffer_halfsize));
-	SimpleDynamics<EmitterBufferInflowCondition, BodyAlignedBoxByCell> emitter_buffer_inflow_condition(emitter_buffer);
+	SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> emitter_buffer_inflow_condition(emitter_buffer);
 
 	Vec2d disposer_up_halfsize = Vec2d(0.3 * DH, 0.5 * BW);
 	Vec2d disposer_up_translation = Vec2d(DL + 0.05 * DH, 2.0 * DH) - disposer_up_halfsize;
 	BodyAlignedBoxByCell disposer_up(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(disposer_up_translation)), disposer_up_halfsize));
-	SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion, BodyAlignedBoxByCell> disposer_up_outflow_deletion(disposer_up, yAxis);
+	SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_up_outflow_deletion(disposer_up, yAxis);
 
 	Vec2d disposer_down_halfsize = disposer_up_halfsize;
-	Vec2d disposer_down_translation = Vec2d(DL1 - 0.05 * DH, - DH) + disposer_down_halfsize;
+	Vec2d disposer_down_translation = Vec2d(DL1 - 0.05 * DH, -DH) + disposer_down_halfsize;
 	BodyAlignedBoxByCell disposer_down(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Rotation2d(Pi), Vec2d(disposer_down_translation)), disposer_down_halfsize));
-	SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion, BodyAlignedBoxByCell> disposer_down_outflow_deletion(disposer_down, yAxis);
+	SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_down_outflow_deletion(disposer_down, yAxis);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_body_states(io_environment, system.real_bodies_);
-	RestartIO restart_io(io_environment, system.real_bodies_);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
 	//----------------------------------------------------------------------
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	wall_boundary_normal_direction.parallel_exec();
+	wall_boundary_normal_direction.exec();
 	//----------------------------------------------------------------------
 	//	Setup computing and initial conditions.
 	//----------------------------------------------------------------------
-	size_t number_of_iterations = system.restart_step_;
+	size_t number_of_iterations = system.RestartStep();
 	int screen_output_interval = 100;
-	int restart_output_interval = screen_output_interval * 10;
 	Real end_time = 100.0;
 	Real output_interval = end_time / 200.0; /**< Time stamps for output of body states. */
 	Real dt = 0.0;							 /**< Default acoustic time step sizes. */
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
 	//----------------------------------------------------------------------
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 	//----------------------------------------------------------------------
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
@@ -206,21 +197,21 @@ int main(int ac, char *av[])
 		/** Integrate time (loop) until the next output time. */
 		while (integration_time < output_interval)
 		{
-			initialize_a_fluid_step.parallel_exec();
-			Real Dt = get_fluid_advection_time_step_size.parallel_exec();
-			inlet_outlet_surface_particle_indicator.parallel_exec();
-			update_density_by_summation.parallel_exec();
-			viscous_acceleration.parallel_exec();
-			transport_velocity_correction.parallel_exec();
+			initialize_a_fluid_step.exec();
+			Real Dt = get_fluid_advection_time_step_size.exec();
+			inlet_outlet_surface_particle_indicator.exec();
+			update_density_by_summation.exec();
+			viscous_acceleration.exec();
+			transport_velocity_correction.exec();
 
 			/** Dynamics including pressure relaxation. */
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
-				dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt - relaxation_time);
-				pressure_relaxation.parallel_exec(dt);
+				dt = SMIN(get_fluid_time_step_size.exec(), Dt - relaxation_time);
+				pressure_relaxation.exec(dt);
 				emitter_buffer_inflow_condition.exec();
-				density_relaxation.parallel_exec(dt);
+				density_relaxation.exec(dt);
 
 				relaxation_time += dt;
 				integration_time += dt;
@@ -232,30 +223,27 @@ int main(int ac, char *av[])
 				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
 						  << GlobalStaticVariables::physical_time_
 						  << "	Dt = " << Dt << "	dt = " << dt << "\n";
-
-				if (number_of_iterations % restart_output_interval == 0 && number_of_iterations != system.restart_step_)
-					restart_io.writeToFile(Real(number_of_iterations));
 			}
 			number_of_iterations++;
 
 			/** inflow injection*/
 			emitter_inflow_injection.exec();
-			disposer_up_outflow_deletion.parallel_exec();
-			disposer_down_outflow_deletion.parallel_exec();
+			disposer_up_outflow_deletion.exec();
+			disposer_down_outflow_deletion.exec();
 
 			/** Update cell linked list and configuration. */
 			water_block.updateCellLinkedListWithParticleSort(100);
 			water_block_complex_relation.updateConfiguration();
 		}
 
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		write_body_states.writeToFile();
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds()
 			  << " seconds." << std::endl;

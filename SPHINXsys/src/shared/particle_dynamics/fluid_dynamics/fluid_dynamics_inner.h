@@ -74,8 +74,8 @@ namespace SPH
 			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
-			Real rho0_;
 			StdLargeVec<Real> &rho_, &rho_sum_, &mass_;
+			Real rho0_;
 		};
 
 		/**
@@ -87,7 +87,8 @@ namespace SPH
 		public:
 			explicit DensitySummationInner(BaseInnerRelation &inner_relation);
 			virtual ~DensitySummationInner(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+
+			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			Real W0_, inv_sigma0_;
@@ -102,7 +103,8 @@ namespace SPH
 		public:
 			explicit DensitySummationInnerAdaptive(BaseInnerRelation &inner_relation);
 			virtual ~DensitySummationInnerAdaptive(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+
+			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			SPHAdaptation &sph_adaptation_;
@@ -121,10 +123,10 @@ namespace SPH
 			virtual ~BaseViscousAccelerationInner(){};
 
 		protected:
-			Real mu_;
-			Real smoothing_length_;
 			StdLargeVec<Real> &rho_;
 			StdLargeVec<Vecd> &vel_, &acc_prior_;
+			Real mu_;
+			Real smoothing_length_;
 		};
 
 		/**
@@ -137,7 +139,8 @@ namespace SPH
 			explicit ViscousAccelerationInner(BaseInnerRelation &inner_relation)
 				: BaseViscousAccelerationInner(inner_relation){};
 			virtual ~ViscousAccelerationInner(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+
+			inline void interaction(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
@@ -151,7 +154,8 @@ namespace SPH
 			explicit AngularConservativeViscousAccelerationInner(BaseInnerRelation &inner_relation)
 				: BaseViscousAccelerationInner(inner_relation){};
 			virtual ~AngularConservativeViscousAccelerationInner(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+
+			inline void interaction(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
@@ -163,7 +167,8 @@ namespace SPH
 		public:
 			explicit TransportVelocityCorrectionInner(BaseInnerRelation &inner_relation, Real coefficient = 0.2);
 			virtual ~TransportVelocityCorrectionInner(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+
+			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Vecd> &pos_;
@@ -181,7 +186,8 @@ namespace SPH
 		public:
 			explicit TransportVelocityCorrectionInnerAdaptive(BaseInnerRelation &inner_relation, Real coefficient = 0.2);
 			virtual ~TransportVelocityCorrectionInnerAdaptive(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+
+			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			SPHAdaptation &sph_adaptation_;
@@ -227,8 +233,8 @@ namespace SPH
 			virtual Real outputResult(Real reduced_value) override;
 
 		protected:
-			Real smoothing_length_min_;
 			StdLargeVec<Vecd> &vel_;
+			Real smoothing_length_min_;
 			Real advectionCFL_;
 		};
 
@@ -256,7 +262,8 @@ namespace SPH
 		public:
 			explicit VorticityInner(BaseInnerRelation &inner_relation);
 			virtual ~VorticityInner(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+
+			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Vecd> &vel_;
@@ -292,7 +299,9 @@ namespace SPH
 			virtual ~BaseIntegration1stHalf(){};
 			RiemannSolverType riemann_solver_;
 			void initialization(size_t index_i, Real dt = 0.0);
-			void interaction(size_t index_i, Real dt = 0.0);
+
+			inline void interaction(size_t index_i, Real dt = 0.0);
+
 			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
@@ -315,7 +324,9 @@ namespace SPH
 			virtual ~BaseIntegration2ndHalf(){};
 			RiemannSolverType riemann_solver_;
 			void initialization(size_t index_i, Real dt = 0.0);
-			void interaction(size_t index_i, Real dt = 0.0);
+
+			inline void interaction(size_t index_i, Real dt = 0.0);
+
 			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
@@ -336,7 +347,8 @@ namespace SPH
 			explicit Oldroyd_BIntegration1stHalf(BaseInnerRelation &inner_relation);
 			virtual ~Oldroyd_BIntegration1stHalf(){};
 			void initialization(size_t index_i, Real dt = 0.0);
-			void interaction(size_t index_i, Real dt = 0.0);
+
+			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Matd> &tau_, &dtau_dt_;
@@ -351,7 +363,9 @@ namespace SPH
 		public:
 			explicit Oldroyd_BIntegration2ndHalf(BaseInnerRelation &inner_relation);
 			virtual ~Oldroyd_BIntegration2ndHalf(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+
+			inline void interaction(size_t index_i, Real dt = 0.0);
+
 			void update(size_t index_i, Real dt = 0.0);
 
 		protected:

@@ -25,7 +25,7 @@
  * @brief 	Base classes on body and particle topology relations.
  * @author	Chi ZHang and Xiangyu Hu
  */
- 
+
 #ifndef BASE_BODY_RELATION_H
 #define BASE_BODY_RELATION_H
 
@@ -104,16 +104,17 @@ namespace SPH
 	 */
 	class SPHRelation
 	{
-	public:
+	protected:
 		SPHBody &sph_body_;
-		BaseParticles &base_particles_;
-		SPHBody &getDynamicsRange() { return sph_body_; };
 
+	public:
+		BaseParticles &base_particles_;
+		SPHBody &getSPHBody() { return sph_body_; };
 		explicit SPHRelation(SPHBody &sph_body);
 		virtual ~SPHRelation(){};
 
 		void subscribeToBody() { sph_body_.body_relations_.push_back(this); };
-		virtual void updateConfigurationMemories() = 0;
+		virtual void resizeConfiguration() = 0;
 		virtual void updateConfiguration() = 0;
 	};
 
@@ -132,7 +133,7 @@ namespace SPH
 		explicit BaseInnerRelation(RealBody &real_body);
 		virtual ~BaseInnerRelation(){};
 
-		virtual void updateConfigurationMemories() override;
+		virtual void resizeConfiguration() override;
 	};
 
 	/**
@@ -146,14 +147,14 @@ namespace SPH
 
 	public:
 		RealBodyVector contact_bodies_;
-		ContactParticleConfiguration contact_configuration_; /**< Configurations for particle interaction between bodies. */
+		StdVec<ParticleConfiguration> contact_configuration_; /**< Configurations for particle interaction between bodies. */
 
 		BaseContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies);
 		BaseContactRelation(SPHBody &sph_body, BodyPartVector contact_body_parts)
 			: BaseContactRelation(sph_body, BodyPartsToRealBodies(contact_body_parts)){};
 		virtual ~BaseContactRelation(){};
 
-		virtual void updateConfigurationMemories() override;
+		virtual void resizeConfiguration() override;
 	};
 }
 #endif // BASE_BODY_RELATION_H

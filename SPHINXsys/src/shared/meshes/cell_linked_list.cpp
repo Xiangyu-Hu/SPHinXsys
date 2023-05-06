@@ -20,9 +20,9 @@ namespace SPH
 			split_cell_lists[i].clear();
 	}
 	//=================================================================================================//
-	CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing, RealBody &real_body, SPHAdaptation &sph_adaptation)
-		: BaseCellLinkedList(real_body, sph_adaptation)
-		, Mesh(tentative_bounds, grid_spacing, 2)
+	CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
+								   RealBody &real_body, SPHAdaptation &sph_adaptation)
+		: BaseCellLinkedList(real_body, sph_adaptation), Mesh(tentative_bounds, grid_spacing, 2)
 	{
 		allocateMeshDataMatrix();
 		single_cell_linked_list_level_.push_back(this);
@@ -34,8 +34,8 @@ namespace SPH
 		StdLargeVec<Vecd> &pos_n = base_particles.pos_;
 		size_t total_real_particles = base_particles.total_real_particles_;
 		parallel_for(
-			blocked_range<size_t>(0, total_real_particles),
-			[&](const blocked_range<size_t> &r)
+			IndexRange(0, total_real_particles),
+			[&](const IndexRange &r)
 			{
 				for (size_t i = r.begin(); i != r.end(); ++i)
 				{
@@ -57,17 +57,19 @@ namespace SPH
 		StdLargeVec<Vecd> &pos = base_particles.pos_;
 		StdLargeVec<size_t> &sequence = base_particles.sequence_;
 		size_t total_real_particles = base_particles.total_real_particles_;
-		particle_parallel_for(total_real_particles, [&](size_t i)
-							  { sequence[i] = transferMeshIndexToMortonOrder(CellIndexFromPosition(pos[i])); });
+		particle_for(execution::ParallelPolicy(), total_real_particles, [&](size_t i)
+					 { sequence[i] = transferMeshIndexToMortonOrder(CellIndexFromPosition(pos[i])); });
 		return sequence;
 	}
 	//=================================================================================================//
-	MultilevelCellLinkedList::MultilevelCellLinkedList(BoundingBox tentative_bounds, Real reference_grid_spacing,
-							size_t total_levels, RealBody &real_body, SPHAdaptation &sph_adaptation)
+	MultilevelCellLinkedList::MultilevelCellLinkedList(
+		BoundingBox tentative_bounds, Real reference_grid_spacing,
+		size_t total_levels, RealBody &real_body, SPHAdaptation &sph_adaptation)
 		: MultilevelMesh<BaseCellLinkedList, CellLinkedList, RefinedMesh<CellLinkedList>>(
-			  				tentative_bounds, reference_grid_spacing, total_levels, real_body, sph_adaptation)
-		, h_ratio_(DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->h_ratio_) 
-	{}
+			  tentative_bounds, reference_grid_spacing, total_levels, real_body, sph_adaptation),
+		  h_ratio_(DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->h_ratio_)
+	{
+	}
 	//=================================================================================================//
 	size_t MultilevelCellLinkedList::getMeshLevel(Real particle_cutoff_radius)
 	{
@@ -104,8 +106,8 @@ namespace SPH
 		size_t total_real_particles = base_particles.total_real_particles_;
 		// rebuild the corresponding particle list.
 		parallel_for(
-			blocked_range<size_t>(0, total_real_particles),
-			[&](const blocked_range<size_t> &r)
+			IndexRange(0, total_real_particles),
+			[&](const IndexRange &r)
 			{
 				for (size_t i = r.begin(); i != r.end(); ++i)
 				{
@@ -130,18 +132,18 @@ namespace SPH
 		StdLargeVec<Vecd> &pos = base_particles.pos_;
 		StdLargeVec<size_t> &sequence = base_particles.sequence_;
 		size_t total_real_particles = base_particles.total_real_particles_;
-		particle_parallel_for(total_real_particles, [&](size_t i)
-							  {
-								  size_t level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[i]));
-								  sequence[i] = mesh_levels_[level]->transferMeshIndexToMortonOrder(
-									  mesh_levels_[level]->CellIndexFromPosition(pos[i]));
-							  });
+		particle_for(execution::ParallelPolicy(), total_real_particles,
+					 [&](size_t i)
+					 {
+						 size_t level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[i]));
+						 sequence[i] = mesh_levels_[level]->transferMeshIndexToMortonOrder(
+						 mesh_levels_[level]->CellIndexFromPosition(pos[i])); });
 
 		return sequence;
 	}
 	//=================================================================================================//
 	void MultilevelCellLinkedList::
-		tagBodyPartByCell(ConcurrentIndexesInCells &cell_lists, std::function<bool(Vecd, Real)> &check_included)
+		tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included)
 	{
 		for (size_t l = 0; l != total_levels_; ++l)
 		{

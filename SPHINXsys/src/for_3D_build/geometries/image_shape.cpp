@@ -47,7 +47,7 @@ namespace SPH
 	{
 		double extend = 1.5;
 		int length = int(std::ceil(2.0 * extend * radius));
-		Veci NxNyNz(length, length, length);
+		Arrayi NxNyNz(length, length, length);
 		image_.reset(new ImageMHD<float, 3>(radius, NxNyNz, spacings));
 	}
 	//=================================================================================================//

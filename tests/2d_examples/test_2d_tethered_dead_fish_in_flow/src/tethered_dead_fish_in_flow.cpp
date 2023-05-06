@@ -167,34 +167,31 @@ public:
 		positions_.push_back(Vecd(cx + fish_length - resolution_ref, cy));
 	}
 };
-/**
- * Inflow boundary condition.
- */
-class ParabolicInflow : public fluid_dynamics::InflowVelocityCondition
+//----------------------------------------------------------------------
+//	Inflow velocity
+//----------------------------------------------------------------------
+struct InflowVelocity
 {
-	Real u_ave_, u_ref_, t_ref;
+	Real u_ref_, t_ref_;
+	AlignedBoxShape &aligned_box_;
+	Vecd halfsize_;
 
-public:
-	ParabolicInflow(BodyAlignedBoxByCell &aligned_box_part)
-		: InflowVelocityCondition(aligned_box_part),
-		  u_ave_(0), u_ref_(1.0), t_ref(4.0) {}
+	template <class BoundaryConditionType>
+	InflowVelocity(BoundaryConditionType &boundary_condition)
+		: u_ref_(U_f), t_ref_(2.0),
+		  aligned_box_(boundary_condition.getAlignedBox()),
+		  halfsize_(aligned_box_.HalfSize()) {}
 
-	Vecd getPrescribedVelocity(Vecd &position, Vecd &velocity) override
+	Vecd operator()(Vecd &position, Vecd &velocity)
 	{
-		Real u = velocity[0];
-		Real v = velocity[1];
-		if (position[0] < 0.0)
-		{
-			u = 6.0 * u_ave_ * position[1] * (DH - position[1]) / DH / DH;
-			v = 0.0;
-		}
-		return Vecd(u, v);
-	}
-
-	void setupDynamics(Real dt = 0.0) override
-	{
+		Vecd target_velocity = velocity;
 		Real run_time = GlobalStaticVariables::physical_time_;
-		u_ave_ = run_time < t_ref ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref)) : u_ref_;
+		Real u_ave = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
+		if (aligned_box_.checkInBounds(0, position))
+		{
+			target_velocity[0] = 1.5 * u_ave * (1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
+		}
+		return target_velocity;
 	}
 };
 /**
@@ -207,11 +204,9 @@ int main(int ac, char *av[])
 	 */
 	SPHSystem system(system_domain_bounds, resolution_ref);
 	/** Tag for run particle relaxation for the initial body fitted distribution. */
-	system.run_particle_relaxation_ = false;
+	system.setRunParticleRelaxation(false);
 	/** Tag for computation start with relaxed body fitted particles distribution. */
-	system.reload_particles_ = true;
-	/** Tag for computation from restart files. 0: start with initial condition. */
-	system.restart_step_ = 0;
+	system.setReloadParticles(true);
 	system.handleCommandlineOptions(ac, av);
 	IOEnvironment io_environment(system);
 
@@ -235,7 +230,7 @@ int main(int ac, char *av[])
 	fish_body.defineBodyLevelSetShape();
 	fish_body.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
 	// Using relaxed particle distribution if needed
-	(!system.run_particle_relaxation_ && system.reload_particles_)
+	(!system.RunParticleRelaxation() && system.ReloadParticles())
 		? fish_body.generateParticles<ParticleGeneratorReload>(io_environment, fish_body.getName())
 		: fish_body.generateParticles<ParticleGeneratorLattice>();
 	/**
@@ -250,12 +245,8 @@ int main(int ac, char *av[])
 	ContactRelation fish_body_contact(fish_body, {&water_block});
 	ContactRelation fish_observer_contact(fish_observer, {&fish_body});
 
-	BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
-	ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceOnSolid>> write_total_force_on_fish(io_environment, fish_body);
-	ObservedQuantityRecording<Vecd> write_fish_displacement("Position", io_environment, fish_observer_contact);
-
 	/** check whether run particle relaxation for body fitted particle distribution. */
-	if (system.run_particle_relaxation_)
+	if (system.RunParticleRelaxation())
 	{
 		/**
 		 * @brief 	Methods used for particle relaxation.
@@ -272,15 +263,15 @@ int main(int ac, char *av[])
 		/**
 		 * @brief 	Particle relaxation starts here.
 		 */
-		random_fish_body_particles.parallel_exec(0.25);
-		relaxation_step_inner.surface_bounding_.parallel_exec();
+		random_fish_body_particles.exec(0.25);
+		relaxation_step_inner.SurfaceBounding().exec();
 		write_fish_body.writeToFile();
 
 		/** relax particles of the insert body. */
 		int ite_p = 0;
 		while (ite_p < 1000)
 		{
-			relaxation_step_inner.parallel_exec();
+			relaxation_step_inner.exec();
 			ite_p += 1;
 			if (ite_p % 200 == 0)
 			{
@@ -330,22 +321,22 @@ int main(int ac, char *av[])
 	/** Inflow boundary condition. */
 	BodyAlignedBoxByCell inflow_buffer(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(buffer_translation)), buffer_halfsize));
-	SimpleDynamics<ParabolicInflow, BodyAlignedBoxByCell> parabolic_inflow(inflow_buffer);
+	SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
 
 	/**
 	 * Fluid structure interaction model.
 	 */
-	InteractionDynamics<solid_dynamics::FluidViscousForceOnSolid> viscous_force_on_fish_body(fish_body_contact);
-	InteractionDynamics<solid_dynamics::FluidForceOnSolidUpdate> fluid_force_on_fish_body(fish_body_contact, viscous_force_on_fish_body);
+	InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_fish_body(fish_body_contact);
+	InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid> fluid_force_on_fish_body(fish_body_contact, viscous_force_on_fish_body);
 	/**
 	 * Solid dynamics.
 	 */
 	/** Time step size calculation. */
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> fish_body_computing_time_step_size(fish_body);
 	/** Process of stress relaxation. */
-	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf>
+	Dynamics1Level<solid_dynamics::Integration1stHalf>
 		fish_body_stress_relaxation_first_half(fish_body_inner);
-	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf>
+	Dynamics1Level<solid_dynamics::Integration2ndHalf>
 		fish_body_stress_relaxation_second_half(fish_body_inner);
 	/** Update normal direction on fish body.*/
 	SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection>
@@ -384,7 +375,7 @@ int main(int ac, char *av[])
 	SimTK::CablePath tethering_line(cables, fixed_spot, SimTK::Vec3(0), tethered_spot, SimTK::Vec3(disp_cable_end[0], disp_cable_end[1], 0.0) );
 	SimTK::CableSpring tethering_spring(forces, tethering_line, 100.0, 3.0, 10.0);
 
-	// discreted forces acting on the bodies
+	// discrete forces acting on the bodies
 	SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
 	fixed_spot_info.addDecoration(SimTK::Transform(), SimTK::DecorativeSphere(0.02));
 	tethered_spot_info.addDecoration(SimTK::Transform(), SimTK::DecorativeSphere(0.4));
@@ -405,11 +396,15 @@ int main(int ac, char *av[])
 	/**
 	 * Coupling between SimBody and SPH.
 	 */
-	ReduceDynamics<solid_dynamics::TotalForceForSimBody, SolidBodyPartForSimbody>
+	ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody>
 		force_on_tethered_spot(fish_head, MBsystem, tethered_spot, force_on_bodies, integ);
-	SimpleDynamics<solid_dynamics::ConstraintBySimBody, SolidBodyPartForSimbody>
+	SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody>
 		constraint_tethered_spot(fish_head, MBsystem, tethered_spot, force_on_bodies, integ);
 
+	BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
+	ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>> 
+	write_total_force_on_fish(io_environment, fluid_force_on_fish_body, "TotalPressureForceOnSolid");
+	ObservedQuantityRecording<Vecd> write_fish_displacement("Position", io_environment, fish_observer_contact);
 	/**
 	 * Time steeping starts here.
 	 */
@@ -420,14 +415,14 @@ int main(int ac, char *av[])
 	 * for building up of extra configuration.
 	 */
 	system.initializeSystemCellLinkedLists();
-	periodic_condition.update_cell_linked_list_.parallel_exec();
+	periodic_condition.update_cell_linked_list_.exec();
 	system.initializeSystemConfigurations();
 	/** Prepare quantities, e.g. wall normal, fish body norm,
 	 * fluid initial number density and configuration of fish particles, will be used once only.
 	 */
-	wall_boundary_normal_direction.parallel_exec();
-	fish_body_normal_direction.parallel_exec();
-	fish_body_corrected_configuration.parallel_exec();
+	wall_boundary_normal_direction.exec();
+	fish_body_normal_direction.exec();
+	fish_body_corrected_configuration.exec();
 	/** Output for initial condition. */
 	write_real_body_states.writeToFile(0);
 	write_fish_displacement.writeToFile(0);
@@ -440,8 +435,8 @@ int main(int ac, char *av[])
 	Real output_interval = end_time / 200.0;
 	Real dt = 0.0;	 /**< Default acoustic time step sizes. */
 	Real dt_s = 0.0; /**< Default acoustic time step sizes for solid. */
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 
 	/**
 	 * Main loop starts here.
@@ -451,51 +446,51 @@ int main(int ac, char *av[])
 		Real integration_time = 0.0;
 		while (integration_time < output_interval)
 		{
-			initialize_a_fluid_step.parallel_exec();
-			Real Dt = get_fluid_advection_time_step_size.parallel_exec();
-			update_density_by_summation.parallel_exec();
-			viscous_acceleration.parallel_exec();
-			transport_velocity_correction.parallel_exec();
+			initialize_a_fluid_step.exec();
+			Real Dt = get_fluid_advection_time_step_size.exec();
+			update_density_by_summation.exec();
+			viscous_acceleration.exec();
+			transport_velocity_correction.exec();
 			/** Viscous force exerting on fish body. */
-			viscous_force_on_fish_body.parallel_exec();
+			viscous_force_on_fish_body.exec();
 			/** Update normal direction on fish body. */
-			fish_body_update_normal.parallel_exec();
+			fish_body_update_normal.exec();
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
 				// note that dt needs to sufficiently large to avoid divide zero
 				// when computing solid average velocity for FSI
-				dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt);
+				dt = SMIN(get_fluid_time_step_size.exec(), Dt);
 				/** Fluid dynamics process, first half. */
-				pressure_relaxation.parallel_exec(dt);
+				pressure_relaxation.exec(dt);
 				/** Fluid pressure force exerting on fish. */
-				fluid_force_on_fish_body.parallel_exec();
+				fluid_force_on_fish_body.exec();
 				/** Fluid dynamics process, second half. */
-				density_relaxation.parallel_exec(dt);
+				density_relaxation.exec(dt);
 				/** Relax fish body by solid dynamics. */
 				Real dt_s_sum = 0.0;
-				fish_body_average_velocity.initialize_displacement_.parallel_exec();
+				fish_body_average_velocity.initialize_displacement_.exec();
 				while (dt_s_sum < dt)
 				{
-					dt_s = SMIN(fish_body_computing_time_step_size.parallel_exec(), dt - dt_s_sum);
-					fish_body_stress_relaxation_first_half.parallel_exec(dt_s);
+					dt_s = SMIN(fish_body_computing_time_step_size.exec(), dt - dt_s_sum);
+					fish_body_stress_relaxation_first_half.exec(dt_s);
 					SimTK::State &state_for_update = integ.updAdvancedState();
 					force_on_bodies.clearAllBodyForces(state_for_update);
 					force_on_bodies.setOneBodyForce(state_for_update, tethered_spot,
-													force_on_tethered_spot.parallel_exec());
+													force_on_tethered_spot.exec());
 					integ.stepBy(dt_s);
-					constraint_tethered_spot.parallel_exec();
-					fish_body_stress_relaxation_second_half.parallel_exec(dt_s);
+					constraint_tethered_spot.exec();
+					fish_body_stress_relaxation_second_half.exec(dt_s);
 					dt_s_sum += dt_s;
 				}
 				// note that dt needs to sufficiently large to avoid divide zero
-				fish_body_average_velocity.update_averages_.parallel_exec(dt);
+				fish_body_average_velocity.update_averages_.exec(dt);
 				write_total_force_on_fish.writeToFile(number_of_iterations);
 
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
-				parabolic_inflow.parallel_exec();
+				parabolic_inflow.exec();
 			}
 			if (number_of_iterations % screen_output_interval == 0)
 			{
@@ -508,24 +503,24 @@ int main(int ac, char *av[])
 			// visualize the motion of rigid body
 			viz.report(integ.getState());
 			/** Water block configuration and periodic condition. */
-			periodic_condition.bounding_.parallel_exec();
+			periodic_condition.bounding_.exec();
 			water_block.updateCellLinkedListWithParticleSort(100);
 			fish_body.updateCellLinkedList();
-			periodic_condition.update_cell_linked_list_.parallel_exec();
+			periodic_condition.update_cell_linked_list_.exec();
 			water_block_complex.updateConfiguration();
 			/** Fish body contact configuration. */
 			fish_body_contact.updateConfiguration();
 			write_fish_displacement.writeToFile(number_of_iterations);
 		}
-		tick_count t2 = tick_count::now();
-		compute_vorticity.parallel_exec();
+		TickCount t2 = TickCount::now();
+		compute_vorticity.exec();
 		write_real_body_states.writeToFile();
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 

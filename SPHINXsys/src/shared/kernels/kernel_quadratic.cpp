@@ -6,7 +6,7 @@ namespace SPH
 {
 	//=================================================================================================//
 	KernelQuadratic::KernelQuadratic(Real h)
-		: Kernel(h, "QuadraticKernel")
+		: Kernel(h, 2.0, 2.0, "QuadraticKernel")
 	{
 		factor_W_1D_ = inv_h_ / 7.0;
 		factor_W_2D_ = inv_h_ * inv_h_ / (3.0 * Pi);
@@ -33,11 +33,11 @@ namespace SPH
 	{
 		if (q < 1.0)
 		{
-			return (-6.0 + 3.0 * powerN(q, 2));
+			return (-6.0 + 3.0 * pow(q, 2));
 		}
 		else
 		{
-			return powerN(2.0 - q, 2) * (-1.0);
+			return pow(2.0 - q, 2) * (-1.0);
 		}
 	}
 	//=================================================================================================//

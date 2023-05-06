@@ -7,7 +7,7 @@ namespace SPH
 	{
 		//=================================================================================================//
 		BaseFlowBoundaryCondition::BaseFlowBoundaryCondition(BodyPartByCell &body_part)
-			: LocalDynamics(body_part.getSPHBody()), FluidDataSimple(sph_body_),
+			: BaseLocalDynamics<BodyPartByCell>(body_part), FluidDataSimple(sph_body_),
 			  rho_(particles_->rho_), p_(particles_->p_),
 			  pos_(particles_->pos_), vel_(particles_->vel_){};
 		//=================================================================================================//
@@ -17,20 +17,6 @@ namespace SPH
 		void FlowVelocityBuffer::update(size_t index_i, Real dt)
 		{
 			vel_[index_i] += relaxation_rate_ * (getTargetVelocity(pos_[index_i], vel_[index_i]) - vel_[index_i]);
-		}
-		//=================================================================================================//
-		InflowVelocityCondition::InflowVelocityCondition(BodyAlignedBoxByCell &aligned_box_part)
-			: BaseFlowBoundaryCondition(aligned_box_part),
-			  transform_(aligned_box_part.aligned_box_.getTransform()),
-			  halfsize_(aligned_box_part.aligned_box_.HalfSize()) {}
-		//=================================================================================================//
-		void InflowVelocityCondition::update(size_t index_i, Real dt)
-		{
-			Vecd frame_position = transform_.shiftBaseStationToFrame(pos_[index_i]);
-			Vecd frame_velocity = transform_.xformBaseVecToFrame(vel_[index_i]);
-			Vecd prescribed_velocity =
-				transform_.xformFrameVecToBase(getPrescribedVelocity(frame_position, frame_velocity));
-			vel_[index_i] = prescribed_velocity;
 		}
 		//=================================================================================================//
 		DampingBoundaryCondition::DampingBoundaryCondition(BodyRegionByCell &body_part)
@@ -46,7 +32,7 @@ namespace SPH
 		//=================================================================================================//
 		EmitterInflowCondition::
 			EmitterInflowCondition(BodyAlignedBoxByParticle &aligned_box_part)
-			: LocalDynamics(aligned_box_part.getSPHBody()), FluidDataSimple(sph_body_),
+			: BaseLocalDynamics<BodyPartByParticle>(aligned_box_part), FluidDataSimple(sph_body_),
 			  fluid_(particles_->fluid_),
 			  pos_(particles_->pos_), vel_(particles_->vel_), acc_(particles_->acc_),
 			  rho_(particles_->rho_), p_(particles_->p_), drho_dt_(particles_->drho_dt_),
@@ -68,7 +54,7 @@ namespace SPH
 		//=================================================================================================//
 		EmitterInflowInjection::EmitterInflowInjection(BodyAlignedBoxByParticle &aligned_box_part,
 													   size_t body_buffer_width, int axis)
-			: LocalDynamics(aligned_box_part.getSPHBody()), FluidDataSimple(sph_body_),
+			: BaseLocalDynamics<BodyPartByParticle>(aligned_box_part), FluidDataSimple(sph_body_),
 			  fluid_(particles_->fluid_),
 			  pos_(particles_->pos_), rho_(particles_->rho_), p_(particles_->p_),
 			  axis_(axis), aligned_box_(aligned_box_part.aligned_box_)
@@ -105,7 +91,7 @@ namespace SPH
 		//=================================================================================================//
 		DisposerOutflowDeletion::
 			DisposerOutflowDeletion(BodyAlignedBoxByCell &aligned_box_part, int axis)
-			: LocalDynamics(aligned_box_part.getSPHBody()), FluidDataSimple(sph_body_),
+			: BaseLocalDynamics<BodyPartByCell>(aligned_box_part), FluidDataSimple(sph_body_),
 			  pos_(particles_->pos_), axis_(axis), aligned_box_(aligned_box_part.aligned_box_) {}
 		//=================================================================================================//
 		void DisposerOutflowDeletion::update(size_t index_i, Real dt)
@@ -119,8 +105,8 @@ namespace SPH
 		}
 		//=================================================================================================//
 		StaticConfinementDensity::StaticConfinementDensity(NearShapeSurface &near_surface)
-			: LocalDynamics(near_surface.getSPHBody()), FluidDataSimple(sph_body_),
-			  rho0_(sph_body_.base_material_->ReferenceDensity()), 
+			: BaseLocalDynamics<BodyPartByCell>(near_surface), FluidDataSimple(sph_body_),
+			  rho0_(sph_body_.base_material_->ReferenceDensity()),
 			  inv_sigma0_(1.0 / sph_body_.sph_adaptation_->ReferenceNumberDensity()),
 			  mass_(particles_->mass_), rho_sum_(particles_->rho_sum_), pos_(particles_->pos_),
 			  level_set_shape_(&near_surface.level_set_shape_) {}
@@ -133,7 +119,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		StaticConfinementIntegration1stHalf::StaticConfinementIntegration1stHalf(NearShapeSurface &near_surface)
-			: LocalDynamics(near_surface.getSPHBody()), FluidDataSimple(sph_body_),
+			: BaseLocalDynamics<BodyPartByCell>(near_surface), FluidDataSimple(sph_body_),
 			  fluid_(particles_->fluid_),
 			  rho_(particles_->rho_), p_(particles_->p_),
 			  pos_(particles_->pos_), vel_(particles_->vel_),
@@ -144,12 +130,11 @@ namespace SPH
 		void StaticConfinementIntegration1stHalf::update(size_t index_i, Real dt)
 		{
 			Vecd kernel_gradient = level_set_shape_->computeKernelGradientIntegral(pos_[index_i]);
-			Vecd normal_to_fluid = -kernel_gradient / (kernel_gradient.norm() + TinyReal);
 			acc_[index_i] -= 2.0 * p_[index_i] * kernel_gradient / rho_[index_i];
 		}
 		//=================================================================================================//
 		StaticConfinementIntegration2ndHalf::StaticConfinementIntegration2ndHalf(NearShapeSurface &near_surface)
-			: LocalDynamics(near_surface.getSPHBody()), FluidDataSimple(sph_body_),
+			: BaseLocalDynamics<BodyPartByCell>(near_surface), FluidDataSimple(sph_body_),
 			  fluid_(particles_->fluid_),
 			  rho_(particles_->rho_), p_(particles_->p_), drho_dt_(particles_->drho_dt_),
 			  pos_(particles_->pos_), vel_(particles_->vel_),
@@ -159,14 +144,13 @@ namespace SPH
 		void StaticConfinementIntegration2ndHalf::update(size_t index_i, Real dt)
 		{
 			Vecd kernel_gradient = level_set_shape_->computeKernelGradientIntegral(pos_[index_i]);
-			Vecd normal_to_fluid = -kernel_gradient / (kernel_gradient.norm() + TinyReal);
 			Vecd vel_in_wall = -vel_[index_i];
 			drho_dt_[index_i] += rho_[index_i] * (vel_[index_i] - vel_in_wall).dot(kernel_gradient);
 		}
 		//=================================================================================================//
 		StaticConfinement::StaticConfinement(NearShapeSurface &near_surface)
 			: density_summation_(near_surface), pressure_relaxation_(near_surface),
-			  density_relaxation_(near_surface) {}
+			  density_relaxation_(near_surface), surface_bounding_(near_surface) {}
 		//=================================================================================================//
 	}
 	//=================================================================================================//

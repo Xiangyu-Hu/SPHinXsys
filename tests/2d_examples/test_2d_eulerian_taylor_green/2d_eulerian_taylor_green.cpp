@@ -13,7 +13,7 @@ Real DL = 1.0;					  /**< box length. */
 Real DH = 1.0;					  /**< box height. */
 Real resolution_ref = 1.0 / 50.0; /**< Global reference resolution. */
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(0), Vec2d(DL, DH));
+BoundingBox system_domain_bounds(Vec2d::Zero(), Vec2d(DL, DH));
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
@@ -76,8 +76,6 @@ int main(int ac, char *av[])
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
 	/** Set the starting time. */
 	GlobalStaticVariables::physical_time_ = 0.0;
-	/** Tag for computation from restart files. 0: not from restart files. */
-	sph_system.restart_step_ = 0;
 	IOEnvironment io_environment(sph_system);
 	sph_system.handleCommandlineOptions(ac, av);
 	//----------------------------------------------------------------------
@@ -117,8 +115,6 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	/** Output the body states. */
 	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
-	/** Output the body states for restart simulation. */
-	RestartIO restart_io(io_environment, sph_system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
 	RegressionTestEnsembleAveraged<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
 		write_total_mechanical_energy(io_environment, water_body);
@@ -130,21 +126,20 @@ int main(int ac, char *av[])
 	//	and case specified initial condition if necessary.
 	//----------------------------------------------------------------------
 	sph_system.initializeSystemCellLinkedLists();
-	periodic_condition_x.update_cell_linked_list_.parallel_exec();
-	periodic_condition_y.update_cell_linked_list_.parallel_exec();
+	periodic_condition_x.update_cell_linked_list_.exec();
+	periodic_condition_y.update_cell_linked_list_.exec();
 	sph_system.initializeSystemConfigurations();
-	initial_condition.parallel_exec();
+	initial_condition.exec();
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
-	size_t number_of_iterations = sph_system.restart_step_;
+	size_t number_of_iterations = 0;
 	int screen_output_interval = 100;
-	int restart_output_interval = screen_output_interval * 10;
 	Real end_time = 5.0;
 	Real output_interval = 0.1; /**< Time stamps for output of body states. */
 	/** statistics for computing CPU time. */
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 	//----------------------------------------------------------------------
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
@@ -162,13 +157,13 @@ int main(int ac, char *av[])
 		while (integration_time < output_interval)
 		{
 			/** Acceleration due to viscous force. */
-			time_step_initialization.parallel_exec();
-			Real dt = get_fluid_time_step_size.parallel_exec();
-			viscous_acceleration.parallel_exec();
+			time_step_initialization.exec();
+			Real dt = get_fluid_time_step_size.exec();
+			viscous_acceleration.exec();
 			/** Dynamics including pressure relaxation. */
 			integration_time += dt;
-			pressure_relaxation.parallel_exec(dt);
-			density_and_energy_relaxation.parallel_exec(dt);
+			pressure_relaxation.exec(dt);
+			density_and_energy_relaxation.exec(dt);
 			GlobalStaticVariables::physical_time_ += dt;
 
 			if (number_of_iterations % screen_output_interval == 0)
@@ -176,28 +171,23 @@ int main(int ac, char *av[])
 				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
 						  << GlobalStaticVariables::physical_time_
 						  << "	dt = " << dt << "\n";
-
-				if (number_of_iterations % restart_output_interval == 0)
-				{
-					restart_io.writeToFile(number_of_iterations);
-				}
 			}
 			number_of_iterations++;
 		}
 
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		write_total_mechanical_energy.writeToFile(number_of_iterations);
 		write_maximum_speed.writeToFile(number_of_iterations);
 		body_states_recording.writeToFile();
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
-	cout << "Total wall time for computation: " << tt.seconds()
-		 << " seconds." << endl;
+	std::cout << "Total wall time for computation: " << tt.seconds()
+		 << " seconds." << std::endl;
 
 	write_total_mechanical_energy.newResultTest();
 	write_maximum_speed.newResultTest();

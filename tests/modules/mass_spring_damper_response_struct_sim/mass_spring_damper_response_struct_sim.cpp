@@ -34,7 +34,7 @@ TEST(StructuralSimulation, MassSpringDamperResponse)
 		{physical_viscosity},
 		{}
 	};
-	input.non_zero_gravity_ = vector<GravityPair>{ GravityPair(0, Vec3d(0.0, 0.0, gravity_force)) };
+	input.non_zero_gravity_ = std::vector<GravityPair>{ GravityPair(0, Vec3d(0.0, 0.0, gravity_force)) };
 	input.spring_damper_tuple_ = { SpringDamperTuple(0, Vec3d(0, 0, spring_coeff), spring_damper_ratio) };
 
 	//=================================================================================================//

@@ -51,7 +51,7 @@ namespace SPH
 		int bound_number = 0;
 		for (int axis_direction = 0; axis_direction != Dimensions; ++axis_direction)
 		{
-			Real particle_spacing = pow(volume, 1.0 / Dimensions);
+			Real particle_spacing = pow(volume, 1.0 / (Real)Dimensions);
 			if (position[axis_direction] > (refinement_region_bounds.first_[axis_direction] + particle_spacing) &&
 				position[axis_direction] < (refinement_region_bounds.second_[axis_direction] - particle_spacing))
 				bound_number += 1;

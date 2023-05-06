@@ -4,6 +4,7 @@
  */
 
 #include "general_dynamics_refinement.h"
+#include "base_particles.hpp"
 #include "level_set_shape.h"
 
 namespace SPH
@@ -130,12 +131,11 @@ namespace SPH
         Vecd e_ij = displacement / (distance + TinyReal);
         Kernel *kernel_ptr_ = particle_adaptation_.getKernel();
         Real cutoff_radius = kernel_ptr_->CutOffRadius(h_ratio_min);
-        Real kernel_weight = 0.0;
         Vecd grad_kernel = Vecd::Zero();
         if (distance <= cutoff_radius)
         {
-            Real dweight = kernel_ptr_->dW(h_ratio_min, distance, displacement) * Vol;
-            grad_kernel = dweight * e_ij;
+            Real d_weight = kernel_ptr_->dW(h_ratio_min, distance, displacement) * Vol;
+            grad_kernel = d_weight * e_ij;
         }
         return grad_kernel;
     }
@@ -146,7 +146,7 @@ namespace SPH
         Real Vol_newIndex = particles_->Vol_[index_rho] / 2.0;
         Real h_newIndex = pow(particles_->Vol_[index_rho] / Vol_newIndex, 1.0 / (Real)Dimensions);
 
-        Real W0 = particle_adaptation_.getKernel()->W0(h_newIndex, zero_vec);
+        Real W0 = particle_adaptation_.getKernel()->W0(h_newIndex, ZeroVecd);
         Real inv_sigma_0 = 1.0 / particle_adaptation_.ReferenceNumberDensity(h_newIndex);
         Real sigma_newIndex = W0;
 
@@ -187,7 +187,6 @@ namespace SPH
 
             for (size_t n = 0; n != original_indices.size(); ++n)
             {
-                Real h_ratio_min = SMIN(h_ratio_j, h_ratio_[original_indices[n]]);
                 Vecd displacement = pos_j - particles_->pos_[original_indices[n]];
                 Real Vol_ratio = particles_->Vol_[original_indices[n]] / Vol_j;
                 sigma_split_j += computeKernelWeightBetweenParticles(h_ratio_j, displacement, Vol_ratio);
@@ -237,7 +236,6 @@ namespace SPH
         Neighborhood &contact_neighborhood = inner_configuration_[index_rho];
         for (size_t k = 0; k != contact_bodies_.size(); ++k)
         {
-            StdLargeVec<Real> &Vol_j = *(contact_Vol_[k]);
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
             {
                 grad_kernel += contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
@@ -289,8 +287,8 @@ namespace SPH
     ParticleRefinementWithPrescribedArea::
         ParticleRefinementWithPrescribedArea(SPHBody &sph_body, Shape &refinement_region)
         : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
-          particle_adaptation_(DynamicCast<ParticleSplitAndMerge>(this, *sph_body.sph_adaptation_)),
           refinement_region_bounds_(refinement_region.getBounds()),
+          particle_adaptation_(DynamicCast<ParticleSplitAndMerge>(this, *sph_body.sph_adaptation_)),
           inv_rho0_(1.0 / sph_body_.base_material_->ReferenceDensity()),
           Vol_(particles_->Vol_), pos_(particles_->pos_), rho_(particles_->rho_),
           mass_(particles_->mass_),
@@ -302,7 +300,7 @@ namespace SPH
         int bound_number = 0;
         for (int axis_direction = 0; axis_direction != Dimensions; ++axis_direction)
         {
-            Real particle_spacing = pow(volume, 1.0 / Dimensions);
+            Real particle_spacing = pow(volume, 1.0 / (Real)Dimensions);
             if (position[axis_direction] > (refinement_region_bounds.first_[axis_direction] + particle_spacing) &&
                 position[axis_direction] < (refinement_region_bounds.second_[axis_direction] - particle_spacing))
                 bound_number += 1;
@@ -316,15 +314,6 @@ namespace SPH
     {
         particles_->addBufferParticles(body_buffer_width);
         sph_body.allocateConfigurationMemoriesForBufferParticles();
-    }
-    //=================================================================================================//
-    void ParticleSplitWithPrescribedArea::interaction(size_t index_i, Real dt)
-    {
-        if (splitCriteria(index_i))
-        {
-            StdVec<size_t> new_indices;
-            splittingModel(index_i, new_indices);
-        }
     }
     //=================================================================================================//
     bool ParticleSplitWithPrescribedArea::splitCriteria(size_t index_i)
@@ -348,7 +337,7 @@ namespace SPH
 
         particle_number_change += 1;
         split_position_.push_back(2.0 * pos_[index_i] - pos_splitting);
-        split_index_.push_back(Vecu(index_i, particle_real_number));
+        split_index_.push_back(std::make_pair(index_i, particle_real_number));
     }
     //=================================================================================================//
     void ParticleSplitWithPrescribedArea::setupDynamics(Real dt)
@@ -362,10 +351,10 @@ namespace SPH
     {
         for (size_t num = 0; num != particle_number_change; ++num)
         {
-            if (index_i == split_index_[num][0])
+            if (index_i == split_index_[num].first)
             {
-                size_t index_i = split_index_[num][0];
-                size_t index_j = split_index_[num][1];
+                size_t index_i = split_index_[num].first;
+                size_t index_j = split_index_[num].second;
                 pos_[index_i] = split_position_[num];
                 mass_[index_i] = mass_[index_j];
                 Vol_[index_i] = Vol_[index_j];
@@ -435,9 +424,9 @@ namespace SPH
         total_split_error_[index_i] = compute_density_error.density_error_[index_i];
         for (size_t num = 0; num != particle_number_change; ++num)
         {
-            if (index_i == split_index_[num][0])
+            if (index_i == split_index_[num].first)
             {
-                size_t index_j = split_index_[num][1];
+                size_t index_j = split_index_[num].second;
                 total_split_error_[index_j] = compute_density_error.density_error_[index_j];
             }
         }
@@ -446,7 +435,7 @@ namespace SPH
     //=================================================================================================//
     ParticleMergeWithPrescribedArea::
         ParticleMergeWithPrescribedArea(BaseInnerRelation &inner_relation, Shape &refinement_region)
-        : ParticleRefinementWithPrescribedArea(inner_relation.sph_body_, refinement_region),
+        : ParticleRefinementWithPrescribedArea(inner_relation.getSPHBody(), refinement_region),
           DataDelegateInner<BaseParticles, DataDelegateEmptyBase>(inner_relation),
           all_particle_data_(particles_->all_particle_data_), vel_n_(particles_->vel_)
     {
@@ -462,25 +451,11 @@ namespace SPH
         }
     }
     //=================================================================================================//
-    void ParticleMergeWithPrescribedArea::interaction(size_t index_i, Real dt)
-    {
-        if (!tag_merged_[index_i])
-        {
-            StdVec<size_t> merge_indices; // three particles for merging to two
-            if (mergeCriteria(index_i, merge_indices))
-            {
-                merge_indices.push_back(index_i);
-                tag_merged_[index_i] = true;
-                mergingModel(merge_indices);
-            }
-        }
-    }
-    //=================================================================================================//
     bool ParticleMergeWithPrescribedArea::mergeCriteria(size_t index_i, StdVec<size_t> &merge_indices)
     {
         Real non_deformed_volume = mass_[index_i] * inv_rho0_;
         bool resolution_check = particle_adaptation_.mergeResolutionCheck(non_deformed_volume);
-        Real particle_spacing = pow(non_deformed_volume, 1.0 / Dimensions);
+        Real particle_spacing = pow(non_deformed_volume, 1.0 / (Real)Dimensions);
         Real search_threshold = 1.2;
         Real search_distance = search_threshold * particle_spacing;
         if (resolution_check)
@@ -535,7 +510,7 @@ namespace SPH
     {
         updateMergedParticleInformation(particles_->total_real_particles_, merge_indices);
         size_t merge_change_number = merge_indices.size() - 1;
-        for (size_t k = merge_change_number; k != -1; --k)
+        for (size_t k = merge_change_number; k != size_t(-1); --k)
             particles_->copyFromAnotherParticle(merge_indices[k], particles_->total_real_particles_ - (merge_change_number - k));
         particles_->total_real_particles_ -= merge_change_number;
     }
@@ -553,7 +528,7 @@ namespace SPH
         merge_particle_value_(all_particle_data_, merged_index, merge_indices, merge_mass_);
         mass_[merged_index] = total_mass;
         Vol_[merged_index] = mass_[merged_index] * inv_rho0_;
-        Real particle_spacing = pow(Vol_[merged_index], 1.0 / Dimensions);
+        Real particle_spacing = pow(Vol_[merged_index], 1.0 / (Real)Dimensions);
         h_ratio_[merged_index] = sph_body_.sph_adaptation_->ReferenceSpacing() / particle_spacing;
     }
     //=================================================================================================//
@@ -573,8 +548,8 @@ namespace SPH
     {
         Real non_deformed_volume = mass_[index_i] * inv_rho0_;
         bool resolution_check = particle_adaptation_.mergeResolutionCheck(non_deformed_volume);
-        Real particle_spacing_small = pow(non_deformed_volume, 1.0 / Dimensions);
-        Real particle_spacing_large = pow(non_deformed_volume * 2.0, 1.0 / Dimensions);
+        Real particle_spacing_small = pow(non_deformed_volume, 1.0 / (Real)Dimensions);
+        Real particle_spacing_large = pow(non_deformed_volume * 2.0, 1.0 / (Real)Dimensions);
         Real search_threshold = 1.2;
         Real search_distance_small = search_threshold * particle_spacing_small;
         Real search_distance_large = search_threshold * particle_spacing_large;
@@ -619,7 +594,6 @@ namespace SPH
         Real distance_min = 0.2 * particle_spacing; // angularMomentumConservation(index_center, merge_indices);
         Real distance_max = 0.65 * particle_spacing;
 
-        Vecd position = pos_[merge_indices[0]] - pos_[index_center];
         Vecd pos_j = pos_[merge_indices[0]]; // pos_[index_center] + distance_min * position / (position.norm() + TinyReal);
         Vecd pos_i = 2.0 * pos_[index_center] - pos_j;
         initial_new_positions.push_back(pos_i);

@@ -34,29 +34,29 @@ public:
 	Beam(const std::string &shape_name)
 		: ComplexShape(shape_name)
 	{
-		string fname_ = "./input/beam.stl";
+		std::string fname_ = "./input/beam.stl";
 		Vecd translation(0.0, 0.0, 0.0);
 		add<TriangleMeshShapeSTL>(fname_, translation, 0.001);
 	}
 };
 
 /* define load*/
-class LoadForce : public LocalDynamics, public solid_dynamics::ElasticSolidDataSimple
+class LoadForce : public BaseLocalDynamics<BodyPartByParticle>, public solid_dynamics::ElasticSolidDataSimple
 {
 public:
-	LoadForce(BodyPartByParticle &body_part, StdVec<array<Real, 2>> f_arr)
-		: LocalDynamics(body_part.getSPHBody()),
+	LoadForce(BodyPartByParticle &body_part, StdVec<std::array<Real, 2>> f_arr)
+		: BaseLocalDynamics<BodyPartByParticle>(body_part),
 		  solid_dynamics::ElasticSolidDataSimple(sph_body_),
 		  acc_prior(particles_->acc_prior_),
-		  force_arr_(f_arr),
 		  mass_n_(particles_->mass_),
 		  Vol_(particles_->Vol_),
 		  F_(particles_->F_),
+		  force_arr_(f_arr),
 		  particles_num_(body_part.body_part_particles_.size())
 	{
 		area_0_.resize(particles_->total_real_particles_);
 		for (size_t i = 0; i < particles_->total_real_particles_; ++i)
-			area_0_[i] = std::pow(particles_->Vol_[i], 2.0 / 3.0);
+			area_0_[i] = pow(particles_->Vol_[i], 2.0 / 3.0);
 	}
 
 	void update(size_t index_i, Real time = 0.0)
@@ -84,7 +84,7 @@ protected:
 	StdLargeVec<Real> &Vol_;
 	StdLargeVec<Matd> &F_;
 
-	StdVec<array<Real, 2>> force_arr_;
+	StdVec<std::array<Real, 2>> force_arr_;
 	size_t particles_num_;
 
 protected:
@@ -101,7 +101,7 @@ protected:
 			else if (time > force_arr_.back()[0])
 				return force_arr_.back()[1];
 		}
-        return 0;
+		return 0.0;
 	}
 };
 
@@ -140,8 +140,8 @@ int main(int ac, char *av[])
 	SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> update_beam_normal(beam_body);
 
 	/** active and passive stress relaxation. */
-	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> stress_relaxation_first_half(beam_body_inner);
-	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half(beam_body_inner);
+	Dynamics1Level<solid_dynamics::Integration1stHalf> stress_relaxation_first_half(beam_body_inner);
+	Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(beam_body_inner);
 
 	/** specify end-time for defining the force-time profile */
 	Real end_time = 1;
@@ -150,19 +150,19 @@ int main(int ac, char *av[])
 	/** create a brick to tag the surface */
 	Vecd half_size_0(0.03, 0.03, resolution_ref);
 	BodyRegionByParticle load_surface(beam_body, makeShared<TriangleMeshShapeBrick>(half_size_0, 1, Vecd(0.00, 0.00, 0.1)));
-	StdVec<array<Real, 2>> force_over_time = {
+	StdVec<std::array<Real, 2>> force_over_time = {
 		{0.0, 0.0},
 		{0.1 * end_time, 0.1 * load_total_force},
 		{0.4 * end_time, load_total_force},
 		{end_time, load_total_force}};
-	SimpleDynamics<LoadForce, BodyRegionByParticle> pull_force(load_surface, force_over_time);
-	cout << "load surface particle number: " << load_surface.body_part_particles_.size() << endl;
+	SimpleDynamics<LoadForce> pull_force(load_surface, force_over_time);
+	std::cout << "load surface particle number: " << load_surface.body_part_particles_.size() << std::endl;
 
 	//=== define constraint ===
 	/* create a brick to tag the region */
 	Vecd half_size_1(0.03, 0.03, 0.02);
 	BodyRegionByParticle holder(beam_body, makeShared<TriangleMeshShapeBrick>(half_size_1, 1, Vecd(0.0, 0.0, -0.02)));
-	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_holder(holder);
+	SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_holder(holder);
 
 	/** Damping with the solid body*/
 	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
@@ -178,7 +178,7 @@ int main(int ac, char *av[])
 	system.initializeSystemConfigurations();
 
 	/** apply initial condition */
-	corrected_configuration.parallel_exec();
+	corrected_configuration.exec();
 	write_states.writeToFile(0);
 	write_beam_stress.writeToFile(0);
 	/** Setup physical parameters. */
@@ -187,8 +187,8 @@ int main(int ac, char *av[])
 	Real dt = 0.0;
 
 	/** Statistics for computing time. */
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 	/**
 	 * Main loop
 	 */
@@ -204,41 +204,41 @@ int main(int ac, char *av[])
 						  << dt << "\n";
 			}
 
-			beam_initialize.parallel_exec();
-			pull_force.parallel_exec(GlobalStaticVariables::physical_time_);
+			beam_initialize.exec();
+			pull_force.exec(GlobalStaticVariables::physical_time_);
 
 			/** Stress relaxation and damping. */
-			stress_relaxation_first_half.parallel_exec(dt);
-			constraint_holder.parallel_exec(dt);
-			beam_damping.parallel_exec(dt);
-			constraint_holder.parallel_exec(dt);
-			stress_relaxation_second_half.parallel_exec(dt);
+			stress_relaxation_first_half.exec(dt);
+			constraint_holder.exec(dt);
+			beam_damping.exec(dt);
+			constraint_holder.exec(dt);
+			stress_relaxation_second_half.exec(dt);
 
 			ite++;
 			dt = system.getSmallestTimeStepAmongSolidBodies();
 			integration_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
 		}
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		write_beam_stress.writeToFile(ite);
 		write_states.writeToFile();
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
 
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	if (system.generate_regression_data_)
 	{
-		write_beam_stress.generateDataBase({0.01}, {0.01});
+		write_beam_stress.generateDataBase(0.01, 0.01);
 	}
 	else
 	{
-		write_beam_stress.newResultTest(); 
+		write_beam_stress.newResultTest();
 	}
 
 	return 0;

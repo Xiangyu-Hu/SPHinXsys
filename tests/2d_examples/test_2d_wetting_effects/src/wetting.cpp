@@ -16,8 +16,6 @@ int main()
 	SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
 	/** Set the starting time. */
 	GlobalStaticVariables::physical_time_ = 0.0;
-	/** Tag for computation from restart files. 0: not from restart files. */
-	sph_system.restart_step_ = 0;
 	IOEnvironment io_environment(sph_system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
@@ -52,7 +50,7 @@ int main()
 	SimpleDynamics<TimeStepInitialization> initialize_a_air_step(air_block);
 	/** Evaluation of density by summation approach. */
 	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex>
-		update_water_density_by_summation(water_wall_contact, water_air_complex.inner_relation_);
+		update_water_density_by_summation(water_wall_contact, water_air_complex.getInnerRelation());
 	InteractionWithUpdate<fluid_dynamics::DensitySummationComplex>
 		update_air_density_by_summation(air_wall_contact, air_water_complex);
 	/** transport formulation for regularizing particle distribution. */
@@ -66,9 +64,9 @@ int main()
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_air_time_step_size(air_block);
 	/** Pressure relaxation for water by using position verlet time stepping. */
 	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall>
-		water_pressure_relaxation(water_wall_contact, water_air_complex.inner_relation_);
+		water_pressure_relaxation(water_wall_contact, water_air_complex.getInnerRelation());
 	Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall>
-		water_density_relaxation(water_wall_contact, water_air_complex.inner_relation_);
+		water_density_relaxation(water_wall_contact, water_air_complex.getInnerRelation());
 	/** Extend Pressure relaxation is used for air. */
 	Dynamics1Level<fluid_dynamics::ExtendMultiPhaseIntegration1stHalfRiemannWithWall>
 		air_pressure_relaxation(air_wall_contact, air_water_complex, 2.0);
@@ -78,10 +76,10 @@ int main()
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhase> air_viscous_acceleration(air_water_complex);
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhase> water_viscous_acceleration(water_air_complex);
 	/** Surface tension and wetting effects. */
-	InteractionWithUpdate<fluid_dynamics::FreeSurfaceIndicationComplex> surface_detection(water_air_complex.inner_relation_, water_wall_contact);
-	InteractionDynamics<fluid_dynamics::ColorFunctionGradientComplex> color_gradient(water_air_complex.inner_relation_, water_wall_contact);
-	InteractionDynamics<fluid_dynamics::ColorFunctionGradientInterpolationInner> color_gradient_interpolation(water_air_complex.inner_relation_);
-	InteractionDynamics<fluid_dynamics::SurfaceTensionAccelerationInner> surface_tension_acceleration(water_air_complex.inner_relation_, tension_force);
+	InteractionWithUpdate<fluid_dynamics::FreeSurfaceIndicationComplex> surface_detection(water_air_complex.getInnerRelation(), water_wall_contact);
+	InteractionDynamics<fluid_dynamics::ColorFunctionGradientComplex> color_gradient(water_air_complex.getInnerRelation(), water_wall_contact);
+	InteractionDynamics<fluid_dynamics::ColorFunctionGradientInterpolationInner> color_gradient_interpolation(water_air_complex.getInnerRelation());
+	InteractionDynamics<fluid_dynamics::SurfaceTensionAccelerationInner> surface_tension_acceleration(water_air_complex.getInnerRelation(), tension_force);
 	/** Wetting effects. */
 	InteractionDynamics<fluid_dynamics::SurfaceNormWithWall> wetting_norm(water_wall_contact, contact_angle);
 	//----------------------------------------------------------------------
@@ -96,23 +94,22 @@ int main()
 	//----------------------------------------------------------------------
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
-	wall_boundary_normal_direction.parallel_exec();
+	wall_boundary_normal_direction.exec();
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
-	size_t number_of_iterations = sph_system.restart_step_;
+	size_t number_of_iterations = 0;
 	int screen_output_interval = 100;
-	int restart_output_interval = screen_output_interval * 10;
 	Real end_time = 5.0;				  /**< End time. */
 	Real output_interval = end_time / 50; /**< Time stamps for output of body states. */
 	Real dt = 0.0;						  /**< Default acoustic time step sizes. */
 	/** statistics for computing CPU time. */
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
-	tick_count::interval_t interval_computing_time_step;
-	tick_count::interval_t interval_computing_pressure_relaxation;
-	tick_count::interval_t interval_updating_configuration;
-	tick_count time_instance;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
+	TimeInterval interval_computing_time_step;
+	TimeInterval interval_computing_pressure_relaxation;
+	TimeInterval interval_updating_configuration;
+	TickCount time_instance;
 	//----------------------------------------------------------------------
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
@@ -127,49 +124,49 @@ int main()
 		while (integration_time < output_interval)
 		{
 			/** Acceleration due to viscous force and gravity. */
-			time_instance = tick_count::now();
-			initialize_a_water_step.parallel_exec();
-			initialize_a_air_step.parallel_exec();
+			time_instance = TickCount::now();
+			initialize_a_water_step.exec();
+			initialize_a_air_step.exec();
 
-			Real Dt_f = get_water_advection_time_step_size.parallel_exec();
-			Real Dt_a = get_air_advection_time_step_size.parallel_exec();
+			Real Dt_f = get_water_advection_time_step_size.exec();
+			Real Dt_a = get_air_advection_time_step_size.exec();
 			Real Dt = SMIN(Dt_f, Dt_a);
 
-			update_water_density_by_summation.parallel_exec();
-			update_air_density_by_summation.parallel_exec();
-			air_transport_correction.parallel_exec();
+			update_water_density_by_summation.exec();
+			update_air_density_by_summation.exec();
+			air_transport_correction.exec();
 
-			air_viscous_acceleration.parallel_exec();
-			water_viscous_acceleration.parallel_exec();
+			air_viscous_acceleration.exec();
+			water_viscous_acceleration.exec();
 
-			surface_detection.parallel_exec();
-			color_gradient.parallel_exec();
-			color_gradient_interpolation.parallel_exec();
-			wetting_norm.parallel_exec();
-			surface_tension_acceleration.parallel_exec();
+			surface_detection.exec();
+			color_gradient.exec();
+			color_gradient_interpolation.exec();
+			wetting_norm.exec();
+			surface_tension_acceleration.exec();
 
-			interval_computing_time_step += tick_count::now() - time_instance;
+			interval_computing_time_step += TickCount::now() - time_instance;
 
 			/** Dynamics including pressure relaxation. */
-			time_instance = tick_count::now();
+			time_instance = TickCount::now();
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
-				Real dt_f = get_water_time_step_size.parallel_exec();
-				Real dt_a = get_air_time_step_size.parallel_exec();
+				Real dt_f = get_water_time_step_size.exec();
+				Real dt_a = get_air_time_step_size.exec();
 				dt = SMIN(SMIN(dt_f, dt_a), Dt);
 
-				water_pressure_relaxation.parallel_exec(dt);
-				air_pressure_relaxation.parallel_exec(dt);
+				water_pressure_relaxation.exec(dt);
+				air_pressure_relaxation.exec(dt);
 
-				water_density_relaxation.parallel_exec(dt);
-				air_density_relaxation.parallel_exec(dt);
+				water_density_relaxation.exec(dt);
+				air_density_relaxation.exec(dt);
 
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
 			}
-			interval_computing_pressure_relaxation += tick_count::now() - time_instance;
+			interval_computing_pressure_relaxation += TickCount::now() - time_instance;
 
 			if (number_of_iterations % screen_output_interval == 0)
 			{
@@ -180,7 +177,7 @@ int main()
 			number_of_iterations++;
 
 			/** Update cell linked list and configuration. */
-			time_instance = tick_count::now();
+			time_instance = TickCount::now();
 
 			water_block.updateCellLinkedListWithParticleSort(100);
 			water_air_complex.updateConfiguration();
@@ -190,18 +187,18 @@ int main()
 			air_water_complex.updateConfiguration();
 			air_wall_contact.updateConfiguration();
 
-			interval_updating_configuration += tick_count::now() - time_instance;
+			interval_updating_configuration += TickCount::now() - time_instance;
 		}
 
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		body_states_recording.writeToFile();
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
 
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds()
 			  << " seconds." << std::endl;

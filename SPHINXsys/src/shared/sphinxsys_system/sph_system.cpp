@@ -11,8 +11,8 @@ namespace SPH
 		: system_domain_bounds_(system_domain_bounds),
 		  resolution_ref_(resolution_ref),
 		  tbb_global_control_(tbb::global_control::max_allowed_parallelism, number_of_threads),
-		  io_environment_(nullptr), restart_step_(0), run_particle_relaxation_(false),
-		  reload_particles_(false), generate_regression_data_(false) {}
+		  io_environment_(nullptr), generate_regression_data_(false),run_particle_relaxation_(false),
+		  reload_particles_(false), restart_step_(0) {}
 	//=================================================================================================//
 	void SPHSystem::initializeSystemCellLinkedLists()
 	{
@@ -39,7 +39,7 @@ namespace SPH
 		for (size_t i = 0; i < solid_bodies_.size(); i++)
 		{
 			ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(*solid_bodies_[i], CFL);
-			Real dt_temp = computing_time_step_size.parallel_exec();
+			Real dt_temp = computing_time_step_size.exec();
 			if (dt_temp < dt)
 				dt = dt_temp;
 		}

@@ -303,7 +303,7 @@ namespace SPH
 		registerVariable(vel_ave_, "AverageVelocity");
 		registerVariable(acc_ave_, "AverageAcceleration");
 		/** 
-		 * for rotatoin. 
+		 * for rotation. 
 		 */
 		addVariableToRestart<Matd>("DeformationGradient");
 		addVariableToRestart<Vecd>("PseudoNormal");

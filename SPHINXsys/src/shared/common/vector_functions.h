@@ -28,7 +28,7 @@
 #ifndef SMALL_VECTORS_H
 #define SMALL_VECTORS_H
 
-#include "data_type.h"
+#include "base_data_type.h"
 
 namespace SPH
 {
@@ -38,14 +38,24 @@ namespace SPH
 	Vec2d SimTKToEigen(const SimTK::Vec2 &simTK_vector);
 	Vec3d SimTKToEigen(const SimTK::Vec3 &simTK_vector);
 
+	SimTK::Mat22 EigenToSimTK(const Mat2d &eigen_matrix);
+	SimTK::Mat33 EigenToSimTK(const Mat3d &eigen_matrix);
+	Mat2d SimTKToEigen(const SimTK::Mat22 &simTK_matrix);
+	Mat3d SimTKToEigen(const SimTK::Mat33 &simTK_matrix);
+
 	Vec2d FirstAxisVector(const Vec2d &zero_vector);
 	Vec3d FirstAxisVector(const Vec3d &zero_vector);
 
-	Vec3d upgradeToVector3D(const Real &input);
-	Vec3d upgradeToVector3D(const Vec2d &input);
-	Vec3d upgradeToVector3D(const Vec3d &input);
-	Mat3d upgradeToMatrix3D(const Mat2d &input);
-	Mat3d upgradeToMatrix3D(const Mat3d &input);
+	Vec3d upgradeToVec3d(const Real &input);
+	Vec3d upgradeToVec3d(const Vec2d &input);
+	Vec3d upgradeToVec3d(const Vec3d &input);
+	Mat3d upgradeToMat3d(const Mat2d &input);
+	Mat3d upgradeToMat3d(const Mat3d &input);
+
+	void degradeToVecd(const Vec3d &input, Vec2d &output);
+	inline void degradeToVecd(const Vec3d &input, Vec3d &output) { output = input; };
+	void degradeToMatd(const Mat3d &input, Mat2d &output);
+	inline void degradeToMatd(const Mat3d &input, Mat3d &output) { output = input; };
 
 	Mat2d getInverse(const Mat2d &A);
 	Mat3d getInverse(const Mat3d &A);
@@ -84,7 +94,180 @@ namespace SPH
 	Real getCrossProduct(const Vec2d &vector_1, const Vec2d &vector_2);
 	Vec3d getCrossProduct(const Vec3d &vector_1, const Vec3d &vector_2);
 
+	/** Bounding box for system, body, body part and shape, first: lower bound, second: upper bound. */
+	template <typename VecType>
+	class BaseBoundingBox
+	{
+	public:
+		VecType first_, second_;
+		int dimension_;
+
+		BaseBoundingBox() : first_(VecType::Zero()), second_(VecType::Zero()), dimension_(VecType::Zero().size()){};
+		BaseBoundingBox(const VecType &lower_bound, const VecType &upper_bound)
+			: first_(lower_bound), second_(upper_bound), dimension_(lower_bound.size()){};
+		/** Check the bounding box contain. */
+		bool checkContain(const VecType &point)
+		{
+			bool is_contain = true;
+			for (int i = 0; i < dimension_; ++i)
+			{
+				if (point[i] < first_[i] || point[i] > second_[i])
+				{
+					is_contain = false;
+					break;
+				}
+			}
+			return is_contain;
+		};
+	};
+	/** Operator define. */
+	template <class T>
+	bool operator==(const BaseBoundingBox<T> &bb1, const BaseBoundingBox<T> &bb2)
+	{
+		return bb1.first_ == bb2.first_ && bb1.second_ == bb2.second_ ? true : false;
+	};
+	/** Intersection fo bounding box.*/
+	template <class BoundingBoxType>
+	BoundingBoxType getIntersectionOfBoundingBoxes(const BoundingBoxType &bb1, const BoundingBoxType &bb2)
+	{
+		/** Check that the inputs are correct. */
+		int dimension = bb1.dimension_;
+		/** Get the Bounding Box of the intersection of the two meshes. */
+		BoundingBoxType bb(bb1);
+		/** #1 check that there is overlap, if not, exception. */
+		for (int i = 0; i < dimension; ++i)
+			if (bb2.first_[i] > bb1.second_[i] || bb2.second_[i] < bb1.first_[i])
+				std::runtime_error("getIntersectionOfBoundingBoxes: no overlap!");
+		/** #2 otherwise modify the first one to get the intersection. */
+		for (int i = 0; i < dimension; ++i)
+		{
+			/** If the lower limit is inside change the lower limit. */
+			if (bb1.first_[i] < bb2.first_[i] && bb2.first_[i] < bb1.second_[i])
+				bb.first_[i] = bb2.first_[i];
+			/**  If the upper limit is inside, change the upper limit. */
+			if (bb1.second_[i] > bb2.second_[i] && bb2.second_[i] > bb1.first_[i])
+				bb.second_[i] = bb2.second_[i];
+		}
+		return bb;
+	}
+
 	/** obtain minimum dimension of a bounding box */
-	Real MinimumDimension(const BoundingBox &bbox);
+	template <class BoundingBoxType>
+	Real MinimumDimension(const BoundingBoxType &bbox)
+	{
+		return (bbox.second_ - bbox.first_).cwiseAbs().minCoeff();
+	};
+
+	/**
+	 * @class Rotation2d
+	 * @brief Rotation Coordinate transform (around the origin)
+	 * in 2D with an angle.
+	 */
+	class Rotation2d
+	{
+		Real cosine_angle_, sine_angle_;
+
+	public:
+		explicit Rotation2d(Real angle)
+			: cosine_angle_(std::cos(angle)), sine_angle_(std::sin(angle)){};
+		virtual ~Rotation2d(){};
+
+		/** Forward transformation. */
+		Vec2d xformFrameVecToBase(const Vec2d &origin)
+		{
+			return Vec2d(origin[0] * cosine_angle_ - origin[1] * sine_angle_,
+						 origin[1] * cosine_angle_ + origin[0] * sine_angle_);
+		};
+		/** Inverse transformation. */
+		Vec2d xformBaseVecToFrame(const Vec2d &target)
+		{
+			return Vec2d(target[0] * cosine_angle_ + target[1] * sine_angle_,
+						 target[1] * cosine_angle_ - target[0] * sine_angle_);
+		};
+	};
+
+	/**
+	 * @class Transform2d
+	 * @brief Coordinate transform in 2D
+	 * Note that the rotation is around the frame (or local) origin.
+	 */
+	class Transform2d
+	{
+	private:
+		Rotation2d rotation_;
+		Vec2d translation_;
+
+	public:
+		Transform2d() : rotation_(Rotation2d(0)), translation_(Vec2d::Zero()){};
+		explicit Transform2d(const Vec2d &translation) : rotation_(Rotation2d(0)), translation_(translation){};
+		explicit Transform2d(const Rotation2d &rotation, const Vec2d &translation = Vec2d::Zero())
+			: rotation_(rotation), translation_(translation){};
+
+		/** Forward rotation. */
+		Vec2d xformFrameVecToBase(const Vec2d &origin)
+		{
+			return rotation_.xformFrameVecToBase(origin);
+		};
+
+		/** Forward transformation. Note that the rotation operation is carried out first. */
+		Vec2d shiftFrameStationToBase(const Vec2d &origin)
+		{
+			return translation_ + xformFrameVecToBase(origin);
+		};
+
+		/** Inverse rotation. */
+		Vec2d xformBaseVecToFrame(const Vec2d &target)
+		{
+			return rotation_.xformBaseVecToFrame(target);
+		};
+
+		/** Inverse transformation. Note that the inverse translation operation is carried out first. */
+		Vec2d shiftBaseStationToFrame(const Vec2d &target)
+		{
+			return xformBaseVecToFrame(target - translation_);
+		};
+	};
+
+	/**
+	 * @class Transform3d
+	 * @brief Wrapper for SimTK::Transform
+	 * Note that the rotation is around the frame (or local) origin.
+	 */
+	class Transform3d
+	{
+	private:
+		Mat3d rotation_, inv_rotation_;
+		Vec3d translation_;
+
+	public:
+		explicit Transform3d(const Mat3d &rotation, const Vec3d &translation = Vec3d::Zero())
+			: rotation_(rotation), inv_rotation_(rotation_.transpose()), translation_(translation){};
+		Transform3d() : Transform3d(Mat3d::Identity(), Vec3d::Zero()){};
+		explicit Transform3d(const Vec3d &translation) : Transform3d(Mat3d::Identity(), translation){};
+
+		/** Forward rotation. */
+		Vec3d xformFrameVecToBase(const Vec3d &origin)
+		{
+			return rotation_ * origin;
+		};
+
+		/** Forward transformation. Note that the rotation operation is carried out first. */
+		Vec3d shiftFrameStationToBase(const Vec3d &origin)
+		{
+			return translation_ + xformFrameVecToBase(origin);
+		};
+
+		/** Inverse rotation. */
+		Vec3d xformBaseVecToFrame(const Vec3d &target)
+		{
+			return inv_rotation_ * target;
+		};
+
+		/** Inverse transformation. Note that the inverse translation operation is carried out first. */
+		Vec3d shiftBaseStationToFrame(const Vec3d &target)
+		{
+			return xformBaseVecToFrame(target - translation_);
+		};
+	};
 }
 #endif // SMALL_VECTORS_H

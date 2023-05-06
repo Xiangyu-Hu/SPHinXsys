@@ -16,9 +16,9 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
 	/** Tag for run particle relaxation for the initial body fitted distribution. */
-	sph_system.run_particle_relaxation_ = false;
+	sph_system.setRunParticleRelaxation(false);
 	/** Tag for computation start with relaxed body fitted particles distribution. */
-	sph_system.reload_particles_ = true;
+	sph_system.setReloadParticles(true);
 //handle command line arguments
 #ifdef BOOST_AVAILABLE
 	sph_system.handleCommandlineOptions(ac, av);
@@ -36,7 +36,7 @@ int main(int ac, char *av[])
 	cylinder.defineAdaptationRatios(1.15, 2.0);
 	cylinder.defineBodyLevelSetShape();
 	cylinder.defineParticlesAndMaterial<SolidParticles, Solid>();
-	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
+	(!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
 		? cylinder.generateParticles<ParticleGeneratorReload>(io_environment, cylinder.getName())
 		: cylinder.generateParticles<ParticleGeneratorLattice>();
 
@@ -53,7 +53,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------
-	if (sph_system.run_particle_relaxation_)
+	if (sph_system.RunParticleRelaxation())
 	{
 		/** body topology only for particle relaxation */
 		InnerRelation cylinder_inner(cylinder);
@@ -71,14 +71,14 @@ int main(int ac, char *av[])
 		//----------------------------------------------------------------------
 		//	Particle relaxation starts here.
 		//----------------------------------------------------------------------
-		random_inserted_body_particles.parallel_exec(0.25);
-		relaxation_step_inner.surface_bounding_.parallel_exec();
+		random_inserted_body_particles.exec(0.25);
+		relaxation_step_inner.SurfaceBounding().exec();
 		write_inserted_body_to_vtp.writeToFile(0);
 
 		int ite_p = 0;
 		while (ite_p < 1000)
 		{
-			relaxation_step_inner.parallel_exec();
+			relaxation_step_inner.exec();
 			ite_p += 1;
 			if (ite_p % 200 == 0)
 			{
@@ -118,25 +118,25 @@ int main(int ac, char *av[])
 	/** Impose transport velocity. */
 	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> transport_velocity_correction(water_block_complex);
 	/** Computing vorticity in the flow. */
-	InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_complex.inner_relation_);
+	InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_complex.getInnerRelation());
 	/** free stream boundary condition. */
 	BodyRegionByCell free_stream_buffer(water_block, makeShared<MultiPolygonShape>(createBufferShape()));
-	SimpleDynamics<FreeStreamCondition, BodyRegionByCell> freestream_condition(free_stream_buffer);
+	SimpleDynamics<FreeStreamCondition> freestream_condition(free_stream_buffer);
 	//----------------------------------------------------------------------
 	//	Algorithms of FSI.
 	//----------------------------------------------------------------------
 	/** Compute the force exerted on solid body due to fluid pressure and viscosity. */
-	InteractionDynamics<solid_dynamics::FluidViscousForceOnSolid> viscous_force_on_cylinder(cylinder_contact);
-	InteractionDynamics<solid_dynamics::FluidPressureForceOnSolid> pressure_force_on_cylinder(cylinder_contact);
+	InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_cylinder(cylinder_contact);
+	InteractionDynamics<solid_dynamics::PressureForceAccelerationFromFluid> pressure_force_on_cylinder(cylinder_contact);
 	/** Computing viscous force acting on wall with wall model. */
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
-	RegressionTestTimeAveraged<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalViscousForceOnSolid>>>
-		write_total_viscous_force_on_inserted_body(io_environment, cylinder);
-	ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalViscousForceOnSolid>>
-		write_total_force_on_inserted_body(io_environment, cylinder);
+	RegressionTestTimeAveraged<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>>
+		write_total_viscous_force_on_inserted_body(io_environment, viscous_force_on_cylinder, "TotalViscousForceOnSolid");
+	ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>
+		write_total_force_on_inserted_body(io_environment, pressure_force_on_cylinder, "TotalPressureForceOnSolid");
 	ObservedQuantityRecording<Vecd>
 		write_fluid_velocity("Velocity", io_environment, fluid_observer_contact);
 	//----------------------------------------------------------------------
@@ -147,25 +147,24 @@ int main(int ac, char *av[])
 	sph_system.initializeSystemCellLinkedLists();
 	/** periodic condition applied after the mesh cell linked list build up
 	  * but before the configuration build up. */
-	periodic_condition_x.update_cell_linked_list_.parallel_exec();
-	periodic_condition_y.update_cell_linked_list_.parallel_exec();
+	periodic_condition_x.update_cell_linked_list_.exec();
+	periodic_condition_y.update_cell_linked_list_.exec();
 	/** initialize configurations for all bodies. */
 	sph_system.initializeSystemConfigurations();
 	/** initialize surface normal direction for the insert body. */
-	cylinder_normal_direction.parallel_exec();
+	cylinder_normal_direction.exec();
 	//----------------------------------------------------------------------
 	//	Setup computing and initial conditions.
 	//----------------------------------------------------------------------
-	size_t number_of_iterations = sph_system.restart_step_;
+	size_t number_of_iterations = 0;
 	int screen_output_interval = 100;
-	int restart_output_interval = screen_output_interval * 10;
 	Real end_time = 200.0;
 	Real output_interval = end_time / 200.0;
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
 	//----------------------------------------------------------------------
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 	//----------------------------------------------------------------------
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
@@ -180,30 +179,30 @@ int main(int ac, char *av[])
 		/** Integrate time (loop) until the next output time. */
 		while (integration_time < output_interval)
 		{
-			initialize_a_fluid_step.parallel_exec();
-			Real Dt = get_fluid_advection_time_step_size.parallel_exec();
-			update_density_by_summation.parallel_exec();
-			viscous_acceleration.parallel_exec();
-			transport_velocity_correction.parallel_exec();
+			initialize_a_fluid_step.exec();
+			Real Dt = get_fluid_advection_time_step_size.exec();
+			update_density_by_summation.exec();
+			viscous_acceleration.exec();
+			transport_velocity_correction.exec();
 
 			/** FSI for viscous force. */
-			viscous_force_on_cylinder.parallel_exec();
+			viscous_force_on_cylinder.exec();
 			size_t inner_ite_dt = 0;
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
-				Real dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt);
+				Real dt = SMIN(get_fluid_time_step_size.exec(), Dt);
 				/** Fluid pressure relaxation, first half. */
-				pressure_relaxation.parallel_exec(dt);
+				pressure_relaxation.exec(dt);
 				/** FSI for pressure force. */
-				pressure_force_on_cylinder.parallel_exec();
+				pressure_force_on_cylinder.exec();
 				/** Fluid pressure relaxation, second half. */
-				density_relaxation.parallel_exec(dt);
+				density_relaxation.exec(dt);
 
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
-				freestream_condition.parallel_exec();
+				freestream_condition.exec();
 				inner_ite_dt++;
 			}
 
@@ -216,31 +215,31 @@ int main(int ac, char *av[])
 			number_of_iterations++;
 
 			/** Water block configuration and periodic condition. */
-			periodic_condition_x.bounding_.parallel_exec();
-			periodic_condition_y.bounding_.parallel_exec();
+			periodic_condition_x.bounding_.exec();
+			periodic_condition_y.bounding_.exec();
 			water_block.updateCellLinkedListWithParticleSort(100);
-			periodic_condition_x.update_cell_linked_list_.parallel_exec();
-			periodic_condition_y.update_cell_linked_list_.parallel_exec();
+			periodic_condition_x.update_cell_linked_list_.exec();
+			periodic_condition_y.update_cell_linked_list_.exec();
 			/** one need update configuration after periodic condition. */
 			water_block_complex.updateConfiguration();
 			cylinder_contact.updateConfiguration();
 		}
 
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		/** write run-time observation into file */
-		compute_vorticity.parallel_exec();
+		compute_vorticity.exec();
 		write_real_body_states.writeToFile();
 		write_total_viscous_force_on_inserted_body.writeToFile(number_of_iterations);
 		write_total_force_on_inserted_body.writeToFile(number_of_iterations);
 		fluid_observer_contact.updateConfiguration();
 		write_fluid_velocity.writeToFile(number_of_iterations);
 
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 

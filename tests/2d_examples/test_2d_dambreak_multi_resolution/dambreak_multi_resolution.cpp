@@ -89,12 +89,12 @@ int main(int ac, char *av[])
 	FluidBody water_block(
 		sph_system, makeShared<TransformShape<GeometricShapeBox>>(
 						Transform2d(water_block_translation), water_block_halfsize, "WaterBody"));
-	water_block.defineAdaptation<ParticleSplitAndMerge>(1.3, 1.0, 1.0);
+	water_block.defineAdaptation<ParticleSplitAndMerge>(1.3, 1.0, 1);
 	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
 	water_block.generateParticles<ParticleGeneratorSplitAndMerge>();
 	water_block.addBodyStateForRecording<Real>("SmoothingLengthRatio");
 	water_block.addBodyStateForRecording<Real>("VolumetricMeasure");
-	
+
 	SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
 	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
@@ -116,8 +116,8 @@ int main(int ac, char *av[])
 	Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_complex);
 
 	MultiPolygonShape split_merge_region(createRefinementArea());
-	InteractionWithUpdate<SplitWithMinimumDensityErrorWithWall> particle_split_(water_complex, split_merge_region, 8000);
-	InteractionDynamics<MergeWithMinimumDensityErrorWithWall> particle_merge_(water_complex, split_merge_region);
+	InteractionWithUpdate<SplitWithMinimumDensityErrorWithWall, SequencedPolicy> particle_split_(water_complex, split_merge_region, 8000);
+	InteractionDynamics<MergeWithMinimumDensityErrorWithWall, SequencedPolicy> particle_merge_(water_complex, split_merge_region);
 	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplexAdaptive> fluid_density_by_summation(water_complex);
 
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
@@ -131,7 +131,6 @@ int main(int ac, char *av[])
 	//	and regression tests of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
-	RestartIO restart_io(io_environment, sph_system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
 		write_water_mechanical_energy(io_environment, water_block, gravity_ptr);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
@@ -142,24 +141,13 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
-	wall_boundary_normal_direction.parallel_exec();
-	//----------------------------------------------------------------------
-	//	Load restart file if necessary.
-	//----------------------------------------------------------------------
-	if (sph_system.restart_step_ != 0)
-	{
-		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.restart_step_);
-		water_block.updateCellLinkedList();
-		water_complex.updateConfiguration();
-		fluid_observer_contact.updateConfiguration();
-	}
+	wall_boundary_normal_direction.exec();
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
-	size_t number_of_iterations = sph_system.restart_step_;
+	size_t number_of_iterations = 0;
 	int screen_output_interval = 100;
 	int observation_sample_interval = screen_output_interval * 2;
-	int restart_output_interval = screen_output_interval * 10;
 	Real End_Time = 20.0; /**< End time. */
 	Real D_Time = 0.1;	  /**< Time stamps for output of body states. */
 	Real dt = 0.0;		  /**< Default acoustic time step sizes. */
@@ -167,12 +155,12 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
 	//----------------------------------------------------------------------
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
-	tick_count::interval_t interval_computing_time_step;
-	tick_count::interval_t interval_computing_fluid_pressure_relaxation;
-	tick_count::interval_t interval_updating_configuration;
-	tick_count time_instance;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
+	TimeInterval interval_computing_time_step;
+	TimeInterval interval_computing_fluid_pressure_relaxation;
+	TimeInterval interval_updating_configuration;
+	TickCount time_instance;
 	//----------------------------------------------------------------------
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
@@ -189,25 +177,25 @@ int main(int ac, char *av[])
 		while (integration_time < D_Time)
 		{
 			/** outer loop for dual-time criteria time-stepping. */
-			time_instance = tick_count::now();
-			fluid_step_initialization.parallel_exec();
-			Real Dt = fluid_advection_time_step.parallel_exec();
-			fluid_density_by_summation.parallel_exec();
-			interval_computing_time_step += tick_count::now() - time_instance;
+			time_instance = TickCount::now();
+			fluid_step_initialization.exec();
+			Real Dt = fluid_advection_time_step.exec();
+			fluid_density_by_summation.exec();
+			interval_computing_time_step += TickCount::now() - time_instance;
 
-			time_instance = tick_count::now();
+			time_instance = TickCount::now();
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
 				/** inner loop for dual-time criteria time-stepping.  */
-				fluid_pressure_relaxation.parallel_exec(dt);
-				fluid_density_relaxation.parallel_exec(dt);
-				dt = fluid_acoustic_time_step.parallel_exec();
+				fluid_pressure_relaxation.exec(dt);
+				fluid_density_relaxation.exec(dt);
+				dt = fluid_acoustic_time_step.exec();
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
 			}
-			interval_computing_fluid_pressure_relaxation += tick_count::now() - time_instance;
+			interval_computing_fluid_pressure_relaxation += TickCount::now() - time_instance;
 
 			/** screen output, write body reduced values and restart files  */
 			if (number_of_iterations % screen_output_interval == 0)
@@ -216,13 +204,11 @@ int main(int ac, char *av[])
 						  << GlobalStaticVariables::physical_time_
 						  << "	Dt = " << Dt << "	dt = " << dt << "\n";
 
-				if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.restart_step_)
+				if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != 0)
 				{
 					write_water_mechanical_energy.writeToFile(number_of_iterations);
 					write_recorded_water_pressure.writeToFile(number_of_iterations);
 				}
-				if (number_of_iterations % restart_output_interval == 0)
-					restart_io.writeToFile(number_of_iterations);
 			}
 			number_of_iterations++;
 
@@ -233,21 +219,21 @@ int main(int ac, char *av[])
 				particle_merge_.exec();
 			}
 			/** Update cell linked list and configuration. */
-			time_instance = tick_count::now();
+			time_instance = TickCount::now();
 			water_block.updateCellLinkedListWithParticleSort(100);
 			water_complex.updateConfiguration();
 			fluid_observer_contact.updateConfiguration();
-			interval_updating_configuration += tick_count::now() - time_instance;
+			interval_updating_configuration += TickCount::now() - time_instance;
 		}
 
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		body_states_recording.writeToFile();
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds()
 			  << " seconds." << std::endl;
@@ -258,7 +244,7 @@ int main(int ac, char *av[])
 	std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
 			  << interval_updating_configuration.seconds() << "\n";
 
-	/*	if (sph_system.restart_step_ == 0)
+	/*	if (sph_system.RestartStep() == 0)
 		{
 			write_water_mechanical_energy.newResultTest();
 			write_recorded_water_pressure.newResultTest();

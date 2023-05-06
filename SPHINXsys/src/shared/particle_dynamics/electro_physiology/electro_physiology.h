@@ -30,7 +30,7 @@
 #ifndef ELECTRO_PHYSIOLOGY_H
 #define ELECTRO_PHYSIOLOGY_H
 
-#include "particle_dynamics_diffusion_reaction.h"
+#include "particle_dynamics_diffusion_reaction.hpp"
 #include "solid_particles.h"
 
 namespace SPH
@@ -92,6 +92,12 @@ namespace SPH
 		virtual ~AlievPanfilowModel(){};
 	};
 
+	// type trait for pass type template constructor
+	// This is a C++17 replacement to the C++20 https://en.cppreference.com/w/cpp/types/type_identity.
+	template <typename T>
+	struct TypeIdentity
+	{
+	};
 	/**
 	 * @class MonoFieldElectroPhysiology
 	 * @brief material class for electro_physiology.
@@ -99,23 +105,17 @@ namespace SPH
 	class MonoFieldElectroPhysiology : public DiffusionReaction<Solid, 3>
 	{
 	public:
-		explicit MonoFieldElectroPhysiology(ElectroPhysiologyReaction &electro_physiology_reaction,
-											Real diff_cf, Real bias_diff_cf, Vecd bias_direction);
+		template <class DiffusionType>
+		MonoFieldElectroPhysiology(SharedPtr<ElectroPhysiologyReaction> electro_physiology_reaction_ptr,
+								   TypeIdentity<DiffusionType> empty_object,
+								   Real diff_cf, Real bias_diff_cf, Vecd bias_direction)
+			: DiffusionReaction<Solid, 3>({"Voltage", "GateVariable", "ActiveContractionStress"},
+										  electro_physiology_reaction_ptr)
+		{
+			material_type_name_ = "MonoFieldElectroPhysiology";
+			initializeAnDiffusion<DiffusionType>("Voltage", "Voltage", diff_cf, bias_diff_cf, bias_direction);
+		};
 		virtual ~MonoFieldElectroPhysiology(){};
-	};
-
-	/**
-	 * @class LocalMonoFieldElectroPhysiology
-	 * @brief material class for electro_physiology with locally oriented fibers.
-	 */
-	class LocalMonoFieldElectroPhysiology : public DiffusionReaction<Solid, 3>
-	{
-	public:
-		explicit LocalMonoFieldElectroPhysiology(ElectroPhysiologyReaction &electro_physiology_reaction,
-												 Real diff_cf, Real bias_diff_cf, Vecd bias_direction);
-		virtual ~LocalMonoFieldElectroPhysiology(){};
-
-		virtual void readFromXmlForLocalParameters(const std::string &filefullpath) override;
 	};
 
 	/**
@@ -123,23 +123,25 @@ namespace SPH
 	 * @brief A group of particles with electrophysiology particle data.
 	 */
 	class ElectroPhysiologyParticles
-		: public DiffusionReactionParticles<SolidParticles, Solid, 3>
+		: public DiffusionReactionParticles<SolidParticles, MonoFieldElectroPhysiology>
 	{
 	public:
-		ElectroPhysiologyParticles(SPHBody &sph_body, DiffusionReaction<Solid, 3> *diffusion_reaction_material);
+		ElectroPhysiologyParticles(SPHBody &sph_body, MonoFieldElectroPhysiology *mono_field_electro_physiology)
+			: DiffusionReactionParticles<SolidParticles, MonoFieldElectroPhysiology>(sph_body, mono_field_electro_physiology){};
 		virtual ~ElectroPhysiologyParticles(){};
 		virtual ElectroPhysiologyParticles *ThisObjectPtr() override { return this; };
 	};
+
 	/**
 	 * @class ElectroPhysiologyReducedParticles
 	 * @brief A group of reduced particles with electrophysiology particle data.
 	 */
-	class ElectroPhysiologyReducedParticles
-		: public DiffusionReactionParticles<SolidParticles, Solid, 3>
+	class ElectroPhysiologyReducedParticles : public ElectroPhysiologyParticles
 	{
 	public:
 		/** Constructor. */
-		ElectroPhysiologyReducedParticles(SPHBody &sph_body, DiffusionReaction<Solid, 3> *diffusion_reaction_material);
+		ElectroPhysiologyReducedParticles(SPHBody &sph_body, MonoFieldElectroPhysiology *mono_field_electro_physiology)
+			: ElectroPhysiologyParticles(sph_body, mono_field_electro_physiology){};
 		/** Destructor. */
 		virtual ~ElectroPhysiologyReducedParticles(){};
 		virtual ElectroPhysiologyReducedParticles *ThisObjectPtr() override { return this; };
@@ -152,8 +154,8 @@ namespace SPH
 
 	namespace electro_physiology
 	{
-		typedef DiffusionReactionSimpleData<SolidParticles, Solid, 3> ElectroPhysiologyDataDelegateSimple;
-		typedef DiffusionReactionInnerData<SolidParticles, Solid, 3> ElectroPhysiologyDataDelegateInner;
+		typedef DiffusionReactionSimpleData<ElectroPhysiologyParticles> ElectroPhysiologyDataDelegateSimple;
+		typedef DiffusionReactionInnerData<ElectroPhysiologyParticles> ElectroPhysiologyDataDelegateInner;
 		/**
 		 * @class ElectroPhysiologyInitialCondition
 		 * @brief  set initial condition for a muscle body
@@ -166,23 +168,22 @@ namespace SPH
 			explicit ElectroPhysiologyInitialCondition(SPHBody &sph_body)
 				: LocalDynamics(sph_body),
 				  ElectroPhysiologyDataDelegateSimple(sph_body),
-				  pos_(particles_->pos_), species_n_(particles_->species_n_){};
+				  pos_(particles_->pos_), all_species_(particles_->all_species_){};
 			virtual ~ElectroPhysiologyInitialCondition(){};
 
 		protected:
 			StdLargeVec<Vecd> &pos_;
-			StdVec<StdLargeVec<Real>> &species_n_;
+			StdVec<StdLargeVec<Real>> &all_species_;
 		};
 		/**
 		 * @class GetElectroPhysiologyTimeStepSize
 		 * @brief Computing the time step size from diffusion criteria
 		 */
-		class GetElectroPhysiologyTimeStepSize
-			: public GetDiffusionTimeStepSize<SolidParticles, Solid, 3>
+		class GetElectroPhysiologyTimeStepSize : public GetDiffusionTimeStepSize<ElectroPhysiologyParticles>
 		{
 		public:
 			explicit GetElectroPhysiologyTimeStepSize(RealBody &real_body)
-				: GetDiffusionTimeStepSize<SolidParticles, Solid, 3>(real_body){};
+				: GetDiffusionTimeStepSize<ElectroPhysiologyParticles>(real_body){};
 			virtual ~GetElectroPhysiologyTimeStepSize(){};
 		};
 		/**
@@ -191,7 +192,7 @@ namespace SPH
 		 */
 		class ElectroPhysiologyDiffusionRelaxationInner
 			: public RelaxationOfAllDiffusionSpeciesRK2<
-				  RelaxationOfAllDiffusionSpeciesInner<SolidParticles, Solid, 3>>
+				  RelaxationOfAllDiffusionSpeciesInner<ElectroPhysiologyParticles>>
 		{
 		public:
 			explicit ElectroPhysiologyDiffusionRelaxationInner(BaseInnerRelation &inner_relation)
@@ -204,7 +205,7 @@ namespace SPH
 		 */
 		class ElectroPhysiologyDiffusionRelaxationComplex
 			: public RelaxationOfAllDiffusionSpeciesRK2<
-				  RelaxationOfAllDiffusionSpeciesComplex<SolidParticles, Solid, SolidParticles, Solid, 3>>
+				  RelaxationOfAllDiffusionSpeciesComplex<ElectroPhysiologyParticles, ElectroPhysiologyParticles>>
 		{
 		public:
 			explicit ElectroPhysiologyDiffusionRelaxationComplex(ComplexRelation &complex_relation)
@@ -214,10 +215,10 @@ namespace SPH
 
 		/** Solve the reaction ODE equation of trans-membrane potential	using forward sweeping */
 		using ElectroPhysiologyReactionRelaxationForward =
-			SimpleDynamics<RelaxationOfAllReactionsForward<SolidParticles, Solid, 3>>;
+			SimpleDynamics<RelaxationOfAllReactionsForward<ElectroPhysiologyParticles>>;
 		/** Solve the reaction ODE equation of trans-membrane potential	using backward sweeping */
 		using ElectroPhysiologyReactionRelaxationBackward =
-			SimpleDynamics<RelaxationOfAllReactionsBackward<SolidParticles, Solid, 3>>;
+			SimpleDynamics<RelaxationOfAllReactionsBackward<ElectroPhysiologyParticles>>;
 	}
 }
 #endif // ELECTRO_PHYSIOLOGY_H

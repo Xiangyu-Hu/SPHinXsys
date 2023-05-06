@@ -6,7 +6,7 @@ namespace SPH
 {
 	//=================================================================================================//
 	KernelHyperbolic::KernelHyperbolic(Real h)
-		: Kernel(h, "HyperbolicKernel")
+		: Kernel(h, 2.0, 2.0, "HyperbolicKernel")
 	{
 		factor_W_1D_ = inv_h_ / 7.0;
 		factor_W_2D_ = inv_h_ * inv_h_ / (3.0 * Pi);
@@ -18,11 +18,11 @@ namespace SPH
 	{
 		if (q < 1.0)
 		{
-			return (6.0 - 6.0 * q + powerN(q, 3));
+			return (6.0 - 6.0 * q + pow(q, 3));
 		}
 		else
 		{
-			return powerN(2.0 - q, 3);
+			return pow(2.0 - q, 3);
 		}
 	}
 	//=================================================================================================//
@@ -40,11 +40,11 @@ namespace SPH
 	{
 		if (q < 1.0)
 		{
-			return (-6.0 + 3.0 * powerN(q, 2));
+			return (-6.0 + 3.0 * pow(q, 2));
 		}
 		else
 		{
-			return powerN(2.0 - q, 2) * (-1.0);
+			return pow(2.0 - q, 2) * (-1.0);
 		}
 	}
 	//=================================================================================================//

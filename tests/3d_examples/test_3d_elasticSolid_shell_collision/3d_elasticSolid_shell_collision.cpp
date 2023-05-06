@@ -14,11 +14,13 @@ Real thickness = resolution_ref * 1.;				/**< shell thickness. */
 Real radius = 2.0;									/**< cylinder radius. */
 Real half_height = 1.0;								/** Height of the cylinder. */
 Real radius_mid_surface = radius + thickness / 2.0; /** Radius of the mid surface. */
+Vec3d ball_center(radius / 2.0, 0.0, 0.0);
 int particle_number_mid_surface = int(2.0 * radius_mid_surface * Pi * 215.0 / 360.0 / resolution_ref);
 int particle_number_height = 2 * int(half_height / resolution_ref);
 int BWD = 1; /** Width of the boundary layer measured by number of particles. */
 BoundingBox system_domain_bounds(Vec3d(-radius - thickness, -half_height - thickness, -radius - thickness),
 								 Vec3d(radius + thickness, half_height + thickness, radius + thickness));
+StdVec<Vecd> ball_observation_location = { ball_center };
 Real ball_radius = 0.5;
 Real gravity_g = 1.0;
 //----------------------------------------------------------------------
@@ -60,12 +62,11 @@ int main(int ac, char *av[])
 	//	Build up the environment of a SPHSystem with global controls.
 	//----------------------------------------------------------------------
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
+	//sph_system.generate_regression_data_ = true;
 	/** Tag for running particle relaxation for the initially body-fitted distribution */
-	sph_system.run_particle_relaxation_ = false;
+	sph_system.setRunParticleRelaxation(false);
 	/** Tag for starting with relaxed body-fitted particles distribution */
-	sph_system.reload_particles_ = true;
-	/** Tag for computation from restart files. 0: start with initial condition */
-	sph_system.restart_step_ = 0;
+	sph_system.setReloadParticles(true);
 	sph_system.handleCommandlineOptions(ac, av);
 	IOEnvironment io_environment(sph_system);
 	//----------------------------------------------------------------------
@@ -76,9 +77,9 @@ int main(int ac, char *av[])
 	shell.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	shell.generateParticles<CylinderParticleGenerator>();
 
-	SolidBody ball(sph_system, makeShared<GeometricShapeBall>(Vec3d(radius / 2.0, 0.0, 0.0), ball_radius, "BallBody"));
+	SolidBody ball(sph_system, makeShared<GeometricShapeBall>(ball_center, ball_radius, "BallBody"));
 	ball.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
+	if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
 	{
 		ball.generateParticles<ParticleGeneratorReload>(io_environment, ball.getName());
 	}
@@ -87,10 +88,13 @@ int main(int ac, char *av[])
 		ball.defineBodyLevelSetShape()->writeLevelSet(io_environment);
 		ball.generateParticles<ParticleGeneratorLattice>();
 	}
+
+	ObserverBody ball_observer(sph_system, "BallObserver");
+	ball_observer.generateParticles<ObserverParticleGenerator>(ball_observation_location);
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------
-	if (sph_system.run_particle_relaxation_)
+	if (sph_system.RunParticleRelaxation())
 	{
 		//----------------------------------------------------------------------
 		//	Define body relation map used for particle relaxation.
@@ -109,7 +113,7 @@ int main(int ac, char *av[])
 		//----------------------------------------------------------------------
 		//	Particle relaxation starts here.
 		//----------------------------------------------------------------------
-		ball_random_particles.parallel_exec(0.25);
+		ball_random_particles.exec(0.25);
 		write_relaxed_particles.writeToFile(0);
 		//----------------------------------------------------------------------
 		//	From here iteration for particle relaxation begins.
@@ -118,7 +122,7 @@ int main(int ac, char *av[])
 		int relax_step = 1000;
 		while (ite < relax_step)
 		{
-			ball_relaxation_step_inner.parallel_exec();
+			ball_relaxation_step_inner.exec();
 			ite += 1;
 			if (ite % 100 == 0)
 			{
@@ -137,6 +141,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	InnerRelation ball_inner(ball);
 	SurfaceContactRelation ball_contact(ball, {&shell});
+	ContactRelation ball_observer_contact(ball_observer, { &ball });
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
@@ -145,25 +150,27 @@ int main(int ac, char *av[])
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> ball_corrected_configuration(ball_inner);
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> ball_get_time_step_size(ball, 0.45);
 	/** stress relaxation for the balls. */
-	Dynamics1Level<solid_dynamics::KirchhoffStressRelaxationFirstHalf> ball_stress_relaxation_first_half(ball_inner);
-	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> ball_stress_relaxation_second_half(ball_inner);
+	Dynamics1Level<solid_dynamics::KirchhoffIntegration1stHalf> ball_stress_relaxation_first_half(ball_inner);
+	Dynamics1Level<solid_dynamics::Integration2ndHalf> ball_stress_relaxation_second_half(ball_inner);
 	/** Algorithms for solid-solid contact. */
-	InteractionDynamics<solid_dynamics::ShellContactDensity, BodyPartByParticle> ball_update_contact_density(ball_contact);
-	InteractionDynamics<solid_dynamics::ContactForceFromWall, BodyPartByParticle> ball_compute_solid_contact_forces(ball_contact);
+	InteractionDynamics<solid_dynamics::ShellContactDensity> ball_update_contact_density(ball_contact);
+	InteractionDynamics<solid_dynamics::ContactForceFromWall> ball_compute_solid_contact_forces(ball_contact);
 	DampingWithRandomChoice<InteractionSplit<solid_dynamics::PairwiseFrictionFromWall>>
 		ball_friction(0.1, ball_contact, physical_viscosity);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
-	BodyStatesRecordingToVtp write_ball_state(io_environment, {ball});
+	BodyStatesRecordingToVtp write_ball_state(io_environment, {&ball});
+	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
+		write_ball_center_displacement("Position", io_environment, ball_observer_contact);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
 	//----------------------------------------------------------------------
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
-	ball_corrected_configuration.parallel_exec();
+	ball_corrected_configuration.exec();
 	/** Initial states output. */
 	body_states_recording.writeToFile(0);
 	/** Main loop. */
@@ -176,8 +183,8 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
 	//----------------------------------------------------------------------
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 	//----------------------------------------------------------------------
 	//	Main loop starts here.
 	//----------------------------------------------------------------------
@@ -189,38 +196,49 @@ int main(int ac, char *av[])
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
-				ball_initialize_timestep.parallel_exec();
+				ball_initialize_timestep.exec();
 				if (ite % 100 == 0)
 				{
 					std::cout << "N=" << ite << " Time: "
 							  << GlobalStaticVariables::physical_time_ << "	dt: " << dt << "\n";
 				}
-				ball_update_contact_density.parallel_exec();
-				ball_compute_solid_contact_forces.parallel_exec();
-				ball_stress_relaxation_first_half.parallel_exec(dt);
-				ball_friction.parallel_exec(dt);
-				ball_stress_relaxation_second_half.parallel_exec(dt);
+				ball_update_contact_density.exec();
+				ball_compute_solid_contact_forces.exec();
+				ball_stress_relaxation_first_half.exec(dt);
+				ball_friction.exec(dt);
+				ball_stress_relaxation_second_half.exec(dt);
 
 				ball.updateCellLinkedList();
 				ball_contact.updateConfiguration();
 
 				ite++;
-				Real dt_free = ball_get_time_step_size.parallel_exec();
+				Real dt_free = ball_get_time_step_size.exec();
 				dt = dt_free;
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
 			}
+
+			write_ball_center_displacement.writeToFile(ite);
 		}
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		write_ball_state.writeToFile(ite);
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+
+	if (sph_system.generate_regression_data_)
+	{
+		write_ball_center_displacement.generateDataBase(0.005);
+	}
+	else
+	{
+		write_ball_center_displacement.newResultTest();
+	}
 	return 0;
 }

@@ -35,15 +35,13 @@
 namespace SPH
 {
 	/**
-	* @class PlasticSolid
-	* @brief Abstract class for a generalized plastic solid
-	*/
+	 * @class PlasticSolid
+	 * @brief Abstract class for a generalized plastic solid
+	 */
 	class PlasticSolid : public NeoHookeanSolid
 	{
 	protected:
 		Real yield_stress_;
-
-		virtual void initializePlasticParameters() = 0;
 
 	public:
 		/** Constructor */
@@ -73,8 +71,6 @@ namespace SPH
 		StdLargeVec<Matd> inverse_plastic_strain_; /**< inverse of plastic right cauchy green strain tensor */
 		StdLargeVec<Real> hardening_parameter_;	   /**< hardening parameter */
 
-		virtual void initializePlasticParameters() override;
-
 	public:
 		/** Constructor */
 		explicit HardeningPlasticSolid(Real rho0, Real youngs_modulus, Real poisson_ratio, Real yield_stress, Real hardening_modulus)
@@ -84,9 +80,8 @@ namespace SPH
 		};
 		virtual ~HardeningPlasticSolid(){};
 
+		virtual void initializeLocalParameters(BaseParticles *base_particles) override;
 		Real HardeningModulus() { return hardening_modulus_; };
-		/** assign particles to this material */
-		virtual void assignBaseParticles(BaseParticles *base_particles) override;;
 		/** compute the stress through deformation, and plastic relaxation. */
 		virtual Matd PlasticConstitutiveRelation(const Matd &deformation, size_t index_i, Real dt = 0.0) override;
 

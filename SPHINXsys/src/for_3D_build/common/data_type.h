@@ -29,10 +29,11 @@
 #define DATA_TYPE_3D_H
 
 #include "base_data_type.h"
+#include "scalar_functions.h"
+#include "vector_functions.h"
 
 namespace SPH {
-	using Veci = Vec3i;
-	using Vecu = Vec3u;
+	using Arrayi = Array3i;
 	using Vecd = Vec3d;
 	using Matd = Mat3d;
 	using AlignedBox = AlignedBox3d;
@@ -50,10 +51,7 @@ namespace SPH {
 
 	/** only works for smoothing length ratio less or equal than 1.3*/
 	constexpr int MaximumNeighborhoodSize = int(1.33 * M_PI * 27);
-
 	constexpr int Dimensions = 3;
-	constexpr Real one_over_dimensions_ = 1.0 / (Real)Dimensions;
-
 	/** correction matrix, only works for thin structure dynamics. */
 	const Matd reduced_unit_matrix{ {1, 0, 0}, // 0 row
 									{0, 1, 0}, // 1 row
@@ -62,6 +60,6 @@ namespace SPH {
 	/** initial local normal, only works for thin structure dynamics. */
 	const Vecd local_pseudo_n_0 = Vecd(0.0, 0.0, 1.0);
 
-	const Vecd zero_vec = Vec3d::Zero();
+	const Vecd ZeroVecd = Vec3d::Zero();
 }
 #endif //DATA_TYPE_3D_H

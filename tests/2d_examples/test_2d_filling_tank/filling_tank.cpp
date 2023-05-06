@@ -91,8 +91,6 @@ int main()
 	SPHSystem system(system_domain_bounds, resolution_ref);
 	/** Set the starting time. */
 	GlobalStaticVariables::physical_time_ = 0.0;
-	/** Tag for computation from restart files. 0: not from restart files. */
-	system.restart_step_ = 0;
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
@@ -134,15 +132,14 @@ int main()
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
 	BodyAlignedBoxByParticle emitter(
 		water_body, makeShared<AlignedBoxShape>(Transform2d(inlet_translation), inlet_halfsize));
-	SimpleDynamics<InletInflowCondition, BodyAlignedBoxByParticle> inflow_condition(emitter);
-	SimpleDynamics<fluid_dynamics::EmitterInflowInjection, BodyAlignedBoxByParticle> emitter_injection(emitter, 350, 0);
+	SimpleDynamics<InletInflowCondition> inflow_condition(emitter);
+	SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_injection(emitter, 350, 0);
 
 	//----------------------------------------------------------------------
 	//	File Output
 	//----------------------------------------------------------------------
 	IOEnvironment io_environment(system);
 	BodyStatesRecordingToVtp body_states_recording(io_environment, system.real_bodies_);
-	RestartIO restart_io(io_environment, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
 		write_water_mechanical_energy(io_environment, water_body, gravity_ptr);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
@@ -153,20 +150,19 @@ int main()
 	//----------------------------------------------------------------------
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	wall_normal_direction.parallel_exec();
-	indicate_free_surface.parallel_exec();
+	wall_normal_direction.exec();
+	indicate_free_surface.exec();
 	//----------------------------------------------------------------------
 	//	Time stepping control parameters.
 	//----------------------------------------------------------------------
-	size_t number_of_iterations = system.restart_step_;
+	size_t number_of_iterations = system.RestartStep();
 	int screen_output_interval = 100;
-	int restart_output_interval = screen_output_interval * 10;
 	Real end_time = 30.0;
 	Real output_interval = 0.1;
 	Real dt = 0.0; /**< Default acoustic time step sizes. */
 	/** statistics for computing CPU time. */
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 	//----------------------------------------------------------------------
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
@@ -182,19 +178,19 @@ int main()
 		while (integration_time < output_interval)
 		{
 			/** Acceleration due to viscous force and gravity. */
-			initialize_a_fluid_step.parallel_exec();
-			Real Dt = get_fluid_advection_time_step_size.parallel_exec();
-			update_density_by_summation.parallel_exec();
+			initialize_a_fluid_step.exec();
+			Real Dt = get_fluid_advection_time_step_size.exec();
+			update_density_by_summation.exec();
 
 			/** Dynamics including pressure relaxation. */
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
-				pressure_relaxation.parallel_exec(dt);
-				inflow_condition.parallel_exec();
-				density_relaxation.parallel_exec(dt);
-				inflow_condition.parallel_exec();
-				dt = get_fluid_time_step_size.parallel_exec();
+				pressure_relaxation.exec(dt);
+				inflow_condition.exec();
+				density_relaxation.exec(dt);
+				inflow_condition.exec();
+				dt = get_fluid_time_step_size.exec();
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
@@ -205,14 +201,11 @@ int main()
 				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
 						  << GlobalStaticVariables::physical_time_
 						  << "	Dt = " << Dt << "	dt = " << dt << "\n";
-
-				if (number_of_iterations % restart_output_interval == 0)
-					restart_io.writeToFile(number_of_iterations);
 			}
 			number_of_iterations++;
 
 			/** inflow emitter injection*/
-			emitter_injection.parallel_exec();
+			emitter_injection.exec();
 			/** Update cell linked list and configuration. */
 
 			water_body.updateCellLinkedListWithParticleSort(100);
@@ -220,17 +213,17 @@ int main()
 			fluid_observer_contact_relation.updateConfiguration();
 		}
 
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		write_water_mechanical_energy.writeToFile(number_of_iterations);
-		indicate_free_surface.parallel_exec();
+		indicate_free_surface.exec();
 		body_states_recording.writeToFile();
 		write_recorded_water_pressure.writeToFile(number_of_iterations);
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds()
 			  << " seconds." << std::endl;

@@ -35,7 +35,7 @@ class Coil : public ComplexShape
 public:
 	explicit Coil(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		add<TriangleMeshShapeSTL>(full_path_to_file, Vecd(0), 1.0);
+		add<TriangleMeshShapeSTL>(full_path_to_file, Vecd::Zero(), 1.0);
 	}
 };
 class StationaryPlate : public ComplexShape
@@ -58,9 +58,9 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, resolution_ref);
 	// Tag for run particle relaxation for the initial body fitted distribution.
-	system.run_particle_relaxation_ = false;
+	system.setRunParticleRelaxation(false);
 	// Tag for reload initially relaxed particles.
-	system.reload_particles_ = true;
+	system.setReloadParticles(true);
 #ifdef BOOST_AVAILABLE
 	// handle command line arguments
 	system.handleCommandlineOptions(ac, av);
@@ -72,7 +72,7 @@ int main(int ac, char *av[])
 	SolidBody coil(system, makeShared<Coil>("Coil"));
 	coil.defineBodyLevelSetShape()->writeLevelSet(io_environment);
 	coil.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-	(!system.run_particle_relaxation_ && system.reload_particles_)
+	(!system.RunParticleRelaxation() && system.ReloadParticles())
 		? coil.generateParticles<ParticleGeneratorReload>(io_environment, coil.getName())
 		: coil.generateParticles<ParticleGeneratorLattice>();
 
@@ -94,7 +94,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	check whether run particle relaxation for body fitted particle distribution.
 	//----------------------------------------------------------------------
-	if (system.run_particle_relaxation_)
+	if (system.RunParticleRelaxation())
 	{
 		//----------------------------------------------------------------------
 		//	Methods used for particle relaxation.
@@ -108,8 +108,8 @@ int main(int ac, char *av[])
 		//----------------------------------------------------------------------
 		//	Particle relaxation starts here.
 		//----------------------------------------------------------------------
-		random_inserted_body_particles.parallel_exec(0.25);
-		relaxation_step_inner.surface_bounding_.parallel_exec();
+		random_inserted_body_particles.exec(0.25);
+		relaxation_step_inner.SurfaceBounding().exec();
 		write_states.writeToFile(0);
 		//----------------------------------------------------------------------
 		//	Particle relaxation loop.
@@ -117,7 +117,7 @@ int main(int ac, char *av[])
 		int ite_p = 0;
 		while (ite_p < 1000)
 		{
-			relaxation_step_inner.parallel_exec();
+			relaxation_step_inner.exec();
 			ite_p += 1;
 			if (ite_p % 200 == 0)
 			{
@@ -140,13 +140,13 @@ int main(int ac, char *av[])
 	// Time step size
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(coil);
 	// stress relaxation.
-	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf> stress_relaxation_first_half(coil_inner);
-	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf> stress_relaxation_second_half(coil_inner);
+	Dynamics1Level<solid_dynamics::Integration1stHalf> stress_relaxation_first_half(coil_inner);
+	Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(coil_inner);
 	// Algorithms for solid-solid contacts.
-	InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle> coil_update_contact_density(coil_contact);
-	InteractionDynamics<solid_dynamics::ContactForceFromWall, BodyPartByParticle> coil_compute_solid_contact_forces(coil_contact);
-	InteractionDynamics<solid_dynamics::SelfContactDensitySummation, BodyPartByParticle> coil_self_contact_density(coil_self_contact);
-	InteractionDynamics<solid_dynamics::SelfContactForce, BodyPartByParticle> coil_self_contact_forces(coil_self_contact);
+	InteractionDynamics<solid_dynamics::ContactDensitySummation> coil_update_contact_density(coil_contact);
+	InteractionDynamics<solid_dynamics::ContactForceFromWall> coil_compute_solid_contact_forces(coil_contact);
+	InteractionDynamics<solid_dynamics::SelfContactDensitySummation> coil_self_contact_density(coil_self_contact);
+	InteractionDynamics<solid_dynamics::SelfContactForce> coil_self_contact_forces(coil_self_contact);
 	// Damping the velocity field for quasi-static solution
 	DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
 		coil_damping(0.2, coil_inner, "Velocity", physical_viscosity);
@@ -156,7 +156,7 @@ int main(int ac, char *av[])
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
 	// apply initial condition
-	corrected_configuration.parallel_exec();
+	corrected_configuration.exec();
 	write_states.writeToFile(0);
 	// Setup time stepping control parameters.
 	int ite = 0;
@@ -164,8 +164,8 @@ int main(int ac, char *av[])
 	Real output_period = end_time / 100.0;
 	Real dt = 0.0;
 	// Statistics for computing time.
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 	//----------------------------------------------------------------------
 	//	Main loop
 	//----------------------------------------------------------------------
@@ -180,19 +180,19 @@ int main(int ac, char *av[])
 						  << GlobalStaticVariables::physical_time_ << "	dt: "
 						  << dt << "\n";
 			}
-			initialization_with_gravity.parallel_exec();
+			initialization_with_gravity.exec();
 			// contact dynamics.
-			coil_self_contact_density.parallel_exec();
-			coil_self_contact_forces.parallel_exec();
-			coil_update_contact_density.parallel_exec();
-			coil_compute_solid_contact_forces.parallel_exec();
+			coil_self_contact_density.exec();
+			coil_self_contact_forces.exec();
+			coil_update_contact_density.exec();
+			coil_compute_solid_contact_forces.exec();
 			// Stress relaxation and damping.
-			stress_relaxation_first_half.parallel_exec(dt);
-			coil_damping.parallel_exec(dt);
-			stress_relaxation_second_half.parallel_exec(dt);
+			stress_relaxation_first_half.exec(dt);
+			coil_damping.exec(dt);
+			stress_relaxation_second_half.exec(dt);
 
 			ite++;
-			dt = computing_time_step_size.parallel_exec();
+			dt = computing_time_step_size.exec();
 			integration_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
 
@@ -201,14 +201,14 @@ int main(int ac, char *av[])
 			coil_self_contact.updateConfiguration();
 			coil_contact.updateConfiguration();
 		}
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		write_states.writeToFile();
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 

@@ -21,7 +21,7 @@
  *                                                                          *
  * ------------------------------------------------------------------------*/
 /**
- * @file 	all_kernelas.h
+ * @file 	all_kernels.h
  * @brief 	Headers for all kernels. 
  * @author	Chi ZHang and Xiangyu Hu
  */
@@ -31,7 +31,7 @@
 
 #include "kernel_wenland_c2.h"
 #include "kernel_hyperbolic.h"
-#include "kernel_tabulated.hpp"
+#include "kernel_tabulated.h"
 #include "kernel_cubic_B_spline.h"
 #include "kernel_laguerre_gauss.h"
 

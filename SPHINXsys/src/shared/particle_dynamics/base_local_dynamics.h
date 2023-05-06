@@ -23,7 +23,7 @@
 /**
  * @file    base_local_dynamics.h
  * @brief 	This is for the base classes of local particle dynamics, which describe the
- * 			dynamics of a particle.
+ * 			dynamics of a particle and it neighbors.
  * @author	Chi ZHang and Xiangyu Hu
  */
 
@@ -36,9 +36,6 @@
 
 namespace SPH
 {
-	/** Functor for operation on particles. */
-	typedef std::function<void(size_t, Real)> ParticleFunctor;
-
 	/** A Functor for Summation */
 	template <class ReturnType>
 	struct ReduceSum
@@ -90,50 +87,36 @@ namespace SPH
 
 	/**
 	 * @class BaseLocalDynamics
-	 * @brief The new version of base class for all local particle dynamics.
+	 * @brief The base class for all local particle dynamics.
 	 */
-	template <class ReturnType>
+	template <class DynamicsIdentifier>
 	class BaseLocalDynamics
 	{
-	protected:
-		SPHBody &sph_body_;
-
 	public:
-		explicit BaseLocalDynamics(SPHBody &sph_body) : sph_body_(sph_body){};
+		explicit BaseLocalDynamics(DynamicsIdentifier &identifier)
+			: identifier_(identifier), sph_body_(identifier.getSPHBody()){};
 		virtual ~BaseLocalDynamics(){};
-
-		void setBodyUpdated() { sph_body_.setNewlyUpdated(); };
-		virtual ReturnType setupDynamics(Real dt = 0.0) = 0; // setup global parameters
+		SPHBody &getSPHBody() { return sph_body_; };
+		DynamicsIdentifier &getDynamicsIdentifier() { return identifier_; };
+		virtual void setupDynamics(Real dt = 0.0){}; // setup global parameters
+	protected:
+		DynamicsIdentifier &identifier_;
+		SPHBody &sph_body_;
 	};
+	using LocalDynamics = BaseLocalDynamics<SPHBody>;
 
 	/**
-	 * @class LocalDynamics
-	 * @brief The new version of base class for all local particle dynamics,
-	 * which loops along particles.
+	 * @class BaseLocalDynamicsReduce
+	 * @brief The base class for all local particle dynamics for reducing.
 	 */
-	class LocalDynamics : public BaseLocalDynamics<void>
+	template <typename ReturnType, typename Operation, class DynamicsIdentifier>
+	class BaseLocalDynamicsReduce : public BaseLocalDynamics<DynamicsIdentifier>
 	{
 	public:
-		explicit LocalDynamics(SPHBody &sph_body)
-			: BaseLocalDynamics<void>(sph_body){};
-		virtual ~LocalDynamics(){};
-
-		/** the function for set global parameters for the particle dynamics */
-		virtual void setupDynamics(Real dt = 0.0) override{};
-	};
-
-	/**
-	 * @class LocalDynamicsReduce
-	 * @brief The new version of base class for all local particle dynamics.
-	 */
-	template <typename ReturnType, typename Operation>
-	class LocalDynamicsReduce : public LocalDynamics
-	{
-	public:
-		LocalDynamicsReduce(SPHBody &sph_body, ReturnType reference)
-			: LocalDynamics(sph_body), reference_(reference),
+		BaseLocalDynamicsReduce(DynamicsIdentifier &identifier, ReturnType reference)
+			: BaseLocalDynamics<DynamicsIdentifier>(identifier), reference_(reference),
 			  quantity_name_("ReducedQuantity"){};
-		virtual ~LocalDynamicsReduce(){};
+		virtual ~BaseLocalDynamicsReduce(){};
 
 		using ReduceReturnType = ReturnType;
 		ReturnType Reference() { return reference_; };
@@ -146,5 +129,7 @@ namespace SPH
 		Operation operation_;
 		std::string quantity_name_;
 	};
+	template <typename ReturnType, typename Operation>
+	using LocalDynamicsReduce = BaseLocalDynamicsReduce<ReturnType, Operation, SPHBody>;
 }
 #endif // BASE_LOCAL_DYNAMICS_H

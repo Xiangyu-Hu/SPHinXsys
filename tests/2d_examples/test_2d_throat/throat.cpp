@@ -29,14 +29,14 @@ Real rho0_f = 1.0;
 Real gravity_g = 1.0; /**< Gravity force of fluid. */
 Real Re = 0.001;	  /**< Reynolds number defined in the channel */
 // obtain viscosity according planar Poiseuille flow solution in the channel
-Real mu_f = rho0_f * sqrt(0.5 * rho0_f * powerN(0.5 * DH, 3) * gravity_g / Re);
+Real mu_f = rho0_f * sqrt(0.5 * rho0_f * pow(0.5 * DH, 3) * gravity_g / Re);
 // maximum flow velocity in the channel
-Real U_c = 0.5 * powerN(0.5 * DH, 2) * gravity_g * rho0_f / mu_f;
+Real U_c = 0.5 * pow(0.5 * DH, 2) * gravity_g * rho0_f / mu_f;
 //	predicted overall maximum velocity for this case is in the throat according to incompressible condition
 Real U_f = U_c * DH / DT;
 // For low Reynolds number flow the weakly compressible formulation need to
 // consider viscosity for artificial sound speed.
-Real c_f = 10.0 * (U_f, sqrt(mu_f / rho0_f * U_f / DT));
+Real c_f = 10.0 * SMAX(U_f, sqrt(mu_f / rho0_f * U_f / DT));
 Real mu_p_f = 0.6 * mu_f;
 Real lambda_f = 10.0;
 //----------------------------------------------------------------------
@@ -140,7 +140,7 @@ int main(int ac, char *av[])
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
 	ObserverBody fluid_observer(system, "FluidObserver");
-	StdVec<Vecd> observation_location = {Vecd(0)};
+	StdVec<Vecd> observation_location = {Vecd::Zero()};
 	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
@@ -192,14 +192,14 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	system.initializeSystemCellLinkedLists();
 	// initial periodic boundary condition
-	periodic_condition.ghost_creation_.parallel_exec();
+	periodic_condition.ghost_creation_.exec();
 	system.initializeSystemConfigurations();
 	// prepare quantities will be used once only
-	wall_boundary_normal_direction.parallel_exec();
+	wall_boundary_normal_direction.exec();
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
-	int number_of_iterations = 0;
+	size_t number_of_iterations = 0;
 	int screen_output_interval = 10;
 	int observation_sample_interval = screen_output_interval * 2;
 	Real end_time = 20.0;
@@ -207,8 +207,8 @@ int main(int ac, char *av[])
 	Real output_interval = end_time / 20.0;
 	Real dt = 0.0; // default acoustic time step sizes
 	// statistics for computing time
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 	//----------------------------------------------------------------------
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
@@ -223,18 +223,18 @@ int main(int ac, char *av[])
 		while (integration_time < output_interval)
 		{
 
-			initialize_a_fluid_step.parallel_exec();
-			Real Dt = get_fluid_advection_time_step_size.parallel_exec();
-			update_density_by_summation.parallel_exec();
-			transport_velocity_correction.parallel_exec();
+			initialize_a_fluid_step.exec();
+			Real Dt = get_fluid_advection_time_step_size.exec();
+			update_density_by_summation.exec();
+			transport_velocity_correction.exec();
 
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
-				dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt);
-				implicit_viscous_damping.parallel_exec(dt);
-				pressure_relaxation.parallel_exec(dt);
-				density_relaxation.parallel_exec(dt);
+				dt = SMIN(get_fluid_time_step_size.exec(), Dt);
+				implicit_viscous_damping.exec(dt);
+				pressure_relaxation.exec(dt);
+				density_relaxation.exec(dt);
 
 				relaxation_time += dt;
 				integration_time += dt;
@@ -246,7 +246,7 @@ int main(int ac, char *av[])
 				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
 						  << GlobalStaticVariables::physical_time_
 						  << "	Dt = " << Dt << "	dt = " << dt << "\n";
-				if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != system.restart_step_)
+				if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != system.RestartStep())
 				{
 					write_fluid_mechanical_energy.writeToFile(number_of_iterations);
 					write_recorded_fluid_pressure.writeToFile(number_of_iterations);
@@ -255,21 +255,21 @@ int main(int ac, char *av[])
 			number_of_iterations++;
 
 			// water block configuration and periodic condition
-			periodic_condition.bounding_.parallel_exec();
+			periodic_condition.bounding_.exec();
 			fluid_block.updateCellLinkedListWithParticleSort(100);
-			periodic_condition.ghost_creation_.parallel_exec();
+			periodic_condition.ghost_creation_.exec();
 			fluid_block_complex.updateConfiguration();
 		}
 
-		tick_count t2 = tick_count::now();
-		compute_vorticity.parallel_exec();
+		TickCount t2 = TickCount::now();
+		compute_vorticity.exec();
 		write_real_body_states.writeToFile();
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 

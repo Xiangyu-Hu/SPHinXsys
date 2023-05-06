@@ -22,8 +22,8 @@ namespace SPH
 	{
 		Real rho_ratio = rho / rho0_;
 		return rho_ratio > 1.0
-				   ? p0_ * (powerN(rho_ratio, gamma_) - 1.0) / Real(gamma_)
-				   : -p0_ * (powerN(1.0 / rho_ratio, gamma_) - 1.0) / Real(gamma_);
+				   ? p0_ * (pow(rho_ratio, gamma_) - 1.0) / Real(gamma_)
+				   : -p0_ * (pow(1.0 / rho_ratio, gamma_) - 1.0) / Real(gamma_);
 	}
 	//=================================================================================================//
 	Real SymmetricTaitFluid::DensityFromPressure(Real p)

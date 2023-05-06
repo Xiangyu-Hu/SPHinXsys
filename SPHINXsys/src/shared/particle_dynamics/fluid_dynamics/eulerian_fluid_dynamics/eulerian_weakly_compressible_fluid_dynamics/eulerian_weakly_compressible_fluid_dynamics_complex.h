@@ -75,7 +75,8 @@ namespace SPH
 			ViscousWithWall(BaseBodyRelationType &base_body_relation,
 							BaseContactRelation &wall_contact_relation);
 			virtual ~ViscousWithWall(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
 		};
 
 		/** template interface class for different pressure relaxation with wall schemes */
@@ -104,10 +105,11 @@ namespace SPH
 			BaseIntegration1stHalfWithWall(BaseBodyRelationType &base_body_relation,
 										   BaseContactRelation &wall_contact_relation);
 			explicit BaseIntegration1stHalfWithWall(ComplexRelation &fluid_wall_relation)
-				: BaseIntegration1stHalfWithWall(fluid_wall_relation.inner_relation_,
-												 fluid_wall_relation.contact_relation_){};
+				: BaseIntegration1stHalfWithWall(fluid_wall_relation.getInnerRelation(),
+												 fluid_wall_relation.getContactRelation()){};
 			virtual ~BaseIntegration1stHalfWithWall(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
 		};
 
 		using Integration1stHalfHLLCRiemannWithLimiterWithWall = BaseIntegration1stHalfWithWall<Integration1stHalfHLLCWithLimiterRiemann>;
@@ -126,10 +128,11 @@ namespace SPH
 			BaseIntegration2ndHalfWithWall(BaseBodyRelationType &base_body_relation,
 							   BaseContactRelation &wall_contact_relation);
 			explicit BaseIntegration2ndHalfWithWall(ComplexRelation &fluid_wall_relation)
-				: BaseIntegration2ndHalfWithWall(fluid_wall_relation.inner_relation_,
-												 fluid_wall_relation.contact_relation_){};
+				: BaseIntegration2ndHalfWithWall(fluid_wall_relation.getInnerRelation(),
+												 fluid_wall_relation.getContactRelation()){};
 			virtual ~BaseIntegration2ndHalfWithWall(){};
-			void interaction(size_t index_i, Real dt = 0.0);
+			
+			inline void interaction(size_t index_i, Real dt = 0.0);
 		};
 		using Integration2ndHalfHLLCRiemannWithLimiterWithWall = BaseIntegration2ndHalfWithWall<Integration2ndHalfHLLCWithLimiterRiemann>;
 	}

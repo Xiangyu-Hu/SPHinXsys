@@ -71,7 +71,7 @@ namespace SPH
 	//=================================================================================================//
 	Matd LinearElasticSolid::StressPK2(Matd &F, size_t particle_index_i)
 	{
-		Matd strain = 0.5 * (F.transpose() + F) - Matd::Identity(); 
+		Matd strain = 0.5 * (F.transpose() + F) - Matd::Identity();
 		return lambda0_ * strain.trace() * Matd::Identity() + 2.0 * G0_ * strain;
 	}
 	//=================================================================================================//
@@ -93,7 +93,7 @@ namespace SPH
 	//=================================================================================================//
 	Matd NeoHookeanSolid::StressPK2(Matd &F, size_t particle_index_i)
 	{
-		// This formulation allows negative determinant of F. Please refer
+		// This formulation allows negative determinant of F. Please refer Eq. (12) in
 		// Smith et al. (2018) Stable Neo-Hookean Flesh Simulation.
 		// ACM Transactions on Graphics, Vol. 37, No. 2, Article 12.
 		Matd right_cauchy = F.transpose() * F;
@@ -106,8 +106,8 @@ namespace SPH
 		Real J = F.determinant();
 		Matd B = (-2.0 * almansi_strain + Matd::Identity()).inverse();
 		Matd cauchy_stress = 0.5 * K0_ * (J - 1.0 / J) * Matd::Identity() +
-							 G0_ * pow(J, - 2.0 * one_over_dimensions_ - 1.0) *
-								 (B - one_over_dimensions_ * B.trace() * Matd::Identity());
+							 G0_ * pow(J, -2.0 * OneOverDimensions - 1.0) *
+								 (B - OneOverDimensions * B.trace() * Matd::Identity());
 		return cauchy_stress;
 	}
 	//=================================================================================================//
@@ -119,9 +119,9 @@ namespace SPH
 	Matd NeoHookeanSolidIncompressible::StressPK2(Matd &F, size_t particle_index_i)
 	{
 		Matd right_cauchy = F.transpose() * F;
-		Real I_1 = right_cauchy.trace(); // first strain invariant
-		Real I_3 = right_cauchy.determinant();	 // first strain invariant
-		return G0_ * std::pow(I_3, -1.0 / 3.0) * (Matd::Identity() - 1.0 / 3.0 * I_1 * right_cauchy.inverse());
+		Real I_1 = right_cauchy.trace();	   // first strain invariant
+		Real I_3 = right_cauchy.determinant(); // first strain invariant
+		return G0_ * pow(I_3, -1.0 / 3.0) * (Matd::Identity() - 1.0 / 3.0 * I_1 * right_cauchy.inverse());
 	}
 	//=================================================================================================//
 	Matd NeoHookeanSolidIncompressible::
@@ -135,14 +135,14 @@ namespace SPH
 	{
 		return 0.5 * K0_ * (J * J - 1);
 	}
-    //=================================================================================================//
+	//=================================================================================================//
 	OrthotropicSolid::OrthotropicSolid(Real rho_0, std::array<Vecd, Dimensions> a, std::array<Real, Dimensions> E,
 									   std::array<Real, Dimensions> G, std::array<Real, Dimensions> poisson)
 		// set parameters for parent class: LinearElasticSolid
 		// we take the max. E and max. poisson to approximate the maximum of
 		// the Bulk modulus --> for time step size calculation
-		: LinearElasticSolid(rho_0, *std::max_element(E.cbegin(),E.cend()),
-							 *std::max_element(poisson.cbegin(),poisson.cend())),
+		: LinearElasticSolid(rho_0, *std::max_element(E.cbegin(), E.cend()),
+							 *std::max_element(poisson.cbegin(), poisson.cend())),
 		  a_(a), E_(E), G_(G), poisson_(poisson)
 	{
 		// parameters for derived class
@@ -163,7 +163,7 @@ namespace SPH
 			for (int j = 0; j < Dimensions; j++)
 			{
 				// inner sum (b{1-3})
-				Summa2 += Lambda_(i,j) * (CalculateDoubleDotProduct(A_[i], strain) * A_[j] +
+				Summa2 += Lambda_(i, j) * (CalculateDoubleDotProduct(A_[i], strain) * A_[j] +
 										   CalculateDoubleDotProduct(A_[j], strain) * A_[i]);
 			}
 			stress_PK2 += Mu_[i] * (((A_[i] * strain) + (strain * A_[i])) + 1 / 2 * (Summa2));
@@ -178,8 +178,8 @@ namespace SPH
 	//=================================================================================================//
 	void OrthotropicSolid::CalculateA0()
 	{
-        for(int i = 0; i < Dimensions; ++i)
-		    A_[i] = a_[i] * a_[i].transpose();
+		for (int i = 0; i < Dimensions; ++i)
+			A_[i] = a_[i] * a_[i].transpose();
 	}
 	//=================================================================================================//
 	Matd FeneNeoHookeanSolid::StressPK2(Matd &F, size_t particle_index_i)
@@ -216,7 +216,7 @@ namespace SPH
 		Matd right_cauchy = F.transpose() * F;
 		Real I_ff_1 = (right_cauchy * f0_).transpose() * f0_ - 1.0;
 		Real I_ss_1 = (right_cauchy * s0_).transpose() * s0_ - 1.0;
-		Real I_fs   = (right_cauchy * f0_).transpose() * s0_;
+		Real I_fs = (right_cauchy * f0_).transpose() * s0_;
 		Real I_1_1 = right_cauchy.trace() - Real(Dimensions);
 		Real J = F.determinant();
 		return a0_[0] * exp(b0_[0] * I_1_1) * Matd::Identity() +
@@ -236,8 +236,8 @@ namespace SPH
 		Matd right_cauchy = F.transpose() * F;
 		Real I_ff_1 = (right_cauchy * local_f0_[i]).transpose() * local_f0_[i] - 1.0;
 		Real I_ss_1 = (right_cauchy * local_s0_[i]).transpose() * local_s0_[i] - 1.0;
-		Real I_fs   = (right_cauchy * local_f0_[i]).transpose() * local_s0_[i];
-		Real I_1_1  = right_cauchy.trace() - Real(Dimensions);
+		Real I_fs = (right_cauchy * local_f0_[i]).transpose() * local_s0_[i];
+		Real I_1_1 = right_cauchy.trace() - Real(Dimensions);
 		Real J = F.determinant();
 		return a0_[0] * exp(b0_[0] * I_1_1) * Matd::Identity() +
 			   (lambda0_ * (J - 1.0) - a0_[0]) * J * right_cauchy.inverse() +
@@ -246,41 +246,25 @@ namespace SPH
 			   a0_[3] * I_fs * exp(b0_[3] * I_fs * I_fs) * local_f0s0_[i];
 	}
 	//=================================================================================================//
-	void LocallyOrthotropicMuscle::assignBaseParticles(BaseParticles *base_particles)
+	void LocallyOrthotropicMuscle::registerReloadLocalParameters(BaseParticles *base_particles)
 	{
-		Muscle::assignBaseParticles(base_particles);
-		initializeFiberAndSheet();
+		Muscle::registerReloadLocalParameters(base_particles);
+		base_particles->registerVariable(local_f0_, "Fiber");
+		base_particles->registerVariable(local_s0_, "Sheet");
+		base_particles->addVariableToReload<Vecd>("Fiber");
+		base_particles->addVariableToReload<Vecd>("Sheet");
 	}
 	//=================================================================================================//
-	void LocallyOrthotropicMuscle::initializeFiberAndSheet()
+	void LocallyOrthotropicMuscle::initializeLocalParameters(BaseParticles *base_particles)
 	{
-		base_particles_->registerVariable(local_f0_, "Fiber");
-		base_particles_->registerVariable(local_s0_, "Sheet");
-		base_particles_->addVariableNameToList<Vecd>(reload_local_parameters_, "Fiber");
-		base_particles_->addVariableNameToList<Vecd>(reload_local_parameters_, "Sheet");
-		initializeFiberAndSheetTensors();
-	}
-	//=================================================================================================//
-	void LocallyOrthotropicMuscle::initializeFiberAndSheetTensors()
-	{
-		base_particles_->registerVariable(local_f0f0_, "FiberFiberTensor", [&](size_t i) -> Matd
+		Muscle::initializeLocalParameters(base_particles);
+		base_particles->registerVariable(local_f0f0_, "FiberFiberTensor", [&](size_t i) -> Matd
 										  { return local_f0_[i] * local_f0_[i].transpose(); });
-		base_particles_->registerVariable(local_s0s0_, "SheetSheetTensor", [&](size_t i) -> Matd
+		base_particles->registerVariable(local_s0s0_, "SheetSheetTensor", [&](size_t i) -> Matd
 										  { return local_s0_[i] * local_s0_[i].transpose(); });
-		base_particles_->registerVariable(local_f0s0_, "FiberSheetTensor", [&](size_t i) -> Matd
-										  { return local_f0_[i] * local_s0_[i].transpose(); });
-	}
-	//=================================================================================================//
-	void LocallyOrthotropicMuscle::readFromXmlForLocalParameters(const std::string &filefullpath)
-	{
-		BaseMaterial::readFromXmlForLocalParameters(filefullpath);
-		size_t total_real_particles = base_particles_->total_real_particles_;
-		for (size_t i = 0; i != total_real_particles; i++)
-		{
-			local_f0f0_[i] = local_f0_[i] * local_f0_[i].transpose();
-			local_s0s0_[i] = local_s0_[i] * local_s0_[i].transpose();
-			local_f0s0_[i] = local_f0_[i] * local_s0_[i].transpose();
-		}
+		base_particles->registerVariable(local_f0s0_, "FiberSheetTensor", [&](size_t i) -> Matd
+										  { return local_f0_[i] * local_s0_[i].transpose() +
+												   local_s0_[i] * local_f0_[i].transpose(); });
 	}
 	//=================================================================================================//
 }

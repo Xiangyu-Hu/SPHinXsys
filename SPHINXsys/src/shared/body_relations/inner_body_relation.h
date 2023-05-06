@@ -58,7 +58,7 @@ namespace SPH
 	class AdaptiveInnerRelation : public BaseInnerRelation
 	{
 	private:
-		UniquePtrKeepers<SearchDepthAdaptive> adaptive_search_depth_ptr_vector_keeper_;
+		UniquePtrsKeeper<SearchDepthAdaptive> adaptive_search_depth_ptr_vector_keeper_;
 
 	protected:
 		size_t total_levels_;
@@ -84,8 +84,6 @@ namespace SPH
 
 		explicit SelfSurfaceContactRelation(RealBody &real_body);
 		virtual ~SelfSurfaceContactRelation(){};
-		BodyPartByParticle &getDynamicsRange() { return body_surface_layer_; };
-
 		virtual void updateConfiguration() override;
 
 	protected:

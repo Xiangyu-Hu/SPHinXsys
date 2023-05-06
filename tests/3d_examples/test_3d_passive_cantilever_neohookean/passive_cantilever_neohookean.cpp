@@ -92,16 +92,16 @@ int main(int ac, char *av[])
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize>
 		computing_time_step_size(cantilever_body);
 	/** active and passive stress relaxation. */
-	Dynamics1Level<solid_dynamics::StressRelaxationFirstHalf>
+	Dynamics1Level<solid_dynamics::Integration1stHalf>
 		stress_relaxation_first_half(cantilever_body_inner);
 	/** Setup the damping stress, if you know what you are doing. */
 	// stress_relaxation_first_step.setupDampingStressFactor(1.0);
-	Dynamics1Level<solid_dynamics::StressRelaxationSecondHalf>
+	Dynamics1Level<solid_dynamics::Integration2ndHalf>
 		stress_relaxation_second_half(cantilever_body_inner);
 	/** Constrain the holder. */
 	BodyRegionByParticle holder(cantilever_body,
 								makeShared<TransformShape<GeometricShapeBox>>(Transformd(translation_holder), halfsize_holder, "Holder"));
-	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_holder(holder);
+	SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_holder(holder);
 	DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
 		muscle_damping(0.1, cantilever_body_inner, "Velocity", physical_viscosity);
 	/** Output */
@@ -116,7 +116,7 @@ int main(int ac, char *av[])
 	GlobalStaticVariables::physical_time_ = 0.0;
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	corrected_configuration.parallel_exec();
+	corrected_configuration.exec();
 	write_states.writeToFile(0);
 	write_displacement.writeToFile(0);
 	/** Setup physical parameters. */
@@ -125,8 +125,8 @@ int main(int ac, char *av[])
 	Real output_period = end_time / 100.0;
 	Real dt = 0.0;
 	/** Statistics for computing time. */
-	tick_count t1 = tick_count::now();
-	tick_count::interval_t interval;
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
 	/**
 	 * Main loop
 	 */
@@ -142,27 +142,27 @@ int main(int ac, char *av[])
 						  << dt << "\n";
 			}
 
-			initialize_time_step.parallel_exec(); // gravity force
-			stress_relaxation_first_half.parallel_exec(dt);
-			constraint_holder.parallel_exec(dt);
-			muscle_damping.parallel_exec(dt);
-			constraint_holder.parallel_exec(dt);
-			stress_relaxation_second_half.parallel_exec(dt);
+			initialize_time_step.exec(); // gravity force
+			stress_relaxation_first_half.exec(dt);
+			constraint_holder.exec(dt);
+			muscle_damping.exec(dt);
+			constraint_holder.exec(dt);
+			stress_relaxation_second_half.exec(dt);
 
 			ite++;
-			dt = computing_time_step_size.parallel_exec();
+			dt = computing_time_step_size.exec();
 			integration_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
 		}
 		write_displacement.writeToFile(ite);
-		tick_count t2 = tick_count::now();
+		TickCount t2 = TickCount::now();
 		write_states.writeToFile();
-		tick_count t3 = tick_count::now();
+		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	tick_count t4 = tick_count::now();
+	TickCount t4 = TickCount::now();
 
-	tick_count::interval_t tt;
+	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 

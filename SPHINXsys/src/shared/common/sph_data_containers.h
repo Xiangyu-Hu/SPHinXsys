@@ -49,28 +49,28 @@ namespace SPH
 	using SolidBodyVector = StdVec<SolidBody *>;
 	using RealBodyVector = StdVec<RealBody *>;
 	using BodyPartVector = StdVec<BodyPart *>;
-	
+
 	using IndexVector = StdVec<size_t>;
 	using ConcurrentIndexVector = ConcurrentVec<size_t>;
 
 	/** List data pair: first for indexes, second for particle position. */
 	using ListData = std::tuple<size_t, Vecd, Real>;
 	using ListDataVector = StdLargeVec<ListData>;
-	using ConcurrentIndexesInCells = StdLargeVec<ConcurrentIndexVector *>;
 	using DataListsInCells = StdLargeVec<ListDataVector *>;
-	using CellLists = std::pair<ConcurrentIndexesInCells, DataListsInCells>;
-
 	using ConcurrentCellLists = ConcurrentVec<ConcurrentIndexVector *>;
 	/** Cell list for splitting algorithms. */
 	using SplitCellLists = StdVec<ConcurrentCellLists>;
+	/** Cell list for periodic boundary condition algorithms. */
+	using CellLists = std::pair<ConcurrentCellLists, DataListsInCells>;
 
 	/** Generalized particle data type */
-	typedef GeneralDataAssemble<StdLargeVec> ParticleData;
+	typedef DataContainerAddressAssemble<StdLargeVec> ParticleData;
+	constexpr size_t ParticleDataSize = std::tuple_size<ParticleData>::value;
 	/** Generalized particle variable to index map */
-	typedef std::array<std::map<std::string, size_t>, 4> ParticleDataMap;
+	typedef std::array<std::map<std::string, size_t>, ParticleDataSize> ParticleDataMap;
 	/** Generalized particle variable list */
-	typedef std::array<StdVec<std::pair<std::string, size_t>>, 4> ParticleVariableList;
-		
+	typedef std::array<StdVec<std::pair<std::string, size_t>>, ParticleDataSize> ParticleVariableList;
+
 	/** operation by looping or going through a particle data map */
 	template <typename VariableType>
 	struct loopParticleDataMap
@@ -95,16 +95,15 @@ namespace SPH
 	{
 		template <typename VariableOperation>
 		void operator()(ParticleData &particle_data,
-						ParticleVariableList &variable_name_list, VariableOperation &variable_operation) const
+						const ParticleVariableList &variable_name_list, VariableOperation &variable_operation) const
 		{
 			constexpr int type_index = DataTypeIndex<VariableType>::value;
-			for (std::pair<std::string, size_t> &name_index : variable_name_list[type_index])
+			for (const auto& [variable_name,variable_index] : variable_name_list[type_index])
 			{
-				std::string variable_name = name_index.first;
-				StdLargeVec<VariableType> &variable = *(std::get<type_index>(particle_data)[name_index.second]);
+				StdLargeVec<VariableType> &variable = *(std::get<type_index>(particle_data)[variable_index]);
 				variable_operation(variable_name, variable);
 			}
 		};
-	};	
+	};
 }
 #endif // SPH_DATA_CONTAINERS_H

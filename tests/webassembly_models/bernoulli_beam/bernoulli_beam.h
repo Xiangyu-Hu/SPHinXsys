@@ -26,7 +26,7 @@ struct BernoulliBeamInput
 	std::string relative_input_path;
 };
 
-StructuralSimulationInput createSimulationInput(const BernoulliBeamInput& input, std::shared_ptr<SaintVenantKirchhoffSolid> material)
+StructuralSimulationInput createSimulationInput(const BernoulliBeamInput& input, std::SharedPtr<SaintVenantKirchhoffSolid> material)
 {
 	StlList imported_stl_list = input.stls;
 	std::vector<Vec3d> translation_list = {
@@ -34,7 +34,7 @@ StructuralSimulationInput createSimulationInput(const BernoulliBeamInput& input,
 	};
 	std::vector<Real> resolution_list = input.resolution;
 
-	std::vector<shared_ptr<SaintVenantKirchhoffSolid>> material_model_list = {
+	std::vector<SharedPtr<SaintVenantKirchhoffSolid>> material_model_list = {
 		material
 	};
 
@@ -71,7 +71,7 @@ public: //C++ Backend functions
 	void runCompleteSimulation(double endTime) { sim->runSimulation(SPH::Real(endTime)); };
 	
 private:
-	std::shared_ptr<SaintVenantKirchhoffSolid> material_;
+	std::SharedPtr<SaintVenantKirchhoffSolid> material_;
 	std::unique_ptr<StructuralSimulation> sim;
 };
 
@@ -105,7 +105,7 @@ public:
 	void onError(emscripten::val on_error) { on_error_ = [on_error](const std::string& error_message) { on_error(error_message); }; }
 
 private:
-	std::shared_ptr<SaintVenantKirchhoffSolid> material_;
+	std::SharedPtr<SaintVenantKirchhoffSolid> material_;
 	std::unique_ptr<StructuralSimulationJS> sim_js_;
 	std::function<void(const std::string&)> on_error_;
 };
