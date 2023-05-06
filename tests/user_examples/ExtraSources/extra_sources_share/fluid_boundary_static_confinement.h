@@ -90,12 +90,12 @@ namespace SPH
             void update(size_t index_i, Real dt = 0.0);
 
         protected:
-            Real penalty_strength_, c_0_;
             Fluid& fluid_;
             StdLargeVec<Real>& rho_, & p_;
             StdLargeVec<Vecd>& pos_, & vel_, & acc_;
             LevelSetShape* level_set_shape_;
             AcousticRiemannSolver riemann_solver_;
+            Real penalty_strength_, c_0_;
         };
 
         /**
