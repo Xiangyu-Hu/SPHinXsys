@@ -150,10 +150,16 @@ namespace SPH
 		ComplexInteraction<DiffusionRelaxationOthers...> others_diffusion_relaxation_;
 
 	public:
-		template <class FirstRelationType, typename... OtherRelationTypes>
-		explicit ComplexInteraction(FirstRelationType& body_relation, OtherRelationTypes &&...other_relations)
-			: DiffusionRelaxationFirst(body_relation),
-			others_diffusion_relaxation_(std::forward<OtherRelationTypes>(other_relations)...) {};
+		template <class FirstRelationType, typename...ExtraArgs>
+		explicit ComplexInteraction(FirstRelationType& body_relation, BaseContactRelation& contact_relation_01, ExtraArgs &&...extra_args)
+			: DiffusionRelaxationFirst(body_relation, std::forward<ExtraArgs>(extra_args)...),
+			others_diffusion_relaxation_(contact_relation_01) {};
+
+		template <class FirstRelationType, typename...ExtraArgs>
+		explicit ComplexInteraction(FirstRelationType& body_relation, BaseContactRelation& contact_relation_01, BaseContactRelation& contact_relation_02, ExtraArgs &&...extra_args)
+			: DiffusionRelaxationFirst(body_relation, std::forward<ExtraArgs>(extra_args)...),
+			others_diffusion_relaxation_(contact_relation_01) {};
+
 
 		void interaction(size_t index_i, Real dt = 0.0)
 		{
