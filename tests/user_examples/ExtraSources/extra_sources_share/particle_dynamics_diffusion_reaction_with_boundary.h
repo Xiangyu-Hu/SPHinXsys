@@ -155,6 +155,7 @@ namespace SPH
 		void interaction(size_t index_i, Real dt = 0.0) {};
 	};
 
+	// add extra_args
 	template <class DiffusionRelaxationFirst, class... DiffusionRelaxationOthers>
 	class ComplexInteraction<DiffusionRelaxationFirst, DiffusionRelaxationOthers...> : public DiffusionRelaxationFirst
 	{
