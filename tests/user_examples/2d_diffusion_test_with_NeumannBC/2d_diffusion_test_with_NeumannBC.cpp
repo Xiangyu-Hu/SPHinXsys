@@ -156,7 +156,7 @@ int main(int ac, char* av[])
 	}
 	else if (sph_system.RestartStep() == 0)
 	{
-		write_solid_temperature.newResultTest();
+		write_solid_temperature.testResult();
 	}
 	
 	return 0;
