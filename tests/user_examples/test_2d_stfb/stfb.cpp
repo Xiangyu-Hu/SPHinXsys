@@ -7,13 +7,14 @@
 using namespace SPH;
 #include "stfb.h" //header for this case
 
-int main()
+int main(int ac, char *av[])
 {
 	std::cout << "Mass " << StructureMass << " str_sup " << FlStA <<  " rho_s " << rho_s << std::endl;
 	//----------------------------------------------------------------------
 	//	Build up the environment of a SPHSystem with global controls.
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, particle_spacing_ref);
+	system.handleCommandlineOptions(ac, av);
 	IOEnvironment io_environment(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
@@ -21,6 +22,7 @@ int main()
 	FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
 	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	water_block.generateParticles<ParticleGeneratorLattice>();
+	water_block.addBodyStateForRecording<Real>("VolumetricMeasure");
 
 	SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
 	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
@@ -144,7 +146,7 @@ int main()
 	InteractionDynamics<InterpolatingAQuantity<Vecd>>
 		interpolation_observer_position(observer_contact_with_structure, "Position", "Position");
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		write_str_displacement("Position", io_environment, observer_contact_with_structure);
+		write_str_displacement("Position", io_environment, observer_contact_with_structure);	
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
@@ -247,22 +249,23 @@ int main()
 		interval += t3 - t2;
 	}
 
-	if (system.generate_regression_data_)
-	{
-	write_str_displacement.generateDataBase(0.005);
-	wave_gauge.generateDataBase(0.005);
-	}
-	else
-	{
-	write_str_displacement.newResultTest();
-	wave_gauge.newResultTest();
-	}
-
 	TickCount t4 = TickCount::now();
 
 	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+
+
+	if (system.generate_regression_data_)
+	{
+	write_str_displacement.generateDataBase(0.001);
+	wave_gauge.generateDataBase(0.001);
+	}
+	 else
+	 {
+	 write_str_displacement.newResultTest();
+	 wave_gauge.newResultTest();
+	 }
 
 	return 0;
 }
