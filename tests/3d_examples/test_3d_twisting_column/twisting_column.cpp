@@ -117,8 +117,8 @@ int main(int ac, char *av[])
 	}
 	else
 	{
-		write_displacement.newResultTest();
-		write_velocity.newResultTest();
+		write_displacement.testResult();
+		write_velocity.testResult();
 	}
 
 	return 0;

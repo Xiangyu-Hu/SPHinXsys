@@ -378,7 +378,7 @@ int main()
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-	write_fluid_phi.newResultTest();
+	write_fluid_phi.testResult();
 
 	return 0;
 }

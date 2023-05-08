@@ -238,7 +238,7 @@ int main(int ac, char *av[])
 	}
 	else
 	{
-		write_ball_center_displacement.newResultTest();
+		write_ball_center_displacement.testResult();
 	}
 	return 0;
 }

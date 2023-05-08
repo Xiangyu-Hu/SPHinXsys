@@ -182,7 +182,7 @@ int main()
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-	write_recorded_voltage.newResultTest();
+	write_recorded_voltage.testResult();
 
 	return 0;
 }
