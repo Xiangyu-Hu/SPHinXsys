@@ -288,8 +288,8 @@ int main(int ac, char *av[])
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-	free_ball_displacement_recording.newResultTest();
-	damping_ball_displacement_recording.newResultTest();
+	free_ball_displacement_recording.testResult();
+	damping_ball_displacement_recording.testResult();
 
 	return 0;
 }

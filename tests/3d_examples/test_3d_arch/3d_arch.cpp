@@ -215,7 +215,7 @@ int main(int ac, char *av[])
 	}
 	else
 	{
-		write_cylinder_max_displacement.newResultTest();
+		write_cylinder_max_displacement.testResult();
 	}
 
 	return 0;

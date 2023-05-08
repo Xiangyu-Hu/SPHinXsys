@@ -108,7 +108,7 @@ namespace SPH
 		};
 
 		/** the interface for generating the priori converged result with DTW. */
-		void newResultTest(std::string filter = "false")
+		void testResult(std::string filter = "false")
 		{
 			this->writeXmlToXmlFile();
 			this->readXmlFromXmlFile();

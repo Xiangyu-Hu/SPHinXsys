@@ -338,8 +338,8 @@ int main(int ac, char* av[])
 	}
 	else if (sph_system.RestartStep() == 0)
 	{
-		write_water_mechanical_energy.newResultTest();
-		wave_probe.newResultTest();
+		write_water_mechanical_energy.testResult();
+		wave_probe.testResult();
 	}
 
 	return 0;

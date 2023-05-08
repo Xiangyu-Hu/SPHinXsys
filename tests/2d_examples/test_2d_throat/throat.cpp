@@ -280,8 +280,8 @@ int main(int ac, char *av[])
 	}
 	else
 	{
-		write_fluid_mechanical_energy.newResultTest();
-		write_recorded_fluid_pressure.newResultTest();
+		write_fluid_mechanical_energy.testResult();
+		write_recorded_fluid_pressure.testResult();
 	}
 
 	return 0;
