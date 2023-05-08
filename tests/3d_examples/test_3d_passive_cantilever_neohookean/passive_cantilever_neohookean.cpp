@@ -172,7 +172,7 @@ int main(int ac, char *av[])
 	}
 	else
 	{
-		write_displacement.newResultTest();
+		write_displacement.testResult();
 	}
 
 	return 0;

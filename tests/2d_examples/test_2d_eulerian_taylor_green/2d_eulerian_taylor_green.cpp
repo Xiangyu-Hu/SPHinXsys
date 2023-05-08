@@ -189,8 +189,8 @@ int main(int ac, char *av[])
 	std::cout << "Total wall time for computation: " << tt.seconds()
 		 << " seconds." << std::endl;
 
-	write_total_mechanical_energy.newResultTest();
-	write_maximum_speed.newResultTest();
+	write_total_mechanical_energy.testResult();
+	write_maximum_speed.testResult();
 
 	return 0;
 }

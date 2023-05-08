@@ -135,8 +135,6 @@ namespace SPH
 
 		for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 		{
-			StdVec<StdLargeVec<Real>*>& gradient_species_k = this->contact_gradient_species_[k];
-
 			StdLargeVec<Real>& heat_flux_ = *(contact_heat_flux_[k]);
 			StdLargeVec<Vecd>& n_k = *(contact_n_[k]);
 
@@ -144,7 +142,6 @@ namespace SPH
 			for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = contact_neighborhood.j_[n];
-				Real r_ij_ = contact_neighborhood.r_ij_[n];
 				Real dW_ijV_j_ = contact_neighborhood.dW_ijV_j_[n];
 				Vecd& e_ij = contact_neighborhood.e_ij_[n];
 
@@ -193,8 +190,6 @@ namespace SPH
 
 		for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 		{
-			StdVec<StdLargeVec<Real>*>& gradient_species_k = this->contact_gradient_species_[k];
-
 			StdLargeVec<Vecd>& n_k = *(contact_n_[k]);
 
 			StdLargeVec<Real>& convection_ = *(contact_convection_[k]);
@@ -204,7 +199,6 @@ namespace SPH
 			for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = contact_neighborhood.j_[n];
-				Real r_ij_ = contact_neighborhood.r_ij_[n];
 				Real dW_ijV_j_ = contact_neighborhood.dW_ijV_j_[n];
 				Vecd& e_ij = contact_neighborhood.e_ij_[n];
 

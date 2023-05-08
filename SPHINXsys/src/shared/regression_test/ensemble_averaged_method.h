@@ -101,7 +101,7 @@ namespace SPH
 		};
 
 		/** the interface for testing new result. */
-		void newResultTest(std::string filter = "false")
+		void testResult(std::string filter = "false")
 		{
 			this->writeXmlToXmlFile();
 			this->readXmlFromXmlFile();

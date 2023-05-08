@@ -254,8 +254,8 @@ int main()
 	}
 	else
 	{
-	write_str_displacement.newResultTest();
-	wave_gauge.newResultTest();
+	write_str_displacement.testResult();
+	wave_gauge.testResult();
 	}
 
 	TickCount t4 = TickCount::now();

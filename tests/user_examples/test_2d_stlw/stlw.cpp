@@ -140,7 +140,7 @@ int main()
 	}
 	else
 	{
-	wave_gauge.newResultTest();
+	wave_gauge.testResult();
 	}
 
 	TickCount t4 = TickCount::now();
