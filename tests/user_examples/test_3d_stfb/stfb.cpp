@@ -7,13 +7,14 @@
 using namespace SPH;
 #include "stfb.h" //header for this case
 
-int main()
+int main(int ac, char *av[])
 {
 	std::cout << "Mass " << StructureMass << " str_sup " << FlStA <<  " rho_s " << rho_s << std::endl;
 	//----------------------------------------------------------------------
 	//	Build up the environment of a SPHSystem with global controls.
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, particle_spacing_ref);
+	system.handleCommandlineOptions(ac, av);
 	IOEnvironment io_environment(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
@@ -256,7 +257,13 @@ int main()
 		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
-	
+
+	TickCount t4 = TickCount::now();
+
+	TimeInterval tt;
+	tt = t4 - t1 - interval;
+	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+
 	if (system.generate_regression_data_)
 	{
 	write_str_displacement.generateDataBase(0.005);
@@ -267,12 +274,6 @@ int main()
 	write_str_displacement.testResult();
 	wave_gauge.testResult();
 	}
-
-	TickCount t4 = TickCount::now();
-
-	TimeInterval tt;
-	tt = t4 - t1 - interval;
-	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	return 0;
 }

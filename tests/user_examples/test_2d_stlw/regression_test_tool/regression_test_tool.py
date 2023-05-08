@@ -7,7 +7,7 @@ sys.path.append(path)
 from regression_test_base_tool import SphinxsysRegressionTest
 
 """
-case name: test_2d_stfb
+case name: test_2d_stlw
 """
 
 case_name = "test_2d_stlw"
@@ -25,12 +25,12 @@ while True:
     number_of_run_times += 1
     converged = sphinxsys.read_dat_file()
     print("Please note: This is the", number_of_run_times, "run!")
-    if number_of_run_times <= 20:
+    if number_of_run_times <= 50:
         if (converged == "true") :
             print("The tested parameters of all variables are converged, and the run will stop here!")
             break
-        else :
-            print("The tested parameters of", sphinxsys.sphinxsys_parameter_name, "is not converged!")
+        elif converged != "true":
+            print("The tested parameters of", sphinxsys.sphinxsys_parameter_name, "are not converged!")
             continue
     else:
         print("It's too many runs but still not converged, please try again!")
