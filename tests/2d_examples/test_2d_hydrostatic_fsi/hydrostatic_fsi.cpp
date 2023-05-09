@@ -371,7 +371,7 @@ int main()
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-	write_beam_tip_displacement.newResultTest();
+	write_beam_tip_displacement.testResult();
 
 	return 0;
 }

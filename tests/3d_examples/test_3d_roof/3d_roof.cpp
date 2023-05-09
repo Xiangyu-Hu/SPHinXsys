@@ -222,7 +222,7 @@ int main(int ac, char *av[])
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-	write_cylinder_max_displacement.newResultTest();
+	write_cylinder_max_displacement.testResult();
 	observed_quantity_n = (*write_cylinder_max_displacement.getObservedQuantity())[0][2];
 
 	testing::InitGoogleTest(&ac, av);

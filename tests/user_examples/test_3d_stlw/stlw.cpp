@@ -161,7 +161,7 @@ int main(int ac, char *av[])
 	}
 	else
 	{
-	wave_gauge.newResultTest();
+	wave_gauge.testResult();
 	}
 	
 	return 0;
