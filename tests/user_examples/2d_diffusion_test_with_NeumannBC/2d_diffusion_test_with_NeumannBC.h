@@ -7,7 +7,7 @@
 #define DIFFUSION_TEST_WITH_NEUMANNBC_H
 
 #include "sphinxsys.h"
-#include "diffusion_reaction_particles_with_boundary.h"
+//#include "diffusion_reaction_particles_with_boundary.h"
 #include "particle_dynamics_diffusion_reaction_with_boundary.h"
 #include "particle_dynamics_diffusion_reaction_with_boundary.hpp"
 
@@ -108,20 +108,20 @@ public:
 		initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi", diffusion_coff);
 	}
 };
-using DiffusionParticlesWithBoundary = DiffusionReactionParticlesWithBoundary<SolidParticles, DiffusionMaterial>;
-using WallParticles = DiffusionReactionParticlesWithBoundary<SolidParticles, DiffusionMaterial>;
+using DiffusionParticles = DiffusionReactionParticles<SolidParticles, DiffusionMaterial>;
+using WallParticles = DiffusionReactionParticles<SolidParticles, DiffusionMaterial>;
 //----------------------------------------------------------------------
 //	Application dependent initial condition. 
 //----------------------------------------------------------------------
 class DiffusionInitialCondition
-	: public DiffusionReactionInitialConditionWithBoundary<DiffusionParticlesWithBoundary>
+	: public DiffusionReactionInitialConditionWithBoundary<DiffusionParticles>
 {
 protected:
 	size_t phi_;
 
 public:
 	explicit DiffusionInitialCondition(SPHBody& sph_body)
-		: DiffusionReactionInitialConditionWithBoundary<DiffusionParticlesWithBoundary>(sph_body)
+		: DiffusionReactionInitialConditionWithBoundary<DiffusionParticles>(sph_body)
 	{
 		phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
 	};
@@ -163,9 +163,9 @@ public:
 	}
 };
 
-using DiffusionRelaxationInner = RelaxationOfAllDiffusionSpeciesInner<DiffusionParticlesWithBoundary>;
-using DiffusionRelaxationWithDirichletContact = RelaxationOfAllDiffusionSpeciesDirichletContact<DiffusionParticlesWithBoundary, WallParticles>;
-using DiffusionRelaxationWithNeumannContact = RelaxationOfAllDiffusionSpeciesNeumannContact<DiffusionParticlesWithBoundary, WallParticles>;
+using DiffusionRelaxationInner = RelaxationOfAllDiffusionSpeciesInner<DiffusionParticles>;
+using DiffusionRelaxationWithDirichletContact = RelaxationOfAllDiffusionSpeciesDirichletContact<DiffusionParticles, WallParticles>;
+using DiffusionRelaxationWithNeumannContact = RelaxationOfAllDiffusionSpeciesNeumannContact<DiffusionParticles, WallParticles>;
 //----------------------------------------------------------------------
 //	Specify diffusion relaxation method. 
 //----------------------------------------------------------------------

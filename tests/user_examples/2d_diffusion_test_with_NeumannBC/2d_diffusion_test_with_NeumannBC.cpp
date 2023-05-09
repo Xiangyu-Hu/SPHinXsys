@@ -25,7 +25,7 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	//---------------------------------------------------------------------- 
 	SolidBody diffusion_body(sph_system, makeShared<DiffusionBody>("DiffusionBody"));
-	diffusion_body.defineParticlesAndMaterial<DiffusionParticlesWithBoundary, DiffusionMaterial>();
+	diffusion_body.defineParticlesAndMaterial<DiffusionParticles, DiffusionMaterial>();
 	diffusion_body.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody wall_boundary_Dirichlet(sph_system, makeShared<WallBoundaryDirichlet>("WallBoundaryDirichlet"));
@@ -59,7 +59,7 @@ int main(int ac, char* av[])
 	SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
 	SimpleDynamics<WallBoundaryInitialCondition> setup_boundary_condition_Dirichlet(wall_boundary_Dirichlet);
 	SimpleDynamics<WallBoundaryInitialCondition> setup_boundary_condition_Neumann(wall_boundary_Neumann);
-	GetDiffusionTimeStepSize<DiffusionParticlesWithBoundary> get_time_step_size(diffusion_body);
+	GetDiffusionTimeStepSize<DiffusionParticles> get_time_step_size(diffusion_body);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------

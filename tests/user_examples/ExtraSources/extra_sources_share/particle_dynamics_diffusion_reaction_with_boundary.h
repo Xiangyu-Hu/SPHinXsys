@@ -28,9 +28,9 @@ namespace SPH
 		virtual ~DiffusionReactionInitialConditionWithBoundary() {};
 
 	protected:
-		StdLargeVec<Real>& heat_flux_;
-		StdLargeVec<Real>& convection_;
-		StdLargeVec<Real>& T_infinity_;
+		StdLargeVec<Real> heat_flux_;
+		StdLargeVec<Real> convection_;
+		StdLargeVec<Real> T_infinity_;
 	};
 
 	/**
