@@ -298,8 +298,8 @@ int main(int ac, char *av[])
 	}
 	else
 	{
-		write_total_viscous_force_on_insert_body.newResultTest();
-		write_beam_tip_displacement.newResultTest();
+		write_total_viscous_force_on_insert_body.testResult();
+		write_beam_tip_displacement.testResult();
 	}
 
 	return 0;

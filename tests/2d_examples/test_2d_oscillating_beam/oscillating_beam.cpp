@@ -217,7 +217,7 @@ int main(int ac, char *av[])
 	}
 	else
 	{
-		write_beam_tip_displacement.newResultTest();
+		write_beam_tip_displacement.testResult();
 	}
 
 	return 0;

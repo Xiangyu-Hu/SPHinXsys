@@ -271,8 +271,8 @@ int main(int ac, char *av[])
 	}
 	else
 	{
-	write_str_displacement.newResultTest();
-	wave_gauge.newResultTest();
+	write_str_displacement.testResult();
+	wave_gauge.testResult();
 	}
 
 	return 0;
