@@ -127,17 +127,6 @@ namespace SPH
 		inline void interaction(size_t index_i, Real dt = 0.0);
 	};
 
-	/*template <typename BodyRelationType>
-	class OtherRelationTypes : public BaseContactRelation
-	{
-	public:
-		template <typename... ConstructorArgs>
-		explicit OtherRelationTypes(ConstructorArgs &&... args)
-			: BaseContactRelation(std::forward<ConstructorArgs>(args)...) {};
-
-		virtual ~OtherRelationTypes() {};
-	};*/
-
 	/**
 	 * @class ComplexInteraction
 	 * @brief A class that integrates multiple boundary conditions.
@@ -155,7 +144,6 @@ namespace SPH
 		void interaction(size_t index_i, Real dt = 0.0) {};
 	};
 
-	// add extra_args
 	template <class DiffusionRelaxationFirst, class... DiffusionRelaxationOthers>
 	class ComplexInteraction<DiffusionRelaxationFirst, DiffusionRelaxationOthers...> : public DiffusionRelaxationFirst
 	{
@@ -163,38 +151,64 @@ namespace SPH
 		ComplexInteraction<DiffusionRelaxationOthers...> others_diffusion_relaxation_;
 
 	public:
-		/*emplate <class FirstRelationType, class OtherRelationTypes, typename...ExtraArgs,
-			typename std::enable_if <
-			std::is_base_of<SPHRelation, OtherRelationTypes>{} && !std::is_base_of<SPHRelation, ExtraArgs>{},
-			bool > ::type = true >
-		explicit ComplexInteraction(FirstRelationType& body_relation, OtherRelationTypes& contact_relation_01, OtherRelationTypes& contact_relation_02, ExtraArgs &&...extra_args)
-			: DiffusionRelaxationFirst(body_relation,  std::forward<ExtraArgs>(extra_args)...),
-			others_diffusion_relaxation_(contact_relation_01, contact_relation_02, std::forward<ExtraArgs>(extra_args)...) {};
 
-		template <class FirstRelationType, class OtherRelationTypes, typename...ExtraArgs,
-			typename std::enable_if <
-			std::is_base_of<SPHRelation, OtherRelationTypes>{} && !std::is_base_of<SPHRelation, ExtraArgs>{},
-			bool > ::type = true >
-		explicit ComplexInteraction(FirstRelationType& body_relation, OtherRelationTypes & contact_relation, ExtraArgs &&...extra_args)
-			: DiffusionRelaxationFirst(body_relation, std::forward<ExtraArgs>(extra_args)...),
-			others_diffusion_relaxation_(contact_relation, std::forward<ExtraArgs>(extra_args)...) {};
-
+		// no other relations
 		template <class FirstRelationType, typename...ExtraArgs,
 			typename std::enable_if <
-			!std::is_base_of<SPHRelation, ExtraArgs>{},
+			!(std::is_base_of<SPHRelation, ExtraArgs>::value || ...),
 			bool > ::type = true >
 		explicit ComplexInteraction(FirstRelationType& body_relation, ExtraArgs &&...extra_args)
 			: DiffusionRelaxationFirst(body_relation, std::forward<ExtraArgs>(extra_args)...),
-			others_diffusion_relaxation_(std::forward<ExtraArgs>(extra_args)...) {};*/
+			others_diffusion_relaxation_(std::forward<ExtraArgs>(extra_args)...) {};
 
-		template <class FirstRelationType, typename... OtherRelationTypes, typename... ExtraArgs,
+		// one other relation
+		template <class FirstRelationType, class OtherRelationTypes, typename... ExtraArgs,
+			typename std::enable_if<
+			(std::is_base_of<SPHRelation, OtherRelationTypes>::value) &&
+			!(std::is_base_of<SPHRelation, ExtraArgs>::value || ...),
+			bool>::type = true>
+		explicit ComplexInteraction(FirstRelationType &body_relation, OtherRelationTypes &contact_relation, ExtraArgs &&...extra_args)
+			: DiffusionRelaxationFirst(body_relation, std::forward<ExtraArgs>(extra_args)...),
+			others_diffusion_relaxation_(contact_relation, std::forward<ExtraArgs>(extra_args)...){};
+
+		// two other relations
+        template <class FirstRelationType, class OtherRelationTypes, typename... ExtraArgs,
+			typename std::enable_if<
+			(std::is_base_of<SPHRelation, OtherRelationTypes>::value) &&
+			!(std::is_base_of<SPHRelation, ExtraArgs>::value || ...),
+            bool>::type = true>
+        explicit ComplexInteraction(FirstRelationType &body_relation, OtherRelationTypes &contact_relation_01, OtherRelationTypes &contact_relation_02, ExtraArgs &&...extra_args)
+			: DiffusionRelaxationFirst(body_relation, std::forward<ExtraArgs>(extra_args)...),
+			others_diffusion_relaxation_(contact_relation_01, contact_relation_02, std::forward<ExtraArgs>(extra_args)...){};
+
+		// three other relations
+        template <class FirstRelationType, class OtherRelationTypes, typename... ExtraArgs,
+			typename std::enable_if<
+			(std::is_base_of<SPHRelation, OtherRelationTypes>::value) &&
+			!(std::is_base_of<SPHRelation, ExtraArgs>::value || ...),
+			bool>::type = true>
+        explicit ComplexInteraction(FirstRelationType &body_relation, OtherRelationTypes &contact_relation_01, OtherRelationTypes &contact_relation_02, OtherRelationTypes &contact_relation_03, ExtraArgs &&...extra_args)
+            : DiffusionRelaxationFirst(body_relation, std::forward<ExtraArgs>(extra_args)...),
+              others_diffusion_relaxation_(contact_relation_01, contact_relation_02, contact_relation_03, std::forward<ExtraArgs>(extra_args)...){};
+
+		// four other relations
+        template <class FirstRelationType, class OtherRelationTypes, typename... ExtraArgs,
+                  typename std::enable_if<
+                      (std::is_base_of<SPHRelation, OtherRelationTypes>::value) &&
+                          !(std::is_base_of<SPHRelation, ExtraArgs>::value || ...),
+                      bool>::type = true>
+        explicit ComplexInteraction(FirstRelationType &body_relation, OtherRelationTypes &contact_relation_01, OtherRelationTypes &contact_relation_02, OtherRelationTypes &contact_relation_03, OtherRelationTypes &contact_relation_04, ExtraArgs &&...extra_args)
+            : DiffusionRelaxationFirst(body_relation, std::forward<ExtraArgs>(extra_args)...),
+              others_diffusion_relaxation_(contact_relation_01, contact_relation_02, contact_relation_03, contact_relation_04, std::forward<ExtraArgs>(extra_args)...){};
+
+		/*template <class FirstRelationType, typename... OtherRelationTypes, typename... ExtraArgs,
 			typename std::enable_if <
 			(std::is_base_of<SPHRelation, OtherRelationTypes>::value || ...) &&
 			!(std::is_base_of<SPHRelation, ExtraArgs>::value || ...),
 			bool > ::type = true >
 		explicit ComplexInteraction(FirstRelationType& body_relation, OtherRelationTypes &&...other_relations, ExtraArgs &&...extra_args)
 			: DiffusionRelaxationFirst(body_relation, std::forward<ExtraArgs>(extra_args)...),
-			others_diffusion_relaxation_(std::forward<OtherRelationTypes>(other_relations)..., std::forward<ExtraArgs>(extra_args)...) {};
+			others_diffusion_relaxation_(std::forward<OtherRelationTypes>(other_relations)..., std::forward<ExtraArgs>(extra_args)...) {};*/
 
 		void interaction(size_t index_i, Real dt = 0.0)
 		{
