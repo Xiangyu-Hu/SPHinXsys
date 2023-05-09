@@ -88,7 +88,7 @@ namespace SPH
 		: public BodyStatesRecordingToVtp
 	{
 	private:
-	UniquePtrKeepers<ReduceDynamics<VelocityBoundCheck>> check_bodies_ptr_keeper_;	
+	UniquePtrsKeeper<ReduceDynamics<VelocityBoundCheck>> check_bodies_ptr_keeper_;	
 
 	protected:
 		bool out_of_bound_;

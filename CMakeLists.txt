@@ -18,6 +18,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # Generate `compile_commands.json` file wh
 #set(CMAKE_CXX_STANDARD_REQUIRED ON) # C++ standard requirement for all targets is NOT optional 
 set(CMAKE_CXX_EXTENSIONS OFF) # Disable any non-standard compiler specific C++ extensions for all targets.
 
+set(CMAKE_POSITION_INDEPENDENT_CODE TRUE) # Enable for all targets, needed for python modules
+
 #------ Declare core library
 add_library(sphinxsys_core INTERFACE)
 
@@ -34,7 +36,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES Windows)
     target_compile_options(sphinxsys_core INTERFACE /MP)
     target_compile_options(sphinxsys_core INTERFACE /permissive-) 
     # target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:/W4 /WX>) # TODO: For when one gets rid of Simbody 
-else()
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Werror>)
     target_compile_options(sphinxsys_core INTERFACE  $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Wall>)
     # target_compile_options(sphinxsys_core INTERFACE  $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Wextra>) # TODO: 

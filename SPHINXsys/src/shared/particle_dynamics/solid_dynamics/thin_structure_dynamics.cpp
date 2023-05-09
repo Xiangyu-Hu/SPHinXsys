@@ -11,9 +11,9 @@ namespace SPH
 			  n0_(particles_->n0_), n_(particles_->n_), pseudo_n_(particles_->pseudo_n_),
 			  pos0_(particles_->pos0_), transformation_matrix_(particles_->transformation_matrix_) {}
 		//=================================================================================================//
-		ShellAcousticTimeStepSize::ShellAcousticTimeStepSize(SPHBody &sph_body, Real CFL)
+		ShellAcousticTimeStepSize::ShellAcousticTimeStepSize(SPHBody& sph_body, Real CFL)
 			: LocalDynamicsReduce<Real, ReduceMin>(sph_body, Real(MaxRealNumber)),
-			  ShellDataSimple(sph_body), CFL_(CFL), vel_(particles_->vel_), acc_(particles_->acc_),
+			ShellDataSimple(sph_body), CFL_(CFL), vel_(particles_->vel_), acc_(particles_->acc_),
 			  angular_vel_(particles_->angular_vel_), dangular_vel_dt_(particles_->dangular_vel_dt_),
 			  acc_prior_(particles_->acc_prior_),
 			  thickness_(particles_->thickness_),

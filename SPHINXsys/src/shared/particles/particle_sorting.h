@@ -41,22 +41,22 @@ namespace tbb
 		template <typename RandomAccessIterator, typename Compare, typename SwapType>
 		class QuickSortParticleRange
 		{
-			inline size_t median_of_three(const RandomAccessIterator& array, size_t l, size_t m, size_t r) const
+			inline size_t median_of_three(const RandomAccessIterator &array, size_t l, size_t m, size_t r) const
 			{
 				return comp_(array[l], array[m]) ? (comp_(array[m], array[r]) ? m : (comp_(array[l], array[r]) ? r : l))
-					: (comp_(array[r], array[m]) ? m : (comp_(array[r], array[l]) ? r : l));
+													: (comp_(array[r], array[m]) ? m : (comp_(array[r], array[l]) ? r : l));
 			}
 
-			inline size_t PseudoMedianOfNine(const RandomAccessIterator& array, const QuickSortParticleRange& range) const
+			inline size_t PseudoMedianOfNine(const RandomAccessIterator &array, const QuickSortParticleRange &range) const
 			{
 				size_t offset = range.size_ / 8u;
 				return median_of_three(array,
-					median_of_three(array, 0, offset, offset * 2),
-					median_of_three(array, offset * 3, offset * 4, offset * 5),
-					median_of_three(array, offset * 6, offset * 7, range.size_ - 1));
+										median_of_three(array, 0, offset, offset * 2),
+										median_of_three(array, offset * 3, offset * 4, offset * 5),
+										median_of_three(array, offset * 6, offset * 7, range.size_ - 1));
 			}
 
-			size_t splitRange(QuickSortParticleRange& range)
+			size_t splitRange(QuickSortParticleRange &range)
 			{
 				RandomAccessIterator array = range.begin_;
 				RandomAccessIterator key0 = range.begin_;
@@ -103,27 +103,27 @@ namespace tbb
 			void operator=(const QuickSortParticleRange&) = delete;
 			QuickSortParticleRange(const QuickSortParticleRange&) = default;
 			QuickSortParticleRange() = default;
-
+			
 			static const size_t grainsize_ = 500;
-			const Compare& comp_;
-			SwapType& swap_sortable_particle_data_;
+			const Compare &comp_;
+			SwapType &swap_sortable_particle_data_;
 			size_t size_;
 			RandomAccessIterator begin_;
 
 			QuickSortParticleRange(RandomAccessIterator begin,
-				size_t size, const Compare& compare, SwapType& swap_particle_data)
+									size_t size, const Compare &compare, SwapType &swap_particle_data)
 				: comp_(compare), swap_sortable_particle_data_(swap_particle_data),
-				size_(size), begin_(begin) {}
+					size_(size), begin_(begin) {}
 
 			bool empty() const { return size_ == 0; }
 			bool is_divisible() const { return size_ >= grainsize_; }
 
-			QuickSortParticleRange(QuickSortParticleRange& range, split)
+			QuickSortParticleRange(QuickSortParticleRange &range, split)
 				: comp_(range.comp_), swap_sortable_particle_data_(range.swap_sortable_particle_data_), size_(splitRange(range))
-				// +1 accounts for the pivot element, which is at its correct place
-				// already and, therefore, is not included into subranges.
-				,
-				begin_(range.begin_ + range.size_ + 1)
+					// +1 accounts for the pivot element, which is at its correct place
+					// already and, therefore, is not included into subranges.
+					,
+					begin_(range.begin_ + range.size_ + 1)
 			{
 			}
 		};
@@ -134,7 +134,7 @@ namespace tbb
 		Ref			: http://www.cs.fsu.edu/~lacher/courses/COP4531/lectures/sorts/slide09.html
 		*/
 		template <typename RandomAccessIterator, typename Compare, typename SwapType>
-		RandomAccessIterator Partition(RandomAccessIterator first, RandomAccessIterator last, Compare& compare, SwapType& swap_particle_data)
+		RandomAccessIterator Partition(RandomAccessIterator first, RandomAccessIterator last, Compare &compare, SwapType &swap_particle_data)
 		{
 			auto pivot = std::prev(last, 1);
 			auto i = first;
@@ -151,7 +151,7 @@ namespace tbb
 		}
 
 		template <typename RandomAccessIterator, typename Compare, typename SwapType>
-		void SerialQuickSort(RandomAccessIterator first, RandomAccessIterator last, Compare& compare, SwapType& swap_particle_data)
+		void SerialQuickSort(RandomAccessIterator first, RandomAccessIterator last, Compare &compare, SwapType &swap_particle_data)
 		{
 			if (std::distance(first, last) > 1)
 			{
@@ -167,7 +167,7 @@ namespace tbb
 		*/
 
 		template <typename RandomAccessIterator, typename Compare, typename SwapType>
-		void InsertionSort(RandomAccessIterator First, RandomAccessIterator Last, Compare& compare, SwapType& swap_particle_data)
+		void InsertionSort(RandomAccessIterator First, RandomAccessIterator Last, Compare &compare, SwapType &swap_particle_data)
 		{
 			RandomAccessIterator min = First;
 			for (RandomAccessIterator i = First + 1; i < Last; ++i)
@@ -184,7 +184,7 @@ namespace tbb
 		template <typename RandomAccessIterator, typename Compare, typename SwapType>
 		struct QuickSortParticleBody
 		{
-			void operator()(const QuickSortParticleRange<RandomAccessIterator, Compare, SwapType>& range) const
+			void operator()(const QuickSortParticleRange<RandomAccessIterator, Compare, SwapType> &range) const
 			{
 				SerialQuickSort(range.begin_, range.begin_ + range.size_, range.comp_, range.swap_sortable_particle_data_);
 			}
@@ -261,9 +261,9 @@ namespace SPH
 		SwapSortableParticleData swap_sortable_particle_data_;
 		CompareParticleSequence compare_;
 		tbb::interface9::QuickSortParticleRange<
-			size_t*, CompareParticleSequence, SwapSortableParticleData> quick_sort_particle_range_;
+			size_t *, CompareParticleSequence, SwapSortableParticleData> quick_sort_particle_range_;
 		tbb::interface9::QuickSortParticleBody<
-			size_t*, CompareParticleSequence, SwapSortableParticleData>
+			size_t *, CompareParticleSequence, SwapSortableParticleData>
 			quick_sort_particle_body_;
 
 	public:

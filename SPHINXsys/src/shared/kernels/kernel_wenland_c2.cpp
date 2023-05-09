@@ -6,7 +6,7 @@ namespace SPH
 {
 	//=================================================================================================//
 	KernelWendlandC2::KernelWendlandC2(Real h)
-		: Kernel(h, "Wendland2CKernel")
+		: Kernel(h, 2.0, 2.0, "Wendland2CKernel")
 	{
 		factor_W_1D_ = inv_h_ * 3.0 / 4.0;
 		factor_W_2D_ = inv_h_ * inv_h_ * 7.0 / (4.0 * Pi);

@@ -215,8 +215,8 @@ int main()
 	std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
 			  << interval_updating_configuration.seconds() << "\n";
 
-	write_water_mechanical_energy.newResultTest();
-	write_recorded_pressure.newResultTest();
+	write_water_mechanical_energy.testResult();
+	write_recorded_pressure.testResult();
 
 	return 0;
 }

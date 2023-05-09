@@ -82,11 +82,11 @@ namespace SPH
 	class BaseParticles
 	{
 	private:
-		UniquePtrKeepers<BaseDynamics<void>> derived_particle_data_; /**< Unique ptr for Base dynamics. */
-
+		UniquePtrsKeeper<BaseDynamics<void>> derived_particle_data_; /**< Unique ptr for Base dynamics. */
+		
 	public:
 		explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
-		virtual ~BaseParticles(){};
+		virtual ~BaseParticles() {};
 
 		StdLargeVec<Vecd> pos_;		  /**< particle position */
 		StdLargeVec<Vecd> vel_;		  /**< particle velocity */
@@ -107,7 +107,7 @@ namespace SPH
 		//		Generalized particle data for parameterized management
 		//----------------------------------------------------------------------
 		ParticleData all_particle_data_;
-		DataContainerAssemble<StdLargeVec> shared_variable_data_; // extra data for shared variables
+		DataContainerUniquePtrAssemble<StdLargeVec> shared_variable_data_; // extra data for shared variables
 		ParticleDataMap all_variable_maps_;
 		StdVec<BaseDynamics<void> *> derived_variables_;
 		ParticleVariableList variables_to_write_;
@@ -133,14 +133,19 @@ namespace SPH
 		template <typename VariableType>
 		void addVariableToWrite(const std::string &variable_name);
 		/** add a derived variable into the list for state output */
-		template <class DerivedVariableMethod>
-		void addDerivedVariableToWrite();
+        template <class DerivedVariableMethod, class... Ts>
+		void addDerivedVariable(Ts&&...);
+        /** add a derived variable into the list for state output */
+		template <class DerivedVariableMethod, class... Ts>
+		void addDerivedVariableToWrite(Ts&&...);
 		/** add a variable into the list for restart */
 		template <typename VariableType>
 		void addVariableToRestart(const std::string &variable_name);
+		inline const ParticleVariableList& getVariablesToRestart() const {return variables_to_restart_;}
 		/** add a variable into the list for particle reload */
 		template <typename VariableType>
 		void addVariableToReload(const std::string &variable_name);
+		inline const ParticleVariableList& getVariablesToReload() const {return variables_to_reload_;}
 		/**
 		 *		Particle data for sorting
 		 */
@@ -252,7 +257,7 @@ namespace SPH
 			: xml_engine_(xml_engine), total_real_particles_(total_real_particles){};
 
 		template <typename VariableType>
-		void operator()(std::string &variable_name, StdLargeVec<VariableType> &variable) const;
+		void operator()(const std::string &variable_name, StdLargeVec<VariableType> &variable) const;
 	};
 	/**
 	 * @struct ReadAParticleVariableFromXml
@@ -266,7 +271,7 @@ namespace SPH
 			: xml_engine_(xml_engine), total_real_particles_(total_real_particles){};
 
 		template <typename VariableType>
-		void operator()(std::string &variable_name, StdLargeVec<VariableType> &variable) const;
+		void operator()(const std::string &variable_name, StdLargeVec<VariableType> &variable) const;
 	};
 	/**
 	 * @class BaseDerivedVariable

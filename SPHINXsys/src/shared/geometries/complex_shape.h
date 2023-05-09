@@ -31,7 +31,7 @@
 #define COMPLEX_SHAPE_H
 
 #include "base_geometry.h"
-
+#include "level_set_shape.h"
 #include "geometric_shape.h"
 #include "transform_shape.h"
 
@@ -79,7 +79,7 @@ namespace SPH
 			: TransformShape<GeometricShapeBox>(
 				Transformd(Vecd(0.5 * (shape.bounding_box_.second_ + shape.bounding_box_.first_))),
 				0.5 * (shape.bounding_box_.second_ - shape.bounding_box_.first_), std::forward<Args>(args)...)
-		{};
+        {};
 
 		Vecd HalfSize() { return halfsize_; }
 		bool checkInBounds(int axis, const Vecd &probe_point);

@@ -36,6 +36,7 @@
 #include <algorithm>
 #include <vector>
 #include <map>
+#include <limits>
 
 #include <Eigen/Core>
 #include <Eigen/Dense>
