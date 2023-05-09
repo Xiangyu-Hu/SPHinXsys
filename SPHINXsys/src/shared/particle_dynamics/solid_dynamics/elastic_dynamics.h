@@ -211,6 +211,51 @@ namespace SPH
 			Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd);
 		};
 
+
+        /** @class CauchyIntegration1stHalf
+		 * @brief computing Cauchy stress relaxation process by verlet time stepping
+		 * This is the first step
+		 */
+		class CauchyIntegration1stHalf : public Integration1stHalf
+		{
+		public:
+			explicit CauchyIntegration1stHalf(BaseInnerRelation &inner_relation);
+			virtual ~CauchyIntegration1stHalf() {};
+
+			void initialization(size_t index_i, Real dt = 0.0);
+	
+            inline void interaction(size_t index_i, Real dt = 0.0)
+			{
+				// including gravity and force from fluid
+				Vecd acceleration = Vecd::Zero();
+				const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+				for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+				{
+					size_t index_j = inner_neighborhood.j_[n];
+					Vecd e_ij = inner_neighborhood.e_ij_[n];
+					Real r_ij = inner_neighborhood.r_ij_[n];
+					Real dim_r_ij_1 = Dimensions / r_ij;
+					Vecd pos_jump = pos_[index_i] - pos_[index_j];
+					Vecd vel_jump = vel_[index_i] - vel_[index_j];
+					Real strain_rate = dim_r_ij_1 * dim_r_ij_1 * pos_jump.dot(vel_jump);
+					Real weight = inner_neighborhood.W_ij_[n] * inv_W0_;
+					Real dW_ijV =inner_neighborhood.dW_ijV_j_[n];
+
+					Matd numerical_stress_ij =
+						0.5 * (F_[index_i] + F_[index_j]) * elastic_solid_.PairNumericalDamping(strain_rate, smoothing_length_);
+
+					acceleration += (cauchy_stress_[index_i] + cauchy_stress_[index_j])
+						* e_ij * dW_ijV / rho_[index_i]
+						+ numerical_dissipation_factor_ * weight * dW_ijV  * numerical_stress_ij * e_ij * inv_rho0_;
+				}
+				acc_[index_i] = acceleration;
+			}
+		protected:
+			StdLargeVec<Matd> cauchy_stress_;
+		};
+
+   
+
 		/**
 		 * @class KirchhoffParticleIntegration1stHalf
 		 */
