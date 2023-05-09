@@ -11,14 +11,14 @@ namespace SPH
 		DiffusionReactionInitialConditionWithBoundary(SPHBody& sph_body)
 		: DiffusionReactionInitialCondition<DiffusionReactionParticlesType>(sph_body)
 	{
-            this->particles_->registerVariable(heat_flux_, "HeatFlux");
-            this->particles_->registerVariable(convection_, "Convection");
-            this->particles_->registerVariable(T_infinity_, "T_infinity");
+		this->particles_->registerVariable(heat_flux_, "HeatFlux");
+        this->particles_->registerVariable(convection_, "Convection");
+        this->particles_->registerVariable(T_infinity_, "T_infinity");
 	}
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
-	RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
-		RelaxationOfAllDiffusionSpeciesSimpleContact(BaseContactRelation& contact_relation)
+	RelaxationOfAllDiffusionSpeciesBaseContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
+		RelaxationOfAllDiffusionSpeciesBaseContact(BaseContactRelation& contact_relation)
 		: LocalDynamics(contact_relation.getSPHBody()),
 		DiffusionReactionContactDataWithBoundary<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(contact_relation),
 		material_(this->particles_->diffusion_reaction_material_),
@@ -63,7 +63,7 @@ namespace SPH
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	RelaxationOfAllDiffusionSpeciesDirichletContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
 		RelaxationOfAllDiffusionSpeciesDirichletContact(ContactRelation& contact_relation)
-		: RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(contact_relation) {}
+		: RelaxationOfAllDiffusionSpeciesBaseContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(contact_relation) {}
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	void RelaxationOfAllDiffusionSpeciesDirichletContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
@@ -107,7 +107,7 @@ namespace SPH
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	RelaxationOfAllDiffusionSpeciesNeumannContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
 		RelaxationOfAllDiffusionSpeciesNeumannContact(ContactRelation& contact_relation)
-		: RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(contact_relation),
+		: RelaxationOfAllDiffusionSpeciesBaseContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(contact_relation),
 		n_(this->particles_->n_)
 	{
 		for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
@@ -160,7 +160,7 @@ namespace SPH
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	RelaxationOfAllDiffusionSpeciesRobinContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
 		RelaxationOfAllDiffusionSpeciesRobinContact(ContactRelation& contact_relation)
-		: RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(contact_relation),
+		: RelaxationOfAllDiffusionSpeciesBaseContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(contact_relation),
 		n_(this->particles_->n_)
 	{
 		for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
