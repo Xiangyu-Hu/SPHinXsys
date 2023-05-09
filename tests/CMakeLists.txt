@@ -22,9 +22,6 @@ if(SPHINXSYS_BUILD_UNIT_TESTS)
 	ADD_SUBDIRECTORY(unit_tests_src)
 endif()
 
-if(SPHINXSYS_BUILD_USER_EXAMPLES)
-	ADD_SUBDIRECTORY(user_examples)
-endif()
 
 add_subdirectory(modules)
 	
