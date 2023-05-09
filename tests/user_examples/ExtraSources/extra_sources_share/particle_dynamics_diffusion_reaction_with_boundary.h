@@ -38,7 +38,7 @@ namespace SPH
 	 * @brief Simple diffusion relaxation process between two contact bodies, which is the base class of three boundary conditions.
 	 */
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
-	class RelaxationOfAllDiffusionSpeciesSimpleContact
+	class RelaxationOfAllDiffusionSpeciesBaseContact
 		: public LocalDynamics,
 		  public DiffusionReactionContactDataWithBoundary<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
 	{
@@ -56,8 +56,8 @@ namespace SPH
 		typedef DiffusionReactionParticlesType InnerParticlesType;
 		typedef BaseContactRelation BodyRelationType;
 
-		explicit RelaxationOfAllDiffusionSpeciesSimpleContact(BaseContactRelation& contact_relation);
-		virtual ~RelaxationOfAllDiffusionSpeciesSimpleContact() {};
+		explicit RelaxationOfAllDiffusionSpeciesBaseContact(BaseContactRelation &contact_relation);
+		virtual ~RelaxationOfAllDiffusionSpeciesBaseContact() {};
 		StdVec<BaseDiffusion*>& AllDiffusions() { return material_.AllDiffusions(); };
 
 		virtual void interaction(size_t index_i, Real dt = 0.0) = 0;
@@ -69,7 +69,7 @@ namespace SPH
 	 */
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	class RelaxationOfAllDiffusionSpeciesDirichletContact
-		: public RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
+		: public RelaxationOfAllDiffusionSpeciesBaseContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
 	{
 	protected:
 		void getDiffusionChangeRateDirichletContact(size_t particle_i, size_t particle_j, Vecd& e_ij, Real surface_area_ij,
@@ -88,7 +88,7 @@ namespace SPH
 	 */
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	class RelaxationOfAllDiffusionSpeciesNeumannContact
-		: public RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
+		: public RelaxationOfAllDiffusionSpeciesBaseContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
 	{
 		StdLargeVec<Vecd>& n_;
 		StdVec<StdLargeVec<Real>*> contact_heat_flux_;
@@ -110,7 +110,7 @@ namespace SPH
 	 */
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	class RelaxationOfAllDiffusionSpeciesRobinContact
-		: public RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
+		: public RelaxationOfAllDiffusionSpeciesBaseContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
 	{
 		StdLargeVec<Vecd>& n_;
 		StdVec<StdLargeVec<Real>*> contact_convection_;
@@ -131,7 +131,7 @@ namespace SPH
 	 * @class ComplexInteraction
 	 * @brief A class that integrates multiple boundary conditions.
 	 */
-	template <typename... DiffusionRelaxationType>
+	template <typename... InteractionType>
 	class ComplexInteraction;
 
 	template <>
@@ -144,11 +144,11 @@ namespace SPH
 		void interaction(size_t index_i, Real dt = 0.0) {};
 	};
 
-	template <class DiffusionRelaxationFirst, class... DiffusionRelaxationOthers>
-	class ComplexInteraction<DiffusionRelaxationFirst, DiffusionRelaxationOthers...> : public DiffusionRelaxationFirst
+	template <class FirstInteraction, class... OtherInteractions>
+    class ComplexInteraction<FirstInteraction, OtherInteractions...> : public FirstInteraction
 	{
 	protected:
-		ComplexInteraction<DiffusionRelaxationOthers...> others_diffusion_relaxation_;
+		ComplexInteraction<OtherInteractions...> other_interaction_;
 
 	public:
 
@@ -158,8 +158,8 @@ namespace SPH
 			!(std::is_base_of<SPHRelation, ExtraArgs>::value || ...),
 			bool > ::type = true >
 		explicit ComplexInteraction(FirstRelationType& body_relation, ExtraArgs &&...extra_args)
-			: DiffusionRelaxationFirst(body_relation, std::forward<ExtraArgs>(extra_args)...),
-			others_diffusion_relaxation_(std::forward<ExtraArgs>(extra_args)...) {};
+			: FirstInteraction(body_relation, std::forward<ExtraArgs>(extra_args)...),
+			other_interaction_(std::forward<ExtraArgs>(extra_args)...) {};
 
 		// one other relation
 		template <class FirstRelationType, class OtherRelationTypes, typename... ExtraArgs,
@@ -168,8 +168,8 @@ namespace SPH
 			!(std::is_base_of<SPHRelation, ExtraArgs>::value || ...),
 			bool>::type = true>
 		explicit ComplexInteraction(FirstRelationType &body_relation, OtherRelationTypes &contact_relation, ExtraArgs &&...extra_args)
-			: DiffusionRelaxationFirst(body_relation, std::forward<ExtraArgs>(extra_args)...),
-			others_diffusion_relaxation_(contact_relation, std::forward<ExtraArgs>(extra_args)...){};
+			: FirstInteraction(body_relation, std::forward<ExtraArgs>(extra_args)...),
+			other_interaction_(contact_relation, std::forward<ExtraArgs>(extra_args)...){};
 
 		// two other relations
         template <class FirstRelationType, class OtherRelationTypes, typename... ExtraArgs,
@@ -178,8 +178,8 @@ namespace SPH
 			!(std::is_base_of<SPHRelation, ExtraArgs>::value || ...),
             bool>::type = true>
         explicit ComplexInteraction(FirstRelationType &body_relation, OtherRelationTypes &contact_relation_01, OtherRelationTypes &contact_relation_02, ExtraArgs &&...extra_args)
-			: DiffusionRelaxationFirst(body_relation, std::forward<ExtraArgs>(extra_args)...),
-			others_diffusion_relaxation_(contact_relation_01, contact_relation_02, std::forward<ExtraArgs>(extra_args)...){};
+			: FirstInteraction(body_relation, std::forward<ExtraArgs>(extra_args)...),
+			other_interaction_(contact_relation_01, contact_relation_02, std::forward<ExtraArgs>(extra_args)...){};
 
 		// three other relations
         template <class FirstRelationType, class OtherRelationTypes, typename... ExtraArgs,
@@ -188,32 +188,29 @@ namespace SPH
 			!(std::is_base_of<SPHRelation, ExtraArgs>::value || ...),
 			bool>::type = true>
         explicit ComplexInteraction(FirstRelationType &body_relation, OtherRelationTypes &contact_relation_01, OtherRelationTypes &contact_relation_02, OtherRelationTypes &contact_relation_03, ExtraArgs &&...extra_args)
-            : DiffusionRelaxationFirst(body_relation, std::forward<ExtraArgs>(extra_args)...),
-              others_diffusion_relaxation_(contact_relation_01, contact_relation_02, contact_relation_03, std::forward<ExtraArgs>(extra_args)...){};
+            : FirstInteraction(body_relation, std::forward<ExtraArgs>(extra_args)...),
+              other_interaction_(contact_relation_01, contact_relation_02, contact_relation_03, std::forward<ExtraArgs>(extra_args)...){};
 
 		// four other relations
         template <class FirstRelationType, class OtherRelationTypes, typename... ExtraArgs,
-                  typename std::enable_if<
-                      (std::is_base_of<SPHRelation, OtherRelationTypes>::value) &&
-                          !(std::is_base_of<SPHRelation, ExtraArgs>::value || ...),
-                      bool>::type = true>
+			typename std::enable_if<
+			(std::is_base_of<SPHRelation, OtherRelationTypes>::value) &&
+			!(std::is_base_of<SPHRelation, ExtraArgs>::value || ...),
+			bool>::type = true>
         explicit ComplexInteraction(FirstRelationType &body_relation, OtherRelationTypes &contact_relation_01, OtherRelationTypes &contact_relation_02, OtherRelationTypes &contact_relation_03, OtherRelationTypes &contact_relation_04, ExtraArgs &&...extra_args)
-            : DiffusionRelaxationFirst(body_relation, std::forward<ExtraArgs>(extra_args)...),
-              others_diffusion_relaxation_(contact_relation_01, contact_relation_02, contact_relation_03, contact_relation_04, std::forward<ExtraArgs>(extra_args)...){};
+            : FirstInteraction(body_relation, std::forward<ExtraArgs>(extra_args)...),
+              other_interaction_(contact_relation_01, contact_relation_02, contact_relation_03, contact_relation_04, std::forward<ExtraArgs>(extra_args)...){};
 
 		/*template <class FirstRelationType, typename... OtherRelationTypes, typename... ExtraArgs,
-			typename std::enable_if <
-			(std::is_base_of<SPHRelation, OtherRelationTypes>::value || ...) &&
-			!(std::is_base_of<SPHRelation, ExtraArgs>::value || ...),
-			bool > ::type = true >
-		explicit ComplexInteraction(FirstRelationType& body_relation, OtherRelationTypes &&...other_relations, ExtraArgs &&...extra_args)
-			: DiffusionRelaxationFirst(body_relation, std::forward<ExtraArgs>(extra_args)...),
-			others_diffusion_relaxation_(std::forward<OtherRelationTypes>(other_relations)..., std::forward<ExtraArgs>(extra_args)...) {};*/
+			typename std::enable_if<(std::is_base_of<SPHRelation, OtherRelationTypes&&...>::value) &&!(std::is_base_of<SPHRelation, ExtraArgs&&...>::value),bool>::type = true>
+		explicit ComplexInteraction(FirstRelationType &body_relation, OtherRelationTypes &&...other_relations, ExtraArgs &&...extra_args)
+			: FirstInteraction(body_relation, std::forward<ExtraArgs>(extra_args)...),
+			other_interaction_(std::forward<OtherRelationTypes>(other_relations)..., std::forward<ExtraArgs>(extra_args)...) {};*/
 
 		void interaction(size_t index_i, Real dt = 0.0)
 		{
-			DiffusionRelaxationFirst::interaction(index_i, dt);
-			others_diffusion_relaxation_.interaction(index_i, dt);
+			FirstInteraction::interaction(index_i, dt);
+			other_interaction_.interaction(index_i, dt);
 		};
 	};
 

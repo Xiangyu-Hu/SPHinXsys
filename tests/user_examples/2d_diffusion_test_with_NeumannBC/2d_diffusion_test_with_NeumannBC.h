@@ -7,7 +7,6 @@
 #define DIFFUSION_TEST_WITH_NEUMANNBC_H
 
 #include "sphinxsys.h"
-//#include "diffusion_reaction_particles_with_boundary.h"
 #include "particle_dynamics_diffusion_reaction_with_boundary.h"
 #include "particle_dynamics_diffusion_reaction_with_boundary.hpp"
 
