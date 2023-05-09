@@ -9,8 +9,12 @@ namespace SPH
 	template <class DiffusionReactionParticlesType>
 	DiffusionReactionInitialConditionWithBoundary<DiffusionReactionParticlesType>::
 		DiffusionReactionInitialConditionWithBoundary(SPHBody& sph_body)
-		: DiffusionReactionInitialCondition<DiffusionReactionParticlesType>(sph_body),
-	heat_flux_(this->particles_->heat_flux_), convection_(this->particles_->convection_), T_infinity_(this->particles_->T_infinity_) {}
+		: DiffusionReactionInitialCondition<DiffusionReactionParticlesType>(sph_body)
+	{
+            this->particles_->registerVariable(heat_flux_, "HeatFlux");
+            this->particles_->registerVariable(convection_, "Convection");
+            this->particles_->registerVariable(T_infinity_, "T_infinity");
+	}
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	RelaxationOfAllDiffusionSpeciesSimpleContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
@@ -111,7 +115,7 @@ namespace SPH
 			for (size_t k = 0; k != this->contact_particles_.size(); ++k)
 			{
 				contact_n_.push_back(&(this->contact_particles_[k]->n_));
-				contact_heat_flux_.push_back(&(this->contact_particles_[k]->heat_flux_));
+				contact_heat_flux_.push_back(this->contact_particles_[k]->getVariableByName<Real>("HeatFlux"));
 			}
 		}
 	}
@@ -164,8 +168,9 @@ namespace SPH
 			for (size_t k = 0; k != this->contact_particles_.size(); ++k)
 			{
 				contact_n_.push_back(&(this->contact_particles_[k]->n_));
-				contact_convection_.push_back(&(this->contact_particles_[k]->convection_));
-				contact_T_infinity_.push_back(&(this->contact_particles_[k]->T_infinity_));
+
+				contact_convection_.push_back(this->contact_particles_[k]->getVariableByName<Real>("Convection"));
+				contact_T_infinity_.push_back(this->contact_particles_[k]->getVariableByName<Real>("T_infinity"));
 			}
 		}
 	}
