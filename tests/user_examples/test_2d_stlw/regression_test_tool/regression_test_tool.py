@@ -25,7 +25,7 @@ while True:
     number_of_run_times += 1
     converged = sphinxsys.read_dat_file()
     print("Please note: This is the", number_of_run_times, "run!")
-    if number_of_run_times <= 50:
+    if number_of_run_times <= 200:
         if (converged == "true") :
             print("The tested parameters of all variables are converged, and the run will stop here!")
             break
