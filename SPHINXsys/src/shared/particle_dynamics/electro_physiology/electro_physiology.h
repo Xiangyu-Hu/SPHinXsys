@@ -191,25 +191,28 @@ namespace SPH
 		 * @brief Compute the diffusion relaxation process
 		 */
 		class ElectroPhysiologyDiffusionRelaxationInner
-			: public RelaxationOfAllDiffusionSpeciesRK2<
+			: public RelaxationOfAllDiffusionSpeciesRK2Complex<
 				  RelaxationOfAllDiffusionSpeciesInner<ElectroPhysiologyParticles>>
 		{
 		public:
 			explicit ElectroPhysiologyDiffusionRelaxationInner(BaseInnerRelation &inner_relation)
-				: RelaxationOfAllDiffusionSpeciesRK2(inner_relation){};
+				: RelaxationOfAllDiffusionSpeciesRK2Complex(inner_relation){};
 			virtual ~ElectroPhysiologyDiffusionRelaxationInner(){};
 		};
+
+		using DiffusionRelaxationInner = RelaxationOfAllDiffusionSpeciesInner<ElectroPhysiologyParticles>;
+		using DiffusionRelaxationWithDirichletContact = RelaxationOfAllDiffusionSpeciesDirichletContact<ElectroPhysiologyParticles, ElectroPhysiologyParticles>;
 		/**
 		 * @class ElectroPhysiologyDiffusionRelaxationComplex
 		 * @brief Compute the diffusion relaxation process
 		 */
 		class ElectroPhysiologyDiffusionRelaxationComplex
-			: public RelaxationOfAllDiffusionSpeciesRK2<
-				  RelaxationOfAllDiffusionSpeciesComplex<ElectroPhysiologyParticles, ElectroPhysiologyParticles>>
+			: public RelaxationOfAllDiffusionSpeciesRK2Complex<
+				  ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>
 		{
 		public:
-			explicit ElectroPhysiologyDiffusionRelaxationComplex(ComplexRelation &complex_relation)
-				: RelaxationOfAllDiffusionSpeciesRK2(complex_relation){};
+			explicit ElectroPhysiologyDiffusionRelaxationComplex(InnerRelation& inner_relation, ContactRelation& body_contact_relation_Dirichlet)
+				: RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>(inner_relation, body_contact_relation_Dirichlet) {};
 			virtual ~ElectroPhysiologyDiffusionRelaxationComplex(){};
 		};
 

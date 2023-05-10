@@ -78,12 +78,12 @@ public:
 using FiberDirectionDiffusionParticles = DiffusionReactionParticles<ElasticSolidParticles, FiberDirectionDiffusion>;
 /** Set diffusion relaxation method. */
 class DiffusionRelaxation
-	: public RelaxationOfAllDiffusionSpeciesRK2<
+	: public RelaxationOfAllDiffusionSpeciesRK2Complex<
 		  RelaxationOfAllDiffusionSpeciesInner<FiberDirectionDiffusionParticles>>
 {
 public:
 	explicit DiffusionRelaxation(InnerRelation &inner_relation)
-		: RelaxationOfAllDiffusionSpeciesRK2(inner_relation){};
+		: RelaxationOfAllDiffusionSpeciesRK2Complex(inner_relation){};
 	virtual ~DiffusionRelaxation(){};
 };
 /** Imposing diffusion boundary condition */
@@ -273,7 +273,7 @@ int main(int ac, char *av[])
 	//	SPHSystem section
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, dp_0);
-	system.setRunParticleRelaxation(true); // Tag for run particle relaxation for body-fitted distribution
+	system.setRunParticleRelaxation(false); // Tag for run particle relaxation for body-fitted distribution
 	system.setReloadParticles(true);	   // Tag for computation with save particles distribution
 #ifdef BOOST_AVAILABLE
 	system.handleCommandlineOptions(ac, av); // handle command line arguments

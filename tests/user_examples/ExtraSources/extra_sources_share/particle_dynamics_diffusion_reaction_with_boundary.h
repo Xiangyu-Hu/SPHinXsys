@@ -75,8 +75,7 @@ namespace SPH
 	class ComplexInteraction<>
 	{
 	public:
-		template <typename...ExtraArgs>
-		ComplexInteraction(ExtraArgs &&...extra_args) {};
+		ComplexInteraction() {};
 
 		void interaction(size_t index_i, Real dt = 0.0) {};
 	};
