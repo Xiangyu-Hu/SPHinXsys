@@ -50,8 +50,8 @@ namespace SPH
 		{
 			BaseDensitySummationComplex<DensitySummationInnerAdaptive>::interaction(index_i, dt);
 			Real sigma = BaseDensitySummationComplex<DensitySummationInnerAdaptive>::ContactSummation(index_i);
-			rho_sum_[index_i] += sigma * rho0_ * rho0_ / mass_[index_i] /
-								 sph_adaptation_.ReferenceNumberDensity(h_ratio_[index_i]);
+			rho_sum_[index_i] += sigma * rho0_ * rho0_ * inv_sigma0_ / mass_[index_i] /
+								 sph_adaptation_.NumberDensityScaleFactor(h_ratio_[index_i]);
 		}
 		//=================================================================================================//
 		void TransportVelocityCorrectionComplex::

@@ -67,9 +67,9 @@ namespace SPH
 		return sigma;
 	}
 	//=================================================================================================//
-	Real SPHAdaptation::ReferenceNumberDensity(Real smoothing_length_ratio)
+	Real SPHAdaptation::NumberDensityScaleFactor(Real smoothing_length_ratio)
 	{
-		return sigma0_ref_ * pow(smoothing_length_ratio, Dimensions);
+		return pow(smoothing_length_ratio, Dimensions);
 	}
 	//=================================================================================================//
 	void SPHAdaptation::resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio)
