@@ -273,7 +273,7 @@ int main(int ac, char *av[])
 	//	SPHSystem section
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, dp_0);
-	system.setRunParticleRelaxation(false); // Tag for run particle relaxation for body-fitted distribution
+	system.setRunParticleRelaxation(true); // Tag for run particle relaxation for body-fitted distribution
 	system.setReloadParticles(true);	   // Tag for computation with save particles distribution
 #ifdef BOOST_AVAILABLE
 	system.handleCommandlineOptions(ac, av); // handle command line arguments
