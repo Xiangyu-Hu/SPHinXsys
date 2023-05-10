@@ -13,7 +13,6 @@ SET(BUILD_INPUT_PATH "${EXECUTABLE_OUTPUT_PATH}/input")
 SET(BUILD_RELOAD_PATH "${EXECUTABLE_OUTPUT_PATH}/reload")
 
 file(MAKE_DIRECTORY ${BUILD_INPUT_PATH})
-execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_INPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/regression_test_tool.py
         DESTINATION ${BUILD_INPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/BeamObserver_Position_runtimes.dat
@@ -23,9 +22,8 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/BeamObserver_Position
 
 aux_source_directory(. DIR_SRCS)
 ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})
+set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
+target_link_libraries(${PROJECT_NAME} extra_sources_2d)
 
 add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME}
-                  WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
-
-    set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
-    target_link_libraries(${PROJECT_NAME} sphinxsys_2d)
+                 WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
