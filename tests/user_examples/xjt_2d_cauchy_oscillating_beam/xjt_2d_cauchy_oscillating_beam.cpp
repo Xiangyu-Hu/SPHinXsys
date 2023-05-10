@@ -1,12 +1,15 @@
 /* ---------------------------------------------------------------------------*
- *            SPHinXsys: 2D oscillation beam example-one body version           *
+ *            SPHinXsys: 2D oscillation beam example-one body test cauchy stress version           *
  * ----------------------------------------------------------------------------*
  * This is the one of the basic test cases, also the first case for            *
  * understanding SPH method for solid simulation.                              *
  * In this case, the constraint of the beam is implemented with                *
  * internal constrained subregion.                                             *
  * ----------------------------------------------------------------------------*/
-#include "sphinxsys.h"
+#include "sphinxsys.h"//SPHinXsys Library.
+#include "elastic_dynamics_cauchy.cpp"
+#include "elastic_dynamics_cauchy.h"
+
 using namespace SPH;
 //------------------------------------------------------------------------------
 // global parameters for the case
