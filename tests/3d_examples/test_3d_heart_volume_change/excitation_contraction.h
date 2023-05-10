@@ -80,12 +80,12 @@ public:
 using FiberDirectionDiffusionParticles = DiffusionReactionParticles<ElasticSolidParticles, FiberDirectionDiffusion>;
 /** Set diffusion relaxation method. */
 class DiffusionRelaxation
-	: public RelaxationOfAllDiffusionSpeciesRK2<
+	: public RelaxationOfAllDiffusionSpeciesRK2Complex<
 		  RelaxationOfAllDiffusionSpeciesInner<FiberDirectionDiffusionParticles>>
 {
 public:
 	explicit DiffusionRelaxation(InnerRelation &body_inner_relation)
-		: RelaxationOfAllDiffusionSpeciesRK2(body_inner_relation){};
+		: RelaxationOfAllDiffusionSpeciesRK2Complex(body_inner_relation){};
 	virtual ~DiffusionRelaxation(){};
 };
 /** Imposing diffusion boundary condition */
