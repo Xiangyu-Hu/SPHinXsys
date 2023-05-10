@@ -77,7 +77,7 @@ class SPHAdaptation
     Real ReferenceSmoothingLength() { return h_ref_; };
     Real MinimumSmoothingLength() { return h_ref_ / h_ratio_max_; };
     Kernel *getKernel() { return kernel_ptr_.get(); };
-    Real ReferenceNumberDensity() { return sigma0_ref_; };
+    Real LatticeNumberDensity() { return sigma0_ref_; };
     Real NumberDensityScaleFactor(Real smoothing_length_ratio);
     virtual Real SmoothingLengthRatio(size_t particle_index_i) { return 1.0; };
     void resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
@@ -90,12 +90,12 @@ class SPHAdaptation
     void resetKernel(ConstructorArgs &&...args)
     {
         kernel_ptr_.reset(new KernelType(h_ref_, std::forward<ConstructorArgs>(args)...));
-        sigma0_ref_ = computeReferenceNumberDensity(Vecd());
+        sigma0_ref_ = computeLatticeNumberDensity(Vecd());
     };
 
   protected:
-    Real computeReferenceNumberDensity(Vec2d zero);
-    Real computeReferenceNumberDensity(Vec3d zero);
+    Real computeLatticeNumberDensity(Vec2d zero);
+    Real computeLatticeNumberDensity(Vec3d zero);
     virtual Real MostRefinedSpacing(Real coarse_particle_spacing, int local_refinement_level);
     Real MostRefinedSpacingRegular(Real coarse_particle_spacing, int local_refinement_level);
 };
