@@ -147,7 +147,7 @@ Real ComputeDensityErrorInner::
     Real h_newIndex = pow(particles_->Vol_[index_rho] / Vol_newIndex, 1.0 / (Real)Dimensions);
 
     Real W0 = particle_adaptation_.getKernel()->W0(h_newIndex, ZeroVecd);
-    Real inv_sigma_0 = 1.0 / particle_adaptation_.ReferenceNumberDensity() / particle_adaptation_.NumberDensityScaleFactor(h_newIndex);
+    Real inv_sigma_i = inv_sigma0_ / particle_adaptation_.NumberDensityScaleFactor(h_newIndex);
     Real sigma_newIndex = W0;
 
     Vecd displacement = 2.0 * (position - particles_->pos_[index_rho]);
@@ -166,7 +166,7 @@ Real ComputeDensityErrorInner::
         grad_sigma += computeKernelWeightGradientBetweenParticles(h_ratio_min, displacement, Vol_j);
     }
     grad_new_indices_.push_back(grad_sigma);
-    sigma_newIndex = sigma_newIndex * rho0_ * inv_sigma_0;
+    sigma_newIndex = sigma_newIndex * rho0_ * inv_sigma_i;
     return sigma_newIndex;
 }
 //=================================================================================================//
@@ -182,7 +182,7 @@ void ComputeDensityErrorInner::
         Real h_ratio_j = h_ratio_[neighborhood.j_[k]];
         Vecd pos_j = particles_->pos_[neighborhood.j_[k]];
         Real Vol_j = particles_->mass_[neighborhood.j_[k]] / rho0_;
-        Real inv_sigma_j = 1.0 / particle_adaptation_.ReferenceNumberDensity() / particle_adaptation_.NumberDensityScaleFactor(h_newIndex);
+        Real inv_sigma_j = inv_sigma0_ / particle_adaptation_.NumberDensityScaleFactor(h_newIndex);
         Real sigma_split_j = 0.0;
 
         for (size_t n = 0; n != original_indices.size(); ++n)
@@ -262,7 +262,7 @@ Real ComputeDensityErrorWithWall::
     Real Vol_newIndex = particles_->Vol_[index_rho] / 2.0;
     Real h_newIndex = pow(particles_->Vol_[index_rho] / Vol_newIndex, 1.0 / (Real)Dimensions);
 
-    Real inv_sigma_0 = 1.0 / particle_adaptation_.ReferenceNumberDensity() / particle_adaptation_.NumberDensityScaleFactor(h_newIndex);
+    Real inv_sigma_i = inv_sigma0_ / particle_adaptation_.NumberDensityScaleFactor(h_newIndex);
     ;
     Real sigma_inner = ComputeDensityErrorInner::computeNewGeneratedParticleDensity(index_rho, position);
     Vecd grad_sigma = Vecd::Zero();
@@ -281,7 +281,7 @@ Real ComputeDensityErrorWithWall::
         }
     }
     grad_new_indices_[grad_new_indices_.size() - 1] += grad_sigma;
-    sigma_newIndex = sigma_newIndex * rho0_ * inv_sigma_0 + sigma_inner;
+    sigma_newIndex = sigma_newIndex * rho0_ * inv_sigma_i + sigma_inner;
     return sigma_newIndex;
 }
 //=================================================================================================//

@@ -75,7 +75,7 @@ namespace SPH
 
 		protected:
 			StdLargeVec<Real> &rho_, &rho_sum_, &mass_;
-			Real rho0_;
+			Real rho0_, inv_sigma0_;
 		};
 
 		/**
