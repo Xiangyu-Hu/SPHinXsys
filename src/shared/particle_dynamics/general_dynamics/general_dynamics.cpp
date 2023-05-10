@@ -10,7 +10,7 @@ namespace SPH
 	//=================================================================================================//
 	void TimeStepInitialization::update(size_t index_i, Real dt)
 	{
-		acc_prior_[index_i] = gravity_->InducedAcceleration(pos_[index_i]);
+        TimeStepInitializationKernel::update(index_i, dt, acc_prior_.data(), pos_.data(), *gravity_);
 	}
 	//=================================================================================================//
 	RandomizeParticlePosition::RandomizeParticlePosition(SPHBody &sph_body)
