@@ -42,9 +42,12 @@ namespace SPH
 
         class ParallelUnsequencedPolicy {};
 
+        class ParallelSYCLDevicePolicy {};
+
         inline constexpr auto seq = SequencedPolicy{};
         inline constexpr auto unseq = UnsequencedPolicy{};
         inline constexpr auto par = ParallelPolicy{};
+        inline constexpr auto par_sycl = ParallelSYCLDevicePolicy{};
         inline constexpr auto par_unseq = ParallelUnsequencedPolicy{};
     }
 }

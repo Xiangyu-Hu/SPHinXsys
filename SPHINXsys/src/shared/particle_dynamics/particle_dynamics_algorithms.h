@@ -94,14 +94,14 @@ namespace SPH
 	 * @class SimpleDynamics
 	 * @brief Simple particle dynamics without considering particle interaction
 	 */
-	template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
+	template <class LocalDynamicsType, class Proxy = NoProxy<LocalDynamicsType>, class ExecutionPolicy = ParallelPolicy>
 	class SimpleDynamics : public LocalDynamicsType, public BaseDynamics<void>
 	{
 	public:
 		template <class DynamicsIdentifier, typename... Args>
 		SimpleDynamics(DynamicsIdentifier &identifier, Args &&...args)
 			: LocalDynamicsType(identifier, std::forward<Args>(args)...),
-			  BaseDynamics<void>(identifier.getSPHBody())
+			  BaseDynamics<void>(identifier.getSPHBody()), proxy(this)
 		{
 			static_assert(!has_initialize<LocalDynamicsType>::value &&
 							  !has_interaction<LocalDynamicsType>::value,
@@ -113,11 +113,29 @@ namespace SPH
 		{
 			this->setUpdated();
 			this->setupDynamics(dt);
-			particle_for(ExecutionPolicy(),
+            auto executionPolicy = ExecutionPolicy();
+            proxy.copy_memory(executionPolicy);
+            auto& runner = *(proxy.get(executionPolicy));
+            if constexpr (std::is_same_v<ExecutionPolicy, ParallelSYCLDevicePolicy>)
+			    particle_for(executionPolicy,
 						 this->identifier_.LoopRange(),
-						 [&](size_t i)
-						 { this->update(i, dt); });
+						 [&]<typename Runner, typename ...MemoryAccess>(size_t i, Runner kernel, MemoryAccess ...args)
+						 { kernel.update(i, dt, std::forward<MemoryAccess>(args)...); },
+                         [&](sycl::handler& cgh) {
+                             proxy.get_memory_access(Context<ExecutionPolicy>(cgh),
+                                                                          executionPolicy);
+                             return std::make_tuple(runner);
+                         });
+            else
+                particle_for(executionPolicy,
+                             this->identifier_.LoopRange(),
+                             [&](size_t i)
+                             { this->update(i, dt); });
+            proxy.copy_back(executionPolicy);
 		};
+
+    private:
+        Proxy proxy;
 	};
 
 	/**

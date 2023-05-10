@@ -35,6 +35,7 @@
 #include "external_force.h"
 
 #include <limits>
+#include <tuple>
 
 namespace SPH
 {
@@ -54,12 +55,91 @@ namespace SPH
 
 	protected:
 		Gravity *gravity_;
+        Gravity::Proxy gravityProxy_;
 
 	public:
 		BaseTimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> &gravity_ptr)
-			: LocalDynamics(sph_body), gravity_(gravity_ptr_keeper_.assignPtr(gravity_ptr)){};
+			: LocalDynamics(sph_body), gravity_(gravity_ptr_keeper_.assignPtr(gravity_ptr)), gravityProxy_(gravity_){};
 		virtual ~BaseTimeStepInitialization(){};
 	};
+
+
+    class TimeStepInitializationKernel {
+    public:
+        template<class AccPriorType, class PosType, class GravityType>
+        static void update(size_t index_i, Real dt, AccPriorType acc_prior, PosType pos, GravityType gravity)
+        {
+            acc_prior[index_i] = gravity.InducedAcceleration(pos[index_i]);
+        }
+
+        void update(size_t index_i, Real dt)
+        {
+            update(index_i, dt, acc_prior_accessor, pos_accessor, gravity_);
+        }
+
+        void setAccessors(const std::tuple<sycl::accessor<Vecd, 1, sycl::access_mode::write>,
+                sycl::accessor<Vecd, 1, sycl::access_mode::write>, GravityKernel> &arguments) {
+            acc_prior_accessor = std::get<0>(arguments);
+            pos_accessor = std::get<1>(arguments);
+            gravity_ = std::get<2>(arguments);
+        }
+
+    private:
+        sycl::accessor<Vecd, 1, sycl::access_mode::write> acc_prior_accessor;
+        sycl::accessor<Vecd, 1, sycl::access_mode::write> pos_accessor;
+        GravityKernel gravity_;
+    };
+
+
+    template<class TimeStepInitializationType>
+    class TimeStepInitializationProxy :
+            public ExecutionProxy<TimeStepInitializationType, TimeStepInitializationKernel> {
+    public:
+        explicit TimeStepInitializationProxy(TimeStepInitializationType *base)
+                : ExecutionProxy<TimeStepInitializationType, TimeStepInitializationKernel>(
+                        base, new TimeStepInitializationKernel()) {}
+
+        ~TimeStepInitializationProxy() {
+            delete this->kernel;
+        }
+
+        template<class ExecutionPolicy>
+        auto get_memory_access(const Context<ExecutionPolicy>& context, const ExecutionPolicy&) {
+            if constexpr (std::is_same_v<ExecutionPolicy, ParallelSYCLDevicePolicy>) {
+                gravityProxy_->get_memory_access(Context<ParallelSYCLDevicePolicy>(context.cgh), par_sycl);
+                auto memory_access = std::tuple_cat(std::make_tuple(
+                        acc_prior_buffer->get_access(context.cgh, sycl::write_only),
+                        pos_buffer->get_access(context.cgh, sycl::write_only)
+                        ), std::make_tuple(*gravityProxy_->get(par_sycl)));
+                this->kernel->setAccessors(memory_access);
+                return memory_access;
+            }
+        }
+
+    protected:
+        void copy_memory_to_device() override {
+            acc_prior_buffer = std::make_unique<sycl::buffer<Vecd, 1>>(
+                    this->base->acc_prior_.data(), this->base->acc_prior_.size());
+
+            pos_buffer = std::make_unique<sycl::buffer<Vecd, 1>>(
+                    this->base->pos_.data(), this->base->pos_.size());
+
+            gravityProxy_ = std::make_unique<Gravity::Proxy>(this->base->gravity_);
+            gravityProxy_->copy_memory(par_sycl);
+        }
+
+        void copy_back_from_device() override {
+            acc_prior_buffer.reset();
+            pos_buffer.reset();
+            gravityProxy_->copy_back(par_sycl);
+        }
+
+    private:
+        std::unique_ptr<sycl::buffer<Vecd, 1>> acc_prior_buffer;
+        std::unique_ptr<sycl::buffer<Vecd, 1>> pos_buffer;
+        std::unique_ptr<Gravity::Proxy> gravityProxy_;
+    };
+
 
 	/**
 	 * @class TimeStepInitialization
@@ -77,6 +157,9 @@ namespace SPH
 		virtual ~TimeStepInitialization(){};
 
 		void update(size_t index_i, Real dt = 0.0);
+
+        using Proxy = TimeStepInitializationProxy<TimeStepInitialization>;
+        friend Proxy;
 	};
 
 	/**

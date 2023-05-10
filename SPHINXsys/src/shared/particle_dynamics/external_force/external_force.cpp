@@ -10,7 +10,7 @@ namespace SPH {
 	//=================================================================================================//
 	Vecd Gravity::InducedAcceleration(Vecd& position)
 	{
-		return global_acceleration_;
+        return GravityKernel::InducedAcceleration(position, global_acceleration_);
 	}
 	//=================================================================================================//
 	Real Gravity::getPotential(Vecd& position)
