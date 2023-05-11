@@ -35,6 +35,7 @@ Here, we present several short examples in flow, solid dynamics, fluid structure
 <img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/half-sphere.gif" height="192px"></a>
 <a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/3d_examples/test_3d_twisting_column/twisting_column.cpp"> 
 <img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/twisting.gif" height="168px"></a>
+
 ## Journal publications
 
 Main Reference:
@@ -78,6 +79,11 @@ Volume 236, (2021) 109540
 10. Yujie Zhu, Chi Zhang, Xiangyu Hu, "A dynamic relaxation method with operator splitting and random-choice strategy for SPH", Journal of Computational Physics, 458,
 111105, 2022.
 
+11. Dong Wu, Chi Zhang, Xiaojing Tang, Xiangyu Hu, "An essentially non-hourglass formulation for total Lagrangian smoothed particle hydrodynamics", Computer Methods in Applied Mechanics and Engineering, 407, 115915, 2023.
+
+12. Chi Zhang, Hao Gao, Xiangyu Hu, "A multi-order smoothed particle hydrodynamics method for cardiac electromechanics with the Purkinje network", Computer Methods in Applied Mechanics and Engineering, 407, 115885, 2023.
+
+13. Yongchuan Yu, Yujie Zhu, Chi Zhang, Oskar J. Haidn, Xiangyu Hu, "Level-set based pre-processing techniques for particle method", Computer Physics Communications 289, 108744, 2023.
 
 ## Software Architecture
 
