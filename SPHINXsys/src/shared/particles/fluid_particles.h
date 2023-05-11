@@ -49,7 +49,7 @@ namespace SPH
 	public:
 		StdLargeVec<Real> p_;				 /**< pressure */
 		StdLargeVec<Real> drho_dt_;			 /**< density change rate */
-		StdLargeVec<Real> rho_sum_;			 /**< number density */
+		StdLargeVec<Real> rho_sum_;			 /**< density by particle summation */
 		StdLargeVec<int> surface_indicator_; /**< free surface indicator */
 		Fluid &fluid_;
 
