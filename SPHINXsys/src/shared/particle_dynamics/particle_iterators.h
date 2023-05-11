@@ -257,7 +257,7 @@ namespace SPH
 	 */
 	template <class ReturnType, typename Operation, class LocalDynamicsFunction>
 	inline ReturnType particle_reduce(const SequencedPolicy &seq, const size_t &all_real_particles,
-									  ReturnType temp, Operation &operation,
+									  ReturnType temp, Operation &&operation,
 									  const LocalDynamicsFunction &local_dynamics_function)
 	{
 		for (size_t i = 0; i < all_real_particles; ++i)
@@ -269,7 +269,7 @@ namespace SPH
 
 	template <class ReturnType, typename Operation, class LocalDynamicsFunction>
 	inline ReturnType particle_reduce(const ParallelPolicy &par, const size_t &all_real_particles,
-									  ReturnType temp, Operation &operation,
+									  ReturnType temp, Operation &&operation,
 									  const LocalDynamicsFunction &local_dynamics_function)
 	{
 		return parallel_reduce(
@@ -291,7 +291,7 @@ namespace SPH
 	 */
 	template <class ReturnType, typename Operation, class LocalDynamicsFunction>
 	inline ReturnType particle_reduce(const SequencedPolicy &seq, const IndexVector &body_part_particles,
-									  ReturnType temp, Operation &operation,
+									  ReturnType temp, Operation &&operation,
 									  const LocalDynamicsFunction &local_dynamics_function)
 	{
 		for (size_t i = 0; i < body_part_particles.size(); ++i)
@@ -303,7 +303,7 @@ namespace SPH
 
 	template <class ReturnType, typename Operation, class LocalDynamicsFunction>
 	inline ReturnType particle_reduce(const ParallelPolicy &par, const IndexVector &body_part_particles,
-									  ReturnType temp, Operation &operation,
+									  ReturnType temp, Operation &&operation,
 									  const LocalDynamicsFunction &local_dynamics_function)
 	{
 		return parallel_reduce(
@@ -327,7 +327,7 @@ namespace SPH
 	 */
 	template <class ReturnType, typename Operation, class LocalDynamicsFunction>
 	inline ReturnType particle_reduce(const SequencedPolicy &seq, const ConcurrentCellLists &body_part_cells,
-									  ReturnType temp, Operation &operation,
+									  ReturnType temp, Operation &&operation,
 									  const LocalDynamicsFunction &local_dynamics_function)
 	{
 		for (size_t i = 0; i != body_part_cells.size(); ++i)
@@ -344,7 +344,7 @@ namespace SPH
 
 	template <class ReturnType, typename Operation, class LocalDynamicsFunction>
 	inline ReturnType particle_reduce(const ParallelPolicy &par, const ConcurrentCellLists &body_part_cells,
-									  ReturnType temp, Operation &operation,
+									  ReturnType temp, Operation &&operation,
 									  const LocalDynamicsFunction &local_dynamics_function)
 	{
 		return parallel_reduce(
