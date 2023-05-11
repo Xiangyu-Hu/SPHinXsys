@@ -63,6 +63,7 @@ namespace SPH
 		UniquePtr<Kernel> kernel_ptr_; /**< unique pointer of kernel function owned this class */
 		Real sigma0_ref_;			   /**< Reference number density dependent on h_spacing_ratio_ and kernel function */
 		Real spacing_min_;			   /**< minimum particle spacing determined by local refinement level */
+		Real Vol_min_;				   /**< minimum particle volume measure determined by local refinement level */
 		Real h_ratio_max_;			   /**< the ratio between the reference smoothing length to the minimum smoothing length */
 
 	public:
@@ -78,8 +79,8 @@ namespace SPH
 		Kernel *getKernel() { return kernel_ptr_.get(); };
 		Real ReferenceNumberDensity(Real smoothing_length_ratio = 1.0);
 		virtual Real SmoothingLengthRatio(size_t particle_index_i) { return 1.0; };
-		virtual void resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
-		virtual void registerAdaptationVariables(BaseParticles &base_particles) {};
+		void resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
+		virtual void registerAdaptationVariables(BaseParticles &base_particles){};
 
 		virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, RealBody &real_body);
 		virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio);
@@ -94,7 +95,8 @@ namespace SPH
 	protected:
 		Real computeReferenceNumberDensity(Vec2d zero);
 		Real computeReferenceNumberDensity(Vec3d zero);
-		virtual Real MostRefinedSpacing(Real coarse_particle_spacing, int refinement_level);
+		virtual Real MostRefinedSpacing(Real coarse_particle_spacing, int local_refinement_level);
+		Real MostRefinedSpacingRegular(Real coarse_particle_spacing, int local_refinement_level);
 	};
 
 	/**
@@ -188,7 +190,6 @@ namespace SPH
 		ParticleSplitAndMerge(SPHBody &sph_body, Real h_spacing_ratio_,
 							  Real system_resolution_ratio, int local_refinement_level);
 		virtual ~ParticleSplitAndMerge(){};
-		void resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0) override;
 
 		virtual bool isSplitAllowed(Real current_volume);
 		virtual bool mergeResolutionCheck(Real volume);
@@ -197,10 +198,10 @@ namespace SPH
 
 	protected:
 		Real minimum_volume_;
-		Real maximum_volume_;
 
 		virtual Real MostRefinedSpacing(Real coarse_particle_spacing, int local_refinement_level) override;
 		virtual size_t getCellLinkedListTotalLevel() override;
+		Real MostRefinedSpacingSplitting(Real coarse_particle_spacing, int local_refinement_level);
 	};
 }
 #endif // ADAPTATION_H

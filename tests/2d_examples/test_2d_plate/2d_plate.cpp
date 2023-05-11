@@ -194,7 +194,7 @@ int main()
 	}
 	else
 	{
-		write_plate_max_displacement.newResultTest();
+		write_plate_max_displacement.testResult();
 	}
 	return 0;
 }

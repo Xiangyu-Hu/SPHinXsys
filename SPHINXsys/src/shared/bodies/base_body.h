@@ -159,10 +159,16 @@ namespace SPH
 			base_particles_->template addVariableToWrite<VariableType>(variable_name);
 		};
 
-		template <class DerivedVariableMethod>
-		void addDerivedBodyStateForRecording()
+		template <class DerivedVariableMethod,typename... Args>
+		void addDerivedBodyStateForRecording(Args&&... args)
 		{
-			base_particles_->template addDerivedVariableToWrite<DerivedVariableMethod>();
+			base_particles_->template addDerivedVariableToWrite<DerivedVariableMethod>(std::forward<Args>(args)...);
+		};
+
+        template <class DerivedVariableMethod,typename... Args>
+		void addDerivedBodyState(Args&&... args)
+		{
+			base_particles_->template addDerivedVariable<DerivedVariableMethod>(std::forward<Args>(args)...);
 		};
 
 		virtual void writeParticlesToVtuFile(std::ostream &output_file);
@@ -204,7 +210,7 @@ namespace SPH
 			  cell_linked_list_created_(false)
 		{
 			this->getSPHSystem().real_bodies_.push_back(this);
-			size_t number_of_split_cell_lists = pow(3, Vecd::Zero().size());
+			size_t number_of_split_cell_lists = pow(3, Dimensions);
 			split_cell_lists_.resize(number_of_split_cell_lists);
 		};
 		virtual ~RealBody(){};

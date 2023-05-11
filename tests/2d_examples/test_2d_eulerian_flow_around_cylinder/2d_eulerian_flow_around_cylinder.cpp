@@ -259,7 +259,7 @@ int main(int ac, char *av[])
 	}
 	else
 	{
-		write_total_viscous_force_on_inserted_body.newResultTest();
+		write_total_viscous_force_on_inserted_body.testResult();
 	}
 
 	return 0;

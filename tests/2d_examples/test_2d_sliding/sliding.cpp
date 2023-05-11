@@ -202,7 +202,7 @@ int main(int ac, char *av[])
 	}
 	else
 	{
-	write_free_cube_displacement.newResultTest();
+	write_free_cube_displacement.testResult();
 	}
 
 	return 0;

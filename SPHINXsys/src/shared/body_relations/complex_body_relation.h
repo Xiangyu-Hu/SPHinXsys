@@ -54,7 +54,7 @@ namespace SPH
 		BaseContactRelation &getContactRelation() { return contact_relation_; };
 		RealBodyVector contact_bodies_;
 		ParticleConfiguration &inner_configuration_;
-		ContactParticleConfiguration &contact_configuration_;
+		StdVec<ParticleConfiguration> &contact_configuration_;
 
 		ComplexRelation(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation);
 		ComplexRelation(RealBody &real_body, RealBodyVector contact_bodies);
@@ -62,7 +62,7 @@ namespace SPH
 		ComplexRelation(RealBody &real_body, BodyPartVector contact_body_parts);
 		virtual ~ComplexRelation(){};
 
-		virtual void updateConfigurationMemories() override;
+		virtual void resizeConfiguration() override;
 		virtual void updateConfiguration() override;
 	};
 }

@@ -193,7 +193,7 @@ namespace SPH
 		virtual ~MultilevelMesh(){};
 
 	private:
-		UniquePtrKeepers<CoarsestMeshType> mesh_level_ptr_vector_keeper_;
+		UniquePtrsKeeper<CoarsestMeshType> mesh_level_ptr_vector_keeper_;
 
 	protected:
 		size_t total_levels_;					 /**< level 0 is the coarsest */

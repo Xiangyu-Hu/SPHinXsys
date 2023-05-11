@@ -246,8 +246,8 @@ int main(int ac, char *av[])
 
 	/*	if (sph_system.RestartStep() == 0)
 		{
-			write_water_mechanical_energy.newResultTest();
-			write_recorded_water_pressure.newResultTest();
+			write_water_mechanical_energy.testResult();
+			write_recorded_water_pressure.testResult();
 		} */
 
 	return 0;
