@@ -62,16 +62,19 @@ const int number_of_particles = 10;
 const Real resolution_ref = diameter / number_of_particles;
 const Real inflow_length = resolution_ref * 20.0; // Inflow region
 const Real wall_thickness = resolution_ref * 4.0;
-const Real shell_thickness = resolution_ref * 1.0;
+const Real shell_thickness = resolution_ref * 2.0;
 const int simtk_resolution = 20;
-const Vec3d translation_fluid(0.,full_length*0.5,0.);
+const Vec3d translation_fluid(0., full_length * 0.5, 0.);
 /**
  * @brief Geometry parameters for shell.
  */
-const Real radius_mid_surface = fluid_radius + shell_thickness; 
-const int particle_number_mid_surface = int(2.0 * radius_mid_surface * Pi / resolution_ref);
-const int particle_number_height = 2 * int( (full_length*0.5 + wall_thickness) / resolution_ref);
-const int BWD = 1; /** Width of the boundary layer measured by number of particles. */
+const Real radius_mid_surface = fluid_radius + shell_thickness * 0.5;
+const int particle_number_mid_surface =
+    int(2.0 * radius_mid_surface * Pi / resolution_ref);
+const int particle_number_height =
+    2 * int((full_length * 0.5 + wall_thickness) / resolution_ref);
+const int BWD =
+    1; /** Width of the boundary layer measured by number of particles. */
 
 /**
  * @brief Geometry parameters for boundary condition.
