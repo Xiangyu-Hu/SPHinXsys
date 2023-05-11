@@ -85,7 +85,8 @@ To install the *shared* versions, do the following:
         boost-program-options:x64-linux-dynamic \
         boost-geometry:x64-linux-dynamic        \
         simbody:x64-linux-dynamic               \
-        gtest:x64-linux-dynamic
+        gtest:x64-linux-dynamic                 \
+        pybind11:x64-linux-dynamic  
     cd ..
 
 Otherwise, please refer to the official `vcpkg documentation <https://vcpkg.io/en/docs/examples/overlay-triplets-linux-dynamic.html>`_
