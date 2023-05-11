@@ -41,12 +41,9 @@ namespace SPH
 {
 	using namespace execution;
 
-    using DefaultMemoryAccessFunctionType = std::function<void()>;
-
-	template <class ExecutionPolicy, typename DynamicsRange, class LocalDynamicsFunction, class MemoryAccessFunction = DefaultMemoryAccessFunctionType>
+	template <class ExecutionPolicy, typename DynamicsRange, class LocalDynamicsFunction>
 	void particle_for(const ExecutionPolicy &execution_policy, const DynamicsRange &dynamics_range,
-					  const LocalDynamicsFunction &local_dynamics_function,
-                      const MemoryAccessFunction& memory_access_function = [](){})
+					  const LocalDynamicsFunction &local_dynamics_function)
 	{
 		std::cout << "\n Error: ExecutionPolicy, DynamicsRange or LocalDynamicsFunction not defined for particle dynamics !" << std::endl;
 		std::cout << __FILE__ << ':' << __LINE__ << std::endl;
@@ -57,19 +54,17 @@ namespace SPH
 	 * Body-wise iterators (for sequential and parallel computing).
 	 */
 
-	template <class LocalDynamicsFunction, class MemoryAccessFunction = DefaultMemoryAccessFunctionType>
+	template <class LocalDynamicsFunction>
 	inline void particle_for(const SequencedPolicy &seq, const size_t &all_real_particles,
-							 const LocalDynamicsFunction &local_dynamics_function,
-                             const MemoryAccessFunction& memory_access_function = [](){})
+							 const LocalDynamicsFunction &local_dynamics_function)
 	{
 		for (size_t i = 0; i < all_real_particles; ++i)
 			local_dynamics_function(i);
 	};
 
-	template <class LocalDynamicsFunction, class MemoryAccessFunction = DefaultMemoryAccessFunctionType>
+	template <class LocalDynamicsFunction>
 	inline void particle_for(const ParallelPolicy &par, const size_t &all_real_particles,
-							 const LocalDynamicsFunction &local_dynamics_function,
-                             const MemoryAccessFunction& memory_access_function = [](){})
+							 const LocalDynamicsFunction &local_dynamics_function)
 	{
 		parallel_for(
 			IndexRange(0, all_real_particles),
@@ -82,22 +77,38 @@ namespace SPH
 			},
 			ap);
 	};
+
+    template <class LocalDynamicsFunction, class Proxy>
+    inline void particle_for(const ParallelPolicy &par_policy, const size_t &all_real_particles,
+                             const LocalDynamicsFunction &local_dynamics_function, Proxy& proxy)
+    {
+        auto& kernel = *proxy.get(par_policy);
+        parallel_for(
+                IndexRange(0, all_real_particles),
+                [&](const IndexRange &r)
+                {
+                    for (size_t i = r.begin(); i < r.end(); ++i)
+                    {
+                        local_dynamics_function(i, kernel);
+                    }
+                },
+                ap);
+    }
+
 	/**
 	 * Bodypart By Particle-wise iterators (for sequential and parallel computing).
 	 */
-	template <class LocalDynamicsFunction, class MemoryAccessFunction = DefaultMemoryAccessFunctionType>
+	template <class LocalDynamicsFunction>
 	inline void particle_for(const SequencedPolicy &seq, const IndexVector &body_part_particles,
-							 const LocalDynamicsFunction &local_dynamics_function,
-                             const MemoryAccessFunction& memory_access_function = [](){})
+							 const LocalDynamicsFunction &local_dynamics_function)
 	{
 		for (size_t i = 0; i < body_part_particles.size(); ++i)
 			local_dynamics_function(body_part_particles[i]);
 	};
 
-	template <class LocalDynamicsFunction, class MemoryAccessFunction = DefaultMemoryAccessFunctionType>
+	template <class LocalDynamicsFunction>
 	inline void particle_for(const ParallelPolicy &par, const IndexVector &body_part_particles,
-							 const LocalDynamicsFunction &local_dynamics_function,
-                             const MemoryAccessFunction& memory_access_function = [](){})
+							 const LocalDynamicsFunction &local_dynamics_function)
 	{
 		parallel_for(
 			IndexRange(0, body_part_particles.size()),
@@ -113,10 +124,9 @@ namespace SPH
 	/**
 	 * Bodypart By Cell-wise iterators (for sequential and parallel computing).
 	 */
-	template <class LocalDynamicsFunction, class MemoryAccessFunction = DefaultMemoryAccessFunctionType>
+	template <class LocalDynamicsFunction>
 	inline void particle_for(const SequencedPolicy &seq, const ConcurrentCellLists &body_part_cells,
-							 const LocalDynamicsFunction &local_dynamics_function,
-                             const MemoryAccessFunction& memory_access_function = [](){})
+							 const LocalDynamicsFunction &local_dynamics_function)
 	{
 		for (size_t i = 0; i != body_part_cells.size(); ++i)
 		{
@@ -128,10 +138,9 @@ namespace SPH
 		}
 	}
 
-	template <class LocalDynamicsFunction, class MemoryAccessFunction = DefaultMemoryAccessFunctionType>
+	template <class LocalDynamicsFunction>
 	inline void particle_for(const ParallelPolicy &par, const ConcurrentCellLists &body_part_cells,
-							 const LocalDynamicsFunction &local_dynamics_function,
-                             const MemoryAccessFunction& memory_access_function = [](){})
+							 const LocalDynamicsFunction &local_dynamics_function)
 	{
 		parallel_for(
 			IndexRange(0, body_part_cells.size()),
@@ -148,19 +157,40 @@ namespace SPH
 			},
 			ap);
 	};
+
+    template <class LocalDynamicsFunction, class Proxy>
+    inline void particle_for(const ParallelPolicy &par_policy, const ConcurrentCellLists &body_part_cells,
+                             const LocalDynamicsFunction &local_dynamics_function, Proxy& proxy)
+    {
+        auto& kernel = *proxy.get(par_policy);
+        parallel_for(
+                IndexRange(0, body_part_cells.size()),
+                [&](const IndexRange &r)
+                {
+                    for (size_t i = r.begin(); i < r.end(); ++i)
+                    {
+                        ConcurrentIndexVector &particle_indexes = *body_part_cells[i];
+                        for (size_t num = 0; num < particle_indexes.size(); ++num)
+                        {
+                            local_dynamics_function(particle_indexes[num], kernel);
+                        }
+                    }
+                },
+                ap);
+    }
+
 	/**
 	 * BodypartByCell-wise iterators on cells (for sequential and parallel computing).
 	 */
-	template <class LocalDynamicsFunction, class MemoryAccessFunction = DefaultMemoryAccessFunctionType>
+	template <class LocalDynamicsFunction>
 	inline void particle_for(const SequencedPolicy &seq, const DataListsInCells &body_part_cells,
-							 const LocalDynamicsFunction &local_dynamics_function,
-                             const MemoryAccessFunction& memory_access_function = [](){})
+							 const LocalDynamicsFunction &local_dynamics_function)
 	{
 		for (size_t i = 0; i != body_part_cells.size(); ++i)
 			local_dynamics_function(body_part_cells[i]);
 	};
 
-	template <class LocalDynamicsFunction, class MemoryAccessFunction = DefaultMemoryAccessFunctionType>
+	template <class LocalDynamicsFunction>
 	inline void particle_for(const ParallelPolicy &par, const DataListsInCells &body_part_cells,
 							 const LocalDynamicsFunction &local_dynamics_function)
 	{
@@ -178,10 +208,9 @@ namespace SPH
 	/**
 	 * Splitting algorithm (for sequential and parallel computing).
 	 */
-	template <class LocalDynamicsFunction, class MemoryAccessFunction = DefaultMemoryAccessFunctionType>
+	template <class LocalDynamicsFunction>
 	inline void particle_for(const SequencedPolicy &seq, const SplitCellLists &split_cell_lists,
-							 const LocalDynamicsFunction &local_dynamics_function,
-                             const MemoryAccessFunction& memory_access_function = [](){})
+							 const LocalDynamicsFunction &local_dynamics_function)
 	{
 		// forward sweeping
 		for (size_t k = 0; k != split_cell_lists.size(); ++k)
@@ -212,10 +241,9 @@ namespace SPH
 		}
 	}
 
-	template <class LocalDynamicsFunction, class MemoryAccessFunction = DefaultMemoryAccessFunctionType>
+	template <class LocalDynamicsFunction>
 	inline void particle_for(const ParallelPolicy &par, const SplitCellLists &split_cell_lists,
-							 const LocalDynamicsFunction &local_dynamics_function,
-                             const MemoryAccessFunction& memory_access_function = [](){})
+							 const LocalDynamicsFunction &local_dynamics_function)
 	{
 		// forward sweeping
 		for (size_t k = 0; k != split_cell_lists.size(); ++k)
@@ -258,19 +286,18 @@ namespace SPH
 		}
 	}
 
-    template <class LocalDynamicsFunction, class MemoryAccessFunction>
-    inline void particle_for(const ParallelSYCLDevicePolicy &, const size_t &all_real_particles,
-                             const LocalDynamicsFunction &local_dynamics_function,
-                             const MemoryAccessFunction &memory_access_function)
+    template <class LocalDynamicsFunction, class Proxy>
+    inline void particle_for(const ParallelSYCLDevicePolicy & sycl_policy, const size_t &all_real_particles,
+                             const LocalDynamicsFunction &local_dynamics_function, Proxy& proxy)
     {
         try {
             auto &sycl_queue = ExecutionQueue::getQueue();
+            auto& kernel = *proxy.get(sycl_policy);
             sycl_queue.submit([&](sycl::handler &cgh) {
-                auto mem_acc = memory_access_function(cgh);
+                proxy.get_memory_access(Context<ParallelSYCLDevicePolicy>(cgh), sycl_policy);
                 cgh.parallel_for(all_real_particles, [=](sycl::item<1> index) {
                     auto i = index.get_id();
-                    std::apply(local_dynamics_function,
-                               std::tuple_cat(std::make_tuple(i), mem_acc));
+                    std::apply(local_dynamics_function, std::make_tuple(i, kernel));
                 });
             });
             sycl_queue.wait_and_throw();

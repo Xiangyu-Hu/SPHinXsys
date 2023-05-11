@@ -16,11 +16,11 @@ namespace SPH {
 
             template<class ExecutionPolicy = ParallelPolicy>
             BaseT* get(const ExecutionPolicy& = par,
-                       std::enable_if_t<std::negation_v<std::is_same<ExecutionPolicy, ParallelSYCLDevicePolicy>>>* = nullptr) {
+                       std::enable_if_t<std::negation_v<std::is_same<ExecutionPolicy, ParallelSYCLDevicePolicy>>>* = nullptr) const {
                 return base;
             }
 
-            KernelT* get(const ParallelSYCLDevicePolicy&) {
+            KernelT* get(const ParallelSYCLDevicePolicy&) const {
                 return kernel;
             }
 

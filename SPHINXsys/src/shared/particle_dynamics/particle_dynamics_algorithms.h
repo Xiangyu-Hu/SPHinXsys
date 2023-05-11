@@ -53,6 +53,7 @@
 #include "particle_iterators.h"
 #include "base_local_dynamics.h"
 #include "base_particle_dynamics.hpp"
+#include "execution_argument.hpp"
 
 #include <type_traits>
 
@@ -115,22 +116,11 @@ namespace SPH
 			this->setupDynamics(dt);
             auto executionPolicy = ExecutionPolicy();
             proxy.copy_memory(executionPolicy);
-            auto& runner = *(proxy.get(executionPolicy));
-            if constexpr (std::is_same_v<ExecutionPolicy, ParallelSYCLDevicePolicy>)
-			    particle_for(executionPolicy,
-						 this->identifier_.LoopRange(),
-						 [&]<typename Runner, typename ...MemoryAccess>(size_t i, Runner kernel, MemoryAccess ...args)
-						 { kernel.update(i, dt, std::forward<MemoryAccess>(args)...); },
-                         [&](sycl::handler& cgh) {
-                             proxy.get_memory_access(Context<ExecutionPolicy>(cgh),
-                                                                          executionPolicy);
-                             return std::make_tuple(runner);
-                         });
-            else
-                particle_for(executionPolicy,
-                             this->identifier_.LoopRange(),
-                             [&](size_t i)
-                             { this->update(i, dt); });
+            particle_for(executionPolicy,
+                         this->identifier_.LoopRange(),
+                         [=](size_t i, auto&& kernel)
+                         { kernel.update(i, dt); },
+                         proxy);
             proxy.copy_back(executionPolicy);
 		};
 
