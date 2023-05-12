@@ -107,7 +107,7 @@ const Real mu_f = 6.5e-3;   /**< Viscosity. */
 const Real Re = 10;
 // const Real U_f = 30.0e-6 / 60. / (M_PI / 4.0 * diameter * diameter); /**<
 // Characteristic velocity. Average velocity */
-const Real U_f = Re / diameter * mu_f;
+const Real U_f = Re / diameter * mu_f * 0.5;
 const Real U_max = 2.0 * U_f;  // parabolic inflow, Thus U_max = 2*U_f
 const Real c_f = 10.0 * U_max; /**< Reference sound speed. */
 /**
