@@ -341,11 +341,11 @@ int main() {
         dt = SMIN(get_fluid_time_step_size.parallel_exec(),
                   Dt - relaxation_time);
         pressure_relaxation.parallel_exec(dt);
-        emitter_buffer_inflow_condition.parallel_exec();
         density_relaxation.parallel_exec(dt);
         relaxation_time += dt;
         integration_time += dt;
         GlobalStaticVariables::physical_time_ += dt;
+        emitter_buffer_inflow_condition.parallel_exec();
       }
       interval_computing_pressure_relaxation +=
           tick_count::now() - time_instance;
