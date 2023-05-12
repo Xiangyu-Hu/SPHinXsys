@@ -6,11 +6,11 @@ namespace SPH
 	//=================================================================================================//
 	namespace granular_dynamics
 	{
-		GranularInitialCondition::GranularInitialCondition(SPHBody &sph_body)
-		: LocalDynamics(sph_body), GranularDataSimple(sph_body),
-		pos_(particles_->pos_), vel_(particles_->vel_){}
+		GranularInitialCondition::GranularInitialCondition(SPHBody& sph_body)
+			: LocalDynamics(sph_body), GranularDataSimple(sph_body),
+			pos_(particles_->pos_), vel_(particles_->vel_) {}
 		//=================================================================================================//
-		GranularAcousticTimeStepSize::GranularAcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL)
+		GranularAcousticTimeStepSize::GranularAcousticTimeStepSize(SPHBody& sph_body, Real acousticCFL)
 			: fluid_dynamics::AcousticTimeStepSize(sph_body, acousticCFL) {}
 		//=================================================================================================//
 		Real GranularAcousticTimeStepSize::reduce(size_t index_i, Real dt)
@@ -23,19 +23,19 @@ namespace SPH
 			return acousticCFL_ * smoothing_length_min_ / (fluid_.ReferenceSoundSpeed() + TinyReal);
 		}
 		//=================================================================================================//
-		BaseRelaxation::BaseRelaxation(BaseInnerRelation &inner_relation)
+		BaseRelaxation::BaseRelaxation(BaseInnerRelation& inner_relation)
 			: LocalDynamics(inner_relation.getSPHBody()), GranularDataInner(inner_relation),
 			granular_material_(particles_->granular_material_), rho_(particles_->rho_),
 			p_(particles_->p_), drho_dt_(particles_->drho_dt_),
 			pos_(particles_->pos_), vel_(particles_->vel_),
-			acc_(particles_->acc_), acc_prior_(particles_->acc_prior_){} 
+			acc_(particles_->acc_), acc_prior_(particles_->acc_prior_) {}
 		//=================================================================================================//
 		//===============================ArtificialStressRelaxation======================================//
 		//=================================================================================================//
 		BaseArtificialStressRelaxation ::
 			BaseArtificialStressRelaxation(BaseInnerRelation& inner_relation, Real epsilon)
 			: BaseRelaxation(inner_relation), smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
-			reference_spacing_(sph_body_.sph_adaptation_->ReferenceSpacing()), acc_shear_(particles_->acc_shear_), epsilon_(epsilon){ }
+			reference_spacing_(sph_body_.sph_adaptation_->ReferenceSpacing()), epsilon_(epsilon) { }
 		Matd BaseArtificialStressRelaxation::repulsiveForce(Matd stress_tensor_i, Real rho_i)
 		{
 			Real sigma_xx = stress_tensor_i(0, 0);
@@ -67,7 +67,7 @@ namespace SPH
 		}
 		ArtificialNormalShearStressRelaxation ::
 			ArtificialNormalShearStressRelaxation(BaseInnerRelation& inner_relation, Real exponent)
-			: BaseArtificialStressRelaxation(inner_relation), shear_stress_(particles_->shear_stress_), exponent_(exponent){}
+			: BaseArtificialStressRelaxation(inner_relation), shear_stress_(particles_->shear_stress_), acc_shear_(particles_->acc_shear_), exponent_(exponent) {}
 		void ArtificialNormalShearStressRelaxation::interaction(size_t index_i, Real dt)
 		{
 			Vecd acceleration = Vecd::Zero();
@@ -79,9 +79,7 @@ namespace SPH
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = inner_neighborhood.j_[n];
-				Vecd& e_ij = inner_neighborhood.e_ij_[n];
 				Real r_ij = inner_neighborhood.r_ij_[n];
-				Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
 				Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
 
 				Real W_ij = sph_body_.sph_adaptation_->getKernel()->W_2D(r_ij / smoothing_length_);
@@ -99,7 +97,7 @@ namespace SPH
 		//===============================ShearStressRelaxation1stHalf======================================//
 		//=================================================================================================/
 		ShearStressRelaxation1stHalf ::
-			ShearStressRelaxation1stHalf(BaseInnerRelation &inner_relation)
+			ShearStressRelaxation1stHalf(BaseInnerRelation& inner_relation)
 			: BaseRelaxation(inner_relation),
 			shear_stress_(particles_->shear_stress_), shear_stress_rate_(particles_->shear_stress_rate_),
 			acc_shear_(particles_->acc_shear_) {}
@@ -114,16 +112,12 @@ namespace SPH
 			Real rho_i = rho_[index_i];
 			Matd shear_stress_i = shear_stress_[index_i];
 			Vecd acceleration = Vecd::Zero();
-			Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-			Vecd vel_i = vel_[index_i];
+			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = inner_neighborhood.j_[n];
-				Vecd &e_ij = inner_neighborhood.e_ij_[n];
-				Real r_ij = inner_neighborhood.r_ij_[n];
-				Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
 				Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
-				acceleration += rho_[index_j] * (shear_stress_i / (rho_i * rho_i) + shear_stress_[index_j] / (rho_[index_j] * rho_[index_j]) ) * nablaW_ijV_j;
+				acceleration += rho_[index_j] * (shear_stress_i / (rho_i * rho_i) + shear_stress_[index_j] / (rho_[index_j] * rho_[index_j])) * nablaW_ijV_j;
 			}
 			acc_shear_[index_i] += acceleration;  //for with artificial stress
 		}
@@ -145,8 +139,7 @@ namespace SPH
 		void ShearStressRelaxation2ndHalf::interaction(size_t index_i, Real dt)
 		{
 			Matd velocity_gradient = Matd::Zero();
-			Vecd vel_i = vel_[index_i];
-			Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = inner_neighborhood.j_[n];
