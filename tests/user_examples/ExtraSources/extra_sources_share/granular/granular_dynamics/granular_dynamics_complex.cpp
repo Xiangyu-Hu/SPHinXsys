@@ -1,4 +1,3 @@
-#pragma once
 #include "granular_dynamics_complex.h"
 #include "granular_dynamics_complex.hpp"
 

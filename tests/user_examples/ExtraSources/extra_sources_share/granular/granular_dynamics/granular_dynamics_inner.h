@@ -17,18 +17,18 @@ namespace SPH
 		class GranularInitialCondition : public LocalDynamics, public GranularDataSimple
 		{
 		public:
-			explicit GranularInitialCondition(SPHBody &sph_body);
+			explicit GranularInitialCondition(SPHBody& sph_body);
 			virtual ~GranularInitialCondition() {};
 
 		protected:
-			StdLargeVec<Vecd> &pos_, &vel_;
+			StdLargeVec<Vecd>& pos_, & vel_;
 		};
 
 
 		class GranularAcousticTimeStepSize : public fluid_dynamics::AcousticTimeStepSize
 		{
 		public:
-			explicit GranularAcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL = 0.5);
+			explicit GranularAcousticTimeStepSize(SPHBody& sph_body, Real acousticCFL = 0.5);
 			virtual ~GranularAcousticTimeStepSize() {};
 			Real reduce(size_t index_i, Real dt = 0.0);
 			virtual Real outputResult(Real reduced_value) override;
@@ -41,13 +41,13 @@ namespace SPH
 		class BaseRelaxation : public LocalDynamics, public GranularDataInner
 		{
 		public:
-			explicit BaseRelaxation(BaseInnerRelation &inner_relation);
+			explicit BaseRelaxation(BaseInnerRelation& inner_relation);
 			virtual ~BaseRelaxation() {};
 
 		protected:
-			GranularMaterial &granular_material_;
-			StdLargeVec<Real> &rho_, &p_, &drho_dt_;
-			StdLargeVec<Vecd> &pos_, &vel_, &acc_, &acc_prior_;
+			GranularMaterial& granular_material_;
+			StdLargeVec<Real>& rho_, & p_, & drho_dt_;
+			StdLargeVec<Vecd>& pos_, & vel_, & acc_, & acc_prior_;
 		};
 
 		/**
@@ -61,7 +61,6 @@ namespace SPH
 			Matd repulsiveForce(Matd stress_tensor_i, Real rho_i);
 		protected:
 			Real smoothing_length_, reference_spacing_, epsilon_;
-			StdLargeVec<Vecd>& acc_shear_;
 		};
 
 		/**
@@ -75,6 +74,7 @@ namespace SPH
 			void interaction(size_t index_i, Real dt = 0.0);
 		protected:
 			StdLargeVec<Matd>& shear_stress_;
+			StdLargeVec<Vecd>& acc_shear_;
 			Real exponent_;
 		};
 
@@ -85,14 +85,14 @@ namespace SPH
 		class ShearStressRelaxation1stHalf : public BaseRelaxation
 		{
 		public:
-			explicit ShearStressRelaxation1stHalf(BaseInnerRelation &inner_relation);
+			explicit ShearStressRelaxation1stHalf(BaseInnerRelation& inner_relation);
 			virtual ~ShearStressRelaxation1stHalf() {};
 			void initialization(size_t index_i, Real dt = 0.0);
 			void interaction(size_t index_i, Real dt = 0.0);
 			void update(size_t index_i, Real dt = 0.0);
 		protected:
-			StdLargeVec<Matd> &shear_stress_, &shear_stress_rate_;
-			StdLargeVec<Vecd> &acc_shear_;
+			StdLargeVec<Matd>& shear_stress_, & shear_stress_rate_;
+			StdLargeVec<Vecd>& acc_shear_;
 		};
 		/**
 		* @class ShearStressRelaxation2ndHalf
@@ -101,7 +101,7 @@ namespace SPH
 		{
 		public:
 
-			explicit ShearStressRelaxation2ndHalf(BaseInnerRelation &inner_relation);
+			explicit ShearStressRelaxation2ndHalf(BaseInnerRelation& inner_relation);
 			virtual ~ShearStressRelaxation2ndHalf() {};
 			//void initialization(size_t index_i, Real dt = 0.0);
 			void interaction(size_t index_i, Real dt = 0.0);
