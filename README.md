@@ -28,7 +28,7 @@ Here, we present several short examples in flow, solid dynamics, fluid structure
 <a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/2d_examples/test_2d_dambreak/Dambreak.cpp">
 <img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/dambreak.gif" height="192px"></a>
 <a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/2d_examples/test_2d_fsi2/fsi2.cpp"> 
-<img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/fsi-2d.gif" height="168px"></a>
+<img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/fsi-2d.gif" height="192px"></a>
 <a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/3d_examples/test_3d_elasticSolid_shell_collision/3d_elasticSolid_shell_collision.cpp"> 
 <img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/ball-shell.gif" height="192px"></a>
 <a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/3d_examples/test_3d_shell_stability_half_sphere/test_3d_shell_stability_half_sphere.cpp"> 
