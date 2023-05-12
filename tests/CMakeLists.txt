@@ -12,13 +12,16 @@ if(SPHINXSYS_2D AND SPHINXSYS_BUILD_2D_EXAMPLES)
 	ADD_SUBDIRECTORY(2d_examples)
 endif()
 
-if(SPHINXSYS_BUILD_UNIT_TESTS)
-	ADD_SUBDIRECTORY(unit_tests_src)
-endif()
 
 if(SPHINXSYS_BUILD_USER_EXAMPLES)
 	ADD_SUBDIRECTORY(user_examples)
 endif()
+
+
+if(SPHINXSYS_BUILD_UNIT_TESTS)
+	ADD_SUBDIRECTORY(unit_tests_src)
+endif()
+
 
 add_subdirectory(modules)
 	
