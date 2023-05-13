@@ -85,7 +85,7 @@ class DiffusionBodyRelaxation
 		  RelaxationOfAllDiffusionSpeciesInner<DiffusionParticles>>
 {
 public:
-	explicit DiffusionBodyRelaxation(InnerRelation &inner_relation)
+	explicit DiffusionBodyRelaxation(BaseInnerRelation &inner_relation)
 		: RelaxationOfAllDiffusionSpeciesRK2Complex(inner_relation){};
 	virtual ~DiffusionBodyRelaxation(){};
 };

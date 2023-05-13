@@ -158,7 +158,7 @@ namespace SPH
 			const StdVec<StdLargeVec<Real>*>& gradient_species_k);
 
 	public:
-		explicit RelaxationOfAllDiffusionSpeciesDirichletContact(ContactRelation& contact_relation);
+		explicit RelaxationOfAllDiffusionSpeciesDirichletContact(BaseContactRelation& contact_relation);
 		virtual ~RelaxationOfAllDiffusionSpeciesDirichletContact() {};
 
 		inline void interaction(size_t index_i, Real dt = 0.0);
