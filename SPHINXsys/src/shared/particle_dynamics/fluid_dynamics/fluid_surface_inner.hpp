@@ -175,7 +175,7 @@ namespace SPH
 		template <class DensitySummationType>
 		void DensitySummationFreeSurface<DensitySummationType>::update(size_t index_i, Real dt)
 		{
-			this->rho_[index_i] = ReinitializedDensity(this->rho_sum_[index_i], this->rho0_, this->rho_[index_i]);
+			this->rho_[index_i] = ReinitializedDensity(this->rho_sum_[index_i], this->rho0_);
 		}
 		//=================================================================================================//
 		template <class DensitySummationFreeSurfaceType>
@@ -190,7 +190,7 @@ namespace SPH
 		{
 			if (this->rho_sum_[index_i] < this->rho0_ && isNearFreeSurface(index_i))
 			{
-				this->rho_[index_i] = this->ReinitializedDensity(this->rho_sum_[index_i], this->rho0_, this->rho_[index_i]);
+				this->rho_[index_i] = this->ReinitializedDensity(this->rho_sum_[index_i], this->rho0_);
 			}
 			else
 			{

@@ -123,8 +123,8 @@ namespace SPH
         {
         protected:
             Transformd transform_;
-            Real rho_ref_;
-            StdLargeVec<Real> &rho_sum;
+            Real rho0_;
+            StdLargeVec<Real> &rho_sum_;
             StdLargeVec<Vecd> &pos_, &vel_;
             StdLargeVec<int> &surface_indicator_;
             TargetVelocity target_velocity;
@@ -132,8 +132,8 @@ namespace SPH
         public:
             explicit FreeStreamVelocityCorrection(SPHBody &sph_body, const Transformd &transform = Transformd())
                 : LocalDynamics(sph_body), FluidDataSimple(sph_body),
-                  transform_(transform), rho_ref_(particles_->fluid_.ReferenceDensity()),
-                  rho_sum(particles_->rho_sum_), pos_(particles_->pos_), vel_(particles_->vel_),
+                  transform_(transform), rho0_(particles_->fluid_.ReferenceDensity()),
+                  rho_sum_(particles_->rho_sum_), pos_(particles_->pos_), vel_(particles_->vel_),
                   surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")),
                   target_velocity(*this){};
             virtual ~FreeStreamVelocityCorrection(){};
@@ -147,7 +147,7 @@ namespace SPH
                     Real frame_u_stream_direction = frame_velocity[0];
                     Real u_freestream = target_velocity(frame_position, frame_velocity)[0];
                     frame_velocity[0] = u_freestream + (frame_u_stream_direction - u_freestream) *
-                                                           SMIN(rho_sum[index_i], rho_ref_) / rho_ref_;
+                                                           SMIN(rho_sum_[index_i], rho0_) / rho0_;
                     vel_[index_i] = transform_.xformFrameVecToBase(frame_velocity);
                 }
             };

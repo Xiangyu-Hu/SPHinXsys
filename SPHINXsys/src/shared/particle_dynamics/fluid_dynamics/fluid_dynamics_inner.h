@@ -75,7 +75,7 @@ namespace SPH
 
 		protected:
 			StdLargeVec<Real> &rho_, &rho_sum_, &mass_;
-			Real rho0_;
+			Real rho0_, inv_sigma0_;
 		};
 
 		/**
@@ -91,7 +91,7 @@ namespace SPH
 			inline void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			Real W0_, inv_sigma0_;
+			Real W0_;
 		};
 
 		/**
