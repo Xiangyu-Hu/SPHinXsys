@@ -205,7 +205,7 @@ int main(int ac, char *av[])
 	/** Time step size calculation. */
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> get_mechanics_time_step(mechanics_heart);
 	/** active and passive stress relaxation. */
-	Dynamics1Level<solid_dynamics::Integration1stHalf> stress_relaxation_first_half(mechanics_heart_inner);
+	Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(mechanics_heart_inner);
 	Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(mechanics_heart_inner);
 	/** Constrain region of the inserted body. */
 	MuscleBaseShapeParameters muscle_base_parameters;

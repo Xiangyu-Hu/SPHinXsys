@@ -195,7 +195,7 @@ int main()
 	//----------------------------------------------------------------------
 	//	Algorithms of Elastic dynamics.
 	//----------------------------------------------------------------------
-	Dynamics1Level<solid_dynamics::Integration1stHalf> gate_stress_relaxation_first_half(gate_inner_relation);
+	Dynamics1Level<solid_dynamics::Integration1stHalfPK2> gate_stress_relaxation_first_half(gate_inner_relation);
 	Dynamics1Level<solid_dynamics::Integration2ndHalf> gate_stress_relaxation_second_half(gate_inner_relation);
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> gate_computing_time_step_size(gate);
 

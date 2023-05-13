@@ -172,7 +172,7 @@ int main(int ac, char *av[])
 	/** Time step size calculation. */
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> get_mechanics_time_step(mechanics_heart);
 	/** active and passive stress relaxation. */
-	Dynamics1Level<solid_dynamics::Integration1stHalf> stress_relaxation_first_half(mechanics_body_inner);
+	Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(mechanics_body_inner);
 	Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(mechanics_body_inner);
     //initialize and update of normal direction
     SimpleDynamics<NormalDirectionFromBodyShape>(mechanics_heart).exec();
