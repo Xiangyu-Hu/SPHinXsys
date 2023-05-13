@@ -211,7 +211,7 @@ namespace SPH
 				  ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>
 		{
 		public:
-			explicit ElectroPhysiologyDiffusionRelaxationComplex(InnerRelation& inner_relation, ContactRelation& body_contact_relation_Dirichlet)
+			explicit ElectroPhysiologyDiffusionRelaxationComplex(BaseInnerRelation& inner_relation, BaseContactRelation& body_contact_relation_Dirichlet)
 				: RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>(inner_relation, body_contact_relation_Dirichlet) {};
 			virtual ~ElectroPhysiologyDiffusionRelaxationComplex(){};
 		};

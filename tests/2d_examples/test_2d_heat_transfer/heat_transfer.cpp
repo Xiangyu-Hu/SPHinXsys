@@ -182,7 +182,7 @@ class ThermalRelaxationComplex
 		  ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>
 {
 public:
-	explicit ThermalRelaxationComplex(InnerRelation& inner_relation, ContactRelation& body_contact_relation_Dirichlet)
+	explicit ThermalRelaxationComplex(BaseInnerRelation& inner_relation, BaseContactRelation& body_contact_relation_Dirichlet)
 		: RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>(inner_relation, body_contact_relation_Dirichlet) {};
 	virtual ~ThermalRelaxationComplex(){};
 };
