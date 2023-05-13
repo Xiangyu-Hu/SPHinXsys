@@ -94,46 +94,22 @@ SPHinXsys is cross-platform can be compiled and used in Windows, Linux and Apple
 For installation, program manual and tutorials, please check https://www.sphinxsys.org/html/sphinx_index.html. 
 Please check the documentation of the code at https://xiangyu-hu.github.io/SPHinXsys/.
 
-## Contribute to SPHinXsys
+## Get involved to SPHinXsys
 
-You are welcomed to contribute to SPHinXsys.
-There are three main types of contributions. First is to report bugs or issues in SPHinXsys.
-Second is to suggest enhancements, including new test cases, or new features.
-Third is to write enhancements or new features by yourself.
+You are welcomed to use and get involved in SPHinXsys.
 
 As the code is on git-hub, you can register an account there (if you do not have a github account yet) 
 and fork out the SPHinXsys repository.
 You can work on the forked repository and add new features, and then commit them. 
 
-### Contribute new features
+Besides forking the repository and begin to develop by your own, 
+there are many other ways to make SPHinXsys better for every one.
+For example, you can initiate issues on any thing relevant to SPHinXsys, not only bugs and installation issues,
+check the pull requests for the current development status,
+ask questions, give suggestion and comment on SPHinXsys in the discussion page, etc.   
 
-After you have finished a new feature, 
-which is a commit together with a new test case which uses the new feature,
-you can send a pull request to the SPHinXsys repository. 
-The SPHinXsys team will review the new code and give suggestions for revision, if there is.
-After the revision is done, your contribution will be merged into the master branch of the original SPHinXsys repository.
-When you write the code, please remember to add your name as an author in the header files that you have contributed.
-
-### Contribute new test cases
-
-Test cases are very important for testing the features and showing the ability of SPHinXsys.
-If you think that a cases which implemented by you are very useful for the above propose,
-you can move this test into the folder cases_test in your local commit 
-which is directly branched from the master branch in the original SPHinXsys repository.
-After test it, you can carry out a pull request.
-Then, a standard review process will be carried out before merge it to the original SPHinXsys repository.
-If a new test cases is added, it will be maintained together with code by SPHinXsys team. 
-
-### Contribute challenging benchmarks
-
-Improving numerical algorithms is one of our main drives 
-and we are happy to test challenging cases and to be informed 
-if there is any other code that does better on any benchmark case.
-For this, you can inform us by the contact listed below. 
-If you have the case implemented, you can do just as contribute a new test case, 
-except move this case to cases_user folder. 
-Then, after a standard pull request and review process, 
-we will merge you code to master branch and discuss with you on the issues of the case 
-and work together to improve the numerical algorithm for that case. 
+You are also welcomed to join the main repository in as a collaborator, 
+by which you are able to branch directly in the main repository, 
+and review the pull request. 
 
 If you have any further question, you are also welcomed to contact xiangyu.hu@tum.de.
