@@ -106,9 +106,9 @@ Besides forking the repository and begin to develop by your own,
 there are many other ways to make SPHinXsys better for every one.
 For example, you can initiate issues on any thing relevant to SPHinXsys, not only bugs and installation issues,
 check the pull requests for the current development status,
-ask questions, give suggestion and comment on SPHinXsys in the discussion page, etc.   
+ask questions, give suggestion and comment on SPHinXsys on the discussion page, etc.   
 
-You are also welcomed to join the main repository in as a collaborator, 
+You are also welcomed to join the main repository as a collaborator, 
 by which you are able to branch directly in the main repository, 
 and review the pull request. 
 
