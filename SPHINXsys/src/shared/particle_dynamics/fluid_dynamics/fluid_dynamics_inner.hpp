@@ -56,8 +56,8 @@ namespace SPH
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 				sigma_i += inner_neighborhood.W_ij_[n] * mass_[inner_neighborhood.j_[n]];
 
-			rho_sum_[index_i] = sigma_i * rho0_ / mass_[index_i] /
-								sph_adaptation_.ReferenceNumberDensity(h_ratio_[index_i]);
+			rho_sum_[index_i] = sigma_i * rho0_ * inv_sigma0_ / mass_[index_i] /
+								sph_adaptation_.NumberDensityScaleFactor(h_ratio_[index_i]);
 		}
 		//=================================================================================================//
 		void ViscousAccelerationInner::

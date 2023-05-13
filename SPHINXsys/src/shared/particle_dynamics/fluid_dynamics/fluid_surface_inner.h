@@ -99,9 +99,9 @@ namespace SPH
 			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
-			Real ReinitializedDensity(Real rho_sum, Real rho_0, Real rho_n)
+			Real ReinitializedDensity(Real rho_sum, Real rho_0)
 			{
-				return rho_sum + SMAX(0.0, (rho_n - rho_sum)) * rho_0 / rho_n;
+				return SMAX(rho_sum, rho_0);
 			};
 		};
 

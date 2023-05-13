@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <dtw_distance>
-    <DTWDistance Pressure_0="0.38837419761097436" Pressure_1="0.70216100007665949" Pressure_2="1.0282013325239825" Pressure_3="1.2992101644004235" Pressure_4="1.4549914899854253" Pressure_5="1.4969511695479591" />
+    <DTWDistance Pressure_0="1.5" Pressure_1="1.5" Pressure_2="3.0" Pressure_3="3.0" Pressure_4="4.0" Pressure_5="4.5" />
 </dtw_distance>

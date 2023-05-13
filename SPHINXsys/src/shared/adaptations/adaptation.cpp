@@ -15,7 +15,7 @@ namespace SPH
 		: h_spacing_ratio_(h_spacing_ratio), system_refinement_ratio_(system_refinement_ratio),
 		  local_refinement_level_(0), spacing_ref_(resolution_ref / system_refinement_ratio_),
 		  h_ref_(h_spacing_ratio_ * spacing_ref_), kernel_ptr_(makeUnique<KernelWendlandC2>(h_ref_)),
-		  sigma0_ref_(computeReferenceNumberDensity(Vecd())),
+		  sigma0_ref_(computeLatticeNumberDensity(Vecd())),
 		  spacing_min_(this->MostRefinedSpacingRegular(spacing_ref_, local_refinement_level_)),
 		  Vol_min_(pow(spacing_min_, Dimensions)), h_ratio_max_(spacing_ref_ / spacing_min_){};
 	//=================================================================================================//
@@ -31,7 +31,7 @@ namespace SPH
 		return coarse_particle_spacing / pow(2.0, local_refinement_level);
 	}
 	//=================================================================================================//
-	Real SPHAdaptation::computeReferenceNumberDensity(Vec2d zero)
+	Real SPHAdaptation::computeLatticeNumberDensity(Vec2d zero)
 	{
 		Real sigma(0);
 		Real cutoff_radius = kernel_ptr_->CutOffRadius();
@@ -48,7 +48,7 @@ namespace SPH
 		return sigma;
 	}
 	//=================================================================================================//
-	Real SPHAdaptation::computeReferenceNumberDensity(Vec3d zero)
+	Real SPHAdaptation::computeLatticeNumberDensity(Vec3d zero)
 	{
 		Real sigma(0);
 		Real cutoff_radius = kernel_ptr_->CutOffRadius();
@@ -67,9 +67,9 @@ namespace SPH
 		return sigma;
 	}
 	//=================================================================================================//
-	Real SPHAdaptation::ReferenceNumberDensity(Real smoothing_length_ratio)
+	Real SPHAdaptation::NumberDensityScaleFactor(Real smoothing_length_ratio)
 	{
-		return sigma0_ref_ * pow(smoothing_length_ratio, Dimensions);
+		return pow(smoothing_length_ratio, Dimensions);
 	}
 	//=================================================================================================//
 	void SPHAdaptation::resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio)
@@ -79,7 +79,7 @@ namespace SPH
 		system_refinement_ratio_ = new_system_refinement_ratio;
 		h_ref_ = h_spacing_ratio_ * spacing_ref_;
 		getKernel()->resetSmoothingLength(h_ref_);
-		sigma0_ref_ = computeReferenceNumberDensity(Vecd());
+		sigma0_ref_ = computeLatticeNumberDensity(Vecd());
 		spacing_min_ = MostRefinedSpacing(spacing_ref_, local_refinement_level_);
 		Vol_min_ = pow(spacing_min_, Dimensions);
 		h_ratio_max_ = spacing_ref_ / spacing_min_;
