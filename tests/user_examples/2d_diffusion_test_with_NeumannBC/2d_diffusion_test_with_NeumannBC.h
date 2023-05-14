@@ -28,7 +28,7 @@ std::array<std::string, 1> species_name_list{ "Phi" };
 //----------------------------------------------------------------------
 //	Initial and boundary conditions.
 //----------------------------------------------------------------------
-Real initial_temperature = 0.0;
+Real initial_temperature = 100.0;
 Real left_temperature = 300.0;
 Real right_temperature = 350.0;
 Real heat_flux = 900.0;
@@ -127,7 +127,7 @@ public:
 
 	void update(size_t index_i, Real dt)
 	{
-		all_species_[phi_][index_i] = 200 + 50 * (double)rand() / RAND_MAX;
+		all_species_[phi_][index_i] = initial_temperature;
 	};
 };
 
