@@ -14,7 +14,8 @@ namespace SPH
 		BaseDensitySummationInner::BaseDensitySummationInner(BaseInnerRelation &inner_relation)
 			: LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
 			  rho_(particles_->rho_), rho_sum_(particles_->rho_sum_), mass_(particles_->mass_),
-			  rho0_(sph_body_.base_material_->ReferenceDensity()) {}
+			  rho0_(sph_body_.base_material_->ReferenceDensity()),
+			  inv_sigma0_(1.0 / sph_body_.sph_adaptation_->LatticeNumberDensity()) {}
 		//=================================================================================================//
 		void BaseDensitySummationInner::update(size_t index_i, Real dt)
 		{
@@ -23,8 +24,7 @@ namespace SPH
 		//=================================================================================================//
 		DensitySummationInner::DensitySummationInner(BaseInnerRelation &inner_relation)
 			: BaseDensitySummationInner(inner_relation),
-			  W0_(sph_body_.sph_adaptation_->getKernel()->W0( ZeroVecd )),
-			  inv_sigma0_(1.0 / sph_body_.sph_adaptation_->ReferenceNumberDensity()) {}
+			  W0_(sph_body_.sph_adaptation_->getKernel()->W0( ZeroVecd )) {}
 		//=================================================================================================//
 		DensitySummationInnerAdaptive::
 			DensitySummationInnerAdaptive(BaseInnerRelation &inner_relation)
