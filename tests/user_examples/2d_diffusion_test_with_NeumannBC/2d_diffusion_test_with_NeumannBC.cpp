@@ -23,7 +23,6 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	//---------------------------------------------------------------------- 
 	SolidBody diffusion_body(sph_system, makeShared<DiffusionBody>("DiffusionBody"));
 	diffusion_body.defineParticlesAndMaterial<DiffusionParticles, DiffusionMaterial>();
 	diffusion_body.generateParticles<ParticleGeneratorLattice>();
