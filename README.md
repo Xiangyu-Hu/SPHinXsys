@@ -1,4 +1,4 @@
-# ![](SPHINXsys/logo.png) SPHinXsys
+# ![](assets/logo.png) SPHinXsys
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Linux](https://svgshare.com/i/Zhy.svg)](https://svgshare.com/i/Zhy.svg)
