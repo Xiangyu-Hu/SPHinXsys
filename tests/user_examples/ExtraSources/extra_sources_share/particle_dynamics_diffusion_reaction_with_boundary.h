@@ -25,8 +25,6 @@ namespace SPH
 
 	protected:
 		StdLargeVec<Real> heat_flux_;
-		StdLargeVec<Real> convection_;
-		StdLargeVec<Real> T_infinity_;
 	};
 
 	/**
@@ -47,29 +45,6 @@ namespace SPH
 	public:
 		explicit RelaxationOfAllDiffusionSpeciesNeumannContact(ContactRelation& contact_relation);
 		virtual ~RelaxationOfAllDiffusionSpeciesNeumannContact() {};
-
-		inline void interaction(size_t index_i, Real dt = 0.0);
-	};
-
-	/**
-	 * @class RelaxationOfAllDiffusionSpeciesRobinContact
-	 * @brief Contact diffusion relaxation with Robin boundary condition.
-	 */
-	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
-	class RelaxationOfAllDiffusionSpeciesRobinContact
-		: public RelaxationOfAllDiffusionSpeciesBaseContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
-	{
-		StdLargeVec<Vecd>& n_;
-		StdVec<StdLargeVec<Real>*> contact_convection_;
-		StdVec<StdLargeVec<Real>*> contact_T_infinity_;
-		StdVec<StdLargeVec<Vecd>*> contact_n_;
-
-	protected:
-		void getDiffusionChangeRateRobinContact(size_t particle_i, size_t particle_j, Real surface_area_ij_Robin, StdLargeVec<Real>& convection_k, StdLargeVec<Real>& T_infinity_k);
-
-	public:
-		explicit RelaxationOfAllDiffusionSpeciesRobinContact(ContactRelation& contact_relation);
-		virtual ~RelaxationOfAllDiffusionSpeciesRobinContact() {};
 
 		inline void interaction(size_t index_i, Real dt = 0.0);
 	};
