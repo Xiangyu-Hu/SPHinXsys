@@ -267,7 +267,7 @@ int main(int ac, char *av[])
 	if (system.generate_regression_data_)
 	{
 	write_str_displacement.generateDataBase(0.005);
-	wave_gauge.generateDataBase(0.005);
+	wave_gauge.generateDataBase(0.05);
 	}
 	else
 	{
