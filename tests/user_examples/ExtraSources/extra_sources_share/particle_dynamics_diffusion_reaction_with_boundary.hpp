@@ -25,7 +25,7 @@ namespace SPH
 			for (size_t k = 0; k != this->contact_particles_.size(); ++k)
 			{
 				contact_n_.push_back(&(this->contact_particles_[k]->n_));
-				contact_heat_flux_.push_back(this->contact_particles_[k]->getVariableByName<Real>("HeatFlux"));
+				contact_heat_flux_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("HeatFlux"));
 			}
 		}
 	}
