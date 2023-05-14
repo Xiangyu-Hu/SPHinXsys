@@ -16,7 +16,7 @@ namespace SPH
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	RelaxationOfAllDiffusionSpeciesNeumannContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
-		RelaxationOfAllDiffusionSpeciesNeumannContact(ContactRelation& contact_relation)
+		RelaxationOfAllDiffusionSpeciesNeumannContact(BaseContactRelation& contact_relation)
 		: RelaxationOfAllDiffusionSpeciesBaseContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(contact_relation),
 		n_(this->particles_->n_)
 	{

@@ -43,7 +43,7 @@ namespace SPH
 		void getDiffusionChangeRateNeumannContact(size_t particle_i, size_t particle_j, Real surface_area_ij_Neumann, StdLargeVec<Real>& heat_flux_k);
 
 	public:
-		explicit RelaxationOfAllDiffusionSpeciesNeumannContact(ContactRelation& contact_relation);
+		explicit RelaxationOfAllDiffusionSpeciesNeumannContact(BaseContactRelation& contact_relation);
 		virtual ~RelaxationOfAllDiffusionSpeciesNeumannContact() {};
 
 		inline void interaction(size_t index_i, Real dt = 0.0);
