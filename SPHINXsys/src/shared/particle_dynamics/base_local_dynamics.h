@@ -41,26 +41,36 @@ namespace SPH
 	struct ReduceSum
 	{
 		ReturnType operator()(const ReturnType &x, const ReturnType &y) const { return x + y; };
+
+        using SYCLOp = sycl::plus<ReturnType>;
 	};
 	/** A Functor for Maximum */
 	struct ReduceMax
 	{
 		Real operator()(Real x, Real y) const { return SMAX(x, y); };
+
+        using SYCLOp = sycl::maximum<Real>;
 	};
 	/** A Functor for Minimum */
 	struct ReduceMin
 	{
 		Real operator()(Real x, Real y) const { return SMIN(x, y); };
+
+        using SYCLOp = sycl::minimum<Real>;
 	};
 	/** A Functor for OR operator */
 	struct ReduceOR
 	{
 		bool operator()(bool x, bool y) const { return x || y; };
+
+        using SYCLOp = sycl::logical_or<bool>;
 	};
 	/** A Functor for AND operator */
 	struct ReduceAND
 	{
 		bool operator()(bool x, bool y) const { return x && y; };
+
+        using SYCLOp = sycl::logical_and<bool>;
 	};
 	/** A Functor for lower bound */
 	struct ReduceLowerBound
