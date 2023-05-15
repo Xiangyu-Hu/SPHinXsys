@@ -386,7 +386,7 @@ namespace SPH
                 proxy.get_memory_access(Context<ParallelSYCLDevicePolicy>(cgh), sycl_policy);
                 auto reduction_operator = sycl::reduction(buffer_result, cgh, typename Operation::SYCLOp());
                 cgh.parallel_for(sycl::range(all_real_particles), reduction_operator, [=](sycl::id<1> idx, auto& reduction) {
-                    reduction.combine(local_dynamics_function(idx, kernel));
+                    reduction.combine(local_dynamics_function(idx, typename Proxy::Kernel(kernel)));
                 });
             });
             sycl_queue.wait_and_throw();
