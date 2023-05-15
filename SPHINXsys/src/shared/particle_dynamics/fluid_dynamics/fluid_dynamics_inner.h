@@ -217,6 +217,62 @@ namespace SPH
 			Real acousticCFL_;
 		};
 
+        using namespace execution;
+
+        class AdvectionTimeStepSizeForImplicitViscosityKernel {
+        public:
+            template<class VelType, class SquareNormFunction>
+            static Real reduce(size_t index_i, Real dt, VelType vel, SquareNormFunction squareNorm) {
+                return squareNorm(vel[index_i]);
+            }
+
+            Real reduce(size_t index_i, Real dt = 0.0) {
+                return reduce(index_i, dt, vel_accessor, [](const Vecd& vel){
+                    sycl::float2 syclVel {vel[0], vel[1]};
+                    return sycl::dot(syclVel, syclVel);
+                });
+            }
+
+            void setAccessors(sycl::accessor<Vecd, 1, sycl::access_mode::read> &&vel) {
+                vel_accessor.swap(vel);
+            }
+
+        private:
+            sycl::accessor<Vecd, 1, sycl::access_mode::read> vel_accessor;
+        };
+
+
+        template<class AdvectionType>
+        class AdvectionTimeStepSizeForImplicitViscosityProxy :
+                public ExecutionProxy<AdvectionType, AdvectionTimeStepSizeForImplicitViscosityKernel> {
+        public:
+            explicit AdvectionTimeStepSizeForImplicitViscosityProxy(AdvectionType *base)
+                    : ExecutionProxy<AdvectionType, AdvectionTimeStepSizeForImplicitViscosityKernel>(
+                            base, new AdvectionTimeStepSizeForImplicitViscosityKernel()) {}
+
+            virtual ~AdvectionTimeStepSizeForImplicitViscosityProxy() {
+                delete this->kernel;
+            }
+
+            template<class ExecutionPolicy>
+            void get_memory_access(const Context<ExecutionPolicy>& context, const ExecutionPolicy&) {
+                if constexpr (std::is_same_v<ExecutionPolicy, ParallelSYCLDevicePolicy>)
+                    this->kernel->setAccessors(vel_buffer->get_access(context.cgh, sycl::read_only));
+            }
+
+        protected:
+            void copy_memory_to_device() override {
+                vel_buffer = std::make_unique<sycl::buffer<Vecd, 1>>(this->base->vel_.data(), this->base->vel_.size());
+            }
+
+            void copy_back_from_device() override {
+                vel_buffer.reset();
+            }
+
+        private:
+            std::unique_ptr<sycl::buffer<Vecd, 1>> vel_buffer;
+        };
+
 		/**
 		 * @class AdvectionTimeStepSizeForImplicitViscosity
 		 * @brief Computing the advection time step size when viscosity is handled implicitly
@@ -231,6 +287,9 @@ namespace SPH
 			virtual ~AdvectionTimeStepSizeForImplicitViscosity(){};
 			Real reduce(size_t index_i, Real dt = 0.0);
 			virtual Real outputResult(Real reduced_value) override;
+
+            using Proxy = AdvectionTimeStepSizeForImplicitViscosityProxy<AdvectionTimeStepSizeForImplicitViscosity>;
+            friend Proxy;
 
 		protected:
 			StdLargeVec<Vecd> &vel_;
