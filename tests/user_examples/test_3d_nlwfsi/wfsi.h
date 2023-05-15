@@ -482,7 +482,7 @@ public:
 //----------------------------------------------------------------------
 Real h = 1.3 * particle_spacing_ref;
 	Vecd WGaugeDim(0.5 * DW, 0.5 * h, 0.5 * DH);
-	Vecd WGauge(0.0, 11.848, 0.5 * DH);
+	Vecd WGauge(0.0, 10.848, 0.5 * DH);
 	Transformd translation_WGauge(WGauge);
 
 	/**
