@@ -131,5 +131,41 @@ namespace SPH
 	};
 	template <typename ReturnType, typename Operation>
 	using LocalDynamicsReduce = BaseLocalDynamicsReduce<ReturnType, Operation, SPHBody>;
+
+	/**
+	 * @class ComplexInteraction
+	 * @brief A class that integrates multiple boundary conditions.
+	 */
+	template <typename... InteractionType>
+	class ComplexInteraction;
+
+	template <>
+	class ComplexInteraction<>
+	{
+	public:
+		ComplexInteraction() {};
+
+		void interaction(size_t index_i, Real dt = 0.0) {};
+	};
+
+	template <class FirstInteraction, class... OtherInteractions>
+    class ComplexInteraction<FirstInteraction, OtherInteractions...> : public FirstInteraction
+	{
+	protected:
+		ComplexInteraction<OtherInteractions...> other_interaction_;
+
+	public:
+
+		template <class FirstRelationType, typename... OtherRelationTypes>
+		explicit ComplexInteraction(FirstRelationType& body_relation, OtherRelationTypes &&...other_relations)
+			: FirstInteraction(body_relation),
+			other_interaction_(std::forward<OtherRelationTypes>(other_relations)...) {};
+
+		void interaction(size_t index_i, Real dt = 0.0)
+		{
+			FirstInteraction::interaction(index_i, dt);
+			other_interaction_.interaction(index_i, dt);
+		};
+	};
 }
 #endif // BASE_LOCAL_DYNAMICS_H

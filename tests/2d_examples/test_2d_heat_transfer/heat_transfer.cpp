@@ -171,16 +171,19 @@ public:
 		}
 	};
 };
+
+using DiffusionRelaxationInner = RelaxationOfAllDiffusionSpeciesInner<DiffusionFluidParticles>;
+using DiffusionRelaxationWithDirichletContact = RelaxationOfAllDiffusionSpeciesDirichletContact<DiffusionFluidParticles, DiffusionSolidParticles>;
 //----------------------------------------------------------------------
 //	Set thermal relaxation between different bodies
 //----------------------------------------------------------------------
 class ThermalRelaxationComplex
-	: public RelaxationOfAllDiffusionSpeciesRK2<
-		  RelaxationOfAllDiffusionSpeciesComplex<DiffusionFluidParticles, DiffusionSolidParticles>>
+	: public RelaxationOfAllDiffusionSpeciesRK2Complex<
+		  ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>
 {
 public:
-	explicit ThermalRelaxationComplex(ComplexRelation &complex_relation)
-		: RelaxationOfAllDiffusionSpeciesRK2(complex_relation){};
+	explicit ThermalRelaxationComplex(BaseInnerRelation& inner_relation, BaseContactRelation& body_contact_relation_Dirichlet)
+		: RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>(inner_relation, body_contact_relation_Dirichlet) {};
 	virtual ~ThermalRelaxationComplex(){};
 };
 //----------------------------------------------------------------------
@@ -241,9 +244,9 @@ int main()
 	//----------------------------------------------------------------------
 	InnerRelation fluid_body_inner(thermofluid_body);
 	InnerRelation solid_body_inner(thermosolid_body);
+	ContactRelation fluid_wall_contact_Dirichlet(thermofluid_body, {&thermosolid_body});
 	ComplexRelation fluid_body_complex(fluid_body_inner, {&thermosolid_body});
 	ContactRelation fluid_observer_contact(temperature_observer, {&thermofluid_body});
-
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
@@ -263,7 +266,7 @@ int main()
 	/** Time step size calculation. */
 	GetDiffusionTimeStepSize<DiffusionFluidParticles> get_thermal_time_step(thermofluid_body);
 	/** Diffusion process between two diffusion bodies. */
-	ThermalRelaxationComplex thermal_relaxation_complex(fluid_body_complex);
+	ThermalRelaxationComplex thermal_relaxation_complex(fluid_body_inner, fluid_wall_contact_Dirichlet);
 	/** Pressure relaxation using verlet time stepping. */
 	/** Here, we do not use Riemann solver for pressure as the flow is viscous. */
 	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(fluid_body_complex);
@@ -361,6 +364,9 @@ int main()
 			thermofluid_body.updateCellLinkedListWithParticleSort(100);
 			periodic_condition.update_cell_linked_list_.exec();
 			fluid_body_complex.updateConfiguration();
+
+			fluid_body_inner.updateConfiguration();
+			fluid_wall_contact_Dirichlet.updateConfiguration();
 		}
 		TickCount t2 = TickCount::now();
 		/** write run-time observation into file */
