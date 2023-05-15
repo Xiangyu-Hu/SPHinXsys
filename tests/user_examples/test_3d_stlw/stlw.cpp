@@ -157,7 +157,7 @@ int main(int ac, char *av[])
 
 	if (system.generate_regression_data_)
 	{
-	wave_gauge.generateDataBase(0.05);
+	wave_gauge.generateDataBase(1e-3);
 	}
 	else
 	{

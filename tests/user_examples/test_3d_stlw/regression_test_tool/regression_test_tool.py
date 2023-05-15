@@ -7,7 +7,7 @@ sys.path.append(path)
 from regression_test_base_tool import SphinxsysRegressionTest
 
 """
-case name: test_2d_stlw
+case name: test_3d_stlw
 """
 
 case_name = "test_3d_stlw"
