@@ -140,7 +140,7 @@ int main(int ac, char *av[])
 	// Time step size
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(coil);
 	// stress relaxation.
-	Dynamics1Level<solid_dynamics::Integration1stHalf> stress_relaxation_first_half(coil_inner);
+	Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(coil_inner);
 	Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(coil_inner);
 	// Algorithms for solid-solid contacts.
 	InteractionDynamics<solid_dynamics::ContactDensitySummation> coil_update_contact_density(coil_contact);
