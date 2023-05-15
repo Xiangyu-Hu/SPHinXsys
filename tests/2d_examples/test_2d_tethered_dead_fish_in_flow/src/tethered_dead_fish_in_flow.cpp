@@ -334,7 +334,7 @@ int main(int ac, char *av[])
 	/** Time step size calculation. */
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> fish_body_computing_time_step_size(fish_body);
 	/** Process of stress relaxation. */
-	Dynamics1Level<solid_dynamics::Integration1stHalf>
+	Dynamics1Level<solid_dynamics::Integration1stHalfPK2>
 		fish_body_stress_relaxation_first_half(fish_body_inner);
 	Dynamics1Level<solid_dynamics::Integration2ndHalf>
 		fish_body_stress_relaxation_second_half(fish_body_inner);

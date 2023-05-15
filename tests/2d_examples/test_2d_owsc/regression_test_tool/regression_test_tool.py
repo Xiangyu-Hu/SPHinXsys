@@ -12,14 +12,11 @@ case name: test_2d_owsc
 
 case_name = "test_2d_owsc"
 body_name = "Flap"
-parameter_name = "TotalForceFromFluid"
-body_name_1 = "FlapObserver"
-parameter_name_1 = "Pressure"
+parameter_name = "TotalForceOnSolid"
 
 number_of_run_times = 0
 converged = 0
 sphinxsys = SphinxsysRegressionTest(case_name, body_name, parameter_name)
-sphinxsys_1 = SphinxsysRegressionTest(case_name, body_name_1, parameter_name_1)
 
 
 while True:
@@ -27,17 +24,13 @@ while True:
     sphinxsys.run_case()
     number_of_run_times += 1
     converged = sphinxsys.read_dat_file()
-    converged_1 = sphinxsys_1.read_dat_file()
     print("Please note: This is the", number_of_run_times, "run!")
     if number_of_run_times <= 200:
-        if (converged == "true") and (converged_1 == "true"):
+        if (converged == "true"):
             print("The tested parameters of all variables are converged, and the run will stop here!")
             break
         elif converged != "true":
             print("The tested parameters of", sphinxsys.sphinxsys_parameter_name, "are not converged!")
-            continue
-        elif converged_1 != "true":
-            print("The tested parameters of", sphinxsys_1.sphinxsys_parameter_name, "are not converged!")
             continue
     else:
         print("It's too many runs but still not converged, please try again!")
