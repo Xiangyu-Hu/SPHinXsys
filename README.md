@@ -40,7 +40,9 @@ Here, we present several short examples in flow, solid dynamics, fluid structure
 
 Main Reference:
 
-1. C. Zhang, M. Rezavand, Y. Zhu, Y. Yu, D. Wu, W. Zhang, J. Wang, X. Hu, "SPHinXsys: an open-source multi-physics and multi-resolution library based on smoothed particle hydrodynamics", Computer Physics Communications, 267, 108066, 2021.
+1. C. Zhang, M. Rezavand, Y. Zhu, Y. Yu, D. Wu, W. Zhang, J. Wang, X. Hu, 
+"SPHinXsys: an open-source multi-physics and multi-resolution library based on smoothed particle hydrodynamics", 
+Computer Physics Communications, 267, 108066, 2021.
 
 The algorithms in SPHinXsys are based on the following publications:
 1. Chi Zhang and Yujie Zhu and Dong Wu and Nikolaus A Adams and Xiagnyu Hu, 
