@@ -51,8 +51,7 @@ Both the models and physical dynamics can be extended.
 
 There are a few conventions that have developed over time around SPHinXsys:
 
-* The main source is in the folder SPHINXsys and the examples and test problems are in the folder tests.
-    * In SPHINXsys, the cmake file are in the folder cmake, and the sources are in the folder src.
+* The main source is in the folder *src* and the examples and test problems are in the folder tests.
     * In src, the sources which will be used for both 2D and 3D are in the folder shared.
     * In shared, each folder is spefical model or physical dynamics. 
 	For example, the folder materials is for modeling fluid, solid and more complex material properties. 
