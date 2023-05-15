@@ -41,7 +41,7 @@ int main(int ac, char *av[])
 	/** Time step size calculation. We use CFL = 0.5 due to the very large twisting speed. */
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(column, 0.5);
 	/** active and passive stress relaxation. */
-	Dynamics1Level<solid_dynamics::KirchhoffIntegration1stHalf> stress_relaxation_first_half(column_inner);
+	Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> stress_relaxation_first_half(column_inner);
 	Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(column_inner);
 	/** Constrain the holder. */
 	BodyRegionByParticle holder(column, makeShared<TransformShape<GeometricShapeBox>>(Transformd(translation_holder), halfsize_holder, "Holder"));
