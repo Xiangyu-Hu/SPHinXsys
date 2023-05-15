@@ -82,7 +82,10 @@ namespace SPH
 		//=================================================================================================//
 		Real AdvectionTimeStepSizeForImplicitViscosity::reduce(size_t index_i, Real dt)
 		{
-			return vel_[index_i].squaredNorm();
+            return AdvectionTimeStepSizeForImplicitViscosityKernel::reduce(index_i, dt, vel_.data(),
+                                                                           [](const Vecd& vel) {
+                return vel.squaredNorm();
+            });
 		}
 		//=================================================================================================//
 		Real AdvectionTimeStepSizeForImplicitViscosity::outputResult(Real reduced_value)
