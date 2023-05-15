@@ -185,7 +185,7 @@ int main(int ac, char *av[])
 	InteractionDynamics<solid_dynamics::CorrectConfiguration> beam_corrected_configuration(beam_inner);
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> shell_get_time_step_size(beam);
 	/** stress relaxation for the walls. */
-	Dynamics1Level<solid_dynamics::Integration1stHalf> beam_stress_relaxation_first_half(beam_inner);
+	Dynamics1Level<solid_dynamics::Integration1stHalfPK2> beam_stress_relaxation_first_half(beam_inner);
 	Dynamics1Level<solid_dynamics::Integration2ndHalf> beam_stress_relaxation_second_half(beam_inner);
 	/** Algorithms for shell-solid contact. */
 	InteractionDynamics<solid_dynamics::ContactDensitySummation> beam_shell_update_contact_density(beam_contact);
