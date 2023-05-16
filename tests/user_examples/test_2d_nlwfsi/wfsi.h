@@ -125,7 +125,7 @@ Real mu_f = 1.0e-3;
 //	Structure Properties G and Inertia
 //----------------------------------------------------------------------
 /* Weight of the solid structure*/
-Real StructureMass = 160;
+Real StructureMass = 62.036;
 
 Real bp_area =bp_l*bp_h;
 Real ssp_area =ssp_l*ssp_h;
