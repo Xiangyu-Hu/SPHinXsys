@@ -173,17 +173,17 @@ public:
 };
 
 using DiffusionRelaxationInner = RelaxationOfAllDiffusionSpeciesInner<DiffusionFluidParticles>;
-using DiffusionRelaxationWithDirichletContact = RelaxationOfAllDiffusionSpeciesDirichletContact<DiffusionFluidParticles, DiffusionSolidParticles>;
+using DiffusionRelaxationWithDirichletContact = RelaxationOfAllDiffusionSpeciesDirichlet<DiffusionFluidParticles, DiffusionSolidParticles>;
 //----------------------------------------------------------------------
 //	Set thermal relaxation between different bodies
 //----------------------------------------------------------------------
 class ThermalRelaxationComplex
-	: public RelaxationOfAllDiffusionSpeciesRK2Complex<
+	: public RelaxationOfAllDiffusionSpeciesRK2<
 		  ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>
 {
 public:
 	explicit ThermalRelaxationComplex(BaseInnerRelation& inner_relation, BaseContactRelation& body_contact_relation_Dirichlet)
-		: RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>(inner_relation, body_contact_relation_Dirichlet) {};
+		: RelaxationOfAllDiffusionSpeciesRK2<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>(inner_relation, body_contact_relation_Dirichlet) {};
 	virtual ~ThermalRelaxationComplex(){};
 };
 //----------------------------------------------------------------------
