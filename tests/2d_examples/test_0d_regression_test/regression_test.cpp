@@ -154,12 +154,12 @@ public:
 //	Specify diffusion relaxation method.
 //----------------------------------------------------------------------
 class DiffusionBodyRelaxation
-	: public RelaxationOfAllDiffusionSpeciesRK2Complex<
+	: public RelaxationOfAllDiffusionSpeciesRK2<
 		  RelaxationOfAllDiffusionSpeciesInner<DiffusionParticles>>
 {
 public:
 	explicit DiffusionBodyRelaxation(BaseInnerRelation &inner_relation)
-		: RelaxationOfAllDiffusionSpeciesRK2Complex(inner_relation){};
+		: RelaxationOfAllDiffusionSpeciesRK2(inner_relation){};
 	virtual ~DiffusionBodyRelaxation(){};
 };
 //----------------------------------------------------------------------

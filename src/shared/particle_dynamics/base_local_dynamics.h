@@ -31,141 +31,142 @@
 #define BASE_LOCAL_DYNAMICS_H
 
 #include "base_data_package.h"
-#include "sph_data_containers.h"
 #include "base_particle_dynamics.h"
+#include "sph_data_containers.h"
 
 namespace SPH
 {
-	/** A Functor for Summation */
-	template <class ReturnType>
-	struct ReduceSum
-	{
-		ReturnType operator()(const ReturnType &x, const ReturnType &y) const { return x + y; };
-	};
-	/** A Functor for Maximum */
-	struct ReduceMax
-	{
-		Real operator()(Real x, Real y) const { return SMAX(x, y); };
-	};
-	/** A Functor for Minimum */
-	struct ReduceMin
-	{
-		Real operator()(Real x, Real y) const { return SMIN(x, y); };
-	};
-	/** A Functor for OR operator */
-	struct ReduceOR
-	{
-		bool operator()(bool x, bool y) const { return x || y; };
-	};
-	/** A Functor for AND operator */
-	struct ReduceAND
-	{
-		bool operator()(bool x, bool y) const { return x && y; };
-	};
-	/** A Functor for lower bound */
-	struct ReduceLowerBound
-	{
-		Vecd operator()(const Vecd &x, const Vecd &y) const
-		{
-			Vecd lower_bound;
-			for (int i = 0; i < lower_bound.size(); ++i)
-				lower_bound[i] = SMIN(x[i], y[i]);
-			return lower_bound;
-		};
-	};
-	/** A Functor for upper bound */
-	struct ReduceUpperBound
-	{
-		Vecd operator()(const Vecd &x, const Vecd &y) const
-		{
-			Vecd upper_bound;
-			for (int i = 0; i < upper_bound.size(); ++i)
-				upper_bound[i] = SMAX(x[i], y[i]);
-			return upper_bound;
-		};
-	};
+/** A Functor for Summation */
+template <class ReturnType>
+struct ReduceSum
+{
+    ReturnType operator()(const ReturnType &x, const ReturnType &y) const { return x + y; };
+};
+/** A Functor for Maximum */
+struct ReduceMax
+{
+    Real operator()(Real x, Real y) const { return SMAX(x, y); };
+};
+/** A Functor for Minimum */
+struct ReduceMin
+{
+    Real operator()(Real x, Real y) const { return SMIN(x, y); };
+};
+/** A Functor for OR operator */
+struct ReduceOR
+{
+    bool operator()(bool x, bool y) const { return x || y; };
+};
+/** A Functor for AND operator */
+struct ReduceAND
+{
+    bool operator()(bool x, bool y) const { return x && y; };
+};
+/** A Functor for lower bound */
+struct ReduceLowerBound
+{
+    Vecd operator()(const Vecd &x, const Vecd &y) const
+    {
+        Vecd lower_bound;
+        for (int i = 0; i < lower_bound.size(); ++i)
+            lower_bound[i] = SMIN(x[i], y[i]);
+        return lower_bound;
+    };
+};
+/** A Functor for upper bound */
+struct ReduceUpperBound
+{
+    Vecd operator()(const Vecd &x, const Vecd &y) const
+    {
+        Vecd upper_bound;
+        for (int i = 0; i < upper_bound.size(); ++i)
+            upper_bound[i] = SMAX(x[i], y[i]);
+        return upper_bound;
+    };
+};
 
-	/**
-	 * @class BaseLocalDynamics
-	 * @brief The base class for all local particle dynamics.
-	 */
-	template <class DynamicsIdentifier>
-	class BaseLocalDynamics
-	{
-	public:
-		explicit BaseLocalDynamics(DynamicsIdentifier &identifier)
-			: identifier_(identifier), sph_body_(identifier.getSPHBody()){};
-		virtual ~BaseLocalDynamics(){};
-		SPHBody &getSPHBody() { return sph_body_; };
-		DynamicsIdentifier &getDynamicsIdentifier() { return identifier_; };
-		virtual void setupDynamics(Real dt = 0.0){}; // setup global parameters
-	protected:
-		DynamicsIdentifier &identifier_;
-		SPHBody &sph_body_;
-	};
-	using LocalDynamics = BaseLocalDynamics<SPHBody>;
+/**
+ * @class BaseLocalDynamics
+ * @brief The base class for all local particle dynamics.
+ */
+template <class DynamicsIdentifier>
+class BaseLocalDynamics
+{
+  public:
+    explicit BaseLocalDynamics(DynamicsIdentifier &identifier)
+        : identifier_(identifier), sph_body_(identifier.getSPHBody()){};
+    virtual ~BaseLocalDynamics(){};
+    SPHBody &getSPHBody() { return sph_body_; };
+    DynamicsIdentifier &getDynamicsIdentifier() { return identifier_; };
+    virtual void setupDynamics(Real dt = 0.0){}; // setup global parameters
+  protected:
+    DynamicsIdentifier &identifier_;
+    SPHBody &sph_body_;
+};
+using LocalDynamics = BaseLocalDynamics<SPHBody>;
 
-	/**
-	 * @class BaseLocalDynamicsReduce
-	 * @brief The base class for all local particle dynamics for reducing.
-	 */
-	template <typename ReturnType, typename Operation, class DynamicsIdentifier>
-	class BaseLocalDynamicsReduce : public BaseLocalDynamics<DynamicsIdentifier>
-	{
-	public:
-		BaseLocalDynamicsReduce(DynamicsIdentifier &identifier, ReturnType reference)
-			: BaseLocalDynamics<DynamicsIdentifier>(identifier), reference_(reference),
-			  quantity_name_("ReducedQuantity"){};
-		virtual ~BaseLocalDynamicsReduce(){};
+/**
+ * @class BaseLocalDynamicsReduce
+ * @brief The base class for all local particle dynamics for reducing.
+ */
+template <typename ReturnType, typename Operation, class DynamicsIdentifier>
+class BaseLocalDynamicsReduce : public BaseLocalDynamics<DynamicsIdentifier>
+{
+  public:
+    BaseLocalDynamicsReduce(DynamicsIdentifier &identifier, ReturnType reference)
+        : BaseLocalDynamics<DynamicsIdentifier>(identifier), reference_(reference),
+          quantity_name_("ReducedQuantity"){};
+    virtual ~BaseLocalDynamicsReduce(){};
 
-		using ReduceReturnType = ReturnType;
-		ReturnType Reference() { return reference_; };
-		std::string QuantityName() { return quantity_name_; };
-		Operation &getOperation() { return operation_; };
-		virtual ReturnType outputResult(ReturnType reduced_value) { return reduced_value; }
+    using ReduceReturnType = ReturnType;
+    ReturnType Reference() { return reference_; };
+    std::string QuantityName() { return quantity_name_; };
+    Operation &getOperation() { return operation_; };
+    virtual ReturnType outputResult(ReturnType reduced_value) { return reduced_value; }
 
-	protected:
-		ReturnType reference_;
-		Operation operation_;
-		std::string quantity_name_;
-	};
-	template <typename ReturnType, typename Operation>
-	using LocalDynamicsReduce = BaseLocalDynamicsReduce<ReturnType, Operation, SPHBody>;
+  protected:
+    ReturnType reference_;
+    Operation operation_;
+    std::string quantity_name_;
+};
+template <typename ReturnType, typename Operation>
+using LocalDynamicsReduce = BaseLocalDynamicsReduce<ReturnType, Operation, SPHBody>;
 
-	/**
-	 * @class ComplexInteraction
-	 * @brief A class that integrates multiple boundary conditions.
-	 */
-	template <typename... InteractionType>
-	class ComplexInteraction;
+/**
+ * @class ComplexInteraction
+ * @brief A class that integrates multiple local dynamics.
+ * Typically, it includes an inner interaction and one or
+ * several contact interaction ad boundary conditions.
+ */
+template <typename... InteractionType>
+class ComplexInteraction;
 
-	template <>
-	class ComplexInteraction<>
-	{
-	public:
-		ComplexInteraction() {};
+template <>
+class ComplexInteraction<>
+{
+  public:
+    ComplexInteraction(){};
 
-		void interaction(size_t index_i, Real dt = 0.0) {};
-	};
+    void interaction(size_t index_i, Real dt = 0.0){};
+};
 
-	template <class FirstInteraction, class... OtherInteractions>
-    class ComplexInteraction<FirstInteraction, OtherInteractions...> : public FirstInteraction
-	{
-	protected:
-		ComplexInteraction<OtherInteractions...> other_interaction_;
+template <class FirstInteraction, class... OtherInteractions>
+class ComplexInteraction<FirstInteraction, OtherInteractions...> : public FirstInteraction
+{
+  protected:
+    ComplexInteraction<OtherInteractions...> other_interactions_;
 
-	public:
+  public:
+    template <class FirstRelationType, typename... OtherRelationTypes>
+    explicit ComplexInteraction(FirstRelationType &body_relation, OtherRelationTypes &&...other_relations)
+        : FirstInteraction(body_relation),
+          other_interactions_(std::forward<OtherRelationTypes>(other_relations)...){};
 
-		template <class FirstRelationType, typename... OtherRelationTypes>
-		explicit ComplexInteraction(FirstRelationType& body_relation, OtherRelationTypes &&...other_relations)
-			: FirstInteraction(body_relation),
-			other_interaction_(std::forward<OtherRelationTypes>(other_relations)...) {};
-
-		void interaction(size_t index_i, Real dt = 0.0)
-		{
-			FirstInteraction::interaction(index_i, dt);
-			other_interaction_.interaction(index_i, dt);
-		};
-	};
-}
+    void interaction(size_t index_i, Real dt = 0.0)
+    {
+        FirstInteraction::interaction(index_i, dt);
+        other_interactions_.interaction(index_i, dt);
+    };
+};
+} // namespace SPH
 #endif // BASE_LOCAL_DYNAMICS_H

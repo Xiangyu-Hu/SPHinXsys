@@ -31,351 +31,348 @@
 #define PARTICLE_DYNAMICS_DIFFUSION_REACTION_H
 
 #include "all_particle_dynamics.h"
-#include "diffusion_reaction_particles.h"
 #include "diffusion_reaction.h"
+#include "diffusion_reaction_particles.h"
 
 namespace SPH
 {
-	template <class DiffusionReactionParticlesType>
-	using DiffusionReactionSimpleData = DataDelegateSimple<DiffusionReactionParticlesType>;
+template <class DiffusionReactionParticlesType>
+using DiffusionReactionSimpleData = DataDelegateSimple<DiffusionReactionParticlesType>;
 
-	template <class DiffusionReactionParticlesType>
-	using DiffusionReactionInnerData = DataDelegateInner<DiffusionReactionParticlesType>;
+template <class DiffusionReactionParticlesType>
+using DiffusionReactionInnerData = DataDelegateInner<DiffusionReactionParticlesType>;
 
-	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
-	using DiffusionReactionContactData =
-		DataDelegateContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>;
+template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
+using DiffusionReactionContactData =
+    DataDelegateContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>;
 
-	/**
-	 * @class DiffusionReactionInitialCondition
-	 * @brief Pure abstract class for initial conditions
-	 */
-	template <class DiffusionReactionParticlesType>
-	class DiffusionReactionInitialCondition
-		: public LocalDynamics,
-		  public DiffusionReactionSimpleData<DiffusionReactionParticlesType>
-	{
-	public:
-		explicit DiffusionReactionInitialCondition(SPHBody &sph_body);
-		virtual ~DiffusionReactionInitialCondition(){};
+/**
+ * @class DiffusionReactionInitialCondition
+ * @brief Pure abstract class for initial conditions
+ */
+template <class DiffusionReactionParticlesType>
+class DiffusionReactionInitialCondition
+    : public LocalDynamics,
+      public DiffusionReactionSimpleData<DiffusionReactionParticlesType>
+{
+  public:
+    explicit DiffusionReactionInitialCondition(SPHBody &sph_body);
+    virtual ~DiffusionReactionInitialCondition(){};
 
-	protected:
-		StdLargeVec<Vecd> &pos_;
-		StdVec<StdLargeVec<Real>> &all_species_;
-	};
+  protected:
+    StdLargeVec<Vecd> &pos_;
+    StdVec<StdLargeVec<Real>> &all_species_;
+};
 
-	/**
-	 * @class GetDiffusionTimeStepSize
-	 * @brief Computing the time step size based on diffusion coefficient and particle smoothing length
-	 */
-	template <class DiffusionReactionParticlesType>
-	class GetDiffusionTimeStepSize
-		: public BaseDynamics<Real>,
-		  public DiffusionReactionSimpleData<DiffusionReactionParticlesType>
-	{
-	public:
-		explicit GetDiffusionTimeStepSize(SPHBody &sph_body);
-		virtual ~GetDiffusionTimeStepSize(){};
+/**
+ * @class GetDiffusionTimeStepSize
+ * @brief Computing the time step size based on diffusion coefficient and particle smoothing length
+ */
+template <class DiffusionReactionParticlesType>
+class GetDiffusionTimeStepSize
+    : public BaseDynamics<Real>,
+      public DiffusionReactionSimpleData<DiffusionReactionParticlesType>
+{
+  public:
+    explicit GetDiffusionTimeStepSize(SPHBody &sph_body);
+    virtual ~GetDiffusionTimeStepSize(){};
 
-		virtual Real exec(Real dt = 0.0) override { return diff_time_step_; };
+    virtual Real exec(Real dt = 0.0) override { return diff_time_step_; };
 
-	protected:
-		Real diff_time_step_;
-	};
+  protected:
+    Real diff_time_step_;
+};
 
-	/**
-	 * @class RelaxationOfAllDiffusionSpeciesInner
-	 * @brief Compute the diffusion relaxation process of all species
-	 */
-	template <class DiffusionReactionParticlesType>
-	class RelaxationOfAllDiffusionSpeciesInner
-		: public LocalDynamics,
-		  public DiffusionReactionInnerData<DiffusionReactionParticlesType>
-	{
-	protected:
-		typedef typename DiffusionReactionParticlesType::DiffusionReactionMaterial DiffusionReactionMaterial;
-		DiffusionReactionMaterial &material_;
-		StdVec<BaseDiffusion *> &all_diffusions_;
-		StdVec<StdLargeVec<Real> *> &diffusion_species_;
-		StdVec<StdLargeVec<Real> *> &gradient_species_;
-		StdVec<StdLargeVec<Real> *> diffusion_dt_;
+/**
+ * @class RelaxationOfAllDiffusionSpeciesInner
+ * @brief Compute the diffusion relaxation process of all species
+ */
+template <class DiffusionReactionParticlesType>
+class RelaxationOfAllDiffusionSpeciesInner
+    : public LocalDynamics,
+      public DiffusionReactionInnerData<DiffusionReactionParticlesType>
+{
+  protected:
+    typedef typename DiffusionReactionParticlesType::DiffusionReactionMaterial DiffusionReactionMaterial;
+    DiffusionReactionMaterial &material_;
+    StdVec<BaseDiffusion *> &all_diffusions_;
+    StdVec<StdLargeVec<Real> *> &diffusion_species_;
+    StdVec<StdLargeVec<Real> *> &gradient_species_;
+    StdVec<StdLargeVec<Real> *> diffusion_dt_;
 
-		void initializeDiffusionChangeRate(size_t particle_i);
-		void getDiffusionChangeRate(size_t particle_i, size_t particle_j, Vecd &e_ij, Real surface_area_ij);
-		virtual void updateSpeciesDiffusion(size_t particle_i, Real dt);
+    void initializeDiffusionChangeRate(size_t particle_i);
+    void getDiffusionChangeRate(size_t particle_i, size_t particle_j, Vecd &e_ij, Real surface_area_ij);
+    virtual void updateSpeciesDiffusion(size_t particle_i, Real dt);
 
-	public:
-		typedef DiffusionReactionParticlesType InnerParticlesType;
-		typedef BaseInnerRelation BodyRelationType;
+  public:
+    typedef DiffusionReactionParticlesType InnerParticlesType;
+    typedef BaseInnerRelation BodyRelationType;
 
-		explicit RelaxationOfAllDiffusionSpeciesInner(BaseInnerRelation &inner_relation);
-		virtual ~RelaxationOfAllDiffusionSpeciesInner(){};
-		StdVec<BaseDiffusion *> &AllDiffusions() { return material_.AllDiffusions(); };
-		inline void interaction(size_t index_i, Real dt = 0.0);
-		void update(size_t index_i, Real dt = 0.0);
-	};
+    explicit RelaxationOfAllDiffusionSpeciesInner(BaseInnerRelation &inner_relation);
+    virtual ~RelaxationOfAllDiffusionSpeciesInner(){};
+    StdVec<BaseDiffusion *> &AllDiffusions() { return material_.AllDiffusions(); };
+    inline void interaction(size_t index_i, Real dt = 0.0);
+    void update(size_t index_i, Real dt = 0.0);
+};
 
-	/**
-	 * @class RelaxationOfAllDiffusionSpeciesSimpleContact
-	 * @brief Simple diffusion relaxation process between two contact bodies, which is the base class of three boundary conditions.
-	 */
-	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
-	class RelaxationOfAllDiffusionSpeciesBaseContact
-		: public LocalDynamics,
-		  public DiffusionReactionContactData<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
-	{
-	protected:
-		typedef typename DiffusionReactionParticlesType::DiffusionReactionMaterial DiffusionReactionMaterial;
-		DiffusionReactionMaterial& material_;
-		StdVec<BaseDiffusion*>& all_diffusions_;
-		StdVec<StdLargeVec<Real>*>& diffusion_species_;
-		StdVec<StdLargeVec<Real>*>& gradient_species_;
-		StdVec<StdLargeVec<Real>*> diffusion_dt_;
+/**
+ * @class RelaxationOfAllDiffusionSpeciesContact
+ * @brief Base class for diffusion relaxation process between two contact bodies.
+ */
+template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
+class RelaxationOfAllDiffusionSpeciesContact
+    : public LocalDynamics,
+      public DiffusionReactionContactData<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
+{
+  protected:
+    typedef typename DiffusionReactionParticlesType::DiffusionReactionMaterial DiffusionReactionMaterial;
+    DiffusionReactionMaterial &material_;
+    StdVec<BaseDiffusion *> &all_diffusions_;
+    StdVec<StdLargeVec<Real> *> &diffusion_species_;
+    StdVec<StdLargeVec<Real> *> &gradient_species_;
+    StdVec<StdLargeVec<Real> *> diffusion_dt_;
 
-	public:
-		StdVec<StdVec<StdLargeVec<Real>*>> contact_gradient_species_;
+  public:
+    StdVec<StdVec<StdLargeVec<Real> *>> contact_gradient_species_;
 
-		typedef DiffusionReactionParticlesType InnerParticlesType;
-		typedef BaseContactRelation BodyRelationType;
+    typedef DiffusionReactionParticlesType InnerParticlesType;
+    typedef BaseContactRelation BodyRelationType;
 
-		explicit RelaxationOfAllDiffusionSpeciesBaseContact(BaseContactRelation &contact_relation);
-		virtual ~RelaxationOfAllDiffusionSpeciesBaseContact() {};
-		StdVec<BaseDiffusion*>& AllDiffusions() { return material_.AllDiffusions(); };
+    explicit RelaxationOfAllDiffusionSpeciesContact(BaseContactRelation &contact_relation);
+    virtual ~RelaxationOfAllDiffusionSpeciesContact(){};
+    StdVec<BaseDiffusion *> &AllDiffusions() { return material_.AllDiffusions(); };
+};
 
-		virtual void interaction(size_t index_i, Real dt = 0.0) = 0;
-	};
+/**
+ * @class RelaxationOfAllDiffusionSpeciesDirichlet
+ * @brief Contact diffusion relaxation with Dirichlet boundary condition.
+ */
+template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
+class RelaxationOfAllDiffusionSpeciesDirichlet
+    : public RelaxationOfAllDiffusionSpeciesContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
+{
+  protected:
+    void getDiffusionChangeRateDirichletContact(size_t particle_i, size_t particle_j, Vecd &e_ij, Real surface_area_ij,
+                                                const StdVec<StdLargeVec<Real> *> &gradient_species_k);
 
-	/**
-	 * @class RelaxationOfAllDiffusionSpeciesDirichletContact
-	 * @brief Contact diffusion relaxation with Dirichlet boundary condition.
-	 */
-	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
-	class RelaxationOfAllDiffusionSpeciesDirichletContact
-		: public RelaxationOfAllDiffusionSpeciesBaseContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
-	{
-	protected:
-		void getDiffusionChangeRateDirichletContact(size_t particle_i, size_t particle_j, Vecd& e_ij, Real surface_area_ij,
-			const StdVec<StdLargeVec<Real>*>& gradient_species_k);
+  public:
+    explicit RelaxationOfAllDiffusionSpeciesDirichlet(BaseContactRelation &contact_relation);
+    virtual ~RelaxationOfAllDiffusionSpeciesDirichlet(){};
+    inline void interaction(size_t index_i, Real dt = 0.0);
+};
 
-	public:
-		explicit RelaxationOfAllDiffusionSpeciesDirichletContact(BaseContactRelation& contact_relation);
-		virtual ~RelaxationOfAllDiffusionSpeciesDirichletContact() {};
+/**
+ * @class InitializationRK
+ * @brief Initialization of a runge-kutta integration scheme.
+ */
+template <class DiffusionReactionParticlesType>
+class InitializationRK : public LocalDynamics,
+                         public DiffusionReactionSimpleData<DiffusionReactionParticlesType>
+{
+  protected:
+    typename DiffusionReactionParticlesType::DiffusionReactionMaterial &material_;
+    StdVec<BaseDiffusion *> &all_diffusions_;
+    StdVec<StdLargeVec<Real> *> &diffusion_species_;
+    StdVec<StdLargeVec<Real>> &diffusion_species_s_;
 
-		inline void interaction(size_t index_i, Real dt = 0.0);
-	};
+  public:
+    InitializationRK(SPHBody &sph_body, StdVec<StdLargeVec<Real>> &diffusion_species_s);
+    virtual ~InitializationRK(){};
+    void update(size_t index_i, Real dt = 0.0);
+};
 
-	/**
-	 * @class InitializationRKComplex
-	 * @brief Initialization of a runge-kutta integration scheme.
-	 */
-	template <class DiffusionReactionParticlesType>
-	class InitializationRKComplex : public LocalDynamics,
-		public DiffusionReactionSimpleData<DiffusionReactionParticlesType>
-	{
-	protected:
-		typename DiffusionReactionParticlesType::DiffusionReactionMaterial& material_;
-		StdVec<BaseDiffusion*>& all_diffusions_;
-		StdVec<StdLargeVec<Real>*>& diffusion_species_;
-		StdVec<StdLargeVec<Real>>& diffusion_species_s_;
+/**
+ * @class SecondStageRK2
+ * @brief The second stage of the 2nd-order Runge-Kutta scheme.
+ */
+template <class FirstStageType>
+class SecondStageRK2 : public FirstStageType
+{
+  protected:
+    StdVec<StdLargeVec<Real>> &diffusion_species_s_;
+    virtual void updateSpeciesDiffusion(size_t particle_i, Real dt) override;
 
-	public:
-		InitializationRKComplex(SPHBody& sph_body, StdVec<StdLargeVec<Real>>& diffusion_species_s);
-		virtual ~InitializationRKComplex() {};
+  public:
+    template <typename... ContactArgsType>
+    SecondStageRK2(typename FirstStageType::BodyRelationType &body_relation,
+                   StdVec<StdLargeVec<Real>> &diffusion_species_s, ContactArgsType &&...contact_args)
+        : FirstStageType(body_relation, std::forward<ContactArgsType>(contact_args)...),
+          diffusion_species_s_(diffusion_species_s){};
+    virtual ~SecondStageRK2(){};
+};
 
-		void update(size_t index_i, Real dt = 0.0);
-	};
+template <class FirstStageType>
+class RelaxationOfAllDiffusionSpeciesRK2 : public BaseDynamics<void>
+{
+  protected:
+    /** Intermediate Value */
+    StdVec<StdLargeVec<Real>> diffusion_species_s_;
+    SimpleDynamics<InitializationRK<typename FirstStageType::InnerParticlesType>> rk2_initialization_;
+    InteractionWithUpdate<FirstStageType> rk2_1st_stage_;
+    InteractionWithUpdate<SecondStageRK2<FirstStageType>> rk2_2nd_stage_;
+    StdVec<BaseDiffusion *> all_diffusions_;
 
-	/**
-	 * @class SecondStageRK2Complex
-	 * @brief The second stage of the 2nd-order Runge-Kutta scheme.
-	 */
-	template <class FirstStageType>
-	class SecondStageRK2Complex : public FirstStageType
-	{
-	protected:
-		StdVec<StdLargeVec<Real>>& diffusion_species_s_;
-		virtual void updateSpeciesDiffusion(size_t particle_i, Real dt) override;
+  public:
+    template <typename... ContactArgsType>
+    explicit RelaxationOfAllDiffusionSpeciesRK2(typename FirstStageType::BodyRelationType &body_relation, ContactArgsType &&...contact_args)
+        : BaseDynamics<void>(body_relation.getSPHBody()),
+          rk2_initialization_(body_relation.getSPHBody(), diffusion_species_s_),
+          rk2_1st_stage_(body_relation, std::forward<ContactArgsType>(contact_args)...),
+          rk2_2nd_stage_(body_relation, diffusion_species_s_, std::forward<ContactArgsType>(contact_args)...),
+          all_diffusions_(rk2_1st_stage_.AllDiffusions())
+    {
+        diffusion_species_s_.resize(all_diffusions_.size());
+        StdVec<std::string> &all_species_names = rk2_1st_stage_.getParticles()->AllSpeciesNames();
+        for (size_t i = 0; i != all_diffusions_.size(); ++i)
+        {
+            // Register diffusion species intermediate
+            size_t diffusion_species_index = all_diffusions_[i]->diffusion_species_index_;
+            std::string &diffusion_species_name = all_species_names[diffusion_species_index];
+            rk2_1st_stage_.getParticles()->registerVariable(diffusion_species_s_[i], diffusion_species_name + "Intermediate");
+        }
+    }
+    virtual ~RelaxationOfAllDiffusionSpeciesRK2(){};
 
-	public:
-		template <typename... ContactArgsType>
-		SecondStageRK2Complex(typename FirstStageType::BodyRelationType& body_relation, StdVec<StdLargeVec<Real>>& diffusion_species_s, ContactArgsType &&... contact_agrs)
-			: FirstStageType(body_relation, std::forward<ContactArgsType>(contact_agrs)...),
-			diffusion_species_s_(diffusion_species_s) {};
-		virtual ~SecondStageRK2Complex() {};
-	};
+    virtual void exec(Real dt = 0.0) override;
+};
 
-	template <class FirstStageType>
-	class RelaxationOfAllDiffusionSpeciesRK2Complex : public BaseDynamics<void>
-	{
-	protected:
-		/** Intermediate Value */
-		StdVec<StdLargeVec<Real>> diffusion_species_s_;
-		SimpleDynamics<InitializationRKComplex<typename FirstStageType::InnerParticlesType>> rk2_initialization_;
-		InteractionWithUpdate<FirstStageType> rk2_1st_stage_;
-		InteractionWithUpdate<SecondStageRK2Complex<FirstStageType>> rk2_2nd_stage_;
-		StdVec<BaseDiffusion*> all_diffusions_;
+struct UpdateAReactionSpecies
+{
+    Real operator()(Real input, Real production_rate, Real loss_rate, Real dt) const
+    {
+        return input * exp(-loss_rate * dt) + production_rate * (1.0 - exp(-loss_rate * dt)) / (loss_rate + TinyReal);
+    };
+};
 
-	public:
-		template <typename... ContactArgsType>
-		explicit RelaxationOfAllDiffusionSpeciesRK2Complex(typename FirstStageType::BodyRelationType& body_relation, ContactArgsType &&... contact_agrs)
-			: BaseDynamics<void>(body_relation.getSPHBody()),
-			rk2_initialization_(body_relation.getSPHBody(), diffusion_species_s_),
-			rk2_1st_stage_(body_relation, std::forward<ContactArgsType>(contact_agrs)...),
-			rk2_2nd_stage_(body_relation, diffusion_species_s_, std::forward<ContactArgsType>(contact_agrs)...),
-			all_diffusions_(rk2_1st_stage_.AllDiffusions())
-		{
-			diffusion_species_s_.resize(all_diffusions_.size());
-			StdVec<std::string>& all_species_names = rk2_1st_stage_.getParticles()->AllSpeciesNames();
-			for (size_t i = 0; i != all_diffusions_.size(); ++i)
-			{
-				// Register diffusion species intermediate
-				size_t diffusion_species_index = all_diffusions_[i]->diffusion_species_index_;
-				std::string& diffusion_species_name = all_species_names[diffusion_species_index];
-				rk2_1st_stage_.getParticles()->registerVariable(diffusion_species_s_[i], diffusion_species_name + "Intermediate");
-			}
-		}
-		virtual ~RelaxationOfAllDiffusionSpeciesRK2Complex() {};
+/**
+ * @class BaseRelaxationOfAllReactions
+ * @brief Base class for computing the reaction process of all species
+ */
+template <class DiffusionReactionParticlesType>
+class BaseRelaxationOfAllReactions
+    : public LocalDynamics,
+      public DiffusionReactionSimpleData<DiffusionReactionParticlesType>
+{
+    static constexpr int NumReactiveSpecies = DiffusionReactionParticlesType::NumReactiveSpecies;
+    typedef std::array<Real, NumReactiveSpecies> LocalSpecies;
+    StdVec<StdLargeVec<Real> *> &reactive_species_;
+    BaseReactionModel<NumReactiveSpecies> &reaction_model_;
+    UpdateAReactionSpecies updateAReactionSpecies;
+    void loadLocalSpecies(LocalSpecies &local_species, size_t index_i);
+    void applyGlobalSpecies(LocalSpecies &local_species, size_t index_i);
 
-		virtual void exec(Real dt = 0.0) override;
-	};
+  public:
+    explicit BaseRelaxationOfAllReactions(SPHBody &sph_body);
+    virtual ~BaseRelaxationOfAllReactions(){};
 
-	struct UpdateAReactionSpecies
-	{
-		Real operator()(Real input, Real production_rate, Real loss_rate, Real dt) const
-		{
-			return input * exp(-loss_rate * dt) + production_rate * (1.0 - exp(-loss_rate * dt)) / (loss_rate + TinyReal);
-		};
-	};
+  protected:
+    void advanceForwardStep(size_t index_i, Real dt);
+    void advanceBackwardStep(size_t index_i, Real dt);
+};
 
-	/**
-	 * @class BaseRelaxationOfAllReactions
-	 * @brief Base class for computing the reaction process of all species
-	 */
-	template <class DiffusionReactionParticlesType>
-	class BaseRelaxationOfAllReactions
-		: public LocalDynamics,
-		  public DiffusionReactionSimpleData<DiffusionReactionParticlesType>
-	{
-		static constexpr int NumReactiveSpecies = DiffusionReactionParticlesType::NumReactiveSpecies;		
-		typedef std::array<Real, NumReactiveSpecies> LocalSpecies;
-		StdVec<StdLargeVec<Real> *> &reactive_species_;
-		BaseReactionModel<NumReactiveSpecies> &reaction_model_;
-		UpdateAReactionSpecies updateAReactionSpecies;
-		void loadLocalSpecies(LocalSpecies &local_species, size_t index_i);
-		void applyGlobalSpecies(LocalSpecies &local_species, size_t index_i);
+/**
+ * @class RelaxationOfAllReactionsForward
+ * @brief Compute the reaction process of all species by forward splitting
+ */
+template <class DiffusionReactionParticlesType>
+class RelaxationOfAllReactionsForward
+    : public BaseRelaxationOfAllReactions<DiffusionReactionParticlesType>
+{
+  public:
+    RelaxationOfAllReactionsForward(SPHBody &sph_body)
+        : BaseRelaxationOfAllReactions<DiffusionReactionParticlesType>(sph_body){};
+    virtual ~RelaxationOfAllReactionsForward(){};
+    void update(size_t index_i, Real dt = 0.0) { this->advanceForwardStep(index_i, dt); };
+};
 
-	public:
-		explicit BaseRelaxationOfAllReactions(SPHBody &sph_body);
-		virtual ~BaseRelaxationOfAllReactions(){};
+/**
+ * @class RelaxationOfAllReactionsBackward
+ * @brief Compute the reaction process of all species by backward splitting
+ */
+template <class DiffusionReactionParticlesType>
+class RelaxationOfAllReactionsBackward
+    : public BaseRelaxationOfAllReactions<DiffusionReactionParticlesType>
+{
+  public:
+    explicit RelaxationOfAllReactionsBackward(SPHBody &sph_body)
+        : BaseRelaxationOfAllReactions<DiffusionReactionParticlesType>(sph_body){};
+    virtual ~RelaxationOfAllReactionsBackward(){};
+    void update(size_t index_i, Real dt = 0.0) { this->advanceBackwardStep(index_i, dt); };
+};
 
-	protected:
-		void advanceForwardStep(size_t index_i, Real dt);
-		void advanceBackwardStep(size_t index_i, Real dt);
-	};
+/**
+ * @class DiffusionReactionSpeciesConstraint
+ * @brief set boundary condition for diffusion problem
+ */
+template <class DynamicsIdentifier, class DiffusionReactionParticlesType>
+class DiffusionReactionSpeciesConstraint
+    : public BaseLocalDynamics<DynamicsIdentifier>,
+      public DiffusionReactionSimpleData<DiffusionReactionParticlesType>
+{
+  public:
+    DiffusionReactionSpeciesConstraint(DynamicsIdentifier &identifier, const std::string &species_name)
+        : BaseLocalDynamics<DynamicsIdentifier>(identifier),
+          DiffusionReactionSimpleData<DiffusionReactionParticlesType>(identifier.getSPHBody()),
+          phi_(this->particles_->diffusion_reaction_material_.AllSpeciesIndexMap()[species_name]),
+          species_(this->particles_->all_species_[phi_]){};
+    virtual ~DiffusionReactionSpeciesConstraint(){};
 
-	/**
-	 * @class RelaxationOfAllReactionsForward
-	 * @brief Compute the reaction process of all species by forward splitting
-	 */
-	template <class DiffusionReactionParticlesType>
-	class RelaxationOfAllReactionsForward
-		: public BaseRelaxationOfAllReactions<DiffusionReactionParticlesType>
-	{
-	public:
-		RelaxationOfAllReactionsForward(SPHBody &sph_body)
-			: BaseRelaxationOfAllReactions<DiffusionReactionParticlesType>(sph_body){};
-		virtual ~RelaxationOfAllReactionsForward(){};
-		void update(size_t index_i, Real dt = 0.0) { this->advanceForwardStep(index_i, dt); };
-	};
+  protected:
+    size_t phi_;
+    StdLargeVec<Real> &species_;
+};
 
-	/**
-	 * @class RelaxationOfAllReactionsBackward
-	 * @brief Compute the reaction process of all species by backward splitting
-	 */
-	template <class DiffusionReactionParticlesType>
-	class RelaxationOfAllReactionsBackward
-		: public BaseRelaxationOfAllReactions<DiffusionReactionParticlesType>
-	{
-	public:
-		explicit RelaxationOfAllReactionsBackward(SPHBody &sph_body)
-			: BaseRelaxationOfAllReactions<DiffusionReactionParticlesType>(sph_body){};
-		virtual ~RelaxationOfAllReactionsBackward(){};
-		void update(size_t index_i, Real dt = 0.0) { this->advanceBackwardStep(index_i, dt); };
-	};
+/**
+ * @class DiffusionBasedMapping
+ * @brief Mapping inside of body according to diffusion.
+ * This is a abstract class to be override for case specific implementation
+ */
+template <class DiffusionReactionParticlesType>
+class DiffusionBasedMapping
+    : public LocalDynamics,
+      public DiffusionReactionSimpleData<DiffusionReactionParticlesType>
+{
+  public:
+    explicit DiffusionBasedMapping(SPHBody &sph_body)
+        : LocalDynamics(sph_body),
+          DiffusionReactionSimpleData<DiffusionReactionParticlesType>(sph_body),
+          pos_(this->particles_->pos_), all_species_(this->particles_->all_species_){};
+    virtual ~DiffusionBasedMapping(){};
 
-	/**
-	 * @class DiffusionReactionSpeciesConstraint
-	 * @brief set boundary condition for diffusion problem
-	 */
-	template <class DynamicsIdentifier, class DiffusionReactionParticlesType>
-	class DiffusionReactionSpeciesConstraint
-		: public BaseLocalDynamics<DynamicsIdentifier>,
-		  public DiffusionReactionSimpleData<DiffusionReactionParticlesType>
-	{
-	public:
-		DiffusionReactionSpeciesConstraint(DynamicsIdentifier &identifier, const std::string &species_name)
-			: BaseLocalDynamics<DynamicsIdentifier>(identifier),
-			  DiffusionReactionSimpleData<DiffusionReactionParticlesType>(identifier.getSPHBody()),
-			  phi_(this->particles_->diffusion_reaction_material_.AllSpeciesIndexMap()[species_name]),
-			  species_(this->particles_->all_species_[phi_]){};
-		virtual ~DiffusionReactionSpeciesConstraint(){};
+  protected:
+    StdLargeVec<Vecd> &pos_;
+    StdVec<StdLargeVec<Real>> &all_species_;
+};
 
-	protected:
-		size_t phi_;
-		StdLargeVec<Real> &species_;
-	};
+/**
+ * @class 	DiffusionReactionSpeciesSummation
+ * @brief 	Computing the total averaged parameter on the whole diffusion body.
+ * 			TODO: need a test using this method
+ */
+template <class DynamicsIdentifier, class DiffusionReactionParticlesType>
+class DiffusionReactionSpeciesSummation
+    : public BaseLocalDynamicsReduce<Real, ReduceSum<Real>, DynamicsIdentifier>,
+      public DiffusionReactionSimpleData<DiffusionReactionParticlesType>
+{
+  protected:
+    StdVec<StdLargeVec<Real>> &all_species_;
+    size_t phi_;
 
-	/**
-	 * @class DiffusionBasedMapping
-	 * @brief Mapping inside of body according to diffusion.
-	 * This is a abstract class to be override for case specific implementation
-	 */
-	template <class DiffusionReactionParticlesType>
-	class DiffusionBasedMapping
-		: public LocalDynamics,
-		  public DiffusionReactionSimpleData<DiffusionReactionParticlesType>
-	{
-	public:
-		explicit DiffusionBasedMapping(SPHBody &sph_body)
-			: LocalDynamics(sph_body),
-			  DiffusionReactionSimpleData<DiffusionReactionParticlesType>(sph_body),
-			  pos_(this->particles_->pos_), all_species_(this->particles_->all_species_){};
-		virtual ~DiffusionBasedMapping(){};
+  public:
+    DiffusionReactionSpeciesSummation(DynamicsIdentifier &identifier, const std::string &species_name)
+        : BaseLocalDynamicsReduce<Real, ReduceSum<Real>, DynamicsIdentifier>(identifier, Real(0)),
+          DiffusionReactionSimpleData<DiffusionReactionParticlesType>(identifier.getSPHBody()),
+          all_species_(this->particles_->all_species_),
+          phi_(this->particles_->diffusion_reaction_material_.AllSpeciesIndexMap()[species_name])
+    {
+        this->quantity_name_ = "DiffusionReactionSpeciesAverage";
+    };
+    virtual ~DiffusionReactionSpeciesSummation(){};
 
-	protected:
-		StdLargeVec<Vecd> &pos_;
-		StdVec<StdLargeVec<Real>> &all_species_;
-	};
-
-	/**
-	 * @class 	DiffusionReactionSpeciesSummation
-	 * @brief 	Computing the total averaged parameter on the whole diffusion body.
-	 * 			TODO: need a test using this method
-	 */
-	template <class DynamicsIdentifier, class DiffusionReactionParticlesType>
-	class DiffusionReactionSpeciesSummation
-		: public BaseLocalDynamicsReduce<Real, ReduceSum<Real>, DynamicsIdentifier>,
-		  public DiffusionReactionSimpleData<DiffusionReactionParticlesType>
-	{
-	protected:
-		StdVec<StdLargeVec<Real>> &all_species_;
-		size_t phi_;
-
-	public:
-		DiffusionReactionSpeciesSummation(DynamicsIdentifier &identifier, const std::string &species_name)
-			: BaseLocalDynamicsReduce<Real, ReduceSum<Real>, DynamicsIdentifier>(identifier, Real(0)),
-			  DiffusionReactionSimpleData<DiffusionReactionParticlesType>(identifier.getSPHBody()),
-			  all_species_(this->particles_->all_species_),
-			  phi_(this->particles_->diffusion_reaction_material_.AllSpeciesIndexMap()[species_name])
-		{
-			this->quantity_name_ = "DiffusionReactionSpeciesAverage";
-		};
-		virtual ~DiffusionReactionSpeciesSummation(){};
-
-		Real reduce(size_t index_i, Real dt = 0.0)
-		{
-			return all_species_[phi_][index_i];
-		};
-	};
-}
+    Real reduce(size_t index_i, Real dt = 0.0)
+    {
+        return all_species_[phi_][index_i];
+    };
+};
+} // namespace SPH
 #endif // PARTICLE_DYNAMICS_DIFFUSION_REACTION_H
