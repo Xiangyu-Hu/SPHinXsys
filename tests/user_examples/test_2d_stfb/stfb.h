@@ -9,7 +9,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real total_physical_time = 50.0; 				/**< TOTAL SIMULATION TIME*/
+Real total_physical_time = 10.0; 				/**< TOTAL SIMULATION TIME*/
 Real DL = 3.0;									/**< Tank length. */
 Real DH = 2.5;									/**< Tank height. */
 Real WH = 2.0;									/**< Water block height. */
@@ -142,14 +142,14 @@ public:
 	{
 		/** Geometry definition. */
 		std::vector<Vecd> outer_wall_shape;
-		outer_wall_shape.push_back(Vecd(-DL/2, -DH/2)+Vec2d(-BW,-BW));
+		outer_wall_shape.push_back(Vec2d(-DL/2, -DH/2)+Vec2d(-BW,-BW));
 		outer_wall_shape.push_back(Vec2d(-DL/2, DH/2)+Vec2d(-BW,0));
 		outer_wall_shape.push_back(Vec2d(DL/2, DH/2)+Vec2d(+BW,0));
 		outer_wall_shape.push_back(Vec2d(DL/2, -DH/2)+Vec2d(+BW,-BW));
 		outer_wall_shape.push_back(Vec2d(-DL/2, -DH/2)+Vec2d(-BW,-BW));
 
 		std::vector<Vecd> inner_wall_shape;
-		inner_wall_shape.push_back(Vecd(-DL/2, -DH/2));
+		inner_wall_shape.push_back(Vec2d(-DL/2, -DH/2));
 		inner_wall_shape.push_back(Vec2d(-DL/2, DH/2));
 		inner_wall_shape.push_back(Vec2d(DL/2, DH/2));
 		inner_wall_shape.push_back(Vec2d(DL/2, -DH/2));
