@@ -10,7 +10,7 @@ using namespace SPH;
 
 int main(int ac, char *av[])
 {
-	std::cout << "Mass " << StructureMass << " str_sup " << Area <<  " rho_s " << rho_s ;
+	std::cout << "Mass " << StructureMass << " str_sup " << Area <<  " rho_s " << rho_s << std::endl;
 	//----------------------------------------------------------------------
 	//	Build up the environment of a SPHSystem with global controls.
 	//----------------------------------------------------------------------
@@ -203,20 +203,7 @@ int main(int ac, char *av[])
 		write_recorded_pressure_fp2("Pressure", io_environment, fp2_contact_w);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
 		write_recorded_pressure_fp3("Pressure", io_environment, fp3_contact_w);
-	//----------------------------------------------------------------------
-	//	Basic control parameters for time stepping.
-	//----------------------------------------------------------------------
-	GlobalStaticVariables::physical_time_ = 0.0;
-	int number_of_iterations = 0;
-	int screen_output_interval = 1000;
-	Real end_time = total_physical_time;
-	Real output_interval = end_time/200;
-	Real dt = 0.0;
-	Real total_time = 0.0;
-	Real relax_time = 1.0;
-	/** statistics for computing time. */
-	TickCount t1 = TickCount::now();
-	TimeInterval interval;
+	RestartIO restart_io(io_environment, system.real_bodies_);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
@@ -228,6 +215,35 @@ int main(int ac, char *av[])
 	flap_normal_direction.exec();
 	structure_corrected_configuration.exec();
 	//----------------------------------------------------------------------
+	//	Load restart file if necessary.
+	//----------------------------------------------------------------------
+	if (system.RestartStep() != 0)
+	{
+		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(system.RestartStep());
+			water_block.updateCellLinkedListWithParticleSort(100);
+			wall_boundary.updateCellLinkedList();
+			structure.updateCellLinkedList();
+			water_block_complex.updateConfiguration();
+			structure_contact.updateConfiguration();
+			observer_contact_with_water.updateConfiguration();
+			fp2_contact_w.updateConfiguration();
+			fp3_contact_w.updateConfiguration();
+	}
+		//----------------------------------------------------------------------
+	//	Basic control parameters for time stepping.
+	//----------------------------------------------------------------------
+	size_t number_of_iterations = system.RestartStep();
+	int screen_output_interval = 500;
+	int restart_output_interval = screen_output_interval * 10;
+	Real end_time = total_physical_time;
+	Real output_interval = end_time/100;
+	Real dt = 0.0;
+	Real total_time = 0.0;
+	Real relax_time = 1.0;
+	/** statistics for computing time. */
+	TickCount t1 = TickCount::now();
+	TimeInterval interval;
+	//----------------------------------------------------------------------
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
 	write_real_body_states.writeToFile(number_of_iterations);
@@ -236,8 +252,7 @@ int main(int ac, char *av[])
 	write_recorded_pressure_fp2.writeToFile(number_of_iterations);
 	write_recorded_pressure_fp3.writeToFile(number_of_iterations);
 	write_cable_A.writeToFile(number_of_iterations);
-	write_cable_B.writeToFile(number_of_iterations);
-				
+	write_cable_B.writeToFile(number_of_iterations);	
 	//----------------------------------------------------------------------
 	//	Main loop of time stepping starts here.
 	//----------------------------------------------------------------------
@@ -291,6 +306,8 @@ int main(int ac, char *av[])
 						  << "	Physical Time = " << GlobalStaticVariables::physical_time_
 						  << "	Dt = " << Dt << "	dt = " << dt << "\n";
 			}
+			if (number_of_iterations % restart_output_interval == 0)
+					restart_io.writeToFile(number_of_iterations);
 			number_of_iterations++;
 			water_block.updateCellLinkedListWithParticleSort(100);
 			wall_boundary.updateCellLinkedList();
