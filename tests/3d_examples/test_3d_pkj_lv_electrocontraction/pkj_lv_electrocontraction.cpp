@@ -31,9 +31,9 @@ int main(int ac, char *av[])
 	/** Set the starting time. */
 	GlobalStaticVariables::physical_time_ = 0.0;
 	/** Tag for run particle relaxation for the initial body fitted distribution. */
-	system.setRunParticleRelaxation(true);
+	system.setRunParticleRelaxation(false);
 	/** Tag for reload initially relaxed particles. */
-	system.setReloadParticles(false);
+	system.setReloadParticles(true);
 // handle command line arguments
 #ifdef BOOST_AVAILABLE
 	system.handleCommandlineOptions(ac, av);
@@ -165,7 +165,8 @@ int main(int ac, char *av[])
 	ContactRelation mechanics_heart_contact(mechanics_heart, {&physiology_heart});
 	ContactRelation voltage_observer_contact(voltage_observer, {&physiology_heart});
 	ContactRelation myocardium_observer_contact(myocardium_observer, {&mechanics_heart});
-	ComplexRelation physiology_heart_complex(physiology_heart, {&pkj_leaves});
+	//ComplexRelation physiology_heart_complex(physiology_heart, {&pkj_leaves});
+	ContactRelationToBodyPart physiology_heart_contact_with_pkj_leaves(physiology_heart, {&pkj_leaves});
 	TreeInnerRelation pkj_inner(pkj_body);
 
 	/** Corrected configuration. */
@@ -173,7 +174,7 @@ int main(int ac, char *av[])
 	/** Time step size calculation. */
 	electro_physiology::GetElectroPhysiologyTimeStepSize get_myocardium_physiology_time_step(physiology_heart);
 	/** Diffusion process for diffusion body. */
-	electro_physiology::ElectroPhysiologyDiffusionRelaxationComplex myocardium_diffusion_relaxation(physiology_heart_complex);
+	electro_physiology::ElectroPhysiologyDiffusionRelaxationComplex myocardium_diffusion_relaxation(physiology_heart_inner, physiology_heart_contact_with_pkj_leaves);
 	/** Solvers for ODE system */
 	electro_physiology::ElectroPhysiologyReactionRelaxationForward myocardium_reaction_relaxation_forward(physiology_heart);
 	electro_physiology::ElectroPhysiologyReactionRelaxationBackward myocardium_reaction_relaxation_backward(physiology_heart);
