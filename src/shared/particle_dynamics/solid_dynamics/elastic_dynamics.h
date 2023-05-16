@@ -114,7 +114,7 @@ class DeformationGradientBySummation : public LocalDynamics, public ElasticSolid
     {
         Vecd &pos_n_i = pos_[index_i];
 
-        Matd deformation = Matd::Identity();
+        Matd deformation = Matd::Zero();
         Neighborhood &inner_neighborhood = inner_configuration_[index_i];
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
         {
