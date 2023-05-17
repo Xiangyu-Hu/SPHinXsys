@@ -1,4 +1,4 @@
-#ifndef PARTICLE_DYNAMICS_DIFFUSION_REACTION_WITH_BOUNDARY_HPP
+﻿#ifndef PARTICLE_DYNAMICS_DIFFUSION_REACTION_WITH_BOUNDARY_HPP
 #define PARTICLE_DYNAMICS_DIFFUSION_REACTION_WITH_BOUNDARY_HPP
 
 #include "particle_dynamics_diffusion_reaction_with_boundary.h"
@@ -9,10 +9,8 @@ namespace SPH
 	template <class DiffusionReactionParticlesType>
 	DiffusionReactionInitialConditionWithBoundary<DiffusionReactionParticlesType>::
 		DiffusionReactionInitialConditionWithBoundary(SPHBody& sph_body)
-		: DiffusionReactionInitialCondition<DiffusionReactionParticlesType>(sph_body)
-	{
-            this->particles_->registerVariable(heat_flux_, "HeatFlux");
-	}
+		: DiffusionReactionInitialCondition<DiffusionReactionParticlesType>(sph_body),
+		heat_flux_(*(this->particles_->template getVariableByName<Real>("HeatFlux"))) {}
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	RelaxationOfAllDiffusionSpeciesNeumannContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
@@ -20,12 +18,13 @@ namespace SPH
 		: RelaxationOfAllDiffusionSpeciesBaseContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(contact_relation),
 		n_(this->particles_->n_)
 	{
+		contact_heat_flux_.resize(this->contact_particles_.size());
 		for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
 		{
 			for (size_t k = 0; k != this->contact_particles_.size(); ++k)
 			{
 				contact_n_.push_back(&(this->contact_particles_[k]->n_));
-				contact_heat_flux_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("HeatFlux"));
+				contact_heat_flux_[k] = this->contact_particles_[k]->template registerSharedVariable<Real>("HeatFlux");
 			}
 		}
 	}
@@ -49,7 +48,7 @@ namespace SPH
 
 		for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 		{
-			StdLargeVec<Real>& heat_flux_ = *(contact_heat_flux_[k]);
+			StdLargeVec<Real>& heat_flux_k = *(contact_heat_flux_[k]);
 			StdLargeVec<Vecd>& n_k = *(contact_n_[k]);
 
 			Neighborhood& contact_neighborhood = (*this->contact_configuration_[k])[index_i];
@@ -62,7 +61,7 @@ namespace SPH
 				const Vecd& grad_ijV_j = particles->getKernelGradient(index_i, index_j, dW_ijV_j_, e_ij);
 				Vecd n_ij = n_[index_i] - n_k[index_j];
 				Real area_ij_Neumann = grad_ijV_j.dot(n_ij);
-				getDiffusionChangeRateNeumannContact(index_i, index_j, area_ij_Neumann, heat_flux_);
+				getDiffusionChangeRateNeumannContact(index_i, index_j, area_ij_Neumann, heat_flux_k);
 			}
 		}
 	}

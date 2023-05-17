@@ -113,14 +113,14 @@ using WallParticles = DiffusionReactionParticles<SolidParticles, DiffusionMateri
 //	Application dependent initial condition. 
 //----------------------------------------------------------------------
 class DiffusionInitialCondition
-	: public DiffusionReactionInitialConditionWithBoundary<DiffusionParticles>
+	: public DiffusionReactionInitialCondition<DiffusionParticles>
 {
 protected:
 	size_t phi_;
 
 public:
 	explicit DiffusionInitialCondition(SPHBody& sph_body)
-		: DiffusionReactionInitialConditionWithBoundary<DiffusionParticles>(sph_body)
+		: DiffusionReactionInitialCondition<DiffusionParticles>(sph_body)
 	{
 		phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
 	};
@@ -131,15 +131,15 @@ public:
 	};
 };
 
-class WallBoundaryInitialCondition
-	: public DiffusionReactionInitialConditionWithBoundary<WallParticles>
+class DirichletWallBoundaryInitialCondition
+	: public DiffusionReactionInitialCondition<WallParticles>
 {
 protected:
 	size_t phi_;
 
 public:
-	WallBoundaryInitialCondition(SolidBody& diffusion_body) :
-		DiffusionReactionInitialConditionWithBoundary<WallParticles>(diffusion_body)
+	DirichletWallBoundaryInitialCondition(SolidBody& diffusion_body) :
+		DiffusionReactionInitialCondition<WallParticles>(diffusion_body)
 	{
 		phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
 	}
@@ -147,6 +147,7 @@ public:
 	void update(size_t index_i, Real dt)
 	{
 		all_species_[phi_][index_i] = -0.0;
+
 		if (pos_[index_i][1] > H && pos_[index_i][0] > 0.3 * L && pos_[index_i][0] < 0.4 * L)
 		{
 			all_species_[phi_][index_i] = left_temperature;
@@ -155,6 +156,26 @@ public:
 		{
 			all_species_[phi_][index_i] = right_temperature;
 		}
+	}
+};
+
+class NeumannBoundaryInitialCondition
+	: public DiffusionReactionInitialConditionWithBoundary<WallParticles>
+{
+protected:
+	size_t phi_;
+
+public:
+	NeumannBoundaryInitialCondition(SolidBody& diffusion_body) :
+		DiffusionReactionInitialConditionWithBoundary<WallParticles>(diffusion_body)
+	{
+		phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
+	}
+
+	void update(size_t index_i, Real dt)
+	{
+		all_species_[phi_][index_i] = -0.0;
+
 		if (pos_[index_i][1] < 0 && pos_[index_i][0] > 0.45 * L && pos_[index_i][0] < 0.55 * L)
 		{
 			heat_flux_[index_i] = heat_flux;
