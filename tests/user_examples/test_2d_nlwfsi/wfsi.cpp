@@ -144,6 +144,9 @@ int main(int ac, char *av[])
 	/*-----------------------------------------------------------------------------*/
 	Vecd disp_cable_endB = cable_endB - structure_multibody.initial_mass_center_;
 	SimTK::CablePath tethering_lineB(cables, fixed_spotB, SimTK::Vec3(0.0,0.0,0.0), tethered_spot, SimTK::Vec3(disp_cable_endB[0], disp_cable_endB[1], 0.0) );
+
+	Real lengthA=G[1]+disp_cable_endA[1];
+	Real lengthB=G[1]+disp_cable_endB[1];
 		/* CABLE SPRING (forces,
 					cable line,
 					defaultStiffness, 
@@ -158,8 +161,8 @@ int main(int ac, char *av[])
 						A nonnegative dissipation coefficient for this elastic element in units of 1/velocity.
 					);
 	*/
-	SimTK::CableSpring tethering_springA(forces, tethering_lineA, 3.163E5, cablength, 2.);
-	SimTK::CableSpring tethering_springB(forces, tethering_lineB, 3.163E5, cablength, 2.);
+	SimTK::CableSpring tethering_springA(forces, tethering_lineA, 3.163E5, lengthA, 2.);
+	SimTK::CableSpring tethering_springB(forces, tethering_lineB, 3.163E5, lengthB, 2.);
 	SimTK::Force::UniformGravity sim_gravity(forces, matter, SimTK::Vec3(0.0, -gravity_g, 0.0), 0.0);
 	/** discrete forces acting on the bodies. */
 	SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
