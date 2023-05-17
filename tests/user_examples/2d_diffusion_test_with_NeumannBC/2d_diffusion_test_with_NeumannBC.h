@@ -77,20 +77,20 @@ public:
 	}
 };
 
-class WallBoundaryDirichlet : public MultiPolygonShape
+class DirichletWallBoundary : public MultiPolygonShape
 {
 public:
-	explicit WallBoundaryDirichlet(const std::string& shape_name) : MultiPolygonShape(shape_name)
+	explicit DirichletWallBoundary(const std::string& shape_name) : MultiPolygonShape(shape_name)
 	{
 		multi_polygon_.addAPolygon(left_temperature_region, ShapeBooleanOps::add);
 		multi_polygon_.addAPolygon(right_temperature_region, ShapeBooleanOps::add);
 	}
 };
 
-class WallBoundaryNeumann : public MultiPolygonShape
+class NeumannWallBoundary : public MultiPolygonShape
 {
 public:
-	explicit WallBoundaryNeumann(const std::string& shape_name) : MultiPolygonShape(shape_name)
+	explicit NeumannWallBoundary(const std::string& shape_name) : MultiPolygonShape(shape_name)
 	{
 		multi_polygon_.addAPolygon(heat_flux_region, ShapeBooleanOps::add);
 	}
@@ -159,14 +159,14 @@ public:
 	}
 };
 
-class NeumannBoundaryInitialCondition
+class NeumannWallBoundaryInitialCondition
 	: public DiffusionReactionInitialConditionWithNeumann<WallParticles>
 {
 protected:
 	size_t phi_;
 
 public:
-	NeumannBoundaryInitialCondition(SolidBody& diffusion_body) :
+	NeumannWallBoundaryInitialCondition(SolidBody& diffusion_body) :
 		DiffusionReactionInitialConditionWithNeumann<WallParticles>(diffusion_body)
 	{
 		phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];

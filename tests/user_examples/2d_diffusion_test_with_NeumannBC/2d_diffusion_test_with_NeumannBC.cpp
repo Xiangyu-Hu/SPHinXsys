@@ -26,11 +26,11 @@ int main(int ac, char* av[])
 	diffusion_body.defineParticlesAndMaterial<DiffusionParticles, DiffusionMaterial>();
 	diffusion_body.generateParticles<ParticleGeneratorLattice>();
 
-	SolidBody wall_boundary_Dirichlet(sph_system, makeShared<WallBoundaryDirichlet>("WallBoundaryDirichlet"));
+	SolidBody wall_boundary_Dirichlet(sph_system, makeShared<DirichletWallBoundary>("DirichletWallBoundary"));
 	wall_boundary_Dirichlet.defineParticlesAndMaterial<WallParticles, DiffusionMaterial>();
 	wall_boundary_Dirichlet.generateParticles<ParticleGeneratorLattice>();
 
-	SolidBody wall_boundary_Neumann(sph_system, makeShared<WallBoundaryNeumann>("WallBoundaryNeumann"));
+	SolidBody wall_boundary_Neumann(sph_system, makeShared<NeumannWallBoundary>("NeumannWallBoundary"));
 	wall_boundary_Neumann.defineParticlesAndMaterial<WallParticles, DiffusionMaterial>();
 	wall_boundary_Neumann.generateParticles<ParticleGeneratorLattice>();
 	//----------------------------------------------------------------------
@@ -60,7 +60,7 @@ int main(int ac, char* av[])
 
 	SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
 	SimpleDynamics<DirichletWallBoundaryInitialCondition> setup_boundary_condition_Dirichlet(wall_boundary_Dirichlet);
-	SimpleDynamics<NeumannBoundaryInitialCondition> setup_boundary_condition_Neumann(wall_boundary_Neumann);
+	SimpleDynamics<NeumannWallBoundaryInitialCondition> setup_boundary_condition_Neumann(wall_boundary_Neumann);
 
 	SimpleDynamics<NormalDirectionFromBodyShape> diffusion_body_normal_direction(diffusion_body);
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary_Neumann);
