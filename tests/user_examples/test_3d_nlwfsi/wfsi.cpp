@@ -224,6 +224,11 @@ int main()
 	Vecd disp_cable_endBL =  structure_tethering_BL - structure_multibody.initial_mass_center_;
 	SimTK::CablePath tethering_lineBL(cables, fixed_spotBL, SimTK::Vec3(0.0, 0.0 , 0.0), tethered_strct, SimTK::Vec3(disp_cable_endBL[0], disp_cable_endBL[1], disp_cable_endBL[2]) );
 
+
+	Real lengthAR = G[2]+disp_cable_endAR[2];
+	Real lengthAL = G[2]+disp_cable_endAL[2];
+	Real lengthBR = G[2]+disp_cable_endBR[2];
+	Real lengthBL = G[2]+disp_cable_endBL[2];
 	/*-----------------------------------------------------------------------------*/
 		/* CABLE SPRING (forces,
 					cable line,
@@ -239,10 +244,10 @@ int main()
 						A nonnegative dissipation coefficient for this elastic element in units of 1/velocity.
 					);
 	*/
-	SimTK::CableSpring tethering_springAR(forces, tethering_lineAR, 3.163E5, cablength, 50.);
-	SimTK::CableSpring tethering_springAL(forces, tethering_lineAL, 3.163E5, cablength, 50.);
-	SimTK::CableSpring tethering_springBR(forces, tethering_lineBR, 3.163E5, cablength, 50.);
-	SimTK::CableSpring tethering_springBL(forces, tethering_lineBL, 3.163E5, cablength, 50.);
+	SimTK::CableSpring tethering_springAR(forces, tethering_lineAR, 3.163E5, lengthAR, 50.);
+	SimTK::CableSpring tethering_springAL(forces, tethering_lineAL, 3.163E5, lengthAL, 50.);
+	SimTK::CableSpring tethering_springBR(forces, tethering_lineBR, 3.163E5, lengthBR, 50.);
+	SimTK::CableSpring tethering_springBL(forces, tethering_lineBL, 3.163E5, lengthBL, 50.);
 	SimTK::Force::UniformGravity sim_gravity(forces, matter, SimTK::Vec3(0.0, 0.0,-gravity_g), 0.0);
 	/** discrete forces acting on the bodies. */
 	SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
