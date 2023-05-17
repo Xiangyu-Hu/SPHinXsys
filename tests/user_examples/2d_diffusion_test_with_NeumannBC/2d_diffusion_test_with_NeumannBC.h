@@ -160,14 +160,14 @@ public:
 };
 
 class NeumannBoundaryInitialCondition
-	: public DiffusionReactionInitialConditionWithBoundary<WallParticles>
+	: public DiffusionReactionInitialConditionWithNeumann<WallParticles>
 {
 protected:
 	size_t phi_;
 
 public:
 	NeumannBoundaryInitialCondition(SolidBody& diffusion_body) :
-		DiffusionReactionInitialConditionWithBoundary<WallParticles>(diffusion_body)
+		DiffusionReactionInitialConditionWithNeumann<WallParticles>(diffusion_body)
 	{
 		phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
 	}
@@ -184,17 +184,17 @@ public:
 };
 
 using DiffusionRelaxationInner = RelaxationOfAllDiffusionSpeciesInner<DiffusionParticles>;
-using DiffusionRelaxationWithDirichletContact = RelaxationOfAllDiffusionSpeciesDirichletContact<DiffusionParticles, WallParticles>;
-using DiffusionRelaxationWithNeumannContact = RelaxationOfAllDiffusionSpeciesNeumannContact<DiffusionParticles, WallParticles>;
+using DiffusionRelaxationWithDirichletContact = RelaxationOfAllDiffusionSpeciesDirichlet<DiffusionParticles, WallParticles>;
+using DiffusionRelaxationWithNeumannContact = RelaxationOfAllDiffusionSpeciesNeumann<DiffusionParticles, WallParticles>;
 //----------------------------------------------------------------------
 //	Specify diffusion relaxation method. 
 //----------------------------------------------------------------------
 class DiffusionBodyRelaxation
-	: public RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact, DiffusionRelaxationWithNeumannContact>>
+	: public RelaxationOfAllDiffusionSpeciesRK2<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact, DiffusionRelaxationWithNeumannContact>>
 {
 public:
 	explicit DiffusionBodyRelaxation(InnerRelation& inner_relation, ContactRelation& body_contact_relation_Dirichlet, ContactRelation& body_contact_relation_Neumann)
-		: RelaxationOfAllDiffusionSpeciesRK2Complex<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact, DiffusionRelaxationWithNeumannContact>>(inner_relation, body_contact_relation_Dirichlet, body_contact_relation_Neumann) {};
+		: RelaxationOfAllDiffusionSpeciesRK2<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact, DiffusionRelaxationWithNeumannContact>>(inner_relation, body_contact_relation_Dirichlet, body_contact_relation_Neumann) {};
 	virtual ~DiffusionBodyRelaxation() {};
 };
 //----------------------------------------------------------------------
@@ -218,5 +218,4 @@ public:
 		}
 	}
 };
-
 #endif //DIFFUSION_TEST_WITH_NEUMANNBC_H
