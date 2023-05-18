@@ -18,39 +18,54 @@
 
 namespace SPH
 {
-	typedef DataDelegateInner<BaseParticles> GeneralDataDelegateInner;
-	typedef DataDelegateContact<BaseParticles, BaseParticles, DataDelegateEmptyBase>
-		GeneralDataDelegateContact;
+	typedef DataDelegateContact<BaseParticles, BaseParticles> GeneralDataDelegateFullContact;
+class CorrectionMatrixInner : public LocalDynamics, public GeneralDataDelegateInner
+{
+  public:
+    CorrectionMatrixInner(BaseInnerRelation &inner_relation, int beta, Real alpha)
+        : LocalDynamics(inner_relation.getSPHBody()),
+          GeneralDataDelegateInner(inner_relation),
+          beta_(beta), alpha_(alpha),
+          B_(*particles_->registerSharedVariable<Matd>("WeightedCorrectionMatrix")){};
+    CorrectionMatrixInner(LocalDynamicsParameters<BaseInnerRelation, int, Real> parameter_set)
+        : CorrectionMatrixInner(parameter_set.body_relation_,
+                                std::get<0>(parameter_set.others_),
+                                std::get<1>(parameter_set.others_)){};
 
-	class GlobalCorrectionMatrix : public LocalDynamics, public GeneralDataDelegateInner, public GeneralDataDelegateContact
-	{
-	public:
-		GlobalCorrectionMatrix(ComplexRelation& complex_relation, int beta, Real alpha)
-			: LocalDynamics(complex_relation.getSPHBody()),
-			GeneralDataDelegateInner(complex_relation.getInnerRelation()),
-			GeneralDataDelegateContact(complex_relation.getContactRelation()),
-			beta_(beta), alpha_(alpha), Vol_(particles_->Vol_)
-		{
-			particles_->registerVariable(B_, "WeightedCorrectionMatrix");
+    virtual ~CorrectionMatrixInner() {}
 
-			for (size_t k = 0; k != contact_particles_.size(); ++k)
-			{
-				contact_mass_.push_back(&(contact_particles_[k]->mass_));
-				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
-			}
-		}
+  protected:
+    int beta_;
+    Real alpha_;
+    StdLargeVec<Matd> &B_;
 
-		virtual ~GlobalCorrectionMatrix() {}
+    void interaction(size_t index_i, Real dt = 0.0);
+    void update(size_t index_i, Real dt = 0.0);
+};
 
-	protected:
-		StdVec<StdLargeVec<Real>*> contact_Vol_;
-		StdVec<StdLargeVec<Real>*> contact_mass_;
-		const int beta_;
-		const Real alpha_;
-		StdLargeVec<Real>& Vol_;
-		StdLargeVec<Matd>B_;
+class CorrectionMatrixContact : public LocalDynamics, public GeneralDataDelegateFullContact
+{
+  public:
+    CorrectionMatrixContact(BaseContactRelation &contact_relation)
+        : LocalDynamics(contact_relation.getSPHBody()),
+          GeneralDataDelegateFullContact(contact_relation),
+          B_(*particles_->getVariableByName<Matd>("WeightedCorrectionMatrix"))
+    {
+        for (size_t k = 0; k != contact_particles_.size(); ++k)
+        {
+            contact_mass_.push_back(&(contact_particles_[k]->mass_));
+            contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
+        }
+    }
 
-		void interaction(size_t index_i, Real dt = 0.0);
-	};
-}
+    virtual ~CorrectionMatrixContact() {}
+
+  protected:
+    StdVec<StdLargeVec<Real> *> contact_Vol_;
+    StdVec<StdLargeVec<Real> *> contact_mass_;
+    StdLargeVec<Matd> &B_;
+
+    void interaction(size_t index_i, Real dt = 0.0);
+};
+} // namespace SPH
 #endif // GENERAL_DYNAMICS_WKGC_H
