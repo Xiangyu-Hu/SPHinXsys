@@ -1,11 +1,11 @@
 /**
- * @file 	2d_diffusion_test_with_NeumannBC.cpp
+ * @file 	2d_diffusion_test_with_RobinBC.cpp
  * @brief 	2D diffusion test of diffusion problem with Neumann boundary condition.
  * @details This is a case to implement Neumann boundary condition.
  * @author 	Chenxi Zhao, Bo Zhang, Chi Zhang and Xiangyu Hu
  */
 #include "sphinxsys.h"
-#include "2d_diffusion_test_with_NeumannBC.h"
+#include "2d_diffusion_test_with_RobinBC.h"
 
 using namespace SPH; //Namespace cite here
 //----------------------------------------------------------------------
@@ -17,7 +17,7 @@ int main(int ac, char* av[])
 	//	Build up the environment of a SPHSystem.
 	//----------------------------------------------------------------------
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
-	sph_system.generate_regression_data_ = false;
+	//sph_system.generate_regression_data_ = false;
 	IOEnvironment io_environment(sph_system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
@@ -30,9 +30,9 @@ int main(int ac, char* av[])
 	wall_boundary_Dirichlet.defineParticlesAndMaterial<WallParticles, DiffusionMaterial>();
 	wall_boundary_Dirichlet.generateParticles<ParticleGeneratorLattice>();
 
-	SolidBody wall_boundary_Neumann(sph_system, makeShared<NeumannWallBoundary>("NeumannWallBoundary"));
-	wall_boundary_Neumann.defineParticlesAndMaterial<WallParticles, DiffusionMaterial>();
-	wall_boundary_Neumann.generateParticles<ParticleGeneratorLattice>();
+	SolidBody wall_boundary_Robin(sph_system, makeShared<RobinWallBoundary>("RobinWallBoundary"));
+	wall_boundary_Robin.defineParticlesAndMaterial<WallParticles, DiffusionMaterial>();
+	wall_boundary_Robin.generateParticles<ParticleGeneratorLattice>();
 	//----------------------------------------------------------------------
 	//	Particle and body creation of temperature observers.
 	//----------------------------------------------------------------------
@@ -46,31 +46,32 @@ int main(int ac, char* av[])
 	InnerRelation diffusion_body_inner_relation(diffusion_body);
 
 	ContactRelation diffusion_body_contact_Dirichlet(diffusion_body, { &wall_boundary_Dirichlet });
-	ContactRelation diffusion_body_contact_Neumann(diffusion_body, { &wall_boundary_Neumann });
-	ContactRelation wall_boundary_contact_Neumann(wall_boundary_Neumann, { &diffusion_body });
+	ContactRelation diffusion_body_contact_Robin(diffusion_body, { &wall_boundary_Robin });
+	//ContactRelation wall_boundary_contact_Robin(wall_boundary_Robin, { &diffusion_body });
 
 	ContactRelation temperature_observer_contact(temperature_observer, { &diffusion_body });
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	DiffusionBodyRelaxation temperature_relaxation(diffusion_body_inner_relation, diffusion_body_contact_Dirichlet, diffusion_body_contact_Neumann);
+	DiffusionBodyRelaxation temperature_relaxation(diffusion_body_inner_relation, diffusion_body_contact_Dirichlet, diffusion_body_contact_Robin);
 
 	GetDiffusionTimeStepSize<DiffusionParticles> get_time_step_size(diffusion_body);
 
 	SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
 	SimpleDynamics<DirichletWallBoundaryInitialCondition> setup_boundary_condition_Dirichlet(wall_boundary_Dirichlet);
-	SimpleDynamics<NeumannWallBoundaryInitialCondition> setup_boundary_condition_Neumann(wall_boundary_Neumann);
+	SimpleDynamics<RobinWallBoundaryInitialCondition> setup_boundary_condition_Robin(wall_boundary_Robin);
 
 	SimpleDynamics<NormalDirectionFromBodyShape> diffusion_body_normal_direction(diffusion_body);
-	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary_Neumann);
+	SimpleDynamics<NormalDirectionFromBodyShape> Dirichlet_normal_direction(wall_boundary_Dirichlet);
+	SimpleDynamics<NormalDirectionFromBodyShape> Robin_normal_direction(wall_boundary_Robin);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
-	//ObservedQuantityRecording<Real> write_solid_temperature("Phi", io_environment, temperature_observer_contact);
-	RegressionTestEnsembleAveraged<ObservedQuantityRecording<Real>>
-		write_solid_temperature("Phi", io_environment, temperature_observer_contact);
+	ObservedQuantityRecording<Real> write_solid_temperature("Phi", io_environment, temperature_observer_contact);
+	/*RegressionTestEnsembleAveraged<ObservedQuantityRecording<Real>>
+		write_solid_temperature("Phi", io_environment, temperature_observer_contact);*/
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary. 
@@ -81,10 +82,11 @@ int main(int ac, char* av[])
 	setup_diffusion_initial_condition.exec();
 
 	setup_boundary_condition_Dirichlet.exec();
-	setup_boundary_condition_Neumann.exec();
+	setup_boundary_condition_Robin.exec();
 
 	diffusion_body_normal_direction.exec();
-	wall_boundary_normal_direction.exec();
+	Dirichlet_normal_direction.exec();
+	Robin_normal_direction.exec();
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
@@ -146,14 +148,14 @@ int main(int ac, char* av[])
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 	std::cout << "Total physical time for computation: " << GlobalStaticVariables::physical_time_ << " seconds." << std::endl;
 	
-	if (sph_system.generate_regression_data_)
+	/*if (sph_system.generate_regression_data_)
 	{
 		write_solid_temperature.generateDataBase(1.0e-3, 1.0e-3);
 	}
 	else if (sph_system.RestartStep() == 0)
 	{
 		write_solid_temperature.testResult();
-	}
+	}*/
 	
 	return 0;
 }

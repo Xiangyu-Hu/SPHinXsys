@@ -1,10 +1,10 @@
 /**
- * @file 	2d_diffusion_test_with_NeumannBC.h
- * @brief 	This is the head files used by 2d_diffusion_test_with_NeumannBC.cpp.
+ * @file 	2d_diffusion_test_with_RobinBC.h
+ * @brief 	This is the head files used by 2d_diffusion_test_with_RobinBC.cpp.
  * @author	Chenxi Zhao, Bo Zhang, Chi Zhang and Xiangyu Hu
  */
-#ifndef	DIFFUSION_TEST_WITH_NEUMANNBC_H
-#define DIFFUSION_TEST_WITH_NEUMANNBC_H
+#ifndef	DIFFUSION_TEST_WITH_ROBINBC_H
+#define DIFFUSION_TEST_WITH_ROBINBC_H
 
 #include "sphinxsys.h"
 #include "particle_dynamics_diffusion_reaction_with_boundary.h"
@@ -31,7 +31,8 @@ std::array<std::string, 1> species_name_list{ "Phi" };
 Real initial_temperature = 100.0;
 Real left_temperature = 300.0;
 Real right_temperature = 350.0;
-Real heat_flux = 900.0;
+Real convection = 100.0;
+Real T_infinity = 400.0;
 //----------------------------------------------------------------------
 //	Geometric shapes used in the system.
 //----------------------------------------------------------------------
@@ -59,7 +60,7 @@ std::vector<Vecd> right_temperature_region
 	Vecd(0.7 * L, H), Vecd(0.6 * L, H)
 };
 
-std::vector<Vecd> heat_flux_region
+std::vector<Vecd> convection_region
 {
 	Vecd(0.45 * L, -BW), Vecd(0.45 * L, 0), Vecd(0.55 * L, 0),
 	Vecd(0.55 * L, -BW), Vecd(0.45 * L, -BW)
@@ -87,15 +88,14 @@ public:
 	}
 };
 
-class NeumannWallBoundary : public MultiPolygonShape
+class RobinWallBoundary : public MultiPolygonShape
 {
 public:
-	explicit NeumannWallBoundary(const std::string& shape_name) : MultiPolygonShape(shape_name)
+	explicit RobinWallBoundary(const std::string& shape_name) : MultiPolygonShape(shape_name)
 	{
-		multi_polygon_.addAPolygon(heat_flux_region, ShapeBooleanOps::add);
+		multi_polygon_.addAPolygon(convection_region, ShapeBooleanOps::add);
 	}
 };
-
 //----------------------------------------------------------------------
 //	Setup diffusion material properties. 
 //----------------------------------------------------------------------
@@ -159,15 +159,15 @@ public:
 	}
 };
 
-class NeumannWallBoundaryInitialCondition
-	: public DiffusionReactionInitialConditionWithNeumann<WallParticles>
+class RobinWallBoundaryInitialCondition
+	: public DiffusionReactionInitialConditionWithRobin<WallParticles>
 {
 protected:
 	size_t phi_;
 
 public:
-	NeumannWallBoundaryInitialCondition(SolidBody& diffusion_body) :
-		DiffusionReactionInitialConditionWithNeumann<WallParticles>(diffusion_body)
+	RobinWallBoundaryInitialCondition(SolidBody& diffusion_body) :
+		DiffusionReactionInitialConditionWithRobin<WallParticles>(diffusion_body)
 	{
 		phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
 	}
@@ -178,23 +178,24 @@ public:
 
 		if (pos_[index_i][1] < 0 && pos_[index_i][0] > 0.45 * L && pos_[index_i][0] < 0.55 * L)
 		{
-			heat_flux_[index_i] = heat_flux;
+			convection_[index_i] = convection;
+			T_infinity_[index_i] = T_infinity;
 		}
 	}
 };
 
 using DiffusionRelaxationInner = RelaxationOfAllDiffusionSpeciesInner<DiffusionParticles>;
 using DiffusionRelaxationWithDirichletContact = RelaxationOfAllDiffusionSpeciesDirichlet<DiffusionParticles, WallParticles>;
-using DiffusionRelaxationWithNeumannContact = RelaxationOfAllDiffusionSpeciesNeumann<DiffusionParticles, WallParticles>;
+using DiffusionRelaxationWithRobinContact = RelaxationOfAllDiffusionSpeciesRobin<DiffusionParticles, WallParticles>;
 //----------------------------------------------------------------------
 //	Specify diffusion relaxation method. 
 //----------------------------------------------------------------------
 class DiffusionBodyRelaxation
-	: public RelaxationOfAllDiffusionSpeciesRK2<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact, DiffusionRelaxationWithNeumannContact>>
+	: public RelaxationOfAllDiffusionSpeciesRK2<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact, DiffusionRelaxationWithRobinContact>>
 {
 public:
-	explicit DiffusionBodyRelaxation(InnerRelation& inner_relation, ContactRelation& body_contact_relation_Dirichlet, ContactRelation& body_contact_relation_Neumann)
-		: RelaxationOfAllDiffusionSpeciesRK2<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact, DiffusionRelaxationWithNeumannContact>>(inner_relation, body_contact_relation_Dirichlet, body_contact_relation_Neumann) {};
+	explicit DiffusionBodyRelaxation(BaseInnerRelation& inner_relation, BaseContactRelation& body_contact_relation_Dirichlet, BaseContactRelation& body_contact_relation_Robin)
+		: RelaxationOfAllDiffusionSpeciesRK2<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact, DiffusionRelaxationWithRobinContact>>(inner_relation, body_contact_relation_Dirichlet, body_contact_relation_Robin) {};
 	virtual ~DiffusionBodyRelaxation() {};
 };
 //----------------------------------------------------------------------
