@@ -68,6 +68,33 @@ namespace SPH
         }
     }
     //=================================================================================================//
+    template <typename GlobalVariableType>
+    void BaseParticles::
+        registerGlobalVariable(const std::string &variable_name, GlobalVariableType initial_value)
+    {
+        constexpr int type_index = DataTypeIndex<GlobalVariableType>::value;
+
+        bool isRegistered = false;
+
+        for (const auto& variable : std::get<type_index>(all_global_data))
+        {
+            if (variable.getName() == name)
+            {
+                isRegistered = true;
+                std::cout << "\n Error: the variable '" << variable_name << "' has already been registered!" << std::endl;
+                std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+                exit(1);
+            }
+        }
+
+        if (!isRegistered)
+        {
+            //GlobalVariable<GlobalVariableType> new_value(variable_name, GlobalVariableType::Zero());
+            GlobalVariable<GlobalVariableType> new_value(variable_name, initial_value);
+            std::get<type_index>(all_global_data_).push_back(new_value);
+        }
+    }
+    //=================================================================================================//
     template <typename VariableType>
     StdLargeVec<VariableType> *BaseParticles::registerSharedVariable(const std::string &variable_name)
     {

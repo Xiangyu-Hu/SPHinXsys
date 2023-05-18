@@ -112,6 +112,8 @@ namespace SPH
 		StdVec<BaseDynamics<void> *> derived_variables_;
 		ParticleVariableList variables_to_write_;
 
+		DataContainerAssemble<GlobalVariable> all_global_data_;
+
 		/** register a variable defined in a class (can be non-particle class) */
 		template <typename VariableType>
 		void registerVariable(StdLargeVec<VariableType> &variable_addrs, const std::string &variable_name,
@@ -120,6 +122,12 @@ namespace SPH
 		template <typename VariableType, class InitializationFunction>
 		void registerVariable(StdLargeVec<VariableType> &variable_addrs, const std::string &variable_name,
 							  const InitializationFunction &initialization);
+
+		/** register a global variable */
+		template <typename GlobalVariableType>
+		void registerGlobalVariable(const std::string &variable_name, GlobalVariableType initial_value = GlobalVariableType::Zero());
+		//void registerGlobalVariable(const std::string &variable_name, GlobalVariableType initial_value = ZeroData<GlobalVariableType>::value);
+		
 		/** register a variable which may have been already defined by other and with default value only */
 		template <typename VariableType>
 		StdLargeVec<VariableType> *registerSharedVariable(const std::string &variable_name);

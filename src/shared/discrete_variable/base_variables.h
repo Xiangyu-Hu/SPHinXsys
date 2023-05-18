@@ -34,6 +34,37 @@
 
 namespace SPH
 {
+    class BaseVariable
+    {
+    public:
+        BaseVariable(const std::string &name)
+            : name_(name){};
+        virtual ~BaseVariable(){};
+        std::string VariableName() const { return name_; };
+
+    private:
+        const std::string name_;
+    };
+
+    template <typename DataType>
+    class GlobalVariable : public BaseVariable
+    {
+    public:
+        GlobalVariable(const std::string &name, DataType& value)
+            : name_(name), value_(value) {};
+        virtual ~GlobalVariable(){};
+
+        //VariableType initial_value = ZeroData<VariableType>::value
+       
+        std::string getName() const { return name_; };
+        DataType setValue() const { return value_; };
+
+    private:
+        const std::string name_;
+        DataType value_;
+    };
+
+    
     template <typename DataType>
     class DiscreteVariable;
     const bool sharedVariable = true;
