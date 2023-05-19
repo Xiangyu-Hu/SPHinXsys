@@ -90,8 +90,8 @@ namespace SPH
         if (!isRegistered)
         {
             //GlobalVariable<GlobalVariableType> new_value(variable_name, GlobalVariableType::Zero());
-            GlobalVariable<GlobalVariableType> new_value(variable_name, initial_value);
-            std::get<type_index>(all_global_data_).push_back(new_value);
+            GlobalVariable<GlobalVariableType> new_variable(variable_name, initial_value);
+            std::get<type_index>(all_global_data_).push_back(new_variable);
         }
     }
     //=================================================================================================//

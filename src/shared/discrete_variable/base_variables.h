@@ -48,7 +48,7 @@ namespace SPH
 
     template <typename DataType>
     class GlobalVariable;
-    typedef DataContainerAssemble<GlobalVariable> GlobalVariableAssemble;
+    typedef DataContainerAddressAssemble<GlobalVariable> GlobalVariableAssemble;
 
     template <typename DataType>
     class GlobalVariable : public BaseVariable

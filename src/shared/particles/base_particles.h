@@ -36,6 +36,7 @@
 #include "base_material.h"
 #include "xml_engine.h"
 #include "particle_sorting.h"
+#include "base_variables.h"
 
 #include <fstream>
 

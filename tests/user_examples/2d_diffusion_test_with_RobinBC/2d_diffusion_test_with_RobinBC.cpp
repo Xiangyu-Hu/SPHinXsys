@@ -17,7 +17,7 @@ int main(int ac, char* av[])
 	//	Build up the environment of a SPHSystem.
 	//----------------------------------------------------------------------
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
-	//sph_system.generate_regression_data_ = false;
+	sph_system.generate_regression_data_ = false;
 	IOEnvironment io_environment(sph_system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
@@ -69,9 +69,9 @@ int main(int ac, char* av[])
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
-	ObservedQuantityRecording<Real> write_solid_temperature("Phi", io_environment, temperature_observer_contact);
-	/*RegressionTestEnsembleAveraged<ObservedQuantityRecording<Real>>
-		write_solid_temperature("Phi", io_environment, temperature_observer_contact);*/
+	//ObservedQuantityRecording<Real> write_solid_temperature("Phi", io_environment, temperature_observer_contact);
+	RegressionTestEnsembleAveraged<ObservedQuantityRecording<Real>>
+		write_solid_temperature("Phi", io_environment, temperature_observer_contact);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary. 
@@ -148,14 +148,14 @@ int main(int ac, char* av[])
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 	std::cout << "Total physical time for computation: " << GlobalStaticVariables::physical_time_ << " seconds." << std::endl;
 	
-	/*if (sph_system.generate_regression_data_)
+	if (sph_system.generate_regression_data_)
 	{
 		write_solid_temperature.generateDataBase(1.0e-3, 1.0e-3);
 	}
 	else if (sph_system.RestartStep() == 0)
 	{
 		write_solid_temperature.testResult();
-	}*/
+	}
 	
 	return 0;
 }
