@@ -33,7 +33,7 @@ namespace SPH
 	 */
 	template <class ParticlesType, class ContactParticlesType>
 	class DiffusionRelaxationNeumann
-		: public DiffusionRelaxationContact<ParticlesType, ContactParticlesType>
+		: public BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType>
 	{
 		StdLargeVec<Vecd>& n_;
 		StdVec<StdLargeVec<Real>*> contact_heat_flux_;

@@ -54,10 +54,10 @@ GetDiffusionTimeStepSize<ParticlesType>::
 }
 //=================================================================================================//
 template <class ParticlesType>
-DiffusionRelaxationInner<ParticlesType>::
-    DiffusionRelaxationInner(BaseInnerRelation &inner_relation)
-    : LocalDynamics(inner_relation.getSPHBody()),
-      DiffusionReactionInnerData<ParticlesType>(inner_relation),
+BaseDiffusionRelaxation<ParticlesType>::
+    BaseDiffusionRelaxation(SPHBody &sph_body)
+    : LocalDynamics(sph_body),
+      DiffusionReactionSimpleData<ParticlesType>(sph_body),
       material_(this->particles_->diffusion_reaction_material_),
       all_diffusions_(material_.AllDiffusions()),
       diffusion_species_(this->particles_->DiffusionSpecies()),
@@ -72,15 +72,20 @@ DiffusionRelaxationInner<ParticlesType>::
         std::string &diffusion_species_name = all_species_names[diffusion_species_indexes[i]];
         diffusion_dt_[i] = this->particles_->template registerSharedVariable<Real>(diffusion_species_name + "ChangeRate");
     }
-}
+} //=================================================================================================//
+template <class ParticlesType>
+DiffusionRelaxationInner<ParticlesType>::
+    DiffusionRelaxationInner(BaseInnerRelation &inner_relation)
+    : BaseDiffusionRelaxation<ParticlesType>(inner_relation.getSPHBody()),
+      DataDelegateInner<ParticlesType, DataDelegateEmptyBase>(inner_relation) {}
 //=================================================================================================//
 template <class ParticlesType>
 void DiffusionRelaxationInner<ParticlesType>::
     initializeDiffusionChangeRate(size_t particle_i)
 {
-    for (size_t m = 0; m < all_diffusions_.size(); ++m)
+    for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
     {
-        (*diffusion_dt_[m])[particle_i] = 0;
+        (*this->diffusion_dt_[m])[particle_i] = 0;
     }
 }
 //=================================================================================================//
@@ -88,13 +93,13 @@ template <class ParticlesType>
 void DiffusionRelaxationInner<ParticlesType>::
     getDiffusionChangeRate(size_t particle_i, size_t particle_j, Vecd &e_ij, Real surface_area_ij)
 {
-    for (size_t m = 0; m < all_diffusions_.size(); ++m)
+    for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
     {
         Real diff_coff_ij =
-            all_diffusions_[m]->getInterParticleDiffusionCoff(particle_i, particle_j, e_ij);
-        StdLargeVec<Real> &gradient_species = *gradient_species_[m];
+            this->all_diffusions_[m]->getInterParticleDiffusionCoff(particle_i, particle_j, e_ij);
+        StdLargeVec<Real> &gradient_species = *this->gradient_species_[m];
         Real phi_ij = gradient_species[particle_i] - gradient_species[particle_j];
-        (*diffusion_dt_[m])[particle_i] += diff_coff_ij * phi_ij * surface_area_ij;
+        (*this->diffusion_dt_[m])[particle_i] += diff_coff_ij * phi_ij * surface_area_ij;
     }
 }
 //=================================================================================================//
@@ -102,9 +107,9 @@ template <class ParticlesType>
 void DiffusionRelaxationInner<ParticlesType>::
     updateSpeciesDiffusion(size_t particle_i, Real dt)
 {
-    for (size_t m = 0; m < all_diffusions_.size(); ++m)
+    for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
     {
-        (*diffusion_species_[m])[particle_i] += dt * (*diffusion_dt_[m])[particle_i];
+        (*this->diffusion_species_[m])[particle_i] += dt * (*this->diffusion_dt_[m])[particle_i];
     }
 }
 //=================================================================================================//
@@ -137,45 +142,32 @@ void DiffusionRelaxationInner<ParticlesType>::
 }
 //=================================================================================================//
 template <class ParticlesType, class ContactParticlesType>
-DiffusionRelaxationContact<ParticlesType, ContactParticlesType>::
-    DiffusionRelaxationContact(BaseContactRelation &contact_relation)
-    : LocalDynamics(contact_relation.getSPHBody()),
-      DiffusionReactionContactData<ParticlesType, ContactParticlesType>(contact_relation),
-      material_(this->particles_->diffusion_reaction_material_),
-      all_diffusions_(material_.AllDiffusions()),
-      diffusion_species_(this->particles_->DiffusionSpecies()),
-      gradient_species_(this->particles_->GradientSpecies())
+BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType>::
+    BaseDiffusionRelaxationContact(BaseContactRelation &contact_relation)
+    : BaseDiffusionRelaxation<ParticlesType>(contact_relation.getSPHBody()),
+      DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>(contact_relation)
 {
-    diffusion_dt_.resize(all_diffusions_.size());
-    contact_gradient_species_.resize(this->contact_particles_.size());
-
     StdVec<std::string> &all_species_names = this->particles_->AllSpeciesNames();
-    IndexVector &diffusion_species_indexes = material_.DiffusionSpeciesIndexes();
+    contact_gradient_species_names_.resize(this->contact_particles_.size());
 
     for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
     {
-        // Register specie change rate as shared variable
-        std::string &diffusion_species_name = all_species_names[diffusion_species_indexes[m]];
-        diffusion_dt_[m] = this->particles_->template registerSharedVariable<Real>(diffusion_species_name + "ChangeRate");
-
         size_t l = this->all_diffusions_[m]->gradient_species_index_;
         std::string &inner_species_name_m = all_species_names[l];
         for (size_t k = 0; k != this->contact_particles_.size(); ++k)
         {
-            size_t contact_species_index_k_m = this->contact_particles_[k]->AllSpeciesIndexMap()[inner_species_name_m];
-            StdVec<std::string> &all_contact_species_names_k = this->contact_particles_[k]->AllSpeciesNames();
-            std::string &contact_species_name_k_m = all_contact_species_names_k[contact_species_index_k_m];
-
-            if (inner_species_name_m != contact_species_name_k_m)
+            auto all_species_map_k = this->contact_particles_[k]->AllSpeciesIndexMap();
+            if (all_species_map_k.find(inner_species_name_m) != all_species_map_k.end())
+            {
+                contact_gradient_species_names_[k].push_back(inner_species_name_m);
+            }
+            else
             {
                 std::cout << "\n Error: inner species '" << inner_species_name_m
-                          << "' and contact species '" << contact_species_name_k_m << "' not match! " << std::endl;
+                          << "' is not found in contact particles" << std::endl;
                 std::cout << __FILE__ << ':' << __LINE__ << std::endl;
                 exit(1);
             }
-            StdVec<StdLargeVec<Real>> &all_contact_species_k = this->contact_particles_[k]->all_species_;
-
-            contact_gradient_species_[k].push_back(&all_contact_species_k[contact_species_index_k_m]);
         }
     }
 }
@@ -183,7 +175,22 @@ DiffusionRelaxationContact<ParticlesType, ContactParticlesType>::
 template <class ParticlesType, class ContactParticlesType>
 DiffusionRelaxationDirichlet<ParticlesType, ContactParticlesType>::
     DiffusionRelaxationDirichlet(BaseContactRelation &contact_relation)
-    : DiffusionRelaxationContact<ParticlesType, ContactParticlesType>(contact_relation) {}
+    : BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType>(contact_relation)
+{
+    contact_gradient_species_.resize(this->contact_particles_.size());
+
+    for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
+    {
+        for (size_t k = 0; k != this->contact_particles_.size(); ++k)
+        {
+            std::string contact_species_names_k_m = this->contact_gradient_species_names_[k][m];
+            auto all_species_map_k = this->contact_particles_[k]->AllSpeciesIndexMap();
+            size_t contact_species_index_k_m = all_species_map_k[contact_species_names_k_m];
+            StdVec<StdLargeVec<Real>> &all_contact_species_k = this->contact_particles_[k]->all_species_;
+            contact_gradient_species_[k].push_back(&all_contact_species_k[contact_species_index_k_m]);
+        }
+    }
+}
 //=================================================================================================//
 template <class ParticlesType, class ContactParticlesType>
 void DiffusionRelaxationDirichlet<ParticlesType, ContactParticlesType>::

@@ -84,13 +84,13 @@ class GetDiffusionTimeStepSize
 };
 
 /**
- * @class DiffusionRelaxationInner
- * @brief Compute the diffusion relaxation process of all species
+ * @class BaseDiffusionRelaxation
+ * @brief Base for compute the diffusion of all species
  */
 template <class ParticlesType>
-class DiffusionRelaxationInner
+class BaseDiffusionRelaxation
     : public LocalDynamics,
-      public DiffusionReactionInnerData<ParticlesType>
+      public DiffusionReactionSimpleData<ParticlesType>
 {
   protected:
     typedef typename ParticlesType::DiffusionReactionMaterial Material;
@@ -100,17 +100,31 @@ class DiffusionRelaxationInner
     StdVec<StdLargeVec<Real> *> &gradient_species_;
     StdVec<StdLargeVec<Real> *> diffusion_dt_;
 
+  public:
+    typedef ParticlesType InnerParticlesType;
+    explicit BaseDiffusionRelaxation(SPHBody &sph_body);
+    virtual ~BaseDiffusionRelaxation(){};
+    StdVec<BaseDiffusion *> &AllDiffusions() { return material_.AllDiffusions(); };
+};
+
+/**
+ * @class DiffusionRelaxationInner
+ * @brief Compute the diffusion relaxation process of all species
+ */
+template <class ParticlesType>
+class DiffusionRelaxationInner
+    : public BaseDiffusionRelaxation<ParticlesType>,
+      public DataDelegateInner<ParticlesType, DataDelegateEmptyBase>
+{
+  protected:
     void initializeDiffusionChangeRate(size_t particle_i);
     void getDiffusionChangeRate(size_t particle_i, size_t particle_j, Vecd &e_ij, Real surface_area_ij);
     virtual void updateSpeciesDiffusion(size_t particle_i, Real dt);
 
   public:
-    typedef ParticlesType InnerParticlesType;
     typedef BaseInnerRelation BodyRelationType;
-
     explicit DiffusionRelaxationInner(BaseInnerRelation &inner_relation);
     virtual ~DiffusionRelaxationInner(){};
-    StdVec<BaseDiffusion *> &AllDiffusions() { return material_.AllDiffusions(); };
     inline void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 };
@@ -120,27 +134,18 @@ class DiffusionRelaxationInner
  * @brief Base class for diffusion relaxation process between two contact bodies.
  */
 template <class ParticlesType, class ContactParticlesType>
-class DiffusionRelaxationContact
-    : public LocalDynamics,
-      public DiffusionReactionContactData<ParticlesType, ContactParticlesType>
+class BaseDiffusionRelaxationContact
+    : public BaseDiffusionRelaxation<ParticlesType>,
+      public DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>
 {
   protected:
-    typedef typename ParticlesType::DiffusionReactionMaterial Material;
-    Material &material_;
-    StdVec<BaseDiffusion *> &all_diffusions_;
-    StdVec<StdLargeVec<Real> *> &diffusion_species_;
-    StdVec<StdLargeVec<Real> *> &gradient_species_;
-    StdVec<StdLargeVec<Real> *> diffusion_dt_;
+    StdVec<StdVec<std::string>> contact_gradient_species_names_;
 
   public:
-    StdVec<StdVec<StdLargeVec<Real> *>> contact_gradient_species_;
-
-    typedef ParticlesType InnerParticlesType;
     typedef BaseContactRelation BodyRelationType;
 
-    explicit DiffusionRelaxationContact(BaseContactRelation &contact_relation);
-    virtual ~DiffusionRelaxationContact(){};
-    StdVec<BaseDiffusion *> &AllDiffusions() { return material_.AllDiffusions(); };
+    explicit BaseDiffusionRelaxationContact(BaseContactRelation &contact_relation);
+    virtual ~BaseDiffusionRelaxationContact(){};
 };
 
 /**
@@ -149,11 +154,13 @@ class DiffusionRelaxationContact
  */
 template <class ParticlesType, class ContactParticlesType>
 class DiffusionRelaxationDirichlet
-    : public DiffusionRelaxationContact<ParticlesType, ContactParticlesType>
+    : public BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType>
 {
   protected:
-    void getDiffusionChangeRateDirichletContact(size_t particle_i, size_t particle_j, Vecd &e_ij, Real surface_area_ij,
-                                                const StdVec<StdLargeVec<Real> *> &gradient_species_k);
+    StdVec<StdVec<StdLargeVec<Real> *>> contact_gradient_species_;
+    void getDiffusionChangeRateDirichletContact(
+        size_t particle_i, size_t particle_j, Vecd &e_ij, Real surface_area_ij,
+        const StdVec<StdLargeVec<Real> *> &gradient_species_k);
 
   public:
     explicit DiffusionRelaxationDirichlet(BaseContactRelation &contact_relation);
