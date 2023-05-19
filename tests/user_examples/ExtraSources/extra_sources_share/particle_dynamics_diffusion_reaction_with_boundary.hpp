@@ -15,7 +15,7 @@ namespace SPH
 	template <class ParticlesType, class ContactParticlesType>
 	DiffusionRelaxationNeumann<ParticlesType, ContactParticlesType>::
 		DiffusionRelaxationNeumann(BaseContactRelation& contact_relation)
-		: DiffusionRelaxationContact<ParticlesType, ContactParticlesType>(contact_relation),
+		: BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType>(contact_relation),
 		n_(this->particles_->n_)
 	{
 		contact_heat_flux_.resize(this->contact_particles_.size());
