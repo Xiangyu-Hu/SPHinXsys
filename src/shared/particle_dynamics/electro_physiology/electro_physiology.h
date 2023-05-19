@@ -191,37 +191,37 @@ namespace SPH
 		 * @brief Compute the diffusion relaxation process
 		 */
 		class ElectroPhysiologyDiffusionRelaxationInner
-			: public RelaxationOfAllDiffusionSpeciesRK2<
-				  RelaxationOfAllDiffusionSpeciesInner<ElectroPhysiologyParticles>>
+			: public DiffusionRelaxationRK2<
+				  DiffusionRelaxationInner<ElectroPhysiologyParticles>>
 		{
 		public:
 			explicit ElectroPhysiologyDiffusionRelaxationInner(BaseInnerRelation &inner_relation)
-				: RelaxationOfAllDiffusionSpeciesRK2(inner_relation){};
+				: DiffusionRelaxationRK2(inner_relation){};
 			virtual ~ElectroPhysiologyDiffusionRelaxationInner(){};
 		};
 
-		using DiffusionRelaxationInner = RelaxationOfAllDiffusionSpeciesInner<ElectroPhysiologyParticles>;
-		using DiffusionRelaxationWithDirichletContact = RelaxationOfAllDiffusionSpeciesDirichlet<ElectroPhysiologyParticles, ElectroPhysiologyParticles>;
+		using DiffusionRelaxationInner = DiffusionRelaxationInner<ElectroPhysiologyParticles>;
+		using DiffusionRelaxationWithDirichletContact = DiffusionRelaxationDirichlet<ElectroPhysiologyParticles, ElectroPhysiologyParticles>;
 		/**
 		 * @class ElectroPhysiologyDiffusionRelaxationComplex
 		 * @brief Compute the diffusion relaxation process
 		 */
 		class ElectroPhysiologyDiffusionRelaxationComplex
-			: public RelaxationOfAllDiffusionSpeciesRK2<
+			: public DiffusionRelaxationRK2<
 				  ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>
 		{
 		public:
 			explicit ElectroPhysiologyDiffusionRelaxationComplex(BaseInnerRelation& inner_relation, BaseContactRelation& body_contact_relation_Dirichlet)
-				: RelaxationOfAllDiffusionSpeciesRK2<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>(inner_relation, body_contact_relation_Dirichlet) {};
+				: DiffusionRelaxationRK2<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>(inner_relation, body_contact_relation_Dirichlet) {};
 			virtual ~ElectroPhysiologyDiffusionRelaxationComplex(){};
 		};
 
 		/** Solve the reaction ODE equation of trans-membrane potential	using forward sweeping */
 		using ElectroPhysiologyReactionRelaxationForward =
-			SimpleDynamics<RelaxationOfAllReactionsForward<ElectroPhysiologyParticles>>;
+			SimpleDynamics<ReactionRelaxationForward<ElectroPhysiologyParticles>>;
 		/** Solve the reaction ODE equation of trans-membrane potential	using backward sweeping */
 		using ElectroPhysiologyReactionRelaxationBackward =
-			SimpleDynamics<RelaxationOfAllReactionsBackward<ElectroPhysiologyParticles>>;
+			SimpleDynamics<ReactionRelaxationBackward<ElectroPhysiologyParticles>>;
 	}
 }
 #endif // ELECTRO_PHYSIOLOGY_H

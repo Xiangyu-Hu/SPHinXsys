@@ -15,9 +15,9 @@ namespace SPH
 	 * @class DiffusionReactionInitialCondition
 	 * @brief Pure abstract class for initial conditions.
 	 */
-	template <class DiffusionReactionParticlesType>
+	template <class ParticlesType>
 	class DiffusionReactionInitialConditionWithNeumann
-		: public DiffusionReactionInitialCondition<DiffusionReactionParticlesType>
+		: public DiffusionReactionInitialCondition<ParticlesType>
 	{
 	public:
 		explicit DiffusionReactionInitialConditionWithNeumann(SPHBody& sph_body);
@@ -31,9 +31,9 @@ namespace SPH
 	 * @class RelaxationOfAllDiffusionSpeciesNeumannContact
 	 * @brief Contact diffusion relaxation with Neumann boundary condition.
 	 */
-	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
-	class RelaxationOfAllDiffusionSpeciesNeumann
-		: public RelaxationOfAllDiffusionSpeciesContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>
+	template <class ParticlesType, class ContactParticlesType>
+	class DiffusionRelaxationNeumann
+		: public DiffusionRelaxationContact<ParticlesType, ContactParticlesType>
 	{
 		StdLargeVec<Vecd>& n_;
 		StdVec<StdLargeVec<Real>*> contact_heat_flux_;
@@ -43,8 +43,8 @@ namespace SPH
 		void getDiffusionChangeRateNeumannContact(size_t particle_i, size_t particle_j, Real surface_area_ij_Neumann, StdLargeVec<Real>& heat_flux_k);
 
 	public:
-		explicit RelaxationOfAllDiffusionSpeciesNeumann(BaseContactRelation& contact_relation);
-		virtual ~RelaxationOfAllDiffusionSpeciesNeumann() {};
+		explicit DiffusionRelaxationNeumann(BaseContactRelation& contact_relation);
+		virtual ~DiffusionRelaxationNeumann() {};
 
 		inline void interaction(size_t index_i, Real dt = 0.0);
 	};

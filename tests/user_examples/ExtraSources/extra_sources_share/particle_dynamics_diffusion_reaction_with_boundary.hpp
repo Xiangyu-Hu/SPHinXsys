@@ -6,16 +6,16 @@
 namespace SPH
 {
 	//=================================================================================================//
-	template <class DiffusionReactionParticlesType>
-	DiffusionReactionInitialConditionWithNeumann<DiffusionReactionParticlesType>::
+	template <class ParticlesType>
+	DiffusionReactionInitialConditionWithNeumann<ParticlesType>::
 		DiffusionReactionInitialConditionWithNeumann(SPHBody& sph_body)
-		: DiffusionReactionInitialCondition<DiffusionReactionParticlesType>(sph_body),
+		: DiffusionReactionInitialCondition<ParticlesType>(sph_body),
 		heat_flux_(*(this->particles_->template getVariableByName<Real>("HeatFlux"))) {}
 	//=================================================================================================//
-	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
-	RelaxationOfAllDiffusionSpeciesNeumann<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
-		RelaxationOfAllDiffusionSpeciesNeumann(BaseContactRelation& contact_relation)
-		: RelaxationOfAllDiffusionSpeciesContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(contact_relation),
+	template <class ParticlesType, class ContactParticlesType>
+	DiffusionRelaxationNeumann<ParticlesType, ContactParticlesType>::
+		DiffusionRelaxationNeumann(BaseContactRelation& contact_relation)
+		: DiffusionRelaxationContact<ParticlesType, ContactParticlesType>(contact_relation),
 		n_(this->particles_->n_)
 	{
 		contact_heat_flux_.resize(this->contact_particles_.size());
@@ -29,8 +29,8 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
-	void RelaxationOfAllDiffusionSpeciesNeumann<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
+	template <class ParticlesType, class ContactParticlesType>
+	void DiffusionRelaxationNeumann<ParticlesType, ContactParticlesType>::
 		getDiffusionChangeRateNeumannContact(size_t particle_i, size_t particle_j,
 			Real surface_area_ij_Neumann, StdLargeVec<Real>& heat_flux_k)
 	{
@@ -40,11 +40,11 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
-	void RelaxationOfAllDiffusionSpeciesNeumann<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
+	template <class ParticlesType, class ContactParticlesType>
+	void DiffusionRelaxationNeumann<ParticlesType, ContactParticlesType>::
 		interaction(size_t index_i, Real dt)
 	{
-		DiffusionReactionParticlesType* particles = this->particles_;
+		ParticlesType* particles = this->particles_;
 
 		for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 		{
