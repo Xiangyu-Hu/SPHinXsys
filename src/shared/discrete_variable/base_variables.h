@@ -47,14 +47,16 @@ namespace SPH
     };
 
     template <typename DataType>
+    class GlobalVariable;
+    typedef DataContainerAssemble<GlobalVariable> GlobalVariableAssemble;
+
+    template <typename DataType>
     class GlobalVariable : public BaseVariable
     {
     public:
         GlobalVariable(const std::string &name, DataType& value)
             : name_(name), value_(value) {};
         virtual ~GlobalVariable(){};
-
-        //VariableType initial_value = ZeroData<VariableType>::value
        
         std::string getName() const { return name_; };
         DataType setValue() const { return value_; };
@@ -63,7 +65,6 @@ namespace SPH
         const std::string name_;
         DataType value_;
     };
-
     
     template <typename DataType>
     class DiscreteVariable;
