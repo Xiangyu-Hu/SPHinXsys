@@ -21,26 +21,19 @@
  *                                                                          *
  * ------------------------------------------------------------------------*/
 /**
- * @file 	particle_dynamics_diffusion_reaction.hpp
+ * @file 	diffusion_dynamics.hpp
  * @brief 	This is the particle dynamics applicable for all type bodies
  * 			TODO: there is an issue on applying corrected configuration for contact bodies..
  * @author	Chi ZHang and Xiangyu Hu
  */
 
-#ifndef PARTICLE_DYNAMICS_DIFFUSION_REACTION_HPP
-#define PARTICLE_DYNAMICS_DIFFUSION_REACTION_HPP
+#ifndef DIFFUSION_DYNAMICS_HPP
+#define DIFFUSION_DYNAMICS_HPP
 
-#include "particle_dynamics_diffusion_reaction.h"
+#include "diffusion_dynamics.h"
 
 namespace SPH
 {
-//=================================================================================================//
-template <class ParticlesType>
-DiffusionReactionInitialCondition<ParticlesType>::
-    DiffusionReactionInitialCondition(SPHBody &sph_body)
-    : LocalDynamics(sph_body),
-      DiffusionReactionSimpleData<ParticlesType>(sph_body),
-      pos_(this->particles_->pos_), all_species_(this->particles_->all_species_) {}
 //=================================================================================================//
 template <class ParticlesType>
 GetDiffusionTimeStepSize<ParticlesType>::
@@ -231,23 +224,73 @@ void DiffusionRelaxationDirichlet<ParticlesType, ContactParticlesType>::
     }
 }
 //=================================================================================================//
+template <class ParticlesType, class ContactParticlesType>
+DiffusionRelaxationNeumann<ParticlesType, ContactParticlesType>::
+    DiffusionRelaxationNeumann(BaseContactRelation &contact_relation)
+    : BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType>(contact_relation),
+      n_(this->particles_->n_)
+{
+    contact_heat_flux_.resize(this->contact_particles_.size());
+    for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
+    {
+        for (size_t k = 0; k != this->contact_particles_.size(); ++k)
+        {
+            contact_n_.push_back(&(this->contact_particles_[k]->n_));
+            contact_heat_flux_[k] = this->contact_particles_[k]->template registerSharedVariable<Real>("HeatFlux");
+        }
+    }
+}
+//=================================================================================================//
+template <class ParticlesType, class ContactParticlesType>
+void DiffusionRelaxationNeumann<ParticlesType, ContactParticlesType>::
+    getDiffusionChangeRateNeumannContact(size_t particle_i, size_t particle_j,
+                                         Real surface_area_ij_Neumann, StdLargeVec<Real> &heat_flux_k)
+{
+    for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
+    {
+        (*this->diffusion_dt_[m])[particle_i] += surface_area_ij_Neumann * heat_flux_k[particle_j];
+    }
+}
+//=================================================================================================//
+template <class ParticlesType, class ContactParticlesType>
+void DiffusionRelaxationNeumann<ParticlesType, ContactParticlesType>::
+    interaction(size_t index_i, Real dt)
+{
+    ParticlesType *particles = this->particles_;
+
+    for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
+    {
+        StdLargeVec<Real> &heat_flux_k = *(contact_heat_flux_[k]);
+        StdLargeVec<Vecd> &n_k = *(contact_n_[k]);
+
+        Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
+        for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+        {
+            size_t index_j = contact_neighborhood.j_[n];
+            Real dW_ijV_j_ = contact_neighborhood.dW_ijV_j_[n];
+            Vecd &e_ij = contact_neighborhood.e_ij_[n];
+
+            const Vecd &grad_ijV_j = particles->getKernelGradient(index_i, index_j, dW_ijV_j_, e_ij);
+            Vecd n_ij = n_[index_i] - n_k[index_j];
+            Real area_ij_Neumann = grad_ijV_j.dot(n_ij);
+            getDiffusionChangeRateNeumannContact(index_i, index_j, area_ij_Neumann, heat_flux_k);
+        }
+    }
+}
+//=================================================================================================//
 template <class ParticlesType>
 InitializationRK<ParticlesType>::
     InitializationRK(SPHBody &sph_body, StdVec<StdLargeVec<Real>> &diffusion_species_s)
-    : LocalDynamics(sph_body),
-      DiffusionReactionSimpleData<ParticlesType>(sph_body),
-      material_(this->particles_->diffusion_reaction_material_),
-      all_diffusions_(material_.AllDiffusions()),
-      diffusion_species_(this->particles_->DiffusionSpecies()),
+    : BaseDiffusionRelaxation<ParticlesType>(sph_body),
       diffusion_species_s_(diffusion_species_s) {}
 //=================================================================================================//
 template <class ParticlesType>
 void InitializationRK<ParticlesType>::
     update(size_t index_i, Real dt)
 {
-    for (size_t m = 0; m < all_diffusions_.size(); ++m)
+    for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
     {
-        diffusion_species_s_[m][index_i] = (*diffusion_species_[m])[index_i];
+        diffusion_species_s_[m][index_i] = (*this->diffusion_species_[m])[index_i];
     }
 }
 //=================================================================================================//
@@ -264,6 +307,27 @@ void SecondStageRK2<FirstStageType>::
 }
 //=================================================================================================//
 template <class FirstStageType>
+template <typename... ContactArgsType>
+DiffusionRelaxationRK2<FirstStageType>::
+    DiffusionRelaxationRK2(typename FirstStageType::BodyRelationType &body_relation, ContactArgsType &&...contact_args)
+    : BaseDynamics<void>(body_relation.getSPHBody()),
+      rk2_initialization_(body_relation.getSPHBody(), diffusion_species_s_),
+      rk2_1st_stage_(body_relation, std::forward<ContactArgsType>(contact_args)...),
+      rk2_2nd_stage_(body_relation, diffusion_species_s_, std::forward<ContactArgsType>(contact_args)...),
+      all_diffusions_(rk2_1st_stage_.AllDiffusions())
+{
+    diffusion_species_s_.resize(all_diffusions_.size());
+    StdVec<std::string> &all_species_names = rk2_1st_stage_.getParticles()->AllSpeciesNames();
+    for (size_t i = 0; i != all_diffusions_.size(); ++i)
+    {
+        // Register diffusion species intermediate
+        size_t diffusion_species_index = all_diffusions_[i]->diffusion_species_index_;
+        std::string &diffusion_species_name = all_species_names[diffusion_species_index];
+        rk2_1st_stage_.getParticles()->registerVariable(diffusion_species_s_[i], diffusion_species_name + "Intermediate");
+    }
+}
+//=================================================================================================//
+template <class FirstStageType>
 void DiffusionRelaxationRK2<FirstStageType>::exec(Real dt)
 {
     rk2_initialization_.exec();
@@ -271,64 +335,5 @@ void DiffusionRelaxationRK2<FirstStageType>::exec(Real dt)
     rk2_2nd_stage_.exec(dt);
 }
 //=================================================================================================//
-template <class ParticlesType>
-BaseReactionRelaxation<ParticlesType>::
-    BaseReactionRelaxation(SPHBody &sph_body)
-    : LocalDynamics(sph_body),
-      DiffusionReactionSimpleData<ParticlesType>(sph_body),
-      reactive_species_(this->particles_->ReactiveSpecies()),
-      reaction_model_(this->particles_->diffusion_reaction_material_.ReactionModel()) {}
-//=================================================================================================//
-template <class ParticlesType>
-void BaseReactionRelaxation<ParticlesType>::
-    loadLocalSpecies(LocalSpecies &local_species, size_t index_i)
-{
-    for (size_t k = 0; k != NumReactiveSpecies; ++k)
-    {
-        local_species[k] = (*reactive_species_[k])[index_i];
-    }
-}
-//=================================================================================================//
-template <class ParticlesType>
-void BaseReactionRelaxation<ParticlesType>::
-    applyGlobalSpecies(LocalSpecies &local_species, size_t index_i)
-{
-    for (size_t k = 0; k != NumReactiveSpecies; ++k)
-    {
-        (*reactive_species_[k])[index_i] = local_species[k];
-    }
-}
-//=================================================================================================//
-template <class ParticlesType>
-void BaseReactionRelaxation<ParticlesType>::
-    advanceForwardStep(size_t index_i, Real dt)
-{
-    LocalSpecies local_species;
-    loadLocalSpecies(local_species, index_i);
-    for (size_t k = 0; k != NumReactiveSpecies; ++k)
-    {
-        Real production_rate = reaction_model_.get_production_rates_[k](local_species);
-        Real loss_rate = reaction_model_.get_loss_rates_[k](local_species);
-        local_species[k] = updateAReactionSpecies(local_species[k], production_rate, loss_rate, dt);
-    }
-    applyGlobalSpecies(local_species, index_i);
-}
-//=================================================================================================//
-template <class ParticlesType>
-void BaseReactionRelaxation<ParticlesType>::
-    advanceBackwardStep(size_t index_i, Real dt)
-{
-    LocalSpecies local_species;
-    loadLocalSpecies(local_species, index_i);
-    for (size_t k = NumReactiveSpecies; k != 0; --k)
-    {
-        size_t m = k - 1;
-        Real production_rate = reaction_model_.get_production_rates_[m](local_species);
-        Real loss_rate = reaction_model_.get_loss_rates_[m](local_species);
-        local_species[m] = updateAReactionSpecies(local_species[m], production_rate, loss_rate, dt);
-    }
-    applyGlobalSpecies(local_species, index_i);
-}
-//=================================================================================================//
 } // namespace SPH
-#endif // PARTICLE_DYNAMICS_DIFFUSION_REACTION_HPP
+#endif // DIFFUSION_DYNAMICS_HPP
