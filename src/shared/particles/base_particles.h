@@ -113,7 +113,6 @@ namespace SPH
 		StdVec<BaseDynamics<void> *> derived_variables_;
 		ParticleVariableList variables_to_write_;
 
-		//GlobalVariableAssemble all_global_data_;
 		DataContainerUniquePtrAssemble<GlobalVariable> all_global_data_;
 
 		/** register a variable defined in a class (can be non-particle class) */

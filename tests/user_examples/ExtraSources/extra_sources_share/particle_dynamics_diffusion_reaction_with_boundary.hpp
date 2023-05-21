@@ -86,14 +86,14 @@ namespace SPH
 
 		for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
 		{
+			contact_T_infinity_[m] = this->contact_particles_->getGlobalVariableByName<Real>("T_infinity");
+
 			for (size_t k = 0; k != this->contact_particles_.size(); ++k)
 			{
 				contact_n_.push_back(&(this->contact_particles_[k]->n_));
 				/*contact_convection_[k] = this->contact_particles_[k]->template registerSharedVariable<Real>("Convection");
 				contact_T_infinity_[k] = this->contact_particles_[k]->template registerSharedVariable<Real>("T_infinity");*/
 				contact_convection_.push_back(this->contact_particles_[k]->getVariableByName<Real>("Convection"));
-				//contact_T_infinity_.push_back(this->contact_particles_[k]->getGlobalVariableByName<Real>("T_infinity"));
-				*contact_T_infinity_ = this->contact_particles_[k]->getGlobalVariableByName<Real>("T_infinity");
 			}
 		}
 	}

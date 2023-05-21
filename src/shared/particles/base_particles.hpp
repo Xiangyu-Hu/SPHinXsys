@@ -76,9 +76,11 @@ namespace SPH
 
         bool isRegistered = false;
 
-        for (const auto& variable : std::get<type_index>(all_global_data_))
+        for (const auto& ptr : std::get<type_index>(all_global_data_))
         {
-            if (variable.getName() == variable_name)
+            const GlobalVariable<GlobalVariableType>* variable = ptr;
+
+            if (*variable.getName() == variable_name)
             {
                 isRegistered = true;
                 std::cout << "\n Error: the variable '" << variable_name << "' has already been registered!" << std::endl;
@@ -89,12 +91,8 @@ namespace SPH
 
         if (!isRegistered)
         {
-            /*GlobalVariable<GlobalVariableType> new_variable(variable_name, initial_value);
-            std::get<type_index>(all_global_data_).push_back(new_variable);*/
             UniquePtrsKeeper<GlobalVariable<GlobalVariableType>> &container = std::get<type_index>(all_global_data_);
-            GlobalVariable<GlobalVariableType> *contained_data = container.template createPtr<GlobalVariable<GlobalVariableType>>(initial_value);
-            //std::get<type_index>(all_global_data_).push_back(new GlobalVariable(variable_name, initial_value));
-            std::get<type_index>(all_global_data_).push_back(GlobalVariable(variable_name, *contained_data));
+            container.template createPtr<GlobalVariable<GlobalVariableType>>(variable_name, initial_value);
         }
     }
      //=================================================================================================//
@@ -105,12 +103,14 @@ namespace SPH
 
         bool isRegistered = false;
 
-        for (const auto& variable : std::get<type_index>(all_global_data_))
+        for (const auto& ptr : std::get<type_index>(all_global_data_))
         {
-            if (variable.getName() == variable_name)
+            const GlobalVariable<GlobalVariableType>* variable = ptr;
+
+            if (*variable.getName() == variable_name)
             {
                 isRegistered = true;
-                return variable.getValue();
+                return *variable.getValue();
             }
         }
 
@@ -122,7 +122,6 @@ namespace SPH
             return nullptr;
         }
     }
-
     //=================================================================================================//
     template <typename VariableType>
     StdLargeVec<VariableType> *BaseParticles::registerSharedVariable(const std::string &variable_name)
