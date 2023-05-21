@@ -53,28 +53,7 @@ namespace SPH
 			: vel_(vel), p_(p){};
 	};
 
-	/**
-	 * @struct CompressibleFluidState
-	 * @brief  Struct for stored states of Riemann solver in compressible flow. 
-	 */
-
-	struct CompressibleFluidState : FluidState
-	{
-		Real &E_;
-		CompressibleFluidState(Real &rho, Vecd &vel, Real &p, Real &E)
-			: FluidState(rho, vel, p), E_(E){};
-	};
-
-	struct CompressibleFluidStarState : FluidStarState
-	{
-		Real rho_;
-		Real E_;
-		CompressibleFluidStarState(Real rho, Vecd vel, Real p, Real E)
-			: FluidStarState(vel, p), rho_(rho), E_(E){};
-	};
-
 	class Fluid;
-	class CompressibleFluid;
 
 	/**
 	 * @struct NoRiemannSolver
@@ -124,61 +103,6 @@ namespace SPH
 		DissipativeRiemannSolver(FluidI &fluid_i, FluidJ &fluid_j)
 			: AcousticRiemannSolver(fluid_i, fluid_j){};
 		Real DissipativePJump(const Real &u_jump);
-	};
-
-	/**
-	 * @struct HLLCRiemannSolverInWeaklyCompressibleFluid
-	 * @brief  HLLC Riemann for weakly-compressible flow. 
-	 */
-	class HLLCRiemannSolverInWeaklyCompressibleFluid
-	{
-		Fluid &fluid_i_, &fluid_j_;
-
-	public:
-		HLLCRiemannSolverInWeaklyCompressibleFluid(Fluid &compressible_fluid_i, Fluid &compressible_fluid_j)
-			: fluid_i_(compressible_fluid_i), fluid_j_(compressible_fluid_j){};
-		FluidState getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
-	};
-
-	/**
-	 * @struct HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid
-	 * @brief  HLLC Riemann with dissipation limiter for weakly-compressible flow. 
-	 */
-	class HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid
-	{
-		Fluid &fluid_i_, &fluid_j_;
-
-	public:
-		HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid(Fluid &compressible_fluid_i, Fluid &compressible_fluid_j) : fluid_i_(compressible_fluid_i), fluid_j_(compressible_fluid_j){};
-		FluidStarState getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
-	};
-
-	/**
-	 * @struct HLLCRiemannSolver
-	 * @brief  HLLC Riemann solver. 
-	 */
-	class HLLCRiemannSolver
-	{
-		CompressibleFluid &compressible_fluid_i_, &compressible_fluid_j_;
-
-	public:
-		HLLCRiemannSolver(CompressibleFluid &compressible_fluid_i, CompressibleFluid &compressible_fluid_j)
-			: compressible_fluid_i_(compressible_fluid_i), compressible_fluid_j_(compressible_fluid_j){};
-		CompressibleFluidStarState getInterfaceState(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &direction_to_i);
-	};
-
-	/**
-	 * @struct HLLCRiemannSolver
-	 * @brief  HLLC Riemann solver with dissipation limiter. 
-	 */
-	class HLLCWithLimiterRiemannSolver
-	{
-		CompressibleFluid &compressible_fluid_i_, &compressible_fluid_j_;
-
-	public:
-		HLLCWithLimiterRiemannSolver(CompressibleFluid &compressible_fluid_i, CompressibleFluid &compressible_fluid_j)
-			: compressible_fluid_i_(compressible_fluid_i), compressible_fluid_j_(compressible_fluid_j){};
-		CompressibleFluidStarState getInterfaceState(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &direction_to_i);
 	};
 }
 
