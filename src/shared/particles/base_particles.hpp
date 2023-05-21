@@ -73,14 +73,16 @@ namespace SPH
         registerGlobalVariable(const std::string &variable_name, GlobalVariableType initial_value)
     {
         constexpr int type_index = DataTypeIndex<GlobalVariableType>::value;
+        UniquePtrsKeeper<GlobalVariable<GlobalVariableType>>& container = std::get<type_index>(all_global_data_);
 
         bool isRegistered = false;
 
-        for (const auto& ptr : std::get<type_index>(all_global_data_))
+        //attention: here change ptr_keepers_ to public property temporarily!
+        for (size_t i = 0; i < container.ptr_keepers_.size(); ++i)
         {
-            const GlobalVariable<GlobalVariableType>* variable = ptr;
+            const GlobalVariable<GlobalVariableType> variable = dynamic_cast<const GlobalVariable<GlobalVariableType>*>(container[i]);
 
-            if (*variable.getName() == variable_name)
+            if (variable.getName() == variable_name)
             {
                 isRegistered = true;
                 std::cout << "\n Error: the variable '" << variable_name << "' has already been registered!" << std::endl;
@@ -91,7 +93,6 @@ namespace SPH
 
         if (!isRegistered)
         {
-            UniquePtrsKeeper<GlobalVariable<GlobalVariableType>> &container = std::get<type_index>(all_global_data_);
             container.template createPtr<GlobalVariable<GlobalVariableType>>(variable_name, initial_value);
         }
     }
@@ -100,17 +101,18 @@ namespace SPH
     GlobalVariableType *BaseParticles::getGlobalVariableByName(const std::string &variable_name)
     {
         constexpr int type_index = DataTypeIndex<GlobalVariableType>::value;
+        UniquePtrsKeeper<GlobalVariable<GlobalVariableType>>& container = std::get<type_index>(all_global_data_);
 
         bool isRegistered = false;
 
-        for (const auto& ptr : std::get<type_index>(all_global_data_))
+        for (size_t i = 0; i < container.ptr_keepers_.size(); ++i)
         {
-            const GlobalVariable<GlobalVariableType>* variable = ptr;
+            const GlobalVariable<GlobalVariableType> variable = dynamic_cast<const GlobalVariable<GlobalVariableType>*>(container[i]);
 
-            if (*variable.getName() == variable_name)
+            if (variable.getName() == variable_name)
             {
                 isRegistered = true;
-                return *variable.getValue();
+                return variable.getValue();
             }
         }
 
