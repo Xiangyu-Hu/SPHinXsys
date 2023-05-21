@@ -80,7 +80,7 @@ namespace SPH
         //attention: here change ptr_keepers_ to public property temporarily!
         for (size_t i = 0; i < container.ptr_keepers_.size(); ++i)
         {
-            const GlobalVariable<GlobalVariableType> variable = dynamic_cast<const GlobalVariable<GlobalVariableType>*>(container[i]);
+            const GlobalVariable<GlobalVariableType> variable = dynamic_cast<const GlobalVariable<GlobalVariableType>*>(container[i]); //wrong
 
             if (variable.getName() == variable_name)
             {
