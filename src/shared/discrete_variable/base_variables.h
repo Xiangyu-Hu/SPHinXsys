@@ -46,9 +46,9 @@ namespace SPH
         const std::string name_;
     };
 
-    template <typename DataType>
+    /*template <typename DataType>
     class GlobalVariable;
-    typedef DataContainerAddressAssemble<GlobalVariable> GlobalVariableAssemble;
+    typedef DataContainerUniquePtrAssemble<GlobalVariable> GlobalVariableAssemble;*/
 
     template <typename DataType>
     class GlobalVariable : public BaseVariable
@@ -59,7 +59,7 @@ namespace SPH
         virtual ~GlobalVariable(){};
        
         std::string getName() const { return name_; };
-        DataType setValue() const { return value_; };
+        DataType getValue() const { return value_; };
 
     private:
         const std::string name_;

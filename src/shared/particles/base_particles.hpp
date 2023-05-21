@@ -89,11 +89,40 @@ namespace SPH
 
         if (!isRegistered)
         {
-            //GlobalVariable<GlobalVariableType> new_value(variable_name, GlobalVariableType::Zero());
-            GlobalVariable<GlobalVariableType> new_variable(variable_name, initial_value);
-            std::get<type_index>(all_global_data_).push_back(new_variable);
+            /*GlobalVariable<GlobalVariableType> new_variable(variable_name, initial_value);
+            std::get<type_index>(all_global_data_).push_back(new_variable);*/
+            UniquePtrsKeeper<GlobalVariable<GlobalVariableType>> &container = std::get<type_index>(all_global_data_);
+            GlobalVariable<GlobalVariableType> *contained_data = container.template createPtr<GlobalVariable<GlobalVariableType>>(initial_value);
+            //std::get<type_index>(all_global_data_).push_back(new GlobalVariable(variable_name, initial_value));
+            std::get<type_index>(all_global_data_).push_back(GlobalVariable(variable_name, *contained_data));
         }
     }
+     //=================================================================================================//
+    template <typename GlobalVariableType>
+    GlobalVariableType *BaseParticles::getGlobalVariableByName(const std::string &variable_name)
+    {
+        constexpr int type_index = DataTypeIndex<GlobalVariableType>::value;
+
+        bool isRegistered = false;
+
+        for (const auto& variable : std::get<type_index>(all_global_data_))
+        {
+            if (variable.getName() == variable_name)
+            {
+                isRegistered = true;
+                return variable.getValue();
+            }
+        }
+
+        if (!isRegistered)
+        {
+            std::cout << "\nWarning: the variable '" << variable_name << "' is not registered!\n";
+            std::cout << "This warning might be acceptable if the variable is registered later.\n";
+            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+            return nullptr;
+        }
+    }
+
     //=================================================================================================//
     template <typename VariableType>
     StdLargeVec<VariableType> *BaseParticles::registerSharedVariable(const std::string &variable_name)

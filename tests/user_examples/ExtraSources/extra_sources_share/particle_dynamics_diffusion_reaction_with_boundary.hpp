@@ -69,9 +69,11 @@ namespace SPH
 	template <class DiffusionReactionParticlesType>
 	DiffusionReactionInitialConditionWithRobin<DiffusionReactionParticlesType>::
 		DiffusionReactionInitialConditionWithRobin(SPHBody& sph_body)
-		: DiffusionReactionInitialCondition<DiffusionReactionParticlesType>(sph_body),
-		convection_(*(this->particles_->template getVariableByName<Real>("Convection"))),
-		T_infinity_(*(this->particles_->template getVariableByName<Real>("T_infinity"))) {}
+		: DiffusionReactionInitialCondition<DiffusionReactionParticlesType>(sph_body)
+	{
+		this->particles_->registerVariable(convection_, "Convection");
+		this->particles_->registerGlobalVariable("T_infinity", T_infinity_);
+	}
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	RelaxationOfAllDiffusionSpeciesRobin<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
@@ -79,16 +81,19 @@ namespace SPH
 		: RelaxationOfAllDiffusionSpeciesContact<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>(contact_relation),
 		n_(this->particles_->n_)
 	{
-		contact_convection_.resize(this->contact_particles_.size());
-		contact_T_infinity_.resize(this->contact_particles_.size());
+		/*contact_convection_.resize(this->contact_particles_.size());
+		contact_T_infinity_.resize(this->contact_particles_.size());*/
 
 		for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
 		{
 			for (size_t k = 0; k != this->contact_particles_.size(); ++k)
 			{
 				contact_n_.push_back(&(this->contact_particles_[k]->n_));
-				contact_convection_[k] = this->contact_particles_[k]->template registerSharedVariable<Real>("Convection");
-				contact_T_infinity_[k] = this->contact_particles_[k]->template registerSharedVariable<Real>("T_infinity");
+				/*contact_convection_[k] = this->contact_particles_[k]->template registerSharedVariable<Real>("Convection");
+				contact_T_infinity_[k] = this->contact_particles_[k]->template registerSharedVariable<Real>("T_infinity");*/
+				contact_convection_.push_back(this->contact_particles_[k]->getVariableByName<Real>("Convection"));
+				//contact_T_infinity_.push_back(this->contact_particles_[k]->getGlobalVariableByName<Real>("T_infinity"));
+				*contact_T_infinity_ = this->contact_particles_[k]->getGlobalVariableByName<Real>("T_infinity");
 			}
 		}
 	}
@@ -96,11 +101,11 @@ namespace SPH
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>
 	void RelaxationOfAllDiffusionSpeciesRobin<DiffusionReactionParticlesType, ContactDiffusionReactionParticlesType>::
 		getDiffusionChangeRateRobinContact(size_t particle_i, size_t particle_j,
-			Real surface_area_ij_Robin, StdLargeVec<Real>& convection_k, StdLargeVec<Real>& T_infinity_k)
+			Real surface_area_ij_Robin, StdLargeVec<Real>& convection_k, Real& T_infinity_k)
 	{
 		for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
 		{
-			Real phi_ij = T_infinity_k[particle_j] - (*this->diffusion_species_[m])[particle_i];
+			Real phi_ij = T_infinity_k - (*this->diffusion_species_[m])[particle_i];
 			(*this->diffusion_dt_[m])[particle_i] += convection_k[particle_j] * phi_ij * surface_area_ij_Robin;
 		}
 	}
@@ -116,7 +121,7 @@ namespace SPH
 			StdLargeVec<Vecd>& n_k = *(contact_n_[k]);
 
 			StdLargeVec<Real>& convection_k = *(contact_convection_[k]);
-			StdLargeVec<Real>& T_infinity_k = *(contact_T_infinity_[k]);
+			Real& T_infinity_k = *(contact_T_infinity_[k]);
 
 			Neighborhood& contact_neighborhood = (*this->contact_configuration_[k])[index_i];
 			for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
