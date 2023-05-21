@@ -126,8 +126,7 @@ namespace SPH
 
 		/** register a global variable */
 		template <typename GlobalVariableType>
-		void registerGlobalVariable(const std::string &variable_name, GlobalVariableType initial_value = ZeroData<GlobalVariableType>::value);
-		//void registerGlobalVariable(const std::string &variable_name, GlobalVariableType initial_value = ZeroData<GlobalVariableType>::value);
+		void registerGlobalVariable(const std::string& variable_name, GlobalVariableType initial_value = ZeroData<GlobalVariableType>::value);
 		template <typename GlobalVariableType>
 		GlobalVariableType* getGlobalVariableByName(const std::string& variable_name);
 
