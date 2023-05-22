@@ -62,7 +62,9 @@ jobs:
             simbody \
             gtest \
             xsimd \
-            pybind11
+            pybind11\
+            TKSTEP
+            
 
       - name: Generate buildsystem
         run: |
