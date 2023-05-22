@@ -5,7 +5,7 @@
  * @author 	Zhentong Wang and Xiangyu Hu
  */
 
-#include "common_compressible_eulerian_classes.h"
+#include "sphinxsys.h"
 #include "shock_tube.h"
 using namespace SPH;
 
@@ -23,7 +23,7 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	//	Create body, materials and particles.
 	//----------------------------------------------------------------------
-	EulerianCompressibleFluidBody wave_body(sph_system, makeShared<WaveBlock>("WaveBody"));
+	EulerianFluidBody wave_body(sph_system, makeShared<WaveBlock>("WaveBody"));
 	wave_body.defineParticlesAndMaterial<FluidParticles, CompressibleFluid>(rho0_l, heat_capacity_ratio);
 	wave_body.generateParticles<ParticleGeneratorLattice>();
 	//----------------------------------------------------------------------
@@ -46,7 +46,7 @@ int main(int ac, char* av[])
 	// Periodic BCs in y direction.
 	PeriodicConditionUsingCellLinkedList periodic_condition_y(wave_body, wave_body.getBodyShapeBounds(), yAxis);
 	// Time step size with considering sound wave speed.
-	ReduceDynamics<EulerianAcousticTimeStepSize> get_wave_time_step_size(wave_body);
+	ReduceDynamics<EulerianCompressibleAcousticTimeStepSize> get_wave_time_step_size(wave_body);
 	// Pressure, density and energy relaxation algorithm by use HLLC Riemann solver.
 	Dynamics1Level<Integration1stHalfHLLCRiemann> pressure_relaxation(wave_body_inner);
 	InteractionWithUpdate<Integration2ndHalfHLLCRiemann> density_and_energy_relaxation(wave_body_inner);

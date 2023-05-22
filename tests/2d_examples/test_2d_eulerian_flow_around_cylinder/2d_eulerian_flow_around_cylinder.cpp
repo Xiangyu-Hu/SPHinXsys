@@ -4,7 +4,7 @@
  * @details We consider a Eulerian flow passing by a cylinder in 2D.
  * @author 	Zhentong Wang and Xiangyu Hu
  */
-#include "common_weakly_compressible_eulerian_classes.h" // SPHinXsys Library with common eulerian classes
+#include "sphinxsys.h"
 #include "2d_eulerian_flow_around_cylinder.h"
 using namespace SPH;
 //----------------------------------------------------------------------
@@ -18,16 +18,16 @@ int main(int ac, char* av[])
 	BoundingBox system_domain_bounds(Vec2d(-DL_sponge, -DH_sponge), Vec2d(DL, DH + DH_sponge));
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
 	// Tag for run particle relaxation for the initial body fitted distribution.		
-	sph_system.setRunParticleRelaxation(true);
+	sph_system.setRunParticleRelaxation(false);
 	// Tag for computation start with relaxed body fitted particles distribution.
-	sph_system.setReloadParticles(false);
+	sph_system.setReloadParticles(true);
 	// Handle command line arguments and override the tags for particle relaxation and reload.
 	sph_system.handleCommandlineOptions(ac, av);
 	IOEnvironment io_environment(sph_system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	EulerianWCFluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
+	EulerianFluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
 	water_block.defineComponentLevelSetShape("OuterBoundary");
 	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	(!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
@@ -104,7 +104,7 @@ int main(int ac, char* av[])
 	Dynamics1Level<Integration1stHalfAcousticRiemannWithWall> pressure_relaxation(water_block_complex);
 	InteractionWithUpdate<Integration2ndHalfAcousticRiemannWithWall> density_relaxation(water_block_complex);
 	InteractionDynamics<ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
-	ReduceDynamics<EulerianAcousticTimeStepSize> get_fluid_time_step_size(water_block);
+	ReduceDynamics<EulerianWCAcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	InteractionWithUpdate<fluid_dynamics::FreeSurfaceIndicationComplex> surface_indicator(water_block_complex.getInnerRelation(), water_block_complex.getContactRelation());
 	Dynamics1Level<FarFieldBoundary> variable_reset_in_boundary_condition(water_block_complex.getInnerRelation());
 	//----------------------------------------------------------------------

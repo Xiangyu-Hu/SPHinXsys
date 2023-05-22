@@ -15,59 +15,18 @@ namespace SPH
 		dE_dt_prior_[index_i] = rho_[index_i] * (gravity_->InducedAcceleration(pos_[index_i])).dot(vel_[index_i]);
 	}
 	//=================================================================================================//
-	EulerianAcousticTimeStepSize::EulerianAcousticTimeStepSize(SPHBody& sph_body)
+	EulerianCompressibleAcousticTimeStepSize::EulerianCompressibleAcousticTimeStepSize(SPHBody& sph_body)
 		: AcousticTimeStepSize(sph_body), rho_(particles_->rho_), p_(particles_->p_), vel_(particles_->vel_),
 		smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()), compressible_fluid_(CompressibleFluid(1.0, 1.4)) {};
 	//=================================================================================================//
-	Real EulerianAcousticTimeStepSize::reduce(size_t index_i, Real dt)
+	Real EulerianCompressibleAcousticTimeStepSize::reduce(size_t index_i, Real dt)
 	{
 		return compressible_fluid_.getSoundSpeed(p_[index_i], rho_[index_i]) + vel_[index_i].norm();
 	}
 	//=================================================================================================//
-	Real EulerianAcousticTimeStepSize::outputResult(Real reduced_value)
+	Real EulerianCompressibleAcousticTimeStepSize::outputResult(Real reduced_value)
 	{
 		return 0.6 / Dimensions * smoothing_length_ / (reduced_value + TinyReal);
-	}
-	//=================================================================================================//
-	KernalGredientWithCorrectionInner::KernalGredientWithCorrectionInner(BaseInnerRelation& inner_relation)
-		: LocalDynamics(inner_relation.getSPHBody()), GeneralDataDelegateInner(inner_relation) 
-	{
-		particles_->registerVariable(B_, "CorrectionMatrix");
-		particles_->registerVariable(local_configuration_inner_, "LocalConfigurationInner");
-	};
-	//=================================================================================================//
-	void KernalGredientWithCorrectionInner::interaction(size_t index_i, Real dt)
-	{
-		Matd local_configuration = Eps * Matd::Identity(); // a small number added to diagonal to avoid divide zero
-		const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
-		for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-		{
-			Vecd gradW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
-			Vecd r_ji = inner_neighborhood.r_ij_[n] * inner_neighborhood.e_ij_[n];
-			local_configuration -= r_ji * gradW_ijV_j.transpose();
-		}
-		B_[index_i] = local_configuration.inverse();
-		local_configuration_inner_[index_i] = local_configuration;
-	}
-	//=================================================================================================//
-	void KernalGredientWithCorrectionInner::update(size_t index_i, Real dt)
-	{
-		Neighborhood& inner_neighborhood = inner_configuration_[index_i];
-		for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-		{
-			size_t index_j = inner_neighborhood.j_[n];
-			Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
-			Vecd e_ij = inner_neighborhood.e_ij_[n];
-			Real r_ij = inner_neighborhood.r_ij_[n];
-			Vecd r_ji = r_ij * e_ij;
-
-			Matd B_average = 0.5 * (B_[index_i] + B_[index_j]);
-			Vecd kernel_gredient_with_B = B_average * dW_ijV_j * e_ij;
-			if (dW_ijV_j < 0) { inner_neighborhood.dW_ijV_j_[n] = -kernel_gredient_with_B.norm(); }
-			else { inner_neighborhood.dW_ijV_j_[n] = kernel_gredient_with_B.norm(); }
-			inner_neighborhood.e_ij_[n] = kernel_gredient_with_B / inner_neighborhood.dW_ijV_j_[n];
-			inner_neighborhood.r_ij_[n] = r_ji.dot(inner_neighborhood.e_ij_[n]);
-		}
 	}
 	//=================================================================================================//
 	HLLCRiemannSolver::HLLCRiemannSolver(CompressibleFluid& compressible_fluid_i, CompressibleFluid& compressible_fluid_j)
@@ -168,12 +127,12 @@ namespace SPH
 		return CompressibleFluidStarState(rho_star, v_star, p_star, energy_star);
 	}
 	//=================================================================================================//
-	EulerianViscousAccelerationInner::EulerianViscousAccelerationInner(BaseInnerRelation& inner_relation)
+	EulerianCompressibleViscousAccelerationInner::EulerianCompressibleViscousAccelerationInner(BaseInnerRelation& inner_relation)
 		: ViscousAccelerationInner(inner_relation),
 		dE_dt_prior_(*particles_->getVariableByName<Real>("OtherEnergyChangeRate")),
 		dmom_dt_prior_(*particles_->getVariableByName<Vecd>("OtherMomentumChangeRate")) {};
 	//=================================================================================================//
-	void EulerianViscousAccelerationInner::interaction(size_t index_i, Real dt) 
+	void EulerianCompressibleViscousAccelerationInner::interaction(size_t index_i, Real dt) 
 	{
 		Real rho_i = rho_[index_i];
 		const Vecd& vel_i = vel_[index_i];

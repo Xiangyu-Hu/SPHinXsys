@@ -38,22 +38,7 @@
 namespace SPH
 {
 	/**
-	* @class EulerianFluidBody
-	* @brief Eulerian Fluid body uses smoothing length to particle spacing 1.3
-	*/
-	class EulerianCompressibleFluidBody : public FluidBody
-	{
-	public:
-		explicit EulerianCompressibleFluidBody(SPHSystem& system, SharedPtr<Shape> shape_ptr) : FluidBody(system, shape_ptr)
-		{
-			defineAdaptation<SPHAdaptation>(1.3);
-		};
-		virtual ~EulerianCompressibleFluidBody() {};
-		virtual EulerianCompressibleFluidBody* ThisObjectPtr() override { return this; };
-	};
-
-	/**
-	* @class EulerianFlowTimeStepInitialization
+	* @class EulerianCompressibleTimeStepInitialization
 	* @brief initialize a time step for a body.
 	* including initialize particle acceleration
 	* induced by viscous, gravity and other forces,
@@ -76,7 +61,7 @@ namespace SPH
 	* @class EulerianAcousticTimeStepSize
 	* @brief Computing the acoustic time step size
 	*/
-	class EulerianAcousticTimeStepSize : public fluid_dynamics::AcousticTimeStepSize
+	class EulerianCompressibleAcousticTimeStepSize : public fluid_dynamics::AcousticTimeStepSize
 	{
 	protected:
 		StdLargeVec<Real>& rho_, & p_;
@@ -84,27 +69,12 @@ namespace SPH
 		Real smoothing_length_;
 
 	public:
-		explicit EulerianAcousticTimeStepSize(SPHBody& sph_body);
-		virtual ~EulerianAcousticTimeStepSize() {};
+		explicit EulerianCompressibleAcousticTimeStepSize(SPHBody& sph_body);
+		virtual ~EulerianCompressibleAcousticTimeStepSize() {};
 
 		Real reduce(size_t index_i, Real dt = 0.0);
 		virtual Real outputResult(Real reduced_value) override;
 		CompressibleFluid compressible_fluid_;
-	};
-
-	/**
-	* @class KernalGredientWithCorrectionInner
-	* @brief obtain the corrected initial configuration in strong form and correct kernel gredient
-	*/
-	class KernalGredientWithCorrectionInner : public LocalDynamics, public GeneralDataDelegateInner
-	{
-	public:
-		KernalGredientWithCorrectionInner(BaseInnerRelation& inner_relation);
-		virtual ~KernalGredientWithCorrectionInner() {};
-		void interaction(size_t index_i, Real dt = 0.0);
-		void update(size_t index_i, Real dt = 0.0);
-	protected:
-		StdLargeVec<Matd> B_, local_configuration_inner_;
 	};
 
 	//----------------------------------------------------------------------
@@ -156,11 +126,11 @@ namespace SPH
 	* @class EulerianViscousAccelerationInner
 	* @brief  the viscosity force induced acceleration in Eulerian method
 	*/
-	class EulerianViscousAccelerationInner : public fluid_dynamics::ViscousAccelerationInner
+	class EulerianCompressibleViscousAccelerationInner : public fluid_dynamics::ViscousAccelerationInner
 	{
 	public:
-		explicit EulerianViscousAccelerationInner(BaseInnerRelation& inner_relation);
-		virtual ~EulerianViscousAccelerationInner() {};
+		explicit EulerianCompressibleViscousAccelerationInner(BaseInnerRelation& inner_relation);
+		virtual ~EulerianCompressibleViscousAccelerationInner() {};
 		void interaction(size_t index_i, Real dt = 0.0);
 		StdLargeVec<Real>& dE_dt_prior_;
 		StdLargeVec<Vecd>& dmom_dt_prior_;

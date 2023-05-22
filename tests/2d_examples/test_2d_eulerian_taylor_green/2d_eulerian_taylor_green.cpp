@@ -4,7 +4,7 @@
  * @details 2D eulerian_taylor_green vortex flow example.
  * @author 	Chi Zhang, Zhentong Wang and Xiangyu Hu
  */
-#include "common_compressible_eulerian_classes.h" // SPHinXsys Library with common eulerian classes
+#include "sphinxsys.h"
 #include "2d_eulerian_taylor_green.h"
 using namespace SPH;   //	Namespace cite here.
 //----------------------------------------------------------------------
@@ -23,7 +23,7 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	EulerianCompressibleFluidBody water_body(sph_system, makeShared<WaterBlock>("WaterBody"));
+	EulerianFluidBody water_body(sph_system, makeShared<WaterBlock>("WaterBody"));
 	water_body.defineParticlesAndMaterial<FluidParticles, CompressibleFluid>(rho0_f, heat_capacity_ratio, mu_f);
 	water_body.generateParticles<ParticleGeneratorLattice>();
 	//----------------------------------------------------------------------
@@ -46,13 +46,13 @@ int main(int ac, char* av[])
 	/** Periodic BCs in y direction. */
 	PeriodicConditionUsingCellLinkedList periodic_condition_y(water_body, water_body.getBodyShapeBounds(), yAxis);
 	/** Time step size with considering sound wave speed. */
-	ReduceDynamics<EulerianAcousticTimeStepSize> get_fluid_time_step_size(water_body);
+	ReduceDynamics<EulerianCompressibleAcousticTimeStepSize> get_fluid_time_step_size(water_body);
 	/** Pressure relaxation algorithm by using verlet time stepping. */
 	/** Here, we can use HLLC with Limiter Riemann solver for pressure relaxation and density and energy relaxation  */
 	Dynamics1Level<Integration1stHalfHLLCWithLimiterRiemann> pressure_relaxation(water_body_inner);
 	InteractionWithUpdate<Integration2ndHalfHLLCWithLimiterRiemann> density_and_energy_relaxation(water_body_inner);
 	/** Computing viscous acceleration. */
-	InteractionDynamics<EulerianViscousAccelerationInner> viscous_acceleration(water_body_inner);
+	InteractionDynamics<EulerianCompressibleViscousAccelerationInner> viscous_acceleration(water_body_inner);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
