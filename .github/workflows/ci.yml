@@ -63,7 +63,7 @@ jobs:
             gtest \
             xsimd \
             pybind11\
-            TKSTEP
+            opencascade
             
 
       - name: Generate buildsystem
@@ -152,7 +152,7 @@ jobs:
             gtest `
             xsimd `
             pybind11 `
-            TKSTEP
+            opencascade
 
       - uses: ilammy/msvc-dev-cmd@v1
 
@@ -249,7 +249,7 @@ jobs:
             simbody \
             xsimd \
             pybind11 \
-            TKSTEP
+            opencascade
 
       - name: Generate buildsystem
         run: |
