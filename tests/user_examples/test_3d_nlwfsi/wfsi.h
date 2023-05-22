@@ -29,7 +29,7 @@ Real StructureBasePlateH=0.12;
  * It is a multiple of the structure baseplate height.
  * 
  * */
-Real particle_spacing_ref = StructureBasePlateH/4;	
+Real particle_spacing_ref = StructureBasePlateH/2;	
 Real BW = particle_spacing_ref * 4.0;			/**< Extending width for BCs. */
 Real Maker_width = particle_spacing_ref * 4.0;	/**< Width of the wavemaker. */
 

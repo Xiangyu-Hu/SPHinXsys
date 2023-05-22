@@ -7,6 +7,7 @@
 using namespace SPH;
 #include "wfsi.h" //header for this case
 #include "io_simbody_cable.h" //output for cable data
+#include "io_simbody_free.h" //output for free body data
 
 int main()
 {
@@ -28,9 +29,69 @@ int main()
 	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
+	SolidBody structurefit(system, makeShared<FloatingStructure>("Structure_Fit"));
+	structurefit.defineAdaptation<ParticleRefinementNearSurface>(1.15, 1.0, 3);
+	structurefit.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(io_environment);
+	structurefit.defineParticlesAndMaterial<SolidParticles, Solid>(Srho);
+	structurefit.generateParticles<ParticleGeneratorMultiResolution>();
+	structurefit.addBodyStateForRecording<Real>("SmoothingLengthRatio");
+	//----------------------------------------------------------------------
+	//	Define simple file input and outputs functions.
+	//----------------------------------------------------------------------
+	BodyStatesRecordingToVtp write_imported_model_to_vtp(io_environment, {structurefit});
+	MeshRecordingToPlt cell_linked_list_recording(io_environment, structurefit.getCellLinkedList());
+	//----------------------------------------------------------------------
+	//	Define body relation map.
+	//	The contact map gives the topological connections between the bodies.
+	//	Basically the the range of bodies to build neighbor particle lists.
+	//----------------------------------------------------------------------
+	AdaptiveInnerRelation structure_adaptive_inner(structurefit);
+	//----------------------------------------------------------------------
+	//	Methods used for particle relaxation.
+	//----------------------------------------------------------------------
+	SimpleDynamics<RandomizeParticlePosition> random_imported_model_particles(structurefit);
+	/** A  Physics relaxation step. */
+	relax_dynamics::RelaxationStepInner relaxation_step_inner(structure_adaptive_inner, true);
+	SimpleDynamics<relax_dynamics::UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(structurefit);
+	/** Write the particle reload files. */
+	ReloadParticleIO write_particle_reload_files(io_environment, structurefit);
+	//----------------------------------------------------------------------
+	//	Particle relaxation starts here.
+	//----------------------------------------------------------------------
+	random_imported_model_particles.exec(0.25);
+	relaxation_step_inner.SurfaceBounding().exec();
+	update_smoothing_length_ratio.exec();
+	write_imported_model_to_vtp.writeToFile();
+	structurefit.updateCellLinkedList();
+	cell_linked_list_recording.writeToFile(0);
+	//----------------------------------------------------------------------
+	//	Particle relaxation time stepping start here.
+	//----------------------------------------------------------------------
+	int ite_p = 0;
+	while (ite_p < 1000)
+	{
+		update_smoothing_length_ratio.exec();
+		relaxation_step_inner.exec();
+		ite_p += 1;
+		if (ite_p % 100 == 0)
+		{	
+			int ite_pp=ite_p/100;
+			std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the imported model N = " << ite_p << "\n";
+			write_imported_model_to_vtp.writeToFile(ite_pp);
+		}
+	}
+	std::cout << "The physics relaxation process of imported model finish !" << std::endl;
+
+	write_particle_reload_files.writeToFile(0);
+	/** 
+	 * end of particle relaxation
+	*/
+
 	SolidBody structure(system, makeShared<FloatingStructure>("Structure"));
 	structure.defineParticlesAndMaterial<SolidParticles, Solid>(Srho);
-	structure.generateParticles<ParticleGeneratorLattice>();
+	structure.generateParticles<ParticleGeneratorReload>(io_environment, "Structure_Fit");
+
+
 
 	ObserverBody observer(system, "Observer");
 	observer.defineAdaptationRatios(h, 2.0);
@@ -178,17 +239,8 @@ int main()
 	  * SimTK::MassProperties(mass, center of mass, inertia)
 	*/
 	SimTK::Body::Rigid structure_info(*structure_multibody.body_part_mass_properties_);
-	/**
-	  * @brief  ** Create a %Planar mobilizer between an existing parent (inboard) body P 
-      *	and a new child (outboard) body B created by copying the given \a bodyInfo 
-      *	into a privately-owned Body within the constructed %MobilizedBody object. 
-      *	Specify the mobilizer frames F fixed to parent P and M fixed to child B. 
-	  * @param[in] inboard(SimTK::Vec3) Defines the location of the joint point relative to the parent body.
-	  * @param[in] outboard(SimTK::Vec3) Defines the body's origin location to the joint point.
-	  * @note	The body's origin location can be the mass center, the the center of mass should be SimTK::Vec3(0)
-	  * 			in SimTK::MassProperties(mass, com, inertia)
-	  */
-	SimTK::MobilizedBody::Planar tethered_strct(matter.Ground(), SimTK::Transform(SimTK::Vec3(translation_str[0],translation_str[1],translation_str[2])), structure_info, SimTK::Transform(SimTK::Vec3(0.0, 0.0, 0.0)));
+	/** Free mobilizer */
+	SimTK::MobilizedBody::Free tethered_strct(matter.Ground(), SimTK::Transform(SimTK::Vec3(translation_str[0],translation_str[1],translation_str[2])), structure_info, SimTK::Transform(SimTK::Vec3(0.0, 0.0, 0.0)));
 	/** Mobility of the fixed spot. */
 	/*---------------------------------------------------------------------------*/
 	SimTK::MobilizedBody::Weld fixed_spotAR( matter.Ground(), SimTK::Transform( 	
@@ -229,6 +281,10 @@ int main()
 	Real lengthAL = G[2]+disp_cable_endAL[2];
 	Real lengthBR = G[2]+disp_cable_endBR[2];
 	Real lengthBL = G[2]+disp_cable_endBL[2];
+	// Real lengthAR = 0.5;
+	// Real lengthAL =0.5;
+	// Real lengthBR = 0.5;
+	// Real lengthBL = 0.5;
 	/*-----------------------------------------------------------------------------*/
 		/* CABLE SPRING (forces,
 					cable line,
@@ -271,6 +327,8 @@ int main()
 	WriteSimBodyCableData write_cable_AL(io_environment, integ, tethering_springAL,"AL");
 	WriteSimBodyCableData write_cable_BR(io_environment, integ, tethering_springBR,"BR");
 	WriteSimBodyCableData write_cable_BL(io_environment, integ, tethering_springBL,"BL");
+	WriteSimBodyFreeRotationMatrix  write_free_body_rotation(io_environment, integ, tethered_strct);
+	WriteSimBodyVelocity  write_free_body_velocity(io_environment, integ, tethered_strct);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
@@ -395,6 +453,9 @@ int main()
 	write_cable_BR.writeToFile(number_of_iterations);
 	write_cable_BL.writeToFile(number_of_iterations);
 
+	write_free_body_rotation.writeToFile(number_of_iterations);
+	write_free_body_velocity.writeToFile(number_of_iterations);
+
 	// SimBodyStructurePosition.writeToFile(number_of_iterations);
 	//----------------------------------------------------------------------
 	//	Main loop of time stepping starts here.
@@ -497,7 +558,8 @@ int main()
 				write_cable_BR.writeToFile(number_of_iterations);
 				write_cable_BL.writeToFile(number_of_iterations);
 
-				// SimBodyStructurePosition.writeToFile(number_of_iterations); *****TODO*****
+				write_free_body_rotation.writeToFile(number_of_iterations);
+				write_free_body_velocity.writeToFile(number_of_iterations);
 			}
 		}
 
