@@ -51,6 +51,32 @@ namespace SPH
 		};
 
 		/**
+		* @class ShearAccelerationRelaxation
+		*/
+		class ShearAccelerationRelaxation : public BaseRelaxation
+		{
+		public:
+			explicit ShearAccelerationRelaxation(BaseInnerRelation& inner_relation);
+			virtual ~ShearAccelerationRelaxation() {};
+			void interaction(size_t index_i, Real dt = 0.0);
+		protected:
+			Real G_, smoothing_length_;
+		};
+
+		/**
+		 * @class AngularConservativeShearAccelerationRelaxation
+		 */
+		class AngularConservativeShearAccelerationRelaxation : public ShearAccelerationRelaxation
+		{
+		public:
+			explicit AngularConservativeShearAccelerationRelaxation(BaseInnerRelation& inner_relation)
+				: ShearAccelerationRelaxation(inner_relation) {};
+			virtual ~AngularConservativeShearAccelerationRelaxation() {};
+
+			void interaction(size_t index_i, Real dt = 0.0);
+		};
+
+		/**
 		* @class BaseArtificialStressRelaxation
 		*/
 		class BaseArtificialStressRelaxation : public BaseRelaxation

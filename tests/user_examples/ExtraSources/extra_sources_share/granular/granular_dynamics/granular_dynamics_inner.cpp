@@ -29,6 +29,53 @@ namespace SPH
 			p_(particles_->p_), drho_dt_(particles_->drho_dt_),
 			pos_(particles_->pos_), vel_(particles_->vel_),
 			acc_(particles_->acc_), acc_prior_(particles_->acc_prior_) {}
+
+		//=================================================================================================//
+		//===============================ShearAccelerationRelaxation======================================//
+		//=================================================================================================//
+		ShearAccelerationRelaxation :: ShearAccelerationRelaxation(BaseInnerRelation& inner_relation)
+			: BaseRelaxation(inner_relation),
+			G_(granular_material_.getShearModulus(granular_material_.getYoungsModulus(), granular_material_.getPoissonRatio())),
+			smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
+
+		void ShearAccelerationRelaxation::interaction(size_t index_i, Real dt)
+		{
+			Real rho_i = rho_[index_i];
+			Vecd acceleration = Vecd::Zero();
+			Vecd vel_i = vel_[index_i];
+			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+			{
+				size_t index_j = inner_neighborhood.j_[n];
+				Real r_ij = inner_neighborhood.r_ij_[n];
+				Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
+
+				acceleration += 2 * (vel_i - vel_[index_j]) * dW_ijV_j / (r_ij + 0.01 * smoothing_length_);
+			}
+			acc_prior_[index_i] += G_ * acceleration * dt / rho_i;
+		}
+		//=================================================================================================//
+		//==========================AngularConservativeShearAccelerationRelaxation=========================//
+		//=================================================================================================//
+		void AngularConservativeShearAccelerationRelaxation::interaction(size_t index_i, Real dt)
+		{
+			Real rho_i = rho_[index_i];
+			Vecd acceleration = Vecd::Zero();
+			Vecd vel_i = vel_[index_i];
+			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+			{
+				size_t index_j = inner_neighborhood.j_[n];
+				Real r_ij = inner_neighborhood.r_ij_[n];
+				Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
+				Vecd& e_ij = inner_neighborhood.e_ij_[n];
+
+				Real v_r_ij = (vel_[index_i] - vel_[index_j]).dot(r_ij * e_ij);
+				Real eta_ij = 2 * ((Real)Dimensions + 2) * v_r_ij / (r_ij * r_ij + 0.01 * smoothing_length_);
+				acceleration += eta_ij * inner_neighborhood.dW_ijV_j_[n] * e_ij;
+			}
+			acc_prior_[index_i] += G_ * acceleration * dt / rho_i;
+		}
 		//=================================================================================================//
 		//===============================ArtificialStressRelaxation======================================//
 		//=================================================================================================//
@@ -62,7 +109,7 @@ namespace SPH
 			R(0, 0) = R_xx_dot * cos(sita) * cos(sita) + R_yy_dot * sin(sita) * sin(sita);
 			R(1, 1) = R_xx_dot * sin(sita) * sin(sita) + R_yy_dot * cos(sita) * cos(sita);
 			R(0, 1) = (R_xx_dot - R_yy_dot) * cos(sita) * sin(sita);
-			R(1, 0) = R(0, 1);
+			R(1, 0) = - R(0, 1);
 			return R;
 		}
 		ArtificialNormalShearStressRelaxation ::
