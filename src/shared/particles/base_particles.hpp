@@ -75,7 +75,7 @@ namespace SPH
         constexpr int type_index = DataTypeIndex<GlobalVariableType>::value;
         bool isRegistered = false;
 
-        for (const auto& variable : std::get<type_index>(all_global_data_))
+        for (auto& variable : std::get<type_index>(all_global_data_))
         {
             if (variable->getName() == variable_name)
             {
@@ -100,7 +100,7 @@ namespace SPH
         constexpr int type_index = DataTypeIndex<GlobalVariableType>::value;
         bool isRegistered = false;
 
-        for (const auto& variable : std::get<type_index>(all_global_data_))
+        for (auto& variable : std::get<type_index>(all_global_data_))
         {
             if (variable->getName() == variable_name)
             {
