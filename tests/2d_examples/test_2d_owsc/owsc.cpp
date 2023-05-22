@@ -151,9 +151,9 @@ int main(int ac, char *av[])
     //	Coupling between SimBody and SPH
     //----------------------------------------------------------------------
     ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody>
-        force_on_spot_flap(flap_multibody, MBsystem, pin_spot, force_on_bodies, integ);
+        force_on_spot_flap(flap_multibody, MBsystem, pin_spot, integ);
     SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody>
-        constraint_spot_flap(flap_multibody, MBsystem, pin_spot, force_on_bodies, integ);
+        constraint_spot_flap(flap_multibody, MBsystem, pin_spot, integ);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
