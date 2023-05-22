@@ -8,7 +8,8 @@
 #ifndef SHOCK_TUBE_H
 #define SHOCK_TUBE_H
 
-#include "sphinxsys.h"
+#include "common_shared_eulerian_classes.h" // basic eulerian classes for fluid.
+#include "common_compressible_eulerian_classes.h" // eulerian classes for compressible fluid only.
 using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.

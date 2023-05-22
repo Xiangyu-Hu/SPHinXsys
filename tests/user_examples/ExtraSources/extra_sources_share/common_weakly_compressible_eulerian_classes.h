@@ -25,7 +25,6 @@
   * @brief 	Here, we define the common weakly compressible eulerian classes for fluid dynamics.
   * @author	Zhentong Wang and Xiangyu Hu
   */
-
 #ifndef COMMON_WEAKLY_COMPRESSIBLE_EULERIAN_CLASSES_H
 #define COMMON_WEAKLY_COMPRESSIBLE_EULERIAN_CLASSES_H
 
@@ -39,22 +38,7 @@
 namespace SPH
 {
 	/**
-	* @class EulerianFluidBody
-	* @brief Eulerian Fluid body uses smoothing length to particle spacing 1.3
-	*/
-	class EulerianWCFluidBody : public FluidBody
-	{
-	public:
-		explicit EulerianWCFluidBody(SPHSystem& system, SharedPtr<Shape> shape_ptr) : FluidBody(system, shape_ptr)
-		{
-			defineAdaptation<SPHAdaptation>(1.3);
-		};
-		virtual ~EulerianWCFluidBody() {};
-		virtual EulerianWCFluidBody* ThisObjectPtr() override { return this; };
-	};
-
-	/**
-	* @class EulerianFlowTimeStepInitialization
+	* @class EulerianWCTimeStepInitialization
 	* @brief initialize a time step for a body.
 	* including initialize particle acceleration
 	* induced by viscous, gravity and other forces,
@@ -73,50 +57,15 @@ namespace SPH
 	};
 
 	/**
-	* @class EulerianAcousticTimeStepSize
+	* @class EulerianWCAcousticTimeStepSize
 	* @brief Computing the acoustic time step size
 	*/
-	class EulerianAcousticTimeStepSize : public fluid_dynamics::AcousticTimeStepSize
+	class EulerianWCAcousticTimeStepSize : public fluid_dynamics::AcousticTimeStepSize
 	{
 	public:
-		explicit EulerianAcousticTimeStepSize(SPHBody& sph_body) : AcousticTimeStepSize(sph_body) {};
-		virtual ~EulerianAcousticTimeStepSize() {};
-
-		/*Real reduce(size_t index_i, Real dt = 0.0)
-		{
-			return fluid_.getSoundSpeed(p_[index_i], rho_[index_i]) + vel_[index_i].norm();
-		};*/
+		explicit EulerianWCAcousticTimeStepSize(SPHBody& sph_body) : AcousticTimeStepSize(sph_body) {};
+		virtual ~EulerianWCAcousticTimeStepSize() {};
 		virtual Real outputResult(Real reduced_value) override;
-	};
-
-	/**
-	* @class KernalGredientWithCorrectionInner
-	* @brief obtain the corrected initial configuration in strong form and correct kernel gredient
-	*/
-	class KernalGredientWithCorrectionInner : public LocalDynamics, public GeneralDataDelegateInner
-	{
-	public:
-		KernalGredientWithCorrectionInner(BaseInnerRelation& inner_relation);
-		virtual ~KernalGredientWithCorrectionInner() {};
-		void interaction(size_t index_i, Real dt = 0.0);
-		void update(size_t index_i, Real dt = 0.0);
-	protected:
-		StdLargeVec<Matd> B_, local_configuration_inner_;
-	};
-
-	/**
-	* @class KernalGredientWithCorrectionComplex
-	* @brief obtain the corrected initial configuration in strong form and correct kernel gredient in complex topology
-	*/
-	class KernalGredientWithCorrectionComplex : public BaseInteractionComplex<KernalGredientWithCorrectionInner, GeneralDataDelegateContact>
-	{
-	public:
-		template <typename... Args>
-		KernalGredientWithCorrectionComplex(Args &&...args)
-			: BaseInteractionComplex<KernalGredientWithCorrectionInner, GeneralDataDelegateContact>(std::forward<Args>(args)...) {};
-		virtual ~KernalGredientWithCorrectionComplex() {};
-		void interaction(size_t index_i, Real dt = 0.0);
-		void update(size_t index_i, Real dt = 0.0);
 	};
 
 	//----------------------------------------------------------------------

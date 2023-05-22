@@ -4,11 +4,11 @@
  * @details See https://doi.org/10.1016/j.jcp.2010.08.019 for the detailed problem setup.
  * @author 	Zhentong Wang and Xiangyu Hu
  */
-
 #ifndef EULERIAN_FLOW_AROUND_CYLINDER_H
 #define EULERIAN_FLOW_AROUND_CYLINDER_H
 
-#include "sphinxsys.h"
+#include "common_shared_eulerian_classes.h" // basic eulerian classes for fluid.
+#include "common_weakly_compressible_eulerian_classes.h" // eulerian classes for weakly compressible fluid only.
 using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
