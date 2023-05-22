@@ -7,6 +7,7 @@
 using namespace SPH;
 #include "wfsi.h" //header for this case
 #include "io_simbody_cable.h" //output for cable data
+#include "io_simbody_planar.h" //output for planar structure
 
 int main(int ac, char *av[])
 {
@@ -100,8 +101,6 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Define the multi-body system
 	//----------------------------------------------------------------------
-	std::cout << "MASS CENTER " << G << std::endl;
-	std::cout << "INERTIA " << Ix <<" "<< Iy << " " << Iz << std::endl;
 	/** set up the multi body system. */
 	SimTK::MultibodySystem MBsystem;
 	/** the bodies or matter of the system. */
@@ -175,15 +174,23 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Coupling between SimBody and SPH
 	//----------------------------------------------------------------------
+	std::cout << "MASS CENTER GOAL" << " " << G[0] << " "<< G[1] << std::endl;
+	std::cout << "MASS CENTER SIMBODY" << " " << structure_multibody.initial_mass_center_[0] << " " << structure_multibody.initial_mass_center_[1] << std::endl;
+
+	std::cout << "INERTIA " << Ix <<" "<< Iy << " " << Iz << std::endl;
+	//----------------------------------------------------------------------
+	//	Coupling between SimBody and SPH
+	//----------------------------------------------------------------------
 	ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody>
 		force_on_structure(structure_multibody, MBsystem, tethered_spot, force_on_bodies, integ);
 	SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody>
 		constraint_on_structure(structure_multibody, MBsystem, tethered_spot, force_on_bodies, integ);
 	//----------------------------------------------------------------------
-	//	Cable SimBody Output
+	//	SimBody Output
 	//----------------------------------------------------------------------
 	WriteSimBodyCableData write_cable_A(io_environment, integ, tethering_springA,"A");
 	WriteSimBodyCableData write_cable_B(io_environment, integ, tethering_springB,"B");
+	WriteSimBodyPlanarData write_planar(io_environment, integ, tethered_spot);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
@@ -256,6 +263,7 @@ int main(int ac, char *av[])
 	write_recorded_pressure_fp3.writeToFile(number_of_iterations);
 	write_cable_A.writeToFile(number_of_iterations);
 	write_cable_B.writeToFile(number_of_iterations);	
+	write_planar.writeToFile(number_of_iterations);	
 	//----------------------------------------------------------------------
 	//	Main loop of time stepping starts here.
 	//----------------------------------------------------------------------
@@ -332,6 +340,8 @@ int main(int ac, char *av[])
 
 				write_cable_A.writeToFile(number_of_iterations);
 				write_cable_B.writeToFile(number_of_iterations);
+
+				write_planar.writeToFile(number_of_iterations);	
 				
 			}
 		}
