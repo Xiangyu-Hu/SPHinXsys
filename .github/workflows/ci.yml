@@ -151,7 +151,8 @@ jobs:
             simbody `
             gtest `
             xsimd `
-            pybind11
+            pybind11 `
+            TKSTEP
 
       - uses: ilammy/msvc-dev-cmd@v1
 
@@ -247,7 +248,8 @@ jobs:
             gtest \
             simbody \
             xsimd \
-            pybind11
+            pybind11 \
+            TKSTEP
 
       - name: Generate buildsystem
         run: |
