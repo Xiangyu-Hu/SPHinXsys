@@ -70,8 +70,7 @@ namespace SPH
 				Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
 				Vecd& e_ij = inner_neighborhood.e_ij_[n];
 
-				Real v_r_ij = (vel_[index_i] - vel_[index_j]).dot(r_ij * e_ij);
-				Real eta_ij = 2 * ((Real)Dimensions + 2) * v_r_ij / (r_ij * r_ij + 0.01 * smoothing_length_);
+				Real eta_ij = 2 * ((Real)Dimensions + 2) * (vel_[index_i] - vel_[index_j]).dot(e_ij) / (r_ij + 0.01 * smoothing_length_);
 				acceleration += eta_ij * inner_neighborhood.dW_ijV_j_[n] * e_ij;
 			}
 			acc_prior_[index_i] += G_ * acceleration * dt / rho_i;

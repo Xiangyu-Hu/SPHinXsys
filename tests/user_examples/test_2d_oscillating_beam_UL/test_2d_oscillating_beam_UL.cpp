@@ -116,6 +116,7 @@ int main(int ac, char *av[])
 	beam_body.defineParticlesAndMaterial<GranularMaterialParticles, GranularMaterial>(rho0_s, c0, Youngs_modulus, poisson);
 	beam_body.generateParticles<ParticleGeneratorLattice>();
 	beam_body.addBodyStateForRecording<Real>("VonMisesStress");
+	beam_body.addBodyStateForRecording<Vecd>("AccelerationByShear");
 
 	ObserverBody beam_observer(system, "BeamObserver");
 	beam_observer.sph_adaptation_->resetAdaptationRatios(1.15, 2.0);
