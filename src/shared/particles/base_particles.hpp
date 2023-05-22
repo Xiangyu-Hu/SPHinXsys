@@ -73,16 +73,11 @@ namespace SPH
         registerGlobalVariable(const std::string &variable_name, GlobalVariableType initial_value)
     {
         constexpr int type_index = DataTypeIndex<GlobalVariableType>::value;
-        UniquePtrsKeeper<GlobalVariable<GlobalVariableType>>& container = std::get<type_index>(all_global_data_);
-
         bool isRegistered = false;
 
-        //attention: ptr_keepers_ is changed here to public property temporarily!
-        for (size_t i = 0; i < container.ptr_keepers_.size(); ++i)
+        for (const auto& variable : std::get<type_index>(all_global_data_))
         {
-            const GlobalVariable<GlobalVariableType> variable = container[i]; //wrong, container[i] is UniquePtrsKeeper
-
-            if (variable.getName() == variable_name)
+            if (variable->getName() == variable_name)
             {
                 isRegistered = true;
                 std::cout << "\n Error: the variable '" << variable_name << "' has already been registered!" << std::endl;
@@ -93,7 +88,9 @@ namespace SPH
 
         if (!isRegistered)
         {
-            container.template createPtr<GlobalVariable<GlobalVariableType>>(variable_name, initial_value);
+            UniquePtrsKeeper<GlobalVariable<GlobalVariableType>>& container = std::get<type_index>(all_global_data_ptr_);
+            GlobalVariable<GlobalVariableType> *contained_data = container.template createPtr<GlobalVariable<GlobalVariableType>>(variable_name, initial_value);
+            std::get<type_index>(all_global_data_).push_back(contained_data);
         }
     }
      //=================================================================================================//
@@ -101,18 +98,14 @@ namespace SPH
     GlobalVariableType *BaseParticles::getGlobalVariableByName(const std::string &variable_name)
     {
         constexpr int type_index = DataTypeIndex<GlobalVariableType>::value;
-        UniquePtrsKeeper<GlobalVariable<GlobalVariableType>>& container = std::get<type_index>(all_global_data_);
-
         bool isRegistered = false;
 
-        for (size_t i = 0; i < container.ptr_keepers_.size(); ++i)
+        for (const auto& variable : std::get<type_index>(all_global_data_))
         {
-            const GlobalVariable<GlobalVariableType> variable = container[i]; //wrong, container[i] is UniquePtrsKeeper
-
-            if (variable.getName() == variable_name)
+            if (variable->getName() == variable_name)
             {
                 isRegistered = true;
-                return variable.getValue();
+                return variable->getValue();
             }
         }
 

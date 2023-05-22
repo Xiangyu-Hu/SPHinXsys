@@ -127,9 +127,6 @@ namespace SPH
 	class UniquePtrsKeeper
 	{
 	public:
-
-		std::vector<UniquePtrKeeper<BaseType>> ptr_keepers_;
-
 		/** used to create a new derived object in the vector
 		 * and output its pointer as observer */
 		template <class DerivedType, typename... ConstructorArgs>
@@ -150,6 +147,9 @@ namespace SPH
 			std::cout << "\n Error in UniquePtrsKeeper : UniquePtr index is out of bound! \n";
 			exit(1);
 		}
+
+	private:
+		std::vector<UniquePtrKeeper<BaseType>> ptr_keepers_;
 	};
 
 	template <class T>

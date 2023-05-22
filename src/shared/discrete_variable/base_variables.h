@@ -40,7 +40,8 @@ namespace SPH
         BaseVariable(const std::string &name)
             : name_(name){};
         virtual ~BaseVariable(){};
-        std::string VariableName() const { return name_; };
+
+        std::string getName() const { return name_; };
 
     private:
         const std::string name_;
@@ -55,14 +56,13 @@ namespace SPH
     {
     public:
         GlobalVariable(const std::string &name, DataType& value)
-            : name_(name), value_(value) {};
+            : BaseVariable(name),
+            value_(value) {};
         virtual ~GlobalVariable(){};
        
-        std::string getName() const { return name_; };
         DataType getValue() const { return value_; };
 
     private:
-        const std::string name_;
         DataType value_;
     };
     
