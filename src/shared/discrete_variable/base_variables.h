@@ -60,7 +60,7 @@ namespace SPH
             value_(value) {};
         virtual ~GlobalVariable(){};
        
-        DataType getValue() const { return value_; };
+        DataType* getValue() const { return &value_; };
 
     private:
         DataType value_;
