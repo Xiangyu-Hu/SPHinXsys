@@ -1,6 +1,5 @@
 #include "riemann_solver.h"
 #include "base_material.h"
-#include "compressible_fluid.h"
 
 namespace SPH
 {

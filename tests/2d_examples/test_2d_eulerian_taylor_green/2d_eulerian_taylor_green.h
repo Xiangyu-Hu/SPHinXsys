@@ -4,11 +4,9 @@
  * @details See https://doi.org/10.1016/j.jcp.2010.08.019 for the detailed problem setup.
  * @author 	Zhentong Wang and Xiangyu Hu
  */
-
-#ifndef TAYLOR_GREEN_H
-#define TAYLOR_GREEN_H
-
-#include "common_shared_eulerian_classes.h" // basic eulerian classes for fluid.
+#ifndef EULERIAN_TAYLOR_GREEN_H
+#define EULERIAN_TAYLOR_GREEN_H
+#include "common_shared_eulerian_classes.h" // shared eulerian classes for weakly-compressible and compressible fluid.
 #include "common_compressible_eulerian_classes.h" // eulerian classes for compressible fluid only.
 using namespace SPH;
 //----------------------------------------------------------------------
@@ -87,4 +85,4 @@ protected:
 	Real gamma_;
 };
 
-#endif // TAYLOR_GREEN_H
+#endif // EULERIAN_TAYLOR_GREEN_H
