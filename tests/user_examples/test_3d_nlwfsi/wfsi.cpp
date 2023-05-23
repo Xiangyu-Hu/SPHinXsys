@@ -11,8 +11,60 @@ using namespace SPH;
 
 int main()
 {
-	std::cout << "Mass " << StructureMass << " Volume " << StructureVol <<  " rho_str " << Srho ;
-	getchar();
+	std::cout << "Mass " << StructureMass << " Volume " << StructureVol <<  " rho_str " << Srho << std::endl;
+	//----------------------------------------------------------------------
+	//	Build up the environment of a SPHSystem with global controls.
+	//----------------------------------------------------------------------
+	SPHSystem system_fit(system_domain_bounds, particle_spacing_structure);
+	IOEnvironment io_environment_fit(system_fit);
+	SolidBody structurefit(system_fit, makeShared<FloatingStructure>("Structure_Fit"));
+	structurefit.defineAdaptation<ParticleRefinementNearSurface>(1.3, 0.7, 3);
+	structurefit.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(io_environment_fit);
+	structurefit.defineParticlesAndMaterial<SolidParticles, Solid>(Srho);
+	structurefit.generateParticles<ParticleGeneratorMultiResolution>();
+	structurefit.addBodyStateForRecording<Real>("SmoothingLengthRatio");
+	//----------------------------------------------------------------------
+	//	Define body relation map.
+	//	The contact map gives the topological connections between the bodies.
+	//	Basically the the range of bodies to build neighbor particle lists.
+	//----------------------------------------------------------------------
+	AdaptiveInnerRelation structure_adaptive_inner(structurefit);
+	//----------------------------------------------------------------------
+	//	Methods used for particle relaxation.
+	//----------------------------------------------------------------------
+	SimpleDynamics<RandomizeParticlePosition> random_imported_model_particles(structurefit);
+	/** A  Physics relaxation step. */
+	relax_dynamics::RelaxationStepInner relaxation_step_inner(structure_adaptive_inner, true);
+	SimpleDynamics<relax_dynamics::UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(structurefit);
+	/** Write the particle reload files. */
+	ReloadParticleIO write_particle_reload_files(io_environment_fit, structurefit);
+	//----------------------------------------------------------------------
+	//	Particle relaxation starts here.
+	//----------------------------------------------------------------------
+	random_imported_model_particles.exec(0.25);
+	relaxation_step_inner.SurfaceBounding().exec();
+	update_smoothing_length_ratio.exec();
+	structurefit.updateCellLinkedList();
+	//----------------------------------------------------------------------
+	//	Particle relaxation time stepping start here.
+	//----------------------------------------------------------------------
+	int ite_p = 0;
+	while (ite_p < 1000)
+	{
+		update_smoothing_length_ratio.exec();
+		relaxation_step_inner.exec();
+		ite_p += 1;
+		if (ite_p % 100 == 0)
+		{	
+			std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the imported model N = " << ite_p << "\n";
+		}
+	}
+	std::cout << "The physics relaxation process of imported model finish !" << std::endl;
+
+	write_particle_reload_files.writeToFile(0);
+	/** 
+	 * end of particle relaxation
+	*/
 	//----------------------------------------------------------------------
 	//	Build up the environment of a SPHSystem with global controls.
 	//----------------------------------------------------------------------
@@ -29,69 +81,9 @@ int main()
 	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
-	SolidBody structurefit(system, makeShared<FloatingStructure>("Structure_Fit"));
-	structurefit.defineAdaptation<ParticleRefinementNearSurface>(1.15, 1.0, 3);
-	structurefit.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(io_environment);
-	structurefit.defineParticlesAndMaterial<SolidParticles, Solid>(Srho);
-	structurefit.generateParticles<ParticleGeneratorMultiResolution>();
-	structurefit.addBodyStateForRecording<Real>("SmoothingLengthRatio");
-	//----------------------------------------------------------------------
-	//	Define simple file input and outputs functions.
-	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp write_imported_model_to_vtp(io_environment, {structurefit});
-	MeshRecordingToPlt cell_linked_list_recording(io_environment, structurefit.getCellLinkedList());
-	//----------------------------------------------------------------------
-	//	Define body relation map.
-	//	The contact map gives the topological connections between the bodies.
-	//	Basically the the range of bodies to build neighbor particle lists.
-	//----------------------------------------------------------------------
-	AdaptiveInnerRelation structure_adaptive_inner(structurefit);
-	//----------------------------------------------------------------------
-	//	Methods used for particle relaxation.
-	//----------------------------------------------------------------------
-	SimpleDynamics<RandomizeParticlePosition> random_imported_model_particles(structurefit);
-	/** A  Physics relaxation step. */
-	relax_dynamics::RelaxationStepInner relaxation_step_inner(structure_adaptive_inner, true);
-	SimpleDynamics<relax_dynamics::UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(structurefit);
-	/** Write the particle reload files. */
-	ReloadParticleIO write_particle_reload_files(io_environment, structurefit);
-	//----------------------------------------------------------------------
-	//	Particle relaxation starts here.
-	//----------------------------------------------------------------------
-	random_imported_model_particles.exec(0.25);
-	relaxation_step_inner.SurfaceBounding().exec();
-	update_smoothing_length_ratio.exec();
-	write_imported_model_to_vtp.writeToFile();
-	structurefit.updateCellLinkedList();
-	cell_linked_list_recording.writeToFile(0);
-	//----------------------------------------------------------------------
-	//	Particle relaxation time stepping start here.
-	//----------------------------------------------------------------------
-	int ite_p = 0;
-	while (ite_p < 1000)
-	{
-		update_smoothing_length_ratio.exec();
-		relaxation_step_inner.exec();
-		ite_p += 1;
-		if (ite_p % 100 == 0)
-		{	
-			int ite_pp=ite_p/100;
-			std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the imported model N = " << ite_p << "\n";
-			write_imported_model_to_vtp.writeToFile(ite_pp);
-		}
-	}
-	std::cout << "The physics relaxation process of imported model finish !" << std::endl;
-
-	write_particle_reload_files.writeToFile(0);
-	/** 
-	 * end of particle relaxation
-	*/
-
 	SolidBody structure(system, makeShared<FloatingStructure>("Structure"));
 	structure.defineParticlesAndMaterial<SolidParticles, Solid>(Srho);
 	structure.generateParticles<ParticleGeneratorReload>(io_environment, "Structure_Fit");
-
-
 
 	ObserverBody observer(system, "Observer");
 	observer.defineAdaptationRatios(h, 2.0);
