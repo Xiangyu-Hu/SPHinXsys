@@ -6,7 +6,9 @@ namespace SPH
 	//=================================================================================================//
 	TimeStepInitialization::TimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> gravity_ptr)
 		: BaseTimeStepInitialization(sph_body, gravity_ptr), GeneralDataDelegateSimple(sph_body),
-		  pos_(particles_->pos_), acc_prior_(particles_->acc_prior_) {}
+		  pos_(particles_->pos_), acc_prior_(particles_->acc_prior_), pos_device(pos_.data(), pos_.size()),
+          acc_prior_device(acc_prior_.data(), acc_prior_.size()), gravity_proxy(gravity_->getDeviceProxy()),
+          device_proxy(this, pos_device, acc_prior_device, gravity_proxy) {}
 	//=================================================================================================//
 	void TimeStepInitialization::update(size_t index_i, Real dt)
 	{
