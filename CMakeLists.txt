@@ -10,6 +10,7 @@ option(SPHINXSYS_2D "Build sphinxsys_2d library" ON)
 option(SPHINXSYS_3D "Build sphinxsys_3d library" ON)
 option(SPHINXSYS_BUILD_TESTS "Build tests" ON)
 option(SPHINXSYS_DEVELOPER_MODE "Developer mode has more flags active for code quality" ON)
+option(SPHINXSYS_SINGLE "Build using single precision or not" OFF)
 
 #------ Global properties (Some cannot be set on INTERFACE targets)
 set(CMAKE_VERBOSE_MAKEFILE OFF CACHE BOOL "Enable verbose compilation commands for Makefile and Ninja" FORCE) # Extra fluff needed for Ninja: https://github.com/ninja-build/ninja/issues/900
@@ -77,6 +78,9 @@ find_package(Boost QUIET COMPONENTS program_options)
 if(TARGET Boost::program_options)
     target_compile_definitions(sphinxsys_core INTERFACE BOOST_AVAILABLE)
     target_link_libraries(sphinxsys_core INTERFACE Boost::program_options)
+endif()
+if(SPHINXSYS_SINGLE)
+    add_definitions(-D ENABLE_SINGLE)
 endif()
 
 #------ Setup the concrete libraries
