@@ -179,7 +179,7 @@ public:
 		if (pos_[index_i][1] < 0 && pos_[index_i][0] > 0.45 * L && pos_[index_i][0] < 0.55 * L)
 		{
 			convection_[index_i] = convection;
-			T_infinity_ = T_infinity;
+			T_infinity_.setValue(T_infinity);
 		}
 	}
 };

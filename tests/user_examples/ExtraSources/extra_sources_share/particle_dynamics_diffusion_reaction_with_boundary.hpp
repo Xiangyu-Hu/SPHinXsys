@@ -72,7 +72,7 @@ namespace SPH
 		: DiffusionReactionInitialCondition<DiffusionReactionParticlesType>(sph_body)
 	{
 		this->particles_->registerVariable(convection_, "Convection");
-		this->particles_->registerGlobalVariable("T_infinity", T_infinity_);
+		this->particles_->registerGlobalVariable(T_infinity_.getName(), T_infinity_.getValue());
 	}
 	//=================================================================================================//
 	template <class DiffusionReactionParticlesType, class ContactDiffusionReactionParticlesType>

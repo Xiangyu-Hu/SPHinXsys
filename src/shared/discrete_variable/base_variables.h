@@ -47,20 +47,17 @@ namespace SPH
         const std::string name_;
     };
 
-    /*template <typename DataType>
-    class GlobalVariable;
-    typedef DataContainerUniquePtrAssemble<GlobalVariable> GlobalVariableAssemble;*/
-
     template <typename DataType>
     class GlobalVariable : public BaseVariable
     {
     public:
-        GlobalVariable(const std::string &name, DataType& value)
+        GlobalVariable(const std::string &name, DataType& value = ZeroData<DataType>::value)
             : BaseVariable(name),
             value_(value) {};
         virtual ~GlobalVariable(){};
        
         DataType* getValue() { return &value_; };
+        void setValue(DataType& outer_value) { value_ = outer_value; };
 
     private:
         DataType value_;

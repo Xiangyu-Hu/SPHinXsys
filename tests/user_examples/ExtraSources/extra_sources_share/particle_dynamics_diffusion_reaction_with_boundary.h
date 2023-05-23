@@ -63,7 +63,7 @@ namespace SPH
 
 	protected:
 		StdLargeVec<Real> convection_;
-		Real T_infinity_;
+		GlobalVariable<Real> T_infinity_("T_infinity");
 	};
 
 	/**
