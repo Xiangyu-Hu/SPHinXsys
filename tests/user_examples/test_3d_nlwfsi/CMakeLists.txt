@@ -17,6 +17,8 @@ target_sources(${PROJECT_NAME} PRIVATE ${DIR_SRCS})
 target_link_libraries(${PROJECT_NAME} sphinxsys_3d)
 set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 
+set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "fluid dynamics, Simbody")
+
 add_test(NAME ${PROJECT_NAME} 
          COMMAND ${PROJECT_NAME}
          WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
