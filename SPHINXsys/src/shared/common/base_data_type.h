@@ -69,7 +69,12 @@ namespace SPH
 	 * 			Using -mtune=native produces code optimized for the local machine under the constraints of the selected instruction set.
 	 */
 
-	using Real = double;
+	using Real = 
+	#if ENABLE_SINGLE
+		single;
+	#else
+		double;
+	#endif
 	/** Vector with integers. */
 	using Array2i = Eigen::Array<int, 2, 1>;
 	using Array3i = Eigen::Array<int, 3, 1>;
@@ -142,8 +147,8 @@ namespace SPH
 	};
 	/** Useful float point constants. */
 	constexpr size_t MaxSize_t = std::numeric_limits<size_t>::max();
-	constexpr double MinRealNumber = std::numeric_limits<double>::min();
-	constexpr double MaxRealNumber = std::numeric_limits<double>::max();
+	constexpr Real MinRealNumber = std::numeric_limits<Real>::min();
+	constexpr Real MaxRealNumber = std::numeric_limits<Real>::max();
 	/** Verbal boolean for positive and negative axis directions. */
 	const int xAxis = 0;
 	const int yAxis = 1;
@@ -151,11 +156,11 @@ namespace SPH
 	const bool positiveDirection = true;
 	const bool negativeDirection = false;
 	/** Constant parameters. */
-	const Real Pi = Real(M_PI);
-	const Real Eps = 2.22045e-16;
-	const Real TinyReal = 2.71051e-20;
-	const Real Infinity = std::numeric_limits<double>::max();
-	const Real SqrtEps = 1.0e-8;
+	constexpr Real Pi = Real(M_PI);
+	constexpr Real Eps = std::numeric_limits<Real>::epsilon();
+	constexpr Real TinyReal = pow(Eps, 1.25);
+	constexpr Real Infinity = std::numeric_limits<Real>::max();
+	constexpr Real SqrtEps = sqrt(Eps);
 }
 
 #endif // BASE_DATA_TYPE_H
