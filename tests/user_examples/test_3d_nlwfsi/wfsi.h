@@ -22,13 +22,6 @@ Real BEH = 2.0;			/**< Beach end height. */
 Real Wmk_p = 0.0;		/**< Wavemaker initial position. */
 Real EXS =2.0;			/**< etra space behind the wavemaker*/
 Real HWM =1.5; 			/**< Wameker height*/
-Real StructureBasePlateH=0.12;
-/**
- *  
- * Initial reference particle spacing
- * It is a multiple of the structure baseplate height.
- * 
- * */
 Real particle_spacing_ref = 0.1;	
 Real particle_spacing_structure= 0.1;
 Real BW = particle_spacing_ref * 4.0;			/**< Extending width for BCs. */

@@ -9,7 +9,7 @@ using namespace SPH;
 #include "io_simbody_cable.h" //output for cable data
 #include "io_simbody_free.h" //output for free body data
 
-int main()
+int main(int ac, char *av[])
 {
 	std::cout << "Mass " << StructureMass << " Volume " << StructureVol <<  " rho_str " << Srho << std::endl;
 	//----------------------------------------------------------------------
@@ -69,6 +69,7 @@ int main()
 	//	Build up the environment of a SPHSystem with global controls.
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, particle_spacing_ref);
+	system.handleCommandlineOptions(ac, av);
 	IOEnvironment io_environment(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
@@ -390,12 +391,14 @@ int main()
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
 		write_recorded_pressure_bp2("Pressure", io_environment, bp2_contact_w);
 	
+	RestartIO restart_io(io_environment, system.real_bodies_);
 	//----------------------------------------------------------------------
 	//	Basic control parameters for time stepping.
 	//----------------------------------------------------------------------
 	GlobalStaticVariables::physical_time_ = 0.0;
 	int number_of_iterations = 0;
 	int screen_output_interval = 1000;
+	int restart_output_interval = screen_output_interval * 10;
 	Real end_time = total_physical_time;
 	Real output_interval = end_time/200;
 	Real dt = 0.0;
@@ -414,6 +417,29 @@ int main()
 	wall_boundary_normal_direction.exec();
 	structure_normal_direction.exec();
 	structure_corrected_configuration.exec();
+	//----------------------------------------------------------------------
+	//	Load restart file if necessary.
+	//----------------------------------------------------------------------
+	if (system.RestartStep() != 0)
+	{
+		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(system.RestartStep());
+			water_block.updateCellLinkedListWithParticleSort(100);
+			wall_boundary.updateCellLinkedList();
+			structure.updateCellLinkedList();
+			water_block_complex.updateConfiguration();
+			structure_contact.updateConfiguration();
+			observer_contact_with_water.updateConfiguration();
+			WMobserver_contact_with_water.updateConfiguration();
+
+			tp1_contact_w.updateConfiguration();
+			tp2_contact_w.updateConfiguration();
+			fp1_contact_w.updateConfiguration();
+			fp2_contact_w.updateConfiguration();
+			fp3_contact_w.updateConfiguration();
+			fp4_contact_w.updateConfiguration();
+			bp1_contact_w.updateConfiguration();
+			bp2_contact_w.updateConfiguration();
+	}
 	//----------------------------------------------------------------------
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
@@ -502,6 +528,8 @@ int main()
 						  << "	Physical Time = " << GlobalStaticVariables::physical_time_
 						  << "	Dt = " << Dt << "	dt = " << dt << "\n";
 			}
+			if (number_of_iterations % restart_output_interval == 0)
+					restart_io.writeToFile(number_of_iterations);
 			number_of_iterations++;
 			damping_wave.exec(Dt);
 			water_block.updateCellLinkedListWithParticleSort(100);
@@ -566,6 +594,19 @@ int main()
 	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+
+	if (system.generate_regression_data_)
+	{
+		write_str_displacement.generateDataBase(1.0e-3);
+		write_recorded_pressure_fp2.generateDataBase(1.0e-3);
+		write_recorded_pressure_bp1.generateDataBase(1.0e-3);
+	}
+	else if (system.RestartStep() == 0)
+	{
+		write_str_displacement.testResult();
+		write_recorded_pressure_fp2.testResult();
+		write_recorded_pressure_bp1.testResult();
+	}
 
 	return 0;
 }
