@@ -6,8 +6,7 @@
  */
 #ifndef EULERIAN_FLOW_AROUND_CYLINDER_H
 #define EULERIAN_FLOW_AROUND_CYLINDER_H
-
-#include "common_shared_eulerian_classes.h" // basic eulerian classes for fluid.
+#include "common_shared_eulerian_classes.h" // shared eulerian classes for weakly-compressible and compressible fluid.
 #include "common_weakly_compressible_eulerian_classes.h" // eulerian classes for weakly compressible fluid only.
 using namespace SPH;
 //----------------------------------------------------------------------

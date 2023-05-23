@@ -4,11 +4,9 @@
  * @details See https://doi.org/10.1016/j.jcp.2010.08.019 for the detailed problem setup.
  * @author 	Zhentong Wang and Xiangyu Hu
  */
-
 #include "sphinxsys.h"
 #include "shock_tube.h"
 using namespace SPH;
-
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------

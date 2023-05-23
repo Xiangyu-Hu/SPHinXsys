@@ -4,11 +4,9 @@
  * @details See https://doi.org/10.1016/j.jcp.2010.08.019 for the detailed problem setup.
  * @author 	Zhentong Wang and Xiangyu Hu
  */
-
 #ifndef SHOCK_TUBE_H
 #define SHOCK_TUBE_H
-
-#include "common_shared_eulerian_classes.h" // basic eulerian classes for fluid.
+#include "common_shared_eulerian_classes.h" // shared eulerian classes for weakly-compressible and compressible fluid.
 #include "common_compressible_eulerian_classes.h" // eulerian classes for compressible fluid only.
 using namespace SPH;
 //----------------------------------------------------------------------
