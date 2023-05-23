@@ -34,6 +34,7 @@
 
 #include "base_data_package.h"
 #include "execution_unit/execution_proxy.hpp"
+#include "execution_unit/execution_argument.hpp"
 
 namespace SPH {
 	/**
@@ -62,48 +63,13 @@ namespace SPH {
             return InducedAcceleration(position, global_acceleration_accessor[0]);
         }
 
-        void setAccessors(const std::tuple<sycl::accessor<Vecd, 1, sycl::access_mode::read>> &arguments) {
-            global_acceleration_accessor = std::get<0>(arguments);
+        void setAccessors(const std::tuple<sycl::accessor<Vecd, 1, sycl::access_mode::read>> &accessors) {
+            global_acceleration_accessor = std::get<0>(accessors);
         }
 
     private:
         sycl::accessor<Vecd, 1, sycl::access_mode::read> global_acceleration_accessor;
     };
-
-
-    template<class GravityType>
-    class GravityProxy : public ExecutionProxy<GravityType, GravityKernel> {
-    public:
-        explicit GravityProxy(GravityType *base)
-        : ExecutionProxy<GravityType, GravityKernel>(base, new GravityKernel()) {}
-
-        virtual ~GravityProxy() {
-            delete this->kernel;
-        }
-
-        template<class ExecutionPolicy>
-        auto get_memory_access(const Context<ExecutionPolicy>& context, const ExecutionPolicy&) {
-            if constexpr (std::is_same_v<ExecutionPolicy, ParallelSYCLDevicePolicy>) {
-                auto memory_access =
-                        std::make_tuple(global_acceleration_buffer->get_access(context.cgh, sycl::read_only));
-                this->kernel->setAccessors(memory_access);
-                return memory_access;
-            }
-        }
-
-    protected:
-        void copy_memory_to_device() override {
-            global_acceleration_buffer = std::make_unique<sycl::buffer<Vecd, 1>>(&this->base->global_acceleration_, 1);
-        }
-
-        void copy_back_from_device() override {
-            global_acceleration_buffer.reset();
-        }
-
-    private:
-        std::unique_ptr<sycl::buffer<Vecd, 1>> global_acceleration_buffer;
-    };
-
 
 	/**
 	 * @class Gravity
@@ -114,6 +80,10 @@ namespace SPH {
 	protected:
 		Vecd global_acceleration_;
 		Vecd zero_potential_reference_;
+
+        DeviceVariable<Vecd, sycl::access_mode::read> global_acceleration_device;
+        DeviceProxy<Gravity, GravityKernel, decltype(global_acceleration_device)> device_proxy;
+
 	public:
 		Gravity(Vecd gravity_vector, Vecd reference_position = Vecd::Zero());
 		virtual ~Gravity() {};
@@ -122,8 +92,11 @@ namespace SPH {
 		virtual Vecd InducedAcceleration(Vecd& position) override;
 		Real getPotential(Vecd& position);
 
-        using Proxy = GravityProxy<Gravity>;
-        friend Proxy;
+        auto& getDeviceProxy() {
+            return device_proxy;
+        }
+
+        using Proxy = decltype(device_proxy);
 	};
 }
 #endif //EXTERNAL_FORCE_H

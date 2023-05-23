@@ -40,6 +40,8 @@
 #include "weakly_compressible_fluid.h"
 #include "riemann_solver.h"
 
+#include "execution_argument.hpp"
+
 namespace SPH
 {
 	namespace fluid_dynamics
@@ -233,44 +235,12 @@ namespace SPH
                 });
             }
 
-            void setAccessors(sycl::accessor<Vecd, 1, sycl::access_mode::read> &&vel) {
-                vel_accessor.swap(vel);
+            void setAccessors(std::tuple<sycl::accessor<Vecd, 1, sycl::access_mode::read>> &&accessors) {
+                vel_accessor.swap(std::get<0>(accessors));
             }
 
         private:
             sycl::accessor<Vecd, 1, sycl::access_mode::read> vel_accessor;
-        };
-
-
-        template<class AdvectionType>
-        class AdvectionTimeStepSizeForImplicitViscosityProxy :
-                public ExecutionProxy<AdvectionType, AdvectionTimeStepSizeForImplicitViscosityKernel> {
-        public:
-            explicit AdvectionTimeStepSizeForImplicitViscosityProxy(AdvectionType *base)
-                    : ExecutionProxy<AdvectionType, AdvectionTimeStepSizeForImplicitViscosityKernel>(
-                            base, new AdvectionTimeStepSizeForImplicitViscosityKernel()) {}
-
-            virtual ~AdvectionTimeStepSizeForImplicitViscosityProxy() {
-                delete this->kernel;
-            }
-
-            template<class ExecutionPolicy>
-            void get_memory_access(const Context<ExecutionPolicy>& context, const ExecutionPolicy&) {
-                if constexpr (std::is_same_v<ExecutionPolicy, ParallelSYCLDevicePolicy>)
-                    this->kernel->setAccessors(vel_buffer->get_access(context.cgh, sycl::read_only));
-            }
-
-        protected:
-            void copy_memory_to_device() override {
-                vel_buffer = std::make_unique<sycl::buffer<Vecd, 1>>(this->base->vel_.data(), this->base->vel_.size());
-            }
-
-            void copy_back_from_device() override {
-                vel_buffer.reset();
-            }
-
-        private:
-            std::unique_ptr<sycl::buffer<Vecd, 1>> vel_buffer;
         };
 
 		/**
@@ -288,13 +258,22 @@ namespace SPH
 			Real reduce(size_t index_i, Real dt = 0.0);
 			virtual Real outputResult(Real reduced_value) override;
 
-            using Proxy = AdvectionTimeStepSizeForImplicitViscosityProxy<AdvectionTimeStepSizeForImplicitViscosity>;
-            friend Proxy;
-
 		protected:
 			StdLargeVec<Vecd> &vel_;
 			Real smoothing_length_min_;
 			Real advectionCFL_;
+
+            DeviceVariable<Vecd, sycl::access_mode::read> vel_device;
+            DeviceProxy<AdvectionTimeStepSizeForImplicitViscosity,
+                    AdvectionTimeStepSizeForImplicitViscosityKernel,
+                    decltype(vel_device)> device_proxy;
+
+        public:
+            auto& getDeviceProxy() {
+                return device_proxy;
+            }
+
+            using Proxy = decltype(device_proxy);
 		};
 
 		/**

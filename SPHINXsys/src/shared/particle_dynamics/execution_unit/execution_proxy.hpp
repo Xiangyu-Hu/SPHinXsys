@@ -25,20 +25,13 @@ namespace SPH {
             }
 
             template<class ExecutionPolicy>
-            void copy_memory(const ExecutionPolicy&) {
+            void get_memory_access(const Context<ExecutionPolicy>& context, const ExecutionPolicy&) {
                 if constexpr (std::is_same_v<ExecutionPolicy, ParallelSYCLDevicePolicy>)
-                    this->copy_memory_to_device();
-            }
-
-            template<class ExecutionPolicy>
-            void copy_back(const ExecutionPolicy&) {
-                if constexpr (std::is_same_v<ExecutionPolicy, ParallelSYCLDevicePolicy>)
-                    this->copy_back_from_device();
+                    this->get_memory_access_device(context.cgh);
             }
 
         protected:
-            virtual void copy_memory_to_device() = 0;
-            virtual void copy_back_from_device() = 0;
+            virtual void get_memory_access_device(sycl::handler& cgh) = 0;
 
             BaseT* base;
             KernelT* kernel;
@@ -50,17 +43,9 @@ namespace SPH {
         public:
             explicit NoProxy(T *base) : ExecutionProxy<T, T>(base, base) {}
 
-            void get_memory_access(sycl::handler& cgh) {
-                static_assert("No device memory access available for this class.");
-            }
-
         protected:
-            void copy_memory_to_device() override {
-                static_assert("No device copy available for this class.");
-            }
-
-            void copy_back_from_device() override {
-                static_assert("No device copy-back available for this class.");
+            void get_memory_access_device(sycl::handler& cgh) override {
+                static_assert("No device memory access available for this class.");
             }
         };
     }

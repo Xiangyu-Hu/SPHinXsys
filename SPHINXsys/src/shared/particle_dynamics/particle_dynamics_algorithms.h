@@ -95,14 +95,14 @@ namespace SPH
 	 * @class SimpleDynamics
 	 * @brief Simple particle dynamics without considering particle interaction
 	 */
-	template <class LocalDynamicsType, class Proxy = NoProxy<LocalDynamicsType>, class ExecutionPolicy = ParallelPolicy>
+	template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy, template<class> class Dispatcher = NoDispatcher>
 	class SimpleDynamics : public LocalDynamicsType, public BaseDynamics<void>
 	{
 	public:
 		template <class DynamicsIdentifier, typename... Args>
 		SimpleDynamics(DynamicsIdentifier &identifier, Args &&...args)
 			: LocalDynamicsType(identifier, std::forward<Args>(args)...),
-			  BaseDynamics<void>(identifier.getSPHBody()), proxy(this)
+			  BaseDynamics<void>(identifier.getSPHBody()), dispatcher(this)
 		{
 			static_assert(!has_initialize<LocalDynamicsType>::value &&
 							  !has_interaction<LocalDynamicsType>::value,
@@ -115,24 +115,23 @@ namespace SPH
 			this->setUpdated();
 			this->setupDynamics(dt);
             auto executionPolicy = ExecutionPolicy();
-            proxy.copy_memory(executionPolicy);
             particle_for(executionPolicy,
                          this->identifier_.LoopRange(),
                          [=](size_t i, auto&& kernel)
                          { kernel.update(i, dt); },
-                         proxy);
-            proxy.copy_back(executionPolicy);
+                         dispatcher.getProxy());
+            dispatcher.writeBack();
 		};
 
     private:
-        Proxy proxy;
+        Dispatcher<LocalDynamicsType> dispatcher;
 	};
 
 	/**
 	 * @class ReduceDynamics
 	 * @brief Template class for particle-wise reduce operation, summation, max or min.
 	 */
-	template <class LocalDynamicsType, class Proxy = NoProxy<LocalDynamicsType>, class ExecutionPolicy = ParallelPolicy>
+	template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy, template<class> class Dispatcher = NoDispatcher>
 	class ReduceDynamics : public LocalDynamicsType,
 						   public BaseDynamics<typename LocalDynamicsType::ReduceReturnType>
 
@@ -143,7 +142,7 @@ namespace SPH
 		template <class DynamicsIdentifier, typename... Args>
 		ReduceDynamics(DynamicsIdentifier &identifier, Args &&...args)
 			: LocalDynamicsType(identifier, std::forward<Args>(args)...),
-			  BaseDynamics<ReturnType>(identifier.getSPHBody()), proxy(this) {};
+			  BaseDynamics<ReturnType>(identifier.getSPHBody()), dispatcher(this) {};
 		virtual ~ReduceDynamics(){};
 
 		using ReduceReturnType = ReturnType;
@@ -153,17 +152,15 @@ namespace SPH
 		virtual ReturnType exec(Real dt = 0.0) override
 		{
 			this->setupDynamics(dt);
-            proxy.copy_memory(executionPolicy);
-			ReturnType temp = particle_reduce(executionPolicy,
+            ReturnType temp = particle_reduce(executionPolicy,
 											  this->identifier_.LoopRange(), this->Reference(), this->getOperation(),
 											  [=](size_t i, auto&& kernel) -> ReturnType
-											  { return kernel.reduce(i, dt); }, proxy);
-            proxy.copy_back(executionPolicy);
+											  { return kernel.reduce(i, dt); }, dispatcher.getProxy());
 			return this->outputResult(temp);
 		};
 
     private:
-        Proxy proxy;
+        Dispatcher<LocalDynamicsType> dispatcher;
         ExecutionPolicy executionPolicy;
 	};
 
