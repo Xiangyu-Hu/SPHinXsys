@@ -154,12 +154,12 @@ public:
 //	Specify diffusion relaxation method.
 //----------------------------------------------------------------------
 class DiffusionBodyRelaxation
-	: public RelaxationOfAllDiffusionSpeciesRK2<
-		  RelaxationOfAllDiffusionSpeciesInner<DiffusionParticles>>
+	: public DiffusionRelaxationRK2<
+		  DiffusionRelaxationInner<DiffusionParticles>>
 {
 public:
 	explicit DiffusionBodyRelaxation(BaseInnerRelation &inner_relation)
-		: RelaxationOfAllDiffusionSpeciesRK2(inner_relation){};
+		: DiffusionRelaxationRK2(inner_relation){};
 	virtual ~DiffusionBodyRelaxation(){};
 };
 //----------------------------------------------------------------------
@@ -232,7 +232,7 @@ int main()
 		write_solid_temperature("Phi", io_environment, temperature_observer_contact);
 	BodyRegionByParticle inner_domain(diffusion_body, makeShared<MultiPolygonShape>(createInnerDomain(), "InnerDomain"));
 	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<
-		ReduceAverage<DiffusionReactionSpeciesSummation<BodyPartByParticle, DiffusionParticles>>>>
+		ReduceAverage<SpeciesSummation<BodyPartByParticle, DiffusionParticles>>>>
 		write_solid_average_temperature_part(io_environment, inner_domain, "Phi");
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration

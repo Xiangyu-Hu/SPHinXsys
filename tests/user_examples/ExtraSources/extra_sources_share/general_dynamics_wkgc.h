@@ -18,39 +18,32 @@
 
 namespace SPH
 {
-	typedef DataDelegateInner<BaseParticles> GeneralDataDelegateInner;
-	typedef DataDelegateContact<BaseParticles, BaseParticles, DataDelegateEmptyBase>
-		GeneralDataDelegateContact;
+class CorrectionMatrixInner : public LocalDynamics, public GeneralDataDelegateInner
+{
+  public:
+    CorrectionMatrixInner(BaseInnerRelation &inner_relation, int beta, Real alpha);
+    virtual ~CorrectionMatrixInner(){};
 
-	class GlobalCorrectionMatrix : public LocalDynamics, public GeneralDataDelegateInner, public GeneralDataDelegateContact
-	{
-	public:
-		GlobalCorrectionMatrix(ComplexRelation& complex_relation, int beta, Real alpha)
-			: LocalDynamics(complex_relation.getSPHBody()),
-			GeneralDataDelegateInner(complex_relation.getInnerRelation()),
-			GeneralDataDelegateContact(complex_relation.getContactRelation()),
-			beta_(beta), alpha_(alpha), Vol_(particles_->Vol_)
-		{
-			particles_->registerVariable(B_, "WeightedCorrectionMatrix");
+  protected:
+    int beta_;
+    Real alpha_;
+    StdLargeVec<Matd> &B_;
 
-			for (size_t k = 0; k != contact_particles_.size(); ++k)
-			{
-				contact_mass_.push_back(&(contact_particles_[k]->mass_));
-				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
-			}
-		}
+    void interaction(size_t index_i, Real dt = 0.0);
+    void update(size_t index_i, Real dt = 0.0);
+};
 
-		virtual ~GlobalCorrectionMatrix() {}
+class CorrectionMatrixComplex : public CorrectionMatrixInner, public GeneralDataDelegateContact
+{
+  public:
+    CorrectionMatrixComplex(ComplexRelation &complex_relation, int beta, Real alpha);
+    virtual ~CorrectionMatrixComplex(){};
 
-	protected:
-		StdVec<StdLargeVec<Real>*> contact_Vol_;
-		StdVec<StdLargeVec<Real>*> contact_mass_;
-		const int beta_;
-		const Real alpha_;
-		StdLargeVec<Real>& Vol_;
-		StdLargeVec<Matd>B_;
+  protected:
+    StdVec<StdLargeVec<Real> *> contact_Vol_;
+    StdVec<StdLargeVec<Real> *> contact_mass_;
 
-		void interaction(size_t index_i, Real dt = 0.0);
-	};
-}
+    void interaction(size_t index_i, Real dt = 0.0);
+};
+} // namespace SPH
 #endif // GENERAL_DYNAMICS_WKGC_H
