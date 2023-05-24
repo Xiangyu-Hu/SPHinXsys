@@ -329,14 +329,16 @@ int main(int ac, char *av[])
 	/** WaveProbes. */
 	BodyRegionByCell wave_probe_buffer(water_block, makeShared<TransformShape<GeometricShapeBox>>(Transformd(translation_WGauge), WGaugeDim));
 	ReducedQuantityRecording<ReduceDynamics<FreeSurfaceHeightZ>> wave_gauge(io_environment, wave_probe_buffer);
+
 	InteractionDynamics<InterpolatingAQuantity<Vecd>>
 		interpolation_observer_position(observer_contact_with_structure, "Position", "Position");
+
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
 		write_str_displacement("Position", io_environment, observer_contact_with_structure);
 
 	InteractionDynamics<InterpolatingAQuantity<Vecd>>
 		interpolation_WMobserver_position(WMobserver_contact_with_wall, "Position", "Position");
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
+	ObservedQuantityRecording<Vecd>
 		write_WM_displacement("Position", io_environment, WMobserver_contact_with_wall);
 
 	InteractionDynamics<InterpolatingAQuantity<Vecd>>
@@ -355,40 +357,22 @@ int main(int ac, char *av[])
 		interpolation_bp1_position(bp1_contact_s, "Position", "Position");
 	InteractionDynamics<InterpolatingAQuantity<Vecd>>
 		interpolation_bp2_position(bp2_contact_s, "Position", "Position");
-	
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		tp1_position_s("Position", io_environment, tp1_contact_s);
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		tp2_position_s("Position", io_environment, tp2_contact_s);	
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		fp1_position_s("Position", io_environment, fp1_contact_s);
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		fp2_position_s("Position", io_environment, fp2_contact_s);
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		fp3_position_s("Position", io_environment, fp3_contact_s);
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		fp4_position_s("Position", io_environment, fp4_contact_s);
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		bp1_position_s("Position", io_environment, bp1_contact_s);
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		bp2_position_s("Position", io_environment, bp2_contact_s);
 
-
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
+	ObservedQuantityRecording<Real>
 		write_recorded_pressure_tp1("Pressure", io_environment, tp1_contact_w);
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
+	ObservedQuantityRecording<Real>
 		write_recorded_pressure_tp2("Pressure", io_environment, tp2_contact_w);
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
+	ObservedQuantityRecording<Real>
 		write_recorded_pressure_fp1("Pressure", io_environment, fp1_contact_w);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
 		write_recorded_pressure_fp2("Pressure", io_environment, fp2_contact_w);
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
+	ObservedQuantityRecording<Real>
 		write_recorded_pressure_fp3("Pressure", io_environment, fp3_contact_w);
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
+	ObservedQuantityRecording<Real>
 		write_recorded_pressure_fp4("Pressure", io_environment, fp4_contact_w);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
 		write_recorded_pressure_bp1("Pressure", io_environment, bp1_contact_w);
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
+	ObservedQuantityRecording<Real>
 		write_recorded_pressure_bp2("Pressure", io_environment, bp2_contact_w);
 	
 	RestartIO restart_io(io_environment, system.real_bodies_);
@@ -448,15 +432,6 @@ int main(int ac, char *av[])
 	write_WM_displacement.writeToFile(number_of_iterations);
 	wave_gauge.writeToFile(number_of_iterations);
 
-	tp1_position_s.writeToFile(number_of_iterations);
-	tp2_position_s.writeToFile(number_of_iterations);
-	fp1_position_s.writeToFile(number_of_iterations);
-	fp2_position_s.writeToFile(number_of_iterations);
-	fp3_position_s.writeToFile(number_of_iterations);
-	fp4_position_s.writeToFile(number_of_iterations);
-	bp1_position_s.writeToFile(number_of_iterations);
-	bp2_position_s.writeToFile(number_of_iterations);
-				
 	write_recorded_pressure_tp1.writeToFile(number_of_iterations);
 	write_recorded_pressure_tp2.writeToFile(number_of_iterations);
 	write_recorded_pressure_fp1.writeToFile(number_of_iterations);
@@ -555,15 +530,6 @@ int main(int ac, char *av[])
 				write_WM_displacement.writeToFile(number_of_iterations);
 				wave_gauge.writeToFile(number_of_iterations);
 
-				tp1_position_s.writeToFile(number_of_iterations);
-				tp2_position_s.writeToFile(number_of_iterations);
-				fp1_position_s.writeToFile(number_of_iterations);
-				fp2_position_s.writeToFile(number_of_iterations);
-				fp3_position_s.writeToFile(number_of_iterations);
-				fp4_position_s.writeToFile(number_of_iterations);
-				bp1_position_s.writeToFile(number_of_iterations);
-				bp2_position_s.writeToFile(number_of_iterations);
-				
 				write_recorded_pressure_tp1.writeToFile(number_of_iterations);
 				write_recorded_pressure_tp2.writeToFile(number_of_iterations);
 				write_recorded_pressure_fp1.writeToFile(number_of_iterations);
