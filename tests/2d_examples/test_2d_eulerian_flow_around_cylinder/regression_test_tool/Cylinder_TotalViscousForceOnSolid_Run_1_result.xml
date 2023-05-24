@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<result>
+    <Snapshot_Element>
+        <Snapshot number_of_snapshot_for_local_result_="16" />
+    </Snapshot_Element>
+    <Result_Element>
+        <Particle_0 snapshot_0="~[1.0823,0.0099567]" snapshot_1="~[1.07591,0.00945119]" snapshot_2="~[1.06602,0.00847179]" snapshot_3="~[1.06236,0.00737631]" snapshot_4="~[1.06232,0.00687147]" snapshot_5="~[1.06205,0.00671301]" snapshot_6="~[1.06196,0.0066288]" snapshot_7="~[1.06193,0.00659675]" snapshot_8="~[1.06192,0.0065844]" snapshot_9="~[1.06192,0.00657953]" snapshot_10="~[1.06192,0.00657761]" snapshot_11="~[1.06192,0.00657692]" snapshot_12="~[1.06192,0.00657663]" snapshot_13="~[1.06192,0.00657654]" snapshot_14="~[1.06192,0.00657651]" snapshot_15="~[1.06192,0.00657652]" />
+    </Result_Element>
+</result>
