@@ -1,11 +1,11 @@
 /**
- * @file 	2d_diffusion_test_with_RobinBC.cpp
+ * @file 	test_2d_diffusion_RobinBC.cpp
  * @brief 	2D diffusion test of diffusion problem with Neumann boundary condition.
  * @details This is a case to implement Neumann boundary condition.
  * @author 	Chenxi Zhao, Bo Zhang, Chi Zhang and Xiangyu Hu
  */
 #include "sphinxsys.h"
-#include "2d_diffusion_test_with_RobinBC.h"
+#include "test_2d_diffusion_RobinBC.h"
 
 using namespace SPH; //Namespace cite here
 //----------------------------------------------------------------------
@@ -47,22 +47,19 @@ int main(int ac, char* av[])
 
 	ContactRelation diffusion_body_contact_Dirichlet(diffusion_body, { &wall_boundary_Dirichlet });
 	ContactRelation diffusion_body_contact_Robin(diffusion_body, { &wall_boundary_Robin });
-	//ContactRelation wall_boundary_contact_Robin(wall_boundary_Robin, { &diffusion_body });
 
 	ContactRelation temperature_observer_contact(temperature_observer, { &diffusion_body });
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	
+	DiffusionBodyRelaxation temperature_relaxation(diffusion_body_inner_relation, diffusion_body_contact_Dirichlet, diffusion_body_contact_Robin);
 
 	GetDiffusionTimeStepSize<DiffusionParticles> get_time_step_size(diffusion_body);
 
 	SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
 	SimpleDynamics<DirichletWallBoundaryInitialCondition> setup_boundary_condition_Dirichlet(wall_boundary_Dirichlet);
 	SimpleDynamics<RobinWallBoundaryInitialCondition> setup_boundary_condition_Robin(wall_boundary_Robin);
-
-	DiffusionBodyRelaxation temperature_relaxation(diffusion_body_inner_relation, diffusion_body_contact_Dirichlet, diffusion_body_contact_Robin);
 
 	SimpleDynamics<NormalDirectionFromBodyShape> diffusion_body_normal_direction(diffusion_body);
 	SimpleDynamics<NormalDirectionFromBodyShape> Dirichlet_normal_direction(wall_boundary_Dirichlet);

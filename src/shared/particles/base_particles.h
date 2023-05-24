@@ -126,10 +126,10 @@ namespace SPH
 							  const InitializationFunction &initialization);
 
 		/** register a global variable */
-		template <typename GlobalVariableType>
-		void registerGlobalVariable(const std::string& variable_name, GlobalVariableType initial_value = ZeroData<GlobalVariableType>::value);
-		template <typename GlobalVariableType>
-		GlobalVariableType* getGlobalVariableByName(const std::string& variable_name);
+		template <typename DataType>
+		DataType* registerGlobalVariable(const std::string& variable_name, DataType initial_value = ZeroData<DataType>::value);
+		template <typename DataType>
+		DataType* getGlobalVariableByName(const std::string& variable_name);
 
 		/** register a variable which may have been already defined by other and with default value only */
 		template <typename VariableType>

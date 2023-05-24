@@ -57,8 +57,7 @@ namespace SPH
         virtual ~GlobalVariable(){};
        
         DataType* getValue() { return &value_; };
-        void setValue(DataType& outer_value) { value_ = outer_value; };
-
+    
     private:
         DataType value_;
     };
@@ -73,18 +72,17 @@ namespace SPH
      * @brief template base class for all discrete variables.
      */
     template <typename DataType>
-    class DiscreteVariable
+    class DiscreteVariable : public BaseVariable
     {
     public:
         DiscreteVariable(DiscreteVariableAssemble &variable_assemble,
                          const std::string &name, bool is_shared = !sharedVariable)
-            : name_(name), index_in_container_(initializeIndex(variable_assemble, is_shared)){};
+            : BaseVariable(name),
+            index_in_container_(initializeIndex(variable_assemble, is_shared)){};
         virtual ~DiscreteVariable(){};
         size_t IndexInContainer() const { return index_in_container_; };
-        std::string VariableName() const { return name_; };
 
     private:
-        const std::string name_;
         size_t index_in_container_;
 
         size_t initializeIndex(DiscreteVariableAssemble &variable_assemble, bool is_shared)
@@ -99,8 +97,8 @@ namespace SPH
             }
             else if (!is_shared)
             {
-                std::cout << "\n Error: the variable: " << name_ << " is already used!" << std::endl;
-                std::cout << "\n Please check if " << name_ << " is a sharable variable." << std::endl;
+                std::cout << "\n Error: the variable: " << getName() << " is already used!" << std::endl;
+                std::cout << "\n Please check if " << getName() << " is a sharable variable." << std::endl;
                 std::cout << __FILE__ << ':' << __LINE__ << std::endl;
                 exit(1);
             }
@@ -114,7 +112,7 @@ namespace SPH
             size_t i = 0;
             while (i != variable_container.size())
             {
-                if (variable_container[i]->VariableName() == name_)
+                if (variable_container[i]->getName() == getName())
                 {
                     return i;
                 }
