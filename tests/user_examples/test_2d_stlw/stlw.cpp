@@ -7,19 +7,22 @@
 using namespace SPH;
 #include "stlw.h" //header for this case
 
-int main()
+int main(int ac, char *av[])
 {
 	//----------------------------------------------------------------------
 	//	Build up the environment of a SPHSystem with global controls.
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, particle_spacing_ref);
+	system.handleCommandlineOptions(ac, av);
 	IOEnvironment io_environment(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
+	FluidBody water_block(system, makeShared<TransformShape<GeometricShapeBox>>(
+						Transform2d(water_block_translation), water_block_halfsize, "Structure"));
 	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	water_block.generateParticles<ParticleGeneratorLattice>();
+	water_block.addBodyStateForRecording<Real>("VolumetricMeasure");
 
 	SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
 	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
@@ -52,7 +55,8 @@ int main()
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
-	BodyRegionByCell wave_probe_buffer(water_block, makeShared<MultiPolygonShape>(createFreeSurfaceGauge(), "FreeSurfaceGauge"));
+	BodyRegionByCell wave_probe_buffer(water_block, makeShared<TransformShape<GeometricShapeBox>>(
+						Transform2d(gauge_translation), gauge_halfsize, "FreeSurfaceGauge"));
 	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight>>> wave_gauge(io_environment, wave_probe_buffer);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
@@ -134,6 +138,12 @@ int main()
 		interval += t3 - t2;
 	}
 
+	TickCount t4 = TickCount::now();
+
+	TimeInterval tt;
+	tt = t4 - t1 - interval;
+	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+
 	if (system.generate_regression_data_)
 	{
 	wave_gauge.generateDataBase(0.1);
@@ -142,12 +152,6 @@ int main()
 	{
 	wave_gauge.testResult();
 	}
-
-	TickCount t4 = TickCount::now();
-
-	TimeInterval tt;
-	tt = t4 - t1 - interval;
-	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	return 0;
 }
