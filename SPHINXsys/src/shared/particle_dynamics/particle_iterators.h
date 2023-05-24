@@ -294,7 +294,7 @@ namespace SPH
             auto &sycl_queue = ExecutionQueue::getQueue();
             auto& kernel = *proxy.get(sycl_policy);
             sycl_queue.submit([&](sycl::handler &cgh) {
-                proxy.get_memory_access(Context<ParallelSYCLDevicePolicy>(cgh), sycl_policy);
+                proxy.init_memory_access(Context<ParallelSYCLDevicePolicy>(cgh));
                 cgh.parallel_for(all_real_particles, [=](sycl::item<1> index) {
                     auto i = index.get_id();
                     local_dynamics_function(i, typename Proxy::Kernel(kernel));
@@ -383,7 +383,7 @@ namespace SPH
             auto &sycl_queue = ExecutionQueue::getQueue();
             sycl::buffer<ReturnType> buffer_result(&result, 1);
             sycl_queue.submit([&](sycl::handler &cgh) {
-                proxy.get_memory_access(Context<ParallelSYCLDevicePolicy>(cgh), sycl_policy);
+                proxy.init_memory_access(Context<ParallelSYCLDevicePolicy>(cgh));
                 auto reduction_operator = sycl::reduction(buffer_result, cgh, typename Operation::SYCLOp());
                 cgh.parallel_for(sycl::range(all_real_particles), reduction_operator, [=](sycl::id<1> idx, auto& reduction) {
                     reduction.combine(local_dynamics_function(idx, typename Proxy::Kernel(kernel)));

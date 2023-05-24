@@ -104,9 +104,8 @@ namespace SPH
 
         DeviceVariable<Vecd, sycl::access_mode::write> pos_device;
         DeviceVariable<Vecd, sycl::access_mode::write> acc_prior_device;
-        DeviceProxyVariable<Gravity::Proxy> gravity_proxy;
         DeviceProxy<TimeStepInitialization, TimeStepInitializationKernel,
-                    decltype(pos_device), decltype(acc_prior_device), decltype(gravity_proxy)> device_proxy;
+                    decltype(pos_device), decltype(acc_prior_device), Gravity::Proxy> device_proxy;
 
 	public:
 		TimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd::Zero()));

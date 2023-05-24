@@ -25,13 +25,13 @@ namespace SPH {
             }
 
             template<class ExecutionPolicy>
-            void get_memory_access(const Context<ExecutionPolicy>& context, const ExecutionPolicy&) {
+            void init_memory_access(const Context<ExecutionPolicy>& context) {
                 if constexpr (std::is_same_v<ExecutionPolicy, ParallelSYCLDevicePolicy>)
-                    this->get_memory_access_device(context.cgh);
+                    this->init_device_memory_access(context.cgh);
             }
 
         protected:
-            virtual void get_memory_access_device(sycl::handler& cgh) = 0;
+            virtual void init_device_memory_access(sycl::handler& cgh) = 0;
 
             BaseT* base;
             KernelT* kernel;
@@ -44,7 +44,7 @@ namespace SPH {
             explicit NoProxy(T *base) : ExecutionProxy<T, T>(base, base) {}
 
         protected:
-            void get_memory_access_device(sycl::handler& cgh) override {
+            void init_device_memory_access(sycl::handler& cgh) override {
                 static_assert("No device memory access available for this class.");
             }
         };
