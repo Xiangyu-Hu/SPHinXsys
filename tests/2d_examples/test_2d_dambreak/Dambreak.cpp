@@ -50,6 +50,12 @@ public:
 //----------------------------------------------------------------------
 int main(int ac, char *av[])
 {
+	// test precision
+	std::cout << "test precision:" << std::endl;
+	std::cout << Eps << std::endl;
+	std::cout << TinyReal << std::endl;
+	std::cout << Infinity << std::endl;
+	std::cout << SqrtEps << std::endl;
 	//----------------------------------------------------------------------
 	//	Build up an SPHSystem.
 	//----------------------------------------------------------------------

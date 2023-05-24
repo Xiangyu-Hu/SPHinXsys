@@ -33,15 +33,15 @@
 namespace SPH
 {
 
-	SimTK::Vec2 EigenToSimTK(const Vec2d &eigen_vector);
-	SimTK::Vec3 EigenToSimTK(const Vec3d &eigen_vector);
-	Vec2d SimTKToEigen(const SimTK::Vec2 &simTK_vector);
-	Vec3d SimTKToEigen(const SimTK::Vec3 &simTK_vector);
+	SimTKVec2 EigenToSimTK(const Vec2d &eigen_vector);
+	SimTKVec3 EigenToSimTK(const Vec3d &eigen_vector);
+	Vec2d SimTKToEigen(const SimTKVec2 &simTK_vector);
+	Vec3d SimTKToEigen(const SimTKVec3 &simTK_vector);
 
-	SimTK::Mat22 EigenToSimTK(const Mat2d &eigen_matrix);
-	SimTK::Mat33 EigenToSimTK(const Mat3d &eigen_matrix);
-	Mat2d SimTKToEigen(const SimTK::Mat22 &simTK_matrix);
-	Mat3d SimTKToEigen(const SimTK::Mat33 &simTK_matrix);
+	SimTKMat22 EigenToSimTK(const Mat2d &eigen_matrix);
+	SimTKMat33 EigenToSimTK(const Mat3d &eigen_matrix);
+	Mat2d SimTKToEigen(const SimTKMat22 &simTK_matrix);
+	Mat3d SimTKToEigen(const SimTKMat33 &simTK_matrix);
 
 	Vec2d FirstAxisVector(const Vec2d &zero_vector);
 	Vec3d FirstAxisVector(const Vec3d &zero_vector);

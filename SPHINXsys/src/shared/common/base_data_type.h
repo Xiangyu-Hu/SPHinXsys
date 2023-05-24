@@ -69,12 +69,22 @@ namespace SPH
 	 * 			Using -mtune=native produces code optimized for the local machine under the constraints of the selected instruction set.
 	 */
 
-	using Real = 
 	#if ENABLE_SINGLE
-		single;
+		using Real = float;
+		using SimTKVec2 = SimTK::fVec2;
+		using SimTKVec3 = SimTK::fVec3;
+		using SimTKMat22 = SimTK::fMat22;
+		using SimTKMat33 = SimTK::fMat33;
+		using EigMat = Eigen::MatrixXf;
 	#else
-		double;
+		using Real = double;
+		using SimTKVec2 = SimTK::Vec2;
+		using SimTKVec3 = SimTK::Vec3;
+		using SimTKMat22 = SimTK::Mat22;
+		using SimTKMat33 = SimTK::Mat33;
+		using EigMat = Eigen::MatrixXd;
 	#endif
+
 	/** Vector with integers. */
 	using Array2i = Eigen::Array<int, 2, 1>;
 	using Array3i = Eigen::Array<int, 3, 1>;
