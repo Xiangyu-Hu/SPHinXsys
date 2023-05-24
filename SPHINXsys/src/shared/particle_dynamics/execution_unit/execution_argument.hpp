@@ -6,15 +6,14 @@
 
 #include "execution_proxy.hpp"
 
-namespace SPH {
-    namespace execution {
+namespace SPH::execution {
         template<class T, sycl::access_mode access_mode, typename=std::true_type>
         class DeviceVariable {
             using VarType = std::remove_reference_t<T>;
         public:
             DeviceVariable(VarType* var_addr, std::size_t var_size) : var_buffer(var_addr, var_size){}
 
-            auto init_memory_access(sycl::handler& cgh) {
+            auto get_device_memory_access(sycl::handler& cgh) {
                 return var_buffer.template get_access<access_mode>(cgh);
             }
 
@@ -24,20 +23,6 @@ namespace SPH {
 
         private:
             sycl::buffer<VarType , 1> var_buffer;
-        };
-
-        template<class Proxy, typename=std::enable_if_t<std::is_base_of_v<ExecutionProxy<typename Proxy::Base,
-                typename Proxy::Kernel>, Proxy>>>
-        class DeviceProxyVariable {
-        public:
-            explicit DeviceProxyVariable(Proxy &proxy) : var_proxy(proxy) {}
-
-            auto init_memory_access(sycl::handler& cgh) {
-                var_proxy.get_memory_access(Context<ParallelSYCLDevicePolicy>(cgh), par_sycl);
-                return *var_proxy.get(par_sycl);
-            }
-        private:
-            Proxy& var_proxy;
         };
 
         template<typename BaseT, typename KernelT, typename ...DeviceVariables>
@@ -50,11 +35,16 @@ namespace SPH {
                 delete this->kernel;
             }
 
+            auto get_device_memory_access(sycl::handler& cgh) {
+                this->init_memory_access(Context<ParallelSYCLDevicePolicy>(cgh));
+                return *this->kernel;
+            }
+
         protected:
 
-            void get_memory_access_device(sycl::handler &cgh) override {
+            void init_device_memory_access(sycl::handler &cgh) override {
                 auto build_accessors_argument = [&](DeviceVariables& ...vars) {
-                    return std::make_tuple(vars.init_memory_access(cgh)...);
+                    return std::make_tuple(vars.get_device_memory_access(cgh)...);
                 };
                 this->kernel->setAccessors(std::apply(build_accessors_argument, deviceVariables));
             }
@@ -95,6 +85,5 @@ namespace SPH {
             NoProxy<T> proxy;
         };
     }
-}
 
 #endif //SPHINXSYS_EXECUTION_ARGUMENT_HPP
