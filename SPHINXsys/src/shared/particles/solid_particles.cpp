@@ -297,6 +297,9 @@ namespace SPH
 		registerVariable(global_shear_stress_, "GlobalShearStress");
 		registerVariable(global_stress_, "GlobalStress");
 		registerVariable(global_moment_, "GlobalMoment");
+		registerVariable(mid_surface_cauchy_stress_, "MidSurfaceCauchyStress");
+		registerVariable(numerical_damping_scaling_, "NemrticalDampingScaling_",
+						 [&](size_t i) -> Matd { return Matd::Identity() * sph_body_.sph_adaptation_->ReferenceSmoothingLength(); });
 		/** 
 		 * for FSI
 		 */
@@ -318,12 +321,16 @@ namespace SPH
 		addDerivedVariableToWrite<VonMisesStrain>();
 		addVariableToRestart<Matd>("DeformationGradient");
 		addVariableToWrite<Vecd>("Rotation");
+		addDerivedVariableToWrite<MidSurfaceVonMisesStressofShells>();
 		/** 
 		 * initialize transformation matrix
 		 */
 		for (size_t i = 0; i != real_particles_bound_; ++i)
 		{
 			transformation_matrix_[i] = getTransformationMatrix(n_[i]);
+			numerical_damping_scaling_[i](Dimensions - 1, Dimensions - 1) = 
+				thickness_[i] < sph_body_.sph_adaptation_->ReferenceSmoothingLength() ? 
+				thickness_[i] : sph_body_.sph_adaptation_->ReferenceSmoothingLength();
 		}
 	}
 	//=================================================================================================//

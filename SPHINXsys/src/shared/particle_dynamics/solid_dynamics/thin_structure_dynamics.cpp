@@ -73,6 +73,8 @@ namespace SPH
 			  global_stress_(particles_->global_stress_),
 			  global_moment_(particles_->global_moment_),
 			  global_shear_stress_(particles_->global_shear_stress_),
+			  mid_surface_cauchy_stress_(particles_->mid_surface_cauchy_stress_),
+			  numerical_damping_scaling_(particles_->numerical_damping_scaling_),
 			  n_(particles_->n_),
 			  rho0_(elastic_solid_.ReferenceDensity()),
 			  inv_rho0_(1.0 / rho0_),
@@ -98,15 +100,8 @@ namespace SPH
 				gaussian_point_ = three_gaussian_points_;
 				gaussian_weight_ = three_gaussian_weights_;
 			}
-			/** Define the factor of hourglass control algorithm according to the dimension. */
-			if (Dimensions == 2)
-			{
-				hourglass_control_factor_ = 0.05;
-			}
-			else
-			{
-				hourglass_control_factor_ = 0.01;
-			}
+			/** Define the factor of hourglass control algorithm. */
+			hourglass_control_factor_ = 0.005;
 		}
 		//=================================================================================================//
 		void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
@@ -115,11 +110,10 @@ namespace SPH
 			// and rotation_[index_i], angular_vel_[index_i], dangular_vel_dt_[index_i], B_[index_i]
 			// are defined in local coordinates, while others in global coordinates.
 			pos_[index_i] += vel_[index_i] * dt * 0.5;
-			//rotation_[index_i] += angular_vel_[index_i] * dt * 0.5;
-			//pseudo_n_[index_i] += dpseudo_n_dt_[index_i] * dt * 0.5;
+			rotation_[index_i] += angular_vel_[index_i] * dt * 0.5;
+			pseudo_n_[index_i] += dpseudo_n_dt_[index_i] * dt * 0.5;
 
 			F_[index_i] += dF_dt_[index_i] * dt * 0.5;
-			F_[index_i].col(Dimensions - 1) = transformation_matrix_[index_i] * pseudo_n_[index_i];
 			F_bending_[index_i] += dF_bending_dt_[index_i] * dt * 0.5;
 
 			Real J = F_[index_i].determinant();
@@ -130,7 +124,7 @@ namespace SPH
 			/** Calculate the current normal direction of mid-surface. */
 			n_[index_i] = transformation_matrix_[index_i].transpose() * getNormalFromDeformationGradientTensor(F_[index_i]);
 			/** Get transformation matrix from global coordinates to current local coordinates. */
-			Matd current_transformation_matrix = getTransformationMatrix(n_[index_i]);
+            Matd current_transformation_matrix = getTransformationMatrix(pseudo_n_[index_i]);
 
 			Matd resultant_stress = Matd::Zero();
 			Matd resultant_moment = Matd::Zero();
@@ -149,18 +143,23 @@ namespace SPH
 				current_local_almansi_strain = getCorrectedAlmansiStrain(current_local_almansi_strain, nu_);
 
 				/** correct out-plane numerical damping. */
-				Matd numerical_damping = current_transformation_matrix * transformation_matrix_[index_i].transpose() * F_gaussian_point *
-										 elastic_solid_.NumericalDampingRightCauchy(F_gaussian_point, dF_gaussian_point_dt, smoothing_length_, index_i) * F_gaussian_point.transpose() * transformation_matrix_[index_i] * current_transformation_matrix.transpose() / F_gaussian_point.determinant();
-				numerical_damping.col(Dimensions - 1) *= thickness_[index_i] / smoothing_length_;
-
-				Matd cauchy_stress = elastic_solid_.StressCauchy(current_local_almansi_strain, F_gaussian_point, index_i);
-				//	+ numerical_damping;
+				Matd cauchy_stress = elastic_solid_.StressCauchy(current_local_almansi_strain, F_gaussian_point, index_i) 
+									 + current_transformation_matrix * transformation_matrix_[index_i].transpose() * F_gaussian_point *
+									 elastic_solid_.NumericalDampingRightCauchy(F_gaussian_point, dF_gaussian_point_dt, numerical_damping_scaling_[index_i], index_i)
+									 * F_gaussian_point.transpose() * transformation_matrix_[index_i] * current_transformation_matrix.transpose()
+									 / F_gaussian_point.determinant();
 
 				/** Impose modeling assumptions. */
 				cauchy_stress.col(Dimensions - 1) *= shear_correction_factor_;
 				cauchy_stress.row(Dimensions - 1) *= shear_correction_factor_;
 				cauchy_stress(Dimensions - 1, Dimensions - 1) = 0.0;
+				
+				if (i == 0)
+				{
+					mid_surface_cauchy_stress_[index_i] = cauchy_stress;
+				}
 
+				/** Integrate Cauchy stress along thickness. */
 				resultant_stress +=
 					0.5 * thickness_[index_i] * gaussian_weight_[i] * cauchy_stress;
 				resultant_moment +=
@@ -174,9 +173,9 @@ namespace SPH
 
 			/** stress and moment in global coordinates for pair interaction */
 			global_stress_[index_i] = J * current_transformation_matrix.transpose() * resultant_stress * current_transformation_matrix
-				* transformation_matrix_[index_i].transpose() * inverse_F.transpose() * B_[index_i].transpose() * transformation_matrix_[index_i];
+				* transformation_matrix_[index_i].transpose() * inverse_F.transpose() * transformation_matrix_[index_i];
 			global_moment_[index_i] = J * current_transformation_matrix.transpose() * resultant_moment * current_transformation_matrix
-				* transformation_matrix_[index_i].transpose() * inverse_F.transpose() * B_[index_i].transpose() * transformation_matrix_[index_i];
+				* transformation_matrix_[index_i].transpose() * inverse_F.transpose() * transformation_matrix_[index_i];
 			global_shear_stress_[index_i] = J * current_transformation_matrix.transpose() * resultant_shear_stress;
 		}
 		//=================================================================================================//
@@ -189,10 +188,10 @@ namespace SPH
 		void ShellStressRelaxationSecondHalf::initialization(size_t index_i, Real dt)
 		{
 			pos_[index_i] += vel_[index_i] * dt * 0.5;
-			rotation_[index_i] += angular_vel_[index_i] * dt;
+			rotation_[index_i] += angular_vel_[index_i] * dt * 0.5;
 			dpseudo_n_dt_[index_i] = transformation_matrix_[index_i].transpose() *
-									 getVectorChangeRateAfterThinStructureRotation(local_pseudo_n_0, rotation_[index_i], angular_vel_[index_i]);
-			pseudo_n_[index_i] = transformation_matrix_[index_i].transpose() * getPseudoNormal(rotation_[index_i]);
+                                     getVectorChangeRateAfterThinStructureRotation(local_pseudo_n_0, rotation_[index_i], angular_vel_[index_i]);
+			pseudo_n_[index_i] += dpseudo_n_dt_[index_i] * dt * 0.5;
 		}
 		//=================================================================================================//
 		void ShellStressRelaxationSecondHalf::update(size_t index_i, Real dt)
