@@ -10,7 +10,7 @@
  *																			*
  * SPHinXsys is partially funded by German Research Foundation				*
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
- *  HU1527/12-1 and HU1527/12-4													*
+ *  HU1527/12-1 and HU1527/12-4												*
  *                                                                          *
  * Portions copyright (c) 2017-2022 Technical University of Munich and		*
  * the authors' affiliations.												*
@@ -21,25 +21,24 @@
  *                                                                          *
  * ------------------------------------------------------------------------*/
 /**
- * @file    all_particle_dynamics.h
- * @brief   Head file for all physics dynamics.
- *          This is the header file that user code should include to pick up all
-            particle dynamics capabilities.
- * @author	Chi ZHang and Xiangyu Hu
+ * @file 	general_diffusion_reaction_dynamics.hpp
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
-#ifndef ALL_PHYSICAL_DYNAMICS_H
-#define ALL_PHYSICAL_DYNAMICS_H
+#ifndef GENERAL_DIFFUSION_REACTION_DYNAMICS_HPP
+#define GENERAL_DIFFUSION_REACTION_DYNAMICS_HPP
 
-#include "active_muscle_dynamics.h"
-#include "all_diffusion_reaction_dynamics.h"
-#include "all_fluid_dynamics.h"
-#include "all_general_dynamics.h"
-#include "all_solid_dynamics.h"
-#include "electro_physiology.h"
-#include "external_force.h"
-#include "particle_dynamics_dissipation.h"
-#include "particle_dynamics_dissipation.hpp"
-#include "relax_dynamics.h"
+#include "general_diffusion_reaction_dynamics.h"
 
-#endif // ALL_PHYSICAL_DYNAMICS_H
+namespace SPH
+{
+//=================================================================================================//
+template <class ParticlesType>
+DiffusionReactionInitialCondition<ParticlesType>::
+    DiffusionReactionInitialCondition(SPHBody &sph_body)
+    : LocalDynamics(sph_body),
+      DiffusionReactionSimpleData<ParticlesType>(sph_body),
+      pos_(this->particles_->pos_), all_species_(this->particles_->all_species_) {}
+//=================================================================================================//
+} // namespace SPH
+#endif // GENERAL_DIFFUSION_REACTION_DYNAMICS_HPP

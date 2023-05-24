@@ -10,7 +10,7 @@
  *																			*
  * SPHinXsys is partially funded by German Research Foundation				*
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
- *  HU1527/12-1 and HU1527/12-4													*
+ *  HU1527/12-1 and HU1527/12-4												*
  *                                                                          *
  * Portions copyright (c) 2017-2022 Technical University of Munich and		*
  * the authors' affiliations.												*
@@ -21,25 +21,14 @@
  *                                                                          *
  * ------------------------------------------------------------------------*/
 /**
- * @file    all_particle_dynamics.h
- * @brief   Head file for all physics dynamics.
- *          This is the header file that user code should include to pick up all
-            particle dynamics capabilities.
- * @author	Chi ZHang and Xiangyu Hu
+ * @file    all_diffusion_reaction_dynamics.h
+ * @brief   This is the header file that user code should include to pick up all
+ *          all diffusion and reaction dynamics used in SPHinXsys.
+ * @author	Xiangyu Hu
  */
 
-#ifndef ALL_PHYSICAL_DYNAMICS_H
-#define ALL_PHYSICAL_DYNAMICS_H
+#pragma once
 
-#include "active_muscle_dynamics.h"
-#include "all_diffusion_reaction_dynamics.h"
-#include "all_fluid_dynamics.h"
-#include "all_general_dynamics.h"
-#include "all_solid_dynamics.h"
-#include "electro_physiology.h"
-#include "external_force.h"
-#include "particle_dynamics_dissipation.h"
-#include "particle_dynamics_dissipation.hpp"
-#include "relax_dynamics.h"
-
-#endif // ALL_PHYSICAL_DYNAMICS_H
+#include "diffusion_dynamics.hpp"
+#include "general_diffusion_reaction_dynamics.hpp"
+#include "reaction_dynamics.hpp"

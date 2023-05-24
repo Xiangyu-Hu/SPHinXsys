@@ -133,6 +133,19 @@ template <typename ReturnType, typename Operation>
 using LocalDynamicsReduce = BaseLocalDynamicsReduce<ReturnType, Operation, SPHBody>;
 
 /**
+ * @class LocalDynamicsParameters
+ * @brief Class template argument deduction (CTAD) for constructor parameters.
+ */
+template <typename BodyRelationType, typename... OtherArgs>
+struct LocalDynamicsParameters
+{
+    BodyRelationType &body_relation_;
+    std::tuple<OtherArgs...> others_;
+    LocalDynamicsParameters(BodyRelationType &body_relation, OtherArgs &&...other_args)
+        : body_relation_(body_relation), others_(std::forward<OtherArgs>(other_args)...){};
+};
+
+/**
  * @class ComplexInteraction
  * @brief A class that integrates multiple local dynamics.
  * Typically, it includes an inner interaction and one or
@@ -157,10 +170,10 @@ class ComplexInteraction<FirstInteraction, OtherInteractions...> : public FirstI
     ComplexInteraction<OtherInteractions...> other_interactions_;
 
   public:
-    template <class FirstRelationType, typename... OtherRelationTypes>
-    explicit ComplexInteraction(FirstRelationType &body_relation, OtherRelationTypes &&...other_relations)
-        : FirstInteraction(body_relation),
-          other_interactions_(std::forward<OtherRelationTypes>(other_relations)...){};
+    template <class FirstParameterSet, typename... OtherParameterSets>
+    explicit ComplexInteraction(FirstParameterSet &&first_parameter_set, OtherParameterSets &&...other_parameter_sets)
+        : FirstInteraction(first_parameter_set),
+          other_interactions_(std::forward<OtherParameterSets>(other_parameter_sets)...){};
 
     void interaction(size_t index_i, Real dt = 0.0)
     {
