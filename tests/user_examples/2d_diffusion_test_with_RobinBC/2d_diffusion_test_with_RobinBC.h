@@ -184,18 +184,18 @@ public:
 	}
 };
 
-using DiffusionRelaxationInner = RelaxationOfAllDiffusionSpeciesInner<DiffusionParticles>;
-using DiffusionRelaxationWithDirichletContact = RelaxationOfAllDiffusionSpeciesDirichlet<DiffusionParticles, WallParticles>;
-using DiffusionRelaxationWithRobinContact = RelaxationOfAllDiffusionSpeciesRobin<DiffusionParticles, WallParticles>;
+using SolidDiffusionInner = DiffusionRelaxationInner<DiffusionParticles>;
+using SolidDiffusionDirichlet = DiffusionRelaxationDirichlet<DiffusionParticles, WallParticles>;
+using SolidDiffusionRobin = DiffusionRelaxationRobin<DiffusionParticles, WallParticles>;
 //----------------------------------------------------------------------
 //	Specify diffusion relaxation method. 
 //----------------------------------------------------------------------
 class DiffusionBodyRelaxation
-	: public RelaxationOfAllDiffusionSpeciesRK2<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact, DiffusionRelaxationWithRobinContact>>
+	: public DiffusionRelaxationRK2<ComplexInteraction<SolidDiffusionInner, SolidDiffusionDirichlet, SolidDiffusionRobin>>
 {
 public:
 	explicit DiffusionBodyRelaxation(BaseInnerRelation& inner_relation, BaseContactRelation& body_contact_relation_Dirichlet, BaseContactRelation& body_contact_relation_Robin)
-		: RelaxationOfAllDiffusionSpeciesRK2<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact, DiffusionRelaxationWithRobinContact>>(inner_relation, body_contact_relation_Dirichlet, body_contact_relation_Robin) {};
+		: DiffusionRelaxationRK2<ComplexInteraction<SolidDiffusionInner, SolidDiffusionDirichlet, SolidDiffusionRobin>>(inner_relation, body_contact_relation_Dirichlet, body_contact_relation_Robin) {};
 	virtual ~DiffusionBodyRelaxation() {};
 };
 //----------------------------------------------------------------------
