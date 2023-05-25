@@ -38,9 +38,7 @@ jobs:
             pkg-config `# for installing libraries with vcpkg`\
             git \
             cmake \
-            ninja-build \
-            libx11-dev \
-            freeglut3-dev
+            ninja-build 
 
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
@@ -65,6 +63,8 @@ jobs:
             gtest \
             xsimd \
             pybind11\
+            libx11-dev \
+            freeglut3-dev \
             opencascade
             
 
