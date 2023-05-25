@@ -246,7 +246,7 @@ int main(int ac, char *av[])
 
 	if (system.generate_regression_data_)
 	{
-		write_cylinder_max_displacement.generateDataBase(0.005);
+		write_cylinder_max_displacement.generateDataBase(0.05);
 	}
 	else
 	{
