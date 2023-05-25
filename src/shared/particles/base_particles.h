@@ -36,6 +36,7 @@
 #include "base_material.h"
 #include "xml_engine.h"
 #include "particle_sorting.h"
+#include "base_variables.h"
 
 #include <fstream>
 
@@ -112,6 +113,9 @@ namespace SPH
 		StdVec<BaseDynamics<void> *> derived_variables_;
 		ParticleVariableList variables_to_write_;
 
+		DataContainerAddressAssemble<GlobalVariable> all_global_data_;
+		DataContainerUniquePtrAssemble<GlobalVariable> all_global_data_ptr_;
+
 		/** register a variable defined in a class (can be non-particle class) */
 		template <typename VariableType>
 		void registerVariable(StdLargeVec<VariableType> &variable_addrs, const std::string &variable_name,
@@ -120,6 +124,13 @@ namespace SPH
 		template <typename VariableType, class InitializationFunction>
 		void registerVariable(StdLargeVec<VariableType> &variable_addrs, const std::string &variable_name,
 							  const InitializationFunction &initialization);
+
+		/** register a global variable */
+		template <typename DataType>
+		DataType* registerGlobalVariable(const std::string& variable_name, DataType initial_value = ZeroData<DataType>::value);
+		template <typename DataType>
+		DataType* getGlobalVariableByName(const std::string& variable_name);
+
 		/** register a variable which may have been already defined by other and with default value only */
 		template <typename VariableType>
 		StdLargeVec<VariableType> *registerSharedVariable(const std::string &variable_name);
