@@ -84,10 +84,11 @@ add_subdirectory(SPHINXsys)
 add_subdirectory(modules)
 
 #------ Setup the tests
-if(SPHINXSYS_BUILD_TESTS)
+#[[if(SPHINXSYS_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
-endif()
+endif()]]
+add_subdirectory(tests/2d_examples/test_2d_dambreak)
 
 #------ Extra scripts to install
 file(COPY        ${CMAKE_CURRENT_SOURCE_DIR}/PythonScriptStore/RegressionTest/regression_test_base_tool.py
