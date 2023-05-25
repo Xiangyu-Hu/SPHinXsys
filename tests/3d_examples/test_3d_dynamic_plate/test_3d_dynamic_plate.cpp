@@ -229,8 +229,6 @@ int main()
 			dt = computing_time_step_size.exec();
 			integeral_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
-			Real check_time = GlobalStaticVariables::physical_time_;
-
 		}
 		write_plate_max_displacement.writeToFile(ite);
 		TickCount t2 = TickCount::now();
