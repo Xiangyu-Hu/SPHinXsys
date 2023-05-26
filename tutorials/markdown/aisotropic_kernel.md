@@ -8,7 +8,7 @@ To compute the kernel function in SPH,
 compared with isotropic kernel, one has the following change on the normalization as
 
 $$ \text{SPH:} ~\boldsymbol{\eta} = \boldsymbol{r} / h \rightarrow \text{ASPH:} ~\boldsymbol{\eta} = \boldsymbol{G}\boldsymbol{r}.
-$$ (1)
+$$
 
 Under such notation, one can obtain a ASPH kernel value by $W'(\boldsymbol{G}\boldsymbol{r})$ and the kernel should still have the normalization property of 
 
@@ -16,7 +16,7 @@ $$
 1 = \int W(\boldsymbol{\eta}) d \boldsymbol{\eta}
 = \int W'(\boldsymbol{G}\boldsymbol{r}) d \boldsymbol{r} 
 = \int |\boldsymbol{G}| W(\boldsymbol{\eta}) d \boldsymbol{r}. 
-$$(2)
+$$
 
 Here, $|\boldsymbol{G}| dr = d \boldsymbol{\eta}$, 
 where $|\boldsymbol{G}|$ is the determinate, 
@@ -33,28 +33,54 @@ d \boldsymbol{r}
 d \boldsymbol{r}.
 $$
 
-To obtain the formulation of Laplacian, we first consider the identity
+Another way to obtain the approximation of derivative is using
+the following identity
 
 $$
-2 d = -2 \int \boldsymbol{\eta} \cdot \boldsymbol{\eta} F(\boldsymbol{\eta}) d \boldsymbol{\eta},
-$$(3)
+\boldsymbol{I} = - \int \boldsymbol{\eta} \otimes \nabla W(\boldsymbol{\eta})  d \boldsymbol{\eta},
+$$
+
+where $\boldsymbol{I}$ is the identity matrix. 
+With the transformation, one has
+
+$$
+\boldsymbol{I} = - |\boldsymbol{G}| \boldsymbol{G} \int \boldsymbol{r} \otimes \nabla W(\boldsymbol{\eta})  d \boldsymbol{r}.
+$$
+
+Note that the above equation can also be considered as the kernel approximation of 
+the gradient  
+$\nabla \boldsymbol{\eta} = \boldsymbol{I}$.
+Therefore, one can substitute $\boldsymbol{r}$ in the above equation with 
+the difference of the field to position $i$, that is 
+$\boldsymbol{r} \rightarrow \phi(\boldsymbol{r}) - \phi(\boldsymbol{r}_i)$,
+to obtain the same approximation of derivate.
+
+To obtain the formulation of Laplacian, similarly, 
+we first consider the identity
+
+$$
+2 d = -2 \int \boldsymbol{\eta}^2 F(\boldsymbol{\eta}) d \boldsymbol{\eta},
+$$
 
 where $d$ is the dimension and 
 $F(\boldsymbol{\eta}) = \frac{1}{\eta} \frac{\partial W}{\partial \eta}$.
-Note that Eq. (3) can also be considered as the kernel approximation of 
-the Laplacian 
-$\nabla^2 (\boldsymbol{\eta} \cdot \boldsymbol{\eta}) = 2 d$.
+Again, the above equation can also be considered as 
+the kernel approximation of the Laplacian 
+$\Delta \boldsymbol{\eta}^2 = 2 d$.
 By introducing the transformation, one has 
 
 $$
 2 d = -2 |\boldsymbol{G}| \boldsymbol{G} : \boldsymbol{G} 
-\int \boldsymbol{r} \cdot \boldsymbol{r} F(\boldsymbol{\eta}) d \boldsymbol{r},
-$$(4)
+\int \boldsymbol{r}^2 F(\boldsymbol{\eta}) d \boldsymbol{r},
+$$
 
-then the general approximation of Laplacian can be written as
+then, with the similar substitution as for derivative
+$\boldsymbol{r}^2 \rightarrow \phi(\boldsymbol{r}) - \phi(\boldsymbol{r}_i)$, 
+the general approximation of Laplacian can be written as
 
 $$
-(\nabla^{2} \phi)_i = 2|\boldsymbol{G}| \boldsymbol{G} : \boldsymbol{G} 
+(\Delta \phi)_i = 2|\boldsymbol{G}| \boldsymbol{G} : \boldsymbol{G} 
 \int \frac{\phi(\boldsymbol{r}_i) - \phi(\boldsymbol{r})}{\eta} 
 \frac{\partial W}{\partial \eta} d \boldsymbol{r}.
-$$(5)
+$$
+
