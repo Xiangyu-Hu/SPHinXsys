@@ -26,8 +26,9 @@ Real BW = particle_spacing_ref * (Real)BWD; /** Boundary width, determined by sp
 BoundingBox system_domain_bounds(Vec3d(-radius - thickness, 0.0, -radius - thickness),
 								 Vec3d(radius + thickness + BW, height, radius + thickness));
 // Observer location
-StdVec<Vecd> observation_location = {Vecd(radius_mid_surface * cos(5.0 / 18.0 * Pi), 0.5 * height, radius_mid_surface *sin(5.0 / 18.0 * Pi))};
-
+StdVec<Vecd> observation_location = { Vecd(radius_mid_surface * cos((50.0 - 2.0 * 80.0 / particle_number) / 180.0 * Pi),
+										  0.5 * height,
+										  radius_mid_surface * sin((50.0 - 2.0 * 80.0 / particle_number) / 180.0 * Pi)) };
 /** For material properties of the solid. */
 Real rho0_s = 36.0;				 /** Normalized density. */
 Real Youngs_modulus = 4.32e8;	 /** Normalized Youngs Modulus. */
@@ -55,13 +56,13 @@ public:
 	virtual void initializeGeometricVariables() override
 	{
 		// the cylinder and boundary
-		for (int i = 0; i < particle_number; i++)
+		for (int i = 0; i < particle_number + 1; i++)
 		{
-			for (int j = 0; j < (height / particle_spacing_ref + 2 * BWD - 1); j++)
+			for (int j = 0; j < (height / particle_spacing_ref + 2 * BWD); j++)
 			{
-				Real x = radius_mid_surface * cos(50.0 / 180.0 * Pi + (i + 0.5) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number);
+				Real x = radius_mid_surface * cos(50.0 / 180.0 * Pi + i * 80.0 / 360.0 * 2 * Pi / (Real)particle_number);
 				Real y = particle_spacing_ref * j - BW + particle_spacing_ref * 0.5;
-				Real z = radius_mid_surface * sin(50.0 / 180.0 * Pi + (i + 0.5) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number);
+				Real z = radius_mid_surface * sin(50.0 / 180.0 * Pi + i * 80.0 / 360.0 * 2 * Pi / (Real)particle_number);
 				initializePositionAndVolumetricMeasure(Vecd(x, y, z), particle_spacing_ref * particle_spacing_ref);
 				Vecd n_0 = Vec3d(x / radius_mid_surface, 0.0, z / radius_mid_surface);
 				initializeSurfaceProperties(n_0, thickness);
@@ -84,7 +85,7 @@ public:
 private:
 	void tagManually(size_t index_i)
 	{
-		if (base_particles_.pos_[index_i][1] < 0.0 || base_particles_.pos_[index_i][1] > height - 0.5 * particle_spacing_ref)
+		if (base_particles_.pos_[index_i][1] < 0.0 || base_particles_.pos_[index_i][1] > height + 0.5 * particle_spacing_ref)
 		{
 			body_part_particles_.push_back(index_i);
 		}
@@ -114,7 +115,7 @@ int main(int ac, char *av[])
 {
 	/** Setup the system. */
 	SPHSystem system(system_domain_bounds, particle_spacing_ref);
-
+	system.generate_regression_data_ = false;
 	/** Create a Cylinder body. */
 	SolidBody cylinder_body(system, makeShared<DefaultShape>("CylinderBody"));
 	cylinder_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
@@ -222,7 +223,15 @@ int main(int ac, char *av[])
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-	write_cylinder_max_displacement.testResult();
+	if (system.generate_regression_data_)
+	{
+		write_cylinder_max_displacement.generateDataBase(0.005);
+	}
+	else
+	{
+		write_cylinder_max_displacement.testResult();
+	}
+
 	observed_quantity_n = (*write_cylinder_max_displacement.getObservedQuantity())[0][2];
 
 	testing::InitGoogleTest(&ac, av);
