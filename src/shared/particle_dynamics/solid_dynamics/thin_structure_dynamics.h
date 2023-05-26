@@ -208,7 +208,7 @@ namespace SPH
 															  transformation_matrix_[index_i].transpose() * F_[index_i] * transformation_matrix_[index_i],
 															  pos_[index_j],
 															  transformation_matrix_[index_i].transpose() * F_[index_j] * transformation_matrix_[index_i]);
-						acceleration += hourglass_control_factor_ * weight * E0_ * pos_jump * dim_inv_r_ij *
+						acceleration += hourglass_control_factor_ * weight * G0_ * pos_jump * dim_inv_r_ij *
 										inner_neighborhood.dW_ijV_j_[n] * thickness_[index_i];
 
 						Vecd pseudo_n_jump = getLinearVariableJump(e_ij, r_ij, pseudo_n_[index_i] - n0_[index_i],
@@ -236,7 +236,7 @@ namespace SPH
 
 		protected:
 			ElasticSolid &elastic_solid_;
-			StdLargeVec<Matd> &global_stress_, &global_moment_;
+			StdLargeVec<Matd> &global_stress_, &global_moment_, &mid_surface_cauchy_stress_, &numerical_damping_scaling_;
 			StdLargeVec<Vecd> &global_shear_stress_, &n_;
 			Real rho0_, inv_rho0_;
 			Real smoothing_length_, E0_, G0_, nu_, hourglass_control_factor_;
