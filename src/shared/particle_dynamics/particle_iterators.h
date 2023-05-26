@@ -35,8 +35,6 @@
 #include "execution_unit/execution_proxy.hpp"
 #include "execution_unit/execution_queue.hpp"
 
-#include <tuple>
-
 namespace SPH
 {
 	using namespace execution;
