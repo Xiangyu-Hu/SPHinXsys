@@ -1,6 +1,6 @@
 /**
  * @file 	wfsi.h
- * @brief 	This is the case file for wave impact with tension leg floating structure.
+ * @brief 	This is the 2d case file for wave impact with tension leg floating structure.
  * @author  Nicolò Salis
  */
 #include "sphinxsys.h" //SPHinXsys Library.
@@ -11,13 +11,13 @@ using namespace SPH;
 
 int main(int ac, char *av[])
 {
-	std::cout << "Mass " << StructureMass << " str_sup " << Area <<  " rho_s " << rho_s << std::endl;
 	//----------------------------------------------------------------------
 	//	Build up the environment of a SPHSystem with global controls.
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, particle_spacing_ref);
 	system.handleCommandlineOptions(ac, av);
 	IOEnvironment io_environment(system);
+
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
@@ -53,6 +53,7 @@ int main(int ac, char *av[])
 	StdVec<Vecd> fp3l = {Vecd(fp3x, fp3y)};
 	fp3.defineAdaptationRatios(1.15, 2.0);
 	fp3.generateParticles<ObserverParticleGenerator>(fp3l);
+
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
@@ -68,6 +69,7 @@ int main(int ac, char *av[])
 	ContactRelation fp3_contact_s(fp3, {&structure});
 	ContactRelation fp2_contact_w(fp2, {&water_block});
 	ContactRelation fp3_contact_w(fp3, {&water_block});
+
 	//----------------------------------------------------------------------
 	//	Define all numerical methods which are used in this case.
 	//----------------------------------------------------------------------
@@ -89,15 +91,13 @@ int main(int ac, char *av[])
 	Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> density_relaxation(water_block_complex);
 	/** Computing viscous acceleration. */
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
-	/** Inflow boundary condition. */
-	//BodyRegionByCell damping_buffer(water_block, makeShared<MultiPolygonShape>(createDampingBufferShape()));
-	//SimpleDynamics<fluid_dynamics::DampingBoundaryCondition> damping_wave(damping_buffer);
 	/** Fluid force on structure. */
 	InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(structure_contact);
 	InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid> fluid_force_on_structure(structure_contact, viscous_force_on_solid);
 	/** constrain region of the part of wall boundary. */
 	BodyRegionByParticle wave_maker(wall_boundary, makeShared<MultiPolygonShape>(createWaveMakerShape()));
 	SimpleDynamics<WaveMaking> wave_making(wave_maker);
+
 	//----------------------------------------------------------------------
 	//	Define the multi-body system
 	//----------------------------------------------------------------------
@@ -116,16 +116,7 @@ int main(int ac, char *av[])
 	  * SimTK::MassProperties(mass, center of mass, inertia)
 	*/
 	SimTK::Body::Rigid structure_info(*structure_multibody.body_part_mass_properties_);
-	/**
-	  * @brief  ** Create a %Planar mobilizer between an existing parent (inboard) body P 
-      *	and a new child (outboard) body B created by copying the given \a bodyInfo 
-      *	into a privately-owned Body within the constructed %MobilizedBody object. 
-      *	Specify the mobilizer frames F fixed to parent P and M fixed to child B. 
-	  * @param[in] inboard(SimTK::Vec3) Defines the location of the joint point relative to the parent body.
-	  * @param[in] outboard(SimTK::Vec3) Defines the body's origin location to the joint point.
-	  * @note	The body's origin location can be the mass center, the the center of mass should be SimTK::Vec3(0)
-	  * 			in SimTK::MassProperties(mass, com, inertia)
-	  */
+
 	SimTK::MobilizedBody::Planar tethered_spot(matter.Ground(), SimTK::Transform(SimTK::Vec3(G[0],G[1], 0.0)), structure_info, SimTK::Transform(SimTK::Vec3(0.0, 0.0, 0.0)));
 	/** Mobility of the fixed spot. */
 	SimTK::MobilizedBody::Weld fixed_spotA( matter.Ground(), SimTK::Transform( 	
@@ -136,8 +127,7 @@ int main(int ac, char *av[])
 							SimTK::Vec3(tethering_pointB[0], tethering_pointB[1], 0.0) ),
 							fixed_spot_info, SimTK::Transform(SimTK::Vec3(0.0, 0.0, 0.0)) );
 
-	//A SEASIDE PILLAR
-	//B PORTSIDE PILLAR
+	//A SEASIDE PILLAR; B PORTSIDE PILLAR
 	Vecd disp_cable_endA =  cable_endA - structure_multibody.initial_mass_center_;
 	SimTK::CablePath tethering_lineA(cables, fixed_spotA, SimTK::Vec3(0.0, 0.0 , 0.0), tethered_spot, SimTK::Vec3(disp_cable_endA[0], disp_cable_endA[1], 0.0) );
 	/*-----------------------------------------------------------------------------*/
@@ -146,20 +136,7 @@ int main(int ac, char *av[])
 
 	Real lengthA=G[1]+disp_cable_endA[1];
 	Real lengthB=G[1]+disp_cable_endB[1];
-		/* CABLE SPRING (forces,
-					cable line,
-					defaultStiffness, 
-						A nonnegative spring constant representing the stiffness of this element, 
-						in units of force/length, where the force represents a uniform tension along 
-						the element that results from stretching it beyond its slack length.
-                    defaultSlackLength,
-						The maximum length this elastic element can have before it begins to
-						generate force. At or below this length the element is slack and has 
-						zero tension and zero power dissipation. 
-                    defaultDissipationCoef
-						A nonnegative dissipation coefficient for this elastic element in units of 1/velocity.
-					);
-	*/
+
 	SimTK::CableSpring tethering_springA(forces, tethering_lineA, 3.163E5, lengthA, 2.);
 	SimTK::CableSpring tethering_springB(forces, tethering_lineB, 3.163E5, lengthB, 2.);
 	SimTK::Force::UniformGravity sim_gravity(forces, matter, SimTK::Vec3(0.0, -gravity_g, 0.0), 0.0);
@@ -168,16 +145,15 @@ int main(int ac, char *av[])
 	/** Time stepping method for multibody system.*/
 	SimTK::State state = MBsystem.realizeTopology();
 	SimTK::RungeKuttaMersonIntegrator integ(MBsystem);
-	integ.setAccuracy(1e-3);
-	integ.setAllowInterpolation(false);
-	integ.initialize(state);
-	//----------------------------------------------------------------------
-	//	Coupling between SimBody and SPH
 	//----------------------------------------------------------------------
 	std::cout << "MASS CENTER GOAL" << " " << G[0] << " "<< G[1] << std::endl;
 	std::cout << "MASS CENTER SIMBODY" << " " << structure_multibody.initial_mass_center_[0] << " " << structure_multibody.initial_mass_center_[1] << std::endl;
-
 	std::cout << "INERTIA " << Ix <<" "<< Iy << " " << Iz << std::endl;
+	//----------------------------------------------------------------------
+	integ.setAccuracy(1e-3);
+	integ.setAllowInterpolation(false);
+	integ.initialize(state);
+
 	//----------------------------------------------------------------------
 	//	Coupling between SimBody and SPH
 	//----------------------------------------------------------------------
@@ -185,12 +161,14 @@ int main(int ac, char *av[])
 		force_on_structure(structure_multibody, MBsystem, tethered_spot,integ);
 	SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody>
 		constraint_on_structure(structure_multibody, MBsystem, tethered_spot, integ);
+	
 	//----------------------------------------------------------------------
 	//	SimBody Output
 	//----------------------------------------------------------------------
 	WriteSimBodyCableData write_cable_A(io_environment, integ, tethering_springA,"A");
 	WriteSimBodyCableData write_cable_B(io_environment, integ, tethering_springB,"B");
 	WriteSimBodyPlanarData write_planar(io_environment, integ, tethered_spot);
+	
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
@@ -214,6 +192,7 @@ int main(int ac, char *av[])
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
 		write_recorded_pressure_fp3("Pressure", io_environment, fp3_contact_w);
 	RestartIO restart_io(io_environment, system.real_bodies_);
+	
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
@@ -224,6 +203,7 @@ int main(int ac, char *av[])
 	wall_boundary_normal_direction.exec();
 	flap_normal_direction.exec();
 	structure_corrected_configuration.exec();
+	
 	//----------------------------------------------------------------------
 	//	Load restart file if necessary.
 	//----------------------------------------------------------------------
@@ -239,11 +219,12 @@ int main(int ac, char *av[])
 			fp2_contact_w.updateConfiguration();
 			fp3_contact_w.updateConfiguration();
 	}
-		//----------------------------------------------------------------------
+	
+	//----------------------------------------------------------------------
 	//	Basic control parameters for time stepping.
 	//----------------------------------------------------------------------
 	size_t number_of_iterations = system.RestartStep();
-	int screen_output_interval = 500;
+	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
 	Real end_time = total_physical_time;
 	Real output_interval = end_time/100;
@@ -253,6 +234,7 @@ int main(int ac, char *av[])
 	/** statistics for computing time. */
 	TickCount t1 = TickCount::now();
 	TimeInterval interval;
+	
 	//----------------------------------------------------------------------
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
@@ -264,6 +246,7 @@ int main(int ac, char *av[])
 	write_cable_A.writeToFile(number_of_iterations);
 	write_cable_B.writeToFile(number_of_iterations);	
 	write_planar.writeToFile(number_of_iterations);	
+	
 	//----------------------------------------------------------------------
 	//	Main loop of time stepping starts here.
 	//----------------------------------------------------------------------
@@ -316,9 +299,9 @@ int main(int ac, char *av[])
 						  << "	Total Time = " << total_time
 						  << "	Physical Time = " << GlobalStaticVariables::physical_time_
 						  << "	Dt = " << Dt << "	dt = " << dt << "\n";
-			}
 			if (number_of_iterations % restart_output_interval == 0)
 					restart_io.writeToFile(number_of_iterations);
+			}
 			number_of_iterations++;
 			water_block.updateCellLinkedListWithParticleSort(100);
 			wall_boundary.updateCellLinkedList();

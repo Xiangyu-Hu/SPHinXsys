@@ -1,6 +1,6 @@
 /**
  * @file 	wfsi.h
- * @brief 	This is the case header for wave impact with tension leg floating structure.
+ * @brief 	This is the 2d case header for wave impact with tension leg floating structure.
  * @author  Nicolò Salis
  */
 #include "sphinxsys.h"
@@ -21,10 +21,8 @@ Real Wmk_p = 0.0;								/**< Wavemaker initial position. */
 Real EXS =2.0;									/**< etra space behind the wavemaker*/
 Real StructureBasePlateH=0.12;
 /**
- *  
  * Initial reference particle spacing
  * It is a multiple of the structure baseplate height.
- * 
  * */
 Real particle_spacing_ref = StructureBasePlateH/2;	
 Real BW = particle_spacing_ref * 4.0;			/**< Extending width for BCs. */
@@ -46,10 +44,11 @@ Vec2d Wmak_rb(Wmk_p , 0.0);					 	/**< Right bottom. */
 Vec2d b1a(TB,0);								/**< beach start. */
 Vec2d bwh((WH)*10+TB,WH);						/**< water height at beach. */
 Vec2d b1b(25,1);								/**< beach end. */
-// 
-/**
+ 
+/*
  * Buoyant Structure Shape
  */
+
 /** baseplate. */
 Real bp_x = 12.286;
 Real bp_y = 0.573;
@@ -67,7 +66,6 @@ Real ssp_y = bp_y+bp_h;
 Real ssp_l = 0.2;
 Real ssp_h = 0.24;
 
-
 Vec2d ssp_lb(ssp_x, ssp_y);		                /**< Left bottom. */
 Vec2d ssp_lt(ssp_x, ssp_y+ssp_h); 		    	/**< Left top. */
 Vec2d ssp_rt(ssp_x+ssp_l, ssp_y+ssp_h);			/**< Right top. */
@@ -78,7 +76,6 @@ Real psp_x = bp_x+bp_l-0.45;
 Real psp_y = bp_y+bp_h;
 Real psp_l = 0.2;
 Real psp_h = 0.24;
-
 
 Vec2d psp_lb(psp_x, psp_y);		                /**< Left bottom. */
 Vec2d psp_lt(psp_x, psp_y+psp_h); 		    	/**< Left top. */
@@ -96,9 +93,7 @@ Vec2d tp_rt(tp_x+tp_l, tp_y+tp_h);				/**< Right top. */
 Vec2d tp_rb(tp_x+tp_l, tp_y);					/**< Right bottom. */
 
 /**
- *  
  * Topology of the tethers.
- * 
  * */
 
 Real cxA = bp_x+0.35;		 					/**< Center of buoy in x direction. */
@@ -121,6 +116,7 @@ Real gravity_g = 9.81;				       	/**< Value of gravity. */
 Real U_f = 2.0 * sqrt(0.79*gravity_g); 	    /**< Characteristic velocity. */
 Real c_f = 10.0 * U_f;                     	/**< Reference sound speed. */
 Real mu_f = 1.0e-3;
+
 //----------------------------------------------------------------------
 //	Structure Properties G and Inertia
 //----------------------------------------------------------------------
@@ -181,6 +177,7 @@ Real bcmy=(rho_bp*bp_area*bp_cm[1]+
 		  rho_ssp*ssp_area+
 		  rho_psp*psp_area+
 		  rho_tp*tp_area);
+
 Vec2d G(bcmx,bcmy);
 Real d_bp =sqrt((G[0]-bp_cm[0])*(G[0]-bp_cm[0])+(G[1]-bp_cm[1])*(G[1]-bp_cm[1]));
 Real d_ssp=sqrt((G[0]-ssp_cm[0])*(G[0]-ssp_cm[0])+(G[1]-ssp_cm[1])*(G[1]-ssp_cm[1]));
@@ -201,9 +198,7 @@ Real Iz = (Ibp[2]+rho_bp*bp_area*(d_bp*d_bp)+
 		   Itp[2]+rho_tp*tp_area*(d_tp*d_tp));
 
 /**
- *  
  * Structure observer position
- * 
  * */
 
 Vec2d obs = bp_cm;
@@ -211,7 +206,6 @@ Vec2d obs = bp_cm;
 //------------------------------------------------------------------------------
 // geometric shape elements used in the case
 //------------------------------------------------------------------------------
-
 MultiPolygon createStructureShape()
 {	
 		/** Geometry definition. */
@@ -306,6 +300,7 @@ public:
 				.createPtr<SimTK::MassProperties>(StructureMass, SimTK::Vec3(0.0), SimTK::UnitInertia(0, 0, Iz));
 	}
 };
+
 //----------------------------------------------------------------------
 //	Water block
 //----------------------------------------------------------------------
@@ -368,6 +363,7 @@ public:
 
 	}
 };
+
 //----------------------------------------------------------------------
 //	Wall cases-dependent geometries.
 //----------------------------------------------------------------------
@@ -408,6 +404,7 @@ public:
 
 	}
 };
+
 //----------------------------------------------------------------------
 //	create a wavemaker shape
 //----------------------------------------------------------------------
@@ -424,6 +421,7 @@ MultiPolygon createWaveMakerShape()
 	multi_polygon.addAPolygon(Wmak_shape, ShapeBooleanOps::add);
 	return multi_polygon;
 }
+
 //----------------------------------------------------------------------
 //	Boundary condition for wavemaker
 //----------------------------------------------------------------------
@@ -550,6 +548,7 @@ public:
 		acc_[index_i] = getAcceleration(time);
 	};
 };
+
 //----------------------------------------------------------------------
 //	create mesuring probes
 //----------------------------------------------------------------------

@@ -1,6 +1,6 @@
 /**
  * @file 	wfsi.h
- * @brief 	This is the case file for wave impact with tension leg floating structure.
+ * @brief 	This is the 3d case file for wave impact with tension leg floating structure.
  * @author   Nicolò Salis
  */
 #include "sphinxsys.h"
@@ -22,15 +22,14 @@ Real BEH = 2.0;			/**< Beach end height. */
 Real Wmk_p = 0.0;		/**< Wavemaker initial position. */
 Real EXS =2.0;			/**< etra space behind the wavemaker*/
 Real HWM =1.5; 			/**< Wameker height*/
-Real particle_spacing_ref = 0.1;	
-Real particle_spacing_structure= 0.1;
+Real particle_spacing_ref = 0.1;				/**< Main water particle spacing. */
+Real particle_spacing_structure= 0.1; 			/**< Structure particle spacing. */
 Real BW = particle_spacing_ref * 4.0;			/**< Extending width for BCs. */
 Real Maker_width = particle_spacing_ref * 4.0;	/**< Width of the wavemaker. */
 
 BoundingBox system_domain_bounds(Vecd(-BW, -EXS -BW, -BW), Vecd(EXS + BW, DL + BW, DH+BW));
 
 Vecd offset = Vecd::Zero();
-
 // water block parameters
 Vec2d watS_lb(0.0, 0.0);					  	/**< Left bottom. */
 Vec2d watS_lt(0.0, WH); 						/**< Left top. */
@@ -52,10 +51,10 @@ Real gravity_g = 9.81;				       	/**< Value of gravity. */
 Real U_f = 2.0 * sqrt(WH*gravity_g); 	    /**< Characteristic velocity. */
 Real c_f = 10.0 * U_f;                     	/**< Reference sound speed. */
 Real mu_f = 1.0e-3;
+
 //----------------------------------------------------------------------
 //	Structure Properties G and Inertia
 //----------------------------------------------------------------------
-
 Real Strx = 1.0;
 Real Stry = 12.106;
 Real Strz = 0.573;
@@ -125,7 +124,7 @@ Real SIx=(Srho*SVol)/12*(Sd*Sd+Sh*Sh);
 Real SIy=(Srho*SVol)/12*(Sw*Sw+Sh*Sh);
 Real SIz=(Srho*SVol)/12*(Sd*Sd+Sw*Sw);
 
-/**
+/*
  * Structure center of mass
  */
 
@@ -239,9 +238,7 @@ Real Iz=2*LIz+2*(dLZ*LVol*Srho)+
 		TIz+(dTZ*TVol*Srho);
 
 /**
- *  
  * Topology of the tethers.
- * 
  * */
 
 // Right seaside cable topology			
@@ -260,9 +257,7 @@ Vecd structure_tethering_BL(G[0]-0.31,G[1]+0.3, Strz);
 Real cablength=Strz;
 
 /**
- *  
  * Structure observer position
- * 
  * */
 
 Vecd obs(Strx,Stry+yT+Td/2,Strz+zT+Th);
@@ -274,9 +269,7 @@ Vecd obs(Strx,Stry+yT+Td/2,Strz+zT+Th);
 std::string stl_structure_path = "./input/structure_cm.stl";
 Real StructureScale =1;
 Vecd translation_str=G;
-/**
- * Define heart geometry
- */
+
 class FloatingStructure : public ComplexShape
 {
 public:
@@ -299,6 +292,7 @@ public:
 				.createPtr<SimTK::MassProperties>(StructureMass, SimTK::Vec3(0.0), SimTK::UnitInertia(Ix, Iy, Iz));
 	}
 };
+
 //----------------------------------------------------------------------
 //	Water block
 //----------------------------------------------------------------------
@@ -316,12 +310,14 @@ public:
 
 	}
 };
+
 //----------------------------------------------------------------------
 //	create a wavemaker shape
 //----------------------------------------------------------------------
 	Vecd wmker(0.5 * DW, 0.5 * Maker_width, 0.5 * DH);
 	Vecd wmk_pos(0.5 * DW, -0.5 * Maker_width, 0.5 * HWM);
 	Transformd translation_wmker(wmk_pos);
+
 //----------------------------------------------------------------------
 //	Wall geometries.
 //----------------------------------------------------------------------
@@ -343,6 +339,7 @@ public:
 		add<TransformShape<GeometricShapeBox>>(Transformd(translation_wmker), wmker);
 	}
 };
+
 //----------------------------------------------------------------------
 //	Boundary condition for wavemaker
 //----------------------------------------------------------------------
@@ -471,6 +468,7 @@ public:
 		acc_[index_i] = getAcceleration(time);
 	};
 };
+
 //----------------------------------------------------------------------
 //	create mesuring probes
 //----------------------------------------------------------------------
@@ -479,24 +477,22 @@ Real h = 1.3 * particle_spacing_ref;
 	Vecd WGauge(0.0, 10.848, 0.5 * DH);
 	Transformd translation_WGauge(WGauge);
 
-	/**
-		 * @class FreeSurfaceHeightZ
-		 * @brief Probe the free surface profile for a fluid body part by reduced operation.
-		 */
-		class FreeSurfaceHeightZ : public BaseLocalDynamicsReduce<Real, ReduceMax, BodyPartByCell>,
-								  public SPH::fluid_dynamics::FluidDataSimple
+/**
+	 * @class FreeSurfaceHeightZ
+	 * @brief Probe the free surface profile for a fluid body part by reduced operation.
+ */
+class FreeSurfaceHeightZ : public BaseLocalDynamicsReduce<Real, ReduceMax, BodyPartByCell>,
+						  public SPH::fluid_dynamics::FluidDataSimple
+	{
+	protected:
+		StdLargeVec<Vecd> &pos_;
+	public:
+		FreeSurfaceHeightZ(BodyPartByCell &body_part)
+			: BaseLocalDynamicsReduce<Real, ReduceMax, BodyPartByCell>(body_part, Real(MinRealNumber)),
+			  SPH::fluid_dynamics::FluidDataSimple(sph_body_), pos_(particles_->pos_)
 		{
-		protected:
-			StdLargeVec<Vecd> &pos_;
-
-		public:
-			FreeSurfaceHeightZ(BodyPartByCell &body_part)
-				: BaseLocalDynamicsReduce<Real, ReduceMax, BodyPartByCell>(body_part, Real(MinRealNumber)),
-				  SPH::fluid_dynamics::FluidDataSimple(sph_body_), pos_(particles_->pos_)
-			{
-				quantity_name_ = "FreeSurfaceHeight";
-			}
-			virtual ~FreeSurfaceHeightZ(){};
-
-			Real reduce(size_t index_i, Real dt = 0.0) { return pos_[index_i][2]; };
-		};
+			quantity_name_ = "FreeSurfaceHeight";
+		}
+		virtual ~FreeSurfaceHeightZ(){};
+		Real reduce(size_t index_i, Real dt = 0.0) { return pos_[index_i][2]; };
+	};

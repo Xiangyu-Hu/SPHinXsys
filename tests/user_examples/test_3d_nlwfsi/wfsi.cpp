@@ -1,6 +1,6 @@
 /**
  * @file 	wfsi.h
- * @brief 	This is the case file for wave impact with tension leg floating structure.
+ * @brief 	This is the 3d case file for wave impact with tension leg floating structure.
  * @author   Nicolò Salis
  */
 #include "sphinxsys.h" //SPHinXsys Library.
@@ -12,10 +12,12 @@ using namespace SPH;
 int main(int ac, char *av[])
 {
 	std::cout << "Mass " << StructureMass << " Volume " << StructureVol <<  " rho_str " << Srho << std::endl;
+
 	//----------------------------------------------------------------------
-	//	Build up the environment of a SPHSystem with global controls.
+	//	Build up the Structure Relax SPHSystem with global controls.
 	//----------------------------------------------------------------------
 	SPHSystem system_fit(system_domain_bounds, particle_spacing_structure);
+	system_fit.handleCommandlineOptions(ac, av);
 	IOEnvironment io_environment_fit(system_fit);
 	SolidBody structurefit(system_fit, makeShared<FloatingStructure>("Structure_Fit"));
 	structurefit.defineAdaptation<ParticleRefinementNearSurface>(1.3, 0.7, 3);
@@ -23,12 +25,12 @@ int main(int ac, char *av[])
 	structurefit.defineParticlesAndMaterial<SolidParticles, Solid>(Srho);
 	structurefit.generateParticles<ParticleGeneratorMultiResolution>();
 	structurefit.addBodyStateForRecording<Real>("SmoothingLengthRatio");
+
 	//----------------------------------------------------------------------
 	//	Define body relation map.
-	//	The contact map gives the topological connections between the bodies.
-	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
 	AdaptiveInnerRelation structure_adaptive_inner(structurefit);
+
 	//----------------------------------------------------------------------
 	//	Methods used for particle relaxation.
 	//----------------------------------------------------------------------
@@ -38,6 +40,7 @@ int main(int ac, char *av[])
 	SimpleDynamics<relax_dynamics::UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(structurefit);
 	/** Write the particle reload files. */
 	ReloadParticleIO write_particle_reload_files(io_environment_fit, structurefit);
+
 	//----------------------------------------------------------------------
 	//	Particle relaxation starts here.
 	//----------------------------------------------------------------------
@@ -45,6 +48,7 @@ int main(int ac, char *av[])
 	relaxation_step_inner.SurfaceBounding().exec();
 	update_smoothing_length_ratio.exec();
 	structurefit.updateCellLinkedList();
+
 	//----------------------------------------------------------------------
 	//	Particle relaxation time stepping start here.
 	//----------------------------------------------------------------------
@@ -62,15 +66,14 @@ int main(int ac, char *av[])
 	std::cout << "The physics relaxation process of imported model finish !" << std::endl;
 
 	write_particle_reload_files.writeToFile(0);
-	/** 
-	 * end of particle relaxation
-	*/
+
 	//----------------------------------------------------------------------
-	//	Build up the environment of a SPHSystem with global controls.
+	//	Build up the Main environment of a SPHSystem with global controls.
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, particle_spacing_ref);
 	system.handleCommandlineOptions(ac, av);
 	IOEnvironment io_environment(system);
+
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
@@ -96,6 +99,7 @@ int main(int ac, char *av[])
 	Vecd WMpos0=Vecd(0.0,-Maker_width/2,HWM/2);
 	WMobserver.generateParticles<ObserverParticleGenerator>(
 		StdVec<Vecd> {WMpos0});	
+
 	//---------------------------------------------------------
 	// PRESSURE PROBES
 	//---------------------------------------------------------
@@ -147,6 +151,7 @@ int main(int ac, char *av[])
 	Real bp2z=0.933;
 	StdVec<Vecd> bp2l={Vecd(bp2x, bp2y, bp2z)};
 	bp2.generateParticles<ObserverParticleGenerator>(bp2l);
+
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
@@ -178,6 +183,7 @@ int main(int ac, char *av[])
 	ContactRelation fp4_contact_w(fp4, {&water_block});
 	ContactRelation bp1_contact_w(bp1, {&water_block});
 	ContactRelation bp2_contact_w(bp2, {&water_block});
+
 	//----------------------------------------------------------------------
 	//	Define all numerical methods which are used in this case.
 	//----------------------------------------------------------------------
@@ -210,6 +216,7 @@ int main(int ac, char *av[])
 	/** constrain region of the part of wall boundary. */
 	BodyRegionByParticle wave_maker(wall_boundary, makeShared<TransformShape<GeometricShapeBox>>(Transformd(translation_wmker), wmker));
 	SimpleDynamics<WaveMaking> wave_making(wave_maker);
+
 	//----------------------------------------------------------------------
 	//	Define the multi-body system
 	//----------------------------------------------------------------------
@@ -251,11 +258,9 @@ int main(int ac, char *av[])
 	SimTK::MobilizedBody::Weld fixed_spotBL( matter.Ground(), SimTK::Transform( 	
 						SimTK::Vec3(ground_tethering_BL[0], ground_tethering_BL[1], ground_tethering_BL[2]) ),
 						fixed_spot_info, SimTK::Transform(SimTK::Vec3(0.0, 0.0, 0.0)) );
+
 	/*---------------------------------------------------------------------------*/
-
-	//A SEASIDE PILLARS
-	//B PORTSIDE PILLARS
-
+	//A SEASIDE PILLARS; B PORTSIDE PILLARS
 	/*-----------------------------------------------------------------------------*/
 	Vecd disp_cable_endAR =  structure_tethering_AR - structure_multibody.initial_mass_center_;
 	SimTK::CablePath tethering_lineAR(cables, fixed_spotAR, SimTK::Vec3(0.0, 0.0 , 0.0), tethered_strct, SimTK::Vec3(disp_cable_endAR[0], disp_cable_endAR[1], disp_cable_endAR[2]) );
@@ -269,34 +274,15 @@ int main(int ac, char *av[])
 	Vecd disp_cable_endBL =  structure_tethering_BL - structure_multibody.initial_mass_center_;
 	SimTK::CablePath tethering_lineBL(cables, fixed_spotBL, SimTK::Vec3(0.0, 0.0 , 0.0), tethered_strct, SimTK::Vec3(disp_cable_endBL[0], disp_cable_endBL[1], disp_cable_endBL[2]) );
 
-
 	Real lengthAR = G[2]+disp_cable_endAR[2];
 	Real lengthAL = G[2]+disp_cable_endAL[2];
 	Real lengthBR = G[2]+disp_cable_endBR[2];
 	Real lengthBL = G[2]+disp_cable_endBL[2];
-	// Real lengthAR = 0.5;
-	// Real lengthAL =0.5;
-	// Real lengthBR = 0.5;
-	// Real lengthBL = 0.5;
-	/*-----------------------------------------------------------------------------*/
-		/* CABLE SPRING (forces,
-					cable line,
-					defaultStiffness, 
-						A nonnegative spring constant representing the stiffness of this element, 
-						in units of force/length, where the force represents a uniform tension along 
-						the element that results from stretching it beyond its slack length.
-                    defaultSlackLength,
-						The maximum length this elastic element can have before it begins to
-						generate force. At or below this length the element is slack and has 
-						zero tension and zero power dissipation. 
-                    defaultDissipationCoef
-						A nonnegative dissipation coefficient for this elastic element in units of 1/velocity.
-					);
-	*/
-	SimTK::CableSpring tethering_springAR(forces, tethering_lineAR, 3.163E5, lengthAR, 50.);
-	SimTK::CableSpring tethering_springAL(forces, tethering_lineAL, 3.163E5, lengthAL, 50.);
-	SimTK::CableSpring tethering_springBR(forces, tethering_lineBR, 3.163E5, lengthBR, 50.);
-	SimTK::CableSpring tethering_springBL(forces, tethering_lineBL, 3.163E5, lengthBL, 50.);
+
+	SimTK::CableSpring tethering_springAR(forces, tethering_lineAR, 3.163E5, lengthAR, 1.);
+	SimTK::CableSpring tethering_springAL(forces, tethering_lineAL, 3.163E5, lengthAL, 1.);
+	SimTK::CableSpring tethering_springBR(forces, tethering_lineBR, 3.163E5, lengthBR, 1.);
+	SimTK::CableSpring tethering_springBL(forces, tethering_lineBL, 3.163E5, lengthBL, 1.);
 	SimTK::Force::UniformGravity sim_gravity(forces, matter, SimTK::Vec3(0.0, 0.0,-gravity_g), 0.0);
 	/** discrete forces acting on the bodies. */
 	SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
@@ -306,6 +292,7 @@ int main(int ac, char *av[])
 	integ.setAccuracy(1e-3);
 	integ.setAllowInterpolation(false);
 	integ.initialize(state);
+
 	//----------------------------------------------------------------------
 	//	Coupling between SimBody and SPH
 	//----------------------------------------------------------------------
@@ -313,6 +300,7 @@ int main(int ac, char *av[])
 	force_on_structure(structure_multibody, MBsystem, tethered_strct, integ);
 	SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody>
 	constraint_on_structure(structure_multibody, MBsystem, tethered_strct, integ);
+
 	//----------------------------------------------------------------------
 	//	Cable SimBody Output
 	//----------------------------------------------------------------------
@@ -322,6 +310,7 @@ int main(int ac, char *av[])
 	WriteSimBodyCableData write_cable_BL(io_environment, integ, tethering_springBL,"BL");
 	WriteSimBodyFreeRotationMatrix  write_free_body_rotation(io_environment, integ, tethered_strct);
 	WriteSimBodyVelocity  write_free_body_velocity(io_environment, integ, tethered_strct);
+
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
@@ -376,12 +365,13 @@ int main(int ac, char *av[])
 		write_recorded_pressure_bp2("Pressure", io_environment, bp2_contact_w);
 	
 	RestartIO restart_io(io_environment, system.real_bodies_);
+
 	//----------------------------------------------------------------------
 	//	Basic control parameters for time stepping.
 	//----------------------------------------------------------------------
 	GlobalStaticVariables::physical_time_ = 0.0;
 	int number_of_iterations = 0;
-	int screen_output_interval = 1000;
+	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
 	Real end_time = total_physical_time;
 	Real output_interval = end_time/200;
@@ -391,6 +381,7 @@ int main(int ac, char *av[])
 	/** statistics for computing time. */
 	TickCount t1 = TickCount::now();
 	TimeInterval interval;
+
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
@@ -401,6 +392,7 @@ int main(int ac, char *av[])
 	wall_boundary_normal_direction.exec();
 	structure_normal_direction.exec();
 	structure_corrected_configuration.exec();
+
 	//----------------------------------------------------------------------
 	//	Load restart file if necessary.
 	//----------------------------------------------------------------------
@@ -424,6 +416,7 @@ int main(int ac, char *av[])
 			bp1_contact_w.updateConfiguration();
 			bp2_contact_w.updateConfiguration();
 	}
+	
 	//----------------------------------------------------------------------
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
@@ -449,7 +442,6 @@ int main(int ac, char *av[])
 	write_free_body_rotation.writeToFile(number_of_iterations);
 	write_free_body_velocity.writeToFile(number_of_iterations);
 
-	// SimBodyStructurePosition.writeToFile(number_of_iterations);
 	//----------------------------------------------------------------------
 	//	Main loop of time stepping starts here.
 	//----------------------------------------------------------------------
@@ -502,9 +494,9 @@ int main(int ac, char *av[])
 						  << "	Total Time = " << total_time
 						  << "	Physical Time = " << GlobalStaticVariables::physical_time_
 						  << "	Dt = " << Dt << "	dt = " << dt << "\n";
-			}
 			if (number_of_iterations % restart_output_interval == 0)
 					restart_io.writeToFile(number_of_iterations);
+			}
 			number_of_iterations++;
 			damping_wave.exec(Dt);
 			water_block.updateCellLinkedListWithParticleSort(100);
