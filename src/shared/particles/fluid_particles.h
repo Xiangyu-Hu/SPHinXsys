@@ -102,26 +102,5 @@ namespace SPH
 		/** Return the ptr of this object. */
 		virtual CompressibleFluidParticles *ThisObjectPtr() override { return this; };
 	};
-
-	/**
-	 * @class WeaklyCompressibleFluidParticles
-	 * @brief WeaklyCompressible fluid particles.
-	 */
-	class WeaklyCompressibleFluidParticles : public FluidParticles
-	{
-	public:
-		StdLargeVec<Real> dmass_dt_;	  /**< mass change rate */
-		StdLargeVec<Vecd> mom_;			  /**< momentum */
-		StdLargeVec<Vecd> dmom_dt_;		  /**< change rate of momentum */
-		StdLargeVec<Vecd> dmom_dt_prior_; /**< other, such as gravity and viscous, accelerations, cause momentum loss */
-
-		WeaklyCompressibleFluidParticles(SPHBody &sph_body, Fluid *fluid);
-		virtual ~WeaklyCompressibleFluidParticles(){};
-
-		/** Initialize particle variables used in weakly-compressible fluid particle. */
-		virtual void initializeOtherVariables() override;
-		/** Return the ptr of this object. */
-		virtual WeaklyCompressibleFluidParticles *ThisObjectPtr() override { return this; };
-	};
 }
 #endif // FLUID_PARTICLES_H

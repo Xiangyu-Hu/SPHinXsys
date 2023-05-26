@@ -162,6 +162,29 @@ class DiffusionRelaxationNeumann
 };
 
 /**
+* @class RelaxationOfAllDiffusionSpeciesRobinContact
+* @brief Contact diffusion relaxation with Robin boundary condition.
+*/
+template <class ParticlesType, class ContactParticlesType>
+class DiffusionRelaxationRobin
+	: public BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType>
+{
+	StdLargeVec<Vecd>& n_;
+	StdVec<StdLargeVec<Real>*> contact_convection_;
+	StdVec<Real *> contact_T_infinity_;
+	StdVec<StdLargeVec<Vecd>*> contact_n_;
+
+protected:
+	void getDiffusionChangeRateRobinContact(size_t particle_i, size_t particle_j, Real surface_area_ij_Robin, StdLargeVec<Real>& convection_k, Real& T_infinity_k);
+
+public:
+	explicit DiffusionRelaxationRobin(BaseContactRelation& contact_relation);
+	virtual ~DiffusionRelaxationRobin() {};
+
+	inline void interaction(size_t index_i, Real dt = 0.0);
+};
+
+/**
  * @class InitializationRK
  * @brief Initialization of a runge-kutta integration scheme.
  */

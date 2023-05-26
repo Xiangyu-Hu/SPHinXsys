@@ -16,6 +16,7 @@ Real radius = 0.0975;								/** Radius of the inner boundary of the cylindrical
 Real height = 0.02;									/** Height of the cylinder. */
 Real thickness = 0.005;								/** Thickness of the cylinder. */
 Real radius_mid_surface = radius + thickness / 2.0; /** Radius of the mid surface. */
+Real rotation = 30.0 / 180.0 * Pi;					/** rotate the arch 30 degrees around z-axis. */
 int particle_number = 10;							/** Particle number in the height direction. */
 Real particle_spacing_ref = height / (Real)particle_number;
 int particle_number_mid_surface = int(2.0 * radius_mid_surface * Pi * 215.0 / 360.0 / particle_spacing_ref);
@@ -23,17 +24,22 @@ int BWD = 1;								/** Width of the boundary layer measured by number of partic
 Real BW = particle_spacing_ref * (Real)BWD; /** Boundary width, determined by specific layer of boundary particles. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec3d(-radius - thickness, 0.0, -radius - thickness),
-								 Vec3d(radius + thickness, height, radius + thickness));
+                                 Vec3d(radius + thickness, height, radius + thickness));
+// rotation matrix
+Mat3d rotation_matrix{
+    {cos(rotation), -sin(rotation), 0.0},
+    {sin(rotation), cos(rotation), 0.0},
+    {0.0, 0.0, 1.0},
+};
 // Observer location
-StdVec<Vecd> observation_location = {Vecd(0.0, height / 2.0, radius_mid_surface)};
+StdVec<Vecd> observation_location = {rotation_matrix * 
+									 Vecd(radius_mid_surface * cos(45.0 / 180.0 * Pi), height / 2.0, radius_mid_surface *cos(45.0 / 180.0 * Pi))
+									};
 /** For material properties of the solid. */
 Real rho0_s = 7.800;			 /** Normalized density. */
 Real Youngs_modulus = 210e6;	 /** Normalized Youngs Modulus. */
 Real poisson = 0.3;				 /** Poisson ratio. */
 Real physical_viscosity = 200.0; /** physical damping, here we choose the same value as numerical viscosity. */
-
-Real time_to_full_external_force = 0.001;
-Real gravitational_acceleration = -300000.0;
 
 /** Define application dependent particle generator for thin structure. */
 class CylinderParticleGenerator : public SurfaceParticleGenerator
@@ -41,7 +47,7 @@ class CylinderParticleGenerator : public SurfaceParticleGenerator
 public:
 	explicit CylinderParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
 	virtual void initializeGeometricVariables() override
-	{
+    {
 		// the cylinder and boundary
 		for (int i = 0; i < particle_number_mid_surface + 2 * BWD; i++)
 		{
@@ -50,12 +56,55 @@ public:
 				Real x = radius_mid_surface * cos(-17.5 / 180.0 * Pi + (i - BWD + 0.5) * 215.0 / 360.0 * 2 * Pi / (Real)particle_number_mid_surface);
 				Real y = particle_spacing_ref * j + particle_spacing_ref * 0.5;
 				Real z = radius_mid_surface * sin(-17.5 / 180.0 * Pi + (i - BWD + 0.5) * 215.0 / 360.0 * 2 * Pi / (Real)particle_number_mid_surface);
-				initializePositionAndVolumetricMeasure(Vecd(x, y, z), particle_spacing_ref * particle_spacing_ref);
-				Vec3d n_0 = Vec3d(x / radius_mid_surface, 0.0, z / radius_mid_surface);
+				Vecd position = rotation_matrix * Vecd(x, y, z);
+                Vec3d n_0 = rotation_matrix * Vec3d(x / radius_mid_surface, 0.0, z / radius_mid_surface);
+
+				initializePositionAndVolumetricMeasure(position, particle_spacing_ref * particle_spacing_ref);
 				initializeSurfaceProperties(n_0, thickness);
 			}
 		}
 	}
+};
+
+/** Define the displacement-control geometry. */
+class DisControlGeometry : public BodyPartByParticle
+{
+      public:
+        DisControlGeometry(SPHBody &body, const std::string &body_part_name)
+            : BodyPartByParticle(body, body_part_name)
+        {
+                TaggingParticleMethod tagging_particle_method = std::bind(&DisControlGeometry::tagManually, this, _1);
+                tagParticles(tagging_particle_method);
+        };
+        virtual ~DisControlGeometry(){};
+
+      private:
+        void tagManually(size_t index_i)
+        {
+            Vecd pos_bofore_rotation = rotation_matrix.transpose() * base_particles_.pos_[index_i];
+            if (pos_bofore_rotation[0] < 0.5 * particle_spacing_ref && pos_bofore_rotation[0] > -0.5 * particle_spacing_ref)
+            {
+                    body_part_particles_.push_back(index_i);
+            }
+        };
+};
+
+/** Define the controled displacement. */
+class ControlDiaplacement : public thin_structure_dynamics::ConstrainShellBodyRegion
+{
+      public:
+        ControlDiaplacement(BodyPartByParticle &body_part)
+            : ConstrainShellBodyRegion(body_part),
+              vel_(particles_->vel_){};
+        virtual ~ControlDiaplacement(){};
+
+      protected:
+        StdLargeVec<Vecd> &vel_;
+
+        void update(size_t index_i, Real dt = 0.0)
+        {
+                vel_[index_i] = Vecd(0.0, 0.0, -50.0);
+        };
 };
 
 /** Define the boundary geometry. */
@@ -81,30 +130,16 @@ private:
 };
 
 /**
- * define time dependent external force
- */
-class TimeDependentExternalForce : public Gravity
-{
-public:
-	explicit TimeDependentExternalForce(Vecd external_force)
-		: Gravity(external_force) {}
-	virtual Vecd InducedAcceleration(Vecd &position) override
-	{
-		Real current_time = GlobalStaticVariables::physical_time_;
-		return current_time < time_to_full_external_force ? current_time * global_acceleration_ / time_to_full_external_force : global_acceleration_;
-	}
-};
-
-/**
  *  The main program
  */
 int main(int ac, char *av[])
 {
 	/** Setup the system. */
 	SPHSystem system(system_domain_bounds, particle_spacing_ref);
-#ifdef BOOST_AVAILABLE
+	system.generate_regression_data_ = false;
+	#ifdef BOOST_AVAILABLE
 	system.handleCommandlineOptions(ac, av);
-#endif
+	#endif
 	IOEnvironment io_environment(system);
 	/** create a cylinder body with shell particles and linear elasticity. */
 	SolidBody cylinder_body(system, makeShared<DefaultShape>("CylinderBody"));
@@ -122,10 +157,6 @@ int main(int ac, char *av[])
 	InnerRelation cylinder_body_inner(cylinder_body);
 	ContactRelation cylinder_observer_contact(cylinder_observer, {&cylinder_body});
 
-	/** Common particle dynamics. */
-	SimpleDynamics<TimeStepInitialization> initialize_external_force(
-		cylinder_body, makeShared<Gravity>(Vec3d(0.0, 0.0, gravitational_acceleration)));
-
 	/**
 	 * This section define all numerical methods will be used in this case.
 	 */
@@ -136,7 +167,10 @@ int main(int ac, char *av[])
 	ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(cylinder_body);
 	/** stress relaxation. */
 	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(cylinder_body_inner);
-	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(cylinder_body_inner);
+        Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(cylinder_body_inner);
+	/** Control the displacement. */
+	DisControlGeometry dis_control_geometry(cylinder_body, "DisControlGeometry");
+	SimpleDynamics<ControlDiaplacement> dis_control(dis_control_geometry);
 	/** Constrain the Boundary. */
 	BoundaryGeometry boundary_geometry(cylinder_body, "BoundaryGeometry");
 	SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> constrain_holder(boundary_geometry);
@@ -164,8 +198,8 @@ int main(int ac, char *av[])
 
 	/** Setup time stepping control parameters. */
 	int ite = 0;
-	Real end_time = 0.006;
-	Real output_period = end_time / 100.0;
+	Real end_time = 0.0048;
+	Real output_period = end_time / 200.0;
 	Real dt = 0.0;
 	/** Statistics for computing time. */
 	TickCount t1 = TickCount::now();
@@ -184,12 +218,13 @@ int main(int ac, char *av[])
 						  << GlobalStaticVariables::physical_time_ << "	dt: "
 						  << dt << "\n";
 			}
-			initialize_external_force.exec(dt);
 			stress_relaxation_first_half.exec(dt);
 			constrain_holder.exec(dt);
+			dis_control.exec(dt);
 			cylinder_position_damping.exec(dt);
 			cylinder_rotation_damping.exec(dt);
 			constrain_holder.exec(dt);
+			dis_control.exec(dt);
 			stress_relaxation_second_half.exec(dt);
 
 			ite++;
@@ -211,7 +246,7 @@ int main(int ac, char *av[])
 
 	if (system.generate_regression_data_)
 	{
-		write_cylinder_max_displacement.generateDataBase(0.005);
+		write_cylinder_max_displacement.generateDataBase(0.05);
 	}
 	else
 	{

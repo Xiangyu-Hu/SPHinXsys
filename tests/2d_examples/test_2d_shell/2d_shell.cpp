@@ -29,10 +29,10 @@ StdVec<Vecd> observation_location = {Vecd(0.0, radius_mid_surface)};
 Real rho0_s = 3.67346939;		  /** Normalized density. */
 Real Youngs_modulus = 4.32e7;	  /** Normalized Youngs Modulus. */
 Real poisson = 0.3;				  /** Poisson ratio. */
-Real physical_viscosity = 1000.0; /** physical damping, here we choose the same value as numerical viscosity. */
+Real physical_viscosity = 2000.0; /** physical damping, here we choose the same value as numerical viscosity. */
 
 Real time_to_full_external_force = 0.1;
-Real gravitational_acceleration = -2000.0;
+Real gravitational_acceleration = -10000.0;
 /** Define application dependent particle generator for thin structure. */
 class CylinderParticleGenerator : public SurfaceParticleGenerator
 {
@@ -95,7 +95,7 @@ int main()
 {
 	/** Setup the system. */
 	SPHSystem system(system_domain_bounds, particle_spacing_ref);
-
+	system.generate_regression_data_ = false;
 	/** Create a Cylinder body. */
 	SolidBody cylinder_body(system, makeShared<DefaultShape>("CylinderBody"));
 	cylinder_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
@@ -127,7 +127,7 @@ int main()
 	ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(cylinder_body);
 	/** stress relaxation. */
 	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf>
-		stress_relaxation_first_half(cylinder_body_inner);
+		stress_relaxation_first_half(cylinder_body_inner, 3, true);
 	Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf>
 		stress_relaxation_second_half(cylinder_body_inner);
 	/** Constrain the Boundary. */
@@ -203,7 +203,14 @@ int main()
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-	write_cylinder_max_displacement.testResult();
+	if (system.generate_regression_data_)
+	{
+		write_cylinder_max_displacement.generateDataBase(0.05);
+	}
+	else
+	{
+		write_cylinder_max_displacement.testResult();
+	}
 
 	return 0;
 }

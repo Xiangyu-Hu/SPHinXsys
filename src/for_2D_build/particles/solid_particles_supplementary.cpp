@@ -51,4 +51,16 @@ namespace SPH
 			sqrt(sigmaxx * sigmaxx + sigmayy * sigmayy - sigmaxx * sigmayy + 3.0 * sigmaxy * sigmaxy);
 	}
 	//=============================================================================================//
+	void MidSurfaceVonMisesStressofShells::update(size_t index_i, Real dt)
+	{
+		Matd sigma = mid_surface_cauchy_stress_[index_i];
+
+		Real sigmaxx = sigma(0, 0);
+		Real sigmayy = sigma(1, 1);
+		Real sigmaxy = sigma(0, 1);
+
+		derived_variable_[index_i] =
+			sqrt(sigmaxx * sigmaxx + sigmayy * sigmayy - sigmaxx * sigmayy + 3.0 * sigmaxy * sigmaxy);
+	}
+	//=============================================================================================//
 }

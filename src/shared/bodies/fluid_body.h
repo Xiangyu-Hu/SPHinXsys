@@ -45,17 +45,5 @@ namespace SPH {
 		virtual ~FluidBody() {};
 		virtual FluidBody* ThisObjectPtr() override {return this;};
 	};
-
-	/**
-	 * @class EulerianFluidBody
-	 * @brief Eulerian Fluid body uses smoothing length to particle spacing 1.3 
-	 */
-	class EulerianFluidBody : public FluidBody
-	{
-	public:
-		explicit EulerianFluidBody(SPHSystem &system, SharedPtr<Shape> shape_ptr);
-		virtual ~EulerianFluidBody() {};
-		virtual EulerianFluidBody* ThisObjectPtr() override { return this; };
-	};
 }
 #endif //FLUID_BODY_H

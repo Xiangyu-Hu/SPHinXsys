@@ -68,6 +68,59 @@ namespace SPH
         }
     }
     //=================================================================================================//
+    template <typename DataType>
+    DataType *BaseParticles::
+        registerGlobalVariable(const std::string &variable_name, DataType initial_value)
+    {
+        constexpr int type_index = DataTypeIndex<DataType>::value;
+        bool isRegistered = false;
+
+        for (auto& variable : std::get<type_index>(all_global_data_))
+        {
+            if (variable->getName() == variable_name)
+            {
+                isRegistered = true;
+                return variable->getValue();
+            }
+        }
+
+        if (!isRegistered)
+        {
+            UniquePtrsKeeper<GlobalVariable<DataType>>& container = std::get<type_index>(all_global_data_ptr_);
+            GlobalVariable<DataType> *contained_data = container.template createPtr<GlobalVariable<DataType>>(variable_name, initial_value);
+            std::get<type_index>(all_global_data_).push_back(contained_data);
+            return contained_data->getValue();
+        }
+
+        return nullptr;
+    }
+     //=================================================================================================//
+    template <typename DataType>
+    DataType *BaseParticles::getGlobalVariableByName(const std::string &variable_name)
+    {
+        constexpr int type_index = DataTypeIndex<DataType>::value;
+        bool isRegistered = false;
+
+        for (auto& variable : std::get<type_index>(all_global_data_))
+        {
+            if (variable->getName() == variable_name)
+            {
+                isRegistered = true;
+                return variable->getValue();
+            }
+        }
+
+        if (!isRegistered)
+        {
+            std::cout << "\nWarning: the variable '" << variable_name << "' is not registered!\n";
+            std::cout << "This warning might be acceptable if the variable is registered later.\n";
+            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+            return nullptr;
+        }
+
+        return nullptr;
+    }
+    //=================================================================================================//
     template <typename VariableType>
     StdLargeVec<VariableType> *BaseParticles::registerSharedVariable(const std::string &variable_name)
     {

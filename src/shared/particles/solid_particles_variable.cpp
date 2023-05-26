@@ -93,5 +93,9 @@ namespace SPH
     {
         derived_variable_[index_i] = particles_->getVonMisesStrainDynamic(index_i, poisson_ratio_);
     }
+    //=============================================================================================//
+    MidSurfaceVonMisesStressofShells::MidSurfaceVonMisesStressofShells(SPHBody& sph_body)
+        : BaseDerivedVariable<Real>(sph_body, "MidSurfaceVonMisesStressofShells"), ShellSolidDataSimple(sph_body),
+        LocalDynamics(sph_body), mid_surface_cauchy_stress_(particles_->mid_surface_cauchy_stress_) {}
     //=================================================================================================//
 }
