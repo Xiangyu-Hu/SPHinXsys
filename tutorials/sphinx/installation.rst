@@ -144,7 +144,7 @@ Pre-requisites
 
 * Windows 7 or newer
 * `Git <https://git-scm.com/download/win>`_
-* `Visual Studio 2017 or newer <https://visualstudio.microsoft.com/vs/community/>`_ (mainly for `Visual Studio Build Tools <https://devblogs.microsoft.com/cppblog/updates-to-visual-studio-build-tools-license-for-c-and-cpp-open-source-projects/>`_)
+* `Visual Studio 2017 or newer <https://visualstudio.microsoft.com/vs/community/>`_ 
 * `CMake <https://cmake.org/>`_
 * `Python3 <https://www.python.org/>`_
 
@@ -163,8 +163,10 @@ Open Windows PowerShell or Git CMD, and then run the commands below one by one.
         tbb:x64-windows                         \
         boost-program-options:x64-windows       \
         boost-geometry:x64-windows              \
-        simbody:x64-windows gtest:x64-windows
+        simbody:x64-windows gtest:x64-windows   \
+        pybind11:x64-windows
     .\vcpkg integrate install
+
 
 You can also install it by using Git Bash. 
 In this way, you need to change the command :code:`.\bootstrap-vcpkg.bat` to :code:`./bootstrap-vcpkg.bat` ,
@@ -198,7 +200,8 @@ To install the *static* versions, replace the former install line by the followi
         boost-program-options:x64-windows-static \
         boost-geometry:x64-windows-static        \
         simbody:x64-windows-static               \
-        gtest:x64-windows-static
+        gtest:x64-windows-static                 \
+        pybind11:x64-windows-static
 
 For any other combination, please refer to the official `architecture documentation <https://vcpkg.io/en/docs/users/triplets.html>` .
 
@@ -222,7 +225,8 @@ First clone the repository:
     git clone https://github.com/Xiangyu-Hu/SPHinXsys.git sphinxsys
 
 
-Then, just open Visual Studio and follow the procedure given `Visual Studio document <https://learn.microsoft.com/en-us/cpp/build/cmake-projects-in-visual-studio>` .
+Then, just open Visual Studio and follow the procedure given 
+`Visual Studio document <https://learn.microsoft.com/en-us/cpp/build/cmake-projects-in-visual-studio>` .
 
 
 Building SPHinXsys via cmake-gui.exe
