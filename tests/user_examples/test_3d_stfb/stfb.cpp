@@ -99,12 +99,12 @@ int main(int ac, char *av[])
       *	and a new child (outboard) body B created by copying the given \a bodyInfo 
       *	into a privately-owned Body within the constructed %MobilizedBody object. 
       *	Specify the mobilizer frames F fixed to parent P and M fixed to child B. 
-	  * @param[in] inboard(SimTK::Vec3) Defines the location of the joint point relative to the parent body.
-	  * @param[in] outboard(SimTK::Vec3) Defines the body's origin location to the joint point.
-	  * @note	The body's origin location can be the mass center, the the center of mass should be SimTK::Vec3(0)
+	  * @param[in] inboard(SimTKVec3) Defines the location of the joint point relative to the parent body.
+	  * @param[in] outboard(SimTKVec3) Defines the body's origin location to the joint point.
+	  * @note	The body's origin location can be the mass center, the the center of mass should be SimTKVec3(0)
 	  * 			in SimTK::MassProperties(mass, com, inertia)
 	  */
-	SimTK::MobilizedBody::Planar structure_mob(matter.Ground(), SimTK::Transform(SimTK::Vec3(G[0],G[1], G[2])), structure_info, SimTK::Transform(SimTK::Vec3(0.0, 0.0, 0.0)));
+	SimTK::MobilizedBody::Planar structure_mob(matter.Ground(), SimTK::Transform(SimTKVec3(G[0],G[1], G[2])), structure_info, SimTK::Transform(SimTKVec3(0.0, 0.0, 0.0)));
 	/**
 	 * @details Add gravity to mb body.
 	 * @param[in,out] forces, The subsystem to which this force should be added.
@@ -129,7 +129,7 @@ int main(int ac, char *av[])
 	 *		hb=pb*(-d) - hz. Note that this is a signed quantity so the potential energy is
 	 *		also signed. 0.475
 	 */
-	SimTK::Force::UniformGravity sim_gravity(forces, matter, SimTK::Vec3(0.0, 0.0, -gravity_g), 0.0);
+	SimTK::Force::UniformGravity sim_gravity(forces, matter, SimTKVec3(0.0, 0.0, -gravity_g), 0.0);
 	/** discrete forces acting on the bodies. */
 	SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
 	/** Time stepping method for multibody system.*/

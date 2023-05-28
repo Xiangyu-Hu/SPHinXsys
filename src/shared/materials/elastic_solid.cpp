@@ -163,8 +163,8 @@ namespace SPH
 			for (int j = 0; j < Dimensions; j++)
 			{
 				// inner sum (b{1-3})
-				Summa2 += Lambda_(i, j) * (CalculateDoubleDotProduct(A_[i], strain) * A_[j] +
-										   CalculateDoubleDotProduct(A_[j], strain) * A_[i]);
+				Summa2 += Lambda_(i, j) * (CalculateBiDotProduct(A_[i], strain) * A_[j] +
+										   CalculateBiDotProduct(A_[j], strain) * A_[i]);
 			}
 			stress_PK2 += Mu_[i] * (((A_[i] * strain) + (strain * A_[i])) + 1 / 2 * (Summa2));
 		}

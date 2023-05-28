@@ -35,7 +35,7 @@ namespace SPH
 {
 	//=================================================================================================//
 	template<class ObserveMethodType>
-	void RegressionTestTimeAveraged<ObserveMethodType>::filterLocalResult(DoubleVec<Real> &current_result)
+	void RegressionTestTimeAveraged<ObserveMethodType>::filterLocalResult(BiVector<Real> &current_result)
 	{
 		int scale = round(this->snapshot_ / 200);
 		std::cout << "The filter scale is " << scale * 2 << "." << std::endl;
@@ -69,7 +69,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
-	void RegressionTestTimeAveraged<ObserveMethodType>::filterLocalResult(DoubleVec<Vecd> &current_result)
+	void RegressionTestTimeAveraged<ObserveMethodType>::filterLocalResult(BiVector<Vecd> &current_result)
 	{
 		int scale = round(this->snapshot_ / 200);
 		std::cout << "The filter scale is " << scale * 2 << "." << std::endl;
@@ -106,7 +106,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
-	void RegressionTestTimeAveraged<ObserveMethodType>::filterLocalResult(DoubleVec<Matd> &current_result)
+	void RegressionTestTimeAveraged<ObserveMethodType>::filterLocalResult(BiVector<Matd> &current_result)
 	{
 		int scale = round(this->snapshot_ / 200);
 		std::cout << "The filter scale is " << scale * 2 << "." << std::endl;
@@ -146,7 +146,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
-	void RegressionTestTimeAveraged<ObserveMethodType>::searchSteadyStart(DoubleVec<Real> &current_result)
+	void RegressionTestTimeAveraged<ObserveMethodType>::searchSteadyStart(BiVector<Real> &current_result)
 	{
 		/* the search is only for one value. */
 		int scale = round(this->snapshot_ / 20);
@@ -170,7 +170,7 @@ namespace SPH
 	}
 	//=================================================================================================// 
 	template<class ObserveMethodType>
-	void RegressionTestTimeAveraged<ObserveMethodType>::searchSteadyStart(DoubleVec<Vecd> &current_result)
+	void RegressionTestTimeAveraged<ObserveMethodType>::searchSteadyStart(BiVector<Vecd> &current_result)
 	{
 		/* the search is for each value within parameters. */
 		int scale = round(this->snapshot_ / 20);
@@ -194,7 +194,7 @@ namespace SPH
 	}
 	//=================================================================================================// 
 	template<class ObserveMethodType>
-	void RegressionTestTimeAveraged<ObserveMethodType>::searchSteadyStart(DoubleVec<Matd> &current_result)
+	void RegressionTestTimeAveraged<ObserveMethodType>::searchSteadyStart(BiVector<Matd> &current_result)
 	{
 		int scale = round(this->snapshot_ / 20);
 		for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
@@ -217,7 +217,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
-	void RegressionTestTimeAveraged<ObserveMethodType>::calculateNewVariance(DoubleVec<Real> &current_result, 
+	void RegressionTestTimeAveraged<ObserveMethodType>::calculateNewVariance(BiVector<Real> &current_result, 
 		StdVec<Real> &local_meanvalue, StdVec<Real> &variance, StdVec<Real> &variance_new)
 	{
 		for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
@@ -230,7 +230,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
-	void RegressionTestTimeAveraged<ObserveMethodType>::calculateNewVariance(DoubleVec<Vecd> &current_result, 
+	void RegressionTestTimeAveraged<ObserveMethodType>::calculateNewVariance(BiVector<Vecd> &current_result, 
 		StdVec<Vecd> &local_meanvalue, StdVec<Vecd> &variance, StdVec<Vecd> &variance_new)
 	{
 		for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
@@ -244,7 +244,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
-	void RegressionTestTimeAveraged<ObserveMethodType>::calculateNewVariance(DoubleVec<Matd> &current_result, 
+	void RegressionTestTimeAveraged<ObserveMethodType>::calculateNewVariance(BiVector<Matd> &current_result, 
 		StdVec<Matd> &local_meanvalue, StdVec<Matd> &variance, StdVec<Matd> &variance_new)
 	{
 		for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
@@ -335,7 +335,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
-	int RegressionTestTimeAveraged<ObserveMethodType>::testNewResult(DoubleVec<Real> &current_result, 
+	int RegressionTestTimeAveraged<ObserveMethodType>::testNewResult(BiVector<Real> &current_result, 
 		StdVec<Real> &meanvalue, StdVec<Real> &local_meanvalue, StdVec<Real> &variance)
 	{
 		int count = 0;
@@ -365,7 +365,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template<class ObserveMethodType>
-	int RegressionTestTimeAveraged<ObserveMethodType>::testNewResult(DoubleVec<Vecd> &current_result, 
+	int RegressionTestTimeAveraged<ObserveMethodType>::testNewResult(BiVector<Vecd> &current_result, 
 		StdVec<Vecd> &meanvalue, StdVec<Vecd> &local_meanvalue, StdVec<Vecd> &variance)
 	{
 		int count = 0;
@@ -399,7 +399,7 @@ namespace SPH
 	}
 	//=================================================================================================// 
 	template<class ObserveMethodType>
-	int RegressionTestTimeAveraged<ObserveMethodType>::testNewResult(DoubleVec<Matd> &current_result, 
+	int RegressionTestTimeAveraged<ObserveMethodType>::testNewResult(BiVector<Matd> &current_result, 
 		StdVec<Matd> &meanvalue, StdVec<Matd> &local_meanvalue, StdVec<Matd> &variance)
 	{
 		int count = 0;

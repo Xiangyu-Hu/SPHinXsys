@@ -3,45 +3,45 @@
 namespace SPH
 {
 	//=================================================================================================//
-	SimTK::Vec2 EigenToSimTK(const Vec2d &eigen_vector)
+	SimTKVec2 EigenToSimTK(const Vec2d &eigen_vector)
 	{
-		return SimTK::Vec2(eigen_vector[0], eigen_vector[1]);
+		return SimTKVec2(eigen_vector[0], eigen_vector[1]);
 	}
 	//=================================================================================================//
-	SimTK::Vec3 EigenToSimTK(const Vec3d &eigen_vector)
+	SimTKVec3 EigenToSimTK(const Vec3d &eigen_vector)
 	{
-		return SimTK::Vec3(eigen_vector[0], eigen_vector[1], eigen_vector[2]);
+		return SimTKVec3(eigen_vector[0], eigen_vector[1], eigen_vector[2]);
 	}
 	//=================================================================================================//
-	Vec2d SimTKToEigen(const SimTK::Vec2 &simTK_vector)
+	Vec2d SimTKToEigen(const SimTKVec2 &simTK_vector)
 	{
 		return Vec2d(simTK_vector[0], simTK_vector[1]);
 	}
 	//=================================================================================================//
-	Vec3d SimTKToEigen(const SimTK::Vec3 &simTK_vector)
+	Vec3d SimTKToEigen(const SimTKVec3 &simTK_vector)
 	{
 		return Vec3d(simTK_vector[0], simTK_vector[1], simTK_vector[2]);
 	}
-	SimTK::Mat22 EigenToSimTK(const Mat2d &eigen_matrix)
+	SimTKMat22 EigenToSimTK(const Mat2d &eigen_matrix)
 	{
-		return SimTK::Mat22(eigen_matrix(0, 0), eigen_matrix(0, 1),
+		return SimTKMat22(eigen_matrix(0, 0), eigen_matrix(0, 1),
 							eigen_matrix(1, 0), eigen_matrix(1, 1));
 	}
 	//=================================================================================================//
-	SimTK::Mat33 EigenToSimTK(const Mat3d &eigen_matrix)
+	SimTKMat33 EigenToSimTK(const Mat3d &eigen_matrix)
 	{
-		return SimTK::Mat33(eigen_matrix(0, 0), eigen_matrix(0, 1), eigen_matrix(0, 2),
+		return SimTKMat33(eigen_matrix(0, 0), eigen_matrix(0, 1), eigen_matrix(0, 2),
 							eigen_matrix(1, 0), eigen_matrix(1, 1), eigen_matrix(1, 2),
 							eigen_matrix(2, 0), eigen_matrix(2, 1), eigen_matrix(2, 2));
 	}
-	Mat2d SimTKToEigen(const SimTK::Mat22 &simTK_matrix)
+	Mat2d SimTKToEigen(const SimTKMat22 &simTK_matrix)
 	{
 		return Mat2d{
 			{simTK_matrix(0, 0), simTK_matrix(0, 1)},
 			{simTK_matrix(1, 0), simTK_matrix(1, 1)}};
 	}
 	//=================================================================================================//
-	Mat3d SimTKToEigen(const SimTK::Mat33 &simTK_matrix)
+	Mat3d SimTKToEigen(const SimTKMat33 &simTK_matrix)
 	{
 		return Mat3d{
 			{simTK_matrix(0, 0), simTK_matrix(0, 1), simTK_matrix(0, 2)},
@@ -167,7 +167,7 @@ namespace SPH
 		{
 			for (int j = 0; j < (i + 1); j++)
 			{
-				double sum = 0;
+				Real sum = 0;
 				for (int k = 0; k < j; k++)
 				{
 					sum += lower(i, k) * lower(j, k);
@@ -195,7 +195,7 @@ namespace SPH
 		{
 			for (int j = 0; j < (i + 1); j++)
 			{
-				double sum = 0;
+				Real sum = 0;
 				for (int k = 0; k < j; k++)
 				{
 					sum += lower(i, k) * lower(j, k);
@@ -261,7 +261,7 @@ namespace SPH
 		return diag;
 	}
 	//=================================================================================================//
-	Real CalculateDoubleDotProduct(Mat2d Matrix1, Mat2d Matrix2)
+	Real CalculateBiDotProduct(Mat2d Matrix1, Mat2d Matrix2)
 	{
 		Real product = 0;
 		for (int i = 0; i < 2; i++)
@@ -273,7 +273,7 @@ namespace SPH
 		}
 		return product;
 	}
-	Real CalculateDoubleDotProduct(Mat3d Matrix1, Mat3d Matrix2)
+	Real CalculateBiDotProduct(Mat3d Matrix1, Mat3d Matrix2)
 	{
 		Real product = 0;
 		for (int i = 0; i < 3; i++)
@@ -369,7 +369,7 @@ namespace SPH
 	//=================================================================================================//
 	Vec2d getPrincipalValuesFromMatrix(const Mat2d &A)
 	{
-		Eigen::EigenSolver<Eigen::MatrixXd> ces(A, /* computeEigenvectors = */ false);
+		Eigen::EigenSolver<EigMat> ces(A, /* computeEigenvectors = */ false);
 		auto eigen_values = ces.eigenvalues();
 
 		std::vector<Real> sorted_values = {
@@ -384,7 +384,7 @@ namespace SPH
 	//=================================================================================================//
 	Vec3d getPrincipalValuesFromMatrix(const Mat3d &A)
 	{
-		Eigen::EigenSolver<Eigen::MatrixXd> ces(A, /* computeEigenvectors = */ false);
+		Eigen::EigenSolver<EigMat> ces(A, /* computeEigenvectors = */ false);
 		auto eigen_values = ces.eigenvalues();
 
 		std::vector<Real> sorted_values = {

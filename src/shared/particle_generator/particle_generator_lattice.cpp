@@ -40,7 +40,7 @@ namespace SPH
 	{
 		Real local_particle_spacing = particle_adaptation_->getLocalSpacing(target_shape_, position);
 		Real local_particle_volume_ratio = pow(lattice_spacing_ / local_particle_spacing, Dimensions);
-		if ((double)rand() / (RAND_MAX) < local_particle_volume_ratio)
+		if ((Real)rand() / (RAND_MAX) < local_particle_volume_ratio)
 		{
 			ParticleGeneratorLattice::initializePositionAndVolumetricMeasure(position, volume / local_particle_volume_ratio);
 			initializeSmoothingLengthRatio(local_particle_spacing);

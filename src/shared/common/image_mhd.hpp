@@ -189,7 +189,7 @@ namespace SPH {
 				for (int x = 0; x < width_; x++)
 				{
 					int index = z * width_*height_ + y * width_ + x;
-					double distance = (Vecd(x, y, z) - center).norm() - radius;
+					Real distance = (Vecd(x, y, z) - center).norm() - radius;
 					if (distance < min_value_) min_value_ = distance;
 					if (distance > max_value_) max_value_ = distance;
 					data_[index] = float(distance);
@@ -256,7 +256,7 @@ namespace SPH {
 		int y = (i%sliceSize) / width;
 		int x = (i%sliceSize) % width;
 
-		double gradx = 0.0; double grady = 0.0; double gradz = 0.0;
+		Real gradx = 0.0; Real grady = 0.0; Real gradz = 0.0;
 		//- cds (if inner cell)
 		//- otherwise back/forward scheme
 		if (x == 0)
@@ -367,20 +367,20 @@ namespace SPH {
 		Array3i this_cell = Array3i::Zero();
 		std::vector<int> neighbors = findNeighbors(probe_point, this_cell);
 		Vec3d n_sum = Vecd::Zero();
-		double weight_sum = 0.0;
-		double d_sum = 0.0;
+		Real weight_sum = 0.0;
+		Real d_sum = 0.0;
 		for (const int& i : neighbors)
 		{
 			// checkIndexBound(i);
 			Vec3d nCj = computeNormalAtCell(i);
-			double dCj = float(getValueAtCell(i));
-			double weight_Cj = 1.0 / (fabs(dCj) + Eps);
+			Real dCj = float(getValueAtCell(i));
+			Real weight_Cj = 1.0 / (fabs(dCj) + Eps);
 			n_sum = n_sum + weight_Cj * nCj;
 			weight_sum = weight_sum + weight_Cj;
 			d_sum = d_sum + dCj;
 		}
 		Vec3d n = n_sum / (weight_sum + Eps);
-		double d = d_sum / (weight_sum + Eps);
+		Real d = d_sum / (weight_sum + Eps);
 
 		Vec3d p_image = Vec3d(this_cell[0], this_cell[1], this_cell[2]) + n.normalized() * d;
 		Vec3d p = convertToPhysicalSpace(p_image);
@@ -418,15 +418,15 @@ namespace SPH {
 	{
 		Array3i this_cell;
 		std::vector<int> neighbors = findNeighbors(probe_point, this_cell);
-		double weight_sum = 0.0;
-		double d_sum = 0.0;
+		Real weight_sum = 0.0;
+		Real d_sum = 0.0;
 		if (neighbors.size() > 0)
 		{
 			for (const int& i : neighbors)
 			{
 				// checkIndexBound(i);
-				double dCj = float(getValueAtCell(i));
-				double weight_Cj = 1.0 / (fabs(dCj) + Eps);
+				Real dCj = float(getValueAtCell(i));
+				Real weight_Cj = 1.0 / (fabs(dCj) + Eps);
 				weight_sum = weight_sum + weight_Cj;
 				d_sum = d_sum + dCj;
 			}
@@ -445,16 +445,16 @@ namespace SPH {
 		Array3i this_cell = Array3i::Zero();
 		std::vector<int> neighbors = findNeighbors(probe_point, this_cell);
 		Vec3d n_sum = Vecd::Zero();
-		double weight_sum = 0.0;
-		double d_sum = 0.0;
+		Real weight_sum = 0.0;
+		Real d_sum = 0.0;
 		if (neighbors.size() > 0)
 		{
 			for (const int& i : neighbors)
 			{
 				// checkIndexBound(i);
 				Vec3d nCj = computeNormalAtCell(i);
-				double dCj = float(getValueAtCell(i));
-				double weight_Cj = 1.0 / (fabs(dCj) + Eps);
+				Real dCj = float(getValueAtCell(i));
+				Real weight_Cj = 1.0 / (fabs(dCj) + Eps);
 				n_sum = n_sum + weight_Cj * nCj;
 				weight_sum = weight_sum + weight_Cj;
 				d_sum = d_sum + dCj;

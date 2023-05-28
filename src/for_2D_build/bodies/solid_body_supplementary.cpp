@@ -40,7 +40,7 @@ namespace SPH
 		Iz /= body_part_volume;
 
 		body_part_mass_properties_ = mass_properties_ptr_keeper_.createPtr<SimTK::MassProperties>(
-			body_part_volume * solid_body_density_, SimTK::Vec3(0), SimTK::UnitInertia(Ix, Iy, Iz));
+			body_part_volume * solid_body_density_, SimTKVec3(0), SimTK::UnitInertia(Ix, Iy, Iz));
 	}
 	//=================================================================================================//
 }

@@ -62,7 +62,7 @@ namespace SPH
 		};
 
 		/** the local constrained method used for calculating the dtw distance between two lines. */
-		StdVec<Real> calculateDTWDistance(DoubleVec<VariableType> dataset_a_, DoubleVec<VariableType> dataset_b_);
+		StdVec<Real> calculateDTWDistance(BiVector<VariableType> dataset_a_, BiVector<VariableType> dataset_b_);
 
 	public:
 		template <typename... ConstructorArgs>

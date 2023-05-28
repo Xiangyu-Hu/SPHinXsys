@@ -6,9 +6,9 @@ void write_csv_files(
 	const std::string& parameter_1_name,
 	const std::string& parameter_2_name,
     const std::string& parameter_3_name,
-    const std::vector<double>& parameter_1,
-    const std::vector<double>& parameter_2,
-    const std::vector<double>& parameter_3
+    const std::vector<Real>& parameter_1,
+    const std::vector<Real>& parameter_2,
+    const std::vector<Real>& parameter_3
 )
 {
 	std::ofstream myfile;

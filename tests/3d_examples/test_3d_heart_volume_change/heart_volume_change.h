@@ -17,9 +17,9 @@ void write_csv_files(
 	const std::string& parameter_1_name,
 	const std::string& parameter_2_name,
     const std::string& parameter_3_name,
-    const std::vector<double>& parameter_1,
-    const std::vector<double>& parameter_2,
-    const std::vector<double>& parameter_3
+    const std::vector<Real>& parameter_1,
+    const std::vector<Real>& parameter_2,
+    const std::vector<Real>& parameter_3
 );
 
 
@@ -43,7 +43,7 @@ private:
 	};
 	struct Mesh
 	{
-		std::vector<std::array<double,3>> vertices;
+		std::vector<std::array<Real,3>> vertices;
 		std::vector<std::array<int,3>> faces;
 	};
 
