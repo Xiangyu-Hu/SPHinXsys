@@ -5,78 +5,12 @@
  * @author 	Zhentong Wang and Xiangyu Hu
  */
 #include "sphinxsys.h"
+#include "shock_tube.h"
 using namespace SPH;
-//----------------------------------------------------------------------
-//	Basic geometry parameters and numerical setup.
-//----------------------------------------------------------------------
-Real DL = 5.0;							 /**< Tube length. */
-Real particle_spacing_ref = 1.0 / 200.0; /**< Initial reference particle spacing. */
-Real DH = particle_spacing_ref * 4;		 /**< Tube height. */
-/** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-2.0 / 5.0 * DL, 0.0), Vec2d(3.0 / 5.0 * DL, DH));
-Real rho0_l = 1.0;	  /**< initial density of left state. */
-Real rho0_r = 0.125;  /**< initial density of right state. */
-Vecd velocity_l = Vecd::Zero(); /**< initial velocity of left state. */
-Vecd velocity_r = Vecd::Zero();; /**< initial velocity of right state. */
-Real p_l = 1.0;		  /**< initial pressure of left state. */
-Real p_r = 0.1;		  /**< initial pressure of right state. */
-//----------------------------------------------------------------------
-//	Global parameters on material properties
-//----------------------------------------------------------------------
-Real heat_capacity_ratio = 1.4; /**< heat capacity ratio. */
-//----------------------------------------------------------------------
-//	Cases-dependent geometry
-//----------------------------------------------------------------------
-class WaveBlock : public MultiPolygonShape
-{
-public:
-	explicit WaveBlock(const std::string &body_name)
-		: MultiPolygonShape(body_name)
-	{
-		std::vector<Vecd> waves_block_shape{
-			Vecd(-2.0 / 5.0 * DL, 0.0), Vecd(-2.0 / 5.0 * DL, DH), Vecd(3.0 / 5.0 * DL, DH),
-			Vecd(3.0 / 5.0 * DL, 0.0), Vecd(-2.0 / 5.0 * DL, 0.0)};
-		multi_polygon_.addAPolygon(waves_block_shape, ShapeBooleanOps::add);
-	}
-};
-//----------------------------------------------------------------------
-//	Case-dependent initial condition.
-//----------------------------------------------------------------------
-class WavesInitialCondition
-	: public eulerian_compressible_fluid_dynamics::CompressibleFluidInitialCondition
-{
-public:
-	explicit WavesInitialCondition(SPHBody &sph_body)
-		: eulerian_compressible_fluid_dynamics::CompressibleFluidInitialCondition(sph_body){};
-
-	void update(size_t index_i, Real dt)
-	{
-		if (pos_[index_i][0] < DL / 10.0)
-		{
-			// initial left state pressure,momentum and energy profile
-			rho_[index_i] = rho0_l;
-			p_[index_i] = p_l;
-			Real rho_e = p_[index_i] / (gamma_ - 1.0);
-			vel_[index_i] = velocity_l;
-			mom_[index_i] = rho0_l * velocity_l;
-			E_[index_i] = rho_e + 0.5 * rho_[index_i] * vel_[index_i].squaredNorm();
-		}
-		if (pos_[index_i][0] > DL / 10.0)
-		{
-			// initial right state pressure,momentum and energy profile
-			rho_[index_i] = rho0_r;
-			p_[index_i] = p_r;
-			Real rho_e = p_[index_i] / (gamma_ - 1.0);
-			vel_[index_i] = velocity_r;
-			mom_[index_i] = rho0_r * velocity_r;
-			E_[index_i] = rho_e + 0.5 * rho_[index_i] * vel_[index_i].squaredNorm();
-		}
-	}
-};
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main(int ac, char *av[])
+int main(int ac, char* av[])
 {
 	//----------------------------------------------------------------------
 	//	Build up the environment of a SPHSystem with global controls.
@@ -88,29 +22,32 @@ int main(int ac, char *av[])
 	//	Create body, materials and particles.
 	//----------------------------------------------------------------------
 	EulerianFluidBody wave_body(sph_system, makeShared<WaveBlock>("WaveBody"));
-	wave_body.defineParticlesAndMaterial<CompressibleFluidParticles, CompressibleFluid>(rho0_l, heat_capacity_ratio);
+	wave_body.defineParticlesAndMaterial<FluidParticles, CompressibleFluid>(rho0_l, heat_capacity_ratio);
 	wave_body.generateParticles<ParticleGeneratorLattice>();
-	wave_body.addBodyStateForRecording<Real>("TotalEnergy");
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The inner relation defines the particle configuration for particles within a body.
 	//	The contact relation defines the particle configuration between the bodies.
 	//----------------------------------------------------------------------
 	InnerRelation wave_body_inner(wave_body);
+	// using correction Matrix to correct kernel gredient.
+	InteractionWithUpdate<KernalGredientWithCorrectionInner> kernel_gredient_update(wave_body_inner);
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	SimpleDynamics<WavesInitialCondition> waves_initial_condition(wave_body);
+	SimpleDynamics<ShockTubeInitialCondition> waves_initial_condition(wave_body);
+	wave_body.addBodyStateForRecording<Real>("TotalEnergy");
+	wave_body.addBodyStateForRecording<Real>("Density");
 	// Initialize particle acceleration.
-	SimpleDynamics<eulerian_compressible_fluid_dynamics::CompressibleFlowTimeStepInitialization> initialize_wave_step(wave_body);
+	SimpleDynamics<EulerianCompressibleTimeStepInitialization> initialize_wave_step(wave_body);
 	// Periodic BCs in y direction.
 	PeriodicConditionUsingCellLinkedList periodic_condition_y(wave_body, wave_body.getBodyShapeBounds(), yAxis);
 	// Time step size with considering sound wave speed.
-	ReduceDynamics<eulerian_compressible_fluid_dynamics::AcousticTimeStepSize> get_wave_time_step_size(wave_body);
+	ReduceDynamics<EulerianCompressibleAcousticTimeStepSize> get_wave_time_step_size(wave_body);
 	// Pressure, density and energy relaxation algorithm by use HLLC Riemann solver.
-	Dynamics1Level<eulerian_compressible_fluid_dynamics::Integration1stHalfHLLCRiemann> pressure_relaxation(wave_body_inner);
-	InteractionWithUpdate<eulerian_compressible_fluid_dynamics::Integration2ndHalfHLLCRiemann> density_and_energy_relaxation(wave_body_inner);
+	Dynamics1Level<Integration1stHalfHLLCRiemann> pressure_relaxation(wave_body_inner);
+	InteractionWithUpdate<Integration2ndHalfHLLCRiemann> density_and_energy_relaxation(wave_body_inner);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations, observations of the simulation.
 	//	Regression tests are also defined here.
@@ -124,6 +61,7 @@ int main(int ac, char *av[])
 	sph_system.initializeSystemCellLinkedLists();
 	periodic_condition_y.update_cell_linked_list_.exec();
 	sph_system.initializeSystemConfigurations();
+	kernel_gredient_update.exec();
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
@@ -160,8 +98,8 @@ int main(int ac, char *av[])
 			if (number_of_iterations % screen_output_interval == 0)
 			{
 				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-						  << GlobalStaticVariables::physical_time_
-						  << "	dt = " << dt << "\n";
+					<< GlobalStaticVariables::physical_time_
+					<< "	dt = " << dt << "\n";
 			}
 			number_of_iterations++;
 		}

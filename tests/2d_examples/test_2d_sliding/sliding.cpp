@@ -105,7 +105,7 @@ int main(int ac, char *av[])
 	/** Time step size. */
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> free_cube_get_time_step_size(free_cube);
 	/** stress relaxation for the solid body. */
-	Dynamics1Level<solid_dynamics::Integration1stHalf> free_cube_stress_relaxation_first_half(free_cube_inner);
+	Dynamics1Level<solid_dynamics::Integration1stHalfPK2> free_cube_stress_relaxation_first_half(free_cube_inner);
 	Dynamics1Level<solid_dynamics::Integration2ndHalf> free_cube_stress_relaxation_second_half(free_cube_inner);
 	/** Algorithms for solid-solid contact. */
 	InteractionDynamics<solid_dynamics::ContactDensitySummation> free_cube_update_contact_density(free_cube_contact);
@@ -202,7 +202,7 @@ int main(int ac, char *av[])
 	}
 	else
 	{
-	write_free_cube_displacement.newResultTest();
+	write_free_cube_displacement.testResult();
 	}
 
 	return 0;

@@ -38,8 +38,7 @@ jobs:
             pkg-config `# for installing libraries with vcpkg`\
             git \
             cmake \
-            ninja-build \
-            python3
+            ninja-build
 
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
@@ -62,7 +61,8 @@ jobs:
             boost-geometry \
             simbody \
             gtest \
-            xsimd
+            xsimd \
+            pybind11
 
       - name: Generate buildsystem
         run: |
@@ -134,8 +134,6 @@ jobs:
         with:
           key: ${{ github.job }}
 
-      - uses: actions/setup-python@v4
-
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
         with: 
           committish: ${{ env.VCPKG_VERSION }}
@@ -150,7 +148,8 @@ jobs:
             boost-geometry `
             simbody `
             gtest `
-            xsimd
+            xsimd `
+            pybind11
 
       - uses: ilammy/msvc-dev-cmd@v1
 
@@ -245,7 +244,8 @@ jobs:
             boost-geometry \
             gtest \
             simbody \
-            xsimd
+            xsimd \
+            pybind11
 
       - name: Generate buildsystem
         run: |

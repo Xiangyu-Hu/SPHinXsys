@@ -5,85 +5,19 @@
  * @author 	Zhentong Wang and Xiangyu Hu
  */
 #include "sphinxsys.h"
+#include "2d_eulerian_flow_around_cylinder.h"
 using namespace SPH;
-//----------------------------------------------------------------------
-//	Basic geometry parameters and numerical setup.
-//----------------------------------------------------------------------
-Real DL = 15.0;						   /**< Channel length. */
-Real DH = 10.0;						   /**< Channel height. */
-Real resolution_ref = 1.0 / 5.0;	   /**< Initial reference particle spacing. */
-Real DL_sponge = resolution_ref * 2.0; /**< Sponge region to impose inflow condition. */
-Real DH_sponge = resolution_ref * 2.0; /**< Sponge region to impose inflow condition. */
-Vec2d cylinder_center(4.0, 5.0);	   /**< Location of the cylinder center. */
-Real cylinder_radius = 1.0;			   /**< Radius of the cylinder. */
-//----------------------------------------------------------------------
-//	Material properties of the fluid.
-//----------------------------------------------------------------------
-Real rho0_f = 1.0;										 /**< Density. */
-Real U_f = 1.0;											 /**< freestream velocity. */
-Real c_f = 10.0 * U_f;									 /**< Speed of sound. */
-Real Re = 100.0;										 /**< Reynolds number. */
-Real mu_f = rho0_f * U_f * (2.0 * cylinder_radius) / Re; /**< Dynamics viscosity. */
-//----------------------------------------------------------------------
-//	Define geometries and body shapes
-//----------------------------------------------------------------------
-std::vector<Vecd> createWaterBlockShape()
-{
-	std::vector<Vecd> water_block_shape;
-	water_block_shape.push_back(Vecd(-DL_sponge, -DH_sponge));
-	water_block_shape.push_back(Vecd(-DL_sponge, DH + DH_sponge));
-	water_block_shape.push_back(Vecd(DL, DH + DH_sponge));
-	water_block_shape.push_back(Vecd(DL, -DH_sponge));
-	water_block_shape.push_back(Vecd(-DL_sponge, -DH_sponge));
-
-	return water_block_shape;
-}
-class WaterBlock : public ComplexShape
-{
-public:
-	explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
-	{
-		MultiPolygon outer_boundary(createWaterBlockShape());
-		add<MultiPolygonShape>(outer_boundary, "OuterBoundary");
-		MultiPolygon circle(cylinder_center, cylinder_radius, 100);
-		subtract<MultiPolygonShape>(circle);
-	}
-};
-class Cylinder : public MultiPolygonShape
-{
-public:
-	explicit Cylinder(const std::string &shape_name) : MultiPolygonShape(shape_name)
-	{
-		/** Geometry definition. */
-		multi_polygon_.addACircle(cylinder_center, cylinder_radius, 100, ShapeBooleanOps::add);
-	}
-};
-//----------------------------------------------------------------------
-//	Far field boundary condition
-//----------------------------------------------------------------------
-class FarFieldBoundary : public eulerian_weakly_compressible_fluid_dynamics::NonReflectiveBoundaryVariableCorrection
-{
-public:
-	explicit FarFieldBoundary(BaseInnerRelation &inner_relation)
-		: eulerian_weakly_compressible_fluid_dynamics::NonReflectiveBoundaryVariableCorrection(inner_relation)
-	{
-		rho_farfield_ = rho0_f;
-		vel_farfield_ = Vecd(U_f, 0.0);
-		sound_speed_ = c_f;
-	};
-	virtual ~FarFieldBoundary(){};
-};
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main(int ac, char *av[])
+int main(int ac, char* av[])
 {
 	//----------------------------------------------------------------------
 	//	Build up the environment of a SPHSystem.
 	//----------------------------------------------------------------------
 	BoundingBox system_domain_bounds(Vec2d(-DL_sponge, -DH_sponge), Vec2d(DL, DH + DH_sponge));
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
-	// Tag for run particle relaxation for the initial body fitted distribution.
+	// Tag for run particle relaxation for the initial body fitted distribution.		
 	sph_system.setRunParticleRelaxation(false);
 	// Tag for computation start with relaxed body fitted particles distribution.
 	sph_system.setReloadParticles(true);
@@ -95,7 +29,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	EulerianFluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
 	water_block.defineComponentLevelSetShape("OuterBoundary");
-	water_block.defineParticlesAndMaterial<WeaklyCompressibleFluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	(!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
 		? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getName())
 		: water_block.generateParticles<ParticleGeneratorLattice>();
@@ -114,8 +48,8 @@ int main(int ac, char *av[])
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//	Note that the same relation should be defined only once.
 	//----------------------------------------------------------------------
-	ComplexRelation water_block_complex(water_block, {&cylinder});
-	ContactRelation cylinder_contact(cylinder, {&water_block});
+	ComplexRelation water_block_complex(water_block, { &cylinder });
+	ContactRelation cylinder_contact(cylinder, { &water_block });
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------
@@ -162,14 +96,17 @@ int main(int ac, char *av[])
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	SimpleDynamics<eulerian_weakly_compressible_fluid_dynamics::EulerianFlowTimeStepInitialization> initialize_a_fluid_step(water_block);
+	/** Initial condition */
+	SimpleDynamics<WeaklyCompressibleFluidInitialCondition> initial_condition(water_block);
+	InteractionWithUpdate<KernalGredientWithCorrectionComplex> kernel_gredient_update(water_block_complex);
+	SimpleDynamics<EulerianWCTimeStepInitialization> initialize_a_fluid_step(water_block);
 	SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
-	Dynamics1Level<eulerian_weakly_compressible_fluid_dynamics::Integration1stHalfHLLCRiemannWithLimiterWithWall> pressure_relaxation(water_block_complex);
-	InteractionWithUpdate<eulerian_weakly_compressible_fluid_dynamics::Integration2ndHalfHLLCRiemannWithLimiterWithWall> density_relaxation(water_block_complex);
-	InteractionDynamics<eulerian_weakly_compressible_fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
-	ReduceDynamics<eulerian_weakly_compressible_fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
+	Dynamics1Level<Integration1stHalfAcousticRiemannWithWall> pressure_relaxation(water_block_complex);
+	InteractionWithUpdate<Integration2ndHalfAcousticRiemannWithWall> density_relaxation(water_block_complex);
+	InteractionDynamics<ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
+	ReduceDynamics<EulerianWCAcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	InteractionWithUpdate<fluid_dynamics::FreeSurfaceIndicationComplex> surface_indicator(water_block_complex.getInnerRelation(), water_block_complex.getContactRelation());
-	InteractionDynamics<FarFieldBoundary> variable_reset_in_boundary_condition(water_block_complex.getInnerRelation());
+	Dynamics1Level<FarFieldBoundary> variable_reset_in_boundary_condition(water_block_complex.getInnerRelation());
 	//----------------------------------------------------------------------
 	//	Compute the force exerted on solid body due to fluid pressure and viscosity
 	//----------------------------------------------------------------------
@@ -179,7 +116,7 @@ int main(int ac, char *av[])
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
-	RegressionTestTimeAveraged<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>>
+	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>>
 		write_total_viscous_force_on_inserted_body(io_environment, viscous_force_on_solid, "TotalViscousForceOnSolid");
 	ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>
 		write_total_force_on_inserted_body(io_environment, fluid_force_on_solid_update, "TotalPressureForceOnSolid");
@@ -193,6 +130,7 @@ int main(int ac, char *av[])
 	cylinder_normal_direction.exec();
 	surface_indicator.exec();
 	variable_reset_in_boundary_condition.exec();
+	kernel_gredient_update.exec();
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
@@ -230,8 +168,8 @@ int main(int ac, char *av[])
 			if (number_of_iterations % screen_output_interval == 0)
 			{
 				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-					 << GlobalStaticVariables::physical_time_
-					 << "	dt = " << dt << "\n";
+					<< GlobalStaticVariables::physical_time_
+					<< "	dt = " << dt << "\n";
 			}
 			number_of_iterations++;
 		}
@@ -252,15 +190,7 @@ int main(int ac, char *av[])
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-	if (sph_system.generate_regression_data_)
-	{
-		// The lift force at the cylinder is very small and not important in this case.
-		write_total_viscous_force_on_inserted_body.generateDataBase(Vec2d{1.0e-2, 1.0e-2}, Vec2d{1.0e-2, 1.0e-2});
-	}
-	else
-	{
-		write_total_viscous_force_on_inserted_body.newResultTest();
-	}
+	write_total_viscous_force_on_inserted_body.testResult();
 
 	return 0;
 }

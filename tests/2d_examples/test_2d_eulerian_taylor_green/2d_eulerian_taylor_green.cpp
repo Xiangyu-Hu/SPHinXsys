@@ -4,71 +4,13 @@
  * @details 2D eulerian_taylor_green vortex flow example.
  * @author 	Chi Zhang, Zhentong Wang and Xiangyu Hu
  */
-#include "sphinxsys.h" //	SPHinXsys Library.
+#include "sphinxsys.h"
+#include "2d_eulerian_taylor_green.h"
 using namespace SPH;   //	Namespace cite here.
-//----------------------------------------------------------------------
-//	Basic geometry parameters and numerical setup.
-//----------------------------------------------------------------------
-Real DL = 1.0;					  /**< box length. */
-Real DH = 1.0;					  /**< box height. */
-Real resolution_ref = 1.0 / 50.0; /**< Global reference resolution. */
-/** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d::Zero(), Vec2d(DL, DH));
-//----------------------------------------------------------------------
-//	Material properties of the fluid.
-//----------------------------------------------------------------------
-Real rho0_f = 1.0;					/**< Reference density of fluid. */
-Real U_f = 1.0;						/**< Characteristic velocity. */
-Real c_f = 10.0 * U_f;				/**< Reference sound speed. */
-Real Re = 100;						/**< Reynolds number. */
-Real mu_f = rho0_f * U_f * DL / Re; /**< Dynamics viscosity. */
-Real heat_capacity_ratio = 1.4;		/**< heat capacity ratio. */
-//----------------------------------------------------------------------
-//	Cases-dependent geometries
-//----------------------------------------------------------------------
-class WaterBlock : public MultiPolygonShape
-{
-public:
-	explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
-	{
-		/** Geometry definition. */
-		std::vector<Vecd> water_body_shape;
-		water_body_shape.push_back(Vecd(0.0, 0.0));
-		water_body_shape.push_back(Vecd(0.0, DH));
-		water_body_shape.push_back(Vecd(DL, DH));
-		water_body_shape.push_back(Vecd(DL, 0.0));
-		water_body_shape.push_back(Vecd(0.0, 0.0));
-		multi_polygon_.addAPolygon(water_body_shape, ShapeBooleanOps::add);
-	}
-};
-//----------------------------------------------------------------------
-//	Application dependent initial condition
-//----------------------------------------------------------------------
-class TaylorGreenInitialCondition
-	: public eulerian_compressible_fluid_dynamics::CompressibleFluidInitialCondition
-{
-public:
-	explicit TaylorGreenInitialCondition(SPHBody &sph_body)
-		: eulerian_compressible_fluid_dynamics::CompressibleFluidInitialCondition(sph_body){};
-
-	void update(size_t index_i, Real dt)
-	{
-		/** initial momentum and energy profile */
-		rho_[index_i] = rho0_f;
-		p_[index_i] = pow(c_f, 2) * rho_[index_i] / gamma_;
-		vel_[index_i][0] = -cos(2.0 * Pi * pos_[index_i][0]) *
-						   sin(2.0 * Pi * pos_[index_i][1]);
-		vel_[index_i][1] = sin(2.0 * Pi * pos_[index_i][0]) *
-						   cos(2.0 * Pi * pos_[index_i][1]);
-		mom_[index_i] = rho_[index_i] * vel_[index_i];
-		Real rho_e = p_[index_i] / (gamma_ - 1.0);
-		E_[index_i] = rho_e + 0.5 * rho_[index_i] * vel_[index_i].squaredNorm();
-	}
-};
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main(int ac, char *av[])
+int main(int ac, char* av[])
 {
 	//----------------------------------------------------------------------
 	//	Build up the environment of a SPHSystem.
@@ -82,7 +24,7 @@ int main(int ac, char *av[])
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	EulerianFluidBody water_body(sph_system, makeShared<WaterBlock>("WaterBody"));
-	water_body.defineParticlesAndMaterial<CompressibleFluidParticles, CompressibleFluid>(rho0_f, heat_capacity_ratio, mu_f);
+	water_body.defineParticlesAndMaterial<FluidParticles, CompressibleFluid>(rho0_f, heat_capacity_ratio, mu_f);
 	water_body.generateParticles<ParticleGeneratorLattice>();
 	//----------------------------------------------------------------------
 	//	Define body relation map.
@@ -90,6 +32,7 @@ int main(int ac, char *av[])
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
 	InnerRelation water_body_inner(water_body);
+	InteractionWithUpdate<KernalGredientWithCorrectionInner> kernel_gredient_update(water_body_inner);
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
@@ -97,19 +40,19 @@ int main(int ac, char *av[])
 	/** Initial condition with momentum and energy field */
 	SimpleDynamics<TaylorGreenInitialCondition> initial_condition(water_body);
 	/** Initialize a time step. */
-	SimpleDynamics<eulerian_compressible_fluid_dynamics::CompressibleFlowTimeStepInitialization> time_step_initialization(water_body);
+	SimpleDynamics<EulerianCompressibleTimeStepInitialization> time_step_initialization(water_body);
 	/** Periodic BCs in x direction. */
 	PeriodicConditionUsingCellLinkedList periodic_condition_x(water_body, water_body.getBodyShapeBounds(), xAxis);
 	/** Periodic BCs in y direction. */
 	PeriodicConditionUsingCellLinkedList periodic_condition_y(water_body, water_body.getBodyShapeBounds(), yAxis);
 	/** Time step size with considering sound wave speed. */
-	ReduceDynamics<eulerian_compressible_fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_body);
+	ReduceDynamics<EulerianCompressibleAcousticTimeStepSize> get_fluid_time_step_size(water_body);
 	/** Pressure relaxation algorithm by using verlet time stepping. */
 	/** Here, we can use HLLC with Limiter Riemann solver for pressure relaxation and density and energy relaxation  */
-	Dynamics1Level<eulerian_compressible_fluid_dynamics::Integration1stHalfHLLCWithLimiterRiemann> pressure_relaxation(water_body_inner);
-	InteractionWithUpdate<eulerian_compressible_fluid_dynamics::Integration2ndHalfHLLCWithLimiterRiemann> density_and_energy_relaxation(water_body_inner);
+	Dynamics1Level<Integration1stHalfHLLCWithLimiterRiemann> pressure_relaxation(water_body_inner);
+	InteractionWithUpdate<Integration2ndHalfHLLCWithLimiterRiemann> density_and_energy_relaxation(water_body_inner);
 	/** Computing viscous acceleration. */
-	InteractionDynamics<eulerian_compressible_fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_body_inner);
+	InteractionDynamics<EulerianCompressibleViscousAccelerationInner> viscous_acceleration(water_body_inner);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
@@ -130,6 +73,7 @@ int main(int ac, char *av[])
 	periodic_condition_y.update_cell_linked_list_.exec();
 	sph_system.initializeSystemConfigurations();
 	initial_condition.exec();
+	kernel_gredient_update.exec();
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
@@ -169,8 +113,8 @@ int main(int ac, char *av[])
 			if (number_of_iterations % screen_output_interval == 0)
 			{
 				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-						  << GlobalStaticVariables::physical_time_
-						  << "	dt = " << dt << "\n";
+					<< GlobalStaticVariables::physical_time_
+					<< "	dt = " << dt << "\n";
 			}
 			number_of_iterations++;
 		}
@@ -187,10 +131,10 @@ int main(int ac, char *av[])
 	TimeInterval tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds()
-		 << " seconds." << std::endl;
+		<< " seconds." << std::endl;
 
-	write_total_mechanical_energy.newResultTest();
-	write_maximum_speed.newResultTest();
+	write_total_mechanical_energy.testResult();
+	write_maximum_speed.testResult();
 
 	return 0;
 }

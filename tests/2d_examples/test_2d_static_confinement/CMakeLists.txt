@@ -13,29 +13,8 @@ SET(BUILD_INPUT_PATH "${EXECUTABLE_OUTPUT_PATH}/input")
 SET(BUILD_RELOAD_PATH "${EXECUTABLE_OUTPUT_PATH}/reload")
 
 file(MAKE_DIRECTORY ${BUILD_INPUT_PATH})
-execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/regression_test_tool.py
-        DESTINATION ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FluidObserver_Pressure_runtimes.dat
-        DESTINATION ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FluidObserver_Pressure_dtwdistance.xml
-        DESTINATION ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FluidObserver_Pressure_Run_0_result.xml
-        DESTINATION ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FluidObserver_Pressure_Run_6_result.xml
-        DESTINATION ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FluidObserver_Pressure_Run_11_result.xml
-        DESTINATION ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/WaterBody_TotalMechanicalEnergy_runtimes.dat
-        DESTINATION ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/WaterBody_TotalMechanicalEnergy_dtwdistance.xml
-        DESTINATION ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/WaterBody_TotalMechanicalEnergy_Run_0_result.xml
-        DESTINATION ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/WaterBody_TotalMechanicalEnergy_Run_6_result.xml
-        DESTINATION ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/WaterBody_TotalMechanicalEnergy_Run_11_result.xml
-        DESTINATION ${BUILD_INPUT_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/
+     DESTINATION ${BUILD_INPUT_PATH})
 
 aux_source_directory(. DIR_SRCS)
 ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})

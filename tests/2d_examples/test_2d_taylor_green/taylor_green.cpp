@@ -205,8 +205,8 @@ int main(int ac, char *av[])
 	}
 	else if (!sph_system.ReloadParticles())
 	{
-		write_total_mechanical_energy.newResultTest();
-		write_maximum_speed.newResultTest();
+		write_total_mechanical_energy.testResult();
+		write_maximum_speed.testResult();
 	}
 
 	return 0;

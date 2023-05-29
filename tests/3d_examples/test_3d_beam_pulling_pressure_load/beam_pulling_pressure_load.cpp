@@ -140,7 +140,7 @@ int main(int ac, char *av[])
 	SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> update_beam_normal(beam_body);
 
 	/** active and passive stress relaxation. */
-	Dynamics1Level<solid_dynamics::Integration1stHalf> stress_relaxation_first_half(beam_body_inner);
+	Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(beam_body_inner);
 	Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(beam_body_inner);
 
 	/** specify end-time for defining the force-time profile */
@@ -238,7 +238,7 @@ int main(int ac, char *av[])
 	}
 	else
 	{
-		write_beam_stress.newResultTest();
+		write_beam_stress.testResult();
 	}
 
 	return 0;
