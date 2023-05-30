@@ -7,7 +7,7 @@
 #include "execution_proxy.hpp"
 
 namespace SPH::execution {
-        template<class T, sycl::access_mode access_mode, typename=std::true_type>
+        template<class T, sycl::access_mode access_mode>
         class DeviceVariable {
             using VarType = std::remove_reference_t<T>;
         public:
