@@ -55,32 +55,32 @@ the difference of the field to position $i$, that is
 $\boldsymbol{r} \rightarrow \phi(\boldsymbol{r}) - \phi(\boldsymbol{r}_i)$,
 to obtain the same approximation of derivate.
 
-To obtain the formulation of Laplacian, similarly, 
-we first consider the identity
+To obtain the formulation of Laplacian, we first consider the relation
 
 $$
-2 d = -2 \int \boldsymbol{\eta}^2 F(\boldsymbol{\eta}) d \boldsymbol{\eta},
+\Delta \phi(\boldsymbol{r}) = 
+\boldsymbol{G}^2 : \nabla \nabla \phi(\boldsymbol{\eta}).
 $$
 
-where $d$ is the dimension and 
-$F(\boldsymbol{\eta}) = \frac{1}{\eta} \frac{\partial W}{\partial \eta}$.
-Again, the above equation can also be considered as 
-the kernel approximation of the Laplacian 
-$\Delta \boldsymbol{\eta}^2 = 2 d$.
-By introducing the transformation, one has 
+From Espanol and Revenga (2003), one has 
 
 $$
-2 d = -2 |\boldsymbol{G}| \boldsymbol{G} : \boldsymbol{G} 
-\int \boldsymbol{r}^2 F(\boldsymbol{\eta}) d \boldsymbol{r},
+\nabla \nabla \phi(\boldsymbol{\eta}) =
+\int \frac{\phi(\boldsymbol{0}) - \phi(\boldsymbol{\eta})}{\eta}
+\left[\frac{\boldsymbol{\eta}}{\eta} 
+\otimes \nabla W(\boldsymbol{\eta}) (d + 2)  
+- \boldsymbol{I}\frac{\boldsymbol{\eta}}{\eta} \cdot \nabla W(\boldsymbol{\eta}) \right] 
+d \boldsymbol{\eta}.
 $$
 
-then, with the similar substitution as for derivative
-$\boldsymbol{r}^2 \rightarrow \phi(\boldsymbol{r}) - \phi(\boldsymbol{r}_i)$, 
-the general approximation of Laplacian can be written as
+The final formulation of the Laplacian is 
 
 $$
-(\Delta \phi)_i = 2|\boldsymbol{G}| \boldsymbol{G} : \boldsymbol{G} 
-\int \frac{\phi(\boldsymbol{r}_i) - \phi(\boldsymbol{r})}{\eta} 
-\frac{\partial W}{\partial \eta} d \boldsymbol{r}.
+(\Delta \phi)_i = |\boldsymbol{G}| \boldsymbol{G}^2 : 
+\int \frac{\phi(\boldsymbol{r}_i) - \phi(\boldsymbol{r})}{\eta}
+\left[\frac{\boldsymbol{\eta}}{\eta} \otimes
+ \nabla W(\boldsymbol{\eta}) (d + 2)  
+- \boldsymbol{I}\frac{\boldsymbol{\eta}}{\eta} \cdot \nabla W(\boldsymbol{\eta}) \right] 
+d \boldsymbol{r}.
 $$
 
