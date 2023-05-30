@@ -105,13 +105,13 @@ int main(int ac, char *av[])
 	//---------------------------------------------------------
 	ObserverBody tp1(system, "TP1");
 	Real tp1x=1.-0.285;
-	Real tp1y=12.286+.35;
+	Real tp1y=12.286+.035;
 	Real tp1z=1.043;
 	StdVec<Vecd> tp1l={Vecd(tp1x, tp1y, tp1z)};
 	tp1.generateParticles<ObserverParticleGenerator>(tp1l);
 	ObserverBody tp2(system, "TP2");
 	Real tp2x=1.+0.04;
-	Real tp2y=12.286+.35;
+	Real tp2y=12.286+.035;
 	Real tp2z=1.043;
 	StdVec<Vecd> tp2l={Vecd(tp2x, tp2y, tp2z)};
 	tp2.generateParticles<ObserverParticleGenerator>(tp2l);
@@ -141,13 +141,13 @@ int main(int ac, char *av[])
 	fp4.generateParticles<ObserverParticleGenerator>(fp4l);
 	ObserverBody bp1(system, "BP1");
 	Real bp1x=1.-0.295;
-	Real bp1y=12.286+.35;
+	Real bp1y=12.286+.035;
 	Real bp1z=0.933;
 	StdVec<Vecd> bp1l={Vecd(bp1x, bp1y, bp1z)};
 	bp1.generateParticles<ObserverParticleGenerator>(bp1l);
 	ObserverBody bp2(system, "BP2");
 	Real bp2x=1.-0.04;
-	Real bp2y=12.286+.35;
+	Real bp2y=12.286+.035;
 	Real bp2z=0.933;
 	StdVec<Vecd> bp2l={Vecd(bp2x, bp2y, bp2z)};
 	bp2.generateParticles<ObserverParticleGenerator>(bp2l);
@@ -235,9 +235,6 @@ int main(int ac, char *av[])
 	SimTK::Body::Rigid fixed_spot_info(SimTK::MassProperties(1, SimTK::Vec3(0), SimTK::UnitInertia(1)));
 	/** mass properties of the structure. */
 	StructureSystemForSimbody structure_multibody(structure, makeShared<TriangleMeshShapeSTL>(stl_structure_path, translation_str, StructureScale));
-	/** Mass properties of the constrained spot.
-	  * SimTK::MassProperties(mass, center of mass, inertia)
-	*/
 	SimTK::Body::Rigid structure_info(*structure_multibody.body_part_mass_properties_);
 	/** Free mobilizer */
 	SimTK::MobilizedBody::Free tethered_strct(matter.Ground(), SimTK::Transform(SimTK::Vec3(translation_str[0],translation_str[1],translation_str[2])), structure_info, SimTK::Transform(SimTK::Vec3(0.0, 0.0, 0.0)));
@@ -258,7 +255,6 @@ int main(int ac, char *av[])
 	SimTK::MobilizedBody::Weld fixed_spotBL( matter.Ground(), SimTK::Transform( 	
 						SimTK::Vec3(ground_tethering_BL[0], ground_tethering_BL[1], ground_tethering_BL[2]) ),
 						fixed_spot_info, SimTK::Transform(SimTK::Vec3(0.0, 0.0, 0.0)) );
-
 	/*---------------------------------------------------------------------------*/
 	//A SEASIDE PILLARS; B PORTSIDE PILLARS
 	/*-----------------------------------------------------------------------------*/
@@ -477,8 +473,14 @@ int main(int ac, char *av[])
 				     wave_making.exec(dt);
 				}
 				interpolation_observer_position.exec();
+				interpolation_tp1_position.exec();
+				interpolation_tp2_position.exec();
+				interpolation_fp1_position.exec();
 				interpolation_fp2_position.exec();
 				interpolation_fp3_position.exec();
+				interpolation_fp4_position.exec();
+				interpolation_bp1_position.exec();
+				interpolation_bp2_position.exec();
 
 				relaxation_time += dt;
 				integral_time += dt;

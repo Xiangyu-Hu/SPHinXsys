@@ -11,13 +11,9 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real total_physical_time = 25.0; /**< TOTAL SIMULATION TIME*/
 Real DL = 20.0;			/**< Tank length. */
-Real DLW = 33.0;        /**< Water length. */
 Real DH = 1.5;			/**< Tank height. */
-Real WL = 20.0;			/**< Water block width. */
 Real DW =2.0;
 Real WH = 0.8;			/**< Water block height. */
-Real TB = 15.0;			/**< Beach start. */
-Real DB = 25.0;			/**< Beach end. */
 Real BEH = 2.0;			/**< Beach end height. */
 Real Wmk_p = 0.0;		/**< Wavemaker initial position. */
 Real EXS =2.0;			/**< etra space behind the wavemaker*/
@@ -38,11 +34,6 @@ Vec2d Wmak_lb(Wmk_p - Maker_width, 0.0);		/**< Left bottom. */
 Vec2d Wmak_lt(Wmk_p - Maker_width, 1.5); 		/**< Left top. */
 Vec2d Wmak_rt(Wmk_p , 1.5);				 		/**< Right top. */
 Vec2d Wmak_rb(Wmk_p , 0.0);					 	/**< Right bottom. */
-/* BEACH */
-Vec2d b1a(TB,0);								/**< beach start. */
-Vec2d bwh((WH)*10+TB,WH);						/**< water height at beach. */
-Vec2d b1b(25,1);								/**< beach end. */
-
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
