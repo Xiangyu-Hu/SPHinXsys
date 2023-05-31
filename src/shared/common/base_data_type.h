@@ -29,6 +29,7 @@
 #ifndef BASE_DATA_TYPE_H
 #define BASE_DATA_TYPE_H
 
+#include <math.h>
 #include <cmath>
 #include <iostream>
 #include <cassert>
