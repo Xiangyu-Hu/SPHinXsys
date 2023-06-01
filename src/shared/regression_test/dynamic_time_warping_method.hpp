@@ -46,6 +46,14 @@ namespace SPH
 			int window_size_ = 5;
 			int a_length = dataset_a_[observation_index].size();
 			int b_length = dataset_b_[observation_index].size();
+
+			if (b_length > 1.1 * a_length || b_length < 0.9 * a_length)
+            {
+				std::cout << "\n Error: please check the time step change, because the data length changed a lot !" << std::endl;
+                std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+                exit(1);
+			}
+
 			/** create a 2D vector with [a_length, b_length] to contain the local DTW distance value. */
 			DoubleVec<Real> local_dtw_distance(a_length, StdVec<Real>(b_length, 0));
 			local_dtw_distance[0][0] = calculatePNorm(dataset_a_[observation_index][0], dataset_b_[observation_index][0]);
@@ -66,7 +74,7 @@ namespace SPH
 	};
 	//=================================================================================================//
 	template<class ObserveMethodType>
-	void RegressionTestDynamicTimeWarping<ObserveMethodType>::setupTheTest()
+	void RegressionTestDynamicTimeWarping<ObserveMethodType>::setupTheTest(bool testing)
 	{
 		this->snapshot_ = this->current_result_.size();
 		this->observation_ = this->current_result_[0].size();
@@ -81,12 +89,19 @@ namespace SPH
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 			exit(1);
 		}
+
+		if ((this->number_of_run_ == 1) && (testing = true))
+        {
+            std::cout << "\n Error: there is no database but you are try to conduct the regression testing" << std::endl;
+            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+            exit(1);
+		}
 	};
 	//=================================================================================================//	
 	template<class ObserveMethodType>
 	void RegressionTestDynamicTimeWarping<ObserveMethodType>::readDTWDistanceFromXml()
 	{
-		if (this->number_of_run_ > 1)
+		if (this->number_of_run_ > 1) 
 		{
 			dtw_distance_xml_engine_in_.loadXmlFile(dtw_distance_filefullpath_);
 			SimTK::Xml::Element element_name_dtw_distance_ = dtw_distance_xml_engine_in_.root_element_;
