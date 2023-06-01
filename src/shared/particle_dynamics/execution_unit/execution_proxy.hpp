@@ -15,8 +15,7 @@ namespace SPH {
             ExecutionProxy(BaseT* base, KernelT* proxy) : base(base), kernel(proxy) {}
 
             template<class ExecutionPolicy = ParallelPolicy>
-            BaseT* get(const ExecutionPolicy& = par,
-                       std::enable_if_t<std::negation_v<std::is_same<ExecutionPolicy, ParallelSYCLDevicePolicy>>>* = nullptr) const {
+            BaseT* get(const ExecutionPolicy& = par) const {
                 return base;
             }
 
