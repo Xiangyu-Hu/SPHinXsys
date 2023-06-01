@@ -9,9 +9,8 @@
 namespace SPH::execution {
         template<class T, sycl::access_mode access_mode>
         class DeviceVariable {
-            using VarType = std::remove_reference_t<T>;
         public:
-            DeviceVariable(VarType* var_addr, std::size_t var_size) : var_buffer(var_addr, var_size){}
+            DeviceVariable(T& var_addr, std::size_t var_size) : var_buffer(&var_addr, var_size){}
 
             auto get_device_memory_access(sycl::handler& cgh) {
                 return var_buffer.template get_access<access_mode>(cgh);
@@ -22,7 +21,7 @@ namespace SPH::execution {
             }
 
         private:
-            sycl::buffer<VarType , 1> var_buffer;
+            sycl::buffer<T, 1> var_buffer;
         };
 
         template<typename BaseT, typename KernelT, typename ...DeviceVariables>
