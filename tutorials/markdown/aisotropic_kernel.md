@@ -59,9 +59,10 @@ To obtain the formulation of Laplacian, we first consider the relation
 
 $$
 \Delta \phi(\boldsymbol{r}) = 
-\boldsymbol{G}^2 : \nabla \nabla \phi(\boldsymbol{\eta}).
+\text{Tr}[  \nabla \boldsymbol{D} \nabla \phi(\boldsymbol{\eta})],
 $$
 
+where $\boldsymbol{D} = \boldsymbol{G} \boldsymbol{G}^T$.
 From Espanol and Revenga (2003), one has 
 
 $$
@@ -76,11 +77,47 @@ $$
 The final formulation of the Laplacian is 
 
 $$
-(\Delta \phi)_i = |\boldsymbol{G}| \boldsymbol{G}^2 : 
+(\Delta \phi)_i = |\boldsymbol{G}|  
 \int \frac{\phi(\boldsymbol{r}_i) - \phi(\boldsymbol{r})}{\eta}
-\left[\frac{\boldsymbol{\eta}}{\eta} \otimes
- \nabla W(\boldsymbol{\eta}) (d + 2)  
-- \boldsymbol{I}\frac{\boldsymbol{\eta}}{\eta} \cdot \nabla W(\boldsymbol{\eta}) \right] 
-d \boldsymbol{r}.
+\left[ \boldsymbol{D}: 
+\frac{\boldsymbol{\eta}}{\eta}\frac{\boldsymbol{\eta}}{\eta}
+(d + 2)  - \text{Tr}(\boldsymbol{D}) 
+\frac{\boldsymbol{\eta}}{\eta} \cdot \frac{\boldsymbol{\eta}}{\eta} \right] 
+\frac{\partial W}{\partial \eta}  d \boldsymbol{r}.
 $$
+
+The discretized form is
+
+$$
+(\Delta \phi)_i = |\boldsymbol{G}|  
+\sum_j \frac{\phi_{ij}}{\eta_{ij}}
+\left[ \boldsymbol{D}: 
+\boldsymbol{e}_{ij} \boldsymbol{e}_{ij}
+(d + 2)  - \text{Tr}(\boldsymbol{D}) 
+\boldsymbol{e}_{ij} \cdot \boldsymbol{e}_{ij} \right] 
+\frac{\partial W_{ij}}{\partial \eta_{ij}} V_j,
+$$
+
+where $\boldsymbol{e}_{ij} = \boldsymbol{\eta}_{ij}/\eta_{ij}$.
+To increase numerical accuracy, one can introduce the correction matrix
+
+$$
+\boldsymbol{B}_i = - \left(|\boldsymbol{G}|\sum_j 
+\boldsymbol{\eta}_{ij} \boldsymbol{e}_{ij} 
+\frac{\partial W_{ij}}{\partial \eta_{ij}} V_j \right)^{-1},
+$$
+
+so that 
+
+$$
+(\Delta \phi)_i = |\boldsymbol{G}|  
+\sum_j \frac{\phi_{ij}}{\eta_{ij}}
+\left[ \boldsymbol{D}: 
+\boldsymbol{e}_{ij} \overline{\boldsymbol{B}}_{ij} \boldsymbol{e}_{ij}
+(d + 2)  - \text{Tr}(\boldsymbol{D}) 
+\boldsymbol{e}_{ij} \cdot \overline{\boldsymbol{B}}_{ij} \boldsymbol{e}_{ij} \right] 
+\frac{\partial W_{ij}}{\partial \eta_{ij}} V_j,
+$$
+
+where $\overline{\boldsymbol{B}}_{ij} = (\boldsymbol{B}_{i} + \boldsymbol{B}_{j})/2$ is the inter-particle average of the correction matrix. 
 
