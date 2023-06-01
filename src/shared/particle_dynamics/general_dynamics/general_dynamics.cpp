@@ -6,11 +6,13 @@ namespace SPH
 	//=================================================================================================//
 	TimeStepInitialization::TimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> gravity_ptr)
 		: BaseTimeStepInitialization(sph_body, gravity_ptr), GeneralDataDelegateSimple(sph_body),
-		  pos_(particles_->pos_), acc_prior_(particles_->acc_prior_) {}
+		  pos_(particles_->pos_), acc_prior_(particles_->acc_prior_), pos_device(pos_.data(), pos_.size()),
+          acc_prior_device(acc_prior_.data(), acc_prior_.size()),
+          device_proxy(this, pos_device, acc_prior_device, gravity_->getDeviceProxy()) {}
 	//=================================================================================================//
 	void TimeStepInitialization::update(size_t index_i, Real dt)
 	{
-		acc_prior_[index_i] = gravity_->InducedAcceleration(pos_[index_i]);
+        TimeStepInitializationKernel::update(index_i, dt, acc_prior_.data(), pos_.data(), *gravity_);
 	}
 	//=================================================================================================//
 	RandomizeParticlePosition::RandomizeParticlePosition(SPHBody &sph_body)

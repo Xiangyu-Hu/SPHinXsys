@@ -32,6 +32,8 @@
 #include "base_data_package.h"
 #include "sph_data_containers.h"
 #include "execution_policy.h"
+#include "execution_unit/execution_proxy.hpp"
+#include "execution_unit/execution_queue.hpp"
 
 namespace SPH
 {
@@ -73,6 +75,24 @@ namespace SPH
 			},
 			ap);
 	};
+
+    template <class LocalDynamicsFunction, class Proxy>
+    inline void particle_for(const ParallelPolicy &par_policy, const size_t &all_real_particles,
+                             const LocalDynamicsFunction &local_dynamics_function, Proxy& proxy)
+    {
+        auto& kernel = *proxy.get(par_policy);
+        parallel_for(
+                IndexRange(0, all_real_particles),
+                [&](const IndexRange &r)
+                {
+                    for (size_t i = r.begin(); i < r.end(); ++i)
+                    {
+                        local_dynamics_function(i, kernel);
+                    }
+                },
+                ap);
+    }
+
 	/**
 	 * Bodypart By Particle-wise iterators (for sequential and parallel computing).
 	 */
@@ -135,6 +155,28 @@ namespace SPH
 			},
 			ap);
 	};
+
+    template <class LocalDynamicsFunction, class Proxy>
+    inline void particle_for(const ParallelPolicy &par_policy, const ConcurrentCellLists &body_part_cells,
+                             const LocalDynamicsFunction &local_dynamics_function, Proxy& proxy)
+    {
+        auto& kernel = *proxy.get(par_policy);
+        parallel_for(
+                IndexRange(0, body_part_cells.size()),
+                [&](const IndexRange &r)
+                {
+                    for (size_t i = r.begin(); i < r.end(); ++i)
+                    {
+                        ConcurrentIndexVector &particle_indexes = *body_part_cells[i];
+                        for (size_t num = 0; num < particle_indexes.size(); ++num)
+                        {
+                            local_dynamics_function(particle_indexes[num], kernel);
+                        }
+                    }
+                },
+                ap);
+    }
+
 	/**
 	 * BodypartByCell-wise iterators on cells (for sequential and parallel computing).
 	 */
@@ -242,6 +284,26 @@ namespace SPH
 		}
 	}
 
+    template <class LocalDynamicsFunction, class Proxy>
+    inline void particle_for(const ParallelSYCLDevicePolicy & sycl_policy, const size_t &all_real_particles,
+                             const LocalDynamicsFunction &local_dynamics_function, Proxy& proxy)
+    {
+        try {
+            auto &sycl_queue = ExecutionQueue::getQueue();
+            auto& kernel = *proxy.get(sycl_policy);
+            sycl_queue.submit([&](sycl::handler &cgh) {
+                proxy.init_memory_access(Context<ParallelSYCLDevicePolicy>(cgh));
+                cgh.parallel_for(all_real_particles, [=](sycl::item<1> index) {
+                    auto i = index.get_id();
+                    local_dynamics_function(i, typename Proxy::Kernel(kernel));
+                });
+            });
+            sycl_queue.wait_and_throw();
+        } catch (const sycl::exception &error) {
+            std::cerr << error.what() << std::endl;
+        }
+    }
+
 	template <class ExecutionPolicy, typename DynamicsRange, class ReturnType,
 			  typename Operation, class LocalDynamicsFunction>
 	void particle_reduce(const ExecutionPolicy &execution_policy, const DynamicsRange &dynamics_range,
@@ -286,6 +348,52 @@ namespace SPH
 				return operation(x, y);
 			});
 	};
+
+    template <class ReturnType, typename Operation, class LocalDynamicsFunction, class Proxy>
+    inline ReturnType particle_reduce(const ParallelPolicy &par_policy, const size_t &all_real_particles,
+                                      ReturnType identity, Operation &operation,
+                                      const LocalDynamicsFunction &local_dynamics_function, Proxy& proxy)
+    {
+        auto& kernel = *proxy.get(par_policy);
+        return parallel_reduce(
+                IndexRange(0, all_real_particles),
+                identity, [&](const IndexRange &r, ReturnType temp0) -> ReturnType
+                {
+                    for (size_t i = r.begin(); i != r.end(); ++i)
+                    {
+                        temp0 = operation(temp0, local_dynamics_function(i, kernel));
+                    }
+                    return temp0; },
+                [&](const ReturnType &x, const ReturnType &y) -> ReturnType
+                {
+                    return operation(x, y);
+                });
+    };
+
+    template <class ReturnType, typename Operation, class LocalDynamicsFunction, class Proxy>
+    inline ReturnType particle_reduce(const ParallelSYCLDevicePolicy &sycl_policy, const size_t &all_real_particles,
+                                      ReturnType identity, Operation&,
+                                      const LocalDynamicsFunction &local_dynamics_function, Proxy& proxy)
+    {
+        ReturnType result = identity;
+        auto& kernel = *proxy.get(sycl_policy);
+        try {
+            auto &sycl_queue = ExecutionQueue::getQueue();
+            sycl::buffer<ReturnType> buffer_result(&result, 1);
+            sycl_queue.submit([&](sycl::handler &cgh) {
+                proxy.init_memory_access(Context<ParallelSYCLDevicePolicy>(cgh));
+                auto reduction_operator = sycl::reduction(buffer_result, cgh, typename Operation::SYCLOp());
+                cgh.parallel_for(sycl::range(all_real_particles), reduction_operator, [=](sycl::id<1> idx, auto& reduction) {
+                    reduction.combine(local_dynamics_function(idx, typename Proxy::Kernel(kernel)));
+                });
+            });
+            sycl_queue.wait_and_throw();
+        } catch (const sycl::exception &error) {
+            std::cerr << error.what() << std::endl;
+        }
+        return result;
+    }
+
 	/**
 	 * BodypartByParticle-wise reduce iterators (for sequential and parallel computing).
 	 */

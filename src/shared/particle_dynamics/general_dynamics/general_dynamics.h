@@ -35,6 +35,7 @@
 #include "external_force.h"
 
 #include <limits>
+#include <tuple>
 
 namespace SPH
 {
@@ -61,6 +62,35 @@ namespace SPH
 		virtual ~BaseTimeStepInitialization(){};
 	};
 
+
+    class TimeStepInitializationKernel {
+    public:
+        template<class AccPriorType, class PosType, class GravityType>
+        static void update(size_t index_i, Real dt, AccPriorType acc_prior, PosType pos, GravityType&& gravity)
+        {
+            acc_prior[index_i] = gravity.InducedAcceleration(pos[index_i]);
+        }
+
+        void update(size_t index_i, Real dt)
+        {
+            update(index_i, dt, acc_prior_accessor, pos_accessor, gravity_);
+        }
+
+        void setAccessors(std::tuple<sycl::accessor<Vecd, 1, sycl::access_mode::write>,
+                          sycl::accessor<Vecd, 1, sycl::access_mode::write>,
+                          GravityKernel> &&accessors) {
+            pos_accessor.swap(std::get<0>(accessors));
+            acc_prior_accessor.swap(std::get<1>(accessors));
+            gravity_ = std::get<2>(accessors);
+        }
+
+    private:
+        sycl::accessor<Vecd, 1, sycl::access_mode::write> pos_accessor;
+        sycl::accessor<Vecd, 1, sycl::access_mode::write> acc_prior_accessor;
+        GravityKernel gravity_;
+    };
+
+
 	/**
 	 * @class TimeStepInitialization
 	 * @brief initialize a time step for a body.
@@ -72,11 +102,29 @@ namespace SPH
 	protected:
 		StdLargeVec<Vecd> &pos_, &acc_prior_;
 
+        DeviceVariable<Vecd, sycl::access_mode::write> pos_device;
+        DeviceVariable<Vecd, sycl::access_mode::write> acc_prior_device;
+        DeviceProxy<TimeStepInitialization, TimeStepInitializationKernel,
+                    decltype(pos_device), decltype(acc_prior_device), Gravity::Proxy> device_proxy;
+
 	public:
 		TimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd::Zero()));
 		virtual ~TimeStepInitialization(){};
 
 		void update(size_t index_i, Real dt = 0.0);
+
+        auto& getDeviceProxy() {
+            return device_proxy;
+        }
+
+        void writeBack() {
+            auto host_acc_prior = acc_prior_device.get_host_memory_access();
+            for (int i = 0; i < acc_prior_.size(); ++i) {
+                acc_prior_[i] = host_acc_prior[i];
+            }
+        }
+
+        using Proxy = decltype(device_proxy);
 	};
 
 	/**

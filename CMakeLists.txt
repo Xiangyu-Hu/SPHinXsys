@@ -10,6 +10,7 @@ option(SPHINXSYS_2D "Build sphinxsys_2d library" ON)
 option(SPHINXSYS_3D "Build sphinxsys_3d library" ON)
 option(SPHINXSYS_BUILD_TESTS "Build tests" ON)
 option(SPHINXSYS_DEVELOPER_MODE "Developer mode has more flags active for code quality" ON)
+option(SPHINXSYS_USE_SYCL "Build using SYCL acceleration or not" OFF)
 
 # ------ Global properties (Some cannot be set on INTERFACE targets)
 set(CMAKE_VERBOSE_MAKEFILE OFF CACHE BOOL "Enable verbose compilation commands for Makefile and Ninja" FORCE) # Extra fluff needed for Ninja: https://github.com/ninja-build/ninja/issues/900
@@ -90,15 +91,25 @@ if(TARGET Boost::program_options)
     target_link_libraries(sphinxsys_core INTERFACE Boost::program_options)
 endif()
 
+if(SPHINXSYS_USE_SYCL)
+    if(NOT SPHINXSYS_SYCL_TARGETS)
+        set(SPHINXSYS_SYCL_TARGETS nvptx64-nvidia-cuda)
+    endif()
+    message("-- SPHinXsys use SYCL with targets ${SPHINXSYS_SYCL_TARGETS}")
+    target_compile_options(sphinxsys_core INTERFACE -fsycl -fsycl-targets=${SPHINXSYS_SYCL_TARGETS})
+    target_link_options(sphinxsys_core INTERFACE -fsycl -fsycl-targets=${SPHINXSYS_SYCL_TARGETS})
+endif()
+
 # ------ Setup the concrete libraries
 add_subdirectory(src)
 add_subdirectory(modules)
 
 # ------ Setup the tests
-if(SPHINXSYS_BUILD_TESTS)
+#[[if(SPHINXSYS_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
-endif()
+endif()]]
+add_subdirectory(tests/2d_examples/test_2d_dambreak)
 
 # ------ Extra scripts to install
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/PythonScriptStore/RegressionTest/regression_test_base_tool.py

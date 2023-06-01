@@ -30,7 +30,11 @@
 #ifndef EXTERNAL_FORCE_H
 #define EXTERNAL_FORCE_H
 
+#include <memory>
+
 #include "base_data_package.h"
+#include "execution_unit/execution_proxy.hpp"
+#include "execution_unit/execution_argument.hpp"
 
 namespace SPH {
 	/**
@@ -46,6 +50,27 @@ namespace SPH {
 		virtual Vecd InducedAcceleration(Vecd& position) = 0;
 	};
 
+    using namespace execution;
+
+    class GravityKernel {
+    public:
+        template<class GlobalAccelerationType>
+        static Vecd InducedAcceleration(Vecd& position, GlobalAccelerationType global_acceleration) {
+            return global_acceleration;
+        }
+
+        Vecd InducedAcceleration(Vecd& position) {
+            return InducedAcceleration(position, global_acceleration_accessor[0]);
+        }
+
+        void setAccessors(const std::tuple<sycl::accessor<Vecd, 1, sycl::access_mode::read>> &accessors) {
+            global_acceleration_accessor = std::get<0>(accessors);
+        }
+
+    private:
+        sycl::accessor<Vecd, 1, sycl::access_mode::read> global_acceleration_accessor;
+    };
+
 	/**
 	 * @class Gravity
 	 * @brief The gravity force, derived class of External force.
@@ -55,6 +80,10 @@ namespace SPH {
 	protected:
 		Vecd global_acceleration_;
 		Vecd zero_potential_reference_;
+
+        DeviceVariable<Vecd, sycl::access_mode::read> global_acceleration_device;
+        DeviceProxy<Gravity, GravityKernel, decltype(global_acceleration_device)> device_proxy;
+
 	public:
 		Gravity(Vecd gravity_vector, Vecd reference_position = Vecd::Zero());
 		virtual ~Gravity() {};
@@ -62,6 +91,12 @@ namespace SPH {
 		/** This function can be used for runtime control of external force. */
 		virtual Vecd InducedAcceleration(Vecd& position) override;
 		Real getPotential(Vecd& position);
+
+        auto& getDeviceProxy() {
+            return device_proxy;
+        }
+
+        using Proxy = decltype(device_proxy);
 	};
 }
 #endif //EXTERNAL_FORCE_H

@@ -53,6 +53,7 @@
 #include "base_local_dynamics.h"
 #include "base_particle_dynamics.hpp"
 #include "particle_iterators.h"
+#include "execution_unit/execution_argument.hpp"
 
 #include <type_traits>
 
@@ -94,14 +95,14 @@ using namespace execution;
  * @class SimpleDynamics
  * @brief Simple particle dynamics without considering particle interaction
  */
-template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
+template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy, template<class> class Dispatcher = NoDispatcher>
 class SimpleDynamics : public LocalDynamicsType, public BaseDynamics<void>
 {
   public:
     template <class DynamicsIdentifier, typename... Args>
     SimpleDynamics(DynamicsIdentifier &identifier, Args &&...args)
         : LocalDynamicsType(identifier, std::forward<Args>(args)...),
-          BaseDynamics<void>(identifier.getSPHBody())
+          BaseDynamics<void>(identifier.getSPHBody()), dispatcher(this)
     {
         static_assert(!has_initialize<LocalDynamicsType>::value &&
                           !has_interaction<LocalDynamicsType>::value,
@@ -113,18 +114,24 @@ class SimpleDynamics : public LocalDynamicsType, public BaseDynamics<void>
     {
         this->setUpdated();
         this->setupDynamics(dt);
-        particle_for(ExecutionPolicy(),
+        auto executionPolicy = ExecutionPolicy();
+        particle_for(executionPolicy,
                      this->identifier_.LoopRange(),
-                     [&](size_t i)
-                     { this->update(i, dt); });
-    };
+                     [=](size_t i, auto&& kernel)
+                     { kernel.update(i, dt); },
+                     dispatcher.getProxy());
+        dispatcher.writeBack();
+    }
+
+  private:
+        Dispatcher<LocalDynamicsType> dispatcher;
 };
 
 /**
  * @class ReduceDynamics
  * @brief Template class for particle-wise reduce operation, summation, max or min.
  */
-template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
+template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy, template<class> class Dispatcher = NoDispatcher>
 class ReduceDynamics : public LocalDynamicsType,
                        public BaseDynamics<typename LocalDynamicsType::ReduceReturnType>
 
@@ -135,7 +142,7 @@ class ReduceDynamics : public LocalDynamicsType,
     template <class DynamicsIdentifier, typename... Args>
     ReduceDynamics(DynamicsIdentifier &identifier, Args &&...args)
         : LocalDynamicsType(identifier, std::forward<Args>(args)...),
-          BaseDynamics<ReturnType>(identifier.getSPHBody()){};
+          BaseDynamics<ReturnType>(identifier.getSPHBody()), dispatcher(this) {};
     virtual ~ReduceDynamics(){};
 
     using ReduceReturnType = ReturnType;
@@ -145,12 +152,15 @@ class ReduceDynamics : public LocalDynamicsType,
     virtual ReturnType exec(Real dt = 0.0) override
     {
         this->setupDynamics(dt);
-        ReturnType temp = particle_reduce(ExecutionPolicy(),
+        ReturnType temp = particle_reduce(executionPolicy,
                                           this->identifier_.LoopRange(), this->Reference(), this->getOperation(),
-                                          [&](size_t i) -> ReturnType
-                                          { return this->reduce(i, dt); });
+                                          [=](size_t i, auto&& kernel) -> ReturnType
+                                          { return kernel.reduce(i, dt); }, dispatcher.getProxy());
         return this->outputResult(temp);
-    };
+    }
+  private:
+    Dispatcher<LocalDynamicsType> dispatcher;
+    ExecutionPolicy executionPolicy;
 };
 
 /**
