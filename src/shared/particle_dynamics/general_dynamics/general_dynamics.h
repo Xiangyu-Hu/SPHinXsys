@@ -66,7 +66,7 @@ namespace SPH
     class TimeStepInitializationKernel {
     public:
         template<class AccPriorType, class PosType, class GravityType>
-        static void update(size_t index_i, Real dt, AccPriorType acc_prior, PosType pos, GravityType&& gravity)
+        static void update(size_t index_i, Real dt, AccPriorType&& acc_prior, PosType&& pos, GravityType&& gravity)
         {
             acc_prior[index_i] = gravity.InducedAcceleration(pos[index_i]);
         }
