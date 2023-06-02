@@ -224,7 +224,7 @@ namespace SPH
         class AdvectionTimeStepSizeForImplicitViscosityKernel {
         public:
             template<class VelType, class SquareNormFunction>
-            static Real reduce(size_t index_i, Real dt, VelType vel, SquareNormFunction squareNorm) {
+            static Real reduce(size_t index_i, Real dt, VelType&& vel, SquareNormFunction&& squareNorm) {
                 return squareNorm(vel[index_i]);
             }
 
