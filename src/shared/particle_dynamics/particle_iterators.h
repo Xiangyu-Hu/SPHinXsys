@@ -351,7 +351,7 @@ namespace SPH
 
     template <class ReturnType, typename Operation, class LocalDynamicsFunction, class Proxy>
     inline ReturnType particle_reduce(const ParallelPolicy &par_policy, const size_t &all_real_particles,
-                                      ReturnType identity, Operation &operation,
+                                      ReturnType identity, Operation &&operation,
                                       const LocalDynamicsFunction &local_dynamics_function, Proxy& proxy)
     {
         auto& kernel = *proxy.get(par_policy);
@@ -372,7 +372,7 @@ namespace SPH
 
     template <class ReturnType, typename Operation, class LocalDynamicsFunction, class Proxy>
     inline ReturnType particle_reduce(const ParallelSYCLDevicePolicy &sycl_policy, const size_t &all_real_particles,
-                                      ReturnType identity, Operation&,
+                                      ReturnType identity, Operation&&,
                                       const LocalDynamicsFunction &local_dynamics_function, Proxy& proxy)
     {
         ReturnType result = identity;
@@ -382,7 +382,7 @@ namespace SPH
             sycl::buffer<ReturnType> buffer_result(&result, 1);
             sycl_queue.submit([&](sycl::handler &cgh) {
                 proxy.init_memory_access(Context<ParallelSYCLDevicePolicy>(cgh));
-                auto reduction_operator = sycl::reduction(buffer_result, cgh, typename Operation::SYCLOp());
+                auto reduction_operator = sycl::reduction(buffer_result, cgh, typename std::remove_reference_t<Operation>::SYCLOp());
                 cgh.parallel_for(sycl::range(all_real_particles), reduction_operator, [=](sycl::id<1> idx, auto& reduction) {
                     reduction.combine(local_dynamics_function(idx, typename Proxy::Kernel(kernel)));
                 });
