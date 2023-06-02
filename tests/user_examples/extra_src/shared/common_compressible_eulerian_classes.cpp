@@ -15,8 +15,8 @@ namespace SPH
 		dE_dt_prior_[index_i] = rho_[index_i] * (gravity_->InducedAcceleration(pos_[index_i])).dot(vel_[index_i]);
 	}
 	//=================================================================================================//
-	EulerianCompressibleAcousticTimeStepSize::EulerianCompressibleAcousticTimeStepSize(SPHBody& sph_body)
-		: AcousticTimeStepSize(sph_body), rho_(particles_->rho_), p_(particles_->p_), vel_(particles_->vel_),
+	EulerianCompressibleAcousticTimeStepSize::EulerianCompressibleAcousticTimeStepSize(SPHBody& sph_body, Real CFL)
+		: AcousticTimeStepSize(sph_body, CFL), rho_(particles_->rho_), p_(particles_->p_), vel_(particles_->vel_),
 		smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()), compressible_fluid_(CompressibleFluid(1.0, 1.4)) {};
 	//=================================================================================================//
 	Real EulerianCompressibleAcousticTimeStepSize::reduce(size_t index_i, Real dt)
@@ -26,7 +26,7 @@ namespace SPH
 	//=================================================================================================//
 	Real EulerianCompressibleAcousticTimeStepSize::outputResult(Real reduced_value)
 	{
-		return 0.6 / Dimensions * smoothing_length_ / (reduced_value + TinyReal);
+		return acousticCFL_ / Dimensions * smoothing_length_ / (reduced_value + TinyReal);
 	}
 	//=================================================================================================//
 	HLLCRiemannSolver::HLLCRiemannSolver(CompressibleFluid& compressible_fluid_i, CompressibleFluid& compressible_fluid_j)
