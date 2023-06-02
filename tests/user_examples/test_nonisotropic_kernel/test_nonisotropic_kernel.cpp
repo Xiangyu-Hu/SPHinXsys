@@ -1,95 +1,94 @@
-#include <gtest/gtest.h>
-#include "base_kernel_includes_nonisotropic.h"
-#include "anisotropic_kernel.h"
 #include "anisotropic_kernel.hpp"
+#include "base_kernel_includes_nonisotropic.h"
 #include "kernel_wenland_c2_anisotropic.h"
 #include "sphinxsys.h"
+#include <gtest/gtest.h>
 
 using namespace SPH;
 
+Real getLinearProfile(const Vecd &input)
+{
+    return input.dot(Vecd::Ones());
+}
+
+Mat2d A{
+    {0.0, 0.0},   // First row
+    {0.0, 100.0}, // Second row
+};
+
+Real getQuadraticProfile(const Vecd &input)
+{
+    return (A * input * input.transpose()).trace();
+}
+
 TEST(test_anisotropic_kernel, test_Laplacian)
 {
-	int y_num = 10; // particle number in y direction
-	Real PH = 1.0; // domain size PH , PL
-	Real ratio_ = 4.0; //  dp_x /dp_y
-	Real PL = ratio_* PH;
+    Real PH = 1.0;                            // domain size in y direction
+    Real ratio = 1.0;                         // dp_x / dp_y
+    Real PL = ratio * PH;                     // domain size in x direction
+    int y_num = 50;                           // particle number in y direction
+    Real resolution_y = PH / Real(y_num);     // resolution in y direction
+    Real resolution_x = ratio * resolution_y; // resolution in x direction
+    int x_num = PL / resolution_x;            // Particle number in x direction , the same as particle number in y direction
 
-	Vec2d scaling_vector = Vec2d(1.0, 1.0 / ratio_);    // For tensor
-	Real resolution_ref = PH / Real(y_num);             //resolution in y direction
-	Real resolution_ref_large = ratio_ * resolution_ref;       //resolution in x direction
-	Real V_ = resolution_ref * resolution_ref_large;            // Particle volume 
-	Vec2d center = Vec2d(resolution_ref_large * 5.0, resolution_ref * 5.0);   // Particle i location 
+    Vecd scaling_vector(1.0, 1.0 / ratio); // in x and y directions
+    AnisotropicKernel<Anisotropic::KernelWendlandC2>
+        wendland(1.15 * resolution_x, scaling_vector, Vecd(0.0, 0.0)); // no rotation introduced
 
-	int x_num = PL / resolution_ref_large;     // Particle number in x direction , the same as particle number in y direction
- 
- 	AnisotropicKernel<Anisotropic::KernelWendlandC2>  
- 	    wendland(1.15 * resolution_ref_large, scaling_vector,  Vec2d(0.0, 0.0));
- 	 
+    Mat2d transform_tensor = wendland.getCoordinateTransformationTensorG(scaling_vector, Vecd(0.0, 0.0)); // tensor
 
-	Mat2d transform_tensor_ = wendland.getCoordinateTransformationTensorG(scaling_vector,  Vec2d(0.0, 0.0));  // tensor
+    Mat2d tensor_D = transform_tensor * transform_tensor.transpose();
 
-    Mat2d Tensor_D = transform_tensor_ * transform_tensor_.transpose();
-	Real trace_D = Tensor_D.trace();
+    std::cout << transform_tensor << std::endl;
 
-	std::cout<< transform_tensor_<< std::endl;
+    Real predicted_kernel_integral = 0.0;
+    Vecd predicted_gradient = Vecd(0.0, 0.0);
+    Real predicted_laplacian = 0.0;
 
+    Vecd pos_i = Vecd(resolution_x * 5.0, resolution_y * 5.0); // Particle i location
+    Real V = resolution_y * resolution_x;                      // Particle volume
+    for (int i = 0; i < (x_num + 1); i++)
+    {
+        for (int j = 0; j < (y_num + 1); j++)
+        {
+            Vecd pos_j(i * resolution_x, j * resolution_y);
+            Vecd displacement = pos_i - pos_j;
+            Real distance_ = displacement.norm();
 
-	Real sum = 0.0;
-	Vec2d first_order_rate = Vec2d(0.0, 0.0);
-	Real second_order_rate =  0.0;
+            Real linear_profile = getLinearProfile(pos_j);
+            Real linear_profile_pos_i = getLinearProfile(pos_i);
 
-	 for (int i = 0; i < (x_num + 1); i++)
-	{
-		for (int j = 0; j < (y_num + 1); j++)
-		{
-			Real x = i * resolution_ref_large;
-			Real y = j * resolution_ref;
-			Vec2d displacement =  center - Vec2d(x, y) ;
-			Real distance_ = displacement.norm();
+            Real parabolic_profile = getQuadraticProfile(pos_j);
+            Real parabolic_profile_pos_i = getQuadraticProfile(pos_i);
 
-			Real  sarutration_first_order =  y + x ;
-			Real  sarutration_first_order_center =  center[1] + center[0];
+            // if within cutoff radius
+            if (wendland.checkIfWithinCutOffRadius(displacement))
+            {
+                predicted_kernel_integral += wendland.W(distance_, displacement) * V;
+                Vecd eij_dwij_V = wendland.e(distance_, displacement) * wendland.dW(distance_, displacement) * V;
+                predicted_gradient -= (linear_profile_pos_i - linear_profile) * eij_dwij_V;
 
-			Real  sarutration_x = x * x  ;
-			Real  sarutration_center_x = center[0] *  center[0];
-		 
-		 // if withincutoffradius
-			if (wendland.checkIfWithinCutOffRadius(displacement)) 
-			{
-				Vec2d  eij_dwij_V = wendland.e(distance_, displacement)* wendland.dW(distance_, displacement) * V_;
-              	sum += wendland.W(distance_, displacement)* V_;
-				first_order_rate -= (sarutration_first_order_center - sarutration_first_order)* eij_dwij_V;
+                Vecd isotropic_displacement = transform_tensor * displacement;
+                Vecd isotropic_eij = isotropic_displacement / (isotropic_displacement.norm() + TinyReal);
 
+                Matd eij_tensor = isotropic_eij * isotropic_eij.transpose();
+                Real weight_ = (tensor_D * ((Real(Dimensions) + 2.0) * eij_tensor - Mat2d::Identity())).trace();
 
+                // tensor.det has already been added in factor_dw_2d in  dW(distance_, displacement), so there is no tensor.det
+                predicted_laplacian += (parabolic_profile_pos_i - parabolic_profile) / (isotropic_displacement.norm() + TinyReal) *
+                                       weight_ * V * wendland.dW(distance_, displacement);
+            }
+        }
+    }
 
-                Vec2d   isotropic_displacement = transform_tensor_ * displacement;
-                Vec2d   isotropic_eij = isotropic_displacement / (isotropic_displacement.norm()+ TinyReal);
-				
-				// eij cross product, it seems cross() function can only be used in three dimensions
-                Mat2d  eij_tensor =   Mat2d ({{isotropic_eij[0] * isotropic_eij[0], isotropic_eij[0] * isotropic_eij[1]}, 
-				 							{isotropic_eij[1] * isotropic_eij[0], isotropic_eij[1] * isotropic_eij[1]}});
-
-	 
-	 			Real weight_ =  (Tensor_D *  eij_tensor).trace()* (2.0 + 2.0) - trace_D ;
-              
-			    // tensor.det has already been added in factor_dw_2d in  dW(distance_, displacement), so there is no tensor.det
-				second_order_rate +=  (sarutration_center_x  - sarutration_x) 
-									 /(isotropic_displacement.norm()+ TinyReal)  * weight_
-					 				* V_ * wendland.dW(distance_, displacement); 
-			
-			}		
-		}
-
-	}
-
-	EXPECT_EQ(1.0, sum); 
-	EXPECT_EQ(1.0, first_order_rate[0]);
-	EXPECT_EQ(1.0, first_order_rate[1]);
-	EXPECT_EQ(2.0, second_order_rate);
+    EXPECT_EQ(1.0, predicted_kernel_integral);
+    EXPECT_EQ(1.0, predicted_gradient[0]);
+    EXPECT_EQ(1.0, predicted_gradient[1]);
+    EXPECT_EQ(2.0 * A.trace(), predicted_laplacian);
 }
- 
-int main(int argc, char* argv[])
-{	
-	testing::InitGoogleTest(&argc, argv);
-	return RUN_ALL_TESTS();
+
+int main(int argc, char *argv[])
+{
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }
