@@ -233,7 +233,7 @@ public:
 			materail_id_[index_i] = 0;
 			active_strain_[index_i](0, 0) = -Am * hx * st * pow(sin(w * GlobalStaticVariables::physical_time_/2 + wave_number * x/2 + PI / 2), 2);
 		}
-		else if ((x >(fish_length - head_length) || (y< (cy + bone_thickness / 2))&& y > (cy - bone_thickness / 2)))
+		 else if ((x > (fish_length - head_length)) || ((y < (cy + bone_thickness / 2)) && (y > (cy - bone_thickness / 2))))
 		{
 			materail_id_[index_i] = 2;
 		}
