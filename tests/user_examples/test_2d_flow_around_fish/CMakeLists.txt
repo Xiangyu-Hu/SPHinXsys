@@ -5,8 +5,6 @@ set(CMAKE_VERBOSE_MAKEFILE on)
 STRING( REGEX REPLACE ".*/(.*)" "\\1" CURRENT_FOLDER ${CMAKE_CURRENT_SOURCE_DIR} )
 PROJECT("${CURRENT_FOLDER}")
 
-include(ImportSPHINXsysFromSource_for_2D_build)
-
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 SET(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin/")
 SET(BUILD_INPUT_PATH "${EXECUTABLE_OUTPUT_PATH}/input")
@@ -15,12 +13,6 @@ SET(BUILD_RELOAD_PATH "${EXECUTABLE_OUTPUT_PATH}/reload")
 file(MAKE_DIRECTORY ${BUILD_INPUT_PATH})
 execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_INPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/project_parameters.dat
-        DESTINATION ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/regression_test_tool.py
-        DESTINATION ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/Cylinder_TotalViscousForceOnSolid_runtimes.dat
-        DESTINATION ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/Cylinder_TotalViscousForceOnSolid_time_averaged_mean_variance.xml
         DESTINATION ${BUILD_INPUT_PATH})
 
 aux_source_directory(. DIR_SRCS)
