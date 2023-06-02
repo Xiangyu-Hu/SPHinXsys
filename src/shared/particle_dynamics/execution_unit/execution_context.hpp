@@ -8,13 +8,7 @@ namespace SPH {
         class ParallelSYCLDevicePolicy;
 
         template<typename ExecutionUnit>
-        struct Context {
-            template<class ...Args>
-            explicit Context(Args& ...args) {};
-
-            template<class ...Args>
-            explicit Context(Args&& ...args) {};
-        };
+        struct Context {};
 
         template<>
         struct Context<ParallelSYCLDevicePolicy> {
