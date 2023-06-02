@@ -69,7 +69,7 @@ namespace SPH
 		Real smoothing_length_;
 
 	public:
-		explicit EulerianCompressibleAcousticTimeStepSize(SPHBody& sph_body);
+		explicit EulerianCompressibleAcousticTimeStepSize(SPHBody& sph_body, Real CFL = 0.6);
 		virtual ~EulerianCompressibleAcousticTimeStepSize() {};
 
 		Real reduce(size_t index_i, Real dt = 0.0);
@@ -118,8 +118,9 @@ namespace SPH
 		CompressibleFluid& compressible_fluid_i_, & compressible_fluid_j_;
 
 	public:
-		HLLCWithLimiterRiemannSolver(CompressibleFluid& compressible_fluid_i, CompressibleFluid& compressible_fluid_j);
+		HLLCWithLimiterRiemannSolver(CompressibleFluid& compressible_fluid_i, CompressibleFluid& compressible_fluid_j, Real limiter_parameter=5.0);
 		CompressibleFluidStarState getInterfaceState(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j, const Vecd& e_ij);
+		Real limiter_parameter_;
 	};
 
 	/**

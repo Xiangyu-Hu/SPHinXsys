@@ -72,6 +72,31 @@ namespace SPH
 	//	Remann Solver classes.
 	//----------------------------------------------------------------------
 	/**
+	* @struct NoRiemannSolverInEulerianMethod
+	* @brief  NO RiemannSolver for weakly-compressible flow in Eulerian method.
+	*/
+	class NoRiemannSolverInEulerianMethod
+	{
+		Fluid &fluid_i_, &fluid_j_;
+		Real limiter_parameter_;
+
+		public:
+		NoRiemannSolverInEulerianMethod(Fluid &fluid_i, Fluid &fluid_j, Real limiter_parameter = 15.0)
+			: fluid_i_(fluid_i), fluid_j_(fluid_j), limiter_parameter_(limiter_parameter){};
+		FluidStarState getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
+		{
+			Real p_star = (state_i.p_ * state_j.rho_ + state_j.p_ * state_i.rho_) / (state_i.rho_ + state_j.rho_);
+			Vecd v_star = (state_i.vel_ * state_i.rho_ + state_j.vel_ * state_j.rho_) / (state_i.rho_ + state_j.rho_);
+
+			FluidStarState interface_state(v_star, p_star);
+			interface_state.vel_ = v_star;
+			interface_state.p_ = p_star;
+
+			return interface_state;
+		};
+	};
+
+	/**
     * @struct AcousticRiemannSolverInEulerianMethod
     * @brief  Acoustic RiemannSolver for weakly-compressible flow in Eulerian method.
     */
@@ -80,8 +105,8 @@ namespace SPH
 		Fluid& fluid_i_, & fluid_j_;
 
 	public:
-		AcousticRiemannSolverInEulerianMethod(Fluid& compressible_fluid_i, Fluid& compressible_fluid_j)
-			: fluid_i_(compressible_fluid_i), fluid_j_(compressible_fluid_j) {};
+		AcousticRiemannSolverInEulerianMethod(Fluid& compressible_fluid_i, Fluid& compressible_fluid_j, Real limiter_parameter=15.0)
+			: fluid_i_(compressible_fluid_i), fluid_j_(compressible_fluid_j), limiter_parameter_(limiter_parameter) {};
 		FluidStarState getInterfaceState(const FluidState& state_i, const FluidState& state_j, const Vecd& e_ij)
 		{
 			Real ul = -e_ij.dot(state_i.vel_);
@@ -91,8 +116,8 @@ namespace SPH
 			Real clr = (rhol_cl + rhor_cr) / (state_i.rho_ + state_j.rho_);
 
 			Real p_star = (rhol_cl * state_j.p_ + rhor_cr * state_i.p_ + rhol_cl * rhor_cr * (ul - ur)
-				* SMIN(15.0 * SMAX((ul - ur) / clr, 0.0), 1.0)) / (rhol_cl + rhor_cr);
-            Real u_star = (rhol_cl * ul + rhor_cr * ur + (state_i.p_ - state_j.p_) * pow(SMIN(15.0 * SMAX((ul - ur) / clr, 0.0), 1.0),2)) / (rhol_cl + rhor_cr);
+				* SMIN(limiter_parameter_ * SMAX((ul - ur) / clr, 0.0), 1.0)) / (rhol_cl + rhor_cr);
+            Real u_star = (rhol_cl * ul + rhor_cr * ur + (state_i.p_ - state_j.p_) * pow(SMIN(limiter_parameter_ * SMAX((ul - ur) / clr, 0.0), 1.0),2)) / (rhol_cl + rhor_cr);
 			Vecd vel_star = (state_i.vel_ * state_i.rho_ + state_j.vel_ * state_j.rho_) / (state_i.rho_ + state_j.rho_)
 				- e_ij * (u_star - (ul * state_i.rho_ + ur * state_j.rho_) / (state_i.rho_ + state_j.rho_));
 
@@ -102,6 +127,7 @@ namespace SPH
 
 			return interface_state;
 		};
+		Real limiter_parameter_;
 	};
 
 	//----------------------------------------------------------------------
