@@ -10,7 +10,7 @@ namespace SPH::execution {
         template<class T, sycl::access_mode access_mode>
         class DeviceVariable {
         public:
-            DeviceVariable(T& var_addr, std::size_t var_size) : var_buffer(&var_addr, var_size){}
+            DeviceVariable(T* var_addr, std::size_t var_size) : var_buffer(var_addr, var_size){}
 
             auto get_device_memory_access(sycl::handler& cgh) {
                 return var_buffer.template get_access<access_mode>(cgh);
