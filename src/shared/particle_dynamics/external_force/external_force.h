@@ -55,7 +55,7 @@ namespace SPH {
     class GravityKernel {
     public:
         template<class GlobalAccelerationType>
-        static Vecd InducedAcceleration(Vecd& position, GlobalAccelerationType global_acceleration) {
+        static Vecd InducedAcceleration(Vecd& position, GlobalAccelerationType&& global_acceleration) {
             return global_acceleration;
         }
 
