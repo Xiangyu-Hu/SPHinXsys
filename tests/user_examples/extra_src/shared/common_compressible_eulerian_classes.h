@@ -118,8 +118,9 @@ namespace SPH
 		CompressibleFluid& compressible_fluid_i_, & compressible_fluid_j_;
 
 	public:
-		HLLCWithLimiterRiemannSolver(CompressibleFluid& compressible_fluid_i, CompressibleFluid& compressible_fluid_j);
+		HLLCWithLimiterRiemannSolver(CompressibleFluid& compressible_fluid_i, CompressibleFluid& compressible_fluid_j, Real limiter_parameter=5.0);
 		CompressibleFluidStarState getInterfaceState(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j, const Vecd& e_ij);
+		Real limiter_parameter_;
 	};
 
 	/**

@@ -153,7 +153,7 @@ namespace SPH
 	class BaseIntegration1stHalfInFVM : public BaseRelaxationInFVM
 	{
 	public:
-		explicit BaseIntegration1stHalfInFVM(BaseInnerRelationInFVM &inner_relation, Real limiter_parameter = 30.0)
+		explicit BaseIntegration1stHalfInFVM(BaseInnerRelationInFVM &inner_relation, Real limiter_parameter = 15.0)
 			: BaseRelaxationInFVM(inner_relation), riemann_solver_(fluid_, fluid_, limiter_parameter) {};
 		virtual ~BaseIntegration1stHalfInFVM() {};
 		RiemannSolverType riemann_solver_;
@@ -246,7 +246,7 @@ namespace SPH
 	class BaseIntegration2ndHalfInFVM : public BaseRelaxationInFVM
 	{
 	public:
-		explicit BaseIntegration2ndHalfInFVM(BaseInnerRelationInFVM &inner_relation, Real limiter_parameter = 30.0)
+		explicit BaseIntegration2ndHalfInFVM(BaseInnerRelationInFVM &inner_relation, Real limiter_parameter = 15.0)
 			: BaseRelaxationInFVM(inner_relation), riemann_solver_(fluid_, fluid_, limiter_parameter) {};
 		virtual ~BaseIntegration2ndHalfInFVM() {};
 		RiemannSolverType riemann_solver_;

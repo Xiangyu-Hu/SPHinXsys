@@ -45,6 +45,8 @@ int main(int ac, char *av[])
 	/** Time step size with considering sound wave speed. */
 	ReduceDynamics<WCAcousticTimeStepSizeInFVM> get_fluid_time_step_size(water_block);
 	InteractionDynamics<ViscousAccelerationRiemannInnerInFVM> viscous_acceleration(water_block_inner);
+	/** Here we introduce the limiter in the Riemann solver and 0 means the no extra numerical dissipation.
+	the value is larger, the numerical dissipation larger*/
 	Dynamics1Level<Integration1stHalfAcousticRiemannInFVM> pressure_relaxation(water_block_inner, 50.0);
 	InteractionWithUpdate<Integration2ndHalfAcousticRiemannInFVM> density_relaxation(water_block_inner, 50.0);
 	//----------------------------------------------------------------------
