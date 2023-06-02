@@ -45,7 +45,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     # target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Wpedantic>) # For strict C++ standard compliance # TODO:
 endif()
 
-# ------ Dependencies
+# ------ Dependencie
 # ## SIMD flags
 find_package(SIMD QUIET)
 target_compile_options(sphinxsys_core INTERFACE ${SIMD_CXX_FLAGS})
