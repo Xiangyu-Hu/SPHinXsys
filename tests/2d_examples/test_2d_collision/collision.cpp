@@ -182,9 +182,9 @@ int main(int ac, char *av[])
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> free_ball_get_time_step_size(free_ball);
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> damping_ball_get_time_step_size(damping_ball);
 	/** stress relaxation for the balls. */
-	Dynamics1Level<solid_dynamics::Integration1stHalf> free_ball_stress_relaxation_first_half(free_ball_inner);
+	Dynamics1Level<solid_dynamics::Integration1stHalfPK2> free_ball_stress_relaxation_first_half(free_ball_inner);
 	Dynamics1Level<solid_dynamics::Integration2ndHalf> free_ball_stress_relaxation_second_half(free_ball_inner);
-	Dynamics1Level<solid_dynamics::Integration1stHalf> damping_ball_stress_relaxation_first_half(damping_ball_inner);
+	Dynamics1Level<solid_dynamics::Integration1stHalfPK2> damping_ball_stress_relaxation_first_half(damping_ball_inner);
 	Dynamics1Level<solid_dynamics::Integration2ndHalf> damping_ball_stress_relaxation_second_half(damping_ball_inner);
 	/** Algorithms for solid-solid contact. */
 	InteractionDynamics<solid_dynamics::ContactDensitySummation> free_ball_update_contact_density(free_ball_contact);
@@ -288,8 +288,8 @@ int main(int ac, char *av[])
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-	free_ball_displacement_recording.newResultTest();
-	damping_ball_displacement_recording.newResultTest();
+	free_ball_displacement_recording.testResult();
+	damping_ball_displacement_recording.testResult();
 
 	return 0;
 }

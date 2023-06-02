@@ -251,7 +251,7 @@ int main()
 	/** Compute time step size of elastic solid. */
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> gate_computing_time_step_size(gate);
 	/** Stress relaxation stepping for the elastic gate. */
-	Dynamics1Level<solid_dynamics::Integration1stHalf> gate_stress_relaxation_first_half(gate_inner);
+	Dynamics1Level<solid_dynamics::Integration1stHalfPK2> gate_stress_relaxation_first_half(gate_inner);
 	Dynamics1Level<solid_dynamics::Integration2ndHalf> gate_stress_relaxation_second_half(gate_inner);
 	/**Constrain a solid body part.  */
 	BodyRegionByParticle gate_constraint_part(gate, makeShared<MultiPolygonShape>(createGateConstrainShape()));
@@ -371,7 +371,7 @@ int main()
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-	write_beam_tip_displacement.newResultTest();
+	write_beam_tip_displacement.testResult();
 
 	return 0;
 }

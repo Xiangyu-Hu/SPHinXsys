@@ -9,7 +9,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
 aux_source_directory(. DIR_SRCS)
 add_executable(${PROJECT_NAME} ${DIR_SRCS})
-target_link_libraries(${PROJECT_NAME} sphinxsys_2d)
+target_link_libraries(${PROJECT_NAME} extra_sources_2d)
 
 add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME})
 set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "periodic boundary, Eulerian")
