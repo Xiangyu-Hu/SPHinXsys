@@ -24,7 +24,7 @@ Real getQuadraticProfile(const Vecd &input)
 TEST(test_anisotropic_kernel, test_Laplacian)
 {
     Real PH = 1.0;                            // domain size in y direction
-    Real ratio = 1.0;                         // dp_x / dp_y
+    Real ratio = 4.0;                         // dp_x / dp_y
     Real PL = ratio * PH;                     // domain size in x direction
     int y_num = 50;                           // particle number in y direction
     Real resolution_y = PH / Real(y_num);     // resolution in y direction
