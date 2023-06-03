@@ -3,25 +3,30 @@
 
 #include <sycl/sycl.hpp>
 
-namespace SPH {
-    namespace execution {
-        class ParallelSYCLDevicePolicy;
+namespace SPH
+{
+namespace execution
+{
+class ParallelSYCLDevicePolicy;
 
-        template<typename ExecutionUnit>
-        struct Context {
-            template<class ...Args>
-            explicit Context(Args& ...args) {};
+template <typename ExecutionUnit>
+struct Context
+{
+    template <class... Args>
+    explicit Context(Args &...args){};
 
-            template<class ...Args>
-            explicit Context(Args&& ...args) {};
-        };
+    template <class... Args>
+    explicit Context(Args &&...args){};
+};
 
-        template<>
-        struct Context<ParallelSYCLDevicePolicy> {
-            explicit Context(sycl::handler &cgh) : cgh(cgh) {}
-            sycl::handler& cgh;
-        };
-    }
-}
+template <>
+struct Context<ParallelSYCLDevicePolicy>
+{
+    explicit Context(sycl::handler &cgh) : cgh(cgh) {}
 
-#endif //SPHINXSYS_EXECUTION_CONTEXT_HPP
+    sycl::handler &cgh; /**< Command group handler*/
+};
+} // namespace execution
+} // namespace SPH
+
+#endif // SPHINXSYS_EXECUTION_CONTEXT_HPP
