@@ -38,7 +38,9 @@ jobs:
             pkg-config `# for installing libraries with vcpkg`\
             git \
             cmake \
-            ninja-build
+            libx11-dev \
+            freeglut3-dev \
+            ninja-build 
 
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
@@ -62,7 +64,9 @@ jobs:
             simbody \
             gtest \
             xsimd \
-            pybind11
+            pybind11 \
+            opencascade
+            
 
       - name: Generate buildsystem
         run: |
@@ -149,7 +153,8 @@ jobs:
             simbody `
             gtest `
             xsimd `
-            pybind11
+            pybind11 `
+            opencascade
 
       - uses: ilammy/msvc-dev-cmd@v1
 
@@ -245,7 +250,8 @@ jobs:
             gtest \
             simbody \
             xsimd \
-            pybind11
+            pybind11 \
+            opencascade
 
       - name: Generate buildsystem
         run: |

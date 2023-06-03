@@ -63,6 +63,10 @@ target_compile_definitions(sphinxsys_core INTERFACE _SILENCE_CXX17_ITERATOR_BASE
 find_package(Eigen3 CONFIG REQUIRED)
 target_link_libraries(sphinxsys_core INTERFACE Eigen3::Eigen)
 
+# ## OCCT
+find_package(OpenCASCADE CONFIG REQUIRED)
+target_link_libraries(sphinxsys_core INTERFACE TKSTEP  ) 
+
 # ## TBB
 find_package(TBB CONFIG REQUIRED)
 target_link_libraries(sphinxsys_core INTERFACE TBB::tbb TBB::tbbmalloc $<$<PLATFORM_ID:Windows>:TBB::tbbmalloc_proxy>)

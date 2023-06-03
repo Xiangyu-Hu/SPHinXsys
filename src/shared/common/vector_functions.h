@@ -29,10 +29,13 @@
 #define SMALL_VECTORS_H
 
 #include "base_data_type.h"
+#include "opencascade/gp_Pnt.hxx"
 
 namespace SPH
 {
-
+	 Vec3d OcctToEigen(const gp_Pnt &occt_vector);
+    gp_Pnt EigenToOcct(const Vec3d &eigen_vector);
+    Vec3d OcctVecToEigen(const gp_Vec &occt_vector);
 	SimTK::Vec2 EigenToSimTK(const Vec2d &eigen_vector);
 	SimTK::Vec3 EigenToSimTK(const Vec3d &eigen_vector);
 	Vec2d SimTKToEigen(const SimTK::Vec2 &simTK_vector);
