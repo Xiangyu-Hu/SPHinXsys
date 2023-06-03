@@ -27,7 +27,7 @@ namespace SPH
 	//=================================================================================================//
 	Real AcousticRiemannSolver::DissipativePJump(const Real &u_jump)
 	{
-		return rho0c0_geo_ave_ * u_jump * SMIN(3.0 * SMAX(u_jump * inv_c_ave_, 0.0), 1.0);
+		return rho0c0_geo_ave_ * u_jump * SMIN( Real(3) * SMAX(u_jump * inv_c_ave_, Real(0)), Real(1));
 	}
 	//=================================================================================================//
 	Real AcousticRiemannSolver::DissipativeUJump(const Real &p_jump)
@@ -100,7 +100,7 @@ namespace SPH
 			Real rho_cl = state_i.rho_ * fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_);
 			Real rho_cr = state_j.rho_ * fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_);
 			Real rho_clr = (rho_cl * state_i.rho_ + rho_cr * state_j.rho_) / (state_i.rho_ + state_j.rho_);
-			p_star = 0.5 * (state_i.p_ + state_j.p_) + 0.5 * (SMIN(3.0 * SMAX(rho_ave * (ul - ur), 0.0), rho_clr) * (ul - ur) + s_star * (rho_cr - rho_cl));
+			p_star = 0.5 * (state_i.p_ + state_j.p_) + 0.5 * (SMIN(Real(3) * SMAX(rho_ave * (ul - ur), Real(0)), rho_clr) * (ul - ur) + s_star * (rho_cr - rho_cl));
 			v_star = state_i.vel_ - e_ij * (s_star - ul);
 		}
 		if (s_star <= 0.0 && 0.0 <= s_r)
@@ -109,7 +109,7 @@ namespace SPH
 			Real rho_cl = state_i.rho_ * fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_);
 			Real rho_cr = state_j.rho_ * fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_);
 			Real rho_clr = (rho_cl * state_i.rho_ + rho_cr * state_j.rho_) / (state_i.rho_ + state_j.rho_);
-			p_star = 0.5 * (state_i.p_ + state_j.p_) + 0.5 * (SMIN(3.0 * SMAX(rho_ave * (ul - ur), 0.0), rho_clr) * (ul - ur) + s_star * (rho_cr - rho_cl));
+			p_star = 0.5 * (state_i.p_ + state_j.p_) + 0.5 * (SMIN(Real(3) * SMAX(rho_ave * (ul - ur), Real(0)), rho_clr) * (ul - ur) + s_star * (rho_cr - rho_cl));
 			v_star = state_j.vel_ - e_ij * (s_star - ur);
 		}
 		if (s_r < 0.0)
@@ -192,7 +192,7 @@ namespace SPH
 			Real rho_cl = state_i.rho_ * compressible_fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_);
 			Real rho_cr = state_j.rho_ * compressible_fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_);
 			Real rho_clr = (rho_cl * state_i.rho_ + rho_cr * state_j.rho_) / (state_i.rho_ + state_j.rho_);
-			p_star = 0.5 * (state_i.p_ + state_j.p_) + 0.5 * (SMIN(3.0 * SMAX(rho_ave * (ul - ur), 0.0), rho_clr) * (ul - ur) + s_star * (rho_cr - rho_cl));
+			p_star = 0.5 * (state_i.p_ + state_j.p_) + 0.5 * (SMIN(Real(3) * SMAX(rho_ave * (ul - ur), Real(0)), rho_clr) * (ul - ur) + s_star * (rho_cr - rho_cl));
 			v_star = state_i.vel_ - e_ij * (s_star - ul);
 			rho_star = state_i.rho_ * (s_l - ul) / (s_l - s_star);
 			energy_star = state_i.rho_ * (s_l - ul) / (s_l - s_star) * (state_i.E_ / state_i.rho_ + (s_star - ul) * (s_star + state_i.p_ / state_i.rho_ / (s_l - ul)));
@@ -203,7 +203,7 @@ namespace SPH
 			Real rho_cl = state_i.rho_ * compressible_fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_);
 			Real rho_cr = state_j.rho_ * compressible_fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_);
 			Real rho_clr = (rho_cl * state_i.rho_ + rho_cr * state_j.rho_) / (state_i.rho_ + state_j.rho_);
-			p_star = 0.5 * (state_i.p_ + state_j.p_) + 0.5 * (SMIN(3.0 * SMAX(rho_ave * (ul - ur), 0.0), rho_clr) * (ul - ur) + s_star * (rho_cr - rho_cl));
+			p_star = 0.5 * (state_i.p_ + state_j.p_) + 0.5 * (SMIN(Real(3) * SMAX(rho_ave * (ul - ur), Real(0)), rho_clr) * (ul - ur) + s_star * (rho_cr - rho_cl));
 			v_star = state_j.vel_ - e_ij * (s_star - ur);
 			rho_star = state_j.rho_ * (s_r - ur) / (s_r - s_star);
 			energy_star = state_j.rho_ * (s_r - ur) / (s_r - s_star) * (state_j.E_ / state_j.rho_ + (s_star - ur) * (s_star + state_j.p_ / state_j.rho_ / (s_r - ur)));

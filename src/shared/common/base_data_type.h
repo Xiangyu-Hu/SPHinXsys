@@ -71,17 +71,9 @@ namespace SPH
 
 #if ENABLE_SINGLE
 		using Real = float;
-		using SimTKVec2 = SimTK::fVec2;
-		using SimTKVec3 = SimTK::fVec3;
-		using SimTKMat22 = SimTK::fMat22;
-		using SimTKMat33 = SimTK::fMat33;
 		using EigMat = Eigen::MatrixXf;
 #else
 		using Real = double;
-		using SimTKVec2 = SimTK::Vec2;
-		using SimTKVec3 = SimTK::Vec3;
-		using SimTKMat22 = SimTK::Mat22;
-		using SimTKMat33 = SimTK::Mat33;
 		using EigMat = Eigen::MatrixXd;
 #endif
 
@@ -97,6 +89,14 @@ namespace SPH
 	/** AlignedBox */
 	using AlignedBox2d = Eigen::AlignedBox<Real, 2>;
 	using AlignedBox3d = Eigen::AlignedBox<Real, 3>;
+	/** SimTK vector and matrix */
+	/**
+	 * Note that SimTK vector and matrix using double precision, whne ENABLE_SINGLE, will transfer to double precision. 
+	*/
+	using SimTKVec2 = SimTK::Vec2;
+	using SimTKVec3 = SimTK::Vec3;
+	using SimTKMat22 = SimTK::Mat22;
+	using SimTKMat33 = SimTK::Mat33;
 	/** Unified initialize to zero for all data type. */
 	/**
 	 * NOTE: Eigen::Matrix<> constexpr constructor?
