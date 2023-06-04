@@ -31,7 +31,7 @@
 #define MESH_WITH_DATA_PACKAGES_H
 
 #include "base_mesh.h"
-#include "base_variables.h"
+#include "base_variable.h"
 #include "my_memory_pool.h"
 
 #include <fstream>
@@ -137,14 +137,14 @@ namespace SPH
 		void for_each_addrs(const FunctionOnAddress &function);
 		/** access specific package data with discrete variable */
 		template <typename DataType>
-		PackageData<DataType> &getPackageData(const DiscreteVariable<DataType> &discrete_variable)
+		PackageData<DataType> &getPackageData(const PackageVariable<DataType> &discrete_variable)
 		{
 			constexpr int type_index = DataTypeIndex<DataType>::value;
 			return std::get<type_index>(all_pkg_data_)[discrete_variable.IndexInContainer()];
 		};
 		/** access specific package data address with discrete variable */
 		template <typename DataType>
-		PackageDataAddress<DataType> &getPackageDataAddress(const DiscreteVariable<DataType> &discrete_variable)
+		PackageDataAddress<DataType> &getPackageDataAddress(const PackageVariable<DataType> &discrete_variable)
 		{
 			constexpr int type_index = DataTypeIndex<DataType>::value;
 			return std::get<type_index>(all_pkg_data_addrs_)[discrete_variable.IndexInContainer()];
@@ -154,12 +154,12 @@ namespace SPH
 		DataType probeDataPackage(PackageDataAddress<DataType> &pkg_data_addrs, const Vecd &position);
 		/** assign value to data package according to the position of data */
 		template <typename DataType, typename FunctionByPosition>
-		void assignByPosition(const DiscreteVariable<DataType> &discrete_variable,
+		void assignByPosition(const PackageVariable<DataType> &discrete_variable,
 							  const FunctionByPosition &function_by_position);
 		/** compute gradient transform within data package */
 		template <typename InDataType, typename OutDataType>
-		void computeGradient(const DiscreteVariable<InDataType> &in_variable,
-							 const DiscreteVariable<OutDataType> &out_variable);
+		void computeGradient(const PackageVariable<InDataType> &in_variable,
+							 const PackageVariable<OutDataType> &out_variable);
 		/** obtain averaged value at a corner of a data cell */
 		template <typename DataType>
 		DataType CornerAverage(PackageDataAddress<DataType> &pkg_data_addrs,
@@ -177,7 +177,7 @@ namespace SPH
 		{
 			void operator()(DataContainerAssemble<PackageData> &all_pkg_data,
 							DataContainerAssemble<PackageDataAddress> &all_pkg_data_addrs,
-							const DiscreteVariableAssemble &all_variables)
+							const PackageVariableAssemble &all_variables)
 			{
 				constexpr int type_index = DataTypeIndex<DataType>::value;
 				size_t total_variables = std::get<type_index>(all_variables).size();
@@ -206,7 +206,7 @@ namespace SPH
 		DataAssembleOperation<AssignPackageDataAddress> assign_pkg_data_addrs_;
 
 	public:
-		void allocateAllVariables(const DiscreteVariableAssemble &all_variables)
+		void allocateAllVariables(const PackageVariableAssemble &all_variables)
 		{
 			allocate_all_variables_(all_pkg_data_, all_pkg_data_addrs_, all_variables);
 		};
@@ -255,7 +255,7 @@ namespace SPH
 		virtual Real DataSpacing() override { return data_spacing_; };
 
 	protected:
-		DiscreteVariableAssemble all_variables_;			   /**< all discrete variables on this mesh. */
+		PackageVariableAssemble all_variables_;			   /**< all discrete variables on this mesh. */
 		MyMemoryPool<GridDataPackageType> data_pkg_pool_;	   /**< memory pool for all packages in the mesh. */
 		MeshDataMatrix<GridDataPackageType *> data_pkg_addrs_; /**< Address of data packages. */
 		ConcurrentVec<GridDataPackageType *> inner_data_pkgs_; /**< Inner data packages which is able to carry out spatial operations. */
@@ -274,7 +274,7 @@ namespace SPH
 		void deleteMeshDataMatrix();   /**< delete memories for addresses of data packages. */
 		template <typename InitializeSingularData>
 		void initializeASingularDataPackage(
-			const DataContainerAddressAssemble<DiscreteVariable> &all_variables,
+			const DataContainerAddressAssemble<PackageVariable> &all_variables,
 			const InitializeSingularData &initialize_singular_data)
 		{
 			GridDataPackageType *new_data_pkg = data_pkg_pool_.malloc();
@@ -286,7 +286,7 @@ namespace SPH
 
 		template <typename InitializePackageData>
 		GridDataPackageType *createDataPackage(
-			const DataContainerAddressAssemble<DiscreteVariable> &all_variables,
+			const DataContainerAddressAssemble<PackageVariable> &all_variables,
 			const Arrayi &cell_index,
 			const InitializePackageData &initialize_package_data)
 		{
@@ -318,10 +318,10 @@ namespace SPH
 		}
 		/** This function probe a mesh value */
 		template <class DataType>
-		DataType probeMesh(const DiscreteVariable<DataType> &discrete_variable, const Vecd &position);
+		DataType probeMesh(const PackageVariable<DataType> &discrete_variable, const Vecd &position);
 		/** This function find the value of data from its index from global mesh. */
 		template <typename DataType>
-		DataType DataValueFromGlobalIndex(const DiscreteVariable<DataType> &discrete_variable,
+		DataType DataValueFromGlobalIndex(const PackageVariable<DataType> &discrete_variable,
 										  const Arrayi &global_grid_index);
 	};
 }

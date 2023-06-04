@@ -33,7 +33,7 @@
 
 #include "base_data_package.h"
 #include "base_material.h"
-#include "base_variables.h"
+#include "base_variable.h"
 #include "particle_sorting.h"
 #include "sph_data_containers.h"
 #include "xml_engine.h"
@@ -108,13 +108,13 @@ class BaseParticles
     //		Generalized particle data for parameterized management
     //----------------------------------------------------------------------
     ParticleData all_particle_data_;
-    DataContainerUniquePtrAssemble<StdLargeVec> shared_variable_data_; // extra data for shared variables
-    ParticleDataMap all_variable_maps_;
-    StdVec<BaseDynamics<void> *> derived_variables_;
-    ParticleVariableList variables_to_write_;
+    DataContainerUniquePtrAssemble<StdLargeVec> shared_particle_data_ptr_; // extra data for shared variables
+    DataContainerUniquePtrAssemble<DiscreteVariable> all_discrete_variable_ptrs_;
+    ParticleVariables all_discrete_variables_;
+    ParticleVariables variables_to_write_;
 
-    DataContainerAddressAssemble<GlobalVariable> all_global_data_;
-    DataContainerUniquePtrAssemble<GlobalVariable> all_global_data_ptr_;
+    DataContainerUniquePtrAssemble<GlobalVariable> all_global_variable_ptrs_;
+    DataContainerAddressAssemble<GlobalVariable> all_global_variables_;
 
     /** register a variable defined in a class (can be non-particle class) */
     template <typename DataType>
@@ -139,7 +139,7 @@ class BaseParticles
     StdLargeVec<DataType> *getVariableByName(const std::string &variable_name);
     /** add a variable into a particle variable name list */
     template <typename DataType>
-    void addVariableNameToList(ParticleVariableList &variable_name_list, const std::string &variable_name);
+    void addVariableToList(ParticleVariables &variable_set, const std::string &variable_name);
     /** add a variable into the list for state output */
     template <typename DataType>
     void addVariableToWrite(const std::string &variable_name);
@@ -152,11 +152,11 @@ class BaseParticles
     /** add a variable into the list for restart */
     template <typename DataType>
     void addVariableToRestart(const std::string &variable_name);
-    inline const ParticleVariableList &getVariablesToRestart() const { return variables_to_restart_; }
+    inline const ParticleVariables &getVariablesToRestart() const { return variables_to_restart_; }
     /** add a variable into the list for particle reload */
     template <typename DataType>
     void addVariableToReload(const std::string &variable_name);
-    inline const ParticleVariableList &getVariablesToReload() const { return variables_to_reload_; }
+    inline const ParticleVariables &getVariablesToReload() const { return variables_to_reload_; }
     /**
      *		Particle data for sorting
      */
@@ -164,7 +164,7 @@ class BaseParticles
     StdLargeVec<size_t> sorted_id_;   /**< the sorted particle ids of particles from unsorted ids. */
     StdLargeVec<size_t> sequence_;    /**< the sequence referred for sorting. */
     ParticleData sortable_data_;
-    ParticleDataMap sortable_variable_maps_;
+    ParticleVariables sortable_variables_;
     ParticleSorting particle_sorting_;
 
     /** register an already defined variable as sortable */
@@ -177,6 +177,7 @@ class BaseParticles
 
     SPHBody &getSPHBody() { return sph_body_; };
     /** initialize other variables  based one geometric variables and material */
+    ParticleVariables &AllDiscreteVariables() { return all_discrete_variables_; };
     virtual void initializeOtherVariables();
     /** Add buffer particles. */
     void addBufferParticles(size_t buffer_size);
@@ -222,13 +223,14 @@ class BaseParticles
     virtual Real ParticleMass(size_t index_i) { return mass_[index_i]; }
 
   protected:
-    SPHBody &sph_body_;                         /**< The body in which the particles belongs to. */
-    std::string body_name_;                     /**< Name of the body. */
-    XmlEngine restart_xml_engine_;              /**< Restart XML engine. */
-    XmlEngine reload_xml_engine_;               /**< Reload XML engine. */
-    ParticleVariableList variables_to_restart_; /**< Particle variables for restart. */
-    ParticleVariableList variables_to_reload_;  /**< Particle variables for reload. */
-    void addAParticleEntry();                   /**< Add a particle entry to the particle array. */
+    SPHBody &sph_body_;                      /**< The body in which the particles belongs to. */
+    std::string body_name_;                  /**< Name of the body. */
+    XmlEngine restart_xml_engine_;           /**< Restart XML engine. */
+    XmlEngine reload_xml_engine_;            /**< Reload XML engine. */
+    ParticleVariables variables_to_restart_; /**< Particle variables for restart. */
+    ParticleVariables variables_to_reload_;  /**< Particle variables for reload. */
+    StdVec<BaseDynamics<void> *> derived_variables_;
+    void addAParticleEntry(); /**< Add a particle entry to the particle array. */
     /** Write header to PLT file. */
     virtual void writePltFileHeader(std::ofstream &output_file);
     /** Write particle data to PLT file. */

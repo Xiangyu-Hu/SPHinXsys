@@ -40,17 +40,22 @@ template <typename DataType>
 void BaseParticles::registerVariable(StdLargeVec<DataType> &variable_addrs,
                                      const std::string &variable_name, DataType initial_value)
 {
-    constexpr int type_index = DataTypeIndex<DataType>::value;
+    DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, variable_name);
 
-    if (all_variable_maps_[type_index].find(variable_name) == all_variable_maps_[type_index].end())
+    if (variable == nullptr)
     {
         variable_addrs.resize(real_particles_bound_, initial_value);
+
+        constexpr int type_index = DataTypeIndex<DataType>::value;
         std::get<type_index>(all_particle_data_).push_back(&variable_addrs);
-        all_variable_maps_[type_index].insert(make_pair(variable_name, std::get<type_index>(all_particle_data_).size() - 1));
+        size_t new_variable_index = std::get<type_index>(all_particle_data_).size() - 1;
+
+        addVariableToAssemble<DataType>(all_discrete_variables_, all_discrete_variable_ptrs_, variable_name, new_variable_index);
     }
     else
     {
         std::cout << "\n Error: the variable '" << variable_name << "' has already been registered!" << std::endl;
+        std::cout << "\n Please check if " << variable_name << " is a sharable variable." << std::endl;
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         exit(1);
     }
@@ -70,35 +75,23 @@ void BaseParticles::registerVariable(StdLargeVec<DataType> &variable_addrs,
 template <typename DataType>
 DataType *BaseParticles::registerGlobalVariable(const std::string &variable_name, DataType initial_value)
 {
-    constexpr int type_index = DataTypeIndex<DataType>::value;
+    GlobalVariable<DataType> *variable = findVariableByName<DataType>(all_global_variables_, variable_name);
 
-    auto &variables = std::get<type_index>(all_global_data_);
-    auto result = std::find_if(variables.begin(), variables.end(),
-                               [&](auto &variable) -> bool
-                               { return variable->getName() == variable_name; });
-    if (result != variables.end())
-    {
-        return (*result)->getValue();
-    }
-
-    UniquePtrsKeeper<GlobalVariable<DataType>> &container = std::get<type_index>(all_global_data_ptr_);
-    GlobalVariable<DataType> *contained_data = container.template createPtr<GlobalVariable<DataType>>(variable_name, initial_value);
-    std::get<type_index>(all_global_data_).push_back(contained_data);
-    return contained_data->getValue();
+    return variable != nullptr
+               ? variable->ValueAddress()
+               : addVariableToAssemble<DataType>(all_global_variables_,
+                                                 all_global_variable_ptrs_, variable_name, initial_value)
+                     ->ValueAddress();
 }
 //=================================================================================================//
 template <typename DataType>
 DataType *BaseParticles::getGlobalVariableByName(const std::string &variable_name)
 {
-    constexpr int type_index = DataTypeIndex<DataType>::value;
+    GlobalVariable<DataType> *variable = findVariableByName<DataType>(all_global_variables_, variable_name);
 
-    auto &variables = std::get<type_index>(all_global_data_);
-    auto result = std::find_if(variables.begin(), variables.end(),
-                               [&](auto &variable) -> bool
-                               { return variable->getName() == variable_name; });
-    if (result != variables.end())
+    if (variable != nullptr)
     {
-        return (*result)->getValue();
+        return variable->ValueAddress();
     }
 
     std::cout << "\nError: the variable '" << variable_name << "' is not registered!\n";
@@ -111,27 +104,33 @@ DataType *BaseParticles::getGlobalVariableByName(const std::string &variable_nam
 template <typename DataType>
 StdLargeVec<DataType> *BaseParticles::registerSharedVariable(const std::string &variable_name)
 {
+
+    DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, variable_name);
+
     constexpr int type_index = DataTypeIndex<DataType>::value;
-    if (all_variable_maps_[type_index].find(variable_name) == all_variable_maps_[type_index].end())
+    if (variable == nullptr)
     {
-        UniquePtrsKeeper<StdLargeVec<DataType>> &container = std::get<type_index>(shared_variable_data_);
+        UniquePtrsKeeper<StdLargeVec<DataType>> &container = std::get<type_index>(shared_particle_data_ptr_);
         StdLargeVec<DataType> *contained_data = container.template createPtr<StdLargeVec<DataType>>();
         registerVariable(*contained_data, variable_name);
         return contained_data;
     }
     else
     {
-        return std::get<type_index>(all_particle_data_)[all_variable_maps_[type_index][variable_name]];
+        return std::get<type_index>(all_particle_data_)[variable->IndexInContainer()];
     }
 }
 //=================================================================================================//
 template <typename DataType>
 StdLargeVec<DataType> *BaseParticles::getVariableByName(const std::string &variable_name)
 {
-    constexpr int type_index = DataTypeIndex<DataType>::value;
+    DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, variable_name);
 
-    if (all_variable_maps_[type_index].find(variable_name) != all_variable_maps_[type_index].end())
-        return std::get<type_index>(all_particle_data_)[all_variable_maps_[type_index][variable_name]];
+    if (variable != nullptr)
+    {
+        constexpr int type_index = DataTypeIndex<DataType>::value;
+        return std::get<type_index>(all_particle_data_)[variable->IndexInContainer()];
+    }
 
     std::cout << "\nErr0r: the variable '" << variable_name << "' is not registered!\n";
     std::cout << __FILE__ << ':' << __LINE__ << std::endl;
@@ -141,23 +140,18 @@ StdLargeVec<DataType> *BaseParticles::getVariableByName(const std::string &varia
 }
 //=================================================================================================//
 template <typename DataType>
-void BaseParticles::
-    addVariableNameToList(ParticleVariableList &variable_name_list, const std::string &variable_name)
+void BaseParticles::addVariableToList(ParticleVariables &variable_set, const std::string &variable_name)
 {
-    constexpr int type_index = DataTypeIndex<DataType>::value;
+    DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, variable_name);
 
-    if (all_variable_maps_[type_index].find(variable_name) != all_variable_maps_[type_index].end())
+    if (variable != nullptr)
     {
-        bool is_to_add = true;
-        for (size_t i = 0; i != variable_name_list[type_index].size(); ++i)
+        DiscreteVariable<DataType> *listed_variable = findVariableByName<DataType>(variable_set, variable_name);
+
+        if (listed_variable == nullptr)
         {
-            if (variable_name_list[type_index][i].first == variable_name)
-                is_to_add = false;
-        }
-        if (is_to_add)
-        {
-            size_t variable_index = all_variable_maps_[type_index][variable_name];
-            variable_name_list[type_index].push_back(make_pair(variable_name, variable_index));
+            constexpr int type_index = DataTypeIndex<DataType>::value;
+            std::get<type_index>(variable_set).push_back(variable);
         }
     }
     else
@@ -171,62 +165,61 @@ void BaseParticles::
 template <typename DataType>
 void BaseParticles::addVariableToWrite(const std::string &variable_name)
 {
-    addVariableNameToList<DataType>(variables_to_write_, variable_name);
+    addVariableToList<DataType>(variables_to_write_, variable_name);
 }
 //=================================================================================================//
 template <class DerivedVariableMethod, class... Ts>
 void BaseParticles::addDerivedVariableToWrite(Ts &&...args)
 {
-    SimpleDynamics<DerivedVariableMethod> *derived_data = derived_particle_data_.createPtr<SimpleDynamics<DerivedVariableMethod>>(sph_body_, std::forward<Ts>(args)...);
+    SimpleDynamics<DerivedVariableMethod> *derived_data =
+        derived_particle_data_.createPtr<SimpleDynamics<DerivedVariableMethod>>(sph_body_, std::forward<Ts>(args)...);
     derived_variables_.push_back(derived_data);
     using DerivedDataType = typename DerivedVariableMethod::DerivedDataType;
-    addVariableNameToList<DerivedDataType>(variables_to_write_, derived_data->variable_name_);
+    addVariableToList<DerivedDataType>(variables_to_write_, derived_data->variable_name_);
 }
 //=================================================================================================//
 template <class DerivedVariableMethod, class... Ts>
 void BaseParticles::addDerivedVariable(Ts &&...args)
 {
-    SimpleDynamics<DerivedVariableMethod> *derived_data = derived_particle_data_.createPtr<SimpleDynamics<DerivedVariableMethod>>(sph_body_, std::forward<Ts>(args)...);
+    SimpleDynamics<DerivedVariableMethod> *derived_data =
+        derived_particle_data_.createPtr<SimpleDynamics<DerivedVariableMethod>>(sph_body_, std::forward<Ts>(args)...);
     derived_variables_.push_back(derived_data);
 }
 //=================================================================================================//
 template <typename DataType>
 void BaseParticles::addVariableToRestart(const std::string &variable_name)
 {
-    addVariableNameToList<DataType>(variables_to_restart_, variable_name);
+    addVariableToList<DataType>(variables_to_restart_, variable_name);
 }
 //=================================================================================================//
 template <typename DataType>
 void BaseParticles::addVariableToReload(const std::string &variable_name)
 {
-    addVariableNameToList<DataType>(variables_to_reload_, variable_name);
+    addVariableToList<DataType>(variables_to_reload_, variable_name);
 }
 //=================================================================================================//
 template <typename DataType>
 void BaseParticles::registerSortableVariable(const std::string &variable_name)
 {
-    constexpr int type_index = DataTypeIndex<DataType>::value;
+    DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, variable_name);
 
-    if (sortable_variable_maps_[type_index].find(variable_name) == sortable_variable_maps_[type_index].end())
+    if (variable != nullptr)
     {
-        if (all_variable_maps_[type_index].find(variable_name) != all_variable_maps_[type_index].end())
+        DiscreteVariable<DataType> *listed_variable = findVariableByName<DataType>(sortable_variables_, variable_name);
+
+        if (listed_variable == nullptr)
         {
-            StdLargeVec<DataType> *variable =
-                std::get<type_index>(all_particle_data_)[all_variable_maps_[type_index][variable_name]];
-            std::get<type_index>(sortable_data_).push_back(variable);
-            sortable_variable_maps_[type_index].insert(make_pair(variable_name, std::get<type_index>(sortable_data_).size() - 1));
-        }
-        else
-        {
-            std::cout << "\n Error: the variable '" << variable_name << "' for sorting is not registered!" << std::endl;
-            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-            exit(1);
+            constexpr int type_index = DataTypeIndex<DataType>::value;
+            std::get<type_index>(sortable_variables_).push_back(variable);
+            StdLargeVec<DataType> *variable_data = std::get<type_index>(all_particle_data_)[variable->IndexInContainer()];
+            std::get<type_index>(sortable_data_).push_back(variable_data);
         }
     }
     else
     {
-        std::cout << "\n Warning: the variable '" << variable_name << "' is already a sortable variable!" << std::endl;
+        std::cout << "\n Error: the variable '" << variable_name << "' to write is not particle data!" << std::endl;
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        exit(1);
     }
 }
 //=================================================================================================//
@@ -317,15 +310,14 @@ void BaseParticles::writeParticlesToVtk(StreamType &output_stream)
 
     // write integers
     constexpr int type_index_int = DataTypeIndex<int>::value;
-    for (std::pair<std::string, size_t> &name_index : variables_to_write_[type_index_int])
+    for (DiscreteVariable<int> *variable : std::get<type_index_int>(variables_to_write_))
     {
-        std::string variable_name = name_index.first;
-        StdLargeVec<int> &variable = *(std::get<type_index_int>(all_particle_data_)[name_index.second]);
-        output_stream << "    <DataArray Name=\"" << variable_name << "\" type=\"Int32\" Format=\"ascii\">\n";
+        StdLargeVec<int> &variable_data = *(std::get<type_index_int>(all_particle_data_)[variable->IndexInContainer()]);
+        output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Int32\" Format=\"ascii\">\n";
         output_stream << "    ";
         for (size_t i = 0; i != total_real_particles; ++i)
         {
-            output_stream << std::fixed << std::setprecision(9) << variable[i] << " ";
+            output_stream << std::fixed << std::setprecision(9) << variable_data[i] << " ";
         }
         output_stream << std::endl;
         output_stream << "    </DataArray>\n";
@@ -333,15 +325,14 @@ void BaseParticles::writeParticlesToVtk(StreamType &output_stream)
 
     // write scalars
     constexpr int type_index_Real = DataTypeIndex<Real>::value;
-    for (std::pair<std::string, size_t> &name_index : variables_to_write_[type_index_Real])
+    for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(variables_to_write_))
     {
-        std::string variable_name = name_index.first;
-        StdLargeVec<Real> &variable = *(std::get<type_index_Real>(all_particle_data_)[name_index.second]);
-        output_stream << "    <DataArray Name=\"" << variable_name << "\" type=\"Float32\" Format=\"ascii\">\n";
+        StdLargeVec<Real> &variable_data = *(std::get<type_index_Real>(all_particle_data_)[variable->IndexInContainer()]);
+        output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Float32\" Format=\"ascii\">\n";
         output_stream << "    ";
         for (size_t i = 0; i != total_real_particles; ++i)
         {
-            output_stream << std::fixed << std::setprecision(9) << variable[i] << " ";
+            output_stream << std::fixed << std::setprecision(9) << variable_data[i] << " ";
         }
         output_stream << std::endl;
         output_stream << "    </DataArray>\n";
@@ -349,15 +340,14 @@ void BaseParticles::writeParticlesToVtk(StreamType &output_stream)
 
     // write vectors
     constexpr int type_index_Vecd = DataTypeIndex<Vecd>::value;
-    for (std::pair<std::string, size_t> &name_index : variables_to_write_[type_index_Vecd])
+    for (DiscreteVariable<Vecd> *variable : std::get<type_index_Vecd>(variables_to_write_))
     {
-        std::string variable_name = name_index.first;
-        StdLargeVec<Vecd> &variable = *(std::get<type_index_Vecd>(all_particle_data_)[name_index.second]);
-        output_stream << "    <DataArray Name=\"" << variable_name << "\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
+        StdLargeVec<Vecd> &variable_data = *(std::get<type_index_Vecd>(all_particle_data_)[variable->IndexInContainer()]);
+        output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
         output_stream << "    ";
         for (size_t i = 0; i != total_real_particles; ++i)
         {
-            Vec3d vector_value = upgradeToVec3d(variable[i]);
+            Vec3d vector_value = upgradeToVec3d(variable_data[i]);
             output_stream << std::fixed << std::setprecision(9) << vector_value[0] << " " << vector_value[1] << " " << vector_value[2] << " ";
         }
         output_stream << std::endl;
@@ -366,15 +356,14 @@ void BaseParticles::writeParticlesToVtk(StreamType &output_stream)
 
     // write matrices
     constexpr int type_index_Matd = DataTypeIndex<Matd>::value;
-    for (std::pair<std::string, size_t> &name_index : variables_to_write_[type_index_Matd])
+    for (DiscreteVariable<Matd> *variable : std::get<type_index_Matd>(variables_to_write_))
     {
-        std::string variable_name = name_index.first;
-        StdLargeVec<Matd> &variable = *(std::get<type_index_Matd>(all_particle_data_)[name_index.second]);
-        output_stream << "    <DataArray Name=\"" << variable_name << "\" type= \"Float32\"  NumberOfComponents=\"9\" Format=\"ascii\">\n";
+        StdLargeVec<Matd> &variable_data = *(std::get<type_index_Matd>(all_particle_data_)[variable->IndexInContainer()]);
+        output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type= \"Float32\"  NumberOfComponents=\"9\" Format=\"ascii\">\n";
         output_stream << "    ";
         for (size_t i = 0; i != total_real_particles; ++i)
         {
-            Mat3d matrix_value = upgradeToMat3d(variable[i]);
+            Mat3d matrix_value = upgradeToMat3d(variable_data[i]);
             for (int k = 0; k != 3; ++k)
             {
                 Vec3d col_vector = matrix_value.col(k);
