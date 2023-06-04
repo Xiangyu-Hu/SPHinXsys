@@ -69,7 +69,7 @@ namespace SPH
 	 * 			Using -mtune=native produces code optimized for the local machine under the constraints of the selected instruction set.
 	 */
 
-#if USE_SINGLE
+#if USE_FLOAT
 		using Real = float;
 		using EigMat = Eigen::MatrixXf;
 #else
