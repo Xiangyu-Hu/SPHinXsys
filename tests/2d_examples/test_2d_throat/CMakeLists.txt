@@ -24,8 +24,6 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FluidObserver_Pressur
         DESTINATION ${BUILD_INPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FluidObserver_Pressure_Run_5_result.xml
         DESTINATION ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FluidObserver_Pressure_Run_10_result.xml
-        DESTINATION ${BUILD_INPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FluidObserver_Pressure_Run_14_result.xml
         DESTINATION ${BUILD_INPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FluidBody_TotalMechanicalEnergy_runtimes.dat
@@ -35,8 +33,6 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FluidBody_TotalMechan
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FluidBody_TotalMechanicalEnergy_Run_0_result.xml
         DESTINATION ${BUILD_INPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FluidBody_TotalMechanicalEnergy_Run_6_result.xml
-        DESTINATION ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FluidBody_TotalMechanicalEnergy_Run_11_result.xml
         DESTINATION ${BUILD_INPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FluidBody_TotalMechanicalEnergy_Run_16_result.xml
         DESTINATION ${BUILD_INPUT_PATH})
