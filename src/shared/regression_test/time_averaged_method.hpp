@@ -224,8 +224,11 @@ namespace SPH
 		{
 			for (int snapshot_index = snapshot_for_converged_; snapshot_index != this->snapshot_; ++snapshot_index)
 				variance_new[observation_index] += pow((current_result[observation_index][snapshot_index] - local_meanvalue[observation_index]), 2);
-			variance_new[observation_index] = SMAX( (variance_new[observation_index] / (this->snapshot_ - snapshot_for_converged_)), 
-												    variance[observation_index], pow(local_meanvalue[observation_index] * 1.0e-2, 2) );
+			variance_new[observation_index] = SMAX( 
+												(Real)(variance_new[observation_index] / (this->snapshot_ - snapshot_for_converged_)), 
+												(Real)variance[observation_index], 
+												(Real)pow(local_meanvalue[observation_index] *  Real(0.01), 2) 
+												);
 		}
 	}
 	//=================================================================================================//
@@ -238,8 +241,11 @@ namespace SPH
 			{
 				for (int snapshot_index = snapshot_for_converged_; snapshot_index != this->snapshot_; ++snapshot_index)
 					variance_new[observation_index][i] += pow((current_result[observation_index][snapshot_index][i] - local_meanvalue[observation_index][i]), 2);
-				variance_new[observation_index][i] = SMAX( (variance_new[observation_index][i] / (this->snapshot_ - snapshot_for_converged_)), 
-															variance[observation_index][i], pow(local_meanvalue[observation_index][i] * 1.0e-2, 2) );
+				variance_new[observation_index][i] = SMAX( 
+														(Real)(variance_new[observation_index][i] / (this->snapshot_ - snapshot_for_converged_)), 
+														(Real)variance[observation_index][i], 
+														(Real)pow(local_meanvalue[observation_index][i] *  Real(0.01), 2) 
+														);
 			}
 	}
 	//=================================================================================================//
@@ -253,8 +259,11 @@ namespace SPH
 				{
 					for (int snapshot_index = snapshot_for_converged_; snapshot_index != this->snapshot_; ++snapshot_index)
 						variance_new[observation_index](i,j) += pow((current_result[observation_index][snapshot_index](i,j) - local_meanvalue[observation_index](i,j)), 2);
-					variance_new[observation_index](i,j) = SMAX( (variance_new[observation_index](i,j) / (this->snapshot_ - snapshot_for_converged_)), 
-																 variance[observation_index](i,j), pow(local_meanvalue[observation_index](i,j) * 1.0e-2, 2) );
+					variance_new[observation_index](i,j) = SMAX( 
+																(Real)(variance_new[observation_index](i,j) / (this->snapshot_ - snapshot_for_converged_)), 
+																(Real)variance[observation_index](i,j), 
+																(Real)pow(local_meanvalue[observation_index](i,j) *  Real(0.01), 2) 
+																);
 				}
 	}
 	//=================================================================================================//

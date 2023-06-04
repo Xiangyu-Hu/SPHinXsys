@@ -116,10 +116,10 @@ namespace SPH
 		polymesh.loadStlFile(filepathname);
 
 		polymesh.scaleMesh(scale_factor);
-		SimTK::Transform_<Real> transform(SimTK::Rotation_<Real>(SimTKMat33(rotation(0, 0), rotation(0, 1), rotation(0, 2),
-																			  rotation(1, 0), rotation(1, 1), rotation(1, 2),
-																			  rotation(2, 0), rotation(2, 1), rotation(2, 2))),
-										  SimTKVec3(translation[0], translation[1], translation[2]));
+		SimTK::Transform_<double> transform(SimTK::Rotation_<double>(SimTKMat33((double)rotation(0, 0), (double)rotation(0, 1), (double)rotation(0, 2),
+																			  (double)rotation(1, 0), (double)rotation(1, 1), (double)rotation(1, 2),
+																			  (double)rotation(2, 0), (double)rotation(2, 1), (double)rotation(2, 2))),
+										  SimTKVec3((double)translation[0], (double)translation[1], (double)translation[2]));
 		triangle_mesh_ = generateTriangleMesh(polymesh.transformMesh(transform));
 	}
 //=================================================================================================//

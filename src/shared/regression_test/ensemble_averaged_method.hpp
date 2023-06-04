@@ -42,10 +42,12 @@ namespace SPH
 			for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
 				for (int run_index = 0; run_index != this->number_of_run_; ++run_index)
 				{
-					variance_new[snapshot_index][observation_index] = SMAX(variance[snapshot_index][observation_index], 
-						variance_new[snapshot_index][observation_index],
-						pow((result[run_index][snapshot_index][observation_index] - meanvalue_new[snapshot_index][observation_index]), 2), 
-						pow(meanvalue_new[snapshot_index][observation_index] * 1.0e-2, 2) );
+					variance_new[snapshot_index][observation_index] = SMAX(
+						(Real)variance[snapshot_index][observation_index], 
+						(Real)variance_new[snapshot_index][observation_index],
+						(Real)pow((result[run_index][snapshot_index][observation_index] - meanvalue_new[snapshot_index][observation_index]), 2), 
+						(Real)pow(meanvalue_new[snapshot_index][observation_index] * 1.0e-2, 2) 
+						);
 				}
 	};
 	//=================================================================================================//
@@ -58,10 +60,12 @@ namespace SPH
 				for (int run_index = 0; run_index != this->number_of_run_; ++run_index) 
 					for (int i = 0; i != variance[0][0].size(); ++i)
 					{
-						variance_new[snapshot_index][observation_index][i] = SMAX(variance[snapshot_index][observation_index][i], 
-							variance_new[snapshot_index][observation_index][i],
-							pow((result[run_index][snapshot_index][observation_index][i] - meanvalue_new[snapshot_index][observation_index][i]), 2),
-							pow(meanvalue_new[snapshot_index][observation_index][i] * 1.0e-2, 2) );
+						variance_new[snapshot_index][observation_index][i] = SMAX(
+							(Real)variance[snapshot_index][observation_index][i], 
+							(Real)variance_new[snapshot_index][observation_index][i],
+							(Real)pow((result[run_index][snapshot_index][observation_index][i] - meanvalue_new[snapshot_index][observation_index][i]), 2),
+							(Real)pow(meanvalue_new[snapshot_index][observation_index][i] *  1.0e-2, 2) 
+							);
 					}
 	};
 	//=================================================================================================//
@@ -75,10 +79,12 @@ namespace SPH
 					for (size_t i = 0; i != variance[0][0].size(); ++i)
 						for (size_t j = 0; j != variance[0][0].size(); ++j)
 						{
-							variance_new[snapshot_index][observation_index](i,j) = SMAX(variance[snapshot_index][observation_index](i,j), 
-								variance_new[snapshot_index][observation_index](i,j),
-								pow((result[run_index][snapshot_index][observation_index](i,j) - meanvalue_new[snapshot_index][observation_index](i,j)), 2),
-								pow(meanvalue_new[snapshot_index][observation_index](i,j) * 1.0e-2, 2));
+							variance_new[snapshot_index][observation_index](i,j) = SMAX(
+								(Real)variance[snapshot_index][observation_index](i,j), 
+								(Real)variance_new[snapshot_index][observation_index](i,j),
+								(Real)pow((result[run_index][snapshot_index][observation_index](i,j) - meanvalue_new[snapshot_index][observation_index](i,j)), 2),
+								(Real)pow(meanvalue_new[snapshot_index][observation_index](i,j) *  Real(0.01), 2)
+								);
 						}
 	};
 	//=================================================================================================//

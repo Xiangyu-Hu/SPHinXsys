@@ -57,8 +57,8 @@ BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
 Real rho0_s = 1.06e-3;
 /** Active stress factor */
 Real k_a = 150 * stress_scale;
-Real a0[4] = {496.0 * stress_scale, 15196.0 * stress_scale, 3283.0 * stress_scale, 662.0 * stress_scale};
-Real b0[4] = {7.209, 20.417, 11.176, 9.466};
+Real a0[4] = {Real(496.0 * stress_scale), Real(15196.0 * stress_scale), Real(3283.0 * stress_scale), Real(662.0 * stress_scale)};
+Real b0[4] = {Real(7.209), Real(20.417), Real(11.176), Real(9.466)};
 /** reference stress to achieve weakly compressible condition */
 Real poisson = 0.4995;
 Real bulk_modulus = 2.0 * a0[0] * (1.0 + poisson) / (3.0 * (1.0 - 2.0 * poisson));
