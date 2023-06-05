@@ -11,10 +11,10 @@ namespace SPH
 {
 //=================================================================================================//
 BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
-    : base_material_(*base_material), total_real_particles_(0),
-      real_particles_bound_(0), total_ghost_particles_(0),
+    : total_real_particles_(0), real_particles_bound_(0), total_ghost_particles_(0),
       particle_sorting_(*this),
       sph_body_(sph_body), body_name_(sph_body.getName()),
+      base_material_(*base_material),
       restart_xml_engine_("xml_restart", "particles"),
       reload_xml_engine_("xml_particle_reload", "particles")
 {
@@ -69,7 +69,7 @@ void BaseParticles::addAParticleEntry()
     sorted_id_.push_back(sequence_.size());
     sequence_.push_back(0);
 
-    add_a_particle_value_(all_particle_data_);
+    add_particle_data_with_default_value_(all_particle_data_);
 }
 //=================================================================================================//
 void BaseParticles::addBufferParticles(size_t buffer_size)
@@ -81,46 +81,46 @@ void BaseParticles::addBufferParticles(size_t buffer_size)
     real_particles_bound_ += buffer_size;
 }
 //=================================================================================================//
-void BaseParticles::copyFromAnotherParticle(size_t this_index, size_t another_index)
+void BaseParticles::copyFromAnotherParticle(size_t index, size_t another_index)
 {
-    updateFromAnotherParticle(this_index, another_index);
+    updateFromAnotherParticle(index, another_index);
 }
 //=================================================================================================//
-void BaseParticles::updateFromAnotherParticle(size_t this_index, size_t another_index)
+void BaseParticles::updateFromAnotherParticle(size_t index, size_t another_index)
 {
-    copy_a_particle_value_(all_particle_data_, this_index, another_index);
+    copy_particle_data_(all_particle_data_, index, another_index);
 }
 //=================================================================================================//
-size_t BaseParticles::insertAGhostParticle(size_t index_i)
+size_t BaseParticles::insertAGhostParticle(size_t index)
 {
     total_ghost_particles_ += 1;
     size_t expected_size = real_particles_bound_ + total_ghost_particles_;
     size_t expected_particle_index = expected_size - 1;
     if (expected_size <= pos_.size())
     {
-        copyFromAnotherParticle(expected_particle_index, index_i);
+        copyFromAnotherParticle(expected_particle_index, index);
         /** For a ghost particle, its sorted id is that of corresponding real particle. */
-        sorted_id_[expected_particle_index] = index_i;
+        sorted_id_[expected_particle_index] = index;
     }
     else
     {
         addAParticleEntry();
-        copyFromAnotherParticle(expected_particle_index, index_i);
+        copyFromAnotherParticle(expected_particle_index, index);
         /** For a ghost particle, its sorted id is that of corresponding real particle. */
-        sorted_id_[expected_particle_index] = index_i;
+        sorted_id_[expected_particle_index] = index;
     }
     return expected_particle_index;
 }
 //=================================================================================================//
-void BaseParticles::switchToBufferParticle(size_t index_i)
+void BaseParticles::switchToBufferParticle(size_t index)
 {
     size_t last_real_particle_index = total_real_particles_ - 1;
-    if (index_i < last_real_particle_index)
+    if (index < last_real_particle_index)
     {
-        updateFromAnotherParticle(index_i, last_real_particle_index);
+        updateFromAnotherParticle(index, last_real_particle_index);
         // update unsorted and sorted_id as well
-        std::swap(unsorted_id_[index_i], unsorted_id_[last_real_particle_index]);
-        sorted_id_[unsorted_id_[index_i]] = index_i;
+        std::swap(unsorted_id_[index], unsorted_id_[last_real_particle_index]);
+        sorted_id_[unsorted_id_[index]] = index;
     }
     total_real_particles_ -= 1;
 }
@@ -151,25 +151,25 @@ void BaseParticles::writePltFileHeader(std::ofstream &output_file)
     };
 }
 //=================================================================================================//
-void BaseParticles::writePltFileParticleData(std::ofstream &output_file, size_t index_i)
+void BaseParticles::writePltFileParticleData(std::ofstream &output_file, size_t index)
 {
     // write particle positions and index first
-    Vec3d particle_position = upgradeToVec3d(pos_[index_i]);
+    Vec3d particle_position = upgradeToVec3d(pos_[index]);
     output_file << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " "
-                << index_i << " ";
+                << index << " ";
 
     constexpr int type_index_int = DataTypeIndex<int>::value;
     for (DiscreteVariable<int> *variable : std::get<type_index_int>(variables_to_write_))
     {
         StdLargeVec<int> &variable_data = *(std::get<type_index_int>(all_particle_data_)[variable->IndexInContainer()]);
-        output_file << variable_data[index_i] << " ";
+        output_file << variable_data[index] << " ";
     };
 
     constexpr int type_index_Vecd = DataTypeIndex<Vecd>::value;
     for (DiscreteVariable<Vecd> *variable : std::get<type_index_Vecd>(variables_to_write_))
     {
         StdLargeVec<Vecd> &variable_data = *(std::get<type_index_Vecd>(all_particle_data_)[variable->IndexInContainer()]);
-        Vec3d vector_value = upgradeToVec3d(variable_data[index_i]);
+        Vec3d vector_value = upgradeToVec3d(variable_data[index]);
         output_file << vector_value[0] << " " << vector_value[1] << " " << vector_value[2] << " ";
     };
 
@@ -177,7 +177,7 @@ void BaseParticles::writePltFileParticleData(std::ofstream &output_file, size_t 
     for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(variables_to_write_))
     {
         StdLargeVec<Real> &variable_data = *(std::get<type_index_Real>(all_particle_data_)[variable->IndexInContainer()]);
-        output_file << variable_data[index_i] << " ";
+        output_file << variable_data[index] << " ";
     };
 }
 //=================================================================================================//

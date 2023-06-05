@@ -110,7 +110,7 @@ StdLargeVec<DataType> *BaseParticles::registerSharedVariable(const std::string &
     constexpr int type_index = DataTypeIndex<DataType>::value;
     if (variable == nullptr)
     {
-        UniquePtrsKeeper<StdLargeVec<DataType>> &container = std::get<type_index>(shared_particle_data_ptr_);
+        UniquePtrsKeeper<StdLargeVec<DataType>> &container = std::get<type_index>(shared_particle_data_ptrs_);
         StdLargeVec<DataType> *contained_data = container.template createPtr<StdLargeVec<DataType>>();
         registerVariable(*contained_data, variable_name);
         return contained_data;
@@ -178,14 +178,6 @@ void BaseParticles::addDerivedVariableToWrite(Ts &&...args)
     addVariableToList<DerivedDataType>(variables_to_write_, derived_data->variable_name_);
 }
 //=================================================================================================//
-template <class DerivedVariableMethod, class... Ts>
-void BaseParticles::addDerivedVariable(Ts &&...args)
-{
-    SimpleDynamics<DerivedVariableMethod> *derived_data =
-        derived_particle_data_.createPtr<SimpleDynamics<DerivedVariableMethod>>(sph_body_, std::forward<Ts>(args)...);
-    derived_variables_.push_back(derived_data);
-}
-//=================================================================================================//
 template <typename DataType>
 void BaseParticles::addVariableToRestart(const std::string &variable_name)
 {
@@ -241,7 +233,7 @@ operator()(ParticleData &particle_data, size_t new_size) const
 }
 //=================================================================================================//
 template <typename DataType>
-void BaseParticles::addAParticleDataValue<DataType>::
+void BaseParticles::addParticleDataWithDefaultValue<DataType>::
 operator()(ParticleData &particle_data) const
 {
     constexpr int type_index = DataTypeIndex<DataType>::value;
@@ -251,13 +243,13 @@ operator()(ParticleData &particle_data) const
 }
 //=================================================================================================//
 template <typename DataType>
-void BaseParticles::copyAParticleDataValue<DataType>::
-operator()(ParticleData &particle_data, size_t this_index, size_t another_index) const
+void BaseParticles::copyParticleData<DataType>::
+operator()(ParticleData &particle_data, size_t index, size_t another_index) const
 {
     constexpr int type_index = DataTypeIndex<DataType>::value;
 
     for (size_t i = 0; i != std::get<type_index>(particle_data).size(); ++i)
-        (*std::get<type_index>(particle_data)[i])[this_index] =
+        (*std::get<type_index>(particle_data)[i])[index] =
             (*std::get<type_index>(particle_data)[i])[another_index];
 }
 //=================================================================================================//

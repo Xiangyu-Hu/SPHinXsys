@@ -37,7 +37,7 @@ namespace SPH
 class BaseVariable
 {
   public:
-    BaseVariable(const std::string &name) : name_(name){};
+    explicit BaseVariable(const std::string &name) : name_(name){};
     virtual ~BaseVariable(){};
     std::string Name() const { return name_; };
 

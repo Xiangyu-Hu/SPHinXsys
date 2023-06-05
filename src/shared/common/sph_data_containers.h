@@ -66,11 +66,10 @@ using CellLists = std::pair<ConcurrentCellLists, DataListsInCells>;
 
 /** Generalized particle data type */
 typedef DataContainerAddressAssemble<StdLargeVec> ParticleData;
-constexpr size_t ParticleDataSize = std::tuple_size<ParticleData>::value;
-/** Generalized particle variable to index map */
+/** Generalized particle variable type*/
 typedef DataContainerAddressAssemble<DiscreteVariable> ParticleVariables;
-/** Generalized particle variable list */
-typedef std::array<StdVec<std::pair<std::string, size_t>>, ParticleDataSize> ParticleVariableList;
+/** Generalized particle variable type*/
+typedef DataContainerAddressAssemble<GlobalVariable> GlobalVariables;
 
 /** operation by looping or going through a particle variables */
 template <typename DataType>

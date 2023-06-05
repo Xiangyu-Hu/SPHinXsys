@@ -438,7 +438,7 @@ ParticleMergeWithPrescribedArea::
     ParticleMergeWithPrescribedArea(BaseInnerRelation &inner_relation, Shape &refinement_region)
     : ParticleRefinementWithPrescribedArea(inner_relation.getSPHBody(), refinement_region),
       DataDelegateInner<BaseParticles, DataDelegateEmptyBase>(inner_relation),
-      all_particle_data_(particles_->all_particle_data_), vel_n_(particles_->vel_)
+      all_particle_data_(particles_->getAllParticleData()), vel_n_(particles_->vel_)
 {
     particles_->registerVariable(total_merge_error_, "MergeDensityError", 0.0);
 }

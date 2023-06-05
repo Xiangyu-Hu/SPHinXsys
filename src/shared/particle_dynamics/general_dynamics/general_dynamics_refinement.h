@@ -236,7 +236,6 @@ class ParticleMergeWithPrescribedArea : public ParticleRefinementWithPrescribedA
 
   protected:
     ParticleData &all_particle_data_;
-    int dimension_;
     StdLargeVec<Vecd> &vel_n_;
     StdLargeVec<bool> tag_merged_;
     StdLargeVec<Real> total_merge_error_;
