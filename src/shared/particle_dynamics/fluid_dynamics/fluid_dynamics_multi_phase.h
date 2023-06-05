@@ -36,9 +36,9 @@ namespace SPH
 {
 	namespace fluid_dynamics
 	{
-		typedef DataDelegateContact<FluidParticles, FluidParticles, DataDelegateEmptyBase>
+		typedef DataDelegateContact<BaseParticles, BaseParticles, DataDelegateEmptyBase>
 			MultiPhaseContactData;
-		typedef DataDelegateContact<FluidParticles, FluidParticles> MultiPhaseData;
+		typedef DataDelegateContact<BaseParticles, BaseParticles> MultiPhaseData;
 		/**
 		 * @class ViscousAccelerationMultiPhase
 		 * @brief  the viscosity force induced acceleration

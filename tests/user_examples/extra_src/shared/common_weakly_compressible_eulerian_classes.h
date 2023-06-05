@@ -410,7 +410,7 @@ namespace SPH
 	//----------------------------------------------------------------------
 	//	Non-Reflective Boundary
 	//----------------------------------------------------------------------
-	class NonReflectiveBoundaryVariableCorrection : public LocalDynamics, public DataDelegateInner<FluidParticles>
+	class NonReflectiveBoundaryVariableCorrection : public LocalDynamics, public DataDelegateInner<BaseParticles>
 	{
 	public:
 		NonReflectiveBoundaryVariableCorrection(BaseInnerRelation& inner_relation);

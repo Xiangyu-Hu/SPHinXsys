@@ -193,7 +193,14 @@ namespace SPH
 		//=================================================================================================//
 		template <class RiemannSolverType>
 		BaseIntegration1stHalf<RiemannSolverType>::BaseIntegration1stHalf(BaseInnerRelation &inner_relation)
-			: BaseIntegration(inner_relation), riemann_solver_(fluid_, fluid_) {}
+			: BaseIntegration(inner_relation), riemann_solver_(fluid_, fluid_) 
+		{
+			particles_->registerSortableVariable<Vecd>("Position");
+			particles_->registerSortableVariable<Vecd>("Velocity");
+			particles_->registerSortableVariable<Real>("MassiveMeasure");
+			particles_->registerSortableVariable<Real>("Density");
+			particles_->registerSortableVariable<Real>("VolumetricMeasure");
+		}
 		//=================================================================================================//
 		template <class RiemannSolverType>
 		void BaseIntegration1stHalf<RiemannSolverType>::initialization(size_t index_i, Real dt)

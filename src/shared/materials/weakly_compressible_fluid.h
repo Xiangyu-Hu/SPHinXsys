@@ -32,6 +32,7 @@
 #define WEAKLY_COMPRESSIBLE_FLUID_H
 
 #include "base_material.h"
+#include "all_particle_dynamics.h"
 
 namespace SPH
 {
@@ -44,6 +45,7 @@ namespace SPH
 	protected:
 		Real p0_; /**< reference pressure */
 	public:
+
 		explicit WeaklyCompressibleFluid(Real rho0, Real c0, Real mu = 0.0)
 			: Fluid(rho0, c0, mu), p0_(rho0 * c0 * c0)
 		{

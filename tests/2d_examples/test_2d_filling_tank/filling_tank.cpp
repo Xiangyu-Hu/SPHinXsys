@@ -97,7 +97,7 @@ int main()
 	FluidBody water_body(system, makeShared<TransformShape<GeometricShapeBox>>(
 									 Transform2d(inlet_translation), inlet_halfsize, "WaterBody"));
 	water_body.sph_adaptation_->resetKernel<KernelTabulated<KernelWendlandC2>>(20);
-	water_body.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
+	water_body.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
 	water_body.generateParticles<ParticleGeneratorLattice>();
 	/**note that, as particle sort is activated (by default) for fluid particles,
 	 * the output occasionally does not reflect the real free surface indication due to sorting. */

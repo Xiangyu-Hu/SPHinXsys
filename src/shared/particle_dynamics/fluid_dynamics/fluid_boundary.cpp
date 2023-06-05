@@ -8,7 +8,7 @@ namespace SPH
 		//=================================================================================================//
 		BaseFlowBoundaryCondition::BaseFlowBoundaryCondition(BodyPartByCell &body_part)
 			: BaseLocalDynamics<BodyPartByCell>(body_part), FluidDataSimple(sph_body_),
-			  rho_(particles_->rho_), p_(particles_->p_),
+			  rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
 			  pos_(particles_->pos_), vel_(particles_->vel_){};
 		//=================================================================================================//
 		FlowVelocityBuffer::FlowVelocityBuffer(BodyPartByCell &body_part, Real relaxation_rate)
@@ -33,9 +33,10 @@ namespace SPH
 		EmitterInflowCondition::
 			EmitterInflowCondition(BodyAlignedBoxByParticle &aligned_box_part)
 			: BaseLocalDynamics<BodyPartByParticle>(aligned_box_part), FluidDataSimple(sph_body_),
-			  fluid_(particles_->fluid_),
+			  fluid_(DynamicCast<Fluid>(this, particles_->base_material_)),
 			  pos_(particles_->pos_), vel_(particles_->vel_), acc_(particles_->acc_),
-			  rho_(particles_->rho_), p_(particles_->p_), drho_dt_(particles_->drho_dt_),
+			  rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")), 
+			  drho_dt_(*particles_->getVariableByName<Real>("DensityChangeRate")),
 			  inflow_pressure_(0), rho0_(fluid_.ReferenceDensity()),
 			  aligned_box_(aligned_box_part.aligned_box_),
 			  updated_transform_(aligned_box_.getTransform()),
@@ -55,8 +56,8 @@ namespace SPH
 		EmitterInflowInjection::EmitterInflowInjection(BodyAlignedBoxByParticle &aligned_box_part,
 													   size_t body_buffer_width, int axis)
 			: BaseLocalDynamics<BodyPartByParticle>(aligned_box_part), FluidDataSimple(sph_body_),
-			  fluid_(particles_->fluid_),
-			  pos_(particles_->pos_), rho_(particles_->rho_), p_(particles_->p_),
+			  fluid_(DynamicCast<Fluid>(this, particles_->base_material_)),
+			  pos_(particles_->pos_), rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
 			  axis_(axis), aligned_box_(aligned_box_part.aligned_box_)
 		{
 			size_t total_body_buffer_particles = aligned_box_part.body_part_particles_.size() * body_buffer_width;
@@ -108,7 +109,7 @@ namespace SPH
 			: BaseLocalDynamics<BodyPartByCell>(near_surface), FluidDataSimple(sph_body_),
 			  rho0_(sph_body_.base_material_->ReferenceDensity()),
 			  inv_sigma0_(1.0 / sph_body_.sph_adaptation_->LatticeNumberDensity()),
-			  mass_(particles_->mass_), rho_sum_(particles_->rho_sum_), pos_(particles_->pos_),
+			  mass_(particles_->mass_), rho_sum_(*particles_->getVariableByName<Real>("DensitySummation")), pos_(particles_->pos_),
 			  level_set_shape_(&near_surface.level_set_shape_) {}
 		//=================================================================================================//
 		void StaticConfinementDensity::update(size_t index_i, Real dt)
@@ -120,8 +121,8 @@ namespace SPH
 		//=================================================================================================//
 		StaticConfinementIntegration1stHalf::StaticConfinementIntegration1stHalf(NearShapeSurface &near_surface)
 			: BaseLocalDynamics<BodyPartByCell>(near_surface), FluidDataSimple(sph_body_),
-			  fluid_(particles_->fluid_),
-			  rho_(particles_->rho_), p_(particles_->p_),
+			  fluid_(DynamicCast<Fluid>(this, particles_->base_material_)),
+			  rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
 			  pos_(particles_->pos_), vel_(particles_->vel_),
 			  acc_(particles_->acc_),
 			  level_set_shape_(&near_surface.level_set_shape_),
@@ -135,8 +136,9 @@ namespace SPH
 		//=================================================================================================//
 		StaticConfinementIntegration2ndHalf::StaticConfinementIntegration2ndHalf(NearShapeSurface &near_surface)
 			: BaseLocalDynamics<BodyPartByCell>(near_surface), FluidDataSimple(sph_body_),
-			  fluid_(particles_->fluid_),
-			  rho_(particles_->rho_), p_(particles_->p_), drho_dt_(particles_->drho_dt_),
+			  fluid_(DynamicCast<Fluid>(this, particles_->base_material_)),
+			  rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")), 
+			  drho_dt_(*particles_->getVariableByName<Real>("DensityChangeRate")),
 			  pos_(particles_->pos_), vel_(particles_->vel_),
 			  level_set_shape_(&near_surface.level_set_shape_),
 			  riemann_solver_(fluid_, fluid_) {}

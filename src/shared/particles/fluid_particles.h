@@ -36,55 +36,55 @@
 
 namespace SPH
 {
-	class Fluid;
-	class Oldroyd_B_Fluid;
+	//class Fluid;
+	//class Oldroyd_B_Fluid;
 	class CompressibleFluid;
 
-	/**
-	 * @class FluidParticles
-	 * @brief newtonian fluid particles.
-	 */
-	class FluidParticles : public BaseParticles
-	{
-	public:
-		StdLargeVec<Real> p_;				 /**< pressure */
-		StdLargeVec<Real> drho_dt_;			 /**< density change rate */
-		StdLargeVec<Real> rho_sum_;			 /**< density by particle summation */
-		StdLargeVec<int> surface_indicator_; /**< free surface indicator */
-		Fluid &fluid_;
+	///**
+	// * @class FluidParticles
+	// * @brief newtonian fluid particles.
+	// */
+	//class FluidParticles : public BaseParticles
+	//{
+	//public:
+	//	//StdLargeVec<Real> p_;				 /**< pressure */
+	//	//StdLargeVec<Real> drho_dt_;			 /**< density change rate */
+	//	//StdLargeVec<Real> rho_sum_;			 /**< density by particle summation */
+	//	//StdLargeVec<int> surface_indicator_; /**< free surface indicator */
+	//	Fluid &fluid_;
 
-		FluidParticles(SPHBody &sph_body, Fluid *fluid);
-		virtual ~FluidParticles(){};
-		/** Initialize particle variables used in fluid particle. */
-		virtual void initializeOtherVariables() override;
-		/** Return the ptr of this object. */
-		virtual FluidParticles *ThisObjectPtr() override { return this; };
-	};
+	//	FluidParticles(SPHBody &sph_body, Fluid *fluid);
+	//	virtual ~FluidParticles(){};
+	//	/** Initialize particle variables used in fluid particle. */
+	//	virtual void initializeOtherVariables() override;
+	//	/** Return the ptr of this object. */
+	//	virtual FluidParticles *ThisObjectPtr() override { return this; };
+	//};
 
-	/**
-	 * @class ViscoelasticFluidParticles
-	 * @brief Viscoelastic fluid particles.
-	 */
-	class ViscoelasticFluidParticles : public FluidParticles
-	{
-	public:
-		StdLargeVec<Matd> tau_;		/**<  elastic stress */
-		StdLargeVec<Matd> dtau_dt_; /**<  change rate of elastic stress */
-		Oldroyd_B_Fluid &oldroyd_b_fluid_; 
+	///**
+	// * @class ViscoelasticFluidParticles
+	// * @brief Viscoelastic fluid particles.
+	// */
+	//class ViscoelasticFluidParticles : public FluidParticles
+	//{
+	//public:
+	//	//StdLargeVec<Matd> tau_;		/**<  elastic stress */
+	//	//StdLargeVec<Matd> dtau_dt_; /**<  change rate of elastic stress */
+	//	Oldroyd_B_Fluid &oldroyd_b_fluid_; 
 
-		ViscoelasticFluidParticles(SPHBody &sph_body, Oldroyd_B_Fluid *oldroyd_b_fluid);
-		virtual ~ViscoelasticFluidParticles(){};
-		/** Initialize particle variables used in viscoelastic fluid particle. */
-		virtual void initializeOtherVariables() override;
-		/** Return the ptr of this object. */
-		virtual ViscoelasticFluidParticles *ThisObjectPtr() override { return this; };
-	};
+	//	ViscoelasticFluidParticles(SPHBody &sph_body, Oldroyd_B_Fluid *oldroyd_b_fluid);
+	//	virtual ~ViscoelasticFluidParticles(){};
+	//	/** Initialize particle variables used in viscoelastic fluid particle. */
+	//	virtual void initializeOtherVariables() override;
+	//	/** Return the ptr of this object. */
+	//	virtual ViscoelasticFluidParticles *ThisObjectPtr() override { return this; };
+	//};
 
 	/**
 	 * @class CompressibleFluidParticles
 	 * @brief Compressible fluid particles.
 	 */
-	class CompressibleFluidParticles : public FluidParticles
+	class CompressibleFluidParticles : public BaseParticles
 	{
 	public:
 		StdLargeVec<Vecd> mom_;				/**< momentum */

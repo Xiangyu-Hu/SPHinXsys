@@ -6,11 +6,11 @@ namespace SPH
 {
 	GranularMaterialParticles::
 		GranularMaterialParticles(SPHBody &sph_body, GranularMaterial *granular_material)
-		: FluidParticles(sph_body, granular_material), granular_material_(*granular_material) {}
+		: BaseParticles(sph_body, granular_material), granular_material_(*granular_material) {}
 	//=================================================================================================//
 	void GranularMaterialParticles::initializeOtherVariables()
 	{
-		FluidParticles::initializeOtherVariables();
+		BaseParticles::initializeOtherVariables();
 
 		registerVariable(acc_shear_, "AccelerationByShear");
 		registerVariable(stress_tensor_, "StressTensor");

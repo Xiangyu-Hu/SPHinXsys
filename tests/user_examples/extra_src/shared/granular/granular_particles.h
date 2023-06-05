@@ -8,7 +8,7 @@ namespace SPH
 {
 	class GranularMaterial;
 
-	class GranularMaterialParticles : public FluidParticles
+	class GranularMaterialParticles : public BaseParticles
 	{
 	public:
 
