@@ -24,7 +24,7 @@
  * @file    base_local_dynamics.h
  * @brief 	This is for the base classes of local particle dynamics, which describe the
  * 			dynamics of a particle and it neighbors.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang, Chenxi Zhao and Xiangyu Hu
  */
 
 #ifndef BASE_LOCAL_DYNAMICS_H

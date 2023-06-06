@@ -24,7 +24,7 @@
  * @file 	base_variables.h
  * @brief 	Here gives classes for the base variables used in simulation.
  * @details These variables are those discretized in spaces and time.
- * @author	Xiangyu Hu
+ * @author	Xiangyu Hu and Chenxi Zhao
  */
 
 #ifndef BASE_VARIABLES_H

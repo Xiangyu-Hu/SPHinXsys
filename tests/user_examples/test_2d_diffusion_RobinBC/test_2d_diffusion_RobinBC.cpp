@@ -1,7 +1,7 @@
 /**
  * @file 	test_2d_diffusion_RobinBC.cpp
- * @brief 	2D diffusion test of diffusion problem with Neumann boundary condition.
- * @details This is a case to implement Neumann boundary condition.
+ * @brief 	2D diffusion test of diffusion problem with Robin boundary condition.
+ * @details This is the first case to implement global variable registed on particles.
  * @author 	Chenxi Zhao, Bo Zhang, Chi Zhang and Xiangyu Hu
  */
 #include "sphinxsys.h"
