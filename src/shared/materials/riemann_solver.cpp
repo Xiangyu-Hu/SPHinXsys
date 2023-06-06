@@ -35,7 +35,7 @@ Real DissipativeRiemannSolver::DissipativeUJump(const Real &p_jump)
 //=================================================================================================//
 Real AcousticRiemannSolver::DissipativePJump(const Real &u_jump)
 {
-    return DissipativeRiemannSolver::DissipativeUJump(u_jump) *
+    return DissipativeRiemannSolver::DissipativePJump(u_jump) *
            SMIN(limiting_factor_ * SMAX(u_jump * inv_c_ave_, 0.0), 1.0);
 }
 //=================================================================================================//
