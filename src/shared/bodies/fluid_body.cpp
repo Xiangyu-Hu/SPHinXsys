@@ -1,7 +1,5 @@
 #include "fluid_body.h"
-
 #include "base_material.h"
- 
 #include "cell_linked_list.h"
 
 namespace SPH

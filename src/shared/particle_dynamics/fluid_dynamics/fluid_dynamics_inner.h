@@ -36,7 +36,6 @@
 #include "base_kernel.h"
 #include "all_body_relations.h"
 #include "fluid_body.h"
- 
 #include "weakly_compressible_fluid.h"
 #include "riemann_solver.h"
 

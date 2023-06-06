@@ -7,9 +7,7 @@
 #include "elastic_solid.h"
 #include "external_force.h"
 #include "cell_linked_list.h"
- 
 #include "weakly_compressible_fluid.h"
-
 #include "Simbody.h"
 #include "SimTKmath.h"
 #include "SimTKcommon.h"

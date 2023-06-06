@@ -1,7 +1,6 @@
 #ifndef GRANULAR_BODY_H
 #define GRANULAR_BODY_H
 
-
 #include "base_body.h"
 #include "base_body_part.h"
 #include "fluid_body.h"
