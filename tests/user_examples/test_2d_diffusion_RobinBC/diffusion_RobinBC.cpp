@@ -1,11 +1,11 @@
 /**
- * @file 	test_2d_diffusion_RobinBC.cpp
- * @brief 	2D diffusion test of diffusion problem with Robin boundary condition.
- * @details This is the first case to implement global variable registed on particles.
+ * @file 	diffusion_RobinBC.cpp
+ * @brief 	2D test of diffusion problem with Robin boundary condition.
+ * @details This is the first case to implement global variables registed on particles.
  * @author 	Chenxi Zhao, Bo Zhang, Chi Zhang and Xiangyu Hu
  */
 #include "sphinxsys.h"
-#include "test_2d_diffusion_RobinBC.h"
+#include "diffusion_RobinBC.h"
 
 using namespace SPH; //Namespace cite here
 //----------------------------------------------------------------------
@@ -61,6 +61,8 @@ int main(int ac, char* av[])
 	SimpleDynamics<DirichletWallBoundaryInitialCondition> setup_boundary_condition_Dirichlet(wall_boundary_Dirichlet);
 	SimpleDynamics<RobinWallBoundaryInitialCondition> setup_boundary_condition_Robin(wall_boundary_Robin);
 
+	InteractionDynamics<solid_dynamics::CorrectConfiguration> correct_configuration(diffusion_body_inner_relation);
+
 	SimpleDynamics<NormalDirectionFromBodyShape> diffusion_body_normal_direction(diffusion_body);
 	SimpleDynamics<NormalDirectionFromBodyShape> Dirichlet_normal_direction(wall_boundary_Dirichlet);
 	SimpleDynamics<NormalDirectionFromBodyShape> Robin_normal_direction(wall_boundary_Robin);
@@ -77,6 +79,8 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
+
+	correct_configuration.exec();
 
 	setup_diffusion_initial_condition.exec();
 

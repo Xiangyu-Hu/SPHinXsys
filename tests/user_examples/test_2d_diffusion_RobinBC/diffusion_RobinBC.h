@@ -1,10 +1,10 @@
 /**
- * @file 	test_2d_diffusion_RobinBC.h
- * @brief 	This is the head files used by test_2d_diffusion_RobinBC.cpp.
+ * @file 	diffusion_RobinBC.h
+ * @brief 	This is the head files used by diffusion_RobinBC.cpp.
  * @author	Chenxi Zhao, Bo Zhang, Chi Zhang and Xiangyu Hu
  */
-#ifndef	DIFFUSION_TEST_WITH_ROBINBC_H
-#define DIFFUSION_TEST_WITH_ROBINBC_H
+#ifndef	DIFFUSION_ROBINBC_H
+#define DIFFUSION_ROBINBC_H
 
 #include "sphinxsys.h"
 using namespace SPH;
@@ -224,4 +224,4 @@ public:
 		}
 	}
 };
-#endif //DIFFUSION_TEST_WITH_NEUMANNBC_H
+#endif //DIFFUSION_ROBINBC_H

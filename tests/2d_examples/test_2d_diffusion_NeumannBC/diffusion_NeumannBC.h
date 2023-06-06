@@ -1,10 +1,10 @@
 /**
- * @file 	2d_diffusion_test_with_NeumannBC.h
- * @brief 	This is the head files used by 2d_diffusion_test_with_NeumannBC.cpp.
+ * @file 	diffusion_NeumannBC.h
+ * @brief 	This is the head files used by diffusion_NeumannBC.cpp.
  * @author	Chenxi Zhao, Bo Zhang, Chi Zhang and Xiangyu Hu
  */
-#ifndef DIFFUSION_TEST_WITH_NEUMANNBC_H
-#define DIFFUSION_TEST_WITH_NEUMANNBC_H
+#ifndef DIFFUSION_NEUMANNBC_H
+#define DIFFUSION_NEUMANNBC_H
 
 #include "sphinxsys.h"
 using namespace SPH;
@@ -213,4 +213,4 @@ class TemperatureObserverParticleGenerator : public ObserverParticleGenerator
         }
     }
 };
-#endif // DIFFUSION_TEST_WITH_NEUMANNBC_H
+#endif // DIFFUSION_NEUMANNBC_H
