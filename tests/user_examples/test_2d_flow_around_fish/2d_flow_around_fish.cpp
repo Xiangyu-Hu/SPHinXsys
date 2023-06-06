@@ -11,9 +11,9 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, particle_spacing_ref);
 	/** Tag for run particle relaxation for the initial body fitted distribution. */
-	system.setRunParticleRelaxation(false);
+	system.setRunParticleRelaxation(true);
 	/** Tag for computation start with relaxed body fitted particles distribution. */
-	system.setReloadParticles(true);
+	system.setReloadParticles(false);
     //handle command line arguments
 #ifdef BOOST_AVAILABLE
 	system.handleCommandlineOptions(ac, av);

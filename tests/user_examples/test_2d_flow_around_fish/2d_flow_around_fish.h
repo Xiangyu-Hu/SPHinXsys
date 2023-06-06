@@ -9,7 +9,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DL = 0.8;								     /**< Channel length. */
 Real DH = 0.4;								    /**< Channel height. */
-Real particle_spacing_ref = 0.005;			   /**< Initial reference particle spacing. */
+Real particle_spacing_ref = 0.0025;			   /**< Initial reference particle spacing. */
 Real DL_sponge = particle_spacing_ref * 20.0; /**< Sponge region to impose inflow condition. */
 Real BW = particle_spacing_ref * 4.0;		 /**< Boundary width, determined by specific layer of boundary particles. */
 /** Domain bounds of the system. */
@@ -20,23 +20,22 @@ Vec2d buffer_translation = Vec2d(-DL_sponge, 0.0) + buffer_halfsize;
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
-Real rho0_f = 1000.0;										     /**< Density. */
+Real rho0_f = 1000.0;										 /**< Density. */
 Real U_f = 1.0;												/**< freestream velocity. */
 Real c_f = 10.0 * U_f;									   /**< Speed of sound. */
 Real Re = 30000.0;										  /**< Reynolds number. */
-Real mu_f = rho0_f * U_f * 0.3 / Re;                    /**< Dynamics viscosity. */
-
+Real mu_f = rho0_f * U_f * 0.3 / Re;                     /**< Dynamics viscosity. */
 //----------------------------------------------------------------------
 //	Global parameters on the solid properties
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
-Real cx = 0.3 * DL;				   /**< Center of fish in x direction. */
+Real cx = 0.3 * DL;			  /**< Center of fish in x direction. */
 Real cy = DH / 2;             /**< Center of fish in y direction. */
 Real fish_length = 0.2;       /**< Length of fish. */
 Real fish_thickness = 0.03;   /**< The maximum fish thickness. */
 Real muscel_thickness = 0.02; /**< The maximum fish thickness. */
 Real head_length = 0.03;      /**< Length of fish bone. */
-Real bone_thickness = 0.005;  /**< Length of fish bone. */
+Real bone_thickness = 0.003;  /**< Length of fish bone. */
 Real fish_shape_resolution = particle_spacing_ref * 0.5;
 
 Real rho0_s = 1050.0;
@@ -210,12 +209,12 @@ public:
 		Real y = pos0_[index_i][1];
 		Real y1(0);
 
-		y1 = b1 * pow(x, 0 + 1) + b2 * pow(x, 1 + 1) + b3 * pow(x, 2 + 1) + b4 * pow(x, 3 + 1) + b5 * pow(x, 4 + 1);
+		y1 = a1 * pow(x, 0 + 1) + a2 * pow(x, 1 + 1) + a3 * pow(x, 2 + 1) + a4 * pow(x, 3 + 1) + a5 * pow(x, 4 + 1);
 
 		Real Am = 0.12;
 		Real frequency = 4.0;
 		Real w = 2 * PI * frequency;
-		Real lamda = 1.0 * fish_length;
+		Real lamda = 3.0 * fish_length;
 		Real wave_number = 2 * PI / lamda;
 		Real hx = -(pow(x, 2)- pow(fish_length, 2)) / pow(fish_length, 2);
 		Real ta = 0.2;
@@ -223,12 +222,12 @@ public:
 
 		active_strain_[index_i] = Matd::Zero();
 
-		if (x <=(fish_length - head_length) && y > (y1 + cy))
+		if (x <=(fish_length - head_length)  && y > (y1-0.004 + cy) && y > (cy + bone_thickness / 2))
 		{
 			materail_id_[index_i] = 0;
 			active_strain_[index_i](0, 0) = -Am * hx * st * pow(sin(w * GlobalStaticVariables::physical_time_/2 + wave_number * x/2), 2);
 		}
-		else if (x <=(fish_length - head_length) && y < (-y1 + cy))
+		else if (x <= (fish_length - head_length)  && y < (-y1 + 0.004 + cy) && y <(cy - bone_thickness / 2))
 		{
 			materail_id_[index_i] = 0;
 			active_strain_[index_i](0, 0) = -Am * hx * st * pow(sin(w * GlobalStaticVariables::physical_time_/2 + wave_number * x/2 + PI / 2), 2);
