@@ -81,6 +81,7 @@ find_path(BOOST_INCLUDE_DIR boost/geometry) # Header-only Boost libraries are no
 
 if(SPHINXSYS_USE_FLOAT)
     target_compile_definitions(sphinxsys_core INTERFACE USE_FLOAT)
+    message("-- Use float as default")
 endif()
 
 if(NOT BOOST_INCLUDE_DIR)

@@ -78,24 +78,5 @@ namespace SPH
 		addVariableToWrite<Real>("Pressure");
 	}
 	//=================================================================================================//
-	WeaklyCompressibleFluidParticles::WeaklyCompressibleFluidParticles(SPHBody &sph_body, Fluid *fluid)
-		: FluidParticles(sph_body, fluid) {}
-	//=================================================================================================//
-	void WeaklyCompressibleFluidParticles::initializeOtherVariables()
-	{
-		FluidParticles::initializeOtherVariables();
-		/**
-		 *	register sortable particle data
-		 */	
-		registerVariable(dmass_dt_, "MassChangeRate");
-		registerVariable(mom_, "Momentum");
-		registerVariable(dmom_dt_, "MomentumChangeRate");
-		registerVariable(dmom_dt_prior_, "OtherMomentumChangeRate");
-		/**
-		 *	add output particle data
-		 */	
-		addVariableToWrite<Real>("Pressure");
-	}
-	//=================================================================================================//
 }
 //=====================================================================================================//

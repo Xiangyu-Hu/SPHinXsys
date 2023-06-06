@@ -15,22 +15,6 @@ namespace SPH
 		cs0_ = sqrt(G0_ / rho0_);
 	};
 	//=================================================================================================//
-	Matd ElasticSolid::NumericalDampingRightCauchy(
-		Matd &F, Matd &dF_dt, Real smoothing_length, size_t particle_index_i)
-	{
-		Matd strain_rate = 0.5 * (dF_dt.transpose() * F + F.transpose() * dF_dt);
-		Matd normal_rate = getDiagonal(strain_rate);
-		return 0.5 * rho0_ * (cs0_ * (strain_rate - normal_rate) + c0_ * normal_rate) * smoothing_length;
-	}
-	//=================================================================================================//
-	Matd ElasticSolid::NumericalDampingLeftCauchy(
-		Matd &F, Matd &dF_dt, Real smoothing_length, size_t particle_index_i)
-	{
-		Matd strain_rate = 0.5 * (dF_dt * F.transpose() + F * dF_dt.transpose());
-		Matd normal_rate = getDiagonal(strain_rate);
-		return 0.5 * rho0_ * (cs0_ * (strain_rate - normal_rate) + c0_ * normal_rate) * smoothing_length;
-	}
-	//=================================================================================================//
 	Real ElasticSolid::PairNumericalDamping(Real dE_dt_ij, Real smoothing_length)
 	{
 		return 0.5 * rho0_ * c0_ * dE_dt_ij * smoothing_length;

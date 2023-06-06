@@ -397,9 +397,9 @@ int main(int ac, char *av[])
 	 * Coupling between SimBody and SPH.
 	 */
 	ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody>
-		force_on_tethered_spot(fish_head, MBsystem, tethered_spot, force_on_bodies, integ);
+		force_on_tethered_spot(fish_head, MBsystem, tethered_spot, integ);
 	SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody>
-		constraint_tethered_spot(fish_head, MBsystem, tethered_spot, force_on_bodies, integ);
+		constraint_tethered_spot(fish_head, MBsystem, tethered_spot, integ);
 
 	BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
 	ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>> 

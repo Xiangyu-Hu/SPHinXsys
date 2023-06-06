@@ -75,9 +75,21 @@ class ElasticSolid : public Solid
     /** Cauchy stress through Eulerian Almansi strain tensor. */
     virtual Matd StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i) = 0;
     /** Numerical damping stress using right Cauchy tensor. */
-    virtual Matd NumericalDampingRightCauchy(Matd &deformation, Matd &deformation_rate, Real smoothing_length, size_t particle_index_i);
-    /** Numerical damping stress using left Cauchy tensor. */
-    virtual Matd NumericalDampingLeftCauchy(Matd &deformation, Matd &deformation_rate, Real smoothing_length, size_t particle_index_i);
+		template <typename ScalingType>
+		Matd NumericalDampingRightCauchy(const Matd &deformation, const Matd &deformation_rate, const ScalingType &scaling, size_t particle_index_i)
+		{
+			Matd strain_rate = 0.5 * (deformation_rate.transpose() * deformation + deformation.transpose() * deformation_rate);
+			Matd normal_rate = getDiagonal(strain_rate);
+			return 0.5 * rho0_ * (cs0_ * (strain_rate - normal_rate) + c0_ * normal_rate) * scaling;
+		}
+		/** Numerical damping stress using left Cauchy tensor. */
+		template <typename ScalingType>
+		Matd NumericalDampingLeftCauchy(const Matd &deformation, const Matd &deformation_rate, const ScalingType& scaling, size_t particle_index_i)
+		{
+			Matd strain_rate = 0.5 * (deformation_rate * deformation.transpose() + deformation * deformation_rate.transpose());
+			Matd normal_rate = getDiagonal(strain_rate);
+			return 0.5 * rho0_ * (cs0_ * (strain_rate - normal_rate) + c0_ * normal_rate) * scaling;
+		}
     /** Numerical damping is computed between particles i and j */
     virtual Real PairNumericalDamping(Real dE_dt_ij, Real smoothing_length);
 

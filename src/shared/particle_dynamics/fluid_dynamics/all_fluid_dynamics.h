@@ -38,5 +38,3 @@
 #include "fluid_surface_inner.hpp"
 #include "fluid_surface_complex.h"
 #include "fluid_boundary.h"
-#include "all_eulerian_compressible_fluid_dynamics.h"
-#include "all_eulerian_weakly_compressible_fluid_dynamics.h"

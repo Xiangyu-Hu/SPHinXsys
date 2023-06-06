@@ -197,5 +197,26 @@ namespace SPH
 	protected:
 		Real poisson_ratio_;
 	};
+
+	//----------------------------------------------------------------------
+	//		for general shell dynamics variables
+	//----------------------------------------------------------------------
+	typedef DataDelegateSimple<ShellParticles> ShellSolidDataSimple;
+	/**
+	 * @class MidSurfaceVonMisesStressofShells
+	 * @brief computing mid-surface von Mises stress of shells
+	 */
+	class MidSurfaceVonMisesStressofShells : public BaseDerivedVariable<Real>,
+		public ShellSolidDataSimple,
+		public LocalDynamics
+	{
+	public:
+		explicit MidSurfaceVonMisesStressofShells(SPHBody& sph_body);
+		virtual ~MidSurfaceVonMisesStressofShells() {};
+		void update(size_t index_i, Real dt = 0.0);
+
+	protected:
+		StdLargeVec<Matd>& mid_surface_cauchy_stress_;
+	};
 }
 #endif // SOLID_PARTICLES_VARIABLE_H
