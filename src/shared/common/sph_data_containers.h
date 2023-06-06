@@ -71,6 +71,11 @@ typedef DataContainerAddressAssemble<DiscreteVariable> ParticleVariables;
 /** Generalized particle variable type*/
 typedef DataContainerAddressAssemble<GlobalVariable> GlobalVariables;
 
+/** Generalized mesh data type */
+template <typename DataType>
+using MeshVariable = DiscreteVariable<DataType>;
+typedef DataContainerAddressAssemble<MeshVariable> MeshVariableAssemble;
+
 /** operation by looping or going through a particle variables */
 template <typename DataType>
 struct loopParticleVariables

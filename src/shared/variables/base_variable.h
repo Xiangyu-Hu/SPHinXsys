@@ -73,66 +73,6 @@ class DiscreteVariable : public BaseVariable
     size_t index_in_container_;
 };
 
-template <typename DataType>
-class PackageVariable;
-const bool sharedVariable = true;
-typedef DataContainerAddressAssemble<PackageVariable> PackageVariableAssemble;
-
-/**
- * @class PackageVariable
- * @brief discrete variable saved in data packages.
- */
-template <typename DataType>
-class PackageVariable : public BaseVariable
-{
-  public:
-    PackageVariable(PackageVariableAssemble &variable_assemble,
-                    const std::string &name, bool is_shared = !sharedVariable)
-        : BaseVariable(name),
-          index_in_container_(initializeIndex(variable_assemble, is_shared)){};
-    virtual ~PackageVariable(){};
-    size_t IndexInContainer() const { return index_in_container_; };
-
-  private:
-    size_t index_in_container_;
-
-    size_t initializeIndex(PackageVariableAssemble &variable_assemble, bool is_shared)
-    {
-        constexpr int type_index = DataTypeIndex<DataType>::value;
-        auto &variable_container = std::get<type_index>(variable_assemble);
-        size_t determined_index = determineIndex(variable_container);
-
-        if (determined_index == variable_container.size()) // determined a new index
-        {
-            variable_container.push_back(this);
-        }
-        else if (!is_shared)
-        {
-            std::cout << "\n Error: the variable: " << this->Name() << " is already used!" << std::endl;
-            std::cout << "\n Please check if " << this->Name() << " is a sharable variable." << std::endl;
-            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-            exit(1);
-        }
-
-        return determined_index;
-    };
-
-    template <typename VariableContainer>
-    size_t determineIndex(const VariableContainer &variable_container)
-    {
-        size_t i = 0;
-        while (i != variable_container.size())
-        {
-            if (variable_container[i]->Name() == this->Name())
-            {
-                return i;
-            }
-            ++i;
-        }
-        return variable_container.size();
-    }
-};
-
 template <typename DataType, template <typename VariableDataType> class VariableType>
 VariableType<DataType> *findVariableByName(DataContainerAddressAssemble<VariableType> &assemble,
                                            const std::string &name)
