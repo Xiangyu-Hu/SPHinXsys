@@ -168,9 +168,9 @@ namespace SPH
 	/** Constant parameters. */
 	constexpr Real Pi = Real(M_PI);
 	constexpr Real Eps = std::numeric_limits<Real>::epsilon();
-	constexpr Real TinyReal = pow(Eps, 1.25);
+	constexpr Real TinyReal = Real(2.71051e-20);
 	constexpr Real Infinity = std::numeric_limits<Real>::max();
-	constexpr Real SqrtEps = sqrt(Eps);
+	constexpr Real SqrtEps = Real(1.0e-8);
 }
 
 #endif // BASE_DATA_TYPE_H

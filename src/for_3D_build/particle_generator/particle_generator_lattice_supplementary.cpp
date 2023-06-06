@@ -66,7 +66,7 @@ namespace SPH
 					{
 						if (body_shape_.checkContain(particle_position))
 						{
-							Real random_real = (Real)rand() / (RAND_MAX);
+							Real random_real = Real(rand() / RAND_MAX);
 							// If the random_real is smaller than the interval, add a particle, only if we haven't reached the max. number of particles.
 							if (random_real <= interval && base_particles_.total_real_particles_ < planned_number_of_particles_)
 							{

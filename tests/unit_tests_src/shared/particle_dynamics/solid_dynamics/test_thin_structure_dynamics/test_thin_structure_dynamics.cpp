@@ -215,7 +215,7 @@ int main(int ac, char* av[])
 
 	for (int i = 0; i < 10; i++)
 	{
-		rondom_index.push_back((double)rand() / (RAND_MAX) * shell_particles->total_real_particles_);
+		rondom_index.push_back(double(rand() / RAND_MAX) * shell_particles->total_real_particles_);
 		von_mises_strain.push_back(shell_particles->getVonMisesStrain(rondom_index[i]));
 	}
 	pseudo_normal = shell_particles->pseudo_n_;
