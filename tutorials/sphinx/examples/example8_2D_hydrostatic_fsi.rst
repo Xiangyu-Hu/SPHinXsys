@@ -303,7 +303,7 @@ Note that the "observer" is defined for outputing the concerned variables.
 	//----------------------------------------------------------------------
 	WaterBlock* water_block = new WaterBlock(system, "WaterBody");
 	WaterMaterial* water_material = new WaterMaterial();
-	FluidParticles 	fluid_particles(water_block, water_material);
+	BaseParticles 	fluid_particles(water_block, water_material);
 	WallBoundary* wall_boundary = new WallBoundary(system, "Wall");
 	SolidParticles 	wall_boundary_particles(wall_boundary);
 	GateMaterial* gate_material = new GateMaterial();

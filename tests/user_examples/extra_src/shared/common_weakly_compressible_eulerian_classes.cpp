@@ -47,11 +47,11 @@ namespace SPH
 		dmom_dt_prior_(*particles_->getVariableByName<Vecd>("OtherMomentumChangeRate")) {};
 	//=================================================================================================//
 	NonReflectiveBoundaryVariableCorrection::NonReflectiveBoundaryVariableCorrection(BaseInnerRelation& inner_relation) 
-		: LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner<FluidParticles>(inner_relation),
-		fluid_(particles_->fluid_), rho_farfield_(0.0), sound_speed_(0.0), vel_farfield_(Vecd::Zero()),
-		rho_(particles_->rho_), p_(particles_->p_), Vol_(particles_->Vol_), vel_(particles_->vel_),
+		: LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner<BaseParticles>(inner_relation),
+		fluid_(DynamicCast<Fluid>(this, particles_->base_material_)), rho_farfield_(0.0), sound_speed_(0.0), vel_farfield_(Vecd::Zero()),
+		rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")), Vol_(particles_->Vol_), vel_(particles_->vel_),
 		mom_(*particles_->getVariableByName<Vecd>("Momentum")), pos_(particles_->pos_),
-		surface_indicator_(particles_->surface_indicator_)
+		surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator"))
 	{
 		particles_->registerVariable(n_, "NormalDirection");
 		particles_->registerVariable(inner_weight_summation_, "InnerWeightSummation");

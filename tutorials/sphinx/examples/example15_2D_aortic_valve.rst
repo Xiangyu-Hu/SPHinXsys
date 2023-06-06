@@ -280,7 +280,7 @@ First, we provide the following program to create a system for this problem.
 		 * @brief Creating body, materials and particles for a water block.
 		 */
 		WaterBlock water_block(system, "WaterBody");
-		FluidParticles fluid_particles(water_block, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f));
+		BaseParticles fluid_particles(water_block, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f));
 		/**
 		 * @brief 	Creating body, materials and particles for the inserted body.
 		 */
@@ -899,7 +899,7 @@ and input/output environment is initialized.
 	 * @brief Creating body, materials and particles for a water block.
 	 */
 	WaterBlock water_block(system, "WaterBody");
-	FluidParticles fluid_particles(water_block, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f));
+	BaseParticles fluid_particles(water_block, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f));
 	/**
 	 * @brief 	Creating body, materials and particles for the inserted body.
 	 */

@@ -8,7 +8,7 @@ var searchData=
   ['weakly_5fcompressible_5ffluid_2eh',['weakly_compressible_fluid.h',['../weakly__compressible__fluid_8h.html',1,'']]],
   ['weaklycompressiblefluid',['WeaklyCompressibleFluid',['../class_s_p_h_1_1_weakly_compressible_fluid.html',1,'SPH']]],
   ['weaklycompressiblefluidfreesurface',['WeaklyCompressibleFluidFreeSurface',['../class_s_p_h_1_1_weakly_compressible_fluid_free_surface.html',1,'SPH']]],
-  ['weaklycompressiblefluidparticles',['WeaklyCompressibleFluidParticles',['../class_s_p_h_1_1_weakly_compressible_fluid_particles.html',1,'SPH']]],
+  ['weaklycompressibleBaseParticles',['WeaklyCompressibleBaseParticles',['../class_s_p_h_1_1_weakly_compressible_fluid_particles.html',1,'SPH']]],
   ['weaklycompressiblefluidtype',['WeaklyCompressibleFluidType',['../class_weakly_compressible_fluid_type.html',1,'']]],
   ['working_5fstate_5f',['working_state_',['../class_s_p_h_1_1_state_engine.html#a2955767698012d3e8e3fc0abac4367ff',1,'SPH::StateEngine']]],
   ['writeaparticlevariabletoxml',['WriteAParticleVariableToXml',['../struct_s_p_h_1_1_write_a_particle_variable_to_xml.html',1,'SPH']]],

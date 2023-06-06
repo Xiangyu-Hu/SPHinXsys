@@ -1,7 +1,7 @@
 var searchData=
 [
   ['p0_5f',['p0_',['../class_s_p_h_1_1_weakly_compressible_fluid.html#a5ad7ad3403085fdce97622ef6428dc21',1,'SPH::WeaklyCompressibleFluid']]],
-  ['p_5f',['p_',['../class_s_p_h_1_1_fluid_particles.html#ab04be7ab944ad5bf66387f1d5d56eda3',1,'SPH::FluidParticles']]],
+  ['p_5f',['p_',['../class_s_p_h_1_1_fluid_particles.html#ab04be7ab944ad5bf66387f1d5d56eda3',1,'SPH::BaseParticles']]],
   ['packagefunctor',['PackageFunctor',['../namespace_s_p_h.html#accacbd06a7a0fcf76fdb671b5692a983',1,'SPH']]],
   ['packageiterator',['PackageIterator',['../namespace_s_p_h.html#a80f0f60c78da0728fc00b8635b119141',1,'SPH']]],
   ['packageiterator_5fparallel',['PackageIterator_parallel',['../namespace_s_p_h.html#a48923041cba94d98cf2a82f1faf91e65',1,'SPH']]],

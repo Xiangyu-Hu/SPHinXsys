@@ -263,7 +263,7 @@ First, we provide the following program to create a system for this problem.
 		 * @brief Creating body, materials and particles.
 		 */
 		WaterBlock water_block(system, "WaterBody");
-		FluidParticles fluid_particles(water_block, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f));
+		BaseParticles fluid_particles(water_block, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f));
 
 		WallBoundary wall_boundary(system, "Wall");
 		SharedPtr<ParticleGenerator> wall_particle_generator = makeShared<ParticleGeneratorLattice>();
@@ -802,7 +802,7 @@ and input/output environment is initialized.
 	 * @brief Creating body, materials and particles.
 	 */
 	WaterBlock water_block(system, "WaterBody");
-	FluidParticles fluid_particles(water_block, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f));
+	BaseParticles fluid_particles(water_block, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f));
 
 	WallBoundary wall_boundary(system, "Wall");
 	SharedPtr<ParticleGenerator> wall_particle_generator = makeShared<ParticleGeneratorLattice>();

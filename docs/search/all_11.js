@@ -103,7 +103,7 @@ var searchData=
   ['rfindindex',['rfindIndex',['../class_s_p_h_1_1_array.html#a6293f335e1b9bdc21599222d76b14d7b',1,'SPH::Array']]],
   ['rho0_5f',['rho0_',['../class_s_p_h_1_1_base_material.html#ab44c8bc85d7ee057c68acf3584035a7e',1,'SPH::BaseMaterial::rho0_()'],['../class_s_p_h_1_1_base_particles.html#a181f99605f02cf585423de652b1e5356',1,'SPH::BaseParticles::rho0_()']]],
   ['rho_5f',['rho_',['../class_s_p_h_1_1_base_particles.html#a7b269617b5aa18940a5e6b3f4cf36f0c',1,'SPH::BaseParticles']]],
-  ['rho_5fsum_5f',['rho_sum_',['../class_s_p_h_1_1_fluid_particles.html#a19d2f24f7fe8a78e8813967b5a3c43e1',1,'SPH::FluidParticles']]],
+  ['rho_5fsum_5f',['rho_sum_',['../class_s_p_h_1_1_fluid_particles.html#a19d2f24f7fe8a78e8813967b5a3c43e1',1,'SPH::BaseParticles']]],
   ['riemann_5fsolver_2ecpp',['riemann_solver.cpp',['../riemann__solver_8cpp.html',1,'']]],
   ['root_5felement_5f',['root_element_',['../class_s_p_h_1_1_xml_engine.html#ae7d5abfca7c289fcee482634b9e94b31',1,'SPH::XmlEngine']]],
   ['rotation2d',['Rotation2d',['../class_s_p_h_1_1_rotation2d.html',1,'SPH']]],

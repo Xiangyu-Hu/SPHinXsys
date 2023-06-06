@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.14"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>SPHinXsys: SPH::FluidParticles Class Reference</title>
+<title>SPHinXsys: SPH::BaseParticles Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -63,7 +63,7 @@ $(function() {
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="namespace_s_p_h.html">SPH</a></li><li class="navelem"><a class="el" href="class_s_p_h_1_1_fluid_particles.html">FluidParticles</a></li>  </ul>
+<li class="navelem"><a class="el" href="namespace_s_p_h.html">SPH</a></li><li class="navelem"><a class="el" href="class_s_p_h_1_1_fluid_particles.html">BaseParticles</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -72,7 +72,7 @@ $(function() {
 <a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="class_s_p_h_1_1_fluid_particles-members.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">SPH::FluidParticles Class Reference</div>  </div>
+<div class="title">SPH::BaseParticles Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
@@ -83,17 +83,17 @@ $(function() {
 
 <p>Inherits <a class="el" href="class_s_p_h_1_1_base_particles.html">SPH::BaseParticles</a>.</p>
 
-<p>Inherited by <a class="el" href="class_s_p_h_1_1_compressible_fluid_particles.html">SPH::CompressibleFluidParticles</a>, <a class="el" href="class_s_p_h_1_1_viscoelastic_fluid_particles.html">SPH::ViscoelasticFluidParticles</a>, and <a class="el" href="class_s_p_h_1_1_weakly_compressible_fluid_particles.html">SPH::WeaklyCompressibleFluidParticles</a>.</p>
+<p>Inherited by <a class="el" href="class_s_p_h_1_1_compressible_fluid_particles.html">SPH::CompressibleBaseParticles</a>, <a class="el" href="class_s_p_h_1_1_viscoelastic_fluid_particles.html">SPH::ViscoelasticBaseParticles</a>, and <a class="el" href="class_s_p_h_1_1_weakly_compressible_fluid_particles.html">SPH::WeaklyCompressibleBaseParticles</a>.</p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:ada3691242d742da56f24f6d6c0e799b8"><td class="memItemLeft" align="right" valign="top"><a id="ada3691242d742da56f24f6d6c0e799b8"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>FluidParticles</b> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> &amp;sph_body, <a class="el" href="class_s_p_h_1_1_fluid.html">Fluid</a> *fluid)</td></tr>
+&#160;</td><td class="memItemRight" valign="bottom"><b>BaseParticles</b> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> &amp;sph_body, <a class="el" href="class_s_p_h_1_1_fluid.html">Fluid</a> *fluid)</td></tr>
 <tr class="separator:ada3691242d742da56f24f6d6c0e799b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae90466e8ee9899d22b4d0a0f3956c6d8"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_fluid_particles.html#ae90466e8ee9899d22b4d0a0f3956c6d8">initializeOtherVariables</a> () override</td></tr>
 <tr class="separator:ae90466e8ee9899d22b4d0a0f3956c6d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a05b97836a7faa7f2cb4ca5ac661a970b"><td class="memItemLeft" align="right" valign="top"><a id="a05b97836a7faa7f2cb4ca5ac661a970b"></a>
-virtual <a class="el" href="class_s_p_h_1_1_fluid_particles.html">FluidParticles</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>ThisObjectPtr</b> () override</td></tr>
+virtual <a class="el" href="class_s_p_h_1_1_fluid_particles.html">BaseParticles</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>ThisObjectPtr</b> () override</td></tr>
 <tr class="separator:a05b97836a7faa7f2cb4ca5ac661a970b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_class_s_p_h_1_1_base_particles"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_s_p_h_1_1_base_particles')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_s_p_h_1_1_base_particles.html">SPH::BaseParticles</a></td></tr>
 <tr class="memitem:a11470e7e1f2865d8a19c3d12f242e1b1 inherit pub_methods_class_s_p_h_1_1_base_particles"><td class="memItemLeft" align="right" valign="top"><a id="a11470e7e1f2865d8a19c3d12f242e1b1"></a>
@@ -303,7 +303,7 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>body_name_</b>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void SPH::FluidParticles::initializeOtherVariables </td>
+          <td class="memname">void SPH::BaseParticles::initializeOtherVariables </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -319,7 +319,7 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>body_name_</b>
 
 <p>Reimplemented from <a class="el" href="class_s_p_h_1_1_base_particles.html#a1d0cb79785e5188e1f2b9e3669f59014">SPH::BaseParticles</a>.</p>
 
-<p>Reimplemented in <a class="el" href="class_s_p_h_1_1_weakly_compressible_fluid_particles.html#aba0f19819aa7de645a8d0ae1a880aa1b">SPH::WeaklyCompressibleFluidParticles</a>, <a class="el" href="class_s_p_h_1_1_compressible_fluid_particles.html#ad7fa5bb13d9926d1d9128f4d4af71a8b">SPH::CompressibleFluidParticles</a>, and <a class="el" href="class_s_p_h_1_1_viscoelastic_fluid_particles.html#a8ff60f8f44bdfb73a808796a6b5f03e9">SPH::ViscoelasticFluidParticles</a>.</p>
+<p>Reimplemented in <a class="el" href="class_s_p_h_1_1_weakly_compressible_fluid_particles.html#aba0f19819aa7de645a8d0ae1a880aa1b">SPH::WeaklyCompressibleBaseParticles</a>, <a class="el" href="class_s_p_h_1_1_compressible_fluid_particles.html#ad7fa5bb13d9926d1d9128f4d4af71a8b">SPH::CompressibleBaseParticles</a>, and <a class="el" href="class_s_p_h_1_1_viscoelastic_fluid_particles.html#a8ff60f8f44bdfb73a808796a6b5f03e9">SPH::ViscoelasticBaseParticles</a>.</p>
 
 </div>
 </div>
@@ -331,7 +331,7 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>body_name_</b>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">StdLargeVec&lt;Real&gt; SPH::FluidParticles::drho_dt_</td>
+          <td class="memname">StdLargeVec&lt;Real&gt; SPH::BaseParticles::drho_dt_</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -346,7 +346,7 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>body_name_</b>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">StdLargeVec&lt;Real&gt; SPH::FluidParticles::p_</td>
+          <td class="memname">StdLargeVec&lt;Real&gt; SPH::BaseParticles::p_</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -361,7 +361,7 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>body_name_</b>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">StdLargeVec&lt;Real&gt; SPH::FluidParticles::rho_sum_</td>
+          <td class="memname">StdLargeVec&lt;Real&gt; SPH::BaseParticles::rho_sum_</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -376,7 +376,7 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>body_name_</b>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">StdLargeVec&lt;int&gt; SPH::FluidParticles::surface_indicator_</td>
+          <td class="memname">StdLargeVec&lt;int&gt; SPH::BaseParticles::surface_indicator_</td>
         </tr>
       </table>
 </div><div class="memdoc">

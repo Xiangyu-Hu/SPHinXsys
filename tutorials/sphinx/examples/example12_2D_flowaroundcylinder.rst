@@ -209,7 +209,7 @@ by following piece of code.
 	*/
 	WaterBlock* water_block = new WaterBlock(system, "WaterBody");
 	WaterMaterial* water_material = new WaterMaterial();
-	FluidParticles 	fluid_particles(water_block, water_material);
+	BaseParticles 	fluid_particles(water_block, water_material);
 	/**
 	* @brief 	Creating the cylinder.
 	*/

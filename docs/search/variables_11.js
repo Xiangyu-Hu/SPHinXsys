@@ -24,7 +24,7 @@ var searchData=
   ['statesassociatedsystem_5f',['statesassociatedsystem_',['../class_s_p_h_1_1_state_engine.html#ad0bd04394577980e3da56abd62ffc4b9',1,'SPH::StateEngine']]],
   ['strength_5f',['strength_',['../class_s_p_h_1_1fluid__dynamics_1_1_damping_boundary_condition.html#a211b0dbc411f84d404ae8d6d893c4c0a',1,'SPH::fluid_dynamics::DampingBoundaryCondition']]],
   ['stress_5fmeasure_5f',['stress_measure_',['../class_s_p_h_1_1_elastic_solid_particles.html#a8acdbb34a7c0d6ac3f8aede4270712e6',1,'SPH::ElasticSolidParticles']]],
-  ['surface_5findicator_5f',['surface_indicator_',['../class_s_p_h_1_1_fluid_particles.html#a11b48607432aaed240fc0633607ad773',1,'SPH::FluidParticles']]],
+  ['surface_5findicator_5f',['surface_indicator_',['../class_s_p_h_1_1_fluid_particles.html#a11b48607432aaed240fc0633607ad773',1,'SPH::BaseParticles']]],
   ['swap_5fsortable_5fparticle_5fdata_5f',['swap_sortable_particle_data_',['../class_s_p_h_1_1_particle_sorting.html#af62e0fa6386a5cdfe60e576feb42ba56',1,'SPH::ParticleSorting']]],
   ['system_5fdomain_5fbounds_5f',['system_domain_bounds_',['../class_s_p_h_1_1_s_p_h_system.html#a04e180b1f52b8cf07f1f0c0ef0ad184e',1,'SPH::SPHSystem']]],
   ['system_5frefinement_5fratio_5f',['system_refinement_ratio_',['../class_s_p_h_1_1_s_p_h_adaptation.html#abcfbc45be8afe53c5d5f85d8f9eded09',1,'SPH::SPHAdaptation']]]

@@ -13,7 +13,7 @@ var searchData=
   ['restart_5fstep_5f',['restart_step_',['../class_s_p_h_1_1_s_p_h_system.html#aa8857ddbfa363705aed7220755d8bc6b',1,'SPH::SPHSystem']]],
   ['rho0_5f',['rho0_',['../class_s_p_h_1_1_base_material.html#ab44c8bc85d7ee057c68acf3584035a7e',1,'SPH::BaseMaterial::rho0_()'],['../class_s_p_h_1_1_base_particles.html#a181f99605f02cf585423de652b1e5356',1,'SPH::BaseParticles::rho0_()']]],
   ['rho_5f',['rho_',['../class_s_p_h_1_1_base_particles.html#a7b269617b5aa18940a5e6b3f4cf36f0c',1,'SPH::BaseParticles']]],
-  ['rho_5fsum_5f',['rho_sum_',['../class_s_p_h_1_1_fluid_particles.html#a19d2f24f7fe8a78e8813967b5a3c43e1',1,'SPH::FluidParticles']]],
+  ['rho_5fsum_5f',['rho_sum_',['../class_s_p_h_1_1_fluid_particles.html#a19d2f24f7fe8a78e8813967b5a3c43e1',1,'SPH::BaseParticles']]],
   ['root_5felement_5f',['root_element_',['../class_s_p_h_1_1_xml_engine.html#ae7d5abfca7c289fcee482634b9e94b31',1,'SPH::XmlEngine']]],
   ['rotation_5f',['rotation_',['../class_s_p_h_1_1_shell_particles.html#a8b40c62543a35744caa96990095c3dab',1,'SPH::ShellParticles']]],
   ['run_5fparticle_5frelaxation_5f',['run_particle_relaxation_',['../class_s_p_h_1_1_s_p_h_system.html#ab7507f0cd0f83c6ccb5986ed23a58e91',1,'SPH::SPHSystem']]]

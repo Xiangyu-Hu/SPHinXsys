@@ -84,6 +84,11 @@ namespace SPH
 		Real mu_; /**< reference viscosity. */
 
 	public:
+
+		StdLargeVec<Real> p_;				 /**< pressure */
+		StdLargeVec<Real> drho_dt_;			 /**< density change rate */
+		StdLargeVec<int> surface_indicator_; /**< free surface indicator */
+
 		explicit Fluid(Real rho0, Real c0, Real mu)
 			: BaseMaterial(rho0), c0_(c0), mu_(mu)
 		{
@@ -99,6 +104,8 @@ namespace SPH
 		virtual Real DensityFromPressure(Real p) = 0;
 		virtual Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) = 0;
 		virtual Fluid *ThisObjectPtr() override { return this; };
+
+		virtual void registerReloadLocalParameters(BaseParticles* base_particles) override;
 	};
 
 	/** @class  Solid

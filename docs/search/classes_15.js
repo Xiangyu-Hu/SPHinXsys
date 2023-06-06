@@ -2,7 +2,7 @@ var searchData=
 [
   ['weaklycompressiblefluid',['WeaklyCompressibleFluid',['../class_s_p_h_1_1_weakly_compressible_fluid.html',1,'SPH']]],
   ['weaklycompressiblefluidfreesurface',['WeaklyCompressibleFluidFreeSurface',['../class_s_p_h_1_1_weakly_compressible_fluid_free_surface.html',1,'SPH']]],
-  ['weaklycompressiblefluidparticles',['WeaklyCompressibleFluidParticles',['../class_s_p_h_1_1_weakly_compressible_fluid_particles.html',1,'SPH']]],
+  ['weaklycompressibleBaseParticles',['WeaklyCompressibleBaseParticles',['../class_s_p_h_1_1_weakly_compressible_fluid_particles.html',1,'SPH']]],
   ['weaklycompressiblefluidtype',['WeaklyCompressibleFluidType',['../class_weakly_compressible_fluid_type.html',1,'']]],
   ['writeaparticlevariabletoxml',['WriteAParticleVariableToXml',['../struct_s_p_h_1_1_write_a_particle_variable_to_xml.html',1,'SPH']]],
   ['writesimbodypindata',['WriteSimBodyPinData',['../class_s_p_h_1_1_write_sim_body_pin_data.html',1,'SPH']]],

@@ -368,11 +368,11 @@ Here, we must insert a specie :code:`Temperature` resperenting heat being transf
 .. code-block:: cpp
 
 	class WaterMaterial
-		:public DiffusionReaction<FluidParticles, WeaklyCompressibleFluid>
+		:public DiffusionReaction<BaseParticles, WeaklyCompressibleFluid>
 	{
 	public:
 		WaterMaterial()
-			: DiffusionReaction<FluidParticles, WeaklyCompressibleFluid>({ "Temperature" }, rho0_f, c_f, mu_f)
+			: DiffusionReaction<BaseParticles, WeaklyCompressibleFluid>({ "Temperature" }, rho0_f, c_f, mu_f)
 		{
 			initializeAnDiffusion<DirectionalDiffusion>("Temperature", "Temperature", diffusion_coff, bias_diffusion_coff, bias_direction);
 		};
@@ -458,7 +458,7 @@ and the temperature at the top wall is low. While the fluid body have the same t
     //----------------------------------------------------------------------------------------------------
 
 	class ThermofluidBodyInitialCondition
-		: public  DiffusionReactionInitialCondition< FluidBody, FluidParticles, WeaklyCompressibleFluid>
+		: public  DiffusionReactionInitialCondition< FluidBody, BaseParticles, WeaklyCompressibleFluid>
 	{
 	protected:
 		size_t temperature_;
@@ -472,7 +472,7 @@ and the temperature at the top wall is low. While the fluid body have the same t
 		};
 	public:
 		ThermofluidBodyInitialCondition(FluidBody &diffusion_fluid_body)
-			: DiffusionReactionInitialCondition<FluidBody, FluidParticles, WeaklyCompressibleFluid >(diffusion_fluid_body) {
+			: DiffusionReactionInitialCondition<FluidBody, BaseParticles, WeaklyCompressibleFluid >(diffusion_fluid_body) {
 			temperature_ = material_->SpeciesIndexMap()["Temperature"];
 		};
 	};
@@ -483,8 +483,8 @@ If there is only one body, :code:`InnerBodyRelation` works.
 .. code-block:: cpp
 
 	class ThermalRelaxationComplex
-	: public RelaxationOfAllDiffusionSpeciesRK2<FluidBody, FluidParticles, WeaklyCompressibleFluid,
-	RelaxationOfAllDiffussionSpeciesComplex<FluidBody, FluidParticles, WeaklyCompressibleFluid, SolidBody, SolidParticles, Solid>,
+	: public RelaxationOfAllDiffusionSpeciesRK2<FluidBody, BaseParticles, WeaklyCompressibleFluid,
+	RelaxationOfAllDiffussionSpeciesComplex<FluidBody, BaseParticles, WeaklyCompressibleFluid, SolidBody, SolidParticles, Solid>,
 	ComplexBodyRelation>
 	{
 	public:
@@ -533,7 +533,7 @@ Create body, materials and particles for water channel and solid wall
 .. code-block:: cpp
 
 	WaterChannel water_channel(system, "WaterChannel");
-	DiffusionReactionParticles<FluidParticles, WeaklyCompressibleFluid>
+	DiffusionReactionParticles<BaseParticles, WeaklyCompressibleFluid>
 		fluid_particles(water_channel, makeShared<WaterMaterial>());
     //-------------------------------------------------------------------
 	SolidWall solid_wall(system, "SolidWall");
@@ -588,7 +588,7 @@ Then the main algorithm for fluid, solid and thermal transfer is defined, includ
 	/** Time step size with considering sound wave speed. */
 	fluid_dynamics::AcousticTimeStepSize		get_fluid_time_step_size(water_channel);
 	/** Time step size calculation. */
-	GetDiffusionTimeStepSize<FluidBody, FluidParticles, WeaklyCompressibleFluid> get_thermal_time_step(water_channel);
+	GetDiffusionTimeStepSize<FluidBody, BaseParticles, WeaklyCompressibleFluid> get_thermal_time_step(water_channel);
 	/** Diffusion process between two diffusion bodies. */
 	ThermalRelaxationComplex 	thermal_relaxation_complex(water_channel_complex);
 	/** Pressure relaxation using verlet time stepping. */

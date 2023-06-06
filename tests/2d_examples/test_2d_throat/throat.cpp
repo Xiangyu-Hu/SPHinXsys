@@ -132,7 +132,7 @@ int main(int ac, char *av[])
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	FluidBody fluid_block(system, makeShared<FluidBlock>("FluidBody"));
-	fluid_block.defineParticlesAndMaterial<ViscoelasticFluidParticles, Oldroyd_B_Fluid>(rho0_f, c_f, mu_f, lambda_f, mu_p_f);
+	fluid_block.defineParticlesAndMaterial<ViscoelasticBaseParticles, Oldroyd_B_Fluid>(rho0_f, c_f, mu_f, lambda_f, mu_p_f);
 	fluid_block.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));

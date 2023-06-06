@@ -108,7 +108,7 @@ in which the water wave impacts the tank wall and produces splashes.
 		//	Creating body, materials and particles.
 		//----------------------------------------------------------------------
 		WaterBlock water_block(sph_system, "WaterBody");
-		FluidParticles fluid_particles(water_block, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f));
+		BaseParticles fluid_particles(water_block, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f));
 
 		WallBoundary wall_boundary(sph_system, "Wall");
 		SolidParticles wall_particles(wall_boundary);
@@ -431,7 +431,7 @@ and input/output environment is initialized.
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	WaterBlock water_block(sph_system, "WaterBody");
-	FluidParticles fluid_particles(water_block, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f));
+	BaseParticles fluid_particles(water_block, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f));
 
 	WallBoundary wall_boundary(sph_system, "Wall");
 	SolidParticles wall_particles(wall_boundary);

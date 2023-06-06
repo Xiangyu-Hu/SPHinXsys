@@ -174,7 +174,7 @@ As there is no solid wall body in the static confinment case, only :code:`BaseIn
    */
   WaterBlock *water_block = new WaterBlock(sph_system, "WaterBody");
   WaterMaterial 	*water_material = new WaterMaterial();
-  FluidParticles 	fluid_particles(water_block, water_material);
+  BaseParticles 	fluid_particles(water_block, water_material);
   /** topology */
   BaseInnerBodyRelation* water_block_inner = new InnerBodyRelation(water_block);
  

@@ -30,7 +30,7 @@ int main(int ac, char* av[])
 	EulerianFluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
 	water_block.sph_adaptation_->resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
 	water_block.defineComponentLevelSetShape("OuterBoundary");
-	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+	water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	(!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
 		? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getName())
 		: water_block.generateParticles<ParticleGeneratorLattice>();

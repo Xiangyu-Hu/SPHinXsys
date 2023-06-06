@@ -136,11 +136,11 @@ Here, we must insert a specie `Phi` resperenting heat being transferred between 
  	* Setup heat conduction material properties for diffusion fluid body 
  	*/
 	class ThermofluidBodyMaterial
-		: public DiffusionReactionMaterial<FluidParticles, WeaklyCompressibleFluid>
+		: public DiffusionReactionMaterial<BaseParticles, WeaklyCompressibleFluid>
 	{
 	public:
 		ThermofluidBodyMaterial()
-			: DiffusionReactionMaterial<FluidParticles, WeaklyCompressibleFluid>()
+			: DiffusionReactionMaterial<BaseParticles, WeaklyCompressibleFluid>()
 		{
 			rho_0_ = rho0_f;
 			c_0_ = c_f;
@@ -219,7 +219,7 @@ Here, we must insert a specie `Phi` resperenting heat being transferred between 
 	 * application dependent fluid body initial condition
 	*/
 	class ThermofluidBodyInitialCondition
-		: public  DiffusionReactionInitialCondition< FluidBody, FluidParticles, WeaklyCompressibleFluid>
+		: public  DiffusionReactionInitialCondition< FluidBody, BaseParticles, WeaklyCompressibleFluid>
 	{
 	protected:
 		size_t phi_;
@@ -235,7 +235,7 @@ Here, we must insert a specie `Phi` resperenting heat being transferred between 
 		};
 	public:
 		ThermofluidBodyInitialCondition(FluidBody* diffusion_fluid_body)
-			: DiffusionReactionInitialCondition<FluidBody, FluidParticles, WeaklyCompressibleFluid >	(diffusion_fluid_body) {
+			: DiffusionReactionInitialCondition<FluidBody, BaseParticles, WeaklyCompressibleFluid >	(diffusion_fluid_body) {
 			phi_ = material_->SpeciesIndexMap()["Phi"];
 		};
 	};
@@ -250,8 +250,8 @@ If there is only one body, :code:`InnerBodyRelation` works.
  	*Set thermal relaxation between different bodies 
  	*/
 	class ThermalRelaxationComplex
-		: public RelaxationOfAllDiffusionSpeciesRK2<FluidBody, FluidParticles, WeaklyCompressibleFluid,
-		RelaxationOfAllDiffussionSpeciesComplex<FluidBody, FluidParticles, WeaklyCompressibleFluid, SolidBody, 	SolidParticles, Solid>,
+		: public RelaxationOfAllDiffusionSpeciesRK2<FluidBody, BaseParticles, WeaklyCompressibleFluid,
+		RelaxationOfAllDiffussionSpeciesComplex<FluidBody, BaseParticles, WeaklyCompressibleFluid, SolidBody, 	SolidParticles, Solid>,
 		ComplexBodyRelation>
 	{
 	public:
@@ -271,7 +271,7 @@ Particles and materials should also be assigned to the bodies here.
 	 */
 	ThermofluidBody *thermofluid_body = new ThermofluidBody(system, "ThermofluidBody");
 	ThermofluidBodyMaterial *thermofluid_body_material = new ThermofluidBodyMaterial();
-	DiffusionReactionParticles<FluidParticles, WeaklyCompressibleFluid>	
+	DiffusionReactionParticles<BaseParticles, WeaklyCompressibleFluid>	
 		diffusion_fluid_body_particles(thermofluid_body, thermofluid_body_material);
 
 	/**
@@ -322,7 +322,7 @@ fluid dynamics, and the methods for thermal relaxtion as well as boundary condit
 	/** Time step size with considering sound wave speed. */
 	fluid_dynamics::AcousticTimeStepSize		get_fluid_time_step(thermofluid_body);
 	/** Time step size calculation. */
-	GetDiffusionTimeStepSize<FluidBody, FluidParticles, WeaklyCompressibleFluid> get_thermal_time_step(thermofluid_body);
+	GetDiffusionTimeStepSize<FluidBody, BaseParticles, WeaklyCompressibleFluid> get_thermal_time_step(thermofluid_body);
 	/** Diffusion process between two diffusion bodies. */
 	ThermalRelaxationComplex 	thermal_relaxation_complex(fluid_body_complex);
 	/** Pressure relaxation using verlet time stepping. */

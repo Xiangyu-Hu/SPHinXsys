@@ -149,7 +149,7 @@ and whether the computation begin from restart files is checked.
 		water_block->particle_generator_ = new ParticleGeneratorReload(&in_output, water_block->getBodyName());
 	}
 	WaterMaterial 	*water_material = new WaterMaterial();
-	FluidParticles 	fluid_particles(water_block, water_material);
+	BaseParticles 	fluid_particles(water_block, water_material);
 	/** topology */
 	BaseInnerBodyRelation* water_block_inner = new InnerBodyRelation(water_block);
 
