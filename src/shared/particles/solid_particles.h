@@ -179,6 +179,15 @@ namespace SPH
 		StdLargeVec<Vecd> global_shear_stress_; /**< global shear stress */
 		StdLargeVec<Matd> global_stress_;		/**<  global stress for pair interaction */
 		StdLargeVec<Matd> global_moment_;		/**<  global bending moment for pair interaction */
+		/**
+		 *	extra stress for calculating von Mises stress of shell mid-surface
+		 */
+		StdLargeVec<Matd> mid_surface_cauchy_stress_;
+		/**
+		 *	extra scaling matrix fot numerical damping
+		 */
+		StdLargeVec<Matd> numerical_damping_scaling_;
+
 		/** get particle volume. */
 		virtual Real ParticleVolume(size_t index_i) override { return Vol_[index_i] * thickness_[index_i]; }
 		/** get particle mass. */

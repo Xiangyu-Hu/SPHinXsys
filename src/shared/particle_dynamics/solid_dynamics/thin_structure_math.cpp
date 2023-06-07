@@ -44,85 +44,64 @@ namespace SPH
 		//=================================================================================================//
 		Vec2d getVectorChangeRateAfterThinStructureRotation(const Vec2d &initial_vector, const Vec2d &rotation_angles, const Vec2d &angular_vel)
 		{
-			/**The derivative of the rotation matrix. */
-			Real sin_angle = sin(rotation_angles[0]);
-			Real cos_angle = cos(rotation_angles[0]);
-			Mat2d drotation_matrix_dt{
-				{-sin_angle * angular_vel[0],  cos_angle * angular_vel[0]},
-				{-cos_angle * angular_vel[0], -sin_angle * angular_vel[0]},
-			};
-
-			return drotation_matrix_dt * initial_vector;
+			return Vec2d(cos(rotation_angles[0]) * angular_vel[0], -sin(rotation_angles[0]) * angular_vel[0]);
 		}
 		//=================================================================================================//
 		Vec3d getVectorChangeRateAfterThinStructureRotation(const Vec3d &initial_vector, const Vec3d &rotation_angles, const Vec3d &angular_vel)
 		{
-			/**The rotation matrix about the X-axis. */
-			Real sin_angle_x = sin(rotation_angles[0]);
-			Real cos_angle_x = cos(rotation_angles[0]);
-			
-			Real sin_angle_y = sin(rotation_angles[1]);
-			Real cos_angle_y = cos(rotation_angles[1]);
+			Real sin_rotation_0 = sin(rotation_angles[0]);
+			Real cos_rotation_0 = cos(rotation_angles[0]);
 
-			Real angular_vel_x = angular_vel[0];
-			Real angular_vel_y = angular_vel[1];
+			Real sin_rotation_1 = sin(rotation_angles[1]);
+			Real cos_rotation_1 = cos(rotation_angles[1]);
 
-			Mat3d rotation_matrix_x{
-				{1.0, 0.0, 0.0},
-				{0.0, cos_angle_x, -sin_angle_x},
-				{0.0, sin_angle_x, cos_angle_x},
-			};
-			/**The rotation matrix about the Y-axis. */
-			Mat3d rotation_matrix_y{
-				{cos_angle_y, 0.0, sin_angle_y},
-				{0.0, 1.0, 0.0},
-				{-sin_angle_y, 0.0, cos_angle_y},
-			};
-			/**The derivative of the rotation matrix of the X-axis. */
-			Mat3d drotation_matrix_x_dt{
-				{0.0, 0.0, 0.0},
-				{0.0,-sin_angle_x * angular_vel_x, -cos_angle_x * angular_vel_x},
-				{0.0, cos_angle_x * angular_vel_x, -sin_angle_x * angular_vel_x},
-			};
-			/**The derivative of the rotation matrix of the Y-axis. */
-			Mat3d drotation_matrix_y_dt{
-				{-sin_angle_y * angular_vel_y, 0.0, cos_angle_y * angular_vel_y},
-				{0.0, 0.0, 0.0},
-				{-cos_angle_y * angular_vel_y, 0.0,-sin_angle_y * angular_vel_y},
-			};
+			Real dpseudo_n_dt_0 = -sin_rotation_0 * sin_rotation_1 * angular_vel[0] + cos_rotation_0 * cos_rotation_1 * angular_vel[1];
+			Real dpseudo_n_dt_1 = -cos_rotation_0 * angular_vel[0];
+			Real dpseudo_n_dt_2 = -sin_rotation_0 * cos_rotation_1 * angular_vel[0] - cos_rotation_0 * sin_rotation_1 * angular_vel[1];
 
-			return (drotation_matrix_y_dt * rotation_matrix_x + rotation_matrix_y * drotation_matrix_x_dt)* initial_vector;
+			return Vec3d(dpseudo_n_dt_0, dpseudo_n_dt_1, dpseudo_n_dt_2);
 		}
 		//=================================================================================================//
 		Vec2d getRotationFromPseudoNormalForFiniteDeformation(const Vec2d &dpseudo_n_d2t, const Vec2d &rotation, const Vec2d &angular_vel, Real dt)
-		{
-			Vec2d dangular_vel_dt = Vec2d::Zero();
-			dangular_vel_dt[0] = -(dpseudo_n_d2t[0] + sin(rotation[0]) * pow(angular_vel[0], 2))
-								 / (2 * sin(rotation[0]) * angular_vel[0] * dt - cos(rotation[0]));
-			return dangular_vel_dt;
+        {
+			Real cos_rotation_0 = cos(rotation[0]);
+			Real sin_rotation_0 = sin(rotation[0]);
+
+			Real angle_vel_dt_0 = cos_rotation_0 * (dpseudo_n_d2t[0] + sin_rotation_0 * angular_vel[0] * angular_vel[0]) 
+								  - sin_rotation_0 * (dpseudo_n_d2t[1] + cos_rotation_0 * angular_vel[0] * angular_vel[0]);
+
+            return Vec2d(angle_vel_dt_0, 0.0);
 		}
 		//=================================================================================================//
 		Vec3d getRotationFromPseudoNormalForFiniteDeformation(const Vec3d &dpseudo_n_d2t, const Vec3d &rotation, const Vec3d &angular_vel, Real dt)
 		{
-			Real sin_rotation_x = sin(rotation[0]);
-			Real cos_rotation_x = cos(rotation[0]);
-			Real sin_rotation_y = sin(rotation[1]);
-			Real cos_rotation_y = cos(rotation[1]);
+			Real sin_rotation_0 = sin(rotation[0]);
+			Real cos_rotation_0 = cos(rotation[0]);
+			Real sin_rotation_1 = sin(rotation[1]);
+			Real cos_rotation_1 = cos(rotation[1]);
 
-			Real angle_vel_dt_x = (dpseudo_n_d2t[1] - sin_rotation_x * pow(angular_vel[0], 2))
-								 / (2 * sin_rotation_x * angular_vel[0] * dt - cos_rotation_x);
+			Real rotation_0_a = -(dpseudo_n_d2t[2] * cos_rotation_1 + dpseudo_n_d2t[0] * sin_rotation_1
+								  + angular_vel[1] * angular_vel[1] * cos_rotation_0
+								  + angular_vel[0] * angular_vel[0] * cos_rotation_0);
+			Real rotation_0_b = sin_rotation_0 * angular_vel[0] * angular_vel[0] - dpseudo_n_d2t[1];
+			Real angle_vel_dt_0 = sin_rotation_0 * rotation_0_a + cos_rotation_0 * rotation_0_b;
 
-			Real angle_vel_dt_y = (dpseudo_n_d2t[0] + cos_rotation_x * sin_rotation_y
-								  * (pow(angular_vel[0], 2) + pow(angular_vel[1], 2))
-								  + 2 * sin_rotation_x * cos_rotation_y * angular_vel[0] * angular_vel[1]
-								  + (2 * cos_rotation_x * sin_rotation_y * angular_vel[0] * dt
-								  + 2 * sin_rotation_x * cos_rotation_y * angular_vel[1] * dt
-								  + sin_rotation_x * cos_rotation_y) * angle_vel_dt_x)
-								 / (-2 * sin_rotation_x * cos_rotation_y * angular_vel[0] * dt
-									- 2 * cos_rotation_x * sin_rotation_y * angular_vel[1] * dt
-									+ cos_rotation_x * cos_rotation_y);
-									
-			return Vec3d(angle_vel_dt_x, angle_vel_dt_y, 0.0);
+			Real rotation_1_a = dpseudo_n_d2t[0] * cos_rotation_1 - dpseudo_n_d2t[2] * sin_rotation_1
+								+ 2.0 * angular_vel[1] * angular_vel[0] * sin_rotation_0;
+			Real rotation_1_b1 = dpseudo_n_d2t[0] * cos_rotation_0
+								 + angular_vel[1] * angular_vel[1] * cos_rotation_0 * cos_rotation_0 * sin_rotation_1
+								 + angular_vel[0] * angular_vel[0] * sin_rotation_1
+								 - dpseudo_n_d2t[1] * sin_rotation_1 * sin_rotation_0
+								 + 2.0 * angular_vel[1] * angular_vel[0] * cos_rotation_1 * cos_rotation_0 * sin_rotation_0;
+			Real rotation_1_b2 = -(dpseudo_n_d2t[2] * cos_rotation_0
+								   + angular_vel[1] * angular_vel[1] * cos_rotation_1 * cos_rotation_0 * cos_rotation_0
+								   + angular_vel[0] * angular_vel[0] * cos_rotation_1
+								   - dpseudo_n_d2t[1] * cos_rotation_1 * sin_rotation_0
+								   - 2.0 * angular_vel[1] * angular_vel[0] * cos_rotation_0 * sin_rotation_1 * sin_rotation_0);
+			Real angle_vel_dt_1 = rotation_1_a * rotation_1_a * (rotation_1_b1 * cos_rotation_1 + rotation_1_b2 * sin_rotation_1)
+								  / (rotation_1_b1 * rotation_1_b1 + rotation_1_b2 * rotation_1_b2 + Eps);
+					
+			return Vec3d(angle_vel_dt_0, angle_vel_dt_1, 0.0);
 		}
 		//=================================================================================================//
 		Vec2d getRotationFromPseudoNormalForSmallDeformation(const Vec2d &dpseudo_n_d2t, const Vec2d &rotation, const Vec2d &angular_vel, Real dt)
