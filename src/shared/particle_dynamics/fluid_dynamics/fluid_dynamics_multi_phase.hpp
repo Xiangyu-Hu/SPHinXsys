@@ -110,7 +110,7 @@ namespace SPH
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				contact_fluids_.push_back(DynamicCast<Fluid>(this, &contact_particles_[k]->base_material_));
-				contact_p_.push_back(contact_particles_[k]->getVariableByName<Real>("Pressure"));
+				contact_p_.push_back(contact_particles_[k]->template getVariableByName<Real>("Pressure"));
 				contact_rho_n_.push_back(&(contact_particles_[k]->rho_));
 				contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
 			}

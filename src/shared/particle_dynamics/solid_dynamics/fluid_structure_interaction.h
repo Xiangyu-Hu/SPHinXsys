@@ -164,7 +164,7 @@ namespace SPH
 				{
 					contact_rho_n_.push_back(&(contact_particles_[k]->rho_));
 					contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
-					contact_p_.push_back(contact_particles_[k]->getVariableByName<Real>("Pressure"));
+					contact_p_.push_back(contact_particles_[k]->template getVariableByName<Real>("Pressure"));
 					contact_acc_prior_.push_back(&(contact_particles_[k]->acc_prior_));
 					riemann_solvers_.push_back(RiemannSolverType(*contact_fluids_[k], *contact_fluids_[k]));
 				}
