@@ -195,11 +195,19 @@ namespace SPH
 		BaseIntegration1stHalf<RiemannSolverType>::BaseIntegration1stHalf(BaseInnerRelation &inner_relation)
 			: BaseIntegration(inner_relation), riemann_solver_(fluid_, fluid_) 
 		{
+			/**
+			 *	register sortable particle data
+			 */
 			particles_->registerSortableVariable<Vecd>("Position");
 			particles_->registerSortableVariable<Vecd>("Velocity");
 			particles_->registerSortableVariable<Real>("MassiveMeasure");
 			particles_->registerSortableVariable<Real>("Density");
+			particles_->registerSortableVariable<Real>("Pressure");
 			particles_->registerSortableVariable<Real>("VolumetricMeasure");
+			//----------------------------------------------------------------------
+			//		add restart output particle data
+			//----------------------------------------------------------------------
+			particles_->addVariableToRestart<Real>("Pressure");
 		}
 		//=================================================================================================//
 		template <class RiemannSolverType>

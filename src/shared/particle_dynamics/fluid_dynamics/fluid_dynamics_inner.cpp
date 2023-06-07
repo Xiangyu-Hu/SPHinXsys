@@ -13,12 +13,9 @@ namespace SPH
 		//=================================================================================================//
 		BaseDensitySummationInner::BaseDensitySummationInner(BaseInnerRelation &inner_relation)
 			: LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
-			  rho_(particles_->rho_), mass_(particles_->mass_),
+			  rho_(particles_->rho_), rho_sum_(*particles_->getVariableByName<Real>("DensitySummation")), mass_(particles_->mass_),
 			  rho0_(sph_body_.base_material_->ReferenceDensity()),
-			  inv_sigma0_(1.0 / sph_body_.sph_adaptation_->LatticeNumberDensity()) 
-		{
-			particles_->registerVariable(rho_sum_, "DensitySummation");
-		}
+			  inv_sigma0_(1.0 / sph_body_.sph_adaptation_->LatticeNumberDensity()) {}
 		//=================================================================================================//
 		void BaseDensitySummationInner::update(size_t index_i, Real dt)
 		{
@@ -45,7 +42,7 @@ namespace SPH
 		TransportVelocityCorrectionInner::
 			TransportVelocityCorrectionInner(BaseInnerRelation &inner_relation, Real coefficient)
 			: LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
-			  pos_(particles_->pos_), surface_indicator_(particles_->surface_indicator_),
+			  pos_(particles_->pos_), surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")),
 			  smoothing_length_sqr_(pow(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
 			  coefficient_(coefficient) {}
 		//=================================================================================================//
@@ -53,7 +50,7 @@ namespace SPH
 			TransportVelocityCorrectionInnerAdaptive(BaseInnerRelation &inner_relation, Real coefficient)
 			: LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
 			  sph_adaptation_(*sph_body_.sph_adaptation_),
-			  pos_(particles_->pos_), surface_indicator_(particles_->surface_indicator_),
+			  pos_(particles_->pos_), surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")),
 			  smoothing_length_sqr_(pow(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
 			  coefficient_(coefficient) {}
 		//=================================================================================================//
@@ -96,7 +93,7 @@ namespace SPH
 		//=================================================================================================//
 		AdvectionTimeStepSize::AdvectionTimeStepSize(SPHBody &sph_body, Real U_max, Real advectionCFL)
 			: AdvectionTimeStepSizeForImplicitViscosity(sph_body, U_max, advectionCFL),
-			fluid_(DynamicCast<Fluid>(this, particles_->base_material_))
+			  fluid_(DynamicCast<Fluid>(this, particles_->base_material_))
 		{
 			Real viscous_speed = fluid_.ReferenceViscosity() / fluid_.ReferenceDensity() / smoothing_length_min_;
 			reference_ = SMAX(viscous_speed * viscous_speed, reference_);
@@ -118,8 +115,7 @@ namespace SPH
 		BaseIntegration::BaseIntegration(BaseInnerRelation &inner_relation)
 			: LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
 			  fluid_(DynamicCast<Fluid>(this, particles_->base_material_)), rho_(particles_->rho_),
-			  p_(*particles_->getVariableByName<Real>("Pressure")),
-			  drho_dt_(*particles_->getVariableByName<Real>("DensityChangeRate")),
+			  p_(*particles_->getVariableByName<Real>("Pressure")), drho_dt_(*particles_->getVariableByName<Real>("DensityChangeRate")),
 			  pos_(particles_->pos_), vel_(particles_->vel_),
 			  acc_(particles_->acc_), acc_prior_(particles_->acc_prior_) {}
 		//=================================================================================================//

@@ -35,8 +35,7 @@ namespace SPH
 			: BaseLocalDynamics<BodyPartByParticle>(aligned_box_part), FluidDataSimple(sph_body_),
 			  fluid_(DynamicCast<Fluid>(this, particles_->base_material_)),
 			  pos_(particles_->pos_), vel_(particles_->vel_), acc_(particles_->acc_),
-			  rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")), 
-			  drho_dt_(*particles_->getVariableByName<Real>("DensityChangeRate")),
+			  rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")), drho_dt_(*particles_->getVariableByName<Real>("DensityChangeRate")),
 			  inflow_pressure_(0), rho0_(fluid_.ReferenceDensity()),
 			  aligned_box_(aligned_box_part.aligned_box_),
 			  updated_transform_(aligned_box_.getTransform()),
@@ -137,8 +136,7 @@ namespace SPH
 		StaticConfinementIntegration2ndHalf::StaticConfinementIntegration2ndHalf(NearShapeSurface &near_surface)
 			: BaseLocalDynamics<BodyPartByCell>(near_surface), FluidDataSimple(sph_body_),
 			  fluid_(DynamicCast<Fluid>(this, particles_->base_material_)),
-			  rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")), 
-			  drho_dt_(*particles_->getVariableByName<Real>("DensityChangeRate")),
+			  rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")), drho_dt_(*particles_->getVariableByName<Real>("DensityChangeRate")),
 			  pos_(particles_->pos_), vel_(particles_->vel_),
 			  level_set_shape_(&near_surface.level_set_shape_),
 			  riemann_solver_(fluid_, fluid_) {}

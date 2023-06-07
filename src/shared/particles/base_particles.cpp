@@ -23,13 +23,11 @@ namespace SPH
 		//----------------------------------------------------------------------
 		registerVariable(pos_, "Position");
 		registerVariable(Vol_, "VolumetricMeasure");
-		registerVariable(surface_indicator_, "SurfaceIndicator");
 		//----------------------------------------------------------------------
 		//		add particle reload data on geometries
 		//----------------------------------------------------------------------
 		addVariableNameToList<Vecd>(variables_to_reload_, "Position");
 		addVariableNameToList<Real>(variables_to_reload_, "VolumetricMeasure");
-		addVariableNameToList<int>(variables_to_reload_, "SurfaceIndicator");
 	}
 	//=================================================================================================//
 	void BaseParticles::initializeOtherVariables()

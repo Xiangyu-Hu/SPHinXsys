@@ -1,7 +1,7 @@
 #ifndef GRANULAR_PARTICLES_H
 #define GRANULAR_PARTICLES_H
 #include "granular_material.h"
-#include "fluid_particles.h"
+#include "base_particles.hpp"
 #include "base_particles.h"
 #include "particle_generator_lattice.h"
 namespace SPH

@@ -18,7 +18,7 @@ int main(int ac, char* av[])
 	BoundingBox system_domain_bounds(Vec2d(-DL_sponge, -DH_sponge), Vec2d(DL, DH + DH_sponge));
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
 	// Tag for run particle relaxation for the initial body fitted distribution.		
-	sph_system.setRunParticleRelaxation(true);
+	sph_system.setRunParticleRelaxation(false);
 	// Tag for computation start with relaxed body fitted particles distribution.
 	sph_system.setReloadParticles(true);
 	// Handle command line arguments and override the tags for particle relaxation and reload.

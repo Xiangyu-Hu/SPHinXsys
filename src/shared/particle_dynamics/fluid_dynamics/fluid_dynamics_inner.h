@@ -36,7 +36,7 @@
 #include "base_kernel.h"
 #include "all_body_relations.h"
 #include "fluid_body.h"
-#include "fluid_particles.h"
+#include "base_particles.hpp"
 #include "weakly_compressible_fluid.h"
 #include "riemann_solver.h"
 
@@ -74,7 +74,7 @@ namespace SPH
 			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
-			StdLargeVec<Real> &rho_, rho_sum_, &mass_;
+			StdLargeVec<Real> &rho_, &rho_sum_, &mass_;
 			Real rho0_, inv_sigma0_;
 		};
 

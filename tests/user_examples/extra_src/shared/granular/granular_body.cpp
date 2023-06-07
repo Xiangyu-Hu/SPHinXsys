@@ -1,6 +1,6 @@
 #include "granular_body.h"
 #include "base_material.h"
-#include "fluid_particles.h"
+#include "base_particles.hpp"
 #include "cell_linked_list.h"
 namespace SPH
 {
