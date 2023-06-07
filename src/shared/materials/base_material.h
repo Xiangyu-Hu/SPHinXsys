@@ -52,9 +52,6 @@ namespace SPH
 	class BaseMaterial
 	{
 	public:
-
-		StdLargeVec<int> surface_indicator_; /**< free surface indicator */
-
 		explicit BaseMaterial(Real rho0)
 			: material_type_name_("BaseMaterial"), rho0_(rho0){};
 		BaseMaterial() : BaseMaterial(1.0){};
@@ -62,7 +59,7 @@ namespace SPH
 		std::string MaterialType() { return material_type_name_; }
 		Real ReferenceDensity() { return rho0_; };
 		/**interface called in base particles constructor */
-		virtual void registerReloadLocalParameters(BaseParticles *base_particles);
+		virtual void registerReloadLocalParameters(BaseParticles* base_particles) {};
 		/**
 		 * This will be called after particles generation
 		 * and is important because particles are not defined yet when material is constructed.
@@ -91,6 +88,7 @@ namespace SPH
 		StdLargeVec<Real> p_;				 /**< pressure */
 		StdLargeVec<Real> drho_dt_;			 /**< density change rate */
 		StdLargeVec<Real> rho_sum_;			 /**< density by particle summation */
+		StdLargeVec<int> surface_indicator_; /**< free surface indicator */
 
 		explicit Fluid(Real rho0, Real c0, Real mu)
 			: BaseMaterial(rho0), c0_(c0), mu_(mu)
