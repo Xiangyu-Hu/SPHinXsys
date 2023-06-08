@@ -29,6 +29,7 @@
 #define SMALL_VECTORS_H
 
 #include "base_data_type.h"
+#include "execution_queue.hpp"
 
 namespace SPH
 {
@@ -93,6 +94,27 @@ namespace SPH
 	/** get transformation matrix. */
 	Real getCrossProduct(const Vec2d &vector_1, const Vec2d &vector_2);
 	Vec3d getCrossProduct(const Vec3d &vector_1, const Vec3d &vector_2);
+
+    /* SYCL memory transfer utilities */
+    template<class T>
+    inline T* allocateDeviceData(std::size_t size) {
+        return sycl::malloc_device<T>(size, execution::ExecutionQueue::getQueue());
+    }
+
+    template<class T>
+    inline void freeDeviceData(T* device_mem) {
+        sycl::free(device_mem, execution::ExecutionQueue::getQueue());
+    }
+
+    template<class T>
+    inline void copyDataToDevice(const T* host, T*& device, std::size_t size) {
+        execution::ExecutionQueue::getQueue().memcpy(device, host, size*sizeof(T));
+    }
+
+    template<class T>
+    inline void copyDataFromDevice(T* host, const T* device, std::size_t size) {
+        execution::ExecutionQueue::getQueue().memcpy(host, device, size*sizeof(T));
+    }
 
 	/** Bounding box for system, body, body part and shape, first: lower bound, second: upper bound. */
 	template <typename VecType>
