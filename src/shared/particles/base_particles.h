@@ -37,6 +37,7 @@
 #include "xml_engine.h"
 #include "particle_sorting.h"
 #include "base_variables.h"
+#include "execution_queue.hpp"
 
 #include <fstream>
 
@@ -89,10 +90,10 @@ namespace SPH
 		explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
 		virtual ~BaseParticles() {};
 
-		StdLargeVec<Vecd> pos_;		  /**< particle position */
-		StdLargeVec<Vecd> vel_;		  /**< particle velocity */
-		StdLargeVec<Vecd> acc_;		  /**< total acceleration including inner pressure- or stress-induced acceleration and other accelerations */
-		StdLargeVec<Vecd> acc_prior_; /**< other, such as gravity and viscous, accelerations */
+		StdLargeVec<Vecd> pos_; Vecd* pos_device_;		  /**< particle position */
+		StdLargeVec<Vecd> vel_; Vecd* vel_device_;		  /**< particle velocity */
+		StdLargeVec<Vecd> acc_; Vecd* acc_device_;		  /**< total acceleration including inner pressure- or stress-induced acceleration and other accelerations */
+		StdLargeVec<Vecd> acc_prior_; Vecd* acc_prior_device_; /**< other, such as gravity and viscous, accelerations */
 
 		StdLargeVec<Real> Vol_;	 /**< particle volumetric measure, also referred to area of surface particle and length of linear particle */
 		StdLargeVec<Real> rho_;	 /**< particle density */
@@ -220,6 +221,34 @@ namespace SPH
 		virtual Real ParticleVolume(size_t index_i) { return Vol_[index_i]; }
 		/** Return particle mass. */
 		virtual Real ParticleMass(size_t index_i) { return mass_[index_i]; }
+
+        void allocateDeviceMemory() {
+            pos_device_ = allocateDeviceData<Vecd>(pos_.size());
+            vel_device_ = allocateDeviceData<Vecd>(vel_.size());
+            acc_device_ = allocateDeviceData<Vecd>(acc_.size());
+            acc_prior_device_ = allocateDeviceData<Vecd>(acc_prior_.size());
+        }
+
+        void freeDeviceMemory() {
+            freeDeviceData(pos_device_);
+            freeDeviceData(vel_device_);
+            freeDeviceData(acc_device_);
+            freeDeviceData(acc_prior_device_);
+        }
+
+        void copyToDeviceMemory() {
+            copyDataToDevice(pos_.data(), pos_device_, pos_.size());
+            copyDataToDevice(vel_.data(), vel_device_, vel_.size());
+            copyDataToDevice(acc_.data(), acc_device_, acc_.size());
+            copyDataToDevice(acc_prior_.data(), acc_prior_device_, acc_prior_.size());
+        }
+
+        void copyFromDeviceMemory() {
+            copyDataFromDevice(pos_.data(), pos_device_, pos_.size());
+            copyDataFromDevice(vel_.data(), vel_device_, vel_.size());
+            copyDataFromDevice(acc_.data(), acc_device_, acc_.size());
+            copyDataFromDevice(acc_prior_.data(), acc_prior_device_, acc_prior_.size());
+        }
 
 	protected:
 		SPHBody &sph_body_;							/**< The body in which the particles belongs to. */
