@@ -290,12 +290,13 @@ namespace SPH
     {
         try {
             auto &sycl_queue = ExecutionQueue::getQueue();
-            auto& kernel = *proxy.get(sycl_policy);
+            auto* kernel = proxy.get(sycl_policy);
+			auto kernel_buffer = sycl::buffer<typename Proxy::Kernel>(kernel, 1);
             sycl_queue.submit([&](sycl::handler &cgh) {
-                proxy.init_memory_access(Context<ParallelSYCLDevicePolicy>(cgh));
+                auto kernel_accessor = kernel_buffer.get_access(cgh, sycl::read_write);
                 cgh.parallel_for(all_real_particles, [=](sycl::item<1> index) {
                     auto i = index.get_id();
-                    local_dynamics_function(i, typename Proxy::Kernel(kernel));
+                    local_dynamics_function(i, kernel_accessor[0]);
                 });
             });
             sycl_queue.wait_and_throw();
@@ -376,15 +377,16 @@ namespace SPH
                                       const LocalDynamicsFunction &local_dynamics_function, Proxy& proxy)
     {
         ReturnType result = identity;
-        auto& kernel = *proxy.get(sycl_policy);
+        auto* kernel = proxy.get(sycl_policy);
+        auto kernel_buffer = sycl::buffer<typename Proxy::Kernel>(kernel, 1);
         try {
             auto &sycl_queue = ExecutionQueue::getQueue();
             sycl::buffer<ReturnType> buffer_result(&result, 1);
             sycl_queue.submit([&](sycl::handler &cgh) {
-                proxy.init_memory_access(Context<ParallelSYCLDevicePolicy>(cgh));
+                auto kernel_accessor = kernel_buffer.get_access(cgh, sycl::read_write);
                 auto reduction_operator = sycl::reduction(buffer_result, cgh, typename std::remove_reference_t<Operation>::SYCLOp());
                 cgh.parallel_for(sycl::range(all_real_particles), reduction_operator, [=](sycl::id<1> idx, auto& reduction) {
-                    reduction.combine(local_dynamics_function(idx, typename Proxy::Kernel(kernel)));
+                    reduction.combine(local_dynamics_function(idx, kernel_accessor[0]));
                 });
             });
             sycl_queue.wait_and_throw();
