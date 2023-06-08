@@ -376,7 +376,7 @@ void ParticleSplitWithPrescribedArea::update(size_t index_i, Real dt)
 Vecd ParticleSplitWithPrescribedArea::getSplittingPosition(const StdVec<size_t> &new_indices)
 {
     srand(int(new_indices[0]));
-    Real delta_random = 0 + 2.0 * Pi * Real(rand() / RAND_MAX) * (2.0 * Pi - 0);
+    Real delta_random = 0 + 2.0 * Pi * rand() / RAND_MAX * (2.0 * Pi - 0);
     Vecd pos_ = particles_->pos_[new_indices[0]];
     Real delta = delta_random + Pi;
     Real Vol_split = Vol_[new_indices[0]] / 2.0;
