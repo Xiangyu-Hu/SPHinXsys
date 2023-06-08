@@ -53,7 +53,7 @@
 #include "base_local_dynamics.h"
 #include "base_particle_dynamics.hpp"
 #include "particle_iterators.h"
-#include "execution_unit/execution_argument.hpp"
+#include "execution_unit/execution_selector.hpp"
 
 #include <type_traits>
 
@@ -95,7 +95,7 @@ using namespace execution;
  * @class SimpleDynamics
  * @brief Simple particle dynamics without considering particle interaction
  */
-template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy, template<class> class Dispatcher = NoDispatcher>
+template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
 class SimpleDynamics : public LocalDynamicsType, public BaseDynamics<void>
 {
   public:
@@ -120,18 +120,17 @@ class SimpleDynamics : public LocalDynamicsType, public BaseDynamics<void>
                      [=](size_t i, auto&& kernel)
                      { kernel.update(i, dt); },
                      dispatcher.getProxy());
-        dispatcher.writeBack();
     }
 
   private:
-        Dispatcher<LocalDynamicsType> dispatcher;
+        ExecutionSelector<LocalDynamicsType, ExecutionPolicy> dispatcher;
 };
 
 /**
  * @class ReduceDynamics
  * @brief Template class for particle-wise reduce operation, summation, max or min.
  */
-template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy, template<class> class Dispatcher = NoDispatcher>
+template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
 class ReduceDynamics : public LocalDynamicsType,
                        public BaseDynamics<typename LocalDynamicsType::ReduceReturnType>
 
@@ -159,7 +158,7 @@ class ReduceDynamics : public LocalDynamicsType,
         return this->outputResult(temp);
     }
   private:
-    Dispatcher<LocalDynamicsType> dispatcher;
+    ExecutionSelector<LocalDynamicsType, ExecutionPolicy> dispatcher;
     ExecutionPolicy executionPolicy;
 };
 
