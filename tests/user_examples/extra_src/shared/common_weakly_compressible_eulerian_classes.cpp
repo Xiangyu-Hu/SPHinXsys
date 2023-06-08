@@ -15,7 +15,7 @@ namespace SPH
 	//=================================================================================================//
 	Real EulerianWCAcousticTimeStepSize::outputResult(Real reduced_value)
 	{
-		return 0.6 / Dimensions * smoothing_length_min_ / (reduced_value + TinyReal);
+		return acousticCFL_ / Dimensions * smoothing_length_min_ / (reduced_value + TinyReal);
 	}
 	//=================================================================================================//
 	EulerianViscousAccelerationInner::EulerianViscousAccelerationInner(BaseInnerRelation& inner_relation)

@@ -63,7 +63,7 @@ namespace SPH
 	class EulerianWCAcousticTimeStepSize : public fluid_dynamics::AcousticTimeStepSize
 	{
 	public:
-		explicit EulerianWCAcousticTimeStepSize(SPHBody& sph_body) : AcousticTimeStepSize(sph_body) {};
+		explicit EulerianWCAcousticTimeStepSize(SPHBody& sph_body, Real CFL = 0.6) : AcousticTimeStepSize(sph_body, CFL) {};
 		virtual ~EulerianWCAcousticTimeStepSize() {};
 		virtual Real outputResult(Real reduced_value) override;
 	};
