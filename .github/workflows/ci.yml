@@ -16,104 +16,6 @@ env:
 
 # A workflow is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-
-  ###############################################################################
-
-  Linux:
-    runs-on: ubuntu-22.04
-    env:
-      VCPKG_DEFAULT_TRIPLET: x64-linux
-
-    steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
-
-      - name: Install system dependencies
-        run: |
-          sudo apt update 
-          sudo apt install -y \
-            apt-utils \
-            build-essential \
-            curl zip unzip tar `# when starting fresh on a WSL image for bootstrapping vcpkg`\
-            pkg-config `# for installing libraries with vcpkg`\
-            git \
-            cmake \
-            ninja-build
-
-      - uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          key: ${{ github.job }}
-
-      - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
-        with: 
-          committish: ${{ env.VCPKG_VERSION }}
-          cache-version: ${{env.VCPKG_VERSION}}
-
-      - name: Install dependencies
-        run: |
-          ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build openblas[dynamic-arch] --allow-unsupported # last argument to remove after regression introduced by microsoft/vcpkg#30192 is addressed
-          # Simbody depends on (open)blas implementation, which -march=native by default, conflicting with cache restore, hence dynamic-arch feature
-          # Above problem might also be resolved by adding the hash of architecture in the cache key, esp. if more package do the same
-          ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build \
-            eigen3 \
-            tbb \
-            boost-program-options \
-            boost-geometry \
-            simbody \
-            gtest \
-            xsimd \
-            pybind11
-
-      - name: Generate buildsystem
-        run: |
-          cmake -G Ninja \
-            -D CMAKE_BUILD_TYPE=Release \
-            -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
-            -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -D SPHINXSYS_CI=ON \
-            -S ${{github.workspace}} \
-            -B ${{github.workspace}}/build
-            
-      - name: Build
-        run: cmake --build build --config Release --verbose
-
-      - name: Test with the first try
-        id: first-try
-        run: |
-          cd build 
-          ctest  --output-on-failure
-        continue-on-error: true
-
-      - name: Test with the second try for failed cases
-        id: second-try
-        if: ${{ steps.first-try.outcome == 'failure' }} 
-        run: |
-          cd build 
-          ctest --rerun-failed --output-on-failure
-        continue-on-error: true
-
-      - name: Test with the third try for failed cases
-        id: third-try
-        if: ${{ steps.second-try.outcome == 'failure' }} 
-        run: |
-          cd build 
-          ctest --rerun-failed --output-on-failure
-        continue-on-error: true
-
-      - name: Test with the fourth try for failed cases
-        id: fourth-try
-        if: ${{ steps.third-try.outcome == 'failure' }} 
-        run: |
-          cd build 
-          ctest --rerun-failed --output-on-failure
-        continue-on-error: true
-
-      - name: Test with the last try for failed cases
-        if: ${{ steps.fourth-try.outcome == 'failure' }} 
-        run: |
-          cd build 
-          ctest --rerun-failed --output-on-failure
-
   ###############################################################################
 
   Windows:
@@ -134,10 +36,12 @@ jobs:
         with:
           key: ${{ github.job }}
 
-      - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
-        with: 
-          committish: ${{ env.VCPKG_VERSION }}
-          cache-version: ${{env.VCPKG_VERSION}}
+      - name: setup vcpkg (windows)
+        uses: lukka/run-vcpkg@v11
+        with:
+          # hash for tag 2023.04.15 - bugged so use more recent
+          # https://github.com/microsoft/vcpkg/pull/29067
+          vcpkgGitCommitId: "1c5a340f6e10985e2d92af174a68dbd15c1fa4e1"
 
       - name: Install dependencies
         run: |
@@ -204,96 +108,3 @@ jobs:
           ctest.exe --rerun-failed --output-on-failure
 
   ###############################################################################
-
-  macOS:
-    runs-on: macos-12
-    env:
-      VCPKG_DEFAULT_TRIPLET: x64-osx
-
-    steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
-
-      - name: Install system dependencies
-        run: |
-          brew reinstall gfortran # to force having gfortran on PATH because github runners don't have it, just the versioned aliases, i.e. gfortran-11
-                                  # https://github.com/actions/runner-images/blob/main/images/macos/macos-12-Readme.md
-                                  # https://github.com/actions/runner-images/issues/3371#issuecomment-839882565
-                                  # https://github.com/modflowpy/install-gfortran-action and https://github.com/awvwgk/setup-fortran
-          brew install \
-            pkg-config `# for installing libraries with vcpkg`\
-            git \
-            cmake \
-            ninja
-
-      - uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          key: ${{ github.job }}
-
-      - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
-        with: 
-          committish: ${{ env.VCPKG_VERSION }}
-          cache-version: ${{env.VCPKG_VERSION}}
-
-      - name: Install dependencies
-        run: |
-          ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build \
-            eigen3 \
-            tbb \
-            boost-program-options \
-            boost-geometry \
-            gtest \
-            simbody \
-            xsimd \
-            pybind11
-
-      - name: Generate buildsystem
-        run: |
-          cmake -G Ninja \
-            -D CMAKE_C_COMPILER=clang -D CMAKE_CXX_COMPILER=clang++ \
-            -D CMAKE_BUILD_TYPE=Release \
-            -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
-            -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -D SPHINXSYS_CI=ON \
-            -S ${{github.workspace}} \
-            -B ${{github.workspace}}/build
-
-      - name: Build
-        run: cmake --build build --config Release --verbose
-
-      - name: Test with the first try
-        id: first-try
-        run: |
-          cd build 
-          ctest  --output-on-failure
-        continue-on-error: true
-
-      - name: Test with the second try for failed cases
-        id: second-try
-        if: ${{ steps.first-try.outcome == 'failure' }} 
-        run: |
-          cd build 
-          ctest --rerun-failed --output-on-failure
-        continue-on-error: true
-
-      - name: Test with the third try for failed cases
-        id: third-try
-        if: ${{ steps.second-try.outcome == 'failure' }} 
-        run: |
-          cd build 
-          ctest --rerun-failed --output-on-failure
-        continue-on-error: true
-
-      - name: Test with the fourth try for failed cases
-        id: fourth-try
-        if: ${{ steps.third-try.outcome == 'failure' }} 
-        run: |
-          cd build 
-          ctest --rerun-failed --output-on-failure
-        continue-on-error: true
-
-      - name: Test with the last try for failed cases
-        if: ${{ steps.fourth-try.outcome == 'failure' }} 
-        run: |
-          cd build 
-          ctest --rerun-failed --output-on-failure
