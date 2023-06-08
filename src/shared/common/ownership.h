@@ -161,6 +161,15 @@ namespace SPH
 		return std::make_shared<T>(std::forward<ConstructorArgs>(args)...);
 	}
 
+    template <class T, typename... ConstructorArgs>
+    auto makeSharedDevice(ConstructorArgs &&...args)
+    {
+        auto& queue = execution::ExecutionQueue::getQueue();
+        T* ptr = sycl::malloc_shared<T>(1, queue);
+        new(ptr) T(std::forward<ConstructorArgs>(args)...);
+        return SharedPtr<T>(ptr, [=](auto* p) { sycl::free(p, queue); });
+    }
+
 	/**
 	 * @class SharedPtrKeeper
 	 * @brief A wrapper to provide an shared ownership for a new derived object
