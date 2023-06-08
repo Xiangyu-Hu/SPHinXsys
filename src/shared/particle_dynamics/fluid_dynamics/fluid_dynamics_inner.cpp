@@ -78,12 +78,11 @@ namespace SPH
 			: LocalDynamicsReduce<Real, ReduceMax>(sph_body, U_max * U_max),
 			  FluidDataSimple(sph_body), vel_(particles_->vel_),
 			  smoothing_length_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
-			  advectionCFL_(advectionCFL), vel_device(vel_.data(), vel_.size()),
-              device_proxy(this, vel_device) {}
+			  advectionCFL_(advectionCFL), device_proxy(this, particles_) {}
 		//=================================================================================================//
 		Real AdvectionTimeStepSizeForImplicitViscosity::reduce(size_t index_i, Real dt)
 		{
-            return AdvectionTimeStepSizeForImplicitViscosityKernel::reduce(index_i, dt, vel_,
+            return AdvectionTimeStepSizeForImplicitViscosityKernel::reduce(index_i, dt, vel_.data(),
                                                                            [](const Vecd& vel) {
                 return vel.squaredNorm();
             });

@@ -40,7 +40,7 @@
 #include "weakly_compressible_fluid.h"
 #include "riemann_solver.h"
 
-#include "execution_argument.hpp"
+#include "execution_selector.hpp"
 
 namespace SPH
 {
@@ -223,24 +223,22 @@ namespace SPH
 
         class AdvectionTimeStepSizeForImplicitViscosityKernel {
         public:
-            template<class VelType, class SquareNormFunction>
-            static Real reduce(size_t index_i, Real dt, VelType&& vel, SquareNormFunction&& squareNorm) {
+            AdvectionTimeStepSizeForImplicitViscosityKernel(BaseParticles* particles): vel_(particles->vel_device_) {}
+
+            template<class SquareNormFunction>
+            static Real reduce(size_t index_i, Real dt, Vecd* vel, SquareNormFunction&& squareNorm) {
                 return squareNorm(vel[index_i]);
             }
 
             Real reduce(size_t index_i, Real dt = 0.0) {
-                return reduce(index_i, dt, vel_accessor, [](const Vecd& vel){
+                return reduce(index_i, dt, vel_, [](const Vecd& vel){
                     sycl::float2 syclVel {vel[0], vel[1]};
                     return sycl::dot(syclVel, syclVel);
                 });
             }
 
-            void setAccessors(std::tuple<sycl::accessor<Vecd, 1, sycl::access_mode::read>> &&accessors) {
-                vel_accessor.swap(std::get<0>(accessors));
-            }
-
         private:
-            sycl::accessor<Vecd, 1, sycl::access_mode::read> vel_accessor;
+            Vecd* vel_;
         };
 
 		/**
@@ -263,10 +261,8 @@ namespace SPH
 			Real smoothing_length_min_;
 			Real advectionCFL_;
 
-            DeviceVariable<Vecd, sycl::access_mode::read> vel_device;
-            DeviceProxy<AdvectionTimeStepSizeForImplicitViscosity,
-                    AdvectionTimeStepSizeForImplicitViscosityKernel,
-                    decltype(vel_device)> device_proxy;
+            ExecutionProxy<AdvectionTimeStepSizeForImplicitViscosity,
+                    AdvectionTimeStepSizeForImplicitViscosityKernel> device_proxy;
 
         public:
             auto& getDeviceProxy() {

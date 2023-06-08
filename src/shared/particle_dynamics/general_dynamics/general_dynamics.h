@@ -65,29 +65,17 @@ namespace SPH
 
     class TimeStepInitializationKernel {
     public:
-        template<class AccPriorType, class PosType, class GravityType>
-        static void update(size_t index_i, Real dt, AccPriorType&& acc_prior, PosType&& pos, GravityType&& gravity)
-        {
-            acc_prior[index_i] = gravity.InducedAcceleration(pos[index_i]);
-        }
+        TimeStepInitializationKernel(BaseParticles* particles, Gravity* gravity) :
+        pos_(particles->pos_device_), acc_prior_(particles->acc_prior_device_), gravity_(gravity) {}
 
         void update(size_t index_i, Real dt)
         {
-            update(index_i, dt, acc_prior_accessor, pos_accessor, gravity_);
-        }
-
-        void setAccessors(std::tuple<sycl::accessor<Vecd, 1, sycl::access_mode::write>,
-                          sycl::accessor<Vecd, 1, sycl::access_mode::write>,
-                          GravityKernel> &&accessors) {
-            pos_accessor.swap(std::get<0>(accessors));
-            acc_prior_accessor.swap(std::get<1>(accessors));
-            gravity_ = std::get<2>(accessors);
+            acc_prior_[index_i] = gravity_->InducedAcceleration_Device(pos_[index_i]);
         }
 
     private:
-        sycl::accessor<Vecd, 1, sycl::access_mode::write> pos_accessor;
-        sycl::accessor<Vecd, 1, sycl::access_mode::write> acc_prior_accessor;
-        GravityKernel gravity_;
+        Vecd* pos_, *acc_prior_;
+        Gravity* gravity_;
     };
 
 
@@ -102,10 +90,7 @@ namespace SPH
 	protected:
 		StdLargeVec<Vecd> &pos_, &acc_prior_;
 
-        DeviceVariable<Vecd, sycl::access_mode::write> pos_device;
-        DeviceVariable<Vecd, sycl::access_mode::write> acc_prior_device;
-        DeviceProxy<TimeStepInitialization, TimeStepInitializationKernel,
-                    decltype(pos_device), decltype(acc_prior_device), Gravity::Proxy> device_proxy;
+        ExecutionProxy<TimeStepInitialization, TimeStepInitializationKernel> device_proxy;
 
 	public:
 		TimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd::Zero()));
@@ -115,13 +100,6 @@ namespace SPH
 
         auto& getDeviceProxy() {
             return device_proxy;
-        }
-
-        void writeBack() {
-            auto host_acc_prior = acc_prior_device.get_host_memory_access();
-            for (int i = 0; i < acc_prior_.size(); ++i) {
-                acc_prior_[i] = host_acc_prior[i];
-            }
         }
 
         using Proxy = decltype(device_proxy);
