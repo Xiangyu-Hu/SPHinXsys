@@ -12,7 +12,7 @@
 
 EMSCRIPTEN_BINDINGS(SPHINXSYS)
 {
-    emscripten::value_array<std::array<double, 3>>("ArrayDouble3")
+    emscripten::value_array<std::array<Real, 3>>("ArrayReal3")
         .element(emscripten::index<0>())
         .element(emscripten::index<1>())
         .element(emscripten::index<2>());
@@ -22,7 +22,7 @@ EMSCRIPTEN_BINDINGS(SPHINXSYS)
         .field("ptr", &StlData::ptr);
     
     emscripten::register_vector<std::string>("StringVector");
-    emscripten::register_vector<double>("DoubleVector");
+    emscripten::register_vector<Real>("BiVectortor");
     emscripten::register_vector<IndexVector::value_type>("UIntVector");
     emscripten::register_vector<StlData>("StlsList");
     emscripten::register_vector<IndexVector>("BodiesList");

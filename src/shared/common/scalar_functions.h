@@ -146,11 +146,11 @@ namespace SPH
 		return (std::isnan(a) || !(std::isfinite(a))) ? true : false;
 	}
 
-	inline double rand_norm(double u, double std)
+	inline Real rand_norm(Real u, Real std)
 	{
 		unsigned seed = (unsigned)std::chrono::system_clock::now().time_since_epoch().count();
 		std::default_random_engine generator(seed);
-		std::normal_distribution<double> distribution(u, std);
+		std::normal_distribution<Real> distribution(u, std);
 		return distribution(generator);
 	}
 	/** rotating axis once according to right hand rule.
@@ -162,8 +162,8 @@ namespace SPH
 	 */
 	int ThirdAxis(int first_axis);
 
-	double getLeftStateInWeno(double v1, double v2, double v3, double v4);
-	double getRightStateInWeno(double v1, double v2, double v3, double v4);
+	Real getLeftStateInWeno(Real v1, Real v2, Real v3, Real v4);
+	Real getRightStateInWeno(Real v1, Real v2, Real v3, Real v4);
 
 	/** linear heaviside function.*/
 	Real Heaviside(Real phi, Real half_width);

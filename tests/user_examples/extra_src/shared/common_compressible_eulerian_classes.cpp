@@ -88,7 +88,7 @@ namespace SPH
 		Real rhol_cl = compressible_fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_) * state_i.rho_;
 		Real rhor_cr = compressible_fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_) * state_j.rho_;
 		Real clr = (rhol_cl + rhor_cr) / (state_i.rho_ + state_j.rho_);
-		Real s_star = (state_j.p_ - state_i.p_) * pow(SMIN(5.0 * SMAX((ul - ur) / clr, 0.0), 1.0), 2) / (state_i.rho_ * (s_l - ul) - state_j.rho_ * (s_r - ur)) +
+		Real s_star = (state_j.p_ - state_i.p_) * pow(SMIN(Real(5) * SMAX((ul - ur) / clr, Real(0)), Real(1)), 2) / (state_i.rho_ * (s_l - ul) - state_j.rho_ * (s_r - ur)) +
 			(state_i.rho_ * (s_l - ul) * ul - state_j.rho_ * (s_r - ur) * ur) / (state_i.rho_ * (s_l - ul) - state_j.rho_ * (s_r - ur));
 		Real p_star = 0.0;
 		Vecd v_star = Vecd::Zero();
@@ -104,7 +104,7 @@ namespace SPH
 		if (s_l <= 0.0 && 0.0 <= s_star)
 		{
 			p_star = 0.5 * (state_i.p_ + state_j.p_) +
-				0.5 * (state_i.rho_ * (s_l - ul) * (s_star - ul) + state_j.rho_ * (s_r - ur) * (s_star - ur)) * SMIN(5.0 * SMAX((ul - ur) / clr, 0.0), 1.0);
+				0.5 * (state_i.rho_ * (s_l - ul) * (s_star - ul) + state_j.rho_ * (s_r - ur) * (s_star - ur)) * SMIN(Real(5) * SMAX((ul - ur) / clr, Real(0)), Real(1));
 			v_star = state_i.vel_ - e_ij * (s_star - ul);
 			rho_star = state_i.rho_ * (s_l - ul) / (s_l - s_star);
 			energy_star = ((s_l - ul) * state_i.E_ - state_i.p_ * ul + p_star * s_star) / (s_l - s_star);
@@ -112,7 +112,7 @@ namespace SPH
 		if (s_star <= 0.0 && 0.0 <= s_r)
 		{
 			p_star = 0.5 * (state_i.p_ + state_j.p_) +
-				0.5 * (state_i.rho_ * (s_l - ul) * (s_star - ul) + state_j.rho_ * (s_r - ur) * (s_star - ur)) * SMIN(5.0 * SMAX((ul - ur) / clr, 0.0), 1.0);
+				0.5 * (state_i.rho_ * (s_l - ul) * (s_star - ul) + state_j.rho_ * (s_r - ur) * (s_star - ur)) * SMIN(Real(5) * SMAX((ul - ur) / clr, Real(0)), Real(1));
 			v_star = state_j.vel_ - e_ij * (s_star - ur);
 			rho_star = state_j.rho_ * (s_r - ur) / (s_r - s_star);
 			energy_star = ((s_r - ur) * state_j.E_ - state_j.p_ * ur + p_star * s_star) / (s_r - s_star);

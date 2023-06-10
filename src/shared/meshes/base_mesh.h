@@ -147,7 +147,7 @@ namespace SPH
 
 	/**
 	 * @class 	RefinedMesh
-	 * @brief 	Abstract base class derived from the coarse mesh but has double resolution.
+	 * @brief 	Abstract base class derived from the coarse mesh but has Real resolution.
 	 * 			Currently, the design is simple but can be extending for more inter-mesh operations.
 	 */
 	template <class CoarseMeshType>
@@ -166,7 +166,7 @@ namespace SPH
 
 	/**
 	 * @class 	MultilevelMesh
-	 * @brief 	Multi-level Meshes with successively double the resolution
+	 * @brief 	Multi-level Meshes with successively Real the resolution
 	 */
 	template <class MeshFieldType, class CoarsestMeshType, class RefinedMeshType>
 	class MultilevelMesh : public MeshFieldType

@@ -33,15 +33,15 @@
 namespace SPH
 {
 
-	SimTK::Vec2 EigenToSimTK(const Vec2d &eigen_vector);
-	SimTK::Vec3 EigenToSimTK(const Vec3d &eigen_vector);
-	Vec2d SimTKToEigen(const SimTK::Vec2 &simTK_vector);
-	Vec3d SimTKToEigen(const SimTK::Vec3 &simTK_vector);
+	SimTKVec2 EigenToSimTK(const Vec2d &eigen_vector);
+	SimTKVec3 EigenToSimTK(const Vec3d &eigen_vector);
+	Vec2d SimTKToEigen(const SimTKVec2 &simTK_vector);
+	Vec3d SimTKToEigen(const SimTKVec3 &simTK_vector);
 
-	SimTK::Mat22 EigenToSimTK(const Mat2d &eigen_matrix);
-	SimTK::Mat33 EigenToSimTK(const Mat3d &eigen_matrix);
-	Mat2d SimTKToEigen(const SimTK::Mat22 &simTK_matrix);
-	Mat3d SimTKToEigen(const SimTK::Mat33 &simTK_matrix);
+	SimTKMat22 EigenToSimTK(const Mat2d &eigen_matrix);
+	SimTKMat33 EigenToSimTK(const Mat3d &eigen_matrix);
+	Mat2d SimTKToEigen(const SimTKMat22 &simTK_matrix);
+	Mat3d SimTKToEigen(const SimTKMat33 &simTK_matrix);
 
 	Vec2d FirstAxisVector(const Vec2d &zero_vector);
 	Vec3d FirstAxisVector(const Vec3d &zero_vector);
@@ -66,9 +66,9 @@ namespace SPH
 	Mat2d getDiagonal(const Mat2d &A);
 	Mat3d getDiagonal(const Mat3d &A);
 
-	/** double dot product between two matrices, resulting in a scalar value (sum of products of element-wise) */
-	Real CalculateDoubleDotProduct(Mat2d Matrix1, Mat2d Matrix2); // calculate double dot
-	Real CalculateDoubleDotProduct(Mat3d Matrix1, Mat3d Matrix2); // calculate double dot
+	/** Real dot product between two matrices, resulting in a scalar value (sum of products of element-wise) */
+	Real CalculateBiDotProduct(Mat2d Matrix1, Mat2d Matrix2); // calculate Real dot
+	Real CalculateBiDotProduct(Mat3d Matrix1, Mat3d Matrix2); // calculate Real dot
 
 	/** get transformation matrix. */
 	Mat2d getTransformationMatrix(const Vec2d &direction_of_y);

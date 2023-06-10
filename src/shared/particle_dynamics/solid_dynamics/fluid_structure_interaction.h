@@ -138,7 +138,7 @@ namespace SPH
 						Vecd e_ij = contact_neighborhood.e_ij_[n];
 						Real r_ij = contact_neighborhood.r_ij_[n];
 						Real face_wall_external_acceleration = (acc_prior_k[index_j] - acc_ave_[index_i]).dot(e_ij);
-						Real p_in_wall = p_k[index_j] + rho_n_k[index_j] * r_ij * SMAX(0.0, face_wall_external_acceleration);
+						Real p_in_wall = p_k[index_j] + rho_n_k[index_j] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
 						Real u_jump = 2.0 * (vel_k[index_j] - vel_ave_[index_i]).dot(n_[index_i]);
 						force += (riemann_solvers_k.DissipativePJump(u_jump) * n_[index_i] - (p_in_wall + p_k[index_j]) * e_ij )
 								 * Vol_[index_i] * contact_neighborhood.dW_ijV_j_[n];

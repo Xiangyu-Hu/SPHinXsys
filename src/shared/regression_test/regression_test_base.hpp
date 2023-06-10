@@ -66,7 +66,7 @@ namespace SPH
 		size_t number_of_particle_ = this->base_particles_.total_real_particles_;
 		size_t number_of_snapshot_ = std::distance(observe_xml_engine_.root_element_.element_begin(),
 			observe_xml_engine_.root_element_.element_end());
-		DoubleVec<VariableType> current_result_temp_(number_of_snapshot_, StdVec<VariableType>(number_of_particle_));
+		BiVector<VariableType> current_result_temp_(number_of_snapshot_, StdVec<VariableType>(number_of_particle_));
 		StdVec<std::string> element_tag_temp_(number_of_snapshot_);
 		current_result_ = current_result_temp_;
 		element_tag_ = element_tag_temp_;
@@ -86,7 +86,7 @@ namespace SPH
 		size_t number_of_particle_ = 1;
 		size_t number_of_snapshot_ = std::distance(observe_xml_engine_.root_element_.element_begin(),
 			observe_xml_engine_.root_element_.element_end());
-		DoubleVec<VariableType> current_result_temp_(number_of_snapshot_, StdVec<VariableType>(number_of_particle_));
+		BiVector<VariableType> current_result_temp_(number_of_snapshot_, StdVec<VariableType>(number_of_particle_));
 		StdVec<std::string> element_tag_temp_(number_of_snapshot_);
 		current_result_ = current_result_temp_;
 		element_tag_ = element_tag_temp_;
@@ -103,7 +103,7 @@ namespace SPH
 	{
 		int number_of_snapshot = this->current_result_.size();
 		int number_of_observation = this->current_result_[0].size();
-		DoubleVec<VariableType> temp(number_of_observation, StdVec<VariableType>(number_of_snapshot));
+		BiVector<VariableType> temp(number_of_observation, StdVec<VariableType>(number_of_snapshot));
 		current_result_trans_ = temp;
 		for (int snapshot_index = 0; snapshot_index != number_of_snapshot; ++snapshot_index)
 			for (int observation_index = 0; observation_index != number_of_observation; ++observation_index)
@@ -116,14 +116,14 @@ namespace SPH
 		if (number_of_run_ > 1) /*only read the result from the 2nd run, because the 1st run doesn't have previous results. */
 		{
 			/*Here result_in is a temporary container that reloads each previous result.*/
-			DoubleVec<VariableType> result_in_(SMAX(snapshot_, number_of_snapshot_old_), StdVec<VariableType>(observation_));
+			BiVector<VariableType> result_in_(SMAX(snapshot_, number_of_snapshot_old_), StdVec<VariableType>(observation_));
 			for (int run_index_ = 0; run_index_ != number_of_run_ - 1; ++run_index_)
 			{
 				std::string node_name_ = "Round_" + std::to_string(run_index_);
 				SimTK::Xml::Element father_element_ = result_xml_engine_in_.getChildElement(node_name_);
 				for (int observation_index_ = 0; observation_index_ != observation_; ++observation_index_)
 					xmlmemory_io_.readDataFromXmlMemory(result_xml_engine_in_, father_element_, observation_index_, result_in_, this->quantity_name_);
-				DoubleVec<VariableType> result_temp_ = result_in_;
+				BiVector<VariableType> result_temp_ = result_in_;
 				for (int delete_ = 0; delete_ != difference_; ++delete_)
 					result_temp_.pop_back(); /* trim the new reading result to unify the length of all results. (number of snapshots) */
 				result_.push_back(result_temp_);
@@ -172,7 +172,7 @@ namespace SPH
 			SimTK::Xml::element_iterator ele_ite = snapshot_element_.element_begin();
 			result_xml_engine_in_.getRequiredAttributeValue(ele_ite, "number_of_snapshot_for_local_result_", snapshot_);
 
-			DoubleVec<VariableType> result_temp_(observation_, StdVec<VariableType>(snapshot_));
+			BiVector<VariableType> result_temp_(observation_, StdVec<VariableType>(snapshot_));
 			result_in_ = result_temp_;
 			SimTK::Xml::Element result_element_ = result_xml_engine_in_.getChildElement("Result_Element");
 			for (int snapshot_index = 0; snapshot_index != snapshot_; ++snapshot_index)
