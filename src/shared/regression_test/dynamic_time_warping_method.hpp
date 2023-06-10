@@ -37,7 +37,7 @@ namespace SPH
 	//=================================================================================================//
 	template<class ObserveMethodType>
 	StdVec<Real> RegressionTestDynamicTimeWarping<ObserveMethodType>::calculateDTWDistance
-	(DoubleVec<VariableType> dataset_a_, DoubleVec<VariableType> dataset_b_)
+	(BiVector<VariableType> dataset_a_, BiVector<VariableType> dataset_b_)
 	{
 		/* define the container to hold the dtw distance.*/
 		StdVec<Real> dtw_distance;
@@ -47,7 +47,7 @@ namespace SPH
 			int a_length = dataset_a_[observation_index].size();
 			int b_length = dataset_b_[observation_index].size();
 			/** create a 2D vector with [a_length, b_length] to contain the local DTW distance value. */
-			DoubleVec<Real> local_dtw_distance(a_length, StdVec<Real>(b_length, 0));
+			BiVector<Real> local_dtw_distance(a_length, StdVec<Real>(b_length, 0));
 			local_dtw_distance[0][0] = calculatePNorm(dataset_a_[observation_index][0], dataset_b_[observation_index][0]);
 			for (int index_i = 1; index_i < a_length; ++index_i)
 				local_dtw_distance[index_i][0] = local_dtw_distance[index_i - 1][0] + calculatePNorm(dataset_a_[observation_index][index_i], dataset_b_[observation_index][0]);

@@ -64,13 +64,13 @@ namespace SPH
 		                                             /*< the XmlEngine can operate the node name and elements in xml memory. */
 		 
 		 StdVec<std::string> element_tag_;           /*< the container of the tag of current result. */
-		 DoubleVec<VariableType> current_result_;    /*< the container of current run result stored as snapshot * observation. */
-		 DoubleVec<VariableType> current_result_trans_; /*< the container of current run result with snapshot & observations transposed,
+		 BiVector<VariableType> current_result_;    /*< the container of current run result stored as snapshot * observation. */
+		 BiVector<VariableType> current_result_trans_; /*< the container of current run result with snapshot & observations transposed,
 													    because this data structure is required in TA and DTW method. */
-		 DoubleVec<VariableType> result_in_;         /*< the temporary container of each result when reading from .xml memory, and
+		 BiVector<VariableType> result_in_;         /*< the temporary container of each result when reading from .xml memory, and
 													    it may be snapshot * observations (reading all result for averaged methods),
 														or observations * snapshot (reading specified result for TA and DTW method.) */
-		 TripleVec<VariableType> result_;            /*< the container of results in all runs (run * snapshot * observation) */
+		 TriVector<VariableType> result_;            /*< the container of results in all runs (run * snapshot * observation) */
 
 		 int snapshot_, observation_;                /*< the size of each layer of current result vector. */
 		 int difference_;                            /*< the length difference of snapshot between old and new result, 

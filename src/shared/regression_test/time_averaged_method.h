@@ -55,19 +55,19 @@ namespace SPH
 		StdVec<VariableType> local_meanvalue_;              /* the container of meanvalue for current result. */
 		
 		/** the method used for filtering local extreme values. */
-		void filterLocalResult(DoubleVec<Real> &current_result);
-		void filterLocalResult(DoubleVec<Vecd> &current_result);
-		void filterLocalResult(DoubleVec<Matd> &current_result);
+		void filterLocalResult(BiVector<Real> &current_result);
+		void filterLocalResult(BiVector<Vecd> &current_result);
+		void filterLocalResult(BiVector<Matd> &current_result);
 
 		/** the method used for searching steady starting point. */
-		void searchSteadyStart(DoubleVec<Real> &current_result);
-		void searchSteadyStart(DoubleVec<Vecd> &current_result);
-		void searchSteadyStart(DoubleVec<Matd> &current_result);
+		void searchSteadyStart(BiVector<Real> &current_result);
+		void searchSteadyStart(BiVector<Vecd> &current_result);
+		void searchSteadyStart(BiVector<Matd> &current_result);
 
 		/** the method used for calculating the new variance. */
-		void calculateNewVariance(DoubleVec<Real> &current_result, StdVec<Real> &local_meanvalue, StdVec<Real> &variance, StdVec<Real> &variance_new);
-		void calculateNewVariance(DoubleVec<Vecd> &current_result, StdVec<Vecd> &local_meanvalue, StdVec<Vecd> &variance, StdVec<Vecd> &variance_new);
-		void calculateNewVariance(DoubleVec<Matd> &current_result, StdVec<Matd> &local_meanvalue, StdVec<Matd> &variance, StdVec<Matd> &variance_new);
+		void calculateNewVariance(BiVector<Real> &current_result, StdVec<Real> &local_meanvalue, StdVec<Real> &variance, StdVec<Real> &variance_new);
+		void calculateNewVariance(BiVector<Vecd> &current_result, StdVec<Vecd> &local_meanvalue, StdVec<Vecd> &variance, StdVec<Vecd> &variance_new);
+		void calculateNewVariance(BiVector<Matd> &current_result, StdVec<Matd> &local_meanvalue, StdVec<Matd> &variance, StdVec<Matd> &variance_new);
 
 		/** the method used for comparing the meanvalue and variance. */
 		int compareParameter(std::string par_name, StdVec<Real> &parameter, StdVec<Real> &parameter_new, Real &threshold);
@@ -75,9 +75,9 @@ namespace SPH
 		int compareParameter(std::string par_name, StdVec<Matd> &parameter, StdVec<Matd> &parameter_new, Matd &threshold);
 
 		/** the method used for testing the new result with meanvalue and variance. */
-		int testNewResult(DoubleVec<Real> &current_result, StdVec<Real> &meanvalue, StdVec<Real> &local_meanvalue, StdVec<Real> &variance);
-		int testNewResult(DoubleVec<Vecd> &current_result, StdVec<Vecd> &meanvalue, StdVec<Vecd> &local_meanvalue, StdVec<Vecd> &variance);
-		int testNewResult(DoubleVec<Matd> &current_result, StdVec<Matd> &meanvalue, StdVec<Matd> &local_meanvalue, StdVec<Matd> &variance);
+		int testNewResult(BiVector<Real> &current_result, StdVec<Real> &meanvalue, StdVec<Real> &local_meanvalue, StdVec<Real> &variance);
+		int testNewResult(BiVector<Vecd> &current_result, StdVec<Vecd> &meanvalue, StdVec<Vecd> &local_meanvalue, StdVec<Vecd> &variance);
+		int testNewResult(BiVector<Matd> &current_result, StdVec<Matd> &meanvalue, StdVec<Matd> &local_meanvalue, StdVec<Matd> &variance);
 		
 	public:
 		template<typename... ConstructorArgs>

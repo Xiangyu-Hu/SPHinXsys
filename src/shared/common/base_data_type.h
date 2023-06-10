@@ -69,7 +69,14 @@ namespace SPH
 	 * 			Using -mtune=native produces code optimized for the local machine under the constraints of the selected instruction set.
 	 */
 
-	using Real = double;
+#if USE_FLOAT
+		using Real = float;
+		using EigMat = Eigen::MatrixXf;
+#else
+		using Real = double;
+		using EigMat = Eigen::MatrixXd;
+#endif
+
 	/** Vector with integers. */
 	using Array2i = Eigen::Array<int, 2, 1>;
 	using Array3i = Eigen::Array<int, 3, 1>;
@@ -82,6 +89,14 @@ namespace SPH
 	/** AlignedBox */
 	using AlignedBox2d = Eigen::AlignedBox<Real, 2>;
 	using AlignedBox3d = Eigen::AlignedBox<Real, 3>;
+	/** SimTK vector and matrix */
+	/**
+	 * Note that SimTK vector and matrix using double precision, whne ENABLE_SINGLE, will transfer to double precision. 
+	*/
+	using SimTKVec2 = SimTK::Vec2;
+	using SimTKVec3 = SimTK::Vec3;
+	using SimTKMat22 = SimTK::Mat22;
+	using SimTKMat33 = SimTK::Mat33;
 	/** Unified initialize to zero for all data type. */
 	/**
 	 * NOTE: Eigen::Matrix<> constexpr constructor?
@@ -142,8 +157,8 @@ namespace SPH
 	};
 	/** Useful float point constants. */
 	constexpr size_t MaxSize_t = std::numeric_limits<size_t>::max();
-	constexpr double MinRealNumber = std::numeric_limits<double>::min();
-	constexpr double MaxRealNumber = std::numeric_limits<double>::max();
+	constexpr Real MinRealNumber = std::numeric_limits<Real>::min();
+	constexpr Real MaxRealNumber = std::numeric_limits<Real>::max();
 	/** Verbal boolean for positive and negative axis directions. */
 	const int xAxis = 0;
 	const int yAxis = 1;
@@ -151,11 +166,11 @@ namespace SPH
 	const bool positiveDirection = true;
 	const bool negativeDirection = false;
 	/** Constant parameters. */
-	const Real Pi = Real(M_PI);
-	const Real Eps = 2.22045e-16;
-	const Real TinyReal = 2.71051e-20;
-	const Real Infinity = std::numeric_limits<double>::max();
-	const Real SqrtEps = 1.0e-8;
+	constexpr Real Pi = Real(M_PI);
+	constexpr Real Eps = std::numeric_limits<Real>::epsilon();
+	constexpr Real TinyReal = Real(2.71051e-20);
+	constexpr Real Infinity = std::numeric_limits<Real>::max();
+	constexpr Real SqrtEps = Real(1.0e-8);
 }
 
 #endif // BASE_DATA_TYPE_H

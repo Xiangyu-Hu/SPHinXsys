@@ -130,7 +130,7 @@ namespace SPH
 	{
 		SPHAdaptation::registerAdaptationVariables(base_particles);
 
-		base_particles.registerVariable(h_ratio_, "SmoothingLengthRatio", 1.0);
+		base_particles.registerVariable(h_ratio_, "SmoothingLengthRatio", Real(1.0));
 		base_particles.registerSortableVariable<Real>("SmoothingLengthRatio");
 		base_particles.addVariableToReload<Real>("SmoothingLengthRatio");
 	}
@@ -210,12 +210,12 @@ namespace SPH
 	//=================================================================================================//
 	Vec2d ParticleSplitAndMerge::splittingPattern(Vec2d pos, Real particle_spacing, Real delta)
 	{
-		return {pos[0] + 0.5 * particle_spacing * cos(delta), pos[1] + 0.5 * particle_spacing * sin(delta)};
+		return {pos[0] + Real(0.5) * particle_spacing * cos(delta), pos[1] + Real(0.5) * particle_spacing * sin(delta)};
 	}
 	//=================================================================================================//
 	Vec3d ParticleSplitAndMerge::splittingPattern(Vec3d pos, Real particle_spacing, Real delta)
 	{
-		return {pos[0] + 0.5 * particle_spacing * cos(delta), pos[1] + 0.5 * particle_spacing * sin(delta), pos[2]};
+		return {pos[0] + Real(0.5) * particle_spacing * cos(delta), pos[1] + Real(0.5) * particle_spacing * sin(delta), pos[2]};
 	}
 	//=================================================================================================//
 }

@@ -22,7 +22,7 @@ namespace SPH
 		Vecd &pos_n_i = pos_[index_i];
 		for (int k = 0; k < pos_n_i.size(); ++k)
 		{
-			pos_n_i[k] += dt * (((double)rand() / (RAND_MAX)) - 0.5) * 2.0 * randomize_scale_;
+			pos_n_i[k] += dt * (((Real)rand() / (RAND_MAX)) - 0.5) * 2.0 * randomize_scale_;
 		}
 	}
 	//=================================================================================================//

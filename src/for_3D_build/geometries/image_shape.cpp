@@ -45,7 +45,7 @@ namespace SPH
 		ImageShapeSphere(Real radius, Vecd spacings, Vecd center, const std::string &shape_name)
 		: ImageShape(shape_name)
 	{
-		double extend = 1.5;
+		Real extend = 1.5;
 		int length = int(std::ceil(2.0 * extend * radius));
 		Arrayi NxNyNz(length, length, length);
 		image_.reset(new ImageMHD<float, 3>(radius, NxNyNz, spacings));
