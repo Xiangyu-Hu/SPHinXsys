@@ -44,10 +44,11 @@ jobs:
         with:
           key: ${{ github.job }}
 
-      - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
-        with: 
-          committish: ${{ env.VCPKG_VERSION }}
-          cache-version: ${{env.VCPKG_VERSION}}
+      - uses: lukka/run-vcpkg@v11
+        with:
+          # hash for tag 2023.04.15 - bugged so use more recent
+          # https://github.com/microsoft/vcpkg/pull/29067
+          vcpkgGitCommitId: "1c5a340f6e10985e2d92af174a68dbd15c1fa4e1"
 
       - name: Install dependencies
         run: |
@@ -122,7 +123,7 @@ jobs:
       VCPKG_DEFAULT_TRIPLET: x64-windows
 
     steps:
-      - uses: actions/checkout@v3 # Checks-out the repository under ${{github.workspace}}
+      - uses: actions/checkout@v3.5.2 # Checks-out the repository under ${{github.workspace}}
       
       - name: Update ccache and ninja # For correct caching with ccache on Windows
         shell: bash
@@ -134,10 +135,11 @@ jobs:
         with:
           key: ${{ github.job }}
 
-      - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
-        with: 
-          committish: ${{ env.VCPKG_VERSION }}
-          cache-version: ${{env.VCPKG_VERSION}}
+      - uses: lukka/run-vcpkg@v11
+        with:
+          # hash for tag 2023.04.15 - bugged so use more recent
+          # https://github.com/microsoft/vcpkg/pull/29067
+          vcpkgGitCommitId: "1c5a340f6e10985e2d92af174a68dbd15c1fa4e1"
 
       - name: Install dependencies
         run: |
@@ -230,10 +232,11 @@ jobs:
         with:
           key: ${{ github.job }}
 
-      - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
-        with: 
-          committish: ${{ env.VCPKG_VERSION }}
-          cache-version: ${{env.VCPKG_VERSION}}
+      - uses: lukka/run-vcpkg@v11
+        with:
+          # hash for tag 2023.04.15 - bugged so use more recent
+          # https://github.com/microsoft/vcpkg/pull/29067
+          vcpkgGitCommitId: "1c5a340f6e10985e2d92af174a68dbd15c1fa4e1"
 
       - name: Install dependencies
         run: |

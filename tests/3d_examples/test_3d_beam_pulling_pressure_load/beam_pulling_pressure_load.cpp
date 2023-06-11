@@ -151,10 +151,10 @@ int main(int ac, char *av[])
 	Vecd half_size_0(0.03, 0.03, resolution_ref);
 	BodyRegionByParticle load_surface(beam_body, makeShared<TriangleMeshShapeBrick>(half_size_0, 1, Vecd(0.00, 0.00, 0.1)));
 	StdVec<std::array<Real, 2>> force_over_time = {
-		{0.0, 0.0},
-		{0.1 * end_time, 0.1 * load_total_force},
-		{0.4 * end_time, load_total_force},
-		{end_time, load_total_force}};
+		{Real(0), Real(0)},
+		{Real(0.1) * end_time, Real(0.1) * load_total_force},
+		{Real(0.4) * end_time, load_total_force},
+		{Real(end_time), Real(load_total_force)}};
 	SimpleDynamics<LoadForce> pull_force(load_surface, force_over_time);
 	std::cout << "load surface particle number: " << load_surface.body_part_particles_.size() << std::endl;
 

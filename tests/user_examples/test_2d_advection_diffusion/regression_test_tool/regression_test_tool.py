@@ -7,10 +7,10 @@ sys.path.append(path)
 from regression_test_base_tool import SphinxsysRegressionTest
 
 """
-case name: test_2d_diffusion_NeumannBC
+case name: test_2d_advection_diffusion
 """
 
-case_name = "test_2d_diffusion_NeumannBC"
+case_name = "test_2d_advection_diffusion"
 body_name = "DiffusionBody"
 parameter_name = "TemperatureObserver"
 

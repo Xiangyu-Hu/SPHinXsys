@@ -3,7 +3,7 @@
 
 using namespace SPH;
 
-TEST(small_vectors, CalculateDoubleDotProduct)
+TEST(small_vectors, CalculateBiDotProduct)
 {
     Mat3d matrix_1{ {6.5, 7.8, 0.0},
                     {1.0, 2.0, 3.0}, 
@@ -13,7 +13,7 @@ TEST(small_vectors, CalculateDoubleDotProduct)
                     {1.0, 5.0, 7.0}, 
                     {0.0, 0.0, 0.2},
                   };
-    EXPECT_DOUBLE_EQ(CalculateDoubleDotProduct(matrix_1, matrix_2), 103.58);
+    EXPECT_EQ(CalculateBiDotProduct(matrix_1, matrix_2), 103.58);
 }
 
 TEST(small_vectors, getCosineOfAngleBetweenTwoVectors)
@@ -87,8 +87,8 @@ TEST(TransformationMatrix, getTransformationMatrix)
 	{
 	    // Generate 3D unit vectors with a spherically symmetric probability distribution
 		// according to the link: https://mathworld.wolfram.com/SpherePointPicking.html
-		Real u = (double)rand() / (RAND_MAX);
-		Real v = (double)rand() / (RAND_MAX);
+		Real u = (Real)rand() / (RAND_MAX);
+		Real v = (Real)rand() / (RAND_MAX);
 		Real theta = 2.0 * Pi * u;
 		Real cos_phi = 2.0 * v - 1.0;
 		Real sin_phi = sqrt(1.0 - cos_phi * cos_phi);
@@ -118,7 +118,7 @@ TEST(small_vectors, getPrincipalValuesFromMatrix)
                          };
     Vec3d principal_stress_2 = getPrincipalValuesFromMatrix(stress_tensor_2);
     Vec3d principal_stress_2_ref = {15.3, 12.5, -50.4};
-    for (size_t i = 0; i < 3; i++) EXPECT_DOUBLE_EQ(principal_stress_2[i], principal_stress_2_ref[i]);
+    for (size_t i = 0; i < 3; i++) EXPECT_EQ(principal_stress_2[i], principal_stress_2_ref[i]);
 }
 
 //=================================================================================================//

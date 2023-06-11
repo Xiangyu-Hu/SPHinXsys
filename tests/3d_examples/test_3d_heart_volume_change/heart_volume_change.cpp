@@ -6,9 +6,9 @@ void write_csv_files(
 	const std::string& parameter_1_name,
 	const std::string& parameter_2_name,
     const std::string& parameter_3_name,
-    const std::vector<double>& parameter_1,
-    const std::vector<double>& parameter_2,
-    const std::vector<double>& parameter_3
+    const std::vector<Real>& parameter_1,
+    const std::vector<Real>& parameter_2,
+    const std::vector<Real>& parameter_3
 )
 {
 	std::ofstream myfile;
@@ -30,7 +30,7 @@ void MeshData::load(std::string path_to_mesh, Real scale)
 	for(int i=0;i<inner_mesh.getNumVertices();i++)
 	{
 		const auto& p = inner_mesh.getVertexPosition(i);
-		stl_mesh.vertices.push_back({p[0],p[1],p[2]});
+		stl_mesh.vertices.push_back({Real(p[0]), Real(p[1]), Real(p[2])});
 	}
 
 	stl_mesh.faces.reserve(inner_mesh.getNumFaces());

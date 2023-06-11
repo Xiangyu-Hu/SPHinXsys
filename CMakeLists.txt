@@ -10,6 +10,7 @@ option(SPHINXSYS_2D "Build sphinxsys_2d library" ON)
 option(SPHINXSYS_3D "Build sphinxsys_3d library" ON)
 option(SPHINXSYS_BUILD_TESTS "Build tests" ON)
 option(SPHINXSYS_DEVELOPER_MODE "Developer mode has more flags active for code quality" ON)
+option(SPHINXSYS_USE_FLOAT "Build using float or not" OFF)
 
 # ------ Global properties (Some cannot be set on INTERFACE targets)
 set(CMAKE_VERBOSE_MAKEFILE OFF CACHE BOOL "Enable verbose compilation commands for Makefile and Ninja" FORCE) # Extra fluff needed for Ninja: https://github.com/ninja-build/ninja/issues/900
@@ -77,6 +78,11 @@ set(Boost_NO_WARN_NEW_VERSIONS TRUE) # In case your CMake version is older than 
 # Boost geometry and program-options are old enough to afford skipping this warning
 find_package(Boost REQUIRED)
 find_path(BOOST_INCLUDE_DIR boost/geometry) # Header-only Boost libraries are not components
+
+if(SPHINXSYS_USE_FLOAT)
+    target_compile_definitions(sphinxsys_core INTERFACE USE_FLOAT)
+    message("-- Use float as default")
+endif()
 
 if(NOT BOOST_INCLUDE_DIR)
     message(FATAL_ERROR "Please install Boost.Geometry library")

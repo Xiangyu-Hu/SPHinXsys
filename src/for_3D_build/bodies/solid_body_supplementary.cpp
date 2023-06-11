@@ -42,9 +42,9 @@ namespace SPH
 		inertia_products /= body_part_volume;
 
 		body_part_mass_properties_ = mass_properties_ptr_keeper_.createPtr<SimTK::MassProperties>(
-			body_part_volume * solid_body_density_, SimTK::Vec3(0), 
-			SimTK::UnitInertia(SimTK::Vec3(inertia_moments[0],inertia_moments[1],inertia_moments[2]), 
-							   SimTK::Vec3(inertia_products[0],inertia_products[1],inertia_products[2])));
+			body_part_volume * solid_body_density_, SimTKVec3(0), 
+			SimTK::UnitInertia(SimTKVec3(inertia_moments[0],inertia_moments[1],inertia_moments[2]), 
+							   SimTKVec3(inertia_products[0],inertia_products[1],inertia_products[2])));
 	}
 	//=================================================================================================//
 }

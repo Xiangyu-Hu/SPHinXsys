@@ -62,10 +62,10 @@ namespace SPH {
 	using StdVec = std::vector<T>;
 
 	template <typename T>
-	using DoubleVec = std::vector<std::vector<T>>;
+	using BiVector = std::vector<std::vector<T>>;
 
 	template <typename T>
-	using TripleVec = std::vector<std::vector<std::vector<T>>>;
+	using TriVector = std::vector<std::vector<std::vector<T>>>;
 }
 
 #endif //LARGE_DATA_CONTAINER_H
