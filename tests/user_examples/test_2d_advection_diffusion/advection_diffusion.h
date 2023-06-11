@@ -1,10 +1,10 @@
 /**
- * @file 	test_2d_diffusion_RobinBC.h
- * @brief 	This is the head files used by test_2d_diffusion_RobinBC.cpp.
- * @author	Chenxi Zhao, Bo Zhang, Chi Zhang and Xiangyu Hu
+ * @file 	test_2d_advection_diffusion.h
+ * @brief 	This is the head files used by test_2d_advection_diffusion.cpp.
+ * @author	Chenxi Zhao and Xiangyu Hu
  */
-#ifndef	DIFFUSION_TEST_WITH_ROBINBC_H
-#define DIFFUSION_TEST_WITH_ROBINBC_H
+#ifndef	ADVECTION_DIFFUSION_H
+#define ADVECTION_DIFFUSION_H
 
 #include "sphinxsys.h"
 using namespace SPH;
