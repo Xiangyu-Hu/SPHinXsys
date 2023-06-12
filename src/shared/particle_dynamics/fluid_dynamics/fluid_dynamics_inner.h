@@ -74,7 +74,7 @@ namespace SPH
 			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
-			StdLargeVec<Real> &rho_, &rho_sum_, &mass_;
+			StdLargeVec<Real> &rho_, rho_sum_, &mass_;
 			Real rho0_, inv_sigma0_;
 		};
 

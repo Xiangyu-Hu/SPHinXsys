@@ -13,9 +13,12 @@ namespace SPH
 		//=================================================================================================//
 		BaseDensitySummationInner::BaseDensitySummationInner(BaseInnerRelation &inner_relation)
 			: LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
-			  rho_(particles_->rho_), rho_sum_(*particles_->getVariableByName<Real>("DensitySummation")), mass_(particles_->mass_),
+			  rho_(particles_->rho_), mass_(particles_->mass_),
 			  rho0_(sph_body_.base_material_->ReferenceDensity()),
-			  inv_sigma0_(1.0 / sph_body_.sph_adaptation_->LatticeNumberDensity()) {}
+			  inv_sigma0_(1.0 / sph_body_.sph_adaptation_->LatticeNumberDensity()) 
+		{
+			particles_->registerVariable(rho_sum_, "DensitySummation");
+		}
 		//=================================================================================================//
 		void BaseDensitySummationInner::update(size_t index_i, Real dt)
 		{
@@ -115,8 +118,7 @@ namespace SPH
 		BaseIntegration::BaseIntegration(BaseInnerRelation &inner_relation)
 			: LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
 			  fluid_(DynamicCast<Fluid>(this, particles_->base_material_)), rho_(particles_->rho_),
-			  p_(*particles_->getVariableByName<Real>("Pressure")), drho_dt_(*particles_->getVariableByName<Real>("DensityChangeRate")),
-			  pos_(particles_->pos_), vel_(particles_->vel_),
+			  p_(*particles_->getVariableByName<Real>("Pressure")), drho_dt_(*particles_->registerSharedVariable<Real>("DensityChangeRate")), pos_(particles_->pos_), vel_(particles_->vel_),
 			  acc_(particles_->acc_), acc_prior_(particles_->acc_prior_) {}
 		//=================================================================================================//
 		Oldroyd_BIntegration1stHalf ::

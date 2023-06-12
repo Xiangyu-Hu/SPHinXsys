@@ -35,6 +35,7 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		register non-geometric data
 		//----------------------------------------------------------------------
+		registerVariable(surface_indicator_, "SurfaceIndicator");
 		registerVariable(vel_, "Velocity");
 		registerVariable(acc_, "Acceleration");
 		registerVariable(acc_prior_, "PriorAcceleration");
