@@ -277,7 +277,7 @@ public:
 			write_water_mechanical_energy.generateDataBase(1.0e-3);
 			write_recorded_water_pressure.generateDataBase(1.0e-3);
 		}
-		else if (sph_system.RestartStep() == 0)
+        else if ((sph_system.RestartStep() == 0)&&(!sph_system.generate_regression_data_))
 		{
 			write_water_mechanical_energy.testResult();
 			write_recorded_water_pressure.testResult();
