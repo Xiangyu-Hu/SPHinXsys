@@ -74,7 +74,7 @@ namespace SPH
 		};
 		virtual ~RegressionTestDynamicTimeWarping(){};
 
-		void setupTheTest(bool testing = false);						   /** setup the test and defined basic variables. */
+		void setupTheTest(bool testing = false);	   /** setup the test and defined basic variables. */
 		void readDTWDistanceFromXml();				   /** read the old DTW distance from the .xml file. */
 		void updateDTWDistance();					   /** update the maximum DTWDistance with the new result. */
 		void writeDTWDistanceToXml();				   /* write the updated DTWDistance to .xml file.*/
@@ -89,7 +89,7 @@ namespace SPH
 			this->transposeTheIndex();
 			if (this->converged == "false")
 			{
-				setupTheTest();
+				setupTheTest(false);
 				if (filter == "true")
 					this->filterExtremeValues();
 				readDTWDistanceFromXml();
