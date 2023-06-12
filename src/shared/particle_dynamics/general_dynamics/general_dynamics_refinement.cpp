@@ -440,7 +440,7 @@ ParticleMergeWithPrescribedArea::
       DataDelegateInner<BaseParticles, DataDelegateEmptyBase>(inner_relation),
       all_particle_data_(particles_->getAllParticleData()), vel_n_(particles_->vel_)
 {
-    particles_->registerVariable(total_merge_error_, "MergeDensityError", 0.0);
+    particles_->registerVariable(total_merge_error_, "MergeDensityError", Real(0));
 }
 //=================================================================================================//
 void ParticleMergeWithPrescribedArea::setupDynamics(Real dt)

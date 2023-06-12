@@ -94,7 +94,7 @@ namespace SPH
 		strategy::buffer::end_round end_strategy;
 		strategy::buffer::side_straight side_strategy;
 		strategy::buffer::point_circle circle_strategy(buffer_res);
-		strategy::buffer::distance_symmetric<double> circle_dist_strategy(buffer_radius);
+		strategy::buffer::distance_symmetric<Real> circle_dist_strategy(buffer_radius);
 
 		// Create the buffer of a multi point
 		model::d2::point_xy<Real> circle_center_pnt;
@@ -154,7 +154,7 @@ namespace SPH
 		std::fstream dataFile(file_path_name);
 		Vecd temp_point;
 		std::vector<Vecd> coordinates;
-		double temp1 = 0.0, temp2 = 0.0;
+		Real temp1 = 0.0, temp2 = 0.0;
 		if (dataFile.fail())
 		{
 			std::cout << "File can not open.\n"

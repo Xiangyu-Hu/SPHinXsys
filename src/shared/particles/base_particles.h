@@ -25,7 +25,7 @@
  * @brief 	This is the base class of SPH particles. The basic data of the particles
  *			is saved in separated large vectors. Each derived class will introduce several extra
  * 			vectors for the new data. Note that there is no class of single particle.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang, Chenxi Zhao and Xiangyu Hu
  */
 
 #ifndef BASE_PARTICLES_H

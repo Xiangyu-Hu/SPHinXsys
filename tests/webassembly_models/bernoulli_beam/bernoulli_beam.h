@@ -15,13 +15,13 @@ using namespace SPH;
 
 struct BernoulliBeamInput
 {
-	double scale_stl;
-	std::vector<double> resolution;
-	double rho_0;
-	double poisson;
-	double Youngs_modulus;
-	double physical_viscosity;	
-	std::array<double, 3> translation;
+	Real scale_stl;
+	std::vector<Real> resolution;
+	Real rho_0;
+	Real poisson;
+	Real Youngs_modulus;
+	Real physical_viscosity;	
+	std::array<Real, 3> translation;
 	StlList stls;
 	std::string relative_input_path;
 };
@@ -68,7 +68,7 @@ public:
 	}
 
 public: //C++ Backend functions
-	void runCompleteSimulation(double endTime) { sim->runSimulation(SPH::Real(endTime)); };
+	void runCompleteSimulation(Real endTime) { sim->runSimulation(SPH::Real(endTime)); };
 	
 private:
 	std::SharedPtr<SaintVenantKirchhoffSolid> material_;

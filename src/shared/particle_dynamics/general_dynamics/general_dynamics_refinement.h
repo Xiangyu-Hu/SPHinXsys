@@ -180,7 +180,7 @@ class SplitWithMinimumDensityErrorInner : public ParticleSplitWithPrescribedArea
         : ParticleSplitWithPrescribedArea(inner_relation.getSPHBody(), refinement_region, body_buffer_width),
           compute_density_error(inner_relation)
     {
-        particles_->registerVariable(total_split_error_, "SplitDensityError", 0.0);
+        particles_->registerVariable(total_split_error_, "SplitDensityError", Real(0));
     };
     virtual ~SplitWithMinimumDensityErrorInner(){};
 

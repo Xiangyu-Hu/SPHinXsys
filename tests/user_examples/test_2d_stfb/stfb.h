@@ -70,10 +70,10 @@ public:
 		: SolidBodyPartForSimbody(sph_body, shape_ptr)
 	{
 		//Vec2d mass_center(G[0], G[1]);
-		//initial_mass_center_ = SimTK::Vec3(mass_center[0], mass_center[1], 0.0);
+		//initial_mass_center_ = SimTKVec3(mass_center[0], mass_center[1], 0.0);
 		body_part_mass_properties_ =
 			mass_properties_ptr_keeper_
-				.createPtr<SimTK::MassProperties>(StructureMass, SimTK::Vec3(0.0), SimTK::UnitInertia(Ix,Iy,Iz));
+				.createPtr<SimTK::MassProperties>(StructureMass, SimTKVec3(0.0), SimTK::UnitInertia(Ix,Iy,Iz));
 	}
 };
 //----------------------------------------------------------------------
