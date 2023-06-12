@@ -80,27 +80,5 @@ namespace SPH
 		virtual ViscoelasticFluidParticles *ThisObjectPtr() override { return this; };
 	};
 
-	/**
-	 * @class CompressibleFluidParticles
-	 * @brief Compressible fluid particles.
-	 */
-	class CompressibleFluidParticles : public FluidParticles
-	{
-	public:
-		StdLargeVec<Vecd> mom_;				/**< momentum */
-		StdLargeVec<Vecd> dmom_dt_; 		/**< change rate of momentum */
-		StdLargeVec<Vecd> dmom_dt_prior_;
-		StdLargeVec<Real> E_;	  			/**< total energy per unit volume */
-		StdLargeVec<Real> dE_dt_; 			/**< change rate of total energy */
-		StdLargeVec<Real> dE_dt_prior_;
-		CompressibleFluid &compressible_fluid_;
-
-		CompressibleFluidParticles(SPHBody &sph_body, CompressibleFluid *compressible_fluid);
-		virtual ~CompressibleFluidParticles(){};
-		/** Initialize particle variables used in compressible fluid particle. */
-		virtual void initializeOtherVariables() override;
-		/** Return the ptr of this object. */
-		virtual CompressibleFluidParticles *ThisObjectPtr() override { return this; };
-	};
 }
 #endif // FLUID_PARTICLES_H
