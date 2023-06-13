@@ -43,7 +43,6 @@
 
 namespace SPH {
 
-	static tbb::affinity_partitioner ap;
 	typedef tbb::blocked_range<size_t> IndexRange;
 	typedef tbb::blocked_range2d<size_t> IndexRange2d;
 	typedef tbb::blocked_range3d<size_t> IndexRange3d;

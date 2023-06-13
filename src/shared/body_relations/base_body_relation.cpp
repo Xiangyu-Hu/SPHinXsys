@@ -33,6 +33,7 @@ namespace SPH
 	//=================================================================================================//
 	void BaseInnerRelation::resetNeighborhoodCurrentSize()
 	{
+		static tbb::affinity_partitioner ap;
 		parallel_for(
 			IndexRange(0, base_particles_.total_real_particles_),
 			[&](const IndexRange &r)
@@ -63,6 +64,7 @@ namespace SPH
 	//=================================================================================================//
 	void BaseContactRelation::resetNeighborhoodCurrentSize()
 	{
+		static tbb::affinity_partitioner ap;
 		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{
 			parallel_for(

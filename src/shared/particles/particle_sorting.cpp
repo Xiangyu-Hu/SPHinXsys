@@ -33,6 +33,7 @@ namespace SPH
 	{
 		quick_sort_particle_range_.begin_ = begin;
 		quick_sort_particle_range_.size_ = size;
+		static tbb::affinity_partitioner ap;
 		parallel_for(quick_sort_particle_range_, quick_sort_particle_body_, ap);
 		updateSortedId();
 	}
@@ -42,6 +43,7 @@ namespace SPH
 		const StdLargeVec<size_t> &unsorted_id = base_particles_.unsorted_id_;
 		StdLargeVec<size_t> &sorted_id = base_particles_.sorted_id_;
 		size_t total_real_particles = base_particles_.total_real_particles_;
+		static tbb::affinity_partitioner ap;
 		parallel_for(
 			IndexRange(0, total_real_particles),
 			[&](const IndexRange &r)
