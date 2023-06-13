@@ -101,7 +101,7 @@ class BaseDataPackage
  * Note that, pkg_addrs_size = pkg_size + 2 * pkg_addrs_buffer;
  * Also note that, while the mesh_lower_bound_ locates the first data address,
  * the DataLowerBound() locates the first data for initialization.
- * Also note that, as a inner package is contained in a coarse mesh cell,
+ * Also note that, as a inner package is contained in a background mesh cell,
  * it will be constructed based on the grid position (lower-left corner) of the cell.
  */
 template <int PKG_SIZE, int ADDRS_BUFFER>
@@ -139,24 +139,24 @@ class GridDataPackage : public BaseDataPackage, public BaseMesh
     void for_each_addrs(const FunctionOnAddress &function);
     /** access specific package data with discrete variable */
     template <typename DataType>
-    PackageData<DataType> &getPackageData(const MeshVariable<DataType> &discrete_variable)
+    PackageData<DataType> &getPackageData(const MeshVariable<DataType> &mesh_variable)
     {
         constexpr int type_index = DataTypeIndex<DataType>::value;
-        return std::get<type_index>(all_pkg_data_)[discrete_variable.IndexInContainer()];
+        return std::get<type_index>(all_pkg_data_)[mesh_variable.IndexInContainer()];
     };
     /** access specific package data address with discrete variable */
     template <typename DataType>
-    PackageDataAddress<DataType> &getPackageDataAddress(const MeshVariable<DataType> &discrete_variable)
+    PackageDataAddress<DataType> &getPackageDataAddress(const MeshVariable<DataType> &mesh_variable)
     {
         constexpr int type_index = DataTypeIndex<DataType>::value;
-        return std::get<type_index>(all_pkg_data_addrs_)[discrete_variable.IndexInContainer()];
+        return std::get<type_index>(all_pkg_data_addrs_)[mesh_variable.IndexInContainer()];
     };
     /** probe by applying bi and tri-linear interpolation within the package. */
     template <typename DataType>
     DataType probeDataPackage(PackageDataAddress<DataType> &pkg_data_addrs, const Vecd &position);
     /** assign value to data package according to the position of data */
     template <typename DataType, typename FunctionByPosition>
-    void assignByPosition(const MeshVariable<DataType> &discrete_variable,
+    void assignByPosition(const MeshVariable<DataType> &mesh_variable,
                           const FunctionByPosition &function_by_position);
     /** compute gradient transform within data package */
     template <typename InDataType, typename OutDataType>
@@ -338,10 +338,10 @@ class MeshWithGridDataPackages : public Mesh
     }
     /** This function probe a mesh value */
     template <class DataType>
-    DataType probeMesh(const MeshVariable<DataType> &discrete_variable, const Vecd &position);
+    DataType probeMesh(const MeshVariable<DataType> &mesh_variable, const Vecd &position);
     /** This function find the value of data from its index from global mesh. */
     template <typename DataType>
-    DataType DataValueFromGlobalIndex(const MeshVariable<DataType> &discrete_variable,
+    DataType DataValueFromGlobalIndex(const MeshVariable<DataType> &mesh_variable,
                                       const Arrayi &global_grid_index);
 };
 } // namespace SPH

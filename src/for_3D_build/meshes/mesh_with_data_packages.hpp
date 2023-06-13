@@ -103,10 +103,10 @@ namespace SPH
 	template <int PKG_SIZE, int ADDRS_BUFFER>
 	template <typename DataType, typename FunctionByPosition>
 	void GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::
-		assignByPosition(const MeshVariable<DataType> &discrete_variable,
+		assignByPosition(const MeshVariable<DataType> &mesh_variable,
 						 const FunctionByPosition &function_by_position)
 	{
-		auto &pkg_data = getPackageData(discrete_variable);
+		auto &pkg_data = getPackageData(mesh_variable);
 		for (int i = 0; i != pkg_size; ++i)
 			for (int j = 0; j != pkg_size; ++j)
 				for (int k = 0; k != pkg_size; ++k)
@@ -174,7 +174,7 @@ namespace SPH
 	template <class GridDataPackageType>
 	template <typename DataType>
 	DataType MeshWithGridDataPackages<GridDataPackageType>::
-		DataValueFromGlobalIndex(const MeshVariable<DataType> &discrete_variable,
+		DataValueFromGlobalIndex(const MeshVariable<DataType> &mesh_variable,
 								 const Arrayi &global_grid_index)
 	{
 		Arrayi cell_index_on_mesh_ = Arrayi::Zero();
@@ -185,7 +185,7 @@ namespace SPH
 			cell_index_on_mesh_[n] = cell_index_in_this_direction;
 			local_data_index[n] = global_grid_index[n] - cell_index_in_this_direction * pkg_size;
 		}
-		auto &data = data_pkg_addrs_[cell_index_on_mesh_[0]][cell_index_on_mesh_[1]][cell_index_on_mesh_[2]]->getPackageData(discrete_variable);
+		auto &data = data_pkg_addrs_[cell_index_on_mesh_[0]][cell_index_on_mesh_[1]][cell_index_on_mesh_[2]]->getPackageData(mesh_variable);
 		return data[local_data_index[0]][local_data_index[1]][local_data_index[2]];
 	}
 	//=================================================================================================//
@@ -245,11 +245,11 @@ namespace SPH
 	template <class GridDataPackageType>
 	template <class DataType>
 	DataType MeshWithGridDataPackages<GridDataPackageType>::
-		probeMesh(const MeshVariable<DataType> &discrete_variable, const Vecd &position)
+		probeMesh(const MeshVariable<DataType> &mesh_variable, const Vecd &position)
 	{
 		Arrayi index = CellIndexFromPosition(position);
 		GridDataPackageType *data_pkg = data_pkg_addrs_[index[0]][index[1]][index[2]];
-		auto &pkg_data_addrs = data_pkg->getPackageDataAddress(discrete_variable);
+		auto &pkg_data_addrs = data_pkg->getPackageDataAddress(mesh_variable);
 		return data_pkg->isInnerPackage() ? data_pkg->GridDataPackageType::template probeDataPackage<DataType>(pkg_data_addrs, position)
 										  : *pkg_data_addrs[0][0][0];
 	}
