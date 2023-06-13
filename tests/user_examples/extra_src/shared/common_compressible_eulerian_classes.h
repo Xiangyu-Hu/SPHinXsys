@@ -97,6 +97,20 @@ namespace SPH
 		CompressibleFluidStarState(Real rho, Vecd vel, Real p, Real E)
 			: FluidStarState(vel, p), rho_(rho), E_(E) {};
 	};
+
+	/**
+	* @struct NoRiemannSolverInCompressibleEulerianMethod
+	* @brief  NO RiemannSolver for weakly-compressible flow in Eulerian method for compressible flow.
+	*/
+    class NoRiemannSolverInCompressobleEulerianMethod
+	{
+		CompressibleFluid& compressible_fluid_i_, & compressible_fluid_j_;
+
+		public:
+		NoRiemannSolverInCompressobleEulerianMethod(CompressibleFluid &fluid_i, CompressibleFluid &fluid_j);
+		CompressibleFluidStarState getInterfaceState(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &e_ij);
+	};
+
 	/**
 	* @struct HLLCRiemannSolver
 	* @brief  HLLC Riemann solver.
@@ -116,9 +130,10 @@ namespace SPH
 	class HLLCWithLimiterRiemannSolver
 	{
 		CompressibleFluid& compressible_fluid_i_, & compressible_fluid_j_;
+		Real limiter_parameter_;
 
 	public:
-		HLLCWithLimiterRiemannSolver(CompressibleFluid& compressible_fluid_i, CompressibleFluid& compressible_fluid_j);
+		HLLCWithLimiterRiemannSolver(CompressibleFluid& compressible_fluid_i, CompressibleFluid& compressible_fluid_j, Real limiter_parameter = 5.0);
 		CompressibleFluidStarState getInterfaceState(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j, const Vecd& e_ij);
 	};
 
@@ -171,6 +186,7 @@ namespace SPH
 		void interaction(size_t index_i, Real dt = 0.0);
 		void update(size_t index_i, Real dt = 0.0);
 	};
+	using Integration1stHalf = BaseIntegration1stHalf<NoRiemannSolverInCompressobleEulerianMethod>;
 	using Integration1stHalfHLLCRiemann = BaseIntegration1stHalf<HLLCRiemannSolver>;
 	using Integration1stHalfHLLCWithLimiterRiemann = BaseIntegration1stHalf<HLLCWithLimiterRiemannSolver>;
 
@@ -188,6 +204,7 @@ namespace SPH
 		void interaction(size_t index_i, Real dt = 0.0);
 		void update(size_t index_i, Real dt = 0.0);
 	};
+	using Integration2ndHalf = BaseIntegration2ndHalf<NoRiemannSolverInCompressobleEulerianMethod>;
 	using Integration2ndHalfHLLCRiemann = BaseIntegration2ndHalf<HLLCRiemannSolver>;
 	using Integration2ndHalfHLLCWithLimiterRiemann = BaseIntegration2ndHalf<HLLCWithLimiterRiemannSolver>;
 

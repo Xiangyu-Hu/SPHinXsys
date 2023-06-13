@@ -72,16 +72,31 @@ namespace SPH
 	//	Remann Solver classes.
 	//----------------------------------------------------------------------
 	/**
+	* @struct NoRiemannSolverInWCEulerianMethod
+	* @brief  NO RiemannSolver for weakly-compressible flow in Eulerian method for weakly-compressible flow.
+	*/
+	class NoRiemannSolverInWCEulerianMethod
+	{
+		Fluid &fluid_i_, &fluid_j_;
+
+		public:
+		NoRiemannSolverInWCEulerianMethod(Fluid &fluid_i, Fluid &fluid_j)
+			: fluid_i_(fluid_i), fluid_j_(fluid_j) {};
+		FluidStarState getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij);
+	};
+
+	/**
     * @struct AcousticRiemannSolverInEulerianMethod
     * @brief  Acoustic RiemannSolver for weakly-compressible flow in Eulerian method.
     */
 	class AcousticRiemannSolverInEulerianMethod
 	{
 		Fluid& fluid_i_, & fluid_j_;
+		Real limiter_parameter_;
 
 	public:
-		AcousticRiemannSolverInEulerianMethod(Fluid& compressible_fluid_i, Fluid& compressible_fluid_j)
-			: fluid_i_(compressible_fluid_i), fluid_j_(compressible_fluid_j) {};
+		AcousticRiemannSolverInEulerianMethod(Fluid& compressible_fluid_i, Fluid& compressible_fluid_j, Real limiter_parameter = 15.0)
+			: fluid_i_(compressible_fluid_i), fluid_j_(compressible_fluid_j), limiter_parameter_(limiter_parameter){};
 		FluidStarState getInterfaceState(const FluidState& state_i, const FluidState& state_j, const Vecd& e_ij);
 	};
 
