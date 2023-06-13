@@ -43,23 +43,23 @@ namespace SPH
 		using VariableType = decltype(ObserveMethodType::type_indicator_);
 
 	protected:
-		DoubleVec<VariableType> meanvalue_, meanvalue_new_;  /* the container of (new) mean value. [different from time-averaged]*/
-		DoubleVec<VariableType> variance_, variance_new_;    /* the container of (new) variance. [different from time-averaged]*/
+		BiVector<VariableType> meanvalue_, meanvalue_new_;  /* the container of (new) mean value. [different from time-averaged]*/
+		BiVector<VariableType> variance_, variance_new_;    /* the container of (new) variance. [different from time-averaged]*/
 		
 		/** the method used for calculating the new variance. */
-		void calculateNewVariance(TripleVec<Real> &result, DoubleVec<Real> &meanvalue_new, DoubleVec<Real> &variance, DoubleVec<Real> &variance_new);
-		void calculateNewVariance(TripleVec<Vecd> &result, DoubleVec<Vecd> &meanvalue_new, DoubleVec<Vecd> &variance, DoubleVec<Vecd> &variance_new);
-		void calculateNewVariance(TripleVec<Matd> &result, DoubleVec<Matd> &meanvalue_new, DoubleVec<Matd> &variance, DoubleVec<Matd> &variance_new);
+		void calculateNewVariance(TriVector<Real> &result, BiVector<Real> &meanvalue_new, BiVector<Real> &variance, BiVector<Real> &variance_new);
+		void calculateNewVariance(TriVector<Vecd> &result, BiVector<Vecd> &meanvalue_new, BiVector<Vecd> &variance, BiVector<Vecd> &variance_new);
+		void calculateNewVariance(TriVector<Matd> &result, BiVector<Matd> &meanvalue_new, BiVector<Matd> &variance, BiVector<Matd> &variance_new);
 
 		/** the method used for comparing the meanvalue and variance. */
-		int compareParameter(std::string par_name, DoubleVec<Real> &parameter, DoubleVec<Real> &parameter_new, Real &threshold);
-		int compareParameter(std::string par_name, DoubleVec<Vecd> &parameter, DoubleVec<Vecd> &parameter_new, Vecd &threshold);
-		int compareParameter(std::string par_name, DoubleVec<Matd> &parameter, DoubleVec<Matd> &parameter_new, Matd &threshold);
+		int compareParameter(std::string par_name, BiVector<Real> &parameter, BiVector<Real> &parameter_new, Real &threshold);
+		int compareParameter(std::string par_name, BiVector<Vecd> &parameter, BiVector<Vecd> &parameter_new, Vecd &threshold);
+		int compareParameter(std::string par_name, BiVector<Matd> &parameter, BiVector<Matd> &parameter_new, Matd &threshold);
 		
 		/** the method used for testing the new result with meanvalue and variance. */
-		int testNewResult(int diff, DoubleVec<Real> &current_result, DoubleVec<Real> &meanvalue, DoubleVec<Real> &variance);
-		int testNewResult(int diff, DoubleVec<Vecd> &current_result, DoubleVec<Vecd> &meanvalue, DoubleVec<Vecd> &variance);
-		int testNewResult(int diff, DoubleVec<Matd> &current_result, DoubleVec<Matd> &meanvalue, DoubleVec<Matd> &variance);
+		int testNewResult(int diff, BiVector<Real> &current_result, BiVector<Real> &meanvalue, BiVector<Real> &variance);
+		int testNewResult(int diff, BiVector<Vecd> &current_result, BiVector<Vecd> &meanvalue, BiVector<Vecd> &variance);
+		int testNewResult(int diff, BiVector<Matd> &current_result, BiVector<Matd> &meanvalue, BiVector<Matd> &variance);
 
 	public:
 		template<typename... ConstructorArgs>

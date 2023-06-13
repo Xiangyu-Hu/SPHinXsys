@@ -115,9 +115,9 @@ int main()
      */
     SimTK::Body::Rigid rigid_info(*plate_multibody.body_part_mass_properties_);
     SimTK::MobilizedBody::Slider
-        plateMBody(matter.Ground(), SimTK::Transform(SimTK::Vec3(0)), rigid_info, SimTK::Transform(SimTK::Vec3(0)));
+        plateMBody(matter.Ground(), SimTK::Transform(SimTKVec3(0)), rigid_info, SimTK::Transform(SimTKVec3(0)));
     /** Gravity. */
-    SimTK::Force::UniformGravity sim_gravity(forces, matter, SimTK::Vec3(Real(-100.0), 0.0, 0.0));
+    SimTK::Force::UniformGravity sim_gravity(forces, matter, SimTKVec3(Real(-100.0), 0.0, 0.0));
     /** discrete forces acting on the bodies. */
     SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
     /** Damper. */

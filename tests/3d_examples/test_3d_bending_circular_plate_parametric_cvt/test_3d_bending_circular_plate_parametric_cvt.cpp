@@ -320,7 +320,7 @@ return_data bending_circular_plate(Real dp_ratio)
 
 				initialize_external_force.exec(dt);
 
-				dt = std::min(thickness/dp, 0.5) * computing_time_step_size.exec();
+				dt = std::min(thickness/dp, Real(0.5)) * computing_time_step_size.exec();
 				{// checking for excessive time step reduction
 					if (dt > max_dt) max_dt = dt;
 					if (dt < max_dt/1e3) throw std::runtime_error("time step decreased too much");
