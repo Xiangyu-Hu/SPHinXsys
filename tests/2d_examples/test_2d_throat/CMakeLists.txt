@@ -16,6 +16,26 @@ file(MAKE_DIRECTORY ${BUILD_INPUT_PATH})
 execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_INPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/ 
      DESTINATION ${BUILD_INPUT_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FluidObserver_Pressure_runtimes.dat
+        DESTINATION ${BUILD_INPUT_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FluidObserver_Pressure_dtwdistance.xml
+        DESTINATION ${BUILD_INPUT_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FluidObserver_Pressure_Run_0_result.xml
+        DESTINATION ${BUILD_INPUT_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FluidObserver_Pressure_Run_5_result.xml
+        DESTINATION ${BUILD_INPUT_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FluidObserver_Pressure_Run_14_result.xml
+        DESTINATION ${BUILD_INPUT_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FluidBody_TotalMechanicalEnergy_runtimes.dat
+        DESTINATION ${BUILD_INPUT_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FluidBody_TotalMechanicalEnergy_dtwdistance.xml
+        DESTINATION ${BUILD_INPUT_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FluidBody_TotalMechanicalEnergy_Run_0_result.xml
+        DESTINATION ${BUILD_INPUT_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FluidBody_TotalMechanicalEnergy_Run_6_result.xml
+        DESTINATION ${BUILD_INPUT_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FluidBody_TotalMechanicalEnergy_Run_16_result.xml
+        DESTINATION ${BUILD_INPUT_PATH})
 
 aux_source_directory(. DIR_SRCS)
 ADD_EXECUTABLE(${PROJECT_NAME} ${EXECUTABLE_OUTPUT_PATH} ${DIR_SRCS} )
