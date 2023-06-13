@@ -120,13 +120,12 @@ class GridDataPackage : public BaseDataPackage, public BaseMesh
     using PackageTemporaryData = PackageDataMatrix<DataType, pkg_addrs_size>;
 
     GridDataPackage() : BaseDataPackage(), BaseMesh(pkg_addrs_size * Arrayi::Ones()){};
+    GridDataPackage(const Vecd &pkg_lower_bound, Real data_spacing)
+        : BaseDataPackage(),
+          BaseMesh(pkg_lower_bound - data_spacing * Vecd::Ones() * ((Real)pkg_addrs_buffer - 0.5),
+                   data_spacing, pkg_addrs_size * Arrayi::Ones()){};
     virtual ~GridDataPackage(){};
     Vecd DataPositionFromIndex(const Vecd &data_index) { return DataLowerBound() + data_index * grid_spacing_; };
-    void initializePackageGeometry(const Vecd &pkg_lower_bound, Real data_spacing)
-    {
-        mesh_lower_bound_ = pkg_lower_bound - data_spacing * Vecd::Ones() * ((Real)pkg_addrs_buffer - 0.5);
-        grid_spacing_ = data_spacing;
-    };
     /** void (non_value_returning) function iterate on all data points by value,
      *  for function only involving the data itself. */
     template <typename FunctionOnData>
@@ -310,12 +309,11 @@ class MeshWithGridDataPackages : public Mesh
         const InitializePackageData &initialize_package_data)
     {
         mutex_my_pool.lock();
-        GridDataPackageType *new_data_pkg = data_pkg_pool_.malloc();
-        mutex_my_pool.unlock();
-        new_data_pkg->allocateAllVariables(all_mesh_variables_);
         Vecd cell_position = CellPositionFromIndex(cell_index);
         Vecd pkg_lower_bound = GridPositionFromCellPosition(cell_position);
-        new_data_pkg->initializePackageGeometry(pkg_lower_bound, data_spacing_);
+        GridDataPackageType *new_data_pkg = data_pkg_pool_.malloc(pkg_lower_bound, data_spacing_);
+        mutex_my_pool.unlock();
+        new_data_pkg->allocateAllVariables(all_mesh_variables_);
         initialize_package_data(new_data_pkg);
         new_data_pkg->setCellIndexOnMesh(cell_index);
         assignDataPackageAddress(cell_index, new_data_pkg);
