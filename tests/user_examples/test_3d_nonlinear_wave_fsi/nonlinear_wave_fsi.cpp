@@ -5,9 +5,12 @@
  */
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;
-#include "wfsi.h" //header for this case
+#include "nonlinear_wave_fsi.h" //header for this case
 #include "io_simbody_cable.h" //output for cable data
 #include "io_simbody_free.h" //output for free body data
+#include "fluid_dynamics_complex_wkgc.hpp"
+#include "fluid_dynamics_inner_wkgc.hpp"
+#include "general_dynamics_wkgc.h"
 
 int main(int ac, char *av[])
 {
@@ -80,6 +83,8 @@ int main(int ac, char *av[])
 	FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
 	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	water_block.generateParticles<ParticleGeneratorLattice>();
+	water_block.addBodyStateForRecording<Vecd>("Position");
+	water_block.addBodyStateForRecording<Real>("Pressure");
 
 	SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
 	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
@@ -191,7 +196,10 @@ int main(int ac, char *av[])
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	SimpleDynamics<NormalDirectionFromBodyShape> structure_normal_direction(structure);
 	/** corrected strong configuration. */
-	InteractionDynamics<solid_dynamics::CorrectConfiguration> structure_corrected_configuration(structure_inner);
+	InteractionWithUpdate<CorrectionMatrixComplex> 
+	corrected_configuration_fluid(water_block_complex, 2, 0.4);
+	InteractionDynamics<solid_dynamics::CorrectConfiguration> 
+	structure_corrected_configuration(structure_inner);
 	/** Time step initialization, add gravity. */
 	SimpleDynamics<TimeStepInitialization> initialize_time_step_to_fluid(water_block, makeShared<Gravity>(Vecd(0.0, 0.0, -gravity_g)));
 	/** Evaluation of density by summation approach. */
@@ -201,7 +209,8 @@ int main(int ac, char *av[])
 	/** time step size with considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	/** pressure relaxation using Verlet time stepping. */
-	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannCorrectWithWall> pressure_relaxation(water_block_complex);
+	//Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
 	Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> density_relaxation(water_block_complex);
 	/** Computing viscous acceleration. */
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
@@ -370,7 +379,7 @@ int main(int ac, char *av[])
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
 	Real end_time = total_physical_time;
-	Real output_interval = end_time/200;
+	Real output_interval = end_time/375;
 	Real dt = 0.0;
 	Real total_time = 0.0;
 	Real relax_time = 1.0;
@@ -450,6 +459,7 @@ int main(int ac, char *av[])
 
 			Real Dt = get_fluid_advection_time_step_size.exec();
 			update_density_by_summation.exec();
+			corrected_configuration_fluid.exec();
 			viscous_acceleration.exec();
 			/** Viscous force exerting on structure. */
 			viscous_force_on_solid.exec();

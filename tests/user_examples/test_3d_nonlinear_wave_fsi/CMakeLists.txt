@@ -16,7 +16,7 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/
 add_executable(${PROJECT_NAME})
 aux_source_directory(. DIR_SRCS)
 target_sources(${PROJECT_NAME} PRIVATE ${DIR_SRCS})
-target_link_libraries(${PROJECT_NAME} sphinxsys_3d)
+target_link_libraries(${PROJECT_NAME} extra_sources_3d)
 set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 
 add_test(NAME ${PROJECT_NAME} 

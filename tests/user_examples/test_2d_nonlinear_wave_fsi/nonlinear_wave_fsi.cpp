@@ -5,9 +5,12 @@
  */
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;
-#include "wfsi.h" //header for this case
+#include "nonlinear_wave_fsi.h" //header for this case
 #include "io_simbody_cable.h" //output for cable data
 #include "io_simbody_planar.h" //output for planar structure
+#include "fluid_dynamics_complex_wkgc.hpp"
+#include "fluid_dynamics_inner_wkgc.hpp"
+#include "general_dynamics_wkgc.h"
 
 int main(int ac, char *av[])
 {
@@ -59,9 +62,8 @@ int main(int ac, char *av[])
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	InnerRelation water_block_inner(water_block);
 	InnerRelation structure_inner(structure);
-	ComplexRelation water_block_complex(water_block_inner, {&wall_boundary, &structure});
+	ComplexRelation water_block_complex(water_block, {&wall_boundary, &structure});
 	ContactRelation structure_contact(structure, {&water_block});
 	ContactRelation observer_contact_with_water(observer, {&water_block});
 	ContactRelation observer_contact_with_structure(observer, {&structure});
@@ -75,9 +77,12 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	SimpleDynamics<OffsetInitialPosition> structure_offset_position(structure, offset);
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-	SimpleDynamics<NormalDirectionFromBodyShape> flap_normal_direction(structure);
+	SimpleDynamics<NormalDirectionFromBodyShape> structure_normal_direction(structure);
 	/** corrected strong configuration. */
-	InteractionDynamics<solid_dynamics::CorrectConfiguration> structure_corrected_configuration(structure_inner);
+	InteractionWithUpdate<CorrectionMatrixComplex> 
+	corrected_configuration_fluid(water_block_complex, 2, 0.3);
+	InteractionDynamics<solid_dynamics::CorrectConfiguration> 
+	structure_corrected_configuration(structure_inner);
 	/** Time step initialization, add gravity. */
 	SimpleDynamics<TimeStepInitialization> initialize_time_step_to_fluid(water_block, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
 	/** Evaluation of density by summation approach. */
@@ -87,7 +92,8 @@ int main(int ac, char *av[])
 	/** time step size with considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	/** pressure relaxation using Verlet time stepping. */
-	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
+	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannCorrectWithWall> pressure_relaxation(water_block_complex);
+	//Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
 	Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> density_relaxation(water_block_complex);
 	/** Computing viscous acceleration. */
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
@@ -201,7 +207,7 @@ int main(int ac, char *av[])
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
 	wall_boundary_normal_direction.exec();
-	flap_normal_direction.exec();
+	structure_normal_direction.exec();
 	structure_corrected_configuration.exec();
 	
 	//----------------------------------------------------------------------
@@ -259,6 +265,7 @@ int main(int ac, char *av[])
 
 			Real Dt = get_fluid_advection_time_step_size.exec();
 			update_density_by_summation.exec();
+			corrected_configuration_fluid.exec();
 			viscous_acceleration.exec();
 			/** Viscous force exerting on structure. */
 			viscous_force_on_solid.exec();
