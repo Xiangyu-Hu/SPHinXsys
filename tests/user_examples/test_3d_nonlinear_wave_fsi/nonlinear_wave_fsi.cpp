@@ -379,7 +379,7 @@ int main(int ac, char *av[])
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
 	Real end_time = total_physical_time;
-	Real output_interval = end_time/375;
+	Real output_interval = end_time/50;
 	Real dt = 0.0;
 	Real total_time = 0.0;
 	Real relax_time = 1.0;
