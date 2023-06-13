@@ -89,13 +89,6 @@ namespace SPH
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 			exit(1);
 		}
-
-		if ((this->number_of_run_ == 1) && (testing == true))
-        {
-            std::cout << "\n Error: there is no database but you are try to conduct the regression testing" << std::endl;
-            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-            exit(1);
-		}
 	};
 	//=================================================================================================//	
 	template<class ObserveMethodType>
