@@ -98,10 +98,11 @@ class BaseDataPackage
  * @class GridDataPackage
  * @brief Abstract base class for a data package
  * whose data are defined on the grids of a small mesh patch.
- * note tha pkg_addrs_size = pkg_size + 2 * pkg_addrs_buffer;
- * Also note that, while the mesh lower bound locates the first data address,
- * the data lower bound locates the first data.
- * The package lower bound is just in the middle of mesh and data lower bounds.
+ * Note that, pkg_addrs_size = pkg_size + 2 * pkg_addrs_buffer;
+ * Also note that, while the mesh_lower_bound_ locates the first data address,
+ * the DataLowerBound() locates the first data for initialization.
+ * Also note that, as a inner package is contained in a coarse mesh cell,
+ * it will be constructed based on the grid position (lower-left corner) of the cell.
  */
 template <int PKG_SIZE, int ADDRS_BUFFER>
 class GridDataPackage : public BaseDataPackage, public BaseMesh
@@ -119,10 +120,12 @@ class GridDataPackage : public BaseDataPackage, public BaseMesh
     template <typename DataType>
     using PackageTemporaryData = PackageDataMatrix<DataType, pkg_addrs_size>;
 
+    /** Default constructor for singular package */
     GridDataPackage() : BaseDataPackage(), BaseMesh(pkg_addrs_size * Arrayi::Ones()){};
-    GridDataPackage(const Vecd &pkg_lower_bound, Real data_spacing)
+    /** Constructor for inner package */
+    GridDataPackage(const Vecd &container_lower_bound, Real data_spacing)
         : BaseDataPackage(),
-          BaseMesh(pkg_lower_bound - data_spacing * Vecd::Ones() * ((Real)pkg_addrs_buffer - 0.5),
+          BaseMesh(container_lower_bound - data_spacing * Vecd::Ones() * ((Real)pkg_addrs_buffer - 0.5),
                    data_spacing, pkg_addrs_size * Arrayi::Ones()){};
     virtual ~GridDataPackage(){};
     Vecd DataPositionFromIndex(const Vecd &data_index) { return DataLowerBound() + data_index * grid_spacing_; };
@@ -310,8 +313,8 @@ class MeshWithGridDataPackages : public Mesh
     {
         mutex_my_pool.lock();
         Vecd cell_position = CellPositionFromIndex(cell_index);
-        Vecd pkg_lower_bound = GridPositionFromCellPosition(cell_position);
-        GridDataPackageType *new_data_pkg = data_pkg_pool_.malloc(pkg_lower_bound, data_spacing_);
+        Vecd grid_position = GridPositionFromCellPosition(cell_position);
+        GridDataPackageType *new_data_pkg = data_pkg_pool_.malloc(grid_position, data_spacing_);
         mutex_my_pool.unlock();
         new_data_pkg->allocateAllVariables(all_mesh_variables_);
         initialize_package_data(new_data_pkg);
