@@ -72,36 +72,32 @@ namespace SPH
 	//	Remann Solver classes.
 	//----------------------------------------------------------------------
 	/**
+	* @struct NoRiemannSolverInWCEulerianMethod
+	* @brief  NO RiemannSolver for weakly-compressible flow in Eulerian method for weakly-compressible flow.
+	*/
+	class NoRiemannSolverInWCEulerianMethod
+	{
+		Fluid &fluid_i_, &fluid_j_;
+
+		public:
+		NoRiemannSolverInWCEulerianMethod(Fluid &fluid_i, Fluid &fluid_j)
+			: fluid_i_(fluid_i), fluid_j_(fluid_j) {};
+		FluidStarState getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij);
+	};
+
+	/**
     * @struct AcousticRiemannSolverInEulerianMethod
     * @brief  Acoustic RiemannSolver for weakly-compressible flow in Eulerian method.
     */
 	class AcousticRiemannSolverInEulerianMethod
 	{
 		Fluid& fluid_i_, & fluid_j_;
+		Real limiter_parameter_;
 
 	public:
-		AcousticRiemannSolverInEulerianMethod(Fluid& compressible_fluid_i, Fluid& compressible_fluid_j)
-			: fluid_i_(compressible_fluid_i), fluid_j_(compressible_fluid_j) {};
-		FluidStarState getInterfaceState(const FluidState& state_i, const FluidState& state_j, const Vecd& e_ij)
-		{
-			Real ul = -e_ij.dot(state_i.vel_);
-			Real ur = -e_ij.dot(state_j.vel_);
-			Real rhol_cl = fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_) * state_i.rho_;
-			Real rhor_cr = fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_) * state_j.rho_;
-			Real clr = (rhol_cl + rhor_cr) / (state_i.rho_ + state_j.rho_);
-
-			Real p_star = (rhol_cl * state_j.p_ + rhor_cr * state_i.p_ + rhol_cl * rhor_cr * (ul - ur)
-				* SMIN(Real(15) * SMAX((ul - ur) / clr, Real(0)), Real(1))) / (rhol_cl + rhor_cr);
-            Real u_star = (rhol_cl * ul + rhor_cr * ur + (state_i.p_ - state_j.p_) * pow(SMIN(Real(15) * SMAX((ul - ur) / clr, Real(0)), Real(1)),2)) / (rhol_cl + rhor_cr);
-			Vecd vel_star = (state_i.vel_ * state_i.rho_ + state_j.vel_ * state_j.rho_) / (state_i.rho_ + state_j.rho_)
-				- e_ij * (u_star - (ul * state_i.rho_ + ur * state_j.rho_) / (state_i.rho_ + state_j.rho_));
-
-			FluidStarState interface_state(vel_star, p_star);
-			interface_state.vel_ = vel_star;
-			interface_state.p_ = p_star;
-
-			return interface_state;
-		};
+		AcousticRiemannSolverInEulerianMethod(Fluid& compressible_fluid_i, Fluid& compressible_fluid_j, Real limiter_parameter = 15.0)
+			: fluid_i_(compressible_fluid_i), fluid_j_(compressible_fluid_j), limiter_parameter_(limiter_parameter){};
+		FluidStarState getInterfaceState(const FluidState& state_i, const FluidState& state_j, const Vecd& e_ij);
 	};
 
 	//----------------------------------------------------------------------
@@ -129,25 +125,7 @@ namespace SPH
 	{
 	public:
 		template <class BaseBodyRelationType>
-		InteractionWithWall(BaseBodyRelationType& base_body_relation, BaseContactRelation& wall_contact_relation)
-			: BaseIntegrationType(base_body_relation), fluid_dynamics::FluidWallData(wall_contact_relation)
-		{
-			if (&base_body_relation.getSPHBody() != &wall_contact_relation.getSPHBody())
-			{
-				std::cout << "\n Error: the two body_relations do not have the same source body!" << std::endl;
-				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-				exit(1);
-			}
-
-			for (size_t k = 0; k != fluid_dynamics::FluidWallData::contact_particles_.size(); ++k)
-			{
-				Real rho_0_k = fluid_dynamics::FluidWallData::contact_bodies_[k]->base_material_->ReferenceDensity();
-				wall_inv_rho0_.push_back(1.0 / rho_0_k);
-				wall_vel_ave_.push_back(fluid_dynamics::FluidWallData::contact_particles_[k]->AverageVelocity());
-				wall_acc_ave_.push_back(fluid_dynamics::FluidWallData::contact_particles_[k]->AverageAcceleration());
-				wall_n_.push_back(&(fluid_dynamics::FluidWallData::contact_particles_[k]->n_));
-			}
-		};
+		InteractionWithWall(BaseBodyRelationType& base_body_relation, BaseContactRelation& wall_contact_relation);
 		virtual ~InteractionWithWall() {};
 
 	protected:
@@ -165,34 +143,9 @@ namespace SPH
 	public:
 		// template for different combination of constructing body relations
 		template <class BaseBodyRelationType>
-		ViscousWithWall(BaseBodyRelationType& base_body_relation, BaseContactRelation& wall_contact_relation)
-			: InteractionWithWall<BaseViscousAccelerationType>(base_body_relation, wall_contact_relation) {};
+		ViscousWithWall(BaseBodyRelationType& base_body_relation, BaseContactRelation& wall_contact_relation);
 		virtual ~ViscousWithWall() {};
-		void interaction(size_t index_i, Real dt = 0.0)
-		{
-			BaseViscousAccelerationType::interaction(index_i, dt);
-
-			Real rho_i = this->rho_[index_i];
-			const Vecd& vel_i = this->vel_[index_i];
-
-			Vecd acceleration = Vecd::Zero();
-			Vecd vel_derivative = Vecd::Zero();
-			for (size_t k = 0; k < fluid_dynamics::FluidWallData::contact_configuration_.size(); ++k)
-			{
-				StdLargeVec<Vecd>& vel_ave_k = *(this->wall_vel_ave_[k]);
-				Neighborhood& contact_neighborhood = (*fluid_dynamics::FluidWallData::contact_configuration_[k])[index_i];
-				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-				{
-					size_t index_j = contact_neighborhood.j_[n];
-					Real r_ij = contact_neighborhood.r_ij_[n];
-
-					vel_derivative = 2.0 * (vel_i - vel_ave_k[index_j]) / (r_ij + 0.01 * this->smoothing_length_);
-					acceleration += 2.0 * this->mu_ * vel_derivative * contact_neighborhood.dW_ijV_j_[n] / rho_i;
-				}
-			}
-
-			this->dmom_dt_prior_[index_i] += acceleration * rho_i;
-		};;
+		void interaction(size_t index_i, Real dt = 0.0);
 	};
 
 	/** template interface class for different pressure relaxation with wall schemes */
@@ -235,40 +188,12 @@ namespace SPH
 	class BaseIntegration1stHalf : public EulerianBaseIntegration
 	{
 	public:
-		explicit BaseIntegration1stHalf(BaseInnerRelation& inner_relation)
-			: EulerianBaseIntegration(inner_relation), riemann_solver_(this->fluid_, this->fluid_) {};
+		explicit BaseIntegration1stHalf(BaseInnerRelation& inner_relation);
 		virtual ~BaseIntegration1stHalf() {};
 		RiemannSolverType riemann_solver_;
-		void initialization(size_t index_i, Real dt = 0.0)
-		{
-			rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
-			p_[index_i] = fluid_.getPressure(rho_[index_i]);
-		};
-		void interaction(size_t index_i, Real dt = 0.0)
-		{
-			FluidState state_i(rho_[index_i], vel_[index_i], p_[index_i]);
-			Vecd momentum_change_rate = dmom_dt_prior_[index_i];
-			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
-			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-			{
-				size_t index_j = inner_neighborhood.j_[n];
-				Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
-				Vecd& e_ij = inner_neighborhood.e_ij_[n];
-
-				FluidState state_j(rho_[index_j], vel_[index_j], p_[index_j]);
-				FluidStarState interface_state = riemann_solver_.getInterfaceState(state_i, state_j, e_ij);
-				Real rho_star = this->fluid_.DensityFromPressure(interface_state.p_);
-
-				momentum_change_rate -= 2.0 *
-					((rho_star * interface_state.vel_) * interface_state.vel_.transpose() + interface_state.p_ * Matd::Identity()) * e_ij * dW_ijV_j;
-			}
-			dmom_dt_[index_i] = momentum_change_rate;
-		};
-		void update(size_t index_i, Real dt = 0.0)
-		{
-			mom_[index_i] += dmom_dt_[index_i] * dt;
-			vel_[index_i] = mom_[index_i] / rho_[index_i];
-		};
+		void initialization(size_t index_i, Real dt = 0.0);
+		void interaction(size_t index_i, Real dt = 0.0);
+		void update(size_t index_i, Real dt = 0.0);
 	};
 	/** define the mostly used pressure relaxation scheme using Riemann solver */
 	using Integration1stHalfAcousticRiemann = BaseIntegration1stHalf<AcousticRiemannSolverInEulerianMethod>;
@@ -289,35 +214,7 @@ namespace SPH
 			: BaseIntegration1stHalfWithWall(fluid_wall_relation.getInnerRelation(),
 				fluid_wall_relation.getContactRelation()) {};
 		virtual ~BaseIntegration1stHalfWithWall() {};
-		void interaction(size_t index_i, Real dt = 0.0)
-		{
-			BaseIntegration1stHalfType::interaction(index_i, dt);
-
-			FluidState state_i(this->rho_[index_i], this->vel_[index_i], this->p_[index_i]);
-
-			Vecd momentum_change_rate = Vecd::Zero();
-			for (size_t k = 0; k < fluid_dynamics::FluidWallData::contact_configuration_.size(); ++k)
-			{
-				StdLargeVec<Vecd>& n_k = *(this->wall_n_[k]);
-				Neighborhood& wall_neighborhood = (*fluid_dynamics::FluidWallData::contact_configuration_[k])[index_i];
-				for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
-				{
-					size_t index_j = wall_neighborhood.j_[n];
-					Vecd& e_ij = wall_neighborhood.e_ij_[n];
-					Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
-
-					Vecd vel_in_wall = -state_i.vel_;
-					Real p_in_wall = state_i.p_;
-					Real rho_in_wall = state_i.rho_;
-					FluidState state_j(rho_in_wall, vel_in_wall, p_in_wall);
-					FluidStarState interface_state = this->riemann_solver_.getInterfaceState(state_i, state_j, n_k[index_j]);
-					Real rho_star = this->fluid_.DensityFromPressure(interface_state.p_);
-
-					momentum_change_rate -= 2.0 * ((rho_star * interface_state.vel_) * interface_state.vel_.transpose() + interface_state.p_ * Matd::Identity()) * e_ij * dW_ijV_j;
-				}
-			}
-			this->dmom_dt_[index_i] += momentum_change_rate;
-		};
+		void interaction(size_t index_i, Real dt = 0.0);
 	};
 	using Integration1stHalfAcousticRiemannWithWall = BaseIntegration1stHalfWithWall<Integration1stHalfAcousticRiemann>;
 
@@ -329,33 +226,11 @@ namespace SPH
 	class BaseIntegration2ndHalf : public EulerianBaseIntegration
 	{
 	public:
-		explicit BaseIntegration2ndHalf(BaseInnerRelation& inner_relation)
-			: EulerianBaseIntegration(inner_relation), riemann_solver_(this->fluid_, this->fluid_) {};;
+		explicit BaseIntegration2ndHalf(BaseInnerRelation& inner_relation);
 		virtual ~BaseIntegration2ndHalf() {};
 		RiemannSolverType riemann_solver_;
-		void interaction(size_t index_i, Real dt = 0.0)
-		{
-			FluidState state_i(rho_[index_i], vel_[index_i], p_[index_i]);
-			Real density_change_rate = 0.0;
-			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
-			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-			{
-				size_t index_j = inner_neighborhood.j_[n];
-				Vecd& e_ij = inner_neighborhood.e_ij_[n];
-				Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
-
-				FluidState state_j(rho_[index_j], vel_[index_j], p_[index_j]);
-				FluidStarState interface_state = riemann_solver_.getInterfaceState(state_i, state_j, e_ij);
-
-				Real rho_star = this->fluid_.DensityFromPressure(interface_state.p_);
-				density_change_rate -= 2.0 * (rho_star * interface_state.vel_).dot(e_ij) * dW_ijV_j;
-			}
-			drho_dt_[index_i] = density_change_rate;
-		};
-		void update(size_t index_i, Real dt = 0.0)
-		{
-			rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
-		};
+		void interaction(size_t index_i, Real dt = 0.0);
+		void update(size_t index_i, Real dt = 0.0);
 	};
 	using Integration2ndHalfAcousticRiemann = BaseIntegration2ndHalf<AcousticRiemannSolverInEulerianMethod>;
 
@@ -375,35 +250,7 @@ namespace SPH
 			: BaseIntegration2ndHalfWithWall(fluid_wall_relation.getInnerRelation(),
 				fluid_wall_relation.getContactRelation()) {};
 		virtual ~BaseIntegration2ndHalfWithWall() {};
-		void interaction(size_t index_i, Real dt = 0.0)
-		{
-			BaseIntegration2ndHalfType::interaction(index_i, dt);
-
-			FluidState state_i(this->rho_[index_i], this->vel_[index_i], this->p_[index_i]);
-			Real density_change_rate = 0.0;
-			for (size_t k = 0; k < fluid_dynamics::FluidWallData::contact_configuration_.size(); ++k)
-			{
-				StdLargeVec<Vecd>& n_k = *(this->wall_n_[k]);
-				Neighborhood& wall_neighborhood = (*fluid_dynamics::FluidWallData::contact_configuration_[k])[index_i];
-				for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
-				{
-					size_t index_j = wall_neighborhood.j_[n];
-					Vecd& e_ij = wall_neighborhood.e_ij_[n];
-					Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
-
-					Vecd vel_in_wall = -state_i.vel_;
-					Real p_in_wall = state_i.p_;
-					Real rho_in_wall = state_i.rho_;
-
-					FluidState state_j(rho_in_wall, vel_in_wall, p_in_wall);
-					FluidStarState interface_state = this->riemann_solver_.getInterfaceState(state_i, state_j, n_k[index_j]);
-					Real rho_star = this->fluid_.DensityFromPressure(interface_state.p_);
-
-					density_change_rate -= 2.0 * (rho_star * interface_state.vel_).dot(e_ij) * dW_ijV_j;
-				}
-			}
-			this->drho_dt_[index_i] += density_change_rate;
-		};
+		void interaction(size_t index_i, Real dt = 0.0);
 	};
 	using Integration2ndHalfAcousticRiemannWithWall = BaseIntegration2ndHalfWithWall<Integration2ndHalfAcousticRiemann>;
 

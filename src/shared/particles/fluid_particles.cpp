@@ -55,28 +55,5 @@ namespace SPH
 		addVariableToRestart<Matd>("ElasticStress");
 	}
 	//=================================================================================================//
-	CompressibleFluidParticles::
-		CompressibleFluidParticles(SPHBody &sph_body, CompressibleFluid *compressible_fluid)
-		: FluidParticles(sph_body, compressible_fluid),
-		  compressible_fluid_(*compressible_fluid) {}
-	//=================================================================================================//
-	void CompressibleFluidParticles::initializeOtherVariables()
-	{
-		FluidParticles::initializeOtherVariables();
-		/**
-		 *	register sortable particle data
-		 */	
-		registerVariable(mom_, "Momentum");
-		registerVariable(dmom_dt_, "MomentumChangeRate");
-		registerVariable(dmom_dt_prior_, "OtherMomentumChangeRate");
-		registerVariable(E_, "TotalEnergy");
-		registerVariable(dE_dt_, "TotalEnergyChangeRate");
-		registerVariable(dE_dt_prior_, "OtherEnergyChangeRate");
-		/**
-		 *	add output particle data
-		 */	
-		addVariableToWrite<Real>("Pressure");
-	}
-	//=================================================================================================//
 }
 //=====================================================================================================//
