@@ -90,8 +90,6 @@ int main(int ac, char *av[])
 	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> fluid_density_by_summation(water_block_complex);
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	SharedPtr<Gravity> gravity_ptr = makeSharedDevice<Gravity>(Vecd(0.0, -gravity_g));
-    water_block.getBaseParticles().allocateDeviceMemory();
-    water_block.getBaseParticles().copyToDeviceMemory();
 	SimpleDynamics<TimeStepInitialization, ParallelSYCLDevicePolicy> fluid_step_initialization(water_block, gravity_ptr);
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize, ParallelSYCLDevicePolicy> fluid_advection_time_step(water_block, U_max);
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);

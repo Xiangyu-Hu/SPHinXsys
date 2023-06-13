@@ -151,6 +151,10 @@ namespace SPH
 			particle_generator.generateParticlesWithBasicVariables();
 			base_particles_->initializeOtherVariables();
 			base_material_->initializeLocalParameters(base_particles_);
+
+            // copy allocated particles to device memory
+            base_particles_->allocateDeviceMemory();
+            base_particles_->copyToDeviceMemory();
 		};
 
 		template <typename VariableType>
