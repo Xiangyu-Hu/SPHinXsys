@@ -202,7 +202,7 @@ int main()
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	FluidBody water_block(system,makeShared<WaterBlock>("WaterBody"));
-	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
+	water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
 	water_block.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));

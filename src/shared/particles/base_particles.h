@@ -88,7 +88,7 @@ namespace SPH
 	public:
 		explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
 		virtual ~BaseParticles() {};
-
+		StdLargeVec<int> surface_indicator_; /**< free surface indicator */
 		StdLargeVec<Vecd> pos_;		  /**< particle position */
 		StdLargeVec<Vecd> vel_;		  /**< particle velocity */
 		StdLargeVec<Vecd> acc_;		  /**< total acceleration including inner pressure- or stress-induced acceleration and other accelerations */

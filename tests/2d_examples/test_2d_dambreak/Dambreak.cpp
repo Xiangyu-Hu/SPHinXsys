@@ -63,7 +63,7 @@ int main(int ac, char *av[])
 	FluidBody water_block(
 		sph_system, makeShared<TransformShape<GeometricShapeBox>>(
 						Transform2d(water_block_translation), water_block_halfsize, "WaterBody"));
-	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
+	water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
 	water_block.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));

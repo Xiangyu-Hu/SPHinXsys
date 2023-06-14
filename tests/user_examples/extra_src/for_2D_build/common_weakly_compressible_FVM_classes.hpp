@@ -19,11 +19,11 @@ namespace SPH
 	template<class RiemannSolverType>
 	BaseViscousAccelerationInnerInFVM<RiemannSolverType>::
     BaseViscousAccelerationInnerInFVM(BaseInnerRelationInFVM &inner_relation, Real limiter_parameter)
-    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInnerInFVM<FluidParticles>(inner_relation),
-      fluid_(particles_->fluid_), riemann_solver_(fluid_, fluid_, limiter_parameter), rho_(particles_->rho_),
-      p_(particles_->p_), vel_(particles_->vel_), acc_prior_(particles_->acc_prior_), pos_(particles_->pos_),
+    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInnerInFVM<BaseParticles>(inner_relation),
+      fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->base_material_)), riemann_solver_(fluid_, fluid_, limiter_parameter), rho_(particles_->rho_),
+      p_(*particles_->getVariableByName<Real>("Pressure")), vel_(particles_->vel_), acc_prior_(particles_->acc_prior_), pos_(particles_->pos_),
       dmom_dt_prior_(*particles_->getVariableByName<Vecd>("OtherMomentumChangeRate")),
-      mu_(particles_->fluid_.ReferenceViscosity()){};
+      mu_(fluid_.ReferenceViscosity()){};
 	//=================================================================================================//
 	template<class RiemannSolverType>
 	void BaseViscousAccelerationInnerInFVM<RiemannSolverType>::interaction(size_t index_i, Real dt)
