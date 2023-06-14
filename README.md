@@ -87,6 +87,8 @@ Volume 236, (2021) 109540
 
 13. Yongchuan Yu, Yujie Zhu, Chi Zhang, Oskar J. Haidn, Xiangyu Hu, "Level-set based pre-processing techniques for particle method", Computer Physics Communications 289, 108744, 2023.
 
+14. Shuoguo Zhang, Wenbin Zhang, Chi Zhang, Xiangyu Hu, "A Lagrangian free-stream boundary condition for weakly compressible smoothed particle hydrodynamics", Journal of Computational Physics, in press, 2023.
+
 ## Software Architecture
 
 SPHinXsys is cross-platform can be compiled and used in Windows, Linux and Apple systems.
