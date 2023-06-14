@@ -54,7 +54,7 @@ namespace SPH
 	* @class BaseIntegrationInCompressibleFVM
 	* @brief Pure abstract base class for all fluid relaxation schemes in compressible flows
 	*/
-    class BaseIntegrationInCompressibleFVM : public LocalDynamics, public DataDelegateInnerInFVM<FluidParticles>
+    class BaseIntegrationInCompressibleFVM : public LocalDynamics, public DataDelegateInnerInFVM<BaseParticles>
     {
       public:
         explicit BaseIntegrationInCompressibleFVM(BaseInnerRelationInFVM &inner_relation);

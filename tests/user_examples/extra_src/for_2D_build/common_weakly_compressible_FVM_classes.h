@@ -54,7 +54,7 @@ namespace SPH
 	* @brief the viscosity force induced acceleration
 	*/
 	template<class RiemannSolverType>
-	class BaseViscousAccelerationInnerInFVM : public LocalDynamics, public DataDelegateInnerInFVM<FluidParticles>
+	class BaseViscousAccelerationInnerInFVM : public LocalDynamics, public DataDelegateInnerInFVM<BaseParticles>
 	{
 	public:
 		explicit BaseViscousAccelerationInnerInFVM(BaseInnerRelationInFVM& inner_relation, Real limiter_parameter=30.0);
@@ -73,7 +73,7 @@ namespace SPH
 	* @class BaseRelaxationInFVM
 	* @brief Pure abstract base class for all fluid relaxation schemes
 	*/
-	class BaseRelaxationInFVM : public LocalDynamics, public DataDelegateInnerInFVM<FluidParticles>
+	class BaseRelaxationInFVM : public LocalDynamics, public DataDelegateInnerInFVM<BaseParticles>
 	{
 	public:
 		explicit BaseRelaxationInFVM(BaseInnerRelationInFVM &inner_relation);
@@ -124,7 +124,7 @@ namespace SPH
 	* @class BaseFluidForceOnSolidInFVM
 	* @brief Base class for computing the forces from the fluid
 	*/
-	class BaseForceFromFluidInFVM : public LocalDynamics, public DataDelegateInnerInFVM<FluidParticles>
+	class BaseForceFromFluidInFVM : public LocalDynamics, public DataDelegateInnerInFVM<BaseParticles>
 	{
 	public:
 		explicit BaseForceFromFluidInFVM(BaseInnerRelationInFVM& inner_relation);
@@ -163,8 +163,8 @@ namespace SPH
 	{
 	public:
 		explicit BasePressureForceAccelerationFromFluidInFVM(BaseInnerRelationInFVM& inner_relation)
-			: BaseForceFromFluidInFVM(inner_relation),  fluid_(particles_->fluid_), vel_(particles_->vel_), 
-			p_(particles_->p_), rho_(particles_->rho_), riemann_solver_(fluid_, fluid_)
+			: BaseForceFromFluidInFVM(inner_relation),  fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->base_material_)), vel_(particles_->vel_),
+			p_(*particles_->getVariableByName<Real>("Pressure")), rho_(particles_->rho_), riemann_solver_(fluid_, fluid_)
 		{
 			particles_->registerVariable(force_from_fluid_, "PressureForceFromFluid");
 		};
