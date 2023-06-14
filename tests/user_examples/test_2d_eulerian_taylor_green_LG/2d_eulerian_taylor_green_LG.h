@@ -7,7 +7,7 @@
 #ifndef EULERIAN_TAYLOR_GREEN_H
 #define EULERIAN_TAYLOR_GREEN_H
 #include "common_shared_eulerian_classes.h" // shared eulerian classes for weakly-compressible and compressible fluid.
-#include "common_compressible_eulerian_classes.h" // eulerian classes for compressible fluid only.
+#include "common_compressible_eulerian_classes.hpp" // eulerian classes for compressible fluid only.
 using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.

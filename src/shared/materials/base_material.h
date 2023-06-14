@@ -85,6 +85,9 @@ namespace SPH
 
 	public:
 		StdLargeVec<Real> p_;				 /**< pressure */
+		StdLargeVec<Real> drho_dt_;			 /**< density change rate */
+		StdLargeVec<Real> rho_sum_;			 /**< density by particle summation */
+		StdLargeVec<int> surface_indicator_; /**< free surface indicator */
 
 		explicit Fluid(Real rho0, Real c0, Real mu)
 			: BaseMaterial(rho0), c0_(c0), mu_(mu)

@@ -37,9 +37,9 @@ TEST(BernoulliBeam20x, Pressure)
 	};
 	input.body_indices_fixed_constraint_region_ = StdVec<ConstrainedRegionPair>{ ConstrainedRegionPair(0, fixation) };
 	StdVec<std::array<Real, 2>> pressure_over_time = {
-		{0.0, 0.0},
-		{end_time * 0.1, pressure},
-		{end_time, pressure }
+		{Real(0), Real(0)},
+		{Real(end_time * 0.1), Real(pressure)},
+		{Real(end_time), Real(pressure)}
 	};
 	input.surface_pressure_tuple_ = StdVec<PressureTuple>{ PressureTuple(0, specimen, Vec3d(0.1, 0.0, 0.1), pressure_over_time) };
 	input.particle_relaxation_list_ = { true };

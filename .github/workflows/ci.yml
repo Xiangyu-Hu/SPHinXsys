@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 env:
-  VCPKG_VERSION: "69efe9cc2df0015f0bb2d37d55acde4a75c9a25b" # 01/04/2023
+  VCPKG_VERSION: "1c5a340f6e10985e2d92af174a68dbd15c1fa4e1" # 29/05/2023 commit at https://github.com/microsoft/vcpkg/pull/29067
   CTEST_PARALLEL_LEVEL: "1"
 
 # A workflow is made up of one or more jobs that can run sequentially or in parallel
@@ -44,11 +44,10 @@ jobs:
         with:
           key: ${{ github.job }}
 
-      - uses: lukka/run-vcpkg@v11
-        with:
-          # hash for tag 2023.04.15 - bugged so use more recent
-          # https://github.com/microsoft/vcpkg/pull/29067
-          vcpkgGitCommitId: "1c5a340f6e10985e2d92af174a68dbd15c1fa4e1"
+      - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
+        with: 
+          committish: ${{ env.VCPKG_VERSION }}
+          cache-version: ${{env.VCPKG_VERSION}}
 
       - name: Install dependencies
         run: |
@@ -135,11 +134,10 @@ jobs:
         with:
           key: ${{ github.job }}
 
-      - uses: lukka/run-vcpkg@v11
-        with:
-          # hash for tag 2023.04.15 - bugged so use more recent
-          # https://github.com/microsoft/vcpkg/pull/29067
-          vcpkgGitCommitId: "1c5a340f6e10985e2d92af174a68dbd15c1fa4e1"
+      - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
+        with: 
+          committish: ${{ env.VCPKG_VERSION }}
+          cache-version: ${{env.VCPKG_VERSION}}
 
       - name: Install dependencies
         run: |
@@ -232,11 +230,10 @@ jobs:
         with:
           key: ${{ github.job }}
 
-      - uses: lukka/run-vcpkg@v11
-        with:
-          # hash for tag 2023.04.15 - bugged so use more recent
-          # https://github.com/microsoft/vcpkg/pull/29067
-          vcpkgGitCommitId: "1c5a340f6e10985e2d92af174a68dbd15c1fa4e1"
+      - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
+        with: 
+          committish: ${{ env.VCPKG_VERSION }}
+          cache-version: ${{env.VCPKG_VERSION}}
 
       - name: Install dependencies
         run: |

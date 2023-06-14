@@ -62,7 +62,7 @@ namespace SPH
 		};
 
 		/** the local constrained method used for calculating the dtw distance between two lines. */
-		StdVec<Real> calculateDTWDistance(DoubleVec<VariableType> dataset_a_, DoubleVec<VariableType> dataset_b_);
+		StdVec<Real> calculateDTWDistance(BiVector<VariableType> dataset_a_, BiVector<VariableType> dataset_b_);
 
 	public:
 		template <typename... ConstructorArgs>
@@ -74,7 +74,7 @@ namespace SPH
 		};
 		virtual ~RegressionTestDynamicTimeWarping(){};
 
-		void setupTheTest();						   /** setup the test and defined basic variables. */
+		void setupTheTest();	                       /** setup the test and defined basic variables. */
 		void readDTWDistanceFromXml();				   /** read the old DTW distance from the .xml file. */
 		void updateDTWDistance();					   /** update the maximum DTWDistance with the new result. */
 		void writeDTWDistanceToXml();				   /* write the updated DTWDistance to .xml file.*/

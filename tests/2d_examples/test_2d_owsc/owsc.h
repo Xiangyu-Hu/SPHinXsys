@@ -247,14 +247,14 @@ public:
 		: SolidBodyPartForSimbody(sph_body, shape_ptr)
 	{
 		// Vecd mass_center = Vecd(7.92, 0.355); // 0.3355
-		// initial_mass_center_ = SimTK::Vec3(mass_center[0], mass_center[1], 0.0);
+		// initial_mass_center_ = SimTKVec3(mass_center[0], mass_center[1], 0.0);
 		/** UnitInertia_ (const RealP &xx, const RealP &yy, const RealP &zz)
 		 * 	Create a principal unit inertia matrix (only non-zero on diagonal).
 		 */
 		Real Iz = 1.84 / 33.04;
 		body_part_mass_properties_ =
 			mass_properties_ptr_keeper_
-				.createPtr<SimTK::MassProperties>(33.04, SimTK::Vec3(0.0), SimTK::UnitInertia(0.0, 0.0, Iz));
+				.createPtr<SimTK::MassProperties>(33.04, SimTKVec3(0.0), SimTK::UnitInertia(0.0, 0.0, Iz));
 	}
 };
 

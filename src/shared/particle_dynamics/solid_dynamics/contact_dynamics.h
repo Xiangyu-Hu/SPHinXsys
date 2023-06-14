@@ -66,7 +66,7 @@ namespace SPH
 				const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 				for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 				{
-					Real corrected_W_ij = std::max(inner_neighborhood.W_ij_[n] - offset_W_ij_, 0.0);
+					Real corrected_W_ij = std::max(inner_neighborhood.W_ij_[n] - offset_W_ij_, Real(0));
 					sigma += corrected_W_ij * mass_[inner_neighborhood.j_[n]];
 				}
 				contact_density_[index_i] = sigma;
@@ -98,7 +98,7 @@ namespace SPH
 
 					for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 					{
-						Real corrected_W_ij = std::max(contact_neighborhood.W_ij_[n] - offset_W_ij_[k], 0.0);
+						Real corrected_W_ij = std::max(contact_neighborhood.W_ij_[n] - offset_W_ij_[k], Real(0));
 						sigma += corrected_W_ij * contact_mass_k[contact_neighborhood.j_[n]];
 					}
 				}
@@ -134,7 +134,7 @@ namespace SPH
 					Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 					for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 					{
-						Real corrected_W_ij = std::max(contact_neighborhood.W_ij_[n] - offset_W_ij_[k], 0.0);
+						Real corrected_W_ij = std::max(contact_neighborhood.W_ij_[n] - offset_W_ij_[k], Real(0));
 						sigma += corrected_W_ij * contact_Vol_k[contact_neighborhood.j_[n]];
 					}
 					constexpr Real heuristic_limiter = 0.1;
@@ -359,7 +359,7 @@ namespace SPH
 						// only update particle i
 						Vecd vel_derivative = (vel_i - vel_k[index_j]);
 						Vecd n_j = e_ij.dot(n_k[index_j]) > 0.0 ? n_k[index_j] : -1.0 * n_k[index_j];
-						vel_derivative -= SMAX(0.0, vel_derivative.dot(n_j)) * n_j;
+						vel_derivative -= SMAX(Real(0), vel_derivative.dot(n_j)) * n_j;
 						vel_i += parameter_b[n] * vel_derivative / (mass_i - 2.0 * parameter_b[n]);
 					}
 					// backward sweep
@@ -371,7 +371,7 @@ namespace SPH
 						// only update particle i
 						Vecd vel_derivative = (vel_i - vel_k[index_j]);
 						Vecd n_j = e_ij.dot(n_k[index_j]) > 0.0 ? n_k[index_j] : -1.0 * n_k[index_j];
-						vel_derivative -= SMAX(0.0, vel_derivative.dot(n_j)) * n_j;
+						vel_derivative -= SMAX(Real(0), vel_derivative.dot(n_j)) * n_j;
 						vel_i += parameter_b[n - 1] * vel_derivative / (mass_i - 2.0 * parameter_b[n - 1]);
 					}
 				}

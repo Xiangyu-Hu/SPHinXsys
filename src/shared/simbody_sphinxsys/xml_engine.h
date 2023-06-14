@@ -144,7 +144,7 @@ namespace SPH
 		virtual ~XmlMemoryIO(){};
 
 		template <typename T>
-		void writeDataToXmlMemory(XmlEngine &xml_engine, SimTK::Xml::Element &element, const DoubleVec<T> &quantity,
+		void writeDataToXmlMemory(XmlEngine &xml_engine, SimTK::Xml::Element &element, const BiVector<T> &quantity,
 								  int snapshot_, int observation_, const std::string &quantity_name, StdVec<std::string> &element_tag)
 		{
 			for (int snapshot_index = 0; snapshot_index != snapshot_; ++snapshot_index)
@@ -171,7 +171,7 @@ namespace SPH
 
 		template <typename T>
 		void readDataFromXmlMemory(XmlEngine &xml_engine, SimTK::Xml::Element &element,
-								   int observation_index, DoubleVec<T> &result_container, const std::string &quantity_name)
+								   int observation_index, BiVector<T> &result_container, const std::string &quantity_name)
 		{
 			int snapshot_index = 0;
 			SimTK::Xml::element_iterator ele_ite = element.element_begin();

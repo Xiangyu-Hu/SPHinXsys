@@ -138,7 +138,7 @@ namespace SPH
 
 	/**
 	 * @class RefinedLevelSet
-	 * @brief level set  which has double resolution of a coarse level set.
+	 * @brief level set  which has Real resolution of a coarse level set.
 	 */
 	class RefinedLevelSet : public RefinedMesh<LevelSet>
 	{
