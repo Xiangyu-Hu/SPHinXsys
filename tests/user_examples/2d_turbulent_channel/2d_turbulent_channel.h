@@ -9,9 +9,9 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 6;						  /**< Reference length. */
-Real DH = 0.2;						  /**< Reference and the height of main channel. */
-Real resolution_ref = 0.01;			  /**< Initial reference particle spacing. */
+Real DL = 60;						  /**< Reference length. */
+Real DH = 2;						  /**< Reference and the height of main channel. */
+Real resolution_ref = 0.1;			  /**< Initial reference particle spacing. */
 Real BW = resolution_ref * 4;		  /**< Reference size of the emitter. */
 Real DL_sponge = resolution_ref * 20; /**< Reference size of the emitter buffer to impose inflow condition. */
 //-------------------------------------------------------
@@ -32,7 +32,7 @@ Real rho0_f = 1.0; /**< Reference density of fluid. */
 Real U_f = 1.0;	   /**< Characteristic velocity. */
 /** Reference sound speed needs to consider the flow speed in the narrow channels. */
 Real c_f = 10.0 * U_f;
-Real Re = 25000.0;					/**< Reynolds number. */
+Real Re = 20000.0;					/**< Reynolds number. */
 //Real Re = 100.0;
 Real mu_f = rho0_f * U_f * DH / Re; /**< Dynamics viscosity. */
 //----------------------------------------------------------------------

@@ -7,15 +7,15 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Define basic parameters
 //----------------------------------------------------------------------
-Real DL = 0.4;						  /**< Reference length. */
-Real DH = 0.2;						  /**< Reference and the height of main channel. */
-Real resolution_ref = 0.01;			  /**< Initial reference particle spacing. */
+Real DL = 4;						  /**< Reference length. */
+Real DH = 2;						  /**< Reference and the height of main channel. */
+Real resolution_ref = 0.1;			  /**< Initial reference particle spacing. */
 Real BW = resolution_ref * 4;		  /**< Reference size of the emitter. */
 Real rho0_f = 1.0; /**< Reference density of fluid. */
 Real U_f = 1.0;	   /**< Characteristic velocity. */
 /** Reference sound speed needs */
 Real c_f = 10.0 * U_f;
-Real Re = 13750.0;					/**< Reynolds number according to book [2006 Wilcox]. */
+Real Re = 20000.0;					/**< Reynolds number according to book [2006 Wilcox]. */
 Real mu_f = rho0_f * U_f * DH / Re; /**< Dynamics viscosity. */
 //----------------------------------------------------------------------
 
@@ -32,13 +32,14 @@ std::vector<Vecd> water_block_shape
 /** the outer wall polygon. */
 std::vector<Vecd> outer_wall_shape
 {
-	Vecd(-BW, -BW),Vecd(-BW, DH + BW),Vecd(DL + BW, DH + BW),Vecd(DL + BW, -BW),Vecd(-BW, -BW),
+	Vecd(-3.0 * BW, -BW),Vecd(-3.0 * BW, DH + BW),
+	Vecd(DL + 3.0 * BW, DH + BW),Vecd(DL + 3.0 * BW, -BW),Vecd(-3.0 * BW, -BW),
 };
 /** the inner wall polygon. */
 std::vector<Vecd> inner_wall_shape
 {
-	Vecd(0.0-2.0 * BW, 0.0),Vecd(0.0- 2.0 * BW, DH),
-	Vecd(DL+ 2.0 * BW, DH),Vecd(DL+ 2.0 * BW, 0.0),Vecd(0.0- 2.0 * BW, 0.0)
+	Vecd(0.0-3.0 * BW, 0.0),Vecd(0.0- 3.0 * BW, DH),
+	Vecd(DL+ 3.0 * BW, DH),Vecd(DL+ 3.0 * BW, 0.0),Vecd(0.0- 3.0 * BW, 0.0)
 };
 class WaterBlock : public MultiPolygonShape
 {
@@ -73,7 +74,7 @@ protected:
 
 public:
 	BaseTurbulentModule() :
-		system_domain_bounds(Vec2d(-DL - 2.0 * BW, -BW), Vec2d(DL + 2.0 * BW, DH + BW)),
+		system_domain_bounds(Vec2d(-DL - 2.0 * BW, -BW), Vec2d(DL + 3.0 * BW, DH + BW)),
 		sph_system(system_domain_bounds, resolution_ref),
 		io_environment(sph_system),
 		water_block(sph_system, makeShared<WaterBlock>("WaterBody")),
@@ -94,6 +95,8 @@ protected:
 	InnerRelation water_block_inner;
 	ComplexRelation water_block_complex_relation;
 	InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelComplex, SequencedPolicy> k_equation_relaxation;
+	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction;
+	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection, SequencedPolicy> standard_wall_function_correction;
 	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation;
 	BodyStatesRecordingToVtp write_body_states;
 	size_t number_of_iterations;
@@ -106,6 +109,8 @@ public:
 		water_block_inner(water_block),
 		water_block_complex_relation(water_block_inner, { &wall_boundary }),
 		k_equation_relaxation(water_block_complex_relation),
+		wall_boundary_normal_direction(wall_boundary),
+		standard_wall_function_correction(water_block_complex_relation),
 		update_density_by_summation(water_block_complex_relation),
 		write_body_states(io_environment, sph_system.real_bodies_)
 	{
@@ -118,8 +123,6 @@ public:
 		water_block_complex_relation.updateConfiguration();
 
 		write_body_states.writeToFile();
-
-
 
 		update_density_by_summation.exec();
 		number_of_iterations = 0;
@@ -138,20 +141,102 @@ public:
 class Test_K_Equation : public fluid_dynamics::FluidInitialCondition
 {
 protected:
-	
+	StdLargeVec<Vecd>& pos_, & vel_;
+	StdLargeVec<Real>& turbu_mu_;
+	StdLargeVec<Real>& turbu_k_;
+	StdLargeVec<Real>& turbu_epsilon_;
+	Vecd imposed_data_;
+	const int num_data = 20;
+	const int num_file = 4;
+	double input_data[20][4];
+	std::string file_name[4] = { "U.dat","K.dat" ,"Epsilon.dat" ,"Mu_t.dat" };
+	Real smoothing_length_min_;
 public:
-	Test_K_Equation(SPHBody& sph_body) : FluidInitialCondition(sph_body)
+	Test_K_Equation(SPHBody& sph_body) : FluidInitialCondition(sph_body),
+		pos_(particles_->pos_), vel_(particles_->vel_),
+		turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
+		turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
+		turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation")),
+		smoothing_length_min_(sph_body.sph_adaptation_->MinimumSmoothingLength())
 	{
+		std::vector<double> data;
+		//load 4 files one by one
+		for (int j = 0; j < num_file; ++j)
+		{
+			data = loadInputData(num_data, num_file, file_name[j]);
+			for (int i = 0; i < num_data; ++i)
+			{
+				input_data[i][j] = data[i];
+			}
+		}
+	
 	}
 	virtual ~Test_K_Equation() {};
-	void update(size_t index_i, Real dt = 0.0)
+	void update(size_t index_i, Real dt = 0.0);
+
+	std::vector<double> loadInputData(int num_data, int num_file, std::string file_name)
 	{
+		std::ifstream file("./MappingData/FVM16_basedOnSPH4_4/" + file_name, std::ios::binary);  
+		if (file)
+		{
+			std::string line;
+			std::vector<double> temp_data;
+			for (int i = 0; i < num_data; ++i)
+			{
+				std::getline(file, line);
+				//std::cout << line << std::endl;
+				double value = std::stod(line); 
+				temp_data.push_back(value); 
+			}
+			file.close();
+			return temp_data;
+		}
+		else 
+		{
+			std::cerr << "cannot open file." << std::endl;
+			std::cin.get();
+			exit(1);
+		}
 
 	};
+
 };
+void Test_K_Equation::update(size_t index_i, Real dt) 
+{
+	for (int i = 0; i < num_data; ++i)
+	{
+		if (pos_[index_i][1] > i * resolution_ref && pos_[index_i][1] < (1 + i) * resolution_ref)
+		{
+			//if (i == 6)
+				//system("pause");
+			vel_[index_i][0] = input_data[i][0];
+			turbu_k_[index_i] = input_data[i][1];
+			turbu_epsilon_[index_i] = input_data[i][2];
+			turbu_mu_[index_i] = input_data[i][3];
+			continue;
+		}
+	}
+}
+
 TEST_F(TurbulentModule, TestTurbulentKineticEnergyEquation)
 {
+	SimpleDynamics<Test_K_Equation, SequencedPolicy> test_k_equation(water_block);
+	wall_boundary_normal_direction.exec();
+	write_body_states.writeToFile();
+	test_k_equation.exec(); //** impose profiles *
+	//write_body_states.writeToFile();
+	//standard_wall_function_correction.exec();
+	//write_body_states.writeToFile();
+	k_equation_relaxation.exec(dt);
+	write_body_states.writeToFile();
+
+
 	ASSERT_NEAR(1, 1, 0.02);
+
+
+	std::cout << "TestTurbulentKineticEnergyEquation completed, continuing will rewrite body states data"<<std::endl;
+	system("pause");
+
 }
 //----------------------------------------------------------------------
 
