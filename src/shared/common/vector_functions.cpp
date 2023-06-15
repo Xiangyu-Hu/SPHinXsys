@@ -240,14 +240,25 @@ Mat3d getTransformationMatrix(const Vec3d &direction_of_z)
     transformation_matrix(2, 1) = direction_of_z[1];
     transformation_matrix(2, 2) = direction_of_z[2];
 
-    return transformation_matrix;
-}
-//=================================================================================================//
-Mat2d getDiagonal(const Mat2d &A)
-{
-    Mat2d diag = Mat2d::Identity();
-    diag(0, 0) = A(0, 0);
-    diag(1, 1) = A(1, 1);
+		return transformation_matrix;
+	}
+	//=================================================================================================//
+        Mat3d getTransformationMatrix(const Vec3d &direction_of_z, const Vec3d &direction_of_y)
+        {
+                Mat3d transformation_matrix = Mat3d::Zero();
+                Vec3d direction_of_x = direction_of_y.cross(direction_of_z);
+                transformation_matrix.row(0) = direction_of_x.transpose();
+                transformation_matrix.row(1) = direction_of_y.transpose();
+                transformation_matrix.row(2) = direction_of_z.transpose();
+
+                return transformation_matrix;
+        }
+   //=================================================================================================//
+	Mat2d getDiagonal(const Mat2d &A)
+	{
+		Mat2d diag = Mat2d::Identity();
+		diag(0, 0) = A(0, 0);
+		diag(1, 1) = A(1, 1);
 
     return diag;
 }
