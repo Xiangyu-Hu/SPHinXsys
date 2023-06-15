@@ -20,7 +20,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	FluidBody water_block(system, makeShared<TransformShape<GeometricShapeBox>>(
 						Transform2d(water_block_translation), water_block_halfsize, "Structure"));
-	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+	water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	water_block.generateParticles<ParticleGeneratorLattice>();
 	water_block.addBodyStateForRecording<Real>("VolumetricMeasure");
 

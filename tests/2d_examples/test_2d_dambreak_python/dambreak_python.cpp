@@ -79,7 +79,7 @@ public:
 		//----------------------------------------------------------------------
 		//	Creating bodies with corresponding materials and particles.
 		//----------------------------------------------------------------------
-		water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
+		water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
 		water_block.generateParticles<ParticleGeneratorLattice>();
 
 		wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();

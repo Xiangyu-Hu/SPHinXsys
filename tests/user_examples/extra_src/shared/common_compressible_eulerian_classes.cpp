@@ -16,7 +16,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	EulerianCompressibleAcousticTimeStepSize::EulerianCompressibleAcousticTimeStepSize(SPHBody& sph_body)
-		: AcousticTimeStepSize(sph_body), rho_(particles_->rho_), p_(particles_->p_), vel_(particles_->vel_),
+		: AcousticTimeStepSize(sph_body), rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")), vel_(particles_->vel_),
 		smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()), compressible_fluid_(CompressibleFluid(1.0, 1.4)) {};
 	//=================================================================================================//
 	Real EulerianCompressibleAcousticTimeStepSize::reduce(size_t index_i, Real dt)

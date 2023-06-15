@@ -7,7 +7,7 @@
 #include "elastic_solid.h"
 #include "external_force.h"
 #include "cell_linked_list.h"
-#include "fluid_particles.h"
+#include "base_particles.hpp"
 #include "weakly_compressible_fluid.h"
 #include "polar_decomposition_3x3.h"
 
