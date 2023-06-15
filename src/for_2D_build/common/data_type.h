@@ -60,7 +60,8 @@ namespace SPH {
 									};
 
 	/** initial local normal, only works for thin structure dynamics. */
-	const Vecd local_pseudo_n_0 = Vecd(0.0, 1.0);
+    const Vecd local_pseudo_n_0 = Vecd(0.0, 1.0);
+    const Vecd local_pseudo_b_n_0 = Vecd(1.0, 0.0);
 
 	const Vecd ZeroVecd = Vec2d::Zero();
 }

@@ -73,7 +73,7 @@ namespace SPH
 	/** get transformation matrix. */
 	Mat2d getTransformationMatrix(const Vec2d &direction_of_y);
 	Mat3d getTransformationMatrix(const Vec3d &direction_of_z);
-
+    Mat3d getTransformationMatrix(const Vec3d &direction_of_z, const Vec3d &direction_of_y);
 	/** get angle between two vectors. */
 	Real getCosineOfAngleBetweenTwoVectors(const Vec2d &vector_1, const Vec2d &vector_2);
 	Real getCosineOfAngleBetweenTwoVectors(const Vec3d &vector_1, const Vec3d &vector_2);
