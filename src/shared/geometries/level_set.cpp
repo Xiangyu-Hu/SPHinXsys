@@ -5,7 +5,7 @@ namespace SPH
 {
 	//=================================================================================================//
 	BaseLevelSet ::BaseLevelSet(Shape &shape, SPHAdaptation &sph_adaptation)
-		: BaseMeshField("LevelSet"), shape_(shape), sph_adaptation_(sph_adaptation)
+		: BaseMeshField("LevelSet_" + shape.getName()), shape_(shape), sph_adaptation_(sph_adaptation)
 	{
 		if (!shape_.isValid())
 		{
