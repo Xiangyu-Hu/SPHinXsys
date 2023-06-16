@@ -107,7 +107,7 @@ namespace SPH
     }
 
     template<class T>
-    inline void copyDataToDevice(const T* host, T*& device, std::size_t size) {
+    inline void copyDataToDevice(const T* host, T* device, std::size_t size) {
         execution::ExecutionQueue::getQueue().memcpy(device, host, size*sizeof(T));
     }
 
