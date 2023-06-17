@@ -2,7 +2,7 @@
  * @file 	static_confinement.cpp
  * @brief 	2D dambreak example in which the solid wall boundary are static confinement.
  * @details This is the one of the basic test cases.
- * @author 	Yongchuan Yu and Xiangyu Hu
+ * @author 	Xiangyu Hu
  */
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;   // Namespace cite here.
