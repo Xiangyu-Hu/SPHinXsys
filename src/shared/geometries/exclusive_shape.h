@@ -49,7 +49,7 @@ namespace SPH
         template <typename... ConstructorArgs>
         explicit ExclusiveShape(ConstructorArgs &&...args)
             : BaseShapeType(std::forward<ConstructorArgs>(args)...), 
-            base_shape_(base_shape_keeper_.createPtr<BaseShapeType>(std::forward<ConstructorArgs>(args)...))
+            base_shape_(base_shape_keeper_.template createPtr<BaseShapeType>(std::forward<ConstructorArgs>(args)...))
         {};
 
         virtual ~ExclusiveShape(){};
