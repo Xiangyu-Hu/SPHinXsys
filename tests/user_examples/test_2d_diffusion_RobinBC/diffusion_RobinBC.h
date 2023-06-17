@@ -185,7 +185,7 @@ public:
 	}
 };
 
-using SolidDiffusionInner = DiffusionRelaxationInner<DiffusionParticles, CorrectedKernelGradientInner>;
+using SolidDiffusionInner = DiffusionRelaxationInner<DiffusionParticles>;
 using SolidDiffusionDirichlet = DiffusionRelaxationDirichlet<DiffusionParticles, WallParticles>;
 using SolidDiffusionRobin = DiffusionRelaxationRobin<DiffusionParticles, WallParticles>;
 //----------------------------------------------------------------------
