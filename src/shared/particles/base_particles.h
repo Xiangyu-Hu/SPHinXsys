@@ -209,11 +209,6 @@ namespace SPH
 		void readFromXmlForReloadParticle(std::string &filefullpath);
 		/** BaseParticle ptr. */
 		virtual BaseParticles *ThisObjectPtr() { return this; };
-		/** Get the kernel gradient in weak form. */
-		virtual Vecd getKernelGradient(size_t index_i, size_t index_j, Real dW_ijV_j, Vecd &e_ij)
-		{
-			return dW_ijV_j * e_ij;
-		};
 		/** Return total particle acceleration. */
 		virtual Vecd ParticleTotalAcceleration(size_t index_i) { return acc_[index_i] + acc_prior_[index_i]; }
 		/** Return particle volume. */

@@ -145,11 +145,6 @@ class ElectroPhysiologyReducedParticles : public ElectroPhysiologyParticles
     /** Destructor. */
     virtual ~ElectroPhysiologyReducedParticles(){};
     virtual ElectroPhysiologyReducedParticles *ThisObjectPtr() override { return this; };
-
-    virtual Vecd getKernelGradient(size_t particle_index_i, size_t particle_index_j, Real dW_ijV_j, Vecd &e_ij) override
-    {
-        return dW_ijV_j * e_ij;
-    };
 };
 
 namespace electro_physiology
