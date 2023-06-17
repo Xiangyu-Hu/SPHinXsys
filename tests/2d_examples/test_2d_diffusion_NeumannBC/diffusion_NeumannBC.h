@@ -174,7 +174,7 @@ class NeumannWallBoundaryInitialCondition
     }
 };
 
-using SolidDiffusionInner = DiffusionRelaxationInner<DiffusionParticles>;
+using SolidDiffusionInner = DiffusionRelaxationInner<DiffusionParticles, CorrectedKernelGradientInner>;
 using SolidDiffusionDirichlet = DiffusionRelaxationDirichlet<DiffusionParticles, WallParticles>;
 using SolidDiffusionNeumann = DiffusionRelaxationNeumann<DiffusionParticles, WallParticles>;
 //----------------------------------------------------------------------

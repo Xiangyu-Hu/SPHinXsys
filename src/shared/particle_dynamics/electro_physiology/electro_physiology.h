@@ -186,21 +186,21 @@ class GetElectroPhysiologyTimeStepSize : public GetDiffusionTimeStepSize<Electro
         : GetDiffusionTimeStepSize<ElectroPhysiologyParticles>(real_body){};
     virtual ~GetElectroPhysiologyTimeStepSize(){};
 };
+
+using ElectroPhysiologyDiffusionRelaxationInner = DiffusionRelaxationInner<ElectroPhysiologyParticles, CorrectedKernelGradientInner>;
 /**
- * @class ElectroPhysiologyDiffusionRelaxationInner
+ * @class ElectroPhysiologyDiffusionInnerRK2
  * @brief Compute the diffusion relaxation process
  */
-class ElectroPhysiologyDiffusionRelaxationInner
-    : public DiffusionRelaxationRK2<
-          DiffusionRelaxationInner<ElectroPhysiologyParticles>>
+class ElectroPhysiologyDiffusionInnerRK2
+    : public DiffusionRelaxationRK2<ElectroPhysiologyDiffusionRelaxationInner>
 {
   public:
-    explicit ElectroPhysiologyDiffusionRelaxationInner(BaseInnerRelation &inner_relation)
+    explicit ElectroPhysiologyDiffusionInnerRK2(BaseInnerRelation &inner_relation)
         : DiffusionRelaxationRK2(inner_relation){};
-    virtual ~ElectroPhysiologyDiffusionRelaxationInner(){};
+    virtual ~ElectroPhysiologyDiffusionInnerRK2(){};
 };
 
-using DiffusionRelaxationInner = DiffusionRelaxationInner<ElectroPhysiologyParticles>;
 using DiffusionRelaxationWithDirichletContact = DiffusionRelaxationDirichlet<ElectroPhysiologyParticles, ElectroPhysiologyParticles>;
 /**
  * @class ElectroPhysiologyDiffusionRelaxationComplex
@@ -208,11 +208,11 @@ using DiffusionRelaxationWithDirichletContact = DiffusionRelaxationDirichlet<Ele
  */
 class ElectroPhysiologyDiffusionRelaxationComplex
     : public DiffusionRelaxationRK2<
-          ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>
+          ComplexInteraction<ElectroPhysiologyDiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>
 {
   public:
-    explicit ElectroPhysiologyDiffusionRelaxationComplex(BaseInnerRelation &inner_relation, BaseContactRelation &body_contact_relation_Dirichlet)
-        : DiffusionRelaxationRK2<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>(inner_relation, body_contact_relation_Dirichlet){};
+    explicit ElectroPhysiologyDiffusionRelaxationComplex(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation)
+        : DiffusionRelaxationRK2<ComplexInteraction<ElectroPhysiologyDiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>(inner_relation, contact_relation){};
     virtual ~ElectroPhysiologyDiffusionRelaxationComplex(){};
 };
 
