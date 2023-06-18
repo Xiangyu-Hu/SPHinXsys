@@ -36,7 +36,8 @@ namespace SPH
 {
 /**
  * @class ExclusiveShape
- * @brief A template shape which has the fluid outside of the geometry.
+ * @brief A template shape which define the region outside of the geometry. 
+ * @brief In simple terms, he has the opposite containment relationship to the original geometry.
  */
     class Shape;
 
@@ -48,8 +49,7 @@ namespace SPH
         /** template constructor for general shapes. */
         template <typename... ConstructorArgs>
         explicit ExclusiveShape(ConstructorArgs &&...args)
-            : BaseShapeType(std::forward<ConstructorArgs>(args)...), 
-            base_shape_(base_shape_keeper_.template createPtr<BaseShapeType>(std::forward<ConstructorArgs>(args)...))
+            : BaseShapeType(std::forward<ConstructorArgs>(args)...) 
         {};
 
         virtual ~ExclusiveShape(){};
@@ -57,18 +57,8 @@ namespace SPH
         /*reverse the value of checkContain function*/
         virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override
         {
-            bool is_inside = base_shape_->checkContain(probe_point);
-            return !is_inside;
+            return !BaseShapeType::checkContain(probe_point);
         };
-
-        virtual Vecd findClosestPoint(const Vecd &probe_point) override
-        {
-            return base_shape_->findClosestPoint(probe_point);
-        };
-
-      private:
-            UniquePtrKeeper<BaseShapeType> base_shape_keeper_;
-            Shape *base_shape_;
     };
 } // namespace SPH
 
