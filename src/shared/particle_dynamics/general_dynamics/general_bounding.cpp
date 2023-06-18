@@ -20,9 +20,9 @@ void PeriodicConditionUsingCellLinkedList::
         if (particle_position[axis_] > bounding_bounds_.first_[axis_] &&
             particle_position[axis_] < (bounding_bounds_.first_[axis_] + cut_off_radius_max_))
         {
-            Vecd translated_position = particle_position + periodic_translation_;
             /** insert ghost particle to cell linked list */
             mutex_cell_list_entry_.lock();
+            Vecd translated_position = particle_position + periodic_translation_;
             cell_linked_list_.InsertListDataEntry(std::get<0>(cell_list_data[num]),
                                                   translated_position, std::get<2>(cell_list_data[num]));
             mutex_cell_list_entry_.unlock();
@@ -39,9 +39,9 @@ void PeriodicConditionUsingCellLinkedList::
         if (particle_position[axis_] < bounding_bounds_.second_[axis_] &&
             particle_position[axis_] > (bounding_bounds_.second_[axis_] - cut_off_radius_max_))
         {
-            Vecd translated_position = particle_position - periodic_translation_;
             /** insert ghost particle to cell linked list */
             mutex_cell_list_entry_.lock();
+            Vecd translated_position = particle_position - periodic_translation_;
             cell_linked_list_.InsertListDataEntry(std::get<0>(cell_list_data[num]),
                                                   translated_position, std::get<2>(cell_list_data[num]));
             mutex_cell_list_entry_.unlock();
@@ -66,12 +66,13 @@ void PeriodicConditionUsingGhostParticles::
             particle_position[axis_] < (bounding_bounds_.first_[axis_] + cut_off_radius_max_))
         {
             mutex_cell_list_entry_.lock();
+            Vecd translated_position = particle_position + periodic_translation_;
             size_t ghost_particle_index = particles_->insertAGhostParticle(index_i);
             ghost_particles_[0].push_back(ghost_particle_index);
-            pos_[ghost_particle_index] = particle_position + periodic_translation_;
+            pos_[ghost_particle_index] = translated_position;
             /** insert ghost particle to cell linked list */
             cell_linked_list_.InsertListDataEntry(ghost_particle_index,
-                                                  pos_[ghost_particle_index], std::get<2>(cell_list_data[num]));
+                                                  translated_position, std::get<2>(cell_list_data[num]));
             mutex_cell_list_entry_.unlock();
         }
     }
@@ -88,12 +89,13 @@ void PeriodicConditionUsingGhostParticles::
             particle_position[axis_] > (bounding_bounds_.second_[axis_] - cut_off_radius_max_))
         {
             mutex_cell_list_entry_.lock();
+            Vecd translated_position = particle_position - periodic_translation_;
             size_t ghost_particle_index = particles_->insertAGhostParticle(index_i);
             ghost_particles_[1].push_back(ghost_particle_index);
-            pos_[ghost_particle_index] = particle_position - periodic_translation_;
+            pos_[ghost_particle_index] = translated_position;
             /** insert ghost particle to cell linked list */
             cell_linked_list_.InsertListDataEntry(ghost_particle_index,
-                                                  pos_[ghost_particle_index], std::get<2>(cell_list_data[num]));
+                                                  translated_position, std::get<2>(cell_list_data[num]));
             mutex_cell_list_entry_.unlock();
         }
     }
