@@ -39,7 +39,6 @@ namespace SPH
  * @brief A template shape which define the region outside of the geometry. 
  * @brief In simple terms, it gives opposite return value for the function checkContain() as the original shape
  */
-    class Shape;
 
     template <class BaseShapeType>
     class ExclusiveShape : public BaseShapeType
