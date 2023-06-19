@@ -37,7 +37,7 @@ namespace SPH
 /**
  * @class ExclusiveShape
  * @brief A template shape which define the region outside of the geometry. 
- * @brief In simple terms, he has the opposite containment relationship to the original geometry.
+ * @brief In simple terms, it gives opposite return value for the function checkContain() as the original shape
  */
     class Shape;
 
