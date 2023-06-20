@@ -78,6 +78,7 @@ namespace SPH
     template <typename LocalFunction, typename... Args>
     void mesh_parallel_for(const MeshRange &mesh_range, const LocalFunction &local_function, Args &&...args)
     {
+        static tbb::affinity_partitioner ap;
         parallel_for(
             IndexRange3d((mesh_range.first)[0], (mesh_range.second)[0],
                          (mesh_range.first)[1], (mesh_range.second)[1],

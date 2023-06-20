@@ -55,6 +55,7 @@ namespace SPH
 	void package_parallel_for(const ConcurrentVec<DataPackageType *> &data_pkgs,
 							  const LocalFunction &local_function, Args &&...args)
 	{
+		static tbb::affinity_partitioner ap;
 		parallel_for(
 			IndexRange(0, data_pkgs.size()),
 			[&](const IndexRange &r)

@@ -33,6 +33,7 @@ namespace SPH
 		clearCellLists();
 		StdLargeVec<Vecd> &pos_n = base_particles.pos_;
 		size_t total_real_particles = base_particles.total_real_particles_;
+		static tbb::affinity_partitioner ap;
 		parallel_for(
 			IndexRange(0, total_real_particles),
 			[&](const IndexRange &r)
@@ -105,6 +106,7 @@ namespace SPH
 		StdLargeVec<Vecd> &pos_n = base_particles.pos_;
 		size_t total_real_particles = base_particles.total_real_particles_;
 		// rebuild the corresponding particle list.
+		static tbb::affinity_partitioner ap;
 		parallel_for(
 			IndexRange(0, total_real_particles),
 			[&](const IndexRange &r)

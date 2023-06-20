@@ -62,6 +62,7 @@ namespace SPH
 	inline void particle_for(const ParallelPolicy &par, const size_t &all_real_particles,
 							 const LocalDynamicsFunction &local_dynamics_function)
 	{
+		static tbb::affinity_partitioner ap;
 		parallel_for(
 			IndexRange(0, all_real_particles),
 			[&](const IndexRange &r)
@@ -88,6 +89,7 @@ namespace SPH
 	inline void particle_for(const ParallelPolicy &par, const IndexVector &body_part_particles,
 							 const LocalDynamicsFunction &local_dynamics_function)
 	{
+		static tbb::affinity_partitioner ap;
 		parallel_for(
 			IndexRange(0, body_part_particles.size()),
 			[&](const IndexRange &r)
@@ -120,6 +122,7 @@ namespace SPH
 	inline void particle_for(const ParallelPolicy &par, const ConcurrentCellLists &body_part_cells,
 							 const LocalDynamicsFunction &local_dynamics_function)
 	{
+		static tbb::affinity_partitioner ap;
 		parallel_for(
 			IndexRange(0, body_part_cells.size()),
 			[&](const IndexRange &r)
@@ -150,6 +153,7 @@ namespace SPH
 	inline void particle_for(const ParallelPolicy &par, const DataListsInCells &body_part_cells,
 							 const LocalDynamicsFunction &local_dynamics_function)
 	{
+		static tbb::affinity_partitioner ap;
 		parallel_for(
 			IndexRange(0, body_part_cells.size()),
 			[&](const IndexRange &r)
@@ -201,6 +205,7 @@ namespace SPH
 	inline void particle_for(const ParallelPolicy &par, const SplitCellLists &split_cell_lists,
 							 const LocalDynamicsFunction &local_dynamics_function)
 	{
+		static tbb::affinity_partitioner ap;
 		// forward sweeping
 		for (size_t k = 0; k != split_cell_lists.size(); ++k)
 		{
