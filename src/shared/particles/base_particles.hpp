@@ -96,7 +96,7 @@ DataType *BaseParticles::getGlobalVariableByName(const std::string &variable_nam
 
     std::cout << "\nError: the variable '" << variable_name << "' is not registered!\n";
     std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-    exit(1);
+    return nullptr;
 
     return nullptr;
 }
