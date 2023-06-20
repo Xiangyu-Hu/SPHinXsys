@@ -163,7 +163,7 @@ namespace SPH
 	{
 	public:
 		explicit BasePressureForceAccelerationFromFluidInFVM(BaseInnerRelationInFVM& inner_relation)
-			: BaseForceFromFluidInFVM(inner_relation),  fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->base_material_)), vel_(particles_->vel_),
+			: BaseForceFromFluidInFVM(inner_relation),  fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())), vel_(particles_->vel_),
 			p_(*particles_->getVariableByName<Real>("Pressure")), rho_(particles_->rho_), riemann_solver_(fluid_, fluid_)
 		{
 			particles_->registerVariable(force_from_fluid_, "PressureForceFromFluid");

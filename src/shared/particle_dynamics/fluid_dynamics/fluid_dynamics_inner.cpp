@@ -39,7 +39,7 @@ namespace SPH
 		BaseViscousAccelerationInner::BaseViscousAccelerationInner(BaseInnerRelation &inner_relation)
 			: LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
 			  rho_(particles_->rho_), vel_(particles_->vel_), acc_prior_(particles_->acc_prior_),
-			  mu_(DynamicCast<Fluid>(this, particles_->base_material_).ReferenceViscosity()),
+			  mu_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceViscosity()),
 			  smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
 		//=================================================================================================//
 		TransportVelocityCorrectionInner::
@@ -59,7 +59,7 @@ namespace SPH
 		//=================================================================================================//
 		AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL)
 			: LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
-			  FluidDataSimple(sph_body), fluid_(DynamicCast<Fluid>(this, particles_->base_material_)), rho_(particles_->rho_),
+			  FluidDataSimple(sph_body), fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())), rho_(particles_->rho_),
 			  p_(*particles_->getVariableByName<Real>("Pressure")), vel_(particles_->vel_),
 			  smoothing_length_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
 			  acousticCFL_(acousticCFL) {}
@@ -96,7 +96,7 @@ namespace SPH
 		//=================================================================================================//
 		AdvectionTimeStepSize::AdvectionTimeStepSize(SPHBody &sph_body, Real U_max, Real advectionCFL)
 			: AdvectionTimeStepSizeForImplicitViscosity(sph_body, U_max, advectionCFL),
-			  fluid_(DynamicCast<Fluid>(this, particles_->base_material_))
+			  fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()))
 		{
 			Real viscous_speed = fluid_.ReferenceViscosity() / fluid_.ReferenceDensity() / smoothing_length_min_;
 			reference_ = SMAX(viscous_speed * viscous_speed, reference_);
@@ -117,7 +117,7 @@ namespace SPH
 		//=================================================================================================//
 		BaseIntegration::BaseIntegration(BaseInnerRelation &inner_relation)
 			: LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
-			  fluid_(DynamicCast<Fluid>(this, particles_->base_material_)), rho_(particles_->rho_),
+			  fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())), rho_(particles_->rho_),
 			  p_(*particles_->getVariableByName<Real>("Pressure")), drho_dt_(*particles_->registerSharedVariable<Real>("DensityChangeRate")), pos_(particles_->pos_), vel_(particles_->vel_),
 			  acc_(particles_->acc_), acc_prior_(particles_->acc_prior_) {}
 		//=================================================================================================//
@@ -141,7 +141,7 @@ namespace SPH
 		Oldroyd_BIntegration2ndHalf::
 			Oldroyd_BIntegration2ndHalf(BaseInnerRelation &inner_relation)
 			: Integration2ndHalfDissipativeRiemann(inner_relation),
-			  oldroyd_b_fluid_(DynamicCast<Oldroyd_B_Fluid>(this, particles_->base_material_)),
+			  oldroyd_b_fluid_(DynamicCast<Oldroyd_B_Fluid>(this, particles_->getBaseMaterial())),
 			  tau_(*particles_->getVariableByName<Matd>("ElasticStress")),
 			  dtau_dt_(*particles_->getVariableByName<Matd>("ElasticStressChangeRate"))
 		{

@@ -5,7 +5,7 @@ namespace SPH
 {
 	//=================================================================================================//
 	WCAcousticTimeStepSizeInFVM::WCAcousticTimeStepSizeInFVM(SPHBody &sph_body) 
-		: AcousticTimeStepSize(sph_body), rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")), vel_(particles_->vel_), fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->base_material_)){};
+		: AcousticTimeStepSize(sph_body), rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")), vel_(particles_->vel_), fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())){};
 	//=================================================================================================//
 	Real WCAcousticTimeStepSizeInFVM::outputResult(Real reduced_value)
 	{
@@ -15,7 +15,7 @@ namespace SPH
 	//=================================================================================================//
 	BaseRelaxationInFVM::BaseRelaxationInFVM(BaseInnerRelationInFVM &inner_relation)
 		: LocalDynamics(inner_relation.getSPHBody()), DataDelegateInnerInFVM<BaseParticles>(inner_relation),
-		fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->base_material_)), p_(*particles_->getVariableByName<Real>("Pressure")), rho_(particles_->rho_), drho_dt_(*particles_->registerSharedVariable<Real>("DensityChangeRate")),
+		fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())), p_(*particles_->getVariableByName<Real>("Pressure")), rho_(particles_->rho_), drho_dt_(*particles_->registerSharedVariable<Real>("DensityChangeRate")),
 		vel_(particles_->vel_), mom_(*particles_->getVariableByName<Vecd>("Momentum")),
 		dmom_dt_(*particles_->getVariableByName<Vecd>("MomentumChangeRate")),
 		dmom_dt_prior_(*particles_->getVariableByName<Vecd>("OtherMomentumChangeRate")),
@@ -25,7 +25,7 @@ namespace SPH
 		: LocalDynamics(inner_relation.getSPHBody()), DataDelegateInnerInFVM<BaseParticles>(inner_relation), Vol_(particles_->Vol_) {};
 	//=================================================================================================//
 	ViscousForceFromFluidInFVM::ViscousForceFromFluidInFVM(BaseInnerRelationInFVM& inner_relation)
-		: BaseForceFromFluidInFVM(inner_relation), fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->base_material_)), 
+		: BaseForceFromFluidInFVM(inner_relation), fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())), 
 		vel_(particles_->vel_), mu_(fluid_.ReferenceViscosity())
 	{
 		particles_->registerVariable(force_from_fluid_, "ViscousForceFromFluid");
