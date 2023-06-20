@@ -26,7 +26,7 @@ namespace SPH
 		BaseRelaxation::BaseRelaxation(BaseInnerRelation& inner_relation)
 			: LocalDynamics(inner_relation.getSPHBody()), GranularDataInner(inner_relation),
 			granular_material_(particles_->granular_material_), rho_(particles_->rho_),
-			p_(particles_->p_), drho_dt_(particles_->drho_dt_),
+			p_(*particles_->getVariableByName<Real>("Pressure")), drho_dt_(*particles_->getVariableByName<Real>("DensityChangeRate")),
 			pos_(particles_->pos_), vel_(particles_->vel_),
 			acc_(particles_->acc_), acc_prior_(particles_->acc_prior_) {}
 		//=================================================================================================//

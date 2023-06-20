@@ -36,5 +36,6 @@
 #include "level_set_shape.h"
 #include "complex_shape.h"
 #include "transform_shape.h"
+#include "exclusive_shape.h"
 
 #endif //ALL_GEOMETRIES_H

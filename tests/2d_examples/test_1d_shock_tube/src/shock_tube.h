@@ -7,7 +7,7 @@
 #ifndef SHOCK_TUBE_H
 #define SHOCK_TUBE_H
 #include "common_shared_eulerian_classes.h" // shared eulerian classes for weakly-compressible and compressible fluid.
-#include "common_compressible_eulerian_classes.h" // eulerian classes for compressible fluid only.
+#include "common_compressible_eulerian_classes.hpp" // eulerian classes for compressible fluid only.
 using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
@@ -51,7 +51,7 @@ class ShockTubeInitialCondition
 public:
 	explicit ShockTubeInitialCondition(SPHBody& sph_body)
 		: FluidInitialCondition(sph_body), pos_(particles_->pos_), vel_(particles_->vel_),
-		rho_(particles_->rho_), p_(particles_->p_)
+		rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure"))
 	{
 		particles_->registerVariable(mom_, "Momentum");
 		particles_->registerVariable(dmom_dt_, "MomentumChangeRate");

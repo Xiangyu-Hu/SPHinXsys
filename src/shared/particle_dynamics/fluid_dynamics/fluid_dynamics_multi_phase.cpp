@@ -19,7 +19,7 @@ namespace SPH
 
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
-				contact_fluids_.push_back(&contact_particles_[k]->fluid_);
+				contact_fluids_.push_back(DynamicCast<Fluid>(this, &contact_particles_[k]->base_material_));
 				contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
 			}
 		}
@@ -34,7 +34,7 @@ namespace SPH
 			: LocalDynamics(contact_relation.getSPHBody()), MultiPhaseData(contact_relation),
 			  rho0_(sph_body_.base_material_->ReferenceDensity()), Vol_(particles_->Vol_),
 			  pos_div_(*particles_->getVariableByName<Real>("PositionDivergence")),
-			  surface_indicator_(particles_->surface_indicator_)
+			  surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator"))
 		{
 			particles_->registerVariable(color_grad_, "ColorGradient");
 			particles_->registerVariable(surface_norm_, "SurfaceNormal");
