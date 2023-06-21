@@ -28,6 +28,9 @@ int main(int ac, char *av[])
 	wave_block.defineParticlesAndMaterial<BaseParticles, CompressibleFluid>(rho0_another, heat_capacity_ratio);
 	wave_block.generateParticles<ParticleGeneratorInFVM>(read_mesh_data.elements_center_coordinates_, read_mesh_data.elements_volumes_);
 	wave_block.addBodyStateForRecording<Real>("Density");
+	/** Initial condition and register variables*/
+	SimpleDynamics<DMFInitialCondition> initial_condition(wave_block);
+	GhostCreationFromMesh ghost_creation(wave_block, read_mesh_data.cell_lists_, read_mesh_data.point_coordinates_2D_);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//----------------------------------------------------------------------
@@ -37,17 +40,21 @@ int main(int ac, char *av[])
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	/** Initial condition */
-	SimpleDynamics<DMFInitialCondition> initial_condition(wave_block);
-	initial_condition.exec();
+	/** Boundary conditions set up */
+	DMFBoundaryConditionSetup boundary_condition_setup(water_block_inner,ghost_creation.each_boundary_type_with_all_ghosts_index_,
+		ghost_creation.each_boundary_type_with_all_ghosts_eij_,ghost_creation.each_boundary_type_contact_real_index_);
 	SimpleDynamics<EulerianCompressibleTimeStepInitialization> initialize_a_fluid_step(wave_block);
 	/** Time step size with considering sound wave speed. */
-	ReduceDynamics<CompressibleAcousticTimeStepSizeInFVM> get_fluid_time_step_size(wave_block);
+	ReduceDynamics<CompressibleAcousticTimeStepSizeInFVM> get_fluid_time_step_size(wave_block,read_mesh_data.max_distance_between_nodes_,0.08);
 	/** Here we introduce the limiter in the Riemann solver and 0 means the no extra numerical dissipation.
 	the value is larger, the numerical dissipation larger*/
-	Dynamics1Level<Integration1stHalfHLLCWithLimiterRiemannInFVM> pressure_relaxation(water_block_inner, 100.0);
-	InteractionWithUpdate<Integration2ndHalfHLLCWithLimiterRiemannInFVM> density_relaxation(water_block_inner, 100.0);
+	InteractionWithUpdate<Integration1stHalfHLLCRiemann> pressure_relaxation(water_block_inner);
+	InteractionWithUpdate<Integration2ndHalfHLLCRiemann> density_relaxation(water_block_inner);
 	BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
+	//----------------------------------------------------------------------
+	//	Prepare the simulation with case specified initial condition if necessary.
+	//----------------------------------------------------------------------
+	initial_condition.exec();
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
@@ -74,7 +81,9 @@ int main(int ac, char *av[])
 		{
 			initialize_a_fluid_step.exec();
 			Real dt = get_fluid_time_step_size.exec();
+			boundary_condition_setup.resetBoundaryConditions();
 			pressure_relaxation.exec(dt);
+			boundary_condition_setup.resetBoundaryConditions();
 			density_relaxation.exec(dt);
 
 			integration_time += dt;

@@ -18,14 +18,14 @@ namespace SPH
 		return acousticCFL_ / Dimensions * smoothing_length_min_ / (reduced_value + TinyReal);
 	}
 	//=================================================================================================//
-	EulerianViscousAccelerationInner::EulerianViscousAccelerationInner(BaseInnerRelation& inner_relation)
+	WCEulerianViscousAccelerationInner::WCEulerianViscousAccelerationInner(BaseInnerRelation& inner_relation)
 		: BaseViscousAccelerationInner(inner_relation),
 		dmom_dt_prior_(*particles_->getVariableByName<Vecd>("OtherMomentumChangeRate")) {};
 	//=================================================================================================//
-	void EulerianViscousAccelerationInner::interaction(size_t index_i, Real dt)
+	void WCEulerianViscousAccelerationInner::interaction(size_t index_i, Real dt)
 	{
 		Real rho_i = rho_[index_i];
-		const Vecd& vel_i = vel_[index_i];
+		Vecd vel_i = vel_[index_i];
 
 		Vecd acceleration = Vecd::Zero();
 		Vecd vel_derivative = Vecd::Zero();
@@ -33,12 +33,10 @@ namespace SPH
 		for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 		{
 			size_t index_j = inner_neighborhood.j_[n];
-
-			// viscous force
-			vel_derivative = (vel_i - vel_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
+			vel_derivative = (vel_i - vel_[index_j]) / (inner_neighborhood.r_ij_[n] + TinyReal);
 			acceleration += 2.0 * mu_ * vel_derivative * inner_neighborhood.dW_ijV_j_[n] / rho_i;
 		}
-		dmom_dt_prior_[index_i] += rho_[index_i] * acceleration;
+		dmom_dt_prior_[index_i] += rho_i * acceleration;
 	}
 	//=================================================================================================//
 	FluidStarState NoRiemannSolverInWCEulerianMethod::getInterfaceState(const FluidState& state_i, const FluidState& state_j, const Vecd& e_ij)
@@ -48,8 +46,8 @@ namespace SPH
 		Real rhol_cl = fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_) * state_i.rho_;
 		Real rhor_cr = fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_) * state_j.rho_;
 
-		Real p_star = (rhol_cl * state_j.p_ + rhor_cr * state_i.p_ + rhol_cl * rhor_cr * (ul - ur)) / (rhol_cl + rhor_cr);
-        Real u_star = (rhol_cl * ul + rhor_cr * ur + (state_i.p_ - state_j.p_)) / (rhol_cl + rhor_cr);
+		Real p_star = (rhol_cl * state_j.p_ + rhor_cr * state_i.p_) / (rhol_cl + rhor_cr);
+        Real u_star = (rhol_cl * ul + rhor_cr * ur) / (rhol_cl + rhor_cr);
 		Vecd vel_star = (state_i.vel_ * state_i.rho_ + state_j.vel_ * state_j.rho_) / (state_i.rho_ + state_j.rho_)
 			- e_ij * (u_star - (ul * state_i.rho_ + ur * state_j.rho_) / (state_i.rho_ + state_j.rho_));
 

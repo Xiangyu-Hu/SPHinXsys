@@ -49,7 +49,7 @@ int main(int ac, char* av[])
 	ReduceDynamics<EulerianCompressibleAcousticTimeStepSize> get_fluid_time_step_size(water_body);
 	/** Pressure relaxation algorithm by using verlet time stepping. */
 	/** Here, we can use HLLC with Limiter Riemann solver for pressure relaxation and density and energy relaxation  */
-	Dynamics1Level<Integration1stHalfHLLCWithLimiterRiemann> pressure_relaxation(water_body_inner);
+	InteractionWithUpdate<Integration1stHalfHLLCWithLimiterRiemann> pressure_relaxation(water_body_inner);
 	InteractionWithUpdate<Integration2ndHalfHLLCWithLimiterRiemann> density_and_energy_relaxation(water_body_inner);
 	/** Computing viscous acceleration. */
 	InteractionDynamics<EulerianCompressibleViscousAccelerationInner> viscous_acceleration(water_body_inner);
