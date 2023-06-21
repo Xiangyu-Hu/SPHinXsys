@@ -376,10 +376,10 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	GlobalStaticVariables::physical_time_ = 0.0;
 	int number_of_iterations = 0;
-	int screen_output_interval = 100;
+	int screen_output_interval = 1000;
 	int restart_output_interval = screen_output_interval * 10;
 	Real end_time = total_physical_time;
-	Real output_interval = end_time/50;
+	Real output_interval = end_time/25;
 	Real dt = 0.0;
 	Real total_time = 0.0;
 	Real relax_time = 1.0;
@@ -569,13 +569,11 @@ int main(int ac, char *av[])
 	{
 		write_str_displacement.generateDataBase(1.0e-3);
 		write_recorded_pressure_fp2.generateDataBase(1.0e-3);
-		write_recorded_pressure_bp1.generateDataBase(1.0e-3);
 	}
 	else if (system.RestartStep() == 0)
 	{
 		write_str_displacement.testResult();
 		write_recorded_pressure_fp2.testResult();
-		write_recorded_pressure_bp1.testResult();
 	}
 
 	return 0;
