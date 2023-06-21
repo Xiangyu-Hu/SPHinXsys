@@ -24,7 +24,7 @@
  * @file 	diffusion_dynamics.h
  * @brief 	This is the particle dynamics applicable for all type bodies
  * 			TODO: there is an issue on applying corrected configuration for contact bodies..
- * @author	Chi Zhang and Xiangyu Hu
+ * @author	Chi Zhang, Chenxi Zhao and Xiangyu Hu
  */
 
 #ifndef DIFFUSION_DYNAMICS_H

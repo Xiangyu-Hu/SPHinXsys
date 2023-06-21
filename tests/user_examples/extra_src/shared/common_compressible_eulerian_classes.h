@@ -97,6 +97,20 @@ namespace SPH
 		CompressibleFluidStarState(Real rho, Vecd vel, Real p, Real E)
 			: FluidStarState(vel, p), rho_(rho), E_(E) {};
 	};
+
+	/**
+	* @struct NoRiemannSolverInCompressibleEulerianMethod
+	* @brief  NO RiemannSolver for weakly-compressible flow in Eulerian method for compressible flow.
+	*/
+    class NoRiemannSolverInCompressobleEulerianMethod
+	{
+		CompressibleFluid& compressible_fluid_i_, & compressible_fluid_j_;
+
+		public:
+		NoRiemannSolverInCompressobleEulerianMethod(CompressibleFluid &fluid_i, CompressibleFluid &fluid_j);
+		CompressibleFluidStarState getInterfaceState(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &e_ij);
+	};
+
 	/**
 	* @struct HLLCRiemannSolver
 	* @brief  HLLC Riemann solver.
@@ -116,9 +130,10 @@ namespace SPH
 	class HLLCWithLimiterRiemannSolver
 	{
 		CompressibleFluid& compressible_fluid_i_, & compressible_fluid_j_;
+		Real limiter_parameter_;
 
 	public:
-		HLLCWithLimiterRiemannSolver(CompressibleFluid& compressible_fluid_i, CompressibleFluid& compressible_fluid_j);
+		HLLCWithLimiterRiemannSolver(CompressibleFluid& compressible_fluid_i, CompressibleFluid& compressible_fluid_j, Real limiter_parameter = 5.0);
 		CompressibleFluidStarState getInterfaceState(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j, const Vecd& e_ij);
 	};
 
@@ -164,42 +179,14 @@ namespace SPH
 	class BaseIntegration1stHalf : public BaseIntegrationInCompressible
 	{
 	public:
-		explicit BaseIntegration1stHalf(BaseInnerRelation& inner_relation)
-			: BaseIntegrationInCompressible(inner_relation), riemann_solver_(compressible_fluid_, compressible_fluid_) {};;
+		explicit BaseIntegration1stHalf(BaseInnerRelation& inner_relation);
 		virtual ~BaseIntegration1stHalf() {};
 		RiemannSolverType riemann_solver_;
-		void initialization(size_t index_i, Real dt = 0.0)
-		{
-			E_[index_i] += dE_dt_[index_i] * dt * 0.5;
-			rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
-			Real rho_e = E_[index_i] - 0.5 * mom_[index_i].squaredNorm() / rho_[index_i];
-			p_[index_i] = compressible_fluid_.getPressure(rho_[index_i], rho_e);
-		};
-		void interaction(size_t index_i, Real dt = 0.0)
-		{
-			CompressibleFluidState state_i(rho_[index_i], vel_[index_i], p_[index_i], E_[index_i]);
-			Vecd momentum_change_rate = dmom_dt_prior_[index_i];
-			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
-			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-			{
-				size_t index_j = inner_neighborhood.j_[n];
-				Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
-				Vecd& e_ij = inner_neighborhood.e_ij_[n];
-
-				CompressibleFluidState state_j(rho_[index_j], vel_[index_j], p_[index_j], E_[index_j]);
-				CompressibleFluidStarState interface_state = riemann_solver_.getInterfaceState(state_i, state_j, e_ij);
-
-				momentum_change_rate -= 2.0 * dW_ijV_j *
-					((interface_state.rho_ * interface_state.vel_) * interface_state.vel_.transpose() + interface_state.p_ * Matd::Identity()) * e_ij;
-			}
-			dmom_dt_[index_i] = momentum_change_rate;
-		};
-		void update(size_t index_i, Real dt = 0.0)
-		{
-			mom_[index_i] += dmom_dt_[index_i] * dt;
-			vel_[index_i] = mom_[index_i] / rho_[index_i];
-		};
+		void initialization(size_t index_i, Real dt = 0.0);
+		void interaction(size_t index_i, Real dt = 0.0);
+		void update(size_t index_i, Real dt = 0.0);
 	};
+	using Integration1stHalf = BaseIntegration1stHalf<NoRiemannSolverInCompressobleEulerianMethod>;
 	using Integration1stHalfHLLCRiemann = BaseIntegration1stHalf<HLLCRiemannSolver>;
 	using Integration1stHalfHLLCWithLimiterRiemann = BaseIntegration1stHalf<HLLCWithLimiterRiemannSolver>;
 
@@ -211,37 +198,13 @@ namespace SPH
 	class BaseIntegration2ndHalf : public BaseIntegrationInCompressible
 	{
 	public:
-		explicit BaseIntegration2ndHalf(BaseInnerRelation& inner_relation)
-			: BaseIntegrationInCompressible(inner_relation), riemann_solver_(compressible_fluid_, compressible_fluid_) {};
+		explicit BaseIntegration2ndHalf(BaseInnerRelation& inner_relation);
 		virtual ~BaseIntegration2ndHalf() {};
 		RiemannSolverType riemann_solver_;
-		void interaction(size_t index_i, Real dt = 0.0)
-		{
-			CompressibleFluidState state_i(rho_[index_i], vel_[index_i], p_[index_i], E_[index_i]);
-			Real density_change_rate = 0.0;
-			Real energy_change_rate = dE_dt_prior_[index_i];
-			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
-			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-			{
-				size_t index_j = inner_neighborhood.j_[n];
-				Vecd& e_ij = inner_neighborhood.e_ij_[n];
-				Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
-
-				CompressibleFluidState state_j(rho_[index_j], vel_[index_j], p_[index_j], E_[index_j]);
-				CompressibleFluidStarState interface_state = riemann_solver_.getInterfaceState(state_i, state_j, e_ij);
-
-				density_change_rate -= 2.0 * dW_ijV_j * (interface_state.rho_ * interface_state.vel_).dot(e_ij);
-				energy_change_rate -= 2.0 * dW_ijV_j * (interface_state.E_ * interface_state.vel_ + interface_state.p_ * interface_state.vel_).dot(e_ij);
-			}
-			drho_dt_[index_i] = density_change_rate;
-			dE_dt_[index_i] = energy_change_rate;
-		};
-		void update(size_t index_i, Real dt = 0.0)
-		{
-			E_[index_i] += dE_dt_[index_i] * dt * 0.5;
-			rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
-		};
+		void interaction(size_t index_i, Real dt = 0.0);
+		void update(size_t index_i, Real dt = 0.0);
 	};
+	using Integration2ndHalf = BaseIntegration2ndHalf<NoRiemannSolverInCompressobleEulerianMethod>;
 	using Integration2ndHalfHLLCRiemann = BaseIntegration2ndHalf<HLLCRiemannSolver>;
 	using Integration2ndHalfHLLCWithLimiterRiemann = BaseIntegration2ndHalf<HLLCWithLimiterRiemannSolver>;
 

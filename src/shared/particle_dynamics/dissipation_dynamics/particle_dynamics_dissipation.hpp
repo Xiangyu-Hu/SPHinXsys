@@ -436,7 +436,7 @@ namespace SPH
 	template <class DampingAlgorithmType>
 	bool DampingWithRandomChoice<DampingAlgorithmType>::RandomChoice()
 	{
-		return ((double)rand() / (RAND_MAX)) < random_ratio_ ? true : false;
+		return ((Real)rand() / (RAND_MAX)) < random_ratio_ ? true : false;
 	}
 	//=================================================================================================//
 	template <class DampingAlgorithmType>

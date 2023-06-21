@@ -25,7 +25,7 @@
  * @brief 	This is the base class of SPH particles. The basic data of the particles
  *			is saved in separated large vectors. Each derived class will introduce several extra
  * 			vectors for the new data. Note that there is no class of single particle.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang, Chenxi Zhao and Xiangyu Hu
  */
 
 #ifndef BASE_PARTICLES_H
@@ -88,7 +88,7 @@ namespace SPH
 	public:
 		explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
 		virtual ~BaseParticles() {};
-
+		StdLargeVec<int> surface_indicator_; /**< free surface indicator */
 		StdLargeVec<Vecd> pos_;		  /**< particle position */
 		StdLargeVec<Vecd> vel_;		  /**< particle velocity */
 		StdLargeVec<Vecd> acc_;		  /**< total acceleration including inner pressure- or stress-induced acceleration and other accelerations */

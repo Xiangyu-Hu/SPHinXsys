@@ -7,7 +7,7 @@ namespace SPH
     {
         SimTK::UnitVec3 normal;
         bool inside = false;
-        contact_geometry_->findNearestPoint(SimTK::Vec3(probe_point[0], probe_point[1], probe_point[2]), inside, normal);
+        contact_geometry_->findNearestPoint(SimTKVec3(probe_point[0], probe_point[1], probe_point[2]), inside, normal);
 
         return inside;
     }
@@ -16,7 +16,7 @@ namespace SPH
     {
         SimTK::UnitVec3 normal;
         bool inside = false;
-        SimTK::Vec3 out_pnt = contact_geometry_->findNearestPoint(SimTK::Vec3(probe_point[0], probe_point[1], probe_point[2]), inside, normal);
+        SimTKVec3 out_pnt = contact_geometry_->findNearestPoint(SimTKVec3(probe_point[0], probe_point[1], probe_point[2]), inside, normal);
 
         return Vecd(out_pnt[0], out_pnt[1], out_pnt[2]);
     }
@@ -30,13 +30,13 @@ namespace SPH
     //=================================================================================================//
     bool GeometricShapeBox::checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED)
     {
-        return brick_.getGeoBox().containsPoint(SimTK::Vec3(probe_point[0], probe_point[1], probe_point[2]));
+        return brick_.getGeoBox().containsPoint(SimTKVec3(probe_point[0], probe_point[1], probe_point[2]));
     }
     //=================================================================================================//
     Vec3d GeometricShapeBox::findClosestPoint(const Vec3d &probe_point)
     {
         bool inside = false;
-        SimTK::Vec3 out_pnt = brick_.getGeoBox().findClosestPointOnSurface(SimTK::Vec3(probe_point[0], probe_point[1], probe_point[2]), inside);
+        SimTKVec3 out_pnt = brick_.getGeoBox().findClosestPointOnSurface(SimTKVec3(probe_point[0], probe_point[1], probe_point[2]), inside);
 
         return Vecd(out_pnt[0], out_pnt[1], out_pnt[2]);
     }

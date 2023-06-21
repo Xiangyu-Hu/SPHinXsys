@@ -23,7 +23,7 @@
 /**
  * @file 	level_set.h
  * @brief 	Level set is a function which is defined as signed distance to a surface or interface.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi ZHang, Yongchuan Yu and Xiangyu Hu
  */
 
 #ifndef LEVEL_SET_H
@@ -138,7 +138,7 @@ namespace SPH
 
 	/**
 	 * @class RefinedLevelSet
-	 * @brief level set  which has double resolution of a coarse level set.
+	 * @brief level set  which has Real resolution of a coarse level set.
 	 */
 	class RefinedLevelSet : public RefinedMesh<LevelSet>
 	{

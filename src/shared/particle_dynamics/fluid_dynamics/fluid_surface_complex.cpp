@@ -41,7 +41,7 @@ namespace SPH
 		SurfaceNormWithWall::SurfaceNormWithWall(BaseContactRelation &contact_relation, Real contact_angle)
 			: LocalDynamics(contact_relation.getSPHBody()), FSIContactData(contact_relation),
 			  contact_angle_(contact_angle),
-			  surface_indicator_(particles_->surface_indicator_),
+			  surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")),
 			  surface_norm_(*particles_->getVariableByName<Vecd>("SurfaceNormal")),
 			  pos_div_(*particles_->getVariableByName<Real>("PositionDivergence"))
 		{

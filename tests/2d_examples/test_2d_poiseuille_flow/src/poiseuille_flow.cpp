@@ -89,7 +89,7 @@ int main()
 	 * @brief Material property, particles and body creation of fluid.
 	 */
 	FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
-	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+	water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	water_block.generateParticles<ParticleGeneratorLattice>();
 	/**
 	 * @brief 	Particle and body creation of wall boundary.

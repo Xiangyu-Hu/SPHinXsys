@@ -23,7 +23,7 @@ Real DL_sponge = resolution_ref * 20; /**< Reference size of the emitter buffer 
 Real rho0_f = 1.0; /**< Reference density of fluid. */
 Real U_f = 1.0;	   /**< Characteristic velocity. */
 /** Reference sound speed needs to consider the flow speed in the narrow channels. */
-Real c_f = 10.0 * U_f * SMAX(1.0, DH / (2.0 * (DL - DL1)));
+Real c_f = 10.0 * U_f * SMAX(Real(1), DH / (Real(2.0) * (DL - DL1)));
 Real Re = 100.0;					/**< Reynolds number. */
 Real mu_f = rho0_f * U_f * DH / Re; /**< Dynamics viscosity. */
 //----------------------------------------------------------------------
@@ -105,7 +105,7 @@ int main(int ac, char *av[])
 	//	Creating body, materials and particles.cd
 	//----------------------------------------------------------------------
 	FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
-	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+	water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	water_block.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));

@@ -74,15 +74,25 @@ public:
 	}
 };
 //----------------------------------------------------------------------
-//	Shape for wall boundary and a structure.
+//	Shape for the wall.
 //----------------------------------------------------------------------
-class WallAndStructure : public MultiPolygonShape
+class Wall : public MultiPolygonShape
 {
 public:
-	explicit WallAndStructure(const std::string &shape_name) : MultiPolygonShape(shape_name)
+	explicit Wall(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
 		multi_polygon_.addAPolygon(createWallShape(), ShapeBooleanOps::add);
-		multi_polygon_.addAPolygon(createStructureShape(), ShapeBooleanOps::sub);
+	}
+};
+//----------------------------------------------------------------------
+//	Shape for a structure.
+//----------------------------------------------------------------------
+class Triangle : public MultiPolygonShape
+{
+public:
+	explicit Triangle(const std::string &shape_name) : MultiPolygonShape(shape_name)
+	{
+		multi_polygon_.addAPolygon(createStructureShape(), ShapeBooleanOps::add);
 	}
 };
 //----------------------------------------------------------------------
@@ -101,7 +111,7 @@ int main(int ac, char *av[])
 	//	Creating bodies with corresponding materials and particles.
 	//----------------------------------------------------------------------
 	FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
+	water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
 	water_block.generateParticles<ParticleGeneratorLattice>();
 
 	ObserverBody fluid_observer(sph_system, "FluidObserver");
@@ -130,13 +140,23 @@ int main(int ac, char *av[])
 	/** Pressure relaxation algorithm by using position verlet time stepping. */
 	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemann> pressure_relaxation(water_block_inner);
 	Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemann> density_relaxation(water_block_inner);
-	/** Confinement condition for wall and structure. */
-	NearShapeSurface near_surface(water_block, makeShared<WallAndStructure>("WallAndStructure"));
-	fluid_dynamics::StaticConfinement confinement_condition(near_surface);
-	update_density_by_summation.post_processes_.push_back(&confinement_condition.density_summation_);
-	pressure_relaxation.post_processes_.push_back(&confinement_condition.pressure_relaxation_);
-	density_relaxation.post_processes_.push_back(&confinement_condition.density_relaxation_);
-	density_relaxation.post_processes_.push_back(&confinement_condition.surface_bounding_);
+	/** Define the confinement condition for wall. */
+	NearShapeSurface near_surface_wall(water_block, makeShared<Wall>("Wall"));
+        near_surface_wall.level_set_shape_.writeLevelSet(io_environment);
+    fluid_dynamics::StaticConfinement confinement_condition_wall(near_surface_wall);
+    /** Define the confinement condition for structure. */
+	NearShapeSurface near_surface_triangle(water_block, makeShared<ExclusiveShape<Triangle>>("Triangle"));
+		near_surface_triangle.level_set_shape_.writeLevelSet(io_environment);
+	fluid_dynamics::StaticConfinement confinement_condition_triangle(near_surface_triangle);
+	/** Push back the static confinement conditiont to corresponding dynamics. */
+	update_density_by_summation.post_processes_.push_back(&confinement_condition_wall.density_summation_);
+    update_density_by_summation.post_processes_.push_back(&confinement_condition_triangle.density_relaxation_);
+    pressure_relaxation.post_processes_.push_back(&confinement_condition_wall.pressure_relaxation_);
+    pressure_relaxation.post_processes_.push_back(&confinement_condition_triangle.pressure_relaxation_);
+    density_relaxation.post_processes_.push_back(&confinement_condition_wall.density_relaxation_);
+    density_relaxation.post_processes_.push_back(&confinement_condition_triangle.density_relaxation_);
+    density_relaxation.post_processes_.push_back(&confinement_condition_wall.surface_bounding_);
+    density_relaxation.post_processes_.push_back(&confinement_condition_triangle.surface_bounding_);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations, observations
 	//	and regression tests of the simulation.

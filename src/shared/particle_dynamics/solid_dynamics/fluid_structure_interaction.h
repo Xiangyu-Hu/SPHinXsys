@@ -40,7 +40,7 @@ namespace SPH
 	namespace solid_dynamics
 	{
 		typedef DataDelegateSimple<SolidParticles> SolidDataSimple;
-		typedef DataDelegateContact<SolidParticles, FluidParticles> FSIContactData;
+		typedef DataDelegateContact<SolidParticles, BaseParticles> FSIContactData;
 
 		/**
 		 * @class BaseForceFromFluid
@@ -138,7 +138,7 @@ namespace SPH
 						Vecd e_ij = contact_neighborhood.e_ij_[n];
 						Real r_ij = contact_neighborhood.r_ij_[n];
 						Real face_wall_external_acceleration = (acc_prior_k[index_j] - acc_ave_[index_i]).dot(e_ij);
-						Real p_in_wall = p_k[index_j] + rho_n_k[index_j] * r_ij * SMAX(0.0, face_wall_external_acceleration);
+						Real p_in_wall = p_k[index_j] + rho_n_k[index_j] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
 						Real u_jump = 2.0 * (vel_k[index_j] - vel_ave_[index_i]).dot(n_[index_i]);
 						force += (riemann_solvers_k.DissipativePJump(u_jump) * n_[index_i] - (p_in_wall + p_k[index_j]) * e_ij )
 								 * Vol_[index_i] * contact_neighborhood.dW_ijV_j_[n];
@@ -164,7 +164,7 @@ namespace SPH
 				{
 					contact_rho_n_.push_back(&(contact_particles_[k]->rho_));
 					contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
-					contact_p_.push_back(&(contact_particles_[k]->p_));
+					contact_p_.push_back(contact_particles_[k]->template getVariableByName<Real>("Pressure"));
 					contact_acc_prior_.push_back(&(contact_particles_[k]->acc_prior_));
 					riemann_solvers_.push_back(RiemannSolverType(*contact_fluids_[k], *contact_fluids_[k]));
 				}

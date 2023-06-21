@@ -12,7 +12,7 @@ namespace SPH
 		{
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
-				contact_fluids_.push_back(&contact_particles_[k]->fluid_);
+				contact_fluids_.push_back(DynamicCast<Fluid>(this, &contact_particles_[k]->base_material_));
 			}
 		}
 		//=================================================================================================//
