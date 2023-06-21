@@ -107,12 +107,13 @@ namespace SPH
 	* @class EulerianViscousAccelerationInner
 	* @brief  the viscosity force induced acceleration
 	*/
-	class EulerianViscousAccelerationInner : public fluid_dynamics::BaseViscousAccelerationInner
+	class WCEulerianViscousAccelerationInner : public fluid_dynamics::BaseViscousAccelerationInner
 	{
 	public:
-		explicit EulerianViscousAccelerationInner(BaseInnerRelation& inner_relation);
-		virtual ~EulerianViscousAccelerationInner() {};
+		explicit WCEulerianViscousAccelerationInner(BaseInnerRelation& inner_relation);
+		virtual ~WCEulerianViscousAccelerationInner() {};
 		void interaction(size_t index_i, Real dt = 0.0);
+	protected:
 		StdLargeVec<Vecd>& dmom_dt_prior_;
 	};
 
@@ -162,7 +163,7 @@ namespace SPH
 			BaseContactRelation& wall_contact_relation)
 			: BaseViscousAccelerationType(fluid_complex_relation, wall_contact_relation) {};
 	};
-	using ViscousAccelerationWithWall = BaseViscousAccelerationWithWall<ViscousWithWall<EulerianViscousAccelerationInner>>;
+	using ViscousAccelerationWithWall = BaseViscousAccelerationWithWall<ViscousWithWall<WCEulerianViscousAccelerationInner>>;
 
 	/**
 	* @class EulerianBaseIntegration
@@ -188,10 +189,10 @@ namespace SPH
 	class BaseIntegration1stHalf : public EulerianBaseIntegration
 	{
 	public:
-		explicit BaseIntegration1stHalf(BaseInnerRelation& inner_relation);
+		explicit BaseIntegration1stHalf(BaseInnerRelation& inner_relation, Real limiter_parameter=15.0);
 		virtual ~BaseIntegration1stHalf() {};
+		Real limiter_input_;
 		RiemannSolverType riemann_solver_;
-		void initialization(size_t index_i, Real dt = 0.0);
 		void interaction(size_t index_i, Real dt = 0.0);
 		void update(size_t index_i, Real dt = 0.0);
 	};
@@ -208,13 +209,14 @@ namespace SPH
 	public:
 		// template for different combination of constructing body relations
 		template <class BaseBodyRelationType>
-		BaseIntegration1stHalfWithWall(BaseBodyRelationType& base_body_relation, BaseContactRelation& wall_contact_relation)
-			: InteractionWithWall<BaseIntegration1stHalfType>(base_body_relation, wall_contact_relation) {};
+		BaseIntegration1stHalfWithWall(BaseBodyRelationType& base_body_relation, BaseContactRelation& wall_contact_relation, Real limiter_parameter=15.0)
+			: InteractionWithWall<BaseIntegration1stHalfType>(base_body_relation, wall_contact_relation),limiter_input_(limiter_parameter) {};
 		explicit BaseIntegration1stHalfWithWall(ComplexRelation& fluid_wall_relation)
 			: BaseIntegration1stHalfWithWall(fluid_wall_relation.getInnerRelation(),
 				fluid_wall_relation.getContactRelation()) {};
 		virtual ~BaseIntegration1stHalfWithWall() {};
 		void interaction(size_t index_i, Real dt = 0.0);
+		Real& limiter_input_;
 	};
 	using Integration1stHalfAcousticRiemannWithWall = BaseIntegration1stHalfWithWall<Integration1stHalfAcousticRiemann>;
 
@@ -226,8 +228,9 @@ namespace SPH
 	class BaseIntegration2ndHalf : public EulerianBaseIntegration
 	{
 	public:
-		explicit BaseIntegration2ndHalf(BaseInnerRelation& inner_relation);
+		explicit BaseIntegration2ndHalf(BaseInnerRelation& inner_relation, Real limiter_parameter=15.0);
 		virtual ~BaseIntegration2ndHalf() {};
+		Real limiter_input_;
 		RiemannSolverType riemann_solver_;
 		void interaction(size_t index_i, Real dt = 0.0);
 		void update(size_t index_i, Real dt = 0.0);
@@ -244,13 +247,14 @@ namespace SPH
 	public:
 		// template for different combination of constructing body relations
 		template <class BaseBodyRelationType>
-		BaseIntegration2ndHalfWithWall(BaseBodyRelationType& base_body_relation, BaseContactRelation& wall_contact_relation)
-			: InteractionWithWall<BaseIntegration2ndHalfType>(base_body_relation, wall_contact_relation) {};
+		BaseIntegration2ndHalfWithWall(BaseBodyRelationType& base_body_relation, BaseContactRelation& wall_contact_relation, Real limiter_parameter=15.0)
+			: InteractionWithWall<BaseIntegration2ndHalfType>(base_body_relation, wall_contact_relation),limiter_input_(limiter_parameter) {};
 		explicit BaseIntegration2ndHalfWithWall(ComplexRelation& fluid_wall_relation)
 			: BaseIntegration2ndHalfWithWall(fluid_wall_relation.getInnerRelation(),
 				fluid_wall_relation.getContactRelation()) {};
 		virtual ~BaseIntegration2ndHalfWithWall() {};
 		void interaction(size_t index_i, Real dt = 0.0);
+		Real& limiter_input_;
 	};
 	using Integration2ndHalfAcousticRiemannWithWall = BaseIntegration2ndHalfWithWall<Integration2ndHalfAcousticRiemann>;
 

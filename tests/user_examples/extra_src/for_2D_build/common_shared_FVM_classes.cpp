@@ -400,6 +400,7 @@ namespace SPH
 			if (text_line.find("Zone Sections", 0) != string::npos) break;
 			if (text_line.find(")") != string::npos) continue;
 		}
+		cell_lists_.erase(cell_lists_.begin());
 	}
     //=================================================================================================//
     void readMeshFile::getElementCenterCoordinates()
@@ -433,35 +434,52 @@ namespace SPH
                 pow(half_perimeter * (half_perimeter - first_side_length) * (half_perimeter - second_side_length) * (half_perimeter - third_side_length), 0.5);
             elements_volumes_[element] = element_volume;
         }
+		elements_volumes_.erase(elements_volumes_.begin());
+		elements_center_coordinates_.erase(elements_center_coordinates_.begin());
     }
     //=================================================================================================//
-    void NeighborhoodInFVM::removeANeighbor(size_t neighbor_n) 
-	{
-        current_size_--;
-        j_[neighbor_n] = j_[current_size_];
-        dW_ijV_j_[neighbor_n] = dW_ijV_j_[current_size_];
-        r_ij_[neighbor_n] = r_ij_[current_size_];
-        interface_size_[neighbor_n] = interface_size_[current_size_];
-        boundary_type_[neighbor_n] = boundary_type_[current_size_];
-	}
-	//=================================================================================================//
+	void readMeshFile::gerMaximumDistanceBetweenNodes()
+    {
+       vector<Real> all_data_of_distance_between_nodes;
+	   all_data_of_distance_between_nodes.resize(0);
+	   for(size_t element_index=0;element_index!=elements_volumes_.size();++element_index)
+	   {
+		    for (std::vector<std::vector<long unsigned int>>::size_type neighbor = 0; neighbor != cell_lists_[element_index].size(); ++neighbor)
+			{
+				size_t interface_node1_index = cell_lists_[element_index][neighbor][2];
+				size_t interface_node2_index = cell_lists_[element_index][neighbor][3];
+				Vecd node1_position = Vecd(point_coordinates_2D_[interface_node1_index][0], point_coordinates_2D_[interface_node1_index][1]);
+				Vecd node2_position = Vecd(point_coordinates_2D_[interface_node2_index][0], point_coordinates_2D_[interface_node2_index][1]);
+				Vecd interface_area_vector = node1_position - node2_position;
+				Real interface_area_size = interface_area_vector.norm();
+				all_data_of_distance_between_nodes.push_back(interface_area_size);
+			}
+	   }
+	   auto max_distance_iter = std::max_element(all_data_of_distance_between_nodes.begin(), all_data_of_distance_between_nodes.end());
+	   if (max_distance_iter != all_data_of_distance_between_nodes.end())
+	   {
+		   max_distance_between_nodes_ = *max_distance_iter;
+	   }
+	   else {cout << "The array of all distance between nodes is empty " << endl; }
+    }
+    //=================================================================================================//
 	void BaseInnerRelationInFVM::resetNeighborhoodCurrentSize()
 	{
 		parallel_for
 		(
-            IndexRange(0, base_particles_.total_real_particles_),
+            IndexRange(0, base_particles_.total_real_particles_ + base_particles_.total_ghost_particles_),
             [&](const IndexRange &r)
             {
                 for (size_t num = r.begin(); num != r.end(); ++num)
                 {
-                    inner_configuration_in_FVM_[num].current_size_ = 0;
+                    inner_configuration_[num].current_size_ = 0;
                 }
             },
         ap);
 	}
 	//=================================================================================================//
 	 BaseInnerRelationInFVM::BaseInnerRelationInFVM(RealBody &real_body, vector<vector<vector<size_t>>> data_inpute, vector<vector<Real>> nodes_coordinates)
-        : SPHRelation(real_body), real_body_(&real_body)
+        : BaseInnerRelation(real_body), real_body_(&real_body)
     {
         all_needed_data_from_mesh_file_ = data_inpute;
         nodes_coordinates_ = nodes_coordinates;
@@ -471,8 +489,8 @@ namespace SPH
 	//=================================================================================================//
     void BaseInnerRelationInFVM::resizeConfiguration() 
 	{
-        size_t updated_size = base_particles_.real_particles_bound_;
-        inner_configuration_in_FVM_.resize(updated_size, NeighborhoodInFVM());
+        size_t updated_size = base_particles_.real_particles_bound_+ base_particles_.total_ghost_particles_;
+        inner_configuration_.resize(updated_size, Neighborhood());
 	}
 	//=================================================================================================//
     ParticleGeneratorInFVM::ParticleGeneratorInFVM(SPHBody &sph_body, const StdLargeVec<Vecd> &positions, const StdLargeVec<Real> &elements_volumes)
@@ -480,45 +498,41 @@ namespace SPH
 	//=================================================================================================//
 	void ParticleGeneratorInFVM::initializeGeometricVariables()
 	{
-        for (size_t particle_index = 1; particle_index != elements_center_coordinates_.size(); ++particle_index)
+        for (size_t particle_index = 0; particle_index != elements_center_coordinates_.size(); ++particle_index)
         {
             initializePositionAndVolumetricMeasure(elements_center_coordinates_[particle_index], elements_volumes_[particle_index]);
         }
 	}
 	//=================================================================================================//
-	void NeighborBuilderInFVM::createRelation(NeighborhoodInFVM &neighborhood, Real &distance, Real &dW_ijV_j, Real &interface_size,
-                            Vecd &interface_normal_direction, size_t bc_type, size_t j_index) const
+	void NeighborBuilderInFVM::createRelation(Neighborhood &neighborhood, Real &distance, 
+		Real &dW_ijV_j, Vecd &interface_normal_direction, size_t j_index) const
 	{
         neighborhood.j_.push_back(j_index);
         neighborhood.r_ij_.push_back(distance);
-        neighborhood.interface_size_.push_back(interface_size);
         neighborhood.e_ij_.push_back(interface_normal_direction);
         neighborhood.dW_ijV_j_.push_back(dW_ijV_j);
-        neighborhood.boundary_type_.push_back(bc_type);
         neighborhood.allocated_size_++;
 	}
 	//=================================================================================================//
-	void NeighborBuilderInFVM::initializeRelation(NeighborhoodInFVM &neighborhood, Real &distance, Real &dW_ijV_j, Real &interface_size,
-                                Vecd &interface_normal_direction, size_t bc_type, size_t j_index)const
+	void NeighborBuilderInFVM::initializeRelation(Neighborhood &neighborhood, Real &distance, 
+		Real &dW_ijV_j, Vecd &interface_normal_direction, size_t j_index)const
 	{
 		size_t current_size = neighborhood.current_size_;
 		neighborhood.j_[current_size] = j_index;
 		neighborhood.dW_ijV_j_[current_size] = dW_ijV_j;
 		neighborhood.r_ij_[current_size] = distance;
-		neighborhood.interface_size_[current_size] = interface_size;
 		neighborhood.e_ij_[current_size] = interface_normal_direction;
-		neighborhood.boundary_type_[current_size] = bc_type;
 	}
 	//=================================================================================================//
 	InnerRelationInFVM::InnerRelationInFVM(RealBody &real_body, vector<vector<vector<size_t>>> data_inpute, vector<vector<Real>> nodes_coordinates)
             : BaseInnerRelationInFVM(real_body, data_inpute, nodes_coordinates), get_inner_neighbor_(&real_body){};
 	//=================================================================================================//
 	template <typename GetParticleIndex, typename GetNeighborRelation>
-	void InnerRelationInFVM::searchNeighborsByParticles(size_t total_real_particles, BaseParticles &source_particles,
-        ParticleConfigurationInFVM &particle_configuration, GetParticleIndex &get_particle_index, GetNeighborRelation &get_neighbor_relation)
+	void InnerRelationInFVM::searchNeighborsByParticles(size_t total_particles, BaseParticles &source_particles,
+        ParticleConfiguration &particle_configuration, GetParticleIndex &get_particle_index, GetNeighborRelation &get_neighbor_relation)
 	{
 		parallel_for(
-                IndexRange(0, base_particles_.total_real_particles_),
+                IndexRange(0, base_particles_.total_real_particles_+ base_particles_.total_ghost_particles_),
                 [&](const IndexRange &r)
             {
                 StdLargeVec<Vecd> &pos_n = source_particles.pos_;
@@ -529,13 +543,13 @@ namespace SPH
                     Vecd &particle_position = pos_n[index_i];
                     Real &Vol_i = Vol_n[index_i];
 
-                    NeighborhoodInFVM &neighborhood = particle_configuration[index_i];
-                    for (std::vector<std::vector<long unsigned int>>::size_type neighbor = 0; neighbor != all_needed_data_from_mesh_file_[index_i + 1].size(); ++neighbor)
+                    Neighborhood &neighborhood = particle_configuration[index_i];
+                    for (std::vector<std::vector<long unsigned int>>::size_type neighbor = 0; neighbor != all_needed_data_from_mesh_file_[index_i].size(); ++neighbor)
                     {
-                        size_t index_j = all_needed_data_from_mesh_file_[index_i + 1][neighbor][0] - 1;
-                        size_t boundary_type = all_needed_data_from_mesh_file_[index_i + 1][neighbor][1];
-                        size_t interface_node1_index = all_needed_data_from_mesh_file_[index_i + 1][neighbor][2];
-                        size_t interface_node2_index = all_needed_data_from_mesh_file_[index_i + 1][neighbor][3];
+                        size_t index_j = all_needed_data_from_mesh_file_[index_i][neighbor][0] - 1;
+                        size_t boundary_type = all_needed_data_from_mesh_file_[index_i][neighbor][1];
+                        size_t interface_node1_index = all_needed_data_from_mesh_file_[index_i][neighbor][2];
+                        size_t interface_node2_index = all_needed_data_from_mesh_file_[index_i][neighbor][3];
                         Vecd node1_position = Vecd(nodes_coordinates_[interface_node1_index][0], nodes_coordinates_[interface_node1_index][1]);
                         Vecd node2_position = Vecd(nodes_coordinates_[interface_node2_index][0], nodes_coordinates_[interface_node2_index][1]);
                         Vecd interface_area_vector = node1_position - node2_position;
@@ -561,7 +575,7 @@ namespace SPH
                             r_ij = node1_to_center_direction.dot(normal_vector) * 2.0;
                         }
                         Real dW_ijV_j = -interface_area_size / (2.0 * Vol_i);
-                        get_neighbor_relation(neighborhood, r_ij, dW_ijV_j, interface_area_size, normal_vector, boundary_type, index_j);
+                        get_neighbor_relation(neighborhood, r_ij, dW_ijV_j, normal_vector, index_j);
                     }
                 }
             },
@@ -571,8 +585,8 @@ namespace SPH
 	void InnerRelationInFVM::updateConfiguration()
 	{
 		resetNeighborhoodCurrentSize();
-		searchNeighborsByParticles(base_particles_.total_real_particles_,
-									base_particles_, inner_configuration_in_FVM_,
+		searchNeighborsByParticles(base_particles_.total_real_particles_+base_particles_.total_ghost_particles_,
+									base_particles_, inner_configuration_,
 									get_particle_index_, get_inner_neighbor_);
 	}
 	//=================================================================================================//

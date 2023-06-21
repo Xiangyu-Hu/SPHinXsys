@@ -120,7 +120,7 @@ namespace SPH
 		CompressibleFluid& compressible_fluid_i_, & compressible_fluid_j_;
 
 	public:
-		HLLCRiemannSolver(CompressibleFluid& compressible_fluid_i, CompressibleFluid& compressible_fluid_j);
+		HLLCRiemannSolver(CompressibleFluid& compressible_fluid_i, CompressibleFluid& compressible_fluid_j, Real limiter_parameter = 0.0);
 		CompressibleFluidStarState getInterfaceState(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j, const Vecd& e_ij);
 	};
 	/**
@@ -179,10 +179,9 @@ namespace SPH
 	class BaseIntegration1stHalf : public BaseIntegrationInCompressible
 	{
 	public:
-		explicit BaseIntegration1stHalf(BaseInnerRelation& inner_relation);
+		explicit BaseIntegration1stHalf(BaseInnerRelation& inner_relation, Real limiter_parameter=5.0);
 		virtual ~BaseIntegration1stHalf() {};
 		RiemannSolverType riemann_solver_;
-		void initialization(size_t index_i, Real dt = 0.0);
 		void interaction(size_t index_i, Real dt = 0.0);
 		void update(size_t index_i, Real dt = 0.0);
 	};
@@ -198,7 +197,7 @@ namespace SPH
 	class BaseIntegration2ndHalf : public BaseIntegrationInCompressible
 	{
 	public:
-		explicit BaseIntegration2ndHalf(BaseInnerRelation& inner_relation);
+		explicit BaseIntegration2ndHalf(BaseInnerRelation& inner_relation, Real limiter_parameter=5.0);
 		virtual ~BaseIntegration2ndHalf() {};
 		RiemannSolverType riemann_solver_;
 		void interaction(size_t index_i, Real dt = 0.0);

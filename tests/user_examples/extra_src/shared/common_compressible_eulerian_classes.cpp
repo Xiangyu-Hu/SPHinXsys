@@ -44,7 +44,7 @@ namespace SPH
 		return CompressibleFluidStarState(rho_star, v_star, p_star, energy_star);
 	}
 	//=================================================================================================//
-	HLLCRiemannSolver::HLLCRiemannSolver(CompressibleFluid& compressible_fluid_i, CompressibleFluid& compressible_fluid_j)
+	HLLCRiemannSolver::HLLCRiemannSolver(CompressibleFluid& compressible_fluid_i, CompressibleFluid& compressible_fluid_j, Real limiter_parameter)
 		: compressible_fluid_i_(compressible_fluid_i), compressible_fluid_j_(compressible_fluid_j) {};
 	//=================================================================================================//
 	CompressibleFluidStarState HLLCRiemannSolver::

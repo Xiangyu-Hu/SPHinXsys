@@ -10,7 +10,7 @@
 #include "common_shared_FVM_classes.h" // shared classes for weakly-compressible and compressible fluid in FVM.
 #include "common_weakly_compressible_FVM_classes.hpp" // classes for weakly compressible fluid only in FVM.
 #include "common_shared_eulerian_classes.h" // shared eulerian classes for weakly-compressible and compressible fluid.
-#include "common_weakly_compressible_eulerian_classes.h" // eulerian classes for weakly compressible fluid only.
+#include "common_weakly_compressible_eulerian_classes.hpp" // eulerian classes for weakly compressible fluid only.
 using namespace SPH;
 using namespace std;
 //----------------------------------------------------------------------
@@ -79,6 +79,64 @@ class WeaklyCompressibleFluidInitialCondition
   protected:
     StdLargeVec<Vecd> mom_, dmom_dt_, dmom_dt_prior_;
     StdLargeVec<Real> &rho_, &p_;
+};
+
+//----------------------------------------------------------------------
+//	DMFBoundaryConditionSetup
+//----------------------------------------------------------------------
+class FACBoundaryConditionSetup : public fluid_dynamics::FluidDataInner
+{
+public:
+	FACBoundaryConditionSetup(BaseInnerRelationInFVM& inner_relation, vector<vector<size_t>> each_boundary_type_with_all_ghosts_index,
+        vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_,vector<vector<size_t>> each_boundary_type_contact_real_index): 
+        fluid_dynamics::FluidDataInner(inner_relation), rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")), 
+        Vol_(particles_->Vol_), vel_(particles_->vel_), mom_(*particles_->getVariableByName<Vecd>("Momentum")), pos_(particles_->pos_),
+		fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())), total_ghost_particles_(particles_->total_ghost_particles_),
+        real_particles_bound_(particles_->real_particles_bound_),each_boundary_type_with_all_ghosts_index_(each_boundary_type_with_all_ghosts_index),
+        each_boundary_type_with_all_ghosts_eij_(each_boundary_type_with_all_ghosts_eij_),each_boundary_type_contact_real_index_(each_boundary_type_contact_real_index){};
+	virtual ~FACBoundaryConditionSetup() {};
+
+	void resetBoundaryConditions()
+    {
+		for (size_t boundary_type = 0; boundary_type < each_boundary_type_with_all_ghosts_index_.size(); ++boundary_type)
+        {
+            if (!each_boundary_type_with_all_ghosts_index_[boundary_type].empty()) 
+            {
+                for (size_t ghost_number = 0; ghost_number != each_boundary_type_with_all_ghosts_index_[boundary_type].size(); ++ghost_number)
+                {
+                    size_t ghost_index = each_boundary_type_with_all_ghosts_index_[boundary_type][ghost_number];
+                    size_t index_i = each_boundary_type_contact_real_index_[boundary_type][ghost_number];
+                    if (boundary_type == 3)
+					{
+						//non-slip wall boundary
+						vel_[ghost_index] = -vel_[index_i];
+						p_[ghost_index] = p_[index_i];
+						rho_[ghost_index] = rho_[index_i];
+					}
+					if (boundary_type == 9)
+					{
+						//Far-field boundary
+						Vecd far_field_velocity(1.0, 0.0);
+						Real far_field_density = 1.0;
+						Real far_field_pressure = fluid_.getPressure(far_field_density);
+
+						vel_[ghost_index] = far_field_velocity;
+						p_[ghost_index] = far_field_pressure;
+						rho_[ghost_index] = far_field_density;
+					}
+                }
+            }
+        }
+    };
+protected:
+	StdLargeVec<Real>& rho_, & p_, & Vol_;
+	StdLargeVec<Vecd>& vel_, & mom_, & pos_;
+	Fluid& fluid_;
+	size_t &total_ghost_particles_;
+    size_t &real_particles_bound_;
+	vector<vector<size_t>> each_boundary_type_with_all_ghosts_index_;
+    vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_;
+    vector<vector<size_t>> each_boundary_type_contact_real_index_;
 };
 
 #endif // EULERIAN_FLOW_AROUND_CYLINDER_H

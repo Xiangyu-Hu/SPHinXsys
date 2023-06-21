@@ -46,7 +46,7 @@ int main(int ac, char* av[])
 	// Time step size with considering sound wave speed.
 	ReduceDynamics<EulerianCompressibleAcousticTimeStepSize> get_wave_time_step_size(wave_body);
 	// Pressure, density and energy relaxation algorithm by use HLLC Riemann solver.
-	Dynamics1Level<Integration1stHalfHLLCRiemann> pressure_relaxation(wave_body_inner);
+	InteractionWithUpdate<Integration1stHalfHLLCRiemann> pressure_relaxation(wave_body_inner);
 	InteractionWithUpdate<Integration2ndHalfHLLCRiemann> density_and_energy_relaxation(wave_body_inner);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations, observations of the simulation.
