@@ -142,7 +142,9 @@ namespace SPH
 			StdLargeVec<Vecd>& acc_prior_;
 
 			StdLargeVec<Vecd>& pos_;
-			StdLargeVec<int>& surface_indicator_;
+			StdLargeVec<int>& surface_indicator_;//, is_near_wall_P1_;
+			StdLargeVec<Vecd> tke_acc_inner_, tke_acc_wall_;
+			StdLargeVec<Vecd> test_k_grad_rslt_;
 		};
 
 		/**
@@ -158,6 +160,9 @@ namespace SPH
 			inline void interaction(size_t index_i, Real dt = 0.0);
 		protected:
 			StdLargeVec<Real>& turbu_mu_;
+			StdLargeVec<Real>& wall_Y_plus_;
+			StdLargeVec<Vecd>& velo_friction_;
+			StdLargeVec<Vecd> visc_acc_inner_, visc_acc_wall_;
 		};
 
 		/**

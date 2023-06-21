@@ -128,12 +128,16 @@ namespace SPH
 					size_t index_j = contact_neighborhood.j_[n];
 					Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
 					//the value of k on wall in this part needs discusstion!
-					k_gradient += (turbu_k_i - 0.0) * nablaW_ijV_j;
+					k_gradient += -1.0 * 2.3 *(turbu_k_i - 0.0) * nablaW_ijV_j;
+					//k_gradient +=  (turbu_k_i - 0.0) * nablaW_ijV_j;
 					acceleration -= (2.0 / 3.0) * k_gradient;
 				}
 			}
 			//if (surface_indicator_[index_i] == 0 && pos_[index_i][0] <= 5.95)//To prevent kernel truncation near outlet
-				acc_prior_[index_i] += acceleration;
+			acc_prior_[index_i] += acceleration;
+			//for test
+			tke_acc_wall_[index_i] = acceleration;
+			test_k_grad_rslt_[index_i] += k_gradient;
 		}
 		//=================================================================================================//
 		template <class TurbuViscousAccInnerType>
@@ -144,6 +148,10 @@ namespace SPH
 			Real turbu_mu_i = this->turbu_mu_[index_i];
 			Real rho_i = this->rho_[index_i];
 			const Vecd& vel_i = this->vel_[index_i];
+			const Vecd& vel_fric_i = this->velo_friction_[index_i];
+			Vecd direction_vel_fric = vel_fric_i.normalized();
+			
+			Real y_plus_i = this->wall_Y_plus_[index_i];
 
 			Vecd acceleration = Vecd::Zero();
 			Vecd vel_derivative = Vecd::Zero();
@@ -156,10 +164,14 @@ namespace SPH
 					size_t index_j = contact_neighborhood.j_[n];
 					Real r_ij = contact_neighborhood.r_ij_[n];
 
-					vel_derivative = 2.0 * (vel_i - vel_ave_k[index_j]) / (r_ij + 0.01 * this->smoothing_length_);
-					acceleration += 2.0 * (this->mu_+ turbu_mu_i) * vel_derivative * contact_neighborhood.dW_ijV_j_[n] / rho_i;
+					//vel_derivative = 2.0 * (vel_i - vel_ave_k[index_j]) / (r_ij + 0.01 * this->smoothing_length_);
+					//acceleration += 2.0 * (this->mu_+ turbu_mu_i) * vel_derivative * contact_neighborhood.dW_ijV_j_[n] / rho_i;
+					vel_derivative = 2.0 * vel_fric_i.dot(vel_fric_i)* direction_vel_fric;
+					acceleration +=  vel_derivative * contact_neighborhood.dW_ijV_j_[n] ;
 				}
 			}
+			//for test
+			this->visc_acc_wall_[index_i] = acceleration;
 
 			this->acc_prior_[index_i] += acceleration;
 		}
@@ -181,7 +193,7 @@ namespace SPH
 
 			index_nearest[index_i] = 0;
 			velo_tan_[index_i] = 0.0;
-			velo_friction_[index_i] = 0.0;
+			velo_friction_[index_i] = Vecd::Zero();
 			wall_Y_plus_[index_i] = 0.0;
 			wall_Y_star_[index_i] = 0.0;
 			distance_to_wall[index_i] = 0.0;
@@ -244,8 +256,10 @@ namespace SPH
 				velo_fric = getFrictionVelo(0.0, 3.0, 1e-6);
 				checkFrictionVelo(velo_fric, 1e-2);
 
-				//for output test
-				velo_friction_[index_i] = velo_fric;
+				velo_friction_[index_i] = velo_fric* e_ij_t;
+				//friction velocity have the same direction of vel_i, if not, change its direction
+				if (vel_i.dot(velo_friction_[index_i]) < 0.0)
+					velo_friction_[index_i] = -1.0*velo_friction_[index_i];
 
 			}
 			if (r_wall_normal <= 1.5 * particle_spacing_ &&
@@ -263,9 +277,9 @@ namespace SPH
 			is_near_wall_P1_pre_[index_i] = 0;
 			is_near_wall_P1_pre_[index_i] = is_near_wall_P1_[index_i];
 
-			if (is_near_wall_P1_[index_i] == 1)
+			if (is_near_wall_P1_[index_i] == 1&& pos_[index_i][0]>=0.0) // this is a temporal treamtment.
 			{
-				//turbu_k_[index_i] = velo_fric * velo_fric / sqrt(C_mu);
+				turbu_k_[index_i] = velo_fric * velo_fric / sqrt(C_mu);
 				turbu_epsilon_[index_i] = pow(C_mu, 0.75) * pow(turbu_k_[index_i], 1.5) / (Karman * r_wall_normal);
 				wall_Y_plus_[index_i] = r_wall_normal * velo_fric * rho_i / mu_;
 				wall_Y_star_[index_i] = r_wall_normal * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * rho_i / mu_;

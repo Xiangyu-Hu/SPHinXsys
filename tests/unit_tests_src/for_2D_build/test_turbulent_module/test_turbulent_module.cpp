@@ -95,6 +95,7 @@ protected:
 	InnerRelation water_block_inner;
 	ComplexRelation water_block_complex_relation;
 	InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelComplex, SequencedPolicy> k_equation_relaxation;
+	InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelComplex> epsilon_equation_relaxation;
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction;
 	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection, SequencedPolicy> standard_wall_function_correction;
 	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation;
@@ -104,11 +105,12 @@ protected:
 	Real dt;
 	int num_fluid_particle;
 public:
-	TurbulentModule() : 
+	TurbulentModule() :
 		BaseTurbulentModule(),
 		water_block_inner(water_block),
 		water_block_complex_relation(water_block_inner, { &wall_boundary }),
 		k_equation_relaxation(water_block_complex_relation),
+		epsilon_equation_relaxation(water_block_complex_relation),
 		wall_boundary_normal_direction(wall_boundary),
 		standard_wall_function_correction(water_block_complex_relation),
 		update_density_by_summation(water_block_complex_relation),
@@ -136,9 +138,9 @@ public:
 
 
 //----------------------------------------------------------------------
-//	Test K equation
+//	Test K_Epsilon equation
 //----------------------------------------------------------------------
-class Test_K_Equation : public fluid_dynamics::FluidInitialCondition
+class Test_K_Epsilon_Equation : public fluid_dynamics::FluidInitialCondition
 {
 protected:
 	StdLargeVec<Vecd>& pos_, & vel_;
@@ -151,14 +153,19 @@ protected:
 	double input_data[20][4];
 	std::string file_name[4] = { "U.dat","K.dat" ,"Epsilon.dat" ,"Mu_t.dat" };
 	Real smoothing_length_min_;
+	StdLargeVec<Vecd> expect_k_gradient_;
+
 public:
-	Test_K_Equation(SPHBody& sph_body) : FluidInitialCondition(sph_body),
+	Test_K_Epsilon_Equation(SPHBody& sph_body) : FluidInitialCondition(sph_body),
 		pos_(particles_->pos_), vel_(particles_->vel_),
 		turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
 		turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
 		turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation")),
 		smoothing_length_min_(sph_body.sph_adaptation_->MinimumSmoothingLength())
 	{
+		particles_->registerVariable(expect_k_gradient_, "ExpectTkeGradient");
+		particles_->addVariableToWrite<Vecd>("ExpectTkeGradient");
+
 		std::vector<double> data;
 		//load 4 files one by one
 		for (int j = 0; j < num_file; ++j)
@@ -171,9 +178,9 @@ public:
 		}
 	
 	}
-	virtual ~Test_K_Equation() {};
+	virtual ~Test_K_Epsilon_Equation() {};
 	void update(size_t index_i, Real dt = 0.0);
-
+	void impose_parabolic_k(size_t index_i);
 	std::vector<double> loadInputData(int num_data, int num_file, std::string file_name)
 	{
 		std::ifstream file("./MappingData/FVM16_basedOnSPH4_4/" + file_name, std::ios::binary);  
@@ -201,7 +208,7 @@ public:
 	};
 
 };
-void Test_K_Equation::update(size_t index_i, Real dt) 
+void Test_K_Epsilon_Equation::update(size_t index_i, Real dt)
 {
 	for (int i = 0; i < num_data; ++i)
 	{
@@ -217,17 +224,47 @@ void Test_K_Equation::update(size_t index_i, Real dt)
 		}
 	}
 }
+void Test_K_Epsilon_Equation::impose_parabolic_k(size_t index_i)
+{
+	Real Radius = (DH / 2.0);
+	Real transformed_pos = pos_[index_i][1] - (DH / 2.0);
+	turbu_k_[index_i] = 1.5 * U_f * (1.0 - transformed_pos * transformed_pos / Radius / Radius);
+	expect_k_gradient_[index_i][1] = -2.0 * 1.5 * U_f / Radius / Radius * transformed_pos;
+}
+
+
+
+TEST_F(TurbulentModule, TestTurbulentKineticEnergyGradient)
+{
+	SimpleDynamics<Test_K_Epsilon_Equation, SequencedPolicy> test_k_ep_equation(water_block);
+	InteractionDynamics<fluid_dynamics::TKEnergyAccComplex, SequencedPolicy> turbulent_kinetic_energy_acceleration(water_block_complex_relation);
+	for (int index_i = 0; index_i < num_fluid_particle; ++index_i)
+	{
+		test_k_ep_equation.impose_parabolic_k(index_i); //** impose parabolic profiles *
+	}
+	write_body_states.writeToFile();
+	turbulent_kinetic_energy_acceleration.exec();
+	write_body_states.writeToFile();
+	ASSERT_NEAR(1, 1, 0.02);
+
+
+	std::cout << "TestTurbulentKineticEnergyGradient completed, continuing will rewrite body states data" << std::endl;
+	system("pause");
+
+}
 
 TEST_F(TurbulentModule, TestTurbulentKineticEnergyEquation)
 {
-	SimpleDynamics<Test_K_Equation, SequencedPolicy> test_k_equation(water_block);
+	SimpleDynamics<Test_K_Epsilon_Equation, SequencedPolicy> test_k_ep_equation(water_block);
 	wall_boundary_normal_direction.exec();
 	write_body_states.writeToFile();
-	test_k_equation.exec(); //** impose profiles *
-	//write_body_states.writeToFile();
-	//standard_wall_function_correction.exec();
-	//write_body_states.writeToFile();
+	test_k_ep_equation.exec(); //** impose profiles *
+	write_body_states.writeToFile();//** output to check initial profiles *
+	dt = 1;
 	k_equation_relaxation.exec(dt);
+	epsilon_equation_relaxation.exec(dt);
+
+	standard_wall_function_correction.exec();
 	write_body_states.writeToFile();
 
 
@@ -238,6 +275,7 @@ TEST_F(TurbulentModule, TestTurbulentKineticEnergyEquation)
 	system("pause");
 
 }
+
 //----------------------------------------------------------------------
 
 

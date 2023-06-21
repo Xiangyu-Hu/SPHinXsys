@@ -127,11 +127,15 @@ namespace SPH
 			{
 				size_t index_j = inner_neighborhood.j_[n];
 				Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
-				k_gradient += (turbu_k_i - turbu_k_[index_j]) * nablaW_ijV_j;
+				k_gradient += -1.0*(turbu_k_i - turbu_k_[index_j]) * nablaW_ijV_j;
+				//k_gradient +=  (turbu_k_i - turbu_k_[index_j]) * nablaW_ijV_j;
 				acceleration -= (2.0 / 3.0) * k_gradient;
 			}
 			//if (surface_indicator_[index_i] == 0 && pos_[index_i][0] <= 5.95)//To prevent kernel truncation near outlet
-				acc_prior_[index_i] += acceleration;
+			acc_prior_[index_i] += acceleration;
+			//for test
+			tke_acc_inner_[index_i] = acceleration;
+			test_k_grad_rslt_[index_i] = k_gradient;
 		}
 		//=================================================================================================//
 		void TurbuViscousAccInner::
@@ -149,6 +153,8 @@ namespace SPH
 				vel_derivative = (vel_[index_i] - vel_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
 				acceleration += 2.0 * (mu_+ turbu_mu_i) * vel_derivative * inner_neighborhood.dW_ijV_j_[n];
 			}
+			//for test
+			visc_acc_inner_[index_i] = acceleration / rho_[index_i];
 
 			acc_prior_[index_i] += acceleration / rho_[index_i];
 		}

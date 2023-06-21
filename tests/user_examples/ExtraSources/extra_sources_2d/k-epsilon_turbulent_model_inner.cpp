@@ -7,7 +7,7 @@ namespace SPH
 	{
 		//=================================================================================================//
 		BaseTurbuClosureCoeff::BaseTurbuClosureCoeff()
-			: Karman(0.4187), C_mu(0.09), TurbulentIntensity(1.0e-2), sigma_k(1.0),
+			: Karman(0.4187), C_mu(0.09), TurbulentIntensity(5.0e-2), sigma_k(1.0),
 			C_l(1.44), C_2(1.92), sigma_E(1.3), turbu_const_E(9.793){}
 		//=================================================================================================//
 		BaseTurtbulentModelInner::BaseTurtbulentModelInner(BaseInnerRelation& inner_relation)
@@ -84,11 +84,30 @@ namespace SPH
 			TKEnergyAccInner(BaseInnerRelation& inner_relation)
 			: BaseTurtbulentModelInner(inner_relation), acc_prior_(particles_->acc_prior_),
 			surface_indicator_(particles_->surface_indicator_), pos_(particles_->pos_),
-			turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")){}
+			turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy"))//,
+			//is_near_wall_P1_(*particles_->getVariableByName<int>("IsNearWallP1"))
+
+		{
+			particles_->registerVariable(tke_acc_inner_, "TkeAccInner");
+			particles_->addVariableToWrite<Vecd>("TkeAccInner");
+			particles_->registerVariable(tke_acc_wall_, "TkeAccWall");
+			particles_->addVariableToWrite<Vecd>("TkeAccWall");
+
+			particles_->registerVariable(test_k_grad_rslt_, "TkeGradResult");
+			particles_->addVariableToWrite<Vecd>("TkeGradResult");
+		}
 		//=================================================================================================//
 		TurbuViscousAccInner::TurbuViscousAccInner(BaseInnerRelation& inner_relation)
 			: BaseViscousAccelerationInner(inner_relation),
-			turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")) {}
+			turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
+			wall_Y_plus_(*particles_->getVariableByName<Real>("WallYplus")),
+			velo_friction_(*particles_->getVariableByName<Vecd>("FrictionVelocity"))
+		{
+			particles_->registerVariable(visc_acc_inner_, "ViscousAccInner");
+			particles_->addVariableToWrite<Vecd>("ViscousAccInner");
+			particles_->registerVariable(visc_acc_wall_, "ViscousAccWall");
+			particles_->addVariableToWrite<Vecd>("ViscousAccWall");
+		}
 		//=================================================================================================//
 		TurbulentEddyViscosity::
 			TurbulentEddyViscosity(SPHBody& sph_body)
@@ -169,6 +188,7 @@ namespace SPH
 			if (position[0] < 0.0)
 			{
 				turbu_k_original = temp_in_turbu_k;
+				//std::cout << "temp_in_turbu_k="<< temp_in_turbu_k << std::endl;
 			}
 			return turbu_k_original;
 		}

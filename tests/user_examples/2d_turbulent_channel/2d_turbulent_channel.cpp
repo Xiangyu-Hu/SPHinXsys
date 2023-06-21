@@ -62,6 +62,12 @@ int main(int ac, char* av[])
 	InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelComplex,SequencedPolicy> k_equation_relaxation(water_block_complex_relation);
 	InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelComplex> epsilon_equation_relaxation(water_block_complex_relation);
 	InteractionDynamics<fluid_dynamics::TKEnergyAccComplex,  SequencedPolicy> turbulent_kinetic_energy_acceleration(water_block_complex_relation);
+	
+	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+	/** Turbulent standard wall function needs normal vectors of wall. */
+	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection, SequencedPolicy> standard_wall_function_correction(water_block_complex_relation);
+
+	/** TurbulentViscous cal. uses friction velocity and Y+ that are defined in WallFunction . */
 	InteractionDynamics<fluid_dynamics::TurbulentViscousAccelerationWithWall> turbulent_viscous_acceleration(water_block_complex_relation);
 	//InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex_relation);
 
@@ -74,19 +80,15 @@ int main(int ac, char* av[])
 	water_block.addBodyStateForRecording<int>("SurfaceIndicator"); // output for debug
 
 	/** Define the external force for turbulent startup */
-	SharedPtr<TimeDependentAcceleration> gravity_ptr = makeShared<TimeDependentAcceleration>(Vecd(0.0, 0.0));
+	/**to reduce instability at start-up stage, 1e-4 is from poisulle case */
+	SharedPtr<TimeDependentAcceleration> gravity_ptr = makeShared<TimeDependentAcceleration>(Vecd(1.0e-4, 0.0));
 	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, gravity_ptr);
 	
 	/** Turbulent advection time step. */
 	ReduceDynamics<fluid_dynamics::TurbulentAdvectionTimeStepSize> get_turbulent_fluid_advection_time_step_size(water_block, U_f);
 	//ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
 	
-	
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
-	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-
-	/** Turbulent standard wall function needs normal vectors of wall. */
-	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection,SequencedPolicy> standard_wall_function_correction(water_block_complex_relation);
 	
 	/** Turbulent eddy viscosity calculation needs values of Wall Y start. */
 	SimpleDynamics<fluid_dynamics::TurbulentEddyViscosity> update_eddy_viscosity(water_block);
@@ -180,10 +182,9 @@ int main(int ac, char* av[])
 
 				density_relaxation.exec(dt);
 
-				standard_wall_function_correction.exec();
-
 				k_equation_relaxation.exec(dt);
 				epsilon_equation_relaxation.exec(dt);
+				standard_wall_function_correction.exec();
 
 				relaxation_time += dt;
 				integration_time += dt;
@@ -213,10 +214,10 @@ int main(int ac, char* av[])
 
 		ITER = ITER + 1;
 		//std::cout << "ITER=" << ITER << std::endl;
-		//if (ITER >=12)
+		//if (ITER >=50)
 		//{
 		//	D_Time = End_Time / 4000.0;
-		//	//system("pause");
+		//	std::system("pause");
 		//}
 
 

@@ -47,8 +47,8 @@ namespace SPH
 			particles_->addVariableToWrite<int>("IsMigrate");
 
 			particles_->registerVariable(velo_friction_, "FrictionVelocity");
-			particles_->registerSortableVariable<Real>("FrictionVelocity");
-			particles_->addVariableToWrite<Real>("FrictionVelocity");
+			particles_->registerSortableVariable<Vecd>("FrictionVelocity");
+			particles_->addVariableToWrite<Vecd>("FrictionVelocity");
 
 			particles_->registerVariable(velo_tan_, "TangentialVelocity");
 			particles_->registerSortableVariable<Real>("TangentialVelocity");

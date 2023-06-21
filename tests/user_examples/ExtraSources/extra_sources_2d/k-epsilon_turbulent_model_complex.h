@@ -104,7 +104,7 @@ namespace SPH
 		public:
 			template <typename... Args>
 			BaseTurbuViscousAccWithWall(Args &&...args)
-				: InteractionWithWall<TurbuViscousAccInnerType>(std::forward<Args>(args)...) {};
+				: InteractionWithWall<TurbuViscousAccInnerType>(std::forward<Args>(args)...){};
 			virtual ~BaseTurbuViscousAccWithWall() {};
 
 			inline void interaction(size_t index_i, Real dt = 0.0);
@@ -142,7 +142,7 @@ namespace SPH
 
 			StdLargeVec<int> is_near_wall_P1_, is_near_wall_P2_, is_near_wall_P1_pre_, is_migrate_;
 			StdLargeVec<Real> velo_tan_;
-			StdLargeVec<Real> velo_friction_;
+			StdLargeVec<Vecd> velo_friction_;
 			StdLargeVec<int> index_nearest;
 			StdLargeVec<Real> distance_to_wall;
 
