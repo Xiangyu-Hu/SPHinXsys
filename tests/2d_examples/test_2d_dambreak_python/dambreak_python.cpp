@@ -79,7 +79,7 @@ public:
 		//----------------------------------------------------------------------
 		//	Creating bodies with corresponding materials and particles.
 		//----------------------------------------------------------------------
-		water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
+		water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
 		water_block.generateParticles<ParticleGeneratorLattice>();
 
 		wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
@@ -277,6 +277,7 @@ public:
 			write_water_mechanical_energy.generateDataBase(1.0e-3);
 			write_recorded_water_pressure.generateDataBase(1.0e-3);
 		}
+
 		else if (sph_system.RestartStep() == 0)
 		{
 			write_water_mechanical_energy.testResult();

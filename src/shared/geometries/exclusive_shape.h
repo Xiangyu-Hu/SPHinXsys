@@ -21,18 +21,44 @@
  *                                                                          *
  * ------------------------------------------------------------------------*/
 /**
- * @file 	fluid_particles_variable.h
- * @brief 	Here, we define the algorithm classes for computing derived solid dynamics variables. 
- * @details These variable can be added into variable list for state output.  
- * @author	Chi ZHang and Xiangyu Hu
+ * @file 	exclusive_shape.h
+ * @brief 	exclusive shape related class for geometries.
+ * @author	Yongchuan Yu and Xiangyu Hu
  */
 
-#ifndef FLUID_PARTICLES_VARIABLE_H
-#define FLUID_PARTICLES_VARIABLE_H
+#ifndef EXCLUSIVE_SHAPE_H
+#define EXCLUSIVE_SHAPE_H
 
-#include "base_particles.hpp"
+#include "base_data_package.h"
+#include "base_geometry.h"
 
 namespace SPH
 {
-}
-#endif // FLUID_PARTICLES_VARIABLE_H
+/**
+ * @class ExclusiveShape
+ * @brief A template shape which define the region outside of the geometry. 
+ * @brief In simple terms, it gives opposite return value for the function checkContain() as the original shape
+ */
+
+    template <class BaseShapeType>
+    class ExclusiveShape : public BaseShapeType
+    {
+
+      public:
+        /** template constructor for general shapes. */
+        template <typename... ConstructorArgs>
+        explicit ExclusiveShape(ConstructorArgs &&...args)
+            : BaseShapeType(std::forward<ConstructorArgs>(args)...) 
+        {};
+
+        virtual ~ExclusiveShape(){};
+
+        /*reverse the value of checkContain function*/
+        virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override
+        {
+            return !BaseShapeType::checkContain(probe_point);
+        };
+    };
+} // namespace SPH
+
+#endif // TRANSFORM_SHAPE_H

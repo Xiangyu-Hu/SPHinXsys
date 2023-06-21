@@ -32,6 +32,7 @@
 #include "general_dynamics.h"
 #include "fluid_dynamics_inner.h"
 #include "compressible_fluid.h"
+#include "base_particle_generator.h"
 using namespace std;
 namespace SPH
 {

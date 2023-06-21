@@ -69,7 +69,7 @@ class WeaklyCompressibleFluidInitialCondition
 {
 public:
 	explicit WeaklyCompressibleFluidInitialCondition(SPHBody& sph_body)
-		: FluidInitialCondition(sph_body), rho_(particles_->rho_), p_(particles_->p_)
+		: FluidInitialCondition(sph_body), rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure"))
 	{
 		particles_->registerVariable(mom_, "Momentum");
 		particles_->registerVariable(dmom_dt_, "MomentumChangeRate");
