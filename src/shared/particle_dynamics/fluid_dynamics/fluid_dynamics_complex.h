@@ -68,6 +68,46 @@ namespace SPH
 			StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_acc_ave_, wall_n_;
 		};
 
+        class BaseDensitySummationComplexKernel {
+        public:
+            BaseDensitySummationComplexKernel(Real *contactInvRho0, Real **contactMass,
+                                              NeighborhoodDevice **contactConfiguration,
+                                              size_t contactConfigurationSize) :
+                                              contact_inv_rho0_(contactInvRho0),
+                                              contact_mass_(contactMass),
+                                              contact_configuration_(contactConfiguration),
+                                              contact_configuration_size_(contactConfigurationSize) {}
+
+            template<class ContactMassFunc, class ContactConfigFunc>
+            static Real ContactSummation(size_t index_i, std::size_t contact_configuration_size,
+                                         const Real* contact_inv_rho0, ContactMassFunc&& contactMassFunc,
+                                         ContactConfigFunc&& contactConfigFunc)
+            {
+                Real sigma(0.0);
+                for (size_t k = 0; k < contact_configuration_size; ++k)
+                {
+                    Real* contact_mass_k = contactMassFunc(k);
+                    Real contact_inv_rho0_k = contact_inv_rho0[k];
+                    auto& contact_neighborhood = contactConfigFunc(k, index_i);
+                    for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+                        sigma += contact_neighborhood.W_ij_[n] * contact_inv_rho0_k * contact_mass_k[contact_neighborhood.j_[n]];
+                }
+                return sigma;
+            }
+
+            Real ContactSummation(size_t index_i)
+            {
+                return BaseDensitySummationComplexKernel::ContactSummation(index_i, contact_configuration_size_,
+                           contact_inv_rho0_, [&](auto k){ return contact_mass_[k]; },
+                           [&](auto k, auto index_i) -> NeighborhoodDevice& { return contact_configuration_[k][index_i]; });
+            };
+
+        private:
+            Real *contact_inv_rho0_, **contact_mass_;
+            NeighborhoodDevice** contact_configuration_;
+            std::size_t contact_configuration_size_;
+        };
+
 		/**
 		 * @class DensitySummation
 		 * @brief computing density by summation considering contribution from contact bodies
@@ -82,11 +122,43 @@ namespace SPH
 			virtual ~BaseDensitySummationComplex(){};
 
 		protected:
-			StdVec<Real> contact_inv_rho0_;
+			StdSharedVec<Real> contact_inv_rho0_;
 			StdVec<StdLargeVec<Real> *> contact_mass_;
+            StdSharedVec<Real*> contact_mass_device_;
+
+            ExecutionProxy<BaseDensitySummationComplex, BaseDensitySummationComplexKernel> device_proxy;
 
 			Real ContactSummation(size_t index_i);
+
+            auto& getDeviceProxy() {
+                return device_proxy;
+            }
 		};
+
+        class DensitySummationComplexKernel : public BaseDensitySummationComplexKernel,
+                                              public DensitySummationInnerKernel {
+        public:
+            DensitySummationComplexKernel(const BaseDensitySummationComplexKernel& complexKernel,
+                                          const DensitySummationInnerKernel& innerKernel)
+            : BaseDensitySummationComplexKernel(complexKernel), DensitySummationInnerKernel(innerKernel) {}
+
+            template<class InteractionFunc, class ContactSummationFunc>
+            static void interaction(size_t index_i, Real dt, Real* rho_sum, Real rho0, Real inv_sigma0, const Real* mass,
+                                    InteractionFunc&& interaction, ContactSummationFunc&& ContactSummation)
+            {
+                interaction(index_i, dt);
+                Real sigma = ContactSummation(index_i);
+                rho_sum[index_i] += sigma * rho0 * rho0 * inv_sigma0 / mass[index_i];
+            }
+
+            void interaction(size_t index_i, Real dt)
+            {
+                interaction(index_i, dt, rho_sum_, rho0_, inv_sigma0_, mass_,
+                            [&](auto idx, auto delta) { DensitySummationInnerKernel::interaction(idx, delta); },
+                            [&](auto idx) { return BaseDensitySummationComplexKernel::ContactSummation(idx); });
+            }
+
+        };
 
 		/**
 		 * @class DensitySummationComplex
@@ -98,10 +170,19 @@ namespace SPH
 		public:
 			template <typename... Args>
 			explicit DensitySummationComplex(Args &&...args)
-				: BaseDensitySummationComplex<DensitySummationInner>(std::forward<Args>(args)...){};
+				: BaseDensitySummationComplex<DensitySummationInner>(std::forward<Args>(args)...),
+                  device_proxy(this, *BaseDensitySummationComplex<DensitySummationInner>::getDeviceProxy().getKernel(),
+                               *DensitySummationInner::getDeviceProxy().getKernel()){};
 			virtual ~DensitySummationComplex(){};
 
 			inline void interaction(size_t index_i, Real dt = 0.0);
+
+            auto& getDeviceProxy() {
+                return device_proxy;
+            }
+
+        private:
+            ExecutionProxy<DensitySummationComplex, DensitySummationComplexKernel> device_proxy;
 		};
 
 		/**

@@ -40,9 +40,9 @@ namespace SPH
 		void DensitySummationComplex::
 		interaction(size_t index_i, Real dt)
 		{
-			BaseDensitySummationComplex<DensitySummationInner>::interaction(index_i, dt);
-			Real sigma = BaseDensitySummationComplex<DensitySummationInner>::ContactSummation(index_i);
-			rho_sum_[index_i] += sigma * rho0_ * rho0_ * inv_sigma0_ / mass_[index_i];
+            DensitySummationComplexKernel::interaction(index_i, dt, rho_sum_.data(), rho0_, inv_sigma0_, mass_.data(),
+                        [&](auto idx, auto delta) { BaseDensitySummationComplex<DensitySummationInner>::interaction(idx, delta); },
+                        [&](auto idx) { return BaseDensitySummationComplex<DensitySummationInner>::ContactSummation(idx); });
 		}
 		//=================================================================================================//
 		void DensitySummationComplexAdaptive::
@@ -182,31 +182,28 @@ namespace SPH
 		template <typename... Args>
 		BaseDensitySummationComplex<DensitySummationInnerType>::
 			BaseDensitySummationComplex(Args &&...args)
-			: BaseInteractionComplex<DensitySummationInnerType, FluidContactData>(std::forward<Args>(args)...)
+			: BaseInteractionComplex<DensitySummationInnerType, FluidContactData>(std::forward<Args>(args)...),
+              contact_inv_rho0_(this->contact_particles_.size(), executionQueue.getQueue()),
+              contact_mass_(this->contact_particles_.size()),
+              contact_mass_device_(this->contact_particles_.size(), executionQueue.getQueue()),
+              device_proxy(this, contact_inv_rho0_.data(), contact_mass_device_.data(),
+                           this->contact_configuration_device_->data(), this->contact_configuration_device_->size())
 		{
 			for (size_t k = 0; k != this->contact_particles_.size(); ++k)
 			{
 				Real rho0_k = this->contact_bodies_[k]->base_material_->ReferenceDensity();
-				contact_inv_rho0_.push_back(1.0 / rho0_k);
-				contact_mass_.push_back(&(this->contact_particles_[k]->mass_));
+				contact_inv_rho0_.at(k) = 1.0 / rho0_k;
+                contact_mass_.at(k) = &(this->contact_particles_[k]->mass_);
+                contact_mass_device_.at(k) = this->contact_particles_[k]->mass_device_;
 			}
-		};
+		}
 		//=================================================================================================//
 		template <class DensitySummationInnerType>
 		Real BaseDensitySummationComplex<DensitySummationInnerType>::ContactSummation(size_t index_i)
 		{
-			Real sigma(0.0);
-			for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
-			{
-				StdLargeVec<Real> &contact_mass_k = *(this->contact_mass_[k]);
-				Real contact_inv_rho0_k = contact_inv_rho0_[k];
-				Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
-				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-				{
-					sigma += contact_neighborhood.W_ij_[n] * contact_inv_rho0_k * contact_mass_k[contact_neighborhood.j_[n]];
-				}
-			}
-			return sigma;
+            return BaseDensitySummationComplexKernel::ContactSummation(index_i, this->contact_configuration_.size(),
+                    contact_inv_rho0_.data(), [&](auto k){ return this->contact_mass_.at(k)->data(); },
+                    [&](auto k, auto index_i) -> Neighborhood& { return this->contact_configuration_.at(k)->at(index_i); });
 		};
 		//=================================================================================================//
 		template <class ViscousAccelerationInnerType>
