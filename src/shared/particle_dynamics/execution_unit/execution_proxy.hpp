@@ -28,6 +28,14 @@ namespace SPH {
                 return kernel;
             }
 
+            BaseT *getBase() const {
+                return base;
+            }
+
+            KernelT *getKernel() const {
+                return kernel;
+            }
+
         protected:
             BaseT* base;
             KernelT* kernel;
