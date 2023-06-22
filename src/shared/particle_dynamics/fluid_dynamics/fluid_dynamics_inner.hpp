@@ -40,13 +40,10 @@ namespace SPH
 		void DensitySummationInner::
 			interaction(size_t index_i, Real dt)
 		{
-			Real sigma = W0_;
-			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-				sigma += inner_neighborhood.W_ij_[n];
+            DensitySummationInnerKernel::interaction(index_i, dt, inner_configuration_.data(), W0_, rho_sum_.data(),
+                                                     rho0_, inv_sigma0_);
 
-			rho_sum_[index_i] = sigma * rho0_ * inv_sigma0_;
-		}
+        }
 		//=================================================================================================//
 		void DensitySummationInnerAdaptive::
 			interaction(size_t index_i, Real dt)

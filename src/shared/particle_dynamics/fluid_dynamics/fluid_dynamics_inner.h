@@ -64,6 +64,19 @@ namespace SPH
 			StdLargeVec<Vecd> &pos_, &vel_;
 		};
 
+        class BaseDensitySummationInnerKernel {
+        public:
+            BaseDensitySummationInnerKernel(NeighborhoodDevice* inner_configuration, FluidParticles* particles,
+                                            Real rho0, Real invSigma0) :
+                inner_configuration_(inner_configuration), rho_(particles->rho_device_),
+                rho_sum_(particles->rho_sum_device_), mass_(particles->mass_device_),
+                rho0_(rho0), inv_sigma0_(invSigma0) {}
+        protected:
+            NeighborhoodDevice* inner_configuration_;
+            Real *rho_, *rho_sum_, *mass_;
+            Real rho0_, inv_sigma0_;
+        };
+
 		/**
 		 * @class BaseDensitySummationInner
 		 * @brief Base class for computing density by summation
@@ -80,6 +93,30 @@ namespace SPH
 			Real rho0_, inv_sigma0_;
 		};
 
+        class DensitySummationInnerKernel : public BaseDensitySummationInnerKernel {
+        public:
+            template<class ...Args>
+            DensitySummationInnerKernel(Real W0, Args ...baseArgs) :
+                BaseDensitySummationInnerKernel(std::forward<Args>(baseArgs)...),  W0_(W0) {}
+
+            template<class NeighborhoodType>
+            static void interaction(size_t index_i, Real dt, NeighborhoodType* inner_configuration, Real W0,
+                                    Real* rho_sum, Real rho0, Real inv_sigma0) {
+                Real sigma = W0;
+                const NeighborhoodType &inner_neighborhood = inner_configuration[index_i];
+                for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+                    sigma += inner_neighborhood.W_ij_[n];
+                rho_sum[index_i] = sigma * rho0 * inv_sigma0;
+            }
+
+            void interaction(size_t index_i, Real dt = 0.0) {
+                interaction(index_i, dt, inner_configuration_, W0_, rho_sum_, rho0_, inv_sigma0_);
+            }
+
+        private:
+            Real W0_;
+        };
+
 		/**
 		 * @class DensitySummationInner
 		 * @brief  computing density by summation
@@ -92,8 +129,14 @@ namespace SPH
 
 			inline void interaction(size_t index_i, Real dt = 0.0);
 
+            auto& getDeviceProxy() {
+                return device_proxy;
+            }
+
 		protected:
 			Real W0_;
+
+            ExecutionProxy<DensitySummationInner, DensitySummationInnerKernel> device_proxy;
 		};
 
 		/**
@@ -230,7 +273,7 @@ namespace SPH
                 return squareNorm(vel[index_i]);
             }
 
-            Real reduce(size_t index_i, Real dt = 0.0) {
+            Real reduce(size_t index_i, Real dt = 0.0) const {
                 return reduce(index_i, dt, vel_, [](const Vecd& vel){
                     sycl::float2 syclVel {vel[0], vel[1]};
                     return sycl::dot(syclVel, syclVel);
