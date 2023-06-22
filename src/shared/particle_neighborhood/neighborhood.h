@@ -65,6 +65,52 @@ namespace SPH
 	};
 	using ParticleConfiguration = StdLargeVec<Neighborhood>;
 
+    class NeighborhoodDevice {
+    public:
+        size_t current_size_;	/**< the current number of neighbors */
+        static constexpr size_t allocated_size_ = 200;  /**< the limit of neighbors does not require memory allocation  */
+
+        size_t *j_;  /**< index of the neighbor particle. */
+        Real *W_ij_;  /**< kernel value or particle volume contribution */
+        Real *dW_ijV_j_;  /**< derivative of kernel function or inter-particle surface contribution */
+        Real *r_ij_;  /**< distance between j and i. */
+        Vecd *e_ij_;  /**< unit vector pointing from j to i or inter-particle surface direction */
+
+        NeighborhoodDevice() : current_size_(0),
+                               j_(allocateDeviceData<size_t>(allocated_size_)),
+                               W_ij_(allocateDeviceData<Real>(allocated_size_)),
+                               dW_ijV_j_(allocateDeviceData<Real>(allocated_size_)),
+                               r_ij_(allocateDeviceData<Real>(allocated_size_)),
+                               e_ij_(allocateDeviceData<Vecd>(allocated_size_)) {}
+        ~NeighborhoodDevice(){
+            freeDeviceData(j_);
+            freeDeviceData(W_ij_);
+            freeDeviceData(dW_ijV_j_);
+            freeDeviceData(r_ij_);
+            freeDeviceData(e_ij_);
+        };
+
+        void copyFrom(const Neighborhood& hostNeighborhood) {
+            copyDataToDevice<size_t>(hostNeighborhood.j_.data(), j_, hostNeighborhood.current_size_);
+            copyDataToDevice<Real>(hostNeighborhood.W_ij_.data(), W_ij_, hostNeighborhood.current_size_);
+            copyDataToDevice<Real>(hostNeighborhood.dW_ijV_j_.data(), dW_ijV_j_, hostNeighborhood.current_size_);
+            copyDataToDevice<Real>(hostNeighborhood.r_ij_.data(), r_ij_, hostNeighborhood.current_size_);
+            copyDataToDevice<Vecd>(hostNeighborhood.e_ij_.data(), e_ij_, hostNeighborhood.current_size_);
+            current_size_ = hostNeighborhood.current_size_;
+        }
+
+        void copyTo(Neighborhood& hostNeighborhood) const {
+            copyDataFromDevice<size_t>(hostNeighborhood.j_.data(), j_, current_size_);
+            copyDataFromDevice<Real>(hostNeighborhood.W_ij_.data(), W_ij_, current_size_);
+            copyDataFromDevice<Real>(hostNeighborhood.dW_ijV_j_.data(), dW_ijV_j_, current_size_);
+            copyDataFromDevice<Real>(hostNeighborhood.r_ij_.data(), r_ij_, current_size_);
+            copyDataFromDevice<Vecd>(hostNeighborhood.e_ij_.data(), e_ij_, current_size_);
+            hostNeighborhood.current_size_ = current_size_;
+        }
+    };
+
+
+
 	/**
 	 * @class NeighborBuilder
 	 * @brief Base class for building a neighbor particle j around particles i.
