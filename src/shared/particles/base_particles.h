@@ -96,8 +96,8 @@ namespace SPH
 		StdLargeVec<Vecd> acc_prior_; Vecd* acc_prior_device_; /**< other, such as gravity and viscous, accelerations */
 
 		StdLargeVec<Real> Vol_;	 /**< particle volumetric measure, also referred to area of surface particle and length of linear particle */
-		StdLargeVec<Real> rho_;	 /**< particle density */
-		StdLargeVec<Real> mass_; /**< particle massive measure, also referred to mass per-unit thickness of surface particle and mass per-unit cross-section area of linear particle */
+		StdLargeVec<Real> rho_; Real* rho_device_;	 /**< particle density */
+		StdLargeVec<Real> mass_; Real* mass_device_; /**< particle massive measure, also referred to mass per-unit thickness of surface particle and mass per-unit cross-section area of linear particle */
 		BaseMaterial &base_material_;
 		//----------------------------------------------------------------------
 		// Global information for defining particle groups
@@ -222,32 +222,40 @@ namespace SPH
 		/** Return particle mass. */
 		virtual Real ParticleMass(size_t index_i) { return mass_[index_i]; }
 
-        void allocateDeviceMemory() {
+        virtual void allocateDeviceMemory() {
             pos_device_ = allocateDeviceData<Vecd>(pos_.size());
             vel_device_ = allocateDeviceData<Vecd>(vel_.size());
             acc_device_ = allocateDeviceData<Vecd>(acc_.size());
             acc_prior_device_ = allocateDeviceData<Vecd>(acc_prior_.size());
+            rho_device_ = allocateDeviceData<Real>(rho_.size());
+            mass_device_ = allocateDeviceData<Real>(mass_.size());
         }
 
-        void freeDeviceMemory() {
+        virtual void freeDeviceMemory() {
             freeDeviceData(pos_device_);
             freeDeviceData(vel_device_);
             freeDeviceData(acc_device_);
             freeDeviceData(acc_prior_device_);
+            freeDeviceData(rho_device_);
+            freeDeviceData(mass_device_);
         }
 
-        void copyToDeviceMemory() {
+        virtual void copyToDeviceMemory() {
             copyDataToDevice(pos_.data(), pos_device_, pos_.size());
             copyDataToDevice(vel_.data(), vel_device_, vel_.size());
             copyDataToDevice(acc_.data(), acc_device_, acc_.size());
             copyDataToDevice(acc_prior_.data(), acc_prior_device_, acc_prior_.size());
+            copyDataToDevice(rho_.data(), rho_device_, rho_.size());
+            copyDataToDevice(mass_.data(), mass_device_, mass_.size());
         }
 
-        void copyFromDeviceMemory() {
+        virtual void copyFromDeviceMemory() {
             copyDataFromDevice(pos_.data(), pos_device_, pos_.size());
             copyDataFromDevice(vel_.data(), vel_device_, vel_.size());
             copyDataFromDevice(acc_.data(), acc_device_, acc_.size());
             copyDataFromDevice(acc_prior_.data(), acc_prior_device_, acc_prior_.size());
+            copyDataFromDevice(rho_.data(), rho_device_, rho_.size());
+            copyDataFromDevice(mass_.data(), mass_device_, mass_.size());
         }
 
 	protected:
