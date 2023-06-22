@@ -60,6 +60,15 @@ namespace SPH
 			local_dynamics_function(i);
 	};
 
+    template <class LocalDynamicsFunction, class Proxy>
+    inline void particle_for(const SequencedPolicy &seq, const size_t &all_real_particles,
+                             const LocalDynamicsFunction &local_dynamics_function, Proxy& proxy)
+    {
+        auto& kernel = *proxy.getProxy().get(seq);
+        for (size_t i = 0; i < all_real_particles; ++i)
+            local_dynamics_function(i, kernel);
+    };
+
 	template <class LocalDynamicsFunction>
 	inline void particle_for(const ParallelPolicy &par, const size_t &all_real_particles,
 							 const LocalDynamicsFunction &local_dynamics_function)
