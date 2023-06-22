@@ -74,7 +74,7 @@ namespace SPH
 		};
 		virtual ~RegressionTestDynamicTimeWarping(){};
 
-		void setupTheTest();						   /** setup the test and defined basic variables. */
+		void setupTheTest();	                       /** setup the test and defined basic variables. */
 		void readDTWDistanceFromXml();				   /** read the old DTW distance from the .xml file. */
 		void updateDTWDistance();					   /** update the maximum DTWDistance with the new result. */
 		void writeDTWDistanceToXml();				   /* write the updated DTWDistance to .xml file.*/

@@ -59,7 +59,7 @@ namespace SPH
 		std::string MaterialType() { return material_type_name_; }
 		Real ReferenceDensity() { return rho0_; };
 		/**interface called in base particles constructor */
-		virtual void registerReloadLocalParameters(BaseParticles *base_particles){};
+		virtual void registerReloadLocalParameters(BaseParticles* base_particles) {};
 		/**
 		 * This will be called after particles generation
 		 * and is important because particles are not defined yet when material is constructed.
@@ -84,6 +84,8 @@ namespace SPH
 		Real mu_; /**< reference viscosity. */
 
 	public:
+		StdLargeVec<Real> p_;				 /**< pressure */
+
 		explicit Fluid(Real rho0, Real c0, Real mu)
 			: BaseMaterial(rho0), c0_(c0), mu_(mu)
 		{
@@ -99,6 +101,8 @@ namespace SPH
 		virtual Real DensityFromPressure(Real p) = 0;
 		virtual Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) = 0;
 		virtual Fluid *ThisObjectPtr() override { return this; };
+
+		virtual void registerReloadLocalParameters(BaseParticles* base_particles) override;
 	};
 
 	/** @class  Solid

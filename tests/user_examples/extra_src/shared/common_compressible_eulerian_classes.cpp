@@ -16,7 +16,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	EulerianCompressibleAcousticTimeStepSize::EulerianCompressibleAcousticTimeStepSize(SPHBody& sph_body)
-		: AcousticTimeStepSize(sph_body), rho_(particles_->rho_), p_(particles_->p_), vel_(particles_->vel_),
+		: AcousticTimeStepSize(sph_body), rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")), vel_(particles_->vel_),
 		smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()), compressible_fluid_(CompressibleFluid(1.0, 1.4)) {};
 	//=================================================================================================//
 	Real EulerianCompressibleAcousticTimeStepSize::reduce(size_t index_i, Real dt)
@@ -27,6 +27,21 @@ namespace SPH
 	Real EulerianCompressibleAcousticTimeStepSize::outputResult(Real reduced_value)
 	{
 		return 0.6 / Dimensions * smoothing_length_ / (reduced_value + TinyReal);
+	}
+	//=================================================================================================//
+	NoRiemannSolverInCompressobleEulerianMethod
+		::NoRiemannSolverInCompressobleEulerianMethod(CompressibleFluid& compressible_fluid_i, CompressibleFluid& compressible_fluid_j)
+		: compressible_fluid_i_(compressible_fluid_i), compressible_fluid_j_(compressible_fluid_j) {};
+	//=================================================================================================//
+	CompressibleFluidStarState NoRiemannSolverInCompressobleEulerianMethod::
+		getInterfaceState(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j, const Vecd& e_ij)
+	{
+		Real p_star = 0.5*(state_i.p_+state_j.p_);
+		Vecd v_star = 0.5*(state_i.vel_+state_j.vel_);
+		Real rho_star = 0.5*(state_i.rho_+state_j.rho_);
+		Real energy_star = 0.5*(state_i.E_+state_j.E_);
+
+		return CompressibleFluidStarState(rho_star, v_star, p_star, energy_star);
 	}
 	//=================================================================================================//
 	HLLCRiemannSolver::HLLCRiemannSolver(CompressibleFluid& compressible_fluid_i, CompressibleFluid& compressible_fluid_j)
@@ -75,8 +90,8 @@ namespace SPH
 		return CompressibleFluidStarState(rho_star, v_star, p_star, energy_star);
 	}
 	//=================================================================================================//
-	HLLCWithLimiterRiemannSolver::HLLCWithLimiterRiemannSolver(CompressibleFluid& compressible_fluid_i, CompressibleFluid& compressible_fluid_j)
-		: compressible_fluid_i_(compressible_fluid_i), compressible_fluid_j_(compressible_fluid_j) {};
+	HLLCWithLimiterRiemannSolver::HLLCWithLimiterRiemannSolver(CompressibleFluid& compressible_fluid_i, CompressibleFluid& compressible_fluid_j, Real limiter_parameter)
+		: compressible_fluid_i_(compressible_fluid_i), compressible_fluid_j_(compressible_fluid_j), limiter_parameter_(limiter_parameter) {};
 	//=================================================================================================//
 	CompressibleFluidStarState HLLCWithLimiterRiemannSolver::
 		getInterfaceState(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j, const Vecd& e_ij)
@@ -88,7 +103,7 @@ namespace SPH
 		Real rhol_cl = compressible_fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_) * state_i.rho_;
 		Real rhor_cr = compressible_fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_) * state_j.rho_;
 		Real clr = (rhol_cl + rhor_cr) / (state_i.rho_ + state_j.rho_);
-		Real s_star = (state_j.p_ - state_i.p_) * pow(SMIN(Real(5) * SMAX((ul - ur) / clr, Real(0)), Real(1)), 2) / (state_i.rho_ * (s_l - ul) - state_j.rho_ * (s_r - ur)) +
+		Real s_star = (state_j.p_ - state_i.p_) * pow(SMIN(limiter_parameter_ * SMAX((ul - ur) / clr, Real(0)), Real(1)), 2) / (state_i.rho_ * (s_l - ul) - state_j.rho_ * (s_r - ur)) +
 			(state_i.rho_ * (s_l - ul) * ul - state_j.rho_ * (s_r - ur) * ur) / (state_i.rho_ * (s_l - ul) - state_j.rho_ * (s_r - ur));
 		Real p_star = 0.0;
 		Vecd v_star = Vecd::Zero();
@@ -104,7 +119,7 @@ namespace SPH
 		if (s_l <= 0.0 && 0.0 <= s_star)
 		{
 			p_star = 0.5 * (state_i.p_ + state_j.p_) +
-				0.5 * (state_i.rho_ * (s_l - ul) * (s_star - ul) + state_j.rho_ * (s_r - ur) * (s_star - ur)) * SMIN(Real(5) * SMAX((ul - ur) / clr, Real(0)), Real(1));
+				0.5 * (state_i.rho_ * (s_l - ul) * (s_star - ul) + state_j.rho_ * (s_r - ur) * (s_star - ur)) * SMIN(limiter_parameter_ * SMAX((ul - ur) / clr, Real(0)), Real(1));
 			v_star = state_i.vel_ - e_ij * (s_star - ul);
 			rho_star = state_i.rho_ * (s_l - ul) / (s_l - s_star);
 			energy_star = ((s_l - ul) * state_i.E_ - state_i.p_ * ul + p_star * s_star) / (s_l - s_star);
@@ -112,7 +127,7 @@ namespace SPH
 		if (s_star <= 0.0 && 0.0 <= s_r)
 		{
 			p_star = 0.5 * (state_i.p_ + state_j.p_) +
-				0.5 * (state_i.rho_ * (s_l - ul) * (s_star - ul) + state_j.rho_ * (s_r - ur) * (s_star - ur)) * SMIN(Real(5) * SMAX((ul - ur) / clr, Real(0)), Real(1));
+				0.5 * (state_i.rho_ * (s_l - ul) * (s_star - ul) + state_j.rho_ * (s_r - ur) * (s_star - ur)) * SMIN(limiter_parameter_ * SMAX((ul - ur) / clr, Real(0)), Real(1));
 			v_star = state_j.vel_ - e_ij * (s_star - ur);
 			rho_star = state_j.rho_ * (s_r - ur) / (s_r - s_star);
 			energy_star = ((s_r - ur) * state_j.E_ - state_j.p_ * ur + p_star * s_star) / (s_r - s_star);

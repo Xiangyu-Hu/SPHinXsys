@@ -28,7 +28,7 @@ int main(int ac, char *av[])
 	FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
 	water_block.defineAdaptation<ParticleRefinementWithinShape>(1.3, 1.0, 1);
 	water_block.defineComponentLevelSetShape("OuterBoundary")->writeLevelSet(io_environment);
-	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+	water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	MultiPolygonShape refinement_region(MultiPolygon(initial_refinement_region), "RefinementRegion");
 	(!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
 		? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getName())

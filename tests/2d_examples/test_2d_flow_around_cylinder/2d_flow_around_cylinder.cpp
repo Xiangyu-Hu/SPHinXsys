@@ -29,7 +29,7 @@ int main(int ac, char *av[])
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
-	water_block.defineParticlesAndMaterial<FluidParticles, ParameterizedWaterMaterial>(parameterization_io, rho0_f, c_f, mu_f);
+	water_block.defineParticlesAndMaterial<BaseParticles, ParameterizedWaterMaterial>(parameterization_io, rho0_f, c_f, mu_f);
 	water_block.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));

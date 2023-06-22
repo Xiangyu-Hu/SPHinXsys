@@ -104,7 +104,7 @@ public:
 		initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi", diffusion_coff);
 	};
 };
-using DiffusionFluidParticles = DiffusionReactionParticles<FluidParticles, ThermofluidBodyMaterial>;
+using DiffusionBaseParticles = DiffusionReactionParticles<BaseParticles, ThermofluidBodyMaterial>;
 //----------------------------------------------------------------------
 //	Setup heat conduction material properties for diffusion solid body
 //----------------------------------------------------------------------
@@ -151,14 +151,14 @@ public:
 //	Application dependent fluid body initial condition
 //----------------------------------------------------------------------
 class ThermofluidBodyInitialCondition
-	: public DiffusionReactionInitialCondition<DiffusionFluidParticles>
+	: public DiffusionReactionInitialCondition<DiffusionBaseParticles>
 {
 protected:
 	size_t phi_;
 
 public:
 	explicit ThermofluidBodyInitialCondition(SPHBody &sph_body)
-		: DiffusionReactionInitialCondition<DiffusionFluidParticles>(sph_body)
+		: DiffusionReactionInitialCondition<DiffusionBaseParticles>(sph_body)
 	{
 		phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
 	};
@@ -172,8 +172,8 @@ public:
 	};
 };
 
-using FluidDiffusionInner = DiffusionRelaxationInner<DiffusionFluidParticles>;
-using FluidDiffusionDirichlet = DiffusionRelaxationDirichlet<DiffusionFluidParticles, DiffusionSolidParticles>;
+using FluidDiffusionInner = DiffusionRelaxationInner<DiffusionBaseParticles>;
+using FluidDiffusionDirichlet = DiffusionRelaxationDirichlet<DiffusionBaseParticles, DiffusionSolidParticles>;
 //----------------------------------------------------------------------
 //	Set thermal relaxation between different bodies
 //----------------------------------------------------------------------
@@ -228,7 +228,7 @@ int main()
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	FluidBody thermofluid_body(system, makeShared<ThermofluidBody>("ThermofluidBody"));
-	thermofluid_body.defineParticlesAndMaterial<DiffusionFluidParticles, ThermofluidBodyMaterial>();
+	thermofluid_body.defineParticlesAndMaterial<DiffusionBaseParticles, ThermofluidBodyMaterial>();
 	thermofluid_body.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody thermosolid_body(system, makeShared<ThermosolidBody>("ThermosolidBody"));
@@ -264,7 +264,7 @@ int main()
 	/** Time step size with considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step(thermofluid_body);
 	/** Time step size calculation. */
-	GetDiffusionTimeStepSize<DiffusionFluidParticles> get_thermal_time_step(thermofluid_body);
+	GetDiffusionTimeStepSize<DiffusionBaseParticles> get_thermal_time_step(thermofluid_body);
 	/** Diffusion process between two diffusion bodies. */
 	ThermalRelaxationComplex thermal_relaxation_complex(fluid_body_inner, fluid_wall_contact_Dirichlet);
 	/** Pressure relaxation using verlet time stepping. */
