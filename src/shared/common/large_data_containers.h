@@ -58,6 +58,9 @@ namespace SPH {
 	template <typename T>
 	using StdLargeVec = std::vector<T, tbb::cache_aligned_allocator<T>>;
 
+    template <typename T>
+    using StdSharedVec = std::vector<T, sycl::usm_allocator<T, sycl::usm::alloc::shared>>;
+
 	template <typename T>
 	using StdVec = std::vector<T>;
 
