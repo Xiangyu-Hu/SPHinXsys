@@ -10,7 +10,7 @@
  *																			*
  * SPHinXsys is partially funded by German Research Foundation				*
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
- *  HU1527/12-1 and HU1527/12-4													*
+ *  HU1527/12-1 and HU1527/12-4												*
  *                                                                          *
  * Portions copyright (c) 2017-2022 Technical University of Munich and		*
  * the authors' affiliations.												*
@@ -21,20 +21,44 @@
  *                                                                          *
  * ------------------------------------------------------------------------*/
 /**
- * @file 	all_geometries.h
- * @brief 	This is the header file that user code should include to pick up all 
- *          geometry classes used in SPHinXsys.
- * @author	Chi ZHang and Xiangyu Hu
+ * @file 	exclusive_shape.h
+ * @brief 	exclusive shape related class for geometries.
+ * @author	Yongchuan Yu and Xiangyu Hu
  */
 
-#ifndef ALL_GEOMETRIES_H
-#define ALL_GEOMETRIES_H
+#ifndef EXCLUSIVE_SHAPE_H
+#define EXCLUSIVE_SHAPE_H
 
-#include "geometric_shape.h"
-#include "multi_polygon_shape.h"
-#include "level_set_shape.h"
-#include "complex_shape.h"
-#include "transform_shape.h"
-#include "exclusive_shape.h"
+#include "base_data_package.h"
+#include "base_geometry.h"
 
-#endif //ALL_GEOMETRIES_H
+namespace SPH
+{
+/**
+ * @class ExclusiveShape
+ * @brief A template shape which define the region outside of the geometry. 
+ * @brief In simple terms, it gives opposite return value for the function checkContain() as the original shape
+ */
+
+    template <class BaseShapeType>
+    class ExclusiveShape : public BaseShapeType
+    {
+
+      public:
+        /** template constructor for general shapes. */
+        template <typename... ConstructorArgs>
+        explicit ExclusiveShape(ConstructorArgs &&...args)
+            : BaseShapeType(std::forward<ConstructorArgs>(args)...) 
+        {};
+
+        virtual ~ExclusiveShape(){};
+
+        /*reverse the value of checkContain function*/
+        virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override
+        {
+            return !BaseShapeType::checkContain(probe_point);
+        };
+    };
+} // namespace SPH
+
+#endif // TRANSFORM_SHAPE_H

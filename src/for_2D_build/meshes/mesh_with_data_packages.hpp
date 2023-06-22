@@ -81,8 +81,8 @@ namespace SPH
 	template <int PKG_SIZE, int ADDRS_BUFFER>
 	template <typename InDataType, typename OutDataType>
 	void GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::
-		computeGradient(const DiscreteVariable<InDataType> &in_variable,
-						const DiscreteVariable<OutDataType> &out_variable)
+		computeGradient(const MeshVariable<InDataType> &in_variable,
+						const MeshVariable<OutDataType> &out_variable)
 	{
 		auto &in_variable_addrs = getPackageDataAddress(in_variable);
 		auto &out_variable_addrs = getPackageDataAddress(out_variable);
@@ -99,10 +99,10 @@ namespace SPH
 	template <int PKG_SIZE, int ADDRS_BUFFER>
 	template <typename DataType, typename FunctionByPosition>
 	void GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::
-		assignByPosition(const DiscreteVariable<DataType> &discrete_variable,
+		assignByPosition(const MeshVariable<DataType> &mesh_variable,
 						 const FunctionByPosition &function_by_position)
 	{
-		auto &pkg_data = getPackageData(discrete_variable);
+		auto &pkg_data = getPackageData(mesh_variable);
 		for (int i = 0; i != pkg_size; ++i)
 			for (int j = 0; j != pkg_size; ++j)
 			{
@@ -166,7 +166,7 @@ namespace SPH
 	template <class GridDataPackageType>
 	template <typename DataType>
 	DataType MeshWithGridDataPackages<GridDataPackageType>::
-		DataValueFromGlobalIndex(const DiscreteVariable<DataType> &discrete_variable,
+		DataValueFromGlobalIndex(const MeshVariable<DataType> &mesh_variable,
 								 const Arrayi &global_grid_index)
 	{
 		Arrayi cell_index_on_mesh_ = Arrayi::Zero();
@@ -177,7 +177,7 @@ namespace SPH
 			cell_index_on_mesh_[n] = cell_index_in_this_direction;
 			local_data_index[n] = global_grid_index[n] - cell_index_in_this_direction * pkg_size;
 		}
-		auto &data = data_pkg_addrs_[cell_index_on_mesh_[0]][cell_index_on_mesh_[1]]->getPackageData(discrete_variable);
+		auto &data = data_pkg_addrs_[cell_index_on_mesh_[0]][cell_index_on_mesh_[1]]->getPackageData(mesh_variable);
 		return data[local_data_index[0]][local_data_index[1]];
 	}
 	//=================================================================================================//
@@ -233,11 +233,11 @@ namespace SPH
 	template <class GridDataPackageType>
 	template <class DataType>
 	DataType MeshWithGridDataPackages<GridDataPackageType>::
-		probeMesh(const DiscreteVariable<DataType> &discrete_variable, const Vecd &position)
+		probeMesh(const MeshVariable<DataType> &mesh_variable, const Vecd &position)
 	{
 		Arrayi grid_index = CellIndexFromPosition(position);
 		GridDataPackageType *data_pkg = data_pkg_addrs_[grid_index[0]][grid_index[1]];
-		auto &pkg_data_addrs = data_pkg->getPackageDataAddress(discrete_variable);
+		auto &pkg_data_addrs = data_pkg->getPackageDataAddress(mesh_variable);
 		return data_pkg->isInnerPackage() ? data_pkg->GridDataPackageType::
 												template probeDataPackage<DataType>(pkg_data_addrs, position)
 										  : *pkg_data_addrs[0][0];

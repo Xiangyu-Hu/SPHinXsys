@@ -45,7 +45,8 @@ namespace SPH
 		class ContactDensityAccessor
 		{
 		protected:
-			ContactDensityAccessor(BaseParticles& particles,const std::string &variable_name): contact_density_(*particles.registerSharedVariable<Real>(variable_name)){};
+			ContactDensityAccessor(BaseParticles& particles,const std::string &variable_name): 
+			contact_density_(*particles.registerSharedVariable<Real>(variable_name)){};
 			~ContactDensityAccessor() = default;
 			StdLargeVec<Real>& contact_density_;
 		};

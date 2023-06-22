@@ -132,7 +132,7 @@ namespace SPH
         public:
             explicit FreeStreamVelocityCorrection(SPHBody &sph_body, const Transformd &transform = Transformd())
                 : LocalDynamics(sph_body), FluidDataSimple(sph_body),
-                  transform_(transform), rho0_(DynamicCast<Fluid>(this, particles_->base_material_).ReferenceDensity()),
+                  transform_(transform), rho0_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceDensity()),
                   rho_sum_(*particles_->getVariableByName<Real>("DensitySummation")), pos_(particles_->pos_), vel_(particles_->vel_),
                   surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")),
                   target_velocity(*this){};

@@ -263,8 +263,8 @@ ShellParticles::ShellParticles(SPHBody &sph_body, ElasticSolid *elastic_solid)
     /**
      * add particle reload data
      */
-    addVariableNameToList<Vecd>(variables_to_reload_, "NormalDirection");
-    addVariableNameToList<Real>(variables_to_reload_, "Thickness");
+    addVariableToList<Vecd>(variables_to_reload_, "NormalDirection");
+    addVariableToList<Real>(variables_to_reload_, "Thickness");
 }
 //=================================================================================================//
 void ShellParticles::initializeOtherVariables()

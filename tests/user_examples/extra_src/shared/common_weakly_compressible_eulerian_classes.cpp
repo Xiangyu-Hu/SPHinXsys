@@ -88,7 +88,7 @@ namespace SPH
 	//=================================================================================================//
 	NonReflectiveBoundaryVariableCorrection::NonReflectiveBoundaryVariableCorrection(BaseInnerRelation& inner_relation) 
 		: LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner<BaseParticles>(inner_relation),
-		fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->base_material_)), rho_farfield_(0.0), sound_speed_(0.0), vel_farfield_(Vecd::Zero()),
+		fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())), rho_farfield_(0.0), sound_speed_(0.0), vel_farfield_(Vecd::Zero()),
 		rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")), Vol_(particles_->Vol_), vel_(particles_->vel_),
 		mom_(*particles_->getVariableByName<Vecd>("Momentum")), pos_(particles_->pos_),
 		surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator"))
