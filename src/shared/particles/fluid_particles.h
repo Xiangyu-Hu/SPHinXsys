@@ -49,7 +49,7 @@ namespace SPH
 	public:
 		StdLargeVec<Real> p_;				 /**< pressure */
 		StdLargeVec<Real> drho_dt_;			 /**< density change rate */
-		StdLargeVec<Real> rho_sum_;			 /**< density by particle summation */
+		StdLargeVec<Real> rho_sum_; Real* rho_sum_device_;			 /**< density by particle summation */
 		StdLargeVec<int> surface_indicator_; /**< free surface indicator */
 		Fluid &fluid_;
 
@@ -59,7 +59,27 @@ namespace SPH
 		virtual void initializeOtherVariables() override;
 		/** Return the ptr of this object. */
 		virtual FluidParticles *ThisObjectPtr() override { return this; };
-	};
+
+        void allocateDeviceMemory() override {
+            BaseParticles::allocateDeviceMemory();
+            rho_sum_device_ = allocateDeviceData<Real>(rho_sum_.size());
+        }
+
+        void freeDeviceMemory() override {
+            BaseParticles::freeDeviceMemory();
+            freeDeviceData(rho_sum_device_);
+        }
+
+        void copyToDeviceMemory() override {
+            BaseParticles::copyToDeviceMemory();
+            copyDataToDevice(rho_sum_.data(), rho_sum_device_, rho_sum_.size());
+        }
+
+        void copyFromDeviceMemory() override {
+            BaseParticles::copyFromDeviceMemory();
+            copyDataFromDevice(rho_sum_.data(), rho_sum_device_, rho_sum_.size());
+        }
+    };
 
 	/**
 	 * @class ViscoelasticFluidParticles
