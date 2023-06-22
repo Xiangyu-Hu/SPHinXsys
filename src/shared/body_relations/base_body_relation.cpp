@@ -44,7 +44,23 @@ namespace SPH
 			},
 			ap);
 	}
-	//=================================================================================================//
+
+    void BaseInnerRelation::allocateInnerConfigurationDevice() {
+        inner_configuration_device_ = makeSharedDevice<StdSharedVec<NeighborhoodDevice>>(inner_configuration_.size(),
+                execution::executionQueue.getQueue());
+    }
+
+    void BaseInnerRelation::copyInnerConfigurationToDevice() {
+        for (std::size_t i = 0; i < inner_configuration_.size(); ++i)
+            inner_configuration_device_->at(i).copyFrom(inner_configuration_.at(i));
+    }
+
+    void BaseInnerRelation::copyInnerConfigurationFromDevice() {
+        for (std::size_t i = 0; i < inner_configuration_.size(); ++i)
+            inner_configuration_device_->at(i).copyTo(inner_configuration_.at(i));
+    }
+
+    //=================================================================================================//
 	BaseContactRelation::BaseContactRelation(SPHBody &sph_body, RealBodyVector contact_sph_bodies)
 		: SPHRelation(sph_body), contact_bodies_(contact_sph_bodies)
 	{
