@@ -184,13 +184,7 @@ class BaseParticles
     void writeToXmlForReloadParticle(std::string &filefullpath);
     void readFromXmlForReloadParticle(std::string &filefullpath);
     XmlEngine *getReloadXmlEngine() { return &reload_xml_engine_; };
-
     virtual BaseParticles *ThisObjectPtr() { return this; };
-    /** Get the kernel gradient in weak form. */
-    virtual Vecd getKernelGradient(size_t index, size_t index_j, Real dW_ijV_j, Vecd &e_ij)
-    {
-        return dW_ijV_j * e_ij;
-    };
     //----------------------------------------------------------------------
     //		Relation relate volume, surface and linear particles
     //----------------------------------------------------------------------
