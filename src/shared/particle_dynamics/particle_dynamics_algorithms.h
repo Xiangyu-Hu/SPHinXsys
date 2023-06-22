@@ -102,7 +102,7 @@ class SimpleDynamics : public LocalDynamicsType, public BaseDynamics<void>
     template <class DynamicsIdentifier, typename... Args>
     SimpleDynamics(DynamicsIdentifier &identifier, Args &&...args)
         : LocalDynamicsType(identifier, std::forward<Args>(args)...),
-          BaseDynamics<void>(identifier.getSPHBody()), dispatcher(this)
+          BaseDynamics<void>(identifier.getSPHBody()), executionSelector(this)
     {
         static_assert(!has_initialize<LocalDynamicsType>::value &&
                           !has_interaction<LocalDynamicsType>::value,
@@ -114,16 +114,15 @@ class SimpleDynamics : public LocalDynamicsType, public BaseDynamics<void>
     {
         this->setUpdated();
         this->setupDynamics(dt);
-        auto executionPolicy = ExecutionPolicy();
-        particle_for(executionPolicy,
+        particle_for(ExecutionPolicy(),
                      this->identifier_.LoopRange(),
                      [=](size_t i, auto&& kernel)
                      { kernel.update(i, dt); },
-                     dispatcher.getProxy());
+                     executionSelector);
     }
 
   private:
-        ExecutionSelector<LocalDynamicsType, ExecutionPolicy> dispatcher;
+        ExecutionSelector<LocalDynamicsType, ExecutionPolicy> executionSelector;
 };
 
 /**
@@ -141,7 +140,7 @@ class ReduceDynamics : public LocalDynamicsType,
     template <class DynamicsIdentifier, typename... Args>
     ReduceDynamics(DynamicsIdentifier &identifier, Args &&...args)
         : LocalDynamicsType(identifier, std::forward<Args>(args)...),
-          BaseDynamics<ReturnType>(identifier.getSPHBody()), dispatcher(this) {};
+          BaseDynamics<ReturnType>(identifier.getSPHBody()), executionSelector(this){};
     virtual ~ReduceDynamics(){};
 
     using ReduceReturnType = ReturnType;
@@ -151,15 +150,14 @@ class ReduceDynamics : public LocalDynamicsType,
     virtual ReturnType exec(Real dt = 0.0) override
     {
         this->setupDynamics(dt);
-        ReturnType temp = particle_reduce(executionPolicy,
+        ReturnType temp = particle_reduce(ExecutionPolicy(),
                                           this->identifier_.LoopRange(), this->Reference(), this->getOperation(),
                                           [=](size_t i, auto&& kernel) -> ReturnType
-                                          { return kernel.reduce(i, dt); }, dispatcher.getProxy());
+                                          { return kernel.reduce(i, dt); }, executionSelector);
         return this->outputResult(temp);
     }
   private:
-    ExecutionSelector<LocalDynamicsType, ExecutionPolicy> dispatcher;
-    ExecutionPolicy executionPolicy;
+    ExecutionSelector<LocalDynamicsType, ExecutionPolicy> executionSelector;
 };
 
 /**
@@ -287,14 +285,19 @@ class InteractionDynamics : public BaseInteractionDynamics<LocalDynamicsType, Ex
     {
         particle_for(ExecutionPolicy(),
                      this->identifier_.LoopRange(),
-                     [&](size_t i)
-                     { this->interaction(i, dt); });
+                     [=](size_t i, auto&& kernel)
+                     { kernel.interaction(i, dt); },
+                     executionSelector);
     }
 
   protected:
     template <typename... Args>
     InteractionDynamics(bool mostDerived, Args &&...args)
-        : BaseInteractionDynamics<LocalDynamicsType, ExecutionPolicy>(std::forward<Args>(args)...){};
+        : BaseInteractionDynamics<LocalDynamicsType, ExecutionPolicy>(std::forward<Args>(args)...),
+          executionSelector(this){};
+
+  private:
+    ExecutionSelector<LocalDynamicsType, ExecutionPolicy> executionSelector;
 };
 
 /**
@@ -307,7 +310,8 @@ class InteractionWithUpdate : public InteractionDynamics<LocalDynamicsType, Exec
   public:
     template <typename... Args>
     InteractionWithUpdate(Args &&...args)
-        : InteractionDynamics<LocalDynamicsType, ExecutionPolicy>(false, std::forward<Args>(args)...)
+        : InteractionDynamics<LocalDynamicsType, ExecutionPolicy>(false, std::forward<Args>(args)...),
+          executionSelector(this)
     {
         static_assert(!has_initialize<LocalDynamicsType>::value,
                       "LocalDynamicsType does not fulfill InteractionWithUpdate requirements");
@@ -319,9 +323,13 @@ class InteractionWithUpdate : public InteractionDynamics<LocalDynamicsType, Exec
         InteractionDynamics<LocalDynamicsType, ExecutionPolicy>::exec(dt);
         particle_for(ExecutionPolicy(),
                      this->identifier_.LoopRange(),
-                     [&](size_t i)
-                     { this->update(i, dt); });
+                     [=](size_t i, auto&& kernel)
+                     { kernel.update(i, dt); },
+                     executionSelector);
     };
+
+private:
+    ExecutionSelector<LocalDynamicsType, ExecutionPolicy> executionSelector;
 };
 
 /**

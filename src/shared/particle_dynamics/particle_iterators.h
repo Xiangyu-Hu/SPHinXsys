@@ -89,7 +89,7 @@ namespace SPH
     inline void particle_for(const ParallelPolicy &par_policy, const size_t &all_real_particles,
                              const LocalDynamicsFunction &local_dynamics_function, Proxy& proxy)
     {
-        auto& kernel = *proxy.get(par_policy);
+        auto& kernel = *proxy.getProxy().get(par_policy);
         parallel_for(
                 IndexRange(0, all_real_particles),
                 [&](const IndexRange &r)
@@ -169,7 +169,7 @@ namespace SPH
     inline void particle_for(const ParallelPolicy &par_policy, const ConcurrentCellLists &body_part_cells,
                              const LocalDynamicsFunction &local_dynamics_function, Proxy& proxy)
     {
-        auto& kernel = *proxy.get(par_policy);
+        auto& kernel = *proxy.getProxy().get(par_policy);
         parallel_for(
                 IndexRange(0, body_part_cells.size()),
                 [&](const IndexRange &r)
@@ -358,7 +358,7 @@ namespace SPH
                                       ReturnType identity, Operation &&operation,
                                       const LocalDynamicsFunction &local_dynamics_function, Proxy& proxy)
     {
-        auto& kernel = *proxy.get(par_policy);
+        auto& kernel = *proxy.getProxy().get(par_policy);
         return parallel_reduce(
                 IndexRange(0, all_real_particles),
                 identity, [&](const IndexRange &r, ReturnType temp0) -> ReturnType
