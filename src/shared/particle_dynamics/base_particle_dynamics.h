@@ -130,13 +130,15 @@ namespace SPH
 	public:
 		explicit DataDelegateInner(BaseInnerRelation &inner_relation)
 			: BaseDataDelegateType(inner_relation.getSPHBody()),
-			  inner_configuration_(inner_relation.inner_configuration_){};
+			  inner_configuration_(inner_relation.inner_configuration_),
+              inner_configuration_device_(inner_relation.inner_configuration_device_) {};
 		virtual ~DataDelegateInner(){};
 
-	protected:
-		/** inner configuration of the designated body */
+    protected:
+        /** inner configuration of the designated body */
 		ParticleConfiguration &inner_configuration_;
-	};
+        SharedPtr<StdSharedVec<NeighborhoodDevice>> inner_configuration_device_;
+    };
 
 	/**
 	 * @class DataDelegateContact
@@ -157,6 +159,7 @@ namespace SPH
 		StdVec<ContactParticlesType *> contact_particles_;
 		/** Configurations for particle interaction between bodies. */
 		StdVec<ParticleConfiguration *> contact_configuration_;
+        SharedPtr<StdSharedVec<NeighborhoodDevice*>> contact_configuration_device_;
 	};
 
 	/**
