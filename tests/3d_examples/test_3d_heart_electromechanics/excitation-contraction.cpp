@@ -400,7 +400,7 @@ int main(int ac, char *av[])
 	// Time step size calculation.
 	electro_physiology::GetElectroPhysiologyTimeStepSize get_physiology_time_step(physiology_heart);
 	// Diffusion process for diffusion body.
-	electro_physiology::ElectroPhysiologyDiffusionRelaxationInner diffusion_relaxation(physiology_heart_inner);
+	electro_physiology::ElectroPhysiologyDiffusionInnerRK2 diffusion_relaxation(physiology_heart_inner);
 	// Solvers for ODE system.
 	electro_physiology::ElectroPhysiologyReactionRelaxationForward reaction_relaxation_forward(physiology_heart);
 	electro_physiology::ElectroPhysiologyReactionRelaxationBackward reaction_relaxation_backward(physiology_heart);

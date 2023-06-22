@@ -1,25 +1,25 @@
-/* -------------------------------------------------------------------------*
- *								SPHinXsys									*
- * -------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic*
- * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
- * (smoothed particle hydrodynamics), a meshless computational method using	*
- * particle discretization.													*
- *																			*
- * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
- *  HU1527/12-1 and HU1527/12-4												*
- *                                                                          *
- * Portions copyright (c) 2017-2022 Technical University of Munich and		*
- * the authors' affiliations.												*
- *                                                                          *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
- * not use this file except in compliance with the License. You may obtain a*
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
- *                                                                          *
- * ------------------------------------------------------------------------*/
+/* ------------------------------------------------------------------------- *
+ *                                SPHinXsys                                  *
+ * ------------------------------------------------------------------------- *
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle *
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for    *
+ * physical accurate simulation and aims to model coupled industrial dynamic *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH   *
+ * (smoothed particle hydrodynamics), a meshless computational method using  *
+ * particle discretization.                                                  *
+ *                                                                           *
+ * SPHinXsys is partially funded by German Research Foundation               *
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
+ *  HU1527/12-1 and HU1527/12-4                                              *
+ *                                                                           *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and       *
+ * the authors' affiliations.                                                *
+ *                                                                           *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
+ * not use this file except in compliance with the License. You may obtain a *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
+ *                                                                           *
+ * ------------------------------------------------------------------------- */
 /**
  * @file 	diffusion_dynamics.h
  * @brief 	This is the particle dynamics applicable for all type bodies
@@ -77,16 +77,40 @@ class BaseDiffusionRelaxation
     StdVec<BaseDiffusion *> &AllDiffusions() { return material_.AllDiffusions(); };
 };
 
+class KernelGradientInner
+{
+  public:
+    KernelGradientInner(BaseParticles *inner_particles){};
+    Vecd operator()(size_t index_i, size_t index_j, Real dW_ijV_j, const Vecd &e_ij)
+    {
+        return dW_ijV_j * e_ij;
+    };
+};
+
+class CorrectedKernelGradientInner
+{
+    StdLargeVec<Matd> &B_;
+
+  public:
+    CorrectedKernelGradientInner(BaseParticles *inner_particles)
+        : B_(*inner_particles->getVariableByName<Matd>("CorrectionMatrix")){};
+    Vecd operator()(size_t index_i, size_t index_j, Real dW_ijV_j, const Vecd &e_ij)
+    {
+        return 0.5 * dW_ijV_j * (B_[index_i] + B_[index_j]) * e_ij;
+    };
+};
+
 /**
  * @class DiffusionRelaxationInner
  * @brief Compute the diffusion relaxation process of all species
  */
-template <class ParticlesType>
+template <class ParticlesType, class KernelGradientType = KernelGradientInner>
 class DiffusionRelaxationInner
     : public BaseDiffusionRelaxation<ParticlesType>,
       public DataDelegateInner<ParticlesType, DataDelegateEmptyBase>
 {
   protected:
+    KernelGradientType kernel_gradient_;
     void initializeDiffusionChangeRate(size_t particle_i);
     void getDiffusionChangeRate(size_t particle_i, size_t particle_j, Vecd &e_ij, Real surface_area_ij);
     virtual void updateSpeciesDiffusion(size_t particle_i, Real dt);
@@ -99,17 +123,43 @@ class DiffusionRelaxationInner
     void update(size_t index_i, Real dt = 0.0);
 };
 
+class KernelGradientContact
+{
+  public:
+    KernelGradientContact(BaseParticles *inner_particles, BaseParticles *contact_particles){};
+    Vecd operator()(size_t index_i, size_t index_j, Real dW_ijV_j, const Vecd &e_ij)
+    {
+        return dW_ijV_j * e_ij;
+    };
+};
+
+class CorrectedKernelGradientContact
+{
+    StdLargeVec<Matd> &B_;
+    StdLargeVec<Matd> &contact_B_;
+
+  public:
+    CorrectedKernelGradientContact(BaseParticles *inner_particles, BaseParticles *contact_particles)
+        : B_(*inner_particles->getVariableByName<Matd>("CorrectionMatrix")),
+          contact_B_(*contact_particles->getVariableByName<Matd>("CorrectionMatrix")){};
+    Vecd operator()(size_t index_i, size_t index_j, Real dW_ijV_j, const Vecd &e_ij)
+    {
+        return 0.5 * dW_ijV_j * (B_[index_i] + contact_B_[index_j]) * e_ij;
+    };
+};
+
 /**
  * @class DiffusionRelaxationContact
  * @brief Base class for diffusion relaxation process between two contact bodies.
  */
-template <class ParticlesType, class ContactParticlesType>
+template <class ParticlesType, class ContactParticlesType, class KernelGradientType = KernelGradientContact>
 class BaseDiffusionRelaxationContact
     : public BaseDiffusionRelaxation<ParticlesType>,
       public DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>
 {
   protected:
     StdVec<StdVec<std::string>> contact_gradient_species_names_;
+    StdVec<KernelGradientType> contact_kernel_gradients_;
 
   public:
     typedef BaseContactRelation BodyRelationType;
@@ -122,9 +172,9 @@ class BaseDiffusionRelaxationContact
  * @class DiffusionRelaxationDirichlet
  * @brief Contact diffusion relaxation with Dirichlet boundary condition.
  */
-template <class ParticlesType, class ContactParticlesType>
+template <class ParticlesType, class ContactParticlesType, class KernelGradientType = KernelGradientContact>
 class DiffusionRelaxationDirichlet
-    : public BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType>
+    : public BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType>
 {
   protected:
     StdVec<StdVec<StdLargeVec<Real> *>> contact_gradient_species_;
@@ -142,9 +192,9 @@ class DiffusionRelaxationDirichlet
  * @class DiffusionRelaxationNeumann
  * @brief Contact diffusion relaxation with Neumann boundary condition.
  */
-template <class ParticlesType, class ContactParticlesType>
+template <class ParticlesType, class ContactParticlesType, class KernelGradientType = KernelGradientContact>
 class DiffusionRelaxationNeumann
-    : public BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType>
+    : public BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType>
 {
     StdLargeVec<Vecd> &n_;
     StdVec<StdLargeVec<Real> *> contact_heat_flux_;
@@ -162,26 +212,26 @@ class DiffusionRelaxationNeumann
 };
 
 /**
-* @class RelaxationOfAllDiffusionSpeciesRobinContact
-* @brief Contact diffusion relaxation with Robin boundary condition.
-*/
-template <class ParticlesType, class ContactParticlesType>
+ * @class RelaxationOfAllDiffusionSpeciesRobinContact
+ * @brief Contact diffusion relaxation with Robin boundary condition.
+ */
+template <class ParticlesType, class ContactParticlesType, class KernelGradientType = KernelGradientContact>
 class DiffusionRelaxationRobin
-	: public BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType>
+    : public BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType>
 {
-	StdLargeVec<Vecd>& n_;
-	StdVec<StdLargeVec<Real>*> contact_convection_;
-	StdVec<Real *> contact_T_infinity_;
-	StdVec<StdLargeVec<Vecd>*> contact_n_;
+    StdLargeVec<Vecd> &n_;
+    StdVec<StdLargeVec<Real> *> contact_convection_;
+    StdVec<Real *> contact_T_infinity_;
+    StdVec<StdLargeVec<Vecd> *> contact_n_;
 
-protected:
-	void getDiffusionChangeRateRobinContact(size_t particle_i, size_t particle_j, Real surface_area_ij_Robin, StdLargeVec<Real>& convection_k, Real& T_infinity_k);
+  protected:
+    void getDiffusionChangeRateRobinContact(size_t particle_i, size_t particle_j, Real surface_area_ij_Robin, StdLargeVec<Real> &convection_k, Real &T_infinity_k);
 
-public:
-	explicit DiffusionRelaxationRobin(BaseContactRelation& contact_relation);
-	virtual ~DiffusionRelaxationRobin() {};
+  public:
+    explicit DiffusionRelaxationRobin(BaseContactRelation &contact_relation);
+    virtual ~DiffusionRelaxationRobin(){};
 
-	inline void interaction(size_t index_i, Real dt = 0.0);
+    inline void interaction(size_t index_i, Real dt = 0.0);
 };
 
 /**

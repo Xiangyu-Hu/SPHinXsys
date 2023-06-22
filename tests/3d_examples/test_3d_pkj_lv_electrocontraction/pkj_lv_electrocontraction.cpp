@@ -181,7 +181,7 @@ int main(int ac, char *av[])
 	/** Physiology for PKJ*/
 	/** Time step size calculation. */
 	electro_physiology::GetElectroPhysiologyTimeStepSize get_pkj_physiology_time_step(pkj_body);
-	electro_physiology::ElectroPhysiologyDiffusionRelaxationInner pkj_diffusion_relaxation(pkj_inner);
+	electro_physiology::ElectroPhysiologyDiffusionInnerRK2 pkj_diffusion_relaxation(pkj_inner);
 	/** Solvers for ODE system */
 	electro_physiology::ElectroPhysiologyReactionRelaxationForward pkj_reaction_relaxation_forward(pkj_body);
 	electro_physiology::ElectroPhysiologyReactionRelaxationBackward pkj_reaction_relaxation_backward(pkj_body);

@@ -58,8 +58,6 @@ namespace SPH
 		StdLargeVec<Matd> B_;	 /**< configuration correction for linear reproducing */
 		Solid &solid_;
 
-		/** Get the kernel gradient in weak form. */
-		virtual Vecd getKernelGradient(size_t index_i, size_t index_j, Real dW_ijV_j, Vecd &e_ij) override;
 		/** Get wall average velocity when interacting with fluid. */
 		virtual StdLargeVec<Vecd> *AverageVelocity() { return &vel_; };
 		/** Get wall average acceleration when interacting with fluid. */
