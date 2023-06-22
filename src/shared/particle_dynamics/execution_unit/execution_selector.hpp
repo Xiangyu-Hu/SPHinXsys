@@ -16,8 +16,6 @@ namespace SPH::execution {
                 return proxy;
             }
 
-            void writeBack() {}
-
         private:
             NoProxy<T> proxy;
         };
@@ -25,18 +23,22 @@ namespace SPH::execution {
         template<class T>
         class ExecutionSelector<T, ParallelSYCLDevicePolicy> {
         public:
-            explicit ExecutionSelector(T* localDynamics) : local_dynamics(localDynamics) {}
+            explicit ExecutionSelector(T* localDynamics) : local_dynamics(localDynamics),
+                buffer_local_dynamics_kernel(sycl::buffer<KernelT>(local_dynamics->getDeviceProxy().getKernel(), 1)) {}
 
             auto& getProxy() {
                 return local_dynamics->getDeviceProxy();
             }
 
-            void writeBack() {
-                local_dynamics->writeBack();
+            auto& getBuffer() {
+                return buffer_local_dynamics_kernel;
             }
 
         private:
+            using KernelT =
+                    std::remove_pointer_t<decltype(std::declval<T>().getDeviceProxy().getKernel())>;
             T* local_dynamics;
+            sycl::buffer<KernelT, 1> buffer_local_dynamics_kernel;
         };
     }
 
