@@ -103,7 +103,7 @@ int main(int ac, char* av[])
 	InteractionWithUpdate<KernalGredientWithCorrectionComplex> kernel_gredient_update(water_block_complex);
 	SimpleDynamics<EulerianWCTimeStepInitialization> initialize_a_fluid_step(water_block);
 	SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
-	Dynamics1Level<Integration1stHalfAcousticRiemannWithWall> pressure_relaxation(water_block_complex);
+	InteractionWithUpdate<Integration1stHalfAcousticRiemannWithWall> pressure_relaxation(water_block_complex);
 	InteractionWithUpdate<Integration2ndHalfAcousticRiemannWithWall> density_relaxation(water_block_complex);
 	InteractionDynamics<ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	ReduceDynamics<EulerianWCAcousticTimeStepSize> get_fluid_time_step_size(water_block, 0.3);

@@ -42,92 +42,24 @@ namespace SPH
         StdLargeVec<Real> &rho_, &p_;
         StdLargeVec<Vecd> &vel_;
         Fluid &fluid_;
+        Real max_distance_between_nodes_;
 
       public:
-        explicit WCAcousticTimeStepSizeInFVM(SPHBody &sph_body);
+        explicit WCAcousticTimeStepSizeInFVM(SPHBody &sph_body, Real max_distance_between_nodes, Real acousticCFL = 0.6);
         virtual ~WCAcousticTimeStepSizeInFVM(){};
         virtual Real outputResult(Real reduced_value) override;
+		Real acousticCFL_;
     };
 
 	/**
-	* @class BaseViscousAccelerationInnerInFVM
-	* @brief the viscosity force induced acceleration
-	*/
-	template<class RiemannSolverType>
-	class BaseViscousAccelerationInnerInFVM : public LocalDynamics, public DataDelegateInnerInFVM<BaseParticles>
-	{
-	public:
-		explicit BaseViscousAccelerationInnerInFVM(BaseInnerRelationInFVM& inner_relation, Real limiter_parameter=30.0);
-		virtual ~BaseViscousAccelerationInnerInFVM() {};
-		void interaction(size_t index_i, Real dt = 0.0);
-	protected:
-		Fluid& fluid_;
-		RiemannSolverType riemann_solver_;
-		StdLargeVec<Real>& rho_,& p_;
-		StdLargeVec<Vecd>& vel_, & acc_prior_, & pos_,& dmom_dt_prior_;
-		Real mu_;
-	};
-	using ViscousAccelerationRiemannInnerInFVM = BaseViscousAccelerationInnerInFVM<AcousticRiemannSolverInEulerianMethod>;
-
-	/**
-	* @class BaseRelaxationInFVM
-	* @brief Pure abstract base class for all fluid relaxation schemes
-	*/
-	class BaseRelaxationInFVM : public LocalDynamics, public DataDelegateInnerInFVM<BaseParticles>
-	{
-	public:
-		explicit BaseRelaxationInFVM(BaseInnerRelationInFVM &inner_relation);
-		virtual ~BaseRelaxationInFVM() {};
-	protected:
-		Fluid& fluid_;
-		StdLargeVec<Real>& p_, & rho_, & drho_dt_;
-		StdLargeVec<Vecd>& vel_, & mom_, & dmom_dt_, & dmom_dt_prior_, & pos_;
-		Real mu_;
-	};
-
-	/**
-	* @class BaseIntegration1stHalfInFVM
-	* @brief Template class for pressure relaxation scheme with the Riemann solver
-	* as template variable
-	*/
-	template <class RiemannSolverType>
-	class BaseIntegration1stHalfInFVM : public BaseRelaxationInFVM
-	{
-	public:
-		explicit BaseIntegration1stHalfInFVM(BaseInnerRelationInFVM &inner_relation, Real limiter_parameter = 15.0);
-		virtual ~BaseIntegration1stHalfInFVM() {};
-		RiemannSolverType riemann_solver_;
-		void initialization(size_t index_i, Real dt = 0.0);
-		void interaction(size_t index_i, Real dt = 0.0);
-		void update(size_t index_i, Real dt = 0.0);
-	};
-	using Integration1stHalfAcousticRiemannInFVM = BaseIntegration1stHalfInFVM<AcousticRiemannSolverInEulerianMethod>;
-
-	/**
-	* @class BaseIntegration2ndHalfInFVM
-	* @brief Template class for pressure relaxation scheme with the Riemann solver
-	* as template variable
-	*/
-	template <class RiemannSolverType>
-	class BaseIntegration2ndHalfInFVM : public BaseRelaxationInFVM
-	{
-	public:
-		explicit BaseIntegration2ndHalfInFVM(BaseInnerRelationInFVM &inner_relation, Real limiter_parameter = 15.0);
-		virtual ~BaseIntegration2ndHalfInFVM() {};
-		RiemannSolverType riemann_solver_;
-		void interaction(size_t index_i, Real dt = 0.0);
-		void update(size_t index_i, Real dt = 0.0);
-	};
-	using Integration2ndHalfAcousticRiemannInFVM = BaseIntegration2ndHalfInFVM<AcousticRiemannSolverInEulerianMethod>;
-
-	/**
 	* @class BaseFluidForceOnSolidInFVM
-	* @brief Base class for computing the forces from the fluid
+	* @brief Base class for computing the forces from the fluid. 
+	* Note that In FVM , we need FluidDataInner class to calculate force between solid and fluid.
 	*/
-	class BaseForceFromFluidInFVM : public LocalDynamics, public DataDelegateInnerInFVM<BaseParticles>
+	class BaseForceFromFluidInFVM : public LocalDynamics, public fluid_dynamics::FluidDataInner
 	{
 	public:
-		explicit BaseForceFromFluidInFVM(BaseInnerRelationInFVM& inner_relation);
+		explicit BaseForceFromFluidInFVM(BaseInnerRelation& inner_relation);
 		virtual ~BaseForceFromFluidInFVM() {};
 		StdLargeVec<Vecd>& getForceFromFluid() { return force_from_fluid_; };
 
@@ -143,13 +75,14 @@ namespace SPH
 	class ViscousForceFromFluidInFVM : public BaseForceFromFluidInFVM
 	{
 	public:
-		explicit ViscousForceFromFluidInFVM(BaseInnerRelationInFVM& inner_relation);
+		explicit ViscousForceFromFluidInFVM(BaseInnerRelation& inner_relation, vector<vector<size_t>> each_boundary_type_contact_real_index);
 		virtual ~ViscousForceFromFluidInFVM() {};
 		void interaction(size_t index_i, Real dt = 0.0);
 	protected:
 		Fluid& fluid_;
 		StdLargeVec<Vecd>& vel_;
 		Real mu_;
+		vector<vector<size_t>> each_boundary_type_contact_real_index_;
 	};
 
 	/**
@@ -162,9 +95,10 @@ namespace SPH
 	class BasePressureForceAccelerationFromFluidInFVM : public BaseForceFromFluidInFVM
 	{
 	public:
-		explicit BasePressureForceAccelerationFromFluidInFVM(BaseInnerRelationInFVM& inner_relation)
+		explicit BasePressureForceAccelerationFromFluidInFVM(BaseInnerRelation& inner_relation, vector<vector<size_t>> each_boundary_type_contact_real_index)
 			: BaseForceFromFluidInFVM(inner_relation),  fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())), vel_(particles_->vel_),
-			p_(*particles_->getVariableByName<Real>("Pressure")), rho_(particles_->rho_), riemann_solver_(fluid_, fluid_)
+			p_(*particles_->getVariableByName<Real>("Pressure")), rho_(particles_->rho_), riemann_solver_(fluid_, fluid_),
+			each_boundary_type_contact_real_index_(each_boundary_type_contact_real_index)
 		{
 			particles_->registerVariable(force_from_fluid_, "PressureForceFromFluid");
 		};
@@ -172,31 +106,29 @@ namespace SPH
 		StdLargeVec<Vecd>& vel_;
 		StdLargeVec<Real>& p_, & rho_;
 		RiemannSolverType riemann_solver_;
+		vector<vector<size_t>> each_boundary_type_contact_real_index_;
 		virtual ~BasePressureForceAccelerationFromFluidInFVM() {};
 
 		void interaction(size_t index_i, Real dt = 0.0)
 		{
-			Real Vol_i = Vol_[index_i];
-			Vecd& vel_i = vel_[index_i];
-
-			Vecd force = Vecd::Zero();
-			const NeighborhoodInFVM& inner_neighborhood = inner_configuration_in_FVM_[index_i];
-			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+			for(size_t real_particle_num=0;real_particle_num!=each_boundary_type_contact_real_index_[3].size();++real_particle_num)
 			{
-				FluidState state_i(rho_[index_i], vel_[index_i], p_[index_i]);
-				if (inner_neighborhood.boundary_type_[n] == 3)
+				Vecd force = Vecd::Zero();
+				if(index_i==each_boundary_type_contact_real_index_[3][real_particle_num])
 				{
-					Vecd e_ij = inner_neighborhood.e_ij_[n];
-					Vecd vel_in_wall = -vel_i;
-					Real p_in_wall = p_[index_i];
-					Real rho_in_wall = fluid_.DensityFromPressure(p_in_wall);
-					FluidState state_j(rho_in_wall, vel_in_wall, p_in_wall);
+					Real Vol_i = Vol_[index_i];
+					FluidState state_i(rho_[index_i], vel_[index_i], p_[index_i]);
+					const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+					size_t index_j = inner_neighborhood.j_[2];
+					Vecd e_ij = inner_neighborhood.e_ij_[2];
+					FluidState state_j(rho_[index_j], vel_[index_j], p_[index_j]);
 					FluidStarState interface_state = riemann_solver_.getInterfaceState(state_i, state_j, e_ij);
 					Real p_star = interface_state.p_;
-					force -= 2.0 * (-e_ij) * p_star * Vol_i * inner_neighborhood.dW_ijV_j_[n];
+					force -= 2.0 * (-e_ij) * p_star * Vol_i * inner_neighborhood.dW_ijV_j_[2];
+					force_from_fluid_[index_i] = force;
 				}
 			}
-			force_from_fluid_[index_i] = force;
+
 		};
 	};
 	using PressureForceAccelerationFromFluidInFVM = BasePressureForceAccelerationFromFluidInFVM<NoRiemannSolverInWCEulerianMethod>;
@@ -211,9 +143,9 @@ namespace SPH
 	{
 	public:
 		template <class ViscousForceFromFluidType>
-		BaseAllForceAccelerationFromFluidInFVM(BaseInnerRelationInFVM& inner_relation,
-			ViscousForceFromFluidType& viscous_force_from_fluid)
-			: PressureForceType(inner_relation),
+		BaseAllForceAccelerationFromFluidInFVM(BaseInnerRelation& inner_relation,
+			ViscousForceFromFluidType& viscous_force_from_fluid, vector<vector<size_t>> each_boundary_type_contact_real_index)
+			: PressureForceType(inner_relation,each_boundary_type_contact_real_index),
 			viscous_force_from_fluid_(viscous_force_from_fluid.getForceFromFluid())
 		{
 			this->particles_->registerVariable(this->force_from_fluid_, "AllForceFromFluid");

@@ -29,6 +29,9 @@ int main(int ac, char *av[])
 	water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	water_block.generateParticles<ParticleGeneratorInFVM>(read_mesh_data.elements_center_coordinates_, read_mesh_data.elements_volumes_);
 	water_block.addBodyStateForRecording<Real>("Density");
+	/** Initial condition */
+	SimpleDynamics<WeaklyCompressibleFluidInitialCondition> initial_condition(water_block);
+	GhostCreationFromMesh ghost_creation(water_block, read_mesh_data.cell_lists_, read_mesh_data.point_coordinates_2D_);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//----------------------------------------------------------------------
@@ -38,22 +41,22 @@ int main(int ac, char *av[])
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	/** Initial condition */
-	SimpleDynamics<WeaklyCompressibleFluidInitialCondition> initial_condition(water_block);
-	initial_condition.exec();
+	/** Boundary conditions set up */
+	FACBoundaryConditionSetup boundary_condition_setup(water_block_inner,ghost_creation.each_boundary_type_with_all_ghosts_index_,
+		ghost_creation.each_boundary_type_with_all_ghosts_eij_,ghost_creation.each_boundary_type_contact_real_index_);
 	SimpleDynamics<EulerianWCTimeStepInitialization> initialize_a_fluid_step(water_block);
 	/** Time step size with considering sound wave speed. */
-	ReduceDynamics<WCAcousticTimeStepSizeInFVM> get_fluid_time_step_size(water_block);
-	InteractionDynamics<ViscousAccelerationRiemannInnerInFVM> viscous_acceleration(water_block_inner);
+	ReduceDynamics<WCAcousticTimeStepSizeInFVM> get_fluid_time_step_size(water_block,read_mesh_data.max_distance_between_nodes_);
+	InteractionDynamics<WCEulerianViscousAccelerationInner> viscous_acceleration(water_block_inner);
 	/** Here we introduce the limiter in the Riemann solver and 0 means the no extra numerical dissipation.
 	the value is larger, the numerical dissipation larger*/
-	Dynamics1Level<Integration1stHalfAcousticRiemannInFVM> pressure_relaxation(water_block_inner, 50.0);
-	InteractionWithUpdate<Integration2ndHalfAcousticRiemannInFVM> density_relaxation(water_block_inner, 50.0);
+	InteractionWithUpdate<Integration1stHalfAcousticRiemann> pressure_relaxation(water_block_inner, 200.0);
+	InteractionWithUpdate<Integration2ndHalfAcousticRiemann> density_relaxation(water_block_inner, 200.0);
 	//----------------------------------------------------------------------
 	//	Compute the force exerted on solid body due to fluid pressure and viscosity
 	//----------------------------------------------------------------------
-	InteractionDynamics<ViscousForceFromFluidInFVM> viscous_force_on_solid(water_block_inner);
-	InteractionDynamics<AllForceAccelerationFromFluid> fluid_force_on_solid_update(water_block_inner, viscous_force_on_solid);
+	InteractionDynamics<ViscousForceFromFluidInFVM> viscous_force_on_solid(water_block_inner,ghost_creation.each_boundary_type_contact_real_index_);
+	InteractionDynamics<AllForceAccelerationFromFluid> fluid_force_on_solid_update(water_block_inner, viscous_force_on_solid,ghost_creation.each_boundary_type_contact_real_index_);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
@@ -63,6 +66,10 @@ int main(int ac, char *av[])
 	ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>
 		write_total_force_on_inserted_body(io_environment, fluid_force_on_solid_update, "TotalPressureForceOnSolid");
 	ReducedQuantityRecording<ReduceDynamics<MaximumSpeed>> write_maximum_speed(io_environment, water_block);
+	//----------------------------------------------------------------------
+	//	Prepare the simulation with case specified initial condition if necessary.
+	//----------------------------------------------------------------------
+	initial_condition.exec();
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
@@ -89,10 +96,12 @@ int main(int ac, char *av[])
 		{
 			initialize_a_fluid_step.exec();
 			Real dt = get_fluid_time_step_size.exec();
+			boundary_condition_setup.resetBoundaryConditions();
 			viscous_acceleration.exec();
 			pressure_relaxation.exec(dt);
+			boundary_condition_setup.resetBoundaryConditions();
 			density_relaxation.exec(dt);
-
+			
 			integration_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
 			if (number_of_iterations % screen_output_interval == 0)
@@ -115,7 +124,7 @@ int main(int ac, char *av[])
     TimeInterval tt;
     tt = t4 - t1 - interval;
 	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
-    write_total_viscous_force_on_inserted_body.testResult();
+	write_total_viscous_force_on_inserted_body.testResult();
 
 	return 0;
 }
