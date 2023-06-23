@@ -66,7 +66,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
     // ObservedQuantityRecording<Real> write_solid_temperature("Phi", io_environment, temperature_observer_contact);
-    RegressionTestEnsembleAveraged<ObservedQuantityRecording<Real>>
+    RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>>
         write_solid_temperature("Phi", io_environment, temperature_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
