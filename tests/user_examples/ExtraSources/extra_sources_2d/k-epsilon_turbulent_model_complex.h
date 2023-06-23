@@ -57,6 +57,7 @@ namespace SPH
 				}
 			};
 			virtual ~K_TurtbulentModelComplex() {};
+
 			inline void interaction(size_t index_i, Real dt = 0.0);
 		protected:
 			StdVec<StdLargeVec<Vecd>*> contact_vel_ave_;

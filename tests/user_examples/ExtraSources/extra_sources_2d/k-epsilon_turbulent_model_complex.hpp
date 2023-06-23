@@ -134,7 +134,10 @@ namespace SPH
 				}
 			}
 			//if (surface_indicator_[index_i] == 0 && pos_[index_i][0] <= 5.95)//To prevent kernel truncation near outlet
-			acc_prior_[index_i] += acceleration;
+			
+			//According to NHT book, dkdy for wall part should be zero
+			//acc_prior_[index_i] += acceleration;
+			
 			//for test
 			tke_acc_wall_[index_i] = acceleration;
 			test_k_grad_rslt_[index_i] += k_gradient;
