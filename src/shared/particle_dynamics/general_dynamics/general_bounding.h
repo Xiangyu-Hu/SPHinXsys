@@ -55,6 +55,74 @@ class BoundingAlongAxis : public BaseDynamics<void>,
     virtual ~BoundingAlongAxis(){};
 };
 
+class PeriodicBoundary
+{
+  public:
+    PeriodicBoundary(BoundingBox bounding_bounds, int axis)
+        : bounding_bounds_(bounding_bounds), axis_(axis),
+          translation_(bounding_bounds.second_[axis] - bounding_bounds.first_[axis]){};
+
+    Vecd LowerBoundTranslation(Vecd pos)
+    {
+        pos[axis_] += translation_;
+        return pos;
+    };
+
+    Vecd UpperBoundTranslation(Vecd pos)
+    {
+        pos[axis_] -= translation_;
+        return pos;
+    };
+
+  protected:
+    BoundingBox bounding_bounds_;
+    int axis_;
+    Real translation_;
+};
+
+class LeeEdwardsBoundary : public PeriodicBoundary
+{
+  public:
+    LeeEdwardsBoundary(BoundingBox bounding_bounds, int axis, int shear_direction, Real shear_rate)
+        : PeriodicBoundary(bounding_bounds, axis), shear_direction_(shear_direction),
+          shear_center_(0.5 * (bounding_bounds.second_[shear_direction] + bounding_bounds.first_[shear_direction])),
+          pos_increment_(bounding_bounds.second_[shear_direction] - bounding_bounds.first_[shear_direction]),
+          vel_increment_(pos_increment_ * shear_rate){};
+
+    Vecd LowerBoundTranslation(Vecd pos)
+    {
+        pos[axis_] += translation_;
+        flipPosition(pos);
+        return pos;
+    };
+
+    Vecd UpperBoundTranslation(Vecd pos)
+    {
+        pos[axis_] -= translation_;
+        flipPosition(pos);
+        return pos;
+    };
+
+    Vecd flipVelocity(const Vecd &pos, Vecd vel)
+    {
+        bool is_positive_side = pos[shear_direction_] > shear_center_;
+        vel[shear_direction_] += is_positive_side ? -vel_increment_ : vel_increment_;
+        return vel;
+    };
+
+  private:
+    int shear_direction_; // upper bound moving toward positive side
+    Real shear_center_;
+    Real pos_increment_;
+    Real vel_increment_;
+
+    void flipPosition(Vecd &pos)
+    {
+        bool is_positive_side = pos[shear_direction_] > shear_center_;
+        pos[shear_direction_] += is_positive_side ? -pos_increment_ : pos_increment_;
+    };
+};
+
 /**
  * @class BasePeriodicCondition
  * @brief Base class for two different type periodic boundary conditions.
