@@ -170,7 +170,7 @@ int main(int ac, char *av[])
 
     /** Output */
     BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
-    RegressionTestTimeAveraged<ObservedQuantityRecording<Real>>
+    RegressionTestTimeAverage<ObservedQuantityRecording<Real>>
         write_beam_stress("VonMisesStress", io_environment, beam_observer_contact);
     /* time step begins */
     GlobalStaticVariables::physical_time_ = 0.0;

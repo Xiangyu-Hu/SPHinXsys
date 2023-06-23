@@ -119,7 +119,7 @@ int main(int ac, char *av[])
     /** Output the body states. */
     BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
     /** Observer and output. */
-    RegressionTestEnsembleAveraged<ObservedQuantityRecording<Vecd>>
+    RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
         write_free_cube_displacement("Position", io_environment, cube_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration

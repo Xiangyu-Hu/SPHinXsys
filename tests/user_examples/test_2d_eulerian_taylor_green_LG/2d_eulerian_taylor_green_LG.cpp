@@ -60,10 +60,10 @@ int main(int ac, char *av[])
     /** Output the body states. */
     BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
     /** Output the mechanical energy of fluid body. */
-    RegressionTestEnsembleAveraged<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
+    RegressionTestEnsembleAverage<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
         write_total_mechanical_energy(io_environment, water_body);
     /** Output the maximum speed of the fluid body. */
-    RegressionTestEnsembleAveraged<ReducedQuantityRecording<ReduceDynamics<MaximumSpeed>>>
+    RegressionTestEnsembleAverage<ReducedQuantityRecording<ReduceDynamics<MaximumSpeed>>>
         write_maximum_speed(io_environment, water_body);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration

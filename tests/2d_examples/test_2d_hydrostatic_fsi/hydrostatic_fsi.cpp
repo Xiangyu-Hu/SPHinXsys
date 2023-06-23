@@ -268,7 +268,7 @@ int main()
     /** Output body states for visualization. */
     BodyStatesRecordingToVtp write_real_body_states_to_vtp(io_environment, system.real_bodies_);
     /** Output the observed displacement of gate free end. */
-    RegressionTestEnsembleAveraged<ObservedQuantityRecording<Vecd>>
+    RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
         write_beam_tip_displacement("Position", io_environment, gate_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration

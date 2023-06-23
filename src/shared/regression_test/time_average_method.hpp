@@ -1,25 +1,3 @@
-/* -------------------------------------------------------------------------*
- *								SPHinXsys									*
- * -------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic*
- * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
- * (smoothed particle hydrodynamics), a meshless computational method using	*
- * particle discretization.													*
- *																			*
- * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
- *  HU1527/12-1 and HU1527/12-4													*
- *                                                                          *
- * Portions copyright (c) 2017-2022 Technical University of Munich and		*
- * the authors' affiliations.												*
- *                                                                          *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
- * not use this file except in compliance with the License. You may obtain a*
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
- *                                                                          *
- * ------------------------------------------------------------------------*/
 /**
  * @file 	time_averaged_method.hpp
  * @brief 	Classes for the comparison between validated and tested results
@@ -29,13 +7,13 @@
 
 #pragma once
 
-#include "time_averaged_method.h"
+#include "time_average_method.h"
 
 namespace SPH
 {
 //=================================================================================================//
 template <class ObserveMethodType>
-void RegressionTestTimeAveraged<ObserveMethodType>::filterLocalResult(BiVector<Real> &current_result)
+void RegressionTestTimeAverage<ObserveMethodType>::filterLocalResult(BiVector<Real> &current_result)
 {
     int scale = round(this->snapshot_ / 200);
     std::cout << "The filter scale is " << scale * 2 << "." << std::endl;
@@ -69,7 +47,7 @@ void RegressionTestTimeAveraged<ObserveMethodType>::filterLocalResult(BiVector<R
 }
 //=================================================================================================//
 template <class ObserveMethodType>
-void RegressionTestTimeAveraged<ObserveMethodType>::filterLocalResult(BiVector<Vecd> &current_result)
+void RegressionTestTimeAverage<ObserveMethodType>::filterLocalResult(BiVector<Vecd> &current_result)
 {
     int scale = round(this->snapshot_ / 200);
     std::cout << "The filter scale is " << scale * 2 << "." << std::endl;
@@ -106,7 +84,7 @@ void RegressionTestTimeAveraged<ObserveMethodType>::filterLocalResult(BiVector<V
 }
 //=================================================================================================//
 template <class ObserveMethodType>
-void RegressionTestTimeAveraged<ObserveMethodType>::filterLocalResult(BiVector<Matd> &current_result)
+void RegressionTestTimeAverage<ObserveMethodType>::filterLocalResult(BiVector<Matd> &current_result)
 {
     int scale = round(this->snapshot_ / 200);
     std::cout << "The filter scale is " << scale * 2 << "." << std::endl;
@@ -146,7 +124,7 @@ void RegressionTestTimeAveraged<ObserveMethodType>::filterLocalResult(BiVector<M
 }
 //=================================================================================================//
 template <class ObserveMethodType>
-void RegressionTestTimeAveraged<ObserveMethodType>::searchSteadyStart(BiVector<Real> &current_result)
+void RegressionTestTimeAverage<ObserveMethodType>::searchSteadyStart(BiVector<Real> &current_result)
 {
     /* the search is only for one value. */
     int scale = round(this->snapshot_ / 20);
@@ -170,7 +148,7 @@ void RegressionTestTimeAveraged<ObserveMethodType>::searchSteadyStart(BiVector<R
 }
 //=================================================================================================//
 template <class ObserveMethodType>
-void RegressionTestTimeAveraged<ObserveMethodType>::searchSteadyStart(BiVector<Vecd> &current_result)
+void RegressionTestTimeAverage<ObserveMethodType>::searchSteadyStart(BiVector<Vecd> &current_result)
 {
     /* the search is for each value within parameters. */
     int scale = round(this->snapshot_ / 20);
@@ -194,7 +172,7 @@ void RegressionTestTimeAveraged<ObserveMethodType>::searchSteadyStart(BiVector<V
 }
 //=================================================================================================//
 template <class ObserveMethodType>
-void RegressionTestTimeAveraged<ObserveMethodType>::searchSteadyStart(BiVector<Matd> &current_result)
+void RegressionTestTimeAverage<ObserveMethodType>::searchSteadyStart(BiVector<Matd> &current_result)
 {
     int scale = round(this->snapshot_ / 20);
     for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
@@ -217,8 +195,8 @@ void RegressionTestTimeAveraged<ObserveMethodType>::searchSteadyStart(BiVector<M
 }
 //=================================================================================================//
 template <class ObserveMethodType>
-void RegressionTestTimeAveraged<ObserveMethodType>::calculateNewVariance(BiVector<Real> &current_result,
-                                                                         StdVec<Real> &local_meanvalue, StdVec<Real> &variance, StdVec<Real> &variance_new)
+void RegressionTestTimeAverage<ObserveMethodType>::calculateNewVariance(BiVector<Real> &current_result,
+                                                                        StdVec<Real> &local_meanvalue, StdVec<Real> &variance, StdVec<Real> &variance_new)
 {
     for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
     {
@@ -232,8 +210,8 @@ void RegressionTestTimeAveraged<ObserveMethodType>::calculateNewVariance(BiVecto
 }
 //=================================================================================================//
 template <class ObserveMethodType>
-void RegressionTestTimeAveraged<ObserveMethodType>::calculateNewVariance(BiVector<Vecd> &current_result,
-                                                                         StdVec<Vecd> &local_meanvalue, StdVec<Vecd> &variance, StdVec<Vecd> &variance_new)
+void RegressionTestTimeAverage<ObserveMethodType>::calculateNewVariance(BiVector<Vecd> &current_result,
+                                                                        StdVec<Vecd> &local_meanvalue, StdVec<Vecd> &variance, StdVec<Vecd> &variance_new)
 {
     for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
         for (int i = 0; i != current_result[0][0].size(); ++i)
@@ -248,8 +226,8 @@ void RegressionTestTimeAveraged<ObserveMethodType>::calculateNewVariance(BiVecto
 }
 //=================================================================================================//
 template <class ObserveMethodType>
-void RegressionTestTimeAveraged<ObserveMethodType>::calculateNewVariance(BiVector<Matd> &current_result,
-                                                                         StdVec<Matd> &local_meanvalue, StdVec<Matd> &variance, StdVec<Matd> &variance_new)
+void RegressionTestTimeAverage<ObserveMethodType>::calculateNewVariance(BiVector<Matd> &current_result,
+                                                                        StdVec<Matd> &local_meanvalue, StdVec<Matd> &variance, StdVec<Matd> &variance_new)
 {
     for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
         for (int i = 0; i != current_result[0][0].size(); ++i)
@@ -265,8 +243,8 @@ void RegressionTestTimeAveraged<ObserveMethodType>::calculateNewVariance(BiVecto
 }
 //=================================================================================================//
 template <class ObserveMethodType>
-int RegressionTestTimeAveraged<ObserveMethodType>::compareParameter(std::string par_name,
-                                                                    StdVec<Real> &parameter, StdVec<Real> &parameter_new, Real &threshold)
+int RegressionTestTimeAverage<ObserveMethodType>::compareParameter(std::string par_name,
+                                                                   StdVec<Real> &parameter, StdVec<Real> &parameter_new, Real &threshold)
 {
     int count = 0;
     for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
@@ -289,8 +267,8 @@ int RegressionTestTimeAveraged<ObserveMethodType>::compareParameter(std::string 
 }
 //=================================================================================================//
 template <class ObserveMethodType>
-int RegressionTestTimeAveraged<ObserveMethodType>::compareParameter(std::string par_name,
-                                                                    StdVec<Vecd> &parameter, StdVec<Vecd> &parameter_new, Vecd &threshold)
+int RegressionTestTimeAverage<ObserveMethodType>::compareParameter(std::string par_name,
+                                                                   StdVec<Vecd> &parameter, StdVec<Vecd> &parameter_new, Vecd &threshold)
 {
     int count = 0;
     for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
@@ -314,8 +292,8 @@ int RegressionTestTimeAveraged<ObserveMethodType>::compareParameter(std::string 
 }
 //=================================================================================================//
 template <class ObserveMethodType>
-int RegressionTestTimeAveraged<ObserveMethodType>::compareParameter(std::string par_name,
-                                                                    StdVec<Matd> &parameter, StdVec<Matd> &parameter_new, Matd &threshold)
+int RegressionTestTimeAverage<ObserveMethodType>::compareParameter(std::string par_name,
+                                                                   StdVec<Matd> &parameter, StdVec<Matd> &parameter_new, Matd &threshold)
 {
     int count = 0;
     for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
@@ -341,8 +319,8 @@ int RegressionTestTimeAveraged<ObserveMethodType>::compareParameter(std::string 
 }
 //=================================================================================================//
 template <class ObserveMethodType>
-int RegressionTestTimeAveraged<ObserveMethodType>::testNewResult(BiVector<Real> &current_result,
-                                                                 StdVec<Real> &meanvalue, StdVec<Real> &local_meanvalue, StdVec<Real> &variance)
+int RegressionTestTimeAverage<ObserveMethodType>::testNewResult(BiVector<Real> &current_result,
+                                                                StdVec<Real> &meanvalue, StdVec<Real> &local_meanvalue, StdVec<Real> &variance)
 {
     int count = 0;
     for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
@@ -371,8 +349,8 @@ int RegressionTestTimeAveraged<ObserveMethodType>::testNewResult(BiVector<Real> 
 }
 //=================================================================================================//
 template <class ObserveMethodType>
-int RegressionTestTimeAveraged<ObserveMethodType>::testNewResult(BiVector<Vecd> &current_result,
-                                                                 StdVec<Vecd> &meanvalue, StdVec<Vecd> &local_meanvalue, StdVec<Vecd> &variance)
+int RegressionTestTimeAverage<ObserveMethodType>::testNewResult(BiVector<Vecd> &current_result,
+                                                                StdVec<Vecd> &meanvalue, StdVec<Vecd> &local_meanvalue, StdVec<Vecd> &variance)
 {
     int count = 0;
     for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
@@ -406,8 +384,8 @@ int RegressionTestTimeAveraged<ObserveMethodType>::testNewResult(BiVector<Vecd> 
 }
 //=================================================================================================//
 template <class ObserveMethodType>
-int RegressionTestTimeAveraged<ObserveMethodType>::testNewResult(BiVector<Matd> &current_result,
-                                                                 StdVec<Matd> &meanvalue, StdVec<Matd> &local_meanvalue, StdVec<Matd> &variance)
+int RegressionTestTimeAverage<ObserveMethodType>::testNewResult(BiVector<Matd> &current_result,
+                                                                StdVec<Matd> &meanvalue, StdVec<Matd> &local_meanvalue, StdVec<Matd> &variance)
 {
     int count = 0;
     for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
@@ -444,14 +422,14 @@ int RegressionTestTimeAveraged<ObserveMethodType>::testNewResult(BiVector<Matd> 
 }
 //=================================================================================================//
 template <class ObserveMethodType>
-void RegressionTestTimeAveraged<ObserveMethodType>::initializeThreshold(VariableType &threshold_mean, VariableType &threshold_variance)
+void RegressionTestTimeAverage<ObserveMethodType>::initializeThreshold(VariableType &threshold_mean, VariableType &threshold_variance)
 {
     threshold_mean_ = threshold_mean;
     threshold_variance_ = threshold_variance;
 }
 //=================================================================================================//
 template <class ObserveMethodType>
-void RegressionTestTimeAveraged<ObserveMethodType>::setupTheTest()
+void RegressionTestTimeAverage<ObserveMethodType>::setupTheTest()
 {
     this->snapshot_ = this->current_result_.size();
     this->observation_ = this->current_result_[0].size();
@@ -471,7 +449,7 @@ void RegressionTestTimeAveraged<ObserveMethodType>::setupTheTest()
 }
 //=================================================================================================//
 template <class ObserveMethodType>
-void RegressionTestTimeAveraged<ObserveMethodType>::readMeanVarianceFromXml()
+void RegressionTestTimeAverage<ObserveMethodType>::readMeanVarianceFromXml()
 {
     if (this->number_of_run_ > 1)
     {
@@ -497,7 +475,7 @@ void RegressionTestTimeAveraged<ObserveMethodType>::readMeanVarianceFromXml()
 }
 //=================================================================================================//
 template <class ObserveMethodType>
-void RegressionTestTimeAveraged<ObserveMethodType>::searchForStartPoint()
+void RegressionTestTimeAverage<ObserveMethodType>::searchForStartPoint()
 {
     snapshot_for_converged_ = 0;
     searchSteadyStart(this->current_result_);
@@ -505,7 +483,7 @@ void RegressionTestTimeAveraged<ObserveMethodType>::searchForStartPoint()
 }
 //=================================================================================================//
 template <class ObserveMethodType>
-void RegressionTestTimeAveraged<ObserveMethodType>::filterExtremeValues()
+void RegressionTestTimeAverage<ObserveMethodType>::filterExtremeValues()
 {
     filterLocalResult(this->current_result_);
     filefullpath_filter_output_ = this->input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ + ".dat";
@@ -534,7 +512,7 @@ void RegressionTestTimeAveraged<ObserveMethodType>::filterExtremeValues()
 }
 //=================================================================================================//
 template <class ObserveMethodType>
-void RegressionTestTimeAveraged<ObserveMethodType>::updateMeanVariance()
+void RegressionTestTimeAverage<ObserveMethodType>::updateMeanVariance()
 {
     for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
     {
@@ -549,7 +527,7 @@ void RegressionTestTimeAveraged<ObserveMethodType>::updateMeanVariance()
 }
 //=================================================================================================//
 template <class ObserveMethodType>
-void RegressionTestTimeAveraged<ObserveMethodType>::writeMeanVarianceToXml()
+void RegressionTestTimeAverage<ObserveMethodType>::writeMeanVarianceToXml()
 {
     mean_variance_xml_engine_out_.addElementToXmlDoc("MeanValue_Element");
     SimTK::Xml::Element meanvalue_element_ = mean_variance_xml_engine_out_.getChildElement("MeanValue_Element");
@@ -573,7 +551,7 @@ void RegressionTestTimeAveraged<ObserveMethodType>::writeMeanVarianceToXml()
 }
 //=================================================================================================//
 template <class ObserveMethodType>
-bool RegressionTestTimeAveraged<ObserveMethodType>::compareMeanVariance()
+bool RegressionTestTimeAverage<ObserveMethodType>::compareMeanVariance()
 {
     int count_not_converged_m = 0;
     int count_not_converged_v = 0;
@@ -618,7 +596,7 @@ bool RegressionTestTimeAveraged<ObserveMethodType>::compareMeanVariance()
 }
 //=================================================================================================//
 template <class ObserveMethodType>
-void RegressionTestTimeAveraged<ObserveMethodType>::resultTest()
+void RegressionTestTimeAverage<ObserveMethodType>::resultTest()
 {
     int test_wrong = 0;
 

@@ -1,25 +1,25 @@
-/* -------------------------------------------------------------------------*
- *								SPHinXsys									*
- * -------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic*
- * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
- * (smoothed particle hydrodynamics), a meshless computational method using	*
- * particle discretization.													*
- *																			*
- * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
- *  HU1527/12-1 and HU1527/12-4													*
- *                                                                          *
- * Portions copyright (c) 2017-2022 Technical University of Munich and		*
- * the authors' affiliations.												*
- *                                                                          *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
- * not use this file except in compliance with the License. You may obtain a*
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
- *                                                                          *
- * ------------------------------------------------------------------------*/
+/* ------------------------------------------------------------------------- *
+ *                                SPHinXsys                                  *
+ * ------------------------------------------------------------------------- *
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle *
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for    *
+ * physical accurate simulation and aims to model coupled industrial dynamic *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH   *
+ * (smoothed particle hydrodynamics), a meshless computational method using  *
+ * particle discretization.                                                  *
+ *                                                                           *
+ * SPHinXsys is partially funded by German Research Foundation               *
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
+ *  HU1527/12-1 and HU1527/12-4                                              *
+ *                                                                           *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and       *
+ * the authors' affiliations.                                                *
+ *                                                                           *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
+ * not use this file except in compliance with the License. You may obtain a *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
+ *                                                                           *
+ * ------------------------------------------------------------------------- */
 /**
  * @file 	time_averaged_method.h
  * @brief 	Classes for the comparison between validated and tested results
@@ -33,11 +33,11 @@
 namespace SPH
 {
 /**
- * @class RegressionTestTimeAveraged
+ * @class RegressionTestTimeAverage
  * @brief The regression test is based on the time-averaged meanvalue and variance.
  */
 template <class ObserveMethodType>
-class RegressionTestTimeAveraged : public RegressionTestBase<ObserveMethodType>
+class RegressionTestTimeAverage : public RegressionTestBase<ObserveMethodType>
 {
     /* identify the variable type from the parent class. */
     using VariableType = decltype(ObserveMethodType::type_indicator_);
@@ -81,13 +81,13 @@ class RegressionTestTimeAveraged : public RegressionTestBase<ObserveMethodType>
 
   public:
     template <typename... ConstructorArgs>
-    explicit RegressionTestTimeAveraged(ConstructorArgs &&...args) : RegressionTestBase<ObserveMethodType>(std::forward<ConstructorArgs>(args)...),
+    explicit RegressionTestTimeAverage(ConstructorArgs &&...args) : RegressionTestBase<ObserveMethodType>(std::forward<ConstructorArgs>(args)...),
                                                                      mean_variance_xml_engine_in_("mean_variance_xml_engine_in_", "meanvariance"),
                                                                      mean_variance_xml_engine_out_("mean_variance_xml_engine_out_", "meanvariance")
     {
         mean_variance_filefullpath_ = this->input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ + "_time_averaged_mean_variance.xml";
     };
-    virtual ~RegressionTestTimeAveraged(){};
+    virtual ~RegressionTestTimeAverage(){};
 
     /** initialize the threshold of meanvalue and variance. */
     void initializeThreshold(VariableType &threshold_mean, VariableType &threshold_variance);
