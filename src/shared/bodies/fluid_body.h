@@ -31,19 +31,20 @@
 
 #include "base_body.h"
 
-namespace SPH {
-	class SPHSystem;
-	/**
-	 * @class FluidBody
-	 * @brief Fluid body uses smoothing length to particle spacing 1.3 
-	 * and carry out particle sorting every 100 iterations.
-	 */
-	class FluidBody : public RealBody
-	{
-	public:
-		explicit FluidBody(SPHSystem &system, SharedPtr<Shape> shape_ptr);
-		virtual ~FluidBody() {};
-		virtual FluidBody* ThisObjectPtr() override {return this;};
-	};
-}
-#endif //FLUID_BODY_H
+namespace SPH
+{
+class SPHSystem;
+/**
+ * @class FluidBody
+ * @brief Fluid body uses smoothing length to particle spacing 1.3
+ * and carry out particle sorting every 100 iterations.
+ */
+class FluidBody : public RealBody
+{
+  public:
+    explicit FluidBody(SPHSystem &system, SharedPtr<Shape> shape_ptr);
+    virtual ~FluidBody(){};
+    virtual FluidBody *ThisObjectPtr() override { return this; };
+};
+} // namespace SPH
+#endif // FLUID_BODY_H

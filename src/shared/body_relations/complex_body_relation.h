@@ -25,7 +25,7 @@
  * @brief 	The topological relations within one body and to other bodies.
  * @author	Chi ZHang and Xiangyu Hu
  */
- 
+
 #ifndef COMPLEX_BODY_RELATION_H
 #define COMPLEX_BODY_RELATION_H
 
@@ -33,37 +33,37 @@
 
 namespace SPH
 {
-	/**
-	 * @class ComplexRelation
-	 * @brief The relation combined an inner and a contact body relation.
-	 * The interaction is in a inner-boundary-condition fashion. Here inner interaction is
-	 * different from contact interaction.
-	 */
-	class ComplexRelation : public SPHRelation
-	{
-	private:
-		UniquePtrKeeper<BaseInnerRelation> base_inner_relation_ptr_keeper_;
-		UniquePtrKeeper<BaseContactRelation> base_contact_relation_ptr_keeper_;
+/**
+ * @class ComplexRelation
+ * @brief The relation combined an inner and a contact body relation.
+ * The interaction is in a inner-boundary-condition fashion. Here inner interaction is
+ * different from contact interaction.
+ */
+class ComplexRelation : public SPHRelation
+{
+  private:
+    UniquePtrKeeper<BaseInnerRelation> base_inner_relation_ptr_keeper_;
+    UniquePtrKeeper<BaseContactRelation> base_contact_relation_ptr_keeper_;
 
-	protected:
-		BaseInnerRelation &inner_relation_;
-		BaseContactRelation &contact_relation_;
+  protected:
+    BaseInnerRelation &inner_relation_;
+    BaseContactRelation &contact_relation_;
 
-	public:
-		BaseInnerRelation &getInnerRelation() { return inner_relation_; };
-		BaseContactRelation &getContactRelation() { return contact_relation_; };
-		RealBodyVector contact_bodies_;
-		ParticleConfiguration &inner_configuration_;
-		StdVec<ParticleConfiguration> &contact_configuration_;
+  public:
+    BaseInnerRelation &getInnerRelation() { return inner_relation_; };
+    BaseContactRelation &getContactRelation() { return contact_relation_; };
+    RealBodyVector contact_bodies_;
+    ParticleConfiguration &inner_configuration_;
+    StdVec<ParticleConfiguration> &contact_configuration_;
 
-		ComplexRelation(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation);
-		ComplexRelation(RealBody &real_body, RealBodyVector contact_bodies);
-		ComplexRelation(BaseInnerRelation &inner_relation, RealBodyVector contact_bodies);
-		ComplexRelation(RealBody &real_body, BodyPartVector contact_body_parts);
-		virtual ~ComplexRelation(){};
+    ComplexRelation(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation);
+    ComplexRelation(RealBody &real_body, RealBodyVector contact_bodies);
+    ComplexRelation(BaseInnerRelation &inner_relation, RealBodyVector contact_bodies);
+    ComplexRelation(RealBody &real_body, BodyPartVector contact_body_parts);
+    virtual ~ComplexRelation(){};
 
-		virtual void resizeConfiguration() override;
-		virtual void updateConfiguration() override;
-	};
-}
+    virtual void resizeConfiguration() override;
+    virtual void updateConfiguration() override;
+};
+} // namespace SPH
 #endif // COMPLEX_BODY_RELATION_H

@@ -36,76 +36,76 @@
 
 namespace SPH
 {
-    /** iteration with void (non_value_returning) function. 2D case. */
-    template <int lower0, int upper0,
-              int lower1, int upper1, typename FunctionOnEach>
-    inline void mesh_for_each2d(const FunctionOnEach &function);
-    template <int lower, int upper, typename FunctionOnEach>
-    inline void mesh_for_each2d(const FunctionOnEach &function)
-    {
-        mesh_for_each2d<lower, upper, lower, upper, FunctionOnEach>(function);
-    };
+/** iteration with void (non_value_returning) function. 2D case. */
+template <int lower0, int upper0,
+          int lower1, int upper1, typename FunctionOnEach>
+inline void mesh_for_each2d(const FunctionOnEach &function);
+template <int lower, int upper, typename FunctionOnEach>
+inline void mesh_for_each2d(const FunctionOnEach &function)
+{
+    mesh_for_each2d<lower, upper, lower, upper, FunctionOnEach>(function);
+};
 
-    /** iteration with boolean return function. 2D case. */
-    template <int lower0, int upper0,
-              int lower1, int upper1, typename CheckOnEach>
-    inline Array2i mesh_find_if2d(const CheckOnEach &function);
-    template <int lower, int upper, typename CheckOnEach>
-    inline Array2i mesh_find_if2d(const CheckOnEach &function)
-    {
-        return mesh_find_if2d<lower, upper, lower, upper, CheckOnEach>(function);
-    };
-    template <int lower, int upper, typename CheckOnEach>
-    inline bool mesh_any_of2d(const CheckOnEach &function)
-    {
-        return mesh_find_if2d<lower, upper, lower, upper, CheckOnEach>(
-                   function) != Array2i(upper, upper);
-    };
+/** iteration with boolean return function. 2D case. */
+template <int lower0, int upper0,
+          int lower1, int upper1, typename CheckOnEach>
+inline Array2i mesh_find_if2d(const CheckOnEach &function);
+template <int lower, int upper, typename CheckOnEach>
+inline Array2i mesh_find_if2d(const CheckOnEach &function)
+{
+    return mesh_find_if2d<lower, upper, lower, upper, CheckOnEach>(function);
+};
+template <int lower, int upper, typename CheckOnEach>
+inline bool mesh_any_of2d(const CheckOnEach &function)
+{
+    return mesh_find_if2d<lower, upper, lower, upper, CheckOnEach>(
+               function) != Array2i(upper, upper);
+};
 
-    /** iteration with void (non_value_returning) function. 3D case. */
-    template <int lower0, int upper0,
-              int lower1, int upper1,
-              int lower2, int upper2, typename FunctionOnEach>
-    inline void mesh_for_each3d(const FunctionOnEach &function);
-    template <int lower, int upper, typename FunctionOnEach>
-    inline void mesh_for_each3d(const FunctionOnEach &function)
-    {
-        mesh_for_each3d<lower, upper, lower, upper, lower, upper, FunctionOnEach>(function);
-    };
+/** iteration with void (non_value_returning) function. 3D case. */
+template <int lower0, int upper0,
+          int lower1, int upper1,
+          int lower2, int upper2, typename FunctionOnEach>
+inline void mesh_for_each3d(const FunctionOnEach &function);
+template <int lower, int upper, typename FunctionOnEach>
+inline void mesh_for_each3d(const FunctionOnEach &function)
+{
+    mesh_for_each3d<lower, upper, lower, upper, lower, upper, FunctionOnEach>(function);
+};
 
-    /** iteration with boolean return function.  3D case. */
-    template <int lower0, int upper0,
-              int lower1, int upper1,
-              int lower2, int upper2, typename CheckOnEach>
-    inline Array3i mesh_find_if3d(const CheckOnEach &function);
-    template <int lower, int upper, typename CheckOnEach>
-    inline Array3i mesh_find_if3d(const CheckOnEach &function)
-    {
-        return mesh_find_if3d<lower, upper, lower, upper, lower, upper, CheckOnEach>(function);
-    };
-    template <int lower, int upper, typename CheckOnEach>
-    inline bool mesh_any_of3d(const CheckOnEach &function)
-    {
-        return mesh_find_if3d<lower, upper, lower, upper, lower, upper, CheckOnEach>(
-                   function) != Array3i(upper, upper, upper);
-    };
+/** iteration with boolean return function.  3D case. */
+template <int lower0, int upper0,
+          int lower1, int upper1,
+          int lower2, int upper2, typename CheckOnEach>
+inline Array3i mesh_find_if3d(const CheckOnEach &function);
+template <int lower, int upper, typename CheckOnEach>
+inline Array3i mesh_find_if3d(const CheckOnEach &function)
+{
+    return mesh_find_if3d<lower, upper, lower, upper, lower, upper, CheckOnEach>(function);
+};
+template <int lower, int upper, typename CheckOnEach>
+inline bool mesh_any_of3d(const CheckOnEach &function)
+{
+    return mesh_find_if3d<lower, upper, lower, upper, lower, upper, CheckOnEach>(
+               function) != Array3i(upper, upper, upper);
+};
 
-    template <typename FunctionOnEach>
-    void mesh_for_each(const Arrayi &lower, const Arrayi &upper, const FunctionOnEach &function);
-    template <typename FunctionOnEach>
-    Arrayi mesh_find_if(const Arrayi &lower, const Arrayi &upper, const FunctionOnEach &function);
-    template <typename FunctionOnEach>
-    bool mesh_any_of(const Arrayi &lower, const Arrayi &upper, const FunctionOnEach &function)
-    {
-        return mesh_find_if(lower, upper, function).matrix() != upper.matrix();
-    };
+template <typename FunctionOnEach>
+void mesh_for_each(const Arrayi &lower, const Arrayi &upper, const FunctionOnEach &function);
+template <typename FunctionOnEach>
+Arrayi mesh_find_if(const Arrayi &lower, const Arrayi &upper, const FunctionOnEach &function);
+template <typename FunctionOnEach>
+bool mesh_any_of(const Arrayi &lower, const Arrayi &upper, const FunctionOnEach &function)
+{
+    return mesh_find_if(lower, upper, function).matrix() != upper.matrix();
+};
 
-    using MeshRange = std::pair<Arrayi, Arrayi>;
-    /** Iterator on the mesh by looping index. sequential computing. */
-    template <typename LocalFunction, typename... Args>
-    void mesh_for(const MeshRange &mesh_range, const LocalFunction &local_function, Args &&...args);
-    /** Iterator on the mesh by looping index. parallel computing. */
-    template <typename LocalFunction, typename... Args>
-    void mesh_parallel_for(const MeshRange &mesh_range, const LocalFunction &local_function, Args &&...args);
-}
+using MeshRange = std::pair<Arrayi, Arrayi>;
+/** Iterator on the mesh by looping index. sequential computing. */
+template <typename LocalFunction, typename... Args>
+void mesh_for(const MeshRange &mesh_range, const LocalFunction &local_function, Args &&...args);
+/** Iterator on the mesh by looping index. parallel computing. */
+template <typename LocalFunction, typename... Args>
+void mesh_parallel_for(const MeshRange &mesh_range, const LocalFunction &local_function, Args &&...args);
+} // namespace SPH
 #endif // MESH_ITERATORS_H

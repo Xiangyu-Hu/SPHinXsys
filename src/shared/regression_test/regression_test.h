@@ -22,21 +22,18 @@
  * ------------------------------------------------------------------------*/
 /**
  * @file     regression_test.h
- * @brief    This is the header file that user code should include to pick up all 
+ * @brief    This is the header file that user code should include to pick up all
  *           the regression test method used in SPHinXsys.
  * @author	Bo Zhang , Chi ZHang and Xiangyu Hu
  */
 
 #pragma once
 
+#include "dynamic_time_warping_method.h"
+#include "dynamic_time_warping_method.hpp"
+#include "ensemble_averaged_method.h"
+#include "ensemble_averaged_method.hpp"
 #include "regression_test_base.h"
 #include "regression_test_base.hpp"
 #include "time_averaged_method.h"
 #include "time_averaged_method.hpp"
-#include "ensemble_averaged_method.h"
-#include "ensemble_averaged_method.hpp"
-#include "dynamic_time_warping_method.h"
-#include "dynamic_time_warping_method.hpp"
-
-
-

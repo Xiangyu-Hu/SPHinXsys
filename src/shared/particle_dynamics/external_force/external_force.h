@@ -32,36 +32,38 @@
 
 #include "base_data_package.h"
 
-namespace SPH {
-	/**
-	 * @class ExternalForce
-	 * @brief This class define external forces.
-	 */
-	class ExternalForce
-	{
-	public:
-		ExternalForce();
-		virtual ~ExternalForce() {};
-		/** This function can be used for runtime control of external force. */
-		virtual Vecd InducedAcceleration(Vecd& position) = 0;
-	};
+namespace SPH
+{
+/**
+ * @class ExternalForce
+ * @brief This class define external forces.
+ */
+class ExternalForce
+{
+  public:
+    ExternalForce();
+    virtual ~ExternalForce(){};
+    /** This function can be used for runtime control of external force. */
+    virtual Vecd InducedAcceleration(Vecd &position) = 0;
+};
 
-	/**
-	 * @class Gravity
-	 * @brief The gravity force, derived class of External force.
-	 */
-	class Gravity : public ExternalForce
-	{
-	protected:
-		Vecd global_acceleration_;
-		Vecd zero_potential_reference_;
-	public:
-		Gravity(Vecd gravity_vector, Vecd reference_position = Vecd::Zero());
-		virtual ~Gravity() {};
+/**
+ * @class Gravity
+ * @brief The gravity force, derived class of External force.
+ */
+class Gravity : public ExternalForce
+{
+  protected:
+    Vecd global_acceleration_;
+    Vecd zero_potential_reference_;
 
-		/** This function can be used for runtime control of external force. */
-		virtual Vecd InducedAcceleration(Vecd& position) override;
-		Real getPotential(Vecd& position);
-	};
-}
-#endif //EXTERNAL_FORCE_H
+  public:
+    Gravity(Vecd gravity_vector, Vecd reference_position = Vecd::Zero());
+    virtual ~Gravity(){};
+
+    /** This function can be used for runtime control of external force. */
+    virtual Vecd InducedAcceleration(Vecd &position) override;
+    Real getPotential(Vecd &position);
+};
+} // namespace SPH
+#endif // EXTERNAL_FORCE_H

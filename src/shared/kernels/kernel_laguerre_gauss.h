@@ -22,7 +22,7 @@
  * ------------------------------------------------------------------------*/
 /**
  * @file 	kernel_laguerre_gauss.h
- * @brief 	This is the class for laguerre gauss kernel. 
+ * @brief 	This is the class for laguerre gauss kernel.
  * @author	Zhentong Wang, Chi ZHang and Xiangyu Hu
  */
 
@@ -33,30 +33,30 @@
 
 namespace SPH
 {
-	/**
-	 * @class Kernel Laguerre Gauss
-	 * @brief Kernel Laguerre Gauss
-	 */
-	class KernelLaguerreGauss : public Kernel
-	{
-	public:
-		KernelLaguerreGauss(Real h);
+/**
+ * @class Kernel Laguerre Gauss
+ * @brief Kernel Laguerre Gauss
+ */
+class KernelLaguerreGauss : public Kernel
+{
+  public:
+    KernelLaguerreGauss(Real h);
 
-		/** 
-		 * Calculates the kernel value for 
-		 * the given distance of two particles 
-		 */
-		virtual Real W_1D(const Real q) const override;
-		virtual Real W_2D(const Real q) const override;
-		virtual Real W_3D(const Real q) const override;
+    /**
+     * Calculates the kernel value for
+     * the given distance of two particles
+     */
+    virtual Real W_1D(const Real q) const override;
+    virtual Real W_2D(const Real q) const override;
+    virtual Real W_3D(const Real q) const override;
 
-		virtual Real dW_1D(const Real q) const override;
-		virtual Real dW_2D(const Real q) const override;
-		virtual Real dW_3D(const Real q) const override;
+    virtual Real dW_1D(const Real q) const override;
+    virtual Real dW_2D(const Real q) const override;
+    virtual Real dW_3D(const Real q) const override;
 
-		virtual Real d2W_1D(const Real q) const override;
-		virtual Real d2W_2D(const Real q) const override;
-		virtual Real d2W_3D(const Real q) const override;
-	};
-}
-#endif //KERNEL_LAGUERRE_GAUSS_H
+    virtual Real d2W_1D(const Real q) const override;
+    virtual Real d2W_2D(const Real q) const override;
+    virtual Real d2W_3D(const Real q) const override;
+};
+} // namespace SPH
+#endif // KERNEL_LAGUERRE_GAUSS_H

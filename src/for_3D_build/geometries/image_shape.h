@@ -34,51 +34,51 @@
 #include "base_geometry.h"
 #include "image_mhd.h"
 
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <string>
-#include <fstream>
-#include <filesystem>
 namespace fs = std::filesystem;
 
 namespace SPH
 {
-	class ImageShape : public Shape
-	{
-	public:
-		explicit ImageShape(const std::string &shape_name)
-			: Shape(shape_name), translation_(Vecd::Zero()), rotation_(Matd::Identity()),
-			  max_distance_(-INFINITY), min_distance_(INFINITY){};
+class ImageShape : public Shape
+{
+  public:
+    explicit ImageShape(const std::string &shape_name)
+        : Shape(shape_name), translation_(Vecd::Zero()), rotation_(Matd::Identity()),
+          max_distance_(-INFINITY), min_distance_(INFINITY){};
 
-		virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;
-		virtual Vecd findClosestPoint(const Vecd &probe_point) override;
+    virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;
+    virtual Vecd findClosestPoint(const Vecd &probe_point) override;
 
-	protected:
-		Vecd translation_;
-		Matd rotation_;
-		std::unique_ptr<ImageMHD<float, 3>> image_;
-		Real max_distance_;
-		Real min_distance_;
-	
-		virtual BoundingBox findBounds() override;
-	};
+  protected:
+    Vecd translation_;
+    Matd rotation_;
+    std::unique_ptr<ImageMHD<float, 3>> image_;
+    Real max_distance_;
+    Real min_distance_;
 
-	class ImageShapeFromFile : public ImageShape
-	{
-	public:
-		explicit ImageShapeFromFile(const std::string &file_path_name,
-									const std::string &shape_name = "ImageShapeFromFile");
-		virtual ~ImageShapeFromFile(){};
-	};
+    virtual BoundingBox findBounds() override;
+};
 
-	class ImageShapeSphere : public ImageShape
-	{
-	public:
-		ImageShapeSphere(Real radius, Vecd spacings, Vecd center,
-						 const std::string &shape_name = "ImageShapeSphere");
-		virtual ~ImageShapeSphere(){};
-	};
-}
+class ImageShapeFromFile : public ImageShape
+{
+  public:
+    explicit ImageShapeFromFile(const std::string &file_path_name,
+                                const std::string &shape_name = "ImageShapeFromFile");
+    virtual ~ImageShapeFromFile(){};
+};
+
+class ImageShapeSphere : public ImageShape
+{
+  public:
+    ImageShapeSphere(Real radius, Vecd spacings, Vecd center,
+                     const std::string &shape_name = "ImageShapeSphere");
+    virtual ~ImageShapeSphere(){};
+};
+} // namespace SPH
 
 #endif //__EMSCRIPTEN__
 
-#endif //IMAGE_SHAPE_3D_H
+#endif // IMAGE_SHAPE_3D_H

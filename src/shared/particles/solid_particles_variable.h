@@ -30,193 +30,193 @@
 #ifndef SOLID_PARTICLES_VARIABLE_H
 #define SOLID_PARTICLES_VARIABLE_H
 
-#include "particle_dynamics_algorithms.h"
 #include "all_body_relations.h"
+#include "particle_dynamics_algorithms.h"
 #include "solid_body.h"
 #include "solid_particles.h"
 
 namespace SPH
 {
-	//----------------------------------------------------------------------
-	//		for general solid dynamics variables
-	//----------------------------------------------------------------------
-	typedef DataDelegateSimple<SolidParticles> SolidDataSimple;
+//----------------------------------------------------------------------
+//		for general solid dynamics variables
+//----------------------------------------------------------------------
+typedef DataDelegateSimple<SolidParticles> SolidDataSimple;
 
-	/**
-	 * @class Displacement
-	 * @brief computing displacement from current and initial particle position
-	 */
-	class Displacement : public BaseDerivedVariable<Vecd>,
-						 public SolidDataSimple,
-						 public LocalDynamics
-	{
-	public:
-		explicit Displacement(SPHBody &sph_body);
-		virtual ~Displacement(){};
-		void update(size_t index_i, Real dt = 0.0);
+/**
+ * @class Displacement
+ * @brief computing displacement from current and initial particle position
+ */
+class Displacement : public BaseDerivedVariable<Vecd>,
+                     public SolidDataSimple,
+                     public LocalDynamics
+{
+  public:
+    explicit Displacement(SPHBody &sph_body);
+    virtual ~Displacement(){};
+    void update(size_t index_i, Real dt = 0.0);
 
-	protected:
-		StdLargeVec<Vecd> &pos_, &pos0_;
-	};
+  protected:
+    StdLargeVec<Vecd> &pos_, &pos0_;
+};
 
-	/**
-	 * @class OffsetInitialPosition
-	 * @brief offset initial particle position
-	 */
-	class OffsetInitialPosition : public SolidDataSimple, 
-								  public LocalDynamics
-	{
-	public:
-		explicit OffsetInitialPosition(SPHBody &sph_body, Vecd &offset);
-		virtual ~OffsetInitialPosition(){};
-		void update(size_t index_i, Real dt = 0.0);
+/**
+ * @class OffsetInitialPosition
+ * @brief offset initial particle position
+ */
+class OffsetInitialPosition : public SolidDataSimple,
+                              public LocalDynamics
+{
+  public:
+    explicit OffsetInitialPosition(SPHBody &sph_body, Vecd &offset);
+    virtual ~OffsetInitialPosition(){};
+    void update(size_t index_i, Real dt = 0.0);
 
-	protected:
-		Vecd offset_;
-		StdLargeVec<Vecd> &pos_, &pos0_;
-	};
+  protected:
+    Vecd offset_;
+    StdLargeVec<Vecd> &pos_, &pos0_;
+};
 
-	/**
-	 * @class TranslationAndRotation
-	 * @brief transformation on particle position and rotation
-	 */
-	class TranslationAndRotation : public SolidDataSimple, 
-								   public LocalDynamics
-	{
-	public:
-		explicit TranslationAndRotation(SPHBody &sph_body, Transformd &transform);
-		virtual ~TranslationAndRotation(){};
-		void update(size_t index_i, Real dt = 0.0);
+/**
+ * @class TranslationAndRotation
+ * @brief transformation on particle position and rotation
+ */
+class TranslationAndRotation : public SolidDataSimple,
+                               public LocalDynamics
+{
+  public:
+    explicit TranslationAndRotation(SPHBody &sph_body, Transformd &transform);
+    virtual ~TranslationAndRotation(){};
+    void update(size_t index_i, Real dt = 0.0);
 
-	protected:
-		Transformd &transform_;
-		StdLargeVec<Vecd> &pos_, &pos0_;
-	};
+  protected:
+    Transformd &transform_;
+    StdLargeVec<Vecd> &pos_, &pos0_;
+};
 
-	/**
-	 * @class NormalDirectionFromBodyShape
-	 * @brief normal direction at particles
-	 */
-	class NormalDirectionFromBodyShape : public SolidDataSimple, 
-										 public LocalDynamics
-	{
-	public:
-		explicit NormalDirectionFromBodyShape(SPHBody &sph_body);
-		virtual ~NormalDirectionFromBodyShape(){};
-		void update(size_t index_i, Real dt = 0.0);
+/**
+ * @class NormalDirectionFromBodyShape
+ * @brief normal direction at particles
+ */
+class NormalDirectionFromBodyShape : public SolidDataSimple,
+                                     public LocalDynamics
+{
+  public:
+    explicit NormalDirectionFromBodyShape(SPHBody &sph_body);
+    virtual ~NormalDirectionFromBodyShape(){};
+    void update(size_t index_i, Real dt = 0.0);
 
-	protected:
-		Shape &body_shape_;
-		StdLargeVec<Vecd> &pos_, &n_, &n0_;
-	};
+  protected:
+    Shape &body_shape_;
+    StdLargeVec<Vecd> &pos_, &n_, &n0_;
+};
 
-	/**
-	 * @class NormalDirectionFromBodyShape
-	 * @brief normal direction at particles
-	 */
-	class NormalDirectionFromShapeAndOp : public SolidDataSimple, 
-										  public LocalDynamics
-	{
-	public:
-		explicit NormalDirectionFromShapeAndOp(SPHBody &sph_body, const std::string &shape_name);
-		virtual ~NormalDirectionFromShapeAndOp(){};
-		void update(size_t index_i, Real dt = 0.0);
+/**
+ * @class NormalDirectionFromBodyShape
+ * @brief normal direction at particles
+ */
+class NormalDirectionFromShapeAndOp : public SolidDataSimple,
+                                      public LocalDynamics
+{
+  public:
+    explicit NormalDirectionFromShapeAndOp(SPHBody &sph_body, const std::string &shape_name);
+    virtual ~NormalDirectionFromShapeAndOp(){};
+    void update(size_t index_i, Real dt = 0.0);
 
-	protected:
-		ShapeAndOp *shape_and_op_;
-		Shape *shape_;
-		const Real switch_sign_;
-		StdLargeVec<Vecd> &pos_, &n_, &n0_;
-	};
+  protected:
+    ShapeAndOp *shape_and_op_;
+    Shape *shape_;
+    const Real switch_sign_;
+    StdLargeVec<Vecd> &pos_, &n_, &n0_;
+};
 
-	//----------------------------------------------------------------------
-	//		for general elastic solid dynamics variables
-	//----------------------------------------------------------------------
-	typedef DataDelegateSimple<ElasticSolidParticles> ElasticSolidDataSimple;
+//----------------------------------------------------------------------
+//		for general elastic solid dynamics variables
+//----------------------------------------------------------------------
+typedef DataDelegateSimple<ElasticSolidParticles> ElasticSolidDataSimple;
 
-	class GreenLagrangeStrain : public BaseDerivedVariable<Matd>,
-								public ElasticSolidDataSimple,
-								public LocalDynamics
-	{
-	public:
-		explicit GreenLagrangeStrain(SPHBody &sph_body);
-		virtual ~GreenLagrangeStrain(){};
-		void update(size_t index_i, Real dt = 0.0);
+class GreenLagrangeStrain : public BaseDerivedVariable<Matd>,
+                            public ElasticSolidDataSimple,
+                            public LocalDynamics
+{
+  public:
+    explicit GreenLagrangeStrain(SPHBody &sph_body);
+    virtual ~GreenLagrangeStrain(){};
+    void update(size_t index_i, Real dt = 0.0);
 
-	protected:
-		StdLargeVec<Matd> &F_;
-	};
+  protected:
+    StdLargeVec<Matd> &F_;
+};
 
-	/**
-	 * @class VonMisesStress
-	 * @brief computing von_Mises_stress
-	 */
-	class VonMisesStress : public BaseDerivedVariable<Real>,
-						   public ElasticSolidDataSimple,
-						   public LocalDynamics
-	{
-	public:
-		explicit VonMisesStress(SPHBody &sph_body);
-		virtual ~VonMisesStress(){};
-		void update(size_t index_i, Real dt = 0.0);
+/**
+ * @class VonMisesStress
+ * @brief computing von_Mises_stress
+ */
+class VonMisesStress : public BaseDerivedVariable<Real>,
+                       public ElasticSolidDataSimple,
+                       public LocalDynamics
+{
+  public:
+    explicit VonMisesStress(SPHBody &sph_body);
+    virtual ~VonMisesStress(){};
+    void update(size_t index_i, Real dt = 0.0);
 
-	protected:
-		Real rho0_;
-		StdLargeVec<Real> &rho_;
-		StdLargeVec<Matd> &F_;
-		ElasticSolid &elastic_solid_;
-	};
+  protected:
+    Real rho0_;
+    StdLargeVec<Real> &rho_;
+    StdLargeVec<Matd> &F_;
+    ElasticSolid &elastic_solid_;
+};
 
-	/**
-	 * @class VonMisesStrain
-	 * @brief computing von Mises strain
-	 */
-	class VonMisesStrain : public BaseDerivedVariable<Real>,
-						   public ElasticSolidDataSimple,
-						   public LocalDynamics
-	{
-	public:
-		explicit VonMisesStrain(SPHBody &sph_body);
-		virtual ~VonMisesStrain(){};
-		void update(size_t index_i, Real dt = 0.0);
-	};
+/**
+ * @class VonMisesStrain
+ * @brief computing von Mises strain
+ */
+class VonMisesStrain : public BaseDerivedVariable<Real>,
+                       public ElasticSolidDataSimple,
+                       public LocalDynamics
+{
+  public:
+    explicit VonMisesStrain(SPHBody &sph_body);
+    virtual ~VonMisesStrain(){};
+    void update(size_t index_i, Real dt = 0.0);
+};
 
-	/**
-	 * @class VonMisesStrain
-	 * @brief update von Mises strain
-	 */
-	class VonMisesStrainDynamic : public BaseDerivedVariable<Real>,
-								  public ElasticSolidDataSimple,
-								  public LocalDynamics
-	{
-	public:
-		explicit VonMisesStrainDynamic(SPHBody &sph_body);
-		virtual ~VonMisesStrainDynamic(){};
-		void update(size_t index_i, Real dt = 0.0);
+/**
+ * @class VonMisesStrain
+ * @brief update von Mises strain
+ */
+class VonMisesStrainDynamic : public BaseDerivedVariable<Real>,
+                              public ElasticSolidDataSimple,
+                              public LocalDynamics
+{
+  public:
+    explicit VonMisesStrainDynamic(SPHBody &sph_body);
+    virtual ~VonMisesStrainDynamic(){};
+    void update(size_t index_i, Real dt = 0.0);
 
-	protected:
-		Real poisson_ratio_;
-	};
+  protected:
+    Real poisson_ratio_;
+};
 
-	//----------------------------------------------------------------------
-	//		for general shell dynamics variables
-	//----------------------------------------------------------------------
-	typedef DataDelegateSimple<ShellParticles> ShellSolidDataSimple;
-	/**
-	 * @class MidSurfaceVonMisesStressofShells
-	 * @brief computing mid-surface von Mises stress of shells
-	 */
-	class MidSurfaceVonMisesStressofShells : public BaseDerivedVariable<Real>,
-		public ShellSolidDataSimple,
-		public LocalDynamics
-	{
-	public:
-		explicit MidSurfaceVonMisesStressofShells(SPHBody& sph_body);
-		virtual ~MidSurfaceVonMisesStressofShells() {};
-		void update(size_t index_i, Real dt = 0.0);
+//----------------------------------------------------------------------
+//		for general shell dynamics variables
+//----------------------------------------------------------------------
+typedef DataDelegateSimple<ShellParticles> ShellSolidDataSimple;
+/**
+ * @class MidSurfaceVonMisesStressofShells
+ * @brief computing mid-surface von Mises stress of shells
+ */
+class MidSurfaceVonMisesStressofShells : public BaseDerivedVariable<Real>,
+                                         public ShellSolidDataSimple,
+                                         public LocalDynamics
+{
+  public:
+    explicit MidSurfaceVonMisesStressofShells(SPHBody &sph_body);
+    virtual ~MidSurfaceVonMisesStressofShells(){};
+    void update(size_t index_i, Real dt = 0.0);
 
-	protected:
-		StdLargeVec<Matd>& mid_surface_cauchy_stress_;
-	};
-}
+  protected:
+    StdLargeVec<Matd> &mid_surface_cauchy_stress_;
+};
+} // namespace SPH
 #endif // SOLID_PARTICLES_VARIABLE_H

@@ -25,16 +25,16 @@
  * @brief   This is the header file that user code should include to pick up all
  *          fluid dynamics used in SPHinXsys.
  * @details The fluid dynamics algorithms begin for fluid bulk without boundary condition,
- *          then algorithm interacting with wall is defined, further algorithms 
+ *          then algorithm interacting with wall is defined, further algorithms
  *          for multiphase flow interaction built upon these basic algorithms.
  * @author	Chi ZHang and Xiangyu Hu
  */
 
 #pragma once
 
-#include "fluid_dynamics_inner.hpp"
-#include "fluid_dynamics_complex.hpp"
-#include "fluid_dynamics_multi_phase.hpp"
-#include "fluid_surface_inner.hpp"
-#include "fluid_surface_complex.h"
 #include "fluid_boundary.h"
+#include "fluid_dynamics_complex.hpp"
+#include "fluid_dynamics_inner.hpp"
+#include "fluid_dynamics_multi_phase.hpp"
+#include "fluid_surface_complex.h"
+#include "fluid_surface_inner.hpp"

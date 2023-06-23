@@ -22,8 +22,8 @@
  * ------------------------------------------------------------------------*/
 /**
  * @file 	compressible_fluid.h
- * @brief 	Describe the compressible fluid which is used 
- * 			model compressible fluids. Here, we have ideal gas equation of states. 
+ * @brief 	Describe the compressible fluid which is used
+ * 			model compressible fluids. Here, we have ideal gas equation of states.
  * @author	Chi ZHang, Zhentong Wang and Xiangyu Hu
  */
 
@@ -33,28 +33,28 @@
 
 namespace SPH
 {
-	/**
-	 * @class CompressibleFluid
-	 * @brief Ideal gas equation of state (EOS).
-	 */
-	class CompressibleFluid : public Fluid
-	{
-	protected:
-		Real gamma_; /** heat capacity ratio */
+/**
+ * @class CompressibleFluid
+ * @brief Ideal gas equation of state (EOS).
+ */
+class CompressibleFluid : public Fluid
+{
+  protected:
+    Real gamma_; /** heat capacity ratio */
 
-	public:
-		explicit CompressibleFluid(Real rho0, Real gamma, Real mu = 0.0)
-			: Fluid(rho0, mu), gamma_(gamma)
-		{
-			material_type_name_ = "CompressibleFluid";
-		};
-		virtual ~CompressibleFluid(){};
+  public:
+    explicit CompressibleFluid(Real rho0, Real gamma, Real mu = 0.0)
+        : Fluid(rho0, mu), gamma_(gamma)
+    {
+        material_type_name_ = "CompressibleFluid";
+    };
+    virtual ~CompressibleFluid(){};
 
-		Real HeatCapacityRatio() { return gamma_; };
-		virtual Real getPressure(Real rho, Real rho_e) override;
-		virtual Real getPressure(Real rho) override { return 0.0; };
-		virtual Real DensityFromPressure(Real p) override { return 0.0; };
-		virtual Real getSoundSpeed(Real p, Real rho) override;
-		virtual CompressibleFluid *ThisObjectPtr() override { return this; };
-	};
-}
+    Real HeatCapacityRatio() { return gamma_; };
+    virtual Real getPressure(Real rho, Real rho_e) override;
+    virtual Real getPressure(Real rho) override { return 0.0; };
+    virtual Real DensityFromPressure(Real p) override { return 0.0; };
+    virtual Real getSoundSpeed(Real p, Real rho) override;
+    virtual CompressibleFluid *ThisObjectPtr() override { return this; };
+};
+} // namespace SPH

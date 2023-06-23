@@ -23,7 +23,7 @@
  * ------------------------------------------------------------------------*/
 /**
  * @file 	all_bodies.h
- * @brief 	This is the header file that user code should include to pick up all 
+ * @brief 	This is the header file that user code should include to pick up all
  *          bodies used in SPHinXsys.
  * @author	Chi ZHang and Xiangyu Hu
  */
@@ -33,8 +33,8 @@
 #pragma once
 
 #include "base_body_part.h"
-#include "fluid_body.h"
-#include "solid_body.h"
-#include "observer_body.h"
 #include "complex_body.h"
-#endif //ALL_BODIES_H
+#include "fluid_body.h"
+#include "observer_body.h"
+#include "solid_body.h"
+#endif // ALL_BODIES_H

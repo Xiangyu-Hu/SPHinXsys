@@ -22,17 +22,17 @@
  * ------------------------------------------------------------------------*/
 /**
  * @file 	all_kernels.h
- * @brief 	Headers for all kernels. 
+ * @brief 	Headers for all kernels.
  * @author	Chi ZHang and Xiangyu Hu
  */
 
 #ifndef ALL_KERNELS_H
 #define ALL_KERNELS_H
 
-#include "kernel_wenland_c2.h"
-#include "kernel_hyperbolic.h"
-#include "kernel_tabulated.h"
 #include "kernel_cubic_B_spline.h"
+#include "kernel_hyperbolic.h"
 #include "kernel_laguerre_gauss.h"
+#include "kernel_tabulated.h"
+#include "kernel_wenland_c2.h"
 
-#endif //ALL_KERNELS_H
+#endif // ALL_KERNELS_H

@@ -34,53 +34,53 @@
 
 namespace SPH
 {
-	/**
-	 * @brief pre-claimed class.
-	 */
-	class SPHSystem;
-	class SolidParticles;
-	/**
-	 * @class SolidBody
-	 * @brief Declaration of solid body which is used for Solid BCs and derived from RealBody.
-	 */
-	class SolidBody : public RealBody
-	{
-	public:
-		template <typename... ConstructorArgs>
-		SolidBody(ConstructorArgs &&...args)
-			: RealBody(std::forward<ConstructorArgs>(args)...)
-		{
-			sph_system_.solid_bodies_.push_back(this);
-			defineAdaptation<SPHAdaptation>(1.15);
-		};
-		virtual ~SolidBody(){};
-		virtual SolidBody *ThisObjectPtr() override { return this; };
-	};
+/**
+ * @brief pre-claimed class.
+ */
+class SPHSystem;
+class SolidParticles;
+/**
+ * @class SolidBody
+ * @brief Declaration of solid body which is used for Solid BCs and derived from RealBody.
+ */
+class SolidBody : public RealBody
+{
+  public:
+    template <typename... ConstructorArgs>
+    SolidBody(ConstructorArgs &&...args)
+        : RealBody(std::forward<ConstructorArgs>(args)...)
+    {
+        sph_system_.solid_bodies_.push_back(this);
+        defineAdaptation<SPHAdaptation>(1.15);
+    };
+    virtual ~SolidBody(){};
+    virtual SolidBody *ThisObjectPtr() override { return this; };
+};
 
-	/**
-	 * @class SolidBodyPartForSimbody
-	 * @brief A SolidBodyPart for coupling with Simbody.
-	 * The mass, origin, and unit inertial matrix are computed.
-	 * Note: In Simbody, all spatial vectors are three dimensional.
-	 */
-	class SolidBodyPartForSimbody : public BodyRegionByParticle
-	{
-	protected:
-		UniquePtrKeeper<SimTK::MassProperties> mass_properties_ptr_keeper_;
+/**
+ * @class SolidBodyPartForSimbody
+ * @brief A SolidBodyPart for coupling with Simbody.
+ * The mass, origin, and unit inertial matrix are computed.
+ * Note: In Simbody, all spatial vectors are three dimensional.
+ */
+class SolidBodyPartForSimbody : public BodyRegionByParticle
+{
+  protected:
+    UniquePtrKeeper<SimTK::MassProperties> mass_properties_ptr_keeper_;
 
-	public:
-		Vecd initial_mass_center_;
-		SimTK::MassProperties *body_part_mass_properties_;
+  public:
+    Vecd initial_mass_center_;
+    SimTK::MassProperties *body_part_mass_properties_;
 
-		SolidBodyPartForSimbody(SPHBody &body, SharedPtr<Shape> shape_ptr);
-		virtual ~SolidBodyPartForSimbody(){};
+    SolidBodyPartForSimbody(SPHBody &body, SharedPtr<Shape> shape_ptr);
+    virtual ~SolidBodyPartForSimbody(){};
 
-	protected:
-		Real solid_body_density_;
-		SolidParticles *solid_particles_;
+  protected:
+    Real solid_body_density_;
+    SolidParticles *solid_particles_;
 
-	private:
-		void setMassProperties();
-	};
-}
+  private:
+    void setMassProperties();
+};
+} // namespace SPH
 #endif // SOLID_BODY_H

@@ -22,16 +22,16 @@
  * ------------------------------------------------------------------------*/
 /**
  * @file 	all_materials.h
- * @brief 	This is the header file for materials. 
+ * @brief 	This is the header file for materials.
  * @author	Chi ZHang and Xiangyu Hu
  */
 
 #pragma once
 
-#include "weakly_compressible_fluid.h"
-#include "elastic_solid.h"
-#include "inelastic_solid.h"
 #include "complex_solid.h"
 #include "complex_solid.hpp"
-#include "diffusion_reaction.h"
 #include "compressible_fluid.h"
+#include "diffusion_reaction.h"
+#include "elastic_solid.h"
+#include "inelastic_solid.h"
+#include "weakly_compressible_fluid.h"

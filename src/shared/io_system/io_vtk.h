@@ -34,70 +34,70 @@ using VtuStringData = std::map<std::string, std::string>;
 
 namespace SPH
 {
-	/**
-	 * @class BodyStatesRecordingToVtp
-	 * @brief  Write files for bodies
-	 * the output file is VTK XML format can visualized by ParaView the data type vtkPolyData
-	 */
-	class BodyStatesRecordingToVtp : public BodyStatesRecording
-	{
-	public:
-		BodyStatesRecordingToVtp(IOEnvironment &io_environment, SPHBody &body)
-			: BodyStatesRecording(io_environment, body){};
-		BodyStatesRecordingToVtp(IOEnvironment &io_environment, SPHBodyVector bodies)
-			: BodyStatesRecording(io_environment, bodies){};
-		virtual ~BodyStatesRecordingToVtp(){};
+/**
+ * @class BodyStatesRecordingToVtp
+ * @brief  Write files for bodies
+ * the output file is VTK XML format can visualized by ParaView the data type vtkPolyData
+ */
+class BodyStatesRecordingToVtp : public BodyStatesRecording
+{
+  public:
+    BodyStatesRecordingToVtp(IOEnvironment &io_environment, SPHBody &body)
+        : BodyStatesRecording(io_environment, body){};
+    BodyStatesRecordingToVtp(IOEnvironment &io_environment, SPHBodyVector bodies)
+        : BodyStatesRecording(io_environment, bodies){};
+    virtual ~BodyStatesRecordingToVtp(){};
 
-	protected:
-		virtual void writeWithFileName(const std::string &sequence) override;
-	};
+  protected:
+    virtual void writeWithFileName(const std::string &sequence) override;
+};
 
-	/**
-	 * @class BodyStatesRecordingToVtpString
-	 * @brief  Write strings for bodies
-	 * the output is map of strings with VTK XML format can visualized by ParaView
-	 * the data type vtkUnstructedGrid
-	 */
-	class BodyStatesRecordingToVtpString : public BodyStatesRecording
-	{
-	public:
-		BodyStatesRecordingToVtpString(IOEnvironment &io_environment, SPHBodyVector bodies)
-			: BodyStatesRecording(io_environment, bodies){};
-		virtual ~BodyStatesRecordingToVtpString() = default;
+/**
+ * @class BodyStatesRecordingToVtpString
+ * @brief  Write strings for bodies
+ * the output is map of strings with VTK XML format can visualized by ParaView
+ * the data type vtkUnstructedGrid
+ */
+class BodyStatesRecordingToVtpString : public BodyStatesRecording
+{
+  public:
+    BodyStatesRecordingToVtpString(IOEnvironment &io_environment, SPHBodyVector bodies)
+        : BodyStatesRecording(io_environment, bodies){};
+    virtual ~BodyStatesRecordingToVtpString() = default;
 
-		const VtuStringData &GetVtuData() const;
-		void clear()
-		{
-			_vtuData.clear();
-		}
+    const VtuStringData &GetVtuData() const;
+    void clear()
+    {
+        _vtuData.clear();
+    }
 
-	protected:
-		virtual void writeWithFileName(const std::string &sequence) override;
-		virtual void writeVtu(std::ostream &stream, SPHBody *body) const;
+  protected:
+    virtual void writeWithFileName(const std::string &sequence) override;
+    virtual void writeVtu(std::ostream &stream, SPHBody *body) const;
 
-	private:
-		VtuStringData _vtuData;
-	};
+  private:
+    VtuStringData _vtuData;
+};
 
-	/**
-	 * @class WriteToVtpIfVelocityOutOfBound
-	 * @brief  output body sates if particle velocity is
-	 * out of a bound
-	 */
-	class WriteToVtpIfVelocityOutOfBound
-		: public BodyStatesRecordingToVtp
-	{
-	private:
-	UniquePtrsKeeper<ReduceDynamics<VelocityBoundCheck>> check_bodies_ptr_keeper_;	
+/**
+ * @class WriteToVtpIfVelocityOutOfBound
+ * @brief  output body sates if particle velocity is
+ * out of a bound
+ */
+class WriteToVtpIfVelocityOutOfBound
+    : public BodyStatesRecordingToVtp
+{
+  private:
+    UniquePtrsKeeper<ReduceDynamics<VelocityBoundCheck>> check_bodies_ptr_keeper_;
 
-	protected:
-		bool out_of_bound_;
-		StdVec<ReduceDynamics<VelocityBoundCheck> *> check_bodies_;
-		virtual void writeWithFileName(const std::string &sequence) override;
+  protected:
+    bool out_of_bound_;
+    StdVec<ReduceDynamics<VelocityBoundCheck> *> check_bodies_;
+    virtual void writeWithFileName(const std::string &sequence) override;
 
-	public:
-		WriteToVtpIfVelocityOutOfBound(IOEnvironment &io_environment,
-									   SPHBodyVector bodies, Real velocity_bound);
-		virtual ~WriteToVtpIfVelocityOutOfBound(){};
-	};
-}
+  public:
+    WriteToVtpIfVelocityOutOfBound(IOEnvironment &io_environment,
+                                   SPHBodyVector bodies, Real velocity_bound);
+    virtual ~WriteToVtpIfVelocityOutOfBound(){};
+};
+} // namespace SPH

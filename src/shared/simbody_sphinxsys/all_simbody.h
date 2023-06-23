@@ -22,14 +22,14 @@
  * ------------------------------------------------------------------------*/
 /**
  * @file    all_simbody.h
- * @brief   headers for SimBody engine. 
+ * @brief   headers for SimBody engine.
  * @author	Chi ZHang and Xiangyu Hu
  */
 
 #ifndef ALL_SIMBODY_H
 #define ALL_SIMBODY_H
 
-#include "xml_engine.h"
 #include "state_engine.h"
+#include "xml_engine.h"
 
-#endif //ALL_SIMBODY_H
+#endif // ALL_SIMBODY_H

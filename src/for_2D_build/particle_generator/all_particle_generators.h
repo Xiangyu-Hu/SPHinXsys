@@ -22,14 +22,12 @@
  * ------------------------------------------------------------------------*/
 /**
  * @file 	all_particle_generator.h
- * @brief 	Head file for all particle generator. 
+ * @brief 	Head file for all particle generator.
  * @author	Chi ZHang and Xiangyu Hu
  */
 
 #ifndef ALL_PARTICLE_GENERATORS_2D_H
 #define ALL_PARTICLE_GENERATORS_2D_H
 
-
-
 #include "particle_generator_lattice.h"
-#endif //ALL_PARTICLE_GENERATORS_2D_H
+#endif // ALL_PARTICLE_GENERATORS_2D_H

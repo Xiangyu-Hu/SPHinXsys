@@ -7,10 +7,10 @@
 
 #ifndef FVM_DOUBLE_MACH_REFLECTION_H
 #define FVM_DOUBLE_MACH_REFLECTION_H
-#include "common_shared_FVM_classes.h" // shared eulerian classes for weakly-compressible and compressible fluid in FVM.
-#include "common_compressible_FVM_classes.h" // eulerian classes for compressible fluid in FVM only.
-#include "common_shared_eulerian_classes.h" // shared eulerian classes for weakly-compressible and compressible fluid.
+#include "common_compressible_FVM_classes.h"        // eulerian classes for compressible fluid in FVM only.
 #include "common_compressible_eulerian_classes.hpp" // eulerian classes for weakly compressible fluid only.
+#include "common_shared_FVM_classes.h"              // shared eulerian classes for weakly-compressible and compressible fluid in FVM.
+#include "common_shared_eulerian_classes.h"         // shared eulerian classes for weakly-compressible and compressible fluid.
 using namespace SPH;
 using namespace std;
 //----------------------------------------------------------------------
@@ -37,12 +37,12 @@ Real heat_capacity_ratio = 1.4;              /**< heat capacity ratio. */
 //	Set the file path to the data file.
 //----------------------------------------------------------------------
 std::string double_mach_reflection_mesh_fullpath = "./input/double_mach_reflection_0.05.msh";
-// 
+//
 //	Define geometries and body shapes
 //----------------------------------------------------------------------
 std::vector<Vecd> CreatComputationDomian()
 {
-    //geometry
+    // geometry
     std::vector<Vecd> computation_domain;
     computation_domain.push_back(Vecd(0.0, 0.0));
     computation_domain.push_back(Vecd(0.0, DH));
@@ -53,12 +53,12 @@ std::vector<Vecd> CreatComputationDomian()
 }
 class WaterBlock : public ComplexShape
 {
-public:
-	explicit WaterBlock(const std::string& shape_name) : ComplexShape(shape_name)
-	{
-		MultiPolygon wave_block(CreatComputationDomian());
-		add<MultiPolygonShape>(wave_block, "WaveBlock");
-	}
+  public:
+    explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
+    {
+        MultiPolygon wave_block(CreatComputationDomian());
+        add<MultiPolygonShape>(wave_block, "WaveBlock");
+    }
 };
 //----------------------------------------------------------------------
 //	Case-dependent initial condition.
@@ -117,64 +117,63 @@ class DMFInitialCondition
 //----------------------------------------------------------------------
 class DMFBoundaryConditionSetup : public fluid_dynamics::FluidDataInner
 {
-public:
-	DMFBoundaryConditionSetup(BaseInnerRelationInFVM& inner_relation, vector<vector<size_t>> each_boundary_type_with_all_ghosts_index,
-        vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_,vector<vector<size_t>> each_boundary_type_contact_real_index): 
-        fluid_dynamics::FluidDataInner(inner_relation), 
-		compressible_fluid_(CompressibleFluid(1.0, 1.4)), rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")), 
-        Vol_(particles_->Vol_), E_(*particles_->getVariableByName<Real>("TotalEnergy")), vel_(particles_->vel_), 
-        mom_(*particles_->getVariableByName<Vecd>("Momentum")), pos_(particles_->pos_), total_ghost_particles_(particles_->total_ghost_particles_),
-        real_particles_bound_(particles_->real_particles_bound_),each_boundary_type_with_all_ghosts_index_(each_boundary_type_with_all_ghosts_index),
-        each_boundary_type_with_all_ghosts_eij_(each_boundary_type_with_all_ghosts_eij_),each_boundary_type_contact_real_index_(each_boundary_type_contact_real_index){};
-	virtual ~DMFBoundaryConditionSetup() {};
+  public:
+    DMFBoundaryConditionSetup(BaseInnerRelationInFVM &inner_relation, vector<vector<size_t>> each_boundary_type_with_all_ghosts_index,
+                              vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_, vector<vector<size_t>> each_boundary_type_contact_real_index) : fluid_dynamics::FluidDataInner(inner_relation),
+                                                                                                                                                            compressible_fluid_(CompressibleFluid(1.0, 1.4)), rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
+                                                                                                                                                            Vol_(particles_->Vol_), E_(*particles_->getVariableByName<Real>("TotalEnergy")), vel_(particles_->vel_),
+                                                                                                                                                            mom_(*particles_->getVariableByName<Vecd>("Momentum")), pos_(particles_->pos_), total_ghost_particles_(particles_->total_ghost_particles_),
+                                                                                                                                                            real_particles_bound_(particles_->real_particles_bound_), each_boundary_type_with_all_ghosts_index_(each_boundary_type_with_all_ghosts_index),
+                                                                                                                                                            each_boundary_type_with_all_ghosts_eij_(each_boundary_type_with_all_ghosts_eij_), each_boundary_type_contact_real_index_(each_boundary_type_contact_real_index){};
+    virtual ~DMFBoundaryConditionSetup(){};
 
     void resetBoundaryConditions()
     {
         for (size_t boundary_type = 0; boundary_type < each_boundary_type_with_all_ghosts_index_.size(); ++boundary_type)
         {
-            if (!each_boundary_type_with_all_ghosts_index_[boundary_type].empty()) 
+            if (!each_boundary_type_with_all_ghosts_index_[boundary_type].empty())
             {
                 for (size_t ghost_number = 0; ghost_number != each_boundary_type_with_all_ghosts_index_[boundary_type].size(); ++ghost_number)
                 {
                     size_t ghost_index = each_boundary_type_with_all_ghosts_index_[boundary_type][ghost_number];
                     size_t index_i = each_boundary_type_contact_real_index_[boundary_type][ghost_number];
-                    Vecd e_ij=each_boundary_type_with_all_ghosts_eij_[boundary_type][ghost_number];
+                    Vecd e_ij = each_boundary_type_with_all_ghosts_eij_[boundary_type][ghost_number];
                     if (boundary_type == 3)
-			        {
-				        //rigid wall boundary 
-				        vel_[ghost_index] = (vel_[index_i] - e_ij.dot(vel_[index_i])*(e_ij)) + (-e_ij.dot(vel_[index_i])*(e_ij));
-				        p_[ghost_index] = p_[index_i];
-				        rho_[ghost_index] = rho_[index_i];
-				        E_[ghost_index]=E_[index_i];
-			        }
+                    {
+                        // rigid wall boundary
+                        vel_[ghost_index] = (vel_[index_i] - e_ij.dot(vel_[index_i]) * (e_ij)) + (-e_ij.dot(vel_[index_i]) * (e_ij));
+                        p_[ghost_index] = p_[index_i];
+                        rho_[ghost_index] = rho_[index_i];
+                        E_[ghost_index] = E_[index_i];
+                    }
 
                     if (boundary_type == 10)
                     {
-				        //given value inlet flow
-				        Vecd vel_another= Vecd::Zero();
-				        vel_another[0] = u_another;
-				        vel_another[1] = v_another;
-				        Real p_another = 140.2 / 1.2;					/**< initial pressure of another. */
-				        Real rho_e_another = p_another / (1.4 - 1.0);
-				        Real E_inlet_another = rho_e_another + 0.5 * rho0_another * vel_another.squaredNorm();
+                        // given value inlet flow
+                        Vecd vel_another = Vecd::Zero();
+                        vel_another[0] = u_another;
+                        vel_another[1] = v_another;
+                        Real p_another = 140.2 / 1.2; /**< initial pressure of another. */
+                        Real rho_e_another = p_another / (1.4 - 1.0);
+                        Real E_inlet_another = rho_e_another + 0.5 * rho0_another * vel_another.squaredNorm();
 
-				        rho_[ghost_index] = rho0_another;
-				        p_[ghost_index] = p_another;
-				        vel_[ghost_index][0] = u_another;
-				        vel_[ghost_index][1] = v_another;
-				        E_[ghost_index] = E_inlet_another;
+                        rho_[ghost_index] = rho0_another;
+                        p_[ghost_index] = p_another;
+                        vel_[ghost_index][0] = u_another;
+                        vel_[ghost_index][1] = v_another;
+                        E_[ghost_index] = E_inlet_another;
                     }
-                
+
                     if (boundary_type == 36)
                     {
-                        //Outlet boundary condition
+                        // Outlet boundary condition
                         vel_[ghost_index] = vel_[index_i];
                         p_[ghost_index] = p_[index_i];
-				        rho_[ghost_index] = rho_[index_i];
-				        E_[ghost_index]=E_[index_i];
+                        rho_[ghost_index] = rho_[index_i];
+                        E_[ghost_index] = E_[index_i];
                     }
 
-			        //Top boundary condition
+                    // Top boundary condition
                     if (boundary_type == 4)
                     {
                         Real run_time = GlobalStaticVariables::physical_time_;
@@ -202,10 +201,11 @@ public:
             }
         }
     };
-protected:
-	CompressibleFluid compressible_fluid_;
-	StdLargeVec<Real>& rho_, & p_, & Vol_, & E_;
-	StdLargeVec<Vecd>& vel_, & mom_, & pos_;
+
+  protected:
+    CompressibleFluid compressible_fluid_;
+    StdLargeVec<Real> &rho_, &p_, &Vol_, &E_;
+    StdLargeVec<Vecd> &vel_, &mom_, &pos_;
     size_t &total_ghost_particles_;
     size_t &real_particles_bound_;
     vector<vector<size_t>> each_boundary_type_with_all_ghosts_index_;

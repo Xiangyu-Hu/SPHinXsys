@@ -35,12 +35,12 @@
 
 namespace SPH
 {
-	class ObserverParticles : public BaseParticles
-	{
-	public:
-		explicit ObserverParticles(SPHBody &sph_body,  BaseMaterial *base_material)
-        : BaseParticles(sph_body, base_material) {};
-		virtual ~ObserverParticles(){};
-	};
-}
-#endif //OBSERVER_PARTICLES_H
+class ObserverParticles : public BaseParticles
+{
+  public:
+    explicit ObserverParticles(SPHBody &sph_body, BaseMaterial *base_material)
+        : BaseParticles(sph_body, base_material){};
+    virtual ~ObserverParticles(){};
+};
+} // namespace SPH
+#endif // OBSERVER_PARTICLES_H

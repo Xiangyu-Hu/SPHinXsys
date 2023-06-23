@@ -32,53 +32,53 @@
 
 namespace SPH
 {
-	/**
-	 * @class PltEngine
-	 * @brief The base class which defines Tecplot file related operation.
-	 */
-	class PltEngine
-	{
-	public:
-		PltEngine(){};
-		virtual ~PltEngine(){};
+/**
+ * @class PltEngine
+ * @brief The base class which defines Tecplot file related operation.
+ */
+class PltEngine
+{
+  public:
+    PltEngine(){};
+    virtual ~PltEngine(){};
 
-		void writeAQuantityHeader(std::ofstream &out_file, const Real &quantity, const std::string &quantity_name);
-		void writeAQuantityHeader(std::ofstream &out_file, const Vecd &quantity, const std::string &quantity_name);
-		void writeAQuantity(std::ofstream &out_file, const Real &quantity);
-		void writeAQuantity(std::ofstream &out_file, const Vecd &quantity);
-	};
+    void writeAQuantityHeader(std::ofstream &out_file, const Real &quantity, const std::string &quantity_name);
+    void writeAQuantityHeader(std::ofstream &out_file, const Vecd &quantity, const std::string &quantity_name);
+    void writeAQuantity(std::ofstream &out_file, const Real &quantity);
+    void writeAQuantity(std::ofstream &out_file, const Vecd &quantity);
+};
 
-	/**
-	 * @class BodyStatesRecordingToPlt
-	 * @brief  Write files for bodies
-	 * the output file is dat format can visualized by TecPlot
-	 */
-	class BodyStatesRecordingToPlt : public BodyStatesRecording
-	{
-	public:
-		BodyStatesRecordingToPlt(IOEnvironment &io_environment, SPHBody &body)
-			: BodyStatesRecording(io_environment, body){};
-		BodyStatesRecordingToPlt(IOEnvironment &io_environment, SPHBodyVector bodies)
-			: BodyStatesRecording(io_environment, bodies){};
-		virtual ~BodyStatesRecordingToPlt(){};
+/**
+ * @class BodyStatesRecordingToPlt
+ * @brief  Write files for bodies
+ * the output file is dat format can visualized by TecPlot
+ */
+class BodyStatesRecordingToPlt : public BodyStatesRecording
+{
+  public:
+    BodyStatesRecordingToPlt(IOEnvironment &io_environment, SPHBody &body)
+        : BodyStatesRecording(io_environment, body){};
+    BodyStatesRecordingToPlt(IOEnvironment &io_environment, SPHBodyVector bodies)
+        : BodyStatesRecording(io_environment, bodies){};
+    virtual ~BodyStatesRecordingToPlt(){};
 
-	protected:
-		virtual void writeWithFileName(const std::string &sequence) override;
-	};
+  protected:
+    virtual void writeWithFileName(const std::string &sequence) override;
+};
 
-	/**
-	 * @class MeshRecordingToPlt
-	 * @brief  write the mesh data in Tecplot format
-	 */
-	class MeshRecordingToPlt : public BaseIO
-	{
-	protected:
-		BaseMeshField &mesh_field_;
-		std::string filefullpath_;
+/**
+ * @class MeshRecordingToPlt
+ * @brief  write the mesh data in Tecplot format
+ */
+class MeshRecordingToPlt : public BaseIO
+{
+  protected:
+    BaseMeshField &mesh_field_;
+    std::string filefullpath_;
 
-	public:
-		MeshRecordingToPlt(IOEnvironment &io_environment, BaseMeshField &mesh_field);
-		virtual ~MeshRecordingToPlt(){};
-		virtual void writeToFile(size_t iteration_step = 0) override;
-	};
-}
+  public:
+    MeshRecordingToPlt(IOEnvironment &io_environment, BaseMeshField &mesh_field);
+    virtual ~MeshRecordingToPlt(){};
+    virtual void writeToFile(size_t iteration_step = 0) override;
+};
+} // namespace SPH

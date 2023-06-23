@@ -30,7 +30,6 @@
  * @author	Chi ZHang and Xiangyu Hu
  */
 
-
 #ifndef KERNEL_HYPERBOLIC_H
 #define KERNEL_HYPERBOLIC_H
 
@@ -38,27 +37,27 @@
 
 namespace SPH
 {
-	/**
-	 * @class KernelHyperbolic
-	 * @brief Kernel from Yang el al.
-	 */
-	class KernelHyperbolic : public Kernel
-	{
-	public:
-		KernelHyperbolic(Real h);
+/**
+ * @class KernelHyperbolic
+ * @brief Kernel from Yang el al.
+ */
+class KernelHyperbolic : public Kernel
+{
+  public:
+    KernelHyperbolic(Real h);
 
-		virtual Real W_1D(const Real q) const override;
-		virtual Real W_2D(const Real q) const override;
-		virtual Real W_3D(const Real q) const override;
+    virtual Real W_1D(const Real q) const override;
+    virtual Real W_2D(const Real q) const override;
+    virtual Real W_3D(const Real q) const override;
 
-		virtual Real dW_1D(const Real q) const override;
-		virtual Real dW_2D(const Real q) const override;
-		virtual Real dW_3D(const Real q) const override;
+    virtual Real dW_1D(const Real q) const override;
+    virtual Real dW_2D(const Real q) const override;
+    virtual Real dW_3D(const Real q) const override;
 
-		virtual Real d2W_1D(const Real q) const override;
-		virtual Real d2W_2D(const Real q) const override;
-		virtual Real d2W_3D(const Real q) const override;
-	};
-}
+    virtual Real d2W_1D(const Real q) const override;
+    virtual Real d2W_2D(const Real q) const override;
+    virtual Real d2W_3D(const Real q) const override;
+};
+} // namespace SPH
 
-#endif //KERNEL_HYPERBOLIC_H
+#endif // KERNEL_HYPERBOLIC_H

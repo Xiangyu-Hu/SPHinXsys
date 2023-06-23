@@ -22,7 +22,7 @@
  * ------------------------------------------------------------------------*/
 /**
  * @file 	image_mesh_shape.h
- * @brief 	Image process for geometry representation. 
+ * @brief 	Image process for geometry representation.
  * @author	Yijin Mao
  */
 
@@ -31,137 +31,138 @@
 
 #ifndef __EMSCRIPTEN__
 
-#include "vector_functions.h"
 #include "sph_data_containers.h"
+#include "vector_functions.h"
 
+#include <fstream>
 #include <iostream>
 #include <string>
-#include <fstream>
 
-namespace SPH {
+namespace SPH
+{
 
-	enum Image_Data_Type
-	{
-		MET_FLOAT,
-		MET_UCHAR,
-		MET_LONG
-	};
+enum Image_Data_Type
+{
+    MET_FLOAT,
+    MET_UCHAR,
+    MET_LONG
+};
 
-	enum Output_Mode
-	{
-		BINARY,
-		ASCII
-	};
+enum Output_Mode
+{
+    BINARY,
+    ASCII
+};
 
-	template <typename T, int nDims>
-	class ImageMHD
-	{
-	public:
-		ImageMHD() {};
-		// constructor for input files
-		explicit ImageMHD(std::string full_path_file);
-		// constructor for sphere 
-		ImageMHD(Real radius, Array3i dxdydz, Vec3d spacings);
-		~ImageMHD();
+template <typename T, int nDims>
+class ImageMHD
+{
+  public:
+    ImageMHD(){};
+    // constructor for input files
+    explicit ImageMHD(std::string full_path_file);
+    // constructor for sphere
+    ImageMHD(Real radius, Array3i dxdydz, Vec3d spacings);
+    ~ImageMHD();
 
-		void set_objectType(const std::string &objectType) 
-		{ 
-			objectType_ = objectType; 
-		};
+    void set_objectType(const std::string &objectType)
+    {
+        objectType_ = objectType;
+    };
 
-		void set_binaryData(bool binaryData) 
-		{ 
-			binaryData_ = binaryData; 
-		};
-		void set_binaryDataByteOrderMSB(bool binaryDataByteOrderMSB) 
-		{ 
-			binaryDataByteOrderMSB_ = binaryDataByteOrderMSB; 
-		};
-		void set_compressedData(bool compressedData) 
-		{ 
-			compressedData_ = compressedData; 
-		};
-		void set_transformMatrix(Mat3d transformMatrix) 
-		{ 
-			transformMatrix_ = transformMatrix; 
-		};
-		void set_offset(Vec3d offset) 
-		{ 
-			offset_ = offset; 
-		};
-		void set_centerOfRotation(Vec3d centerOfRotation) 
-		{ 
-			centerOfRotation_ = centerOfRotation; 
-		};
-		void set_elementSpacing(Vec3d elementSpacing) 
-		{ 
-			elementSpacing_ = elementSpacing; 
-		};
-		void set_dimSize(Vec3d dimSize) 
-		{ 
-			dimSize_ = dimSize; 
-		};
-		void set_anatomicalOrientation(const std::string &anatomicalOrientation) 
-		{
-			anatomicalOrientation_ = anatomicalOrientation;
-		};
-		void set_elementType(const Image_Data_Type &elementType) 
-		{
-			elementType_ = elementType;
-		};
-		void set_elementDataFile(std::string elementDataFile) 
-		{
-			elementDataFile_ = elementDataFile;
-		};
+    void set_binaryData(bool binaryData)
+    {
+        binaryData_ = binaryData;
+    };
+    void set_binaryDataByteOrderMSB(bool binaryDataByteOrderMSB)
+    {
+        binaryDataByteOrderMSB_ = binaryDataByteOrderMSB;
+    };
+    void set_compressedData(bool compressedData)
+    {
+        compressedData_ = compressedData;
+    };
+    void set_transformMatrix(Mat3d transformMatrix)
+    {
+        transformMatrix_ = transformMatrix;
+    };
+    void set_offset(Vec3d offset)
+    {
+        offset_ = offset;
+    };
+    void set_centerOfRotation(Vec3d centerOfRotation)
+    {
+        centerOfRotation_ = centerOfRotation;
+    };
+    void set_elementSpacing(Vec3d elementSpacing)
+    {
+        elementSpacing_ = elementSpacing;
+    };
+    void set_dimSize(Vec3d dimSize)
+    {
+        dimSize_ = dimSize;
+    };
+    void set_anatomicalOrientation(const std::string &anatomicalOrientation)
+    {
+        anatomicalOrientation_ = anatomicalOrientation;
+    };
+    void set_elementType(const Image_Data_Type &elementType)
+    {
+        elementType_ = elementType;
+    };
+    void set_elementDataFile(std::string elementDataFile)
+    {
+        elementDataFile_ = elementDataFile;
+    };
 
-		T* get_data() { return data_; };
+    T *get_data() { return data_; };
 
-		int get_size() { return size_; }
+    int get_size() { return size_; }
 
-		Real get_min_value() { return min_value_; };
-		Real get_max_value() { return max_value_; };
+    Real get_min_value() { return min_value_; };
+    Real get_max_value() { return max_value_; };
 
-		Vec3d findClosestPoint(const Vec3d& probe_point);
-		BoundingBox findBounds();
-		Real findValueAtPoint(const Vec3d& probe_point);
-		Vec3d findNormalAtPoint(const Vec3d & probe_point);
+    Vec3d findClosestPoint(const Vec3d &probe_point);
+    BoundingBox findBounds();
+    Real findValueAtPoint(const Vec3d &probe_point);
+    Vec3d findNormalAtPoint(const Vec3d &probe_point);
 
-		void write(std::string filename, Output_Mode=BINARY);
+    void write(std::string filename, Output_Mode = BINARY);
 
-	private:
-		std::string objectType_;
-		int ndims_;
-		bool binaryData_;
-		bool binaryDataByteOrderMSB_;
-		bool compressedData_;
-		Mat3d transformMatrix_;
-		Vec3d offset_;
-		Vec3d centerOfRotation_;
-		Vec3d elementSpacing_;
-		Array3i dimSize_;
-		int width_;
-		int height_;
-		int depth_;
-		int size_;
-		std::string anatomicalOrientation_;
-		Image_Data_Type elementType_;
-		std::string elementDataFile_;
-		Real min_value_;
-		Real max_value_;
-		T *data_;
+  private:
+    std::string objectType_;
+    int ndims_;
+    bool binaryData_;
+    bool binaryDataByteOrderMSB_;
+    bool compressedData_;
+    Mat3d transformMatrix_;
+    Vec3d offset_;
+    Vec3d centerOfRotation_;
+    Vec3d elementSpacing_;
+    Array3i dimSize_;
+    int width_;
+    int height_;
+    int depth_;
+    int size_;
+    std::string anatomicalOrientation_;
+    Image_Data_Type elementType_;
+    std::string elementDataFile_;
+    Real min_value_;
+    Real max_value_;
+    T *data_;
 
-		std::vector<int> findNeighbors(const Vec3d& probe_point, Array3i& this_cell);
-		Vec3d computeGradientAtCell(int i);
-		Vec3d computeNormalAtCell(int i);
-		T getValueAtCell(int i);
-		Vec3d convertToPhysicalSpace(Vec3d p);
-		void split(const std::string &s, char delim, std::vector<std::string> &elems);
-	};
+    std::vector<int> findNeighbors(const Vec3d &probe_point, Array3i &this_cell);
+    Vec3d computeGradientAtCell(int i);
+    Vec3d computeNormalAtCell(int i);
+    T getValueAtCell(int i);
+    Vec3d convertToPhysicalSpace(Vec3d p);
+    void split(const std::string &s, char delim, std::vector<std::string> &elems);
+};
 
-}
+} // namespace SPH
 
 #include "image_mhd.hpp"
 
 #endif //__EMSCRIPTEN__
 
-#endif //IMAGE_MHD_H
+#endif // IMAGE_MHD_H

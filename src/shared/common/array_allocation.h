@@ -22,7 +22,7 @@
  * ------------------------------------------------------------------------*/
 /**
  * @file 	array_allocation.h
- * @brief 	Memory allocation for array data. 
+ * @brief 	Memory allocation for array data.
  * @author	Chi ZHang and Xiangyu Hu
  */
 #ifndef ARRAY_ALLOCATION_H
@@ -30,48 +30,55 @@
 
 #include "vector_functions.h"
 
-namespace SPH {
-	/** Allocate and deallocate 3d array. */
-	template<class T>
-	void Allocate3dArray(T*** &matrix, Array3i res)
-	{
-		matrix = new T**[res[0]];
-		for (int i = 0; i < res[0]; i++) {
-			matrix[i] = new T*[res[1]];
-			for (int j = 0; j < res[1]; j++) {
-				matrix[i][j] = new T[res[2]];
-			}
-		}
-	}
-
-	template<class T>
-	void Delete3dArray(T*** matrix, Array3i res)
-	{
-		for (int i = 0; i < res[0]; i++) {
-			for (int j = 0; j < res[1]; j++) {
-				delete[] matrix[i][j];
-			}
-			delete[] matrix[i];
-		}
-		delete[] matrix;
-	}
-	/** Allocate 2d array. */
-	template<class T>
-	void Allocate2dArray(T** &matrix, Array2i res)
-	{
-		matrix = new T*[res[0]];
-		for (int i = 0; i < res[0]; i++) {
-			matrix[i] = new T[res[1]];
-		}
-	}
-	template<class T>
-	void Delete2dArray(T** matrix, Array2i res)
-	{
-		for (int i = 0; i < res[0]; i++) {
-			delete[] matrix[i];
-		}
-		delete[] matrix;
-	}
+namespace SPH
+{
+/** Allocate and deallocate 3d array. */
+template <class T>
+void Allocate3dArray(T ***&matrix, Array3i res)
+{
+    matrix = new T **[res[0]];
+    for (int i = 0; i < res[0]; i++)
+    {
+        matrix[i] = new T *[res[1]];
+        for (int j = 0; j < res[1]; j++)
+        {
+            matrix[i][j] = new T[res[2]];
+        }
+    }
 }
 
-#endif //ARRAY_ALLOCATION_H
+template <class T>
+void Delete3dArray(T ***matrix, Array3i res)
+{
+    for (int i = 0; i < res[0]; i++)
+    {
+        for (int j = 0; j < res[1]; j++)
+        {
+            delete[] matrix[i][j];
+        }
+        delete[] matrix[i];
+    }
+    delete[] matrix;
+}
+/** Allocate 2d array. */
+template <class T>
+void Allocate2dArray(T **&matrix, Array2i res)
+{
+    matrix = new T *[res[0]];
+    for (int i = 0; i < res[0]; i++)
+    {
+        matrix[i] = new T[res[1]];
+    }
+}
+template <class T>
+void Delete2dArray(T **matrix, Array2i res)
+{
+    for (int i = 0; i < res[0]; i++)
+    {
+        delete[] matrix[i];
+    }
+    delete[] matrix;
+}
+} // namespace SPH
+
+#endif // ARRAY_ALLOCATION_H

@@ -40,12 +40,12 @@
 
 namespace SPH
 {
-	class ObserverBody : public SPHBody
-	{
-	public:
-		ObserverBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr);
-		ObserverBody(SPHSystem &sph_system, const std::string &name);
-		virtual ~ObserverBody(){};
-	};
-}
+class ObserverBody : public SPHBody
+{
+  public:
+    ObserverBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr);
+    ObserverBody(SPHSystem &sph_system, const std::string &name);
+    virtual ~ObserverBody(){};
+};
+} // namespace SPH
 #endif // OBSERVER_BODY_H

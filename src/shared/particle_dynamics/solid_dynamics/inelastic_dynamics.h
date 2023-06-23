@@ -34,23 +34,23 @@
 
 namespace SPH
 {
-	namespace solid_dynamics
-	{
-		/**
-		 * @class PlasticIntegration1stHalf
-		 * @brief computing stress relaxation process by verlet time stepping
-		 * This is the first step
-		 */
-		class PlasticIntegration1stHalf
-			: public Integration1stHalf
-		{
-		public:
-			PlasticIntegration1stHalf(BaseInnerRelation &inner_relation);
-			virtual ~PlasticIntegration1stHalf(){};
-			void initialization(size_t index_i, Real dt = 0.0);
+namespace solid_dynamics
+{
+/**
+ * @class PlasticIntegration1stHalf
+ * @brief computing stress relaxation process by verlet time stepping
+ * This is the first step
+ */
+class PlasticIntegration1stHalf
+    : public Integration1stHalf
+{
+  public:
+    PlasticIntegration1stHalf(BaseInnerRelation &inner_relation);
+    virtual ~PlasticIntegration1stHalf(){};
+    void initialization(size_t index_i, Real dt = 0.0);
 
-		protected:
-			PlasticSolid &plastic_solid_;
-		};
-	}
-}
+  protected:
+    PlasticSolid &plastic_solid_;
+};
+} // namespace solid_dynamics
+} // namespace SPH

@@ -36,29 +36,28 @@ namespace SPH
 {
 /**
  * @class ExclusiveShape
- * @brief A template shape which define the region outside of the geometry. 
+ * @brief A template shape which define the region outside of the geometry.
  * @brief In simple terms, it gives opposite return value for the function checkContain() as the original shape
  */
 
-    template <class BaseShapeType>
-    class ExclusiveShape : public BaseShapeType
+template <class BaseShapeType>
+class ExclusiveShape : public BaseShapeType
+{
+
+  public:
+    /** template constructor for general shapes. */
+    template <typename... ConstructorArgs>
+    explicit ExclusiveShape(ConstructorArgs &&...args)
+        : BaseShapeType(std::forward<ConstructorArgs>(args)...){};
+
+    virtual ~ExclusiveShape(){};
+
+    /*reverse the value of checkContain function*/
+    virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override
     {
-
-      public:
-        /** template constructor for general shapes. */
-        template <typename... ConstructorArgs>
-        explicit ExclusiveShape(ConstructorArgs &&...args)
-            : BaseShapeType(std::forward<ConstructorArgs>(args)...) 
-        {};
-
-        virtual ~ExclusiveShape(){};
-
-        /*reverse the value of checkContain function*/
-        virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override
-        {
-            return !BaseShapeType::checkContain(probe_point);
-        };
+        return !BaseShapeType::checkContain(probe_point);
     };
+};
 } // namespace SPH
 
 #endif // TRANSFORM_SHAPE_H

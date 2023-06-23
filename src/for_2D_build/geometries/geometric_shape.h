@@ -34,39 +34,39 @@
 
 namespace SPH
 {
-    class GeometricShapeBox : public Shape
-    {
-    public:
-        explicit GeometricShapeBox(const Vec2d &halfsize,
-                                   const std::string &shape_name = "GeometricShapeBox");
-        virtual ~GeometricShapeBox(){};
+class GeometricShapeBox : public Shape
+{
+  public:
+    explicit GeometricShapeBox(const Vec2d &halfsize,
+                               const std::string &shape_name = "GeometricShapeBox");
+    virtual ~GeometricShapeBox(){};
 
-        virtual bool checkContain(const Vec2d &probe_point, bool BOUNDARY_INCLUDED = true) override;
-        virtual Vec2d findClosestPoint(const Vec2d &probe_point) override;
+    virtual bool checkContain(const Vec2d &probe_point, bool BOUNDARY_INCLUDED = true) override;
+    virtual Vec2d findClosestPoint(const Vec2d &probe_point) override;
 
-    protected:
-        Vec2d halfsize_;
-        MultiPolygon multi_polygon_;
+  protected:
+    Vec2d halfsize_;
+    MultiPolygon multi_polygon_;
 
-        virtual BoundingBox findBounds() override;
-    };
+    virtual BoundingBox findBounds() override;
+};
 
-    class GeometricShapeBall : public Shape
-    {
-        Vec2d center_;
-        Real radius_;
+class GeometricShapeBall : public Shape
+{
+    Vec2d center_;
+    Real radius_;
 
-    public:
-        explicit GeometricShapeBall(const Vec2d &center, Real radius,
-                                    const std::string &shape_name = "GeometricShapeBall");
-        virtual ~GeometricShapeBall(){};
+  public:
+    explicit GeometricShapeBall(const Vec2d &center, Real radius,
+                                const std::string &shape_name = "GeometricShapeBall");
+    virtual ~GeometricShapeBall(){};
 
-        virtual bool checkContain(const Vec2d &probe_point, bool BOUNDARY_INCLUDED = true) override;
-        virtual Vec2d findClosestPoint(const Vec2d &probe_point) override;
+    virtual bool checkContain(const Vec2d &probe_point, bool BOUNDARY_INCLUDED = true) override;
+    virtual Vec2d findClosestPoint(const Vec2d &probe_point) override;
 
-    protected:
-        virtual BoundingBox findBounds() override;
-    };
-}
+  protected:
+    virtual BoundingBox findBounds() override;
+};
+} // namespace SPH
 
 #endif // GEOMETRIC_SHAPE_H

@@ -29,32 +29,31 @@
 #ifndef KERNEL_QUADRATIC_H
 #define KERNEL_QUADRATIC_H
 
-
 #include "base_kernel.h"
 
 namespace SPH
 {
-	/**
-	 * @class KernelQuadratic
-	 * @brief Kernel from Yang el al.
-	 */
-	class KernelQuadratic : public Kernel
-	{
-	public:
-		KernelQuadratic(Real h);
+/**
+ * @class KernelQuadratic
+ * @brief Kernel from Yang el al.
+ */
+class KernelQuadratic : public Kernel
+{
+  public:
+    KernelQuadratic(Real h);
 
-		virtual Real W_1D(const Real q) const override;
-		virtual Real W_2D(const Real q) const override;
-		virtual Real W_3D(const Real q) const override;
+    virtual Real W_1D(const Real q) const override;
+    virtual Real W_2D(const Real q) const override;
+    virtual Real W_3D(const Real q) const override;
 
-		virtual Real dW_1D(const Real q) const override;
-		virtual Real dW_2D(const Real q) const override;
-		virtual Real dW_3D(const Real q) const override;
+    virtual Real dW_1D(const Real q) const override;
+    virtual Real dW_2D(const Real q) const override;
+    virtual Real dW_3D(const Real q) const override;
 
-		virtual Real d2W_1D(const Real q) const override;
-		virtual Real d2W_2D(const Real q) const override;
-		virtual Real d2W_3D(const Real q) const override;
-	};
-}
+    virtual Real d2W_1D(const Real q) const override;
+    virtual Real d2W_2D(const Real q) const override;
+    virtual Real d2W_3D(const Real q) const override;
+};
+} // namespace SPH
 
-#endif //KERNEL_QUADRATIC_H
+#endif // KERNEL_QUADRATIC_H

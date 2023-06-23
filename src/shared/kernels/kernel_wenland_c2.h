@@ -22,7 +22,7 @@
  * ------------------------------------------------------------------------*/
 /**
  * @file 	base_data_type.h
- * @brief 	This is the class for Wenland kernel. 
+ * @brief 	This is the class for Wenland kernel.
  * @author	Chi ZHang and Xiangyu Hu
  */
 
@@ -33,30 +33,30 @@
 
 namespace SPH
 {
-	/**
-	 * @class KernelWendlandC2
-	 * @brief Kernel WendlandC2
-	 */
-	class KernelWendlandC2 : public Kernel
-	{
-	public:
-		explicit KernelWendlandC2(Real h);
+/**
+ * @class KernelWendlandC2
+ * @brief Kernel WendlandC2
+ */
+class KernelWendlandC2 : public Kernel
+{
+  public:
+    explicit KernelWendlandC2(Real h);
 
-		/** 
-		 * Calculates the kernel value for 
-		 * the given distance of two particles 
-		 */
-		virtual Real W_1D(const Real q) const override;
-		virtual Real W_2D(const Real q) const override;
-		virtual Real W_3D(const Real q) const override;
+    /**
+     * Calculates the kernel value for
+     * the given distance of two particles
+     */
+    virtual Real W_1D(const Real q) const override;
+    virtual Real W_2D(const Real q) const override;
+    virtual Real W_3D(const Real q) const override;
 
-		virtual Real dW_1D(const Real q) const override;
-		virtual Real dW_2D(const Real q) const override;
-		virtual Real dW_3D(const Real q) const override;
+    virtual Real dW_1D(const Real q) const override;
+    virtual Real dW_2D(const Real q) const override;
+    virtual Real dW_3D(const Real q) const override;
 
-		virtual Real d2W_1D(const Real q) const override;
-		virtual Real d2W_2D(const Real q) const override;
-		virtual Real d2W_3D(const Real q) const override;
-	};
-}
-#endif //KERNEL_WENLAND_C2_H
+    virtual Real d2W_1D(const Real q) const override;
+    virtual Real d2W_2D(const Real q) const override;
+    virtual Real d2W_3D(const Real q) const override;
+};
+} // namespace SPH
+#endif // KERNEL_WENLAND_C2_H

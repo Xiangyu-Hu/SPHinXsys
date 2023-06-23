@@ -22,7 +22,7 @@
  * ------------------------------------------------------------------------*/
 /**
  * @file 	complex_solid.h
- * @brief 	These are classes for define complex solid materials. 
+ * @brief 	These are classes for define complex solid materials.
  * @author	Chi ZHang and Xiangyu Hu
  */
 
@@ -32,25 +32,25 @@
 
 namespace SPH
 {
-	/**
-	 * @class ActiveMuscle
-	 * @brief Here, the active response is considered.
-	 */
-	template <class MuscleType>
-	class ActiveMuscle : public MuscleType
-	{
-	protected:
-		StdLargeVec<Real> active_contraction_stress_; /**<  active contraction stress */
+/**
+ * @class ActiveMuscle
+ * @brief Here, the active response is considered.
+ */
+template <class MuscleType>
+class ActiveMuscle : public MuscleType
+{
+  protected:
+    StdLargeVec<Real> active_contraction_stress_; /**<  active contraction stress */
 
-	public:
-		template <typename... ConstructorArgs>
-		explicit ActiveMuscle(ConstructorArgs &&...args);
-		virtual ~ActiveMuscle(){};
+  public:
+    template <typename... ConstructorArgs>
+    explicit ActiveMuscle(ConstructorArgs &&...args);
+    virtual ~ActiveMuscle(){};
 
-		/** initialize the local properties, fiber and sheet direction. */
-		virtual void initializeLocalParameters(BaseParticles *base_particles) override;
-		/** compute the stress through Constitutive relation. */
-		virtual Matd StressPK2(Matd &deformation, size_t index_i) override;
-		virtual ActiveMuscle<MuscleType> *ThisObjectPtr() override { return this; };
-	};
-}
+    /** initialize the local properties, fiber and sheet direction. */
+    virtual void initializeLocalParameters(BaseParticles *base_particles) override;
+    /** compute the stress through Constitutive relation. */
+    virtual Matd StressPK2(Matd &deformation, size_t index_i) override;
+    virtual ActiveMuscle<MuscleType> *ThisObjectPtr() override { return this; };
+};
+} // namespace SPH

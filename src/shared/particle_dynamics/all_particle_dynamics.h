@@ -22,7 +22,7 @@
  * ------------------------------------------------------------------------*/
 /**
  * @file    all_particle_dynamics.h
- * @brief   Head file for all particle dynamics. 
+ * @brief   Head file for all particle dynamics.
  * @author	Chi ZHang and Xiangyu Hu
  */
 
@@ -31,4 +31,4 @@
 
 #include "particle_dynamics_algorithms.h"
 
-#endif //ALL_PARTICLE_DYNAMICS_H
+#endif // ALL_PARTICLE_DYNAMICS_H

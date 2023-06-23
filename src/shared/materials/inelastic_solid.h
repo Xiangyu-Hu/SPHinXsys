@@ -34,57 +34,57 @@
 
 namespace SPH
 {
-	/**
-	 * @class PlasticSolid
-	 * @brief Abstract class for a generalized plastic solid
-	 */
-	class PlasticSolid : public NeoHookeanSolid
-	{
-	protected:
-		Real yield_stress_;
+/**
+ * @class PlasticSolid
+ * @brief Abstract class for a generalized plastic solid
+ */
+class PlasticSolid : public NeoHookeanSolid
+{
+  protected:
+    Real yield_stress_;
 
-	public:
-		/** Constructor */
-		explicit PlasticSolid(Real rho0, Real youngs_modulus, Real poisson_ratio, Real yield_stress)
-			: NeoHookeanSolid(rho0, youngs_modulus, poisson_ratio), yield_stress_(yield_stress)
-		{
-			material_type_name_ = "PlasticSolid";
-		};
-		virtual ~PlasticSolid(){};
+  public:
+    /** Constructor */
+    explicit PlasticSolid(Real rho0, Real youngs_modulus, Real poisson_ratio, Real yield_stress)
+        : NeoHookeanSolid(rho0, youngs_modulus, poisson_ratio), yield_stress_(yield_stress)
+    {
+        material_type_name_ = "PlasticSolid";
+    };
+    virtual ~PlasticSolid(){};
 
-		Real YieldStress() { return yield_stress_; };
-		/** compute the stress through deformation, and plastic relaxation. */
-		virtual Matd PlasticConstitutiveRelation(const Matd &deformation, size_t index_i, Real dt = 0.0) = 0;
+    Real YieldStress() { return yield_stress_; };
+    /** compute the stress through deformation, and plastic relaxation. */
+    virtual Matd PlasticConstitutiveRelation(const Matd &deformation, size_t index_i, Real dt = 0.0) = 0;
 
-		virtual PlasticSolid *ThisObjectPtr() override { return this; };
-	};
+    virtual PlasticSolid *ThisObjectPtr() override { return this; };
+};
 
-	/**
-	 * @class HardeningPlasticSolid
-	 * @brief Class for plastic solid with hardening
-	 */
-	class HardeningPlasticSolid : public PlasticSolid
-	{
-	protected:
-		Real hardening_modulus_;
-		const Real sqrt_2_over_3_ = sqrt(2.0 / 3.0);
-		StdLargeVec<Matd> inverse_plastic_strain_; /**< inverse of plastic right cauchy green strain tensor */
-		StdLargeVec<Real> hardening_parameter_;	   /**< hardening parameter */
+/**
+ * @class HardeningPlasticSolid
+ * @brief Class for plastic solid with hardening
+ */
+class HardeningPlasticSolid : public PlasticSolid
+{
+  protected:
+    Real hardening_modulus_;
+    const Real sqrt_2_over_3_ = sqrt(2.0 / 3.0);
+    StdLargeVec<Matd> inverse_plastic_strain_; /**< inverse of plastic right cauchy green strain tensor */
+    StdLargeVec<Real> hardening_parameter_;    /**< hardening parameter */
 
-	public:
-		/** Constructor */
-		explicit HardeningPlasticSolid(Real rho0, Real youngs_modulus, Real poisson_ratio, Real yield_stress, Real hardening_modulus)
-			: PlasticSolid(rho0, youngs_modulus, poisson_ratio, yield_stress), hardening_modulus_(hardening_modulus)
-		{
-			material_type_name_ = "HardeningPlasticSolid";
-		};
-		virtual ~HardeningPlasticSolid(){};
+  public:
+    /** Constructor */
+    explicit HardeningPlasticSolid(Real rho0, Real youngs_modulus, Real poisson_ratio, Real yield_stress, Real hardening_modulus)
+        : PlasticSolid(rho0, youngs_modulus, poisson_ratio, yield_stress), hardening_modulus_(hardening_modulus)
+    {
+        material_type_name_ = "HardeningPlasticSolid";
+    };
+    virtual ~HardeningPlasticSolid(){};
 
-		virtual void initializeLocalParameters(BaseParticles *base_particles) override;
-		Real HardeningModulus() { return hardening_modulus_; };
-		/** compute the stress through deformation, and plastic relaxation. */
-		virtual Matd PlasticConstitutiveRelation(const Matd &deformation, size_t index_i, Real dt = 0.0) override;
+    virtual void initializeLocalParameters(BaseParticles *base_particles) override;
+    Real HardeningModulus() { return hardening_modulus_; };
+    /** compute the stress through deformation, and plastic relaxation. */
+    virtual Matd PlasticConstitutiveRelation(const Matd &deformation, size_t index_i, Real dt = 0.0) override;
 
-		virtual HardeningPlasticSolid *ThisObjectPtr() override { return this; };
-	};
-}
+    virtual HardeningPlasticSolid *ThisObjectPtr() override { return this; };
+};
+} // namespace SPH

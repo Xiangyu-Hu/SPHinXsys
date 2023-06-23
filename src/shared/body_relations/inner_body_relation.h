@@ -33,84 +33,84 @@
 
 namespace SPH
 {
-	/**
-	 * @class InnerRelation
-	 * @brief The first concrete relation within a SPH body
-	 */
-	class InnerRelation : public BaseInnerRelation
-	{
-	protected:
-		SearchDepthSingleResolution get_single_search_depth_;
-		NeighborBuilderInner get_inner_neighbor_;
-		CellLinkedList &cell_linked_list_;
+/**
+ * @class InnerRelation
+ * @brief The first concrete relation within a SPH body
+ */
+class InnerRelation : public BaseInnerRelation
+{
+  protected:
+    SearchDepthSingleResolution get_single_search_depth_;
+    NeighborBuilderInner get_inner_neighbor_;
+    CellLinkedList &cell_linked_list_;
 
-	public:
-		explicit InnerRelation(RealBody &real_body);
-		virtual ~InnerRelation(){};
+  public:
+    explicit InnerRelation(RealBody &real_body);
+    virtual ~InnerRelation(){};
 
-		virtual void updateConfiguration() override;
-	};
+    virtual void updateConfiguration() override;
+};
 
-	/**
-	 * @class AdaptiveInnerRelation
-	 * @brief The relation within a SPH body with smoothing length adaptation
-	 */
-	class AdaptiveInnerRelation : public BaseInnerRelation
-	{
-	private:
-		UniquePtrsKeeper<SearchDepthAdaptive> adaptive_search_depth_ptr_vector_keeper_;
+/**
+ * @class AdaptiveInnerRelation
+ * @brief The relation within a SPH body with smoothing length adaptation
+ */
+class AdaptiveInnerRelation : public BaseInnerRelation
+{
+  private:
+    UniquePtrsKeeper<SearchDepthAdaptive> adaptive_search_depth_ptr_vector_keeper_;
 
-	protected:
-		size_t total_levels_;
-		StdVec<SearchDepthAdaptive *> get_multi_level_search_depth_;
-		NeighborBuilderInnerAdaptive get_adaptive_inner_neighbor_;
-		StdVec<CellLinkedList *> cell_linked_list_levels_;
+  protected:
+    size_t total_levels_;
+    StdVec<SearchDepthAdaptive *> get_multi_level_search_depth_;
+    NeighborBuilderInnerAdaptive get_adaptive_inner_neighbor_;
+    StdVec<CellLinkedList *> cell_linked_list_levels_;
 
-	public:
-		explicit AdaptiveInnerRelation(RealBody &real_body);
-		virtual ~AdaptiveInnerRelation(){};
+  public:
+    explicit AdaptiveInnerRelation(RealBody &real_body);
+    virtual ~AdaptiveInnerRelation(){};
 
-		virtual void updateConfiguration() override;
-	};
+    virtual void updateConfiguration() override;
+};
 
-	/**
-	 * @class SelfSurfaceContactRelation
-	 * @brief The relation for self contact of a solid body
-	 */
-	class SelfSurfaceContactRelation : public BaseInnerRelation
-	{
-	public:
-		BodySurfaceLayer body_surface_layer_;
+/**
+ * @class SelfSurfaceContactRelation
+ * @brief The relation for self contact of a solid body
+ */
+class SelfSurfaceContactRelation : public BaseInnerRelation
+{
+  public:
+    BodySurfaceLayer body_surface_layer_;
 
-		explicit SelfSurfaceContactRelation(RealBody &real_body);
-		virtual ~SelfSurfaceContactRelation(){};
-		virtual void updateConfiguration() override;
+    explicit SelfSurfaceContactRelation(RealBody &real_body);
+    virtual ~SelfSurfaceContactRelation(){};
+    virtual void updateConfiguration() override;
 
-	protected:
-		IndexVector &body_part_particles_;
-		SearchDepthSingleResolution get_single_search_depth_;
-		NeighborBuilderSelfContact get_self_contact_neighbor_;
-		CellLinkedList &cell_linked_list_;
+  protected:
+    IndexVector &body_part_particles_;
+    SearchDepthSingleResolution get_single_search_depth_;
+    NeighborBuilderSelfContact get_self_contact_neighbor_;
+    CellLinkedList &cell_linked_list_;
 
-		virtual void resetNeighborhoodCurrentSize() override;
-	};
+    virtual void resetNeighborhoodCurrentSize() override;
+};
 
-	/**
-	 * @class TreeInnerRelation
-	 * @brief The relation within a reduced SPH body, viz. network
-	 */
-	class TreeInnerRelation : public InnerRelation
-	{
-	protected:
-		TreeBody &generative_tree_;
+/**
+ * @class TreeInnerRelation
+ * @brief The relation within a reduced SPH body, viz. network
+ */
+class TreeInnerRelation : public InnerRelation
+{
+  protected:
+    TreeBody &generative_tree_;
 
-	public:
-		explicit TreeInnerRelation(RealBody &real_body)
-			: InnerRelation(real_body),
-			  generative_tree_(DynamicCast<TreeBody>(this, real_body)){};
-		virtual ~TreeInnerRelation(){};
+  public:
+    explicit TreeInnerRelation(RealBody &real_body)
+        : InnerRelation(real_body),
+          generative_tree_(DynamicCast<TreeBody>(this, real_body)){};
+    virtual ~TreeInnerRelation(){};
 
-		virtual void updateConfiguration() override;
-	};
-}
-#endif //INNER_BODY_RELATION_H
+    virtual void updateConfiguration() override;
+};
+} // namespace SPH
+#endif // INNER_BODY_RELATION_H

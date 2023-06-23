@@ -22,7 +22,7 @@
  * ------------------------------------------------------------------------*/
 /**
  * @file 	all_particle_generator.h
- * @brief 	Head file for all particle generator. 
+ * @brief 	Head file for all particle generator.
  * @author	Chi ZHang and Xiangyu Hu
  */
 
@@ -32,4 +32,4 @@
 #include "particle_generator_lattice.h"
 #include "particle_generator_network.h"
 
-#endif //ALL_PARTICLE_GENERATORS_3D_H
+#endif // ALL_PARTICLE_GENERATORS_3D_H

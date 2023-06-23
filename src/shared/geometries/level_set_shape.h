@@ -36,41 +36,41 @@
 
 namespace SPH
 {
-	class IOEnvironment;
-	class SPHBody;
-	/**
-	 * @class LevelSetShape
-	 * @brief A shape using level set to define geometry
-	 */
-	class LevelSetShape : public Shape
-	{
-	private:
-		UniquePtrKeeper<BaseLevelSet> level_set_keeper_;
-		SharedPtr<SPHAdaptation> sph_adaptation_;
+class IOEnvironment;
+class SPHBody;
+/**
+ * @class LevelSetShape
+ * @brief A shape using level set to define geometry
+ */
+class LevelSetShape : public Shape
+{
+  private:
+    UniquePtrKeeper<BaseLevelSet> level_set_keeper_;
+    SharedPtr<SPHAdaptation> sph_adaptation_;
 
-	public:
-		/** refinement_ratio is between body reference resolution and level set resolution */
-		LevelSetShape(Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation, Real refinement_ratio = 1.0);
-		LevelSetShape(SPHBody &sph_body, Shape &shape, Real refinement_ratio = 1.0);
+  public:
+    /** refinement_ratio is between body reference resolution and level set resolution */
+    LevelSetShape(Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation, Real refinement_ratio = 1.0);
+    LevelSetShape(SPHBody &sph_body, Shape &shape, Real refinement_ratio = 1.0);
 
-		virtual ~LevelSetShape(){};
+    virtual ~LevelSetShape(){};
 
-		virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;
-		virtual Vecd findClosestPoint(const Vecd &probe_point) override;
+    virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;
+    virtual Vecd findClosestPoint(const Vecd &probe_point) override;
 
-		Vecd findLevelSetGradient(const Vecd &probe_point);
-		Real computeKernelIntegral(const Vecd &probe_point, Real h_ratio = 1.0);
-		Vecd computeKernelGradientIntegral(const Vecd &probe_point, Real h_ratio = 1.0);
-		/** small_shift_factor = 1.0 by default, can be increased for difficult geometries for smoothing */
-		LevelSetShape *cleanLevelSet(Real small_shift_factor = 1.0);
-		/** required to build level set from triangular mesh in stl file format. */
-		LevelSetShape *correctLevelSetSign(Real small_shift_factor = 1.0);
-		void writeLevelSet(IOEnvironment &io_environment);
+    Vecd findLevelSetGradient(const Vecd &probe_point);
+    Real computeKernelIntegral(const Vecd &probe_point, Real h_ratio = 1.0);
+    Vecd computeKernelGradientIntegral(const Vecd &probe_point, Real h_ratio = 1.0);
+    /** small_shift_factor = 1.0 by default, can be increased for difficult geometries for smoothing */
+    LevelSetShape *cleanLevelSet(Real small_shift_factor = 1.0);
+    /** required to build level set from triangular mesh in stl file format. */
+    LevelSetShape *correctLevelSetSign(Real small_shift_factor = 1.0);
+    void writeLevelSet(IOEnvironment &io_environment);
 
-	protected:
-		BaseLevelSet &level_set_; /**< narrow bounded level set mesh. */
+  protected:
+    BaseLevelSet &level_set_; /**< narrow bounded level set mesh. */
 
-		virtual BoundingBox findBounds() override;
-	};
-}
+    virtual BoundingBox findBounds() override;
+};
+} // namespace SPH
 #endif // LEVEL_SET_SHAPE_H

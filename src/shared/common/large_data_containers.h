@@ -22,7 +22,7 @@
  * ------------------------------------------------------------------------*/
 /**
  * @file 	large_data-container.h
- * @brief 	Data container for large vector, e.g. particle data. 
+ * @brief 	Data container for large vector, e.g. particle data.
  * @author	Chi ZHang and Xiangyu Hu
  */
 #ifndef LARGE_DATA_CONTAINER_H
@@ -31,41 +31,41 @@
 #include "tbb/blocked_range.h"
 #include "tbb/blocked_range2d.h"
 #include "tbb/blocked_range3d.h"
-#include "tbb/parallel_for.h"
-#include "tbb/parallel_reduce.h"
-#include "tbb/tick_count.h"
-#include "tbb/scalable_allocator.h"
+#include "tbb/cache_aligned_allocator.h"
 #include "tbb/concurrent_unordered_set.h"
 #include "tbb/concurrent_vector.h"
-#include "tbb/cache_aligned_allocator.h"
+#include "tbb/parallel_for.h"
+#include "tbb/parallel_reduce.h"
+#include "tbb/scalable_allocator.h"
+#include "tbb/tick_count.h"
 
 #include <array>
 
-namespace SPH {
+namespace SPH
+{
 
-	static tbb::affinity_partitioner ap;
-	typedef tbb::blocked_range<size_t> IndexRange;
-	typedef tbb::blocked_range2d<size_t> IndexRange2d;
-	typedef tbb::blocked_range3d<size_t> IndexRange3d;
+static tbb::affinity_partitioner ap;
+typedef tbb::blocked_range<size_t> IndexRange;
+typedef tbb::blocked_range2d<size_t> IndexRange2d;
+typedef tbb::blocked_range3d<size_t> IndexRange3d;
 
-	typedef tbb::tick_count TickCount;
-	typedef tbb::tick_count::interval_t TimeInterval;
+typedef tbb::tick_count TickCount;
+typedef tbb::tick_count::interval_t TimeInterval;
 
+template <typename T>
+using ConcurrentVec = tbb::concurrent_vector<T>;
 
-	template <typename T>
-	using ConcurrentVec = tbb::concurrent_vector<T>;
+template <typename T>
+using StdLargeVec = std::vector<T, tbb::cache_aligned_allocator<T>>;
 
-	template <typename T>
-	using StdLargeVec = std::vector<T, tbb::cache_aligned_allocator<T>>;
+template <typename T>
+using StdVec = std::vector<T>;
 
-	template <typename T>
-	using StdVec = std::vector<T>;
+template <typename T>
+using BiVector = std::vector<std::vector<T>>;
 
-	template <typename T>
-	using BiVector = std::vector<std::vector<T>>;
+template <typename T>
+using TriVector = std::vector<std::vector<std::vector<T>>>;
+} // namespace SPH
 
-	template <typename T>
-	using TriVector = std::vector<std::vector<std::vector<T>>>;
-}
-
-#endif //LARGE_DATA_CONTAINER_H
+#endif // LARGE_DATA_CONTAINER_H
