@@ -164,33 +164,17 @@ namespace SPH
 		virtual void resizeConfiguration() override;
 
         void allocateContactConfiguration() {
-            /*std::size_t contact_configuration_size = 0;
             for (const auto & body : contact_configuration_)
-                contact_configuration_size += body.size();
-            contact_configuration_device_ = makeSharedDevice<StdSharedVec<NeighborhoodDevice>>(
-                    contact_configuration_size, execution::ExecutionQueue::getQueue());*/
-
-            for (const auto & body : contact_configuration_)
-                contact_configuration_device_.emplace_back(body.size(), execution::executionQueue.getQueue());
+                contact_configuration_device_.emplace_back(body.size(), execution::ExecutionQueue::getInstance().getQueue());
         }
 
         void copyContactConfigurationToDevice() {
-            /*std::size_t index_device = 0;
-            for (const auto & body : contact_configuration_)
-                for (const auto & neighborhood : body)
-                    contact_configuration_device_->at(index_device++).copyFrom(neighborhood);*/
-
             for (int k = 0; k < contact_configuration_.size(); ++k)
                 for (int i = 0; i < contact_configuration_.at(k).size(); ++i)
                     contact_configuration_device_.at(k).at(i).copyFrom(contact_configuration_.at(k).at(i));
         }
 
         void copyContactConfigurationFromDevice() {
-            /*std::size_t index_device = 0;
-            for (auto & body : contact_configuration_)
-                for (auto & neighborhood : body)
-                    contact_configuration_device_->at(index_device++).copyTo(neighborhood);*/
-
             for (int k = 0; k < contact_configuration_.size(); ++k)
                 for (int i = 0; i < contact_configuration_.at(k).size(); ++i)
                     contact_configuration_device_.at(k).at(i).copyTo(contact_configuration_.at(k).at(i));

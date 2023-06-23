@@ -165,7 +165,7 @@ namespace SPH
     template <class T, typename... ConstructorArgs>
     auto makeSharedDevice(ConstructorArgs &&...args)
     {
-        auto& queue = execution::executionQueue.getQueue();
+        auto& queue = execution::ExecutionQueue::getInstance().getQueue();
         T* ptr = sycl::malloc_shared<T>(1, queue);
         new(ptr) T(std::forward<ConstructorArgs>(args)...);
         return SharedPtr<T>(ptr, [=](auto* p) { sycl::free(p, queue); });

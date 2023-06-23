@@ -297,8 +297,8 @@ namespace SPH
     inline void particle_for(const ParallelSYCLDevicePolicy & sycl_policy, const size_t &all_real_particles,
                              const LocalDynamicsFunction &local_dynamics_function, Proxy& proxy)
     {
-        auto &sycl_queue = executionQueue.getQueue();
-        auto work_group_size = executionQueue.getWorkGroupSize();
+        auto &sycl_queue = ExecutionQueue::getInstance().getQueue();
+        auto work_group_size = ExecutionQueue::getInstance().getWorkGroupSize();
         auto &kernel_buffer = proxy.getBuffer();
         sycl_queue.submit([&](sycl::handler &cgh) {
             auto kernel_accessor = kernel_buffer.get_access(cgh, sycl::read_write);
@@ -381,18 +381,20 @@ namespace SPH
     {
         ReturnType result = identity;
         auto &kernel_buffer = proxy.getBuffer();
-        auto &sycl_queue = executionQueue.getQueue();
-        auto work_group_size = executionQueue.getWorkGroupSize();
-        sycl::buffer<ReturnType> buffer_result(&result, 1);
-        sycl_queue.submit([&](sycl::handler &cgh) {
-            auto kernel_accessor = kernel_buffer.get_access(cgh, sycl::read_only);
-            auto reduction_operator = sycl::reduction(buffer_result, cgh,
-                                                      typename std::remove_reference_t<Operation>::SYCLOp());
-            cgh.parallel_for(sycl::nd_range<1>{all_real_particles, work_group_size}, reduction_operator,
-                             [=](sycl::nd_item<1> item, auto& reduction) {
-                reduction.combine(local_dynamics_function(item.get_global_id(0), kernel_accessor[0]));
-            });
-        }).wait();
+        auto &sycl_queue = ExecutionQueue::getInstance().getQueue();
+        auto work_group_size = ExecutionQueue::getInstance().getWorkGroupSize();
+        {
+            sycl::buffer<ReturnType> buffer_result(&result, 1);
+            sycl_queue.submit([&](sycl::handler &cgh) {
+                auto kernel_accessor = kernel_buffer.get_access(cgh, sycl::read_only);
+                auto reduction_operator = sycl::reduction(buffer_result, cgh,
+                                                          typename std::remove_reference_t<Operation>::SYCLOp());
+                cgh.parallel_for(sycl::nd_range<1>{all_real_particles, work_group_size}, reduction_operator,
+                                 [=](sycl::nd_item<1> item, auto& reduction) {
+                                     reduction.combine(local_dynamics_function(item.get_global_id(0), kernel_accessor[0]));
+                                 });
+            }).wait();
+        }
         return result;
     }
 

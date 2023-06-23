@@ -98,27 +98,27 @@ namespace SPH
     /* SYCL memory transfer utilities */
     template<class T>
     inline T* allocateDeviceData(std::size_t size) {
-        return sycl::malloc_device<T>(size, execution::executionQueue.getQueue());
+        return sycl::malloc_device<T>(size, execution::ExecutionQueue::getInstance().getQueue());
     }
 
     template<class T>
     inline T* allocateSharedData(std::size_t size) {
-        return sycl::malloc_shared<T>(size, execution::executionQueue.getQueue());
+        return sycl::malloc_shared<T>(size, execution::ExecutionQueue::getInstance().getQueue());
     }
 
     template<class T>
     inline void freeDeviceData(T* device_mem) {
-        sycl::free(device_mem, execution::executionQueue.getQueue());
+        sycl::free(device_mem, execution::ExecutionQueue::getInstance().getQueue());
     }
 
     template<class T>
     inline void copyDataToDevice(const T* host, T* device, std::size_t size) {
-        execution::executionQueue.getQueue().memcpy(device, host, size*sizeof(T));
+        execution::ExecutionQueue::getInstance().getQueue().memcpy(device, host, size*sizeof(T));
     }
 
     template<class T>
     inline void copyDataFromDevice(T* host, const T* device, std::size_t size) {
-        execution::executionQueue.getQueue().memcpy(host, device, size*sizeof(T));
+        execution::ExecutionQueue::getInstance().getQueue().memcpy(host, device, size*sizeof(T));
     }
 
 	/** Bounding box for system, body, body part and shape, first: lower bound, second: upper bound. */

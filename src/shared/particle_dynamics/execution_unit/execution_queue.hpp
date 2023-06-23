@@ -6,7 +6,13 @@
 namespace SPH::execution {
     class ExecutionQueue {
     public:
-        ExecutionQueue() : work_group_size(32), sycl_queue(sycl::gpu_selector_v) {}
+        ExecutionQueue(ExecutionQueue const&) = delete;
+        void operator=(ExecutionQueue const&) = delete;
+
+        static ExecutionQueue& getInstance() {
+            static ExecutionQueue instance;
+            return instance;
+        }
 
         sycl::queue &getQueue() {
             return sycl_queue;
@@ -21,9 +27,11 @@ namespace SPH::execution {
         }
 
     private:
+        ExecutionQueue() : work_group_size(32), sycl_queue(sycl::gpu_selector_v) {}
+
         std::size_t work_group_size;
         sycl::queue sycl_queue;
-    } static executionQueue;
+    };
 }
 
 #endif //SPHINXSYS_EXECUTION_QUEUE_H
