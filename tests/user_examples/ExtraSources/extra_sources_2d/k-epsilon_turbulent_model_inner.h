@@ -142,7 +142,7 @@ namespace SPH
 			StdLargeVec<Vecd>& acc_prior_;
 
 			StdLargeVec<Vecd>& pos_;
-			StdLargeVec<int>& surface_indicator_;//, is_near_wall_P1_;
+			StdLargeVec<int>& surface_indicator_;
 			StdLargeVec<Vecd> tke_acc_inner_, tke_acc_wall_;
 			StdLargeVec<Vecd> test_k_grad_rslt_;
 		};
@@ -183,7 +183,6 @@ namespace SPH
 			StdLargeVec<Real>& turbu_k_;
 			StdLargeVec<Real>& turbu_epsilon_;
 			StdLargeVec<Real>& wall_Y_plus_, & wall_Y_star_;
-			StdLargeVec<int>& is_near_wall_P1_;
 			Real mu_;
 		};
 

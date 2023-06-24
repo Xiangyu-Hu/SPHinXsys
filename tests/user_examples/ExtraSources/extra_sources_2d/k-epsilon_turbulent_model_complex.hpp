@@ -169,6 +169,8 @@ namespace SPH
 
 					//vel_derivative = 2.0 * (vel_i - vel_ave_k[index_j]) / (r_ij + 0.01 * this->smoothing_length_);
 					//acceleration += 2.0 * (this->mu_+ turbu_mu_i) * vel_derivative * contact_neighborhood.dW_ijV_j_[n] / rho_i;
+					//if (index_i > 2000 &&GlobalStaticVariables::physical_time_>5. &&vel_fric_i.dot(vel_fric_i) == 0.0)
+						//system("pause");
 					vel_derivative = 2.0 * vel_fric_i.dot(vel_fric_i)* direction_vel_fric;
 					acceleration +=  vel_derivative * contact_neighborhood.dW_ijV_j_[n] ;
 				}
@@ -249,6 +251,10 @@ namespace SPH
 				r_wall_normal > 0.0 * particle_spacing_ + TinyReal)
 			{
 				is_near_wall_P1_[index_i] = 1;
+			}
+			if (r_wall_normal < 1.0 * particle_spacing_ &&
+				r_wall_normal > 0.0 * particle_spacing_ + TinyReal)
+			{
 				Real velo_tan = 0.0; //tangible velo for fluid particle i
 				velo_tan = abs(e_ij_t.dot(vel_i));
 				velo_tan_[index_i] = velo_tan;

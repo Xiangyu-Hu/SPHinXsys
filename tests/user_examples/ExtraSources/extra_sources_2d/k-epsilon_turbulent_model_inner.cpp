@@ -84,8 +84,7 @@ namespace SPH
 			TKEnergyAccInner(BaseInnerRelation& inner_relation)
 			: BaseTurtbulentModelInner(inner_relation), acc_prior_(particles_->acc_prior_),
 			surface_indicator_(particles_->surface_indicator_), pos_(particles_->pos_),
-			turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy"))//,
-			//is_near_wall_P1_(*particles_->getVariableByName<int>("IsNearWallP1"))
+			turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy"))
 
 		{
 			particles_->registerVariable(tke_acc_inner_, "TkeAccInner");
@@ -114,7 +113,6 @@ namespace SPH
 			: LocalDynamics(sph_body), FluidDataSimple(sph_body),
 			rho_(particles_->rho_), wall_Y_star_(*particles_->getVariableByName<Real>("WallYstar")),
 			wall_Y_plus_(*particles_->getVariableByName<Real>("WallYplus")),
-			is_near_wall_P1_(*particles_->getVariableByName<int>("IsNearWallP1")),
 			mu_(particles_->fluid_.ReferenceViscosity()),
 			turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
 			turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
@@ -122,14 +120,7 @@ namespace SPH
 		//=================================================================================================//
 		void TurbulentEddyViscosity::update(size_t index_i, Real dt)
 		{
-			//if (is_near_wall_P1_[index_i] == 0)
-			//{
-				turbu_mu_[index_i] = rho_[index_i] * C_mu * turbu_k_[index_i] * turbu_k_[index_i] / (turbu_epsilon_[index_i]);
-			//}
-			//else //for the near wall particles, wall function effects
-			//{
-			//	turbu_mu_[index_i] = wall_Y_star_[index_i] * mu_ * Karman / log(turbu_const_E * wall_Y_star_[index_i]);
-			//}
+			turbu_mu_[index_i] = rho_[index_i] * C_mu * turbu_k_[index_i] * turbu_k_[index_i] / (turbu_epsilon_[index_i]);
 		}
 		
 		//=================================================================================================//
