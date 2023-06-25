@@ -1,7 +1,4 @@
 #include "general_continuum.h"
-#ifdef max
-#undef max
-#endif
 
 namespace SPH
 {

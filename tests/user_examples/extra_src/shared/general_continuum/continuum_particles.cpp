@@ -1,7 +1,5 @@
 #include "continuum_particles.h"
-#include "base_body.h"
 #include "general_continuum.h"
-#include "xml_engine.h"
 namespace SPH
 {
     ContinuumParticles::

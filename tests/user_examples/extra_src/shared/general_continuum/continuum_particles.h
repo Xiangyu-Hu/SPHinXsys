@@ -1,9 +1,7 @@
 #ifndef CONTINUUM_PARTICLES_H
 #define CONTINUUM_PARTICLES_H
-#include "base_particles.h"
 #include "base_particles.hpp"
 #include "general_continuum.h"
-#include "particle_generator_lattice.h"
 namespace SPH
 {
     class GeneralContinuum;

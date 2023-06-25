@@ -1,9 +1,7 @@
 #ifndef GENERAL_CONTINUUM_H
 #define GENERAL_CONTINUUM_H
 
-#include "base_material.h"
 #include "weakly_compressible_fluid.h"
-#include <fstream>
 
 namespace SPH
 {

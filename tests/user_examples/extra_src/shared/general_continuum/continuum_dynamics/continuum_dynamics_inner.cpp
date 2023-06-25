@@ -1,5 +1,4 @@
 #include "continuum_dynamics_inner.hpp"
-#include <numeric>
 namespace SPH
 {
 //=================================================================================================//
