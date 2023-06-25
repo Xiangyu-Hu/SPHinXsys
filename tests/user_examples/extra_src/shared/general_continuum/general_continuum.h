@@ -1,5 +1,5 @@
-#ifndef CONTINUUM_MATERIAL_H
-#define CONTINUUM_MATERIAL_H
+#ifndef GENERAL_CONTINUUM_H
+#define GENERAL_CONTINUUM_H
 
 #include "base_material.h"
 #include "weakly_compressible_fluid.h"
@@ -41,4 +41,4 @@ class GeneralContinuum : public WeaklyCompressibleFluid
     virtual GeneralContinuum *ThisObjectPtr() override { return this; };
 };
 } // namespace SPH
-#endif // CONTINUUM_MATERIAL_H
+#endif // GENERAL_CONTINUUM_H
