@@ -1,34 +1,32 @@
-#ifndef GRANULAR_DYNAMICS_INNER_H
-#define GRANULAR_DYNAMICS_INNER_H
+#ifndef CONTINUUM_DYNAMICS_INNER_H
+#define CONTINUUM_DYNAMICS_INNER_H
 #include "constraint_dynamics.h"
-#include "fluid_dynamics_inner.h"
 #include "fluid_dynamics_inner.hpp"
-#include "granular_body.h"
-#include "granular_material.h"
-#include "granular_particles.h"
+#include "general_continuum.h"
+#include "continuum_particles.h"
 
 namespace SPH
 {
-namespace granular_dynamics
+namespace continuum_dyannmics
 {
-typedef DataDelegateSimple<GranularMaterialParticles> GranularDataSimple;
-typedef DataDelegateInner<GranularMaterialParticles> GranularDataInner;
+typedef DataDelegateSimple<ContinuumParticles> ContinuumDataSimple;
+typedef DataDelegateInner<ContinuumParticles> ContinuumDataInner;
 
-class GranularInitialCondition : public LocalDynamics, public GranularDataSimple
+class ContinuumInitialCondition : public LocalDynamics, public ContinuumDataSimple
 {
   public:
-    explicit GranularInitialCondition(SPHBody &sph_body);
-    virtual ~GranularInitialCondition(){};
+    explicit ContinuumInitialCondition(SPHBody &sph_body);
+    virtual ~ContinuumInitialCondition(){};
 
   protected:
     StdLargeVec<Vecd> &pos_, &vel_;
 };
 
-class GranularAcousticTimeStepSize : public fluid_dynamics::AcousticTimeStepSize
+class ContinuumAcousticTimeStepSize : public fluid_dynamics::AcousticTimeStepSize
 {
   public:
-    explicit GranularAcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL = 0.5);
-    virtual ~GranularAcousticTimeStepSize(){};
+    explicit ContinuumAcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL = 0.5);
+    virtual ~ContinuumAcousticTimeStepSize(){};
     Real reduce(size_t index_i, Real dt = 0.0);
     virtual Real outputResult(Real reduced_value) override;
 };
@@ -37,14 +35,14 @@ class GranularAcousticTimeStepSize : public fluid_dynamics::AcousticTimeStepSize
  * @class BaseIntegration
  * @brief Pure abstract base class for all fluid relaxation schemes
  */
-class BaseRelaxation : public LocalDynamics, public GranularDataInner
+class BaseRelaxation : public LocalDynamics, public ContinuumDataInner
 {
   public:
     explicit BaseRelaxation(BaseInnerRelation &inner_relation);
     virtual ~BaseRelaxation(){};
 
   protected:
-    GranularMaterial &granular_material_;
+    GeneralContinuum &granular_material_;
     StdLargeVec<Real> &rho_, &p_, &drho_dt_;
     StdLargeVec<Vecd> &pos_, &vel_, &acc_, &acc_prior_;
 };
@@ -116,11 +114,11 @@ class ShearStressRelaxation2ndHalf : public BaseRelaxation
  * @class BaseMotionConstraint
  */
 template <class DynamicsIdentifier>
-class BaseMotionConstraint : public BaseLocalDynamics<DynamicsIdentifier>, public GranularDataSimple
+class BaseMotionConstraint : public BaseLocalDynamics<DynamicsIdentifier>, public ContinuumDataSimple
 {
   public:
     explicit BaseMotionConstraint(DynamicsIdentifier &identifier)
-        : BaseLocalDynamics<DynamicsIdentifier>(identifier), GranularDataSimple(identifier.getSPHBody()),
+        : BaseLocalDynamics<DynamicsIdentifier>(identifier), ContinuumDataSimple(identifier.getSPHBody()),
           pos_(particles_->pos_), pos0_(particles_->pos0_),
           n_(particles_->n_), n0_(particles_->n0_),
           vel_(particles_->vel_), acc_(particles_->acc_){};
@@ -147,6 +145,6 @@ class FixConstraint : public BaseMotionConstraint<DynamicsIdentifier>
 };
 using FixBodyConstraint = FixConstraint<SPHBody>;
 using FixBodyPartConstraint = FixConstraint<BodyPartByParticle>;
-} // namespace granular_dynamics
+} // namespace continuum_dyannmics
 } // namespace SPH
-#endif // GRANULAR_DYNAMICS_INNER_H
+#endif // CONTINUUM_DYNAMICS_INNER_H

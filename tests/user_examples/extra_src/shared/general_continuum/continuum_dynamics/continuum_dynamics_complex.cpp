@@ -1,11 +1,10 @@
-#include "granular_dynamics_complex.h"
-#include "granular_dynamics_complex.hpp"
+#include "continuum_dynamics_complex.hpp"
 
 namespace SPH
 {
 //=================================================================================================//
-namespace granular_dynamics
-{
+	namespace continuum_dyannmics
+	{
 
-}
+	}
 } // namespace SPH

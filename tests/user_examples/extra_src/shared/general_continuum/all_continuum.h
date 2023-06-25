@@ -31,5 +31,6 @@
  */
 #pragma once
 
-#include "granular_dynamics_complex.hpp"
-#include "granular_dynamics_inner.hpp"
+#include "all_continuum_dynamics.h"
+#include "general_continuum.h"
+#include "continuum_particles.h"
