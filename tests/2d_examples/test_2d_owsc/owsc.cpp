@@ -19,7 +19,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
 
     SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
@@ -95,13 +95,13 @@ int main(int ac, char *av[])
      * @details Create a Pin mobilizer between an existing parent (inboard) body P and
      * 			a new child (outboard) body B created by copying the given bodyInfo into
      *			a privately-owned Body within the constructed MobilizedBody object.
-     * @param[in] inboard(SimTK::Vec3) Defines the location of the joint point relative to the parent body.
-     * @param[in] outboard(SimTK::Vec3) Defines the body's origin location to the joint point.
-     * @note	The body's origin location can be the mass center, the the center of mass should be SimTK::Vec3(0)
+     * @param[in] inboard(SimTKVec3) Defines the location of the joint point relative to the parent body.
+     * @param[in] outboard(SimTKVec3) Defines the body's origin location to the joint point.
+     * @note	The body's origin location can be the mass center, the the center of mass should be SimTKVec3(0)
      * 			in SimTK::MassProperties(mass, com, inertia)
      */
-    SimTK::MobilizedBody::Pin pin_spot(matter.Ground(), SimTK::Transform(SimTK::Vec3(7.92, 0.315, 0.0)),
-                                       pin_spot_info, SimTK::Transform(SimTK::Vec3(0.0, 0.0, 0.0)));
+    SimTK::MobilizedBody::Pin pin_spot(matter.Ground(), SimTK::Transform(SimTKVec3(7.92, 0.315, 0.0)),
+                                       pin_spot_info, SimTK::Transform(SimTKVec3(0.0, 0.0, 0.0)));
     /** set the default angle of the pin. */
     pin_spot.setDefaultAngle(0);
     /**
@@ -128,7 +128,7 @@ int main(int ac, char *av[])
      *		hb=pb*(-d) - hz. Note that this is a signed quantity so the potential energy is
      *		also signed. 0.475
      */
-    SimTK::Force::UniformGravity sim_gravity(forces, matter, SimTK::Vec3(0.0, -gravity_g, 0.0), 0.0);
+    SimTK::Force::UniformGravity sim_gravity(forces, matter, SimTKVec3(0.0, -gravity_g, 0.0), 0.0);
     /** discrete forces acting on the bodies. */
     SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
     /**

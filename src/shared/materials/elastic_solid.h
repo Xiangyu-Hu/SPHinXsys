@@ -1,25 +1,25 @@
-/* -------------------------------------------------------------------------*
- *								SPHinXsys									*
- * -------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic*
- * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
- * (smoothed particle hydrodynamics), a meshless computational method using	*
- * particle discretization.													*
- *																			*
- * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
- *  HU1527/12-1 and HU1527/12-4													*
- *                                                                          *
- * Portions copyright (c) 2017-2022 Technical University of Munich and		*
- * the authors' affiliations.												*
- *                                                                          *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
- * not use this file except in compliance with the License. You may obtain a*
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
- *                                                                          *
- * ------------------------------------------------------------------------*/
+/* ------------------------------------------------------------------------- *
+ *                                SPHinXsys                                  *
+ * ------------------------------------------------------------------------- *
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle *
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for    *
+ * physical accurate simulation and aims to model coupled industrial dynamic *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH   *
+ * (smoothed particle hydrodynamics), a meshless computational method using  *
+ * particle discretization.                                                  *
+ *                                                                           *
+ * SPHinXsys is partially funded by German Research Foundation               *
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
+ *  HU1527/12-1 and HU1527/12-4                                              *
+ *                                                                           *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and       *
+ * the authors' affiliations.                                                *
+ *                                                                           *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
+ * not use this file except in compliance with the License. You may obtain a *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
+ *                                                                           *
+ * ------------------------------------------------------------------------- */
 /**
  * @file 	elastic_solid.h
  * @brief 	These are classes for define properties of elastic solid materials.
@@ -75,21 +75,21 @@ class ElasticSolid : public Solid
     /** Cauchy stress through Eulerian Almansi strain tensor. */
     virtual Matd StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i) = 0;
     /** Numerical damping stress using right Cauchy tensor. */
-		template <typename ScalingType>
-		Matd NumericalDampingRightCauchy(const Matd &deformation, const Matd &deformation_rate, const ScalingType &scaling, size_t particle_index_i)
-		{
-			Matd strain_rate = 0.5 * (deformation_rate.transpose() * deformation + deformation.transpose() * deformation_rate);
-			Matd normal_rate = getDiagonal(strain_rate);
-			return 0.5 * rho0_ * (cs0_ * (strain_rate - normal_rate) + c0_ * normal_rate) * scaling;
-		}
-		/** Numerical damping stress using left Cauchy tensor. */
-		template <typename ScalingType>
-		Matd NumericalDampingLeftCauchy(const Matd &deformation, const Matd &deformation_rate, const ScalingType& scaling, size_t particle_index_i)
-		{
-			Matd strain_rate = 0.5 * (deformation_rate * deformation.transpose() + deformation * deformation_rate.transpose());
-			Matd normal_rate = getDiagonal(strain_rate);
-			return 0.5 * rho0_ * (cs0_ * (strain_rate - normal_rate) + c0_ * normal_rate) * scaling;
-		}
+    template <typename ScalingType>
+    Matd NumericalDampingRightCauchy(const Matd &deformation, const Matd &deformation_rate, const ScalingType &scaling, size_t particle_index_i)
+    {
+        Matd strain_rate = 0.5 * (deformation_rate.transpose() * deformation + deformation.transpose() * deformation_rate);
+        Matd normal_rate = getDiagonal(strain_rate);
+        return 0.5 * rho0_ * (cs0_ * (strain_rate - normal_rate) + c0_ * normal_rate) * scaling;
+    }
+    /** Numerical damping stress using left Cauchy tensor. */
+    template <typename ScalingType>
+    Matd NumericalDampingLeftCauchy(const Matd &deformation, const Matd &deformation_rate, const ScalingType &scaling, size_t particle_index_i)
+    {
+        Matd strain_rate = 0.5 * (deformation_rate * deformation.transpose() + deformation * deformation_rate.transpose());
+        Matd normal_rate = getDiagonal(strain_rate);
+        return 0.5 * rho0_ * (cs0_ * (strain_rate - normal_rate) + c0_ * normal_rate) * scaling;
+    }
     /** Numerical damping is computed between particles i and j */
     virtual Real PairNumericalDamping(Real dE_dt_ij, Real smoothing_length);
 

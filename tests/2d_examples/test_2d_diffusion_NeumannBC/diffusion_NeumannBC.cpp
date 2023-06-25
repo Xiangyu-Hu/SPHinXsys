@@ -1,7 +1,7 @@
 /**
- * @file 	2d_diffusion_test_with_NeumannBC.cpp
- * @brief 	2D diffusion test of diffusion problem with Neumann boundary condition.
- * @details This is a case to implement Neumann boundary condition.
+ * @file 	diffusion_NeumannBC.cpp
+ * @brief 	2D test of diffusion problem with Neumann boundary condition.
+ * @details This is the first case to validate multiple boundary conditions.
  * @author 	Chenxi Zhao, Bo Zhang, Chi Zhang and Xiangyu Hu
  */
 #include "diffusion_NeumannBC.h"
@@ -16,7 +16,7 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.generate_regression_data_ = false;
+    sph_system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
@@ -46,7 +46,6 @@ int main(int ac, char *av[])
 
     ContactRelation diffusion_body_contact_Dirichlet(diffusion_body, {&wall_boundary_Dirichlet});
     ContactRelation diffusion_body_contact_Neumann(diffusion_body, {&wall_boundary_Neumann});
-    ContactRelation wall_boundary_contact_Neumann(wall_boundary_Neumann, {&diffusion_body});
 
     ContactRelation temperature_observer_contact(temperature_observer, {&diffusion_body});
     //----------------------------------------------------------------------
@@ -60,7 +59,6 @@ int main(int ac, char *av[])
     SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
     SimpleDynamics<DirichletWallBoundaryInitialCondition> setup_boundary_condition_Dirichlet(wall_boundary_Dirichlet);
     SimpleDynamics<NeumannWallBoundaryInitialCondition> setup_boundary_condition_Neumann(wall_boundary_Neumann);
-
     SimpleDynamics<NormalDirectionFromBodyShape> diffusion_body_normal_direction(diffusion_body);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary_Neumann);
     //----------------------------------------------------------------------
@@ -68,7 +66,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
     // ObservedQuantityRecording<Real> write_solid_temperature("Phi", io_environment, temperature_observer_contact);
-    RegressionTestEnsembleAveraged<ObservedQuantityRecording<Real>>
+    RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>>
         write_solid_temperature("Phi", io_environment, temperature_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration

@@ -1,3 +1,4 @@
+
  /* -------------------------------------------------------------------------*
  *								SPHinXsys									*
  * -------------------------------------------------------------------------*
@@ -20,26 +21,5 @@
  * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
  *                                                                          *
  * ------------------------------------------------------------------------*/
-/**
- * @file 	sphinxsys.h
- * @brief 	This is the header file that user code should include to pick up all SPHinXsys capabilities. 
- * @author	Chi ZHang and Xiangyu Hu
- */
-#ifndef SPHINXSYS_H
-#define SPHINXSYS_H
 
-#include "all_kernels.h"
-#include "all_particles.h"
-#include "all_particle_generators.h"
-#include "all_geometries.h"
-#include "all_bodies.h"
-#include "all_body_relations.h"
-#include "sph_system.h"
-#include "all_materials.h"
-#include "all_physical_dynamics.h"
-#include "all_simbody.h"
-#include "io_all.h"
-#include "parameterization.h"
-#include "regression_test.h"
 
-#endif //SPHINXSYS_H

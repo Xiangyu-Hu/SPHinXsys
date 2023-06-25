@@ -3,6 +3,9 @@ file(GLOB_RECURSE SPHINXSYS_SHARED_SOURCES CONFIGURE_DEPENDS shared/*.cpp)
 
 if(SPHINXSYS_2D)
     add_library(sphinxsys_2d)
+    #Make sure in-tree projects can reference this as SPHinXsys::sphinxsys_2d
+    #to match the installed target names
+    add_library(SPHinXsys::sphinxsys_2d ALIAS sphinxsys_2d)
 
     file(GLOB_RECURSE SPHINXSYS_2D_HEADERS CONFIGURE_DEPENDS for_2D_build/*.h for_2D_build/*.hpp)
     target_sources(sphinxsys_2d PUBLIC ${SPHINXSYS_SHARED_HEADERS} ${SPHINXSYS_2D_HEADERS})
@@ -30,6 +33,9 @@ endif()
 if(SPHINXSYS_3D)
 
     add_library(sphinxsys_3d)
+    #Make sure in-tree projects can reference this as SPHinXsys::sphinxsys_3d
+    #to match the installed target names
+    add_library(SPHinXsys::sphinxsys_3d ALIAS sphinxsys_3d)
 
     file(GLOB_RECURSE SPHINXSYS_3D_HEADERS CONFIGURE_DEPENDS for_3D_build/*.h for_3D_build/*.hpp)
     target_sources(sphinxsys_3d PUBLIC ${SPHINXSYS_SHARED_HEADERS} ${SPHINXSYS_3D_HEADERS})
