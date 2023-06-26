@@ -14,8 +14,9 @@ namespace SPH
 template <class KernelType>
 Mat2d AnisotropicKernel<KernelType>::getCoordinateTransformationTensorG(Vec2d kernel_vector, Vec2d transform_angle)
 {
-    Mat2d scaling_tensor = Mat2d({{1.0 / (this->h_ * kernel_vector[0]), 0.0},
-                                  {0.0, 1.0 / (this->h_ * kernel_vector[1])}});
+    Mat2d scaling_tensor = Mat2d({{ Real(1.0) / (this->h_ * kernel_vector[0]), 0.0},
+                                  {0.0, Real(1.0) / (this->h_ * kernel_vector[1])}}
+                                  );
     Mat2d G_kernel_coordinate = scaling_tensor;
     return G_kernel_coordinate;
 }
@@ -23,9 +24,10 @@ Mat2d AnisotropicKernel<KernelType>::getCoordinateTransformationTensorG(Vec2d ke
 template <class KernelType>
 Mat3d AnisotropicKernel<KernelType>::getCoordinateTransformationTensorG(Vec3d kernel_vector, Vec3d transform_vector)
 {
-    Mat3d G_kernel_coordinate = Mat3d({{1.0 / (this->h_ * kernel_vector[0]), 0.0, 0.0},
-                                       {0.0, 1.0 / (this->h_ * kernel_vector[1]), 0.0},
-                                       {0.0, 0.0, 1.0 / (this->h_ * kernel_vector[2])}});
+    Mat3d G_kernel_coordinate = Mat3d({{ Real(1.0) / (this->h_ * kernel_vector[0]), 0.0, 0.0},
+                                       {0.0, Real(1.0) / (this->h_ * kernel_vector[1]), 0.0},
+                                       {0.0, 0.0, Real(1.0) / (this->h_ * kernel_vector[2])}}
+                                     );
     return G_kernel_coordinate;
 }
 //=========================================================================================//
