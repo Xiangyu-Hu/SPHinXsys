@@ -269,70 +269,71 @@ ShellParticles::ShellParticles(SPHBody &sph_body, ElasticSolid *elastic_solid)
 //=================================================================================================//
 void ShellParticles::initializeOtherVariables()
 {
-		BaseParticles::initializeOtherVariables();
+    BaseParticles::initializeOtherVariables();
     /**
-		 * register particle data
-		 */
-		registerVariable(pos0_, "InitialPosition",
-						 [&](size_t i) -> Vecd
-						 { return pos_[i]; });
-		registerVariable(n0_, "InitialNormalDirection",
-						 [&](size_t i) -> Vecd
-						 { return n_[i]; });
-		registerVariable(transformation_matrix_, "TransformationMatrix");
+     * register particle data
+     */
+    registerVariable(pos0_, "InitialPosition",
+                     [&](size_t i) -> Vecd
+                     { return pos_[i]; });
+    registerVariable(n0_, "InitialNormalDirection",
+                     [&](size_t i) -> Vecd
+                     { return n_[i]; });
+    registerVariable(transformation_matrix_, "TransformationMatrix");
     registerVariable(B_, "CorrectionMatrix", [&](size_t i) -> Matd
                      { return Matd::Identity(); });
     registerVariable(F_, "DeformationGradient", [&](size_t i) -> Matd
                      { return Matd::Identity(); });
-		registerVariable(dF_dt_, "DeformationRate");
-		registerVariable(pseudo_n_, "PseudoNormal",
-						 [&](size_t i) -> Vecd
-						 { return n_[i]; });
-		registerVariable(dpseudo_n_dt_, "PseudoNormalChangeRate");
-		registerVariable(dpseudo_n_d2t_, "PseudoNormal2ndOrderTimeDerivative");
-		registerVariable(rotation_, "Rotation");
-		registerVariable(angular_vel_, "AngularVelocity");
-		registerVariable(dangular_vel_dt_, "AngularAcceleration");
-		registerVariable(F_bending_, "BendingDeformationGradient");
-		registerVariable(dF_bending_dt_, "BendingDeformationGradientChangeRate");
-		registerVariable(global_shear_stress_, "GlobalShearStress");
-		registerVariable(global_stress_, "GlobalStress");
-		registerVariable(global_moment_, "GlobalMoment");
-		registerVariable(mid_surface_cauchy_stress_, "MidSurfaceCauchyStress");
-		registerVariable(numerical_damping_scaling_, "NemrticalDampingScaling_",
+    registerVariable(dF_dt_, "DeformationRate");
+    registerVariable(pseudo_n_, "PseudoNormal",
+                     [&](size_t i) -> Vecd
+                     { return n_[i]; });
+    registerVariable(dpseudo_n_dt_, "PseudoNormalChangeRate");
+    registerVariable(dpseudo_n_d2t_, "PseudoNormal2ndOrderTimeDerivative");
+    registerVariable(rotation_, "Rotation");
+    registerVariable(angular_vel_, "AngularVelocity");
+    registerVariable(dangular_vel_dt_, "AngularAcceleration");
+    registerVariable(F_bending_, "BendingDeformationGradient");
+    registerVariable(dF_bending_dt_, "BendingDeformationGradientChangeRate");
+    registerVariable(global_shear_stress_, "GlobalShearStress");
+    registerVariable(global_stress_, "GlobalStress");
+    registerVariable(global_moment_, "GlobalMoment");
+    registerVariable(mid_surface_cauchy_stress_, "MidSurfaceCauchyStress");
+    registerVariable(numerical_damping_scaling_, "NemrticalDampingScaling_",
                      [&](size_t i) -> Matd
                      { return Matd::Identity() * sph_body_.sph_adaptation_->ReferenceSmoothingLength(); });
     /**
-		 * for FSI
-		 */
-		registerVariable(vel_ave_, "AverageVelocity");
-		registerVariable(acc_ave_, "AverageAcceleration");
+     * for FSI
+     */
+    registerVariable(vel_ave_, "AverageVelocity");
+    registerVariable(acc_ave_, "AverageAcceleration");
     /**
      * for rotation.
-		 */
-		addVariableToRestart<Matd>("DeformationGradient");
-		addVariableToRestart<Vecd>("PseudoNormal");
-		addVariableToRestart<Vecd>("Rotation");
-		addVariableToRestart<Vecd>("AngularVelocity");
+     */
+    addVariableToRestart<Matd>("DeformationGradient");
+    addVariableToRestart<Vecd>("PseudoNormal");
+    addVariableToRestart<Vecd>("Rotation");
+    addVariableToRestart<Vecd>("AngularVelocity");
     /**
-		 * add basic output particle data
-		 */
-		addVariableToWrite<Vecd>("NormalDirection");
-		addDerivedVariableToWrite<Displacement>();
-		addDerivedVariableToWrite<VonMisesStress>();
-		addDerivedVariableToWrite<VonMisesStrain>();
-		addVariableToRestart<Matd>("DeformationGradient");
-		addVariableToWrite<Vecd>("Rotation");
-		addDerivedVariableToWrite<MidSurfaceVonMisesStressofShells>();
+     * add basic output particle data
+     */
+    addVariableToWrite<Vecd>("NormalDirection");
+    addDerivedVariableToWrite<Displacement>();
+    addDerivedVariableToWrite<VonMisesStress>();
+    addDerivedVariableToWrite<VonMisesStrain>();
+    addVariableToRestart<Matd>("DeformationGradient");
+    addVariableToWrite<Vecd>("Rotation");
+    addDerivedVariableToWrite<MidSurfaceVonMisesStressofShells>();
     /**
-		 * initialize transformation matrix
-		 */
-		for (size_t i = 0; i != real_particles_bound_; ++i)
-		{
-			transformation_matrix_[i] = getTransformationMatrix(n_[i]);
-        numerical_damping_scaling_[i](Dimensions - 1, Dimensions - 1) =
-            thickness_[i] < sph_body_.sph_adaptation_->ReferenceSmoothingLength() ? thickness_[i] : sph_body_.sph_adaptation_->ReferenceSmoothingLength();
-		}
+     * initialize transformation matrix
+     */
+    for (size_t i = 0; i != real_particles_bound_; ++i)
+    {
+                        transformation_matrix_[i] = getTransformationMatrix(n_[i]);
+                        numerical_damping_scaling_[i](Dimensions - 1, Dimensions - 1) =
+                            thickness_[i] < sph_body_.sph_adaptation_->ReferenceSmoothingLength() ? thickness_[i] : sph_body_.sph_adaptation_->ReferenceSmoothingLength();
+    }
+}
         BarParticles::BarParticles(SPHBody &sph_body, ElasticSolid *elastic_solid)
             : ShellParticles(sph_body, elastic_solid), width_ref_(1.0)
         {
@@ -348,8 +349,8 @@ void ShellParticles::initializeOtherVariables()
                 /**
                  * add particle reload data
                  */
-                addVariableNameToList<Vecd>(variables_to_reload_, "BinormalDirection");
-                addVariableNameToList<Real>(variables_to_reload_, "Width");
+                //addVariableNameToList<Vecd>(variables_to_reload_, "BinormalDirection");
+                //addVariableNameToList<Real>(variables_to_reload_, "Width");
         }
         //=================================================================================================//
         void BarParticles::initializeOtherVariables()
