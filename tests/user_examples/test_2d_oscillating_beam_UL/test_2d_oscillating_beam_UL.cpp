@@ -6,16 +6,15 @@
  * In this case, the constraint of the beam is implemented with                *
  * internal constrained subregion.                                             *
  * ----------------------------------------------------------------------------*/
-#include "all_granular.h"
+#include "all_continuum.h"
 #include "sphinxsys.h"
 using namespace SPH;
 //------------------------------------------------------------------------------
 // global parameters for the case
 //------------------------------------------------------------------------------
-Real sc = 1;
-Real PL = 0.2 * sc;  // beam length
-Real PH = 0.02 * sc; // for thick plate; =0.01 for thin plate
-Real SL = 0.06 * sc; // depth of the insert
+Real PL = 0.2;  // beam length
+Real PH = 0.02; // for thick plate; =0.01 for thin plate
+Real SL = 0.06; // depth of the insert
 Real resolution_ref = PH / 10;
 Real BW = resolution_ref * 4; // boundary width, at least three particles
 /** Domain bounds of the system. */
@@ -69,7 +68,7 @@ class BeamInitialCondition
     : public fluid_dynamics::FluidInitialCondition
 {
   public:
-    explicit BeamInitialCondition(GranularBody &granular_column)
+    explicit BeamInitialCondition(RealBody &granular_column)
         : fluid_dynamics::FluidInitialCondition(granular_column){};
 
   protected:
@@ -111,9 +110,9 @@ int main(int ac, char *av[])
        //----------------------------------------------------------------------
        //	Creating body, materials and particles.
        //----------------------------------------------------------------------
-    GranularBody beam_body(system, makeShared<Beam>("BeamBody"));
+    RealBody beam_body(system, makeShared<Beam>("BeamBody"));
     beam_body.sph_adaptation_->resetKernel<KernelCubicBSpline>();
-    beam_body.defineParticlesAndMaterial<GranularMaterialParticles, GranularMaterial>(rho0_s, c0, Youngs_modulus, poisson);
+    beam_body.defineParticlesAndMaterial<ContinuumParticles, GeneralContinuum>(rho0_s, c0, Youngs_modulus, poisson);
     beam_body.generateParticles<ParticleGeneratorLattice>();
     beam_body.addBodyStateForRecording<Real>("VonMisesStress");
 
@@ -134,19 +133,15 @@ int main(int ac, char *av[])
 
     /** initial condition */
     SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
-    InteractionWithUpdate<fluid_dynamics::FreeSurfaceIndicationInner> surface_detection(beam_body_inner);
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionInner> beam_transport_correction(beam_body_inner);
-    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceInner> beam_density_by_summation(beam_body_inner);
     Dynamics1Level<fluid_dynamics::Integration1stHalf> granular_pressure_relaxation(beam_body_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfDissipativeRiemann> granular_density_relaxation(beam_body_inner);
-
-    Dynamics1Level<granular_dynamics::ShearStressRelaxation1stHalf> granular_shear_stress_relaxation(beam_body_inner);
-    InteractionWithUpdate<granular_dynamics::ShearStressRelaxation2ndHalf> granular_shear_stress_rate_relaxation(beam_body_inner);
-    InteractionDynamics<granular_dynamics::ArtificialNormalShearStressRelaxation> granular_artificial_normal_shear_stress_relaxation(beam_body_inner);
-    ReduceDynamics<granular_dynamics::GranularAcousticTimeStepSize> computing_time_step_size(beam_body);
+    Dynamics1Level<continuum_dyannmics::ShearStressRelaxation1stHalf> granular_shear_stress_relaxation(beam_body_inner);
+    InteractionWithUpdate<continuum_dyannmics::ShearStressRelaxation2ndHalf> granular_shear_stress_rate_relaxation(beam_body_inner);
+    InteractionDynamics<continuum_dyannmics::ArtificialNormalShearStressRelaxation> granular_artificial_normal_shear_stress_relaxation(beam_body_inner);
+    ReduceDynamics<continuum_dyannmics::ContinuumAcousticTimeStepSize> computing_time_step_size(beam_body);
     // clamping a solid body part.
     BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
-    SimpleDynamics<granular_dynamics::FixConstraint<BodyPartByParticle>> constraint_beam_base(beam_base);
+    SimpleDynamics<continuum_dyannmics::FixConstraint<BodyPartByParticle>> constraint_beam_base(beam_base);
     //-----------------------------------------------------------------------------
     // outputs
     //-----------------------------------------------------------------------------

@@ -1,11 +1,11 @@
 #pragma once
-#include "granular_dynamics_complex.h"
+#include "continuum_dynamics_complex.h"
 
 //=================================================================================================//
 namespace SPH
 {
 //=================================================================================================//
-namespace granular_dynamics
+namespace continuum_dyannmics
 {
 //=================================================================================================//
 //==========================BaseShearStressRelaxation1stHalfWithWall================================//
@@ -70,5 +70,5 @@ void BaseShearStressRelaxation2ndHalfWithWall<BaseShearStressRelaxation2ndHalfTy
     }
     this->velocity_gradient_[index_i] += velocity_gradient;
 }
-} // namespace granular_dynamics
+} // namespace continuum_dyannmics
 } // namespace SPH

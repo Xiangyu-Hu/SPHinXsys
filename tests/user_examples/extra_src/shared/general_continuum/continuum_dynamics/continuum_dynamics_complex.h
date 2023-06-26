@@ -1,23 +1,21 @@
-#ifndef GRANULAR_DYNAMICS_COMPLEX_H
-#define GRANULAR_DYNAMICS_COMPLEX_H
+#ifndef CONTINUUM_DYNAMICS_COMPLEX_H
+#define CONTINUUM_DYNAMICS_COMPLEX_H
 
 #include "fluid_dynamics_complex.h"
-#include "granular_body.h"
-#include "granular_dynamics_inner.h"
-#include "granular_dynamics_inner.hpp"
-#include "granular_material.h"
-#include "granular_particles.h"
+#include "continuum_dynamics_inner.hpp"
+#include "general_continuum.h"
+#include "continuum_particles.h"
 
 namespace SPH
 {
-namespace granular_dynamics
+namespace continuum_dyannmics
 {
 
-typedef DataDelegateContact<GranularMaterialParticles, SolidParticles, DataDelegateEmptyBase>
-    GranularWallData;
-typedef DataDelegateContact<GranularMaterialParticles, BaseParticles, DataDelegateEmptyBase>
-    GranularContactData;
-typedef DataDelegateContact<GranularMaterialParticles, SolidParticles> FSIContactData;
+typedef DataDelegateContact<ContinuumParticles, SolidParticles, DataDelegateEmptyBase>
+    ContinuumWallData;
+typedef DataDelegateContact<ContinuumParticles, BaseParticles, DataDelegateEmptyBase>
+    ContinuumContactData;
+typedef DataDelegateContact<ContinuumParticles, SolidParticles> FSIContactData;
 
 /**
  * @class BaseShearStressRelaxation1stHalfType
@@ -53,7 +51,7 @@ class BaseShearStressRelaxation2ndHalfWithWall : public fluid_dynamics::Interact
 };
 
 using ShearStressRelaxation2ndHalfWithWall = BaseShearStressRelaxation2ndHalfWithWall<ShearStressRelaxation2ndHalf>;
-} // namespace granular_dynamics
+} // namespace continuum_dyannmics
 } // namespace SPH
 
-#endif // GRANULAR_DYNAMICS_COMPLEX_H
+#endif // CONTINUUM_DYNAMICS_COMPLEX_H

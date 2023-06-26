@@ -1,13 +1,11 @@
-#ifndef GRANULAR_MATERIAL_H
-#define GRANULAR_MATERIAL_H
+#ifndef GENERAL_CONTINUUM_H
+#define GENERAL_CONTINUUM_H
 
-#include "base_material.h"
 #include "weakly_compressible_fluid.h"
-#include <fstream>
 
 namespace SPH
 {
-class GranularMaterial : public WeaklyCompressibleFluid
+class GeneralContinuum : public WeaklyCompressibleFluid
 {
   protected:
     Real E_;  /*< Youngs or tensile modules  */
@@ -16,17 +14,17 @@ class GranularMaterial : public WeaklyCompressibleFluid
     Real nu_; /*< Poisson ratio  */
 
   public:
-    explicit GranularMaterial(Real rho0, Real c0, Real youngs_modulus, Real poisson_ratio)
+    explicit GeneralContinuum(Real rho0, Real c0, Real youngs_modulus, Real poisson_ratio)
         : WeaklyCompressibleFluid(rho0, c0), E_(0.0), G_(0.0), K_(0.0), nu_(0.0)
     {
-        material_type_name_ = "GranularMaterial";
+        material_type_name_ = "GeneralContinuum";
         E_ = youngs_modulus;
         nu_ = poisson_ratio;
         G_ = getShearModulus(youngs_modulus, poisson_ratio);
         K_ = getBulkModulus(youngs_modulus, poisson_ratio);
         lambda0_ = getLambda(youngs_modulus, poisson_ratio);
     };
-    virtual ~GranularMaterial(){};
+    virtual ~GeneralContinuum(){};
 
     Real lambda0_; /*< first Lame parameter */
     Real getYoungsModulus() { return E_; };
@@ -38,7 +36,7 @@ class GranularMaterial : public WeaklyCompressibleFluid
 
     virtual Matd ConstitutiveRelationShearStress(Matd &velocity_gradient, Matd &shear_stress);
 
-    virtual GranularMaterial *ThisObjectPtr() override { return this; };
+    virtual GeneralContinuum *ThisObjectPtr() override { return this; };
 };
 } // namespace SPH
-#endif // GRANULAR_MATERIAL_H
+#endif // GENERAL_CONTINUUM_H
