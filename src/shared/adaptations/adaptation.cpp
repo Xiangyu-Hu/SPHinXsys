@@ -210,12 +210,12 @@ size_t ParticleSplitAndMerge::getCellLinkedListTotalLevel()
 //=================================================================================================//
 Vec2d ParticleSplitAndMerge::splittingPattern(Vec2d pos, Real particle_spacing, Real delta)
 {
-    return {pos[0] + Real(0.5) * particle_spacing * cos(delta), pos[1] + Real(0.5) * particle_spacing * sin(delta)};
+    return { pos[0] + Real(0.5) * particle_spacing * cos(Real(delta)), pos[1] + Real(0.5) * particle_spacing * sin(Real(delta))};
 }
 //=================================================================================================//
 Vec3d ParticleSplitAndMerge::splittingPattern(Vec3d pos, Real particle_spacing, Real delta)
 {
-    return {pos[0] + Real(0.5) * particle_spacing * cos(delta), pos[1] + Real(0.5) * particle_spacing * sin(delta), pos[2]};
+    return {pos[0] + Real(0.5) * particle_spacing * cos(Real(delta)), pos[1] + Real(0.5) * particle_spacing * sin(Real(delta)), pos[2]};
 }
 //=================================================================================================//
 } // namespace SPH
