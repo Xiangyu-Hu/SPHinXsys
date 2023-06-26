@@ -43,7 +43,7 @@ Real gravitational_acceleration = 0.009646;
 Real observed_quantity_0(0.0);
 Real observed_quantity_n(0.0);
 Real displ_max_reference = 1.8687;
-TEST(Plate, MaxDisplacement)
+TEST(Beam, MaxDisplacement)
 {
 	Real displ_max = observed_quantity_n - observed_quantity_0;
 	EXPECT_NEAR(displ_max, displ_max_reference, displ_max_reference * 0.1);
@@ -137,7 +137,7 @@ int main(int ac, char *av[])
 	/** Setup the system. */
 	SPHSystem system(system_domain_bounds, resolution_ref);
 
-	/** create a plate body. */
+	/** create a bar body. */
 	SolidBody bar_body(system, makeShared<DefaultShape>("BarBody"));
 	bar_body.defineParticlesAndMaterial<BarParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 	bar_body.generateParticles<BarParticleGenerator>();
@@ -156,7 +156,7 @@ int main(int ac, char *av[])
 
 	/** Common particle dynamics. */
 	SimpleDynamics<TimeStepInitialization> initialize_external_force(bar_body, 
-		makeShared<TimeDependentExternalForce>(Vec3d(0.0, q / (PT * rho0_s) - gravitational_acceleration, q / (PT * rho0_s) - gravitational_acceleration)));
+		makeShared<TimeDependentExternalForce>(Vec3d(0.0, 0.0, q / (PT * rho0_s) - gravitational_acceleration)));
 
 	/**
 	 * This section define all numerical methods will be used in this case.
