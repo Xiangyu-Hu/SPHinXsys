@@ -165,7 +165,7 @@ namespace SPH
 
         void allocateContactConfiguration() {
             for (const auto & body : contact_configuration_)
-                contact_configuration_device_.emplace_back(body.size(), execution::ExecutionQueue::getInstance().getQueue());
+                contact_configuration_device_.emplace_back(body.size(), execution::executionQueue.getQueue());
         }
 
         void copyContactConfigurationToDevice() {

@@ -183,9 +183,9 @@ namespace SPH
 		BaseDensitySummationComplex<DensitySummationInnerType>::
 			BaseDensitySummationComplex(Args &&...args)
 			: BaseInteractionComplex<DensitySummationInnerType, FluidContactData>(std::forward<Args>(args)...),
-              contact_inv_rho0_(this->contact_particles_.size(), ExecutionQueue::getInstance().getQueue()),
+              contact_inv_rho0_(this->contact_particles_.size(), executionQueue.getQueue()),
               contact_mass_(this->contact_particles_.size()),
-              contact_mass_device_(this->contact_particles_.size(), ExecutionQueue::getInstance().getQueue()),
+              contact_mass_device_(this->contact_particles_.size(), executionQueue.getQueue()),
               device_proxy(this, contact_inv_rho0_.data(), contact_mass_device_.data(),
                            this->contact_configuration_device_->data(), this->contact_configuration_device_->size())
 		{

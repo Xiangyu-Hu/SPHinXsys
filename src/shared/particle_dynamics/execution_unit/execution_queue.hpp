@@ -31,7 +31,7 @@ namespace SPH::execution {
 
         std::size_t work_group_size;
         sycl::queue sycl_queue;
-    };
+    } static &executionQueue = ExecutionQueue::getInstance();
 }
 
 #endif //SPHINXSYS_EXECUTION_QUEUE_H

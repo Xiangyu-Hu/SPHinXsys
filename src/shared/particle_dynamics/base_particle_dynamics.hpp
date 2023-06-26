@@ -44,7 +44,7 @@ namespace SPH
 	{
 		RealBodyVector contact_sph_bodies = body_contact_relation.contact_bodies_;
         contact_configuration_device_ = makeSharedDevice<StdSharedVec<NeighborhoodDevice*>>(contact_sph_bodies.size(),
-                execution::ExecutionQueue::getInstance().getQueue());
+                execution::executionQueue.getQueue());
 		for (size_t i = 0; i != contact_sph_bodies.size(); ++i)
 		{
 			contact_bodies_.push_back(contact_sph_bodies[i]);
@@ -75,7 +75,7 @@ namespace SPH
 
         auto new_contact_configuration_device = makeSharedDevice<StdSharedVec<NeighborhoodDevice*>>(
                 contact_configuration_device_->size() + extra_contact_relation.contact_bodies_.size(),
-                execution::ExecutionQueue::getInstance().getQueue());
+                execution::executionQueue.getQueue());
         std::copy(contact_configuration_device_->begin(), contact_configuration_device_->end(),
                   new_contact_configuration_device->begin());
 		for (size_t i = 0; i != extra_contact_relation.contact_bodies_.size(); ++i)

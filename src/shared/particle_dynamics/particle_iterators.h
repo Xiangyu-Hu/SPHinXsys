@@ -297,8 +297,8 @@ namespace SPH
     inline void particle_for(const ParallelSYCLDevicePolicy & sycl_policy, const size_t &all_real_particles,
                              const LocalDynamicsFunction &local_dynamics_function, Proxy& proxy)
     {
-        auto &sycl_queue = ExecutionQueue::getInstance().getQueue();
-        auto work_group_size = ExecutionQueue::getInstance().getWorkGroupSize();
+        auto &sycl_queue = executionQueue.getQueue();
+        auto work_group_size = executionQueue.getWorkGroupSize();
         auto &kernel_buffer = proxy.getBuffer();
         sycl_queue.submit([&](sycl::handler &cgh) {
             auto kernel_accessor = kernel_buffer.get_access(cgh, sycl::read_write);
@@ -381,8 +381,8 @@ namespace SPH
     {
         ReturnType result = identity;
         auto &kernel_buffer = proxy.getBuffer();
-        auto &sycl_queue = ExecutionQueue::getInstance().getQueue();
-        auto work_group_size = ExecutionQueue::getInstance().getWorkGroupSize();
+        auto &sycl_queue = executionQueue.getQueue();
+        auto work_group_size = executionQueue.getWorkGroupSize();
         {
             sycl::buffer<ReturnType> buffer_result(&result, 1);
             sycl_queue.submit([&](sycl::handler &cgh) {
