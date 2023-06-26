@@ -131,7 +131,7 @@ namespace SPH
 			StdLargeVec<Real> wall_Y_plus_, wall_Y_star_;
 
 			Real intial_distance_to_wall;
-			Real particle_spacing_;
+			Real particle_spacing_, cutoff_radius_;
 
 			StdLargeVec<Real>& turbu_k_;
 			StdLargeVec<Real>& turbu_epsilon_;

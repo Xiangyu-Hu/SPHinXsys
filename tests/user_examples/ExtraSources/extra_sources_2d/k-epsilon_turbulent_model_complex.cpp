@@ -20,6 +20,7 @@ namespace SPH
 			vel_(particles_->vel_),pos_(particles_->pos_),dimension_(Vecd(0).size()), 
 			rho_(particles_->rho_),mu_(particles_->fluid_.ReferenceViscosity()),
 			particle_spacing_(inner_relation.getSPHBody().sph_adaptation_->ReferenceSpacing()),
+			cutoff_radius_(inner_relation.getSPHBody().sph_adaptation_->getKernel()->CutOffRadius()),
 			turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
 			turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation")),
 			turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity"))

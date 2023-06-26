@@ -232,6 +232,41 @@ void Test_K_Epsilon_Equation::impose_parabolic_k(size_t index_i)
 	expect_k_gradient_[index_i][1] = -2.0 * 1.5 * U_f / Radius / Radius * transformed_pos;
 }
 
+TEST_F(TurbulentModule, TestTurbulentKineticEnergyEquation)
+{
+	SimpleDynamics<Test_K_Epsilon_Equation, SequencedPolicy> test_k_ep_equation(water_block);
+	wall_boundary_normal_direction.exec();
+	write_body_states.writeToFile();
+	test_k_ep_equation.exec(); //** impose profiles *
+	write_body_states.writeToFile();//** output to check initial profiles *
+	dt = 1;
+	k_equation_relaxation.exec(dt);
+	epsilon_equation_relaxation.exec(dt);
+
+	standard_wall_function_correction.exec();
+	write_body_states.writeToFile();
+
+
+	ASSERT_NEAR(1, 1, 0.02);
+
+
+	std::cout << "TestTurbulentKineticEnergyEquation completed, continuing will rewrite body states data" << std::endl;
+	system("pause");
+
+}
+
+TEST_F(TurbulentModule, TestMomentumEquation)
+{
+
+
+
+	ASSERT_NEAR(1, 1, 0.02);
+
+
+	std::cout << "TestTurbulentKineticEnergyEquation completed, continuing will rewrite body states data" << std::endl;
+	system("pause");
+
+}
 
 
 TEST_F(TurbulentModule, TestTurbulentKineticEnergyGradient)
@@ -253,28 +288,7 @@ TEST_F(TurbulentModule, TestTurbulentKineticEnergyGradient)
 
 }
 
-TEST_F(TurbulentModule, TestTurbulentKineticEnergyEquation)
-{
-	SimpleDynamics<Test_K_Epsilon_Equation, SequencedPolicy> test_k_ep_equation(water_block);
-	wall_boundary_normal_direction.exec();
-	write_body_states.writeToFile();
-	test_k_ep_equation.exec(); //** impose profiles *
-	write_body_states.writeToFile();//** output to check initial profiles *
-	dt = 1;
-	k_equation_relaxation.exec(dt);
-	epsilon_equation_relaxation.exec(dt);
 
-	standard_wall_function_correction.exec();
-	write_body_states.writeToFile();
-
-
-	ASSERT_NEAR(1, 1, 0.02);
-
-
-	std::cout << "TestTurbulentKineticEnergyEquation completed, continuing will rewrite body states data"<<std::endl;
-	system("pause");
-
-}
 
 //----------------------------------------------------------------------
 

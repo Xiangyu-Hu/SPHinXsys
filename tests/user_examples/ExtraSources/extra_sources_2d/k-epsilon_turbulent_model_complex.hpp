@@ -169,13 +169,18 @@ namespace SPH
 
 					//vel_derivative = 2.0 * (vel_i - vel_ave_k[index_j]) / (r_ij + 0.01 * this->smoothing_length_);
 					//acceleration += 2.0 * (this->mu_+ turbu_mu_i) * vel_derivative * contact_neighborhood.dW_ijV_j_[n] / rho_i;
-					//if (index_i > 2000 &&GlobalStaticVariables::physical_time_>5. &&vel_fric_i.dot(vel_fric_i) == 0.0)
-						//system("pause");
+					//This is to check whether the wall-sub-nearest fluid particles fric, velo. is zero or not
+					if (index_i > 2000 && GlobalStaticVariables::physical_time_ > 5. && vel_fric_i.dot(vel_fric_i) == 0.0+TinyReal)
+					{
+						system("pause");
+						std::cout << index_j << std::endl;
+					}
 					vel_derivative = 2.0 * vel_fric_i.dot(vel_fric_i)* direction_vel_fric;
 					acceleration +=  vel_derivative * contact_neighborhood.dW_ijV_j_[n] ;
 				}
 			}
 			//for test
+
 			this->visc_acc_wall_[index_i] = acceleration;
 
 			this->acc_prior_[index_i] += acceleration;
@@ -252,7 +257,7 @@ namespace SPH
 			{
 				is_near_wall_P1_[index_i] = 1;
 			}
-			if (r_wall_normal < 1.0 * particle_spacing_ &&
+			if (r_wall_normal < (cutoff_radius_ - 0.5 * particle_spacing_) &&
 				r_wall_normal > 0.0 * particle_spacing_ + TinyReal)
 			{
 				Real velo_tan = 0.0; //tangible velo for fluid particle i
@@ -287,6 +292,8 @@ namespace SPH
 			is_near_wall_P1_pre_[index_i] = is_near_wall_P1_[index_i];
 
 			if (is_near_wall_P1_[index_i] == 1&& pos_[index_i][0]>=0.0) // this is a temporal treamtment.
+				//if (r_wall_normal < (cutoff_radius_ - 0.5 * particle_spacing_) &&
+				//r_wall_normal > 0.0 * particle_spacing_ + TinyReal && pos_[index_i][0] >= 0.0)
 			{
 				turbu_k_[index_i] = velo_fric * velo_fric / sqrt(C_mu);
 				turbu_epsilon_[index_i] = pow(C_mu, 0.75) * pow(turbu_k_[index_i], 1.5) / (Karman * r_wall_normal);
