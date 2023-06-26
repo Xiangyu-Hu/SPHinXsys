@@ -64,17 +64,32 @@ jobs:
             xsimd \
             pybind11
 
-      - name: Generate buildsystem
+      - name: Generate buildsystem using single (No test)
         run: |
           cmake -G Ninja \
             -D CMAKE_BUILD_TYPE=Release \
+            -D SPHINXSYS_USE_FLOAT=ON \
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -D SPHINXSYS_CI=ON \
             -S ${{github.workspace}} \
             -B ${{github.workspace}}/build
             
-      - name: Build
+      - name: Build using single
+        run: cmake --build build --config Release --verbose
+
+      - name: Generate buildsystem using double 
+        run: |
+          cmake -G Ninja \
+            -D CMAKE_BUILD_TYPE=Release \
+            -D SPHINXSYS_USE_FLOAT=OFF \
+            -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
+            -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -D SPHINXSYS_CI=ON \
+            -S ${{github.workspace}} \
+            -B ${{github.workspace}}/build
+            
+      - name: Build using double
         run: cmake --build build --config Release --verbose
 
       - name: Test with the first try
