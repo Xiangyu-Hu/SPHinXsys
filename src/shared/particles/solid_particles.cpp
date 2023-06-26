@@ -353,6 +353,7 @@ void ShellParticles::initializeOtherVariables()
                 //addVariableNameToList<Real>(variables_to_reload_, "Width");
         }
         //=================================================================================================//
+   
         void BarParticles::initializeOtherVariables()
         {
                 ShellParticles::initializeOtherVariables();

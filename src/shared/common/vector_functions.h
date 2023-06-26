@@ -77,7 +77,7 @@ Mat3d getTransformationMatrix(const Vec3d &direction_of_z);
 /** get angle between two vectors. */
 Real getCosineOfAngleBetweenTwoVectors(const Vec2d &vector_1, const Vec2d &vector_2);
 Real getCosineOfAngleBetweenTwoVectors(const Vec3d &vector_1, const Vec3d &vector_2);
-
+    Mat3d getTransformationMatrix(const Vec3d &direction_of_z, const Vec3d &direction_of_y);
 /** get orthogonal projection of a vector. */
 Vec2d getVectorProjectionOfVector(const Vec2d &vector_1, const Vec2d &vector_2);
 Vec3d getVectorProjectionOfVector(const Vec3d &vector_1, const Vec3d &vector_2);
