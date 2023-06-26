@@ -25,12 +25,12 @@ set(CMAKE_POSITION_INDEPENDENT_CODE TRUE) # Enable for all targets, needed for p
 add_library(sphinxsys_core INTERFACE)
 
 # ------ Local properties
-target_compile_features(sphinxsys_core INTERFACE cxx_std_20) # Requires a compiler supporting at least C++20
+target_compile_features(sphinxsys_core INTERFACE cxx_std_17) # Requires a compiler supporting at least C++17
 
 # ## Generic properties below enabled for INTERFACE targets only for CMake>=3.19
 # set_target_properties(sphinxsys_core PROPERTIES CXX_EXTENSIONS OFF) # Disable any non-standard compiler specific C++ extensions
 # set_target_properties(sphinxsys_core PROPERTIES CXX_STANDARD_REQUIRED ON) # C++ standard requirement for targets is NOT optional
-# set_target_properties(sphinxsys_core PROPERTIES CXX_STANDARD 20)
+# set_target_properties(sphinxsys_core PROPERTIES CXX_STANDARD 17)
 if(${CMAKE_SYSTEM_NAME} MATCHES Windows)
     set_target_properties(sphinxsys_core PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON) # For correct DLL generation on Windows
     target_compile_definitions(sphinxsys_core INTERFACE _USE_MATH_DEFINES NOMINMAX)
@@ -60,7 +60,7 @@ set(Simbody_LIBS
     $<$<BOOL:${Simbody_STATIC_LIBRARIES}>:${Simbody_STATIC_LIBRARIES}> # contains "SimTKcommon_static SimTKmath_static SimTKsimbody_static" in triplet with static linking, empty otherwise
 )
 target_link_libraries(sphinxsys_core INTERFACE ${Simbody_LIBS})
-target_compile_definitions(sphinxsys_core INTERFACE _SILENCE_CXX20_ITERATOR_BASE_CLASS_DEPRECATION_WARNING) # Because of Simbody headers
+target_compile_definitions(sphinxsys_core INTERFACE _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING) # Because of Simbody headers
 
 # ## Eigen
 find_package(Eigen3 CONFIG REQUIRED)
