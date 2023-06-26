@@ -53,13 +53,14 @@ namespace SPH {
 	constexpr int MaximumNeighborhoodSize = int(1.33 * M_PI * 27);
 	constexpr int Dimensions = 3;
 	/** correction matrix, only works for thin structure dynamics. */
-	const Matd reduced_unit_matrix{ {1, 0, 0}, // 0 row
-									{0, 1, 0}, // 1 row
-									{0, 0, 0}, // 2 row
-								  };
-	/** initial local normal, only works for thin structure dynamics. */
-        const Vecd local_pseudo_n_0 = Vecd(0.0, 0.0, 1.0);
-        const Vecd local_pseudo_b_n_0 = Vecd(0.0, 1.0, 0.0);
+	const Matd reduced_unit_matrix{ 
+		{1, 0, 0}, // 0 row
+		{0, 1, 0}, // 1 row
+	    {0, 0, 0}, // 2 row
+	};
+    /** initial local normal, only works for thin structure dynamics. */
+    const Vecd local_pseudo_n_0 = Vecd(0.0, 0.0, 1.0);
+    const Vecd local_pseudo_b_n_0 = Vecd(0.0, 1.0, 0.0);
 
 	const Vecd ZeroVecd = Vec3d::Zero();
 }
