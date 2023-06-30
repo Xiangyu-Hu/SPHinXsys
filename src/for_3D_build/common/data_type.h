@@ -39,7 +39,7 @@ using Vecd = Vec3d;
 using Matd = Mat3d;
 using AlignedBox = AlignedBox3d;
 using AngularVecd = Vec3d;
-using Transformd = Transform3d;
+using Rotation = Rotation3d;
 using SimTKVecd = SimTKVec3;
 
 using BoundingBox = BaseBoundingBox<Vec3d>;

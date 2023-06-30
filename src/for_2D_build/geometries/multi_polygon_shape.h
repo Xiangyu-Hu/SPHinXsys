@@ -81,7 +81,7 @@ class MultiPolygon
     void addAMultiPolygon(MultiPolygon &multi_polygon, ShapeBooleanOps op);
     void addABoostMultiPoly(boost_multi_poly &boost_multi_poly, ShapeBooleanOps op);
     void addAPolygon(const std::vector<Vecd> &points, ShapeBooleanOps op);
-    void addABox(Transform2d transform2d, const Vecd &halfsize, ShapeBooleanOps op);
+    void addABox(Transform transform, const Vecd &halfsize, ShapeBooleanOps op);
     void addACircle(const Vecd &center, Real radius, int resolution, ShapeBooleanOps op);
     void addAPolygonFromFile(std::string file_path_name, ShapeBooleanOps op, Vecd translation = Vecd::Zero(), Real scale_factor = 1.0);
 

@@ -40,7 +40,7 @@ using Vecd = Vec2d;
 using Matd = Mat2d;
 using AlignedBox = AlignedBox2d;
 using AngularVecd = Real;
-using Transformd = Transform2d;
+using Rotation = Rotation2d;
 using SimTKVecd = SimTKVec2;
 
 using BoundingBox = BaseBoundingBox<Vec2d>;

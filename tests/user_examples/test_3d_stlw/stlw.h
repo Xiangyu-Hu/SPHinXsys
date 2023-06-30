@@ -39,8 +39,8 @@ class WaterBlock : public ComplexShape
         /** Geometry definition. */
         Vecd halfsize_water(0.5 * DW, 0.5 * DL, 0.5 * WH);
         Vecd water_pos(0.5 * DW, 0.5 * DL, 0.5 * WH);
-        Transformd translation_water(water_pos);
-        add<TransformShape<GeometricShapeBox>>(Transformd(translation_water), halfsize_water);
+        Transform translation_water(water_pos);
+        add<TransformShape<GeometricShapeBox>>(Transform(translation_water), halfsize_water);
     }
 };
 //----------------------------------------------------------------------
@@ -53,13 +53,13 @@ class WallBoundary : public ComplexShape
     {
         Vecd halfsize_wall_outer(0.5 * DW + BW, 0.5 * DL + BW, 0.5 * DH + BW);
         Vecd wall_outer_pos(0.5 * DW, 0.5 * DL, 0.5 * DH);
-        Transformd translation_wall_outer(wall_outer_pos);
-        add<TransformShape<GeometricShapeBox>>(Transformd(translation_wall_outer), halfsize_wall_outer);
+        Transform translation_wall_outer(wall_outer_pos);
+        add<TransformShape<GeometricShapeBox>>(Transform(translation_wall_outer), halfsize_wall_outer);
 
         Vecd halfsize_wall_inner(0.5 * DW, 0.5 * DL, 0.5 * DH + BW);
         Vecd wall_inner_pos(0.5 * DW, 0.5 * DL, 0.5 * DH + BW);
-        Transformd translation_wall_inner(wall_inner_pos);
-        subtract<TransformShape<GeometricShapeBox>>(Transformd(translation_wall_inner), halfsize_wall_inner);
+        Transform translation_wall_inner(wall_inner_pos);
+        subtract<TransformShape<GeometricShapeBox>>(Transform(translation_wall_inner), halfsize_wall_inner);
     }
 };
 //----------------------------------------------------------------------
@@ -68,7 +68,7 @@ class WallBoundary : public ComplexShape
 Real h = 1.3 * particle_spacing_ref;
 Vecd FS_gaugeDim(0.5 * h, 0.5 * h, 0.5 * DH);
 Vecd FS_gauge(DW / 3, DL / 3, 0.5 * DH);
-Transformd translation_FS_gauge(FS_gauge);
+Transform translation_FS_gauge(FS_gauge);
 
 /**
  * @class FreeSurfaceHeightZ

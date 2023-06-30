@@ -47,36 +47,36 @@ class TransformShape : public BaseShapeType
   public:
     /** template constructor for general shapes. */
     template <typename... ConstructorArgs>
-    explicit TransformShape(const Transformd &transformd, ConstructorArgs &&...args)
-        : BaseShapeType(std::forward<ConstructorArgs>(args)...), transformd_(transformd){};
+    explicit TransformShape(const Transform &transform, ConstructorArgs &&...args)
+        : BaseShapeType(std::forward<ConstructorArgs>(args)...), transform_(transform){};
 
     virtual ~TransformShape(){};
 
     /** variable transform is introduced here */
-    Transformd &getTransform() { return transformd_; };
-    void setTransform(const Transformd &transformd) { transformd_ = transformd; };
+    Transform &getTransform() { return transform_; };
+    void setTransform(const Transform &transform) { transform_ = transform; };
 
     virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override
     {
-        Vecd input_pnt_origin = transformd_.shiftBaseStationToFrame(probe_point);
+        Vecd input_pnt_origin = transform_.shiftBaseStationToFrame(probe_point);
         return BaseShapeType::checkContain(input_pnt_origin);
     };
 
     virtual Vecd findClosestPoint(const Vecd &probe_point) override
     {
-        Vecd input_pnt_origin = transformd_.shiftBaseStationToFrame(probe_point);
+        Vecd input_pnt_origin = transform_.shiftBaseStationToFrame(probe_point);
         Vecd closest_point_origin = BaseShapeType::findClosestPoint(input_pnt_origin);
-        return transformd_.shiftFrameStationToBase(closest_point_origin);
+        return transform_.shiftFrameStationToBase(closest_point_origin);
     };
 
   protected:
-    Transformd transformd_;
+    Transform transform_;
 
     virtual BoundingBox findBounds() override
     {
         BoundingBox original_bound = BaseShapeType::findBounds();
-        return BoundingBox(transformd_.shiftFrameStationToBase(original_bound.first_),
-                           transformd_.shiftFrameStationToBase(original_bound.second_));
+        return BoundingBox(transform_.shiftFrameStationToBase(original_bound.first_),
+                           transform_.shiftFrameStationToBase(original_bound.second_));
     };
 };
 } // namespace SPH

@@ -72,12 +72,12 @@ void MultiPolygon::addABoostMultiPoly(boost_multi_poly &boost_multi_poly_op, Sha
     multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, boost_multi_poly_op, op);
 }
 //=================================================================================================//
-void MultiPolygon::addABox(Transform2d transform2d, const Vecd &halfsize, ShapeBooleanOps op)
+void MultiPolygon::addABox(Transform transform, const Vecd &halfsize, ShapeBooleanOps op)
 {
-    Vecd point0 = transform2d.shiftFrameStationToBase(-halfsize);
-    Vecd point1 = transform2d.shiftFrameStationToBase(Vecd(-halfsize[0], halfsize[1]));
-    Vecd point2 = transform2d.shiftFrameStationToBase(halfsize);
-    Vecd point3 = transform2d.shiftFrameStationToBase(Vecd(halfsize[0], -halfsize[1]));
+    Vecd point0 = transform.shiftFrameStationToBase(-halfsize);
+    Vecd point1 = transform.shiftFrameStationToBase(Vecd(-halfsize[0], halfsize[1]));
+    Vecd point2 = transform.shiftFrameStationToBase(halfsize);
+    Vecd point3 = transform.shiftFrameStationToBase(Vecd(halfsize[0], -halfsize[1]));
 
     std::vector<Vecd> points = {point0, point1, point2, point3, point0};
     addAPolygon(points, op);
