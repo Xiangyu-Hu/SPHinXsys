@@ -41,8 +41,6 @@ using Matd = Mat2d;
 using AlignedBox = AlignedBox2d;
 using AngularVecd = Real;
 using Rotation = Rotation2d;
-using SimTKVecd = SimTKVec2;
-
 using BoundingBox = BaseBoundingBox<Vec2d>;
 
 template <class DataType, int array_size>
