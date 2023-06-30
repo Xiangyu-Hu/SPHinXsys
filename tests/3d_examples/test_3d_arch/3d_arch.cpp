@@ -26,14 +26,17 @@ Real BW = particle_spacing_ref * (Real)BWD; /** Boundary width, determined by sp
 BoundingBox system_domain_bounds(Vec3d(-radius - thickness, 0.0, -radius - thickness),
                                  Vec3d(radius + thickness, height, radius + thickness));
 // rotation matrix
+Real rot_cos = cos(rotation);
+Real rot_sin = sin(rotation);
 Mat3d rotation_matrix{
-    {cos(rotation), -sin(rotation), 0.0},
-    {sin(rotation), cos(rotation), 0.0},
+    {rot_cos, -rot_sin, 0.0},
+    {rot_sin, rot_cos, 0.0},
     {0.0, 0.0, 1.0},
 };
 // Observer location
+Real observation_rot_cos = cos(45.0 / 180.0 * Pi);
 StdVec<Vecd> observation_location = {rotation_matrix *
-                                     Vecd(radius_mid_surface * cos(45.0 / 180.0 * Pi), height / 2.0, radius_mid_surface *cos(45.0 / 180.0 * Pi))};
+                                     Vecd(radius_mid_surface * observation_rot_cos, height / Real(2.0), radius_mid_surface * observation_rot_cos)};
 /** For material properties of the solid. */
 Real rho0_s = 7.800;             /** Normalized density. */
 Real Youngs_modulus = 210e6;     /** Normalized Youngs Modulus. */
@@ -121,7 +124,7 @@ class BoundaryGeometry : public BodyPartByParticle
   private:
     void tagManually(size_t index_i)
     {
-        if (base_particles_.pos_[index_i][2] < radius_mid_surface * sin(-17.5 / 180.0 * Pi))
+        if (base_particles_.pos_[index_i][2] < radius_mid_surface * (Real)sin(-17.5 / 180.0 * Pi))
         {
             body_part_particles_.push_back(index_i);
         }
