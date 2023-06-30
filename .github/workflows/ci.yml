@@ -18,8 +18,7 @@ env:
 jobs:
 
   ###############################################################################
-
-  Linux:
+  Linux-float:
     runs-on: ubuntu-22.04
     env:
       VCPKG_DEFAULT_TRIPLET: x64-linux
@@ -78,7 +77,53 @@ jobs:
       - name: Build using float
         run: cmake --build build --config Release --verbose
 
-      - name: Generate buildsystem using double float
+  ###############################################################################   
+  Linux-double:
+    runs-on: ubuntu-22.04
+    env:
+      VCPKG_DEFAULT_TRIPLET: x64-linux
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+
+      - name: Install system dependencies
+        run: |
+          sudo apt update 
+          sudo apt install -y \
+            apt-utils \
+            build-essential \
+            curl zip unzip tar `# when starting fresh on a WSL image for bootstrapping vcpkg`\
+            pkg-config `# for installing libraries with vcpkg`\
+            git \
+            cmake \
+            ninja-build
+
+      - uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ github.job }}
+
+      - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
+        with: 
+          committish: ${{ env.VCPKG_VERSION }}
+          cache-version: ${{env.VCPKG_VERSION}}
+
+      - name: Install dependencies
+        run: |
+          ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build openblas[dynamic-arch] --allow-unsupported # last argument to remove after regression introduced by microsoft/vcpkg#30192 is addressed
+          # Simbody depends on (open)blas implementation, which -march=native by default, conflicting with cache restore, hence dynamic-arch feature
+          # Above problem might also be resolved by adding the hash of architecture in the cache key, esp. if more package do the same
+          ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build \
+            eigen3 \
+            tbb \
+            boost-program-options \
+            boost-geometry \
+            simbody \
+            gtest \
+            xsimd \
+            pybind11
+
+      - name: Generate buildsystem using double
         run: |
           cmake -G Ninja \
             -D CMAKE_BUILD_TYPE=Release \
@@ -89,7 +134,7 @@ jobs:
             -S ${{github.workspace}} \
             -B ${{github.workspace}}/build
             
-      - name: Build using double float
+      - name: Build using double
         run: cmake --build build --config Release --verbose
 
       - name: Test with the first try
