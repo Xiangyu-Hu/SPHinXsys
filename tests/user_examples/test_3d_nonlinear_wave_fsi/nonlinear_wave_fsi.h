@@ -94,28 +94,28 @@ Real SVol=Sw*Sd*Sh;
 
 Real StructureVol=2*LVol+4*PVol+TVol+2*SVol; 
 Real StructureMass = 62.036; /* Weight of the solid structure (Luo share)*/
-Real Srho=StructureMass/StructureVol;/* Structure density */
+Real StructureDensity=StructureMass/StructureVol;/* Structure density */
 
 /**
  * Inertia of Structure Parts
  */
 
 //LEG
-Real LIx=(Srho*LVol)/12*(Ld*Ld+Lh*Lh);
-Real LIy=(Srho*LVol)/12*(Lw*Lw+Lh*Lh);
-Real LIz=(Srho*LVol)/12*(Ld*Ld+Lw*Lw);
+Real LIx=(StructureDensity*LVol)/12*(Ld*Ld+Lh*Lh);
+Real LIy=(StructureDensity*LVol)/12*(Lw*Lw+Lh*Lh);
+Real LIz=(StructureDensity*LVol)/12*(Ld*Ld+Lw*Lw);
 //PILLAR
-Real PIx=(Srho*PVol)/12*(Pd*Pd+Ph*Ph);
-Real PIy=(Srho*PVol)/12*(Pw*Pw+Ph*Ph);
-Real PIz=(Srho*PVol)/12*(Pd*Pd+Pw*Pw);
+Real PIx=(StructureDensity*PVol)/12*(Pd*Pd+Ph*Ph);
+Real PIy=(StructureDensity*PVol)/12*(Pw*Pw+Ph*Ph);
+Real PIz=(StructureDensity*PVol)/12*(Pd*Pd+Pw*Pw);
 //TOP
-Real TIx=(Srho*TVol)/12*(Td*Td+Th*Th);
-Real TIy=(Srho*TVol)/12*(Tw*Tw+Th*Th);
-Real TIz=(Srho*TVol)/12*(Td*Td+Tw*Tw);
+Real TIx=(StructureDensity*TVol)/12*(Td*Td+Th*Th);
+Real TIy=(StructureDensity*TVol)/12*(Tw*Tw+Th*Th);
+Real TIz=(StructureDensity*TVol)/12*(Td*Td+Tw*Tw);
 //STIFFNER
-Real SIx=(Srho*SVol)/12*(Sd*Sd+Sh*Sh);
-Real SIy=(Srho*SVol)/12*(Sw*Sw+Sh*Sh);
-Real SIz=(Srho*SVol)/12*(Sd*Sd+Sw*Sw);
+Real SIx=(StructureDensity*SVol)/12*(Sd*Sd+Sh*Sh);
+Real SIy=(StructureDensity*SVol)/12*(Sw*Sw+Sh*Sh);
+Real SIz=(StructureDensity*SVol)/12*(Sd*Sd+Sw*Sw);
 
 /*
  * Structure center of mass
@@ -146,38 +146,38 @@ Real yT=0.18;
 Real zT=0.36;
 Vec3d Tcm(Strx,Stry+yT+Td/2,Strz+zT+Th/2); /* Top Plate */
 
-Real bcmx=(Srho*LVol*RLcm[0]+
-			Srho*LVol*LLcm[0]+
-			Srho*PVol*RSsPcm[0]+
-			Srho*PVol*RPsPcm[0]+
-			Srho*PVol*LSsPcm[0]+
-			Srho*PVol*LPsPcm[0]+
-			Srho*SVol*PsScm[0]+
-			Srho*SVol*SsScm[0]+
-			Srho*TVol*Tcm[0])/
-			(Srho*StructureVol);
+Real bcmx=(StructureDensity*LVol*RLcm[0]+
+			StructureDensity*LVol*LLcm[0]+
+			StructureDensity*PVol*RSsPcm[0]+
+			StructureDensity*PVol*RPsPcm[0]+
+			StructureDensity*PVol*LSsPcm[0]+
+			StructureDensity*PVol*LPsPcm[0]+
+			StructureDensity*SVol*PsScm[0]+
+			StructureDensity*SVol*SsScm[0]+
+			StructureDensity*TVol*Tcm[0])/
+			(StructureDensity*StructureVol);
 
-Real bcmy=(Srho*LVol*RLcm[1]+
-			Srho*LVol*LLcm[1]+
-			Srho*PVol*RSsPcm[1]+
-			Srho*PVol*RPsPcm[1]+
-			Srho*PVol*LSsPcm[1]+
-			Srho*PVol*LPsPcm[1]+
-			Srho*SVol*PsScm[1]+
-			Srho*SVol*SsScm[1]+
-			Srho*TVol*Tcm[1])/
-			(Srho*StructureVol);
+Real bcmy=(StructureDensity*LVol*RLcm[1]+
+			StructureDensity*LVol*LLcm[1]+
+			StructureDensity*PVol*RSsPcm[1]+
+			StructureDensity*PVol*RPsPcm[1]+
+			StructureDensity*PVol*LSsPcm[1]+
+			StructureDensity*PVol*LPsPcm[1]+
+			StructureDensity*SVol*PsScm[1]+
+			StructureDensity*SVol*SsScm[1]+
+			StructureDensity*TVol*Tcm[1])/
+			(StructureDensity*StructureVol);
 
-Real bcmz=(Srho*LVol*RLcm[2]+
-			Srho*LVol*LLcm[2]+
-			Srho*PVol*RSsPcm[2]+
-			Srho*PVol*RPsPcm[2]+
-			Srho*PVol*LSsPcm[2]+
-			Srho*PVol*LPsPcm[2]+
-			Srho*SVol*PsScm[2]+
-			Srho*SVol*SsScm[2]+
-			Srho*TVol*Tcm[2])/
-			(Srho*StructureVol);
+Real bcmz=(StructureDensity*LVol*RLcm[2]+
+			StructureDensity*LVol*LLcm[2]+
+			StructureDensity*PVol*RSsPcm[2]+
+			StructureDensity*PVol*RPsPcm[2]+
+			StructureDensity*PVol*LSsPcm[2]+
+			StructureDensity*PVol*LPsPcm[2]+
+			StructureDensity*SVol*PsScm[2]+
+			StructureDensity*SVol*SsScm[2]+
+			StructureDensity*TVol*Tcm[2])/
+			(StructureDensity*StructureVol);
 
 Vecd G(bcmx,bcmy,bcmz);
 
@@ -215,20 +215,20 @@ Real dSZ=(G[0]-PsScm[0])*(G[0]-PsScm[0])+
 Real dTZ=(G[0]-Tcm[0])*(G[0]-Tcm[0])+
      	 (G[1]-Tcm[1])*(G[1]-Tcm[1]);
 
-Real Ix=2*LIx+2*(dLX*LVol*Srho)+
-		4*PIx+4*(dPX*PVol*Srho)+
-		2*SIx+2*(dSX*SVol*Srho)+
-		TIx+(dTX*TVol*Srho);
+Real Ix=2*LIx+2*(dLX*LVol*StructureDensity)+
+		4*PIx+4*(dPX*PVol*StructureDensity)+
+		2*SIx+2*(dSX*SVol*StructureDensity)+
+		TIx+(dTX*TVol*StructureDensity);
 
-Real Iy=2*LIy+2*(dLY*LVol*Srho)+
-		4*PIy+4*(dPY*PVol*Srho)+
-		2*SIy+2*(dSY*SVol*Srho)+
-		TIy+(dTY*TVol*Srho);
+Real Iy=2*LIy+2*(dLY*LVol*StructureDensity)+
+		4*PIy+4*(dPY*PVol*StructureDensity)+
+		2*SIy+2*(dSY*SVol*StructureDensity)+
+		TIy+(dTY*TVol*StructureDensity);
 
-Real Iz=2*LIz+2*(dLZ*LVol*Srho)+
-		4*PIz+4*(dPZ*PVol*Srho)+
-		2*SIz+2*(dSZ*SVol*Srho)+
-		TIz+(dTZ*TVol*Srho);
+Real Iz=2*LIz+2*(dLZ*LVol*StructureDensity)+
+		4*PIz+4*(dPZ*PVol*StructureDensity)+
+		2*SIz+2*(dSZ*SVol*StructureDensity)+
+		TIz+(dTZ*TVol*StructureDensity);
 
 /**
  * Topology of the tethers.
@@ -307,9 +307,9 @@ public:
 //----------------------------------------------------------------------
 //	create a wavemaker shape
 //----------------------------------------------------------------------
-	Vecd wmker(0.5 * DW, 0.5 * Maker_width, 0.5 * DH);
+	Vecd wave_maker_shape(0.5 * DW, 0.5 * Maker_width, 0.5 * DH);
 	Vecd wmk_pos(0.5 * DW, -0.5 * Maker_width, 0.5 * HWM);
-	Transformd translation_wmker(wmk_pos);
+	Transformd translation_wave_maker(wmk_pos);
 
 //----------------------------------------------------------------------
 //	Wall geometries.
@@ -329,7 +329,7 @@ public:
 		Transformd translation_wall_inner(wall_inner_pos);
 		subtract<TransformShape<GeometricShapeBox>>(Transformd(translation_wall_inner), halfsize_wall_inner);
 		
-		add<TransformShape<GeometricShapeBox>>(Transformd(translation_wmker), wmker);
+		add<TransformShape<GeometricShapeBox>>(Transformd(translation_wave_maker), wave_maker_shape);
 	}
 };
 

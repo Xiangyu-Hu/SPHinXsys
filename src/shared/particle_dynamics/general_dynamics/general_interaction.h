@@ -33,11 +33,11 @@
 
 namespace SPH
 {
-class CorrectionMatrixInner : public LocalDynamics, public GeneralDataDelegateInner
+class CorrectedConfigurationInner : public LocalDynamics, public GeneralDataDelegateInner
 {
   public:
-    CorrectionMatrixInner(BaseInnerRelation &inner_relation, int beta = 0, Real alpha = Real(0));
-    virtual ~CorrectionMatrixInner(){};
+    CorrectedConfigurationInner(BaseInnerRelation &inner_relation, int beta = 0, Real alpha = Real(0));
+    virtual ~CorrectedConfigurationInner(){};
 
   protected:
     int beta_;
@@ -48,11 +48,11 @@ class CorrectionMatrixInner : public LocalDynamics, public GeneralDataDelegateIn
     void update(size_t index_i, Real dt = 0.0);
 };
 
-class CorrectionMatrixComplex : public CorrectionMatrixInner, public GeneralDataDelegateContact
+class CorrectedConfigurationComplex : public CorrectedConfigurationInner, public GeneralDataDelegateContact
 {
   public:
-    CorrectionMatrixComplex(ComplexRelation &complex_relation, int beta = 0, Real alpha = Real(0));
-    virtual ~CorrectionMatrixComplex(){};
+    CorrectedConfigurationComplex(ComplexRelation &complex_relation, int beta = 0, Real alpha = Real(0));
+    virtual ~CorrectedConfigurationComplex(){};
 
   protected:
     StdVec<StdLargeVec<Real> *> contact_Vol_;

@@ -50,14 +50,14 @@ class EulerianFluidBody : public FluidBody
 };
 
 /**
- * @class KernalGredientWithCorrectionInner
- * @brief obtain the corrected initial configuration in strong form and correct kernel gredient
+ * @class KernelGradientWithCorrectionInner
+ * @brief obtain the corrected initial configuration in strong form and correct kernel gradient
  */
-class KernalGredientWithCorrectionInner : public LocalDynamics, public GeneralDataDelegateInner
+class KernelGradientWithCorrectionInner : public LocalDynamics, public GeneralDataDelegateInner
 {
   public:
-    KernalGredientWithCorrectionInner(BaseInnerRelation &inner_relation);
-    virtual ~KernalGredientWithCorrectionInner(){};
+    KernelGradientWithCorrectionInner(BaseInnerRelation &inner_relation);
+    virtual ~KernelGradientWithCorrectionInner(){};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 
@@ -66,16 +66,16 @@ class KernalGredientWithCorrectionInner : public LocalDynamics, public GeneralDa
 };
 
 /**
- * @class KernalGredientWithCorrectionComplex
- * @brief obtain the corrected initial configuration in strong form and correct kernel gredient in complex topology
+ * @class KernelGradientWithCorrectionComplex
+ * @brief obtain the corrected initial configuration in strong form and correct kernel gradient in complex topology
  */
-class KernalGredientWithCorrectionComplex : public BaseInteractionComplex<KernalGredientWithCorrectionInner, GeneralDataDelegateContact>
+class KernelGradientWithCorrectionComplex : public BaseInteractionComplex<KernelGradientWithCorrectionInner, GeneralDataDelegateContact>
 {
   public:
     template <typename... Args>
-    KernalGredientWithCorrectionComplex(Args &&...args)
-        : BaseInteractionComplex<KernalGredientWithCorrectionInner, GeneralDataDelegateContact>(std::forward<Args>(args)...){};
-    virtual ~KernalGredientWithCorrectionComplex(){};
+    KernelGradientWithCorrectionComplex(Args &&...args)
+        : BaseInteractionComplex<KernelGradientWithCorrectionInner, GeneralDataDelegateContact>(std::forward<Args>(args)...){};
+    virtual ~KernelGradientWithCorrectionComplex(){};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 };

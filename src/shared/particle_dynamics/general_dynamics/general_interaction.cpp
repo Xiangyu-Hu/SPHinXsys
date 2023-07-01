@@ -4,14 +4,14 @@
 namespace SPH
 {
 //=================================================================================================//
-CorrectionMatrixInner::
-    CorrectionMatrixInner(BaseInnerRelation &inner_relation, int beta, Real alpha)
+CorrectedConfigurationInner::
+    CorrectedConfigurationInner(BaseInnerRelation &inner_relation, int beta, Real alpha)
     : LocalDynamics(inner_relation.getSPHBody()),
       GeneralDataDelegateInner(inner_relation),
       beta_(beta), alpha_(alpha),
       B_(*particles_->getVariableByName<Matd>("CorrectionMatrix")) {}
 //=================================================================================================//
-void CorrectionMatrixInner::interaction(size_t index_i, Real dt)
+void CorrectedConfigurationInner::interaction(size_t index_i, Real dt)
 {
     Matd local_configuration = Eps * Matd::Identity();
 
@@ -26,16 +26,16 @@ void CorrectionMatrixInner::interaction(size_t index_i, Real dt)
     B_[index_i] = local_configuration;
 }
 //=================================================================================================//
-void CorrectionMatrixInner::update(size_t index_i, Real dt)
+void CorrectedConfigurationInner::update(size_t index_i, Real dt)
 {
     Real det_sqr = pow(B_[index_i].determinant(), beta_);
     Matd inverse = B_[index_i].inverse();
     B_[index_i] = (det_sqr * inverse + alpha_ * Matd::Identity()) / (alpha_ + det_sqr);
 }
 //=================================================================================================//
-CorrectionMatrixComplex::
-    CorrectionMatrixComplex(ComplexRelation &complex_relation, int beta, Real alpha)
-    : CorrectionMatrixInner(complex_relation.getInnerRelation(), beta, alpha),
+CorrectedConfigurationComplex::
+    CorrectedConfigurationComplex(ComplexRelation &complex_relation, int beta, Real alpha)
+    : CorrectedConfigurationInner(complex_relation.getInnerRelation(), beta, alpha),
       GeneralDataDelegateContact(complex_relation.getContactRelation())
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
@@ -45,9 +45,9 @@ CorrectionMatrixComplex::
     }
 }
 //=================================================================================================//
-void CorrectionMatrixComplex::interaction(size_t index_i, Real dt)
+void CorrectedConfigurationComplex::interaction(size_t index_i, Real dt)
 {
-    CorrectionMatrixInner::interaction(index_i, dt);
+    CorrectedConfigurationInner::interaction(index_i, dt);
 
     Matd local_configuration = ZeroData<Matd>::value;
     for (size_t k = 0; k < contact_configuration_.size(); ++k)

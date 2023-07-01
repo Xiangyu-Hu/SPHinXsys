@@ -4,14 +4,14 @@
 namespace SPH
 {
 //=================================================================================================//
-KernalGredientWithCorrectionInner::KernalGredientWithCorrectionInner(BaseInnerRelation &inner_relation)
+KernelGradientWithCorrectionInner::KernelGradientWithCorrectionInner(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), GeneralDataDelegateInner(inner_relation)
 {
     particles_->registerVariable(B_, "CorrectionMatrix");
     particles_->registerVariable(local_configuration_inner_, "LocalConfigurationInner");
 };
 //=================================================================================================//
-void KernalGredientWithCorrectionInner::interaction(size_t index_i, Real dt)
+void KernelGradientWithCorrectionInner::interaction(size_t index_i, Real dt)
 {
     Matd local_configuration = Eps * Matd::Identity(); // a small number added to diagonal to avoid divide zero
     const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -25,7 +25,7 @@ void KernalGredientWithCorrectionInner::interaction(size_t index_i, Real dt)
     local_configuration_inner_[index_i] = local_configuration;
 }
 //=================================================================================================//
-void KernalGredientWithCorrectionInner::update(size_t index_i, Real dt)
+void KernelGradientWithCorrectionInner::update(size_t index_i, Real dt)
 {
     Neighborhood &inner_neighborhood = inner_configuration_[index_i];
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -37,23 +37,23 @@ void KernalGredientWithCorrectionInner::update(size_t index_i, Real dt)
         Vecd r_ji = r_ij * e_ij;
 
         Matd B_average = 0.5 * (B_[index_i] + B_[index_j]);
-        Vecd kernel_gredient_with_B = B_average * dW_ijV_j * e_ij;
+        Vecd kernel_gradient_with_B = B_average * dW_ijV_j * e_ij;
         if (dW_ijV_j < 0)
         {
-            inner_neighborhood.dW_ijV_j_[n] = -kernel_gredient_with_B.norm();
+            inner_neighborhood.dW_ijV_j_[n] = -kernel_gradient_with_B.norm();
         }
         else
         {
-            inner_neighborhood.dW_ijV_j_[n] = kernel_gredient_with_B.norm();
+            inner_neighborhood.dW_ijV_j_[n] = kernel_gradient_with_B.norm();
         }
-        inner_neighborhood.e_ij_[n] = kernel_gredient_with_B / inner_neighborhood.dW_ijV_j_[n];
+        inner_neighborhood.e_ij_[n] = kernel_gradient_with_B / inner_neighborhood.dW_ijV_j_[n];
         inner_neighborhood.r_ij_[n] = r_ji.dot(inner_neighborhood.e_ij_[n]);
     }
 }
 //=================================================================================================//
-void KernalGredientWithCorrectionComplex::interaction(size_t index_i, Real dt)
+void KernelGradientWithCorrectionComplex::interaction(size_t index_i, Real dt)
 {
-    KernalGredientWithCorrectionInner::interaction(index_i, dt);
+    KernelGradientWithCorrectionInner::interaction(index_i, dt);
 
     Matd local_configuration = Eps * Matd::Identity(); // a small number added to diagonal to avoid divide zero
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
@@ -73,9 +73,9 @@ void KernalGredientWithCorrectionComplex::interaction(size_t index_i, Real dt)
     B_[index_i] = (local_configuration + local_configuration_inner_[index_i]).inverse();
 }
 //=================================================================================================//
-void KernalGredientWithCorrectionComplex::update(size_t index_i, Real dt)
+void KernelGradientWithCorrectionComplex::update(size_t index_i, Real dt)
 {
-    KernalGredientWithCorrectionInner::update(index_i, dt);
+    KernelGradientWithCorrectionInner::update(index_i, dt);
 
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
@@ -87,16 +87,16 @@ void KernalGredientWithCorrectionComplex::update(size_t index_i, Real dt)
             Real r_ij = contact_neighborhood.r_ij_[n];
             Vecd r_ji = r_ij * e_ij;
 
-            Vecd kernel_gredient_with_B = B_[index_i] * dW_ijV_j * e_ij;
+            Vecd kernel_gradient_with_B = B_[index_i] * dW_ijV_j * e_ij;
             if (dW_ijV_j < 0)
             {
-                contact_neighborhood.dW_ijV_j_[n] = -kernel_gredient_with_B.norm();
+                contact_neighborhood.dW_ijV_j_[n] = -kernel_gradient_with_B.norm();
             }
             else
             {
-                contact_neighborhood.dW_ijV_j_[n] = kernel_gredient_with_B.norm();
+                contact_neighborhood.dW_ijV_j_[n] = kernel_gradient_with_B.norm();
             }
-            contact_neighborhood.e_ij_[n] = kernel_gredient_with_B / contact_neighborhood.dW_ijV_j_[n];
+            contact_neighborhood.e_ij_[n] = kernel_gradient_with_B / contact_neighborhood.dW_ijV_j_[n];
             contact_neighborhood.r_ij_[n] = r_ji.dot(contact_neighborhood.e_ij_[n]);
         }
     }

@@ -8,10 +8,6 @@ namespace SPH
 namespace solid_dynamics
 {
 //=================================================================================================//
-CorrectConfiguration::
-    CorrectConfiguration(BaseInnerRelation &inner_relation)
-    : LocalDynamics(inner_relation.getSPHBody()), SolidDataInner(inner_relation),
-      B_(particles_->B_) {}
 //=================================================================================================//
 } // namespace solid_dynamics
 } // namespace SPH

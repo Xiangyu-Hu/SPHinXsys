@@ -91,7 +91,7 @@ int main()
      */
     SimpleDynamics<CantileverInitialCondition> initialization(cantilever_body);
     /** Corrected configuration. */
-    InteractionDynamics<solid_dynamics::CorrectConfiguration>
+    InteractionWithUpdate<CorrectedConfigurationInner>
         corrected_configuration(cantilever_body_inner);
     /** Time step size calculation. */
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize>

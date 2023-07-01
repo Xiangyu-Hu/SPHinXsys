@@ -100,7 +100,7 @@ int main()
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
 	SimpleDynamics<DepolarizationInitialCondition> initialization(muscle_body);
-	InteractionDynamics<solid_dynamics::CorrectConfiguration> correct_configuration(muscle_body_inner_relation);
+	InteractionWithUpdate<CorrectedConfigurationInner> correct_configuration(muscle_body_inner_relation);
 	electro_physiology::GetElectroPhysiologyTimeStepSize get_time_step_size(muscle_body);
 	// Diffusion process for diffusion body.
 	electro_physiology::ElectroPhysiologyDiffusionInnerRK2 diffusion_relaxation(muscle_body_inner_relation);
