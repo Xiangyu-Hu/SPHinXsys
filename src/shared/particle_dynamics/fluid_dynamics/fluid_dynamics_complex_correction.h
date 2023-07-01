@@ -21,17 +21,40 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    all_general_dynamics.h
- * @brief   This is the header file that user code should include to pick up all
- *          general dynamics used in SPHinXsys.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file 	fluid_dynamics_complex_correction.h
+ * @brief Here, we define the algorithm classes for fluid dynamics,
+ *        in which correction matrix is used to increase the approximation
+ *        of pressure gradient.
+ * @author Yaru Ren and Xiangyu Hu
  */
 
-#pragma once
+#ifndef FLUID_DYNAMICS_COMPLEX_CORRECTION_H
+#define FLUID_DYNAMICS_COMPLEX_CORRECTION_H
 
-#include "general_bounding.h"
-#include "general_dynamics.h"
-#include "general_dynamics_refinement.h"
-#include "general_interaction.h"
-#include "general_interpolation.h"
-#include "general_life_time_dynamics.h"
+#include "fluid_dynamics_complex.h"
+#include "fluid_dynamics_inner_correction.hpp"
+
+namespace SPH
+{
+namespace fluid_dynamics
+{
+/**
+ * @class BaseIntegration1stHalfCorrectWithWall
+ * @brief  template class pressure relaxation scheme together with wall boundary
+ */
+template <class BaseIntegration1stHalfCorrectType>
+class BaseIntegration1stHalfCorrectWithWall : public InteractionWithWall<BaseIntegration1stHalfCorrectType>
+{
+  public:
+    template <typename... Args>
+    BaseIntegration1stHalfCorrectWithWall(Args &&...args)
+        : InteractionWithWall<BaseIntegration1stHalfCorrectType>(std::forward<Args>(args)...){};
+    virtual ~BaseIntegration1stHalfCorrectWithWall(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+};
+
+using Integration1stHalfCorrectWithWall = BaseIntegration1stHalfCorrectWithWall<Integration1stHalfCorrect>;
+using Integration1stHalfRiemannCorrectWithWall = BaseIntegration1stHalfCorrectWithWall<Integration1stHalfRiemannCorrect>;
+} // namespace fluid_dynamics
+} // namespace SPH
+#endif // FLUID_DYNAMICS_COMPLEX_CORRECTION_H

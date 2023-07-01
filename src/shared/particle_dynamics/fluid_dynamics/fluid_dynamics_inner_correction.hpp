@@ -1,27 +1,16 @@
-/* -------------------------------------------------------------------------*
- *								SPHinXsys									*
- * -------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic*
- * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
- * (smoothed particle hydrodynamics), a meshless computational method using	*
- * particle discretization.													*                                                                         *
- * ------------------------------------------------------------------------*/
 #pragma once
 
-#include "fluid_dynamics_inner_wkgc.h"
+#include "fluid_dynamics_inner_correction.h"
 
 namespace SPH
 {
-//=====================================================================================================//
 namespace fluid_dynamics
 {
 //=================================================================================================//
 template <class RiemannSolverType>
 BaseIntegration1stHalfCorrect<RiemannSolverType>::BaseIntegration1stHalfCorrect(BaseInnerRelation &inner_relation)
     : BaseIntegration1stHalf<RiemannSolverType>(inner_relation),
-      B_(*this->particles_->template getVariableByName<Matd>("WeightedCorrectionMatrix"))
+      B_(*this->particles_->template registerSharedVariable<Matd>("CorrectionMatrix", Matd::Identity()))
 {
     this->particles_->registerVariable(p_B_, "CorrectedPressure");
 }
@@ -53,6 +42,4 @@ void BaseIntegration1stHalfCorrect<RiemannSolverType>::interaction(size_t index_
 }
 //=================================================================================================//
 } // namespace fluid_dynamics
-  //=====================================================================================================//
 } // namespace SPH
-  //=================================================================================================//

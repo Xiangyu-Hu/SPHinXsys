@@ -34,7 +34,9 @@
 
 #include "fluid_boundary.h"
 #include "fluid_dynamics_complex.hpp"
+#include "fluid_dynamics_complex_correction.hpp"
 #include "fluid_dynamics_inner.hpp"
+#include "fluid_dynamics_inner_correction.hpp"
 #include "fluid_dynamics_multi_phase.hpp"
 #include "fluid_surface_complex.h"
 #include "fluid_surface_inner.hpp"

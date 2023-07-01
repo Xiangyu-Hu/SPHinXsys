@@ -21,17 +21,43 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    all_general_dynamics.h
- * @brief   This is the header file that user code should include to pick up all
- *          general dynamics used in SPHinXsys.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file 	fluid_dynamics_inner_correction.h
+ * @brief Here, we define the algorithm classes for fluid dynamics,
+ *        in which correction matrix is used to increase the approximation
+ *        of pressure gradient.
+ * @author Yaru Ren and Xiangyu Hu
  */
 
-#pragma once
+#ifndef FLUID_DYNAMICS_INNER_CORRECTION_H
+#define FLUID_DYNAMICS_INNER_CORRECTION_H
 
-#include "general_bounding.h"
-#include "general_dynamics.h"
-#include "general_dynamics_refinement.h"
-#include "general_interaction.h"
-#include "general_interpolation.h"
-#include "general_life_time_dynamics.h"
+#include "fluid_dynamics_inner.h"
+
+namespace SPH
+{
+namespace fluid_dynamics
+{
+/**
+ * @class BaseIntegration1stHalfCorrect
+ */
+template <class RiemannSolverType>
+class BaseIntegration1stHalfCorrect : public BaseIntegration1stHalf<RiemannSolverType>
+{
+  public:
+    explicit BaseIntegration1stHalfCorrect(BaseInnerRelation &inner_relation);
+    virtual ~BaseIntegration1stHalfCorrect(){};
+
+    using BaseIntegration1stHalf<RiemannSolverType>::BaseIntegration1stHalf;
+    void initialization(size_t index_i, Real dt);
+    void interaction(size_t index_i, Real dt);
+
+  protected:
+    StdLargeVec<Matd> p_B_;
+    StdLargeVec<Matd> &B_;
+};
+using Integration1stHalfCorrect = BaseIntegration1stHalfCorrect<NoRiemannSolver>;
+/** define the mostly used pressure relaxation scheme using Riemann solver */
+using Integration1stHalfRiemannCorrect = BaseIntegration1stHalfCorrect<AcousticRiemannSolver>;
+} // namespace fluid_dynamics
+} // namespace SPH
+#endif // FLUID_DYNAMICS_INNER_CORRECTION_H

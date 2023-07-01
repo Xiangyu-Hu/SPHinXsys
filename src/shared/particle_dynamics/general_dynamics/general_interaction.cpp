@@ -1,4 +1,4 @@
-#include "general_dynamics_wkgc.h"
+#include "general_interaction.h"
 #include "base_particles.hpp"
 
 namespace SPH
@@ -9,7 +9,7 @@ CorrectionMatrixInner::
     : LocalDynamics(inner_relation.getSPHBody()),
       GeneralDataDelegateInner(inner_relation),
       beta_(beta), alpha_(alpha),
-      B_(*particles_->registerSharedVariable<Matd>("WeightedCorrectionMatrix")) {}
+      B_(*particles_->getVariableByName<Matd>("CorrectionMatrix")) {}
 //=================================================================================================//
 void CorrectionMatrixInner::interaction(size_t index_i, Real dt)
 {
