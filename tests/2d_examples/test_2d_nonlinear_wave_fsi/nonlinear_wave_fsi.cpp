@@ -1,6 +1,6 @@
 /**
- * @file 	wfsi.h
- * @brief 	This is the 2d case file for wave impact with tension leg floating structure.
+ * @file 	nonlinear_wave_fsi.h
+ * @brief 	This is the 2d case file for wave impact with tension leg moored floating structure.
  * @author  Nicolò Salis
  */
 #include "sphinxsys.h" //SPHinXsys Library.
