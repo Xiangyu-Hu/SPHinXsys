@@ -21,17 +21,32 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    all_simbody.h
- * @brief   headers for SimBody engine.
- * @author	Chi ZHang and Xiangyu Hu
+ * @file 	type_wrapper.h
+ * @brief 	type wrapper between eigen and SimTK.
+ * @author	Chi Zhang and Xiangyu Hu
  */
+#ifndef TYPE_WRAPPER_H
+#define TYPE_WRAPPER_H
 
-#ifndef ALL_SIMBODY_H
-#define ALL_SIMBODY_H
-
+#include "base_data_type.h"
 #include "simbody_middle.h"
-#include "state_engine.h"
-#include "type_wrapper.h"
-#include "xml_engine.h"
 
-#endif // ALL_SIMBODY_H
+namespace SPH
+{
+using SimTKVec2 = SimTK::Vec2;
+using SimTKVec3 = SimTK::Vec3;
+using SimTKMat22 = SimTK::Mat22;
+using SimTKMat33 = SimTK::Mat33;
+
+SimTKVec2 EigenToSimTK(const Vec2d &eigen_vector);
+SimTKVec3 EigenToSimTK(const Vec3d &eigen_vector);
+Vec2d SimTKToEigen(const SimTKVec2 &simTK_vector);
+Vec3d SimTKToEigen(const SimTKVec3 &simTK_vector);
+
+SimTKMat22 EigenToSimTK(const Mat2d &eigen_matrix);
+SimTKMat33 EigenToSimTK(const Mat3d &eigen_matrix);
+Mat2d SimTKToEigen(const SimTKMat22 &simTK_matrix);
+Mat3d SimTKToEigen(const SimTKMat33 &simTK_matrix);
+
+} // namespace SPH
+#endif // TYPE_WRAPPER_H

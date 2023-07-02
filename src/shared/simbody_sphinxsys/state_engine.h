@@ -37,7 +37,6 @@
 
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
-#include "all_simbody.h"
 #include "base_data_package.h"
 #include "exception.h"
 
@@ -46,11 +45,8 @@
 #include <stdexcept>
 #include <string>
 
-#include "SimTKcommon.h"
-#include "SimTKmath.h"
-#include "Simbody.h"
-#include "simbody/internal/MultibodySystem.h"
-
+#include "simbody_middle.h"
+#include "xml_engine.h"
 namespace SPH
 {
 /**

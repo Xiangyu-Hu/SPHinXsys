@@ -29,16 +29,11 @@
 #ifndef XML_ENGINE_SIMBODY_H
 #define XML_ENGINE_SIMBODY_H
 
-#include "base_data_package.h"
-#include "sph_data_containers.h"
-
-#include "SimTKcommon.h"
-#include "SimTKcommon/internal/String.h"
 #include "SimTKcommon/internal/Xml.h"
-
-#include <cstdio>
-#include <iostream>
-#include <string>
+#include "base_data_package.h"
+#include "simbody_middle.h"
+#include "sph_data_containers.h"
+#include "type_wrapper.h"
 
 #include <filesystem>
 #include <fstream>
