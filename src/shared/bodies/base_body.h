@@ -153,6 +153,12 @@ class SPHBody
         base_material_->initializeLocalParameters(base_particles_);
     };
 
+    template <typename DataType>
+    void addBodyState(StdLargeVec<DataType> &variable_addrs, const std::string &variable_name)
+    {
+        base_particles_->template registerVariable<DataType>(variable_addrs, variable_name);
+    };
+
     template <typename VariableType>
     void addBodyStateForRecording(const std::string &variable_name)
     {
@@ -163,6 +169,12 @@ class SPHBody
     void addDerivedBodyStateForRecording(Args &&...args)
     {
         base_particles_->template addDerivedVariableToWrite<DerivedVariableMethod>(std::forward<Args>(args)...);
+    };
+
+    template <typename VariableType>
+    void addBodyStateToRestart(const std::string &variable_name)
+    {
+        base_particles_->template addVariableToRestart<VariableType>(variable_name);
     };
 
     virtual void writeParticlesToVtuFile(std::ostream &output_file);

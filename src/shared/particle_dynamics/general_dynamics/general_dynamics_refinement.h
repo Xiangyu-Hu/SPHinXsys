@@ -89,12 +89,12 @@ class ComputeDensityErrorInner : public LocalDynamics, public GeneralDataDelegat
  * @class ComputeDensityErrorWithWall
  * @brief compute error of particle splitting and merging
  */
-class ComputeDensityErrorWithWall : public ComputeDensityErrorInner, public GeneralDataDelegateContact
+class ComputeDensityErrorWithWall : public ComputeDensityErrorInner, public GeneralDataDelegateContactOnly
 {
   public:
     ComputeDensityErrorWithWall(ComplexRelation &complex_relation)
         : ComputeDensityErrorInner(complex_relation.getInnerRelation()),
-          GeneralDataDelegateContact(complex_relation.getContactRelation())
+          GeneralDataDelegateContactOnly(complex_relation.getContactRelation())
     {
         for (size_t k = 0; k != contact_bodies_.size(); ++k)
         {

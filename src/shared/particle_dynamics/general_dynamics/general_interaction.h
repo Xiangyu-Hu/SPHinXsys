@@ -48,7 +48,7 @@ class CorrectedConfigurationInner : public LocalDynamics, public GeneralDataDele
     void update(size_t index_i, Real dt = 0.0);
 };
 
-class CorrectedConfigurationComplex : public CorrectedConfigurationInner, public GeneralDataDelegateContact
+class CorrectedConfigurationComplex : public CorrectedConfigurationInner, public GeneralDataDelegateContactOnly
 {
   public:
     CorrectedConfigurationComplex(ComplexRelation &complex_relation, int beta = 0, Real alpha = Real(0));

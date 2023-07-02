@@ -69,12 +69,12 @@ class KernelGradientWithCorrectionInner : public LocalDynamics, public GeneralDa
  * @class KernelGradientWithCorrectionComplex
  * @brief obtain the corrected initial configuration in strong form and correct kernel gradient in complex topology
  */
-class KernelGradientWithCorrectionComplex : public BaseInteractionComplex<KernelGradientWithCorrectionInner, GeneralDataDelegateContact>
+class KernelGradientWithCorrectionComplex : public BaseInteractionComplex<KernelGradientWithCorrectionInner, GeneralDataDelegateContactOnly>
 {
   public:
     template <typename... Args>
     KernelGradientWithCorrectionComplex(Args &&...args)
-        : BaseInteractionComplex<KernelGradientWithCorrectionInner, GeneralDataDelegateContact>(std::forward<Args>(args)...){};
+        : BaseInteractionComplex<KernelGradientWithCorrectionInner, GeneralDataDelegateContactOnly>(std::forward<Args>(args)...){};
     virtual ~KernelGradientWithCorrectionComplex(){};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
