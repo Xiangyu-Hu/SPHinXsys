@@ -10,9 +10,9 @@
  *                                                                           *
  * SPHinXsys is partially funded by German Research Foundation               *
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
- *  HU1527/12-1 and HU1527/12-4                                              *
+ *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2022 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2023 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -21,10 +21,9 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	mesh_with_data_packages.h
- * @brief 	This class is designed to save memory and increase computational efficiency on mesh.
- *			TODO: the connection between successive meshes in refined mesh should enhanced.
- * @author	Chi ZHang and Xiangyu Hu
+ * @file    mesh_with_data_packages.h
+ * @brief   This class is designed to save memory and increase computational efficiency on mesh.
+ * @author  Chi Zhang and Xiangyu Hu
  */
 
 #ifndef MESH_WITH_DATA_PACKAGES_H
@@ -73,7 +72,6 @@ void package_parallel_for(const ConcurrentVec<DataPackageType *> &data_pkgs,
  * 		  by which the data in a derived class can be on- or off-grid.
  * 		  The data package can be defined in a cell of a background mesh so the pkg_index is
  * 		  the cell location on the mesh.
- *        TODO: The class will be enriched with general methods for all data packages.
  */
 class BaseDataPackage
 {
@@ -90,13 +88,13 @@ class BaseDataPackage
   protected:
     Arrayi cell_index_on_mesh_; /**< index of this data package on the background mesh, zero if it is not on the mesh. */
     /** reserved value: 0 not occupying background mesh, 1 occupying.
-     *  guide to use: large magnitude for high priority of the data package. */
+     *  guide to use: larger for high priority of the data package. */
     int state_indicator_;
 };
 
 /**
  * @class GridDataPackage
- * @brief Abstract base class for a data package
+ * @brief Abstract base class for a grid-based data package
  * whose data are defined on the grids of a small mesh patch.
  * Note that, pkg_addrs_size = pkg_size + 2 * pkg_addrs_buffer;
  * Also note that, while the mesh_lower_bound_ locates the first data address,
@@ -137,14 +135,14 @@ class GridDataPackage : public BaseDataPackage, public BaseMesh
      *  for function involving operations on data neighbors. */
     template <typename FunctionOnAddress>
     void for_each_addrs(const FunctionOnAddress &function);
-    /** access specific package data with discrete variable */
+    /** access specific package data with mesh variable */
     template <typename DataType>
     PackageData<DataType> &getPackageData(const MeshVariable<DataType> &mesh_variable)
     {
         constexpr int type_index = DataTypeIndex<DataType>::value;
         return std::get<type_index>(all_pkg_data_)[mesh_variable.IndexInContainer()];
     };
-    /** access specific package data address with discrete variable */
+    /** access specific package data address with mesh variable */
     template <typename DataType>
     PackageDataAddress<DataType> &getPackageDataAddress(const MeshVariable<DataType> &mesh_variable)
     {
@@ -260,7 +258,7 @@ class MeshWithGridDataPackages : public Mesh
     virtual Real DataSpacing() override { return data_spacing_; };
 
   protected:
-    MeshVariableAssemble all_mesh_variables_;              /**< all discrete variables on this mesh. */
+    MeshVariableAssemble all_mesh_variables_;              /**< all mesh variables on this mesh. */
     MyMemoryPool<GridDataPackageType> data_pkg_pool_;      /**< memory pool for all packages in the mesh. */
     MeshDataMatrix<GridDataPackageType *> data_pkg_addrs_; /**< Address of data packages. */
     ConcurrentVec<GridDataPackageType *> inner_data_pkgs_; /**< Inner data packages which is able to carry out spatial operations. */

@@ -1,4 +1,3 @@
-
 /**
  * @file 	io_vtk.cpp
  * @author	Luhui Han, Chi Zhang and Xiangyu Hu
@@ -15,8 +14,7 @@ void BodyStatesRecordingToVtp::writeWithFileName(const std::string &sequence)
     {
         if (body->checkNewlyUpdated())
         {
-            // TODO: we can short the file name by without using SPHBody
-            std::string filefullpath = io_environment_.output_folder_ + "/SPHBody_" + body->getName() + "_" + sequence + ".vtp";
+            std::string filefullpath = io_environment_.output_folder_ + body->getName() + "_" + sequence + ".vtp";
             if (fs::exists(filefullpath))
             {
                 fs::remove(filefullpath);
@@ -29,7 +27,8 @@ void BodyStatesRecordingToVtp::writeWithFileName(const std::string &sequence)
 
             BaseParticles &base_particles = body->getBaseParticles();
             size_t total_real_particles = base_particles.total_real_particles_;
-            out_file << "  <Piece Name =\"" << body->getName() << "\" NumberOfPoints=\"" << total_real_particles << "\" NumberOfVerts=\"" << total_real_particles << "\">\n";
+            out_file << "  <Piece Name =\"" << body->getName() << "\" NumberOfPoints=\"" << total_real_particles
+                     << "\" NumberOfVerts=\"" << total_real_particles << "\">\n";
 
             body->writeParticlesToVtpFile(out_file);
 

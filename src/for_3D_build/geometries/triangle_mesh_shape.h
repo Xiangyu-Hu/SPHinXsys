@@ -10,9 +10,9 @@
  *                                                                           *
  * SPHinXsys is partially funded by German Research Foundation               *
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
- *  HU1527/12-1 and HU1527/12-4                                              *
+ *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2022 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2023 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -21,10 +21,9 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	triangle_mesh_shape.h
- * @brief 	Here, we define the 3D geometric algorithms. they are based on the polymesh.
- * @details 	The idea is to define complex geometry by passing stl, obj or other
- *			polymesh files. TODO: the translation needs to be generalized into transform.
+ * @file 	  triangle_mesh_shape.h
+ * @brief   Here, we define the 3D geometries based on the polymesh.
+ * @details The idea is to define complex geometry by passing stl, obj or other polymesh files.
  * @author	Chi ZHang and Xiangyu Hu
  */
 
