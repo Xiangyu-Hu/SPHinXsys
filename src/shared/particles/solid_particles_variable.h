@@ -84,12 +84,12 @@ class TranslationAndRotation : public SolidDataSimple,
                                public LocalDynamics
 {
   public:
-    explicit TranslationAndRotation(SPHBody &sph_body, Transformd &transform);
+    explicit TranslationAndRotation(SPHBody &sph_body, Transform &transform);
     virtual ~TranslationAndRotation(){};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    Transformd &transform_;
+    Transform &transform_;
     StdLargeVec<Vecd> &pos_, &pos0_;
 };
 

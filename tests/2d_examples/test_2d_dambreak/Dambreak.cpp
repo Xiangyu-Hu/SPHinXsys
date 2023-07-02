@@ -41,8 +41,8 @@ class WallBoundary : public ComplexShape
   public:
     explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transform2d(outer_wall_translation), outer_wall_halfsize);
-        subtract<TransformShape<GeometricShapeBox>>(Transform2d(inner_wall_translation), inner_wall_halfsize);
+        add<TransformShape<GeometricShapeBox>>(Transform(outer_wall_translation), outer_wall_halfsize);
+        subtract<TransformShape<GeometricShapeBox>>(Transform(inner_wall_translation), inner_wall_halfsize);
     }
 };
 //----------------------------------------------------------------------
@@ -62,7 +62,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody water_block(
         sph_system, makeShared<TransformShape<GeometricShapeBox>>(
-                        Transform2d(water_block_translation), water_block_halfsize, "WaterBody"));
+                        Transform(water_block_translation), water_block_halfsize, "WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
 

@@ -64,7 +64,7 @@ class WallBoundary : public MultiPolygonShape
     {
         multi_polygon_.addAPolygon(CreateOuterWallShape(), ShapeBooleanOps::add);
         multi_polygon_.addAPolygon(CreateInnerWallShape(), ShapeBooleanOps::sub);
-        multi_polygon_.addABox(Transform2d(inlet_translation), inlet_halfsize, ShapeBooleanOps::sub);
+        multi_polygon_.addABox(Transform(inlet_translation), inlet_halfsize, ShapeBooleanOps::sub);
     }
 };
 //----------------------------------------------------------------------
@@ -95,7 +95,7 @@ int main()
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_body(system, makeShared<TransformShape<GeometricShapeBox>>(
-                                     Transform2d(inlet_translation), inlet_halfsize, "WaterBody"));
+                                     Transform(inlet_translation), inlet_halfsize, "WaterBody"));
     water_body.sph_adaptation_->resetKernel<KernelTabulated<KernelWendlandC2>>(20);
     water_body.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
     water_body.generateParticles<ParticleGeneratorLattice>();
@@ -131,7 +131,7 @@ int main()
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_body);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
     BodyAlignedBoxByParticle emitter(
-        water_body, makeShared<AlignedBoxShape>(Transform2d(inlet_translation), inlet_halfsize));
+        water_body, makeShared<AlignedBoxShape>(Transform(inlet_translation), inlet_halfsize));
     SimpleDynamics<InletInflowCondition> inflow_condition(emitter);
     SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_injection(emitter, 350, 0);
 

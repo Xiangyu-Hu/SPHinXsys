@@ -279,7 +279,7 @@ int main()
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(fluid_body_inner);
     /** Inflow boundary condition. */
     BodyAlignedBoxByCell inflow_buffer(
-        thermofluid_body, makeShared<AlignedBoxShape>(Transform2d(Vec2d(buffer_translation)), buffer_halfsize));
+        thermofluid_body, makeShared<AlignedBoxShape>(Transform(Vec2d(buffer_translation)), buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.

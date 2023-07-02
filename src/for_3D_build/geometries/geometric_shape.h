@@ -29,8 +29,8 @@
 #ifndef GEOMETRIC_SHAPE_H
 #define GEOMETRIC_SHAPE_H
 
+#include "all_simbody.h"
 #include "base_geometry.h"
-#include "simbody_middle.h"
 
 namespace SPH
 {

@@ -31,8 +31,8 @@
 #ifndef TRIANGULAR_MESH_SHAPE_H
 #define TRIANGULAR_MESH_SHAPE_H
 
+#include "all_simbody.h"
 #include "base_geometry.h"
-#include "simbody_middle.h"
 
 #include <filesystem>
 #include <fstream>

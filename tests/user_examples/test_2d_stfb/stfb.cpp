@@ -29,7 +29,7 @@ int main(int ac, char *av[])
     wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
     SolidBody structure(system, makeShared<TransformShape<GeometricShapeBox>>(
-                                    Transform2d(structure_translation), structure_halfsize, "Structure"));
+                                    Transform(structure_translation), structure_halfsize, "Structure"));
     structure.defineParticlesAndMaterial<SolidParticles, Solid>(rho_s);
     structure.generateParticles<ParticleGeneratorLattice>();
 
@@ -83,7 +83,7 @@ int main(int ac, char *av[])
     SimTK::GeneralForceSubsystem forces(MBsystem);
     /** mass properties of the fixed spot. */
     StructureSystemForSimbody structure_multibody(structure, makeShared<TransformShape<GeometricShapeBox>>(
-                                                                 Transform2d(structure_translation), structure_halfsize, "Structure"));
+                                                                 Transform(structure_translation), structure_halfsize, "Structure"));
     /** Mass properties of the constrained spot.
      * SimTK::MassProperties(mass, center of mass, inertia)
      */
@@ -144,7 +144,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
     BodyRegionByCell wave_probe_buffer(water_block, makeShared<TransformShape<GeometricShapeBox>>(
-                                                        Transform2d(gauge_translation), gauge_halfsize, "FreeSurfaceGauge"));
+                                                        Transform(gauge_translation), gauge_halfsize, "FreeSurfaceGauge"));
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight>>> wave_gauge(io_environment, wave_probe_buffer);
     InteractionDynamics<InterpolatingAQuantity<Vecd>>
         interpolation_observer_position(observer_contact_with_structure, "Position", "Position");
