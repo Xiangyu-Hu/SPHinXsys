@@ -1,6 +1,6 @@
 /**
  * @file 	nonlinear_wave_fsi.h
- * @brief 	This is the 3d case file for wave impact with tension leg floating structure.
+ * @brief 	This is the 3d case file for wave impact with tension leg moored floating structure.
  * @author   Nicolò Salis
  */
 #include "sphinxsys.h" //SPHinXsys Library.
