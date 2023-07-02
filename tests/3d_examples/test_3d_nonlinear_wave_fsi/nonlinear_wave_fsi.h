@@ -1,6 +1,6 @@
 /**
- * @file 	wfsi.h
- * @brief 	This is the 3d case file for wave impact with tension leg floating structure.
+ * @file 	nonlinear_wave_fsi.h
+ * @brief 	This is the 3d case file for wave impact with tension leg moored floating structure.
  * @author   Nicolò Salis
  */
 #include "sphinxsys.h"
@@ -9,14 +9,14 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real total_physical_time = 25.0; /**< TOTAL SIMULATION TIME*/
-Real DL = 20.0;                  /**< Tank length. */
+Real total_physical_time = 20.0; /**< TOTAL SIMULATION TIME*/
+Real DL = 17.0;                  /**< Tank length. */
 Real DH = 1.5;                   /**< Tank height. */
 Real DW = 2.0;
 Real WH = 0.8;    /**< Water block height. */
-Real BEH = 2.0;   /**< Beach end height. */
+Real BEH = 2.0;   /**< Flume height. */
 Real Wmk_p = 0.0; /**< Wavemaker initial position. */
-Real EXS = 2.0;   /**< etra space behind the wavemaker*/
+Real EXS = 2.0;   /**< Extra space behind the wavemaker*/
 Real HWM = 1.5;   /**< Wameker height*/
 Real d = 0.8;     /**< Still water level*/
 Real dDx = 8;

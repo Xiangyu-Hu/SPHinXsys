@@ -53,7 +53,7 @@ int main(int ac, char *av[])
     //	Particle relaxation time stepping start here.
     //----------------------------------------------------------------------
     int ite_p = 0;
-    while (ite_p < 1000)
+    while (ite_p < 500)
     {
         update_smoothing_length_ratio.exec();
         relaxation_step_inner.exec();
@@ -211,7 +211,7 @@ int main(int ac, char *av[])
     InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
     /** Damp waves */
     Vecd translation_damping(0.5 * DW, 16.5, 0.5 * HWM);
-    Vecd damping(0.5 * DW, 1.5, 0.5 * HWM);
+    Vecd damping(0.5 * DW, 0.5, 0.5 * HWM);
     BodyRegionByCell damping_buffer(water_block, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_damping), damping));
     SimpleDynamics<fluid_dynamics::DampingBoundaryCondition> damping_wave(damping_buffer);
     /** Fluid force on structure. */
