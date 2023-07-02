@@ -32,17 +32,6 @@
 
 namespace SPH
 {
-
-SimTKVec2 EigenToSimTK(const Vec2d &eigen_vector);
-SimTKVec3 EigenToSimTK(const Vec3d &eigen_vector);
-Vec2d SimTKToEigen(const SimTKVec2 &simTK_vector);
-Vec3d SimTKToEigen(const SimTKVec3 &simTK_vector);
-
-SimTKMat22 EigenToSimTK(const Mat2d &eigen_matrix);
-SimTKMat33 EigenToSimTK(const Mat3d &eigen_matrix);
-Mat2d SimTKToEigen(const SimTKMat22 &simTK_matrix);
-Mat3d SimTKToEigen(const SimTKMat33 &simTK_matrix);
-
 Vec2d FirstAxisVector(const Vec2d &zero_vector);
 Vec3d FirstAxisVector(const Vec3d &zero_vector);
 
@@ -156,118 +145,6 @@ template <class BoundingBoxType>
 Real MinimumDimension(const BoundingBoxType &bbox)
 {
     return (bbox.second_ - bbox.first_).cwiseAbs().minCoeff();
-};
-
-/**
- * @class Rotation2d
- * @brief Rotation Coordinate transform (around the origin)
- * in 2D with an angle.
- */
-class Rotation2d
-{
-    Real cosine_angle_, sine_angle_;
-
-  public:
-    explicit Rotation2d(Real angle)
-        : cosine_angle_(std::cos(angle)), sine_angle_(std::sin(angle)){};
-    virtual ~Rotation2d(){};
-
-    /** Forward transformation. */
-    Vec2d xformFrameVecToBase(const Vec2d &origin)
-    {
-        return Vec2d(origin[0] * cosine_angle_ - origin[1] * sine_angle_,
-                     origin[1] * cosine_angle_ + origin[0] * sine_angle_);
-    };
-    /** Inverse transformation. */
-    Vec2d xformBaseVecToFrame(const Vec2d &target)
-    {
-        return Vec2d(target[0] * cosine_angle_ + target[1] * sine_angle_,
-                     target[1] * cosine_angle_ - target[0] * sine_angle_);
-    };
-};
-
-/**
- * @class Transform2d
- * @brief Coordinate transform in 2D
- * Note that the rotation is around the frame (or local) origin.
- */
-class Transform2d
-{
-  private:
-    Rotation2d rotation_;
-    Vec2d translation_;
-
-  public:
-    Transform2d() : rotation_(Rotation2d(0)), translation_(Vec2d::Zero()){};
-    explicit Transform2d(const Vec2d &translation) : rotation_(Rotation2d(0)), translation_(translation){};
-    explicit Transform2d(const Rotation2d &rotation, const Vec2d &translation = Vec2d::Zero())
-        : rotation_(rotation), translation_(translation){};
-
-    /** Forward rotation. */
-    Vec2d xformFrameVecToBase(const Vec2d &origin)
-    {
-        return rotation_.xformFrameVecToBase(origin);
-    };
-
-    /** Forward transformation. Note that the rotation operation is carried out first. */
-    Vec2d shiftFrameStationToBase(const Vec2d &origin)
-    {
-        return translation_ + xformFrameVecToBase(origin);
-    };
-
-    /** Inverse rotation. */
-    Vec2d xformBaseVecToFrame(const Vec2d &target)
-    {
-        return rotation_.xformBaseVecToFrame(target);
-    };
-
-    /** Inverse transformation. Note that the inverse translation operation is carried out first. */
-    Vec2d shiftBaseStationToFrame(const Vec2d &target)
-    {
-        return xformBaseVecToFrame(target - translation_);
-    };
-};
-
-/**
- * @class Transform3d
- * @brief Wrapper for SimTK::Transform
- * Note that the rotation is around the frame (or local) origin.
- */
-class Transform3d
-{
-  private:
-    Mat3d rotation_, inv_rotation_;
-    Vec3d translation_;
-
-  public:
-    explicit Transform3d(const Mat3d &rotation, const Vec3d &translation = Vec3d::Zero())
-        : rotation_(rotation), inv_rotation_(rotation_.transpose()), translation_(translation){};
-    Transform3d() : Transform3d(Mat3d::Identity(), Vec3d::Zero()){};
-    explicit Transform3d(const Vec3d &translation) : Transform3d(Mat3d::Identity(), translation){};
-
-    /** Forward rotation. */
-    Vec3d xformFrameVecToBase(const Vec3d &origin)
-    {
-        return rotation_ * origin;
-    };
-
-    /** Forward transformation. Note that the rotation operation is carried out first. */
-    Vec3d shiftFrameStationToBase(const Vec3d &origin)
-    {
-        return translation_ + xformFrameVecToBase(origin);
-    };
-
-    /** Inverse rotation. */
-    Vec3d xformBaseVecToFrame(const Vec3d &target)
-    {
-        return inv_rotation_ * target;
-    };
-
-    /** Inverse transformation. Note that the inverse translation operation is carried out first. */
-    Vec3d shiftBaseStationToFrame(const Vec3d &target)
-    {
-        return xformBaseVecToFrame(target - translation_);
-    };
 };
 } // namespace SPH
 #endif // SMALL_VECTORS_H

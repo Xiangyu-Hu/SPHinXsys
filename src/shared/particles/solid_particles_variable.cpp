@@ -24,7 +24,7 @@ void OffsetInitialPosition::update(size_t index_i, Real dt)
     pos0_[index_i] += offset_;
 }
 //=============================================================================================//
-TranslationAndRotation::TranslationAndRotation(SPHBody &sph_body, Transformd &transform)
+TranslationAndRotation::TranslationAndRotation(SPHBody &sph_body, Transform &transform)
     : SolidDataSimple(sph_body), LocalDynamics(sph_body), transform_(transform),
       pos_(particles_->pos_), pos0_(particles_->pos0_) {}
 //=============================================================================================//
