@@ -10,9 +10,9 @@
  *                                                                           *
  * SPHinXsys is partially funded by German Research Foundation               *
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
- *  HU1527/12-1 and HU1527/12-4.                                             *
+ *  HU1527/12-1 and HU1527/12-4                                              *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -21,47 +21,44 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	data_type.h
- * @brief 	This is the date type definition in 2D for SPHinXsys.
- * @author	Chi ZHang and Xiangyu Hu
+ * @file 	general_interaction.h
+ * @brief 	This is the interaction dynamics applicable for all type bodies
+ * @author	Yaru Ren and Xiangyu Hu
  */
 
-#ifndef DATA_TYPE_2D_H
-#define DATA_TYPE_2D_H
+#ifndef GENERAL_INTERACTION_H
+#define GENERAL_INTERACTION_H
 
-#include "base_data_type.h"
-#include "scalar_functions.h"
-#include "vector_functions.h"
+#include "general_dynamics.h"
 
 namespace SPH
 {
-using Arrayi = Array2i;
-using Vecd = Vec2d;
-using Matd = Mat2d;
-using AlignedBox = AlignedBox2d;
-using AngularVecd = Real;
-using Rotation = Rotation2d;
-using BoundingBox = BaseBoundingBox<Vec2d>;
+class CorrectedConfigurationInner : public LocalDynamics, public GeneralDataDelegateInner
+{
+  public:
+    CorrectedConfigurationInner(BaseInnerRelation &inner_relation, int beta = 0, Real alpha = Real(0));
+    virtual ~CorrectedConfigurationInner(){};
 
-template <class DataType, int array_size>
-using PackageDataMatrix = std::array<std::array<DataType, array_size>, array_size>;
+  protected:
+    int beta_;
+    Real alpha_;
+    StdLargeVec<Matd> &B_;
 
-template <class DataType>
-using MeshDataMatrix = DataType **;
-
-/** only works for smoothing length ratio less or equal than 1.3*/
-constexpr int MaximumNeighborhoodSize = int(M_PI * 9);
-constexpr int Dimensions = 2;
-/** correction matrix, only works for thin structure dynamics. */
-const Matd reduced_unit_matrix{
-    {1.0, 0.0}, // First row
-    {0.0, 0.0}, // Second row
+    void interaction(size_t index_i, Real dt = 0.0);
+    void update(size_t index_i, Real dt = 0.0);
 };
 
-/** initial local normal, only works for thin structure dynamics. */
-const Vecd local_pseudo_n_0 = Vecd(0.0, 1.0);
+class CorrectedConfigurationComplex : public CorrectedConfigurationInner, public GeneralDataDelegateContact
+{
+  public:
+    CorrectedConfigurationComplex(ComplexRelation &complex_relation, int beta = 0, Real alpha = Real(0));
+    virtual ~CorrectedConfigurationComplex(){};
 
-const Vecd ZeroVecd = Vec2d::Zero();
+  protected:
+    StdVec<StdLargeVec<Real> *> contact_Vol_;
+    StdVec<StdLargeVec<Real> *> contact_mass_;
+
+    void interaction(size_t index_i, Real dt = 0.0);
+};
 } // namespace SPH
-
-#endif // DATA_TYPE_2D_H
+#endif // GENERAL_INTERACTION_H

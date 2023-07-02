@@ -64,7 +64,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
     /** WaveProbes. */
-    BodyRegionByCell wave_probe_buffer(water_block, makeShared<TransformShape<GeometricShapeBox>>(Transformd(translation_FS_gauge), FS_gauge));
+    BodyRegionByCell wave_probe_buffer(water_block, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_FS_gauge), FS_gauge));
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<FreeSurfaceHeightZ>>> wave_gauge(io_environment, wave_probe_buffer);
     //----------------------------------------------------------------------
     //	Basic control parameters for time stepping.

@@ -33,8 +33,8 @@ class Myocardium : public ComplexShape
   public:
     explicit Myocardium(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transformd(translation_myocardium), halfsize_myocardium);
-        add<TransformShape<GeometricShapeBox>>(Transformd(translation_stationary_plate), halfsize_stationary_plate);
+        add<TransformShape<GeometricShapeBox>>(Transform(translation_myocardium), halfsize_myocardium);
+        add<TransformShape<GeometricShapeBox>>(Transform(translation_stationary_plate), halfsize_stationary_plate);
     }
 };
 /**
@@ -45,7 +45,7 @@ class MovingPlate : public ComplexShape
   public:
     explicit MovingPlate(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transformd(translation_moving_plate), halfsize_moving_plate);
+        add<TransformShape<GeometricShapeBox>>(Transform(translation_moving_plate), halfsize_moving_plate);
     }
 };
 /**
@@ -76,8 +76,8 @@ int main()
     SimpleDynamics<TimeStepInitialization> myocardium_initialize_time_step(myocardium_body);
     SimpleDynamics<TimeStepInitialization> plate_initialize_time_step(moving_plate, makeShared<Gravity>(Vecd(-100.0, 0.0, 0.0)));
     /** Corrected configuration. */
-    InteractionDynamics<solid_dynamics::CorrectConfiguration> corrected_configuration(myocardium_body_inner);
-    InteractionDynamics<solid_dynamics::CorrectConfiguration> corrected_configuration_2(moving_plate_inner);
+    InteractionWithUpdate<CorrectedConfigurationInner> corrected_configuration(myocardium_body_inner);
+    InteractionWithUpdate<CorrectedConfigurationInner> corrected_configuration_2(moving_plate_inner);
     /** active and passive stress relaxation. */
     Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> stress_relaxation_first_half(myocardium_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(myocardium_body_inner);
@@ -92,7 +92,7 @@ int main()
 
     /** Constrain the holder. */
     BodyRegionByParticle holder(myocardium_body,
-                                makeShared<TransformShape<GeometricShapeBox>>(Transformd(translation_stationary_plate), halfsize_stationary_plate, "Holder"));
+                                makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_stationary_plate), halfsize_stationary_plate, "Holder"));
     SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_holder(holder);
     /** Add spring constraint on the plate. */
     SimpleDynamics<solid_dynamics::SpringDamperConstraintParticleWise> spring_constraint(moving_plate, Vecd(0.2, 0, 0), 0.01);

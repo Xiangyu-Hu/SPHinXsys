@@ -100,7 +100,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     /** Initial condition */
     SimpleDynamics<WeaklyCompressibleFluidInitialCondition> initial_condition(water_block);
-    InteractionWithUpdate<KernalGredientWithCorrectionComplex> kernel_gredient_update(water_block_complex);
+    InteractionWithUpdate<KernelGradientWithCorrectionComplex> kernel_gradient_update(water_block_complex);
     SimpleDynamics<EulerianWCTimeStepInitialization> initialize_a_fluid_step(water_block);
     SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
     InteractionWithUpdate<Integration1stHalfAcousticRiemannWithWall> pressure_relaxation(water_block_complex);
@@ -132,7 +132,7 @@ int main(int ac, char *av[])
     cylinder_normal_direction.exec();
     surface_indicator.exec();
     variable_reset_in_boundary_condition.exec();
-    kernel_gredient_update.exec();
+    kernel_gradient_update.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------

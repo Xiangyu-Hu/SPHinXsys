@@ -24,7 +24,7 @@
  * @file    all_general_dynamics.h
  * @brief   This is the header file that user code should include to pick up all
  *          general dynamics used in SPHinXsys.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #pragma once
@@ -32,5 +32,6 @@
 #include "general_bounding.h"
 #include "general_dynamics.h"
 #include "general_dynamics_refinement.h"
+#include "general_interaction.h"
 #include "general_interpolation.h"
 #include "general_life_time_dynamics.h"

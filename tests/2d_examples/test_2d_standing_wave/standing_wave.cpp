@@ -1,11 +1,8 @@
 /**
- * @file	standingwave.cpp
- * @brief	2D standingwave example.
+ * @file	standing_wave.cpp
+ * @brief	2D standing_wave example.
  * @author	Yaru Ren, Chi Zhang and Xiangyu Hu
  */
-#include "fluid_dynamics_complex_wkgc.hpp"
-#include "fluid_dynamics_inner_wkgc.hpp"
-#include "general_dynamics_wkgc.h"
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;   // Namespace cite here.
 #define PI 3.1415926
@@ -42,8 +39,8 @@ class WallBoundary : public ComplexShape
   public:
     explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transform2d(outer_wall_translation), outer_wall_halfsize);
-        subtract<TransformShape<GeometricShapeBox>>(Transform2d(inner_wall_translation), inner_wall_halfsize);
+        add<TransformShape<GeometricShapeBox>>(Transform(outer_wall_translation), outer_wall_halfsize);
+        subtract<TransformShape<GeometricShapeBox>>(Transform(inner_wall_translation), inner_wall_halfsize);
     }
 };
 //----------------------------------------------------------------------
@@ -194,9 +191,9 @@ int main(int ac, char *av[])
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
-    InteractionWithUpdate<CorrectionMatrixComplex> corrected_configuration_fluid(water_block_complex, 2, 0.3);
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannCorrectWithWall> fluid_pressure_relaxation_correct(water_block_complex);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_block_complex);
+    InteractionWithUpdate<CorrectedConfigurationComplex> corrected_configuration_fluid(water_block_complex, 2, 0.3);
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> fluid_density_by_summation(water_block_complex);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));

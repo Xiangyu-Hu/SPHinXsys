@@ -133,7 +133,7 @@ int main(int ac, char *av[])
     SimpleDynamics<TimeStepInitialization> beam_initialize(beam_body);
 
     /** Corrected configuration. */
-    InteractionDynamics<solid_dynamics::CorrectConfiguration> corrected_configuration(beam_body_inner);
+    InteractionWithUpdate<CorrectedConfigurationInner> corrected_configuration(beam_body_inner);
 
     /** Time step size calculation. */
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);

@@ -22,7 +22,7 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file 	structural_simulation_class.h
- * @brief 	The structural simulation module is licensed under the Aladdin Free Public License 
+ * @brief 	The structural simulation module is licensed under the Aladdin Free Public License
  * (https://spdx.org/licenses/Aladdin.html) regarding usage for medical device development.
  * Commercial use for medical device development is not permitted. This does not apply to applications in other fields.
  * @details	solid structural simulation class for general structural simulations
@@ -91,7 +91,7 @@ class SolidBodyForSimulation
     InnerRelation inner_body_relation_;
 
     SimpleDynamics<NormalDirectionFromBodyShape> initial_normal_direction_;
-    InteractionDynamics<solid_dynamics::CorrectConfiguration> correct_configuration_;
+    InteractionWithUpdate<CorrectedConfigurationInner> correct_configuration_;
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half_;
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half_;
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>> damping_random_;
@@ -108,7 +108,7 @@ class SolidBodyForSimulation
     InnerRelation *getInnerBodyRelation() { return &inner_body_relation_; };
 
     SimpleDynamics<NormalDirectionFromBodyShape> *getInitialNormalDirection() { return &initial_normal_direction_; };
-    InteractionDynamics<solid_dynamics::CorrectConfiguration> *getCorrectConfiguration() { return &correct_configuration_; };
+    InteractionWithUpdate<CorrectedConfigurationInner> *getCorrectConfiguration() { return &correct_configuration_; };
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> *getStressRelaxationFirstHalf() { return &stress_relaxation_first_half_; };
     Dynamics1Level<solid_dynamics::Integration2ndHalf> *getStressRelaxationSecondHalf() { return &stress_relaxation_second_half_; };
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>> *getDampingWithRandomChoice() { return &damping_random_; };

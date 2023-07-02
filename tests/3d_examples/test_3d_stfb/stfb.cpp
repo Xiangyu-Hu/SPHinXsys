@@ -1,14 +1,15 @@
 /**
- * @file 	owsc.cpp
- * @brief 	This is the test of wave interaction with Oscillating Wave Surge Converter (OWSC)
- * @author   Chi Zhang and Xiangyu Hu
+ * @file 	 stfb.cpp
+ * @brief 	 This is the case file for 3D still floaing body.
+ * @author   Nicolò Salis
  */
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;
-#include "owsc.h" //header for this case
+#include "stfb.h" //header for this case
 
 int main(int ac, char *av[])
 {
+    std::cout << "Mass " << StructureMass << " str_sup " << FlStA << " rho_s " << rho_s << std::endl;
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
@@ -26,34 +27,35 @@ int main(int ac, char *av[])
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
-    SolidBody flap(system, makeShared<Flap>("Flap"));
-    flap.defineParticlesAndMaterial<SolidParticles, Solid>(rho0_s);
-    flap.generateParticles<ParticleGeneratorLattice>();
+    SolidBody structure(system, makeShared<FloatingStructure>("Structure"));
+    structure.defineParticlesAndMaterial<SolidParticles, Solid>(rho_s);
+    structure.generateParticles<ParticleGeneratorLattice>();
 
-    ObserverBody observer(system, "FlapObserver");
-    observer.generateParticles<FlapObserverParticleGenerator>();
+    ObserverBody observer(system, "Observer");
+    observer.defineAdaptationRatios(1.15, 2.0);
+    observer.generateParticles<ObserverParticleGenerator>(
+        StdVec<Vecd>{obs});
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
-    InnerRelation flap_inner(flap);
-    ComplexRelation water_block_complex(water_block_inner, {&wall_boundary, &flap});
-    ContactRelation flap_contact(flap, {&water_block});
+    InnerRelation structure_inner(structure);
+    ComplexRelation water_block_complex(water_block_inner, {&wall_boundary, &structure});
+    ContactRelation structure_contact(structure, {&water_block});
     ContactRelation observer_contact_with_water(observer, {&water_block});
-    ContactRelation observer_contact_with_flap(observer, {&flap});
+    ContactRelation observer_contact_with_structure(observer, {&structure});
     //----------------------------------------------------------------------
     //	Define all numerical methods which are used in this case.
     //----------------------------------------------------------------------
-    SimpleDynamics<OffsetInitialPosition> flap_offset_position(flap, offset);
+    SimpleDynamics<OffsetInitialPosition> structure_offset_position(structure, offset);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-    SimpleDynamics<NormalDirectionFromBodyShape> flap_normal_direction(flap);
-
+    SimpleDynamics<NormalDirectionFromBodyShape> str_normal(structure);
     /** corrected strong configuration. */
-    InteractionWithUpdate<CorrectedConfigurationInner> flap_corrected_configuration(flap_inner);
+    InteractionWithUpdate<CorrectedConfigurationInner> str_corrected_conf(structure_inner);
     /** Time step initialization, add gravity. */
-    SimpleDynamics<TimeStepInitialization> initialize_time_step_to_fluid(water_block, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
+    SimpleDynamics<TimeStepInitialization> initialize_time_step_to_fluid(water_block, makeShared<Gravity>(Vecd(0.0, 0.0, -gravity_g)));
     /** Evaluation of density by summation approach. */
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_density_by_summation(water_block_complex);
     /** time step size without considering sound wave speed. */
@@ -65,15 +67,18 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> density_relaxation(water_block_complex);
     /** Computing viscous acceleration. */
     InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
-    /** Inflow boundary condition. */
-    BodyRegionByCell damping_buffer(water_block, makeShared<MultiPolygonShape>(createDampingBufferShape()));
-    SimpleDynamics<fluid_dynamics::DampingBoundaryCondition> damping_wave(damping_buffer);
-    /** Fluid force on flap. */
-    InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(flap_contact);
-    InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid> fluid_force_on_flap(flap_contact, viscous_force_on_solid);
-    /** constrain region of the part of wall boundary. */
-    BodyRegionByParticle wave_maker(wall_boundary, makeShared<MultiPolygonShape>(createWaveMakerShape()));
-    SimpleDynamics<WaveMaking> wave_making(wave_maker);
+    /** Fluid force on structure. */
+    InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(structure_contact);
+    InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid> fluid_force_on_solid(structure_contact, viscous_force_on_solid);
+    /*-------------------------------------------------------------------------------*/
+    /*--------------------------FREE SURFACE IDENTIFICATION--------------------------*/
+    /*-------------------------------------------------------------------------------*/
+    InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex>
+        free_stream_surface_indicator(water_block_complex);
+    /** Impose transport velocity formulation. */
+    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex>
+        transport_velocity_correction(water_block_complex);
+    /*-------------------------------------------------------------------------------*/
     //----------------------------------------------------------------------
     //	Define the multi-body system
     //----------------------------------------------------------------------
@@ -84,26 +89,22 @@ int main(int ac, char *av[])
     /** the forces of the system. */
     SimTK::GeneralForceSubsystem forces(MBsystem);
     /** mass properties of the fixed spot. */
-    FlapSystemForSimbody flap_multibody(flap, makeShared<MultiPolygonShape>(createFlapSimbodyConstrainShape(), "FlapMultiBody"));
+    StructureSystemForSimbody structure_multibody(structure, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_str), halfsize_structure));
     /** Mass properties of the constrained spot.
      * SimTK::MassProperties(mass, center of mass, inertia)
      */
-    SimTK::Body::Rigid pin_spot_info(*flap_multibody.body_part_mass_properties_);
+    SimTK::Body::Rigid structure_info(*structure_multibody.body_part_mass_properties_);
     /**
-     * @brief   Pin (MobilizedBody &parent, const Transform &X_PF, const Body &bodyInfo, const
-                                            Transform &X_BM, Direction=Forward)1
-     * @details Create a Pin mobilizer between an existing parent (inboard) body P and
-     * 			a new child (outboard) body B created by copying the given bodyInfo into
-     *			a privately-owned Body within the constructed MobilizedBody object.
+     * @brief  ** Create a %Planar mobilizer between an existing parent (inboard) body P
+     *	and a new child (outboard) body B created by copying the given \a bodyInfo
+     *	into a privately-owned Body within the constructed %MobilizedBody object.
+     *	Specify the mobilizer frames F fixed to parent P and M fixed to child B.
      * @param[in] inboard(SimTKVec3) Defines the location of the joint point relative to the parent body.
      * @param[in] outboard(SimTKVec3) Defines the body's origin location to the joint point.
      * @note	The body's origin location can be the mass center, the the center of mass should be SimTKVec3(0)
      * 			in SimTK::MassProperties(mass, com, inertia)
      */
-    SimTK::MobilizedBody::Pin pin_spot(matter.Ground(), SimTK::Transform(SimTKVec3(7.92, 0.315, 0.0)),
-                                       pin_spot_info, SimTK::Transform(SimTKVec3(0.0, 0.0, 0.0)));
-    /** set the default angle of the pin. */
-    pin_spot.setDefaultAngle(0);
+    SimTK::MobilizedBody::Planar structure_mob(matter.Ground(), SimTK::Transform(SimTKVec3(G[0], G[1], G[2])), structure_info, SimTK::Transform(SimTKVec3(0.0, 0.0, 0.0)));
     /**
      * @details Add gravity to mb body.
      * @param[in,out] forces, The subsystem to which this force should be added.
@@ -128,19 +129,9 @@ int main(int ac, char *av[])
      *		hb=pb*(-d) - hz. Note that this is a signed quantity so the potential energy is
      *		also signed. 0.475
      */
-    SimTK::Force::UniformGravity sim_gravity(forces, matter, SimTKVec3(0.0, -gravity_g, 0.0), 0.0);
+    SimTK::Force::UniformGravity sim_gravity(forces, matter, SimTKVec3(0.0, 0.0, -gravity_g), 0.0);
     /** discrete forces acting on the bodies. */
     SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
-    /**
-     * Add a linear damping force to the mobilized body.
-     * @class SimTK::Force::MobilityLinearDamper::MobilityLinearDamper(
-     * @param[in]	GeneralForceSubsystem &  	forces,
-     * @param[in]	const MobilizedBody &  	mobod,
-     * @param[in]	MobilizerUIndex  whichU, e.g., MobilizerUIndex(0)
-     * @param[in]	Real  	Damping constant )
-     * Here, The damping constant c is provided, with the generated force being -c*u where u is the mobility's generalized speed.
-     */
-    SimTK::Force::MobilityLinearDamper linear_damper(forces, pin_spot, SimTK::MobilizerUIndex(0), 20.0);
     /** Time stepping method for multibody system.*/
     SimTK::State state = MBsystem.realizeTopology();
     SimTK::RungeKuttaMersonIntegrator integ(MBsystem);
@@ -151,57 +142,20 @@ int main(int ac, char *av[])
     //	Coupling between SimBody and SPH
     //----------------------------------------------------------------------
     ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody>
-        force_on_spot_flap(flap_multibody, MBsystem, pin_spot, integ);
+        force_on_structure(structure_multibody, MBsystem, structure_mob, integ);
     SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody>
-        constraint_spot_flap(flap_multibody, MBsystem, pin_spot, integ);
+        constraint_on_structure(structure_multibody, MBsystem, structure_mob, integ);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
-    RegressionTestDynamicTimeWarping<
-        ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>>
-        write_total_force_on_flap(io_environment, fluid_force_on_flap, "TotalForceOnSolid");
-    WriteSimBodyPinData write_flap_pin_data(io_environment, integ, pin_spot);
-
     /** WaveProbes. */
-    BodyRegionByCell wave_probe_buffer_no_4(water_block, makeShared<MultiPolygonShape>(createWaveProbeShape4(), "WaveProbe_04"));
-    ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight>>
-        wave_probe_4(io_environment, wave_probe_buffer_no_4);
-
-    BodyRegionByCell wave_probe_buffer_no_5(water_block, makeShared<MultiPolygonShape>(createWaveProbeShape5(), "WaveProbe_05"));
-    ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight>>
-        wave_probe_5(io_environment, wave_probe_buffer_no_5);
-
-    BodyRegionByCell wave_probe_buffer_no_12(water_block, makeShared<MultiPolygonShape>(createWaveProbeShape12(), "WaveProbe_12"));
-    ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight>>
-        wave_probe_12(io_environment, wave_probe_buffer_no_12);
-
-    /** Pressure probe. */
-    ObservedQuantityRecording<Real> pressure_probe("Pressure", io_environment, observer_contact_with_water);
-    // Interpolate the particle position in flap to move the observer accordingly.
-    // Seems not used? TODO: observe displacement more accurate.
+    BodyRegionByCell wave_probe_buffer(water_block, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_FS_gauge), FS_gauge));
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<FreeSurfaceHeightZ>>> wave_gauge(io_environment, wave_probe_buffer);
     InteractionDynamics<InterpolatingAQuantity<Vecd>>
-        interpolation_observer_position(observer_contact_with_flap, "Position", "Position");
-    //----------------------------------------------------------------------
-    //	Prepare the simulation with cell linked list, configuration
-    //	and case specified initial condition if necessary.
-    //----------------------------------------------------------------------
-    flap_offset_position.exec();
-    system.initializeSystemCellLinkedLists();
-    system.initializeSystemConfigurations();
-    wall_boundary_normal_direction.exec();
-    flap_normal_direction.exec();
-    flap_corrected_configuration.exec();
-    //----------------------------------------------------------------------
-    //	First output before the main loop.
-    //----------------------------------------------------------------------
-    write_real_body_states.writeToFile(0);
-    write_total_force_on_flap.writeToFile(0);
-    write_flap_pin_data.writeToFile(0);
-    wave_probe_4.writeToFile(0);
-    wave_probe_5.writeToFile(0);
-    wave_probe_12.writeToFile(0);
-    pressure_probe.writeToFile(0);
+        interpolation_observer_position(observer_contact_with_structure, "Position", "Position");
+    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
+        write_str_displacement("Position", io_environment, observer_contact_with_structure);
     //----------------------------------------------------------------------
     //	Basic control parameters for time stepping.
     //----------------------------------------------------------------------
@@ -209,13 +163,29 @@ int main(int ac, char *av[])
     int number_of_iterations = 0;
     int screen_output_interval = 1000;
     Real end_time = total_physical_time;
-    Real output_interval = end_time / 100.0;
+    Real output_interval = end_time / 200;
     Real dt = 0.0;
     Real total_time = 0.0;
     Real relax_time = 1.0;
     /** statistics for computing time. */
     TickCount t1 = TickCount::now();
     TimeInterval interval;
+    //----------------------------------------------------------------------
+    //	Prepare the simulation with cell linked list, configuration
+    //	and case specified initial condition if necessary.
+    //----------------------------------------------------------------------
+    structure_offset_position.exec();
+    system.initializeSystemCellLinkedLists();
+    system.initializeSystemConfigurations();
+    wall_boundary_normal_direction.exec();
+    str_normal.exec();
+    str_corrected_conf.exec();
+    //----------------------------------------------------------------------
+    //	First output before the main loop.
+    //----------------------------------------------------------------------
+    write_real_body_states.writeToFile(number_of_iterations);
+    write_str_displacement.writeToFile(number_of_iterations);
+    wave_gauge.writeToFile(number_of_iterations);
     //----------------------------------------------------------------------
     //	Main loop of time stepping starts here.
     //----------------------------------------------------------------------
@@ -229,29 +199,28 @@ int main(int ac, char *av[])
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
             viscous_acceleration.exec();
-            /** Viscous force exerting on flap. */
+            /** Viscous force exerting on structure. */
             viscous_force_on_solid.exec();
 
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
             {
+                dt = get_fluid_time_step_size.exec();
+
                 pressure_relaxation.exec(dt);
-                fluid_force_on_flap.exec();
+                fluid_force_on_solid.exec();
                 density_relaxation.exec(dt);
                 /** coupled rigid body dynamics. */
                 if (total_time >= relax_time)
                 {
                     SimTK::State &state_for_update = integ.updAdvancedState();
-                    Real angle = pin_spot.getAngle(state_for_update);
                     force_on_bodies.clearAllBodyForces(state_for_update);
-                    force_on_bodies.setOneBodyForce(state_for_update, pin_spot, force_on_spot_flap.exec(angle));
+                    force_on_bodies.setOneBodyForce(state_for_update, structure_mob, force_on_structure.exec());
                     integ.stepBy(dt);
-                    constraint_spot_flap.exec();
-                    wave_making.exec(dt);
+                    constraint_on_structure.exec();
                 }
                 interpolation_observer_position.exec();
 
-                dt = get_fluid_time_step_size.exec();
                 relaxation_time += dt;
                 integral_time += dt;
                 total_time += dt;
@@ -267,21 +236,17 @@ int main(int ac, char *av[])
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
             }
             number_of_iterations++;
-            damping_wave.exec(Dt);
             water_block.updateCellLinkedListWithParticleSort(100);
             wall_boundary.updateCellLinkedList();
-            flap.updateCellLinkedList();
+            structure.updateCellLinkedList();
             water_block_complex.updateConfiguration();
-            flap_contact.updateConfiguration();
+            structure_contact.updateConfiguration();
             observer_contact_with_water.updateConfiguration();
+
             if (total_time >= relax_time)
             {
-                write_total_force_on_flap.writeToFile(number_of_iterations);
-                write_flap_pin_data.writeToFile(GlobalStaticVariables::physical_time_);
-                wave_probe_4.writeToFile(number_of_iterations);
-                wave_probe_5.writeToFile(number_of_iterations);
-                wave_probe_12.writeToFile(number_of_iterations);
-                pressure_probe.writeToFile(number_of_iterations);
+                write_str_displacement.writeToFile(number_of_iterations);
+                wave_gauge.writeToFile(number_of_iterations);
             }
         }
 
@@ -291,6 +256,7 @@ int main(int ac, char *av[])
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }
+
     TickCount t4 = TickCount::now();
 
     TimeInterval tt;
@@ -299,11 +265,13 @@ int main(int ac, char *av[])
 
     if (system.generate_regression_data_)
     {
-        write_total_force_on_flap.generateDataBase(1.0e-3);
+        write_str_displacement.generateDataBase(1e-3);
+        wave_gauge.generateDataBase(1e-3);
     }
     else
     {
-        write_total_force_on_flap.testResult();
+        write_str_displacement.testResult();
+        wave_gauge.testResult();
     }
 
     return 0;

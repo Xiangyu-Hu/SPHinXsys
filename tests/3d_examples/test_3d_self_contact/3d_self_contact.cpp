@@ -45,7 +45,7 @@ class StationaryPlate : public ComplexShape
     {
         Vecd halfsize_plate(half_width + BW, 0.5 * BW, half_width + BW);
         Vecd translation_plate(0.0, -half_width - 0.75 * BW, half_width);
-        add<TransformShape<GeometricShapeBox>>(Transformd(translation_plate), halfsize_plate);
+        add<TransformShape<GeometricShapeBox>>(Transform(translation_plate), halfsize_plate);
     }
 };
 //----------------------------------------------------------------------
@@ -136,7 +136,7 @@ int main(int ac, char *av[])
     // initialize a time step
     SimpleDynamics<TimeStepInitialization> initialization_with_gravity(coil, makeShared<Gravity>(Vecd(0.0, -1.0, 0.0)));
     // Corrected configuration for reproducing rigid rotation.
-    InteractionDynamics<solid_dynamics::CorrectConfiguration> corrected_configuration(coil_inner);
+    InteractionWithUpdate<CorrectedConfigurationInner> corrected_configuration(coil_inner);
     // Time step size
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(coil);
     // stress relaxation.

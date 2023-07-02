@@ -1,6 +1,6 @@
 /**
- * @file 	 stfb.cpp
- * @brief 	 This is the case file for 3D still floaing body.
+ * @file 	stfb.cpp
+ * @brief 	This is the case file for 2D still floaing body.
  * @author   Nicolò Salis
  */
 #include "sphinxsys.h" //SPHinXsys Library.
@@ -22,12 +22,14 @@ int main(int ac, char *av[])
     FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
+    water_block.addBodyStateForRecording<Real>("VolumetricMeasure");
 
     SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
-    SolidBody structure(system, makeShared<FloatingStructure>("Structure"));
+    SolidBody structure(system, makeShared<TransformShape<GeometricShapeBox>>(
+                                    Transform(structure_translation), structure_halfsize, "Structure"));
     structure.defineParticlesAndMaterial<SolidParticles, Solid>(rho_s);
     structure.generateParticles<ParticleGeneratorLattice>();
 
@@ -53,9 +55,9 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> str_normal(structure);
     /** corrected strong configuration. */
-    InteractionDynamics<solid_dynamics::CorrectConfiguration> str_corrected_conf(structure_inner);
+    InteractionWithUpdate<CorrectedConfigurationInner> str_corrected_conf(structure_inner);
     /** Time step initialization, add gravity. */
-    SimpleDynamics<TimeStepInitialization> initialize_time_step_to_fluid(water_block, makeShared<Gravity>(Vecd(0.0, 0.0, -gravity_g)));
+    SimpleDynamics<TimeStepInitialization> initialize_time_step_to_fluid(water_block, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
     /** Evaluation of density by summation approach. */
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_density_by_summation(water_block_complex);
     /** time step size without considering sound wave speed. */
@@ -70,15 +72,6 @@ int main(int ac, char *av[])
     /** Fluid force on structure. */
     InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(structure_contact);
     InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid> fluid_force_on_solid(structure_contact, viscous_force_on_solid);
-    /*-------------------------------------------------------------------------------*/
-    /*--------------------------FREE SURFACE IDENTIFICATION--------------------------*/
-    /*-------------------------------------------------------------------------------*/
-    InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex>
-        free_stream_surface_indicator(water_block_complex);
-    /** Impose transport velocity formulation. */
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex>
-        transport_velocity_correction(water_block_complex);
-    /*-------------------------------------------------------------------------------*/
     //----------------------------------------------------------------------
     //	Define the multi-body system
     //----------------------------------------------------------------------
@@ -89,7 +82,8 @@ int main(int ac, char *av[])
     /** the forces of the system. */
     SimTK::GeneralForceSubsystem forces(MBsystem);
     /** mass properties of the fixed spot. */
-    StructureSystemForSimbody structure_multibody(structure, makeShared<TransformShape<GeometricShapeBox>>(Transformd(translation_str), halfsize_structure));
+    StructureSystemForSimbody structure_multibody(structure, makeShared<TransformShape<GeometricShapeBox>>(
+                                                                 Transform(structure_translation), structure_halfsize, "Structure"));
     /** Mass properties of the constrained spot.
      * SimTK::MassProperties(mass, center of mass, inertia)
      */
@@ -104,7 +98,7 @@ int main(int ac, char *av[])
      * @note	The body's origin location can be the mass center, the the center of mass should be SimTKVec3(0)
      * 			in SimTK::MassProperties(mass, com, inertia)
      */
-    SimTK::MobilizedBody::Planar structure_mob(matter.Ground(), SimTK::Transform(SimTKVec3(G[0], G[1], G[2])), structure_info, SimTK::Transform(SimTKVec3(0.0, 0.0, 0.0)));
+    SimTK::MobilizedBody::Planar structure_mob(matter.Ground(), SimTK::Transform(SimTKVec3(G[0], G[1], 0.0)), structure_info, SimTK::Transform(SimTKVec3(0.0, 0.0, 0.0)));
     /**
      * @details Add gravity to mb body.
      * @param[in,out] forces, The subsystem to which this force should be added.
@@ -129,7 +123,7 @@ int main(int ac, char *av[])
      *		hb=pb*(-d) - hz. Note that this is a signed quantity so the potential energy is
      *		also signed. 0.475
      */
-    SimTK::Force::UniformGravity sim_gravity(forces, matter, SimTKVec3(0.0, 0.0, -gravity_g), 0.0);
+    SimTK::Force::UniformGravity sim_gravity(forces, matter, SimTKVec3(0.0, -gravity_g, 0.0), 0.0);
     /** discrete forces acting on the bodies. */
     SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
     /** Time stepping method for multibody system.*/
@@ -149,27 +143,13 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
-    /** WaveProbes. */
-    BodyRegionByCell wave_probe_buffer(water_block, makeShared<TransformShape<GeometricShapeBox>>(Transformd(translation_FS_gauge), FS_gauge));
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<FreeSurfaceHeightZ>>> wave_gauge(io_environment, wave_probe_buffer);
+    BodyRegionByCell wave_probe_buffer(water_block, makeShared<TransformShape<GeometricShapeBox>>(
+                                                        Transform(gauge_translation), gauge_halfsize, "FreeSurfaceGauge"));
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight>>> wave_gauge(io_environment, wave_probe_buffer);
     InteractionDynamics<InterpolatingAQuantity<Vecd>>
         interpolation_observer_position(observer_contact_with_structure, "Position", "Position");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_str_displacement("Position", io_environment, observer_contact_with_structure);
-    //----------------------------------------------------------------------
-    //	Basic control parameters for time stepping.
-    //----------------------------------------------------------------------
-    GlobalStaticVariables::physical_time_ = 0.0;
-    int number_of_iterations = 0;
-    int screen_output_interval = 1000;
-    Real end_time = total_physical_time;
-    Real output_interval = end_time / 200;
-    Real dt = 0.0;
-    Real total_time = 0.0;
-    Real relax_time = 1.0;
-    /** statistics for computing time. */
-    TickCount t1 = TickCount::now();
-    TimeInterval interval;
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -183,9 +163,23 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
-    write_real_body_states.writeToFile(number_of_iterations);
-    write_str_displacement.writeToFile(number_of_iterations);
-    wave_gauge.writeToFile(number_of_iterations);
+    write_real_body_states.writeToFile(0);
+    write_str_displacement.writeToFile(0);
+    wave_gauge.writeToFile(0);
+    //----------------------------------------------------------------------
+    //	Basic control parameters for time stepping.
+    //----------------------------------------------------------------------
+    GlobalStaticVariables::physical_time_ = 0.0;
+    int number_of_iterations = 0;
+    int screen_output_interval = 1000;
+    Real end_time = total_physical_time;
+    Real output_interval = end_time / 100;
+    Real dt = 0.0;
+    Real total_time = 0.0;
+    Real relax_time = 1.0;
+    /** statistics for computing time. */
+    TickCount t1 = TickCount::now();
+    TimeInterval interval;
     //----------------------------------------------------------------------
     //	Main loop of time stepping starts here.
     //----------------------------------------------------------------------
@@ -265,8 +259,8 @@ int main(int ac, char *av[])
 
     if (system.generate_regression_data_)
     {
-        write_str_displacement.generateDataBase(1e-3);
-        wave_gauge.generateDataBase(1e-3);
+        write_str_displacement.generateDataBase(0.001);
+        wave_gauge.generateDataBase(0.001);
     }
     else
     {

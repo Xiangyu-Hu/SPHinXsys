@@ -80,7 +80,8 @@ DataType *BaseParticles::getGlobalVariableByName(const std::string &variable_nam
 }
 //=================================================================================================//
 template <typename DataType>
-StdLargeVec<DataType> *BaseParticles::registerSharedVariable(const std::string &variable_name)
+StdLargeVec<DataType> *BaseParticles::
+    registerSharedVariable(const std::string &variable_name, const DataType &default_value)
 {
 
     DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, variable_name);
@@ -90,7 +91,7 @@ StdLargeVec<DataType> *BaseParticles::registerSharedVariable(const std::string &
     {
         UniquePtrsKeeper<StdLargeVec<DataType>> &container = std::get<type_index>(shared_particle_data_ptrs_);
         StdLargeVec<DataType> *contained_data = container.template createPtr<StdLargeVec<DataType>>();
-        registerVariable(*contained_data, variable_name);
+        registerVariable(*contained_data, variable_name, default_value);
         return contained_data;
     }
     else

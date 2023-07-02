@@ -96,12 +96,12 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    Transform2d transform2d(Rotation2d(-0.5235));
+    Transform transform2d(Rotation2d(-0.5235));
     SimpleDynamics<TranslationAndRotation> wall_boundary_rotation(wall_boundary, transform2d);
     SimpleDynamics<TranslationAndRotation> free_cube_rotation(free_cube, transform2d);
     SimpleDynamics<TimeStepInitialization> free_cube_initialize_timestep(free_cube, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
     /** Kernel correction. */
-    InteractionDynamics<solid_dynamics::CorrectConfiguration> free_cube_corrected_configuration(free_cube_inner);
+    InteractionWithUpdate<CorrectedConfigurationInner> free_cube_corrected_configuration(free_cube_inner);
     /** Time step size. */
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> free_cube_get_time_step_size(free_cube);
     /** stress relaxation for the solid body. */

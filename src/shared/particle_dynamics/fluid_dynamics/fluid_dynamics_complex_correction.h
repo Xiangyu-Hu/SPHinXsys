@@ -10,9 +10,9 @@
  *                                                                           *
  * SPHinXsys is partially funded by German Research Foundation               *
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
- *  HU1527/12-1 and HU1527/12-4.                                             *
+ *  HU1527/12-1 and HU1527/12-4                                              *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -21,47 +21,40 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	data_type.h
- * @brief 	This is the date type definition in 2D for SPHinXsys.
- * @author	Chi ZHang and Xiangyu Hu
+ * @file 	fluid_dynamics_complex_correction.h
+ * @brief Here, we define the algorithm classes for fluid dynamics,
+ *        in which correction matrix is used to increase the approximation
+ *        of pressure gradient.
+ * @author Yaru Ren and Xiangyu Hu
  */
 
-#ifndef DATA_TYPE_2D_H
-#define DATA_TYPE_2D_H
+#ifndef FLUID_DYNAMICS_COMPLEX_CORRECTION_H
+#define FLUID_DYNAMICS_COMPLEX_CORRECTION_H
 
-#include "base_data_type.h"
-#include "scalar_functions.h"
-#include "vector_functions.h"
+#include "fluid_dynamics_complex.h"
+#include "fluid_dynamics_inner_correction.hpp"
 
 namespace SPH
 {
-using Arrayi = Array2i;
-using Vecd = Vec2d;
-using Matd = Mat2d;
-using AlignedBox = AlignedBox2d;
-using AngularVecd = Real;
-using Rotation = Rotation2d;
-using BoundingBox = BaseBoundingBox<Vec2d>;
-
-template <class DataType, int array_size>
-using PackageDataMatrix = std::array<std::array<DataType, array_size>, array_size>;
-
-template <class DataType>
-using MeshDataMatrix = DataType **;
-
-/** only works for smoothing length ratio less or equal than 1.3*/
-constexpr int MaximumNeighborhoodSize = int(M_PI * 9);
-constexpr int Dimensions = 2;
-/** correction matrix, only works for thin structure dynamics. */
-const Matd reduced_unit_matrix{
-    {1.0, 0.0}, // First row
-    {0.0, 0.0}, // Second row
+namespace fluid_dynamics
+{
+/**
+ * @class BaseIntegration1stHalfCorrectWithWall
+ * @brief  template class pressure relaxation scheme together with wall boundary
+ */
+template <class BaseIntegration1stHalfCorrectType>
+class BaseIntegration1stHalfCorrectWithWall : public InteractionWithWall<BaseIntegration1stHalfCorrectType>
+{
+  public:
+    template <typename... Args>
+    BaseIntegration1stHalfCorrectWithWall(Args &&...args)
+        : InteractionWithWall<BaseIntegration1stHalfCorrectType>(std::forward<Args>(args)...){};
+    virtual ~BaseIntegration1stHalfCorrectWithWall(){};
+    void interaction(size_t index_i, Real dt = 0.0);
 };
 
-/** initial local normal, only works for thin structure dynamics. */
-const Vecd local_pseudo_n_0 = Vecd(0.0, 1.0);
-
-const Vecd ZeroVecd = Vec2d::Zero();
+using Integration1stHalfCorrectWithWall = BaseIntegration1stHalfCorrectWithWall<Integration1stHalfCorrect>;
+using Integration1stHalfRiemannCorrectWithWall = BaseIntegration1stHalfCorrectWithWall<Integration1stHalfRiemannCorrect>;
+} // namespace fluid_dynamics
 } // namespace SPH
-
-#endif // DATA_TYPE_2D_H
+#endif // FLUID_DYNAMICS_COMPLEX_CORRECTION_H

@@ -37,6 +37,7 @@
 #include "general_dynamics.h"
 #include "solid_body.h"
 #include "solid_particles.h"
+#include "all_simbody.h"
 
 namespace SPH
 {

@@ -10,9 +10,9 @@
  *                                                                           *
  * SPHinXsys is partially funded by German Research Foundation               *
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
- *  HU1527/12-1 and HU1527/12-4.                                             *
+ *  HU1527/12-1 and HU1527/12-4                                              *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -21,47 +21,32 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	data_type.h
- * @brief 	This is the date type definition in 2D for SPHinXsys.
- * @author	Chi ZHang and Xiangyu Hu
+ * @file 	type_wrapper.h
+ * @brief 	type wrapper between eigen and SimTK.
+ * @author	Chi Zhang and Xiangyu Hu
  */
-
-#ifndef DATA_TYPE_2D_H
-#define DATA_TYPE_2D_H
+#ifndef TYPE_WRAPPER_H
+#define TYPE_WRAPPER_H
 
 #include "base_data_type.h"
-#include "scalar_functions.h"
-#include "vector_functions.h"
+#include "simbody_middle.h"
 
 namespace SPH
 {
-using Arrayi = Array2i;
-using Vecd = Vec2d;
-using Matd = Mat2d;
-using AlignedBox = AlignedBox2d;
-using AngularVecd = Real;
-using Rotation = Rotation2d;
-using BoundingBox = BaseBoundingBox<Vec2d>;
+using SimTKVec2 = SimTK::Vec2;
+using SimTKVec3 = SimTK::Vec3;
+using SimTKMat22 = SimTK::Mat22;
+using SimTKMat33 = SimTK::Mat33;
 
-template <class DataType, int array_size>
-using PackageDataMatrix = std::array<std::array<DataType, array_size>, array_size>;
+SimTKVec2 EigenToSimTK(const Vec2d &eigen_vector);
+SimTKVec3 EigenToSimTK(const Vec3d &eigen_vector);
+Vec2d SimTKToEigen(const SimTKVec2 &simTK_vector);
+Vec3d SimTKToEigen(const SimTKVec3 &simTK_vector);
 
-template <class DataType>
-using MeshDataMatrix = DataType **;
+SimTKMat22 EigenToSimTK(const Mat2d &eigen_matrix);
+SimTKMat33 EigenToSimTK(const Mat3d &eigen_matrix);
+Mat2d SimTKToEigen(const SimTKMat22 &simTK_matrix);
+Mat3d SimTKToEigen(const SimTKMat33 &simTK_matrix);
 
-/** only works for smoothing length ratio less or equal than 1.3*/
-constexpr int MaximumNeighborhoodSize = int(M_PI * 9);
-constexpr int Dimensions = 2;
-/** correction matrix, only works for thin structure dynamics. */
-const Matd reduced_unit_matrix{
-    {1.0, 0.0}, // First row
-    {0.0, 0.0}, // Second row
-};
-
-/** initial local normal, only works for thin structure dynamics. */
-const Vecd local_pseudo_n_0 = Vecd(0.0, 1.0);
-
-const Vecd ZeroVecd = Vec2d::Zero();
 } // namespace SPH
-
-#endif // DATA_TYPE_2D_H
+#endif // TYPE_WRAPPER_H

@@ -170,8 +170,8 @@ class CorrectInterpolationKernelWeights : public LocalDynamics,
         }
 
         // correction matrix for interacting configuration
-        Matd B_ = local_configuration.inverse();
-        Vecd normalized_weight_correction = B_ * weight_correction;
+        Matd B = local_configuration.inverse();
+        Vecd normalized_weight_correction = B * weight_correction;
         // Add the kernel weight correction to W_ij_ of neighboring particles.
         for (size_t k = 0; k < contact_configuration_.size(); ++k)
         {

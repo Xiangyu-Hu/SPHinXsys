@@ -37,6 +37,49 @@
 
 namespace SPH
 {
+/**
+ * @class Transform
+ * @brief Wrapper for SimTK::Transform
+ * Note that the rotation is around the frame (or local) origin.
+ */
+class Transform
+{
+  private:
+    Matd rotation_, inv_rotation_;
+    Vecd translation_;
+
+  public:
+    explicit Transform(const Rotation &rotation, const Vecd &translation = Vecd::Zero())
+        : rotation_(rotation.toRotationMatrix()), inv_rotation_(rotation_.transpose()), translation_(translation){};
+    explicit Transform(const Vecd &translation)
+        : rotation_(Matd::Identity()), inv_rotation_(rotation_.transpose()), translation_(translation){};
+    Transform() : Transform(Vecd::Zero()){};
+
+    /** Forward rotation. */
+    Vecd xformFrameVecToBase(const Vecd &origin)
+    {
+        return rotation_ * origin;
+    };
+
+    /** Forward transformation. Note that the rotation operation is carried out first. */
+    Vecd shiftFrameStationToBase(const Vecd &origin)
+    {
+        return translation_ + xformFrameVecToBase(origin);
+    };
+
+    /** Inverse rotation. */
+    Vecd xformBaseVecToFrame(const Vecd &target)
+    {
+        return inv_rotation_ * target;
+    };
+
+    /** Inverse transformation. Note that the inverse translation operation is carried out first. */
+    Vecd shiftBaseStationToFrame(const Vecd &target)
+    {
+        return xformBaseVecToFrame(target - translation_);
+    };
+};
+
 constexpr Real OneOverDimensions = 1.0 / (Real)Dimensions;
 
 /** Generalized data container assemble type */

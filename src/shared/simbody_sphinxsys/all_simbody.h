@@ -29,7 +29,9 @@
 #ifndef ALL_SIMBODY_H
 #define ALL_SIMBODY_H
 
+#include "simbody_middle.h"
 #include "state_engine.h"
+#include "type_wrapper.h"
 #include "xml_engine.h"
 
 #endif // ALL_SIMBODY_H

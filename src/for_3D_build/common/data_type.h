@@ -39,9 +39,7 @@ using Vecd = Vec3d;
 using Matd = Mat3d;
 using AlignedBox = AlignedBox3d;
 using AngularVecd = Vec3d;
-using Transformd = Transform3d;
-using SimTKVecd = SimTKVec3;
-
+using Rotation = Rotation3d;
 using BoundingBox = BaseBoundingBox<Vec3d>;
 
 template <class DataType, int array_size>

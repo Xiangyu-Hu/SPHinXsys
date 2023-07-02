@@ -69,13 +69,13 @@ class AlignedBoxShape : public TransformShape<GeometricShapeBox>
   public:
     /** construct directly */
     template <typename... Args>
-    explicit AlignedBoxShape(const Transformd &transformd, Args &&...args)
-        : TransformShape<GeometricShapeBox>(transformd, std::forward<Args>(args)...){};
+    explicit AlignedBoxShape(const Transform &transform, Args &&...args)
+        : TransformShape<GeometricShapeBox>(transform, std::forward<Args>(args)...){};
     /** construct from a shape already has aligned boundaries */
     template <typename... Args>
     explicit AlignedBoxShape(const Shape &shape, Args &&...args)
         : TransformShape<GeometricShapeBox>(
-              Transformd(Vecd(0.5 * (shape.bounding_box_.second_ + shape.bounding_box_.first_))),
+              Transform(Vecd(0.5 * (shape.bounding_box_.second_ + shape.bounding_box_.first_))),
               0.5 * (shape.bounding_box_.second_ - shape.bounding_box_.first_), std::forward<Args>(args)...){};
 
     Vecd HalfSize() { return halfsize_; }

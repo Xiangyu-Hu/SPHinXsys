@@ -19,7 +19,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(system, makeShared<TransformShape<GeometricShapeBox>>(
-                                      Transform2d(water_block_translation), water_block_halfsize, "Structure"));
+                                      Transform(water_block_translation), water_block_halfsize, "Structure"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
     water_block.addBodyStateForRecording<Real>("VolumetricMeasure");
@@ -56,7 +56,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
     BodyRegionByCell wave_probe_buffer(water_block, makeShared<TransformShape<GeometricShapeBox>>(
-                                                        Transform2d(gauge_translation), gauge_halfsize, "FreeSurfaceGauge"));
+                                                        Transform(gauge_translation), gauge_halfsize, "FreeSurfaceGauge"));
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight>>> wave_gauge(io_environment, wave_probe_buffer);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration

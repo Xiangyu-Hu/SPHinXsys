@@ -30,8 +30,8 @@ int main(int ac, char *av[])
     //	The contact relation defines the particle configuration between the bodies.
     //----------------------------------------------------------------------
     InnerRelation wave_body_inner(wave_body);
-    // using correction Matrix to correct kernel gredient.
-    InteractionWithUpdate<KernalGredientWithCorrectionInner> kernel_gredient_update(wave_body_inner);
+    // using correction Matrix to correct kernel gradient.
+    InteractionWithUpdate<KernelGradientWithCorrectionInner> kernel_gradient_update(wave_body_inner);
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
@@ -61,7 +61,7 @@ int main(int ac, char *av[])
     sph_system.initializeSystemCellLinkedLists();
     periodic_condition_y.update_cell_linked_list_.exec();
     sph_system.initializeSystemConfigurations();
-    kernel_gredient_update.exec();
+    kernel_gradient_update.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------

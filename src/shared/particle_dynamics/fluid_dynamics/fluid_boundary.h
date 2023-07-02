@@ -107,7 +107,7 @@ class InflowVelocityCondition : public BaseFlowBoundaryCondition
   protected:
     Real relaxation_rate_;
     AlignedBoxShape &aligned_box_;
-    Transformd &transform_;
+    Transform &transform_;
     Vecd halfsize_;
     TargetVelocity target_velocity;
 };
@@ -122,7 +122,7 @@ template <typename TargetVelocity>
 class FreeStreamVelocityCorrection : public LocalDynamics, public FluidDataSimple
 {
   protected:
-    Transformd transform_;
+    Transform transform_;
     Real rho0_;
     StdLargeVec<Real> &rho_sum_;
     StdLargeVec<Vecd> &pos_, &vel_;
@@ -130,7 +130,7 @@ class FreeStreamVelocityCorrection : public LocalDynamics, public FluidDataSimpl
     TargetVelocity target_velocity;
 
   public:
-    explicit FreeStreamVelocityCorrection(SPHBody &sph_body, const Transformd &transform = Transformd())
+    explicit FreeStreamVelocityCorrection(SPHBody &sph_body, const Transform &transform = Transform())
         : LocalDynamics(sph_body), FluidDataSimple(sph_body),
           transform_(transform), rho0_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceDensity()),
           rho_sum_(*particles_->getVariableByName<Real>("DensitySummation")), pos_(particles_->pos_), vel_(particles_->vel_),
@@ -195,7 +195,7 @@ class EmitterInflowCondition : public BaseLocalDynamics<BodyPartByParticle>, pub
     Real inflow_pressure_;
     Real rho0_;
     AlignedBoxShape &aligned_box_;
-    Transformd &updated_transform_, old_transform_;
+    Transform &updated_transform_, old_transform_;
 
     /** no transform by default */
     virtual void updateTransform(){};

@@ -44,10 +44,6 @@
 #include <Eigen/Eigenvalues>
 #include <Eigen/Geometry>
 
-#include "SimTKcommon.h"
-#include "SimTKmath.h"
-#include "Simbody.h"
-
 namespace SPH
 {
 /**
@@ -89,14 +85,10 @@ using Mat3d = Eigen::Matrix<Real, 3, 3>;
 /** AlignedBox */
 using AlignedBox2d = Eigen::AlignedBox<Real, 2>;
 using AlignedBox3d = Eigen::AlignedBox<Real, 3>;
-/** SimTK vector and matrix */
-/**
- * Note that SimTK vector and matrix using double precision, whne ENABLE_SINGLE, will transfer to double precision.
- */
-using SimTKVec2 = SimTK::Vec2;
-using SimTKVec3 = SimTK::Vec3;
-using SimTKMat22 = SimTK::Mat22;
-using SimTKMat33 = SimTK::Mat33;
+/** Rotation */
+using Rotation2d = Eigen::Rotation2D<Real>;
+using Rotation3d = Eigen::AngleAxis<Real>;
+
 /** Unified initialize to zero for all data type. */
 /**
  * NOTE: Eigen::Matrix<> constexpr constructor?

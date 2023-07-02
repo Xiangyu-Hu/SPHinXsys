@@ -33,7 +33,7 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //----------------------------------------------------------------------
     InnerRelation water_body_inner(water_body);
-    InteractionWithUpdate<KernalGredientWithCorrectionInner> kernel_gredient_update(water_body_inner);
+    InteractionWithUpdate<KernelGradientWithCorrectionInner> kernel_gradient_update(water_body_inner);
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
@@ -74,7 +74,7 @@ int main(int ac, char *av[])
     periodic_condition_y.update_cell_linked_list_.exec();
     sph_system.initializeSystemConfigurations();
     initial_condition.exec();
-    kernel_gredient_update.exec();
+    kernel_gradient_update.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
