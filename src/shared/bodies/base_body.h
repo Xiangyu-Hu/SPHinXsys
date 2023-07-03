@@ -10,9 +10,9 @@
  *                                                                           *
  * SPHinXsys is partially funded by German Research Foundation               *
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
- *  HU1527/12-1 and HU1527/12-4                                              *
+ *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2022 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2023 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -153,6 +153,12 @@ class SPHBody
         base_material_->initializeLocalParameters(base_particles_);
     };
 
+    template <typename DataType>
+    void addBodyState(StdLargeVec<DataType> &variable_addrs, const std::string &variable_name)
+    {
+        base_particles_->template registerVariable<DataType>(variable_addrs, variable_name);
+    };
+
     template <typename VariableType>
     void addBodyStateForRecording(const std::string &variable_name)
     {
@@ -163,6 +169,12 @@ class SPHBody
     void addDerivedBodyStateForRecording(Args &&...args)
     {
         base_particles_->template addDerivedVariableToWrite<DerivedVariableMethod>(std::forward<Args>(args)...);
+    };
+
+    template <typename VariableType>
+    void addBodyStateToRestart(const std::string &variable_name)
+    {
+        base_particles_->template addVariableToRestart<VariableType>(variable_name);
     };
 
     virtual void writeParticlesToVtuFile(std::ostream &output_file);

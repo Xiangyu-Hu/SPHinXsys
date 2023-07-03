@@ -36,7 +36,7 @@ void CorrectedConfigurationInner::update(size_t index_i, Real dt)
 CorrectedConfigurationComplex::
     CorrectedConfigurationComplex(ComplexRelation &complex_relation, int beta, Real alpha)
     : CorrectedConfigurationInner(complex_relation.getInnerRelation(), beta, alpha),
-      GeneralDataDelegateContact(complex_relation.getContactRelation())
+      GeneralDataDelegateContactOnly(complex_relation.getContactRelation())
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {

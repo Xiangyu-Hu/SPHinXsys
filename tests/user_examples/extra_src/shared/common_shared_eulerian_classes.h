@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
  *  HU1527/12-1 and HU1527/12-4													*
  *                                                                          *
- * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * Portions copyright (c) 2017-2023 Technical University of Munich and		*
  * the authors' affiliations.												*
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
@@ -69,12 +69,12 @@ class KernelGradientWithCorrectionInner : public LocalDynamics, public GeneralDa
  * @class KernelGradientWithCorrectionComplex
  * @brief obtain the corrected initial configuration in strong form and correct kernel gradient in complex topology
  */
-class KernelGradientWithCorrectionComplex : public BaseInteractionComplex<KernelGradientWithCorrectionInner, GeneralDataDelegateContact>
+class KernelGradientWithCorrectionComplex : public BaseInteractionComplex<KernelGradientWithCorrectionInner, GeneralDataDelegateContactOnly>
 {
   public:
     template <typename... Args>
     KernelGradientWithCorrectionComplex(Args &&...args)
-        : BaseInteractionComplex<KernelGradientWithCorrectionInner, GeneralDataDelegateContact>(std::forward<Args>(args)...){};
+        : BaseInteractionComplex<KernelGradientWithCorrectionInner, GeneralDataDelegateContactOnly>(std::forward<Args>(args)...){};
     virtual ~KernelGradientWithCorrectionComplex(){};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
