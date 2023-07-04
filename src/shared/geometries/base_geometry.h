@@ -96,6 +96,7 @@ using ShapeAndOp = std::pair<Shape *, ShapeBooleanOps>;
  * This class has ownership of all shapes by using a unique pointer vector.
  * In this way, add or subtract a shape will call the shape's constructor other than
  * passing the shape pointer.
+ * For now, partially overlapped the shapes are not allowed for binary operations.
  */
 class BinaryShapes : public Shape
 {

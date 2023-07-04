@@ -26,12 +26,15 @@ BoundingBox system_domain_bounds(Vec2d(-DL1, 0), Vec2d(DL, DH));
 //----------------------------------------------------------------------
 //	Shape of the InputBody
 //----------------------------------------------------------------------
-class InputBody : public MultiPolygonShape
+class InputBody : public ComplexShape
 {
   public:
-    explicit InputBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    explicit InputBody(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        multi_polygon_.addAPolygonFromFile(input_body, ShapeBooleanOps::add);
+        MultiPolygon original_logo;
+        original_logo.addAPolygonFromFile(input_body, ShapeBooleanOps::add);
+        add<ExtrudeShape<MultiPolygonShape>>(4.0 * resolution_ref, original_logo);
+        subtract<MultiPolygonShape>(original_logo);
     }
 };
 //----------------------------------------------------------------------

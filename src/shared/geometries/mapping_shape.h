@@ -35,27 +35,67 @@
 namespace SPH
 {
 /**
- * @class ExclusiveShape
+ * @class InverseShape
  * @brief A template shape which define the region outside of the geometry.
  * @brief In simple terms, it gives opposite return value for the function checkContain() as the original shape
  */
 
 template <class BaseShapeType>
-class ExclusiveShape : public BaseShapeType
+class InverseShape : public BaseShapeType
 {
 
   public:
     /** template constructor for general shapes. */
     template <typename... ConstructorArgs>
-    explicit ExclusiveShape(ConstructorArgs &&...args)
+    explicit InverseShape(ConstructorArgs &&...args)
         : BaseShapeType(std::forward<ConstructorArgs>(args)...){};
 
-    virtual ~ExclusiveShape(){};
+    virtual ~InverseShape(){};
 
     /*reverse the value of checkContain function*/
     virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override
     {
         return !BaseShapeType::checkContain(probe_point);
+    };
+};
+
+/**
+ * @class ExtrudeShape
+ * @brief A template shape which define the region by expanding the geometry surface with given thickness.
+ * @brief Positive thickness will extend the shape and negative thickness will shrink the shape.
+ */
+template <class BaseShapeType>
+class ExtrudeShape : public BaseShapeType
+{
+    Real thickness_;
+    Vecd getShift(const Vecd &probe_point, const Vecd &original_closest_point)
+    {
+        Vecd displacement = original_closest_point - probe_point;
+        return thickness_ * displacement / (displacement.norm() + Eps);
+    };
+
+  public:
+    template <typename... ConstructorArgs>
+    explicit ExtrudeShape(Real thickness, ConstructorArgs &&...args)
+        : BaseShapeType(std::forward<ConstructorArgs>(args)...),
+          thickness_(thickness){};
+    virtual ~ExtrudeShape(){};
+
+    virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override
+    {
+        Vecd original_closest_point = BaseShapeType::findClosestPoint(probe_point);
+        Vecd shift = getShift(probe_point, original_closest_point);
+        return BaseShapeType::checkContain(probe_point)
+                   ? BaseShapeType::checkContain(probe_point - shift)
+                   : BaseShapeType::checkContain(probe_point + shift);
+    };
+
+    virtual Vecd findClosestPoint(const Vecd &probe_point) override
+    {
+        Vecd closest_point = BaseShapeType::findClosestPoint(probe_point);
+        Vecd shift = getShift(probe_point, closest_point);
+        closest_point += BaseShapeType::checkContain(probe_point) ? shift : -shift;
+        return closest_point;
     };
 };
 } // namespace SPH
