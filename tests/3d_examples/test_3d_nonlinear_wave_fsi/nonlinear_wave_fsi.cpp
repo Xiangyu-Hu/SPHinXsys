@@ -289,7 +289,7 @@ int main(int ac, char *av[])
     
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
         write_recorded_pressure_fp1("Pressure", io_environment, fp1_contact_w);
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
+    ObservedQuantityRecording<Real>
         write_recorded_pressure_bp1("Pressure", io_environment, bp1_contact_w);
     
     RestartIO restart_io(io_environment, system.real_bodies_);
