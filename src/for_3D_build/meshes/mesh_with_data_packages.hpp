@@ -1,8 +1,7 @@
 /**
- * @file 	mesh_with_data_packages.hpp
- * @brief 	This class is designed to save memory and increase computational efficiency on mesh.
- *			TODO: the connection between successive meshes in refined mesh should enhanced.
- * @author	Chi ZHang and Xiangyu Hu
+ * @file    mesh_with_data_packages.hpp
+ * @brief   Implementation for 3d builds.
+ * @author  Chi Zhang and Xiangyu Hu
  */
 
 #ifndef MESH_WITH_DATA_PACKAGES_3D_HPP
@@ -41,7 +40,8 @@ void GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::
 //=================================================================================================//
 template <int PKG_SIZE, int ADDRS_BUFFER>
 template <class DataType>
-DataType GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::probeDataPackage(PackageDataAddress<DataType> &pkg_data_addrs, const Vecd &position)
+DataType GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::
+    probeDataPackage(PackageDataAddress<DataType> &pkg_data_addrs, const Vecd &position)
 {
     Arrayi grid_idx = CellIndexFromPosition(position);
     Vecd grid_pos = GridPositionFromIndex(grid_idx);
@@ -127,7 +127,8 @@ operator()(DataContainerAssemble<PackageDataAddress> &all_pkg_data_addrs,
     {
         PackageData<DataType> &pkg_data = std::get<type_index>(all_pkg_data)[l];
         PackageDataAddress<DataType> &pkg_data_addrs = std::get<type_index>(all_pkg_data_addrs)[l];
-        pkg_data_addrs[addrs_index[0]][addrs_index[1]][addrs_index[2]] = &pkg_data[data_index[0]][data_index[1]][data_index[2]];
+        pkg_data_addrs[addrs_index[0]][addrs_index[1]][addrs_index[2]] =
+            &pkg_data[data_index[0]][data_index[1]][data_index[2]];
     }
 }
 //=================================================================================================//
@@ -163,7 +164,8 @@ DataType MeshWithGridDataPackages<GridDataPackageType>::
         cell_index_on_mesh_[n] = cell_index_in_this_direction;
         local_data_index[n] = global_grid_index[n] - cell_index_in_this_direction * pkg_size;
     }
-    auto &data = data_pkg_addrs_[cell_index_on_mesh_[0]][cell_index_on_mesh_[1]][cell_index_on_mesh_[2]]->getPackageData(mesh_variable);
+    auto &data = data_pkg_addrs_[cell_index_on_mesh_[0]][cell_index_on_mesh_[1]][cell_index_on_mesh_[2]]
+                     ->getPackageData(mesh_variable);
     return data[local_data_index[0]][local_data_index[1]][local_data_index[2]];
 }
 //=================================================================================================//
@@ -228,7 +230,8 @@ DataType MeshWithGridDataPackages<GridDataPackageType>::
     Arrayi index = CellIndexFromPosition(position);
     GridDataPackageType *data_pkg = data_pkg_addrs_[index[0]][index[1]][index[2]];
     auto &pkg_data_addrs = data_pkg->getPackageDataAddress(mesh_variable);
-    return data_pkg->isInnerPackage() ? data_pkg->GridDataPackageType::template probeDataPackage<DataType>(pkg_data_addrs, position)
+    return data_pkg->isInnerPackage() ? data_pkg->GridDataPackageType::
+                                            template probeDataPackage<DataType>(pkg_data_addrs, position)
                                       : *pkg_data_addrs[0][0][0];
 }
 //=================================================================================================//

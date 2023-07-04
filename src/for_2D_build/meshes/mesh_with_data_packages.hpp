@@ -1,8 +1,7 @@
 /**
- * @file 	mesh_with_data_packages.hpp
- * @brief 	This class is designed to save memory and increase computational efficiency on mesh.
- *			TODO: the connection between successive meshes in refined mesh should enhanced.
- * @author	Chi ZHang and Xiangyu Hu
+ * @file    mesh_with_data_packages.hpp
+ * @brief   Implementation for 2d builds.
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef MESH_WITH_DATA_PACKAGES_2D_HPP
