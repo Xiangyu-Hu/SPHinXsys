@@ -34,6 +34,7 @@
 #include "base_data_package.h"
 #include "sph_data_containers.h"
 #include "all_kernels.h"
+#include "execution_selector.hpp"
 
 namespace SPH
 {
@@ -41,6 +42,7 @@ namespace SPH
 	class SPHBody;
 	class BodyPart;
 	class SPHAdaptation;
+    class NeighborhoodDevice;
 
 	/**
 	 * @class Neighborhood
@@ -62,51 +64,30 @@ namespace SPH
 		~Neighborhood(){};
 
 		void removeANeighbor(size_t neighbor_n);
+
+        inline size_t current_size() const { return current_size_; }
+
+        Neighborhood& operator=(const NeighborhoodDevice& device);
 	};
 	using ParticleConfiguration = StdLargeVec<Neighborhood>;
 
     class NeighborhoodDevice {
     public:
-        size_t current_size_;	/**< the current number of neighbors */
-        static constexpr size_t allocated_size_ = 200;  /**< the limit of neighbors does not require memory allocation  */
+        size_t* current_size_;	/**< the current number of neighbors */
+        static constexpr size_t allocated_size_ = 40;  /**< the limit of neighbors does not require memory allocation  */
 
         size_t *j_;  /**< index of the neighbor particle. */
-        Real *W_ij_;  /**< kernel value or particle volume contribution */
-        Real *dW_ijV_j_;  /**< derivative of kernel function or inter-particle surface contribution */
-        Real *r_ij_;  /**< distance between j and i. */
-        Vecd *e_ij_;  /**< unit vector pointing from j to i or inter-particle surface direction */
+        DeviceReal *W_ij_;  /**< kernel value or particle volume contribution */
+        DeviceReal *dW_ijV_j_;  /**< derivative of kernel function or inter-particle surface contribution */
+        DeviceReal *r_ij_;  /**< distance between j and i. */
+        DeviceVecd *e_ij_;  /**< unit vector pointing from j to i or inter-particle surface direction */
 
-        NeighborhoodDevice() : current_size_(0),
-                               j_(allocateDeviceData<size_t>(allocated_size_)),
-                               W_ij_(allocateDeviceData<Real>(allocated_size_)),
-                               dW_ijV_j_(allocateDeviceData<Real>(allocated_size_)),
-                               r_ij_(allocateDeviceData<Real>(allocated_size_)),
-                               e_ij_(allocateDeviceData<Vecd>(allocated_size_)) {}
-        ~NeighborhoodDevice(){
-            freeDeviceData(j_);
-            freeDeviceData(W_ij_);
-            freeDeviceData(dW_ijV_j_);
-            freeDeviceData(r_ij_);
-            freeDeviceData(e_ij_);
-        };
+        inline size_t current_size() const { return *current_size_; }
 
-        void copyFrom(const Neighborhood& hostNeighborhood) {
-            copyDataToDevice<size_t>(hostNeighborhood.j_.data(), j_, hostNeighborhood.current_size_);
-            copyDataToDevice<Real>(hostNeighborhood.W_ij_.data(), W_ij_, hostNeighborhood.current_size_);
-            copyDataToDevice<Real>(hostNeighborhood.dW_ijV_j_.data(), dW_ijV_j_, hostNeighborhood.current_size_);
-            copyDataToDevice<Real>(hostNeighborhood.r_ij_.data(), r_ij_, hostNeighborhood.current_size_);
-            copyDataToDevice<Vecd>(hostNeighborhood.e_ij_.data(), e_ij_, hostNeighborhood.current_size_);
-            current_size_ = hostNeighborhood.current_size_;
-        }
+        NeighborhoodDevice();
+        ~NeighborhoodDevice();
 
-        void copyTo(Neighborhood& hostNeighborhood) const {
-            copyDataFromDevice<size_t>(hostNeighborhood.j_.data(), j_, current_size_);
-            copyDataFromDevice<Real>(hostNeighborhood.W_ij_.data(), W_ij_, current_size_);
-            copyDataFromDevice<Real>(hostNeighborhood.dW_ijV_j_.data(), dW_ijV_j_, current_size_);
-            copyDataFromDevice<Real>(hostNeighborhood.r_ij_.data(), r_ij_, current_size_);
-            copyDataFromDevice<Vecd>(hostNeighborhood.e_ij_.data(), e_ij_, current_size_);
-            hostNeighborhood.current_size_ = current_size_;
-        }
+        NeighborhoodDevice& operator=(const Neighborhood& host);
     };
 
 
