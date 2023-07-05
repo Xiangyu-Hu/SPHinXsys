@@ -110,6 +110,7 @@ add_subdirectory(modules)
     add_subdirectory(tests)
 endif()]]
 add_subdirectory(tests/2d_examples/test_2d_dambreak)
+add_subdirectory(tests/2d_examples/test_2d_sycl_performance)
 
 # ------ Extra scripts to install
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/PythonScriptStore/RegressionTest/regression_test_base_tool.py
