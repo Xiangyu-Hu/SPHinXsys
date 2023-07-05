@@ -90,14 +90,14 @@ namespace SPH
 		explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
 		virtual ~BaseParticles() {};
 
-		StdLargeVec<Vecd> pos_; Vecd* pos_device_;		  /**< particle position */
-		StdLargeVec<Vecd> vel_; Vecd* vel_device_;		  /**< particle velocity */
-		StdLargeVec<Vecd> acc_; Vecd* acc_device_;		  /**< total acceleration including inner pressure- or stress-induced acceleration and other accelerations */
-		StdLargeVec<Vecd> acc_prior_; Vecd* acc_prior_device_; /**< other, such as gravity and viscous, accelerations */
+		StdLargeVec<Vecd> pos_; DeviceVecd* pos_device_;		  /**< particle position */
+		StdLargeVec<Vecd> vel_; DeviceVecd* vel_device_;		  /**< particle velocity */
+		StdLargeVec<Vecd> acc_; DeviceVecd* acc_device_;		  /**< total acceleration including inner pressure- or stress-induced acceleration and other accelerations */
+		StdLargeVec<Vecd> acc_prior_; DeviceVecd* acc_prior_device_; /**< other, such as gravity and viscous, accelerations */
 
 		StdLargeVec<Real> Vol_;	 /**< particle volumetric measure, also referred to area of surface particle and length of linear particle */
-		StdLargeVec<Real> rho_; Real* rho_device_;	 /**< particle density */
-		StdLargeVec<Real> mass_; Real* mass_device_; /**< particle massive measure, also referred to mass per-unit thickness of surface particle and mass per-unit cross-section area of linear particle */
+		StdLargeVec<Real> rho_; DeviceReal* rho_device_;	 /**< particle density */
+		StdLargeVec<Real> mass_; DeviceReal* mass_device_; /**< particle massive measure, also referred to mass per-unit thickness of surface particle and mass per-unit cross-section area of linear particle */
 		BaseMaterial &base_material_;
 		//----------------------------------------------------------------------
 		// Global information for defining particle groups
@@ -223,12 +223,12 @@ namespace SPH
 		virtual Real ParticleMass(size_t index_i) { return mass_[index_i]; }
 
         virtual void allocateDeviceMemory() {
-            pos_device_ = allocateDeviceData<Vecd>(pos_.size());
-            vel_device_ = allocateDeviceData<Vecd>(vel_.size());
-            acc_device_ = allocateDeviceData<Vecd>(acc_.size());
-            acc_prior_device_ = allocateDeviceData<Vecd>(acc_prior_.size());
-            rho_device_ = allocateDeviceData<Real>(rho_.size());
-            mass_device_ = allocateDeviceData<Real>(mass_.size());
+            pos_device_ = allocateSharedData<DeviceVecd>(pos_.size());
+            vel_device_ = allocateSharedData<DeviceVecd>(vel_.size());
+            acc_device_ = allocateSharedData<DeviceVecd>(acc_.size());
+            acc_prior_device_ = allocateSharedData<DeviceVecd>(acc_prior_.size());
+            rho_device_ = allocateDeviceData<DeviceReal>(rho_.size());
+            mass_device_ = allocateDeviceData<DeviceReal>(mass_.size());
         }
 
         virtual void freeDeviceMemory() {
