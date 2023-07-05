@@ -158,7 +158,13 @@ namespace SPH
 			InteractionWithWall(BaseContactRelation &wall_contact_relation,
 								BaseBodyRelationType &base_body_relation, Args &&...args)
 			: BaseIntegrationType(base_body_relation, std::forward<Args>(args)...),
-			  FluidWallData(wall_contact_relation)
+			  FluidWallData(wall_contact_relation),
+              wall_inv_rho0_(FluidWallData::contact_particles_.size()),
+              wall_inv_rho0_device_(FluidWallData::contact_particles_.size(), executionQueue.getQueue()),
+              wall_mass_device_(FluidWallData::contact_particles_.size(), executionQueue.getQueue()),
+              wall_vel_ave_device_(FluidWallData::contact_particles_.size(), executionQueue.getQueue()),
+              wall_acc_ave_device_(FluidWallData::contact_particles_.size(), executionQueue.getQueue()),
+              wall_n_device_(FluidWallData::contact_particles_.size(), executionQueue.getQueue())
 		{
 			if (&base_body_relation.getSPHBody() != &wall_contact_relation.getSPHBody())
 			{
@@ -170,11 +176,18 @@ namespace SPH
 			for (size_t k = 0; k != FluidWallData::contact_particles_.size(); ++k)
 			{
 				Real rho0_k = FluidWallData::contact_bodies_[k]->base_material_->ReferenceDensity();
-				wall_inv_rho0_.push_back(1.0 / rho0_k);
+				wall_inv_rho0_.at(k) = 1.0 / rho0_k;
+				wall_inv_rho0_device_.at(k) = 1.0f / static_cast<DeviceReal>(rho0_k);
 				wall_mass_.push_back(&(FluidWallData::contact_particles_[k]->mass_));
 				wall_vel_ave_.push_back(FluidWallData::contact_particles_[k]->AverageVelocity());
 				wall_acc_ave_.push_back(FluidWallData::contact_particles_[k]->AverageAcceleration());
 				wall_n_.push_back(&(FluidWallData::contact_particles_[k]->n_));
+
+                // Device variables
+                wall_mass_device_.at(k) = this->contact_particles_[k]->mass_device_;
+                wall_vel_ave_device_.at(k) = this->contact_particles_[k]->vel_device_;
+                wall_acc_ave_device_.at(k) = this->contact_particles_[k]->acc_device_;
+                wall_n_device_.at(k) = this->contact_particles_[k]->n_device_;
 			}
 		}
 		//=================================================================================================//
@@ -183,16 +196,18 @@ namespace SPH
 		BaseDensitySummationComplex<DensitySummationInnerType>::
 			BaseDensitySummationComplex(Args &&...args)
 			: BaseInteractionComplex<DensitySummationInnerType, FluidContactData>(std::forward<Args>(args)...),
-              contact_inv_rho0_(this->contact_particles_.size(), executionQueue.getQueue()),
+              contact_inv_rho0_(this->contact_particles_.size()),
+              contact_inv_rho0_device_(this->contact_particles_.size(), executionQueue.getQueue()),
               contact_mass_(this->contact_particles_.size()),
               contact_mass_device_(this->contact_particles_.size(), executionQueue.getQueue()),
-              device_proxy(this, contact_inv_rho0_.data(), contact_mass_device_.data(),
+              device_proxy(this, contact_inv_rho0_device_.data(), contact_mass_device_.data(),
                            this->contact_configuration_device_->data(), this->contact_configuration_device_->size())
 		{
 			for (size_t k = 0; k != this->contact_particles_.size(); ++k)
 			{
 				Real rho0_k = this->contact_bodies_[k]->base_material_->ReferenceDensity();
 				contact_inv_rho0_.at(k) = 1.0 / rho0_k;
+				contact_inv_rho0_device_.at(k) = 1.0f / static_cast<DeviceReal>(rho0_k);
                 contact_mass_.at(k) = &(this->contact_particles_[k]->mass_);
                 contact_mass_device_.at(k) = this->contact_particles_[k]->mass_device_;
 			}
@@ -240,29 +255,14 @@ namespace SPH
 		{
 			BaseIntegration1stHalfType::interaction(index_i, dt);
 
-			Vecd acc_prior_i = computeNonConservativeAcceleration(index_i);
-
-			Vecd acceleration = Vecd::Zero();
-			Real rho_dissipation(0);
-			for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
-			{
-				StdLargeVec<Vecd> &acc_ave_k = *(this->wall_acc_ave_[k]);
-				Neighborhood &wall_neighborhood = (*FluidWallData::contact_configuration_[k])[index_i];
-				for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
-				{
-					size_t index_j = wall_neighborhood.j_[n];
-					Vecd &e_ij = wall_neighborhood.e_ij_[n];
-					Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
-					Real r_ij = wall_neighborhood.r_ij_[n];
-
-					Real face_wall_external_acceleration = (acc_prior_i - acc_ave_k[index_j]).dot(-e_ij);
-					Real p_in_wall = this->p_[index_i] + this->rho_[index_i] * r_ij * SMAX(0.0, face_wall_external_acceleration);
-					acceleration -= (this->p_[index_i] + p_in_wall) * dW_ijV_j * e_ij;
-					rho_dissipation += this->riemann_solver_.DissipativeUJump(this->p_[index_i] - p_in_wall) * dW_ijV_j;
-				}
-			}
-			this->acc_[index_i] += acceleration / this->rho_[index_i];
-			this->drho_dt_[index_i] += rho_dissipation * this->rho_[index_i];
+            BaseIntegration1stHalfWithWallKernel<typename BaseIntegration1stHalfType::DeviceKernel>::interaction(
+                    index_i, dt, this->p_.data(), this->rho_.data(), this->drho_dt_.data(), this->acc_.data(),
+                    this->riemann_solver_, FluidWallData::contact_configuration_.size(),
+                    [&](auto index_i){ return computeNonConservativeAcceleration(index_i); },
+                    [&](auto k){ return this->wall_acc_ave_[k]->data(); },
+                    [&](auto k, auto index_i) -> Neighborhood&
+                        { return (*FluidWallData::contact_configuration_[k])[index_i]; },
+                    [](const Vecd& v1, const Vecd& v2){ return v1.dot(v2); });
 		}
 		//=================================================================================================//
 		template <class BaseIntegration1stHalfType>

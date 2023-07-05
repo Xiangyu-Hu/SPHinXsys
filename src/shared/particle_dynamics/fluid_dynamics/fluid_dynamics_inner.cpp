@@ -60,11 +60,13 @@ namespace SPH
 			  FluidDataSimple(sph_body), fluid_(particles_->fluid_), rho_(particles_->rho_),
 			  p_(particles_->p_), vel_(particles_->vel_),
 			  smoothing_length_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
-			  acousticCFL_(acousticCFL) {}
+			  acousticCFL_(acousticCFL), device_proxy(this, particles_) {}
 		//=================================================================================================//
 		Real AcousticTimeStepSize::reduce(size_t index_i, Real dt)
 		{
-			return fluid_.getSoundSpeed(p_[index_i], rho_[index_i]) + vel_[index_i].norm();
+            return decltype(device_proxy)::Kernel::reduce(index_i, dt, fluid_, p_.data(), rho_.data(), vel_.data(),
+                                  [](Fluid& fluid, Real p_i, Real rho_i) { return fluid.getSoundSpeed(p_i, rho_i); },
+                                  [](const Vecd& vel) { return vel.norm(); });
 		}
 		//=================================================================================================//
 		Real AcousticTimeStepSize::outputResult(Real reduced_value)

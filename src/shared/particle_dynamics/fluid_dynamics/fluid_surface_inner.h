@@ -90,8 +90,8 @@ namespace SPH
             DensitySummationFreeSurfaceKernel(const DensitySummationKernel& densitySummation) :
                 DensitySummationKernel(densitySummation) {}
 
-            template<class ReinitializedDensityFunc>
-            static void update(size_t index_i, Real dt, Real* rho, Real* rho_sum, Real rho0,
+            template<class RealT, class ReinitializedDensityFunc>
+            static void update(size_t index_i, Real dt, RealT* rho, RealT* rho_sum, RealT rho0,
                                ReinitializedDensityFunc&& ReinitializedDensity)
             {
                 rho[index_i] = ReinitializedDensity(rho_sum[index_i], rho0);
@@ -101,6 +101,7 @@ namespace SPH
                 update(index_i, dt, this->rho_, this->rho_sum_, this->rho0_, [](auto rho_sum, auto rho0) {
                     return sycl::fmax(rho_sum, rho0);
                 });
+//                this->rho_[index_i] = sycl::fmax(this->rho_sum_[index_i], this->rho0_);
             }
         };
 
