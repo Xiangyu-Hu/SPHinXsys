@@ -171,13 +171,13 @@ namespace SPH
         void copyContactConfigurationToDevice() {
             for (int k = 0; k < contact_configuration_.size(); ++k)
                 for (int i = 0; i < contact_configuration_.at(k).size(); ++i)
-                    contact_configuration_device_.at(k).at(i).copyFrom(contact_configuration_.at(k).at(i));
+                    contact_configuration_device_.at(k).at(i) = contact_configuration_.at(k).at(i);
         }
 
         void copyContactConfigurationFromDevice() {
             for (int k = 0; k < contact_configuration_.size(); ++k)
                 for (int i = 0; i < contact_configuration_.at(k).size(); ++i)
-                    contact_configuration_device_.at(k).at(i).copyTo(contact_configuration_.at(k).at(i));
+                    contact_configuration_.at(k).at(i) = contact_configuration_device_.at(k).at(i);
         }
 	};
 }
