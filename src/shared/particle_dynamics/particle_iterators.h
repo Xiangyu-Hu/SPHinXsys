@@ -34,6 +34,7 @@
 #include "execution_policy.h"
 #include "execution_unit/execution_proxy.hpp"
 #include "execution_unit/execution_queue.hpp"
+#include "execution_unit/execution_event.hpp"
 
 namespace SPH
 {
@@ -332,6 +333,19 @@ namespace SPH
 		}
 		return temp;
 	}
+
+    template <class ReturnType, typename Operation, class LocalDynamicsFunction, class Proxy>
+    inline ReturnType particle_reduce(const SequencedPolicy &seq, const size_t &all_real_particles,
+                                      ReturnType temp, Operation &&operation,
+                                      const LocalDynamicsFunction &local_dynamics_function, Proxy& proxy)
+    {
+        auto& kernel = *proxy.getProxy().get(seq);
+        for (size_t i = 0; i < all_real_particles; ++i)
+        {
+            temp = operation(temp, local_dynamics_function(i, kernel));
+        }
+        return temp;
+    }
 
 	template <class ReturnType, typename Operation, class LocalDynamicsFunction>
 	inline ReturnType particle_reduce(const ParallelPolicy &par, const size_t &all_real_particles,
