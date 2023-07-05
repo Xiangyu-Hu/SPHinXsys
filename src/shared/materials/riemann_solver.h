@@ -92,7 +92,7 @@ namespace SPH
 		Real DissipativeUJump(const Real &p_jump) {
             return p_jump * inv_rho0c0_ave_;
         }
-        DeviceReal DissipativeUJump(const DeviceReal &p_jump) const {
+        DeviceReal DissipativeUJump_Device(const DeviceReal &p_jump) const {
             return p_jump * static_cast<DeviceReal>(inv_rho0c0_ave_);
         }
 

@@ -259,7 +259,7 @@ namespace SPH
             Real reduce(size_t index_i, Real dt = 0.0) const {
                 return reduce(index_i, dt, fluid_, p_, rho_, vel_,
                               [](const FluidT& fluid, DeviceReal p_i, DeviceReal rho_i) {
-                                    return fluid.getSoundSpeed(p_i, rho_i);
+                                    return fluid.getSoundSpeed_Device(p_i, rho_i);
                               },
                               [](const DeviceVecd& vel) {
                                     return sycl::length(vel);
@@ -458,7 +458,7 @@ namespace SPH
 
             void initialization(size_t index_i, Real dt = 0.0) {
                 initialization(index_i, dt, rho_, drho_dt_, p_, pos_, vel_, fluid_, [](const auto& fluid, DeviceReal rho) {
-                    return fluid.getPressure(rho);
+                    return fluid.getPressure_Device(rho);
                 });
             }
 
