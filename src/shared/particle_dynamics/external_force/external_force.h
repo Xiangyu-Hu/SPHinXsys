@@ -58,6 +58,7 @@ namespace SPH {
 	{
 	protected:
 		Vecd global_acceleration_;
+		DeviceVecd global_acceleration_device_;
 		Vecd zero_potential_reference_;
 
 	public:
@@ -68,8 +69,8 @@ namespace SPH {
 		virtual Vecd InducedAcceleration(Vecd& position) override;
 		Real getPotential(Vecd& position);
 
-        Vecd InducedAcceleration_Device(Vecd& position) {
-            return global_acceleration_;
+        DeviceVecd InducedAcceleration(DeviceVecd& position) {
+            return global_acceleration_device_;
         }
 	};
 }
