@@ -70,11 +70,11 @@ namespace SPH
 
         void update(size_t index_i, Real dt)
         {
-            acc_prior_[index_i] = gravity_->InducedAcceleration_Device(pos_[index_i]);
+            acc_prior_[index_i] = gravity_->InducedAcceleration(pos_[index_i]);
         }
 
     private:
-        Vecd* pos_, *acc_prior_;
+        DeviceVecd* pos_, *acc_prior_;
         Gravity* gravity_;
     };
 
