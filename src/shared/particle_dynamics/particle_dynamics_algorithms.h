@@ -225,6 +225,7 @@ class BaseInteractionDynamics : public LocalDynamicsType, public BaseDynamics<vo
         this->setupDynamics(dt);
         runInteraction(dt);
     };
+
 };
 
 /**
@@ -345,7 +346,7 @@ class Dynamics1Level : public InteractionDynamics<LocalDynamicsType, ExecutionPo
     template <typename... Args>
     Dynamics1Level(Args &&...args)
         : InteractionDynamics<LocalDynamicsType, ExecutionPolicy>(
-              false, std::forward<Args>(args)...) {}
+              false, std::forward<Args>(args)...), executionSelector(this) {}
     virtual ~Dynamics1Level(){};
 
     virtual void exec(Real dt = 0.0) override
@@ -355,16 +356,20 @@ class Dynamics1Level : public InteractionDynamics<LocalDynamicsType, ExecutionPo
 
         particle_for(ExecutionPolicy(),
                      this->identifier_.LoopRange(),
-                     [&](size_t i)
-                     { this->initialization(i, dt); });
+                     [=](size_t i, auto&& kernel)
+                     { kernel.initialization(i, dt); },
+                     executionSelector);
 
         InteractionDynamics<LocalDynamicsType, ExecutionPolicy>::runInteraction(dt);
 
         particle_for(ExecutionPolicy(),
                      this->identifier_.LoopRange(),
-                     [&](size_t i)
-                     { this->update(i, dt); });
-    };
+                     [=](size_t i, auto&& kernel)
+                     { kernel.update(i, dt); },
+                     executionSelector);
+    }
+private:
+    ExecutionSelector<LocalDynamicsType, ExecutionPolicy> executionSelector;
 };
 } // namespace SPH
 #endif // PARTICLE_DYNAMICS_ALGORITHMS_H
