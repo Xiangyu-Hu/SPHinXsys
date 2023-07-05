@@ -25,7 +25,29 @@ namespace SPH
 	{
 		return 0.5 * dW_ijV_j * (B_[index_i] + B_[index_j]) * e_ij;
 	}
-	//=============================================================================================//
+
+    void SolidParticles::allocateDeviceMemory() {
+        BaseParticles::allocateDeviceMemory();
+        n_device_ = allocateSharedData<DeviceVecd>(n_.size());
+    }
+
+    void SolidParticles::freeDeviceMemory() {
+        BaseParticles::freeDeviceMemory();
+        freeDeviceData(n_device_);
+    }
+
+    void SolidParticles::copyToDeviceMemory() {
+        BaseParticles::copyToDeviceMemory();
+        copyDataToDevice(n_.data(), n_device_, n_.size());
+//        executionQueue.getQueue().wait();
+    }
+
+    void SolidParticles::copyFromDeviceMemory() {
+        BaseParticles::copyFromDeviceMemory();
+        copyDataFromDevice(n_.data(), n_device_, n_.size());
+    }
+
+    //=============================================================================================//
 	ElasticSolidParticles::
 		ElasticSolidParticles(SPHBody &sph_body, ElasticSolid *elastic_solid)
 		: SolidParticles(sph_body, elastic_solid),
