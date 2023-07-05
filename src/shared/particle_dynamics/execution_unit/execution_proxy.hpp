@@ -2,7 +2,6 @@
 #define SPHINXSYS_EXECUTION_PROXY_HPP
 
 #include "execution_policy.h"
-#include "execution_context.hpp"
 
 namespace SPH {
     namespace execution {
