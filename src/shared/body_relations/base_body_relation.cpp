@@ -52,12 +52,12 @@ namespace SPH
 
     void BaseInnerRelation::copyInnerConfigurationToDevice() {
         for (std::size_t i = 0; i < inner_configuration_.size(); ++i)
-            inner_configuration_device_->at(i).copyFrom(inner_configuration_.at(i));
+            inner_configuration_device_->at(i) = inner_configuration_.at(i);
     }
 
     void BaseInnerRelation::copyInnerConfigurationFromDevice() {
         for (std::size_t i = 0; i < inner_configuration_.size(); ++i)
-            inner_configuration_device_->at(i).copyTo(inner_configuration_.at(i));
+            inner_configuration_.at(i) = inner_configuration_device_->at(i);
     }
 
     //=================================================================================================//

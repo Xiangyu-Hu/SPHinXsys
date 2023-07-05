@@ -45,6 +45,8 @@
 #include <Eigen/Geometry>
 #include <Eigen/Cholesky>
 
+#include <sycl/sycl.hpp>
+
 #include "Simbody.h"
 #include "SimTKcommon.h"
 #include "SimTKmath.h"
@@ -83,6 +85,10 @@ namespace SPH
 	/** AlignedBox */
 	using AlignedBox2d = Eigen::AlignedBox<Real, 2>;
 	using AlignedBox3d = Eigen::AlignedBox<Real, 3>;
+    /** Device data types. */
+    using DeviceReal = float;
+    using DeviceVec2d = sycl::vec<DeviceReal, 2>;
+    using DeviceVec3d = sycl::vec<DeviceReal, 3>;
 	/** Unified initialize to zero for all data type. */
 	/**
 	 * NOTE: Eigen::Matrix<> constexpr constructor?

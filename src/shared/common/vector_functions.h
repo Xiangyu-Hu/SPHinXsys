@@ -95,6 +95,24 @@ namespace SPH
 	Real getCrossProduct(const Vec2d &vector_1, const Vec2d &vector_2);
 	Vec3d getCrossProduct(const Vec3d &vector_1, const Vec3d &vector_2);
 
+    /** convert host Vecd to device Vecd */
+    inline DeviceVec2d hostToDeviceVecd(const Vec2d& host) { return {host[0], host[1]}; }
+    inline DeviceVec3d hostToDeviceVecd(const Vec3d& host) { return {host[0], host[1], host[2]}; }
+
+    /** convert device Vecd to host Vecd */
+    inline Vec2d deviceToHostVecd(const DeviceVec2d& device) { return {device[0], device[1]}; }
+    inline Vec3d deviceToHostVecd(const DeviceVec3d& device) { return {device[0], device[1], device[2]}; }
+
+    /** Initialize Vecd of zeros for host or device */
+    template<class V> inline V VecdZero();
+    template<> inline DeviceVec2d VecdZero() { return { static_cast<DeviceReal>(0.0),
+                                                        static_cast<DeviceReal>(0.0) }; }
+    template<> inline DeviceVec3d VecdZero() { return { static_cast<DeviceReal>(0.0),
+                                                        static_cast<DeviceReal>(0.0),
+                                                        static_cast<DeviceReal>(0.0) }; }
+    template<> inline Vec2d VecdZero() { return Vec2d::Zero(); }
+    template<> inline Vec3d VecdZero() { return Vec3d::Zero(); }
+
     /* SYCL memory transfer utilities */
     template<class T>
     inline T* allocateDeviceData(std::size_t size) {
