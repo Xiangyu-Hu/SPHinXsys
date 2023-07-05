@@ -134,9 +134,49 @@ namespace SPH
         execution::executionQueue.getQueue().memcpy(device, host, size*sizeof(T));
     }
 
+    template<class HostType, class DeviceType, class TransformFunc>
+    void transformAndCopyDataToDevice(const HostType* host, DeviceType* device, std::size_t size, TransformFunc&& transformation) {
+        std::vector<DeviceType> hostTransformed(size);
+        for(size_t i = 0; i < size; ++i)
+            hostTransformed[i] = transformation(host[i]);
+        copyDataToDevice(hostTransformed.data(), device, size);
+        execution::executionQueue.getQueue().wait();
+    }
+
+    inline void copyDataToDevice(const Vec2d* host, DeviceVec2d* device, std::size_t size) {
+        transformAndCopyDataToDevice(host, device, size, [](auto vec) { return hostToDeviceVecd(vec); });
+    }
+
+    inline void copyDataToDevice(const Real* host, DeviceReal* device, std::size_t size) {
+        transformAndCopyDataToDevice(host, device, size, [](Real val) { return static_cast<DeviceReal>(val); });
+    }
+
+    template<class T>
+    inline void copyDataToDevice(const T& value, T* device, std::size_t size) {
+        execution::executionQueue.getQueue().fill(device, value, size);
+    }
+
     template<class T>
     inline void copyDataFromDevice(T* host, const T* device, std::size_t size) {
         execution::executionQueue.getQueue().memcpy(host, device, size*sizeof(T));
+    }
+
+    template<class HostType, class DeviceType, class TransformFunc>
+    void transformAndCopyDataFromDevice(HostType* host, const DeviceType* device, std::size_t size, TransformFunc&& transformation) {
+        std::vector<DeviceType> hostTransformed(size);
+        copyDataFromDevice(hostTransformed.data(), device, size);
+        execution::executionQueue.getQueue().wait();
+        for(size_t i = 0; i < size; ++i)
+            host[i] = transformation(hostTransformed[i]);
+    }
+
+
+    inline void copyDataFromDevice(Vec2d* host, const DeviceVec2d* device, std::size_t size) {
+        transformAndCopyDataFromDevice(host, device, size, [](auto vec) { return deviceToHostVecd(vec); });
+    }
+
+    inline void copyDataFromDevice(Real* host, const DeviceReal* device, std::size_t size) {
+        transformAndCopyDataFromDevice(host, device, size, [](DeviceReal val) { return static_cast<Real>(val); });
     }
 
 	/** Bounding box for system, body, body part and shape, first: lower bound, second: upper bound. */
