@@ -28,6 +28,12 @@ namespace SPH
 		  contact_configuration_(contact_relation_.contact_configuration_)
 	{
 		resizeConfiguration();
+
+        inner_relation_.allocateInnerConfigurationDevice();
+        inner_relation_.copyInnerConfigurationToDevice();
+
+        contact_relation_.allocateContactConfiguration();
+        contact_relation_.copyContactConfigurationToDevice();
 	}
 	//=================================================================================================//
 	ComplexRelation::

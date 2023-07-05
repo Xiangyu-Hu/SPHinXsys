@@ -33,6 +33,7 @@
 #include "fluid_particles_variable.h"
 
 #include "particle_generator_lattice.h"
+#include "weakly_compressible_fluid.h"
 
 namespace SPH
 {
@@ -47,11 +48,11 @@ namespace SPH
 	class FluidParticles : public BaseParticles
 	{
 	public:
-		StdLargeVec<Real> p_;				 /**< pressure */
-		StdLargeVec<Real> drho_dt_;			 /**< density change rate */
-		StdLargeVec<Real> rho_sum_;			 /**< density by particle summation */
+		StdLargeVec<Real> p_; DeviceReal* p_device_;				 /**< pressure */
+		StdLargeVec<Real> drho_dt_; DeviceReal* drho_dt_device_;			 /**< density change rate */
+		StdLargeVec<Real> rho_sum_; DeviceReal* rho_sum_device_;			 /**< density by particle summation */
 		StdLargeVec<int> surface_indicator_; /**< free surface indicator */
-		Fluid &fluid_;
+		Fluid &fluid_; WeaklyCompressibleFluid* fluid_device_;
 
 		FluidParticles(SPHBody &sph_body, Fluid *fluid);
 		virtual ~FluidParticles(){};
@@ -59,7 +60,40 @@ namespace SPH
 		virtual void initializeOtherVariables() override;
 		/** Return the ptr of this object. */
 		virtual FluidParticles *ThisObjectPtr() override { return this; };
-	};
+
+        void allocateDeviceMemory() override {
+            BaseParticles::allocateDeviceMemory();
+            p_device_ = allocateDeviceData<DeviceReal>(p_.size());
+            drho_dt_device_ = allocateDeviceData<DeviceReal>(drho_dt_.size());
+            rho_sum_device_ = allocateDeviceData<DeviceReal>(rho_sum_.size());
+            fluid_device_ = allocateDeviceData<WeaklyCompressibleFluid>(1);
+        }
+
+        void freeDeviceMemory() override {
+            BaseParticles::freeDeviceMemory();
+            freeDeviceData(p_device_);
+            freeDeviceData(drho_dt_device_);
+            freeDeviceData(rho_sum_device_);
+            freeDeviceData(fluid_device_);
+        }
+
+        void copyToDeviceMemory() override {
+            BaseParticles::copyToDeviceMemory();
+            copyDataToDevice(p_.data(), p_device_, p_.size());
+            copyDataToDevice(drho_dt_.data(), drho_dt_device_, drho_dt_.size());
+            copyDataToDevice(rho_sum_.data(), rho_sum_device_, rho_sum_.size());
+
+            WeaklyCompressibleFluid fluid {fluid_.ReferenceDensity(), fluid_.ReferenceSoundSpeed()};
+            copyDataToDevice(&fluid, fluid_device_, 1);
+        }
+
+        void copyFromDeviceMemory() override {
+            BaseParticles::copyFromDeviceMemory();
+            copyDataFromDevice(p_.data(), p_device_, p_.size());
+            copyDataFromDevice(drho_dt_.data(), drho_dt_device_, drho_dt_.size());
+            copyDataFromDevice(rho_sum_.data(), rho_sum_device_, rho_sum_.size());
+        }
+    };
 
 	/**
 	 * @class ViscoelasticFluidParticles

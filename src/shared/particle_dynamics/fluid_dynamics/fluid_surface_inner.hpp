@@ -175,7 +175,11 @@ namespace SPH
 		template <class DensitySummationType>
 		void DensitySummationFreeSurface<DensitySummationType>::update(size_t index_i, Real dt)
 		{
-			this->rho_[index_i] = ReinitializedDensity(this->rho_sum_[index_i], this->rho0_);
+            DensitySummationFreeSurfaceKernel<DensitySummationKernel>::update(index_i, dt, this->rho_.data(),
+                                                                              this->rho_sum_.data(), this->rho0_,
+                                                                              [&](auto rho_sum, auto rho0) {
+                return ReinitializedDensity(rho_sum, rho0);
+            });
 		}
 		//=================================================================================================//
 		template <class DensitySummationFreeSurfaceType>

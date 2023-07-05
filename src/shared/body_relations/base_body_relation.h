@@ -130,10 +130,16 @@ namespace SPH
 	public:
 		RealBody *real_body_;
 		ParticleConfiguration inner_configuration_; /**< inner configuration for the neighbor relations. */
+        SharedPtr<StdSharedVec<NeighborhoodDevice>> inner_configuration_device_;
+
 		explicit BaseInnerRelation(RealBody &real_body);
 		virtual ~BaseInnerRelation(){};
 
 		virtual void resizeConfiguration() override;
+
+        void allocateInnerConfigurationDevice();
+        void copyInnerConfigurationToDevice();
+        void copyInnerConfigurationFromDevice();
 	};
 
 	/**
@@ -148,6 +154,7 @@ namespace SPH
 	public:
 		RealBodyVector contact_bodies_;
 		StdVec<ParticleConfiguration> contact_configuration_; /**< Configurations for particle interaction between bodies. */
+        StdVec<StdSharedVec<NeighborhoodDevice>> contact_configuration_device_;
 
 		BaseContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies);
 		BaseContactRelation(SPHBody &sph_body, BodyPartVector contact_body_parts)
@@ -155,6 +162,23 @@ namespace SPH
 		virtual ~BaseContactRelation(){};
 
 		virtual void resizeConfiguration() override;
+
+        void allocateContactConfiguration() {
+            for (const auto & body : contact_configuration_)
+                contact_configuration_device_.emplace_back(body.size(), execution::executionQueue.getQueue());
+        }
+
+        void copyContactConfigurationToDevice() {
+            for (int k = 0; k < contact_configuration_.size(); ++k)
+                for (int i = 0; i < contact_configuration_.at(k).size(); ++i)
+                    contact_configuration_device_.at(k).at(i) = contact_configuration_.at(k).at(i);
+        }
+
+        void copyContactConfigurationFromDevice() {
+            for (int k = 0; k < contact_configuration_.size(); ++k)
+                for (int i = 0; i < contact_configuration_.at(k).size(); ++i)
+                    contact_configuration_.at(k).at(i) = contact_configuration_device_.at(k).at(i);
+        }
 	};
 }
 #endif // BASE_BODY_RELATION_H

@@ -3,25 +3,35 @@
 
 #include <sycl/sycl.hpp>
 
-class ExecutionQueue {
-public:
-    static sycl::queue &getQueue() {
-        static std::unique_ptr<sycl::queue> sycl_queue;
-        if(sycl_queue == nullptr) {
-            try {
-                static sycl::async_handler error_handler = [](const auto &list_errors) {
-                    for (const auto &error: list_errors)
-                        std::rethrow_exception(error);
-                };
+namespace SPH::execution {
+    class ExecutionQueue {
+    public:
+        ExecutionQueue(ExecutionQueue const&) = delete;
+        void operator=(ExecutionQueue const&) = delete;
 
-                sycl_queue = std::make_unique<sycl::queue>(sycl::gpu_selector_v, error_handler);
-
-            } catch (const sycl::exception &error) {
-                std::cerr << error.what() << std::endl;
-            }
+        static ExecutionQueue& getInstance() {
+            static ExecutionQueue instance;
+            return instance;
         }
-        return *sycl_queue;
-    }
-};
+
+        sycl::queue &getQueue() {
+            return sycl_queue;
+        }
+
+        auto getWorkGroupSize() const {
+            return work_group_size;
+        }
+
+        void setWorkGroupSize(size_t workGroupSize) {
+            work_group_size = workGroupSize;
+        }
+
+    private:
+        ExecutionQueue() : work_group_size(32), sycl_queue(sycl::gpu_selector_v) {}
+
+        std::size_t work_group_size;
+        sycl::queue sycl_queue;
+    } static &executionQueue = ExecutionQueue::getInstance();
+}
 
 #endif //SPHINXSYS_EXECUTION_QUEUE_H

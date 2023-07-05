@@ -40,13 +40,10 @@ namespace SPH
 		void DensitySummationInner::
 			interaction(size_t index_i, Real dt)
 		{
-			Real sigma = W0_;
-			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-				sigma += inner_neighborhood.W_ij_[n];
+            DensitySummationInnerKernel::interaction(index_i, dt, inner_configuration_.data(), W0_, rho_sum_.data(),
+                                                     rho0_, inv_sigma0_);
 
-			rho_sum_[index_i] = sigma * rho0_ * inv_sigma0_;
-		}
+        }
 		//=================================================================================================//
 		void DensitySummationInnerAdaptive::
 			interaction(size_t index_i, Real dt)
@@ -193,20 +190,21 @@ namespace SPH
 		//=================================================================================================//
 		template <class RiemannSolverType>
 		BaseIntegration1stHalf<RiemannSolverType>::BaseIntegration1stHalf(BaseInnerRelation &inner_relation)
-			: BaseIntegration(inner_relation), riemann_solver_(fluid_, fluid_) {}
+			: BaseIntegration(inner_relation),
+            riemann_solver_(fluid_, fluid_)
+            {}
 		//=================================================================================================//
 		template <class RiemannSolverType>
 		void BaseIntegration1stHalf<RiemannSolverType>::initialization(size_t index_i, Real dt)
 		{
-			rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
-			p_[index_i] = fluid_.getPressure(rho_[index_i]);
-			pos_[index_i] += vel_[index_i] * dt * 0.5;
+            DeviceKernel::initialization(index_i, dt, rho_.data(), drho_dt_.data(), p_.data(), pos_.data(), vel_.data(),
+                                         fluid_, [](auto &fluid, Real rho) { return fluid.getPressure(rho); });
 		}
 		//=================================================================================================//
 		template <class RiemannSolverType>
 		void BaseIntegration1stHalf<RiemannSolverType>::update(size_t index_i, Real dt)
 		{
-			vel_[index_i] += (acc_prior_[index_i] + acc_[index_i]) * dt;
+            DeviceKernel::update(index_i, dt, vel_.data(), acc_prior_.data(), acc_.data());
 		}
 		//=================================================================================================//
 		template <class RiemannSolverType>

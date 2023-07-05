@@ -29,11 +29,6 @@ namespace SPH
 		return rho0c0_geo_ave_ * u_jump * SMIN(3.0 * SMAX(u_jump * inv_c_ave_, 0.0), 1.0);
 	}
 	//=================================================================================================//
-	Real AcousticRiemannSolver::DissipativeUJump(const Real &p_jump)
-	{
-		return p_jump * inv_rho0c0_ave_;
-	}
-	//=================================================================================================//
 	Real DissipativeRiemannSolver::DissipativePJump(const Real &u_jump)
 	{
 		return rho0c0_geo_ave_ * u_jump;

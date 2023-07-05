@@ -6,12 +6,12 @@ namespace SPH {
 //=================================================================================================//
 	Gravity::Gravity(Vecd global_acceleration, Vecd reference_position)
 		: ExternalForce(), global_acceleration_(global_acceleration),
-		zero_potential_reference_(reference_position), global_acceleration_device(&global_acceleration_, 1),
-        device_proxy(this, global_acceleration_device) {}
+        global_acceleration_device_(hostToDeviceVecd(global_acceleration_)),
+		zero_potential_reference_(reference_position) {}
 	//=================================================================================================//
 	Vecd Gravity::InducedAcceleration(Vecd& position)
 	{
-        return GravityKernel::InducedAcceleration(position, global_acceleration_);
+        return global_acceleration_;
 	}
 	//=================================================================================================//
 	Real Gravity::getPotential(Vecd& position)

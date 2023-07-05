@@ -85,14 +85,17 @@ int main(int ac, char *av[])
 	//	Define the numerical methods used in the simulation.
 	//	Note that there may be data dependence on the sequence of constructions.
 	//----------------------------------------------------------------------
-	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> fluid_pressure_relaxation(water_block_complex);
-	Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_block_complex);
-	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> fluid_density_by_summation(water_block_complex);
+    fluid_observer_contact.allocateContactConfiguration();
+    fluid_observer_contact.copyContactConfigurationToDevice();
+
+    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall, ParallelSYCLDevicePolicy> fluid_pressure_relaxation(water_block_complex);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_block_complex);
+	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex, ParallelSYCLDevicePolicy> fluid_density_by_summation(water_block_complex);
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-	SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
-	SimpleDynamics<TimeStepInitialization, ParallelSYCLDevicePolicy, DeviceDispatcher> fluid_step_initialization(water_block, gravity_ptr);
-	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize, ParallelSYCLDevicePolicy, DeviceDispatcher> fluid_advection_time_step(water_block, U_max);
-	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
+	SharedPtr<Gravity> gravity_ptr = makeSharedDevice<Gravity>(Vecd(0.0, -gravity_g));
+	SimpleDynamics<TimeStepInitialization, ParallelSYCLDevicePolicy> fluid_step_initialization(water_block, gravity_ptr);
+	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize, ParallelSYCLDevicePolicy> fluid_advection_time_step(water_block, U_max);
+	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize, ParallelSYCLDevicePolicy> fluid_acoustic_time_step(water_block);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations, observations
 	//	and regression tests of the simulation.
@@ -153,12 +156,20 @@ int main(int ac, char *av[])
 		/** Integrate time (loop) until the next output time. */
 		while (integration_time < output_interval)
 		{
+            water_block.getBaseParticles().copyToDeviceMemory();
+            water_block_complex.getInnerRelation().copyInnerConfigurationToDevice();
+            water_block_complex.getContactRelation().copyContactConfigurationToDevice();
 			/** outer loop for dual-time criteria time-stepping. */
 			time_instance = TickCount::now();
 			fluid_step_initialization.exec();
 			Real advection_dt = fluid_advection_time_step.exec();
-			fluid_density_by_summation.exec();
-			interval_computing_time_step += TickCount::now() - time_instance;
+            fluid_density_by_summation.exec();
+
+            water_block.getBaseParticles().copyFromDeviceMemory();
+            water_block_complex.getInnerRelation().copyInnerConfigurationFromDevice();
+            water_block_complex.getContactRelation().copyContactConfigurationFromDevice();
+
+            interval_computing_time_step += TickCount::now() - time_instance;
 
 			time_instance = TickCount::now();
 			Real relaxation_time = 0.0;
@@ -166,9 +177,14 @@ int main(int ac, char *av[])
 			while (relaxation_time < advection_dt)
 			{
 				/** inner loop for dual-time criteria time-stepping.  */
-				acoustic_dt = fluid_acoustic_time_step.exec();
-				fluid_pressure_relaxation.exec(acoustic_dt);
-				fluid_density_relaxation.exec(acoustic_dt);
+                water_block.getBaseParticles().copyToDeviceMemory();
+
+                acoustic_dt = fluid_acoustic_time_step.exec();
+                fluid_pressure_relaxation.exec(acoustic_dt);
+
+                water_block.getBaseParticles().copyFromDeviceMemory();
+
+                fluid_density_relaxation.exec(acoustic_dt);
 				relaxation_time += acoustic_dt;
 				integration_time += acoustic_dt;
 				GlobalStaticVariables::physical_time_ += acoustic_dt;
@@ -205,6 +221,10 @@ int main(int ac, char *av[])
 		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
 	}
+
+    water_block.getBaseParticles().copyFromDeviceMemory();
+    water_block.getBaseParticles().freeDeviceMemory();
+
 	TickCount t4 = TickCount::now();
 
 	TimeInterval tt;

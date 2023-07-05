@@ -24,7 +24,8 @@ namespace SPH
 		//=================================================================================================//
 		DensitySummationInner::DensitySummationInner(BaseInnerRelation &inner_relation)
 			: BaseDensitySummationInner(inner_relation),
-			  W0_(sph_body_.sph_adaptation_->getKernel()->W0( ZeroVecd )) {}
+			  W0_(sph_body_.sph_adaptation_->getKernel()->W0( ZeroVecd )),
+              device_proxy(this, W0_, inner_configuration_device_->data(), particles_, rho0_, inv_sigma0_){}
 		//=================================================================================================//
 		DensitySummationInnerAdaptive::
 			DensitySummationInnerAdaptive(BaseInnerRelation &inner_relation)
@@ -59,11 +60,13 @@ namespace SPH
 			  FluidDataSimple(sph_body), fluid_(particles_->fluid_), rho_(particles_->rho_),
 			  p_(particles_->p_), vel_(particles_->vel_),
 			  smoothing_length_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
-			  acousticCFL_(acousticCFL) {}
+			  acousticCFL_(acousticCFL), device_proxy(this, particles_) {}
 		//=================================================================================================//
 		Real AcousticTimeStepSize::reduce(size_t index_i, Real dt)
 		{
-			return fluid_.getSoundSpeed(p_[index_i], rho_[index_i]) + vel_[index_i].norm();
+            return decltype(device_proxy)::Kernel::reduce(index_i, dt, fluid_, p_.data(), rho_.data(), vel_.data(),
+                                  [](Fluid& fluid, Real p_i, Real rho_i) { return fluid.getSoundSpeed(p_i, rho_i); },
+                                  [](const Vecd& vel) { return vel.norm(); });
 		}
 		//=================================================================================================//
 		Real AcousticTimeStepSize::outputResult(Real reduced_value)
@@ -78,8 +81,7 @@ namespace SPH
 			: LocalDynamicsReduce<Real, ReduceMax>(sph_body, U_max * U_max),
 			  FluidDataSimple(sph_body), vel_(particles_->vel_),
 			  smoothing_length_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
-			  advectionCFL_(advectionCFL), vel_device(vel_.data(), vel_.size()),
-              device_proxy(this, vel_device) {}
+			  advectionCFL_(advectionCFL), device_proxy(this, particles_) {}
 		//=================================================================================================//
 		Real AdvectionTimeStepSizeForImplicitViscosity::reduce(size_t index_i, Real dt)
 		{

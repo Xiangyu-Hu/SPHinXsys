@@ -37,6 +37,7 @@
 #include "xml_engine.h"
 #include "particle_sorting.h"
 #include "base_variables.h"
+#include "execution_queue.hpp"
 
 #include <fstream>
 
@@ -89,14 +90,14 @@ namespace SPH
 		explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
 		virtual ~BaseParticles() {};
 
-		StdLargeVec<Vecd> pos_;		  /**< particle position */
-		StdLargeVec<Vecd> vel_;		  /**< particle velocity */
-		StdLargeVec<Vecd> acc_;		  /**< total acceleration including inner pressure- or stress-induced acceleration and other accelerations */
-		StdLargeVec<Vecd> acc_prior_; /**< other, such as gravity and viscous, accelerations */
+		StdLargeVec<Vecd> pos_; DeviceVecd* pos_device_;		  /**< particle position */
+		StdLargeVec<Vecd> vel_; DeviceVecd* vel_device_;		  /**< particle velocity */
+		StdLargeVec<Vecd> acc_; DeviceVecd* acc_device_;		  /**< total acceleration including inner pressure- or stress-induced acceleration and other accelerations */
+		StdLargeVec<Vecd> acc_prior_; DeviceVecd* acc_prior_device_; /**< other, such as gravity and viscous, accelerations */
 
 		StdLargeVec<Real> Vol_;	 /**< particle volumetric measure, also referred to area of surface particle and length of linear particle */
-		StdLargeVec<Real> rho_;	 /**< particle density */
-		StdLargeVec<Real> mass_; /**< particle massive measure, also referred to mass per-unit thickness of surface particle and mass per-unit cross-section area of linear particle */
+		StdLargeVec<Real> rho_; DeviceReal* rho_device_;	 /**< particle density */
+		StdLargeVec<Real> mass_; DeviceReal* mass_device_; /**< particle massive measure, also referred to mass per-unit thickness of surface particle and mass per-unit cross-section area of linear particle */
 		BaseMaterial &base_material_;
 		//----------------------------------------------------------------------
 		// Global information for defining particle groups
@@ -220,6 +221,42 @@ namespace SPH
 		virtual Real ParticleVolume(size_t index_i) { return Vol_[index_i]; }
 		/** Return particle mass. */
 		virtual Real ParticleMass(size_t index_i) { return mass_[index_i]; }
+
+        virtual void allocateDeviceMemory() {
+            pos_device_ = allocateSharedData<DeviceVecd>(pos_.size());
+            vel_device_ = allocateSharedData<DeviceVecd>(vel_.size());
+            acc_device_ = allocateSharedData<DeviceVecd>(acc_.size());
+            acc_prior_device_ = allocateSharedData<DeviceVecd>(acc_prior_.size());
+            rho_device_ = allocateDeviceData<DeviceReal>(rho_.size());
+            mass_device_ = allocateDeviceData<DeviceReal>(mass_.size());
+        }
+
+        virtual void freeDeviceMemory() {
+            freeDeviceData(pos_device_);
+            freeDeviceData(vel_device_);
+            freeDeviceData(acc_device_);
+            freeDeviceData(acc_prior_device_);
+            freeDeviceData(rho_device_);
+            freeDeviceData(mass_device_);
+        }
+
+        virtual void copyToDeviceMemory() {
+            copyDataToDevice(pos_.data(), pos_device_, pos_.size());
+            copyDataToDevice(vel_.data(), vel_device_, vel_.size());
+            copyDataToDevice(acc_.data(), acc_device_, acc_.size());
+            copyDataToDevice(acc_prior_.data(), acc_prior_device_, acc_prior_.size());
+            copyDataToDevice(rho_.data(), rho_device_, rho_.size());
+            copyDataToDevice(mass_.data(), mass_device_, mass_.size());
+        }
+
+        virtual void copyFromDeviceMemory() {
+            copyDataFromDevice(pos_.data(), pos_device_, pos_.size());
+            copyDataFromDevice(vel_.data(), vel_device_, vel_.size());
+            copyDataFromDevice(acc_.data(), acc_device_, acc_.size());
+            copyDataFromDevice(acc_prior_.data(), acc_prior_device_, acc_prior_.size());
+            copyDataFromDevice(rho_.data(), rho_device_, rho_.size());
+            copyDataFromDevice(mass_.data(), mass_device_, mass_.size());
+        }
 
 	protected:
 		SPHBody &sph_body_;							/**< The body in which the particles belongs to. */

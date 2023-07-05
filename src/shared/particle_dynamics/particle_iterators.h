@@ -34,6 +34,7 @@
 #include "execution_policy.h"
 #include "execution_unit/execution_proxy.hpp"
 #include "execution_unit/execution_queue.hpp"
+#include "execution_unit/execution_event.hpp"
 
 namespace SPH
 {
@@ -60,6 +61,15 @@ namespace SPH
 			local_dynamics_function(i);
 	};
 
+    template <class LocalDynamicsFunction, class Proxy>
+    inline void particle_for(const SequencedPolicy &seq, const size_t &all_real_particles,
+                             const LocalDynamicsFunction &local_dynamics_function, Proxy& proxy)
+    {
+        auto& kernel = *proxy.getProxy().get(seq);
+        for (size_t i = 0; i < all_real_particles; ++i)
+            local_dynamics_function(i, kernel);
+    };
+
 	template <class LocalDynamicsFunction>
 	inline void particle_for(const ParallelPolicy &par, const size_t &all_real_particles,
 							 const LocalDynamicsFunction &local_dynamics_function)
@@ -80,7 +90,7 @@ namespace SPH
     inline void particle_for(const ParallelPolicy &par_policy, const size_t &all_real_particles,
                              const LocalDynamicsFunction &local_dynamics_function, Proxy& proxy)
     {
-        auto& kernel = *proxy.get(par_policy);
+        auto& kernel = *proxy.getProxy().get(par_policy);
         parallel_for(
                 IndexRange(0, all_real_particles),
                 [&](const IndexRange &r)
@@ -160,7 +170,7 @@ namespace SPH
     inline void particle_for(const ParallelPolicy &par_policy, const ConcurrentCellLists &body_part_cells,
                              const LocalDynamicsFunction &local_dynamics_function, Proxy& proxy)
     {
-        auto& kernel = *proxy.get(par_policy);
+        auto& kernel = *proxy.getProxy().get(par_policy);
         parallel_for(
                 IndexRange(0, body_part_cells.size()),
                 [&](const IndexRange &r)
@@ -288,20 +298,15 @@ namespace SPH
     inline void particle_for(const ParallelSYCLDevicePolicy & sycl_policy, const size_t &all_real_particles,
                              const LocalDynamicsFunction &local_dynamics_function, Proxy& proxy)
     {
-        try {
-            auto &sycl_queue = ExecutionQueue::getQueue();
-            auto& kernel = *proxy.get(sycl_policy);
-            sycl_queue.submit([&](sycl::handler &cgh) {
-                proxy.init_memory_access(Context<ParallelSYCLDevicePolicy>(cgh));
-                cgh.parallel_for(all_real_particles, [=](sycl::item<1> index) {
-                    auto i = index.get_id();
-                    local_dynamics_function(i, typename Proxy::Kernel(kernel));
-                });
+        auto &sycl_queue = executionQueue.getQueue();
+        auto work_group_size = executionQueue.getWorkGroupSize();
+        auto &kernel_buffer = proxy.getBuffer();
+        sycl_queue.submit([&](sycl::handler &cgh) {
+            auto kernel_accessor = kernel_buffer.get_access(cgh, sycl::read_write);
+            cgh.parallel_for(sycl::nd_range<1>{all_real_particles, work_group_size}, [=](sycl::nd_item<1> index) {
+                local_dynamics_function(index.get_global_id(0), kernel_accessor[0]);
             });
-            sycl_queue.wait_and_throw();
-        } catch (const sycl::exception &error) {
-            std::cerr << error.what() << std::endl;
-        }
+        }).wait();
     }
 
 	template <class ExecutionPolicy, typename DynamicsRange, class ReturnType,
@@ -329,6 +334,19 @@ namespace SPH
 		return temp;
 	}
 
+    template <class ReturnType, typename Operation, class LocalDynamicsFunction, class Proxy>
+    inline ReturnType particle_reduce(const SequencedPolicy &seq, const size_t &all_real_particles,
+                                      ReturnType temp, Operation &&operation,
+                                      const LocalDynamicsFunction &local_dynamics_function, Proxy& proxy)
+    {
+        auto& kernel = *proxy.getProxy().get(seq);
+        for (size_t i = 0; i < all_real_particles; ++i)
+        {
+            temp = operation(temp, local_dynamics_function(i, kernel));
+        }
+        return temp;
+    }
+
 	template <class ReturnType, typename Operation, class LocalDynamicsFunction>
 	inline ReturnType particle_reduce(const ParallelPolicy &par, const size_t &all_real_particles,
 									  ReturnType temp, Operation &&operation,
@@ -351,10 +369,10 @@ namespace SPH
 
     template <class ReturnType, typename Operation, class LocalDynamicsFunction, class Proxy>
     inline ReturnType particle_reduce(const ParallelPolicy &par_policy, const size_t &all_real_particles,
-                                      ReturnType identity, Operation &operation,
+                                      ReturnType identity, Operation &&operation,
                                       const LocalDynamicsFunction &local_dynamics_function, Proxy& proxy)
     {
-        auto& kernel = *proxy.get(par_policy);
+        auto& kernel = *proxy.getProxy().get(par_policy);
         return parallel_reduce(
                 IndexRange(0, all_real_particles),
                 identity, [&](const IndexRange &r, ReturnType temp0) -> ReturnType
@@ -372,24 +390,24 @@ namespace SPH
 
     template <class ReturnType, typename Operation, class LocalDynamicsFunction, class Proxy>
     inline ReturnType particle_reduce(const ParallelSYCLDevicePolicy &sycl_policy, const size_t &all_real_particles,
-                                      ReturnType identity, Operation&,
+                                      ReturnType identity, Operation&&,
                                       const LocalDynamicsFunction &local_dynamics_function, Proxy& proxy)
     {
         ReturnType result = identity;
-        auto& kernel = *proxy.get(sycl_policy);
-        try {
-            auto &sycl_queue = ExecutionQueue::getQueue();
+        auto &kernel_buffer = proxy.getBuffer();
+        auto &sycl_queue = executionQueue.getQueue();
+        auto work_group_size = executionQueue.getWorkGroupSize();
+        {
             sycl::buffer<ReturnType> buffer_result(&result, 1);
             sycl_queue.submit([&](sycl::handler &cgh) {
-                proxy.init_memory_access(Context<ParallelSYCLDevicePolicy>(cgh));
-                auto reduction_operator = sycl::reduction(buffer_result, cgh, typename Operation::SYCLOp());
-                cgh.parallel_for(sycl::range(all_real_particles), reduction_operator, [=](sycl::id<1> idx, auto& reduction) {
-                    reduction.combine(local_dynamics_function(idx, typename Proxy::Kernel(kernel)));
-                });
-            });
-            sycl_queue.wait_and_throw();
-        } catch (const sycl::exception &error) {
-            std::cerr << error.what() << std::endl;
+                auto kernel_accessor = kernel_buffer.get_access(cgh, sycl::read_only);
+                auto reduction_operator = sycl::reduction(buffer_result, cgh,
+                                                          typename std::remove_reference_t<Operation>::SYCLOp());
+                cgh.parallel_for(sycl::nd_range<1>{all_real_particles, work_group_size}, reduction_operator,
+                                 [=](sycl::nd_item<1> item, auto& reduction) {
+                                     reduction.combine(local_dynamics_function(item.get_global_id(0), kernel_accessor[0]));
+                                 });
+            }).wait();
         }
         return result;
     }

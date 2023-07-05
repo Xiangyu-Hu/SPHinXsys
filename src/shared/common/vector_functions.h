@@ -29,6 +29,7 @@
 #define SMALL_VECTORS_H
 
 #include "base_data_type.h"
+#include "execution_queue.hpp"
 
 namespace SPH
 {
@@ -93,6 +94,90 @@ namespace SPH
 	/** get transformation matrix. */
 	Real getCrossProduct(const Vec2d &vector_1, const Vec2d &vector_2);
 	Vec3d getCrossProduct(const Vec3d &vector_1, const Vec3d &vector_2);
+
+    /** convert host Vecd to device Vecd */
+    inline DeviceVec2d hostToDeviceVecd(const Vec2d& host) { return {host[0], host[1]}; }
+    inline DeviceVec3d hostToDeviceVecd(const Vec3d& host) { return {host[0], host[1], host[2]}; }
+
+    /** convert device Vecd to host Vecd */
+    inline Vec2d deviceToHostVecd(const DeviceVec2d& device) { return {device[0], device[1]}; }
+    inline Vec3d deviceToHostVecd(const DeviceVec3d& device) { return {device[0], device[1], device[2]}; }
+
+    /** Initialize Vecd of zeros for host or device */
+    template<class V> inline V VecdZero();
+    template<> inline DeviceVec2d VecdZero() { return { static_cast<DeviceReal>(0.0),
+                                                        static_cast<DeviceReal>(0.0) }; }
+    template<> inline DeviceVec3d VecdZero() { return { static_cast<DeviceReal>(0.0),
+                                                        static_cast<DeviceReal>(0.0),
+                                                        static_cast<DeviceReal>(0.0) }; }
+    template<> inline Vec2d VecdZero() { return Vec2d::Zero(); }
+    template<> inline Vec3d VecdZero() { return Vec3d::Zero(); }
+
+    /* SYCL memory transfer utilities */
+    template<class T>
+    inline T* allocateDeviceData(std::size_t size) {
+        return sycl::malloc_device<T>(size, execution::executionQueue.getQueue());
+    }
+
+    template<class T>
+    inline T* allocateSharedData(std::size_t size) {
+        return sycl::malloc_shared<T>(size, execution::executionQueue.getQueue());
+    }
+
+    template<class T>
+    inline void freeDeviceData(T* device_mem) {
+        sycl::free(device_mem, execution::executionQueue.getQueue());
+    }
+
+    template<class T>
+    inline void copyDataToDevice(const T* host, T* device, std::size_t size) {
+        execution::executionQueue.getQueue().memcpy(device, host, size*sizeof(T));
+    }
+
+    template<class HostType, class DeviceType, class TransformFunc>
+    void transformAndCopyDataToDevice(const HostType* host, DeviceType* device, std::size_t size, TransformFunc&& transformation) {
+        std::vector<DeviceType> hostTransformed(size);
+        for(size_t i = 0; i < size; ++i)
+            hostTransformed[i] = transformation(host[i]);
+        copyDataToDevice(hostTransformed.data(), device, size);
+        execution::executionQueue.getQueue().wait();
+    }
+
+    inline void copyDataToDevice(const Vec2d* host, DeviceVec2d* device, std::size_t size) {
+        transformAndCopyDataToDevice(host, device, size, [](auto vec) { return hostToDeviceVecd(vec); });
+    }
+
+    inline void copyDataToDevice(const Real* host, DeviceReal* device, std::size_t size) {
+        transformAndCopyDataToDevice(host, device, size, [](Real val) { return static_cast<DeviceReal>(val); });
+    }
+
+    template<class T>
+    inline void copyDataToDevice(const T& value, T* device, std::size_t size) {
+        execution::executionQueue.getQueue().fill(device, value, size);
+    }
+
+    template<class T>
+    inline void copyDataFromDevice(T* host, const T* device, std::size_t size) {
+        execution::executionQueue.getQueue().memcpy(host, device, size*sizeof(T));
+    }
+
+    template<class HostType, class DeviceType, class TransformFunc>
+    void transformAndCopyDataFromDevice(HostType* host, const DeviceType* device, std::size_t size, TransformFunc&& transformation) {
+        std::vector<DeviceType> hostTransformed(size);
+        copyDataFromDevice(hostTransformed.data(), device, size);
+        execution::executionQueue.getQueue().wait();
+        for(size_t i = 0; i < size; ++i)
+            host[i] = transformation(hostTransformed[i]);
+    }
+
+
+    inline void copyDataFromDevice(Vec2d* host, const DeviceVec2d* device, std::size_t size) {
+        transformAndCopyDataFromDevice(host, device, size, [](auto vec) { return deviceToHostVecd(vec); });
+    }
+
+    inline void copyDataFromDevice(Real* host, const DeviceReal* device, std::size_t size) {
+        transformAndCopyDataFromDevice(host, device, size, [](DeviceReal val) { return static_cast<Real>(val); });
+    }
 
 	/** Bounding box for system, body, body part and shape, first: lower bound, second: upper bound. */
 	template <typename VecType>

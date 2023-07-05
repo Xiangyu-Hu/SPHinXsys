@@ -40,7 +40,8 @@
 #include "weakly_compressible_fluid.h"
 #include "riemann_solver.h"
 
-#include "execution_argument.hpp"
+#include "execution_selector.hpp"
+#include "device_executable.hpp"
 
 namespace SPH
 {
@@ -64,6 +65,19 @@ namespace SPH
 			StdLargeVec<Vecd> &pos_, &vel_;
 		};
 
+        class BaseDensitySummationInnerKernel {
+        public:
+            BaseDensitySummationInnerKernel(NeighborhoodDevice* inner_configuration, FluidParticles* particles,
+                                            DeviceReal rho0, DeviceReal invSigma0) :
+                inner_configuration_(inner_configuration), rho_(particles->rho_device_),
+                rho_sum_(particles->rho_sum_device_), mass_(particles->mass_device_),
+                rho0_(rho0), inv_sigma0_(invSigma0) {}
+        protected:
+            NeighborhoodDevice* inner_configuration_;
+            DeviceReal *rho_, *rho_sum_, *mass_;
+            DeviceReal rho0_, inv_sigma0_;
+        };
+
 		/**
 		 * @class BaseDensitySummationInner
 		 * @brief Base class for computing density by summation
@@ -80,6 +94,30 @@ namespace SPH
 			Real rho0_, inv_sigma0_;
 		};
 
+        class DensitySummationInnerKernel : public BaseDensitySummationInnerKernel {
+        public:
+            template<class ...Args>
+            DensitySummationInnerKernel(DeviceReal W0, Args ...baseArgs) :
+                BaseDensitySummationInnerKernel(std::forward<Args>(baseArgs)...),  W0_(W0) {}
+
+            template<class RealT, class NeighborhoodType>
+            static void interaction(size_t index_i, Real dt, NeighborhoodType* inner_configuration, RealT W0,
+                                    RealT* rho_sum, RealT rho0, RealT inv_sigma0) {
+                RealT sigma = W0;
+                const auto& inner_neighborhood = inner_configuration[index_i];
+                for (size_t n = 0; n != inner_neighborhood.current_size(); ++n)
+                    sigma += inner_neighborhood.W_ij_[n];
+                rho_sum[index_i] = sigma * rho0 * inv_sigma0;
+            }
+
+            void interaction(size_t index_i, Real dt = 0.0) {
+                interaction(index_i, dt, inner_configuration_, W0_, rho_sum_, rho0_, inv_sigma0_);
+            }
+
+        private:
+            DeviceReal W0_;
+        };
+
 		/**
 		 * @class DensitySummationInner
 		 * @brief  computing density by summation
@@ -92,8 +130,14 @@ namespace SPH
 
 			inline void interaction(size_t index_i, Real dt = 0.0);
 
+            auto& getDeviceProxy() {
+                return device_proxy;
+            }
+
 		protected:
 			Real W0_;
+
+            ExecutionProxy<DensitySummationInner, DensitySummationInnerKernel> device_proxy;
 		};
 
 		/**
@@ -199,6 +243,35 @@ namespace SPH
 			const Real coefficient_;
 		};
 
+        template<class FluidT>
+        class AcousticTimeStepSizeKernel {
+        public:
+            explicit AcousticTimeStepSizeKernel(FluidParticles* particles) : rho_(particles->rho_device_),
+                                                    p_(particles->p_device_), vel_(particles->vel_device_),
+                                                    fluid_(*dynamic_cast<FluidT*>(&particles->fluid_)) {}
+
+            template<class RealT, class Vec, class FluidType, class SoundSpeedFunc, class NormVecdFunc>
+            static RealT reduce(size_t index_i, Real dt, FluidType&& fluid, RealT* p, RealT* rho, Vec* vel,
+                               SoundSpeedFunc&& getSoundSpeed, NormVecdFunc&& norm) {
+                return getSoundSpeed(fluid, p[index_i], rho[index_i]) + norm(vel[index_i]);
+            }
+
+            Real reduce(size_t index_i, Real dt = 0.0) const {
+                return reduce(index_i, dt, fluid_, p_, rho_, vel_,
+                              [](const FluidT& fluid, DeviceReal p_i, DeviceReal rho_i) {
+                                    return fluid.getSoundSpeed_Device(p_i, rho_i);
+                              },
+                              [](const DeviceVecd& vel) {
+                                    return sycl::length(vel);
+                              });
+            }
+
+        private:
+            DeviceReal *rho_, *p_;
+            DeviceVecd *vel_;
+            FluidT fluid_;
+        };
+
 		/**
 		 * @class AcousticTimeStepSize
 		 * @brief Computing the acoustic time step size
@@ -211,36 +284,40 @@ namespace SPH
 			Real reduce(size_t index_i, Real dt = 0.0);
 			virtual Real outputResult(Real reduced_value) override;
 
+            auto& getDeviceProxy() {
+                return device_proxy;
+            }
+
 		protected:
 			Fluid &fluid_;
 			StdLargeVec<Real> &rho_, &p_;
 			StdLargeVec<Vecd> &vel_;
 			Real smoothing_length_min_;
 			Real acousticCFL_;
+
+        private:
+            ExecutionProxy<AcousticTimeStepSize, AcousticTimeStepSizeKernel<WeaklyCompressibleFluid>> device_proxy;
 		};
 
         using namespace execution;
 
         class AdvectionTimeStepSizeForImplicitViscosityKernel {
         public:
-            template<class VelType, class SquareNormFunction>
-            static Real reduce(size_t index_i, Real dt, VelType vel, SquareNormFunction squareNorm) {
+            AdvectionTimeStepSizeForImplicitViscosityKernel(BaseParticles* particles): vel_(particles->vel_device_) {}
+
+            template<class Vec, class SquareNormFunction>
+            static Real reduce(size_t index_i, Real dt, Vec* vel, SquareNormFunction&& squareNorm) {
                 return squareNorm(vel[index_i]);
             }
 
-            Real reduce(size_t index_i, Real dt = 0.0) {
-                return reduce(index_i, dt, vel_accessor, [](const Vecd& vel){
-                    sycl::float2 syclVel {vel[0], vel[1]};
-                    return sycl::dot(syclVel, syclVel);
+            Real reduce(size_t index_i, Real dt = 0.0) const {
+                return reduce(index_i, dt, vel_, [](const DeviceVecd& vel){
+                    return sycl::dot(vel, vel);
                 });
             }
 
-            void setAccessors(std::tuple<sycl::accessor<Vecd, 1, sycl::access_mode::read>> &&accessors) {
-                vel_accessor.swap(std::get<0>(accessors));
-            }
-
         private:
-            sycl::accessor<Vecd, 1, sycl::access_mode::read> vel_accessor;
+            DeviceVecd* vel_;
         };
 
 		/**
@@ -263,10 +340,8 @@ namespace SPH
 			Real smoothing_length_min_;
 			Real advectionCFL_;
 
-            DeviceVariable<Vecd, sycl::access_mode::read> vel_device;
-            DeviceProxy<AdvectionTimeStepSizeForImplicitViscosity,
-                    AdvectionTimeStepSizeForImplicitViscosityKernel,
-                    decltype(vel_device)> device_proxy;
+            ExecutionProxy<AdvectionTimeStepSizeForImplicitViscosity,
+                    AdvectionTimeStepSizeForImplicitViscosityKernel> device_proxy;
 
         public:
             auto& getDeviceProxy() {
@@ -308,6 +383,22 @@ namespace SPH
 			StdLargeVec<AngularVecd> vorticity_;
 		};
 
+        template<class FluidT>
+        class BaseIntegrationKernel {
+        public:
+            BaseIntegrationKernel(FluidParticles *particles) : fluid_(particles->fluid_.ReferenceDensity(),
+                                                                      particles->fluid_.ReferenceSoundSpeed(),
+                                                                      particles->fluid_.ReferenceViscosity()),
+                                                    rho_(particles->rho_device_), p_(particles->p_device_),
+                                                    drho_dt_(particles->drho_dt_device_), pos_(particles->pos_device_),
+                                                    vel_(particles->vel_device_), acc_(particles->acc_device_),
+                                                    acc_prior_(particles->acc_prior_device_) {}
+        protected:
+            FluidT fluid_;
+            DeviceReal *rho_, *p_, *drho_dt_;
+            DeviceVecd *pos_, *vel_, *acc_, *acc_prior_;
+        };
+
 		/**
 		 * @class BaseIntegration
 		 * @brief Pure abstract base class for all fluid relaxation schemes
@@ -323,6 +414,66 @@ namespace SPH
 			StdLargeVec<Real> &rho_, &p_, &drho_dt_;
 			StdLargeVec<Vecd> &pos_, &vel_, &acc_, &acc_prior_;
 		};
+
+        template<class RiemannSolverType>
+        class BaseIntegration1stHalfKernel : public BaseIntegrationKernel<WeaklyCompressibleFluid> {
+        public:
+            BaseIntegration1stHalfKernel(FluidParticles* particles, NeighborhoodDevice* inner_configuration,
+                                         const RiemannSolverType& riemannSolver) :
+                                        BaseIntegrationKernel<WeaklyCompressibleFluid>(particles),
+                                        riemann_solver_(this->fluid_, this->fluid_),
+                                        inner_configuration_(inner_configuration){}
+
+            template<class RealT, class Vec, class FluidType, class PressureFunc>
+            static void initialization(size_t index_i, Real dt, RealT* rho, const RealT *drho_dt, RealT *p, Vec* pos,
+                                Vec *vel, FluidType&& fluid, PressureFunc&& getPressure) {
+                rho[index_i] += drho_dt[index_i] * dt * 0.5;
+                p[index_i] = getPressure(fluid, rho[index_i]);
+                pos[index_i] += vel[index_i] * dt * 0.5;
+            }
+
+            template<class Vec>
+            static void update(size_t index_i, Real dt, Vec *vel, const Vec *acc_prior, const Vec *acc) {
+                vel[index_i] += (acc_prior[index_i] + acc[index_i]) * dt;
+            }
+
+            template<class RealT, class Vec, class NeighborhoodType, class RiemannSolver>
+            static void interaction(size_t index_i, Real dt, RealT *p, RealT *rho, RealT *drho_dt, Vec* acc,
+                                    NeighborhoodType* inner_configuration, RiemannSolver&& riemann_solver) {
+                auto acceleration = VecdZero<Vec>();
+                RealT rho_dissipation(0);
+                const auto &inner_neighborhood = inner_configuration[index_i];
+                for (size_t n = 0; n < inner_neighborhood.current_size(); ++n)
+                {
+                    const auto& index_j = inner_neighborhood.j_[n];
+                    const auto& dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
+                    const auto &e_ij = inner_neighborhood.e_ij_[n];
+
+                    acceleration -= (p[index_i] + p[index_j]) * dW_ijV_j * e_ij;
+                    rho_dissipation += riemann_solver.DissipativeUJump(p[index_i] - p[index_j]) * dW_ijV_j;
+                }
+                acc[index_i] += acceleration / rho[index_i];
+                drho_dt[index_i] = rho_dissipation * rho[index_i];
+            }
+
+            void initialization(size_t index_i, Real dt = 0.0) {
+                initialization(index_i, dt, rho_, drho_dt_, p_, pos_, vel_, fluid_, [](const auto& fluid, DeviceReal rho) {
+                    return fluid.getPressure_Device(rho);
+                });
+            }
+
+            void update(size_t index_i, Real dt = 0.0) {
+                update(index_i, dt, vel_, acc_prior_, acc_);
+            }
+
+            void interaction(size_t index_i, Real dt = 0.0) {
+                interaction(index_i, dt, p_, rho_, drho_dt_, acc_, inner_configuration_, riemann_solver_);
+            }
+
+        protected:
+            RiemannSolverType riemann_solver_;
+            NeighborhoodDevice* inner_configuration_;
+        };
 
 		/**
 		 * @class BaseIntegration1stHalf
@@ -341,6 +492,8 @@ namespace SPH
 			inline void interaction(size_t index_i, Real dt = 0.0);
 
 			void update(size_t index_i, Real dt = 0.0);
+
+            using DeviceKernel = BaseIntegration1stHalfKernel<RiemannSolverType>;
 
 		protected:
 			virtual Vecd computeNonConservativeAcceleration(size_t index_i);

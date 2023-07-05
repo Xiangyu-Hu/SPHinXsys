@@ -53,7 +53,7 @@
 #include "base_local_dynamics.h"
 #include "base_particle_dynamics.hpp"
 #include "particle_iterators.h"
-#include "execution_unit/execution_argument.hpp"
+#include "execution_unit/execution_selector.hpp"
 
 #include <type_traits>
 
@@ -95,14 +95,14 @@ using namespace execution;
  * @class SimpleDynamics
  * @brief Simple particle dynamics without considering particle interaction
  */
-template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy, template<class> class Dispatcher = NoDispatcher>
+template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
 class SimpleDynamics : public LocalDynamicsType, public BaseDynamics<void>
 {
   public:
     template <class DynamicsIdentifier, typename... Args>
     SimpleDynamics(DynamicsIdentifier &identifier, Args &&...args)
         : LocalDynamicsType(identifier, std::forward<Args>(args)...),
-          BaseDynamics<void>(identifier.getSPHBody()), dispatcher(this)
+          BaseDynamics<void>(identifier.getSPHBody()), executionSelector(this)
     {
         static_assert(!has_initialize<LocalDynamicsType>::value &&
                           !has_interaction<LocalDynamicsType>::value,
@@ -114,24 +114,22 @@ class SimpleDynamics : public LocalDynamicsType, public BaseDynamics<void>
     {
         this->setUpdated();
         this->setupDynamics(dt);
-        auto executionPolicy = ExecutionPolicy();
-        particle_for(executionPolicy,
+        particle_for(ExecutionPolicy(),
                      this->identifier_.LoopRange(),
                      [=](size_t i, auto&& kernel)
                      { kernel.update(i, dt); },
-                     dispatcher.getProxy());
-        dispatcher.writeBack();
+                     executionSelector);
     }
 
   private:
-        Dispatcher<LocalDynamicsType> dispatcher;
+        ExecutionSelector<LocalDynamicsType, ExecutionPolicy> executionSelector;
 };
 
 /**
  * @class ReduceDynamics
  * @brief Template class for particle-wise reduce operation, summation, max or min.
  */
-template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy, template<class> class Dispatcher = NoDispatcher>
+template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
 class ReduceDynamics : public LocalDynamicsType,
                        public BaseDynamics<typename LocalDynamicsType::ReduceReturnType>
 
@@ -142,7 +140,7 @@ class ReduceDynamics : public LocalDynamicsType,
     template <class DynamicsIdentifier, typename... Args>
     ReduceDynamics(DynamicsIdentifier &identifier, Args &&...args)
         : LocalDynamicsType(identifier, std::forward<Args>(args)...),
-          BaseDynamics<ReturnType>(identifier.getSPHBody()), dispatcher(this) {};
+          BaseDynamics<ReturnType>(identifier.getSPHBody()), executionSelector(this){};
     virtual ~ReduceDynamics(){};
 
     using ReduceReturnType = ReturnType;
@@ -152,15 +150,14 @@ class ReduceDynamics : public LocalDynamicsType,
     virtual ReturnType exec(Real dt = 0.0) override
     {
         this->setupDynamics(dt);
-        ReturnType temp = particle_reduce(executionPolicy,
+        ReturnType temp = particle_reduce(ExecutionPolicy(),
                                           this->identifier_.LoopRange(), this->Reference(), this->getOperation(),
                                           [=](size_t i, auto&& kernel) -> ReturnType
-                                          { return kernel.reduce(i, dt); }, dispatcher.getProxy());
+                                          { return kernel.reduce(i, dt); }, executionSelector);
         return this->outputResult(temp);
     }
   private:
-    Dispatcher<LocalDynamicsType> dispatcher;
-    ExecutionPolicy executionPolicy;
+    ExecutionSelector<LocalDynamicsType, ExecutionPolicy> executionSelector;
 };
 
 /**
@@ -228,6 +225,7 @@ class BaseInteractionDynamics : public LocalDynamicsType, public BaseDynamics<vo
         this->setupDynamics(dt);
         runInteraction(dt);
     };
+
 };
 
 /**
@@ -288,14 +286,19 @@ class InteractionDynamics : public BaseInteractionDynamics<LocalDynamicsType, Ex
     {
         particle_for(ExecutionPolicy(),
                      this->identifier_.LoopRange(),
-                     [&](size_t i)
-                     { this->interaction(i, dt); });
+                     [=](size_t i, auto&& kernel)
+                     { kernel.interaction(i, dt); },
+                     executionSelector);
     }
 
   protected:
     template <typename... Args>
     InteractionDynamics(bool mostDerived, Args &&...args)
-        : BaseInteractionDynamics<LocalDynamicsType, ExecutionPolicy>(std::forward<Args>(args)...){};
+        : BaseInteractionDynamics<LocalDynamicsType, ExecutionPolicy>(std::forward<Args>(args)...),
+          executionSelector(this){};
+
+  private:
+    ExecutionSelector<LocalDynamicsType, ExecutionPolicy> executionSelector;
 };
 
 /**
@@ -308,7 +311,8 @@ class InteractionWithUpdate : public InteractionDynamics<LocalDynamicsType, Exec
   public:
     template <typename... Args>
     InteractionWithUpdate(Args &&...args)
-        : InteractionDynamics<LocalDynamicsType, ExecutionPolicy>(false, std::forward<Args>(args)...)
+        : InteractionDynamics<LocalDynamicsType, ExecutionPolicy>(false, std::forward<Args>(args)...),
+          executionSelector(this)
     {
         static_assert(!has_initialize<LocalDynamicsType>::value,
                       "LocalDynamicsType does not fulfill InteractionWithUpdate requirements");
@@ -320,9 +324,13 @@ class InteractionWithUpdate : public InteractionDynamics<LocalDynamicsType, Exec
         InteractionDynamics<LocalDynamicsType, ExecutionPolicy>::exec(dt);
         particle_for(ExecutionPolicy(),
                      this->identifier_.LoopRange(),
-                     [&](size_t i)
-                     { this->update(i, dt); });
+                     [=](size_t i, auto&& kernel)
+                     { kernel.update(i, dt); },
+                     executionSelector);
     };
+
+private:
+    ExecutionSelector<LocalDynamicsType, ExecutionPolicy> executionSelector;
 };
 
 /**
@@ -338,7 +346,7 @@ class Dynamics1Level : public InteractionDynamics<LocalDynamicsType, ExecutionPo
     template <typename... Args>
     Dynamics1Level(Args &&...args)
         : InteractionDynamics<LocalDynamicsType, ExecutionPolicy>(
-              false, std::forward<Args>(args)...) {}
+              false, std::forward<Args>(args)...), executionSelector(this) {}
     virtual ~Dynamics1Level(){};
 
     virtual void exec(Real dt = 0.0) override
@@ -348,16 +356,20 @@ class Dynamics1Level : public InteractionDynamics<LocalDynamicsType, ExecutionPo
 
         particle_for(ExecutionPolicy(),
                      this->identifier_.LoopRange(),
-                     [&](size_t i)
-                     { this->initialization(i, dt); });
+                     [=](size_t i, auto&& kernel)
+                     { kernel.initialization(i, dt); },
+                     executionSelector);
 
         InteractionDynamics<LocalDynamicsType, ExecutionPolicy>::runInteraction(dt);
 
         particle_for(ExecutionPolicy(),
                      this->identifier_.LoopRange(),
-                     [&](size_t i)
-                     { this->update(i, dt); });
-    };
+                     [=](size_t i, auto&& kernel)
+                     { kernel.update(i, dt); },
+                     executionSelector);
+    }
+private:
+    ExecutionSelector<LocalDynamicsType, ExecutionPolicy> executionSelector;
 };
 } // namespace SPH
 #endif // PARTICLE_DYNAMICS_ALGORITHMS_H

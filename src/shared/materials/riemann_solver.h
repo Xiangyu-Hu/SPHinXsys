@@ -89,7 +89,12 @@ namespace SPH
 			  rho0c0_geo_ave_(2.0 * rho0c0_i_ * rho0c0_j_ * inv_rho0c0_sum_),
 			  inv_c_ave_(0.5 * (rho0_i_ + rho0_j_) * inv_rho0c0_ave_){};
 		Real DissipativePJump(const Real &u_jump);
-		Real DissipativeUJump(const Real &p_jump);
+		Real DissipativeUJump(const Real &p_jump) {
+            return p_jump * inv_rho0c0_ave_;
+        }
+        DeviceReal DissipativeUJump_Device(const DeviceReal &p_jump) const {
+            return p_jump * static_cast<DeviceReal>(inv_rho0c0_ave_);
+        }
 
 	protected:
 		Real inv_rho0c0_ave_, rho0c0_geo_ave_;

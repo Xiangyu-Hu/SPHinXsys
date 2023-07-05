@@ -2,7 +2,6 @@
 #define SPHINXSYS_EXECUTION_PROXY_HPP
 
 #include "execution_policy.h"
-#include "execution_context.hpp"
 
 namespace SPH {
     namespace execution {
@@ -12,7 +11,12 @@ namespace SPH {
             using Base = BaseT;
             using Kernel = KernelT;
 
-            ExecutionProxy(BaseT* base, KernelT* proxy) : base(base), kernel(proxy) {}
+            template<class ...Args>
+            ExecutionProxy(BaseT* base, Args&&... kernelArgs) : base(base), kernel(new KernelT(std::forward<Args>(kernelArgs)...)) {}
+
+            ~ExecutionProxy() {
+                delete kernel;
+            }
 
             template<class ExecutionPolicy = ParallelPolicy>
             BaseT* get(const ExecutionPolicy& = par) const {
@@ -23,29 +27,31 @@ namespace SPH {
                 return kernel;
             }
 
-            template<class ExecutionPolicy>
-            void init_memory_access(const Context<ExecutionPolicy>& context) {
-                if constexpr (std::is_same_v<ExecutionPolicy, ParallelSYCLDevicePolicy>)
-                    this->init_device_memory_access(context.cgh);
+            BaseT *getBase() const {
+                return base;
+            }
+
+            KernelT *getKernel() const {
+                return kernel;
             }
 
         protected:
-            virtual void init_device_memory_access(sycl::handler& cgh) = 0;
-
             BaseT* base;
             KernelT* kernel;
         };
 
 
         template<typename T>
-        class NoProxy : public ExecutionProxy<T, T> {
+        class NoProxy {
         public:
-            explicit NoProxy(T *base) : ExecutionProxy<T, T>(base, base) {}
+            explicit NoProxy(T *base) : base_(base) {}
 
-        protected:
-            void init_device_memory_access(sycl::handler& cgh) override {
-                static_assert("No device memory access available for this class.");
+            template<class ExecutionPolicy = ParallelPolicy>
+            T* get(const ExecutionPolicy& = par) const {
+                return base_;
             }
+        private:
+            T* base_;
         };
     }
 }

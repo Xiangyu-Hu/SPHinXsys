@@ -84,6 +84,27 @@ namespace SPH
 		using SpatialTemporalFreeSurfaceIdentificationInner =
 			SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIndicationInner>;
 
+        template<class DensitySummationKernel>
+        class DensitySummationFreeSurfaceKernel : public DensitySummationKernel {
+        public:
+            DensitySummationFreeSurfaceKernel(const DensitySummationKernel& densitySummation) :
+                DensitySummationKernel(densitySummation) {}
+
+            template<class RealT, class ReinitializedDensityFunc>
+            static void update(size_t index_i, Real dt, RealT* rho, RealT* rho_sum, RealT rho0,
+                               ReinitializedDensityFunc&& ReinitializedDensity)
+            {
+                rho[index_i] = ReinitializedDensity(rho_sum[index_i], rho0);
+            }
+
+            void update(size_t index_i, Real dt = 0.0) {
+                update(index_i, dt, this->rho_, this->rho_sum_, this->rho0_, [](auto rho_sum, auto rho0) {
+                    return sycl::fmax(rho_sum, rho0);
+                });
+//                this->rho_[index_i] = sycl::fmax(this->rho_sum_[index_i], this->rho0_);
+            }
+        };
+
 		/**
 		 * @class DensitySummationFreeSurface
 		 * @brief computing density by summation with a re-normalization for free surface flows
@@ -94,15 +115,26 @@ namespace SPH
 		public:
 			template <typename... ConstructorArgs>
 			explicit DensitySummationFreeSurface(ConstructorArgs &&...args)
-				: DensitySummationType(std::forward<ConstructorArgs>(args)...){};
+				: DensitySummationType(std::forward<ConstructorArgs>(args)...),
+                  device_proxy(this, *DensitySummationType::getDeviceProxy().getKernel()) {}
 			virtual ~DensitySummationFreeSurface(){};
 			void update(size_t index_i, Real dt = 0.0);
+
+            auto& getDeviceProxy() {
+                return device_proxy;
+            }
 
 		protected:
 			Real ReinitializedDensity(Real rho_sum, Real rho_0)
 			{
 				return SMAX(rho_sum, rho_0);
 			};
+
+        private:
+            using DensitySummationKernel =
+                    std::remove_pointer_t<decltype(std::declval<DensitySummationType>().getDeviceProxy().getKernel())>;
+            ExecutionProxy<DensitySummationFreeSurface<DensitySummationType>,
+                           DensitySummationFreeSurfaceKernel<DensitySummationKernel>> device_proxy;
 		};
 
 		using DensitySummationFreeSurfaceInner = DensitySummationFreeSurface<DensitySummationInner>;
