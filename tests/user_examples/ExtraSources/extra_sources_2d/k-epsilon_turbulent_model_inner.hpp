@@ -51,6 +51,7 @@ namespace SPH
 				//Matd strain_rate = Matd::Zero();
 				//Matd Re_stress = Matd::Zero();
 				velocity_gradient[index_i] = Matd::Zero();
+				velocity_gradient_inner[index_i] = Matd::Zero();
 
 				const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 				for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -62,17 +63,9 @@ namespace SPH
 					k_derivative = (turbu_k_i - turbu_k_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
 					k_lap += 2.0 * (mu_+turbu_mu_i/sigma_k)*k_derivative * inner_neighborhood.dW_ijV_j_[n]/ rho_i;
 				}
-				//for (int jj = 0; jj != 2; jj++)
-				//{
-				//	for (int ii = 0; ii != 2; ii++)
-				//	{
-				//		if (velocity_gradient[index_i](ii,jj) > 2.0)
-				//		{
-				//			std::cout << "strange" << std::endl;
-				//			system("pause");
-				//		}
-				//	}
-				//}
+				//for test 
+				velocity_gradient_inner[index_i] = velocity_gradient[index_i];
+
 
 				//strain_rate = 0.5 * (velocity_gradient.transpose() + velocity_gradient);
 				//Re_stress = 2.0 * strain_rate * turbu_mu_i / rho_i - (2.0 / 3.0) * turbu_k_i * Matd::Identity();
@@ -152,6 +145,7 @@ namespace SPH
 				// viscous force
 				vel_derivative = (vel_[index_i] - vel_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
 				acceleration += 2.0 * (mu_+ turbu_mu_i) * vel_derivative * inner_neighborhood.dW_ijV_j_[n];
+				//acceleration += 2.0 * (mu_ ) * vel_derivative * inner_neighborhood.dW_ijV_j_[n];
 			}
 			//for test
 			visc_acc_inner_[index_i] = acceleration / rho_[index_i];

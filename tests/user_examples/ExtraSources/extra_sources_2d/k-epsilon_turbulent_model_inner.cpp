@@ -53,6 +53,14 @@ namespace SPH
 				particles_->registerVariable(velocity_gradient, "Velocity_Gradient");
 				particles_->registerSortableVariable<Matd>("Velocity_Gradient");
 				particles_->addVariableToWrite<Matd>("Velocity_Gradient");
+				
+				//for test
+				particles_->registerVariable(velocity_gradient_wall, "Velocity_Gradient_Wall");
+				particles_->registerSortableVariable<Matd>("Velocity_Gradient_Wall");
+				particles_->addVariableToWrite<Matd>("Velocity_Gradient_Wall");
+				particles_->registerVariable(velocity_gradient_inner, "Velocity_Gradient_Inner");
+				particles_->registerSortableVariable<Matd>("Velocity_Gradient_Inner");
+				particles_->addVariableToWrite<Matd>("Velocity_Gradient_Inner");
 
 				particles_->registerVariable(vel_x_, "Velocity_X");
 				particles_->registerSortableVariable<Real>("Velocity_X");
@@ -100,7 +108,8 @@ namespace SPH
 			: BaseViscousAccelerationInner(inner_relation),
 			turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
 			wall_Y_plus_(*particles_->getVariableByName<Real>("WallYplus")),
-			velo_friction_(*particles_->getVariableByName<Vecd>("FrictionVelocity"))
+			velo_friction_(*particles_->getVariableByName<Vecd>("FrictionVelocity")),
+			distance_to_wall_(*particles_->getVariableByName<Real>("DistanceToWall"))
 		{
 			particles_->registerVariable(visc_acc_inner_, "ViscousAccInner");
 			particles_->addVariableToWrite<Vecd>("ViscousAccInner");

@@ -94,10 +94,15 @@ class TurbulentModule : public :: testing :: Test, public BaseTurbulentModule
 protected:
 	InnerRelation water_block_inner;
 	ComplexRelation water_block_complex_relation;
+	
 	InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelComplex, SequencedPolicy> k_equation_relaxation;
 	InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelComplex> epsilon_equation_relaxation;
+	InteractionDynamics<fluid_dynamics::TKEnergyAccComplex, SequencedPolicy> turbulent_kinetic_energy_acceleration;
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction;
 	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection, SequencedPolicy> standard_wall_function_correction;
+	InteractionDynamics<fluid_dynamics::TurbulentViscousAccelerationWithWall, SequencedPolicy> turbulent_viscous_acceleration;
+	SimpleDynamics<fluid_dynamics::TurbulentEddyViscosity, SequencedPolicy> update_eddy_viscosity;
+
 	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation;
 	BodyStatesRecordingToVtp write_body_states;
 	size_t number_of_iterations;
@@ -109,10 +114,15 @@ public:
 		BaseTurbulentModule(),
 		water_block_inner(water_block),
 		water_block_complex_relation(water_block_inner, { &wall_boundary }),
+		
 		k_equation_relaxation(water_block_complex_relation),
 		epsilon_equation_relaxation(water_block_complex_relation),
+		turbulent_kinetic_energy_acceleration(water_block_complex_relation),
 		wall_boundary_normal_direction(wall_boundary),
 		standard_wall_function_correction(water_block_complex_relation),
+		turbulent_viscous_acceleration(water_block_complex_relation),
+		update_eddy_viscosity(water_block),
+
 		update_density_by_summation(water_block_complex_relation),
 		write_body_states(io_environment, sph_system.real_bodies_)
 	{
@@ -143,10 +153,11 @@ public:
 class Test_K_Epsilon_Equation : public fluid_dynamics::FluidInitialCondition
 {
 protected:
-	StdLargeVec<Vecd>& pos_, & vel_;
+	StdLargeVec<Vecd>& pos_, & vel_,& acc_, & acc_prior_;
 	StdLargeVec<Real>& turbu_mu_;
 	StdLargeVec<Real>& turbu_k_;
 	StdLargeVec<Real>& turbu_epsilon_;
+	StdLargeVec<Vecd>& velo_friction_;
 	Vecd imposed_data_;
 	const int num_data = 20;
 	const int num_file = 4;
@@ -154,17 +165,21 @@ protected:
 	std::string file_name[4] = { "U.dat","K.dat" ,"Epsilon.dat" ,"Mu_t.dat" };
 	Real smoothing_length_min_;
 	StdLargeVec<Vecd> expect_k_gradient_;
-
 public:
 	Test_K_Epsilon_Equation(SPHBody& sph_body) : FluidInitialCondition(sph_body),
 		pos_(particles_->pos_), vel_(particles_->vel_),
 		turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
 		turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
 		turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation")),
-		smoothing_length_min_(sph_body.sph_adaptation_->MinimumSmoothingLength())
+		smoothing_length_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
+		acc_(particles_->acc_), acc_prior_(particles_->acc_prior_),
+		velo_friction_(*particles_->getVariableByName<Vecd>("FrictionVelocity"))
 	{
 		particles_->registerVariable(expect_k_gradient_, "ExpectTkeGradient");
 		particles_->addVariableToWrite<Vecd>("ExpectTkeGradient");
+
+		particles_->addVariableToWrite<Vecd>("PriorAcceleration");
+		particles_->addVariableToWrite<Vecd>("Acceleration");
 
 		std::vector<double> data;
 		//load 4 files one by one
@@ -181,6 +196,10 @@ public:
 	virtual ~Test_K_Epsilon_Equation() {};
 	void update(size_t index_i, Real dt = 0.0);
 	void impose_parabolic_k(size_t index_i);
+	void mannul_update_velocity(size_t index_i, Real dt);
+	void mannul_impose_pressure_gradient(size_t index_i);
+	void clear_acc_prior(size_t index_i);
+
 	std::vector<double> loadInputData(int num_data, int num_file, std::string file_name)
 	{
 		std::ifstream file("./MappingData/FVM16_basedOnSPH4_4/" + file_name, std::ios::binary);  
@@ -231,6 +250,22 @@ void Test_K_Epsilon_Equation::impose_parabolic_k(size_t index_i)
 	turbu_k_[index_i] = 1.5 * U_f * (1.0 - transformed_pos * transformed_pos / Radius / Radius);
 	expect_k_gradient_[index_i][1] = -2.0 * 1.5 * U_f / Radius / Radius * transformed_pos;
 }
+void Test_K_Epsilon_Equation::mannul_update_velocity(size_t index_i, Real dt)
+{
+	vel_[index_i] += (acc_prior_[index_i] + acc_[index_i]) * dt;
+}
+void Test_K_Epsilon_Equation::mannul_impose_pressure_gradient(size_t index_i)
+{
+	//acc_[index_i] = 2.0/DH*velo_friction_[index_i].dot(velo_friction_[index_i])* velo_friction_[index_i].normalized();
+	acc_[index_i] = 2.0 / DH * 0.053033 * 0.053033 * Vecd(1, 0);
+}
+
+
+void Test_K_Epsilon_Equation::clear_acc_prior(size_t index_i)
+{
+	acc_prior_[index_i] = Vecd::Zero();
+}
+
 
 TEST_F(TurbulentModule, TestTurbulentKineticEnergyEquation)
 {
@@ -239,13 +274,34 @@ TEST_F(TurbulentModule, TestTurbulentKineticEnergyEquation)
 	write_body_states.writeToFile();
 	test_k_ep_equation.exec(); //** impose profiles *
 	write_body_states.writeToFile();//** output to check initial profiles *
-	dt = 1;
-	k_equation_relaxation.exec(dt);
-	epsilon_equation_relaxation.exec(dt);
+	
+	dt = 0.1;
+	int num_iter = 0;
+	while (GlobalStaticVariables::physical_time_<100.0)
+	{
+		update_eddy_viscosity.exec();
+		turbulent_viscous_acceleration.exec();
+		//turbulent_kinetic_energy_acceleration.exec();
+		for (int index_i = 0; index_i < num_fluid_particle; ++index_i)
+		{
+			test_k_ep_equation.mannul_impose_pressure_gradient(index_i);
+			//test_k_ep_equation.mannul_update_velocity(index_i, dt);
+		}
 
-	standard_wall_function_correction.exec();
-	write_body_states.writeToFile();
+		k_equation_relaxation.exec(dt);
+		epsilon_equation_relaxation.exec(dt);
+		standard_wall_function_correction.exec();
 
+		GlobalStaticVariables::physical_time_ += dt;
+		std::cout << "physical_time_="<< GlobalStaticVariables::physical_time_ <<std::endl;
+		if(num_iter % 10 == 0)
+			write_body_states.writeToFile();
+		num_iter++;
+		for (int index_i = 0; index_i < num_fluid_particle; ++index_i)
+		{
+			test_k_ep_equation.clear_acc_prior(index_i);
+		}
+	}
 
 	ASSERT_NEAR(1, 1, 0.02);
 

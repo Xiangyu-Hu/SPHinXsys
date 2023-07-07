@@ -145,7 +145,7 @@ namespace SPH
 			StdLargeVec<Real> velo_tan_;
 			StdLargeVec<Vecd> velo_friction_;
 			StdLargeVec<int> index_nearest;
-			StdLargeVec<Real> distance_to_wall;
+			StdLargeVec<Real> distance_to_wall_;
 
 			StdLargeVec<Vecd>& vel_, & pos_;
 			StdLargeVec<Real>& rho_;

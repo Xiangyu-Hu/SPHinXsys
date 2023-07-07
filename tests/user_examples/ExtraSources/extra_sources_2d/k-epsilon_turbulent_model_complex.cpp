@@ -59,7 +59,7 @@ namespace SPH
 			particles_->registerSortableVariable<int>("NearestIndex");
 			particles_->addVariableToWrite<int>("NearestIndex");
 
-			particles_->registerVariable(distance_to_wall, "DistanceToWall");
+			particles_->registerVariable(distance_to_wall_, "DistanceToWall");
 			particles_->registerSortableVariable<Real>("DistanceToWall");
 			particles_->addVariableToWrite<Real>("DistanceToWall");
 

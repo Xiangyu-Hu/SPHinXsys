@@ -105,6 +105,7 @@ namespace SPH
 
 			//** for test */
 			StdLargeVec<Real> lap_k_, lap_k_term_, vel_x_;
+			StdLargeVec<Matd>  velocity_gradient_inner, velocity_gradient_wall;
 		};
 
 		/**
@@ -163,6 +164,7 @@ namespace SPH
 			StdLargeVec<Real>& wall_Y_plus_;
 			StdLargeVec<Vecd>& velo_friction_;
 			StdLargeVec<Vecd> visc_acc_inner_, visc_acc_wall_;
+			StdLargeVec<Real>& distance_to_wall_;
 		};
 
 		/**

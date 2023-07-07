@@ -51,6 +51,7 @@ namespace SPH
 			Matd strain_rate = Matd::Zero();
 			Matd Re_stress = Matd::Zero();
 			//Matd velocity_gradient = Matd::Zero();
+			velocity_gradient_wall[index_i] = Matd::Zero();
 
 			for (size_t k = 0; k < FluidContactData::contact_configuration_.size(); ++k)
 			{
@@ -60,7 +61,12 @@ namespace SPH
 				{
 					size_t index_j = contact_neighborhood.j_[n];
 					Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
-					velocity_gradient[index_i] += -2.3*(vel_i - vel_ave_k[index_j]) * nablaW_ijV_j.transpose();
+					//velocity_gradient[index_i] += -2.3*(vel_i - vel_ave_k[index_j]) * nablaW_ijV_j.transpose();
+					velocity_gradient[index_i] += -0.0 * (vel_i - vel_ave_k[index_j]) * nablaW_ijV_j.transpose();
+
+					//for test 
+					velocity_gradient_wall[index_i] += -0.0 * (vel_i - vel_ave_k[index_j]) * nablaW_ijV_j.transpose();
+
 
 					/** With standard wall function, diffusion of k to wall is zero */
 					k_derivative = 0.0;
@@ -155,6 +161,8 @@ namespace SPH
 			Vecd direction_vel_fric = vel_fric_i.normalized();
 			
 			Real y_plus_i = this->wall_Y_plus_[index_i];
+			Real distance_to_wall = this->distance_to_wall_[index_i];
+
 
 			Vecd acceleration = Vecd::Zero();
 			Vecd vel_derivative = Vecd::Zero();
@@ -175,8 +183,9 @@ namespace SPH
 						system("pause");
 						std::cout << index_j << std::endl;
 					}
-					vel_derivative = 2.0 * vel_fric_i.dot(vel_fric_i)* direction_vel_fric;
-					acceleration +=  vel_derivative * contact_neighborhood.dW_ijV_j_[n] ;
+					//vel_derivative = 2.0 * vel_fric_i.dot(vel_fric_i)* direction_vel_fric;
+					vel_derivative = distance_to_wall * vel_fric_i.dot(vel_fric_i) * direction_vel_fric / (r_ij + 0.01 * this->smoothing_length_);
+					acceleration += 4.0 * vel_derivative * contact_neighborhood.dW_ijV_j_[n] ;
 				}
 			}
 			//for test
@@ -206,7 +215,7 @@ namespace SPH
 			velo_friction_[index_i] = Vecd::Zero();
 			wall_Y_plus_[index_i] = 0.0;
 			wall_Y_star_[index_i] = 0.0;
-			distance_to_wall[index_i] = 0.0;
+			distance_to_wall_[index_i] = 0.0;
 			is_near_wall_P1_[index_i] = 0;
 
 			Real r_wall_normal = 0.0;
@@ -240,7 +249,7 @@ namespace SPH
 					{
 						r_min = r_ij; //Find the nearest wall particle
 						r_wall_normal = r_wall_normal_temp;
-						distance_to_wall[index_i] = r_wall_normal;
+						distance_to_wall_[index_i] = r_wall_normal;
 						index_nearest[index_i] = index_j;
 					}
 					Vecd n_k_j_nearest = n_k[index_nearest[index_i]];
