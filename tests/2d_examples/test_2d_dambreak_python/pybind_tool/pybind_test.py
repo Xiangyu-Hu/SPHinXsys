@@ -6,7 +6,7 @@ import argparse
 # add dynamic link library or shared object to python env
 # attention: match current python version with the version exposing the cpp code
 sys_str = platform.system()
-path_1 = os.path.abspath(os.path.join(os.getcwd(), '../..'))
+path_1 = os.path.abspath(os.path.join(os.getcwd(), '..'))
 if sys_str == 'Windows':
     path_2 = 'lib'
 elif sys_str == 'Linux':

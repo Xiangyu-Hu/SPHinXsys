@@ -100,10 +100,10 @@ int main()
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
 	SimpleDynamics<DepolarizationInitialCondition> initialization(muscle_body);
-	InteractionDynamics<solid_dynamics::CorrectConfiguration> correct_configuration(muscle_body_inner_relation);
+	InteractionWithUpdate<CorrectedConfigurationInner> correct_configuration(muscle_body_inner_relation);
 	electro_physiology::GetElectroPhysiologyTimeStepSize get_time_step_size(muscle_body);
 	// Diffusion process for diffusion body.
-	electro_physiology::ElectroPhysiologyDiffusionRelaxationInner diffusion_relaxation(muscle_body_inner_relation);
+	electro_physiology::ElectroPhysiologyDiffusionInnerRK2 diffusion_relaxation(muscle_body_inner_relation);
 	// Solvers for ODE system or reactions
 	electro_physiology::ElectroPhysiologyReactionRelaxationForward reaction_relaxation_forward(muscle_body);
 	electro_physiology::ElectroPhysiologyReactionRelaxationBackward reaction_relaxation_backward(muscle_body);
@@ -111,7 +111,7 @@ int main()
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
-	RegressionTestEnsembleAveraged<ObservedQuantityRecording<Real>>
+	RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>>
 		write_recorded_voltage("Voltage", io_environment, voltage_observer_contact_relation);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
