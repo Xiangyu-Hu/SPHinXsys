@@ -67,8 +67,8 @@ find_package(Eigen3 CONFIG REQUIRED)
 target_link_libraries(sphinxsys_core INTERFACE Eigen3::Eigen)
 
 # ## OCCT
-find_package(opencascade CONFIG REQUIRED)
-target_link_libraries(sphinxsys_core INTERFACE TKSTEP  ) 
+find_package(OpenCASCADE CONFIG REQUIRED)
+target_link_libraries(sphinxsys_core INTERFACE TKSTEP TKSTEPAttr TKSTEP209 TKSTEPBase TKXSBase TKShHealing TKTopAlgo TKGeomAlgo TKBRep TKGeomBase TKG3d TKG2d TKMath TKernel ) 
 
 # ## TBB
 find_package(TBB CONFIG REQUIRED)
