@@ -37,6 +37,8 @@ jobs:
             pkg-config `# for installing libraries with vcpkg`\
             git \
             cmake \
+            libx11-dev \
+            freeglut3-dev \
             ninja-build
 
       - uses: hendrikmuhs/ccache-action@v1.2
@@ -61,7 +63,8 @@ jobs:
             simbody \
             gtest \
             xsimd \
-            pybind11
+            pybind11 \
+            opencascade
 
       - name: Generate buildsystem using float (No test)
         run: |
@@ -97,6 +100,8 @@ jobs:
             pkg-config `# for installing libraries with vcpkg`\
             git \
             cmake \
+            libx11-dev \
+            freeglut3-dev \
             ninja-build
 
       - uses: hendrikmuhs/ccache-action@v1.2
@@ -121,7 +126,8 @@ jobs:
             simbody \
             gtest \
             xsimd \
-            pybind11
+            pybind11 \
+            opencascade
 
       - name: Generate buildsystem using double
         run: |
@@ -209,7 +215,8 @@ jobs:
             simbody `
             gtest `
             xsimd `
-            pybind11
+            pybind11 `
+            opencascade
 
       - uses: ilammy/msvc-dev-cmd@v1
 
@@ -305,7 +312,8 @@ jobs:
             gtest \
             simbody \
             xsimd \
-            pybind11
+            pybind11 \
+            opencascade
 
       - name: Generate buildsystem
         run: |
