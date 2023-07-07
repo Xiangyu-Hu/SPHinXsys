@@ -67,7 +67,7 @@ class InverseShape : public BaseShapeType
 template <class BaseShapeType>
 class ExtrudeShape : public BaseShapeType
 {
-    Real thickness_;
+    Real thickness_, thickness_sqr_;
     Vecd getShift(const Vecd &probe_point, const Vecd &original_closest_point)
     {
         Vecd displacement = original_closest_point - probe_point;
@@ -78,16 +78,21 @@ class ExtrudeShape : public BaseShapeType
     template <typename... ConstructorArgs>
     explicit ExtrudeShape(Real thickness, ConstructorArgs &&...args)
         : BaseShapeType(std::forward<ConstructorArgs>(args)...),
-          thickness_(thickness){};
+          thickness_(thickness), thickness_sqr_(thickness * thickness){};
     virtual ~ExtrudeShape(){};
 
     virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override
     {
         Vecd original_closest_point = BaseShapeType::findClosestPoint(probe_point);
-        Vecd shift = getShift(probe_point, original_closest_point);
-        return BaseShapeType::checkContain(probe_point)
-                   ? BaseShapeType::checkContain(probe_point - shift)
-                   : BaseShapeType::checkContain(probe_point + shift);
+        Vecd displacement = original_closest_point - probe_point;
+        if (BaseShapeType::checkContain(probe_point))
+        {
+            return thickness_ > 0.0 ? true : displacement.squaredNorm() < thickness_sqr_;
+        }
+        else
+        {
+            return thickness_ < 0.0 ? false : displacement.squaredNorm() < thickness_sqr_;
+        }
     };
 
     virtual Vecd findClosestPoint(const Vecd &probe_point) override
