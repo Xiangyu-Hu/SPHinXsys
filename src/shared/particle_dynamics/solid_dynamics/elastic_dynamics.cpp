@@ -20,7 +20,7 @@ Real AcousticTimeStepSize::reduce(size_t index_i, Real dt)
 {
     // since the particle does not change its configuration in pressure relaxation step
     // I chose a time-step size according to Eulerian method
-    return CFL_ * SMIN(sqrt(smoothing_length_ / ((acc_[index_i] + acc_prior_[index_i]).norm() + TinyReal)),
+    return CFL_ * SMIN((Real)sqrt(smoothing_length_ / ((acc_[index_i] + acc_prior_[index_i]).norm() + TinyReal)),
                        smoothing_length_ / (c0_ + vel_[index_i].norm()));
 }
 //=================================================================================================//

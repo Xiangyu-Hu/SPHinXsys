@@ -9,205 +9,205 @@ using namespace SPH;   // SPHinXsys namespace.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 1.0;					   /**< box length. */
-Real DH = 1.0;					   /**< box height. */
+Real DL = 1.0;                     /**< box length. */
+Real DH = 1.0;                     /**< box height. */
 Real resolution_ref = 1.0 / 100.0; /**< Global reference resolution. */
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------
-Real rho0_f = 1.0;					/**< Reference density of fluid. */
-Real U_f = 1.0;						/**< Characteristic velocity. */
-Real c_f = 10.0 * U_f;				/**< Reference sound speed. */
-Real Re = 100;						/**< Reynolds number. */
+Real rho0_f = 1.0;                  /**< Reference density of fluid. */
+Real U_f = 1.0;                     /**< Characteristic velocity. */
+Real c_f = 10.0 * U_f;              /**< Reference sound speed. */
+Real Re = 100;                      /**< Reynolds number. */
 Real mu_f = rho0_f * U_f * DL / Re; /**< Dynamics viscosity. */
 //----------------------------------------------------------------------
 //	Fluid body shape definition.
 //----------------------------------------------------------------------
 class WaterBlock : public MultiPolygonShape
 {
-public:
-	explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
-	{
-		std::vector<Vecd> water_block_shape;
-		water_block_shape.push_back(Vecd(0.0, 0.0));
-		water_block_shape.push_back(Vecd(0.0, DH));
-		water_block_shape.push_back(Vecd(DL, DH));
-		water_block_shape.push_back(Vecd(DL, 0.0));
-		water_block_shape.push_back(Vecd(0.0, 0.0));
-		multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
-	}
+  public:
+    explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    {
+        std::vector<Vecd> water_block_shape;
+        water_block_shape.push_back(Vecd(0.0, 0.0));
+        water_block_shape.push_back(Vecd(0.0, DH));
+        water_block_shape.push_back(Vecd(DL, DH));
+        water_block_shape.push_back(Vecd(DL, 0.0));
+        water_block_shape.push_back(Vecd(0.0, 0.0));
+        multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
+    }
 };
 //----------------------------------------------------------------------
 //	application dependent initial condition
 //----------------------------------------------------------------------
 class TaylorGreenInitialCondition
-	: public fluid_dynamics::FluidInitialCondition
+    : public fluid_dynamics::FluidInitialCondition
 {
-public:
-	explicit TaylorGreenInitialCondition(SPHBody &sph_body)
-		: fluid_dynamics::FluidInitialCondition(sph_body){};
+  public:
+    explicit TaylorGreenInitialCondition(SPHBody &sph_body)
+        : fluid_dynamics::FluidInitialCondition(sph_body){};
 
-	void update(size_t index_i, Real dt)
-	{
-		/** initial velocity profile */
-		vel_[index_i][0] = -cos(2.0 * Pi * pos_[index_i][0]) *
-						   sin(2.0 * Pi * pos_[index_i][1]);
-		vel_[index_i][1] = sin(2.0 * Pi * pos_[index_i][0]) *
-						   cos(2.0 * Pi * pos_[index_i][1]);
-	}
+    void update(size_t index_i, Real dt)
+    {
+        /** initial velocity profile */
+        vel_[index_i][0] = -cos(2.0 * Pi * pos_[index_i][0]) *
+                           sin(2.0 * Pi * pos_[index_i][1]);
+        vel_[index_i][1] = sin(2.0 * Pi * pos_[index_i][0]) *
+                           cos(2.0 * Pi * pos_[index_i][1]);
+    }
 };
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
 int main(int ac, char *av[])
 {
-	//----------------------------------------------------------------------
-	//	Build up an SPHSystem.
-	//----------------------------------------------------------------------
-	BoundingBox system_domain_bounds(Vec2d::Zero(), Vec2d(DL, DH));
-	SPHSystem sph_system(system_domain_bounds, resolution_ref);
-	/** Tag for computation start with relaxed body fitted particles distribution. */
-	sph_system.setReloadParticles(false);
-	// handle command line arguments
-	sph_system.handleCommandlineOptions(ac, av);
-	IOEnvironment io_environment(sph_system);
-	//----------------------------------------------------------------------
-	//	Creating bodies with corresponding materials and particles.
-	//----------------------------------------------------------------------
-	FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-	// Using relaxed particle distribution if needed
-	sph_system.ReloadParticles()
-		? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getName())
-		: water_block.generateParticles<ParticleGeneratorLattice>();
-	//----------------------------------------------------------------------
-	//	Define body relation map.
-	//	The contact map gives the topological connections between the bodies.
-	//	Basically the the range of bodies to build neighbor particle lists.
-	//----------------------------------------------------------------------
-	InnerRelation water_block_inner(water_block);
-	//----------------------------------------------------------------------
-	//	Define the numerical methods used in the simulation.
-	//	Note that there may be data dependence on the sequence of constructions.
-	//----------------------------------------------------------------------
-	SimpleDynamics<TaylorGreenInitialCondition> initial_condition(water_block);
-	SimpleDynamics<TimeStepInitialization> time_step_initialization(water_block);
-	/** Pressure relaxation algorithm by using verlet time stepping. */
-	/** Here, we do not use Riemann solver for pressure as the flow is viscous.
-	 * The other reason is that we are using transport velocity formulation,
-	 * which will also introduce numerical dissipation slightly. */
-	Dynamics1Level<fluid_dynamics::Integration1stHalfRiemann> pressure_relaxation(water_block_inner);
-	Dynamics1Level<fluid_dynamics::Integration2ndHalf> density_relaxation(water_block_inner);
-	InteractionWithUpdate<fluid_dynamics::DensitySummationInner> update_density_by_summation(water_block_inner);
-	InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_inner);
-	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionInner> transport_velocity_correction(water_block_inner);
-	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
-	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
-	PeriodicConditionUsingCellLinkedList periodic_condition_x(water_block, water_block.getBodyShapeBounds(), xAxis);
-	PeriodicConditionUsingCellLinkedList periodic_condition_y(water_block, water_block.getBodyShapeBounds(), yAxis);
-	//----------------------------------------------------------------------
-	//	Define the methods for I/O operations, observations
-	//	and regression tests of the simulation.
-	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
-	ReloadParticleIO write_particle_reload_files(io_environment, water_block);
-	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
-		write_total_mechanical_energy(io_environment, water_block);
-	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<MaximumSpeed>>>
-		write_maximum_speed(io_environment, water_block);
-	//----------------------------------------------------------------------
-	//	Prepare the simulation with cell linked list, configuration
-	//	and case specified initial condition if necessary.
-	//----------------------------------------------------------------------
-	initial_condition.exec();
-	sph_system.initializeSystemCellLinkedLists();
-	periodic_condition_x.update_cell_linked_list_.exec();
-	periodic_condition_y.update_cell_linked_list_.exec();
-	sph_system.initializeSystemConfigurations();
-	//----------------------------------------------------------------------
-	//	Setup for time-stepping control
-	//----------------------------------------------------------------------
-	size_t number_of_iterations = 0;
-	int screen_output_interval = 100;
-	Real end_time = 5.0;
-	Real output_interval = 0.1; /**< Time stamps for output of body states. */
-	Real dt = 0.0;				/**< Default acoustic time step sizes. */
-	//----------------------------------------------------------------------
-	//	Statistics for CPU time
-	//----------------------------------------------------------------------
-	TickCount t1 = TickCount::now();
-	TimeInterval interval;
-	//----------------------------------------------------------------------
-	//	First output before the main loop.
-	//----------------------------------------------------------------------
-	body_states_recording.writeToFile(0);
-	write_total_mechanical_energy.writeToFile(0);
-	while (GlobalStaticVariables::physical_time_ < end_time)
-	{
-		Real integration_time = 0.0;
-		while (integration_time < output_interval)
-		{
-			time_step_initialization.exec();
-			Real Dt = get_fluid_advection_time_step_size.exec();
-			update_density_by_summation.exec();
-			viscous_acceleration.exec();
-			transport_velocity_correction.exec();
+    //----------------------------------------------------------------------
+    //	Build up an SPHSystem.
+    //----------------------------------------------------------------------
+    BoundingBox system_domain_bounds(Vec2d::Zero(), Vec2d(DL, DH));
+    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    /** Tag for computation start with relaxed body fitted particles distribution. */
+    sph_system.setReloadParticles(false);
+    // handle command line arguments
+    sph_system.handleCommandlineOptions(ac, av);
+    IOEnvironment io_environment(sph_system);
+    //----------------------------------------------------------------------
+    //	Creating bodies with corresponding materials and particles.
+    //----------------------------------------------------------------------
+    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
+    water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    // Using relaxed particle distribution if needed
+    sph_system.ReloadParticles()
+        ? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getName())
+        : water_block.generateParticles<ParticleGeneratorLattice>();
+    //----------------------------------------------------------------------
+    //	Define body relation map.
+    //	The contact map gives the topological connections between the bodies.
+    //	Basically the the range of bodies to build neighbor particle lists.
+    //----------------------------------------------------------------------
+    InnerRelation water_block_inner(water_block);
+    //----------------------------------------------------------------------
+    //	Define the numerical methods used in the simulation.
+    //	Note that there may be data dependence on the sequence of constructions.
+    //----------------------------------------------------------------------
+    SimpleDynamics<TaylorGreenInitialCondition> initial_condition(water_block);
+    SimpleDynamics<TimeStepInitialization> time_step_initialization(water_block);
+    /** Pressure relaxation algorithm by using verlet time stepping. */
+    /** Here, we do not use Riemann solver for pressure as the flow is viscous.
+     * The other reason is that we are using transport velocity formulation,
+     * which will also introduce numerical dissipation slightly. */
+    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemann> pressure_relaxation(water_block_inner);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalf> density_relaxation(water_block_inner);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationInner> update_density_by_summation(water_block_inner);
+    InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_inner);
+    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionInner> transport_velocity_correction(water_block_inner);
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
+    PeriodicConditionUsingCellLinkedList periodic_condition_x(water_block, water_block.getBodyShapeBounds(), xAxis);
+    PeriodicConditionUsingCellLinkedList periodic_condition_y(water_block, water_block.getBodyShapeBounds(), yAxis);
+    //----------------------------------------------------------------------
+    //	Define the methods for I/O operations, observations
+    //	and regression tests of the simulation.
+    //----------------------------------------------------------------------
+    BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
+    ReloadParticleIO write_particle_reload_files(io_environment, water_block);
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
+        write_total_mechanical_energy(io_environment, water_block);
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<MaximumSpeed>>>
+        write_maximum_speed(io_environment, water_block);
+    //----------------------------------------------------------------------
+    //	Prepare the simulation with cell linked list, configuration
+    //	and case specified initial condition if necessary.
+    //----------------------------------------------------------------------
+    initial_condition.exec();
+    sph_system.initializeSystemCellLinkedLists();
+    periodic_condition_x.update_cell_linked_list_.exec();
+    periodic_condition_y.update_cell_linked_list_.exec();
+    sph_system.initializeSystemConfigurations();
+    //----------------------------------------------------------------------
+    //	Setup for time-stepping control
+    //----------------------------------------------------------------------
+    size_t number_of_iterations = 0;
+    int screen_output_interval = 100;
+    Real end_time = 5.0;
+    Real output_interval = 0.1; /**< Time stamps for output of body states. */
+    Real dt = 0.0;              /**< Default acoustic time step sizes. */
+    //----------------------------------------------------------------------
+    //	Statistics for CPU time
+    //----------------------------------------------------------------------
+    TickCount t1 = TickCount::now();
+    TimeInterval interval;
+    //----------------------------------------------------------------------
+    //	First output before the main loop.
+    //----------------------------------------------------------------------
+    body_states_recording.writeToFile(0);
+    write_total_mechanical_energy.writeToFile(0);
+    while (GlobalStaticVariables::physical_time_ < end_time)
+    {
+        Real integration_time = 0.0;
+        while (integration_time < output_interval)
+        {
+            time_step_initialization.exec();
+            Real Dt = get_fluid_advection_time_step_size.exec();
+            update_density_by_summation.exec();
+            viscous_acceleration.exec();
+            transport_velocity_correction.exec();
 
-			Real relaxation_time = 0.0;
-			while (relaxation_time < Dt)
-			{
-				// avoid possible smaller acoustic time step size for viscous flow
-				dt = SMIN(get_fluid_time_step_size.exec(), Dt);
-				relaxation_time += dt;
-				integration_time += dt;
-				pressure_relaxation.exec(dt);
-				density_relaxation.exec(dt);
-				GlobalStaticVariables::physical_time_ += dt;
-			}
+            Real relaxation_time = 0.0;
+            while (relaxation_time < Dt)
+            {
+                // avoid possible smaller acoustic time step size for viscous flow
+                dt = SMIN(get_fluid_time_step_size.exec(), Dt);
+                relaxation_time += dt;
+                integration_time += dt;
+                pressure_relaxation.exec(dt);
+                density_relaxation.exec(dt);
+                GlobalStaticVariables::physical_time_ += dt;
+            }
 
-			if (number_of_iterations % screen_output_interval == 0)
-			{
-				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-						  << GlobalStaticVariables::physical_time_
-						  << "	Dt = " << Dt << "	dt = " << dt << "\n";
-			}
-			number_of_iterations++;
+            if (number_of_iterations % screen_output_interval == 0)
+            {
+                std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
+                          << GlobalStaticVariables::physical_time_
+                          << "	Dt = " << Dt << "	dt = " << dt << "\n";
+            }
+            number_of_iterations++;
 
-			/** Water block configuration and periodic condition. */
-			periodic_condition_x.bounding_.exec();
-			periodic_condition_y.bounding_.exec();
-			water_block.updateCellLinkedList();
-			periodic_condition_x.update_cell_linked_list_.exec();
-			periodic_condition_y.update_cell_linked_list_.exec();
-			water_block_inner.updateConfiguration();
-		}
+            /** Water block configuration and periodic condition. */
+            periodic_condition_x.bounding_.exec();
+            periodic_condition_y.bounding_.exec();
+            water_block.updateCellLinkedList();
+            periodic_condition_x.update_cell_linked_list_.exec();
+            periodic_condition_y.update_cell_linked_list_.exec();
+            water_block_inner.updateConfiguration();
+        }
 
-		TickCount t2 = TickCount::now();
-		write_total_mechanical_energy.writeToFile(number_of_iterations);
-		write_maximum_speed.writeToFile(number_of_iterations);
-		body_states_recording.writeToFile();
-		TickCount t3 = TickCount::now();
-		interval += t3 - t2;
-	}
-	TickCount t4 = TickCount::now();
+        TickCount t2 = TickCount::now();
+        write_total_mechanical_energy.writeToFile(number_of_iterations);
+        write_maximum_speed.writeToFile(number_of_iterations);
+        body_states_recording.writeToFile();
+        TickCount t3 = TickCount::now();
+        interval += t3 - t2;
+    }
+    TickCount t4 = TickCount::now();
 
-	TimeInterval tt;
-	tt = t4 - t1 - interval;
-	std::cout << "Total wall time for computation: " << tt.seconds()
-			  << " seconds." << std::endl;
+    TimeInterval tt;
+    tt = t4 - t1 - interval;
+    std::cout << "Total wall time for computation: " << tt.seconds()
+              << " seconds." << std::endl;
 
-	write_particle_reload_files.writeToFile();
+    write_particle_reload_files.writeToFile();
 
-	if (sph_system.generate_regression_data_)
-	{
-		write_total_mechanical_energy.generateDataBase(1.0e-3);
-		write_maximum_speed.generateDataBase(1.0e-3);
-	}
-	else if (!sph_system.ReloadParticles())
-	{
-		write_total_mechanical_energy.testResult();
-		write_maximum_speed.testResult();
-	}
+    if (sph_system.generate_regression_data_)
+    {
+        write_total_mechanical_energy.generateDataBase(1.0e-3);
+        write_maximum_speed.generateDataBase(1.0e-3);
+    }
+    else if (!sph_system.ReloadParticles())
+    {
+        write_total_mechanical_energy.testResult();
+        write_maximum_speed.testResult();
+    }
 
-	return 0;
+    return 0;
 }

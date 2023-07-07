@@ -1,29 +1,6 @@
-/* -------------------------------------------------------------------------*
- *								SPHinXsys									*
- * -------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic*
- * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
- * (smoothed particle hydrodynamics), a meshless computational method using	*
- * particle discretization.													*
- *																			*
- * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
- *  HU1527/12-1 and HU1527/12-4												*
- *                                                                          *
- * Portions copyright (c) 2017-2022 Technical University of Munich and		*
- * the authors' affiliations.												*
- *                                                                          *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
- * not use this file except in compliance with the License. You may obtain a*
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
- *                                                                          *
- * ------------------------------------------------------------------------*/
 /**
  * @file 	diffusion_dynamics.hpp
  * @brief 	This is the particle dynamics applicable for all type bodies
- * 			TODO: there is an issue on applying corrected configuration for contact bodies..
  * @author	Chi ZHang and Xiangyu Hu
  */
 
@@ -66,14 +43,15 @@ BaseDiffusionRelaxation<ParticlesType>::
         diffusion_dt_[i] = this->particles_->template registerSharedVariable<Real>(diffusion_species_name + "ChangeRate");
     }
 } //=================================================================================================//
-template <class ParticlesType>
-DiffusionRelaxationInner<ParticlesType>::
+template <class ParticlesType, class KernelGradientType>
+DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
     DiffusionRelaxationInner(BaseInnerRelation &inner_relation)
     : BaseDiffusionRelaxation<ParticlesType>(inner_relation.getSPHBody()),
-      DataDelegateInner<ParticlesType, DataDelegateEmptyBase>(inner_relation) {}
+      DataDelegateInner<ParticlesType, DataDelegateEmptyBase>(inner_relation),
+      kernel_gradient_(this->particles_) {}
 //=================================================================================================//
-template <class ParticlesType>
-void DiffusionRelaxationInner<ParticlesType>::
+template <class ParticlesType, class KernelGradientType>
+void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
     initializeDiffusionChangeRate(size_t particle_i)
 {
     for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
@@ -82,8 +60,8 @@ void DiffusionRelaxationInner<ParticlesType>::
     }
 }
 //=================================================================================================//
-template <class ParticlesType>
-void DiffusionRelaxationInner<ParticlesType>::
+template <class ParticlesType, class KernelGradientType>
+void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
     getDiffusionChangeRate(size_t particle_i, size_t particle_j, Vecd &e_ij, Real surface_area_ij)
 {
     for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
@@ -96,8 +74,8 @@ void DiffusionRelaxationInner<ParticlesType>::
     }
 }
 //=================================================================================================//
-template <class ParticlesType>
-void DiffusionRelaxationInner<ParticlesType>::
+template <class ParticlesType, class KernelGradientType>
+void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
     updateSpeciesDiffusion(size_t particle_i, Real dt)
 {
     for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
@@ -106,11 +84,10 @@ void DiffusionRelaxationInner<ParticlesType>::
     }
 }
 //=================================================================================================//
-template <class ParticlesType>
-void DiffusionRelaxationInner<ParticlesType>::
+template <class ParticlesType, class KernelGradientType>
+void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
     interaction(size_t index_i, Real dt)
 {
-    ParticlesType *particles = this->particles_;
     Neighborhood &inner_neighborhood = this->inner_configuration_[index_i];
 
     initializeDiffusionChangeRate(index_i);
@@ -121,21 +98,21 @@ void DiffusionRelaxationInner<ParticlesType>::
         Real r_ij_ = inner_neighborhood.r_ij_[n];
         Vecd &e_ij = inner_neighborhood.e_ij_[n];
 
-        const Vecd &grad_ijV_j = particles->getKernelGradient(index_i, index_j, dW_ijV_j_, e_ij);
+        const Vecd &grad_ijV_j = this->kernel_gradient_(index_i, index_j, dW_ijV_j_, e_ij);
         Real area_ij = 2.0 * grad_ijV_j.dot(e_ij) / r_ij_;
         getDiffusionChangeRate(index_i, index_j, e_ij, area_ij);
     }
 }
 //=================================================================================================//
-template <class ParticlesType>
-void DiffusionRelaxationInner<ParticlesType>::
+template <class ParticlesType, class KernelGradientType>
+void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
     update(size_t index_i, Real dt)
 {
     updateSpeciesDiffusion(index_i, dt);
 }
 //=================================================================================================//
-template <class ParticlesType, class ContactParticlesType>
-BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType>::
+template <class ParticlesType, class ContactParticlesType, class KernelGradientType>
+BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType>::
     BaseDiffusionRelaxationContact(BaseContactRelation &contact_relation)
     : BaseDiffusionRelaxation<ParticlesType>(contact_relation.getSPHBody()),
       DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>(contact_relation)
@@ -163,12 +140,17 @@ BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType>::
             }
         }
     }
+
+    for (size_t k = 0; k != this->contact_particles_.size(); ++k)
+    {
+        contact_kernel_gradients_.push_back(KernelGradientType(this->particles_, this->contact_particles_[k]));
+    }
 }
 //=================================================================================================//
-template <class ParticlesType, class ContactParticlesType>
-DiffusionRelaxationDirichlet<ParticlesType, ContactParticlesType>::
+template <class ParticlesType, class ContactParticlesType, class KernelGradientType>
+DiffusionRelaxationDirichlet<ParticlesType, ContactParticlesType, KernelGradientType>::
     DiffusionRelaxationDirichlet(BaseContactRelation &contact_relation)
-    : BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType>(contact_relation)
+    : BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType>(contact_relation)
 {
     contact_gradient_species_.resize(this->contact_particles_.size());
 
@@ -185,8 +167,8 @@ DiffusionRelaxationDirichlet<ParticlesType, ContactParticlesType>::
     }
 }
 //=================================================================================================//
-template <class ParticlesType, class ContactParticlesType>
-void DiffusionRelaxationDirichlet<ParticlesType, ContactParticlesType>::
+template <class ParticlesType, class ContactParticlesType, class KernelGradientType>
+void DiffusionRelaxationDirichlet<ParticlesType, ContactParticlesType, KernelGradientType>::
     getDiffusionChangeRateDirichletContact(size_t particle_i, size_t particle_j, Vecd &e_ij,
                                            Real surface_area_ij, const StdVec<StdLargeVec<Real> *> &gradient_species_k)
 {
@@ -194,17 +176,15 @@ void DiffusionRelaxationDirichlet<ParticlesType, ContactParticlesType>::
     {
         Real diff_coff_ij =
             this->all_diffusions_[m]->getInterParticleDiffusionCoff(particle_i, particle_j, e_ij);
-        Real phi_ij = (*this->diffusion_species_[m])[particle_i] - (*gradient_species_k[m])[particle_j];
+        Real phi_ij = (*this->gradient_species_[m])[particle_i] - (*gradient_species_k[m])[particle_j];
         (*this->diffusion_dt_[m])[particle_i] += diff_coff_ij * phi_ij * surface_area_ij;
     }
 }
 //=================================================================================================//
-template <class ParticlesType, class ContactParticlesType>
-void DiffusionRelaxationDirichlet<ParticlesType, ContactParticlesType>::
+template <class ParticlesType, class ContactParticlesType, class KernelGradientType>
+void DiffusionRelaxationDirichlet<ParticlesType, ContactParticlesType, KernelGradientType>::
     interaction(size_t index_i, Real dt)
 {
-    ParticlesType *particles = this->particles_;
-
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
         StdVec<StdLargeVec<Real> *> &gradient_species_k = this->contact_gradient_species_[k];
@@ -217,17 +197,17 @@ void DiffusionRelaxationDirichlet<ParticlesType, ContactParticlesType>::
             Real dW_ijV_j_ = contact_neighborhood.dW_ijV_j_[n];
             Vecd &e_ij = contact_neighborhood.e_ij_[n];
 
-            const Vecd &grad_ijV_j = particles->getKernelGradient(index_i, index_j, dW_ijV_j_, e_ij);
+            const Vecd &grad_ijV_j = this->contact_kernel_gradients_[k](index_i, index_j, dW_ijV_j_, e_ij);
             Real area_ij = 2.0 * grad_ijV_j.dot(e_ij) / r_ij_;
             getDiffusionChangeRateDirichletContact(index_i, index_j, e_ij, area_ij, gradient_species_k);
         }
     }
 }
 //=================================================================================================//
-template <class ParticlesType, class ContactParticlesType>
-DiffusionRelaxationNeumann<ParticlesType, ContactParticlesType>::
+template <class ParticlesType, class ContactParticlesType, class KernelGradientType>
+DiffusionRelaxationNeumann<ParticlesType, ContactParticlesType, KernelGradientType>::
     DiffusionRelaxationNeumann(BaseContactRelation &contact_relation)
-    : BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType>(contact_relation),
+    : BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType>(contact_relation),
       n_(this->particles_->n_)
 {
     contact_heat_flux_.resize(this->contact_particles_.size());
@@ -241,8 +221,8 @@ DiffusionRelaxationNeumann<ParticlesType, ContactParticlesType>::
     }
 }
 //=================================================================================================//
-template <class ParticlesType, class ContactParticlesType>
-void DiffusionRelaxationNeumann<ParticlesType, ContactParticlesType>::
+template <class ParticlesType, class ContactParticlesType, class KernelGradientType>
+void DiffusionRelaxationNeumann<ParticlesType, ContactParticlesType, KernelGradientType>::
     getDiffusionChangeRateNeumannContact(size_t particle_i, size_t particle_j,
                                          Real surface_area_ij_Neumann, StdLargeVec<Real> &heat_flux_k)
 {
@@ -252,12 +232,10 @@ void DiffusionRelaxationNeumann<ParticlesType, ContactParticlesType>::
     }
 }
 //=================================================================================================//
-template <class ParticlesType, class ContactParticlesType>
-void DiffusionRelaxationNeumann<ParticlesType, ContactParticlesType>::
+template <class ParticlesType, class ContactParticlesType, class KernelGradientType>
+void DiffusionRelaxationNeumann<ParticlesType, ContactParticlesType, KernelGradientType>::
     interaction(size_t index_i, Real dt)
 {
-    ParticlesType *particles = this->particles_;
-
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
         StdLargeVec<Real> &heat_flux_k = *(contact_heat_flux_[k]);
@@ -270,7 +248,7 @@ void DiffusionRelaxationNeumann<ParticlesType, ContactParticlesType>::
             Real dW_ijV_j_ = contact_neighborhood.dW_ijV_j_[n];
             Vecd &e_ij = contact_neighborhood.e_ij_[n];
 
-            const Vecd &grad_ijV_j = particles->getKernelGradient(index_i, index_j, dW_ijV_j_, e_ij);
+            const Vecd &grad_ijV_j = this->contact_kernel_gradients_[k](index_i, index_j, dW_ijV_j_, e_ij);
             Vecd n_ij = n_[index_i] - n_k[index_j];
             Real area_ij_Neumann = grad_ijV_j.dot(n_ij);
             getDiffusionChangeRateNeumannContact(index_i, index_j, area_ij_Neumann, heat_flux_k);
@@ -278,64 +256,62 @@ void DiffusionRelaxationNeumann<ParticlesType, ContactParticlesType>::
     }
 }
 //=================================================================================================//
-template <class ParticlesType, class ContactParticlesType>
-DiffusionRelaxationRobin<ParticlesType, ContactParticlesType>::
-	DiffusionRelaxationRobin(BaseContactRelation& contact_relation)
-	: BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType>(contact_relation),
-	n_(this->particles_->n_)
+template <class ParticlesType, class ContactParticlesType, class KernelGradientType>
+DiffusionRelaxationRobin<ParticlesType, ContactParticlesType, KernelGradientType>::
+    DiffusionRelaxationRobin(BaseContactRelation &contact_relation)
+    : BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType>(contact_relation),
+      n_(this->particles_->n_)
 {
-	contact_convection_.resize(this->contact_particles_.size());
-	contact_T_infinity_.resize(this->all_diffusions_.size());
+    contact_convection_.resize(this->contact_particles_.size());
+    contact_T_infinity_.resize(this->all_diffusions_.size());
 
-	for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
-	{
-		for (size_t k = 0; k != this->contact_particles_.size(); ++k)
-		{
-			contact_n_.push_back(&(this->contact_particles_[k]->n_));
-			contact_convection_[k] = this->contact_particles_[k]->template registerSharedVariable<Real>("Convection");
-			contact_T_infinity_[m] = this->contact_particles_[k]->template registerGlobalVariable<Real>("T_infinity");
-		}
-	}
+    for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
+    {
+        for (size_t k = 0; k != this->contact_particles_.size(); ++k)
+        {
+            contact_n_.push_back(&(this->contact_particles_[k]->n_));
+            contact_convection_[k] = this->contact_particles_[k]->template registerSharedVariable<Real>("Convection");
+            contact_T_infinity_[m] = this->contact_particles_[k]->template registerGlobalVariable<Real>("T_infinity");
+        }
+    }
 }
 //=================================================================================================//
-template <class ParticlesType, class ContactParticlesType>
-void DiffusionRelaxationRobin<ParticlesType, ContactParticlesType>::
-	getDiffusionChangeRateRobinContact(size_t particle_i, size_t particle_j,
-		Real surface_area_ij_Robin, StdLargeVec<Real>& convection_k, Real& T_infinity_k)
+template <class ParticlesType, class ContactParticlesType, class KernelGradientType>
+void DiffusionRelaxationRobin<ParticlesType, ContactParticlesType, KernelGradientType>::
+    getDiffusionChangeRateRobinContact(size_t particle_i, size_t particle_j,
+                                       Real surface_area_ij_Robin, StdLargeVec<Real> &convection_k, Real &T_infinity_k)
 {
-	for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
-	{
-		Real phi_ij = T_infinity_k - (*this->diffusion_species_[m])[particle_i];
-		(*this->diffusion_dt_[m])[particle_i] += convection_k[particle_j] * phi_ij * surface_area_ij_Robin;
-	}
+    for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
+    {
+        Real phi_ij = T_infinity_k - (*this->diffusion_species_[m])[particle_i];
+        (*this->diffusion_dt_[m])[particle_i] += convection_k[particle_j] * phi_ij * surface_area_ij_Robin;
+    }
 }
 //=================================================================================================//
-template <class ParticlesType, class ContactParticlesType>
-void DiffusionRelaxationRobin<ParticlesType, ContactParticlesType>::
-	interaction(size_t index_i, Real dt)
+template <class ParticlesType, class ContactParticlesType, class KernelGradientType>
+void DiffusionRelaxationRobin<ParticlesType, ContactParticlesType, KernelGradientType>::
+    interaction(size_t index_i, Real dt)
 {
-	ParticlesType* particles = this->particles_;
+    for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
+    {
+        StdLargeVec<Vecd> &n_k = *(contact_n_[k]);
 
-	for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
-	{
-		StdLargeVec<Vecd>& n_k = *(contact_n_[k]);
+        StdLargeVec<Real> &convection_k = *(contact_convection_[k]);
+        Real &T_infinity_k = *(contact_T_infinity_[k]);
 
-		StdLargeVec<Real>& convection_k = *(contact_convection_[k]);
-		Real& T_infinity_k = *(contact_T_infinity_[k]);
+        Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
+        for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+        {
+            size_t index_j = contact_neighborhood.j_[n];
+            Real dW_ijV_j_ = contact_neighborhood.dW_ijV_j_[n];
+            Vecd &e_ij = contact_neighborhood.e_ij_[n];
 
-		Neighborhood& contact_neighborhood = (*this->contact_configuration_[k])[index_i];
-		for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-		{
-			size_t index_j = contact_neighborhood.j_[n];
-			Real dW_ijV_j_ = contact_neighborhood.dW_ijV_j_[n];
-			Vecd& e_ij = contact_neighborhood.e_ij_[n];
-
-			const Vecd& grad_ijV_j = particles->getKernelGradient(index_i, index_j, dW_ijV_j_, e_ij);
-			Vecd n_ij = n_[index_i] - n_k[index_j];
-			Real area_ij_Robin = grad_ijV_j.dot(n_ij);
-			getDiffusionChangeRateRobinContact(index_i, index_j, area_ij_Robin, convection_k, T_infinity_k);
-		}
-	}
+            const Vecd &grad_ijV_j = this->contact_kernel_gradients_[k](index_i, index_j, dW_ijV_j_, e_ij);
+            Vecd n_ij = n_[index_i] - n_k[index_j];
+            Real area_ij_Robin = grad_ijV_j.dot(n_ij);
+            getDiffusionChangeRateRobinContact(index_i, index_j, area_ij_Robin, convection_k, T_infinity_k);
+        }
+    }
 }
 //=================================================================================================//
 template <class ParticlesType>

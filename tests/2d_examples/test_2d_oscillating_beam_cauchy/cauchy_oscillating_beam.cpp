@@ -126,7 +126,7 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
     // corrected strong configuration
-    InteractionDynamics<solid_dynamics::CorrectConfiguration> beam_corrected_configuration(beam_body_inner);
+    InteractionWithUpdate<CorrectedConfigurationInner> beam_corrected_configuration(beam_body_inner);
     // time step size calculation
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
     // stress relaxation for the beam
@@ -140,7 +140,7 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     IOEnvironment io_environment(system);
     BodyStatesRecordingToVtp write_beam_states(io_environment, system.real_bodies_);
-    RegressionTestEnsembleAveraged<ObservedQuantityRecording<Vecd>>
+    RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
         write_beam_tip_displacement("Position", io_environment, beam_observer_contact);
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.

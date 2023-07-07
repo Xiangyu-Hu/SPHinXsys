@@ -12,17 +12,17 @@
 
 EMSCRIPTEN_BINDINGS(SPHINXSYS)
 {
-    emscripten::value_array<std::array<double, 3>>("ArrayDouble3")
+    emscripten::value_array<std::array<Real, 3>>("ArrayReal3")
         .element(emscripten::index<0>())
         .element(emscripten::index<1>())
         .element(emscripten::index<2>());
 
-    emscripten::value_object<StlData>("StlData")   
+    emscripten::value_object<StlData>("StlData")
         .field("name", &StlData::name)
         .field("ptr", &StlData::ptr);
-    
+
     emscripten::register_vector<std::string>("StringVector");
-    emscripten::register_vector<double>("DoubleVector");
+    emscripten::register_vector<Real>("BiVectortor");
     emscripten::register_vector<IndexVector::value_type>("UIntVector");
     emscripten::register_vector<StlData>("StlsList");
     emscripten::register_vector<IndexVector>("BodiesList");
@@ -52,16 +52,16 @@ int main()
 {
     BernoulliBeamInput input;
     input.scale_stl = 0.001;
-    input.resolution = { 1.5 };
+    input.resolution = {1.5};
     input.rho_0 = 1e3;
     input.poisson = 0.3;
     input.Youngs_modulus = 5e8;
     input.physical_viscosity = 5e6;
-    input.translation = { 0, 0, 0 };
+    input.translation = {0, 0, 0};
 
     string beam_stl = "bernoulli_beam_20x.stl";
 
-    input.stls = { beam_stl };
+    input.stls = {beam_stl};
     input.relative_input_path = "./input/";
 
     /* DOWNLOAD STLs files at this point */
@@ -74,7 +74,7 @@ int main()
         std::cout << "About to run the simulation" << std::endl;
         bernoulli_beam.runSimulation(number_of_steps);
     }
-    catch (const std::exception& e)
+    catch (const std::exception &e)
     {
         std::cout << e.what() << std::endl;
         return 1;
