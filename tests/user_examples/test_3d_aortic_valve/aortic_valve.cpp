@@ -110,7 +110,7 @@ class CylinderParticleGenerator : public SurfaceParticleGenerator
             }
         }
 
-        for (int i = 0; i != points.size(); i++)
+        for (int i = 0; i != (int)points.size(); i++)
         {
             initializePositionAndVolumetricMeasure(points[i], particle_spacing_ref * particle_spacing_ref);
             Vecd n_0 = Vec3d(1.0, 1.0, 1.0);
