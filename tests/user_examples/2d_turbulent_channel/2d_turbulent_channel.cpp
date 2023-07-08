@@ -4,11 +4,9 @@
  * @details This is the one of the basic test cases.
  * @author 	Xiangyu Hu
  */
-#include "sphinxsys.h"
+//#include "sphinxsys.h"
 #include "2d_turbulent_channel.h"
 
-#include "k-epsilon_turbulent_model_complex.h"
-#include "k-epsilon_turbulent_model_complex.hpp"
 using namespace SPH;
 
 int main(int ac, char* av[])

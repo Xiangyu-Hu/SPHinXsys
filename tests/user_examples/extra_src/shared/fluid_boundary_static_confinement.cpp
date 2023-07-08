@@ -26,7 +26,7 @@ namespace SPH
 		StaticConfinementViscousAcceleration::StaticConfinementViscousAcceleration(NearShapeSurface& near_surface)
 			: LocalDynamics(near_surface.getSPHBody()), FluidDataSimple(sph_body_),
 			pos_(particles_->pos_), acc_prior_(particles_->acc_prior_), rho_(particles_->rho_),
-			mu_(particles_->fluid_.ReferenceViscosity()), vel_(particles_->vel_),
+			mu_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceViscosity()), vel_(particles_->vel_),
 			level_set_shape_(&near_surface.level_set_shape_) {}
 		//=================================================================================================//
 		void StaticConfinementViscousAcceleration::update(size_t index_i, Real dt)
@@ -45,8 +45,8 @@ namespace SPH
 		StaticConfinementExtendIntegration1stHalf::
 			StaticConfinementExtendIntegration1stHalf(NearShapeSurface& near_surface, Real  sound_speed, Real penalty_strength)
 			: LocalDynamics(near_surface.getSPHBody()), FluidDataSimple(sph_body_),
-			fluid_(particles_->fluid_), c_0_ (sound_speed),
-			rho_(particles_->rho_), p_(particles_->p_),
+			fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())), c_0_ (sound_speed),
+			rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
 			pos_(particles_->pos_), vel_(particles_->vel_),
 			acc_(particles_->acc_),
 			level_set_shape_(&near_surface.level_set_shape_),
