@@ -17,7 +17,7 @@ the particle position is corrected by relaxing the zero-order
 consistency error iteratively
 
 $$
-\Delta \mathbf{r}_i = 2 \alpha h^{2} \sum_j  \nabla W_{ij} V_j,
+\Delta \mathbf{r}_i = 2 \alpha h^2 \sum_j  \nabla W_{ij} V_j,
 $$
 
 where the parameter $\alpha \approx 0.2$ to ensure numerical stability, 
