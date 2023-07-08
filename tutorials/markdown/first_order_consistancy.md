@@ -26,8 +26,7 @@ until the residue is sufficiently small.
 To achieve first-order consistency, one introduces the correction matrix
 
 $$
-\mathbf{B}_i = \left(\sum_j 
-\mathbf{r}_{ij} \otimes \nabla W_{ij} V_j \right)^{-1},
+\mathbf{B}_i = \left(\sum_j \mathbf{r}_{ij} \otimes \nabla W_{ij} V_j \right)^{-1},
 $$
 
 and relax the particle positions similarly according to 
