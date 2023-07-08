@@ -35,23 +35,19 @@ namespace SPH
 	namespace fluid_dynamics
 	{
 		//=================================================================================================//
-		void K_TurtbulentModelInner::
-			interaction(size_t index_i, Real dt)
+		void K_TurtbulentModelInner::interaction(size_t index_i, Real dt)
 		{
-
 				Vecd vel_i = vel_[index_i];
 				Real rho_i = rho_[index_i];
 				Real turbu_mu_i = turbu_mu_[index_i];
 				Real turbu_k_i = turbu_k_[index_i];
 
-				dk_dt_[index_i] = 0.0;
-				Real k_production(0.0);
+				dk_dt_[index_i] = 0.0;;
 				Real k_derivative(0.0);
 				Real k_lap(0.0);
-				//Matd strain_rate = Matd::Zero();
-				//Matd Re_stress = Matd::Zero();
+				Matd strain_rate = Matd::Zero();
+				Matd Re_stress = Matd::Zero();
 				velocity_gradient[index_i] = Matd::Zero();
-				velocity_gradient_inner[index_i] = Matd::Zero();
 
 				const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 				for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -63,22 +59,17 @@ namespace SPH
 					k_derivative = (turbu_k_i - turbu_k_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
 					k_lap += 2.0 * (mu_+turbu_mu_i/sigma_k)*k_derivative * inner_neighborhood.dW_ijV_j_[n]/ rho_i;
 				}
-				//for test 
-				velocity_gradient_inner[index_i] = velocity_gradient[index_i];
 
+				strain_rate = 0.5 * (velocity_gradient[index_i].transpose() + velocity_gradient[index_i]);
+				Re_stress = 2.0 * strain_rate * turbu_mu_i / rho_i - (2.0 / 3.0) * turbu_k_i * Matd::Identity();
+				Matd k_production_matrix = Re_stress.array() * velocity_gradient[index_i].array();
+				k_production_[index_i] = k_production_matrix.sum();
 
-				//strain_rate = 0.5 * (velocity_gradient.transpose() + velocity_gradient);
-				//Re_stress = 2.0 * strain_rate * turbu_mu_i / rho_i - (2.0 / 3.0) * turbu_k_i * Matd::Identity();
-				//Matd k_production_matrix = Re_stress.array() * velocity_gradient.array();
-				//k_production = k_production_matrix.sum();
-
-				/** k_production will be calculated in the complex part after getting the velocity contribution of wall*/
-				dk_dt_[index_i] = 0.0 - turbu_epsilon_[index_i] + k_lap;
+				dk_dt_[index_i] = k_production_[index_i] - turbu_epsilon_[index_i] + k_lap;
 
 				//** for test */
-				lap_k_[index_i] = 0.0;
 				lap_k_[index_i] = k_lap;
-
+				lap_k_term_[index_i] = (mu_ + turbu_mu_i / sigma_k) * lap_k_[index_i];
 		}
 		//=================================================================================================//
 		void E_TurtbulentModelInner::
@@ -101,8 +92,8 @@ namespace SPH
 				epsilon_derivative = (turbu_epsilon_i - turbu_epsilon_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
 				epsilon_lap += 2.0 * (mu_ + turbu_mu_i / sigma_E) * epsilon_derivative * inner_neighborhood.dW_ijV_j_[n] / rho_i;
 			}
-			/** epsilon_production will be calculated in the complex part*/
-			epsilon_production = 0.0;
+
+			epsilon_production = C_l * turbu_epsilon_i * k_production_[index_i] / turbu_k_i;
 			epsilon_dissipation = C_2 * turbu_epsilon_i * turbu_epsilon_i / turbu_k_i;
 
 			dE_dt_[index_i] = epsilon_production - epsilon_dissipation + epsilon_lap;
@@ -121,11 +112,10 @@ namespace SPH
 				size_t index_j = inner_neighborhood.j_[n];
 				Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
 				k_gradient += -1.0*(turbu_k_i - turbu_k_[index_j]) * nablaW_ijV_j;
-				//k_gradient +=  (turbu_k_i - turbu_k_[index_j]) * nablaW_ijV_j;
 				acceleration -= (2.0 / 3.0) * k_gradient;
 			}
-			//if (surface_indicator_[index_i] == 0 && pos_[index_i][0] <= 5.95)//To prevent kernel truncation near outlet
 			acc_prior_[index_i] += acceleration;
+			
 			//for test
 			tke_acc_inner_[index_i] = acceleration;
 			test_k_grad_rslt_[index_i] = k_gradient;

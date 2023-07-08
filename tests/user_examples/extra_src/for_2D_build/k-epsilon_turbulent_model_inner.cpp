@@ -58,9 +58,6 @@ namespace SPH
 				particles_->registerVariable(velocity_gradient_wall, "Velocity_Gradient_Wall");
 				particles_->registerSortableVariable<Matd>("Velocity_Gradient_Wall");
 				particles_->addVariableToWrite<Matd>("Velocity_Gradient_Wall");
-				particles_->registerVariable(velocity_gradient_inner, "Velocity_Gradient_Inner");
-				particles_->registerSortableVariable<Matd>("Velocity_Gradient_Inner");
-				particles_->addVariableToWrite<Matd>("Velocity_Gradient_Inner");
 
 				particles_->registerVariable(vel_x_, "Velocity_X");
 				particles_->registerSortableVariable<Real>("Velocity_X");

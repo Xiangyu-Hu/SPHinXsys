@@ -51,8 +51,8 @@ namespace SPH
 			Matd strain_rate = Matd::Zero();
 			Matd Re_stress = Matd::Zero();
 			//Matd velocity_gradient = Matd::Zero();
-			velocity_gradient_wall[index_i] = Matd::Zero();
-
+			//velocity_gradient_wall[index_i] = Matd::Zero();
+			/*
 			for (size_t k = 0; k < FluidContactData::contact_configuration_.size(); ++k)
 			{
 				StdLargeVec<Vecd>& vel_ave_k = *(contact_vel_ave_[k]);
@@ -68,18 +68,19 @@ namespace SPH
 					velocity_gradient_wall[index_i] += -0.0 * (vel_i - vel_ave_k[index_j]) * nablaW_ijV_j.transpose();
 
 
-					/** With standard wall function, diffusion of k to wall is zero */
+					// With standard wall function, diffusion of k to wall is zero 
 					k_derivative = 0.0;
 					k_lap += 0.0;
 				}
 			}
+	        */
 			strain_rate = 0.5 * (velocity_gradient[index_i].transpose() + velocity_gradient[index_i]);
 			Re_stress = 2.0 * strain_rate * turbu_mu_i / rho_i - (2.0 / 3.0) * turbu_k_i * Matd::Identity();
 			Matd k_production_matrix = Re_stress.array() * velocity_gradient[index_i].array();
 			k_production = k_production_matrix.sum();
 
 			/** With standard wall function, epilson on wall is zero */
-			dk_dt_[index_i] += k_production - 0.0 + k_lap;
+			dk_dt_[index_i] += k_production - 0.0 + 0.0;
 
 			/** Store the production of K for the use of Epsilon euqation and output*/
 			k_production_[index_i] = k_production;

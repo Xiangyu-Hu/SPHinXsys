@@ -56,10 +56,10 @@ int main(int ac, char* av[])
 	//Attention! the original one does use Riemann solver for density
 	Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(water_block_complex_relation);
 	
-	/** Turbulent. */
-	InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelComplex,SequencedPolicy> k_equation_relaxation(water_block_complex_relation);
-	InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelComplex> epsilon_equation_relaxation(water_block_complex_relation);
-	InteractionDynamics<fluid_dynamics::TKEnergyAccComplex,  SequencedPolicy> turbulent_kinetic_energy_acceleration(water_block_complex_relation);
+	/** Turbulent.Note: When use wall function, K Epsilon and TKE gradient calculation only consider inner */
+	InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner,SequencedPolicy> k_equation_relaxation(water_block_inner);
+	InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelInner> epsilon_equation_relaxation(water_block_inner);
+	InteractionDynamics<fluid_dynamics::TKEnergyAccInner,  SequencedPolicy> turbulent_kinetic_energy_acceleration(water_block_inner);
 	
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	/** Turbulent standard wall function needs normal vectors of wall. */

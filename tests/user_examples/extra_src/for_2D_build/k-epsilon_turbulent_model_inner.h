@@ -58,7 +58,6 @@ namespace SPH
 			//closure coefficients for epsilon model
 			Real C_l, C_2;
 			Real sigma_E;
-
 		};
 
 		/**
@@ -105,7 +104,7 @@ namespace SPH
 
 			//** for test */
 			StdLargeVec<Real> lap_k_, lap_k_term_, vel_x_;
-			StdLargeVec<Matd>  velocity_gradient_inner, velocity_gradient_wall;
+			StdLargeVec<Matd> velocity_gradient_wall;
 		};
 
 		/**
