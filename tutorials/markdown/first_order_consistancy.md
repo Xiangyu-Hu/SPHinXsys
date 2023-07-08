@@ -5,7 +5,8 @@
 In SPH, if we assume all particles have the same mass $m$,
 the density is obtained $\rho_i = m \sum_j W_{ij}$ and
 the particle volume is obtained from $V_i = m/ \rho_i$.
-The typical anti-symmetric formulation of SPH approximation of gradient is
+The typical conservative or anti-symmetric formulation
+of SPH approximation of gradient is
 
 $$
 \nabla \phi_i = - \sum_j
