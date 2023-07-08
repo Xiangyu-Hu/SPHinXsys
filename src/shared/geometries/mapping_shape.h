@@ -21,13 +21,13 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	exclusive_shape.h
- * @brief 	exclusive shape related class for geometries.
+ * @file 	maping_shape.h
+ * @brief 	Shape generated based on mapping from an original shape.
  * @author	Yongchuan Yu and Xiangyu Hu
  */
 
-#ifndef EXCLUSIVE_SHAPE_H
-#define EXCLUSIVE_SHAPE_H
+#ifndef MAPPING_SHAPE_H
+#define MAPPING_SHAPE_H
 
 #include "base_data_package.h"
 #include "base_geometry.h"
@@ -36,7 +36,7 @@ namespace SPH
 {
 /**
  * @class InverseShape
- * @brief A template shape which define the region outside of the geometry.
+ * @brief A template shape which switches the defined inside or outside region.
  * @brief In simple terms, it gives opposite return value for the function checkContain() as the original shape
  */
 
@@ -105,4 +105,4 @@ class ExtrudeShape : public BaseShapeType
 };
 } // namespace SPH
 
-#endif // TRANSFORM_SHAPE_H
+#endif // MAPPING_SHAPE_H
