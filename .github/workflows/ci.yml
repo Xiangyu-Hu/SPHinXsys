@@ -304,7 +304,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build \
+          ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build --allow-unsupported \
             eigen3 \
             tbb \
             boost-program-options \
