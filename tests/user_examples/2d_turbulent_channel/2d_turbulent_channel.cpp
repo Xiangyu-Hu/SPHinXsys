@@ -23,7 +23,7 @@ int main(int ac, char* av[])
 	//	Creating body, materials and particles.cd
 	//----------------------------------------------------------------------
 	FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
-	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+	water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	water_block.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
@@ -95,11 +95,11 @@ int main(int ac, char* av[])
 	
 	
 	BodyAlignedBoxByParticle emitter(
-		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(emitter_translation)), emitter_halfsize));
+		water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(emitter_translation)), emitter_halfsize));
 	SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, 50, 0);
 
 	BodyAlignedBoxByCell emitter_buffer(
-		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(inlet_buffer_translation)), inlet_buffer_halfsize));
+		water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(inlet_buffer_translation)), inlet_buffer_halfsize));
 	SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> emitter_buffer_inflow_condition(emitter_buffer);
 	
 	/** Turbulent InflowTurbulentCondition.It needs characteristic Length to calculate turbulent length  */
@@ -109,7 +109,7 @@ int main(int ac, char* av[])
 	Vec2d disposer_up_halfsize = Vec2d(0.5 * BW, 0.55 * DH);
 	Vec2d disposer_up_translation = Vec2d(DL - BW, -0.05 * DH) + disposer_up_halfsize;
 	BodyAlignedBoxByCell disposer_up(
-		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(disposer_up_translation)), disposer_up_halfsize));
+		water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(disposer_up_translation)), disposer_up_halfsize));
 	SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_up_outflow_deletion(disposer_up, xAxis);
 ;
 	//----------------------------------------------------------------------
