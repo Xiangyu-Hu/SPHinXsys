@@ -59,6 +59,28 @@ class GlobalVariable : public BaseVariable
     DataType value_;
 };
 
+template <typename DeviceDataType>
+class DeviceVariable : public BaseVariable
+{
+public:
+    template<class HostDataType = void>
+    DeviceVariable(const std::string &name, std::size_t size, const HostDataType *host_value = nullptr)
+            : BaseVariable(name), device_addr_(allocateSharedData<DeviceDataType>(size))
+    {
+        if constexpr(std::negation_v<std::is_same<HostDataType, void>>)
+            copyDataToDevice(host_value, device_addr_, size);
+    }
+    virtual ~DeviceVariable()
+    {
+        freeDeviceData(device_addr_);
+    }
+
+    DeviceDataType *VariableAddress() { return device_addr_; };
+
+private:
+    DeviceDataType *device_addr_;
+};
+
 template <typename DataType>
 class DiscreteVariable : public BaseVariable
 {

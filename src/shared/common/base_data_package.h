@@ -90,7 +90,10 @@ using DataContainerAssemble =
                StdVec<DataContainerType<Vec3d>>,
                StdVec<DataContainerType<Mat2d>>,
                StdVec<DataContainerType<Mat3d>>,
-               StdVec<DataContainerType<int>>>;
+               StdVec<DataContainerType<int>>,
+               StdVec<DataContainerType<DeviceReal>>,
+               StdVec<DataContainerType<DeviceVec2d>>,
+               StdVec<DataContainerType<DeviceVec3d>>>;
 /** Generalized data container address assemble type */
 template <template <typename DataType> typename DataContainerType>
 using DataContainerAddressAssemble =
@@ -99,7 +102,10 @@ using DataContainerAddressAssemble =
                StdVec<DataContainerType<Vec3d> *>,
                StdVec<DataContainerType<Mat2d> *>,
                StdVec<DataContainerType<Mat3d> *>,
-               StdVec<DataContainerType<int> *>>;
+               StdVec<DataContainerType<int> *>,
+               StdVec<DataContainerType<DeviceReal> *>,
+               StdVec<DataContainerType<DeviceVec2d> *>,
+               StdVec<DataContainerType<DeviceVec3d> *>>;
 /** Generalized data container unique pointer assemble type */
 template <template <typename DataType> typename DataContainerType>
 using DataContainerUniquePtrAssemble =
@@ -108,7 +114,10 @@ using DataContainerUniquePtrAssemble =
                UniquePtrsKeeper<DataContainerType<Vec3d>>,
                UniquePtrsKeeper<DataContainerType<Mat2d>>,
                UniquePtrsKeeper<DataContainerType<Mat3d>>,
-               UniquePtrsKeeper<DataContainerType<int>>>;
+               UniquePtrsKeeper<DataContainerType<int>>,
+               UniquePtrsKeeper<DataContainerType<DeviceReal>>,
+               UniquePtrsKeeper<DataContainerType<DeviceVec2d>>,
+               UniquePtrsKeeper<DataContainerType<DeviceVec3d>>>;
 
 /** a type irrelevant operation on the data assembles  */
 template <template <typename VariableType> typename OperationType>
