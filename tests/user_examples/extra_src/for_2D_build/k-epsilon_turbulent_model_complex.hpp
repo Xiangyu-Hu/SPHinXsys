@@ -179,11 +179,11 @@ namespace SPH
 					//vel_derivative = 2.0 * (vel_i - vel_ave_k[index_j]) / (r_ij + 0.01 * this->smoothing_length_);
 					//acceleration += 2.0 * (this->mu_+ turbu_mu_i) * vel_derivative * contact_neighborhood.dW_ijV_j_[n] / rho_i;
 					//This is to check whether the wall-sub-nearest fluid particles fric, velo. is zero or not
-					if (index_i > 2000 && GlobalStaticVariables::physical_time_ > 5. && vel_fric_i.dot(vel_fric_i) == 0.0+TinyReal)
-					{
-						system("pause");
-						std::cout << index_j << std::endl;
-					}
+					//if (index_i > 2000 && GlobalStaticVariables::physical_time_ > 5. && vel_fric_i.dot(vel_fric_i) <= 0.0+TinyReal)
+					//{
+					//	system("pause");
+					//	std::cout << index_j << std::endl;
+					//}
 					//vel_derivative = 2.0 * vel_fric_i.dot(vel_fric_i)* direction_vel_fric;
 					vel_derivative = distance_to_wall * vel_fric_i.dot(vel_fric_i) * direction_vel_fric / (r_ij + 0.01 * this->smoothing_length_);
 					acceleration += 4.0 * vel_derivative * contact_neighborhood.dW_ijV_j_[n] ;
@@ -246,7 +246,8 @@ namespace SPH
 						std::cout << "r_wall_normal_temp <= 0.0" << std::endl;
 						system("pause");
 					}
-					if (r_wall_normal_temp <= intial_distance_to_wall && r_ij < r_min)
+					//if (r_wall_normal_temp <= intial_distance_to_wall && r_ij < r_min)
+					if (r_ij < r_min)
 					{
 						r_min = r_ij; //Find the nearest wall particle
 						r_wall_normal = r_wall_normal_temp;
@@ -262,6 +263,8 @@ namespace SPH
 					}
 				}
 			}
+
+
 			if (r_wall_normal < 1.0 * particle_spacing_ &&
 				r_wall_normal > 0.0 * particle_spacing_ + TinyReal)
 			{
@@ -270,6 +273,7 @@ namespace SPH
 			if (r_wall_normal < (cutoff_radius_ - 0.5 * particle_spacing_) &&
 				r_wall_normal > 0.0 * particle_spacing_ + TinyReal)
 			{
+				is_near_wall_P2_[index_i] = 10;
 				Real velo_tan = 0.0; //tangible velo for fluid particle i
 				velo_tan = abs(e_ij_t.dot(vel_i));
 				velo_tan_[index_i] = velo_tan;
@@ -289,7 +293,7 @@ namespace SPH
 			if (r_wall_normal <= 1.5 * particle_spacing_ &&
 				r_wall_normal > 1.0 * particle_spacing_)
 			{
-				is_near_wall_P2_[index_i] = 1;
+				//is_near_wall_P2_[index_i] = 1;
 			}
 
 			if (is_near_wall_P1_[index_i] == 0 && is_near_wall_P1_pre_[index_i] == 1)

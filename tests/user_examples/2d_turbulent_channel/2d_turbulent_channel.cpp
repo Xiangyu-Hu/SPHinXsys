@@ -57,13 +57,13 @@ int main(int ac, char* av[])
 	Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(water_block_complex_relation);
 	
 	/** Turbulent.Note: When use wall function, K Epsilon and TKE gradient calculation only consider inner */
-	InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner,SequencedPolicy> k_equation_relaxation(water_block_inner);
+	InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner);
 	InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelInner> epsilon_equation_relaxation(water_block_inner);
-	InteractionDynamics<fluid_dynamics::TKEnergyAccInner,  SequencedPolicy> turbulent_kinetic_energy_acceleration(water_block_inner);
+	InteractionDynamics<fluid_dynamics::TKEnergyAccInner> turbulent_kinetic_energy_acceleration(water_block_inner);
 	
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	/** Turbulent standard wall function needs normal vectors of wall. */
-	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection, SequencedPolicy> standard_wall_function_correction(water_block_complex_relation);
+	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection,SequencedPolicy> standard_wall_function_correction(water_block_complex_relation);
 
 	/** TurbulentViscous cal. uses friction velocity and Y+ that are defined in WallFunction . */
 	InteractionDynamics<fluid_dynamics::TurbulentViscousAccelerationWithWall> turbulent_viscous_acceleration(water_block_complex_relation);
@@ -101,7 +101,7 @@ int main(int ac, char* av[])
 	SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> emitter_buffer_inflow_condition(emitter_buffer);
 	
 	/** Turbulent InflowTurbulentCondition.It needs characteristic Length to calculate turbulent length  */
-	SimpleDynamics<fluid_dynamics::InflowTurbulentCondition,SequencedPolicy> impose_turbulent_inflow_condition(emitter_buffer,DH,0.5);
+	SimpleDynamics<fluid_dynamics::InflowTurbulentCondition> impose_turbulent_inflow_condition(emitter_buffer,DH,0.5);
 
 
 	Vec2d disposer_up_halfsize = Vec2d(0.5 * BW, 0.55 * DH);
