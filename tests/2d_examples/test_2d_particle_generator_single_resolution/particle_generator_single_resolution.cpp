@@ -18,20 +18,23 @@ std::string input_body = "./input/SPHinXsys-2d.dat";
 //----------------------------------------------------------------------
 //	Basic geometry parameters
 //----------------------------------------------------------------------
-Real DL = 2.3;                          /**< InputBody length right part. */
-Real DL1 = 2.3;                         /**< InputBody length left part. */
-Real DH = 4.5;                          /**< InputBody height. */
+Real DL = 2.5;                          /**< InputBody length right part. */
+Real DL1 = 2.5;                         /**< InputBody length left part. */
+Real DH = 5.0;                          /**< InputBody height. */
 Real resolution_ref = (DL + DL1) / 120; /**< Reference resolution. */
-BoundingBox system_domain_bounds(Vec2d(-DL1, 0), Vec2d(DL, DH));
+BoundingBox system_domain_bounds(Vec2d(-DL1, -0.5), Vec2d(DL, DH));
 //----------------------------------------------------------------------
 //	Shape of the InputBody
 //----------------------------------------------------------------------
-class InputBody : public MultiPolygonShape
+class InputBody : public ComplexShape
 {
   public:
-    explicit InputBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    explicit InputBody(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        multi_polygon_.addAPolygonFromFile(input_body, ShapeBooleanOps::add);
+        MultiPolygon original_logo;
+        original_logo.addAPolygonFromFile(input_body, ShapeBooleanOps::add);
+        add<ExtrudeShape<MultiPolygonShape>>(4.0 * resolution_ref, original_logo);
+        subtract<MultiPolygonShape>(original_logo);
     }
 };
 //----------------------------------------------------------------------
@@ -89,11 +92,11 @@ int main()
         ite_p += 1;
         if (ite_p % 100 == 0)
         {
-            std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the airfoil N = " << ite_p << "\n";
+            std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite_p << "\n";
             input_body_recording_to_vtp.writeToFile(ite_p);
         }
     }
-    std::cout << "The physics relaxation process of airfoil finish !" << std::endl;
+    std::cout << "The physics relaxation process finish !" << std::endl;
 
     return 0;
 }

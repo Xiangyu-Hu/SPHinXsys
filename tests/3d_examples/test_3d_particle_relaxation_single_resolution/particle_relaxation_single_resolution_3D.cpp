@@ -28,9 +28,9 @@ std::string full_path_to_file = "./input/triangle_prism.stl";
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 0.75; // Tank width.
-Real DH = 1.3;  // Tank height.
-Real DW = 1.2;  // Tank width.
+Real DL = 0.75; // Domain width.
+Real DH = 1.3;  // Domain height.
+Real DW = 1.2;  // Domain width.
 Vec3d domain_lower_bound(-0.2, -0.2, -0.2);
 Vec3d domain_upper_bound(DL, DH, DW);
 Vecd translation(0.5 * DL, 0.5 * DH, 0.5 * DW);
@@ -48,7 +48,8 @@ class SolidBodyFromMesh : public ComplexShape
   public:
     explicit SolidBodyFromMesh(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TriangleMeshShapeSTL>(full_path_to_file, translation, scaling);
+        add<ExtrudeShape<TriangleMeshShapeSTL>>(4.0 * dp_0, full_path_to_file, translation, scaling);
+        subtract<TriangleMeshShapeSTL>(full_path_to_file, translation, scaling);
     }
 };
 //-----------------------------------------------------------------------------------------------------------

@@ -145,7 +145,7 @@ int main(int ac, char *av[])
     near_surface_wall.level_set_shape_.writeLevelSet(io_environment);
     fluid_dynamics::StaticConfinement confinement_condition_wall(near_surface_wall);
     /** Define the confinement condition for structure. */
-    NearShapeSurface near_surface_triangle(water_block, makeShared<ExclusiveShape<Triangle>>("Triangle"));
+    NearShapeSurface near_surface_triangle(water_block, makeShared<InverseShape<Triangle>>("Triangle"));
     near_surface_triangle.level_set_shape_.writeLevelSet(io_environment);
     fluid_dynamics::StaticConfinement confinement_condition_triangle(near_surface_triangle);
     /** Push back the static confinement conditiont to corresponding dynamics. */
