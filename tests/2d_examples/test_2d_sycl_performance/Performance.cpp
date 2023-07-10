@@ -100,12 +100,10 @@ int main(int ac, char *av[])
 	ComplexRelation water_block_complex_sycl(water_block_sycl, {&wall_boundary_sycl});
 
     TickCount timer_mem = TickCount::now();
-    water_block_complex_sycl.getInnerRelation().allocateInnerConfigurationDevice();
-    water_block_complex_sycl.getInnerRelation().copyInnerConfigurationToDevice();
-    water_block_complex_sycl.getContactRelation().allocateContactConfiguration();
-    water_block_complex_sycl.getContactRelation().copyContactConfigurationToDevice();
+    water_block_sycl.getBaseParticles().registerExtraDeviceMemory();
     TimeInterval tt_mem = TickCount::now() - timer_mem;
 
+    water_block.getBaseParticles().registerExtraDeviceMemory();
 
     SharedPtr<Gravity> gravity_ptr = makeSharedDevice<Gravity>(Vecd(0.0, -gravity_g));
 
@@ -132,11 +130,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     timer_mem = TickCount::now();
     water_block_sycl.getBaseParticles().copyToDeviceMemory();
+    water_block_sycl.getBaseParticles().copyToExtraDeviceMemory();
     water_block_complex_sycl.getInnerRelation().copyInnerConfigurationToDevice();
     water_block_complex_sycl.getContactRelation().copyContactConfigurationToDevice();
     tt_mem += TickCount::now() - timer_mem;
 
-    executionQueue.setWorkGroupSize(25);
+    executionQueue.setWorkGroupSize(32);
 
     //----------------------------------------------------------------------
     //	Main loop benchmarks
@@ -145,6 +144,10 @@ int main(int ac, char *av[])
 
     std::size_t iterations = 2000;
     std::cout << "Number of iterations per test: " << iterations << std::endl;
+
+    std::cout << "------------" << std::endl;
+    std::cout << "SYCL memory operations: " << tt_mem.seconds()
+              << " seconds." << std::endl;
 
     std::cout << "------------" << std::endl;
     benchmark([&](){
@@ -187,18 +190,6 @@ int main(int ac, char *av[])
     benchmark([&](){ fluid_pressure_relaxation.exec(); },
               [&](){ fluid_pressure_relaxation_sycl.exec(); },
               "fluid_pressure_relaxation", iterations);
-
-
-    //----------------------------------------------------------------------
-    //	Free device data
-    //----------------------------------------------------------------------
-    timer_mem = TickCount::now();
-    water_block_sycl.getBaseParticles().freeDeviceMemory();
-    tt_mem += TickCount::now() - timer_mem;
-    std::cout << "------------" << std::endl;
-    std::cout << "SYCL memory operations: " << tt_mem.seconds()
-              << " seconds." << std::endl;
-
 
 	return 0;
 };
