@@ -201,12 +201,10 @@ class BaseParticles
     virtual Real ParticleMass(size_t index) { return mass_[index]; }
 
     virtual void registerDeviceMemory();
-    virtual void freeDeviceMemory();
     virtual void copyToDeviceMemory();
     virtual void copyFromDeviceMemory();
 
     virtual void registerExtraDeviceMemory();
-    virtual void freeExtraDeviceMemory();
     virtual void copyToExtraDeviceMemory();
     virtual void copyFromExtraDeviceMemory();
 

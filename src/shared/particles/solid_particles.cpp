@@ -29,11 +29,6 @@ void SolidParticles::registerDeviceMemory() {
         registerDeviceVariable<DeviceVecd>("Normal", n_.size(), n_.data());
 }
 
-void SolidParticles::freeDeviceMemory() {
-        BaseParticles::freeDeviceMemory();
-        freeDeviceData(getDeviceVariableByName<DeviceVecd>("Normal"));
-}
-
 void SolidParticles::copyToDeviceMemory() {
     BaseParticles::copyToDeviceMemory();
     copyDataToDevice(n_.data(), getDeviceVariableByName<DeviceVecd>("Normal"), n_.size());

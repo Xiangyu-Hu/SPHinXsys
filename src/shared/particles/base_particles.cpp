@@ -377,15 +377,6 @@ void BaseParticles::readFromXmlForReloadParticle(std::string &filefullpath)
         registerDeviceVariable<DeviceReal>("Mass", mass_.size(), mass_.data());
     }
 
-    void BaseParticles::freeDeviceMemory() {
-        freeDeviceData(getDeviceVariableByName<DeviceVecd>("Position"));
-        freeDeviceData(getDeviceVariableByName<DeviceVecd>("Velocity"));
-        freeDeviceData(getDeviceVariableByName<DeviceVecd>("Acceleration"));
-        freeDeviceData(getDeviceVariableByName<DeviceVecd>("AccelerationPrior"));
-        freeDeviceData(getDeviceVariableByName<DeviceReal>("Density"));
-        freeDeviceData(getDeviceVariableByName<DeviceReal>("Mass"));
-    }
-
     void BaseParticles::copyToDeviceMemory() {
         copyDataToDevice(pos_.data(), getDeviceVariableByName<DeviceVecd>("Position"), pos_.size());
         copyDataToDevice(vel_.data(), getDeviceVariableByName<DeviceVecd>("Velocity"), vel_.size());
@@ -408,12 +399,6 @@ void BaseParticles::readFromXmlForReloadParticle(std::string &filefullpath)
         registerDeviceVariable<DeviceReal>("Pressure", pos_.size());
         registerDeviceVariable<DeviceReal>("DensityChangeRate", pos_.size());
         registerDeviceVariable<DeviceReal>("DensitySummation", pos_.size());
-    }
-
-    void BaseParticles::freeExtraDeviceMemory() {
-        freeDeviceData(getDeviceVariableByName<DeviceReal>("Pressure"));
-        freeDeviceData(getDeviceVariableByName<DeviceReal>("DensityChangeRate"));
-        freeDeviceData(getDeviceVariableByName<DeviceReal>("DensitySummation"));
     }
 
     void BaseParticles::copyToExtraDeviceMemory() {
