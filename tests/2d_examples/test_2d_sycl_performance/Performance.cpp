@@ -50,11 +50,11 @@ Vec2d inner_wall_translation = inner_wall_halfsize;
 class WallBoundary : public ComplexShape
 {
 public:
-	explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
-	{
-		add<TransformShape<GeometricShapeBox>>(Transform2d(outer_wall_translation), outer_wall_halfsize);
-		subtract<TransformShape<GeometricShapeBox>>(Transform2d(inner_wall_translation), inner_wall_halfsize);
-	}
+    explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
+    {
+        add<TransformShape<GeometricShapeBox>>(Transform(outer_wall_translation), outer_wall_halfsize);
+        subtract<TransformShape<GeometricShapeBox>>(Transform(inner_wall_translation), inner_wall_halfsize);
+    }
 };
 //----------------------------------------------------------------------
 //	Main program starts here.
@@ -70,16 +70,16 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Creating bodies with corresponding materials and particles.
 	//----------------------------------------------------------------------
-	FluidBody water_block(
-		sph_system, makeShared<TransformShape<GeometricShapeBox>>(
-						Transform2d(water_block_translation), water_block_halfsize, "WaterBody"));
-	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
-	water_block.generateParticles<ParticleGeneratorLattice>();
+    FluidBody water_block(
+            sph_system, makeShared<TransformShape<GeometricShapeBox>>(
+                    Transform(water_block_translation), water_block_halfsize, "WaterBody"));
+    water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.generateParticles<ParticleGeneratorLattice>();
 
     FluidBody water_block_sycl(
             sph_system, makeShared<TransformShape<GeometricShapeBox>>(
-                    Transform2d(water_block_translation), water_block_halfsize, "WaterBody"));
-    water_block_sycl.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
+                    Transform(water_block_translation), water_block_halfsize, "WaterBody"));
+    water_block_sycl.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
     water_block_sycl.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
