@@ -85,6 +85,7 @@ int main(int ac, char *av[])
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
+    water_block.getBaseParticles().registerExtraDeviceMemory();
     fluid_observer_contact.allocateContactConfiguration();
     fluid_observer_contact.copyContactConfigurationToDevice();    
 
@@ -157,12 +158,18 @@ int main(int ac, char *av[])
         while (integration_time < output_interval)
         {
             /** outer loop for dual-time criteria time-stepping. */
+            water_block.getBaseParticles().copyToDeviceMemory();
+            water_block.getBaseParticles().copyToExtraDeviceMemory();
+            water_block_complex.getInnerRelation().copyInnerConfigurationToDevice();
+            water_block_complex.getContactRelation().copyContactConfigurationToDevice();
+
             time_instance = TickCount::now();
             fluid_step_initialization.exec();
             Real advection_dt = fluid_advection_time_step.exec();
             fluid_density_by_summation.exec();
 
             water_block.getBaseParticles().copyFromDeviceMemory();
+            water_block.getBaseParticles().copyFromExtraDeviceMemory();
             water_block_complex.getInnerRelation().copyInnerConfigurationFromDevice();
             water_block_complex.getContactRelation().copyContactConfigurationFromDevice();
 
@@ -175,12 +182,14 @@ int main(int ac, char *av[])
             {
                 /** inner loop for dual-time criteria time-stepping.  */
 
-                water_block.getBaseParticles().copyToDeviceMemory();                
+                water_block.getBaseParticles().copyToDeviceMemory();
+                water_block.getBaseParticles().copyToExtraDeviceMemory();
 
                 acoustic_dt = fluid_acoustic_time_step.exec();
                 fluid_pressure_relaxation.exec(acoustic_dt);
 
                 water_block.getBaseParticles().copyFromDeviceMemory();
+                water_block.getBaseParticles().copyFromExtraDeviceMemory();
 
                 fluid_density_relaxation.exec(acoustic_dt);
                 relaxation_time += acoustic_dt;
@@ -221,7 +230,7 @@ int main(int ac, char *av[])
     }
 
     water_block.getBaseParticles().copyFromDeviceMemory();
-    water_block.getBaseParticles().freeDeviceMemory();
+    water_block.getBaseParticles().copyFromExtraDeviceMemory();
 
     TickCount t4 = TickCount::now();
 
