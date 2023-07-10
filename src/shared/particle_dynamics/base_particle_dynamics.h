@@ -130,7 +130,7 @@ class DataDelegateInner : public BaseDataDelegateType
   public:
     explicit DataDelegateInner(BaseInnerRelation &inner_relation)
         : BaseDataDelegateType(inner_relation.getSPHBody()),
-          inner_configuration_(inner_relation.inner_configuration_)
+          inner_configuration_(inner_relation.inner_configuration_),
           inner_configuration_device_(inner_relation.inner_configuration_device_) {};
     virtual ~DataDelegateInner(){};
 

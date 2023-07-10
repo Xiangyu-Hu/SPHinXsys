@@ -35,6 +35,7 @@
 #include "fluid_dynamics_inner.hpp"
 #include "solid_body.h"
 #include "solid_particles.h"
+#include "execution_unit/device_executable.hpp"
 
 namespace SPH
 {
@@ -67,6 +68,9 @@ class InteractionWithWall : public BaseIntegrationType, public FluidWallData
     StdSharedVec<DeviceReal> wall_inv_rho0_device_;
     StdVec<StdLargeVec<Real> *> wall_mass_;
     StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_acc_ave_, wall_n_;
+
+    StdSharedVec<DeviceReal*> wall_mass_device_;
+    StdSharedVec<DeviceVecd*> wall_vel_ave_device_, wall_acc_ave_device_, wall_n_device_;
 };
 
 class BaseDensitySummationComplexKernel {
@@ -135,6 +139,30 @@ class BaseDensitySummationComplex
     auto& getDeviceProxy() {
         return device_proxy;
     }
+};
+
+class DensitySummationComplexKernel : public BaseDensitySummationComplexKernel, public DensitySummationInnerKernel {
+  public:
+    DensitySummationComplexKernel(const BaseDensitySummationComplexKernel& complexKernel,
+                                  const DensitySummationInnerKernel& innerKernel)
+        : BaseDensitySummationComplexKernel(complexKernel), DensitySummationInnerKernel(innerKernel) {}
+
+    template<class RealT, class InnerInteractionFunc, class ContactSummationFunc>
+    static void interaction(size_t index_i, Real dt, RealT* rho_sum, RealT rho0, RealT inv_sigma0, const RealT* mass,
+                            InnerInteractionFunc&& innerInteraction, ContactSummationFunc&& ContactSummation)
+    {
+        innerInteraction(index_i, dt);
+        RealT sigma = ContactSummation(index_i);
+        rho_sum[index_i] += sigma * rho0 * rho0 * inv_sigma0 / mass[index_i];
+    }
+
+    void interaction(size_t index_i, Real dt)
+    {
+        interaction(index_i, dt, rho_sum_, rho0_, inv_sigma0_, mass_,
+                    [&](auto idx, auto delta) { DensitySummationInnerKernel::interaction(idx, delta); },
+                    [&](auto idx) { return BaseDensitySummationComplexKernel::ContactSummation(idx); });
+    }
+
 };
 
 /**
