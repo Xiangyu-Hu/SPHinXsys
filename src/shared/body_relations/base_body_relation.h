@@ -154,6 +154,7 @@ class BaseContactRelation : public SPHRelation
   public:
     RealBodyVector contact_bodies_;
     StdVec<ParticleConfiguration> contact_configuration_; /**< Configurations for particle interaction between bodies. */
+    StdVec<StdSharedVec<NeighborhoodDevice>> contact_configuration_device_;
 
     BaseContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies);
     BaseContactRelation(SPHBody &sph_body, BodyPartVector contact_body_parts)
