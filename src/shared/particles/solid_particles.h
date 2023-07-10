@@ -53,7 +53,7 @@ class SolidParticles : public BaseParticles
     virtual ~SolidParticles(){};
 
     StdLargeVec<Vecd> pos0_; /**< initial position */
-    StdLargeVec<Vecd> n_; DeviceVecd* n_device_;    /**< normal direction */
+    StdLargeVec<Vecd> n_;    /**< normal direction */
     StdLargeVec<Vecd> n0_;   /**< initial normal direction */
     StdLargeVec<Matd> B_;    /**< configuration correction for linear reproducing */
     Solid &solid_;
@@ -67,7 +67,7 @@ class SolidParticles : public BaseParticles
     /** Return this pointer. */
     virtual SolidParticles *ThisObjectPtr() override { return this; };
 
-    void allocateDeviceMemory() override;
+    void registerDeviceMemory() override;
     void freeDeviceMemory() override;
     void copyToDeviceMemory() override;
     void copyFromDeviceMemory() override;

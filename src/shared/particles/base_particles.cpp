@@ -5,6 +5,8 @@
 #include "base_material.h"
 #include "base_particle_generator.h"
 #include "xml_engine.h"
+#include "base_particles.h"
+
 
 //=====================================================================================================//
 namespace SPH
@@ -365,6 +367,76 @@ void BaseParticles::readFromXmlForReloadParticle(std::string &filefullpath)
     DataAssembleOperation<loopParticleVariables> loop_variable_namelist;
     loop_variable_namelist(all_particle_data_, variables_to_reload_, read_variable_from_xml);
 }
+
+    void BaseParticles::registerDeviceMemory() {
+        registerDeviceVariable<DeviceVecd>("Position", pos_.size(), pos_.data());
+        registerDeviceVariable<DeviceVecd>("Velocity", vel_.size(), vel_.data());
+        registerDeviceVariable<DeviceVecd>("Acceleration", acc_.size(), acc_.data());
+        registerDeviceVariable<DeviceVecd>("AccelerationPrior", acc_prior_.size(), acc_prior_.data());
+        registerDeviceVariable<DeviceReal>("Density", rho_.size(), rho_.data());
+        registerDeviceVariable<DeviceReal>("Mass", mass_.size(), mass_.data());
+    }
+
+    void BaseParticles::freeDeviceMemory() {
+        freeDeviceData(getDeviceVariableByName<DeviceVecd>("Position"));
+        freeDeviceData(getDeviceVariableByName<DeviceVecd>("Velocity"));
+        freeDeviceData(getDeviceVariableByName<DeviceVecd>("Acceleration"));
+        freeDeviceData(getDeviceVariableByName<DeviceVecd>("AccelerationPrior"));
+        freeDeviceData(getDeviceVariableByName<DeviceReal>("Density"));
+        freeDeviceData(getDeviceVariableByName<DeviceReal>("Mass"));
+    }
+
+    void BaseParticles::copyToDeviceMemory() {
+        copyDataToDevice(pos_.data(), getDeviceVariableByName<DeviceVecd>("Position"), pos_.size());
+        copyDataToDevice(vel_.data(), getDeviceVariableByName<DeviceVecd>("Velocity"), vel_.size());
+        copyDataToDevice(acc_.data(), getDeviceVariableByName<DeviceVecd>("Acceleration"), acc_.size());
+        copyDataToDevice(acc_prior_.data(), getDeviceVariableByName<DeviceVecd>("AccelerationPrior"), acc_prior_.size());
+        copyDataToDevice(rho_.data(), getDeviceVariableByName<DeviceReal>("Density"), rho_.size());
+        copyDataToDevice(mass_.data(), getDeviceVariableByName<DeviceReal>("Mass"), mass_.size());
+    }
+
+    void BaseParticles::copyFromDeviceMemory() {
+        copyDataFromDevice(pos_.data(), getDeviceVariableByName<DeviceVecd>("Position"), pos_.size());
+        copyDataFromDevice(vel_.data(), getDeviceVariableByName<DeviceVecd>("Velocity"), vel_.size());
+        copyDataFromDevice(acc_.data(), getDeviceVariableByName<DeviceVecd>("Acceleration"), acc_.size());
+        copyDataFromDevice(acc_prior_.data(), getDeviceVariableByName<DeviceVecd>("AccelerationPrior"), acc_prior_.size());
+        copyDataFromDevice(rho_.data(), getDeviceVariableByName<DeviceReal>("Density"), rho_.size());
+        copyDataFromDevice(mass_.data(), getDeviceVariableByName<DeviceReal>("Mass"), mass_.size());
+    }
+
+    void BaseParticles::registerExtraDeviceMemory() {
+        registerDeviceVariable<DeviceReal>("Pressure", pos_.size());
+        registerDeviceVariable<DeviceReal>("DensityChangeRate", pos_.size());
+        registerDeviceVariable<DeviceReal>("DensitySummation", pos_.size());
+    }
+
+    void BaseParticles::freeExtraDeviceMemory() {
+        freeDeviceData(getDeviceVariableByName<DeviceReal>("Pressure"));
+        freeDeviceData(getDeviceVariableByName<DeviceReal>("DensityChangeRate"));
+        freeDeviceData(getDeviceVariableByName<DeviceReal>("DensitySummation"));
+    }
+
+    void BaseParticles::copyToExtraDeviceMemory() {
+        auto *p = getVariableByName<Real>("Pressure");
+        copyDataToDevice(p->data(), getDeviceVariableByName<DeviceReal>("Pressure"), p->size());
+
+        auto *drho_dt = getVariableByName<Real>("DensityChangeRate");
+        copyDataToDevice(drho_dt->data(), getDeviceVariableByName<DeviceReal>("DensityChangeRate"), drho_dt->size());
+
+        auto *rho_sum = getVariableByName<Real>("DensitySummation");
+        copyDataToDevice(rho_sum->data(), getDeviceVariableByName<DeviceReal>("DensitySummation"), rho_sum->size());
+    }
+
+    void BaseParticles::copyFromExtraDeviceMemory() {
+        auto *p = getVariableByName<Real>("Pressure");
+        copyDataFromDevice(p->data(), getDeviceVariableByName<DeviceReal>("Pressure"), p->size());
+
+        auto *drho_dt = getVariableByName<Real>("DensityChangeRate");
+        copyDataFromDevice(drho_dt->data(), getDeviceVariableByName<DeviceReal>("DensityChangeRate"), drho_dt->size());
+
+        auto *rho_sum = getVariableByName<Real>("DensitySummation");
+        copyDataFromDevice(rho_sum->data(), getDeviceVariableByName<DeviceReal>("DensitySummation"), rho_sum->size());
+    }
 //=================================================================================================//
 } // namespace SPH
   //=====================================================================================================//
