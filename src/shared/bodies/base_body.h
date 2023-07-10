@@ -153,8 +153,7 @@ class SPHBody
         base_material_->initializeLocalParameters(base_particles_);
             
         // copy allocated particles to device memory
-        base_particles_->allocateDeviceMemory();
-        base_particles_->copyToDeviceMemory();
+        base_particles_->registerDeviceMemory();
     };
 
     template <typename DataType>

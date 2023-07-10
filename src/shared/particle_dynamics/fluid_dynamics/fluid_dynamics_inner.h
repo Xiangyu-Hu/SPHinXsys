@@ -64,11 +64,11 @@ class FluidInitialCondition : public LocalDynamics, public FluidDataSimple
 
 class BaseDensitySummationInnerKernel {
   public:
-    BaseDensitySummationInnerKernel(NeighborhoodDevice* inner_configuration, FluidParticles* particles,
+    BaseDensitySummationInnerKernel(NeighborhoodDevice* inner_configuration, BaseParticles* particles,
                                     DeviceReal rho0, DeviceReal invSigma0) :
-        inner_configuration_(inner_configuration), rho_(particles->rho_device_),
-        rho_sum_(particles->rho_sum_device_), mass_(particles->mass_device_),
-        rho0_(rho0), inv_sigma0_(invSigma0) {}
+        inner_configuration_(inner_configuration), rho_(particles->getDeviceVariableByName<DeviceReal>("Density")),
+        rho_sum_(particles->getDeviceVariableByName<DeviceReal>("DensitySummation")),
+        mass_(particles->getDeviceVariableByName<DeviceReal>("Mass")), rho0_(rho0), inv_sigma0_(invSigma0) {}
   protected:
     NeighborhoodDevice* inner_configuration_;
     DeviceReal *rho_, *rho_sum_, *mass_;
@@ -242,9 +242,11 @@ class TransportVelocityCorrectionInnerAdaptive : public LocalDynamics, public Fl
 template<class FluidT>
 class AcousticTimeStepSizeKernel {
   public:
-    explicit AcousticTimeStepSizeKernel(FluidParticles* particles) : rho_(particles->rho_device_),
-                                        p_(particles->p_device_), vel_(particles->vel_device_),
-                                        fluid_(*dynamic_cast<FluidT*>(&particles->fluid_)) {}
+    explicit AcousticTimeStepSizeKernel(BaseParticles* particles) :
+        rho_(particles->getDeviceVariableByName<DeviceReal>("Density")),
+        p_(particles->getDeviceVariableByName<DeviceReal>("Pressure")),
+        vel_(particles->getDeviceVariableByName<DeviceVecd>("Velocity")),
+        fluid_(DynamicCast<FluidT>(this, particles->getBaseMaterial())) {}
 
     template<class RealT, class Vec, class FluidType, class SoundSpeedFunc, class NormVecdFunc>
     static RealT reduce(size_t index_i, Real dt, FluidType&& fluid, RealT* p, RealT* rho, Vec* vel,
@@ -299,7 +301,8 @@ using namespace execution;
 
 class AdvectionTimeStepSizeForImplicitViscosityKernel {
   public:
-    AdvectionTimeStepSizeForImplicitViscosityKernel(BaseParticles* particles): vel_(particles->vel_device_) {}
+    AdvectionTimeStepSizeForImplicitViscosityKernel(BaseParticles* particles):
+        vel_(particles->getDeviceVariableByName<DeviceVecd>("Velocity")) {}
 
     template<class Vec, class SquareNormFunction>
     static Real reduce(size_t index_i, Real dt, Vec* vel, SquareNormFunction&& squareNorm) {
@@ -380,11 +383,15 @@ class VorticityInner : public LocalDynamics, public FluidDataInner
 template<class FluidT>
 class BaseIntegrationKernel {
   public:
-    BaseIntegrationKernel(FluidParticles *particles) : 
-        fluid_(particles->fluid_.ReferenceDensity(), particles->fluid_.ReferenceSoundSpeed(),
-        particles->fluid_.ReferenceViscosity()), rho_(particles->rho_device_), p_(particles->p_device_),
-        drho_dt_(particles->drho_dt_device_), pos_(particles->pos_device_), vel_(particles->vel_device_), 
-        acc_(particles->acc_device_), acc_prior_(particles->acc_prior_device_) {}
+    BaseIntegrationKernel(BaseParticles *particles) :
+        fluid_(DynamicCast<FluidT>(this, particles->getBaseMaterial())),
+        rho_(particles->getDeviceVariableByName<DeviceReal>("Density")),
+        p_(particles->getDeviceVariableByName<DeviceReal>("Pressure")),
+        drho_dt_(particles->getDeviceVariableByName<DeviceReal>("DensityChangeRate")),
+        pos_(particles->getDeviceVariableByName<DeviceVecd>("Position")),
+        vel_(particles->getDeviceVariableByName<DeviceVecd>("Velocity")),
+        acc_(particles->getDeviceVariableByName<DeviceVecd>("Acceleration")),
+        acc_prior_(particles->getDeviceVariableByName<DeviceVecd>("AccelerationPrior")) {}
         
   protected:
     FluidT fluid_;
@@ -411,7 +418,7 @@ class BaseIntegration : public LocalDynamics, public FluidDataInner
 template<class RiemannSolverType>
 class BaseIntegration1stHalfKernel : public BaseIntegrationKernel<WeaklyCompressibleFluid> {
   public:
-    BaseIntegration1stHalfKernel(FluidParticles* particles, NeighborhoodDevice* inner_configuration,
+    BaseIntegration1stHalfKernel(BaseParticles* particles, NeighborhoodDevice* inner_configuration,
                                  const RiemannSolverType& riemannSolver) :
                                  BaseIntegrationKernel<WeaklyCompressibleFluid>(particles),
                                  riemann_solver_(this->fluid_, this->fluid_),

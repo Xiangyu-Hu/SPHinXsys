@@ -328,7 +328,8 @@ public DeviceExecutable<BaseIntegration1stHalfWithWall<BaseIntegration1stHalfTyp
         : InteractionWithWall<BaseIntegration1stHalfType>(std::forward<Args>(args)...),
           DeviceExecutable<BaseIntegration1stHalfWithWall<BaseIntegration1stHalfType>,
                            BaseIntegration1stHalfWithWallKernel<typename BaseIntegration1stHalfType::DeviceKernel>>(this,
-                           *this->contact_configuration_device_, this->contact_particles_[0]->acc_device_,
+                           *this->contact_configuration_device_,
+                           this->contact_particles_[0]->template getDeviceVariableByName<DeviceVecd>("Acceleration"),
                            BaseIntegration1stHalfType::particles_,
                            BaseIntegration1stHalfType::inner_configuration_device_->data(),
                            this->riemann_solver_) {};

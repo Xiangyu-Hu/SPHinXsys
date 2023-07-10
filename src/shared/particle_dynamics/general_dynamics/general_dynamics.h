@@ -66,7 +66,8 @@ class BaseTimeStepInitialization : public LocalDynamics
 class TimeStepInitializationKernel {
   public:
     TimeStepInitializationKernel(BaseParticles* particles, Gravity* gravity) :
-        pos_(particles->pos_device_), acc_prior_(particles->acc_prior_device_), gravity_(gravity) {}
+        pos_(particles->getDeviceVariableByName<DeviceVecd>("Position")),
+        acc_prior_(particles->getDeviceVariableByName<DeviceVecd>("AccelerationPrior")), gravity_(gravity) {}
 
     void update(size_t index_i, Real dt)
     {
