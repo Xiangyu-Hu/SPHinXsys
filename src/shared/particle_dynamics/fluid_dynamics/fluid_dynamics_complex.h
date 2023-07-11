@@ -280,7 +280,7 @@ class BaseIntegration1stHalfWithWallKernel : public BaseIntegration1stHalfType {
         for (size_t k = 0; k < contact_configuration_size; ++k)
         {
             Vec* acc_ave_k = getWallAccAve(k);
-            auto &wall_neighborhood = getWallNeighborhood(k, index_i);
+            const auto &wall_neighborhood = getWallNeighborhood(k, index_i);
             for (size_t n = 0; n < wall_neighborhood.current_size(); ++n)
             {
                 const auto& index_j = wall_neighborhood.j_[n];
@@ -304,7 +304,7 @@ class BaseIntegration1stHalfWithWallKernel : public BaseIntegration1stHalfType {
         interaction(index_i, dt, this->p_, this->rho_, this->drho_dt_, this->acc_, this->riemann_solver_,
                     contact_configuration_.size(), [&](auto index_i){ return this->acc_prior_[index_i]; },
                     [&](auto k){ return this->wall_acc_ave_[k]; },
-                    [&](auto k, auto index_i) -> NeighborhoodDevice&
+                    [&](auto k, auto index_i) -> const NeighborhoodDevice&
                         { return this->contact_configuration_[k][index_i]; },
                     [](const DeviceVecd& v1, const DeviceVecd& v2) { return sycl::dot(v1, v2); });
     }
