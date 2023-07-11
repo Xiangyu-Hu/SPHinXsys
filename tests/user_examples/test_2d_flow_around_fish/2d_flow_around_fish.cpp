@@ -122,7 +122,7 @@ int main(int ac, char *av[])
 	InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_complex.getInnerRelation());
 
 	BodyAlignedBoxByCell inflow_buffer(
-		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(buffer_translation)), buffer_halfsize));
+		water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(buffer_translation)), buffer_halfsize));
 	SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
 	/** Periodic BCs in x direction. */
 	PeriodicConditionUsingCellLinkedList periodic_condition(water_block, water_block.getBodyShapeBounds(), xAxis);
@@ -134,7 +134,7 @@ int main(int ac, char *av[])
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	SimpleDynamics<NormalDirectionFromBodyShape> fish_body_normal_direction(fish_body);
 	/** Corrected configuration for the elastic insert body. */
-	InteractionDynamics<solid_dynamics::CorrectConfiguration> fish_body_corrected_configuration(fish_inner);
+	InteractionWithUpdate<CorrectedConfigurationInner> fish_body_corrected_configuration(fish_inner);
 	/** Compute the force exerted on solid body due to fluid pressure and viscosity. */
 	InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(fish_contact);
 	InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid>
@@ -160,9 +160,9 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
 	RestartIO restart_io(io_environment, system.real_bodies_);
-	RegressionTestTimeAveraged<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>>
+	RegressionTestTimeAverage<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>>
 		write_total_viscous_force_on_insert_body(io_environment, viscous_force_on_solid, "TotalViscousForceOnSolid");
-	RegressionTestTimeAveraged<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>>
+	RegressionTestTimeAverage<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>>
 		write_total_force_on_insert_body(io_environment, fluid_force_on_solid_update, "TotalForceOnSolid");
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
