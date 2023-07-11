@@ -140,7 +140,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop benchmarks
     //----------------------------------------------------------------------
-    std::cout << "Number of particles: " << water_block.getBaseParticles().pos_.size() << std::endl;
+    std::cout << "Number of particles: " << water_block_sycl.getBaseParticles().total_real_particles_ << std::endl;
 
     std::size_t iterations = 2000;
     std::cout << "Number of iterations per test: " << iterations << std::endl;
