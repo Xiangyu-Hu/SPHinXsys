@@ -1,25 +1,25 @@
-/* -------------------------------------------------------------------------*
- *								SPHinXsys									*
- * -------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic*
- * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
- * (smoothed particle hydrodynamics), a meshless computational method using	*
- * particle discretization.													*
- *																			*
- * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
- *  HU1527/12-1 and HU1527/12-4												*
- *                                                                          *
- * Portions copyright (c) 2017-2022 Technical University of Munich and		*
- * the authors' affiliations.												*
- *                                                                          *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
- * not use this file except in compliance with the License. You may obtain a*
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
- *                                                                          *
- * ------------------------------------------------------------------------*/
+/* ------------------------------------------------------------------------- *
+ *                                SPHinXsys                                  *
+ * ------------------------------------------------------------------------- *
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle *
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for    *
+ * physical accurate simulation and aims to model coupled industrial dynamic *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH   *
+ * (smoothed particle hydrodynamics), a meshless computational method using  *
+ * particle discretization.                                                  *
+ *                                                                           *
+ * SPHinXsys is partially funded by German Research Foundation               *
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
+ *  HU1527/12-1 and HU1527/12-4.                                             *
+ *                                                                           *
+ * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * the authors' affiliations.                                                *
+ *                                                                           *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
+ * not use this file except in compliance with the License. You may obtain a *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
+ *                                                                           *
+ * ------------------------------------------------------------------------- */
 /**
  * @file 	base_particles.h
  * @brief 	This is the base class of SPH particles. The basic data of the particles
@@ -131,7 +131,8 @@ class BaseParticles
     void registerVariable(StdLargeVec<DataType> &variable_addrs, const std::string &variable_name,
                           const InitializationFunction &initialization);
     template <typename DataType>
-    StdLargeVec<DataType> *registerSharedVariable(const std::string &variable_name);
+    StdLargeVec<DataType> *registerSharedVariable(
+        const std::string &variable_name, const DataType &default_value = ZeroData<DataType>::value);
     template <typename DataType>
     StdLargeVec<DataType> *getVariableByName(const std::string &variable_name);
     ParticleVariables &AllDiscreteVariables() { return all_discrete_variables_; };
@@ -184,13 +185,7 @@ class BaseParticles
     void writeToXmlForReloadParticle(std::string &filefullpath);
     void readFromXmlForReloadParticle(std::string &filefullpath);
     XmlEngine *getReloadXmlEngine() { return &reload_xml_engine_; };
-
     virtual BaseParticles *ThisObjectPtr() { return this; };
-    /** Get the kernel gradient in weak form. */
-    virtual Vecd getKernelGradient(size_t index, size_t index_j, Real dW_ijV_j, Vecd &e_ij)
-    {
-        return dW_ijV_j * e_ij;
-    };
     //----------------------------------------------------------------------
     //		Relation relate volume, surface and linear particles
     //----------------------------------------------------------------------

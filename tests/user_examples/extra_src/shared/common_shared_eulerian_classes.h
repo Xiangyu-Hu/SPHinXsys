@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
  *  HU1527/12-1 and HU1527/12-4													*
  *                                                                          *
- * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * Portions copyright (c) 2017-2023 Technical University of Munich and		*
  * the authors' affiliations.												*
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
@@ -28,56 +28,56 @@
 #ifndef COMMON_SHARED_EULERIAN_CLASSES_H
 #define COMMON_SHARED_EULERIAN_CLASSES_H
 
-#include "fluid_body.h"
-#include "general_dynamics.h"
-#include "fluid_dynamics_inner.h"
 #include "compressible_fluid.h"
+#include "fluid_body.h"
+#include "fluid_dynamics_inner.h"
+#include "general_dynamics.h"
 namespace SPH
 {
-	/**
-	* @class EulerianFluidBody
-	* @brief Eulerian Fluid body uses smoothing length to particle spacing 1.3
-	*/
-	class EulerianFluidBody : public FluidBody
-	{
-	public:
-		explicit EulerianFluidBody(SPHSystem& system, SharedPtr<Shape> shape_ptr) : FluidBody(system, shape_ptr)
-		{
-			defineAdaptation<SPHAdaptation>(1.3);
-		};
-		virtual ~EulerianFluidBody() {};
-		virtual EulerianFluidBody* ThisObjectPtr() override { return this; };
-	};
-
-	/**
-	* @class KernalGredientWithCorrectionInner
-	* @brief obtain the corrected initial configuration in strong form and correct kernel gredient
-	*/
-    class KernalGredientWithCorrectionInner : public LocalDynamics, public GeneralDataDelegateInner
+/**
+ * @class EulerianFluidBody
+ * @brief Eulerian Fluid body uses smoothing length to particle spacing 1.3
+ */
+class EulerianFluidBody : public FluidBody
+{
+  public:
+    explicit EulerianFluidBody(SPHSystem &system, SharedPtr<Shape> shape_ptr) : FluidBody(system, shape_ptr)
     {
-        public:
-        KernalGredientWithCorrectionInner(BaseInnerRelation &inner_relation);
-        virtual ~KernalGredientWithCorrectionInner(){};
-        void interaction(size_t index_i, Real dt = 0.0);
-        void update(size_t index_i, Real dt = 0.0);
-
-        protected:
-        StdLargeVec<Matd> B_, local_configuration_inner_;
+        defineAdaptation<SPHAdaptation>(1.3);
     };
+    virtual ~EulerianFluidBody(){};
+    virtual EulerianFluidBody *ThisObjectPtr() override { return this; };
+};
 
-	/**
-	* @class KernalGredientWithCorrectionComplex
-	* @brief obtain the corrected initial configuration in strong form and correct kernel gredient in complex topology
-	*/
-    class KernalGredientWithCorrectionComplex : public BaseInteractionComplex<KernalGredientWithCorrectionInner, GeneralDataDelegateContact>
-    {
-      public:
-        template <typename... Args>
-        KernalGredientWithCorrectionComplex(Args &&...args)
-            : BaseInteractionComplex<KernalGredientWithCorrectionInner, GeneralDataDelegateContact>(std::forward<Args>(args)...){};
-        virtual ~KernalGredientWithCorrectionComplex(){};
-        void interaction(size_t index_i, Real dt = 0.0);
-        void update(size_t index_i, Real dt = 0.0);
-    };
-}
+/**
+ * @class KernelGradientWithCorrectionInner
+ * @brief obtain the corrected initial configuration in strong form and correct kernel gradient
+ */
+class KernelGradientWithCorrectionInner : public LocalDynamics, public GeneralDataDelegateInner
+{
+  public:
+    KernelGradientWithCorrectionInner(BaseInnerRelation &inner_relation);
+    virtual ~KernelGradientWithCorrectionInner(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+    void update(size_t index_i, Real dt = 0.0);
+
+  protected:
+    StdLargeVec<Matd> B_, local_configuration_inner_;
+};
+
+/**
+ * @class KernelGradientWithCorrectionComplex
+ * @brief obtain the corrected initial configuration in strong form and correct kernel gradient in complex topology
+ */
+class KernelGradientWithCorrectionComplex : public BaseInteractionComplex<KernelGradientWithCorrectionInner, GeneralDataDelegateContactOnly>
+{
+  public:
+    template <typename... Args>
+    KernelGradientWithCorrectionComplex(Args &&...args)
+        : BaseInteractionComplex<KernelGradientWithCorrectionInner, GeneralDataDelegateContactOnly>(std::forward<Args>(args)...){};
+    virtual ~KernelGradientWithCorrectionComplex(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+    void update(size_t index_i, Real dt = 0.0);
+};
+} // namespace SPH
 #endif // COMMON_SHARED_EULERIAN_CLASSES_H

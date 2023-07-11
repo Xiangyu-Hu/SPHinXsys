@@ -33,25 +33,25 @@ Real hardening_modulus = 0.1e9;
 
 class Wall : public ComplexShape
 {
-public:
-	explicit Wall(const std::string &shape_name) : ComplexShape(shape_name)
-	{
-		Vecd halfsize_holder(3.0 * PL, 3.0 * PL, 0.5 * SL);
-		Vecd translation_holder(0.0, 0.0, -0.5 * SL);
-		add<TriangleMeshShapeBrick>(halfsize_holder, resolution, translation_holder);
-	}
+  public:
+    explicit Wall(const std::string &shape_name) : ComplexShape(shape_name)
+    {
+        Vecd halfsize_holder(3.0 * PL, 3.0 * PL, 0.5 * SL);
+        Vecd translation_holder(0.0, 0.0, -0.5 * SL);
+        add<TriangleMeshShapeBrick>(halfsize_holder, resolution, translation_holder);
+    }
 };
 
 /** Define the body. */
 class Column : public ComplexShape
 {
-public:
-	explicit Column(const std::string &shape_name) : ComplexShape(shape_name)
-	{
-		Vecd translation_column(0.0, 0.0, 0.6 * PW);
-		add<TriangleMeshShapeCylinder>(SimTK::UnitVec3(0, 0, 1.0), inner_circle_radius,
-									   0.5 * PW, resolution, translation_column);
-	}
+  public:
+    explicit Column(const std::string &shape_name) : ComplexShape(shape_name)
+    {
+        Vecd translation_column(0.0, 0.0, 0.6 * PW);
+        add<TriangleMeshShapeCylinder>(SimTK::UnitVec3(0, 0, 1.0), inner_circle_radius,
+                                       0.5 * PW, resolution, translation_column);
+    }
 };
 
 /**
@@ -59,25 +59,25 @@ public:
  */
 
 class InitialCondition
-	: public solid_dynamics::ElasticDynamicsInitialCondition
+    : public solid_dynamics::ElasticDynamicsInitialCondition
 {
-public:
-	explicit InitialCondition(SPHBody &sph_body)
-		: solid_dynamics::ElasticDynamicsInitialCondition(sph_body){};
+  public:
+    explicit InitialCondition(SPHBody &sph_body)
+        : solid_dynamics::ElasticDynamicsInitialCondition(sph_body){};
 
-	void update(size_t index_i, Real dt)
-	{
-		vel_[index_i][2] = -227.0;
-	}
+    void update(size_t index_i, Real dt)
+    {
+        vel_[index_i][2] = -227.0;
+    }
 };
 
 // define an observer body
 class ColumnObserverParticleGenerator : public ObserverParticleGenerator
 {
-public:
-	explicit ColumnObserverParticleGenerator(SPHBody &sph_body) : ObserverParticleGenerator(sph_body)
-	{
-		positions_.push_back(Vecd(0.0, 0.0, PW));
-		positions_.push_back(Vecd(PL, 0.0, 0.0));
-	}
+  public:
+    explicit ColumnObserverParticleGenerator(SPHBody &sph_body) : ObserverParticleGenerator(sph_body)
+    {
+        positions_.push_back(Vecd(0.0, 0.0, PW));
+        positions_.push_back(Vecd(PL, 0.0, 0.0));
+    }
 };
