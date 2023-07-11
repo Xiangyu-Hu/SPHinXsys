@@ -263,7 +263,7 @@ class BaseIntegration1stHalfWithWallKernel : public BaseIntegration1stHalfType {
   public:
     template<class ...BaseArgs>
     BaseIntegration1stHalfWithWallKernel(StdSharedVec<NeighborhoodDevice*> &contact_configuration,
-                                         DeviceVecd* wall_acc_ave, BaseArgs&& ...args) :
+                                         DeviceVecd** wall_acc_ave, BaseArgs&& ...args) :
                                          BaseIntegration1stHalfType(args...),
                                          contact_configuration_(contact_configuration),
                                          wall_acc_ave_(wall_acc_ave) {}
@@ -303,14 +303,14 @@ class BaseIntegration1stHalfWithWallKernel : public BaseIntegration1stHalfType {
 
         interaction(index_i, dt, this->p_, this->rho_, this->drho_dt_, this->acc_, this->riemann_solver_,
                     contact_configuration_.size(), [&](auto index_i){ return this->acc_prior_[index_i]; },
-                    [&](auto k){ return this->wall_acc_ave_; },
+                    [&](auto k){ return this->wall_acc_ave_[k]; },
                     [&](auto k, auto index_i) -> NeighborhoodDevice&
                         { return this->contact_configuration_[k][index_i]; },
                     [](const DeviceVecd& v1, const DeviceVecd& v2) { return sycl::dot(v1, v2); });
     }
   private:
     StdSharedVec<NeighborhoodDevice*> &contact_configuration_;
-    DeviceVecd* wall_acc_ave_;
+    DeviceVecd** wall_acc_ave_;
 };
 
 /**
@@ -328,8 +328,7 @@ public DeviceExecutable<BaseIntegration1stHalfWithWall<BaseIntegration1stHalfTyp
         : InteractionWithWall<BaseIntegration1stHalfType>(std::forward<Args>(args)...),
           DeviceExecutable<BaseIntegration1stHalfWithWall<BaseIntegration1stHalfType>,
                            BaseIntegration1stHalfWithWallKernel<typename BaseIntegration1stHalfType::DeviceKernel>>(this,
-                           *this->contact_configuration_device_,
-                           this->contact_particles_[0]->template getDeviceVariableByName<DeviceVecd>("Acceleration"),
+                           *this->contact_configuration_device_, this->wall_acc_ave_device_.data(),
                            BaseIntegration1stHalfType::particles_,
                            BaseIntegration1stHalfType::inner_configuration_device_->data(),
                            this->riemann_solver_) {};
