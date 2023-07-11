@@ -291,7 +291,7 @@ class BaseIntegration1stHalfWithWallKernel : public BaseIntegration1stHalfType {
                 RealT face_wall_external_acceleration = dot(acc_prior_i - acc_ave_k[index_j], -e_ij);
                 auto p_in_wall = p[index_i] + rho[index_i] * r_ij * SMAX(min_external_acc, face_wall_external_acceleration);
                 acceleration -= (p[index_i] + p_in_wall) * dW_ijV_j * e_ij;
-                rho_dissipation += riemann_solver.DissipativeUJump_Device(p[index_i] - p_in_wall) * dW_ijV_j;
+                rho_dissipation += riemann_solver.DissipativeUJump(p[index_i] - p_in_wall) * dW_ijV_j;
             }
         }
         acc[index_i] += acceleration / rho[index_i];

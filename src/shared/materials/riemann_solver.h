@@ -68,8 +68,8 @@ class NoRiemannSolver
           c0_i_(fluid_i.ReferenceSoundSpeed()), c0_j_(fluid_j.ReferenceSoundSpeed()),
           rho0c0_i_(rho0_i_ * c0_i_), rho0c0_j_(rho0_j_ * c0_j_),
           inv_rho0c0_sum_(1.0 / (rho0c0_i_ + rho0c0_j_)){};
-    Real DissipativePJump(const Real &u_jump);
-    Real DissipativeUJump(const Real &p_jump);
+    Real DissipativePJump(const Real &u_jump) const { return 0.0; }
+    Real DissipativeUJump(const Real &p_jump) const { return 0.0; }
     Real AverageP(const Real &p_i, const Real &p_j);
     Vecd AverageV(const Vecd &vel_i, const Vecd &vel_j);
 
@@ -88,12 +88,11 @@ class AcousticRiemannSolver : public NoRiemannSolver
           inv_rho0c0_ave_(2.0 * inv_rho0c0_sum_),
           rho0c0_geo_ave_(2.0 * rho0c0_i_ * rho0c0_j_ * inv_rho0c0_sum_),
           inv_c_ave_(0.5 * (rho0_i_ + rho0_j_) * inv_rho0c0_ave_){};
-    Real DissipativePJump(const Real &u_jump);
-    Real DissipativeUJump(const Real &p_jump) {
-        return p_jump * inv_rho0c0_ave_;
+    Real DissipativePJump(const Real &u_jump) const {
+        return rho0c0_geo_ave_ * u_jump * SMIN(Real(3) * SMAX(u_jump * inv_c_ave_, Real(0)), Real(1));
     }
-    DeviceReal DissipativeUJump_Device(const DeviceReal &p_jump) const {
-        return p_jump * static_cast<DeviceReal>(inv_rho0c0_ave_);
+    Real DissipativeUJump(const Real &p_jump) const  {
+        return p_jump * inv_rho0c0_ave_;
     }
 
   protected:
@@ -107,7 +106,9 @@ class DissipativeRiemannSolver : public AcousticRiemannSolver
     template <class FluidI, class FluidJ>
     DissipativeRiemannSolver(FluidI &fluid_i, FluidJ &fluid_j)
         : AcousticRiemannSolver(fluid_i, fluid_j){};
-    Real DissipativePJump(const Real &u_jump);
+    Real DissipativePJump(const Real &u_jump) const {
+        return rho0c0_geo_ave_ * u_jump;
+    }
 };
 } // namespace SPH
 
