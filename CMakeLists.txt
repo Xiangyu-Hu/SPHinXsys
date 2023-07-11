@@ -67,8 +67,12 @@ find_package(Eigen3 CONFIG REQUIRED)
 target_link_libraries(sphinxsys_core INTERFACE Eigen3::Eigen)
 
 # ## OCCT
+if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 find_package(OpenCASCADE CONFIG REQUIRED)
 target_link_libraries(sphinxsys_core INTERFACE TKSTEP TKSTEPAttr TKSTEP209 TKSTEPBase TKXSBase TKShHealing TKTopAlgo TKGeomAlgo TKBRep TKGeomBase TKG3d TKG2d TKMath TKernel ) 
+
+endif()
+ 
 
 # ## TBB
 find_package(TBB CONFIG REQUIRED)
@@ -101,10 +105,20 @@ endif()
 add_subdirectory(src)
 add_subdirectory(modules)
 
+if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+add_subdirectory(opencascade_modules)
+
+endif()
+
 # ------ Setup the tests
 if(SPHINXSYS_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
+
+    if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    add_subdirectory(opencascade_tests)
+    endif()
+    
 endif()
 
 # ------ Extra scripts to install
