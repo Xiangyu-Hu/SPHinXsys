@@ -25,7 +25,7 @@ int main(int ac, char *av[])
 		//----------------------------------------------------------------------
 	FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
 	water_block.defineComponentLevelSetShape("OuterBoundary");
-	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+	water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	(!system.RunParticleRelaxation() && system.ReloadParticles())
 		? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getName())
 		: water_block.generateParticles<ParticleGeneratorLattice>();
