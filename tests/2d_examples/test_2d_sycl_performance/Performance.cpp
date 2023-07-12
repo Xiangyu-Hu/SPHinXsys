@@ -99,12 +99,6 @@ int main(int ac, char *av[])
 	ComplexRelation water_block_complex(water_block, {&wall_boundary});
 	ComplexRelation water_block_complex_sycl(water_block_sycl, {&wall_boundary_sycl});
 
-    TickCount timer_mem = TickCount::now();
-    water_block_sycl.getBaseParticles().registerExtraDeviceMemory();
-    TimeInterval tt_mem = TickCount::now() - timer_mem;
-
-    water_block.getBaseParticles().registerExtraDeviceMemory();
-
     SharedPtr<Gravity> gravity_ptr = makeSharedDevice<Gravity>(Vecd(0.0, -gravity_g));
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall, ParallelSYCLDevicePolicy> fluid_pressure_relaxation_sycl(water_block_complex_sycl);
@@ -128,12 +122,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Copy data to device
     //----------------------------------------------------------------------
-    timer_mem = TickCount::now();
+    TickCount timer_mem = TickCount::now();
     water_block_sycl.getBaseParticles().copyToDeviceMemory();
-    water_block_sycl.getBaseParticles().copyToExtraDeviceMemory();
     water_block_complex_sycl.getInnerRelation().copyInnerConfigurationToDevice();
     water_block_complex_sycl.getContactRelation().copyContactConfigurationToDevice();
-    tt_mem += TickCount::now() - timer_mem;
+    TimeInterval tt_mem = TickCount::now() - timer_mem;
 
     executionQueue.setWorkGroupSize(32);
 

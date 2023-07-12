@@ -204,10 +204,6 @@ class BaseParticles
     virtual void copyToDeviceMemory();
     virtual void copyFromDeviceMemory();
 
-    virtual void registerExtraDeviceMemory();
-    virtual void copyToExtraDeviceMemory();
-    virtual void copyFromExtraDeviceMemory();
-
   protected:
     SPHBody &sph_body_;
     std::string body_name_;

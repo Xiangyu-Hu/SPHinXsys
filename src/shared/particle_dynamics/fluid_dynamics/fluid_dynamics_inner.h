@@ -67,7 +67,7 @@ class BaseDensitySummationInnerKernel {
     BaseDensitySummationInnerKernel(NeighborhoodDevice* inner_configuration, BaseParticles* particles,
                                     DeviceReal rho0, DeviceReal invSigma0) :
         inner_configuration_(inner_configuration), rho_(particles->getDeviceVariableByName<DeviceReal>("Density")),
-        rho_sum_(particles->getDeviceVariableByName<DeviceReal>("DensitySummation")),
+        rho_sum_(particles->registerDeviceVariable<DeviceReal>("DensitySummation", particles->total_real_particles_)),
         mass_(particles->getDeviceVariableByName<DeviceReal>("Mass")), rho0_(rho0), inv_sigma0_(invSigma0) {}
   protected:
     NeighborhoodDevice* inner_configuration_;
@@ -244,7 +244,7 @@ class AcousticTimeStepSizeKernel {
   public:
     explicit AcousticTimeStepSizeKernel(BaseParticles* particles) :
         rho_(particles->getDeviceVariableByName<DeviceReal>("Density")),
-        p_(particles->getDeviceVariableByName<DeviceReal>("Pressure")),
+        p_(particles->registerDeviceVariable<DeviceReal>("Pressure", particles->total_real_particles_)),
         vel_(particles->getDeviceVariableByName<DeviceVecd>("Velocity")),
         fluid_(DynamicCast<FluidT>(this, particles->getBaseMaterial())) {}
 
@@ -386,8 +386,8 @@ class BaseIntegrationKernel {
     BaseIntegrationKernel(BaseParticles *particles) :
         fluid_(DynamicCast<FluidT>(this, particles->getBaseMaterial())),
         rho_(particles->getDeviceVariableByName<DeviceReal>("Density")),
-        p_(particles->getDeviceVariableByName<DeviceReal>("Pressure")),
-        drho_dt_(particles->getDeviceVariableByName<DeviceReal>("DensityChangeRate")),
+        p_(particles->registerDeviceVariable<DeviceReal>("Pressure", particles->total_real_particles_)),
+        drho_dt_(particles->registerDeviceVariable<DeviceReal>("DensityChangeRate", particles->total_real_particles_)),
         pos_(particles->getDeviceVariableByName<DeviceVecd>("Position")),
         vel_(particles->getDeviceVariableByName<DeviceVecd>("Velocity")),
         acc_(particles->getDeviceVariableByName<DeviceVecd>("Acceleration")),

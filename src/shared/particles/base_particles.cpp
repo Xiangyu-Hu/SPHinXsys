@@ -394,34 +394,6 @@ void BaseParticles::readFromXmlForReloadParticle(std::string &filefullpath)
         copyDataFromDevice(rho_.data(), getDeviceVariableByName<DeviceReal>("Density"), total_real_particles_);
         copyDataFromDevice(mass_.data(), getDeviceVariableByName<DeviceReal>("Mass"), total_real_particles_);
     }
-
-    void BaseParticles::registerExtraDeviceMemory() {
-        registerDeviceVariable<DeviceReal>("Pressure", total_real_particles_);
-        registerDeviceVariable<DeviceReal>("DensityChangeRate", total_real_particles_);
-        registerDeviceVariable<DeviceReal>("DensitySummation", total_real_particles_);
-    }
-
-    void BaseParticles::copyToExtraDeviceMemory() {
-        auto *p = getVariableByName<Real>("Pressure");
-        copyDataToDevice(p->data(), getDeviceVariableByName<DeviceReal>("Pressure"), total_real_particles_);
-
-        auto *drho_dt = getVariableByName<Real>("DensityChangeRate");
-        copyDataToDevice(drho_dt->data(), getDeviceVariableByName<DeviceReal>("DensityChangeRate"), total_real_particles_);
-
-        auto *rho_sum = getVariableByName<Real>("DensitySummation");
-        copyDataToDevice(rho_sum->data(), getDeviceVariableByName<DeviceReal>("DensitySummation"), total_real_particles_);
-    }
-
-    void BaseParticles::copyFromExtraDeviceMemory() {
-        auto *p = getVariableByName<Real>("Pressure");
-        copyDataFromDevice(p->data(), getDeviceVariableByName<DeviceReal>("Pressure"), total_real_particles_);
-
-        auto *drho_dt = getVariableByName<Real>("DensityChangeRate");
-        copyDataFromDevice(drho_dt->data(), getDeviceVariableByName<DeviceReal>("DensityChangeRate"), total_real_particles_);
-
-        auto *rho_sum = getVariableByName<Real>("DensitySummation");
-        copyDataFromDevice(rho_sum->data(), getDeviceVariableByName<DeviceReal>("DensitySummation"), total_real_particles_);
-    }
 //=================================================================================================//
 } // namespace SPH
   //=====================================================================================================//
