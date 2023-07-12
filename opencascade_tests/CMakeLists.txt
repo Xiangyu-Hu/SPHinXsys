@@ -7,7 +7,7 @@ include(GoogleTest)
 target_link_libraries(sphinxsys_core INTERFACE GTest::gtest GTest::gtest_main)
 
 
-if(SPHINXSYS_BUILD_UNIT_TESTS)
+if(SPHINXSYS_BUILD_OPENCASCADE_TESTS)
 	ADD_SUBDIRECTORY(opencascade_tests)
 endif()
 
