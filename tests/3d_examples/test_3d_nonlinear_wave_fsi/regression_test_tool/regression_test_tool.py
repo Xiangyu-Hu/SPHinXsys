@@ -13,7 +13,7 @@ case name: test_3d_nonlinear_wave_fsi
 case_name = "test_3d_nonlinear_wave_fsi"
 body_name = "Observer"
 parameter_name = "Position"
-body_name_1 = "FP2"
+body_name_1 = "FP1"
 parameter_name_1 = "Pressure"
 
 number_of_run_times = 0

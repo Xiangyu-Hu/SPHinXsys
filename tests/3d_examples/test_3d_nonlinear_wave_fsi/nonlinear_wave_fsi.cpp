@@ -53,12 +53,12 @@ int main(int ac, char *av[])
     //	Particle relaxation time stepping start here.
     //----------------------------------------------------------------------
     int ite_p = 0;
-    while (ite_p < 1000)
+    while (ite_p < 100)
     {
         update_smoothing_length_ratio.exec();
         relaxation_step_inner.exec();
         ite_p += 1;
-        if (ite_p % 100 == 0)
+        if (ite_p % 10 == 0)
         {
             std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the imported model N = " << ite_p << "\n";
         }
@@ -105,54 +105,20 @@ int main(int ac, char *av[])
     //---------------------------------------------------------
     // PRESSURE PROBES
     //---------------------------------------------------------
-    ObserverBody tp1(system, "TP1");
-    Real tp1x = 1. - 0.285;
-    Real tp1y = 12.286 + .035;
-    Real tp1z = 1.043;
-    StdVec<Vecd> tp1l = {Vecd(tp1x, tp1y, tp1z)};
-    tp1.generateParticles<ObserverParticleGenerator>(tp1l);
-    ObserverBody tp2(system, "TP2");
-    Real tp2x = 1. + 0.04;
-    Real tp2y = 12.286 + .035;
-    Real tp2z = 1.043;
-    StdVec<Vecd> tp2l = {Vecd(tp2x, tp2y, tp2z)};
-    tp2.generateParticles<ObserverParticleGenerator>(tp2l);
+   
     ObserverBody fp1(system, "FP1");
-    Real fp1x = 1. - 0.12;
-    Real fp1y = 12.286;
+    Real fp1x = Strx - 0.12;
+    Real fp1y = Stry;
     Real fp1z = 1.013;
     StdVec<Vecd> fp1l = {Vecd(fp1x, fp1y, fp1z)};
     fp1.generateParticles<ObserverParticleGenerator>(fp1l);
-    ObserverBody fp2(system, "FP2");
-    Real fp2x = 1.;
-    Real fp2y = 12.286;
-    Real fp2z = 0.968;
-    StdVec<Vecd> fp2l = {Vecd(fp2x, fp2y, fp2z)};
-    fp2.generateParticles<ObserverParticleGenerator>(fp2l);
-    ObserverBody fp3(system, "FP3");
-    Real fp3x = 1.;
-    Real fp3y = 12.286;
-    Real fp3z = 1.013;
-    StdVec<Vecd> fp3l = {Vecd(fp3x, fp3y, fp3z)};
-    fp3.generateParticles<ObserverParticleGenerator>(fp3l);
-    ObserverBody fp4(system, "FP4");
-    Real fp4x = 1. + 0.31;
-    Real fp4y = 12.286;
-    Real fp4z = 1.013;
-    StdVec<Vecd> fp4l = {Vecd(fp4x, fp4y, fp4z)};
-    fp4.generateParticles<ObserverParticleGenerator>(fp4l);
+    
     ObserverBody bp1(system, "BP1");
-    Real bp1x = 1. - 0.295;
-    Real bp1y = 12.286 + .035;
+    Real bp1x = Strx - 0.295;
+    Real bp1y = Stry + .035;
     Real bp1z = 0.933;
     StdVec<Vecd> bp1l = {Vecd(bp1x, bp1y, bp1z)};
     bp1.generateParticles<ObserverParticleGenerator>(bp1l);
-    ObserverBody bp2(system, "BP2");
-    Real bp2x = 1. - 0.04;
-    Real bp2y = 12.286 + .035;
-    Real bp2z = 0.933;
-    StdVec<Vecd> bp2l = {Vecd(bp2x, bp2y, bp2z)};
-    bp2.generateParticles<ObserverParticleGenerator>(bp2l);
 
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -168,23 +134,12 @@ int main(int ac, char *av[])
     ContactRelation WMobserver_contact_with_water(WMobserver, {&water_block});
     ContactRelation WMobserver_contact_with_wall(WMobserver, {&wall_boundary});
 
-    ContactRelation tp1_contact_s(tp1, {&structure});
-    ContactRelation tp2_contact_s(tp2, {&structure});
-    ContactRelation fp1_contact_s(fp1, {&structure});
-    ContactRelation fp2_contact_s(fp2, {&structure});
-    ContactRelation fp3_contact_s(fp3, {&structure});
-    ContactRelation fp4_contact_s(fp4, {&structure});
-    ContactRelation bp1_contact_s(bp1, {&structure});
-    ContactRelation bp2_contact_s(bp2, {&structure});
 
-    ContactRelation tp1_contact_w(tp1, {&water_block});
-    ContactRelation tp2_contact_w(tp2, {&water_block});
+    ContactRelation fp1_contact_s(fp1, {&structure});
+    ContactRelation bp1_contact_s(bp1, {&structure});
+
     ContactRelation fp1_contact_w(fp1, {&water_block});
-    ContactRelation fp2_contact_w(fp2, {&water_block});
-    ContactRelation fp3_contact_w(fp3, {&water_block});
-    ContactRelation fp4_contact_w(fp4, {&water_block});
     ContactRelation bp1_contact_w(bp1, {&water_block});
-    ContactRelation bp2_contact_w(bp2, {&water_block});
 
     //----------------------------------------------------------------------
     //	Define all numerical methods which are used in this case.
@@ -210,8 +165,8 @@ int main(int ac, char *av[])
     /** Computing viscous acceleration. */
     InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
     /** Damp waves */
-    Vecd translation_damping(0.5 * DW, 16.5, 0.5 * HWM);
-    Vecd damping(0.5 * DW, 1.5, 0.5 * HWM);
+    Vecd translation_damping(0.5 * DW, 9.5 , 0.5 * HWM);
+    Vecd damping(0.5 * DW, 0.5, 0.5 * HWM);
     BodyRegionByCell damping_buffer(water_block, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_damping), damping));
     SimpleDynamics<fluid_dynamics::DampingBoundaryCondition> damping_wave(damping_buffer);
     /** Fluid force on structure. */
@@ -326,40 +281,17 @@ int main(int ac, char *av[])
     ObservedQuantityRecording<Vecd>
         write_WM_displacement("Position", io_environment, WMobserver_contact_with_wall);
 
-    InteractionDynamics<InterpolatingAQuantity<Vecd>>
-        interpolation_tp1_position(tp1_contact_s, "Position", "Position");
-    InteractionDynamics<InterpolatingAQuantity<Vecd>>
-        interpolation_tp2_position(tp2_contact_s, "Position", "Position");
+    
     InteractionDynamics<InterpolatingAQuantity<Vecd>>
         interpolation_fp1_position(fp1_contact_s, "Position", "Position");
     InteractionDynamics<InterpolatingAQuantity<Vecd>>
-        interpolation_fp2_position(fp2_contact_s, "Position", "Position");
-    InteractionDynamics<InterpolatingAQuantity<Vecd>>
-        interpolation_fp3_position(fp3_contact_s, "Position", "Position");
-    InteractionDynamics<InterpolatingAQuantity<Vecd>>
-        interpolation_fp4_position(fp4_contact_s, "Position", "Position");
-    InteractionDynamics<InterpolatingAQuantity<Vecd>>
         interpolation_bp1_position(bp1_contact_s, "Position", "Position");
-    InteractionDynamics<InterpolatingAQuantity<Vecd>>
-        interpolation_bp2_position(bp2_contact_s, "Position", "Position");
-
-    ObservedQuantityRecording<Real>
-        write_recorded_pressure_tp1("Pressure", io_environment, tp1_contact_w);
-    ObservedQuantityRecording<Real>
-        write_recorded_pressure_tp2("Pressure", io_environment, tp2_contact_w);
-    ObservedQuantityRecording<Real>
+    
+    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
         write_recorded_pressure_fp1("Pressure", io_environment, fp1_contact_w);
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-        write_recorded_pressure_fp2("Pressure", io_environment, fp2_contact_w);
     ObservedQuantityRecording<Real>
-        write_recorded_pressure_fp3("Pressure", io_environment, fp3_contact_w);
-    ObservedQuantityRecording<Real>
-        write_recorded_pressure_fp4("Pressure", io_environment, fp4_contact_w);
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
         write_recorded_pressure_bp1("Pressure", io_environment, bp1_contact_w);
-    ObservedQuantityRecording<Real>
-        write_recorded_pressure_bp2("Pressure", io_environment, bp2_contact_w);
-
+    
     RestartIO restart_io(io_environment, system.real_bodies_);
 
     //----------------------------------------------------------------------
@@ -367,10 +299,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     GlobalStaticVariables::physical_time_ = 0.0;
     int number_of_iterations = 0;
-    int screen_output_interval = 1000;
+    int screen_output_interval = 100;
     int restart_output_interval = screen_output_interval * 10;
     Real end_time = total_physical_time;
-    Real output_interval = end_time / 25;
+    Real output_interval = end_time / 100;
     Real dt = 0.0;
     Real total_time = 0.0;
     Real relax_time = 1.0;
@@ -403,14 +335,8 @@ int main(int ac, char *av[])
         observer_contact_with_water.updateConfiguration();
         WMobserver_contact_with_water.updateConfiguration();
 
-        tp1_contact_w.updateConfiguration();
-        tp2_contact_w.updateConfiguration();
         fp1_contact_w.updateConfiguration();
-        fp2_contact_w.updateConfiguration();
-        fp3_contact_w.updateConfiguration();
-        fp4_contact_w.updateConfiguration();
         bp1_contact_w.updateConfiguration();
-        bp2_contact_w.updateConfiguration();
     }
 
     //----------------------------------------------------------------------
@@ -421,14 +347,8 @@ int main(int ac, char *av[])
     write_WM_displacement.writeToFile(number_of_iterations);
     wave_gauge.writeToFile(number_of_iterations);
 
-    write_recorded_pressure_tp1.writeToFile(number_of_iterations);
-    write_recorded_pressure_tp2.writeToFile(number_of_iterations);
     write_recorded_pressure_fp1.writeToFile(number_of_iterations);
-    write_recorded_pressure_fp2.writeToFile(number_of_iterations);
-    write_recorded_pressure_fp3.writeToFile(number_of_iterations);
-    write_recorded_pressure_fp4.writeToFile(number_of_iterations);
     write_recorded_pressure_bp1.writeToFile(number_of_iterations);
-    write_recorded_pressure_bp2.writeToFile(number_of_iterations);
 
     write_cable_AR.writeToFile(number_of_iterations);
     write_cable_AL.writeToFile(number_of_iterations);
@@ -474,14 +394,8 @@ int main(int ac, char *av[])
                     wave_making.exec(dt);
                 }
                 interpolation_observer_position.exec();
-                interpolation_tp1_position.exec();
-                interpolation_tp2_position.exec();
                 interpolation_fp1_position.exec();
-                interpolation_fp2_position.exec();
-                interpolation_fp3_position.exec();
-                interpolation_fp4_position.exec();
                 interpolation_bp1_position.exec();
-                interpolation_bp2_position.exec();
 
                 relaxation_time += dt;
                 integral_time += dt;
@@ -509,14 +423,8 @@ int main(int ac, char *av[])
             observer_contact_with_water.updateConfiguration();
             WMobserver_contact_with_water.updateConfiguration();
 
-            tp1_contact_w.updateConfiguration();
-            tp2_contact_w.updateConfiguration();
             fp1_contact_w.updateConfiguration();
-            fp2_contact_w.updateConfiguration();
-            fp3_contact_w.updateConfiguration();
-            fp4_contact_w.updateConfiguration();
             bp1_contact_w.updateConfiguration();
-            bp2_contact_w.updateConfiguration();
 
             if (total_time >= relax_time)
             {
@@ -524,14 +432,8 @@ int main(int ac, char *av[])
                 write_WM_displacement.writeToFile(number_of_iterations);
                 wave_gauge.writeToFile(number_of_iterations);
 
-                write_recorded_pressure_tp1.writeToFile(number_of_iterations);
-                write_recorded_pressure_tp2.writeToFile(number_of_iterations);
                 write_recorded_pressure_fp1.writeToFile(number_of_iterations);
-                write_recorded_pressure_fp2.writeToFile(number_of_iterations);
-                write_recorded_pressure_fp3.writeToFile(number_of_iterations);
-                write_recorded_pressure_fp4.writeToFile(number_of_iterations);
                 write_recorded_pressure_bp1.writeToFile(number_of_iterations);
-                write_recorded_pressure_bp2.writeToFile(number_of_iterations);
 
                 write_cable_AR.writeToFile(number_of_iterations);
                 write_cable_AL.writeToFile(number_of_iterations);
@@ -558,12 +460,12 @@ int main(int ac, char *av[])
     if (system.generate_regression_data_)
     {
         write_str_displacement.generateDataBase(1.0e-3);
-        write_recorded_pressure_fp2.generateDataBase(1.0e-3);
+        write_recorded_pressure_fp1.generateDataBase(1.0e-3);
     }
     else if (system.RestartStep() == 0)
     {
         write_str_displacement.testResult();
-        write_recorded_pressure_fp2.testResult();
+        write_recorded_pressure_fp1.testResult();
     }
 
     return 0;

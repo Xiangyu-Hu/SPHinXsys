@@ -1,6 +1,6 @@
 /**
- * @file 	wfsi.h
- * @brief 	This is the 3d case file for wave impact with tension leg floating structure.
+ * @file 	nonlinear_wave_fsi.h
+ * @brief 	This is the 3d case file for wave impact with tension leg moored floating structure.
  * @author   Nicolò Salis
  */
 #include "sphinxsys.h"
@@ -9,17 +9,17 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real total_physical_time = 25.0; /**< TOTAL SIMULATION TIME*/
-Real DL = 20.0;                  /**< Tank length. */
-Real DH = 1.5;                   /**< Tank height. */
-Real DW = 2.0;
-Real WH = 0.8;    /**< Water block height. */
-Real BEH = 2.0;   /**< Beach end height. */
-Real Wmk_p = 0.0; /**< Wavemaker initial position. */
-Real EXS = 2.0;   /**< etra space behind the wavemaker*/
-Real HWM = 1.5;   /**< Wameker height*/
-Real d = 0.8;     /**< Still water level*/
-Real dDx = 8;
+Real total_physical_time = 6.0; /**< TOTAL SIMULATION TIME*/
+Real DL = 10.0;                  /**< Tank length. */
+Real DH = 1.0;                   /**< Tank height. */
+Real DW = 1.6;                   /**< Tank width. */
+Real WH = 0.8;                   /**< Water block height. */
+Real BEH = 2.0;                  /**< Flume height. */
+Real Wmk_p = 0.0;                /**< Wavemaker initial position. */
+Real EXS = 2.0;                  /**< Extra space behind the wavemaker*/
+Real HWM = 1.0;                  /**< Wameker height*/
+Real d = 0.8;                    /**< Still water level*/
+Real dDx = 10;
 Real particle_spacing_ref = d / dDx;           /**< Main water particle spacing. */
 Real particle_spacing_structure = 0.1;         /**< Structure particle spacing. */
 Real BW = particle_spacing_ref * 4.0;          /**< Extending width for BCs. */
@@ -48,8 +48,8 @@ Real mu_f = 1.0e-3;
 //----------------------------------------------------------------------
 //	Structure Properties G and Inertia
 //----------------------------------------------------------------------
-Real Strx = 1.0;
-Real Stry = 12.106;
+Real Strx = 0.8;
+Real Stry = 5.0;
 Real Strz = 0.573;
 
 // LEG
@@ -455,7 +455,7 @@ class WaveMaking : public solid_dynamics::BaseMotionConstraint<BodyPartByParticl
   public:
     WaveMaking(BodyPartByParticle &body_part)
         : solid_dynamics::BaseMotionConstraint<BodyPartByParticle>(body_part),
-          h(WH), tf(20.480), xf(12.0), fmn(0.32), fmx(0.96), a(0.0068), N(32), g(gravity_g)
+          h(WH), tf(5), xf(4.5), fmn(0.32), fmx(0.96), a(0.0078), N(32), g(gravity_g)
     {
         ComputeWaveChar();
     }
@@ -474,7 +474,7 @@ class WaveMaking : public solid_dynamics::BaseMotionConstraint<BodyPartByParticl
 //----------------------------------------------------------------------
 Real h = 1.3 * particle_spacing_ref;
 Vecd WGaugeDim(0.5 * DW, 0.5 * h, 0.5 * DH);
-Vecd WGauge(0.0, 10.848, 0.5 * DH);
+Vecd WGauge(0.0, 4., 0.5 * DH);
 Transform translation_WGauge(WGauge);
 
 /**
