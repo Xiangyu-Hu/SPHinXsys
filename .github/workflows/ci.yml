@@ -215,8 +215,7 @@ jobs:
             simbody `
             gtest `
             xsimd `
-            pybind11 `
-            opencascade
+            pybind11 
 
       - uses: ilammy/msvc-dev-cmd@v1
 
