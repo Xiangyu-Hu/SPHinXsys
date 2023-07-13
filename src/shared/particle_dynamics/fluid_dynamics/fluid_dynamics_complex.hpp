@@ -242,8 +242,7 @@ void BaseIntegration1stHalfWithWall<BaseIntegration1stHalfType>::
             [&](auto index_i){ return computeNonConservativeAcceleration(index_i); },
             [&](auto k){ return this->wall_acc_ave_[k]->data(); },
             [&](auto k, auto index_i) -> Neighborhood&
-               { return (*FluidWallData::contact_configuration_[k])[index_i]; },
-            [](const Vecd& v1, const Vecd& v2){ return v1.dot(v2); });
+               { return (*FluidWallData::contact_configuration_[k])[index_i]; });
 }
 //=================================================================================================//
 template <class BaseIntegration1stHalfType>
@@ -319,8 +318,7 @@ void BaseIntegration2ndHalfWithWall<BaseIntegration2ndHalfType>::
             [&](auto k){ return this->wall_vel_ave_[k]->data(); },
             [&](auto k){ return this->wall_n_[k]->data(); },
             [&](auto k, auto index_i) -> const Neighborhood&
-            { return (*FluidWallData::contact_configuration_[k])[index_i]; },
-            [](const Vecd& v1, const Vecd& v2){ return v1.dot(v2); });
+            { return (*FluidWallData::contact_configuration_[k])[index_i]; });
 }
 //=================================================================================================//
 } // namespace fluid_dynamics

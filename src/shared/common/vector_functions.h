@@ -105,6 +105,32 @@ template<> inline DeviceVec3d VecdZero() { return { static_cast<DeviceReal>(0.0)
 template<> inline Vec2d VecdZero() { return Vec2d::Zero(); }
 template<> inline Vec3d VecdZero() { return Vec3d::Zero(); }
 
+/* specialization for specific vector operations */
+template<class RealType, int Dimension>
+inline RealType VecdDot(const sycl::vec<RealType,Dimension>& v1, const sycl::vec<RealType,Dimension>& v2) {
+    return sycl::dot(v1, v2);
+}
+template<class RealType, int Dimension>
+inline RealType VecdDot(const Eigen::Matrix<RealType,Dimension,1>& v1, const Eigen::Matrix<RealType,Dimension,1>& v2) {
+    return v1.dot(v2);
+}
+template<class RealType, int Dimension>
+inline RealType VecdNorm(const sycl::vec<RealType,Dimension>& vec) {
+    return sycl::length(vec);
+}
+template<class RealType, int Dimension>
+inline RealType VecdNorm(const Eigen::Matrix<RealType,Dimension,1>& vec) {
+    return vec.norm();
+}
+template<class RealType, int Dimension>
+inline RealType VecdSquareNorm(const sycl::vec<RealType,Dimension>& vec) {
+    return sycl::dot(vec, vec);
+}
+template<class RealType, int Dimension>
+inline RealType VecdSquareNorm(const Eigen::Matrix<RealType,Dimension,1>& vec) {
+    return vec.squaredNorm();
+}
+
 /* SYCL memory transfer utilities */
 template<class T>
 inline T* allocateDeviceData(std::size_t size) {

@@ -248,19 +248,16 @@ class AcousticTimeStepSizeKernel {
         vel_(particles->getDeviceVariableByName<DeviceVecd>("Velocity")),
         fluid_(DynamicCast<FluidT>(this, particles->getBaseMaterial())) {}
 
-    template<class RealType, class VecType, class FluidType, class SoundSpeedFunc, class NormVecdFunc>
+    template<class RealType, class VecType, class FluidType, class SoundSpeedFunc>
     static RealType reduce(size_t index_i, Real dt, FluidType&& fluid, RealType* p, RealType* rho, VecType* vel,
-                        SoundSpeedFunc&& getSoundSpeed, NormVecdFunc&& norm) {
-        return getSoundSpeed(fluid, p[index_i], rho[index_i]) + norm(vel[index_i]);
+                        SoundSpeedFunc&& getSoundSpeed) {
+        return getSoundSpeed(fluid, p[index_i], rho[index_i]) + VecdNorm(vel[index_i]);
     }
 
     DeviceReal reduce(size_t index_i, Real dt = 0.0) const {
         return reduce(index_i, dt, fluid_, p_, rho_, vel_,
                       [](const FluidT& fluid, DeviceReal p_i, DeviceReal rho_i) {
                           return fluid.getSoundSpeed_Device(p_i, rho_i);
-                      },
-                      [](const DeviceVecd& vel) {
-                          return sycl::length(vel);
                       });
     }
 
@@ -304,13 +301,13 @@ class AdvectionTimeStepSizeForImplicitViscosityKernel {
     AdvectionTimeStepSizeForImplicitViscosityKernel(BaseParticles* particles):
         vel_(particles->getDeviceVariableByName<DeviceVecd>("Velocity")) {}
 
-    template<class VecType, class SquareNormFunction>
-    static Real reduce(size_t index_i, Real dt, VecType* vel, SquareNormFunction&& squareNorm) {
-        return squareNorm(vel[index_i]);
+    template<class VecType>
+    static Real reduce(size_t index_i, Real dt, VecType* vel) {
+        return VecdSquareNorm(vel[index_i]);
     }
 
     Real reduce(size_t index_i, Real dt = 0.0) const {
-        return reduce(index_i, dt, vel_, [](const DeviceVecd& vel){ return sycl::dot(vel, vel); });
+        return reduce(index_i, dt, vel_);
     }
 
   private:
@@ -528,9 +525,9 @@ class BaseIntegration2ndHalfKernel : public BaseIntegrationKernel<WeaklyCompress
         Vol[index_i] = mass[index_i] / rho[index_i];
     }
 
-    template<class RealType, class VecType, class NeighborhoodType, class RiemannSolver, class DotFunc>
+    template<class RealType, class VecType, class NeighborhoodType, class RiemannSolver>
     static void interaction(size_t index_i, Real dt, RealType *rho, RealType *drho_dt, VecType* vel, VecType* acc,
-                            NeighborhoodType* inner_configuration, RiemannSolver&& riemann_solver, DotFunc&& dot) {
+                            NeighborhoodType* inner_configuration, RiemannSolver&& riemann_solver) {
         RealType density_change_rate(0);
         auto p_dissipation = VecdZero<VecType>();
         const auto &inner_neighborhood = inner_configuration[index_i];
@@ -540,7 +537,7 @@ class BaseIntegration2ndHalfKernel : public BaseIntegrationKernel<WeaklyCompress
             const auto &e_ij = inner_neighborhood.e_ij_[n];
             const auto &dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
 
-            const RealType u_jump = dot(vel[index_i] - vel[index_j], e_ij);
+            const RealType u_jump = VecdDot(VecType(vel[index_i] - vel[index_j]), e_ij);
             density_change_rate += u_jump * dW_ijV_j;
             p_dissipation += static_cast<RealType>(riemann_solver.DissipativePJump(u_jump)) * dW_ijV_j * e_ij;
         }
@@ -557,8 +554,7 @@ class BaseIntegration2ndHalfKernel : public BaseIntegrationKernel<WeaklyCompress
     }
 
     void interaction(size_t index_i, Real dt = 0.0) {
-        interaction(index_i, dt, rho_, drho_dt_, vel_, acc_, inner_configuration_, riemann_solver_,
-                    [](const DeviceVecd& v1, const DeviceVecd& v2) { return sycl::dot(v1, v2); });
+        interaction(index_i, dt, rho_, drho_dt_, vel_, acc_, inner_configuration_, riemann_solver_);
     }
 
   protected:
