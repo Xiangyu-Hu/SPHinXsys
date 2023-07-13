@@ -97,10 +97,10 @@ class DensitySummationInnerKernel : public BaseDensitySummationInnerKernel {
     DensitySummationInnerKernel(DeviceReal W0, Args ...baseArgs) :
         BaseDensitySummationInnerKernel(std::forward<Args>(baseArgs)...),  W0_(W0) {}
 
-    template<class RealT, class NeighborhoodType>
-    static void interaction(size_t index_i, Real dt, NeighborhoodType* inner_configuration, RealT W0,
-                            RealT* rho_sum, RealT rho0, RealT inv_sigma0) {
-        RealT sigma = W0;
+    template<class RealType, class NeighborhoodType>
+    static void interaction(size_t index_i, Real dt, NeighborhoodType* inner_configuration, RealType W0,
+                            RealType* rho_sum, RealType rho0, RealType inv_sigma0) {
+        RealType sigma = W0;
         const auto& inner_neighborhood = inner_configuration[index_i];
         for (size_t n = 0; n != inner_neighborhood.current_size(); ++n)
             sigma += inner_neighborhood.W_ij_[n];
@@ -248,13 +248,13 @@ class AcousticTimeStepSizeKernel {
         vel_(particles->getDeviceVariableByName<DeviceVecd>("Velocity")),
         fluid_(DynamicCast<FluidT>(this, particles->getBaseMaterial())) {}
 
-    template<class RealT, class Vec, class FluidType, class SoundSpeedFunc, class NormVecdFunc>
-    static RealT reduce(size_t index_i, Real dt, FluidType&& fluid, RealT* p, RealT* rho, Vec* vel,
+    template<class RealType, class VecType, class FluidType, class SoundSpeedFunc, class NormVecdFunc>
+    static RealType reduce(size_t index_i, Real dt, FluidType&& fluid, RealType* p, RealType* rho, VecType* vel,
                         SoundSpeedFunc&& getSoundSpeed, NormVecdFunc&& norm) {
         return getSoundSpeed(fluid, p[index_i], rho[index_i]) + norm(vel[index_i]);
     }
 
-    Real reduce(size_t index_i, Real dt = 0.0) const {
+    DeviceReal reduce(size_t index_i, Real dt = 0.0) const {
         return reduce(index_i, dt, fluid_, p_, rho_, vel_,
                       [](const FluidT& fluid, DeviceReal p_i, DeviceReal rho_i) {
                           return fluid.getSoundSpeed_Device(p_i, rho_i);
@@ -304,8 +304,8 @@ class AdvectionTimeStepSizeForImplicitViscosityKernel {
     AdvectionTimeStepSizeForImplicitViscosityKernel(BaseParticles* particles):
         vel_(particles->getDeviceVariableByName<DeviceVecd>("Velocity")) {}
 
-    template<class Vec, class SquareNormFunction>
-    static Real reduce(size_t index_i, Real dt, Vec* vel, SquareNormFunction&& squareNorm) {
+    template<class VecType, class SquareNormFunction>
+    static Real reduce(size_t index_i, Real dt, VecType* vel, SquareNormFunction&& squareNorm) {
         return squareNorm(vel[index_i]);
     }
 
@@ -424,9 +424,9 @@ class BaseIntegration1stHalfKernel : public BaseIntegrationKernel<WeaklyCompress
                                  riemann_solver_(this->fluid_, this->fluid_),
                                  inner_configuration_(inner_configuration){}
 
-    template<class RealT, class Vec, class FluidType, class PressureFunc>
-    static void initialization(size_t index_i, Real dt, RealT* rho, const RealT *drho_dt, RealT *p, Vec* pos,
-                               Vec *vel, FluidType&& fluid, PressureFunc&& getPressure) {
+    template<class RealType, class VecType, class FluidType, class PressureFunc>
+    static void initialization(size_t index_i, Real dt, RealType* rho, const RealType *drho_dt, RealType *p, VecType* pos,
+                               VecType *vel, FluidType&& fluid, PressureFunc&& getPressure) {
         rho[index_i] += drho_dt[index_i] * dt * 0.5;
         p[index_i] = getPressure(fluid, rho[index_i]);
         pos[index_i] += vel[index_i] * dt * 0.5;
@@ -437,11 +437,11 @@ class BaseIntegration1stHalfKernel : public BaseIntegrationKernel<WeaklyCompress
         vel[index_i] += (acc_prior[index_i] + acc[index_i]) * dt;
     }
 
-    template<class RealT, class Vec, class NeighborhoodType, class RiemannSolver>
-    static void interaction(size_t index_i, Real dt, RealT *p, RealT *rho, RealT *drho_dt, Vec* acc,
+    template<class RealType, class VecType, class NeighborhoodType, class RiemannSolver>
+    static void interaction(size_t index_i, Real dt, RealType *p, RealType *rho, RealType *drho_dt, VecType* acc,
                             NeighborhoodType* inner_configuration, RiemannSolver&& riemann_solver) {
-        auto acceleration = VecdZero<Vec>();
-        RealT rho_dissipation(0);
+        auto acceleration = VecdZero<VecType>();
+        RealType rho_dissipation(0);
         const auto &inner_neighborhood = inner_configuration[index_i];
         for (size_t n = 0; n < inner_neighborhood.current_size(); ++n)
         {

@@ -83,15 +83,15 @@ class BaseDensitySummationComplexKernel {
                                       contact_configuration_(contactConfiguration),
                                       contact_configuration_size_(contactConfigurationSize) {}
 
-    template<class RealT, class ContactMassFunc, class ContactConfigFunc>
-    static RealT ContactSummation(size_t index_i, std::size_t contact_configuration_size,
-                                  const RealT* contact_inv_rho0, ContactMassFunc&& contactMassFunc,
+    template<class RealType, class ContactMassFunc, class ContactConfigFunc>
+    static RealType ContactSummation(size_t index_i, std::size_t contact_configuration_size,
+                                  const RealType* contact_inv_rho0, ContactMassFunc&& contactMassFunc,
                                   ContactConfigFunc&& contactConfigFunc)
     {
-        RealT sigma(0.0);
+        RealType sigma(0.0);
         for (size_t k = 0; k < contact_configuration_size; ++k)
         {
-            const RealT* contact_mass_k = contactMassFunc(k);
+            const RealType* contact_mass_k = contactMassFunc(k);
             const auto& contact_inv_rho0_k = contact_inv_rho0[k];
             const auto& contact_neighborhood = contactConfigFunc(k, index_i);
             for (size_t n = 0; n != contact_neighborhood.current_size(); ++n)
@@ -147,12 +147,12 @@ class DensitySummationComplexKernel : public BaseDensitySummationComplexKernel, 
                                   const DensitySummationInnerKernel& innerKernel)
         : BaseDensitySummationComplexKernel(complexKernel), DensitySummationInnerKernel(innerKernel) {}
 
-    template<class RealT, class InnerInteractionFunc, class ContactSummationFunc>
-    static void interaction(size_t index_i, Real dt, RealT* rho_sum, RealT rho0, RealT inv_sigma0, const RealT* mass,
+    template<class RealType, class InnerInteractionFunc, class ContactSummationFunc>
+    static void interaction(size_t index_i, Real dt, RealType* rho_sum, RealType rho0, RealType inv_sigma0, const RealType* mass,
                             InnerInteractionFunc&& innerInteraction, ContactSummationFunc&& ContactSummation)
     {
         innerInteraction(index_i, dt);
-        RealT sigma = ContactSummation(index_i);
+        RealType sigma = ContactSummation(index_i);
         rho_sum[index_i] += sigma * rho0 * rho0 * inv_sigma0 / mass[index_i];
     }
 
@@ -268,18 +268,19 @@ class BaseIntegration1stHalfWithWallKernel : public BaseIntegration1stHalfType {
                                          contact_configuration_(contact_configuration),
                                          wall_acc_ave_(wall_acc_ave) {}
 
-    template<class RealT, class Vec, class RiemannSolver, class WallNeighborhoodFunc,
+    template<class RealType, class VecType, class RiemannSolver, class WallNeighborhoodFunc,
              class NonConservativeAccFunc, class WallAccAveFunc, class DotFunc>
-    static void interaction(size_t index_i, Real dt, RealT *p, RealT *rho, RealT *drho_dt, Vec *acc,
+    static void interaction(size_t index_i, Real dt, RealType *p, RealType *rho, RealType *drho_dt, VecType *acc,
                             RiemannSolver& riemann_solver, std::size_t contact_configuration_size,
                             NonConservativeAccFunc&& computeNonConservativeAcceleration,
                             WallAccAveFunc&& getWallAccAve, WallNeighborhoodFunc&& getWallNeighborhood,
                             DotFunc&& dot) {
-        Vec acceleration = VecdZero<Vec>(), acc_prior_i = computeNonConservativeAcceleration(index_i);
-        RealT rho_dissipation{0}, min_external_acc{0};
+        const VecType acc_prior_i = computeNonConservativeAcceleration(index_i);
+        VecType acceleration = VecdZero<VecType>();
+        RealType rho_dissipation{0}, min_external_acc{0};
         for (size_t k = 0; k < contact_configuration_size; ++k)
         {
-            Vec* acc_ave_k = getWallAccAve(k);
+            const VecType* acc_ave_k = getWallAccAve(k);
             const auto &wall_neighborhood = getWallNeighborhood(k, index_i);
             for (size_t n = 0; n < wall_neighborhood.current_size(); ++n)
             {
@@ -288,8 +289,8 @@ class BaseIntegration1stHalfWithWallKernel : public BaseIntegration1stHalfType {
                 const auto& dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
                 const auto& r_ij = wall_neighborhood.r_ij_[n];
 
-                RealT face_wall_external_acceleration = dot(acc_prior_i - acc_ave_k[index_j], -e_ij);
-                auto p_in_wall = p[index_i] + rho[index_i] * r_ij * SMAX(min_external_acc, face_wall_external_acceleration);
+                const RealType face_wall_external_acceleration = dot(acc_prior_i - acc_ave_k[index_j], -e_ij);
+                const auto p_in_wall = p[index_i] + rho[index_i] * r_ij * SMAX(min_external_acc, face_wall_external_acceleration);
                 acceleration -= (p[index_i] + p_in_wall) * dW_ijV_j * e_ij;
                 rho_dissipation += riemann_solver.DissipativeUJump(p[index_i] - p_in_wall) * dW_ijV_j;
             }

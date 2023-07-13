@@ -90,8 +90,8 @@ class DensitySummationFreeSurfaceKernel : public DensitySummationKernel {
     DensitySummationFreeSurfaceKernel(const DensitySummationKernel& densitySummation) :
         DensitySummationKernel(densitySummation) {}
 
-    template<class RealT, class ReinitializedDensityFunc>
-    static void update(size_t index_i, Real dt, RealT* rho, RealT* rho_sum, RealT rho0,
+    template<class RealType, class ReinitializedDensityFunc>
+    static void update(size_t index_i, Real dt, RealType* rho, RealType* rho_sum, RealType rho0,
                        ReinitializedDensityFunc&& ReinitializedDensity)
     {
         rho[index_i] = ReinitializedDensity(rho_sum[index_i], rho0);
