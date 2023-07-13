@@ -89,7 +89,7 @@ int main(int ac, char *av[])
     fluid_observer_contact.copyContactConfigurationToDevice();    
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall, ParallelSYCLDevicePolicy> fluid_pressure_relaxation(water_block_complex);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_block_complex);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall, ParallelSYCLDevicePolicy> fluid_density_relaxation(water_block_complex);
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex, ParallelSYCLDevicePolicy> fluid_density_by_summation(water_block_complex);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SharedPtr<Gravity> gravity_ptr = makeSharedDevice<Gravity>(Vecd(0.0, -gravity_g));
@@ -166,10 +166,6 @@ int main(int ac, char *av[])
             Real advection_dt = fluid_advection_time_step.exec();
             fluid_density_by_summation.exec();
 
-            water_block.getBaseParticles().copyFromDeviceMemory();
-            water_block_complex.getInnerRelation().copyInnerConfigurationFromDevice();
-            water_block_complex.getContactRelation().copyContactConfigurationFromDevice();
-
             interval_computing_time_step += TickCount::now() - time_instance;
 
             time_instance = TickCount::now();
@@ -178,20 +174,18 @@ int main(int ac, char *av[])
             while (relaxation_time < advection_dt)
             {
                 /** inner loop for dual-time criteria time-stepping.  */
-
-                water_block.getBaseParticles().copyToDeviceMemory();
-
                 acoustic_dt = fluid_acoustic_time_step.exec();
                 fluid_pressure_relaxation.exec(acoustic_dt);
-
-                water_block.getBaseParticles().copyFromDeviceMemory();
-
                 fluid_density_relaxation.exec(acoustic_dt);
                 relaxation_time += acoustic_dt;
                 integration_time += acoustic_dt;
                 GlobalStaticVariables::physical_time_ += acoustic_dt;
             }
             interval_computing_fluid_pressure_relaxation += TickCount::now() - time_instance;
+
+            water_block.getBaseParticles().copyFromDeviceMemory();
+            water_block_complex.getInnerRelation().copyInnerConfigurationFromDevice();
+            water_block_complex.getContactRelation().copyContactConfigurationFromDevice();
 
             /** screen output, write body reduced values and restart files  */
             if (number_of_iterations % screen_output_interval == 0)

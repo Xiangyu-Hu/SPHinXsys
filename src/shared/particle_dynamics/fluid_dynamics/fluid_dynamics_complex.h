@@ -383,18 +383,81 @@ class BaseExtendIntegration1stHalfWithWall : public BaseIntegration1stHalfWithWa
 
 using ExtendIntegration1stHalfRiemannWithWall = BaseExtendIntegration1stHalfWithWall<Integration1stHalfRiemann>;
 
+
+template <class BaseIntegration2ndHalfType>
+class BaseIntegration2ndHalfWithWallKernel : public BaseIntegration2ndHalfType {
+  public:
+    template<class ...BaseArgs>
+    BaseIntegration2ndHalfWithWallKernel(StdSharedVec<NeighborhoodDevice*> &contact_configuration,
+                                         DeviceVecd** wall_vel_ave, DeviceVecd** wall_n, BaseArgs&& ...args) :
+            BaseIntegration2ndHalfType(args...),
+            contact_configuration_(contact_configuration),
+            wall_vel_ave_(wall_vel_ave), wall_n_(wall_n) {}
+
+    template<class RealType, class VecType, class RiemannSolver, class WallNeighborhoodFunc,
+             class WallVelAveFunc, class WallNormalFunc, class DotFunc>
+    static void interaction(size_t index_i, Real dt, RealType *rho, RealType *drho_dt, VecType* vel, VecType *acc,
+                            RiemannSolver& riemann_solver, std::size_t contact_configuration_size,
+                            WallVelAveFunc&& getWallVelAve, WallNormalFunc&& getWallNormal,
+                            WallNeighborhoodFunc&& getWallNeighborhood, DotFunc&& dot) {
+        RealType density_change_rate{0};
+        auto p_dissipation = VecdZero<VecType>();
+        for (size_t k = 0; k < contact_configuration_size; ++k)
+        {
+            VecType *vel_ave_k = getWallVelAve(k);
+            VecType *n_k = getWallNormal(k);
+            const auto &wall_neighborhood = getWallNeighborhood(k, index_i);
+            for (size_t n = 0; n != wall_neighborhood.current_size(); ++n)
+            {
+                const auto &index_j = wall_neighborhood.j_[n];
+                const auto &e_ij = wall_neighborhood.e_ij_[n];
+                const auto &dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
+
+                const VecType vel_in_wall = static_cast<RealType>(2.0) * vel_ave_k[index_j] - vel[index_i];
+                density_change_rate += dot(vel[index_i] - vel_in_wall, e_ij) * dW_ijV_j;
+                const RealType u_jump = static_cast<RealType>(2.0) * dot(vel[index_i] - vel_ave_k[index_j], n_k[index_j]);
+                p_dissipation += static_cast<RealType>(riemann_solver.DissipativePJump(u_jump)) * dW_ijV_j * n_k[index_j];
+            }
+        }
+        drho_dt[index_i] += density_change_rate * rho[index_i];
+        acc[index_i] += p_dissipation / rho[index_i];
+    }
+
+    void interaction(size_t index_i, Real dt = 0.0) {
+        BaseIntegration2ndHalfType::interaction(index_i, dt);
+
+        interaction(index_i, dt, this->rho_, this->drho_dt_, this->vel_, this->acc_, this->riemann_solver_,
+                    contact_configuration_.size(), [&](auto k){ return this->wall_vel_ave_[k]; },
+                    [&](auto k){ return this->wall_n_[k]; },
+                    [&](auto k, auto index_i) -> const NeighborhoodDevice&
+                        { return this->contact_configuration_[k][index_i]; },
+                    [](const DeviceVecd& v1, const DeviceVecd& v2) { return sycl::dot(v1, v2); });
+    }
+  private:
+    StdSharedVec<NeighborhoodDevice*> &contact_configuration_;
+    DeviceVecd **wall_vel_ave_, **wall_n_;
+};
+
+
 /**
  * @class BaseIntegration2ndHalfWithWall
  * @brief template density relaxation scheme without using different Riemann solvers.
  * The difference from the free surface version is that no Riemann problem is applied
  */
 template <class BaseIntegration2ndHalfType>
-class BaseIntegration2ndHalfWithWall : public InteractionWithWall<BaseIntegration2ndHalfType>
+class BaseIntegration2ndHalfWithWall : public InteractionWithWall<BaseIntegration2ndHalfType>,
+   public DeviceExecutable<BaseIntegration2ndHalfWithWall<BaseIntegration2ndHalfType>,
+                           BaseIntegration2ndHalfWithWallKernel<typename BaseIntegration2ndHalfType::DeviceKernel>>
 {
   public:
     template <typename... Args>
     BaseIntegration2ndHalfWithWall(Args &&...args)
-        : InteractionWithWall<BaseIntegration2ndHalfType>(std::forward<Args>(args)...){};
+        : InteractionWithWall<BaseIntegration2ndHalfType>(std::forward<Args>(args)...),
+          DeviceExecutable<BaseIntegration2ndHalfWithWall<BaseIntegration2ndHalfType>,
+                  BaseIntegration2ndHalfWithWallKernel<typename BaseIntegration2ndHalfType::DeviceKernel>>(this,
+                    *this->contact_configuration_device_, this->wall_vel_ave_device_.data(),
+                    this->wall_n_device_.data(), BaseIntegration2ndHalfType::particles_,
+                    BaseIntegration2ndHalfType::inner_configuration_device_->data(), this->riemann_solver_) {};
     virtual ~BaseIntegration2ndHalfWithWall(){};
 
     inline void interaction(size_t index_i, Real dt = 0.0);
