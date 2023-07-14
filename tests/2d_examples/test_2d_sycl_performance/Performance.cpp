@@ -50,11 +50,11 @@ Vec2d inner_wall_translation = inner_wall_halfsize;
 class WallBoundary : public ComplexShape
 {
 public:
-	explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
-	{
-		add<TransformShape<GeometricShapeBox>>(Transform2d(outer_wall_translation), outer_wall_halfsize);
-		subtract<TransformShape<GeometricShapeBox>>(Transform2d(inner_wall_translation), inner_wall_halfsize);
-	}
+    explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
+    {
+        add<TransformShape<GeometricShapeBox>>(Transform(outer_wall_translation), outer_wall_halfsize);
+        subtract<TransformShape<GeometricShapeBox>>(Transform(inner_wall_translation), inner_wall_halfsize);
+    }
 };
 //----------------------------------------------------------------------
 //	Main program starts here.
@@ -70,16 +70,16 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Creating bodies with corresponding materials and particles.
 	//----------------------------------------------------------------------
-	FluidBody water_block(
-		sph_system, makeShared<TransformShape<GeometricShapeBox>>(
-						Transform2d(water_block_translation), water_block_halfsize, "WaterBody"));
-	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
-	water_block.generateParticles<ParticleGeneratorLattice>();
+    FluidBody water_block(
+            sph_system, makeShared<TransformShape<GeometricShapeBox>>(
+                    Transform(water_block_translation), water_block_halfsize, "WaterBody"));
+    water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.generateParticles<ParticleGeneratorLattice>();
 
     FluidBody water_block_sycl(
             sph_system, makeShared<TransformShape<GeometricShapeBox>>(
-                    Transform2d(water_block_translation), water_block_halfsize, "WaterBody"));
-    water_block_sycl.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
+                    Transform(water_block_translation), water_block_halfsize, "WaterBody"));
+    water_block_sycl.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
     water_block_sycl.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
@@ -98,14 +98,6 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	ComplexRelation water_block_complex(water_block, {&wall_boundary});
 	ComplexRelation water_block_complex_sycl(water_block_sycl, {&wall_boundary_sycl});
-
-    TickCount timer_mem = TickCount::now();
-    water_block_complex_sycl.getInnerRelation().allocateInnerConfigurationDevice();
-    water_block_complex_sycl.getInnerRelation().copyInnerConfigurationToDevice();
-    water_block_complex_sycl.getContactRelation().allocateContactConfiguration();
-    water_block_complex_sycl.getContactRelation().copyContactConfigurationToDevice();
-    TimeInterval tt_mem = TickCount::now() - timer_mem;
-
 
     SharedPtr<Gravity> gravity_ptr = makeSharedDevice<Gravity>(Vecd(0.0, -gravity_g));
 
@@ -130,21 +122,25 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Copy data to device
     //----------------------------------------------------------------------
-    timer_mem = TickCount::now();
+    TickCount timer_mem = TickCount::now();
     water_block_sycl.getBaseParticles().copyToDeviceMemory();
     water_block_complex_sycl.getInnerRelation().copyInnerConfigurationToDevice();
     water_block_complex_sycl.getContactRelation().copyContactConfigurationToDevice();
-    tt_mem += TickCount::now() - timer_mem;
+    TimeInterval tt_mem = TickCount::now() - timer_mem;
 
-    executionQueue.setWorkGroupSize(25);
+    executionQueue.setWorkGroupSize(32);
 
     //----------------------------------------------------------------------
     //	Main loop benchmarks
     //----------------------------------------------------------------------
-    std::cout << "Number of particles: " << water_block.getBaseParticles().pos_.size() << std::endl;
+    std::cout << "Number of particles: " << water_block_sycl.getBaseParticles().total_real_particles_ << std::endl;
 
     std::size_t iterations = 2000;
     std::cout << "Number of iterations per test: " << iterations << std::endl;
+
+    std::cout << "------------" << std::endl;
+    std::cout << "SYCL memory operations: " << tt_mem.seconds()
+              << " seconds." << std::endl;
 
     std::cout << "------------" << std::endl;
     benchmark([&](){
@@ -187,18 +183,6 @@ int main(int ac, char *av[])
     benchmark([&](){ fluid_pressure_relaxation.exec(); },
               [&](){ fluid_pressure_relaxation_sycl.exec(); },
               "fluid_pressure_relaxation", iterations);
-
-
-    //----------------------------------------------------------------------
-    //	Free device data
-    //----------------------------------------------------------------------
-    timer_mem = TickCount::now();
-    water_block_sycl.getBaseParticles().freeDeviceMemory();
-    tt_mem += TickCount::now() - timer_mem;
-    std::cout << "------------" << std::endl;
-    std::cout << "SYCL memory operations: " << tt_mem.seconds()
-              << " seconds." << std::endl;
-
 
 	return 0;
 };

@@ -87,20 +87,21 @@ class BaseParticles
     DataContainerUniquePtrAssemble<DiscreteVariable> all_discrete_variable_ptrs_;
     DataContainerUniquePtrAssemble<StdLargeVec> shared_particle_data_ptrs_;
     DataContainerUniquePtrAssemble<GlobalVariable> all_global_variable_ptrs_;
+    DataContainerUniquePtrAssemble<DeviceVariable> all_device_variable_ptrs_;
     UniquePtrsKeeper<BaseDynamics<void>> derived_particle_data_;
 
   public:
     explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
     virtual ~BaseParticles(){};
 
-    StdLargeVec<Vecd> pos_; DeviceVecd* pos_device_;       /**< Position */
-    StdLargeVec<Vecd> vel_; DeviceVecd* vel_device_;       /**< Velocity */
-    StdLargeVec<Vecd> acc_; DeviceVecd* acc_device_;       /**< Acceleration induced by pressure- or stress */
-    StdLargeVec<Vecd> acc_prior_; DeviceVecd* acc_prior_device_; /**< Other, such as gravity and viscous, accelerations computed before acc_ */
+    StdLargeVec<Vecd> pos_;       /**< Position */
+    StdLargeVec<Vecd> vel_;       /**< Velocity */
+    StdLargeVec<Vecd> acc_;       /**< Acceleration induced by pressure- or stress */
+    StdLargeVec<Vecd> acc_prior_; /**< Other, such as gravity and viscous, accelerations computed before acc_ */
 
     StdLargeVec<Real> Vol_;              /**< Volumetric measure, also area and length of surface and linear particle */
-    StdLargeVec<Real> rho_; DeviceReal* rho_device_;              /**< Density */
-    StdLargeVec<Real> mass_; DeviceReal* mass_device_;             /**< Massive measure, also mass per-unit thickness and per-unit cross-section of surface and linear particle */
+    StdLargeVec<Real> rho_;              /**< Density */
+    StdLargeVec<Real> mass_;             /**< Massive measure, also mass per-unit thickness and per-unit cross-section of surface and linear particle */
     StdLargeVec<int> surface_indicator_; /**< free surface indicator */
     //----------------------------------------------------------------------
     // Global information for defining particle groups
@@ -143,6 +144,12 @@ class BaseParticles
                                      DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType>
     DataType *getGlobalVariableByName(const std::string &variable_name);
+
+    template <typename DeviceDataType, typename HostDataType = void>
+    DeviceDataType *registerDeviceVariable(const std::string &variable_name, std::size_t size,
+                                           const HostDataType* host_value = nullptr);
+    template <typename DeviceDataType>
+    DeviceDataType *getDeviceVariableByName(const std::string &variable_name);
     //----------------------------------------------------------------------
     //		Manage subsets of particle variables
     //----------------------------------------------------------------------
@@ -193,41 +200,9 @@ class BaseParticles
     virtual Real ParticleVolume(size_t index) { return Vol_[index]; }
     virtual Real ParticleMass(size_t index) { return mass_[index]; }
 
-    virtual void allocateDeviceMemory() {
-        pos_device_ = allocateSharedData<DeviceVecd>(pos_.size());
-        vel_device_ = allocateSharedData<DeviceVecd>(vel_.size());
-        acc_device_ = allocateSharedData<DeviceVecd>(acc_.size());
-        acc_prior_device_ = allocateSharedData<DeviceVecd>(acc_prior_.size());
-        rho_device_ = allocateDeviceData<DeviceReal>(rho_.size());
-        mass_device_ = allocateDeviceData<DeviceReal>(mass_.size());
-    }
-
-    virtual void freeDeviceMemory() {
-        freeDeviceData(pos_device_);
-        freeDeviceData(vel_device_);
-        freeDeviceData(acc_device_);
-        freeDeviceData(acc_prior_device_);
-        freeDeviceData(rho_device_);
-        freeDeviceData(mass_device_);
-    }
-
-    virtual void copyToDeviceMemory() {
-        copyDataToDevice(pos_.data(), pos_device_, pos_.size());
-        copyDataToDevice(vel_.data(), vel_device_, vel_.size());
-        copyDataToDevice(acc_.data(), acc_device_, acc_.size());
-        copyDataToDevice(acc_prior_.data(), acc_prior_device_, acc_prior_.size());
-        copyDataToDevice(rho_.data(), rho_device_, rho_.size());
-        copyDataToDevice(mass_.data(), mass_device_, mass_.size());
-    }
-
-    virtual void copyFromDeviceMemory() {
-        copyDataFromDevice(pos_.data(), pos_device_, pos_.size());
-        copyDataFromDevice(vel_.data(), vel_device_, vel_.size());
-        copyDataFromDevice(acc_.data(), acc_device_, acc_.size());
-        copyDataFromDevice(acc_prior_.data(), acc_prior_device_, acc_prior_.size());
-        copyDataFromDevice(rho_.data(), rho_device_, rho_.size());
-        copyDataFromDevice(mass_.data(), mass_device_, mass_.size());
-    }
+    virtual void registerDeviceMemory();
+    virtual void copyToDeviceMemory();
+    virtual void copyFromDeviceMemory();
 
   protected:
     SPHBody &sph_body_;
@@ -238,6 +213,7 @@ class BaseParticles
     ParticleData all_particle_data_;
     ParticleVariables all_discrete_variables_;
     GlobalVariables all_global_variables_;
+    DeviceVariables all_device_variables_;
     ParticleVariables variables_to_write_;
     ParticleVariables variables_to_restart_;
     ParticleVariables variables_to_reload_;

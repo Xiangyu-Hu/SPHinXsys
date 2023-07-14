@@ -35,6 +35,7 @@
 #include "fluid_dynamics_inner.hpp"
 #include "solid_body.h"
 #include "solid_particles.h"
+#include "execution_unit/device_executable.hpp"
 
 namespace SPH
 {
@@ -67,6 +68,9 @@ class InteractionWithWall : public BaseIntegrationType, public FluidWallData
     StdSharedVec<DeviceReal> wall_inv_rho0_device_;
     StdVec<StdLargeVec<Real> *> wall_mass_;
     StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_acc_ave_, wall_n_;
+
+    StdSharedVec<DeviceReal*> wall_mass_device_;
+    StdSharedVec<DeviceVecd*> wall_vel_ave_device_, wall_acc_ave_device_, wall_n_device_;
 };
 
 class BaseDensitySummationComplexKernel {
@@ -79,15 +83,15 @@ class BaseDensitySummationComplexKernel {
                                       contact_configuration_(contactConfiguration),
                                       contact_configuration_size_(contactConfigurationSize) {}
 
-    template<class RealT, class ContactMassFunc, class ContactConfigFunc>
-    static RealT ContactSummation(size_t index_i, std::size_t contact_configuration_size,
-                                  const RealT* contact_inv_rho0, ContactMassFunc&& contactMassFunc,
+    template<class RealType, class ContactMassFunc, class ContactConfigFunc>
+    static RealType ContactSummation(size_t index_i, std::size_t contact_configuration_size,
+                                  const RealType* contact_inv_rho0, ContactMassFunc&& contactMassFunc,
                                   ContactConfigFunc&& contactConfigFunc)
     {
-        RealT sigma(0.0);
+        RealType sigma(0.0);
         for (size_t k = 0; k < contact_configuration_size; ++k)
         {
-            const RealT* contact_mass_k = contactMassFunc(k);
+            const RealType* contact_mass_k = contactMassFunc(k);
             const auto& contact_inv_rho0_k = contact_inv_rho0[k];
             const auto& contact_neighborhood = contactConfigFunc(k, index_i);
             for (size_t n = 0; n != contact_neighborhood.current_size(); ++n)
@@ -135,6 +139,30 @@ class BaseDensitySummationComplex
     auto& getDeviceProxy() {
         return device_proxy;
     }
+};
+
+class DensitySummationComplexKernel : public BaseDensitySummationComplexKernel, public DensitySummationInnerKernel {
+  public:
+    DensitySummationComplexKernel(const BaseDensitySummationComplexKernel& complexKernel,
+                                  const DensitySummationInnerKernel& innerKernel)
+        : BaseDensitySummationComplexKernel(complexKernel), DensitySummationInnerKernel(innerKernel) {}
+
+    template<class RealType, class InnerInteractionFunc, class ContactSummationFunc>
+    static void interaction(size_t index_i, Real dt, RealType* rho_sum, RealType rho0, RealType inv_sigma0, const RealType* mass,
+                            InnerInteractionFunc&& innerInteraction, ContactSummationFunc&& ContactSummation)
+    {
+        innerInteraction(index_i, dt);
+        RealType sigma = ContactSummation(index_i);
+        rho_sum[index_i] += sigma * rho0 * rho0 * inv_sigma0 / mass[index_i];
+    }
+
+    void interaction(size_t index_i, Real dt)
+    {
+        interaction(index_i, dt, rho_sum_, rho0_, inv_sigma0_, mass_,
+                    [&](auto idx, auto delta) { DensitySummationInnerKernel::interaction(idx, delta); },
+                    [&](auto idx) { return BaseDensitySummationComplexKernel::ContactSummation(idx); });
+    }
+
 };
 
 /**
@@ -235,24 +263,25 @@ class BaseIntegration1stHalfWithWallKernel : public BaseIntegration1stHalfType {
   public:
     template<class ...BaseArgs>
     BaseIntegration1stHalfWithWallKernel(StdSharedVec<NeighborhoodDevice*> &contact_configuration,
-                                         DeviceVecd* wall_acc_ave, BaseArgs&& ...args) :
+                                         DeviceVecd** wall_acc_ave, BaseArgs&& ...args) :
                                          BaseIntegration1stHalfType(args...),
                                          contact_configuration_(contact_configuration),
                                          wall_acc_ave_(wall_acc_ave) {}
 
-    template<class RealT, class Vec, class RiemannSolver, class WallNeighborhoodFunc,
+    template<class RealType, class VecType, class RiemannSolver, class WallNeighborhoodFunc,
              class NonConservativeAccFunc, class WallAccAveFunc, class DotFunc>
-    static void interaction(size_t index_i, Real dt, RealT *p, RealT *rho, RealT *drho_dt, Vec *acc,
+    static void interaction(size_t index_i, Real dt, RealType *p, RealType *rho, RealType *drho_dt, VecType *acc,
                             RiemannSolver& riemann_solver, std::size_t contact_configuration_size,
                             NonConservativeAccFunc&& computeNonConservativeAcceleration,
                             WallAccAveFunc&& getWallAccAve, WallNeighborhoodFunc&& getWallNeighborhood,
                             DotFunc&& dot) {
-        Vec acceleration = VecdZero<Vec>(), acc_prior_i = computeNonConservativeAcceleration(index_i);
-        RealT rho_dissipation{0}, min_external_acc{0};
+        const VecType acc_prior_i = computeNonConservativeAcceleration(index_i);
+        VecType acceleration = VecdZero<VecType>();
+        RealType rho_dissipation{0}, min_external_acc{0};
         for (size_t k = 0; k < contact_configuration_size; ++k)
         {
-            Vec* acc_ave_k = getWallAccAve(k);
-            auto &wall_neighborhood = getWallNeighborhood(k, index_i);
+            const VecType* acc_ave_k = getWallAccAve(k);
+            const auto &wall_neighborhood = getWallNeighborhood(k, index_i);
             for (size_t n = 0; n < wall_neighborhood.current_size(); ++n)
             {
                 const auto& index_j = wall_neighborhood.j_[n];
@@ -260,10 +289,10 @@ class BaseIntegration1stHalfWithWallKernel : public BaseIntegration1stHalfType {
                 const auto& dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
                 const auto& r_ij = wall_neighborhood.r_ij_[n];
 
-                RealT face_wall_external_acceleration = dot(acc_prior_i - acc_ave_k[index_j], -e_ij);
-                auto p_in_wall = p[index_i] + rho[index_i] * r_ij * SMAX(min_external_acc, face_wall_external_acceleration);
+                const RealType face_wall_external_acceleration = dot(acc_prior_i - acc_ave_k[index_j], -e_ij);
+                const auto p_in_wall = p[index_i] + rho[index_i] * r_ij * SMAX(min_external_acc, face_wall_external_acceleration);
                 acceleration -= (p[index_i] + p_in_wall) * dW_ijV_j * e_ij;
-                rho_dissipation += riemann_solver.DissipativeUJump_Device(p[index_i] - p_in_wall) * dW_ijV_j;
+                rho_dissipation += riemann_solver.DissipativeUJump(p[index_i] - p_in_wall) * dW_ijV_j;
             }
         }
         acc[index_i] += acceleration / rho[index_i];
@@ -275,14 +304,14 @@ class BaseIntegration1stHalfWithWallKernel : public BaseIntegration1stHalfType {
 
         interaction(index_i, dt, this->p_, this->rho_, this->drho_dt_, this->acc_, this->riemann_solver_,
                     contact_configuration_.size(), [&](auto index_i){ return this->acc_prior_[index_i]; },
-                    [&](auto k){ return this->wall_acc_ave_; },
-                    [&](auto k, auto index_i) -> NeighborhoodDevice&
+                    [&](auto k){ return this->wall_acc_ave_[k]; },
+                    [&](auto k, auto index_i) -> const NeighborhoodDevice&
                         { return this->contact_configuration_[k][index_i]; },
                     [](const DeviceVecd& v1, const DeviceVecd& v2) { return sycl::dot(v1, v2); });
     }
   private:
     StdSharedVec<NeighborhoodDevice*> &contact_configuration_;
-    DeviceVecd* wall_acc_ave_;
+    DeviceVecd** wall_acc_ave_;
 };
 
 /**
@@ -300,7 +329,7 @@ public DeviceExecutable<BaseIntegration1stHalfWithWall<BaseIntegration1stHalfTyp
         : InteractionWithWall<BaseIntegration1stHalfType>(std::forward<Args>(args)...),
           DeviceExecutable<BaseIntegration1stHalfWithWall<BaseIntegration1stHalfType>,
                            BaseIntegration1stHalfWithWallKernel<typename BaseIntegration1stHalfType::DeviceKernel>>(this,
-                           *this->contact_configuration_device_, this->contact_particles_[0]->acc_device_,
+                           *this->contact_configuration_device_, this->wall_acc_ave_device_.data(),
                            BaseIntegration1stHalfType::particles_,
                            BaseIntegration1stHalfType::inner_configuration_device_->data(),
                            this->riemann_solver_) {};

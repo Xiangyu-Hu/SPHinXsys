@@ -119,7 +119,7 @@ struct ZeroData<int>
     static inline int value = 0;
 };
 /** Type trait for data type index. */
-template <typename T>
+template <typename T, typename Enable = void>
 struct DataTypeIndex
 {
     static constexpr int value = std::numeric_limits<int>::max();
@@ -153,6 +153,21 @@ template <>
 struct DataTypeIndex<int>
 {
     static constexpr int value = 5;
+};
+template <>
+struct DataTypeIndex<DeviceReal, std::enable_if_t<std::negation_v<std::is_same<Real, DeviceReal>>>>
+{
+    static constexpr int value = 6;
+};
+template <>
+struct DataTypeIndex<DeviceVec2d, std::enable_if_t<std::negation_v<std::is_same<Vec2d, DeviceVec2d>>>>
+{
+    static constexpr int value = 7;
+};
+template <>
+struct DataTypeIndex<DeviceVec3d, std::enable_if_t<std::negation_v<std::is_same<Vec3d, DeviceVec3d>>>>
+{
+    static constexpr int value = 8;
 };
 /** Useful float point constants. */
 constexpr size_t MaxSize_t = std::numeric_limits<size_t>::max();

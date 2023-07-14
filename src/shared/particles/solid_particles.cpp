@@ -24,25 +24,19 @@ void SolidParticles::initializeOtherVariables()
                      { return Matd::Identity(); });
 }
 //=================================================================================================//
-void SolidParticles::allocateDeviceMemory() {
-        BaseParticles::allocateDeviceMemory();
-        n_device_ = allocateSharedData<DeviceVecd>(n_.size());
-}
-
-void SolidParticles::freeDeviceMemory() {
-        BaseParticles::freeDeviceMemory();
-        freeDeviceData(n_device_);
+void SolidParticles::registerDeviceMemory() {
+        BaseParticles::registerDeviceMemory();
+        registerDeviceVariable<DeviceVecd>("Normal", total_real_particles_, n_.data());
 }
 
 void SolidParticles::copyToDeviceMemory() {
     BaseParticles::copyToDeviceMemory();
-    copyDataToDevice(n_.data(), n_device_, n_.size());
-//    executionQueue.getQueue().wait();
+    copyDataToDevice(n_.data(), getDeviceVariableByName<DeviceVecd>("Normal"), total_real_particles_);
 }
 
 void SolidParticles::copyFromDeviceMemory() {
     BaseParticles::copyFromDeviceMemory();
-    copyDataFromDevice(n_.data(), n_device_, n_.size());
+    copyDataFromDevice(n_.data(), getDeviceVariableByName<DeviceVecd>("Normal"), total_real_particles_);
 }
 
 //=============================================================================================//

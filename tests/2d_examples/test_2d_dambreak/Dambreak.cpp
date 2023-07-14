@@ -157,6 +157,10 @@ int main(int ac, char *av[])
         while (integration_time < output_interval)
         {
             /** outer loop for dual-time criteria time-stepping. */
+            water_block.getBaseParticles().copyToDeviceMemory();
+            water_block_complex.getInnerRelation().copyInnerConfigurationToDevice();
+            water_block_complex.getContactRelation().copyContactConfigurationToDevice();
+
             time_instance = TickCount::now();
             fluid_step_initialization.exec();
             Real advection_dt = fluid_advection_time_step.exec();
@@ -175,7 +179,7 @@ int main(int ac, char *av[])
             {
                 /** inner loop for dual-time criteria time-stepping.  */
 
-                water_block.getBaseParticles().copyToDeviceMemory();                
+                water_block.getBaseParticles().copyToDeviceMemory();
 
                 acoustic_dt = fluid_acoustic_time_step.exec();
                 fluid_pressure_relaxation.exec(acoustic_dt);
@@ -221,7 +225,6 @@ int main(int ac, char *av[])
     }
 
     water_block.getBaseParticles().copyFromDeviceMemory();
-    water_block.getBaseParticles().freeDeviceMemory();
 
     TickCount t4 = TickCount::now();
 

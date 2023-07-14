@@ -5,6 +5,8 @@
 #include "base_material.h"
 #include "base_particle_generator.h"
 #include "xml_engine.h"
+#include "base_particles.h"
+
 
 //=====================================================================================================//
 namespace SPH
@@ -365,6 +367,33 @@ void BaseParticles::readFromXmlForReloadParticle(std::string &filefullpath)
     DataAssembleOperation<loopParticleVariables> loop_variable_namelist;
     loop_variable_namelist(all_particle_data_, variables_to_reload_, read_variable_from_xml);
 }
+
+    void BaseParticles::registerDeviceMemory() {
+        registerDeviceVariable<DeviceVecd>("Position", total_real_particles_, pos_.data());
+        registerDeviceVariable<DeviceVecd>("Velocity", total_real_particles_, vel_.data());
+        registerDeviceVariable<DeviceVecd>("Acceleration", total_real_particles_, acc_.data());
+        registerDeviceVariable<DeviceVecd>("AccelerationPrior", total_real_particles_, acc_prior_.data());
+        registerDeviceVariable<DeviceReal>("Density", total_real_particles_, rho_.data());
+        registerDeviceVariable<DeviceReal>("Mass", total_real_particles_, mass_.data());
+    }
+
+    void BaseParticles::copyToDeviceMemory() {
+        copyDataToDevice(pos_.data(), getDeviceVariableByName<DeviceVecd>("Position"), total_real_particles_);
+        copyDataToDevice(vel_.data(), getDeviceVariableByName<DeviceVecd>("Velocity"), total_real_particles_);
+        copyDataToDevice(acc_.data(), getDeviceVariableByName<DeviceVecd>("Acceleration"), total_real_particles_);
+        copyDataToDevice(acc_prior_.data(), getDeviceVariableByName<DeviceVecd>("AccelerationPrior"), total_real_particles_);
+        copyDataToDevice(rho_.data(), getDeviceVariableByName<DeviceReal>("Density"), total_real_particles_);
+        copyDataToDevice(mass_.data(), getDeviceVariableByName<DeviceReal>("Mass"), total_real_particles_);
+    }
+
+    void BaseParticles::copyFromDeviceMemory() {
+        copyDataFromDevice(pos_.data(), getDeviceVariableByName<DeviceVecd>("Position"), total_real_particles_);
+        copyDataFromDevice(vel_.data(), getDeviceVariableByName<DeviceVecd>("Velocity"), total_real_particles_);
+        copyDataFromDevice(acc_.data(), getDeviceVariableByName<DeviceVecd>("Acceleration"), total_real_particles_);
+        copyDataFromDevice(acc_prior_.data(), getDeviceVariableByName<DeviceVecd>("AccelerationPrior"), total_real_particles_);
+        copyDataFromDevice(rho_.data(), getDeviceVariableByName<DeviceReal>("Density"), total_real_particles_);
+        copyDataFromDevice(mass_.data(), getDeviceVariableByName<DeviceReal>("Mass"), total_real_particles_);
+    }
 //=================================================================================================//
 } // namespace SPH
   //=====================================================================================================//

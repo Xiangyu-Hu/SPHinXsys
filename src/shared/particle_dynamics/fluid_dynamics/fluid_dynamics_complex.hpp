@@ -162,10 +162,10 @@ InteractionWithWall<BaseIntegrationType>::
         
         // Device variables
         wall_inv_rho0_device_.at(k) = 1.0f / static_cast<DeviceReal>(rho0_k);
-        wall_mass_device_.at(k) = this->contact_particles_[k]->mass_device_;
-        wall_vel_ave_device_.at(k) = this->contact_particles_[k]->vel_device_;
-        wall_acc_ave_device_.at(k) = this->contact_particles_[k]->acc_device_;
-        wall_n_device_.at(k) = this->contact_particles_[k]->n_device_;
+        wall_mass_device_.at(k) = this->contact_particles_[k]->template getDeviceVariableByName<DeviceReal>("Mass");;
+        wall_vel_ave_device_.at(k) = this->contact_particles_[k]->template getDeviceVariableByName<DeviceVecd>("Velocity");
+        wall_acc_ave_device_.at(k) = this->contact_particles_[k]->template getDeviceVariableByName<DeviceVecd>("Acceleration");;
+        wall_n_device_.at(k) = this->contact_particles_[k]->template getDeviceVariableByName<DeviceVecd>("Normal");;
     }
 }
 //=================================================================================================//
@@ -189,7 +189,7 @@ BaseDensitySummationComplex<DensitySummationInnerType>::
 
 	// Device variables
 	contact_inv_rho0_device_.at(k) = 1.0f / static_cast<DeviceReal>(rho0_k);
-        contact_mass_device_.at(k) = this->contact_particles_[k]->mass_device_;
+        contact_mass_device_.at(k) = this->contact_particles_[k]->template getDeviceVariableByName<DeviceReal>("Mass");
     }
 }
 //=================================================================================================//
