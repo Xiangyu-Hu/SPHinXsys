@@ -9,16 +9,16 @@ namespace SPH
 	void CompositeMaterial::initializeLocalParameters(BaseParticles* base_particles)
 	{
 		ElasticSolid::initializeLocalParameters(base_particles);
-		for (size_t i = 0; i < CompositeMaterails_.size(); ++i)
-			CompositeMaterails_[i]->initializeLocalParameters(base_particles);
+		for (size_t i = 0; i < composite_materials_.size(); ++i)
+			composite_materials_[i]->initializeLocalParameters(base_particles);
 
-		for (size_t j = 0; j < CompositeMaterails_.size(); ++j)
-			sound_speed_.push_back(CompositeMaterails_[j]->ReferenceSoundSpeed());
+		for (size_t j = 0; j < composite_materials_.size(); ++j)
+			sound_speed_.push_back(composite_materials_[j]->ReferenceSoundSpeed());
 
 		c0_ = *std::max_element(sound_speed_.begin(), sound_speed_.end());
 		setContactStiffness(c0_);
 
-		base_particles->registerVariable(materail_id_, "MaterailId");
+		base_particles->registerVariable(material_id_, "MaterailId");
 	}
 
 	//=================================================================================================//

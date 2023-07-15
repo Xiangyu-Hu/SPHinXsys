@@ -7,69 +7,70 @@
 
 namespace SPH
 {
-	/**@class CompositeMaterial*/
-	class CompositeMaterial : public ElasticSolid
-	{
-	protected:
-		UniquePtrsKeeper<ElasticSolid> composite_ptr_keeper_;
-		StdVec<ElasticSolid*> CompositeMaterails_;
-		/** initialize the local properties, fiber and sheet direction. */
-		std::vector<Real> sound_speed_;
-	public:
-		StdLargeVec<int> materail_id_;
+/**@class CompositeMaterial*/
+class CompositeMaterial : public ElasticSolid
+{
+  protected:
+    UniquePtrsKeeper<ElasticSolid> composite_ptr_keeper_;
+    StdVec<ElasticSolid *> composite_materials_;
+    /** initialize the local properties, fiber and sheet direction. */
+    std::vector<Real> sound_speed_;
 
-		explicit CompositeMaterial(Real rho0) : ElasticSolid(rho0)
-		{
-			material_type_name_ = "CompositeMaterial";
-		};
-		virtual ~CompositeMaterial() {};
+  public:
+    StdLargeVec<int> material_id_;
 
-		virtual void initializeLocalParameters(BaseParticles* base_particles) override;
+    explicit CompositeMaterial(Real rho0) : ElasticSolid(rho0)
+    {
+        material_type_name_ = "CompositeMaterial";
+    };
+    virtual ~CompositeMaterial(){};
 
-		virtual Matd StressPK2(Matd& deformation, size_t particle_index_i) override
-		{
-			return CompositeMaterails_[materail_id_[particle_index_i]]->StressPK2(deformation, particle_index_i);
-		};
+    virtual void initializeLocalParameters(BaseParticles *base_particles) override;
 
-		Real CompositeDensity(size_t particle_index_i)
-		{
-			return CompositeMaterails_[materail_id_[particle_index_i]]->ReferenceDensity();
-		};
+    virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) override
+    {
+        return composite_materials_[material_id_[particle_index_i]]->StressPK2(deformation, particle_index_i);
+    };
 
-		virtual Matd StressCauchy(Matd& almansi_strain, Matd& F, size_t particle_index_i) override
-		{
-			return Matd::Identity();
-		};
+    Real CompositeDensity(size_t particle_index_i)
+    {
+        return composite_materials_[material_id_[particle_index_i]]->ReferenceDensity();
+    };
 
-		virtual Real VolumetricKirchhoff(Real J) override
-		{
-			return 0.0;
-		};
+    virtual Matd StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i) override
+    {
+        return Matd::Identity();
+    };
 
-		virtual std::string getRelevantStressMeasureName() override { return "PK2"; };
+    virtual Real VolumetricKirchhoff(Real J) override
+    {
+        return 0.0;
+    };
 
-		template <class AddMaterial, typename... ConstructorArgs>
-		void add(ConstructorArgs &&...args)
-		{
-			CompositeMaterails_.push_back(composite_ptr_keeper_.createPtr<AddMaterial>(std::forward<ConstructorArgs>(args)...));
-		};
-	};
+    virtual std::string getRelevantStressMeasureName() override { return "PK2"; };
 
-	/**
-	* @class Activemodel
-	*/
-	class ActiveModelSolid : public SaintVenantKirchhoffSolid
-	{
-	public:
-		explicit ActiveModelSolid(Real rho0, Real youngs_modulus, Real poisson_ratio)
-			: SaintVenantKirchhoffSolid(rho0, youngs_modulus, poisson_ratio)
-		{
-			material_type_name_ = "ActiveModelSolid";
-		};
-		virtual ~ActiveModelSolid() {};
+    template <class AddMaterial, typename... ConstructorArgs>
+    void add(ConstructorArgs &&...args)
+    {
+        composite_materials_.push_back(composite_ptr_keeper_.createPtr<AddMaterial>(std::forward<ConstructorArgs>(args)...));
+    };
+};
 
-		/** second Piola-Kirchhoff stress related with green-lagrangian deformation tensor */
-		virtual Matd StressPK2(Matd& deformation, size_t particle_index_i);
-	};
-}
-#endif //COMPOSITE_MATERAIL_H
+/**
+ * @class ActiveModelSolid
+ */
+class ActiveModelSolid : public SaintVenantKirchhoffSolid
+{
+  public:
+    explicit ActiveModelSolid(Real rho0, Real youngs_modulus, Real poisson_ratio)
+        : SaintVenantKirchhoffSolid(rho0, youngs_modulus, poisson_ratio)
+    {
+        material_type_name_ = "ActiveModelSolid";
+    };
+    virtual ~ActiveModelSolid(){};
+
+    /** second Piola-Kirchhoff stress related with green-lagrangian deformation tensor */
+    virtual Matd StressPK2(Matd &deformation, size_t particle_index_i);
+};
+} // namespace SPH
+#endif // COMPOSITE_MATERIAL_H

@@ -20,7 +20,7 @@ namespace SPH
 
 		protected:
 			StdLargeVec<Matd> &active_strain_,F_0, E_e;
-			StdLargeVec<int>& materail_id_;
+			StdLargeVec<int>& material_id_;
 		};
 	}
 }
