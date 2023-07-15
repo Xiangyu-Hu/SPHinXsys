@@ -150,7 +150,6 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration2ndHalf> fish_body_stress_relaxation_second_half(fish_inner);
     /** Update norm .*/
     SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> fish_body_update_normal(fish_body);
-    fish_body.addBodyStateForRecording<Vecd>("NormalDirection");
     fish_body.addBodyStateForRecording<Real>("Density");
     fish_body.addBodyStateForRecording<int>("MaterialID");
     fish_body.addBodyStateForRecording<Matd>("ActiveStrain");
@@ -217,7 +216,7 @@ int main(int ac, char *av[])
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
             {
-                Real dt = SMIN(get_fluid_time_step_size.exec(), Dt - relaxation_time);
+                Real dt = get_fluid_time_step_size.exec();
                 /** Fluid pressure relaxation, first half. */
                 pressure_relaxation.exec(dt);
                 /** FSI for fluid force on solid body. */
