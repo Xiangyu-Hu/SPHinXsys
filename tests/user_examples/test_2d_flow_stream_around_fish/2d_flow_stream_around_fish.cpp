@@ -143,7 +143,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Algorithms of solid dynamics.
     //----------------------------------------------------------------------
-    SimpleDynamics<MaterialId> composite_material_id(fish_body);
+    SimpleDynamics<FishMaterialInitialization> composite_material_id(fish_body);
+    SimpleDynamics<ImposingActiveStrain> imposing_active_strain(fish_body);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> fish_body_computing_time_step_size(fish_body);
     /** Stress relaxation for the inserted body. */
     Dynamics1Level<solid_dynamics::ActiveIntegration1stHalf> fish_body_stress_relaxation_first_half(fish_inner);
@@ -170,10 +171,12 @@ int main(int ac, char *av[])
     system.initializeSystemCellLinkedLists();
     /** initialize configurations for all bodies. */
     system.initializeSystemConfigurations();
-    /** computing surface normal direction for the insert body. */
+    /** computing surface normal direction for the fish. */
     fish_body_normal_direction.exec();
-    /** computing linear reproducing configuration for the insert body. */
+    /** computing linear reproducing configuration for the fish. */
     fish_body_corrected_configuration.exec();
+    /** initialize material ids for the fish. */
+    composite_material_id.exec();
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
@@ -231,7 +234,7 @@ int main(int ac, char *av[])
                 while (dt_s_sum < dt)
                 {
                     Real dt_s = SMIN(fish_body_computing_time_step_size.exec(), dt - dt_s_sum);
-                    composite_material_id.exec(dt_s);
+                    imposing_active_strain.exec();
                     fish_body_stress_relaxation_first_half.exec(dt_s);
                     fish_body_stress_relaxation_second_half.exec(dt_s);
                     dt_s_sum += dt_s;

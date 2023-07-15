@@ -3,7 +3,8 @@
 #define COMPOSITE_MATERIAL_H
 
 #include "elastic_solid.h"
-#include <fstream>
+
+#include <general_dynamics.h>
 
 namespace SPH
 {
@@ -56,6 +57,21 @@ class CompositeMaterial : public ElasticSolid
         c0_ = SMAX(c0_, added_material->ReferenceSoundSpeed());
         setContactStiffness(c0_);
     };
+};
+
+/**
+ * @class MaterialIdInitialization
+ */
+class MaterialIdInitialization
+    : public LocalDynamics,
+      public GeneralDataDelegateSimple
+{
+  public:
+    explicit MaterialIdInitialization(SPHBody &sph_body);
+
+  protected:
+    StdLargeVec<int> &material_id_;
+    StdLargeVec<Vecd> &pos0_;
 };
 
 /**

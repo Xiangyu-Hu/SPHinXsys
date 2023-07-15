@@ -40,7 +40,7 @@ Real cx = 0.3 * DL;           /**< Center of fish in x direction. */
 Real cy = DH / 2;             /**< Center of fish in y direction. */
 Real fish_length = 0.2;       /**< Length of fish. */
 Real fish_thickness = 0.03;   /**< The maximum fish thickness. */
-Real muscel_thickness = 0.02; /**< The maximum fish thickness. */
+Real muscle_thickness = 0.02; /**< The maximum fish thickness. */
 Real head_length = 0.03;      /**< Length of fish bone. */
 Real bone_thickness = 0.003;  /**< Length of fish bone. */
 Real fish_shape_resolution = particle_spacing_ref * 0.5;
@@ -57,11 +57,11 @@ Real a3 = -15.73 * fish_thickness / pow(fish_length, 3);
 Real a4 = 21.87 * fish_thickness / pow(fish_length, 4);
 Real a5 = -10.55 * fish_thickness / pow(fish_length, 5);
 
-Real b1 = 1.22 * muscel_thickness / fish_length;
-Real b2 = 3.19 * muscel_thickness / fish_length / fish_length;
-Real b3 = -15.73 * muscel_thickness / pow(fish_length, 3);
-Real b4 = 21.87 * muscel_thickness / pow(fish_length, 4);
-Real b5 = -10.55 * muscel_thickness / pow(fish_length, 5);
+Real b1 = 1.22 * muscle_thickness / fish_length;
+Real b2 = 3.19 * muscle_thickness / fish_length / fish_length;
+Real b3 = -15.73 * muscle_thickness / pow(fish_length, 3);
+Real b4 = 21.87 * muscle_thickness / pow(fish_length, 4);
+Real b5 = -10.55 * muscle_thickness / pow(fish_length, 5);
 //----------------------------------------------------------------------
 //	SPH bodies with cases-dependent geometries (ComplexShape).
 //----------------------------------------------------------------------
@@ -101,7 +101,7 @@ class WaterBlock : public ComplexShape
   public:
     explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        /** Geomtry definition. */
+        /** Geometry definition. */
         MultiPolygon outer_boundary(createWaterBlockShape());
         add<MultiPolygonShape>(outer_boundary, "OuterBoundary");
         MultiPolygon fish(CreatFishShape(cx, cy, fish_length, fish_shape_resolution));
@@ -126,7 +126,6 @@ struct FreeStreamVelocity
         return target_velocity;
     }
 };
-
 //----------------------------------------------------------------------
 //	Define time dependent acceleration in x-direction
 //----------------------------------------------------------------------
@@ -158,48 +157,29 @@ class SolidBodyMaterial : public CompositeMaterial
         add<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus3, poisson);
     };
 };
-
-//	Setup material ID
-class MaterialId
-    : public solid_dynamics::ElasticDynamicsInitialCondition
+//----------------------------------------------------------------------
+//	Case dependent initialization material ids
+//----------------------------------------------------------------------
+class FishMaterialInitialization
+    : public MaterialIdInitialization
 {
   public:
-    explicit MaterialId(SolidBody &solid_body)
-        : solid_dynamics::ElasticDynamicsInitialCondition(solid_body),
-          solid_particles_(dynamic_cast<SolidParticles *>(&solid_body.getBaseParticles())),
-          material_id_(*solid_particles_->getVariableByName<int>("MaterialID")),
-          pos0_(solid_particles_->pos0_)
-    {
-        solid_particles_->registerVariable(active_strain_, "ActiveStrain");
-    };
-    virtual void update(size_t index_i, Real dt = 0.0)
+    explicit FishMaterialInitialization(SolidBody &solid_body)
+        : MaterialIdInitialization(solid_body){};
+
+    void update(size_t index_i, Real dt = 0.0)
     {
         Real x = pos0_[index_i][0] - cx;
         Real y = pos0_[index_i][1];
-        Real y1(0);
 
-        y1 = a1 * pow(x, 0 + 1) + a2 * pow(x, 1 + 1) + a3 * pow(x, 2 + 1) + a4 * pow(x, 3 + 1) + a5 * pow(x, 4 + 1);
-
-        Real Am = 0.12;
-        Real frequency = 4.0;
-        Real w = 2 * PI * frequency;
-        Real lamda = 3.0 * fish_length;
-        Real wave_number = 2 * PI / lamda;
-        Real hx = -(pow(x, 2) - pow(fish_length, 2)) / pow(fish_length, 2);
-        Real ta = 0.2;
-        Real st = 1 - exp(-GlobalStaticVariables::physical_time_ / ta);
-
-        active_strain_[index_i] = Matd::Zero();
-
+        Real y1 = a1 * pow(x, 0 + 1) + a2 * pow(x, 1 + 1) + a3 * pow(x, 2 + 1) + a4 * pow(x, 3 + 1) + a5 * pow(x, 4 + 1);
         if (x <= (fish_length - head_length) && y > (y1 - 0.004 + cy) && y > (cy + bone_thickness / 2))
         {
-            material_id_[index_i] = 0;
-            active_strain_[index_i](0, 0) = -Am * hx * st * pow(sin(w * GlobalStaticVariables::physical_time_ / 2 + wave_number * x / 2), 2);
+            material_id_[index_i] = 0; // region for muscle
         }
         else if (x <= (fish_length - head_length) && y < (-y1 + 0.004 + cy) && y < (cy - bone_thickness / 2))
         {
-            material_id_[index_i] = 0;
-            active_strain_[index_i](0, 0) = -Am * hx * st * pow(sin(w * GlobalStaticVariables::physical_time_ / 2 + wave_number * x / 2 + PI / 2), 2);
+            material_id_[index_i] = 0; // region for muscle
         }
         else if ((x > (fish_length - head_length)) || ((y < (cy + bone_thickness / 2)) && (y > (cy - bone_thickness / 2))))
         {
@@ -210,9 +190,44 @@ class MaterialId
             material_id_[index_i] = 1;
         }
     };
+};
+
+// imposing active strain to fish muscle
+class ImposingActiveStrain
+    : public solid_dynamics::ElasticDynamicsInitialCondition
+{
+  public:
+    explicit ImposingActiveStrain(SolidBody &solid_body)
+        : solid_dynamics::ElasticDynamicsInitialCondition(solid_body),
+          material_id_(*particles_->getVariableByName<int>("MaterialID")),
+          pos0_(*particles_->getVariableByName<Vecd>("InitialPosition"))
+    {
+        particles_->registerVariable(active_strain_, "ActiveStrain");
+    };
+    virtual void update(size_t index_i, Real dt = 0.0)
+    {
+        if (material_id_[index_i] == 0)
+        {
+            Real x = pos0_[index_i][0] - cx;
+            Real y = pos0_[index_i][1];
+
+            Real Am = 0.12;
+            Real frequency = 4.0;
+            Real w = 2 * Pi * frequency;
+            Real lambda = 3.0 * fish_length;
+            Real wave_number = 2 * Pi / lambda;
+            Real hx = -(pow(x, 2) - pow(fish_length, 2)) / pow(fish_length, 2);
+            Real start_time = 0.2;
+            Real current_time = GlobalStaticVariables::physical_time_;
+            Real strength = 1 - exp(-current_time / start_time);
+
+            Real phase_shift = y > (cy + bone_thickness / 2) ? 0 : Pi / 2;
+            active_strain_[index_i](0, 0) =
+                -Am * hx * strength * pow(sin(w * current_time / 2 + wave_number * x / 2 + phase_shift), 2);
+        }
+    };
 
   protected:
-    SolidParticles *solid_particles_;
     StdLargeVec<int> &material_id_;
     StdLargeVec<Vecd> &pos0_;
     StdLargeVec<Matd> active_strain_;

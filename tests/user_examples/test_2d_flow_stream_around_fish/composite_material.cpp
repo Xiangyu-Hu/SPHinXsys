@@ -1,7 +1,6 @@
 #include "composite_material.h"
+#include "base_local_dynamics.h"
 #include "base_particles.hpp"
-
-#include <numeric>
 
 namespace SPH
 {
@@ -16,6 +15,11 @@ void CompositeMaterial::initializeLocalParameters(BaseParticles *base_particles)
         composite_materials_[i]->initializeLocalParameters(base_particles);
     }
 }
+//=================================================================================================//
+MaterialIdInitialization::MaterialIdInitialization(SPHBody &sph_body)
+    : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
+      material_id_(*particles_->getVariableByName<int>("MaterialID")),
+      pos0_(*particles_->getVariableByName<Vecd>("InitialPosition")){};
 //=================================================================================================//
 Matd ActiveModelSolid::StressPK2(Matd &F, size_t particle_index_i)
 {
