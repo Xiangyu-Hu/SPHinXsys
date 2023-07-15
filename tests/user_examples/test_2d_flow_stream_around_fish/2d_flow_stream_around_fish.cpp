@@ -33,7 +33,6 @@ int main(int ac, char *av[])
     fish_body.defineAdaptationRatios(1.15, 2.0);
     fish_body.defineBodyLevelSetShape()->writeLevelSet(io_environment);
     fish_body.defineParticlesAndMaterial<ElasticSolidParticles, SolidBodyMaterial>();
-    // fish_body.defineParticlesAndMaterial<ElasticSolidParticles, ActiveMuscle<Muscle>>(rho0_s, bulk_modulus1, fiber_direction, sheet_direction, a01, b0);
     //  Using relaxed particle distribution if needed
     (!system.RunParticleRelaxation() && system.ReloadParticles())
         ? fish_body.generateParticles<ParticleGeneratorReload>(io_environment, fish_body.getName())
@@ -112,7 +111,6 @@ int main(int ac, char *av[])
     /** We can output a method-specific particle data for debug */
     water_block.addBodyStateForRecording<Real>("Pressure");
     water_block.addBodyStateForRecording<int>("SurfaceIndicator");
-    // fish_body.addBodyStateForRecording<int>("MaterailId");
     /** Time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     /** Time step size with considering sound wave speed. */
@@ -138,25 +136,25 @@ int main(int ac, char *av[])
     InteractionWithUpdate<CorrectedConfigurationInner> fish_body_corrected_configuration(fish_inner);
     /** Compute the force exerted on solid body due to fluid pressure and viscosity. */
     InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(fish_contact);
-    InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid>
-        fluid_force_on_solid_update(fish_contact, viscous_force_on_solid);
+    InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluidRiemann>
+        fluid_force_on_fish_update(fish_contact, viscous_force_on_solid);
     /** Compute the average velocity of the insert body. */
     solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(fish_body);
     //----------------------------------------------------------------------
     //	Algorithms of solid dynamics.
     //----------------------------------------------------------------------
-    SimpleDynamics<MaterialId> CompositematerialId(fish_body);
-
+    SimpleDynamics<TimeStepInitialization> fish_initialize_timestep(fish_body);
+    SimpleDynamics<MaterialId> composite_material_id(fish_body);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> fish_body_computing_time_step_size(fish_body);
     /** Stress relaxation for the inserted body. */
     Dynamics1Level<solid_dynamics::ActiveIntegration1stHalf> fish_body_stress_relaxation_first_half(fish_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> fish_body_stress_relaxation_second_half(fish_inner);
     /** Update norm .*/
     SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> fish_body_update_normal(fish_body);
-
+    fish_body.addBodyStateForRecording<Vecd>("NormalDirection");
     fish_body.addBodyStateForRecording<Real>("Density");
+    fish_body.addBodyStateForRecording<int>("MaterialID");
     fish_body.addBodyStateForRecording<Matd>("ActiveStrain");
-    fish_body.addBodyStateForRecording<int>("MaterailId");
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
@@ -165,7 +163,7 @@ int main(int ac, char *av[])
     RegressionTestTimeAverage<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>>
         write_total_viscous_force_on_insert_body(io_environment, viscous_force_on_solid, "TotalViscousForceOnSolid");
     RegressionTestTimeAverage<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>>
-        write_total_force_on_insert_body(io_environment, fluid_force_on_solid_update, "TotalForceOnSolid");
+        write_total_force_on_insert_body(io_environment, fluid_force_on_fish_update, "TotalForceOnSolid");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -178,7 +176,6 @@ int main(int ac, char *av[])
     fish_body_normal_direction.exec();
     /** computing linear reproducing configuration for the insert body. */
     fish_body_corrected_configuration.exec();
-    // CompositematerialID.parallel_exec();
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
@@ -224,8 +221,9 @@ int main(int ac, char *av[])
                 Real dt = SMIN(get_fluid_time_step_size.exec(), Dt - relaxation_time);
                 /** Fluid pressure relaxation, first half. */
                 pressure_relaxation.exec(dt);
-                /** FSI for pressure force. */
-                fluid_force_on_solid_update.exec();
+                /** FSI for fluid force on solid body. */
+                fish_initialize_timestep.exec();
+                fluid_force_on_fish_update.exec();
                 /** Fluid pressure relaxation, second half. */
                 density_relaxation.exec(dt);
 
@@ -236,7 +234,7 @@ int main(int ac, char *av[])
                 while (dt_s_sum < dt)
                 {
                     Real dt_s = SMIN(fish_body_computing_time_step_size.exec(), dt - dt_s_sum);
-                    CompositematerialId.exec(dt_s);
+                    composite_material_id.exec(dt_s);
                     fish_body_stress_relaxation_first_half.exec(dt_s);
                     fish_body_stress_relaxation_second_half.exec(dt_s);
                     dt_s_sum += dt_s;

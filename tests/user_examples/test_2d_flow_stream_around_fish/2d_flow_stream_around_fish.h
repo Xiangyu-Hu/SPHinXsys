@@ -167,7 +167,7 @@ class MaterialId
     explicit MaterialId(SolidBody &solid_body)
         : solid_dynamics::ElasticDynamicsInitialCondition(solid_body),
           solid_particles_(dynamic_cast<SolidParticles *>(&solid_body.getBaseParticles())),
-          material_id_(*solid_particles_->getVariableByName<int>("MaterailId")),
+          material_id_(*solid_particles_->getVariableByName<int>("MaterialID")),
           pos0_(solid_particles_->pos0_)
     {
         solid_particles_->registerVariable(active_strain_, "ActiveStrain");

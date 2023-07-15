@@ -11,10 +11,8 @@ namespace SPH
 class CompositeMaterial : public ElasticSolid
 {
   protected:
-    UniquePtrsKeeper<ElasticSolid> composite_ptr_keeper_;
+    UniquePtrsKeeper<ElasticSolid> composite_ptrs_keeper_;
     StdVec<ElasticSolid *> composite_materials_;
-    /** initialize the local properties, fiber and sheet direction. */
-    std::vector<Real> sound_speed_;
 
   public:
     StdLargeVec<int> material_id_;
@@ -49,10 +47,14 @@ class CompositeMaterial : public ElasticSolid
 
     virtual std::string getRelevantStressMeasureName() override { return "PK2"; };
 
-    template <class AddMaterial, typename... ConstructorArgs>
-    void add(ConstructorArgs &&...args)
+    template <class ElasticSolidType, typename... Args>
+    void add(Args &&...args)
     {
-        composite_materials_.push_back(composite_ptr_keeper_.createPtr<AddMaterial>(std::forward<ConstructorArgs>(args)...));
+        ElasticSolid *added_material =
+            composite_ptrs_keeper_.createPtr<ElasticSolidType>(std::forward<Args>(args)...);
+        composite_materials_.push_back(added_material);
+        c0_ = SMAX(c0_, added_material->ReferenceSoundSpeed());
+        setContactStiffness(c0_);
     };
 };
 

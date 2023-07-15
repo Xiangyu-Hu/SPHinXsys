@@ -10,7 +10,7 @@ namespace SPH
 		ActiveIntegration1stHalf::
 			ActiveIntegration1stHalf(BaseInnerRelation &inner_relation)
 			: Integration1stHalfPK2(inner_relation), active_strain_(*particles_->getVariableByName<Matd>("ActiveStrain"))
-			, material_id_(*particles_->getVariableByName<int>("MaterailId"))
+			, material_id_(*particles_->getVariableByName<int>("MaterialID"))
 		{
 			particles_->registerVariable(F_0, "ActiveTensor");
 			particles_->registerVariable(E_e, "ElasticStrain");
