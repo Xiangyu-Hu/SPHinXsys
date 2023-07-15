@@ -143,7 +143,6 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Algorithms of solid dynamics.
     //----------------------------------------------------------------------
-    SimpleDynamics<TimeStepInitialization> fish_initialize_timestep(fish_body);
     SimpleDynamics<MaterialId> composite_material_id(fish_body);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> fish_body_computing_time_step_size(fish_body);
     /** Stress relaxation for the inserted body. */
@@ -222,7 +221,6 @@ int main(int ac, char *av[])
                 /** Fluid pressure relaxation, first half. */
                 pressure_relaxation.exec(dt);
                 /** FSI for fluid force on solid body. */
-                fish_initialize_timestep.exec();
                 fluid_force_on_fish_update.exec();
                 /** Fluid pressure relaxation, second half. */
                 density_relaxation.exec(dt);
