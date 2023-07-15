@@ -1,4 +1,8 @@
-
+/**
+ * @file    2d_flow_stream_around_fish.cpp
+ * @brief   fish swimming driven by active muscles
+ * @author  Yaru Ren and Xiangyu Hu
+ */
 #include "2d_flow_stream_around_fish.h"
 #include "active_model.h"
 #include "sphinxsys.h"
