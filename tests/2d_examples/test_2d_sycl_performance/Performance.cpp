@@ -102,12 +102,14 @@ int main(int ac, char *av[])
     SharedPtr<Gravity> gravity_ptr = makeSharedDevice<Gravity>(Vecd(0.0, -gravity_g));
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall, ParallelSYCLDevicePolicy> fluid_pressure_relaxation_sycl(water_block_complex_sycl);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall, ParallelSYCLDevicePolicy> fluid_density_relaxation_sycl(water_block_complex);
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex, ParallelSYCLDevicePolicy> fluid_density_by_summation_sycl(water_block_complex_sycl);
 	SimpleDynamics<TimeStepInitialization, ParallelSYCLDevicePolicy> fluid_step_initialization_sycl(water_block_sycl, gravity_ptr);
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize, ParallelSYCLDevicePolicy> fluid_advection_time_step_sycl(water_block_sycl, U_max);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize, ParallelSYCLDevicePolicy> fluid_acoustic_time_step_sycl(water_block_sycl);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> fluid_pressure_relaxation(water_block_complex);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_block_complex);
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> fluid_density_by_summation(water_block_complex);
     SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block, gravity_ptr);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_max);
@@ -149,6 +151,7 @@ int main(int ac, char *av[])
                   fluid_density_by_summation.exec();
                   Real acoustic_dt = fluid_acoustic_time_step.exec();
                   fluid_pressure_relaxation.exec();
+                  fluid_density_relaxation.exec();
               },
               [&](){
                   fluid_step_initialization_sycl.exec();
@@ -156,6 +159,7 @@ int main(int ac, char *av[])
                   fluid_density_by_summation_sycl.exec();
                   Real acoustic_dt = fluid_acoustic_time_step_sycl.exec();
                   fluid_pressure_relaxation_sycl.exec();
+                  fluid_density_relaxation_sycl.exec();
               },
               "all methods", iterations);
 
@@ -183,6 +187,11 @@ int main(int ac, char *av[])
     benchmark([&](){ fluid_pressure_relaxation.exec(); },
               [&](){ fluid_pressure_relaxation_sycl.exec(); },
               "fluid_pressure_relaxation", iterations);
+
+    std::cout << "------------" << std::endl;
+    benchmark([&](){ fluid_density_relaxation.exec(); },
+              [&](){ fluid_density_relaxation_sycl.exec(); },
+              "fluid_density_relaxation", iterations);
 
 	return 0;
 };

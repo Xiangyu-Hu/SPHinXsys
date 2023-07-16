@@ -388,6 +388,8 @@ class BaseIntegrationKernel {
         rho_(particles->getDeviceVariableByName<DeviceReal>("Density")),
         p_(particles->registerDeviceVariable<DeviceReal>("Pressure", particles->total_real_particles_)),
         drho_dt_(particles->registerDeviceVariable<DeviceReal>("DensityChangeRate", particles->total_real_particles_)),
+        Vol_(particles->getDeviceVariableByName<DeviceReal>("Volume")),
+        mass_(particles->getDeviceVariableByName<DeviceReal>("Mass")),
         pos_(particles->getDeviceVariableByName<DeviceVecd>("Position")),
         vel_(particles->getDeviceVariableByName<DeviceVecd>("Velocity")),
         acc_(particles->getDeviceVariableByName<DeviceVecd>("Acceleration")),
@@ -395,7 +397,7 @@ class BaseIntegrationKernel {
         
   protected:
     FluidT fluid_;
-    DeviceReal *rho_, *p_, *drho_dt_;
+    DeviceReal *rho_, *p_, *drho_dt_, *Vol_, *mass_;
     DeviceVecd *pos_, *vel_, *acc_, *acc_prior_;
 };
 
@@ -503,6 +505,66 @@ using Integration1stHalf = BaseIntegration1stHalf<NoRiemannSolver>;
 using Integration1stHalfRiemann = BaseIntegration1stHalf<AcousticRiemannSolver>;
 using Integration1stHalfDissipativeRiemann = BaseIntegration1stHalf<DissipativeRiemannSolver>;
 
+
+template<class RiemannSolverType>
+class BaseIntegration2ndHalfKernel : public BaseIntegrationKernel<WeaklyCompressibleFluid> {
+  public:
+    BaseIntegration2ndHalfKernel(BaseParticles* particles, NeighborhoodDevice* inner_configuration,
+                                 const RiemannSolverType& riemannSolver) :
+            BaseIntegrationKernel<WeaklyCompressibleFluid>(particles),
+            riemann_solver_(this->fluid_, this->fluid_),
+            inner_configuration_(inner_configuration){}
+
+    template<class VecType>
+    static inline void initialization(size_t index_i, Real dt, VecType* pos, VecType *vel) {
+        pos[index_i] += vel[index_i] * dt * 0.5;
+    }
+
+    template<class RealType>
+    static void update(size_t index_i, Real dt, RealType* rho, RealType* drho_dt, RealType* Vol, RealType* mass) {
+        rho[index_i] += drho_dt[index_i] * dt * 0.5;
+        Vol[index_i] = mass[index_i] / rho[index_i];
+    }
+
+    template<class RealType, class VecType, class NeighborhoodType, class RiemannSolver, class DotFunc>
+    static void interaction(size_t index_i, Real dt, RealType *rho, RealType *drho_dt, VecType* vel, VecType* acc,
+                            NeighborhoodType* inner_configuration, RiemannSolver&& riemann_solver, DotFunc&& dot) {
+        RealType density_change_rate(0);
+        auto p_dissipation = VecdZero<VecType>();
+        const auto &inner_neighborhood = inner_configuration[index_i];
+        for (size_t n = 0; n != inner_neighborhood.current_size(); ++n)
+        {
+            const auto &index_j = inner_neighborhood.j_[n];
+            const auto &e_ij = inner_neighborhood.e_ij_[n];
+            const auto &dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
+
+            const RealType u_jump = dot(vel[index_i] - vel[index_j], e_ij);
+            density_change_rate += u_jump * dW_ijV_j;
+            p_dissipation += static_cast<RealType>(riemann_solver.DissipativePJump(u_jump)) * dW_ijV_j * e_ij;
+        }
+        drho_dt[index_i] += density_change_rate * rho[index_i];
+        acc[index_i] = p_dissipation / rho[index_i];
+    }
+
+    void initialization(size_t index_i, Real dt = 0.0) {
+        initialization(index_i, dt, pos_, vel_);
+    }
+
+    void update(size_t index_i, Real dt = 0.0) {
+        update(index_i, dt, rho_, drho_dt_, Vol_, mass_);
+    }
+
+    void interaction(size_t index_i, Real dt = 0.0) {
+        interaction(index_i, dt, rho_, drho_dt_, vel_, acc_, inner_configuration_, riemann_solver_,
+                    [](const DeviceVecd& v1, const DeviceVecd& v2) { return sycl::dot(v1, v2); });
+    }
+
+  protected:
+    RiemannSolverType riemann_solver_;
+    NeighborhoodDevice* inner_configuration_;
+};
+
+
 /**
  * @class BaseIntegration2ndHalf
  * @brief  Template density relaxation scheme with different Riemann solver
@@ -519,6 +581,8 @@ class BaseIntegration2ndHalf : public BaseIntegration
     inline void interaction(size_t index_i, Real dt = 0.0);
 
     void update(size_t index_i, Real dt = 0.0);
+
+    using DeviceKernel = BaseIntegration2ndHalfKernel<RiemannSolverType>;
 
   protected:
     StdLargeVec<Real> &Vol_, &mass_;
