@@ -174,12 +174,12 @@ namespace SPH
 									 / F_gaussian_point.determinant();
 
 				/** Impose modeling assumptions. */
-                cauchy_stress(0, 1) *= shear_correction_factor_;
+               /* cauchy_stress(0, 1) *= shear_correction_factor_;
                 cauchy_stress(1, 0) *= shear_correction_factor_;
                 cauchy_stress(0, 2) *= shear_correction_factor_;
 				cauchy_stress(2, 0) *= shear_correction_factor_;
                 cauchy_stress(1, 2) *= shear_correction_factor_;
-                cauchy_stress(2, 1) *= shear_correction_factor_;
+                cauchy_stress(2, 1) *= shear_correction_factor_;*/
 
                 cauchy_stress(Dimensions - 1, Dimensions - 1) = 0.0;
                 cauchy_stress(Dimensions - 2, Dimensions - 2) = 0.0;
