@@ -265,7 +265,7 @@ namespace SPH
     
 			Vecd local_dpseudo_n_d2t = transformation_matrix_[index_i] * dpseudo_n_d2t_[index_i];
             Vecd local_dpseudo_b_n_d2t = transformation_matrix_[index_i] * dpseudo_b_n_d2t_[index_i];
-            dangular_b_vel_dt_[index_i] = getRotationFromPseudoNormalForSmallDeformation_b(local_dpseudo_b_n_d2t, local_dpseudo_n_d2t, rotation_b_[index_i], angular_b_vel_[index_i], dt);
+            dangular_b_vel_dt_[index_i] = getRotationFromPseudoNormalForSmallDeformation_b(Vec3d(local_dpseudo_b_n_d2t), Vec3d(local_dpseudo_n_d2t), Vec3d(rotation_b_[index_i]), Vec3d(angular_b_vel_[index_i]), dt);
             dangular_vel_dt_[index_i] = getRotationFromPseudoNormalForSmallDeformation(local_dpseudo_b_n_d2t, local_dpseudo_n_d2t, rotation_[index_i], angular_vel_[index_i], dt);
 			};
 
