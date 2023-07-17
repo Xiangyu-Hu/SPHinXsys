@@ -6,20 +6,7 @@ namespace SPH
 	namespace slender_structure_dynamics
 	{
 		//=================================================================================================//
-		Vec2d getVectorAfterThinStructureRotation(const Vec2d &initial_vector, const Vec2d &rotation_angles)
-		{
-			/**The rotation matrix. */
-			Real sin_angle = sin(rotation_angles[0]);
-			Real cos_angle = cos(rotation_angles[0]);
-			
-			Mat2d rotation_matrix{
-								  {cos_angle, sin_angle}, 	// First row
-								  {-sin_angle,cos_angle},	//Second row
-			};
-
-			return rotation_matrix * initial_vector;
-		}
-		//=================================================================================================//
+	
 		Vec3d getVectorAfterThinStructureRotation(const Vec3d &initial_vector, const Vec3d &rotation_angles)
 		{
                         Real sin_angle_x = sin(rotation_angles[0]);
@@ -44,11 +31,7 @@ namespace SPH
 
                         return rotation_matrix * initial_vector;
 		}
-		//=================================================================================================//
-		Vec2d getVectorChangeRateAfterThinStructureRotation(const Vec2d &initial_vector, const Vec2d &rotation_angles, const Vec2d &angular_vel)
-		{
-			return Vec2d(cos(rotation_angles[0]) * angular_vel[0], -sin(rotation_angles[0]) * angular_vel[0]);
-		}
+	
 		//=================================================================================================//
 		Vec3d getVectorChangeRateAfterThinStructureRotation(const Vec3d &initial_vector, const Vec3d &rotation_angles, const Vec3d &angular_vel)
 		{
@@ -65,17 +48,7 @@ namespace SPH
 			return Vec3d(dpseudo_n_dt_0, dpseudo_n_dt_1, dpseudo_n_dt_2);
 		}
 		//=================================================================================================//
-		Vec2d getRotationFromPseudoNormalForFiniteDeformation(const Vec2d &dpseudo_n_d2t, const Vec2d &rotation, const Vec2d &angular_vel, Real dt)
-        {
-			Real cos_rotation_0 = cos(rotation[0]);
-			Real sin_rotation_0 = sin(rotation[0]);
-
-			Real angle_vel_dt_0 = cos_rotation_0 * (dpseudo_n_d2t[0] + sin_rotation_0 * angular_vel[0] * angular_vel[0]) 
-								  - sin_rotation_0 * (dpseudo_n_d2t[1] + cos_rotation_0 * angular_vel[0] * angular_vel[0]);
-
-            return Vec2d(angle_vel_dt_0, 0.0);
-		}
-		//=================================================================================================//
+	
 		Vec3d getRotationFromPseudoNormalForFiniteDeformation(const Vec3d &dpseudo_n_d2t, const Vec3d &rotation, const Vec3d &angular_vel, Real dt)
 		{
 			Real sin_rotation_0 = sin(rotation[0]);
@@ -107,11 +80,7 @@ namespace SPH
 			return Vec3d(angle_vel_dt_0, angle_vel_dt_1, 0.0);
 		}
 		//=================================================================================================//
-		Vec2d getRotationFromPseudoNormalForSmallDeformation(const Vec2d &dpseudo_n_d2t, const Vec2d &rotation, const Vec2d &angular_vel, Real dt)
-		{
-			return Vec2d(dpseudo_n_d2t[0], 0);
-		}
-		//=================================================================================================//
+		
         Vec3d getRotationFromPseudoNormalForSmallDeformation(const Vec3d &dpseudo_b_n_d2t, const Vec3d &dpseudo_n_d2t, const Vec3d &rotation, const Vec3d &angular_vel, Real dt)
 		{
             return Vec3d(0.0, dpseudo_n_d2t[0], 0.0);
@@ -124,11 +93,7 @@ namespace SPH
         }
                 //=================================================================================================//
 
-		Vec2d getNormalFromDeformationGradientTensor(const Mat2d &F)
-		{
-			return Vec2d(-F.col(0)[1], F.col(0)[0]).normalized();
-		}
-		//=================================================================================================//
+	
 		Vec3d getNormalFromDeformationGradientTensor(const Mat3d &F)
 		{
 			return F.col(0).cross(F.col(1)).normalized();
@@ -205,14 +170,7 @@ namespace SPH
 			return getWENOStateWithStencilPoints(v1, v2, v3, v4);
 		}
 		//=================================================================================================//
-		Vec2d getRotationJump(const Vec2d &pseudo_n_jump, const Mat2d &transformation_matrix)
-		{
-			Vec2d local_rotation_jump =  Vec2d::Zero();
-			Vec2d local_pseuodo_n_jump = transformation_matrix * pseudo_n_jump;
-			local_rotation_jump[0] = local_pseuodo_n_jump[0];
-			return transformation_matrix.transpose() * local_rotation_jump;
-		}
-		//=================================================================================================//
+		
 		Vec3d getRotationJump(const Vec3d &pseudo_n_jump, const Mat3d &transformation_matrix)
 		{
 			Vec3d local_rotation_jump = Vec3d::Zero();
@@ -222,13 +180,7 @@ namespace SPH
 			return transformation_matrix.transpose() * local_rotation_jump;
 		}
 		//=================================================================================================//
-		Mat2d getCorrectedAlmansiStrain(const Mat2d &current_local_almansi_strain, const Real &nu_)
-		{
-			Mat2d corrected_almansi_strain = current_local_almansi_strain;
-			corrected_almansi_strain(1,1) = -nu_ * current_local_almansi_strain(0,0) / (1.0 - nu_);
-			return corrected_almansi_strain;
-		}
-		//=================================================================================================//
+	
 		Mat3d getCorrectedAlmansiStrain(const Mat3d &current_local_almansi_strain, const Real &nu_)
 		{
 			Mat3d corrected_almansi_strain = current_local_almansi_strain;
@@ -237,15 +189,7 @@ namespace SPH
 			return corrected_almansi_strain;
 		}
 		//=================================================================================================//
-		Mat2d getCorrectionMatrix(const Mat2d &local_deformation_part_one)
-		{
-			Real one_over_local_deformation = 1.0 / local_deformation_part_one(0,0);
-			return Mat2d{
-							{one_over_local_deformation, 0},
-							{0,0},
-						};
-		}
-		//=================================================================================================//
+
 		Mat3d getCorrectionMatrix(const Mat3d &local_deformation_part_one)
 		{
 			Mat3d correction_matrix = Mat3d::Zero();
