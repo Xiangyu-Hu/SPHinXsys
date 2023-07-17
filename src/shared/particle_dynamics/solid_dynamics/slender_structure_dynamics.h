@@ -110,7 +110,7 @@ namespace SPH
 				Matd local_configuration =
 					transformation_matrix_[index_i] * global_configuration * transformation_matrix_[index_i].transpose();
 				/** correction matrix is obtained from local configuration. */
-				B_[index_i] = getCorrectionMatrix_beam(local_configuration);
+				//B_[index_i] = getCorrectionMatrix_beam(local_configuration);
 			};
 
 		protected:
