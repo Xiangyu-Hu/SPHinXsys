@@ -225,7 +225,7 @@ namespace SPH
 				{
 					size_t index_j = inner_neighborhood.j_[n];
 
-				if (hourglass_control_)
+				/*if (hourglass_control_)
                 {
                     Vecd e_ij = inner_neighborhood.e_ij_[n];
                     Real r_ij = inner_neighborhood.r_ij_[n];
@@ -253,7 +253,7 @@ namespace SPH
                     Vecd rotation_b_jump = getRotationJump(pseudo_b_n_jump, transformation_matrix_[index_i]);
                     pseudo_b_normal_acceleration += hourglass_control_factor_ * weight * G0_ * rotation_b_jump * dim_inv_r_ij *
                                                     inner_neighborhood.dW_ijV_j_[n] * pow(thickness_[index_i], 4);
-                }
+                }*/
                 acceleration += (global_stress_i + global_stress_[index_j]) * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
                 pseudo_normal_acceleration += (global_moment_i + global_moment_[index_j]) * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
                 pseudo_b_normal_acceleration += (global_b_moment_i + global_b_moment_[index_j]) * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
