@@ -7,7 +7,8 @@
  */
 #include "sphinxsys.h"
 #include <gtest/gtest.h>
-
+#include "slender_structure_dynamics.h"
+#include "slender_structure_math.h"
 using namespace SPH;
 
 /**
