@@ -8,8 +8,8 @@
 
 namespace SPH
 {
-/**@class CompositeMaterial*/
-class CompositeMaterial : public ElasticSolid
+/**@class CompositeSolid*/
+class CompositeSolid : public ElasticSolid
 {
   protected:
     UniquePtrsKeeper<ElasticSolid> composite_ptrs_keeper_;
@@ -18,11 +18,11 @@ class CompositeMaterial : public ElasticSolid
   public:
     StdLargeVec<int> material_id_;
 
-    explicit CompositeMaterial(Real rho0) : ElasticSolid(rho0)
+    explicit CompositeSolid(Real rho0) : ElasticSolid(rho0)
     {
-        material_type_name_ = "CompositeMaterial";
+        material_type_name_ = "CompositeSolid";
     };
-    virtual ~CompositeMaterial(){};
+    virtual ~CompositeSolid(){};
 
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
 

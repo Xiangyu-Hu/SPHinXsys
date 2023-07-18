@@ -5,7 +5,7 @@
 namespace SPH
 {
 //=================================================================================================//
-void CompositeMaterial::initializeLocalParameters(BaseParticles *base_particles)
+void CompositeSolid::initializeLocalParameters(BaseParticles *base_particles)
 {
     ElasticSolid::initializeLocalParameters(base_particles);
     base_particles->registerVariable(material_id_, "MaterialID");

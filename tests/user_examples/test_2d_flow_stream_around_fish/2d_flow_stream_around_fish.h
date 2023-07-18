@@ -147,10 +147,10 @@ class TimeDependentAcceleration : public Gravity
 };
 
 // Material ID
-class SolidBodyMaterial : public CompositeMaterial
+class FishBodyComposite : public CompositeSolid
 {
   public:
-    SolidBodyMaterial() : CompositeMaterial(rho0_s)
+    FishBodyComposite() : CompositeSolid(rho0_s)
     {
         add<ActiveModelSolid>(rho0_s, Youngs_modulus1, poisson);
         add<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus2, poisson);
