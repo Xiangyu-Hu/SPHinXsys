@@ -7,10 +7,8 @@
  */
 #include "sphinxsys.h"
 #include <gtest/gtest.h>
-#include "slender_structure_dynamics.h"
-#include "slender_structure_math.h"
-using namespace SPH;
 
+using namespace SPH;
 
 /**
  * @brief Basic geometry parameters and numerical setup.
@@ -20,7 +18,7 @@ Real PH = 10.0;									  /** Width of the square plate. */
 Real PT = 1.0;                                                                    /** Thickness of the square plate. */
 Real PW = 1.0;                                                                    /** Thickness of the square plate. */
 Vec3d n_0 = Vec3d(0.0, 0.0, 1.0);                                                 /** Pseudo-normal. */
-Vec3d b_n_0 = Vec3d(0.0, 1.0, 0.0);                                                 /** Pseudo-normal. */
+Vec3d b_n_0 = Vec3d(0.0, 1.0, 0.0);                                                 /** Pseudo-binormal. */
 int particle_number = 40;						  /** Particle number in the direction of the length */
 Real resolution_ref = PL / (Real)particle_number; /** Initial reference particle spacing. */
 int BWD = 1;									  /** Width of the boundary layer measured by number of particles. */

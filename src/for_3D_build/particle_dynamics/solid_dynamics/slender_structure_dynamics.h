@@ -57,9 +57,10 @@ namespace SPH
                     virtual ~BarDynamicsInitialCondition(){};
 
                   protected:
-                    StdLargeVec<Vecd> &b_n0_, &b_n_, &pseudo_b_n_;
+                  
                     StdLargeVec<Vecd> &n0_, &n_, &pseudo_n_, &pos0_;
                     StdLargeVec<Matd> &transformation_matrix_;
+                    StdLargeVec<Vecd> &b_n0_, &b_n_, &pseudo_b_n_;
                 };
 
 		/**
@@ -107,10 +108,15 @@ namespace SPH
 					Vecd r_ji = -inner_neighborhood.r_ij_[n] * inner_neighborhood.e_ij_[n];
 					global_configuration += r_ji * gradW_ijV_j.transpose();
 				}
-				Matd local_configuration =
-					transformation_matrix_[index_i] * global_configuration * transformation_matrix_[index_i].transpose();
+			/*	Matd local_configuration =
+					transformation_matrix_[index_i] * global_configuration * transformation_matrix_[index_i].transpose();*/
 				/** correction matrix is obtained from local configuration. */
-				B_[index_i] = getCorrectionMatrix_beam(local_configuration);
+				//B_[index_i] = getCorrectionMatrix_beam(local_configuration);
+
+				//Matd local_configuration =
+    //                  transformation_matrix_[index_i] * global_configuration * transformation_matrix_[index_i].transpose();
+    //            /** correction matrix is obtained from local configuration. */
+    //              B_[index_i] = getCorrectionMatrix(local_configuration);
 			};
 
 		protected:
@@ -220,7 +226,7 @@ namespace SPH
 				{
 					size_t index_j = inner_neighborhood.j_[n];
 
-				if (hourglass_control_)
+				/*if (hourglass_control_)
                 {
                     Vecd e_ij = inner_neighborhood.e_ij_[n];
                     Real r_ij = inner_neighborhood.r_ij_[n];
@@ -248,7 +254,7 @@ namespace SPH
                     Vecd rotation_b_jump = getRotationJump(pseudo_b_n_jump, transformation_matrix_[index_i]);
                     pseudo_b_normal_acceleration += hourglass_control_factor_ * weight * G0_ * rotation_b_jump * dim_inv_r_ij *
                                                     inner_neighborhood.dW_ijV_j_[n] * pow(thickness_[index_i], 4);
-                }
+                }*/
                 acceleration += (global_stress_i + global_stress_[index_j]) * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
                 pseudo_normal_acceleration += (global_moment_i + global_moment_[index_j]) * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
                 pseudo_b_normal_acceleration += (global_b_moment_i + global_b_moment_[index_j]) * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
@@ -258,10 +264,12 @@ namespace SPH
             dpseudo_n_d2t_[index_i] = pseudo_normal_acceleration * inv_rho0_ * 12.0 / pow(thickness_[index_i], 4);
             dpseudo_b_n_d2t_[index_i] = -pseudo_b_normal_acceleration * inv_rho0_ * 12.0 / pow(thickness_[index_i], 4);
     
-			Vecd local_dpseudo_n_d2t = transformation_matrix_[index_i] * dpseudo_n_d2t_[index_i];
-            Vecd local_dpseudo_b_n_d2t = transformation_matrix_[index_i] * dpseudo_b_n_d2t_[index_i];
-            dangular_b_vel_dt_[index_i] = getRotationFromPseudoNormalForSmallDeformation_b(local_dpseudo_b_n_d2t, local_dpseudo_n_d2t, rotation_b_[index_i], angular_b_vel_[index_i], dt);
-            dangular_vel_dt_[index_i] = getRotationFromPseudoNormalForSmallDeformation(local_dpseudo_b_n_d2t, local_dpseudo_n_d2t, rotation_[index_i], angular_vel_[index_i], dt);
+			/*Vecd local_dpseudo_n_d2t = transformation_matrix_[index_i] * dpseudo_n_d2t_[index_i];
+            Vecd local_dpseudo_b_n_d2t = transformation_matrix_[index_i] * dpseudo_b_n_d2t_[index_i];*/
+                        dangular_b_vel_dt_[index_i] = Vecd::Zero();//Vec3d(0.0, 0.0, local_dpseudo_b_n_d2t[0]);
+                        
+                        //getRotationFromPseudoNormalForSmallDeformation_b(Vec3d(local_dpseudo_b_n_d2t), Vec3d(local_dpseudo_n_d2t), Vec3d(rotation_b_[index_i]), Vec3d(angular_b_vel_[index_i]), dt);
+                        dangular_vel_dt_[index_i] = Vecd::Zero(); // Vec3d(0.0, local_dpseudo_n_d2t[0], 0.0); // getRotationFromPseudoNormalForSmallDeformation(Vec3d(local_dpseudo_b_n_d2t), Vec3d(local_dpseudo_n_d2t), Vec3d(rotation_[index_i]), Vec3d(angular_vel_[index_i]), dt);
 			};
 
 			void update(size_t index_i, Real dt = 0.0);
@@ -271,8 +279,6 @@ namespace SPH
 			StdLargeVec<Matd> &global_stress_, &global_moment_, &mid_surface_cauchy_stress_, &numerical_damping_scaling_;
 			StdLargeVec<Vecd> &global_shear_stress_, &n_;
 
-			StdLargeVec<Matd> &global_b_moment_, &global_b_stress_;
-            StdLargeVec<Vecd> &b_n_, &global_b_shear_stress_;
 			Real rho0_, inv_rho0_;
 			Real smoothing_length_, E0_, G0_, nu_, hourglass_control_factor_;
 			bool hourglass_control_;
@@ -294,9 +300,14 @@ namespace SPH
 
  
 			int number_of_gaussian_points_;
+         
+
+            StdLargeVec<Matd> &global_b_stress_, &global_b_moment_;
+			StdLargeVec<Vecd> &global_b_shear_stress_;
+            StdLargeVec<Vecd> &b_n_;
             StdVec<Real> gaussian_point_x;
             StdVec<Real> gaussian_point_y;
-			StdVec<Real> gaussian_weight_;
+            StdVec<Real> gaussian_weight_;
 		};
 
 		/**
@@ -373,8 +384,9 @@ namespace SPH
 			const int axis_; /**< the axis direction for bounding*/
 			StdLargeVec<Vecd> &pos_, &pos0_;
 			StdLargeVec<Vecd> &vel_, &acc_;
-            StdLargeVec<Vecd> &rotation_b_, &angular_b_vel_, &dangular_b_vel_dt_;
             StdLargeVec<Vecd> &rotation_, &angular_vel_, &dangular_vel_dt_;
+            StdLargeVec<Vecd> &rotation_b_, &angular_b_vel_, &dangular_b_vel_dt_;
+		
 		};
 
 		/**

@@ -400,4 +400,3 @@ void ShellParticles::initializeOtherVariables()
                 }
         }
         }
-		 

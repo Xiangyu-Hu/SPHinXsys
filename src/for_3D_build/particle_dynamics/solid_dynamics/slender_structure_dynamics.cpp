@@ -17,15 +17,15 @@ namespace SPH
               BarDataSimple(sph_body), CFL_(CFL),
               vel_(particles_->vel_), acc_(particles_->acc_),
               angular_vel_(particles_->angular_vel_), dangular_vel_dt_(particles_->dangular_vel_dt_),
-              angular_b_vel_(particles_->angular_b_vel_), dangular_b_vel_dt_(particles_->dangular_b_vel_dt_),
               acc_prior_(particles_->acc_prior_),
               thickness_(particles_->thickness_),
-              width_(particles_->thickness_),
               rho0_(particles_->elastic_solid_.ReferenceDensity()),
               E0_(particles_->elastic_solid_.YoungsModulus()),
               nu_(particles_->elastic_solid_.PoissonRatio()),
               c0_(particles_->elastic_solid_.ReferenceSoundSpeed()),
-              smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()) {}
+              smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()),
+              angular_b_vel_(particles_->angular_b_vel_), dangular_b_vel_dt_(particles_->dangular_b_vel_dt_),
+              width_(particles_->thickness_){}
 		//=================================================================================================//
 		Real BarAcousticTimeStepSize::reduce(size_t index_i, Real dt)
 		{
@@ -45,16 +45,16 @@ namespace SPH
 			BarCorrectConfiguration(BaseInnerRelation &inner_relation)
 			: LocalDynamics(inner_relation.getSPHBody()), BarDataInner(inner_relation),
 			  B_(particles_->B_),
-              n0_(particles_->n0_), transformation_matrix_(particles_->transformation_matrix_), b_n0_(particles_->b_n0_) {}
+              n0_(particles_->n0_), b_n0_(particles_->b_n0_), transformation_matrix_(particles_->transformation_matrix_) {}
 		//=================================================================================================//
 		BarDeformationGradientTensor::
 			BarDeformationGradientTensor(BaseInnerRelation &inner_relation)
 			: LocalDynamics(inner_relation.getSPHBody()), BarDataInner(inner_relation),
 			  pos_(particles_->pos_), pseudo_n_(particles_->pseudo_n_), n0_(particles_->n0_),
-              pseudo_b_n_(particles_->pseudo_n_), b_n0_(particles_->n0_),
               B_(particles_->B_), F_(particles_->F_), F_bending_(particles_->F_bending_), 
-			  F_b_bending_(particles_->F_b_bending_),
-			  transformation_matrix_(particles_->transformation_matrix_) {}
+			  transformation_matrix_(particles_->transformation_matrix_),
+              F_b_bending_(particles_->F_b_bending_),
+              pseudo_b_n_(particles_->pseudo_n_), b_n0_(particles_->n0_){ }
 		//=================================================================================================//
 		BaseBarRelaxation::BaseBarRelaxation(BaseInnerRelation &inner_relation)
 			: LocalDynamics(inner_relation.getSPHBody()), BarDataInner(inner_relation),
@@ -70,11 +70,11 @@ namespace SPH
 			  B_(particles_->B_), F_(particles_->F_), dF_dt_(particles_->dF_dt_),
 			  F_bending_(particles_->F_bending_), dF_bending_dt_(particles_->dF_bending_dt_),
 			  transformation_matrix_(particles_->transformation_matrix_),
-              F_b_bending_(particles_->F_b_bending_), dF_b_bending_dt_(particles_->dF_b_bending_dt_),
+              width_(particles_->width_),
               b_n0_(particles_->b_n0_), pseudo_b_n_(particles_->pseudo_b_n_),
               dpseudo_b_n_dt_(particles_->dpseudo_b_n_dt_), dpseudo_b_n_d2t_(particles_->dpseudo_b_n_d2t_),
               rotation_b_(particles_->rotation_b_), angular_b_vel_(particles_->angular_b_vel_),
-              dangular_b_vel_dt_(particles_->dangular_b_vel_dt_), width_(particles_->width_) {}
+              dangular_b_vel_dt_(particles_->dangular_b_vel_dt_), F_b_bending_(particles_->F_b_bending_), dF_b_bending_dt_(particles_->dF_b_bending_dt_){}
 		//=================================================================================================//
          BarStressRelaxationFirstHalf::
 			BarStressRelaxationFirstHalf(BaseInnerRelation &inner_relation,
@@ -150,7 +150,6 @@ namespace SPH
 			Matd resultant_stress = Matd::Zero();
 			Matd resultant_moment = Matd::Zero();
 			Vecd resultant_shear_stress = Vecd::Zero();
-            Matd resultant_b_stress = Matd::Zero();
             Matd resultant_b_moment = Matd::Zero();
             Vecd resultant_b_shear_stress = Vecd::Zero();
 
@@ -174,15 +173,15 @@ namespace SPH
 									 / F_gaussian_point.determinant();
 
 				/** Impose modeling assumptions. */
-                cauchy_stress(0, 1) *= shear_correction_factor_;
+               /* cauchy_stress(0, 1) *= shear_correction_factor_;
                 cauchy_stress(1, 0) *= shear_correction_factor_;
                 cauchy_stress(0, 2) *= shear_correction_factor_;
 				cauchy_stress(2, 0) *= shear_correction_factor_;
                 cauchy_stress(1, 2) *= shear_correction_factor_;
-                cauchy_stress(2, 1) *= shear_correction_factor_;
+                cauchy_stress(2, 1) *= shear_correction_factor_;*/
 
-                cauchy_stress(Dimensions - 1, Dimensions - 1) = 0.0;
-                cauchy_stress(Dimensions - 2, Dimensions - 2) = 0.0;
+      /*          cauchy_stress(Dimensions - 1, Dimensions - 1) = 0.0;
+                cauchy_stress(Dimensions - 2, Dimensions - 2) = 0.0;*/
 				if (i == 0)
 				{
 					mid_surface_cauchy_stress_[index_i] = cauchy_stress;
@@ -201,7 +200,7 @@ namespace SPH
 					0.5 * width_[index_i] * 0.5 * thickness_[index_i] * gaussian_weight_[i] * cauchy_stress.col(Dimensions - 2);
 
 
-                resultant_stress.row(Dimensions - 1) = Vecd::Zero().transpose();
+      /*          resultant_stress.row(Dimensions - 1) = Vecd::Zero().transpose();
 				resultant_stress.col(Dimensions - 1) = Vecd::Zero();
 
 				resultant_stress.row(Dimensions - 2) = Vecd::Zero().transpose();
@@ -214,7 +213,7 @@ namespace SPH
                 resultant_b_moment.col(Dimensions - 2) = Vecd::Zero();
                 
 				resultant_shear_stress[Dimensions - 2] = 0.0;
-				resultant_b_shear_stress[Dimensions - 1] = 0.0;
+				resultant_b_shear_stress[Dimensions - 1] = 0.0;*/
 			}
 
 			/** stress and moment in global coordinates for pair interaction */				
