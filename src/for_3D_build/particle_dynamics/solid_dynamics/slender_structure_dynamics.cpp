@@ -23,9 +23,9 @@ namespace SPH
               E0_(particles_->elastic_solid_.YoungsModulus()),
               nu_(particles_->elastic_solid_.PoissonRatio()),
               c0_(particles_->elastic_solid_.ReferenceSoundSpeed()),
-              smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()),
+              smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength())/*,
               angular_b_vel_(particles_->angular_b_vel_), dangular_b_vel_dt_(particles_->dangular_b_vel_dt_),
-              width_(particles_->thickness_){}
+              width_(particles_->thickness_)*/{}
 		//=================================================================================================//
 		Real BarAcousticTimeStepSize::reduce(size_t index_i, Real dt)
 		{
