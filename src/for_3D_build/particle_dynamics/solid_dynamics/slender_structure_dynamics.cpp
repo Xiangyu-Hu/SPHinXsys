@@ -53,8 +53,7 @@ namespace SPH
 			  pos_(particles_->pos_), pseudo_n_(particles_->pseudo_n_), n0_(particles_->n0_),
               B_(particles_->B_), F_(particles_->F_), F_bending_(particles_->F_bending_), 
 			  transformation_matrix_(particles_->transformation_matrix_),
-              F_b_bending_(particles_->F_b_bending_),
-              pseudo_b_n_(particles_->pseudo_n_), b_n0_(particles_->n0_){ }
+              pseudo_b_n_(particles_->pseudo_n_), b_n0_(particles_->n0_), F_b_bending_(particles_->F_b_bending_){ }
 		//=================================================================================================//
 		BaseBarRelaxation::BaseBarRelaxation(BaseInnerRelation &inner_relation)
 			: LocalDynamics(inner_relation.getSPHBody()), BarDataInner(inner_relation),
