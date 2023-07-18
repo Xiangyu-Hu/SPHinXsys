@@ -38,7 +38,8 @@ namespace SPH
 			Real time_setp_2 = smoothing_length_ * sqrt(rho0_ * (1.0 - nu_ * nu_) / E0_ /
 														(2.0 + (Pi * Pi / 12.0) * (1.0 - nu_) *
 																   (1.0 + 1.5 * pow(smoothing_length_ / thickness_[index_i], 2))));
-			return CFL_ * SMIN(time_setp_0, time_setp_1, time_setp_2);
+                        return CFL_ * time_setp_2;
+                        //return CFL_ * SMIN(time_setp_0, time_setp_1, time_setp_2);
 		}
 		//=================================================================================================//
 		BarCorrectConfiguration::
