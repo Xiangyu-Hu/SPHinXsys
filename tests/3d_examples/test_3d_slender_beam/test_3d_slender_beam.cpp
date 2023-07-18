@@ -67,7 +67,7 @@ public:
 				Real x = resolution_ref * i - BW + resolution_ref * 0.5;
                 Real y = 0.0;
                 Real z = 0.0;
-				initializePositionAndVolumetricMeasure(Vecd(x, 0.0, 0.0), resolution_ref );
+				initializePositionAndVolumetricMeasure(Vecd(x, y, z), resolution_ref );
 				initializeLineProperties(n_0,b_n_0, PT,PW);
 			
 		}
