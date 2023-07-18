@@ -98,6 +98,26 @@ class SurfaceParticleGenerator : public ParticleGenerator
 };
 
 /**
+ * @class LineParticleGenerator
+ * @brief Generate volumetric particles by initialize extra Line variables.
+ */
+class LineParticleGenerator : public ParticleGenerator
+{
+  public:
+    explicit LineParticleGenerator(SPHBody &sph_body);
+    virtual ~LineParticleGenerator(){};
+
+  protected:
+    StdLargeVec<Vecd> &n_;         /**< line normal */
+    StdLargeVec<Real> &thickness_; /**< line thickness */
+    StdLargeVec<Vecd> &b_n_;       /**< line binormal */
+    StdLargeVec<Real> &width_;     /**< line width */
+
+    /** Initialize line particle. */
+    virtual void initializeLineProperties(const Vecd &line_normal, const Vecd &line_binormal, Real thickness, Real width);
+};
+
+/**
  * @class ObserverParticleGenerator
  * @brief Generate particle directly from position-and-volume data.
  * @details The values of positions will be given in the derived class.
