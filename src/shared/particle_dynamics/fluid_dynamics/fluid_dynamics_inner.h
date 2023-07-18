@@ -160,7 +160,14 @@ class AngularConservativeViscousAccelerationInner : public BaseViscousAccelerati
 
 /**
  * @class TransportVelocityCorrectionInner
- * @brief transport velocity correction
+ * @brief The particle positions are corrected for more uniformed distribution
+ * when there is negative pressure in the flow.
+ * @details Note that the default coefficient is for using the dual time criteria method:
+ * Dual-criteria time stepping for weakly compressible smoothed particle hydrodynamics.
+ * C Zhang, M Rezavand, X Hu - Journal of Computational Physics,
+ * Volume 404, 1 March 2020, 109135.
+ * If single (acoustic) time step is used, the coefficient should be decrease
+ * to about 1/4 of the default value.
  */
 class TransportVelocityCorrectionInner : public LocalDynamics, public FluidDataInner
 {
