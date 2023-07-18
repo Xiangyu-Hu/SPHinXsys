@@ -1,8 +1,9 @@
 
 #include "2d_fish_and_bones.h"
+#include "active_model.h"
 #include "composite_material.h"
 #include "sphinxsys.h"
-#define PI 3.1415926
+
 using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
@@ -200,10 +201,8 @@ class ImposingActiveStrain
     explicit ImposingActiveStrain(SolidBody &solid_body)
         : solid_dynamics::ElasticDynamicsInitialCondition(solid_body),
           material_id_(*particles_->getVariableByName<int>("MaterialID")),
-          pos0_(*particles_->getVariableByName<Vecd>("InitialPosition"))
-    {
-        particles_->registerVariable(active_strain_, "ActiveStrain");
-    };
+          pos0_(*particles_->getVariableByName<Vecd>("InitialPosition")),
+          active_strain_(*particles_->getVariableByName<Matd>("ActiveStrain")){};
     virtual void update(size_t index_i, Real dt = 0.0)
     {
         if (material_id_[index_i] == 0)
@@ -230,5 +229,5 @@ class ImposingActiveStrain
   protected:
     StdLargeVec<int> &material_id_;
     StdLargeVec<Vecd> &pos0_;
-    StdLargeVec<Matd> active_strain_;
+    StdLargeVec<Matd> &active_strain_;
 };

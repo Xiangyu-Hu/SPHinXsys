@@ -72,6 +72,10 @@ class ElasticSolid : public Solid
 
     /** 2nd Piola-Kirchhoff stress through deformation. */
     virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) = 0;
+    virtual Matd StressPK1(Matd &deformation, size_t particle_index_i)
+    {
+        return deformation * StressPK2(deformation, particle_index_i);
+    };
     /** Cauchy stress through Eulerian Almansi strain tensor. */
     virtual Matd StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i) = 0;
     /** Numerical damping stress using right Cauchy tensor. */

@@ -6,22 +6,21 @@
 
 namespace SPH
 {
-	namespace solid_dynamics
-	{
-		/**
-		 * @class ActiveIntegration1stHalf
-		 */
-		class ActiveIntegration1stHalf : public Integration1stHalfPK2
-		{
-		public:
-			explicit ActiveIntegration1stHalf(BaseInnerRelation &inner_relation);
-			virtual ~ActiveIntegration1stHalf(){};
-			void initialization(size_t index_i, Real dt = 0.0);
+/**
+ * @class ActiveModelSolid
+ */
+class ActiveModelSolid : public SaintVenantKirchhoffSolid
+{
+    StdLargeVec<Matd> active_strain_;
 
-		protected:
-			StdLargeVec<Matd> &active_strain_,F_0, E_e;
-			StdLargeVec<int>& material_id_;
-		};
-	}
+  public:
+    explicit ActiveModelSolid(Real rho0, Real youngs_modulus, Real poisson_ratio);
+    virtual ~ActiveModelSolid(){};
+
+    /** initialize the local properties, fiber and sheet direction. */
+    virtual void initializeLocalParameters(BaseParticles *base_particles) override;
+    /** second Piola-Kirchhoff stress related with green-lagrangian deformation tensor */
+    virtual Matd StressPK1(Matd &deformation, size_t particle_index_i);
+};
 }
 #endif // ACTIVE_MODEL_H

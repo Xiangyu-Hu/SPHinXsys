@@ -73,22 +73,5 @@ class MaterialIdInitialization
     StdLargeVec<int> &material_id_;
     StdLargeVec<Vecd> &pos0_;
 };
-
-/**
- * @class ActiveModelSolid
- */
-class ActiveModelSolid : public SaintVenantKirchhoffSolid
-{
-  public:
-    explicit ActiveModelSolid(Real rho0, Real youngs_modulus, Real poisson_ratio)
-        : SaintVenantKirchhoffSolid(rho0, youngs_modulus, poisson_ratio)
-    {
-        material_type_name_ = "ActiveModelSolid";
-    };
-    virtual ~ActiveModelSolid(){};
-
-    /** second Piola-Kirchhoff stress related with green-lagrangian deformation tensor */
-    virtual Matd StressPK2(Matd &deformation, size_t particle_index_i);
-};
 } // namespace SPH
 #endif // COMPOSITE_MATERIAL_H

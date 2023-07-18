@@ -21,10 +21,5 @@ MaterialIdInitialization::MaterialIdInitialization(SPHBody &sph_body)
       material_id_(*particles_->getVariableByName<int>("MaterialID")),
       pos0_(*particles_->getVariableByName<Vecd>("InitialPosition")){};
 //=================================================================================================//
-Matd ActiveModelSolid::StressPK2(Matd &F, size_t particle_index_i)
-{
-    return lambda0_ * F.trace() * Matd::Identity() + 2.0 * G0_ * F;
-}
-//=================================================================================================//
 } // namespace SPH
   //=================================================================================================//
