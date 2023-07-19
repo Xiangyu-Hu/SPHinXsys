@@ -26,17 +26,22 @@ class CompositeSolid : public ElasticSolid
 
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
 
-    virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) override
+    virtual Matd StressPK2(Matd &deformation, size_t index_i) override
     {
-        return composite_materials_[material_id_[particle_index_i]]->StressPK2(deformation, particle_index_i);
+        return composite_materials_[material_id_[index_i]]->StressPK2(deformation, index_i);
     };
 
-    Real CompositeDensity(size_t particle_index_i)
+    virtual Matd StressPK1(Matd &deformation, size_t index_i) override
     {
-        return composite_materials_[material_id_[particle_index_i]]->ReferenceDensity();
+        return composite_materials_[material_id_[index_i]]->StressPK1(deformation, index_i);
     };
 
-    virtual Matd StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i) override
+    Real CompositeDensity(size_t index_i)
+    {
+        return composite_materials_[material_id_[index_i]]->ReferenceDensity();
+    };
+
+    virtual Matd StressCauchy(Matd &almansi_strain, Matd &F, size_t index_i) override
     {
         return Matd::Identity();
     };

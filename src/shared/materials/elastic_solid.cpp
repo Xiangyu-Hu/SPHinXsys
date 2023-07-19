@@ -53,13 +53,18 @@ Real LinearElasticSolid::getLambda(Real youngs_modulus, Real poisson_ratio)
     return nu_ * youngs_modulus / (1.0 + poisson_ratio) / (1.0 - 2.0 * poisson_ratio);
 }
 //=================================================================================================//
-Matd LinearElasticSolid::StressPK2(Matd &F, size_t particle_index_i)
+Matd LinearElasticSolid::StressPK1(Matd &F, size_t index_i)
+{
+    return F * StressPK2(F, index_i);
+}
+//=================================================================================================//
+Matd LinearElasticSolid::StressPK2(Matd &F, size_t index_i)
 {
     Matd strain = 0.5 * (F.transpose() + F) - Matd::Identity();
     return lambda0_ * strain.trace() * Matd::Identity() + 2.0 * G0_ * strain;
 }
 //=================================================================================================//
-Matd LinearElasticSolid::StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i)
+Matd LinearElasticSolid::StressCauchy(Matd &almansi_strain, Matd &F, size_t index_i)
 {
     return lambda0_ * almansi_strain.trace() * Matd::Identity() + 2.0 * G0_ * almansi_strain;
 }
@@ -69,13 +74,13 @@ Real LinearElasticSolid::VolumetricKirchhoff(Real J)
     return K0_ * J * (J - 1);
 }
 //=================================================================================================//
-Matd SaintVenantKirchhoffSolid::StressPK2(Matd &F, size_t particle_index_i)
+Matd SaintVenantKirchhoffSolid::StressPK2(Matd &F, size_t index_i)
 {
     Matd strain = 0.5 * (F.transpose() * F - Matd::Identity());
     return lambda0_ * strain.trace() * Matd::Identity() + 2.0 * G0_ * strain;
 }
 //=================================================================================================//
-Matd NeoHookeanSolid::StressPK2(Matd &F, size_t particle_index_i)
+Matd NeoHookeanSolid::StressPK2(Matd &F, size_t index_i)
 {
     // This formulation allows negative determinant of F. Please refer Eq. (12) in
     // Smith et al. (2018) Stable Neo-Hookean Flesh Simulation.
@@ -85,7 +90,7 @@ Matd NeoHookeanSolid::StressPK2(Matd &F, size_t particle_index_i)
     return G0_ * Matd::Identity() + (lambda0_ * (J - 1.0) - G0_) * J * right_cauchy.inverse();
 }
 //=================================================================================================//
-Matd NeoHookeanSolid::StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i)
+Matd NeoHookeanSolid::StressCauchy(Matd &almansi_strain, Matd &F, size_t index_i)
 {
     Real J = F.determinant();
     Matd B = (-2.0 * almansi_strain + Matd::Identity()).inverse();
@@ -100,7 +105,7 @@ Real NeoHookeanSolid::VolumetricKirchhoff(Real J)
     return 0.5 * K0_ * (J * J - 1);
 }
 //=================================================================================================//
-Matd NeoHookeanSolidIncompressible::StressPK2(Matd &F, size_t particle_index_i)
+Matd NeoHookeanSolidIncompressible::StressPK2(Matd &F, size_t index_i)
 {
     Matd right_cauchy = F.transpose() * F;
     Real I_1 = right_cauchy.trace();       // first strain invariant
@@ -109,7 +114,7 @@ Matd NeoHookeanSolidIncompressible::StressPK2(Matd &F, size_t particle_index_i)
 }
 //=================================================================================================//
 Matd NeoHookeanSolidIncompressible::
-    StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i)
+    StressCauchy(Matd &almansi_strain, Matd &F, size_t index_i)
 {
     // TODO: implement
     return {};
@@ -136,7 +141,7 @@ OrthotropicSolid::OrthotropicSolid(Real rho_0, std::array<Vecd, Dimensions> a, s
     CalculateAllLambda();
 };
 //=================================================================================================//
-Matd OrthotropicSolid::StressPK2(Matd &F, size_t particle_index_i)
+Matd OrthotropicSolid::StressPK2(Matd &F, size_t index_i)
 {
     Matd strain = 0.5 * (F.transpose() * F - Matd::Identity());
     Matd stress_PK2 = Matd::Zero();
@@ -166,7 +171,7 @@ void OrthotropicSolid::CalculateA0()
         A_[i] = a_[i] * a_[i].transpose();
 }
 //=================================================================================================//
-Matd FeneNeoHookeanSolid::StressPK2(Matd &F, size_t particle_index_i)
+Matd FeneNeoHookeanSolid::StressPK2(Matd &F, size_t index_i)
 {
     Matd right_cauchy = F.transpose() * F;
     Matd strain = 0.5 * (right_cauchy - Matd::Identity());
