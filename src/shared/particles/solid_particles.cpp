@@ -254,7 +254,7 @@ ShellParticles::ShellParticles(SPHBody &sph_body, ElasticSolid *elastic_solid)
 		//----------------------------------------------------------------------
 		//		modify kernel function for surface particles
 		//----------------------------------------------------------------------
-		//sph_body.sph_adaptation_->getKernel()->reduceOnce();
+		sph_body.sph_adaptation_->getKernel()->reduceOnce();
 		//----------------------------------------------------------------------
 		//		register geometric data only
 		//----------------------------------------------------------------------
