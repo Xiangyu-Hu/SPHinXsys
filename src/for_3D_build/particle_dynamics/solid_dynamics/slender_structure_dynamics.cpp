@@ -199,7 +199,7 @@ namespace SPH
 					0.5 * width_[index_i] * 0.5 * thickness_[index_i] * gaussian_weight_[i] * cauchy_stress.col(Dimensions - 2);
 
 
-      /*          resultant_stress.row(Dimensions - 1) = Vecd::Zero().transpose();
+                resultant_stress.row(Dimensions - 1) = Vecd::Zero().transpose();
 				resultant_stress.col(Dimensions - 1) = Vecd::Zero();
 
 				resultant_stress.row(Dimensions - 2) = Vecd::Zero().transpose();
@@ -212,7 +212,7 @@ namespace SPH
                 resultant_b_moment.col(Dimensions - 2) = Vecd::Zero();
                 
 				resultant_shear_stress[Dimensions - 2] = 0.0;
-				resultant_b_shear_stress[Dimensions - 1] = 0.0;*/
+                resultant_b_shear_stress[Dimensions - 1] = 0.0;
 			}
 
 			/** stress and moment in global coordinates for pair interaction */				
