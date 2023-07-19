@@ -77,8 +77,8 @@ namespace SPH
 			Real rho0_, E0_, nu_, c0_;
 			Real smoothing_length_;
 
-       /*     StdLargeVec<Vecd> &angular_b_vel_, &dangular_b_vel_dt_;
-			StdLargeVec<Real> &width_;*/
+            StdLargeVec<Vecd> &angular_b_vel_, &dangular_b_vel_dt_;
+			StdLargeVec<Real> &width_;
 
 		public:
 			explicit BarAcousticTimeStepSize(SPHBody &sph_body, Real CFL = 0.6);

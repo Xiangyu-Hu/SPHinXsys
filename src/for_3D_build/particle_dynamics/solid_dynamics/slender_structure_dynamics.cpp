@@ -23,23 +23,23 @@ namespace SPH
               E0_(particles_->elastic_solid_.YoungsModulus()),
               nu_(particles_->elastic_solid_.PoissonRatio()),
               c0_(particles_->elastic_solid_.ReferenceSoundSpeed()),
-              smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength())/*,
+              smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()),
               angular_b_vel_(particles_->angular_b_vel_), dangular_b_vel_dt_(particles_->dangular_b_vel_dt_),
-              width_(particles_->thickness_)*/{}
+              width_(particles_->thickness_){}
 		//=================================================================================================//
 		Real BarAcousticTimeStepSize::reduce(size_t index_i, Real dt)
 		{
 			// Since the particle does not change its configuration in pressure relaxation step,
 			// I chose a time-step size according to Eulerian method.
-			//Real time_setp_0 = SMIN(sqrt(smoothing_length_ / ((acc_[index_i] + acc_prior_[index_i]).norm() + TinyReal)),
-									//smoothing_length_ / (c0_ + vel_[index_i].norm()));
-			//Real time_setp_1 = SMIN(sqrt(1.0 / (dangular_vel_dt_[index_i].norm() + TinyReal)),
-									//1.0 / (angular_vel_[index_i].norm() + TinyReal));
+			Real time_setp_0 = SMIN(sqrt(smoothing_length_ / ((acc_[index_i] + acc_prior_[index_i]).norm() + TinyReal)),
+									smoothing_length_ / (c0_ + vel_[index_i].norm()));
+			Real time_setp_1 = SMIN(sqrt(1.0 / (dangular_vel_dt_[index_i].norm() + TinyReal)),
+									1.0 / (angular_vel_[index_i].norm() + TinyReal));
 			Real time_setp_2 = smoothing_length_ * sqrt(rho0_ * (1.0 - nu_ * nu_) / E0_ /
 														(2.0 + (Pi * Pi / 12.0) * (1.0 - nu_) *
 																   (1.0 + 1.5 * pow(smoothing_length_ / thickness_[index_i], 2))));
-                        return CFL_ * time_setp_2;
-                        //return CFL_ * SMIN(time_setp_0, time_setp_1, time_setp_2);
+                        //return CFL_ * time_setp_2;
+                        return CFL_ * SMIN(time_setp_0, time_setp_1, time_setp_2);
 		}
 		//=================================================================================================//
 		BarCorrectConfiguration::
