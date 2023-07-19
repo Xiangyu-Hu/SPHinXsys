@@ -56,8 +56,8 @@ def net_displacement(file_path, output_file):
 
 
 def copy_files(output_folder):
-    source_files = ['output/PlateObserver_Position.dat', 'output/SPHBody_PlateBody_0000000000.vtp', 'output/SPHBody_PlateBody_0000806458.vtp']
-    destination_files = [output_folder + 'PlateObserver_Position.dat', output_folder + 'SPHBody_PlateBody_0000000000.vtp', output_folder + 'SPHBody_PlateBody_0000806458.vtp']
+    source_files = ['output/PlateObserver_Position.dat', 'output/SPHBody_PlateBody_0000000000.vtp', 'output/SPHBody_PlateBody_0000000001.vtp']
+    destination_files = [output_folder + 'PlateObserver_Position.dat', output_folder + 'SPHBody_PlateBody_0000000000.vtp', output_folder + 'SPHBody_PlateBody_0000000001.vtp']
 
     for index, source_file in enumerate(source_files):
         # Read the content of the source file
@@ -68,8 +68,8 @@ def copy_files(output_folder):
             destination.write(content)
 
 def rename_files(value, output_folder):
-    old_file_name = [output_folder + 'PlateObserver_Position.dat', output_folder + 'SPHBody_PlateBody_0000000000.vtp', output_folder + 'SPHBody_PlateBody_0000806458.vtp']
-    new_file_name = [(output_folder + 'PlateObserver_Position_' + value + '.dat'), (output_folder + 'SPHBody_PlateBody_0000000000_' + value + '.vtp'), (output_folder + 'SPHBody_PlateBody_0000806458_' + value + '.vtp')]
+    old_file_name = [output_folder + 'PlateObserver_Position.dat', output_folder + 'SPHBody_PlateBody_0000000000.vtp', output_folder + 'SPHBody_PlateBody_0000000001.vtp']
+    new_file_name = [(output_folder + 'PlateObserver_Position_' + value + '.dat'), (output_folder + 'SPHBody_PlateBody_0000000000_' + value + '.vtp'), (output_folder + 'SPHBody_PlateBody_0000000001_' + value + '.vtp')]
 
     for index, file in enumerate(old_file_name):
         try:
@@ -84,9 +84,8 @@ if __name__ == "__main__":
     file_path = 'output/PlateObserver_Position.dat'
     output_folder = 'multiple_runs_output/'
     output_file = output_folder + 'Displacements.dat'
-    values = [6.5, 12.5, 25, 50, 75, 100, 125, 150, 175, 200]
-    #values = [6.5, 12.5]
-    displacement = list(range(len(values)))
+    #values = [6.5, 12.5, 25, 50, 75, 100, 125, 150, 175, 200]
+    values = [6.5, 12.5]
     displacement = list(range(len(values)))
     run_time = list(range(len(values)))
 
@@ -103,7 +102,7 @@ if __name__ == "__main__":
         with open(output_file, 'a') as outfile:
             outfile.write("loading_factor = " + str(value) + '\n')
         run_case(value)
-        displacement[index], run_time[index] = net_displacement(file_path, output_file)
+        run_time[index], displacement[index] = net_displacement(file_path, output_file)
         with open(output_file, 'a') as outfile:
             outfile.write('\n')
         copy_files(output_folder)
@@ -113,7 +112,7 @@ if __name__ == "__main__":
     print(f"All the cases finished! Files are saved as follows: ")
     for index,value in enumerate(values):
         print(f"For loading_factor = {value} :")
-        new_file_name = [(output_folder + 'PlateObserver_Position_' + str(index) + '.dat'), (output_folder + 'SPHBody_PlateBody_0000000000_' + str(index) + '.vtp'), (output_folder + 'SPHBody_PlateBody_0000806458_' + str(index) + '.vtp')]
+        new_file_name = [(output_folder + 'PlateObserver_Position_' + str(index) + '.dat'), (output_folder + 'SPHBody_PlateBody_0000000000_' + str(index) + '.vtp'), (output_folder + 'SPHBody_PlateBody_0000000001_' + str(index) + '.vtp')]
         print("\t" + new_file_name[0])
         print("\t" + new_file_name[1])
         print("\t" + new_file_name[2])
