@@ -1,8 +1,8 @@
 #ifndef ACTIVE_MODEL_H
 #define ACTIVE_MODEL_H
 
+#include "complex_solid.h"
 #include "elastic_dynamics.h"
-#include "composite_material.h"
 
 namespace SPH
 {
@@ -20,7 +20,7 @@ class ActiveModelSolid : public SaintVenantKirchhoffSolid
     /** initialize the local properties, fiber and sheet direction. */
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
     /** second Piola-Kirchhoff stress related with green-lagrangian deformation tensor */
-    virtual Matd StressPK1(Matd &deformation, size_t particle_index_i);
+    virtual Matd StressPK1(Matd &deformation, size_t particle_index_i) override;
 };
-}
+} // namespace SPH
 #endif // ACTIVE_MODEL_H

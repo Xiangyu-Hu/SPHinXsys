@@ -1,7 +1,6 @@
 
 #include "2d_fish_and_bones.h"
 #include "active_model.h"
-#include "composite_material.h"
 #include "sphinxsys.h"
 
 using namespace SPH;
