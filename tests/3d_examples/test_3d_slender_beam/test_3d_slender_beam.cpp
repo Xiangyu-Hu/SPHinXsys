@@ -56,7 +56,7 @@ class BarParticleGenerator : public LineParticleGenerator
 {
 public:
         explicit BarParticleGenerator(SPHBody &sph_body) : LineParticleGenerator(sph_body){
-            sph_body.sph_adaptation_->getKernel()->reduceTwice();
+            sph_body.sph_adaptation_->getKernel()->reduceOnce();
         };
 	virtual void initializeGeometricVariables() override
 	{
