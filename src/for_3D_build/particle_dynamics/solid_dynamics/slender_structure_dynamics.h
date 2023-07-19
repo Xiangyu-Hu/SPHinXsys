@@ -108,10 +108,10 @@ namespace SPH
 					Vecd r_ji = -inner_neighborhood.r_ij_[n] * inner_neighborhood.e_ij_[n];
 					global_configuration += r_ji * gradW_ijV_j.transpose();
 				}
-			/*	Matd local_configuration =
-					transformation_matrix_[index_i] * global_configuration * transformation_matrix_[index_i].transpose();*/
+				Matd local_configuration =
+					transformation_matrix_[index_i] * global_configuration * transformation_matrix_[index_i].transpose();
 				/** correction matrix is obtained from local configuration. */
-				//B_[index_i] = getCorrectionMatrix_beam(local_configuration);
+				B_[index_i] = getCorrectionMatrix_beam(local_configuration);
 
 				//Matd local_configuration =
     //                  transformation_matrix_[index_i] * global_configuration * transformation_matrix_[index_i].transpose();
