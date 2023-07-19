@@ -179,8 +179,13 @@ namespace SPH
                 cauchy_stress(1, 2) *= shear_correction_factor_;
                 cauchy_stress(2, 1) *= shear_correction_factor_;*/
 
-      /*          cauchy_stress(Dimensions - 1, Dimensions - 1) = 0.0;
-                cauchy_stress(Dimensions - 2, Dimensions - 2) = 0.0;*/
+				cauchy_stress.row(Dimensions - 1) *= shear_correction_factor_;
+                cauchy_stress.col(Dimensions - 1) *= shear_correction_factor_;
+                cauchy_stress.row(Dimensions - 2) *= shear_correction_factor_;
+                cauchy_stress.col(Dimensions - 2) *= shear_correction_factor_;
+
+                cauchy_stress(Dimensions - 1, Dimensions - 1) = 0.0;
+                cauchy_stress(Dimensions - 2, Dimensions - 2) = 0.0;
 				if (i == 0)
 				{
 					mid_surface_cauchy_stress_[index_i] = cauchy_stress;
