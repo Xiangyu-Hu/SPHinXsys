@@ -217,20 +217,8 @@ template <class RiemannSolverType>
 void BaseIntegration1stHalf<RiemannSolverType>::
     interaction(size_t index_i, Real dt)
 {
-    Vecd acceleration = Vecd::Zero();
-    Real rho_dissipation(0);
-    const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-    {
-        size_t index_j = inner_neighborhood.j_[n];
-        Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
-        const Vecd &e_ij = inner_neighborhood.e_ij_[n];
-
-        acceleration -= (p_[index_i] + p_[index_j]) * dW_ijV_j * e_ij;
-        rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_[index_j]) * dW_ijV_j;
-    }
-    acc_[index_i] += acceleration / rho_[index_i];
-    drho_dt_[index_i] = rho_dissipation * rho_[index_i];
+    DeviceKernel::interaction(index_i, dt, p_.data(), rho_.data(), drho_dt_.data(), acc_.data(),
+                              inner_configuration_.data(), riemann_solver_);
 }
 //=================================================================================================//
 template <class RiemannSolverType>
@@ -241,35 +229,22 @@ BaseIntegration2ndHalf<RiemannSolverType>::BaseIntegration2ndHalf(BaseInnerRelat
 template <class RiemannSolverType>
 void BaseIntegration2ndHalf<RiemannSolverType>::initialization(size_t index_i, Real dt)
 {
-    pos_[index_i] += vel_[index_i] * dt * 0.5;
+    DeviceKernel::initialization(index_i, dt, pos_.data(), vel_.data());
 }
 //=================================================================================================//
 template <class RiemannSolverType>
 void BaseIntegration2ndHalf<RiemannSolverType>::update(size_t index_i, Real dt)
 {
-    rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
-    Vol_[index_i] = mass_[index_i] / rho_[index_i];
+    DeviceKernel::update(index_i, dt, rho_.data(), drho_dt_.data(), Vol_.data(), mass_.data());
 }
 //=================================================================================================//
 template <class RiemannSolverType>
 void BaseIntegration2ndHalf<RiemannSolverType>::
     interaction(size_t index_i, Real dt)
 {
-    Real density_change_rate(0);
-    Vecd p_dissipation = Vecd::Zero();
-    const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-    {
-        size_t index_j = inner_neighborhood.j_[n];
-        const Vecd &e_ij = inner_neighborhood.e_ij_[n];
-        Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
-
-        Real u_jump = (vel_[index_i] - vel_[index_j]).dot(e_ij);
-        density_change_rate += u_jump * dW_ijV_j;
-        p_dissipation += riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * e_ij;
-    }
-    drho_dt_[index_i] += density_change_rate * rho_[index_i];
-    acc_[index_i] = p_dissipation / rho_[index_i];
+    DeviceKernel::interaction(index_i, dt, rho_.data(), drho_dt_.data(), vel_.data(),
+                              acc_.data(), inner_configuration_.data(), riemann_solver_,
+                              [](const Vecd& v1, const Vecd& v2) { return v1.dot(v2); });
 };
 //=================================================================================================//
 } // namespace fluid_dynamics
