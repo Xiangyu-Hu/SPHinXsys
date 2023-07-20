@@ -196,42 +196,7 @@ class ShellParticles : public ElasticSolidParticles
     virtual ShellParticles *ThisObjectPtr() override { return this; };
 };
 
-		class BarParticles : public ShellParticles
-        {
-              public:
-                BarParticles(SPHBody &sph_body, ElasticSolid *elastic_solid);
-                virtual ~BarParticles(){};
 
-                Real width_ref_;
-                StdLargeVec<Vecd> b_n_;  /**< binormal direction */
-                StdLargeVec<Real> width_;
-                StdLargeVec<Vecd> b_n0_; /**< initial binormal direction */
-
-                StdLargeVec<Vecd> pseudo_b_n_;            /**< current pseudo-binormal vector */
-                StdLargeVec<Vecd> dpseudo_b_n_dt_;        /**< pseudo-binormal vector change rate */
-                StdLargeVec<Vecd> dpseudo_b_n_d2t_;       /**< pseudo-binormal vector second order time derivation */
-                StdLargeVec<Vecd> global_b_shear_stress_; /**< global b shear stress */
-                StdLargeVec<Matd> global_b_stress_;       /**<  global b stress for pair interaction */
-                StdLargeVec<Matd> global_b_moment_;       /**<  global b bending moment for pair interaction */
-                                                          //----------------------------------------------------------------------
-                //	extra generalized coordinate and velocity in local coordinate
-                //----------------------------------------------------------------------
-                StdLargeVec<Vecd> rotation_b_; /**< rotation angle of the initial binormal respective to each axis */
-                StdLargeVec<Vecd> angular_b_vel_;		/**< angular velocity respective to each axis */
-                StdLargeVec<Vecd> dangular_b_vel_dt_; /**< angular acceleration of respective to each axis*/
-                                                      //	extra deformation and deformation rate in local coordinate
-                //----------------------------------------------------------------------
-                StdLargeVec<Matd> F_b_bending_;     /**< bending deformation gradient	*/
-                StdLargeVec<Matd> dF_b_bending_dt_; /**< bending deformation gradient change rate	*/
-                //----------------------------------------------------------------------
-                /** get particle volume. */
-                virtual Real ParticleVolume(size_t index_i) override { return Vol_[index_i] * thickness_[index_i]*width_[index_i]; }
-                /** get particle mass. */
-                virtual Real ParticleMass(size_t index_i) override { return mass_[index_i] * thickness_[index_i] * width_[index_i]; }
-                /** Initialize variable for shell particles. */
-                virtual void initializeOtherVariables() override;
-                virtual BarParticles *ThisObjectPtr() override{return this;};
-        };
 
 }
 #endif // SOLID_PARTICLES_H

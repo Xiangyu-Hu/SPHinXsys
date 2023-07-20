@@ -37,6 +37,7 @@
 #include "solid_particles.h"
 #include "elastic_solid.h"
 #include "slender_structure_math.h"
+#include "beam_particles.h"
 
 namespace SPH
 {

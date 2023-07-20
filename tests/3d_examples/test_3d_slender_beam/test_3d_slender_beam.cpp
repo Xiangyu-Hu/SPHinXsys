@@ -9,6 +9,8 @@
 #include <gtest/gtest.h>
 #include "slender_structure_dynamics.h"
 #include "slender_structure_math.h"
+#include "beam_particles.h"
+#include "beam_particle_generator.h"
 using namespace SPH;
 
 /**
