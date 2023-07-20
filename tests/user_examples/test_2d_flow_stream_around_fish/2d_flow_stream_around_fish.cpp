@@ -4,7 +4,6 @@
  * @author  Yaru Ren and Xiangyu Hu
  */
 #include "2d_flow_stream_around_fish.h"
-#include "active_model.h"
 #include "sphinxsys.h"
 using namespace SPH;
 
@@ -36,7 +35,7 @@ int main(int ac, char *av[])
     SolidBody fish_body(system, makeShared<FishBody>("FishBody"));
     fish_body.defineAdaptationRatios(1.15, 2.0);
     fish_body.defineBodyLevelSetShape()->writeLevelSet(io_environment);
-    fish_body.defineParticlesAndMaterial<ElasticSolidParticles, SolidBodyMaterial>();
+    fish_body.defineParticlesAndMaterial<ElasticSolidParticles, FishBodyComposite>();
     //  Using relaxed particle distribution if needed
     (!system.RunParticleRelaxation() && system.ReloadParticles())
         ? fish_body.generateParticles<ParticleGeneratorReload>(io_environment, fish_body.getName())
@@ -151,7 +150,7 @@ int main(int ac, char *av[])
     SimpleDynamics<ImposingActiveStrain> imposing_active_strain(fish_body);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> fish_body_computing_time_step_size(fish_body);
     /** Stress relaxation for the inserted body. */
-    Dynamics1Level<solid_dynamics::ActiveIntegration1stHalf> fish_body_stress_relaxation_first_half(fish_inner);
+    Dynamics1Level<solid_dynamics::Integration1stHalfPK2> fish_body_stress_relaxation_first_half(fish_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> fish_body_stress_relaxation_second_half(fish_inner);
     /** Update norm .*/
     SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> fish_body_update_normal(fish_body);

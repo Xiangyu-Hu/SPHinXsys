@@ -70,6 +70,8 @@ class ElasticSolid : public Solid
     Real BulkModulus() { return K0_; };
     Real PoissonRatio() { return nu_; };
 
+    /** 1st Piola-Kirchhoff stress through deformation. */
+    virtual Matd StressPK1(Matd &deformation, size_t particle_index_i) = 0;
     /** 2nd Piola-Kirchhoff stress through deformation. */
     virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) = 0;
     /** Cauchy stress through Eulerian Almansi strain tensor. */
@@ -115,6 +117,7 @@ class LinearElasticSolid : public ElasticSolid
     explicit LinearElasticSolid(Real rho0, Real youngs_modulus, Real poisson_ratio);
     virtual ~LinearElasticSolid(){};
 
+    virtual Matd StressPK1(Matd &deformation, size_t particle_index_i) override;
     virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) override;
     virtual Matd StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i) override;
     /** Volumetric Kirchhoff stress from determinate */
