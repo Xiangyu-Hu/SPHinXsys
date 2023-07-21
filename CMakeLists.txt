@@ -97,18 +97,18 @@ endif()
 add_subdirectory(src)
 add_subdirectory(modules)
 
-# ## if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
  add_subdirectory(opencascade_modules)
-# ## endif()
+ endif()
 
 # ------ Setup the tests
 if(SPHINXSYS_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
 
-   # ##  if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_subdirectory(opencascade_tests)
-    # ## endif()
+    endif()
     
 endif()
 

@@ -3,7 +3,7 @@ target_include_directories(opencascade_modules PUBLIC $<BUILD_INTERFACE:${CMAKE_
 target_link_libraries(opencascade_modules PUBLIC sphinxsys_3d)
 
 # ## OCCT
-# ##if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 find_package(OpenCASCADE CONFIG REQUIRED)
 target_link_libraries(sphinxsys_core INTERFACE TKSTEP TKSTEPAttr TKSTEP209 TKSTEPBase TKXSBase TKShHealing TKTopAlgo TKGeomAlgo TKBRep TKGeomBase TKG3d TKG2d TKMath TKernel ) 
-# ## endif()
+endif()
