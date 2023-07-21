@@ -36,6 +36,7 @@
 #include"opencascade/TopoDS.hxx"
 #include"opencascade/BRep_Builder.hxx"
 #include"opencascade/GeomAPI_ProjectPointOnSurf.hxx"
+#include "opencascade/gp_Pnt.hxx"
 
 #ifdef _WIN32
 #pragma warning(pop) // for MSVC

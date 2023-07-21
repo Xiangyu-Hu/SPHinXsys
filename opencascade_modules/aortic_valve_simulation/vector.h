@@ -29,7 +29,7 @@
 #define VECTOR_H
 
 #include "base_data_type.h"
-#include "opencascade/gp_Pnt.hxx"
+#include"opencascade.h"
 
 namespace SPH
 {
