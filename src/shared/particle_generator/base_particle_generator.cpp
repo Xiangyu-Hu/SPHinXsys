@@ -47,11 +47,13 @@ void SurfaceParticleGenerator::initializeSurfaceProperties(const Vecd &surface_n
     thickness_.push_back(thickness);
 }
 //=================================================================================================//
+
+
 void ObserverParticleGenerator::initializeGeometricVariables()
 {
     for (size_t i = 0; i < positions_.size(); ++i)
     {
-        initializePositionAndVolumetricMeasure(positions_[i], 0.0);
+        initializePositionAndVolumetricMeasure(positions_[i], 0.0); 
     }
 }
 //=================================================================================================//

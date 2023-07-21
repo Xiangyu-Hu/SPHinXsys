@@ -21,48 +21,50 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	data_type.h
- * @brief 	This is the date type definition in 2D for SPHinXsys.
- * @author	Chi ZHang and Xiangyu Hu
+ * @file 	base_particle_generator.h
+ * @brief 	This is the base class of particle generator, which generates particles
+ * 			with given positions and volumes. The direct generator simply generate
+ * 			particle with given position and volume.
+ * @author	Xipeng Lyu
  */
 
-#ifndef DATA_TYPE_2D_H
-#define DATA_TYPE_2D_H
+#ifndef BEAM_PARTICLE_GENERATOR_H
+#define BEAM_PARTICLE_GENERATOR_H
 
-#include "base_data_type.h"
-#include "scalar_functions.h"
-#include "vector_functions.h"
+#include "base_data_package.h"
+#include "large_data_containers.h"
+#include "sph_data_containers.h"
+#include "base_particle_generator.h"
 
 namespace SPH
 {
-using Arrayi = Array2i;
-using Vecd = Vec2d;
-using Matd = Mat2d;
-using AlignedBox = AlignedBox2d;
-using AngularVecd = Real;
-using Rotation = Rotation2d;
-using BoundingBox = BaseBoundingBox<Vec2d>;
 
-template <class DataType, int array_size>
-using PackageDataMatrix = std::array<std::array<DataType, array_size>, array_size>;
+class SPHBody;
+class BaseParticles;
+class IOEnvironment;
 
-template <class DataType>
-using MeshDataMatrix = DataType **;
 
-/** only works for smoothing length ratio less or equal than 1.3*/
-constexpr int MaximumNeighborhoodSize = int(M_PI * 9);
-constexpr int Dimensions = 2;
-/** correction matrix, only works for thin structure dynamics. */
-const Matd reduced_unit_matrix{
-    {1.0, 0.0}, // First row
-    {0.0, 0.0}, // Second row
+
+/**
+ * @class LineParticleGenerator
+ * @brief Generate volumetric particles by initialize extra Line variables.
+ */
+class LineParticleGenerator : public ParticleGenerator
+{
+  public:
+    explicit LineParticleGenerator(SPHBody &sph_body);
+    virtual ~LineParticleGenerator(){};
+
+  protected:
+    StdLargeVec<Vecd> &n_;         /**< line normal */
+    StdLargeVec<Real> &thickness_; /**< line thickness */
+    StdLargeVec<Vecd> &b_n_;       /**< line binormal */
+    StdLargeVec<Real> &width_;     /**< line width */
+
+    /** Initialize line particle. */
+    virtual void initializeLineProperties(const Vecd &line_normal, const Vecd &line_binormal, Real thickness, Real width);
 };
 
-/** initial local normal, only works for thin structure dynamics. */
-const Vecd local_pseudo_n_0 = Vecd(0.0, 1.0);
-//const Vecd local_pseudo_b_n_0 = Vecd(0.0, 1.0);
 
-const Vecd ZeroVecd = Vec2d::Zero();
 } // namespace SPH
-
-#endif // DATA_TYPE_2D_H
+#endif // BEAM_PARTICLE_GENERATOR_H

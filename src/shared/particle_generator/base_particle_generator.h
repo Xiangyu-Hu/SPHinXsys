@@ -97,6 +97,7 @@ class SurfaceParticleGenerator : public ParticleGenerator
     virtual void initializeSurfaceProperties(const Vecd &surface_normal, Real thickness);
 };
 
+
 /**
  * @class ObserverParticleGenerator
  * @brief Generate particle directly from position-and-volume data.
