@@ -13,16 +13,8 @@
 #ifndef SURFACE_SHAPE_H
 #define SURFACE_SHAPE_H
 
-#include "base_geometry.h"
-#include "simbody_middle.h"
-#include "opencascade/STEPCAFControl_Reader.hxx"
-#include "opencascade/XSControl_WorkSession.hxx"
-#include"opencascade/Transfer_TransientProcess.hxx"
-#include"opencascade/TopExp_Explorer.hxx"
-#include"opencascade/TopoDS.hxx"
-#include"opencascade/BRep_Builder.hxx"
-#include"opencascade/GeomAPI_ProjectPointOnSurf.hxx"
-#include"opencascade/ProjLib_ProjectOnSurface.hxx"
+#include "sphinxsys.h" 
+#include"opencascade.h"
 #include "vector.h"
 
 

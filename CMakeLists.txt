@@ -66,14 +66,6 @@ target_compile_definitions(sphinxsys_core INTERFACE _SILENCE_CXX17_ITERATOR_BASE
 find_package(Eigen3 CONFIG REQUIRED)
 target_link_libraries(sphinxsys_core INTERFACE Eigen3::Eigen)
 
-# ## OCCT
-if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-find_package(OpenCASCADE CONFIG REQUIRED)
-target_link_libraries(sphinxsys_core INTERFACE TKSTEP TKSTEPAttr TKSTEP209 TKSTEPBase TKXSBase TKShHealing TKTopAlgo TKGeomAlgo TKBRep TKGeomBase TKG3d TKG2d TKMath TKernel ) 
-
-endif()
- 
-
 # ## TBB
 find_package(TBB CONFIG REQUIRED)
 target_link_libraries(sphinxsys_core INTERFACE TBB::tbb TBB::tbbmalloc $<$<PLATFORM_ID:Windows>:TBB::tbbmalloc_proxy>)
@@ -105,19 +97,18 @@ endif()
 add_subdirectory(src)
 add_subdirectory(modules)
 
-if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-add_subdirectory(opencascade_modules)
-
-endif()
+# ## if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+ add_subdirectory(opencascade_modules)
+# ## endif()
 
 # ------ Setup the tests
 if(SPHINXSYS_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
 
-    if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+   # ##  if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_subdirectory(opencascade_tests)
-    endif()
+    # ## endif()
     
 endif()
 

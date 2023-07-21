@@ -30,12 +30,7 @@
 #ifndef RELAX_DYNAMICS_SURFACE_H
 #define RELAX_DYNAMICS_SURFACE_H
 
-#include "all_particle_dynamics.h"
-#include "base_kernel.h"
-#include "cell_linked_list.h"
-#include "all_body_relations.h"
-#include "general_dynamics.h"
-#include "relax_dynamics.h"
+#include "sphinxsys.h"
 #include "vector.h"
 
 namespace SPH

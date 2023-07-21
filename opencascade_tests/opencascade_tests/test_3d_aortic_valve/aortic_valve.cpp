@@ -3,18 +3,11 @@
  * @brief 	This is the test of using OCCT to import surface model,and then generate  particles with single resolution and relax particles.
  * @details	We use this case to test the particle generation and relaxation  for a surface geometry (3D).
  */
-#include "opencascade/BRep_Builder.hxx"
-#include "opencascade/GeomAPI_ProjectPointOnSurf.hxx"
-#include "opencascade/Geom_Surface.hxx"
-#include "opencascade/STEPCAFControl_Reader.hxx"
-#include "opencascade/TopExp_Explorer.hxx"
-#include "opencascade/TopoDS.hxx"
-#include "opencascade/Transfer_TransientProcess.hxx"
-#include "opencascade/XSControl_WorkSession.hxx"
+
 #include "sphinxsys.h" // SPHinXsys Library.
 #include "relax_dynamics_surface.h"
 #include "surface_shape.h"
-#include "vector.h"
+
 
 using namespace SPH;
 //----------------------------------------------------------------------
