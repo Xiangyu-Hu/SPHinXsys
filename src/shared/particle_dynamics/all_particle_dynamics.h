@@ -23,7 +23,7 @@
 /**
  * @file    all_particle_dynamics.h
  * @brief   Head file for all particle dynamics.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef ALL_PARTICLE_DYNAMICS_H

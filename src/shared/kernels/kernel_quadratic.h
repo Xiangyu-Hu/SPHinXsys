@@ -23,7 +23,7 @@
 /**
  * @file 	kernel_quadratic.h
  * @brief 	Here, we define quadratic kernel functions but not fully implemented it yet.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef KERNEL_QUADRATIC_H

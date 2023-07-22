@@ -23,7 +23,7 @@
 /**
  * @file 	base_data_type.h
  * @brief 	This is the date type definition for SPHinXsys.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef BASE_DATA_TYPE_H

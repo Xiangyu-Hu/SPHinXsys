@@ -24,7 +24,7 @@
  * @file sph_system.h
  * @brief The SPH_System managing objects in the system level.
  * @details Note that the system operation prefer these are application independent.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef SPH_SYSTEM_H

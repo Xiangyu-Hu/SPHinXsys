@@ -24,7 +24,7 @@
  * @file 	dynamic_time_warping_method.h
  * @brief 	Classes for the comparison between validated and tested results
                         with dynamic time warping method.
- * @author	Bo Zhang , Chi ZHang and Xiangyu Hu
+ * @author	Bo Zhang , Chi Zhang and Xiangyu Hu
  */
 
 #pragma once

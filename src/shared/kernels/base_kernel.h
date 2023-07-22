@@ -26,7 +26,7 @@
  *			implemented in derived classes. The kernal function define the relevance
  * 			between two neighboring particles. Basically, the further the two
  *			particles, the less relevance they have.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef BASE_KERNELS_H

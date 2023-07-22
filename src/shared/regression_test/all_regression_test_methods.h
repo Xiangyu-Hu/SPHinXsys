@@ -24,7 +24,7 @@
  * @file     all_regression_test_methods.h
  * @brief    This is the header file that user code should include to pick up all
  *           the regression test method used in SPHinXsys.
- * @author	Bo Zhang , Chi ZHang and Xiangyu Hu
+ * @author	Bo Zhang , Chi Zhang and Xiangyu Hu
  */
 
 #ifndef ALL_REGRESSION_TEST_METHODS_H

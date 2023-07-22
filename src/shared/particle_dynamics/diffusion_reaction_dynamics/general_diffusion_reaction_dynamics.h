@@ -23,7 +23,7 @@
 /**
  * @file    general_diffusion_reaction_dynamics.h
  * @brief   This is the particle dynamics applicable for all type of particles.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef GENERAL_DIFFUSION_REACTION_DYNAMICS_H

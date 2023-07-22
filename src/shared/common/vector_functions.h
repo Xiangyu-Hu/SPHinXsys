@@ -23,7 +23,7 @@
 /**
  * @file 	vector_functions.h
  * @brief 	Basic functions for vector type data.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 #ifndef SMALL_VECTORS_H
 #define SMALL_VECTORS_H

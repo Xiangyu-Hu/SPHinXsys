@@ -23,7 +23,7 @@
 /**
  * @file 	kernel_laguerre_gauss.h
  * @brief 	This is the class for laguerre gauss kernel.
- * @author	Zhentong Wang, Chi ZHang and Xiangyu Hu
+ * @author	Zhentong Wang, Chi Zhang and Xiangyu Hu
  */
 
 #ifndef KERNEL_LAGUERRE_GAUSS_H

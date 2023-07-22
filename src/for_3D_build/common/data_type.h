@@ -23,7 +23,7 @@
 /**
  * @file 	data_type.h
  * @brief 	This is the date type definition in 3D for SPHinXsys.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 #ifndef DATA_TYPE_3D_H
 #define DATA_TYPE_3D_H

@@ -23,7 +23,7 @@
 /**
  * @file 	image_shape.h
  * @brief 	Geometry processing with image shape.
- * @author	Yijin Mao, Chi ZHang and Xiangyu Hu
+ * @author	Yijin Mao, Chi Zhang and Xiangyu Hu
  */
 
 #ifndef IMAGE_SHAPE_3D_H

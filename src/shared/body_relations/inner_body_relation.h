@@ -23,7 +23,7 @@
 /**
  * @file 	inner_body_relation.h
  * @brief 	The topological relations within the body.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef INNER_BODY_RELATION_H

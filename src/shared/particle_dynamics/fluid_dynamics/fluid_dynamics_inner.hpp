@@ -3,7 +3,7 @@
  * @brief 	Here, we define the algorithm classes for fluid dynamics within the body.
  * @details 	We consider here weakly compressible fluids. The algorithms may be
  * 			different for free surface flow and the one without free surface.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 #pragma once
 

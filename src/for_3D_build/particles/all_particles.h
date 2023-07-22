@@ -21,17 +21,15 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	all_materials.h
- * @brief 	This is the header file for materials.
+ * @file 	all_particles.h
+ * @brief 	Head files for all particle type.
  * @author	Chi Zhang and Xiangyu Hu
  */
 
-#pragma once
+#ifndef ALL_PARTICLES_3D_H
+#define ALL_PARTICLES_3D_H
 
-#include "complex_solid.h"
-#include "complex_solid.hpp"
-#include "compressible_fluid.h"
-#include "diffusion_reaction.h"
-#include "elastic_solid.h"
-#include "inelastic_solid.h"
-#include "weakly_compressible_fluid.h"
+#include "all_shared_particles.h"
+#include "beam_particles.h"
+
+#endif // ALL_PARTICLES_3D_H

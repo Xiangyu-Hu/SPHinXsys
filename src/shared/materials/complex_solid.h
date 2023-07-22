@@ -23,7 +23,7 @@
 /**
  * @file 	complex_solid.h
  * @brief 	These are classes for define complex solid materials.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef COMPLEX_SOLID_H

@@ -23,7 +23,7 @@
 /**
  * @file particle_sorting.h
  * @brief Here gives the classes for particle sorting.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef PARTICLE_SORTING_H

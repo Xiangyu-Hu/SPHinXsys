@@ -25,7 +25,7 @@
  * @brief 	Here, we define the algorithm classes for complex fluid dynamics,
  * 			which is involving with either solid walls (with suffix WithWall)
  * 			or/and other bodies treated as wall for the fluid (with suffix Complex).
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef FLUID_DYNAMICS_COMPLEX_H

@@ -1,7 +1,7 @@
 /**
  * @file fluid_dynamics_multi_phase.hpp
  * @brief Here, we define the algorithm classes for the dynamics involving multiple fluids.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #pragma once

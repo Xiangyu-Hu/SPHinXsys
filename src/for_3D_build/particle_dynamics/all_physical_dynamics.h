@@ -21,17 +21,17 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	all_materials.h
- * @brief 	This is the header file for materials.
+ * @file    all_physical_dynamics.h
+ * @brief   Head file for all physics dynamics.
+ *          This is the header file that user code should include to pick up all
+            particle dynamics capabilities.
  * @author	Chi Zhang and Xiangyu Hu
  */
 
-#pragma once
+#ifndef ALL_PHYSICAL_DYNAMICS_3D_H
+#define ALL_PHYSICAL_DYNAMICS_3D_H
 
-#include "complex_solid.h"
-#include "complex_solid.hpp"
-#include "compressible_fluid.h"
-#include "diffusion_reaction.h"
-#include "elastic_solid.h"
-#include "inelastic_solid.h"
-#include "weakly_compressible_fluid.h"
+#include "all_shared_physical_dynamics.h"
+#include "slender_structure_dynamics.h"
+
+#endif // ALL_PHYSICAL_DYNAMICS_3D_H

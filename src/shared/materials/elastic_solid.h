@@ -26,7 +26,7 @@
  *			These classes are based on isotropic linear elastic solid.
  * 			Several more complex materials, including neo-Hookean, FENE neo-Hookean
  *			and anisotropic muscle, are derived from the basic elastic solid class.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef ELASTIC_SOLID_H

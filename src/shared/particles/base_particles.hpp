@@ -1,7 +1,7 @@
 /**
  * @file 	base_particles.hpp
  * @brief 	This is the implementation of the template functions in base_particles.h
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef BASE_PARTICLES_HPP
