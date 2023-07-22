@@ -21,10 +21,8 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	base_particle_generator.h
- * @brief 	This is the base class of particle generator, which generates particles
- * 			with given positions and volumes. The direct generator simply generate
- * 			particle with given position and volume.
+ * @file 	beam_particle_generator.h
+ * @brief generate particle for linear structures.
  * @author	Xipeng Lyu
  */
 
@@ -32,9 +30,9 @@
 #define BEAM_PARTICLE_GENERATOR_H
 
 #include "base_data_package.h"
+#include "base_particle_generator.h"
 #include "large_data_containers.h"
 #include "sph_data_containers.h"
-#include "base_particle_generator.h"
 
 namespace SPH
 {
@@ -42,8 +40,6 @@ namespace SPH
 class SPHBody;
 class BaseParticles;
 class IOEnvironment;
-
-
 
 /**
  * @class LineParticleGenerator
@@ -64,7 +60,6 @@ class LineParticleGenerator : public ParticleGenerator
     /** Initialize line particle. */
     virtual void initializeLineProperties(const Vecd &line_normal, const Vecd &line_binormal, Real thickness, Real width);
 };
-
 
 } // namespace SPH
 #endif // BEAM_PARTICLE_GENERATOR_H
