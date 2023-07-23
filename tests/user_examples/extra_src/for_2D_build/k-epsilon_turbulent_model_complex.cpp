@@ -72,41 +72,51 @@ namespace SPH
 		};
 
 		//=================================================================================================//
-		Real StandardWallFunctionCorrection::getFrictionVelo(Real a, Real b, Real e)
+		Real StandardWallFunctionCorrection::getFrictionVelo(Real left_bound, Real right_bound, Real e, Real A, Real B)
 		{
 			Real EPSILON = e;
-			if (WallFunc(a) * WallFunc(b) >= 0)
+			Real left_value = WallFunc(left_bound,A,B);
+			Real right_value = WallFunc(right_bound, A, B);
+
+			if (left_value * right_value >= 0)
 			{
 				std::cout << "You have not assumed right a and b\n";
 				system("pause");
 				return 0.0;
 				exit(1);
 			}
-			Real c = a;
-			while ((b - a) >= EPSILON)
+			Real middle = left_bound;
+			Real middle_value = 0.0;
+			while ((right_bound - left_bound) >= EPSILON)
 			{
-				// Find middle point
-				c = (a + b) / 2;
+				// Update middle point
+				middle = (left_bound + right_bound) / 2;
+				middle_value = WallFunc(middle, A, B);
 				// Check if middle point is root
-				if (WallFunc(c) == 0.0)
+				if (abs(middle_value) < EPSILON)
 					break;
 				// Decide the side to repeat the steps
-				else if (WallFunc(c) * WallFunc(a) < 0)
-					b = c;
+				else if (middle_value * left_value < 0)
+					right_bound = middle;
 				else
-					a = c;
+					left_bound = middle;
 			}
 			//cout << "The value of root is : " << c;
-			return c;
+			return middle;
+		}
+		Real StandardWallFunctionCorrection::WallFunc(Real x, Real CA, Real CB)
+		{
+			return CA / x - log(CB * x);
 		}
 		//=================================================================================================//
-		void StandardWallFunctionCorrection::checkFrictionVelo(Real velo_fric, Real e)
+		void StandardWallFunctionCorrection::checkFrictionVelo(Real velo_fric, Real e, Real A, Real B)
 		{
 			Real EPSILON = e;
-			Real left_value = coefficientA / velo_fric;
-			Real right_value = log(coefficientB * velo_fric);
+			Real left_value = A / velo_fric;
+			Real right_value = log(B * velo_fric);
 			Real error = abs(left_value - right_value);
 			if (error > EPSILON && GlobalStaticVariables::physical_time_>2.0)
+			//if (error > EPSILON )
 			{
 				std::cout << "FrictionVelocity is not accurately calcualted" << std::endl;
 				std::cout << "error=" << error << std::endl;

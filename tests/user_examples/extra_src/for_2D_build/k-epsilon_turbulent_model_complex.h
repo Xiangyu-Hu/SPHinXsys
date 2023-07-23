@@ -151,13 +151,10 @@ namespace SPH
 			StdLargeVec<Real>& rho_;
 
 			int dimension_;
-			Real coefficientA, coefficientB;
-			inline Real WallFunc(Real x)
-			{
-				return coefficientA / x - log(coefficientB * x);
-			}
-			virtual Real getFrictionVelo(Real a, Real b, Real e);
-			virtual void checkFrictionVelo(Real velo_fric, Real e);
+
+			virtual Real getFrictionVelo(Real left_bound, Real right_bound, Real e, Real A, Real B);
+			virtual Real WallFunc(Real x, Real CA, Real CB);
+			virtual void checkFrictionVelo(Real velo_fric, Real e, Real A, Real B);
 		};
 
 

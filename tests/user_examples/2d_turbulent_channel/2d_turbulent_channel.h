@@ -22,7 +22,7 @@ BoundingBox system_domain_bounds(Vec2d(-DL_sponge - 2.0 * BW, -BW), Vec2d(DL + 2
 Real x_observe = 0.90 * DL;
 Real x_observe_start = 0.90 * DL;
 Real observe_spacing_x = 0.02 * DL;
-int num_observer_points_x = 6;
+int num_observer_points_x = 1;
 int num_observer_points = 20;
 Real observe_spacing = DH / num_observer_points;
 StdVec<Vecd> observation_locations;

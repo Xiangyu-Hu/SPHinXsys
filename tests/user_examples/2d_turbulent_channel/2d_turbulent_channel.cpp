@@ -63,7 +63,7 @@ int main(int ac, char* av[])
 	
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	/** Turbulent standard wall function needs normal vectors of wall. */
-	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection,SequencedPolicy> standard_wall_function_correction(water_block_complex_relation);
+	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block_complex_relation);
 
 	/** TurbulentViscous cal. uses friction velocity and Y+ that are defined in WallFunction . */
 	InteractionDynamics<fluid_dynamics::TurbulentViscousAccelerationWithWall, SequencedPolicy> turbulent_viscous_acceleration(water_block_complex_relation);
@@ -93,7 +93,7 @@ int main(int ac, char* av[])
 	
 
 	/**  Try to introduce B correction */
-	InteractionWithUpdate<CorrectedConfigurationInner> correct_configuration(water_block_inner);
+	//InteractionWithUpdate<CorrectedConfigurationInner> correct_configuration(water_block_inner);
 	
 
 
@@ -170,7 +170,7 @@ int main(int ac, char* av[])
 			//viscous_acceleration.exec();
 			transport_velocity_correction.exec();
 			//** Try to introduce B correction * 
-			correct_configuration.exec();
+			//correct_configuration.exec();
 			/** Dynamics including pressure relaxation. */
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)

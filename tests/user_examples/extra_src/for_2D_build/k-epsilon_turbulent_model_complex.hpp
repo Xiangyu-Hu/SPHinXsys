@@ -227,6 +227,9 @@ namespace SPH
 			const Vecd& vel_i = vel_[index_i];
 			Real rho_i = rho_[index_i];
 
+			Real coefficientA = 0.0;
+			Real coefficientB = 0.0;
+
 			Vecd e_ij_t = Vecd::Zero();
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
@@ -283,12 +286,12 @@ namespace SPH
 				Real velo_tan = 0.0; //tangible velo for fluid particle i
 				velo_tan = abs(e_ij_t.dot(vel_i));
 				velo_tan_[index_i] = velo_tan;
-				coefficientA = 0.0;
-				coefficientB = 0.0;
 				coefficientA = velo_tan * Karman + TinyReal;
 				coefficientB = (turbu_const_E * rho_i * r_wall_normal) / mu_;
-				velo_fric = getFrictionVelo(0.0, 3.0, 1e-6);
-				checkFrictionVelo(velo_fric, 1e-2);
+				
+				velo_fric = getFrictionVelo(0.0, 3.0, 1e-6, coefficientA, coefficientB);
+				
+				checkFrictionVelo(velo_fric, 1e-2, coefficientA, coefficientB);
 
 				velo_friction_[index_i] = velo_fric* e_ij_t;
 				//friction velocity have the same direction of vel_i, if not, change its direction

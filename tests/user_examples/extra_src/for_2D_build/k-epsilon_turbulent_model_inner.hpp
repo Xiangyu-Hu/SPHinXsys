@@ -71,6 +71,7 @@ namespace SPH
 
 				//** for test */
 				k_diffusion_[index_i] = k_lap;
+				vel_x_[index_i] = vel_[index_i][0];
 		}
 		//=================================================================================================//
 		void E_TurtbulentModelInner::
