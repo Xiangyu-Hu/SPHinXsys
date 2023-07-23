@@ -75,7 +75,6 @@ namespace SPH
 			StdLargeVec<Real> turbu_mu_;
 			StdLargeVec<Real> turbu_k_;
 			StdLargeVec<Real> turbu_epsilon_;
-
 			Real smoothing_length_;
 			Real particle_spacing_min_;
 			Real mu_;
@@ -99,11 +98,11 @@ namespace SPH
 		protected:
 			StdLargeVec<Real> dk_dt_;
 			StdLargeVec<Matd>  velocity_gradient;
-
+			StdLargeVec<Matd> B_;
 			StdLargeVec<Real> k_production_;
 
 			//** for test */
-			StdLargeVec<Real> lap_k_, lap_k_term_, vel_x_;
+			StdLargeVec<Real>  k_diffusion_, vel_x_;
 			StdLargeVec<Matd> velocity_gradient_wall;
 		};
 
@@ -120,7 +119,7 @@ namespace SPH
 			inline void interaction(size_t index_i, Real dt = 0.0);
 			void update(size_t index_i, Real dt = 0.0);
 		protected:
-			StdLargeVec<Real> dE_dt_;
+			StdLargeVec<Real> dE_dt_, ep_production, ep_dissipation_, ep_diffusion_;
 			StdLargeVec<Real>& turbu_mu_;
 			StdLargeVec<Real>& turbu_k_;
 			StdLargeVec<Real>& turbu_epsilon_;

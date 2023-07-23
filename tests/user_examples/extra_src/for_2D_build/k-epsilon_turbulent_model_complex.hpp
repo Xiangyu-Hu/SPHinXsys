@@ -86,9 +86,7 @@ namespace SPH
 			k_production_[index_i] = k_production;
 			
 			//** for test */
-			lap_k_[index_i] += k_lap;
-			lap_k_term_[index_i] = 0.0;
-			lap_k_term_[index_i] = (mu_ + turbu_mu_i / sigma_k) * lap_k_[index_i];
+			k_diffusion_[index_i] += k_lap;
 		}
 		//=================================================================================================//
 		void E_TurtbulentModelComplex::
@@ -179,21 +177,24 @@ namespace SPH
 					//vel_derivative = 2.0 * (vel_i - vel_ave_k[index_j]) / (r_ij + 0.01 * this->smoothing_length_);
 					//acceleration += 2.0 * (this->mu_+ turbu_mu_i) * vel_derivative * contact_neighborhood.dW_ijV_j_[n] / rho_i;
 					//This is to check whether the wall-sub-nearest fluid particles fric, velo. is zero or not
-					//if (index_i > 2000 && GlobalStaticVariables::physical_time_ > 5. && vel_fric_i.dot(vel_fric_i) <= 0.0+TinyReal)
-					//{
-					//	system("pause");
-					//	std::cout << index_j << std::endl;
-					//}
+					if (index_i > 2000 && GlobalStaticVariables::physical_time_ > 5. && vel_fric_i.dot(vel_fric_i) <= 0.0+TinyReal&& contact_neighborhood.current_size_>2)
+					{
+						system("pause");
+						std::cout << index_j << std::endl;
+						std::cout << vel_fric_i << std::endl;
+						std::cout << distance_to_wall << std::endl;
+						std::cout << contact_neighborhood.current_size_ << std::endl;
+					}
 					//vel_derivative = 2.0 * vel_fric_i.dot(vel_fric_i)* direction_vel_fric;
 					vel_derivative = distance_to_wall * vel_fric_i.dot(vel_fric_i) * direction_vel_fric / (r_ij + 0.01 * this->smoothing_length_);
 					acceleration += 4.0 * vel_derivative * contact_neighborhood.dW_ijV_j_[n] ;
 				}
 			}
 			//for test
+			Real wall_viscous_factor = 1.0;
+			this->visc_acc_wall_[index_i] = wall_viscous_factor * acceleration;
 
-			this->visc_acc_wall_[index_i] = acceleration;
-
-			this->acc_prior_[index_i] += acceleration;
+			this->acc_prior_[index_i] += wall_viscous_factor  * acceleration;
 		}
 		//=================================================================================================//
 		void StandardWallFunctionCorrection::interaction(size_t index_i, Real dt)
@@ -254,6 +255,11 @@ namespace SPH
 						distance_to_wall_[index_i] = r_wall_normal;
 						index_nearest[index_i] = index_j;
 					}
+					if (distance_to_wall_[index_i] <= 0.0 + TinyReal)
+					{
+						std::cout << "strange" << std::endl;
+						system("pause");
+					}
 					Vecd n_k_j_nearest = n_k[index_nearest[index_i]];
 					if (dimension_ == 2)
 					{
@@ -270,7 +276,7 @@ namespace SPH
 			{
 				is_near_wall_P1_[index_i] = 1;
 			}
-			if (r_wall_normal < (cutoff_radius_ - 0.5 * particle_spacing_) &&
+			if (r_wall_normal < (cutoff_radius_ - 0.5 * particle_spacing_)+TinyReal &&
 				r_wall_normal > 0.0 * particle_spacing_ + TinyReal)
 			{
 				is_near_wall_P2_[index_i] = 10;

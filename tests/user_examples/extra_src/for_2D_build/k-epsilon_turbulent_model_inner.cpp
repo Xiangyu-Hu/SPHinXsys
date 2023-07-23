@@ -15,7 +15,7 @@ namespace SPH
 			particle_spacing_min_(inner_relation.real_body_->sph_adaptation_->MinimumSpacing()),
 			 rho_(particles_->rho_), vel_(particles_->vel_), 
 			mu_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceViscosity()), dimension_(Vecd(0).size()),
-			smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()){}
+			smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
 		//=================================================================================================//
 		K_TurtbulentModelInner::K_TurtbulentModelInner(BaseInnerRelation& inner_relation)
 			: BaseTurtbulentModelInner(inner_relation)
@@ -39,14 +39,12 @@ namespace SPH
 				particles_->registerSortableVariable<Real>("K_Production");
 				particles_->addVariableToWrite<Real>("K_Production");
 				
-				//** for test */
-				particles_->registerVariable(lap_k_, "Lap_K");
-				particles_->registerSortableVariable<Real>("Lap_K");
-				particles_->addVariableToWrite<Real>("Lap_K");
+				particles_->registerVariable(B_, "CorrectionMatrix");
 
-				particles_->registerVariable(lap_k_term_, "Lap_K_term");
-				particles_->registerSortableVariable<Real>("Lap_K_term");
-				particles_->addVariableToWrite<Real>("Lap_K_term");
+				//** for test */
+				particles_->registerVariable(k_diffusion_, "K_Diffusion");
+				particles_->registerSortableVariable<Real>("K_Diffusion");
+				particles_->addVariableToWrite<Real>("K_Diffusion");
 
 				particles_->addVariableToWrite<Real>("ChangeRateOfTKE");
 
@@ -78,6 +76,18 @@ namespace SPH
 		{
 			particles_->registerVariable(dE_dt_, "ChangeRateOfTDR");
 			particles_->registerSortableVariable<Real>("ChangeRateOfTDR");
+			particles_->addVariableToWrite<Real>("ChangeRateOfTDR");
+
+			particles_->registerVariable(ep_production, "Ep_Production");
+			particles_->registerSortableVariable<Real>("Ep_Production");
+			particles_->addVariableToWrite<Real>("Ep_Production");
+			particles_->registerVariable(ep_dissipation_, "Ep_Dissipation_");
+			particles_->registerSortableVariable<Real>("Ep_Dissipation_");
+			particles_->addVariableToWrite<Real>("Ep_Dissipation_");
+			particles_->registerVariable(ep_diffusion_, "Ep_Diffusion_");
+			particles_->registerSortableVariable<Real>("Ep_Diffusion_");
+			particles_->addVariableToWrite<Real>("Ep_Diffusion_");
+
 		}
 		//=================================================================================================//
 		void E_TurtbulentModelInner::update(size_t index_i, Real dt)

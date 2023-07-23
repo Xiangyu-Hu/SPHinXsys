@@ -66,11 +66,11 @@ int main(int ac, char* av[])
 	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection,SequencedPolicy> standard_wall_function_correction(water_block_complex_relation);
 
 	/** TurbulentViscous cal. uses friction velocity and Y+ that are defined in WallFunction . */
-	InteractionDynamics<fluid_dynamics::TurbulentViscousAccelerationWithWall> turbulent_viscous_acceleration(water_block_complex_relation);
+	InteractionDynamics<fluid_dynamics::TurbulentViscousAccelerationWithWall, SequencedPolicy> turbulent_viscous_acceleration(water_block_complex_relation);
 	//InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex_relation);
 
 		
-	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> transport_velocity_correction(water_block_complex_relation);
+	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex,SequencedPolicy> transport_velocity_correction(water_block_complex_relation);
 	InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex>
 		inlet_outlet_surface_particle_indicator(water_block_complex_relation);
 	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation(water_block_complex_relation);
@@ -91,7 +91,13 @@ int main(int ac, char* av[])
 	/** Turbulent eddy viscosity calculation needs values of Wall Y start. */
 	SimpleDynamics<fluid_dynamics::TurbulentEddyViscosity> update_eddy_viscosity(water_block);
 	
+
+	/**  Try to introduce B correction */
+	InteractionWithUpdate<CorrectedConfigurationInner> correct_configuration(water_block_inner);
 	
+
+
+
 	BodyAlignedBoxByParticle emitter(
 		water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(emitter_translation)), emitter_halfsize));
 	SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, 50, 0);
@@ -163,14 +169,15 @@ int main(int ac, char* av[])
 			turbulent_viscous_acceleration.exec();
 			//viscous_acceleration.exec();
 			transport_velocity_correction.exec();
-
+			//** Try to introduce B correction * 
+			correct_configuration.exec();
 			/** Dynamics including pressure relaxation. */
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
 				dt = SMIN(get_fluid_time_step_size.exec(), Dt - relaxation_time);
 				
-				//turbulent_kinetic_energy_acceleration.exec();
+				turbulent_kinetic_energy_acceleration.exec();
 				
 				pressure_relaxation.exec(dt);
 
@@ -191,7 +198,6 @@ int main(int ac, char* av[])
 				//write_body_states.writeToFile();
 
 			}
-
 			if (number_of_iterations % screen_output_interval == 0)
 			{
 				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "

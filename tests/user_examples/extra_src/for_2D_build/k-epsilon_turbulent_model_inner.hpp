@@ -53,7 +53,9 @@ namespace SPH
 				for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 				{
 					size_t index_j = inner_neighborhood.j_[n];
-					Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+					//Vecd nablaW_ijV_j = 0.5* inner_neighborhood.dW_ijV_j_[n] * (B_[index_i] + B_[index_j]) * inner_neighborhood.e_ij_[n];
+					//Vecd nablaW_ijV_j =  inner_neighborhood.dW_ijV_j_[n] * B_[index_i]  * inner_neighborhood.e_ij_[n];
+					Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] *  inner_neighborhood.e_ij_[n];
 					velocity_gradient[index_i] += -(vel_i - vel_[index_j]) * nablaW_ijV_j.transpose();
 
 					k_derivative = (turbu_k_i - turbu_k_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
@@ -68,8 +70,7 @@ namespace SPH
 				dk_dt_[index_i] = k_production_[index_i] - turbu_epsilon_[index_i] + k_lap;
 
 				//** for test */
-				lap_k_[index_i] = k_lap;
-				lap_k_term_[index_i] = (mu_ + turbu_mu_i / sigma_k) * lap_k_[index_i];
+				k_diffusion_[index_i] = k_lap;
 		}
 		//=================================================================================================//
 		void E_TurtbulentModelInner::
@@ -97,6 +98,12 @@ namespace SPH
 			epsilon_dissipation = C_2 * turbu_epsilon_i * turbu_epsilon_i / turbu_k_i;
 
 			dE_dt_[index_i] = epsilon_production - epsilon_dissipation + epsilon_lap;
+			
+			//** for test */
+			ep_production[index_i] = epsilon_production;
+			ep_dissipation_[index_i] = epsilon_dissipation;
+			ep_diffusion_[index_i] = epsilon_lap;
+
 		}
 		//=================================================================================================//
 		void TKEnergyAccInner::interaction(size_t index_i, Real dt)
@@ -105,15 +112,17 @@ namespace SPH
 			Vecd acceleration = Vecd::Zero();
 			Vecd k_gradient = Vecd::Zero();
 			
-			//strong form is used
 			const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = inner_neighborhood.j_[n];
 				Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
-				k_gradient += -1.0*(turbu_k_i - turbu_k_[index_j]) * nablaW_ijV_j;
-				acceleration -= (2.0 / 3.0) * k_gradient;
+				//strong form 
+				//k_gradient += -1.0*(turbu_k_i - turbu_k_[index_j]) * nablaW_ijV_j;
+				//weak form 
+				k_gradient += 1.0 * (turbu_k_i + turbu_k_[index_j]) * nablaW_ijV_j;
 			}
+			acceleration = -1.0 * (2.0 / 3.0) * k_gradient;
 			acc_prior_[index_i] += acceleration;
 			
 			//for test
@@ -128,14 +137,15 @@ namespace SPH
 			Vecd acceleration = Vecd::Zero();
 			Vecd vel_derivative = Vecd::Zero();
 			const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = inner_neighborhood.j_[n];
 
-				// viscous force
 				vel_derivative = (vel_[index_i] - vel_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
 				acceleration += 2.0 * (mu_+ turbu_mu_i) * vel_derivative * inner_neighborhood.dW_ijV_j_[n];
 				//acceleration += 2.0 * (mu_ ) * vel_derivative * inner_neighborhood.dW_ijV_j_[n];
+
 			}
 			//for test
 			visc_acc_inner_[index_i] = acceleration / rho_[index_i];

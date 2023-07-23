@@ -81,7 +81,7 @@ public:
 		wall_boundary(sph_system, makeShared<WallBoundary>("Wall"))
 	{
 		std::cout << "constructor for BaseTurbulentModule" << std::endl;
-		water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+		water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 		water_block.generateParticles<ParticleGeneratorLattice>();
 		wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
 		wall_boundary.generateParticles<ParticleGeneratorLattice>();
@@ -95,13 +95,15 @@ protected:
 	InnerRelation water_block_inner;
 	ComplexRelation water_block_complex_relation;
 	
-	InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelComplex, SequencedPolicy> k_equation_relaxation;
-	InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelComplex> epsilon_equation_relaxation;
-	InteractionDynamics<fluid_dynamics::TKEnergyAccComplex, SequencedPolicy> turbulent_kinetic_energy_acceleration;
+	InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner, SequencedPolicy> k_equation_relaxation;
+	InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelInner> epsilon_equation_relaxation;
+	InteractionDynamics<fluid_dynamics::TKEnergyAccInner, SequencedPolicy> turbulent_kinetic_energy_acceleration;
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction;
 	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection, SequencedPolicy> standard_wall_function_correction;
 	InteractionDynamics<fluid_dynamics::TurbulentViscousAccelerationWithWall, SequencedPolicy> turbulent_viscous_acceleration;
 	SimpleDynamics<fluid_dynamics::TurbulentEddyViscosity, SequencedPolicy> update_eddy_viscosity;
+
+	InteractionWithUpdate<CorrectedConfigurationInner> correct_configuration;
 
 	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation;
 	BodyStatesRecordingToVtp write_body_states;
@@ -115,9 +117,11 @@ public:
 		water_block_inner(water_block),
 		water_block_complex_relation(water_block_inner, { &wall_boundary }),
 		
-		k_equation_relaxation(water_block_complex_relation),
-		epsilon_equation_relaxation(water_block_complex_relation),
-		turbulent_kinetic_energy_acceleration(water_block_complex_relation),
+		correct_configuration(water_block_inner),
+
+		k_equation_relaxation(water_block_inner),
+		epsilon_equation_relaxation(water_block_inner),
+		turbulent_kinetic_energy_acceleration(water_block_inner),
 		wall_boundary_normal_direction(wall_boundary),
 		standard_wall_function_correction(water_block_complex_relation),
 		turbulent_viscous_acceleration(water_block_complex_relation),
@@ -202,7 +206,7 @@ public:
 
 	std::vector<double> loadInputData(int num_data, int num_file, std::string file_name)
 	{
-		std::ifstream file("./MappingData/FVM16_basedOnSPH4_4/" + file_name, std::ios::binary);  
+		std::ifstream file("./MappingData/FromPy10/" + file_name, std::ios::binary);  
 		if (file)
 		{
 			std::string line;
@@ -279,8 +283,18 @@ TEST_F(TurbulentModule, TestTurbulentKineticEnergyEquation)
 	int num_iter = 0;
 	while (GlobalStaticVariables::physical_time_<100.0)
 	{
-		update_eddy_viscosity.exec();
+		//** Try to introduce B correction * 
+		correct_configuration.exec();
+		//update_eddy_viscosity.exec();
+
+
+		//** Test viscous force *
+		standard_wall_function_correction.exec(); //the wall viscous relies on wall Func values
 		turbulent_viscous_acceleration.exec();
+		write_body_states.writeToFile();
+		std::cout <<"Test viscous" << std::endl;
+		system("pause");
+
 		//turbulent_kinetic_energy_acceleration.exec();
 		for (int index_i = 0; index_i < num_fluid_particle; ++index_i)
 		{
@@ -301,6 +315,7 @@ TEST_F(TurbulentModule, TestTurbulentKineticEnergyEquation)
 		{
 			test_k_ep_equation.clear_acc_prior(index_i);
 		}
+		system("pause");
 	}
 
 	ASSERT_NEAR(1, 1, 0.02);

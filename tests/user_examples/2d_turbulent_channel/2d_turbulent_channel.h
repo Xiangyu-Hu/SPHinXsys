@@ -10,7 +10,7 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 60;						  /**< Reference length. */
+Real DL = 120;						  /**< Reference length. */
 Real DH = 2;						  /**< Reference and the height of main channel. */
 Real resolution_ref = 0.1;			  /**< Initial reference particle spacing. */
 Real BW = resolution_ref * 4;		  /**< Reference size of the emitter. */
