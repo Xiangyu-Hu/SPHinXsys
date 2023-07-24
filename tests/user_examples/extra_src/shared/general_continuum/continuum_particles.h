@@ -21,14 +21,15 @@ namespace SPH
         StdLargeVec<Matd> velocity_gradient_;
 
         StdLargeVec<Real> von_mises_stress_;
+        StdLargeVec<Real> von_mises_strain_;
 
         StdLargeVec<Vecd> pos0_; /**< initial position */
         StdLargeVec<Vecd> n_;    /**<  current normal direction */
         StdLargeVec<Vecd> n0_;   /**<  initial normal direction */
 
-        GeneralContinuum &granular_material_;
+        GeneralContinuum &continuum_;
 
-        ContinuumParticles(SPHBody &sph_body, GeneralContinuum *granular_material);
+        ContinuumParticles(SPHBody &sph_body, GeneralContinuum *continuum);
         virtual ~ContinuumParticles(){};
 
         virtual void initializeOtherVariables() override;

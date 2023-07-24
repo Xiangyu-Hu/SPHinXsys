@@ -3,7 +3,7 @@
 namespace SPH
 {
 //=================================================================================================//
-	namespace continuum_dyannmics
+	namespace continuum_dynamics
 	{
 
 	}

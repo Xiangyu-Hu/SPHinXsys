@@ -5,7 +5,7 @@
 namespace SPH
 {
 //=================================================================================================//
-namespace continuum_dyannmics
+namespace continuum_dynamics
 {
 //=================================================================================================//
 //==========================BaseShearStressRelaxation1stHalfWithWall================================//
@@ -16,7 +16,7 @@ void BaseShearStressRelaxation1stHalfWithWall<BaseShearStressRelaxation1stHalfTy
     BaseShearStressRelaxation1stHalfType::interaction(index_i, dt);
     Matd shear_stress_i = this->shear_stress_[index_i];
     Real rho_i = this->rho_[index_i];
-    Real rho_in_wall = this->granular_material_.getDensity();
+    Real rho_in_wall = this->continuum_.getDensity();
     Vecd acceleration = Vecd::Zero();
     for (size_t k = 0; k < fluid_dynamics::FluidWallData::contact_configuration_.size(); ++k) // There may be several wall bodies.
     {
@@ -48,7 +48,7 @@ void BaseShearStressRelaxation2ndHalfWithWall<BaseShearStressRelaxation2ndHalfTy
 
     Vecd vel_i = this->vel_[index_i];
     Matd velocity_gradient = Matd::Zero();
-    Real rho_in_wall = this->granular_material_.getDensity();
+    Real rho_in_wall = this->continuum_.getDensity();
     for (size_t k = 0; k < fluid_dynamics::FluidWallData::contact_configuration_.size(); ++k)
     {
 
@@ -70,5 +70,5 @@ void BaseShearStressRelaxation2ndHalfWithWall<BaseShearStressRelaxation2ndHalfTy
     }
     this->velocity_gradient_[index_i] += velocity_gradient;
 }
-} // namespace continuum_dyannmics
+} // namespace continuum_dynamics
 } // namespace SPH
