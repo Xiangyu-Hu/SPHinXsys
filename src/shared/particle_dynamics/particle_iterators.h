@@ -33,7 +33,6 @@
 #include "execution_policy.h"
 #include "execution_unit/execution_proxy.hpp"
 #include "execution_unit/execution_queue.hpp"
-#include "execution_unit/execution_event.hpp"
 #include "sph_data_containers.h"
 
 namespace SPH
