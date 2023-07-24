@@ -76,10 +76,6 @@ Vecd getWENOLeftState(const Vecd &e_ij, const Real &r_ij, const Vecd &particle_i
 Vecd getWENORightState(const Vecd &e_ij, const Real &r_ij, const Vecd &particle_i_value,
                        const Matd &gradient_particle_i_value, const Vecd &particle_j_value, const Matd &gradient_particle_j_value);
 
-/** get the artificial rotation from the pseudo-normal jump. */
-Vec2d getRotationJump(const Vec2d &pseudo_n_jump, const Mat2d &transformation_matrix);
-Vec3d getRotationJump(const Vec3d &pseudo_n_jump, const Mat3d &transformation_matrix);
-
 /** get the corrected Eulerian Almansi strain tensor according to plane stress problem. */
 Mat2d getCorrectedAlmansiStrain(const Mat2d &current_local_almansi_strain, const Real &nu_);
 Mat3d getCorrectedAlmansiStrain(const Mat3d &current_local_almansi_strain, const Real &nu_);
