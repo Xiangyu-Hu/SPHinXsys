@@ -23,7 +23,7 @@
 /**
  * @file 	solid_particles.h
  * @brief 	This is the derived class of base particles.
- * @author	Chi ZHang, Dong Wu and Xiangyu Hu
+ * @author	Chi Zhang, Dong Wu and Xiangyu Hu
  */
 
 #ifndef SOLID_PARTICLES_H

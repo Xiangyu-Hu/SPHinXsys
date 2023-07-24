@@ -23,7 +23,7 @@
 /**
  * @file 	kernel_cubic_B_spline.h
  * @brief 	This is the class for cubic_B_spline kernel.
- * @author	Zhentong Wang, Chi ZHang and Xiangyu Hu
+ * @author	Zhentong Wang, Chi Zhang and Xiangyu Hu
  */
 
 #ifndef KERNEL_CUBIC_B_SPLINE_H

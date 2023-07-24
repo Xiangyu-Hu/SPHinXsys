@@ -23,7 +23,7 @@
 /**
  * @file 	particle_iterators.h
  * @brief 	This is for the base functions for particle iterator.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef PARTICLE_ITERATORS_H

@@ -23,7 +23,7 @@
 /**
  * @file 	base_body_relation.h
  * @brief 	Base classes on body and particle topology relations.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef BASE_BODY_RELATION_H

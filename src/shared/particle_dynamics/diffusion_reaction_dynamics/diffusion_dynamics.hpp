@@ -1,7 +1,7 @@
 /**
  * @file 	diffusion_dynamics.hpp
  * @brief 	This is the particle dynamics applicable for all type bodies
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef DIFFUSION_DYNAMICS_HPP

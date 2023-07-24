@@ -23,7 +23,7 @@
 /**
  * @file 	diffusion_reaction_particles.h
  * @brief 	This is the derived class of diffusion reaction particles.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef DIFFUSION_REACTION_PARTICLES_H

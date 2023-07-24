@@ -23,7 +23,7 @@
 /**
  * @file 	transform_shape.h
  * @brief 	transformation related class for geometries.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef TRANSFORM_SHAPE_H

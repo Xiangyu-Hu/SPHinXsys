@@ -23,7 +23,7 @@
 /**
  * @file 	large_data-container.h
  * @brief 	Data container for large vector, e.g. particle data.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 #ifndef LARGE_DATA_CONTAINER_H
 #define LARGE_DATA_CONTAINER_H

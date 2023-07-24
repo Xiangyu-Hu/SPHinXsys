@@ -25,7 +25,7 @@
  * @brief 	Here are the classes for damping the magnitude of
  * 			any variables.
  * 			Note that, currently, these classes works only in single resolution.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef PARTICLE_DYNAMICS_DISSIPATION_H

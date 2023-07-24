@@ -29,7 +29,7 @@
  *          (state, discrete, cache, ...) to the underlying system. As such, SimbodyState
  *          handles all of the bookkeeping of system indices and provides convenience
  *          access to variable values (incl. derivatives) via their names as strings.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef STATE_ENGINE_SIMBODY_H

@@ -1,7 +1,7 @@
 /**
  * @file regression_test_base.hpp
  * @brief Base classes for comparisons between validated and tested results.
- * @author	Bo Zhang , Chi ZHang and Xiangyu Hu
+ * @author	Bo Zhang , Chi Zhang and Xiangyu Hu
  */
 
 #pragma once

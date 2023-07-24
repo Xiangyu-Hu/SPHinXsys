@@ -23,7 +23,7 @@
 /**
  * @file 	all_kernels.h
  * @brief 	Headers for all kernels.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef ALL_KERNELS_H

@@ -23,7 +23,7 @@
 /**
  * @file 	base_data_package.h
  * @brief 	Base data package for the library.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 #ifndef BASE_DATA_PACKAGE_H
 #define BASE_DATA_PACKAGE_H

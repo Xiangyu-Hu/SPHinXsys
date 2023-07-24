@@ -23,7 +23,7 @@
 /**
  * @file 	level_set_shape.h
  * @brief 	Here, we define geometry based on level set technique.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef LEVEL_SET_SHAPE_H

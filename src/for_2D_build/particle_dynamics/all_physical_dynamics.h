@@ -21,25 +21,16 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    all_particle_dynamics.h
+ * @file    all_physical_dynamics.h
  * @brief   Head file for all physics dynamics.
  *          This is the header file that user code should include to pick up all
             particle dynamics capabilities.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
-#ifndef ALL_PHYSICAL_DYNAMICS_H
-#define ALL_PHYSICAL_DYNAMICS_H
+#ifndef ALL_PHYSICAL_DYNAMICS_2D_H
+#define ALL_PHYSICAL_DYNAMICS_2D_H
 
-#include "active_muscle_dynamics.h"
-#include "all_diffusion_reaction_dynamics.h"
-#include "all_fluid_dynamics.h"
-#include "all_general_dynamics.h"
-#include "all_solid_dynamics.h"
-#include "electro_physiology.h"
-#include "external_force.h"
-#include "particle_dynamics_dissipation.h"
-#include "particle_dynamics_dissipation.hpp"
-#include "relax_dynamics.h"
+#include "all_shared_physical_dynamics.h"
 
-#endif // ALL_PHYSICAL_DYNAMICS_H
+#endif // ALL_PHYSICAL_DYNAMICS_2D_H

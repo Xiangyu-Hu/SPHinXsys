@@ -23,7 +23,7 @@
 /**
  * @file 	complex_body_relation.h
  * @brief 	The topological relations within one body and to other bodies.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef COMPLEX_BODY_RELATION_H

@@ -23,7 +23,7 @@
 /**
  * @file    all_simbody.h
  * @brief   headers for SimBody engine.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef ALL_SIMBODY_H

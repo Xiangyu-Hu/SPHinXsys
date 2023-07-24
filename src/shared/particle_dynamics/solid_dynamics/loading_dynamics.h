@@ -24,7 +24,7 @@
  * @file 	loading_dynamics.h
  * @brief 	Here, we define the algorithm classes for solid dynamics.
  * @details We consider here a weakly compressible solids.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef LOADING_DYNAMICS_H

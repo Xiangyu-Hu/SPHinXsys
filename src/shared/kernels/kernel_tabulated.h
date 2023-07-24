@@ -23,7 +23,7 @@
 /**
  * @file 	kernel_tabulated.h
  * @brief 	This is the class for tabulated kernels using template.
- * @author	Yongchuan Yu, Massoud Rezevand, Chi ZHang and Xiangyu Hu
+ * @author	Yongchuan Yu, Massoud Rezevand, Chi Zhang and Xiangyu Hu
  */
 
 #ifndef KERNEL_TABULATED_H

@@ -23,7 +23,7 @@
 /**
  * @file 	active_muscle_dynamics.h
  * @brief 	In is file, we declare muscle dynamics which is driven by an external injection of energy.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef ACTIVE_MUSCLE_DYNAMICS_H

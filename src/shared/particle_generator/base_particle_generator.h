@@ -25,7 +25,7 @@
  * @brief 	This is the base class of particle generator, which generates particles
  * 			with given positions and volumes. The direct generator simply generate
  * 			particle with given position and volume.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef BASE_PARTICLE_GENERATOR_H

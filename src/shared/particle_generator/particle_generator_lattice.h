@@ -26,7 +26,7 @@
  * 			with given positions and volumes. The direct generator simply generate
  * 			particle with given position and volume. The lattice generator generate
  * 			at lattice position by check whether the position is contained by a SPH body.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef PARTICLE_GENERATOR_LATTICE_H

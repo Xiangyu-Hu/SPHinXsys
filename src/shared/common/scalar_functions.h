@@ -23,7 +23,7 @@
 /**
  * @file 	scalar_functions.h
  * @brief 	Base scalar function definition.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 #ifndef SCALAR_FUNCTIONS_H
 #define SCALAR_FUNCTIONS_H
