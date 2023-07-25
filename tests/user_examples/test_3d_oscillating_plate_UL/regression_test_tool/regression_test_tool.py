@@ -7,11 +7,11 @@ sys.path.append(path)
 from regression_test_base_tool import SphinxsysRegressionTest
 
 """
-case name: test_2d_oscillating_beam_UL
+case name: test_2d_oscillating_beam
 """
 
-case_name = "zsh_2d_oscillating_beam_UL_non-hourglass"
-body_name = "BeamObserver"
+case_name = "zsh_3d_oscillating_plate"
+body_name = "PlateObserver"
 parameter_name = "Position"
 
 number_of_run_times = 0

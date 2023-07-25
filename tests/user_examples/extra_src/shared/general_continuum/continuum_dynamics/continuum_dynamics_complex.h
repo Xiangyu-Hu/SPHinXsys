@@ -8,7 +8,7 @@
 
 namespace SPH
 {
-namespace continuum_dyannmics
+namespace continuum_dynamics
 {
 
 typedef DataDelegateContact<ContinuumParticles, SolidParticles, DataDelegateEmptyBase>
@@ -51,7 +51,7 @@ class BaseShearStressRelaxation2ndHalfWithWall : public fluid_dynamics::Interact
 };
 
 using ShearStressRelaxation2ndHalfWithWall = BaseShearStressRelaxation2ndHalfWithWall<ShearStressRelaxation2ndHalf>;
-} // namespace continuum_dyannmics
+} // namespace continuum_dynamics
 } // namespace SPH
 
 #endif // CONTINUUM_DYNAMICS_COMPLEX_H
