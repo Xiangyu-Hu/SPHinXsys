@@ -11,6 +11,7 @@ option(SPHINXSYS_3D "Build sphinxsys_3d library" ON)
 option(SPHINXSYS_BUILD_TESTS "Build tests" ON)
 option(SPHINXSYS_DEVELOPER_MODE "Developer mode has more flags active for code quality" ON)
 option(SPHINXSYS_USE_FLOAT "Build using float (single-precision floating-point format) as primary type" OFF)
+option(SPHINXSYS_MODULE_OPENCASCADE "Build extension relying on OpenCASCADE" OFF)
 
 # ------ Global properties (Some cannot be set on INTERFACE targets)
 set(CMAKE_VERBOSE_MAKEFILE OFF CACHE BOOL "Enable verbose compilation commands for Makefile and Ninja" FORCE) # Extra fluff needed for Ninja: https://github.com/ninja-build/ninja/issues/900
@@ -97,19 +98,10 @@ endif()
 add_subdirectory(src)
 add_subdirectory(modules)
 
-if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
- add_subdirectory(opencascade_modules)
- endif()
-
 # ------ Setup the tests
 if(SPHINXSYS_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
-
-    if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    add_subdirectory(opencascade_tests)
-    endif()
-    
 endif()
 
 # ------ Extra scripts to install

@@ -14,10 +14,10 @@
 #define SURFACE_SHAPE_H
 
 #include "sphinxsys.h" 
-#include"opencascade.h"
 #include "vector.h"
 
-
+#include <opencascade/Standard_TypeDef.hxx>
+#include <opencascade/Geom_Surface.hxx>
 
 #include <iostream>
 #include <string>

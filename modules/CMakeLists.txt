@@ -1,3 +1,7 @@
-add_library(structural_simulation_module structural_simulation/structural_simulation_class.cpp structural_simulation/structural_simulation_class.h)
-target_include_directories(structural_simulation_module PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/structural_simulation> $<INSTALL_INTERFACE:include/structural_simulation>)
-target_link_libraries(structural_simulation_module PUBLIC sphinxsys_3d)
+SUBDIRLIST(SUBDIRS ${CMAKE_CURRENT_SOURCE_DIR})
+
+foreach(subdir ${SUBDIRS})
+    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${subdir}/CMakeLists.txt)
+	    add_subdirectory(${subdir})
+    endif()
+endforeach()

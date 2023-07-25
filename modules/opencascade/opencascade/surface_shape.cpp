@@ -1,5 +1,12 @@
 #include "surface_shape.h"
 
+#include <opencascade/STEPCAFControl_Reader.hxx>
+#include <opencascade/TopExp_Explorer.hxx>
+#include <opencascade/TopoDS.hxx>
+#include <opencascade/BRep_Builder.hxx>
+#include <opencascade/GeomAPI_ProjectPointOnSurf.hxx>
+#include <opencascade/gp_Pnt.hxx>
+
 namespace SPH
 {
 	//=================================================================================================//
