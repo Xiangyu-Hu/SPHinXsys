@@ -106,7 +106,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<Integration1stHalfAcousticRiemannWithWall> pressure_relaxation(water_block_complex);
     InteractionWithUpdate<Integration2ndHalfAcousticRiemannWithWall> density_relaxation(water_block_complex);
     InteractionDynamics<ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
-    ReduceDynamics<EulerianWCAcousticTimeStepSize> get_fluid_time_step_size(water_block, 0.3);
+    ReduceDynamics<EulerianWCAcousticTimeStepSize> get_fluid_time_step_size(water_block, 0.5);
     InteractionWithUpdate<fluid_dynamics::FreeSurfaceIndicationComplex> surface_indicator(water_block_complex.getInnerRelation(), water_block_complex.getContactRelation());
     Dynamics1Level<FarFieldBoundary> variable_reset_in_boundary_condition(water_block_complex.getInnerRelation());
     //----------------------------------------------------------------------
