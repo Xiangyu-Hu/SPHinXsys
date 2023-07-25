@@ -38,8 +38,7 @@ jobs:
             git \
             cmake \
             ninja-build \
-            # Below required for vcpkg opencascade
-            libfontconfig1-dev \
+            libfontconfig1-dev `# From here required for vcpkg opencascade`\
             libx11-dev \
             libgl-dev
 
@@ -104,8 +103,7 @@ jobs:
             git \
             cmake \
             ninja-build \
-            # Below required for vcpkg opencascade
-            libfontconfig1-dev \
+            libfontconfig1-dev `# From here required for vcpkg opencascade`\
             libx11-dev \
             libgl-dev
 
