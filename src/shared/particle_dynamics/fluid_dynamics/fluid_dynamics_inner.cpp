@@ -59,8 +59,8 @@ TransportVelocityCorrectionInnerAdaptive::
 //=================================================================================================//
 AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL)
     : LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
-      FluidDataSimple(sph_body), fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())), rho_(particles_->rho_),
-      p_(*particles_->getVariableByName<Real>("Pressure")), vel_(particles_->vel_),
+      FluidDataSimple(sph_body), fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
+      rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")), vel_(particles_->vel_),
       smoothing_length_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
       acousticCFL_(acousticCFL) {}
 //=================================================================================================//
@@ -118,7 +118,9 @@ VorticityInner::VorticityInner(BaseInnerRelation &inner_relation)
 BaseIntegration::BaseIntegration(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())), rho_(particles_->rho_),
-      p_(*particles_->getVariableByName<Real>("Pressure")), drho_dt_(*particles_->registerSharedVariable<Real>("DensityChangeRate")), pos_(particles_->pos_), vel_(particles_->vel_),
+      p_(*particles_->getVariableByName<Real>("Pressure")),
+      drho_dt_(*particles_->registerSharedVariable<Real>("DensityChangeRate")),
+      pos_(particles_->pos_), vel_(particles_->vel_),
       acc_(particles_->acc_), acc_prior_(particles_->acc_prior_) {}
 //=================================================================================================//
 Oldroyd_BIntegration1stHalf ::
