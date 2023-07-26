@@ -15,9 +15,7 @@
 
 #include "sphinxsys.h" 
 #include "vector.h"
-
-#include <opencascade/Standard_TypeDef.hxx>
-#include <opencascade/Geom_Surface.hxx>
+#include"opencascade.h"
 
 #include <iostream>
 #include <string>
@@ -27,8 +25,6 @@ namespace fs = std::filesystem;
 
 namespace SPH
 {
-	
-	
 	class SurfaceShape : public Shape
         {
               public:
@@ -36,7 +32,7 @@ namespace SPH
                     : Shape(shape_name){};
                 virtual bool checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED = true) override;
                 virtual Vecd findClosestPoint(const Vecd &input_pnt) override;
-                Vecd findActualPoint(Standard_Real u, Standard_Real v);
+                Vecd getCartesianPoint(Standard_Real u, Standard_Real v);
               
                 Handle_Geom_Surface surface_;
               protected:

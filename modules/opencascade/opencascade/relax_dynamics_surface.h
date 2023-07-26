@@ -32,6 +32,7 @@
 
 #include "sphinxsys.h"
 #include "vector.h"
+#include "surface_shape.h"
 
 namespace SPH
 {

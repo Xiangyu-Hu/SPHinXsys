@@ -69,24 +69,24 @@ class CylinderParticleGenerator : public SurfaceParticleGenerator
         for (size_t k = 0;  k <= 1 / DELTA1; k++)
         {
             Standard_Real u = u1 + k * DELTA1;
-            points.push_back(a->findActualPoint(u, 0));
+            points.push_back(a->getCartesianPoint(u, 0));
         }
         for (size_t k = 0;  k <= 1 / DELTA1-1; k++)
         {
             Standard_Real v = v1 + k * DELTA1;
-            points.push_back(a->findActualPoint(0, v));
+            points.push_back(a->getCartesianPoint(0, v));
         }
 
         for (size_t n = 0; n <= 1 / DELTA2 - 2; n++)
         {
             Standard_Real u = u2 + n * DELTA2;
-            points.push_back(a->findActualPoint(u, 1));
+            points.push_back(a->getCartesianPoint(u, 1));
         }
 
         for (size_t n = 0; n <= 1 / DELTA2 - 1; n++)
         {
             Standard_Real v = v2 + n * DELTA2;
-            points.push_back(a->findActualPoint(1, v));
+            points.push_back(a->getCartesianPoint(1, v));
         }
 
         for (size_t k = 0; k <= 8; k++)
@@ -99,7 +99,7 @@ class CylinderParticleGenerator : public SurfaceParticleGenerator
             for (size_t n = 0; n <= 20; n++)
             {
                 Standard_Real u = u1 + n * UDELTA;
-                points.push_back(a->findActualPoint(u, v));
+                points.push_back(a->getCartesianPoint(u, v));
             }
         }
 

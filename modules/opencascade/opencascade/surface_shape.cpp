@@ -1,12 +1,5 @@
 #include "surface_shape.h"
 
-#include <opencascade/STEPCAFControl_Reader.hxx>
-#include <opencascade/TopExp_Explorer.hxx>
-#include <opencascade/TopoDS.hxx>
-#include <opencascade/BRep_Builder.hxx>
-#include <opencascade/GeomAPI_ProjectPointOnSurf.hxx>
-#include <opencascade/gp_Pnt.hxx>
-
 namespace SPH
 {
 	//=================================================================================================//
@@ -15,9 +8,8 @@ Vecd SurfaceShape::findClosestPoint(const Vecd &input_pnt)
 
     Vecd closest_pnt;
     gp_Pnt point1 = EigenToOcct(input_pnt);
-    gp_Pnt point2;
     Extrema_ExtAlgo Algo = Extrema_ExtAlgo_Tree;
-    point2 = GeomAPI_ProjectPointOnSurf(point1, surface_, Algo);
+    gp_Pnt point2 = GeomAPI_ProjectPointOnSurf(point1, surface_, Algo);
     closest_pnt[0] = point2.X();
     closest_pnt[1] = point2.Y();
     closest_pnt[2] = point2.Z();
@@ -30,7 +22,7 @@ bool SurfaceShape::checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED) { retur
 BoundingBox SurfaceShape::findBounds() { return BoundingBox(); }
 //=================================================================================================//
 
-Vecd SurfaceShape::findActualPoint(Standard_Real u, Standard_Real v)
+Vecd SurfaceShape::getCartesianPoint(Standard_Real u, Standard_Real v)
 {
     gp_Pnt point;
     Vec3d actual_pnt;
@@ -46,6 +38,12 @@ SurfaceShapeSTEP::
     SurfaceShapeSTEP(Standard_CString &filepathname, const std::string &shape_name)
     : SurfaceShape(shape_name)
 {
+    if (!std::filesystem::exists(filepathname))
+    {
+        std::cout << "\n Error: the input file:" << filepathname << " is not exists" << std::endl;
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        throw;
+    }
     STEPControl_Reader step_reader;
     step_reader.ReadFile(filepathname);
 

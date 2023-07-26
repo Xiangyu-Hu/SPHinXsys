@@ -1,12 +1,5 @@
-#include "relax_dynamics.h"
-#include "base_particles.hpp"
-#include "particle_generator_lattice.h"
-#include "level_set_shape.h"
-#include "surface_shape.h"
 #include "relax_dynamics_surface.h"
 
-#include <opencascade/GeomAPI_ProjectPointOnSurf.hxx>
-#include <opencascade/gp_Pnt.hxx>
 //========================================================================================================//
 namespace SPH
 {
@@ -15,7 +8,7 @@ namespace SPH
 	{
         //=================================================================================================//
         ShapeSurfaceBounding2::ShapeSurfaceBounding2(RealBody &real_body_)
-            : LocalDynamics(real_body_), RelaxDataDelegateSimple(real_body_), pos_(particles_->pos_) /*, surface_shape_(DynamicCast<SurfaceShape>(this, sph_body_.body_shape_))*/
+            : LocalDynamics(real_body_), RelaxDataDelegateSimple(real_body_), pos_(particles_->pos_) 
         {
             shape_ = real_body_.body_shape_;
            
