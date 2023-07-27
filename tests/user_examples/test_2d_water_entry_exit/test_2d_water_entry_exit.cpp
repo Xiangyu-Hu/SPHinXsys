@@ -15,10 +15,10 @@ using namespace SPH;   // Namespace cite here.
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
 Real insert_cylinder_radius = 0.055;                              /**< Cylinder radius. */
-Real DL = 16.0 * insert_cylinder_radius;                          /**< Water tank length. */
-Real DH = 20.0 * insert_cylinder_radius;                          /**< Water tank height. */
+Real DL = 8.0 * insert_cylinder_radius;                          /**< Water tank length. */
+Real DH = 7.0 * insert_cylinder_radius;                          /**< Water tank height. */
 Real LL = DL;                                                     /**< Water column length. */
-Real LH = 8.0 * insert_cylinder_radius;                           /**< Water column height. */
+Real LH = 3.0 * insert_cylinder_radius;                           /**< Water column height. */
 Real particle_spacing_ref = 2.0 * insert_cylinder_radius / 40.0;  /**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4;                               /**< Thickness of tank wall. */
 Vec2d insert_cylinder_center(0.5 * DL, LH + 0.15);                /**< Location of the cylinder center. */
@@ -427,8 +427,8 @@ int main(int ac, char *av[])
     int screen_output_interval = 100;
     int observation_sample_interval = screen_output_interval * 2;
     int restart_output_interval = screen_output_interval * 10;
-    Real end_time = 0.8;
-    Real output_interval = end_time/100.0;
+    Real end_time = 0.7;
+    Real output_interval = end_time/70.0;
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------

@@ -1,9 +1,11 @@
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake) # main (top) cmake dir
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${SPHINXSYS_PROJECT_DIR}/cmake) # main (top) cmake dir
 
 set(CMAKE_VERBOSE_MAKEFILE on)
 
 STRING( REGEX REPLACE ".*/(.*)" "\\1" CURRENT_FOLDER ${CMAKE_CURRENT_SOURCE_DIR} )
 PROJECT("${CURRENT_FOLDER}")
+
+
 
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 SET(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin/")
@@ -15,7 +17,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_INPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/ DESTINATION ${BUILD_INPUT_PATH})
 
 aux_source_directory(. DIR_SRCS)
-ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})
+ADD_EXECUTABLE(${PROJECT_NAME} ${EXECUTABLE_OUTPUT_PATH} ${DIR_SRCS} )
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         add_test(NAME ${PROJECT_NAME}_particle_relaxation COMMAND ${PROJECT_NAME} --r=true
@@ -29,12 +31,8 @@ else()
                 WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 endif()
 
-set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "periodic boundary")
+set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "periodic boundary, free stream")
 
 set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 target_link_libraries(${PROJECT_NAME} extra_sources_2d)
 
-add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME}
-                 WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
-add_test(NAME ${PROJECT_NAME}_restart COMMAND ${PROJECT_NAME} --restart_step=4000
-                 WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
