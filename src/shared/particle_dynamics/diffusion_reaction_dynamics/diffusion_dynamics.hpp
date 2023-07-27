@@ -325,11 +325,11 @@ void InitializationRK<ParticlesType>::
 template <class FirstStageType>
 void SecondStageRK2<FirstStageType>::update(size_t index_i, Real dt)
 {
+    FirstStageType::update(index_i, dt);
     for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
     {
-        (*this->diffusion_species_[m])[index_i] =
-            0.5 * diffusion_species_s_[m][index_i] +
-            0.5 * ((*this->diffusion_species_[m])[index_i] + dt * (*this->diffusion_dt_[m])[index_i]);
+        (*this->diffusion_species_[m])[index_i] = 0.5 * diffusion_species_s_[m][index_i] +
+                                                  0.5 * (*this->diffusion_species_[m])[index_i];
     }
 }
 //=================================================================================================//
