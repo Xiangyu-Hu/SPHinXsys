@@ -42,7 +42,16 @@ BaseDiffusionRelaxation<ParticlesType>::
         std::string &diffusion_species_name = all_species_names[diffusion_species_indexes[i]];
         diffusion_dt_[i] = this->particles_->template registerSharedVariable<Real>(diffusion_species_name + "ChangeRate");
     }
-} 
+}
+//=================================================================================================//
+template <class ParticlesType>
+void BaseDiffusionRelaxation<ParticlesType>::initialization(size_t index_i, Real dt)
+{
+    for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
+    {
+        (*this->diffusion_dt_[m])[index_i] = 0;
+    }
+}
 //=================================================================================================//
 template <class ParticlesType>
 void BaseDiffusionRelaxation<ParticlesType>::update(size_t index_i, Real dt)
@@ -59,16 +68,6 @@ DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
     : BaseDiffusionRelaxation<ParticlesType>(inner_relation.getSPHBody()),
       DataDelegateInner<ParticlesType, DataDelegateEmptyBase>(inner_relation),
       kernel_gradient_(this->particles_) {}
-//=================================================================================================//
-template <class ParticlesType, class KernelGradientType>
-void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
-    initializeDiffusionChangeRate(size_t particle_i)
-{
-    for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
-    {
-        (*this->diffusion_dt_[m])[particle_i] = 0;
-    }
-}
 //=================================================================================================//
 template <class ParticlesType, class KernelGradientType>
 void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
@@ -89,8 +88,6 @@ void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
     interaction(size_t index_i, Real dt)
 {
     Neighborhood &inner_neighborhood = this->inner_configuration_[index_i];
-
-    initializeDiffusionChangeRate(index_i);
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
         size_t index_j = inner_neighborhood.j_[n];
