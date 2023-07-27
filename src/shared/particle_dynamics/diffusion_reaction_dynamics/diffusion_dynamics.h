@@ -112,7 +112,6 @@ class DiffusionRelaxationInner
     KernelGradientType kernel_gradient_;
     void initializeDiffusionChangeRate(size_t particle_i);
     void getDiffusionChangeRate(size_t particle_i, size_t particle_j, Vecd &e_ij, Real surface_area_ij);
-    virtual void updateSpeciesDiffusion(size_t particle_i, Real dt);
 
   public:
     typedef BaseInnerRelation BodyRelationType;
@@ -258,7 +257,6 @@ class SecondStageRK2 : public FirstStageType
 {
   protected:
     StdVec<StdLargeVec<Real>> &diffusion_species_s_;
-    virtual void updateSpeciesDiffusion(size_t particle_i, Real dt) override;
 
   public:
     template <typename... ContactArgsType>
@@ -267,6 +265,8 @@ class SecondStageRK2 : public FirstStageType
         : FirstStageType(body_relation, std::forward<ContactArgsType>(contact_args)...),
           diffusion_species_s_(diffusion_species_s){};
     virtual ~SecondStageRK2(){};
+
+    void update(size_t index_i, Real dt = 0.0);
 };
 
 /**

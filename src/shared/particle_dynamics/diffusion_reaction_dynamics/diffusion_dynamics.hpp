@@ -75,12 +75,11 @@ void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
 }
 //=================================================================================================//
 template <class ParticlesType, class KernelGradientType>
-void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
-    updateSpeciesDiffusion(size_t particle_i, Real dt)
+void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::update(size_t index_i, Real dt)
 {
     for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
     {
-        (*this->diffusion_species_[m])[particle_i] += dt * (*this->diffusion_dt_[m])[particle_i];
+        (*this->diffusion_species_[m])[index_i] += dt * (*this->diffusion_dt_[m])[index_i];
     }
 }
 //=================================================================================================//
@@ -102,13 +101,6 @@ void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
         Real area_ij = 2.0 * grad_ijV_j.dot(e_ij) / r_ij_;
         getDiffusionChangeRate(index_i, index_j, e_ij, area_ij);
     }
-}
-//=================================================================================================//
-template <class ParticlesType, class KernelGradientType>
-void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
-    update(size_t index_i, Real dt)
-{
-    updateSpeciesDiffusion(index_i, dt);
 }
 //=================================================================================================//
 template <class ParticlesType, class ContactParticlesType, class KernelGradientType>
@@ -331,14 +323,13 @@ void InitializationRK<ParticlesType>::
 }
 //=================================================================================================//
 template <class FirstStageType>
-void SecondStageRK2<FirstStageType>::
-    updateSpeciesDiffusion(size_t particle_i, Real dt)
+void SecondStageRK2<FirstStageType>::update(size_t index_i, Real dt)
 {
     for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
     {
-        (*this->diffusion_species_[m])[particle_i] =
-            0.5 * diffusion_species_s_[m][particle_i] +
-            0.5 * ((*this->diffusion_species_[m])[particle_i] + dt * (*this->diffusion_dt_[m])[particle_i]);
+        (*this->diffusion_species_[m])[index_i] =
+            0.5 * diffusion_species_s_[m][index_i] +
+            0.5 * ((*this->diffusion_species_[m])[index_i] + dt * (*this->diffusion_dt_[m])[index_i]);
     }
 }
 //=================================================================================================//
