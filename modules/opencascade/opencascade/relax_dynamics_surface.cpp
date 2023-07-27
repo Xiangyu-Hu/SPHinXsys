@@ -1,4 +1,9 @@
+#include "level_set_shape.h"
+#include "surface_shape.h"
 #include "relax_dynamics_surface.h"
+
+#include <opencascade/GeomAPI_ProjectPointOnSurf.hxx>
+#include <opencascade/gp_Pnt.hxx>
 
 //========================================================================================================//
 namespace SPH

@@ -15,7 +15,9 @@
 
 #include "sphinxsys.h" 
 #include "vector.h"
-#include"opencascade.h"
+
+#include <opencascade/Standard_TypeDef.hxx>
+#include <opencascade/Geom_Surface.hxx>
 
 #include <iostream>
 #include <string>

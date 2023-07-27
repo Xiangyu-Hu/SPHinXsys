@@ -16,7 +16,6 @@ add_library(sphinxsys_opencascade
     opencascade/surface_shape.h 
     opencascade/vector.cpp 
     opencascade/vector.h
-    opencascade/opencascade.h
 )
 target_include_directories(sphinxsys_opencascade PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/opencascade>)
 target_link_libraries(sphinxsys_opencascade PUBLIC sphinxsys_3d)
