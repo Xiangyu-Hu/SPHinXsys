@@ -183,6 +183,8 @@ int main()
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
+        write_water_mechanical_energy(io_environment, water_block);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -209,6 +211,7 @@ int main()
     //	First output before the main loop.
     //----------------------------------------------------------------------
     body_states_recording.writeToFile(0);
+    write_water_mechanical_energy.writeToFile(number_of_iterations);
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -283,6 +286,7 @@ int main()
 
             interval_updating_configuration += TickCount::now() - time_instance;
         }
+        write_water_mechanical_energy.writeToFile(number_of_iterations);
         TickCount t2 = TickCount::now();
         body_states_recording.writeToFile();
         TickCount t3 = TickCount::now();
@@ -301,6 +305,16 @@ int main()
               << interval_computing_pressure_relaxation.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
+
+    sph_system.generate_regression_data_ = false;
+    if (sph_system.generate_regression_data_)
+    {
+        write_water_mechanical_energy.generateDataBase(1.0e-3);
+    }
+    else if (sph_system.RestartStep() == 0)
+    {
+        write_water_mechanical_energy.testResult();
+    }
 
     return 0;
 }
