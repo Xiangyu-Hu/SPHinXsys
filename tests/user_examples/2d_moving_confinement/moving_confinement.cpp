@@ -5,18 +5,24 @@
  * @author 	Xiangyu Hu
  */
 #include "sphinxsys.h" //SPHinXsys Library.
+#include "body_part_by_cell_tracing.h"
+#include "level_set_confinement.h"
+//#include "body_part_by_cell_tracing.hpp"
 using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
 Real DL = 5.366;              /**< Tank length. */
 Real DH = 5.366;              /**< Tank height. */
-Real LL = 2.0;                /**< Liquid column length. */
+Real LL = 5.366;                /**< Liquid column length. */
 Real LH = 2.0;                /**< Liquid column height. */
-Real resolution_ref = 0.025;  /**< Global reference resolution. */
+Real resolution_ref = 0.05;  /**< Global reference resolution. */
 Real BW = resolution_ref * 4; /**< Extending width for BCs. */
 // Observer location
 StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
+// circle parameters
+Vecd insert_circle_center (1.0, 1.0);
+Real insert_circle_radius = 0.25;
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------
@@ -62,6 +68,8 @@ std::vector<Vecd> createStructureShape()
     water_block_shape.push_back(Vecd(0.5 * DL, 0.05 * DH));
     return water_block_shape;
 }
+
+
 //----------------------------------------------------------------------
 // Water body shape definition.
 //----------------------------------------------------------------------
@@ -71,6 +79,8 @@ class WaterBlock : public MultiPolygonShape
     explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
         multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
+        //multi_polygon_.addAPolygon(createStructureShape(), ShapeBooleanOps::sub);
+        multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
     }
 };
 //----------------------------------------------------------------------
@@ -92,9 +102,28 @@ class Triangle : public MultiPolygonShape
   public:
     explicit Triangle(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createStructureShape(), ShapeBooleanOps::add);
+       // multi_polygon_.addAPolygon(createStructureShape(), ShapeBooleanOps::add);
+        multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
     }
 };
+
+class HorizontalMovement: public BaseTracingMethod
+{
+ public:
+     HorizontalMovement() {};
+     virtual ~HorizontalMovement(){};
+
+     virtual Vecd tracingPosition (Vecd previous_position, Real current_time = 0.0) override
+     {
+         Real run_time = GlobalStaticVariables::physical_time_;
+         Vecd current_position (0.0, 0.0);
+         current_position[0]= previous_position[0] - 0.15 * run_time;
+         current_position[1] = previous_position[1];
+
+         return current_position;
+     }
+};
+
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
@@ -145,18 +174,23 @@ int main(int ac, char *av[])
     near_surface_wall.level_set_shape_.writeLevelSet(io_environment);
     fluid_dynamics::StaticConfinement confinement_condition_wall(near_surface_wall);
     /** Define the confinement condition for structure. */
-    NearShapeSurface near_surface_triangle(water_block, makeShared<InverseShape<Triangle>>("Triangle"));
+
+    HorizontalMovement horizaontal_movement;
+    NearShapeSurfaceTracing near_surface_circle(water_block, makeShared<InverseShape<Triangle>>("Circle"), horizaontal_movement);
+    near_surface_circle.level_set_shape_.writeLevelSet(io_environment);
+    fluid_dynamics::MovingConfinementGeneral confinement_condition_circle(near_surface_circle);
+    /*NearShapeSurface near_surface_triangle(water_block, makeShared<InverseShape<Triangle>>("Triangle"));
     near_surface_triangle.level_set_shape_.writeLevelSet(io_environment);
-    fluid_dynamics::StaticConfinement confinement_condition_triangle(near_surface_triangle);
+    fluid_dynamics::StaticConfinement confinement_condition_triangle(near_surface_triangle);*/
     /** Push back the static confinement conditiont to corresponding dynamics. */
     update_density_by_summation.post_processes_.push_back(&confinement_condition_wall.density_summation_);
-    update_density_by_summation.post_processes_.push_back(&confinement_condition_triangle.density_relaxation_);
+    update_density_by_summation.post_processes_.push_back(&confinement_condition_circle.density_relaxation_);
     pressure_relaxation.post_processes_.push_back(&confinement_condition_wall.pressure_relaxation_);
-    pressure_relaxation.post_processes_.push_back(&confinement_condition_triangle.pressure_relaxation_);
+    pressure_relaxation.post_processes_.push_back(&confinement_condition_circle.pressure_relaxation_);
     density_relaxation.post_processes_.push_back(&confinement_condition_wall.density_relaxation_);
-    density_relaxation.post_processes_.push_back(&confinement_condition_triangle.density_relaxation_);
+    density_relaxation.post_processes_.push_back(&confinement_condition_circle.density_relaxation_);
     density_relaxation.post_processes_.push_back(&confinement_condition_wall.surface_bounding_);
-    density_relaxation.post_processes_.push_back(&confinement_condition_triangle.surface_bounding_);
+    density_relaxation.post_processes_.push_back(&confinement_condition_circle.surface_bounding_);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -243,6 +277,7 @@ int main(int ac, char *av[])
             water_block.updateCellLinkedListWithParticleSort(100);
             water_block_inner.updateConfiguration();
             fluid_observer_contact.updateConfiguration();
+            near_surface_circle.updateCellList();
             interval_updating_configuration += TickCount::now() - time_instance;
         }
 

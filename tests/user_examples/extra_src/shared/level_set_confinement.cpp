@@ -150,7 +150,75 @@ namespace SPH
                 density_relaxation_(near_surface), transport_velocity_(near_surface),
                 viscous_acceleration_(near_surface), surface_bounding_(near_surface), free_surface_indication_(near_surface)
         {}
+		//=================================================================================================//
+		MovingConfinementDensitySummation::MovingConfinementDensitySummation(NearShapeSurfaceTracing& near_surface_tracing )
+			: BaseLocalDynamics<BodyPartByCell>(near_surface_tracing), FluidDataSimple(sph_body_),
+		rho0_(sph_body_.base_material_->ReferenceDensity()), near_surface_tracing_(near_surface_tracing),
+		inv_sigma0_(1.0 / sph_body_.sph_adaptation_->LatticeNumberDensity()),
+		mass_(particles_->mass_), rho_sum_(*particles_->getVariableByName<Real>("DensitySummation")), pos_(particles_->pos_),
+		level_set_shape_(&near_surface_tracing.level_set_shape_){}
+		//=================================================================================================//
+		void MovingConfinementDensitySummation::update(size_t index_i, Real dt)
+		{
+			Real inv_Vol_0_i = rho0_ / mass_[index_i];
+			rho_sum_[index_i] +=
+				level_set_shape_->computeKernelIntegral(near_surface_tracing_.tracing_cell_method_base_.tracingPosition(pos_[index_i])) * inv_Vol_0_i * rho0_ * inv_sigma0_;
+		}
+		//=================================================================================================//
+		MovingConfinementIntegration1stHalf::MovingConfinementIntegration1stHalf(NearShapeSurfaceTracing& near_surface_tracing)
+			 : BaseLocalDynamics<BodyPartByCell>(near_surface_tracing), FluidDataSimple(sph_body_),
+		fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())), near_surface_tracing_(near_surface_tracing),
+		rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
+		pos_(particles_->pos_), vel_(particles_->vel_),
+		acc_(particles_->acc_),
+		level_set_shape_(&near_surface_tracing.level_set_shape_),
+		riemann_solver_(fluid_, fluid_) {}
+		//=================================================================================================//
+		void MovingConfinementIntegration1stHalf::update(size_t index_i, Real dt)
+		{
+			Vecd kernel_gradient = level_set_shape_->computeKernelGradientIntegral(near_surface_tracing_.tracing_cell_method_base_.tracingPosition(pos_[index_i]));
+			acc_[index_i] -= 2.0 * p_[index_i] * kernel_gradient / rho_[index_i];
+		}
+		//=================================================================================================//
+		MovingConfinementIntegration2ndHalf::MovingConfinementIntegration2ndHalf(NearShapeSurfaceTracing& near_surface_tracing)
+			 : BaseLocalDynamics<BodyPartByCell>(near_surface_tracing), FluidDataSimple(sph_body_),
+		fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
+		rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")), drho_dt_(*particles_->getVariableByName<Real>("DensityChangeRate")),
+		pos_(particles_->pos_), vel_(particles_->vel_), near_surface_tracing_(near_surface_tracing),
+		level_set_shape_(&near_surface_tracing.level_set_shape_),
+		riemann_solver_(fluid_, fluid_) {}
+		//=================================================================================================//
+		void MovingConfinementIntegration2ndHalf::update(size_t index_i, Real dt)
+		{
+			Vecd kernel_gradient = level_set_shape_->computeKernelGradientIntegral(near_surface_tracing_.tracing_cell_method_base_.tracingPosition(pos_[index_i]));
+			Vecd vel_in_wall = -vel_[index_i];
+			drho_dt_[index_i] += rho_[index_i] * (vel_[index_i] - vel_in_wall).dot(kernel_gradient);
+		}
+		//=================================================================================================//
+		//template <class TracingMethodType>
+		MovingConfinementBounding::MovingConfinementBounding(NearShapeSurfaceTracing& near_surface_tracing)
+			:BaseLocalDynamics<BodyPartByCell>(near_surface_tracing), FluidDataSimple(sph_body_),
+			pos_(particles_->pos_),level_set_shape_(&near_surface_tracing.level_set_shape_), 
+			near_surface_tracing_(near_surface_tracing),
+			constrained_distance_(0.5 * sph_body_.sph_adaptation_->MinimumSpacing()){}
+		//=================================================================================================//
+		void MovingConfinementBounding::update(size_t index_i, Real dt)
+		{
+			Real phi = level_set_shape_->findSignedDistance(near_surface_tracing_.tracing_cell_method_base_.tracingPosition(pos_[index_i]));
+
+			if (phi > -constrained_distance_)
+			{
+				Vecd unit_normal = level_set_shape_->findNormalDirection(near_surface_tracing_.tracing_cell_method_base_.tracingPosition(pos_[index_i]));
+				pos_[index_i] -= (phi + constrained_distance_) * unit_normal;
+			}
+		}
+		//=================================================================================================//
+		MovingConfinementGeneral::MovingConfinementGeneral(NearShapeSurfaceTracing& near_surface_tracing)
+		: density_summation_(near_surface_tracing), pressure_relaxation_(near_surface_tracing),
+		  density_relaxation_(near_surface_tracing), surface_bounding_(near_surface_tracing) {}
 	}
+	//=================================================================================================//
+	
 	//=================================================================================================//
 }
 //=================================================================================================//

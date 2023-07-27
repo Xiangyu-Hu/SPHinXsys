@@ -33,6 +33,8 @@
 #include "fluid_dynamics_inner.h"
 #include "fluid_boundary.h"
 #include "fluid_surface_inner.h"
+#include "body_part_by_cell_tracing.h"
+//#include "body_part_by_cell_tracing.hpp"
 #include <mutex>
 
 namespace SPH
@@ -208,6 +210,114 @@ namespace SPH
             StaticConfinementGeneral(NearShapeSurface &near_surface);
             virtual ~StaticConfinementGeneral(){};
         };
+
+        /**
+        * @class MovingConfinementDensity
+        * @brief Moving confinement condition for density summation, with tracing method for each particle
+        */
+
+        class MovingConfinementDensitySummation : public BaseLocalDynamics<BodyPartByCell>, public FluidDataSimple
+        {
+          public:
+            MovingConfinementDensitySummation(NearShapeSurfaceTracing& near_surface_tracing);
+
+            virtual ~MovingConfinementDensitySummation() {};
+            void update(size_t index_i, Real dt = 0.0);
+
+          protected:
+            Real rho0_, inv_sigma0_;
+            StdLargeVec<Real>& mass_, & rho_sum_;
+            StdLargeVec<Vecd>& pos_;
+            LevelSetShape* level_set_shape_;
+            NearShapeSurfaceTracing& near_surface_tracing_;
+            /*typedef std::function<Vecd(Vecd, Real)> TracingCellMethod;
+            TracingCellMethod tracing_particle_method_;*/
+        };
+
+        /**
+        * @class MovingConfinementIntegration1stHalf
+        * @brief Moving confinement condition for pressure relaxation, with tracing method for each particle
+        */
+        class MovingConfinementIntegration1stHalf : public BaseLocalDynamics<BodyPartByCell>, public FluidDataSimple
+        {
+          public:
+            MovingConfinementIntegration1stHalf(NearShapeSurfaceTracing& near_surface_tracing);
+            virtual ~MovingConfinementIntegration1stHalf() {};
+            void update(size_t index_i, Real dt = 0.0);
+
+          protected:
+            Fluid &fluid_;
+            StdLargeVec<Real> &rho_, &p_;
+            StdLargeVec<Vecd> &pos_, &vel_, &acc_;
+            LevelSetShape *level_set_shape_;
+            AcousticRiemannSolver riemann_solver_;
+            /*typedef std::function<Vecd(Vecd, Real)> TracingCellMethod;
+            TracingCellMethod tracing_particle_method_;*/
+            NearShapeSurfaceTracing& near_surface_tracing_;
+        };
+
+        /**
+        * @class MovingConfinementIntegration2ndHalf
+        * @brief Moving confinement condition for density relaxation, with tracing method for each particle
+        */
+        //template <class TracingMethodType>
+        class MovingConfinementIntegration2ndHalf : public BaseLocalDynamics<BodyPartByCell>, public FluidDataSimple
+        {
+          public:
+            MovingConfinementIntegration2ndHalf(NearShapeSurfaceTracing& near_surface_tracing);
+            virtual ~MovingConfinementIntegration2ndHalf(){};
+            void update(size_t index_i, Real dt = 0.0);
+
+          protected:
+            Fluid &fluid_;
+            StdLargeVec<Real> &rho_, &p_, &drho_dt_;
+            StdLargeVec<Vecd> &pos_, &vel_;
+            LevelSetShape *level_set_shape_;
+            AcousticRiemannSolver riemann_solver_;
+           /* typedef std::function<Vecd(Vecd, Real)> TracingCellMethod;
+            TracingCellMethod tracing_particle_method_;*/
+            NearShapeSurfaceTracing& near_surface_tracing_;
+        };
+
+        /**
+        * @class MovingConfinementIntegration1stHalf
+        * @brief static confinement condition for pressure relaxation
+        */
+        //template <class TracingMethodType>
+        class MovingConfinementBounding : public BaseLocalDynamics<BodyPartByCell>, public FluidDataSimple
+        {
+        public:
+            MovingConfinementBounding(NearShapeSurfaceTracing& near_surface_tracing);
+            virtual ~MovingConfinementBounding() {};
+            void update(size_t index_i, Real dt = 0.0);
+
+        protected:
+            StdLargeVec<Vecd>& pos_;
+            LevelSetShape* level_set_shape_;
+            Real constrained_distance_;
+            /*typedef std::function<Vecd(Vecd, Real)> TracingCellMethod;
+            TracingCellMethod tracing_particle_method_;*/
+            NearShapeSurfaceTracing& near_surface_tracing_;
+        };
+
+
+        /**
+        * @class MovingConfinementGeneral
+        * @brief Moving confinement boundary condition for solid boundary, with tracing method for solid geometry
+        */
+        //template <class TracingMethodType>
+        class MovingConfinementGeneral
+         {
+         public:
+
+             SimpleDynamics<MovingConfinementDensitySummation> density_summation_;
+             SimpleDynamics<MovingConfinementIntegration1stHalf> pressure_relaxation_;
+             SimpleDynamics<MovingConfinementIntegration2ndHalf> density_relaxation_;
+             SimpleDynamics<MovingConfinementBounding> surface_bounding_;
+             MovingConfinementGeneral(NearShapeSurfaceTracing& near_surface_tracing);
+             virtual ~MovingConfinementGeneral() {};
+         };
+
     }
 }
 #endif  LEVEL_SET_COFINEMENT_H

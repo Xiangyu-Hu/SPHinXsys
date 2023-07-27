@@ -21,9 +21,10 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	base_body_part.h
- * @brief 	This is the base classes of body parts.
- * @details	There two main type of body parts. One is part by particle.
+ * @file 	body_part_by_cell_tracing.h
+ * @brief 	This is the base classes of body parts by cell with tracing method.
+ * @details	By default, the tracing method is empty, but with real tracing method, 
+            it can provide the position of each cell under the given imaginary motion 
  * @author	Yongchuan Yu and Xiangyu Hu
  */
 
@@ -32,7 +33,6 @@
 
 #include "base_body.h"
 #include "base_body_part.h"
-
 #include <string>
 
 namespace SPH
@@ -42,190 +42,75 @@ namespace SPH
  * @brief An auxillary class for SPHBody to indicate a part of the body.
  */
 using namespace std::placeholders;
-//class BodyPart
-//{
-//  public:
-//    BodyPart(SPHBody &sph_body, const std::string &body_part_name)
-//        : sph_body_(sph_body), body_part_name_(body_part_name){};
-//    virtual ~BodyPart(){};
-//
-//    SPHBody &getSPHBody() { return sph_body_; };
-//    std::string getName() { return body_part_name_; };
-//
-//  protected:
-//    SPHBody &sph_body_;
-//    std::string body_part_name_;
-//};
 
-/**
- * @class BodyPartByParticle
- * @brief A body part with a collection of particles.
- */
-//class BodyPartByParticle : public BodyPart
-//{
-//  public:
-//    IndexVector body_part_particles_; /**< Collection particle in this body part. */
-//    BaseParticles &getBaseParticles() { return base_particles_; };
-//    IndexVector &LoopRange() { return body_part_particles_; };
-//    size_t SizeOfLoopRange() { return body_part_particles_.size(); };
-//
-//    BodyPartByParticle(SPHBody &sph_body, const std::string &body_part_name)
-//        : BodyPart(sph_body, body_part_name), base_particles_(sph_body.getBaseParticles()),
-//          body_part_bounds_(Vecd::Zero(), Vecd::Zero()), body_part_bounds_set_(false){};
-//    virtual ~BodyPartByParticle(){};
-//
-//    void setBodyPartBounds(BoundingBox bbox)
-//    {
-//        body_part_bounds_ = bbox;
-//        body_part_bounds_set_ = true;
-//    };
-//
-//    BoundingBox getBodyPartBounds()
-//    {
-//        if (!body_part_bounds_set_)
-//            std::cout << "WARNING: the body part bounds are not set for BodyPartByParticle." << std::endl;
-//        return body_part_bounds_;
-//    }
-//
-//  protected:
-//    BaseParticles &base_particles_;
-//    BoundingBox body_part_bounds_;
-//    bool body_part_bounds_set_;
-//
-//    typedef std::function<void(size_t)> TaggingParticleMethod;
-//    void tagParticles(TaggingParticleMethod &tagging_particle_method);
-//};
+class BodyPart;
+
+class BaseTracingMethod
+{
+ public:
+     BaseTracingMethod() {};
+     virtual ~BaseTracingMethod(){};
+
+     virtual Vecd tracingPosition (Vecd previous_position, Real current_time = 0.0)
+     {
+         Vecd current_position = previous_position;
+         return current_position;
+     }
+};
 
 /**
  * @class BodyPartByCell
  * @brief A body part with a collection of cell lists.
  */
-class BodyPartByCell : public BodyPart
-{
-  public:
-    ConcurrentCellLists body_part_cells_; /**< Collection of cells to indicate the body part. */
-    ConcurrentCellLists &LoopRange() { return body_part_cells_; };
-    size_t SizeOfLoopRange();
-
-    BodyPartByCell(RealBody &real_body, const std::string &body_part_name)
-        : BodyPart(real_body, body_part_name), cell_linked_list_(real_body.getCellLinkedList()){};
-    virtual ~BodyPartByCell(){};
-
-  protected:
-    BaseCellLinkedList &cell_linked_list_;
-    typedef std::function<bool(Vecd, Real)> TaggingCellMethod;
-    void tagCells(TaggingCellMethod &tagging_cell_method);
-};
-
-/**
- * @class BodyRegionByParticle
- * @brief A  body part with the collection of particles within by a prescribed shape.
- */
-//class BodyRegionByParticle : public BodyPartByParticle
-//{
-//  private:
-//    SharedPtrKeeper<Shape> shape_ptr_keeper_;
-//
-//  public:
-//    Shape &body_part_shape_;
-//
-//    BodyRegionByParticle(SPHBody &sph_body, SharedPtr<Shape> shape_ptr);
-//    virtual ~BodyRegionByParticle(){};
-//
-//  private:
-//    void tagByContain(size_t particle_index);
-//};
-
-/**
- * @class BodySurface
- * @brief A  body part with the collection of particles at surface of a body
- */
-//class BodySurface : public BodyPartByParticle
+//template <class TracingMethodType = BaseTracingMethod>
+//class BodyPartByCellWithTracing : public BodyPart, public TracingMethodType
 //{
 //  public:
-//    explicit BodySurface(SPHBody &sph_body);
-//    virtual ~BodySurface(){};
+//    ConcurrentCellLists body_part_cells_; /**< Collection of cells to indicate the body part. */
+//    ConcurrentCellLists &LoopRange() { return body_part_cells_; };
+//    size_t SizeOfLoopRange();
 //
-//  private:
-//    Real particle_spacing_min_;
-//    void tagNearSurface(size_t particle_index);
+//    BodyPartByCellWithTracing(RealBody& real_body, const std::string& body_part_name)
+//        : BodyPart(real_body, body_part_name), cell_linked_list_(real_body.getCellLinkedList())
+//    {
+//        tracing_cell_method_ = std::bind(&TracingMethodType::tracingPosition, this, _1, _2);
+//    };
+//    virtual ~BodyPartByCellWithTracing(){};
+//
+//  protected:
+//    BaseCellLinkedList &cell_linked_list_;
+//    typedef std::function<bool(Vecd, Real)> TaggingCellMethod;
+//    typedef std::function<Vecd(Vecd, Real)> TracingCellMethod;
+//    TracingCellMethod tracing_cell_method_;
+//    void tagCells(TaggingCellMethod &tagging_cell_method, TracingCellMethod &tracing_cell_method);
 //};
 
-/**
- * @class BodySurfaceLayer
- * @brief A  body part with the collection of particles within the surface layers of a body.
- */
-//class BodySurfaceLayer : public BodyPartByParticle
-//{
-//  public:
-//    explicit BodySurfaceLayer(SPHBody &sph_body, Real layer_thickness = 3.0);
-//    virtual ~BodySurfaceLayer(){};
-//
-//  private:
-//    Real thickness_threshold_;
-//    void tagSurfaceLayer(size_t particle_index);
-//};
-
-/**
- * @class BodyRegionByCell
- * @brief A body part with the cell lists within a prescribed shape.
- */
-//class BodyRegionByCell : public BodyPartByCell
-//{
-//  private:
-//    SharedPtrKeeper<Shape> shape_ptr_keeper_;
-//
-//  public:
-//    Shape &body_part_shape_;
-//
-//    BodyRegionByCell(RealBody &real_body, SharedPtr<Shape> shape_ptr);
-//    virtual ~BodyRegionByCell(){};
-//
-//  private:
-//    bool checkNotFar(Vecd cell_position, Real threshold);
-//};
 
 /**
  * @class NearShapeSurface
  * @brief A body part with the cell lists near the surface of a prescribed shape.
  */
-class NearShapeSurface : public BodyPartByCell
+//template <class TracingMethodType= BaseTracingMethod>
+class NearShapeSurfaceTracing : public BodyPartByCell
 {
-  private:
+private:
     UniquePtrKeeper<LevelSetShape> level_set_shape_keeper_;
+public:
+    LevelSetShape& level_set_shape_;
+    BaseTracingMethod& tracing_cell_method_base_;
 
-  public:
-    LevelSetShape &level_set_shape_;
-
-    /** for the case that the body part shape is not that of the body */
-    NearShapeSurface(RealBody &real_body, SharedPtr<Shape> shape_ptr);
-    /** for the case that the body part shape is the surface of the body shape */
-    explicit NearShapeSurface(RealBody &real_body);
-    /** for the case that the body part shape is one part of the surface of the body shape */
-    NearShapeSurface(RealBody &real_body, const std::string &shape_name);
-    virtual ~NearShapeSurface(){};
-
-  private:
-    /** only cells near the surface of the body part shape are included */
+    NearShapeSurfaceTracing(RealBody& real_body, SharedPtr<Shape> shape_ptr, BaseTracingMethod& tracing_cell_method_base);
+    //explicit NearShapeSurfaceTracing(RealBody &real_body, BaseTracingMethod& tracing_cell_method_base);
+    //NearShapeSurfaceTracing(RealBody &real_body, const std::string &shape_name, BaseTracingMethod& tracing_cell_method_base);
+    virtual ~NearShapeSurfaceTracing(){};
+    void updateCellList();
+private:
     bool checkNearSurface(Vecd cell_position, Real threshold);
+    typedef std::function<Vecd(Vecd, Real)> TracingCellMethod;
+    //TracingCellMethod tracing_cell_method_;
+    TaggingCellMethod tagging_cell_method_;
+    
 };
 
-/**
- * @class AlignedBoxRegion
- * @brief A template body part with the collection of particles within by an AlignedBoxShape.
- */
-//template <class BodyRegionType>
-//class AlignedBoxRegion : public BodyRegionType
-//{
-//  public:
-//    AlignedBoxShape &aligned_box_;
-//
-//    AlignedBoxRegion(RealBody &real_body, SharedPtr<AlignedBoxShape> aligned_box_ptr)
-//        : BodyRegionType(real_body, aligned_box_ptr), aligned_box_(*aligned_box_ptr.get()){};
-//    virtual ~AlignedBoxRegion(){};
-//};
-//
-//using BodyAlignedBoxByParticle = AlignedBoxRegion<BodyRegionByParticle>;
-//using BodyAlignedBoxByCell = AlignedBoxRegion<BodyRegionByCell>;
 } // namespace SPH
 #endif // BODY_PART_BY_CELL_TRACING_H
