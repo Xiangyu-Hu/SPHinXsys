@@ -74,12 +74,13 @@ class BaseDiffusionRelaxation
     explicit BaseDiffusionRelaxation(SPHBody &sph_body);
     virtual ~BaseDiffusionRelaxation(){};
     StdVec<BaseDiffusion *> &AllDiffusions() { return material_.AllDiffusions(); };
+    void update(size_t index_i, Real dt = 0.0);
 };
 
 class KernelGradientInner
 {
   public:
-    KernelGradientInner(BaseParticles *inner_particles){};
+    explicit KernelGradientInner(BaseParticles *inner_particles){};
     Vecd operator()(size_t index_i, size_t index_j, Real dW_ijV_j, const Vecd &e_ij)
     {
         return dW_ijV_j * e_ij;
@@ -91,7 +92,7 @@ class CorrectedKernelGradientInner
     StdLargeVec<Matd> &B_;
 
   public:
-    CorrectedKernelGradientInner(BaseParticles *inner_particles)
+    explicit CorrectedKernelGradientInner(BaseParticles *inner_particles)
         : B_(*inner_particles->getVariableByName<Matd>("CorrectionMatrix")){};
     Vecd operator()(size_t index_i, size_t index_j, Real dW_ijV_j, const Vecd &e_ij)
     {
@@ -118,7 +119,6 @@ class DiffusionRelaxationInner
     explicit DiffusionRelaxationInner(BaseInnerRelation &inner_relation);
     virtual ~DiffusionRelaxationInner(){};
     inline void interaction(size_t index_i, Real dt = 0.0);
-    void update(size_t index_i, Real dt = 0.0);
 };
 
 class KernelGradientContact

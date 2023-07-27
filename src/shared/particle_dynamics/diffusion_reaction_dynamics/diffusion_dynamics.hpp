@@ -42,7 +42,17 @@ BaseDiffusionRelaxation<ParticlesType>::
         std::string &diffusion_species_name = all_species_names[diffusion_species_indexes[i]];
         diffusion_dt_[i] = this->particles_->template registerSharedVariable<Real>(diffusion_species_name + "ChangeRate");
     }
-} //=================================================================================================//
+} 
+//=================================================================================================//
+template <class ParticlesType>
+void BaseDiffusionRelaxation<ParticlesType>::update(size_t index_i, Real dt)
+{
+    for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
+    {
+        (*this->diffusion_species_[m])[index_i] += dt * (*this->diffusion_dt_[m])[index_i];
+    }
+}
+//=================================================================================================//
 template <class ParticlesType, class KernelGradientType>
 DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
     DiffusionRelaxationInner(BaseInnerRelation &inner_relation)
@@ -71,15 +81,6 @@ void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
         StdLargeVec<Real> &gradient_species = *this->gradient_species_[m];
         Real phi_ij = gradient_species[particle_i] - gradient_species[particle_j];
         (*this->diffusion_dt_[m])[particle_i] += diff_coff_ij * phi_ij * surface_area_ij;
-    }
-}
-//=================================================================================================//
-template <class ParticlesType, class KernelGradientType>
-void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::update(size_t index_i, Real dt)
-{
-    for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
-    {
-        (*this->diffusion_species_[m])[index_i] += dt * (*this->diffusion_dt_[m])[index_i];
     }
 }
 //=================================================================================================//
