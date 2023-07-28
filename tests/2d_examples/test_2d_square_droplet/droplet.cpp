@@ -7,7 +7,7 @@
  */
 #include "sphinxsys.h" //SPHinXsys Library.
 
-using namespace SPH;   // Namespace cite here.
+using namespace SPH; // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
@@ -25,7 +25,7 @@ Real rho0_a = 0.001;     /**< Reference density of air. */
 Real U_max = 1.0;        /**< Characteristic velocity. */
 Real c_f = 10.0 * U_max; /**< Reference sound speed. */
 Real mu_f = 0.2;         /**< Water viscosity. */
-Real mu_a = 0.002;      /**< Air viscosity. */
+Real mu_a = 0.002;       /**< Air viscosity. */
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
 //----------------------------------------------------------------------
@@ -116,19 +116,14 @@ class SmoothedColorFunctionInner : public LocalDynamics, public FluidDataInner
 
     void interaction(size_t index_i, Real dt = 0.0)
     {
-        smoothed_color_[index_i] = 1;
-
-        if (surface_indicator_[index_i] == 1)
+        Real summation = ZeroData<Real>::value;
+        const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
         {
-            Real summation = ZeroData<Real>::value;
-            const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-            for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-            {
-                size_t index_j = inner_neighborhood.j_[n];
-                summation += inner_neighborhood.W_ij_[n] * Vol_[index_j];
-            }
-            smoothed_color_[index_i] = summation;
+            size_t index_j = inner_neighborhood.j_[n];
+            summation += inner_neighborhood.W_ij_[n] * Vol_[index_j];
         }
+        smoothed_color_[index_i] = summation;
     };
 
   protected:
@@ -139,7 +134,7 @@ class SmoothedColorFunctionInner : public LocalDynamics, public FluidDataInner
 class SmoothedColorGradientInner : public LocalDynamics, public FluidDataInner
 {
   public:
-    explicit SmoothedColorGradientInner(BaseInnerRelation &inner_relation) 
+    explicit SmoothedColorGradientInner(BaseInnerRelation &inner_relation)
         : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
           smoothed_color_(*particles_->getVariableByName<Real>("SmoothedColor"))
     {
@@ -184,7 +179,7 @@ class SmoothedColorGradientContact : public LocalDynamics, public BaseDataContac
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
             {
                 summation -= smoothed_color_[index_i] *
-                            contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
+                             contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
             }
         }
         color_gradient_[index_i] += summation;
@@ -200,7 +195,8 @@ class SurfaceStressAccelerationInner : public LocalDynamics, public FluidDataInn
   public:
     SurfaceStressAccelerationInner(BaseInnerRelation &inner_relation, Real gamma)
         : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
-          gamma_(gamma), acc_prior_(particles_->acc_prior_), 
+          gamma_(gamma), acc_prior_(particles_->acc_prior_),
+          smoothed_color_(*particles_->getVariableByName<Real>("SmoothedColor")),
           color_gradient_(*particles_->getVariableByName<Vecd>("SmoothedColorGradient"))
     {
         particles_->registerVariable(surface_stress_, "SurfaceStress");
@@ -211,8 +207,8 @@ class SurfaceStressAccelerationInner : public LocalDynamics, public FluidDataInn
     {
         Vecd gradient = color_gradient_[index_i];
         Real norm = gradient.norm();
-        surface_stress_[index_i] = gamma_ / (norm + Eps) * 
-            (norm * norm / Real(Dimensions) * Matd::Identity() - gradient * gradient.transpose()); 
+        surface_stress_[index_i] = gamma_ / (norm + Eps) *
+                                   (norm * norm / Real(Dimensions) * Matd::Identity() - gradient * gradient.transpose());
     };
     void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -221,8 +217,14 @@ class SurfaceStressAccelerationInner : public LocalDynamics, public FluidDataInn
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
         {
             size_t index_j = inner_neighborhood.j_[n];
-            summation += inner_neighborhood.dW_ijV_j_[n] * 
-                (surface_stress_[index_i] + surface_stress_[index_j]) * inner_neighborhood.e_ij_[n];
+            Vecd e_ij = inner_neighborhood.e_ij_[n];
+            Real r_ij = inner_neighborhood.r_ij_[n];
+
+            Real mismatch = (smoothed_color_[index_i] - smoothed_color_[index_i]) -
+                            0.5 * (color_gradient_[index_i] + color_gradient_[index_j]).dot(e_ij) * r_ij;
+            summation += inner_neighborhood.dW_ijV_j_[n] *
+                         (surface_stress_[index_i] + surface_stress_[index_j] - mismatch * Matd::Identity()) *
+                         inner_neighborhood.e_ij_[n];
         }
         acc_prior_[index_i] += summation;
     };
@@ -230,6 +232,7 @@ class SurfaceStressAccelerationInner : public LocalDynamics, public FluidDataInn
   protected:
     Real gamma_;
     StdLargeVec<Vecd> &acc_prior_;
+    StdLargeVec<Real> &smoothed_color_;
     StdLargeVec<Vecd> &color_gradient_;
     StdLargeVec<Matd> surface_stress_;
 };
@@ -327,8 +330,8 @@ int main()
     InteractionDynamics<SmoothedColorFunctionInner>
         volume_fraction(water_air_complex.getInnerRelation());
     water_block.addBodyStateForRecording<Real>("SmoothedColor");
-    InteractionDynamics<ComplexInteraction<SmoothedColorGradientInner, SmoothedColorGradientContact>>
-        color_gradient(water_air_complex.getInnerRelation(), water_air_complex.getContactRelation());
+    InteractionDynamics<SmoothedColorGradientInner>
+        color_gradient(water_air_complex.getInnerRelation());
     water_block.addBodyStateForRecording<Vecd>("SmoothedColorGradient");
     InteractionWithInitialization<SurfaceStressAccelerationInner>
         surface_tension_acceleration(water_air_complex.getInnerRelation(), 1.0);
