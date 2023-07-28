@@ -21,7 +21,7 @@ Real BW = resolution_ref * 4; /**< Extending width for BCs. */
 // Observer location
 StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
 // circle parameters
-Vecd insert_circle_center (1.0, 1.0);
+Vecd insert_circle_center (0.5, 1.0);
 Real insert_circle_radius = 0.25;
 //----------------------------------------------------------------------
 //	Material parameters.
@@ -69,6 +69,17 @@ std::vector<Vecd> createStructureShape()
     return water_block_shape;
 }
 
+std::vector<Vecd> creatSquare()
+{
+    //geometry
+    std::vector<Vecd> square_shape;
+    square_shape.push_back(Vecd(2.5, 0.75));
+    square_shape.push_back(Vecd(2.5, 1.25));
+    square_shape.push_back(Vecd(3.0, 1.25));
+    square_shape.push_back(Vecd(3.0, 0.75));
+    square_shape.push_back(Vecd(2.5, 0.75));
+    return square_shape;
+}
 
 //----------------------------------------------------------------------
 // Water body shape definition.
@@ -81,6 +92,7 @@ class WaterBlock : public MultiPolygonShape
         multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
         //multi_polygon_.addAPolygon(createStructureShape(), ShapeBooleanOps::sub);
         multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
+        //multi_polygon_.addAPolygon(creatSquare(), ShapeBooleanOps::sub);
     }
 };
 //----------------------------------------------------------------------
@@ -104,6 +116,7 @@ class Triangle : public MultiPolygonShape
     {
        // multi_polygon_.addAPolygon(createStructureShape(), ShapeBooleanOps::add);
         multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
+        //multi_polygon_.addAPolygon(creatSquare(), ShapeBooleanOps::add);
     }
 };
 
@@ -117,13 +130,43 @@ class HorizontalMovement: public BaseTracingMethod
      {
          Real run_time = GlobalStaticVariables::physical_time_;
          Vecd current_position (0.0, 0.0);
-         current_position[0]= previous_position[0] - 0.15 * run_time;
-         current_position[1] = previous_position[1];
+         current_position[0]= previous_position[0] - 0.2 * run_time;
+         //current_position[0] = previous_position[0];
+         if(run_time <= 10.0)
+         {
+             current_position[1] = previous_position[1] + 0.05 * run_time;
+         }
+         else{
+             current_position[1] = previous_position[1] - 0.05 * (run_time-20.0);
+         }
+         
+         
 
          return current_position;
      }
 };
 
+class CircleMovement : public BaseTracingMethod
+{
+public:
+    CircleMovement() {};
+    virtual ~CircleMovement() {};
+
+    virtual Vecd tracingPosition(Vecd previous_position, Real current_time = 0.0) override
+    {
+        Real dt = 0.1;
+        Vecd rotation_center(2.75, 1.0);
+        Real rotation_v = 0.2*Pi;
+        Real distance = (previous_position - rotation_center).norm();
+        Real run_time = GlobalStaticVariables::physical_time_;
+        Vecd current_position(0.0, 0.0);
+        current_position[0] = cos(rotation_v * run_time) * distance;
+        current_position[1] = sin(rotation_v * run_time) * distance;
+       /* current_position[0] = previous_position[0] - (rotation_center[0] * cos(rotation_v * run_time) - rotation_center[1] * sin(rotation_v * run_time));
+        current_position[1] = previous_position[1] - (rotation_center[0] * sin(rotation_v * run_time) + rotation_center[1] * cos(rotation_v * run_time));*/
+        return current_position;
+    }
+};
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
@@ -142,7 +185,7 @@ int main(int ac, char *av[])
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
-
+  
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
     //----------------------------------------------------------------------
@@ -175,10 +218,12 @@ int main(int ac, char *av[])
     fluid_dynamics::StaticConfinement confinement_condition_wall(near_surface_wall);
     /** Define the confinement condition for structure. */
 
+    //CircleMovement circle_movement;
     HorizontalMovement horizaontal_movement;
     NearShapeSurfaceTracing near_surface_circle(water_block, makeShared<InverseShape<Triangle>>("Circle"), horizaontal_movement);
     near_surface_circle.level_set_shape_.writeLevelSet(io_environment);
     fluid_dynamics::MovingConfinementGeneral confinement_condition_circle(near_surface_circle);
+    
     /*NearShapeSurface near_surface_triangle(water_block, makeShared<InverseShape<Triangle>>("Triangle"));
     near_surface_triangle.level_set_shape_.writeLevelSet(io_environment);
     fluid_dynamics::StaticConfinement confinement_condition_triangle(near_surface_triangle);*/
@@ -255,6 +300,7 @@ int main(int ac, char *av[])
                 relaxation_time += dt;
                 integration_time += dt;
                 GlobalStaticVariables::physical_time_ += dt;
+                //body_states_recording.writeToFile();
             }
             interval_computing_pressure_relaxation += TickCount::now() - time_instance;
 
@@ -279,6 +325,7 @@ int main(int ac, char *av[])
             fluid_observer_contact.updateConfiguration();
             near_surface_circle.updateCellList();
             interval_updating_configuration += TickCount::now() - time_instance;
+            
         }
 
         TickCount t2 = TickCount::now();
@@ -299,7 +346,7 @@ int main(int ac, char *av[])
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
 
-    if (sph_system.generate_regression_data_)
+   /* if (sph_system.generate_regression_data_)
     {
         write_water_mechanical_energy.generateDataBase(1.0e-3);
         write_recorded_water_pressure.generateDataBase(1.0e-3);
@@ -308,7 +355,7 @@ int main(int ac, char *av[])
     {
         write_water_mechanical_energy.testResult();
         write_recorded_water_pressure.testResult();
-    }
+    }*/
 
     return 0;
 }
