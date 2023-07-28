@@ -8,7 +8,6 @@
  */
 #include "sphinxsys.h" //SPHinXsys Library.
 #include "wetting_coupled_spatial_temporal_method.h"
-#include "base_diffusion_inner_without_calculation.h"
 
 using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
@@ -193,15 +192,14 @@ class WettingCylinderBodyInitialCondition
 //----------------------------------------------------------------------
 //	Set topology for wetting bodies
 //----------------------------------------------------------------------
-using CylinderDiffusionInner = DiffusionRelaxationInnerWithoutCalculation<DiffusionCylinderParticles>;
 using CylinderFluidDiffusionDirichlet = DiffusionRelaxationDirichlet<DiffusionCylinderParticles, DiffusionFluidParticles>;
 class ThermalRelaxationComplex
     : public DiffusionRelaxationRK2<
-          ComplexInteraction<CylinderDiffusionInner, CylinderFluidDiffusionDirichlet>>
+          ComplexInteraction<CylinderFluidDiffusionDirichlet>>
 {
   public:
-    explicit ThermalRelaxationComplex(BaseInnerRelation &inner_relation, BaseContactRelation &body_contact_relation_Dirichlet)
-        : DiffusionRelaxationRK2<ComplexInteraction<CylinderDiffusionInner, CylinderFluidDiffusionDirichlet>>(inner_relation, body_contact_relation_Dirichlet){};
+    explicit ThermalRelaxationComplex(BaseContactRelation &body_contact_relation_Dirichlet)
+        : DiffusionRelaxationRK2<ComplexInteraction<CylinderFluidDiffusionDirichlet>>(body_contact_relation_Dirichlet){};
     virtual ~ThermalRelaxationComplex(){};
 };
 //------------------------------------------------------------------------------
@@ -329,7 +327,7 @@ int main(int ac, char *av[])
     SimpleDynamics<WettingWallBodyInitialCondition> Wetting_wall_initial_condition(wall_boundary);
     SimpleDynamics<WettingCylinderBodyInitialCondition> Wetting_cylinder_initial_condition(cylinder);
     GetDiffusionTimeStepSize<DiffusionCylinderParticles> get_thermal_time_step(cylinder);
-    ThermalRelaxationComplex thermal_relaxation_complex(cylinder_inner, cylinder_contact);
+    ThermalRelaxationComplex thermal_relaxation_complex(cylinder_contact);
     //----------------------------------------------------------------------
     //	Algorithms of FSI.
     //----------------------------------------------------------------------
