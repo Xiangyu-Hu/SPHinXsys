@@ -365,14 +365,8 @@ int main(int ac, char *av[])
     SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
     fixed_spot_info.addDecoration(SimTK::Transform(), SimTK::DecorativeSphere(0.02));
     tethered_spot_info.addDecoration(SimTK::Transform(), SimTK::DecorativeSphere(0.4));
-    /** Visualizer from simbody. */
-    SimTK::Visualizer viz(MBsystem);
-    MBsystem.addEventReporter(new SimTK::Visualizer::Reporter(viz, 0.01));
-    /** Initialize the system and state. */
     SimTK::State state = MBsystem.realizeTopology();
-    viz.report(state);
-    std::cout << "Hit ENTER to run a short simulation ...";
-    getchar();
+
     /** Time steping method for multibody system.*/
     SimTK::RungeKuttaMersonIntegrator integ(MBsystem);
     integ.setAccuracy(1e-3);
@@ -503,7 +497,6 @@ int main(int ac, char *av[])
             }
             number_of_iterations++;
 
-            viz.report(integ.getState());
             /** Update cell linked list and configuration. */
             time_instance = TickCount::now();
             water_block.updateCellLinkedListWithParticleSort(100);
