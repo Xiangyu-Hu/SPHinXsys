@@ -6,6 +6,7 @@
  * @author 	Chi Zhang and Xiangyu Hu
  */
 #include "sphinxsys.h" //SPHinXsys Library.
+
 using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
@@ -24,7 +25,7 @@ Real rho0_a = 0.001;     /**< Reference density of air. */
 Real U_max = 1.0;        /**< Characteristic velocity. */
 Real c_f = 10.0 * U_max; /**< Reference sound speed. */
 Real mu_f = 0.2;         /**< Water viscosity. */
-Real mu_a = 0.0002;      /**< Air viscosity. */
+Real mu_a = 0.002;      /**< Air viscosity. */
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
 //----------------------------------------------------------------------
@@ -99,6 +100,162 @@ class WallBoundary : public MultiPolygonShape
         multi_polygon_.addAPolygon(inner_shape, ShapeBooleanOps::sub);
     }
 };
+
+using fluid_dynamics::FluidDataInner;
+class SmoothedColorFunctionInner : public LocalDynamics, public FluidDataInner
+{
+  public:
+    explicit SmoothedColorFunctionInner(BaseInnerRelation &inner_relation)
+        : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
+          surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")),
+          Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure"))
+    {
+        particles_->registerVariable(smoothed_color_, "SmoothedColor", Real(1));
+    };
+    virtual ~SmoothedColorFunctionInner(){};
+
+    void interaction(size_t index_i, Real dt = 0.0)
+    {
+        smoothed_color_[index_i] = 1;
+
+        if (surface_indicator_[index_i] == 1)
+        {
+            Real summation = ZeroData<Real>::value;
+            const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+            for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+            {
+                size_t index_j = inner_neighborhood.j_[n];
+                summation += inner_neighborhood.W_ij_[n] * Vol_[index_j];
+            }
+            smoothed_color_[index_i] = summation;
+        }
+    };
+
+  protected:
+    StdLargeVec<int> &surface_indicator_;
+    StdLargeVec<Real> &Vol_, smoothed_color_;
+};
+
+class SmoothedColorGradientInner : public LocalDynamics, public FluidDataInner
+{
+  public:
+    explicit SmoothedColorGradientInner(BaseInnerRelation &inner_relation) 
+        : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
+          smoothed_color_(*particles_->getVariableByName<Real>("SmoothedColor"))
+    {
+        particles_->registerVariable(color_gradient_, "SmoothedColorGradient");
+    };
+    virtual ~SmoothedColorGradientInner(){};
+
+    void interaction(size_t index_i, Real dt = 0.0)
+    {
+        Vecd summation = ZeroData<Vecd>::value;
+        const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+        {
+            size_t index_j = inner_neighborhood.j_[n];
+            summation -= (smoothed_color_[index_i] - smoothed_color_[index_j]) *
+                         inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+        }
+        color_gradient_[index_i] = summation;
+    };
+
+  protected:
+    StdLargeVec<Real> &smoothed_color_;
+    StdLargeVec<Vecd> color_gradient_;
+};
+
+typedef DataDelegateContact<BaseParticles, BaseParticles> BaseDataContact;
+class SmoothedColorGradientContact : public LocalDynamics, public BaseDataContact
+{
+  public:
+    explicit SmoothedColorGradientContact(BaseContactRelation &conact_relation)
+        : LocalDynamics(conact_relation.getSPHBody()), BaseDataContact(conact_relation),
+          smoothed_color_(*particles_->getVariableByName<Real>("SmoothedColor")),
+          color_gradient_(*particles_->getVariableByName<Vecd>("SmoothedColorGradient")){};
+    virtual ~SmoothedColorGradientContact(){};
+
+    void interaction(size_t index_i, Real dt = 0.0)
+    {
+        Vecd summation = ZeroData<Vecd>::value;
+        for (size_t k = 0; k < contact_configuration_.size(); ++k)
+        {
+            Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+            for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+            {
+                summation -= smoothed_color_[index_i] *
+                            contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
+            }
+        }
+        color_gradient_[index_i] += summation;
+    };
+
+  protected:
+    StdLargeVec<Real> &smoothed_color_;
+    StdLargeVec<Vecd> &color_gradient_;
+};
+
+class SurfaceStressAccelerationInner : public LocalDynamics, public FluidDataInner
+{
+  public:
+    SurfaceStressAccelerationInner(BaseInnerRelation &inner_relation, Real gamma)
+        : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
+          gamma_(gamma), acc_prior_(particles_->acc_prior_), 
+          color_gradient_(*particles_->getVariableByName<Vecd>("SmoothedColorGradient"))
+    {
+        particles_->registerVariable(surface_stress_, "SurfaceStress");
+    };
+    virtual ~SurfaceStressAccelerationInner(){};
+
+    void initialization(size_t index_i, Real dt = 0.0)
+    {
+        Vecd gradient = color_gradient_[index_i];
+        Real norm = gradient.norm();
+        surface_stress_[index_i] = gamma_ / (norm + Eps) * 
+            (norm * norm / Real(Dimensions) * Matd::Identity() - gradient * gradient.transpose()); 
+    };
+    void interaction(size_t index_i, Real dt = 0.0)
+    {
+        Vecd summation = ZeroData<Vecd>::value;
+        const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+        {
+            size_t index_j = inner_neighborhood.j_[n];
+            summation += inner_neighborhood.dW_ijV_j_[n] * 
+                (surface_stress_[index_i] + surface_stress_[index_j]) * inner_neighborhood.e_ij_[n];
+        }
+        acc_prior_[index_i] += summation;
+    };
+
+  protected:
+    Real gamma_;
+    StdLargeVec<Vecd> &acc_prior_;
+    StdLargeVec<Vecd> &color_gradient_;
+    StdLargeVec<Matd> surface_stress_;
+};
+
+template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
+class InteractionWithInitialization : public InteractionDynamics<LocalDynamicsType, ExecutionPolicy>
+{
+  public:
+    template <typename... Args>
+    InteractionWithInitialization(Args &&...args)
+        : InteractionDynamics<LocalDynamicsType, ExecutionPolicy>(false, std::forward<Args>(args)...)
+    {
+        static_assert(!has_update<LocalDynamicsType>::value,
+                      "LocalDynamicsType does not fulfill InteractionWithInitialization requirements");
+    }
+    virtual ~InteractionWithInitialization(){};
+
+    virtual void exec(Real dt = 0.0) override
+    {
+        particle_for(ExecutionPolicy(),
+                     this->identifier_.LoopRange(),
+                     [&](size_t i)
+                     { this->initialization(i, dt); });
+        InteractionDynamics<LocalDynamicsType, ExecutionPolicy>::exec(dt);
+    };
+};
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
@@ -141,11 +298,6 @@ int main()
     SimpleDynamics<TimeStepInitialization> initialize_a_water_step(water_block);
     SimpleDynamics<TimeStepInitialization> initialize_a_air_step(air_block);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-    /** Evaluation of density by summation approach. */
-    InteractionWithUpdate<fluid_dynamics::DensitySummationComplex>
-        update_water_density_by_summation(water_wall_contact, water_air_complex);
-    InteractionWithUpdate<fluid_dynamics::DensitySummationComplex>
-        update_air_density_by_summation(air_wall_contact, air_water_complex);
     InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex>
         air_transport_correction(air_wall_contact, air_water_complex);
     /** Time step size without considering sound wave speed. */
@@ -172,11 +324,13 @@ int main()
     /** Surface tension. */
     InteractionWithUpdate<fluid_dynamics::FreeSurfaceIndicationInner>
         surface_detection(water_air_complex.getInnerRelation());
-    InteractionDynamics<fluid_dynamics::ColorFunctionGradientInner>
-        color_gradient(water_air_complex.getInnerRelation());
-    InteractionDynamics<fluid_dynamics::ColorFunctionGradientInterpolationInner>
-        color_gradient_interpolation(water_air_complex.getInnerRelation());
-    InteractionDynamics<fluid_dynamics::SurfaceTensionAccelerationInner>
+    InteractionDynamics<SmoothedColorFunctionInner>
+        volume_fraction(water_air_complex.getInnerRelation());
+    water_block.addBodyStateForRecording<Real>("SmoothedColor");
+    InteractionDynamics<ComplexInteraction<SmoothedColorGradientInner, SmoothedColorGradientContact>>
+        color_gradient(water_air_complex.getInnerRelation(), water_air_complex.getContactRelation());
+    water_block.addBodyStateForRecording<Vecd>("SmoothedColorGradient");
+    InteractionWithInitialization<SurfaceStressAccelerationInner>
         surface_tension_acceleration(water_air_complex.getInnerRelation(), 1.0);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
@@ -230,16 +384,13 @@ int main()
             Real Dt_a = get_air_advection_time_step_size.exec();
             Real Dt = SMIN(Dt_f, Dt_a);
 
-            update_water_density_by_summation.exec();
-            update_air_density_by_summation.exec();
-            air_transport_correction.exec();
-
             air_viscous_acceleration.exec();
             water_viscous_acceleration.exec();
+            air_transport_correction.exec();
 
             surface_detection.exec();
+            volume_fraction.exec();
             color_gradient.exec();
-            color_gradient_interpolation.exec();
             surface_tension_acceleration.exec();
 
             interval_computing_time_step += TickCount::now() - time_instance;
@@ -276,7 +427,7 @@ int main()
             /** Update cell linked list and configuration. */
             time_instance = TickCount::now();
 
-            water_block.updateCellLinkedListWithParticleSort(100);
+            water_block.updateCellLinkedList();
             water_air_complex.updateConfiguration();
             water_wall_contact.updateConfiguration();
 
