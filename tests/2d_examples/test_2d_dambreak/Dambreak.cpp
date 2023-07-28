@@ -104,7 +104,7 @@ int main(int ac, char *av[])
     RestartIO restart_io(io_environment, sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy, ParallelSYCLDevicePolicy>>>
         write_water_mechanical_energy(io_environment, water_block, gravity_ptr);
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
+    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real, DeviceReal>>
         write_recorded_water_pressure("Pressure", io_environment, fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
@@ -183,10 +183,6 @@ int main(int ac, char *av[])
             }
             interval_computing_fluid_pressure_relaxation += TickCount::now() - time_instance;
 
-            water_block.getBaseParticles().copyFromDeviceMemory();
-            water_block_complex.getInnerRelation().copyInnerConfigurationFromDevice();
-            water_block_complex.getContactRelation().copyContactConfigurationFromDevice();
-
             /** screen output, write body reduced values and restart files  */
             if (number_of_iterations % screen_output_interval == 0)
             {
@@ -203,6 +199,10 @@ int main(int ac, char *av[])
                     restart_io.writeToFile(number_of_iterations);
             }
             number_of_iterations++;
+
+            water_block.getBaseParticles().copyFromDeviceMemory();
+            water_block_complex.getInnerRelation().copyInnerConfigurationFromDevice();
+            water_block_complex.getContactRelation().copyContactConfigurationFromDevice();
 
             /** Update cell linked list and configuration. */
             time_instance = TickCount::now();

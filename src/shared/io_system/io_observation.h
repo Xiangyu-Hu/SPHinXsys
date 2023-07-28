@@ -38,9 +38,9 @@ namespace SPH
  * @class ObservedQuantityRecording
  * @brief write files for observed quantity
  */
-template <typename VariableType>
+template <typename VariableType, typename DeviceVariableType = void>
 class ObservedQuantityRecording : public BodyStatesRecording,
-                                  public ObservingAQuantity<VariableType>
+                                  public ObservingAQuantity<VariableType, DeviceVariableType>
 {
   protected:
     SPHBody &observer_;
@@ -57,12 +57,18 @@ class ObservedQuantityRecording : public BodyStatesRecording,
     ObservedQuantityRecording(const std::string &quantity_name, IOEnvironment &io_environment,
                               BaseContactRelation &contact_relation)
         : BodyStatesRecording(io_environment, contact_relation.getSPHBody()),
-          ObservingAQuantity<VariableType>(contact_relation, quantity_name),
+          ObservingAQuantity<VariableType, DeviceVariableType>(contact_relation, quantity_name),
           observer_(contact_relation.getSPHBody()), plt_engine_(),
           base_particles_(observer_.getBaseParticles()),
           dynamics_identifier_name_(contact_relation.getSPHBody().getName()),
           quantity_name_(quantity_name)
     {
+        /** Copy data from device if device type has been specified **/
+        if constexpr (std::negation_v<std::is_same<DeviceVariableType, void>>) {
+            DeviceVariableType* device_data = this->getParticles()->template getDeviceVariableByName<DeviceVariableType>(quantity_name_);
+            copyDataFromDevice(this->interpolated_quantities_->data(), device_data, this->getParticles()->total_real_particles_);
+        }
+
         /** Output for .dat file. */
         filefullpath_output_ = io_environment_.output_folder_ + "/" + dynamics_identifier_name_ + "_" + quantity_name + ".dat";
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
@@ -81,6 +87,13 @@ class ObservedQuantityRecording : public BodyStatesRecording,
     virtual void writeWithFileName(const std::string &sequence) override
     {
         this->exec();
+
+        /* Copy data from device if device type has been specified */
+        if constexpr (std::negation_v<std::is_same<DeviceVariableType, void>>) {
+            DeviceVariableType* device_data = this->getParticles()->template getDeviceVariableByName<DeviceVariableType>(quantity_name_);
+            copyDataFromDevice(this->interpolated_quantities_->data(), device_data, this->getParticles()->total_real_particles_);
+        }
+
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
         out_file << GlobalStaticVariables::physical_time_ << "   ";
         for (size_t i = 0; i != base_particles_.total_real_particles_; ++i)

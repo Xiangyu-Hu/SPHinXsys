@@ -35,18 +35,75 @@ namespace SPH
 {
 typedef DataDelegateContact<BaseParticles, BaseParticles> InterpolationContactData;
 
+template<class DataType>
+class BaseInterpolationKernel {
+
+  public:
+    BaseInterpolationKernel(NeighborhoodDevice **contact_configuration_device,
+                            size_t contact_size, DataType *interpolated_quantities)
+        : contact_configuration_(contact_configuration_device), contact_size_(contact_size),
+          interpolated_quantities_(interpolated_quantities) {}
+
+    void interaction(size_t index_i, Real dt = 0.0) {
+        DataType observed_quantity(0);
+        DeviceReal ttl_weight(0);
+
+        for (size_t k = 0; k < contact_size_; ++k)
+        {
+            const auto *Vol_k = contact_Vol_[k];
+            const auto *data_k = contact_data_[k];
+            const auto &contact_neighborhood = contact_configuration_[k][index_i];
+            for (size_t n = 0; n != contact_neighborhood.current_size(); ++n)
+            {
+                const auto index_j = contact_neighborhood.j_[n];
+                const auto weight_j = contact_neighborhood.W_ij_[n] * Vol_k[index_j];
+
+                observed_quantity += weight_j * data_k[index_j];
+                ttl_weight += weight_j;
+            }
+        }
+        interpolated_quantities_[index_i] = observed_quantity / (ttl_weight + TinyReal);
+    }
+
+    void setContactVol(DeviceReal **contact_Vol) { contact_Vol_ = contact_Vol; }
+    void setContactData(DataType **contact_data) { contact_data_ = contact_data; }
+
+  private:
+    NeighborhoodDevice** contact_configuration_;
+    DeviceReal** contact_Vol_;
+    DataType** contact_data_;
+    size_t contact_size_;
+    DataType* interpolated_quantities_;
+};
+
+template<>
+class BaseInterpolationKernel<void> {
+  public:
+    template<class ...Args>
+    BaseInterpolationKernel(Args ...args) {}
+
+    void interaction(size_t, Real = 0.0) {
+        static_assert("BaseInterpolationKernel initialized with DataType = void");
+    }
+};
+
 /**
  * @class BaseInterpolation
  * @brief Base class for interpolation.
  */
-template <typename DataType>
-class BaseInterpolation : public LocalDynamics, public InterpolationContactData
+template <typename DataType, typename DataTypeDevice = void>
+class BaseInterpolation : public LocalDynamics, public InterpolationContactData,
+                          public DeviceExecutable<BaseInterpolation<DataType, DataTypeDevice>, BaseInterpolationKernel<DataTypeDevice>>
 {
   public:
     StdLargeVec<DataType> *interpolated_quantities_;
 
     explicit BaseInterpolation(BaseContactRelation &contact_relation, const std::string &variable_name)
         : LocalDynamics(contact_relation.getSPHBody()), InterpolationContactData(contact_relation),
+          DeviceExecutable<BaseInterpolation<DataType, DataTypeDevice>, BaseInterpolationKernel<DataTypeDevice>>(this,
+               this->contact_configuration_device_->data(), this->contact_configuration_device_->size(),
+               [&]() -> DataTypeDevice* { if constexpr (std::is_same_v<DataTypeDevice, void>) return nullptr; else
+                      return particles_->registerDeviceVariable<DataTypeDevice>(variable_name, particles_->total_real_particles_); }()),
           interpolated_quantities_(nullptr)
     {
         for (size_t k = 0; k != this->contact_particles_.size(); ++k)
@@ -55,6 +112,26 @@ class BaseInterpolation : public LocalDynamics, public InterpolationContactData
             StdLargeVec<DataType> *contact_data =
                 this->contact_particles_[k]->template getVariableByName<DataType>(variable_name);
             contact_data_.push_back(contact_data);
+        }
+
+        if constexpr(!std::is_same_v<DataTypeDevice, void>) {
+            contact_Vol_device_ = makeSharedDevice<StdSharedVec<DeviceReal*>>(this->contact_particles_.size(),
+                                                                              execution::executionQueue.getQueue());
+            contact_data_device_ = makeSharedDevice<StdSharedVec<DataTypeDevice*>>(this->contact_particles_.size(),
+                                                                                   execution::executionQueue.getQueue());
+
+            for (size_t k = 0; k != this->contact_particles_.size(); ++k)
+            {
+                contact_Vol_device_->at(k) = this->contact_particles_[k]->template getDeviceVariableByName<DeviceReal>("Volume");
+                DataTypeDevice *contact_data =
+                    this->contact_particles_[k]->template getDeviceVariableByName<DataTypeDevice>(variable_name);
+                contact_data_device_->at(k) = contact_data;
+            }
+
+            // Set device contact volume and data that have just been initialized
+            auto* device_kernel = this->getDeviceProxy().getKernel();
+            device_kernel->setContactVol(contact_Vol_device_->data());
+            device_kernel->setContactData(contact_data_device_->data());
         }
     };
     virtual ~BaseInterpolation(){};
@@ -84,6 +161,8 @@ class BaseInterpolation : public LocalDynamics, public InterpolationContactData
   protected:
     StdVec<StdLargeVec<Real> *> contact_Vol_;
     StdVec<StdLargeVec<DataType> *> contact_data_;
+    SharedPtr<StdSharedVec<DeviceReal*>> contact_Vol_device_;
+    SharedPtr<StdSharedVec<DataTypeDevice*>> contact_data_device_;
 };
 
 /**
@@ -108,12 +187,15 @@ class InterpolatingAQuantity : public BaseInterpolation<DataType>
  * @class ObservingAQuantity
  * @brief Observing a variable from contact bodies.
  */
-template <typename DataType>
-class ObservingAQuantity : public InteractionDynamics<BaseInterpolation<DataType>>
+template <typename DataType, typename DeviceDataType = void>
+class ObservingAQuantity : public InteractionDynamics<BaseInterpolation<DataType, DeviceDataType>,
+                                                      std::conditional_t<std::is_same_v<DeviceDataType, void>,
+                                                                       ParallelPolicy, ParallelSYCLDevicePolicy>>
 {
   public:
     explicit ObservingAQuantity(BaseContactRelation &contact_relation, const std::string &variable_name)
-        : InteractionDynamics<BaseInterpolation<DataType>>(contact_relation, variable_name)
+        : InteractionDynamics<BaseInterpolation<DataType, DeviceDataType>, std::conditional_t<std::is_same_v<DeviceDataType, void>,
+            ParallelPolicy, ParallelSYCLDevicePolicy>>(contact_relation, variable_name)
     {
         this->interpolated_quantities_ = registerObservedQuantity(variable_name);
     };

@@ -55,8 +55,9 @@ class Gravity : public ExternalForce
 {
   protected:
     Vecd global_acceleration_;
-    DeviceVecd global_acceleration_device_;
     Vecd zero_potential_reference_;
+    DeviceVecd global_acceleration_device_;
+    DeviceVecd zero_potential_reference_device_;
 
   public:
     Gravity(Vecd gravity_vector, Vecd reference_position = Vecd::Zero());
@@ -66,8 +67,11 @@ class Gravity : public ExternalForce
     virtual Vecd InducedAcceleration(Vecd &position) override;
     Real getPotential(Vecd &position);
 
-    DeviceVecd InducedAcceleration(DeviceVecd& position) {
+    DeviceVecd InducedAcceleration(const DeviceVecd& position) const {
         return global_acceleration_device_;
+    }
+    DeviceReal getPotential(const DeviceVecd &position) const {
+        return sycl::dot(InducedAcceleration(position), zero_potential_reference_device_ - position);
     }
 };
 } // namespace SPH
