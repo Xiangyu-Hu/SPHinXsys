@@ -1,2 +1,2 @@
-./test_2d_free_stream_around_cylinder --r=true
-./test_2d_free_stream_around_cylinder --r=false --i=true
+./test_2d_water_entry_exit --r=true
+./test_2d_water_entry_exit --r=false --i=true
