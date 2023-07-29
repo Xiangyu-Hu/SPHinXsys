@@ -22,7 +22,7 @@ void ViscousAccelerationMultiPhase::interaction(size_t index_i, Real dt)
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
         Real contact_mu_k = this->contact_mu_[k];
-        StdLargeVec<Vecd> &vel_k = *(this->contact_vel_n_[k]);
+        StdLargeVec<Vecd> &vel_k = *(this->contact_vel_[k]);
         Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
@@ -80,7 +80,7 @@ RelaxationMultiPhase<RelaxationInnerType>::
         contact_fluids_.push_back(DynamicCast<Fluid>(this, &contact_particles_[k]->getBaseMaterial()));
         contact_p_.push_back(contact_particles_[k]->template getVariableByName<Real>("Pressure"));
         contact_rho_n_.push_back(&(contact_particles_[k]->rho_));
-        contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
+        contact_vel_.push_back(&(contact_particles_[k]->vel_));
     }
 }
 //=================================================================================================//
@@ -180,7 +180,7 @@ void BaseMultiPhaseIntegration2ndHalf<Integration2ndHalfType>::
     Vecd p_dissipation = Vecd::Zero();
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Vecd> &vel_k = *(this->contact_vel_n_[k]);
+        StdLargeVec<Vecd> &vel_k = *(this->contact_vel_[k]);
         CurrentRiemannSolver &riemann_solver_k = riemann_solvers_[k];
         Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)

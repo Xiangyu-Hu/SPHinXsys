@@ -21,7 +21,7 @@ ViscousAccelerationMultiPhase::ViscousAccelerationMultiPhase(BaseInnerRelation &
     {
         Real mu_k = DynamicCast<Fluid>(this, &contact_particles_[k]->getBaseMaterial())->ReferenceViscosity();
         contact_mu_.push_back(Real(2) * (mu_ * mu_k) / (mu_ + mu_k));
-        contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
+        contact_vel_.push_back(&(contact_particles_[k]->vel_));
     }
 }
 //=================================================================================================//

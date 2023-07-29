@@ -22,7 +22,7 @@ ViscousForceFromFluid::ViscousForceFromFluid(BaseContactRelation &contact_relati
     particles_->registerVariable(force_from_fluid_, "ViscousForceFromFluid");
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
+        contact_vel_.push_back(&(contact_particles_[k]->vel_));
         mu_.push_back(contact_fluids_[k]->ReferenceViscosity());
         smoothing_length_.push_back(contact_bodies_[k]->sph_adaptation_->ReferenceSmoothingLength());
     }

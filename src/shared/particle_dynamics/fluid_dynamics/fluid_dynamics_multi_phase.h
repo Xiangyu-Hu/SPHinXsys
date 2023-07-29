@@ -55,7 +55,7 @@ class ViscousAccelerationMultiPhase : public ViscousAccelerationInner, public Mu
 
   protected:
     StdVec<Real> contact_mu_;
-    StdVec<StdLargeVec<Vecd> *> contact_vel_n_;
+    StdVec<StdLargeVec<Vecd> *> contact_vel_;
 };
 using ViscousAccelerationMultiPhaseWithWall =
     BaseViscousAccelerationWithWall<ViscousAccelerationMultiPhase>;
@@ -75,7 +75,7 @@ class RelaxationMultiPhase : public RelaxationInnerType, public MultiPhaseContac
   protected:
     StdVec<Fluid *> contact_fluids_;
     StdVec<StdLargeVec<Real> *> contact_p_, contact_rho_n_;
-    StdVec<StdLargeVec<Vecd> *> contact_vel_n_;
+    StdVec<StdLargeVec<Vecd> *> contact_vel_;
 };
 
 /**
