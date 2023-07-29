@@ -24,7 +24,7 @@ Real rho0_a = 0.001;     /**< Reference density of air. */
 Real U_max = 1.0;        /**< Characteristic velocity. */
 Real c_f = 10.0 * U_max; /**< Reference sound speed. */
 Real mu_f = 0.2;         /**< Water viscosity. */
-Real mu_a = 0.0002;      /**< Air viscosity. */
+Real mu_a = 0.002;       /**< Air viscosity. */
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
 //----------------------------------------------------------------------
