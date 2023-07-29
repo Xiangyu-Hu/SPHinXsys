@@ -151,7 +151,7 @@ class CorrectedKernelGradientContact
  * @brief Base class for diffusion relaxation process between two contact bodies.
  */
 template <class ParticlesType, class ContactParticlesType, class KernelGradientType = KernelGradientContact>
-class BaseDiffusionRelaxationBoundary
+class BaseDiffusionRelaxationContact
     : public BaseDiffusionRelaxation<ParticlesType>,
       public DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>
 {
@@ -162,8 +162,8 @@ class BaseDiffusionRelaxationBoundary
   public:
     typedef BaseContactRelation BodyRelationType;
 
-    explicit BaseDiffusionRelaxationBoundary(BaseContactRelation &contact_relation);
-    virtual ~BaseDiffusionRelaxationBoundary(){};
+    explicit BaseDiffusionRelaxationContact(BaseContactRelation &contact_relation);
+    virtual ~BaseDiffusionRelaxationContact(){};
 };
 
 /**
@@ -172,7 +172,7 @@ class BaseDiffusionRelaxationBoundary
  */
 template <class ParticlesType, class ContactParticlesType, class KernelGradientType = KernelGradientContact>
 class DiffusionRelaxationDirichlet
-    : public BaseDiffusionRelaxationBoundary<ParticlesType, ContactParticlesType, KernelGradientType>
+    : public BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType>
 {
   protected:
     StdVec<StdVec<StdLargeVec<Real> *>> contact_gradient_species_;
@@ -192,7 +192,7 @@ class DiffusionRelaxationDirichlet
  */
 template <class ParticlesType, class ContactParticlesType, class KernelGradientType = KernelGradientContact>
 class DiffusionRelaxationNeumann
-    : public BaseDiffusionRelaxationBoundary<ParticlesType, ContactParticlesType, KernelGradientType>
+    : public BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType>
 {
     StdLargeVec<Vecd> &n_;
     StdVec<StdLargeVec<Real> *> contact_heat_flux_;
@@ -215,7 +215,7 @@ class DiffusionRelaxationNeumann
  */
 template <class ParticlesType, class ContactParticlesType, class KernelGradientType = KernelGradientContact>
 class DiffusionRelaxationRobin
-    : public BaseDiffusionRelaxationBoundary<ParticlesType, ContactParticlesType, KernelGradientType>
+    : public BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType>
 {
     StdLargeVec<Vecd> &n_;
     StdVec<StdLargeVec<Real> *> contact_convection_;

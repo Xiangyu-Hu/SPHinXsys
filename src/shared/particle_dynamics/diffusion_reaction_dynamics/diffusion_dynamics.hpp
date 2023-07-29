@@ -102,8 +102,8 @@ void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
 }
 //=================================================================================================//
 template <class ParticlesType, class ContactParticlesType, class KernelGradientType>
-BaseDiffusionRelaxationBoundary<ParticlesType, ContactParticlesType, KernelGradientType>::
-    BaseDiffusionRelaxationBoundary(BaseContactRelation &contact_relation)
+BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType>::
+    BaseDiffusionRelaxationContact(BaseContactRelation &contact_relation)
     : BaseDiffusionRelaxation<ParticlesType>(contact_relation.getSPHBody()),
       DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>(contact_relation)
 {
@@ -140,7 +140,7 @@ BaseDiffusionRelaxationBoundary<ParticlesType, ContactParticlesType, KernelGradi
 template <class ParticlesType, class ContactParticlesType, class KernelGradientType>
 DiffusionRelaxationDirichlet<ParticlesType, ContactParticlesType, KernelGradientType>::
     DiffusionRelaxationDirichlet(BaseContactRelation &contact_relation)
-    : BaseDiffusionRelaxationBoundary<ParticlesType, ContactParticlesType, KernelGradientType>(contact_relation)
+    : BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType>(contact_relation)
 {
     contact_gradient_species_.resize(this->contact_particles_.size());
 
@@ -197,7 +197,7 @@ void DiffusionRelaxationDirichlet<ParticlesType, ContactParticlesType, KernelGra
 template <class ParticlesType, class ContactParticlesType, class KernelGradientType>
 DiffusionRelaxationNeumann<ParticlesType, ContactParticlesType, KernelGradientType>::
     DiffusionRelaxationNeumann(BaseContactRelation &contact_relation)
-    : BaseDiffusionRelaxationBoundary<ParticlesType, ContactParticlesType, KernelGradientType>(contact_relation),
+    : BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType>(contact_relation),
       n_(this->particles_->n_)
 {
     contact_heat_flux_.resize(this->contact_particles_.size());
@@ -249,7 +249,7 @@ void DiffusionRelaxationNeumann<ParticlesType, ContactParticlesType, KernelGradi
 template <class ParticlesType, class ContactParticlesType, class KernelGradientType>
 DiffusionRelaxationRobin<ParticlesType, ContactParticlesType, KernelGradientType>::
     DiffusionRelaxationRobin(BaseContactRelation &contact_relation)
-    : BaseDiffusionRelaxationBoundary<ParticlesType, ContactParticlesType, KernelGradientType>(contact_relation),
+    : BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType>(contact_relation),
       n_(this->particles_->n_)
 {
     contact_convection_.resize(this->contact_particles_.size());
