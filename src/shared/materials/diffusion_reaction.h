@@ -58,7 +58,7 @@ class BaseDiffusion : public BaseMaterial
     size_t gradient_species_index_;
 
     virtual Real getReferenceDiffusivity() = 0;
-    virtual Real getInterParticleDiffusionCoff(size_t particle_i, size_t particle_j, const Vecd &direction_from_j_to_i) = 0;
+    virtual Real getInterParticleDiffusionCoff(size_t particle_i, size_t particle_j, Vecd &direction_from_j_to_i) = 0;
 };
 
 /**
@@ -81,7 +81,7 @@ class IsotropicDiffusion : public BaseDiffusion
     virtual ~IsotropicDiffusion(){};
 
     virtual Real getReferenceDiffusivity() override { return diff_cf_; };
-    virtual Real getInterParticleDiffusionCoff(size_t particle_i, size_t particle_j, const Vecd &direction_from_j_to_i) override
+    virtual Real getInterParticleDiffusionCoff(size_t particle_i, size_t particle_j, Vecd &direction_from_j_to_i) override
     {
         return diff_cf_;
     };
@@ -118,7 +118,7 @@ class DirectionalDiffusion : public IsotropicDiffusion
     };
 
     virtual Real getInterParticleDiffusionCoff(size_t particle_index_i,
-                                               size_t particle_index_j, const Vecd &inter_particle_direction) override
+                                               size_t particle_index_j, Vecd &inter_particle_direction) override
     {
         Vecd grad_ij = transformed_diffusivity_ * inter_particle_direction;
         return 1.0 / grad_ij.squaredNorm();
@@ -147,7 +147,7 @@ class LocalDirectionalDiffusion : public DirectionalDiffusion
     virtual void registerReloadLocalParameters(BaseParticles *base_particles) override;
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
 
-    virtual Real getInterParticleDiffusionCoff(size_t particle_index_i, size_t particle_index_j, const Vecd &inter_particle_direction) override
+    virtual Real getInterParticleDiffusionCoff(size_t particle_index_i, size_t particle_index_j, Vecd &inter_particle_direction) override
     {
         Matd trans_diffusivity = getAverageValue(local_transformed_diffusivity_[particle_index_i], local_transformed_diffusivity_[particle_index_j]);
         Vecd grad_ij = trans_diffusivity * inter_particle_direction;
