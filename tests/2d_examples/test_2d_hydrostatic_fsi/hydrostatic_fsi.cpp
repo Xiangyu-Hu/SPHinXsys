@@ -51,11 +51,11 @@ StdVec<Vecd> observation_location = {Vecd(0.5 * Dam_L, -0.5 * Gate_width)};
 //----------------------------------------------------------------------
 Real rho0_f = 1000.0;  /**< Reference density of fluid. */
 Real gravity_g = 9.81; /**< Value of gravity. */
-Real U_max = 2.0 * sqrt(Dam_H * gravity_g);
+Real U_ref = 2.0 * sqrt(Dam_H * gravity_g);
 ;                                     /**< Characteristic velocity. */
-Real c_f = 10.0 * U_max;              /**< Reference sound speed. */
+Real c_f = 10.0 * U_ref;              /**< Reference sound speed. */
 Real Re = 0.1;                        /**< Reynolds number. */
-Real mu_f = rho0_f * U_max * DL / Re; /**< Dynamics viscosity. */
+Real mu_f = rho0_f * U_ref * DL / Re; /**< Dynamics viscosity. */
 //----------------------------------------------------------------------
 //	Material properties of the elastic gate.
 //----------------------------------------------------------------------
@@ -235,7 +235,7 @@ int main()
     /** Evaluation of fluid density by summation approach. */
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_fluid_density(water_block_complex);
     /** Compute time step size without considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_max);
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_ref);
     /** Compute time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     /** Pressure relaxation using verlet time stepping. */
