@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-
-# Run this script using the same Python3 version as used by the build
-# system to generate the module.
-
 import os
 import sys
 import platform
@@ -11,11 +7,10 @@ import argparse
 # add dynamic link library or shared object to python env
 # attention: match current python version with the version exposing the cpp code
 sys_str = platform.system()
+path_1 = os.path.abspath(os.path.join(os.getcwd(), '../..'))
 if sys_str == 'Windows':
-    path_1 = os.path.abspath(os.path.join(os.getcwd(), '../../lib'))
-    path_2 = 'RelWithDebInfo' # or 'Debug'
+    path_2 = 'lib'
 elif sys_str == 'Linux':
-    path_1 = os.path.abspath(os.path.join(os.getcwd(), '../..'))
     path_2 = 'lib'
 else:
     # depend on the system
