@@ -78,7 +78,7 @@ Real AcousticTimeStepSize::outputResult(Real reduced_value)
 //=================================================================================================//
 AdvectionTimeStepSizeForImplicitViscosity::
     AdvectionTimeStepSizeForImplicitViscosity(SPHBody &sph_body, Real U_ref, Real advectionCFL)
-    : LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
+    : LocalDynamicsReduce<Real, ReduceMax>(sph_body, U_ref * U_ref),
       FluidDataSimple(sph_body), vel_(particles_->vel_),
       smoothing_length_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
       speed_ref_(U_ref), advectionCFL_(advectionCFL) {}
