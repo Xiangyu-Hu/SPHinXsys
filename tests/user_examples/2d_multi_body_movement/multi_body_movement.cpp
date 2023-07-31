@@ -1,13 +1,15 @@
 /**
- * @file 	static_confinement.cpp
- * @brief 	2D dambreak example in which the solid wall boundary are static confinement.
+ * @file 	multi_body_movement.cpp
+ * @brief 	2D multi-body movement case, in which the solid bodies are represented by Levelset.
+ *          In fact, the Levelset values are not moved, but with the tracing method, we let the solid bodies 
+ *          realize the virtual movement.
  * @details This is the one of the basic test cases.
- * @author 	Xiangyu Hu
+ * @author 	Yongchuan Yu
  */
 #include "sphinxsys.h" //SPHinXsys Library.
 #include "body_part_by_cell_tracing.h"
 #include "level_set_confinement.h"
-#include "math.h"
+//#include "body_part_by_cell_tracing.hpp"
 using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
@@ -15,13 +17,13 @@ using namespace SPH;   // Namespace cite here.
 Real DL = 5.366;              /**< Tank length. */
 Real DH = 5.366;              /**< Tank height. */
 Real LL = 5.366;                /**< Liquid column length. */
-Real LH = 2.0;                /**< Liquid column height. */
-Real resolution_ref = 0.05;  /**< Global reference resolution. */
+Real LH = 5.366;                /**< Liquid column height. */
+Real resolution_ref = 0.04;  /**< Global reference resolution. */
 Real BW = resolution_ref * 4; /**< Extending width for BCs. */
 // Observer location
 StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
 // circle parameters
-Vecd insert_circle_center (2.0, 1.0);
+Vecd insert_circle_center (1.0, 0.75);
 Real insert_circle_radius = 0.25;
 //----------------------------------------------------------------------
 //	Material parameters.
@@ -58,14 +60,14 @@ std::vector<Vecd> createWallShape()
     return inner_wall_shape;
 }
 /** create a structure shape */
-std::vector<Vecd> createStructureShape()
+std::vector<Vecd> createTriangle()
 {
     // geometry
     std::vector<Vecd> water_block_shape;
-    water_block_shape.push_back(Vecd(0.5 * DL, 0.05 * DH));
-    water_block_shape.push_back(Vecd(0.5 * DL + 0.5 * LL, 0.05 * DH + 0.5 * LH));
-    water_block_shape.push_back(Vecd(0.5 * DL + 0.5 * LL, 0.05 * DH));
-    water_block_shape.push_back(Vecd(0.5 * DL, 0.05 * DH));
+    water_block_shape.push_back(Vecd(2.5, 5.0));
+    water_block_shape.push_back(Vecd(3.0, 5.0));
+    water_block_shape.push_back(Vecd(2.75, 4.5));
+    water_block_shape.push_back(Vecd(2.5, 5.0));
     return water_block_shape;
 }
 
@@ -73,11 +75,11 @@ std::vector<Vecd> creatSquare()
 {
     //geometry
     std::vector<Vecd> square_shape;
-    square_shape.push_back(Vecd(2.5, 0.75));
-    square_shape.push_back(Vecd(2.5, 1.25));
-    square_shape.push_back(Vecd(3.0, 1.25));
-    square_shape.push_back(Vecd(3.0, 0.75));
-    square_shape.push_back(Vecd(2.5, 0.75));
+    square_shape.push_back(Vecd(4.0, 0.5));
+    square_shape.push_back(Vecd(4.0, 1.0));
+    square_shape.push_back(Vecd(4.5, 1.0));
+    square_shape.push_back(Vecd(4.5, 0.5));
+    square_shape.push_back(Vecd(4.0, 0.5));
     return square_shape;
 }
 
@@ -90,9 +92,9 @@ class WaterBlock : public MultiPolygonShape
     explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
         multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
-        //multi_polygon_.addAPolygon(createStructureShape(), ShapeBooleanOps::sub);
+        multi_polygon_.addAPolygon(createTriangle(), ShapeBooleanOps::sub);
         multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
-        //multi_polygon_.addAPolygon(creatSquare(), ShapeBooleanOps::sub);
+        multi_polygon_.addAPolygon(creatSquare(), ShapeBooleanOps::sub);
     }
 };
 //----------------------------------------------------------------------
@@ -114,11 +116,30 @@ class Triangle : public MultiPolygonShape
   public:
     explicit Triangle(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-       // multi_polygon_.addAPolygon(createStructureShape(), ShapeBooleanOps::add);
-        multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
-        //multi_polygon_.addAPolygon(creatSquare(), ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(createTriangle(), ShapeBooleanOps::add);
+        
     }
 };
+
+class Circle : public MultiPolygonShape
+{
+  public:
+    explicit Circle(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    {
+        multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
+    }
+};
+
+class Square : public MultiPolygonShape
+{
+  public:
+    explicit Square(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    {
+        multi_polygon_.addAPolygon(creatSquare(), ShapeBooleanOps::add);
+    }
+};
+
+
 
 class HorizontalMovement: public BaseTracingMethod
 {
@@ -130,7 +151,7 @@ class HorizontalMovement: public BaseTracingMethod
      {
          Real run_time = GlobalStaticVariables::physical_time_;
          Vecd current_position (0.0, 0.0);
-         current_position[0]= previous_position[0] - 0.2 * run_time;
+         current_position[1]= previous_position[1] - 0.2 * run_time;
          //current_position[0] = previous_position[0];
          if(run_time <= 10.0)
          {
@@ -155,18 +176,83 @@ public:
     virtual Vecd tracingPosition(Vecd previous_position, Real current_time = 0.0) override
     {
         Real dt = 0.1;
-        Vecd rotation_center(2.0, 1.0);
+        Vecd rotation_center(2.75, 1.0);
         Real rotation_v = 0.2*Pi;
-        Real rho = (previous_position - rotation_center).norm();
-        Real theta = atan2(previous_position[0] - rotation_center[0], previous_position[1] - rotation_center[1]);
+        Real distance = (previous_position - rotation_center).norm();
         Real run_time = GlobalStaticVariables::physical_time_;
         Vecd current_position(0.0, 0.0);
-        current_position[0] = cos(theta + rotation_v * run_time) * rho;
-        current_position[1] = sin(theta + rotation_v * run_time) * rho;
+        current_position[0] = cos(rotation_v * run_time) * distance;
+        current_position[1] = sin(rotation_v * run_time) * distance;
        /* current_position[0] = previous_position[0] - (rotation_center[0] * cos(rotation_v * run_time) - rotation_center[1] * sin(rotation_v * run_time));
         current_position[1] = previous_position[1] - (rotation_center[0] * sin(rotation_v * run_time) + rotation_center[1] * cos(rotation_v * run_time));*/
         return current_position;
     }
+};
+
+class VerticalRight: public BaseTracingMethod
+{
+ public:
+     VerticalRight() {};
+     virtual ~VerticalRight(){};
+
+     virtual Vecd tracingPosition (Vecd previous_position, Real current_time = 0.0) override
+     {
+         Real run_time = GlobalStaticVariables::physical_time_;
+         Vecd current_position (0.0, 0.0);
+         current_position[0] = previous_position[0];
+         if(run_time <= 10.0)
+         {
+             current_position[1] = previous_position[1] - 0.4 * run_time;
+         }
+         else{
+             current_position[1] = previous_position[1] + 0.4 * (run_time-20.0);
+         }
+         return current_position;
+     }
+};
+
+class VerticalLeft: public BaseTracingMethod
+{
+ public:
+     VerticalLeft() {};
+     virtual ~VerticalLeft(){};
+
+     virtual Vecd tracingPosition (Vecd previous_position, Real current_time = 0.0) override
+     {
+         Real run_time = GlobalStaticVariables::physical_time_;
+         Vecd current_position (0.0, 0.0);
+         current_position[0] = previous_position[0];
+         if(run_time <= 10.0)
+         {
+             current_position[1] = previous_position[1] - 0.4 * run_time;
+         }
+         else{
+             current_position[1] = previous_position[1] + 0.4 * (run_time-20.0);
+         }
+         return current_position;
+     }
+};
+
+class VerticalMiddle: public BaseTracingMethod
+{
+ public:
+     VerticalMiddle() {};
+     virtual ~VerticalMiddle(){};
+
+     virtual Vecd tracingPosition (Vecd previous_position, Real current_time = 0.0) override
+     {
+         Real run_time = GlobalStaticVariables::physical_time_;
+         Vecd current_position (0.0, 0.0);
+         current_position[0] = previous_position[0];
+         if(run_time <= 10.0)
+         {
+             current_position[1] = previous_position[1] + 0.4 * run_time;
+         }
+         else{
+             current_position[1] = previous_position[1] - 0.4 * (run_time-20.0);
+         }
+         return current_position;
+     }
 };
 //----------------------------------------------------------------------
 //	Main program starts here.
@@ -219,24 +305,37 @@ int main(int ac, char *av[])
     fluid_dynamics::StaticConfinement confinement_condition_wall(near_surface_wall);
     /** Define the confinement condition for structure. */
 
-    CircleMovement circle_movement;
-    //HorizontalMovement horizaontal_movement;
-    NearShapeSurfaceTracing near_surface_circle(water_block, makeShared<InverseShape<Triangle>>("Circle"), circle_movement);
+    VerticalLeft certical_left;
+    NearShapeSurfaceTracing near_surface_circle(water_block, makeShared<InverseShape<Circle>>("Circle"), certical_left);
     near_surface_circle.level_set_shape_.writeLevelSet(io_environment);
     fluid_dynamics::MovingConfinementGeneral confinement_condition_circle(near_surface_circle);
-    
-    /*NearShapeSurface near_surface_triangle(water_block, makeShared<InverseShape<Triangle>>("Triangle"));
+
+    VerticalMiddle certical_middle;
+    NearShapeSurfaceTracing near_surface_triangle(water_block, makeShared<InverseShape<Triangle>>("Triangle"), certical_middle);
     near_surface_triangle.level_set_shape_.writeLevelSet(io_environment);
-    fluid_dynamics::StaticConfinement confinement_condition_triangle(near_surface_triangle);*/
+    fluid_dynamics::MovingConfinementGeneral confinement_condition_triangle(near_surface_triangle);
+    
+    VerticalRight certical_right;
+    NearShapeSurfaceTracing near_surface_square(water_block, makeShared<InverseShape<Square>>("Square"), certical_right);
+    near_surface_square.level_set_shape_.writeLevelSet(io_environment);
+    fluid_dynamics::MovingConfinementGeneral confinement_condition_square(near_surface_square);
     /** Push back the static confinement conditiont to corresponding dynamics. */
     update_density_by_summation.post_processes_.push_back(&confinement_condition_wall.density_summation_);
     update_density_by_summation.post_processes_.push_back(&confinement_condition_circle.density_relaxation_);
+    update_density_by_summation.post_processes_.push_back(&confinement_condition_triangle.density_relaxation_);
+    update_density_by_summation.post_processes_.push_back(&confinement_condition_square.density_relaxation_);
     pressure_relaxation.post_processes_.push_back(&confinement_condition_wall.pressure_relaxation_);
     pressure_relaxation.post_processes_.push_back(&confinement_condition_circle.pressure_relaxation_);
+    pressure_relaxation.post_processes_.push_back(&confinement_condition_triangle.pressure_relaxation_);
+    pressure_relaxation.post_processes_.push_back(&confinement_condition_square.pressure_relaxation_);
     density_relaxation.post_processes_.push_back(&confinement_condition_wall.density_relaxation_);
     density_relaxation.post_processes_.push_back(&confinement_condition_circle.density_relaxation_);
+    density_relaxation.post_processes_.push_back(&confinement_condition_triangle.density_relaxation_);
+    density_relaxation.post_processes_.push_back(&confinement_condition_square.density_relaxation_);
     density_relaxation.post_processes_.push_back(&confinement_condition_wall.surface_bounding_);
     density_relaxation.post_processes_.push_back(&confinement_condition_circle.surface_bounding_);
+    density_relaxation.post_processes_.push_back(&confinement_condition_triangle.surface_bounding_);
+    density_relaxation.post_processes_.push_back(&confinement_condition_square.surface_bounding_);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -325,6 +424,8 @@ int main(int ac, char *av[])
             water_block_inner.updateConfiguration();
             fluid_observer_contact.updateConfiguration();
             near_surface_circle.updateCellList();
+            near_surface_triangle.updateCellList();
+            near_surface_square.updateCellList();
             interval_updating_configuration += TickCount::now() - time_instance;
             
         }
