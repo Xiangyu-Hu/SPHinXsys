@@ -105,7 +105,7 @@ int main(int ac, char *av[])
     RestartIO restart_io(io_environment, sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy, ParallelSYCLDevicePolicy>>>
         write_water_mechanical_energy(io_environment, water_block, gravity_ptr);
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real, DeviceReal>>
+    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real, ParallelSYCLDevicePolicy>>
         write_recorded_water_pressure("Pressure", io_environment, fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration

@@ -38,9 +38,9 @@ namespace SPH
  * @class ObservedQuantityRecording
  * @brief write files for observed quantity
  */
-template <typename VariableType, typename DeviceVariableType = void>
+template <typename VariableType, typename ExecutionPolicy = ParallelPolicy>
 class ObservedQuantityRecording : public BodyStatesRecording,
-                                  public ObservingAQuantity<VariableType, DeviceVariableType>
+                                  public ObservingAQuantity<VariableType, ExecutionPolicy>
 {
   protected:
     SPHBody &observer_;
@@ -57,15 +57,16 @@ class ObservedQuantityRecording : public BodyStatesRecording,
     ObservedQuantityRecording(const std::string &quantity_name, IOEnvironment &io_environment,
                               BaseContactRelation &contact_relation)
         : BodyStatesRecording(io_environment, contact_relation.getSPHBody()),
-          ObservingAQuantity<VariableType, DeviceVariableType>(contact_relation, quantity_name),
+          ObservingAQuantity<VariableType, ExecutionPolicy>(contact_relation, quantity_name),
           observer_(contact_relation.getSPHBody()), plt_engine_(),
           base_particles_(observer_.getBaseParticles()),
           dynamics_identifier_name_(contact_relation.getSPHBody().getName()),
           quantity_name_(quantity_name)
     {
         /** Copy data from device if device type has been specified **/
-        if constexpr (std::negation_v<std::is_same<DeviceVariableType, void>>) {
-            DeviceVariableType* device_data = this->getParticles()->template getDeviceVariableByName<DeviceVariableType>(quantity_name_);
+        if constexpr (std::is_same_v<ExecutionPolicy, ParallelSYCLDevicePolicy>) {
+            auto* device_data = this->getParticles()->
+                                template getDeviceVariableByName<typename DataTypeEquivalence<VariableType>::device_t>(quantity_name_);
             copyDataFromDevice(this->interpolated_quantities_->data(), device_data, this->getParticles()->total_real_particles_);
         }
 
@@ -89,8 +90,9 @@ class ObservedQuantityRecording : public BodyStatesRecording,
         this->exec();
 
         /* Copy data from device if device type has been specified */
-        if constexpr (std::negation_v<std::is_same<DeviceVariableType, void>>) {
-            DeviceVariableType* device_data = this->getParticles()->template getDeviceVariableByName<DeviceVariableType>(quantity_name_);
+        if constexpr (std::is_same_v<ExecutionPolicy, ParallelSYCLDevicePolicy>) {
+            auto* device_data = this->getParticles()->
+                                template getDeviceVariableByName<typename DataTypeEquivalence<VariableType>::device_t>(quantity_name_);
             copyDataFromDevice(this->interpolated_quantities_->data(), device_data, this->getParticles()->total_real_particles_);
         }
 

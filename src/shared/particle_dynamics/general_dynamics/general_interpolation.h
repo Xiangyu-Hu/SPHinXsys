@@ -91,19 +91,23 @@ class BaseInterpolationKernel<void> {
  * @class BaseInterpolation
  * @brief Base class for interpolation.
  */
-template <typename DataType, typename DataTypeDevice = void>
+template <typename DataType, bool DeviceAllocation = false>
 class BaseInterpolation : public LocalDynamics, public InterpolationContactData,
-                          public DeviceExecutable<BaseInterpolation<DataType, DataTypeDevice>, BaseInterpolationKernel<DataTypeDevice>>
+                          public DeviceExecutable<BaseInterpolation<DataType, DeviceAllocation>,
+                              BaseInterpolationKernel<typename DataTypeEquivalence<DataType>::device_t>>
 {
   public:
     StdLargeVec<DataType> *interpolated_quantities_;
 
     explicit BaseInterpolation(BaseContactRelation &contact_relation, const std::string &variable_name)
         : LocalDynamics(contact_relation.getSPHBody()), InterpolationContactData(contact_relation),
-          DeviceExecutable<BaseInterpolation<DataType, DataTypeDevice>, BaseInterpolationKernel<DataTypeDevice>>(this,
-               this->contact_configuration_device_->data(), this->contact_configuration_device_->size(),
-               [&]() -> DataTypeDevice* { if constexpr (std::is_same_v<DataTypeDevice, void>) return nullptr; else
-                      return particles_->registerDeviceVariable<DataTypeDevice>(variable_name, particles_->total_real_particles_); }()),
+          DeviceExecutable<BaseInterpolation<DataType, DeviceAllocation>,
+              BaseInterpolationKernel<typename DataTypeEquivalence<DataType>::device_t>>(
+               this, this->contact_configuration_device_->data(), this->contact_configuration_device_->size(),
+               [&]() -> typename DataTypeEquivalence<DataType>::device_t* {
+                  if constexpr (std::is_same_v<typename DataTypeEquivalence<DataType>::device_t, void>) return nullptr;
+                  else return particles_->registerDeviceVariable<typename DataTypeEquivalence<DataType>::device_t>(
+                          variable_name, particles_->total_real_particles_); }()),
           interpolated_quantities_(nullptr)
     {
         for (size_t k = 0; k != this->contact_particles_.size(); ++k)
@@ -114,7 +118,9 @@ class BaseInterpolation : public LocalDynamics, public InterpolationContactData,
             contact_data_.push_back(contact_data);
         }
 
-        if constexpr(!std::is_same_v<DataTypeDevice, void>) {
+        if constexpr(DeviceAllocation) {
+            using DataTypeDevice = typename DataTypeEquivalence<DataType>::device_t;
+
             contact_Vol_device_ = makeSharedDevice<StdSharedVec<DeviceReal*>>(this->contact_particles_.size(),
                                                                               execution::executionQueue.getQueue());
             contact_data_device_ = makeSharedDevice<StdSharedVec<DataTypeDevice*>>(this->contact_particles_.size(),
@@ -162,7 +168,7 @@ class BaseInterpolation : public LocalDynamics, public InterpolationContactData,
     StdVec<StdLargeVec<Real> *> contact_Vol_;
     StdVec<StdLargeVec<DataType> *> contact_data_;
     SharedPtr<StdSharedVec<DeviceReal*>> contact_Vol_device_;
-    SharedPtr<StdSharedVec<DataTypeDevice*>> contact_data_device_;
+    SharedPtr<StdSharedVec<typename DataTypeEquivalence<DataType>::device_t*>> contact_data_device_;
 };
 
 /**
@@ -187,15 +193,15 @@ class InterpolatingAQuantity : public BaseInterpolation<DataType>
  * @class ObservingAQuantity
  * @brief Observing a variable from contact bodies.
  */
-template <typename DataType, typename DeviceDataType = void>
-class ObservingAQuantity : public InteractionDynamics<BaseInterpolation<DataType, DeviceDataType>,
-                                                      std::conditional_t<std::is_same_v<DeviceDataType, void>,
-                                                                       ParallelPolicy, ParallelSYCLDevicePolicy>>
+template <typename DataType, typename ExecutionPolicy = ParallelPolicy>
+class ObservingAQuantity :
+    public InteractionDynamics<BaseInterpolation<DataType, std::conditional_t<std::is_same_v<ExecutionPolicy, ParallelSYCLDevicePolicy>,
+                                                                              std::true_type, std::false_type>::value>, ExecutionPolicy>
 {
   public:
     explicit ObservingAQuantity(BaseContactRelation &contact_relation, const std::string &variable_name)
-        : InteractionDynamics<BaseInterpolation<DataType, DeviceDataType>, std::conditional_t<std::is_same_v<DeviceDataType, void>,
-            ParallelPolicy, ParallelSYCLDevicePolicy>>(contact_relation, variable_name)
+        : InteractionDynamics<BaseInterpolation<DataType, std::conditional_t<std::is_same_v<ExecutionPolicy, ParallelSYCLDevicePolicy>,
+            std::true_type, std::false_type>::value>, ExecutionPolicy>(contact_relation, variable_name)
     {
         this->interpolated_quantities_ = registerObservedQuantity(variable_name);
     };
