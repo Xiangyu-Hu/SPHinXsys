@@ -77,23 +77,6 @@ void AngularConservativeViscousAccelerationInner::
     acc_prior_[index_i] += acceleration / rho_[index_i];
 }
 //=================================================================================================//
-void TransportVelocityCorrectionInner::
-    interaction(size_t index_i, Real dt)
-{
-    Vecd acceleration_trans = Vecd::Zero();
-    const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-    {
-        Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
-
-        // acceleration for transport velocity
-        acceleration_trans -= 2.0 * nablaW_ijV_j;
-    }
-
-    if (surface_indicator_[index_i] == 0)
-        pos_[index_i] += coefficient_ * smoothing_length_sqr_ * acceleration_trans;
-}
-//=================================================================================================//
 void VorticityInner::interaction(size_t index_i, Real dt)
 {
     AngularVecd vorticity = ZeroData<AngularVecd>::value;
@@ -126,26 +109,6 @@ void Oldroyd_BIntegration1stHalf::
     }
 
     acc_[index_i] += acceleration / rho_[index_i];
-}
-//=================================================================================================//
-void TransportVelocityCorrectionInnerAdaptive::
-    interaction(size_t index_i, Real dt)
-{
-    Vecd acceleration_trans = Vecd::Zero();
-    const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-    {
-        Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
-
-        // acceleration for transport velocity
-        acceleration_trans -= 2.0 * nablaW_ijV_j;
-    }
-
-    if (surface_indicator_[index_i] == 0)
-    {
-        Real inv_h_ratio = 1.0 / sph_adaptation_.SmoothingLengthRatio(index_i);
-        pos_[index_i] += coefficient_ * smoothing_length_sqr_ * inv_h_ratio * inv_h_ratio * acceleration_trans;
-    }
 }
 //=================================================================================================//
 void Oldroyd_BIntegration2ndHalf::

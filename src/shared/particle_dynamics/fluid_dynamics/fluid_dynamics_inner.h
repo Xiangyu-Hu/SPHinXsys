@@ -153,52 +153,6 @@ class AngularConservativeViscousAccelerationInner : public BaseViscousAccelerati
 };
 
 /**
- * @class TransportVelocityCorrectionInner
- * @brief The particle positions are corrected for more uniformed distribution
- * when there is negative pressure in the flow.
- * @details Note that the default coefficient is for using the dual time criteria method:
- * Dual-criteria time stepping for weakly compressible smoothed particle hydrodynamics.
- * C Zhang, M Rezavand, X Hu - Journal of Computational Physics,
- * Volume 404, 1 March 2020, 109135.
- * If single (acoustic) time step is used, the coefficient should be decrease
- * to about 1/4 of the default value.
- */
-class TransportVelocityCorrectionInner : public LocalDynamics, public FluidDataInner
-{
-  public:
-    explicit TransportVelocityCorrectionInner(BaseInnerRelation &inner_relation, Real coefficient = 0.2);
-    virtual ~TransportVelocityCorrectionInner(){};
-
-    inline void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<int> &surface_indicator_;
-    Real smoothing_length_sqr_;
-    const Real coefficient_;
-};
-
-/**
- * @class TransportVelocityCorrectionInner
- * @brief transport velocity correction
- */
-class TransportVelocityCorrectionInnerAdaptive : public LocalDynamics, public FluidDataInner
-{
-  public:
-    explicit TransportVelocityCorrectionInnerAdaptive(BaseInnerRelation &inner_relation, Real coefficient = 0.2);
-    virtual ~TransportVelocityCorrectionInnerAdaptive(){};
-
-    inline void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    SPHAdaptation &sph_adaptation_;
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<int> &surface_indicator_;
-    Real smoothing_length_sqr_;
-    const Real coefficient_;
-};
-
-/**
  * @class AcousticTimeStepSize
  * @brief Computing the acoustic time step size
  */

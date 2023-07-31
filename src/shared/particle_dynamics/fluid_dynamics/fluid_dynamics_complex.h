@@ -138,40 +138,6 @@ class BaseViscousAccelerationWithWall : public InteractionWithWall<ViscousAccele
 using ViscousAccelerationWithWall = BaseViscousAccelerationWithWall<ViscousAccelerationInner>;
 
 /**
- * @class TransportVelocityCorrectionComplex
- * @brief  transport velocity correction considering the contribution from contact bodies
- */
-class TransportVelocityCorrectionComplex
-    : public BaseInteractionComplex<TransportVelocityCorrectionInner, FluidContactOnly>
-{
-  public:
-    template <typename... Args>
-    TransportVelocityCorrectionComplex(Args &&...args)
-        : BaseInteractionComplex<TransportVelocityCorrectionInner, FluidContactOnly>(
-              std::forward<Args>(args)...){};
-    virtual ~TransportVelocityCorrectionComplex(){};
-
-    inline void interaction(size_t index_i, Real dt = 0.0);
-};
-
-/**
- * @class TransportVelocityCorrectionComplexAdaptive
- * @brief  transport velocity correction considering the contribution from contact bodies
- */
-class TransportVelocityCorrectionComplexAdaptive
-    : public BaseInteractionComplex<TransportVelocityCorrectionInnerAdaptive, FluidContactOnly>
-{
-  public:
-    template <typename... Args>
-    TransportVelocityCorrectionComplexAdaptive(Args &&...args)
-        : BaseInteractionComplex<TransportVelocityCorrectionInnerAdaptive, FluidContactOnly>(
-              std::forward<Args>(args)...){};
-    virtual ~TransportVelocityCorrectionComplexAdaptive(){};
-
-    inline void interaction(size_t index_i, Real dt = 0.0);
-};
-
-/**
  * @class BaseIntegration1stHalfWithWall
  * @brief  template class pressure relaxation scheme together with wall boundary
  */
