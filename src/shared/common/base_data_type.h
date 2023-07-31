@@ -119,7 +119,7 @@ struct ZeroData<int>
     static inline int value = 0;
 };
 /** Type trait for data type index. */
-template <typename T, typename Enable = void>
+template <typename T, class Enable = std::true_type>
 struct DataTypeIndex
 {
     static constexpr int value = std::numeric_limits<int>::max();
@@ -154,18 +154,22 @@ struct DataTypeIndex<int>
 {
     static constexpr int value = 5;
 };
+
+template<typename Type1, typename Type2>
+using are_types_different = std::conditional_t<std::is_same_v<Type1, Type2>, std::false_type, std::true_type>;
+
 template <>
-struct DataTypeIndex<DeviceReal, std::enable_if_t<std::negation_v<std::is_same<Real, DeviceReal>>>>
+struct DataTypeIndex<DeviceReal, are_types_different<DeviceReal, Real>>
 {
     static constexpr int value = 6;
 };
 template <>
-struct DataTypeIndex<DeviceVec2d, std::enable_if_t<std::negation_v<std::is_same<Vec2d, DeviceVec2d>>>>
+struct DataTypeIndex<DeviceVec2d, are_types_different<DeviceVec2d, Vec2d>>
 {
     static constexpr int value = 7;
 };
 template <>
-struct DataTypeIndex<DeviceVec3d, std::enable_if_t<std::negation_v<std::is_same<Vec3d, DeviceVec3d>>>>
+struct DataTypeIndex<DeviceVec3d, are_types_different<DeviceVec3d, Vec3d>>
 {
     static constexpr int value = 8;
 };
