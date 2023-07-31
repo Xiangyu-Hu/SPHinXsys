@@ -160,7 +160,7 @@ template <class DensitySummationInnerType>
 template <typename... Args>
 BaseDensitySummationComplex<DensitySummationInnerType>::
     BaseDensitySummationComplex(Args &&...args)
-    : BaseInteractionComplex<DensitySummationInnerType, FluidContactData>(std::forward<Args>(args)...)
+    : BaseInteractionComplex<DensitySummationInnerType, FluidContactOnly>(std::forward<Args>(args)...)
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {

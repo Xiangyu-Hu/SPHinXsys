@@ -32,11 +32,8 @@
 #ifndef FLUID_DYNAMICS_INNER_H
 #define FLUID_DYNAMICS_INNER_H
 
-#include "all_body_relations.h"
-#include "all_particle_dynamics.h"
-#include "base_kernel.h"
-#include "base_particles.hpp"
-#include "fluid_body.h"
+#include "base_fluid_dynamics.h"
+
 #include "riemann_solver.h"
 #include "weakly_compressible_fluid.h"
 
@@ -44,9 +41,6 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-typedef DataDelegateSimple<BaseParticles> FluidDataSimple;
-typedef DataDelegateInner<BaseParticles> FluidDataInner;
-
 /**
  * @class FluidInitialCondition
  * @brief  Set initial condition for a fluid body.

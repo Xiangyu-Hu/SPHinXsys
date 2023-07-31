@@ -42,7 +42,7 @@ namespace fluid_dynamics
  * @class FreeSurfaceIndicationComplex
  * @brief indicate the particles near the free fluid surface.
  */
-class FreeSurfaceIndicationComplex : public FreeSurfaceIndicationInner, public FluidContactData
+class FreeSurfaceIndicationComplex : public FreeSurfaceIndicationInner, public FluidContactOnly
 {
   public:
     FreeSurfaceIndicationComplex(BaseInnerRelation &inner_relation,
@@ -84,7 +84,7 @@ using DensitySummationFreeStreamComplexAdaptive = DensitySummationFreeStream<Den
  * @class ColorFunctionGradientComplex
  * @brief indicate the particles near the free fluid surface.
  */
-class ColorFunctionGradientComplex : public ColorFunctionGradientInner, public FluidContactData
+class ColorFunctionGradientComplex : public ColorFunctionGradientInner, public FluidContactOnly
 {
   public:
     ColorFunctionGradientComplex(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation);

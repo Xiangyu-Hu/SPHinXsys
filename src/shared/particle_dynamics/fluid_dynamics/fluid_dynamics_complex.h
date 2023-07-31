@@ -31,6 +31,8 @@
 #ifndef FLUID_DYNAMICS_COMPLEX_H
 #define FLUID_DYNAMICS_COMPLEX_H
 
+#include "base_fluid_dynamics.h"
+
 #include "fluid_dynamics_inner.h"
 #include "fluid_dynamics_inner.hpp"
 #include "solid_body.h"
@@ -40,10 +42,7 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-typedef DataDelegateContact<BaseParticles, SolidParticles, DataDelegateEmptyBase>
-    FluidWallData;
-typedef DataDelegateContact<BaseParticles, BaseParticles, DataDelegateEmptyBase>
-    FluidContactData;
+typedef DataDelegateContact<BaseParticles, SolidParticles, DataDelegateEmptyBase> FluidWallData;
 typedef DataDelegateContact<BaseParticles, SolidParticles> FSIContactData;
 /**
  * @class InteractionWithWall
@@ -74,7 +73,7 @@ class InteractionWithWall : public BaseIntegrationType, public FluidWallData
  */
 template <class DensitySummationInnerType>
 class BaseDensitySummationComplex
-    : public BaseInteractionComplex<DensitySummationInnerType, FluidContactData>
+    : public BaseInteractionComplex<DensitySummationInnerType, FluidContactOnly>
 {
   public:
     template <typename... Args>
@@ -143,12 +142,12 @@ using ViscousAccelerationWithWall = BaseViscousAccelerationWithWall<ViscousAccel
  * @brief  transport velocity correction considering the contribution from contact bodies
  */
 class TransportVelocityCorrectionComplex
-    : public BaseInteractionComplex<TransportVelocityCorrectionInner, FluidContactData>
+    : public BaseInteractionComplex<TransportVelocityCorrectionInner, FluidContactOnly>
 {
   public:
     template <typename... Args>
     TransportVelocityCorrectionComplex(Args &&...args)
-        : BaseInteractionComplex<TransportVelocityCorrectionInner, FluidContactData>(
+        : BaseInteractionComplex<TransportVelocityCorrectionInner, FluidContactOnly>(
               std::forward<Args>(args)...){};
     virtual ~TransportVelocityCorrectionComplex(){};
 
@@ -160,12 +159,12 @@ class TransportVelocityCorrectionComplex
  * @brief  transport velocity correction considering the contribution from contact bodies
  */
 class TransportVelocityCorrectionComplexAdaptive
-    : public BaseInteractionComplex<TransportVelocityCorrectionInnerAdaptive, FluidContactData>
+    : public BaseInteractionComplex<TransportVelocityCorrectionInnerAdaptive, FluidContactOnly>
 {
   public:
     template <typename... Args>
     TransportVelocityCorrectionComplexAdaptive(Args &&...args)
-        : BaseInteractionComplex<TransportVelocityCorrectionInnerAdaptive, FluidContactData>(
+        : BaseInteractionComplex<TransportVelocityCorrectionInnerAdaptive, FluidContactOnly>(
               std::forward<Args>(args)...){};
     virtual ~TransportVelocityCorrectionComplexAdaptive(){};
 
