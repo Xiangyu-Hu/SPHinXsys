@@ -85,8 +85,9 @@ int main(int ac, char *av[])
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
+    water_block_complex.getInnerRelation().allocateInnerConfigurationDevice();
+    water_block_complex.getContactRelation().allocateContactConfiguration();
     fluid_observer_contact.allocateContactConfiguration();
-    fluid_observer_contact.copyContactConfigurationToDevice();    
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall, ParallelSYCLDevicePolicy> fluid_pressure_relaxation(water_block_complex);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall, ParallelSYCLDevicePolicy> fluid_density_relaxation(water_block_complex);
@@ -123,6 +124,11 @@ int main(int ac, char *av[])
         water_block_complex.updateConfiguration();
         fluid_observer_contact.updateConfiguration();
     }
+
+    water_block_complex.getInnerRelation().copyInnerConfigurationToDevice();
+    water_block_complex.getContactRelation().copyContactConfigurationToDevice();
+    fluid_observer_contact.copyContactConfigurationToDevice();
+
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
@@ -160,6 +166,7 @@ int main(int ac, char *av[])
             water_block.getBaseParticles().copyToDeviceMemory();
             water_block_complex.getInnerRelation().copyInnerConfigurationToDevice();
             water_block_complex.getContactRelation().copyContactConfigurationToDevice();
+            fluid_observer_contact.copyContactConfigurationToDevice();
 
             time_instance = TickCount::now();
             fluid_step_initialization.exec();
