@@ -130,7 +130,7 @@ int main(int ac, char *av[])
         inlet_outlet_surface_particle_indicator(water_block_complex_relation);
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation(water_block_complex_relation);
     water_block.addBodyStateForRecording<Real>("Pressure");        // output for debug
-    water_block.addBodyStateForRecording<int>("SurfaceIndicator"); // output for debug
+    water_block.addBodyStateForRecording<int>("Indicator"); // output for debug
 
     SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);

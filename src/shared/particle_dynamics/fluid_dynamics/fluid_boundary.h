@@ -126,7 +126,7 @@ class FreeStreamVelocityCorrection : public LocalDynamics, public FluidDataSimpl
     Real rho0_;
     StdLargeVec<Real> &rho_sum_;
     StdLargeVec<Vecd> &pos_, &vel_;
-    StdLargeVec<int> &surface_indicator_;
+    StdLargeVec<int> &indicator_;
     TargetVelocity target_velocity;
 
   public:
@@ -134,13 +134,13 @@ class FreeStreamVelocityCorrection : public LocalDynamics, public FluidDataSimpl
         : LocalDynamics(sph_body), FluidDataSimple(sph_body),
           transform_(transform), rho0_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceDensity()),
           rho_sum_(*particles_->getVariableByName<Real>("DensitySummation")), pos_(particles_->pos_), vel_(particles_->vel_),
-          surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")),
+          indicator_(*particles_->getVariableByName<int>("Indicator")),
           target_velocity(*this){};
     virtual ~FreeStreamVelocityCorrection(){};
 
     void update(size_t index_i, Real dt = 0.0)
     {
-        if (surface_indicator_[index_i] == 1)
+        if (indicator_[index_i] == 1)
         {
             Vecd frame_position = transform_.shiftBaseStationToFrame(pos_[index_i]);
             Vecd frame_velocity = transform_.xformBaseVecToFrame(vel_[index_i]);

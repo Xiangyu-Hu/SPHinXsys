@@ -8,7 +8,7 @@ namespace fluid_dynamics
 TransportVelocityCorrectionInner::
     TransportVelocityCorrectionInner(BaseInnerRelation &inner_relation, Real coefficient)
     : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
-      pos_(particles_->pos_), surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")),
+      pos_(particles_->pos_), indicator_(*particles_->getVariableByName<int>("Indicator")),
       smoothing_length_sqr_(pow(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
       coefficient_(coefficient) {}
 //=================================================================================================//
@@ -24,7 +24,7 @@ void TransportVelocityCorrectionInner::interaction(size_t index_i, Real dt)
         acceleration_trans -= 2.0 * nablaW_ijV_j;
     }
 
-    if (surface_indicator_[index_i] == 0)
+    if (indicator_[index_i] == 0)
         pos_[index_i] += coefficient_ * smoothing_length_sqr_ * acceleration_trans;
 }
 //=================================================================================================//
@@ -32,7 +32,7 @@ TransportVelocityCorrectionInnerAdaptive::
     TransportVelocityCorrectionInnerAdaptive(BaseInnerRelation &inner_relation, Real coefficient)
     : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
       sph_adaptation_(*sph_body_.sph_adaptation_),
-      pos_(particles_->pos_), surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")),
+      pos_(particles_->pos_), indicator_(*particles_->getVariableByName<int>("Indicator")),
       smoothing_length_sqr_(pow(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
       coefficient_(coefficient) {}
 
@@ -50,7 +50,7 @@ void TransportVelocityCorrectionInnerAdaptive::
         acceleration_trans -= 2.0 * nablaW_ijV_j;
     }
 
-    if (surface_indicator_[index_i] == 0)
+    if (indicator_[index_i] == 0)
     {
         Real inv_h_ratio = 1.0 / sph_adaptation_.SmoothingLengthRatio(index_i);
         pos_[index_i] += coefficient_ * smoothing_length_sqr_ * inv_h_ratio * inv_h_ratio * acceleration_trans;
@@ -75,7 +75,7 @@ void TransportVelocityCorrectionComplex::interaction(size_t index_i, Real dt)
     }
 
     /** correcting particle position */
-    if (surface_indicator_[index_i] == 0)
+    if (indicator_[index_i] == 0)
         pos_[index_i] += coefficient_ * smoothing_length_sqr_ * acceleration_trans;
 }
 //=================================================================================================//
@@ -97,7 +97,7 @@ void TransportVelocityCorrectionComplexAdaptive::interaction(size_t index_i, Rea
     }
 
     /** correcting particle position */
-    if (surface_indicator_[index_i] == 0)
+    if (indicator_[index_i] == 0)
     {
         Real inv_h_ratio = 1.0 / sph_adaptation_.SmoothingLengthRatio(index_i);
         pos_[index_i] += coefficient_ * smoothing_length_sqr_ * inv_h_ratio * inv_h_ratio * acceleration_trans;

@@ -49,13 +49,13 @@ void ColorFunctionGradientInterpolationInner::
     Vecd grad = Vecd::Zero();
     Real weight(0);
     Real total_weight(0);
-    if (surface_indicator_[index_i] == 1 && pos_div_[index_i] > threshold_by_dimensions_)
+    if (indicator_[index_i] == 1 && pos_div_[index_i] > threshold_by_dimensions_)
     {
         Neighborhood &inner_neighborhood = inner_configuration_[index_i];
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
         {
             size_t index_j = inner_neighborhood.j_[n];
-            if (surface_indicator_[index_j] == 1 && pos_div_[index_j] < threshold_by_dimensions_)
+            if (indicator_[index_j] == 1 && pos_div_[index_j] < threshold_by_dimensions_)
             {
                 weight = inner_neighborhood.W_ij_[n] * Vol_[index_j];
                 grad += weight * color_grad_[index_j];
@@ -75,13 +75,13 @@ void SurfaceTensionAccelerationInner::
     Real curvature(0.0);
     Real renormalized_curvature(0);
     Real pos_div(0);
-    if (surface_indicator_[index_i] == 1)
+    if (indicator_[index_i] == 1)
     {
         Neighborhood &inner_neighborhood = inner_configuration_[index_i];
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
         {
             size_t index_j = inner_neighborhood.j_[n];
-            if (surface_indicator_[index_j] == 1)
+            if (indicator_[index_j] == 1)
             {
                 Vecd n_j = surface_norm_[index_j];
                 Vecd n_ij = n_i - n_j;
@@ -147,7 +147,7 @@ void SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIdentification>::
 {
     FreeSurfaceIdentification::update(index_i, dt);
 
-    previous_surface_indicator_[index_i] = this->surface_indicator_[index_i];
+    previous_surface_indicator_[index_i] = this->indicator_[index_i];
 }
 //=================================================================================================//
 template <class DensitySummationType>
@@ -161,7 +161,7 @@ template <typename... ConstructorArgs>
 DensitySummationFreeStream<DensitySummationFreeSurfaceType>::
     DensitySummationFreeStream(ConstructorArgs &&...args)
     : DensitySummationFreeSurfaceType(std::forward<ConstructorArgs>(args)...),
-      surface_indicator_(*this->particles_->template getVariableByName<int>("SurfaceIndicator")){};
+      indicator_(*this->particles_->template getVariableByName<int>("Indicator")){};
 //=================================================================================================//
 template <class DensitySummationFreeSurfaceType>
 void DensitySummationFreeStream<DensitySummationFreeSurfaceType>::update(size_t index_i, Real dt)
@@ -183,7 +183,7 @@ bool DensitySummationFreeStream<DensitySummationFreeSurfaceType>::isNearFreeSurf
     const Neighborhood &inner_neighborhood = this->inner_configuration_[index_i];
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
-        if (surface_indicator_[inner_neighborhood.j_[n]] == 1)
+        if (indicator_[inner_neighborhood.j_[n]] == 1)
         {
             is_near_surface = true;
             break;

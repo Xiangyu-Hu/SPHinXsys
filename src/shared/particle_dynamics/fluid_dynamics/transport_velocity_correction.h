@@ -63,7 +63,7 @@ class TransportVelocityCorrectionInner : public LocalDynamics, public FluidDataI
 
   protected:
     StdLargeVec<Vecd> &pos_;
-    StdLargeVec<int> &surface_indicator_;
+    StdLargeVec<int> &indicator_;
     Real smoothing_length_sqr_;
     const Real coefficient_;
 };
@@ -83,7 +83,7 @@ class TransportVelocityCorrectionInnerAdaptive : public LocalDynamics, public Fl
   protected:
     SPHAdaptation &sph_adaptation_;
     StdLargeVec<Vecd> &pos_;
-    StdLargeVec<int> &surface_indicator_;
+    StdLargeVec<int> &indicator_;
     Real smoothing_length_sqr_;
     const Real coefficient_;
 };

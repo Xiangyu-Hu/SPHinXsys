@@ -133,7 +133,7 @@ class SurfaceNormWithWall : public LocalDynamics, public FSIContactData
         Vecd smooth_norm = Vecd::Zero();
         Vecd n_i_w = Vecd::Zero();
         /** Contact interaction. */
-        if (surface_indicator_[index_i] == 1)
+        if (indicator_[index_i] == 1)
         {
             for (size_t k = 0; k < contact_configuration_.size(); ++k)
             {
@@ -170,7 +170,7 @@ class SurfaceNormWithWall : public LocalDynamics, public FSIContactData
     Real contact_angle_;
     Real smoothing_length_;
     Real particle_spacing_;
-    StdLargeVec<int> &surface_indicator_;
+    StdLargeVec<int> &indicator_;
     StdLargeVec<Vecd> &surface_norm_;
     StdLargeVec<Real> &pos_div_;
     StdVec<StdLargeVec<Vecd> *> wall_n_;
