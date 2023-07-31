@@ -19,10 +19,10 @@ BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 //----------------------------------------------------------------------
 Real rho0_f = 1.0;                                /**< Reference density of water. */
 Real rho0_a = 1.0e-3;                             /**< Reference density of air. */
-Real U_max = 1.0;                                 /**< Characteristic velocity. */
-Real c_f = 10.0 * U_max;                          /**< Reference sound speed. */
+Real U_ref = 1.0;                                 /**< Characteristic velocity. */
+Real c_f = 10.0 * U_ref;                          /**< Reference sound speed. */
 Real mu_f = 5.0e-2;                               /**< Water viscosity. */
-Real mu_a = 5.0e-5;                               /**< Air viscosity. */
+Real mu_a = 5.0e-4;                               /**< Air viscosity. */
 Real contact_angle = (150.0 / 180.0) * 3.1415926; /**< Contact angle with Wall. */
 Real tension_force = 0.008;
 //----------------------------------------------------------------------

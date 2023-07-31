@@ -270,7 +270,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     observer_point_shell point_A;
     observer_point_shell point_B;
     point_A.pos_0 = Vec3d(radius * std::sin(theta_radian), radius * std::cos(theta_radian) - radius, 0);
-    point_B.pos_0 = Vec3d(0);
+    point_B.pos_0 = Vec3d::Zero();
     // resolution
     const int dp_cm = dp * 100;
     Real total_area = length * 2 * arc; // accounting for particles being on the edges

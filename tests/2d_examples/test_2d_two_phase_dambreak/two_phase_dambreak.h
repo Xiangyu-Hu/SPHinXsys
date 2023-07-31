@@ -24,8 +24,8 @@ StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
 Real rho0_f = 1.0;                       /**< Reference density of water. */
 Real rho0_a = 0.001;                     /**< Reference density of air. */
 Real gravity_g = 1.0;                    /**< Gravity force of fluid. */
-Real U_max = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
-Real c_f = 10.0 * U_max;                 /**< Reference sound speed. */
+Real U_ref = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
+Real c_f = 10.0 * U_ref;                 /**< Reference sound speed. */
 //----------------------------------------------------------------------
 //	Geometric elements used in shape modeling.
 //----------------------------------------------------------------------
