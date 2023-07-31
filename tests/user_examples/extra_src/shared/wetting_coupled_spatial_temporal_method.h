@@ -41,13 +41,13 @@ namespace fluid_dynamics
  * @class WettingCoupledFreeSurfaceIndicationComplex
  * @brief indicate the interfacial fluid particles near the fluid-structure intersurface.
  */
-class WettingCoupledFreeSurfaceIndicationComplex : public FreeSurfaceIndicationComplex
+class FreeSurfaceWettingIndicationComplex : public FreeSurfaceIndicationComplex
 {
   public:
-    WettingCoupledFreeSurfaceIndicationComplex(BaseInnerRelation &inner_relation,
+    FreeSurfaceWettingIndicationComplex(BaseInnerRelation &inner_relation,
                                                BaseContactRelation &contact_relation, Real threshold = 0.75, Real criterion = 0.99);
-    explicit WettingCoupledFreeSurfaceIndicationComplex(ComplexRelation &complex_relation, Real threshold = 0.75, Real criterion = 0.99);
-    virtual ~WettingCoupledFreeSurfaceIndicationComplex(){};
+    explicit FreeSurfaceWettingIndicationComplex(ComplexRelation &complex_relation, Real threshold = 0.75, Real criterion = 0.99);
+    virtual ~FreeSurfaceWettingIndicationComplex(){};
 
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -94,7 +94,7 @@ class WettingCoupledFreeSurfaceIndicationComplex : public FreeSurfaceIndicationC
 };
 
 using WettingCoupledSpatialTemporalFreeSurfaceIdentificationComplex =
-    SpatialTemporalFreeSurfaceIdentification<WettingCoupledFreeSurfaceIndicationComplex>;
+    SpatialTemporalFreeSurfaceIdentification<FreeSurfaceWettingIndicationComplex>;
 using SpatialTemporalFreeSurfaceIdentificationComplex =
     SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIndicationComplex>;
 

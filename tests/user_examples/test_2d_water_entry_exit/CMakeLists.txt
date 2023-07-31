@@ -31,7 +31,7 @@ else()
                 WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 endif()
 
-set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "periodic boundary, free stream")
+set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "spatial_temporal_identification")
 
 set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 target_link_libraries(${PROJECT_NAME} extra_sources_2d)

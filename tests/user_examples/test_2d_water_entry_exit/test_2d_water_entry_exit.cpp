@@ -35,7 +35,7 @@ Real mu_f = 8.9e-7;                      /**< Water dynamics viscosity. */
 //----------------------------------------------------------------------
 //	Wetting parameters
 //----------------------------------------------------------------------
-Real diffusion_coff = 0.0025;    /**< Wetting coeffecient. */
+Real diffusion_coff = 330.578 * pow(particle_spacing_ref,2); /**< Wetting coeffecient. */
 Real fluid_moisture = 1.0;       /**< fluid moisture. */
 Real cylinder_moisture = 0.0;    /**< cylinder moisture. */
 Real wall_moisture = 1.0;        /**< wall moisture. */
