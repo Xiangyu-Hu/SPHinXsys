@@ -38,16 +38,19 @@ namespace SPH
 namespace fluid_dynamics
 {
 /**
- * @class WettingCoupledFreeSurfaceIndicationComplex
- * @brief indicate the interfacial fluid particles near the fluid-structure intersurface.
+ * @class NonWettingSurfaceIndication
+ * @brief Non wetting surface particles include free-surface ones and interfacial ones near the non-wetted structure.
+ * @brief Even the position divergence of interfacial fluid pariticles has satisfied with the threshold of spatial-temporal 
+   identification approach to be identified as internal ones,they will remain as free-surface ones if without 
+   any wetted neighboring solid particles.
  */
-class FreeSurfaceWettingIndicationComplex : public FreeSurfaceIndicationComplex
+class NonWettingSurfaceIndication : public FreeSurfaceIndicationComplex
 {
   public:
-    FreeSurfaceWettingIndicationComplex(BaseInnerRelation &inner_relation,
+    NonWettingSurfaceIndication(BaseInnerRelation &inner_relation,
                                                BaseContactRelation &contact_relation, Real threshold = 0.75, Real criterion = 0.99);
-    explicit FreeSurfaceWettingIndicationComplex(ComplexRelation &complex_relation, Real threshold = 0.75, Real criterion = 0.99);
-    virtual ~FreeSurfaceWettingIndicationComplex(){};
+    explicit NonWettingSurfaceIndication(ComplexRelation &complex_relation, Real threshold = 0.75, Real criterion = 0.99);
+    virtual ~NonWettingSurfaceIndication(){};
 
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -94,7 +97,7 @@ class FreeSurfaceWettingIndicationComplex : public FreeSurfaceIndicationComplex
 };
 
 using WettingCoupledSpatialTemporalFreeSurfaceIdentificationComplex =
-    SpatialTemporalFreeSurfaceIdentification<FreeSurfaceWettingIndicationComplex>;
+    SpatialTemporalFreeSurfaceIdentification<NonWettingSurfaceIndication>;
 using SpatialTemporalFreeSurfaceIdentificationComplex =
     SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIndicationComplex>;
 

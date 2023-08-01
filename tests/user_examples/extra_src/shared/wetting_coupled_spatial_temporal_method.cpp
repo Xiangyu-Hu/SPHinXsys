@@ -6,8 +6,8 @@ namespace SPH
 namespace fluid_dynamics
 {
 //=================================================================================================//
-FreeSurfaceWettingIndicationComplex::
-    FreeSurfaceWettingIndicationComplex(BaseInnerRelation &inner_relation,
+NonWettingSurfaceIndication::
+    NonWettingSurfaceIndication(BaseInnerRelation &inner_relation,
                                                BaseContactRelation &contact_relation, Real threshold, Real criterion)
     : FreeSurfaceIndicationComplex(inner_relation, contact_relation, threshold), wetting_criterion(criterion)
 {
@@ -17,9 +17,9 @@ FreeSurfaceWettingIndicationComplex::
     }
 }
 //=================================================================================================//
-FreeSurfaceWettingIndicationComplex::
-    FreeSurfaceWettingIndicationComplex(ComplexRelation &complex_relation, Real threshold, Real criterion)
-    : FreeSurfaceWettingIndicationComplex(complex_relation.getInnerRelation(),
+NonWettingSurfaceIndication::
+    NonWettingSurfaceIndication(ComplexRelation &complex_relation, Real threshold, Real criterion)
+    : NonWettingSurfaceIndication(complex_relation.getInnerRelation(),
                                                  complex_relation.getContactRelation(), threshold, criterion) {}
 
 //=================================================================================================//

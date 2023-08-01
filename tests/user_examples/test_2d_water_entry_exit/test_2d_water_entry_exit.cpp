@@ -35,7 +35,7 @@ Real mu_f = 8.9e-7;                      /**< Water dynamics viscosity. */
 //----------------------------------------------------------------------
 //	Wetting parameters
 //----------------------------------------------------------------------
-Real diffusion_coff = 330.578 * pow(particle_spacing_ref,2); /**< Wetting coeffecient. */
+Real diffusion_coeff = 330.578 * pow(particle_spacing_ref,2); /**< Wetting coefficient. */
 Real fluid_moisture = 1.0;       /**< fluid moisture. */
 Real cylinder_moisture = 0.0;    /**< cylinder moisture. */
 Real wall_moisture = 1.0;        /**< wall moisture. */
@@ -166,7 +166,7 @@ class WettingCylinderBodyMaterial : public DiffusionReaction<Solid>
   public:
     WettingCylinderBodyMaterial() : DiffusionReaction<Solid>({"Phi"}, SharedPtr<NoReaction>(), rho0_s)
     {
-        initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi",diffusion_coff);
+        initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi",diffusion_coeff);
     };
 };
 using DiffusionCylinderParticles = DiffusionReactionParticles<SolidParticles, WettingCylinderBodyMaterial>;
