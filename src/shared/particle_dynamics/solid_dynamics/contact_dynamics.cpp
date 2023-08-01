@@ -147,7 +147,7 @@ DynamicContactForceWithWall::
     reference_pressure_ = solid_.ReferenceDensity() * solid_.ContactStiffness();
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
+        contact_vel_.push_back(&(contact_particles_[k]->vel_));
         contact_n_.push_back(&(contact_particles_[k]->n_));
     }
 }

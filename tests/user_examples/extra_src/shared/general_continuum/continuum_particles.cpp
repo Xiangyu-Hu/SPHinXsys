@@ -3,8 +3,8 @@
 namespace SPH
 {
     ContinuumParticles::
-        ContinuumParticles(SPHBody &sph_body, GeneralContinuum *granular_material)
-        : BaseParticles(sph_body, granular_material), granular_material_(*granular_material) {}
+        ContinuumParticles(SPHBody &sph_body, GeneralContinuum *continuum)
+        : BaseParticles(sph_body, continuum), continuum_(*continuum) {}
     //=================================================================================================//
     void ContinuumParticles::initializeOtherVariables()
     {
@@ -16,6 +16,7 @@ namespace SPH
         registerVariable(shear_stress_, "ShearStress");
         registerVariable(shear_stress_rate_, "ShearStressRate");
         registerVariable(von_mises_stress_, "VonMisesStress");
+        registerVariable(von_mises_strain_, "VonMisesStrain");
         registerVariable(velocity_gradient_, "VelocityGradient");
         registerVariable(strain_tensor_, "StrainTensor");
         registerVariable(strain_tensor_rate_, "StrainTensorRate");
@@ -29,6 +30,7 @@ namespace SPH
         registerSortableVariable<Matd>("ShearStress");
         registerSortableVariable<Matd>("ShearStressRate");
         registerSortableVariable<Real>("VonMisesStress");
+        registerSortableVariable<Real>("VonMisesStrain");
         registerSortableVariable<Matd>("VelocityGradient");
         registerSortableVariable<Matd>("StrainTensor");
         registerSortableVariable<Matd>("StrainTensorRate");

@@ -80,7 +80,7 @@ class ViscousForceFromFluid : public BaseForceFromFluid
         {
             Real mu_k = mu_[k];
             Real smoothing_length_k = smoothing_length_[k];
-            StdLargeVec<Vecd> &vel_n_k = *(contact_vel_n_[k]);
+            StdLargeVec<Vecd> &vel_n_k = *(contact_vel_[k]);
             Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
             {
@@ -98,7 +98,7 @@ class ViscousForceFromFluid : public BaseForceFromFluid
 
   protected:
     StdLargeVec<Vecd> &vel_ave_;
-    StdVec<StdLargeVec<Vecd> *> contact_vel_n_;
+    StdVec<StdLargeVec<Vecd> *> contact_vel_;
     StdVec<Real> mu_;
     StdVec<Real> smoothing_length_;
 };
@@ -128,7 +128,7 @@ class BasePressureForceAccelerationFromFluid : public BaseForceFromFluid
         {
             StdLargeVec<Real> &rho_n_k = *(contact_rho_n_[k]);
             StdLargeVec<Real> &p_k = *(contact_p_[k]);
-            StdLargeVec<Vecd> &vel_k = *(contact_vel_n_[k]);
+            StdLargeVec<Vecd> &vel_k = *(contact_vel_[k]);
             StdLargeVec<Vecd> &acc_prior_k = *(contact_acc_prior_[k]);
             RiemannSolverType &riemann_solvers_k = riemann_solvers_[k];
             Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
@@ -150,7 +150,7 @@ class BasePressureForceAccelerationFromFluid : public BaseForceFromFluid
   protected:
     StdLargeVec<Vecd> &vel_ave_, &acc_prior_, &acc_ave_, &n_;
     StdVec<StdLargeVec<Real> *> contact_rho_n_, contact_p_;
-    StdVec<StdLargeVec<Vecd> *> contact_vel_n_, contact_acc_prior_;
+    StdVec<StdLargeVec<Vecd> *> contact_vel_, contact_acc_prior_;
     StdVec<RiemannSolverType> riemann_solvers_;
 
     BasePressureForceAccelerationFromFluid(bool mostDerived, BaseContactRelation &contact_relation)
@@ -162,7 +162,7 @@ class BasePressureForceAccelerationFromFluid : public BaseForceFromFluid
         for (size_t k = 0; k != contact_particles_.size(); ++k)
         {
             contact_rho_n_.push_back(&(contact_particles_[k]->rho_));
-            contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
+            contact_vel_.push_back(&(contact_particles_[k]->vel_));
             contact_p_.push_back(contact_particles_[k]->template getVariableByName<Real>("Pressure"));
             contact_acc_prior_.push_back(&(contact_particles_[k]->acc_prior_));
             riemann_solvers_.push_back(RiemannSolverType(*contact_fluids_[k], *contact_fluids_[k]));

@@ -7,7 +7,7 @@
 
 namespace SPH
 {
-namespace continuum_dyannmics
+namespace continuum_dynamics
 {
 typedef DataDelegateSimple<ContinuumParticles> ContinuumDataSimple;
 typedef DataDelegateInner<ContinuumParticles> ContinuumDataInner;
@@ -42,7 +42,7 @@ class BaseRelaxation : public LocalDynamics, public ContinuumDataInner
     virtual ~BaseRelaxation(){};
 
   protected:
-    GeneralContinuum &granular_material_;
+    GeneralContinuum &continuum_;
     StdLargeVec<Real> &rho_, &p_, &drho_dt_;
     StdLargeVec<Vecd> &pos_, &vel_, &acc_, &acc_prior_;
 };
@@ -110,6 +110,77 @@ class ShearStressRelaxation2ndHalf : public BaseRelaxation
     StdLargeVec<Real> &von_mises_stress_;
 };
 
+//=================================================================================================//
+//===================================Non-hourglass formulation=====================================//
+//=================================================================================================//
+/**
+    * @class Integration1stHalf
+    * @brief Pressure relaxation scheme with the mostly used Riemann solver.
+*/
+template <class FluidDynamicsType>
+class BaseIntegration1stHalf : public FluidDynamicsType
+{
+public:
+    explicit BaseIntegration1stHalf(BaseInnerRelation& inner_relation);
+    virtual ~BaseIntegration1stHalf() {};
+    void initialization(size_t index_i, Real dt = 0.0);
+    void interaction(size_t index_i, Real dt = 0.0);
+    void update(size_t index_i, Real dt = 0.0);
+
+protected:
+    StdLargeVec<Vecd>& acc_shear_;
+};
+using Integration1stHalf = BaseIntegration1stHalf<fluid_dynamics::Integration1stHalf>;
+using Integration1stHalfRiemann = BaseIntegration1stHalf<fluid_dynamics::Integration1stHalfRiemann>;
+
+/**
+* @class ShearAccelerationRelaxation
+*/
+class ShearAccelerationRelaxation : public BaseRelaxation
+{
+public:
+    explicit ShearAccelerationRelaxation(BaseInnerRelation& inner_relation);
+    virtual ~ShearAccelerationRelaxation() {};
+    void interaction(size_t index_i, Real dt = 0.0);
+protected:
+    Real G_, smoothing_length_;
+    StdLargeVec<Matd>& shear_stress_, & B_;
+    StdLargeVec<Vecd>& acc_shear_;
+};
+
+/**
+ * @class AngularConservativeShearAccelerationRelaxation
+ */
+class AngularConservativeShearAccelerationRelaxation : public ShearAccelerationRelaxation
+{
+public:
+    explicit AngularConservativeShearAccelerationRelaxation(BaseInnerRelation& inner_relation)
+        : ShearAccelerationRelaxation(inner_relation) {};
+    virtual ~AngularConservativeShearAccelerationRelaxation() {};
+
+    void interaction(size_t index_i, Real dt = 0.0);
+    //void update(size_t index_i, Real dt = 0.0);
+
+};
+
+/**
+* @class ShearStressRelaxation
+*/
+class ShearStressRelaxation : public BaseRelaxation
+{
+public:
+
+    explicit ShearStressRelaxation(BaseInnerRelation& inner_relation);
+    virtual ~ShearStressRelaxation() {};
+    void initialization(size_t index_i, Real dt = 0.0);
+    void interaction(size_t index_i, Real dt = 0.0);
+    void update(size_t index_i, Real dt = 0.0);
+protected:
+    StdLargeVec<Matd>& shear_stress_, & shear_stress_rate_, & velocity_gradient_, & strain_tensor_, & strain_tensor_rate_;
+    StdLargeVec<Real>& von_mises_stress_, & von_mises_strain_, & Vol_;
+    StdLargeVec<Matd>& B_;
+};
+
 /**
  * @class BaseMotionConstraint
  */
@@ -145,6 +216,44 @@ class FixConstraint : public BaseMotionConstraint<DynamicsIdentifier>
 };
 using FixBodyConstraint = FixConstraint<SPHBody>;
 using FixBodyPartConstraint = FixConstraint<BodyPartByParticle>;
-} // namespace continuum_dyannmics
+
+/**
+ * @class FixedInAxisDirection
+ * @brief Constrain the velocity of a solid body part.
+ */
+class FixedInAxisDirection : public BaseMotionConstraint<BodyPartByParticle>
+{
+public:
+    FixedInAxisDirection(BodyPartByParticle& body_part, Vecd constrained_axises = Vecd::Zero());
+    virtual ~FixedInAxisDirection() {};
+    void update(size_t index_i, Real dt = 0.0);
+
+protected:
+    Matd constrain_matrix_;
+};
+
+/**
+ * @class ConstrainSolidBodyMassCenter
+ * @brief Constrain the mass center of a solid body.
+ */
+class ConstrainSolidBodyMassCenter : public LocalDynamics, public ContinuumDataSimple
+{
+private:
+    Real total_mass_;
+    Matd correction_matrix_;
+    Vecd velocity_correction_;
+    StdLargeVec<Vecd>& vel_;
+    ReduceDynamics<QuantityMoment<Vecd>> compute_total_momentum_;
+
+protected:
+    virtual void setupDynamics(Real dt = 0.0) override;
+
+public:
+    explicit ConstrainSolidBodyMassCenter(SPHBody& sph_body, Vecd constrain_direction = Vecd::Ones());
+    virtual ~ConstrainSolidBodyMassCenter() {};
+
+    void update(size_t index_i, Real dt = 0.0);
+};
+} // namespace continuum_dynamics
 } // namespace SPH
 #endif // CONTINUUM_DYNAMICS_INNER_H

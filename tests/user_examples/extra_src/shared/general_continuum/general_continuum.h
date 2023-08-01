@@ -12,10 +12,11 @@ class GeneralContinuum : public WeaklyCompressibleFluid
     Real G_;  /*< shearmodules  */
     Real K_;  /*< bulkmodules  */
     Real nu_; /*< Poisson ratio  */
+    Real contact_stiffness_; /**< contact-force stiffness related to bulk modulus*/
 
   public:
     explicit GeneralContinuum(Real rho0, Real c0, Real youngs_modulus, Real poisson_ratio)
-        : WeaklyCompressibleFluid(rho0, c0), E_(0.0), G_(0.0), K_(0.0), nu_(0.0)
+        : WeaklyCompressibleFluid(rho0, c0), E_(0.0), G_(0.0), K_(0.0), nu_(0.0), contact_stiffness_(c0* c0)
     {
         material_type_name_ = "GeneralContinuum";
         E_ = youngs_modulus;
@@ -33,6 +34,8 @@ class GeneralContinuum : public WeaklyCompressibleFluid
     Real getBulkModulus(Real youngs_modulus, Real poisson_ratio);
     Real getShearModulus(Real youngs_modulus, Real poisson_ratio);
     Real getLambda(Real youngs_modulus, Real poisson_ratio);
+
+    Real ContactStiffness() { return contact_stiffness_; };
 
     virtual Matd ConstitutiveRelationShearStress(Matd &velocity_gradient, Matd &shear_stress);
 
