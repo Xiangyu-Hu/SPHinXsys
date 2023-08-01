@@ -25,7 +25,7 @@ Real rho0_a = 0.001;     /**< Reference density of air. */
 Real U_ref = 1.0;        /**< Characteristic velocity. */
 Real c_f = 10.0 * U_ref; /**< Reference sound speed. */
 Real mu_f = 0.2;         /**< Water viscosity. */
-Real mu_a = 0.002;       /**< Air viscosity. */
+Real mu_a = 0.0002;      /**< Air viscosity. */
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
 //----------------------------------------------------------------------
@@ -135,7 +135,7 @@ class SurfaceTensionStress : public LocalDynamics, public BaseDataContact
             }
             Real norm = weighted_color_gradeint.norm();
             surface_tension_stress_[index_i] += surface_tension_k / (norm + Eps) *
-                                                (norm * norm / Real(Dimensions) * Matd::Identity() -
+                                                (norm * norm * Matd::Identity() -
                                                  weighted_color_gradeint * weighted_color_gradeint.transpose());
         }
     };
@@ -289,9 +289,9 @@ int main()
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplex>
         update_air_density_by_summation(air_wall_contact, air_water_complex);
     InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>>
-        air_transport_correction(air_wall_contact, air_water_complex, 2.0e-3);
+        air_transport_correction(air_wall_contact, air_water_complex, 1.0e-1);
     InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>>
-        water_transport_correction(water_air_complex, 2.0e-3);
+        water_transport_correction(water_air_complex, 1.0e-1);
     /** Time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_water_advection_time_step_size(water_block, U_ref);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_air_advection_time_step_size(air_block, U_ref);
@@ -452,16 +452,6 @@ int main()
               << interval_computing_pressure_relaxation.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
-
-    sph_system.generate_regression_data_ = false;
-    if (sph_system.generate_regression_data_)
-    {
-        write_water_mechanical_energy.generateDataBase(1.0e-3);
-    }
-    else if (sph_system.RestartStep() == 0)
-    {
-        write_water_mechanical_energy.testResult();
-    }
 
     return 0;
 }
