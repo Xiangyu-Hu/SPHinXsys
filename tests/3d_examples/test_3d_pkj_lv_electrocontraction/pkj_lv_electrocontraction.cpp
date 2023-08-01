@@ -129,7 +129,7 @@ int main(int ac, char *av[])
     SharedPtr<AlievPanfilowModel> muscle_reaction_model_ptr = makeShared<AlievPanfilowModel>(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
     physiology_heart.defineParticlesAndMaterial<
         ElectroPhysiologyParticles, MonoFieldElectroPhysiology>(
-        muscle_reaction_model_ptr, TypeIdentity<LocalDirectionalDiffusion>(), diffusion_coff, bias_coff, fiber_direction);
+        muscle_reaction_model_ptr, TypeIdentity<LocalDirectionalDiffusion>(), diffusion_coeff, bias_coeff, fiber_direction);
     (!system.RunParticleRelaxation() && system.ReloadParticles())
         ? physiology_heart.generateParticles<ParticleGeneratorReload>(io_environment, "HeartModel")
         : physiology_heart.generateParticles<ParticleGeneratorLattice>();
@@ -147,7 +147,7 @@ int main(int ac, char *av[])
     SharedPtr<AlievPanfilowModel> pkj_reaction_model_ptr = makeShared<AlievPanfilowModel>(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
     pkj_body.defineParticlesAndMaterial<
         ElectroPhysiologyReducedParticles, MonoFieldElectroPhysiology>(
-        pkj_reaction_model_ptr, TypeIdentity<DirectionalDiffusion>(), diffusion_coff * acceleration_factor, bias_coff, fiber_direction);
+        pkj_reaction_model_ptr, TypeIdentity<DirectionalDiffusion>(), diffusion_coeff * acceleration_factor, bias_coeff, fiber_direction);
     pkj_body.generateParticles<NetworkGeneratorWithExtraCheck>(starting_point, second_point, 50, 1.0);
     TreeTerminates pkj_leaves(pkj_body);
     //----------------------------------------------------------------------

@@ -75,11 +75,11 @@ void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
 {
     for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
     {
-        Real diff_coff_ij =
-            this->all_diffusions_[m]->getInterParticleDiffusionCoff(particle_i, particle_j, e_ij);
+        Real diff_coeff_ij =
+            this->all_diffusions_[m]->getInterParticleDiffusionCoeff(particle_i, particle_j, e_ij);
         StdLargeVec<Real> &gradient_species = *this->gradient_species_[m];
         Real phi_ij = gradient_species[particle_i] - gradient_species[particle_j];
-        (*this->diffusion_dt_[m])[particle_i] += diff_coff_ij * phi_ij * surface_area_ij;
+        (*this->diffusion_dt_[m])[particle_i] += diff_coeff_ij * phi_ij * surface_area_ij;
     }
 }
 //=================================================================================================//
@@ -164,10 +164,10 @@ void DiffusionRelaxationDirichlet<ParticlesType, ContactParticlesType, KernelGra
 {
     for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
     {
-        Real diff_coff_ij =
-            this->all_diffusions_[m]->getInterParticleDiffusionCoff(particle_i, particle_i, e_ij);
+        Real diff_coeff_ij =
+            this->all_diffusions_[m]->getInterParticleDiffusionCoeff(particle_i, particle_i, e_ij);
         Real phi_ij = (*this->gradient_species_[m])[particle_i] - (*gradient_species_k[m])[particle_j];
-        (*this->diffusion_dt_[m])[particle_i] += diff_coff_ij * phi_ij * surface_area_ij;
+        (*this->diffusion_dt_[m])[particle_i] += diff_coeff_ij * phi_ij * surface_area_ij;
     }
 }
 //=================================================================================================//
