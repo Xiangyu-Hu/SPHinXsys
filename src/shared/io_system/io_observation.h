@@ -63,7 +63,7 @@ class ObservedQuantityRecording : public BodyStatesRecording,
           dynamics_identifier_name_(contact_relation.getSPHBody().getName()),
           quantity_name_(quantity_name)
     {
-        /** Copy data from device if device type has been specified **/
+        /** Copy data from device when executing with device policy */
         if constexpr (std::is_same_v<ExecutionPolicy, ParallelSYCLDevicePolicy>) {
             auto* device_data = this->getParticles()->
                                 template getDeviceVariableByName<typename DataTypeEquivalence<VariableType>::device_t>(quantity_name_);
@@ -89,7 +89,7 @@ class ObservedQuantityRecording : public BodyStatesRecording,
     {
         this->exec();
 
-        /* Copy data from device if device type has been specified */
+        /** Copy data from device when executing with device policy */
         if constexpr (std::is_same_v<ExecutionPolicy, ParallelSYCLDevicePolicy>) {
             auto* device_data = this->getParticles()->
                                 template getDeviceVariableByName<typename DataTypeEquivalence<VariableType>::device_t>(quantity_name_);
