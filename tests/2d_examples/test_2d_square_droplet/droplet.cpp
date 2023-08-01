@@ -101,46 +101,59 @@ class WallBoundary : public MultiPolygonShape
     }
 };
 
-using fluid_dynamics::FluidDataInner;
-class SmoothedColorFunctionInner : public LocalDynamics, public FluidDataInner
+typedef DataDelegateContact<BaseParticles, BaseParticles> BaseDataContact;
+class SurfaceTensionStress : public LocalDynamics, public BaseDataContact
 {
   public:
-    explicit SmoothedColorFunctionInner(BaseInnerRelation &inner_relation)
-        : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
-          surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")),
-          Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure"))
+    explicit SurfaceTensionStress(BaseContactRelation &conact_relation, StdVec<Real> contact_surface_tension)
+        : LocalDynamics(conact_relation.getSPHBody()), BaseDataContact(conact_relation)
     {
-        particles_->registerVariable(smoothed_color_, "SmoothedColor", Real(1));
+        particles_->registerVariable(surface_tension_stress_, "SurfaceTensionStress");
+        Real rho0 = getSPHBody().base_material_->ReferenceDensity();
+        for (size_t k = 0; k != contact_particles_.size(); ++k)
+        {
+            contact_surface_tension_.push_back(contact_surface_tension[k]);
+            Real rho0_k = contact_bodies_[k]->base_material_->ReferenceDensity();
+            contact_fraction_.push_back(rho0 / (rho0 + rho0_k));
+        }
     };
-    virtual ~SmoothedColorFunctionInner(){};
+    virtual ~SurfaceTensionStress(){};
 
     void interaction(size_t index_i, Real dt = 0.0)
     {
-        Real summation = ZeroData<Real>::value;
-        const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+        surface_tension_stress_[index_i] = ZeroData<Matd>::value;
+        for (size_t k = 0; k < contact_configuration_.size(); ++k)
         {
-            size_t index_j = inner_neighborhood.j_[n];
-            summation += inner_neighborhood.W_ij_[n] * Vol_[index_j];
+            Vecd weighted_color_gradeint = ZeroData<Vecd>::value;
+            Real contact_fraction_k = contact_fraction_[k];
+            Real surface_tension_k = contact_surface_tension_[k];
+            const Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+            for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+            {
+                weighted_color_gradeint -= contact_fraction_k *
+                                           contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
+            }
+            Real norm = weighted_color_gradeint.norm();
+            surface_tension_stress_[index_i] += surface_tension_k / (norm + Eps) *
+                                                (norm * norm / Real(Dimensions) * Matd::Identity() -
+                                                 weighted_color_gradeint * weighted_color_gradeint.transpose());
         }
-        smoothed_color_[index_i] = summation;
     };
 
   protected:
-    StdLargeVec<int> &surface_indicator_;
-    StdLargeVec<Real> &Vol_, smoothed_color_;
+    StdLargeVec<Matd> surface_tension_stress_;
+    StdVec<Real> contact_surface_tension_, contact_fraction_;
 };
 
-class SmoothedColorGradientInner : public LocalDynamics, public FluidDataInner
+using fluid_dynamics::FluidDataInner;
+class SurfaceStressAccelerationInner : public LocalDynamics, public FluidDataInner
 {
   public:
-    explicit SmoothedColorGradientInner(BaseInnerRelation &inner_relation)
+    SurfaceStressAccelerationInner(BaseInnerRelation &inner_relation)
         : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
-          smoothed_color_(*particles_->getVariableByName<Real>("SmoothedColor"))
-    {
-        particles_->registerVariable(color_gradient_, "SmoothedColorGradient");
-    };
-    virtual ~SmoothedColorGradientInner(){};
+          rho_(particles_->rho_), acc_prior_(particles_->acc_prior_),
+          surface_tension_stress_(*particles_->getVariableByName<Matd>("SurfaceTensionStress")){};
+    virtual ~SurfaceStressAccelerationInner(){};
 
     void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -149,92 +162,64 @@ class SmoothedColorGradientInner : public LocalDynamics, public FluidDataInner
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
         {
             size_t index_j = inner_neighborhood.j_[n];
-            summation -= (smoothed_color_[index_i] - smoothed_color_[index_j]) *
-                         inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+            summation += inner_neighborhood.dW_ijV_j_[n] *
+                         (surface_tension_stress_[index_i] + surface_tension_stress_[index_j]) *
+                         inner_neighborhood.e_ij_[n];
         }
-        color_gradient_[index_i] = summation;
+        acc_prior_[index_i] += summation / rho_[index_i];
     };
 
   protected:
-    StdLargeVec<Real> &smoothed_color_;
-    StdLargeVec<Vecd> color_gradient_;
+    StdLargeVec<Real> &rho_;
+    StdLargeVec<Vecd> &acc_prior_;
+    StdLargeVec<Matd> &surface_tension_stress_;
 };
 
-typedef DataDelegateContact<BaseParticles, BaseParticles> BaseDataContact;
-class SmoothedColorGradientContact : public LocalDynamics, public BaseDataContact
+class SurfaceStressAccelerationContact : public LocalDynamics, public BaseDataContact
 {
   public:
-    explicit SmoothedColorGradientContact(BaseContactRelation &conact_relation)
+    explicit SurfaceStressAccelerationContact(BaseContactRelation &conact_relation)
         : LocalDynamics(conact_relation.getSPHBody()), BaseDataContact(conact_relation),
-          smoothed_color_(*particles_->getVariableByName<Real>("SmoothedColor")),
-          color_gradient_(*particles_->getVariableByName<Vecd>("SmoothedColorGradient")){};
-    virtual ~SmoothedColorGradientContact(){};
+          rho_(particles_->rho_), acc_prior_(particles_->acc_prior_),
+          surface_tension_stress_(*particles_->getVariableByName<Matd>("SurfaceTensionStress"))
+    {
+        Real rho0 = getSPHBody().base_material_->ReferenceDensity();
+        for (size_t k = 0; k != contact_particles_.size(); ++k)
+        {
+            Real rho0_k = contact_bodies_[k]->base_material_->ReferenceDensity();
+            contact_fraction_.push_back(rho0 / (rho0 + rho0_k));
+            contact_surface_tension_stress_.push_back(
+                contact_particles_[k]->getVariableByName<Matd>("SurfaceTensionStress"));
+        }
+    };
+    virtual ~SurfaceStressAccelerationContact(){};
 
     void interaction(size_t index_i, Real dt = 0.0)
     {
         Vecd summation = ZeroData<Vecd>::value;
         for (size_t k = 0; k < contact_configuration_.size(); ++k)
         {
-            Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+            Real contact_fraction_k = contact_fraction_[k];
+            StdLargeVec<Matd> &contact_surface_tension_stress_k = *(contact_surface_tension_stress_[k]);
+            const Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
             {
-                summation -= smoothed_color_[index_i] *
-                             contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
+                size_t index_j = contact_neighborhood.j_[n];
+                summation += contact_neighborhood.dW_ijV_j_[n] *
+                             ((Real(1) - contact_fraction_k) * surface_tension_stress_[index_i] +
+                              contact_surface_tension_stress_k[index_j] * contact_fraction_k) *
+                             contact_neighborhood.e_ij_[n];
             }
         }
-        color_gradient_[index_i] += summation;
+        acc_prior_[index_i] += summation / rho_[index_i];
     };
 
   protected:
-    StdLargeVec<Real> &smoothed_color_;
-    StdLargeVec<Vecd> &color_gradient_;
-};
-
-class SurfaceStressAccelerationInner : public LocalDynamics, public FluidDataInner
-{
-  public:
-    SurfaceStressAccelerationInner(BaseInnerRelation &inner_relation, Real gamma)
-        : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
-          gamma_(gamma), acc_prior_(particles_->acc_prior_),
-          smoothed_color_(*particles_->getVariableByName<Real>("SmoothedColor")),
-          color_gradient_(*particles_->getVariableByName<Vecd>("SmoothedColorGradient"))
-    {
-        particles_->registerVariable(surface_stress_, "SurfaceStress");
-    };
-    virtual ~SurfaceStressAccelerationInner(){};
-
-    void initialization(size_t index_i, Real dt = 0.0)
-    {
-        Vecd gradient = color_gradient_[index_i];
-        Real norm = gradient.norm();
-        surface_stress_[index_i] = gamma_ / (norm + Eps) *
-                                   (norm * norm / Real(Dimensions) * Matd::Identity() - gradient * gradient.transpose());
-    };
-    void interaction(size_t index_i, Real dt = 0.0)
-    {
-        Vecd summation = ZeroData<Vecd>::value;
-        const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-        {
-            size_t index_j = inner_neighborhood.j_[n];
-            Vecd e_ij = inner_neighborhood.e_ij_[n];
-            Real r_ij = inner_neighborhood.r_ij_[n];
-
-            Real mismatch = (smoothed_color_[index_i] - smoothed_color_[index_i]) -
-                            0.5 * (color_gradient_[index_i] + color_gradient_[index_j]).dot(e_ij) * r_ij;
-            summation += inner_neighborhood.dW_ijV_j_[n] *
-                         (surface_stress_[index_i] + surface_stress_[index_j] - mismatch * Matd::Identity()) *
-                         inner_neighborhood.e_ij_[n];
-        }
-        acc_prior_[index_i] += summation;
-    };
-
-  protected:
-    Real gamma_;
+    StdLargeVec<Real> &rho_;
     StdLargeVec<Vecd> &acc_prior_;
-    StdLargeVec<Real> &smoothed_color_;
-    StdLargeVec<Vecd> &color_gradient_;
-    StdLargeVec<Matd> surface_stress_;
+    StdLargeVec<Matd> surface_tension_stress_;
+    StdVec<StdLargeVec<Matd> *> contact_surface_tension_stress_;
+    StdVec<Real> contact_surface_tension_, contact_fraction_;
 };
 
 template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
@@ -301,6 +286,8 @@ int main()
     SimpleDynamics<TimeStepInitialization> initialize_a_water_step(water_block);
     SimpleDynamics<TimeStepInitialization> initialize_a_air_step(air_block);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplex>
+        update_air_density_by_summation(air_wall_contact, air_water_complex);
     InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex>
         air_transport_correction(air_wall_contact, air_water_complex);
     /** Time step size without considering sound wave speed. */
@@ -325,16 +312,16 @@ int main()
     InteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhaseWithWall>
         water_viscous_acceleration(water_wall_contact, water_air_complex);
     /** Surface tension. */
-    InteractionWithUpdate<fluid_dynamics::FreeSurfaceIndicationInner>
-        surface_detection(water_air_complex.getInnerRelation());
-    InteractionDynamics<SmoothedColorFunctionInner>
-        volume_fraction(water_air_complex.getInnerRelation());
-    water_block.addBodyStateForRecording<Real>("SmoothedColor");
-    InteractionDynamics<SmoothedColorGradientInner>
-        color_gradient(water_air_complex.getInnerRelation());
-    water_block.addBodyStateForRecording<Vecd>("SmoothedColorGradient");
-    InteractionWithInitialization<SurfaceStressAccelerationInner>
-        surface_tension_acceleration(water_air_complex.getInnerRelation(), 1.0);
+    InteractionDynamics<SurfaceTensionStress, SequencedPolicy>
+        water_surface_tension_stress(water_air_complex.getContactRelation(), StdVec<Real>{Real(1)});
+    InteractionDynamics<SurfaceTensionStress>
+        air_surface_tension_stress(air_water_complex.getContactRelation(), StdVec<Real>{Real(1)});
+    InteractionDynamics<SurfaceStressAccelerationInner, SequencedPolicy>
+        water_surface_tension_acceleration(water_air_complex.getInnerRelation());
+    water_block.addBodyStateForRecording<Matd>("SurfaceTensionStress");
+    InteractionDynamics<ComplexInteraction<SurfaceStressAccelerationInner, SurfaceStressAccelerationContact>>
+        air_surface_tension_acceleration(air_water_complex.getInnerRelation(), air_water_complex.getContactRelation());
+    air_block.addBodyStateForRecording<Vecd>("PriorAcceleration");
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -387,14 +374,15 @@ int main()
             Real Dt_a = get_air_advection_time_step_size.exec();
             Real Dt = SMIN(Dt_f, Dt_a);
 
+            update_air_density_by_summation.exec();
             air_viscous_acceleration.exec();
             water_viscous_acceleration.exec();
             air_transport_correction.exec();
 
-            surface_detection.exec();
-            volume_fraction.exec();
-            color_gradient.exec();
-            surface_tension_acceleration.exec();
+            water_surface_tension_stress.exec();
+            //           air_surface_tension_stress.exec();
+            water_surface_tension_acceleration.exec();
+            // air_surface_tension_acceleration.exec();
 
             interval_computing_time_step += TickCount::now() - time_instance;
 
@@ -434,7 +422,7 @@ int main()
             water_air_complex.updateConfiguration();
             water_wall_contact.updateConfiguration();
 
-            air_block.updateCellLinkedListWithParticleSort(100);
+            air_block.updateCellLinkedList();
             air_water_complex.updateConfiguration();
             air_wall_contact.updateConfiguration();
 
