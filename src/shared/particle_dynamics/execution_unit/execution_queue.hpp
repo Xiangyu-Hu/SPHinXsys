@@ -18,10 +18,8 @@ namespace SPH::execution {
             return sycl_queue;
         }
 
-        auto getWorkGroupSize(size_t iterations = 0) const {
-            if(!iterations)
-                return work_group_size;
-            return std::min(work_group_size, iterations);
+        auto getWorkGroupSize() const {
+            return work_group_size;
         }
 
         void setWorkGroupSize(size_t workGroupSize) {
