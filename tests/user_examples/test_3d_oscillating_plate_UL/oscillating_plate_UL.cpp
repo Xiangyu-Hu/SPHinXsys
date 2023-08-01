@@ -33,7 +33,7 @@ Real gravity_g = 0.0;
 
 Real governing_vibration_integer_x = 2.0;
 Real governing_vibration_integer_y = 2.0;
-Real U_max = 1.0;  //Maximum velocity
+Real U_ref = 1.0;  //Maximum velocity
 /** Define application dependent particle generator for thin structure. */
 class PlateParticleGenerator : public ParticleGenerator
 {
@@ -135,7 +135,7 @@ int main()
 	 */
 	SimpleDynamics<BeamInitialCondition> initial_velocity(plate_body);
 	/** Time step size calculation. */
-	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(plate_body, U_max, 0.2);
+	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(plate_body, U_ref, 0.2);
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(plate_body, 0.4);
 	/** stress relaxation. */
 	Dynamics1Level<continuum_dynamics::Integration1stHalf> plate_pressure_relaxation(plate_body_inner);
