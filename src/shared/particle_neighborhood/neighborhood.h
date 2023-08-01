@@ -90,9 +90,6 @@ class NeighborhoodDevice {
     NeighborhoodDevice& operator=(const Neighborhood& host);
 };
 
-inline void copyDataToDevice(const Neighborhood* host, NeighborhoodDevice* device, std::size_t size) {
-    transformAndCopyDataToDevice(host, device, size, [](auto val) { return val; });
-}
 
 
 /**
