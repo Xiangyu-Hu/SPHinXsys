@@ -76,38 +76,18 @@ class BaseInterpolationKernel {
     DataType* interpolated_quantities_;
 };
 
-template<>
-class BaseInterpolationKernel<void> {
-  public:
-    template<class ...Args>
-    BaseInterpolationKernel(Args ...args) {}
-
-    void interaction(size_t, Real = 0.0) {
-        static_assert("BaseInterpolationKernel initialized with DataType = void");
-    }
-};
-
 /**
  * @class BaseInterpolation
  * @brief Base class for interpolation.
  */
 template <typename DataType, bool DeviceAllocation = false>
-class BaseInterpolation : public LocalDynamics, public InterpolationContactData,
-                          public DeviceExecutable<BaseInterpolation<DataType, DeviceAllocation>,
-                              BaseInterpolationKernel<typename DataTypeEquivalence<DataType>::device_t>>
+class BaseInterpolation : public LocalDynamics, public InterpolationContactData
 {
   public:
     StdLargeVec<DataType> *interpolated_quantities_;
 
     explicit BaseInterpolation(BaseContactRelation &contact_relation, const std::string &variable_name)
         : LocalDynamics(contact_relation.getSPHBody()), InterpolationContactData(contact_relation),
-          DeviceExecutable<BaseInterpolation<DataType, DeviceAllocation>,
-              BaseInterpolationKernel<typename DataTypeEquivalence<DataType>::device_t>>(
-               this, this->contact_configuration_device_->data(), this->contact_configuration_device_->size(),
-               [&]() -> typename DataTypeEquivalence<DataType>::device_t* {
-                  if constexpr (std::is_same_v<typename DataTypeEquivalence<DataType>::device_t, void>) return nullptr;
-                  else return particles_->registerDeviceVariable<typename DataTypeEquivalence<DataType>::device_t>(
-                          variable_name, particles_->total_real_particles_); }()),
           interpolated_quantities_(nullptr)
     {
         for (size_t k = 0; k != this->contact_particles_.size(); ++k)
@@ -116,28 +96,6 @@ class BaseInterpolation : public LocalDynamics, public InterpolationContactData,
             StdLargeVec<DataType> *contact_data =
                 this->contact_particles_[k]->template getVariableByName<DataType>(variable_name);
             contact_data_.push_back(contact_data);
-        }
-
-        if constexpr(DeviceAllocation) {
-            using DataTypeDevice = typename DataTypeEquivalence<DataType>::device_t;
-
-            contact_Vol_device_ = makeSharedDevice<StdSharedVec<DeviceReal*>>(this->contact_particles_.size(),
-                                                                              execution::executionQueue.getQueue());
-            contact_data_device_ = makeSharedDevice<StdSharedVec<DataTypeDevice*>>(this->contact_particles_.size(),
-                                                                                   execution::executionQueue.getQueue());
-
-            for (size_t k = 0; k != this->contact_particles_.size(); ++k)
-            {
-                contact_Vol_device_->at(k) = this->contact_particles_[k]->template getDeviceVariableByName<DeviceReal>("Volume");
-                DataTypeDevice *contact_data =
-                    this->contact_particles_[k]->template getDeviceVariableByName<DataTypeDevice>(variable_name);
-                contact_data_device_->at(k) = contact_data;
-            }
-
-            // Set device contact volume and data that have just been initialized
-            auto* device_kernel = this->getDeviceProxy().getKernel();
-            device_kernel->setContactVol(contact_Vol_device_->data());
-            device_kernel->setContactData(contact_data_device_->data());
         }
     };
     virtual ~BaseInterpolation(){};
@@ -167,6 +125,48 @@ class BaseInterpolation : public LocalDynamics, public InterpolationContactData,
   protected:
     StdVec<StdLargeVec<Real> *> contact_Vol_;
     StdVec<StdLargeVec<DataType> *> contact_data_;
+};
+
+template <typename DataType>
+class BaseInterpolation<DataType, true> : public LocalDynamics, public InterpolationContactData,
+                                          public DeviceExecutable<BaseInterpolation<DataType, true>,
+                                              BaseInterpolationKernel<typename DataTypeEquivalence<DataType>::device_t>>
+{
+  public:
+    StdLargeVec<DataType> *interpolated_quantities_;
+
+    explicit BaseInterpolation(BaseContactRelation &contact_relation, const std::string &variable_name)
+        : LocalDynamics(contact_relation.getSPHBody()), InterpolationContactData(contact_relation),
+          DeviceExecutable<BaseInterpolation<DataType, true>,
+                           BaseInterpolationKernel<typename DataTypeEquivalence<DataType>::device_t>>(
+              this, this->contact_configuration_device_->data(), this->contact_configuration_device_->size(),
+              particles_->registerDeviceVariable<typename DataTypeEquivalence<DataType>::device_t>(
+                          variable_name, particles_->total_real_particles_)),
+          interpolated_quantities_(nullptr)
+    {
+            using DataTypeDevice = typename DataTypeEquivalence<DataType>::device_t;
+
+            contact_Vol_device_ = makeSharedDevice<StdSharedVec<DeviceReal*>>(this->contact_particles_.size(),
+                                                                               execution::executionQueue.getQueue());
+            contact_data_device_ = makeSharedDevice<StdSharedVec<DataTypeDevice*>>(this->contact_particles_.size(),
+                                                                                    execution::executionQueue.getQueue());
+
+            for (size_t k = 0; k != this->contact_particles_.size(); ++k)
+            {
+                contact_Vol_device_->at(k) = this->contact_particles_[k]->template getDeviceVariableByName<DeviceReal>("Volume");
+                DataTypeDevice *contact_data =
+                    this->contact_particles_[k]->template getDeviceVariableByName<DataTypeDevice>(variable_name);
+                contact_data_device_->at(k) = contact_data;
+            }
+
+            // Set device contact volume and data that have just been initialized
+            auto* device_kernel = this->getDeviceProxy().getKernel();
+            device_kernel->setContactVol(contact_Vol_device_->data());
+            device_kernel->setContactData(contact_data_device_->data());
+    };
+    virtual ~BaseInterpolation(){};
+
+  protected:
     SharedPtr<StdSharedVec<DeviceReal*>> contact_Vol_device_;
     SharedPtr<StdSharedVec<typename DataTypeEquivalence<DataType>::device_t*>> contact_data_device_;
 };
