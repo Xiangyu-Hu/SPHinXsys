@@ -19,8 +19,8 @@ BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
 //----------------------------------------------------------------------
 //	Global parameters on material properties
 //----------------------------------------------------------------------
-Real diffusion_coff = 1.0e-3;
-Real bias_coff = 0.0;
+Real diffusion_coeff = 1.0e-3;
+Real bias_coeff = 0.0;
 Real alpha = Pi / 4.0;
 Vec2d bias_direction(cos(alpha), sin(alpha));
 Real initial_temperature = 0.0;
@@ -103,7 +103,7 @@ class DiffusionMaterial : public DiffusionReaction<Solid>
   public:
     DiffusionMaterial() : DiffusionReaction<Solid>({"Phi"}, SharedPtr<NoReaction>())
     {
-        initializeAnDiffusion<DirectionalDiffusion>("Phi", "Phi", diffusion_coff, bias_coff, bias_direction);
+        initializeAnDiffusion<DirectionalDiffusion>("Phi", "Phi", diffusion_coeff, bias_coeff, bias_direction);
     };
 };
 //----------------------------------------------------------------------
