@@ -21,23 +21,27 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    all_fluid_dynamics.h
- * @brief   This is the header file that user code should include to pick up all
- *          fluid dynamics used in SPHinXsys.
- * @details The fluid dynamics algorithms begin for fluid bulk without boundary condition,
- *          then algorithm interacting with wall is defined, further algorithms
- *          for multiphase flow interaction built upon these basic algorithms.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file base_fluid_dynamics.h
+ * @brief Collection of headers and types used by all fluid dynamics classes.
+ * @author Xiangyu Hu
  */
 
-#pragma once
+#ifndef BASE_FLUID_DYNAMICS_H
+#define BASE_FLUID_DYNAMICS_H
 
-#include "fluid_boundary.h"
-#include "fluid_dynamics_complex.hpp"
-#include "fluid_dynamics_complex_correction.hpp"
-#include "fluid_dynamics_inner.hpp"
-#include "fluid_dynamics_inner_correction.hpp"
-#include "fluid_dynamics_multi_phase.hpp"
-#include "fluid_surface_complex.h"
-#include "fluid_surface_inner.hpp"
-#include "transport_velocity_correction.h"
+#include "all_body_relations.h"
+#include "all_particle_dynamics.h"
+#include "base_particles.hpp"
+#include "fluid_body.h"
+
+namespace SPH
+{
+namespace fluid_dynamics
+{
+typedef DataDelegateSimple<BaseParticles> FluidDataSimple;
+typedef DataDelegateInner<BaseParticles> FluidDataInner;
+typedef DataDelegateContact<BaseParticles, BaseParticles> FluidContactData;
+typedef DataDelegateContact<BaseParticles, BaseParticles, DataDelegateEmptyBase> FluidContactOnly;
+} // namespace fluid_dynamics
+} // namespace SPH
+#endif // BASE_FLUID_DYNAMICS_H

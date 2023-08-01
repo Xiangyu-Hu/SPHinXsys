@@ -31,9 +31,9 @@ Real poisson = 0.3; 			                           /** Poisson ratio. */
 Real c0 = sqrt(Youngs_modulus / (3 * (1 - 2 * poisson) * rho0_s));
 Real gravity_g = 0.0;
 
-Real governing_vibration_integer_x = 1.0;
-Real governing_vibration_integer_y = 1.0;
-Real U_max = 1.0;  //Maximum velocity
+Real governing_vibration_integer_x = 2.0;
+Real governing_vibration_integer_y = 2.0;
+Real U_ref = 1.0;  //Maximum velocity
 /** Define application dependent particle generator for thin structure. */
 class PlateParticleGenerator : public ParticleGenerator
 {
@@ -135,7 +135,7 @@ int main()
 	 */
 	SimpleDynamics<BeamInitialCondition> initial_velocity(plate_body);
 	/** Time step size calculation. */
-	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(plate_body, U_max, 0.2);
+	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(plate_body, U_ref, 0.2);
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(plate_body, 0.4);
 	/** stress relaxation. */
 	Dynamics1Level<continuum_dynamics::Integration1stHalf> plate_pressure_relaxation(plate_body_inner);
@@ -158,8 +158,9 @@ int main()
 	// 	write_plate_displacement("Position", io_environment, plate_observer_contact);
 	RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
 		write_plate_displacement("Position", io_environment, plate_observer_contact);
-	ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>
+	RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
 		write_kinetic_energy(io_environment, plate_body);
+
 
 	/** Apply initial condition. */
 	system.initializeSystemCellLinkedLists();
@@ -186,8 +187,8 @@ int main()
 	size_t number_of_iterations = system.RestartStep();
 	int screen_output_interval = 500;
 	int restart_output_interval = screen_output_interval * 10;
-	Real end_time = 0.1;
-	Real output_period = end_time / 100.0;
+	Real end_time = 0.02;
+	Real output_period = end_time / 50.0;
 	/** Statistics for computing time. */
 	TickCount t1 = TickCount::now();
 	TimeInterval interval;
@@ -242,14 +243,13 @@ int main()
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-	//system.generate_regression_data_ = true;
-    if (system.generate_regression_data_)
-    {
-        write_plate_displacement.generateDataBase(Vecd(1.0e-2, 1.0e-2, 1.0e-2), Vecd(1.0e-2, 1.0e-2, 1.0e-2));
-    }
-    else
-    {
-        write_plate_displacement.testResult();
-    }
-	return 0;
+	system.generate_regression_data_ = false;
+	if (system.generate_regression_data_)
+	{
+		write_kinetic_energy.generateDataBase(1.0e-3);
+	}
+	else
+	{
+		write_kinetic_energy.testResult();
+	}
 }

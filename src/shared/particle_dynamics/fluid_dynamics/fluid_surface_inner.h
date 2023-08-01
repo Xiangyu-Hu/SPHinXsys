@@ -55,7 +55,7 @@ class FreeSurfaceIndicationInner : public LocalDynamics, public FluidDataInner
 
   protected:
     Real threshold_by_dimensions_;
-    StdLargeVec<int> &surface_indicator_;
+    StdLargeVec<int> &indicator_;
     StdLargeVec<Real> pos_div_;
     Real smoothing_length_;
     bool isVeryNearFreeSurface(size_t index_i);
@@ -122,7 +122,7 @@ class DensitySummationFreeStream : public DensitySummationFreeSurfaceType
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<int> &surface_indicator_;
+    StdLargeVec<int> &indicator_;
     bool isNearFreeSurface(size_t index_i);
 };
 
@@ -160,7 +160,7 @@ class ColorFunctionGradientInner : public LocalDynamics, public FluidDataInner
     inline void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<int> &surface_indicator_;
+    StdLargeVec<int> &indicator_;
     StdLargeVec<Real> &pos_div_;
     Real threshold_by_dimensions_;
     StdLargeVec<Vecd> color_grad_;
@@ -181,7 +181,7 @@ class ColorFunctionGradientInterpolationInner : public LocalDynamics, public Flu
 
   protected:
     StdLargeVec<Real> &Vol_;
-    StdLargeVec<int> &surface_indicator_;
+    StdLargeVec<int> &indicator_;
     StdLargeVec<Vecd> &color_grad_;
     StdLargeVec<Vecd> &surface_norm_;
     StdLargeVec<Real> &pos_div_;
@@ -205,7 +205,7 @@ class SurfaceTensionAccelerationInner : public LocalDynamics, public FluidDataIn
     Real gamma_;
     StdLargeVec<Real> &Vol_, &mass_;
     StdLargeVec<Vecd> &acc_prior_;
-    StdLargeVec<int> &surface_indicator_;
+    StdLargeVec<int> &indicator_;
     StdLargeVec<Vecd> &color_grad_;
     StdLargeVec<Vecd> &surface_norm_;
 };

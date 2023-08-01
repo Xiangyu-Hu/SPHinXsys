@@ -14,35 +14,25 @@ namespace SPH
 namespace fluid_dynamics
 {
 //=================================================================================================//
-void ViscousAccelerationMultiPhase::
-    interaction(size_t index_i, Real dt)
+void ViscousAccelerationMultiPhase::interaction(size_t index_i, Real dt)
 {
     ViscousAccelerationInner::interaction(index_i, dt);
 
-    Real rho_i = this->rho_[index_i];
-    const Vecd &vel_i = this->vel_[index_i];
-
     Vecd acceleration = Vecd::Zero();
-    Vecd vel_derivative = Vecd::Zero();
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
-        Real mu_j = this->contact_fluids_[k]->ReferenceViscosity();
-        StdLargeVec<Vecd> &vel_k = *(this->contact_vel_n_[k]);
+        Real contact_mu_k = this->contact_mu_[k];
+        StdLargeVec<Vecd> &vel_k = *(this->contact_vel_[k]);
         Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
             size_t index_j = contact_neighborhood.j_[n];
-            Real r_ij = contact_neighborhood.r_ij_[n];
-
-            vel_derivative = 2.0 * (vel_i - vel_k[index_j]) /
-                             (r_ij + 0.01 * this->smoothing_length_);
-            Real mu_ij = 2.0 * this->mu_ * mu_j / (this->mu_ + mu_j);
-            acceleration += 2.0 * mu_ij * vel_derivative *
-                            contact_neighborhood.dW_ijV_j_[n] / rho_i;
+            Vecd vel_derivative = (this->vel_[index_i] - vel_k[index_j]) /
+                                  (contact_neighborhood.r_ij_[n] + 0.01 * this->smoothing_length_);
+            acceleration += 2.0 * contact_mu_k * vel_derivative * contact_neighborhood.dW_ijV_j_[n];
         }
     }
-
-    acc_prior_[index_i] += acceleration;
+    acc_prior_[index_i] += acceleration / this->rho_[index_i];
 }
 //=================================================================================================//
 void MultiPhaseColorFunctionGradient::
@@ -50,7 +40,7 @@ void MultiPhaseColorFunctionGradient::
 {
     Real Vol_i = Vol_[index_i];
     Vecd gradient = Vecd::Zero();
-    if (surface_indicator_[index_i])
+    if (indicator_[index_i])
     {
         for (size_t k = 0; k < contact_configuration_.size(); ++k)
         {
@@ -90,7 +80,7 @@ RelaxationMultiPhase<RelaxationInnerType>::
         contact_fluids_.push_back(DynamicCast<Fluid>(this, &contact_particles_[k]->getBaseMaterial()));
         contact_p_.push_back(contact_particles_[k]->template getVariableByName<Real>("Pressure"));
         contact_rho_n_.push_back(&(contact_particles_[k]->rho_));
-        contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
+        contact_vel_.push_back(&(contact_particles_[k]->vel_));
     }
 }
 //=================================================================================================//
@@ -190,7 +180,7 @@ void BaseMultiPhaseIntegration2ndHalf<Integration2ndHalfType>::
     Vecd p_dissipation = Vecd::Zero();
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Vecd> &vel_k = *(this->contact_vel_n_[k]);
+        StdLargeVec<Vecd> &vel_k = *(this->contact_vel_[k]);
         CurrentRiemannSolver &riemann_solver_k = riemann_solvers_[k];
         Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)

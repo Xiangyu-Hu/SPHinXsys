@@ -42,7 +42,7 @@ void BaseParticles::initializeOtherVariables()
     registerVariable(mass_, "MassiveMeasure",
                      [&](size_t i) -> Real
                      { return rho_[i] * Vol_[i]; });
-    registerVariable(surface_indicator_, "SurfaceIndicator");
+    registerVariable(indicator_, "Indicator");
     /**
      *	add basic output particle data
      */

@@ -54,8 +54,8 @@ class ViscousAccelerationMultiPhase : public ViscousAccelerationInner, public Mu
     inline void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdVec<Fluid *> contact_fluids_;
-    StdVec<StdLargeVec<Vecd> *> contact_vel_n_;
+    StdVec<Real> contact_mu_;
+    StdVec<StdLargeVec<Vecd> *> contact_vel_;
 };
 using ViscousAccelerationMultiPhaseWithWall =
     BaseViscousAccelerationWithWall<ViscousAccelerationMultiPhase>;
@@ -75,7 +75,7 @@ class RelaxationMultiPhase : public RelaxationInnerType, public MultiPhaseContac
   protected:
     StdVec<Fluid *> contact_fluids_;
     StdVec<StdLargeVec<Real> *> contact_p_, contact_rho_n_;
-    StdVec<StdLargeVec<Vecd> *> contact_vel_n_;
+    StdVec<StdLargeVec<Vecd> *> contact_vel_;
 };
 
 /**
@@ -149,7 +149,7 @@ class MultiPhaseColorFunctionGradient : public LocalDynamics, public MultiPhaseD
     Real rho0_;
     StdVec<Real> contact_rho0_;
     StdLargeVec<Real> &Vol_, &pos_div_;
-    StdLargeVec<int> &surface_indicator_;
+    StdLargeVec<int> &indicator_;
     StdLargeVec<Vecd> color_grad_, surface_norm_;
     StdVec<StdLargeVec<Real> *> contact_Vol_;
 };

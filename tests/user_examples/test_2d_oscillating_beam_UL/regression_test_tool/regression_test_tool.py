@@ -10,7 +10,7 @@ from regression_test_base_tool import SphinxsysRegressionTest
 case name: test_2d_oscillating_beam_UL
 """
 
-case_name = "zsh_2d_oscillating_beam_UL_non-hourglass"
+case_name = "test_2d_oscillating_beam_UL"
 body_name = "BeamObserver"
 parameter_name = "Position"
 

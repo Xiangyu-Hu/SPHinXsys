@@ -129,7 +129,8 @@ class DirichletWallBoundaryInitialCondition
     size_t phi_;
 
   public:
-    DirichletWallBoundaryInitialCondition(SolidBody &diffusion_body) : DiffusionReactionInitialCondition<WallParticles>(diffusion_body)
+    explicit DirichletWallBoundaryInitialCondition(SolidBody &diffusion_body) 
+    : DiffusionReactionInitialCondition<WallParticles>(diffusion_body)
     {
         phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
     }
@@ -157,7 +158,8 @@ class NeumannWallBoundaryInitialCondition
     StdLargeVec<Real> &heat_flux_;
 
   public:
-    NeumannWallBoundaryInitialCondition(SolidBody &diffusion_body) : DiffusionReactionInitialCondition<WallParticles>(diffusion_body),
+    explicit NeumannWallBoundaryInitialCondition(SolidBody &diffusion_body) 
+    : DiffusionReactionInitialCondition<WallParticles>(diffusion_body),
                                                                      heat_flux_(*(particles_->getVariableByName<Real>("HeatFlux")))
     {
         phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];

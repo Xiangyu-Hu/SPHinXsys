@@ -42,23 +42,32 @@ BaseDiffusionRelaxation<ParticlesType>::
         std::string &diffusion_species_name = all_species_names[diffusion_species_indexes[i]];
         diffusion_dt_[i] = this->particles_->template registerSharedVariable<Real>(diffusion_species_name + "ChangeRate");
     }
-} //=================================================================================================//
+}
+//=================================================================================================//
+template <class ParticlesType>
+void BaseDiffusionRelaxation<ParticlesType>::initialization(size_t index_i, Real dt)
+{
+    for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
+    {
+        (*this->diffusion_dt_[m])[index_i] = 0;
+    }
+}
+//=================================================================================================//
+template <class ParticlesType>
+void BaseDiffusionRelaxation<ParticlesType>::update(size_t index_i, Real dt)
+{
+    for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
+    {
+        (*this->diffusion_species_[m])[index_i] += dt * (*this->diffusion_dt_[m])[index_i];
+    }
+}
+//=================================================================================================//
 template <class ParticlesType, class KernelGradientType>
 DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
     DiffusionRelaxationInner(BaseInnerRelation &inner_relation)
     : BaseDiffusionRelaxation<ParticlesType>(inner_relation.getSPHBody()),
       DataDelegateInner<ParticlesType, DataDelegateEmptyBase>(inner_relation),
       kernel_gradient_(this->particles_) {}
-//=================================================================================================//
-template <class ParticlesType, class KernelGradientType>
-void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
-    initializeDiffusionChangeRate(size_t particle_i)
-{
-    for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
-    {
-        (*this->diffusion_dt_[m])[particle_i] = 0;
-    }
-}
 //=================================================================================================//
 template <class ParticlesType, class KernelGradientType>
 void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
@@ -76,21 +85,9 @@ void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
 //=================================================================================================//
 template <class ParticlesType, class KernelGradientType>
 void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
-    updateSpeciesDiffusion(size_t particle_i, Real dt)
-{
-    for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
-    {
-        (*this->diffusion_species_[m])[particle_i] += dt * (*this->diffusion_dt_[m])[particle_i];
-    }
-}
-//=================================================================================================//
-template <class ParticlesType, class KernelGradientType>
-void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
     interaction(size_t index_i, Real dt)
 {
     Neighborhood &inner_neighborhood = this->inner_configuration_[index_i];
-
-    initializeDiffusionChangeRate(index_i);
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
         size_t index_j = inner_neighborhood.j_[n];
@@ -102,13 +99,6 @@ void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
         Real area_ij = 2.0 * grad_ijV_j.dot(e_ij) / r_ij_;
         getDiffusionChangeRate(index_i, index_j, e_ij, area_ij);
     }
-}
-//=================================================================================================//
-template <class ParticlesType, class KernelGradientType>
-void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
-    update(size_t index_i, Real dt)
-{
-    updateSpeciesDiffusion(index_i, dt);
 }
 //=================================================================================================//
 template <class ParticlesType, class ContactParticlesType, class KernelGradientType>
@@ -331,14 +321,13 @@ void InitializationRK<ParticlesType>::
 }
 //=================================================================================================//
 template <class FirstStageType>
-void SecondStageRK2<FirstStageType>::
-    updateSpeciesDiffusion(size_t particle_i, Real dt)
+void SecondStageRK2<FirstStageType>::update(size_t index_i, Real dt)
 {
+    FirstStageType::update(index_i, dt);
     for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
     {
-        (*this->diffusion_species_[m])[particle_i] =
-            0.5 * diffusion_species_s_[m][particle_i] +
-            0.5 * ((*this->diffusion_species_[m])[particle_i] + dt * (*this->diffusion_dt_[m])[particle_i]);
+        (*this->diffusion_species_[m])[index_i] = 0.5 * diffusion_species_s_[m][index_i] +
+                                                  0.5 * (*this->diffusion_species_[m])[index_i];
     }
 }
 //=================================================================================================//

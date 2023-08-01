@@ -157,7 +157,6 @@ namespace SPH
             Matd stress_tensor_i = shear_stress_[index_i] + p_[index_i] * Matd::Identity();
             von_mises_stress_[index_i] = getVonMisesStressFromMatrix(stress_tensor_i);
         }
-
         //=================================================================================================//
         //===================================Non-hourglass formulation=====================================//
         //=================================================================================================//
@@ -166,14 +165,12 @@ namespace SPH
             G_(continuum_.getShearModulus(continuum_.getYoungsModulus(), continuum_.getPoissonRatio())),
             smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()), shear_stress_(particles_->shear_stress_),
             B_(*this->particles_->template registerSharedVariable<Matd>("CorrectionMatrix", Matd::Identity())), acc_shear_(particles_->acc_shear_) {}
-        //original
         void ShearAccelerationRelaxation::interaction(size_t index_i, Real dt)
         {
             Real rho_i = rho_[index_i];
             Vecd acceleration = Vecd::Zero();
             Vecd vel_i = vel_[index_i];
             Neighborhood& inner_neighborhood = inner_configuration_[index_i];
-            //Matd B_i = B_[index_i];
             for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
             {
                 size_t index_j = inner_neighborhood.j_[n];
