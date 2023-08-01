@@ -54,7 +54,7 @@ int main()
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplex>
         update_air_density_by_summation(air_wall_contact, air_water_complex);
     /** transport formulation for regularizing particle distribution. */
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex>
+    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>>
         air_transport_correction(air_wall_contact, air_water_complex, 0.05);
     /** Time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_water_advection_time_step_size(water_block, U_ref);

@@ -53,19 +53,80 @@ namespace fluid_dynamics
  * If single (acoustic) time step is used, the coefficient should be decrease
  * to about 1/4 of the default value.
  */
+template <class ParticleScopeType>
 class TransportVelocityCorrectionInner : public LocalDynamics, public FluidDataInner
 {
   public:
-    explicit TransportVelocityCorrectionInner(BaseInnerRelation &inner_relation, Real coefficient = 0.2);
+    explicit TransportVelocityCorrectionInner(BaseInnerRelation &inner_relation, Real coefficient = 0.2)
+        : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
+          pos_(particles_->pos_), indicator_(*particles_->getVariableByName<int>("Indicator")),
+          smoothing_length_sqr_(pow(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
+          coefficient_(coefficient), checkWithinScope(particles_){};
     virtual ~TransportVelocityCorrectionInner(){};
 
-    void interaction(size_t index_i, Real dt = 0.0);
+    void interaction(size_t index_i, Real dt = 0.0)
+    {
+        if (checkWithinScope(index_i))
+        {
+            Vecd acceleration_trans = Vecd::Zero();
+            const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+            for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+            {
+                Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+
+                // acceleration for transport velocity
+                acceleration_trans -= 2.0 * nablaW_ijV_j;
+            }
+
+            pos_[index_i] += coefficient_ * smoothing_length_sqr_ * acceleration_trans;
+        }
+    };
 
   protected:
     StdLargeVec<Vecd> &pos_;
     StdLargeVec<int> &indicator_;
     Real smoothing_length_sqr_;
     const Real coefficient_;
+    ParticleScopeType checkWithinScope;
+};
+
+/**
+ * @class TransportVelocityCorrectionComplex
+ * @brief  transport velocity correction considering the contribution from contact bodies
+ */
+template <class ParticleScopeType>
+class TransportVelocityCorrectionComplex
+    : public BaseInteractionComplex<TransportVelocityCorrectionInner<ParticleScopeType>, FluidContactOnly>
+{
+  public:
+    template <typename... Args>
+    TransportVelocityCorrectionComplex(Args &&...args)
+        : BaseInteractionComplex<TransportVelocityCorrectionInner<ParticleScopeType>, FluidContactOnly>(
+              std::forward<Args>(args)...){};
+    virtual ~TransportVelocityCorrectionComplex(){};
+
+    void interaction(size_t index_i, Real dt = 0.0)
+    {
+        TransportVelocityCorrectionInner<ParticleScopeType>::interaction(index_i, dt);
+
+        if (this->checkWithinScope(index_i))
+        {
+            Vecd acceleration_trans = Vecd::Zero();
+            for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
+            {
+                Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
+                for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+                {
+                    Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
+
+                    // acceleration for transport velocity
+                    acceleration_trans -= 2.0 * nablaW_ijV_j;
+                }
+            }
+
+            this->pos_[index_i] += this->coefficient_ * this->smoothing_length_sqr_ * acceleration_trans;
+        }
+    };
 };
 
 /**
@@ -89,24 +150,7 @@ class TransportVelocityCorrectionInnerAdaptive : public LocalDynamics, public Fl
 };
 
 /**
- * @class TransportVelocityCorrectionComplex
- * @brief  transport velocity correction considering the contribution from contact bodies
- */
-class TransportVelocityCorrectionComplex
-    : public BaseInteractionComplex<TransportVelocityCorrectionInner, FluidContactOnly>
-{
-  public:
-    template <typename... Args>
-    TransportVelocityCorrectionComplex(Args &&...args)
-        : BaseInteractionComplex<TransportVelocityCorrectionInner, FluidContactOnly>(
-              std::forward<Args>(args)...){};
-    virtual ~TransportVelocityCorrectionComplex(){};
-
-    void interaction(size_t index_i, Real dt = 0.0);
-};
-
-/**
- * @class TransportVelocityCorrectionComplexAdaptive
+ * @class TransportVelocityCorrectionComplex<AllParticles>Adaptive
  * @brief  transport velocity correction considering the contribution from contact bodies
  */
 class TransportVelocityCorrectionComplexAdaptive
