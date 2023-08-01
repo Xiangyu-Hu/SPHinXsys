@@ -9,6 +9,8 @@ import argparse
 sys_str = platform.system()
 path_1 = os.path.abspath(os.path.join(os.getcwd(), '../..'))
 if sys_str == 'Windows':
+    # Append 'RelWithDebInfo' or 'Debug' depending on the configuration
+    # For example, path_2 = 'lib/RelWithDebInfo'
     path_2 = 'lib'
 elif sys_str == 'Linux':
     path_2 = 'lib'
