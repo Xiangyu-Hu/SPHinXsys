@@ -36,15 +36,13 @@
 #include "all_particle_dynamics.h"
 namespace SPH
 {
-namespace solid_dynamics
-{ 
-  
-  
+namespace multi_species_continuum
+{
 //----------------------------------------------------------------------
 //		for porous elastic solid dynamics
 //----------------------------------------------------------------------
-    typedef DataDelegateSimple<PorousMediaParticles> PorousMediaSolidDataSimple;
-	typedef DataDelegateInner<PorousMediaParticles> PorousMediaSolidDataInner;
+    typedef DataDelegateSimple<SPH::multi_species_continuum::PorousMediaParticles> PorousMediaSolidDataSimple;
+	typedef DataDelegateInner<SPH::multi_species_continuum::PorousMediaParticles> PorousMediaSolidDataInner;
  
 		/** 
 	 	* @class GetSaturationTimeStepSize
@@ -195,7 +193,6 @@ namespace solid_dynamics
 			void update(size_t index_i, Real Dt = 0.0);
 		};
 
-
-} // namespace solid_dynamics
+} // namespace multi_species_continuum
 } // namespace SPH
 #endif // POROUS_ELASTIC_DYNAMICS_H

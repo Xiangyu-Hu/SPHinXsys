@@ -37,6 +37,8 @@
 
 namespace SPH
 {
+namespace multi_species_continuum
+{
 	/**
 	* @class PorousMediaSolid
 	* @brief Abstract class for a porous media solid
@@ -69,6 +71,6 @@ namespace SPH
 		virtual ~PorousMediaSolid() {};
   };
 
-
+}
 } // namespace SPH
 #endif // POROUS_SOLID_H

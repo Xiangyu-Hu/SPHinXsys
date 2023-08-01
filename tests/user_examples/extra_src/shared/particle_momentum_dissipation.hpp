@@ -5,13 +5,15 @@
 
 namespace SPH
 {
+namespace multi_species_continuum
+{
 //=================================================================================================//
 	template <typename VariableType>
 	PorousMediaDampingPairwiseInner<VariableType>::
 		PorousMediaDampingPairwiseInner(BaseInnerRelation &inner_relation,
 		        const std::string &variable_name, Real eta)
 		: LocalDynamics(inner_relation.getSPHBody()),
-		 solid_dynamics::PorousMediaSolidDataInner(inner_relation),
+		 PorousMediaSolidDataInner(inner_relation),
 		Vol_(particles_->Vol_), mass_(particles_->mass_), 
 		variable_(*particles_->getVariableByName<VariableType>(variable_name)),
 		eta_(eta) {} 
@@ -54,5 +56,6 @@ namespace SPH
         }
 	}
 //=================================================================================================//
+}
 } // namespace SPH
 #endif // PARTICLE_MOMENTUM_DISSIPATION_HPP

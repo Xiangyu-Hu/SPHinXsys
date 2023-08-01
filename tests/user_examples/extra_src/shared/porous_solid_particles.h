@@ -34,10 +34,8 @@
  
 namespace SPH
 {
-/**
- *	pre-claimed classes
- */
-//class PorousMediaSolid;
+namespace multi_species_continuum
+{	
  
 /**
  * @class PorousMediaParticles
@@ -67,6 +65,6 @@ namespace SPH
 		virtual void initializeOtherVariables() override;
 		virtual ElasticSolidParticles *ThisObjectPtr() override { return this; };
 	};
-
+}
 } // namespace SPH
 #endif // POROUS_SOLID_PARTICLES_H

@@ -6,8 +6,8 @@
 namespace SPH
 {
 //=========================================================================================================//
-namespace solid_dynamics
-{	
+namespace multi_species_continuum
+{
 //=================================================================================================//
 BasePorousMediaRelaxation::
     BasePorousMediaRelaxation(BaseInnerRelation &inner_relation)
@@ -167,6 +167,7 @@ void SaturationRelaxationInPorousMedia::update(size_t index_i, Real Dt)
     //  update fluid saturation 
     fluid_saturation_[index_i] = fluid_mass_[index_i] / fluid_initial_density / Vol_update_[index_i];
 }
-//=================================================================================================//
-} // namespace solid_dynamics
+
+//=================================================================================================// 
+}
 } // namespace SPH

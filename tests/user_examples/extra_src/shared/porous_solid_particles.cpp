@@ -4,6 +4,9 @@
 
 namespace SPH
 {
+namespace multi_species_continuum
+{	
+ 
     //=============================================================================================//
 	PorousMediaParticles::PorousMediaParticles(SPHBody &body, PorousMediaSolid *porous_solid)
 		: ElasticSolidParticles(body, porous_solid), porous_solid_(*porous_solid) {}
@@ -36,4 +39,5 @@ namespace SPH
  
 	}
 //=================================================================================================//
+}
 } // namespace SPH

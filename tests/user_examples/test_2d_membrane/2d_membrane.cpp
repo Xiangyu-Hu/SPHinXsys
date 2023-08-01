@@ -106,10 +106,10 @@ MultiPolygon createSaturationConstrainShape()
 //----------------------------------------------------------------------
 //	application dependent initial condition
 //----------------------------------------------------------------------
-class SaturationInitialCondition : public solid_dynamics::PorousMediaSaturationDynamicsInitialCondition
+class SaturationInitialCondition : public  multi_species_continuum::PorousMediaSaturationDynamicsInitialCondition
 {
   public:
-    SaturationInitialCondition(BodyPartByParticle &body_part) : solid_dynamics::PorousMediaSaturationDynamicsInitialCondition(body_part){};
+    SaturationInitialCondition(BodyPartByParticle &body_part) :  multi_species_continuum::PorousMediaSaturationDynamicsInitialCondition(body_part){};
     virtual ~SaturationInitialCondition(){};
 
   protected:
@@ -137,7 +137,7 @@ int main(int ac, char *av[])
        //	Creating body, materials and particles.
        //----------------------------------------------------------------------
     SolidBody beam_body(system, makeShared<Beam>("2dMembrane"));
-    beam_body.defineParticlesAndMaterial<PorousMediaParticles, PorousMediaSolid>(rho_0, Youngs_modulus, poisson,
+    beam_body.defineParticlesAndMaterial<multi_species_continuum::PorousMediaParticles, multi_species_continuum::PorousMediaSolid>(rho_0, Youngs_modulus, poisson,
                    diffusivity_constant_, fulid_initial_density_, water_pressure_constant_);
     beam_body.generateParticles<ParticleGeneratorLattice>();
 
@@ -160,16 +160,16 @@ int main(int ac, char *av[])
     InteractionWithUpdate<CorrectedConfigurationInner> beam_corrected_configuration(beam_body_inner);
     // time step size calculation
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
-    ReduceDynamics<solid_dynamics::GetSaturationTimeStepSize> saturation_time_step_size(beam_body);
+    ReduceDynamics< multi_species_continuum::GetSaturationTimeStepSize> saturation_time_step_size(beam_body);
 
     // stress relaxation for the beam
-    Dynamics1Level<solid_dynamics::PorousMediaStressRelaxationFirstHalf> stress_relaxation_first_half(beam_body_inner);
-    Dynamics1Level<solid_dynamics::PorousMediaStressRelaxationSecondHalf> stress_relaxation_second_half(beam_body_inner);
-    Dynamics1Level<solid_dynamics::SaturationRelaxationInPorousMedia> saturation_relaxation(beam_body_inner);
+    Dynamics1Level<multi_species_continuum::PorousMediaStressRelaxationFirstHalf> stress_relaxation_first_half(beam_body_inner);
+    Dynamics1Level<multi_species_continuum::PorousMediaStressRelaxationSecondHalf> stress_relaxation_second_half(beam_body_inner);
+    Dynamics1Level<multi_species_continuum::SaturationRelaxationInPorousMedia> saturation_relaxation(beam_body_inner);
 
     // clamping a solid body part. This is softer than a direct constraint
     BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
-    SimpleDynamics<solid_dynamics::MomentumConstraint> clamp_constrain_beam_base(beam_base);
+    SimpleDynamics<multi_species_continuum::MomentumConstraint> clamp_constrain_beam_base(beam_base);
 
     BodyRegionByParticle beam_saturation(beam_body, makeShared<MultiPolygonShape>(createSaturationConstrainShape()));
     SimpleDynamics<SaturationInitialCondition>  constrain_beam_saturation(beam_saturation);
@@ -178,7 +178,7 @@ int main(int ac, char *av[])
     ReduceDynamics<TotalMechanicalEnergy> get_kinetic_energy(beam_body);
 
     /** Damping */
-    DampingWithRandomChoice<InteractionSplit<PorousMediaDampingPairwiseInner<Vec2d>>>
+    DampingWithRandomChoice<InteractionSplit<multi_species_continuum::PorousMediaDampingPairwiseInner<Vec2d>>>
         beam_damping(0.5, beam_body_inner, "TotalMomentum", physical_viscosity);
     //-----------------------------------------------------------------------------
     // outputs

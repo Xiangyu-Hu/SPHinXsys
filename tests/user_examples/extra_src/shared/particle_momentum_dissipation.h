@@ -37,6 +37,8 @@
 
 namespace SPH
 {
+namespace multi_species_continuum
+{
   class PorousMediaParticles;
  
    /**
@@ -49,7 +51,7 @@ namespace SPH
 	 */
 
 	template <typename VariableType>
-	class PorousMediaDampingPairwiseInner : public LocalDynamics, public solid_dynamics::PorousMediaSolidDataInner
+	class PorousMediaDampingPairwiseInner : public LocalDynamics, public PorousMediaSolidDataInner
 	{
     public:
       PorousMediaDampingPairwiseInner(BaseInnerRelation &inner_relation, const std::string &variable_name, Real eta);
@@ -62,6 +64,6 @@ namespace SPH
       StdLargeVec<VariableType> &variable_;
       Real eta_; /**< damping coefficient */
 	};
-
+}
 } // namespace SPH
 #endif // PARTICLE_MOMENTUM_DISSIPATION_H 
