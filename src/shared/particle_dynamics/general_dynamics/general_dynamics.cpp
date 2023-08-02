@@ -92,6 +92,7 @@ Vecd PositionUpperBound::reduce(size_t index_i, Real dt)
 TotalMechanicalEnergy::TotalMechanicalEnergy(SPHBody &sph_body, SharedPtr<Gravity> gravity_ptr)
     : LocalDynamicsReduce<Real, ReduceSum<Real>>(sph_body, Real(0)),
       GeneralDataDelegateSimple(sph_body), mass_(particles_->mass_),
+      DeviceExecutable<TotalMechanicalEnergy, TotalMechanicalEnergyKernel>(this, particles_, gravity_ptr.get()),
       vel_(particles_->vel_), pos_(particles_->pos_),
       gravity_(gravity_ptr_keeper_.assignPtr(gravity_ptr))
 {

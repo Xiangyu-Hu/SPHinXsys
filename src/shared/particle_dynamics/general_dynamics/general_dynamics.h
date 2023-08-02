@@ -33,6 +33,7 @@
 #include "base_body.h"
 #include "base_particles.h"
 #include "external_force.h"
+#include "execution_unit/device_executable.hpp"
 
 #include <limits>
 
@@ -308,13 +309,38 @@ class QuantityMoment : public QuantitySummation<VariableType>
     };
 };
 
+class TotalMechanicalEnergyKernel {
+public:
+    TotalMechanicalEnergyKernel(BaseParticles *particles, Gravity *gravity) :
+        mass_(particles->getDeviceVariableByName<DeviceReal>("Mass")),
+        vel_(particles->getDeviceVariableByName<DeviceVecd>("Velocity")),
+        pos_(particles->getDeviceVariableByName<DeviceVecd>("Position")),
+        gravity_(gravity) {}
+
+    template<class RealType, class VecType, class SquareNormFunc>
+    static RealType reduce(size_t index_i, Real dt, RealType *mass, VecType* vel, VecType *pos, Gravity* gravity,
+                           SquareNormFunc&& squareNorm) {
+        return 0.5 * mass[index_i] * squareNorm(vel[index_i]) + mass[index_i] * gravity->getPotential(pos[index_i]);
+    }
+
+    DeviceReal reduce(size_t index_i, Real dt = 0.0) const {
+        return reduce(index_i, dt, mass_, vel_, pos_, gravity_, [](const DeviceVecd& vel){ return sycl::dot(vel, vel); });
+    }
+
+private:
+    DeviceReal *mass_;
+    DeviceVecd *vel_, *pos_;
+    Gravity *gravity_;
+};
+
 /**
  * @class TotalMechanicalEnergy
  * @brief Compute the total mechanical (kinematic and potential) energy
  */
 class TotalMechanicalEnergy
     : public LocalDynamicsReduce<Real, ReduceSum<Real>>,
-      public GeneralDataDelegateSimple
+      public GeneralDataDelegateSimple,
+      public DeviceExecutable<TotalMechanicalEnergy, TotalMechanicalEnergyKernel>
 {
   private:
     SharedPtrKeeper<Gravity> gravity_ptr_keeper_;

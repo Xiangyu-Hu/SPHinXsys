@@ -101,6 +101,11 @@ int main(int ac, char *av[])
 
     SharedPtr<Gravity> gravity_ptr = makeSharedDevice<Gravity>(Vecd(0.0, -gravity_g));
 
+    water_block_complex.getInnerRelation().allocateInnerConfigurationDevice();
+    water_block_complex.getContactRelation().allocateContactConfiguration();
+    water_block_complex_sycl.getInnerRelation().allocateInnerConfigurationDevice();
+    water_block_complex_sycl.getContactRelation().allocateContactConfiguration();
+
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall, ParallelSYCLDevicePolicy> fluid_pressure_relaxation_sycl(water_block_complex_sycl);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall, ParallelSYCLDevicePolicy> fluid_density_relaxation_sycl(water_block_complex);
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex, ParallelSYCLDevicePolicy> fluid_density_by_summation_sycl(water_block_complex_sycl);

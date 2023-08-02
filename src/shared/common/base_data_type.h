@@ -96,6 +96,32 @@ using DeviceReal = float;
 using DeviceVec2d = sycl::vec<DeviceReal, 2>;
 using DeviceVec3d = sycl::vec<DeviceReal, 3>;
 
+template<typename Type, class Enable = void>
+struct DataTypeEquivalence {
+    static_assert("Type non recognized as host or device type.");
+};
+
+template<class CheckType, class Type1, class Type2>
+using enable_if_is_either_t = std::enable_if_t<std::disjunction_v<std::is_same<CheckType, Type1>, std::is_same<CheckType, Type2>>>;
+
+template<class TypeReal>
+struct DataTypeEquivalence<TypeReal, enable_if_is_either_t<TypeReal, Real, DeviceReal>> {
+    using host_t = Real;
+    using device_t = DeviceReal;
+};
+
+template<class TypeVec2d>
+struct DataTypeEquivalence<TypeVec2d, enable_if_is_either_t<TypeVec2d, Vec2d, DeviceVec2d>> {
+    using host_t = Vec2d;
+    using device_t = DeviceVec2d;
+};
+
+template<class TypeVec3d>
+struct DataTypeEquivalence<TypeVec3d, enable_if_is_either_t<TypeVec3d, Vec3d, DeviceVec3d>> {
+    using host_t = Vec3d;
+    using device_t = DeviceVec3d;
+};
+
 /** Unified initialize to zero for all data type. */
 /**
  * NOTE: Eigen::Matrix<> constexpr constructor?
@@ -119,7 +145,7 @@ struct ZeroData<int>
     static inline int value = 0;
 };
 /** Type trait for data type index. */
-template <typename T, typename Enable = void>
+template <typename T, class Enable = std::true_type>
 struct DataTypeIndex
 {
     static constexpr int value = std::numeric_limits<int>::max();
@@ -154,18 +180,23 @@ struct DataTypeIndex<int>
 {
     static constexpr int value = 5;
 };
+
+template<typename DeviceType>
+using is_device_type_different_from_host =
+    std::conditional_t<std::is_same_v<DeviceType, typename DataTypeEquivalence<DeviceType>::host_t>, std::false_type, std::true_type>;
+
 template <>
-struct DataTypeIndex<DeviceReal, std::enable_if_t<std::negation_v<std::is_same<Real, DeviceReal>>>>
+struct DataTypeIndex<DeviceReal, is_device_type_different_from_host<DeviceReal>>
 {
     static constexpr int value = 6;
 };
 template <>
-struct DataTypeIndex<DeviceVec2d, std::enable_if_t<std::negation_v<std::is_same<Vec2d, DeviceVec2d>>>>
+struct DataTypeIndex<DeviceVec2d, is_device_type_different_from_host<DeviceVec2d>>
 {
     static constexpr int value = 7;
 };
 template <>
-struct DataTypeIndex<DeviceVec3d, std::enable_if_t<std::negation_v<std::is_same<Vec3d, DeviceVec3d>>>>
+struct DataTypeIndex<DeviceVec3d, is_device_type_different_from_host<DeviceVec3d>>
 {
     static constexpr int value = 8;
 };

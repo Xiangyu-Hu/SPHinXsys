@@ -33,7 +33,6 @@
 #include "execution_policy.h"
 #include "execution_unit/execution_proxy.hpp"
 #include "execution_unit/execution_queue.hpp"
-#include "execution_unit/execution_event.hpp"
 #include "sph_data_containers.h"
 
 namespace SPH
@@ -299,7 +298,7 @@ inline void particle_for(const ParallelSYCLDevicePolicy & sycl_policy, const siz
                      const LocalDynamicsFunction &local_dynamics_function, Proxy& proxy)
 {
     auto &sycl_queue = executionQueue.getQueue();
-    auto work_group_size = executionQueue.getWorkGroupSize();
+    const size_t work_group_size = std::min(executionQueue.getWorkGroupSize(), all_real_particles);
     auto &kernel_buffer = proxy.getBuffer();
     sycl_queue.submit([&](sycl::handler &cgh) {
         auto kernel_accessor = kernel_buffer.get_access(cgh, sycl::read_write);
