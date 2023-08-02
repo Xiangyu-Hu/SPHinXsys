@@ -18,7 +18,7 @@ Real DL = 5.366;              /**< Tank length. */
 Real DH = 5.366;              /**< Tank height. */
 Real LL = 5.366;                /**< Liquid column length. */
 Real LH = 5.366;                /**< Liquid column height. */
-Real resolution_ref = 0.04;  /**< Global reference resolution. */
+Real resolution_ref = 0.1;  /**< Global reference resolution. */
 Real BW = resolution_ref * 4; /**< Extending width for BCs. */
 // Observer location
 StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
@@ -167,27 +167,6 @@ class HorizontalMovement: public BaseTracingMethod
      }
 };
 
-class CircleMovement : public BaseTracingMethod
-{
-public:
-    CircleMovement() {};
-    virtual ~CircleMovement() {};
-
-    virtual Vecd tracingPosition(Vecd previous_position, Real current_time = 0.0) override
-    {
-        Real dt = 0.1;
-        Vecd rotation_center(2.75, 1.0);
-        Real rotation_v = 0.2*Pi;
-        Real distance = (previous_position - rotation_center).norm();
-        Real run_time = GlobalStaticVariables::physical_time_;
-        Vecd current_position(0.0, 0.0);
-        current_position[0] = cos(rotation_v * run_time) * distance;
-        current_position[1] = sin(rotation_v * run_time) * distance;
-       /* current_position[0] = previous_position[0] - (rotation_center[0] * cos(rotation_v * run_time) - rotation_center[1] * sin(rotation_v * run_time));
-        current_position[1] = previous_position[1] - (rotation_center[0] * sin(rotation_v * run_time) + rotation_center[1] * cos(rotation_v * run_time));*/
-        return current_position;
-    }
-};
 
 class VerticalRight: public BaseTracingMethod
 {
@@ -254,6 +233,29 @@ class VerticalMiddle: public BaseTracingMethod
          return current_position;
      }
 };
+
+class CircleMovement : public BaseTracingMethod
+{
+public:
+    CircleMovement() {};
+    virtual ~CircleMovement() {};
+
+   
+    virtual Vecd tracingPosition(Vecd previous_position, Real current_time = 0.0) override
+    {
+        Vecd rotation_center(2.0, 1.0);
+        Real rotation_v = Pi;
+        Real rho = (previous_position - rotation_center).norm();
+        Real theta = atan2(previous_position[0] - rotation_center[0], previous_position[1] - rotation_center[1]);
+        Real run_time = GlobalStaticVariables::physical_time_;
+        Vecd current_position(0.0, 0.0);
+        current_position[0] = rotation_center[0] + cos(theta + rotation_v * run_time) * rho;
+        current_position[1] = rotation_center[1] + sin(theta + rotation_v * run_time) * rho;
+       
+        return current_position;
+    }
+};
+
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
@@ -322,20 +324,20 @@ int main(int ac, char *av[])
     /** Push back the static confinement conditiont to corresponding dynamics. */
     update_density_by_summation.post_processes_.push_back(&confinement_condition_wall.density_summation_);
     update_density_by_summation.post_processes_.push_back(&confinement_condition_circle.density_relaxation_);
-    update_density_by_summation.post_processes_.push_back(&confinement_condition_triangle.density_relaxation_);
-    update_density_by_summation.post_processes_.push_back(&confinement_condition_square.density_relaxation_);
+    //update_density_by_summation.post_processes_.push_back(&confinement_condition_triangle.density_relaxation_);
+    //update_density_by_summation.post_processes_.push_back(&confinement_condition_square.density_relaxation_);
     pressure_relaxation.post_processes_.push_back(&confinement_condition_wall.pressure_relaxation_);
     pressure_relaxation.post_processes_.push_back(&confinement_condition_circle.pressure_relaxation_);
-    pressure_relaxation.post_processes_.push_back(&confinement_condition_triangle.pressure_relaxation_);
-    pressure_relaxation.post_processes_.push_back(&confinement_condition_square.pressure_relaxation_);
+    //pressure_relaxation.post_processes_.push_back(&confinement_condition_triangle.pressure_relaxation_);
+    //pressure_relaxation.post_processes_.push_back(&confinement_condition_square.pressure_relaxation_);
     density_relaxation.post_processes_.push_back(&confinement_condition_wall.density_relaxation_);
     density_relaxation.post_processes_.push_back(&confinement_condition_circle.density_relaxation_);
-    density_relaxation.post_processes_.push_back(&confinement_condition_triangle.density_relaxation_);
-    density_relaxation.post_processes_.push_back(&confinement_condition_square.density_relaxation_);
+    //density_relaxation.post_processes_.push_back(&confinement_condition_triangle.density_relaxation_);
+    //density_relaxation.post_processes_.push_back(&confinement_condition_square.density_relaxation_);
     density_relaxation.post_processes_.push_back(&confinement_condition_wall.surface_bounding_);
     density_relaxation.post_processes_.push_back(&confinement_condition_circle.surface_bounding_);
-    density_relaxation.post_processes_.push_back(&confinement_condition_triangle.surface_bounding_);
-    density_relaxation.post_processes_.push_back(&confinement_condition_square.surface_bounding_);
+    //density_relaxation.post_processes_.push_back(&confinement_condition_triangle.surface_bounding_);
+    //density_relaxation.post_processes_.push_back(&confinement_condition_square.surface_bounding_);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -424,8 +426,8 @@ int main(int ac, char *av[])
             water_block_inner.updateConfiguration();
             fluid_observer_contact.updateConfiguration();
             near_surface_circle.updateCellList();
-            near_surface_triangle.updateCellList();
-            near_surface_square.updateCellList();
+            //near_surface_triangle.updateCellList();
+            //near_surface_square.updateCellList();
             interval_updating_configuration += TickCount::now() - time_instance;
             
         }

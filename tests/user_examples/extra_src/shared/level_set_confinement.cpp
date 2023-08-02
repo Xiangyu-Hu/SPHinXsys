@@ -176,7 +176,8 @@ namespace SPH
 		//=================================================================================================//
 		void MovingConfinementIntegration1stHalf::update(size_t index_i, Real dt)
 		{
-			Vecd kernel_gradient = level_set_shape_->computeKernelGradientIntegral(near_surface_tracing_.tracing_cell_method_base_.tracingPosition(pos_[index_i]));
+			Vecd kernel_gradient_previous = level_set_shape_->computeKernelGradientIntegral(near_surface_tracing_.tracing_cell_method_base_.tracingPosition(pos_[index_i]));
+			Vecd kernel_gradient = near_surface_tracing_.tracing_cell_method_base_.updateNormalForVector(kernel_gradient_previous);
 			acc_[index_i] -= 2.0 * p_[index_i] * kernel_gradient / rho_[index_i];
 		}
 		//=================================================================================================//
@@ -190,7 +191,8 @@ namespace SPH
 		//=================================================================================================//
 		void MovingConfinementIntegration2ndHalf::update(size_t index_i, Real dt)
 		{
-			Vecd kernel_gradient = level_set_shape_->computeKernelGradientIntegral(near_surface_tracing_.tracing_cell_method_base_.tracingPosition(pos_[index_i]));
+			Vecd kernel_gradient_previous = level_set_shape_->computeKernelGradientIntegral(near_surface_tracing_.tracing_cell_method_base_.tracingPosition(pos_[index_i]));
+			Vecd kernel_gradient = near_surface_tracing_.tracing_cell_method_base_.updateNormalForVector(kernel_gradient_previous);
 			Vecd vel_in_wall = -vel_[index_i];
 			drho_dt_[index_i] += rho_[index_i] * (vel_[index_i] - vel_in_wall).dot(kernel_gradient);
 		}
@@ -208,7 +210,8 @@ namespace SPH
 
 			if (phi > -constrained_distance_)
 			{
-				Vecd unit_normal = level_set_shape_->findNormalDirection(near_surface_tracing_.tracing_cell_method_base_.tracingPosition(pos_[index_i]));
+				Vecd unit_normal_previous = level_set_shape_->findNormalDirection(near_surface_tracing_.tracing_cell_method_base_.tracingPosition(pos_[index_i]));
+				Vecd unit_normal = near_surface_tracing_.tracing_cell_method_base_.updateNormalForVector(unit_normal_previous);
 				pos_[index_i] -= (phi + constrained_distance_) * unit_normal;
 			}
 		}

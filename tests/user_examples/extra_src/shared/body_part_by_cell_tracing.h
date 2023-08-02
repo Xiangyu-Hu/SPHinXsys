@@ -56,6 +56,11 @@ class BaseTracingMethod
          Vecd current_position = previous_position;
          return current_position;
      }
+
+     virtual Vecd updateNormalForVector(Vecd previous_vector)
+     {
+         return previous_vector;
+     }
 };
 
 /**

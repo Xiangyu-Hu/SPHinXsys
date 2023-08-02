@@ -154,8 +154,8 @@ public:
         Real theta = atan2(previous_position[0] - rotation_center[0], previous_position[1] - rotation_center[1]);
         Real run_time = GlobalStaticVariables::physical_time_;
         Vecd current_position(0.0, 0.0);
-        current_position[0] = cos(theta + rotation_v * run_time) * rho;
-        current_position[1] = sin(theta + rotation_v * run_time) * rho;
+        current_position[0] = rotation_center[0] + cos(theta + rotation_v * run_time) * rho;
+        current_position[1] = rotation_center[1] + sin(theta + rotation_v * run_time) * rho;
        
         return current_position;
     }
@@ -171,9 +171,9 @@ int main(int ac, char *av[])
     Mesh test_region(mesh_domain, 0.2, 4);
     
     CircleMovement circle_movement;
-    Real end_time = 5.0;
+    Real end_time = 10.0;
     
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (GlobalStaticVariables::physical_time_ <= end_time)
     {
         std::string output_folder_ = "./output";
         std::string filePath = output_folder_ + "/" + "rotation_test_" + std::to_string(GlobalStaticVariables::physical_time_) + ".dat";
@@ -188,6 +188,7 @@ int main(int ac, char *av[])
         for(size_t i= 0; i != x; ++i)
             for(size_t j=0; j!= y; ++j)
         {
+                //cell_position.push_back(test_region.CellPositionFromIndex(Array2i(i, j)));
                 cell_position.push_back(circle_movement.tracingPosition(test_region.CellPositionFromIndex(Array2i(i, j))));
         }
         
@@ -198,8 +199,5 @@ int main(int ac, char *av[])
   
         GlobalStaticVariables::physical_time_ += dt;
     }
-
-
-    std::cout << "rotation_test is finished" << std::endl;
     return 0;
 }

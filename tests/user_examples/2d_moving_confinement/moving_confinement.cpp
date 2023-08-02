@@ -16,7 +16,7 @@ Real DL = 5.366;              /**< Tank length. */
 Real DH = 5.366;              /**< Tank height. */
 Real LL = 5.366;                /**< Liquid column length. */
 Real LH = 2.0;                /**< Liquid column height. */
-Real resolution_ref = 0.05;  /**< Global reference resolution. */
+Real resolution_ref = 0.03;  /**< Global reference resolution. */
 Real BW = resolution_ref * 4; /**< Extending width for BCs. */
 // Observer location
 StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
@@ -81,6 +81,7 @@ std::vector<Vecd> creatSquare()
     return square_shape;
 }
 
+Vecd square_center (2.75, 1.0);
 //----------------------------------------------------------------------
 // Water body shape definition.
 //----------------------------------------------------------------------
@@ -91,8 +92,8 @@ class WaterBlock : public MultiPolygonShape
     {
         multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
         //multi_polygon_.addAPolygon(createStructureShape(), ShapeBooleanOps::sub);
-        multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
-        //multi_polygon_.addAPolygon(creatSquare(), ShapeBooleanOps::sub);
+        //multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
+        multi_polygon_.addAPolygon(creatSquare(), ShapeBooleanOps::sub);
     }
 };
 //----------------------------------------------------------------------
@@ -115,8 +116,8 @@ class Triangle : public MultiPolygonShape
     explicit Triangle(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
        // multi_polygon_.addAPolygon(createStructureShape(), ShapeBooleanOps::add);
-        multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
-        //multi_polygon_.addAPolygon(creatSquare(), ShapeBooleanOps::add);
+       // multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(creatSquare(), ShapeBooleanOps::add);
     }
 };
 
@@ -130,8 +131,8 @@ class HorizontalMovement: public BaseTracingMethod
      {
          Real run_time = GlobalStaticVariables::physical_time_;
          Vecd current_position (0.0, 0.0);
-         current_position[0]= previous_position[0] - 0.2 * run_time;
-         //current_position[0] = previous_position[0];
+         current_position[0]= previous_position[0] - 0.1 * run_time;
+         //current_position[1] = previous_position[1];
          if(run_time <= 10.0)
          {
              current_position[1] = previous_position[1] + 0.05 * run_time;
@@ -149,24 +150,37 @@ class HorizontalMovement: public BaseTracingMethod
 class CircleMovement : public BaseTracingMethod
 {
 public:
-    CircleMovement() {};
+    CircleMovement(Vecd rotation_center, Real rotation_velocity) : rotation_center_(rotation_center), rotation_v_(rotation_velocity){};
     virtual ~CircleMovement() {};
-
+   
     virtual Vecd tracingPosition(Vecd previous_position, Real current_time = 0.0) override
     {
-        Real dt = 0.1;
-        Vecd rotation_center(2.0, 1.0);
-        Real rotation_v = 0.2*Pi;
-        Real rho = (previous_position - rotation_center).norm();
-        Real theta = atan2(previous_position[0] - rotation_center[0], previous_position[1] - rotation_center[1]);
+
+        Real rho = (previous_position - rotation_center_).norm();
+        Real theta = atan2(previous_position[0] - rotation_center_[0], previous_position[1] - rotation_center_[1]);
         Real run_time = GlobalStaticVariables::physical_time_;
         Vecd current_position(0.0, 0.0);
-        current_position[0] = cos(theta + rotation_v * run_time) * rho;
-        current_position[1] = sin(theta + rotation_v * run_time) * rho;
-       /* current_position[0] = previous_position[0] - (rotation_center[0] * cos(rotation_v * run_time) - rotation_center[1] * sin(rotation_v * run_time));
-        current_position[1] = previous_position[1] - (rotation_center[0] * sin(rotation_v * run_time) + rotation_center[1] * cos(rotation_v * run_time));*/
+        current_position[0] = rotation_center_[0] + cos(theta + rotation_v_ * run_time) * rho;
+        current_position[1] = rotation_center_[1] + sin(theta + rotation_v_ * run_time) * rho;
+       
         return current_position;
     }
+
+    virtual Vecd updateNormalForVector(Vecd previous_position) override
+    {
+        Real run_time = GlobalStaticVariables::physical_time_;
+        Real magnitude = previous_position.norm();
+        Real theta = atan2(previous_position[0], previous_position[1]);
+        Vecd current_vector(0.0, 0.0);
+        current_vector[0] = magnitude * cos(theta + run_time * rotation_v_);
+        current_vector[1] = magnitude * sin(theta + run_time * rotation_v_);
+
+        return current_vector;
+    }
+
+protected:
+        Vecd rotation_center_;
+        Real rotation_v_;
 };
 //----------------------------------------------------------------------
 //	Main program starts here.
@@ -219,7 +233,7 @@ int main(int ac, char *av[])
     fluid_dynamics::StaticConfinement confinement_condition_wall(near_surface_wall);
     /** Define the confinement condition for structure. */
 
-    CircleMovement circle_movement;
+    CircleMovement circle_movement(square_center, Pi);
     //HorizontalMovement horizaontal_movement;
     NearShapeSurfaceTracing near_surface_circle(water_block, makeShared<InverseShape<Triangle>>("Circle"), circle_movement);
     near_surface_circle.level_set_shape_.writeLevelSet(io_environment);
