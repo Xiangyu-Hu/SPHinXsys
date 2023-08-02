@@ -231,8 +231,9 @@ void BarStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
 void BarStressRelaxationFirstHalf::update(size_t index_i, Real dt)
 {
     vel_[index_i] += (acc_prior_[index_i] + acc_[index_i]) * dt;
-    angular_vel_[index_i] += (dangular_vel_dt_[index_i]) * dt;
-    angular_b_vel_[index_i] += (dangular_b_vel_dt_[index_i]) * dt;
+    Matd current_transformation_matrix = getTransformationMatrix(pseudo_n_[index_i], pseudo_b_n_[index_i]);
+    angular_vel_[index_i] += (transformation_matrix_[index_i] * (current_transformation_matrix.transpose() * dangular_vel_dt_[index_i])) * dt;
+    angular_b_vel_[index_i] += (transformation_matrix_[index_i] * (current_transformation_matrix.transpose() * dangular_b_vel_dt_[index_i])) * dt;
 }
 //=================================================================================================//
 void BarStressRelaxationSecondHalf::initialization(size_t index_i, Real dt)

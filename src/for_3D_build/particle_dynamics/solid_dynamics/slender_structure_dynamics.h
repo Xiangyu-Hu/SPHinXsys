@@ -232,9 +232,9 @@ class BarStressRelaxationFirstHalf : public BaseBarRelaxation
         acc_[index_i] = acceleration * inv_rho0_ / (thickness_[index_i] * width_[index_i]);
         dpseudo_n_d2t_[index_i] = pseudo_normal_acceleration * inv_rho0_ * 12.0 / pow(thickness_[index_i], 4);
         dpseudo_b_n_d2t_[index_i] = -pseudo_b_normal_acceleration * inv_rho0_ * 12.0 / pow(thickness_[index_i], 4);
-
-        Vecd local_dpseudo_n_d2t = transformation_matrix_[index_i] * dpseudo_n_d2t_[index_i];
-        Vecd local_dpseudo_b_n_d2t = transformation_matrix_[index_i] * dpseudo_b_n_d2t_[index_i];
+        Matd current_transformation_matrix = getTransformationMatrix(pseudo_n_[index_i], pseudo_b_n_[index_i]);
+        Vecd local_dpseudo_n_d2t = current_transformation_matrix * dpseudo_n_d2t_[index_i];
+        Vecd local_dpseudo_b_n_d2t = current_transformation_matrix * dpseudo_b_n_d2t_[index_i];
         dangular_b_vel_dt_[index_i] = getRotationFromPseudoNormalForSmallDeformation_b(
             Vec3d(local_dpseudo_b_n_d2t), Vec3d(local_dpseudo_n_d2t), Vec3d(rotation_b_[index_i]), Vec3d(angular_b_vel_[index_i]), dt);
         dangular_vel_dt_[index_i] = getRotationFromPseudoNormalForSmallDeformation(

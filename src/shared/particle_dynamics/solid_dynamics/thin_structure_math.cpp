@@ -23,22 +23,17 @@ Vec2d getVectorAfterThinStructureRotation(const Vec2d &initial_vector, const Vec
 Vec3d getVectorAfterThinStructureRotation(const Vec3d &initial_vector, const Vec3d &rotation_angles)
 {
     /**The rotation matrix is the rotation around Y-axis \times rotation around X-axis. */
-    Real sin_angle_x = sin(rotation_angles[0]);
-    Real cos_angle_x = cos(rotation_angles[0]);
 
-    Real sin_angle_y = sin(rotation_angles[1]);
-    Real cos_angle_y = cos(rotation_angles[1]);
+    Real theta = sqrt(rotation_angles[0] * rotation_angles[0] + rotation_angles[1] * rotation_angles[1] + rotation_angles[2] * rotation_angles[2]);
+    Mat3d R1 = Mat3d::Zero();
+    R1(0, 1) = -rotation_angles[2];
+    R1(0, 2) = rotation_angles[1];
+    R1(1, 0) = rotation_angles[2];
+    R1(1, 2) = -rotation_angles[0];
+    R1(2, 0) = -rotation_angles[1];
+    R1(2, 1) = rotation_angles[0];
 
-    Mat3d rotation_matrix = Mat3d{
-                                {cos_angle_y, 0.0, sin_angle_y},
-                                {0.0, 1.0, 0.0},
-                                {-sin_angle_y, 0.0, cos_angle_y},
-                            } *
-                            Mat3d{
-                                {1.0, 0.0, 0.0},
-                                {0.0, cos_angle_x, -sin_angle_x},
-                                {0.0, sin_angle_x, cos_angle_x},
-                            };
+    Mat3d rotation_matrix = Mat3d::Identity() + sin(theta) / (theta + Eps) * R1 + (1 - cos(theta)) / (theta * theta + Eps) * R1 * R1;
 
     return rotation_matrix * initial_vector;
 }

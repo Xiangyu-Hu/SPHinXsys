@@ -77,14 +77,14 @@ Vec3d getRotationFromPseudoNormalForFiniteDeformation(const Vec3d &dpseudo_n_d2t
 Vec3d getRotationFromPseudoNormalForSmallDeformation(
     const Vec3d &dpseudo_b_n_d2t, const Vec3d &dpseudo_n_d2t, const Vec3d &rotation, const Vec3d &angular_vel, Real dt)
 {
-    return Vec3d(0.0, dpseudo_n_d2t[0], 0.0);
+    return Vec3d(-dpseudo_n_d2t[1] - dpseudo_b_n_d2t[2], dpseudo_n_d2t[0], dpseudo_b_n_d2t[0]);
 }
 //=================================================================================================//
 
 Vec3d getRotationFromPseudoNormalForSmallDeformation_b(
     const Vec3d &dpseudo_b_n_d2t, const Vec3d &dpseudo_n_d2t, const Vec3d &rotation, const Vec3d &angular_vel, Real dt)
 {
-    return Vec3d(0.0, 0.0, dpseudo_b_n_d2t[0]);
+    return Vec3d(-dpseudo_n_d2t[1] - dpseudo_b_n_d2t[2], dpseudo_n_d2t[0], dpseudo_b_n_d2t[0]);
 }
 //=================================================================================================//
 

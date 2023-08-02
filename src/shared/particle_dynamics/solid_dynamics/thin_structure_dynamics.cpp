@@ -177,16 +177,26 @@ void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
 void ShellStressRelaxationFirstHalf::update(size_t index_i, Real dt)
 {
     vel_[index_i] += (acc_prior_[index_i] + acc_[index_i]) * dt;
-    angular_vel_[index_i] += dangular_vel_dt_[index_i] * dt;
+    Matd current_transformation_matrix = getTransformationMatrix(pseudo_n_[index_i]);
+    angular_vel_[index_i] += (transformation_matrix_[index_i] * (current_transformation_matrix.transpose() * dangular_vel_dt_[index_i])) * dt;
 }
 //=================================================================================================//
 void ShellStressRelaxationSecondHalf::initialization(size_t index_i, Real dt)
 {
     pos_[index_i] += vel_[index_i] * dt * 0.5;
     rotation_[index_i] += angular_vel_[index_i] * dt * 0.5;
-    dpseudo_n_dt_[index_i] = transformation_matrix_[index_i].transpose() *
-                             getVectorChangeRateAfterThinStructureRotation(local_pseudo_n_0, rotation_[index_i], angular_vel_[index_i]);
-    pseudo_n_[index_i] += dpseudo_n_dt_[index_i] * dt * 0.5;
+    Vecd pseudo_n_temp = pseudo_n_[index_i];
+
+    pseudo_n_[index_i] = transformation_matrix_[index_i].transpose() * getVectorAfterThinStructureRotation(local_pseudo_n_0, rotation_[index_i]);
+
+    if (dt < 1e-10)
+    {
+        dpseudo_n_dt_[index_i] = Vecd::Zero();
+    }
+    else
+    {
+        dpseudo_n_dt_[index_i] = (pseudo_n_[index_i] - pseudo_n_temp) / (0.5 * dt);
+    }
 }
 //=================================================================================================//
 void ShellStressRelaxationSecondHalf::update(size_t index_i, Real dt)
