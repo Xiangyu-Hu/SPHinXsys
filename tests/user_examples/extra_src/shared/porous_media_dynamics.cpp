@@ -61,38 +61,7 @@ void PorousMediaStressRelaxationFirstHalf::initialization(size_t index_i, Real d
 
     outer_fluid_velocity_relative_fluid_flux_[index_i] = fluid_velocity_[index_i] * relative_fluid_flux_[index_i].transpose() * inverse_F_T;
           
-}
-//=================================================================================================//
-void PorousMediaStressRelaxationFirstHalf::interaction(size_t index_i, Real dt)
-{
-    Vecd total_momentum_increment = Vecd::Zero();
-    Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-
-    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-    {
-        size_t index_j = inner_neighborhood.j_[n];
-        Real r_ij = inner_neighborhood.r_ij_[n];
-        Vecd gradw_ijV_j_ = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
- 
-        Real dim_r_ij_1 = Dimensions / r_ij;
-        Vecd pos_jump = pos_[index_i] - pos_[index_j];
-        Vecd vel_jump = vel_[index_i] - vel_[index_j];
-        Real strain_rate =  pos_jump.dot(vel_jump) * dim_r_ij_1 * dim_r_ij_1;
-        Real weight = inner_neighborhood.W_ij_[n] * inv_W0_;
-
-        Matd numerical_stress_ij = 0.5 * (F_[index_i] + F_[index_j]) 
-            * particles_->porous_solid_.PairNumericalDamping(strain_rate,  smoothing_length_);
-    
-        //three parts for the momentum increment
-        total_momentum_increment += (Stress_[index_i] + Stress_[index_j])* gradw_ijV_j_
-                                    +  numerical_dissipation_factor_  * numerical_stress_ij * weight * gradw_ijV_j_ ;
-    
-        total_momentum_increment -= (outer_fluid_velocity_relative_fluid_flux_[index_i] + outer_fluid_velocity_relative_fluid_flux_[index_j])
-                                     *gradw_ijV_j_;
-    }
-
-    dtotal_momentum_dt_[index_i] = total_momentum_increment;
-}
+} 
 //=================================================================================================//
 void PorousMediaStressRelaxationFirstHalf::update(size_t index_i, Real dt)
 {
@@ -108,56 +77,12 @@ void PorousMediaStressRelaxationSecondHalf::initialization(size_t index_i, Real 
     pos_[index_i] += vel_[index_i] * dt * 0.5;
 }
 //=================================================================================================//
-void PorousMediaStressRelaxationSecondHalf::interaction(size_t index_i, Real dt)
-{
-    Matd deformation_gradient_change_rate = Matd::Zero();
-    Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-    
-    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-    {
-        size_t index_j = inner_neighborhood.j_[n];
-        Vecd gradw_ijV_j_ = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
-
-        deformation_gradient_change_rate -=
-               (vel_[index_i] - vel_[index_j]) * gradw_ijV_j_.transpose();
-    }
-    dF_dt_[index_i] = deformation_gradient_change_rate * B_[index_i];
-}
-//=================================================================================================//
 void PorousMediaStressRelaxationSecondHalf::update(size_t index_i, Real dt)
 {
     F_[index_i] += dF_dt_[index_i] * dt * 0.5;
 }
 //=================================================================================================//
-void SaturationRelaxationInPorousMedia::initialization(size_t index_i, Real Dt) {}
-//=================================================================================================//
-void SaturationRelaxationInPorousMedia::interaction(size_t index_i, Real Dt) 
-{
-    Vecd fluid_saturation_gradient  = Vecd::Zero();
-    Real relative_fluid_flux_divergence  = 0.0;	
-    Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-
-    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-    {
-        size_t index_j = inner_neighborhood.j_[n];
-        Real r_ij = inner_neighborhood.r_ij_[n];
-        Real dw_ijV_j_ = inner_neighborhood.dW_ijV_j_[n] ;
-
-        Vecd e_ij = inner_neighborhood.e_ij_[n];
-        fluid_saturation_gradient -=  (fluid_saturation_[index_i] - fluid_saturation_[index_j])
-                                        * e_ij* dw_ijV_j_;
-                
-        
-        relative_fluid_flux_divergence +=  1.0 / 2.0 * (fluid_saturation_[index_i] * fluid_saturation_[index_i] - fluid_saturation_[index_j] * fluid_saturation_[index_j]) 
-                                                / (r_ij + TinyReal) *  dw_ijV_j_;
-                                        
-    }
-    //then we update relative velocity based on the updated fluid density
-    relative_fluid_flux_[index_i] = -diffusivity_constant * fluid_initial_density * fluid_saturation_[index_i] * fluid_saturation_gradient;
-    
-    dfluid_mass_dt_[index_i] = diffusivity_constant * Vol_update_[index_i] * fluid_initial_density
-                    * relative_fluid_flux_divergence;
-}		
+void SaturationRelaxationInPorousMedia::initialization(size_t index_i, Real Dt) {}		
 //=================================================================================================//
 void SaturationRelaxationInPorousMedia::update(size_t index_i, Real Dt) 
 {
@@ -167,7 +92,6 @@ void SaturationRelaxationInPorousMedia::update(size_t index_i, Real Dt)
     //  update fluid saturation 
     fluid_saturation_[index_i] = fluid_mass_[index_i] / fluid_initial_density / Vol_update_[index_i];
 }
-
 //=================================================================================================// 
 }
 } // namespace SPH
