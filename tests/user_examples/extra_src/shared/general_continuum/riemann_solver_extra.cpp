@@ -1,0 +1,14 @@
+#include "riemann_solver_extra.h"
+
+namespace SPH
+{
+	Vecd AcousticRiemannSolverExtra::DissipativePJumpExtra(const Vecd& u_jump, const Vecd& e_ij)
+	{
+		return rho0c0_geo_ave_ * u_jump * SMIN(3.0 * SMAX(u_jump.dot(e_ij) * inv_c_ave_, 0.0), 1.0);
+	}
+
+	Vecd DissipativeRiemannSolverExtra::DissipativePJumpExtra(const Vecd& u_jump, const Vecd& e_ij)
+	{
+		return rho0c0_geo_ave_ * u_jump;
+	}
+} // namespace SPH
