@@ -62,6 +62,7 @@ class IndicatedParticles
         return indicator_[index_i] == INDICATOR;
     };
 };
+using BulkParticles = IndicatedParticles<0>;
 
 template <int INDICATOR>
 class NotIndicatedParticles
