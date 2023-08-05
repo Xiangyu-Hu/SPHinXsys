@@ -336,7 +336,7 @@ int main()
             Real Dt_a = get_air_advection_time_step_size.exec();
             Real Dt = SMIN(Dt_f, Dt_a);
 
-            //            update_air_density_by_summation.exec();
+            update_air_density_by_summation.exec();
             update_water_density_by_summation.exec();
             air_transport_correction.exec();
             water_transport_correction.exec();
