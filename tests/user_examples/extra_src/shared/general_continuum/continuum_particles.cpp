@@ -23,7 +23,6 @@ namespace SPH
         //----------------------------------------------------------------------
         //		register sortable particle data
         //----------------------------------------------------------------------
-
         registerSortableVariable<Vecd>("AccelerationByShear");
         registerSortableVariable<Matd>("StressTensor");
         registerSortableVariable<Matd>("StressTensorRate");
@@ -42,7 +41,6 @@ namespace SPH
                          [&](size_t i) -> Vecd
                          { return n_[i]; });
     }
-
     //=================================================================================================//
     PlasticContinuumParticles::
         PlasticContinuumParticles(SPHBody& sph_body, PlasticContinuum* plastic_continuum)
@@ -81,7 +79,6 @@ namespace SPH
 
         registerSortableVariable<Real>("VerticalStress");
         registerSortableVariable<Real>("AccDeviatoricPlasticStrain");
-
     }
     //=================================================================================================//
     Real  PlasticContinuumParticles::getDeviatoricPlasticStrain(Mat3d& strain_tensor)

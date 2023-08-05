@@ -245,7 +245,6 @@ namespace SPH
             Matd stress_tensor_i = shear_stress_[index_i] - p_[index_i] * Matd::Identity();
             von_mises_stress_[index_i] = getVonMisesStressFromMatrix(stress_tensor_i);
         }
-
         //=================================================================================================//
         FixedInAxisDirection::FixedInAxisDirection(BodyPartByParticle& body_part, Vecd constrained_axises)
             : BaseMotionConstraint<BodyPartByParticle>(body_part), constrain_matrix_(Matd::Identity())
@@ -258,7 +257,6 @@ namespace SPH
         {
             vel_[index_i] = constrain_matrix_ * vel_[index_i];
         };
-
         //=================================================================================================//
         ConstrainSolidBodyMassCenter::
             ConstrainSolidBodyMassCenter(SPHBody& sph_body, Vecd constrain_direction)
@@ -304,7 +302,6 @@ namespace SPH
             }
             return tensor_2d;
         }
-
         Mat3d BaseRelaxationPlastic::increaseTensor(Matd tensor_2d)
         {
             Mat3d tensor_3d = Mat3d::Zero();
@@ -317,7 +314,6 @@ namespace SPH
             }
             return tensor_3d;
         }
-
         //====================================================================================//
         //===============================StressDiffusion======================================//
         //====================================================================================//
@@ -338,13 +334,10 @@ namespace SPH
                 Real r_ij = inner_neighborhood.r_ij_[n];
                 Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
                 Real y_ij = pos_[index_i](1, 0) - pos_[index_j](1, 0);
-                //calculate Psi, equation (34) in Feng_2021_CG
                 diffusion_stress_ = stress_tensor_3D_[index_i] - stress_tensor_3D_[index_j];
                 diffusion_stress_(0, 0) = diffusion_stress_(0, 0) - (1 - sin(fai_)) * density * gravity * y_ij;
                 diffusion_stress_(1, 1) = diffusion_stress_(1, 1) - density * gravity * y_ij;
                 diffusion_stress_(2, 2) = diffusion_stress_(2, 2) - (1 - sin(fai_)) * density * gravity * y_ij;
-
-                //diffusion_stress_rate_ += 2 * zeta_ * smoothing_length_ * sound_speed_ * diffusion_stress_ * r_ij * dW_ijV_j / (r_ij * r_ij + 0.01 * smoothing_length_ * smoothing_length_);
                 diffusion_stress_rate_ += 2 * zeta_ * smoothing_length_ * sound_speed_ * diffusion_stress_ * r_ij * dW_ijV_j / (r_ij * r_ij + 0.01 * smoothing_length_);
             }
             stress_rate_3D_[index_i] = diffusion_stress_rate_;

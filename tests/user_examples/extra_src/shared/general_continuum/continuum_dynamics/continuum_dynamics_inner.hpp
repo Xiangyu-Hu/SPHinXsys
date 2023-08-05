@@ -38,15 +38,9 @@ namespace SPH
 		{
 			rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
 			p_[index_i] = plastic_continuum_.getPressure(rho_[index_i]);
-			//pressure_replace_by_volumn_part
-			//p_[index_i] = - stress_tensor_3D_[index_i].trace() /3;
-
 			pos_[index_i] += vel_[index_i] * dt * 0.5;
-
 			stress_tensor_3D_[index_i] += stress_rate_3D_[index_i] * dt * 0.5;
 			strain_tensor_3D_[index_i] += strain_rate_3D_[index_i] * dt * 0.5;
-
-			//calculate elastic strain
 			elastic_strain_tensor_3D_[index_i] += elastic_strain_rate_3D_[index_i] * dt * 0.5;
 		}
 		//=================================================================================================//
@@ -87,7 +81,6 @@ namespace SPH
 				Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
 				Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
 				Matd stress_tensor_j = reduceTensor(stress_tensor_3D_[index_j]);
-				//acceleration += rho_[index_j] * (stress_tensor_i / (rho_i * rho_i) + stress_tensor_j / (rho_[index_j] * rho_[index_j])) * nablaW_ijV_j;
 				acceleration += rho_[index_j] * ((stress_tensor_i + stress_tensor_j) / (rho_i * rho_[index_j])) * nablaW_ijV_j;
 				rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_[index_j]) * dW_ijV_j;
 			}
@@ -123,9 +116,6 @@ namespace SPH
 				Vecd u_jump = vel_[index_i] - vel_[index_j];
 				density_change_rate += u_jump.dot(e_ij) * dW_ijV_j;
 				p_dissipation += riemann_solver_.DissipativePJumpExtra(u_jump, e_ij) * dW_ijV_j;
-				// Real temp = u_jump.dot(e_ij);
-				// p_dissipation += riemann_solver_.DissipativePJump(temp) * dW_ijV_j * e_ij;
-
 				Matd velocity_gradient_ij = -(vel_[index_i] - vel_[index_j]) * nablaW_ijV_j.transpose();
 				velocity_gradient += velocity_gradient_ij;
 			}
@@ -142,18 +132,12 @@ namespace SPH
 
 			Mat3d velocity_gradient = increaseTensor(velocity_gradient_[index_i]);
 			Mat3d stress_tensor_rate_3D_ = plastic_continuum_.ConstitutiveRelationZ(velocity_gradient, stress_tensor_3D_[index_i]);
-			//consider diffusion stress with +=
-			//stress_rate_3D_[index_i] = stress_tensor_rate_3D_;
 			stress_rate_3D_[index_i] += stress_tensor_rate_3D_;
-			//update stress tensor
 			stress_tensor_3D_[index_i] += stress_rate_3D_[index_i] * dt * 0.5;
-
 			//For plasticity
 			Mat3d stress_tensor_ = plastic_continuum_.ReturnMapping(stress_tensor_3D_[index_i]);
 			stress_tensor_3D_[index_i] = stress_tensor_;
-			//added
 			vertical_stress_[index_i] = stress_tensor_3D_[index_i](1, 1);
-			//Accumulated deviatoric plastic strains
 			strain_rate_3D_[index_i] = 0.5 * (velocity_gradient + velocity_gradient.transpose());
 			strain_tensor_3D_[index_i] += strain_rate_3D_[index_i] * dt * 0.5;
 			//calculate elastic strain

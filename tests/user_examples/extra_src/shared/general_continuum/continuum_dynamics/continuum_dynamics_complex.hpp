@@ -87,14 +87,10 @@ void BaseStressRelaxation1stHalfWithWall<BaseStressRelaxation1stHalfType>::inter
     BaseStressRelaxation1stHalfType::interaction(index_i, dt);
 
     Vecd acc_prior_i = computeNonConservativeAcceleration(index_i);
-
-    //Vecd acceleration = Vecd::Zero();
     Vecd acceleration = acc_prior_i;
     Real rho_dissipation(0);
 
     Matd stress_tensor_i = this->reduceTensor(this->stress_tensor_3D_[index_i]);
-    //Real rho_i = this->rho_[index_i];
-    //Real rho_in_wall = this->plastic_continuum_.getDensity();
 
     for (size_t k = 0; k < fluid_dynamics::FluidWallData::contact_configuration_.size(); ++k)
     {
@@ -110,15 +106,11 @@ void BaseStressRelaxation1stHalfWithWall<BaseStressRelaxation1stHalfType>::inter
 
             Real face_wall_external_acceleration = (acc_prior_i - acc_ave_k[index_j]).dot(-e_ij);
             Real p_in_wall = this->p_[index_i] + this->rho_[index_i] * r_ij * SMAX(0.0, face_wall_external_acceleration);
-            //Real p_in_wall = this->p_[index_i];
             Matd stress_tensor_in_wall = stress_tensor_i;
-            //acceleration += rho_in_wall * (stress_tensor_i / (rho_i * rho_i) + stress_tensor_in_wall / (rho_in_wall * rho_in_wall)) * nablaW_ijV_j;
             acceleration += (stress_tensor_i + stress_tensor_in_wall) * nablaW_ijV_j;
-
             rho_dissipation += this->riemann_solver_.DissipativeUJump(this->p_[index_i] - p_in_wall) * dW_ijV_j;
         }
     }
-    //this->acc_[index_i] += acceleration;
     this->acc_[index_i] += acceleration / this->rho_[index_i];
     this->drho_dt_[index_i] += rho_dissipation * this->rho_[index_i];
 }
@@ -154,19 +146,14 @@ void BaseStressRelaxation2ndHalfWithWall<BaseStressRelaxation2ndHalfType>::inter
             velocity_gradient += velocity_gradient_ij;
 
             density_change_rate += (this->vel_[index_i] - vel_in_wall).dot(e_ij) * dW_ijV_j;
-            // Real u_jump = 2.0 * (this->vel_[index_i] - vel_ave_k[index_j]).dot(n_k[index_j]);
-            // p_dissipation += this->riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * n_k[index_j];
             Vecd u_jump = 2.0 * (this->vel_[index_i] - vel_ave_k[index_j]);
             p_dissipation += this->riemann_solver_.DissipativePJumpExtra(u_jump, n_k[index_j]) * dW_ijV_j;
-            // Real temp = u_jump.dot(n_k[index_j]);
-            // p_dissipation += this->riemann_solver_.DissipativePJump(temp) * dW_ijV_j * e_ij;
         }
     }
     this->drho_dt_[index_i] += density_change_rate * this->rho_[index_i];
     this->velocity_gradient_[index_i] += velocity_gradient;
     this->acc_[index_i] += p_dissipation / this->rho_[index_i];
 }
-
 //=================================================================================================//
  //================================BaseStressDiffusionWithWall======================================//
  //=================================================================================================//
@@ -193,12 +180,10 @@ void BaseStressDiffusionWithWall<BaseStressDiffusionType>::interaction(size_t in
             Real y_ij = this->pos_[index_i](1, 0) - this->pos_[index_j](1, 0);
             //stress boundary condition
             Mat3d stress_tensor_j = stress_tensor_i;
-
             diffusion_stress_ = stress_tensor_i - stress_tensor_j;
             diffusion_stress_(0, 0) = diffusion_stress_(0, 0) - (1 - sin(this->fai_)) * density * gravity * y_ij;
             diffusion_stress_(1, 1) = diffusion_stress_(1, 1) - density * gravity * y_ij;
             diffusion_stress_(2, 2) = diffusion_stress_(2, 2) - (1 - sin(this->fai_)) * density * gravity * y_ij;
-
             diffusion_stress_rate_ += 2 * this->zeta_ * this->smoothing_length_ * this->sound_speed_ * diffusion_stress_ * r_ij * dW_ijV_j / (r_ij * r_ij + 0.01 * this->smoothing_length_);
         }
     }

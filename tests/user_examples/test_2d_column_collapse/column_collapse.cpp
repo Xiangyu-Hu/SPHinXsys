@@ -33,9 +33,6 @@ Real Youngs_modulus = 0.84e6; //reference Youngs modulus
 Real poisson = 0.3;		 //Poisson ratio
 Real c_s = sqrt(Youngs_modulus / (rho0_s*3*(1-2* poisson)));
 Real friction_angle = 19.8 * Pi / 180;
-//Real cohesion = 100;  //tensile instability occurs
-Real cohesion = 0.0;
-Real dilatancy = 0.0 * Pi / 180;
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
 //----------------------------------------------------------------------
@@ -69,26 +66,6 @@ public:
 	}
 };
 //----------------------------------------------------------------------
-//	application dependent initial condition 
-//----------------------------------------------------------------------
-class SoilInitialCondition : public continuum_dynamics::ContinuumInitialCondition
-{
-public:
-	explicit SoilInitialCondition(RealBody& granular_column)
-		: continuum_dynamics::ContinuumInitialCondition(granular_column) {};
-protected:
-	void update(size_t index_i, Real dt)
-	{
-		/** initial stress */
-		Real y = pos_[index_i][1];
-		Real gama = 1 - sin(friction_angle);
-		Real stress_yy = - rho0_s * gravity_g * y;
-		stress_tensor_3D_[index_i](1, 1) = stress_yy;
-		stress_tensor_3D_[index_i](0, 0) = stress_yy * gama;
-		stress_tensor_3D_[index_i](2, 2) = stress_yy * gama;
-	};
-};
-//----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
 int main(int ac, char *av[])
@@ -106,7 +83,6 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	RealBody soil_block(
 		sph_system, makeShared<Soil>("GranularBody"));
-	//soil_block.defineParticlesAndMaterial<PlasticContinuumParticles, PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle, cohesion, dilatancy);
 	soil_block.defineParticlesAndMaterial<PlasticContinuumParticles, PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle);
 	soil_block.generateParticles<ParticleGeneratorLattice>();
 	soil_block.addBodyStateForRecording<Real>("Pressure");
@@ -129,7 +105,6 @@ int main(int ac, char *av[])
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	SimpleDynamics<SoilInitialCondition> soil_initial_condition(soil_block);
 	Gravity gravity(Vecd(0.0, -gravity_g));
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
@@ -156,7 +131,6 @@ int main(int ac, char *av[])
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
 	wall_boundary_normal_direction.exec();
-	//soil_initial_condition.exec();  //It's better to apply initial condition
 	//----------------------------------------------------------------------
 	//	Load restart file if necessary.
 	//----------------------------------------------------------------------
@@ -216,7 +190,6 @@ int main(int ac, char *av[])
 				stress_diffusion.exec();
 				granular_stress_relaxation_2nd.exec(dt);
 
-				
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;

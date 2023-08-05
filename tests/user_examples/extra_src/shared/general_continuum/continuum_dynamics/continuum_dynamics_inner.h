@@ -164,8 +164,6 @@ public:
     virtual ~AngularConservativeShearAccelerationRelaxation() {};
 
     void interaction(size_t index_i, Real dt = 0.0);
-    //void update(size_t index_i, Real dt = 0.0);
-
 };
 
 /**
@@ -278,7 +276,6 @@ protected:
     StdLargeVec<Vecd>& pos_, & vel_, & acc_, & acc_prior_;
     StdLargeVec<Mat3d>& stress_tensor_3D_, & strain_tensor_3D_, & stress_rate_3D_, & strain_rate_3D_;
     StdLargeVec<Mat3d>& elastic_strain_tensor_3D_, & elastic_strain_rate_3D_;
-
 };
 
 //=================================================================================================//
@@ -333,7 +330,6 @@ protected:
     StdLargeVec<Real>& Vol_, & mass_, & von_mises_stress_;
     StdLargeVec<Real>& acc_deviatoric_plastic_strain_, & vertical_stress_;
     Real E_, nu_;
-
 };
 using StressRelaxation2ndHalf = BaseStressRelaxation2ndHalf<NoRiemannSolver>;
 using StressRelaxation2ndHalfRiemann = BaseStressRelaxation2ndHalf<AcousticRiemannSolverExtra>;

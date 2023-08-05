@@ -2,7 +2,6 @@
 #include "all_continuum.h"
 using namespace SPH;
 // general parameters for geometry
-
 Real radius = 0.1;				  // liquid length
 Real height = 0.1;				  // liquid height
 Real resolution_ref = radius / 10;	  // particle spacing
@@ -10,15 +9,13 @@ Real BW = resolution_ref * 4; // boundary width
 Real DL = 2 * radius*(1+1.24*height/radius) + 0.1;		  // tank length
 Real DH = height + 0.02;				  // tank height
 Real DW = DL;				  // tank width
-// for material properties of the fluid
+// for material properties
 Real rho0_s = 2600;						 /**< Reference density of soil. */
 Real gravity_g = 9.8;					 /**< Gravity force of soil. */
 Real Youngs_modulus = 5.98e6; //reference Youngs modulus
 Real poisson = 0.3;		 //Poisson ratio
 Real c_s = sqrt(Youngs_modulus / (rho0_s * 3 * (1 - 2 * poisson)));
 Real friction_angle = 30 * Pi / 180;
-Real cohesion = 0;
-Real dilatancy = 0 * Pi / 180;
 /** Define the soil body. */
 Real inner_circle_radius = radius;
 int resolution(20);
@@ -59,7 +56,6 @@ protected:
 	{
 		/** initial stress */
 		Real y = pos_[index_i][1];
-		//Real gama = poisson / (1 - poisson);
 		Real gama = 1 - sin(friction_angle);
 		Real stress_yy = -rho0_s * gravity_g * y;
 		stress_tensor_3D_[index_i](1, 1) = stress_yy;
@@ -84,7 +80,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	RealBody soil_block(sph_system, makeShared<SoilBlock>("GranularBody"));
 	soil_block.defineBodyLevelSetShape()->writeLevelSet(io_environment);
-	soil_block.defineParticlesAndMaterial<PlasticContinuumParticles, PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle, cohesion, dilatancy);
+	soil_block.defineParticlesAndMaterial<PlasticContinuumParticles, PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle);
 	(!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
 		? soil_block.generateParticles<ParticleGeneratorReload>(io_environment, soil_block.getName())
 		: soil_block.generateParticles<ParticleGeneratorLattice>();
@@ -230,7 +226,6 @@ int main(int ac, char *av[])
 				stress_diffusion.exec();
 				granular_stress_relaxation_2nd.exec(dt);
 
-				
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
@@ -252,7 +247,6 @@ int main(int ac, char *av[])
 						restart_io.writeToFile(number_of_iterations);
 				}
 				number_of_iterations++;
-
 				soil_block.updateCellLinkedList();
 				soil_block_complex.updateConfiguration();
 			}
@@ -260,12 +254,10 @@ int main(int ac, char *av[])
 			time_instance = TickCount::now();
 			interval_updating_configuration += TickCount::now() - time_instance;
 		}
-
 		TickCount t2 = TickCount::now();
 		body_states_recording.writeToFile();
 		TickCount t3 = TickCount::now();
 		interval += t3 - t2;
-
 	}
 	TickCount t4 = TickCount::now();
 
@@ -290,6 +282,5 @@ int main(int ac, char *av[])
 	{
 		write_soil_mechanical_energy.testResult();
 	}
-
 	return 0;
 }
