@@ -131,7 +131,7 @@ namespace SPH
 			Vol_[index_i] = mass_[index_i] / rho_[index_i];
 
 			Mat3d velocity_gradient = increaseTensor(velocity_gradient_[index_i]);
-			Mat3d stress_tensor_rate_3D_ = plastic_continuum_.ConstitutiveRelationZ(velocity_gradient, stress_tensor_3D_[index_i]);
+			Mat3d stress_tensor_rate_3D_ = plastic_continuum_.ConstitutiveRelation(velocity_gradient, stress_tensor_3D_[index_i]);
 			stress_rate_3D_[index_i] += stress_tensor_rate_3D_;
 			stress_tensor_3D_[index_i] += stress_rate_3D_[index_i] * dt * 0.5;
 			//For plasticity

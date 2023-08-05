@@ -65,9 +65,8 @@ public:
     Real getDPConstantsA(Real friction_angle);
     Real getDPConstantsK(Real cohesion, Real friction_angle);
     Real getFrictionAngle() { return fai_; };
-    virtual Real getPressure(Real rho);
 
-    virtual Mat3d ConstitutiveRelationZ(Mat3d& velocity_gradient, Mat3d& stress_tensor);
+    virtual Mat3d ConstitutiveRelation(Mat3d& velocity_gradient, Mat3d& stress_tensor);
     virtual Mat3d ReturnMapping(Mat3d& stress_tensor);
 
     virtual GeneralContinuum* ThisObjectPtr() override { return this; };

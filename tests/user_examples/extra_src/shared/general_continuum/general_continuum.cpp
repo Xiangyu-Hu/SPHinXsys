@@ -29,10 +29,6 @@ namespace SPH
     //=============================================================================================//
     //==============================PlasticContinuum===============================================//
     //=============================================================================================//
-    Real PlasticContinuum::getPressure(Real rho)
-    {
-        return p0_ * (rho / rho0_ - 1.0);
-    }
 
     Real PlasticContinuum::getDPConstantsA(Real friction_angle)
     {
@@ -44,7 +40,7 @@ namespace SPH
         return 3 * cohesion / sqrt(9 + 12 * tan(friction_angle) * tan(friction_angle));
     }
 
-    Mat3d PlasticContinuum::ConstitutiveRelationZ(Mat3d& velocity_gradient, Mat3d& stress_tensor)
+    Mat3d PlasticContinuum::ConstitutiveRelation(Mat3d& velocity_gradient, Mat3d& stress_tensor)
     {
         Real dim = 3;
         Mat3d strain_rate = 0.5 * (velocity_gradient + velocity_gradient.transpose());
