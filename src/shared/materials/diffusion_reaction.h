@@ -58,7 +58,7 @@ class BaseDiffusion : public BaseMaterial
     size_t gradient_species_index_;
 
     virtual Real getReferenceDiffusivity() = 0;
-    virtual Real getInterParticleDiffusionCoff(size_t particle_i, size_t particle_j, Vecd &direction_from_j_to_i) = 0;
+    virtual Real getInterParticleDiffusionCoeff(size_t particle_i, size_t particle_j, const Vecd &direction_from_j_to_i) = 0;
 };
 
 /**
@@ -81,7 +81,7 @@ class IsotropicDiffusion : public BaseDiffusion
     virtual ~IsotropicDiffusion(){};
 
     virtual Real getReferenceDiffusivity() override { return diff_cf_; };
-    virtual Real getInterParticleDiffusionCoff(size_t particle_i, size_t particle_j, Vecd &direction_from_j_to_i) override
+    virtual Real getInterParticleDiffusionCoeff(size_t particle_i, size_t particle_j, const Vecd &direction_from_j_to_i) override
     {
         return diff_cf_;
     };
@@ -117,8 +117,8 @@ class DirectionalDiffusion : public IsotropicDiffusion
         return SMAX(diff_cf_, diff_cf_ + bias_diff_cf_);
     };
 
-    virtual Real getInterParticleDiffusionCoff(size_t particle_index_i,
-                                               size_t particle_index_j, Vecd &inter_particle_direction) override
+    virtual Real getInterParticleDiffusionCoeff(size_t particle_index_i,
+                                               size_t particle_index_j, const Vecd &inter_particle_direction) override
     {
         Vecd grad_ij = transformed_diffusivity_ * inter_particle_direction;
         return 1.0 / grad_ij.squaredNorm();
@@ -147,7 +147,7 @@ class LocalDirectionalDiffusion : public DirectionalDiffusion
     virtual void registerReloadLocalParameters(BaseParticles *base_particles) override;
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
 
-    virtual Real getInterParticleDiffusionCoff(size_t particle_index_i, size_t particle_index_j, Vecd &inter_particle_direction) override
+    virtual Real getInterParticleDiffusionCoeff(size_t particle_index_i, size_t particle_index_j, const Vecd &inter_particle_direction) override
     {
         Matd trans_diffusivity = getAverageValue(local_transformed_diffusivity_[particle_index_i], local_transformed_diffusivity_[particle_index_j]);
         Vecd grad_ij = trans_diffusivity * inter_particle_direction;
@@ -293,10 +293,10 @@ class DiffusionReaction : public BaseMaterialType
      */
     Real getDiffusionTimeStepSize(Real smoothing_length)
     {
-        Real diff_coff_max = 0.0;
+        Real diff_coeff_max = 0.0;
         for (size_t k = 0; k < all_diffusions_.size(); ++k)
-            diff_coff_max = SMAX(diff_coff_max, all_diffusions_[k]->getReferenceDiffusivity());
-        return 0.5 * smoothing_length * smoothing_length / diff_coff_max / Real(Dimensions);
+            diff_coeff_max = SMAX(diff_coeff_max, all_diffusions_[k]->getReferenceDiffusivity());
+        return 0.5 * smoothing_length * smoothing_length / diff_coeff_max / Real(Dimensions);
     };
 
     /** Initialize a diffusion material. */

@@ -176,7 +176,7 @@ class DiffusionRelaxationDirichlet
 {
   protected:
     StdVec<StdVec<StdLargeVec<Real> *>> contact_gradient_species_;
-    void getDiffusionChangeRateDirichletContact(
+    void getDiffusionChangeRateDirichlet(
         size_t particle_i, size_t particle_j, Vecd &e_ij, Real surface_area_ij,
         const StdVec<StdLargeVec<Real> *> &gradient_species_k);
 
@@ -199,7 +199,7 @@ class DiffusionRelaxationNeumann
     StdVec<StdLargeVec<Vecd> *> contact_n_;
 
   protected:
-    void getDiffusionChangeRateNeumannContact(size_t particle_i, size_t particle_j,
+    void getDiffusionChangeRateNeumann(size_t particle_i, size_t particle_j,
                                               Real surface_area_ij_Neumann, StdLargeVec<Real> &heat_flux_k);
 
   public:
@@ -223,7 +223,7 @@ class DiffusionRelaxationRobin
     StdVec<StdLargeVec<Vecd> *> contact_n_;
 
   protected:
-    void getDiffusionChangeRateRobinContact(size_t particle_i, size_t particle_j, Real surface_area_ij_Robin, StdLargeVec<Real> &convection_k, Real &T_infinity_k);
+    void getDiffusionChangeRateRobin(size_t particle_i, size_t particle_j, Real surface_area_ij_Robin, StdLargeVec<Real> &convection_k, Real &T_infinity_k);
 
   public:
     explicit DiffusionRelaxationRobin(BaseContactRelation &contact_relation);

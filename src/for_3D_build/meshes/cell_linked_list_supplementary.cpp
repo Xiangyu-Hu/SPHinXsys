@@ -15,13 +15,6 @@ void CellLinkedList ::allocateMeshDataMatrix()
 {
     Allocate3dArray(cell_index_lists_, all_cells_);
     Allocate3dArray(cell_data_lists_, all_cells_);
-
-    mesh_parallel_for(MeshRange(Array3i::Zero(), all_cells_),
-                      [&](int i, int j, int k)
-                      {
-                          cell_index_lists_[i][j][k].reserve(36);
-                          cell_data_lists_[i][j][k].reserve(36);
-                      });
 }
 //=================================================================================================//
 void CellLinkedList ::deleteMeshDataMatrix()
