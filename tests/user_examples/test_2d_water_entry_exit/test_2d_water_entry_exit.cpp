@@ -312,7 +312,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> fluid_density_by_summation(water_block_complex);
     water_block.addBodyStateForRecording<Real>("Pressure");
     water_block.addBodyStateForRecording<Real>("Density");
-    water_block.addBodyStateForRecording<int>("SurfaceIndicator");
+    water_block.addBodyStateForRecording<int>("Indicator");
     cylinder.addBodyStateForRecording<Real>("Density");
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> fluid_pressure_relaxation(water_block_complex);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_block_complex);
