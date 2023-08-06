@@ -123,18 +123,17 @@ class SurfaceTensionStress : public LocalDynamics, public BaseDataContact
         surface_tension_stress_[index_i] = ZeroData<Matd>::value;
         for (size_t k = 0; k < contact_configuration_.size(); ++k)
         {
-            Vecd weighted_color_gradient = ZeroData<Vecd>::value;
+            Vecd summation = ZeroData<Vecd>::value;
             Real surface_tension_k = contact_surface_tension_[k];
             const Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
             {
-                weighted_color_gradient -= contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
+                summation -= contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
             }
-            color_gradient_[index_i] = weighted_color_gradient;
-            Real norm = weighted_color_gradient.norm();
+            color_gradient_[index_i] = summation;
+            Real norm = summation.norm();
             surface_tension_stress_[index_i] += surface_tension_k / (norm + Eps) *
-                                                (norm * norm * Matd::Identity() -
-                                                 weighted_color_gradient * weighted_color_gradient.transpose());
+                                                (norm * norm * Matd::Identity() - summation * summation.transpose());
         }
     };
 
