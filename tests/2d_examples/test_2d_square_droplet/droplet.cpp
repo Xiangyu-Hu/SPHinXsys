@@ -105,8 +105,8 @@ typedef DataDelegateContact<BaseParticles, BaseParticles> BaseDataContact;
 class SurfaceTensionStress : public LocalDynamics, public BaseDataContact
 {
   public:
-    explicit SurfaceTensionStress(BaseContactRelation &conact_relation, StdVec<Real> contact_surface_tension)
-        : LocalDynamics(conact_relation.getSPHBody()), BaseDataContact(conact_relation)
+    explicit SurfaceTensionStress(BaseContactRelation &contact_relation, StdVec<Real> contact_surface_tension)
+        : LocalDynamics(contact_relation.getSPHBody()), BaseDataContact(contact_relation)
     {
         particles_->registerVariable(color_gradient_, "ColorGradient");
         particles_->registerVariable(surface_tension_stress_, "SurfaceTensionStress");
@@ -123,18 +123,18 @@ class SurfaceTensionStress : public LocalDynamics, public BaseDataContact
         surface_tension_stress_[index_i] = ZeroData<Matd>::value;
         for (size_t k = 0; k < contact_configuration_.size(); ++k)
         {
-            Vecd weighted_color_gradeint = ZeroData<Vecd>::value;
+            Vecd weighted_color_gradient = ZeroData<Vecd>::value;
             Real surface_tension_k = contact_surface_tension_[k];
             const Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
             {
-                weighted_color_gradeint -= contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
+                weighted_color_gradient -= contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
             }
-            color_gradient_[index_i] = weighted_color_gradeint;
-            Real norm = weighted_color_gradeint.norm();
+            color_gradient_[index_i] = weighted_color_gradient;
+            Real norm = weighted_color_gradient.norm();
             surface_tension_stress_[index_i] += surface_tension_k / (norm + Eps) *
                                                 (norm * norm * Matd::Identity() -
-                                                 weighted_color_gradeint * weighted_color_gradeint.transpose());
+                                                 weighted_color_gradient * weighted_color_gradient.transpose());
         }
     };
 
@@ -147,8 +147,8 @@ class SurfaceTensionStress : public LocalDynamics, public BaseDataContact
 class SurfaceStressAccelerationContact : public LocalDynamics, public BaseDataContact
 {
   public:
-    explicit SurfaceStressAccelerationContact(BaseContactRelation &conact_relation)
-        : LocalDynamics(conact_relation.getSPHBody()), BaseDataContact(conact_relation),
+    explicit SurfaceStressAccelerationContact(BaseContactRelation &contact_relation)
+        : LocalDynamics(contact_relation.getSPHBody()), BaseDataContact(contact_relation),
           rho_(particles_->rho_), acc_prior_(particles_->acc_prior_)
     {
         for (size_t k = 0; k != contact_particles_.size(); ++k)
