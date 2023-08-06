@@ -35,10 +35,10 @@ Real mu_f = 8.9e-7;                      /**< Water dynamics viscosity. */
 //----------------------------------------------------------------------
 //	Wetting parameters
 //----------------------------------------------------------------------
-Real diffusion_coeff = 330.578 * pow(particle_spacing_ref, 2); /**< Wetting coefficient. */
-Real fluid_moisture = 1.0;                                     /**< fluid moisture. */
-Real cylinder_moisture = 0.0;                                  /**< cylinder moisture. */
-Real wall_moisture = 1.0;                                      /**< wall moisture. */
+Real diffusion_coeff = 100.0 * pow(particle_spacing_ref, 2); /**< Wetting coefficient. */
+Real fluid_moisture = 1.0;                                   /**< fluid moisture. */
+Real cylinder_moisture = 0.0;                                /**< cylinder moisture. */
+Real wall_moisture = 1.0;                                    /**< wall moisture. */
 //----------------------------------------------------------------------
 //	Definition for water body
 //----------------------------------------------------------------------
@@ -309,7 +309,7 @@ int main(int ac, char *av[])
     SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block, gravity_ptr);
     InteractionWithUpdate<fluid_dynamics::WettingCoupledSpatialTemporalFreeSurfaceIdentificationComplex>
         free_stream_surface_indicator(water_block_complex);
-    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> fluid_density_by_summation(water_block_complex);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> fluid_density_by_summation(water_block_complex);
     water_block.addBodyStateForRecording<Real>("Pressure");
     water_block.addBodyStateForRecording<Real>("Density");
     water_block.addBodyStateForRecording<int>("Indicator");
@@ -419,7 +419,7 @@ int main(int ac, char *av[])
     int screen_output_interval = 100;
     int observation_sample_interval = screen_output_interval * 2;
     int restart_output_interval = screen_output_interval * 10;
-    Real end_time = 0.7;
+    Real end_time = 1.0;
     Real output_interval = end_time / 70.0;
     //----------------------------------------------------------------------
     //	Statistics for CPU time
