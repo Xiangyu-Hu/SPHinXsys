@@ -246,8 +246,8 @@ int main(int ac, char *av[])
         ? cylinder.generateParticles<ParticleGeneratorReload>(io_environment, cylinder.getName())
         : cylinder.generateParticles<ParticleGeneratorLattice>();
 
-    ObserverBody fluid_observer(sph_system, "FluidObserver");
-    fluid_observer.generateParticles<ObserverParticleGenerator>(observer_location);
+    ObserverBody cylinder_observer(sph_system, "CylinderObserver");
+    cylinder_observer.generateParticles<ObserverParticleGenerator>(observer_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -257,7 +257,7 @@ int main(int ac, char *av[])
     InnerRelation cylinder_inner(cylinder);
     ComplexRelation water_block_complex(water_block_inner, {&wall_boundary, &cylinder});
     ContactRelation cylinder_contact(cylinder, {&water_block});
-    ContactRelation fluid_observer_contact(fluid_observer, {&cylinder});
+    ContactRelation fluid_observer_contact(cylinder_observer, {&cylinder});
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
