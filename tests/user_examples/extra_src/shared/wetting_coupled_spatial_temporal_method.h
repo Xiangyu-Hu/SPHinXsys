@@ -48,8 +48,8 @@ class NonWettingSurfaceIndication : public FreeSurfaceIndicationComplex
 {
   public:
     NonWettingSurfaceIndication(BaseInnerRelation &inner_relation,
-                                BaseContactRelation &contact_relation, Real threshold = 0.75, Real criterion = 0.99);
-    explicit NonWettingSurfaceIndication(ComplexRelation &complex_relation, Real threshold = 0.75, Real criterion = 0.99);
+                                BaseContactRelation &contact_relation, Real threshold = 0.75);
+    explicit NonWettingSurfaceIndication(ComplexRelation &complex_relation, Real threshold = 0.75);
     virtual ~NonWettingSurfaceIndication(){};
 
     inline void interaction(size_t index_i, Real dt = 0.0)
@@ -71,7 +71,6 @@ class NonWettingSurfaceIndication : public FreeSurfaceIndicationComplex
     };
 
   protected:
-    Real wetting_criterion;
     StdVec<StdLargeVec<Real> *> contact_phi_;
 };
 
