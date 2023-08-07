@@ -57,10 +57,6 @@ class BaseShearStressRelaxation2ndHalfWithWall : public fluid_dynamics::Interact
 
 using ShearStressRelaxation2ndHalfWithWall = BaseShearStressRelaxation2ndHalfWithWall<ShearStressRelaxation2ndHalf>;
 
-//=============================================Plasticity==========================================//
-//=================================================================================================//
-//==============================BaseStressRelaxation1stHalfWithWall=================================//
-//=================================================================================================//
 template <class BaseStressRelaxation1stHalfType>
 class BaseStressRelaxation1stHalfWithWall : public fluid_dynamics::InteractionWithWall<BaseStressRelaxation1stHalfType>
 {
@@ -77,9 +73,6 @@ protected:
 using StressRelaxation1stHalfWithWall = BaseStressRelaxation1stHalfWithWall<StressRelaxation1stHalf>;
 using StressRelaxation1stHalfRiemannWithWall = BaseStressRelaxation1stHalfWithWall<StressRelaxation1stHalfRiemann>;
 using StressRelaxation1stHalfDissipativeRiemannfWithWall = BaseStressRelaxation1stHalfWithWall<StressRelaxation1stHalfDissipativeRiemann>;
-//=================================================================================================//
-//===============================BaseStressRelaxation2ndHalfWithWall======================================//
-//=================================================================================================//
 
 template <class BaseStressRelaxation2ndHalfType>
 class BaseStressRelaxation2ndHalfWithWall : public fluid_dynamics::InteractionWithWall<BaseStressRelaxation2ndHalfType>
