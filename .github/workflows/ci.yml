@@ -49,7 +49,7 @@ jobs:
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
         with: 
           committish: ${{ env.VCPKG_VERSION }}
-          cache-version: ${{env.VCPKG_VERSION}}
+          cache: false
 
       - name: Install dependencies
         run: |
