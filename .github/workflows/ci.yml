@@ -148,7 +148,7 @@ jobs:
         run: cmake --build build --config Release --verbose
 
       - name: Zip build folder
-        run: zip -r build.zip ${{github.workspace}}/build
+        run: zip -r build.zip ./build
 
       - uses: actions/upload-artifact@v3
         with:
