@@ -147,10 +147,13 @@ jobs:
       - name: Build using double
         run: cmake --build build --config Release --verbose
 
+      - name: Zip build folder
+        run: zip -r build.zip ${{github.workspace}}/build
+
       - uses: actions/upload-artifact@v3
         with:
           name: Linux-build
-          path: ${{github.workspace}}/build
+          path: ${{github.workspace}}/build.zip
           if-no-files-found: error
           retention-days: 1
 
@@ -202,6 +205,9 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: Linux-build
+
+      - name: Unzip build folder
+        run: unzip build.zip
 
       - name: Test with the first try
         id: first-try
