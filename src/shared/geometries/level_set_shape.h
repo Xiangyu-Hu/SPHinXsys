@@ -67,6 +67,12 @@ class LevelSetShape : public Shape
     LevelSetShape *correctLevelSetSign(Real small_shift_factor = 1.0);
     void writeLevelSet(IOEnvironment &io_environment);
 
+    //=============================================================================================//
+    /*below for viscous force and location divergence*/
+    Real computeKernelGradientMultiplyRijIntegral(const Vecd &probe_point, Real h_ratio = 1.0);
+    Vecd computeKernelGradientDivideRijIntegral(const Vecd& probe_point, Real h_ratio = 1.0);
+    //=============================================================================================//
+
   protected:
     BaseLevelSet &level_set_; /**< narrow bounded level set mesh. */
 

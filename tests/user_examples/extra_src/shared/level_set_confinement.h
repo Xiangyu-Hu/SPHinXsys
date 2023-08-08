@@ -202,7 +202,7 @@ namespace SPH
             SimpleDynamics<StaticConfinementDensity> density_summation_;
             SimpleDynamics<StaticConfinementIntegration1stHalf> pressure_relaxation_;
             SimpleDynamics<StaticConfinementIntegration2ndHalf> density_relaxation_;
-            InteractionDynamics<StaticConfinementTransportVelocity, SequencedPolicy> transport_velocity_;
+            InteractionDynamics<StaticConfinementTransportVelocity> transport_velocity_;
             InteractionDynamics<StaticConfinementViscousAcceleration> viscous_acceleration_;
             InteractionDynamics<StaticConfinementFreeSurfaceIndication> free_surface_indication_;
             SimpleDynamics<StaticConfinementBounding> surface_bounding_;
@@ -232,6 +232,41 @@ namespace SPH
             NearShapeSurfaceTracing& near_surface_tracing_;
             /*typedef std::function<Vecd(Vecd, Real)> TracingCellMethod;
             TracingCellMethod tracing_particle_method_;*/
+        };
+
+        /**
+         * @class StaticConfinementTransportVelocity
+         * @brief static confinement condition for transport velocity
+         */
+        class MovingConfinementTransportVelocity : public BaseLocalDynamics<BodyPartByCell>, public FluidDataSimple
+        {
+        public:
+            MovingConfinementTransportVelocity(NearShapeSurfaceTracing& near_surface_tracing, Real coefficient = 0.2);
+            virtual ~MovingConfinementTransportVelocity() {};
+            void interaction(size_t index_i, Real dt = 0.0);
+
+        protected:
+            StdLargeVec<Vecd>& pos_;
+            StdLargeVec<int>& surface_indicator_;
+            const Real coefficient_;
+            Real smoothing_length_sqr_;
+            LevelSetShape* level_set_shape_;
+            NearShapeSurfaceTracing& near_surface_tracing_;
+        };
+
+        class MovingConfinementFreeSurfaceIndication : public BaseLocalDynamics<BodyPartByCell>, public FluidDataSimple
+        {
+        public:
+            MovingConfinementFreeSurfaceIndication(NearShapeSurfaceTracing& near_surface_tracing);
+            virtual ~MovingConfinementFreeSurfaceIndication() {};
+            void interaction(size_t index_i, Real dt = 0.0);
+
+        protected:
+            StdLargeVec<Vecd>& pos_;
+            StdLargeVec<Real>& pos_div_;
+            StdLargeVec<int> &surface_indicator_;
+            LevelSetShape* level_set_shape_;
+            NearShapeSurfaceTracing& near_surface_tracing_;
         };
 
         /**
@@ -314,6 +349,8 @@ namespace SPH
              SimpleDynamics<MovingConfinementIntegration1stHalf> pressure_relaxation_;
              SimpleDynamics<MovingConfinementIntegration2ndHalf> density_relaxation_;
              SimpleDynamics<MovingConfinementBounding> surface_bounding_;
+             InteractionDynamics<MovingConfinementTransportVelocity> transport_velocity_;
+             InteractionDynamics<MovingConfinementFreeSurfaceIndication> free_surface_indication_;
              MovingConfinementGeneral(NearShapeSurfaceTracing& near_surface_tracing);
              virtual ~MovingConfinementGeneral() {};
          };

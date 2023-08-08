@@ -9,7 +9,7 @@
 #include "sphinxsys.h" //SPHinXsys Library.
 #include "body_part_by_cell_tracing.h"
 #include "level_set_confinement.h"
-//#include "body_part_by_cell_tracing.hpp"
+#include "body_part_by_cell_tracing.hpp"
 using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.

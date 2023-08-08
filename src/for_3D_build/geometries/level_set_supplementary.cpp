@@ -467,4 +467,68 @@ RefinedLevelSet::RefinedLevelSet(BoundingBox tentative_bounds, LevelSet &coarse_
     finishDataPackages();
 }
 //=============================================================================================//
+/*below for viscous force and location divergence*/
+//=============================================================================================//
+Real LevelSet::computeKernelGradientMultiplyRijIntegral(const Vecd &position)
+{
+    Real phi = probeSignedDistance(position);
+    Real cutoff_radius = kernel_.CutOffRadius(global_h_ratio_);
+    Real threshold = cutoff_radius + data_spacing_;
+
+    Real integral(0);
+    if (fabs(phi) < threshold)
+    {
+        Arrayi global_index_ = global_mesh_.CellIndexFromPosition(position);
+        mesh_for_each3d<-3, 4>(
+            [&](int i, int j, int k)
+            {
+                Arrayi neighbor_index = Arrayi(global_index_[0] + i, global_index_[1] + j, global_index_[2] + k);
+                Real phi_neighbor = DataValueFromGlobalIndex(phi_, neighbor_index);
+                if (phi_neighbor > -data_spacing_)
+                {
+                    Vecd phi_gradient = DataValueFromGlobalIndex(phi_gradient_, neighbor_index);
+                    Vecd integral_position = global_mesh_.GridPositionFromIndex(neighbor_index);
+                    Vecd displacement = position - integral_position;
+                    Real distance = displacement.norm();
+                    if (distance < cutoff_radius)
+                        integral += kernel_.W(global_h_ratio_, distance, displacement) *
+                                    CutCellVolumeFraction(phi_neighbor, phi_gradient, data_spacing_) * distance;
+                }
+            });
+    }
+    return phi > threshold ? 1.0 : integral * data_spacing_ * data_spacing_ * data_spacing_;
+}
+//=============================================================================================//
+Vecd LevelSet::computeKernelGradientDivideRijIntegral(const Vecd &position)
+{
+    Real phi = probeSignedDistance(position);
+    Real cutoff_radius = kernel_.CutOffRadius(global_h_ratio_);
+    Real threshold = cutoff_radius + data_spacing_;
+
+    Vecd integral = Vecd::Zero();
+    if (fabs(phi) < threshold)
+    {
+        Arrayi global_index_ = global_mesh_.CellIndexFromPosition(position);
+        mesh_for_each3d<-3, 4>(
+            [&](int i, int j, int k)
+            {
+                Arrayi neighbor_index = Arrayi(global_index_[0] + i, global_index_[1] + j, global_index_[2] + k);
+                Real phi_neighbor = DataValueFromGlobalIndex(phi_, neighbor_index);
+                if (phi_neighbor > -data_spacing_)
+                {
+                    Vecd phi_gradient = DataValueFromGlobalIndex(phi_gradient_, neighbor_index);
+                    Vecd integral_position = global_mesh_.GridPositionFromIndex(neighbor_index);
+                    Vecd displacement = position - integral_position;
+                    Real distance = displacement.norm();
+                    if (distance < cutoff_radius)
+                        integral += kernel_.dW(global_h_ratio_, distance, displacement) *
+                                    CutCellVolumeFraction(phi_neighbor, phi_gradient, data_spacing_) *
+                                    displacement / (distance + TinyReal) / (distance + TinyReal);
+                }
+            });
+    }
+    return integral * data_spacing_ * data_spacing_ * data_spacing_;
+}
+
+//=============================================================================================//
 } // namespace SPH

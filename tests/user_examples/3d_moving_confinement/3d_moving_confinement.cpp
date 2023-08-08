@@ -1,123 +1,84 @@
 /**
- * @file 	static_confinement.cpp
- * @brief 	2D dambreak example in which the solid wall boundary are static confinement.
- * @details This is the one of the basic test cases.
- * @author 	Xiangyu Hu
+ * @file 	particle_relaxation_single_resolution.cpp
+ * @brief 	This is the test of using levelset to generate particles with single resolution and relax particles.
+ * @details We use this case to test the particle generation and relaxation for a complex geometry.
+ *			Before particle generation, we clean the sharp corners of the model.
+ * @author 	Yongchuan Yu and Xiangyu Hu
  */
-#include "sphinxsys.h" //SPHinXsys Library.
+
+#include "sphinxsys.h"
 #include "body_part_by_cell_tracing.h"
 #include "level_set_confinement.h"
 #include "math.h"
-using namespace SPH;   // Namespace cite here.
+using namespace SPH;
+//----------------------------------------------------------------------
+//	Setting for the first geometry.
+//	To use this, please commenting the setting for the second geometry.
+//----------------------------------------------------------------------
+std::string full_path_to_file = "./input/propeller.stl";
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 5.366;              /**< Tank length. */
-Real DH = 5.366;              /**< Tank height. */
-Real LL = 5.366;                /**< Liquid column length. */
-Real LH = 2.0;                /**< Liquid column height. */
-Real resolution_ref = 0.025;  /**< Global reference resolution. */
-Real BW = resolution_ref * 4; /**< Extending width for BCs. */
-// Observer location
-StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
-// circle parameters
-Vecd insert_circle_center (2.0, 1.0);
+Real DL = 400.0; // Domain width.
+Real DH = 400.0;  // Domain height.
+Real DW = 400.0;  // Domain width.
+Vec3d domain_lower_bound(-200, -200.0, -200.0);
+Vec3d domain_upper_bound(0.5*DL, 0.5*DH, 0.5*DW);
+Vecd translation(0.0, 0.0, 0.0);
+Real scaling = 1.0;
+
+//Vecd insert_circle_center (2.0, 1.0);
 Real insert_circle_radius = 0.25;
+
+Vecd rotation_axis_1(0.0, 0.0, 0.0);
+Vecd rotation_axis_2(0.0, 100.0, 0.0);
+
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------
 Real rho0_f = 1.0;                       /**< Reference density of fluid. */
 Real gravity_g = 1.0;                    /**< Gravity force of fluid. */
-Real U_max = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
+Real U_max = 2.0 * sqrt(gravity_g * DH); /**< Characteristic velocity. */
 Real c_f = 10.0 * U_max;                 /**< Reference sound speed. */
+
 //----------------------------------------------------------------------
-//	Geometric shapes used in this case.
+//	Below are common parts for the two test geometries.
 //----------------------------------------------------------------------
+BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 100.0;
+//----------------------------------------------------------------------
+//	define the imported model.
+//----------------------------------------------------------------------
+class SolidBodyFromMesh : public ComplexShape
+{
+  public:
+    explicit SolidBodyFromMesh(const std::string &shape_name) : ComplexShape(shape_name)
+    {
+        add<TriangleMeshShapeSTL>(full_path_to_file, translation, scaling);
+    }
+};
 /** create a water block shape */
-std::vector<Vecd> createWaterBlockShape()
+//	define the water block shape
+class WaterBlock : public ComplexShape
 {
-    // geometry
-    std::vector<Vecd> water_block_shape;
-    water_block_shape.push_back(Vecd(0.0, 0.0));
-    water_block_shape.push_back(Vecd(0.0, LH));
-    water_block_shape.push_back(Vecd(LL, LH));
-    water_block_shape.push_back(Vecd(LL, 0.0));
-    water_block_shape.push_back(Vecd(0.0, 0.0));
-    return water_block_shape;
-}
+  public:
+    explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
+    {
+        Vecd halfsize_water(0.5 * DL, 0.5 * DH, 0.5 * DW);
+        Transform translation_water(halfsize_water);
+        add<TransformShape<GeometricShapeBox>>(Transform(translation_water), halfsize_water);
+        subtract<TriangleMeshShapeSTL>(full_path_to_file, translation, scaling);
+    }
+};
 /** create wall shape */
-std::vector<Vecd> createWallShape()
-{
-    std::vector<Vecd> inner_wall_shape;
-    inner_wall_shape.push_back(Vecd(0.0, 0.0));
-    inner_wall_shape.push_back(Vecd(0.0, DH));
-    inner_wall_shape.push_back(Vecd(DL, DH));
-    inner_wall_shape.push_back(Vecd(DL, 0.0));
-    inner_wall_shape.push_back(Vecd(0.0, 0.0));
-
-    return inner_wall_shape;
-}
-/** create a structure shape */
-std::vector<Vecd> createStructureShape()
-{
-    // geometry
-    std::vector<Vecd> water_block_shape;
-    water_block_shape.push_back(Vecd(0.5 * DL, 0.05 * DH));
-    water_block_shape.push_back(Vecd(0.5 * DL + 0.5 * LL, 0.05 * DH + 0.5 * LH));
-    water_block_shape.push_back(Vecd(0.5 * DL + 0.5 * LL, 0.05 * DH));
-    water_block_shape.push_back(Vecd(0.5 * DL, 0.05 * DH));
-    return water_block_shape;
-}
-
-std::vector<Vecd> creatSquare()
-{
-    //geometry
-    std::vector<Vecd> square_shape;
-    square_shape.push_back(Vecd(2.5, 0.75));
-    square_shape.push_back(Vecd(2.5, 1.25));
-    square_shape.push_back(Vecd(3.0, 1.25));
-    square_shape.push_back(Vecd(3.0, 0.75));
-    square_shape.push_back(Vecd(2.5, 0.75));
-    return square_shape;
-}
-
-Vecd square_center (2.75, 1.0);
-//----------------------------------------------------------------------
-// Water body shape definition.
-//----------------------------------------------------------------------
-class WaterBlock : public MultiPolygonShape
+class WallBoundary : public ComplexShape
 {
   public:
-    explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
-        //multi_polygon_.addAPolygon(createStructureShape(), ShapeBooleanOps::sub);
-        //multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
-        multi_polygon_.addAPolygon(creatSquare(), ShapeBooleanOps::sub);
-    }
-};
-//----------------------------------------------------------------------
-//	Shape for the wall.
-//----------------------------------------------------------------------
-class Wall : public MultiPolygonShape
-{
-  public:
-    explicit Wall(const std::string &shape_name) : MultiPolygonShape(shape_name)
-    {
-        multi_polygon_.addAPolygon(createWallShape(), ShapeBooleanOps::add);
-    }
-};
-//----------------------------------------------------------------------
-//	Shape for a structure.
-//----------------------------------------------------------------------
-class Triangle : public MultiPolygonShape
-{
-  public:
-    explicit Triangle(const std::string &shape_name) : MultiPolygonShape(shape_name)
-    {
-       // multi_polygon_.addAPolygon(createStructureShape(), ShapeBooleanOps::add);
-       // multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(creatSquare(), ShapeBooleanOps::add);
+        Vecd halfsize_inner(0.5 * DL, 0.5 * DH, 0.5 * DW);
+        Transform translation_wall(halfsize_inner);
+        add<TransformShape<GeometricShapeBox>>(Transform(translation_wall), halfsize_inner);
     }
 };
 
@@ -130,93 +91,116 @@ class HorizontalMovement: public BaseTracingMethod
      virtual Vecd tracingPosition (Vecd previous_position, Real current_time = 0.0) override
      {
          Real run_time = GlobalStaticVariables::physical_time_;
-         Vecd current_position (0.0, 0.0);
+         Vecd current_position (0.0, 0.0, 0.0);
          current_position[0]= previous_position[0] - 0.1 * run_time;
-         //current_position[1] = previous_position[1];
-         if(run_time <= 10.0)
-         {
-             current_position[1] = previous_position[1] + 0.05 * run_time;
-         }
-         else{
-             current_position[1] = previous_position[1] - 0.05 * (run_time-20.0);
-         }
-         
-         
+         current_position[1] = previous_position[1];
+         current_position[2] = previous_position[2];
 
          return current_position;
      }
 };
 
-class CircleMovement : public BaseTracingMethod
+class RotationMovement : public BaseTracingMethod
 {
 public:
-    CircleMovement(Vecd rotation_center, Real rotation_velocity) : rotation_center_(rotation_center), rotation_v_(rotation_velocity){};
-    virtual ~CircleMovement() {};
+    RotationMovement(Vecd axis_point_1, Vecd axis_point_2, Real rotation_velocity) : axis_point_1_(axis_point_1), 
+        axis_point_2_(axis_point_2), rotation_v_(rotation_velocity)
+    {
+        rotation_axis_[0] = axis_point_1_[0] - axis_point_2_[0];
+        rotation_axis_[1] = axis_point_1_[1] - axis_point_2_[1];
+        rotation_axis_[2] = axis_point_1_[2] - axis_point_2_[2];
+    };
+    virtual ~RotationMovement() {};
    
     virtual Vecd tracingPosition(Vecd previous_position, Real current_time = 0.0) override
     {
-
-        Real rho = (previous_position - rotation_center_).norm();
-        Real theta = atan2(previous_position[0] - rotation_center_[0], previous_position[1] - rotation_center_[1]);
+        Real rho = (previous_position - findProjectionPoint(previous_position)).norm();
+        Real difference_0 = previous_position[0] - findProjectionPoint(previous_position)[0];
+        Real difference_1 = previous_position[1] - findProjectionPoint(previous_position)[1];
+        Real difference_2 = previous_position[2] - findProjectionPoint(previous_position)[2];
+        Real theta = atan2(difference_0, difference_2);
         Real run_time = GlobalStaticVariables::physical_time_;
-        Vecd current_position(0.0, 0.0);
-        current_position[0] = rotation_center_[0] + cos(theta + rotation_v_ * run_time) * rho;
-        current_position[1] = rotation_center_[1] + sin(theta + rotation_v_ * run_time) * rho;
+        Vecd current_position(0.0, 0.0, 0.0);
+        current_position[0] = rotation_axis_[0] + cos(theta + rotation_v_ * run_time) * rho;
+        current_position[1] = previous_position[1];
+        current_position[2] = rotation_axis_[1] + sin(theta + rotation_v_ * run_time) * rho;
        
         return current_position;
     }
 
-    virtual Vecd updateNormalForVector(Vecd previous_position) override
+    virtual Vecd updateNormalForVector(Vecd previous_vector) override
     {
         Real run_time = GlobalStaticVariables::physical_time_;
-        Real magnitude = previous_position.norm();
-        Real theta = atan2(previous_position[0], previous_position[1]);
-        Vecd current_vector(0.0, 0.0);
+        Real magnitude = (previous_vector - findProjectionPoint(previous_vector)).norm();
+        Real theta = atan2(previous_vector[0], previous_vector[2]);
+        Vecd current_vector(0.0, 0.0, 0.0);
         current_vector[0] = magnitude * cos(theta + run_time * rotation_v_);
-        current_vector[1] = magnitude * sin(theta + run_time * rotation_v_);
+        current_vector[2] = magnitude * sin(theta + run_time * rotation_v_);
+        current_vector[1] = previous_vector[1];
 
         return current_vector;
     }
 
 protected:
-        Vecd rotation_center_;
-        Real rotation_v_;
+    Vecd findProjectionPoint(Vecd previous_position)
+    {
+        Vecd point_vector (0.0,0.0,0.0);
+        Vecd projection_vector = Vecd::Zero();
+        point_vector[0] = previous_position[0] - axis_point_1_[0];
+        point_vector[1] = previous_position[1] - axis_point_1_[1];
+        point_vector[2] = previous_position[2] - axis_point_1_[2];
+
+        Real axisLengthSquared = projection_vector[0] * rotation_axis_[0] + rotation_axis_[1] * rotation_axis_[1] + rotation_axis_[2] * rotation_axis_[2];
+        Real dotProduct = rotation_axis_[0] * point_vector[0] + rotation_axis_[1] * point_vector[1] + rotation_axis_[2] * point_vector[2];
+
+        projection_vector[0] = rotation_axis_[0] * (dotProduct / axisLengthSquared);
+        projection_vector[1] = rotation_axis_[1] * (dotProduct / axisLengthSquared);
+        projection_vector[2] = rotation_axis_[2] * (dotProduct / axisLengthSquared);
+
+        return projection_vector;
+    }
+    Vecd rotation_axis_; //two points axis
+    Real rotation_v_;
+    Vecd axis_point_1_;
+    Vecd axis_point_2_;
 };
-//----------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------------------------------------
 //	Main program starts here.
-//----------------------------------------------------------------------
-int main(int ac, char *av[])
+//-----------------------------------------------------------------------------------------------------------
+int main()
 {
     //----------------------------------------------------------------------
-    //	Build up an SPHSystem.
+    //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
-    BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    SPHSystem system(system_domain_bounds, dp_0);
+    IOEnvironment io_environment(system);
     //----------------------------------------------------------------------
-    //	Creating bodies with corresponding materials and particles.
+    //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
+
+    
+    RealBody imported_model(system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
+    // level set shape is used for particle relaxation
+    imported_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(io_environment);
+    imported_model.defineParticlesAndMaterial();
+    imported_model.generateParticles<ParticleGeneratorLattice>();
+  
+    FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
-  
-    ObserverBody fluid_observer(sph_system, "FluidObserver");
-    fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+
+    BodyStatesRecordingToVtp body_states_recording(io_environment, system.real_bodies_);
+    body_states_recording.writeToFile(0);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
-    ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
-    //----------------------------------------------------------------------
-    //	Define the numerical methods used in the simulation.
-    //	Note that there may be data dependence on the sequence of constructions.
-    //----------------------------------------------------------------------
-    Gravity gravity(Vecd(0.0, -gravity_g));
+
     /** Initialize particle acceleration. */
-    SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
+    SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, 0.0, -gravity_g));
     SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, gravity_ptr);
     /** Evaluation of density by summation approach. */
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceInner> update_density_by_summation(water_block_inner);
@@ -227,17 +211,16 @@ int main(int ac, char *av[])
     /** Pressure relaxation algorithm by using position verlet time stepping. */
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemann> pressure_relaxation(water_block_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemann> density_relaxation(water_block_inner);
-    /** Apply transport velocity formulation. */
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionInner> transport_velocity_correction(water_block_inner);
     /** Define the confinement condition for wall. */
-    NearShapeSurface near_surface_wall(water_block, makeShared<Wall>("Wall"));
+    NearShapeSurface near_surface_wall(water_block, makeShared<WallBoundary>("Wall"));
     near_surface_wall.level_set_shape_.writeLevelSet(io_environment);
-    fluid_dynamics::StaticConfinementGeneral confinement_condition_wall(near_surface_wall);
+    fluid_dynamics::StaticConfinement confinement_condition_wall(near_surface_wall);
     /** Define the confinement condition for structure. */
 
-    CircleMovement circle_movement(square_center, Pi);
+    RotationMovement rotation_movement(rotation_axis_1, rotation_axis_1, 0.5 * Pi);
+    //CircleMovement circle_movement(square_center, Pi);
     //HorizontalMovement horizaontal_movement;
-    NearShapeSurfaceTracing near_surface_circle(water_block, makeShared<InverseShape<Triangle>>("Circle"), circle_movement);
+    NearShapeSurfaceTracing near_surface_circle(water_block, makeShared<InverseShape<SolidBodyFromMesh>>("propeller"), rotation_movement);
     near_surface_circle.level_set_shape_.writeLevelSet(io_environment);
     fluid_dynamics::MovingConfinementGeneral confinement_condition_circle(near_surface_circle);
     
@@ -253,24 +236,21 @@ int main(int ac, char *av[])
     density_relaxation.post_processes_.push_back(&confinement_condition_circle.density_relaxation_);
     density_relaxation.post_processes_.push_back(&confinement_condition_wall.surface_bounding_);
     density_relaxation.post_processes_.push_back(&confinement_condition_circle.surface_bounding_);
-    //transport_velocity_correction.post_processes_.push_back(&confinement_condition_wall.transport_velocity_);
-    //transport_velocity_correction.post_processes_.push_back(&confinement_condition_circle.transport_velocity_);
-
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
+    //BodyStatesRecordingToVtp body_states_recording(io_environment, system.real_bodies_);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
         write_water_mechanical_energy(io_environment, water_block, gravity_ptr);
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-        write_recorded_water_pressure("Pressure", io_environment, fluid_observer_contact);
+    /*RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
+        write_recorded_water_pressure("Pressure", io_environment, fluid_observer_contact);*/
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    sph_system.initializeSystemCellLinkedLists();
-    sph_system.initializeSystemConfigurations();
+    system.initializeSystemCellLinkedLists();
+    system.initializeSystemConfigurations();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
@@ -290,9 +270,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
-    body_states_recording.writeToFile(0);
+    //body_states_recording.writeToFile(0);
     write_water_mechanical_energy.writeToFile(0);
-    write_recorded_water_pressure.writeToFile(0);
+    //write_recorded_water_pressure.writeToFile(0);
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -307,7 +287,6 @@ int main(int ac, char *av[])
             initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
-            transport_velocity_correction.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
 
             /** Dynamics including pressure relaxation. */
@@ -334,7 +313,7 @@ int main(int ac, char *av[])
                 if (number_of_iterations != 0 && number_of_iterations % observation_sample_interval == 0)
                 {
                     write_water_mechanical_energy.writeToFile(number_of_iterations);
-                    write_recorded_water_pressure.writeToFile(number_of_iterations);
+                    //write_recorded_water_pressure.writeToFile(number_of_iterations);
                 }
             }
             number_of_iterations++;
@@ -343,7 +322,7 @@ int main(int ac, char *av[])
             time_instance = TickCount::now();
             water_block.updateCellLinkedListWithParticleSort(100);
             water_block_inner.updateConfiguration();
-            fluid_observer_contact.updateConfiguration();
+            //fluid_observer_contact.updateConfiguration();
             near_surface_circle.updateCellList();
             interval_updating_configuration += TickCount::now() - time_instance;
             
@@ -366,17 +345,6 @@ int main(int ac, char *av[])
               << interval_computing_pressure_relaxation.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
-
-   /* if (sph_system.generate_regression_data_)
-    {
-        write_water_mechanical_energy.generateDataBase(1.0e-3);
-        write_recorded_water_pressure.generateDataBase(1.0e-3);
-    }
-    else if (sph_system.RestartStep() == 0)
-    {
-        write_water_mechanical_energy.testResult();
-        write_recorded_water_pressure.testResult();
-    }*/
 
     return 0;
 }

@@ -45,11 +45,12 @@ namespace SPH
 			Vecd acceleration = Vecd::Zero();
 			Vecd vel_derivative = Vecd::Zero();
 			Vecd vel_level_set_cell_j = Vecd::Zero();
+			Real rho_i = rho_[index_i];
 			/*Here we give the Level-set boundary velocity as zero, but later we need a vector to set the velocity of each level-set cell*/
 			Real phi_r_ij = abs(level_set_shape_->findSignedDistance(pos_[index_i]));
-			vel_derivative = (vel_[index_i] - vel_level_set_cell_j) / (phi_r_ij + TinyReal);
-			Vecd kernel_gradient = level_set_shape_->computeKernelGradientIntegral(pos_[index_i]);
-			acceleration += 2.0 * mu_ * kernel_gradient.norm() * vel_derivative;
+			vel_derivative = 2.0 * (vel_[index_i] - vel_level_set_cell_j);
+			Vecd kernel_gradient_divide_Rij = level_set_shape_->computeKernelGradientDivideRijIntegral(pos_[index_i]);
+			acceleration += 2.0 * mu_ * kernel_gradient_divide_Rij.norm() * vel_derivative /rho_i;
 			acc_prior_[index_i] += acceleration / rho_[index_i];
 		}
 		//=================================================================================================//
@@ -108,9 +109,7 @@ namespace SPH
 		//=================================================================================================//
 		void StaticConfinementFreeSurfaceIndication::interaction(size_t index_i, Real dt )
 		{
-			Real pos_div = 0.0;
-			Vecd kernel_gradient = level_set_shape_->computeKernelGradientIntegral(pos_[index_i]);
-			pos_div -= kernel_gradient.norm() * abs(level_set_shape_->findSignedDistance(pos_[index_i]));
+			Real pos_div = - level_set_shape_->computeKernelGradientMultiplyRijIntegral(pos_[index_i]);
 			pos_div_[index_i] += pos_div;
 		}
 		//=================================================================================================//
@@ -216,9 +215,42 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
+		MovingConfinementFreeSurfaceIndication::MovingConfinementFreeSurfaceIndication(NearShapeSurfaceTracing& near_surface_tracing)
+		: BaseLocalDynamics<BodyPartByCell>(near_surface_tracing), FluidDataSimple(sph_body_),
+			pos_(particles_->pos_), surface_indicator_(particles_->surface_indicator_),
+			near_surface_tracing_(near_surface_tracing),
+			level_set_shape_(&near_surface_tracing.level_set_shape_), pos_div_(*particles_->getVariableByName<Real>("DensityChangeRate"))
+		{}
+		//=================================================================================================//
+		void MovingConfinementFreeSurfaceIndication::interaction(size_t index_i, Real dt )
+		{
+			Real pos_div = - level_set_shape_->computeKernelGradientMultiplyRijIntegral(near_surface_tracing_.tracing_cell_method_base_.tracingPosition(pos_[index_i]));
+			pos_div_[index_i] += pos_div;
+		}
+		//=================================================================================================//
+		 MovingConfinementTransportVelocity::MovingConfinementTransportVelocity(NearShapeSurfaceTracing& near_surface_tracing, Real coefficient)
+			: BaseLocalDynamics<BodyPartByCell>(near_surface_tracing), FluidDataSimple(sph_body_),
+			pos_(particles_->pos_), surface_indicator_(particles_->surface_indicator_),
+			smoothing_length_sqr_(pow(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
+			coefficient_(coefficient), near_surface_tracing_(near_surface_tracing),
+			level_set_shape_(&near_surface_tracing.level_set_shape_) {}
+		//=================================================================================================//
+        void MovingConfinementTransportVelocity::interaction(size_t index_i, Real dt)
+		{
+			Vecd acceleration_trans = Vecd::Zero();
+			Vecd kernel_gradient_previous = level_set_shape_->computeKernelGradientIntegral(near_surface_tracing_.tracing_cell_method_base_.tracingPosition(pos_[index_i]));
+			Vecd kernel_gradient = near_surface_tracing_.tracing_cell_method_base_.updateNormalForVector(kernel_gradient_previous);
+			acceleration_trans -= 2.0 * kernel_gradient;
+            if (surface_indicator_[index_i] == 0)
+            {
+                pos_[index_i] += coefficient_ * smoothing_length_sqr_ * acceleration_trans;
+            }
+		}
+		//=================================================================================================//
 		MovingConfinementGeneral::MovingConfinementGeneral(NearShapeSurfaceTracing& near_surface_tracing)
 		: density_summation_(near_surface_tracing), pressure_relaxation_(near_surface_tracing),
-		  density_relaxation_(near_surface_tracing), surface_bounding_(near_surface_tracing) {}
+		  density_relaxation_(near_surface_tracing), surface_bounding_(near_surface_tracing), 
+	      transport_velocity_(near_surface_tracing),free_surface_indication_(near_surface_tracing) {}
 	}
 	//=================================================================================================//
 	
