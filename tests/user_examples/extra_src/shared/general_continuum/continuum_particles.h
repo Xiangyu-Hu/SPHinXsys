@@ -35,6 +35,36 @@ namespace SPH
         virtual void initializeOtherVariables() override;
         virtual ContinuumParticles *ThisObjectPtr() override { return this; };
     };
+
+    class PlasticContinuumParticles : public ContinuumParticles
+    {
+    public:
+        StdLargeVec<Mat3d> elastic_strain_tensor_3D_;
+        StdLargeVec<Mat3d> elastic_strain_rate_3D_;
+
+        StdLargeVec<Mat3d> strain_tensor_3D_;
+        StdLargeVec<Mat3d> stress_tensor_3D_;
+        StdLargeVec<Mat3d> strain_rate_3D_;
+        StdLargeVec<Mat3d> stress_rate_3D_;
+
+        StdLargeVec<Mat3d> shear_stress_3D_;
+        StdLargeVec<Mat3d> shear_strain_3D_;
+        StdLargeVec<Mat3d> shear_stress_rate_3D_;
+        StdLargeVec<Mat3d> shear_strain_rate_3D_;
+
+        StdLargeVec<Real> vertical_stress_;
+        StdLargeVec<Real> acc_deviatoric_plastic_strain_;
+
+        Real getDeviatoricPlasticStrain(Mat3d& strain_tensor);
+
+        PlasticContinuum& plastic_continuum_;
+
+        PlasticContinuumParticles(SPHBody& sph_body, PlasticContinuum* plastic_continuum);
+        virtual ~PlasticContinuumParticles() {};
+
+        virtual void initializeOtherVariables() override;
+        virtual ContinuumParticles* ThisObjectPtr() override { return this; };
+    };
 } // namespace SPH
 
 #endif // CONTINUUM_PARTICLES_H
