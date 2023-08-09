@@ -5,8 +5,7 @@
 
 #include "sphinxsys.h"
 #include "2d_free_stream_around_square.h"
-#include "exclusive_shape.h"
-#include "fluid_boundary_static_confinement.h"
+#include "level_set_confinement.h"
 
 using namespace SPH;
 
@@ -59,7 +58,7 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 
 	/** time-space method to detect surface particles. */
-    InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationInner>
+    InteractionWithUpdate<fluid_dynamics::FreeSurfaceIndicationInner, SequencedPolicy>
 		free_stream_surface_indicator(water_block_inner);
 
 	/** Evaluation of density by freestream approach. */
@@ -69,7 +68,7 @@ int main(int ac, char *av[])
 	water_block.addBodyStateForRecording<int>("SurfaceIndicator");
 	
 	/** modify the velocity of boundary particles with free-stream velocity. */
-	SimpleDynamics<fluid_dynamics::FreeStreamVelocityCorrection<FreeStreamVelocity>> velocity_boundary_condition_constraint(water_block);
+	SimpleDynamics<fluid_dynamics::FreeStreamVelocityCorrection<FreeStreamVelocity>, SequencedPolicy> velocity_boundary_condition_constraint(water_block);
 	/** Pressure relaxation. */
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemann> pressure_relaxation(water_block_inner);
 	/** correct the velocity of boundary particles with free-stream velocity through the post process of pressure relaxation. */
@@ -79,11 +78,11 @@ int main(int ac, char *av[])
 	/** Computing viscous acceleration. */
     InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_inner);
 	/** Apply transport velocity formulation. */
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionInner, SequencedPolicy> transport_velocity_correction(water_block_inner);
+    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionInner> transport_velocity_correction(water_block_inner);
 	/** compute the vorticity. */
 	InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_inner);
 
-    NearShapeSurface near_surface(water_block, makeShared<ExclusiveShape<Cylinder>>("Cylinder"));
+    NearShapeSurface near_surface(water_block, makeShared<InverseShape<Cylinder>>("Cylinder"));
     near_surface.level_set_shape_.writeLevelSet(io_environment);
     fluid_dynamics::StaticConfinementGeneral confinement_condition(near_surface);
 
@@ -93,6 +92,7 @@ int main(int ac, char *av[])
     density_relaxation.post_processes_.push_back(&confinement_condition.density_relaxation_);
     transport_velocity_correction.post_processes_.push_back(&confinement_condition.transport_velocity_);
     viscous_acceleration.post_processes_.push_back(&confinement_condition.viscous_acceleration_);
+	
 	//----------------------------------------------------------------------
 	//	Algorithms of FSI.
 	//----------------------------------------------------------------------
@@ -147,7 +147,7 @@ int main(int ac, char *av[])
 			update_fluid_density.exec();
 			viscous_acceleration.exec();
             transport_velocity_correction.exec(GlobalStaticVariables::physical_time_);
-
+			//write_real_body_states.writeToFile();
 			size_t inner_ite_dt = 0;
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)

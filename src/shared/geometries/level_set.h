@@ -125,7 +125,7 @@ class LevelSet : public MeshWithGridDataPackages<GridDataPackage<4, 1>>,
 
     //=============================================================================================//
     /*below for viscous force and location divergence*/
-    MeshVariable<Real> &kernel_gradient_Multiply_Rij_;
+    MeshVariable<Real> &kernel_gradient_multiply_Rij_;
     MeshVariable<Vecd>& kernel_gradient_divide_Rij_;
     //=============================================================================================//
 

@@ -108,7 +108,7 @@ int main(int ac, char *av[])
         water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(disposer_translation)), disposer_halfsize));
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer, 0);
     /** time-space method to detect surface particles. */
-    InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex>
+    InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex, SequencedPolicy>
         free_stream_surface_indicator(water_block_complex);
     /** Evaluation of density by freestream approach. */
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_fluid_density(water_block_complex);
@@ -191,7 +191,7 @@ int main(int ac, char *av[])
             update_fluid_density.exec();
             viscous_acceleration.exec();
             transport_velocity_correction.exec();
-
+            //write_real_body_states.writeToFile();
             size_t inner_ite_dt = 0;
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)

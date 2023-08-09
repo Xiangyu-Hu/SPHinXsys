@@ -298,6 +298,7 @@ void LevelSet::writeMeshFieldToPlt(std::ofstream &output_file)
     output_file << "kernel_weight, "
                 << "kernel_gradient_x, "
                 << "kernel_gradient_y "
+                << "kernel_gradient_multiply_Rij "
                 << "\n";
     output_file << "zone i=" << number_of_operation[0] << "  j=" << number_of_operation[1] << "  k=" << 1
                 << "  DATAPACKING=BLOCK  SOLUTIONTIME=" << 0 << "\n";
@@ -387,6 +388,16 @@ void LevelSet::writeMeshFieldToPlt(std::ofstream &output_file)
         for (int i = 0; i != number_of_operation[0]; ++i)
         {
             output_file << DataValueFromGlobalIndex(kernel_gradient_, Arrayi(i, j))[1]
+                        << " ";
+        }
+        output_file << " \n";
+    }
+
+    for (int j = 0; j != number_of_operation[1]; ++j)
+    {
+        for (int i = 0; i != number_of_operation[0]; ++i)
+        {
+            output_file << DataValueFromGlobalIndex(kernel_gradient_multiply_Rij_, Arrayi(i, j))
                         << " ";
         }
         output_file << " \n";
@@ -492,7 +503,7 @@ Real LevelSet::computeKernelGradientMultiplyRijIntegral(const Vecd &position)
                     Vecd displacement = position - integral_position;
                     Real distance = displacement.norm();
                     if (distance < cutoff_radius)
-                        integral += kernel_.W(global_h_ratio_, distance, displacement) *
+                        integral += kernel_.dW(global_h_ratio_, distance, displacement) *
                                     CutCellVolumeFraction(phi_neighbor, phi_gradient, data_spacing_) * distance;
                 }
             });

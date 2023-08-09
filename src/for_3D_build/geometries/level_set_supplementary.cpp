@@ -300,6 +300,12 @@ void LevelSet::writeMeshFieldToPlt(std::ofstream &output_file)
                 << "n_x, "
                 << "n_y, "
                 << "n_z "
+                << "near_interface_id ";
+    output_file << "kernel_weight, "
+                << "kernel_gradient_x, "
+                << "kernel_gradient_y "
+                << "kernel_gradient_z "
+                << "kernel_gradient_multiply_Rij "
                 << "\n";
     output_file << "zone i=" << number_of_operation[0] << "  j=" << number_of_operation[1] << "  k=" << number_of_operation[2]
                 << "  DATAPACKING=BLOCK  SOLUTIONTIME=" << 0 << "\n";
@@ -387,6 +393,17 @@ void LevelSet::writeMeshFieldToPlt(std::ofstream &output_file)
             for (int i = 0; i != number_of_operation[0]; ++i)
             {
                 output_file << DataValueFromGlobalIndex(near_interface_id_, Arrayi(i, j, k))
+                            << " ";
+            }
+            output_file << " \n";
+        }
+
+    for (int k = 0; k != number_of_operation[2]; ++k)
+        for (int j = 0; j != number_of_operation[1]; ++j)
+        {
+            for (int i = 0; i != number_of_operation[0]; ++i)
+            {
+                output_file << DataValueFromGlobalIndex(kernel_gradient_multiply_Rij_, Arrayi(i, j, k))
                             << " ";
             }
             output_file << " \n";

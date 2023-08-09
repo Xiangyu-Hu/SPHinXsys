@@ -39,7 +39,7 @@ LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing, size_t buffe
       kernel_weight_(*registerMeshVariable<Real>("KernelWeight")),
       kernel_gradient_(*registerMeshVariable<Vecd>("KernelGradient")),
       kernel_(*sph_adaptation.getKernel()),
-      kernel_gradient_Multiply_Rij_(*registerMeshVariable<Real>("KernelGradientMultiplyRij")),
+      kernel_gradient_multiply_Rij_(*registerMeshVariable<Real>("KernelGradientMultiplyRij")),
       kernel_gradient_divide_Rij_(*registerMeshVariable<Vecd>("KernelGradientDivideRij"))
 {
     Real far_field_distance = grid_spacing_ * (Real)buffer_width_;
@@ -72,6 +72,13 @@ void LevelSet::updateKernelIntegrals()
                                  { return computeKernelIntegral(position); });
                              data_pkg->assignByPosition(
                                  kernel_gradient_, [&](const Vecd &position) -> Vecd
+                                 { return computeKernelGradientIntegral(position); });
+                             /*below for viscous force and location divergence*/
+                             data_pkg->assignByPosition(
+                                 kernel_gradient_multiply_Rij_, [&](const Vecd &position) -> Real
+                                 { return computeKernelGradientMultiplyRijIntegral(position); });
+                             data_pkg->assignByPosition(
+                                 kernel_gradient_divide_Rij_, [&](const Vecd &position) -> Vecd
                                  { return computeKernelGradientIntegral(position); });
                          });
 }
@@ -344,7 +351,7 @@ bool MultilevelLevelSet::probeIsWithinMeshBound(const Vecd &position)
 //=================================================================================================//
 Real LevelSet::probeKernelGradientMultiplyRijIntegral(const Vecd &position, Real h_ratio)
 {
-    return probeMesh(kernel_gradient_Multiply_Rij_, position);
+    return probeMesh(kernel_gradient_multiply_Rij_, position);
 }
 //=================================================================================================//
 Vecd LevelSet::probeKernelGradientDivideRijIntegral(const Vecd &position, Real h_ratio)

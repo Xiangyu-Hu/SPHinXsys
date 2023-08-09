@@ -63,7 +63,15 @@ class FreeSurfaceIndicationComplex : public FreeSurfaceIndicationInner, public F
                 pos_div -= contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.r_ij_[n];
             }
         }
+        
+        
         pos_div_[index_i] += pos_div;
+
+        std::string output_folder = "./output";
+		std::string filefullpath = output_folder + "/" + "position_divergence" + std::to_string(dt) + ".dat";
+		std::ofstream out_file(filefullpath.c_str(), std::ios::app);
+		out_file <<this->getParticles()->pos_[index_i][0]<< " " 
+            <<this->getParticles()->pos_[index_i][1]<< " "<< pos_div << " "<<  pos_div_[index_i]<<std::endl;
     };
 
   protected:

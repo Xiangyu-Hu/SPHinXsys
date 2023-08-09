@@ -13,7 +13,7 @@ namespace SPH
 			coefficient_(coefficient),
 			level_set_shape_(&near_surface.level_set_shape_) {}
 		//=================================================================================================//
-        void StaticConfinementTransportVelocity::interaction(size_t index_i, Real dt)
+        void StaticConfinementTransportVelocity::update(size_t index_i, Real dt)
 		{
 			Vecd acceleration_trans = Vecd::Zero();
             /*below for debuging*/
@@ -40,7 +40,7 @@ namespace SPH
 			mu_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceViscosity()), vel_(particles_->vel_),
 			level_set_shape_(&near_surface.level_set_shape_) {}
 		//=================================================================================================//
-        void StaticConfinementViscousAcceleration::interaction(size_t index_i, Real dt)
+        void StaticConfinementViscousAcceleration::update(size_t index_i, Real dt)
 		{
 			Vecd acceleration = Vecd::Zero();
 			Vecd vel_derivative = Vecd::Zero();
@@ -107,10 +107,16 @@ namespace SPH
 			level_set_shape_(&near_surface.level_set_shape_), pos_div_(*particles_->getVariableByName<Real>("DensityChangeRate"))
 		{}
 		//=================================================================================================//
-		void StaticConfinementFreeSurfaceIndication::interaction(size_t index_i, Real dt )
+		void StaticConfinementFreeSurfaceIndication::update(size_t index_i, Real dt )
 		{
 			Real pos_div = - level_set_shape_->computeKernelGradientMultiplyRijIntegral(pos_[index_i]);
 			pos_div_[index_i] += pos_div;
+			std::string output_folder = "./output";
+			std::string filefullpath = output_folder + "/" + "position_divergence_levelset_" + std::to_string(dt) + ".dat";
+			std::ofstream out_file(filefullpath.c_str(), std::ios::app);
+			out_file << index_i<< "  "<<  pos_div_[index_i]<<std::endl;
+			//out_file << std::fixed << std::setprecision(2)<<pos_[index_i][0]<< "  " <<pos_[index_i][1]<< "  "<< pos_div << "  "<<  pos_div_[index_i]<<std::endl;
+			out_file << " \n";
 		}
 		//=================================================================================================//
 		StaticConfinementBounding::StaticConfinementBounding(NearShapeSurface& near_surface)
