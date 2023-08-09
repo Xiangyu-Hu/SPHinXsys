@@ -114,7 +114,7 @@ int main(int ac, char *av[])
     SharedPtr<AlievPanfilowModel> muscle_reaction_model_ptr = makeShared<AlievPanfilowModel>(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
     physiology_heart.defineParticlesAndMaterial<
         ElectroPhysiologyParticles, MonoFieldElectroPhysiology>(
-        muscle_reaction_model_ptr, TypeIdentity<LocalDirectionalDiffusion>(), diffusion_coff, bias_coff, fiber_direction);
+        muscle_reaction_model_ptr, TypeIdentity<LocalDirectionalDiffusion>(), diffusion_coeff, bias_coeff, fiber_direction);
     (!system.RunParticleRelaxation() && system.ReloadParticles())
         ? physiology_heart.generateParticles<ParticleGeneratorReload>(io_environment, "HeartModel")
         : physiology_heart.generateParticles<ParticleGeneratorLattice>();

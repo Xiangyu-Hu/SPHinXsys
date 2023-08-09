@@ -18,8 +18,8 @@ StdVec<Vecd> observation_location = {Vecd(0.3, 0.7)};
 //----------------------------------------------------------------------
 //	Basic parameters for material properties.
 //----------------------------------------------------------------------
-Real diffusion_coff = 1.0;
-Real bias_coff = 0.0;
+Real diffusion_coeff = 1.0;
+Real bias_coeff = 0.0;
 Vec2d fiber_direction(1.0, 0.0);
 Real c_m = 1.0;
 Real k = 8.0;
@@ -83,7 +83,7 @@ int main()
 	SolidBody muscle_body(system, makeShared<MuscleBlock>("MuscleBlock"));
 	SharedPtr<AlievPanfilowModel> muscle_reaction_model_ptr = makeShared<AlievPanfilowModel>(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
 	muscle_body.defineParticlesAndMaterial<ElectroPhysiologyParticles, MonoFieldElectroPhysiology>(
-		muscle_reaction_model_ptr, TypeIdentity<DirectionalDiffusion>(), diffusion_coff, bias_coff, fiber_direction);
+		muscle_reaction_model_ptr, TypeIdentity<DirectionalDiffusion>(), diffusion_coeff, bias_coeff, fiber_direction);
 	muscle_body.generateParticles<ParticleGeneratorLattice>();
 
 	ObserverBody voltage_observer(system, "VoltageObserver");
