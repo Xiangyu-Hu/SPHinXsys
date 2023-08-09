@@ -173,23 +173,6 @@ Vecd getWENORightState(const Vecd &e_ij, const Real &r_ij, const Vecd &particle_
     return getWENOStateWithStencilPoints(v1, v2, v3, v4);
 }
 //=================================================================================================//
-Vec2d getRotationJump(const Vec2d &pseudo_n_jump, const Mat2d &transformation_matrix)
-{
-    Vec2d local_rotation_jump = Vec2d::Zero();
-    Vec2d local_pseuodo_n_jump = transformation_matrix * pseudo_n_jump;
-    local_rotation_jump[0] = local_pseuodo_n_jump[0];
-    return transformation_matrix.transpose() * local_rotation_jump;
-}
-//=================================================================================================//
-Vec3d getRotationJump(const Vec3d &pseudo_n_jump, const Mat3d &transformation_matrix)
-{
-    Vec3d local_rotation_jump = Vec3d::Zero();
-    Vec3d local_pseuodo_n_jump = transformation_matrix * pseudo_n_jump;
-    local_rotation_jump[0] = local_pseuodo_n_jump[0];
-    local_rotation_jump[1] = local_pseuodo_n_jump[1];
-    return transformation_matrix.transpose() * local_rotation_jump;
-}
-//=================================================================================================//
 Mat2d getCorrectedAlmansiStrain(const Mat2d &current_local_almansi_strain, const Real &nu_)
 {
     Mat2d corrected_almansi_strain = current_local_almansi_strain;

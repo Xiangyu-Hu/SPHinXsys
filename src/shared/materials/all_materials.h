@@ -23,7 +23,7 @@
 /**
  * @file 	all_materials.h
  * @brief 	This is the header file for materials.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #pragma once

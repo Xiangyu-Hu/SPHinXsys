@@ -202,22 +202,24 @@ class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
             {
                 Vecd e_ij = inner_neighborhood.e_ij_[n];
                 Real r_ij = inner_neighborhood.r_ij_[n];
-                Real dim_inv_r_ij = Dimensions / r_ij;
                 Real weight = inner_neighborhood.W_ij_[n] * inv_W0_;
                 Vecd pos_jump = getLinearVariableJump(e_ij, r_ij, pos_[index_i],
                                                       transformation_matrix_[index_i].transpose() * F_[index_i] * transformation_matrix_[index_i],
                                                       pos_[index_j],
                                                       transformation_matrix_[index_i].transpose() * F_[index_j] * transformation_matrix_[index_i]);
-                acceleration += hourglass_control_factor_ * weight * G0_ * pos_jump * dim_inv_r_ij *
-                                inner_neighborhood.dW_ijV_j_[n] * thickness_[index_i];
+                Real limiter_pos = SMIN(2.0 * pos_jump.norm() / r_ij, 1.0);
+                acceleration += hourglass_control_factor_ * weight * G0_ * pos_jump * Dimensions *
+                                inner_neighborhood.dW_ijV_j_[n] * limiter_pos;
 
-                Vecd pseudo_n_jump = getLinearVariableJump(e_ij, r_ij, pseudo_n_[index_i] - n0_[index_i],
+                Vecd pseudo_n_variation_i = pseudo_n_[index_i] - n0_[index_i];
+                Vecd pseudo_n_variation_j = pseudo_n_[index_j] - n0_[index_j];
+                Vecd pseudo_n_jump = getLinearVariableJump(e_ij, r_ij, pseudo_n_variation_i,
                                                            transformation_matrix_[index_i].transpose() * F_bending_[index_i] * transformation_matrix_[index_i],
-                                                           pseudo_n_[index_j] - n0_[index_j],
+                                                           pseudo_n_variation_j,
                                                            transformation_matrix_[index_j].transpose() * F_bending_[index_j] * transformation_matrix_[index_j]);
-                Vecd rotation_jump = getRotationJump(pseudo_n_jump, transformation_matrix_[index_i]);
-                pseudo_normal_acceleration += hourglass_control_factor_ * weight * G0_ * rotation_jump * dim_inv_r_ij *
-                                              inner_neighborhood.dW_ijV_j_[n] * pow(thickness_[index_i], 3);
+                Real limiter_pseudo_n = SMIN(2.0 * pseudo_n_jump.norm() / ((pseudo_n_variation_i- pseudo_n_variation_j).norm() + Eps), 1.0);
+                pseudo_normal_acceleration += hourglass_control_factor_ * weight * G0_ * pseudo_n_jump * Dimensions *
+                                              inner_neighborhood.dW_ijV_j_[n] * pow(thickness_[index_i], 2) * limiter_pseudo_n;
             }
 
             acceleration += (global_stress_i + global_stress_[index_j]) * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];

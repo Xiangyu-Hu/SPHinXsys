@@ -24,7 +24,7 @@
  * @file 	parameterization.h
  * @brief 	This is the base classes for introducing the parameterization
  *			of a class or method.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef SPHINXSYS_PARAMETERIZATION_H

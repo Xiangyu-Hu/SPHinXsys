@@ -36,7 +36,7 @@ Mat3d rotation_matrix{
 // Observer location
 Real observation_rot_cos = cos(45.0 / 180.0 * Pi);
 StdVec<Vecd> observation_location = {rotation_matrix *
-                                     Vecd(radius_mid_surface * observation_rot_cos, height / Real(2.0), radius_mid_surface * observation_rot_cos)};
+                                     Vecd(radius_mid_surface * observation_rot_cos, height / Real(2.0), radius_mid_surface *observation_rot_cos)};
 /** For material properties of the solid. */
 Real rho0_s = 7.800;             /** Normalized density. */
 Real Youngs_modulus = 210e6;     /** Normalized Youngs Modulus. */
@@ -83,22 +83,22 @@ class DisControlGeometry : public BodyPartByParticle
   private:
     void tagManually(size_t index_i)
     {
-        Vecd pos_bofore_rotation = rotation_matrix.transpose() * base_particles_.pos_[index_i];
-        if (pos_bofore_rotation[0] < 0.5 * particle_spacing_ref && pos_bofore_rotation[0] > -0.5 * particle_spacing_ref)
+        Vecd pos_before_rotation = rotation_matrix.transpose() * base_particles_.pos_[index_i];
+        if (pos_before_rotation[0] < 0.5 * particle_spacing_ref && pos_before_rotation[0] > -0.5 * particle_spacing_ref)
         {
             body_part_particles_.push_back(index_i);
         }
     };
 };
 
-/** Define the controled displacement. */
-class ControlDiaplacement : public thin_structure_dynamics::ConstrainShellBodyRegion
+/** Define the controlled displacement. */
+class ControlDisplacement : public thin_structure_dynamics::ConstrainShellBodyRegion
 {
   public:
-    ControlDiaplacement(BodyPartByParticle &body_part)
+    ControlDisplacement(BodyPartByParticle &body_part)
         : ConstrainShellBodyRegion(body_part),
           vel_(particles_->vel_){};
-    virtual ~ControlDiaplacement(){};
+    virtual ~ControlDisplacement(){};
 
   protected:
     StdLargeVec<Vecd> &vel_;
@@ -172,7 +172,7 @@ int main(int ac, char *av[])
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(cylinder_body_inner);
     /** Control the displacement. */
     DisControlGeometry dis_control_geometry(cylinder_body, "DisControlGeometry");
-    SimpleDynamics<ControlDiaplacement> dis_control(dis_control_geometry);
+    SimpleDynamics<ControlDisplacement> dis_control(dis_control_geometry);
     /** Constrain the Boundary. */
     BoundaryGeometry boundary_geometry(cylinder_body, "BoundaryGeometry");
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> constrain_holder(boundary_geometry);

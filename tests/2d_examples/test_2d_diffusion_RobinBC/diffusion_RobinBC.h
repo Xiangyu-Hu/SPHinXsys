@@ -129,7 +129,8 @@ class DirichletWallBoundaryInitialCondition
     size_t phi_;
 
   public:
-    DirichletWallBoundaryInitialCondition(SolidBody &diffusion_body) : DiffusionReactionInitialCondition<WallParticles>(diffusion_body)
+    explicit DirichletWallBoundaryInitialCondition(SolidBody &diffusion_body)
+        : DiffusionReactionInitialCondition<WallParticles>(diffusion_body)
     {
         phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
     }
@@ -158,9 +159,10 @@ class RobinWallBoundaryInitialCondition
     Real &T_infinity_;
 
   public:
-    RobinWallBoundaryInitialCondition(SolidBody &diffusion_body) : DiffusionReactionInitialCondition<WallParticles>(diffusion_body),
-                                                                   convection_(*(this->particles_->template getVariableByName<Real>("Convection"))),
-                                                                   T_infinity_(*(this->particles_->template getGlobalVariableByName<Real>("T_infinity")))
+    explicit RobinWallBoundaryInitialCondition(SolidBody &diffusion_body)
+        : DiffusionReactionInitialCondition<WallParticles>(diffusion_body),
+          convection_(*(this->particles_->template getVariableByName<Real>("Convection"))),
+          T_infinity_(*(this->particles_->template getGlobalVariableByName<Real>("T_infinity")))
     {
         phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
     }
@@ -200,7 +202,7 @@ class DiffusionBodyRelaxation
 class TemperatureObserverParticleGenerator : public ObserverParticleGenerator
 {
   public:
-    TemperatureObserverParticleGenerator(SPHBody &sph_body) : ObserverParticleGenerator(sph_body)
+    explicit TemperatureObserverParticleGenerator(SPHBody &sph_body) : ObserverParticleGenerator(sph_body)
     {
         /** A line of measuring points at the middle line. */
         size_t number_of_observation_points = 5;
@@ -209,9 +211,8 @@ class TemperatureObserverParticleGenerator : public ObserverParticleGenerator
 
         for (size_t i = 0; i < number_of_observation_points; ++i)
         {
-            Vec2d point_coordinate(0.5 * L, range_of_measure * Real(i) /
-                                                    Real(number_of_observation_points - 1) +
-                                                start_of_measure);
+            Vec2d point_coordinate(
+                0.5 * L, range_of_measure * Real(i) / Real(number_of_observation_points - 1) + start_of_measure);
             positions_.push_back(point_coordinate);
         }
     }

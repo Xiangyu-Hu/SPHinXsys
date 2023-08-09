@@ -23,7 +23,7 @@
 /**
  * @file 	all_particle_generator.h
  * @brief 	Head file for all particle generator.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef ALL_PARTICLE_GENERATORS_2D_H

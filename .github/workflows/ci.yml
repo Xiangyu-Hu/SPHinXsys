@@ -37,7 +37,10 @@ jobs:
             pkg-config `# for installing libraries with vcpkg`\
             git \
             cmake \
-            ninja-build
+            ninja-build \
+            libfontconfig1-dev `# From here required for vcpkg opencascade`\
+            libx11-dev \
+            libgl-dev
 
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
@@ -61,15 +64,17 @@ jobs:
             simbody \
             gtest \
             xsimd \
-            pybind11
+            pybind11 \
+            opencascade
 
       - name: Generate buildsystem using float (No test)
         run: |
           cmake -G Ninja \
             -D CMAKE_BUILD_TYPE=Release \
-            -D SPHINXSYS_USE_FLOAT=ON \
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -D SPHINXSYS_USE_FLOAT=ON \
+            -D SPHINXSYS_MODULE_OPENCASCADE=ON \
             -D SPHINXSYS_CI=ON \
             -S ${{github.workspace}} \
             -B ${{github.workspace}}/build
@@ -97,7 +102,10 @@ jobs:
             pkg-config `# for installing libraries with vcpkg`\
             git \
             cmake \
-            ninja-build
+            ninja-build \
+            libfontconfig1-dev `# From here required for vcpkg opencascade`\
+            libx11-dev \
+            libgl-dev
 
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
@@ -121,16 +129,18 @@ jobs:
             simbody \
             gtest \
             xsimd \
-            pybind11
+            pybind11 \
+            opencascade
 
       - name: Generate buildsystem using double
         run: |
           cmake -G Ninja \
             -D CMAKE_BUILD_TYPE=Release \
-            -D SPHINXSYS_USE_FLOAT=OFF \
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -D SPHINXSYS_CI=ON \
+            -D SPHINXSYS_USE_FLOAT=OFF \
+            -D SPHINXSYS_MODULE_OPENCASCADE=ON \
             -S ${{github.workspace}} \
             -B ${{github.workspace}}/build
             
@@ -209,7 +219,7 @@ jobs:
             simbody `
             gtest `
             xsimd `
-            pybind11
+            pybind11 
 
       - uses: ilammy/msvc-dev-cmd@v1
 
@@ -297,7 +307,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build \
+          ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build --allow-unsupported \
             eigen3 \
             tbb \
             boost-program-options \
@@ -305,7 +315,8 @@ jobs:
             gtest \
             simbody \
             xsimd \
-            pybind11
+            pybind11 \
+            opencascade
 
       - name: Generate buildsystem
         run: |

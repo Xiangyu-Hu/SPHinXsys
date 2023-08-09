@@ -23,7 +23,7 @@
 /**
  * @file 	geometric_shape.h
  * @brief 	Here, we define shapes represented directly by geometric elements.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef GEOMETRIC_SHAPE_H

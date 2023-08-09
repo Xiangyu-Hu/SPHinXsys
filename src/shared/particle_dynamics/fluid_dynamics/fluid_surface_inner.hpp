@@ -2,7 +2,7 @@
  * @file 	fluid_surface_inner.hpp
  * @brief 	Here, we define the algorithm classes for fluid surfaces.
  * @details Fluid indicators are mainly used here to classify different region in a fluid.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #pragma once

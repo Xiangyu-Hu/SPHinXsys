@@ -23,12 +23,14 @@
 /**
  * @file 	complex_solid.h
  * @brief 	These are classes for define complex solid materials.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
-#pragma once
+#ifndef COMPLEX_SOLID_H
+#define COMPLEX_SOLID_H
 
 #include "elastic_solid.h"
+#include <general_dynamics.h>
 
 namespace SPH
 {
@@ -53,4 +55,55 @@ class ActiveMuscle : public MuscleType
     virtual Matd StressPK2(Matd &deformation, size_t index_i) override;
     virtual ActiveMuscle<MuscleType> *ThisObjectPtr() override { return this; };
 };
+
+/**
+ * @class CompositeSolid
+ */
+class CompositeSolid : public ElasticSolid
+{
+    StdLargeVec<int> material_id_;
+
+  protected:
+    UniquePtrsKeeper<ElasticSolid> composite_ptrs_keeper_;
+    StdVec<ElasticSolid *> composite_materials_;
+
+  public:
+    explicit CompositeSolid(Real rho0);
+    virtual ~CompositeSolid(){};
+
+    virtual void initializeLocalParameters(BaseParticles *base_particles) override;
+    virtual Matd StressPK2(Matd &deformation, size_t index_i) override;
+    virtual Matd StressPK1(Matd &deformation, size_t index_i) override;
+    virtual Matd StressCauchy(Matd &almansi_strain, Matd &F, size_t index_i) override;
+    virtual Real VolumetricKirchhoff(Real J) override { return 0.0; };
+    virtual std::string getRelevantStressMeasureName() override { return "PK2"; };
+
+    Real CompositeDensity(size_t index_i);
+
+    template <class ElasticSolidType, typename... Args>
+    void add(Args &&...args)
+    {
+        ElasticSolid *added_material =
+            composite_ptrs_keeper_.createPtr<ElasticSolidType>(std::forward<Args>(args)...);
+        composite_materials_.push_back(added_material);
+        c0_ = SMAX(c0_, added_material->ReferenceSoundSpeed());
+        setContactStiffness(c0_);
+    };
+};
+
+/**
+ * @class MaterialIdInitialization
+ */
+class MaterialIdInitialization
+    : public LocalDynamics,
+      public GeneralDataDelegateSimple
+{
+  public:
+    explicit MaterialIdInitialization(SPHBody &sph_body);
+
+  protected:
+    StdLargeVec<int> &material_id_;
+    StdLargeVec<Vecd> &pos0_;
+};
 } // namespace SPH
+#endif // COMPLEX_SOLID_H

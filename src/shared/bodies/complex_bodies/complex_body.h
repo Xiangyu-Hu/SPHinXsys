@@ -26,7 +26,7 @@
  * 			which can be imported externally or created according to specific rules.
  * 			The secondary structure will be used or even created by the corresponding
  * 			particle generator.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef COMPLEX_BODY_H

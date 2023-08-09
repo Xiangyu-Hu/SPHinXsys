@@ -36,8 +36,8 @@ Real poisson = 0.4995;
 Real bulk_modulus = 2.0 * a0[0] * (1.0 + poisson) / (3.0 * (1.0 - 2.0 * poisson));
 /** Electrophysiology parameters. */
 std::array<std::string, 1> species_name_list{"Phi"};
-Real diffusion_coff = 0.8;
-Real bias_coff = 0.0;
+Real diffusion_coeff = 0.8;
+Real bias_coeff = 0.0;
 /** Electrophysiology parameters. */
 Real c_m = 1.0;
 Real k = 8.0;
@@ -72,7 +72,7 @@ class FiberDirectionDiffusion : public DiffusionReaction<LocallyOrthotropicMuscl
                                     {"Phi"}, SharedPtr<NoReaction>(),
                                     rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0)
     {
-        initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi", diffusion_coff);
+        initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi", diffusion_coeff);
     };
 };
 using FiberDirectionDiffusionParticles = DiffusionReactionParticles<ElasticSolidParticles, FiberDirectionDiffusion>;
@@ -363,7 +363,7 @@ int main(int ac, char *av[])
     SharedPtr<AlievPanfilowModel> muscle_reaction_model_ptr = makeShared<AlievPanfilowModel>(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
     physiology_heart.defineParticlesAndMaterial<
         ElectroPhysiologyParticles, MonoFieldElectroPhysiology>(
-        muscle_reaction_model_ptr, TypeIdentity<LocalDirectionalDiffusion>(), diffusion_coff, bias_coff, fiber_direction);
+        muscle_reaction_model_ptr, TypeIdentity<LocalDirectionalDiffusion>(), diffusion_coeff, bias_coeff, fiber_direction);
     (!system.RunParticleRelaxation() && system.ReloadParticles())
         ? physiology_heart.generateParticles<ParticleGeneratorReload>(io_environment, "HeartModel")
         : physiology_heart.generateParticles<ParticleGeneratorLattice>();

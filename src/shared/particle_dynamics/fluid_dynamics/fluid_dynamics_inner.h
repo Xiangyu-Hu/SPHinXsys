@@ -160,7 +160,14 @@ class AngularConservativeViscousAccelerationInner : public BaseViscousAccelerati
 
 /**
  * @class TransportVelocityCorrectionInner
- * @brief transport velocity correction
+ * @brief The particle positions are corrected for more uniformed distribution
+ * when there is negative pressure in the flow.
+ * @details Note that the default coefficient is for using the dual time criteria method:
+ * Dual-criteria time stepping for weakly compressible smoothed particle hydrodynamics.
+ * C Zhang, M Rezavand, X Hu - Journal of Computational Physics,
+ * Volume 404, 1 March 2020, 109135.
+ * If single (acoustic) time step is used, the coefficient should be decrease
+ * to about 1/4 of the default value.
  */
 class TransportVelocityCorrectionInner : public LocalDynamics, public FluidDataInner
 {
@@ -227,7 +234,7 @@ class AdvectionTimeStepSizeForImplicitViscosity
 {
   public:
     explicit AdvectionTimeStepSizeForImplicitViscosity(
-        SPHBody &sph_body, Real U_max, Real advectionCFL = 0.25);
+        SPHBody &sph_body, Real U_ref, Real advectionCFL = 0.25);
     virtual ~AdvectionTimeStepSizeForImplicitViscosity(){};
     Real reduce(size_t index_i, Real dt = 0.0);
     virtual Real outputResult(Real reduced_value) override;
@@ -235,7 +242,7 @@ class AdvectionTimeStepSizeForImplicitViscosity
   protected:
     StdLargeVec<Vecd> &vel_;
     Real smoothing_length_min_;
-    Real advectionCFL_;
+    Real speed_ref_, advectionCFL_;
 };
 
 /**
@@ -245,7 +252,7 @@ class AdvectionTimeStepSizeForImplicitViscosity
 class AdvectionTimeStepSize : public AdvectionTimeStepSizeForImplicitViscosity
 {
   public:
-    explicit AdvectionTimeStepSize(SPHBody &sph_body, Real U_max, Real advectionCFL = 0.25);
+    explicit AdvectionTimeStepSize(SPHBody &sph_body, Real U_ref, Real advectionCFL = 0.25);
     virtual ~AdvectionTimeStepSize(){};
     Real reduce(size_t index_i, Real dt = 0.0);
 

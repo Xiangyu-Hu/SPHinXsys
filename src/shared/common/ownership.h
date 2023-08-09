@@ -35,7 +35,7 @@
  *          Generally, the classes here are private member and
  * 			the smart pointer is used only when the memory is allocated.
  *          After that, we take reference or raw pointer out and use them as observer.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 #ifndef OWNERSHIP_H
 #define OWNERSHIP_H

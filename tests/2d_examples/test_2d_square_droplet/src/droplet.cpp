@@ -21,10 +21,10 @@ Real BW = particle_spacing_ref * 2;    /**< Extending width for BCs. */
 //----------------------------------------------------------------------
 Real rho0_f = 1.0;       /**< Reference density of water. */
 Real rho0_a = 0.001;     /**< Reference density of air. */
-Real U_max = 1.0;        /**< Characteristic velocity. */
-Real c_f = 10.0 * U_max; /**< Reference sound speed. */
+Real U_ref = 1.0;        /**< Characteristic velocity. */
+Real c_f = 10.0 * U_ref; /**< Reference sound speed. */
 Real mu_f = 0.2;         /**< Water viscosity. */
-Real mu_a = 0.0002;      /**< Air viscosity. */
+Real mu_a = 0.002;       /**< Air viscosity. */
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
 //----------------------------------------------------------------------
@@ -142,23 +142,23 @@ int main()
     SimpleDynamics<TimeStepInitialization> initialize_a_air_step(air_block);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     /** Evaluation of density by summation approach. */
-    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex>
-        update_water_density_by_summation(water_wall_contact, water_air_complex.getInnerRelation());
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplex>
+        update_water_density_by_summation(water_wall_contact, water_air_complex);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplex>
         update_air_density_by_summation(air_wall_contact, air_water_complex);
     InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex>
-        air_transport_correction(air_wall_contact, air_water_complex);
+        air_transport_correction(air_wall_contact, air_water_complex, 0.05);
     /** Time step size without considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_water_advection_time_step_size(water_block, U_max);
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_air_advection_time_step_size(air_block, U_max);
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_water_advection_time_step_size(water_block, U_ref);
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_air_advection_time_step_size(air_block, U_ref);
     /** Time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_water_time_step_size(water_block);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_air_time_step_size(air_block);
     /** Pressure relaxation for water by using position verlet time stepping. */
-    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall>
-        water_pressure_relaxation(water_wall_contact, water_air_complex.getInnerRelation());
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall>
-        water_density_relaxation(water_wall_contact, water_air_complex.getInnerRelation());
+    Dynamics1Level<fluid_dynamics::MultiPhaseIntegration1stHalfRiemannWithWall>
+        water_pressure_relaxation(water_wall_contact, water_air_complex);
+    Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfRiemannWithWall>
+        water_density_relaxation(water_wall_contact, water_air_complex);
     /** Extend Pressure relaxation is used for air. */
     Dynamics1Level<fluid_dynamics::ExtendMultiPhaseIntegration1stHalfRiemannWithWall>
         air_pressure_relaxation(air_wall_contact, air_water_complex, 2.0);

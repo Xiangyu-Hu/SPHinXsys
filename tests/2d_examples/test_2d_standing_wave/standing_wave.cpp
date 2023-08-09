@@ -21,8 +21,8 @@ BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 //----------------------------------------------------------------------
 Real rho0_f = 1000.0;                    /**< Reference density of fluid. */
 Real gravity_g = 9.81;                   /**< Gravity force of fluid. */
-Real U_max = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
-Real c_f = 10.0 * U_max;                 /**< Reference sound speed. */
+Real U_ref = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
+Real c_f = 10.0 * U_ref;                 /**< Reference sound speed. */
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
 //----------------------------------------------------------------------
@@ -198,7 +198,7 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
     SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block, gravity_ptr);
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_max);
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_ref);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
     /** We can output a method-specific particle data for debug */
     water_block.addBodyStateForRecording<Real>("Pressure");

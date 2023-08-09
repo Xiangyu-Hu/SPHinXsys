@@ -29,7 +29,7 @@
  * 			That is, the shapes are those contain each other or without overlap.
  * 			This strict requirement suggests that complex shapes should be finished
  * 			already in modeling using related binary operations before it is included.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef MULTI_POLYGON_SHAPE_H

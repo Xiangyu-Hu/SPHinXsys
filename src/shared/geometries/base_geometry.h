@@ -24,7 +24,7 @@
  * @file 	base_geometry.h
  * @brief 	Define the base classes Shape, BinaryShape and Edge,
  * 			which are the base classes for all geometries.
- * @author	Chi ZHang, Yongchuan Yu and Xiangyu Hu
+ * @author	Chi Zhang, Yongchuan Yu and Xiangyu Hu
  */
 
 #ifndef BASE_GEOMETRY_H
