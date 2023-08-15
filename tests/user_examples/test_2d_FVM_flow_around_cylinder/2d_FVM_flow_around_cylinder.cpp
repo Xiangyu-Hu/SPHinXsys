@@ -43,10 +43,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     /** Boundary conditions set up */
     FACBoundaryConditionSetup boundary_condition_setup(water_block_inner, ghost_creation.each_boundary_type_with_all_ghosts_index_,
-                                                       ghost_creation.each_boundary_type_with_all_ghosts_eij_, ghost_creation.each_boundary_type_contact_real_index_);
+                            ghost_creation.each_boundary_type_with_all_ghosts_eij_, ghost_creation.each_boundary_type_contact_real_index_);
     SimpleDynamics<EulerianWCTimeStepInitialization> initialize_a_fluid_step(water_block);
     /** Time step size with considering sound wave speed. */
-    ReduceDynamics<WCAcousticTimeStepSizeInFVM> get_fluid_time_step_size(water_block, read_mesh_data.max_distance_between_nodes_);
+    ReduceDynamics<WCAcousticTimeStepSizeInFVM> get_fluid_time_step_size(water_block, read_mesh_data.min_distance_between_nodes_);
     InteractionDynamics<WCEulerianViscousAccelerationInner> viscous_acceleration(water_block_inner);
     /** Here we introduce the limiter in the Riemann solver and 0 means the no extra numerical dissipation.
     the value is larger, the numerical dissipation larger*/
@@ -60,7 +60,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
+    //visualizaiton in particle way
     BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
+    //visualizaiton in FVM with data in cell
+    //BodyStatesRecordingInMeshToVtp write_real_body_states(io_environment, sph_system.real_bodies_, read_mesh_data.elements_nodes_connection_, read_mesh_data.point_coordinates_2D_);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>>
         write_total_viscous_force_on_inserted_body(io_environment, viscous_force_on_solid, "TotalViscousForceOnSolid");
     ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>

@@ -4,15 +4,15 @@
 namespace SPH
 {
 //=================================================================================================//
-WCAcousticTimeStepSizeInFVM::WCAcousticTimeStepSizeInFVM(SPHBody &sph_body, Real max_distance_between_nodes, Real acousticCFL)
+WCAcousticTimeStepSizeInFVM::WCAcousticTimeStepSizeInFVM(SPHBody &sph_body, Real min_distance_between_nodes, Real acousticCFL)
     : AcousticTimeStepSize(sph_body), rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
       vel_(particles_->vel_), fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())),
-      max_distance_between_nodes_(max_distance_between_nodes), acousticCFL_(acousticCFL){};
+      min_distance_between_nodes_(min_distance_between_nodes), acousticCFL_(acousticCFL){};
 //=================================================================================================//
 Real WCAcousticTimeStepSizeInFVM::outputResult(Real reduced_value)
 {
     // I chose a time-step size according to Eulerian method
-    return acousticCFL_ / Dimensions * max_distance_between_nodes_ / (reduced_value + TinyReal);
+    return acousticCFL_ / Dimensions * min_distance_between_nodes_ / (reduced_value + TinyReal);
 }
 //=================================================================================================//
 BaseForceFromFluidInFVM::BaseForceFromFluidInFVM(BaseInnerRelation &inner_relation)
