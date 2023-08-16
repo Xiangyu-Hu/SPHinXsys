@@ -634,8 +634,6 @@ void BodyStatesRecordingInMeshToVtp::writeWithFileName(const std::string &sequen
             out_file << "\n</DataArray>\n";
             out_file << "</Polys>\n";
 
-            BaseParticles &base_particles = body->getBaseParticles();
-            size_t total_real_particles = base_particles.total_real_particles_;
             // Write face attribute data
             out_file << "<CellData>\n";
             body->writeParticlesToVtpFile(out_file);
