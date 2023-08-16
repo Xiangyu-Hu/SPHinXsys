@@ -93,6 +93,8 @@ class SPHAdaptation
         sigma0_ref_ = computeLatticeNumberDensity(Vecd());
     };
 
+    virtual Real getLocalSpacing(Shape& shape, const Vecd& position) { return spacing_ref_; };
+
   protected:
     Real computeLatticeNumberDensity(Vec2d zero);
     Real computeLatticeNumberDensity(Vec3d zero);
