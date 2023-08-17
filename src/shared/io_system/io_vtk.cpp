@@ -30,6 +30,21 @@ void BodyStatesRecordingToVtp::writeWithFileName(const std::string &sequence)
             out_file << "  <Piece Name =\"" << body->getName() << "\" NumberOfPoints=\"" << total_real_particles
                      << "\" NumberOfVerts=\"" << total_real_particles << "\">\n";
 
+            // write current/final particle positions first
+            out_file << "   <Points>\n";
+            out_file << "    <DataArray Name=\"Position\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
+            out_file << "    ";
+            for (size_t i = 0; i != total_real_particles; ++i)
+            {
+                Vec3d particle_position = upgradeToVec3d(base_particles.pos_[i]);
+                out_file << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " ";
+            }
+            out_file << std::endl;
+            out_file << "    </DataArray>\n";
+            out_file << "   </Points>\n";
+
+            // write header of particles data
+            out_file << "   <PointData  Vectors=\"vector\">\n";
             body->writeParticlesToVtpFile(out_file);
 
             out_file << "   </PointData>\n";

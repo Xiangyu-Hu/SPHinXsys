@@ -42,10 +42,10 @@ class WCAcousticTimeStepSizeInFVM : public fluid_dynamics::AcousticTimeStepSize
     StdLargeVec<Real> &rho_, &p_;
     StdLargeVec<Vecd> &vel_;
     Fluid &fluid_;
-    Real max_distance_between_nodes_;
+    Real min_distance_between_nodes_;
 
   public:
-    explicit WCAcousticTimeStepSizeInFVM(SPHBody &sph_body, Real max_distance_between_nodes, Real acousticCFL = 0.6);
+    explicit WCAcousticTimeStepSizeInFVM(SPHBody &sph_body, Real min_distance_between_nodes, Real acousticCFL = 0.6);
     virtual ~WCAcousticTimeStepSizeInFVM(){};
     virtual Real outputResult(Real reduced_value) override;
     Real acousticCFL_;
