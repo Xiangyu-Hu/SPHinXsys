@@ -350,11 +350,13 @@ template <typename DataType>
 void WriteAParticleVariableToXml::
 operator()(const std::string &variable_name, StdLargeVec<DataType> &variable) const
 {
-    SimTK::Xml::element_iterator ele_ite = xml_engine_.root_element_.element_begin();
-    for (size_t i = 0; i != total_real_particles_; ++i)
+    size_t index = 0;
+    for( auto child = xml_parser_.first_element_->FirstChildElement();
+        child;
+        child = child->NextSiblingElement()  )
     {
-        xml_engine_.setAttributeToElement(ele_ite, variable_name, variable[i]);
-        ele_ite++;
+        xml_parser_.setAttributeToElement( child, variable_name, variable[index] );
+        index ++; 
     }
 }
 //=================================================================================================//
@@ -362,11 +364,13 @@ template <typename DataType>
 void ReadAParticleVariableFromXml::
 operator()(const std::string &variable_name, StdLargeVec<DataType> &variable) const
 {
-    SimTK::Xml::element_iterator ele_ite = xml_engine_.root_element_.element_begin();
-    for (size_t i = 0; i != total_real_particles_; ++i)
+    size_t index = 0;
+    for( auto child = xml_parser_.first_element_->FirstChildElement();
+        child;
+        child = child->NextSiblingElement()  )
     {
-        xml_engine_.getRequiredAttributeValue(ele_ite, variable_name, variable[i]);
-        ele_ite++;
+        xml_parser_.queryAttributeValue( child, variable_name, variable[index] );
+        index ++; 
     }
 }
 //=================================================================================================//
