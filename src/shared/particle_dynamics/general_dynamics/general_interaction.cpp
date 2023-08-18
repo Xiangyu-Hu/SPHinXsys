@@ -23,7 +23,7 @@ void CorrectedConfigurationInner::interaction(size_t index_i, Real dt)
         local_configuration -= r_ji * gradW_ij.transpose();
     }
 
-    B_[index_i] = local_configuration;
+    B_[index_i] = local_configuration.inverse();
 }
 //=================================================================================================//
 void CorrectedConfigurationInner::update(size_t index_i, Real dt)
