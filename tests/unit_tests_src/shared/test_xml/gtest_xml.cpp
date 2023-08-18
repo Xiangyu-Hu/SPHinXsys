@@ -50,9 +50,9 @@ TEST(test_xml, test_geter)
 	XmlParser xml_parser( "xml_parser");
 	xml_parser.loadXmlFile( "input/test.xml" );
 	/** find child element in the first element. */
-	std::string ele_name = xml_parser.getElementTag( xml_parser.findElement( xml_parser.first_element_, "titel" ) );
+	std::string ele_name = xml_parser.getElementTag( xml_parser.findElement( xml_parser.first_element_, "English" ) );
 
-	EXPECT_EQ(ele_name, "titel");
+	EXPECT_EQ(ele_name, "English");
 }
 
 TEST(test_xml, test_doc_size)
