@@ -108,9 +108,9 @@ class BaseParticles
     size_t real_particles_bound_; /**< Maximum possible number of real particles. Also start index of ghost particles. */
     size_t total_ghost_particles_;
 
-    SPHBody &getSPHBody() { return sph_body_; };
-    BaseMaterial &getBaseMaterial() { return base_material_; };
-    ParticleData &getAllParticleData() { return all_particle_data_; };
+    SPHBody &getSPHBody() { return sph_body_; }
+    auto &getBaseMaterial() { return base_material_; }
+    auto &getAllParticleData() { return all_particle_data_; }
     auto &getVariablesToWrite() { return variables_to_write_; }
     auto &getDerivedVariables() { return derived_variables_; }
     /** initialize other variables after the particles are generated */
