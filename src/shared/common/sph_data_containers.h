@@ -82,7 +82,7 @@ struct loopParticleVariables
 {
     template <typename VariableOperation>
     void operator()(ParticleData &particle_data,
-                    ParticleVariables &particle_variables, VariableOperation &variable_operation) const
+                    const ParticleVariables &particle_variables, VariableOperation &variable_operation) const
     {
         constexpr int type_index = DataTypeIndex<DataType>::value;
         for (DiscreteVariable<DataType> *variable : std::get<type_index>(particle_variables))
