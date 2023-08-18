@@ -321,7 +321,7 @@ void BaseParticles::resizeXmlDocForParticles(XmlParser &xml_parser)
 
     if (total_elements <= total_real_particles_)
     {
-        xml_parser.reszie( xml_parser.first_element_, total_real_particles_, "particle" );
+        xml_parser.resize( xml_parser.first_element_, total_real_particles_, "particle" );
     }
 }
 //=================================================================================================//
