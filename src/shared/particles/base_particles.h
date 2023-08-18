@@ -111,8 +111,8 @@ class BaseParticles
     SPHBody &getSPHBody() { return sph_body_; };
     BaseMaterial &getBaseMaterial() { return base_material_; };
     ParticleData &getAllParticleData() { return all_particle_data_; };
-    auto &getVariablesToWrite() { return variables_to_write_; }
-    auto &getDerivedVariables() { return derived_variables_; }
+    const auto &getVariablesToWrite() const { return variables_to_write_; }
+    const auto &getDerivedVariables() const { return derived_variables_; }
     /** initialize other variables after the particles are generated */
     virtual void initializeOtherVariables();
     //----------------------------------------------------------------------
