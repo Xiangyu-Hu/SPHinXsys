@@ -18,8 +18,8 @@ StdVec<Vecd> observation_location = {Vecd(0.3, 0.7)};
 //----------------------------------------------------------------------
 //	Basic parameters for material properties.
 //----------------------------------------------------------------------
-Real diffusion_coff = 1.0;
-Real bias_coff = 0.0;
+Real diffusion_coeff = 1.0;
+Real bias_coeff = 0.0;
 Vec2d fiber_direction(1.0, 0.0);
 Real c_m = 1.0;
 Real k = 8.0;
@@ -83,7 +83,7 @@ int main()
 	SolidBody muscle_body(system, makeShared<MuscleBlock>("MuscleBlock"));
 	SharedPtr<AlievPanfilowModel> muscle_reaction_model_ptr = makeShared<AlievPanfilowModel>(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
 	muscle_body.defineParticlesAndMaterial<ElectroPhysiologyParticles, MonoFieldElectroPhysiology>(
-		muscle_reaction_model_ptr, TypeIdentity<DirectionalDiffusion>(), diffusion_coff, bias_coff, fiber_direction);
+		muscle_reaction_model_ptr, TypeIdentity<DirectionalDiffusion>(), diffusion_coeff, bias_coeff, fiber_direction);
 	muscle_body.generateParticles<ParticleGeneratorLattice>();
 
 	ObserverBody voltage_observer(system, "VoltageObserver");
@@ -100,10 +100,10 @@ int main()
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
 	SimpleDynamics<DepolarizationInitialCondition> initialization(muscle_body);
-	InteractionDynamics<solid_dynamics::CorrectConfiguration> correct_configuration(muscle_body_inner_relation);
+	InteractionWithUpdate<CorrectedConfigurationInner> correct_configuration(muscle_body_inner_relation);
 	electro_physiology::GetElectroPhysiologyTimeStepSize get_time_step_size(muscle_body);
 	// Diffusion process for diffusion body.
-	electro_physiology::ElectroPhysiologyDiffusionRelaxationInner diffusion_relaxation(muscle_body_inner_relation);
+	electro_physiology::ElectroPhysiologyDiffusionInnerRK2 diffusion_relaxation(muscle_body_inner_relation);
 	// Solvers for ODE system or reactions
 	electro_physiology::ElectroPhysiologyReactionRelaxationForward reaction_relaxation_forward(muscle_body);
 	electro_physiology::ElectroPhysiologyReactionRelaxationBackward reaction_relaxation_backward(muscle_body);
@@ -111,7 +111,7 @@ int main()
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
-	RegressionTestEnsembleAveraged<ObservedQuantityRecording<Real>>
+	RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>>
 		write_recorded_voltage("Voltage", io_environment, voltage_observer_contact_relation);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
@@ -182,7 +182,7 @@ int main()
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-	write_recorded_voltage.newResultTest();
+	write_recorded_voltage.testResult();
 
 	return 0;
 }

@@ -7,14 +7,13 @@ SET(BUILD_INPUT_PATH "${EXECUTABLE_OUTPUT_PATH}/input")
 SET(BUILD_RELOAD_PATH "${EXECUTABLE_OUTPUT_PATH}/reload")
 
 file(MAKE_DIRECTORY ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/
-     DESTINATION ${BUILD_INPUT_PATH})
-
+execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_INPUT_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/ DESTINATION ${BUILD_INPUT_PATH})
         
 add_executable(${PROJECT_NAME})
 aux_source_directory(. DIR_SRCS)
 target_sources(${PROJECT_NAME} PRIVATE ${DIR_SRCS})
-target_link_libraries(${PROJECT_NAME} sphinxsys_2d)
+target_link_libraries(${PROJECT_NAME} extra_sources_2d)
 set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 
 
@@ -27,4 +26,3 @@ add_test(NAME ${PROJECT_NAME}
 set_tests_properties(${PROJECT_NAME} PROPERTIES DEPENDS "${PROJECT_NAME}_particle_relaxation")
 set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "periodic boundary, Eulerian")
 
-set_tests_properties(${PROJECT_NAME} PROPERTIES DISABLED $<$<PLATFORM_ID:Windows,Linux>:TRUE>)
