@@ -386,10 +386,6 @@ class RelaxationStepComplex : public BaseDynamics<void>
     SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
 };
 
-/**********************************************************/
-/*****************THIS IS THE IMPLICIT PART****************/
-/**********************************************************/
-
 template <typename ErrorDataType, typename ParameterADataType, typename ParameterCDataType>
 struct ErrorAndParameters
 {
@@ -418,8 +414,8 @@ protected:
     virtual ErrorAndParameters<Vecd, Matd, Matd> computeErrorAndParameters(size_t index_i, Real dt = 0.0);
     virtual void updateStates(size_t index_i, Real dt, const ErrorAndParameters<Vecd, Matd, Matd>& error_and_parameters);
 
-    Real target_error_p_;
-    StdLargeVec<Real> error_p_;
+    Real target_error_p_; //It is generally to be the maximum error in the whole domain.
+    StdLargeVec<Real> error_p_; //It contains the intermediate error.
 
     Kernel* kernel_;
     StdLargeVec<Real>& Vol_;
@@ -564,131 +560,6 @@ protected:
     SPHAdaptation* sph_adaptation_;
 };
 
-/*****EVOLUTION SCHEME*****/
-
-/**
- * @class ZeroOrderConsistencyEvolution
- * @brief modify the particle position to satisfy the zero order consistency.
- */
-class ZeroOrderConsistencyEvolution : public LocalDynamics, public RelaxDataDelegateInner
-{
-public:
-    ZeroOrderConsistencyEvolution(BaseInnerRelation& inner_relation, bool level_set_correction = false);
-    virtual ~ZeroOrderConsistencyEvolution() {};
-
-protected:
-    virtual ErrorAndParameters<Vecd, Matd, Matd> computeErrorAndParameters(size_t index_i, Real dt = 0.0);
-    virtual void updateStates(size_t index_i, Real dt, const ErrorAndParameters<Vecd, Matd, Matd>& error_and_parameters);
-    void interaction(size_t index_i, Real dt = 0.0);
-
-    Real target_error_;
-    Kernel* kernel_;
-    StdLargeVec<Real>& Vol_;
-    StdLargeVec<Vecd>& pos_, & acc_;
-    StdLargeVec<Matd>& B_;
-    bool level_set_correction_;
-    LevelSetShape* level_set_shape_;
-    SPHAdaptation* sph_adaptation_;
-    StdLargeVec<Real> zero_order_evolution_residue_;
-
-public:
-    inline void updateTargetError(Real target_error) { target_error_ = target_error; };
-};
-
-/**
- * @class ZeroOrderEvolutionStep
- * @brief carry out particle relaxation step based on zero order consistency within the body
- */
-class ZeroOrderEvolutionStep : public BaseDynamics<void>
-{
-public:
-    explicit ZeroOrderEvolutionStep(BaseInnerRelation& inner_relation, bool level_set_correction = false);
-    virtual ~ZeroOrderEvolutionStep() {};
-    BaseDynamics<void>& SurfaceBounding() { return surface_bounding_; };
-    virtual void exec(Real dt = 0.0) override;
-
-protected:
-
-    Real target_error_; //log the maximum error for scale the learning rate.
-    Real time_step_size_;
-    RealBody* real_body_;
-    BaseInnerRelation& inner_relation_;
-    NearShapeSurface near_shape_surface_;
-    ReduceDynamics<GetTimeStepSizeSquare> get_time_step_;
-    InteractionSplit<ZeroOrderConsistencyEvolution> zero_order_consistency_evolution_;
-    SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
-    SimpleDynamics<NearSurfaceVolumeCorrection> surface_correction_;
-    ReduceDynamics<QuantityMaximum<Real>> update_averaged_error_; //calculate the maximum error.
-};
-
-/**
- * @class FirstOrderConsistencyEvolution
- * @brief modify the B matrix to satisfy the first order consistency.
- */
-class FirstOrderConsistencyEvolution : public LocalDynamics, public RelaxDataDelegateInner
-{
-public:
-    FirstOrderConsistencyEvolution(BaseInnerRelation& inner_relation, bool level_set_correction = false);
-    virtual ~FirstOrderConsistencyEvolution() {};
-
-protected:
-    virtual ErrorAndParameters<Matd, Matd, Matd> computeErrorAndParameters(size_t index_i, Real dt = 0.0);
-    virtual void updateStates(size_t index_i, Real dt, const ErrorAndParameters<Matd, Matd, Matd>& error_and_parameters);
-    void interaction(size_t index_i, Real dt = 0.0);
-
-    Kernel* kernel_;
-    StdLargeVec<Real>& Vol_;
-    StdLargeVec<Vecd>& pos_;
-    StdLargeVec<Matd>& B_;
-    bool level_set_correction_;
-    LevelSetShape* level_set_shape_;
-    SPHAdaptation* sph_adaptation_;
-    StdLargeVec<Real> first_order_evolution_residue_;
-    StdLargeVec<Matd> B_backup_;
-    StdLargeVec<Real> evolution_indicator_;
-};
-
-/**
- * @class CorrectionMatrixRegularization
- * @brief regularize the correction matrix after evolution
- */
-class CorrectionMatrixRegularization : public LocalDynamics, public RelaxDataDelegateInner
-{
-public:
-    CorrectionMatrixRegularization(BaseInnerRelation& inner_relation, Real eta = 1.0);
-    virtual ~CorrectionMatrixRegularization() {};
-
-protected:
-    virtual ErrorAndParameters<Matd, Matd, Matd> computeErrorAndParameters(size_t index_i, Real dt = 0.0);
-    virtual void updateStates(size_t index_i, Real dt, const ErrorAndParameters<Matd, Matd, Matd>& error_and_parameters);
-    void interaction(size_t index_i, Real dt = 0.0);
-
-    Real eta_;
-    StdLargeVec<Real>& mass_, Vol_;
-    StdLargeVec<Matd>& B_;
-    StdLargeVec<Real> correction_matrix_variation_;
-
-public:
-    inline void adjustRegularizationCoefficient(Real eta) { eta_ = eta; };
-};
-
-/**
- * @class FirstOrderEvolutionStep
- * @brief carry out correction martrix evolution based on first order consistency within the body
- */
-class FirstOrderEvolutionStep : public BaseDynamics<void>
-{
-public:
-    explicit FirstOrderEvolutionStep(BaseInnerRelation& inner_relation, bool level_set_correction = false);
-    virtual ~FirstOrderEvolutionStep() {}
-    virtual void exec(Real dt = 0.0) override;
-
-protected:
-    Real time_step_size_;
-    ReduceDynamics<GetTimeStepSizeSquare> get_time_step_;
-    UniquePtr<BaseDynamics<void>> first_order_consistency_evolution_;
-};
-
 /**
  * @class UpdateParticleKineticEnergy
  * @brief calculate the particle kinetic energy
@@ -705,6 +576,7 @@ protected:
     StdLargeVec<Vecd>& acc_;
     StdLargeVec<Real> particle_kinetic_energy;
 };
+
 
 /**
  * @class CheckCorrectedZeroOrderConsistency
@@ -744,6 +616,28 @@ protected:
     StdLargeVec<Matd>& B_;
     StdLargeVec<Real> corrected_first_order_error_;
     StdLargeVec<Matd> corrected_first_order_;
+    LevelSetShape* level_set_shape_;
+    SPHAdaptation* sph_adaptation_;
+};
+
+/**
+ * @class CheckConsistencyRealization
+ * @brief check the consistency of SPH conservative formulation.
+ */
+class CheckConsistencyRealization : public LocalDynamics, public GeneralDataDelegateInner
+{
+public:
+    CheckConsistencyRealization(BaseInnerRelation& inner_relation, bool level_set_correction = false);
+    virtual ~CheckConsistencyRealization() {};
+    void interaction(size_t index_i, Real dt);
+
+protected:
+    bool level_set_correction_;
+    StdLargeVec<Real>& pressure_;
+    StdLargeVec<Vecd>& pos_;
+    StdLargeVec<Matd>& B_;
+    StdLargeVec<Real> pressure_gradient_norm_;
+    StdLargeVec<Vecd> pressure_gradient_;
     LevelSetShape* level_set_shape_;
     SPHAdaptation* sph_adaptation_;
 };

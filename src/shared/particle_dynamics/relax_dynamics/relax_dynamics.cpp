@@ -214,9 +214,6 @@ void RelaxationStepComplex::exec(Real dt)
     update_particle_position_.exec(dt_square);
     surface_bounding_.exec();
 }
-
-/****This is the implicit scheme for relaxation****/
-
 //=================================================================================================//
 RelaxationImplicitInner::RelaxationImplicitInner(BaseInnerRelation& inner_relation)
 	: LocalDynamics(inner_relation.getSPHBody()), RelaxDataDelegateInner(inner_relation),
@@ -242,7 +239,7 @@ ErrorAndParameters<Vecd, Matd, Matd> RelaxationImplicitInner::computeErrorAndPar
 	{
 		size_t index_j = inner_neighborhood.j_[n];
 		Matd parameter_b = 2.0 * inner_neighborhood.e_ij_[n] * inner_neighborhood.e_ij_[n].transpose() *
-			kernel_->d2W(inner_neighborhood.r_ij_[n], inner_neighborhood.e_ij_[n]) * Vol_[index_j] * dt * dt;
+			               kernel_->d2W(inner_neighborhood.r_ij_[n], inner_neighborhood.e_ij_[n]) * Vol_[index_j] * dt * dt;
 
 		error_and_parameters.error_ += 2.0 * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n] * dt * dt;
 		error_and_parameters.a_ -= parameter_b;
@@ -267,7 +264,7 @@ void RelaxationImplicitInner::updateStates(size_t index_i, Real dt,
 	{
 		size_t index_j = inner_neighborhood.j_[n];
 		Matd parameter_b = 2.0 * inner_neighborhood.e_ij_[n] * inner_neighborhood.e_ij_[n].transpose() *
-			kernel_->d2W(inner_neighborhood.r_ij_[n], inner_neighborhood.e_ij_[n]) * Vol_[index_j] * dt * dt;
+			               kernel_->d2W(inner_neighborhood.r_ij_[n], inner_neighborhood.e_ij_[n]) * Vol_[index_j] * dt * dt;
 		pos_[index_j] -= parameter_b * parameter_k;
 	}
 }
@@ -310,7 +307,7 @@ void RelaxationStepImplicitInner::exec(Real dt)
 	//real_body_->updateCellLinkedList();
 	//inner_relation_.updateConfiguration();
 	relaxation_evolution_inner_.exec(dt);
-	time_step_size_ = 20 * sqrt(get_time_step_.exec());
+	//time_step_size_ = 20 * sqrt(get_time_step_.exec());
 	//surface_correction_.exec(); 
 	//surface_bounding_.exec();
 	target_error_p_ = update_averaged_error_.exec();
@@ -341,7 +338,7 @@ ErrorAndParameters<Vecd, Matd, Matd> RelaxationByStressImplicitInner::computeErr
 	{
 		size_t index_j = inner_neighborhood.j_[n];
 		Matd parameter_b = (B_[index_i] + B_[index_j]) * inner_neighborhood.e_ij_[n] * inner_neighborhood.e_ij_[n].transpose() *
-			kernel_->d2W(inner_neighborhood.r_ij_[n], inner_neighborhood.e_ij_[n]) * Vol_[index_j] * dt * dt;
+			                kernel_->d2W(inner_neighborhood.r_ij_[n], inner_neighborhood.e_ij_[n]) * Vol_[index_j] * dt * dt;
 
 		error_and_parameters.error_ += (B_[index_i] + B_[index_j]) * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n] * dt * dt;
 		error_and_parameters.a_ -= parameter_b;
@@ -366,7 +363,7 @@ void RelaxationByStressImplicitInner::updateStates(size_t index_i, Real dt,
 	{
 		size_t index_j = inner_neighborhood.j_[n];
 		Matd parameter_b = (B_[index_i] + B_[index_j]) * inner_neighborhood.e_ij_[n] * inner_neighborhood.e_ij_[n].transpose() *
-			kernel_->d2W(inner_neighborhood.r_ij_[n], inner_neighborhood.e_ij_[n]) * Vol_[index_j] * dt * dt;
+			                kernel_->d2W(inner_neighborhood.r_ij_[n], inner_neighborhood.e_ij_[n]) * Vol_[index_j] * dt * dt;
 		pos_[index_j] -= parameter_b * parameter_k;
 	}
 }
@@ -379,8 +376,6 @@ void RelaxationByStressImplicitInner::interaction(size_t index_i, Real dt)
 	implicit_residue_s_[index_i] = (error_and_parameters.error_ / dt / dt).norm();
 
 	error_s_[index_i] = error_and_parameters.error_.norm();
-	error_s_x_[index_i] = abs(error_and_parameters.error_[0]);
-	error_s_y_[index_i] = abs(error_and_parameters.error_[1]);
 }
 //=================================================================================================//
 RelaxationByStressImplicitInnerWithLevelSetCorrection::
@@ -411,8 +406,8 @@ void RelaxationStepByStressImplicitInner::exec(Real dt)
 {
 	//real_body_->updateCellLinkedList();
 	//inner_relation_.updateConfiguration();
-	relaxation_evolution_inner_.exec(dt);
-	//time_step_size_ = 50 * sqrt(get_time_step_.exec());
+	relaxation_evolution_inner_.exec(time_step_size_);
+	time_step_size_ = 20 * sqrt(get_time_step_.exec());
 	//surface_correction_.exec();
 	//surface_bounding_.exec();
 	target_error_s_ = update_averaged_error_.exec();
@@ -446,282 +441,11 @@ void CalculateParticleStress::interaction(size_t index_i, Real dt)
 	{
 		//The calculation of the particle stress is not related to the level set correction.
 		particle_stress_ -= level_set_shape_->computeDisplacementKernelGradientIntegral(pos_[index_i],
-			sph_adaptation_->SmoothingLengthRatio(index_i));
+			                sph_adaptation_->SmoothingLengthRatio(index_i));
 	}
 
 	stress_[index_i] = particle_stress_;
 	B_[index_i] = (Eps * Matd::Identity() + particle_stress_).inverse();
-}
-//=================================================================================================//
-ZeroOrderConsistencyEvolution::
-ZeroOrderConsistencyEvolution(BaseInnerRelation& inner_relation, bool level_set_correction)
-	:LocalDynamics(inner_relation.getSPHBody()), RelaxDataDelegateInner(inner_relation),
-	kernel_(inner_relation.getSPHBody().sph_adaptation_->getKernel()),
-	Vol_(particles_->Vol_), pos_(particles_->pos_), acc_(particles_->acc_),
-	B_(*particles_->template getVariableByName<Matd>("CorrectionMatrix")),
-	level_set_correction_(level_set_correction), target_error_(1.0),
-	sph_adaptation_(sph_body_.sph_adaptation_)
-{
-	level_set_shape_ = DynamicCast<LevelSetShape>(this, sph_body_.body_shape_);
-	particles_->registerVariable(zero_order_evolution_residue_, "zero_order_evolution_residue_");
-	particles_->addVariableToWrite<Real>("zero_order_evolution_residue_");
-}
-//=================================================================================================//
-ErrorAndParameters<Vecd, Matd, Matd> ZeroOrderConsistencyEvolution::computeErrorAndParameters(size_t index_i, Real dt)
-{
-	ErrorAndParameters<Vecd, Matd, Matd> error_and_parameters;
-	Neighborhood& inner_neighborhood = inner_configuration_[index_i];
-
-	for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-	{
-		size_t index_j = inner_neighborhood.j_[n];
-		Matd parameter_b = (B_[index_i] + B_[index_j]) * inner_neighborhood.e_ij_[n] * inner_neighborhood.e_ij_[n].transpose() *
-			kernel_->d2W(inner_neighborhood.r_ij_[n], inner_neighborhood.e_ij_[n]) * Vol_[index_j] * dt * dt;
-		error_and_parameters.error_ += (B_[index_i] + B_[index_j]) * inner_neighborhood.dW_ijV_j_[n] *
-			inner_neighborhood.e_ij_[n] * dt * dt;
-		error_and_parameters.a_ -= parameter_b;
-		error_and_parameters.c_ += parameter_b * parameter_b;
-	}
-
-	/*if (level_set_correction_)
-	{
-		error_and_parameters.error_ += (B_[index_i] + B_[index_i]) * level_set_shape_->computeKernelGradientIntegral(
-			pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * dt * dt;
-		error_and_parameters.a_ -= (B_[index_i] + B_[index_i]) * level_set_shape_->computeKernelSecondGradientIntegral(
-			pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * dt * dt;
-	}*/
-
-	Matd evolution = Matd::Identity();
-	error_and_parameters.a_ -= evolution;
-	return error_and_parameters;
-}
-//=================================================================================================//
-void ZeroOrderConsistencyEvolution::updateStates(size_t index_i, Real dt,
-	const ErrorAndParameters<Vecd, Matd, Matd>& error_and_parameters)
-{
-	Matd parameter_l = error_and_parameters.a_ * error_and_parameters.a_ + error_and_parameters.c_;
-	Vecd parameter_k = parameter_l.inverse() * error_and_parameters.error_;
-
-	//parameter_k = parameter_k * sqrt(sqrt(abs(error_and_parameters.error_.norm()) / target_error_));
-	pos_[index_i] += error_and_parameters.a_ * parameter_k;
-
-	Neighborhood& inner_neighborhood = inner_configuration_[index_i];
-	for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-	{
-		size_t index_j = inner_neighborhood.j_[n];
-		Matd parameter_b = (B_[index_i] + B_[index_j]) *
-			inner_neighborhood.e_ij_[n] * inner_neighborhood.e_ij_[n].transpose() *
-			kernel_->d2W(inner_neighborhood.r_ij_[n], inner_neighborhood.e_ij_[n]) *
-			Vol_[index_j] * dt * dt;
-		pos_[index_j] -= parameter_b * parameter_k;
-	}
-}
-//=================================================================================================//
-void ZeroOrderConsistencyEvolution::interaction(size_t index_i, Real dt)
-{
-	ErrorAndParameters<Vecd, Matd, Matd> error_and_parameters = computeErrorAndParameters(index_i, dt);
-	updateStates(index_i, dt, error_and_parameters);
-	acc_[index_i] = -error_and_parameters.error_ / dt / dt;
-	zero_order_evolution_residue_[index_i] = (error_and_parameters.error_ / dt / dt).norm();
-}
-//=================================================================================================//
-ZeroOrderEvolutionStep::ZeroOrderEvolutionStep(BaseInnerRelation& inner_relation, bool level_set_correction)
-	: BaseDynamics<void>(inner_relation.getSPHBody()), real_body_(inner_relation.real_body_),
-	inner_relation_(inner_relation), time_step_size_(0.01), target_error_(1.0),
-	near_shape_surface_(*real_body_), get_time_step_(*real_body_),
-	zero_order_consistency_evolution_(inner_relation, false),
-	surface_bounding_(near_shape_surface_), surface_correction_(near_shape_surface_),
-	update_averaged_error_(inner_relation.getSPHBody(), "zero_order_evolution_residue_") {}
-//=================================================================================================//
-void ZeroOrderEvolutionStep::exec(Real dt)
-{
-	//real_body_->updateCellLinkedList();
-	//inner_relation_.updateConfiguration();
-	zero_order_consistency_evolution_.exec(dt);
-	//time_step_size_ = 25 * sqrt(get_time_step_.exec());
-	//target_error_ = update_averaged_error_.exec();
-	//zero_order_consistency_evolution_.updateTargetError(target_error_);
-}
-//=================================================================================================//
-FirstOrderConsistencyEvolution::
-FirstOrderConsistencyEvolution(BaseInnerRelation& inner_relation, bool level_set_correction)
-	: LocalDynamics(inner_relation.getSPHBody()), RelaxDataDelegateInner(inner_relation),
-	kernel_(inner_relation.getSPHBody().sph_adaptation_->getKernel()),
-	Vol_(particles_->Vol_), pos_(particles_->pos_),
-	B_(*particles_->template getVariableByName<Matd>("CorrectionMatrix")),
-	level_set_correction_(level_set_correction),
-	sph_adaptation_(sph_body_.sph_adaptation_),
-	B_backup_(*particles_->template getVariableByName<Matd>("CorrectionMatrix"))
-{
-	level_set_shape_ = DynamicCast<LevelSetShape>(this, sph_body_.body_shape_);
-	particles_->registerVariable(first_order_evolution_residue_, "first_order_evolution_residue_");
-	particles_->addVariableToWrite<Real>("first_order_evolution_residue_");
-	particles_->registerVariable(evolution_indicator_, "evolution_indicator_");
-	particles_->addVariableToWrite<Real>("evolution_indicator_");
-}
-//=================================================================================================//
-ErrorAndParameters<Matd, Matd, Matd> FirstOrderConsistencyEvolution::
-computeErrorAndParameters(size_t index_i, Real dt)
-{
-	ErrorAndParameters<Matd, Matd, Matd> error_and_parameters;
-	Neighborhood& inner_neighborhood = inner_configuration_[index_i];
-
-	for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-	{
-		size_t index_j = inner_neighborhood.j_[n];
-		Matd variable_derivative = B_[index_i] + B_[index_j];
-		Matd parameter_b = -0.5 * inner_neighborhood.r_ij_[n] * inner_neighborhood.dW_ijV_j_[n] *
-			inner_neighborhood.e_ij_[n] * (inner_neighborhood.e_ij_[n]).transpose() * dt;
-
-		error_and_parameters.error_ -= variable_derivative * parameter_b; /* correction matrix is left multiplied. */
-		error_and_parameters.a_ += parameter_b;
-		error_and_parameters.c_ += parameter_b * parameter_b;
-	}
-
-	/*if (level_set_correction_)
-	{
-		error_and_parameters.a_ -= level_set_shape_->computeDisplacementKernelGradientIntegral(
-								   pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * dt;
-		error_and_parameters.error_ += B_[index_i] * level_set_shape_->computeDisplacementKernelGradientIntegral(
-									   pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * dt; // correction matrix is left multiplied. //
-	}*/
-
-	error_and_parameters.a_ -= Matd::Identity();
-	error_and_parameters.error_ += Matd::Identity() * dt;
-	return error_and_parameters;
-}
-//=================================================================================================//
-void FirstOrderConsistencyEvolution::updateStates(size_t index_i, Real dt,
-	const ErrorAndParameters<Matd, Matd, Matd>& error_and_parameters)
-{
-	Matd parameter_l = error_and_parameters.a_ * error_and_parameters.a_ + error_and_parameters.c_;
-	Matd parameter_k = parameter_l.inverse() * error_and_parameters.error_; /* the learning rate is right multiplied. */
-	B_backup_[index_i] = B_[index_i];
-	B_[index_i] -= error_and_parameters.a_ * parameter_k;
-
-	Neighborhood& inner_neighborhood = inner_configuration_[index_i];
-	for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-	{
-		size_t index_j = inner_neighborhood.j_[n];
-		Matd parameter_b = -0.5 * inner_neighborhood.r_ij_[n] * inner_neighborhood.dW_ijV_j_[n] *
-			inner_neighborhood.e_ij_[n] * (inner_neighborhood.e_ij_[n]).transpose() * dt;
-		B_backup_[index_j] = B_[index_i];
-		B_[index_j] -= parameter_b * parameter_b;
-	}
-}
-//=================================================================================================//
-void FirstOrderConsistencyEvolution::interaction(size_t index_i, Real dt)
-{
-	ErrorAndParameters<Matd, Matd, Matd> error_and_parameters = computeErrorAndParameters(index_i, dt);
-	updateStates(index_i, dt, error_and_parameters);
-	first_order_evolution_residue_[index_i] = error_and_parameters.error_.norm();
-
-	ErrorAndParameters<Matd, Matd, Matd> error_and_parameters_after = computeErrorAndParameters(index_i, dt);
-	if (error_and_parameters_after.error_.norm() > error_and_parameters.error_.norm())
-	{
-		B_[index_i] = B_backup_[index_i];
-		Neighborhood& inner_neighborhood = inner_configuration_[index_i];
-		for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-		{
-			size_t index_j = inner_neighborhood.j_[n];
-			B_[index_j] = B_backup_[index_j];
-		}
-
-		ErrorAndParameters<Matd, Matd, Matd> error_and_parameters_inverse = computeErrorAndParameters(index_i, -dt);
-		updateStates(index_i, -dt, error_and_parameters_inverse);
-
-		ErrorAndParameters<Matd, Matd, Matd> error_and_parameters_inverse_after = computeErrorAndParameters(index_i, -dt);
-		if (error_and_parameters_inverse_after.error_.norm() > error_and_parameters_inverse.error_.norm())
-		{
-			B_[index_i] = B_backup_[index_i];
-			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
-			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-			{
-				size_t index_j = inner_neighborhood.j_[n];
-				B_[index_j] = B_backup_[index_j];
-			}
-		}
-		else
-		{
-			evolution_indicator_[index_i] = 2;
-		}
-	}
-	else
-	{
-		evolution_indicator_[index_i] = 1;
-	}
-}
-//=================================================================================================//
-CorrectionMatrixRegularization::CorrectionMatrixRegularization(BaseInnerRelation& inner_relation, Real eta)
-	: LocalDynamics(inner_relation.getSPHBody()), RelaxDataDelegateInner(inner_relation),
-	eta_(eta), mass_(particles_->mass_), Vol_(particles_->Vol_),
-	B_(*particles_->template getVariableByName<Matd>("CorrectionMatrix"))
-{
-	particles_->registerVariable(correction_matrix_variation_, "correction_matrix_variation_");
-	particles_->addVariableToWrite<Real>("correction_matrix_variation_");
-}
-//=================================================================================================//
-ErrorAndParameters<Matd, Matd, Matd> CorrectionMatrixRegularization::
-computeErrorAndParameters(size_t index_i, Real dt)
-{
-	ErrorAndParameters<Matd, Matd, Matd> error_and_parameters;
-	Neighborhood& inner_neighborhood = this->inner_configuration_[index_i];
-	for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-	{
-		size_t& index_j = inner_neighborhood.j_[n];
-
-		Matd variable_derivative = B_[index_i] - B_[index_j];
-
-		Matd parameter_b = 2.0 * eta_ * inner_neighborhood.e_ij_[n] * inner_neighborhood.e_ij_[n].transpose() *
-			inner_neighborhood.dW_ijV_j_[n] * Vol_[index_i] * dt / inner_neighborhood.r_ij_[n];
-
-		error_and_parameters.error_ -= variable_derivative * parameter_b;
-		error_and_parameters.a_ += parameter_b;
-		error_and_parameters.c_ += parameter_b * parameter_b;
-	}
-	error_and_parameters.a_ -= mass_[index_i] * Matd::Identity();
-	return error_and_parameters;
-}
-//=================================================================================================//
-void CorrectionMatrixRegularization::
-updateStates(size_t index_i, Real dt, const ErrorAndParameters<Matd, Matd, Matd>& error_and_parameters)
-{
-	Matd parameter_l = error_and_parameters.a_ * error_and_parameters.a_ + error_and_parameters.c_;
-	Matd parameter_k = parameter_l.inverse() * error_and_parameters.error_;
-
-	parameter_k = 0.1 * parameter_k;
-
-	B_[index_i] += error_and_parameters.a_ * parameter_k;
-
-	Neighborhood& inner_neighborhood = inner_configuration_[index_i];
-	for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-	{
-		size_t index_j = inner_neighborhood.j_[n];
-		Matd parameter_b = 2.0 * eta_ * inner_neighborhood.e_ij_[n] * inner_neighborhood.e_ij_[n].transpose() *
-			inner_neighborhood.dW_ijV_j_[n] * Vol_[index_i] * dt / inner_neighborhood.r_ij_[n];
-
-		B_[index_j] -= parameter_b * parameter_k;
-	}
-}
-//=================================================================================================//
-void CorrectionMatrixRegularization::interaction(size_t index_i, Real dt)
-{
-	ErrorAndParameters<Matd, Matd, Matd> error_and_parameters = computeErrorAndParameters(index_i, dt);
-	updateStates(index_i, dt, error_and_parameters);
-	correction_matrix_variation_[index_i] = error_and_parameters.error_.norm();
-}
-//=================================================================================================//
-FirstOrderEvolutionStep::FirstOrderEvolutionStep(BaseInnerRelation& inner_relation, bool level_set_correction)
-	: BaseDynamics<void>(inner_relation.getSPHBody()), time_step_size_(0.01),
-	get_time_step_(*inner_relation.real_body_)
-{
-	first_order_consistency_evolution_ =
-		makeUnique<InteractionSplit<FirstOrderConsistencyEvolution>>(inner_relation, level_set_correction);
-}
-//=================================================================================================//
-void FirstOrderEvolutionStep::exec(Real dt)
-{
-	first_order_consistency_evolution_->exec(dt);
 }
 //=================================================================================================//
 UpdateParticleKineticEnergy::
@@ -806,7 +530,41 @@ void CheckCorrectedFirstOrderConsistency::interaction(size_t index_i, Real dt)
 	corrected_first_order_[index_i] = acceleration;
 	corrected_first_order_error_[index_i] = (acceleration - Matd::Identity()).norm();
 }
+//=================================================================================================//
+CheckConsistencyRealization::
+CheckConsistencyRealization(BaseInnerRelation& inner_relation, bool level_set_correction) :
+    LocalDynamics(inner_relation.getSPHBody()), GeneralDataDelegateInner(inner_relation),
+    level_set_correction_(level_set_correction), pos_(particles_->pos_),
+    pressure_(*particles_->template getVariableByName<Real>("Pressure")),
+    B_(*particles_->template getVariableByName<Matd>("CorrectionMatrix")),
+    sph_adaptation_(sph_body_.sph_adaptation_)
+{
+    level_set_shape_ = DynamicCast<LevelSetShape>(this, sph_body_.body_shape_);
+    particles_->registerVariable(pressure_gradient_norm_, "pressure_gradient_norm");
+    particles_->addVariableToWrite<Real>("pressure_gradient_norm");
+    particles_->registerVariable(pressure_gradient_, "pressure_gradient");
+    particles_->addVariableToWrite<Vecd>("pressure_gradient");
+}
+//=================================================================================================//
+void CheckConsistencyRealization::interaction(size_t index_i, Real dt)
+{
+    Vecd pressure_gradient = Vecd::Zero();
+    Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+    {
+        size_t index_j = inner_neighborhood.j_[n];
+        pressure_gradient += 0.5 * (pressure_[index_i] * B_[index_j] + pressure_[index_j] * B_[index_i]) * inner_neighborhood.e_ij_[n] * inner_neighborhood.dW_ijV_j_[n];
+    }
+    
+    /*if (level_set_correction_)
+    {
 
+    }*/
+
+    pressure_gradient_[index_i] = pressure_gradient;
+    pressure_gradient_norm_[index_i] = sqrt(pow((pressure_gradient[0] - Pi * (cos(pos_[index_i][0] * 2 * Pi))), 2) + 
+                                            pow((pressure_gradient[1] - Pi * (cos(pos_[index_i][1] * 2 * Pi))), 2));
+}
 //=================================================================================================//
 ShellMidSurfaceBounding::
     ShellMidSurfaceBounding(NearShapeSurface &body_part, BaseInnerRelation &inner_relation,
