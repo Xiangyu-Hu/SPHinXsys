@@ -34,3 +34,4 @@
 #include "all_continuum_dynamics.h"
 #include "general_continuum.h"
 #include "continuum_particles.h"
+#include "riemann_solver_extra.h"

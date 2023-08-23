@@ -41,5 +41,35 @@ class GeneralContinuum : public WeaklyCompressibleFluid
 
     virtual GeneralContinuum *ThisObjectPtr() override { return this; };
 };
+
+class PlasticContinuum : public GeneralContinuum
+{
+protected:
+    Real c_;  /*< cohesion  */
+    Real fai_;  /*< friction angle  */
+    Real psi_;  /*< dilatancy angle  */
+    Real alpha_fai_;  /*< Drucker¨CPrager¡¯s constants  */
+    Real k_c_;  /*< Drucker¨CPrager¡¯s constants */
+public:
+    explicit PlasticContinuum(Real rho0, Real c0, Real youngs_modulus, Real poisson_ratio, Real friction_angle, Real cohesion=0, Real dilatancy=0)
+        : GeneralContinuum(rho0, c0, youngs_modulus, poisson_ratio),
+        c_(cohesion), fai_(friction_angle), psi_(dilatancy), alpha_fai_(0.0), k_c_(0.0)
+    {
+        material_type_name_ = "PlasticContinuum";
+        alpha_fai_ = getDPConstantsA(friction_angle);
+        k_c_ = getDPConstantsK(cohesion, friction_angle);
+    };
+    virtual ~PlasticContinuum() {};
+
+
+    Real getDPConstantsA(Real friction_angle);
+    Real getDPConstantsK(Real cohesion, Real friction_angle);
+    Real getFrictionAngle() { return fai_; };
+
+    virtual Mat3d ConstitutiveRelation(Mat3d& velocity_gradient, Mat3d& stress_tensor);
+    virtual Mat3d ReturnMapping(Mat3d& stress_tensor);
+
+    virtual GeneralContinuum* ThisObjectPtr() override { return this; };
+};
 } // namespace SPH
 #endif // GENERAL_CONTINUUM_H
