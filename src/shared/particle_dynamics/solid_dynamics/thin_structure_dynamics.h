@@ -231,7 +231,7 @@ class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
 
         /** the relation between pseudo-normal and rotations */
         Vecd local_dpseudo_n_d2t = transformation_matrix_[index_i] * dpseudo_n_d2t_[index_i];
-        dangular_vel_dt_[index_i] = getRotationFromPseudoNormalForFiniteDeformation(local_dpseudo_n_d2t, rotation_[index_i], angular_vel_[index_i], dt);
+        dangular_vel_dt_[index_i] = getRotationFromPseudoNormal(local_dpseudo_n_d2t, rotation_[index_i], angular_vel_[index_i], dt);
     };
 
     void update(size_t index_i, Real dt = 0.0);

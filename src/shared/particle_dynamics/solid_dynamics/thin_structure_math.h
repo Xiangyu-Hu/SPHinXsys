@@ -52,12 +52,8 @@ Vec2d getVectorChangeRateAfterThinStructureRotation(const Vec2d &initial_vector,
 Vec3d getVectorChangeRateAfterThinStructureRotation(const Vec3d &initial_vector, const Vec3d &rotation_angles, const Vec3d &angular_vel);
 
 /** get the rotation from pseudo-normal for finite deformation. */
-Vec2d getRotationFromPseudoNormalForFiniteDeformation(const Vec2d &dpseudo_n_d2t, const Vec2d &rotation, const Vec2d &angular_vel, Real dt);
-Vec3d getRotationFromPseudoNormalForFiniteDeformation(const Vec3d &dpseudo_n_d2t, const Vec3d &rotation, const Vec3d &angular_vel, Real dt);
-
-/** get the rotation from pseudo-normal for small deformation. */
-Vec2d getRotationFromPseudoNormalForSmallDeformation(const Vec2d &dpseudo_n_d2t, const Vec2d &rotation, const Vec2d &angular_vel, Real dt);
-Vec3d getRotationFromPseudoNormalForSmallDeformation(const Vec3d &dpseudo_n_d2t, const Vec3d &rotation, const Vec3d &angular_vel, Real dt);
+Vec2d getRotationFromPseudoNormal(const Vec2d &dpseudo_n_d2t, const Vec2d &rotation, const Vec2d &angular_vel, Real dt);
+Vec3d getRotationFromPseudoNormal(const Vec3d &dpseudo_n_d2t, const Vec3d &rotation, const Vec3d &angular_vel, Real dt);
 
 /** get the current normal direction from deformation gradient tensor. */
 Vec2d getNormalFromDeformationGradientTensor(const Mat2d &F);

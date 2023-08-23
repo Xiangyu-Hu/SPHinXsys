@@ -63,7 +63,7 @@ Vec3d getVectorChangeRateAfterThinStructureRotation(const Vec3d &initial_vector,
     return Vec3d(dpseudo_n_dt_0, dpseudo_n_dt_1, dpseudo_n_dt_2);
 }
 //=================================================================================================//
-Vec2d getRotationFromPseudoNormalForFiniteDeformation(const Vec2d &dpseudo_n_d2t, const Vec2d &rotation, const Vec2d &angular_vel, Real dt)
+Vec2d getRotationFromPseudoNormal(const Vec2d &dpseudo_n_d2t, const Vec2d &rotation, const Vec2d &angular_vel, Real dt)
 {
     Real cos_rotation_0 = cos(rotation[0]);
     Real sin_rotation_0 = sin(rotation[0]);
@@ -73,7 +73,7 @@ Vec2d getRotationFromPseudoNormalForFiniteDeformation(const Vec2d &dpseudo_n_d2t
     return Vec2d(angle_vel_dt_0, 0.0);
 }
 //=================================================================================================//
-Vec3d getRotationFromPseudoNormalForFiniteDeformation(const Vec3d &dpseudo_n_d2t, const Vec3d &rotation, const Vec3d &angular_vel, Real dt)
+Vec3d getRotationFromPseudoNormal(const Vec3d &dpseudo_n_d2t, const Vec3d &rotation, const Vec3d &angular_vel, Real dt)
 {
     Real sin_rotation_0 = sin(rotation[0]);
     Real cos_rotation_0 = cos(rotation[0]);
@@ -90,16 +90,6 @@ Vec3d getRotationFromPseudoNormalForFiniteDeformation(const Vec3d &dpseudo_n_d2t
     Real angle_vel_dt_1 = rotation_1_a * rotation_1_a * (rotation_1_b1 * cos_rotation_1 + rotation_1_b2 * sin_rotation_1) / (rotation_1_b1 * rotation_1_b1 + rotation_1_b2 * rotation_1_b2 + Eps);
 
     return Vec3d(angle_vel_dt_0, angle_vel_dt_1, 0.0);
-}
-//=================================================================================================//
-Vec2d getRotationFromPseudoNormalForSmallDeformation(const Vec2d &dpseudo_n_d2t, const Vec2d &rotation, const Vec2d &angular_vel, Real dt)
-{
-    return Vec2d(dpseudo_n_d2t[0], 0);
-}
-//=================================================================================================//
-Vec3d getRotationFromPseudoNormalForSmallDeformation(const Vec3d &dpseudo_n_d2t, const Vec3d &rotation, const Vec3d &angular_vel, Real dt)
-{
-    return Vec3d(-dpseudo_n_d2t[1], dpseudo_n_d2t[0], 0.0);
 }
 //=================================================================================================//
 Vec2d getNormalFromDeformationGradientTensor(const Mat2d &F)
