@@ -1,5 +1,5 @@
-#include <gtest/gtest.h>
 #include "sph_data_containers.h"
+#include <gtest/gtest.h>
 
 using namespace SPH;
 
@@ -13,8 +13,8 @@ TEST(sph_data_containers, getIntersectionOfBoundingBoxes)
 
 //=================================================================================================//
 //=================================================================================================//
-int main(int argc, char* argv[])
-{	
-	testing::InitGoogleTest(&argc, argv);
-	return RUN_ALL_TESTS();
+int main(int argc, char *argv[])
+{
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }

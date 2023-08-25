@@ -2,7 +2,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${SPHINXSYS_PROJECT_DIR}/cmake) # mai
 
 set(CMAKE_VERBOSE_MAKEFILE on)
 
-STRING( REGEX REPLACE ".*/(.*)" "\\1" CURRENT_FOLDER ${CMAKE_CURRENT_SOURCE_DIR} )
+STRING(REGEX REPLACE ".*/(.*)" "\\1" CURRENT_FOLDER ${CMAKE_CURRENT_SOURCE_DIR})
 PROJECT("${CURRENT_FOLDER}")
 
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
@@ -11,8 +11,8 @@ set(BUILD_INPUT_PATH "${EXECUTABLE_OUTPUT_PATH}/input")
 set(BUILD_RELOAD_PATH "${EXECUTABLE_OUTPUT_PATH}/reload")
 
 file(MAKE_DIRECTORY ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/regression_test_tool.py
-        DESTINATION ${BUILD_INPUT_PATH})
+execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_INPUT_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/ DESTINATION ${BUILD_INPUT_PATH})
 
 aux_source_directory(. DIR_SRCS)
 add_executable(${PROJECT_NAME} ${DIR_SRCS})
@@ -21,6 +21,8 @@ set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "
 target_link_libraries(${PROJECT_NAME} sphinxsys_2d)
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development) # for finding ${Python3_EXECUTABLE}
-add_test(NAME ${PROJECT_NAME} 
-  COMMAND ${Python3_EXECUTABLE} "${EXECUTABLE_OUTPUT_PATH}/input/regression_test_tool.py"
-  WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
+add_test(NAME ${PROJECT_NAME}
+        COMMAND ${Python3_EXECUTABLE} "${EXECUTABLE_OUTPUT_PATH}/input/regression_test_tool.py"
+        WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
+
+set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "diffusion reaction")
