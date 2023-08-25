@@ -15,7 +15,7 @@ Real DH = 2.0;                         /**< Tank height. */
 Real LL = 1.0;                         /**< Liquid column length. */
 Real LH = 1.0;                         /**< Liquid column height. */
 Real particle_spacing_ref = DL / 40.0; /**< Initial reference particle spacing. */
-Real BW = particle_spacing_ref * 2;    /**< Extending width for BCs. */
+Real BW = particle_spacing_ref * 4;    /**< Extending width for BCs. */
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------
@@ -116,7 +116,7 @@ int main()
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
-    water_block.addBodyStateForRecording<int>("SurfaceIndicator");
+    water_block.addBodyStateForRecording<int>("Indicator");
 
     FluidBody air_block(sph_system, makeShared<AirBlock>("AirBody"));
     air_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_a, c_f, mu_a);
@@ -146,8 +146,10 @@ int main()
         update_water_density_by_summation(water_wall_contact, water_air_complex);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplex>
         update_air_density_by_summation(air_wall_contact, air_water_complex);
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex>
-        air_transport_correction(air_wall_contact, air_water_complex, 0.05);
+    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>>
+        air_transport_correction(air_wall_contact, air_water_complex, 2.0e-3);
+    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>>
+        water_transport_correction(water_air_complex, 2.0e-3);
     /** Time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_water_advection_time_step_size(water_block, U_ref);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_air_advection_time_step_size(air_block, U_ref);
@@ -195,7 +197,7 @@ int main()
     //----------------------------------------------------------------------
     size_t number_of_iterations = 0;
     int screen_output_interval = 100;
-    Real end_time = 1.0;
+    Real end_time = 5.0;
     Real output_interval = 0.02; /**< Time stamps for output of body states. */
     Real dt = 0.0;               /**< Default acoustic time step sizes. */
     /** statistics for computing CPU time. */
@@ -230,6 +232,7 @@ int main()
             update_water_density_by_summation.exec();
             update_air_density_by_summation.exec();
             air_transport_correction.exec();
+            water_transport_correction.exec();
 
             air_viscous_acceleration.exec();
             water_viscous_acceleration.exec();

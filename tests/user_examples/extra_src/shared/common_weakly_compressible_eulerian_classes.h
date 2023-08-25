@@ -281,7 +281,7 @@ class NonReflectiveBoundaryVariableCorrection : public LocalDynamics, public Dat
     StdLargeVec<Vecd> n_;
     StdLargeVec<Real> inner_weight_summation_, rho_average_, vel_normal_average_;
     StdLargeVec<Vecd> vel_tangential_average_, vel_average_;
-    StdLargeVec<int> &surface_indicator_;
+    StdLargeVec<int> &indicator_;
     StdLargeVec<int> surface_inner_particle_indicator_;
 };
 } // namespace SPH

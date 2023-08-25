@@ -10,7 +10,7 @@ FreeSurfaceIndicationInner::
     FreeSurfaceIndicationInner(BaseInnerRelation &inner_relation, Real threshold)
     : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
       threshold_by_dimensions_(threshold * (Real)Dimensions),
-      surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")),
+      indicator_(*particles_->getVariableByName<int>("Indicator")),
       smoothing_length_(inner_relation.getSPHBody().sph_adaptation_->ReferenceSmoothingLength())
 {
     particles_->registerVariable(pos_div_, "PositionDivergence");
@@ -18,9 +18,9 @@ FreeSurfaceIndicationInner::
 //=================================================================================================//
 void FreeSurfaceIndicationInner::update(size_t index_i, Real dt)
 {
-    surface_indicator_[index_i] = 1;
+    indicator_[index_i] = 1;
     if (pos_div_[index_i] > threshold_by_dimensions_ && !isVeryNearFreeSurface(index_i))
-        surface_indicator_[index_i] = 0;
+        indicator_[index_i] = 0;
 }
 //=================================================================================================//
 bool FreeSurfaceIndicationInner::isVeryNearFreeSurface(size_t index_i)
@@ -42,7 +42,7 @@ bool FreeSurfaceIndicationInner::isVeryNearFreeSurface(size_t index_i)
 //=================================================================================================//
 ColorFunctionGradientInner::ColorFunctionGradientInner(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
-      surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")),
+      indicator_(*particles_->getVariableByName<int>("Indicator")),
       pos_div_(*particles_->getVariableByName<Real>("PositionDivergence")),
       threshold_by_dimensions_((0.75 * (Real)Dimensions))
 {
@@ -52,7 +52,7 @@ ColorFunctionGradientInner::ColorFunctionGradientInner(BaseInnerRelation &inner_
 //=================================================================================================//
 ColorFunctionGradientInterpolationInner::ColorFunctionGradientInterpolationInner(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation), Vol_(particles_->Vol_),
-      surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")),
+      indicator_(*particles_->getVariableByName<int>("Indicator")),
       color_grad_(*particles_->getVariableByName<Vecd>("ColorGradient")),
       surface_norm_(*particles_->getVariableByName<Vecd>("SurfaceNormal")),
       pos_div_(*particles_->getVariableByName<Real>("PositionDivergence")),
@@ -66,7 +66,7 @@ ColorFunctionGradientInterpolationInner::ColorFunctionGradientInterpolationInner
 SurfaceTensionAccelerationInner::SurfaceTensionAccelerationInner(BaseInnerRelation &inner_relation, Real gamma)
     : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
       gamma_(gamma), Vol_(particles_->Vol_), mass_(particles_->mass_),
-      acc_prior_(particles_->acc_prior_), surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")),
+      acc_prior_(particles_->acc_prior_), indicator_(*particles_->getVariableByName<int>("Indicator")),
       color_grad_(*particles_->getVariableByName<Vecd>("ColorGradient")),
       surface_norm_(*particles_->getVariableByName<Vecd>("SurfaceNormal")) {}
 //=================================================================================================//

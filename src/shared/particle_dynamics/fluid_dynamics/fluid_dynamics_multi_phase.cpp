@@ -35,7 +35,7 @@ MultiPhaseColorFunctionGradient::
     : LocalDynamics(contact_relation.getSPHBody()), MultiPhaseData(contact_relation),
       rho0_(sph_body_.base_material_->ReferenceDensity()), Vol_(particles_->Vol_),
       pos_div_(*particles_->getVariableByName<Real>("PositionDivergence")),
-      surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator"))
+      indicator_(*particles_->getVariableByName<int>("Indicator"))
 {
     particles_->registerVariable(color_grad_, "ColorGradient");
     particles_->registerVariable(surface_norm_, "SurfaceNormal");

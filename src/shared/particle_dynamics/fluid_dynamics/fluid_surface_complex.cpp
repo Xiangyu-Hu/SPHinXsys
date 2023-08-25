@@ -9,7 +9,7 @@ namespace fluid_dynamics
 FreeSurfaceIndicationComplex::
     FreeSurfaceIndicationComplex(BaseInnerRelation &inner_relation,
                                  BaseContactRelation &contact_relation, Real threshold)
-    : FreeSurfaceIndicationInner(inner_relation, threshold), FluidContactData(contact_relation)
+    : FreeSurfaceIndicationInner(inner_relation, threshold), FluidContactOnly(contact_relation)
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
@@ -26,7 +26,7 @@ FreeSurfaceIndicationComplex::
 //=================================================================================================//
 ColorFunctionGradientComplex::ColorFunctionGradientComplex(BaseInnerRelation &inner_relation,
                                                            BaseContactRelation &contact_relation)
-    : ColorFunctionGradientInner(inner_relation), FluidContactData(contact_relation)
+    : ColorFunctionGradientInner(inner_relation), FluidContactOnly(contact_relation)
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
@@ -41,7 +41,7 @@ ColorFunctionGradientComplex::ColorFunctionGradientComplex(ComplexRelation &comp
 SurfaceNormWithWall::SurfaceNormWithWall(BaseContactRelation &contact_relation, Real contact_angle)
     : LocalDynamics(contact_relation.getSPHBody()), FSIContactData(contact_relation),
       contact_angle_(contact_angle),
-      surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")),
+      indicator_(*particles_->getVariableByName<int>("Indicator")),
       surface_norm_(*particles_->getVariableByName<Vecd>("SurfaceNormal")),
       pos_div_(*particles_->getVariableByName<Real>("PositionDivergence"))
 {
