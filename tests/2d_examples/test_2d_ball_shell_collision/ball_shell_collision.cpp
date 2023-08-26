@@ -254,7 +254,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (sph_system.generate_regression_data_)
+    if (sph_system.GenerateRegressionData())
     {
         write_ball_center_displacement.generateDataBase(1.0e-2);
     }
@@ -262,6 +262,9 @@ int main(int ac, char *av[])
     {
         write_ball_center_displacement.testResult();
     }
+
+    if (sph_system.CleanAfterRun())
+        io_environment.cleanOutput();
 
     return 0;
 }

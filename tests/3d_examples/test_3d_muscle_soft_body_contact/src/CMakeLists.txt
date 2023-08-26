@@ -10,6 +10,6 @@ target_link_libraries(${PROJECT_NAME} sphinxsys_3d)
 set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 
 add_test(NAME ${PROJECT_NAME} 
-         COMMAND ${PROJECT_NAME}
+         COMMAND ${PROJECT_NAME} --clean_after_run=${SPHINXSYS_CLEAN_AFTER_TEST}
 		 WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "muscle")

@@ -198,7 +198,7 @@ int main(int ac, char *av[])
 
     write_particle_reload_files.writeToFile();
 
-    if (sph_system.generate_regression_data_)
+    if (sph_system.GenerateRegressionData())
     {
         write_total_mechanical_energy.generateDataBase(1.0e-3);
         write_maximum_speed.generateDataBase(1.0e-3);

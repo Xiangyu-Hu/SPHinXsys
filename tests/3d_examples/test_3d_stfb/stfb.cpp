@@ -263,7 +263,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (system.generate_regression_data_)
+    if (system.GenerateRegressionData())
     {
         write_str_displacement.generateDataBase(1e-3);
         wave_gauge.generateDataBase(1e-3);

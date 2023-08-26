@@ -232,7 +232,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (system.generate_regression_data_)
+    if (system.GenerateRegressionData())
     {
         write_beam_stress.generateDataBase(0.01, 0.01);
     }

@@ -115,7 +115,7 @@ int main(int ac, char *av[])
 {
     /** Setup the system. */
     SPHSystem system(system_domain_bounds, particle_spacing_ref);
-    system.generate_regression_data_ = false;
+    system.GenerateRegressionData() = false;
     /** Create a Cylinder body. */
     SolidBody cylinder_body(system, makeShared<DefaultShape>("CylinderBody"));
     cylinder_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
@@ -223,7 +223,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (system.generate_regression_data_)
+    if (system.GenerateRegressionData())
     {
         write_cylinder_max_displacement.generateDataBase(0.005);
     }

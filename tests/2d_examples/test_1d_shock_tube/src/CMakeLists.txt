@@ -11,5 +11,5 @@ aux_source_directory(. DIR_SRCS)
 add_executable(${PROJECT_NAME} ${DIR_SRCS})
 target_link_libraries(${PROJECT_NAME} extra_sources_2d)
 
-add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME})
+add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME}  --clean_after_run=${SPHINXSYS_CLEAN_AFTER_TEST})
 set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "periodic boundary, Eulerian")

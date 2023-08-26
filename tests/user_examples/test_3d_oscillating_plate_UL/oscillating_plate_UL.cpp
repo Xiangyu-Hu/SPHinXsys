@@ -243,8 +243,8 @@ int main()
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-	system.generate_regression_data_ = false;
-	if (system.generate_regression_data_)
+	system.GenerateRegressionData() = false;
+	if (system.GenerateRegressionData())
 	{
 		write_kinetic_energy.generateDataBase(1.0e-3);
 	}

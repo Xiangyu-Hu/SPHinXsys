@@ -83,7 +83,7 @@ int main()
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
     SPHSystem system(system_domain_bounds, resolution_ref);
-    system.generate_regression_data_ = false;
+    system.GenerateRegressionData() = false;
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -188,7 +188,7 @@ int main()
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (system.generate_regression_data_)
+    if (system.GenerateRegressionData())
     {
         write_plate_max_displacement.generateDataBase(0.005);
     }

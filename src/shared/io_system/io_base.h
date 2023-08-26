@@ -62,6 +62,7 @@ class IOEnvironment
     explicit IOEnvironment(SPHSystem &sph_system, bool delete_output = true);
     virtual ~IOEnvironment(){};
     ParameterizationIO &defineParameterizationIO();
+    void cleanOutput();
 };
 
 /**

@@ -100,7 +100,7 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem system(system_domain_bounds, resolution_ref);
-    system.generate_regression_data_ = false;
+    system.GenerateRegressionData() = false;
 #ifdef BOOST_AVAILABLE
     // handle command line arguments
     system.handleCommandlineOptions(ac, av);
@@ -212,7 +212,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (system.generate_regression_data_)
+    if (system.GenerateRegressionData())
     {
         // The lift force at the cylinder is very small and not important in this case.
         write_beam_tip_displacement.generateDataBase(Vec2d(1.0e-2, 1.0e-2), Vec2d(1.0e-2, 1.0e-2));

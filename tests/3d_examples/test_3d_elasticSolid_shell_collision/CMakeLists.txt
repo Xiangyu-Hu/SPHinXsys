@@ -19,7 +19,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
         add_test(NAME ${PROJECT_NAME}_particle_relaxation COMMAND ${PROJECT_NAME} --r=true
                  WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
-        add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME} --r=false --i=true
+        add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME} --r=false --i=true --clean_after_run=${SPHINXSYS_CLEAN_AFTER_TEST}
                  WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
         set_tests_properties(${PROJECT_NAME} PROPERTIES DEPENDS "${PROJECT_NAME}_particle_relaxation")
 else()

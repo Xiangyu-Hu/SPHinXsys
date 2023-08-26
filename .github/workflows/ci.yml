@@ -140,6 +140,7 @@ jobs:
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -D SPHINXSYS_CI=ON \
             -D SPHINXSYS_USE_FLOAT=OFF \
+            -D SPHINXSYS_CLEAN_AFTER_TEST=ON \
             -D SPHINXSYS_MODULE_OPENCASCADE=ON \
             -S ${{github.workspace}} \
             -B ${{github.workspace}}/build
@@ -292,6 +293,7 @@ jobs:
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}\vcpkg\scripts\buildsystems\vcpkg.cmake" `
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache `
             -D SPHINXSYS_CI=ON `
+            -D SPHINXSYS_CLEAN_AFTER_TEST=ON `
             -S ${{github.workspace}} `
             -B C:\build
       
@@ -388,6 +390,7 @@ jobs:
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -D SPHINXSYS_CI=ON \
+            -D SPHINXSYS_CLEAN_AFTER_TEST=ON \
             -S ${{github.workspace}} \
             -B ${{github.workspace}}/build
 

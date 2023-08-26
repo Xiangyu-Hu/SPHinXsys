@@ -19,8 +19,8 @@ aux_source_directory(. DIR_SRCS)
 ADD_EXECUTABLE(${PROJECT_NAME} ${EXECUTABLE_OUTPUT_PATH} ${DIR_SRCS} )
 
 add_test(NAME ${PROJECT_NAME}_particle_relaxation 
-		 COMMAND ${PROJECT_NAME} 
+		 COMMAND ${PROJECT_NAME} --clean_after_run=${SPHINXSYS_CLEAN_AFTER_TEST}
 		 WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
                  
-    set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
-    target_link_libraries(${PROJECT_NAME} sphinxsys_2d)
+set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
+target_link_libraries(${PROJECT_NAME} sphinxsys_2d)
