@@ -56,13 +56,13 @@ class MovingPlate : public ComplexShape
 int main()
 {
     /** Setup the system. Please the make sure the global domain bounds are correctly defined. */
-    SPHSystem system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, resolution_ref);
     /** Creat a Myocardium body, corresponding material, particles and reaction model. */
-    SolidBody myocardium_body(system, makeShared<Myocardium>("MyocardiumBody"));
+    SolidBody myocardium_body(sph_system, makeShared<Myocardium>("MyocardiumBody"));
     myocardium_body.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     myocardium_body.generateParticles<ParticleGeneratorLattice>();
     /** Plate. */
-    SolidBody moving_plate(system, makeShared<MovingPlate>("MovingPlate"));
+    SolidBody moving_plate(sph_system, makeShared<MovingPlate>("MovingPlate"));
     moving_plate.defineParticlesAndMaterial<SolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     moving_plate.generateParticles<ParticleGeneratorLattice>();
     /** topology */
@@ -95,8 +95,8 @@ int main()
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
         muscle_damping(0.1, myocardium_body_inner, "Velocity", physical_viscosity);
     /** Output */
-    IOEnvironment io_environment(system);
-    BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
+    IOEnvironment io_environment(sph_system);
+    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
     /** Simbody interface. */
     /**
      * The multi body system from simbody.
@@ -138,8 +138,8 @@ int main()
      * Set the starting time.
      */
     GlobalStaticVariables::physical_time_ = 0.0;
-    system.initializeSystemCellLinkedLists();
-    system.initializeSystemConfigurations();
+    sph_system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemConfigurations();
     /** apply initial condition */
     corrected_configuration.exec();
     write_states.writeToFile(0);
@@ -209,6 +209,11 @@ int main()
     TimeInterval tt;
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+
+    if (sph_system.CleanAfterRun())
+    {
+        io_environment.cleanOutput();
+    }
 
     return 0;
 }

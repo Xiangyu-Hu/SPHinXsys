@@ -222,5 +222,10 @@ int main()
 
     write_solid_temperature.testResult();
 
+    if (sph_system.CleanAfterRun())
+    {
+        io_environment.cleanOutput();
+    }
+
     return 0;
 }

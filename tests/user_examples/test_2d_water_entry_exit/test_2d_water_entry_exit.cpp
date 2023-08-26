@@ -2,27 +2,27 @@
  * @file	water entry and exit.cpp
  * @brief	2D water entry and exit example with surface wettability considered.
  * @details	This is the one of FSI test cases, also one case for
- * 			understanding spatial temporal identification approach, 
+ * 			understanding spatial temporal identification approach,
  *          especially when coupled with the wetting.
  * @author  Shuoguo Zhang and Xiangyu Hu
  */
 #include "sphinxsys.h" //SPHinXsys Library.
 #include "wetting_coupled_spatial_temporal_method.h"
 
-using namespace SPH;   // Namespace cite here.
+using namespace SPH; // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real insert_cylinder_radius = 0.055;                              /**< Cylinder radius. */
+Real insert_cylinder_radius = 0.055;                             /**< Cylinder radius. */
 Real DL = 8.0 * insert_cylinder_radius;                          /**< Water tank length. */
 Real DH = 7.0 * insert_cylinder_radius;                          /**< Water tank height. */
-Real LL = DL;                                                     /**< Water column length. */
-Real LH = 3.0 * insert_cylinder_radius;                           /**< Water column height. */
-Real particle_spacing_ref = 2.0 * insert_cylinder_radius / 40.0;  /**< Initial reference particle spacing. */
-Real BW = particle_spacing_ref * 4;                               /**< Thickness of tank wall. */
-Vec2d insert_cylinder_center(0.5 * DL, LH + 0.15);                /**< Location of the cylinder center. */
-Vecd tethering_point(0.5 * DL, DH);                               /**< The tethering point. */
-StdVec<Vecd> observer_location = {insert_cylinder_center};        /**< Observation point. */
+Real LL = DL;                                                    /**< Water column length. */
+Real LH = 3.0 * insert_cylinder_radius;                          /**< Water column height. */
+Real particle_spacing_ref = 2.0 * insert_cylinder_radius / 40.0; /**< Initial reference particle spacing. */
+Real BW = particle_spacing_ref * 4;                              /**< Thickness of tank wall. */
+Vec2d insert_cylinder_center(0.5 * DL, LH + 0.15);               /**< Location of the cylinder center. */
+Vecd tethering_point(0.5 * DL, DH);                              /**< The tethering point. */
+StdVec<Vecd> observer_location = {insert_cylinder_center};       /**< Observation point. */
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------
@@ -35,10 +35,10 @@ Real mu_f = 8.9e-7;                      /**< Water dynamics viscosity. */
 //----------------------------------------------------------------------
 //	Wetting parameters
 //----------------------------------------------------------------------
-Real diffusion_coeff = 330.578 * pow(particle_spacing_ref,2); /**< Wetting coefficient. */
-Real fluid_moisture = 1.0;       /**< fluid moisture. */
-Real cylinder_moisture = 0.0;    /**< cylinder moisture. */
-Real wall_moisture = 1.0;        /**< wall moisture. */
+Real diffusion_coeff = 330.578 * pow(particle_spacing_ref, 2); /**< Wetting coefficient. */
+Real fluid_moisture = 1.0;                                     /**< fluid moisture. */
+Real cylinder_moisture = 0.0;                                  /**< cylinder moisture. */
+Real wall_moisture = 1.0;                                      /**< wall moisture. */
 //----------------------------------------------------------------------
 //	Definition for water body
 //----------------------------------------------------------------------
@@ -166,7 +166,7 @@ class WettingCylinderBodyMaterial : public DiffusionReaction<Solid>
   public:
     WettingCylinderBodyMaterial() : DiffusionReaction<Solid>({"Phi"}, SharedPtr<NoReaction>(), rho0_s)
     {
-        initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi",diffusion_coeff);
+        initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi", diffusion_coeff);
     };
 };
 using DiffusionCylinderParticles = DiffusionReactionParticles<SolidParticles, WettingCylinderBodyMaterial>;
@@ -224,7 +224,7 @@ int main(int ac, char *av[])
     sph_system.setRunParticleRelaxation(false);
     sph_system.setReloadParticles(true);
     sph_system.handleCommandlineOptions(ac, av);
-    GlobalStaticVariables::physical_time_=0.0;
+    GlobalStaticVariables::physical_time_ = 0.0;
     IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
@@ -315,7 +315,7 @@ int main(int ac, char *av[])
     water_block.addBodyStateForRecording<int>("SurfaceIndicator");
     cylinder.addBodyStateForRecording<Real>("Density");
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> fluid_pressure_relaxation(water_block_complex);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_block_complex);   
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_block_complex);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_max);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
     InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
@@ -334,8 +334,8 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
     InteractionDynamics<solid_dynamics::ViscousForceFromFluid> fluid_viscous_force_on_inserted_body(cylinder_contact);
-    InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid> 
-        fluid_pressure_force_on_inserted_body(cylinder_contact, fluid_viscous_force_on_inserted_body);    
+    InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid>
+        fluid_pressure_force_on_inserted_body(cylinder_contact, fluid_viscous_force_on_inserted_body);
     //----------------------------------------------------------------------
     //	Building Simbody.
     //----------------------------------------------------------------------
@@ -420,7 +420,7 @@ int main(int ac, char *av[])
     int observation_sample_interval = screen_output_interval * 2;
     int restart_output_interval = screen_output_interval * 10;
     Real end_time = 0.7;
-    Real output_interval = end_time/70.0;
+    Real output_interval = end_time / 70.0;
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -448,7 +448,7 @@ int main(int ac, char *av[])
             time_instance = TickCount::now();
             fluid_step_initialization.exec();
             Real Dt = fluid_advection_time_step.exec();
-            
+
             fluid_density_by_summation.exec();
             viscous_acceleration.exec();
             transport_velocity_correction.exec();
@@ -472,7 +472,7 @@ int main(int ac, char *av[])
                 force_on_bodies.clearAllBodyForces(state_for_update);
                 force_on_bodies.setOneBodyForce(state_for_update, tethered_spot, force_on_tethered_spot.exec());
                 constraint_tethered_spot.exec();
-               
+
                 relaxation_time += dt;
                 integration_time += dt;
                 GlobalStaticVariables::physical_time_ += dt;
@@ -533,6 +533,11 @@ int main(int ac, char *av[])
     else if (sph_system.RestartStep() == 0)
     {
         write_cylinder_displacement.testResult();
+    }
+
+    if (sph_system.CleanAfterRun())
+    {
+        io_environment.cleanOutput();
     }
 
     return 0;

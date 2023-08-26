@@ -13,25 +13,25 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
-    SPHSystem system(system_domain_bounds, particle_spacing_ref);
-    system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(system);
+    SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
+    sph_system.handleCommandlineOptions(ac, av);
+    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
+    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
 
-    SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
+    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
-    SolidBody structure(system, makeShared<FloatingStructure>("Structure"));
+    SolidBody structure(sph_system, makeShared<FloatingStructure>("Structure"));
     structure.defineParticlesAndMaterial<SolidParticles, Solid>(rho_s);
     structure.generateParticles<ParticleGeneratorLattice>();
 
-    ObserverBody observer(system, "Observer");
+    ObserverBody observer(sph_system, "Observer");
     observer.defineAdaptationRatios(1.15, 2.0);
     observer.generateParticles<ObserverParticleGenerator>(
         StdVec<Vecd>{obs});
@@ -175,8 +175,8 @@ int main(int ac, char *av[])
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
     structure_offset_position.exec();
-    system.initializeSystemCellLinkedLists();
-    system.initializeSystemConfigurations();
+    sph_system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
     str_normal.exec();
     str_corrected_conf.exec();
@@ -263,7 +263,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (system.GenerateRegressionData())
+    if (sph_system.GenerateRegressionData())
     {
         write_str_displacement.generateDataBase(1e-3);
         wave_gauge.generateDataBase(1e-3);
@@ -272,6 +272,11 @@ int main(int ac, char *av[])
     {
         write_str_displacement.testResult();
         wave_gauge.testResult();
+    }
+
+    if (sph_system.CleanAfterRun())
+    {
+        io_environment.cleanOutput();
     }
 
     return 0;

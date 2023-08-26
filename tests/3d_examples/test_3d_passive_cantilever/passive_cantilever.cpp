@@ -70,14 +70,14 @@ class CantileverInitialCondition
 int main()
 {
     /** Setup the system. Please the make sure the global domain bounds are correctly defined. */
-    SPHSystem system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, resolution_ref);
     /** create a Cantilever body, corresponding material, particles and reaction model. */
-    SolidBody cantilever_body(system, makeShared<Cantilever>("CantileverBody"));
+    SolidBody cantilever_body(sph_system, makeShared<Cantilever>("CantileverBody"));
     cantilever_body.defineParticlesAndMaterial<
         ElasticSolidParticles, Muscle>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
     cantilever_body.generateParticles<ParticleGeneratorLattice>();
     /** Define Observer. */
-    ObserverBody cantilever_observer(system, "CantileverObserver");
+    ObserverBody cantilever_observer(sph_system, "CantileverObserver");
     cantilever_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 
     /** topology */
@@ -102,8 +102,8 @@ int main()
                                 makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_holder), halfsize_holder, "Holder"));
     SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_holder(holder);
     /** Output */
-    IOEnvironment io_environment(system);
-    BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
+    IOEnvironment io_environment(sph_system);
+    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_displacement("Position", io_environment, cantilever_observer_contact);
     /**
@@ -111,8 +111,8 @@ int main()
      * Set the starting time.
      */
     GlobalStaticVariables::physical_time_ = 0.0;
-    system.initializeSystemCellLinkedLists();
-    system.initializeSystemConfigurations();
+    sph_system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemConfigurations();
     /** apply initial condition */
     initialization.exec();
     corrected_configuration.exec();
@@ -162,6 +162,11 @@ int main()
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
     write_displacement.testResult();
+
+    if (sph_system.CleanAfterRun())
+    {
+        io_environment.cleanOutput();
+    }
 
     return 0;
 }

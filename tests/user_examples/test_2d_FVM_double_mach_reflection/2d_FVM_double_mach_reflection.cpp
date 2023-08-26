@@ -51,7 +51,7 @@ int main(int ac, char *av[])
     the value is larger, the numerical dissipation larger*/
     InteractionWithUpdate<Integration1stHalfHLLCRiemann> pressure_relaxation(water_block_inner);
     InteractionWithUpdate<Integration2ndHalfHLLCRiemann> density_relaxation(water_block_inner);
-    //Visuallization in FVM with date in cell.
+    // Visuallization in FVM with date in cell.
     BodyStatesRecordingInMeshToVtp write_real_body_states(io_environment, sph_system.real_bodies_, read_mesh_data.elements_nodes_connection_, read_mesh_data.point_coordinates_2D_);
     //----------------------------------------------------------------------
     //	Prepare the simulation with case specified initial condition if necessary.
@@ -107,6 +107,11 @@ int main(int ac, char *av[])
     TimeInterval tt;
     tt = t4 - t1 - interval;
     cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+
+    if (sph_system.CleanAfterRun())
+    {
+        io_environment.cleanOutput();
+    }
 
     return 0;
 }

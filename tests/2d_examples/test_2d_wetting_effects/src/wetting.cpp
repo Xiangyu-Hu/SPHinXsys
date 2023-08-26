@@ -211,5 +211,10 @@ int main()
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
 
+    if (sph_system.CleanAfterRun())
+    {
+        io_environment.cleanOutput();
+    }
+
     return 0;
 }

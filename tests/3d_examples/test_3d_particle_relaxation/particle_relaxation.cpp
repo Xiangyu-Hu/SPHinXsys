@@ -41,8 +41,8 @@ int main()
     //----------------------------------------------------------------------
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
-    SPHSystem system(system_domain_bounds, dp_0);
-    IOEnvironment io_environment(system);
+    SPHSystem sph_system(system_domain_bounds, dp_0);
+    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -95,6 +95,11 @@ int main()
         }
     }
     std::cout << "The physics relaxation process of imported model finish !" << std::endl;
+
+    if (sph_system.CleanAfterRun())
+    {
+        io_environment.cleanOutput();
+    }
 
     return 0;
 }

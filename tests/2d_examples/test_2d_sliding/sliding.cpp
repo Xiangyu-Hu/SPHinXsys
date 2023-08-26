@@ -205,5 +205,10 @@ int main(int ac, char *av[])
         write_free_cube_displacement.testResult();
     }
 
+    if (sph_system.CleanAfterRun())
+    {
+        io_environment.cleanOutput();
+    }
+
     return 0;
 }
