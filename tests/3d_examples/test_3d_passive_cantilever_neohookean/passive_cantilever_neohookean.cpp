@@ -60,7 +60,7 @@ class TimeDependentGravity : public Gravity
 int main(int ac, char *av[])
 {
     /** Setup the system. */
-    SPHSystem sysph_systemtem(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, resolution_ref);
 // handle command line arguments
 #ifdef BOOST_AVAILABLE
     sph_system.handleCommandlineOptions(ac, av);

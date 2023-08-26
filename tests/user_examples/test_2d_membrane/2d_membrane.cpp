@@ -136,7 +136,7 @@ int main(int ac, char *av[])
 #endif //----------------------------------------------------------------------
        //	Creating body, materials and particles.
        //----------------------------------------------------------------------
-    SolidBody beam_body(system, makeShared<Beam>("2dMembrane"));
+    SolidBody beam_body(sph_system, makeShared<Beam>("2dMembrane"));
     beam_body.defineParticlesAndMaterial<multi_species_continuum::PorousMediaParticles, multi_species_continuum::PorousMediaSolid>(
         rho_0, Youngs_modulus, poisson, diffusivity_constant_, fulid_initial_density_, water_pressure_constant_);
     beam_body.generateParticles<ParticleGeneratorLattice>();

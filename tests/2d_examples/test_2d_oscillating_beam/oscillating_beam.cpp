@@ -105,7 +105,7 @@ int main(int ac, char *av[])
 #endif //----------------------------------------------------------------------
        //	Creating body, materials and particles.
        //----------------------------------------------------------------------
-    SolidBody beam_body(system, makeShared<Beam>("BeamBody"));
+    SolidBody beam_body(sph_system, makeShared<Beam>("BeamBody"));
     beam_body.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     beam_body.generateParticles<ParticleGeneratorLattice>();
 

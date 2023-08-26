@@ -91,11 +91,12 @@ class TimeDependentExternalForce : public Gravity
 /**
  *  The main program
  */
-int main()
+int main(int ac, char *av[])
 {
     /** Setup the system. */
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.GenerateRegressionData() = false;
+    sph_system.handleCommandlineOptions(ac, av);
+    
     /** Create a Cylinder body. */
     SolidBody cylinder_body(sph_system, makeShared<DefaultShape>("CylinderBody"));
     cylinder_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);

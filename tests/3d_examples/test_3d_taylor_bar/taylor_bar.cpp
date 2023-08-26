@@ -22,7 +22,7 @@ int main(int ac, char *av[])
     IOEnvironment io_environment(sph_system);
 
     /** create a body with corresponding material, particles and reaction model. */
-    SolidBody column(system, makeShared<Column>("Column"));
+    SolidBody column(sph_system, makeShared<Column>("Column"));
     column.defineAdaptationRatios(1.3, 1.0);
     column.defineBodyLevelSetShape()->writeLevelSet(io_environment);
     column.defineParticlesAndMaterial<ElasticSolidParticles, HardeningPlasticSolid>(

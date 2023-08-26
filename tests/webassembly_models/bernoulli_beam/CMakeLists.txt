@@ -22,7 +22,7 @@ target_link_libraries(${PROJECT_NAME} structural_simulation_module)
 
 if(NOT EMSCRIPTEN)
 	add_test(NAME ${PROJECT_NAME} 
-			COMMAND ${PROJECT_NAME} --r=true --clean_after_run=${SPHINXSYS_CLEAN_AFTER_TEST}
+			COMMAND ${PROJECT_NAME}
 			WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 endif()
 

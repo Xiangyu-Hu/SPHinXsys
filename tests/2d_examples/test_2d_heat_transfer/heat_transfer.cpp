@@ -216,7 +216,7 @@ struct InflowVelocity
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main()
+int main(int ac, char *av[])
 {
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
@@ -231,7 +231,7 @@ int main()
     thermofluid_body.defineParticlesAndMaterial<DiffusionBaseParticles, ThermofluidBodyMaterial>();
     thermofluid_body.generateParticles<ParticleGeneratorLattice>();
 
-    SolidBody thermosolid_body(system, makeShared<ThermosolidBody>("ThermosolidBody"));
+    SolidBody thermosolid_body(sph_system, makeShared<ThermosolidBody>("ThermosolidBody"));
     thermosolid_body.defineParticlesAndMaterial<DiffusionSolidParticles, ThermosolidBodyMaterial>();
     thermosolid_body.generateParticles<ParticleGeneratorLattice>();
 

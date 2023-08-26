@@ -135,13 +135,13 @@ class TimeDependentExternalForce : public Gravity
 /**
  *  The main program
  */
-int main()
+int main(int ac, char *av[])
 {
     /** Setup the system. */
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.GenerateRegressionData() = false;
+    sph_system.handleCommandlineOptions(ac, av);
     /** create a plate body. */
-    SolidBody plate_body(system, makeShared<DefaultShape>("PlateBody"));
+    SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
     plate_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     plate_body.generateParticles<PlateParticleGenerator>();
     plate_body.addBodyStateForRecording<Vec3d>("PriorAcceleration");
@@ -159,8 +159,8 @@ int main()
     ContactRelation plate_observer_contact(plate_observer, {&plate_body});
 
     /** Common particle dynamics. */
-    SimpleDynamics<TimeStepInitialization> initialize_external_force(plate_body,
-                                                                     makeShared<TimeDependentExternalForce>(Vec3d(0.0, 0.0, q / (PT * rho0_s) - gravitational_acceleration)));
+    SimpleDynamics<TimeStepInitialization> initialize_external_force(
+        plate_body, makeShared<TimeDependentExternalForce>(Vec3d(0.0, 0.0, q / (PT * rho0_s) - gravitational_acceleration)));
 
     /**
      * This section define all numerical methods will be used in this case.

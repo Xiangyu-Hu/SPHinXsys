@@ -77,14 +77,13 @@ class WallBoundary : public MultiPolygonShape
 /**
  * @brief 	Main program starts here.
  */
-int main()
+int main(int ac, char *av[])
 {
     /**
      * @brief Build up -- a SPHSystem --
      */
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    /** Set the starting time. */
-    GlobalStaticVariables::physical_time_ = 0.0;
+    sph_system.handleCommandlineOptions(ac, av);
     /**
      * @brief Material property, particles and body creation of fluid.
      */

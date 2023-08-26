@@ -69,14 +69,14 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    SolidBody coil(system, makeShared<Coil>("Coil"));
+    SolidBody coil(sph_system, makeShared<Coil>("Coil"));
     coil.defineBodyLevelSetShape()->writeLevelSet(io_environment);
     coil.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? coil.generateParticles<ParticleGeneratorReload>(io_environment, coil.getName())
         : coil.generateParticles<ParticleGeneratorLattice>();
 
-    SolidBody stationary_plate(system, makeShared<StationaryPlate>("StationaryPlate"));
+    SolidBody stationary_plate(sph_system, makeShared<StationaryPlate>("StationaryPlate"));
     stationary_plate.defineParticlesAndMaterial<SolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     stationary_plate.generateParticles<ParticleGeneratorLattice>();
     //----------------------------------------------------------------------

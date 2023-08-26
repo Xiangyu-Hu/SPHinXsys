@@ -52,7 +52,7 @@ int main(int ac, char *av[])
     /** check whether run particle relaxation for body fitted particle distribution. */
     if (sph_system.RunParticleRelaxation())
     {
-        SolidBody herat_model(system, level_set_heart_model);
+        SolidBody herat_model(sph_system, level_set_heart_model);
         herat_model.defineParticlesAndMaterial<FiberDirectionDiffusionParticles, FiberDirectionDiffusion>();
         herat_model.generateParticles<ParticleGeneratorLattice>();
         /** topology */

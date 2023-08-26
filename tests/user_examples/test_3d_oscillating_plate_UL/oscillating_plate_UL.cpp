@@ -100,12 +100,11 @@ class BeamInitialCondition
 /**
  *  The main program
  */
-int main()
+int main(int ac, char *av[])
 {
     /** Setup the system. */
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    /** Tag for computation from restart files. 0: start with initial condition. */
-    sph_system.setRestartStep(0);
+    sph_system.handleCommandlineOptions(ac, av);
 
     /** create a plate body. */
     SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
@@ -171,7 +170,7 @@ int main()
      */
     if (sph_system.RestartStep() != 0)
     {
-        GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(system.RestartStep());
+        GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.RestartStep());
     }
     GlobalStaticVariables::physical_time_ = 0.0;
     /** first output. */
@@ -219,7 +218,7 @@ int main()
                               << GlobalStaticVariables::physical_time_ << "	advection_dt: "
                               << advection_dt << "	acoustic_dt: "
                               << acoustic_dt << "\n";
-                    if (number_of_iterations % restart_output_interval == 0 && number_of_iterations != system.RestartStep())
+                    if (number_of_iterations % restart_output_interval == 0 && number_of_iterations != sph_system.RestartStep())
                         restart_io.writeToFile(Real(number_of_iterations));
                 }
             }

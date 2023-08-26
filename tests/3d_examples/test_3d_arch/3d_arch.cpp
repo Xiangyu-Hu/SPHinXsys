@@ -138,13 +138,12 @@ int main(int ac, char *av[])
 {
     /** Setup the system. */
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.GenerateRegressionData() = false;
 #ifdef BOOST_AVAILABLE
     sph_system.handleCommandlineOptions(ac, av);
 #endif
     IOEnvironment io_environment(sph_system);
     /** create a cylinder body with shell particles and linear elasticity. */
-    SolidBody cylinder_body(system, makeShared<DefaultShape>("CylinderBody"));
+    SolidBody cylinder_body(sph_system, makeShared<DefaultShape>("CylinderBody"));
     cylinder_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     cylinder_body.generateParticles<CylinderParticleGenerator>();
 

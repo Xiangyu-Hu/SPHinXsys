@@ -42,11 +42,11 @@ int iteration_levels = 15;
 /** Network defecting angle. */
 Real grad_factor = 5.0;
 
-int main()
+int main(int ac, char *av[])
 {
     /** Setup the system. */
     SPHSystem sph_system(system_domain_bounds, dp_0);
-    /** Output */
+    sph_system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(sph_system);
     /** Creat a body, corresponding material and particles. */
     TreeBody tree_on_sphere(sph_system, makeShared<GeometricShapeBall>(Vec3d::Zero(), 1.0, "Sphere"));
