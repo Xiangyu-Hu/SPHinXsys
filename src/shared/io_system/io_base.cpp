@@ -62,6 +62,18 @@ void IOEnvironment::cleanOutput()
         fs::remove_all(output_folder_);
         fs::create_directory(output_folder_);
     }
+
+    if (fs::exists(restart_folder_))
+    {
+        fs::remove_all(restart_folder_);
+        fs::create_directory(restart_folder_);
+    }
+
+    if (fs::exists(reload_folder_))
+    {
+        fs::remove_all(reload_folder_);
+        fs::create_directory(reload_folder_);
+    }
 }
 //=============================================================================================//
 std::string BaseIO::convertPhysicalTimeToString(Real convertPhysicalTimeToStream)
