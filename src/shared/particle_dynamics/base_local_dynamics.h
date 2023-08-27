@@ -63,6 +63,8 @@ class IndicatedParticles
     };
 };
 
+using BulkParticles = IndicatedParticles<0>;
+
 template <int INDICATOR>
 class NotIndicatedParticles
 {

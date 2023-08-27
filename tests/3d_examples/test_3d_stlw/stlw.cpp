@@ -56,7 +56,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex>
         free_stream_surface_indicator(water_block_complex);
     /** Impose transport velocity formulation. */
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<IndicatedParticles<0>>>
+    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>>
         transport_velocity_correction(water_block_complex);
     /*-------------------------------------------------------------------------------*/
     //----------------------------------------------------------------------

@@ -125,7 +125,7 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex_relation);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(water_block_complex_relation);
     InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex_relation);
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<IndicatedParticles<0>>> transport_velocity_correction(water_block_complex_relation);
+    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_complex_relation);
     InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex>
         inlet_outlet_surface_particle_indicator(water_block_complex_relation);
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation(water_block_complex_relation);
