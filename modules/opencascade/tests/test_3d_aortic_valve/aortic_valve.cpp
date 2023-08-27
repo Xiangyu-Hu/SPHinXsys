@@ -4,10 +4,9 @@
  * @details	We use this case to test the particle generation and relaxation  for a surface geometry (3D).
  */
 
-#include "sphinxsys.h" // SPHinXsys Library.
 #include "relax_dynamics_surface.h"
+#include "sphinxsys.h" // SPHinXsys Library.
 #include "surface_shape.h"
-
 
 using namespace SPH;
 //----------------------------------------------------------------------
@@ -66,12 +65,12 @@ class CylinderParticleGenerator : public SurfaceParticleGenerator
         Standard_Real v2 = DELTA2;
 
         std::vector<Vecd> points;
-        for (size_t k = 0;  k <= 1 / DELTA1; k++)
+        for (size_t k = 0; k <= 1 / DELTA1; k++)
         {
             Standard_Real u = u1 + k * DELTA1;
             points.push_back(a->getCartesianPoint(u, 0));
         }
-        for (size_t k = 0;  k <= 1 / DELTA1-1; k++)
+        for (size_t k = 0; k <= 1 / DELTA1 - 1; k++)
         {
             Standard_Real v = v1 + k * DELTA1;
             points.push_back(a->getCartesianPoint(0, v));
@@ -93,12 +92,12 @@ class CylinderParticleGenerator : public SurfaceParticleGenerator
         {
             v1 = 0.5;
             u1 = 0.5;
-            double VDELTA = 0.005;
-            double UDELTA = 0.005;
-            Standard_Real v = v1 + k * VDELTA;
+            double V_DELTA = 0.005;
+            double U_DELTA = 0.005;
+            Standard_Real v = v1 + k * V_DELTA;
             for (size_t n = 0; n <= 20; n++)
             {
-                Standard_Real u = u1 + n * UDELTA;
+                Standard_Real u = u1 + n * U_DELTA;
                 points.push_back(a->getCartesianPoint(u, v));
             }
         }
@@ -122,6 +121,7 @@ int main(int ac, char *av[])
     //	Build up a SPHSystem.
     //----------------------------------------------------------------------
     SPHSystem system(system_domain_bounds, particle_spacing_ref);
+    sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
     IOEnvironment io_environment(system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
@@ -149,7 +149,7 @@ int main(int ac, char *av[])
     relax_dynamics::RelaxationStepInnerSecondHalf leaflet_relaxation_second_half(leaflet_inner);
     /** Constrain the boundary. */
     BoundaryGeometry boundary_geometry(leaflet, "BoundaryGeometry");
-   SimpleDynamics<relax_dynamics::ConstrainSurfaceBodyRegion> constrain_holder(boundary_geometry);
+    SimpleDynamics<relax_dynamics::ConstrainSurfaceBodyRegion> constrain_holder(boundary_geometry);
     SimpleDynamics<relax_dynamics::SurfaceNormalDirection> surface_normal_direction(leaflet);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
@@ -177,6 +177,11 @@ int main(int ac, char *av[])
     surface_normal_direction.exec();
     write_relaxed_particles.writeToFile(ite);
     std::cout << "The physics relaxation process of surface particles finish !" << std::endl;
+
+    if (sph_system.CleanAfterRun())
+    {
+        io_environment.cleanOutput();
+    }
 
     return 0;
 }

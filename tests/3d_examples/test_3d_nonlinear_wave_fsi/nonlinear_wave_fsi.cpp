@@ -210,7 +210,7 @@ int main(int ac, char *av[])
     SimTK::MobilizedBody::Weld fixed_spotBL(matter.Ground(), SimTK::Transform(SimTK::Vec3(ground_tethering_BL[0], ground_tethering_BL[1], ground_tethering_BL[2])),
                                             fixed_spot_info, SimTK::Transform(SimTK::Vec3(0.0, 0.0, 0.0)));
     /*---------------------------------------------------------------------------*/
-    // A SEASIDE PILLARS; B PORTSIDE PILLARS
+    // A SEASIDE PILLARS; B PORT_SIDE PILLARS
     /*-----------------------------------------------------------------------------*/
     Vecd disp_cable_endAR = structure_tethering_AR - structure_multibody.initial_mass_center_;
     SimTK::CablePath tethering_lineAR(cables, fixed_spotAR, SimTK::Vec3(0.0, 0.0, 0.0), tethered_struct, SimTK::Vec3(disp_cable_endAR[0], disp_cable_endAR[1], disp_cable_endAR[2]));

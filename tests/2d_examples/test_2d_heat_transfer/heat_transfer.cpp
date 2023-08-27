@@ -222,7 +222,7 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    GlobalStaticVariables::physical_time_ = 0.0;
+    sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
     IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
