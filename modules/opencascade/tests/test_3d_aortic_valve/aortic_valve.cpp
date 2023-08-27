@@ -120,20 +120,20 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up a SPHSystem.
     //----------------------------------------------------------------------
-    SPHSystem system(system_domain_bounds, particle_spacing_ref);
+    SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
-    IOEnvironment io_environment(system);
+    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    SolidBody leaflet(system, makeShared<SurfaceShapeSTEP>(full_path_to_geometry, "Leaflet"));
+    SolidBody leaflet(sph_system, makeShared<SurfaceShapeSTEP>(full_path_to_geometry, "Leaflet"));
     // here dummy linear elastic solid is use because no solid dynamics in particle relaxation
     leaflet.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
     leaflet.generateParticles<CylinderParticleGenerator>();
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_relaxed_particles(io_environment, system.real_bodies_);
+    BodyStatesRecordingToVtp write_relaxed_particles(io_environment, sph_system.real_bodies_);
     MeshRecordingToPlt write_mesh_cell_linked_list(io_environment, leaflet.getCellLinkedList());
     //----------------------------------------------------------------------
     //	Define body relation map.
