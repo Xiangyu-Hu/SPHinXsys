@@ -19,17 +19,10 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/ DESTINATION ${BUILD_
 aux_source_directory(. DIR_SRCS)
 ADD_EXECUTABLE(${PROJECT_NAME} ${EXECUTABLE_OUTPUT_PATH} ${DIR_SRCS} )
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-        add_test(NAME ${PROJECT_NAME}_particle_relaxation COMMAND ${PROJECT_NAME} --r=true
+add_test(NAME ${PROJECT_NAME}_particle_relaxation COMMAND ${PROJECT_NAME} --r=true
                  WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
-        add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME} --r=false --i=true --clean_after_run=${SPHINXSYS_CLEAN_AFTER_TEST}
+add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME} --r=false --i=true --clean_after_run=${SPHINXSYS_CLEAN_AFTER_TEST}
                  WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
-else()
-        file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/run_test.sh
-                DESTINATION ${EXECUTABLE_OUTPUT_PATH})
-        add_test(NAME ${PROJECT_NAME} COMMAND bash ${EXECUTABLE_OUTPUT_PATH}/run_test.sh
-                WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
-endif()
 
 set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "periodic boundary, free stream")
 
