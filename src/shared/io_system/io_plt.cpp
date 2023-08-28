@@ -39,7 +39,7 @@ void BodyStatesRecordingToPlt::writeWithFileName(const std::string &sequence)
 {
     for (SPHBody *body : bodies_)
     {
-        if (body->checkNewlyUpdated())
+        if (body->checkNewlyUpdated() && state_recording_)
         {
             std::string filefullpath = io_environment_.output_folder_ +
                                        "/SPHBody_" + body->getName() + "_" + sequence + ".plt";

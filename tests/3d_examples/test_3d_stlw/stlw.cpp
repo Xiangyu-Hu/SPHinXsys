@@ -162,10 +162,6 @@ int main(int ac, char *av[])
         wave_gauge.testResult();
     }
 
-    if (sph_system.CleanAfterRun())
-    {
-        io_environment.cleanOutput();
-    }
 
     return 0;
 }

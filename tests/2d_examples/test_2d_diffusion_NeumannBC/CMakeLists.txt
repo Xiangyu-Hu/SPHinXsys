@@ -17,7 +17,7 @@ target_link_libraries(${PROJECT_NAME} extra_sources_2d)
 set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 
 add_test(NAME ${PROJECT_NAME}
-	COMMAND ${PROJECT_NAME} --clean_after_run=${SPHINXSYS_CLEAN_AFTER_TEST}
+	COMMAND ${PROJECT_NAME} --state_recording=${TEST_STATE_RECORDING}
 	WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 
 set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "diffusion reaction")

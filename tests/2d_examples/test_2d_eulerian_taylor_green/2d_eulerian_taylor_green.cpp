@@ -136,10 +136,6 @@ int main(int ac, char *av[])
     write_total_mechanical_energy.testResult();
     write_maximum_speed.testResult();
 
-    if (sph_system.CleanAfterRun())
-    {
-        io_environment.cleanOutput();
-    }
 
     return 0;
 }

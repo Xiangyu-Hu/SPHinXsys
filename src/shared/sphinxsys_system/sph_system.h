@@ -70,7 +70,7 @@ class SPHSystem
     void setReloadParticles(bool reload_particles) { reload_particles_ = reload_particles; };
     bool ReloadParticles() { return reload_particles_; };
     bool GenerateRegressionData() { return generate_regression_data_; };
-    bool CleanAfterRun() { return clean_after_run_; };
+    bool StateRecording() { return state_recording_; };
     void setRestartStep(size_t restart_step) { restart_step_ = restart_step; };
     size_t RestartStep() { return restart_step_; };
     BoundingBox system_domain_bounds_;       /**< Lower and Upper domain bounds. */
@@ -97,7 +97,7 @@ class SPHSystem
     bool reload_particles_;         /**< start the simulation with relaxed particles. */
     size_t restart_step_;           /**< restart step */
     bool generate_regression_data_; /**< run and generate or enhance the regression test data set. */
-    bool clean_after_run_;          /**< Delete all files in output folder after run */
+    bool state_recording_;          /**< Record state in output folder. */
 };
 } // namespace SPH
 #endif // SPH_SYSTEM_H

@@ -291,8 +291,5 @@ int main(int ac, char *av[])
     free_ball_displacement_recording.testResult();
     damping_ball_displacement_recording.testResult();
 
-    if (sph_system.CleanAfterRun())
-        io_environment.cleanOutput();
-
     return 0;
 }

@@ -290,10 +290,6 @@ int main(int ac, char *av[])
     std::cout << "Total iterations computation:  " << GlobalStaticVariables::physical_time_ / dt
               << "  Total iterations:  " << total_ite << std::endl;
 
-    if (sph_system.CleanAfterRun())
-    {
-        io_environment.cleanOutput();
-    }
 
     return 0;
 }

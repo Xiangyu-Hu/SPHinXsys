@@ -303,10 +303,6 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (sph_system.CleanAfterRun())
-    {
-        io_environment.cleanOutput();
-    }
 
     return 0;
 }

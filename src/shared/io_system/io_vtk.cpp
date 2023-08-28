@@ -12,7 +12,7 @@ void BodyStatesRecordingToVtp::writeWithFileName(const std::string &sequence)
 {
     for (SPHBody *body : bodies_)
     {
-        if (body->checkNewlyUpdated())
+        if (body->checkNewlyUpdated() && state_recording_)
         {
             std::string filefullpath = io_environment_.output_folder_ + "/" + body->getName() + "_" + sequence + ".vtp";
             if (fs::exists(filefullpath))
@@ -84,7 +84,7 @@ void BodyStatesRecordingToVtpString::writeWithFileName(const std::string &sequen
 {
     for (SPHBody *body : bodies_)
     {
-        if (body->checkNewlyUpdated())
+        if (body->checkNewlyUpdated() && state_recording_)
         {
             const auto &vtuName = body->getName() + "_" + sequence + ".vtu";
             std::stringstream sstream;

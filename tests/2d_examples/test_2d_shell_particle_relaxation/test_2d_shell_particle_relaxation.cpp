@@ -92,10 +92,6 @@ int main(int ac, char *av[])
     write_real_body_states.writeToFile(ite_p);
     std::cout << "The physics relaxation process of the cylinder finish !" << std::endl;
 
-    if (sph_system.CleanAfterRun())
-    {
-        io_environment.cleanOutput();
-    }
 
     return 0;
 }

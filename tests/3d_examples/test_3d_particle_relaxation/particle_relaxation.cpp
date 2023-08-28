@@ -97,10 +97,6 @@ int main(int ac, char *av[])
     }
     std::cout << "The physics relaxation process of imported model finish !" << std::endl;
 
-    if (sph_system.CleanAfterRun())
-    {
-        io_environment.cleanOutput();
-    }
 
     return 0;
 }

@@ -248,10 +248,6 @@ int main(int ac, char *av[])
 
     observed_quantity_n = (*write_plate_max_displacement.getObservedQuantity())[0][2];
 
-    if (sph_system.CleanAfterRun())
-    {
-        io_environment.cleanOutput();
-    }
 
     testing::InitGoogleTest(&ac, av);
     return RUN_ALL_TESTS();

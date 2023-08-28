@@ -515,7 +515,7 @@ InnerRelationInFVM::InnerRelationInFVM(RealBody &real_body, vector<vector<vector
 //=================================================================================================//
 template <typename GetParticleIndex, typename GetNeighborRelation>
 void InnerRelationInFVM::searchNeighborsByParticles(size_t total_particles, BaseParticles &source_particles,
-    ParticleConfiguration &particle_configuration, GetParticleIndex &get_particle_index, GetNeighborRelation &get_neighbor_relation)
+                                                    ParticleConfiguration &particle_configuration, GetParticleIndex &get_particle_index, GetNeighborRelation &get_neighbor_relation)
 {
     parallel_for(
         IndexRange(0, base_particles_.total_real_particles_ + base_particles_.total_ghost_particles_),
@@ -580,7 +580,7 @@ void BodyStatesRecordingInMeshToVtp::writeWithFileName(const std::string &sequen
 {
     for (SPHBody *body : bodies_)
     {
-        if (body->checkNewlyUpdated())
+        if (body->checkNewlyUpdated() && state_recording_)
         {
             // TODO: we can short the file name by without using SPHBody
             std::string filefullpath = io_environment_.output_folder_ + "/SPHBody_" + body->getName() + "_" + sequence + ".vtp";

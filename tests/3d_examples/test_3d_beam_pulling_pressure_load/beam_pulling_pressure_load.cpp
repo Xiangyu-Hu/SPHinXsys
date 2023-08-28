@@ -241,10 +241,5 @@ int main(int ac, char *av[])
         write_beam_stress.testResult();
     }
 
-    if (sph_system.CleanAfterRun())
-    {
-        io_environment.cleanOutput();
-    }
-
     return 0;
 }

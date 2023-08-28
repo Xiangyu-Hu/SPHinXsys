@@ -245,10 +245,6 @@ int main(int ac, char *av[])
 
     write_total_viscous_force_on_inserted_body.testResult();
 
-    if (sph_system.CleanAfterRun())
-    {
-        io_environment.cleanOutput();
-    }
 
     return 0;
 }

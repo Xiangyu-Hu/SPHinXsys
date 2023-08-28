@@ -55,15 +55,6 @@ ParameterizationIO &IOEnvironment::defineParameterizationIO()
     return parameterization_io_ptr_keeper_.createRef<ParameterizationIO>(input_folder_);
 }
 //=============================================================================================//
-void IOEnvironment::cleanOutput()
-{
-    if (fs::exists(output_folder_))
-    {
-        fs::remove_all(output_folder_);
-        fs::create_directory(output_folder_);
-    }
-}
-//=============================================================================================//
 std::string BaseIO::convertPhysicalTimeToString(Real convertPhysicalTimeToStream)
 {
     int i_time = int(GlobalStaticVariables::physical_time_ * 1.0e6);

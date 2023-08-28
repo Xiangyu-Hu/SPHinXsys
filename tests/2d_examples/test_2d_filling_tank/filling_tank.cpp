@@ -232,10 +232,6 @@ int main(int ac, char *av[])
     write_water_mechanical_energy.testResult();
     write_recorded_water_pressure.testResult();
 
-    if (sph_system.CleanAfterRun())
-    {
-        io_environment.cleanOutput();
-    }
 
     return 0;
 }

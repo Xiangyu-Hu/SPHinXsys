@@ -197,10 +197,6 @@ int main(int ac, char *av[])
         write_plate_max_displacement.testResult();
     }
 
-    if (sph_system.CleanAfterRun())
-    {
-        io_environment.cleanOutput();
-    }
 
     return 0;
 }

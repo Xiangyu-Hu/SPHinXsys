@@ -466,10 +466,6 @@ int main(int ac, char *av[])
         write_recorded_pressure_fp1.testResult();
     }
 
-    if (sph_system.CleanAfterRun())
-    {
-        io_environment.cleanOutput();
-    }
 
     return 0;
 }

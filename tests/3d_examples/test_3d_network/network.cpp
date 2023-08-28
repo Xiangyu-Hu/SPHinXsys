@@ -57,10 +57,6 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
     write_states.writeToFile(0);
 
-    if (sph_system.CleanAfterRun())
-    {
-        io_environment.cleanOutput();
-    }
 
     return 0;
 }

@@ -178,10 +178,5 @@ int main(int ac, char *av[])
     write_relaxed_particles.writeToFile(ite);
     std::cout << "The physics relaxation process of surface particles finish !" << std::endl;
 
-    if (sph_system.CleanAfterRun())
-    {
-        io_environment.cleanOutput();
-    }
-
     return 0;
 }

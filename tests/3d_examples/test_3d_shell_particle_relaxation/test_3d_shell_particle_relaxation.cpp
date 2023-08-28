@@ -98,10 +98,6 @@ int main(int ac, char *av[])
     write_imported_model_to_vtp.writeToFile(ite_p);
     std::cout << "The physics relaxation process of imported model finish !" << std::endl;
 
-    if (sph_system.CleanAfterRun())
-    {
-        io_environment.cleanOutput();
-    }
 
     return 0;
 }
