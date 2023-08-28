@@ -44,6 +44,21 @@ namespace SPH
 			},
 			ap);
 	}
+        //=================================================================================================//
+        void BaseInnerRelation::resetNeighborhoodDeviceCurrentSize()
+        {
+                auto workgroup_size = execution::executionQueue.getWorkGroupSize();
+                NeighborhoodDevice *inner_configuration_device = inner_configuration_device_->data();
+                execution::executionQueue.getQueue()
+                    .submit(
+                        [&](sycl::handler &cgh) {
+                            cgh.parallel_for(sycl::nd_range<1>{base_particles_.total_real_particles_, workgroup_size},
+                                             [=](sycl::nd_item<1> it) {
+                                                 size_t index_i = it.get_global_id();
+                                                 *inner_configuration_device[index_i].current_size_ = 0;
+                                             });
+                        }).wait();
+        }
 
     void BaseInnerRelation::allocateInnerConfigurationDevice() {
         inner_configuration_device_ = makeSharedDevice<StdSharedVec<NeighborhoodDevice>>(inner_configuration_.size(),
@@ -62,7 +77,7 @@ namespace SPH
 
     //=================================================================================================//
 	BaseContactRelation::BaseContactRelation(SPHBody &sph_body, RealBodyVector contact_sph_bodies)
-		: SPHRelation(sph_body), contact_bodies_(contact_sph_bodies)
+		: SPHRelation(sph_body), contact_bodies_(contact_sph_bodies), device_configuration_allocated_(false)
 	{
 		subscribeToBody();
 		contact_configuration_.resize(contact_bodies_.size());
@@ -93,5 +108,22 @@ namespace SPH
 				ap);
 		}
 	}
+        //=================================================================================================//
+        void BaseContactRelation::resetNeighborhoodDeviceCurrentSize()
+        {
+                for (size_t k = 0; k != contact_bodies_.size(); ++k)
+                {
+                        NeighborhoodDevice *contact_configuration_device = contact_configuration_device_.at(k).data();
+                        execution::executionQueue.getQueue()
+                            .submit(
+                                [&](sycl::handler &cgh) {
+                                    cgh.parallel_for(sycl::range<1>{base_particles_.total_real_particles_},
+                                                     [=](sycl::item<1> it) {
+                                                         size_t index_i = it.get_id();
+                                                         *contact_configuration_device[index_i].current_size_ = 0;
+                                                     });
+                                }).wait();
+                }
+        }
 	//=================================================================================================//
 }

@@ -87,31 +87,4 @@ void SPHBody::readFromXmlForReloadParticle(std::string &filefullpath)
     base_particles_->readFromXmlForReloadParticle(filefullpath);
 }
 //=================================================================================================//
-BaseCellLinkedList &RealBody::getCellLinkedList()
-{
-    if (!cell_linked_list_created_)
-    {
-        cell_linked_list_ptr_ = sph_adaptation_->createCellLinkedList(getSPHSystemBounds(), *this);
-        cell_linked_list_created_ = true;
-    }
-    return *cell_linked_list_ptr_.get();
-}
-//=================================================================================================//
-void RealBody::updateCellLinkedList()
-{
-    getCellLinkedList().UpdateCellLists(*base_particles_);
-    base_particles_->total_ghost_particles_ = 0;
-}
-//=================================================================================================//
-void RealBody::updateCellLinkedListWithParticleSort(size_t particle_sorting_period)
-{
-    if (iteration_count_ % particle_sorting_period == 0)
-    {
-        base_particles_->sortParticles(getCellLinkedList());
-    }
-
-    iteration_count_++;
-    updateCellLinkedList();
-}
-//=================================================================================================//
 } // namespace SPH

@@ -116,6 +116,7 @@ class SPHRelation
     void subscribeToBody() { sph_body_.body_relations_.push_back(this); };
     virtual void resizeConfiguration() = 0;
     virtual void updateConfiguration() = 0;
+    virtual void updateDeviceConfiguration() {}
 };
 
 /**
@@ -126,11 +127,12 @@ class BaseInnerRelation : public SPHRelation
 {
   protected:
     virtual void resetNeighborhoodCurrentSize();
+    virtual void resetNeighborhoodDeviceCurrentSize();
 
   public:
     RealBody *real_body_;
     ParticleConfiguration inner_configuration_; /**< inner configuration for the neighbor relations. */
-        SharedPtr<StdSharedVec<NeighborhoodDevice>> inner_configuration_device_;
+    SharedPtr<StdSharedVec<NeighborhoodDevice>> inner_configuration_device_;
 
     explicit BaseInnerRelation(RealBody &real_body);
     virtual ~BaseInnerRelation(){};
@@ -150,6 +152,10 @@ class BaseContactRelation : public SPHRelation
 {
   protected:
     virtual void resetNeighborhoodCurrentSize();
+    virtual void resetNeighborhoodDeviceCurrentSize();
+
+  private:
+    bool device_configuration_allocated_;
 
   public:
     RealBodyVector contact_bodies_;
@@ -163,22 +169,27 @@ class BaseContactRelation : public SPHRelation
 
     virtual void resizeConfiguration() override;
 
-        void allocateContactConfiguration() {
-            for (const auto & body : contact_configuration_)
-                contact_configuration_device_.emplace_back(body.size(), execution::executionQueue.getQueue());
-        }
+    bool isDeviceConfigurationAllocated() { return device_configuration_allocated_; }
 
-        void copyContactConfigurationToDevice() {
-            for (int k = 0; k < contact_configuration_.size(); ++k)
-                for (int i = 0; i < contact_configuration_.at(k).size(); ++i)
-                    contact_configuration_device_.at(k).at(i) = contact_configuration_.at(k).at(i);
-        }
+    void allocateContactConfiguration() {
+        for (const auto & body : contact_configuration_)
+            contact_configuration_device_.emplace_back(body.size(), execution::executionQueue.getQueue());
+        device_configuration_allocated_ = true;
+    }
 
-        void copyContactConfigurationFromDevice() {
-            for (int k = 0; k < contact_configuration_.size(); ++k)
-                for (int i = 0; i < contact_configuration_.at(k).size(); ++i)
-                    contact_configuration_.at(k).at(i) = contact_configuration_device_.at(k).at(i);
-        }
-	};
+    void copyContactConfigurationToDevice() {
+        assert(device_configuration_allocated_);
+        for (int k = 0; k < contact_configuration_.size(); ++k)
+            for (int i = 0; i < contact_configuration_.at(k).size(); ++i)
+                contact_configuration_device_.at(k).at(i) = contact_configuration_.at(k).at(i);
+    }
+
+    void copyContactConfigurationFromDevice() {
+        assert(device_configuration_allocated_);
+        for (int k = 0; k < contact_configuration_.size(); ++k)
+            for (int i = 0; i < contact_configuration_.at(k).size(); ++i)
+                contact_configuration_.at(k).at(i) = contact_configuration_device_.at(k).at(i);
+    }
+};
 } // namespace SPH
 #endif // BASE_BODY_RELATION_H

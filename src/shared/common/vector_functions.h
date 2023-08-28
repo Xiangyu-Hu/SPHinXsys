@@ -87,6 +87,8 @@ Vec3d getCrossProduct(const Vec3d &vector_1, const Vec3d &vector_2);
 /** convert host Vecd to device Vecd */
 inline DeviceVec2d hostToDeviceVecd(const Vec2d& host) { return {host[0], host[1]}; }
 inline DeviceVec3d hostToDeviceVecd(const Vec3d& host) { return {host[0], host[1], host[2]}; }
+inline DeviceArray2i hostToDeviceArrayi(const Array2i& host) { return {host[0], host[1]}; }
+inline DeviceArray3i hostToDeviceArrayi(const Array3i& host) { return {host[0], host[1], host[2]}; }
 
 /** convert device Vecd to host Vecd */
 inline Vec2d deviceToHostVecd(const DeviceVec2d& device) { return {device[0], device[1]}; }
@@ -120,7 +122,7 @@ inline void freeDeviceData(T* device_mem) {
 
 template<class T>
 inline void copyDataToDevice(const T* host, T* device, std::size_t size) {
-    execution::executionQueue.getQueue().memcpy(device, host, size*sizeof(T));
+    execution::executionQueue.getQueue().memcpy(device, host, size*sizeof(T)).wait();
 }
 
 template<class HostType, class DeviceType, class TransformFunc>
@@ -129,7 +131,6 @@ void transformAndCopyDataToDevice(const HostType* host, DeviceType* device, std:
     for(size_t i = 0; i < size; ++i)
         hostTransformed[i] = transformation(host[i]);
     copyDataToDevice(hostTransformed.data(), device, size);
-    execution::executionQueue.getQueue().wait();
 }
 
 inline void copyDataToDevice(const Vec2d* host, DeviceVec2d* device, std::size_t size) {
@@ -142,19 +143,18 @@ inline void copyDataToDevice(const Real* host, DeviceReal* device, std::size_t s
 
 template<class T>
 inline void copyDataToDevice(const T& value, T* device, std::size_t size) {
-    execution::executionQueue.getQueue().fill(device, value, size);
+    execution::executionQueue.getQueue().fill(device, value, size).wait();
 }
 
 template<class T>
 inline void copyDataFromDevice(T* host, const T* device, std::size_t size) {
-    execution::executionQueue.getQueue().memcpy(host, device, size*sizeof(T));
+    execution::executionQueue.getQueue().memcpy(host, device, size*sizeof(T)).wait();
 }
 
 template<class HostType, class DeviceType, class TransformFunc>
 void transformAndCopyDataFromDevice(HostType* host, const DeviceType* device, std::size_t size, TransformFunc&& transformation) {
     std::vector<DeviceType> hostTransformed(size);
     copyDataFromDevice(hostTransformed.data(), device, size);
-    execution::executionQueue.getQueue().wait();
     for(size_t i = 0; i < size; ++i)
         host[i] = transformation(hostTransformed[i]);
 }

@@ -87,7 +87,7 @@ inline void particle_for(const ParallelPolicy &par, const size_t &all_real_parti
 
 template <class LocalDynamicsFunction, class Proxy>
 inline void particle_for(const ParallelPolicy &par_policy, const size_t &all_real_particles,
-                         const LocalDynamicsFunction &local_dynamics_function, Proxy& proxy)
+                         const LocalDynamicsFunction &local_dynamics_function, Proxy&& proxy)
 {
     auto& kernel = *proxy.getProxy().get(par_policy);
     parallel_for(
@@ -305,7 +305,7 @@ inline void particle_for(const ParallelSYCLDevicePolicy & sycl_policy, const siz
         cgh.parallel_for(sycl::nd_range<1>{all_real_particles, work_group_size}, [=](sycl::nd_item<1> index) {
             local_dynamics_function(index.get_global_id(0), kernel_accessor[0]);
         });
-    }).wait();
+    }).wait_and_throw();
 }
 
 template <class ExecutionPolicy, typename DynamicsRange, class ReturnType,

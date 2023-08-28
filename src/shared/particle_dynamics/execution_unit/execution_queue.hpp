@@ -15,7 +15,9 @@ namespace SPH::execution {
         }
 
         sycl::queue &getQueue() {
-            return sycl_queue;
+            if(!sycl_queue)
+                sycl_queue = std::make_unique<sycl::queue>(sycl::gpu_selector_v);
+            return *sycl_queue;
         }
 
         auto getWorkGroupSize() const {
@@ -27,10 +29,11 @@ namespace SPH::execution {
         }
 
     private:
-        ExecutionQueue() : work_group_size(32), sycl_queue(sycl::gpu_selector_v) {}
+        ExecutionQueue() : work_group_size(32), sycl_queue() {}
 
         std::size_t work_group_size;
-        sycl::queue sycl_queue;
+        std::unique_ptr<sycl::queue> sycl_queue;
+
     } static &executionQueue = ExecutionQueue::getInstance();
 }
 

@@ -221,10 +221,10 @@ void BaseParticles::registerSortableVariable(const std::string &variable_name)
     }
 }
 //=================================================================================================//
-template <typename SequenceMethod>
-void BaseParticles::sortParticles(SequenceMethod &sequence_method)
+template <typename SequenceMethod, class ExecutionPolicy>
+void BaseParticles::sortParticles(SequenceMethod &sequence_method, ExecutionPolicy execution_policy)
 {
-    StdLargeVec<size_t> &sequence = sequence_method.computingSequence(*this);
+    StdLargeVec<size_t> &sequence = sequence_method.computingSequence(*this/*, execution_policy*/);
     particle_sorting_.sortingParticleData(sequence.data(), total_real_particles_);
 }
 //=================================================================================================//

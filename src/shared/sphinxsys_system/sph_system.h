@@ -39,6 +39,7 @@ namespace po = boost::program_options;
 
 #include "base_data_package.h"
 #include "sph_data_containers.h"
+#include "execution_policy.h"
 
 #include <filesystem>
 #include <fstream>
@@ -84,8 +85,10 @@ class SPHSystem
     SolidBodyVector solid_bodies_;     /**< The bodies with inner particle configuration and acoustic time steps . */
     /** Initialize cell linked list for the SPH system. */
     void initializeSystemCellLinkedLists();
+    void initializeSystemCellLinkedLists(execution::ParallelSYCLDevicePolicy);
     /** Initialize particle configuration for the SPH system. */
     void initializeSystemConfigurations();
+    void initializeSystemDeviceConfigurations();
     /** get the min time step from all bodies. */
     Real getSmallestTimeStepAmongSolidBodies(Real CFL = 0.6);
     /** Command line handle for Ctest. */

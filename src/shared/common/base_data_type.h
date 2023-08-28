@@ -95,6 +95,8 @@ using Rotation3d = Eigen::AngleAxis<Real>;
 using DeviceReal = float;
 using DeviceVec2d = sycl::vec<DeviceReal, 2>;
 using DeviceVec3d = sycl::vec<DeviceReal, 3>;
+using DeviceArray2i = sycl::int2;
+using DeviceArray3i = sycl::int3;
 
 template<typename Type, class Enable = void>
 struct DataTypeEquivalence {
@@ -121,6 +123,22 @@ struct DataTypeEquivalence<TypeVec3d, enable_if_is_either_t<TypeVec3d, Vec3d, De
     using host_t = Vec3d;
     using device_t = DeviceVec3d;
 };
+
+template<class TypeArray2i>
+struct DataTypeEquivalence<TypeArray2i, enable_if_is_either_t<TypeArray2i, Array2i , DeviceArray2i >> {
+    using host_t = Array2i;
+    using device_t = DeviceArray2i;
+};
+
+template<class TypeArray3i>
+struct DataTypeEquivalence<TypeArray3i, enable_if_is_either_t<TypeArray3i, Array3i , DeviceArray3i>> {
+    using host_t = Array3i;
+    using device_t = DeviceArray3i;
+};
+
+template<class CheckType, class HostOrDeviceType>
+using enable_both_host_device_t = enable_if_is_either_t<CheckType, typename DataTypeEquivalence<HostOrDeviceType>::host_t,
+                                                         typename DataTypeEquivalence<HostOrDeviceType>::device_t>;
 
 /** Unified initialize to zero for all data type. */
 /**

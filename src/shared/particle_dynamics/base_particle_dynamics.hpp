@@ -21,14 +21,16 @@ DataDelegateContact<ParticlesType, ContactParticlesType, BaseDataDelegateType>::
     : BaseDataDelegateType(body_contact_relation.getSPHBody())
 {
     RealBodyVector contact_sph_bodies = body_contact_relation.contact_bodies_;
-    contact_configuration_device_ = makeSharedDevice<StdSharedVec<NeighborhoodDevice*>>(contact_sph_bodies.size(),
-        execution::executionQueue.getQueue());    
+    if(body_contact_relation.isDeviceConfigurationAllocated())
+        contact_configuration_device_ = makeSharedDevice<StdSharedVec<NeighborhoodDevice*>>(contact_sph_bodies.size(),
+                                                                                             execution::executionQueue.getQueue());
     for (size_t i = 0; i != contact_sph_bodies.size(); ++i)
     {
         contact_bodies_.push_back(contact_sph_bodies[i]);
         contact_particles_.push_back(DynamicCast<ContactParticlesType>(this, &contact_sph_bodies[i]->getBaseParticles()));
         contact_configuration_.push_back(&body_contact_relation.contact_configuration_[i]);
-        contact_configuration_device_->at(i) = body_contact_relation.contact_configuration_device_.at(i).data();
+        if(body_contact_relation.isDeviceConfigurationAllocated())
+            contact_configuration_device_->at(i) = body_contact_relation.contact_configuration_device_.at(i).data();
     }
 }
 //=================================================================================================//
@@ -51,18 +53,25 @@ void DataDelegateContact<ParticlesType, ContactParticlesType, BaseDataDelegateTy
         contact_particles_.push_back(DynamicCast<ContactParticlesType>(this, &extra_body->getBaseParticles()));
     }
 
-    auto new_contact_configuration_device = makeSharedDevice<StdSharedVec<NeighborhoodDevice*>>(
-        contact_configuration_device_->size() + extra_contact_relation.contact_bodies_.size(),
-        execution::executionQueue.getQueue());
-    std::copy(contact_configuration_device_->begin(), contact_configuration_device_->end(),
-        new_contact_configuration_device->begin());
+    SharedPtr<StdSharedVec<NeighborhoodDevice*>> new_contact_configuration_device;
+    if(contact_configuration_device_)
+    {
+        new_contact_configuration_device = makeSharedDevice<StdSharedVec<NeighborhoodDevice*>>(
+                contact_configuration_device_->size() + extra_contact_relation.contact_bodies_.size(),
+                execution::executionQueue.getQueue());
+        std::copy(contact_configuration_device_->begin(), contact_configuration_device_->end(),
+                  new_contact_configuration_device->begin());
+    }
     for (size_t i = 0; i != extra_contact_relation.contact_bodies_.size(); ++i)
     {
         contact_configuration_.push_back(&extra_contact_relation.contact_configuration_[i]);
-        new_contact_configuration_device->at(contact_configuration_device_->size() + i) =
+
+        if(contact_configuration_device_)
+            new_contact_configuration_device->at(contact_configuration_device_->size() + i) =
                 extra_contact_relation.contact_configuration_device_.at(i).data();
     }
-    contact_configuration_device_ = std::move(new_contact_configuration_device);
+    if(contact_configuration_device_)
+        contact_configuration_device_ = std::move(new_contact_configuration_device);
 }
 //=================================================================================================//
 } // namespace SPH

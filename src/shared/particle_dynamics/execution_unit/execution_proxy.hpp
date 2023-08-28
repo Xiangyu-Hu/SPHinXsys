@@ -50,6 +50,15 @@ namespace SPH {
             T* get(const ExecutionPolicy& = par) const {
                 return base_;
             }
+
+            T *getBase() const {
+                return base_;
+            }
+
+            T *getKernel() const {
+                return base_;
+            }
+
         private:
             T* base_;
         };

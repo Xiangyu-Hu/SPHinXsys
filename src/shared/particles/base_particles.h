@@ -38,6 +38,7 @@
 #include "sph_data_containers.h"
 #include "xml_engine.h"
 #include "execution_queue.hpp"
+#include "execution_policy.h"
 
 #include <fstream>
 
@@ -178,8 +179,8 @@ class BaseParticles
 
     template <typename DataType>
     void registerSortableVariable(const std::string &variable_name);
-    template <typename SequenceMethod>
-    void sortParticles(SequenceMethod &sequence_method);
+    template <typename SequenceMethod, class ExecutionPolicy = execution::ParallelPolicy>
+    void sortParticles(SequenceMethod &sequence_method, ExecutionPolicy = execution::par);
     //----------------------------------------------------------------------
     //		Particle data ouput functions
     //----------------------------------------------------------------------

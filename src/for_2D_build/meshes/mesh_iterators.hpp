@@ -46,6 +46,16 @@ void mesh_for_each(const Array2i &lower, const Array2i &upper, const FunctionOnE
 }
 //=================================================================================================//
 template <typename FunctionOnEach>
+void mesh_for_each(const DeviceArray2i &lower, const DeviceArray2i &upper, const FunctionOnEach &function)
+{
+    for (int l = lower[0]; l != upper[0]; ++l)
+        for (int m = lower[1]; m != upper[1]; ++m)
+        {
+            function(l, m);
+        }
+}
+//=================================================================================================//
+template <typename FunctionOnEach>
 Array2i mesh_find_if(const Array2i &lower, const Array2i &upper, const FunctionOnEach &function)
 {
     for (int l = lower[0]; l != upper[0]; ++l)
