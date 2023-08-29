@@ -152,6 +152,14 @@ void BaseParticles::writePltFileHeader(std::ofstream &output_file)
     };
 }
 //=================================================================================================//
+void BaseParticles::computeDrivedVariables()
+{
+    for (auto &derived_variable : derived_variables_)
+    {
+        derived_variable->exec();
+    }
+}
+//=================================================================================================//
 void BaseParticles::writePltFileParticleData(std::ofstream &output_file, size_t index)
 {
     // write particle positions and index first
@@ -186,12 +194,6 @@ void BaseParticles::writeParticlesToPltFile(std::ofstream &output_file)
 {
     writePltFileHeader(output_file);
     output_file << "\n";
-
-    // compute derived particle variables
-    for (auto &derived_variable : derived_variables_)
-    {
-        derived_variable->exec();
-    }
 
     size_t total_real_particles = total_real_particles_;
     for (size_t i = 0; i != total_real_particles; ++i)

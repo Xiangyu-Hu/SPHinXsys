@@ -247,7 +247,7 @@ void BaseParticles::writeParticlesToVtk(StreamType &output_stream)
     output_stream << std::endl;
     output_stream << "    </DataArray>\n";
 
-    //write unsorted particles ID
+    // write unsorted particles ID
     output_stream << "    <DataArray Name=\"UnsortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
     output_stream << "    ";
     for (size_t i = 0; i != total_real_particles; ++i)
@@ -256,12 +256,6 @@ void BaseParticles::writeParticlesToVtk(StreamType &output_stream)
     }
     output_stream << std::endl;
     output_stream << "    </DataArray>\n";
-
-    // compute derived particle variables
-    for (auto &derived_variable : derived_variables_)
-    {
-        derived_variable->exec();
-    }
 
     // write integers
     constexpr int type_index_int = DataTypeIndex<int>::value;

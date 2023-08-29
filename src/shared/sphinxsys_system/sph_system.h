@@ -71,6 +71,7 @@ class SPHSystem
     bool ReloadParticles() { return reload_particles_; };
     bool GenerateRegressionData() { return generate_regression_data_; };
     bool StateRecording() { return state_recording_; };
+    void setStateRecording(bool state_recording) { state_recording_ = state_recording; };
     void setRestartStep(size_t restart_step) { restart_step_ = restart_step; };
     size_t RestartStep() { return restart_step_; };
     BoundingBox system_domain_bounds_;       /**< Lower and Upper domain bounds. */

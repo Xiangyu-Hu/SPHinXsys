@@ -39,17 +39,23 @@ void BodyStatesRecordingToPlt::writeWithFileName(const std::string &sequence)
 {
     for (SPHBody *body : bodies_)
     {
-        if (body->checkNewlyUpdated() && state_recording_)
+        if (body->checkNewlyUpdated())
         {
-            std::string filefullpath = io_environment_.output_folder_ +
-                                       "/SPHBody_" + body->getName() + "_" + sequence + ".plt";
-            if (fs::exists(filefullpath))
+            BaseParticles &base_particles = body->getBaseParticles();
+            base_particles.computeDrivedVariables();
+
+            if (state_recording_)
             {
-                fs::remove(filefullpath);
+                std::string filefullpath = io_environment_.output_folder_ +
+                                           "/SPHBody_" + body->getName() + "_" + sequence + ".plt";
+                if (fs::exists(filefullpath))
+                {
+                    fs::remove(filefullpath);
+                }
+                std::ofstream out_file(filefullpath.c_str(), std::ios::trunc);
+                body->writeParticlesToPltFile(out_file);
+                out_file.close();
             }
-            std::ofstream out_file(filefullpath.c_str(), std::ios::trunc);
-            body->writeParticlesToPltFile(out_file);
-            out_file.close();
         }
         body->setNotNewlyUpdated();
     }
