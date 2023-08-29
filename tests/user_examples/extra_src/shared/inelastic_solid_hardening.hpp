@@ -21,7 +21,7 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	inelastic_solid_hardening.h
+ * @file 	inelastic_solid_hardening.hpp
  * @brief 	These are classes for define properties of elastic solid materials.
  *			These classes are based on isotropic linear elastic solid.
  * 			Several more complex materials, including neo-hookean, FENE noe-hookean
