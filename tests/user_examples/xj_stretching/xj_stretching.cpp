@@ -7,7 +7,7 @@
 * internal constrained subregion.                                             *
 * ----------------------------------------------------------------------------*/
 #include "sphinxsys.h"
-#include "inelastic_solid_hardening.hpp"
+#include "inelastic_solid_hardening.h"
 
 using namespace SPH;
 //------------------------------------------------------------------------------
