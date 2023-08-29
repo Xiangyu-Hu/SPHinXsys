@@ -62,8 +62,7 @@ int main()
     /** Random reset the particle position. */
     SimpleDynamics<RandomizeParticlePosition> random_pipe_body_particles(pipe_body);
     /** A  Physics relaxation step. */
-    relax_dynamics::ShellRelaxationStepInner
-        relaxation_step_pipe_body_inner(pipe_body_inner, thickness, level_set_refinement_ratio);
+    relax_dynamics::ShellRelaxationStepInner relaxation_step_pipe_body_inner(pipe_body_inner);
     relax_dynamics::ShellNormalDirectionPrediction shell_normal_prediction(pipe_body_inner, thickness);
     pipe_body.addBodyStateForRecording<int>("UpdatedIndicator");
     /**

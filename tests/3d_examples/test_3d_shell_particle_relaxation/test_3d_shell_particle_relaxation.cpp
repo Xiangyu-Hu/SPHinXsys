@@ -70,7 +70,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SimpleDynamics<RandomizeParticlePosition> random_imported_model_particles(imported_model);
     /** A  Physics relaxation step. */
-    relax_dynamics::ShellRelaxationStepInner relaxation_step_inner(imported_model_inner, thickness, level_set_refinement_ratio);
+    relax_dynamics::ShellRelaxationStepInner relaxation_step_inner(imported_model_inner);
     relax_dynamics::ShellNormalDirectionPrediction shell_normal_prediction(imported_model_inner, thickness);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
