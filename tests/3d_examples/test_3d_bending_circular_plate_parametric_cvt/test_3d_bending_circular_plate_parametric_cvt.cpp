@@ -3,7 +3,8 @@
  * @brief 	Shell verification  incl. refinement study
  * @details Circular plastic shell verification case with relaxed shell particles
  * @author 	Bence Rochlitz
- * @ref 	ANSYS Workbench Verification Manual, Release 15.0, November 2013, VMMECH051: Bending of a Circular Plate Using Axisymmetric Elements
+ * @ref 	ANSYS Workbench Verification Manual, Release 15.0, November 2013,
+ * VMMECH051: Bending of a Circular Plate Using Axis symmetric Elements
  */
 
 #include "sphinxsys.h"
@@ -61,8 +62,8 @@ StdVec<Vec3d> read_obj_vertices(const std::string &file_name)
 {
     std::cout << "read_obj_vertices started" << std::endl;
 
-    std::ifstream myfile(file_name, std::ios_base::in);
-    if (!myfile.is_open())
+    std::ifstream my_file(file_name, std::ios_base::in);
+    if (!my_file.is_open())
         throw std::runtime_error("read_obj_vertices: file doesn't exist: " + file_name);
 
     StdVec<Vec3d> pos_0;
@@ -70,7 +71,7 @@ StdVec<Vec3d> read_obj_vertices(const std::string &file_name)
     unsigned int count = 0;
     Real value = 0;
 
-    while (myfile >> value)
+    while (my_file >> value)
     {
         particle[count] = value;
         ++count;
@@ -163,11 +164,11 @@ struct return_data
 
     void write_data_to_txt(const std::string &file_name) const
     {
-        std::ofstream myfile;
-        myfile.open(file_name);
-        myfile << "deflection; stress_max\n";
-        myfile << deflection << "; " << stress_max << "\n";
-        myfile.close();
+        std::ofstream my_file;
+        my_file.open(file_name);
+        my_file << "deflection; stress_max\n";
+        my_file << deflection << "; " << stress_max << "\n";
+        my_file.close();
     }
 };
 

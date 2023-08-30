@@ -38,6 +38,14 @@ class SphinxsysRegressionTestByCTest:
     def run_case(self) -> None:
         print('Start case simulation...')
         print(self.enter_sphinxsys_exec_folder)
+        command = f".{os.sep}{self.sphinxsys_case_name} --r=false --rt=true"
+        os.system(self.enter_sphinxsys_exec_folder)
+        os.system(command)
+        print('Simulating case is finished...')
+
+    def run_case_with_reload(self) -> None:
+        print('Start case simulation with particle reload...')
+        print(self.enter_sphinxsys_exec_folder)
         command = f".{os.sep}{self.sphinxsys_case_name} --r=false --i=true --rt=true"
         os.system(self.enter_sphinxsys_exec_folder)
         os.system(command)
@@ -95,6 +103,14 @@ class SphinxsysRegressionTest:
 
     def run_case(self) -> None:
         print('Start case simulation...')
+        print(self.enter_sphinxsys_exec_folder)
+        command = f".{os.sep}{self.sphinxsys_case_name} --r=false --rt=true"
+        os.chdir(self.sphinxsys_exec_path)
+        os.system(command)
+        print('Simulating case is finished...')
+
+    def run_case_with_reload(self) -> None:
+        print('Start case simulation with particle reload...')
         print(self.enter_sphinxsys_exec_folder)
         command = f".{os.sep}{self.sphinxsys_case_name} --r=false --i=true --rt=true"
         os.chdir(self.sphinxsys_exec_path)

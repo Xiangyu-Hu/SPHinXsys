@@ -146,7 +146,7 @@ int main(int ac, char *av[])
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
     std::cout << "Total physical time for computation: " << GlobalStaticVariables::physical_time_ << " seconds." << std::endl;
 
-    if (sph_system.generate_regression_data_)
+    if (sph_system.GenerateRegressionData())
     {
         write_solid_temperature.generateDataBase(1.0e-3, 1.0e-3);
     }

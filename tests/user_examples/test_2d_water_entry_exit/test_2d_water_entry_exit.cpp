@@ -344,10 +344,10 @@ int main(int ac, char *av[])
     SimTK::SimbodyMatterSubsystem matter(MBsystem);
     /** The forces of the MBsystem.*/
     SimTK::GeneralForceSubsystem forces(MBsystem);
-    /** Mass proeprties of the fixed spot. */
+    /** Mass properties of the fixed spot. */
     SimTK::Body::Rigid fixed_spot_info(SimTK::MassProperties(1.0, SimTKVec3(0), SimTK::UnitInertia(1)));
     SolidBodyPartForSimbody cylinder_constraint_area(cylinder, makeShared<MultiPolygonShape>(createSimbodyConstrainShape(cylinder), "cylinder"));
-    /** Mass properties of the consrained spot. */
+    /** Mass properties of the constrained spot. */
     SimTK::Body::Rigid tethered_spot_info(*cylinder_constraint_area.body_part_mass_properties_);
     /** Mobility of the fixed spot. */
     SimTK::MobilizedBody::Weld fixed_spot(matter.Ground(), SimTK::Transform(SimTKVec3(tethering_point[0], tethering_point[1], 0.0)),
@@ -365,7 +365,7 @@ int main(int ac, char *av[])
     tethered_spot_info.addDecoration(SimTK::Transform(), SimTK::DecorativeSphere(0.4));
     SimTK::State state = MBsystem.realizeTopology();
 
-    /** Time steping method for multibody system.*/
+    /** Time stepping method for multibody system.*/
     SimTK::RungeKuttaMersonIntegrator integ(MBsystem);
     integ.setAccuracy(1e-3);
     integ.setAllowInterpolation(false);
@@ -526,7 +526,7 @@ int main(int ac, char *av[])
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
 
-    if (sph_system.generate_regression_data_)
+    if (sph_system.GenerateRegressionData())
     {
         write_cylinder_displacement.generateDataBase(1.0e-3);
     }
@@ -534,6 +534,7 @@ int main(int ac, char *av[])
     {
         write_cylinder_displacement.testResult();
     }
+
 
     return 0;
 };

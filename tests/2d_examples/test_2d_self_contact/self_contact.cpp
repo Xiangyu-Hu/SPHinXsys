@@ -108,19 +108,19 @@ int main(int ac, char *av[])
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
     BoundingBox system_domain_bounds(Vec2d(-SL - BW, -PL / 2.0), Vec2d(PL + 3.0 * BW, PL / 2.0));
-    SPHSystem system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, resolution_ref);
 // handle command line arguments
 #ifdef BOOST_AVAILABLE
-    system.handleCommandlineOptions(ac, av);
+    sph_system.handleCommandlineOptions(ac, av);
 #endif
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    SolidBody beam_body(system, makeShared<Beam>("BeamBody"));
+    SolidBody beam_body(sph_system, makeShared<Beam>("BeamBody"));
     beam_body.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     beam_body.generateParticles<ParticleGeneratorLattice>();
 
-    ObserverBody beam_observer(system, "BeamObserver");
+    ObserverBody beam_observer(sph_system, "BeamObserver");
     beam_observer.defineAdaptationRatios(1.15, 2.0);
     StdVec<Vecd> beam_observation_location = {Vecd(PL, 0.0)};
     beam_observer.generateParticles<ObserverParticleGenerator>(beam_observation_location);
@@ -148,16 +148,16 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     //	outputs
     //-----------------------------------------------------------------------------
-    IOEnvironment io_environment(system);
+    IOEnvironment io_environment(sph_system);
     beam_body.addBodyStateForRecording<Real>("SelfContactDensity");
-    BodyStatesRecordingToVtp write_beam_states(io_environment, system.real_bodies_);
+    BodyStatesRecordingToVtp write_beam_states(io_environment, sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_beam_tip_displacement("Position", io_environment, beam_observer_contact);
     //-----------------------------------------------------------------------------
     //	Setup particle configuration and initial conditions
     //-----------------------------------------------------------------------------
-    system.initializeSystemCellLinkedLists();
-    system.initializeSystemConfigurations();
+    sph_system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemConfigurations();
     beam_initial_velocity.exec();
     beam_corrected_configuration.exec();
     //-----------------------------------------------------------------------------
@@ -230,7 +230,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (system.generate_regression_data_)
+    if (sph_system.GenerateRegressionData())
     {
         write_beam_tip_displacement.generateDataBase(1.0e-2);
     }
@@ -238,6 +238,7 @@ int main(int ac, char *av[])
     {
         write_beam_tip_displacement.testResult();
     }
+
 
     return 0;
 }

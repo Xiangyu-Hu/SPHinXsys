@@ -50,18 +50,19 @@ class MyocardiumActivation
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main()
+int main(int ac, char *av[])
 {
     //----------------------------------------------------------------------
     //	Build up an SPHSystem.
     //----------------------------------------------------------------------
     BoundingBox system_domain_bounds(Vecd(-SL, -SL, -SL), Vecd(PL + SL, PH + SL, PW + SL));
-    SPHSystem system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    SolidBody myocardium_muscle_body(system, makeShared<TransformShape<GeometricShapeBox>>(
-                                                 Transform(translation_myocardium), halfsize_myocardium, "MyocardiumMuscleBody"));
+    SolidBody myocardium_muscle_body(sph_system, makeShared<TransformShape<GeometricShapeBox>>(
+                                                     Transform(translation_myocardium), halfsize_myocardium, "MyocardiumMuscleBody"));
     myocardium_muscle_body.defineParticlesAndMaterial<
         ElasticSolidParticles, ActiveMuscle<Muscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
     myocardium_muscle_body.generateParticles<ParticleGeneratorLattice>();
@@ -86,15 +87,15 @@ int main()
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    IOEnvironment io_environment(system);
-    BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
+    IOEnvironment io_environment(sph_system);
+    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
     GlobalStaticVariables::physical_time_ = 0.0;
-    system.initializeSystemCellLinkedLists();
-    system.initializeSystemConfigurations();
+    sph_system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemConfigurations();
     corrected_configuration.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
@@ -147,6 +148,7 @@ int main()
     TimeInterval tt;
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+
 
     return 0;
 }

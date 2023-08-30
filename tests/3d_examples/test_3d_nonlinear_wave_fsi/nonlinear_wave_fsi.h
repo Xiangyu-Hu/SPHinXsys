@@ -10,20 +10,20 @@ using namespace SPH;
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
 Real total_physical_time = 6.0; /**< TOTAL SIMULATION TIME*/
-Real DL = 10.0;                  /**< Tank length. */
-Real DH = 1.0;                   /**< Tank height. */
-Real DW = 1.6;                   /**< Tank width. */
-Real WH = 0.8;                   /**< Water block height. */
-Real BEH = 2.0;                  /**< Flume height. */
-Real Wmk_p = 0.0;                /**< Wavemaker initial position. */
-Real EXS = 2.0;                  /**< Extra space behind the wavemaker*/
-Real HWM = 1.0;                  /**< Wameker height*/
-Real d = 0.8;                    /**< Still water level*/
+Real DL = 10.0;                 /**< Tank length. */
+Real DH = 1.0;                  /**< Tank height. */
+Real DW = 1.6;                  /**< Tank width. */
+Real WH = 0.8;                  /**< Water block height. */
+Real BEH = 2.0;                 /**< Flume height. */
+Real Wmk_p = 0.0;               /**< Wave_maker initial position. */
+Real EXS = 2.0;                 /**< Extra space behind the wave_maker*/
+Real HWM = 1.0;                 /**< Wave_maker height*/
+Real d = 0.8;                   /**< Still water level*/
 Real dDx = 10;
 Real particle_spacing_ref = d / dDx;           /**< Main water particle spacing. */
 Real particle_spacing_structure = 0.1;         /**< Structure particle spacing. */
 Real BW = particle_spacing_ref * 4.0;          /**< Extending width for BCs. */
-Real Maker_width = particle_spacing_ref * 4.0; /**< Width of the wavemaker. */
+Real Maker_width = particle_spacing_ref * 4.0; /**< Width of the wave_maker. */
 
 BoundingBox system_domain_bounds(Vecd(-BW, -EXS - BW, -BW), Vecd(EXS + BW, DL + BW, DH + BW));
 
@@ -79,7 +79,7 @@ Real Tad = Tw * Th;
 Real Taw = Td * Th;
 Real TVol = Tw * Td * Th;
 
-// STIFFNER
+// STIFFENER
 Real Sw = 0.43;
 Real Sd = 0.08;
 Real Sh = 0.04;
@@ -112,7 +112,7 @@ Real PIz = (StructureDensity * PVol) / 12 * (Pd * Pd + Pw * Pw);
 Real TIx = (StructureDensity * TVol) / 12 * (Td * Td + Th * Th);
 Real TIy = (StructureDensity * TVol) / 12 * (Tw * Tw + Th * Th);
 Real TIz = (StructureDensity * TVol) / 12 * (Td * Td + Tw * Tw);
-// STIFFNER
+// STIFFENER
 Real SIx = (StructureDensity * SVol) / 12 * (Sd * Sd + Sh * Sh);
 Real SIy = (StructureDensity * SVol) / 12 * (Sw * Sw + Sh * Sh);
 Real SIz = (StructureDensity * SVol) / 12 * (Sd * Sd + Sw * Sw);
@@ -129,17 +129,17 @@ Vec3d LLcm(Strx - dx - Lw / 2, Stry + Ld / 2, Strz + Lh / 2); /* Left Leg */
 /* Pillars */
 Real yPsP = 0.25;
 Real ySsP = 0.85;
-Vec3d RPsPcm(Strx + dx + Pw / 2, Stry + yPsP + Pd / 2, Strz + Lh + Ph / 2); /* Right Portside Pillar */
-Vec3d LPsPcm(Strx - dx - Pw / 2, Stry + yPsP + Pd / 2, Strz + Lh + Ph / 2); /* Left Portside Pillar */
+Vec3d RPsPcm(Strx + dx + Pw / 2, Stry + yPsP + Pd / 2, Strz + Lh + Ph / 2); /* Right Port side Pillar */
+Vec3d LPsPcm(Strx - dx - Pw / 2, Stry + yPsP + Pd / 2, Strz + Lh + Ph / 2); /* Left Port side Pillar */
 Vec3d RSsPcm(Strx + dx + Pw / 2, Stry + ySsP + Pd / 2, Strz + Lh + Ph / 2); /* Right Seaside Pillar */
 Vec3d LSsPcm(Strx - dx - Pw / 2, Stry + ySsP + Pd / 2, Strz + Lh + Ph / 2); /* Left Seaside Pillar */
 
-/* Stiffners */
+/* StiffEners */
 Real zS = 0.14;
 Real ySsS = 0.31;
 Real yPsS = 0.91;
-Vec3d PsScm(Strx, Stry + yPsS + Sd / 2, Strz + zS + Sh / 2); /* Portside Stiffner */
-Vec3d SsScm(Strx, Stry + ySsS + Sd / 2, Strz + zS + Sh / 2); /* Seaside Stiffner */
+Vec3d PsScm(Strx, Stry + yPsS + Sd / 2, Strz + zS + Sh / 2); /* Port side StiffEner */
+Vec3d SsScm(Strx, Stry + ySsS + Sd / 2, Strz + zS + Sh / 2); /* Seaside StiffEner */
 
 /* Top Plate */
 Real yT = 0.18;
@@ -240,14 +240,14 @@ Vecd structure_tethering_AR(G[0] + 0.31, G[1] - 0.3, Strz);
 // Left seaside cable topology
 Vecd ground_tethering_AL(G[0] - 0.31, G[1] - 0.3, 0.0);
 Vecd structure_tethering_AL(G[0] - 0.31, G[1] - 0.3, Strz);
-// Right portside cable topology
+// Right port side cable topology
 Vecd ground_tethering_BR(G[0] + 0.31, G[1] + 0.3, 0.0);
 Vecd structure_tethering_BR(G[0] + 0.31, G[1] + 0.3, Strz);
-// Left portside cable topology
+// Left port side cable topology
 Vecd ground_tethering_BL(G[0] - 0.31, G[1] + 0.3, 0.0);
 Vecd structure_tethering_BL(G[0] - 0.31, G[1] + 0.3, Strz);
 
-Real cablength = Strz;
+Real cable_length = Strz;
 
 /**
  * Structure observer position
@@ -304,7 +304,7 @@ class WaterBlock : public ComplexShape
 };
 
 //----------------------------------------------------------------------
-//	create a wavemaker shape
+//	create a wave_maker shape
 //----------------------------------------------------------------------
 Vecd wave_maker_shape(0.5 * DW, 0.5 * Maker_width, 0.5 * DH);
 Vecd wmk_pos(0.5 * DW, -0.5 * Maker_width, 0.5 * HWM);
@@ -333,7 +333,7 @@ class WallBoundary : public ComplexShape
 };
 
 //----------------------------------------------------------------------
-//	Boundary condition for wavemaker
+//	Boundary condition for wave_maker
 //----------------------------------------------------------------------
 class WaveMaking : public solid_dynamics::BaseMotionConstraint<BodyPartByParticle>
 {
@@ -470,7 +470,7 @@ class WaveMaking : public solid_dynamics::BaseMotionConstraint<BodyPartByParticl
 };
 
 //----------------------------------------------------------------------
-//	create mesuring probes
+//	create measuring probes
 //----------------------------------------------------------------------
 Real h = 1.3 * particle_spacing_ref;
 Vecd WGaugeDim(0.5 * DW, 0.5 * h, 0.5 * DH);

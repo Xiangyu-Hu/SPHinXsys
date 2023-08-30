@@ -137,19 +137,18 @@ class BoundaryGeometry : public BodyPartByParticle
 int main(int ac, char *av[])
 {
     /** Setup the system. */
-    SPHSystem system(system_domain_bounds, particle_spacing_ref);
-    system.generate_regression_data_ = false;
+    SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
 #ifdef BOOST_AVAILABLE
-    system.handleCommandlineOptions(ac, av);
+    sph_system.handleCommandlineOptions(ac, av);
 #endif
-    IOEnvironment io_environment(system);
+    IOEnvironment io_environment(sph_system);
     /** create a cylinder body with shell particles and linear elasticity. */
-    SolidBody cylinder_body(system, makeShared<DefaultShape>("CylinderBody"));
+    SolidBody cylinder_body(sph_system, makeShared<DefaultShape>("CylinderBody"));
     cylinder_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     cylinder_body.generateParticles<CylinderParticleGenerator>();
 
     /** Define Observer. */
-    ObserverBody cylinder_observer(system, "CylinderObserver");
+    ObserverBody cylinder_observer(sph_system, "CylinderObserver");
     cylinder_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 
     /** Set body contact map
@@ -181,13 +180,13 @@ int main(int ac, char *av[])
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vecd>>>
         cylinder_rotation_damping(0.2, cylinder_body_inner, "AngularVelocity", physical_viscosity);
     /** Output */
-    BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_cylinder_max_displacement("Position", io_environment, cylinder_observer_contact);
 
     /** Apply initial condition. */
-    system.initializeSystemCellLinkedLists();
-    system.initializeSystemConfigurations();
+    sph_system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemConfigurations();
     corrected_configuration.exec();
 
     /**
@@ -246,7 +245,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (system.generate_regression_data_)
+    if (sph_system.GenerateRegressionData())
     {
         write_cylinder_max_displacement.generateDataBase(0.05);
     }
@@ -254,6 +253,7 @@ int main(int ac, char *av[])
     {
         write_cylinder_max_displacement.testResult();
     }
+
 
     return 0;
 }

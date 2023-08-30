@@ -12,25 +12,25 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
-    SPHSystem system(system_domain_bounds, particle_spacing_ref);
-    system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(system);
+    SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
+    sph_system.handleCommandlineOptions(ac, av);
+    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
+    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
 
-    SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
+    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
-    SolidBody flap(system, makeShared<Flap>("Flap"));
+    SolidBody flap(sph_system, makeShared<Flap>("Flap"));
     flap.defineParticlesAndMaterial<SolidParticles, Solid>(rho0_s);
     flap.generateParticles<ParticleGeneratorLattice>();
 
-    ObserverBody observer(system, "FlapObserver");
+    ObserverBody observer(sph_system, "FlapObserver");
     observer.generateParticles<FlapObserverParticleGenerator>();
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -157,7 +157,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<
         ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>>
         write_total_force_on_flap(io_environment, fluid_force_on_flap, "TotalForceOnSolid");
@@ -187,8 +187,8 @@ int main(int ac, char *av[])
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
     flap_offset_position.exec();
-    system.initializeSystemCellLinkedLists();
-    system.initializeSystemConfigurations();
+    sph_system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
     flap_normal_direction.exec();
     flap_corrected_configuration.exec();
@@ -297,7 +297,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (system.generate_regression_data_)
+    if (sph_system.GenerateRegressionData())
     {
         write_total_force_on_flap.generateDataBase(1.0e-3);
     }
@@ -305,6 +305,7 @@ int main(int ac, char *av[])
     {
         write_total_force_on_flap.testResult();
     }
+
 
     return 0;
 }

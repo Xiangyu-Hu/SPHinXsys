@@ -14,20 +14,20 @@ using namespace SPH;
 int main(int ac, char *av[])
 {
     /** Setup the system. Please the make sure the global domain bounds are correctly defined. */
-    SPHSystem system(system_domain_bounds, particle_spacing_ref);
+    SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
 #ifdef BOOST_AVAILABLE
-    system.handleCommandlineOptions(ac, av);
+    sph_system.handleCommandlineOptions(ac, av);
 #endif
-    IOEnvironment io_environment(system);
+    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     /** create a body with corresponding material, particles and reaction model. */
-    SolidBody column(system, makeShared<Column>("Column"));
+    SolidBody column(sph_system, makeShared<Column>("Column"));
     column.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     column.generateParticles<ParticleGeneratorLattice>();
     /** Define Observer. */
-    ObserverBody my_observer(system, "MyObserver");
+    ObserverBody my_observer(sph_system, "MyObserver");
     my_observer.generateParticles<ObserverParticleGenerator>(observation_location);
     /**body relation topology */
     InnerRelation column_inner(column);
@@ -49,7 +49,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Output
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_velocity("Velocity", io_environment, my_observer_contact);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
@@ -57,8 +57,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     // From here the time stepping begins.
     //----------------------------------------------------------------------
-    system.initializeSystemCellLinkedLists();
-    system.initializeSystemConfigurations();
+    sph_system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemConfigurations();
     initial_condition.exec();
     corrected_configuration.exec();
     write_states.writeToFile(0);
@@ -110,7 +110,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (system.generate_regression_data_)
+    if (sph_system.GenerateRegressionData())
     {
         write_displacement.generateDataBase(0.005);
         write_velocity.generateDataBase(0.005);
@@ -120,6 +120,7 @@ int main(int ac, char *av[])
         write_displacement.testResult();
         write_velocity.testResult();
     }
+
 
     return 0;
 }

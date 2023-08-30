@@ -131,15 +131,15 @@ class TimeDependentExternalForce : public Gravity
 int main(int ac, char *av[])
 {
     /** Setup the system. */
-    SPHSystem system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, resolution_ref);
 
     /** create a plate body. */
-    SolidBody plate_body(system, makeShared<DefaultShape>("PlateBody"));
+    SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
     plate_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     plate_body.generateParticles<PlateParticleGenerator>();
 
     /** Define Observer. */
-    ObserverBody plate_observer(system, "PlateObserver");
+    ObserverBody plate_observer(sph_system, "PlateObserver");
     plate_observer.defineParticlesAndMaterial();
     plate_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 
@@ -151,8 +151,8 @@ int main(int ac, char *av[])
     ContactRelation plate_observer_contact(plate_observer, {&plate_body});
 
     /** Common particle dynamics. */
-    SimpleDynamics<TimeStepInitialization> initialize_external_force(plate_body,
-                                                                     makeShared<TimeDependentExternalForce>(Vec3d(0.0, 0.0, q / (PT * rho0_s) - gravitational_acceleration)));
+    SimpleDynamics<TimeStepInitialization> initialize_external_force(
+        plate_body, makeShared<TimeDependentExternalForce>(Vec3d(0.0, 0.0, q / (PT * rho0_s) - gravitational_acceleration)));
 
     /**
      * This section define all numerical methods will be used in this case.
@@ -179,13 +179,13 @@ int main(int ac, char *av[])
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
         plate_rotation_damping(0.5, plate_body_inner, "AngularVelocity", physical_viscosity);
     /** Output */
-    IOEnvironment io_environment(system);
-    BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
+    IOEnvironment io_environment(sph_system);
+    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
     ObservedQuantityRecording<Vecd> write_plate_max_displacement("Position", io_environment, plate_observer_contact);
 
     /** Apply initial condition. */
-    system.initializeSystemCellLinkedLists();
-    system.initializeSystemConfigurations();
+    sph_system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemConfigurations();
     corrected_configuration.exec();
 
     /**
@@ -247,6 +247,7 @@ int main(int ac, char *av[])
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
     observed_quantity_n = (*write_plate_max_displacement.getObservedQuantity())[0][2];
+
 
     testing::InitGoogleTest(&ac, av);
     return RUN_ALL_TESTS();

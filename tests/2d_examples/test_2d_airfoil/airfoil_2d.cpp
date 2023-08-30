@@ -42,16 +42,16 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
-    SPHSystem system(system_domain_bounds, resolution_ref);
-    system.setRunParticleRelaxation(true); // tag to run particle relaxation when no commandline option
+    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    sph_system.setRunParticleRelaxation(true); // tag to run particle relaxation when no commandline option
 #ifdef BOOST_AVAILABLE
-    system.handleCommandlineOptions(ac, av);
+    sph_system.handleCommandlineOptions(ac, av);
 #endif
-    IOEnvironment io_environment(system);
+    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    RealBody airfoil(system, makeShared<ImportModel>("AirFoil"));
+    RealBody airfoil(sph_system, makeShared<ImportModel>("AirFoil"));
     airfoil.defineAdaptation<ParticleRefinementNearSurface>(1.15, 1.0, 3);
     airfoil.defineBodyLevelSetShape()->cleanLevelSet()->writeLevelSet(io_environment);
     airfoil.defineParticlesAndMaterial();
