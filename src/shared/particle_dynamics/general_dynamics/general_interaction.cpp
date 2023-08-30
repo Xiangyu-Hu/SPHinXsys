@@ -9,6 +9,7 @@ CorrectedConfigurationInner::
     : LocalDynamics(inner_relation.getSPHBody()),
       GeneralDataDelegateInner(inner_relation),
       beta_(beta), alpha_(alpha),
+      smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
       B_(*particles_->getVariableByName<Matd>("CorrectionMatrix")) {}
 //=================================================================================================//
 void CorrectedConfigurationInner::interaction(size_t index_i, Real dt)
@@ -30,7 +31,9 @@ void CorrectedConfigurationInner::update(size_t index_i, Real dt)
 {
     Real det_sqr = pow(B_[index_i].determinant(), beta_);
     Matd inverse = B_[index_i].inverse();
-    B_[index_i] = (det_sqr * inverse + alpha_ * Matd::Identity()) / (alpha_ + det_sqr);
+    Real weight1_ = det_sqr / (alpha_ * pow(smoothing_length_, beta_) + det_sqr);
+    Real weight2_ = alpha_ * pow(smoothing_length_, beta_) / (alpha_ * pow(smoothing_length_, beta_) + det_sqr);
+    B_[index_i] = weight1_ * inverse + weight2_ * Matd::Identity();
 }
 //=================================================================================================//
 CorrectedConfigurationComplex::
