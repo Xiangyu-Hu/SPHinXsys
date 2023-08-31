@@ -35,7 +35,6 @@
 #define ANISOTROPIC_KERNEL_H
 
 #include "base_kernel.h"
-#include "all_kernels.h"
 
 namespace SPH
 {
