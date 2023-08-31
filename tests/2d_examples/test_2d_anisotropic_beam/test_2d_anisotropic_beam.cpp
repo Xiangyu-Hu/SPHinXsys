@@ -301,7 +301,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
       
- 	if (sph_system.GenerateRegressionData())
+ 	if (system.GenerateRegressionData())
     {
         // The lift force at the cylinder is very small and not important in this case.
         write_beam_tip_displacement.generateDataBase(Vec2d(1.0e-2, 1.0e-2), Vec2d(1.0e-2, 1.0e-2));
