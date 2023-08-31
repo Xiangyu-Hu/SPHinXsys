@@ -4,6 +4,14 @@
 namespace SPH
 {
 //=================================================================================================//
+void LocalIsotropicDiffusion::initializeLocalParameters(BaseParticles* base_particles)
+{
+    base_particles->registerVariable(local_thermal_conductivity_, "ThermalDiffusivity", [&](size_t i) -> Real {return diff_cf_; });
+    base_particles->addVariableToWrite<Real>("ThermalDiffusivity");
+    base_particles->addVariableToRestart<Real>("ThermalDiffusivity");
+    base_particles->registerSharedVariable
+}
+//=================================================================================================//
 void DirectionalDiffusion::initializeDirectionalDiffusivity(Real diff_cf, Real bias_diff_cf, Vecd bias_direction)
 {
     bias_diff_cf_ = bias_diff_cf;
