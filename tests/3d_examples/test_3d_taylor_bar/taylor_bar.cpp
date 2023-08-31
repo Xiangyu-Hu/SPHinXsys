@@ -13,31 +13,31 @@ using namespace SPH;
 int main(int ac, char *av[])
 {
     /** Setup the system. Please the make sure the global domain bounds are correctly defined. */
-    SPHSystem system(system_domain_bounds, particle_spacing_ref);
-    system.setRunParticleRelaxation(false);
-    system.setReloadParticles(true);
+    SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
+    sph_system.setRunParticleRelaxation(false);
+    sph_system.setReloadParticles(true);
 #ifdef BOOST_AVAILABLE
-    system.handleCommandlineOptions(ac, av);
+    sph_system.handleCommandlineOptions(ac, av);
 #endif
-    IOEnvironment io_environment(system);
+    IOEnvironment io_environment(sph_system);
 
     /** create a body with corresponding material, particles and reaction model. */
-    SolidBody column(system, makeShared<Column>("Column"));
+    SolidBody column(sph_system, makeShared<Column>("Column"));
     column.defineAdaptationRatios(1.3, 1.0);
     column.defineBodyLevelSetShape()->writeLevelSet(io_environment);
     column.defineParticlesAndMaterial<ElasticSolidParticles, HardeningPlasticSolid>(
         rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus);
-    (!system.RunParticleRelaxation() && system.ReloadParticles())
+    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? column.generateParticles<ParticleGeneratorReload>(io_environment, column.getName())
         : column.generateParticles<ParticleGeneratorLattice>();
     column.addBodyStateForRecording<Vecd>("NormalDirection");
 
-    SolidBody wall(system, makeShared<Wall>("Wall"));
+    SolidBody wall(sph_system, makeShared<Wall>("Wall"));
     wall.defineParticlesAndMaterial<SolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     wall.generateParticles<ParticleGeneratorLattice>();
 
     /** Define Observer. */
-    ObserverBody my_observer(system, "MyObserver");
+    ObserverBody my_observer(sph_system, "MyObserver");
     my_observer.generateParticles<ColumnObserverParticleGenerator>();
 
     /**body relation topology */
@@ -45,9 +45,9 @@ int main(int ac, char *av[])
     ContactRelation my_observer_contact(my_observer, {&column});
     SurfaceContactRelation column_wall_contact(column, {&wall});
     /**define simple data file input and outputs functions. */
-    BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
 
-    if (system.RunParticleRelaxation())
+    if (sph_system.RunParticleRelaxation())
     {
         /**
          * @brief 	Methods used for particle relaxation.
@@ -107,8 +107,8 @@ int main(int ac, char *av[])
     // From here the time stepping begins.
     //----------------------------------------------------------------------
     GlobalStaticVariables::physical_time_ = 0.0;
-    system.initializeSystemCellLinkedLists();
-    system.initializeSystemConfigurations();
+    sph_system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemConfigurations();
     wall_normal_direction.exec();
     corrected_configuration.exec();
     initial_condition.exec();
@@ -175,6 +175,7 @@ int main(int ac, char *av[])
 
     write_displacement.testResult();
     write_velocity.testResult();
+
 
     return 0;
 }

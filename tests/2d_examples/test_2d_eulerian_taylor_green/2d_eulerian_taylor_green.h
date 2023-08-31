@@ -1,6 +1,6 @@
 /**
  * @file 	eulerian_taylor_green.h
- * @brief 	This is a test to show the standard eluerian taylor green case.
+ * @brief 	This is a test to show the standard Eluerian Taylor-Green case.
  * @details See https://doi.org/10.1016/j.jcp.2010.08.019 for the detailed problem setup.
  * @author 	Zhentong Wang and Xiangyu Hu
  */

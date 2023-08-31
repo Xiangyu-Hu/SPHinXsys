@@ -11,8 +11,8 @@ SPHSystem::SPHSystem(BoundingBox system_domain_bounds, Real resolution_ref, size
     : system_domain_bounds_(system_domain_bounds),
       resolution_ref_(resolution_ref),
       tbb_global_control_(tbb::global_control::max_allowed_parallelism, number_of_threads),
-      io_environment_(nullptr), generate_regression_data_(false), run_particle_relaxation_(false),
-      reload_particles_(false), restart_step_(0) {}
+      io_environment_(nullptr), run_particle_relaxation_(false), reload_particles_(false),
+      restart_step_(0), generate_regression_data_(false), state_recording_(true) {}
 //=================================================================================================//
 void SPHSystem::initializeSystemCellLinkedLists()
 {
@@ -57,6 +57,7 @@ void SPHSystem::handleCommandlineOptions(int ac, char *av[])
         desc.add_options()("r", po::value<bool>(), "Particle relaxation.");
         desc.add_options()("i", po::value<bool>(), "Particle reload from input file.");
         desc.add_options()("rt", po::value<bool>(), "Regression test.");
+        desc.add_options()("state_recording", po::value<bool>(), "State recording in output folder.");
         desc.add_options()("restart_step", po::value<int>(), "Run form a restart file.");
 
         po::variables_map vm;
@@ -103,6 +104,18 @@ void SPHSystem::handleCommandlineOptions(int ac, char *av[])
         {
             std::cout << "Generate regression test data was set to default ("
                       << generate_regression_data_ << ").\n";
+        }
+
+        if (vm.count("state_recording"))
+        {
+            state_recording_ = vm["state_recording"].as<bool>();
+            std::cout << "Delete all files in output folder after run was set to "
+                      << vm["state_recording"].as<bool>() << ".\n";
+        }
+        else
+        {
+            std::cout << "Delete all files in output folder after run was set to default ("
+                      << state_recording_ << ").\n";
         }
 
         if (vm.count("restart_step"))

@@ -9,14 +9,13 @@
 #include "sphinxsys.h"
 using namespace SPH;
 
-int main()
+int main(int ac, char *av[])
 {
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    /** Set the starting time. */
-    GlobalStaticVariables::physical_time_ = 0.0;
+    sph_system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
@@ -217,6 +216,7 @@ int main()
 
     write_water_mechanical_energy.testResult();
     write_recorded_pressure.testResult();
+
 
     return 0;
 }
