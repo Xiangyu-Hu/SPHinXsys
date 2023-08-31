@@ -63,21 +63,21 @@ namespace SPH
 
 		virtual void interaction(size_t index_i, Real dt = 0.0) = 0;
 	};
-}
 
 	/**
 	 * @class RegularizationByDiffusion
-	 * @brief Regularize the optimized parameter by diffusion analogy method after each splitting step,
-	 *        which could smooth the distribution and avoid some local optimal solution.
+	 * @brief Regularize the optimized parameter by diffusion analogy method 
+	 *        after each splitting step, which could smooth the distribution 
+	 *        and avoid some local optimal solution.
 	 */
-	template <class BaseParticlesType, class BaseMaterialType, typename VariableType, int NUM_SPECIES = 1>
-	class RegularizationByDiffusionInner
-		: public OptimizationBySplittingAlgorithmBase<BaseParticlesType, BaseMaterialType, VariableType, NUM_SPECIES>
-	{
+	template <class ParticleType, typename VariableType>
+	class RegularizationByDiffusionAnalogy
+		: public OptimizationBySplittingAlgorithmBase<ParticleType, typename VariableType>
+    {
 	public:
-		RegularizationByDiffusionInner(BaseInnerRelation &inner_relation, const std::string& variable_name, 
-			                           Real initial_eta = 1, Real variation = 1);
-		virtual ~RegularizationByDiffusionInner() {};
+        RegularizationByDiffusionAnalogy(BaseInnerRelation &inner_relation, const std::string &variable_name,
+                                         Real initial_eta = 1, Real variation = 1);
+        virtual ~RegularizationByDiffusionAnalogy(){};
 
 		void UpdateCurrentEta(Real initial_eta) { initial_eta_ = initial_eta; }
 		void UpdateMaximumVariation(Real maximum_variation) { maximum_variation_ = maximum_variation; }
@@ -88,26 +88,26 @@ namespace SPH
 		virtual ErrorAndParameters<VariableType> computeVariationAndParameters(size_t index_i, Real dt);
 		virtual void updateStatesByVariation(size_t index_i, Real dt, const ErrorAndParameters<VariableType>& variation_and_parameters);
 		virtual void interaction(size_t index_i, Real dt = 0.0) override;
-	};
+    };
 
 	/**
 	 * @class UpdateRegularizationVariation
-	 * @brief The global variation of parameter can be updated after the process of splitting,
-	 *        which is an essential parameter for optimization schedule.
+	 * @brief The global variation of parameter can be updated after the process 
+	 *        of splitting which is an essential parameter for optimization schedule.
 	 */
-	template <class BaseParticlesType, class BaseMaterialType, typename VariableType, int NUM_SPECIES = 1>
-	class UpdateRegularizationVariation 
-		: public OptimizationBySplittingAlgorithmBase<BaseParticlesType, BaseMaterialType, VariableType, NUM_SPECIES>
-	{
-	public:
-		UpdateRegularizationVariation(BaseInnerRelation& inner_relation, const std::string& variable_name);
-		virtual ~UpdateRegularizationVariation() {};
+	template <class ParticleType, typename VariableType>
+    class UpdateRegularizationVariation
+        : public OptimizationBySplittingAlgorithmBase<ParticleType, VariableType>
+    {
+      public:
+        UpdateRegularizationVariation(BaseInnerRelation &inner_relation, const std::string &variable_name);
+        virtual ~UpdateRegularizationVariation(){};
 
-	protected:
-		/* Redefine the compute function to avoid non-meaningful initial variation. */
-		virtual ErrorAndParameters<VariableType> computeVariationAndParameters(size_t index_i, Real dt);
-		virtual void interaction(size_t index_i, Real dt = 0.0) override;
-	};
+      protected:
+        /* Redefine the compute function to avoid non-meaningful initial variation. */
+        virtual ErrorAndParameters<VariableType> computeVariationAndParameters(size_t index_i, Real dt);
+        virtual void interaction(size_t index_i, Real dt = 0.0) override;
+    };
 }
 
 #endif DIFFUSION_SPLITTING_BASE_H
