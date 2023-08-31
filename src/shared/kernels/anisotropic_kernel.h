@@ -34,12 +34,11 @@
 #ifndef ANISOTROPIC_KERNEL_H
 #define ANISOTROPIC_KERNEL_H
 
-#include "base_kernel_includes_nonisotropic.h"
-#include "kernel_wenland_c2_anisotropic.h"
+#include "base_kernel.h"
+#include "all_kernels.h"
 
 namespace SPH
 {
-
 /**
  * @class AnisotropicKernel
  * @brief Abstract base class of a general anisotropic  SPH kernel function which
