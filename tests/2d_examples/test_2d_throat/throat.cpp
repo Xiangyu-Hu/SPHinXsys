@@ -125,21 +125,21 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BoundingBox system_domain_bounds(Vec2d(-0.5 * DL - BW, -0.5 * DH - BW),
                                      Vec2d(0.5 * DL + BW, 0.5 * DH + BW));
-    SPHSystem system(system_domain_bounds, resolution_ref);
-    system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(system);
+    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    sph_system.handleCommandlineOptions(ac, av);
+    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody fluid_block(system, makeShared<FluidBlock>("FluidBody"));
+    FluidBody fluid_block(sph_system, makeShared<FluidBlock>("FluidBody"));
     fluid_block.defineParticlesAndMaterial<BaseParticles, Oldroyd_B_Fluid>(rho0_f, c_f, mu_f, lambda_f, mu_p_f);
     fluid_block.generateParticles<ParticleGeneratorLattice>();
 
-    SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
+    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
-    ObserverBody fluid_observer(system, "FluidObserver");
+    ObserverBody fluid_observer(sph_system, "FluidObserver");
     StdVec<Vecd> observation_location = {Vecd::Zero()};
     fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
     //----------------------------------------------------------------------
@@ -174,14 +174,14 @@ int main(int ac, char *av[])
     InteractionSplit<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>
         implicit_viscous_damping(fluid_block_complex, "Velocity", mu_f);
     // impose transport velocity
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> transport_velocity_correction(fluid_block_complex);
+    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(fluid_block_complex);
     // computing vorticity in the flow
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(fluid_block_inner);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
         write_fluid_mechanical_energy(io_environment, fluid_block);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
@@ -190,10 +190,10 @@ int main(int ac, char *av[])
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemCellLinkedLists();
     // initial periodic boundary condition
     periodic_condition.ghost_creation_.exec();
-    system.initializeSystemConfigurations();
+    sph_system.initializeSystemConfigurations();
     // prepare quantities will be used once only
     wall_boundary_normal_direction.exec();
     //----------------------------------------------------------------------
@@ -246,7 +246,7 @@ int main(int ac, char *av[])
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
                           << GlobalStaticVariables::physical_time_
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
-                if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != system.RestartStep())
+                if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
                 {
                     write_fluid_mechanical_energy.writeToFile(number_of_iterations);
                     write_recorded_fluid_pressure.writeToFile(number_of_iterations);
@@ -273,7 +273,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (system.generate_regression_data_)
+    if (sph_system.GenerateRegressionData())
     {
         write_fluid_mechanical_energy.generateDataBase(1.0e-2);
         write_recorded_fluid_pressure.generateDataBase(1.0e-2);
@@ -283,6 +283,7 @@ int main(int ac, char *av[])
         write_fluid_mechanical_energy.testResult();
         write_recorded_fluid_pressure.testResult();
     }
+
 
     return 0;
 }

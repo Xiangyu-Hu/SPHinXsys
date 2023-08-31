@@ -135,19 +135,19 @@ class TimeDependentExternalForce : public Gravity
 /**
  *  The main program
  */
-int main()
+int main(int ac, char *av[])
 {
     /** Setup the system. */
-    SPHSystem system(system_domain_bounds, particle_spacing_ref);
-    system.generate_regression_data_ = false;
+    SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
+    sph_system.handleCommandlineOptions(ac, av);
     /** create a plate body. */
-    SolidBody plate_body(system, makeShared<DefaultShape>("PlateBody"));
+    SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
     plate_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     plate_body.generateParticles<PlateParticleGenerator>();
     plate_body.addBodyStateForRecording<Vec3d>("PriorAcceleration");
 
     /** Define Observer. */
-    ObserverBody plate_observer(system, "PlateObserver");
+    ObserverBody plate_observer(sph_system, "PlateObserver");
     plate_observer.defineParticlesAndMaterial();
     plate_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 
@@ -159,8 +159,8 @@ int main()
     ContactRelation plate_observer_contact(plate_observer, {&plate_body});
 
     /** Common particle dynamics. */
-    SimpleDynamics<TimeStepInitialization> initialize_external_force(plate_body,
-                                                                     makeShared<TimeDependentExternalForce>(Vec3d(0.0, 0.0, q / (PT * rho0_s) - gravitational_acceleration)));
+    SimpleDynamics<TimeStepInitialization> initialize_external_force(
+        plate_body, makeShared<TimeDependentExternalForce>(Vec3d(0.0, 0.0, q / (PT * rho0_s) - gravitational_acceleration)));
 
     /**
      * This section define all numerical methods will be used in this case.
@@ -179,18 +179,18 @@ int main()
     BoundaryGeometry boundary_geometry(plate_body, "BoundaryGeometry");
     SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constrain_holder(boundary_geometry);
     /** Output */
-    IOEnvironment io_environment(system);
-    BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
+    IOEnvironment io_environment(sph_system);
+    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_plate_max_displacement("Position", io_environment, plate_observer_contact);
 
     /** Apply initial condition. */
-    system.initializeSystemCellLinkedLists();
-    system.initializeSystemConfigurations();
+    sph_system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemConfigurations();
     corrected_configuration.exec();
 
     /**
-     * From here the time stepping begines.
+     * From here the time stepping begins.
      * Set the starting time.
      */
     GlobalStaticVariables::physical_time_ = 0.0;
@@ -211,8 +211,8 @@ int main()
      */
     while (GlobalStaticVariables::physical_time_ < end_time)
     {
-        Real integeral_time = 0.0;
-        while (integeral_time < output_period)
+        Real integral_time = 0.0;
+        while (integral_time < output_period)
         {
             if (ite % 100 == 0)
             {
@@ -227,7 +227,7 @@ int main()
 
             ite++;
             dt = computing_time_step_size.exec();
-            integeral_time += dt;
+            integral_time += dt;
             GlobalStaticVariables::physical_time_ += dt;
         }
         write_plate_max_displacement.writeToFile(ite);
@@ -242,7 +242,7 @@ int main()
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (system.generate_regression_data_)
+    if (sph_system.GenerateRegressionData())
     {
         write_plate_max_displacement.generateDataBase(0.005);
     }
@@ -250,6 +250,7 @@ int main()
     {
         write_plate_max_displacement.testResult();
     }
+
 
     return 0;
 }

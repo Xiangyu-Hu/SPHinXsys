@@ -237,22 +237,6 @@ void BaseParticles::writeParticlesToVtk(StreamType &output_stream)
 {
     size_t total_real_particles = total_real_particles_;
 
-    // write current/final particle positions first
-    output_stream << "   <Points>\n";
-    output_stream << "    <DataArray Name=\"Position\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
-    output_stream << "    ";
-    for (size_t i = 0; i != total_real_particles; ++i)
-    {
-        Vec3d particle_position = upgradeToVec3d(pos_[i]);
-        output_stream << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " ";
-    }
-    output_stream << std::endl;
-    output_stream << "    </DataArray>\n";
-    output_stream << "   </Points>\n";
-
-    // write header of particles data
-    output_stream << "   <PointData  Vectors=\"vector\">\n";
-
     // write sorted particles ID
     output_stream << "    <DataArray Name=\"SortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
     output_stream << "    ";
@@ -272,12 +256,6 @@ void BaseParticles::writeParticlesToVtk(StreamType &output_stream)
     }
     output_stream << std::endl;
     output_stream << "    </DataArray>\n";
-
-    // compute derived particle variables
-    for (auto &derived_variable : derived_variables_)
-    {
-        derived_variable->exec();
-    }
 
     // write integers
     constexpr int type_index_int = DataTypeIndex<int>::value;

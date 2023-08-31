@@ -86,7 +86,7 @@ NonReflectiveBoundaryVariableCorrection::NonReflectiveBoundaryVariableCorrection
       fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())), rho_farfield_(0.0), sound_speed_(0.0), vel_farfield_(Vecd::Zero()),
       rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")), Vol_(particles_->Vol_), vel_(particles_->vel_),
       mom_(*particles_->getVariableByName<Vecd>("Momentum")), pos_(particles_->pos_),
-      surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator"))
+      indicator_(*particles_->getVariableByName<int>("Indicator"))
 {
     particles_->registerVariable(n_, "NormalDirection");
     particles_->registerVariable(inner_weight_summation_, "InnerWeightSummation");
@@ -99,7 +99,7 @@ NonReflectiveBoundaryVariableCorrection::NonReflectiveBoundaryVariableCorrection
 //=================================================================================================//
 void NonReflectiveBoundaryVariableCorrection::initialization(size_t index_i, Real dt)
 {
-    if (surface_indicator_[index_i] == 1)
+    if (indicator_[index_i] == 1)
     {
         const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -114,7 +114,7 @@ void NonReflectiveBoundaryVariableCorrection::initialization(size_t index_i, Rea
 void NonReflectiveBoundaryVariableCorrection::interaction(size_t index_i, Real dt)
 {
     Shape &body_shape = *sph_body_.body_shape_;
-    if (surface_indicator_[index_i] == 1 || surface_inner_particle_indicator_[index_i] == 1)
+    if (indicator_[index_i] == 1 || surface_inner_particle_indicator_[index_i] == 1)
     {
         Vecd normal_direction = body_shape.findNormalDirection(pos_[index_i]);
         n_[index_i] = normal_direction;
@@ -133,7 +133,7 @@ void NonReflectiveBoundaryVariableCorrection::interaction(size_t index_i, Real d
                 for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
                 {
                     size_t index_j = inner_neighborhood.j_[n];
-                    if (surface_indicator_[index_j] != 1)
+                    if (indicator_[index_j] != 1)
                     {
                         Real W_ij = inner_neighborhood.W_ij_[n];
                         inner_weight_summation_[index_i] += W_ij * Vol_[index_j];
@@ -159,7 +159,7 @@ void NonReflectiveBoundaryVariableCorrection::interaction(size_t index_i, Real d
                 for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
                 {
                     size_t index_j = inner_neighborhood.j_[n];
-                    if (surface_indicator_[index_j] != 1)
+                    if (indicator_[index_j] != 1)
                     {
                         rho_summation += rho_[index_j];
                         vel_summation += vel_[index_j];
@@ -182,7 +182,7 @@ void NonReflectiveBoundaryVariableCorrection::interaction(size_t index_i, Real d
                 for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
                 {
                     size_t index_j = inner_neighborhood.j_[n];
-                    if (surface_indicator_[index_j] != 1)
+                    if (indicator_[index_j] != 1)
                     {
                         Real W_ij = inner_neighborhood.W_ij_[n];
                         inner_weight_summation_[index_i] += W_ij * Vol_[index_j];
@@ -203,7 +203,7 @@ void NonReflectiveBoundaryVariableCorrection::interaction(size_t index_i, Real d
 void NonReflectiveBoundaryVariableCorrection::update(size_t index_i, Real dt)
 {
     Shape &body_shape = *sph_body_.body_shape_;
-    if (surface_indicator_[index_i] == 1 || surface_inner_particle_indicator_[index_i] == 1)
+    if (indicator_[index_i] == 1 || surface_inner_particle_indicator_[index_i] == 1)
     {
         Vecd normal_direction = body_shape.findNormalDirection(pos_[index_i]);
         n_[index_i] = normal_direction;

@@ -94,8 +94,8 @@ StdVec<Vec3d> read_obj_vertices(const std::string &file_name)
 {
     std::cout << "read_obj_vertices started" << std::endl;
 
-    std::ifstream myfile(file_name, std::ios_base::in);
-    if (!myfile.is_open())
+    std::ifstream my_file(file_name, std::ios_base::in);
+    if (!my_file.is_open())
         throw std::runtime_error("read_obj_vertices: file doesn't exist");
 
     StdVec<Vec3d> pos_0;
@@ -103,7 +103,7 @@ StdVec<Vec3d> read_obj_vertices(const std::string &file_name)
     unsigned int count = 0;
     Real value = 0;
 
-    while (myfile >> value)
+    while (my_file >> value)
     {
         particle[count] = value;
         ++count;
@@ -242,11 +242,11 @@ struct return_data
 
     void write_data_to_txt(const std::string &file_name) const
     {
-        std::ofstream myfile;
-        myfile.open(file_name);
-        myfile << "displ_y_A; displ_x_A; total_area; total_mass; dp\n";
-        myfile << displ_y_A << "; " << displ_x_A << "; " << total_area << "; " << total_mass << "; " << dp << "\n";
-        myfile.close();
+        std::ofstream my_file;
+        my_file.open(file_name);
+        my_file << "displ_y_A; displ_x_A; total_area; total_mass; dp\n";
+        my_file << displ_y_A << "; " << displ_x_A << "; " << total_area << "; " << total_mass << "; " << dp << "\n";
+        my_file.close();
     }
 };
 

@@ -42,21 +42,6 @@ BaseViscousAccelerationInner::BaseViscousAccelerationInner(BaseInnerRelation &in
       mu_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceViscosity()),
       smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
 //=================================================================================================//
-TransportVelocityCorrectionInner::
-    TransportVelocityCorrectionInner(BaseInnerRelation &inner_relation, Real coefficient)
-    : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
-      pos_(particles_->pos_), surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")),
-      smoothing_length_sqr_(pow(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
-      coefficient_(coefficient) {}
-//=================================================================================================//
-TransportVelocityCorrectionInnerAdaptive::
-    TransportVelocityCorrectionInnerAdaptive(BaseInnerRelation &inner_relation, Real coefficient)
-    : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
-      sph_adaptation_(*sph_body_.sph_adaptation_),
-      pos_(particles_->pos_), surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")),
-      smoothing_length_sqr_(pow(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
-      coefficient_(coefficient) {}
-//=================================================================================================//
 AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL)
     : LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
       FluidDataSimple(sph_body), fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),

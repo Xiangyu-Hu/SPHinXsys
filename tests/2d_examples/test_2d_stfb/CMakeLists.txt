@@ -18,7 +18,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_INPUT_PATH})
 aux_source_directory(. DIR_SRCS)
 ADD_EXECUTABLE(${PROJECT_NAME} ${EXECUTABLE_OUTPUT_PATH} ${DIR_SRCS})
 
-add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME}
+add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME} --state_recording=${TEST_STATE_RECORDING}
      WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 
 set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "fluid dynamics, Simbody")

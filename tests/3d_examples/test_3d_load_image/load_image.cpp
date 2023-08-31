@@ -34,17 +34,18 @@ class SolidBodyFromMesh : public ComplexShape
 //----------------------------------------------------------------------
 //	Main program begins here
 //----------------------------------------------------------------------
-int main()
+int main(int ac, char *av[])
 {
     //----------------------------------------------------------------------
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
-    SPHSystem system(system_domain_bounds, dp_0);
-    IOEnvironment io_environment(system);
+    SPHSystem sph_system(system_domain_bounds, dp_0);
+    sph_system.handleCommandlineOptions(ac, av);
+    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    RealBody imported_model(system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
+    RealBody imported_model(sph_system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
     imported_model.defineAdaptation<ParticleRefinementNearSurface>(1.15, 1.0, 2);
     imported_model.defineBodyLevelSetShape()->writeLevelSet(io_environment);
     imported_model.defineParticlesAndMaterial();
@@ -95,6 +96,7 @@ int main()
         }
     }
     std::cout << "The physics relaxation process of imported model finish !" << std::endl;
+
 
     return 0;
 }
