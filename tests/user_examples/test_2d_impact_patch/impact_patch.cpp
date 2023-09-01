@@ -11,7 +11,7 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 Real LL = 0.667;                        /**< Liquid column length. */
 Real LH = 2.0;                         /**< Liquid column height. */
-Real particle_spacing_ref = LL / 150;    /**< Initial reference particle spacing. */
+Real particle_spacing_ref = LL / 100;    /**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4;  /**< Extending width for boundary conditions. */
 BoundingBox system_domain_bounds(Vec2d(-LH, -LH), Vec2d(LL + BW, LH + BW));
 //----------------------------------------------------------------------
@@ -63,7 +63,7 @@ public:
     void update(size_t index_i, Real dt)
     {
         /** initial velocity profile */
-        if (pos_[index_i][1]>=0.0)
+        if (pos_[index_i][1] >= 0.0)
         {
             vel_[index_i][1] = -1.0;
         }
@@ -137,7 +137,7 @@ int main(int ac, char *av[])
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannCorrect> fluid_pressure_relaxation_correct(water_body_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemann> fluid_density_relaxation(water_body_inner);
-    InteractionWithUpdate<CorrectedConfigurationInner> corrected_configuration_fluid(water_body_inner, 2, 1.0);
+    InteractionWithUpdate<CorrectedConfigurationInner> corrected_configuration_fluid(water_body_inner, 0.1);
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceInner> fluid_density_by_summation(water_body_inner);
     SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_max);

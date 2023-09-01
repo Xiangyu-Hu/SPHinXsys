@@ -5,10 +5,10 @@ namespace SPH
 {
 //=================================================================================================//
 CorrectedConfigurationInner::
-    CorrectedConfigurationInner(BaseInnerRelation &inner_relation, int beta, Real alpha)
+    CorrectedConfigurationInner(BaseInnerRelation &inner_relation, Real alpha)
     : LocalDynamics(inner_relation.getSPHBody()),
       GeneralDataDelegateInner(inner_relation),
-      beta_(beta), alpha_(alpha),
+      alpha_(alpha),
       smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
       B_(*particles_->getVariableByName<Matd>("CorrectionMatrix")) {}
 //=================================================================================================//
@@ -29,16 +29,16 @@ void CorrectedConfigurationInner::interaction(size_t index_i, Real dt)
 //=================================================================================================//
 void CorrectedConfigurationInner::update(size_t index_i, Real dt)
 {
-    Real det_sqr = pow(B_[index_i].determinant(), beta_);
+    Real det_sqr = SMAX((alpha_ - B_[index_i].determinant()), 0.0);
     Matd inverse = B_[index_i].inverse();
-    Real weight1_ = det_sqr / (alpha_ * pow(smoothing_length_, beta_) + det_sqr);
-    Real weight2_ = alpha_ * pow(smoothing_length_, beta_) / (alpha_ * pow(smoothing_length_, beta_) + det_sqr);
+    Real weight1_ = B_[index_i].determinant() / (B_[index_i].determinant() + det_sqr);
+    Real weight2_ = det_sqr / (B_[index_i].determinant() + det_sqr);
     B_[index_i] = weight1_ * inverse + weight2_ * Matd::Identity();
 }
 //=================================================================================================//
 CorrectedConfigurationComplex::
-    CorrectedConfigurationComplex(ComplexRelation &complex_relation, int beta, Real alpha)
-    : CorrectedConfigurationInner(complex_relation.getInnerRelation(), beta, alpha),
+    CorrectedConfigurationComplex(ComplexRelation &complex_relation,Real alpha)
+    : CorrectedConfigurationInner(complex_relation.getInnerRelation(),alpha),
       GeneralDataDelegateContactOnly(complex_relation.getContactRelation())
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)

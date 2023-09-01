@@ -12,7 +12,7 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 Real LL = 1.0;                      /**< Liquid column length. */
 Real LH = 1.0;                      /**< Liquid column height. */
-Real particle_spacing_ref = LL/200; /**< Initial reference particle spacing. */
+Real particle_spacing_ref = LL/100; /**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4; /**< Extending width for boundary conditions. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(LL + BW, LH + BW));
 //----------------------------------------------------------------------
@@ -152,13 +152,14 @@ int main(int ac, char *av[])
     
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannCorrect> fluid_pressure_relaxation_correct(water_body_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemann> fluid_density_relaxation(water_body_inner);
-    InteractionWithUpdate<CorrectedConfigurationInner> corrected_configuration_fluid(water_body_inner, 2, 1.0);
+    InteractionWithUpdate<CorrectedConfigurationInner> corrected_configuration_fluid(water_body_inner, 0.3);
     SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_max);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
     /** We can output a method-specific particle data for debug */
     water_block.addBodyStateForRecording<Real>("Pressure");
     water_block.addBodyStateForRecording<int>("Indicator");
+    water_block.addBodyStateForRecording<Matd>("CorrectionMatrix");
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -251,9 +252,6 @@ int main(int ac, char *av[])
             }
             number_of_iterations++;
 
-            write_water_mechanical_energy.writeToFile(number_of_iterations);
-            write_recorded_water_pressure.writeToFile(number_of_iterations);
-
             /** Update cell linked list and configuration. */
             time_instance = TickCount::now();
             water_block.updateCellLinkedListWithParticleSort(100);
@@ -262,6 +260,9 @@ int main(int ac, char *av[])
             interval_updating_configuration += TickCount::now() - time_instance;     
         }
         body_states_recording.writeToFile();
+        write_water_mechanical_energy.writeToFile(number_of_iterations);
+        write_recorded_water_pressure.writeToFile(number_of_iterations);
+
         TickCount t2 = TickCount::now();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
