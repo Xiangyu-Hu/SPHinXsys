@@ -68,7 +68,6 @@ public:
         /** initial velocity profile */
         vel_[index_i][0] =  omega * pos_[index_i][1];
         vel_[index_i][1] = -omega * pos_[index_i][0];
-
         /** initial pressure */
         for (size_t m = 0; m!= 100; ++m)
         {
