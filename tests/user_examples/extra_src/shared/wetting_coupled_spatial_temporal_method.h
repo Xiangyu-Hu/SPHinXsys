@@ -40,16 +40,16 @@ namespace fluid_dynamics
 /**
  * @class NonWettingSurfaceIndication
  * @brief Non wetting surface particles include free-surface ones and interfacial ones near the non-wetted structure.
- * @brief Even the position divergence of interfacial fluid pariticles has satisfied with the threshold of spatial-temporal 
-   identification approach to be identified as internal ones,they will remain as free-surface ones if without 
+ * @brief Even the position divergence of interfacial fluid pariticles has satisfied with the threshold of spatial-temporal
+   identification approach to be identified as internal ones,they will remain as free-surface ones if without
    any wetted neighboring solid particles.
  */
 class NonWettingSurfaceIndication : public FreeSurfaceIndicationComplex
 {
   public:
     NonWettingSurfaceIndication(BaseInnerRelation &inner_relation,
-                                               BaseContactRelation &contact_relation, Real threshold = 0.75, Real criterion = 0.99);
-    explicit NonWettingSurfaceIndication(ComplexRelation &complex_relation, Real threshold = 0.75, Real criterion = 0.99);
+                                BaseContactRelation &contact_relation, Real threshold = 0.75);
+    explicit NonWettingSurfaceIndication(ComplexRelation &complex_relation, Real threshold = 0.75);
     virtual ~NonWettingSurfaceIndication(){};
 
     inline void interaction(size_t index_i, Real dt = 0.0)
@@ -59,40 +59,18 @@ class NonWettingSurfaceIndication : public FreeSurfaceIndicationComplex
         Real pos_div = 0.0;
         for (size_t k = 0; k < contact_configuration_.size(); ++k)
         {
+            StdLargeVec<Real> &wetting_k = *(contact_phi_[k]);
             Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
             {
-                pos_div -= contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.r_ij_[n];
+                size_t index_j = contact_neighborhood.j_[n];
+                pos_div -= wetting_k[index_j] * contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.r_ij_[n];
             }
         }
         pos_div_[index_i] += pos_div;
-
-        if (pos_div_[index_i] > this->threshold_by_dimensions_)
-        {
-            for (size_t k = 0; k < contact_configuration_.size(); ++k)
-            {
-                Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
-                for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-                {
-                    size_t j = contact_neighborhood.j_[n];
-                    if ((*(contact_phi_[k]))[j] > wetting_criterion)
-                    {
-                        pos_div_[index_i] = 2.0 * this->threshold_by_dimensions_;
-                        break;
-                    }
-                    else
-                    {
-                        pos_div_[index_i] = 0.5 * this->threshold_by_dimensions_;
-                    }
-                }
-                if (pos_div_[index_i] == 2.0 * this->threshold_by_dimensions_)
-                    break;
-            }
-        }
     };
 
   protected:
-    Real wetting_criterion;
     StdVec<StdLargeVec<Real> *> contact_phi_;
 };
 
@@ -100,7 +78,6 @@ using WettingCoupledSpatialTemporalFreeSurfaceIdentificationComplex =
     SpatialTemporalFreeSurfaceIdentification<NonWettingSurfaceIndication>;
 using SpatialTemporalFreeSurfaceIdentificationComplex =
     SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIndicationComplex>;
-
 
 } // namespace fluid_dynamics
 } // namespace SPH
