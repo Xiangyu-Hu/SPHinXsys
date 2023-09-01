@@ -84,7 +84,6 @@ public:
                 }               
             }
         }
-
         rho_[index_i] = p_[index_i]/ pow(c_f,2) + rho0_f;
     }
 
