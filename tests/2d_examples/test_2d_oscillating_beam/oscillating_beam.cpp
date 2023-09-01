@@ -21,7 +21,7 @@ Real BW = resolution_ref * 4; // boundary width, at least three particles
 BoundingBox system_domain_bounds(Vec2d(-SL - BW, -PL / 2.0),
                                  Vec2d(PL + 3.0 * BW, PL / 2.0));
 //----------------------------------------------------------------------
-//	Material properties of the fluid.
+//	Material properties of the solid.
 //----------------------------------------------------------------------
 Real rho0_s = 1.0e3;         // reference density
 Real Youngs_modulus = 2.0e6; // reference Youngs modulus

@@ -96,7 +96,7 @@ class Kernel
     virtual Vec3d e(const Real &distance, const Vec3d &displacement) const { return displacement / (distance + TinyReal); };
     
     /**
-     * check if particles are within cutOff radius
+     * check if particles are within cutoff radius
      */
     virtual bool checkIfWithinCutOffRadius(Vec2d displacement)
     {
