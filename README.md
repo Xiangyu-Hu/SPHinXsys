@@ -42,7 +42,7 @@ Here, we present several short examples in flow, solid dynamics, fluid structure
 
 Through the unified computational framework in SPHinXsys, 
 the algorithms for particle methods are full compatible to those in the classical finite volume method (FVM). 
-The following example gives an example that the flow around cylinder problem is solved by FVM in SPHinXsys.      
+The following gives an example of the flow around cylinder problem solved by FVM in SPHinXsys.      
 
 <a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/user_examples/test_2d_FVM_flow_around_cylinder/2d_FVM_flow_around_cylinder.cpp"> 
 <img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/fvm-sphinxsys-flow-around-cylinder.gif" height="168px"></a>
