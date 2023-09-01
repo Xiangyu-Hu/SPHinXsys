@@ -301,12 +301,12 @@ jobs:
         run: cmake.exe --build C:\build --config Release --verbose
 
       - name: Zip build folder
-        run: 7z.exe a C:\build.7z "C:\build"
+        run: 7z.exe a build.7z "C:\build"
 
       - uses: actions/upload-artifact@v3
         with:
           name: Windows-build
-          path: C:\build.7z
+          path: build.7z
           if-no-files-found: error
           retention-days: 1
 
@@ -352,7 +352,7 @@ jobs:
           name: Windows-build
 
       - name: Unzip build folder
-        run: 7z.exe e C:\build.7z
+        run: 7z.exe e build.7z C:\build
 
       - name: Test with the first try
         id: first-try
