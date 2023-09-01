@@ -10,9 +10,9 @@ SET(BUILD_RELOAD_PATH "${EXECUTABLE_OUTPUT_PATH}/reload")
 aux_source_directory(. DIR_SRCS)
 ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})
 
-add_test(NAME ${PROJECT_NAME}_particle_relaxation COMMAND ${PROJECT_NAME} --r=true
+add_test(NAME ${PROJECT_NAME}_particle_relaxation COMMAND ${PROJECT_NAME} --relax=true --state_recording=${TEST_STATE_RECORDING}
     WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
-add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME} --r=false --i=true
+add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME}  --reload=true --state_recording=${TEST_STATE_RECORDING}
     WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 
 set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "contact, Simbody")

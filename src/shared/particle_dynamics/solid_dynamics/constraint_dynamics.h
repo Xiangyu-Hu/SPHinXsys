@@ -1,30 +1,30 @@
-/* -------------------------------------------------------------------------*
- *								SPHinXsys									*
- * -------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic*
- * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
- * (smoothed particle hydrodynamics), a meshless computational method using	*
- * particle discretization.													*
- *																			*
- * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
- *  HU1527/12-1 and HU1527/12-4												*
- *                                                                          *
- * Portions copyright (c) 2017-2022 Technical University of Munich and		*
- * the authors' affiliations.												*
- *                                                                          *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
- * not use this file except in compliance with the License. You may obtain a*
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
- *                                                                          *
- * ------------------------------------------------------------------------*/
+/* ------------------------------------------------------------------------- *
+ *                                SPHinXsys                                  *
+ * ------------------------------------------------------------------------- *
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle *
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for    *
+ * physical accurate simulation and aims to model coupled industrial dynamic *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH   *
+ * (smoothed particle hydrodynamics), a meshless computational method using  *
+ * particle discretization.                                                  *
+ *                                                                           *
+ * SPHinXsys is partially funded by German Research Foundation               *
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
+ *  HU1527/12-1 and HU1527/12-4.                                             *
+ *                                                                           *
+ * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * the authors' affiliations.                                                *
+ *                                                                           *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
+ * not use this file except in compliance with the License. You may obtain a *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
+ *                                                                           *
+ * ------------------------------------------------------------------------- */
 /**
  * @file 	constraint_dynamics.h
  * @brief 	Here, we define the algorithm classes for solid dynamics.
  * @details We consider here a weakly compressible solids.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef CONSTRAINT_DYNAMICS_H
@@ -37,6 +37,7 @@
 #include "general_dynamics.h"
 #include "solid_body.h"
 #include "solid_particles.h"
+#include "all_simbody.h"
 
 namespace SPH
 {
@@ -258,19 +259,19 @@ class ConstraintBySimBody : public BaseMotionConstraint<DynamicsIdentifier>
     void update(size_t index_i, Real dt = 0.0)
     {
         /** Change to SimTK::Vector. */
-        SimTK::Vec3 rr, pos, vel, acc;
+        SimTKVec3 rr, pos, vel, acc;
         rr = EigenToSimTK(upgradeToVec3d(this->pos0_[index_i])) - initial_mobod_origin_location_;
         mobod_.findStationLocationVelocityAndAccelerationInGround(*simbody_state_, rr, pos, vel, acc);
         /** this is how we calculate the particle position in after transform of MBbody.
          * const SimTK::Rotation&  R_GB = mobod_.getBodyRotation(simbody_state);
-         * const SimTK::Vec3&      p_GB = mobod_.getBodyOriginLocation(simbody_state);
-         * const SimTK::Vec3 r = R_GB * rr; // re-express station vector p_BS in G (15 flops)
+         * const SimTKVec3&      p_GB = mobod_.getBodyOriginLocation(simbody_state);
+         * const SimTKVec3 r = R_GB * rr; // re-express station vector p_BS in G (15 flops)
          * base_particle_data_i.pos_ = (p_GB + r);
          */
         degradeToVecd(SimTKToEigen(pos), this->pos_[index_i]);
         degradeToVecd(SimTKToEigen(vel), this->vel_[index_i]);
 
-        SimTK::Vec3 n = (mobod_.getBodyRotation(*simbody_state_) * EigenToSimTK(upgradeToVec3d(this->n0_[index_i])));
+        SimTKVec3 n = (mobod_.getBodyRotation(*simbody_state_) * EigenToSimTK(upgradeToVec3d(this->n0_[index_i])));
         degradeToVecd(SimTKToEigen(n), this->n_[index_i]);
     };
 
@@ -279,7 +280,7 @@ class ConstraintBySimBody : public BaseMotionConstraint<DynamicsIdentifier>
     SimTK::MobilizedBody &mobod_;
     SimTK::RungeKuttaMersonIntegrator &integ_;
     const SimTK::State *simbody_state_;
-    SimTK::Vec3 initial_mobod_origin_location_;
+    SimTKVec3 initial_mobod_origin_location_;
 };
 using ConstraintBodyBySimBody = ConstraintBySimBody<SPHBody>;
 using ConstraintBodyPartBySimBody = ConstraintBySimBody<BodyPartByParticle>;
@@ -301,7 +302,7 @@ class TotalForceForSimBody
     SimTK::MobilizedBody &mobod_;
     SimTK::RungeKuttaMersonIntegrator &integ_;
     const SimTK::State *simbody_state_;
-    SimTK::Vec3 current_mobod_origin_location_;
+    SimTKVec3 current_mobod_origin_location_;
 
   public:
     TotalForceForSimBody(DynamicsIdentifier &identifier,
@@ -309,7 +310,7 @@ class TotalForceForSimBody
                          SimTK::MobilizedBody &mobod,
                          SimTK::RungeKuttaMersonIntegrator &integ)
         : BaseLocalDynamicsReduce<SimTK::SpatialVec, ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>(
-              identifier, SimTK::SpatialVec(SimTK::Vec3(0), SimTK::Vec3(0))),
+              identifier, SimTK::SpatialVec(SimTKVec3(0), SimTKVec3(0))),
           SolidDataSimple(identifier.getSPHBody()), mass_(particles_->mass_),
           acc_(particles_->acc_), acc_prior_(particles_->acc_prior_),
           pos_(particles_->pos_),
@@ -330,9 +331,9 @@ class TotalForceForSimBody
     SimTK::SpatialVec reduce(size_t index_i, Real dt = 0.0)
     {
         Vecd force = (acc_[index_i] + acc_prior_[index_i]) * mass_[index_i];
-        SimTK::Vec3 force_from_particle = EigenToSimTK(upgradeToVec3d(force));
-        SimTK::Vec3 displacement = EigenToSimTK(upgradeToVec3d(pos_[index_i])) - current_mobod_origin_location_;
-        SimTK::Vec3 torque_from_particle = SimTK::cross(displacement, force_from_particle);
+        SimTKVec3 force_from_particle = EigenToSimTK(upgradeToVec3d(force));
+        SimTKVec3 displacement = EigenToSimTK(upgradeToVec3d(pos_[index_i])) - current_mobod_origin_location_;
+        SimTKVec3 torque_from_particle = SimTK::cross(displacement, force_from_particle);
 
         return SimTK::SpatialVec(torque_from_particle, force_from_particle);
     };

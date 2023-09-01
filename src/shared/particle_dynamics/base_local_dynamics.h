@@ -1,30 +1,30 @@
-/* -------------------------------------------------------------------------*
- *								SPHinXsys									*
- * -------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic*
- * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
- * (smoothed particle hydrodynamics), a meshless computational method using	*
- * particle discretization.													*
- *																			*
- * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
- *  HU1527/12-1 and HU1527/12-4													*
- *                                                                          *
- * Portions copyright (c) 2017-2022 Technical University of Munich and		*
- * the authors' affiliations.												*
- *                                                                          *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
- * not use this file except in compliance with the License. You may obtain a*
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
- *                                                                          *
- * ------------------------------------------------------------------------*/
+/* ------------------------------------------------------------------------- *
+ *                                SPHinXsys                                  *
+ * ------------------------------------------------------------------------- *
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle *
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for    *
+ * physical accurate simulation and aims to model coupled industrial dynamic *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH   *
+ * (smoothed particle hydrodynamics), a meshless computational method using  *
+ * particle discretization.                                                  *
+ *                                                                           *
+ * SPHinXsys is partially funded by German Research Foundation               *
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
+ *  HU1527/12-1 and HU1527/12-4.                                             *
+ *                                                                           *
+ * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * the authors' affiliations.                                                *
+ *                                                                           *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
+ * not use this file except in compliance with the License. You may obtain a *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
+ *                                                                           *
+ * ------------------------------------------------------------------------- */
 /**
  * @file    base_local_dynamics.h
  * @brief 	This is for the base classes of local particle dynamics, which describe the
  * 			dynamics of a particle and it neighbors.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang, Chenxi Zhao and Xiangyu Hu
  */
 
 #ifndef BASE_LOCAL_DYNAMICS_H
@@ -36,33 +36,78 @@
 
 namespace SPH
 {
-/** A Functor for Summation */
+//----------------------------------------------------------------------
+// Particle group scope functors
+//----------------------------------------------------------------------
+class AllParticles
+{
+  public:
+    AllParticles(BaseParticles *base_particles){};
+    bool operator()(size_t index_i)
+    {
+        return true;
+    };
+};
+
+template <int INDICATOR>
+class IndicatedParticles
+{
+    StdLargeVec<int> &indicator_;
+
+  public:
+    IndicatedParticles(BaseParticles *base_particles)
+        : indicator_(*base_particles->getVariableByName<int>("Indicator")){};
+    bool operator()(size_t index_i)
+    {
+        return indicator_[index_i] == INDICATOR;
+    };
+};
+
+using BulkParticles = IndicatedParticles<0>;
+
+template <int INDICATOR>
+class NotIndicatedParticles
+{
+    StdLargeVec<int> &indicator_;
+
+  public:
+    NotIndicatedParticles(BaseParticles *base_particles)
+        : indicator_(*base_particles->getVariableByName<int>("Indicator")){};
+    bool operator()(size_t index_i)
+    {
+        return indicator_[index_i] != INDICATOR;
+    };
+};
+
+//----------------------------------------------------------------------
+// Particle reduce functors
+//----------------------------------------------------------------------
 template <class ReturnType>
 struct ReduceSum
 {
     ReturnType operator()(const ReturnType &x, const ReturnType &y) const { return x + y; };
 };
-/** A Functor for Maximum */
+
 struct ReduceMax
 {
     Real operator()(Real x, Real y) const { return SMAX(x, y); };
 };
-/** A Functor for Minimum */
+
 struct ReduceMin
 {
     Real operator()(Real x, Real y) const { return SMIN(x, y); };
 };
-/** A Functor for OR operator */
+
 struct ReduceOR
 {
     bool operator()(bool x, bool y) const { return x || y; };
 };
-/** A Functor for AND operator */
+
 struct ReduceAND
 {
     bool operator()(bool x, bool y) const { return x && y; };
 };
-/** A Functor for lower bound */
+
 struct ReduceLowerBound
 {
     Vecd operator()(const Vecd &x, const Vecd &y) const
@@ -73,7 +118,6 @@ struct ReduceLowerBound
         return lower_bound;
     };
 };
-/** A Functor for upper bound */
 struct ReduceUpperBound
 {
     Vecd operator()(const Vecd &x, const Vecd &y) const

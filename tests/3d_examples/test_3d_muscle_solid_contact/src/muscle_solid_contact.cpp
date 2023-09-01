@@ -35,8 +35,8 @@ class Myocardium : public ComplexShape
   public:
     explicit Myocardium(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transformd(translation_myocardium), halfsize_myocardium);
-        add<TransformShape<GeometricShapeBox>>(Transformd(translation_stationary_plate), halfsize_stationary_plate);
+        add<TransformShape<GeometricShapeBox>>(Transform(translation_myocardium), halfsize_myocardium);
+        add<TransformShape<GeometricShapeBox>>(Transform(translation_stationary_plate), halfsize_stationary_plate);
     }
 };
 /**
@@ -47,22 +47,23 @@ class MovingPlate : public ComplexShape
   public:
     explicit MovingPlate(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transformd(translation_moving_plate), halfsize_moving_plate);
+        add<TransformShape<GeometricShapeBox>>(Transform(translation_moving_plate), halfsize_moving_plate);
     }
 };
 /**
  *  The main program
  */
-int main()
+int main(int ac, char *av[])
 {
     /** Setup the system. Please the make sure the global domain bounds are correctly defined. */
-    SPHSystem system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    sph_system.handleCommandlineOptions(ac, av);
     /** Creat a Myocardium body, corresponding material, particles and reaction model. */
-    SolidBody myocardium_body(system, makeShared<Myocardium>("MyocardiumBody"));
+    SolidBody myocardium_body(sph_system, makeShared<Myocardium>("MyocardiumBody"));
     myocardium_body.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     myocardium_body.generateParticles<ParticleGeneratorLattice>();
     /** Plate. */
-    SolidBody moving_plate(system, makeShared<MovingPlate>("MovingPlate"));
+    SolidBody moving_plate(sph_system, makeShared<MovingPlate>("MovingPlate"));
     moving_plate.defineParticlesAndMaterial<SolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     moving_plate.generateParticles<ParticleGeneratorLattice>();
     /** topology */
@@ -76,7 +77,7 @@ int main()
     SimpleDynamics<TimeStepInitialization> myocardium_initialize_time_step(myocardium_body);
     SimpleDynamics<TimeStepInitialization> moving_plate_initialize_time_step(moving_plate);
     /** Corrected configuration. */
-    InteractionDynamics<solid_dynamics::CorrectConfiguration> corrected_configuration(myocardium_body_inner);
+    InteractionWithUpdate<CorrectedConfigurationInner> corrected_configuration(myocardium_body_inner);
     /** Time step size calculation. */
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(myocardium_body);
     /** active and passive stress relaxation. */
@@ -89,14 +90,14 @@ int main()
     InteractionDynamics<solid_dynamics::ContactForce> plate_compute_solid_contact_forces(plate_myocardium_contact);
     /** Constrain the holder. */
     BodyRegionByParticle holder(myocardium_body,
-                                makeShared<TransformShape<GeometricShapeBox>>(Transformd(translation_stationary_plate), halfsize_stationary_plate, "Holder"));
+                                makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_stationary_plate), halfsize_stationary_plate, "Holder"));
     SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_holder(holder);
     /** Damping with the solid body*/
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
         muscle_damping(0.1, myocardium_body_inner, "Velocity", physical_viscosity);
     /** Output */
-    IOEnvironment io_environment(system);
-    BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
+    IOEnvironment io_environment(sph_system);
+    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
     /** Simbody interface. */
     /**
      * The multi body system from simbody.
@@ -109,15 +110,15 @@ int main()
     SimTK::CableTrackerSubsystem cables(MBsystem);
     /** mass properties of the fixed spot. */
     SolidBodyPartForSimbody plate_multibody(moving_plate,
-                                            makeShared<TransformShape<GeometricShapeBox>>(Transformd(translation_moving_plate), halfsize_moving_plate, "Plate"));
+                                            makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_moving_plate), halfsize_moving_plate, "Plate"));
     /** Mass properties of the constrained spot.
      * SimTK::MassProperties(mass, center of mass, inertia)
      */
     SimTK::Body::Rigid rigid_info(*plate_multibody.body_part_mass_properties_);
     SimTK::MobilizedBody::Slider
-        plateMBody(matter.Ground(), SimTK::Transform(SimTK::Vec3(0)), rigid_info, SimTK::Transform(SimTK::Vec3(0)));
+        plateMBody(matter.Ground(), SimTK::Transform(SimTKVec3(0)), rigid_info, SimTK::Transform(SimTKVec3(0)));
     /** Gravity. */
-    SimTK::Force::UniformGravity sim_gravity(forces, matter, SimTK::Vec3(Real(-100.0), 0.0, 0.0));
+    SimTK::Force::UniformGravity sim_gravity(forces, matter, SimTKVec3(Real(-100.0), 0.0, 0.0));
     /** discrete forces acting on the bodies. */
     SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
     /** Damper. */
@@ -138,8 +139,8 @@ int main()
      * Set the starting time.
      */
     GlobalStaticVariables::physical_time_ = 0.0;
-    system.initializeSystemCellLinkedLists();
-    system.initializeSystemConfigurations();
+    sph_system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemConfigurations();
     /** apply initial condition */
     corrected_configuration.exec();
     write_states.writeToFile(0);
@@ -209,6 +210,7 @@ int main()
     TimeInterval tt;
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+
 
     return 0;
 }

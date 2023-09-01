@@ -1,30 +1,30 @@
-/* -------------------------------------------------------------------------*
- *								SPHinXsys									*
- * -------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle*
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic*
- * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
- * (smoothed particle hydrodynamics), a meshless computational method using	*
- * particle discretization.													*
- *																			*
- * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
- *  HU1527/12-1 and HU1527/12-4													*
- *                                                                          *
- * Portions copyright (c) 2017-2022 Technical University of Munich and		*
- * the authors' affiliations.												*
- *                                                                          *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may  *
- * not use this file except in compliance with the License. You may obtain a*
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.       *
- *                                                                          *
- * ------------------------------------------------------------------------*/
+/* ------------------------------------------------------------------------- *
+ *                                SPHinXsys                                  *
+ * ------------------------------------------------------------------------- *
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle *
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for    *
+ * physical accurate simulation and aims to model coupled industrial dynamic *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH   *
+ * (smoothed particle hydrodynamics), a meshless computational method using  *
+ * particle discretization.                                                  *
+ *                                                                           *
+ * SPHinXsys is partially funded by German Research Foundation               *
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
+ *  HU1527/12-1 and HU1527/12-4.                                             *
+ *                                                                           *
+ * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * the authors' affiliations.                                                *
+ *                                                                           *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
+ * not use this file except in compliance with the License. You may obtain a *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
+ *                                                                           *
+ * ------------------------------------------------------------------------- */
 /**
  * @file 	electro_physiology.h
  * @brief 	In is file, we declaim the dynamics relevant to electrophysiology,
  * 			including diffusion, reaction and muscle activation.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef ELECTRO_PHYSIOLOGY_H
@@ -145,11 +145,6 @@ class ElectroPhysiologyReducedParticles : public ElectroPhysiologyParticles
     /** Destructor. */
     virtual ~ElectroPhysiologyReducedParticles(){};
     virtual ElectroPhysiologyReducedParticles *ThisObjectPtr() override { return this; };
-
-    virtual Vecd getKernelGradient(size_t particle_index_i, size_t particle_index_j, Real dW_ijV_j, Vecd &e_ij) override
-    {
-        return dW_ijV_j * e_ij;
-    };
 };
 
 namespace electro_physiology
@@ -186,21 +181,21 @@ class GetElectroPhysiologyTimeStepSize : public GetDiffusionTimeStepSize<Electro
         : GetDiffusionTimeStepSize<ElectroPhysiologyParticles>(real_body){};
     virtual ~GetElectroPhysiologyTimeStepSize(){};
 };
+
+using ElectroPhysiologyDiffusionRelaxationInner = DiffusionRelaxationInner<ElectroPhysiologyParticles, CorrectedKernelGradientInner>;
 /**
- * @class ElectroPhysiologyDiffusionRelaxationInner
+ * @class ElectroPhysiologyDiffusionInnerRK2
  * @brief Compute the diffusion relaxation process
  */
-class ElectroPhysiologyDiffusionRelaxationInner
-    : public DiffusionRelaxationRK2<
-          DiffusionRelaxationInner<ElectroPhysiologyParticles>>
+class ElectroPhysiologyDiffusionInnerRK2
+    : public DiffusionRelaxationRK2<ElectroPhysiologyDiffusionRelaxationInner>
 {
   public:
-    explicit ElectroPhysiologyDiffusionRelaxationInner(BaseInnerRelation &inner_relation)
+    explicit ElectroPhysiologyDiffusionInnerRK2(BaseInnerRelation &inner_relation)
         : DiffusionRelaxationRK2(inner_relation){};
-    virtual ~ElectroPhysiologyDiffusionRelaxationInner(){};
+    virtual ~ElectroPhysiologyDiffusionInnerRK2(){};
 };
 
-using DiffusionRelaxationInner = DiffusionRelaxationInner<ElectroPhysiologyParticles>;
 using DiffusionRelaxationWithDirichletContact = DiffusionRelaxationDirichlet<ElectroPhysiologyParticles, ElectroPhysiologyParticles>;
 /**
  * @class ElectroPhysiologyDiffusionRelaxationComplex
@@ -208,11 +203,11 @@ using DiffusionRelaxationWithDirichletContact = DiffusionRelaxationDirichlet<Ele
  */
 class ElectroPhysiologyDiffusionRelaxationComplex
     : public DiffusionRelaxationRK2<
-          ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>
+          ComplexInteraction<ElectroPhysiologyDiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>
 {
   public:
-    explicit ElectroPhysiologyDiffusionRelaxationComplex(BaseInnerRelation &inner_relation, BaseContactRelation &body_contact_relation_Dirichlet)
-        : DiffusionRelaxationRK2<ComplexInteraction<DiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>(inner_relation, body_contact_relation_Dirichlet){};
+    explicit ElectroPhysiologyDiffusionRelaxationComplex(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation)
+        : DiffusionRelaxationRK2<ComplexInteraction<ElectroPhysiologyDiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>(inner_relation, contact_relation){};
     virtual ~ElectroPhysiologyDiffusionRelaxationComplex(){};
 };
 

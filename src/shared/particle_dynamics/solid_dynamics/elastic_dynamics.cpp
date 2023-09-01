@@ -20,7 +20,7 @@ Real AcousticTimeStepSize::reduce(size_t index_i, Real dt)
 {
     // since the particle does not change its configuration in pressure relaxation step
     // I chose a time-step size according to Eulerian method
-    return CFL_ * SMIN(sqrt(smoothing_length_ / ((acc_[index_i] + acc_prior_[index_i]).norm() + TinyReal)),
+    return CFL_ * SMIN((Real)sqrt(smoothing_length_ / ((acc_[index_i] + acc_prior_[index_i]).norm() + TinyReal)),
                        smoothing_length_ / (c0_ + vel_[index_i].norm()));
 }
 //=================================================================================================//
@@ -70,8 +70,7 @@ Integration1stHalf::
     numerical_dissipation_factor_ = 0.25;
 }
 //=================================================================================================//
-Integration1stHalfPK2::
-    Integration1stHalfPK2(BaseInnerRelation &inner_relation)
+Integration1stHalfPK2::Integration1stHalfPK2(BaseInnerRelation &inner_relation)
     : Integration1stHalf(inner_relation){};
 //=================================================================================================//
 void Integration1stHalfPK2::initialization(size_t index_i, Real dt)
@@ -81,7 +80,7 @@ void Integration1stHalfPK2::initialization(size_t index_i, Real dt)
     rho_[index_i] = rho0_ / F_[index_i].determinant();
     // obtain the first Piola-Kirchhoff stress from the second Piola-Kirchhoff stress
     // it seems using reproducing correction here increases convergence rate near the free surface
-    stress_PK1_B_[index_i] = F_[index_i] * elastic_solid_.StressPK2(F_[index_i], index_i) * B_[index_i];
+    stress_PK1_B_[index_i] = elastic_solid_.StressPK1(F_[index_i], index_i) * B_[index_i];
 }
 //=================================================================================================//
 Integration1stHalfKirchhoff::
