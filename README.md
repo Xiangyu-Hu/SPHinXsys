@@ -37,6 +37,8 @@ Here, we present several short examples in flow, solid dynamics, fluid structure
 <img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/twisting.gif" height="168px"></a>
 <a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/user_examples/test_2d_flow_stream_around_fish/2d_flow_stream_around_fish.cpp"> 
 <img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/fish-swimming.gif" height="168px"></a>
+<a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/user_examples/test_2d_FVM_flow_around_cylinder/2d_FVM_flow_around_cylinder.cpp"> 
+<img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/fvm-sphinxsys-flow-around-cylinder.gif" height="168px"></a>
 
 ## Journal publications
 
@@ -89,7 +91,7 @@ Volume 236, (2021) 109540
 
 13. Yongchuan Yu, Yujie Zhu, Chi Zhang, Oskar J. Haidn, Xiangyu Hu, "Level-set based pre-processing techniques for particle method", Computer Physics Communications 289, 108744, 2023.
 
-14. Shuoguo Zhang, Wenbin Zhang, Chi Zhang, Xiangyu Hu, "A Lagrangian free-stream boundary condition for weakly compressible smoothed particle hydrodynamics", Journal of Computational Physics, in press, 2023.
+14. Shuoguo Zhang, Wenbin Zhang, Chi Zhang, Xiangyu Hu, "A Lagrangian free-stream boundary condition for weakly compressible smoothed particle hydrodynamics", Journal of Computational Physics, 490, 112303, 2023.
 
 ## Software Architecture
 
