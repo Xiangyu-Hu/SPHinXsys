@@ -1,12 +1,12 @@
 name: CI
 
-# Controls when the action will run. 
+# Controls when the action will run.
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -16,7 +16,6 @@ env:
 
 # A workflow is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-
   ###############################################################################
   Linux-float:
     runs-on: ubuntu-22.04
@@ -47,7 +46,7 @@ jobs:
           key: ${{ github.job }}
 
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
-        with: 
+        with:
           committish: ${{ env.VCPKG_VERSION }}
           cache: false
 
@@ -78,11 +77,11 @@ jobs:
             -D SPHINXSYS_CI=ON \
             -S ${{github.workspace}} \
             -B ${{github.workspace}}/build
-            
+
       - name: Build using float
         run: cmake --build build --config Release --verbose
 
-  ###############################################################################   
+  ###############################################################################
   Linux-build:
     runs-on: ubuntu-22.04
     env:
@@ -112,7 +111,7 @@ jobs:
           key: ${{ github.job }}
 
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
-        with: 
+        with:
           committish: ${{ env.VCPKG_VERSION }}
           cache-version: ${{env.VCPKG_VERSION}}
 
@@ -144,7 +143,7 @@ jobs:
             -D SPHINXSYS_MODULE_OPENCASCADE=ON \
             -S ${{github.workspace}} \
             -B ${{github.workspace}}/build
-            
+
       - name: Build using double
         run: cmake --build build --config Release --verbose
 
@@ -183,7 +182,7 @@ jobs:
             libgl-dev
 
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
-        with: 
+        with:
           committish: ${{ env.VCPKG_VERSION }}
           cache-version: ${{env.VCPKG_VERSION}}
 
@@ -219,7 +218,7 @@ jobs:
 
       - name: Test with the second try for failed cases
         id: second-try
-        if: ${{ steps.first-try.outcome == 'failure' }} 
+        if: ${{ steps.first-try.outcome == 'failure' }}
         run: |
           cd build 
           ctest --rerun-failed --output-on-failure
@@ -227,7 +226,7 @@ jobs:
 
       - name: Test with the third try for failed cases
         id: third-try
-        if: ${{ steps.second-try.outcome == 'failure' }} 
+        if: ${{ steps.second-try.outcome == 'failure' }}
         run: |
           cd build 
           ctest --rerun-failed --output-on-failure
@@ -235,14 +234,14 @@ jobs:
 
       - name: Test with the fourth try for failed cases
         id: fourth-try
-        if: ${{ steps.third-try.outcome == 'failure' }} 
+        if: ${{ steps.third-try.outcome == 'failure' }}
         run: |
           cd build 
           ctest --rerun-failed --output-on-failure
         continue-on-error: true
 
       - name: Test with the last try for failed cases
-        if: ${{ steps.fourth-try.outcome == 'failure' }} 
+        if: ${{ steps.fourth-try.outcome == 'failure' }}
         run: |
           cd build 
           ctest --rerun-failed --output-on-failure
@@ -256,20 +255,20 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3 # Checks-out the repository under ${{github.workspace}}
-      
+
       - name: Update ccache and ninja # For correct caching with ccache on Windows
         shell: bash
         run: |
           choco install ccache
           choco install ninja
           choco install 7zip
-          
+
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: ${{ github.job }}
 
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
-        with: 
+        with:
           committish: ${{ env.VCPKG_VERSION }}
           cache-version: ${{env.VCPKG_VERSION}}
 
@@ -283,7 +282,7 @@ jobs:
             simbody `
             gtest `
             xsimd `
-            pybind11 
+            pybind11
 
       - uses: ilammy/msvc-dev-cmd@v1
 
@@ -297,7 +296,7 @@ jobs:
             -D TEST_STATE_RECORDING=OFF `
             -S ${{github.workspace}} `
             -B C:\build
-      
+
       - name: Build
         run: cmake.exe --build C:\build --config Release --verbose
 
@@ -316,82 +315,82 @@ jobs:
     runs-on: windows-latest
     env:
       VCPKG_DEFAULT_TRIPLET: x64-windows
-        
-    steps:
-     - uses: actions/checkout@v3 # Checks-out the repository under ${{github.workspace}}
-              
-     - name: Update ccache and ninja # For correct caching with ccache on Windows
-       shell: bash
-       run: |
-         choco install ccache
-         choco install ninja
-         choco install 7zip
 
-     - uses: hendrikmuhs/ccache-action@v1.2
-       with:
-         key: ${{ github.job }}
-        
-     - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
-       with: 
-         committish: ${{ env.VCPKG_VERSION }}
-         cache-version: ${{env.VCPKG_VERSION}}
-        
-     - name: Install dependencies
-       run: |
-         ${{github.workspace}}\vcpkg\vcpkg.exe install --clean-after-build `
-           eigen3 `
-           tbb `
-           boost-program-options `
-           boost-geometry `
-           simbody `
-           gtest `
-           xsimd `
-           pybind11 
-        
-     - uses: actions/download-artifact@v3
-       with:
-         name: Windows-build
-    
-     - name: Unzip build folder
-       run: 7z.exe e C:\build.7z
-        
-     - name: Test with the first try
-       id: first-try
-       run: |
-         cd C:\build 
-         ctest.exe --output-on-failure
-       continue-on-error: true
-      
-     - name: Test with the second try for failed cases
-       id: second-try
-       if: ${{ steps.first-try.outcome == 'failure' }} 
-       run: |
-         cd C:\build 
-         ctest.exe --rerun-failed --output-on-failure
-       continue-on-error: true
-        
-     - name: Test with the third try for failed cases
-       id: third-try
-       if: ${{ steps.second-try.outcome == 'failure' }} 
-       run: |
-         cd C:\build 
-         ctest.exe --rerun-failed --output-on-failure
-       continue-on-error: true
-     
-     - name: Test with the fourth try for failed cases
-       id: fourth-try
-       if: ${{ steps.third-try.outcome == 'failure' }} 
-       run: |
-         cd C:\build 
-         ctest.exe --rerun-failed --output-on-failure
-       continue-on-error: true
-        
-     - name: Test with the last try for failed cases
-       if: ${{ steps.fourth-try.outcome == 'failure' }} 
-       run: |
-         cd C:\build 
-         ctest.exe --rerun-failed --output-on-failure
- 
+    steps:
+      - uses: actions/checkout@v3 # Checks-out the repository under ${{github.workspace}}
+
+      - name: Update ccache and ninja # For correct caching with ccache on Windows
+        shell: bash
+        run: |
+          choco install ccache
+          choco install ninja
+          choco install 7zip
+
+      - uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ github.job }}
+
+      - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
+        with:
+          committish: ${{ env.VCPKG_VERSION }}
+          cache-version: ${{env.VCPKG_VERSION}}
+
+      - name: Install dependencies
+        run: |
+          ${{github.workspace}}\vcpkg\vcpkg.exe install --clean-after-build `
+            eigen3 `
+            tbb `
+            boost-program-options `
+            boost-geometry `
+            simbody `
+            gtest `
+            xsimd `
+            pybind11
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: Windows-build
+
+      - name: Unzip build folder
+        run: 7z.exe e C:\build.7z
+
+      - name: Test with the first try
+        id: first-try
+        run: |
+          cd C:\build 
+          ctest.exe --output-on-failure
+        continue-on-error: true
+
+      - name: Test with the second try for failed cases
+        id: second-try
+        if: ${{ steps.first-try.outcome == 'failure' }}
+        run: |
+          cd C:\build 
+          ctest.exe --rerun-failed --output-on-failure
+        continue-on-error: true
+
+      - name: Test with the third try for failed cases
+        id: third-try
+        if: ${{ steps.second-try.outcome == 'failure' }}
+        run: |
+          cd C:\build 
+          ctest.exe --rerun-failed --output-on-failure
+        continue-on-error: true
+
+      - name: Test with the fourth try for failed cases
+        id: fourth-try
+        if: ${{ steps.third-try.outcome == 'failure' }}
+        run: |
+          cd C:\build 
+          ctest.exe --rerun-failed --output-on-failure
+        continue-on-error: true
+
+      - name: Test with the last try for failed cases
+        if: ${{ steps.fourth-try.outcome == 'failure' }}
+        run: |
+          cd C:\build 
+          ctest.exe --rerun-failed --output-on-failure
+
   ###############################################################################
 
   macOS-build:
@@ -422,7 +421,7 @@ jobs:
           key: ${{ github.job }}
 
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
-        with: 
+        with:
           committish: ${{ env.VCPKG_VERSION }}
           cache-version: ${{env.VCPKG_VERSION}}
 
@@ -459,7 +458,7 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: Linux-build
+          name: macOS-build
           path: ${{github.workspace}}/build.zip
           if-no-files-found: error
           retention-days: 1
@@ -491,7 +490,7 @@ jobs:
           key: ${{ github.job }}
 
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
-        with: 
+        with:
           committish: ${{ env.VCPKG_VERSION }}
           cache-version: ${{env.VCPKG_VERSION}}
 
@@ -510,11 +509,11 @@ jobs:
 
       - uses: actions/download-artifact@v3
         with:
-          name: Linux-build
-    
+          name: macOS-build
+
       - name: Unzip build folder
         run: unzip build.zip
-    
+
       - name: Test with the first try
         id: first-try
         run: |
@@ -524,7 +523,7 @@ jobs:
 
       - name: Test with the second try for failed cases
         id: second-try
-        if: ${{ steps.first-try.outcome == 'failure' }} 
+        if: ${{ steps.first-try.outcome == 'failure' }}
         run: |
           cd build 
           ctest --rerun-failed --output-on-failure
@@ -532,7 +531,7 @@ jobs:
 
       - name: Test with the third try for failed cases
         id: third-try
-        if: ${{ steps.second-try.outcome == 'failure' }} 
+        if: ${{ steps.second-try.outcome == 'failure' }}
         run: |
           cd build 
           ctest --rerun-failed --output-on-failure
@@ -540,14 +539,14 @@ jobs:
 
       - name: Test with the fourth try for failed cases
         id: fourth-try
-        if: ${{ steps.third-try.outcome == 'failure' }} 
+        if: ${{ steps.third-try.outcome == 'failure' }}
         run: |
           cd build 
           ctest --rerun-failed --output-on-failure
         continue-on-error: true
 
       - name: Test with the last try for failed cases
-        if: ${{ steps.fourth-try.outcome == 'failure' }} 
+        if: ${{ steps.fourth-try.outcome == 'failure' }}
         run: |
           cd build 
           ctest --rerun-failed --output-on-failure
