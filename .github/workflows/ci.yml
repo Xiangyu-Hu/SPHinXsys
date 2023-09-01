@@ -353,7 +353,7 @@ jobs:
          name: Windows-build
     
      - name: Unzip build folder
-       run: 7z.exe e C:\build.zip
+       run: 7z.exe e C:\build.7z
         
      - name: Test with the first try
        id: first-try
