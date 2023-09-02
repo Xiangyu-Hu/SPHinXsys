@@ -71,22 +71,22 @@ int main(int ac, char *av[])
     //	Build up an SPHSystem.
     //----------------------------------------------------------------------
     BoundingBox system_domain_bounds(Vecd(-BW, -BW, -BW), Vecd(DL + BW, DH + BW, DW + BW));
-    SPHSystem system(system_domain_bounds, resolution_ref);
-    system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(system);
+    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    sph_system.handleCommandlineOptions(ac, av);
+    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
+    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
 
-    SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
+    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<ParticleGeneratorLattice>();
     wall_boundary.addBodyStateForRecording<Vec3d>("NormalDirection");
 
-    ObserverBody fluid_observer(system, "FluidObserver");
+    ObserverBody fluid_observer(sph_system, "FluidObserver");
     fluid_observer.generateParticles<WaterObserverParticleGenerator>();
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -111,7 +111,7 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_water_block_states(io_environment, system.real_bodies_);
+    BodyStatesRecordingToVtp write_water_block_states(io_environment, sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
         write_water_mechanical_energy(io_environment, water_block, gravity_ptr);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
@@ -120,13 +120,13 @@ int main(int ac, char *av[])
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    system.initializeSystemCellLinkedLists();
-    system.initializeSystemConfigurations();
+    sph_system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
-    size_t number_of_iterations = system.RestartStep();
+    size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
     Real end_time = 20.0;
     Real output_interval = end_time / 20.0;
@@ -192,7 +192,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (system.generate_regression_data_)
+    if (sph_system.GenerateRegressionData())
     {
         write_water_mechanical_energy.generateDataBase(1.0e-3);
         write_recorded_water_pressure.generateDataBase(1.0e-3);
@@ -202,6 +202,7 @@ int main(int ac, char *av[])
         write_water_mechanical_energy.testResult();
         write_recorded_water_pressure.testResult();
     }
+
 
     return 0;
 }

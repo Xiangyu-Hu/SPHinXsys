@@ -60,18 +60,18 @@ class TimeDependentGravity : public Gravity
 int main(int ac, char *av[])
 {
     /** Setup the system. */
-    SPHSystem system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, resolution_ref);
 // handle command line arguments
 #ifdef BOOST_AVAILABLE
-    system.handleCommandlineOptions(ac, av);
+    sph_system.handleCommandlineOptions(ac, av);
 #endif /** output environment. */
 
     /** create a Cantilever body, corresponding material, particles and reaction model. */
-    SolidBody cantilever_body(system, makeShared<Cantilever>("CantileverBody"));
+    SolidBody cantilever_body(sph_system, makeShared<Cantilever>("CantileverBody"));
     cantilever_body.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     cantilever_body.generateParticles<ParticleGeneratorLattice>();
     /** Define Observer. */
-    ObserverBody cantilever_observer(system, "CantileverObserver");
+    ObserverBody cantilever_observer(sph_system, "CantileverObserver");
     cantilever_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 
     /** topology */
@@ -105,8 +105,8 @@ int main(int ac, char *av[])
     DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
         muscle_damping(0.1, cantilever_body_inner, "Velocity", physical_viscosity);
     /** Output */
-    IOEnvironment io_environment(system);
-    BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
+    IOEnvironment io_environment(sph_system);
+    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_displacement("Position", io_environment, cantilever_observer_contact);
     /**
@@ -114,8 +114,8 @@ int main(int ac, char *av[])
      * Set the starting time.
      */
     GlobalStaticVariables::physical_time_ = 0.0;
-    system.initializeSystemCellLinkedLists();
-    system.initializeSystemConfigurations();
+    sph_system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemConfigurations();
     corrected_configuration.exec();
     write_states.writeToFile(0);
     write_displacement.writeToFile(0);
@@ -166,7 +166,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (system.generate_regression_data_)
+    if (sph_system.GenerateRegressionData())
     {
         write_displacement.generateDataBase(1.0e-2);
     }
@@ -174,6 +174,7 @@ int main(int ac, char *av[])
     {
         write_displacement.testResult();
     }
+
 
     return 0;
 }

@@ -2,7 +2,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${SPHINXSYS_PROJECT_DIR}/cmake) # mai
 
 set(CMAKE_VERBOSE_MAKEFILE on)
 
-STRING( REGEX REPLACE ".*/(.*)" "\\1" CURRENT_FOLDER ${CMAKE_CURRENT_SOURCE_DIR} )
+STRING(REGEX REPLACE ".*/(.*)" "\\1" CURRENT_FOLDER ${CMAKE_CURRENT_SOURCE_DIR})
 PROJECT("${CURRENT_FOLDER}")
 
 SET(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin/")
@@ -22,14 +22,14 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/WaterBody_TotalMechan
         DESTINATION ${BUILD_INPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/WaterBody_TotalMechanicalEnergy_ensemble_averaged_mean_variance.xml
         DESTINATION ${BUILD_INPUT_PATH})
-            
+
 aux_source_directory(. DIR_SRCS)
 ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})
 
-add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME}
-                  WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
+add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME} --state_recording=${TEST_STATE_RECORDING}
+        WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 
 set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "periodic boundary, Eulerian")
 
-    set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
-    target_link_libraries(${PROJECT_NAME} extra_sources_2d)
+set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
+target_link_libraries(${PROJECT_NAME} extra_sources_2d)

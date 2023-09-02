@@ -56,33 +56,33 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
-    SPHSystem system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, resolution_ref);
     // Tag for run particle relaxation for the initial body fitted distribution.
-    system.setRunParticleRelaxation(false);
+    sph_system.setRunParticleRelaxation(false);
     // Tag for reload initially relaxed particles.
-    system.setReloadParticles(true);
+    sph_system.setReloadParticles(true);
 #ifdef BOOST_AVAILABLE
     // handle command line arguments
-    system.handleCommandlineOptions(ac, av);
+    sph_system.handleCommandlineOptions(ac, av);
 #endif
-    IOEnvironment io_environment(system);
+    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    SolidBody coil(system, makeShared<Coil>("Coil"));
+    SolidBody coil(sph_system, makeShared<Coil>("Coil"));
     coil.defineBodyLevelSetShape()->writeLevelSet(io_environment);
     coil.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-    (!system.RunParticleRelaxation() && system.ReloadParticles())
+    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? coil.generateParticles<ParticleGeneratorReload>(io_environment, coil.getName())
         : coil.generateParticles<ParticleGeneratorLattice>();
 
-    SolidBody stationary_plate(system, makeShared<StationaryPlate>("StationaryPlate"));
+    SolidBody stationary_plate(sph_system, makeShared<StationaryPlate>("StationaryPlate"));
     stationary_plate.defineParticlesAndMaterial<SolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     stationary_plate.generateParticles<ParticleGeneratorLattice>();
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -94,7 +94,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	check whether run particle relaxation for body fitted particle distribution.
     //----------------------------------------------------------------------
-    if (system.RunParticleRelaxation())
+    if (sph_system.RunParticleRelaxation())
     {
         //----------------------------------------------------------------------
         //	Methods used for particle relaxation.
@@ -153,8 +153,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	From here the time stepping begins.
     //----------------------------------------------------------------------
-    system.initializeSystemCellLinkedLists();
-    system.initializeSystemConfigurations();
+    sph_system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemConfigurations();
     // apply initial condition
     corrected_configuration.exec();
     write_states.writeToFile(0);
@@ -211,6 +211,7 @@ int main(int ac, char *av[])
     TimeInterval tt;
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+
 
     return 0;
 }

@@ -133,15 +133,15 @@ class TimeDependentExternalForce : public Gravity
 int main(int ac, char *av[])
 {
     /** Setup the system. */
-    SPHSystem system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, resolution_ref);
 
     /** create a bar body. */
-    SolidBody bar_body(system, makeShared<DefaultShape>("BarBody"));
+    SolidBody bar_body(sph_system, makeShared<DefaultShape>("BarBody"));
     bar_body.defineParticlesAndMaterial<BarParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     bar_body.generateParticles<BarParticleGenerator>();
 
     /** Define Observer. */
-    ObserverBody bar_observer(system, "BarObserver");
+    ObserverBody bar_observer(sph_system, "BarObserver");
     bar_observer.defineParticlesAndMaterial();
     bar_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 
@@ -153,8 +153,8 @@ int main(int ac, char *av[])
     ContactRelation bar_observer_contact(bar_observer, {&bar_body});
 
     /** Common particle dynamics. */
-    SimpleDynamics<TimeStepInitialization> initialize_external_force(bar_body,
-                                                                     makeShared<TimeDependentExternalForce>(Vec3d(0.0, 0.0, q / (PT * rho0_s) - gravitational_acceleration)));
+    SimpleDynamics<TimeStepInitialization> initialize_external_force(
+        bar_body, makeShared<TimeDependentExternalForce>(Vec3d(0.0, 0.0, q / (PT * rho0_s) - gravitational_acceleration)));
 
     /**
      * This section define all numerical methods will be used in this case.
@@ -183,13 +183,13 @@ int main(int ac, char *av[])
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
         bar_rotation_b_damping(0.5, bar_body_inner, "AngularVelocity_b", physical_viscosity);
     /** Output */
-    IOEnvironment io_environment(system);
-    BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
+    IOEnvironment io_environment(sph_system);
+    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
     ObservedQuantityRecording<Vecd> write_beam_max_displacement("Position", io_environment, bar_observer_contact);
 
     /** Apply initial condition. */
-    system.initializeSystemCellLinkedLists();
-    system.initializeSystemConfigurations();
+    sph_system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemConfigurations();
     corrected_configuration.exec();
 
     /**
@@ -252,6 +252,7 @@ int main(int ac, char *av[])
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
     observed_quantity_n = (*write_beam_max_displacement.getObservedQuantity())[0][2];
+
 
     testing::InitGoogleTest(&ac, av);
     return RUN_ALL_TESTS();
