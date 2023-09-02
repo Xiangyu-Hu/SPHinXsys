@@ -36,6 +36,7 @@
 #include <string>
 #include <cstdio>
 #include <cassert>
+#include <charconv>
 
 #include <fstream>
 #include <filesystem>
@@ -55,7 +56,11 @@ namespace SPH
 	template < typename DataType >
 	inline std::string DataToString( const DataType &value )
 	{
-		return std::to_string(value);
+		std::ostringstream out;
+    	out.precision(15);
+    	out << std::fixed << value;
+    	return std::move(out).str();
+		//return std::to_string(value);
 	}
 
 	template < int DIMENSION, auto... Rest >
