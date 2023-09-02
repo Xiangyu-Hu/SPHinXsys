@@ -41,7 +41,6 @@ class CorrectedConfigurationInner : public LocalDynamics, public GeneralDataDele
 
   protected:
     Real alpha_;
-    Real smoothing_length_;
     StdLargeVec<Matd> &B_;
 
     void interaction(size_t index_i, Real dt = 0.0);
