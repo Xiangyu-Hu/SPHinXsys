@@ -40,17 +40,18 @@ class InputBody : public ComplexShape
 //----------------------------------------------------------------------
 //	The main program
 //----------------------------------------------------------------------
-int main()
+int main(int ac, char *av[])
 {
     //----------------------------------------------------------------------
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
-    SPHSystem system(system_domain_bounds, resolution_ref);
-    IOEnvironment io_environment(system);
+    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    sph_system.handleCommandlineOptions(ac, av);
+    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    RealBody input_body(system, makeShared<InputBody>("SPHInXsysLogo"));
+    RealBody input_body(sph_system, makeShared<InputBody>("SPHInXsysLogo"));
     input_body.defineBodyLevelSetShape()->writeLevelSet(io_environment);
     input_body.defineParticlesAndMaterial();
     input_body.generateParticles<ParticleGeneratorLattice>();
@@ -97,6 +98,7 @@ int main()
         }
     }
     std::cout << "The physics relaxation process finish !" << std::endl;
+
 
     return 0;
 }

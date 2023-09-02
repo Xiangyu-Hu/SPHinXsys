@@ -8,14 +8,13 @@
 #include "sphinxsys.h"
 using namespace SPH;
 
-int main()
+int main(int ac, char *av[])
 {
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    /** Set the starting time. */
-    GlobalStaticVariables::physical_time_ = 0.0;
+    sph_system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
@@ -54,8 +53,10 @@ int main()
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplex>
         update_air_density_by_summation(air_wall_contact, air_water_complex);
     /** transport formulation for regularizing particle distribution. */
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex>
+    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>>
         air_transport_correction(air_wall_contact, air_water_complex, 0.05);
+    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>>
+        water_transport_correction(water_wall_contact, water_air_complex, 0.05);
     /** Time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_water_advection_time_step_size(water_block, U_ref);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_air_advection_time_step_size(air_block, U_ref);
@@ -135,6 +136,7 @@ int main()
             update_water_density_by_summation.exec();
             update_air_density_by_summation.exec();
             air_transport_correction.exec();
+            water_transport_correction.exec();
             air_viscous_acceleration.exec();
             water_viscous_acceleration.exec();
 
@@ -207,6 +209,7 @@ int main()
               << interval_computing_pressure_relaxation.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
+
 
     return 0;
 }

@@ -1,6 +1,6 @@
 /**
  * @file 	 stfb.h
- * @brief 	 This is the case file for 3D still floaing body.
+ * @brief 	 This is the case file for 3D still floating body.
  * @author   Nicolò Salis
  */
 #include "sphinxsys.h"
@@ -17,7 +17,7 @@ Real WH = 2.0;                  /**< Water block height. */
 Real L = 1.0;                   /**< Base of the floating body. */
 Real particle_spacing_ref = L / 10;
 Real BW = particle_spacing_ref * 4.0;          /**< Extending width for BCs. */
-Real Maker_width = particle_spacing_ref * 4.0; /**< Width of the wavemaker. */
+Real Maker_width = particle_spacing_ref * 4.0; /**< Width of the wave_maker. */
 BoundingBox system_domain_bounds(Vecd(-BW, -BW, -BW), Vecd(DW + BW, DL + BW, DH + BW));
 Vecd offset = Vecd::Zero();
 //----------------------------------------------------------------------
@@ -38,7 +38,7 @@ Real FlStA = L * L * L;
 /**< Density of the solid structure*/
 Real rho_s = StructureMass / FlStA;
 /* Equilibrium position of the solid structure*/
-Real H = WH - (rho_s / rho0_f * L - L / 2); /**< Strart placemnt of Flt Body*/
+Real H = WH - (rho_s / rho0_f * L - L / 2); /**< Strart placement of Flt Body*/
 
 Real bcmx = DL / 2;
 Real bcmy = DL / 2;
@@ -117,7 +117,7 @@ class WallBoundary : public ComplexShape
     }
 };
 //----------------------------------------------------------------------
-//	create mesuring probes
+//	create measuring probes
 //----------------------------------------------------------------------
 Real h = 1.3 * particle_spacing_ref;
 Vecd FS_gaugeDim(0.5 * h, 0.5 * h, 0.5 * DH);

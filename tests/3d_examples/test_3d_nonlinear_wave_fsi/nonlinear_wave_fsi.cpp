@@ -70,33 +70,33 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the Main environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
-    SPHSystem system(system_domain_bounds, particle_spacing_ref);
-    system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(system);
+    SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
+    sph_system.handleCommandlineOptions(ac, av);
+    IOEnvironment io_environment(sph_system);
 
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
+    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
     water_block.addBodyStateForRecording<Vecd>("Position");
     water_block.addBodyStateForRecording<Real>("Pressure");
 
-    SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
+    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
-    SolidBody structure(system, makeShared<FloatingStructure>("Structure"));
+    SolidBody structure(sph_system, makeShared<FloatingStructure>("Structure"));
     structure.defineParticlesAndMaterial<SolidParticles, Solid>(StructureDensity);
     structure.generateParticles<ParticleGeneratorReload>(io_environment, "Structure_Fit");
 
-    ObserverBody observer(system, "Observer");
+    ObserverBody observer(sph_system, "Observer");
     observer.defineAdaptationRatios(h, 2.0);
     observer.generateParticles<ObserverParticleGenerator>(
         StdVec<Vecd>{obs});
 
-    ObserverBody WMobserver(system, "WMObserver");
+    ObserverBody WMobserver(sph_system, "WMObserver");
     WMobserver.defineAdaptationRatios(h, 2.0);
     Vecd WMpos0 = Vecd(0.0, -Maker_width / 2, HWM / 2);
     WMobserver.generateParticles<ObserverParticleGenerator>(
@@ -105,15 +105,15 @@ int main(int ac, char *av[])
     //---------------------------------------------------------
     // PRESSURE PROBES
     //---------------------------------------------------------
-   
-    ObserverBody fp1(system, "FP1");
+
+    ObserverBody fp1(sph_system, "FP1");
     Real fp1x = Strx - 0.12;
     Real fp1y = Stry;
     Real fp1z = 1.013;
     StdVec<Vecd> fp1l = {Vecd(fp1x, fp1y, fp1z)};
     fp1.generateParticles<ObserverParticleGenerator>(fp1l);
-    
-    ObserverBody bp1(system, "BP1");
+
+    ObserverBody bp1(sph_system, "BP1");
     Real bp1x = Strx - 0.295;
     Real bp1y = Stry + .035;
     Real bp1z = 0.933;
@@ -133,7 +133,6 @@ int main(int ac, char *av[])
     ContactRelation observer_contact_with_structure(observer, {&structure});
     ContactRelation WMobserver_contact_with_water(WMobserver, {&water_block});
     ContactRelation WMobserver_contact_with_wall(WMobserver, {&wall_boundary});
-
 
     ContactRelation fp1_contact_s(fp1, {&structure});
     ContactRelation bp1_contact_s(bp1, {&structure});
@@ -165,7 +164,7 @@ int main(int ac, char *av[])
     /** Computing viscous acceleration. */
     InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
     /** Damp waves */
-    Vecd translation_damping(0.5 * DW, 9.5 , 0.5 * HWM);
+    Vecd translation_damping(0.5 * DW, 9.5, 0.5 * HWM);
     Vecd damping(0.5 * DW, 0.5, 0.5 * HWM);
     BodyRegionByCell damping_buffer(water_block, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_damping), damping));
     SimpleDynamics<fluid_dynamics::DampingBoundaryCondition> damping_wave(damping_buffer);
@@ -211,7 +210,7 @@ int main(int ac, char *av[])
     SimTK::MobilizedBody::Weld fixed_spotBL(matter.Ground(), SimTK::Transform(SimTK::Vec3(ground_tethering_BL[0], ground_tethering_BL[1], ground_tethering_BL[2])),
                                             fixed_spot_info, SimTK::Transform(SimTK::Vec3(0.0, 0.0, 0.0)));
     /*---------------------------------------------------------------------------*/
-    // A SEASIDE PILLARS; B PORTSIDE PILLARS
+    // A SEASIDE PILLARS; B PORT_SIDE PILLARS
     /*-----------------------------------------------------------------------------*/
     Vecd disp_cable_endAR = structure_tethering_AR - structure_multibody.initial_mass_center_;
     SimTK::CablePath tethering_lineAR(cables, fixed_spotAR, SimTK::Vec3(0.0, 0.0, 0.0), tethered_struct, SimTK::Vec3(disp_cable_endAR[0], disp_cable_endAR[1], disp_cable_endAR[2]));
@@ -265,7 +264,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
     /** WaveProbes. */
     BodyRegionByCell wave_probe_buffer(water_block, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_WGauge), WGaugeDim));
     ReducedQuantityRecording<ReduceDynamics<FreeSurfaceHeightZ>> wave_gauge(io_environment, wave_probe_buffer);
@@ -281,18 +280,17 @@ int main(int ac, char *av[])
     ObservedQuantityRecording<Vecd>
         write_WM_displacement("Position", io_environment, WMobserver_contact_with_wall);
 
-    
     InteractionDynamics<InterpolatingAQuantity<Vecd>>
         interpolation_fp1_position(fp1_contact_s, "Position", "Position");
     InteractionDynamics<InterpolatingAQuantity<Vecd>>
         interpolation_bp1_position(bp1_contact_s, "Position", "Position");
-    
+
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
         write_recorded_pressure_fp1("Pressure", io_environment, fp1_contact_w);
     ObservedQuantityRecording<Real>
         write_recorded_pressure_bp1("Pressure", io_environment, bp1_contact_w);
-    
-    RestartIO restart_io(io_environment, system.real_bodies_);
+
+    RestartIO restart_io(io_environment, sph_system.real_bodies_);
 
     //----------------------------------------------------------------------
     //	Basic control parameters for time stepping.
@@ -315,8 +313,8 @@ int main(int ac, char *av[])
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
     structure_offset_position.exec();
-    system.initializeSystemCellLinkedLists();
-    system.initializeSystemConfigurations();
+    sph_system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
     structure_normal_direction.exec();
     structure_corrected_configuration.exec();
@@ -324,9 +322,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
     //----------------------------------------------------------------------
-    if (system.RestartStep() != 0)
+    if (sph_system.RestartStep() != 0)
     {
-        GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(system.RestartStep());
+        GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.RestartStep());
         water_block.updateCellLinkedListWithParticleSort(100);
         wall_boundary.updateCellLinkedList();
         structure.updateCellLinkedList();
@@ -457,16 +455,17 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (system.generate_regression_data_)
+    if (sph_system.GenerateRegressionData())
     {
         write_str_displacement.generateDataBase(1.0e-3);
         write_recorded_pressure_fp1.generateDataBase(1.0e-3);
     }
-    else if (system.RestartStep() == 0)
+    else if (sph_system.RestartStep() == 0)
     {
         write_str_displacement.testResult();
         write_recorded_pressure_fp1.testResult();
     }
+
 
     return 0;
 }

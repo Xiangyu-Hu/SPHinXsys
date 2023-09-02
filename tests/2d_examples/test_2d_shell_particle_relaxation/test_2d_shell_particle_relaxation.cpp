@@ -33,14 +33,15 @@ class Pipe : public MultiPolygonShape
 //--------------------------------------------------------------------------
 //	Main program starts here.
 //--------------------------------------------------------------------------
-int main()
+int main(int ac, char *av[])
 {
     /** Build up a SPHSystem. */
-    SPHSystem system(system_domain_bounds, resolution_ref);
-    IOEnvironment io_environment(system);
+    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    sph_system.handleCommandlineOptions(ac, av);
+    IOEnvironment io_environment(sph_system);
 
     /** Creating body, materials and particles. */
-    SolidBody pipe_body(system, makeShared<Pipe>("PipeBody"));
+    SolidBody pipe_body(sph_system, makeShared<Pipe>("PipeBody"));
     pipe_body.defineAdaptation<SPHAdaptation>(1.15, 1.0);
     pipe_body.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(io_environment);
     // here dummy linear elastic solid is use because no solid dynamics in particle relaxation
@@ -90,6 +91,7 @@ int main()
     shell_normal_prediction.exec();
     write_real_body_states.writeToFile(ite_p);
     std::cout << "The physics relaxation process of the cylinder finish !" << std::endl;
+
 
     return 0;
 }

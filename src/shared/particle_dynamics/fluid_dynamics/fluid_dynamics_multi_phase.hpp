@@ -40,7 +40,7 @@ void MultiPhaseColorFunctionGradient::
 {
     Real Vol_i = Vol_[index_i];
     Vecd gradient = Vecd::Zero();
-    if (surface_indicator_[index_i])
+    if (indicator_[index_i])
     {
         for (size_t k = 0; k < contact_configuration_.size(); ++k)
         {

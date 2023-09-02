@@ -33,7 +33,7 @@ int main(int ac, char *av[])
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getName())
         : water_block.generateParticles<ParticleGeneratorLattice>();
-    water_block.addBodyStateForRecording<int>("SurfaceIndicator");
+    water_block.addBodyStateForRecording<int>("Indicator");
 
     SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));
     cylinder.defineAdaptationRatios(1.15, 2.0);
@@ -191,6 +191,7 @@ int main(int ac, char *av[])
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
     write_total_viscous_force_on_inserted_body.testResult();
+
 
     return 0;
 }

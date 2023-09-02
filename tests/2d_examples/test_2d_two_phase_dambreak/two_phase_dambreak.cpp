@@ -9,14 +9,13 @@
 #include "sphinxsys.h"
 using namespace SPH;
 
-int main()
+int main(int ac, char *av[])
 {
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    /** Set the starting time. */
-    GlobalStaticVariables::physical_time_ = 0.0;
+    sph_system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
@@ -60,7 +59,7 @@ int main()
         update_water_density_by_summation(water_wall_contact, water_air_complex.getInnerRelation());
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplex>
         update_air_density_by_summation(air_wall_contact, air_water_complex);
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex>
+    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>>
         air_transport_correction(air_wall_contact, air_water_complex);
     /** Time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_water_advection_time_step_size(water_block, U_ref);
@@ -217,6 +216,7 @@ int main()
 
     write_water_mechanical_energy.testResult();
     write_recorded_pressure.testResult();
+
 
     return 0;
 }

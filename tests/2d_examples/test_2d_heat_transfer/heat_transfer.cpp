@@ -216,26 +216,26 @@ struct InflowVelocity
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main()
+int main(int ac, char *av[])
 {
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
-    SPHSystem system(system_domain_bounds, resolution_ref);
-    GlobalStaticVariables::physical_time_ = 0.0;
-    IOEnvironment io_environment(system);
+    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
+    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody thermofluid_body(system, makeShared<ThermofluidBody>("ThermofluidBody"));
+    FluidBody thermofluid_body(sph_system, makeShared<ThermofluidBody>("ThermofluidBody"));
     thermofluid_body.defineParticlesAndMaterial<DiffusionBaseParticles, ThermofluidBodyMaterial>();
     thermofluid_body.generateParticles<ParticleGeneratorLattice>();
 
-    SolidBody thermosolid_body(system, makeShared<ThermosolidBody>("ThermosolidBody"));
+    SolidBody thermosolid_body(sph_system, makeShared<ThermosolidBody>("ThermosolidBody"));
     thermosolid_body.defineParticlesAndMaterial<DiffusionSolidParticles, ThermosolidBodyMaterial>();
     thermosolid_body.generateParticles<ParticleGeneratorLattice>();
 
-    ObserverBody temperature_observer(system, "FluidObserver");
+    ObserverBody temperature_observer(sph_system, "FluidObserver");
     temperature_observer.generateParticles<ObserverParticleGenerator>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -274,7 +274,7 @@ int main()
     /** Computing viscous acceleration. */
     InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(fluid_body_complex);
     /** Apply transport velocity formulation. */
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> transport_velocity_correction(fluid_body_complex);
+    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(fluid_body_complex);
     /** Computing vorticity in the flow. */
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(fluid_body_inner);
     /** Inflow boundary condition. */
@@ -284,7 +284,7 @@ int main()
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>>
         write_fluid_phi("Phi", io_environment, fluid_observer_contact);
     ObservedQuantityRecording<Vecd>
@@ -293,12 +293,12 @@ int main()
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemCellLinkedLists();
     /** periodic condition applied after the mesh cell linked list build up
      * but before the configuration build up. */
     periodic_condition.update_cell_linked_list_.exec();
     /** initialize configurations for all bodies. */
-    system.initializeSystemConfigurations();
+    sph_system.initializeSystemConfigurations();
     /** computing surface normal direction for the wall. */
     thermosolid_body_normal_direction.exec();
     thermosolid_condition.exec();
@@ -385,6 +385,7 @@ int main()
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
     write_fluid_phi.testResult();
+
 
     return 0;
 }

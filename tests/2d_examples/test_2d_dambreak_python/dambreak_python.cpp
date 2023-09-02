@@ -270,7 +270,7 @@ class Environment : public PreSettingCase
         std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
                   << interval_updating_configuration.seconds() << "\n";
 
-        if (sph_system.generate_regression_data_)
+        if (sph_system.GenerateRegressionData())
         {
             write_water_mechanical_energy.generateDataBase(1.0e-3);
             write_recorded_water_pressure.generateDataBase(1.0e-3);

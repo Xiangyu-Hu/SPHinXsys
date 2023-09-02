@@ -237,8 +237,8 @@ int main(int ac, char *av[])
 	std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
 		<< interval_updating_configuration.seconds() << "\n";
 
-	//sph_system.generate_regression_data_ = true;
-	if (sph_system.generate_regression_data_)
+	//sph_system.GenerateRegressionData() = true;
+	if (sph_system.GenerateRegressionData())
 	{
 		write_mechanical_energy.generateDataBase(1.0e-3);
 	}
@@ -246,6 +246,7 @@ int main(int ac, char *av[])
 	{
 		write_mechanical_energy.testResult();
 	}
+
 
 	return 0;
 };

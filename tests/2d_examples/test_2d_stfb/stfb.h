@@ -45,7 +45,7 @@ Real FlStA = L * L;
 /**< Density of the solid structure*/
 Real rho_s = StructureMass / FlStA;
 /* Equilibrium position of the solid structure*/
-Real H = -(rho_s / rho0_f * L - L / 2); /**< Strart placemnt of Flt Body*/
+Real H = -(rho_s / rho0_f * L - L / 2); /**< Strart placement of Flt Body*/
 
 Real bcmx = 0;
 Real bcmy = H + 0;
@@ -98,7 +98,7 @@ class WaterBlock : public ComplexShape
     }
 };
 //----------------------------------------------------------------------
-//	create mesuring probes
+//	create measuring probes
 //----------------------------------------------------------------------
 Real h = 1.3 * particle_spacing_ref;
 Vec2d gauge_halfsize = Vec2d(0.5 * h, 0.5 * DH);

@@ -28,6 +28,7 @@ int main(int ac, char *av[])
     wave_block.defineParticlesAndMaterial<BaseParticles, CompressibleFluid>(rho0_another, heat_capacity_ratio);
     wave_block.generateParticles<ParticleGeneratorInFVM>(read_mesh_data.elements_center_coordinates_, read_mesh_data.elements_volumes_);
     wave_block.addBodyStateForRecording<Real>("Density");
+    wave_block.addBodyStateForRecording<Real>("Pressure");
     /** Initial condition and register variables*/
     SimpleDynamics<DMFInitialCondition> initial_condition(wave_block);
     GhostCreationFromMesh ghost_creation(wave_block, read_mesh_data.cell_lists_, read_mesh_data.point_coordinates_2D_);
@@ -45,12 +46,13 @@ int main(int ac, char *av[])
                                                        ghost_creation.each_boundary_type_with_all_ghosts_eij_, ghost_creation.each_boundary_type_contact_real_index_);
     SimpleDynamics<EulerianCompressibleTimeStepInitialization> initialize_a_fluid_step(wave_block);
     /** Time step size with considering sound wave speed. */
-    ReduceDynamics<CompressibleAcousticTimeStepSizeInFVM> get_fluid_time_step_size(wave_block, read_mesh_data.max_distance_between_nodes_, 0.08);
+    ReduceDynamics<CompressibleAcousticTimeStepSizeInFVM> get_fluid_time_step_size(wave_block, read_mesh_data.min_distance_between_nodes_, 0.2);
     /** Here we introduce the limiter in the Riemann solver and 0 means the no extra numerical dissipation.
     the value is larger, the numerical dissipation larger*/
     InteractionWithUpdate<Integration1stHalfHLLCRiemann> pressure_relaxation(water_block_inner);
     InteractionWithUpdate<Integration2ndHalfHLLCRiemann> density_relaxation(water_block_inner);
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
+    // Visuallization in FVM with date in cell.
+    BodyStatesRecordingInMeshToVtp write_real_body_states(io_environment, sph_system.real_bodies_, read_mesh_data.elements_nodes_connection_, read_mesh_data.point_coordinates_2D_);
     //----------------------------------------------------------------------
     //	Prepare the simulation with case specified initial condition if necessary.
     //----------------------------------------------------------------------
@@ -105,6 +107,7 @@ int main(int ac, char *av[])
     TimeInterval tt;
     tt = t4 - t1 - interval;
     cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+
 
     return 0;
 }

@@ -33,6 +33,7 @@
 #include "fluid_body.h"
 #include "fluid_dynamics_inner.h"
 #include "general_dynamics.h"
+#include "io_vtk.h"
 using namespace std;
 namespace SPH
 {
@@ -48,13 +49,13 @@ class readMeshFile
         full_path_ = full_path;
         getDataFromMeshFile();
         getElementCenterCoordinates();
-        gerMaximumDistanceBetweenNodes();
+        gerMinimumDistanceBetweenNodes();
     };
     virtual ~readMeshFile(){};
 
     void getDataFromMeshFile();
     void getElementCenterCoordinates();
-    void gerMaximumDistanceBetweenNodes();
+    void gerMinimumDistanceBetweenNodes();
     string full_path_;
     vector<size_t> types_of_boundary_condition_;
     vector<vector<Real>> point_coordinates_2D_;
@@ -64,7 +65,7 @@ class readMeshFile
     vector<vector<size_t>> elements_nodes_connection_;
     StdLargeVec<Vec3d> elements_neighbors_connection_;
     vector<vector<vector<size_t>>> cell_lists_;
-    double max_distance_between_nodes_;
+    double min_distance_between_nodes_;
 };
 
 /**
@@ -273,5 +274,24 @@ class GhostCreationFromMesh : public GeneralDataDelegateSimple
     };
 };
 
+/**
+ * @class BodyStatesRecordingInMeshToVtp
+ * @brief  Write files for bodies
+ * the output file is VTK XML format in FVMcan visualized by ParaView the data type vtkPolyData
+ */
+class BodyStatesRecordingInMeshToVtp : public BodyStatesRecording
+{
+  public:
+    BodyStatesRecordingInMeshToVtp(IOEnvironment &io_environment, SPHBody &body, vector<vector<size_t>> elements_nodes_connection, vector<vector<Real>> nodes_coordinates)
+        : BodyStatesRecording(io_environment, body), elements_nodes_connection_(elements_nodes_connection), nodes_coordinates_(nodes_coordinates){};
+    BodyStatesRecordingInMeshToVtp(IOEnvironment &io_environment, SPHBodyVector bodies, vector<vector<size_t>> elements_nodes_connection, vector<vector<Real>> nodes_coordinates)
+        : BodyStatesRecording(io_environment, bodies), elements_nodes_connection_(elements_nodes_connection), nodes_coordinates_(nodes_coordinates){};
+    virtual ~BodyStatesRecordingInMeshToVtp(){};
+
+  protected:
+    virtual void writeWithFileName(const std::string &sequence) override;
+    vector<vector<size_t>> elements_nodes_connection_;
+    vector<vector<Real>> nodes_coordinates_;
+};
 } // namespace SPH
 #endif // COMMON_SHARED_FVM_CLASSES_H

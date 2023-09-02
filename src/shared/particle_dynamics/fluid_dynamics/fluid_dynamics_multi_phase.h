@@ -149,7 +149,7 @@ class MultiPhaseColorFunctionGradient : public LocalDynamics, public MultiPhaseD
     Real rho0_;
     StdVec<Real> contact_rho0_;
     StdLargeVec<Real> &Vol_, &pos_div_;
-    StdLargeVec<int> &surface_indicator_;
+    StdLargeVec<int> &indicator_;
     StdLargeVec<Vecd> color_grad_, surface_norm_;
     StdVec<StdLargeVec<Real> *> contact_Vol_;
 };

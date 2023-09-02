@@ -100,7 +100,7 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalf> density_relaxation(water_block_inner);
     InteractionWithUpdate<fluid_dynamics::DensitySummationInner> update_density_by_summation(water_block_inner);
     InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_inner);
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionInner> transport_velocity_correction(water_block_inner);
+    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionInner<AllParticles>> transport_velocity_correction(water_block_inner);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     PeriodicConditionUsingCellLinkedList periodic_condition_x(water_block, water_block.getBodyShapeBounds(), xAxis);
@@ -198,7 +198,7 @@ int main(int ac, char *av[])
 
     write_particle_reload_files.writeToFile();
 
-    if (sph_system.generate_regression_data_)
+    if (sph_system.GenerateRegressionData())
     {
         write_total_mechanical_energy.generateDataBase(1.0e-3);
         write_maximum_speed.generateDataBase(1.0e-3);
@@ -208,6 +208,7 @@ int main(int ac, char *av[])
         write_total_mechanical_energy.testResult();
         write_maximum_speed.testResult();
     }
+
 
     return 0;
 }

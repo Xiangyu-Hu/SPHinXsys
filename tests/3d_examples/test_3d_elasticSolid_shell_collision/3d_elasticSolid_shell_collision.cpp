@@ -62,7 +62,7 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    // sph_system.generate_regression_data_ = true;
+    // sph_system.GenerateRegressionData() = true;
     /** Tag for running particle relaxation for the initially body-fitted distribution */
     sph_system.setRunParticleRelaxation(false);
     /** Tag for starting with relaxed body-fitted particles distribution */
@@ -232,7 +232,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (sph_system.generate_regression_data_)
+    if (sph_system.GenerateRegressionData())
     {
         write_ball_center_displacement.generateDataBase(0.005);
     }
@@ -240,5 +240,7 @@ int main(int ac, char *av[])
     {
         write_ball_center_displacement.testResult();
     }
+
+
     return 0;
 }

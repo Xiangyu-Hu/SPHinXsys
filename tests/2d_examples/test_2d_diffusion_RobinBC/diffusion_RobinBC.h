@@ -3,8 +3,8 @@
  * @brief 	This is the head files used by diffusion_RobinBC.cpp.
  * @author	Chenxi Zhao, Bo Zhang, Chi Zhang and Xiangyu Hu
  */
-#ifndef DIFFUSION_ROBINBC_H
-#define DIFFUSION_ROBINBC_H
+#ifndef DIFFUSION_ROBIN_BC_H
+#define DIFFUSION_ROBIN_BC_H
 
 #include "sphinxsys.h"
 using namespace SPH;
@@ -217,4 +217,4 @@ class TemperatureObserverParticleGenerator : public ObserverParticleGenerator
         }
     }
 };
-#endif // DIFFUSION_ROBINBC_H
+#endif // DIFFUSION_ROBIN_BC_H

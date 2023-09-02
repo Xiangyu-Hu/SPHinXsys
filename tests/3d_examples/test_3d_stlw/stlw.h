@@ -16,7 +16,7 @@ Real DH = 2.5;                  /**< Tank height. */
 Real WH = 2.0;                  /**< Water block height. */
 Real particle_spacing_ref = 0.1;
 Real BW = particle_spacing_ref * 4.0;          /**< Extending width for BCs. */
-Real Maker_width = particle_spacing_ref * 4.0; /**< Width of the wavemaker. */
+Real Maker_width = particle_spacing_ref * 4.0; /**< Width of the wave_maker. */
 
 BoundingBox system_domain_bounds(Vecd(-BW, -BW, -BW), Vecd(DW + BW, DL + BW, DH + BW));
 
@@ -63,7 +63,7 @@ class WallBoundary : public ComplexShape
     }
 };
 //----------------------------------------------------------------------
-//	create mesuring probes
+//	create measuring probes
 //----------------------------------------------------------------------
 Real h = 1.3 * particle_spacing_ref;
 Vecd FS_gaugeDim(0.5 * h, 0.5 * h, 0.5 * DH);
