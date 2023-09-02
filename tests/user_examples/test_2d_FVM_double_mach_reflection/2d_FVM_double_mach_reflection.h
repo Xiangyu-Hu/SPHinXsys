@@ -40,7 +40,7 @@ std::string double_mach_reflection_mesh_fullpath = "./input/double_mach_reflecti
 //
 //	Define geometries and body shapes
 //----------------------------------------------------------------------
-std::vector<Vecd> CreatComputationDomian()
+std::vector<Vecd> CreatComputationDomain()
 {
     // geometry
     std::vector<Vecd> computation_domain;
@@ -51,12 +51,12 @@ std::vector<Vecd> CreatComputationDomian()
     computation_domain.push_back(Vecd(0.0, 0.0));
     return computation_domain;
 }
-class WaterBlock : public ComplexShape
+class WaveBody : public ComplexShape
 {
   public:
-    explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
+    explicit WaveBody(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        MultiPolygon wave_block(CreatComputationDomian());
+        MultiPolygon wave_block(CreatComputationDomain());
         add<MultiPolygonShape>(wave_block, "WaveBlock");
     }
 };
