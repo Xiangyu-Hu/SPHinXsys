@@ -22,7 +22,6 @@ void CorrectedConfigurationInner::interaction(size_t index_i, Real dt)
         Vecd r_ji = inner_neighborhood.r_ij_[n] * inner_neighborhood.e_ij_[n];
         local_configuration -= r_ji * gradW_ij.transpose();
     }
-
     B_[index_i] = local_configuration;
 }
 //=================================================================================================//
