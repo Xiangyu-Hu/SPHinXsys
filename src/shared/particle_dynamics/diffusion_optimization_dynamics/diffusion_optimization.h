@@ -20,20 +20,20 @@
 * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
 *                                                                           *
 * --------------------------------------------------------------------------*/
-/**
-* @file diffusion_optimization.h
-* @brief This is the header file that user code should include to pick up all 
-* the optimization method used in SPHinXsys.
-* @author	Bo Zhang and Xiangyu Hu
-*/
+/** 
+ * @file   diffusion_optimization.h
+ * @brief  This is the header file that user code should include 
+ *         to pick up all the optimization method used in SPHinXsys.
+ * @author Bo Zhang and Xiangyu Hu
+ */
 #pragma once
 
 #include "diffusion_splitting_base.h"
 #include "diffusion_splitting_base.hpp"
-#include "diffusion_splitting_parameter.h"
-#include "diffusion_splitting_parameter.hpp"
 #include "diffusion_splitting_state.h"
 #include "diffusion_splitting_state.hpp"
+#include "diffusion_splitting_parameter.h"
+#include "diffusion_splitting_parameter.hpp"
 #include "diffusion_optimization_common.h"
 #include "diffusion_optimization_common.hpp"
 

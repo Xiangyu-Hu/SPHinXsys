@@ -39,9 +39,9 @@ namespace SPH
 	 * @class TemperatureSplittingByPDEInner
 	 * @brief The temperature on each particle will be modified innerly to satisfy the PDEs.
 	 */
-	template <class ParticleType, typename VariableType>
+	template <class ParticlesType, typename VariableType>
 	class TemperatureSplittingByPDEInner
-		: public OptimizationBySplittingAlgorithmBase<ParticleType, VariableType>
+		: public OptimizationBySplittingAlgorithmBase<ParticlesType, VariableType>
 	{
 	public:
 		TemperatureSplittingByPDEInner(BaseInnerRelation &inner_relation, const std::string &variable_name);
@@ -55,11 +55,11 @@ namespace SPH
 
 	/**
 	 * @class TemperatureSplittingByPDEWithBoundary
-	 * @brief The temperature on each particle will be modified with boundary to satisfy the PDE.
+	 * @brief The temperature on each particle will be modified with boundary to satisfy the PDEs.
 	 */
-	template <class ParticleType, class ContactParticlesType, typename VariableType>
+	template <class ParticlesType, class ContactParticlesType, typename VariableType>
 	class TemperatureSplittingByPDEWithBoundary
-		: public TemperatureSplittingByPDEInner<ParticleType, VariableType>,
+		: public TemperatureSplittingByPDEInner<ParticlesType, VariableType>,
 		  public DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>
 	{
 	public:
@@ -68,7 +68,6 @@ namespace SPH
 
 	protected:
 		StdVec<StdLargeVec<VariableType> *> boundary_variable_;
-		StdVec<StdLargeVec<Real> *> boundary_normal_distance_;
 		StdVec<StdLargeVec<Real> *> boundary_heat_flux_;
 		StdVec<StdLargeVec<Vecd> *> boundary_normal_vector_;
 		virtual ErrorAndParameters<VariableType> computeErrorAndParameters(size_t index_i, Real dt = 0.0) override;

@@ -11,15 +11,14 @@
 namespace SPH
 {
 	//=================================================================================================//
-	template <class BaseParticlesType, class BaseMaterialType, typename VariableType, int NUM_SPECIES>
-	TemperatureSplittingByPDEInner<BaseParticlesType, BaseMaterialType, VariableType, NUM_SPECIES>::
-		TemperatureSplittingByPDEInner(BaseInnerRelation& inner_relation, const std::string& variable_name) :
-		OptimizationBySplittingAlgorithmBase<BaseParticlesType, BaseMaterialType, 
-		                                     VariableType, NUM_SPECIES>(inner_relation, variable_name) {};
+	template <class ParticlesType, typename VariableType>
+	TemperatureSplittingByPDEInner<ParticlesType, VariableType>::
+		TemperatureSplittingByPDEInner(BaseInnerRelation &inner_relation, const std::string &variable_name) : 
+		OptimizationBySplittingAlgorithmBase<ParticlesType, VariableType>(inner_relation, variable_name){};
 	//=================================================================================================//
-	template <class BaseParticlesType, class BaseMaterialType, typename VariableType, int NUM_SPECIES>
-	ErrorAndParameters<VariableType> TemperatureSplittingByPDEInner<BaseParticlesType, BaseMaterialType, 
-		VariableType, NUM_SPECIES>::computeErrorAndParameters(size_t index_i, Real dt)
+	template <class ParticlesType, typename VariableType>
+    ErrorAndParameters<VariableType> TemperatureSplittingByPDEInner<ParticlesType, VariableType>::
+		computeErrorAndParameters(size_t index_i, Real dt)
 	{
 		VariableType& variable_i = this->variable_[index_i];
 		ErrorAndParameters<VariableType> error_and_parameters;
@@ -42,10 +41,10 @@ namespace SPH
 		error_and_parameters.a_ -= 1;
 		error_and_parameters.error_ -= this->heat_source_[index_i] * dt;
 		return error_and_parameters;
-	}
+	};
 	//=================================================================================================//
-	template <class BaseParticlesType, class BaseMaterialType, typename VariableType, int NUM_SPECIES>
-	void TemperatureSplittingByPDEInner<BaseParticlesType, BaseMaterialType, VariableType, NUM_SPECIES>::
+	template <class ParticlesType, typename VariableType>
+	void TemperatureSplittingByPDEInner<ParticlesType, VariableType>::
 		updateStatesByError(size_t index_i, Real dt, const ErrorAndParameters<VariableType>& error_and_parameters)
 	{
 		Real parameter_l = error_and_parameters.a_ * error_and_parameters.a_ + error_and_parameters.c_;
@@ -65,8 +64,8 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	template <class BaseParticlesType, class BaseMaterialType, typename VariableType, int NUM_SPECIES>
-	void TemperatureSplittingByPDEInner<BaseParticlesType, BaseMaterialType, VariableType, NUM_SPECIES>::
+	template <class ParticlesType, typename VariableType>
+	void TemperatureSplittingByPDEInner<ParticlesType, VariableType>::
 		interaction(size_t index_i, Real dt)
 	{
 		ErrorAndParameters<VariableType> error_and_parameters = computeErrorAndParameters(index_i, dt);
@@ -74,33 +73,26 @@ namespace SPH
 		this->residual_T_local_[index_i] = error_and_parameters.error_;
 	}
 	//=================================================================================================//
-	template <class BaseParticlesType, class BaseMaterialType, class ContactBaseParticlesType,
-			  class ContactBaseMaterialType, typename VariableType, int NUM_SPECIES>
-	TemperatureSplittingByPDEWithBoundary<BaseParticlesType, BaseMaterialType, ContactBaseParticlesType, 
-		                                  ContactBaseMaterialType, VariableType, NUM_SPECIES>::
-		TemperatureSplittingByPDEWithBoundary(ComplexRelation & complex_relation, const std::string & variable_name):
-		TemperatureSplittingByPDEInner<BaseParticlesType, BaseMaterialType, VariableType, 
-		                               NUM_SPECIES>(complex_relation.getInnerRelation(), variable_name),
-		DiffusionReactionContactData<BaseParticlesType, BaseMaterialType, ContactBaseParticlesType, 
-		                             ContactBaseMaterialType, NUM_SPECIES>(complex_relation.getContactRelation())
-	{
+	template <class ParticlesType, class ContactParticlesType, typename VariableType>
+	TemperatureSplittingByPDEWithBoundary<ParticlesType, ContactParticlesType, VariableType>::
+		TemperatureSplittingByPDEWithBoundary(ComplexRelation &complex_relation, const std::string &variable_name):
+		TemperatureSplittingByPDEInner<ParticlesType, VariableType>(complex_relation.getInnerRelation(), variable_name),
+		DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>(complex_relation.getContactRelation())
+    {
 		for (size_t k = 0; k != this->contact_particles_.size(); ++k)
 		{
-			boundary_normal_vector_.push_back(&this->contact_particles_[k]->normal_vector_);
+			boundary_normal_vector_.push_back(&this->contact_particles_[k]->n_);
 			boundary_heat_flux_.push_back(&this->contact_particles_[k]->heat_flux_);
-			boundary_normal_distance_.push_back(&(this->contact_particles_[k]->normal_distance_));
 			boundary_variable_.push_back(this->contact_particles_[k]->template getVariableByName<VariableType>(variable_name));
 		}
-	}
+	};
 	//=================================================================================================//
-	template <class BaseParticlesType, class BaseMaterialType, class ContactBaseParticlesType,
-		      class ContactBaseMaterialType, typename VariableType, int NUM_SPECIES>
-	ErrorAndParameters<VariableType> TemperatureSplittingByPDEWithBoundary<BaseParticlesType, BaseMaterialType, 
-		ContactBaseParticlesType, ContactBaseMaterialType, VariableType, NUM_SPECIES>::
+	template <class ParticlesType, class ContactParticlesType, typename VariableType>
+	ErrorAndParameters<VariableType> TemperatureSplittingByPDEWithBoundary<ParticlesType, ContactParticlesType, VariableType>::
 		computeErrorAndParameters(size_t index_i, Real dt)
 	{
-		ErrorAndParameters<VariableType> error_and_parameters = TemperatureSplittingByPDEInner<BaseParticlesType,
-			BaseMaterialType, VariableType, NUM_SPECIES>::computeErrorAndParameters(index_i, dt);
+		ErrorAndParameters<VariableType> error_and_parameters = TemperatureSplittingByPDEInner<ParticlesType, VariableType>
+			::computeErrorAndParameters(index_i, dt);
 
 		VariableType& variable_i = this->variable_[index_i];
 		/* contact interaction. */

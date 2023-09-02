@@ -39,10 +39,10 @@ namespace SPH
 	 * @class OptimizationBySplittingAlgorithmBase
 	 * @brief The base class for optimization using splitting algorithm.
 	 */
-	template <class ParticleType, typename VariableType>
+	template <class ParticlesType, typename VariableType>
 	class OptimizationBySplittingAlgorithmBase
-		: public BaseDiffusionRelaxation<ParticleType>,
-		  public DataDelegateInner<ParticleType, DataDelegateEmptyBase>
+		: public BaseDiffusionRelaxation<ParticlesType>,
+		  public DataDelegateInner<ParticlesType, DataDelegateEmptyBase>
 	{
 	public:
 		explicit OptimizationBySplittingAlgorithmBase(BaseInnerRelation& inner_relation, const std::string &variable_name);
@@ -50,13 +50,14 @@ namespace SPH
 
 	public:
 		StdLargeVec<int> splitting_index_;
-		StdLargeVec<Real>& Vol_, & mass_, & heat_flux_, & heat_source_;
+		StdLargeVec<Real>& Vol_, & mass_;
+        StdLargeVec<Real> heat_flux_, heat_source_;
 		StdLargeVec<Real> species_modified_, species_recovery_;
-		StdLargeVec<Real> parameter_recovery_, eta_regularization_, normal_distance_;
+		StdLargeVec<Real> parameter_recovery_, eta_regularization_;
 		StdLargeVec<Real> residual_T_local_, residual_T_global_;
 		StdLargeVec<Real> residual_k_local_, residual_k_global_;
 		StdLargeVec<Real> variation_local_, variation_global_;
-		StdLargeVec<Vecd> normal_vector_;
+        StdLargeVec<Vecd> &normal_vector_;
 		StdLargeVec<VariableType>& variable_;
 		StdVec<BaseDiffusion*> species_diffusion_;
 		StdVec<StdLargeVec<Real>>& species_n_;
@@ -70,9 +71,9 @@ namespace SPH
 	 *        after each splitting step, which could smooth the distribution 
 	 *        and avoid some local optimal solution.
 	 */
-	template <class ParticleType, typename VariableType>
+	template <class ParticlesType, typename VariableType>
 	class RegularizationByDiffusionAnalogy
-		: public OptimizationBySplittingAlgorithmBase<ParticleType, typename VariableType>
+		: public OptimizationBySplittingAlgorithmBase<ParticlesType, VariableType>
     {
 	public:
         RegularizationByDiffusionAnalogy(BaseInnerRelation &inner_relation, const std::string &variable_name,
@@ -95,9 +96,9 @@ namespace SPH
 	 * @brief The global variation of parameter can be updated after the process 
 	 *        of splitting which is an essential parameter for optimization schedule.
 	 */
-	template <class ParticleType, typename VariableType>
+	template <class ParticlesType, typename VariableType>
     class UpdateRegularizationVariation
-        : public OptimizationBySplittingAlgorithmBase<ParticleType, VariableType>
+        : public OptimizationBySplittingAlgorithmBase<ParticlesType, VariableType>
     {
       public:
         UpdateRegularizationVariation(BaseInnerRelation &inner_relation, const std::string &variable_name);
