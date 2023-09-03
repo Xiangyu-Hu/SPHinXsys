@@ -170,7 +170,7 @@ int main(int ac, char *av[])
     TreeInnerRelation pkj_inner(pkj_body);
 
     /** Corrected configuration. */
-    InteractionWithUpdate<CorrectedConfigurationInner> correct_configuration_excitation(physiology_heart_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> correct_configuration_excitation(physiology_heart_inner);
     /** Time step size calculation. */
     electro_physiology::GetElectroPhysiologyTimeStepSize get_myocardium_physiology_time_step(physiology_heart);
     /** Diffusion process for diffusion body. */
@@ -193,7 +193,7 @@ int main(int ac, char *av[])
     SimpleDynamics<ApplyStimulusCurrentToMyocardium> apply_stimulus_myocardium(physiology_heart);
     SimpleDynamics<ApplyStimulusCurrentToPKJ> apply_stimulus_pkj(pkj_body);
     /** Active mechanics. */
-    InteractionWithUpdate<CorrectedConfigurationInner> correct_configuration_contraction(mechanics_heart_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> correct_configuration_contraction(mechanics_heart_inner);
     /** Observer Dynamics */
     InteractionDynamics<CorrectInterpolationKernelWeights>
         correct_kernel_weights_for_interpolation(mechanics_heart_contact);

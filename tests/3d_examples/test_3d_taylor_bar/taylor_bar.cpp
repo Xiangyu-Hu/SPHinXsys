@@ -93,7 +93,7 @@ int main(int ac, char *av[])
     InteractionDynamics<solid_dynamics::DynamicContactForceWithWall> column_wall_contact_force(column_wall_contact);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
     SimpleDynamics<InitialCondition> initial_condition(column);
-    InteractionWithUpdate<CorrectedConfigurationInner> corrected_configuration(column_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration(column_inner);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(column, 0.3);
     //----------------------------------------------------------------------
     //	Output

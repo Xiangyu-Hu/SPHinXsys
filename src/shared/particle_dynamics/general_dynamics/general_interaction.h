@@ -33,11 +33,11 @@
 
 namespace SPH
 {
-class CorrectedConfigurationInner : public LocalDynamics, public GeneralDataDelegateInner
+class KernelCorrectionMatrixInner : public LocalDynamics, public GeneralDataDelegateInner
 {
   public:
-    CorrectedConfigurationInner(BaseInnerRelation &inner_relation, int beta = 0, Real alpha = Real(0));
-    virtual ~CorrectedConfigurationInner(){};
+    KernelCorrectionMatrixInner(BaseInnerRelation &inner_relation, int beta = 0, Real alpha = Real(0));
+    virtual ~KernelCorrectionMatrixInner(){};
 
   protected:
     int beta_;
@@ -48,16 +48,44 @@ class CorrectedConfigurationInner : public LocalDynamics, public GeneralDataDele
     void update(size_t index_i, Real dt = 0.0);
 };
 
-class CorrectedConfigurationComplex : public CorrectedConfigurationInner, public GeneralDataDelegateContactOnly
+class KernelCorrectionMatrixComplex : public KernelCorrectionMatrixInner, public GeneralDataDelegateContactOnly
 {
   public:
-    CorrectedConfigurationComplex(ComplexRelation &complex_relation, int beta = 0, Real alpha = Real(0));
-    virtual ~CorrectedConfigurationComplex(){};
+    KernelCorrectionMatrixComplex(ComplexRelation &complex_relation, int beta = 0, Real alpha = Real(0));
+    virtual ~KernelCorrectionMatrixComplex(){};
 
   protected:
     StdVec<StdLargeVec<Real> *> contact_Vol_;
     StdVec<StdLargeVec<Real> *> contact_mass_;
 
+    void interaction(size_t index_i, Real dt = 0.0);
+};
+
+/**
+ * @class KernelGradientCorrectionInner
+ * @brief obtain the corrected initial configuration in strong form and correct kernel gradient
+ */
+class KernelGradientCorrectionInner : public LocalDynamics, public GeneralDataDelegateInner
+{
+  public:
+    KernelGradientCorrectionInner(KernelCorrectionMatrixInner &kernel_correction_inner);
+    virtual ~KernelGradientCorrectionInner(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    StdLargeVec<Matd> &B_;
+    void correctKernelGradient(Neighborhood &neighborhood, size_t index_i);
+};
+
+/**
+ * @class KernelGradientCorrectionComplex
+ * @brief obtain the corrected initial configuration in strong form and correct kernel gradient in complex topology
+ */
+class KernelGradientCorrectionComplex : public KernelGradientCorrectionInner, public GeneralDataDelegateContactOnly
+{
+  public:
+    KernelGradientCorrectionComplex(KernelCorrectionMatrixComplex &kernel_correction_complex);
+    virtual ~KernelGradientCorrectionComplex(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };
 } // namespace SPH

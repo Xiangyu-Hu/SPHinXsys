@@ -114,7 +114,6 @@ int main(int ac, char *av[])
     //	The contact relation defines the particle configuration between the bodies.
     //----------------------------------------------------------------------
     InnerRelation wave_body_inner(wave_body);
-    InteractionWithUpdate<KernelGradientWithCorrectionInner> kernel_gradient_update(wave_body_inner);
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
@@ -127,6 +126,8 @@ int main(int ac, char *av[])
     ReduceDynamics<EulerianCompressibleAcousticTimeStepSize> get_wave_time_step_size(wave_body);
     InteractionWithUpdate<Integration1stHalfHLLCRiemann> pressure_relaxation(wave_body_inner);
     InteractionWithUpdate<Integration2ndHalfHLLCRiemann> density_and_energy_relaxation(wave_body_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> kernel_correction_matrix(wave_body_inner);
+    InteractionDynamics<KernelGradientCorrectionInner> kernel_gradient_update(kernel_correction_matrix);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations of the simulation.
     //	Regression tests are also defined here.
@@ -142,6 +143,7 @@ int main(int ac, char *av[])
     sph_system.initializeSystemCellLinkedLists();
     periodic_condition_y.update_cell_linked_list_.exec();
     sph_system.initializeSystemConfigurations();
+    kernel_correction_matrix.exec();
     kernel_gradient_update.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
