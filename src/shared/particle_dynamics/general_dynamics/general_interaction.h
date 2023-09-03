@@ -67,14 +67,29 @@ class KernelCorrectionMatrixComplex : public KernelCorrectionMatrixInner, public
  */
 class KernelGradientCorrectionInner : public LocalDynamics, public GeneralDataDelegateInner
 {
+    ParticlesPairAverageInner<Matd> average_correction_matrix_;
+
   public:
     KernelGradientCorrectionInner(KernelCorrectionMatrixInner &kernel_correction_inner);
     virtual ~KernelGradientCorrectionInner(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Matd> &B_;
-    void correctKernelGradient(Neighborhood &neighborhood, size_t index_i);
+    template <class PairAverageType>
+    void correctKernelGradient(PairAverageType &average_correction_matrix, Neighborhood &neighborhood, size_t index_i)
+    {
+        for (size_t n = 0; n != neighborhood.current_size_; ++n)
+        {
+            size_t index_j = neighborhood.j_[n];
+            Vecd displacement = neighborhood.r_ij_[n] * neighborhood.e_ij_[n];
+
+            Vecd corrected_direction = average_correction_matrix(index_i, index_j) * neighborhood.e_ij_[n];
+            Real direction_norm = corrected_direction.norm();
+            neighborhood.dW_ijV_j_[n] *= direction_norm;
+            neighborhood.e_ij_[n] = corrected_direction / (direction_norm + Eps);
+            neighborhood.r_ij_[n] = displacement.dot(neighborhood.e_ij_[n]);
+        }
+    };
 };
 
 /**
@@ -83,6 +98,8 @@ class KernelGradientCorrectionInner : public LocalDynamics, public GeneralDataDe
  */
 class KernelGradientCorrectionComplex : public KernelGradientCorrectionInner, public GeneralDataDelegateContactOnly
 {
+    StdVec<ParticlesPairAverageContact<Matd>> contact_average_correction_matrix_;
+
   public:
     KernelGradientCorrectionComplex(KernelCorrectionMatrixComplex &kernel_correction_complex);
     virtual ~KernelGradientCorrectionComplex(){};

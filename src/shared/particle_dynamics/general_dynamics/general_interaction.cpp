@@ -67,32 +67,27 @@ KernelGradientCorrectionInner::
     KernelGradientCorrectionInner(KernelCorrectionMatrixInner &kernel_correction_inner)
     : LocalDynamics(kernel_correction_inner.getSPHBody()),
       GeneralDataDelegateInner(kernel_correction_inner.getInnerRelation()),
-      B_(*particles_->getVariableByName<Matd>("KernelCorrectionMatrix")){};
+      average_correction_matrix_(*particles_->getVariableByName<Matd>("KernelCorrectionMatrix")){};
 //=================================================================================================//
 void KernelGradientCorrectionInner::interaction(size_t index_i, Real dt)
 {
     Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-    correctKernelGradient(inner_neighborhood, index_i);
-}
-//=================================================================================================//
-void KernelGradientCorrectionInner::correctKernelGradient(Neighborhood &neighborhood, size_t index_i)
-{
-    for (size_t n = 0; n != neighborhood.current_size_; ++n)
-    {
-        size_t index_j = neighborhood.j_[n];
-
-        Vecd corrected_direction = 0.5 * (B_[index_i] + B_[index_j]) * neighborhood.e_ij_[n];
-        Real direction_norm = corrected_direction.norm();
-        neighborhood.dW_ijV_j_[n] *= direction_norm;
-        neighborhood.e_ij_[n] = corrected_direction / (direction_norm + Eps);
-        neighborhood.r_ij_[n] *= direction_norm;
-    }
+    correctKernelGradient(average_correction_matrix_, inner_neighborhood, index_i);
 }
 //=================================================================================================//
 KernelGradientCorrectionComplex::
     KernelGradientCorrectionComplex(KernelCorrectionMatrixComplex &kernel_correction_complex)
     : KernelGradientCorrectionInner(kernel_correction_complex),
-      GeneralDataDelegateContactOnly(kernel_correction_complex.getContactRelation()) {}
+      GeneralDataDelegateContactOnly(kernel_correction_complex.getContactRelation())
+{
+    for (size_t k = 0; k != contact_particles_.size(); ++k)
+    {
+        contact_average_correction_matrix_.push_back(
+            ParticlesPairAverageContact<Matd>(
+                *particles_->getVariableByName<Matd>("KernelCorrectionMatrix"),
+                *contact_particles_[k]->getVariableByName<Matd>("KernelCorrectionMatrix")));
+    }
+}
 //=================================================================================================//
 void KernelGradientCorrectionComplex::interaction(size_t index_i, Real dt)
 {
@@ -101,7 +96,7 @@ void KernelGradientCorrectionComplex::interaction(size_t index_i, Real dt)
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
-        KernelGradientCorrectionInner::correctKernelGradient(contact_neighborhood, index_i);
+        correctKernelGradient(contact_average_correction_matrix_[k], contact_neighborhood, index_i);
     }
 }
 //=================================================================================================//

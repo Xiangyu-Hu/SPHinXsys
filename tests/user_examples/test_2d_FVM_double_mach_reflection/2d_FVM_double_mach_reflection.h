@@ -10,7 +10,6 @@
 #include "common_compressible_FVM_classes.h"        // eulerian classes for compressible fluid in FVM only.
 #include "common_compressible_eulerian_classes.hpp" // eulerian classes for weakly compressible fluid only.
 #include "common_shared_FVM_classes.h"              // shared eulerian classes for weakly-compressible and compressible fluid in FVM.
-#include "common_shared_eulerian_classes.h"         // shared eulerian classes for weakly-compressible and compressible fluid.
 using namespace SPH;
 using namespace std;
 //----------------------------------------------------------------------

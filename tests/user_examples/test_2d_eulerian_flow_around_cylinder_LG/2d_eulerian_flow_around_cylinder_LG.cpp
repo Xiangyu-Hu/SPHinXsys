@@ -4,7 +4,6 @@
  * @details We consider a Eulerian flow passing by a cylinder in 2D.
  * @author 	Zhentong Wang and Xiangyu Hu
  */
-#include "common_shared_eulerian_classes.h"                // shared eulerian classes for weakly-compressible and compressible fluid.
 #include "common_weakly_compressible_eulerian_classes.hpp" // eulerian classes for weakly compressible fluid only.
 #include "sphinxsys.h"
 using namespace SPH;
@@ -186,7 +185,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     /** Initial condition */
     SimpleDynamics<WeaklyCompressibleFluidInitialCondition> initial_condition(water_block);
-    InteractionWithUpdate<KernelGradientWithCorrectionComplex> kernel_gradient_update(water_block_complex);
+    InteractionWithUpdate<KernelCorrectionMatrixComplex> kernel_correction_matrix(water_block_complex);
+    InteractionDynamics<KernelGradientCorrectionComplex> kernel_gradient_update(kernel_correction_matrix);
     SimpleDynamics<EulerianWCTimeStepInitialization> initialize_a_fluid_step(water_block);
     SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
     InteractionWithUpdate<Integration1stHalfAcousticRiemannWithWall> pressure_relaxation(water_block_complex);
@@ -218,6 +218,7 @@ int main(int ac, char *av[])
     cylinder_normal_direction.exec();
     surface_indicator.exec();
     variable_reset_in_boundary_condition.exec();
+    kernel_correction_matrix.exec();
     kernel_gradient_update.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control

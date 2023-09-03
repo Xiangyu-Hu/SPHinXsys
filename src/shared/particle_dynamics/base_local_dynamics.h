@@ -79,6 +79,36 @@ class NotIndicatedParticles
     };
 };
 
+template <typename DataType>
+class ParticlesPairAverageInner
+{
+    StdLargeVec<DataType> &variable_;
+
+  public:
+    ParticlesPairAverageInner(StdLargeVec<DataType> &variable)
+        : variable_(variable){};
+    DataType operator()(size_t index_i, size_t index_j)
+    {
+        return 0.5 * (variable_[index_i] + variable_[index_j]);
+    };
+};
+
+template <typename DataType>
+class ParticlesPairAverageContact
+{
+    StdLargeVec<DataType> &inner_variable_;
+    StdLargeVec<DataType> &contact_variable_;
+
+  public:
+    ParticlesPairAverageContact(StdLargeVec<DataType> &inner_variable,
+                                StdLargeVec<DataType> &contact_variable)
+        : inner_variable_(inner_variable), contact_variable_(contact_variable){};
+    DataType operator()(size_t index_i, size_t index_j)
+    {
+        return 0.5 * (inner_variable_[index_i] + contact_variable_[index_j]);
+    };
+};
+
 //----------------------------------------------------------------------
 // Particle reduce functors
 //----------------------------------------------------------------------

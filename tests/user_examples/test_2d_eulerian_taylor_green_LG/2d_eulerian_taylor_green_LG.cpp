@@ -5,7 +5,6 @@
  * @author 	Chi Zhang, Zhentong Wang and Xiangyu Hu
  */
 #include "common_compressible_eulerian_classes.hpp" // eulerian classes for compressible fluid only.
-#include "common_shared_eulerian_classes.h"         // shared eulerian classes for weakly-compressible and compressible fluid.
 #include "sphinxsys.h"
 using namespace SPH; //	Namespace cite here.
 //----------------------------------------------------------------------
