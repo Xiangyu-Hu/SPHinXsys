@@ -83,7 +83,7 @@ namespace SPH
 
 		void UpdateCurrentEta(Real initial_eta) { initial_eta_ = initial_eta; }
 		void UpdateMaximumVariation(Real maximum_variation) { maximum_variation_ = maximum_variation; }
-		void UpdateAveragedVariation(Real averaged_variation) { averaged_variation_ = averaged_variation; }
+		void UpdateAverageVariation(Real averaged_variation) { averaged_variation_ = averaged_variation; }
 
 	protected:
 		Real initial_eta_, maximum_variation_, averaged_variation_;
