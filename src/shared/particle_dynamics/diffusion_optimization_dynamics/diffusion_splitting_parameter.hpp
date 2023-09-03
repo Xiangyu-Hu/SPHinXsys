@@ -14,8 +14,7 @@ namespace SPH
 	template <class ParticlesType, typename VariableType>
 	ParameterSplittingByPDEInner<ParticlesType, VariableType>::
 		ParameterSplittingByPDEInner(BaseInnerRelation& inner_relation, const std::string& variable_name):
-		OptimizationBySplittingAlgorithmBase<ParticlesType, VariableType>(inner_relation, variable_name),
-	    DataDelegateInner<ParticlesType, DataDelegateEmptyBase>(inner_relation) {};
+		OptimizationBySplittingAlgorithmBase<ParticlesType, VariableType>(inner_relation, variable_name){};
 	//=================================================================================================//
 	template <class ParticlesType, typename VariableType>
 	ErrorAndParameters<VariableType> ParameterSplittingByPDEInner<ParticlesType, VariableType>::
@@ -81,9 +80,9 @@ namespace SPH
 
 		ErrorAndParameters<VariableType> error_and_parameters_aft = computeErrorAndParameters(index_i, dt);
 		error_and_parameters_aft.error_ = error_and_parameters_aft.error_ - this->residual_T_local_[index_i];
-		this->residual_sp_pde_[index_i] = error_and_parameters_aft.error_;
+		this->residual_after_splitting_[index_i] = error_and_parameters_aft.error_;
 
-		if (abs(this->residual_sp_pde_[index_i]) > abs(this->residual_k_local_[index_i]))
+		if (abs(this->residual_after_splitting_[index_i]) > abs(this->residual_k_local_[index_i]))
 		{
 			this->variable_[index_i] = this->parameter_recovery_[index_i];
 			Neighborhood& inner_neighborhood = this->inner_configuration_[index_i];
@@ -100,9 +99,9 @@ namespace SPH
 
 			ErrorAndParameters<VariableType> error_and_parameters_aft = computeErrorAndParameters(index_i, -dt);
 			error_and_parameters_aft.error_ = error_and_parameters_aft.error_ + this->residual_T_local_[index_i];
-			this->residual_sp_pde_[index_i] = error_and_parameters_aft.error_;
+			this->residual_after_splitting_[index_i] = error_and_parameters_aft.error_;
 
-			if (abs(this->residual_sp_pde_[index_i]) > abs(this->residual_k_local_[index_i]))
+			if (abs(this->residual_after_splitting_[index_i]) > abs(this->residual_k_local_[index_i]))
 			{
 				this->splitting_index_[index_i] = 0;
 				this->variable_[index_i] = this->parameter_recovery_[index_i];
@@ -113,12 +112,12 @@ namespace SPH
 					this->variable_[index_j] = this->parameter_recovery_[index_j];
 				}
 			}
-			else if (abs(this->residual_sp_pde_[index_i]) <= abs(this->residual_k_local_[index_i]))
+			else if (abs(this->residual_after_splitting_[index_i]) <= abs(this->residual_k_local_[index_i]))
 			{
 				this->splitting_index_[index_i] = 2;
 			}
 		}
-		else if (abs(this->residual_sp_pde_[index_i]) <= abs(this->residual_k_local_[index_i]))
+		else if (abs(this->residual_after_splitting_[index_i]) <= abs(this->residual_k_local_[index_i]))
 		{
 			this->splitting_index_[index_i] = 1;
 		}
@@ -128,13 +127,14 @@ namespace SPH
 	ParameterSplittingByPDEWithBoundary<ParticlesType, ContactParticlesType, VariableType>::
 		ParameterSplittingByPDEWithBoundary(ComplexRelation& complex_relation, const std::string& variable_name):
 		ParameterSplittingByPDEInner<ParticlesType, VariableType>(complex_relation.getInnerRelation(), variable_name),
-		DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>(complex_relation.getContactRelation())									 
+		DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>(complex_relation.getContactRelation())
 	{
+		boundary_heat_flux_.resize(this->contact_particles_.size());
 		for (size_t k = 0; k != this->contact_particles_.size(); ++k)
 		{
-			boundary_heat_flux_.push_back(&(this->contact_particles_[k]->heat_flux_));
-			boundary_species_.push_back(&(this->contact_particles_[k]->species_n_));
-			boundary_normal_vector_.push_back(&this->contact_particles_[k]->normal_vector_);
+			boundary_normal_vector_.push_back(&this->contact_particles_[k]->n_);
+			boundary_species_.push_back(&(this->contact_particles_[k]->all_species_));
+			boundary_heat_flux_[k] = this->contact_particles_[k]->template registerSharedVariable<Real>("HeatFlux");
 		}
 	}
 	//=================================================================================================//
@@ -150,7 +150,6 @@ namespace SPH
 		{
 			StdLargeVec<Real>& heat_flux_k = *(this->boundary_heat_flux_[k]);
 			StdLargeVec<Vecd>& normal_vector_k = *(this->boundary_normal_vector_[k]);
-			StdLargeVec<Real>& normal_distance_k = *(this->boundary_normal_distance_[k]);
 			StdVec<StdLargeVec<Real>>& species_k = *(boundary_species_[k]);
 
 			Neighborhood& contact_neighborhood = (*this->contact_configuration_[k])[index_i];

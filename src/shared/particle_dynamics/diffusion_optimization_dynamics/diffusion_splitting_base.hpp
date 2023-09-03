@@ -16,46 +16,36 @@ namespace SPH
 		OptimizationBySplittingAlgorithmBase(BaseInnerRelation& inner_relation, const std::string &variable_name) :
 		LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner<ParticlesType>(inner_relation),
 		Vol_(this->particles_->Vol_), mass_(this->particles_->mass_), normal_vector_(this->particles_->n_),
-		variable_(*this->particles_->getVariableByName<VariableType>(variable_name))
+		variable_(*this->particles_->getVariableByName<VariableType>(variable_name)),
+		heat_flux_(*this->particles_->template registerSharedVariable<Real>("HeatFlux")),
+		heat_source_(*this->particles_->template registerSharedVariable<Real>("HeatSource")),
+		splitting_index_(*this->particles_->template registerSharedVariable<int>("SplittingIndex")),
+		species_modified_(*this->particles_->template registerSharedVariable<Real>("SpeciesModified")),
+		species_recovery_(*this->particles_->template registerSharedVariable<Real>("SpeciesRecovery")),
+		parameter_recovery_(*this->particles_->template registerSharedVariable<Real>("ParameterRecovery")),
+		eta_regularization_(*this->particles_->template registerSharedVariable<Real>("EtaRegularization")),
+		residual_T_local_(*this->particles_->template registerSharedVariable<Real>("ResidualTLocal")),
+		residual_T_global_(*this->particles_->template registerSharedVariable<Real>("ResidualTGlobal")),
+		residual_k_local_(*this->particles_->template registerSharedVariable<Real>("ResidualKLocal")),
+		residual_k_global_(*this->particles_->template registerSharedVariable<Real>("ResidualKGlobal")),
+		variation_local_(*this->particles_->template registerSharedVariable<Real>("VariationLocal")),
+		variation_global_(*this->particles_->template registerSharedVariable<Real>("VariationGlobal")),
+		residual_after_splitting_(*this->particles_->template registerSharedVariable<Real>("ResidualAfterSplitting"))
 	{
-        this->particles_->template registerVariable<Real>(heat_flux_, "HeatFlux");
         this->particles_->template addVariableToWrite<Real>("HeatFlux");
-
-		this->particles_->template registerVariable<Real>(heat_source_, "HeatSource");
         this->particles_->template addVariableToWrite<Real>("HeatSource");
-
-		this->particles_->template registerVariable<int>(splitting_index_, "SplittingIndex");
 		this->particles_->template addVariableToWrite<int>("SplittingIndex");
-
-		this->particles_->template registerVariable<Real>(species_modified_, "SpeciesModified");
-		this->particles_->template addVariableToWrite<Real>("SpeciesModified");
-
-		this->particles_->template registerVariable<Real>(species_recovery_, "SpeciesRecovery");
-		this->particles_->template addVariableToWrite<Real>("SpeciesRecovery");
-
-		this->particles_->template registerVariable<Real>(parameter_recovery_, "ParameterRecovery");
+		this->particles_->template addVariableToWrite<Real>("SpeciesModified");	
+		this->particles_->template addVariableToWrite<Real>("SpeciesRecovery");	
 		this->particles_->template addVariableToWrite<Real>("ParameterRecovery");
-
-		this->particles_->template registerVariable<Real>(eta_regularization_, "EtaRegularization");
 		this->particles_->template addVariableToWrite<Real>("EtaRegularization");
-
-		this->particles_->template registerVariable<Real>(residual_T_local_, "ResidualTLocal");
 		this->particles_->template addVariableToWrite<Real>("ResidualTLocal");
-
-		this->particles_->template registerVariable<Real>(residual_T_global_, "ResidualTGlobal");
 		this->particles_->template addVariableToWrite<Real>("ResidualTGlobal");
-
-		this->particles_->template registerVariable<Real>(residual_k_local_, "ResidualKLocal");
 		this->particles_->template addVariableToWrite<Real>("ResidualKLocal");
-
-		this->particles_->template registerVariable<Real>(residual_k_global_, "ResidualKGlobal");
 		this->particles_->template addVariableToWrite<Real>("ResidualKGlobal");
-
-		this->particles_->template registerVariable<Real>(variation_local_, "VariationLocal");
 		this->particles_->template addVariableToWrite<Real>("VariationLocal");
-
-		this->particles_->template registerVariable<Real>(variation_global_, "VariationGlobal");
 		this->particles_->template addVariableToWrite<Real>("VariationGlobal");
+		this->particles_->template addVariableToWrite<Real>("ResidualAfterSplitting");
 
 		phi_ = this->particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
 		all_diffusion_ = this->particles_->diffusion_reaction_material_.AllDiffusions();

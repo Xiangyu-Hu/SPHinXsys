@@ -90,7 +90,7 @@ namespace SPH
 	 * @brief The thermal diffusivity on each particle will be corrected with 
 	 *        the same ratio according to the total thermal diffusivity.
 	 */
-	template <class ParticlesType, typename VariableType>
+	template <class ParticlesType>
     class ThermalConductivityConstrain
         : public LocalDynamics,
           public DiffusionReactionSimpleData<ParticlesType>
@@ -104,7 +104,7 @@ namespace SPH
     protected:
         Real initial_thermal_conductivity_;
         Real new_average_thermal_conductivity_;
-        StdLargeVec<VariableType> &local_thermal_conductivity_;
+        StdLargeVec<Real> &local_thermal_conductivity_;
         void update(size_t index_i, Real dt = 0.0);
     };
 }

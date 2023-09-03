@@ -41,8 +41,7 @@ namespace SPH
 	 */
 	template <class ParticlesType, typename VariableType>
 	class ParameterSplittingByPDEInner
-		: public OptimizationBySplittingAlgorithmBase<ParticlesType, VariableType>,
-		  public DataDelegateInner<ParticlesType, DataDelegateEmptyBase>
+		: public OptimizationBySplittingAlgorithmBase<ParticlesType, VariableType>
 	{
 	public:
 		ParameterSplittingByPDEInner(BaseInnerRelation& inner_relation, const std::string& variable_name);
