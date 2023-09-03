@@ -14,53 +14,51 @@ namespace SPH
 	template <class ParticlesType, typename VariableType>
 	OptimizationBySplittingAlgorithmBase<ParticlesType, VariableType>::
 		OptimizationBySplittingAlgorithmBase(BaseInnerRelation& inner_relation, const std::string &variable_name) :
-		BaseDiffusionRelaxation<ParticleType>(inner_relation.getSPHBobdy()),
-		DataDelegateInner<ParticlesType, DataDelegateEmptyBase>(inner_relation),
+		LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner<ParticlesType>(inner_relation),
 		Vol_(this->particles_->Vol_), mass_(this->particles_->mass_), normal_vector_(this->particles_->n_),
-		heat_flux_(this->particles_->heat_flux_), heat_source_(this->particles_->heat_source_),
-		variable_(*this->particles_->template getVariableByName<VariableType>(variable_name))
+		variable_(*this->particles_->getVariableByName<VariableType>(variable_name))
 	{
-        *this->particles_->registerSharedVariable(heat_flux_, "HeatFlux");
-        *this->particles_->addVariableToWrite<Real>("HeatFlux");
+        this->particles_->template registerVariable<Real>(heat_flux_, "HeatFlux");
+        this->particles_->template addVariableToWrite<Real>("HeatFlux");
 
-		*this->particles_->registerSharedVariable(heat_flux_, "HeatSource");
-        *this->particles_->addVariableToWrite<Real>("HeatSource");
+		this->particles_->template registerVariable<Real>(heat_source_, "HeatSource");
+        this->particles_->template addVariableToWrite<Real>("HeatSource");
 
-		*this->particles_->registerSharedVariable(splitting_index_, "SplittingIndex");
-		*this->particles_->addVariableToWrite<Real>("SplittingIndex");
+		this->particles_->template registerVariable<int>(splitting_index_, "SplittingIndex");
+		this->particles_->template addVariableToWrite<int>("SplittingIndex");
 
-		*this->particles_->registerSharedVariable(species_modified_, "SpeciesModified");
-		*this->partivles_->addVariableToWrite<Real>("SpeciesModified");
+		this->particles_->template registerVariable<Real>(species_modified_, "SpeciesModified");
+		this->particles_->template addVariableToWrite<Real>("SpeciesModified");
 
-		*this->particles_->registerSharedVariable(species_recovery_, "SpeciesRecovery");
-		*this->particles_->addVariableToWrite<Real>("SpeciesRecovery");
+		this->particles_->template registerVariable<Real>(species_recovery_, "SpeciesRecovery");
+		this->particles_->template addVariableToWrite<Real>("SpeciesRecovery");
 
-		*this->particles_->registerSharedVariable(parameter_recovery_, "ParameterRecovery");
-		*this->particles_->addVariableToWrite<Real>("ParameterRecovery");
+		this->particles_->template registerVariable<Real>(parameter_recovery_, "ParameterRecovery");
+		this->particles_->template addVariableToWrite<Real>("ParameterRecovery");
 
-		*this->particles_->registerSharedVariable(eta_regularization_, "EtaRegularization");
-		*this->particles_->addVariableToWrite<Real>("EtaRegularization");
+		this->particles_->template registerVariable<Real>(eta_regularization_, "EtaRegularization");
+		this->particles_->template addVariableToWrite<Real>("EtaRegularization");
 
-		*this->particles_->registerSharedVariable(residual_T_local_, "ResidualTLocal");
-		*this->particles_->addVariableToWrite<Real>("ResidualTLocal");
+		this->particles_->template registerVariable<Real>(residual_T_local_, "ResidualTLocal");
+		this->particles_->template addVariableToWrite<Real>("ResidualTLocal");
 
-		*this->particles_->registerSharedVariable(residual_T_global_, "ResidualTGlobal");
-		*this->particles_->addVariableToWrite<Real>("ResidualTGlobal");
+		this->particles_->template registerVariable<Real>(residual_T_global_, "ResidualTGlobal");
+		this->particles_->template addVariableToWrite<Real>("ResidualTGlobal");
 
-		*this->particles_->registerSharedVariable(residual_k_local_, "ResidualKLocal");
-		*this->particles_->addVariableToWrite<Real>("ResidualKLocal");
+		this->particles_->template registerVariable<Real>(residual_k_local_, "ResidualKLocal");
+		this->particles_->template addVariableToWrite<Real>("ResidualKLocal");
 
-		*this->particles_->registerSharedVariable(residual_k_global_, "ResidualKGlobal");
-		*this->particles_->addVariableToWrite<Real>("ResidualKGlobal");
+		this->particles_->template registerVariable<Real>(residual_k_global_, "ResidualKGlobal");
+		this->particles_->template addVariableToWrite<Real>("ResidualKGlobal");
 
-		*this->particles_->registerSharedVariable(variation_local_, "VariationLocal");
-		*this->particles_->addVariableToWrite<Real>("VariationLocal");
+		this->particles_->template registerVariable<Real>(variation_local_, "VariationLocal");
+		this->particles_->template addVariableToWrite<Real>("VariationLocal");
 
-		*this->particles_->registerSharedVariable(variation_global_, "VariationGlobal");
-		*this->particles_->addVariableToWrite<Real>("VariationGlobal");
+		this->particles_->template registerVariable<Real>(variation_global_, "VariationGlobal");
+		this->particles_->template addVariableToWrite<Real>("VariationGlobal");
 
-		phi_ = this->particles_->diffusion_reaction_material_.SpeciesIndexMap()["Phi"];
-		species_diffusion_ = this->particles_->diffusion_reaction_material_.SpeciesDiffusion();
+		phi_ = this->particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
+		all_diffusion_ = this->particles_->diffusion_reaction_material_.AllDiffusions();
 	}
 	//=================================================================================================//
 	template <class ParticlesType, typename VariableType>
@@ -141,7 +139,7 @@ namespace SPH
 	template <class ParticlesType, typename VariableType>
 	UpdateRegularizationVariation<ParticlesType, VariableType>::
 		UpdateRegularizationVariation(BaseInnerRelation& inner_relation, const std::string& variable_name) :
-		OptimizationBySplittingAlgorithmBase<ParticleType, VariableType>(inner_relation, variable_name) {};
+		OptimizationBySplittingAlgorithmBase<ParticlesType, VariableType>(inner_relation, variable_name) {};
 	//=================================================================================================//
 	template <class ParticlesType, typename VariableType>
 	ErrorAndParameters<VariableType> UpdateRegularizationVariation<ParticlesType, VariableType>::

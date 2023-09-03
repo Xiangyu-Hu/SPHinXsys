@@ -74,10 +74,10 @@ namespace SPH
 		StdLargeVec<Real> &variable_;
 
 	public:
-		ComputeMaximumError(DynamicsIdentifier &identifier, const std::string &species_name)
+		ComputeMaximumError(DynamicsIdentifier &identifier, const std::string &variable_name)
 			: BaseLocalDynamicsReduce<Real, ReduceMax, DynamicsIdentifier>(identifier, Real(0)),
               DiffusionReactionSimpleData<ParticlesType>(identifier.getSPHBody()),
-              variable_(*this->particles_->template getVariableByName<Real>(error_name)){};
+              variable_(*this->particles_->template getVariableByName<Real>(variable_name)){};
 
 		Real reduce(size_t index_i, Real dt = 0.0)
         {
@@ -103,7 +103,7 @@ namespace SPH
 
     protected:
         Real initial_thermal_conductivity_;
-        Real new_average_thermal_diffusivity_;
+        Real new_average_thermal_conductivity_;
         StdLargeVec<VariableType> &local_thermal_conductivity_;
         void update(size_t index_i, Real dt = 0.0);
     };

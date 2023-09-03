@@ -18,7 +18,7 @@ namespace SPH
 	LocalDynamics(diffusion_body),                                    
 	DiffusionReactionSimpleData<ParticlesType>(diffusion_body),                                                                  
 	initial_thermal_conductivity_(initial_thermal_conductivity),                            
-	new_average_thermal_diffusivity_(0.0),                                                                 
+	new_average_thermal_conductivity_(0.0),                                                                 
 	local_thermal_conductivity_(*this->particles_->template getVariableByName<VariableType>(variable_name)){};
 	//=================================================================================================//
 	template <class ParticlesType, typename VariableType>
@@ -33,7 +33,7 @@ namespace SPH
 		update(size_t index_i, Real dt)
 	{
 		local_thermal_conductivity_[index_i] = local_thermal_conductivity_[index_i] *
-			initial_thermal_diffusivity_ / new_averaged_thermal_diffusivity_;
+			initial_thermal_conductivity_ / new_average_thermal_conductivity_;
 	}
 	//=================================================================================================//
 }

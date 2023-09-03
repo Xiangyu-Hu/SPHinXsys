@@ -14,7 +14,8 @@ namespace SPH
 	template <class ParticlesType, typename VariableType>
 	ParameterSplittingByPDEInner<ParticlesType, VariableType>::
 		ParameterSplittingByPDEInner(BaseInnerRelation& inner_relation, const std::string& variable_name):
-		OptimizationBySplittingAlgorithmBase<ParticleType, VariableType>(inner_relation, variable_name) {};
+		OptimizationBySplittingAlgorithmBase<ParticlesType, VariableType>(inner_relation, variable_name),
+	    DataDelegateInner<ParticlesType, DataDelegateEmptyBase>(inner_relation) {};
 	//=================================================================================================//
 	template <class ParticlesType, typename VariableType>
 	ErrorAndParameters<VariableType> ParameterSplittingByPDEInner<ParticlesType, VariableType>::
@@ -134,7 +135,6 @@ namespace SPH
 			boundary_heat_flux_.push_back(&(this->contact_particles_[k]->heat_flux_));
 			boundary_species_.push_back(&(this->contact_particles_[k]->species_n_));
 			boundary_normal_vector_.push_back(&this->contact_particles_[k]->normal_vector_);
-			boundary_normal_distance_.push_back(&this->contact_particles_[k]->normal_distance_);
 		}
 	}
 	//=================================================================================================//

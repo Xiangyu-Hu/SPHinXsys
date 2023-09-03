@@ -41,14 +41,15 @@ namespace SPH
 	 */
 	template <class ParticlesType, typename VariableType>
 	class OptimizationBySplittingAlgorithmBase
-		: public BaseDiffusionRelaxation<ParticlesType>,
-		  public DataDelegateInner<ParticlesType, DataDelegateEmptyBase>
+		: public LocalDynamics, public DataDelegateInner<ParticlesType>
 	{
 	public:
-		explicit OptimizationBySplittingAlgorithmBase(BaseInnerRelation& inner_relation, const std::string &variable_name);
+		explicit OptimizationBySplittingAlgorithmBase(BaseInnerRelation& inner_relation, 
+			                                          const std::string &variable_name);
 		virtual ~OptimizationBySplittingAlgorithmBase() {};
 
 	public:
+		size_t phi_;
 		StdLargeVec<int> splitting_index_;
 		StdLargeVec<Real>& Vol_, & mass_;
         StdLargeVec<Real> heat_flux_, heat_source_;
@@ -59,10 +60,10 @@ namespace SPH
 		StdLargeVec<Real> variation_local_, variation_global_;
         StdLargeVec<Vecd> &normal_vector_;
 		StdLargeVec<VariableType>& variable_;
-		StdVec<BaseDiffusion*> species_diffusion_;
-		StdVec<StdLargeVec<Real>>& species_n_;
+		StdVec<BaseDiffusion*> all_diffusion_;
 
-		virtual void interaction(size_t index_i, Real dt = 0.0) = 0;
+		virtual void interaction(size_t index_i, Real dt = 0.0)
+		{};
 	};
 
 	/**

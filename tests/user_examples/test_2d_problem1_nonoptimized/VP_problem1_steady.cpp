@@ -140,7 +140,6 @@ class WallBoundaryInitialCondition
     };
 };
 
-
 //----------------------------------------------------------------------
 //	An observer body to measure temperature at given positions. 
 //----------------------------------------------------------------------
@@ -194,20 +193,19 @@ int main(int ac, char* av[])
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the range of bodies to build neighbor particle lists.
-	//----------------------------------------------------------------------
 	ComplexRelation diffusion_body_complex(diffusion_body, { &wall_boundary });
 	ContactRelation temperature_observer_contact(temperature_observer, { &diffusion_body });
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-    InteractionSplit<TemperatureSplittingByPDEWithBoundary<SolidParticles, SolidParticles, Real>>
+	InteractionSplit<TemperatureSplittingByPDEWithBoundary<DiffusionParticles, WallParticles, Real>>
 		temperature_splitting(diffusion_body_complex, "Phi");
 	
 	GetDiffusionTimeStepSize<DiffusionParticles> get_time_step_size(diffusion_body);
     SimpleDynamics<DiffusionBodyInitialCondition> setup_diffusion_initial_condition(diffusion_body);
     SimpleDynamics<WallBoundaryInitialCondition> setup_boundary_condition(wall_boundary);
-    ReduceAverage<SpeciesSummation<SPHBody, SolidParticles>> calculate_averaged_temperature(diffusion_body, "Phi");
+    ReduceAverage<SpeciesSummation<SPHBody, DiffusionParticles>> calculate_averaged_temperature(diffusion_body, "Phi");
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------

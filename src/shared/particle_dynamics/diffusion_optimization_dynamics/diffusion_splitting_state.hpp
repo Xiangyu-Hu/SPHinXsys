@@ -31,7 +31,7 @@ namespace SPH
 
 			// linear projection
 			VariableType variable_derivative = (variable_i - this->variable_[index_j]);
-			Real diff_coff_ij = this->species_diffusion_[this->phi_]->getInterParticleDiffusionCoff(index_i, index_j, e_ij_);
+			Real diff_coff_ij = this->all_diffusion_[this->phi_]->getInterParticleDiffusionCoeff(index_i, index_j, e_ij_);
 			Real parameter_b = 2.0 * diff_coff_ij * inner_neighborhood.dW_ijV_j_[n] * dt / r_ij_;
 
 			error_and_parameters.error_ -= variable_derivative * parameter_b;
@@ -58,7 +58,7 @@ namespace SPH
 			Real& r_ij_ = inner_neighborhood.r_ij_[n];
 			Vecd& e_ij_ = inner_neighborhood.e_ij_[n];
 	
-			Real diff_coff_ij = this->species_diffusion_[this->phi_]->getInterParticleDiffusionCoff(index_i, index_j, e_ij_);
+			Real diff_coff_ij = this->all_diffusion_[this->phi_]->getInterParticleDiffusionCoeff(index_i, index_j, e_ij_);
 			Real parameter_b = 2.0 * diff_coff_ij * inner_neighborhood.dW_ijV_j_[n] * dt / r_ij_;
 			this->variable_[index_j] -= parameter_k * parameter_b;
 		}
@@ -79,11 +79,12 @@ namespace SPH
 		TemperatureSplittingByPDEInner<ParticlesType, VariableType>(complex_relation.getInnerRelation(), variable_name),
 		DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>(complex_relation.getContactRelation())
     {
+		boundary_heat_flux_.resize(this->contact_particles_.size());
 		for (size_t k = 0; k != this->contact_particles_.size(); ++k)
 		{
-			boundary_normal_vector_.push_back(&this->contact_particles_[k]->n_);
-			boundary_heat_flux_.push_back(&this->contact_particles_[k]->heat_flux_);
+			boundary_normal_vector_.push_back(&this->contact_particles_[k]->n_);			 
 			boundary_variable_.push_back(this->contact_particles_[k]->template getVariableByName<VariableType>(variable_name));
+			boundary_heat_flux_[k] = this->contact_particles_[k]->template registerSharedVariable<Real>("HeatFlux");
 		}
 	};
 	//=================================================================================================//
@@ -100,7 +101,6 @@ namespace SPH
 		{
 			StdLargeVec<Real>& heat_flux_k = *(this->boundary_heat_flux_[k]);
 			StdLargeVec<Vecd>& normal_vector_k = *(this->boundary_normal_vector_[k]);
-			StdLargeVec<Real>& normal_distance_k = *(this->boundary_normal_distance_[k]);
 			StdLargeVec<VariableType>& variable_k = *(this->boundary_variable_[k]);
 
 			Neighborhood& contact_neighborhood = (*this->contact_configuration_[k])[index_i];
@@ -112,7 +112,7 @@ namespace SPH
 				{
 					// linear projection
 					VariableType variable_derivative = (variable_i - variable_k[index_j]);
-					Real diff_coff_ij = this->species_diffusion_[this->phi_]->getDiffusionCoffWithBoundary(index_i);
+					Real diff_coff_ij = this->all_diffusion_[this->phi_]->getDiffusionCoeffWithBoundary(index_i);
 					Real parameter_b = 2.0 * diff_coff_ij * contact_neighborhood.dW_ijV_j_[n] * dt / contact_neighborhood.r_ij_[n];
 
 					error_and_parameters.error_ -= variable_derivative * parameter_b;
