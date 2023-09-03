@@ -35,21 +35,6 @@
 namespace SPH
 {
 /**
- * @class EulerianFluidBody
- * @brief Eulerian Fluid body uses smoothing length to particle spacing 1.3
- */
-class EulerianFluidBody : public FluidBody
-{
-  public:
-    explicit EulerianFluidBody(SPHSystem &system, SharedPtr<Shape> shape_ptr) : FluidBody(system, shape_ptr)
-    {
-        defineAdaptation<SPHAdaptation>(1.3);
-    };
-    virtual ~EulerianFluidBody(){};
-    virtual EulerianFluidBody *ThisObjectPtr() override { return this; };
-};
-
-/**
  * @class KernelGradientWithCorrectionInner
  * @brief obtain the corrected initial configuration in strong form and correct kernel gradient
  */

@@ -113,7 +113,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    EulerianFluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
+    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
     water_block.sph_adaptation_->resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
     water_block.defineComponentLevelSetShape("OuterBoundary");
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);

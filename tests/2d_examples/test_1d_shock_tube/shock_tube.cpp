@@ -105,7 +105,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Create body, materials and particles.
     //----------------------------------------------------------------------
-    EulerianFluidBody wave_body(sph_system, makeShared<WaveBlock>("WaveBody"));
+    FluidBody wave_body(sph_system, makeShared<WaveBlock>("WaveBody"));
     wave_body.defineParticlesAndMaterial<BaseParticles, CompressibleFluid>(rho0_l, heat_capacity_ratio);
     wave_body.generateParticles<ParticleGeneratorLattice>();
     //----------------------------------------------------------------------
