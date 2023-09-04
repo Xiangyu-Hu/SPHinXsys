@@ -12,5 +12,5 @@ target_link_libraries(${PROJECT_NAME} sphinxsys_3d GTest::gtest GTest::gtest_mai
 set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 
 add_test(NAME ${PROJECT_NAME}_particle_relaxation 
-		 COMMAND ${PROJECT_NAME} --r=true
+		 COMMAND ${PROJECT_NAME} --relax=true
 		 WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
