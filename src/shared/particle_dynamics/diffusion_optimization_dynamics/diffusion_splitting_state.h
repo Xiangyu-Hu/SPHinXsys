@@ -89,4 +89,4 @@ namespace SPH
     };
 }
 
-#endif DIFFUSION_SPLITTING_STATE_H
+#endif //DIFFUSION_SPLITTING_STATE_H

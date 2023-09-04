@@ -111,5 +111,4 @@ namespace SPH
         virtual void interaction(size_t index_i, Real dt = 0.0) override;
     };
 }
-
-#endif DIFFUSION_SPLITTING_BASE_H
+#endif //DIFFUSION_SPLITTING_BASE_H

@@ -141,4 +141,4 @@ namespace SPH
 	//=================================================================================================//
 }
 
-#endif DIFFUSION_SPLITTING_STATE_HPP
+#endif //DIFFUSION_SPLITTING_STATE_HPP
