@@ -260,9 +260,9 @@ int main()
 	//Real averaged_residual_k_last_global(10.0);
 	//Real averaged_variation_last_local(10.0);
 	Real averaged_variation_last_global(10.0);
-	Real maximum_residual_T_last_global(10.0);
+	//Real maximum_residual_T_last_global(10.0);
 	//Real maximum_residual_k_last_global(10.0);
-	Real maximum_variation_last_global(10.0);
+	//Real maximum_variation_last_global(10.0);
 
 	/* Averaged parameter of the current cycle. */
 	Real averaged_residual_T_current_local(0.0);
@@ -416,13 +416,13 @@ int main()
 	update_regularization_global_variation.exec(dt_ratio_rg * dt);
 	averaged_variation_current_global = calculate_regularization_global_variation.exec();
 	maximum_variation_current_global = calculate_maximum_variation.exec();
-	maximum_variation_last_global = maximum_variation_current_global;
+	//maximum_variation_last_global = maximum_variation_current_global;
 
 	update_temperature_pde_residual.exec(dt_ratio_t * dt);
 	averaged_residual_T_current_global = calculate_temperature_global_residual.exec();
 	averaged_residual_T_last_global = averaged_residual_T_current_global;
 	maximum_residual_T_current_global = calculate_maximum_residual.exec();
-	maximum_residual_T_last_global = maximum_residual_T_current_global;
+	//maximum_residual_T_last_global = maximum_residual_T_current_global;
 
 	current_averaged_temperature = calculate_averaged_opt_temperature.exec();
 	out_file_nonopt_temperature << std::fixed << std::setprecision(12) << ite 
@@ -560,7 +560,7 @@ int main()
 
 		nonopt_averaged_temperature = opt_averaged_temperature;
 		averaged_residual_T_last_global = averaged_residual_T_current_global;
-		maximum_residual_T_last_global = maximum_residual_T_current_global;
+		//maximum_residual_T_last_global = maximum_residual_T_current_global;
 
 		std::cout << "averaged_residual_T_current_global is " << averaged_residual_T_current_global << std::endl;
 		out_file_ite_T << std::fixed << std::setprecision(12) << ite_loop << "   " << ite_T << "\n";
@@ -581,8 +581,6 @@ int main()
 		relative_temperature_difference = abs(current_averaged_temperature - last_averaged_temperature) / last_averaged_temperature;
 		relative_average_variation_difference = abs(averaged_variation_current_global - averaged_variation_last_global) / abs(averaged_variation_last_global);
 		averaged_variation_last_global = averaged_variation_current_global;
-		//relative_maximum_variation_difference = abs(maximum_variation_current_global - maximum_variation_last_global) / abs(maximum_variation_last_global);
-		maximum_variation_last_global = maximum_variation_current_global;
 		out_file_eta_regularization << std::fixed << std::setprecision(12) << ite_loop << "   " << current_eta_regularization << "\n";
 
 		if (ite_loop % ite_restart == 0) { restart_io.writeToFile(ite_loop); }
