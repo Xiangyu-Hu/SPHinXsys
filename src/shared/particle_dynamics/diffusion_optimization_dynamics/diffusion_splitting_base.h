@@ -50,17 +50,19 @@ namespace SPH
 
 	public:
 		size_t phi_;
-		StdLargeVec<int> splitting_index_;
-		StdLargeVec<Real> &Vol_, &mass_;
-        StdLargeVec<Real> &heat_flux_, &heat_source_;
+		StdLargeVec<Real>& Vol_, & mass_;
+		StdLargeVec<Vecd>& normal_vector_;
+		StdLargeVec<VariableType>& variable_;
+		StdLargeVec<Real>& heat_flux_, & heat_source_;
+		StdLargeVec<int> &splitting_index_;
 		StdLargeVec<Real> &species_modified_, &species_recovery_;
 		StdLargeVec<Real> &parameter_recovery_, &eta_regularization_;
 		StdLargeVec<Real> &residual_T_local_, &residual_T_global_;
 		StdLargeVec<Real> &residual_k_local_, &residual_k_global_;
 		StdLargeVec<Real> &variation_local_, &variation_global_;
 		StdLargeVec<Real> &residual_after_splitting_;
-        StdLargeVec<Vecd> &normal_vector_;
-		StdLargeVec<VariableType> &variable_;
+       
+		
 		StdVec<BaseDiffusion*> all_diffusion_;
 
 		virtual void interaction(size_t index_i, Real dt = 0.0) = 0;

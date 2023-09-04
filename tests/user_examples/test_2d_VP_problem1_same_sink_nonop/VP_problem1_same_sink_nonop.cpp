@@ -231,7 +231,6 @@ int main(int ac, char* av[])
 	int ite = sph_system.RestartStep();
 	Real T0 = 10;
 	Real End_Time = T0;
-	Real Observe_time = 0.01 * End_Time;
 	int restart_output_interval = 1000;
 	Real dt = 0.0;
 	Real current_averaged_temperature = 0.0;
@@ -248,7 +247,6 @@ int main(int ac, char* av[])
 
 	while (GlobalStaticVariables::physical_time_ < End_Time)
 	{
-		Real integration_time = 0.0;
 		dt = get_time_step_size.exec();
 		if (ite % 500 == 0)
 		{

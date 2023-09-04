@@ -220,7 +220,7 @@ int main()
 
 	int ite_T_total = 1;           /* define the total iteration for temperature splitting. */
 	int ite_k_total = 1;           /* define the total iteration for parameter splitting. */
-	int ite_rg_total = 1;          /* define the total iteration for parameter regularization. */
+	//int ite_rg_total = 1;          /* define the total iteration for parameter regularization. */
 	int ite_loop = 0;              /* define loop index for optimization cycle. */
 
 	int ite_T_comparison_opt = 0;  /* define the real step for splitting temperature by sloving PDE. */
@@ -233,14 +233,14 @@ int main()
 	Real dt = 0.0;                 /* time step size. */
 
 	/* Averaged parameter of the last cycle. */
-	Real averaged_residual_T_last_local(10.0);
+	//Real averaged_residual_T_last_local(10.0);
 	Real averaged_residual_T_last_global(10.0);
-	Real averaged_residual_k_last_local(10.0);
-	Real averaged_residual_k_last_global(10.0);
-	Real averaged_variation_last_local(10.0);
+	//Real averaged_residual_k_last_local(10.0);
+	//Real averaged_residual_k_last_global(10.0);
+	//Real averaged_variation_last_local(10.0);
 	Real averaged_variation_last_global(10.0);
 	Real maximum_residual_T_last_global(10.0);
-	Real maximum_residual_k_last_global(10.0);
+	//Real maximum_residual_k_last_global(10.0);
 	Real maximum_variation_last_global(10.0);
 
 	/* Averaged parameter of the current cycle. */
@@ -255,8 +255,8 @@ int main()
 	Real maximum_variation_current_global(10.0);
 
 	/* Initial parameter for limitation. */
-	Real initial_averaged_residual_T = 0.0;
-	Real initial_averaged_variation = 0.0;
+	//Real initial_averaged_residual_T = 0.0;
+	//Real initial_averaged_variation = 0.0;
 	Real opt_averaged_temperature = 0.0;
 	Real nonopt_averaged_temperature = Infinity;
 	Real averaged_k_parameter = 0.0;
@@ -270,9 +270,9 @@ int main()
 
 	/* Parameters related to parameter convergence. */
 	Real relative_average_variation_difference = 1.0;
-	Real relative_maximum_variation_difference = 1.0;
-	Real last_averaged_variation = 0.0;
-	Real current_averaged_variation = 0.0;
+	//Real relative_maximum_variation_difference = 1.0;
+	//Real last_averaged_variation = 0.0;
+	//Real current_averaged_variation = 0.0;
 
 	/* Gradient descent parameter for objective function.*/
 	Real decay_step_alpha = 1; /* The decay step for learning rate. */
@@ -385,14 +385,12 @@ int main()
 
 	update_regularization_global_variation.exec(dt_ratio_rg * dt);
 	averaged_variation_current_global = calculate_regularization_global_variation.exec();
-	initial_averaged_variation = averaged_variation_current_global;
 	maximum_variation_current_global = calculate_maximum_variation.exec();
 	maximum_variation_last_global = maximum_variation_current_global;
 
 	update_temperature_pde_residual.exec(dt);
 	averaged_residual_T_current_global = calculate_temperature_global_residual.exec();
 	averaged_residual_T_last_global = averaged_residual_T_current_global;
-	initial_averaged_residual_T = averaged_residual_T_current_global;
 	maximum_residual_T_current_global = calculate_maximum_residual.exec();
 	maximum_residual_T_last_global = maximum_residual_T_current_global;
 
@@ -549,7 +547,7 @@ int main()
 		relative_temperature_difference = abs(current_averaged_temperature - last_averaged_temperature) / last_averaged_temperature;
 		relative_average_variation_difference = abs(averaged_variation_current_global - averaged_variation_last_global) / abs(averaged_variation_last_global);
 		averaged_variation_last_global = averaged_variation_current_global;
-		relative_maximum_variation_difference = abs(maximum_variation_current_global - maximum_variation_last_global) / abs(maximum_variation_last_global);
+		//relative_maximum_variation_difference = abs(maximum_variation_current_global - maximum_variation_last_global) / abs(maximum_variation_last_global);
 		maximum_variation_last_global = maximum_variation_current_global;
 		out_file_eta_regularization << std::fixed << std::setprecision(12) << ite_loop << "   " << current_eta_regularization << "\n";
 
