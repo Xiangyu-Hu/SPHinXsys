@@ -50,15 +50,15 @@ namespace SPH
 		StdLargeVec<Real> &variable_;
 
 	public:
-		ComputeAverageErrorOrPositiveParameter(DynamicsIdentifier &identifier, const std::string &variable_name) : 
+		ComputeAverageErrorOrPositiveParameter(DynamicsIdentifier &identifier, const std::string &variable_name):
 			SpeciesSummation<DynamicsIdentifier, ParticlesType>(identifier, variable_name),
-            variable_(*this->particles_->template getVariableByName<Real>(variable_name)){};
-          virtual ~ComputeAverageErrorOrPositiveParameter(){};
-
-		  Real reduce(size_t index_i, Real dt = 0.0)
-		  {
-			  return abs(variable_[index_i]);
-		  };
+			variable_(*this->particles_->template getVariableByName<Real>(variable_name)){};
+		virtual ~ComputeAverageErrorOrPositiveParameter(){};
+		
+		Real reduce(size_t index_i, Real dt = 0.0)
+		{
+			return abs(variable_[index_i]);
+		};
 	};
 
 	/**

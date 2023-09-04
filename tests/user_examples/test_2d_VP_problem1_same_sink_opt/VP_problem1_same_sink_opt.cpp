@@ -254,11 +254,6 @@ int main()
 	Real maximum_residual_k_current_global(10.0);
 	Real maximum_variation_current_global(10.0);
 
-	/* Variation scale for last and current cycle. */
-	Real scale_residual_T = 1.0;
-	Real scale_residual_k = 1.0;
-	Real scale_variation = 1.0;
-
 	/* Initial parameter for limitation. */
 	Real initial_averaged_residual_T = 0.0;
 	Real initial_averaged_variation = 0.0;
@@ -389,16 +384,16 @@ int main()
 	write_states.writeToFile(ite); //output the initial states.
 
 	update_regularization_global_variation.exec(dt_ratio_rg * dt);
-	averaged_variation_current_global = calculate_regularization_global_variation.exec(dt);
+	averaged_variation_current_global = calculate_regularization_global_variation.exec();
 	initial_averaged_variation = averaged_variation_current_global;
-	maximum_variation_current_global = calculate_maximum_variation.exec(dt);
+	maximum_variation_current_global = calculate_maximum_variation.exec();
 	maximum_variation_last_global = maximum_variation_current_global;
 
 	update_temperature_pde_residual.exec(dt);
-	averaged_residual_T_current_global = calculate_temperature_global_residual.exec(dt);
+	averaged_residual_T_current_global = calculate_temperature_global_residual.exec();
 	averaged_residual_T_last_global = averaged_residual_T_current_global;
 	initial_averaged_residual_T = averaged_residual_T_current_global;
-	maximum_residual_T_current_global = calculate_maximum_residual.exec(dt);
+	maximum_residual_T_current_global = calculate_maximum_residual.exec();
 	maximum_residual_T_last_global = maximum_residual_T_current_global;
 
 	current_averaged_temperature = calculate_averaged_opt_temperature.exec();
@@ -456,12 +451,11 @@ int main()
 			//	Constraint of the summation of parameter.
 			//----------------------------------------------------------------------
 			if (ite_k % 1 == 0 || ite_k == ite_k_total)
-				//if (ite_k == ite_k_total)
 			{
 				ite++;
-				averaged_k_parameter = total_averaged_thermal_diffusivity.exec(dt);
+				averaged_k_parameter = total_averaged_thermal_diffusivity.exec();
 				thermal_diffusivity_constrain.UpdateAverageParameter(averaged_k_parameter);
-				thermal_diffusivity_constrain.exec(dt);
+				thermal_diffusivity_constrain.exec();
 			}
 
 			//----------------------------------------------------------------------
@@ -476,18 +470,18 @@ int main()
 				thermal_diffusivity_regularization.exec(dt_ratio_rg * dt);
 
 				update_temperature_pde_residual.exec(dt);
-				averaged_residual_T_current_global = calculate_temperature_global_residual.exec(dt);
-				maximum_residual_T_current_global = calculate_maximum_residual.exec(dt);
+				averaged_residual_T_current_global = calculate_temperature_global_residual.exec();
+				maximum_residual_T_current_global = calculate_maximum_residual.exec();
 
 				update_parameter_pde_residual.exec(dt_ratio_k * dt);
-				averaged_residual_k_current_local = calculate_thermal_diffusivity_local_residual.exec(dt);
-				averaged_residual_k_current_global = calculate_thermal_diffusivity_global_residual.exec(dt);
-				maximum_residual_k_current_global = calculate_maximum_residual_change.exec(dt);
+				averaged_residual_k_current_local = calculate_thermal_diffusivity_local_residual.exec();
+				averaged_residual_k_current_global = calculate_thermal_diffusivity_global_residual.exec();
+				maximum_residual_k_current_global = calculate_maximum_residual_change.exec();
 
 				update_regularization_global_variation.exec(dt);
-				averaged_variation_current_local = calculate_regularization_local_variation.exec(dt);
-				averaged_variation_current_global = calculate_regularization_global_variation.exec(dt);
-				maximum_variation_current_global = calculate_maximum_variation.exec(dt);
+				averaged_variation_current_local = calculate_regularization_local_variation.exec();
+				averaged_variation_current_global = calculate_regularization_global_variation.exec();
+				maximum_variation_current_global = calculate_maximum_variation.exec();
 			}
 		}
 		ite_k = 0; ite_rg = 0; if (ite_loop % ite_output == 0) { write_states.writeToFile(ite); }
@@ -506,12 +500,12 @@ int main()
 			temperature_splitting_pde_complex.exec(dt);
 
 			update_temperature_pde_residual.exec(dt);
-			averaged_residual_T_current_local = calculate_temperature_local_residual.exec(dt);
-			averaged_residual_T_current_global = calculate_temperature_global_residual.exec(dt);
-			maximum_residual_T_current_global = calculate_maximum_residual.exec(dt);
+			averaged_residual_T_current_local = calculate_temperature_local_residual.exec();
+			averaged_residual_T_current_global = calculate_temperature_global_residual.exec();
+			maximum_residual_T_current_global = calculate_maximum_residual.exec();
 		}
 
-		opt_averaged_temperature = calculate_averaged_opt_temperature.exec(dt);
+		opt_averaged_temperature = calculate_averaged_opt_temperature.exec();
 		out_file_opt_temperature << std::fixed << std::setprecision(12) <<
 			ite_T_comparison_opt << "   " << opt_averaged_temperature << "\n";
 		out_file_nonopt_temperature << std::fixed << std::setprecision(12) <<

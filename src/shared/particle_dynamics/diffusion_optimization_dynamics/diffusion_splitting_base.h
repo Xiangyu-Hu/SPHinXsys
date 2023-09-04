@@ -37,7 +37,7 @@ namespace SPH
 {
 	/**
 	 * @class OptimizationBySplittingAlgorithmBase
-	 * @brief The base class for optimization using splitting algorithm.
+	 * @brief The base class for optimization using the splitting algorithm.
 	 */
 	template <class ParticlesType, typename VariableType>
 	class OptimizationBySplittingAlgorithmBase
@@ -51,7 +51,7 @@ namespace SPH
 	public:
 		size_t phi_;
 		StdLargeVec<int> splitting_index_;
-		StdLargeVec<Real>& Vol_, & mass_;
+		StdLargeVec<Real> &Vol_, &mass_;
         StdLargeVec<Real> &heat_flux_, &heat_source_;
 		StdLargeVec<Real> &species_modified_, &species_recovery_;
 		StdLargeVec<Real> &parameter_recovery_, &eta_regularization_;
@@ -60,11 +60,10 @@ namespace SPH
 		StdLargeVec<Real> &variation_local_, &variation_global_;
 		StdLargeVec<Real> &residual_after_splitting_;
         StdLargeVec<Vecd> &normal_vector_;
-		StdLargeVec<VariableType>& variable_;
+		StdLargeVec<VariableType> &variable_;
 		StdVec<BaseDiffusion*> all_diffusion_;
 
-		virtual void interaction(size_t index_i, Real dt = 0.0)
-		{};
+		virtual void interaction(size_t index_i, Real dt = 0.0) = 0;
 	};
 
 	/**

@@ -14,12 +14,12 @@ namespace SPH
 	template <class ParticlesType>
 	ThermalConductivityConstrain<ParticlesType>::
 		ThermalConductivityConstrain(SPHBody &diffusion_body, const std::string &variable_name,
-                                 Real initial_thermal_conductivity) : 
-	LocalDynamics(diffusion_body),                                    
-	DiffusionReactionSimpleData<ParticlesType>(diffusion_body),                                                                  
-	initial_thermal_conductivity_(initial_thermal_conductivity),                            
-	new_average_thermal_conductivity_(0.0),                                                                 
-	local_thermal_conductivity_(*this->particles_->template getVariableByName<Real>(variable_name)){};
+                                     Real initial_thermal_conductivity) : 
+	    LocalDynamics(diffusion_body),                                    
+		DiffusionReactionSimpleData<ParticlesType>(diffusion_body),                                                                  
+		initial_thermal_conductivity_(initial_thermal_conductivity),                            
+		new_average_thermal_conductivity_(0.0),                                                                 
+		local_thermal_conductivity_(*this->particles_->template getVariableByName<Real>(variable_name)){};
 	//=================================================================================================//
 	template <class ParticlesType>
     void ThermalConductivityConstrain<ParticlesType>::

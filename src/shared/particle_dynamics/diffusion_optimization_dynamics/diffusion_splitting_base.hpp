@@ -95,7 +95,7 @@ namespace SPH
 		Real parameter_l = error_and_parameters.a_ * error_and_parameters.a_ + error_and_parameters.c_;
 		VariableType parameter_k = error_and_parameters.error_ / (parameter_l + TinyReal);
 		this->variable_[index_i] += parameter_k * error_and_parameters.a_;
-		if (this->variable_[index_i] < 0.1) { this->variable_[index_i] = 0.01; } //set lower bound.
+		if (this->variable_[index_i] < 0.01) { this->variable_[index_i] = 0.01; } //set lower bound.
 
 		Real Vol_i = this->Vol_[index_i];
 		VariableType& variable_i = this->variable_[index_i];
@@ -114,7 +114,7 @@ namespace SPH
 
 			//exchange in conservation form
 			this->variable_[index_j] -= variable_derivative * parameter_b / this->mass_[index_j];
-			if (this->variable_[index_j] < 0.1) { this->variable_[index_j] = 0.01; } //set lower bound.
+			if (this->variable_[index_j] < 0.01) { this->variable_[index_j] = 0.01; } //set lower bound.
 		}
 	}
 	//=================================================================================================//

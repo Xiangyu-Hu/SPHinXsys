@@ -275,11 +275,6 @@ int main()
 	Real maximum_residual_k_current_global(10.0);
 	Real maximum_variation_current_global(10.0);
 
-	/* Variation scale for last and current cycle. */
-	Real scale_residual_T = 1.0;
-	Real scale_residual_k = 1.0;
-	Real scale_variation = 1.0;
-
 	/* Initial parameter for limitation. */
 	Real initial_averaged_residual_T = 0.0;
 	Real initial_averaged_variation = 0.0;
@@ -353,7 +348,6 @@ int main()
 	ReduceAverage<SpeciesSummation<BodyPartByParticle, DiffusionParticles>>
 		calculate_boundary_averaged_temperature(heat_flux_region, "Phi");
 	
-	GetDiffusionTimeStepSize<DiffusionParticles> get_time_step_size(diffusion_body);
 	SimpleDynamics<DiffusionBodyInitialCondition> setup_diffusion_initial_condition(diffusion_body);
 	SimpleDynamics<WallBoundaryInitialCondition> setup_diffusion_boundary_condition(wall_boundary);
 	SimpleDynamics<ThermalConductivityRandomInitialization> thermal_diffusivity_random_initialization(diffusion_body);
@@ -363,7 +357,7 @@ int main()
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToPlt write_states(io_environment, sph_system.real_bodies_);
+	BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
 	RestartIO restart_io(io_environment, sph_system.real_bodies_);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
