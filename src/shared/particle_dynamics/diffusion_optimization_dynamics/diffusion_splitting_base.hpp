@@ -16,7 +16,7 @@ namespace SPH
 		OptimizationBySplittingAlgorithmBase(BaseInnerRelation& inner_relation, const std::string &variable_name) :
 		LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner<ParticlesType>(inner_relation),
 		Vol_(this->particles_->Vol_), mass_(this->particles_->mass_), normal_vector_(this->particles_->n_),
-		variable_(*(this->particles_->getVariableByName<VariableType>(variable_name))),
+		variable_(*(this->particles_->template getVariableByName<VariableType>(variable_name))),
 		heat_flux_(*(this->particles_->template registerSharedVariable<Real>("HeatFlux"))),
 		heat_source_(*(this->particles_->template registerSharedVariable<Real>("HeatSource"))),
 		splitting_index_(*(this->particles_->template registerSharedVariable<int>("SplittingIndex"))),
