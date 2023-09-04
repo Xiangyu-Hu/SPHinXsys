@@ -35,10 +35,10 @@ Real mu_f = 8.9e-7;                      /**< Water dynamics viscosity. */
 //----------------------------------------------------------------------
 //	Wetting parameters
 //----------------------------------------------------------------------
-Real diffusion_coeff = 330.578 * pow(particle_spacing_ref, 2); /**< Wetting coefficient. */
-Real fluid_moisture = 1.0;                                     /**< fluid moisture. */
-Real cylinder_moisture = 0.0;                                  /**< cylinder moisture. */
-Real wall_moisture = 1.0;                                      /**< wall moisture. */
+Real diffusion_coeff = 100.0 * pow(particle_spacing_ref, 2); /**< Wetting coefficient. */
+Real fluid_moisture = 1.0;                                   /**< fluid moisture. */
+Real cylinder_moisture = 0.0;                                /**< cylinder moisture. */
+Real wall_moisture = 1.0;                                    /**< wall moisture. */
 //----------------------------------------------------------------------
 //	Definition for water body
 //----------------------------------------------------------------------
@@ -246,8 +246,8 @@ int main(int ac, char *av[])
         ? cylinder.generateParticles<ParticleGeneratorReload>(io_environment, cylinder.getName())
         : cylinder.generateParticles<ParticleGeneratorLattice>();
 
-    ObserverBody fluid_observer(sph_system, "FluidObserver");
-    fluid_observer.generateParticles<ObserverParticleGenerator>(observer_location);
+    ObserverBody cylinder_observer(sph_system, "CylinderObserver");
+    cylinder_observer.generateParticles<ObserverParticleGenerator>(observer_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -257,7 +257,7 @@ int main(int ac, char *av[])
     InnerRelation cylinder_inner(cylinder);
     ComplexRelation water_block_complex(water_block_inner, {&wall_boundary, &cylinder});
     ContactRelation cylinder_contact(cylinder, {&water_block});
-    ContactRelation fluid_observer_contact(fluid_observer, {&cylinder});
+    ContactRelation cylinder_observer_contact(cylinder_observer, {&cylinder});
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -309,7 +309,7 @@ int main(int ac, char *av[])
     SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block, gravity_ptr);
     InteractionWithUpdate<fluid_dynamics::WettingCoupledSpatialTemporalFreeSurfaceIdentificationComplex>
         free_stream_surface_indicator(water_block_complex);
-    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> fluid_density_by_summation(water_block_complex);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> fluid_density_by_summation(water_block_complex);
     water_block.addBodyStateForRecording<Real>("Pressure");
     water_block.addBodyStateForRecording<Real>("Density");
     water_block.addBodyStateForRecording<int>("Indicator");
@@ -384,7 +384,7 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
     RestartIO restart_io(io_environment, sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_cylinder_displacement("Position", io_environment, fluid_observer_contact);
+        write_cylinder_displacement("Position", io_environment, cylinder_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -406,7 +406,6 @@ int main(int ac, char *av[])
         GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.RestartStep());
         water_block.updateCellLinkedList();
         water_block_complex.updateConfiguration();
-        fluid_observer_contact.updateConfiguration();
         cylinder.updateCellLinkedList();
         water_block_inner.updateConfiguration();
         cylinder_inner.updateConfiguration();
@@ -419,7 +418,7 @@ int main(int ac, char *av[])
     int screen_output_interval = 100;
     int observation_sample_interval = screen_output_interval * 2;
     int restart_output_interval = screen_output_interval * 10;
-    Real end_time = 0.7;
+    Real end_time = 1.0;
     Real output_interval = end_time / 70.0;
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -503,7 +502,6 @@ int main(int ac, char *av[])
             cylinder_inner.updateConfiguration();
             cylinder_contact.updateConfiguration();
             water_block_complex.updateConfiguration();
-            fluid_observer_contact.updateConfiguration();
             free_stream_surface_indicator.exec();
             interval_updating_configuration += TickCount::now() - time_instance;
         }
@@ -534,7 +532,6 @@ int main(int ac, char *av[])
     {
         write_cylinder_displacement.testResult();
     }
-
 
     return 0;
 };
