@@ -332,7 +332,7 @@ int main(int ac, char *av[])
         write_water_mechanical_energy.generateDataBase(1.0e-3);
         wave_probe.generateDataBase(1.0e-3);
     }
-    else 
+    else if (sph_system.RestartStep() == 0)
     {
         write_water_mechanical_energy.testResult();
         wave_probe.testResult();
