@@ -11,14 +11,14 @@ SET(BUILD_INPUT_PATH "${EXECUTABLE_OUTPUT_PATH}/input")
 SET(BUILD_RELOAD_PATH "${EXECUTABLE_OUTPUT_PATH}/reload")
 
  
-
+file(MAKE_DIRECTORY ${BUILD_INPUT_PATH})
+execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_INPUT_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/ DESTINATION ${BUILD_INPUT_PATH})
  
 aux_source_directory(. DIR_SRCS)
 ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})
- 
 target_link_libraries(${PROJECT_NAME} sphinxsys_2d GTest::gtest GTest::gtest_main)	
 target_link_libraries(${PROJECT_NAME} extra_sources_2d)
-
 set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 
  
