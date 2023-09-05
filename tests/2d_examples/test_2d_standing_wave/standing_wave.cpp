@@ -192,7 +192,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannCorrectWithWall> fluid_pressure_relaxation_correct(water_block_complex);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_block_complex);
-    InteractionWithUpdate<CorrectedConfigurationComplex> corrected_configuration_fluid(water_block_complex, 0.1);
+    InteractionWithUpdate<CorrectedConfigurationComplex> corrected_configuration_fluid(water_block_complex, 0.3);
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> fluid_density_by_summation(water_block_complex);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
@@ -237,7 +237,7 @@ int main(int ac, char *av[])
     int observation_sample_interval = screen_output_interval * 2;
     int restart_output_interval = screen_output_interval * 10;
     Real end_time = 10.0;
-    Real output_interval = 0.1;
+    Real output_interval = 0.05;
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -332,7 +332,7 @@ int main(int ac, char *av[])
         write_water_mechanical_energy.generateDataBase(1.0e-3);
         wave_probe.generateDataBase(1.0e-3);
     }
-    else if (sph_system.RestartStep() == 0)
+    else 
     {
         write_water_mechanical_energy.testResult();
         wave_probe.testResult();

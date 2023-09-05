@@ -137,7 +137,7 @@ int main(int ac, char *av[])
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannCorrect> fluid_pressure_relaxation_correct(water_body_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemann> fluid_density_relaxation(water_body_inner);
-    InteractionWithUpdate<CorrectedConfigurationInner> corrected_configuration_fluid(water_body_inner, 0.1);
+    InteractionWithUpdate<CorrectedConfigurationInner> corrected_configuration_fluid(water_body_inner, 0.3);
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceInner> fluid_density_by_summation(water_body_inner);
     SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_max);
@@ -204,7 +204,7 @@ int main(int ac, char *av[])
             /** outer loop for dual-time criteria time-stepping. */
             time_instance = TickCount::now();
             fluid_step_initialization.exec();
-            Real advection_dt = 0.3 *fluid_advection_time_step.exec();
+            Real advection_dt = 0.3 * fluid_advection_time_step.exec();
             free_surface_indicator.exec();
             fluid_density_by_summation.exec();
             corrected_configuration_fluid.exec();
