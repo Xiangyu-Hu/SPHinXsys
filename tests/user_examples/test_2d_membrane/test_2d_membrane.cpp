@@ -15,8 +15,8 @@ using namespace SPH;
 // global parameters for the case
 //------------------------------------------------------------------------------
 Real PL = 10.0;  // membrane length
-Real PH = 0.125; // membrane thickenss
-Real BC = PL * 0.15;
+Real PH = 0.125; // membrane thickness
+Real BC = PL * 0.15; // half length of the saturation
 
 int y_num = 8;
 // reference particle spacing
@@ -29,7 +29,7 @@ BoundingBox system_domain_bounds(Vec2d(-PL, -PL),
 //----------------------------------------------------------------------
 //	Material properties of the solid.
 //----------------------------------------------------------------------
-Real rho_0 = 2.0;  // reference solid density non-dimensionlaize
+Real rho_0 = 2.0;  // reference solid density non-dimensional 
 Real poisson = 0.26316;  /**< Poisson ratio. */
 Real Youngs_modulus = 8.242e6;  /**< Youngs modulus. */
 Real physical_viscosity = 5000.0;
@@ -37,8 +37,8 @@ Real saturation = 0.4;   /**< solid porosity. */
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
-Real diffusivity_constant_ = 1.0e-4; // reference diffusion constant non-dimensionlaize
-Real fulid_initial_density_ = 1.0; // reference fluid density non-dimensionlaize
+Real diffusivity_constant_ = 1.0e-4; // reference diffusion constant non-dimensional 
+Real fluid_initial_density_ = 1.0; // reference fluid density non-dimensional
 Real water_pressure_constant_ = 3.0e6;
 
 // the criterion to represent the static state 
@@ -119,7 +119,7 @@ class SaturationInitialCondition : public multi_species_continuum::PorousMediaSa
     void update(size_t index_i, Real dt = 0.0)
     {
         fluid_saturation_[index_i] = saturation;
-        fluid_mass_[index_i] = saturation * fulid_initial_density_ * Vol_update_[index_i];
+        fluid_mass_[index_i] = saturation * fluid_initial_density_ * Vol_update_[index_i];
         total_mass_[index_i] = rho_n_[index_i] * Vol_update_[index_i] + fluid_mass_[index_i];
     };
 };
@@ -141,7 +141,7 @@ int main(int ac, char *av[])
        //----------------------------------------------------------------------
     SolidBody membrane(sph_system, makeShared<Membrane>("MembraneBody"));
     membrane.defineParticlesAndMaterial<multi_species_continuum::PorousMediaParticles, multi_species_continuum::PorousMediaSolid>(
-        rho_0, Youngs_modulus, poisson, diffusivity_constant_, fulid_initial_density_, water_pressure_constant_);
+        rho_0, Youngs_modulus, poisson, diffusivity_constant_, fluid_initial_density_, water_pressure_constant_);
     membrane.generateParticles<ParticleGeneratorLattice>();
 
     ObserverBody membrane_observer(sph_system, "MembraneObserver");
@@ -170,7 +170,7 @@ int main(int ac, char *av[])
     // fluid diffusion relaxation inside the membrane
      Dynamics1Level<multi_species_continuum::SaturationRelaxationInPorousMedia> saturation_relaxation(membrane_body_inner);
 
-    // clamping a solid body part using momentum constraint. 
+    // clamping a solid body part using momentum constraint  
     BodyRegionByParticle membrane_base(membrane, makeShared<MultiPolygonShape>(createMembraneConstrainShape()));
     SimpleDynamics<multi_species_continuum::MomentumConstraint> clamp_constrain_membrane_base(membrane_base);
 
@@ -181,7 +181,7 @@ int main(int ac, char *av[])
     //total mechanical energy to check the static state is achieved or not
     ReduceDynamics<TotalMechanicalEnergy> get_kinetic_energy(membrane);
 
-    /** Damping applying on momentum */
+    /** Damping applied on momentum */
     DampingWithRandomChoice<InteractionSplit<multi_species_continuum::PorousMediaDampingPairwiseInner<Vec2d>>>
         membrane_damping(0.5, membrane_body_inner, "TotalMomentum", physical_viscosity);
     
