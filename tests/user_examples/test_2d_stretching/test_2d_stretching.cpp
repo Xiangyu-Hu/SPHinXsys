@@ -360,9 +360,7 @@ int main(int ac, char *av[])
 				GlobalStaticVariables::physical_time_ += dt;
 			}
             
-			std::cout << "refer_total_kinetic_energy  " << refer_total_kinetic_energy
-			 <<  "    stress_ite  " << stress_ite <<std::endl;
-		
+			
 		}
      
         write_beam_tip_displacement.writeToFile(ite);
