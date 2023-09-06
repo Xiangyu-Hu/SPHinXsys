@@ -19,7 +19,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     sph_system.setRunParticleRelaxation(false); // Tag for run particle relaxation for body-fitted distribution
-    sph_system.setReloadParticles(true);        // Tag for computation with save particles distribution
+    sph_system.setReloadParticles(false);       // Tag for computation with save particles distribution
 #ifdef BOOST_AVAILABLE
     sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
 #endif
@@ -301,7 +301,6 @@ int main(int ac, char *av[])
         write_total_viscous_force_on_insert_body.testResult();
         write_beam_tip_displacement.testResult();
     }
-
 
     return 0;
 }

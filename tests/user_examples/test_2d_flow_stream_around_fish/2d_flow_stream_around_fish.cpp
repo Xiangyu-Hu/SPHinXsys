@@ -14,7 +14,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     /** Tag for run particle relaxation for the initial body fitted distribution. */
-    sph_system.setRunParticleRelaxation(true);
+    sph_system.setRunParticleRelaxation(false);
     /** Tag for computation start with relaxed body fitted particles distribution. */
     sph_system.setReloadParticles(false);
     // handle command line arguments
@@ -286,7 +286,6 @@ int main(int ac, char *av[])
     TimeInterval tt;
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-
 
     return 0;
 }

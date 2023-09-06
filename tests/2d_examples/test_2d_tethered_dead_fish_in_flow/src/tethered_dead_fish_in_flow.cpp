@@ -206,7 +206,7 @@ int main(int ac, char *av[])
     /** Tag for run particle relaxation for the initial body fitted distribution. */
     system.setRunParticleRelaxation(false);
     /** Tag for computation start with relaxed body fitted particles distribution. */
-    system.setReloadParticles(true);
+    system.setReloadParticles(false);
     system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(system);
 

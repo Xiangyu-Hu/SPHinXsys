@@ -73,7 +73,7 @@ int main(int ac, char *av[])
     BoundingBox system_domain_bounds(Vecd(-BW, -BW, -BW), Vecd(DL + BW, DH + BW, DW + BW));
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     sph_system.setRunParticleRelaxation(false);
-    sph_system.setReloadParticles(true);
+    sph_system.setReloadParticles(false);
     sph_system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
@@ -283,7 +283,6 @@ int main(int ac, char *av[])
     {
         write_soil_mechanical_energy.testResult();
     }
-
 
     return 0;
 }
