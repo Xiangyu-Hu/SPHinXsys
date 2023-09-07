@@ -44,11 +44,15 @@ int main(int ac, char *av[])
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation fish_inner(fish_body);
     InnerRelation water_block_inner(water_block);
-    ComplexRelation water_block_complex(water_block, {&fish_body});
+    ContactRelation water_block_contact(water_block, {&fish_body});
     ContactRelation fish_contact(fish_body, {&water_block});
+    ComplexRelation water_block_complex(water_block_inner, water_block_contact);
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
