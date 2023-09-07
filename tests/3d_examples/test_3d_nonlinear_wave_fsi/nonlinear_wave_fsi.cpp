@@ -159,7 +159,7 @@ int main(int ac, char *av[])
     // Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> density_relaxation(water_block_complex);
     /** corrected strong configuration. */
-    InteractionWithUpdate<CorrectedConfigurationComplex> corrected_configuration_fluid(water_block_complex, 2, 0.4);
+    InteractionWithUpdate<CorrectedConfigurationComplex> corrected_configuration_fluid(water_block_complex, 0.1);
     InteractionWithUpdate<CorrectedConfigurationInner> structure_corrected_configuration(structure_inner);
     /** Computing viscous acceleration. */
     InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
