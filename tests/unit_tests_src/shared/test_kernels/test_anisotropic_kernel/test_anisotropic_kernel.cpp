@@ -1,6 +1,4 @@
 #include "anisotropic_kernel.hpp"
-#include "base_kernel_includes_nonisotropic.h"
-#include "kernel_wenland_c2_anisotropic.h"
 #include "sphinxsys.h"
 #include <gtest/gtest.h>
 
@@ -32,7 +30,7 @@ TEST(test_anisotropic_kernel, test_Laplacian)
     int x_num = PL / resolution_x;            // Particle number in x direction , the same as particle number in y direction
 
     Vecd scaling_vector(1.0, 1.0 / ratio); // in x and y directions
-    AnisotropicKernel<Anisotropic::KernelWendlandC2>
+    AnisotropicKernel<KernelWendlandC2>
         wendland(1.15 * resolution_x, scaling_vector, Vecd(0.0, 0.0)); // no rotation introduced
 
     Mat2d transform_tensor = wendland.getCoordinateTransformationTensorG(scaling_vector, Vecd(0.0, 0.0)); // tensor

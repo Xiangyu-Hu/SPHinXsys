@@ -1,6 +1,6 @@
 /**
- * @file	standing_wave.cpp
- * @brief	2D standing_wave example.
+ * @file	impactpatch.cpp
+ * @brief	2D impactpatch example.
  * @author	Yaru Ren, Chi Zhang and Xiangyu Hu
  */
 #include "sphinxsys.h" //SPHinXsys Library.
@@ -9,75 +9,69 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 2.0;                      /**< Tank length. */
-Real DH = 2.0;                      /**< Tank height. */
-Real LL = 2.0;                      /**< Liquid column length. */
-Real LH = 1.0;                      /**< Liquid column height. */
-Real particle_spacing_ref = 0.02;   /**< Initial reference particle spacing. */
-Real BW = particle_spacing_ref * 4; /**< Extending width for boundary conditions. */
-BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
+Real LL = 0.667;                        /**< Liquid column length. */
+Real LH = 2.0;                         /**< Liquid column height. */
+Real particle_spacing_ref = LL / 100;    /**< Initial reference particle spacing. */
+Real BW = particle_spacing_ref * 4;  /**< Extending width for boundary conditions. */
+BoundingBox system_domain_bounds(Vec2d(-LH, -LH), Vec2d(LL + BW, LH + BW));
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------
-Real rho0_f = 1000.0;                    /**< Reference density of fluid. */
-Real gravity_g = 9.81;                   /**< Gravity force of fluid. */
-Real U_ref = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
-Real c_f = 10.0 * U_ref;                 /**< Reference sound speed. */
+Real rho0_f = 1.0;                    /**< Reference density of fluid. */
+Real U_max = 1.0;                    /**< Characteristic velocity. */
+Real c_f = 100.0;                   /**< Reference sound speed. */
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
 //----------------------------------------------------------------------
-Vec2d outer_wall_halfsize = Vec2d(0.5 * DL + BW, 0.5 * DH + BW);
-Vec2d outer_wall_translation = Vec2d(-BW, -BW) + outer_wall_halfsize;
-Vec2d inner_wall_halfsize = Vec2d(0.5 * DL, 0.5 * DH);
-Vec2d inner_wall_translation = inner_wall_halfsize;
+Vec2d DamP_lb(-LL / 2, -LH / 2);	 /**< Left bottom. */
+Vec2d DamP_lt(-LL / 2, LH / 2);	 /**< Left top. */
+Vec2d DamP_rt(LL / 2, LH / 2); /**< Right top. */
+Vec2d DamP_rb(LL / 2, -LH / 2);	 /**< Right bottom. */
 //----------------------------------------------------------------------
-//	Complex shape for wall boundary, note that no partial overlap is allowed
-//	for the shapes in a complex shape.
-//----------------------------------------------------------------------
-class WallBoundary : public ComplexShape
-{
-  public:
-    explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
-    {
-        add<TransformShape<GeometricShapeBox>>(Transform(outer_wall_translation), outer_wall_halfsize);
-        subtract<TransformShape<GeometricShapeBox>>(Transform(inner_wall_translation), inner_wall_halfsize);
-    }
-};
-//----------------------------------------------------------------------
-//	water block
+//	Geometry definition.
 //----------------------------------------------------------------------
 std::vector<Vecd> createWaterBlockShape()
 {
-    int Nh = 100;
-    Real Lstep = DL / Nh;
-
     std::vector<Vecd> water_block_shape;
-    water_block_shape.push_back(Vecd(0.0, 0.0));
-    std::vector<Vecd> pnts;
-    for (int n = 0; n <= Nh; n++)
-    {
-        Real x = n * Lstep;
-        Real y = 0.1 * cos(PI * x);
-
-        pnts.push_back(Vecd(x, y));
-    }
-    for (int n = 0; n <= Nh - 0; n++)
-    {
-        water_block_shape.push_back(Vecd(pnts[n][0], pnts[n][1] + 1.0));
-    }
-    water_block_shape.push_back(Vecd(LL, 0.0));
-    water_block_shape.push_back(Vecd(0.0, 0.0));
+    water_block_shape.push_back(DamP_lb);
+    water_block_shape.push_back(DamP_lt);
+    water_block_shape.push_back(DamP_rt);
+    water_block_shape.push_back(DamP_rb);
+    water_block_shape.push_back(DamP_lb);
 
     return water_block_shape;
 }
-
-class WaterBlock : public ComplexShape
+class WaterBlock : public MultiPolygonShape
 {
-  public:
-    explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
+public:
+    explicit WaterBlock(const std::string& shape_name) : MultiPolygonShape(shape_name)
     {
-        MultiPolygon outer_boundary(createWaterBlockShape());
-        add<MultiPolygonShape>(outer_boundary, "OuterBoundary");
+        multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
+    }
+};
+
+/**
+ * application dependent initial velocity
+ */
+class InitialVelocity
+    : public fluid_dynamics::FluidInitialCondition
+{
+public:
+    InitialVelocity(SPHBody& sph_body)
+        : fluid_dynamics::FluidInitialCondition(sph_body) {};
+
+    void update(size_t index_i, Real dt)
+    {
+        /** initial velocity profile */
+        if (pos_[index_i][1] >= 0.0)
+        {
+            vel_[index_i][1] = -1.0;
+        }
+        else
+        {
+            vel_[index_i][1] =  1.0;
+        }        
+        
     }
 };
 //----------------------------------------------------------------------
@@ -88,8 +82,8 @@ MultiPolygon createWaveProbeShape()
 {
     std::vector<Vecd> pnts;
     pnts.push_back(Vecd(1.0 - h, 0.0));
-    pnts.push_back(Vecd(1.0 - h, DH));
-    pnts.push_back(Vecd(1.0 + h, DH));
+    pnts.push_back(Vecd(1.0 - h, LH));
+    pnts.push_back(Vecd(1.0 + h, LH));
     pnts.push_back(Vecd(1.0 + h, 0.0));
     pnts.push_back(Vecd(1.0 - h, 0.0));
 
@@ -105,7 +99,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up an SPHSystem.
     //----------------------------------------------------------------------
-    BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
+    BoundingBox system_domain_bounds(Vec2d(-LH, -LH), Vec2d(LL + BW, LH + BW));
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     /** Tag for run particle relaxation for the initial body fitted distribution. */
     sph_system.setRunParticleRelaxation(false);
@@ -118,89 +112,40 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineAdaptation<SPHAdaptation>(1.3, 1.0);
-    water_block.defineComponentLevelSetShape("OuterBoundary");
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
     // Using relaxed particle distribution if needed
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getName())
         : water_block.generateParticles<ParticleGeneratorLattice>();
-
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineAdaptation<SPHAdaptation>(1.15, 1.0);
-    wall_boundary.defineBodyLevelSetShape();
-    wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? wall_boundary.generateParticles<ParticleGeneratorReload>(io_environment, wall_boundary.getName())
-        : wall_boundary.generateParticles<ParticleGeneratorLattice>();
-    wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
     //----------------------------------------------------------------------
-    ComplexRelation water_block_complex(water_block, {&wall_boundary});
+    InnerRelation water_body_inner(water_block);
     //----------------------------------------------------------------------
-    /** check whether run particle relaxation for body fitted particle distribution. */
-    if (sph_system.RunParticleRelaxation())
-    {
-        InnerRelation wall_inner(wall_boundary); // extra body topology only for particle relaxation
-        /**
-         * @brief 	Methods used for particle relaxation.
-         */
-        /** Random reset the insert body particle position. */
-        SimpleDynamics<RandomizeParticlePosition> random_water_body_particles(water_block);
-        SimpleDynamics<RandomizeParticlePosition> random_wall_body_particles(wall_boundary);
-        /** Write the body state to Vtp file. */
-        BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
-        /** Write the particle reload files. */
-        ReloadParticleIO write_real_body_particle_reload_files(io_environment, sph_system.real_bodies_);
-
-        /** A  Physics relaxation step. */
-        relax_dynamics::RelaxationStepInner relaxation_step_inner(wall_inner, true);
-        relax_dynamics::RelaxationStepComplex relaxation_step_complex(water_block_complex, "OuterBoundary", true);
-        /**
-         * @brief 	Particle relaxation starts here.
-         */
-        random_wall_body_particles.exec(0.25);
-        random_water_body_particles.exec(0.25);
-        relaxation_step_inner.SurfaceBounding().exec();
-        relaxation_step_complex.SurfaceBounding().exec();
-        write_real_body_states.writeToFile(0);
-
-        /** relax particles of the insert body. */
-        int ite_p = 0;
-        while (ite_p < 1000)
-        {
-            relaxation_step_inner.exec();
-            relaxation_step_complex.exec();
-            ite_p += 1;
-            if (ite_p % 200 == 0)
-            {
-                std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
-                write_real_body_states.writeToFile(ite_p);
-            }
-        }
-        std::cout << "The physics relaxation process of inserted body finish !" << std::endl;
-
-        /** Output results. */
-        write_real_body_particle_reload_files.writeToFile(0);
-        return 0;
-    }
     //----------------------------------------------------------------------
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
-    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannCorrectWithWall> fluid_pressure_relaxation_correct(water_block_complex);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_block_complex);
-    InteractionWithUpdate<CorrectedConfigurationComplex> corrected_configuration_fluid(water_block_complex, 0.3);
-    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> fluid_density_by_summation(water_block_complex);
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-    SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
-    SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block, gravity_ptr);
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_ref);
+    SimpleDynamics<InitialVelocity> initial_condition(water_block);
+    /** time-space method to detect surface particles. */
+    InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationInner>
+        free_surface_indicator(water_body_inner);
+    /** Apply transport velocity formulation. */
+    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionInner<BulkParticles>> transport_velocity_correction(water_body_inner);
+
+    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannCorrect> fluid_pressure_relaxation_correct(water_body_inner);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemann> fluid_density_relaxation(water_body_inner);
+    InteractionWithUpdate<CorrectedConfigurationInner> corrected_configuration_fluid(water_body_inner, 0.3);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceInner> fluid_density_by_summation(water_body_inner);
+    SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block);
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_max);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
     /** We can output a method-specific particle data for debug */
     water_block.addBodyStateForRecording<Real>("Pressure");
+    water_block.addBodyStateForRecording<int>("Indicator");
+    water_block.addBodyStateForRecording<Real>("PositionDivergence");
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -208,18 +153,14 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
     RestartIO restart_io(io_environment, sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
-        write_water_mechanical_energy(io_environment, water_block, gravity_ptr);
-    /** WaveProbes. */
-    BodyRegionByCell wave_probe_buffer_(water_block, makeShared<MultiPolygonShape>(createWaveProbeShape(), "WaveProbe"));
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight>>>
-        wave_probe(io_environment, wave_probe_buffer_);
+        write_water_mechanical_energy(io_environment, water_block);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
-    wall_boundary_normal_direction.exec();
+    initial_condition.exec();
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
     //----------------------------------------------------------------------
@@ -227,17 +168,16 @@ int main(int ac, char *av[])
     {
         GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.RestartStep());
         water_block.updateCellLinkedList();
-        water_block_complex.updateConfiguration();
+        water_body_inner.updateConfiguration();
     }
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
-    int observation_sample_interval = screen_output_interval * 2;
     int restart_output_interval = screen_output_interval * 10;
-    Real end_time = 10.0;
-    Real output_interval = 0.05;
+    Real end_time = 1.0;
+    Real output_interval = 0.005;
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -252,7 +192,6 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     body_states_recording.writeToFile();
     write_water_mechanical_energy.writeToFile(number_of_iterations);
-    wave_probe.writeToFile(number_of_iterations);
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -265,9 +204,11 @@ int main(int ac, char *av[])
             /** outer loop for dual-time criteria time-stepping. */
             time_instance = TickCount::now();
             fluid_step_initialization.exec();
-            Real advection_dt = fluid_advection_time_step.exec();
+            Real advection_dt = 0.3 * fluid_advection_time_step.exec();
+            free_surface_indicator.exec();
             fluid_density_by_summation.exec();
             corrected_configuration_fluid.exec();
+            transport_velocity_correction.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
 
             time_instance = TickCount::now();
@@ -291,21 +232,18 @@ int main(int ac, char *av[])
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
                           << GlobalStaticVariables::physical_time_
                           << "	advection_dt = " << advection_dt << "	acoustic_dt = " << acoustic_dt << "\n";
-
-                if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
-                {
-                    write_water_mechanical_energy.writeToFile(number_of_iterations);
-                    wave_probe.writeToFile(number_of_iterations);
-                }
+                
                 if (number_of_iterations % restart_output_interval == 0)
                     restart_io.writeToFile(number_of_iterations);
             }
             number_of_iterations++;
 
+            write_water_mechanical_energy.writeToFile(number_of_iterations);
+
             /** Update cell linked list and configuration. */
             time_instance = TickCount::now();
             water_block.updateCellLinkedListWithParticleSort(100);
-            water_block_complex.updateConfiguration();
+            water_body_inner.updateConfiguration();
             interval_updating_configuration += TickCount::now() - time_instance;
         }
 
@@ -326,18 +264,6 @@ int main(int ac, char *av[])
               << interval_computing_fluid_pressure_relaxation.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
-
-    if (sph_system.GenerateRegressionData())
-    {
-        write_water_mechanical_energy.generateDataBase(1.0e-3);
-        wave_probe.generateDataBase(1.0e-3);
-    }
-    else if (sph_system.RestartStep() == 0)
-    {
-        write_water_mechanical_energy.testResult();
-        wave_probe.testResult();
-    }
-
 
     return 0;
 };
