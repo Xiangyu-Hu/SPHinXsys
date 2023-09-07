@@ -29,7 +29,7 @@ void NeighborBuilder::createNeighbor(Neighborhood &neighborhood, const Real &dis
     neighborhood.W_ij_.push_back(kernel_->W(distance, displacement));
     neighborhood.dW_ijV_j_.push_back(kernel_->dW(distance, displacement) * Vol_j);
     neighborhood.r_ij_.push_back(distance);
-    neighborhood.e_ij_.push_back(displacement / (distance + TinyReal));
+    neighborhood.e_ij_.push_back(kernel_->e(distance, displacement));
     neighborhood.allocated_size_++;
 }
 //=================================================================================================//
@@ -41,7 +41,7 @@ void NeighborBuilder::initializeNeighbor(Neighborhood &neighborhood, const Real 
     neighborhood.W_ij_[current_size] = kernel_->W(distance, displacement);
     neighborhood.dW_ijV_j_[current_size] = kernel_->dW(distance, displacement) * Vol_j;
     neighborhood.r_ij_[current_size] = distance;
-    neighborhood.e_ij_[current_size] = displacement / (distance + TinyReal);
+    neighborhood.e_ij_[current_size] = kernel_->e(distance, displacement);
 }
 //=================================================================================================//
 void NeighborBuilder::createNeighbor(Neighborhood &neighborhood, const Real &distance,
@@ -82,7 +82,7 @@ void NeighborBuilderInner::operator()(Neighborhood &neighborhood,
     size_t index_j = std::get<0>(list_data_j);
     Vecd displacement = pos_i - std::get<1>(list_data_j);
     Real distance_metric = displacement.squaredNorm();
-    if (distance_metric < kernel_->CutOffRadiusSqr() && index_i != index_j)
+    if (kernel_->checkIfWithinCutOffRadius(displacement) && index_i != index_j)
     {
         neighborhood.current_size_ >= neighborhood.allocated_size_
             ? createNeighbor(neighborhood, std::sqrt(distance_metric), displacement, index_j, std::get<2>(list_data_j))
