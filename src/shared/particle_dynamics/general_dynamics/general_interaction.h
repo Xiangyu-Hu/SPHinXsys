@@ -36,11 +36,10 @@ namespace SPH
 class CorrectedConfigurationInner : public LocalDynamics, public GeneralDataDelegateInner
 {
   public:
-    CorrectedConfigurationInner(BaseInnerRelation &inner_relation, int beta = 0, Real alpha = Real(0));
+    CorrectedConfigurationInner(BaseInnerRelation &inner_relation, Real alpha = Real(0));
     virtual ~CorrectedConfigurationInner(){};
 
   protected:
-    int beta_;
     Real alpha_;
     StdLargeVec<Matd> &B_;
 
@@ -51,7 +50,7 @@ class CorrectedConfigurationInner : public LocalDynamics, public GeneralDataDele
 class CorrectedConfigurationComplex : public CorrectedConfigurationInner, public GeneralDataDelegateContactOnly
 {
   public:
-    CorrectedConfigurationComplex(ComplexRelation &complex_relation, int beta = 0, Real alpha = Real(0));
+    CorrectedConfigurationComplex(ComplexRelation &complex_relation,Real alpha = Real(0));
     virtual ~CorrectedConfigurationComplex(){};
 
   protected:

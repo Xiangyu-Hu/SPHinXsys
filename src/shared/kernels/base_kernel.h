@@ -87,14 +87,42 @@ class Kernel
     Real FactorW1D() const { return factor_W_1D_; };
     Real FactorW2D() const { return factor_W_2D_; };
     Real FactorW3D() const { return factor_W_3D_; };
+    
+    /**
+     * unit vector pointing from j to i or inter-particle surface direction
+     */
+    
+    virtual Vec2d e(const Real &distance, const Vec2d &displacement) const { return displacement / (distance + TinyReal); };
+    virtual Vec3d e(const Real &distance, const Vec3d &displacement) const { return displacement / (distance + TinyReal); };
+    
+    /**
+     * check if particles are within cutoff radius
+     */
+    virtual bool checkIfWithinCutOffRadius(Vec2d displacement)
+    {
+        Real distance_metric = displacement.squaredNorm();
+        if (distance_metric < CutOffRadiusSqr())
+            return true;
+        else
+            return false;
+    };
+    virtual bool checkIfWithinCutOffRadius(Vec3d displacement)
+    {
+        Real distance_metric = displacement.squaredNorm();
+        if (distance_metric < CutOffRadiusSqr())
+            return true;
+        else
+            return false;
+    };
+
 
     /**
      * Calculates the kernel value for the given displacement of two particles
      * r_ij pointing from particle j to particle i
      */
-    Real W(const Real &r_ij, const Real &displacement) const;
-    Real W(const Real &r_ij, const Vec2d &displacement) const;
-    Real W(const Real &r_ij, const Vec3d &displacement) const;
+    virtual Real W(const Real &r_ij, const Real &displacement) const;
+    virtual Real W(const Real &r_ij, const Vec2d &displacement) const;
+    virtual Real W(const Real &r_ij, const Vec3d &displacement) const;
 
     /** this value could be use to calculate the value of W
      * they are realized in specific kernel implementations
@@ -104,16 +132,16 @@ class Kernel
     virtual Real W_3D(const Real q) const = 0;
 
     /** Calculates the kernel value at the origin **/
-    Real W0(const Real &point_i) const { return factor_W_1D_; };
-    Real W0(const Vec2d &point_i) const { return factor_W_2D_; };
-    Real W0(const Vec3d &point_i) const { return factor_W_3D_; };
+    virtual Real W0(const Real &point_i) const { return factor_W_1D_; };
+    virtual Real W0(const Vec2d &point_i) const { return factor_W_2D_; };
+    virtual Real W0(const Vec3d &point_i) const { return factor_W_3D_; };
 
     /** Calculates the kernel derivation for
      * the given distance of two particles
      */
-    Real dW(const Real &r_ij, const Real &displacement) const;
-    Real dW(const Real &r_ij, const Vec2d &displacement) const;
-    Real dW(const Real &r_ij, const Vec3d &displacement) const;
+    virtual Real dW(const Real &r_ij, const Real &displacement) const;
+    virtual Real dW(const Real &r_ij, const Vec2d &displacement) const;
+    virtual Real dW(const Real &r_ij, const Vec3d &displacement) const;
 
     /** this value could be use to calculate the value of dW
      * they are realized in specific kernel implementations
@@ -125,9 +153,9 @@ class Kernel
     /** Calculates the kernel second order derivation for
      * the given distance of two particles
      */
-    Real d2W(const Real &r_ij, const Real &displacement) const;
-    Real d2W(const Real &r_ij, const Vec2d &displacement) const;
-    Real d2W(const Real &r_ij, const Vec3d &displacement) const;
+    virtual Real d2W(const Real &r_ij, const Real &displacement) const;
+    virtual Real d2W(const Real &r_ij, const Vec2d &displacement) const;
+    virtual Real d2W(const Real &r_ij, const Vec3d &displacement) const;
 
     /** this value could be use to calculate the value of d2W
      * they are realized in specific kernel implementations

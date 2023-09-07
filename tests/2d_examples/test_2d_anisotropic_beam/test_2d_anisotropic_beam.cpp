@@ -1,10 +1,9 @@
 /* ---------------------------------------------------------------------------*
- *            SPHinXsys: 2D oscillation beam example-one body version           *
+ *            SPHinXsys: 2D anisotropic beam example-one body version           *
  * ----------------------------------------------------------------------------*
- * This is the one of the basic test cases, also the first case for            *
- * understanding SPH method for solid simulation.                              *
- * In this case, the constraint of the beam is implemented with                *
- * internal constrained subregion.                                             *
+ * This is a test cases using ASPH method with anisotropic kerne for            *
+ *  simulating solid. Particle space is anisotropic in different directions in this beam.  *
+ * @author	Xiaojing Tang
  * ----------------------------------------------------------------------------*/
 #include "sphinxsys.h"
 using namespace SPH;
@@ -12,10 +11,43 @@ using namespace SPH;
 // global parameters for the case
 //------------------------------------------------------------------------------
 Real PL = 0.2;  // beam length
-Real PH = 0.02; // for thick plate; =0.01 for thin plate
-Real SL = 0.06; // depth of the insert
-// reference particle spacing
-Real resolution_ref = PH / 10.0;
+Real PH = 0.02; // beam width
+Real SL = 0.02; // constrained length
+
+//   particle spacings and particle numbers
+int y_num = 10;                                      // particle number in y direction
+Real ratio_ = 4.0;                                   // anisotropic ratio, also dp_x / dp_y
+Real resolution_ref = PH / y_num;                    // particle spacing in y direction
+Real resolution_ref_large = ratio_ * resolution_ref; // large particle spacing, also the particle spacing in x direction
+Real Total_PL = PL + SL;                             // total length
+int x_num = Total_PL / resolution_ref_large;         // particle number in x direction
+//   anisotropic parameters
+Vec2d scaling_vector = Vec2d(1.0, 1.0 / ratio_); // scaling_vector for defining the anisotropic kernel
+Real scaling_factor = 1.0 / ratio_;              // scaling factor to calculate the time step
+
+//----------------------------------------------------------------------
+//	particle generation considering the anisotropic resolution
+//----------------------------------------------------------------------
+class AnisotropicParticleGenerator : public ParticleGenerator
+{
+  public:
+ AnisotropicParticleGenerator(SPHBody &sph_body) : ParticleGenerator(sph_body){};
+
+    virtual void initializeGeometricVariables() override
+    {
+        // set particles directly
+        for (int i = 0; i < x_num; i++)
+        {
+            for (int j = 0; j < y_num; j++)
+            {
+                Real x = -SL + (i + 0.5) * resolution_ref_large;
+                Real y = -PH / 2 + (j + 0.5) * resolution_ref;
+                initializePositionAndVolumetricMeasure(Vecd(x, y), (resolution_ref * resolution_ref_large));
+            }
+        }
+    }
+};
+
 Real BW = resolution_ref * 4; // boundary width, at least three particles
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-SL - BW, -PL / 2.0),
@@ -40,11 +72,11 @@ Real R = PL / (0.5 * Pi);
 //----------------------------------------------------------------------
 // a beam base shape
 std::vector<Vecd> beam_base_shape{
-    Vecd(-SL - BW, -PH / 2 - BW), Vecd(-SL - BW, PH / 2 + BW), Vecd(0.0, PH / 2 + BW),
-    Vecd(0.0, -PH / 2 - BW), Vecd(-SL - BW, -PH / 2 - BW)};
+    Vecd(-SL, -PH / 2), Vecd(-SL, PH / 2), Vecd(0.0, PH / 2),
+    Vecd(0.0, -PH / 2), Vecd(-SL, -PH / 2)};
 // a beam shape
 std::vector<Vecd> beam_shape{
-    Vecd(-SL, -PH / 2), Vecd(-SL, PH / 2), Vecd(PL, PH / 2), Vecd(PL, -PH / 2), Vecd(-SL, -PH / 2)};
+    Vecd(0.0, -PH / 2), Vecd(0.0, PH / 2), Vecd(PL, PH / 2), Vecd(PL, -PH / 2), Vecd(0.0, -PH / 2)};
 // Beam observer location
 StdVec<Vecd> observation_location = {Vecd(PL, 0.0)};
 //----------------------------------------------------------------------
@@ -90,6 +122,61 @@ MultiPolygon createBeamConstrainShape()
     multi_polygon.addAPolygon(beam_shape, ShapeBooleanOps::sub);
     return multi_polygon;
 };
+//----------------------------------------------------------------------
+//	calculate correction matrix B to keep the accuracy
+//----------------------------------------------------------------------
+
+class AnisotropicCorrectConfiguration : public LocalDynamics, public GeneralDataDelegateInner
+{
+  public:
+    AnisotropicCorrectConfiguration(BaseInnerRelation &inner_relation, int beta = 0, Real alpha = Real(0))
+        : LocalDynamics(inner_relation.getSPHBody()),
+          GeneralDataDelegateInner(inner_relation),
+          beta_(beta), alpha_(alpha),
+          B_(*particles_->getVariableByName<Matd>("CorrectionMatrix")),
+          pos_(particles_->pos_)
+    {
+        particles_->registerVariable(show_neighbor_, "ShowingNeighbor", Real(0.0));
+    }
+    virtual ~AnisotropicCorrectConfiguration(){};
+
+  protected:
+  protected:
+    int beta_;
+    Real alpha_;
+    StdLargeVec<Matd> &B_;
+    StdLargeVec<Vecd> &pos_;
+    StdLargeVec<Real> show_neighbor_;
+
+    void interaction(size_t index_i, Real dt = 0.0)
+    {
+        Matd local_configuration = Eps * Matd::Identity();
+        const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+        {
+            size_t index_j = inner_neighborhood.j_[n];
+            Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
+            Vecd e_ij = inner_neighborhood.e_ij_[n];
+            if (index_i == 67)
+            {
+                show_neighbor_[index_j] = 1.0;
+            };
+
+            Vecd gradW_ijV_j = dW_ijV_j * e_ij;
+            Vecd r_ji = pos_[index_i] - pos_[index_j];
+            local_configuration -= r_ji * gradW_ijV_j.transpose();
+        }
+        B_[index_i] = local_configuration;
+    };
+
+    void update(size_t index_i, Real dt)
+    {
+        Real det_sqr = pow(B_[index_i].determinant(), beta_);
+        Matd inverse = B_[index_i].inverse();
+        B_[index_i] = (det_sqr * inverse + alpha_ * Matd::Identity()) / (alpha_ + det_sqr);
+    }
+};
+
 //------------------------------------------------------------------------------
 // the main program
 //------------------------------------------------------------------------------
@@ -98,19 +185,20 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem system(system_domain_bounds, resolution_ref_large);
 #ifdef BOOST_AVAILABLE
     // handle command line arguments
-    sph_system.handleCommandlineOptions(ac, av);
+    system.handleCommandlineOptions(ac, av);
 #endif //----------------------------------------------------------------------
        //	Creating body, materials and particles.
        //----------------------------------------------------------------------
-    SolidBody beam_body(sph_system, makeShared<Beam>("BeamBody"));
+    SolidBody beam_body(system, makeShared<Beam>("BeamBody"));
+    beam_body.sph_adaptation_->resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
     beam_body.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    beam_body.generateParticles<ParticleGeneratorLattice>();
+    beam_body.generateParticles<AnisotropicParticleGenerator>();
 
-    ObserverBody beam_observer(sph_system, "BeamObserver");
-    beam_observer.defineAdaptationRatios(1.15, 2.0);
+    ObserverBody beam_observer(system, "BeamObserver");
+    beam_observer.sph_adaptation_->resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
     beam_observer.generateParticles<ObserverParticleGenerator>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -123,28 +211,29 @@ int main(int ac, char *av[])
     // this section define all numerical methods will be used in this case
     //-----------------------------------------------------------------------------
     SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
-    // corrected strong configuration
-    InteractionWithUpdate<CorrectedConfigurationInner> beam_corrected_configuration(beam_body_inner);
+    // corrected strong configuration 
+    InteractionWithUpdate<AnisotropicCorrectConfiguration> beam_corrected_configuration(beam_body_inner);
+    beam_body.addBodyStateForRecording<Real>("ShowingNeighbor");
     // time step size calculation
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
     // stress relaxation for the beam
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(beam_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(beam_body_inner);
-    // clamping a solid body part. This is softer than a direct constraint
+    // clamping a solid body part.  
     BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
     SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_beam_base(beam_base);
     //-----------------------------------------------------------------------------
     // outputs
     //-----------------------------------------------------------------------------
-    IOEnvironment io_environment(sph_system);
-    BodyStatesRecordingToVtp write_beam_states(io_environment, sph_system.real_bodies_);
+    IOEnvironment io_environment(system);
+    BodyStatesRecordingToVtp write_beam_states(io_environment, system.real_bodies_);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
         write_beam_tip_displacement("Position", io_environment, beam_observer_contact);
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
-    sph_system.initializeSystemCellLinkedLists();
-    sph_system.initializeSystemConfigurations();
+    system.initializeSystemCellLinkedLists();
+    system.initializeSystemConfigurations();
     beam_initial_velocity.exec();
     beam_corrected_configuration.exec();
     //----------------------------------------------------------------------
@@ -183,7 +272,7 @@ int main(int ac, char *av[])
                 stress_relaxation_second_half.exec(dt);
 
                 ite++;
-                dt = computing_time_step_size.exec();
+                dt = scaling_factor * computing_time_step_size.exec();
                 relaxation_time += dt;
                 integration_time += dt;
                 GlobalStaticVariables::physical_time_ += dt;
@@ -198,7 +287,6 @@ int main(int ac, char *av[])
         }
 
         write_beam_tip_displacement.writeToFile(ite);
-
         TickCount t2 = TickCount::now();
         write_beam_states.writeToFile();
         TickCount t3 = TickCount::now();
@@ -210,16 +298,14 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (sph_system.GenerateRegressionData())
+    if (system.GenerateRegressionData())
     {
-        // The lift force at the cylinder is very small and not important in this case.
         write_beam_tip_displacement.generateDataBase(Vec2d(1.0e-2, 1.0e-2), Vec2d(1.0e-2, 1.0e-2));
     }
     else
     {
         write_beam_tip_displacement.testResult();
     }
-
 
     return 0;
 }
