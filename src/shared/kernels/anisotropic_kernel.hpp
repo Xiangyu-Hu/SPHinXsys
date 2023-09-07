@@ -26,8 +26,7 @@ Mat3d AnisotropicKernel<KernelType>::getCoordinateTransformationTensorG(Vec3d ke
 {
     Mat3d G_kernel_coordinate = Mat3d({{ Real(1.0) / (this->h_ * kernel_vector[0]), 0.0, 0.0},
                                        {0.0, Real(1.0) / (this->h_ * kernel_vector[1]), 0.0},
-                                       {0.0, 0.0, Real(1.0) / (this->h_ * kernel_vector[2])}}
-                                     );
+                                       {0.0, 0.0, Real(1.0) / (this->h_ * kernel_vector[2])}} );                                   
     return G_kernel_coordinate;
 }
 //=========================================================================================//
