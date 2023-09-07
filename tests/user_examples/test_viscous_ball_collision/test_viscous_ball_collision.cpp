@@ -260,7 +260,7 @@ int main(int ac, char *av[])
 
                 ite++;
                 dt_1 = ball_1_get_time_step_size.exec();
-                dt_2 = ball_1_get_time_step_size.exec();
+                dt_2 = ball_2_get_time_step_size.exec();
                 dt = SMIN(dt_1, dt_2);
                 relaxation_time += dt;
                 integration_time += dt;
