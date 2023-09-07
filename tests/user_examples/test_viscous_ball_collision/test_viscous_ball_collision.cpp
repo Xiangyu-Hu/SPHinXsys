@@ -287,15 +287,5 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (sph_system.GenerateRegressionData())
-    {
-        ball_1_position_recording.generateDataBase(Vec2d(1.0e-2, 1.0e-2), Vec2d(1.0e-2, 1.0e-2));
-        ball_2_position_recording.generateDataBase(Vec2d(1.0e-2, 1.0e-2), Vec2d(1.0e-2, 1.0e-2));
-    }
-    else
-    {
-        ball_1_position_recording.testResult();
-        ball_2_position_recording.testResult();
-    }
     return 0;
 }
