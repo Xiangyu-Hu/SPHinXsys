@@ -29,8 +29,6 @@ int main(int ac, char *av[])
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<ParticleGeneratorInFVM>(read_mesh_data.elements_center_coordinates_, read_mesh_data.elements_volumes_);
     water_block.addBodyStateForRecording<Real>("Density");
-    /** Initial condition */
-    SimpleDynamics<WeaklyCompressibleFluidInitialCondition> initial_condition(water_block);
     GhostCreationFromMesh ghost_creation(water_block, read_mesh_data.cell_lists_, read_mesh_data.point_coordinates_2D_);
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -41,17 +39,19 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    /** Boundary conditions set up */
-    FACBoundaryConditionSetup boundary_condition_setup(water_block_inner, ghost_creation.each_boundary_type_with_all_ghosts_index_,
-                                                       ghost_creation.each_boundary_type_with_all_ghosts_eij_, ghost_creation.each_boundary_type_contact_real_index_);
-    SimpleDynamics<EulerianWCTimeStepInitialization> initialize_a_fluid_step(water_block);
-    /** Time step size with considering sound wave speed. */
-    ReduceDynamics<WCAcousticTimeStepSizeInFVM> get_fluid_time_step_size(water_block, read_mesh_data.min_distance_between_nodes_);
-    InteractionDynamics<WCEulerianViscousAccelerationInner> viscous_acceleration(water_block_inner);
     /** Here we introduce the limiter in the Riemann solver and 0 means the no extra numerical dissipation.
     the value is larger, the numerical dissipation larger*/
     InteractionWithUpdate<Integration1stHalfAcousticRiemann> pressure_relaxation(water_block_inner, 200.0);
     InteractionWithUpdate<Integration2ndHalfAcousticRiemann> density_relaxation(water_block_inner, 200.0);
+    SimpleDynamics<WeaklyCompressibleFluidInitialCondition> initial_condition(water_block);
+    /** Boundary conditions set up */
+    FACBoundaryConditionSetup boundary_condition_setup(water_block_inner, ghost_creation.each_boundary_type_with_all_ghosts_index_,
+                                                       ghost_creation.each_boundary_type_with_all_ghosts_eij_, ghost_creation.each_boundary_type_contact_real_index_);
+    SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
+    /** Time step size with considering sound wave speed. */
+    ReduceDynamics<WCAcousticTimeStepSizeInFVM> get_fluid_time_step_size(water_block, read_mesh_data.min_distance_between_nodes_);
+    InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_inner);
+
     //----------------------------------------------------------------------
     //	Compute the force exerted on solid body due to fluid pressure and viscosity
     //----------------------------------------------------------------------

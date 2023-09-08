@@ -4,41 +4,6 @@
 namespace SPH
 {
 //=================================================================================================//
-EulerianWCTimeStepInitialization::EulerianWCTimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> gravity_ptr)
-    : TimeStepInitialization(sph_body, gravity_ptr), rho_(particles_->rho_), pos_(particles_->pos_), vel_(particles_->vel_),
-      dmom_dt_prior_(*particles_->getVariableByName<Vecd>("OtherMomentumChangeRate")){};
-//=================================================================================================//
-void EulerianWCTimeStepInitialization::update(size_t index_i, Real dt)
-{
-    dmom_dt_prior_[index_i] = rho_[index_i] * gravity_->InducedAcceleration(pos_[index_i]);
-}
-//=================================================================================================//
-Real EulerianWCAcousticTimeStepSize::outputResult(Real reduced_value)
-{
-    return acousticCFL_ / Dimensions * smoothing_length_min_ / (reduced_value + TinyReal);
-}
-//=================================================================================================//
-WCEulerianViscousAccelerationInner::WCEulerianViscousAccelerationInner(BaseInnerRelation &inner_relation)
-    : BaseViscousAccelerationInner(inner_relation),
-      dmom_dt_prior_(*particles_->getVariableByName<Vecd>("OtherMomentumChangeRate")){};
-//=================================================================================================//
-void WCEulerianViscousAccelerationInner::interaction(size_t index_i, Real dt)
-{
-    Real rho_i = rho_[index_i];
-    Vecd vel_i = vel_[index_i];
-
-    Vecd acceleration = Vecd::Zero();
-    Vecd vel_derivative = Vecd::Zero();
-    const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-    {
-        size_t index_j = inner_neighborhood.j_[n];
-        vel_derivative = (vel_i - vel_[index_j]) / (inner_neighborhood.r_ij_[n] + TinyReal);
-        acceleration += 2.0 * mu_ * vel_derivative * inner_neighborhood.dW_ijV_j_[n] / rho_i;
-    }
-    dmom_dt_prior_[index_i] += rho_i * acceleration;
-}
-//=================================================================================================//
 FluidStarState NoRiemannSolverInWCEulerianMethod::getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
 {
     Real ul = -e_ij.dot(state_i.vel_);
@@ -75,11 +40,6 @@ FluidStarState AcousticRiemannSolverInEulerianMethod::getInterfaceState(const Fl
 
     return interface_state;
 }
-//=================================================================================================//
-EulerianBaseIntegration::EulerianBaseIntegration(BaseInnerRelation &inner_relation) : BaseIntegration(inner_relation),
-                                                                                      Vol_(particles_->Vol_), mom_(*particles_->getVariableByName<Vecd>("Momentum")),
-                                                                                      dmom_dt_(*particles_->getVariableByName<Vecd>("MomentumChangeRate")),
-                                                                                      dmom_dt_prior_(*particles_->getVariableByName<Vecd>("OtherMomentumChangeRate")){};
 //=================================================================================================//
 NonReflectiveBoundaryVariableCorrection::NonReflectiveBoundaryVariableCorrection(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner<BaseParticles>(inner_relation),

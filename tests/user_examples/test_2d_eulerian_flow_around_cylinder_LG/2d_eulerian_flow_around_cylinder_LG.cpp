@@ -67,18 +67,16 @@ class WeaklyCompressibleFluidInitialCondition
 {
   public:
     explicit WeaklyCompressibleFluidInitialCondition(SPHBody &sph_body)
-        : FluidInitialCondition(sph_body), rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure"))
-    {
-        particles_->registerVariable(mom_, "Momentum");
-        particles_->registerVariable(dmom_dt_, "MomentumChangeRate");
-        particles_->registerVariable(dmom_dt_prior_, "OtherMomentumChangeRate");
-    };
+        : FluidInitialCondition(sph_body), rho_(particles_->rho_),
+          p_(*particles_->getVariableByName<Real>("Pressure")),
+          mom_(*particles_->getVariableByName<Vecd>("Momentum")),
+          dmom_dt_(*particles_->getVariableByName<Vecd>("MomentumChangeRate")){};
 
     void update(size_t index_i, Real dt){};
 
   protected:
-    StdLargeVec<Vecd> mom_, dmom_dt_, dmom_dt_prior_;
     StdLargeVec<Real> &rho_, &p_;
+    StdLargeVec<Vecd> &mom_, &dmom_dt_;
 };
 
 class FarFieldBoundary : public NonReflectiveBoundaryVariableCorrection
@@ -183,17 +181,16 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    /** Initial condition */
+    InteractionWithUpdate<Integration1stHalfAcousticRiemannWithWall> pressure_relaxation(water_block_complex);
+    InteractionWithUpdate<Integration2ndHalfAcousticRiemannWithWall> density_relaxation(water_block_complex);
     SimpleDynamics<WeaklyCompressibleFluidInitialCondition> initial_condition(water_block);
     InteractionWithUpdate<KernelCorrectionMatrixComplex> kernel_correction_matrix(water_block_complex);
     InteractionDynamics<KernelGradientCorrectionComplex> kernel_gradient_update(kernel_correction_matrix);
-    SimpleDynamics<EulerianWCTimeStepInitialization> initialize_a_fluid_step(water_block);
+    SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
     SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
-    InteractionWithUpdate<Integration1stHalfAcousticRiemannWithWall> pressure_relaxation(water_block_complex);
-    InteractionWithUpdate<Integration2ndHalfAcousticRiemannWithWall> density_relaxation(water_block_complex);
-    InteractionDynamics<ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
-    ReduceDynamics<EulerianWCAcousticTimeStepSize> get_fluid_time_step_size(water_block, 0.5);
-    InteractionWithUpdate<fluid_dynamics::FreeSurfaceIndicationComplex> surface_indicator(water_block_complex.getInnerRelation(), water_block_complex.getContactRelation());
+    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block, 0.5);
+    InteractionWithUpdate<fluid_dynamics::FreeSurfaceIndicationComplex> surface_indicator(water_block_complex);
     Dynamics1Level<FarFieldBoundary> variable_reset_in_boundary_condition(water_block_complex.getInnerRelation());
     //----------------------------------------------------------------------
     //	Compute the force exerted on solid body due to fluid pressure and viscosity
