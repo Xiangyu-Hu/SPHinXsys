@@ -110,7 +110,8 @@ Volume 236, (2021) 109540
 111105, 2022.  
  [![Dynamic Relaxation](https://img.shields.io/badge/doi-10.1016%2Fj.jcp.2022.111105-d45815.svg)](https://doi.org/10.1016/j.jcp.2022.111105)
 
-11. Dong Wu, Chi Zhang, Xiaojing Tang, Xiangyu Hu, "An essentially non-hourglass formulation for total Lagrangian smoothed particle hydrodynamics", Computer Methods in Applied Mechanics and Engineering, 407, 115915, 2023.
+11. Dong Wu, Chi Zhang, Xiaojing Tang, Xiangyu Hu, "An essentially non-hourglass formulation for total Lagrangian smoothed particle hydrodynamics", Computer Methods in Applied Mechanics and Engineering, 407, 115915, 2023.  
+[![Hourglass](https://img.shields.io/badge/doi-10.1016%2Fj.jcp.2022.111105-d45815.svg)](https://doi.org/10.1016/j.jcp.2022.111105)
 
 12. Chi Zhang, Hao Gao, Xiangyu Hu, "A multi-order smoothed particle hydrodynamics method for cardiac electromechanics with the Purkinje network", Computer Methods in Applied Mechanics and Engineering, 407, 115885, 2023.  
 [![Purkinje Network](https://img.shields.io/badge/doi-10.1016%2Fj.cma.2023.115885-d45815.svg)](https://doi.org/10.1016/j.cma.2023.115885)
