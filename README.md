@@ -19,7 +19,7 @@ It provides C++ APIs for physical accurate simulation and aims to model coupled 
 and beyond with SPH (smoothed particle hydrodynamics), a meshless computational method using particle discretization.
 For more information on the SPHinXsys project, please check the project website: <https://www.sphinxsys.org>.
 
-SPHinXsys is a multi-physics, multi-resolution SPH library.
+SPHinXsys is a multi-physics, multi-resolution SPH library based on a unified computational framework in which strong couplings are achieved for all involved physics.
 Although it is not a standalone application itself,
 many examples designated for the specific type of applications are provided.
 
