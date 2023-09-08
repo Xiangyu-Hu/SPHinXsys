@@ -22,8 +22,8 @@ void BaseCellLinkedList::clearSplitCellLists(SplitCellLists &split_cell_lists)
 
 CellLinkedListKernel::CellLinkedListKernel(BaseParticles& particles, Kernel& kernel, const DeviceVecd &meshLowerBound, DeviceReal gridSpacing,
                                            const DeviceArrayi &allGridPoints, const DeviceArrayi &allCells)
-    : total_real_particles_(particles.total_real_particles_), list_data_pos_(particles.template getDeviceVariableByName<DeviceVecd>("Position")),
-      list_data_Vol_(particles.template getDeviceVariableByName<DeviceReal>("Volume")), kernel_(kernel),
+    : total_real_particles_(particles.total_real_particles_), list_data_pos_(particles.getDeviceVariableByName<DeviceVecd>("Position")),
+      list_data_Vol_(particles.getDeviceVariableByName<DeviceReal>("Volume")), kernel_(kernel),
       mesh_lower_bound_(meshLowerBound), grid_spacing_(gridSpacing), all_grid_points_(allGridPoints),  all_cells_(allCells),
       index_list_(allocateSharedData<size_t>(total_real_particles_)), index_head_list_(allocateSharedData<size_t>(allCells[0] * allCells[1])){}
 
