@@ -124,7 +124,7 @@ Volume 236, (2021) 109540
 
 ## Software Architecture
 
-SPHinXsys is cross-platform can be compiled and used in Windows, Linux and Apple systems.
+SPHinXsys is cross-platform can be compiled and used in Windows, Linux and McOS systems.
 
 ## Installation, tutorial and documentation
 
