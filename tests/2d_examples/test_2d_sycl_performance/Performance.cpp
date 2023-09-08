@@ -148,10 +148,6 @@ int main(int ac, char *av[])
     std::cout << "Number of iterations per test: " << iterations << std::endl;
 
     std::cout << "------------" << std::endl;
-    std::cout << "SYCL memory operations: " << tt_mem.seconds()
-              << " seconds." << std::endl;
-
-    std::cout << "------------" << std::endl;
     benchmark([&](){
                   fluid_step_initialization.exec();
                   Real advection_dt = fluid_advection_time_step.exec();
