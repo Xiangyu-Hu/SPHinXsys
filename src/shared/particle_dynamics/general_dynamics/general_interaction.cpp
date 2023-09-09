@@ -8,7 +8,7 @@ KernelCorrectionMatrixInner::
     KernelCorrectionMatrixInner(BaseInnerRelation &inner_relation, Real alpha)
     : LocalDynamics(inner_relation.getSPHBody()),
       GeneralDataDelegateInner(inner_relation),
-      alpha_(alpha), B_(*particles_->getVariableByName<Matd>("CorrectionMatrix")) {}
+      alpha_(alpha), B_(*particles_->registerSharedVariable<Matd>("KernelCorrectionMatrix")) {}
 //=================================================================================================//
 void KernelCorrectionMatrixInner::interaction(size_t index_i, Real dt)
 {
