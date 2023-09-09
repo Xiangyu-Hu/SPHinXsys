@@ -1,4 +1,3 @@
-
 #include "common_weakly_compressible_eulerian_classes.h"
 
 namespace SPH
