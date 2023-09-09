@@ -24,6 +24,26 @@ FluidStarState EulerianAcousticRiemannSolver::getInterfaceState(const FluidState
     return interface_state;
 }
 //=================================================================================================//
+SmearedSurfaceIndication::SmearedSurfaceIndication(BaseInnerRelation &inner_relation)
+    : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
+      indicator_(*particles_->getVariableByName<int>("Indicator")),
+      smeared_surface_(*particles_->getVariableByName<int>("SmearedSurface")) {}
+//=================================================================================================//
+void SmearedSurfaceIndication::interaction(size_t index_i, Real dt)
+{
+    bool is_near_surface = false;
+    const Neighborhood &inner_neighborhood = this->inner_configuration_[index_i];
+    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+    {
+        if (indicator_[inner_neighborhood.j_[n]] == 1)
+        {
+            is_near_surface = true;
+            break;
+        }
+    }
+    smeared_surface_[index_i] = is_near_surface;
+}
+//=================================================================================================//
 NonReflectiveBoundaryCorrection::NonReflectiveBoundaryCorrection(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner<BaseParticles>(inner_relation),
       fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())),
@@ -39,27 +59,13 @@ NonReflectiveBoundaryCorrection::NonReflectiveBoundaryCorrection(BaseInnerRelati
     particles_->registerVariable(vel_normal_average_, "VelocityNormalAverage");
     particles_->registerVariable(vel_tangential_average_, "VelocityTangentialAverage");
     particles_->registerVariable(vel_average_, "VelocityAverage");
-    particles_->registerVariable(surface_inner_particle_indicator_, "SurfaceInnerParticleIndicator");
+    particles_->registerVariable(smeared_surface_, "SmearedSurface");
 };
-//=================================================================================================//
-void NonReflectiveBoundaryCorrection::initialization(size_t index_i, Real dt)
-{
-    if (indicator_[index_i] == 1)
-    {
-        const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-        {
-            // if particle j could be searched by indicator 1, this particle j also is seemed as boundary condition particle
-            size_t index_j = inner_neighborhood.j_[n];
-            surface_inner_particle_indicator_[index_j] = 1;
-        }
-    };
-}
 //=================================================================================================//
 void NonReflectiveBoundaryCorrection::interaction(size_t index_i, Real dt)
 {
     Shape &body_shape = *sph_body_.body_shape_;
-    if (indicator_[index_i] == 1 || surface_inner_particle_indicator_[index_i] == 1)
+    if (indicator_[index_i] == 1 || smeared_surface_[index_i] == 1)
     {
         Vecd normal_direction = body_shape.findNormalDirection(pos_[index_i]);
         n_[index_i] = normal_direction;
@@ -148,7 +154,7 @@ void NonReflectiveBoundaryCorrection::interaction(size_t index_i, Real dt)
 void NonReflectiveBoundaryCorrection::update(size_t index_i, Real dt)
 {
     Shape &body_shape = *sph_body_.body_shape_;
-    if (indicator_[index_i] == 1 || surface_inner_particle_indicator_[index_i] == 1)
+    if (indicator_[index_i] == 1 || smeared_surface_[index_i] == 1)
     {
         Vecd normal_direction = body_shape.findNormalDirection(pos_[index_i]);
         n_[index_i] = normal_direction;

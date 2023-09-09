@@ -159,6 +159,23 @@ class EulerianIntegration2ndHalfWithWall : public InteractionWithWall<EulerianIn
 using EulerianIntegration2ndHalfAcousticRiemannWithWall = EulerianIntegration2ndHalfWithWall<EulerianIntegration2ndHalfAcousticRiemann>;
 
 /**
+ * @class SmearedSurfaceIndication
+ * @brief Indication of the particles which are within cut-off radius of surface particles.
+ */
+class SmearedSurfaceIndication : public LocalDynamics, public FluidDataInner
+{
+  public:
+    explicit SmearedSurfaceIndication(BaseInnerRelation &inner_relation);
+    virtual ~SmearedSurfaceIndication(){};
+
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    StdLargeVec<int> &indicator_;
+    StdLargeVec<int> &smeared_surface_;
+};
+
+/**
  * @class NonReflectiveBoundaryCorrection
  * @brief Implement Eulerian non-reflective boundary condition at free surface particles.
  */
@@ -167,7 +184,6 @@ class NonReflectiveBoundaryCorrection : public LocalDynamics, public DataDelegat
   public:
     NonReflectiveBoundaryCorrection(BaseInnerRelation &inner_relation);
     virtual ~NonReflectiveBoundaryCorrection(){};
-    void initialization(size_t index_i, Real dt = 0.0);
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 
@@ -180,8 +196,7 @@ class NonReflectiveBoundaryCorrection : public LocalDynamics, public DataDelegat
     StdLargeVec<Vecd> n_;
     StdLargeVec<Real> inner_weight_summation_, rho_average_, vel_normal_average_;
     StdLargeVec<Vecd> vel_tangential_average_, vel_average_;
-    StdLargeVec<int> &indicator_;
-    StdLargeVec<int> surface_inner_particle_indicator_;
+    StdLargeVec<int> &indicator_, smeared_surface_;
 };
 } // namespace fluid_dynamics
 } // namespace SPH
