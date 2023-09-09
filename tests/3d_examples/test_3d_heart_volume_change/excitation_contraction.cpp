@@ -24,8 +24,8 @@ int main(int ac, char *av[])
     SPHSystem sph_system(system_domain_bounds, dp_0);
     GlobalStaticVariables::physical_time_ = 0.0;
     Real mechanical_time_ = 0.0;
-    sph_system.setRunParticleRelaxation(true); // Tag for run particle relaxation for body-fitted distribution
-    sph_system.setReloadParticles(true);       // Tag for computation with save particles distribution
+    sph_system.setRunParticleRelaxation(false); // Tag for run particle relaxation for body-fitted distribution
+    sph_system.setReloadParticles(false);       // Tag for computation with save particles distribution
 #ifdef BOOST_AVAILABLE
     sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
 #endif
@@ -356,7 +356,6 @@ int main(int ac, char *av[])
     write_csv_files("RV_results.csv", "Time", "flow_rate_RV", "delta_volume_RV", simulation_time, flow_rate_RV, delta_volume_RV);
 
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-
 
     return 0;
 }

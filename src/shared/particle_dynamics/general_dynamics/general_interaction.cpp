@@ -5,11 +5,10 @@ namespace SPH
 {
 //=================================================================================================//
 KernelCorrectionMatrixInner::
-    KernelCorrectionMatrixInner(BaseInnerRelation &inner_relation, int beta, Real alpha)
+    KernelCorrectionMatrixInner(BaseInnerRelation &inner_relation, Real alpha)
     : LocalDynamics(inner_relation.getSPHBody()),
       GeneralDataDelegateInner(inner_relation),
-      beta_(beta), alpha_(alpha),
-      B_(*particles_->registerSharedVariable<Matd>("KernelCorrectionMatrix")) {}
+      alpha_(alpha), B_(*particles_->getVariableByName<Matd>("CorrectionMatrix")) {}
 //=================================================================================================//
 void KernelCorrectionMatrixInner::interaction(size_t index_i, Real dt)
 {
@@ -22,20 +21,21 @@ void KernelCorrectionMatrixInner::interaction(size_t index_i, Real dt)
         Vecd r_ji = inner_neighborhood.r_ij_[n] * inner_neighborhood.e_ij_[n];
         local_configuration -= r_ji * gradW_ij.transpose();
     }
-
     B_[index_i] = local_configuration;
 }
 //=================================================================================================//
 void KernelCorrectionMatrixInner::update(size_t index_i, Real dt)
 {
-    Real det_sqr = pow(B_[index_i].determinant(), beta_);
+    Real det_sqr = alpha_;
     Matd inverse = B_[index_i].inverse();
-    B_[index_i] = (det_sqr * inverse + alpha_ * Matd::Identity()) / (alpha_ + det_sqr);
+    Real weight1_ = B_[index_i].determinant() / (B_[index_i].determinant() + det_sqr);
+    Real weight2_ = det_sqr / (B_[index_i].determinant() + det_sqr);
+    B_[index_i] = weight1_ * inverse + weight2_ * Matd::Identity();
 }
 //=================================================================================================//
 KernelCorrectionMatrixComplex::
-    KernelCorrectionMatrixComplex(ComplexRelation &complex_relation, int beta, Real alpha)
-    : KernelCorrectionMatrixInner(complex_relation.getInnerRelation(), beta, alpha),
+    KernelCorrectionMatrixComplex(ComplexRelation &complex_relation, Real alpha)
+    : KernelCorrectionMatrixInner(complex_relation.getInnerRelation(), alpha),
       GeneralDataDelegateContactOnly(complex_relation.getContactRelation())
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)

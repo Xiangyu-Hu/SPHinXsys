@@ -34,6 +34,9 @@ int main(int ac, char *av[])
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
     //----------------------------------------------------------------------
     ComplexRelation water_air_complex(water_block, {&air_block});
     ContactRelation water_wall_contact(water_block, {&wall_boundary});

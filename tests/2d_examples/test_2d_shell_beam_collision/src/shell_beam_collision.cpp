@@ -83,7 +83,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     /** Tag for running particle relaxation for the initially body-fitted distribution */
-    sph_system.setRunParticleRelaxation(true);
+    sph_system.setRunParticleRelaxation(false);
     /** Tag for starting with relaxed body-fitted particles distribution */
     sph_system.setReloadParticles(false);
     sph_system.handleCommandlineOptions(ac, av);
@@ -118,6 +118,9 @@ int main(int ac, char *av[])
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation beam_inner(beam);
     SurfaceContactRelation shell_contact(shell, {&beam});
@@ -302,7 +305,6 @@ int main(int ac, char *av[])
     TimeInterval tt;
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-
 
     return 0;
 }

@@ -273,8 +273,8 @@ int main(int ac, char *av[])
     //	SPHSystem section
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, dp_0);
-    sph_system.setRunParticleRelaxation(true); // Tag for run particle relaxation for body-fitted distribution
-    sph_system.setReloadParticles(true);       // Tag for computation with save particles distribution
+    sph_system.setRunParticleRelaxation(false); // Tag for run particle relaxation for body-fitted distribution
+    sph_system.setReloadParticles(false);       // Tag for computation with save particles distribution
 #ifdef BOOST_AVAILABLE
     sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
 #endif
@@ -543,7 +543,6 @@ int main(int ac, char *av[])
     TimeInterval tt;
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-
 
     return 0;
 }

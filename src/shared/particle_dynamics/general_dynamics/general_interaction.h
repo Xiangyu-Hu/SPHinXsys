@@ -36,11 +36,10 @@ namespace SPH
 class KernelCorrectionMatrixInner : public LocalDynamics, public GeneralDataDelegateInner
 {
   public:
-    KernelCorrectionMatrixInner(BaseInnerRelation &inner_relation, int beta = 0, Real alpha = Real(0));
+    KernelCorrectionMatrixInner(BaseInnerRelation &inner_relation, Real alpha = Real(0));
     virtual ~KernelCorrectionMatrixInner(){};
 
   protected:
-    int beta_;
     Real alpha_;
     StdLargeVec<Matd> &B_;
 
@@ -51,10 +50,10 @@ class KernelCorrectionMatrixInner : public LocalDynamics, public GeneralDataDele
 class KernelCorrectionMatrixComplex : public KernelCorrectionMatrixInner, public GeneralDataDelegateContactOnly
 {
   public:
-    KernelCorrectionMatrixComplex(ComplexRelation &complex_relation, int beta = 0, Real alpha = Real(0));
+    KernelCorrectionMatrixComplex(ComplexRelation &complex_relation, Real alpha = Real(0));
     virtual ~KernelCorrectionMatrixComplex(){};
 
-  protected:
+  protected: 
     StdVec<StdLargeVec<Real> *> contact_Vol_;
     StdVec<StdLargeVec<Real> *> contact_mass_;
 

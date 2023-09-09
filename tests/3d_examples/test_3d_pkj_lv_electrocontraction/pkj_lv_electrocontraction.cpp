@@ -33,7 +33,7 @@ int main(int ac, char *av[])
     /** Tag for run particle relaxation for the initial body fitted distribution. */
     sph_system.setRunParticleRelaxation(false);
     /** Tag for reload initially relaxed particles. */
-    sph_system.setReloadParticles(true);
+    sph_system.setReloadParticles(false);
 // handle command line arguments
 #ifdef BOOST_AVAILABLE
     sph_system.handleCommandlineOptions(ac, av);
@@ -353,7 +353,6 @@ int main(int ac, char *av[])
     TimeInterval tt;
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-
 
     return 0;
 }
