@@ -16,7 +16,7 @@ namespace SPH
 {
 //=================================================================================================//
 template <class RiemannSolverType>
-BaseIntegration1stHalf<RiemannSolverType>::BaseIntegration1stHalf(BaseInnerRelation &inner_relation, Real limiter_parameter)
+EulerianIntegration1stHalf<RiemannSolverType>::EulerianIntegration1stHalf(BaseInnerRelation &inner_relation, Real limiter_parameter)
     : fluid_dynamics::BaseIntegration(inner_relation), limiter_input_(limiter_parameter),
       riemann_solver_(this->fluid_, this->fluid_, limiter_input_),
       acc_prior_(particles_->acc_prior_)
@@ -26,7 +26,7 @@ BaseIntegration1stHalf<RiemannSolverType>::BaseIntegration1stHalf(BaseInnerRelat
 }
 //=================================================================================================//
 template <class RiemannSolverType>
-void BaseIntegration1stHalf<RiemannSolverType>::interaction(size_t index_i, Real dt)
+void EulerianIntegration1stHalf<RiemannSolverType>::interaction(size_t index_i, Real dt)
 {
     FluidState state_i(rho_[index_i], vel_[index_i], p_[index_i]);
     Vecd momentum_change_rate = Vecd::Zero();
@@ -47,16 +47,16 @@ void BaseIntegration1stHalf<RiemannSolverType>::interaction(size_t index_i, Real
 }
 //=================================================================================================//
 template <class RiemannSolverType>
-void BaseIntegration1stHalf<RiemannSolverType>::update(size_t index_i, Real dt)
+void EulerianIntegration1stHalf<RiemannSolverType>::update(size_t index_i, Real dt)
 {
     mom_[index_i] += (dmom_dt_[index_i] + rho_[index_i] * acc_prior_[index_i]) * dt;
     vel_[index_i] = mom_[index_i] / rho_[index_i];
 }
 //=================================================================================================//
-template <class BaseIntegration1stHalfType>
-void BaseIntegration1stHalfWithWall<BaseIntegration1stHalfType>::interaction(size_t index_i, Real dt)
+template <class EulerianIntegration1stHalfType>
+void EulerianIntegration1stHalfWithWall<EulerianIntegration1stHalfType>::interaction(size_t index_i, Real dt)
 {
-    BaseIntegration1stHalfType::interaction(index_i, dt);
+    EulerianIntegration1stHalfType::interaction(index_i, dt);
 
     FluidState state_i(this->rho_[index_i], this->vel_[index_i], this->p_[index_i]);
 
@@ -85,13 +85,13 @@ void BaseIntegration1stHalfWithWall<BaseIntegration1stHalfType>::interaction(siz
 }
 //=================================================================================================//
 template <class RiemannSolverType>
-BaseIntegration2ndHalf<RiemannSolverType>::
-    BaseIntegration2ndHalf(BaseInnerRelation &inner_relation, Real limiter_parameter)
+EulerianIntegration2ndHalf<RiemannSolverType>::
+    EulerianIntegration2ndHalf(BaseInnerRelation &inner_relation, Real limiter_parameter)
     : fluid_dynamics::BaseIntegration(inner_relation), limiter_input_(limiter_parameter),
       riemann_solver_(this->fluid_, this->fluid_, limiter_input_) {}
 //=================================================================================================//
 template <class RiemannSolverType>
-void BaseIntegration2ndHalf<RiemannSolverType>::interaction(size_t index_i, Real dt)
+void EulerianIntegration2ndHalf<RiemannSolverType>::interaction(size_t index_i, Real dt)
 {
     FluidState state_i(rho_[index_i], vel_[index_i], p_[index_i]);
     Real density_change_rate = 0.0;
@@ -112,16 +112,16 @@ void BaseIntegration2ndHalf<RiemannSolverType>::interaction(size_t index_i, Real
 }
 //=================================================================================================//
 template <class RiemannSolverType>
-void BaseIntegration2ndHalf<RiemannSolverType>::update(size_t index_i, Real dt)
+void EulerianIntegration2ndHalf<RiemannSolverType>::update(size_t index_i, Real dt)
 {
     rho_[index_i] += drho_dt_[index_i] * dt;
     p_[index_i] = fluid_.getPressure(rho_[index_i]);
 }
 //=================================================================================================//
-template <class BaseIntegration2ndHalfType>
-void BaseIntegration2ndHalfWithWall<BaseIntegration2ndHalfType>::interaction(size_t index_i, Real dt)
+template <class EulerianIntegration2ndHalfType>
+void EulerianIntegration2ndHalfWithWall<EulerianIntegration2ndHalfType>::interaction(size_t index_i, Real dt)
 {
-    BaseIntegration2ndHalfType::interaction(index_i, dt);
+    EulerianIntegration2ndHalfType::interaction(index_i, dt);
 
     FluidState state_i(this->rho_[index_i], this->vel_[index_i], this->p_[index_i]);
     Real density_change_rate = 0.0;
