@@ -32,6 +32,8 @@
 #include "common_weakly_compressible_eulerian_classes.h"
 namespace SPH
 {
+namespace fluid_dynamics
+{
 /**
  * @class WCAcousticTimeStepSizeInFVM
  * @brief Computing the acoustic time step size
@@ -52,7 +54,7 @@ class WCAcousticTimeStepSizeInFVM : public fluid_dynamics::AcousticTimeStepSize
 };
 
 /**
- * @class BaseFluidForceOnSolidInFVM
+ * @class BaseForceFromFluidInFVM
  * @brief Base class for computing the forces from the fluid.
  * Note that In FVM , we need FluidDataInner class to calculate force between solid and fluid.
  */
@@ -131,8 +133,7 @@ class BasePressureForceAccelerationFromFluidInFVM : public BaseForceFromFluidInF
         }
     };
 };
-using PressureForceAccelerationFromFluidInFVM = BasePressureForceAccelerationFromFluidInFVM<NoRiemannSolverInWCEulerianMethod>;
-using PressureForceAccelerationFromFluidRiemannInFVM = BasePressureForceAccelerationFromFluidInFVM<AcousticRiemannSolverInEulerianMethod>;
+using PressureForceAccelerationFromFluidRiemannInFVM = BasePressureForceAccelerationFromFluidInFVM<EulerianAcousticRiemannSolver>;
 
 /**
  * @class BaseAllForceAccelerationFromFluidInFVM
@@ -161,7 +162,7 @@ class BaseAllForceAccelerationFromFluidInFVM : public PressureForceType
   protected:
     StdLargeVec<Vecd> &viscous_force_from_fluid_;
 };
-using AllForceAccelerationFromFluid = BaseAllForceAccelerationFromFluidInFVM<PressureForceAccelerationFromFluidInFVM>;
-using AllForceAccelerationFromFluidRiemann = BaseAllForceAccelerationFromFluidInFVM<PressureForceAccelerationFromFluidRiemannInFVM>;
+using AllForceAccelerationFromFluidRiemannFVM = BaseAllForceAccelerationFromFluidInFVM<PressureForceAccelerationFromFluidRiemannInFVM>;
+} // namespace fluid_dynamics
 } // namespace SPH
 #endif // COMMON_WEAKLY_COMPRESSIBLE_FVM_CLASSES_H

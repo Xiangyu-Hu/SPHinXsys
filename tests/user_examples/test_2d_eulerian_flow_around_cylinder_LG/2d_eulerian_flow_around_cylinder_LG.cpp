@@ -62,8 +62,7 @@ class Cylinder : public MultiPolygonShape
 //----------------------------------------------------------------------
 //	Case-dependent initial condition.
 //----------------------------------------------------------------------
-class WeaklyCompressibleFluidInitialCondition
-    : public fluid_dynamics::FluidInitialCondition
+class WeaklyCompressibleFluidInitialCondition : public fluid_dynamics::FluidInitialCondition
 {
   public:
     explicit WeaklyCompressibleFluidInitialCondition(SPHBody &sph_body)
@@ -79,10 +78,11 @@ class WeaklyCompressibleFluidInitialCondition
     StdLargeVec<Vecd> &mom_, &dmom_dt_;
 };
 
-class FarFieldBoundary : public NonReflectiveBoundaryVariableCorrection
+class FarFieldBoundary : public fluid_dynamics::NonReflectiveBoundaryVariableCorrection
 {
   public:
-    explicit FarFieldBoundary(BaseInnerRelation &inner_relation) : NonReflectiveBoundaryVariableCorrection(inner_relation)
+    explicit FarFieldBoundary(BaseInnerRelation &inner_relation)
+        : fluid_dynamics::NonReflectiveBoundaryVariableCorrection(inner_relation)
     {
         rho_farfield_ = rho0_f;
         sound_speed_ = c_f;
@@ -181,8 +181,8 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    InteractionWithUpdate<EulerianIntegration1stHalfAcousticRiemannWithWall> pressure_relaxation(water_block_complex);
-    InteractionWithUpdate<EulerianIntegration2ndHalfAcousticRiemannWithWall> density_relaxation(water_block_complex);
+    InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfAcousticRiemannWithWall> pressure_relaxation(water_block_complex);
+    InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfAcousticRiemannWithWall> density_relaxation(water_block_complex);
     SimpleDynamics<WeaklyCompressibleFluidInitialCondition> initial_condition(water_block);
     InteractionWithUpdate<KernelCorrectionMatrixComplex> kernel_correction_matrix(water_block_complex);
     InteractionDynamics<KernelGradientCorrectionComplex> kernel_gradient_update(kernel_correction_matrix);

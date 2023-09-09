@@ -4,11 +4,13 @@
 
 namespace SPH
 {
+namespace fluid_dynamics
+{
 //=================================================================================================//
 template <class RiemannSolverType>
 EulerianIntegration1stHalf<RiemannSolverType>::
     EulerianIntegration1stHalf(BaseInnerRelation &inner_relation, Real limiter_parameter)
-    : fluid_dynamics::BaseIntegration(inner_relation), limiter_input_(limiter_parameter),
+    : BaseIntegration(inner_relation), limiter_input_(limiter_parameter),
       riemann_solver_(this->fluid_, this->fluid_, limiter_input_),
       acc_prior_(particles_->acc_prior_)
 {
@@ -52,10 +54,10 @@ void EulerianIntegration1stHalfWithWall<EulerianIntegration1stHalfType>::interac
     FluidState state_i(this->rho_[index_i], this->vel_[index_i], this->p_[index_i]);
 
     Vecd momentum_change_rate = Vecd::Zero();
-    for (size_t k = 0; k < fluid_dynamics::FluidWallData::contact_configuration_.size(); ++k)
+    for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
     {
         StdLargeVec<Vecd> &n_k = *(this->wall_n_[k]);
-        Neighborhood &wall_neighborhood = (*fluid_dynamics::FluidWallData::contact_configuration_[k])[index_i];
+        Neighborhood &wall_neighborhood = (*FluidWallData::contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
             size_t index_j = wall_neighborhood.j_[n];
@@ -78,7 +80,7 @@ void EulerianIntegration1stHalfWithWall<EulerianIntegration1stHalfType>::interac
 template <class RiemannSolverType>
 EulerianIntegration2ndHalf<RiemannSolverType>::
     EulerianIntegration2ndHalf(BaseInnerRelation &inner_relation, Real limiter_parameter)
-    : fluid_dynamics::BaseIntegration(inner_relation), limiter_input_(limiter_parameter),
+    : BaseIntegration(inner_relation), limiter_input_(limiter_parameter),
       riemann_solver_(this->fluid_, this->fluid_, limiter_input_) {}
 //=================================================================================================//
 template <class RiemannSolverType>
@@ -116,10 +118,10 @@ void EulerianIntegration2ndHalfWithWall<EulerianIntegration2ndHalfType>::interac
 
     FluidState state_i(this->rho_[index_i], this->vel_[index_i], this->p_[index_i]);
     Real density_change_rate = 0.0;
-    for (size_t k = 0; k < fluid_dynamics::FluidWallData::contact_configuration_.size(); ++k)
+    for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
     {
         StdLargeVec<Vecd> &n_k = *(this->wall_n_[k]);
-        Neighborhood &wall_neighborhood = (*fluid_dynamics::FluidWallData::contact_configuration_[k])[index_i];
+        Neighborhood &wall_neighborhood = (*FluidWallData::contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
             size_t index_j = wall_neighborhood.j_[n];
@@ -140,5 +142,5 @@ void EulerianIntegration2ndHalfWithWall<EulerianIntegration2ndHalfType>::interac
     this->drho_dt_[index_i] += density_change_rate;
 }
 //=================================================================================================//
+} // namespace fluid_dynamics
 } // namespace SPH
-  //=================================================================================================//

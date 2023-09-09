@@ -37,34 +37,19 @@
 
 namespace SPH
 {
-//----------------------------------------------------------------------
-//	Riemann Solver classes.
-//----------------------------------------------------------------------
-/**
- * @struct NoRiemannSolverInWCEulerianMethod
- * @brief  NO RiemannSolver for weakly-compressible flow in Eulerian method for weakly-compressible flow.
- */
-class NoRiemannSolverInWCEulerianMethod
+namespace fluid_dynamics
 {
-    Fluid &fluid_i_, &fluid_j_;
-
-  public:
-    NoRiemannSolverInWCEulerianMethod(Fluid &fluid_i, Fluid &fluid_j)
-        : fluid_i_(fluid_i), fluid_j_(fluid_j){};
-    FluidStarState getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij);
-};
-
 /**
- * @struct AcousticRiemannSolverInEulerianMethod
- * @brief  Acoustic RiemannSolver for weakly-compressible flow in Eulerian method.
+ * @struct EulerianAcousticRiemannSolver
+ * @brief  Acoustic RiemannSolver for Eulerian weakly-compressible flow.
  */
-class AcousticRiemannSolverInEulerianMethod
+class EulerianAcousticRiemannSolver
 {
     Fluid &fluid_i_, &fluid_j_;
     Real limiter_parameter_;
 
   public:
-    AcousticRiemannSolverInEulerianMethod(Fluid &compressible_fluid_i, Fluid &compressible_fluid_j, Real limiter_parameter = 15.0)
+    EulerianAcousticRiemannSolver(Fluid &compressible_fluid_i, Fluid &compressible_fluid_j, Real limiter_parameter = 15.0)
         : fluid_i_(compressible_fluid_i), fluid_j_(compressible_fluid_j), limiter_parameter_(limiter_parameter){};
     FluidStarState getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij);
 };
@@ -75,7 +60,7 @@ class AcousticRiemannSolverInEulerianMethod
  * as template variable
  */
 template <class RiemannSolverType>
-class EulerianIntegration1stHalf : public fluid_dynamics::BaseIntegration
+class EulerianIntegration1stHalf : public BaseIntegration
 {
   public:
     explicit EulerianIntegration1stHalf(BaseInnerRelation &inner_relation, Real limiter_parameter = 15.0);
@@ -90,20 +75,20 @@ class EulerianIntegration1stHalf : public fluid_dynamics::BaseIntegration
     StdLargeVec<Vecd> mom_, dmom_dt_;
 };
 /** define the mostly used pressure relaxation scheme using Riemann solver */
-using EulerianIntegration1stHalfAcousticRiemann = EulerianIntegration1stHalf<AcousticRiemannSolverInEulerianMethod>;
+using EulerianIntegration1stHalfAcousticRiemann = EulerianIntegration1stHalf<EulerianAcousticRiemannSolver>;
 
 /**
  * @class EulerianIntegration1stHalfWithWall
  * @brief  template class pressure relaxation scheme with wall boundary
  */
 template <class EulerianIntegration1stHalfType>
-class EulerianIntegration1stHalfWithWall : public fluid_dynamics::InteractionWithWall<EulerianIntegration1stHalfType>
+class EulerianIntegration1stHalfWithWall : public InteractionWithWall<EulerianIntegration1stHalfType>
 {
   public:
     // template for different combination of constructing body relations
     template <class BaseBodyRelationType>
     EulerianIntegration1stHalfWithWall(BaseContactRelation &wall_contact_relation, BaseBodyRelationType &base_body_relation, Real limiter_parameter = 15.0)
-        : fluid_dynamics::InteractionWithWall<EulerianIntegration1stHalfType>(wall_contact_relation, base_body_relation), limiter_input_(limiter_parameter){};
+        : InteractionWithWall<EulerianIntegration1stHalfType>(wall_contact_relation, base_body_relation), limiter_input_(limiter_parameter){};
     explicit EulerianIntegration1stHalfWithWall(ComplexRelation &fluid_wall_relation)
         : EulerianIntegration1stHalfWithWall(fluid_wall_relation.getContactRelation(), fluid_wall_relation.getInnerRelation()){};
     virtual ~EulerianIntegration1stHalfWithWall(){};
@@ -117,7 +102,7 @@ using EulerianIntegration1stHalfAcousticRiemannWithWall = EulerianIntegration1st
  * @brief  Template density relaxation scheme with different Riemann solver
  */
 template <class RiemannSolverType>
-class EulerianIntegration2ndHalf : public fluid_dynamics::BaseIntegration
+class EulerianIntegration2ndHalf : public BaseIntegration
 {
   public:
     explicit EulerianIntegration2ndHalf(BaseInnerRelation &inner_relation, Real limiter_parameter = 15.0);
@@ -127,20 +112,20 @@ class EulerianIntegration2ndHalf : public fluid_dynamics::BaseIntegration
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 };
-using EulerianIntegration2ndHalfAcousticRiemann = EulerianIntegration2ndHalf<AcousticRiemannSolverInEulerianMethod>;
+using EulerianIntegration2ndHalfAcousticRiemann = EulerianIntegration2ndHalf<EulerianAcousticRiemannSolver>;
 
 /**
  * @class EulerianIntegration2ndHalfWithWall
  * @brief template density relaxation scheme with using  Riemann solver.
  */
 template <class EulerianIntegration2ndHalfType>
-class EulerianIntegration2ndHalfWithWall : public fluid_dynamics::InteractionWithWall<EulerianIntegration2ndHalfType>
+class EulerianIntegration2ndHalfWithWall : public InteractionWithWall<EulerianIntegration2ndHalfType>
 {
   public:
     // template for different combination of constructing body relations
     template <class BaseBodyRelationType>
     EulerianIntegration2ndHalfWithWall(BaseContactRelation &wall_contact_relation, BaseBodyRelationType &base_body_relation, Real limiter_parameter = 15.0)
-        : fluid_dynamics::InteractionWithWall<EulerianIntegration2ndHalfType>(wall_contact_relation, base_body_relation), limiter_input_(limiter_parameter){};
+        : InteractionWithWall<EulerianIntegration2ndHalfType>(wall_contact_relation, base_body_relation), limiter_input_(limiter_parameter){};
     explicit EulerianIntegration2ndHalfWithWall(ComplexRelation &fluid_wall_relation)
         : EulerianIntegration2ndHalfWithWall(fluid_wall_relation.getContactRelation(), fluid_wall_relation.getInnerRelation()){};
     virtual ~EulerianIntegration2ndHalfWithWall(){};
@@ -173,5 +158,6 @@ class NonReflectiveBoundaryVariableCorrection : public LocalDynamics, public Dat
     StdLargeVec<int> &indicator_;
     StdLargeVec<int> surface_inner_particle_indicator_;
 };
+} // namespace fluid_dynamics
 } // namespace SPH
 #endif // COMMON_WEAKLY_COMPRESSIBLE_EULERIAN_CLASSES_H

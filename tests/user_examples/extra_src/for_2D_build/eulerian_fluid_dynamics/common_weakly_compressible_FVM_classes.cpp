@@ -3,6 +3,8 @@
 
 namespace SPH
 {
+    namespace fluid_dynamics
+{
 //=================================================================================================//
 WCAcousticTimeStepSizeInFVM::WCAcousticTimeStepSizeInFVM(SPHBody &sph_body, Real min_distance_between_nodes, Real acousticCFL)
     : AcousticTimeStepSize(sph_body), rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
@@ -44,5 +46,5 @@ void ViscousForceFromFluidInFVM::interaction(size_t index_i, Real dt)
     }
 }
 //=================================================================================================//
+}
 } // namespace SPH
-  //=================================================================================================//
