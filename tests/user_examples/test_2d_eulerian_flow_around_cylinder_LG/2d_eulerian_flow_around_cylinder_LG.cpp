@@ -60,11 +60,11 @@ class Cylinder : public MultiPolygonShape
     }
 };
 
-class FarFieldBoundary : public fluid_dynamics::NonReflectiveBoundaryVariableCorrection
+class FarFieldBoundary : public fluid_dynamics::NonReflectiveBoundaryCorrection
 {
   public:
     explicit FarFieldBoundary(BaseInnerRelation &inner_relation)
-        : fluid_dynamics::NonReflectiveBoundaryVariableCorrection(inner_relation)
+        : fluid_dynamics::NonReflectiveBoundaryCorrection(inner_relation)
     {
         rho_farfield_ = rho0_f;
         sound_speed_ = c_f;

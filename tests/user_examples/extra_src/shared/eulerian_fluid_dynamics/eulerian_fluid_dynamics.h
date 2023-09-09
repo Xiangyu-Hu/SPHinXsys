@@ -49,8 +49,8 @@ class EulerianAcousticRiemannSolver
     Real limiter_parameter_;
 
   public:
-    EulerianAcousticRiemannSolver(Fluid &compressible_fluid_i, Fluid &compressible_fluid_j, Real limiter_parameter = 15.0)
-        : fluid_i_(compressible_fluid_i), fluid_j_(compressible_fluid_j), limiter_parameter_(limiter_parameter){};
+    EulerianAcousticRiemannSolver(Fluid &fluid_i, Fluid &fluid_j, Real limiter_parameter = 15.0)
+        : fluid_i_(fluid_i), fluid_j_(fluid_j), limiter_parameter_(limiter_parameter){};
     FluidStarState getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij);
 };
 
@@ -83,12 +83,12 @@ class EulerianIntegration1stHalf : public BaseIntegration
   public:
     explicit EulerianIntegration1stHalf(BaseInnerRelation &inner_relation, Real limiter_parameter = 15.0);
     virtual ~EulerianIntegration1stHalf(){};
-    Real limiter_input_;
-    RiemannSolverType riemann_solver_;
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
+    Real limiter_input_;
+    RiemannSolverType riemann_solver_;
     StdLargeVec<Vecd> &acc_prior_;
     StdLargeVec<Vecd> mom_, dmom_dt_;
 };
@@ -111,6 +111,8 @@ class EulerianIntegration1stHalfWithWall : public InteractionWithWall<EulerianIn
         : EulerianIntegration1stHalfWithWall(fluid_wall_relation.getContactRelation(), fluid_wall_relation.getInnerRelation()){};
     virtual ~EulerianIntegration1stHalfWithWall(){};
     void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
     Real &limiter_input_;
 };
 using EulerianIntegration1stHalfAcousticRiemannWithWall = EulerianIntegration1stHalfWithWall<EulerianIntegration1stHalfAcousticRiemann>;
@@ -125,10 +127,12 @@ class EulerianIntegration2ndHalf : public BaseIntegration
   public:
     explicit EulerianIntegration2ndHalf(BaseInnerRelation &inner_relation, Real limiter_parameter = 15.0);
     virtual ~EulerianIntegration2ndHalf(){};
-    Real limiter_input_;
-    RiemannSolverType riemann_solver_;
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
+
+  protected:
+    Real limiter_input_;
+    RiemannSolverType riemann_solver_;
 };
 using EulerianIntegration2ndHalfAcousticRiemann = EulerianIntegration2ndHalf<EulerianAcousticRiemannSolver>;
 
@@ -148,18 +152,21 @@ class EulerianIntegration2ndHalfWithWall : public InteractionWithWall<EulerianIn
         : EulerianIntegration2ndHalfWithWall(fluid_wall_relation.getContactRelation(), fluid_wall_relation.getInnerRelation()){};
     virtual ~EulerianIntegration2ndHalfWithWall(){};
     void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
     Real &limiter_input_;
 };
 using EulerianIntegration2ndHalfAcousticRiemannWithWall = EulerianIntegration2ndHalfWithWall<EulerianIntegration2ndHalfAcousticRiemann>;
 
-//----------------------------------------------------------------------
-//	Non-Reflective Boundary
-//----------------------------------------------------------------------
-class NonReflectiveBoundaryVariableCorrection : public LocalDynamics, public DataDelegateInner<BaseParticles>
+/**
+ * @class NonReflectiveBoundaryCorrection
+ * @brief Implement Eulerian non-reflective boundary condition at free surface particles.
+ */
+class NonReflectiveBoundaryCorrection : public LocalDynamics, public DataDelegateInner<BaseParticles>
 {
   public:
-    NonReflectiveBoundaryVariableCorrection(BaseInnerRelation &inner_relation);
-    virtual ~NonReflectiveBoundaryVariableCorrection(){};
+    NonReflectiveBoundaryCorrection(BaseInnerRelation &inner_relation);
+    virtual ~NonReflectiveBoundaryCorrection(){};
     void initialization(size_t index_i, Real dt = 0.0);
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);

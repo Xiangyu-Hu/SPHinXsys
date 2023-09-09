@@ -24,10 +24,12 @@ FluidStarState EulerianAcousticRiemannSolver::getInterfaceState(const FluidState
     return interface_state;
 }
 //=================================================================================================//
-NonReflectiveBoundaryVariableCorrection::NonReflectiveBoundaryVariableCorrection(BaseInnerRelation &inner_relation)
+NonReflectiveBoundaryCorrection::NonReflectiveBoundaryCorrection(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner<BaseParticles>(inner_relation),
-      fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())), rho_farfield_(0.0), sound_speed_(0.0), vel_farfield_(Vecd::Zero()),
-      rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")), Vol_(particles_->Vol_), vel_(particles_->vel_),
+      fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())),
+      rho_farfield_(0.0), sound_speed_(0.0), vel_farfield_(Vecd::Zero()),
+      rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
+      Vol_(particles_->Vol_), vel_(particles_->vel_),
       mom_(*particles_->getVariableByName<Vecd>("Momentum")), pos_(particles_->pos_),
       indicator_(*particles_->getVariableByName<int>("Indicator"))
 {
@@ -40,21 +42,21 @@ NonReflectiveBoundaryVariableCorrection::NonReflectiveBoundaryVariableCorrection
     particles_->registerVariable(surface_inner_particle_indicator_, "SurfaceInnerParticleIndicator");
 };
 //=================================================================================================//
-void NonReflectiveBoundaryVariableCorrection::initialization(size_t index_i, Real dt)
+void NonReflectiveBoundaryCorrection::initialization(size_t index_i, Real dt)
 {
     if (indicator_[index_i] == 1)
     {
         const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
         {
-            // if particle j could be searched by indicator 1, this partical j also is seemed as boundary condition particle
+            // if particle j could be searched by indicator 1, this particle j also is seemed as boundary condition particle
             size_t index_j = inner_neighborhood.j_[n];
             surface_inner_particle_indicator_[index_j] = 1;
         }
     };
 }
 //=================================================================================================//
-void NonReflectiveBoundaryVariableCorrection::interaction(size_t index_i, Real dt)
+void NonReflectiveBoundaryCorrection::interaction(size_t index_i, Real dt)
 {
     Shape &body_shape = *sph_body_.body_shape_;
     if (indicator_[index_i] == 1 || surface_inner_particle_indicator_[index_i] == 1)
@@ -143,7 +145,7 @@ void NonReflectiveBoundaryVariableCorrection::interaction(size_t index_i, Real d
     }
 }
 //=================================================================================================//
-void NonReflectiveBoundaryVariableCorrection::update(size_t index_i, Real dt)
+void NonReflectiveBoundaryCorrection::update(size_t index_i, Real dt)
 {
     Shape &body_shape = *sph_body_.body_shape_;
     if (indicator_[index_i] == 1 || surface_inner_particle_indicator_[index_i] == 1)
@@ -195,7 +197,7 @@ void NonReflectiveBoundaryVariableCorrection::update(size_t index_i, Real dt)
             }
         }
     }
-    //=================================================================================================//
 }
+//=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH
