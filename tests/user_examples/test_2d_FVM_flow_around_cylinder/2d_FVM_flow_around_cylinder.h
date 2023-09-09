@@ -60,26 +60,6 @@ class WaterBlock : public ComplexShape
 };
 
 //----------------------------------------------------------------------
-//	Case-dependent initial condition.
-//----------------------------------------------------------------------
-class WeaklyCompressibleFluidInitialCondition
-    : public fluid_dynamics::FluidInitialCondition
-{
-  public:
-    explicit WeaklyCompressibleFluidInitialCondition(SPHBody &sph_body)
-        : FluidInitialCondition(sph_body), rho_(particles_->rho_),
-          p_(*particles_->getVariableByName<Real>("Pressure")),
-          mom_(*particles_->getVariableByName<Vecd>("Momentum")),
-          dmom_dt_(*particles_->getVariableByName<Vecd>("MomentumChangeRate")){};
-
-    void update(size_t index_i, Real dt){};
-
-  protected:
-    StdLargeVec<Real> &rho_, &p_;
-    StdLargeVec<Vecd> &mom_, &dmom_dt_;
-};
-
-//----------------------------------------------------------------------
 //	DMFBoundaryConditionSetup
 //----------------------------------------------------------------------
 class FACBoundaryConditionSetup : public fluid_dynamics::FluidDataInner

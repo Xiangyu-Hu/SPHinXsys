@@ -43,7 +43,6 @@ int main(int ac, char *av[])
     the value is larger, the numerical dissipation larger*/
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfAcousticRiemann> pressure_relaxation(water_block_inner, 200.0);
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfAcousticRiemann> density_relaxation(water_block_inner, 200.0);
-    SimpleDynamics<WeaklyCompressibleFluidInitialCondition> initial_condition(water_block);
     /** Boundary conditions set up */
     FACBoundaryConditionSetup boundary_condition_setup(water_block_inner, ghost_creation.each_boundary_type_with_all_ghosts_index_,
                                                        ghost_creation.each_boundary_type_with_all_ghosts_eij_, ghost_creation.each_boundary_type_contact_real_index_);
@@ -67,10 +66,6 @@ int main(int ac, char *av[])
     ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>
         write_total_force_on_inserted_body(io_environment, fluid_force_on_solid_update, "TotalPressureForceOnSolid");
     ReducedQuantityRecording<ReduceDynamics<MaximumSpeed>> write_maximum_speed(io_environment, water_block);
-    //----------------------------------------------------------------------
-    //	Prepare the simulation with case specified initial condition if necessary.
-    //----------------------------------------------------------------------
-    initial_condition.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------

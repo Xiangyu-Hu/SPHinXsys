@@ -59,24 +59,6 @@ class Cylinder : public MultiPolygonShape
         multi_polygon_.addACircle(cylinder_center, cylinder_radius, 100, ShapeBooleanOps::add);
     }
 };
-//----------------------------------------------------------------------
-//	Case-dependent initial condition.
-//----------------------------------------------------------------------
-class WeaklyCompressibleFluidInitialCondition : public fluid_dynamics::FluidInitialCondition
-{
-  public:
-    explicit WeaklyCompressibleFluidInitialCondition(SPHBody &sph_body)
-        : FluidInitialCondition(sph_body), rho_(particles_->rho_),
-          p_(*particles_->getVariableByName<Real>("Pressure")),
-          mom_(*particles_->getVariableByName<Vecd>("Momentum")),
-          dmom_dt_(*particles_->getVariableByName<Vecd>("MomentumChangeRate")){};
-
-    void update(size_t index_i, Real dt){};
-
-  protected:
-    StdLargeVec<Real> &rho_, &p_;
-    StdLargeVec<Vecd> &mom_, &dmom_dt_;
-};
 
 class FarFieldBoundary : public fluid_dynamics::NonReflectiveBoundaryVariableCorrection
 {
@@ -183,7 +165,6 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfAcousticRiemannWithWall> pressure_relaxation(water_block_complex);
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfAcousticRiemannWithWall> density_relaxation(water_block_complex);
-    SimpleDynamics<WeaklyCompressibleFluidInitialCondition> initial_condition(water_block);
     InteractionWithUpdate<KernelCorrectionMatrixComplex> kernel_correction_matrix(water_block_complex);
     InteractionDynamics<KernelGradientCorrectionComplex> kernel_gradient_update(kernel_correction_matrix);
     SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);

@@ -55,6 +55,24 @@ class EulerianAcousticRiemannSolver
 };
 
 /**
+ * @class WeaklyCompressibleFluidInitialCondition
+ * @brief  Set initial condition for a Eulerian weakly compressible fluid body.
+ * This is a abstract class to be override for case specific initial conditions
+ */
+class WeaklyCompressibleFluidInitialCondition : public FluidInitialCondition
+{
+  public:
+    explicit WeaklyCompressibleFluidInitialCondition(SPHBody &sph_body)
+        : FluidInitialCondition(sph_body), rho_(particles_->rho_),
+          p_(*particles_->getVariableByName<Real>("Pressure")),
+          mom_(*particles_->getVariableByName<Vecd>("Momentum")){};
+
+  protected:
+    StdLargeVec<Real> &rho_, &p_;
+    StdLargeVec<Vecd> &mom_;
+};
+
+/**
  * @class EulerianIntegration1stHalf
  * @brief Template class for pressure relaxation scheme with the Riemann solver
  * as template variable
