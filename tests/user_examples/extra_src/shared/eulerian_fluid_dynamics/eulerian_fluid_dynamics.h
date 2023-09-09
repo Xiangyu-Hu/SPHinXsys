@@ -21,12 +21,12 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	common_weakly_compressible_eulerian_classes.h
+ * @file 	eulerian_fluid_dynamics.h
  * @brief 	Here, we define the common weakly compressible eulerian classes for fluid dynamics.
  * @author	Zhentong Wang and Xiangyu Hu
  */
-#ifndef COMMON_WEAKLY_COMPRESSIBLE_EULERIAN_CLASSES_H
-#define COMMON_WEAKLY_COMPRESSIBLE_EULERIAN_CLASSES_H
+#ifndef EULERIAN_FLUID_DYNAMICS_H
+#define EULERIAN_FLUID_DYNAMICS_H
 
 #include "compressible_fluid.h"
 #include "fluid_body.h"
@@ -160,4 +160,4 @@ class NonReflectiveBoundaryVariableCorrection : public LocalDynamics, public Dat
 };
 } // namespace fluid_dynamics
 } // namespace SPH
-#endif // COMMON_WEAKLY_COMPRESSIBLE_EULERIAN_CLASSES_H
+#endif // EULERIAN_FLUID_DYNAMICS_H

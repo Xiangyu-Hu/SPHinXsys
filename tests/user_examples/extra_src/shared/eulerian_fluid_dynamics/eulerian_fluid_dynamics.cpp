@@ -1,4 +1,4 @@
-#include "common_weakly_compressible_eulerian_classes.h"
+#include "eulerian_fluid_dynamics.h"
 
 namespace SPH
 {

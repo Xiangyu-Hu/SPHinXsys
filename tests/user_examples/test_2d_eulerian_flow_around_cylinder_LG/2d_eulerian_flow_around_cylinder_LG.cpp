@@ -4,7 +4,7 @@
  * @details We consider a Eulerian flow passing by a cylinder in 2D.
  * @author 	Zhentong Wang and Xiangyu Hu
  */
-#include "common_weakly_compressible_eulerian_classes.hpp" // eulerian classes for weakly compressible fluid only.
+#include "eulerian_fluid_dynamics.hpp" // eulerian classes for weakly compressible fluid only.
 #include "sphinxsys.h"
 using namespace SPH;
 //----------------------------------------------------------------------
