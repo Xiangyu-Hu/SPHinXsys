@@ -103,12 +103,12 @@ struct CompressibleFluidStarState : FluidStarState
  * @struct NoRiemannSolverInCompressibleEulerianMethod
  * @brief  NO RiemannSolver for weakly-compressible flow in Eulerian method for compressible flow.
  */
-class NoRiemannSolverInCompressobleEulerianMethod
+class NoRiemannSolverInCompressibleEulerianMethod
 {
     CompressibleFluid &compressible_fluid_i_, &compressible_fluid_j_;
 
   public:
-    NoRiemannSolverInCompressobleEulerianMethod(CompressibleFluid &fluid_i, CompressibleFluid &fluid_j);
+    NoRiemannSolverInCompressibleEulerianMethod(CompressibleFluid &fluid_i, CompressibleFluid &fluid_j);
     CompressibleFluidStarState getInterfaceState(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &e_ij);
 };
 
@@ -186,7 +186,7 @@ class BaseIntegration1stHalf : public BaseIntegrationInCompressible
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 };
-using Integration1stHalf = BaseIntegration1stHalf<NoRiemannSolverInCompressobleEulerianMethod>;
+using Integration1stHalf = BaseIntegration1stHalf<NoRiemannSolverInCompressibleEulerianMethod>;
 using Integration1stHalfHLLCRiemann = BaseIntegration1stHalf<HLLCRiemannSolver>;
 using Integration1stHalfHLLCWithLimiterRiemann = BaseIntegration1stHalf<HLLCWithLimiterRiemannSolver>;
 
@@ -204,9 +204,24 @@ class BaseIntegration2ndHalf : public BaseIntegrationInCompressible
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 };
-using Integration2ndHalf = BaseIntegration2ndHalf<NoRiemannSolverInCompressobleEulerianMethod>;
+using Integration2ndHalf = BaseIntegration2ndHalf<NoRiemannSolverInCompressibleEulerianMethod>;
 using Integration2ndHalfHLLCRiemann = BaseIntegration2ndHalf<HLLCRiemannSolver>;
 using Integration2ndHalfHLLCWithLimiterRiemann = BaseIntegration2ndHalf<HLLCWithLimiterRiemannSolver>;
+
+/*==================================================================================================================*/
+/**
+ * @class ConservativeNoRiemannSolverInCompressibleEulerianMethod
+ * @brief Conservative no riemann solver for weakly-compressible flow in Eulerian method for compressible flow.
+ */
+class ConservativeNoRiemannSolverInCompressibleEulerianMethod
+{
+    CompressibleFluid& compressible_fluid_i_, & compressible_fluid_j_;
+
+public:
+    ConservativeNoRiemannSolverInCompressibleEulerianMethod(CompressibleFluid& fluid_i, CompressibleFluid& fluid_j);
+    CompressibleFluidStarState getInterfaceState(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j,
+                                                 const Matd& B_i, const Matd& B_j, const Vecd& e_ij);
+};
 
 } // namespace SPH
 #endif // COMMON_COMPRESSIBLE_EULERIAN_CLASSES_H

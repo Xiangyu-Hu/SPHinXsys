@@ -1,11 +1,11 @@
 /**
  * @file 	relaxation_evolution_periodical.cpp
- * @brief   This is the first case with periodical boundary condition
+ * @brief   This is the test case with periodical boundary condition 
  *          by testing the relaxation and consistency.
  * @author  Bo Zhang, Xiangyu Hu.
  */
 
- #include "sphinxsys.h"
+#include "sphinxsys.h"
 using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
@@ -41,7 +41,7 @@ public:
 	void update(size_t index_i, Real dt)
 	{
 		/* initial pressure distribution. */
-		p_[index_i] = (sin(pos_[index_i][0] * 2 * Pi) + sin(pos_[index_i][1] * 2 * Pi));
+		//p_[index_i] = (sin(pos_[index_i][0] * 2 * Pi) + sin(pos_[index_i][1] * 2 * Pi));
 		//p_[index_i] = 1;
 	}
 
@@ -208,7 +208,7 @@ int main(int ac, char* av[])
 	/** initialize cell linked lists for all bodies. */
 	sph_system.initializeSystemCellLinkedLists();
 	/** periodic condition applied after the mesh cell linked list build 
-	 * up but before the configuration build up. */ 
+	    up but before the configuration build up. */ 
 	periodic_condition_x.update_cell_linked_list_.exec();
 	periodic_condition_y.update_cell_linked_list_.exec();
 	/** initialize configurations for all bodies. */
