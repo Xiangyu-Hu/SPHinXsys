@@ -4,13 +4,14 @@
  * @author 	Bo Zhang and Xiangyu Hu
  */
 #include "sphinxsys.h"
+#include <gtest/gtest.h>
 using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
 Real L = 1.0;
 Real H = 1.0;
-Real resolution_ref = H / 100.0;
+Real resolution_ref = H / 50.0;
 Real BW = resolution_ref * 4.0;
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
 //----------------------------------------------------------------------
@@ -107,7 +108,7 @@ public:
 
 	void update(size_t index_i, Real dt)
 	{
-		all_species_[phi_][index_i] = 650 + 50 * (double)rand() / RAND_MAX;
+		all_species_[phi_][index_i] = 600;
 		heat_source_[index_i] = heat_source;
 	};
 };
@@ -184,7 +185,7 @@ public:
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main()
+TEST(test_optimization, test_problem1_optimized)
 {
 	/* Here is the initialization of the random generator. */
 	srand((double)clock());
@@ -217,33 +218,19 @@ int main()
 	int ite_T = 0;                 /* define loop index for temperature splitting iteration. */
 	int ite_k = 0;                 /* define loop index for parameter splitting iteration. */
 	int ite_rg = 0;                /* define loop index for parameter regularization. */
-
 	int ite_T_total = 1;           /* define the total iteration for temperature splitting. */
 	int ite_k_total = 1;           /* define the total iteration for parameter splitting. */
-	//int ite_rg_total = 1;          /* define the total iteration for parameter regularization. */
 	int ite_loop = 0;              /* define loop index for optimization cycle. */
-
 	int ite_T_comparison_opt = 0;  /* define the real step for splitting temperature by sloving PDE. */
 	int ite_output = 50;           /* define the interval for state output. */
 	int ite_restart = 50;          /* define the interval for restart output. */
+	int dt_ratio_k = 1;            /* ratio for adjusting the time step for parameter evolution. */
+	int dt_ratio_rg = 1;           /* ratio for adjusting the time step for regularization. */
+	Real dt = 0.0;                 /* define the time step size. */
 
-	int dt_ratio_k = 1;            /* ratio for adjusting the time step. */
-	int dt_ratio_rg = 1;
-
-	Real dt = 0.0;                 /* time step size. */
-
-	/* Averaged parameter of the last cycle. */
-	//Real averaged_residual_T_last_local(10.0);
 	Real averaged_residual_T_last_global(10.0);
-	//Real averaged_residual_k_last_local(10.0);
-	//Real averaged_residual_k_last_global(10.0);
-	//Real averaged_variation_last_local(10.0);
 	Real averaged_variation_last_global(10.0);
 	Real maximum_residual_T_last_global(10.0);
-	//Real maximum_residual_k_last_global(10.0);
-	//Real maximum_variation_last_global(10.0);
-
-	/* Averaged parameter of the current cycle. */
 	Real averaged_residual_T_current_local(0.0);
 	Real averaged_residual_T_current_global(0.0);
 	Real averaged_residual_k_current_local(0.0);
@@ -253,30 +240,19 @@ int main()
 	Real maximum_residual_T_current_global(10.0);
 	Real maximum_residual_k_current_global(10.0);
 	Real maximum_variation_current_global(10.0);
-
-	/* Initial parameter for limitation. */
-	//Real initial_averaged_residual_T = 0.0;
-	//Real initial_averaged_variation = 0.0;
 	Real opt_averaged_temperature = 0.0;
 	Real nonopt_averaged_temperature = Infinity;
 	Real averaged_k_parameter = 0.0;
-	Real initial_eta_regularization = 2.0;
+	Real initial_eta_regularization = 0.8;
 	Real current_eta_regularization = initial_eta_regularization;
-
-	/* Parameters related to objective observed. */
 	Real relative_temperature_difference = 2.0;
 	Real last_averaged_temperature = 0.0;
 	Real current_averaged_temperature = 0.0;
-
-	/* Parameters related to parameter convergence. */
 	Real relative_average_variation_difference = 1.0;
-	//Real relative_maximum_variation_difference = 1.0;
-	//Real last_averaged_variation = 0.0;
-	//Real current_averaged_variation = 0.0;
 
 	/* Gradient descent parameter for objective function.*/
 	Real decay_step_alpha = 1; /* The decay step for learning rate. */
-	Real initial_learning_rate = 0.002;
+	Real initial_learning_rate = 0.0005;
 	Real decay_rate_alpha = 0.999;
 	Real learning_rate_alpha = initial_learning_rate * pow(decay_rate_alpha, (ite_loop / decay_step_alpha));
 	//----------------------------  ------------------------------------------
@@ -341,7 +317,7 @@ int main()
 	sph_system.initializeSystemConfigurations();
 	setup_diffusion_initial_condition.exec();
 	setup_diffusion_boundary_condition.exec();
-	thermal_diffusivity_random_initialization.exec();
+	//thermal_diffusivity_random_initialization.exec();
 	//----------------------------------------------------------------------
 	//	Load restart file if necessary.
 	//----------------------------------------------------------------------
@@ -381,12 +357,11 @@ int main()
 	//	Initial States update.
 	//----------------------------------------------------------------------
 	dt = get_time_step_size.exec();
-	write_states.writeToFile(ite); //output the initial states.
+	std::cout << dt << std::endl;
 
 	update_regularization_global_variation.exec(dt_ratio_rg * dt);
 	averaged_variation_current_global = calculate_regularization_global_variation.exec();
 	maximum_variation_current_global = calculate_maximum_variation.exec();
-	//maximum_variation_last_global = maximum_variation_current_global;
 
 	update_temperature_pde_residual.exec(dt);
 	averaged_residual_T_current_global = calculate_temperature_global_residual.exec();
@@ -411,7 +386,7 @@ int main()
 		averaged_variation_current_local << "   " << averaged_variation_current_global << "\n";
 
 	/** the converged criterion contains three parts respect to target function, PDE constrain, and maximum step. */
-	while ((relative_temperature_difference > 0.00001 || averaged_residual_T_current_global > 0.000005 ||
+	while ((relative_temperature_difference > 0.00001 || averaged_residual_T_current_global > 0.00002 ||
 		relative_average_variation_difference > 0.0001) && ite_loop < 10000)
 	{
 		std::cout << "This is the beginning of the " << ite_loop << " iteration loop." << std::endl;
@@ -490,9 +465,8 @@ int main()
 		//----------------------------------------------------------------------
 		out_file_all_information << "This is the step of temperature splitting." << "\n";
 		std::cout << "averaged_residual_T_last_global is " << averaged_residual_T_last_global << std::endl;
-		while (((averaged_residual_T_current_global > averaged_residual_T_last_global ||
-			maximum_residual_T_current_global > maximum_residual_T_last_global) &&
-			averaged_residual_T_current_global > 0.000005) || ite_T < ite_T_total)
+		while (((averaged_residual_T_current_global > 0.8 * averaged_residual_T_last_global) &&
+			averaged_residual_T_current_global > 0.00002) || ite_T < ite_T_total)
 		{
 			ite++; ite_T++; ite_T_comparison_opt++;
 			temperature_splitting_pde_complex.exec(dt);
@@ -513,11 +487,11 @@ int main()
 		if ((nonopt_averaged_temperature > opt_averaged_temperature)
 			&& (learning_rate_alpha < initial_learning_rate))
 		{
-			learning_rate_alpha = 1.01 * learning_rate_alpha;
-			current_eta_regularization = 1.01 * current_eta_regularization;
-			std::cout << "The learning rate is fixed!" << std::endl;
+			//learning_rate_alpha = 1.01 * learning_rate_alpha;
+			//current_eta_regularization = 1.01 * current_eta_regularization;
+			//std::cout << "The learning rate is fixed!" << std::endl;
 		}
-		else if (nonopt_averaged_temperature < opt_averaged_temperature)
+		else if (nonopt_averaged_temperature < 510)
 		{
 			learning_rate_alpha = 0.8 * learning_rate_alpha;
 			current_eta_regularization = 0.8 * current_eta_regularization;
@@ -565,5 +539,12 @@ int main()
 	TickCount::interval_t tt;
 	tt = t2 - t1;
 	std::cout << "Total time for optimization: " << tt.seconds() << " seconds." << std::endl;
-	return 0;
+
+	EXPECT_GT(500, calculate_averaged_opt_temperature.exec());
 };
+
+int main(int argc, char* argv[])
+{
+	testing::InitGoogleTest(&argc, argv);
+	return RUN_ALL_TESTS();
+}

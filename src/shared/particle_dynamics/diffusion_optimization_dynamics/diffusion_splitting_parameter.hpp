@@ -50,7 +50,7 @@ namespace SPH
 		VariableType parameter_k = error_and_parameters.error_ / (parameter_l + TinyReal);
 		this->parameter_recovery_[index_i] = this->variable_[index_i];
 		this->variable_[index_i] += parameter_k * error_and_parameters.a_;
-		if (this->variable_[index_i] < 0.01) { this->variable_[index_i] = 0.01; } //set lower bound
+		if (this->variable_[index_i] < 0.1) { this->variable_[index_i] = 0.1; } //set lower bound
 
 		Neighborhood& inner_neighborhood = this->inner_configuration_[index_i];
 		for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -64,7 +64,7 @@ namespace SPH
 
 			this->parameter_recovery_[index_j] = this->variable_[index_j];
 			this->variable_[index_j] += parameter_k * parameter_b;
-			if (this->variable_[index_j] < 0.01) { this->variable_[index_j] = 0.01; } //set lower bound
+			if (this->variable_[index_j] < 0.1) { this->variable_[index_j] = 0.1; } //set lower bound
 		}	
 	}
 	//=================================================================================================//

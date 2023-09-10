@@ -4,6 +4,7 @@
  * @author 	Bo Zhang and Xiangyu Hu
  */
 #include "sphinxsys.h" 
+#include <gtest/gtest.h>
 using namespace SPH;
 
 //----------------------------------------------------------------------
@@ -11,7 +12,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real L = 1.0; 	
 Real H = 1.0;
-Real resolution_ref = H / 100.0;
+Real resolution_ref = H / 50.0;
 Real BW = resolution_ref * 4.0;
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW)); 
 //----------------------------------------------------------------------
@@ -118,7 +119,8 @@ public:
 
 	void update(size_t index_i, Real dt)
 	{
-		all_species_[phi_][index_i] = 550 + 50 * (double)rand() / RAND_MAX;
+		//all_species_[phi_][index_i] = 550 + 50 * (double)rand() / RAND_MAX;
+		all_species_[phi_][index_i] = 550;
 	};
 };
 
@@ -200,7 +202,7 @@ public:
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main()
+TEST(test_optimization, test_problem4_optimized)
 {
 	/* Here is the initialization of the random generator. */
 	srand((double)clock());
@@ -237,34 +239,19 @@ int main()
 	int ite_T = 0;                 /* define loop index for temperature splitting iteration. */
 	int ite_k = 0;                 /* define loop index for parameter splitting iteration. */
 	int ite_rg = 0;                /* define loop index for parameter regularization. */
-
 	int ite_T_total = 1;           /* define the total iteration for temperature splitting. */
 	int ite_k_total = 1;           /* define the total iteration for parameter splitting. */
-	//int ite_rg_total = 1;          /* define the total iteration for parameter regularization. */
 	int ite_loop = 0;              /* define loop index for optimization cycle. */
-
 	int ite_T_comparison_opt = 0;  /* define the real step for splitting temperature by sloving PDE. */
 	int ite_output = 50;           /* define the interval for state output. */
 	int ite_restart = 50;          /* define the interval for restart output. */
-
-	int dt_ratio_k = 1;            /* ratio for adjusting the time step. */
-	int dt_ratio_rg = 1;
-	int dt_ratio_t = 1;
-
+	int dt_ratio_k = 1;            /* ratio for adjusting the time step for the parameter evolution. */
+	int dt_ratio_rg = 1;           /* ratio for adjusting the time step for the regularization.*/
+	int dt_ratio_t = 1;            /* ratio for adjusting the time step for the state advancing.*/
 	Real dt = 0.0;                 /* time step size. */
 
-	/* Averaged parameter of the last cycle. */
-	//Real averaged_residual_T_last_local(10.0);
 	Real averaged_residual_T_last_global(10.0);
-	//Real averaged_residual_k_last_local(10.0);
-	//Real averaged_residual_k_last_global(10.0);
-	//Real averaged_variation_last_local(10.0);
 	Real averaged_variation_last_global(10.0);
-	//Real maximum_residual_T_last_global(10.0);
-	//Real maximum_residual_k_last_global(10.0);
-	//Real maximum_variation_last_global(10.0);
-
-	/* Averaged parameter of the current cycle. */
 	Real averaged_residual_T_current_local(0.0);
 	Real averaged_residual_T_current_global(0.0);
 	Real averaged_residual_k_current_local(0.0);
@@ -274,27 +261,16 @@ int main()
 	Real maximum_residual_T_current_global(10.0);
 	Real maximum_residual_k_current_global(10.0);
 	Real maximum_variation_current_global(10.0);
-
-	/* Initial parameter for limitation. */
-	//Real initial_averaged_residual_T = 0.0;
-	//Real initial_averaged_variation = 0.0;
 	Real opt_averaged_temperature = 0.0;
 	Real nonopt_averaged_temperature = Infinity;
 	Real boundary_averaged_temperature = 0.0;
 	Real averaged_k_parameter = 0.0;
 	Real initial_eta_regularization = 2;
 	Real current_eta_regularization = initial_eta_regularization;
-
-	/* Parameters related to objective observed. */
 	Real relative_temperature_difference = 1.0;
 	Real last_averaged_temperature = 0.0;
 	Real current_averaged_temperature = 0.0;
-
-	/* Parameters related to parameter convergence. */
 	Real relative_average_variation_difference = 1.0;
-	//Real relative_maximum_variation_difference = 1.0;
-	//Real last_averaged_variation = 0.0;
-	//Real current_averaged_variation = 0.0;
 
 	/* Gradient descent parameter for objective function.*/
 	Real decay_step_alpha = 1; /* The decay step for learning rate. */
@@ -416,13 +392,11 @@ int main()
 	update_regularization_global_variation.exec(dt_ratio_rg * dt);
 	averaged_variation_current_global = calculate_regularization_global_variation.exec();
 	maximum_variation_current_global = calculate_maximum_variation.exec();
-	//maximum_variation_last_global = maximum_variation_current_global;
 
 	update_temperature_pde_residual.exec(dt_ratio_t * dt);
 	averaged_residual_T_current_global = calculate_temperature_global_residual.exec();
 	averaged_residual_T_last_global = averaged_residual_T_current_global;
 	maximum_residual_T_current_global = calculate_maximum_residual.exec();
-	//maximum_residual_T_last_global = maximum_residual_T_current_global;
 
 	current_averaged_temperature = calculate_averaged_opt_temperature.exec();
 	out_file_nonopt_temperature << std::fixed << std::setprecision(12) << ite 
@@ -430,7 +404,8 @@ int main()
 	out_file_opt_temperature << std::fixed << std::setprecision(12) << ite_T_comparison_opt 
 		<< "   " << current_averaged_temperature << "\n";
 	boundary_averaged_temperature = calculate_boundary_averaged_temperature.exec();
-	out_file_nonopt_boundary_temperature << std::fixed << std::setprecision(12) << ite_T_comparison_opt << "   " << boundary_averaged_temperature << "\n";
+	out_file_nonopt_boundary_temperature << std::fixed << std::setprecision(12) << 
+		ite_T_comparison_opt << "   " << boundary_averaged_temperature << "\n";
 
 	out_file_residual_plot << std::fixed << std::setprecision(12) << ite << "   " <<
 		averaged_residual_T_current_global << "   " << maximum_residual_T_current_global << "   " <<
@@ -443,7 +418,7 @@ int main()
 		averaged_variation_current_local << "   " << averaged_variation_current_global << "\n";
 	
 	/** the converged criterion contains 3 parts respect to target function, PDE constrain, and maximum step.*/
-	while ((relative_temperature_difference > 0.00001 || averaged_residual_T_current_global > 0.000005 ||
+	while ((relative_temperature_difference > 0.00001 || averaged_residual_T_current_global > 0.00002 ||
 		relative_average_variation_difference > 0.00001) && ite_loop < 5000)
 	{
 		std::cout << "This is the beginning of the " << ite_loop << " iteration loop." << std::endl;
@@ -522,8 +497,8 @@ int main()
 		//----------------------------------------------------------------------
 		out_file_all_information << "This is the step of temperature splitting." << "\n";
 		std::cout << "averaged_residual_T_last_global is " << averaged_residual_T_last_global << std::endl;
-		while (((averaged_residual_T_current_global > 0.9 * averaged_residual_T_last_global) &&
-			averaged_residual_T_current_global > 0.000005) || ite_T < ite_T_total)
+		while (((averaged_residual_T_current_global > 0.95 * averaged_residual_T_last_global) &&
+			averaged_residual_T_current_global > 0.00002) || ite_T < ite_T_total)
 		{
 			ite++; ite_T++; ite_T_comparison_opt++;
 			temperature_splitting_pde_complex.exec(dt_ratio_t * dt);
@@ -547,11 +522,11 @@ int main()
 		if ((nonopt_averaged_temperature > opt_averaged_temperature) 
 			&& (learning_rate_alpha < initial_learning_rate))
 		{
-			learning_rate_alpha = 1.001 * learning_rate_alpha;
-			current_eta_regularization = 1.05 * current_eta_regularization;
-			std::cout << "The learning rate is fixed!" << std::endl;
+			//learning_rate_alpha = 1.001 * learning_rate_alpha;
+			//current_eta_regularization = 1.05 * current_eta_regularization;
+			//std::cout << "The learning rate is fixed!" << std::endl;
 		}
-		else if (opt_averaged_temperature < 430)
+		else if (opt_averaged_temperature < 410)
 		{
 			learning_rate_alpha = 0.75 * learning_rate_alpha;
 			current_eta_regularization = 0.75 * current_eta_regularization;
@@ -560,7 +535,6 @@ int main()
 
 		nonopt_averaged_temperature = opt_averaged_temperature;
 		averaged_residual_T_last_global = averaged_residual_T_current_global;
-		//maximum_residual_T_last_global = maximum_residual_T_current_global;
 
 		std::cout << "averaged_residual_T_current_global is " << averaged_residual_T_current_global << std::endl;
 		out_file_ite_T << std::fixed << std::setprecision(12) << ite_loop << "   " << ite_T << "\n";
@@ -598,6 +572,14 @@ int main()
 	TickCount t2 = TickCount::now();
 	TickCount::interval_t tt;
 	tt = t2 - t1;
-	std::cout << "Total time for optimization: " << tt.seconds() << " seconds." << std::endl;
-	return 0;
+	std::cout << "Total time for optimization: " << tt.seconds() << " seconds." << std::endl;\
+
+	EXPECT_GT(410, calculate_averaged_opt_temperature.exec());
+	EXPECT_GT(510, calculate_boundary_averaged_temperature.exec());
 };
+
+int main(int argc, char* argv[])
+{
+	testing::InitGoogleTest(&argc, argv);
+	return RUN_ALL_TESTS();
+}

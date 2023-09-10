@@ -8,7 +8,6 @@ void LocalIsotropicDiffusion::initializeLocalParameters(BaseParticles* base_part
 {
     base_particles->registerVariable(local_thermal_conductivity_, "ThermalConductivity", [&](size_t i) -> Real {return diff_cf_; });
     base_particles->addVariableToWrite<Real>("ThermalConductivity");
-    base_particles->addVariableToRestart<Real>("ThermalConductivity");
 }
 //=================================================================================================//
 void DirectionalDiffusion::initializeDirectionalDiffusivity(Real diff_cf, Real bias_diff_cf, Vecd bias_direction)

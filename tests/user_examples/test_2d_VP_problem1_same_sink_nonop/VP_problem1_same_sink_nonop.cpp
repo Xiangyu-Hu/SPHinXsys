@@ -4,13 +4,14 @@
  * @author 	Bo Zhang and Xiangyu Hu
  */
 #include "sphinxsys.h" //SPHinXsys Library
+#include <gtest/gtest.h>
 using namespace SPH; //Namespace cite here
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
 Real L = 1.0;
 Real H = 1.0;
-Real resolution_ref = H / 100.0;
+Real resolution_ref = H / 50.0;
 Real BW = resolution_ref * 4.0;
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
 //----------------------------------------------------------------------
@@ -163,13 +164,12 @@ public:
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main(int ac, char* av[])
+TEST(test_optimization, test_problem1_non_optimized)
 {
 	//----------------------------------------------------------------------
 	//	Build up the environment of a SPHSystem.
 	//----------------------------------------------------------------------
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
-	sph_system.handleCommandlineOptions(ac, av);
 	IOEnvironment io_environment(sph_system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
@@ -273,5 +273,12 @@ int main(int ac, char* av[])
 	tt = t4 - t1;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 	std::cout << "Total physical time for computation: " << GlobalStaticVariables::physical_time_ << " seconds." << std::endl;
-	return 0;
+
+	EXPECT_NEAR(619.124, calculate_averaged_temperature.exec(), 0.01);
+}
+
+int main(int argc, char* argv[])
+{
+	testing::InitGoogleTest(&argc, argv);
+	return RUN_ALL_TESTS();
 }
