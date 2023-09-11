@@ -284,7 +284,7 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp write_beam_states(io_environment, system.real_bodies_);
     ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>
 		write_total_mechanical_energy(io_environment, beam_body);
-    RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
+    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_beam_tip_displacement("Position", io_environment, beam_observer_contact);
     
 	//----------------------------------------------------------------------
@@ -380,7 +380,7 @@ int main(int ac, char *av[])
 	
     if (system.GenerateRegressionData())
     {
-        write_beam_tip_displacement.generateDataBase(Vec2d(1.0e-2, 1.0e-2), Vec2d(1.0e-2, 1.0e-2));
+        write_beam_tip_displacement.generateDataBase(1.0e-3);
    	}
     else
     {
