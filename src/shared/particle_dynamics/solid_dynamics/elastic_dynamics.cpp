@@ -79,8 +79,8 @@ void Integration1stHalfPK2::initialization(size_t index_i, Real dt)
     F_[index_i] += dF_dt_[index_i] * dt * 0.5;
     rho_[index_i] = rho0_ / F_[index_i].determinant();
     // obtain the first Piola-Kirchhoff stress from the second Piola-Kirchhoff stress
-    // it seems using reproducing correction here increases convergence rate near the free surface
-    stress_PK1_B_[index_i] = elastic_solid_.StressPK1(F_[index_i], index_i) * B_[index_i];
+    // it seems using reproducing correction here increases convergence rate near the free surface, note that the correction matrix is in a form of transpose
+    stress_PK1_B_[index_i] = elastic_solid_.StressPK1(F_[index_i], index_i) * B_[index_i].transpose();
 }
 //=================================================================================================//
 Integration1stHalfKirchhoff::

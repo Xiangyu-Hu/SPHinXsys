@@ -26,7 +26,7 @@
  *			implemented in derived classes. The kernel function define the relevance
  * 			between two neighboring particles. Basically, the further the two
  *			particles, the less relevance they have.
- * @author	 Zhentong Wang and Xiaojing Tang
+ * @author	  Xiaojing Tang and Zhentong Wang
  * @version	0.1
  * @version  0.3.0
  */
@@ -34,12 +34,10 @@
 #ifndef ANISOTROPIC_KERNEL_H
 #define ANISOTROPIC_KERNEL_H
 
-#include "base_kernel_includes_nonisotropic.h"
-#include "kernel_wenland_c2_anisotropic.h"
+#include "base_kernel.h"
 
 namespace SPH
 {
-
 /**
  * @class AnisotropicKernel
  * @brief Abstract base class of a general anisotropic  SPH kernel function which
@@ -90,9 +88,11 @@ class AnisotropicKernel : public KernelType
         this->factor_d2W_3D_ = this->factor_W_3D_;
     };
 
+    /** Calculates the transform tensor form anisotropic space to isotropic space **/
     Mat2d getCoordinateTransformationTensorG(Vec2d kernel_vector, Vec2d transform_vector);
     Mat3d getCoordinateTransformationTensorG(Vec3d kernel_vector, Vec3d transform_vector);
 
+   /** Calculates the unit vector between a pair of particles **/
     virtual Vec2d e(const Real &distance, const Vec2d &displacement) const override;
     virtual Vec3d e(const Real &distance, const Vec3d &displacement) const override;
 

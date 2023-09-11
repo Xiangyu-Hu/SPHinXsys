@@ -73,7 +73,7 @@ int main(int ac, char *av[])
     BoundingBox system_domain_bounds(Vecd(-BW, -BW, -BW), Vecd(DL + BW, DH + BW, DW + BW));
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     sph_system.setRunParticleRelaxation(false);
-    sph_system.setReloadParticles(true);
+    sph_system.setReloadParticles(false);
     sph_system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
@@ -98,6 +98,9 @@ int main(int ac, char *av[])
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
     //----------------------------------------------------------------------
     ComplexRelation soil_block_complex(soil_block, {&wall_boundary});
     BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
@@ -283,7 +286,6 @@ int main(int ac, char *av[])
     {
         write_soil_mechanical_energy.testResult();
     }
-
 
     return 0;
 }
