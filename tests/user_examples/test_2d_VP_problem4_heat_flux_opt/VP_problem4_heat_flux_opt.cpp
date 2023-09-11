@@ -1,5 +1,5 @@
 /**
- * @file 	diffusion_heat_flux_optimization.cpp
+ * @file 	VP_test4_heat_flux_optimized.cpp
  * @brief 	This is the second test to validate the optimization.
  * @author 	Bo Zhang and Xiangyu Hu
  */
@@ -522,9 +522,9 @@ TEST(test_optimization, test_problem4_optimized)
 		if ((nonopt_averaged_temperature > opt_averaged_temperature) 
 			&& (learning_rate_alpha < initial_learning_rate))
 		{
-			//learning_rate_alpha = 1.001 * learning_rate_alpha;
-			//current_eta_regularization = 1.05 * current_eta_regularization;
-			//std::cout << "The learning rate is fixed!" << std::endl;
+			learning_rate_alpha = learning_rate_alpha;
+			current_eta_regularization = current_eta_regularization;
+			std::cout << "The learning rate is fixed!" << std::endl;
 		}
 		else if (opt_averaged_temperature < 410)
 		{

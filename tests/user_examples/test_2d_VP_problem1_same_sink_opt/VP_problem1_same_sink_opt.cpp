@@ -226,11 +226,10 @@ TEST(test_optimization, test_problem1_optimized)
 	int ite_restart = 50;          /* define the interval for restart output. */
 	int dt_ratio_k = 1;            /* ratio for adjusting the time step for parameter evolution. */
 	int dt_ratio_rg = 1;           /* ratio for adjusting the time step for regularization. */
-	Real dt = 0.0;                 /* define the time step size. */
-
+	
+	Real dt = 0.0;
 	Real averaged_residual_T_last_global(10.0);
 	Real averaged_variation_last_global(10.0);
-	Real maximum_residual_T_last_global(10.0);
 	Real averaged_residual_T_current_local(0.0);
 	Real averaged_residual_T_current_global(0.0);
 	Real averaged_residual_k_current_local(0.0);
@@ -367,7 +366,6 @@ TEST(test_optimization, test_problem1_optimized)
 	averaged_residual_T_current_global = calculate_temperature_global_residual.exec();
 	averaged_residual_T_last_global = averaged_residual_T_current_global;
 	maximum_residual_T_current_global = calculate_maximum_residual.exec();
-	maximum_residual_T_last_global = maximum_residual_T_current_global;
 
 	current_averaged_temperature = calculate_averaged_opt_temperature.exec();
 	out_file_nonopt_temperature << std::fixed << std::setprecision(12) << ite
@@ -487,9 +485,9 @@ TEST(test_optimization, test_problem1_optimized)
 		if ((nonopt_averaged_temperature > opt_averaged_temperature)
 			&& (learning_rate_alpha < initial_learning_rate))
 		{
-			//learning_rate_alpha = 1.01 * learning_rate_alpha;
-			//current_eta_regularization = 1.01 * current_eta_regularization;
-			//std::cout << "The learning rate is fixed!" << std::endl;
+			learning_rate_alpha = learning_rate_alpha;
+			current_eta_regularization = current_eta_regularization;
+			std::cout << "The learning rate is fixed!" << std::endl;
 		}
 		else if (nonopt_averaged_temperature < 510)
 		{
@@ -500,7 +498,6 @@ TEST(test_optimization, test_problem1_optimized)
 
 		nonopt_averaged_temperature = opt_averaged_temperature;
 		averaged_residual_T_last_global = averaged_residual_T_current_global;
-		maximum_residual_T_last_global = maximum_residual_T_current_global;
 
 		std::cout << "averaged_residual_T_current_global is " << averaged_residual_T_current_global << std::endl;
 		out_file_ite_T << std::fixed << std::setprecision(12) << ite_loop << "   " << ite_T << "\n";
