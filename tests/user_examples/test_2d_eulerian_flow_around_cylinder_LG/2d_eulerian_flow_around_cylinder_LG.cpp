@@ -170,6 +170,7 @@ int main(int ac, char *av[])
     SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
     SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
     InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
+    SimpleDynamics<NormalDirectionFromBodyShape> water_block_normal_direction(water_block);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block, 0.5);
     InteractionWithUpdate<FarFieldBoundary> variable_reset_in_boundary_condition(water_block_complex.getInnerRelation());
     InteractionWithUpdate<fluid_dynamics::FreeSurfaceIndicationComplex> surface_indicator(water_block_complex);
@@ -197,6 +198,7 @@ int main(int ac, char *av[])
     cylinder_normal_direction.exec();
     surface_indicator.exec();
     smeared_surface.exec();
+    water_block_normal_direction.exec();
     variable_reset_in_boundary_condition.exec();
     kernel_correction_matrix.exec();
     kernel_gradient_update.exec();

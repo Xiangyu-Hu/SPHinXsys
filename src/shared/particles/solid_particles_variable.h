@@ -93,42 +93,6 @@ class TranslationAndRotation : public SolidDataSimple,
     StdLargeVec<Vecd> &pos_, &pos0_;
 };
 
-/**
- * @class NormalDirectionFromBodyShape
- * @brief normal direction at particles
- */
-class NormalDirectionFromBodyShape : public SolidDataSimple,
-                                     public LocalDynamics
-{
-  public:
-    explicit NormalDirectionFromBodyShape(SPHBody &sph_body);
-    virtual ~NormalDirectionFromBodyShape(){};
-    void update(size_t index_i, Real dt = 0.0);
-
-  protected:
-    Shape &body_shape_;
-    StdLargeVec<Vecd> &pos_, &n_, &n0_;
-};
-
-/**
- * @class NormalDirectionFromBodyShape
- * @brief normal direction at particles
- */
-class NormalDirectionFromShapeAndOp : public SolidDataSimple,
-                                      public LocalDynamics
-{
-  public:
-    explicit NormalDirectionFromShapeAndOp(SPHBody &sph_body, const std::string &shape_name);
-    virtual ~NormalDirectionFromShapeAndOp(){};
-    void update(size_t index_i, Real dt = 0.0);
-
-  protected:
-    ShapeAndOp *shape_and_op_;
-    Shape *shape_;
-    const Real switch_sign_;
-    StdLargeVec<Vecd> &pos_, &n_, &n0_;
-};
-
 //----------------------------------------------------------------------
 //		for general elastic solid dynamics variables
 //----------------------------------------------------------------------

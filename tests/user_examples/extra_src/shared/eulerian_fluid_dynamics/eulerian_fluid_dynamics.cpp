@@ -51,9 +51,9 @@ NonReflectiveBoundaryCorrection::NonReflectiveBoundaryCorrection(BaseInnerRelati
       rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
       Vol_(particles_->Vol_), vel_(particles_->vel_),
       mom_(*particles_->getVariableByName<Vecd>("Momentum")), pos_(particles_->pos_),
-      indicator_(*particles_->getVariableByName<int>("Indicator"))
+      indicator_(*particles_->getVariableByName<int>("Indicator")),
+      n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
 {
-    particles_->registerVariable(n_, "NormalDirection");
     particles_->registerVariable(inner_weight_summation_, "InnerWeightSummation");
     particles_->registerVariable(rho_average_, "DensityAverage");
     particles_->registerVariable(vel_normal_average_, "VelocityNormalAverage");
@@ -64,11 +64,8 @@ NonReflectiveBoundaryCorrection::NonReflectiveBoundaryCorrection(BaseInnerRelati
 //=================================================================================================//
 void NonReflectiveBoundaryCorrection::interaction(size_t index_i, Real dt)
 {
-    Shape &body_shape = *sph_body_.body_shape_;
     if (indicator_[index_i] == 1 || smeared_surface_[index_i] == 1)
     {
-        Vecd normal_direction = body_shape.findNormalDirection(pos_[index_i]);
-        n_[index_i] = normal_direction;
         Real velocity_boundary_normal = vel_[index_i].dot(n_[index_i]);
         // judge it is the inflow condition
         if (n_[index_i][0] <= 0.0 || fabs(n_[index_i][1]) > fabs(n_[index_i][0]))
@@ -153,11 +150,8 @@ void NonReflectiveBoundaryCorrection::interaction(size_t index_i, Real dt)
 //=================================================================================================//
 void NonReflectiveBoundaryCorrection::update(size_t index_i, Real dt)
 {
-    Shape &body_shape = *sph_body_.body_shape_;
     if (indicator_[index_i] == 1 || smeared_surface_[index_i] == 1)
     {
-        Vecd normal_direction = body_shape.findNormalDirection(pos_[index_i]);
-        n_[index_i] = normal_direction;
         Real velocity_farfield_normal = vel_farfield_.dot(n_[index_i]);
         Real velocity_boundary_normal = vel_[index_i].dot(n_[index_i]);
 

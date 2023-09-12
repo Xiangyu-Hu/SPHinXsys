@@ -21,18 +21,50 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    all_general_dynamics.h
- * @brief   This is the header file that user code should include to pick up all
- *          general dynamics used in SPHinXsys.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file    general_geometric.h
+ * @brief   This is the particle dynamics applicable for all type bodies
+ * @author	Xiangyu Hu
  */
 
-#pragma once
+#ifndef GENERAL_GEOMETRIC_H
+#define GENERAL_GEOMETRIC_H
 
-#include "general_bounding.h"
 #include "general_dynamics.h"
-#include "general_dynamics_refinement.h"
-#include "general_geometric.h"
-#include "general_interaction.h"
-#include "general_interpolation.h"
-#include "general_life_time_dynamics.h"
+
+namespace SPH
+{
+/**
+ * @class NormalDirectionFromBodyShape
+ * @brief normal direction at particles
+ */
+class NormalDirectionFromBodyShape : public LocalDynamics, public GeneralDataDelegateSimple
+{
+  public:
+    explicit NormalDirectionFromBodyShape(SPHBody &sph_body);
+    virtual ~NormalDirectionFromBodyShape(){};
+    void update(size_t index_i, Real dt = 0.0);
+
+  protected:
+    Shape &body_shape_;
+    StdLargeVec<Vecd> &pos_, &n_, &n0_;
+};
+
+/**
+ * @class NormalDirectionFromShapeAndOp
+ * @brief normal direction at particles
+ */
+class NormalDirectionFromShapeAndOp : public LocalDynamics, public GeneralDataDelegateSimple
+{
+  public:
+    explicit NormalDirectionFromShapeAndOp(SPHBody &sph_body, const std::string &shape_name);
+    virtual ~NormalDirectionFromShapeAndOp(){};
+    void update(size_t index_i, Real dt = 0.0);
+
+  protected:
+    ShapeAndOp *shape_and_op_;
+    Shape *shape_;
+    const Real switch_sign_;
+    StdLargeVec<Vecd> &pos_, &n_, &n0_;
+};
+} // namespace SPH
+#endif // GENERAL_GEOMETRIC_H
