@@ -36,33 +36,78 @@
 
 namespace SPH
 {
-/** A Functor for Summation */
+//----------------------------------------------------------------------
+// Particle group scope functors
+//----------------------------------------------------------------------
+class AllParticles
+{
+  public:
+    AllParticles(BaseParticles *base_particles){};
+    bool operator()(size_t index_i)
+    {
+        return true;
+    };
+};
+
+template <int INDICATOR>
+class IndicatedParticles
+{
+    StdLargeVec<int> &indicator_;
+
+  public:
+    IndicatedParticles(BaseParticles *base_particles)
+        : indicator_(*base_particles->getVariableByName<int>("Indicator")){};
+    bool operator()(size_t index_i)
+    {
+        return indicator_[index_i] == INDICATOR;
+    };
+};
+
+using BulkParticles = IndicatedParticles<0>;
+
+template <int INDICATOR>
+class NotIndicatedParticles
+{
+    StdLargeVec<int> &indicator_;
+
+  public:
+    NotIndicatedParticles(BaseParticles *base_particles)
+        : indicator_(*base_particles->getVariableByName<int>("Indicator")){};
+    bool operator()(size_t index_i)
+    {
+        return indicator_[index_i] != INDICATOR;
+    };
+};
+
+//----------------------------------------------------------------------
+// Particle reduce functors
+//----------------------------------------------------------------------
 template <class ReturnType>
 struct ReduceSum
 {
     ReturnType operator()(const ReturnType &x, const ReturnType &y) const { return x + y; };
 };
-/** A Functor for Maximum */
+
 struct ReduceMax
 {
     Real operator()(Real x, Real y) const { return SMAX(x, y); };
 };
-/** A Functor for Minimum */
+
 struct ReduceMin
 {
     Real operator()(Real x, Real y) const { return SMIN(x, y); };
 };
-/** A Functor for OR operator */
+
 struct ReduceOR
 {
     bool operator()(bool x, bool y) const { return x || y; };
 };
-/** A Functor for AND operator */
+
 struct ReduceAND
 {
     bool operator()(bool x, bool y) const { return x && y; };
 };
-/** A Functor for lower bound */
+
 struct ReduceLowerBound
 {
     Vecd operator()(const Vecd &x, const Vecd &y) const
@@ -73,7 +118,6 @@ struct ReduceLowerBound
         return lower_bound;
     };
 };
-/** A Functor for upper bound */
 struct ReduceUpperBound
 {
     Vecd operator()(const Vecd &x, const Vecd &y) const

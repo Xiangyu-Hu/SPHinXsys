@@ -1,12 +1,12 @@
 name: CI
 
-# Controls when the action will run. 
+# Controls when the action will run.
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -16,7 +16,6 @@ env:
 
 # A workflow is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-
   ###############################################################################
   Linux-float:
     runs-on: ubuntu-22.04
@@ -37,16 +36,19 @@ jobs:
             pkg-config `# for installing libraries with vcpkg`\
             git \
             cmake \
-            ninja-build
+            ninja-build \
+            libfontconfig1-dev `# From here required for vcpkg opencascade`\
+            libx11-dev \
+            libgl-dev
 
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: ${{ github.job }}
 
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
-        with: 
+        with:
           committish: ${{ env.VCPKG_VERSION }}
-          cache-version: ${{env.VCPKG_VERSION}}
+          cache: false
 
       - name: Install dependencies
         run: |
@@ -61,24 +63,26 @@ jobs:
             simbody \
             gtest \
             xsimd \
-            pybind11
+            pybind11 \
+            opencascade
 
       - name: Generate buildsystem using float (No test)
         run: |
           cmake -G Ninja \
             -D CMAKE_BUILD_TYPE=Release \
-            -D SPHINXSYS_USE_FLOAT=ON \
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -D SPHINXSYS_USE_FLOAT=ON \
+            -D SPHINXSYS_MODULE_OPENCASCADE=ON \
             -D SPHINXSYS_CI=ON \
             -S ${{github.workspace}} \
             -B ${{github.workspace}}/build
-            
+
       - name: Build using float
         run: cmake --build build --config Release --verbose
 
-  ###############################################################################   
-  Linux-double:
+  ###############################################################################
+  Linux-build:
     runs-on: ubuntu-22.04
     env:
       VCPKG_DEFAULT_TRIPLET: x64-linux
@@ -97,14 +101,17 @@ jobs:
             pkg-config `# for installing libraries with vcpkg`\
             git \
             cmake \
-            ninja-build
+            ninja-build \
+            libfontconfig1-dev `# From here required for vcpkg opencascade`\
+            libx11-dev \
+            libgl-dev
 
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: ${{ github.job }}
 
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
-        with: 
+        with:
           committish: ${{ env.VCPKG_VERSION }}
           cache-version: ${{env.VCPKG_VERSION}}
 
@@ -121,21 +128,86 @@ jobs:
             simbody \
             gtest \
             xsimd \
-            pybind11
+            pybind11 \
+            opencascade
 
       - name: Generate buildsystem using double
         run: |
           cmake -G Ninja \
             -D CMAKE_BUILD_TYPE=Release \
-            -D SPHINXSYS_USE_FLOAT=OFF \
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -D SPHINXSYS_CI=ON \
+            -D SPHINXSYS_USE_FLOAT=OFF \
+            -D TEST_STATE_RECORDING=OFF \
+            -D SPHINXSYS_MODULE_OPENCASCADE=ON \
             -S ${{github.workspace}} \
             -B ${{github.workspace}}/build
-            
+
       - name: Build using double
         run: cmake --build build --config Release --verbose
+
+      - name: Zip build folder
+        run: zip -r build.zip ./build
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Linux-build
+          path: ${{github.workspace}}/build.zip
+          if-no-files-found: error
+          retention-days: 1
+
+  Linux-test:
+    needs: Linux-build
+    runs-on: ubuntu-22.04
+    env:
+      VCPKG_DEFAULT_TRIPLET: x64-linux
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install system dependencies
+        run: |
+          sudo apt update 
+          sudo apt install -y \
+            apt-utils \
+            build-essential \
+            curl zip unzip tar `# when starting fresh on a WSL image for bootstrapping vcpkg`\
+            pkg-config `# for installing libraries with vcpkg`\
+            git \
+            cmake \
+            ninja-build \
+            libfontconfig1-dev `# From here required for vcpkg opencascade`\
+            libx11-dev \
+            libgl-dev
+
+      - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
+        with:
+          committish: ${{ env.VCPKG_VERSION }}
+          cache-version: ${{env.VCPKG_VERSION}}
+
+      - name: Install dependencies
+        run: |
+          ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build openblas[dynamic-arch] --allow-unsupported # last argument to remove after regression introduced by microsoft/vcpkg#30192 is addressed
+          # Simbody depends on (open)blas implementation, which -march=native by default, conflicting with cache restore, hence dynamic-arch feature
+          # Above problem might also be resolved by adding the hash of architecture in the cache key, esp. if more package do the same
+          ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build \
+            eigen3 \
+            tbb \
+            boost-program-options \
+            boost-geometry \
+            simbody \
+            gtest \
+            xsimd \
+            pybind11 \
+            opencascade
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: Linux-build
+
+      - name: Unzip build folder
+        run: unzip build.zip
 
       - name: Test with the first try
         id: first-try
@@ -146,7 +218,7 @@ jobs:
 
       - name: Test with the second try for failed cases
         id: second-try
-        if: ${{ steps.first-try.outcome == 'failure' }} 
+        if: ${{ steps.first-try.outcome == 'failure' }}
         run: |
           cd build 
           ctest --rerun-failed --output-on-failure
@@ -154,7 +226,7 @@ jobs:
 
       - name: Test with the third try for failed cases
         id: third-try
-        if: ${{ steps.second-try.outcome == 'failure' }} 
+        if: ${{ steps.second-try.outcome == 'failure' }}
         run: |
           cd build 
           ctest --rerun-failed --output-on-failure
@@ -162,40 +234,41 @@ jobs:
 
       - name: Test with the fourth try for failed cases
         id: fourth-try
-        if: ${{ steps.third-try.outcome == 'failure' }} 
+        if: ${{ steps.third-try.outcome == 'failure' }}
         run: |
           cd build 
           ctest --rerun-failed --output-on-failure
         continue-on-error: true
 
       - name: Test with the last try for failed cases
-        if: ${{ steps.fourth-try.outcome == 'failure' }} 
+        if: ${{ steps.fourth-try.outcome == 'failure' }}
         run: |
           cd build 
           ctest --rerun-failed --output-on-failure
 
   ###############################################################################
 
-  Windows:
+  Windows-build:
     runs-on: windows-latest
     env:
       VCPKG_DEFAULT_TRIPLET: x64-windows
 
     steps:
       - uses: actions/checkout@v3 # Checks-out the repository under ${{github.workspace}}
-      
+
       - name: Update ccache and ninja # For correct caching with ccache on Windows
         shell: bash
         run: |
           choco install ccache
           choco install ninja
-          
+          choco install 7zip
+
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: ${{ github.job }}
 
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
-        with: 
+        with:
           committish: ${{ env.VCPKG_VERSION }}
           cache-version: ${{env.VCPKG_VERSION}}
 
@@ -220,11 +293,66 @@ jobs:
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}\vcpkg\scripts\buildsystems\vcpkg.cmake" `
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache `
             -D SPHINXSYS_CI=ON `
+            -D TEST_STATE_RECORDING=OFF `
             -S ${{github.workspace}} `
             -B C:\build
-      
+
       - name: Build
         run: cmake.exe --build C:\build --config Release --verbose
+
+      - name: Zip build folder
+        run: 7z.exe a C:\build.7z "C:\build"
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Windows-build
+          path: C:\build.7z
+          if-no-files-found: error
+          retention-days: 1
+
+  Windows-test:
+    needs: Windows-build
+    runs-on: windows-latest
+    env:
+      VCPKG_DEFAULT_TRIPLET: x64-windows
+
+    steps:
+      - uses: actions/checkout@v3 # Checks-out the repository under ${{github.workspace}}
+
+      - name: Update ccache and ninja # For correct caching with ccache on Windows
+        shell: bash
+        run: |
+          choco install ccache
+          choco install ninja
+          choco install 7zip
+
+      - uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ github.job }}
+
+      - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
+        with:
+          committish: ${{ env.VCPKG_VERSION }}
+          cache-version: ${{env.VCPKG_VERSION}}
+
+      - name: Install dependencies
+        run: |
+          ${{github.workspace}}\vcpkg\vcpkg.exe install --clean-after-build `
+            eigen3 `
+            tbb `
+            boost-program-options `
+            boost-geometry `
+            simbody `
+            gtest `
+            xsimd `
+            pybind11
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: Windows-build
+
+      - name: Unzip build folder
+        run: 7z.exe x build.7z -oC:\
 
       - name: Test with the first try
         id: first-try
@@ -235,7 +363,7 @@ jobs:
 
       - name: Test with the second try for failed cases
         id: second-try
-        if: ${{ steps.first-try.outcome == 'failure' }} 
+        if: ${{ steps.first-try.outcome == 'failure' }}
         run: |
           cd C:\build 
           ctest.exe --rerun-failed --output-on-failure
@@ -243,7 +371,7 @@ jobs:
 
       - name: Test with the third try for failed cases
         id: third-try
-        if: ${{ steps.second-try.outcome == 'failure' }} 
+        if: ${{ steps.second-try.outcome == 'failure' }}
         run: |
           cd C:\build 
           ctest.exe --rerun-failed --output-on-failure
@@ -251,21 +379,92 @@ jobs:
 
       - name: Test with the fourth try for failed cases
         id: fourth-try
-        if: ${{ steps.third-try.outcome == 'failure' }} 
+        if: ${{ steps.third-try.outcome == 'failure' }}
         run: |
           cd C:\build 
           ctest.exe --rerun-failed --output-on-failure
         continue-on-error: true
 
       - name: Test with the last try for failed cases
-        if: ${{ steps.fourth-try.outcome == 'failure' }} 
+        if: ${{ steps.fourth-try.outcome == 'failure' }}
         run: |
           cd C:\build 
           ctest.exe --rerun-failed --output-on-failure
 
   ###############################################################################
 
-  macOS:
+  macOS-build:
+    runs-on: macos-12
+    env:
+      VCPKG_DEFAULT_TRIPLET: x64-osx
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+
+      - name: Install system dependencies
+        run: |
+          brew reinstall gfortran # to force having gfortran on PATH because github runners don't have it, just the versioned aliases, i.e. gfortran-11
+                                  # https://github.com/actions/runner-images/blob/main/images/macos/macos-12-Readme.md
+                                  # https://github.com/actions/runner-images/issues/3371#issuecomment-839882565
+                                  # https://github.com/modflowpy/install-gfortran-action and https://github.com/awvwgk/setup-fortran
+          brew install \
+            pkg-config `# for installing libraries with vcpkg`\
+            git \
+            cmake \
+            ninja \
+            zip \
+            unzip
+
+      - uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ github.job }}
+
+      - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
+        with:
+          committish: ${{ env.VCPKG_VERSION }}
+          cache-version: ${{env.VCPKG_VERSION}}
+
+      - name: Install dependencies
+        run: |
+          ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build --allow-unsupported \
+            eigen3 \
+            tbb \
+            boost-program-options \
+            boost-geometry \
+            gtest \
+            simbody \
+            xsimd \
+            pybind11 \
+            opencascade
+
+      - name: Generate buildsystem
+        run: |
+          cmake -G Ninja \
+            -D CMAKE_C_COMPILER=clang -D CMAKE_CXX_COMPILER=clang++ \
+            -D CMAKE_BUILD_TYPE=Release \
+            -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
+            -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -D SPHINXSYS_CI=ON \
+            -D TEST_STATE_RECORDING=OFF \
+            -S ${{github.workspace}} \
+            -B ${{github.workspace}}/build
+
+      - name: Build
+        run: cmake --build build --config Release --verbose
+
+      - name: Zip build folder
+        run: zip -r build.zip ./build
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: macOS-build
+          path: ${{github.workspace}}/build.zip
+          if-no-files-found: error
+          retention-days: 1
+
+  macOS-test:
+    needs: macOS-build
     runs-on: macos-12
     env:
       VCPKG_DEFAULT_TRIPLET: x64-osx
@@ -291,13 +490,13 @@ jobs:
           key: ${{ github.job }}
 
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
-        with: 
+        with:
           committish: ${{ env.VCPKG_VERSION }}
           cache-version: ${{env.VCPKG_VERSION}}
 
       - name: Install dependencies
         run: |
-          ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build \
+          ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build --allow-unsupported \
             eigen3 \
             tbb \
             boost-program-options \
@@ -305,21 +504,15 @@ jobs:
             gtest \
             simbody \
             xsimd \
-            pybind11
+            pybind11 \
+            opencascade
 
-      - name: Generate buildsystem
-        run: |
-          cmake -G Ninja \
-            -D CMAKE_C_COMPILER=clang -D CMAKE_CXX_COMPILER=clang++ \
-            -D CMAKE_BUILD_TYPE=Release \
-            -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
-            -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -D SPHINXSYS_CI=ON \
-            -S ${{github.workspace}} \
-            -B ${{github.workspace}}/build
+      - uses: actions/download-artifact@v3
+        with:
+          name: macOS-build
 
-      - name: Build
-        run: cmake --build build --config Release --verbose
+      - name: Unzip build folder
+        run: unzip build.zip
 
       - name: Test with the first try
         id: first-try
@@ -330,7 +523,7 @@ jobs:
 
       - name: Test with the second try for failed cases
         id: second-try
-        if: ${{ steps.first-try.outcome == 'failure' }} 
+        if: ${{ steps.first-try.outcome == 'failure' }}
         run: |
           cd build 
           ctest --rerun-failed --output-on-failure
@@ -338,7 +531,7 @@ jobs:
 
       - name: Test with the third try for failed cases
         id: third-try
-        if: ${{ steps.second-try.outcome == 'failure' }} 
+        if: ${{ steps.second-try.outcome == 'failure' }}
         run: |
           cd build 
           ctest --rerun-failed --output-on-failure
@@ -346,14 +539,14 @@ jobs:
 
       - name: Test with the fourth try for failed cases
         id: fourth-try
-        if: ${{ steps.third-try.outcome == 'failure' }} 
+        if: ${{ steps.third-try.outcome == 'failure' }}
         run: |
           cd build 
           ctest --rerun-failed --output-on-failure
         continue-on-error: true
 
       - name: Test with the last try for failed cases
-        if: ${{ steps.fourth-try.outcome == 'failure' }} 
+        if: ${{ steps.fourth-try.outcome == 'failure' }}
         run: |
           cd build 
           ctest --rerun-failed --output-on-failure

@@ -74,12 +74,14 @@ class BaseDiffusionRelaxation
     explicit BaseDiffusionRelaxation(SPHBody &sph_body);
     virtual ~BaseDiffusionRelaxation(){};
     StdVec<BaseDiffusion *> &AllDiffusions() { return material_.AllDiffusions(); };
+    void initialization(size_t index_i, Real dt = 0.0);
+    void update(size_t index_i, Real dt = 0.0);
 };
 
 class KernelGradientInner
 {
   public:
-    KernelGradientInner(BaseParticles *inner_particles){};
+    explicit KernelGradientInner(BaseParticles *inner_particles){};
     Vecd operator()(size_t index_i, size_t index_j, Real dW_ijV_j, const Vecd &e_ij)
     {
         return dW_ijV_j * e_ij;
@@ -91,7 +93,7 @@ class CorrectedKernelGradientInner
     StdLargeVec<Matd> &B_;
 
   public:
-    CorrectedKernelGradientInner(BaseParticles *inner_particles)
+    explicit CorrectedKernelGradientInner(BaseParticles *inner_particles)
         : B_(*inner_particles->getVariableByName<Matd>("CorrectionMatrix")){};
     Vecd operator()(size_t index_i, size_t index_j, Real dW_ijV_j, const Vecd &e_ij)
     {
@@ -110,16 +112,13 @@ class DiffusionRelaxationInner
 {
   protected:
     KernelGradientType kernel_gradient_;
-    void initializeDiffusionChangeRate(size_t particle_i);
     void getDiffusionChangeRate(size_t particle_i, size_t particle_j, Vecd &e_ij, Real surface_area_ij);
-    virtual void updateSpeciesDiffusion(size_t particle_i, Real dt);
 
   public:
     typedef BaseInnerRelation BodyRelationType;
     explicit DiffusionRelaxationInner(BaseInnerRelation &inner_relation);
     virtual ~DiffusionRelaxationInner(){};
     inline void interaction(size_t index_i, Real dt = 0.0);
-    void update(size_t index_i, Real dt = 0.0);
 };
 
 class KernelGradientContact
@@ -177,7 +176,7 @@ class DiffusionRelaxationDirichlet
 {
   protected:
     StdVec<StdVec<StdLargeVec<Real> *>> contact_gradient_species_;
-    void getDiffusionChangeRateDirichletContact(
+    void getDiffusionChangeRateDirichlet(
         size_t particle_i, size_t particle_j, Vecd &e_ij, Real surface_area_ij,
         const StdVec<StdLargeVec<Real> *> &gradient_species_k);
 
@@ -200,7 +199,7 @@ class DiffusionRelaxationNeumann
     StdVec<StdLargeVec<Vecd> *> contact_n_;
 
   protected:
-    void getDiffusionChangeRateNeumannContact(size_t particle_i, size_t particle_j,
+    void getDiffusionChangeRateNeumann(size_t particle_i, size_t particle_j,
                                               Real surface_area_ij_Neumann, StdLargeVec<Real> &heat_flux_k);
 
   public:
@@ -224,7 +223,7 @@ class DiffusionRelaxationRobin
     StdVec<StdLargeVec<Vecd> *> contact_n_;
 
   protected:
-    void getDiffusionChangeRateRobinContact(size_t particle_i, size_t particle_j, Real surface_area_ij_Robin, StdLargeVec<Real> &convection_k, Real &T_infinity_k);
+    void getDiffusionChangeRateRobin(size_t particle_i, size_t particle_j, Real surface_area_ij_Robin, StdLargeVec<Real> &convection_k, Real &T_infinity_k);
 
   public:
     explicit DiffusionRelaxationRobin(BaseContactRelation &contact_relation);
@@ -258,7 +257,6 @@ class SecondStageRK2 : public FirstStageType
 {
   protected:
     StdVec<StdLargeVec<Real>> &diffusion_species_s_;
-    virtual void updateSpeciesDiffusion(size_t particle_i, Real dt) override;
 
   public:
     template <typename... ContactArgsType>
@@ -267,6 +265,8 @@ class SecondStageRK2 : public FirstStageType
         : FirstStageType(body_relation, std::forward<ContactArgsType>(contact_args)...),
           diffusion_species_s_(diffusion_species_s){};
     virtual ~SecondStageRK2(){};
+
+    void update(size_t index_i, Real dt = 0.0);
 };
 
 /**
@@ -280,8 +280,8 @@ class DiffusionRelaxationRK2 : public BaseDynamics<void>
   protected:
     StdVec<StdLargeVec<Real>> diffusion_species_s_; /**< Intermediate state */
     SimpleDynamics<InitializationRK<typename FirstStageType::InnerParticlesType>> rk2_initialization_;
-    InteractionWithUpdate<FirstStageType> rk2_1st_stage_;
-    InteractionWithUpdate<SecondStageRK2<FirstStageType>> rk2_2nd_stage_;
+    Dynamics1Level<FirstStageType> rk2_1st_stage_;
+    Dynamics1Level<SecondStageRK2<FirstStageType>> rk2_2nd_stage_;
     StdVec<BaseDiffusion *> all_diffusions_;
 
   public:

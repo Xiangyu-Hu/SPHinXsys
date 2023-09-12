@@ -24,14 +24,14 @@
  * @file 	all_geometries.h
  * @brief 	This is the header file that user code should include to pick up all
  *          geometry classes used in SPHinXsys.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef ALL_GEOMETRIES_H
 #define ALL_GEOMETRIES_H
 
 #include "complex_shape.h"
-#include "exclusive_shape.h"
+#include "mapping_shape.h"
 #include "geometric_shape.h"
 #include "level_set_shape.h"
 #include "multi_polygon_shape.h"

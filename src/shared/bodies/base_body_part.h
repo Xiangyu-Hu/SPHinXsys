@@ -24,7 +24,7 @@
  * @file 	base_body_part.h
  * @brief 	This is the base classes of body parts.
  * @details	There two main type of body parts. One is part by particle.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef BASE_BODY_PART_H

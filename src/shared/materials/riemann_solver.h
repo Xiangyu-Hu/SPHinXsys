@@ -23,7 +23,7 @@
 /**
  * @file 	riemann_solvers.h
  * @brief 	This is the collection of Riemann solvers.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef RIEMANN_SOLVER_H

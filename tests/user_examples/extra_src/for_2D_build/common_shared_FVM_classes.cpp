@@ -419,9 +419,10 @@ void readMeshFile::getElementCenterCoordinates()
     }
     elements_volumes_.erase(elements_volumes_.begin());
     elements_center_coordinates_.erase(elements_center_coordinates_.begin());
+    elements_nodes_connection_.erase(elements_nodes_connection_.begin());
 }
 //=================================================================================================//
-void readMeshFile::gerMaximumDistanceBetweenNodes()
+void readMeshFile::gerMinimumDistanceBetweenNodes()
 {
     vector<Real> all_data_of_distance_between_nodes;
     all_data_of_distance_between_nodes.resize(0);
@@ -438,10 +439,10 @@ void readMeshFile::gerMaximumDistanceBetweenNodes()
             all_data_of_distance_between_nodes.push_back(interface_area_size);
         }
     }
-    auto max_distance_iter = std::max_element(all_data_of_distance_between_nodes.begin(), all_data_of_distance_between_nodes.end());
-    if (max_distance_iter != all_data_of_distance_between_nodes.end())
+    auto min_distance_iter = std::min_element(all_data_of_distance_between_nodes.begin(), all_data_of_distance_between_nodes.end());
+    if (min_distance_iter != all_data_of_distance_between_nodes.end())
     {
-        max_distance_between_nodes_ = *max_distance_iter;
+        min_distance_between_nodes_ = *min_distance_iter;
     }
     else
     {
@@ -575,5 +576,80 @@ void InnerRelationInFVM::updateConfiguration()
                                get_particle_index_, get_inner_neighbor_);
 }
 //=================================================================================================//
+void BodyStatesRecordingInMeshToVtp::writeWithFileName(const std::string &sequence)
+{
+    for (SPHBody *body : bodies_)
+    {
+        if (body->checkNewlyUpdated() && state_recording_)
+        {
+            // TODO: we can short the file name by without using SPHBody
+            std::string filefullpath = io_environment_.output_folder_ + "/SPHBody_" + body->getName() + "_" + sequence + ".vtp";
+            if (fs::exists(filefullpath))
+            {
+                fs::remove(filefullpath);
+            }
+            std::ofstream out_file(filefullpath.c_str(), std::ios::trunc);
+            // begin of the XML file
+            out_file << "<?xml version=\"1.0\"?>\n";
+            out_file << "<VTKFile type=\"PolyData\" version=\"1.0\" byte_order=\"LittleEndian\">\n";
+            out_file << "<PolyData>\n";
+
+            // Write point data
+            out_file << "<Piece NumberOfPoints=\"" << nodes_coordinates_.size() << "\" NumberOfVerts=\"0\" NumberOfLines=\"0\" NumberOfStrips=\"0\" NumberOfPolys=\"" << elements_nodes_connection_.size() << "\">\n";
+            out_file << "<Points>\n";
+            out_file << "<DataArray type=\"Float64\" NumberOfComponents=\"3\" format=\"ascii\">\n";
+
+            size_t total_nodes = nodes_coordinates_.size();
+            for (size_t node = 0; node != total_nodes; ++node)
+            {
+                out_file << nodes_coordinates_[node][0] << " " << nodes_coordinates_[node][1] << " 0.0\n";
+            }
+
+            out_file << "</DataArray>\n";
+            out_file << "</Points>\n";
+
+            // Write face data
+            out_file << "<Polys>\n";
+            out_file << "<DataArray type=\"Int32\" Name=\"connectivity\" format=\"ascii\">\n";
+
+            for (const auto &element : elements_nodes_connection_)
+            {
+                for (const auto &vertex : element)
+                {
+                    out_file << vertex << " ";
+                }
+                out_file << "\n";
+            }
+
+            out_file << "</DataArray>\n";
+            out_file << "<DataArray type=\"Int32\" Name=\"offsets\" format=\"ascii\">\n";
+
+            size_t offset = 0;
+            for (const auto &face : elements_nodes_connection_)
+            {
+                offset += face.size();
+                out_file << offset << " ";
+            }
+
+            out_file << "\n</DataArray>\n";
+            out_file << "</Polys>\n";
+
+            // Write face attribute data
+            out_file << "<CellData>\n";
+            body->writeParticlesToVtpFile(out_file);
+
+            out_file << "</CellData>\n";
+
+            // Write file footer
+            out_file << "</Piece>\n";
+            out_file << "</PolyData>\n";
+            out_file << "</VTKFile>\n";
+
+            out_file.close();
+        }
+        body->setNotNewlyUpdated();
+    }
+}
+//=============================================================================================//
 } // namespace SPH
   //=================================================================================================//

@@ -23,7 +23,7 @@
 /**
  * @file 	array_allocation.h
  * @brief 	Memory allocation for array data.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 #ifndef ARRAY_ALLOCATION_H
 #define ARRAY_ALLOCATION_H

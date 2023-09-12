@@ -10,9 +10,9 @@
  *                                                                           *
  * SPHinXsys is partially funded by German Research Foundation               *
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
- *  HU1527/12-1 and HU1527/12-4.                                             *
+ *  HU1527/12-1 and HU1527/12-4                                              *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -23,7 +23,7 @@
 /**
  * @file 	solid_particles.h
  * @brief 	This is the derived class of base particles.
- * @author	Chi ZHang, Dong Wu and Xiangyu Hu
+ * @author	Chi Zhang, Dong Wu and Xiangyu Hu
  */
 
 #ifndef SOLID_PARTICLES_H
@@ -195,5 +195,8 @@ class ShellParticles : public ElasticSolidParticles
     /** Return this pointer. */
     virtual ShellParticles *ThisObjectPtr() override { return this; };
 };
-} // namespace SPH
+
+
+
+}
 #endif // SOLID_PARTICLES_H

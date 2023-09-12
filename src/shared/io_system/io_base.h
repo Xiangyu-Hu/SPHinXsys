@@ -100,7 +100,8 @@ class BodyStatesRecording : public BaseIO
 {
   public:
     BodyStatesRecording(IOEnvironment &io_environment, SPHBodyVector bodies)
-        : BaseIO(io_environment), bodies_(bodies){};
+        : BaseIO(io_environment), bodies_(bodies),
+          state_recording_(io_environment.sph_system_.StateRecording()){};
     BodyStatesRecording(IOEnvironment &io_environment, SPHBody &body)
         : BodyStatesRecording(io_environment, {&body}){};
     virtual ~BodyStatesRecording(){};
@@ -110,6 +111,7 @@ class BodyStatesRecording : public BaseIO
 
   protected:
     SPHBodyVector bodies_;
+    bool state_recording_;
 
     virtual void writeWithFileName(const std::string &sequence) = 0;
 };

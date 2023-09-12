@@ -24,7 +24,7 @@
  * @file 	compressible_fluid.h
  * @brief 	Describe the compressible fluid which is used
  * 			model compressible fluids. Here, we have ideal gas equation of states.
- * @author	Chi ZHang, Zhentong Wang and Xiangyu Hu
+ * @author	Chi Zhang, Zhentong Wang and Xiangyu Hu
  */
 
 #pragma once

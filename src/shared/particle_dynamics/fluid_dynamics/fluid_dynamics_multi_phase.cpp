@@ -19,8 +19,9 @@ ViscousAccelerationMultiPhase::ViscousAccelerationMultiPhase(BaseInnerRelation &
 
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        contact_fluids_.push_back(DynamicCast<Fluid>(this, &contact_particles_[k]->getBaseMaterial()));
-        contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
+        Real mu_k = DynamicCast<Fluid>(this, &contact_particles_[k]->getBaseMaterial())->ReferenceViscosity();
+        contact_mu_.push_back(Real(2) * (mu_ * mu_k) / (mu_ + mu_k));
+        contact_vel_.push_back(&(contact_particles_[k]->vel_));
     }
 }
 //=================================================================================================//
@@ -34,7 +35,7 @@ MultiPhaseColorFunctionGradient::
     : LocalDynamics(contact_relation.getSPHBody()), MultiPhaseData(contact_relation),
       rho0_(sph_body_.base_material_->ReferenceDensity()), Vol_(particles_->Vol_),
       pos_div_(*particles_->getVariableByName<Real>("PositionDivergence")),
-      surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator"))
+      indicator_(*particles_->getVariableByName<int>("Indicator"))
 {
     particles_->registerVariable(color_grad_, "ColorGradient");
     particles_->registerVariable(surface_norm_, "SurfaceNormal");

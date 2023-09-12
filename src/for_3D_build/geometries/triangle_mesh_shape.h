@@ -24,7 +24,7 @@
  * @file 	  triangle_mesh_shape.h
  * @brief   Here, we define the 3D geometries based on the polymesh.
  * @details The idea is to define complex geometry by passing stl, obj or other polymesh files.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef TRIANGULAR_MESH_SHAPE_H

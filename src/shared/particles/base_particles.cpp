@@ -4,7 +4,7 @@
 #include "base_body_part.h"
 #include "base_material.h"
 #include "base_particle_generator.h"
-#include "xml_engine.h"
+#include "xml_parser.h"
 
 //=====================================================================================================//
 namespace SPH
@@ -15,8 +15,8 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
       particle_sorting_(*this),
       sph_body_(sph_body), body_name_(sph_body.getName()),
       base_material_(*base_material),
-      restart_xml_engine_("xml_restart", "particles"),
-      reload_xml_engine_("xml_particle_reload", "particles")
+      restart_xml_parser_("xml_restart", "particles"),
+      reload_xml_parser_("xml_particle_reload", "particles")
 {
     //----------------------------------------------------------------------
     //		register geometric data only
@@ -42,7 +42,7 @@ void BaseParticles::initializeOtherVariables()
     registerVariable(mass_, "MassiveMeasure",
                      [&](size_t i) -> Real
                      { return rho_[i] * Vol_[i]; });
-    registerVariable(surface_indicator_, "SurfaceIndicator");
+    registerVariable(indicator_, "Indicator");
     /**
      *	add basic output particle data
      */
@@ -152,6 +152,14 @@ void BaseParticles::writePltFileHeader(std::ofstream &output_file)
     };
 }
 //=================================================================================================//
+void BaseParticles::computeDrivedVariables()
+{
+    for (auto &derived_variable : derived_variables_)
+    {
+        derived_variable->exec();
+    }
+}
+//=================================================================================================//
 void BaseParticles::writePltFileParticleData(std::ofstream &output_file, size_t index)
 {
     // write particle positions and index first
@@ -186,12 +194,6 @@ void BaseParticles::writeParticlesToPltFile(std::ofstream &output_file)
 {
     writePltFileHeader(output_file);
     output_file << "\n";
-
-    // compute derived particle variables
-    for (auto &derived_variable : derived_variables_)
-    {
-        derived_variable->exec();
-    }
 
     size_t total_real_particles = total_real_particles_;
     for (size_t i = 0; i != total_real_particles; ++i)
@@ -315,53 +317,52 @@ void BaseParticles::writeSurfaceParticlesToVtuFile(std::ostream &output_file, Bo
     }
 }
 //=================================================================================================//
-void BaseParticles::resizeXmlDocForParticles(XmlEngine &xml_engine)
+void BaseParticles::resizeXmlDocForParticles(XmlParser &xml_parser)
 {
-    size_t total_elements = xml_engine.SizeOfXmlDoc();
+    size_t total_elements = xml_parser.Size( xml_parser.first_element_);
 
     if (total_elements <= total_real_particles_)
     {
-        for (size_t i = total_elements; i != total_real_particles_; ++i)
-            xml_engine.addElementToXmlDoc("particle");
+        xml_parser.resize( xml_parser.first_element_, total_real_particles_, "particle" );
     }
 }
 //=================================================================================================//
 void BaseParticles::writeParticlesToXmlForRestart(std::string &filefullpath)
 {
-    resizeXmlDocForParticles(restart_xml_engine_);
-    WriteAParticleVariableToXml write_variable_to_xml(restart_xml_engine_, total_real_particles_);
+    resizeXmlDocForParticles(restart_xml_parser_);
+    WriteAParticleVariableToXml write_variable_to_xml(restart_xml_parser_, total_real_particles_);
     DataAssembleOperation<loopParticleVariables> loop_variable_namelist;
     loop_variable_namelist(all_particle_data_, variables_to_restart_, write_variable_to_xml);
-    restart_xml_engine_.writeToXmlFile(filefullpath);
+    restart_xml_parser_.writeToXmlFile(filefullpath);
 }
 //=================================================================================================//
 void BaseParticles::readParticleFromXmlForRestart(std::string &filefullpath)
 {
-    restart_xml_engine_.loadXmlFile(filefullpath);
-    ReadAParticleVariableFromXml read_variable_from_xml(restart_xml_engine_, total_real_particles_);
+    restart_xml_parser_.loadXmlFile(filefullpath);
+    ReadAParticleVariableFromXml read_variable_from_xml(restart_xml_parser_, total_real_particles_);
     DataAssembleOperation<loopParticleVariables> loop_variable_namelist;
     loop_variable_namelist(all_particle_data_, variables_to_restart_, read_variable_from_xml);
 }
 //=================================================================================================//
 void BaseParticles::writeToXmlForReloadParticle(std::string &filefullpath)
 {
-    resizeXmlDocForParticles(reload_xml_engine_);
-    WriteAParticleVariableToXml write_variable_to_xml(reload_xml_engine_, total_real_particles_);
+    resizeXmlDocForParticles(reload_xml_parser_);
+    WriteAParticleVariableToXml write_variable_to_xml(reload_xml_parser_, total_real_particles_);
     DataAssembleOperation<loopParticleVariables> loop_variable_namelist;
     loop_variable_namelist(all_particle_data_, variables_to_reload_, write_variable_to_xml);
-    reload_xml_engine_.writeToXmlFile(filefullpath);
+    reload_xml_parser_.writeToXmlFile(filefullpath);
 }
 //=================================================================================================//
 void BaseParticles::readFromXmlForReloadParticle(std::string &filefullpath)
 {
-    reload_xml_engine_.loadXmlFile(filefullpath);
-    total_real_particles_ = reload_xml_engine_.SizeOfXmlDoc();
+    reload_xml_parser_.loadXmlFile(filefullpath);
+    total_real_particles_ = reload_xml_parser_.Size( reload_xml_parser_.first_element_ );
     for (size_t i = 0; i != total_real_particles_; ++i)
     {
         unsorted_id_.push_back(i);
     };
     resize_particle_data_(all_particle_data_, total_real_particles_);
-    ReadAParticleVariableFromXml read_variable_from_xml(reload_xml_engine_, total_real_particles_);
+    ReadAParticleVariableFromXml read_variable_from_xml(reload_xml_parser_, total_real_particles_);
     DataAssembleOperation<loopParticleVariables> loop_variable_namelist;
     loop_variable_namelist(all_particle_data_, variables_to_reload_, read_variable_from_xml);
 }

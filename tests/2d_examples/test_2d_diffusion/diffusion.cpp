@@ -15,8 +15,8 @@ BoundingBox system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(L, H));
 //----------------------------------------------------------------------
 //	Basic parameters for material properties.
 //----------------------------------------------------------------------
-Real diffusion_coff = 1.0e-4;
-Real bias_coff = 0.0;
+Real diffusion_coeff = 1.0e-4;
+Real bias_coeff = 0.0;
 Real alpha = Pi / 6.0;
 Vec2d bias_direction(cos(alpha), sin(alpha));
 //----------------------------------------------------------------------
@@ -44,7 +44,7 @@ class DiffusionMaterial : public DiffusionReaction<Solid>
   public:
     DiffusionMaterial() : DiffusionReaction<Solid>({"Phi"}, SharedPtr<NoReaction>())
     {
-        initializeAnDiffusion<DirectionalDiffusion>("Phi", "Phi", diffusion_coff, bias_coff, bias_direction);
+        initializeAnDiffusion<DirectionalDiffusion>("Phi", "Phi", diffusion_coeff, bias_coeff, bias_direction);
     };
 };
 using DiffusionParticles = DiffusionReactionParticles<SolidParticles, DiffusionMaterial>;
@@ -112,12 +112,13 @@ class TemperatureObserverParticleGenerator : public ObserverParticleGenerator
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main()
+int main(int ac, char *av[])
 {
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    sph_system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
@@ -134,6 +135,9 @@ int main()
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation diffusion_body_inner_relation(diffusion_body);
     ContactRelation temperature_observer_contact(temperature_observer, {&diffusion_body});

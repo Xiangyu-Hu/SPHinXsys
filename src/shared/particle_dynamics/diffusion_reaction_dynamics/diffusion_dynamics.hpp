@@ -1,7 +1,7 @@
 /**
  * @file 	diffusion_dynamics.hpp
  * @brief 	This is the particle dynamics applicable for all type bodies
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef DIFFUSION_DYNAMICS_HPP
@@ -42,7 +42,26 @@ BaseDiffusionRelaxation<ParticlesType>::
         std::string &diffusion_species_name = all_species_names[diffusion_species_indexes[i]];
         diffusion_dt_[i] = this->particles_->template registerSharedVariable<Real>(diffusion_species_name + "ChangeRate");
     }
-} //=================================================================================================//
+}
+//=================================================================================================//
+template <class ParticlesType>
+void BaseDiffusionRelaxation<ParticlesType>::initialization(size_t index_i, Real dt)
+{
+    for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
+    {
+        (*this->diffusion_dt_[m])[index_i] = 0;
+    }
+}
+//=================================================================================================//
+template <class ParticlesType>
+void BaseDiffusionRelaxation<ParticlesType>::update(size_t index_i, Real dt)
+{
+    for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
+    {
+        (*this->diffusion_species_[m])[index_i] += dt * (*this->diffusion_dt_[m])[index_i];
+    }
+}
+//=================================================================================================//
 template <class ParticlesType, class KernelGradientType>
 DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
     DiffusionRelaxationInner(BaseInnerRelation &inner_relation)
@@ -52,35 +71,15 @@ DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
 //=================================================================================================//
 template <class ParticlesType, class KernelGradientType>
 void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
-    initializeDiffusionChangeRate(size_t particle_i)
-{
-    for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
-    {
-        (*this->diffusion_dt_[m])[particle_i] = 0;
-    }
-}
-//=================================================================================================//
-template <class ParticlesType, class KernelGradientType>
-void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
     getDiffusionChangeRate(size_t particle_i, size_t particle_j, Vecd &e_ij, Real surface_area_ij)
 {
     for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
     {
-        Real diff_coff_ij =
-            this->all_diffusions_[m]->getInterParticleDiffusionCoff(particle_i, particle_j, e_ij);
+        Real diff_coeff_ij =
+            this->all_diffusions_[m]->getInterParticleDiffusionCoeff(particle_i, particle_j, e_ij);
         StdLargeVec<Real> &gradient_species = *this->gradient_species_[m];
         Real phi_ij = gradient_species[particle_i] - gradient_species[particle_j];
-        (*this->diffusion_dt_[m])[particle_i] += diff_coff_ij * phi_ij * surface_area_ij;
-    }
-}
-//=================================================================================================//
-template <class ParticlesType, class KernelGradientType>
-void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
-    updateSpeciesDiffusion(size_t particle_i, Real dt)
-{
-    for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
-    {
-        (*this->diffusion_species_[m])[particle_i] += dt * (*this->diffusion_dt_[m])[particle_i];
+        (*this->diffusion_dt_[m])[particle_i] += diff_coeff_ij * phi_ij * surface_area_ij;
     }
 }
 //=================================================================================================//
@@ -89,8 +88,6 @@ void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
     interaction(size_t index_i, Real dt)
 {
     Neighborhood &inner_neighborhood = this->inner_configuration_[index_i];
-
-    initializeDiffusionChangeRate(index_i);
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
         size_t index_j = inner_neighborhood.j_[n];
@@ -102,13 +99,6 @@ void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
         Real area_ij = 2.0 * grad_ijV_j.dot(e_ij) / r_ij_;
         getDiffusionChangeRate(index_i, index_j, e_ij, area_ij);
     }
-}
-//=================================================================================================//
-template <class ParticlesType, class KernelGradientType>
-void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::
-    update(size_t index_i, Real dt)
-{
-    updateSpeciesDiffusion(index_i, dt);
 }
 //=================================================================================================//
 template <class ParticlesType, class ContactParticlesType, class KernelGradientType>
@@ -169,15 +159,15 @@ DiffusionRelaxationDirichlet<ParticlesType, ContactParticlesType, KernelGradient
 //=================================================================================================//
 template <class ParticlesType, class ContactParticlesType, class KernelGradientType>
 void DiffusionRelaxationDirichlet<ParticlesType, ContactParticlesType, KernelGradientType>::
-    getDiffusionChangeRateDirichletContact(size_t particle_i, size_t particle_j, Vecd &e_ij,
+    getDiffusionChangeRateDirichlet(size_t particle_i, size_t particle_j, Vecd &e_ij,
                                            Real surface_area_ij, const StdVec<StdLargeVec<Real> *> &gradient_species_k)
 {
     for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
     {
-        Real diff_coff_ij =
-            this->all_diffusions_[m]->getInterParticleDiffusionCoff(particle_i, particle_j, e_ij);
+        Real diff_coeff_ij =
+            this->all_diffusions_[m]->getInterParticleDiffusionCoeff(particle_i, particle_i, e_ij);
         Real phi_ij = (*this->gradient_species_[m])[particle_i] - (*gradient_species_k[m])[particle_j];
-        (*this->diffusion_dt_[m])[particle_i] += diff_coff_ij * phi_ij * surface_area_ij;
+        (*this->diffusion_dt_[m])[particle_i] += diff_coeff_ij * phi_ij * surface_area_ij;
     }
 }
 //=================================================================================================//
@@ -199,7 +189,7 @@ void DiffusionRelaxationDirichlet<ParticlesType, ContactParticlesType, KernelGra
 
             const Vecd &grad_ijV_j = this->contact_kernel_gradients_[k](index_i, index_j, dW_ijV_j_, e_ij);
             Real area_ij = 2.0 * grad_ijV_j.dot(e_ij) / r_ij_;
-            getDiffusionChangeRateDirichletContact(index_i, index_j, e_ij, area_ij, gradient_species_k);
+            getDiffusionChangeRateDirichlet(index_i, index_j, e_ij, area_ij, gradient_species_k);
         }
     }
 }
@@ -223,7 +213,7 @@ DiffusionRelaxationNeumann<ParticlesType, ContactParticlesType, KernelGradientTy
 //=================================================================================================//
 template <class ParticlesType, class ContactParticlesType, class KernelGradientType>
 void DiffusionRelaxationNeumann<ParticlesType, ContactParticlesType, KernelGradientType>::
-    getDiffusionChangeRateNeumannContact(size_t particle_i, size_t particle_j,
+    getDiffusionChangeRateNeumann(size_t particle_i, size_t particle_j,
                                          Real surface_area_ij_Neumann, StdLargeVec<Real> &heat_flux_k)
 {
     for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
@@ -251,7 +241,7 @@ void DiffusionRelaxationNeumann<ParticlesType, ContactParticlesType, KernelGradi
             const Vecd &grad_ijV_j = this->contact_kernel_gradients_[k](index_i, index_j, dW_ijV_j_, e_ij);
             Vecd n_ij = n_[index_i] - n_k[index_j];
             Real area_ij_Neumann = grad_ijV_j.dot(n_ij);
-            getDiffusionChangeRateNeumannContact(index_i, index_j, area_ij_Neumann, heat_flux_k);
+            getDiffusionChangeRateNeumann(index_i, index_j, area_ij_Neumann, heat_flux_k);
         }
     }
 }
@@ -278,7 +268,7 @@ DiffusionRelaxationRobin<ParticlesType, ContactParticlesType, KernelGradientType
 //=================================================================================================//
 template <class ParticlesType, class ContactParticlesType, class KernelGradientType>
 void DiffusionRelaxationRobin<ParticlesType, ContactParticlesType, KernelGradientType>::
-    getDiffusionChangeRateRobinContact(size_t particle_i, size_t particle_j,
+    getDiffusionChangeRateRobin(size_t particle_i, size_t particle_j,
                                        Real surface_area_ij_Robin, StdLargeVec<Real> &convection_k, Real &T_infinity_k)
 {
     for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
@@ -309,7 +299,7 @@ void DiffusionRelaxationRobin<ParticlesType, ContactParticlesType, KernelGradien
             const Vecd &grad_ijV_j = this->contact_kernel_gradients_[k](index_i, index_j, dW_ijV_j_, e_ij);
             Vecd n_ij = n_[index_i] - n_k[index_j];
             Real area_ij_Robin = grad_ijV_j.dot(n_ij);
-            getDiffusionChangeRateRobinContact(index_i, index_j, area_ij_Robin, convection_k, T_infinity_k);
+            getDiffusionChangeRateRobin(index_i, index_j, area_ij_Robin, convection_k, T_infinity_k);
         }
     }
 }
@@ -331,14 +321,13 @@ void InitializationRK<ParticlesType>::
 }
 //=================================================================================================//
 template <class FirstStageType>
-void SecondStageRK2<FirstStageType>::
-    updateSpeciesDiffusion(size_t particle_i, Real dt)
+void SecondStageRK2<FirstStageType>::update(size_t index_i, Real dt)
 {
+    FirstStageType::update(index_i, dt);
     for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
     {
-        (*this->diffusion_species_[m])[particle_i] =
-            0.5 * diffusion_species_s_[m][particle_i] +
-            0.5 * ((*this->diffusion_species_[m])[particle_i] + dt * (*this->diffusion_dt_[m])[particle_i]);
+        (*this->diffusion_species_[m])[index_i] = 0.5 * diffusion_species_s_[m][index_i] +
+                                                  0.5 * (*this->diffusion_species_[m])[index_i];
     }
 }
 //=================================================================================================//

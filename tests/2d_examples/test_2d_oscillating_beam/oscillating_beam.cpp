@@ -21,7 +21,7 @@ Real BW = resolution_ref * 4; // boundary width, at least three particles
 BoundingBox system_domain_bounds(Vec2d(-SL - BW, -PL / 2.0),
                                  Vec2d(PL + 3.0 * BW, PL / 2.0));
 //----------------------------------------------------------------------
-//	Material properties of the fluid.
+//	Material properties of the solid.
 //----------------------------------------------------------------------
 Real rho0_s = 1.0e3;         // reference density
 Real Youngs_modulus = 2.0e6; // reference Youngs modulus
@@ -98,24 +98,27 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
-    SPHSystem system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, resolution_ref);
 #ifdef BOOST_AVAILABLE
     // handle command line arguments
-    system.handleCommandlineOptions(ac, av);
+    sph_system.handleCommandlineOptions(ac, av);
 #endif //----------------------------------------------------------------------
        //	Creating body, materials and particles.
        //----------------------------------------------------------------------
-    SolidBody beam_body(system, makeShared<Beam>("BeamBody"));
+    SolidBody beam_body(sph_system, makeShared<Beam>("BeamBody"));
     beam_body.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     beam_body.generateParticles<ParticleGeneratorLattice>();
 
-    ObserverBody beam_observer(system, "BeamObserver");
+    ObserverBody beam_observer(sph_system, "BeamObserver");
     beam_observer.defineAdaptationRatios(1.15, 2.0);
     beam_observer.generateParticles<ObserverParticleGenerator>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation beam_body_inner(beam_body);
     ContactRelation beam_observer_contact(beam_observer, {&beam_body});
@@ -136,15 +139,15 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     // outputs
     //-----------------------------------------------------------------------------
-    IOEnvironment io_environment(system);
-    BodyStatesRecordingToVtp write_beam_states(io_environment, system.real_bodies_);
+    IOEnvironment io_environment(sph_system);
+    BodyStatesRecordingToVtp write_beam_states(io_environment, sph_system.real_bodies_);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
         write_beam_tip_displacement("Position", io_environment, beam_observer_contact);
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
-    system.initializeSystemCellLinkedLists();
-    system.initializeSystemConfigurations();
+    sph_system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemConfigurations();
     beam_initial_velocity.exec();
     beam_corrected_configuration.exec();
     //----------------------------------------------------------------------
@@ -210,7 +213,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (system.generate_regression_data_)
+    if (sph_system.GenerateRegressionData())
     {
         // The lift force at the cylinder is very small and not important in this case.
         write_beam_tip_displacement.generateDataBase(Vec2d(1.0e-2, 1.0e-2), Vec2d(1.0e-2, 1.0e-2));
@@ -219,6 +222,7 @@ int main(int ac, char *av[])
     {
         write_beam_tip_displacement.testResult();
     }
+
 
     return 0;
 }

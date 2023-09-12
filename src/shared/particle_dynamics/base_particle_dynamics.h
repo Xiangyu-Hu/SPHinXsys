@@ -25,7 +25,7 @@
  * @brief 	This is for the base classes of particle dynamics, which describe the
  * 			interaction between particles. These interactions are used to define
  *			differential operators for surface forces or fluxes in continuum mechanics
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef BASE_PARTICLE_DYNAMICS_H

@@ -29,7 +29,7 @@
  * 			such as intersection, should be produced first.
  * 			Then, all shapes used in body definition should be either contain
  * 			or not contain each other. Partial overlap between them are not permitted.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef BASE_BODY_H

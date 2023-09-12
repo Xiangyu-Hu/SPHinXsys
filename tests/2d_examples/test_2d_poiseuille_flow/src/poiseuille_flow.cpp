@@ -77,24 +77,23 @@ class WallBoundary : public MultiPolygonShape
 /**
  * @brief 	Main program starts here.
  */
-int main()
+int main(int ac, char *av[])
 {
     /**
      * @brief Build up -- a SPHSystem --
      */
-    SPHSystem system(system_domain_bounds, resolution_ref);
-    /** Set the starting time. */
-    GlobalStaticVariables::physical_time_ = 0.0;
+    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    sph_system.handleCommandlineOptions(ac, av);
     /**
      * @brief Material property, particles and body creation of fluid.
      */
-    FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
+    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
     /**
      * @brief 	Particle and body creation of wall boundary.
      */
-    SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
+    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<ParticleGeneratorLattice>();
     /** topology */
@@ -127,26 +126,26 @@ int main()
     /** Computing viscous acceleration. */
     InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
     /** Impose transport velocity. */
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> transport_velocity_correction(water_block_complex);
+    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(water_block_complex);
     /**
      * @brief Output.
      */
-    IOEnvironment io_environment(system);
+    IOEnvironment io_environment(sph_system);
     /** Output the body states. */
-    BodyStatesRecordingToVtp body_states_recording(io_environment, system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
     /**
      * @brief Setup geometry and initial conditions.
      */
-    system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemCellLinkedLists();
     periodic_condition.update_cell_linked_list_.exec();
-    system.initializeSystemConfigurations();
+    sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
     /** Output the start states of bodies. */
     body_states_recording.writeToFile(0);
     /**
      * @brief 	Basic parameters.
      */
-    size_t number_of_iterations = system.RestartStep();
+    size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
     Real end_time = 20.0;   /**< End time. */
     Real Output_Time = 0.1; /**< Time stamps for output of body states. */
@@ -222,6 +221,7 @@ int main()
               << interval_computing_pressure_relaxation.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
+
 
     return 0;
 }

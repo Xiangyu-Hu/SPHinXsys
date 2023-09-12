@@ -28,9 +28,9 @@ std::string full_path_to_file = "./input/triangle_prism.stl";
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 0.75; // Tank width.
-Real DH = 1.3;  // Tank height.
-Real DW = 1.2;  // Tank width.
+Real DL = 0.75; // Domain width.
+Real DH = 1.3;  // Domain height.
+Real DW = 1.2;  // Domain width.
 Vec3d domain_lower_bound(-0.2, -0.2, -0.2);
 Vec3d domain_upper_bound(DL, DH, DW);
 Vecd translation(0.5 * DL, 0.5 * DH, 0.5 * DW);
@@ -48,23 +48,25 @@ class SolidBodyFromMesh : public ComplexShape
   public:
     explicit SolidBodyFromMesh(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TriangleMeshShapeSTL>(full_path_to_file, translation, scaling);
+        add<ExtrudeShape<TriangleMeshShapeSTL>>(4.0 * dp_0, full_path_to_file, translation, scaling);
+        subtract<TriangleMeshShapeSTL>(full_path_to_file, translation, scaling);
     }
 };
 //-----------------------------------------------------------------------------------------------------------
 //	Main program starts here.
 //-----------------------------------------------------------------------------------------------------------
-int main()
+int main(int ac, char *av[])
 {
     //----------------------------------------------------------------------
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
-    SPHSystem system(system_domain_bounds, dp_0);
-    IOEnvironment io_environment(system);
+    SPHSystem sph_system(system_domain_bounds, dp_0);
+    sph_system.handleCommandlineOptions(ac, av);
+    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    RealBody imported_model(system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
+    RealBody imported_model(sph_system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
     // level set shape is used for particle relaxation
     imported_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(io_environment);
     imported_model.defineParticlesAndMaterial();
@@ -78,6 +80,9 @@ int main()
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation imported_model_inner(imported_model);
     //----------------------------------------------------------------------
@@ -109,6 +114,7 @@ int main()
         }
     }
     std::cout << "The physics relaxation process of imported model finish !" << std::endl;
+
 
     return 0;
 }

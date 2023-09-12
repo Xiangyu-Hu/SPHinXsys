@@ -27,7 +27,7 @@
  * @details The fluid dynamics algorithms begin for fluid bulk without boundary condition,
  *          then algorithm interacting with wall is defined, further algorithms
  *          for multiphase flow interaction built upon these basic algorithms.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #pragma once
@@ -40,3 +40,4 @@
 #include "fluid_dynamics_multi_phase.hpp"
 #include "fluid_surface_complex.h"
 #include "fluid_surface_inner.hpp"
+#include "transport_velocity_correction.h"

@@ -24,7 +24,7 @@
  * @file 	external_force.h
  * @brief 	Here, we define the base external force class.
  * @details The simple derived classes, such as gravity will be defined in applications.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef EXTERNAL_FORCE_H

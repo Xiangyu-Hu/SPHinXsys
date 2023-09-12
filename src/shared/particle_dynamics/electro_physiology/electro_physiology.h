@@ -24,7 +24,7 @@
  * @file 	electro_physiology.h
  * @brief 	In is file, we declaim the dynamics relevant to electrophysiology,
  * 			including diffusion, reaction and muscle activation.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef ELECTRO_PHYSIOLOGY_H

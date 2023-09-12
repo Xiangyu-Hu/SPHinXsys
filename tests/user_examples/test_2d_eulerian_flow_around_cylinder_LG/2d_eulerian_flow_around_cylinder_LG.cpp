@@ -20,7 +20,7 @@ int main(int ac, char *av[])
     // Tag for run particle relaxation for the initial body fitted distribution.
     sph_system.setRunParticleRelaxation(false);
     // Tag for computation start with relaxed body fitted particles distribution.
-    sph_system.setReloadParticles(true);
+    sph_system.setReloadParticles(false);
     // Handle command line arguments and override the tags for particle relaxation and reload.
     sph_system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(sph_system);
@@ -34,7 +34,7 @@ int main(int ac, char *av[])
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getName())
         : water_block.generateParticles<ParticleGeneratorLattice>();
-    water_block.addBodyStateForRecording<int>("SurfaceIndicator");
+    water_block.addBodyStateForRecording<int>("Indicator");
 
     SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));
     cylinder.defineAdaptationRatios(1.3, 2.0);
@@ -106,7 +106,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<Integration1stHalfAcousticRiemannWithWall> pressure_relaxation(water_block_complex);
     InteractionWithUpdate<Integration2ndHalfAcousticRiemannWithWall> density_relaxation(water_block_complex);
     InteractionDynamics<ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
-    ReduceDynamics<EulerianWCAcousticTimeStepSize> get_fluid_time_step_size(water_block, 0.3);
+    ReduceDynamics<EulerianWCAcousticTimeStepSize> get_fluid_time_step_size(water_block, 0.5);
     InteractionWithUpdate<fluid_dynamics::FreeSurfaceIndicationComplex> surface_indicator(water_block_complex.getInnerRelation(), water_block_complex.getContactRelation());
     Dynamics1Level<FarFieldBoundary> variable_reset_in_boundary_condition(water_block_complex.getInnerRelation());
     //----------------------------------------------------------------------
@@ -193,6 +193,7 @@ int main(int ac, char *av[])
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
     write_total_viscous_force_on_inserted_body.testResult();
+
 
     return 0;
 }

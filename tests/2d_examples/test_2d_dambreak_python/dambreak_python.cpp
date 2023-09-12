@@ -26,8 +26,8 @@ class Parameter
     //----------------------------------------------------------------------
     Real rho0_f = 1.0;                       /**< Reference density of fluid. */
     Real gravity_g = 1.0;                    /**< Gravity. */
-    Real U_max = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
-    Real c_f = 10.0 * U_max;                 /**< Reference sound speed. */
+    Real U_ref = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
+    Real c_f = 10.0 * U_ref;                 /**< Reference sound speed. */
     //----------------------------------------------------------------------
     //	Geometric shapes used in this case.
     //----------------------------------------------------------------------
@@ -98,6 +98,9 @@ class Environment : public PreSettingCase
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
     //----------------------------------------------------------------------
     ComplexRelation water_block_complex;
     ContactRelation fluid_observer_contact;
@@ -150,7 +153,7 @@ class Environment : public PreSettingCase
                                                  wall_boundary_normal_direction(wall_boundary),
                                                  gravity_ptr(makeShared<Gravity>(Vecd(0.0, -gravity_g))),
                                                  fluid_step_initialization(water_block, gravity_ptr),
-                                                 fluid_advection_time_step(water_block, U_max),
+                                                 fluid_advection_time_step(water_block, U_ref),
                                                  fluid_acoustic_time_step(water_block),
                                                  body_states_recording(io_environment, sph_system.real_bodies_),
                                                  restart_io(io_environment, sph_system.real_bodies_),
@@ -270,7 +273,7 @@ class Environment : public PreSettingCase
         std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
                   << interval_updating_configuration.seconds() << "\n";
 
-        if (sph_system.generate_regression_data_)
+        if (sph_system.GenerateRegressionData())
         {
             write_water_mechanical_energy.generateDataBase(1.0e-3);
             write_recorded_water_pressure.generateDataBase(1.0e-3);

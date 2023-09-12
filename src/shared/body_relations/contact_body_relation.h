@@ -25,7 +25,7 @@
  * @brief 	The topological relations between bodies,
  * 			and the corresponding local topologies (particle configurations)
  * 			are constructed in these classes.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef CONTACT_BODY_RELATION_H

@@ -43,12 +43,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up a SPHSystem.
     //----------------------------------------------------------------------
-    SPHSystem system(system_domain_bounds, dp_0);
-    IOEnvironment io_environment(system);
+    SPHSystem sph_system(system_domain_bounds, dp_0);
+    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    RealBody imported_model(system, makeShared<ImportedShellModel>("ImportedShellModel"));
+    RealBody imported_model(sph_system, makeShared<ImportedShellModel>("ImportedShellModel"));
     imported_model.defineBodyLevelSetShape(level_set_refinement_ratio)->correctLevelSetSign()->writeLevelSet(io_environment);
     // here dummy linear elastic solid is use because no solid dynamics in particle relaxation
     imported_model.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
@@ -63,6 +63,9 @@ int main(int ac, char *av[])
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation imported_model_inner(imported_model);
     //----------------------------------------------------------------------
@@ -97,6 +100,7 @@ int main(int ac, char *av[])
     shell_normal_prediction.exec();
     write_imported_model_to_vtp.writeToFile(ite_p);
     std::cout << "The physics relaxation process of imported model finish !" << std::endl;
+
 
     return 0;
 }

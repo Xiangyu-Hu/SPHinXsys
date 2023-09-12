@@ -1,7 +1,7 @@
 /**
  * @file 	mesh_iterators.hpp
  * @brief 	Here, Functions belong to mesh iterators.
- * @author	hi ZHang and Xiangyu Hu
+ * @author	hi Zhang and Xiangyu Hu
  */
 
 #pragma once

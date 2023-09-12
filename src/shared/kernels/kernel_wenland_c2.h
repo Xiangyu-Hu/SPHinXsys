@@ -23,7 +23,7 @@
 /**
  * @file 	base_data_type.h
  * @brief 	This is the class for Wenland kernel.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef KERNEL_WENLAND_C2_H

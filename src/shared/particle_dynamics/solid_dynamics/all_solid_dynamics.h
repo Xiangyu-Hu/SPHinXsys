@@ -24,7 +24,7 @@
  * @file    all_solid_dynamics.h
  * @brief   This is the header file that user code should include to pick up all
  *          solid dynamics used in SPHinXsys.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #pragma once
@@ -38,3 +38,4 @@
 #include "loading_dynamics.h"
 #include "thin_structure_dynamics.h"
 #include "thin_structure_math.h"
+
