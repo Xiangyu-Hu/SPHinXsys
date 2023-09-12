@@ -29,21 +29,19 @@ StdVec<Vecd> observation_locations;
 //----------------------------------------------------------------------
 //	Global parameters on the fluid properties
 //----------------------------------------------------------------------
-Real rho0_f = 1.0; /**< Reference density of fluid. */
+Real rho0_f = 1.0; /**< Reference density of fluid. */             
 Real U_f = 1.0;	   /**< Characteristic velocity. */
-/** Reference sound speed needs to consider the flow speed in the narrow channels. */
-Real c_f = 10.0 * U_f;
-Real Re = 40000.0;					/**< Reynolds number. */
-//Real Re = 100.0;
+//Real Re = 40000.0;					/**< Reynolds number. */
+Real Re = 500.0;
+
 Real mu_f = rho0_f * U_f * DH / Re; /**< Dynamics viscosity. */
+Real gravity_g = 3.0 * mu_f * U_f / rho0_f / (DH/2.0)/ (DH/2.0) ; /**< Gravity force of fluid. */
+Real c_f = 10.0 * U_f;
+
+
 //----------------------------------------------------------------------
 //	define geometry of SPH bodies
 //----------------------------------------------------------------------
-/** the emitter block. */
-Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH);
-Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize;
-Vec2d inlet_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
-Vec2d inlet_buffer_translation = Vec2d(-DL_sponge, 0.0) + inlet_buffer_halfsize;
 
 /** the water block . */
 std::vector<Vecd> water_block_shape
@@ -93,60 +91,6 @@ public:
 		multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
 	}
 };
-//----------------------------------------------------------------------
-//	Inflow velocity
-//----------------------------------------------------------------------
-struct InflowVelocity
-{
-	Real u_ref_, t_ref_;
-	AlignedBoxShape& aligned_box_;
-	Vecd halfsize_;
 
-	template <class BoundaryConditionType>
-	InflowVelocity(BoundaryConditionType& boundary_condition)
-		: u_ref_(U_f), t_ref_(2.0),
-		aligned_box_(boundary_condition.getAlignedBox()),
-		halfsize_(aligned_box_.HalfSize()) {}
 
-	Vecd operator()(Vecd& position, Vecd& velocity)
-	{
-		Vecd target_velocity = velocity;
-		Real run_time = GlobalStaticVariables::physical_time_;
-		Real u_ave = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
-		if (aligned_box_.checkInBounds(0, position))
-		{
-			/* Fully-developed velocity inlet */
-			//target_velocity[0] = 1.5 * u_ave * (1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
-			
-			/* Uniform velocity inlet */
-			target_velocity[0] = u_ave;
-			
-			/* Fix velocity in Y direction */
-			target_velocity[1] = 0.0;
-		}
-		return target_velocity;
-	}
-};
-//----------------------------------------------------------------------
-//	Define time dependent acceleration in x-direction
-//----------------------------------------------------------------------
-class TimeDependentAcceleration : public Gravity
-{
-	Real du_ave_dt_, u_ref_, t_ref_;
-
-public:
-	explicit TimeDependentAcceleration(Vecd gravity_vector)
-		: Gravity(gravity_vector), t_ref_(2.0), u_ref_(U_f), du_ave_dt_(0) {}
-
-	virtual Vecd InducedAcceleration(Vecd& position) override
-	{
-		Real run_time_ = GlobalStaticVariables::physical_time_;
-		du_ave_dt_ = 0.5 * u_ref_ * (Pi / t_ref_) * sin(Pi * run_time_ / t_ref_);
-		return run_time_ < t_ref_ ? Vecd(du_ave_dt_, 0.0) : global_acceleration_;
-
-	}
-};
-//----------------------------------------------------------------------
-//	Define turbulent inflow boundary condition
-//----------------------------------------------------------------------
 

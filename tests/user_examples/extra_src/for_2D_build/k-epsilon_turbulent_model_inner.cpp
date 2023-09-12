@@ -7,7 +7,7 @@ namespace SPH
 	{
 		//=================================================================================================//
 		BaseTurbuClosureCoeff::BaseTurbuClosureCoeff()
-			: Karman(0.4187), C_mu(0.09), TurbulentIntensity(5.0e-2), sigma_k(1.0),
+			: Karman(0.4187), C_mu(0.09), TurbulentIntensity(5.0e-2), sigma_k(0.8),
 			C_l(1.44), C_2(1.92), sigma_E(1.3), turbu_const_E(9.793){}
 		//=================================================================================================//
 		BaseTurtbulentModelInner::BaseTurtbulentModelInner(BaseInnerRelation& inner_relation)
@@ -40,6 +40,8 @@ namespace SPH
 				particles_->addVariableToWrite<Real>("K_Production");
 				
 				particles_->registerVariable(B_, "CorrectionMatrix");
+				particles_->registerSortableVariable<Matd>("CorrectionMatrix");
+				particles_->addVariableToWrite<Matd>("CorrectionMatrix");
 
 				//** for test */
 				particles_->registerVariable(k_diffusion_, "K_Diffusion");
@@ -99,7 +101,10 @@ namespace SPH
 			TKEnergyAccInner(BaseInnerRelation& inner_relation)
 			: BaseTurtbulentModelInner(inner_relation), acc_prior_(particles_->acc_prior_),
 			surface_indicator_(particles_->surface_indicator_), pos_(particles_->pos_),
-			turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy"))
+			turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
+			B_(*particles_->getVariableByName<Matd>("CorrectionMatrix"))//,
+			//is_near_wall_P1_(*particles_->getVariableByName<int>("IsNearWallP1")), //for test
+			//is_near_wall_P2_(*particles_->getVariableByName<int>("IsNearWallP2"))  //for test
 
 		{
 			particles_->registerVariable(tke_acc_inner_, "TkeAccInner");
@@ -122,6 +127,11 @@ namespace SPH
 			particles_->addVariableToWrite<Vecd>("ViscousAccInner");
 			particles_->registerVariable(visc_acc_wall_, "ViscousAccWall");
 			particles_->addVariableToWrite<Vecd>("ViscousAccWall");
+
+			particles_->registerVariable(shear_stress_, "ShearStress");
+			//particles_->addVariableToWrite<Matd>("ShearStress");
+			particles_->registerVariable(shear_stress_wall_, "ShearStressWall");
+			//particles_->addVariableToWrite<Matd>("ShearStressWall");
 		}
 		//=================================================================================================//
 		TurbulentEddyViscosity::

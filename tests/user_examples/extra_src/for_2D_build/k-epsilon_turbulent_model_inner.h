@@ -139,18 +139,22 @@ namespace SPH
 		protected:
 			StdLargeVec<Real>& turbu_k_;
 			StdLargeVec<Vecd>& acc_prior_;
-
+			StdLargeVec<Matd>& B_;
 			StdLargeVec<Vecd>& pos_;
 			StdLargeVec<int>& surface_indicator_;
 			StdLargeVec<Vecd> tke_acc_inner_, tke_acc_wall_;
 			StdLargeVec<Vecd> test_k_grad_rslt_;
+
+			//**for test*
+			//StdLargeVec<int> &is_near_wall_P1_, &is_near_wall_P2_;
+
 		};
 
 		/**
 		 * @class TurbuViscousAccInner
 		 * @brief  the turbulent viscosity force induced acceleration
 		 */
-		class TurbuViscousAccInner : public BaseViscousAccelerationInner
+		class TurbuViscousAccInner : public BaseViscousAccelerationInner, public BaseTurbuClosureCoeff
 		{
 		public:
 			explicit TurbuViscousAccInner(BaseInnerRelation& inner_relation) ;
@@ -163,6 +167,7 @@ namespace SPH
 			StdLargeVec<Vecd>& velo_friction_;
 			StdLargeVec<Vecd> visc_acc_inner_, visc_acc_wall_;
 			StdLargeVec<Real>& distance_to_wall_;
+			StdLargeVec<Matd> shear_stress_, shear_stress_wall_;
 		};
 
 		/**

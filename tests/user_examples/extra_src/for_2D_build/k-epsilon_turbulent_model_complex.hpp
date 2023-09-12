@@ -79,6 +79,8 @@ namespace SPH
 			Matd k_production_matrix = Re_stress.array() * velocity_gradient[index_i].array();
 			k_production = k_production_matrix.sum();
 
+			std::cout << "K complex should not be executed, please check" << std::endl;
+			system("pause");
 			/** With standard wall function, epilson on wall is zero */
 			dk_dt_[index_i] += k_production - 0.0 + 0.0;
 
@@ -112,6 +114,8 @@ namespace SPH
 					epsilon_lap += 0.0;
 				}
 			}
+			std::cout << "Eplison complex should not be executed, please check" << std::endl;
+			system("pause");
 			epsilon_production = C_l * turbu_epsilon_i * k_production_[index_i] / turbu_k_i;
 			/** With standard wall function, epilson on wall is zero */
 			dE_dt_[index_i] += epsilon_production - 0.0 + epsilon_lap;
@@ -132,16 +136,13 @@ namespace SPH
 				{
 					size_t index_j = contact_neighborhood.j_[n];
 					Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
-					//the value of k on wall in this part needs discusstion!
-					k_gradient += -1.0 * 2.3 *(turbu_k_i - 0.0) * nablaW_ijV_j;
-					//k_gradient +=  (turbu_k_i - 0.0) * nablaW_ijV_j;
-					acceleration -= (2.0 / 3.0) * k_gradient;
+					//** weak form * 
+					k_gradient += -1.0 * (-1.0) * (turbu_k_i + turbu_k_i) * nablaW_ijV_j;
 				}
 			}
-			//if (surface_indicator_[index_i] == 0 && pos_[index_i][0] <= 5.95)//To prevent kernel truncation near outlet
-			
-			//According to NHT book, dkdy for wall part should be zero
-			//acc_prior_[index_i] += acceleration;
+			acceleration = -1.0 * (2.0 / 3.0) * k_gradient;
+
+			acc_prior_[index_i] += acceleration;
 			
 			//for test
 			tke_acc_wall_[index_i] = acceleration;
@@ -157,11 +158,17 @@ namespace SPH
 			Real rho_i = this->rho_[index_i];
 			const Vecd& vel_i = this->vel_[index_i];
 			const Vecd& vel_fric_i = this->velo_friction_[index_i];
-			Vecd direction_vel_fric = vel_fric_i.normalized();
-			
+			Vecd e_tau = vel_fric_i.normalized();
+			//std::cout << "e_tau=" << e_tau << std::endl;
 			Real y_plus_i = this->wall_Y_plus_[index_i];
-			Real distance_to_wall = this->distance_to_wall_[index_i];
+			Real y_p = this->distance_to_wall_[index_i];
 
+			Matd shear_stress_i_wall = Matd::Zero();
+
+			Real u_plus_i =0.0;
+			Real mu_w = 0.0;
+			Real mu_p = 0.0;
+			Real theta = 0.0;
 
 			Vecd acceleration = Vecd::Zero();
 			Vecd vel_derivative = Vecd::Zero();
@@ -169,30 +176,72 @@ namespace SPH
 			{
 				StdLargeVec<Vecd>& vel_ave_k = *(this->wall_vel_ave_[k]);
 				Neighborhood& contact_neighborhood = (*FluidWallData::contact_configuration_[k])[index_i];
+				StdLargeVec<Vecd>& n_k = *(this->wall_n_[k]);
+
+				//** for test
+				if (contact_neighborhood.current_size_ != 0)
+				{
+					u_plus_i = log(this->turbu_const_E * y_plus_i) / this->Karman;
+					mu_w = y_plus_i * this->mu_ / u_plus_i;
+					mu_p = this->mu_ + turbu_mu_i;
+					theta = y_p* vel_fric_i.norm()/ vel_i.norm();
+					if (index_i > 200 && 0)
+					{
+						std::cout << "******" << std::endl;
+						std::cout << "y_plus_i=" << y_plus_i << std::endl << "y_p=" << y_p << std::endl;
+						std::cout << "u_plus_i=" << u_plus_i << std::endl;
+						std::cout << "u_p=" << vel_i << std::endl;
+						std::cout << "mu_w=" << mu_w << std::endl << "mu_p=" << mu_p << std::endl;
+						std::cout << "theta=" << theta << std::endl;
+						std::cout << "-----" << std::endl;
+					}
+				}
+
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
+					
 					size_t index_j = contact_neighborhood.j_[n];
 					Real r_ij = contact_neighborhood.r_ij_[n];
+					Vecd& e_ij = contact_neighborhood.e_ij_[n];
+					//**Calculate the direction matrix of wall shear stress
+					Vecd e_n = n_k[index_j];
+					Matd direc_matrix =Matd::Zero();
+					direc_matrix = e_tau * e_n.transpose() + (e_tau * e_n.transpose()).transpose();
+					//std::cout << "direc_matrix=" << direc_matrix << std::endl;
 
-					//vel_derivative = 2.0 * (vel_i - vel_ave_k[index_j]) / (r_ij + 0.01 * this->smoothing_length_);
-					//acceleration += 2.0 * (this->mu_+ turbu_mu_i) * vel_derivative * contact_neighborhood.dW_ijV_j_[n] / rho_i;
 					//This is to check whether the wall-sub-nearest fluid particles fric, velo. is zero or not
 					if (index_i > 2000 && GlobalStaticVariables::physical_time_ > 5. && vel_fric_i.dot(vel_fric_i) <= 0.0+TinyReal&& contact_neighborhood.current_size_>2)
 					{
 						system("pause");
 						std::cout << index_j << std::endl;
 						std::cout << vel_fric_i << std::endl;
-						std::cout << distance_to_wall << std::endl;
+						std::cout << y_p << std::endl;
 						std::cout << contact_neighborhood.current_size_ << std::endl;
 					}
-					//vel_derivative = 2.0 * vel_fric_i.dot(vel_fric_i)* direction_vel_fric;
-					vel_derivative = distance_to_wall * vel_fric_i.dot(vel_fric_i) * direction_vel_fric / (r_ij + 0.01 * this->smoothing_length_);
-					acceleration += 4.0 * vel_derivative * contact_neighborhood.dW_ijV_j_[n] ;
+
+					shear_stress_i_wall += rho_i* vel_fric_i.dot(vel_fric_i) * direc_matrix;
+
+					//** Note I think there is something wrong with the direction of dW_ijV_j_[n]
+					Vecd acc_j = -1.0 * -1.0 * 2.0 * vel_fric_i.dot(vel_fric_i) * direc_matrix * e_ij * contact_neighborhood.dW_ijV_j_[n];
+					acceleration += acc_j;
+
+					//** for test
+					if (index_i > 200&&0)
+					{
+						//std::cout << "mu_eff=" << mu_eff << std::endl ;
+						//std::cout << "2*mu_p/rij=" << 2*mu_p / r_ij << std::endl;
+						//std::cout << "0.5 * r_ij - theta=" << 0.5 * r_ij - theta << std::endl;
+						std::cout << "Acc_j=" << acc_j << std::endl;
+						std::cout << "acceleration=" << acceleration << std::endl;
+						std::cout << "-----" << std::endl;
+					}
 				}
 			}
 			//for test
 			Real wall_viscous_factor = 1.0;
 			this->visc_acc_wall_[index_i] = wall_viscous_factor * acceleration;
+			this->shear_stress_[index_i] += shear_stress_i_wall;
+			this->shear_stress_wall_[index_i] = shear_stress_i_wall;
 
 			this->acc_prior_[index_i] += wall_viscous_factor  * acceleration;
 		}
@@ -297,6 +346,9 @@ namespace SPH
 				//friction velocity have the same direction of vel_i, if not, change its direction
 				if (vel_i.dot(velo_friction_[index_i]) < 0.0)
 					velo_friction_[index_i] = -1.0*velo_friction_[index_i];
+				
+				//**Calcualte Y+, including P layer and SUB layer
+				wall_Y_plus_[index_i] = r_wall_normal * velo_fric * rho_i / mu_;
 
 			}
 			if (r_wall_normal <= 1.5 * particle_spacing_ &&
@@ -320,7 +372,7 @@ namespace SPH
 			{
 				turbu_k_[index_i] = velo_fric * velo_fric / sqrt(C_mu);
 				turbu_epsilon_[index_i] = pow(C_mu, 0.75) * pow(turbu_k_[index_i], 1.5) / (Karman * r_wall_normal);
-				wall_Y_plus_[index_i] = r_wall_normal * velo_fric * rho_i / mu_;
+				//wall_Y_plus_[index_i] = r_wall_normal * velo_fric * rho_i / mu_;
 				wall_Y_star_[index_i] = r_wall_normal * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * rho_i / mu_;
 			}
 		}

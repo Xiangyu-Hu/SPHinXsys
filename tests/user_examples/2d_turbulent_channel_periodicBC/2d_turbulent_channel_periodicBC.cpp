@@ -5,7 +5,7 @@
  * @author 	Xiangyu Hu
  */
 //#include "sphinxsys.h"
-#include "2d_turbulent_channel.h"
+#include "2d_turbulent_channel_periodicBC.h"
 
 using namespace SPH;
 
@@ -57,85 +57,77 @@ int main(int ac, char* av[])
 	Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(water_block_complex_relation);
 	
 	/** Turbulent.Note: When use wall function, K Epsilon and TKE gradient calculation only consider inner */
-	InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner);
-	InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelInner> epsilon_equation_relaxation(water_block_inner);
-	InteractionDynamics<fluid_dynamics::TKEnergyAccComplex> turbulent_kinetic_energy_acceleration(water_block_complex_relation);
+	//InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner);
+	//InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelInner> epsilon_equation_relaxation(water_block_inner);
+	//InteractionDynamics<fluid_dynamics::TKEnergyAccInner> turbulent_kinetic_energy_acceleration(water_block_inner);
 	
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	/** Turbulent standard wall function needs normal vectors of wall. */
-	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block_complex_relation);
-
-	//** For test *
-	//InteractionDynamics<fluid_dynamics::TKEnergyAccInner,SequencedPolicy> turbulent_kinetic_energy_acceleration(water_block_inner);
-
+	//InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block_complex_relation);
 
 	/** TurbulentViscous cal. includes the molecular one and the eddy viscosity one */
 	/** TurbulentViscous cal. uses friction velocity and Y+ that are defined in WallFunction . */
-	//InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex_relation);
-	InteractionDynamics<fluid_dynamics::TurbulentViscousAccelerationWithWall, SequencedPolicy> turbulent_viscous_acceleration(water_block_complex_relation);
+	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex_relation);
+	//InteractionDynamics<fluid_dynamics::TurbulentViscousAccelerationWithWall, SequencedPolicy> turbulent_viscous_acceleration(water_block_complex_relation);
 
 
 		
 	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex,SequencedPolicy> transport_velocity_correction(water_block_complex_relation);
-	InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex>
-		inlet_outlet_surface_particle_indicator(water_block_complex_relation);
-	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation(water_block_complex_relation);
+	
+	//InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex>
+	//	inlet_outlet_surface_particle_indicator(water_block_complex_relation);
+	
+	InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_complex_relation);
 	water_block.addBodyStateForRecording<Real>("Pressure");		   // output for debug
 	water_block.addBodyStateForRecording<int>("SurfaceIndicator"); // output for debug
 
 	/** Define the external force for turbulent startup */
 	/**to reduce instability at start-up stage, 1e-4 is from poisulle case */
-	SharedPtr<TimeDependentAcceleration> gravity_ptr = makeShared<TimeDependentAcceleration>(Vecd(1.0e-4, 0.0));
-	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, gravity_ptr);
+	//SharedPtr<TimeDependentAcceleration> gravity_ptr = makeShared<TimeDependentAcceleration>(Vecd(1.0e-4, 0.0));
+	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, makeShared<Gravity>(Vecd(gravity_g, 0.0)));
 	
+	/** Periodic BCs in x direction. */
+	PeriodicConditionUsingCellLinkedList periodic_condition(water_block, water_block.getBodyShapeBounds(), xAxis);
+
 	/** Turbulent advection time step. */
-	ReduceDynamics<fluid_dynamics::TurbulentAdvectionTimeStepSize> get_turbulent_fluid_advection_time_step_size(water_block, U_f);
-	//ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
+	//ReduceDynamics<fluid_dynamics::TurbulentAdvectionTimeStepSize> get_turbulent_fluid_advection_time_step_size(water_block, U_f);
+	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
 	
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	
 	/** Turbulent eddy viscosity calculation needs values of Wall Y start. */
-	SimpleDynamics<fluid_dynamics::TurbulentEddyViscosity> update_eddy_viscosity(water_block);
+	//SimpleDynamics<fluid_dynamics::TurbulentEddyViscosity> update_eddy_viscosity(water_block);
 	
-
 	/**  Try to introduce B correction */
-	InteractionWithUpdate<CorrectedConfigurationInner> correct_configuration(water_block_inner);
-	
-
-
-
-	BodyAlignedBoxByParticle emitter(
-		water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(emitter_translation)), emitter_halfsize));
-	SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, 50, 0);
-
-	BodyAlignedBoxByCell emitter_buffer(
-		water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(inlet_buffer_translation)), inlet_buffer_halfsize));
-	SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> emitter_buffer_inflow_condition(emitter_buffer);
+	//InteractionWithUpdate<CorrectedConfigurationInner> correct_configuration(water_block_inner);
 	
 	/** Turbulent InflowTurbulentCondition.It needs characteristic Length to calculate turbulent length  */
-	SimpleDynamics<fluid_dynamics::InflowTurbulentCondition> impose_turbulent_inflow_condition(emitter_buffer,DH,0.5);
+	//SimpleDynamics<fluid_dynamics::InflowTurbulentCondition> impose_turbulent_inflow_condition(emitter_buffer,DH,0.5);
 
 
-	Vec2d disposer_up_halfsize = Vec2d(0.5 * BW, 0.55 * DH);
-	Vec2d disposer_up_translation = Vec2d(DL - BW, -0.05 * DH) + disposer_up_halfsize;
-	BodyAlignedBoxByCell disposer_up(
-		water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(disposer_up_translation)), disposer_up_halfsize));
-	SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_up_outflow_deletion(disposer_up, xAxis);
+	//Vec2d disposer_up_halfsize = Vec2d(0.5 * BW, 0.55 * DH);
+	//Vec2d disposer_up_translation = Vec2d(DL - BW, -0.05 * DH) + disposer_up_halfsize;
+	//BodyAlignedBoxByCell disposer_up(
+	//	water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(disposer_up_translation)), disposer_up_halfsize));
+	//SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_up_outflow_deletion(disposer_up, xAxis);
 ;
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_body_states(io_environment, system.real_bodies_);
-	ObservedQuantityRecording<Real> write_fluid_x_velocity("Velocity_X", io_environment, fluid_observer_contact); //For test turbulent model
-	ObservedQuantityRecording<Real> write_fluid_turbu_kinetic_energy("TurbulenceKineticEnergy", io_environment, fluid_observer_contact); //For test turbulent model
-	ObservedQuantityRecording<Real> write_fluid_turbu_dissipation_rate("TurbulentDissipation", io_environment, fluid_observer_contact); //For test turbulent model
-	ObservedQuantityRecording<Real> write_fluid_turbu_viscosity("TurbulentViscosity", io_environment, fluid_observer_contact); //For test turbulent model
+	//ObservedQuantityRecording<Real> write_fluid_x_velocity("Velocity_X", io_environment, fluid_observer_contact); //For test turbulent model
+	//ObservedQuantityRecording<Real> write_fluid_turbu_kinetic_energy("TurbulenceKineticEnergy", io_environment, fluid_observer_contact); //For test turbulent model
+	//ObservedQuantityRecording<Real> write_fluid_turbu_dissipation_rate("TurbulentDissipation", io_environment, fluid_observer_contact); //For test turbulent model
+	//ObservedQuantityRecording<Real> write_fluid_turbu_viscosity("TurbulentViscosity", io_environment, fluid_observer_contact); //For test turbulent model
 
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
 	//----------------------------------------------------------------------
 	system.initializeSystemCellLinkedLists();
+
+	periodic_condition.update_cell_linked_list_.exec();
+
 	system.initializeSystemConfigurations();
 	wall_boundary_normal_direction.exec();
 	//----------------------------------------------------------------------
@@ -143,7 +135,7 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	size_t number_of_iterations = system.RestartStep();
 	int screen_output_interval = 100;
-	Real end_time = 200.0;
+	Real end_time = 600.0;
 	Real output_interval = end_time / 40.0; /**< Time stamps for output of body states. */
 	Real dt = 0.0;							 /**< Default acoustic time step sizes. */
 	//----------------------------------------------------------------------
@@ -166,39 +158,35 @@ int main(int ac, char* av[])
 		while (integration_time < output_interval)
 		{
 			initialize_a_fluid_step.exec();
-			Real Dt = get_turbulent_fluid_advection_time_step_size.exec();
-			//Real Dt = get_fluid_advection_time_step_size.exec();
-			inlet_outlet_surface_particle_indicator.exec();
+			//Real Dt = get_turbulent_fluid_advection_time_step_size.exec();
+			Real Dt = get_fluid_advection_time_step_size.exec();
+			//inlet_outlet_surface_particle_indicator.exec();
 			update_density_by_summation.exec();
 			
-			update_eddy_viscosity.exec();
-			//viscous_acceleration.exec();
-			turbulent_viscous_acceleration.exec();
+			//update_eddy_viscosity.exec();
+			viscous_acceleration.exec();
+			//turbulent_viscous_acceleration.exec();
 			
 			transport_velocity_correction.exec();
-
 			//** Try to introduce B correction * 
-			correct_configuration.exec();
-
+			//correct_configuration.exec();
 			/** Dynamics including pressure relaxation. */
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
 				dt = SMIN(get_fluid_time_step_size.exec(), Dt - relaxation_time);
 				
-				turbulent_kinetic_energy_acceleration.exec();
+				//turbulent_kinetic_energy_acceleration.exec();
 				
 				pressure_relaxation.exec(dt);
 
-				emitter_buffer_inflow_condition.exec();
-
-				impose_turbulent_inflow_condition.exec();
+				//impose_turbulent_inflow_condition.exec();
 
 				density_relaxation.exec(dt);
 
-				k_equation_relaxation.exec(dt);
-				epsilon_equation_relaxation.exec(dt);
-				standard_wall_function_correction.exec();
+				//k_equation_relaxation.exec(dt);
+				//epsilon_equation_relaxation.exec(dt);
+				//standard_wall_function_correction.exec();
 
 				relaxation_time += dt;
 				integration_time += dt;
@@ -215,14 +203,16 @@ int main(int ac, char* av[])
 			}
 			number_of_iterations++;
 
-			/** inflow injection*/
-			emitter_inflow_injection.exec();
-			disposer_up_outflow_deletion.exec();
+			/** Periodic condition. */
+			periodic_condition.bounding_.exec();
 
 			/** Update cell linked list and configuration. */
 			water_block.updateCellLinkedListWithParticleSort(100);
+			
+			/** Periodic condition. */
+			periodic_condition.update_cell_linked_list_.exec();
+
 			water_block_complex_relation.updateConfiguration();
-			//write_body_states.writeToFile();
 		}
 
 
@@ -236,10 +226,10 @@ int main(int ac, char* av[])
 
 		TickCount t2 = TickCount::now();
 		write_body_states.writeToFile();
-		write_fluid_x_velocity.writeToFile(); //For test turbulent model
-		write_fluid_turbu_kinetic_energy.writeToFile(); //For test turbulent model
-		write_fluid_turbu_dissipation_rate.writeToFile(); //For test turbulent model
-		write_fluid_turbu_viscosity.writeToFile(); //For test turbulent model
+		//write_fluid_x_velocity.writeToFile(); //For test turbulent model
+		//write_fluid_turbu_kinetic_energy.writeToFile(); //For test turbulent model
+		//write_fluid_turbu_dissipation_rate.writeToFile(); //For test turbulent model
+		//write_fluid_turbu_viscosity.writeToFile(); //For test turbulent model
 
 
 		TickCount t3 = TickCount::now();

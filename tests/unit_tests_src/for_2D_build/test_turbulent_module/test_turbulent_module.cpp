@@ -15,7 +15,7 @@ Real rho0_f = 1.0; /**< Reference density of fluid. */
 Real U_f = 1.0;	   /**< Characteristic velocity. */
 /** Reference sound speed needs */
 Real c_f = 10.0 * U_f;
-Real Re = 20000.0;					/**< Reynolds number according to book [2006 Wilcox]. */
+Real Re = 40000.0;					/**< Reynolds number according to book [2006 Wilcox]. */
 Real mu_f = rho0_f * U_f * DH / Re; /**< Dynamics viscosity. */
 //----------------------------------------------------------------------
 
@@ -97,7 +97,12 @@ protected:
 	
 	InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner, SequencedPolicy> k_equation_relaxation;
 	InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelInner> epsilon_equation_relaxation;
+	
+	//** Test K gradient *
 	InteractionDynamics<fluid_dynamics::TKEnergyAccInner, SequencedPolicy> turbulent_kinetic_energy_acceleration;
+	//InteractionDynamics<fluid_dynamics::TKEnergyAccComplex, SequencedPolicy> turbulent_kinetic_energy_acceleration;
+
+	
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction;
 	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection, SequencedPolicy> standard_wall_function_correction;
 	InteractionDynamics<fluid_dynamics::TurbulentViscousAccelerationWithWall, SequencedPolicy> turbulent_viscous_acceleration;
@@ -121,7 +126,11 @@ public:
 
 		k_equation_relaxation(water_block_inner),
 		epsilon_equation_relaxation(water_block_inner),
+		
+		//** Test K gradient *
 		turbulent_kinetic_energy_acceleration(water_block_inner),
+		//turbulent_kinetic_energy_acceleration(water_block_complex_relation),
+
 		wall_boundary_normal_direction(wall_boundary),
 		standard_wall_function_correction(water_block_complex_relation),
 		turbulent_viscous_acceleration(water_block_complex_relation),
@@ -201,12 +210,12 @@ public:
 	void update(size_t index_i, Real dt = 0.0);
 	void impose_parabolic_k(size_t index_i);
 	void mannul_update_velocity(size_t index_i, Real dt);
-	void mannul_impose_pressure_gradient(size_t index_i);
+	void mannul_impose_pressure_gradient(size_t index_i, Real friction_vel);
 	void clear_acc_prior(size_t index_i);
 
 	std::vector<double> loadInputData(int num_data, int num_file, std::string file_name)
 	{
-		std::ifstream file("./MappingData/FromPy10/" + file_name, std::ios::binary);  
+		std::ifstream file("./MappingData/FromPy12/" + file_name, std::ios::binary);  
 		if (file)
 		{
 			std::string line;
@@ -258,10 +267,10 @@ void Test_K_Epsilon_Equation::mannul_update_velocity(size_t index_i, Real dt)
 {
 	vel_[index_i] += (acc_prior_[index_i] + acc_[index_i]) * dt;
 }
-void Test_K_Epsilon_Equation::mannul_impose_pressure_gradient(size_t index_i)
+void Test_K_Epsilon_Equation::mannul_impose_pressure_gradient(size_t index_i, Real friction_vel)
 {
 	//acc_[index_i] = 2.0/DH*velo_friction_[index_i].dot(velo_friction_[index_i])* velo_friction_[index_i].normalized();
-	acc_[index_i] = 2.0 / DH * 0.053033 * 0.053033 * Vecd(1, 0);
+	acc_[index_i] = 2.0 / DH * friction_vel * friction_vel * Vecd(1, 0);
 }
 
 
@@ -269,6 +278,9 @@ void Test_K_Epsilon_Equation::clear_acc_prior(size_t index_i)
 {
 	acc_prior_[index_i] = Vecd::Zero();
 }
+
+
+
 
 
 TEST_F(TurbulentModule, TestTurbulentKineticEnergyEquation)
@@ -280,34 +292,35 @@ TEST_F(TurbulentModule, TestTurbulentKineticEnergyEquation)
 	write_body_states.writeToFile();//** output to check initial profiles *
 	
 	dt = 0.1;
+	Real friction_velocity = 0.048990627;
 	int num_iter = 0;
 	while (GlobalStaticVariables::physical_time_<100.0)
 	{
 		//** Try to introduce B correction * 
-		correct_configuration.exec();
+		//correct_configuration.exec();
 		//update_eddy_viscosity.exec();
 
 
 		//** Test viscous force *
 		standard_wall_function_correction.exec(); //the wall viscous relies on wall Func values
 		turbulent_viscous_acceleration.exec();
-		write_body_states.writeToFile();
-		std::cout <<"Test viscous" << std::endl;
-		system("pause");
-
-		//turbulent_kinetic_energy_acceleration.exec();
 		for (int index_i = 0; index_i < num_fluid_particle; ++index_i)
 		{
-			test_k_ep_equation.mannul_impose_pressure_gradient(index_i);
+			test_k_ep_equation.mannul_impose_pressure_gradient(index_i, friction_velocity);
 			//test_k_ep_equation.mannul_update_velocity(index_i, dt);
 		}
+		//write_body_states.writeToFile();
+		//std::cout <<"Test viscous" << std::endl;
+		//system("pause");
+
+		//turbulent_kinetic_energy_acceleration.exec(); //** This only contributes to momentum equ.
+
 
 		k_equation_relaxation.exec(dt);
 		epsilon_equation_relaxation.exec(dt);
 		standard_wall_function_correction.exec();
 
-		GlobalStaticVariables::physical_time_ += dt;
-		std::cout << "physical_time_="<< GlobalStaticVariables::physical_time_ <<std::endl;
+
 		if(num_iter % 10 == 0)
 			write_body_states.writeToFile();
 		num_iter++;
@@ -315,13 +328,38 @@ TEST_F(TurbulentModule, TestTurbulentKineticEnergyEquation)
 		{
 			test_k_ep_equation.clear_acc_prior(index_i);
 		}
-		system("pause");
+		GlobalStaticVariables::physical_time_ += dt;
+		std::cout << "physical_time_=" << GlobalStaticVariables::physical_time_ << std::endl;
+		//system("pause");
 	}
 
 	ASSERT_NEAR(1, 1, 0.02);
 
 
 	std::cout << "TestTurbulentKineticEnergyEquation completed, continuing will rewrite body states data" << std::endl;
+	system("pause");
+
+}
+
+TEST_F(TurbulentModule, TestTurbulentKineticEnergyGradient)
+{
+	SimpleDynamics<Test_K_Epsilon_Equation, SequencedPolicy> test_k_ep_equation(water_block);
+	for (int index_i = 0; index_i < num_fluid_particle; ++index_i)
+	{
+		test_k_ep_equation.impose_parabolic_k(index_i); //** impose parabolic profiles *
+	}
+	dt = 0.1;
+	write_body_states.writeToFile(); //output initial condition 
+
+	turbulent_kinetic_energy_acceleration.exec();
+	GlobalStaticVariables::physical_time_ += dt;
+	std::cout << "physical_time_=" << GlobalStaticVariables::physical_time_ << std::endl;
+
+	write_body_states.writeToFile();
+	ASSERT_NEAR(1, 1, 0.02);
+
+
+	std::cout << "TestTurbulentKineticEnergyGradient completed, continuing will rewrite body states data" << std::endl;
 	system("pause");
 
 }
@@ -340,24 +378,7 @@ TEST_F(TurbulentModule, TestMomentumEquation)
 }
 
 
-TEST_F(TurbulentModule, TestTurbulentKineticEnergyGradient)
-{
-	SimpleDynamics<Test_K_Epsilon_Equation, SequencedPolicy> test_k_ep_equation(water_block);
-	InteractionDynamics<fluid_dynamics::TKEnergyAccComplex, SequencedPolicy> turbulent_kinetic_energy_acceleration(water_block_complex_relation);
-	for (int index_i = 0; index_i < num_fluid_particle; ++index_i)
-	{
-		test_k_ep_equation.impose_parabolic_k(index_i); //** impose parabolic profiles *
-	}
-	write_body_states.writeToFile();
-	turbulent_kinetic_energy_acceleration.exec();
-	write_body_states.writeToFile();
-	ASSERT_NEAR(1, 1, 0.02);
 
-
-	std::cout << "TestTurbulentKineticEnergyGradient completed, continuing will rewrite body states data" << std::endl;
-	system("pause");
-
-}
 
 
 
