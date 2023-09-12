@@ -13,7 +13,7 @@ namespace SPH
 			coefficient_(coefficient),
 			level_set_shape_(&near_surface.level_set_shape_) {}
 		//=================================================================================================//
-        void StaticConfinementTransportVelocity::update(size_t index_i, Real dt)
+        void StaticConfinementTransportVelocity::interaction(size_t index_i, Real dt)
 		{
 			Vecd acceleration_trans = Vecd::Zero();
             /*below for debuging*/
@@ -27,11 +27,17 @@ namespace SPH
             {
                 pos_[index_i] += coefficient_ * smoothing_length_sqr_ * acceleration_trans;
             }
-			/*std::string output_folder = "./output";
-			std::string filefullpath = output_folder + "/" + "transportVelocity_wall_level_" + std::to_string(dt) + ".dat";
+			 //std::string output_folder = "./output";
+				//std::string filefullpath = output_folder + "/" + "transportVelocity_wall_levelset_" + std::to_string(dt) + ".dat";
+				//std::ofstream out_file(filefullpath.c_str(), std::ios::app);
+				//out_file << pos_[index_i][0] << " " << pos_[index_i][1] << " "<< index_i << " "  << acceleration_trans[0] << " " << acceleration_trans[1]<<" "  << acceleration_trans.norm() << std::endl;
+				///** correcting particle position */
+
+			std::string output_folder = "./output";
+			std::string filefullpath = output_folder + "/" + "transportVelocity_wall_levelset_" + std::to_string(dt) + ".dat";
 			std::ofstream out_file(filefullpath.c_str(), std::ios::app);
-			out_file << index_i << " " << surface_indicator_[index_i] << " " << acceleration_trans[0] << " " << acceleration_trans[1]
-						<< " " << pos_tem[0] << " " << pos_tem[1] << " " << pos_[index_i][0] << " " << pos_[index_i][1] << " " << dt << std::endl;*/
+			out_file <<this->particles_->pos_[index_i][0]<<" "<<this->particles_->pos_[index_i][1]<<" " <<index_i<< "  "<<  acceleration_trans.norm()<<std::endl;
+			out_file << " \n";
 		}
 		//=================================================================================================//
 		StaticConfinementViscousAcceleration::StaticConfinementViscousAcceleration(NearShapeSurface& near_surface)
@@ -104,19 +110,26 @@ namespace SPH
 		StaticConfinementFreeSurfaceIndication::StaticConfinementFreeSurfaceIndication(NearShapeSurface &near_surface)
 		: BaseLocalDynamics<BodyPartByCell>(near_surface), FluidDataSimple(sph_body_),
 			pos_(particles_->pos_), surface_indicator_(particles_->surface_indicator_),
-			level_set_shape_(&near_surface.level_set_shape_), pos_div_(*particles_->getVariableByName<Real>("DensityChangeRate"))
+			level_set_shape_(&near_surface.level_set_shape_), pos_div_(*particles_->getVariableByName<Real>("PositionDivergence"))
 		{}
 		//=================================================================================================//
-		void StaticConfinementFreeSurfaceIndication::update(size_t index_i, Real dt )
+		void StaticConfinementFreeSurfaceIndication::interaction(size_t index_i, Real dt )
 		{
+			//std::string output_folder_1 = "./output";
+			//std::string filefullpath_1 = output_folder_1 + "/" + "position_divergence_levelset_before" + std::to_string(dt) + ".dat";
+			//std::ofstream out_file_1(filefullpath_1.c_str(), std::ios::app);
+			//out_file_1 <<pos_[index_i][0]<<" "<<pos_[index_i][1]<<" " <<index_i<< "  "<<  pos_div_[index_i]<<std::endl;
+			////out_file << std::fixed << std::setprecision(2)<<pos_[index_i][0]<< "  " <<pos_[index_i][1]<< "  "<< pos_div << "  "<<  pos_div_[index_i]<<std::endl;
+			//out_file_1 << " \n";
+
 			Real pos_div = - level_set_shape_->computeKernelGradientMultiplyRijIntegral(pos_[index_i]);
 			pos_div_[index_i] += pos_div;
-			std::string output_folder = "./output";
-			std::string filefullpath = output_folder + "/" + "position_divergence_levelset_" + std::to_string(dt) + ".dat";
-			std::ofstream out_file(filefullpath.c_str(), std::ios::app);
-			out_file << index_i<< "  "<<  pos_div_[index_i]<<std::endl;
-			//out_file << std::fixed << std::setprecision(2)<<pos_[index_i][0]<< "  " <<pos_[index_i][1]<< "  "<< pos_div << "  "<<  pos_div_[index_i]<<std::endl;
-			out_file << " \n";
+			//std::string output_folder = "./output";
+			//std::string filefullpath = output_folder + "/" + "position_divergence_levelset_after" + std::to_string(dt) + ".dat";
+			//std::ofstream out_file(filefullpath.c_str(), std::ios::app);
+			//out_file <<pos_[index_i][0]<<" "<<pos_[index_i][1]<<" " <<index_i<< "  "<<  pos_div_[index_i]<<std::endl;
+			////out_file << std::fixed << std::setprecision(2)<<pos_[index_i][0]<< "  " <<pos_[index_i][1]<< "  "<< pos_div << "  "<<  pos_div_[index_i]<<std::endl;
+			//out_file << " \n";
 		}
 		//=================================================================================================//
 		StaticConfinementBounding::StaticConfinementBounding(NearShapeSurface& near_surface)

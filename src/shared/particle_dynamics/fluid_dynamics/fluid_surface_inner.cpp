@@ -21,6 +21,14 @@ void FreeSurfaceIndicationInner::update(size_t index_i, Real dt)
     surface_indicator_[index_i] = 1;
     if (pos_div_[index_i] > threshold_by_dimensions_ && !isVeryNearFreeSurface(index_i))
         surface_indicator_[index_i] = 0;
+
+     /*below for debuging*/
+    /*std::string output_folder = "./output";
+	std::string filefullpath = output_folder + "/" + "position_divergence_before_update_" + std::to_string(dt) + ".dat";
+	std::ofstream out_file(filefullpath.c_str(), std::ios::app);
+	out_file <<this->particles_->pos_[index_i][0]<<" "<<this->particles_->pos_[index_i][1]<<" " <<index_i<< "  "<<  pos_div_[index_i]<<std::endl;
+	out_file << " \n";*/
+		
 }
 //=================================================================================================//
 bool FreeSurfaceIndicationInner::isVeryNearFreeSurface(size_t index_i)

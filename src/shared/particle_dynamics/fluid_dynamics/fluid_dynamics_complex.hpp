@@ -50,6 +50,10 @@ void TransportVelocityCorrectionComplex::
         }
     }
 
+    std::string output_folder = "./output";
+	std::string filefullpath = output_folder + "/" + "transportVelocity_wall_" + std::to_string(dt) + ".dat";
+	std::ofstream out_file(filefullpath.c_str(), std::ios::app);
+	out_file << pos_[index_i][0] << " " << pos_[index_i][1] << " "<< index_i << " "  << acceleration_trans.norm() << std::endl;
     /** correcting particle position */
     if (surface_indicator_[index_i] == 0)
         pos_[index_i] += coefficient_ * smoothing_length_sqr_ * acceleration_trans;

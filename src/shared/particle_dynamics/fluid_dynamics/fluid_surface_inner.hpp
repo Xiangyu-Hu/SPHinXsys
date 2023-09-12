@@ -25,6 +25,14 @@ void FreeSurfaceIndicationInner::
         pos_div -= inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.r_ij_[n];
     }
     pos_div_[index_i] = pos_div;
+
+    /*below for debuging*/
+    /*std::string output_folder = "./output";
+	std::string filefullpath = output_folder + "/" + "position_divergence_all_particles_" + std::to_string(dt) + ".dat";
+	std::ofstream out_file(filefullpath.c_str(), std::ios::app);
+	out_file <<this->particles_->pos_[index_i][0]<<" "<<this->particles_->pos_[index_i][1]<<" " <<index_i<< "  "<<  pos_div_[index_i]<<std::endl;
+	out_file << " \n";*/
+		
 }
 //=================================================================================================//
 void ColorFunctionGradientInner::

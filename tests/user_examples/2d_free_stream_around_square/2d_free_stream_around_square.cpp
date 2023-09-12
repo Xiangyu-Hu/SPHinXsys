@@ -58,9 +58,9 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 
 	/** time-space method to detect surface particles. */
-    InteractionWithUpdate<fluid_dynamics::FreeSurfaceIndicationInner, SequencedPolicy>
+    InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationInner>
 		free_stream_surface_indicator(water_block_inner);
-
+	
 	/** Evaluation of density by freestream approach. */
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceInner> update_fluid_density(water_block_inner);
 	/** We can output a method-specific particle data for debug */
@@ -78,7 +78,7 @@ int main(int ac, char *av[])
 	/** Computing viscous acceleration. */
     InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_inner);
 	/** Apply transport velocity formulation. */
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionInner> transport_velocity_correction(water_block_inner);
+    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionInner, SequencedPolicy> transport_velocity_correction(water_block_inner);
 	/** compute the vorticity. */
 	InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_inner);
 
@@ -143,7 +143,7 @@ int main(int ac, char *av[])
 		{
 			initialize_a_fluid_step.exec();
 			Real Dt = get_fluid_advection_time_step_size.exec();
-			free_stream_surface_indicator.exec();
+			free_stream_surface_indicator.exec(GlobalStaticVariables::physical_time_);
 			update_fluid_density.exec();
 			viscous_acceleration.exec();
             transport_velocity_correction.exec(GlobalStaticVariables::physical_time_);

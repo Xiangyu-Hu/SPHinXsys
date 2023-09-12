@@ -13,10 +13,10 @@ using namespace SPH;
 Real DL = 30.0;								  /**< Channel length. */
 Real DH = 16.0;								  /**< Channel height. */
 Real particle_spacing_ref = 0.5;			  /**< Initial reference particle spacing. */
-Real DL_sponge = particle_spacing_ref * 5.0; /**< Sponge region to impose emitter. */
+Real DL_sponge = particle_spacing_ref * 10.0; /**< Sponge region to impose emitter. */
 Real BW = 4.0 * particle_spacing_ref;		  /**< Sponge region to impose injection. */
 Vec2d insert_circle_center(10.0, 0.5 * DH);	  /**< Location of the cylinder center. */
-Real insert_circle_radius = 2.0;			  /**< Radius of the cylinder. */
+Real insert_circle_radius = 1.0;			  /**< Radius of the cylinder. */
 // Observation locations
 Vec2d point_coordinate_1(3.0, 5.0);
 Vec2d point_coordinate_2(4.0, 5.0);
