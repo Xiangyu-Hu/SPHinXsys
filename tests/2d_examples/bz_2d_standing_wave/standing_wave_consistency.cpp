@@ -193,8 +193,11 @@ int main(int ac, char* av[])
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannCorrectWithWall> fluid_pressure_relaxation_correct(water_block_complex);
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannConsistencyCorrectWithWall> fluid_pressure_relaxation_consistency_correct(water_block_complex);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_block_complex);
+    InteractionWithUpdate<UpdateConfigurationComplex> update_configuration_fluid(water_block_complex);
     InteractionWithUpdate<CorrectedConfigurationComplex> corrected_configuration_fluid(water_block_complex, 0.3);
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> fluid_density_by_summation(water_block_complex);
+    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_correction(water_block_complex);
+    InteractionDynamics<fluid_dynamics::TransportVelocityConsistencyCorrectionComplex<AllParticles>> transport_consistency_correction(water_block_complex);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
     SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block, gravity_ptr);
@@ -269,6 +272,8 @@ int main(int ac, char* av[])
             Real advection_dt = fluid_advection_time_step.exec();
             fluid_density_by_summation.exec();
             corrected_configuration_fluid.exec();
+            //update_configuration_fluid.exec();
+            transport_correction.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
 
             time_instance = TickCount::now();

@@ -65,7 +65,7 @@ void BaseIntegration1stHalfConsistencyCorrect<RiemannSolverType>::interaction(si
         Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
         const Vecd& e_ij = inner_neighborhood.e_ij_[n];
 
-        acceleration -= (this->p_[index_i] * this->B_[index_i] + this->p_[index_j] * this->B_[index_j]) * dW_ijV_j * e_ij;
+        acceleration -= (this->p_[index_i] * this->B_[index_j] + this->p_[index_j] * this->B_[index_i]) * dW_ijV_j * e_ij;
         rho_dissipation += this->riemann_solver_.DissipativeUJump(this->p_[index_i] - this->p_[index_j]) * dW_ijV_j;
     }
     this->acc_[index_i] += acceleration / this->rho_[index_i];

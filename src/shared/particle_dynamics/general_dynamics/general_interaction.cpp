@@ -8,7 +8,10 @@ UpdateConfigurationInner::
     UpdateConfigurationInner(BaseInnerRelation& inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()),
       GeneralDataDelegateInner(inner_relation),
-      B_(*particles_->getVariableByName<Matd>("CorrectionMatrix")) {}
+      B_(*particles_->getVariableByName<Matd>("CorrectionMatrix")) 
+{
+    particles_->addVariableToWrite<Matd>("CorrectionMatrix");
+}
 //=================================================================================================//
 void UpdateConfigurationInner::interaction(size_t index_i, Real dt)
 {
