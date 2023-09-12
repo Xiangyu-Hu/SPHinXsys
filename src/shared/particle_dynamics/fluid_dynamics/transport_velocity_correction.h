@@ -165,6 +165,85 @@ class TransportVelocityCorrectionComplexAdaptive
 
     void interaction(size_t index_i, Real dt = 0.0);
 };
+
+/**
+ * @class TransportVelocityConsistencyCorrectionInner
+ */
+template <class ParticleScopeType>
+class TransportVelocityConsistencyCorrectionInner : public LocalDynamics, public FluidDataInner
+{
+public:
+    explicit TransportVelocityConsistencyCorrectionInner(BaseInnerRelation& inner_relation, Real coefficient = 0.2)
+        : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
+        pos_(particles_->pos_), B_(*particles_->getVariableByName<Matd>("CorrectionMatrix")),
+        indicator_(*particles_->getVariableByName<int>("Indicator")),
+        smoothing_length_sqr_(pow(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
+        coefficient_(coefficient), checkWithinScope(particles_) {};
+    virtual ~TransportVelocityConsistencyCorrectionInner() {};
+
+    void interaction(size_t index_i, Real dt = 0.0)
+    {
+        if (checkWithinScope(index_i))
+        {
+            Vecd acceleration_trans = Vecd::Zero();
+            const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+            for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+            {
+                size_t index_j = inner_neighborhood.j_[n];;
+                Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+
+                // acceleration for transport velocity
+                acceleration_trans -= (B_[index_i] + B_[index_j]) * nablaW_ijV_j;
+            }
+
+            pos_[index_i] += coefficient_ * smoothing_length_sqr_ * acceleration_trans;
+        }
+    };
+
+protected:
+    StdLargeVec<Vecd>& pos_;
+    StdLargeVec<Matd>& B_;
+    StdLargeVec<int>& indicator_;
+    Real smoothing_length_sqr_;
+    const Real coefficient_;
+    ParticleScopeType checkWithinScope;
+};
+
+template <class ParticleScopeType>
+class TransportVelocityConsistencyCorrectionComplex
+    : public BaseInteractionComplex<TransportVelocityConsistencyCorrectionInner<ParticleScopeType>, FluidContactOnly>
+{
+public:
+    template <typename... Args>
+    TransportVelocityConsistencyCorrectionComplex(Args &&...args)
+        : BaseInteractionComplex<TransportVelocityConsistencyCorrectionInner<ParticleScopeType>, FluidContactOnly>(
+            std::forward<Args>(args)...) {};
+    virtual ~TransportVelocityConsistencyCorrectionComplex() {};
+
+    void interaction(size_t index_i, Real dt = 0.0)
+    {
+        TransportVelocityConsistencyCorrectionInner<ParticleScopeType>::interaction(index_i, dt);
+
+        if (this->checkWithinScope(index_i))
+        {
+            Vecd acceleration_trans = Vecd::Zero();
+            for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
+            {
+                Neighborhood& contact_neighborhood = (*this->contact_configuration_[k])[index_i];
+                for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+                {
+                    Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
+
+                    // acceleration for transport velocity
+                    acceleration_trans -= 2 * this->B_[index_i] * nablaW_ijV_j;
+                }
+            }
+
+            this->pos_[index_i] += this->coefficient_ * this->smoothing_length_sqr_ * acceleration_trans;
+        }
+    };
+};
+
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // TRANSPORT_VELOCITY_CORRECTION_H

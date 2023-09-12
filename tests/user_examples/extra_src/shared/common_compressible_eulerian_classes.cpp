@@ -175,21 +175,21 @@ BaseIntegrationInCompressible::BaseIntegrationInCompressible(BaseInnerRelation &
                                                                                                   dmom_dt_(*particles_->getVariableByName<Vecd>("MomentumChangeRate")),
                                                                                                   dmom_dt_prior_(*particles_->getVariableByName<Vecd>("OtherMomentumChangeRate")){};
 //=================================================================================================//
-ConservativeNoRiemannSolverInCompressibleEulerianMethod::
-ConservativeNoRiemannSolverInCompressibleEulerianMethod(CompressibleFluid& compressible_fluid_i, CompressibleFluid& compressible_fluid_j)
-    : compressible_fluid_i_(compressible_fluid_i), compressible_fluid_j_(compressible_fluid_j) {};
-//=================================================================================================//
-CompressibleFluidStarState ConservativeNoRiemannSolverInCompressibleEulerianMethod::
-getInterfaceState(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j, 
-                  const Matd& B_i, const Matd& B_j, const Vecd& e_ij)
-{
-    Real p_star = 0.5 * (state_i.p_ * B_j + state_j.p_ * B_i);
-    Vecd v_star = 0.5 * (state_i.vel_ + state_j.vel_);
-    Real rho_star = 0.5 * (state_i.rho_ + state_j.rho_);
-    Real energy_star = 0.5 * (state_i.E_ + state_j.E_);
-
-    return CompressibleFluidStarState(rho_star, v_star, p_star, energy_star);
-}
+//ConservativeNoRiemannSolverInCompressibleEulerianMethod::
+//ConservativeNoRiemannSolverInCompressibleEulerianMethod(CompressibleFluid& compressible_fluid_i, CompressibleFluid& compressible_fluid_j)
+//    : compressible_fluid_i_(compressible_fluid_i), compressible_fluid_j_(compressible_fluid_j) {};
+////=================================================================================================//
+//CompressibleFluidStarState ConservativeNoRiemannSolverInCompressibleEulerianMethod::
+//getInterfaceState(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j, 
+//                  const Matd& B_i, const Matd& B_j, const Vecd& e_ij)
+//{
+//    Real p_star = 0.5 * (state_i.p_ * B_j + state_j.p_ * B_i);
+//    Vecd v_star = 0.5 * (state_i.vel_ + state_j.vel_);
+//    Real rho_star = 0.5 * (state_i.rho_ + state_j.rho_);
+//    Real energy_star = 0.5 * (state_i.E_ + state_j.E_);
+//
+//    return CompressibleFluidStarState(rho_star, v_star, p_star, energy_star);
+//}
 //=================================================================================================//
 
 } // namespace SPH

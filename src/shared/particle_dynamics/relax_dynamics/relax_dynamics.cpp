@@ -214,6 +214,60 @@ void RelaxationStepByCMInner::exec(Real dt)
     update_particle_position_.exec(dt_square);
     surface_correction_->exec();
 }
+//=================================================================================================//
+RelaxationAccelerationByCMComplex::
+RelaxationAccelerationByCMComplex(ComplexRelation& complex_relation)
+    : LocalDynamics(complex_relation.getSPHBody()), 
+    RelaxDataDelegateComplex(complex_relation),
+    acc_(particles_->acc_), pos_(particles_->pos_),
+    B_(*particles_->template getVariableByName<Matd>("CorrectionMatrix"))
+{
+    contact_B_.resize(this->contact_particles_.size());
+    for (size_t k = 0; k != this->contact_particles_.size(); ++k)
+    {
+        contact_B_[k] = this->contact_particles_[k]->template registerSharedVariable<Matd>("CorrectionMatrix");
+    }
+}
+//=================================================================================================//
+RelaxationAccelerationByCMComplexWithLevelSetCorrection::
+RelaxationAccelerationByCMComplexWithLevelSetCorrection(ComplexRelation& complex_relation, const std::string& shape_name)
+    : RelaxationAccelerationByCMComplex(complex_relation),
+    sph_adaptation_(sph_body_.sph_adaptation_)
+{
+    ComplexShape& complex_shape = DynamicCast<ComplexShape>(this, *sph_body_.body_shape_);
+    level_set_shape_ = DynamicCast<LevelSetShape>(this, complex_shape.getShapeByName(shape_name));
+}
+//=================================================================================================//
+RelaxationStepByCMComplex::RelaxationStepByCMComplex(ComplexRelation& complex_relation,
+    const std::string& shape_name, bool level_set_correction)
+    : BaseDynamics<void>(complex_relation.getSPHBody()),
+    real_body_(complex_relation.getInnerRelation().real_body_),
+    complex_relation_(complex_relation),
+    near_shape_surface_(*real_body_, shape_name),
+    get_time_step_square_(*real_body_), update_particle_position_(*real_body_),
+    surface_bounding_(near_shape_surface_)
+{
+    if (!level_set_correction)
+    {
+        relaxation_acceleration_complex_ =
+            makeUnique<InteractionDynamics<RelaxationAccelerationByCMComplex>>(complex_relation);
+    }
+    else
+    {
+        relaxation_acceleration_complex_ =
+            makeUnique<InteractionDynamics<RelaxationAccelerationByCMComplexWithLevelSetCorrection>>(complex_relation, shape_name);
+    }
+}
+//=================================================================================================//
+void RelaxationStepByCMComplex::exec(Real dt)
+{
+    real_body_->updateCellLinkedList();
+    complex_relation_.updateConfiguration();
+    relaxation_acceleration_complex_->exec();
+    Real dt_square = get_time_step_square_.exec();
+    update_particle_position_.exec(dt_square);
+    surface_bounding_.exec();
+}
 //****************************************IMPLICIT SCHEME******************************************//
 //=================================================================================================//
 RelaxationImplicitInner::RelaxationImplicitInner(BaseInnerRelation& inner_relation)

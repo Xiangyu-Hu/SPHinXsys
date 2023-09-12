@@ -213,15 +213,15 @@ using Integration2ndHalfHLLCWithLimiterRiemann = BaseIntegration2ndHalf<HLLCWith
  * @class ConservativeNoRiemannSolverInCompressibleEulerianMethod
  * @brief Conservative no riemann solver for weakly-compressible flow in Eulerian method for compressible flow.
  */
-class ConservativeNoRiemannSolverInCompressibleEulerianMethod
-{
-    CompressibleFluid& compressible_fluid_i_, & compressible_fluid_j_;
-
-public:
-    ConservativeNoRiemannSolverInCompressibleEulerianMethod(CompressibleFluid& fluid_i, CompressibleFluid& fluid_j);
-    CompressibleFluidStarState getInterfaceState(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j,
-                                                 const Matd& B_i, const Matd& B_j, const Vecd& e_ij);
-};
+//class ConservativeNoRiemannSolverInCompressibleEulerianMethod
+//{
+//    CompressibleFluid& compressible_fluid_i_, & compressible_fluid_j_;
+//
+//public:
+//    ConservativeNoRiemannSolverInCompressibleEulerianMethod(CompressibleFluid& fluid_i, CompressibleFluid& fluid_j);
+//    CompressibleFluidStarState getInterfaceState(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j,
+//                                                 const Matd& B_i, const Matd& B_j, const Vecd& e_ij);
+//};
 
 } // namespace SPH
 #endif // COMMON_COMPRESSIBLE_EULERIAN_CLASSES_H

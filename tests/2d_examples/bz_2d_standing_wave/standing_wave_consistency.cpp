@@ -36,8 +36,8 @@ Vec2d inner_wall_translation = inner_wall_halfsize;
 //----------------------------------------------------------------------
 class WallBoundary : public ComplexShape
 {
-  public:
-    explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
+public:
+    explicit WallBoundary(const std::string& shape_name) : ComplexShape(shape_name)
     {
         add<TransformShape<GeometricShapeBox>>(Transform(outer_wall_translation), outer_wall_halfsize);
         subtract<TransformShape<GeometricShapeBox>>(Transform(inner_wall_translation), inner_wall_halfsize);
@@ -73,8 +73,8 @@ std::vector<Vecd> createWaterBlockShape()
 
 class WaterBlock : public ComplexShape
 {
-  public:
-    explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
+public:
+    explicit WaterBlock(const std::string& shape_name) : ComplexShape(shape_name)
     {
         MultiPolygon outer_boundary(createWaterBlockShape());
         add<MultiPolygonShape>(outer_boundary, "OuterBoundary");
@@ -100,7 +100,7 @@ MultiPolygon createWaveProbeShape()
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main(int ac, char *av[])
+int main(int ac, char* av[])
 {
     //----------------------------------------------------------------------
     //	Build up an SPHSystem.
@@ -108,7 +108,7 @@ int main(int ac, char *av[])
     BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     /** Tag for run particle relaxation for the initial body fitted distribution. */
-    sph_system.setRunParticleRelaxation(true);
+    sph_system.setRunParticleRelaxation(false);
     /** Tag for computation start with relaxed body fitted particles distribution. */
     sph_system.setReloadParticles(false);
     sph_system.handleCommandlineOptions(ac, av);
@@ -138,7 +138,7 @@ int main(int ac, char *av[])
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
     //----------------------------------------------------------------------
-    ComplexRelation water_block_complex(water_block, {&wall_boundary});
+    ComplexRelation water_block_complex(water_block, { &wall_boundary });
     //----------------------------------------------------------------------
     /** check whether run particle relaxation for body fitted particle distribution. */
     if (sph_system.RunParticleRelaxation())
@@ -147,7 +147,7 @@ int main(int ac, char *av[])
         /**
          * @brief 	Methods used for particle relaxation.
          */
-        /** Random reset the insert body particle position. */
+         /** Random reset the insert body particle position. */
         SimpleDynamics<RandomizeParticlePosition> random_water_body_particles(water_block);
         SimpleDynamics<RandomizeParticlePosition> random_wall_body_particles(wall_boundary);
         /** Write the body state to Vtp file. */
@@ -191,6 +191,7 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannCorrectWithWall> fluid_pressure_relaxation_correct(water_block_complex);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannConsistencyCorrectWithWall> fluid_pressure_relaxation_consistency_correct(water_block_complex);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_block_complex);
     InteractionWithUpdate<CorrectedConfigurationComplex> corrected_configuration_fluid(water_block_complex, 0.3);
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> fluid_density_by_summation(water_block_complex);
@@ -277,7 +278,7 @@ int main(int ac, char *av[])
             {
                 /** inner loop for dual-time criteria time-stepping.  */
                 acoustic_dt = fluid_acoustic_time_step.exec();
-                fluid_pressure_relaxation_correct.exec(acoustic_dt);
+                fluid_pressure_relaxation_consistency_correct.exec(acoustic_dt);
                 fluid_density_relaxation.exec(acoustic_dt);
                 relaxation_time += acoustic_dt;
                 integration_time += acoustic_dt;
@@ -289,8 +290,8 @@ int main(int ac, char *av[])
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << GlobalStaticVariables::physical_time_
-                          << "	advection_dt = " << advection_dt << "	acoustic_dt = " << acoustic_dt << "\n";
+                    << GlobalStaticVariables::physical_time_
+                    << "	advection_dt = " << advection_dt << "	acoustic_dt = " << acoustic_dt << "\n";
 
                 if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
                 {
@@ -319,13 +320,13 @@ int main(int ac, char *av[])
     TimeInterval tt;
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds()
-              << " seconds." << std::endl;
+        << " seconds." << std::endl;
     std::cout << std::fixed << std::setprecision(9) << "interval_computing_time_step ="
-              << interval_computing_time_step.seconds() << "\n";
+        << interval_computing_time_step.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_computing_fluid_pressure_relaxation = "
-              << interval_computing_fluid_pressure_relaxation.seconds() << "\n";
+        << interval_computing_fluid_pressure_relaxation.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
-              << interval_updating_configuration.seconds() << "\n";
+        << interval_updating_configuration.seconds() << "\n";
 
     if (sph_system.GenerateRegressionData())
     {

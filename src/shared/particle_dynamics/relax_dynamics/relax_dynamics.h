@@ -218,6 +218,7 @@ class ShapeSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>,
     LevelSetShape *level_set_shape_;
     Real constrained_distance_;
 };
+
 /**
  * @class NearSurfaceVolumeCorrection
  * @brief Correct the particle volume neat the boundary.
@@ -355,7 +356,7 @@ public:
     {
         RelaxationAccelerationByCMInner::interaction(index_i, dt);
         acc_[index_i] -= (B_[index_i] + B_[index_i]) * level_set_shape_->computeKernelGradientIntegral(
-            pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
+                         pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
     };
 
 protected:
@@ -385,6 +386,91 @@ protected:
     SimpleDynamics<UpdateParticlePosition> update_particle_position_;
     SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
     SharedPtr<BaseDynamics<void>> surface_correction_;
+};
+
+/**
+ * @class RelaxationAccelerationByCMComplex
+ */
+class RelaxationAccelerationByCMComplex : public LocalDynamics,
+    public RelaxDataDelegateComplex
+{
+public:
+    explicit RelaxationAccelerationByCMComplex(ComplexRelation& complex_relation);
+    virtual ~RelaxationAccelerationByCMComplex() {};
+
+    inline void interaction(size_t index_i, Real dt = 0.0)
+    {
+        Vecd acceleration = Vecd::Zero();
+        Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+        {
+            size_t index_j = inner_neighborhood.j_[n];
+            acceleration -= (B_[index_i] + B_[index_j]) * inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+        }
+
+        /** Contact interaction. */
+        for (size_t k = 0; k < contact_configuration_.size(); ++k)
+        {
+            StdLargeVec<Matd>& B_k = *(contact_B_[k]);
+            Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
+            for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+            {
+                size_t index_j = contact_neighborhood.j_[n];
+                acceleration -= (B_[index_i] + B_k[index_j]) * contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
+            }
+        }
+
+        acc_[index_i] = acceleration;
+    };
+
+protected:
+    StdLargeVec<Vecd>& acc_, & pos_;
+    StdLargeVec<Matd>& B_;
+    StdVec<StdLargeVec<Matd>*> contact_B_;
+};
+
+/**
+ * @class RelaxationAccelerationByCMComplexWithLevelSetCorrection
+ */
+class RelaxationAccelerationByCMComplexWithLevelSetCorrection : 
+    public RelaxationAccelerationByCMComplex
+{
+public:
+    RelaxationAccelerationByCMComplexWithLevelSetCorrection(
+        ComplexRelation& complex_relation, const std::string& shape_name);
+    virtual ~RelaxationAccelerationByCMComplexWithLevelSetCorrection() {};
+
+    inline void interaction(size_t index_i, Real dt = 0.0)
+    {
+        acc_[index_i] -= (B_[index_i] + B_[index_i]) * level_set_shape_->computeKernelGradientIntegral(
+                          pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
+    };
+
+protected:
+    LevelSetShape* level_set_shape_;
+    SPHAdaptation* sph_adaptation_;
+};
+
+/**
+ * @class RelaxationStepByCMComplex
+ */
+class RelaxationStepByCMComplex : public BaseDynamics<void>
+{
+public:
+    explicit RelaxationStepByCMComplex(ComplexRelation& complex_relation,
+        const std::string& shape_name, bool level_set_correction = false);
+    virtual ~RelaxationStepByCMComplex() {};
+    SimpleDynamics<ShapeSurfaceBounding>& SurfaceBounding() { return surface_bounding_; };
+    virtual void exec(Real dt = 0.0) override;
+
+protected:
+    RealBody* real_body_;
+    ComplexRelation& complex_relation_;
+    NearShapeSurface near_shape_surface_;
+    UniquePtr<BaseDynamics<void>> relaxation_acceleration_complex_;
+    ReduceDynamics<GetTimeStepSizeSquare> get_time_step_square_;
+    SimpleDynamics<UpdateParticlePosition> update_particle_position_;
+    SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
 };
 
 //****************************************IMPLICIT SCHEME******************************************//
@@ -537,6 +623,8 @@ protected:
     ReduceDynamics<QuantityMaximum<Real>> update_averaged_error_;
 };
 
+
+
 /**
  * @class CalcualteCorrectionMatrix
  * @brief calculate the correction matrix based on the first order consistency
@@ -556,6 +644,9 @@ protected:
     LevelSetShape* level_set_shape_;
     SPHAdaptation* sph_adaptation_;
 };
+
+/**
+ * @class CalculateCorrectionMatrix/
 
 /**
  * @class UpdateParticleKineticEnergy

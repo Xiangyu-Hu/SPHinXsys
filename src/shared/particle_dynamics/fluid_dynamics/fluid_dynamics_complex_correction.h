@@ -55,6 +55,28 @@ class BaseIntegration1stHalfCorrectWithWall : public InteractionWithWall<BaseInt
 
 using Integration1stHalfCorrectWithWall = BaseIntegration1stHalfCorrectWithWall<Integration1stHalfCorrect>;
 using Integration1stHalfRiemannCorrectWithWall = BaseIntegration1stHalfCorrectWithWall<Integration1stHalfRiemannCorrect>;
+
+/**
+ * @class BaseIntegration1stHalfConsistencyCorrectWithWall
+ * @brief template class pressure relaxation scheme together with wall boundary
+ */
+template <class BaseIntegration1stHalfConsistencyCorrectType>
+class BaseIntegration1stHalfConsistencyCorrectWithWall : 
+    public InteractionWithWall<BaseIntegration1stHalfConsistencyCorrectType>
+{
+public:
+    template <typename... Args>
+    BaseIntegration1stHalfConsistencyCorrectWithWall(Args &&...args)
+        : InteractionWithWall<BaseIntegration1stHalfConsistencyCorrectType>(std::forward<Args>(args)...){};
+    virtual ~BaseIntegration1stHalfConsistencyCorrectWithWall() {};
+    void interaction(size_t index_i, Real dt = 0.0);
+};
+
+using Integration1stHalfConsistencyCorrectWithWall =
+BaseIntegration1stHalfConsistencyCorrectWithWall<Integration1stHalfConsistencyCorrect>;
+using Integration1stHalfRiemannConsistencyCorrectWithWall =
+BaseIntegration1stHalfConsistencyCorrectWithWall<Integration1stHalfRiemannConsistencyCorrect>;
+
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // FLUID_DYNAMICS_COMPLEX_CORRECTION_H
