@@ -253,8 +253,8 @@ int main(int ac, char *av[])
     density_relaxation.post_processes_.push_back(&confinement_condition_circle.density_relaxation_);
     density_relaxation.post_processes_.push_back(&confinement_condition_wall.surface_bounding_);
     density_relaxation.post_processes_.push_back(&confinement_condition_circle.surface_bounding_);
-    //transport_velocity_correction.post_processes_.push_back(&confinement_condition_wall.transport_velocity_);
-    //transport_velocity_correction.post_processes_.push_back(&confinement_condition_circle.transport_velocity_);
+    transport_velocity_correction.post_processes_.push_back(&confinement_condition_wall.transport_velocity_);
+    transport_velocity_correction.post_processes_.push_back(&confinement_condition_circle.transport_velocity_);
 
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
