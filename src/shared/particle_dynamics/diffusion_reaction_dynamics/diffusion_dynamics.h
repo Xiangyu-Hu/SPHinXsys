@@ -62,7 +62,7 @@ class BaseDiffusionRelaxation
       public DiffusionReactionSimpleData<ParticlesType>
 {
   protected:
-    typedef typename ParticlesType::DiffusionReactionMaterial Material;
+   typedef typename ParticlesType::DiffusionReactionMaterial Material;
     Material &material_;
     StdVec<BaseDiffusion *> &all_diffusions_;
     StdVec<StdLargeVec<Real> *> &diffusion_species_;

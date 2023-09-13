@@ -20,27 +20,21 @@
  * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
  *                                                                           *
  * ------------------------------------------------------------------------- */
-/**
- * @file    all_shared_physical_dynamics.h
- * @brief   Head file for all shared physics dynamics for both 2- and 3D build.
- *          This is the header file that user code should include to pick up all
-            particle dynamics capabilities.
- * @author	Chi Zhang and Xiangyu Hu
+/** 
+ * @file   diffusion_optimization.h
+ * @brief  This is the header file that user code should include 
+ *         to pick up all the optimization method used in SPHinXsys.
+ * @author Bo Zhang and Xiangyu Hu
  */
+#pragma once
 
-#ifndef ALL_SHARED_PHYSICAL_DYNAMICS_H
-#define ALL_SHARED_PHYSICAL_DYNAMICS_H
+#include "diffusion_splitting_base.h"
+#include "diffusion_splitting_base.hpp"
+#include "diffusion_splitting_state.h"
+#include "diffusion_splitting_state.hpp"
+#include "diffusion_splitting_parameter.h"
+#include "diffusion_splitting_parameter.hpp"
+#include "diffusion_optimization_common.h"
+#include "diffusion_optimization_common.hpp"
 
-#include "active_muscle_dynamics.h"
-#include "all_diffusion_reaction_dynamics.h"
-#include "all_fluid_dynamics.h"
-#include "all_general_dynamics.h"
-#include "all_solid_dynamics.h"
-#include "electro_physiology.h"
-#include "external_force.h"
-#include "particle_dynamics_dissipation.h"
-#include "particle_dynamics_dissipation.hpp"
-#include "relax_dynamics.h"
-#include "diffusion_optimization.h"
 
-#endif // ALL_SHARED_PHYSICAL_DYNAMICS_H
