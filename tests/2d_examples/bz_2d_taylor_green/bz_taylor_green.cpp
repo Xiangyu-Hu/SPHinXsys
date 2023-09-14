@@ -67,19 +67,76 @@ int main(int ac, char* av[])
     BoundingBox system_domain_bounds(Vec2d::Zero(), Vec2d(DL, DH));
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     /** Tag for computation start with relaxed body fitted particles distribution. */
-    sph_system.setReloadParticles(false);
+    sph_system.setRunParticleRelaxation(false);
+    sph_system.setReloadParticles(true);
     // handle command line arguments
     sph_system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
+    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
+    water_block.defineBodyLevelSetShape()->writeLevelSet(io_environment);
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     // Using relaxed particle distribution if needed
-    sph_system.ReloadParticles()
+    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getName())
         : water_block.generateParticles<ParticleGeneratorLattice>();
+    //----------------------------------------------------------------------
+   //	Run particle relaxation for body-fitted distribution if chosen.
+   //----------------------------------------------------------------------
+    if (sph_system.RunParticleRelaxation())
+    {
+        //----------------------------------------------------------------------
+        //	Define body relation map used for particle relaxation.
+        //----------------------------------------------------------------------
+        InnerRelation water_block_inner(water_block);
+        //----------------------------------------------------------------------
+        //	Methods used for particle relaxation.
+        //----------------------------------------------------------------------
+        /** Random reset the insert body particle position. */
+        SimpleDynamics<RandomizeParticlePosition> random_insert_body_particles(water_block);
+        /** Write the body state to Vtp file. */
+        BodyStatesRecordingToVtp write_insert_body_to_vtp(io_environment, { &water_block });
+        /** Write the particle reload files. */
+        ReloadParticleIO write_particle_reload_files(io_environment, { &water_block });
+        /** A  Physics relaxation step. */
+        InteractionWithUpdate<UpdateConfigurationInner> update_configuration_fluid(water_block_inner);
+        relax_dynamics::RelaxationStepByCMInner relaxation_step_inner(water_block_inner);
+        PeriodicConditionUsingCellLinkedList periodic_condition_x(water_block, water_block.getBodyShapeBounds(), xAxis);
+        PeriodicConditionUsingCellLinkedList periodic_condition_y(water_block, water_block.getBodyShapeBounds(), yAxis);
+        //----------------------------------------------------------------------
+        //	Particle relaxation starts here.
+        //----------------------------------------------------------------------
+        random_insert_body_particles.exec(0.25);
+        relaxation_step_inner.SurfaceBounding().exec();
+        write_insert_body_to_vtp.writeToFile(0);
+        //----------------------------------------------------------------------
+        //	Relax particles of the insert body.
+        //----------------------------------------------------------------------
+        int ite_p = 0;
+        while (ite_p < 4000)
+        {
+            periodic_condition_x.bounding_.exec();
+            periodic_condition_y.bounding_.exec();
+            water_block.updateCellLinkedList();
+            periodic_condition_x.update_cell_linked_list_.exec();
+            periodic_condition_y.update_cell_linked_list_.exec();
+            water_block_inner.updateConfiguration();
+            update_configuration_fluid.exec();
+            relaxation_step_inner.exec();
+            ite_p += 1;
+            if (ite_p % 200 == 0)
+            {
+                std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
+                write_insert_body_to_vtp.writeToFile(ite_p);
+            }
+        }
+        std::cout << "The physics relaxation process of inserted body finish !" << std::endl;
+        /** Output results. */
+        write_particle_reload_files.writeToFile(0);
+        return 0;
+    }
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -97,13 +154,14 @@ int main(int ac, char* av[])
      * The other reason is that we are using transport velocity formulation,
      * which will also introduce numerical dissipation slightly. */
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemann> pressure_relaxation(water_block_inner);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannCorrect> pressure_relaxation_correct(water_block_inner);
     Dynamics1Level<fluid_dynamics::Integration1stHalfConsistencyCorrect> pressure_relaxation_consistency(water_block_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalf> density_relaxation(water_block_inner);
     InteractionWithUpdate<UpdateConfigurationInner> update_configuration_fluid(water_block_inner);
     InteractionWithUpdate<fluid_dynamics::DensitySummationInner> update_density_by_summation(water_block_inner);
     InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_inner);
     InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionInner<AllParticles>> transport_velocity_correction(water_block_inner);
-    InteractionDynamics<fluid_dynamics::TransportVelocityConsistencyCorrectionInner<AllParticles>> transport_velocity_consistency_correction(water_block_inner);
+    InteractionDynamics<fluid_dynamics::TransportVelocityConsistencyCorrectionInner<AllParticles>> transport_velocity_consistency(water_block_inner, 0.15);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     PeriodicConditionUsingCellLinkedList periodic_condition_x(water_block, water_block.getBodyShapeBounds(), xAxis);
@@ -155,7 +213,7 @@ int main(int ac, char* av[])
             update_density_by_summation.exec();
             viscous_acceleration.exec();
             update_configuration_fluid.exec();
-            transport_velocity_consistency_correction.exec();
+            transport_velocity_consistency.exec();
 
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
@@ -164,7 +222,7 @@ int main(int ac, char* av[])
                 dt = SMIN(get_fluid_time_step_size.exec(), Dt);
                 relaxation_time += dt;
                 integration_time += dt;
-                pressure_relaxation_consistency.exec(dt);
+                pressure_relaxation_correct.exec(dt);
                 density_relaxation.exec(dt);
                 GlobalStaticVariables::physical_time_ += dt;
             }
@@ -200,7 +258,7 @@ int main(int ac, char* av[])
     std::cout << "Total wall time for computation: " << tt.seconds()
         << " seconds." << std::endl;
 
-    write_particle_reload_files.writeToFile();
+    //write_particle_reload_files.writeToFile();
 
     if (sph_system.GenerateRegressionData())
     {

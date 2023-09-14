@@ -5,158 +5,46 @@
  */
 #include "sphinxsys.h"
 using namespace SPH;
-////----------------------------------------------------------------------
-////	Complex geometry with tan=0.5 angle setup.
-////----------------------------------------------------------------------
-//Real L = 1.0;
-//Vec2d circle_center(0.0, L);
-//Real circle_radius = 0.5;
-//Real resolution_ref = L / 20.0;
-//Real BW = resolution_ref * 4.0;
-//BoundingBox system_domain_bounds(Vec2d(-BW - 4 * L / 2, -BW - 4 * L / 2), Vec2d(BW + 4 * L / 2, BW + 4 * L / 2));
-////----------------------------------------------------------------------
-////	Define geometries
-////----------------------------------------------------------------------
-//std::vector<Vecd> createBlockTriangleShape()
-//{
-//	std::vector<Vecd> shape;
-//	shape.push_back(Vecd(-3 * L / 2, L / 2));
-//	shape.push_back(Vecd(L / 2, 4 * L / 2));
-//	shape.push_back(Vecd(L / 2, L / 2));
-//	shape.push_back(Vecd(3 * L / 2, L / 2));
-//	shape.push_back(Vecd(3 * L / 2, -L / 2));
-//	shape.push_back(Vecd(-L / 2, -L * 4 / 2));
-//	shape.push_back(Vecd(-L / 2, -L / 2));
-//	shape.push_back(Vecd(-3 * L / 2, -L / 2));
-//	shape.push_back(Vecd(- 3 * L / 2, L / 2));
-//	return shape;
-//}
-//
-//class ShapeBody : public MultiPolygonShape
-//{
-//public:
-//	explicit ShapeBody(const std::string& shape_name) : MultiPolygonShape(shape_name)
-//	{
-//		multi_polygon_.addAPolygon(createBlockTriangleShape(), ShapeBooleanOps::add);
-//		multi_polygon_.addACircle(Vecd(-L / 2, -L / 2), circle_radius, 100, ShapeBooleanOps::add);
-//		multi_polygon_.addACircle(Vecd( L / 2, L / 2), circle_radius, 100, ShapeBooleanOps::add);
-//	}
-//};
-
-////----------------------------------------------------------------------
-////	Complex geometry with tan=1 angle setup.
-////----------------------------------------------------------------------
-//Real L = 1.0;
-//Vec2d circle_center(0.0, L);
-//Real circle_radius = 0.5;
-//Real resolution_ref = L / 20.0;
-//Real BW = resolution_ref * 4.0;
-//BoundingBox system_domain_bounds(Vec2d(-BW - 4 * L / 2, -BW - 4 * L / 2), Vec2d(BW + 4 * L / 2, BW + 4 * L / 2));
-////----------------------------------------------------------------------
-////	Define geometries
-////----------------------------------------------------------------------
-//std::vector<Vecd> createBlockTriangleShape()
-//{
-//	std::vector<Vecd> shape;
-//	shape.push_back(Vecd(-L, 0.0));
-//	shape.push_back(Vecd(L / 2, 3 * L / 2));
-//	shape.push_back(Vecd(L / 2, L / 2));
-//	shape.push_back(Vecd(3 * L / 2, L / 2));
-//	shape.push_back(Vecd(3 * L / 2, 0.0));
-//	shape.push_back(Vecd(-L / 2, -L * 3 / 2));
-//	shape.push_back(Vecd(-L / 2, -L / 2));
-//	shape.push_back(Vecd(-3 * L / 2, -L / 2));
-//	shape.push_back(Vecd(-3 * L / 2, 0.0));
-//	shape.push_back(Vecd(-L, 0.0));
-//	return shape;
-//}
-//
-//class ShapeBody : public MultiPolygonShape
-//{
-//public:
-//	explicit ShapeBody(const std::string& shape_name) : MultiPolygonShape(shape_name)
-//	{
-//		multi_polygon_.addAPolygon(createBlockTriangleShape(), ShapeBooleanOps::add);
-//		multi_polygon_.addACircle(Vecd(-L / 2, -L / 2), circle_radius, 100, ShapeBooleanOps::add);
-//		multi_polygon_.addACircle(Vecd( L / 2, L / 2), circle_radius, 100, ShapeBooleanOps::add);
-//	}
-//};
-
-////----------------------------------------------------------------------
-////	Circle geometry setup.
-////----------------------------------------------------------------------
-//Vec2d center(0.0, 0.0);	/**< Location of the cylinder center. */
-//Real radius = 1.0;		/**< Radius of the cylinder. */
-//Real resolution_ref = radius / 20.0;
-//Real BW = resolution_ref * 4.0;
-//BoundingBox system_domain_bounds(Vec2d(-BW - radius, -BW - radius), Vec2d(BW + radius, BW + radius));
-////----------------------------------------------------------------------
-////	Define geometries
-////----------------------------------------------------------------------
-//class ShapeBody : public MultiPolygonShape
-//{
-//public:
-//	explicit ShapeBody(const std::string& shape_name) : MultiPolygonShape(shape_name)
-//	{
-//		multi_polygon_.addACircle(center, radius, 100, ShapeBooleanOps::add);
-//	}
-//}; 
-
 //----------------------------------------------------------------------
-//	Box geometry setup.
+//	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real LL = 2.0;
-Real LH = 2.0;
-Real resolution_ref = LH / 40.0;
-Real BW = resolution_ref * 4.0;
-BoundingBox system_domain_bounds(Vec2d(-BW-LL/2, -BW-LL/2), Vec2d(BW + LL/2, BW + LH/2));
+Real LL = 1.0;
+Real LH = 1.0;
+Real resolution_ref = LH / 50.0;
+BoundingBox system_domain_bounds(Vec2d::Zero(), Vec2d(LL, LH));
 //----------------------------------------------------------------------
 //	Define geometries
 //----------------------------------------------------------------------
-Vec2d water_block_halfsize = Vec2d(0.0, 0.0);
-Vec2d water_block_translation = Vec2d(0.5 * LL, 0.5 * LH);
-class ShapeBody : public ComplexShape
+Vec2d water_block_halfsize = Vec2d(0.5 * LL, 0.5 * LH);
+Vec2d water_block_translation = water_block_halfsize;
+
+class Insert : public ComplexShape
 {
 public:
-	explicit ShapeBody(const std::string& shape_name) : ComplexShape(shape_name)
+	explicit Insert(const std::string& shape_name) : ComplexShape(shape_name)
 	{
-		add<TransformShape<GeometricShapeBox>>(Transform2d(water_block_halfsize), water_block_translation);
+		add<TransformShape<GeometricShapeBox>>(Transform(water_block_halfsize), water_block_translation);
 	}
 };
 
-////----------------------------------------------------------------------
-////	Basic geometry parameters and numerical setup.
-////----------------------------------------------------------------------
-//Real L = 1.0;
-//Real resolution_ref = L / 20.0;
-//Real BW = resolution_ref * 2.0;
-//BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(2 * L + BW, 2 * L + BW));
-////----------------------------------------------------------------------
-////	Define geometries
-////----------------------------------------------------------------------
-//std::vector<Vecd> createBlockTriangleShape()
-//{
-//	std::vector<Vecd> shape;
-//	shape.push_back(Vecd(0, L / 2));
-//	shape.push_back(Vecd(0, 3 * L / 2));
-//	shape.push_back(Vecd(L / 2, 2 * L));
-//	shape.push_back(Vecd(3 * L / 2, 2 * L));
-//	shape.push_back(Vecd(2 * L, 3 * L / 2));
-//	shape.push_back(Vecd(2 * L, L / 2));
-//	shape.push_back(Vecd(3 * L / 2, 0));
-//	shape.push_back(Vecd(L / 2, 0));
-//	shape.push_back(Vecd(0, L / 2 + 0));
-//	return shape;
-//}
-//
-//class ShapeBody : public MultiPolygonShape
-//{
-//public:
-//	explicit ShapeBody(const std::string& shape_name) : MultiPolygonShape(shape_name)
-//	{
-//		multi_polygon_.addAPolygon(createBlockTriangleShape(), ShapeBooleanOps::add);
-//	}
-//};
+class TestingInitialCondition
+	: public fluid_dynamics::FluidInitialCondition
+{
+public:
+	explicit TestingInitialCondition(SPHBody& sph_body)
+		: FluidInitialCondition(sph_body), pos_(particles_->pos_),
+		  p_(*particles_->getVariableByName<Real>("Pressure")) {};
+
+	void update(size_t index_i, Real dt)
+	{
+		/* initial pressure distribution. */
+		p_[index_i] = pos_[index_i][0];
+	}
+
+protected:
+	StdLargeVec<Vecd>& pos_;
+	StdLargeVec<Real>& p_;
+};
 
 int main(int ac, char* av[])
 {
@@ -165,105 +53,151 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
 	sph_system.setRunParticleRelaxation(true);
+	sph_system.setReloadParticles(true);
+#ifdef BOOST_AVAILABLE
+	sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
+#endif
 	IOEnvironment io_environment(sph_system);
+
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	SolidBody body(sph_system, makeShared<ShapeBody>("ShapeBody"));
-	//body.sph_adaptation_->resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
+	FluidBody body(sph_system, makeShared<Insert>("WaterBody"));
 	body.defineBodyLevelSetShape()->writeLevelSet(io_environment);
-	body.defineParticlesAndMaterial();
+	body.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(1, 1, 1);
 	body.addBodyStateForRecording<Vecd>("Position");
 	(!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
 		? body.generateParticles<ParticleGeneratorReload>(io_environment, body.getName())
 		: body.generateParticles<ParticleGeneratorLattice>();
-	//----------------------------------------------------------------------
-	//	Define body relation map.
-	//	The contact map gives the topological connections between the bodies.
-	//	Basically the the range of bodies to build neighbor particle lists.
-	//----------------------------------------------------------------------
-	InnerRelation shape_body_inner(body);
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------
 	if (sph_system.RunParticleRelaxation())
 	{
 		//----------------------------------------------------------------------
+		//	Define body relation map.
+		//----------------------------------------------------------------------
+		InnerRelation insert_body_inner(body);
+		//----------------------------------------------------------------------
 		//	Methods used for particle relaxation.
 		//----------------------------------------------------------------------
-		/** Random reset the insert body particle posisiton. */
+		/** Random reset the insert body particle position. */
 		SimpleDynamics<RandomizeParticlePosition> random_insert_body_particles(body);
 		/** Write the body state to Vtp file. */
 		BodyStatesRecordingToVtp write_insert_body_to_vtp(io_environment, { &body });
 		/** Write the particle reload files. */
 		ReloadParticleIO write_particle_reload_files(io_environment, { &body });
 
-		/** An relaxation process include 0th and 1st order consistency. */
-		InteractionDynamics<relax_dynamics::CalculateParticleStress> calculate_particle_stress(shape_body_inner, true);
-		relax_dynamics::RelaxationStepInner relaxation_0th_inner(shape_body_inner, true);
-		relax_dynamics::RelaxationStepImplicitInner relaxation_0th_implicit_inner(shape_body_inner, true);
-		relax_dynamics::RelaxationStepByStressInner relaxation_1st_inner(shape_body_inner, true);
-		relax_dynamics::RelaxationStepByStressImplicitInner relaxation_1st_implicit_inner(shape_body_inner, true);
+		/* Relaxation method: including based on the 0th and 1st order consistency. */
+		relax_dynamics::RelaxationStepInner relaxation_0th_inner(insert_body_inner, true);
+		relax_dynamics::RelaxationStepImplicitInner relaxation_0th_implicit_inner(insert_body_inner, true);
+		InteractionDynamics<relax_dynamics::CalculateCorrectionMatrix> calculate_correction_matrix(insert_body_inner, true);
+		relax_dynamics::RelaxationStepByCMInner relaxation_1st_inner(insert_body_inner, true);
+		relax_dynamics::RelaxationStepByCMImplicitInner relaxation_1st_implicit_inner(insert_body_inner, true);
 
-		/** Update relaxation residue. */
-		InteractionDynamics<relax_dynamics::UpdateParticleKineticEnergy> update_kinetic_energy(shape_body_inner);
-		ReducedQuantityRecording<ReduceAverage<QuantitySummation<Real>>> write_particle_averaged_kinetic_energy(io_environment, body, "particle_kinetic_energy");
-		ReducedQuantityRecording<ReduceDynamics<QuantityMaximum<Real>>> write_particle_maximum_kinetic_energy(io_environment, body, "particle_kinetic_energy");
-
-		InteractionDynamics<relax_dynamics::CheckCorrectedZeroOrderConsistency> check_corrected_zero_order_consistency(shape_body_inner, true);
-		InteractionDynamics<relax_dynamics::CheckCorrectedFirstOrderConsistency> check_corrected_first_order_consistency(shape_body_inner, true);
-
-		ReducedQuantityRecording<ReduceAverage<QuantitySummation<Real>>> write_particle_averaged_first_error(io_environment, body, "corrected_first_order_error");
-		ReducedQuantityRecording<ReduceDynamics<QuantityMaximum<Real>>> write_particle_maximum_first_error(io_environment, body, "corrected_first_order_error");
-
-		//----------------------------------------------------------------------
+		/* Update the relaxation residual. */
+		InteractionDynamics<relax_dynamics::CheckConsistencyRealization> check_consistency_realization(insert_body_inner, true);
+		ReduceAverage<QuantitySummation<Real>> calculate_pressure_gradient(body, "PressureGradientErrorNorm");
+		ReduceAverage<QuantitySummation<Real>> calculate_zero_order_error(body, "ZeroOrderErrorNorm");
+		ReduceAverage<QuantitySummation<Real>> calculate_reproduce_gradient(body, "ReproduceGradientErrorNorm");
+		InteractionDynamics<relax_dynamics::CheckReverseConsistencyRealization> check_reverse_consistency_realization(insert_body_inner, true);
+		ReduceAverage<QuantitySummation<Real>> calculate_pressure_gradient_reverse(body, "PressureGradientErrorNormReverse");
+		ReduceAverage<QuantitySummation<Real>> calculate_zero_order_error_reverse(body, "ZeroOrderErrorNormReverse");
+		ReduceAverage<QuantitySummation<Real>> calculate_reproduce_gradient_reverse(body, "ReproduceGradientErrorNormReverse");
+		SimpleDynamics<TestingInitialCondition> testing_initial_condition(body);
+		//----------------------------------------------------------------------  
 		//	Particle relaxation starts here.
 		//----------------------------------------------------------------------
 		random_insert_body_particles.exec(0.25);
 		sph_system.initializeSystemCellLinkedLists();
 		sph_system.initializeSystemConfigurations();
+		testing_initial_condition.exec();
 		write_insert_body_to_vtp.writeToFile(0);
+
 		//----------------------------------------------------------------------
 		//	Relax particles of the insert body.
 		//----------------------------------------------------------------------
 		TickCount t1 = TickCount::now();
-		int ite_p = 0;
-		GlobalStaticVariables::physical_time_ = ite_p;
-		while (ite_p <= 10000)
+		int ite = 0; //iteration step for the total relaxation step.
+
+		std::string filefullpath_all_information = io_environment.output_folder_ + "/" + "all_information.dat";
+		std::ofstream out_file_all_information(filefullpath_all_information.c_str(), std::ios::app);
+
+		GlobalStaticVariables::physical_time_ = ite;
+		/* The procedure to obtain uniform particle distribution that satisfies the 0th order consistency. */
+		while (ite < 5)
 		{
-			//calculate_particle_stress.exec();
-			//relaxation_1st_implicit_inner.exec();
-			relaxation_0th_implicit_inner.exec();
+			calculate_correction_matrix.exec();
+			relaxation_1st_inner.exec();
+			body.updateCellLinkedList();
+			insert_body_inner.updateConfiguration();
 
-			if (ite_p % 50 == 0) 
+			ite++;
+
+			if (ite % 1 == 0)
 			{
-				update_kinetic_energy.exec();
-				write_particle_averaged_kinetic_energy.writeToFile(ite_p);
-				write_particle_maximum_kinetic_energy.writeToFile(ite_p);
+				calculate_correction_matrix.exec();
+				check_consistency_realization.exec();
+				check_reverse_consistency_realization.exec();
+				out_file_all_information << std::fixed << std::setprecision(12) << ite << "   " <<
+					calculate_pressure_gradient.exec() << "   " << calculate_pressure_gradient_reverse.exec() << "   " <<
+					calculate_zero_order_error.exec() << "   " << calculate_zero_order_error_reverse.exec() << "   " <<
+					calculate_reproduce_gradient.exec() << "   " << calculate_reproduce_gradient_reverse.exec() << "\n";
+				std::cout << std::fixed << std::setprecision(9) << "The 0th relaxation steps for the body N = " << ite << "\n";
 
-				check_corrected_zero_order_consistency.exec();
-				check_corrected_first_order_consistency.exec();
-				write_particle_averaged_first_error.writeToFile(ite_p);
-				write_particle_maximum_first_error.writeToFile(ite_p);
-			}
-
-			ite_p += 1;
-			GlobalStaticVariables::physical_time_ = ite_p;
-
-			if (ite_p % 50 == 0)
-			{
-				std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
-				write_insert_body_to_vtp.writeToFile(ite_p);
+				write_insert_body_to_vtp.writeToFile(ite);
 			}
 		}
-		std::cout << "The physical relaxation process of body finish !" << std::endl;
 
-		/** Output results. */
+		ite++;
+		write_insert_body_to_vtp.writeToFile(ite);
 		write_particle_reload_files.writeToFile(0);
+
 		TickCount t2 = TickCount::now();
 		TickCount::interval_t tt;
 		tt = t2 - t1;
 		std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 		return 0;
 	}
+
+	//----------------------------------------------------------------------
+	//	Define body relation map.
+	//----------------------------------------------------------------------
+	InnerRelation insert_body_inner(body);
+	InteractionDynamics<relax_dynamics::CalculateCorrectionMatrix> calculate_correction_matrix(insert_body_inner, true);
+	InteractionDynamics<relax_dynamics::CheckConsistencyRealization> check_consistency_realization(insert_body_inner, true);
+	ReduceAverage<QuantitySummation<Real>> calculate_pressure_gradient(body, "PressureGradientErrorNorm");
+	ReduceAverage<QuantitySummation<Real>> calculate_zero_order_error(body, "ZeroOrderErrorNorm");
+	ReduceAverage<QuantitySummation<Real>> calculate_reproduce_gradient(body, "ReproduceGradientErrorNorm");
+	InteractionDynamics<relax_dynamics::CheckReverseConsistencyRealization> check_reverse_consistency_realization(insert_body_inner, true);
+	ReduceAverage<QuantitySummation<Real>> calculate_pressure_gradient_reverse(body, "PressureGradientErrorNormReverse");
+	ReduceAverage<QuantitySummation<Real>> calculate_zero_order_error_reverse(body, "ZeroOrderErrorNormReverse");
+	ReduceAverage<QuantitySummation<Real>> calculate_reproduce_gradient_reverse(body, "ReproduceGradientErrorNormReverse");
+	SimpleDynamics<TestingInitialCondition> testing_initial_condition(body);
+
+	body.addBodyStateForRecording<Real>("Pressure");
+	//----------------------------------------------------------------------
+	//	Define the methods for I/O operations and observations of the simulation.
+	//----------------------------------------------------------------------
+	BodyStatesRecordingToVtp write_insert_body_states(io_environment, sph_system.real_bodies_);
+	std::string filefullpath_all_information = io_environment.output_folder_ + "/" + "all_information.dat";
+	std::ofstream out_file_all_information(filefullpath_all_information.c_str(), std::ios::app);
+	//----------------------------------------------------------------------
+	//	Prepare the simulation with cell linked list, configuration
+	//	and case specified initial condition if necessary.
+	//----------------------------------------------------------------------
+	/** initialize cell linked lists for all bodies. */
+	sph_system.initializeSystemCellLinkedLists();
+	/** initialize configurations for all bodies. */
+	sph_system.initializeSystemConfigurations();
+	testing_initial_condition.exec();
+
+	calculate_correction_matrix.exec();
+	check_consistency_realization.exec();
+	check_reverse_consistency_realization.exec();
+	out_file_all_information << std::fixed << std::setprecision(12) << 1 << "   " <<
+		calculate_pressure_gradient.exec() << "   " << calculate_pressure_gradient_reverse.exec() << "   " <<
+		calculate_zero_order_error.exec() << "   " << calculate_zero_order_error_reverse.exec() << "   " <<
+		calculate_reproduce_gradient.exec() << "   " << calculate_reproduce_gradient_reverse.exec() << "\n";
+	write_insert_body_states.writeToFile();
 }

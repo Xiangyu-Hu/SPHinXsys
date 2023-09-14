@@ -12,9 +12,8 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real LL = 1.0;
 Real LH = 1.0;
-Real resolution_ref = LH / 50.0;
+Real resolution_ref = LH / 100.0;
 BoundingBox system_domain_bounds(Vec2d::Zero(), Vec2d(LL, LH));
- 
 //----------------------------------------------------------------------
 //	Define geometries
 //----------------------------------------------------------------------
@@ -41,8 +40,7 @@ public:
 	void update(size_t index_i, Real dt)
 	{
 		/* initial pressure distribution. */
-		//p_[index_i] = (sin(pos_[index_i][0] * 2 * Pi) + sin(pos_[index_i][1] * 2 * Pi));
-		//p_[index_i] = 1;
+		p_[index_i] = (sin(pos_[index_i][0] * 2 * Pi)) / 2 / Pi;
 	}
 
 protected:
@@ -57,7 +55,7 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
 	sph_system.setRunParticleRelaxation(true); 
-	sph_system.setReloadParticles(true);
+	sph_system.setReloadParticles(false);
 #ifdef BOOST_AVAILABLE
 	sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
 #endif
@@ -96,21 +94,23 @@ int main(int ac, char* av[])
 		/* Relaxation method: including based on the 0th and 1st order consistency. */
 		relax_dynamics::RelaxationStepInner relaxation_0th_inner(insert_body_inner, false);
 		relax_dynamics::RelaxationStepImplicitInner relaxation_0th_implicit_inner(insert_body_inner, false);
-		InteractionDynamics<relax_dynamics::CalculateParticleStress> calculate_particle_stress(insert_body_inner, false);
-		relax_dynamics::RelaxationStepByStressInner relaxation_1st_inner(insert_body_inner, false);
-		relax_dynamics::RelaxationStepByStressImplicitInner relaxation_1st_implicit_inner(insert_body_inner, false);
+		InteractionDynamics<relax_dynamics::CalculateCorrectionMatrix> calculate_correction_matrix(insert_body_inner, false);
+		relax_dynamics::RelaxationStepByCMInner relaxation_1st_inner(insert_body_inner, false);
+		relax_dynamics::RelaxationStepByCMImplicitInner relaxation_1st_implicit_inner(insert_body_inner, false);
 
 		PeriodicConditionUsingCellLinkedList periodic_condition_x(body, body.getBodyShapeBounds(), xAxis);
 		PeriodicConditionUsingCellLinkedList periodic_condition_y(body, body.getBodyShapeBounds(), yAxis);
 
 		/* Update the relaxation residual. */
-		InteractionDynamics<relax_dynamics::CheckCorrectedZeroOrderConsistency> check_corrected_zero_order_consistency(insert_body_inner);
-		ReduceAverage<QuantitySummation<Real>> calculate_particle_average_zero_error(body, "corrected_zero_order_error");
-		ReduceDynamics<QuantityMaximum<Real>> calculate_particle_maximum_zero_error(body, "corrected_zero_order_error");
-		InteractionDynamics<relax_dynamics::CheckCorrectedFirstOrderConsistency> check_corrected_first_order_consistency(insert_body_inner);
-		ReduceAverage<QuantitySummation<Real>> calculate_particle_average_first_error(body, "corrected_first_order_error");
-		ReduceDynamics<QuantityMaximum<Real>> calculate_particle_maximum_first_error(body, "corrected_first_order_error");
-
+		InteractionDynamics<relax_dynamics::CheckConsistencyRealization> check_consistency_realization(insert_body_inner, false);
+		ReduceAverage<QuantitySummation<Real>> calculate_pressure_gradient(body, "PressureGradientErrorNorm");
+		ReduceAverage<QuantitySummation<Real>> calculate_zero_order_error(body, "ZeroOrderErrorNorm");
+		ReduceAverage<QuantitySummation<Real>> calculate_reproduce_gradient(body, "ReproduceGradientErrorNorm");
+		InteractionDynamics<relax_dynamics::CheckReverseConsistencyRealization> check_reverse_consistency_realization(insert_body_inner, false);
+		ReduceAverage<QuantitySummation<Real>> calculate_pressure_gradient_reverse(body, "PressureGradientErrorNormReverse");
+		ReduceAverage<QuantitySummation<Real>> calculate_zero_order_error_reverse(body, "ZeroOrderErrorNormReverse");
+		ReduceAverage<QuantitySummation<Real>> calculate_reproduce_gradient_reverse(body, "ReproduceGradientErrorNormReverse");
+		SimpleDynamics<TestingInitialCondition> testing_initial_condition(body);
 		//----------------------------------------------------------------------  
 		//	Particle relaxation starts here.
 		//----------------------------------------------------------------------
@@ -119,28 +119,21 @@ int main(int ac, char* av[])
 		periodic_condition_x.update_cell_linked_list_.exec();
 		periodic_condition_y.update_cell_linked_list_.exec();
 		sph_system.initializeSystemConfigurations();
+		testing_initial_condition.exec();
 		write_insert_body_to_vtp.writeToFile(0);
 
 		//----------------------------------------------------------------------
 		//	Relax particles of the insert body.
 		//----------------------------------------------------------------------
 		TickCount t1 = TickCount::now();
-
 		int ite = 0; //iteration step for the total relaxation step.
 
-		Real last_zero_maximum_residual = 1;
-		Real last_zero_average_residual = 1;
-		Real last_first_maximum_residual = 1;
-		Real last_first_average_residual = 1;
-
-		Real current_zero_maximum_residual = 1;
-		Real current_zero_average_residual = 1;
-		Real current_first_maximum_residaul = 1;
-		Real current_first_average_residaul = 1;
+		std::string filefullpath_all_information = io_environment.output_folder_ + "/" + "all_information.dat";
+		std::ofstream out_file_all_information(filefullpath_all_information.c_str(), std::ios::app);
 
 		GlobalStaticVariables::physical_time_ = ite;
-		/* The procedure to obtain uniform particle distribution that satisfies the 0ht order consistency. */
-		while (current_zero_maximum_residual > 0.0001)
+		/* The procedure to obtain uniform particle distribution that satisfies the 0th order consistency. */
+		while (ite < 50000)
 		{
 			periodic_condition_x.bounding_.exec();
 			periodic_condition_y.bounding_.exec();
@@ -149,28 +142,32 @@ int main(int ac, char* av[])
 			periodic_condition_y.update_cell_linked_list_.exec();
 			insert_body_inner.updateConfiguration();
 
-			//relaxation_0th_implicit_inner.exec(0.1);
-			calculate_particle_stress.exec();
-			relaxation_1st_implicit_inner.exec(0.1);
+			//calculate_correction_matrix.exec();
+			relaxation_0th_implicit_inner.exec();
+
+			periodic_condition_x.bounding_.exec();
+			periodic_condition_y.bounding_.exec();
+			body.updateCellLinkedList();
+			periodic_condition_x.update_cell_linked_list_.exec();
+			periodic_condition_y.update_cell_linked_list_.exec();
+			insert_body_inner.updateConfiguration();
 
 			ite++;
 
 			if (ite % 100 == 0)
 			{
-				check_corrected_zero_order_consistency.exec();
-				current_zero_average_residual = calculate_particle_average_zero_error.exec();
-				current_zero_maximum_residual = calculate_particle_maximum_zero_error.exec();
-
+				calculate_correction_matrix.exec();
+				check_consistency_realization.exec();
+				check_reverse_consistency_realization.exec();
+				out_file_all_information << std::fixed << std::setprecision(12) << ite << "   " <<
+					calculate_pressure_gradient.exec() << "   " << calculate_pressure_gradient_reverse.exec() << "   " << 
+					calculate_zero_order_error.exec() << "   "  << calculate_zero_order_error_reverse.exec() << "   " << 
+					calculate_reproduce_gradient.exec() << "   " << calculate_reproduce_gradient_reverse.exec() << "\n";
 				std::cout << std::fixed << std::setprecision(9) << "The 0th relaxation steps for the body N = " << ite << "\n";
-				std::cout << "The 0th consistency error: maximum = " << current_zero_maximum_residual << ": average = " << current_zero_average_residual << std::endl;
+				
 				write_insert_body_to_vtp.writeToFile(ite);
 			}
 		}
-
-		check_corrected_zero_order_consistency.exec();
-		current_zero_average_residual = calculate_particle_average_zero_error.exec();
-		current_zero_maximum_residual = calculate_particle_maximum_zero_error.exec();
-		std::cout << "The 0th consistency error: maximum = " << current_zero_maximum_residual << ": average = " << current_zero_average_residual << std::endl;
 	
 		ite++;
 		write_insert_body_to_vtp.writeToFile(ite);
@@ -192,7 +189,7 @@ int main(int ac, char* av[])
 	PeriodicConditionUsingCellLinkedList periodic_condition_y(body, body.getBodyShapeBounds(), yAxis);
 
 	SimpleDynamics<TestingInitialCondition> testing_initial_condition(body);
-	InteractionDynamics<relax_dynamics::CalculateParticleStress> calculate_correction_matrix(insert_body_inner, false);
+	InteractionDynamics<relax_dynamics::CalculateCorrectionMatrix> calculate_correction_matrix(insert_body_inner, false);
 	InteractionDynamics<relax_dynamics::CheckConsistencyRealization> check_consistency_realization(insert_body_inner, false);
 
 	body.addBodyStateForRecording<Real>("Pressure");
