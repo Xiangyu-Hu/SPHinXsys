@@ -13,7 +13,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 int main(int ac, char *av[])
 {
-    // read data from ANASYS mesh.file
+    // read data from ANSYS mesh.file
     readMeshFile read_mesh_data(zero_three_flow_around_cylinder_mesh_file_fullpath);
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
@@ -25,12 +25,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    EulerianFluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
+    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<ParticleGeneratorInFVM>(read_mesh_data.elements_center_coordinates_, read_mesh_data.elements_volumes_);
     water_block.addBodyStateForRecording<Real>("Density");
-    /** Initial condition */
-    SimpleDynamics<WeaklyCompressibleFluidInitialCondition> initial_condition(water_block);
     GhostCreationFromMesh ghost_creation(water_block, read_mesh_data.cell_lists_, read_mesh_data.point_coordinates_2D_);
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -41,38 +39,33 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    /** Boundary conditions set up */
-    FACBoundaryConditionSetup boundary_condition_setup(water_block_inner, ghost_creation.each_boundary_type_with_all_ghosts_index_,
-                            ghost_creation.each_boundary_type_with_all_ghosts_eij_, ghost_creation.each_boundary_type_contact_real_index_);
-    SimpleDynamics<EulerianWCTimeStepInitialization> initialize_a_fluid_step(water_block);
-    /** Time step size with considering sound wave speed. */
-    ReduceDynamics<WCAcousticTimeStepSizeInFVM> get_fluid_time_step_size(water_block, read_mesh_data.min_distance_between_nodes_);
-    InteractionDynamics<WCEulerianViscousAccelerationInner> viscous_acceleration(water_block_inner);
     /** Here we introduce the limiter in the Riemann solver and 0 means the no extra numerical dissipation.
     the value is larger, the numerical dissipation larger*/
-    InteractionWithUpdate<Integration1stHalfAcousticRiemann> pressure_relaxation(water_block_inner, 200.0);
-    InteractionWithUpdate<Integration2ndHalfAcousticRiemann> density_relaxation(water_block_inner, 200.0);
+    InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfAcousticRiemann> pressure_relaxation(water_block_inner, 200.0);
+    InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfAcousticRiemann> density_relaxation(water_block_inner, 200.0);
+    /** Boundary conditions set up */
+    FACBoundaryConditionSetup boundary_condition_setup(water_block_inner, ghost_creation.each_boundary_type_with_all_ghosts_index_,
+                                                       ghost_creation.each_boundary_type_with_all_ghosts_eij_, ghost_creation.each_boundary_type_contact_real_index_);
+    SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
+    /** Time step size with considering sound wave speed. */
+    ReduceDynamics<fluid_dynamics::WCAcousticTimeStepSizeInFVM> get_fluid_time_step_size(water_block, read_mesh_data.min_distance_between_nodes_);
+    InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_inner);
+
     //----------------------------------------------------------------------
     //	Compute the force exerted on solid body due to fluid pressure and viscosity
     //----------------------------------------------------------------------
-    InteractionDynamics<ViscousForceFromFluidInFVM> viscous_force_on_solid(water_block_inner, ghost_creation.each_boundary_type_contact_real_index_);
-    InteractionDynamics<AllForceAccelerationFromFluid> fluid_force_on_solid_update(water_block_inner, viscous_force_on_solid, ghost_creation.each_boundary_type_contact_real_index_);
+    InteractionDynamics<fluid_dynamics::ViscousForceFromFluidInFVM> viscous_force_on_solid(water_block_inner, ghost_creation.each_boundary_type_contact_real_index_);
+    InteractionDynamics<fluid_dynamics::AllForceAccelerationFromFluidRiemannFVM> fluid_force_on_solid_update(water_block_inner, viscous_force_on_solid, ghost_creation.each_boundary_type_contact_real_index_);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    //visualizaiton in particle way
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
-    //visualizaiton in FVM with data in cell
-    //BodyStatesRecordingInMeshToVtp write_real_body_states(io_environment, sph_system.real_bodies_, read_mesh_data.elements_nodes_connection_, read_mesh_data.point_coordinates_2D_);
+    // visualization in FVM with data in cell
+    BodyStatesRecordingInMeshToVtp write_real_body_states(io_environment, sph_system.real_bodies_, read_mesh_data.elements_nodes_connection_, read_mesh_data.point_coordinates_2D_);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>>
         write_total_viscous_force_on_inserted_body(io_environment, viscous_force_on_solid, "TotalViscousForceOnSolid");
     ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>
         write_total_force_on_inserted_body(io_environment, fluid_force_on_solid_update, "TotalPressureForceOnSolid");
     ReducedQuantityRecording<ReduceDynamics<MaximumSpeed>> write_maximum_speed(io_environment, water_block);
-    //----------------------------------------------------------------------
-    //	Prepare the simulation with case specified initial condition if necessary.
-    //----------------------------------------------------------------------
-    initial_condition.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
@@ -128,7 +121,6 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
     write_total_viscous_force_on_inserted_body.testResult();
-
 
     return 0;
 }

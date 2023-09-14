@@ -195,7 +195,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannCorrectWithWall> fluid_pressure_relaxation_correct(water_block_complex);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_block_complex);
-    InteractionWithUpdate<CorrectedConfigurationComplex> corrected_configuration_fluid(water_block_complex, 0.3);
+    InteractionWithUpdate<KernelCorrectionMatrixComplex> corrected_configuration_fluid(water_block_complex, 0.3);
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> fluid_density_by_summation(water_block_complex);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
@@ -340,7 +340,6 @@ int main(int ac, char *av[])
         write_water_mechanical_energy.testResult();
         wave_probe.testResult();
     }
-
 
     return 0;
 };

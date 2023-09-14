@@ -109,12 +109,12 @@ void SPHSystem::handleCommandlineOptions(int ac, char *av[])
         if (vm.count("state_recording"))
         {
             state_recording_ = vm["state_recording"].as<bool>();
-            std::cout << "Delete all files in output folder after run was set to "
+            std::cout << "State recording was set to "
                       << vm["state_recording"].as<bool>() << ".\n";
         }
         else
         {
-            std::cout << "Delete all files in output folder after run was set to default ("
+            std::cout << "State recording was set to default ("
                       << state_recording_ << ").\n";
         }
 

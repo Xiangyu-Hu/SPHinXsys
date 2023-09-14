@@ -17,15 +17,16 @@ namespace SPH
 //=================================================================================================//
 template <class ParticlesType, class ContactParticlesType, class BaseDataDelegateType>
 DataDelegateContact<ParticlesType, ContactParticlesType, BaseDataDelegateType>::
-    DataDelegateContact(BaseContactRelation &body_contact_relation)
-    : BaseDataDelegateType(body_contact_relation.getSPHBody())
+    DataDelegateContact(BaseContactRelation &contact_relation)
+    : BaseDataDelegateType(contact_relation.getSPHBody()),
+      contact_relation_(contact_relation)
 {
-    RealBodyVector contact_sph_bodies = body_contact_relation.contact_bodies_;
+    RealBodyVector contact_sph_bodies = contact_relation.contact_bodies_;
     for (size_t i = 0; i != contact_sph_bodies.size(); ++i)
     {
         contact_bodies_.push_back(contact_sph_bodies[i]);
         contact_particles_.push_back(DynamicCast<ContactParticlesType>(this, &contact_sph_bodies[i]->getBaseParticles()));
-        contact_configuration_.push_back(&body_contact_relation.contact_configuration_[i]);
+        contact_configuration_.push_back(&contact_relation.contact_configuration_[i]);
     }
 }
 //=================================================================================================//

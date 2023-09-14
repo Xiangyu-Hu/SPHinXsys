@@ -140,7 +140,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SimpleDynamics<NormalDirectionFromBodyShape> fish_body_normal_direction(fish_body);
     /** Corrected configuration for the elastic insert body. */
-    InteractionWithUpdate<CorrectedConfigurationInner> fish_body_corrected_configuration(fish_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> fish_body_corrected_configuration(fish_inner);
     /** Compute the force exerted on solid body due to fluid pressure and viscosity. */
     InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(fish_contact);
     InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluidRiemann>

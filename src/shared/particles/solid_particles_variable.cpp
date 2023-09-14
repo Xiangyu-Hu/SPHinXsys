@@ -34,32 +34,6 @@ void TranslationAndRotation::update(size_t index_i, Real dt)
     pos0_[index_i] = transform_.shiftFrameStationToBase(pos0_[index_i]);
 }
 //=============================================================================================//
-NormalDirectionFromBodyShape::NormalDirectionFromBodyShape(SPHBody &sph_body)
-    : SolidDataSimple(sph_body), LocalDynamics(sph_body), body_shape_(*sph_body.body_shape_),
-      pos_(particles_->pos_), n_(particles_->n_), n0_(particles_->n0_) {}
-//=============================================================================================//
-void NormalDirectionFromBodyShape::update(size_t index_i, Real dt)
-{
-    Vecd normal_direction = body_shape_.findNormalDirection(pos_[index_i]);
-    n_[index_i] = normal_direction;
-    n0_[index_i] = normal_direction;
-}
-//=============================================================================================//
-NormalDirectionFromShapeAndOp::
-    NormalDirectionFromShapeAndOp(SPHBody &sph_body, const std::string &shape_name)
-    : SolidDataSimple(sph_body), LocalDynamics(sph_body),
-      shape_and_op_(DynamicCast<ComplexShape>(this, sph_body.body_shape_)->getShapeAndOpByName(shape_name)),
-      shape_(shape_and_op_->first),
-      switch_sign_(shape_and_op_->second == ShapeBooleanOps::add ? 1.0 : -1.0),
-      pos_(particles_->pos_), n_(particles_->n_), n0_(particles_->n0_) {}
-//=============================================================================================//
-void NormalDirectionFromShapeAndOp::update(size_t index_i, Real dt)
-{
-    Vecd normal_direction = switch_sign_ * shape_->findNormalDirection(pos_[index_i]);
-    n_[index_i] = normal_direction;
-    n0_[index_i] = normal_direction;
-}
-//=============================================================================================//
 GreenLagrangeStrain::GreenLagrangeStrain(SPHBody &sph_body)
     : BaseDerivedVariable<Matd>(sph_body, "GreenLagrangeStrain"), ElasticSolidDataSimple(sph_body),
       LocalDynamics(sph_body), F_(particles_->F_) {}

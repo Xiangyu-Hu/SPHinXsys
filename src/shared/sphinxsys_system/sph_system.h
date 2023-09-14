@@ -70,6 +70,7 @@ class SPHSystem
     void setReloadParticles(bool reload_particles) { reload_particles_ = reload_particles; };
     bool ReloadParticles() { return reload_particles_; };
     bool GenerateRegressionData() { return generate_regression_data_; };
+    void setGenerateRegressionData(bool generate_regression_data) { generate_regression_data_ = generate_regression_data; };
     bool StateRecording() { return state_recording_; };
     void setStateRecording(bool state_recording) { state_recording_ = state_recording; };
     void setRestartStep(size_t restart_step) { restart_step_ = restart_step; };

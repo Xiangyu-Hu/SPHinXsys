@@ -10,7 +10,7 @@ namespace fluid_dynamics
 template <class RiemannSolverType>
 BaseIntegration1stHalfCorrect<RiemannSolverType>::BaseIntegration1stHalfCorrect(BaseInnerRelation &inner_relation)
     : BaseIntegration1stHalf<RiemannSolverType>(inner_relation),
-      B_(*this->particles_->template registerSharedVariable<Matd>("CorrectionMatrix", Matd::Identity()))
+      B_(*this->particles_->template registerSharedVariable<Matd>("KernelCorrectionMatrix", Matd::Identity()))
 {
     this->particles_->registerVariable(p_B_, "CorrectedPressure");
 }

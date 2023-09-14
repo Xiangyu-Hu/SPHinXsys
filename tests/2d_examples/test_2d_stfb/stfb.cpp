@@ -58,7 +58,7 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> str_normal(structure);
     /** corrected strong configuration. */
-    InteractionWithUpdate<CorrectedConfigurationInner> str_corrected_conf(structure_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> str_corrected_conf(structure_inner);
     /** Time step initialization, add gravity. */
     SimpleDynamics<TimeStepInitialization> initialize_time_step_to_fluid(water_block, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
     /** Evaluation of density by summation approach. */

@@ -146,7 +146,7 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalfDissipativeRiemann> beam_density_relaxation(beam_body_inner);
     InteractionDynamics<continuum_dynamics::AngularConservativeShearAccelerationRelaxation>
         beam_shear_acceleration_angular_conservative(beam_body_inner);
-    InteractionWithUpdate<CorrectedConfigurationInner> correction_matrix(beam_body_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> correction_matrix(beam_body_inner);
     Dynamics1Level<continuum_dynamics::ShearStressRelaxation> beam_shear_stress_relaxation(beam_body_inner);
     // for dual timestep
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(beam_body, U_ref, 0.2);

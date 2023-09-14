@@ -138,7 +138,7 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> insert_body_normal_direction(insert_body);
     /** Corrected configuration for the elastic insert body. */
-    InteractionWithUpdate<CorrectedConfigurationInner> insert_body_corrected_configuration(insert_body_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> insert_body_corrected_configuration(insert_body_inner);
     /** Compute the force exerted on solid body due to fluid pressure and viscosity. */
     InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(insert_body_contact);
     InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid>

@@ -12,16 +12,7 @@ SET(BUILD_RELOAD_PATH "${EXECUTABLE_OUTPUT_PATH}/reload")
 
 file(MAKE_DIRECTORY ${BUILD_INPUT_PATH})
 execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/regression_test_tool.py
-        DESTINATION ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/WaterBody_MaximumSpeed_runtimes.dat
-        DESTINATION ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/WaterBody_MaximumSpeed_ensemble_averaged_mean_variance.xml
-        DESTINATION ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/WaterBody_TotalMechanicalEnergy_runtimes.dat
-        DESTINATION ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/WaterBody_TotalMechanicalEnergy_ensemble_averaged_mean_variance.xml
-        DESTINATION ${BUILD_INPUT_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/ DESTINATION ${BUILD_INPUT_PATH})
 
 aux_source_directory(. DIR_SRCS)
 ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})

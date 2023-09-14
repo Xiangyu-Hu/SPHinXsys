@@ -297,7 +297,7 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> fish_body_normal_direction(fish_body);
     /** Corrected configuration.*/
-    InteractionWithUpdate<CorrectedConfigurationInner>
+    InteractionWithUpdate<KernelCorrectionMatrixInner>
         fish_body_corrected_configuration(fish_body_inner);
     /**
      * Common particle dynamics.

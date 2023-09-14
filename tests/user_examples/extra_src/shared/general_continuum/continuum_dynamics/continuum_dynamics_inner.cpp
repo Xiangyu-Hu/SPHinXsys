@@ -164,7 +164,7 @@ namespace SPH
             : BaseRelaxation(inner_relation),
             G_(continuum_.getShearModulus(continuum_.getYoungsModulus(), continuum_.getPoissonRatio())),
             smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()), shear_stress_(particles_->shear_stress_),
-            B_(*this->particles_->template registerSharedVariable<Matd>("CorrectionMatrix", Matd::Identity())), acc_shear_(particles_->acc_shear_) {}
+            B_(*this->particles_->template registerSharedVariable<Matd>("KernelCorrectionMatrix", Matd::Identity())), acc_shear_(particles_->acc_shear_) {}
         void ShearAccelerationRelaxation::interaction(size_t index_i, Real dt)
         {
             Real rho_i = rho_[index_i];
@@ -207,7 +207,7 @@ namespace SPH
             velocity_gradient_(particles_->velocity_gradient_), strain_tensor_(particles_->strain_tensor_),
             strain_tensor_rate_(particles_->strain_tensor_rate_), von_mises_stress_(particles_->von_mises_stress_),
             von_mises_strain_(particles_->von_mises_strain_), Vol_(particles_->Vol_), 
-            B_(*particles_->getVariableByName<Matd>("CorrectionMatrix")) {}
+            B_(*particles_->getVariableByName<Matd>("KernelCorrectionMatrix")) {}
         void ShearStressRelaxation::initialization(size_t index_i, Real dt)
         {
             strain_tensor_[index_i] += strain_tensor_rate_[index_i] * 0.5 * dt;

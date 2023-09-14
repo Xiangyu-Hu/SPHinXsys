@@ -148,7 +148,7 @@ int main(int ac, char *av[])
     //	SPH Method section
     //----------------------------------------------------------------------
     // Corrected configuration.
-    InteractionWithUpdate<CorrectedConfigurationInner> correct_configuration_excitation(physiology_heart_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> correct_configuration_excitation(physiology_heart_inner);
     // Time step size calculation.
     electro_physiology::GetElectroPhysiologyTimeStepSize get_physiology_time_step(physiology_heart);
     // Diffusion process for diffusion body.
@@ -160,7 +160,7 @@ int main(int ac, char *av[])
     SimpleDynamics<ApplyStimulusCurrentSI> apply_stimulus_s1(physiology_heart);
     SimpleDynamics<ApplyStimulusCurrentSII> apply_stimulus_s2(physiology_heart);
     // Active mechanics.
-    InteractionWithUpdate<CorrectedConfigurationInner> correct_configuration_contraction(mechanics_body_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> correct_configuration_contraction(mechanics_body_inner);
     InteractionDynamics<CorrectInterpolationKernelWeights> correct_kernel_weights_for_interpolation(mechanics_body_contact);
     /** Interpolate the active contract stress from electrophysiology body. */
     InteractionDynamics<InterpolatingAQuantity<Real>>

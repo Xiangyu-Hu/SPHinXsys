@@ -7,12 +7,12 @@ sys.path.append(path)
 from regression_test_base_tool import SphinxsysRegressionTest
 
 """
-case name: test_2d_eulerian_flow_around_cylinder
+case name: test_2d_FVM_double_mach_reflection
 """
 
-case_name = "test_2d_eulerian_flow_around_cylinder"
-body_name = "Cylinder"
-parameter_name = "TotalViscousForceOnSolid"
+case_name = "test_2d_FVM_double_mach_reflection"
+body_name = "WaveBody"
+parameter_name = "MaximumSpeed"
 
 number_of_run_times = 0
 converged = 0
@@ -20,13 +20,12 @@ sphinxsys = SphinxsysRegressionTest(case_name, body_name, parameter_name)
 
 while True:
     print("Now start a new run......")
-    sphinxsys.run_particle_relaxation()
-    sphinxsys.run_case_with_reload()
+    sphinxsys.run_case()
     number_of_run_times += 1
     converged = sphinxsys.read_dat_file()
     print("Please note: This is the", number_of_run_times, "run!")
     if number_of_run_times <= 200:
-        if converged == "true":
+        if (converged == "true"):
             print("The tested parameters of all variables are converged, and the run will stop here!")
             break
         elif converged != "true":

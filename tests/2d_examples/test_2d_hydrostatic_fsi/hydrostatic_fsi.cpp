@@ -249,7 +249,7 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> gate_normal_direction(gate);
     /** Corrected configuration. */
-    InteractionWithUpdate<CorrectedConfigurationInner> gate_corrected_configuration(gate_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> gate_corrected_configuration(gate_inner);
     /** Compute time step size of elastic solid. */
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> gate_computing_time_step_size(gate);
     /** Stress relaxation stepping for the elastic gate. */

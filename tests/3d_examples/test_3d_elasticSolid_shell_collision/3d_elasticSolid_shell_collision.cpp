@@ -147,7 +147,7 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     SimpleDynamics<TimeStepInitialization> ball_initialize_timestep(ball, makeShared<Gravity>(Vec3d(0.0, 0.0, -gravity_g)));
-    InteractionWithUpdate<CorrectedConfigurationInner> ball_corrected_configuration(ball_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> ball_corrected_configuration(ball_inner);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> ball_get_time_step_size(ball, 0.45);
     /** stress relaxation for the balls. */
     Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> ball_stress_relaxation_first_half(ball_inner);

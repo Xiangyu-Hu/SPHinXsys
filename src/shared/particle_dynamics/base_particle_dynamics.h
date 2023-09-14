@@ -127,11 +127,15 @@ template <class ParticlesType = BaseParticles,
           class BaseDataDelegateType = DataDelegateSimple<ParticlesType>>
 class DataDelegateInner : public BaseDataDelegateType
 {
+    BaseInnerRelation &inner_relation_;
+
   public:
     explicit DataDelegateInner(BaseInnerRelation &inner_relation)
         : BaseDataDelegateType(inner_relation.getSPHBody()),
+          inner_relation_(inner_relation),
           inner_configuration_(inner_relation.inner_configuration_){};
     virtual ~DataDelegateInner(){};
+    BaseInnerRelation &getInnerRelation() { return inner_relation_; };
 
   protected:
     /** inner configuration of the designated body */
@@ -147,10 +151,13 @@ template <class ParticlesType = BaseParticles,
           class BaseDataDelegateType = DataDelegateSimple<ParticlesType>>
 class DataDelegateContact : public BaseDataDelegateType
 {
+    BaseContactRelation &contact_relation_;
+
   public:
-    explicit DataDelegateContact(BaseContactRelation &body_contact_relation);
+    explicit DataDelegateContact(BaseContactRelation &contact_relation);
     virtual ~DataDelegateContact(){};
     void addExtraContactRelation(SPHBody &this_body, BaseContactRelation &extra_contact_relation);
+    BaseContactRelation &getContactRelation() { return contact_relation_; };
 
   protected:
     SPHBodyVector contact_bodies_;

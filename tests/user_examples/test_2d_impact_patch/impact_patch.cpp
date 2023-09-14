@@ -9,24 +9,24 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real LL = 0.667;                        /**< Liquid column length. */
-Real LH = 2.0;                         /**< Liquid column height. */
-Real particle_spacing_ref = LL / 100;    /**< Initial reference particle spacing. */
-Real BW = particle_spacing_ref * 4;  /**< Extending width for boundary conditions. */
+Real LL = 0.667;                      /**< Liquid column length. */
+Real LH = 2.0;                        /**< Liquid column height. */
+Real particle_spacing_ref = LL / 100; /**< Initial reference particle spacing. */
+Real BW = particle_spacing_ref * 4;   /**< Extending width for boundary conditions. */
 BoundingBox system_domain_bounds(Vec2d(-LH, -LH), Vec2d(LL + BW, LH + BW));
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------
-Real rho0_f = 1.0;                    /**< Reference density of fluid. */
-Real U_max = 1.0;                    /**< Characteristic velocity. */
-Real c_f = 100.0;                   /**< Reference sound speed. */
+Real rho0_f = 1.0; /**< Reference density of fluid. */
+Real U_max = 1.0;  /**< Characteristic velocity. */
+Real c_f = 100.0;  /**< Reference sound speed. */
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
 //----------------------------------------------------------------------
-Vec2d DamP_lb(-LL / 2, -LH / 2);	 /**< Left bottom. */
-Vec2d DamP_lt(-LL / 2, LH / 2);	 /**< Left top. */
-Vec2d DamP_rt(LL / 2, LH / 2); /**< Right top. */
-Vec2d DamP_rb(LL / 2, -LH / 2);	 /**< Right bottom. */
+Vec2d DamP_lb(-LL / 2, -LH / 2); /**< Left bottom. */
+Vec2d DamP_lt(-LL / 2, LH / 2);  /**< Left top. */
+Vec2d DamP_rt(LL / 2, LH / 2);   /**< Right top. */
+Vec2d DamP_rb(LL / 2, -LH / 2);  /**< Right bottom. */
 //----------------------------------------------------------------------
 //	Geometry definition.
 //----------------------------------------------------------------------
@@ -43,8 +43,8 @@ std::vector<Vecd> createWaterBlockShape()
 }
 class WaterBlock : public MultiPolygonShape
 {
-public:
-    explicit WaterBlock(const std::string& shape_name) : MultiPolygonShape(shape_name)
+  public:
+    explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
         multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
     }
@@ -56,9 +56,9 @@ public:
 class InitialVelocity
     : public fluid_dynamics::FluidInitialCondition
 {
-public:
-    InitialVelocity(SPHBody& sph_body)
-        : fluid_dynamics::FluidInitialCondition(sph_body) {};
+  public:
+    InitialVelocity(SPHBody &sph_body)
+        : fluid_dynamics::FluidInitialCondition(sph_body){};
 
     void update(size_t index_i, Real dt)
     {
@@ -69,9 +69,8 @@ public:
         }
         else
         {
-            vel_[index_i][1] =  1.0;
-        }        
-        
+            vel_[index_i][1] = 1.0;
+        }
     }
 };
 //----------------------------------------------------------------------
@@ -137,7 +136,7 @@ int main(int ac, char *av[])
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannCorrect> fluid_pressure_relaxation_correct(water_body_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemann> fluid_density_relaxation(water_body_inner);
-    InteractionWithUpdate<CorrectedConfigurationInner> corrected_configuration_fluid(water_body_inner, 0.3);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration_fluid(water_body_inner, 0.3);
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceInner> fluid_density_by_summation(water_body_inner);
     SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_max);
@@ -232,7 +231,7 @@ int main(int ac, char *av[])
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
                           << GlobalStaticVariables::physical_time_
                           << "	advection_dt = " << advection_dt << "	acoustic_dt = " << acoustic_dt << "\n";
-                
+
                 if (number_of_iterations % restart_output_interval == 0)
                     restart_io.writeToFile(number_of_iterations);
             }
