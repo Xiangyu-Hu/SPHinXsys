@@ -241,6 +241,27 @@ namespace SPH
     };
 
     /**
+     * @class DiffusionRelaxationContact
+     * @brief Contact diffusion relaxation with Dirichlet boundary condition.
+     */
+    template < class DiffusionType, class ParticlesType, class ContactParticlesType, class KernelGradientType = KernelGradientContact>
+    class DiffusionRelaxationMutimaterialContact
+        : public BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType>
+    {
+        StdVec<StdVec<BaseDiffusion *>> all_contact_diffusions_;
+        StdVec<StdVec< ThermalDiffusivity<DiffusionType> >> contact_thermal_diffusivities_;
+        StdVec<StdVec<StdLargeVec<Real> *>> contact_gradient_species_;
+
+     protected: 
+        void getDiffusionChangeRateMultimaterialContact(size_t particle_i, size_t particle_j, Vecd &e_ij, Real surface_area_ij, size_t contact_k);
+
+    public:
+        explicit DiffusionRelaxationMutimaterialContact(BaseContactRelation &contact_relation);
+        virtual ~DiffusionRelaxationMutimaterialContact(){};
+        inline void interaction(size_t index_i, Real dt = 0.0);
+    };
+
+    /**
      * @class InitializationRK
      * @brief Initialization of a runge-kutta integration scheme.
      */
