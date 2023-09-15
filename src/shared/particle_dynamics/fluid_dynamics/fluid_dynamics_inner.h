@@ -57,19 +57,33 @@ class FluidInitialCondition : public LocalDynamics, public FluidDataSimple
 };
 
 /**
- * @class BaseDensitySummationInner
+ * @class BaseDensitySummation
  * @brief Base class for computing density by summation
  */
-class BaseDensitySummationInner : public LocalDynamics, public FluidDataInner
+template <class DataDelegationType>
+class BaseDensitySummation : public LocalDynamics, public DataDelegationType
 {
   public:
-    explicit BaseDensitySummationInner(BaseInnerRelation &inner_relation);
-    virtual ~BaseDensitySummationInner(){};
-    void update(size_t index_i, Real dt = 0.0);
+    template <class BaseRelationType>
+    explicit BaseDensitySummation(BaseRelationType &base_relation);
+    virtual ~BaseDensitySummation(){};
 
   protected:
     StdLargeVec<Real> &rho_, rho_sum_, &mass_;
     Real rho0_, inv_sigma0_;
+};
+
+/**
+ * @class BaseDensitySummationInner
+ * @brief Base class for computing density by summation
+ */
+class BaseDensitySummationInner : public BaseDensitySummation<FluidDataInner>
+{
+  public:
+    explicit BaseDensitySummationInner(BaseInnerRelation &inner_relation)
+        : BaseDensitySummation<FluidDataInner>(inner_relation){};
+    virtual ~BaseDensitySummationInner(){};
+    void update(size_t index_i, Real dt = 0.0);
 };
 
 /**
@@ -81,8 +95,7 @@ class DensitySummationInner : public BaseDensitySummationInner
   public:
     explicit DensitySummationInner(BaseInnerRelation &inner_relation);
     virtual ~DensitySummationInner(){};
-
-    inline void interaction(size_t index_i, Real dt = 0.0);
+    void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
     Real W0_;
@@ -98,7 +111,7 @@ class DensitySummationInnerAdaptive : public BaseDensitySummationInner
     explicit DensitySummationInnerAdaptive(BaseInnerRelation &inner_relation);
     virtual ~DensitySummationInnerAdaptive(){};
 
-    inline void interaction(size_t index_i, Real dt = 0.0);
+    void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
     SPHAdaptation &sph_adaptation_;
@@ -107,14 +120,16 @@ class DensitySummationInnerAdaptive : public BaseDensitySummationInner
 };
 
 /**
- * @class BaseViscousAccelerationInner
+ * @class BaseViscousAcceleration
  * @brief Base class for the viscosity force induced acceleration
  */
-class BaseViscousAccelerationInner : public LocalDynamics, public FluidDataInner
+template <class DataDelegationType>
+class BaseViscousAcceleration : public LocalDynamics, public DataDelegationType
 {
   public:
-    explicit BaseViscousAccelerationInner(BaseInnerRelation &inner_relation);
-    virtual ~BaseViscousAccelerationInner(){};
+    template <class BaseRelationType>
+    explicit BaseViscousAcceleration(BaseRelationType &base_relation);
+    virtual ~BaseViscousAcceleration(){};
 
   protected:
     StdLargeVec<Real> &rho_;
@@ -127,14 +142,13 @@ class BaseViscousAccelerationInner : public LocalDynamics, public FluidDataInner
  * @class ViscousAccelerationInner
  * @brief  the viscosity force induced acceleration
  */
-class ViscousAccelerationInner : public BaseViscousAccelerationInner
+class ViscousAccelerationInner : public BaseViscousAcceleration<FluidDataInner>
 {
   public:
     explicit ViscousAccelerationInner(BaseInnerRelation &inner_relation)
-        : BaseViscousAccelerationInner(inner_relation){};
+        : BaseViscousAcceleration<FluidDataInner>(inner_relation){};
     virtual ~ViscousAccelerationInner(){};
-
-    inline void interaction(size_t index_i, Real dt = 0.0);
+    void interaction(size_t index_i, Real dt = 0.0);
 };
 
 /**
@@ -142,14 +156,13 @@ class ViscousAccelerationInner : public BaseViscousAccelerationInner
  * @brief the viscosity force induced acceleration, a formulation for conserving
  * angular momentum, to be tested for its practical applications.
  */
-class AngularConservativeViscousAccelerationInner : public BaseViscousAccelerationInner
+class AngularConservativeViscousAccelerationInner : public BaseViscousAcceleration<FluidDataInner>
 {
   public:
     explicit AngularConservativeViscousAccelerationInner(BaseInnerRelation &inner_relation)
-        : BaseViscousAccelerationInner(inner_relation){};
+        : BaseViscousAcceleration<FluidDataInner>(inner_relation){};
     virtual ~AngularConservativeViscousAccelerationInner(){};
-
-    inline void interaction(size_t index_i, Real dt = 0.0);
+    void interaction(size_t index_i, Real dt = 0.0);
 };
 
 /**
@@ -218,7 +231,7 @@ class VorticityInner : public LocalDynamics, public FluidDataInner
     explicit VorticityInner(BaseInnerRelation &inner_relation);
     virtual ~VorticityInner(){};
 
-    inline void interaction(size_t index_i, Real dt = 0.0);
+    void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
     StdLargeVec<Vecd> &vel_;
@@ -229,10 +242,12 @@ class VorticityInner : public LocalDynamics, public FluidDataInner
  * @class BaseIntegration
  * @brief Pure abstract base class for all fluid relaxation schemes
  */
-class BaseIntegration : public LocalDynamics, public FluidDataInner
+template <class DataDelegationType>
+class BaseIntegration : public LocalDynamics, public DataDelegationType
 {
   public:
-    explicit BaseIntegration(BaseInnerRelation &inner_relation);
+    template <class BaseRelationType>
+    explicit BaseIntegration(BaseRelationType &base_relation);
     virtual ~BaseIntegration(){};
 
   protected:
@@ -242,68 +257,63 @@ class BaseIntegration : public LocalDynamics, public FluidDataInner
 };
 
 /**
- * @class BaseIntegration1stHalf
+ * @class BaseIntegration1stHalfInner
  * @brief Template class for pressure relaxation scheme with the Riemann solver
  * as template variable
  */
 template <class RiemannSolverType>
-class BaseIntegration1stHalf : public BaseIntegration
+class BaseIntegration1stHalfInner : public BaseIntegration<FluidDataInner>
 {
   public:
-    explicit BaseIntegration1stHalf(BaseInnerRelation &inner_relation);
-    virtual ~BaseIntegration1stHalf(){};
-    RiemannSolverType riemann_solver_;
+    explicit BaseIntegration1stHalfInner(BaseInnerRelation &inner_relation);
+    virtual ~BaseIntegration1stHalfInner(){};
     void initialization(size_t index_i, Real dt = 0.0);
-
-    inline void interaction(size_t index_i, Real dt = 0.0);
-
+    void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
+    RiemannSolverType riemann_solver_;
     virtual Vecd computeNonConservativeAcceleration(size_t index_i);
 };
-using Integration1stHalf = BaseIntegration1stHalf<NoRiemannSolver>;
+using Integration1stHalfInner = BaseIntegration1stHalfInner<NoRiemannSolver>;
 /** define the mostly used pressure relaxation scheme using Riemann solver */
-using Integration1stHalfRiemann = BaseIntegration1stHalf<AcousticRiemannSolver>;
-using Integration1stHalfDissipativeRiemann = BaseIntegration1stHalf<DissipativeRiemannSolver>;
+using Integration1stHalfInnerRiemann = BaseIntegration1stHalfInner<AcousticRiemannSolver>;
+using Integration1stHalfInnerDissipativeRiemann = BaseIntegration1stHalfInner<DissipativeRiemannSolver>;
 
 /**
- * @class BaseIntegration2ndHalf
+ * @class BaseIntegration2ndHalfInner
  * @brief  Template density relaxation scheme with different Riemann solver
  */
 template <class RiemannSolverType>
-class BaseIntegration2ndHalf : public BaseIntegration
+class BaseIntegration2ndHalfInner : public BaseIntegration<FluidDataInner>
 {
   public:
-    explicit BaseIntegration2ndHalf(BaseInnerRelation &inner_relation);
-    virtual ~BaseIntegration2ndHalf(){};
-    RiemannSolverType riemann_solver_;
+    explicit BaseIntegration2ndHalfInner(BaseInnerRelation &inner_relation);
+    virtual ~BaseIntegration2ndHalfInner(){};
     void initialization(size_t index_i, Real dt = 0.0);
-
     inline void interaction(size_t index_i, Real dt = 0.0);
-
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
+    RiemannSolverType riemann_solver_;
     StdLargeVec<Real> &Vol_, &mass_;
 };
-using Integration2ndHalf = BaseIntegration2ndHalf<NoRiemannSolver>;
+using Integration2ndHalfInner = BaseIntegration2ndHalfInner<NoRiemannSolver>;
 /** define the mostly used density relaxation scheme using Riemann solver */
-using Integration2ndHalfRiemann = BaseIntegration2ndHalf<AcousticRiemannSolver>;
-using Integration2ndHalfDissipativeRiemann = BaseIntegration2ndHalf<DissipativeRiemannSolver>;
+using Integration2ndHalfInnerRiemann = BaseIntegration2ndHalfInner<AcousticRiemannSolver>;
+using Integration2ndHalfInnerDissipativeRiemann = BaseIntegration2ndHalfInner<DissipativeRiemannSolver>;
 
 /**
  * @class Oldroyd_BIntegration1stHalf
  * @brief Pressure relaxation scheme with the mostly used Riemann solver.
  */
-class Oldroyd_BIntegration1stHalf : public Integration1stHalfDissipativeRiemann
+class Oldroyd_BIntegration1stHalf : public Integration1stHalfInnerDissipativeRiemann
 {
   public:
     explicit Oldroyd_BIntegration1stHalf(BaseInnerRelation &inner_relation);
     virtual ~Oldroyd_BIntegration1stHalf(){};
     void initialization(size_t index_i, Real dt = 0.0);
-
-    inline void interaction(size_t index_i, Real dt = 0.0);
+    void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
     StdLargeVec<Matd> tau_, dtau_dt_;
@@ -313,14 +323,12 @@ class Oldroyd_BIntegration1stHalf : public Integration1stHalfDissipativeRiemann
  * @class Oldroyd_BIntegration2ndHalf
  * @brief Density relaxation scheme with the mostly used Riemann solver.
  */
-class Oldroyd_BIntegration2ndHalf : public Integration2ndHalfDissipativeRiemann
+class Oldroyd_BIntegration2ndHalf : public Integration2ndHalfInnerDissipativeRiemann
 {
   public:
     explicit Oldroyd_BIntegration2ndHalf(BaseInnerRelation &inner_relation);
     virtual ~Oldroyd_BIntegration2ndHalf(){};
-
-    inline void interaction(size_t index_i, Real dt = 0.0);
-
+    void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 
   protected:

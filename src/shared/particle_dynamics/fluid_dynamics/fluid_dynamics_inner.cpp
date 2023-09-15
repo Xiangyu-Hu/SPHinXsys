@@ -11,15 +11,6 @@ FluidInitialCondition::
     : LocalDynamics(sph_body), FluidDataSimple(sph_body),
       pos_(particles_->pos_), vel_(particles_->vel_) {}
 //=================================================================================================//
-BaseDensitySummationInner::BaseDensitySummationInner(BaseInnerRelation &inner_relation)
-    : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
-      rho_(particles_->rho_), mass_(particles_->mass_),
-      rho0_(sph_body_.base_material_->ReferenceDensity()),
-      inv_sigma0_(1.0 / sph_body_.sph_adaptation_->LatticeNumberDensity())
-{
-    particles_->registerVariable(rho_sum_, "DensitySummation");
-}
-//=================================================================================================//
 void BaseDensitySummationInner::update(size_t index_i, Real dt)
 {
     rho_[index_i] = rho_sum_[index_i];
@@ -29,18 +20,69 @@ DensitySummationInner::DensitySummationInner(BaseInnerRelation &inner_relation)
     : BaseDensitySummationInner(inner_relation),
       W0_(sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd)) {}
 //=================================================================================================//
-DensitySummationInnerAdaptive::
-    DensitySummationInnerAdaptive(BaseInnerRelation &inner_relation)
+void DensitySummationInner::interaction(size_t index_i, Real dt)
+{
+    Real sigma = W0_;
+    const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+        sigma += inner_neighborhood.W_ij_[n];
+
+    rho_sum_[index_i] = sigma * rho0_ * inv_sigma0_;
+}
+//=================================================================================================//
+DensitySummationInnerAdaptive::DensitySummationInnerAdaptive(BaseInnerRelation &inner_relation)
     : BaseDensitySummationInner(inner_relation),
       sph_adaptation_(*sph_body_.sph_adaptation_),
       kernel_(*sph_adaptation_.getKernel()),
       h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")) {}
 //=================================================================================================//
-BaseViscousAccelerationInner::BaseViscousAccelerationInner(BaseInnerRelation &inner_relation)
-    : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
-      rho_(particles_->rho_), vel_(particles_->vel_), acc_prior_(particles_->acc_prior_),
-      mu_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceViscosity()),
-      smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
+void DensitySummationInnerAdaptive::interaction(size_t index_i, Real dt)
+{
+    Real sigma_i = mass_[index_i] * kernel_.W0(h_ratio_[index_i], ZeroVecd);
+    const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+        sigma_i += inner_neighborhood.W_ij_[n] * mass_[inner_neighborhood.j_[n]];
+
+    rho_sum_[index_i] = sigma_i * rho0_ * inv_sigma0_ / mass_[index_i] /
+                        sph_adaptation_.NumberDensityScaleFactor(h_ratio_[index_i]);
+}
+//=================================================================================================//
+void ViscousAccelerationInner::interaction(size_t index_i, Real dt)
+{
+    Vecd acceleration = Vecd::Zero();
+    Vecd vel_derivative = Vecd::Zero();
+    const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+    {
+        size_t index_j = inner_neighborhood.j_[n];
+
+        // viscous force
+        vel_derivative = (vel_[index_i] - vel_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
+        acceleration += 2.0 * mu_ * vel_derivative * inner_neighborhood.dW_ijV_j_[n];
+    }
+
+    acc_prior_[index_i] += acceleration / rho_[index_i];
+}
+//=================================================================================================//
+void AngularConservativeViscousAccelerationInner::interaction(size_t index_i, Real dt)
+{
+    Vecd acceleration = Vecd::Zero();
+    Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+    {
+        size_t index_j = inner_neighborhood.j_[n];
+        Vecd &e_ij = inner_neighborhood.e_ij_[n];
+        Real r_ij = inner_neighborhood.r_ij_[n];
+
+        /** The following viscous force is given in Monaghan 2005 (Rep. Prog. Phys.), it seems that
+         * this formulation is more accurate than the previous one for Taylor-Green-Vortex flow. */
+        Real v_r_ij = (vel_[index_i] - vel_[index_j]).dot(r_ij * e_ij);
+        Real eta_ij = 8.0 * mu_ * v_r_ij / (r_ij * r_ij + 0.01 * smoothing_length_);
+        acceleration += eta_ij * inner_neighborhood.dW_ijV_j_[n] * e_ij;
+    }
+
+    acc_prior_[index_i] += acceleration / rho_[index_i];
+}
 //=================================================================================================//
 AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL)
     : LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
@@ -100,17 +142,23 @@ VorticityInner::VorticityInner(BaseInnerRelation &inner_relation)
     particles_->addVariableToWrite<AngularVecd>("VorticityInner");
 }
 //=================================================================================================//
-BaseIntegration::BaseIntegration(BaseInnerRelation &inner_relation)
-    : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
-      fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())), rho_(particles_->rho_),
-      p_(*particles_->getVariableByName<Real>("Pressure")),
-      drho_dt_(*particles_->registerSharedVariable<Real>("DensityChangeRate")),
-      pos_(particles_->pos_), vel_(particles_->vel_),
-      acc_(particles_->acc_), acc_prior_(particles_->acc_prior_) {}
+void VorticityInner::interaction(size_t index_i, Real dt)
+{
+    AngularVecd vorticity = ZeroData<AngularVecd>::value;
+    const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+    {
+        size_t index_j = inner_neighborhood.j_[n];
+
+        Vecd vel_diff = vel_[index_i] - vel_[index_j];
+        vorticity += getCrossProduct(vel_diff, inner_neighborhood.e_ij_[n]) * inner_neighborhood.dW_ijV_j_[n];
+    }
+
+    vorticity_[index_i] = vorticity;
+}
 //=================================================================================================//
-Oldroyd_BIntegration1stHalf ::
-    Oldroyd_BIntegration1stHalf(BaseInnerRelation &inner_relation)
-    : Integration1stHalfDissipativeRiemann(inner_relation)
+Oldroyd_BIntegration1stHalf ::Oldroyd_BIntegration1stHalf(BaseInnerRelation &inner_relation)
+    : Integration1stHalfInnerDissipativeRiemann(inner_relation)
 {
     particles_->registerVariable(tau_, "ElasticStress");
     particles_->registerVariable(dtau_dt_, "ElasticStressChangeRate");
@@ -120,14 +168,33 @@ Oldroyd_BIntegration1stHalf ::
 //=================================================================================================//
 void Oldroyd_BIntegration1stHalf::initialization(size_t index_i, Real dt)
 {
-    Integration1stHalfDissipativeRiemann::initialization(index_i, dt);
+    Integration1stHalfInnerDissipativeRiemann::initialization(index_i, dt);
 
     tau_[index_i] += dtau_dt_[index_i] * dt * 0.5;
 }
 //=================================================================================================//
+void Oldroyd_BIntegration1stHalf::
+    interaction(size_t index_i, Real dt)
+{
+    Integration1stHalfInnerDissipativeRiemann::interaction(index_i, dt);
+
+    Vecd acceleration = Vecd::Zero();
+    Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+    {
+        size_t index_j = inner_neighborhood.j_[n];
+        Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+
+        // elastic force
+        acceleration += (tau_[index_i] + tau_[index_j]) * nablaW_ijV_j;
+    }
+
+    acc_[index_i] += acceleration / rho_[index_i];
+}
+//=================================================================================================//
 Oldroyd_BIntegration2ndHalf::
     Oldroyd_BIntegration2ndHalf(BaseInnerRelation &inner_relation)
-    : Integration2ndHalfDissipativeRiemann(inner_relation),
+    : Integration2ndHalfInnerDissipativeRiemann(inner_relation),
       oldroyd_b_fluid_(DynamicCast<Oldroyd_B_Fluid>(this, particles_->getBaseMaterial())),
       tau_(*particles_->getVariableByName<Matd>("ElasticStress")),
       dtau_dt_(*particles_->getVariableByName<Matd>("ElasticStressChangeRate"))
@@ -138,9 +205,30 @@ Oldroyd_BIntegration2ndHalf::
 //=================================================================================================//
 void Oldroyd_BIntegration2ndHalf::update(size_t index_i, Real dt)
 {
-    Integration2ndHalfDissipativeRiemann::update(index_i, dt);
+    Integration2ndHalfInnerDissipativeRiemann::update(index_i, dt);
 
     tau_[index_i] += dtau_dt_[index_i] * dt * 0.5;
+}
+//=================================================================================================//
+void Oldroyd_BIntegration2ndHalf::
+    interaction(size_t index_i, Real dt)
+{
+    Integration2ndHalfInnerDissipativeRiemann::interaction(index_i, dt);
+
+    Matd tau_i = tau_[index_i];
+    Matd stress_rate = Matd::Zero();
+    Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+    {
+        size_t index_j = inner_neighborhood.j_[n];
+        Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+
+        Matd velocity_gradient = -(vel_[index_i] - vel_[index_j]) * nablaW_ijV_j.transpose();
+        stress_rate += velocity_gradient.transpose() * tau_i + tau_i * velocity_gradient - tau_i / lambda_ +
+                       (velocity_gradient.transpose() + velocity_gradient) * mu_p_ / lambda_;
+    }
+
+    dtau_dt_[index_i] = stress_rate;
 }
 //=================================================================================================//
 } // namespace fluid_dynamics
