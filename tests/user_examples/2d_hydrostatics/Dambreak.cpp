@@ -10,8 +10,8 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 5.366;                    /**< Water tank length. */
-Real DH = 5.366;                    /**< Water tank height. */
+Real DL = 2.0;                    /**< Water tank length. */
+Real DH = 2.0;                    /**< Water tank height. */
 Real LL = 2.0;                      /**< Water column length. */
 Real LH = 1.0;                      /**< Water column height. */
 Real particle_spacing_ref = 0.025;  /**< Initial reference particle spacing. */
@@ -65,6 +65,7 @@ int main(int ac, char *av[])
                         Transform(water_block_translation), water_block_halfsize, "WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
+    SimpleDynamics<RandomizeParticlePosition> random_airfoil_particles(water_block);
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
@@ -90,9 +91,11 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> fluid_density_by_summation(water_block_complex);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
-    SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block, gravity_ptr);
+    //SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block, gravity_ptr);
+    SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_ref);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
+    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> transport_velocity_correction(water_block_complex);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -107,6 +110,7 @@ int main(int ac, char *av[])
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
+    random_airfoil_particles.exec(0.25);
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
@@ -127,7 +131,7 @@ int main(int ac, char *av[])
     int screen_output_interval = 100;
     int observation_sample_interval = screen_output_interval * 2;
     int restart_output_interval = screen_output_interval * 10;
-    Real end_time = 20.0;
+    Real end_time = 10.0;
     Real output_interval = 0.1;
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -159,7 +163,8 @@ int main(int ac, char *av[])
             Real advection_dt = fluid_advection_time_step.exec();
             fluid_density_by_summation.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
-
+            
+            transport_velocity_correction.exec();
             time_instance = TickCount::now();
             Real relaxation_time = 0.0;
             Real acoustic_dt = 0.0;
