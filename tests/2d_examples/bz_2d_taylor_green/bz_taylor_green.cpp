@@ -102,7 +102,7 @@ int main(int ac, char* av[])
         ReloadParticleIO write_particle_reload_files(io_environment, { &water_block });
         /** A  Physics relaxation step. */
         InteractionWithUpdate<UpdateConfigurationInner> update_configuration_fluid(water_block_inner);
-        relax_dynamics::RelaxationStepByCMInner relaxation_step_inner(water_block_inner);
+        relax_dynamics::RelaxationStepImplicitInner relaxation_step_inner(water_block_inner);
         PeriodicConditionUsingCellLinkedList periodic_condition_x(water_block, water_block.getBodyShapeBounds(), xAxis);
         PeriodicConditionUsingCellLinkedList periodic_condition_y(water_block, water_block.getBodyShapeBounds(), yAxis);
         //----------------------------------------------------------------------
@@ -115,7 +115,7 @@ int main(int ac, char* av[])
         //	Relax particles of the insert body.
         //----------------------------------------------------------------------
         int ite_p = 0;
-        while (ite_p < 4000)
+        while (ite_p < 20000)
         {
             periodic_condition_x.bounding_.exec();
             periodic_condition_y.bounding_.exec();
@@ -155,11 +155,13 @@ int main(int ac, char* av[])
      * which will also introduce numerical dissipation slightly. */
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemann> pressure_relaxation(water_block_inner);
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannCorrect> pressure_relaxation_correct(water_block_inner);
-    Dynamics1Level<fluid_dynamics::Integration1stHalfConsistencyCorrect> pressure_relaxation_consistency(water_block_inner);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannConsistencyCorrect> pressure_relaxation_consistency(water_block_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalf> density_relaxation(water_block_inner);
     InteractionWithUpdate<UpdateConfigurationInner> update_configuration_fluid(water_block_inner);
+    InteractionWithUpdate<CorrectedConfigurationInner> corrected_configuration_fluid(water_block_inner, 0.3);
     InteractionWithUpdate<fluid_dynamics::DensitySummationInner> update_density_by_summation(water_block_inner);
     InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_inner);
+    relax_dynamics::RelaxationStepByCMInner relaxation_correction(water_block_inner);
     InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionInner<AllParticles>> transport_velocity_correction(water_block_inner);
     InteractionDynamics<fluid_dynamics::TransportVelocityConsistencyCorrectionInner<AllParticles>> transport_velocity_consistency(water_block_inner, 0.15);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
@@ -213,7 +215,17 @@ int main(int ac, char* av[])
             update_density_by_summation.exec();
             viscous_acceleration.exec();
             update_configuration_fluid.exec();
-            transport_velocity_consistency.exec();
+            //transport_velocity_correction.exec();
+            //relaxation_correction.exec();
+            //transport_velocity_consistency.exec();
+
+            /** Water block configuration and periodic condition. */
+            periodic_condition_x.bounding_.exec();
+            periodic_condition_y.bounding_.exec();
+            water_block.updateCellLinkedList();
+            periodic_condition_x.update_cell_linked_list_.exec();
+            periodic_condition_y.update_cell_linked_list_.exec();
+            water_block_inner.updateConfiguration();
 
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
@@ -222,7 +234,9 @@ int main(int ac, char* av[])
                 dt = SMIN(get_fluid_time_step_size.exec(), Dt);
                 relaxation_time += dt;
                 integration_time += dt;
-                pressure_relaxation_correct.exec(dt);
+                pressure_relaxation.exec(dt);
+                //pressure_relaxation_correct.exec(dt);
+                //pressure_relaxation_consistency.exec(dt);
                 density_relaxation.exec(dt);
                 GlobalStaticVariables::physical_time_ += dt;
             }

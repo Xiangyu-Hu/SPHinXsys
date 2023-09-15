@@ -12,7 +12,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real LL = 1.0;
 Real LH = 1.0;
-Real resolution_ref = LH / 100.0;
+Real resolution_ref = LH / 50.0;
 BoundingBox system_domain_bounds(Vec2d::Zero(), Vec2d(LL, LH));
 //----------------------------------------------------------------------
 //	Define geometries
@@ -103,6 +103,7 @@ int main(int ac, char* av[])
 
 		/* Update the relaxation residual. */
 		InteractionDynamics<relax_dynamics::CheckConsistencyRealization> check_consistency_realization(insert_body_inner, false);
+		ReduceAverage<QuantitySummation<Real>> calculate_relaxation_error(body, "RelaxationErrorNorm");
 		ReduceAverage<QuantitySummation<Real>> calculate_pressure_gradient(body, "PressureGradientErrorNorm");
 		ReduceAverage<QuantitySummation<Real>> calculate_zero_order_error(body, "ZeroOrderErrorNorm");
 		ReduceAverage<QuantitySummation<Real>> calculate_reproduce_gradient(body, "ReproduceGradientErrorNorm");
@@ -142,8 +143,9 @@ int main(int ac, char* av[])
 			periodic_condition_y.update_cell_linked_list_.exec();
 			insert_body_inner.updateConfiguration();
 
+			relaxation_0th_inner.exec();
 			//calculate_correction_matrix.exec();
-			relaxation_0th_implicit_inner.exec();
+			//relaxation_1st_inner.exec();
 
 			periodic_condition_x.bounding_.exec();
 			periodic_condition_y.bounding_.exec();
@@ -151,18 +153,19 @@ int main(int ac, char* av[])
 			periodic_condition_x.update_cell_linked_list_.exec();
 			periodic_condition_y.update_cell_linked_list_.exec();
 			insert_body_inner.updateConfiguration();
-
 			ite++;
 
 			if (ite % 100 == 0)
 			{
+				testing_initial_condition.exec();
 				calculate_correction_matrix.exec();
 				check_consistency_realization.exec();
 				check_reverse_consistency_realization.exec();
 				out_file_all_information << std::fixed << std::setprecision(12) << ite << "   " <<
 					calculate_pressure_gradient.exec() << "   " << calculate_pressure_gradient_reverse.exec() << "   " << 
 					calculate_zero_order_error.exec() << "   "  << calculate_zero_order_error_reverse.exec() << "   " << 
-					calculate_reproduce_gradient.exec() << "   " << calculate_reproduce_gradient_reverse.exec() << "\n";
+					calculate_reproduce_gradient.exec() << "   " << calculate_reproduce_gradient_reverse.exec() << "   " <<
+					calculate_relaxation_error.exec() << "\n";
 				std::cout << std::fixed << std::setprecision(9) << "The 0th relaxation steps for the body N = " << ite << "\n";
 				
 				write_insert_body_to_vtp.writeToFile(ite);

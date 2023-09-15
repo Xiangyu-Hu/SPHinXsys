@@ -617,7 +617,7 @@ protected:
     BaseInnerRelation& inner_relation_;
     NearShapeSurface near_shape_surface_;
     ReduceDynamics<GetTimeStepSizeSquare> get_time_step_;
-    InteractionSplit<RelaxationByCMImplicitInnerWithLevelSetCorrection> relaxation_evolution_inner_;
+    InteractionSplit<RelaxationByCMImplicitInner> relaxation_evolution_inner_;
     SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
     SimpleDynamics<NearSurfaceVolumeCorrection> surface_correction_;
     ReduceDynamics<QuantityMaximum<Real>> update_averaged_error_;
@@ -732,6 +732,7 @@ protected:
     StdLargeVec<Real>& pressure_;
     StdLargeVec<Vecd>& pos_;
     StdLargeVec<Matd>& B_;
+    StdLargeVec<Real> relaxation_error_;
     StdLargeVec<Real> pressure_gradient_error_norm_;
     StdLargeVec<Vecd> pressure_gradient_;
     StdLargeVec<Real> zero_order_error_norm_;

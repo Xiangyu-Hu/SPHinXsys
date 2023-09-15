@@ -207,12 +207,12 @@ RelaxationStepByCMInner::RelaxationStepByCMInner(BaseInnerRelation& inner_relati
 //=================================================================================================//
 void RelaxationStepByCMInner::exec(Real dt)
 {
-    real_body_->updateCellLinkedList();
-    inner_relation_.updateConfiguration();
     relaxation_acceleration_inner_->exec();
     Real dt_square = get_time_step_square_.exec();
     update_particle_position_.exec(dt_square);
-    surface_correction_->exec();
+    //surface_correction_->exec();
+    //real_body_->updateCellLinkedList();
+    //inner_relation_.updateConfiguration();
 }
 //=================================================================================================//
 RelaxationAccelerationByCMComplex::
@@ -453,8 +453,6 @@ RelaxationStepByCMImplicitInner::RelaxationStepByCMImplicitInner(BaseInnerRelati
 //=================================================================================================//
 void RelaxationStepByCMImplicitInner::exec(Real dt)
 {
-	real_body_->updateCellLinkedList();
-	inner_relation_.updateConfiguration();
 	relaxation_evolution_inner_.exec(time_step_size_);
 	time_step_size_ = 50 * sqrt(get_time_step_.exec());
 	//surface_correction_.exec();
@@ -492,8 +490,9 @@ void CalculateCorrectionMatrix::interaction(size_t index_i, Real dt)
 	{
 		//The calculation of the particle stress is not related to the level set correction.
         local_configuration -= level_set_shape_->computeDisplacementKernelGradientIntegral(pos_[index_i],
-			                sph_adaptation_->SmoothingLengthRatio(index_i));
+			                   sph_adaptation_->SmoothingLengthRatio(index_i));
 	}
+
     stress_[index_i] = local_configuration;
     B_[index_i] = (local_configuration).inverse();
 }
@@ -504,14 +503,14 @@ ReformulateParticleVolume::ReformulateParticleVolume(BaseInnerRelation& inner_re
 //=================================================================================================//
 void ReformulateParticleVolume::interaction(size_t index_i, Real dt)
 {
-    Real vol_inverse = 0.0;
+    Real vol_inverse = Eps;
     Neighborhood& inner_neighborhood = inner_configuration_[index_i];
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
         size_t index_j = inner_neighborhood.j_[n];
         vol_inverse += inner_neighborhood.W_ij_[n];
     }
-    Vol_[index_i] = 1 / (Eps + vol_inverse);
+    Vol_[index_i] = 1 / (vol_inverse);
 }
 //=================================================================================================//
 UpdateParticleKineticEnergy::
@@ -605,6 +604,8 @@ CheckConsistencyRealization(BaseInnerRelation& inner_relation, bool level_set_co
     B_(*particles_->template getVariableByName<Matd>("CorrectionMatrix")),
     sph_adaptation_(sph_body_.sph_adaptation_)
 {
+    particles_->registerVariable(relaxation_error_, "RelaxationErrorNorm");
+    particles_->addVariableToWrite<Real>("RelaxationErrorNorm");
     particles_->registerVariable(pressure_gradient_error_norm_, "PressureGradientErrorNorm");
     particles_->addVariableToWrite<Real>("PressureGradientErrorNorm");
     particles_->registerVariable(pressure_gradient_, "PressureGradient");
@@ -624,6 +625,7 @@ CheckConsistencyRealization(BaseInnerRelation& inner_relation, bool level_set_co
 //=================================================================================================//
 void CheckConsistencyRealization::interaction(size_t index_i, Real dt)
 {
+    Vecd relaxation_error = Vecd::Zero();
     Vecd pressure_gradient = Vecd::Zero();
     Vecd zero_order_error = Vecd::Zero();
     Vecd reproduce_gradient = Vecd::Zero();
@@ -631,22 +633,24 @@ void CheckConsistencyRealization::interaction(size_t index_i, Real dt)
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
         size_t index_j = inner_neighborhood.j_[n];
+        relaxation_error += pressure_[index_i] * inner_neighborhood.e_ij_[n] * inner_neighborhood.dW_ijV_j_[n];
         pressure_gradient += (pressure_[index_i] * B_[index_i] + pressure_[index_j] * B_[index_j]) * 
-                             inner_neighborhood.e_ij_[n] * inner_neighborhood.dW_ijV_j_[n];
+                              inner_neighborhood.e_ij_[n] * inner_neighborhood.dW_ijV_j_[n];
         zero_order_error += pressure_[index_i] * (B_[index_i] + B_[index_j]) *
-                             inner_neighborhood.e_ij_[n] * inner_neighborhood.dW_ijV_j_[n];
-        reproduce_gradient += (pressure_[index_i] - pressure_[index_j]) * B_[index_j] *
+                            inner_neighborhood.e_ij_[n] * inner_neighborhood.dW_ijV_j_[n];
+        reproduce_gradient -= (pressure_[index_i] - pressure_[index_j]) * B_[index_j] *
                                inner_neighborhood.e_ij_[n] * inner_neighborhood.dW_ijV_j_[n];
     }
     
+    relaxation_error_[index_i] = relaxation_error.norm();
     pressure_gradient_[index_i] = pressure_gradient;
-    pressure_gradient_error_norm_[index_i] = sqrt(pow((pressure_gradient[0] - 1), 2) + pow((pressure_gradient[1] - 0), 2));
-    //pressure_gradient_error_norm_[index_i] = sqrt(pow((pressure_gradient[0] - (cos(pos_[index_i][0] * 2 * Pi))), 2) + pow((pressure_gradient[1] - 0), 2));
+    //pressure_gradient_error_norm_[index_i] = sqrt(pow((pressure_gradient[0] - 1), 2) + pow((pressure_gradient[1] - 0), 2));
+    pressure_gradient_error_norm_[index_i] = sqrt(pow((pressure_gradient[0] - (cos(pos_[index_i][0] * 2 * Pi))), 2) + pow((pressure_gradient[1] - 0), 2));
     zero_order_error_[index_i] = zero_order_error;
     zero_order_error_norm_[index_i] = zero_order_error.norm();
     reproduce_gradient_[index_i] = reproduce_gradient;
-    reproduce_gradient_error_norm_[index_i] = sqrt(pow((reproduce_gradient[0] - 1), 2) + pow((reproduce_gradient[1] - 0), 2));
-    //reproduce_gradient_error_norm_[index_i] = sqrt(pow((reproduce_gradient[0] - (cos(pos_[index_i][0] * 2 * Pi))), 2) + pow((reproduce_gradient[1] - 0), 2));
+    //reproduce_gradient_error_norm_[index_i] = sqrt(pow((reproduce_gradient[0] - 1), 2) + pow((reproduce_gradient[1] - 0), 2));
+    reproduce_gradient_error_norm_[index_i] = sqrt(pow((reproduce_gradient[0] - (cos(pos_[index_i][0] * 2 * Pi))), 2) + pow((reproduce_gradient[1] - 0), 2));
 }
 //=================================================================================================//
 CheckReverseConsistencyRealization::
@@ -674,30 +678,10 @@ CheckReverseConsistencyRealization(BaseInnerRelation& inner_relation, bool level
 //=================================================================================================//
 void CheckReverseConsistencyRealization::interaction(size_t index_i, Real dt)
 {
-    Matd local_configuration = Eps * Matd::Identity();
     Neighborhood& inner_neighborhood = inner_configuration_[index_i];
-    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-    {
-        Vecd gradW_ij = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
-        Vecd r_ji = inner_neighborhood.r_ij_[n] * inner_neighborhood.e_ij_[n];
-        local_configuration -= r_ji * gradW_ij.transpose();
-
-        if (index_i == 1126 && n == 0)
-        {
-            std::cout << "gradw_ij for configuration is " << gradW_ij << std::endl;
-        }
-    }
-
     Vecd pressure_gradient = Vecd::Zero();
     Vecd zero_order_error = Vecd::Zero();
     Vecd reproduce_gradient = Vecd::Zero();
-
-    if (index_i == 1126)
-    {
-        std::cout << "Local configuration is " << local_configuration.inverse() << std::endl;
-        std::cout << "Correction matrix is " << B_[index_i] << std::endl;
-    }
-
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
         size_t index_j = inner_neighborhood.j_[n];
@@ -706,26 +690,17 @@ void CheckReverseConsistencyRealization::interaction(size_t index_i, Real dt)
                              inner_neighborhood.e_ij_[n] * inner_neighborhood.dW_ijV_j_[n];
         zero_order_error += pressure_[index_i] * (B_[index_i] + B_[index_j]) *
                             inner_neighborhood.e_ij_[n] * inner_neighborhood.dW_ijV_j_[n];
-        reproduce_gradient -= (pressure_[index_i] - pressure_[index_j]) * local_configuration.inverse() * gradW_ij;
-
-        if (index_i == 1126 && n == 0)
-        {
-            std::cout << "gradw_ij for reproduce is " << gradW_ij << std::endl;
-        }
+        reproduce_gradient -= (pressure_[index_i] - pressure_[index_j]) * B_[index_i] * gradW_ij;
     }
 
     pressure_gradient_[index_i] = pressure_gradient;
-    pressure_gradient_error_norm_[index_i] = sqrt(pow((pressure_gradient[0] - 1), 2) + pow((pressure_gradient[1] - 0), 2));
-    //pressure_gradient_error_norm_[index_i] = sqrt(pow((pressure_gradient[0] - (cos(pos_[index_i][0] * 2 * Pi))), 2) + pow((pressure_gradient[1] - 0), 2));
+    //pressure_gradient_error_norm_[index_i] = sqrt(pow((pressure_gradient[0] - 1), 2) + pow((pressure_gradient[1] - 0), 2));
+    pressure_gradient_error_norm_[index_i] = sqrt(pow((pressure_gradient[0] - (cos(pos_[index_i][0] * 2 * Pi))), 2) + pow((pressure_gradient[1] - 0), 2));
     zero_order_error_[index_i] = zero_order_error;
     zero_order_error_norm_[index_i] = zero_order_error.norm();
     reproduce_gradient_[index_i] = reproduce_gradient;
-    if (index_i == 1126)
-    {
-        std::cout << "reproduce pressure gradient " << reproduce_gradient_[index_i] << std::endl;
-    }
-    reproduce_gradient_error_norm_[index_i] = sqrt(pow((reproduce_gradient[0] - 1), 2) + pow((reproduce_gradient[1] - 0), 2));
-    //reproduce_gradient_error_norm_[index_i] = sqrt(pow((reproduce_gradient[0] - (cos(pos_[index_i][0] * 2 * Pi))), 2) + pow((reproduce_gradient[1] - 0), 2));
+    //reproduce_gradient_error_norm_[index_i] = sqrt(pow((reproduce_gradient[0] - 1), 2) + pow((reproduce_gradient[1] - 0), 2));
+    reproduce_gradient_error_norm_[index_i] = sqrt(pow((reproduce_gradient[0] - (cos(pos_[index_i][0] * 2 * Pi))), 2) + pow((reproduce_gradient[1] - 0), 2));
 }
 //=================================================================================================//
 ShellMidSurfaceBounding::

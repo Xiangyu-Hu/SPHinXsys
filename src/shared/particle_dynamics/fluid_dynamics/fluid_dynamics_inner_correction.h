@@ -60,7 +60,7 @@ using Integration1stHalfCorrect = BaseIntegration1stHalfCorrect<NoRiemannSolver>
 using Integration1stHalfRiemannCorrect = BaseIntegration1stHalfCorrect<AcousticRiemannSolver>;
 
 /**
- * @class BaseIntegration1stHalfConsistencyCorrect
+ * @class BaseIntegration1stHalfConsistCorrect
  */
 template <class RiemannSolverType>
 class BaseIntegration1stHalfConsistencyCorrect : public BaseIntegration1stHalf<RiemannSolverType>

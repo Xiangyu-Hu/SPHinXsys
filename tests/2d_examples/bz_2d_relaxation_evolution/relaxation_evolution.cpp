@@ -125,17 +125,15 @@ int main(int ac, char* av[])
 
 		GlobalStaticVariables::physical_time_ = ite;
 		/* The procedure to obtain uniform particle distribution that satisfies the 0th order consistency. */
-		while (ite < 5)
+		while (ite < 50000)
 		{
 			calculate_correction_matrix.exec();
 			relaxation_1st_inner.exec();
-			body.updateCellLinkedList();
-			insert_body_inner.updateConfiguration();
-
 			ite++;
 
-			if (ite % 1 == 0)
+			if (ite % 100 == 0)
 			{
+				testing_initial_condition.exec();
 				calculate_correction_matrix.exec();
 				check_consistency_realization.exec();
 				check_reverse_consistency_realization.exec();
@@ -144,7 +142,6 @@ int main(int ac, char* av[])
 					calculate_zero_order_error.exec() << "   " << calculate_zero_order_error_reverse.exec() << "   " <<
 					calculate_reproduce_gradient.exec() << "   " << calculate_reproduce_gradient_reverse.exec() << "\n";
 				std::cout << std::fixed << std::setprecision(9) << "The 0th relaxation steps for the body N = " << ite << "\n";
-
 				write_insert_body_to_vtp.writeToFile(ite);
 			}
 		}

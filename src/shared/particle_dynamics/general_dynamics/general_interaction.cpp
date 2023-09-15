@@ -29,7 +29,7 @@ void UpdateConfigurationInner::interaction(size_t index_i, Real dt)
 //=================================================================================================//
 void UpdateConfigurationInner::update(size_t index_i, Real dt)
 {
-    B_[index_i] = (Eps * Matd::Identity() + B_[index_i]).inverse();
+    B_[index_i] = B_[index_i].inverse();
 }
 //=================================================================================================//
 UpdateConfigurationComplex::

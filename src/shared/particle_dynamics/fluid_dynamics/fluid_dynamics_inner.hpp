@@ -8,6 +8,7 @@
 #pragma once
 
 #include "fluid_dynamics_inner.h"
+#include "fluid_dynamics_inner_correction.h"
 
 namespace SPH
 {
