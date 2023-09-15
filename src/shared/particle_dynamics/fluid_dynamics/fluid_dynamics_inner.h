@@ -273,7 +273,6 @@ class BaseIntegration1stHalfInner : public BaseIntegration<FluidDataInner>
 
   protected:
     RiemannSolverType riemann_solver_;
-    virtual Vecd computeNonConservativeAcceleration(size_t index_i);
 };
 using Integration1stHalfInner = BaseIntegration1stHalfInner<NoRiemannSolver>;
 /** define the mostly used pressure relaxation scheme using Riemann solver */

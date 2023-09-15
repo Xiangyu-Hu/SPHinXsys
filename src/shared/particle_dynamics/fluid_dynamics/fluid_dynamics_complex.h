@@ -48,17 +48,12 @@ typedef DataDelegateContact<BaseParticles, SolidParticles> FSIContactData;
  * @class InteractionWithWall
  * @brief Base class adding interaction with wall to general relaxation process
  */
-template <class BaseIntegrationType>
-class InteractionWithWall : public BaseIntegrationType, public FluidWallData
+
+template <template <class DataDelegationType> class BaseInteractionType>
+class InteractionWithWall : public BaseInteractionType<FSIContactData>
 {
   public:
-    template <class BaseBodyRelationType, typename... Args>
-    InteractionWithWall(BaseContactRelation &wall_contact_relation,
-                        BaseBodyRelationType &base_body_relation, Args &&...args);
-    template <typename... Args>
-    InteractionWithWall(ComplexRelation &fluid_wall_relation, Args &&...args)
-        : InteractionWithWall(fluid_wall_relation.getContactRelation(),
-                              fluid_wall_relation.getInnerRelation(), std::forward<Args>(args)...) {}
+    explicit InteractionWithWall(BaseContactRelation &wall_contact_relation);
     virtual ~InteractionWithWall(){};
 
   protected:
@@ -68,96 +63,82 @@ class InteractionWithWall : public BaseIntegrationType, public FluidWallData
 };
 
 /**
- * @class DensitySummation
+ * @class BaseDensitySummationContact
  * @brief computing density by summation considering contribution from contact bodies
  */
-template <class DensitySummationInnerType>
-class BaseDensitySummationComplex
-    : public BaseInteractionComplex<DensitySummationInnerType, FluidContactOnly>
+class BaseDensitySummationContact : public BaseDensitySummation<FluidContactData>
 {
   public:
-    template <typename... Args>
-    explicit BaseDensitySummationComplex(Args &&...args);
-    virtual ~BaseDensitySummationComplex(){};
+    explicit BaseDensitySummationContact(BaseContactRelation &contact_relation);
+    virtual ~BaseDensitySummationContact(){};
 
   protected:
     StdVec<Real> contact_inv_rho0_;
     StdVec<StdLargeVec<Real> *> contact_mass_;
-
     Real ContactSummation(size_t index_i);
 };
 
 /**
- * @class DensitySummationComplex
+ * @class DensitySummationContact
  * @brief computing density by summation considering contribution from contact bodies
  */
-class DensitySummationComplex
-    : public BaseDensitySummationComplex<DensitySummationInner>
+class DensitySummationContact : public BaseDensitySummationContact
 {
   public:
-    template <typename... Args>
-    explicit DensitySummationComplex(Args &&...args)
-        : BaseDensitySummationComplex<DensitySummationInner>(std::forward<Args>(args)...){};
-    virtual ~DensitySummationComplex(){};
+    explicit DensitySummationContact(BaseContactRelation &contact_relation)
+        : BaseDensitySummationContact(contact_relation){};
+    virtual ~DensitySummationContact(){};
 
-    inline void interaction(size_t index_i, Real dt = 0.0);
+    void interaction(size_t index_i, Real dt = 0.0);
 };
 
 /**
- * @class DensitySummationComplexAdaptive
+ * @class DensitySummationContactAdaptive
  * @brief computing density by summation considering  contribution from contact bodies
  */
-class DensitySummationComplexAdaptive
-    : public BaseDensitySummationComplex<DensitySummationInnerAdaptive>
+class DensitySummationContactAdaptive : public BaseDensitySummationContact
 {
   public:
-    template <typename... Args>
-    explicit DensitySummationComplexAdaptive(Args &&...args)
-        : BaseDensitySummationComplex<DensitySummationInnerAdaptive>(std::forward<Args>(args)...){};
-    virtual ~DensitySummationComplexAdaptive(){};
+    explicit DensitySummationContactAdaptive(BaseContactRelation &contact_relation);
+    virtual ~DensitySummationContactAdaptive(){};
 
-    inline void interaction(size_t index_i, Real dt = 0.0);
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    SPHAdaptation &sph_adaptation_;
+    StdLargeVec<Real> &h_ratio_;
 };
 
 /**
- * @class ViscousWithWall
+ * @class ViscousAccelerationWithWall
  * @brief  template class viscous acceleration with wall boundary
  */
-template <class ViscousAccelerationInnerType>
-class BaseViscousAccelerationWithWall : public InteractionWithWall<ViscousAccelerationInnerType>
+class ViscousAccelerationWithWall : public InteractionWithWall<BaseViscousAcceleration>
 {
   public:
-    template <typename... Args>
-    BaseViscousAccelerationWithWall(Args &&...args)
-        : InteractionWithWall<ViscousAccelerationInnerType>(std::forward<Args>(args)...){};
-    virtual ~BaseViscousAccelerationWithWall(){};
-
-    inline void interaction(size_t index_i, Real dt = 0.0);
+    ViscousAccelerationWithWall(BaseContactRelation &wall_contact_relation)
+        : InteractionWithWall<BaseViscousAcceleration>(wall_contact_relation){};
+    virtual ~ViscousAccelerationWithWall(){};
+    void interaction(size_t index_i, Real dt = 0.0);
 };
-
-using ViscousAccelerationWithWall = BaseViscousAccelerationWithWall<ViscousAccelerationInner>;
 
 /**
  * @class BaseIntegration1stHalfWithWall
  * @brief  template class pressure relaxation scheme together with wall boundary
  */
-template <class BaseIntegration1stHalfType>
-class BaseIntegration1stHalfWithWall : public InteractionWithWall<BaseIntegration1stHalfType>
+template <class RiemannSolverType>
+class BaseIntegration1stHalfWithWall : public InteractionWithWall<BaseIntegration>
 {
   public:
-    template <typename... Args>
-    BaseIntegration1stHalfWithWall(Args &&...args)
-        : InteractionWithWall<BaseIntegration1stHalfType>(std::forward<Args>(args)...){};
+    BaseIntegration1stHalfWithWall(BaseContactRelation &wall_contact_relation);
     virtual ~BaseIntegration1stHalfWithWall(){};
-
     inline void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    virtual Vecd computeNonConservativeAcceleration(size_t index_i) override;
+    RiemannSolverType riemann_solver_;
 };
 
-using Integration1stHalfWithWall = BaseIntegration1stHalfWithWall<Integration1stHalf>;
-using Integration1stHalfRiemannWithWall = BaseIntegration1stHalfWithWall<Integration1stHalfRiemann>;
+using Integration1stHalfRiemannWithWall = BaseIntegration1stHalfWithWall<AcousticRiemannSolver>;
 
 /**
  * @class BaseExtendIntegration1stHalfWithWall
@@ -165,59 +146,39 @@ using Integration1stHalfRiemannWithWall = BaseIntegration1stHalfWithWall<Integra
  * and considering non-conservative acceleration term and wall penalty to prevent
  * particle penetration.
  */
-template <class BaseIntegration1stHalfType>
-class BaseExtendIntegration1stHalfWithWall : public BaseIntegration1stHalfWithWall<BaseIntegration1stHalfType>
+template <class RiemannSolverType>
+class BaseExtendIntegration1stHalfWithWall : public InteractionWithWall<BaseIntegration>
 {
   public:
-    template <class BaseBodyRelationType, typename... Args>
     BaseExtendIntegration1stHalfWithWall(BaseContactRelation &wall_contact_relation,
-                                         BaseBodyRelationType &base_body_relation,
-                                         Args &&...args, Real penalty_strength = 1.0)
-        : BaseIntegration1stHalfWithWall<BaseIntegration1stHalfType>(
-              wall_contact_relation, base_body_relation, std::forward<Args>(args)...),
-          penalty_strength_(penalty_strength)
-    {
-        this->particles_->registerVariable(non_cnsrv_acc_, "NonConservativeAcceleration");
-    };
-    template <typename... Args>
-    BaseExtendIntegration1stHalfWithWall(ComplexRelation &fluid_wall_relation,
-                                         Args &&...args, Real penalty_strength = 1.0)
-        : BaseExtendIntegration1stHalfWithWall(fluid_wall_relation.getContactRelation(),
-                                               fluid_wall_relation.getInnerRelation(),
-                                               std::forward<Args>(args)..., penalty_strength){};
+                                         Real penalty_strength = 1.0)
+        : InteractionWithWall<BaseIntegration>(wall_contact_relation),
+          penalty_strength_(penalty_strength){};
     virtual ~BaseExtendIntegration1stHalfWithWall(){};
-    void initialization(size_t index_i, Real dt = 0.0);
-
     inline void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
     Real penalty_strength_;
-    StdLargeVec<Vecd> non_cnsrv_acc_;
-
-    virtual Vecd computeNonConservativeAcceleration(size_t index_i) override;
 };
 
-using ExtendIntegration1stHalfRiemannWithWall = BaseExtendIntegration1stHalfWithWall<Integration1stHalfRiemann>;
+using ExtendIntegration1stHalfRiemannWithWall = BaseExtendIntegration1stHalfWithWall<AcousticRiemannSolver>;
 
 /**
  * @class BaseIntegration2ndHalfWithWall
  * @brief template density relaxation scheme without using different Riemann solvers.
  * The difference from the free surface version is that no Riemann problem is applied
  */
-template <class BaseIntegration2ndHalfType>
-class BaseIntegration2ndHalfWithWall : public InteractionWithWall<BaseIntegration2ndHalfType>
+template <class RiemannSolverType>
+class BaseIntegration2ndHalfWithWall : public InteractionWithWall<BaseIntegration>
 {
   public:
-    template <typename... Args>
-    BaseIntegration2ndHalfWithWall(Args &&...args)
-        : InteractionWithWall<BaseIntegration2ndHalfType>(std::forward<Args>(args)...){};
+    BaseIntegration2ndHalfWithWall(BaseContactRelation &wall_contact_relation)
+        : InteractionWithWall<BaseIntegration>(wall_contact_relation){};
     virtual ~BaseIntegration2ndHalfWithWall(){};
-
     inline void interaction(size_t index_i, Real dt = 0.0);
 };
 
-using Integration2ndHalfWithWall = BaseIntegration2ndHalfWithWall<Integration2ndHalf>;
-using Integration2ndHalfRiemannWithWall = BaseIntegration2ndHalfWithWall<Integration2ndHalfRiemann>;
+using Integration2ndHalfRiemannWithWall = BaseIntegration2ndHalfWithWall<AcousticRiemannSolver>;
 
 /**
  * @class Oldroyd_BIntegration1stHalfWithWall
