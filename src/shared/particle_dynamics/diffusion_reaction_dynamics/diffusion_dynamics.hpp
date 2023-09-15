@@ -296,6 +296,67 @@ void DiffusionRelaxationRobin<ParticlesType, ContactParticlesType, KernelGradien
     }
 }
 //=================================================================================================//
+template <class DiffusionType, class ParticlesType, class ContactParticlesType, class KernelGradientType>
+DiffusionRelaxationMutimaterialContact<DiffusionType, ParticlesType, ContactParticlesType, KernelGradientType>::
+    DiffusionRelaxationMutimaterialContact(BaseContactRelation &contact_relation)
+    : BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType>(contact_relation)
+{
+    all_contact_diffusions_.resize(this->contact_particles_.size());
+    contact_thermal_diffusivities_.resize(this->contact_particles_.size());
+    contact_gradient_species_.resize(this->contact_particles_.size());
+    
+    for (size_t k = 0; k != this->contact_particles_.size(); ++k)
+    {
+        all_contact_diffusions_[k] = this->contact_particles_[k]->diffusion_reaction_material_.AllDiffusions();
+
+        for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
+        {
+            std::string contact_species_names_k_m = this->contact_gradient_species_names_[k][m];
+            auto all_species_map_k = this->contact_particles_[k]->AllSpeciesIndexMap();
+            size_t contact_species_index_k_m = all_species_map_k[contact_species_names_k_m];
+            StdVec<StdLargeVec<Real>> &all_contact_species_k = this->contact_particles_[k]->all_species_;
+            contact_gradient_species_[k].push_back(&all_contact_species_k[contact_species_index_k_m]);
+
+            contact_thermal_diffusivities_[k].push_back( ThermalDiffusivity<DiffusionType>(
+                DynamicCast<DiffusionType>(this, *this->all_diffusions_[m]), 
+                DynamicCast<DiffusionType>(this,  *all_contact_diffusions_[k][m]) ));
+        }
+    }
+} // fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
+//=================================================================================================//
+template <class DiffusionType, class ParticlesType, class ContactParticlesType, class KernelGradientType>
+void DiffusionRelaxationMutimaterialContact<DiffusionType, ParticlesType, ContactParticlesType, KernelGradientType>::
+    getDiffusionChangeRateMultimaterialContact(size_t particle_i, size_t particle_j, Vecd &e_ij,Real surface_area_ij,  size_t contact_k)
+{
+    for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
+    {
+        Real diff_coeff_ij = contact_thermal_diffusivities_[contact_k][m].getInterParticleDiffusivity(particle_i, particle_i, e_ij);
+        Real phi_ij = (*this->gradient_species_[m])[particle_i] - (*contact_gradient_species_[contact_k][m])[particle_j];
+        (*this->diffusion_dt_[m])[particle_i] += diff_coeff_ij * phi_ij * surface_area_ij;
+    }
+}
+//=================================================================================================//
+template <class DiffusionType, class ParticlesType, class ContactParticlesType, class KernelGradientType>
+void DiffusionRelaxationMutimaterialContact<DiffusionType, ParticlesType, ContactParticlesType, KernelGradientType>::
+    interaction(size_t index_i, Real dt)
+{
+    for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
+    {
+        Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
+        for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+        {
+            size_t index_j = contact_neighborhood.j_[n];
+            Real r_ij_ = contact_neighborhood.r_ij_[n];
+            Real dW_ijV_j_ = contact_neighborhood.dW_ijV_j_[n];
+            Vecd &e_ij = contact_neighborhood.e_ij_[n];
+
+            const Vecd &grad_ijV_j = this->contact_kernel_gradients_[k](index_i, index_j, dW_ijV_j_, e_ij);
+            Real area_ij = 2.0 * grad_ijV_j.dot(e_ij) / r_ij_;
+            getDiffusionChangeRateMultimaterialContact(index_i, index_j, e_ij, area_ij, k);
+        }
+    }
+}
+//=================================================================================================//
 template <class ParticlesType>
 InitializationRK<ParticlesType>::InitializationRK(SPHBody &sph_body, StdVec<StdLargeVec<Real>> &diffusion_species_s)
     : BaseDiffusionRelaxation<ParticlesType>(sph_body)
