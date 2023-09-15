@@ -188,7 +188,7 @@ namespace SPH
             SimpleDynamics<StaticConfinementIntegration2ndHalf> density_relaxation_;
             InteractionDynamics<StaticConfinementTransportVelocity> transport_velocity_;
             SimpleDynamics<StaticConfinementViscousAcceleration> viscous_acceleration_;
-            SimpleDynamics<StaticConfinementExtendIntegration1stHalf, SequencedPolicy> extend_intergration_1st_half_;
+            SimpleDynamics<StaticConfinementExtendIntegration1stHalf> extend_intergration_1st_half_;
             SimpleDynamics<StaticConfinementIntegration1stHalfPenaltyVelocity> extend_intergration_1st_half_Velocity;
             SimpleDynamics<StaticConfinementBounding> surface_bounding_;
 

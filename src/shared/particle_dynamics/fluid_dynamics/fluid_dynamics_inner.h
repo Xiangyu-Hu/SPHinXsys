@@ -89,7 +89,7 @@ class DensitySummationInner : public BaseDensitySummationInner
     virtual ~DensitySummationInner(){};
 
     inline void interaction(size_t index_i, Real dt = 0.0);
-
+    
   protected:
     Real W0_;
 };
