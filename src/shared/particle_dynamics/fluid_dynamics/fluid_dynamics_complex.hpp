@@ -62,8 +62,16 @@ void BaseIntegration1stHalfWithWall<RiemannSolverType>::interaction(size_t index
 }
 //=================================================================================================//
 template <class RiemannSolverType>
+BaseExtendIntegration1stHalfWithWall<RiemannSolverType>::
+    BaseExtendIntegration1stHalfWithWall(BaseContactRelation &wall_contact_relation, Real penalty_strength)
+    : BaseIntegration1stHalfWithWall<RiemannSolverType>(wall_contact_relation),
+      penalty_strength_(penalty_strength) {}
+//=================================================================================================//
+template <class RiemannSolverType>
 void BaseExtendIntegration1stHalfWithWall<RiemannSolverType>::interaction(size_t index_i, Real dt)
 {
+    BaseIntegration1stHalfWithWall<RiemannSolverType>::interaction(index_i, dt);
+
     Real rho_i = this->rho_[index_i];
     Real penalty_pressure = this->p_[index_i];
     Vecd acceleration = Vecd::Zero();
@@ -97,82 +105,36 @@ void BaseExtendIntegration1stHalfWithWall<RiemannSolverType>::interaction(size_t
     this->acc_[index_i] += acceleration;
 }
 //=================================================================================================//
-template <class BaseIntegration2ndHalfType>
-void BaseIntegration2ndHalfWithWall<BaseIntegration2ndHalfType>::
-    interaction(size_t index_i, Real dt)
+template <class RiemannSolverType>
+BaseIntegration2ndHalfWithWall<RiemannSolverType>::
+    BaseIntegration2ndHalfWithWall(BaseContactRelation &wall_contact_relation)
+    : InteractionWithWall<BaseIntegration>(wall_contact_relation),
+      riemann_solver_(this->fluid_, this->fluid_) {}
+//=================================================================================================//
+template <class RiemannSolverType>
+void BaseIntegration2ndHalfWithWall<RiemannSolverType>::interaction(size_t index_i, Real dt)
 {
-    BaseIntegration2ndHalfType::interaction(index_i, dt);
-
     Real density_change_rate = 0.0;
     Vecd p_dissipation = Vecd::Zero();
-    for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
+    for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Vecd> &vel_ave_k = *(this->wall_vel_ave_[k]);
-        StdLargeVec<Vecd> &n_k = *(this->wall_n_[k]);
-        Neighborhood &wall_neighborhood = (*FluidWallData::contact_configuration_[k])[index_i];
+        StdLargeVec<Vecd> &vel_ave_k = *(wall_vel_ave_[k]);
+        StdLargeVec<Vecd> &n_k = *(wall_n_[k]);
+        Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
             size_t index_j = wall_neighborhood.j_[n];
             Vecd &e_ij = wall_neighborhood.e_ij_[n];
             Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
 
-            Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - this->vel_[index_i];
-            density_change_rate += (this->vel_[index_i] - vel_in_wall).dot(e_ij) * dW_ijV_j;
-            Real u_jump = 2.0 * (this->vel_[index_i] - vel_ave_k[index_j]).dot(n_k[index_j]);
-            p_dissipation += this->riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * n_k[index_j];
+            Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - vel_[index_i];
+            density_change_rate += (vel_[index_i] - vel_in_wall).dot(e_ij) * dW_ijV_j;
+            Real u_jump = 2.0 * (vel_[index_i] - vel_ave_k[index_j]).dot(n_k[index_j]);
+            p_dissipation += riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * n_k[index_j];
         }
     }
-    this->drho_dt_[index_i] += density_change_rate * this->rho_[index_i];
-    this->acc_[index_i] += p_dissipation / this->rho_[index_i];
-}
-//=================================================================================================//
-void Oldroyd_BIntegration1stHalfWithWall::
-    interaction(size_t index_i, Real dt)
-{
-    BaseIntegration1stHalfWithWall<Oldroyd_BIntegration1stHalf>::interaction(index_i, dt);
-
-    Real rho_i = rho_[index_i];
-    Matd tau_i = tau_[index_i];
-
-    Vecd acceleration = Vecd::Zero();
-    for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
-    {
-        Neighborhood &wall_neighborhood = (*FluidWallData::contact_configuration_[k])[index_i];
-        for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
-        {
-            Vecd nablaW_ijV_j = wall_neighborhood.dW_ijV_j_[n] * wall_neighborhood.e_ij_[n];
-            /** stress boundary condition. */
-            acceleration += 2.0 * tau_i * nablaW_ijV_j / rho_i;
-        }
-    }
-
-    acc_[index_i] += acceleration;
-}
-//=================================================================================================//
-void Oldroyd_BIntegration2ndHalfWithWall::
-    interaction(size_t index_i, Real dt)
-{
-    BaseIntegration2ndHalfWithWall<Oldroyd_BIntegration2ndHalf>::interaction(index_i, dt);
-
-    Vecd vel_i = vel_[index_i];
-    Matd tau_i = tau_[index_i];
-
-    Matd stress_rate = Matd::Zero();
-    for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
-    {
-        StdLargeVec<Vecd> &vel_ave_k = *(wall_vel_ave_[k]);
-        Neighborhood &wall_neighborhood = (*FluidWallData::contact_configuration_[k])[index_i];
-        for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
-        {
-            size_t index_j = wall_neighborhood.j_[n];
-            Vecd nablaW_ijV_j = wall_neighborhood.dW_ijV_j_[n] * wall_neighborhood.e_ij_[n];
-
-            Matd velocity_gradient = -2.0 * (vel_i - vel_ave_k[index_j]) * nablaW_ijV_j.transpose();
-            stress_rate += velocity_gradient.transpose() * tau_i + tau_i * velocity_gradient - tau_i / lambda_ +
-                           (velocity_gradient.transpose() + velocity_gradient) * mu_p_ / lambda_;
-        }
-    }
-    dtau_dt_[index_i] += stress_rate;
+    drho_dt_[index_i] += density_change_rate * rho_[index_i];
+    acc_[index_i] += p_dissipation / rho_[index_i];
 }
 //=================================================================================================//
 } // namespace fluid_dynamics

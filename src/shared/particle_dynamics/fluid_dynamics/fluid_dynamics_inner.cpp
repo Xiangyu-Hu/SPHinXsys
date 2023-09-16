@@ -173,8 +173,7 @@ void Oldroyd_BIntegration1stHalf::initialization(size_t index_i, Real dt)
     tau_[index_i] += dtau_dt_[index_i] * dt * 0.5;
 }
 //=================================================================================================//
-void Oldroyd_BIntegration1stHalf::
-    interaction(size_t index_i, Real dt)
+void Oldroyd_BIntegration1stHalf::interaction(size_t index_i, Real dt)
 {
     Integration1stHalfInnerDissipativeRiemann::interaction(index_i, dt);
 

@@ -138,8 +138,8 @@ class BaseIntegration1stHalfWithWall : public InteractionWithWall<BaseIntegratio
     RiemannSolverType riemann_solver_;
 };
 
-using Integration1stHalfRiemannWithWall = BaseIntegration1stHalfWithWall<AcousticRiemannSolver>;
-
+using Integration1stHalfWithWallRiemann = BaseIntegration1stHalfWithWall<AcousticRiemannSolver>;
+using Integration1stHalfWithWallDissipativeRiemann = BaseIntegration1stHalfWithWall<DissipativeRiemannSolver>;
 /**
  * @class BaseExtendIntegration1stHalfWithWall
  * @brief template class for pressure relaxation scheme with wall boundary
@@ -147,21 +147,17 @@ using Integration1stHalfRiemannWithWall = BaseIntegration1stHalfWithWall<Acousti
  * particle penetration.
  */
 template <class RiemannSolverType>
-class BaseExtendIntegration1stHalfWithWall : public InteractionWithWall<BaseIntegration>
+class BaseExtendIntegration1stHalfWithWall : public BaseIntegration1stHalfWithWall<RiemannSolverType>
 {
   public:
-    BaseExtendIntegration1stHalfWithWall(BaseContactRelation &wall_contact_relation,
-                                         Real penalty_strength = 1.0)
-        : InteractionWithWall<BaseIntegration>(wall_contact_relation),
-          penalty_strength_(penalty_strength){};
+    BaseExtendIntegration1stHalfWithWall(BaseContactRelation &wall_contact_relation, Real penalty_strength = 1.0);
     virtual ~BaseExtendIntegration1stHalfWithWall(){};
-    inline void interaction(size_t index_i, Real dt = 0.0);
+    void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
     Real penalty_strength_;
 };
-
-using ExtendIntegration1stHalfRiemannWithWall = BaseExtendIntegration1stHalfWithWall<AcousticRiemannSolver>;
+using ExtendIntegration1stHalfWithWallRiemann = BaseExtendIntegration1stHalfWithWall<AcousticRiemannSolver>;
 
 /**
  * @class BaseIntegration2ndHalfWithWall
@@ -172,42 +168,45 @@ template <class RiemannSolverType>
 class BaseIntegration2ndHalfWithWall : public InteractionWithWall<BaseIntegration>
 {
   public:
-    BaseIntegration2ndHalfWithWall(BaseContactRelation &wall_contact_relation)
-        : InteractionWithWall<BaseIntegration>(wall_contact_relation){};
+    BaseIntegration2ndHalfWithWall(BaseContactRelation &wall_contact_relation);
     virtual ~BaseIntegration2ndHalfWithWall(){};
     inline void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    RiemannSolverType riemann_solver_;
 };
-
-using Integration2ndHalfRiemannWithWall = BaseIntegration2ndHalfWithWall<AcousticRiemannSolver>;
-
+using Integration2ndHalfWithWallRiemann = BaseIntegration2ndHalfWithWall<AcousticRiemannSolver>;
+using Integration2ndHalfWithWallDissipativeRiemann = BaseIntegration2ndHalfWithWall<DissipativeRiemannSolver>;
 /**
  * @class Oldroyd_BIntegration1stHalfWithWall
  * @brief  first half of the pressure relaxation scheme using Riemann solver.
  */
-class Oldroyd_BIntegration1stHalfWithWall : public BaseIntegration1stHalfWithWall<Oldroyd_BIntegration1stHalf>
+class Oldroyd_BIntegration1stHalfWithWall : public Integration1stHalfWithWallDissipativeRiemann
 {
   public:
-    explicit Oldroyd_BIntegration1stHalfWithWall(ComplexRelation &fluid_wall_relation)
-        : BaseIntegration1stHalfWithWall<Oldroyd_BIntegration1stHalf>(fluid_wall_relation){};
-
+    explicit Oldroyd_BIntegration1stHalfWithWall(BaseContactRelation &wall_contact_relation);
     virtual ~Oldroyd_BIntegration1stHalfWithWall(){};
+    void interaction(size_t index_i, Real dt = 0.0);
 
-    inline void interaction(size_t index_i, Real dt = 0.0);
+  protected:
+    StdLargeVec<Matd> &tau_;
 };
 
 /**
  * @class Oldroyd_BIntegration2ndHalfWithWall
  * @brief  second half of the pressure relaxation scheme using Riemann solver.
  */
-class Oldroyd_BIntegration2ndHalfWithWall : public BaseIntegration2ndHalfWithWall<Oldroyd_BIntegration2ndHalf>
+class Oldroyd_BIntegration2ndHalfWithWall : public Integration2ndHalfWithWallDissipativeRiemann
 {
   public:
-    explicit Oldroyd_BIntegration2ndHalfWithWall(ComplexRelation &fluid_wall_relation)
-        : BaseIntegration2ndHalfWithWall<Oldroyd_BIntegration2ndHalf>(fluid_wall_relation){};
-
+    explicit Oldroyd_BIntegration2ndHalfWithWall(BaseContactRelation &wall_contact_relation);
     virtual ~Oldroyd_BIntegration2ndHalfWithWall(){};
-
     inline void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    Oldroyd_B_Fluid &oldroyd_b_fluid_;
+    StdLargeVec<Matd> &tau_, &dtau_dt_;
+    Real mu_p_, lambda_;
 };
 } // namespace fluid_dynamics
 } // namespace SPH
