@@ -62,6 +62,10 @@ class PlainPressure : public BasePressure
     {
         return 0.5 * (p_[index_i] + p_[index_j]);
     };
+    Real atBoundary(size_t index_i, Real p_boundary)
+    {
+        return 0.5 * (p_[index_i] + p_boundary);
+    };
 };
 
 class BaseCorrectedPressure : public BasePressure
@@ -92,6 +96,10 @@ class PlainCorrectedPressure : public BaseCorrectedPressure
     {
         return 0.5 * (p_B_[index_i] + p_B_[index_j]);
     };
+    Matd atBoundary(size_t index_i, Real p_boundary)
+    {
+        return 0.5 * B_[index_i] * (p_[index_i] + p_boundary);
+    };
 
   protected:
     StdLargeVec<Matd> p_B_;
@@ -109,6 +117,11 @@ class StaggeredCorrectedPressure : public BaseCorrectedPressure
     Matd atInterface(size_t index_i, size_t index_j)
     {
         return 0.5 * (B_[index_j] * p_[index_i] + B_[index_i] * p_[index_j]);
+    };
+
+    Matd atBoundary(size_t index_i, Real p_boundary)
+    {
+        return 0.5 * (Matd::Identity() * p_[index_i] + B_[index_i] * p_boundary);
     };
 };
 } // namespace SPH

@@ -29,21 +29,21 @@ InteractionWithWall<BaseInteractionType>::InteractionWithWall(BaseContactRelatio
     }
 }
 //=================================================================================================//
-template <class RiemannSolverType>
-BaseIntegration1stHalfWithWall<RiemannSolverType>::
+template <class RiemannSolverType, class PressureType>
+BaseIntegration1stHalfWithWall<RiemannSolverType, PressureType>::
     BaseIntegration1stHalfWithWall(BaseContactRelation &wall_contact_relation)
     : InteractionWithWall<BaseIntegration>(wall_contact_relation),
-      riemann_solver_(this->fluid_, this->fluid_) {}
+      pressure_(fluid_, particles_), riemann_solver_(fluid_, fluid_) {}
 //=================================================================================================//
-template <class RiemannSolverType>
-void BaseIntegration1stHalfWithWall<RiemannSolverType>::interaction(size_t index_i, Real dt)
+template <class RiemannSolverType, class PressureType>
+void BaseIntegration1stHalfWithWall<RiemannSolverType, PressureType>::interaction(size_t index_i, Real dt)
 {
     Vecd acceleration = Vecd::Zero();
     Real rho_dissipation(0);
-    for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
+    for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Vecd> &acc_ave_k = *(this->wall_acc_ave_[k]);
-        Neighborhood &wall_neighborhood = (*this->contact_configuration_[k])[index_i];
+        StdLargeVec<Vecd> &acc_ave_k = *(wall_acc_ave_[k]);
+        Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
             size_t index_j = wall_neighborhood.j_[n];
@@ -51,26 +51,26 @@ void BaseIntegration1stHalfWithWall<RiemannSolverType>::interaction(size_t index
             Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
             Real r_ij = wall_neighborhood.r_ij_[n];
 
-            Real face_wall_external_acceleration = (this->acc_prior_[index_i] - acc_ave_k[index_j]).dot(-e_ij);
-            Real p_in_wall = this->p_[index_i] + this->rho_[index_i] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
-            acceleration -= (this->p_[index_i] + p_in_wall) * dW_ijV_j * e_ij;
-            rho_dissipation += this->riemann_solver_.DissipativeUJump(this->p_[index_i] - p_in_wall) * dW_ijV_j;
+            Real face_wall_external_acceleration = (acc_prior_[index_i] - acc_ave_k[index_j]).dot(-e_ij);
+            Real p_in_wall = p_[index_i] + rho_[index_i] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
+            acceleration -= 2.0 * pressure_.atBoundary(index_i, p_in_wall) * dW_ijV_j * e_ij;
+            rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_in_wall) * dW_ijV_j;
         }
     }
-    this->acc_[index_i] += acceleration / this->rho_[index_i];
-    this->drho_dt_[index_i] += rho_dissipation * this->rho_[index_i];
+    acc_[index_i] += acceleration / rho_[index_i];
+    drho_dt_[index_i] += rho_dissipation * rho_[index_i];
 }
 //=================================================================================================//
-template <class RiemannSolverType>
-BaseExtendIntegration1stHalfWithWall<RiemannSolverType>::
+template <class RiemannSolverType, class PressureType>
+BaseExtendIntegration1stHalfWithWall<RiemannSolverType, PressureType>::
     BaseExtendIntegration1stHalfWithWall(BaseContactRelation &wall_contact_relation, Real penalty_strength)
-    : BaseIntegration1stHalfWithWall<RiemannSolverType>(wall_contact_relation),
+    : BaseIntegration1stHalfWithWall<RiemannSolverType, PressureType>(wall_contact_relation),
       penalty_strength_(penalty_strength) {}
 //=================================================================================================//
-template <class RiemannSolverType>
-void BaseExtendIntegration1stHalfWithWall<RiemannSolverType>::interaction(size_t index_i, Real dt)
+template <class RiemannSolverType, class PressureType>
+void BaseExtendIntegration1stHalfWithWall<RiemannSolverType, PressureType>::interaction(size_t index_i, Real dt)
 {
-    BaseIntegration1stHalfWithWall<RiemannSolverType>::interaction(index_i, dt);
+    BaseIntegration1stHalfWithWall<RiemannSolverType, PressureType>::interaction(index_i, dt);
 
     Real rho_i = this->rho_[index_i];
     Real penalty_pressure = this->p_[index_i];

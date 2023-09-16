@@ -126,7 +126,7 @@ class ViscousAccelerationWithWall : public InteractionWithWall<BaseViscousAccele
  * @class BaseIntegration1stHalfWithWall
  * @brief  template class pressure relaxation scheme together with wall boundary
  */
-template <class RiemannSolverType>
+template <class RiemannSolverType, class PressureType>
 class BaseIntegration1stHalfWithWall : public InteractionWithWall<BaseIntegration>
 {
   public:
@@ -135,19 +135,20 @@ class BaseIntegration1stHalfWithWall : public InteractionWithWall<BaseIntegratio
     inline void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
+    PressureType pressure_;
     RiemannSolverType riemann_solver_;
 };
 
-using Integration1stHalfWithWallRiemann = BaseIntegration1stHalfWithWall<AcousticRiemannSolver>;
-using Integration1stHalfWithWallDissipativeRiemann = BaseIntegration1stHalfWithWall<DissipativeRiemannSolver>;
+using Integration1stHalfWithWallRiemann = BaseIntegration1stHalfWithWall<AcousticRiemannSolver, PlainPressure>;
+using Integration1stHalfWithWallDissipativeRiemann = BaseIntegration1stHalfWithWall<DissipativeRiemannSolver, PlainPressure>;
 /**
  * @class BaseExtendIntegration1stHalfWithWall
  * @brief template class for pressure relaxation scheme with wall boundary
  * and considering non-conservative acceleration term and wall penalty to prevent
  * particle penetration.
  */
-template <class RiemannSolverType>
-class BaseExtendIntegration1stHalfWithWall : public BaseIntegration1stHalfWithWall<RiemannSolverType>
+template <class RiemannSolverType, class PressureType>
+class BaseExtendIntegration1stHalfWithWall : public BaseIntegration1stHalfWithWall<RiemannSolverType, PressureType>
 {
   public:
     BaseExtendIntegration1stHalfWithWall(BaseContactRelation &wall_contact_relation, Real penalty_strength = 1.0);
@@ -157,7 +158,7 @@ class BaseExtendIntegration1stHalfWithWall : public BaseIntegration1stHalfWithWa
   protected:
     Real penalty_strength_;
 };
-using ExtendIntegration1stHalfWithWallRiemann = BaseExtendIntegration1stHalfWithWall<AcousticRiemannSolver>;
+using ExtendIntegration1stHalfWithWallRiemann = BaseExtendIntegration1stHalfWithWall<AcousticRiemannSolver, PlainPressure>;
 
 /**
  * @class BaseIntegration2ndHalfWithWall

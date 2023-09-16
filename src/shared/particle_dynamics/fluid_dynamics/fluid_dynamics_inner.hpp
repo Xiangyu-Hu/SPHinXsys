@@ -93,7 +93,7 @@ void BaseIntegration1stHalfInner<RiemannSolverType, PressureType>::interaction(s
         Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
         const Vecd &e_ij = inner_neighborhood.e_ij_[n];
 
-        acceleration -= pressure_.atInterface(index_i, index_j) * dW_ijV_j * e_ij;
+        acceleration -= 2.0 * pressure_.atInterface(index_i, index_j) * dW_ijV_j * e_ij;
         rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_[index_j]) * dW_ijV_j;
     }
     acc_[index_i] += acceleration / rho_[index_i];
