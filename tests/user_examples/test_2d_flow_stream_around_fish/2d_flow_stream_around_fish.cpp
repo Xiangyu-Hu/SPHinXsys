@@ -12,51 +12,52 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
+    SPHSystem system(system_domain_bounds, particle_spacing_ref);
     /** Tag for run particle relaxation for the initial body fitted distribution. */
-    sph_system.setRunParticleRelaxation(false);
+    system.setRunParticleRelaxation(true);
     /** Tag for computation start with relaxed body fitted particles distribution. */
-    sph_system.setReloadParticles(false);
+    system.setReloadParticles(false);
     // handle command line arguments
 #ifdef BOOST_AVAILABLE
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    system.handleCommandlineOptions(ac, av);
+    IOEnvironment io_environment(system, 0);
 #endif
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
+    FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
     /**
      * @brief   Particles and body creation for fish.
      */
-    SolidBody fish_body(sph_system, makeShared<FishBody>("FishBody"));
+    SolidBody fish_body(system, makeShared<FishBody>("FishBody"));
     fish_body.defineAdaptationRatios(1.15, 2.0);
     fish_body.defineBodyLevelSetShape()->writeLevelSet(io_environment);
     fish_body.defineParticlesAndMaterial<ElasticSolidParticles, FishBodyComposite>();
     //  Using relaxed particle distribution if needed
-    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
+    (!system.RunParticleRelaxation() && system.ReloadParticles())
         ? fish_body.generateParticles<ParticleGeneratorReload>(io_environment, fish_body.getName())
         : fish_body.generateParticles<ParticleGeneratorLattice>();
+
+    ObserverBody fish_observer(system, "FishObserver");
+    fish_observer.generateParticles<ObserverParticleGenerator>(observation_locations);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
-    //  Generally, we first define all the inner relations, then the contact relations.
-    //  At last, we define the complex relaxations by combining previous defined
-    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation fish_inner(fish_body);
     InnerRelation water_block_inner(water_block);
-    ContactRelation water_block_contact(water_block, {&fish_body});
+    ComplexRelation water_block_complex(water_block, {&fish_body});
     ContactRelation fish_contact(fish_body, {&water_block});
-    ComplexRelation water_block_complex(water_block_inner, water_block_contact);
+    ContactRelation fish_observer_contact_water(fish_observer, { &water_block });
+    ContactRelation fish_observer_contact_solid(fish_observer, { &fish_body });
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
-    if (sph_system.RunParticleRelaxation())
+    if (system.RunParticleRelaxation())
     {
         /**
          * @brief 	Methods used for particle relaxation.
@@ -140,7 +141,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SimpleDynamics<NormalDirectionFromBodyShape> fish_body_normal_direction(fish_body);
     /** Corrected configuration for the elastic insert body. */
-    InteractionWithUpdate<KernelCorrectionMatrixInner> fish_body_corrected_configuration(fish_inner);
+    InteractionWithUpdate<CorrectedConfigurationInner> fish_body_corrected_configuration(fish_inner);
     /** Compute the force exerted on solid body due to fluid pressure and viscosity. */
     InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(fish_contact);
     InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluidRiemann>
@@ -164,20 +165,23 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
-    RestartIO restart_io(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
     RegressionTestTimeAverage<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>>
         write_total_viscous_force_on_insert_body(io_environment, viscous_force_on_solid, "TotalViscousForceOnSolid");
     RegressionTestTimeAverage<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>>
         write_total_force_on_insert_body(io_environment, fluid_force_on_fish_update, "TotalForceOnSolid");
+    ObservedQuantityRecording<Real>pressure_probe("Pressure", io_environment, fish_observer_contact_water);
+    ObservedQuantityRecording<Vecd>fish_velocity_probe("Velocity", io_environment, fish_observer_contact_solid);
+    InteractionDynamics<InterpolatingAQuantity<Vecd>>
+        interpolation_particle_position(fish_observer_contact_solid, "Position", "Position");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
     /** initialize cell linked lists for all bodies. */
-    sph_system.initializeSystemCellLinkedLists();
+    system.initializeSystemCellLinkedLists();
     /** initialize configurations for all bodies. */
-    sph_system.initializeSystemConfigurations();
+    system.initializeSystemConfigurations();
     /** computing surface normal direction for the fish. */
     fish_body_normal_direction.exec();
     /** computing linear reproducing configuration for the fish. */
@@ -187,9 +191,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
-    size_t number_of_iterations = 0;
+    size_t number_of_iterations = system.RestartStep();
     int screen_output_interval = 100;
-    Real End_Time = 2.5; /**< End time. */
+    int restart_output_interval = screen_output_interval;
+    Real End_Time = 10.0; /**< End time. */
     Real D_Time = 0.01;  /**< time stamps for output. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -200,6 +205,8 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     write_real_body_states.writeToFile();
+    pressure_probe.writeToFile();
+    fish_velocity_probe.writeToFile();
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -248,6 +255,7 @@ int main(int ac, char *av[])
                     inner_ite_dt_s++;
                 }
                 average_velocity_and_acceleration.update_averages_.exec(dt);
+                interpolation_particle_position.exec();
 
                 relaxation_time += dt;
                 integration_time += dt;
@@ -255,6 +263,9 @@ int main(int ac, char *av[])
                 emitter_buffer_inflow_condition.exec(dt);
                 inner_ite_dt++;
             }
+            pressure_probe.writeToFile(number_of_iterations);
+            fish_velocity_probe.writeToFile(number_of_iterations);
+            write_total_viscous_force_on_insert_body.writeToFile(number_of_iterations);
 
             if (number_of_iterations % screen_output_interval == 0)
             {
@@ -274,13 +285,15 @@ int main(int ac, char *av[])
             water_block_complex.updateConfiguration();
             /** one need update configuration after periodic condition. */
             fish_contact.updateConfiguration();
+            fish_observer_contact_water.updateConfiguration();
+            //fish_observer_contact_solid.updateConfiguration();
         }
 
         TickCount t2 = TickCount::now();
         /** write run-time observation into file */
         compute_vorticity.exec();
         write_real_body_states.writeToFile();
-        write_total_viscous_force_on_insert_body.writeToFile(number_of_iterations);
+        
 
         TickCount t3 = TickCount::now();
         interval += t3 - t2;

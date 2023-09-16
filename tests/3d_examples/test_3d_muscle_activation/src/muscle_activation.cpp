@@ -50,19 +50,18 @@ class MyocardiumActivation
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main(int ac, char *av[])
+int main()
 {
     //----------------------------------------------------------------------
     //	Build up an SPHSystem.
     //----------------------------------------------------------------------
     BoundingBox system_domain_bounds(Vecd(-SL, -SL, -SL), Vecd(PL + SL, PH + SL, PW + SL));
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av);
+    SPHSystem system(system_domain_bounds, resolution_ref);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    SolidBody myocardium_muscle_body(sph_system, makeShared<TransformShape<GeometricShapeBox>>(
-                                                     Transform(translation_myocardium), halfsize_myocardium, "MyocardiumMuscleBody"));
+    SolidBody myocardium_muscle_body(system, makeShared<TransformShape<GeometricShapeBox>>(
+                                                 Transform(translation_myocardium), halfsize_myocardium, "MyocardiumMuscleBody"));
     myocardium_muscle_body.defineParticlesAndMaterial<
         ElasticSolidParticles, ActiveMuscle<Muscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
     myocardium_muscle_body.generateParticles<ParticleGeneratorLattice>();
@@ -70,9 +69,6 @@ int main(int ac, char *av[])
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
-    //  Generally, we first define all the inner relations, then the contact relations.
-    //  At last, we define the complex relaxations by combining previous defined
-    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation myocardium_muscle_body_inner(myocardium_muscle_body);
     //----------------------------------------------------------------------
@@ -81,7 +77,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(myocardium_muscle_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(myocardium_muscle_body_inner);
-    InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration(myocardium_muscle_body_inner);
+    InteractionWithUpdate<CorrectedConfigurationInner> corrected_configuration(myocardium_muscle_body_inner);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(myocardium_muscle_body);
     SimpleDynamics<MyocardiumActivation> myocardium_activation(myocardium_muscle_body);
     BodyRegionByParticle holder(myocardium_muscle_body, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_holder), halfsize_holder));
@@ -90,15 +86,15 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    IOEnvironment io_environment(sph_system);
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
+    IOEnvironment io_environment(system);
+    BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
     GlobalStaticVariables::physical_time_ = 0.0;
-    sph_system.initializeSystemCellLinkedLists();
-    sph_system.initializeSystemConfigurations();
+    system.initializeSystemCellLinkedLists();
+    system.initializeSystemConfigurations();
     corrected_configuration.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
@@ -151,7 +147,6 @@ int main(int ac, char *av[])
     TimeInterval tt;
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-
 
     return 0;
 }

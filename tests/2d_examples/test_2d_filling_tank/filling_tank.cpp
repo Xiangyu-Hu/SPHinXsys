@@ -85,36 +85,32 @@ class InletInflowCondition : public fluid_dynamics::EmitterInflowCondition
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main(int ac, char *av[])
+int main()
 {
     /** Build up a SPHSystem */
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av);
+    SPHSystem system(system_domain_bounds, resolution_ref);
     /** Set the starting time. */
     GlobalStaticVariables::physical_time_ = 0.0;
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_body(sph_system, makeShared<TransformShape<GeometricShapeBox>>(
-                                         Transform(inlet_translation), inlet_halfsize, "WaterBody"));
+    FluidBody water_body(system, makeShared<TransformShape<GeometricShapeBox>>(
+                                     Transform(inlet_translation), inlet_halfsize, "WaterBody"));
     water_body.sph_adaptation_->resetKernel<KernelTabulated<KernelWendlandC2>>(20);
     water_body.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
     water_body.generateParticles<ParticleGeneratorLattice>();
     /**note that, as particle sort is activated (by default) for fluid particles,
      * the output occasionally does not reflect the real free surface indication due to sorting. */
-    SolidBody wall(sph_system, makeShared<WallBoundary>("Wall"));
+    SolidBody wall(system, makeShared<WallBoundary>("Wall"));
     wall.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall.generateParticles<ParticleGeneratorLattice>();
 
-    ObserverBody fluid_observer(sph_system, "FluidObserver");
+    ObserverBody fluid_observer(system, "FluidObserver");
     fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
-    //  Generally, we first define all the inner relations, then the contact relations.
-    //  At last, we define the complex relaxations by combining previous defined
-    //  inner and contact relations.
     //----------------------------------------------------------------------
     ComplexRelation water_body_complex(water_body, {&wall});
     ContactRelation fluid_observer_contact_relation(fluid_observer, {&water_body});
@@ -127,7 +123,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex>
         indicate_free_surface(water_body_complex);
     water_body.addBodyStateForRecording<Real>("PositionDivergence"); // for debug
-    water_body.addBodyStateForRecording<int>("Indicator");           // for debug
+    water_body.addBodyStateForRecording<int>("Indicator");    // for debug
 
     SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
     SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_body, gravity_ptr);
@@ -142,8 +138,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	File Output
     //----------------------------------------------------------------------
-    IOEnvironment io_environment(sph_system);
-    BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
+    IOEnvironment io_environment(system);
+    BodyStatesRecordingToVtp body_states_recording(io_environment, system.real_bodies_);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
         write_water_mechanical_energy(io_environment, water_body, gravity_ptr);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
@@ -152,14 +148,14 @@ int main(int ac, char *av[])
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    sph_system.initializeSystemCellLinkedLists();
-    sph_system.initializeSystemConfigurations();
+    system.initializeSystemCellLinkedLists();
+    system.initializeSystemConfigurations();
     wall_normal_direction.exec();
     indicate_free_surface.exec();
     //----------------------------------------------------------------------
     //	Time stepping control parameters.
     //----------------------------------------------------------------------
-    size_t number_of_iterations = sph_system.RestartStep();
+    size_t number_of_iterations = system.RestartStep();
     int screen_output_interval = 100;
     Real end_time = 30.0;
     Real output_interval = 0.1;
@@ -234,7 +230,6 @@ int main(int ac, char *av[])
 
     write_water_mechanical_energy.testResult();
     write_recorded_water_pressure.testResult();
-
 
     return 0;
 }

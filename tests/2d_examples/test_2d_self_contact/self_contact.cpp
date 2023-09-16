@@ -108,19 +108,19 @@ int main(int ac, char *av[])
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
     BoundingBox system_domain_bounds(Vec2d(-SL - BW, -PL / 2.0), Vec2d(PL + 3.0 * BW, PL / 2.0));
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem system(system_domain_bounds, resolution_ref);
 // handle command line arguments
 #ifdef BOOST_AVAILABLE
-    sph_system.handleCommandlineOptions(ac, av);
+    system.handleCommandlineOptions(ac, av);
 #endif
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    SolidBody beam_body(sph_system, makeShared<Beam>("BeamBody"));
+    SolidBody beam_body(system, makeShared<Beam>("BeamBody"));
     beam_body.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     beam_body.generateParticles<ParticleGeneratorLattice>();
 
-    ObserverBody beam_observer(sph_system, "BeamObserver");
+    ObserverBody beam_observer(system, "BeamObserver");
     beam_observer.defineAdaptationRatios(1.15, 2.0);
     StdVec<Vecd> beam_observation_location = {Vecd(PL, 0.0)};
     beam_observer.generateParticles<ObserverParticleGenerator>(beam_observation_location);
@@ -128,9 +128,6 @@ int main(int ac, char *av[])
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
-    //  Generally, we first define all the inner relations, then the contact relations.
-    //  At last, we define the complex relaxations by combining previous defined
-    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation beam_body_inner(beam_body);
     ContactRelation beam_observer_contact(beam_observer, {&beam_body});
@@ -140,7 +137,7 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
     SimpleDynamics<TimeStepInitialization> reset_prior_acceleration(beam_body);
-    InteractionWithUpdate<KernelCorrectionMatrixInner> beam_corrected_configuration(beam_body_inner);
+    InteractionWithUpdate<CorrectedConfigurationInner> beam_corrected_configuration(beam_body_inner);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
     Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> stress_relaxation_first_half(beam_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(beam_body_inner);
@@ -151,16 +148,16 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     //	outputs
     //-----------------------------------------------------------------------------
-    IOEnvironment io_environment(sph_system);
+    IOEnvironment io_environment(system);
     beam_body.addBodyStateForRecording<Real>("SelfContactDensity");
-    BodyStatesRecordingToVtp write_beam_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_beam_states(io_environment, system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_beam_tip_displacement("Position", io_environment, beam_observer_contact);
     //-----------------------------------------------------------------------------
     //	Setup particle configuration and initial conditions
     //-----------------------------------------------------------------------------
-    sph_system.initializeSystemCellLinkedLists();
-    sph_system.initializeSystemConfigurations();
+    system.initializeSystemCellLinkedLists();
+    system.initializeSystemConfigurations();
     beam_initial_velocity.exec();
     beam_corrected_configuration.exec();
     //-----------------------------------------------------------------------------
@@ -233,7 +230,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (sph_system.GenerateRegressionData())
+    if (system.generate_regression_data_)
     {
         write_beam_tip_displacement.generateDataBase(1.0e-2);
     }
@@ -241,7 +238,6 @@ int main(int ac, char *av[])
     {
         write_beam_tip_displacement.testResult();
     }
-
 
     return 0;
 }

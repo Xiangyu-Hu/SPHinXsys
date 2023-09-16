@@ -14,26 +14,26 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    SPHSystem system(system_domain_bounds, particle_spacing_ref);
+    system.handleCommandlineOptions(ac, av);
+    IOEnvironment io_environment(system);
 
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
+    FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
 
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
+    SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
-    SolidBody structure(sph_system, makeShared<FloatingStructure>("Structure"));
+    SolidBody structure(system, makeShared<FloatingStructure>("Structure"));
     structure.defineParticlesAndMaterial<SolidParticles, Solid>(rho_s);
     structure.generateParticles<ParticleGeneratorLattice>();
 
-    ObserverBody observer(sph_system, "Observer");
+    ObserverBody observer(system, "Observer");
     observer.defineAdaptationRatios(1.15, 2.0);
     observer.generateParticles<ObserverParticleGenerator>(
         StdVec<Vecd>{obs});
@@ -41,13 +41,13 @@ int main(int ac, char *av[])
     //---------------------------------------------------------
     // PRESSURE PROBES
     //---------------------------------------------------------
-    ObserverBody fp2(sph_system, "FluidObserver2");
+    ObserverBody fp2(system, "FluidObserver2");
     Real fp2x = 12.466;
     Real fp2y = 0.968;
     StdVec<Vecd> fp2l = {Vecd(fp2x, fp2y)};
     fp2.defineAdaptationRatios(1.15, 2.0);
     fp2.generateParticles<ObserverParticleGenerator>(fp2l);
-    ObserverBody fp3(sph_system, "FluidObserver3");
+    ObserverBody fp3(system, "FluidObserver3");
     Real fp3x = 12.466;
     Real fp3y = 1.013;
     StdVec<Vecd> fp3l = {Vecd(fp3x, fp3y)};
@@ -58,9 +58,6 @@ int main(int ac, char *av[])
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
-    //  Generally, we first define all the inner relations, then the contact relations.
-    //  At last, we define the complex relaxations by combining previous defined
-    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     InnerRelation structure_inner(structure);
@@ -92,8 +89,8 @@ int main(int ac, char *av[])
     // Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> density_relaxation(water_block_complex);
     /** corrected strong configuration. */
-    InteractionWithUpdate<KernelCorrectionMatrixComplex> corrected_configuration_fluid(water_block_complex, 0.1);
-    InteractionWithUpdate<KernelCorrectionMatrixInner> structure_corrected_configuration(structure_inner);
+    InteractionWithUpdate<CorrectedConfigurationComplex> corrected_configuration_fluid(water_block_complex, 2, 0.3);
+    InteractionWithUpdate<CorrectedConfigurationInner> structure_corrected_configuration(structure_inner);
     /** Computing viscous acceleration. */
     InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
     /** Fluid force on structure. */
@@ -177,7 +174,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
     /** WaveProbe. */
     BodyRegionByCell wave_probe_buffer(water_block, makeShared<MultiPolygonShape>(createWaveGauge(), "WaveGauge"));
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<fluid_dynamics::FreeSurfaceHeight>>>
@@ -196,15 +193,15 @@ int main(int ac, char *av[])
         write_recorded_pressure_fp2("Pressure", io_environment, fp2_contact_w);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
         write_recorded_pressure_fp3("Pressure", io_environment, fp3_contact_w);
-    RestartIO restart_io(io_environment, sph_system.real_bodies_);
+    RestartIO restart_io(io_environment, system.real_bodies_);
 
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
     structure_offset_position.exec();
-    sph_system.initializeSystemCellLinkedLists();
-    sph_system.initializeSystemConfigurations();
+    system.initializeSystemCellLinkedLists();
+    system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
     structure_normal_direction.exec();
     structure_corrected_configuration.exec();
@@ -212,9 +209,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
     //----------------------------------------------------------------------
-    if (sph_system.RestartStep() != 0)
+    if (system.RestartStep() != 0)
     {
-        GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.RestartStep());
+        GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(system.RestartStep());
         water_block.updateCellLinkedListWithParticleSort(100);
         wall_boundary.updateCellLinkedList();
         structure.updateCellLinkedList();
@@ -228,7 +225,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Basic control parameters for time stepping.
     //----------------------------------------------------------------------
-    size_t number_of_iterations = sph_system.RestartStep();
+    size_t number_of_iterations = system.RestartStep();
     int screen_output_interval = 1000;
     int restart_output_interval = screen_output_interval * 10;
     Real end_time = total_physical_time;
@@ -345,12 +342,12 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (sph_system.GenerateRegressionData())
+    if (system.generate_regression_data_)
     {
         write_str_displacement.generateDataBase(1.0e-3);
         write_recorded_pressure_fp2.generateDataBase(1.0e-3);
     }
-    else if (sph_system.RestartStep() == 0)
+    else if (system.RestartStep() == 0)
     {
         write_str_displacement.testResult();
         write_recorded_pressure_fp2.testResult();

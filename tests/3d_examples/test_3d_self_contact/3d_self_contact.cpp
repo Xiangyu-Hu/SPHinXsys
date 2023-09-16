@@ -56,40 +56,37 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem system(system_domain_bounds, resolution_ref);
     // Tag for run particle relaxation for the initial body fitted distribution.
-    sph_system.setRunParticleRelaxation(false);
+    system.setRunParticleRelaxation(false);
     // Tag for reload initially relaxed particles.
-    sph_system.setReloadParticles(false);
+    system.setReloadParticles(true);
 #ifdef BOOST_AVAILABLE
     // handle command line arguments
-    sph_system.handleCommandlineOptions(ac, av);
+    system.handleCommandlineOptions(ac, av);
 #endif
-    IOEnvironment io_environment(sph_system);
+    IOEnvironment io_environment(system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    SolidBody coil(sph_system, makeShared<Coil>("Coil"));
+    SolidBody coil(system, makeShared<Coil>("Coil"));
     coil.defineBodyLevelSetShape()->writeLevelSet(io_environment);
     coil.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
+    (!system.RunParticleRelaxation() && system.ReloadParticles())
         ? coil.generateParticles<ParticleGeneratorReload>(io_environment, coil.getName())
         : coil.generateParticles<ParticleGeneratorLattice>();
 
-    SolidBody stationary_plate(sph_system, makeShared<StationaryPlate>("StationaryPlate"));
+    SolidBody stationary_plate(system, makeShared<StationaryPlate>("StationaryPlate"));
     stationary_plate.defineParticlesAndMaterial<SolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     stationary_plate.generateParticles<ParticleGeneratorLattice>();
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
-    //  Generally, we first define all the inner relations, then the contact relations.
-    //  At last, we define the complex relaxations by combining previous defined
-    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation coil_inner(coil);
     SelfSurfaceContactRelation coil_self_contact(coil);
@@ -97,7 +94,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	check whether run particle relaxation for body fitted particle distribution.
     //----------------------------------------------------------------------
-    if (sph_system.RunParticleRelaxation())
+    if (system.RunParticleRelaxation())
     {
         //----------------------------------------------------------------------
         //	Methods used for particle relaxation.
@@ -139,7 +136,7 @@ int main(int ac, char *av[])
     // initialize a time step
     SimpleDynamics<TimeStepInitialization> initialization_with_gravity(coil, makeShared<Gravity>(Vecd(0.0, -1.0, 0.0)));
     // Corrected configuration for reproducing rigid rotation.
-    InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration(coil_inner);
+    InteractionWithUpdate<CorrectedConfigurationInner> corrected_configuration(coil_inner);
     // Time step size
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(coil);
     // stress relaxation.
@@ -156,8 +153,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	From here the time stepping begins.
     //----------------------------------------------------------------------
-    sph_system.initializeSystemCellLinkedLists();
-    sph_system.initializeSystemConfigurations();
+    system.initializeSystemCellLinkedLists();
+    system.initializeSystemConfigurations();
     // apply initial condition
     corrected_configuration.exec();
     write_states.writeToFile(0);
@@ -214,7 +211,6 @@ int main(int ac, char *av[])
     TimeInterval tt;
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-
 
     return 0;
 }

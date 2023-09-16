@@ -34,18 +34,17 @@ class SolidBodyFromMesh : public ComplexShape
 //----------------------------------------------------------------------
 //	Main program begins here
 //----------------------------------------------------------------------
-int main(int ac, char *av[])
+int main()
 {
     //----------------------------------------------------------------------
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, dp_0);
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    SPHSystem system(system_domain_bounds, dp_0);
+    IOEnvironment io_environment(system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    RealBody imported_model(sph_system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
+    RealBody imported_model(system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
     imported_model.defineAdaptation<ParticleRefinementNearSurface>(1.15, 1.0, 2);
     imported_model.defineBodyLevelSetShape()->writeLevelSet(io_environment);
     imported_model.defineParticlesAndMaterial();
@@ -60,9 +59,6 @@ int main(int ac, char *av[])
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
-    //  Generally, we first define all the inner relations, then the contact relations.
-    //  At last, we define the complex relaxations by combining previous defined
-    //  inner and contact relations.
     //----------------------------------------------------------------------
     AdaptiveInnerRelation imported_model_inner(imported_model);
     // BaseInnerRelation* imported_model_inner(imported_model);
@@ -99,7 +95,6 @@ int main(int ac, char *av[])
         }
     }
     std::cout << "The physics relaxation process of imported model finish !" << std::endl;
-
 
     return 0;
 }

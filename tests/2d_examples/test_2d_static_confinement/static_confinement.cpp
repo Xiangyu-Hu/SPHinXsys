@@ -120,9 +120,6 @@ int main(int ac, char *av[])
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
-    //  Generally, we first define all the inner relations, then the contact relations.
-    //  At last, we define the complex relaxations by combining previous defined
-    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
@@ -267,7 +264,7 @@ int main(int ac, char *av[])
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
 
-    if (sph_system.GenerateRegressionData())
+    if (sph_system.generate_regression_data_)
     {
         write_water_mechanical_energy.generateDataBase(1.0e-3);
         write_recorded_water_pressure.generateDataBase(1.0e-3);
@@ -277,7 +274,6 @@ int main(int ac, char *av[])
         write_water_mechanical_energy.testResult();
         write_recorded_water_pressure.testResult();
     }
-
 
     return 0;
 }

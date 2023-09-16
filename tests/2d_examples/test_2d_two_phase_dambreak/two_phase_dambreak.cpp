@@ -9,13 +9,14 @@
 #include "sphinxsys.h"
 using namespace SPH;
 
-int main(int ac, char *av[])
+int main()
 {
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av);
+    /** Set the starting time. */
+    GlobalStaticVariables::physical_time_ = 0.0;
     IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
@@ -39,9 +40,6 @@ int main(int ac, char *av[])
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
-    //  Generally, we first define all the inner relations, then the contact relations.
-    //  At last, we define the complex relaxations by combining previous defined
-    //  inner and contact relations.
     //----------------------------------------------------------------------
     ComplexRelation water_air_complex(water_block, {&air_block});
     ContactRelation water_wall_contact(water_block, {&wall_boundary});
@@ -219,7 +217,6 @@ int main(int ac, char *av[])
 
     write_water_mechanical_energy.testResult();
     write_recorded_pressure.testResult();
-
 
     return 0;
 }

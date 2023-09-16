@@ -14,20 +14,20 @@ using namespace SPH;
 int main(int ac, char *av[])
 {
     /** Setup the system. Please the make sure the global domain bounds are correctly defined. */
-    SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
+    SPHSystem system(system_domain_bounds, particle_spacing_ref);
 #ifdef BOOST_AVAILABLE
-    sph_system.handleCommandlineOptions(ac, av);
+    system.handleCommandlineOptions(ac, av);
 #endif
-    IOEnvironment io_environment(sph_system);
+    IOEnvironment io_environment(system);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     /** create a body with corresponding material, particles and reaction model. */
-    SolidBody column(sph_system, makeShared<Column>("Column"));
+    SolidBody column(system, makeShared<Column>("Column"));
     column.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     column.generateParticles<ParticleGeneratorLattice>();
     /** Define Observer. */
-    ObserverBody my_observer(sph_system, "MyObserver");
+    ObserverBody my_observer(system, "MyObserver");
     my_observer.generateParticles<ObserverParticleGenerator>(observation_location);
     /**body relation topology */
     InnerRelation column_inner(column);
@@ -37,7 +37,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SimpleDynamics<InitialCondition> initial_condition(column);
     /** Corrected configuration. */
-    InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration(column_inner);
+    InteractionWithUpdate<CorrectedConfigurationInner> corrected_configuration(column_inner);
     /** Time step size calculation. We use CFL = 0.5 due to the very large twisting speed. */
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(column, 0.5);
     /** active and passive stress relaxation. */
@@ -49,7 +49,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Output
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_velocity("Velocity", io_environment, my_observer_contact);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
@@ -57,8 +57,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     // From here the time stepping begins.
     //----------------------------------------------------------------------
-    sph_system.initializeSystemCellLinkedLists();
-    sph_system.initializeSystemConfigurations();
+    system.initializeSystemCellLinkedLists();
+    system.initializeSystemConfigurations();
     initial_condition.exec();
     corrected_configuration.exec();
     write_states.writeToFile(0);
@@ -110,7 +110,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (sph_system.GenerateRegressionData())
+    if (system.generate_regression_data_)
     {
         write_displacement.generateDataBase(0.005);
         write_velocity.generateDataBase(0.005);
@@ -120,7 +120,6 @@ int main(int ac, char *av[])
         write_displacement.testResult();
         write_velocity.testResult();
     }
-
 
     return 0;
 }

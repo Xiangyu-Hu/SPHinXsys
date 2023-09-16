@@ -7,9 +7,9 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 0.8;                                /**< Channel length. */
-Real DH = 0.4;                                /**< Channel height. */
-Real particle_spacing_ref = 0.0025;           /**< Initial reference particle spacing. */
+Real DL = 2.4;                                /**< Channel length. */
+Real DH = 0.2;                                /**< Channel height. */
+Real particle_spacing_ref = 0.004;           /**< Initial reference particle spacing. */
 Real DL_sponge = particle_spacing_ref * 20.0; /**< Sponge region to impose inflow condition. */
 Real BW = particle_spacing_ref * 4.0;         /**< Boundary width, determined by specific layer of boundary particles. */
 /** Domain bounds of the system. */
@@ -24,6 +24,8 @@ Vec2d emitter_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
 Vec2d emitter_buffer_translation = Vec2d(-DL_sponge, 0.0) + emitter_buffer_halfsize;
 Vec2d disposer_halfsize = Vec2d(0.5 * BW, 0.75 * DH);
 Vec2d disposer_translation = Vec2d(DL, DH + 0.25 * DH) - disposer_halfsize;
+
+Real frequency_ = 3.0;
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
@@ -36,7 +38,7 @@ Real mu_f = rho0_f * U_f * 0.3 / Re; /**< Dynamics viscosity. */
 //	Global parameters on the solid properties
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
-Real cx = 0.3 * DL;           /**< Center of fish in x direction. */
+Real cx = 0.8 * DL;           /**< Center of fish in x direction. */
 Real cy = DH / 2;             /**< Center of fish in y direction. */
 Real fish_length = 0.2;       /**< Length of fish. */
 Real fish_thickness = 0.03;   /**< The maximum fish thickness. */
@@ -62,6 +64,52 @@ Real b2 = 3.19 * muscle_thickness / fish_length / fish_length;
 Real b3 = -15.73 * muscle_thickness / pow(fish_length, 3);
 Real b4 = 21.87 * muscle_thickness / pow(fish_length, 4);
 Real b5 = -10.55 * muscle_thickness / pow(fish_length, 5);
+
+/** Observation position. */
+Real obx1 = cx + 0.1 * fish_length;
+Real oby1 = outline(obx1 - cx, fish_thickness, fish_length) + cy;
+Real obx2 = cx + 0.2 * fish_length;
+Real oby2 = outline(obx2 - cx, fish_thickness, fish_length) + cy;
+Real obx3 = cx + 0.3 * fish_length;
+Real oby3 = outline(obx3 - cx, fish_thickness, fish_length) + cy;
+Real obx4 = cx + 0.4 * fish_length;
+Real oby4 = outline(obx4 - cx, fish_thickness, fish_length) + cy;
+Real obx5 = cx + 0.5 * fish_length;
+Real oby5 = outline(obx5 - cx, fish_thickness, fish_length) + cy;
+Real obx6 = cx + 0.6 * fish_length;
+Real oby6 = outline(obx6 - cx, fish_thickness, fish_length) + cy;
+Real obx7 = cx + 0.7 * fish_length;
+Real oby7 = outline(obx7 - cx, fish_thickness, fish_length) + cy;
+Real obx8 = cx + 0.8 * fish_length;
+Real oby8 = outline(obx8 - cx, fish_thickness, fish_length) + cy;
+Real obx9 = cx + 0.9 * fish_length;
+Real oby9 = outline(obx9 - cx, fish_thickness, fish_length) + cy;
+
+Real obx11 = cx + 0.1 * fish_length;
+Real oby11 = -outline(obx11 - cx, fish_thickness, fish_length) + cy;
+Real obx12 = cx + 0.2 * fish_length;
+Real oby12 = -outline(obx12 - cx, fish_thickness, fish_length) + cy;
+Real obx13 = cx + 0.3 * fish_length;
+Real oby13 = -outline(obx13 - cx, fish_thickness, fish_length) + cy;
+Real obx14 = cx + 0.4 * fish_length;
+Real oby14 = -outline(obx14 - cx, fish_thickness, fish_length) + cy;
+Real obx15 = cx + 0.5 * fish_length;
+Real oby15 = -outline(obx15 - cx, fish_thickness, fish_length) + cy;
+Real obx16 = cx + 0.6 * fish_length;
+Real oby16 = -outline(obx16 - cx, fish_thickness, fish_length) + cy;
+Real obx17 = cx + 0.7 * fish_length;
+Real oby17 = -outline(obx17 - cx, fish_thickness, fish_length) + cy;
+Real obx18 = cx + 0.8 * fish_length;
+Real oby18 = -outline(obx18 - cx, fish_thickness, fish_length) + cy;
+Real obx19 = cx + 0.9 * fish_length;
+Real oby19 = -outline(obx19 - cx, fish_thickness, fish_length) + cy;
+
+StdVec<Vec2d> observation_locations = { Vec2d(obx1,oby1), Vec2d(obx2,oby2),Vec2d(obx3,oby3),Vec2d(obx4,oby4),
+                                        Vec2d(obx4,oby4),Vec2d(obx5,oby5),Vec2d(obx6,oby6),Vec2d(obx7,oby7),
+                                        Vec2d(obx8,oby8),Vec2d(obx9,oby9),Vec2d(obx11,oby11),Vec2d(obx12,oby12),
+                                        Vec2d(obx13,oby13),Vec2d(obx14,oby14),Vec2d(obx15,oby15),Vec2d(obx16,oby16),
+                                        Vec2d(obx17,oby17),Vec2d(obx18,oby18),Vec2d(obx19,oby19) };
+
 //----------------------------------------------------------------------
 //	SPH bodies with cases-dependent geometries (ComplexShape).
 //----------------------------------------------------------------------
@@ -116,7 +164,7 @@ struct FreeStreamVelocity
 
     template <class BoundaryConditionType>
     FreeStreamVelocity(BoundaryConditionType &boundary_condition)
-        : u_ref_(0.0), t_ref_(2.0) {}
+        : u_ref_(0.0), t_ref_(1.0) {}
 
     Vecd operator()(Vecd &position, Vecd &velocity)
     {
@@ -135,7 +183,7 @@ class TimeDependentAcceleration : public Gravity
 
   public:
     explicit TimeDependentAcceleration(Vecd gravity_vector)
-        : Gravity(gravity_vector), t_ref_(2.0), u_ref_(0.00), du_ave_dt_(0) {}
+        : Gravity(gravity_vector), t_ref_(1.0), u_ref_(0.0), du_ave_dt_(0) {}
 
     virtual Vecd InducedAcceleration(Vecd &position) override
     {
@@ -172,16 +220,18 @@ class FishMaterialInitialization
         Real x = pos0_[index_i][0] - cx;
         Real y = pos0_[index_i][1];
 
-        Real y1 = a1 * pow(x, 0 + 1) + a2 * pow(x, 1 + 1) + a3 * pow(x, 2 + 1) + a4 * pow(x, 3 + 1) + a5 * pow(x, 4 + 1);
-        if (x <= (fish_length - head_length) && y > (y1 - 0.004 + cy) && y > (cy + bone_thickness / 2))
+        Real x1 = abs(pos0_[index_i][0] - (cx + fish_length));
+        Real y1 = a1 * pow(x1, 0 + 1) + a2 * pow(x1, 1 + 1) + a3 * pow(x1, 2 + 1) + a4 * pow(x1, 3 + 1) + a5 * pow(x1, 4 + 1);
+
+        if (x >= head_length && y > (y1 - 0.004 + cy) && y > (cy + bone_thickness / 2))
         {
             material_id_[index_i] = 0; // region for muscle
         }
-        else if (x <= (fish_length - head_length) && y < (-y1 + 0.004 + cy) && y < (cy - bone_thickness / 2))
+        else if (x >= head_length && y < (-y1 + 0.004 + cy) && y < (cy - bone_thickness / 2))
         {
             material_id_[index_i] = 0; // region for muscle
         }
-        else if ((x > (fish_length - head_length)) || ((y < (cy + bone_thickness / 2)) && (y > (cy - bone_thickness / 2))))
+        else if ((x < head_length) || ((y < (cy + bone_thickness / 2)) && (y > (cy - bone_thickness / 2))))
         {
             material_id_[index_i] = 2;
         }
@@ -206,13 +256,13 @@ class ImposingActiveStrain
     {
         if (material_id_[index_i] == 0)
         {
-            Real x = pos0_[index_i][0] - cx;
+            Real x = abs(pos0_[index_i][0] - (cx + fish_length));
             Real y = pos0_[index_i][1];
 
             Real Am = 0.12;
-            Real frequency = 4.0;
+            Real frequency = frequency_;
             Real w = 2 * Pi * frequency;
-            Real lambda = 3.0 * fish_length;
+            Real lambda = 2.0 * fish_length;
             Real wave_number = 2 * Pi / lambda;
             Real hx = -(pow(x, 2) - pow(fish_length, 2)) / pow(fish_length, 2);
             Real start_time = 0.2;

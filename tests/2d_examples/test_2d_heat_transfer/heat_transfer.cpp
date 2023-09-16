@@ -216,34 +216,31 @@ struct InflowVelocity
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main(int ac, char *av[])
+int main()
 {
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
-    IOEnvironment io_environment(sph_system);
+    SPHSystem system(system_domain_bounds, resolution_ref);
+    GlobalStaticVariables::physical_time_ = 0.0;
+    IOEnvironment io_environment(system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody thermofluid_body(sph_system, makeShared<ThermofluidBody>("ThermofluidBody"));
+    FluidBody thermofluid_body(system, makeShared<ThermofluidBody>("ThermofluidBody"));
     thermofluid_body.defineParticlesAndMaterial<DiffusionBaseParticles, ThermofluidBodyMaterial>();
     thermofluid_body.generateParticles<ParticleGeneratorLattice>();
 
-    SolidBody thermosolid_body(sph_system, makeShared<ThermosolidBody>("ThermosolidBody"));
+    SolidBody thermosolid_body(system, makeShared<ThermosolidBody>("ThermosolidBody"));
     thermosolid_body.defineParticlesAndMaterial<DiffusionSolidParticles, ThermosolidBodyMaterial>();
     thermosolid_body.generateParticles<ParticleGeneratorLattice>();
 
-    ObserverBody temperature_observer(sph_system, "FluidObserver");
+    ObserverBody temperature_observer(system, "FluidObserver");
     temperature_observer.generateParticles<ObserverParticleGenerator>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
-    //  Generally, we first define all the inner relations, then the contact relations.
-    //  At last, we define the complex relaxations by combining previous defined
-    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation fluid_body_inner(thermofluid_body);
     InnerRelation solid_body_inner(thermosolid_body);
@@ -287,7 +284,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>>
         write_fluid_phi("Phi", io_environment, fluid_observer_contact);
     ObservedQuantityRecording<Vecd>
@@ -296,12 +293,12 @@ int main(int ac, char *av[])
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    sph_system.initializeSystemCellLinkedLists();
+    system.initializeSystemCellLinkedLists();
     /** periodic condition applied after the mesh cell linked list build up
      * but before the configuration build up. */
     periodic_condition.update_cell_linked_list_.exec();
     /** initialize configurations for all bodies. */
-    sph_system.initializeSystemConfigurations();
+    system.initializeSystemConfigurations();
     /** computing surface normal direction for the wall. */
     thermosolid_body_normal_direction.exec();
     thermosolid_condition.exec();
@@ -388,7 +385,6 @@ int main(int ac, char *av[])
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
     write_fluid_phi.testResult();
-
 
     return 0;
 }

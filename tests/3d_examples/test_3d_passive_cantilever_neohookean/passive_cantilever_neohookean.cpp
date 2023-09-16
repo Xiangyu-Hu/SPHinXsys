@@ -60,18 +60,18 @@ class TimeDependentGravity : public Gravity
 int main(int ac, char *av[])
 {
     /** Setup the system. */
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem system(system_domain_bounds, resolution_ref);
 // handle command line arguments
 #ifdef BOOST_AVAILABLE
-    sph_system.handleCommandlineOptions(ac, av);
+    system.handleCommandlineOptions(ac, av);
 #endif /** output environment. */
 
     /** create a Cantilever body, corresponding material, particles and reaction model. */
-    SolidBody cantilever_body(sph_system, makeShared<Cantilever>("CantileverBody"));
+    SolidBody cantilever_body(system, makeShared<Cantilever>("CantileverBody"));
     cantilever_body.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     cantilever_body.generateParticles<ParticleGeneratorLattice>();
     /** Define Observer. */
-    ObserverBody cantilever_observer(sph_system, "CantileverObserver");
+    ObserverBody cantilever_observer(system, "CantileverObserver");
     cantilever_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 
     /** topology */
@@ -86,7 +86,7 @@ int main(int ac, char *av[])
      * This section define all numerical methods will be used in this case.
      */
     /** Corrected configuration. */
-    InteractionWithUpdate<KernelCorrectionMatrixInner>
+    InteractionWithUpdate<CorrectedConfigurationInner>
         corrected_configuration(cantilever_body_inner);
     /** Time step size calculation. */
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize>
@@ -105,8 +105,8 @@ int main(int ac, char *av[])
     DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
         muscle_damping(0.1, cantilever_body_inner, "Velocity", physical_viscosity);
     /** Output */
-    IOEnvironment io_environment(sph_system);
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
+    IOEnvironment io_environment(system);
+    BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_displacement("Position", io_environment, cantilever_observer_contact);
     /**
@@ -114,8 +114,8 @@ int main(int ac, char *av[])
      * Set the starting time.
      */
     GlobalStaticVariables::physical_time_ = 0.0;
-    sph_system.initializeSystemCellLinkedLists();
-    sph_system.initializeSystemConfigurations();
+    system.initializeSystemCellLinkedLists();
+    system.initializeSystemConfigurations();
     corrected_configuration.exec();
     write_states.writeToFile(0);
     write_displacement.writeToFile(0);
@@ -166,7 +166,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (sph_system.GenerateRegressionData())
+    if (system.generate_regression_data_)
     {
         write_displacement.generateDataBase(1.0e-2);
     }
@@ -174,7 +174,6 @@ int main(int ac, char *av[])
     {
         write_displacement.testResult();
     }
-
 
     return 0;
 }

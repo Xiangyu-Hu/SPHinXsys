@@ -11,9 +11,9 @@
 namespace SPH
 {
 //=============================================================================================//
-IOEnvironment::IOEnvironment(SPHSystem &sph_system, bool delete_output)
+IOEnvironment::IOEnvironment(SPHSystem &sph_system, int episode, bool delete_output)
     : sph_system_(sph_system),
-      input_folder_("./input"), output_folder_("./output"),
+      input_folder_("./input"), output_folder_("./output_" + std::to_string(episode)),
       restart_folder_("./restart"), reload_folder_("./reload")
 {
     if (!fs::exists(input_folder_))

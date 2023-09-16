@@ -77,30 +77,27 @@ class BoundaryGeometry : public BodyPartByParticle
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main(int ac, char *av[])
+int main()
 {
     //----------------------------------------------------------------------
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av);
+    SPHSystem system(system_domain_bounds, resolution_ref);
+    system.generate_regression_data_ = false;
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
+    SolidBody plate_body(system, makeShared<DefaultShape>("PlateBody"));
     plate_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     plate_body.generateParticles<PlateParticleGenerator>();
     plate_body.addBodyStateForRecording<Vecd>("PriorAcceleration");
 
-    ObserverBody plate_observer(sph_system, "PlateObserver");
+    ObserverBody plate_observer(system, "PlateObserver");
     plate_observer.generateParticles<ObserverParticleGenerator>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
-    //  Generally, we first define all the inner relations, then the contact relations.
-    //  At last, we define the complex relaxations by combining previous defined
-    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation plate_body_inner(plate_body);
     ContactRelation plate_observer_contact(plate_observer, {&plate_body});
@@ -126,16 +123,16 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    IOEnvironment io_environment(sph_system);
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
+    IOEnvironment io_environment(system);
+    BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_plate_max_displacement("Position", io_environment, plate_observer_contact); // TODO: using ensemble better
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    sph_system.initializeSystemCellLinkedLists();
-    sph_system.initializeSystemConfigurations();
+    system.initializeSystemCellLinkedLists();
+    system.initializeSystemConfigurations();
     corrected_configuration.exec();
     //----------------------------------------------------------------------
     //	First output before the main loop.
@@ -191,7 +188,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (sph_system.GenerateRegressionData())
+    if (system.generate_regression_data_)
     {
         write_plate_max_displacement.generateDataBase(0.005);
     }
@@ -199,7 +196,5 @@ int main(int ac, char *av[])
     {
         write_plate_max_displacement.testResult();
     }
-
-
     return 0;
 }

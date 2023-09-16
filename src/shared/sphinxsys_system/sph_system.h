@@ -69,17 +69,15 @@ class SPHSystem
     bool RunParticleRelaxation() { return run_particle_relaxation_; };
     void setReloadParticles(bool reload_particles) { reload_particles_ = reload_particles; };
     bool ReloadParticles() { return reload_particles_; };
-    bool GenerateRegressionData() { return generate_regression_data_; };
-    void setGenerateRegressionData(bool generate_regression_data) { generate_regression_data_ = generate_regression_data; };
-    bool StateRecording() { return state_recording_; };
-    void setStateRecording(bool state_recording) { state_recording_ = state_recording; };
     void setRestartStep(size_t restart_step) { restart_step_ = restart_step; };
     size_t RestartStep() { return restart_step_; };
     BoundingBox system_domain_bounds_;       /**< Lower and Upper domain bounds. */
     Real resolution_ref_;                    /**< reference resolution of the SPH system */
     tbb::global_control tbb_global_control_; /**< global controlling on the total number parallel threads */
 
-    IOEnvironment *io_environment_;    /**< io_environment setup */
+    IOEnvironment *io_environment_; /**< io_environment setup */
+    bool generate_regression_data_; /**< run and generate or enhance the regression test data set. */
+
     SPHBodyVector sph_bodies_;         /**< All sph bodies. */
     SPHBodyVector observation_bodies_; /**< The bodies without inner particle configuration. */
     SPHBodyVector real_bodies_;        /**< The bodies with inner particle configuration. */
@@ -95,11 +93,9 @@ class SPHSystem
     void handleCommandlineOptions(int ac, char *av[]);
 #endif
   protected:
-    bool run_particle_relaxation_;  /**< run particle relaxation for body fitted particle distribution */
-    bool reload_particles_;         /**< start the simulation with relaxed particles. */
-    size_t restart_step_;           /**< restart step */
-    bool generate_regression_data_; /**< run and generate or enhance the regression test data set. */
-    bool state_recording_;          /**< Record state in output folder. */
+    bool run_particle_relaxation_; /**< run particle relaxation for body fitted particle distribution */
+    bool reload_particles_;        /**< start the simulation with relaxed particles. */
+    size_t restart_step_;          /**< restart step */
 };
 } // namespace SPH
 #endif // SPH_SYSTEM_H

@@ -62,11 +62,11 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    // sph_system.GenerateRegressionData() = true;
+    // sph_system.generate_regression_data_ = true;
     /** Tag for running particle relaxation for the initially body-fitted distribution */
     sph_system.setRunParticleRelaxation(false);
     /** Tag for starting with relaxed body-fitted particles distribution */
-    sph_system.setReloadParticles(false);
+    sph_system.setReloadParticles(true);
     sph_system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
@@ -147,7 +147,7 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     SimpleDynamics<TimeStepInitialization> ball_initialize_timestep(ball, makeShared<Gravity>(Vec3d(0.0, 0.0, -gravity_g)));
-    InteractionWithUpdate<KernelCorrectionMatrixInner> ball_corrected_configuration(ball_inner);
+    InteractionWithUpdate<CorrectedConfigurationInner> ball_corrected_configuration(ball_inner);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> ball_get_time_step_size(ball, 0.45);
     /** stress relaxation for the balls. */
     Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> ball_stress_relaxation_first_half(ball_inner);
@@ -232,7 +232,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (sph_system.GenerateRegressionData())
+    if (sph_system.generate_regression_data_)
     {
         write_ball_center_displacement.generateDataBase(0.005);
     }
@@ -240,7 +240,5 @@ int main(int ac, char *av[])
     {
         write_ball_center_displacement.testResult();
     }
-
-
     return 0;
 }

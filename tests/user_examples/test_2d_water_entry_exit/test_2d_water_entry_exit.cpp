@@ -35,10 +35,10 @@ Real mu_f = 8.9e-7;                      /**< Water dynamics viscosity. */
 //----------------------------------------------------------------------
 //	Wetting parameters
 //----------------------------------------------------------------------
-Real diffusion_coeff = 100.0 * pow(particle_spacing_ref, 2); /**< Wetting coefficient. */
-Real fluid_moisture = 1.0;                                   /**< fluid moisture. */
-Real cylinder_moisture = 0.0;                                /**< cylinder moisture. */
-Real wall_moisture = 1.0;                                    /**< wall moisture. */
+Real diffusion_coeff = 330.578 * pow(particle_spacing_ref, 2); /**< Wetting coefficient. */
+Real fluid_moisture = 1.0;                                     /**< fluid moisture. */
+Real cylinder_moisture = 0.0;                                  /**< cylinder moisture. */
+Real wall_moisture = 1.0;                                      /**< wall moisture. */
 //----------------------------------------------------------------------
 //	Definition for water body
 //----------------------------------------------------------------------
@@ -222,7 +222,7 @@ int main(int ac, char *av[])
     BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     sph_system.setRunParticleRelaxation(false);
-    sph_system.setReloadParticles(false);
+    sph_system.setReloadParticles(true);
     sph_system.handleCommandlineOptions(ac, av);
     GlobalStaticVariables::physical_time_ = 0.0;
     IOEnvironment io_environment(sph_system);
@@ -246,21 +246,18 @@ int main(int ac, char *av[])
         ? cylinder.generateParticles<ParticleGeneratorReload>(io_environment, cylinder.getName())
         : cylinder.generateParticles<ParticleGeneratorLattice>();
 
-    ObserverBody cylinder_observer(sph_system, "CylinderObserver");
-    cylinder_observer.generateParticles<ObserverParticleGenerator>(observer_location);
+    ObserverBody fluid_observer(sph_system, "FluidObserver");
+    fluid_observer.generateParticles<ObserverParticleGenerator>(observer_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
-    //  Generally, we first define all the inner relations, then the contact relations.
-    //  At last, we define the complex relaxations by combining previous defined
-    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     InnerRelation cylinder_inner(cylinder);
     ComplexRelation water_block_complex(water_block_inner, {&wall_boundary, &cylinder});
     ContactRelation cylinder_contact(cylinder, {&water_block});
-    ContactRelation cylinder_observer_contact(cylinder_observer, {&cylinder});
+    ContactRelation fluid_observer_contact(fluid_observer, {&cylinder});
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -312,7 +309,7 @@ int main(int ac, char *av[])
     SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block, gravity_ptr);
     InteractionWithUpdate<fluid_dynamics::WettingCoupledSpatialTemporalFreeSurfaceIdentificationComplex>
         free_stream_surface_indicator(water_block_complex);
-    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> fluid_density_by_summation(water_block_complex);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> fluid_density_by_summation(water_block_complex);
     water_block.addBodyStateForRecording<Real>("Pressure");
     water_block.addBodyStateForRecording<Real>("Density");
     water_block.addBodyStateForRecording<int>("Indicator");
@@ -347,10 +344,10 @@ int main(int ac, char *av[])
     SimTK::SimbodyMatterSubsystem matter(MBsystem);
     /** The forces of the MBsystem.*/
     SimTK::GeneralForceSubsystem forces(MBsystem);
-    /** Mass properties of the fixed spot. */
+    /** Mass proeprties of the fixed spot. */
     SimTK::Body::Rigid fixed_spot_info(SimTK::MassProperties(1.0, SimTKVec3(0), SimTK::UnitInertia(1)));
     SolidBodyPartForSimbody cylinder_constraint_area(cylinder, makeShared<MultiPolygonShape>(createSimbodyConstrainShape(cylinder), "cylinder"));
-    /** Mass properties of the constrained spot. */
+    /** Mass properties of the consrained spot. */
     SimTK::Body::Rigid tethered_spot_info(*cylinder_constraint_area.body_part_mass_properties_);
     /** Mobility of the fixed spot. */
     SimTK::MobilizedBody::Weld fixed_spot(matter.Ground(), SimTK::Transform(SimTKVec3(tethering_point[0], tethering_point[1], 0.0)),
@@ -368,7 +365,7 @@ int main(int ac, char *av[])
     tethered_spot_info.addDecoration(SimTK::Transform(), SimTK::DecorativeSphere(0.4));
     SimTK::State state = MBsystem.realizeTopology();
 
-    /** Time stepping method for multibody system.*/
+    /** Time steping method for multibody system.*/
     SimTK::RungeKuttaMersonIntegrator integ(MBsystem);
     integ.setAccuracy(1e-3);
     integ.setAllowInterpolation(false);
@@ -387,7 +384,7 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
     RestartIO restart_io(io_environment, sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_cylinder_displacement("Position", io_environment, cylinder_observer_contact);
+        write_cylinder_displacement("Position", io_environment, fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -409,6 +406,7 @@ int main(int ac, char *av[])
         GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.RestartStep());
         water_block.updateCellLinkedList();
         water_block_complex.updateConfiguration();
+        fluid_observer_contact.updateConfiguration();
         cylinder.updateCellLinkedList();
         water_block_inner.updateConfiguration();
         cylinder_inner.updateConfiguration();
@@ -421,7 +419,7 @@ int main(int ac, char *av[])
     int screen_output_interval = 100;
     int observation_sample_interval = screen_output_interval * 2;
     int restart_output_interval = screen_output_interval * 10;
-    Real end_time = 1.0;
+    Real end_time = 0.7;
     Real output_interval = end_time / 70.0;
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -505,6 +503,7 @@ int main(int ac, char *av[])
             cylinder_inner.updateConfiguration();
             cylinder_contact.updateConfiguration();
             water_block_complex.updateConfiguration();
+            fluid_observer_contact.updateConfiguration();
             free_stream_surface_indicator.exec();
             interval_updating_configuration += TickCount::now() - time_instance;
         }
@@ -527,7 +526,7 @@ int main(int ac, char *av[])
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
 
-    if (sph_system.GenerateRegressionData())
+    if (sph_system.generate_regression_data_)
     {
         write_cylinder_displacement.generateDataBase(1.0e-3);
     }

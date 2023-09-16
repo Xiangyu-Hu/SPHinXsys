@@ -2,13 +2,14 @@
 
 namespace SPH
 {
+//=====================================================================================================//
 namespace fluid_dynamics
 {
 //=================================================================================================//
 NonWettingSurfaceIndication::
     NonWettingSurfaceIndication(BaseInnerRelation &inner_relation,
-                                BaseContactRelation &contact_relation, Real threshold)
-    : FreeSurfaceIndicationComplex(inner_relation, contact_relation, threshold)
+                                               BaseContactRelation &contact_relation, Real threshold, Real criterion)
+    : FreeSurfaceIndicationComplex(inner_relation, contact_relation, threshold), wetting_criterion(criterion)
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
@@ -17,10 +18,12 @@ NonWettingSurfaceIndication::
 }
 //=================================================================================================//
 NonWettingSurfaceIndication::
-    NonWettingSurfaceIndication(ComplexRelation &complex_relation, Real threshold)
+    NonWettingSurfaceIndication(ComplexRelation &complex_relation, Real threshold, Real criterion)
     : NonWettingSurfaceIndication(complex_relation.getInnerRelation(),
-                                  complex_relation.getContactRelation(), threshold) {}
+                                                 complex_relation.getContactRelation(), threshold, criterion) {}
 
 //=================================================================================================//
 } // namespace fluid_dynamics
+  //=================================================================================================//
 } // namespace SPH
+  //=================================================================================================//

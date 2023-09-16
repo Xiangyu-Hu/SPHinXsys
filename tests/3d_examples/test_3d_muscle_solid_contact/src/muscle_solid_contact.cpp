@@ -53,17 +53,16 @@ class MovingPlate : public ComplexShape
 /**
  *  The main program
  */
-int main(int ac, char *av[])
+int main()
 {
     /** Setup the system. Please the make sure the global domain bounds are correctly defined. */
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av);
+    SPHSystem system(system_domain_bounds, resolution_ref);
     /** Creat a Myocardium body, corresponding material, particles and reaction model. */
-    SolidBody myocardium_body(sph_system, makeShared<Myocardium>("MyocardiumBody"));
+    SolidBody myocardium_body(system, makeShared<Myocardium>("MyocardiumBody"));
     myocardium_body.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     myocardium_body.generateParticles<ParticleGeneratorLattice>();
     /** Plate. */
-    SolidBody moving_plate(sph_system, makeShared<MovingPlate>("MovingPlate"));
+    SolidBody moving_plate(system, makeShared<MovingPlate>("MovingPlate"));
     moving_plate.defineParticlesAndMaterial<SolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     moving_plate.generateParticles<ParticleGeneratorLattice>();
     /** topology */
@@ -77,7 +76,7 @@ int main(int ac, char *av[])
     SimpleDynamics<TimeStepInitialization> myocardium_initialize_time_step(myocardium_body);
     SimpleDynamics<TimeStepInitialization> moving_plate_initialize_time_step(moving_plate);
     /** Corrected configuration. */
-    InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration(myocardium_body_inner);
+    InteractionWithUpdate<CorrectedConfigurationInner> corrected_configuration(myocardium_body_inner);
     /** Time step size calculation. */
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(myocardium_body);
     /** active and passive stress relaxation. */
@@ -96,8 +95,8 @@ int main(int ac, char *av[])
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
         muscle_damping(0.1, myocardium_body_inner, "Velocity", physical_viscosity);
     /** Output */
-    IOEnvironment io_environment(sph_system);
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
+    IOEnvironment io_environment(system);
+    BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
     /** Simbody interface. */
     /**
      * The multi body system from simbody.
@@ -139,8 +138,8 @@ int main(int ac, char *av[])
      * Set the starting time.
      */
     GlobalStaticVariables::physical_time_ = 0.0;
-    sph_system.initializeSystemCellLinkedLists();
-    sph_system.initializeSystemConfigurations();
+    system.initializeSystemCellLinkedLists();
+    system.initializeSystemConfigurations();
     /** apply initial condition */
     corrected_configuration.exec();
     write_states.writeToFile(0);
@@ -210,7 +209,6 @@ int main(int ac, char *av[])
     TimeInterval tt;
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-
 
     return 0;
 }

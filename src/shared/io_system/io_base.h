@@ -59,7 +59,7 @@ class IOEnvironment
     std::string restart_folder_;
     std::string reload_folder_;
 
-    explicit IOEnvironment(SPHSystem &sph_system, bool delete_output = true);
+    explicit IOEnvironment(SPHSystem &sph_system, int episode, bool delete_output = true);
     virtual ~IOEnvironment(){};
     ParameterizationIO &defineParameterizationIO();
 };
@@ -100,8 +100,7 @@ class BodyStatesRecording : public BaseIO
 {
   public:
     BodyStatesRecording(IOEnvironment &io_environment, SPHBodyVector bodies)
-        : BaseIO(io_environment), bodies_(bodies),
-          state_recording_(io_environment.sph_system_.StateRecording()){};
+        : BaseIO(io_environment), bodies_(bodies){};
     BodyStatesRecording(IOEnvironment &io_environment, SPHBody &body)
         : BodyStatesRecording(io_environment, {&body}){};
     virtual ~BodyStatesRecording(){};
@@ -111,7 +110,6 @@ class BodyStatesRecording : public BaseIO
 
   protected:
     SPHBodyVector bodies_;
-    bool state_recording_;
 
     virtual void writeWithFileName(const std::string &sequence) = 0;
 };

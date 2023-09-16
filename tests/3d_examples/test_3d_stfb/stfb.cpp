@@ -13,25 +13,25 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    SPHSystem system(system_domain_bounds, particle_spacing_ref);
+    system.handleCommandlineOptions(ac, av);
+    IOEnvironment io_environment(system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
+    FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
 
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
+    SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
-    SolidBody structure(sph_system, makeShared<FloatingStructure>("Structure"));
+    SolidBody structure(system, makeShared<FloatingStructure>("Structure"));
     structure.defineParticlesAndMaterial<SolidParticles, Solid>(rho_s);
     structure.generateParticles<ParticleGeneratorLattice>();
 
-    ObserverBody observer(sph_system, "Observer");
+    ObserverBody observer(system, "Observer");
     observer.defineAdaptationRatios(1.15, 2.0);
     observer.generateParticles<ObserverParticleGenerator>(
         StdVec<Vecd>{obs});
@@ -39,9 +39,6 @@ int main(int ac, char *av[])
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
-    //  Generally, we first define all the inner relations, then the contact relations.
-    //  At last, we define the complex relaxations by combining previous defined
-    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     InnerRelation structure_inner(structure);
@@ -56,7 +53,7 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> str_normal(structure);
     /** corrected strong configuration. */
-    InteractionWithUpdate<KernelCorrectionMatrixInner> str_corrected_conf(structure_inner);
+    InteractionWithUpdate<CorrectedConfigurationInner> str_corrected_conf(structure_inner);
     /** Time step initialization, add gravity. */
     SimpleDynamics<TimeStepInitialization> initialize_time_step_to_fluid(water_block, makeShared<Gravity>(Vecd(0.0, 0.0, -gravity_g)));
     /** Evaluation of density by summation approach. */
@@ -151,7 +148,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
     /** WaveProbes. */
     BodyRegionByCell wave_probe_buffer(water_block, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_FS_gauge), FS_gauge));
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<FreeSurfaceHeightZ>>> wave_gauge(io_environment, wave_probe_buffer);
@@ -178,8 +175,8 @@ int main(int ac, char *av[])
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
     structure_offset_position.exec();
-    sph_system.initializeSystemCellLinkedLists();
-    sph_system.initializeSystemConfigurations();
+    system.initializeSystemCellLinkedLists();
+    system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
     str_normal.exec();
     str_corrected_conf.exec();
@@ -266,7 +263,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (sph_system.GenerateRegressionData())
+    if (system.generate_regression_data_)
     {
         write_str_displacement.generateDataBase(1e-3);
         wave_gauge.generateDataBase(1e-3);
@@ -276,7 +273,6 @@ int main(int ac, char *av[])
         write_str_displacement.testResult();
         wave_gauge.testResult();
     }
-
 
     return 0;
 }

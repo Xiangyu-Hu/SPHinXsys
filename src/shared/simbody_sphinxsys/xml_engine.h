@@ -109,7 +109,31 @@ class XmlEngine
                                    Eigen::Matrix<Real, DIMENSION, DIMENSION, Rest...> &value)
     {
         std::string value_in_string = ele_ite_->getRequiredAttributeValue(attrib_name);
-        value = SimTKToEigen(SimTK::convertStringTo<SimTK::Mat<DIMENSION, DIMENSION>>(value_in_string));
+        std::stringstream ss(value_in_string);
+
+        std::string firstLine, secondLine, thirdLine, fourthLine;
+        
+        std::getline(ss, firstLine);  // useless
+        std::getline(ss, secondLine); 
+        std::getline(ss, thirdLine);  
+        std::getline(ss, fourthLine); // useless
+
+        // Mat2d mat;
+
+        std::stringstream ss2(secondLine);
+        char bracket;
+        double a, b;
+        ss2 >> bracket >> a >> bracket >> b;
+        value(0, 0) = a;
+        value(0, 1) = b;
+
+        std::stringstream ss3(thirdLine);
+        ss3 >> bracket >> a >> bracket >> b;
+        value(1, 0) = a;
+        value(1, 1) = b;
+        
+        // std::cout << "矩阵:\n" << value << std::endl;
+        // value = SimTKToEigen(SimTK::convertStringTo<SimTK::Mat<DIMENSION, DIMENSION>>(value_in_string));
     };
 
     /** Write to XML file */

@@ -3,8 +3,8 @@
  * @brief 	This is the head files used by diffusion_NeumannBC.cpp.
  * @author	Chenxi Zhao, Bo Zhang, Chi Zhang and Xiangyu Hu
  */
-#ifndef DIFFUSION_NEUMANN_BC_H
-#define DIFFUSION_NEUMANN_BC_H
+#ifndef DIFFUSION_NEUMANNBC_H
+#define DIFFUSION_NEUMANNBC_H
 
 #include "sphinxsys.h"
 using namespace SPH;
@@ -129,8 +129,8 @@ class DirichletWallBoundaryInitialCondition
     size_t phi_;
 
   public:
-    explicit DirichletWallBoundaryInitialCondition(SolidBody &diffusion_body)
-        : DiffusionReactionInitialCondition<WallParticles>(diffusion_body)
+    explicit DirichletWallBoundaryInitialCondition(SolidBody &diffusion_body) 
+    : DiffusionReactionInitialCondition<WallParticles>(diffusion_body)
     {
         phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
     }
@@ -158,9 +158,9 @@ class NeumannWallBoundaryInitialCondition
     StdLargeVec<Real> &heat_flux_;
 
   public:
-    explicit NeumannWallBoundaryInitialCondition(SolidBody &diffusion_body)
-        : DiffusionReactionInitialCondition<WallParticles>(diffusion_body),
-          heat_flux_(*(particles_->getVariableByName<Real>("HeatFlux")))
+    explicit NeumannWallBoundaryInitialCondition(SolidBody &diffusion_body) 
+    : DiffusionReactionInitialCondition<WallParticles>(diffusion_body),
+                                                                     heat_flux_(*(particles_->getVariableByName<Real>("HeatFlux")))
     {
         phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
     }
@@ -215,4 +215,4 @@ class TemperatureObserverParticleGenerator : public ObserverParticleGenerator
         }
     }
 };
-#endif // DIFFUSION_NEUMANN_BC_H
+#endif // DIFFUSION_NEUMANNBC_H

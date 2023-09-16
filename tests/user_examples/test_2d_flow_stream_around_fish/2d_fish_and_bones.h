@@ -39,10 +39,10 @@ std::vector<Vecd> CreatFishShape(Real center_x, Real center_y, Real length, Real
 	std::vector<Vecd> pnts;
 	for (int n = 0; n <= Nh; n++)
 	{
-		Real t = L - n * Lstep;
-		//Real t =n * Lstep;
-		//Real x = tailtip - t;
-		Real x = headtip + t;
+		//Real t = L - n * Lstep;
+		Real t =n * Lstep;
+		Real x = tailtip - t;
+		//Real x = headtip + t;
 		Real y = outline(t, h, L);
 		
 		if (y >= resolution)

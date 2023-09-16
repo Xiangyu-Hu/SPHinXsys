@@ -4,9 +4,10 @@
  * @details	We use this case to test the particle generation and relaxation  for a surface geometry (3D).
  */
 
-#include "relax_dynamics_surface.h"
 #include "sphinxsys.h" // SPHinXsys Library.
+#include "relax_dynamics_surface.h"
 #include "surface_shape.h"
+
 
 using namespace SPH;
 //----------------------------------------------------------------------
@@ -65,12 +66,12 @@ class CylinderParticleGenerator : public SurfaceParticleGenerator
         Standard_Real v2 = DELTA2;
 
         std::vector<Vecd> points;
-        for (size_t k = 0; k <= 1 / DELTA1; k++)
+        for (size_t k = 0;  k <= 1 / DELTA1; k++)
         {
             Standard_Real u = u1 + k * DELTA1;
             points.push_back(a->getCartesianPoint(u, 0));
         }
-        for (size_t k = 0; k <= 1 / DELTA1 - 1; k++)
+        for (size_t k = 0;  k <= 1 / DELTA1-1; k++)
         {
             Standard_Real v = v1 + k * DELTA1;
             points.push_back(a->getCartesianPoint(0, v));
@@ -92,12 +93,12 @@ class CylinderParticleGenerator : public SurfaceParticleGenerator
         {
             v1 = 0.5;
             u1 = 0.5;
-            double V_DELTA = 0.005;
-            double U_DELTA = 0.005;
-            Standard_Real v = v1 + k * V_DELTA;
+            double VDELTA = 0.005;
+            double UDELTA = 0.005;
+            Standard_Real v = v1 + k * VDELTA;
             for (size_t n = 0; n <= 20; n++)
             {
-                Standard_Real u = u1 + n * U_DELTA;
+                Standard_Real u = u1 + n * UDELTA;
                 points.push_back(a->getCartesianPoint(u, v));
             }
         }
@@ -120,28 +121,24 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up a SPHSystem.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
-    IOEnvironment io_environment(sph_system);
+    SPHSystem system(system_domain_bounds, particle_spacing_ref);
+    IOEnvironment io_environment(system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    SolidBody leaflet(sph_system, makeShared<SurfaceShapeSTEP>(full_path_to_geometry, "Leaflet"));
+    SolidBody leaflet(system, makeShared<SurfaceShapeSTEP>(full_path_to_geometry, "Leaflet"));
     // here dummy linear elastic solid is use because no solid dynamics in particle relaxation
     leaflet.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
     leaflet.generateParticles<CylinderParticleGenerator>();
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_relaxed_particles(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_relaxed_particles(io_environment, system.real_bodies_);
     MeshRecordingToPlt write_mesh_cell_linked_list(io_environment, leaflet.getCellLinkedList());
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
-    //  Generally, we first define all the inner relations, then the contact relations.
-    //  At last, we define the complex relaxations by combining previous defined
-    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation leaflet_inner(leaflet);
     //----------------------------------------------------------------------
@@ -152,7 +149,7 @@ int main(int ac, char *av[])
     relax_dynamics::RelaxationStepInnerSecondHalf leaflet_relaxation_second_half(leaflet_inner);
     /** Constrain the boundary. */
     BoundaryGeometry boundary_geometry(leaflet, "BoundaryGeometry");
-    SimpleDynamics<relax_dynamics::ConstrainSurfaceBodyRegion> constrain_holder(boundary_geometry);
+   SimpleDynamics<relax_dynamics::ConstrainSurfaceBodyRegion> constrain_holder(boundary_geometry);
     SimpleDynamics<relax_dynamics::SurfaceNormalDirection> surface_normal_direction(leaflet);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.

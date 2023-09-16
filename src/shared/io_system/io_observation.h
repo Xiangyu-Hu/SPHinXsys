@@ -95,6 +95,21 @@ class ObservedQuantityRecording : public BodyStatesRecording,
     {
         return this->interpolated_quantities_;
     }
+
+    Real getCurrentPressure(int point_number)
+		{
+        return (*this->interpolated_quantities_)[point_number];
+		}
+
+    Real getCurrentPositionX(int point_number)
+    {
+        return (*this->interpolated_quantities_)[point_number][0];
+    }
+
+    Real getCurrentPositionY(int point_number)
+		{
+			  return (*this->interpolated_quantities_)[point_number][1];
+		}
 };
 
 /**

@@ -26,8 +26,7 @@ sphinxsys.copy_reload()
 
 while True:
     print("Now start a new run......")
-    sphinxsys.run_particle_relaxation()
-    sphinxsys.run_case_with_reload()
+    sphinxsys.run_case()
     number_of_run_times += 1
     converged = sphinxsys.read_dat_file()
     converged_1 = sphinxsys_1.read_dat_file()

@@ -34,7 +34,5 @@
 #include "kernel_laguerre_gauss.h"
 #include "kernel_tabulated.h"
 #include "kernel_wenland_c2.h"
-#include "anisotropic_kernel.hpp"
- 
 
 #endif // ALL_KERNELS_H

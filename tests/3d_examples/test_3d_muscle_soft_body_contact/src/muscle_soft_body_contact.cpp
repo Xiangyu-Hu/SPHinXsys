@@ -51,17 +51,16 @@ class MovingPlate : public ComplexShape
 /**
  *  The main program
  */
-int main(int ac, char *av[])
+int main()
 {
     /** Setup the system. Please the make sure the global domain bounds are correctly defined. */
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av);
+    SPHSystem system(system_domain_bounds, resolution_ref);
     /** Creat a Myocardium body, corresponding material, particles and reaction model. */
-    SolidBody myocardium_body(sph_system, makeShared<Myocardium>("MyocardiumBody"));
+    SolidBody myocardium_body(system, makeShared<Myocardium>("MyocardiumBody"));
     myocardium_body.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     myocardium_body.generateParticles<ParticleGeneratorLattice>();
     /** Plate. */
-    SolidBody moving_plate(sph_system, makeShared<MovingPlate>("MovingPlate"));
+    SolidBody moving_plate(system, makeShared<MovingPlate>("MovingPlate"));
     moving_plate.defineAdaptationRatios(1.15, 1.5);
     moving_plate.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     moving_plate.generateParticles<ParticleGeneratorLattice>();
@@ -77,8 +76,8 @@ int main(int ac, char *av[])
     SimpleDynamics<TimeStepInitialization> myocardium_initialize_time_step(myocardium_body);
     SimpleDynamics<TimeStepInitialization> plate_initialize_time_step(moving_plate, makeShared<Gravity>(Vecd(-100.0, 0.0, 0.0)));
     /** Corrected configuration. */
-    InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration(myocardium_body_inner);
-    InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration_2(moving_plate_inner);
+    InteractionWithUpdate<CorrectedConfigurationInner> corrected_configuration(myocardium_body_inner);
+    InteractionWithUpdate<CorrectedConfigurationInner> corrected_configuration_2(moving_plate_inner);
     /** active and passive stress relaxation. */
     Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> stress_relaxation_first_half(myocardium_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(myocardium_body_inner);
@@ -104,16 +103,16 @@ int main(int ac, char *av[])
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
         plate_damping(0.2, moving_plate_inner, "Velocity", physical_viscosity);
     /** Output */
-    IOEnvironment io_environment(sph_system);
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
+    IOEnvironment io_environment(system);
+    BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
 
     /**
      * From here the time stepping begins.
      * Set the starting time.
      */
     GlobalStaticVariables::physical_time_ = 0.0;
-    sph_system.initializeSystemCellLinkedLists();
-    sph_system.initializeSystemConfigurations();
+    system.initializeSystemCellLinkedLists();
+    system.initializeSystemConfigurations();
     /** apply initial condition */
     corrected_configuration.exec();
     corrected_configuration_2.exec();
@@ -165,7 +164,7 @@ int main(int ac, char *av[])
             stress_relaxation_second_half_2.exec(dt);
 
             ite++;
-            dt = sph_system.getSmallestTimeStepAmongSolidBodies();
+            dt = system.getSmallestTimeStepAmongSolidBodies();
             integration_time += dt;
             GlobalStaticVariables::physical_time_ += dt;
 
@@ -185,7 +184,6 @@ int main(int ac, char *av[])
     TimeInterval tt;
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-
 
     return 0;
 }

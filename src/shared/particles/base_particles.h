@@ -36,7 +36,7 @@
 #include "base_variable.h"
 #include "particle_sorting.h"
 #include "sph_data_containers.h"
-#include "xml_parser.h"
+#include "xml_engine.h"
 
 #include <fstream>
 
@@ -158,7 +158,6 @@ class BaseParticles
 
     template <class DerivedVariableMethod, class... Ts>
     void addDerivedVariableToWrite(Ts &&...);
-    void computeDrivedVariables();
     //----------------------------------------------------------------------
     //		Particle data for sorting
     //----------------------------------------------------------------------
@@ -180,12 +179,12 @@ class BaseParticles
     void writeParticlesToVtk(OutStreamType &output_stream);
     void writeParticlesToPltFile(std::ofstream &output_file);
     virtual void writeSurfaceParticlesToVtuFile(std::ostream &output_file, BodySurface &surface_particles);
-    void resizeXmlDocForParticles(XmlParser &xml_parser);
+    void resizeXmlDocForParticles(XmlEngine &xml_engine);
     void writeParticlesToXmlForRestart(std::string &filefullpath);
     void readParticleFromXmlForRestart(std::string &filefullpath);
     void writeToXmlForReloadParticle(std::string &filefullpath);
     void readFromXmlForReloadParticle(std::string &filefullpath);
-    XmlParser *getReloadXmlParser() { return &reload_xml_parser_; };
+    XmlEngine *getReloadXmlEngine() { return &reload_xml_engine_; };
     virtual BaseParticles *ThisObjectPtr() { return this; };
     //----------------------------------------------------------------------
     //		Relation relate volume, surface and linear particles
@@ -197,8 +196,8 @@ class BaseParticles
     SPHBody &sph_body_;
     std::string body_name_;
     BaseMaterial &base_material_;
-    XmlParser restart_xml_parser_;
-    XmlParser reload_xml_parser_;
+    XmlEngine restart_xml_engine_;
+    XmlEngine reload_xml_engine_;
     ParticleData all_particle_data_;
     ParticleVariables all_discrete_variables_;
     GlobalVariables all_global_variables_;
@@ -245,10 +244,10 @@ class BaseParticles
  */
 struct WriteAParticleVariableToXml
 {
-    XmlParser &xml_parser_;
+    XmlEngine &xml_engine_;
     size_t &total_real_particles_;
-    WriteAParticleVariableToXml(XmlParser &xml_parser, size_t &total_real_particles)
-        : xml_parser_(xml_parser), total_real_particles_(total_real_particles){};
+    WriteAParticleVariableToXml(XmlEngine &xml_engine, size_t &total_real_particles)
+        : xml_engine_(xml_engine), total_real_particles_(total_real_particles){};
 
     template <typename DataType>
     void operator()(const std::string &variable_name, StdLargeVec<DataType> &variable) const;
@@ -260,10 +259,10 @@ struct WriteAParticleVariableToXml
  */
 struct ReadAParticleVariableFromXml
 {
-    XmlParser &xml_parser_;
+    XmlEngine &xml_engine_;
     size_t &total_real_particles_;
-    ReadAParticleVariableFromXml(XmlParser &xml_parser, size_t &total_real_particles)
-        : xml_parser_(xml_parser), total_real_particles_(total_real_particles){};
+    ReadAParticleVariableFromXml(XmlEngine &xml_engine, size_t &total_real_particles)
+        : xml_engine_(xml_engine), total_real_particles_(total_real_particles){};
 
     template <typename DataType>
     void operator()(const std::string &variable_name, StdLargeVec<DataType> &variable) const;

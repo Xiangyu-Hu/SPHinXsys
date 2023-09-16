@@ -41,7 +41,7 @@ Real fulid_initial_density_ = 1.0;
 Real water_pressure_constant_ = 3.0e6;
 Real saturation = 0.4;
 
-Real refer_density_energy = 0.5 * water_pressure_constant_;
+Real refer_density_energy = 0.5 * water_pressure_constant_  ;
 
 //----------------------------------------------------------------------
 //	Geometric shapes used in the system.
@@ -106,15 +106,15 @@ MultiPolygon createSaturationConstrainShape()
 //----------------------------------------------------------------------
 //	application dependent initial condition
 //----------------------------------------------------------------------
-class SaturationInitialCondition : public multi_species_continuum::PorousMediaSaturationDynamicsInitialCondition
+class SaturationInitialCondition : public  multi_species_continuum::PorousMediaSaturationDynamicsInitialCondition
 {
   public:
-    SaturationInitialCondition(BodyPartByParticle &body_part) : multi_species_continuum::PorousMediaSaturationDynamicsInitialCondition(body_part){};
+    SaturationInitialCondition(BodyPartByParticle &body_part) :  multi_species_continuum::PorousMediaSaturationDynamicsInitialCondition(body_part){};
     virtual ~SaturationInitialCondition(){};
 
   protected:
     void update(size_t index_i, Real dt = 0.0)
-    {
+    { 
         fluid_saturation_[index_i] = saturation;
         fluid_mass_[index_i] = saturation * fulid_initial_density_ * Vol_update_[index_i];
         total_mass_[index_i] = rho_n_[index_i] * Vol_update_[index_i] + fluid_mass_[index_i];
@@ -129,28 +129,25 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem system(system_domain_bounds, resolution_ref);
 #ifdef BOOST_AVAILABLE
     // handle command line arguments
-    sph_system.handleCommandlineOptions(ac, av);
+    system.handleCommandlineOptions(ac, av);
 #endif //----------------------------------------------------------------------
        //	Creating body, materials and particles.
        //----------------------------------------------------------------------
-    SolidBody beam_body(sph_system, makeShared<Beam>("2dMembrane"));
-    beam_body.defineParticlesAndMaterial<multi_species_continuum::PorousMediaParticles, multi_species_continuum::PorousMediaSolid>(
-        rho_0, Youngs_modulus, poisson, diffusivity_constant_, fulid_initial_density_, water_pressure_constant_);
+    SolidBody beam_body(system, makeShared<Beam>("2dMembrane"));
+    beam_body.defineParticlesAndMaterial<multi_species_continuum::PorousMediaParticles, multi_species_continuum::PorousMediaSolid>(rho_0, Youngs_modulus, poisson,
+                   diffusivity_constant_, fulid_initial_density_, water_pressure_constant_);
     beam_body.generateParticles<ParticleGeneratorLattice>();
 
-    ObserverBody beam_observer(sph_system, "MembraneObserver");
+    ObserverBody beam_observer(system, "MembraneObserver");
     beam_observer.defineAdaptationRatios(1.15, 2.0);
     beam_observer.generateParticles<ObserverParticleGenerator>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
-    //  Generally, we first define all the inner relations, then the contact relations.
-    //  At last, we define the complex relaxations by combining previous defined
-    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation beam_body_inner(beam_body);
     ContactRelation beam_observer_contact(beam_observer, {&beam_body});
@@ -158,11 +155,12 @@ int main(int ac, char *av[])
     // this section define all numerical methods will be used in this case
     //-----------------------------------------------------------------------------
 
+     
     // corrected strong configuration
-    InteractionWithUpdate<KernelCorrectionMatrixInner> beam_corrected_configuration(beam_body_inner);
+    InteractionWithUpdate<CorrectedConfigurationInner> beam_corrected_configuration(beam_body_inner);
     // time step size calculation
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
-    ReduceDynamics<multi_species_continuum::GetSaturationTimeStepSize> saturation_time_step_size(beam_body);
+    ReduceDynamics< multi_species_continuum::GetSaturationTimeStepSize> saturation_time_step_size(beam_body);
 
     // stress relaxation for the beam
     Dynamics1Level<multi_species_continuum::PorousMediaStressRelaxationFirstHalf> stress_relaxation_first_half(beam_body_inner);
@@ -174,8 +172,8 @@ int main(int ac, char *av[])
     SimpleDynamics<multi_species_continuum::MomentumConstraint> clamp_constrain_beam_base(beam_base);
 
     BodyRegionByParticle beam_saturation(beam_body, makeShared<MultiPolygonShape>(createSaturationConstrainShape()));
-    SimpleDynamics<SaturationInitialCondition> constrain_beam_saturation(beam_saturation);
-
+    SimpleDynamics<SaturationInitialCondition>  constrain_beam_saturation(beam_saturation);
+ 
     // need to be done
     ReduceDynamics<TotalMechanicalEnergy> get_kinetic_energy(beam_body);
 
@@ -185,32 +183,36 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     // outputs
     //-----------------------------------------------------------------------------
-    IOEnvironment io_environment(sph_system);
-    BodyStatesRecordingToVtp write_beam_states(io_environment, sph_system.real_bodies_);
+    IOEnvironment io_environment(system);
+    BodyStatesRecordingToVtp write_beam_states(io_environment, system.real_bodies_);
     // note there is a line observation
-
+ 
     ObservedQuantityRecording<Vecd>
         write_beam_tip_position("Position", io_environment, beam_observer_contact);
 
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
-    sph_system.initializeSystemCellLinkedLists();
-    sph_system.initializeSystemConfigurations();
+    system.initializeSystemCellLinkedLists();
+    system.initializeSystemConfigurations();
     constrain_beam_saturation.exec();
     beam_corrected_configuration.exec();
-
+    
+    
     int ite = 0;
-    int total_ite = 0;
-
+    int total_ite = 0; 
+   
+ 
     GlobalStaticVariables::physical_time_ = 0.0;
-
+     
     //----------------------------------------------------------------------
     //	Setup computing time-step controls.
     //----------------------------------------------------------------------
+  
 
     Real End_Time = 100.0;
     Real setup_saturation_time_ = End_Time * 0.1;
+   
 
     // time step size for output file
     Real D_Time = End_Time / 100.0;
@@ -224,7 +226,9 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     write_beam_states.writeToFile(0);
     write_beam_tip_position.writeToFile(0);
-
+   
+ 
+ 
     // computation loop starts
     while (GlobalStaticVariables::physical_time_ < End_Time)
     {
@@ -238,14 +242,15 @@ int main(int ac, char *av[])
                 constrain_beam_saturation.exec();
             }
             saturation_relaxation.exec(Dt);
-
+            
             int stress_ite = 0;
             Real relaxation_time = 0.0;
             Real total_kinetic_energy = 1000.0;
+	      
 
             while (relaxation_time < Dt)
             {
-                if (total_kinetic_energy > (5e-9 * refer_density_energy)) // this is because we change the total mehanical energy calculation
+                if (total_kinetic_energy > (5e-9* refer_density_energy )) // this is because we change the total mehanical energy calculation
                 {
                     stress_relaxation_first_half.exec(dt);
                     clamp_constrain_beam_base.exec();
@@ -261,26 +266,28 @@ int main(int ac, char *av[])
                     if (ite % 1000 == 0)
                     {
                         std::cout << "N=" << ite << " Time: "
-                                  << GlobalStaticVariables::physical_time_ << "  Dt:" << Dt << "	dt: "
-                                  << dt << "  Dt/ dt:" << Dt / dt << "\n";
+							<< GlobalStaticVariables::physical_time_ << "  Dt:" << Dt << "	dt: "
+							<< dt << "  Dt/ dt:" << Dt / dt << "\n";               
                     }
+                  
                 }
+
 
                 total_ite++;
                 relaxation_time += dt;
                 integration_time += dt;
                 GlobalStaticVariables::physical_time_ += dt;
             }
-
-            std::cout << "One Diffusion finishes   "
-                      << "total_kinetic_energy =  " << total_kinetic_energy
-                      << "     stress_ite = " << stress_ite << std::endl;
+                     
+               std::cout << "One Diffusion finishes   "
+                << "total_kinetic_energy =  " << total_kinetic_energy
+                << "     stress_ite = " << stress_ite << std::endl;
         }
 
         TickCount t2 = TickCount::now();
         write_beam_states.writeToFile(ite);
         write_beam_tip_position.writeToFile(ite);
-
+ 
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }
@@ -292,7 +299,6 @@ int main(int ac, char *av[])
               << "  Iterations:  " << ite << std::endl;
     std::cout << "Total iterations computation:  " << GlobalStaticVariables::physical_time_ / dt
               << "  Total iterations:  " << total_ite << std::endl;
-
 
     return 0;
 }

@@ -24,7 +24,7 @@ Vec3d SimTKToEigen(const SimTKVec3 &simTK_vector)
 }
 SimTKMat22 EigenToSimTK(const Mat2d &eigen_matrix)
 {
-    return SimTKMat22((double)eigen_matrix(0, 0), (double)eigen_matrix(0, 1),
+    return SimTKMat22((double)eigen_matrix(0, 0), (double)eigen_matrix(0, 1), 
                       (double)eigen_matrix(1, 0), (double)eigen_matrix(1, 1));
 }
 //=================================================================================================//
@@ -49,4 +49,12 @@ Mat3d SimTKToEigen(const SimTKMat33 &simTK_matrix)
         {(Real)simTK_matrix(2, 0), (Real)simTK_matrix(2, 1), (Real)simTK_matrix(2, 2)}};
 }
 //=================================================================================================//
+SimTKVec2 EigenFirstLineToSimTK(const Mat2d &eigen_matrix)
+{
+    return SimTKVec2((double)eigen_matrix(0, 0), (double)eigen_matrix(0, 1));
+}
+SimTKVec2 EigenSecondLineToSimTK(const Mat2d &eigen_matrix)
+{
+    return SimTKVec2((double)eigen_matrix(1, 0), (double)eigen_matrix(1, 1));
+}
 } // namespace SPH

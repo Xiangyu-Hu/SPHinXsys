@@ -10,6 +10,7 @@
 #include "common_compressible_FVM_classes.h"        // eulerian classes for compressible fluid in FVM only.
 #include "common_compressible_eulerian_classes.hpp" // eulerian classes for weakly compressible fluid only.
 #include "common_shared_FVM_classes.h"              // shared eulerian classes for weakly-compressible and compressible fluid in FVM.
+#include "common_shared_eulerian_classes.h"         // shared eulerian classes for weakly-compressible and compressible fluid.
 using namespace SPH;
 using namespace std;
 //----------------------------------------------------------------------
@@ -39,7 +40,7 @@ std::string double_mach_reflection_mesh_fullpath = "./input/double_mach_reflecti
 //
 //	Define geometries and body shapes
 //----------------------------------------------------------------------
-std::vector<Vecd> CreatComputationDomain()
+std::vector<Vecd> CreatComputationDomian()
 {
     // geometry
     std::vector<Vecd> computation_domain;
@@ -50,12 +51,12 @@ std::vector<Vecd> CreatComputationDomain()
     computation_domain.push_back(Vecd(0.0, 0.0));
     return computation_domain;
 }
-class WaveBody : public ComplexShape
+class WaterBlock : public ComplexShape
 {
   public:
-    explicit WaveBody(const std::string &shape_name) : ComplexShape(shape_name)
+    explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        MultiPolygon wave_block(CreatComputationDomain());
+        MultiPolygon wave_block(CreatComputationDomian());
         add<MultiPolygonShape>(wave_block, "WaveBlock");
     }
 };
@@ -118,13 +119,12 @@ class DMFBoundaryConditionSetup : public fluid_dynamics::FluidDataInner
 {
   public:
     DMFBoundaryConditionSetup(BaseInnerRelationInFVM &inner_relation, vector<vector<size_t>> each_boundary_type_with_all_ghosts_index,
-                              vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_, vector<vector<size_t>> each_boundary_type_contact_real_index)
-        : fluid_dynamics::FluidDataInner(inner_relation),
-          compressible_fluid_(CompressibleFluid(1.0, 1.4)), rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
-          Vol_(particles_->Vol_), E_(*particles_->getVariableByName<Real>("TotalEnergy")), vel_(particles_->vel_),
-          mom_(*particles_->getVariableByName<Vecd>("Momentum")), pos_(particles_->pos_), total_ghost_particles_(particles_->total_ghost_particles_),
-          real_particles_bound_(particles_->real_particles_bound_), each_boundary_type_with_all_ghosts_index_(each_boundary_type_with_all_ghosts_index),
-          each_boundary_type_with_all_ghosts_eij_(each_boundary_type_with_all_ghosts_eij_), each_boundary_type_contact_real_index_(each_boundary_type_contact_real_index){};
+                              vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_, vector<vector<size_t>> each_boundary_type_contact_real_index) : fluid_dynamics::FluidDataInner(inner_relation),
+                                                                                                                                                            compressible_fluid_(CompressibleFluid(1.0, 1.4)), rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
+                                                                                                                                                            Vol_(particles_->Vol_), E_(*particles_->getVariableByName<Real>("TotalEnergy")), vel_(particles_->vel_),
+                                                                                                                                                            mom_(*particles_->getVariableByName<Vecd>("Momentum")), pos_(particles_->pos_), total_ghost_particles_(particles_->total_ghost_particles_),
+                                                                                                                                                            real_particles_bound_(particles_->real_particles_bound_), each_boundary_type_with_all_ghosts_index_(each_boundary_type_with_all_ghosts_index),
+                                                                                                                                                            each_boundary_type_with_all_ghosts_eij_(each_boundary_type_with_all_ghosts_eij_), each_boundary_type_contact_real_index_(each_boundary_type_contact_real_index){};
     virtual ~DMFBoundaryConditionSetup(){};
 
     void resetBoundaryConditions()

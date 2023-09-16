@@ -189,40 +189,38 @@ std::vector<Vecd> createGateConstrainShapeRight()
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main(int ac, char *av[])
+int main()
 {
     //----------------------------------------------------------------------
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    SPHSystem system(system_domain_bounds, particle_spacing_ref);
+    /** Set the starting time to zero. */
+    GlobalStaticVariables::physical_time_ = 0.0;
+    IOEnvironment io_environment(system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
+    FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
     water_block.generateParticles<ParticleGeneratorLattice>();
 
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
+    SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
-    SolidBody gate(sph_system, makeShared<Gate>("Gate"));
+    SolidBody gate(system, makeShared<Gate>("Gate"));
     gate.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     gate.generateParticles<ParticleGeneratorLattice>();
     //----------------------------------------------------------------------
     //	Particle and body creation of gate observer.
     //----------------------------------------------------------------------
-    ObserverBody gate_observer(sph_system, "Observer");
+    ObserverBody gate_observer(system, "Observer");
     gate_observer.generateParticles<ObserverParticleGenerator>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
-    //  Generally, we first define all the inner relations, then the contact relations.
-    //  At last, we define the complex relaxations by combining previous defined
-    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     InnerRelation gate_inner(gate);
@@ -249,7 +247,7 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> gate_normal_direction(gate);
     /** Corrected configuration. */
-    InteractionWithUpdate<KernelCorrectionMatrixInner> gate_corrected_configuration(gate_inner);
+    InteractionWithUpdate<CorrectedConfigurationInner> gate_corrected_configuration(gate_inner);
     /** Compute time step size of elastic solid. */
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> gate_computing_time_step_size(gate);
     /** Stress relaxation stepping for the elastic gate. */
@@ -268,7 +266,7 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     /** Output body states for visualization. */
-    BodyStatesRecordingToVtp write_real_body_states_to_vtp(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states_to_vtp(io_environment, system.real_bodies_);
     /** Output the observed displacement of gate free end. */
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
         write_beam_tip_displacement("Position", io_environment, gate_observer_contact);
@@ -277,9 +275,9 @@ int main(int ac, char *av[])
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
     /** initialize cell linked lists for all bodies. */
-    sph_system.initializeSystemCellLinkedLists();
+    system.initializeSystemCellLinkedLists();
     /** initialize configurations for all bodies. */
-    sph_system.initializeSystemConfigurations();
+    system.initializeSystemConfigurations();
     /** computing surface normal direction for the wall. */
     wall_boundary_normal_direction.exec();
     /** computing surface normal direction for the insert body. */
@@ -374,7 +372,6 @@ int main(int ac, char *av[])
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
     write_beam_tip_displacement.testResult();
-
 
     return 0;
 }

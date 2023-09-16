@@ -40,18 +40,17 @@ class InputBody : public ComplexShape
 //----------------------------------------------------------------------
 //	The main program
 //----------------------------------------------------------------------
-int main(int ac, char *av[])
+int main()
 {
     //----------------------------------------------------------------------
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
+    SPHSystem system(system_domain_bounds, resolution_ref);
+    IOEnvironment io_environment(system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    RealBody input_body(sph_system, makeShared<InputBody>("SPHInXsysLogo"));
+    RealBody input_body(system, makeShared<InputBody>("SPHInXsysLogo"));
     input_body.defineBodyLevelSetShape()->writeLevelSet(io_environment);
     input_body.defineParticlesAndMaterial();
     input_body.generateParticles<ParticleGeneratorLattice>();
@@ -59,9 +58,6 @@ int main(int ac, char *av[])
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
-    //  Generally, we first define all the inner relations, then the contact relations.
-    //  At last, we define the complex relaxations by combining previous defined
-    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation input_body_inner(input_body);
     //----------------------------------------------------------------------
@@ -101,7 +97,6 @@ int main(int ac, char *av[])
         }
     }
     std::cout << "The physics relaxation process finish !" << std::endl;
-
 
     return 0;
 }

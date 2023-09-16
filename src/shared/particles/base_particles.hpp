@@ -247,7 +247,7 @@ void BaseParticles::writeParticlesToVtk(StreamType &output_stream)
     output_stream << std::endl;
     output_stream << "    </DataArray>\n";
 
-    // write unsorted particles ID
+    //write unsorted particles ID
     output_stream << "    <DataArray Name=\"UnsortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
     output_stream << "    ";
     for (size_t i = 0; i != total_real_particles; ++i)
@@ -256,6 +256,12 @@ void BaseParticles::writeParticlesToVtk(StreamType &output_stream)
     }
     output_stream << std::endl;
     output_stream << "    </DataArray>\n";
+
+    // compute derived particle variables
+    for (auto &derived_variable : derived_variables_)
+    {
+        derived_variable->exec();
+    }
 
     // write integers
     constexpr int type_index_int = DataTypeIndex<int>::value;
@@ -328,13 +334,11 @@ template <typename DataType>
 void WriteAParticleVariableToXml::
 operator()(const std::string &variable_name, StdLargeVec<DataType> &variable) const
 {
-    size_t index = 0;
-    for( auto child = xml_parser_.first_element_->FirstChildElement();
-        child;
-        child = child->NextSiblingElement()  )
+    SimTK::Xml::element_iterator ele_ite = xml_engine_.root_element_.element_begin();
+    for (size_t i = 0; i != total_real_particles_; ++i)
     {
-        xml_parser_.setAttributeToElement( child, variable_name, variable[index] );
-        index ++; 
+        xml_engine_.setAttributeToElement(ele_ite, variable_name, variable[i]);
+        ele_ite++;
     }
 }
 //=================================================================================================//
@@ -342,13 +346,11 @@ template <typename DataType>
 void ReadAParticleVariableFromXml::
 operator()(const std::string &variable_name, StdLargeVec<DataType> &variable) const
 {
-    size_t index = 0;
-    for( auto child = xml_parser_.first_element_->FirstChildElement();
-        child;
-        child = child->NextSiblingElement()  )
+    SimTK::Xml::element_iterator ele_ite = xml_engine_.root_element_.element_begin();
+    for (size_t i = 0; i != total_real_particles_; ++i)
     {
-        xml_parser_.queryAttributeValue( child, variable_name, variable[index] );
-        index ++; 
+        xml_engine_.getRequiredAttributeValue(ele_ite, variable_name, variable[i]);
+        ele_ite++;
     }
 }
 //=================================================================================================//

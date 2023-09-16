@@ -112,13 +112,12 @@ class TemperatureObserverParticleGenerator : public ObserverParticleGenerator
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main(int ac, char *av[])
+int main()
 {
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
@@ -135,9 +134,6 @@ int main(int ac, char *av[])
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
-    //  Generally, we first define all the inner relations, then the contact relations.
-    //  At last, we define the complex relaxations by combining previous defined
-    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation diffusion_body_inner_relation(diffusion_body);
     ContactRelation temperature_observer_contact(temperature_observer, {&diffusion_body});
@@ -147,7 +143,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     DiffusionBodyRelaxation diffusion_relaxation(diffusion_body_inner_relation);
     SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
-    InteractionWithUpdate<KernelCorrectionMatrixInner> correct_configuration(diffusion_body_inner_relation);
+    InteractionWithUpdate<CorrectedConfigurationInner> correct_configuration(diffusion_body_inner_relation);
     GetDiffusionTimeStepSize<DiffusionParticles> get_time_step_size(diffusion_body);
     PeriodicConditionUsingCellLinkedList periodic_condition_y(diffusion_body, diffusion_body.getBodyShapeBounds(), yAxis);
     //----------------------------------------------------------------------

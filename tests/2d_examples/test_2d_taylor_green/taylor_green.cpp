@@ -84,9 +84,6 @@ int main(int ac, char *av[])
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
-    //  Generally, we first define all the inner relations, then the contact relations.
-    //  At last, we define the complex relaxations by combining previous defined
-    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     //----------------------------------------------------------------------
@@ -201,7 +198,7 @@ int main(int ac, char *av[])
 
     write_particle_reload_files.writeToFile();
 
-    if (sph_system.GenerateRegressionData())
+    if (sph_system.generate_regression_data_)
     {
         write_total_mechanical_energy.generateDataBase(1.0e-3);
         write_maximum_speed.generateDataBase(1.0e-3);
@@ -211,7 +208,6 @@ int main(int ac, char *av[])
         write_total_mechanical_energy.testResult();
         write_maximum_speed.testResult();
     }
-
 
     return 0;
 }
