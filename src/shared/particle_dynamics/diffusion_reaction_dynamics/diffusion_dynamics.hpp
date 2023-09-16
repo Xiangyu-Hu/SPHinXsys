@@ -113,10 +113,10 @@ namespace SPH
         }
     }
     //=================================================================================================//
-    template <class ParticlesType, class ContactParticlesType, class KernelGradientType>
-    BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType>
+    template <class ParticlesType, class ContactParticlesType, class KernelGradientType, template<class> class BaseDiffusionRelaxationType>
+    BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType, BaseDiffusionRelaxationType>
         :: BaseDiffusionRelaxationContact(BaseContactRelation &contact_relation)
-        : BaseDiffusionRelaxation<ParticlesType>(contact_relation.getSPHBody())
+        : BaseDiffusionRelaxationType<ParticlesType>(contact_relation.getSPHBody())
         , DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>(contact_relation)
     {
         StdVec<std::string> &all_species_names = this->particles_->AllSpeciesNames();
@@ -149,10 +149,10 @@ namespace SPH
         }
     }
     //=================================================================================================//
-    template <class DiffusionType, class ParticlesType, class ContactParticlesType, class KernelGradientType>
-    DiffusionRelaxationContact<DiffusionType, ParticlesType, ContactParticlesType, KernelGradientType>::
-        DiffusionRelaxationContact(BaseContactRelation &contact_relation)
-        : BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType>(contact_relation)
+    template <class DiffusionType, class ParticlesType, class ContactParticlesType, class KernelGradientType, template<class> class BaseDiffusionRelaxationType>
+    DiffusionRelaxationContact<DiffusionType, ParticlesType, ContactParticlesType, KernelGradientType, BaseDiffusionRelaxationType>
+        :: DiffusionRelaxationContact(BaseContactRelation &contact_relation)
+        : BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType, BaseDiffusionRelaxationType>(contact_relation)
     {
         all_contact_diffusions_.resize(this->contact_particles_.size());
         contact_thermal_diffusivities_.resize(this->contact_particles_.size());
@@ -177,9 +177,9 @@ namespace SPH
         }
     } 
     //=================================================================================================//
-    template <class DiffusionType, class ParticlesType, class ContactParticlesType, class KernelGradientType>
-    void DiffusionRelaxationContact<DiffusionType, ParticlesType, ContactParticlesType, KernelGradientType>::
-        getDiffusionChangeRateMultimaterialContact(size_t particle_i, size_t particle_j, Vecd &e_ij,Real surface_area_ij,  size_t contact_k)
+    template <class DiffusionType, class ParticlesType, class ContactParticlesType, class KernelGradientType, template<class> class BaseDiffusionRelaxationType>
+    void DiffusionRelaxationContact<DiffusionType, ParticlesType, ContactParticlesType, KernelGradientType, BaseDiffusionRelaxationType>
+        :: getDiffusionChangeRateMultimaterialContact(size_t particle_i, size_t particle_j, Vecd &e_ij,Real surface_area_ij,  size_t contact_k)
     {
         for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
         {
@@ -189,9 +189,9 @@ namespace SPH
         }
     }
     //=================================================================================================//
-    template <class DiffusionType, class ParticlesType, class ContactParticlesType, class KernelGradientType>
-    void DiffusionRelaxationContact<DiffusionType, ParticlesType, ContactParticlesType, KernelGradientType>::
-        interaction(size_t index_i, Real dt)
+    template <class DiffusionType, class ParticlesType, class ContactParticlesType, class KernelGradientType, template<class> class BaseDiffusionRelaxationType>
+    void DiffusionRelaxationContact<DiffusionType, ParticlesType, ContactParticlesType, KernelGradientType, BaseDiffusionRelaxationType>
+        :: interaction(size_t index_i, Real dt)
     {
         for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
         {
@@ -210,10 +210,10 @@ namespace SPH
         }
     }
     //=================================================================================================//
-    template <class ParticlesType, class ContactParticlesType, class KernelGradientType>
-    DiffusionRelaxationDirichlet<ParticlesType, ContactParticlesType, KernelGradientType>
+    template <class ParticlesType, class ContactParticlesType, class KernelGradientType, template<class> class BaseDiffusionRelaxationType>
+    DiffusionRelaxationDirichlet<ParticlesType, ContactParticlesType, KernelGradientType, BaseDiffusionRelaxationType>
         :: DiffusionRelaxationDirichlet(BaseContactRelation &contact_relation)
-        : BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType>
+        : BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType, BaseDiffusionRelaxationType>
     (contact_relation)
     {
         contact_gradient_species_.resize(this->contact_particles_.size());
@@ -231,8 +231,8 @@ namespace SPH
         }
     }
     //=================================================================================================//
-    template <class ParticlesType, class ContactParticlesType, class KernelGradientType>
-    void DiffusionRelaxationDirichlet<ParticlesType, ContactParticlesType, KernelGradientType>
+    template <class ParticlesType, class ContactParticlesType, class KernelGradientType, template<class> class BaseDiffusionRelaxationType>
+    void DiffusionRelaxationDirichlet<ParticlesType, ContactParticlesType, KernelGradientType, BaseDiffusionRelaxationType>
         :: getDiffusionChangeRateDirichlet(size_t particle_i, size_t particle_j, Vecd &e_ij, Real surface_area_ij, size_t k)
     {
         for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
@@ -244,8 +244,8 @@ namespace SPH
         }
     }
     //=================================================================================================//
-    template <class ParticlesType, class ContactParticlesType, class KernelGradientType>
-    void DiffusionRelaxationDirichlet<ParticlesType, ContactParticlesType, KernelGradientType>
+    template <class ParticlesType, class ContactParticlesType, class KernelGradientType, template<class> class BaseDiffusionRelaxationType>
+    void DiffusionRelaxationDirichlet<ParticlesType, ContactParticlesType, KernelGradientType, BaseDiffusionRelaxationType>
         :: interaction(size_t index_i, Real dt)
     {
         for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
@@ -265,10 +265,10 @@ namespace SPH
         }
     }
     //=================================================================================================//
-    template <class ParticlesType, class ContactParticlesType, class KernelGradientType>
-    DiffusionRelaxationNeumann<ParticlesType, ContactParticlesType, KernelGradientType>
+    template <class ParticlesType, class ContactParticlesType, class KernelGradientType, template<class> class BaseDiffusionRelaxationType>
+    DiffusionRelaxationNeumann<ParticlesType, ContactParticlesType, KernelGradientType, BaseDiffusionRelaxationType>
         :: DiffusionRelaxationNeumann(BaseContactRelation &contact_relation)
-        : BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType>(contact_relation)
+        : BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType, BaseDiffusionRelaxationType>(contact_relation)
         , n_(this->particles_->n_)
     {
         contact_heat_flux_.resize(this->contact_particles_.size());
@@ -282,8 +282,8 @@ namespace SPH
         }
     }
     //=================================================================================================//
-    template <class ParticlesType, class ContactParticlesType, class KernelGradientType>
-    void DiffusionRelaxationNeumann<ParticlesType, ContactParticlesType, KernelGradientType>
+    template <class ParticlesType, class ContactParticlesType, class KernelGradientType, template<class> class BaseDiffusionRelaxationType>
+    void DiffusionRelaxationNeumann<ParticlesType, ContactParticlesType, KernelGradientType, BaseDiffusionRelaxationType>
         :: getDiffusionChangeRateNeumann(size_t particle_i, size_t particle_j, Real surface_area_ij_Neumann, size_t k)
     {
         for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
@@ -292,8 +292,8 @@ namespace SPH
         }
     }
     //=================================================================================================//
-    template <class ParticlesType, class ContactParticlesType, class KernelGradientType>
-    void DiffusionRelaxationNeumann<ParticlesType, ContactParticlesType, KernelGradientType>
+    template <class ParticlesType, class ContactParticlesType, class KernelGradientType, template<class> class BaseDiffusionRelaxationType>
+    void DiffusionRelaxationNeumann<ParticlesType, ContactParticlesType, KernelGradientType, BaseDiffusionRelaxationType>
         :: interaction(size_t index_i, Real dt)
     {
         for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
@@ -315,10 +315,10 @@ namespace SPH
         }
     }
     //=================================================================================================//
-    template <class ParticlesType, class ContactParticlesType, class KernelGradientType>
-    DiffusionRelaxationRobin<ParticlesType, ContactParticlesType, KernelGradientType>
+    template <class ParticlesType, class ContactParticlesType, class KernelGradientType, template<class> class BaseDiffusionRelaxationType>
+    DiffusionRelaxationRobin<ParticlesType, ContactParticlesType, KernelGradientType, BaseDiffusionRelaxationType>
         :: DiffusionRelaxationRobin(BaseContactRelation &contact_relation)
-        : BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType>(contact_relation)
+        : BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType, BaseDiffusionRelaxationType>(contact_relation)
         , n_(this->particles_->n_)
     {
         contact_convection_.resize(this->contact_particles_.size());
@@ -335,8 +335,8 @@ namespace SPH
         }
     }
     //=================================================================================================//
-    template <class ParticlesType, class ContactParticlesType, class KernelGradientType>
-    void DiffusionRelaxationRobin<ParticlesType, ContactParticlesType, KernelGradientType>
+    template <class ParticlesType, class ContactParticlesType, class KernelGradientType, template<class> class BaseDiffusionRelaxationType>
+    void DiffusionRelaxationRobin<ParticlesType, ContactParticlesType, KernelGradientType, BaseDiffusionRelaxationType>
         :: getDiffusionChangeRateRobin(size_t particle_i, size_t particle_j
                                     , Real surface_area_ij_Robin, size_t k)
     {
@@ -347,8 +347,8 @@ namespace SPH
         }
     }
     //=================================================================================================//
-    template <class ParticlesType, class ContactParticlesType, class KernelGradientType>
-    void DiffusionRelaxationRobin<ParticlesType, ContactParticlesType, KernelGradientType>
+    template <class ParticlesType, class ContactParticlesType, class KernelGradientType, template<class> class BaseDiffusionRelaxationType>
+    void DiffusionRelaxationRobin<ParticlesType, ContactParticlesType, KernelGradientType, BaseDiffusionRelaxationType>
         :: interaction(size_t index_i, Real dt)
     {
         for (size_t k = 0; k < this->contact_configuration_.size(); ++k)

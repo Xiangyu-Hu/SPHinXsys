@@ -183,8 +183,8 @@ namespace SPH
      * @class DiffusionRelaxationContact
      * @brief Base class for diffusion relaxation process between two contact bodies.
      */
-    template <class ParticlesType, class ContactParticlesType, class KernelGradientType = KernelGradientContact>
-    class BaseDiffusionRelaxationContact : public BaseDiffusionRelaxation<ParticlesType>
+    template <class ParticlesType, class ContactParticlesType, class KernelGradientType = KernelGradientContact, template<class> class BaseDiffusionRelaxationType = BaseDiffusionRelaxation>
+    class BaseDiffusionRelaxationContact : public BaseDiffusionRelaxationType<ParticlesType>
                                          , public DataDelegateContact<ParticlesType, ContactParticlesType, DataDelegateEmptyBase>
     {
     protected:
@@ -202,9 +202,9 @@ namespace SPH
      * @class DiffusionRelaxationContact
      * @brief Contact diffusion relaxation with Dirichlet boundary condition.
      */
-    template < class DiffusionType, class ParticlesType, class ContactParticlesType, class KernelGradientType = KernelGradientContact>
+    template < class DiffusionType, class ParticlesType, class ContactParticlesType, class KernelGradientType = KernelGradientContact, template<class> class BaseDiffusionRelaxationType = BaseDiffusionRelaxation>
     class DiffusionRelaxationContact
-        : public BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType>
+        : public BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType, BaseDiffusionRelaxationType>
     {
         StdVec<StdVec<BaseDiffusion *>> all_contact_diffusions_;
         StdVec<StdVec< ContactDiffusivity<DiffusionType> >> contact_thermal_diffusivities_;
@@ -220,13 +220,16 @@ namespace SPH
         inline void interaction(size_t index_i, Real dt = 0.0);
     };
 
+    template <class DiffusionType, class ParticlesType, class KernelGradientType = KernelGradientContact>
+    using ThermalDiffusionRelaxationContact = DiffusionRelaxationContact<DiffusionType, ParticlesType, KernelGradientType, BaseThermalDiffusionRelaxation<ParticlesType>>;
+
     /**
      * @class DiffusionRelaxationDirichlet
      * @brief Contact diffusion relaxation with Dirichlet boundary condition.
      */
-    template <class ParticlesType, class ContactParticlesType, class KernelGradientType = KernelGradientContact>
+    template <class ParticlesType, class ContactParticlesType, class KernelGradientType = KernelGradientContact, template<class> class BaseDiffusionRelaxationType = BaseDiffusionRelaxation>
     class DiffusionRelaxationDirichlet
-        : public BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType>
+        : public BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType, BaseDiffusionRelaxationType>
     {
     protected:
         StdVec<StdVec<StdLargeVec<Real> *>> contact_gradient_species_;
@@ -238,13 +241,16 @@ namespace SPH
         inline void interaction(size_t index_i, Real dt = 0.0);
     };
 
+    template <class ParticlesType, class KernelGradientType = KernelGradientContact>
+    using ThermalDiffusionRelaxationDirichlet = DiffusionRelaxationDirichlet<ParticlesType, KernelGradientType, BaseThermalDiffusionRelaxation<ParticlesType>>;
+
     /**
      * @class DiffusionRelaxationNeumann
      * @brief Contact diffusion relaxation with Neumann boundary condition.
      */
-    template <class ParticlesType, class ContactParticlesType, class KernelGradientType = KernelGradientContact>
+    template <class ParticlesType, class ContactParticlesType, class KernelGradientType = KernelGradientContact, template<class> class BaseDiffusionRelaxationType = BaseDiffusionRelaxation>
     class DiffusionRelaxationNeumann
-        : public BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType>
+        : public BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType, BaseDiffusionRelaxationType>
     {
         StdLargeVec<Vecd> &n_;
         StdVec<StdLargeVec<Real> *> contact_heat_flux_;
@@ -260,13 +266,16 @@ namespace SPH
         inline void interaction(size_t index_i, Real dt = 0.0);
     };
 
+    template <class ParticlesType, class KernelGradientType = KernelGradientContact>
+    using ThermalDiffusionRelaxationNeumann = DiffusionRelaxationNeumann<ParticlesType, KernelGradientType, BaseThermalDiffusionRelaxation<ParticlesType>>;
+
     /**
      * @class RelaxationOfAllDiffusionSpeciesRobinContact
      * @brief Contact diffusion relaxation with Robin boundary condition.
      */
-    template <class ParticlesType, class ContactParticlesType, class KernelGradientType = KernelGradientContact>
+    template <class ParticlesType, class ContactParticlesType, class KernelGradientType = KernelGradientContact, template<class> class BaseDiffusionRelaxationType = BaseDiffusionRelaxation>
     class DiffusionRelaxationRobin
-        : public BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType>
+        : public BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType, BaseDiffusionRelaxationType>
     {
         StdLargeVec<Vecd> &n_;
         StdVec<StdLargeVec<Real> *> contact_convection_;
@@ -282,6 +291,9 @@ namespace SPH
 
         inline void interaction(size_t index_i, Real dt = 0.0);
     };
+
+    template <class ParticlesType, class KernelGradientType = KernelGradientContact>
+    using ThermalDiffusionRelaxationRobin = DiffusionRelaxationRobin<ParticlesType, KernelGradientType, BaseThermalDiffusionRelaxation<ParticlesType>>;
 
     /**
      * @class InitializationRK
