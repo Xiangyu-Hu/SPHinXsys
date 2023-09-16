@@ -8,13 +8,18 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 RUN apt-get update && apt-get install -y \ 
     apt-utils \
+    bash \
     build-essential \
     cmake \
     libgtest-dev \
     libtbb-dev \
     libboost-all-dev \
     libsimbody-dev \
-    libsimbody3.6 \      
+    libsimbody3.6 \
+    libeigen3-dev \
+    python3-pybind11 \
+    git \
+    sudo \   
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -25,11 +30,13 @@ ENV SIMBODY_HOME=/usr
 COPY ./ /home/SPHinXsys/
 WORKDIR /home/SPHinXsys
 
-RUN cd /usr/src/gtest
-    sudo cmake CMakeLists.txt
-    sudo make
+RUN cd /usr/src/googletest && \
+    sudo cmake . && \
+    sudo cmake --build . --target install && \
     cd /home/SPHinXsys
 
 RUN git submodule update --init
 RUN rm -rf build
-RUN mkdir build && cd build && cmake .. -DBUILD_WITH_DEPENDENCIES_SOURCE=${build_with_dependencies_source} -DSTATIC_BUILD=${SPH_ONLY_STATIC_BUILD} && make -j$(nproc)
+RUN mkdir build && cd build && cmake .. -DBUILD_WITH_DEPENDENCIES_SOURCE=${build_with_dependencies_source} -DSTATIC_BUILD=${SPH_ONLY_STATIC_BUILD}
+
+ENTRYPOINT [ "/bin/bash" ]

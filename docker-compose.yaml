@@ -1,0 +1,10 @@
+version: '3.4'
+services:
+  service:
+    image: service
+    container_name: service
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    stdin_open: true
+    tty: true
