@@ -73,56 +73,50 @@ class WeaklyCompressibleFluidInitialCondition : public FluidInitialCondition
 };
 
 /**
- * @class EulerianIntegration1stHalf
+ * @class EulerianIntegration1stHalfInner
  * @brief Template class for pressure relaxation scheme with the Riemann solver
  * as template variable
  */
 template <class RiemannSolverType>
-class EulerianIntegration1stHalf : public BaseIntegration
+class EulerianIntegration1stHalfInner : public BaseIntegration<FluidDataInner>
 {
   public:
-    explicit EulerianIntegration1stHalf(BaseInnerRelation &inner_relation, Real limiter_parameter = 15.0);
-    virtual ~EulerianIntegration1stHalf(){};
+    explicit EulerianIntegration1stHalfInner(BaseInnerRelation &inner_relation, Real limiter_parameter = 15.0);
+    virtual ~EulerianIntegration1stHalfInner(){};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    Real limiter_input_;
     RiemannSolverType riemann_solver_;
-    StdLargeVec<Vecd> &acc_prior_;
     StdLargeVec<Vecd> mom_, dmom_dt_;
 };
 /** define the mostly used pressure relaxation scheme using Riemann solver */
-using EulerianIntegration1stHalfAcousticRiemann = EulerianIntegration1stHalf<EulerianAcousticRiemannSolver>;
+using EulerianIntegration1stHalfInnerAcousticRiemann = EulerianIntegration1stHalfInner<EulerianAcousticRiemannSolver>;
 
 /**
  * @class EulerianIntegration1stHalfWithWall
  * @brief  template class pressure relaxation scheme with wall boundary
  */
-template <class EulerianIntegration1stHalfType>
-class EulerianIntegration1stHalfWithWall : public InteractionWithWall<EulerianIntegration1stHalfType>
+template <class RiemannSolverType>
+class EulerianIntegration1stHalfWithWall : public InteractionWithWall<BaseIntegration>
 {
   public:
-    // template for different combination of constructing body relations
-    template <class BaseBodyRelationType>
-    EulerianIntegration1stHalfWithWall(BaseContactRelation &wall_contact_relation, BaseBodyRelationType &base_body_relation, Real limiter_parameter = 15.0)
-        : InteractionWithWall<EulerianIntegration1stHalfType>(wall_contact_relation, base_body_relation), limiter_input_(limiter_parameter){};
-    explicit EulerianIntegration1stHalfWithWall(ComplexRelation &fluid_wall_relation)
-        : EulerianIntegration1stHalfWithWall(fluid_wall_relation.getContactRelation(), fluid_wall_relation.getInnerRelation()){};
+    EulerianIntegration1stHalfWithWall(BaseContactRelation &wall_contact_relation, Real limiter_parameter = 15.0);
     virtual ~EulerianIntegration1stHalfWithWall(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    Real &limiter_input_;
+    RiemannSolverType riemann_solver_;
+    StdLargeVec<Vecd> &dmom_dt_;
 };
-using EulerianIntegration1stHalfAcousticRiemannWithWall = EulerianIntegration1stHalfWithWall<EulerianIntegration1stHalfAcousticRiemann>;
+using EulerianIntegration1stHalfWithWallAcousticRiemann = EulerianIntegration1stHalfWithWall<EulerianAcousticRiemannSolver>;
 
 /**
  * @class EulerianIntegration2ndHalf
  * @brief  Template density relaxation scheme with different Riemann solver
  */
 template <class RiemannSolverType>
-class EulerianIntegration2ndHalf : public BaseIntegration
+class EulerianIntegration2ndHalf : public BaseIntegration<FluidDataInner>
 {
   public:
     explicit EulerianIntegration2ndHalf(BaseInnerRelation &inner_relation, Real limiter_parameter = 15.0);
@@ -131,7 +125,6 @@ class EulerianIntegration2ndHalf : public BaseIntegration
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    Real limiter_input_;
     RiemannSolverType riemann_solver_;
 };
 using EulerianIntegration2ndHalfAcousticRiemann = EulerianIntegration2ndHalf<EulerianAcousticRiemannSolver>;
@@ -140,23 +133,18 @@ using EulerianIntegration2ndHalfAcousticRiemann = EulerianIntegration2ndHalf<Eul
  * @class EulerianIntegration2ndHalfWithWall
  * @brief template density relaxation scheme with using  Riemann solver.
  */
-template <class EulerianIntegration2ndHalfType>
-class EulerianIntegration2ndHalfWithWall : public InteractionWithWall<EulerianIntegration2ndHalfType>
+template <class RiemannSolverType>
+class EulerianIntegration2ndHalfWithWall : public InteractionWithWall<BaseIntegration>
 {
   public:
-    // template for different combination of constructing body relations
-    template <class BaseBodyRelationType>
-    EulerianIntegration2ndHalfWithWall(BaseContactRelation &wall_contact_relation, BaseBodyRelationType &base_body_relation, Real limiter_parameter = 15.0)
-        : InteractionWithWall<EulerianIntegration2ndHalfType>(wall_contact_relation, base_body_relation), limiter_input_(limiter_parameter){};
-    explicit EulerianIntegration2ndHalfWithWall(ComplexRelation &fluid_wall_relation)
-        : EulerianIntegration2ndHalfWithWall(fluid_wall_relation.getContactRelation(), fluid_wall_relation.getInnerRelation()){};
+    EulerianIntegration2ndHalfWithWall(BaseContactRelation &wall_contact_relation, Real limiter_parameter = 15.0);
     virtual ~EulerianIntegration2ndHalfWithWall(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    Real &limiter_input_;
+    RiemannSolverType riemann_solver_;
 };
-using EulerianIntegration2ndHalfAcousticRiemannWithWall = EulerianIntegration2ndHalfWithWall<EulerianIntegration2ndHalfAcousticRiemann>;
+using EulerianIntegration2ndHalfWithWallAcousticRiemann = EulerianIntegration2ndHalfWithWall<EulerianAcousticRiemannSolver>;
 
 /**
  * @class SmearedSurfaceIndication
