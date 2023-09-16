@@ -33,9 +33,8 @@
 #define FLUID_DYNAMICS_INNER_H
 
 #include "base_fluid_dynamics.h"
-
+#include "fluid_dynamics_pressure.h"
 #include "riemann_solver.h"
-#include "weakly_compressible_fluid.h"
 
 namespace SPH
 {
@@ -261,7 +260,7 @@ class BaseIntegration : public LocalDynamics, public DataDelegationType
  * @brief Template class for pressure relaxation scheme with the Riemann solver
  * as template variable
  */
-template <class RiemannSolverType>
+template <class RiemannSolverType, class PressureType>
 class BaseIntegration1stHalfInner : public BaseIntegration<FluidDataInner>
 {
   public:
@@ -272,12 +271,12 @@ class BaseIntegration1stHalfInner : public BaseIntegration<FluidDataInner>
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
+    PressureType pressure_;
     RiemannSolverType riemann_solver_;
 };
-using Integration1stHalfInner = BaseIntegration1stHalfInner<NoRiemannSolver>;
-/** define the mostly used pressure relaxation scheme using Riemann solver */
-using Integration1stHalfInnerRiemann = BaseIntegration1stHalfInner<AcousticRiemannSolver>;
-using Integration1stHalfInnerDissipativeRiemann = BaseIntegration1stHalfInner<DissipativeRiemannSolver>;
+using Integration1stHalfInner = BaseIntegration1stHalfInner<NoRiemannSolver, PlainPressure>;
+using Integration1stHalfInnerRiemann = BaseIntegration1stHalfInner<AcousticRiemannSolver, PlainPressure>;
+using Integration1stHalfInnerDissipativeRiemann = BaseIntegration1stHalfInner<DissipativeRiemannSolver, PlainPressure>;
 
 /**
  * @class BaseIntegration2ndHalfInner
