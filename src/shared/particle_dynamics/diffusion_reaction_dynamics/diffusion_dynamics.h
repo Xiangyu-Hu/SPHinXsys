@@ -137,6 +137,23 @@ namespace SPH
         void update(size_t index_i, Real dt = 0.0);
     };
 
+        /**
+     * @class BaseThermalDiffusionRelaxation
+     * @brief Base for compute the diffusion of all species
+     */
+    template <class ParticlesType>
+    class BaseThermalDiffusionRelaxation : public BaseDiffusionRelaxation<ParticlesType>
+    {
+    protected:
+        StdLargeVec<Real> &rho_;
+
+    public:
+        explicit BaseThermalDiffusionRelaxation(SPHBody &sph_body);
+        virtual ~BaseThermalDiffusionRelaxation(){};
+
+        void update(size_t index_i, Real dt = 0.0);
+    };
+
     /**
      * @class DiffusionRelaxationInner
      * @brief Compute the diffusion relaxation process of all species
@@ -146,7 +163,6 @@ namespace SPH
                                    , public DataDelegateInner<ParticlesType, DataDelegateEmptyBase>
     {
     protected:
-        StdLargeVec<Real> &rho_;
         KernelGradientType kernel_gradient_;
         void getDiffusionChangeRate(size_t particle_i, size_t particle_j, Vecd &e_ij, Real surface_area_ij);
 
@@ -175,6 +191,28 @@ namespace SPH
 
         explicit BaseDiffusionRelaxationContact(BaseContactRelation &contact_relation);
         virtual ~BaseDiffusionRelaxationContact(){};
+    };
+
+    /**
+     * @class DiffusionRelaxationContact
+     * @brief Contact diffusion relaxation with Dirichlet boundary condition.
+     */
+    template < class DiffusionType, class ParticlesType, class ContactParticlesType, class KernelGradientType = KernelGradientContact>
+    class DiffusionRelaxationContact
+        : public BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType>
+    {
+        StdVec<StdVec<BaseDiffusion *>> all_contact_diffusions_;
+        StdVec<StdVec< ContactDiffusivity<DiffusionType> >> contact_thermal_diffusivities_;
+        StdVec<StdVec<StdLargeVec<Real> *>> contact_gradient_species_;
+
+     protected: 
+        void getDiffusionChangeRateMultimaterialContact(size_t particle_i, size_t particle_j, Vecd &e_ij, Real surface_area_ij, size_t contact_k);
+
+    public:
+        explicit DiffusionRelaxationContact(BaseContactRelation &contact_relation);
+        virtual ~DiffusionRelaxationContact(){};
+
+        inline void interaction(size_t index_i, Real dt = 0.0);
     };
 
     /**
@@ -237,27 +275,6 @@ namespace SPH
         explicit DiffusionRelaxationRobin(BaseContactRelation &contact_relation);
         virtual ~DiffusionRelaxationRobin(){};
 
-        inline void interaction(size_t index_i, Real dt = 0.0);
-    };
-
-    /**
-     * @class DiffusionRelaxationContact
-     * @brief Contact diffusion relaxation with Dirichlet boundary condition.
-     */
-    template < class DiffusionType, class ParticlesType, class ContactParticlesType, class KernelGradientType = KernelGradientContact>
-    class DiffusionRelaxationMutimaterialContact
-        : public BaseDiffusionRelaxationContact<ParticlesType, ContactParticlesType, KernelGradientType>
-    {
-        StdVec<StdVec<BaseDiffusion *>> all_contact_diffusions_;
-        StdVec<StdVec< ThermalDiffusivity<DiffusionType> >> contact_thermal_diffusivities_;
-        StdVec<StdVec<StdLargeVec<Real> *>> contact_gradient_species_;
-
-     protected: 
-        void getDiffusionChangeRateMultimaterialContact(size_t particle_i, size_t particle_j, Vecd &e_ij, Real surface_area_ij, size_t contact_k);
-
-    public:
-        explicit DiffusionRelaxationMutimaterialContact(BaseContactRelation &contact_relation);
-        virtual ~DiffusionRelaxationMutimaterialContact(){};
         inline void interaction(size_t index_i, Real dt = 0.0);
     };
 
