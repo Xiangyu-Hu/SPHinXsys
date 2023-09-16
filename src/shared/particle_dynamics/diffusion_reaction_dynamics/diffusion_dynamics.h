@@ -137,23 +137,6 @@ namespace SPH
         void update(size_t index_i, Real dt = 0.0);
     };
 
-        /**
-     * @class BaseThermalDiffusionRelaxation
-     * @brief Base for compute the diffusion of all species
-     */
-    template <class ParticlesType>
-    class BaseThermalDiffusionRelaxation : public BaseDiffusionRelaxation<ParticlesType>
-    {
-    protected:
-        StdLargeVec<Real> &rho_;
-
-    public:
-        explicit BaseThermalDiffusionRelaxation(SPHBody &sph_body);
-        virtual ~BaseThermalDiffusionRelaxation(){};
-
-        void update(size_t index_i, Real dt = 0.0);
-    };
-
     /**
      * @class DiffusionRelaxationInner
      * @brief Compute the diffusion relaxation process of all species
@@ -172,6 +155,23 @@ namespace SPH
         virtual ~DiffusionRelaxationInner(){};
 
         inline void interaction(size_t index_i, Real dt = 0.0);
+    };
+
+    /**
+     * @class ThermalDiffusionRelaxationInner
+     * @brief Base for compute the diffusion of all species in thermal dynamics.
+     */
+    template <class ParticlesType, class KernelGradientType = KernelGradientInner>
+    class ThermalDiffusionRelaxationInner : public DiffusionRelaxationInner<ParticlesType, KernelGradientType>
+    {
+    protected:
+        StdLargeVec<Real> &rho_;
+
+    public:
+        explicit ThermalDiffusionRelaxationInner(BaseInnerRelation &inner_relation);
+        virtual ~ThermalDiffusionRelaxationInner(){};
+
+        void update(size_t index_i, Real dt = 0.0);
     };
 
     /**
