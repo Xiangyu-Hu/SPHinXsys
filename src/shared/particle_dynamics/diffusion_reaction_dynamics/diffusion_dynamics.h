@@ -138,11 +138,28 @@ namespace SPH
     };
 
     /**
-     * @class DiffusionRelaxationInner
+     * @class BaseThermalDiffusionRelaxation
+     * @brief Base for compute the diffusion of all species in thermal dynamics.
+     */
+    template <class ParticlesType>
+    class BaseThermalDiffusionRelaxation : public BaseDiffusionRelaxation<ParticlesType>
+    {
+    protected:
+        StdLargeVec<Real> &rho_;
+
+    public:
+        explicit BaseThermalDiffusionRelaxation(SPHBody &sph_body);
+        virtual ~BaseThermalDiffusionRelaxation(){};
+
+        void update(size_t index_i, Real dt = 0.0);
+    };
+
+    /**
+     * @class BaseDiffusionRelaxationInner
      * @brief Compute the diffusion relaxation process of all species
      */
-    template <class ParticlesType, class KernelGradientType = KernelGradientInner>
-    class DiffusionRelaxationInner : public BaseDiffusionRelaxation<ParticlesType>
+    template <class ParticlesType, class KernelGradientType = KernelGradientInner, template<class> class BaseDiffusionRelaxationType = BaseDiffusionRelaxation>
+    class BaseDiffusionRelaxationInner : public BaseDiffusionRelaxationType<ParticlesType>
                                    , public DataDelegateInner<ParticlesType, DataDelegateEmptyBase>
     {
     protected:
@@ -151,29 +168,17 @@ namespace SPH
 
     public:
         typedef BaseInnerRelation BodyRelationType;
-        explicit DiffusionRelaxationInner(BaseInnerRelation &inner_relation);
-        virtual ~DiffusionRelaxationInner(){};
+        explicit BaseDiffusionRelaxationInner(BaseInnerRelation &inner_relation);
+        virtual ~BaseDiffusionRelaxationInner(){};
 
         inline void interaction(size_t index_i, Real dt = 0.0);
     };
 
-    /**
-     * @class ThermalDiffusionRelaxationInner
-     * @brief Base for compute the diffusion of all species in thermal dynamics.
-     */
     template <class ParticlesType, class KernelGradientType = KernelGradientInner>
-    class ThermalDiffusionRelaxationInner : public DiffusionRelaxationInner<ParticlesType, KernelGradientType>
-    {
-    protected:
-        StdLargeVec<Real> &rho_;
+    using DiffusionRelaxationInner = BaseDiffusionRelaxationInner<ParticlesType, KernelGradientType, BaseDiffusionRelaxation>;
 
-    public:
-        explicit ThermalDiffusionRelaxationInner(BaseInnerRelation &inner_relation);
-        virtual ~ThermalDiffusionRelaxationInner(){};
-
-        void update(size_t index_i, Real dt = 0.0);
-    };
-
+    template <class ParticlesType, class KernelGradientType = KernelGradientInner>
+    using ThermalDiffusionRelaxationInner = BaseDiffusionRelaxationInner<ParticlesType, KernelGradientType, BaseThermalDiffusionRelaxation>;
     /**
      * @class DiffusionRelaxationContact
      * @brief Base class for diffusion relaxation process between two contact bodies.

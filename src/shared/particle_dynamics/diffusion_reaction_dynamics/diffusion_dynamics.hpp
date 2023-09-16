@@ -60,15 +60,30 @@ namespace SPH
         }
     }
     //=================================================================================================//
-    template <class ParticlesType, class KernelGradientType>
-    DiffusionRelaxationInner<ParticlesType, KernelGradientType>::DiffusionRelaxationInner(BaseInnerRelation &inner_relation)
-        : BaseDiffusionRelaxation<ParticlesType>(inner_relation.getSPHBody())
+    template <class ParticlesType>
+    BaseThermalDiffusionRelaxation<ParticlesType>::BaseThermalDiffusionRelaxation(SPHBody &sph_body)
+        : BaseDiffusionRelaxation<ParticlesType>(sph_body)
+        , rho_(this->particles_->rho_)
+    {}
+    //=================================================================================================//
+    template <class ParticlesType>
+    void BaseThermalDiffusionRelaxation<ParticlesType>::update(size_t index_i, Real dt)
+    {
+        for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
+        {
+            (*this->diffusion_species_[m])[index_i] += dt * (*this->diffusion_dt_[m])[index_i] / rho_[index_i];
+        }
+    }
+    //=================================================================================================//
+    template <class ParticlesType, class KernelGradientType, template<class> class BaseDiffusionRelaxationType>
+    BaseDiffusionRelaxationInner<ParticlesType, KernelGradientType, BaseDiffusionRelaxationType>::BaseDiffusionRelaxationInner(BaseInnerRelation &inner_relation)
+        : BaseDiffusionRelaxationType<ParticlesType>(inner_relation.getSPHBody())
         , DataDelegateInner<ParticlesType, DataDelegateEmptyBase>(inner_relation)
         , kernel_gradient_(this->particles_) 
     {}
     //=================================================================================================//
-    template <class ParticlesType, class KernelGradientType>
-    void DiffusionRelaxationInner<ParticlesType, KernelGradientType>
+    template <class ParticlesType, class KernelGradientType, template<class> class BaseDiffusionRelaxationType>
+    void BaseDiffusionRelaxationInner<ParticlesType, KernelGradientType, BaseDiffusionRelaxationType>
         ::getDiffusionChangeRate(size_t particle_i, size_t particle_j, Vecd &e_ij, Real surface_area_ij)
     {
         for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
@@ -81,8 +96,8 @@ namespace SPH
         }
     }
     //=================================================================================================//
-    template <class ParticlesType, class KernelGradientType>
-    void DiffusionRelaxationInner<ParticlesType, KernelGradientType>::interaction(size_t index_i, Real dt)
+    template <class ParticlesType, class KernelGradientType, template<class> class BaseDiffusionRelaxationType>
+    void BaseDiffusionRelaxationInner<ParticlesType, KernelGradientType, BaseDiffusionRelaxationType>::interaction(size_t index_i, Real dt)
     { 
         Neighborhood &inner_neighborhood = this->inner_configuration_[index_i];
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -95,21 +110,6 @@ namespace SPH
             const Vecd &grad_ijV_j = this->kernel_gradient_(index_i, index_j, dW_ijV_j_, e_ij);
             Real area_ij = 2.0 * grad_ijV_j.dot(e_ij) / r_ij_;
             getDiffusionChangeRate(index_i, index_j, e_ij, area_ij);
-        }
-    }
-    //=================================================================================================//
-    template <class ParticlesType, class KernelGradientType>
-    ThermalDiffusionRelaxationInner<ParticlesType, KernelGradientType>::ThermalDiffusionRelaxationInner(BaseInnerRelation &inner_relation)
-        : DiffusionRelaxationInner<ParticlesType, KernelGradientType>(inner_relation)
-        , rho_(this->particles_->rho_)
-    {}
-    //=================================================================================================//
-    template <class ParticlesType, class KernelGradientType>
-    void ThermalDiffusionRelaxationInner<ParticlesType, KernelGradientType>::update(size_t index_i, Real dt)
-    {
-        for (size_t m = 0; m < this->all_diffusions_.size(); ++m)
-        {
-            (*this->diffusion_species_[m])[index_i] += dt * (*this->diffusion_dt_[m])[index_i] / rho_[index_i];
         }
     }
     //=================================================================================================//
