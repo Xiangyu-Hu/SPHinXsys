@@ -94,7 +94,7 @@ class DiffusionMaterial : public DiffusionReaction<Solid>
 public:
 	DiffusionMaterial() : DiffusionReaction<Solid>({ "Phi" }, SharedPtr<NoReaction>())
 	{
-		initializeAnDiffusion<LocalIsotropicDiffusion>("Phi", "Phi", diffusion_coeff);
+		initializeAnDiffusion<LocalIsotropicThermalDiffusion>("Phi", "Phi", diffusion_coeff);
 	}
 };
 
