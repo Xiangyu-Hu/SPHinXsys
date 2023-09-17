@@ -239,7 +239,7 @@ class VorticityInner : public LocalDynamics, public FluidDataInner
 
 /**
  * @class BaseIntegration
- * @brief Pure abstract base class for all fluid relaxation schemes
+ * @brief Base class for all fluid relaxation schemes
  */
 template <class DataDelegationType>
 class BaseIntegration : public LocalDynamics, public DataDelegationType
