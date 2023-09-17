@@ -7,13 +7,13 @@ namespace continuum_dynamics
 //=================================================================================================//
 template <class DataDelegationType>
 template <class BaseRelationType>
-BaseRelaxation<DataDelegationType>::BaseRelaxation(BaseRelationType &base_relation)
-    : LocalDynamics(inner_relation.getSPHBody()), BaseRelationType(base_relation),
-      continuum_(particles_->continuum_), rho_(particles_->rho_),
-      p_(*particles_->getVariableByName<Real>("Pressure")),
-      drho_dt_(*particles_->getVariableByName<Real>("DensityChangeRate")),
-      pos_(particles_->pos_), vel_(particles_->vel_),
-      acc_(particles_->acc_), acc_prior_(particles_->acc_prior_) {}
+BaseShearStressIntegration<DataDelegationType>::BaseShearStressIntegration(BaseRelationType &base_relation)
+    : LocalDynamics(inner_relation.getSPHBody()), DataDelegationType(base_relation),
+      continuum_(this->particles_->continuum_), vel_(this->particles_->vel_),
+      velocity_gradient_(this->particles_->velocity_gradient_),
+      shear_stress_(this->particles_->shear_stress_),
+      p_(*this->particles_->getVariableByName<Real>("Pressure")),
+      von_mises_stress_(this->particles_->von_mises_stress_) {}
 //=================================================================================================//
 template <class FluidDynamicsType>
 BaseIntegration1stHalf<FluidDynamicsType>::BaseIntegration1stHalf(BaseInnerRelation &inner_relation)

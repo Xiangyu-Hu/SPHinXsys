@@ -21,21 +21,26 @@ Real ContinuumAcousticTimeStepSize::outputResult(Real reduced_value)
     return acousticCFL_ * smoothing_length_min_ / (fluid_.ReferenceSoundSpeed() + TinyReal);
 }
 //=================================================================================================//
-Integration1stHalfInnerWithShearStress::
-    Integration1stHalfInnerWithShearStress(BaseInnerRelation &inner_relation,
-                                           Real epsilon, Real exponent)
-    : fluid_dynamics::Integration1stHalfInnerRiemann(inner_relation),
+ArtificialStressAcceleration::
+    ArtificialStressAcceleration(BaseInnerRelation &inner_relation, Real epsilon, Real exponent)
+    : LocalDynamics(inner_relation.getSPHBody()), ContinuumDataInner(inner_relation),
       smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
       reference_spacing_(sph_body_.sph_adaptation_->ReferenceSpacing()),
       epsilon_(epsilon), exponent_(exponent),
-      shear_stress_(*particles_->getVariableByName<Matd>("ShearStress"))
+      shear_stress_(*particles_->getVariableByName<Matd>("ShearStress")),
+      p_(*particles_->getVariableByName<Real>("Pressure")),
+      rho_(particles_->rho_), acc_prior_(particles_->acc_prior_)
 {
-    particles_->registerVariable(shear_stress_rate_, "ShearStressRate");
     particles_->registerVariable(artificial_stress_, "ArtificialStress");
 }
 //=================================================================================================//
-Matd Integration1stHalfInnerWithShearStress::
-    getArtificialStress(const Matd &stress_tensor_i, const Real &rho_i)
+void ArtificialStressAcceleration::initialization(size_t index_i, Real dt)
+{
+    Matd full_stress = shear_stress_[index_i] - p_[index_i] * Matd::Identity();
+    artificial_stress_[index_i] = getArtificialStress(full_stress, rho_[index_i]);
+}
+//=================================================================================================//
+Matd ArtificialStressAcceleration::getArtificialStress(const Matd &stress_tensor_i, const Real &rho_i)
 {
     Real sigma_xx = stress_tensor_i(0, 0);
     Real sigma_xy = stress_tensor_i(0, 1);
@@ -65,7 +70,7 @@ Matd Integration1stHalfInnerWithShearStress::
     return R;
 }
 //=================================================================================================//
-Vecd Integration1stHalfInnerWithShearStress::getArtificialStressAcceleration(size_t index_i)
+void ArtificialStressAcceleration::interaction(size_t index_i, Real dt)
 {
     Vecd acceleration = Vecd::Zero();
     Real rho_i = rho_[index_i];
@@ -87,42 +92,10 @@ Vecd Integration1stHalfInnerWithShearStress::getArtificialStressAcceleration(siz
 
         acceleration += rho_[index_j] * repulsive_force * nablaW_ijV_j;
     }
-    return acceleration;
+    acc_prior_[index_i] += acceleration;
 }
 //=================================================================================================//
-void Integration1stHalfInnerWithShearStress::initialization(size_t index_i, Real dt)
-{
-    fluid_dynamics::Integration1stHalfInnerRiemann::initialization(index_i, dt);
-    shear_stress_[index_i] += shear_stress_rate_[index_i] * dt * 0.5;
-    artificial_stress_[index_i] = getArtificialStress(shear_stress_[index_i], rho_[index_i]);
-}
-//=================================================================================================//
-void Integration1stHalfInnerWithShearStress::interaction(size_t index_i, Real dt)
-{
-    fluid_dynamics::Integration1stHalfInnerRiemann::interaction(index_i, dt);
-
-    Real rho_i = rho_[index_i];
-    Matd shear_stress_i = shear_stress_[index_i];
-    Vecd acceleration = Vecd::Zero();
-    Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-    {
-        size_t index_j = inner_neighborhood.j_[n];
-        Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
-        acceleration += rho_[index_j] * (shear_stress_i / (rho_i * rho_i) + shear_stress_[index_j] / (rho_[index_j] * rho_[index_j])) * nablaW_ijV_j;
-    }
-    acc_[index_i] += acceleration;
-}
-//=================================================================================================//
-ShearStressRelaxation2ndHalfInner::
-    ShearStressRelaxation2ndHalfInner(BaseInnerRelation &inner_relation)
-    : BaseRelaxation<ContinuumDataInner>(inner_relation),
-      shear_stress_(particles_->shear_stress_), shear_stress_rate_(particles_->shear_stress_rate_),
-      velocity_gradient_(particles_->velocity_gradient_), strain_tensor_(particles_->strain_tensor_),
-      strain_tensor_rate_(particles_->strain_tensor_rate_),
-      von_mises_stress_(particles_->von_mises_stress_) {}
-//=================================================================================================//
-void ShearStressRelaxation2ndHalfInner::interaction(size_t index_i, Real dt)
+void ShearStressIntegration::interaction(size_t index_i, Real dt)
 {
     Matd velocity_gradient = Matd::Zero();
     Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -135,44 +108,44 @@ void ShearStressRelaxation2ndHalfInner::interaction(size_t index_i, Real dt)
         velocity_gradient += velocity_gradient_ij;
     }
     velocity_gradient_[index_i] = velocity_gradient;
+    Matd shear_stress_rate = continuum_.ConstitutiveRelationShearStress(velocity_gradient_[index_i], shear_stress_[index_i]);
+    shear_stress_[index_i] += shear_stress_rate * dt;
+    Matd full_stress = shear_stress_[index_i] + p_[index_i] * Matd::Identity();
+    von_mises_stress_[index_i] = getVonMisesStressFromMatrix(full_stress);
 }
 //=================================================================================================//
-void ShearStressRelaxation2ndHalfInner::update(size_t index_i, Real dt)
-{
-    shear_stress_rate_[index_i] = continuum_.ConstitutiveRelationShearStress(velocity_gradient_[index_i], shear_stress_[index_i]);
-    shear_stress_[index_i] += shear_stress_rate_[index_i] * dt * 0.5;
-    Matd stress_tensor_i = shear_stress_[index_i] + p_[index_i] * Matd::Identity();
-    von_mises_stress_[index_i] = getVonMisesStressFromMatrix(stress_tensor_i);
-}
+ShearStressAcceleration::ShearStressAcceleration(BaseInnerRelation &inner_relation)
+    : LocalDynamics(inner_relation.getSPHBody()), ContinuumDataInner(inner_relation),
+      shear_stress_(*particles_->getVariableByName<Matd>("ShearStress")),
+      rho_(particles_->rho_), acc_prior_(particles_->acc_prior_) {}
 //=================================================================================================//
-//===================================Non-hourglass formulation=====================================//
-//=================================================================================================//
-ShearAccelerationRelaxation::ShearAccelerationRelaxation(BaseInnerRelation &inner_relation)
-    : BaseRelaxation(inner_relation),
-      G_(continuum_.getShearModulus(continuum_.getYoungsModulus(), continuum_.getPoissonRatio())),
-      smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()), shear_stress_(particles_->shear_stress_),
-      B_(*this->particles_->template registerSharedVariable<Matd>("KernelCorrectionMatrix", Matd::Identity())), acc_shear_(particles_->acc_shear_) {}
-void ShearAccelerationRelaxation::interaction(size_t index_i, Real dt)
+void ShearStressAcceleration::interaction(size_t index_i, Real dt)
 {
     Real rho_i = rho_[index_i];
+    Matd shear_stress_i = shear_stress_[index_i];
     Vecd acceleration = Vecd::Zero();
-    Vecd vel_i = vel_[index_i];
     Neighborhood &inner_neighborhood = inner_configuration_[index_i];
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
         size_t index_j = inner_neighborhood.j_[n];
-        Real r_ij = inner_neighborhood.r_ij_[n];
-        Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
-
-        Vecd v_ij = (vel_i - vel_[index_j]);
-        acceleration += 2 * v_ij * dW_ijV_j / (r_ij + 0.01 * smoothing_length_);
+        Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+        acceleration += rho_[index_j] * (shear_stress_i / (rho_i * rho_i) + shear_stress_[index_j] / (rho_[index_j] * rho_[index_j])) * nablaW_ijV_j;
     }
-    acc_shear_[index_i] += G_ * acceleration * dt / rho_i;
+    acc_prior_[index_i] += acceleration;
 }
 //=================================================================================================//
-void AngularConservativeShearAccelerationRelaxation::interaction(size_t index_i, Real dt)
+ShearAccelerationIntegration::ShearAccelerationIntegration(BaseInnerRelation &inner_relation)
+    : LocalDynamics(inner_relation.getSPHBody()), ContinuumDataInner(inner_relation),
+      continuum_(particles_->continuum_),
+      G_(continuum_.getShearModulus(continuum_.getYoungsModulus(), continuum_.getPoissonRatio())),
+      smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
+      vel_(particles_->vel_), acc_prior_(particles_->acc_prior_), rho_(particles_->rho_)
 {
-    Real rho_i = rho_[index_i];
+    particles_->registerVariable(acc_shear_, "AccumulatedShearAcceleration");
+}
+//=================================================================================================//
+void ShearAccelerationIntegration::interaction(size_t index_i, Real dt)
+{
     Vecd acceleration = Vecd::Zero();
     Neighborhood &inner_neighborhood = inner_configuration_[index_i];
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -184,53 +157,8 @@ void AngularConservativeShearAccelerationRelaxation::interaction(size_t index_i,
         Real eta_ij = 2 * (0.7 * (Real)Dimensions + 2.1) * (vel_[index_i] - vel_[index_j]).dot(e_ij) / (r_ij + TinyReal);
         acceleration += eta_ij * dW_ijV_j * e_ij;
     }
-    acc_shear_[index_i] += G_ * acceleration * dt / rho_i;
-}
-//=================================================================================================//
-ShearStressRelaxation ::
-    ShearStressRelaxation(BaseInnerRelation &inner_relation)
-    : BaseRelaxation(inner_relation),
-      shear_stress_(particles_->shear_stress_), shear_stress_rate_(particles_->shear_stress_rate_),
-      velocity_gradient_(particles_->velocity_gradient_), strain_tensor_(particles_->strain_tensor_),
-      strain_tensor_rate_(particles_->strain_tensor_rate_), von_mises_stress_(particles_->von_mises_stress_),
-      von_mises_strain_(particles_->von_mises_strain_), Vol_(particles_->Vol_),
-      B_(*particles_->getVariableByName<Matd>("KernelCorrectionMatrix")) {}
-void ShearStressRelaxation::initialization(size_t index_i, Real dt)
-{
-    strain_tensor_[index_i] += strain_tensor_rate_[index_i] * 0.5 * dt;
-    shear_stress_[index_i] += shear_stress_rate_[index_i] * 0.5 * dt;
-}
-void ShearStressRelaxation::interaction(size_t index_i, Real dt)
-{
-    Matd velocity_gradient = Matd::Zero();
-    Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-    {
-        size_t index_j = inner_neighborhood.j_[n];
-        Real dW_ijV_j_ = inner_neighborhood.dW_ijV_j_[n];
-        Vecd &e_ij = inner_neighborhood.e_ij_[n];
-
-        // Matd velocity_gradient_ij = - (vel_[index_i] - vel_[index_j]) * nablaW_ijV_j.transpose();
-        Vecd v_ij = vel_[index_i] - vel_[index_j];
-        Matd velocity_gradient_ij = -v_ij * (B_[index_i] * e_ij * dW_ijV_j_).transpose();
-        velocity_gradient += velocity_gradient_ij;
-    }
-    velocity_gradient_[index_i] = velocity_gradient;
-    // calculate strain
-    Matd strain_rate = 0.5 * (velocity_gradient + velocity_gradient.transpose());
-    strain_tensor_rate_[index_i] = strain_rate;
-    strain_tensor_[index_i] += strain_tensor_rate_[index_i] * 0.5 * dt;
-    Matd strain_i = strain_tensor_[index_i];
-    von_mises_strain_[index_i] = getVonMisesStressFromMatrix(strain_i);
-}
-void ShearStressRelaxation::update(size_t index_i, Real dt)
-{
-    shear_stress_rate_[index_i] = continuum_.ConstitutiveRelationShearStress(velocity_gradient_[index_i], shear_stress_[index_i]);
-    shear_stress_[index_i] += shear_stress_rate_[index_i] * dt * 0.5;
-
-    // VonMises Stress
-    Matd stress_tensor_i = shear_stress_[index_i] - p_[index_i] * Matd::Identity();
-    von_mises_stress_[index_i] = getVonMisesStressFromMatrix(stress_tensor_i);
+    acc_shear_[index_i] += G_ * acceleration * dt / rho_[index_i];
+    acc_prior_[index_i] += acc_shear_[index_i];
 }
 //=================================================================================================//
 FixedInAxisDirection::FixedInAxisDirection(BodyPartByParticle &body_part, Vecd constrained_axises)

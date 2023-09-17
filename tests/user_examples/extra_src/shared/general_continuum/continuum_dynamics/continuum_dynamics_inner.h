@@ -37,108 +37,92 @@ class ContinuumAcousticTimeStepSize : public fluid_dynamics::AcousticTimeStepSiz
 };
 
 /**
- * @class BaseRelaxation
- * @brief Base class for all fluid relaxation schemes
+ * @class ArtificialStressAcceleration
+ * @brief Implemented according to the literature:
+ * Gray, J.P., Monaghan, J.J. and Swift, R., 2001. SPH elastic dynamics.
+ * Computer methods in applied mechanics and engineering, 190(49-50), pp.6641-6662.
+ */
+class ArtificialStressAcceleration : public LocalDynamics, public ContinuumDataInner
+{
+  public:
+    explicit ArtificialStressAcceleration(BaseInnerRelation &inner_relation, Real epsilon, Real exponent);
+    virtual ~ArtificialStressAcceleration(){};
+    void initialization(size_t index_i, Real dt = 0.0);
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    Real smoothing_length_, reference_spacing_;
+    Real epsilon_, exponent_;
+    StdLargeVec<Matd> &shear_stress_, artificial_stress_;
+    StdLargeVec<Real> &p_, &rho_;
+    StdLargeVec<Vecd> &acc_prior_;
+
+    Matd getArtificialStress(const Matd &stress_tensor_i, const Real &rho_i);
+};
+
+/**
+ * @class BaseShearStressIntegration
+ * @brief Evolution of shear stress
  */
 template <class DataDelegationType>
-class BaseRelaxation : public LocalDynamics, public DataDelegationType
+class BaseShearStressIntegration : public LocalDynamics, public DataDelegationType
 {
   public:
     template <class BaseRelationType>
-    explicit BaseRelaxation(BaseRelationType &base_relation);
-    virtual ~BaseRelaxation(){};
+    explicit BaseShearStressIntegration(BaseRelationType &base_relation);
+    virtual ~BaseShearStressIntegration(){};
 
   protected:
     GeneralContinuum &continuum_;
-    StdLargeVec<Real> &rho_, &p_, &drho_dt_;
-    StdLargeVec<Vecd> &pos_, &vel_, &acc_, &acc_prior_;
+    StdLargeVec<Vecd> &vel_;
+    StdLargeVec<Matd> &velocity_gradient_, &shear_stress_;
+    StdLargeVec<Real> &p_, &von_mises_stress_;
 };
 
 /**
- * @class Integration1stHalfInnerWithShearStress
- * @brief Pressure relaxation scheme with the mostly used Riemann solver.
+ * @class ShearStressIntegration
  */
-class Integration1stHalfInnerWithShearStress : public fluid_dynamics::Integration1stHalfInnerRiemann
+class ShearStressIntegration : public BaseShearStressIntegration<ContinuumDataInner>
 {
   public:
-    explicit Integration1stHalfInnerWithShearStress(BaseInnerRelation &inner_relation, Real epsilon, Real exponent);
-    virtual ~Integration1stHalfInnerWithShearStress(){};
-    void initialization(size_t index_i, Real dt = 0.0);
+    explicit ShearStressIntegration(BaseInnerRelation &inner_relation)
+        : BaseShearStressIntegration<ContinuumDataInner>(inner_relation){};
+    virtual ~ShearStressIntegration(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+};
+
+/**
+ * @class ShearStressAcceleration
+ */
+class ShearStressAcceleration : public LocalDynamics, public ContinuumDataInner
+{
+  public:
+    explicit ShearStressAcceleration(BaseInnerRelation &inner_relation);
+    virtual ~ShearStressAcceleration(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    GeneralContinuum &continuum_;
-    Real smoothing_length_, reference_spacing_;
-    Real epsilon_, exponent_;
     StdLargeVec<Matd> &shear_stress_;
-    StdLargeVec<Matd> shear_stress_rate_, artificial_stress_;
-
-    Matd getArtificialStress(const Matd &stress_tensor_i, const Real &rho_i);
-    Vecd getArtificialStressAcceleration(size_t index_i);
+    StdLargeVec<Real> &rho_;
+    StdLargeVec<Vecd> &acc_prior_;
 };
 
 /**
- * @class Integration2ndHalfInnerWithShearStress
+ * @class ShearAccelerationIntegration
+ * @brief This designed for hourglass free formulation
  */
-class Integration2ndHalfInnerWithShearStress : public fluid_dynamics::Integration2ndHalfInnerRiemann
+class ShearAccelerationIntegration : public LocalDynamics, public ContinuumDataInner
 {
   public:
-    explicit Integration2ndHalfInnerWithShearStress(BaseInnerRelation &inner_relation);
-    virtual ~Integration2ndHalfInnerWithShearStress(){};
-    void interaction(size_t index_i, Real dt = 0.0);
-    void update(size_t index_i, Real dt = 0.0);
-
-  protected:
-    StdLargeVec<Matd> &shear_stress_, &shear_stress_rate_, &velocity_gradient_;
-    StdLargeVec<Matd> &strain_tensor_, &strain_tensor_rate_;
-    StdLargeVec<Real> &von_mises_stress_;
-};
-
-/**
- * @class ShearAccelerationRelaxation
- */
-class ShearAccelerationRelaxation : public BaseRelaxation
-{
-  public:
-    explicit ShearAccelerationRelaxation(BaseInnerRelation &inner_relation);
-    virtual ~ShearAccelerationRelaxation(){};
+    explicit ShearAccelerationIntegration(BaseInnerRelation &inner_relation);
+    virtual ~ShearAccelerationIntegration(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
+    GeneralContinuum &continuum_;
     Real G_, smoothing_length_;
-    StdLargeVec<Matd> &shear_stress_, &B_;
-    StdLargeVec<Vecd> &acc_shear_;
-};
-
-/**
- * @class AngularConservativeShearAccelerationRelaxation
- */
-class AngularConservativeShearAccelerationRelaxation : public ShearAccelerationRelaxation
-{
-  public:
-    explicit AngularConservativeShearAccelerationRelaxation(BaseInnerRelation &inner_relation)
-        : ShearAccelerationRelaxation(inner_relation){};
-    virtual ~AngularConservativeShearAccelerationRelaxation(){};
-
-    void interaction(size_t index_i, Real dt = 0.0);
-};
-
-/**
- * @class ShearStressRelaxation
- */
-class ShearStressRelaxation : public BaseRelaxation
-{
-  public:
-    explicit ShearStressRelaxation(BaseInnerRelation &inner_relation);
-    virtual ~ShearStressRelaxation(){};
-    void initialization(size_t index_i, Real dt = 0.0);
-    void interaction(size_t index_i, Real dt = 0.0);
-    void update(size_t index_i, Real dt = 0.0);
-
-  protected:
-    StdLargeVec<Matd> &shear_stress_, &shear_stress_rate_, &velocity_gradient_, &strain_tensor_, &strain_tensor_rate_;
-    StdLargeVec<Real> &von_mises_stress_, &von_mises_strain_, &Vol_;
-    StdLargeVec<Matd> &B_;
+    StdLargeVec<Vecd> &vel_, &acc_prior_, acc_shear_;
+    StdLargeVec<Real> &rho_;
 };
 
 /**
@@ -301,7 +285,7 @@ class StressDiffusion : public BaseRelaxationPlastic
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    Real zeta_ = 0.1, fai_; // diffusion coeficient
+    Real zeta_ = 0.1, fai_; // diffusion coefficient
     Real smoothing_length_, sound_speed_;
 };
 } // namespace continuum_dynamics
