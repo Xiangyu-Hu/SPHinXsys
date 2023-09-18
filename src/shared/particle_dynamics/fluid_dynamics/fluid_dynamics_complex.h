@@ -110,28 +110,28 @@ class DensitySummationContactAdaptive : public BaseDensitySummationContact
 };
 
 /**
- * @class ViscousAccelerationWithWall
- * @brief  template class viscous acceleration with wall boundary
+ * @class ViscousWallBoundary
+ * @brief TBD
  */
-class ViscousAccelerationWithWall : public InteractionWithWall<BaseViscousAcceleration>
+class ViscousWallBoundary : public InteractionWithWall<BaseViscousAcceleration>
 {
   public:
-    ViscousAccelerationWithWall(BaseContactRelation &wall_contact_relation)
+    ViscousWallBoundary(BaseContactRelation &wall_contact_relation)
         : InteractionWithWall<BaseViscousAcceleration>(wall_contact_relation){};
-    virtual ~ViscousAccelerationWithWall(){};
+    virtual ~ViscousWallBoundary(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };
 
 /**
- * @class BaseIntegration1stHalfWithWall
- * @brief  template class pressure relaxation scheme together with wall boundary
+ * @class MomentumWallBoundary
+ * @brief Wall boundary condition for solving the momentum equation
  */
 template <class RiemannSolverType, class PressureType>
-class BaseIntegration1stHalfWithWall : public InteractionWithWall<BaseIntegration>
+class MomentumWallBoundary : public InteractionWithWall<BaseIntegration>
 {
   public:
-    BaseIntegration1stHalfWithWall(BaseContactRelation &wall_contact_relation);
-    virtual ~BaseIntegration1stHalfWithWall(){};
+    MomentumWallBoundary(BaseContactRelation &wall_contact_relation);
+    virtual ~MomentumWallBoundary(){};
     inline void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -139,54 +139,53 @@ class BaseIntegration1stHalfWithWall : public InteractionWithWall<BaseIntegratio
     RiemannSolverType riemann_solver_;
 };
 
-using Integration1stHalfWithWallRiemann = BaseIntegration1stHalfWithWall<AcousticRiemannSolver, PlainPressure>;
-using Integration1stHalfWithWallDissipativeRiemann = BaseIntegration1stHalfWithWall<DissipativeRiemannSolver, PlainPressure>;
+using MomentumWallBoundaryNoRiemann = MomentumWallBoundary<NoRiemannSolver, PlainPressure>;
+using MomentumWallBoundaryRiemann = MomentumWallBoundary<AcousticRiemannSolver, PlainPressure>;
+using MomentumWallBoundaryDissipativeRiemann = MomentumWallBoundary<DissipativeRiemannSolver, PlainPressure>;
 /**
- * @class BaseExtendIntegration1stHalfWithWall
- * @brief template class for pressure relaxation scheme with wall boundary
- * and considering non-conservative acceleration term and wall penalty to prevent
+ * @class ExtendMomentumWallBoundary
+ * @brief Wall boundary conditions considering  wall penalty to prevent
  * particle penetration.
  */
 template <class RiemannSolverType, class PressureType>
-class BaseExtendIntegration1stHalfWithWall : public BaseIntegration1stHalfWithWall<RiemannSolverType, PressureType>
+class ExtendMomentumWallBoundary : public MomentumWallBoundary<RiemannSolverType, PressureType>
 {
   public:
-    BaseExtendIntegration1stHalfWithWall(BaseContactRelation &wall_contact_relation, Real penalty_strength = 1.0);
-    virtual ~BaseExtendIntegration1stHalfWithWall(){};
+    ExtendMomentumWallBoundary(BaseContactRelation &wall_contact_relation, Real penalty_strength = 1.0);
+    virtual ~ExtendMomentumWallBoundary(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
     Real penalty_strength_;
 };
-using ExtendIntegration1stHalfWithWallRiemann = BaseExtendIntegration1stHalfWithWall<AcousticRiemannSolver, PlainPressure>;
+using ExtendMomentumWallBoundaryRiemann = ExtendMomentumWallBoundary<AcousticRiemannSolver, PlainPressure>;
 
 /**
- * @class BaseIntegration2ndHalfWithWall
- * @brief template density relaxation scheme without using different Riemann solvers.
- * The difference from the free surface version is that no Riemann problem is applied
+ * @class ContinuityWallBoundary
+ * @brief Wall boundary condition for solving the continuity equation
  */
 template <class RiemannSolverType>
-class BaseIntegration2ndHalfWithWall : public InteractionWithWall<BaseIntegration>
+class ContinuityWallBoundary : public InteractionWithWall<BaseIntegration>
 {
   public:
-    BaseIntegration2ndHalfWithWall(BaseContactRelation &wall_contact_relation);
-    virtual ~BaseIntegration2ndHalfWithWall(){};
+    ContinuityWallBoundary(BaseContactRelation &wall_contact_relation);
+    virtual ~ContinuityWallBoundary(){};
     inline void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
     RiemannSolverType riemann_solver_;
 };
-using Integration2ndHalfWithWallRiemann = BaseIntegration2ndHalfWithWall<AcousticRiemannSolver>;
-using Integration2ndHalfWithWallDissipativeRiemann = BaseIntegration2ndHalfWithWall<DissipativeRiemannSolver>;
+using ContinuityWallBoundaryRiemann = ContinuityWallBoundary<AcousticRiemannSolver>;
+using ContinuityWallBoundaryDissipativeRiemann = ContinuityWallBoundary<DissipativeRiemannSolver>;
 /**
- * @class Oldroyd_BIntegration1stHalfWithWall
- * @brief  first half of the pressure relaxation scheme using Riemann solver.
+ * @class Oldroyd_BMomentumWallBoundary
+ * @brief Dissipative Riemann solver is used here.
  */
-class Oldroyd_BIntegration1stHalfWithWall : public Integration1stHalfWithWallDissipativeRiemann
+class Oldroyd_BMomentumWallBoundary : public MomentumWallBoundaryDissipativeRiemann
 {
   public:
-    explicit Oldroyd_BIntegration1stHalfWithWall(BaseContactRelation &wall_contact_relation);
-    virtual ~Oldroyd_BIntegration1stHalfWithWall(){};
+    explicit Oldroyd_BMomentumWallBoundary(BaseContactRelation &wall_contact_relation);
+    virtual ~Oldroyd_BMomentumWallBoundary(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -194,14 +193,14 @@ class Oldroyd_BIntegration1stHalfWithWall : public Integration1stHalfWithWallDis
 };
 
 /**
- * @class Oldroyd_BIntegration2ndHalfWithWall
- * @brief  second half of the pressure relaxation scheme using Riemann solver.
+ * @class Oldroyd_BContinuityWallBoundary
+ * @brief Dissipative Riemann solver is used here too.
  */
-class Oldroyd_BIntegration2ndHalfWithWall : public Integration2ndHalfWithWallDissipativeRiemann
+class Oldroyd_BContinuityWallBoundary : public ContinuityWallBoundaryDissipativeRiemann
 {
   public:
-    explicit Oldroyd_BIntegration2ndHalfWithWall(BaseContactRelation &wall_contact_relation);
-    virtual ~Oldroyd_BIntegration2ndHalfWithWall(){};
+    explicit Oldroyd_BContinuityWallBoundary(BaseContactRelation &wall_contact_relation);
+    virtual ~Oldroyd_BContinuityWallBoundary(){};
     inline void interaction(size_t index_i, Real dt = 0.0);
 
   protected:

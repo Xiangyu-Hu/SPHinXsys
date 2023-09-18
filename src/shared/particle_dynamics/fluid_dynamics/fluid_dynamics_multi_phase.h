@@ -102,11 +102,11 @@ using MultiPhaseIntegration1stHalf = BaseMultiPhaseIntegration1stHalf<Integratio
 using MultiPhaseIntegration1stHalfRiemann = BaseMultiPhaseIntegration1stHalf<Integration1stHalfRiemann>;
 
 using MultiPhaseIntegration1stHalfWithWall =
-    BaseIntegration1stHalfWithWall<MultiPhaseIntegration1stHalf>;
+    MomentumWallBoundary<MultiPhaseIntegration1stHalf>;
 using MultiPhaseIntegration1stHalfRiemannWithWall =
-    BaseIntegration1stHalfWithWall<MultiPhaseIntegration1stHalfRiemann>;
+    MomentumWallBoundary<MultiPhaseIntegration1stHalfRiemann>;
 using ExtendMultiPhaseIntegration1stHalfRiemannWithWall =
-    BaseExtendIntegration1stHalfWithWall<MultiPhaseIntegration1stHalfRiemann>;
+    ExtendMomentumWallBoundary<MultiPhaseIntegration1stHalfRiemann>;
 
 /**
  * @class BaseMultiPhaseIntegration2ndHalf
@@ -130,7 +130,7 @@ class BaseMultiPhaseIntegration2ndHalf : public RelaxationMultiPhase<Integration
 using MultiPhaseIntegration2ndHalf = BaseMultiPhaseIntegration2ndHalf<Integration2ndHalf>;
 using MultiPhaseIntegration2ndHalfRiemann = BaseMultiPhaseIntegration2ndHalf<Integration2ndHalfRiemann>;
 using MultiPhaseIntegration2ndHalfWithWall = BaseMultiPhaseIntegration2ndHalf<MultiPhaseIntegration2ndHalf>;
-using MultiPhaseIntegration2ndHalfRiemannWithWall = BaseIntegration2ndHalfWithWall<MultiPhaseIntegration2ndHalfRiemann>;
+using MultiPhaseIntegration2ndHalfRiemannWithWall = ContinuityWallBoundary<MultiPhaseIntegration2ndHalfRiemann>;
 
 /**
  * @class MultiPhaseColorFunctionGradient

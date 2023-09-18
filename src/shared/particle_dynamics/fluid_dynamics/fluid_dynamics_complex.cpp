@@ -52,7 +52,7 @@ void DensitySummationContactAdaptive::interaction(size_t index_i, Real dt)
                          sph_adaptation_.NumberDensityScaleFactor(h_ratio_[index_i]);
 }
 //=================================================================================================//
-void ViscousAccelerationWithWall::interaction(size_t index_i, Real dt)
+void ViscousWallBoundary::interaction(size_t index_i, Real dt)
 {
     Real rho_i = this->rho_[index_i];
     const Vecd &vel_i = this->vel_[index_i];
@@ -76,14 +76,14 @@ void ViscousAccelerationWithWall::interaction(size_t index_i, Real dt)
     this->acc_prior_[index_i] += acceleration;
 }
 //=================================================================================================//
-Oldroyd_BIntegration1stHalfWithWall::
-    Oldroyd_BIntegration1stHalfWithWall(BaseContactRelation &wall_contact_relation)
-    : Integration1stHalfWithWallDissipativeRiemann(wall_contact_relation),
+Oldroyd_BMomentumWallBoundary::
+    Oldroyd_BMomentumWallBoundary(BaseContactRelation &wall_contact_relation)
+    : MomentumWallBoundaryDissipativeRiemann(wall_contact_relation),
       tau_(*particles_->getVariableByName<Matd>("ElasticStress")){};
 //=================================================================================================//
-void Oldroyd_BIntegration1stHalfWithWall::interaction(size_t index_i, Real dt)
+void Oldroyd_BMomentumWallBoundary::interaction(size_t index_i, Real dt)
 {
-    Integration1stHalfWithWallDissipativeRiemann::interaction(index_i, dt);
+    MomentumWallBoundaryDissipativeRiemann::interaction(index_i, dt);
 
     Real rho_i = rho_[index_i];
     Matd tau_i = tau_[index_i];
@@ -103,9 +103,9 @@ void Oldroyd_BIntegration1stHalfWithWall::interaction(size_t index_i, Real dt)
     acc_[index_i] += acceleration;
 }
 //=================================================================================================//
-Oldroyd_BIntegration2ndHalfWithWall::
-    Oldroyd_BIntegration2ndHalfWithWall(BaseContactRelation &wall_contact_relation)
-    : Integration2ndHalfWithWallDissipativeRiemann(wall_contact_relation),
+Oldroyd_BContinuityWallBoundary::
+    Oldroyd_BContinuityWallBoundary(BaseContactRelation &wall_contact_relation)
+    : ContinuityWallBoundaryDissipativeRiemann(wall_contact_relation),
       oldroyd_b_fluid_(DynamicCast<Oldroyd_B_Fluid>(this, particles_->getBaseMaterial())),
       tau_(*particles_->getVariableByName<Matd>("ElasticStress")),
       dtau_dt_(*particles_->getVariableByName<Matd>("ElasticStressChangeRate"))
@@ -114,9 +114,9 @@ Oldroyd_BIntegration2ndHalfWithWall::
     lambda_ = oldroyd_b_fluid_.getReferenceRelaxationTime();
 }
 //=================================================================================================//
-void Oldroyd_BIntegration2ndHalfWithWall::interaction(size_t index_i, Real dt)
+void Oldroyd_BContinuityWallBoundary::interaction(size_t index_i, Real dt)
 {
-    Integration2ndHalfWithWallDissipativeRiemann::interaction(index_i, dt);
+    ContinuityWallBoundaryDissipativeRiemann::interaction(index_i, dt);
 
     Vecd vel_i = vel_[index_i];
     Matd tau_i = tau_[index_i];

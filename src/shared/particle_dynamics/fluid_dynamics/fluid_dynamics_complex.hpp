@@ -30,13 +30,13 @@ InteractionWithWall<BaseInteractionType>::InteractionWithWall(BaseContactRelatio
 }
 //=================================================================================================//
 template <class RiemannSolverType, class PressureType>
-BaseIntegration1stHalfWithWall<RiemannSolverType, PressureType>::
-    BaseIntegration1stHalfWithWall(BaseContactRelation &wall_contact_relation)
+MomentumWallBoundary<RiemannSolverType, PressureType>::
+    MomentumWallBoundary(BaseContactRelation &wall_contact_relation)
     : InteractionWithWall<BaseIntegration>(wall_contact_relation),
       pressure_(fluid_, particles_), riemann_solver_(fluid_, fluid_) {}
 //=================================================================================================//
 template <class RiemannSolverType, class PressureType>
-void BaseIntegration1stHalfWithWall<RiemannSolverType, PressureType>::interaction(size_t index_i, Real dt)
+void MomentumWallBoundary<RiemannSolverType, PressureType>::interaction(size_t index_i, Real dt)
 {
     Vecd acceleration = Vecd::Zero();
     Real rho_dissipation(0);
@@ -62,15 +62,15 @@ void BaseIntegration1stHalfWithWall<RiemannSolverType, PressureType>::interactio
 }
 //=================================================================================================//
 template <class RiemannSolverType, class PressureType>
-BaseExtendIntegration1stHalfWithWall<RiemannSolverType, PressureType>::
-    BaseExtendIntegration1stHalfWithWall(BaseContactRelation &wall_contact_relation, Real penalty_strength)
-    : BaseIntegration1stHalfWithWall<RiemannSolverType, PressureType>(wall_contact_relation),
+ExtendMomentumWallBoundary<RiemannSolverType, PressureType>::
+    ExtendMomentumWallBoundary(BaseContactRelation &wall_contact_relation, Real penalty_strength)
+    : MomentumWallBoundary<RiemannSolverType, PressureType>(wall_contact_relation),
       penalty_strength_(penalty_strength) {}
 //=================================================================================================//
 template <class RiemannSolverType, class PressureType>
-void BaseExtendIntegration1stHalfWithWall<RiemannSolverType, PressureType>::interaction(size_t index_i, Real dt)
+void ExtendMomentumWallBoundary<RiemannSolverType, PressureType>::interaction(size_t index_i, Real dt)
 {
-    BaseIntegration1stHalfWithWall<RiemannSolverType, PressureType>::interaction(index_i, dt);
+    MomentumWallBoundary<RiemannSolverType, PressureType>::interaction(index_i, dt);
 
     Real rho_i = this->rho_[index_i];
     Real penalty_pressure = this->p_[index_i];
@@ -106,13 +106,13 @@ void BaseExtendIntegration1stHalfWithWall<RiemannSolverType, PressureType>::inte
 }
 //=================================================================================================//
 template <class RiemannSolverType>
-BaseIntegration2ndHalfWithWall<RiemannSolverType>::
-    BaseIntegration2ndHalfWithWall(BaseContactRelation &wall_contact_relation)
+ContinuityWallBoundary<RiemannSolverType>::
+    ContinuityWallBoundary(BaseContactRelation &wall_contact_relation)
     : InteractionWithWall<BaseIntegration>(wall_contact_relation),
       riemann_solver_(this->fluid_, this->fluid_) {}
 //=================================================================================================//
 template <class RiemannSolverType>
-void BaseIntegration2ndHalfWithWall<RiemannSolverType>::interaction(size_t index_i, Real dt)
+void ContinuityWallBoundary<RiemannSolverType>::interaction(size_t index_i, Real dt)
 {
     Real density_change_rate = 0.0;
     Vecd p_dissipation = Vecd::Zero();
