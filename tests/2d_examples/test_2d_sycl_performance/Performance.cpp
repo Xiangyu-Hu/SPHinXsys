@@ -85,10 +85,10 @@ int main(int ac, char *av[])
     water_block_sycl.generateParticles<ParticleGeneratorLattice>();
     water_block_sycl.getBaseParticles().registerDeviceMemory();
 
-	SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-	wall_boundary.generateParticles<ParticleGeneratorLattice>();
-	wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
+    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
+    wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
+    wall_boundary.generateParticles<ParticleGeneratorLattice>();
+    wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
 
     SolidBody wall_boundary_sycl(sph_system_sycl, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary_sycl.defineParticlesAndMaterial<SolidParticles, Solid>();
@@ -132,12 +132,7 @@ int main(int ac, char *av[])
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    sph_system.initializeSystemCellLinkedLists();
-    sph_system.initializeSystemConfigurations();
-    sph_system_sycl.initializeSystemCellLinkedLists(execution::par_sycl);
-    sph_system_sycl.initializeSystemDeviceConfigurations();
-
-    executionQueue.setWorkGroupSize(32);
+    executionQueue.setWorkGroupSize(16);
 
     //----------------------------------------------------------------------
     //	Main loop benchmarks
