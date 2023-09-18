@@ -140,4 +140,3 @@ void ContinuityWallBoundary<RiemannSolverType>::interaction(size_t index_i, Real
 } // namespace fluid_dynamics
   //=================================================================================================//
 } // namespace SPH
-  //=================================================================================================//
