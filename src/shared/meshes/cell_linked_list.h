@@ -85,7 +85,7 @@ class BaseCellLinkedList : public BaseMeshField
 
 class CellLinkedListKernel {
   public:
-    CellLinkedListKernel(BaseParticles& particles, Kernel& kernel, const DeviceVecd &meshLowerBound, DeviceReal gridSpacing,
+    CellLinkedListKernel(BaseParticles& particles, const DeviceVecd &meshLowerBound, DeviceReal gridSpacing,
                          const DeviceArrayi &allGridPoints, const DeviceArrayi &allCells);
 
     void clearCellLists();
@@ -118,8 +118,6 @@ class CellLinkedListKernel {
     const DeviceVecd mesh_lower_bound_;
     const DeviceReal grid_spacing_;
     const DeviceArrayi all_grid_points_, all_cells_;
-
-    DeviceKernelWendlandC2 kernel_;
 
     size_t* index_list_;
     size_t* index_head_list_;

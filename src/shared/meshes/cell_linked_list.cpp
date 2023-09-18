@@ -20,12 +20,12 @@ void BaseCellLinkedList::clearSplitCellLists(SplitCellLists &split_cell_lists)
         split_cell_lists[i].clear();
 }
 
-CellLinkedListKernel::CellLinkedListKernel(BaseParticles& particles, Kernel& kernel, const DeviceVecd &meshLowerBound, DeviceReal gridSpacing,
+CellLinkedListKernel::CellLinkedListKernel(BaseParticles& particles, const DeviceVecd &meshLowerBound, DeviceReal gridSpacing,
                                            const DeviceArrayi &allGridPoints, const DeviceArrayi &allCells)
     : total_real_particles_(particles.total_real_particles_), list_data_pos_(particles.getDeviceVariableByName<DeviceVecd>("Position")),
-      list_data_Vol_(particles.getDeviceVariableByName<DeviceReal>("Volume")), kernel_(kernel),
-      mesh_lower_bound_(meshLowerBound), grid_spacing_(gridSpacing), all_grid_points_(allGridPoints),  all_cells_(allCells),
-      index_list_(allocateSharedData<size_t>(total_real_particles_)), index_head_list_(allocateSharedData<size_t>(allCells[0] * allCells[1])){}
+      list_data_Vol_(particles.getDeviceVariableByName<DeviceReal>("Volume")), mesh_lower_bound_(meshLowerBound), grid_spacing_(gridSpacing),
+      all_grid_points_(allGridPoints),  all_cells_(allCells), index_list_(allocateSharedData<size_t>(total_real_particles_)),
+      index_head_list_(allocateSharedData<size_t>(allCells[0] * allCells[1])){}
 
 void CellLinkedListKernel::clearCellLists() {
     // Only clear head list, since index list does not depend on its previous values
@@ -67,7 +67,7 @@ void CellLinkedListKernel::UpdateCellLists(SPH::BaseParticles &base_particles)
 CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
                                RealBody &real_body, SPHAdaptation &sph_adaptation)
     : BaseCellLinkedList(real_body, sph_adaptation), Mesh(tentative_bounds, grid_spacing, 2),
-      execution::DeviceExecutable<CellLinkedList, CellLinkedListKernel>(this, real_body_.getBaseParticles(), kernel_,
+      execution::DeviceExecutable<CellLinkedList, CellLinkedListKernel>(this, real_body_.getBaseParticles(),
                                                                         hostToDeviceVecd(mesh_lower_bound_), DeviceReal(grid_spacing_),
                                                                         hostToDeviceArrayi(all_grid_points_), hostToDeviceArrayi(all_cells_))
 {
