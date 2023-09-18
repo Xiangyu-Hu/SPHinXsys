@@ -28,7 +28,7 @@
 #ifndef SMALL_VECTORS_H
 #define SMALL_VECTORS_H
 
-#include "base_data_type.h"
+#include "data_type.h"
 
 namespace SPH
 {
@@ -41,10 +41,8 @@ Vec3d upgradeToVec3d(const Vec3d &input);
 Mat3d upgradeToMat3d(const Mat2d &input);
 Mat3d upgradeToMat3d(const Mat3d &input);
 
-void degradeToVecd(const Vec3d &input, Vec2d &output);
-inline void degradeToVecd(const Vec3d &input, Vec3d &output) { output = input; };
-void degradeToMatd(const Mat3d &input, Mat2d &output);
-inline void degradeToMatd(const Mat3d &input, Mat3d &output) { output = input; };
+Vecd degradeToVecd(const Vec3d &input);
+Matd degradeToMatd(const Mat3d &input);
 
 Mat2d getInverse(const Mat2d &A);
 Mat3d getInverse(const Mat3d &A);
@@ -82,69 +80,5 @@ Vec3d getPrincipalValuesFromMatrix(const Mat3d &A);
 /** get transformation matrix. */
 Real getCrossProduct(const Vec2d &vector_1, const Vec2d &vector_2);
 Vec3d getCrossProduct(const Vec3d &vector_1, const Vec3d &vector_2);
-
-/** Bounding box for system, body, body part and shape, first: lower bound, second: upper bound. */
-template <typename VecType>
-class BaseBoundingBox
-{
-  public:
-    VecType first_, second_;
-    int dimension_;
-
-    BaseBoundingBox() : first_(VecType::Zero()), second_(VecType::Zero()), dimension_(VecType::Zero().size()){};
-    BaseBoundingBox(const VecType &lower_bound, const VecType &upper_bound)
-        : first_(lower_bound), second_(upper_bound), dimension_(lower_bound.size()){};
-    /** Check the bounding box contain. */
-    bool checkContain(const VecType &point)
-    {
-        bool is_contain = true;
-        for (int i = 0; i < dimension_; ++i)
-        {
-            if (point[i] < first_[i] || point[i] > second_[i])
-            {
-                is_contain = false;
-                break;
-            }
-        }
-        return is_contain;
-    };
-};
-/** Operator define. */
-template <class T>
-bool operator==(const BaseBoundingBox<T> &bb1, const BaseBoundingBox<T> &bb2)
-{
-    return bb1.first_ == bb2.first_ && bb1.second_ == bb2.second_ ? true : false;
-};
-/** Intersection fo bounding box.*/
-template <class BoundingBoxType>
-BoundingBoxType getIntersectionOfBoundingBoxes(const BoundingBoxType &bb1, const BoundingBoxType &bb2)
-{
-    /** Check that the inputs are correct. */
-    int dimension = bb1.dimension_;
-    /** Get the Bounding Box of the intersection of the two meshes. */
-    BoundingBoxType bb(bb1);
-    /** #1 check that there is overlap, if not, exception. */
-    for (int i = 0; i < dimension; ++i)
-        if (bb2.first_[i] > bb1.second_[i] || bb2.second_[i] < bb1.first_[i])
-            std::runtime_error("getIntersectionOfBoundingBoxes: no overlap!");
-    /** #2 otherwise modify the first one to get the intersection. */
-    for (int i = 0; i < dimension; ++i)
-    {
-        /** If the lower limit is inside change the lower limit. */
-        if (bb1.first_[i] < bb2.first_[i] && bb2.first_[i] < bb1.second_[i])
-            bb.first_[i] = bb2.first_[i];
-        /**  If the upper limit is inside, change the upper limit. */
-        if (bb1.second_[i] > bb2.second_[i] && bb2.second_[i] > bb1.first_[i])
-            bb.second_[i] = bb2.second_[i];
-    }
-    return bb;
-}
-
-/** obtain minimum dimension of a bounding box */
-template <class BoundingBoxType>
-Real MinimumDimension(const BoundingBoxType &bbox)
-{
-    return (bbox.second_ - bbox.first_).cwiseAbs().minCoeff();
-};
 } // namespace SPH
 #endif // SMALL_VECTORS_H
