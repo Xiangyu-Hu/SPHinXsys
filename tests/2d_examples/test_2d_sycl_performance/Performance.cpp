@@ -148,6 +148,16 @@ int main(int ac, char *av[])
     std::cout << "Number of iterations per test: " << iterations << std::endl;
 
     std::cout << "------------" << std::endl;
+    benchmark([&](){ sph_system.initializeSystemCellLinkedLists(); },
+              [&](){ sph_system_sycl.initializeSystemCellLinkedLists(execution::par_sycl); },
+              "initialize cell linked list", iterations);
+
+    std::cout << "------------" << std::endl;
+    benchmark([&](){ sph_system.initializeSystemConfigurations(); },
+              [&](){ sph_system_sycl.initializeSystemDeviceConfigurations(); },
+              "initialize system configuration", iterations);
+
+    std::cout << "------------" << std::endl;
     benchmark([&](){
                   fluid_step_initialization.exec();
                   Real advection_dt = fluid_advection_time_step.exec();
