@@ -122,6 +122,9 @@ Volume 236, (2021) 109540
 14. Shuoguo Zhang, Wenbin Zhang, Chi Zhang, Xiangyu Hu, "A Lagrangian free-stream boundary condition for weakly compressible smoothed particle hydrodynamics", Journal of Computational Physics, 490, 112303, 2023.  
 [![Free Stream](https://img.shields.io/badge/doi-10.1016%2Fj.jcp.2023.112303-d45815.svg)](https://doi.org/10.1016/j.jcp.2023.112303)
 
+15. Yaru Ren, Pengzhi Lin, Chi Zhang, Xiangyu Hu, "An efficient weighted correction method in Riemann SPH for the simulation of general free surface flows", Computer Methods in Applied Mechanics and Engineering, in press. 2023.  
+[![Correction Method](https://img.shields.io/badge/doi-10.1016%2FarXiv.2304.14865-d45815.svg)](https://doi.org/10.48550/arXiv.2304.14865)
+
 ## Software Architecture
 
 SPHinXsys is cross-platform can be compiled and used in Windows, Linux and McOS systems.

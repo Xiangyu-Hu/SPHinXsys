@@ -170,9 +170,9 @@ void BaseStressDiffusionWithWall<BaseStressDiffusionType>::interaction(size_t in
             //stress boundary condition
             Mat3d stress_tensor_j = stress_tensor_i;
             diffusion_stress_ = stress_tensor_i - stress_tensor_j;
-            diffusion_stress_(0, 0) = diffusion_stress_(0, 0) - (1 - sin(this->fai_)) * density * gravity * y_ij;
+            diffusion_stress_(0, 0) = diffusion_stress_(0, 0) - (1 - sin(this->phi_)) * density * gravity * y_ij;
             diffusion_stress_(1, 1) = diffusion_stress_(1, 1) - density * gravity * y_ij;
-            diffusion_stress_(2, 2) = diffusion_stress_(2, 2) - (1 - sin(this->fai_)) * density * gravity * y_ij;
+            diffusion_stress_(2, 2) = diffusion_stress_(2, 2) - (1 - sin(this->phi_)) * density * gravity * y_ij;
             diffusion_stress_rate_ += 2 * this->zeta_ * this->smoothing_length_ * this->sound_speed_ * diffusion_stress_ * r_ij * dW_ijV_j / (r_ij * r_ij + 0.01 * this->smoothing_length_);
         }
     }

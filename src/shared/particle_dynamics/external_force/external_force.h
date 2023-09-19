@@ -44,7 +44,7 @@ class ExternalForce
     ExternalForce();
     virtual ~ExternalForce(){};
     /** This function can be used for runtime control of external force. */
-    virtual Vecd InducedAcceleration(Vecd &position) = 0;
+    virtual Vecd InducedAcceleration(const Vecd &position = Vecd::Zero()) = 0;
 };
 
 /**
@@ -62,8 +62,8 @@ class Gravity : public ExternalForce
     virtual ~Gravity(){};
 
     /** This function can be used for runtime control of external force. */
-    virtual Vecd InducedAcceleration(Vecd &position) override;
-    Real getPotential(Vecd &position);
+    virtual Vecd InducedAcceleration(const Vecd &position = Vecd::Zero()) override;
+    Real getPotential(const Vecd &position);
 };
 } // namespace SPH
 #endif // EXTERNAL_FORCE_H

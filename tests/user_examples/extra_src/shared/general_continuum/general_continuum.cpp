@@ -52,13 +52,13 @@ namespace SPH
         Real stress_tensor_I1 = stress_tensor.trace(); // first invariant of stress
         Mat3d deviatoric_stress_tensor = stress_tensor - (1.0 / dim) * stress_tensor.trace() * Mat3d::Identity();
         Real stress_tensor_J2 = 0.5 * (deviatoric_stress_tensor.cwiseProduct(deviatoric_stress_tensor.transpose())).sum();
-        Real f = sqrt(stress_tensor_J2) + alpha_fai_ * stress_tensor_I1 - k_c_;
+        Real f = sqrt(stress_tensor_J2) + alpha_phi_ * stress_tensor_I1 - k_c_;
         Real lambda_dot_ = 0;
         Mat3d g = Mat3d::Zero();
         if ((f >= TinyReal) && (stress_tensor_J2 > TinyReal))
         {
             Real deviatoric_stress_times_strain_rate = (deviatoric_stress_tensor.cwiseProduct(strain_rate)).sum();
-            lambda_dot_ = (3 * alpha_fai_ * K_ * strain_rate.trace() + (G_ / sqrt(stress_tensor_J2)) * deviatoric_stress_times_strain_rate) / (27 * alpha_fai_ * K_ * sin(psi_) + G_);
+            lambda_dot_ = (3 * alpha_phi_ * K_ * strain_rate.trace() + (G_ / sqrt(stress_tensor_J2)) * deviatoric_stress_times_strain_rate) / (27 * alpha_phi_ * K_ * sin(psi_) + G_);
             g = lambda_dot_ * (9 * K_ * sin(psi_) * Mat3d::Identity() + G_ * deviatoric_stress_tensor / (sqrt(stress_tensor_J2)));
         }
         Mat3d stress_rate_temp = stress_rate_elastic - g;
@@ -70,16 +70,16 @@ namespace SPH
         Real dim = 3;
 
         Real stress_tensor_I1 = stress_tensor.trace();
-        if (-alpha_fai_ * stress_tensor_I1 + k_c_ < 0)
+        if (-alpha_phi_ * stress_tensor_I1 + k_c_ < 0)
         {
-            stress_tensor -= (1.0 / dim) * (stress_tensor_I1 - k_c_ / alpha_fai_) * Mat3d::Identity();
+            stress_tensor -= (1.0 / dim) * (stress_tensor_I1 - k_c_ / alpha_phi_) * Mat3d::Identity();
         }
         stress_tensor_I1 = stress_tensor.trace();
         Mat3d deviatoric_stress_tensor = stress_tensor - (1.0 / dim) * stress_tensor.trace() * Mat3d::Identity();
         Real stress_tensor_J2 = 0.5 * (deviatoric_stress_tensor.cwiseProduct(deviatoric_stress_tensor.transpose())).sum();
-        if (-alpha_fai_ * stress_tensor_I1 + k_c_ < sqrt(stress_tensor_J2))
+        if (-alpha_phi_ * stress_tensor_I1 + k_c_ < sqrt(stress_tensor_J2))
         {
-            Real r = (-alpha_fai_ * stress_tensor_I1 + k_c_) / (sqrt(stress_tensor_J2) + TinyReal);
+            Real r = (-alpha_phi_ * stress_tensor_I1 + k_c_) / (sqrt(stress_tensor_J2) + TinyReal);
             stress_tensor = r * deviatoric_stress_tensor + (1.0 / dim) * stress_tensor_I1 * Mat3d::Identity();
         }
         return stress_tensor;
