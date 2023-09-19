@@ -265,7 +265,7 @@ class StressDiffusion : public BaseRelaxationPlastic
   protected:
     Real zeta_ = 0.1;
     int axis_;
-    Real gravity_, rho0_;
+    Real gravity_, rho0_, smoothing_length_;
     Real phi_, diffusion_coeff_;
 };
 } // namespace continuum_dynamics

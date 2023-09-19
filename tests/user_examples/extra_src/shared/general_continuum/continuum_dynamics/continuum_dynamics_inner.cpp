@@ -215,8 +215,8 @@ StressDiffusion::StressDiffusion(BaseInnerRelation &inner_relation, SharedPtr<Gr
       rho0_(plastic_continuum_.ReferenceDensity()),
       gravity_(gravity__ptr->InducedAcceleration()[axis]),
       phi_(plastic_continuum_.getFrictionAngle()),
-      diffusion_coeff_(zeta_ * sph_body_.sph_adaptation_->ReferenceSmoothingLength() *
-                       plastic_continuum_.ReferenceSoundSpeed()) {}
+      smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
+      diffusion_coeff_(zeta_ * smoothing_length_ * plastic_continuum_.ReferenceSoundSpeed()) {}
 //=================================================================================================//
 void StressDiffusion::interaction(size_t index_i, Real dt)
 {
@@ -232,7 +232,7 @@ void StressDiffusion::interaction(size_t index_i, Real dt)
         stress_derivative(0, 0) -= (1 - sin(phi_)) * rho0_ * gravity_ * y_ij;
         stress_derivative(1, 1) -= rho0_ * gravity_ * y_ij;
         stress_derivative(2, 2) -= (1 - sin(phi_)) * rho0_ * gravity_ * y_ij;
-        diffusion_stress_rate_ += 2.0 * zeta_ * smoothing_length_ * sound_speed_ * stress_derivative *
+        diffusion_stress_rate_ += 2.0 * diffusion_coeff_ * stress_derivative *
                                   r_ij * dW_ijV_j / (r_ij * r_ij + 0.01 * smoothing_length_);
     }
     stress_rate_3D_[index_i] = diffusion_stress_rate_;
