@@ -210,7 +210,8 @@ BaseRelaxationPlastic::BaseRelaxationPlastic(BaseInnerRelation &inner_relation)
       elastic_strain_tensor_3D_(particles_->elastic_strain_tensor_3D_),
       elastic_strain_rate_3D_(particles_->elastic_strain_rate_3D_) {}
 //=================================================================================================//
-StressDiffusion::StressDiffusion(BaseInnerRelation &inner_relation, SharedPtr<Gravity> gravity__ptr, int axis)
+StressDiffusion::
+    StressDiffusion(BaseInnerRelation &inner_relation, SharedPtr<Gravity> gravity__ptr, int axis)
     : BaseRelaxationPlastic(inner_relation), axis_(axis),
       rho0_(plastic_continuum_.ReferenceDensity()),
       gravity_(gravity__ptr->InducedAcceleration()[axis]),
@@ -228,12 +229,12 @@ void StressDiffusion::interaction(size_t index_i, Real dt)
         Real r_ij = inner_neighborhood.r_ij_[n];
         Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
         Real y_ij = (pos_[index_i] - pos_[index_j])[axis_];
-        Mat3d stress_derivative = stress_tensor_3D_[index_i] - stress_tensor_3D_[index_j];
-        stress_derivative(0, 0) -= (1 - sin(phi_)) * rho0_ * gravity_ * y_ij;
-        stress_derivative(1, 1) -= rho0_ * gravity_ * y_ij;
-        stress_derivative(2, 2) -= (1 - sin(phi_)) * rho0_ * gravity_ * y_ij;
-        diffusion_stress_rate_ += 2.0 * diffusion_coeff_ * stress_derivative *
-                                  r_ij * dW_ijV_j / (r_ij * r_ij + 0.01 * smoothing_length_);
+        Mat3d difference = stress_tensor_3D_[index_i] - stress_tensor_3D_[index_j];
+        difference(0, 0) -= (1 - sin(phi_)) * rho0_ * gravity_ * y_ij;
+        difference(1, 1) -= rho0_ * gravity_ * y_ij;
+        difference(2, 2) -= (1 - sin(phi_)) * rho0_ * gravity_ * y_ij;
+        diffusion_stress_rate_ += 2.0 * diffusion_coeff_ * difference * dW_ijV_j /
+                                  (r_ij + 0.01 * smoothing_length_);
     }
     stress_rate_3D_[index_i] = diffusion_stress_rate_;
 }
