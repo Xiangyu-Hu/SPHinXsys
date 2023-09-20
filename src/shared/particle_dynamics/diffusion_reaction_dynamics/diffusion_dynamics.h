@@ -62,7 +62,7 @@ class BaseDiffusionRelaxation
       public DiffusionReactionSimpleData<ParticlesType>
 {
   protected:
-    typedef typename ParticlesType::DiffusionReactionMaterial Material;
+   typedef typename ParticlesType::DiffusionReactionMaterial Material;
     Material &material_;
     StdVec<BaseDiffusion *> &all_diffusions_;
     StdVec<StdLargeVec<Real> *> &diffusion_species_;
@@ -94,7 +94,7 @@ class CorrectedKernelGradientInner
 
   public:
     explicit CorrectedKernelGradientInner(BaseParticles *inner_particles)
-        : B_(*inner_particles->getVariableByName<Matd>("CorrectionMatrix")){};
+        : B_(*inner_particles->getVariableByName<Matd>("KernelCorrectionMatrix")){};
     Vecd operator()(size_t index_i, size_t index_j, Real dW_ijV_j, const Vecd &e_ij)
     {
         return 0.5 * dW_ijV_j * (B_[index_i] + B_[index_j]) * e_ij;
@@ -138,8 +138,8 @@ class CorrectedKernelGradientContact
 
   public:
     CorrectedKernelGradientContact(BaseParticles *inner_particles, BaseParticles *contact_particles)
-        : B_(*inner_particles->getVariableByName<Matd>("CorrectionMatrix")),
-          contact_B_(*contact_particles->getVariableByName<Matd>("CorrectionMatrix")){};
+        : B_(*inner_particles->getVariableByName<Matd>("KernelCorrectionMatrix")),
+          contact_B_(*contact_particles->getVariableByName<Matd>("KernelCorrectionMatrix")){};
     Vecd operator()(size_t index_i, size_t index_j, Real dW_ijV_j, const Vecd &e_ij)
     {
         return 0.5 * dW_ijV_j * (B_[index_i] + contact_B_[index_j]) * e_ij;

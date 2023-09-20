@@ -58,6 +58,7 @@ class BaseDiffusion : public BaseMaterial
     size_t gradient_species_index_;
 
     virtual Real getReferenceDiffusivity() = 0;
+    virtual Real getDiffusionCoeffWithBoundary(size_t particle_i) = 0;
     virtual Real getInterParticleDiffusionCoeff(size_t particle_i, size_t particle_j, const Vecd &direction_from_j_to_i) = 0;
 };
 
@@ -81,9 +82,38 @@ class IsotropicDiffusion : public BaseDiffusion
     virtual ~IsotropicDiffusion(){};
 
     virtual Real getReferenceDiffusivity() override { return diff_cf_; };
+    virtual Real getDiffusionCoeffWithBoundary(size_t particle_i) override { return diff_cf_; }
     virtual Real getInterParticleDiffusionCoeff(size_t particle_i, size_t particle_j, const Vecd &direction_from_j_to_i) override
     {
         return diff_cf_;
+    };
+};
+
+/**
+ * @class LocalIsotropicDiffusion
+ * @brief diffusion coefficient is locally different (k is not uniformly distributed).
+ */
+class LocalIsotropicDiffusion : public IsotropicDiffusion
+{
+protected:
+    StdLargeVec<Real> local_thermal_conductivity_;
+
+public:
+    LocalIsotropicDiffusion(size_t diffusion_species_index, size_t gradient_species_index,
+                            Real diff_cf = 1.0)
+        : IsotropicDiffusion(diffusion_species_index, gradient_species_index, diff_cf)
+    {
+        material_type_name_ = "LocalIstropicDiffusion";
+    }
+    virtual ~LocalIsotropicDiffusion() {};
+
+    virtual void initializeLocalParameters(BaseParticles* base_particles) override;
+
+    virtual Real getReferenceDiffusivity() override { return diff_cf_; };
+    virtual Real getDiffusionCoeffWithBoundary(size_t particle_i) override { return local_thermal_conductivity_[particle_i]; };
+    virtual Real getInterParticleDiffusionCoeff(size_t particle_i, size_t particle_j, const Vecd& direction_from_j_to_i) override
+    {
+        return 0.5 * (local_thermal_conductivity_[particle_i] + local_thermal_conductivity_[particle_j]);
     };
 };
 

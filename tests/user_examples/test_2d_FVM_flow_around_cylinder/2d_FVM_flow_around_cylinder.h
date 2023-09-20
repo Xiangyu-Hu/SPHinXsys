@@ -7,10 +7,9 @@
 
 #ifndef FVM_FLOW_AROUND_CYLINDER_H
 #define FVM_FLOW_AROUND_CYLINDER_H
-#include "common_shared_FVM_classes.h"                     // shared classes for weakly-compressible and compressible fluid in FVM.
-#include "common_shared_eulerian_classes.h"                // shared eulerian classes for weakly-compressible and compressible fluid.
-#include "common_weakly_compressible_FVM_classes.hpp"      // classes for weakly compressible fluid only in FVM.
-#include "common_weakly_compressible_eulerian_classes.hpp" // eulerian classes for weakly compressible fluid only.
+#include "common_shared_FVM_classes.h"                // shared classes for weakly-compressible and compressible fluid in FVM.
+#include "common_weakly_compressible_FVM_classes.hpp" // classes for weakly compressible fluid only in FVM.
+#include "eulerian_fluid_dynamics.hpp"                // eulerian classes for weakly compressible fluid only.
 using namespace SPH;
 using namespace std;
 //----------------------------------------------------------------------
@@ -61,38 +60,18 @@ class WaterBlock : public ComplexShape
 };
 
 //----------------------------------------------------------------------
-//	Case-dependent initial condition.
-//----------------------------------------------------------------------
-class WeaklyCompressibleFluidInitialCondition
-    : public fluid_dynamics::FluidInitialCondition
-{
-  public:
-    explicit WeaklyCompressibleFluidInitialCondition(SPHBody &sph_body)
-        : FluidInitialCondition(sph_body), rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure"))
-    {
-        particles_->registerVariable(mom_, "Momentum");
-        particles_->registerVariable(dmom_dt_, "MomentumChangeRate");
-        particles_->registerVariable(dmom_dt_prior_, "OtherMomentumChangeRate");
-    };
-    void update(size_t index_i, Real dt){};
-
-  protected:
-    StdLargeVec<Vecd> mom_, dmom_dt_, dmom_dt_prior_;
-    StdLargeVec<Real> &rho_, &p_;
-};
-
-//----------------------------------------------------------------------
 //	DMFBoundaryConditionSetup
 //----------------------------------------------------------------------
 class FACBoundaryConditionSetup : public fluid_dynamics::FluidDataInner
 {
   public:
     FACBoundaryConditionSetup(BaseInnerRelationInFVM &inner_relation, vector<vector<size_t>> each_boundary_type_with_all_ghosts_index,
-                              vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_, vector<vector<size_t>> each_boundary_type_contact_real_index) : fluid_dynamics::FluidDataInner(inner_relation), rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
-                                                                                                                                                            Vol_(particles_->Vol_), vel_(particles_->vel_), mom_(*particles_->getVariableByName<Vecd>("Momentum")), pos_(particles_->pos_),
-                                                                                                                                                            fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())), total_ghost_particles_(particles_->total_ghost_particles_),
-                                                                                                                                                            real_particles_bound_(particles_->real_particles_bound_), each_boundary_type_with_all_ghosts_index_(each_boundary_type_with_all_ghosts_index),
-                                                                                                                                                            each_boundary_type_with_all_ghosts_eij_(each_boundary_type_with_all_ghosts_eij_), each_boundary_type_contact_real_index_(each_boundary_type_contact_real_index){};
+                              vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_, vector<vector<size_t>> each_boundary_type_contact_real_index)
+        : fluid_dynamics::FluidDataInner(inner_relation), rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
+          Vol_(particles_->Vol_), vel_(particles_->vel_), mom_(*particles_->getVariableByName<Vecd>("Momentum")), pos_(particles_->pos_),
+          fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())), total_ghost_particles_(particles_->total_ghost_particles_),
+          real_particles_bound_(particles_->real_particles_bound_), each_boundary_type_with_all_ghosts_index_(each_boundary_type_with_all_ghosts_index),
+          each_boundary_type_with_all_ghosts_eij_(each_boundary_type_with_all_ghosts_eij_), each_boundary_type_contact_real_index_(each_boundary_type_contact_real_index){};
     virtual ~FACBoundaryConditionSetup(){};
 
     void resetBoundaryConditions()

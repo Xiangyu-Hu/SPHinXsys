@@ -166,6 +166,9 @@ int main(int ac, char *av[])
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
     //----------------------------------------------------------------------
     ComplexRelation water_block_complex_relation(water_block, RealBodyVector{&wall_boundary, &gate});
     InnerRelation gate_inner_relation(gate);
@@ -190,7 +193,7 @@ int main(int ac, char *av[])
     SimpleDynamics<OffsetInitialPosition> gate_offset_position(gate, offset);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> gate_normal_direction(gate);
-    InteractionWithUpdate<CorrectedConfigurationInner> gate_corrected_configuration(gate_inner_relation);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> gate_corrected_configuration(gate_inner_relation);
     InteractionDynamics<solid_dynamics::PressureForceAccelerationFromFluidRiemann> fluid_pressure_force_on_gate(gate_water_contact_relation);
     solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(gate);
     //----------------------------------------------------------------------

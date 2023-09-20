@@ -33,11 +33,11 @@
 
 namespace SPH
 {
-class CorrectedConfigurationInner : public LocalDynamics, public GeneralDataDelegateInner
+class KernelCorrectionMatrixInner : public LocalDynamics, public GeneralDataDelegateInner
 {
   public:
-    CorrectedConfigurationInner(BaseInnerRelation &inner_relation, Real alpha = Real(0));
-    virtual ~CorrectedConfigurationInner(){};
+    KernelCorrectionMatrixInner(BaseInnerRelation &inner_relation, Real alpha = Real(0));
+    virtual ~KernelCorrectionMatrixInner(){};
 
   protected:
     Real alpha_;
@@ -47,16 +47,61 @@ class CorrectedConfigurationInner : public LocalDynamics, public GeneralDataDele
     void update(size_t index_i, Real dt = 0.0);
 };
 
-class CorrectedConfigurationComplex : public CorrectedConfigurationInner, public GeneralDataDelegateContactOnly
+class KernelCorrectionMatrixComplex : public KernelCorrectionMatrixInner, public GeneralDataDelegateContactOnly
 {
   public:
-    CorrectedConfigurationComplex(ComplexRelation &complex_relation,Real alpha = Real(0));
-    virtual ~CorrectedConfigurationComplex(){};
+    KernelCorrectionMatrixComplex(ComplexRelation &complex_relation, Real alpha = Real(0));
+    virtual ~KernelCorrectionMatrixComplex(){};
 
-  protected:
+  protected: 
     StdVec<StdLargeVec<Real> *> contact_Vol_;
     StdVec<StdLargeVec<Real> *> contact_mass_;
 
+    void interaction(size_t index_i, Real dt = 0.0);
+};
+
+/**
+ * @class KernelGradientCorrectionInner
+ * @brief obtain the corrected initial configuration in strong form and correct kernel gradient
+ */
+class KernelGradientCorrectionInner : public LocalDynamics, public GeneralDataDelegateInner
+{
+    ParticlesPairAverageInner<Matd> average_correction_matrix_;
+
+  public:
+    KernelGradientCorrectionInner(KernelCorrectionMatrixInner &kernel_correction_inner);
+    virtual ~KernelGradientCorrectionInner(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    template <class PairAverageType>
+    void correctKernelGradient(PairAverageType &average_correction_matrix, Neighborhood &neighborhood, size_t index_i)
+    {
+        for (size_t n = 0; n != neighborhood.current_size_; ++n)
+        {
+            size_t index_j = neighborhood.j_[n];
+            Vecd displacement = neighborhood.r_ij_[n] * neighborhood.e_ij_[n];
+
+            Vecd corrected_direction = average_correction_matrix(index_i, index_j) * neighborhood.e_ij_[n];
+            Real direction_norm = corrected_direction.norm();
+            neighborhood.dW_ijV_j_[n] *= direction_norm;
+            neighborhood.e_ij_[n] = corrected_direction / (direction_norm + Eps);
+            neighborhood.r_ij_[n] = displacement.dot(neighborhood.e_ij_[n]);
+        }
+    };
+};
+
+/**
+ * @class KernelGradientCorrectionComplex
+ * @brief obtain the corrected initial configuration in strong form and correct kernel gradient in complex topology
+ */
+class KernelGradientCorrectionComplex : public KernelGradientCorrectionInner, public GeneralDataDelegateContactOnly
+{
+    StdVec<ParticlesPairAverageContact<Matd>> contact_average_correction_matrix_;
+
+  public:
+    KernelGradientCorrectionComplex(KernelCorrectionMatrixComplex &kernel_correction_complex);
+    virtual ~KernelGradientCorrectionComplex(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };
 } // namespace SPH

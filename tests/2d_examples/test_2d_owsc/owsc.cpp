@@ -36,6 +36,9 @@ int main(int ac, char *av[])
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     InnerRelation flap_inner(flap);
@@ -51,7 +54,7 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> flap_normal_direction(flap);
 
     /** corrected strong configuration. */
-    InteractionWithUpdate<CorrectedConfigurationInner> flap_corrected_configuration(flap_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> flap_corrected_configuration(flap_inner);
     /** Time step initialization, add gravity. */
     SimpleDynamics<TimeStepInitialization> initialize_time_step_to_fluid(water_block, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
     /** Evaluation of density by summation approach. */

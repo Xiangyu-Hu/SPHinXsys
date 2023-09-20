@@ -1,6 +1,6 @@
 /**
  * @file 	2d_FVM_double_mach_reflection.cpp
- * @brief 	This is the compressible test for the realizaiton of FVM in the SPHinXsys.
+ * @brief 	This is the compressible test for the realization of FVM in the SPHinXsys.
  * @details We consider a double mach reflection case.
  * @author 	Zhentong Wang and Xiangyu Hu
  */
@@ -12,7 +12,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 int main(int ac, char *av[])
 {
-    // read data from ANASYS mesh.file
+    // read data from ANSYS mesh.file
     readMeshFile read_mesh_data(double_mach_reflection_mesh_fullpath);
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
@@ -24,7 +24,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    EulerianFluidBody wave_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
+    FluidBody wave_block(sph_system, makeShared<WaveBody>("WaveBody"));
     wave_block.defineParticlesAndMaterial<BaseParticles, CompressibleFluid>(rho0_another, heat_capacity_ratio);
     wave_block.generateParticles<ParticleGeneratorInFVM>(read_mesh_data.elements_center_coordinates_, read_mesh_data.elements_volumes_);
     wave_block.addBodyStateForRecording<Real>("Density");
@@ -51,8 +51,11 @@ int main(int ac, char *av[])
     the value is larger, the numerical dissipation larger*/
     InteractionWithUpdate<Integration1stHalfHLLCRiemann> pressure_relaxation(water_block_inner);
     InteractionWithUpdate<Integration2ndHalfHLLCRiemann> density_relaxation(water_block_inner);
-    // Visuallization in FVM with date in cell.
-    BodyStatesRecordingInMeshToVtp write_real_body_states(io_environment, sph_system.real_bodies_, read_mesh_data.elements_nodes_connection_, read_mesh_data.point_coordinates_2D_);
+    // Visualization in FVM with date in cell.
+    BodyStatesRecordingInMeshToVtp write_real_body_states(
+        io_environment, sph_system.real_bodies_, read_mesh_data.elements_nodes_connection_, read_mesh_data.point_coordinates_2D_);
+    RegressionTestEnsembleAverage<ReducedQuantityRecording<ReduceDynamics<MaximumSpeed>>>
+        write_maximum_speed(io_environment, wave_block);
     //----------------------------------------------------------------------
     //	Prepare the simulation with case specified initial condition if necessary.
     //----------------------------------------------------------------------
@@ -92,6 +95,7 @@ int main(int ac, char *av[])
             GlobalStaticVariables::physical_time_ += dt;
             if (number_of_iterations % screen_output_interval == 0)
             {
+                write_maximum_speed.writeToFile(number_of_iterations);
                 cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
                      << GlobalStaticVariables::physical_time_
                      << "	dt = " << dt << "\n";
@@ -108,6 +112,13 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
 
-
+    if (sph_system.GenerateRegressionData())
+    {
+        write_maximum_speed.generateDataBase(1.0e-3, 1.0e-3);
+    }
+    else
+    {
+        write_maximum_speed.testResult();
+    }
     return 0;
 }

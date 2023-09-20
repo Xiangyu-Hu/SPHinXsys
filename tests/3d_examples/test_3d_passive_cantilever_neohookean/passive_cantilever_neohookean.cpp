@@ -86,7 +86,7 @@ int main(int ac, char *av[])
      * This section define all numerical methods will be used in this case.
      */
     /** Corrected configuration. */
-    InteractionWithUpdate<CorrectedConfigurationInner>
+    InteractionWithUpdate<KernelCorrectionMatrixInner>
         corrected_configuration(cantilever_body_inner);
     /** Time step size calculation. */
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize>

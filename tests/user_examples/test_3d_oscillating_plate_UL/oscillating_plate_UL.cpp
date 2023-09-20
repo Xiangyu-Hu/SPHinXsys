@@ -140,7 +140,7 @@ int main(int ac, char *av[])
     InteractionDynamics<continuum_dynamics::AngularConservativeShearAccelerationRelaxation>
         plate_shear_acceleration_angular_conservative(plate_body_inner);
     /** Corrected configuration. */
-    InteractionWithUpdate<CorrectedConfigurationInner> corrected_configuration(plate_body_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration(plate_body_inner);
     Dynamics1Level<continuum_dynamics::ShearStressRelaxation> plate_shear_stress_relaxation(plate_body_inner);
     /** Constrain the Boundary. */
     BoundaryGeometry boundary_geometry(plate_body, "BoundaryGeometry");

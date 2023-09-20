@@ -70,6 +70,9 @@ int main(int ac, char *av[])
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation myocardium_muscle_body_inner(myocardium_muscle_body);
     //----------------------------------------------------------------------
@@ -78,7 +81,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(myocardium_muscle_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(myocardium_muscle_body_inner);
-    InteractionWithUpdate<CorrectedConfigurationInner> corrected_configuration(myocardium_muscle_body_inner);
+    InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration(myocardium_muscle_body_inner);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(myocardium_muscle_body);
     SimpleDynamics<MyocardiumActivation> myocardium_activation(myocardium_muscle_body);
     BodyRegionByParticle holder(myocardium_muscle_body, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_holder), halfsize_holder));
