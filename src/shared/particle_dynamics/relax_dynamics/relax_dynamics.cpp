@@ -125,12 +125,12 @@ RelaxationStepInner::
 //=================================================================================================//
 void RelaxationStepInner::exec(Real dt)
 {
-    //real_body_->updateCellLinkedList();
-    //inner_relation_.updateConfiguration();
+    real_body_->updateCellLinkedList();
+    inner_relation_.updateConfiguration();
     relaxation_acceleration_inner_->exec();
     Real dt_square = get_time_step_square_.exec();
     update_particle_position_.exec(dt_square);
-    //surface_bounding_.exec();
+    surface_bounding_.exec();
 }
 //=================================================================================================//
 RelaxationAccelerationComplexWithLevelSetCorrection::

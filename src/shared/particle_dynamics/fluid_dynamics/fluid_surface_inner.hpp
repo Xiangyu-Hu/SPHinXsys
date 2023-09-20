@@ -109,6 +109,7 @@ SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIdentification>::
 {
     this->particles_->registerVariable(previous_surface_indicator_, "PreviousSurfaceIndicator", [&](size_t i) -> int
                                        { return 1; });
+    this->particles_->template addVariableToWrite<int>("PreviousSurfaceIndicator");
     this->particles_->template registerSortableVariable<int>("PreviousSurfaceIndicator");
 }
 //=================================================================================================//

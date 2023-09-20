@@ -146,11 +146,13 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationInner>
         free_surface_indicator(water_body_inner);
     /** Apply transport velocity formulation. */
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionInner<BulkParticles>> transport_velocity_correction(water_body_inner);
-    
-    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannCorrect> fluid_pressure_relaxation_correct(water_body_inner);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemann> fluid_density_relaxation(water_body_inner);
     InteractionWithUpdate<CorrectedConfigurationInner> corrected_configuration_fluid(water_body_inner, 0.3);
+    InteractionWithUpdate<ConsistencyCorrectedConfigurationInner> consistency_configuration_fluid(water_body_inner, 0.1);
+    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionInner<BulkParticles>> transport_velocity_correction(water_body_inner);
+    InteractionDynamics<fluid_dynamics::TransportVelocityConsistencyCorrectionInner<BulkParticles>> transport_velocity_consistency(water_body_inner);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannCorrect> fluid_pressure_relaxation_correct(water_body_inner);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannConsistencyCorrect> fluid_pressure_relaxation_consistency(water_body_inner);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemann> fluid_density_relaxation(water_body_inner);
     SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_max);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
@@ -220,8 +222,10 @@ int main(int ac, char *av[])
             time_instance = TickCount::now();
             fluid_step_initialization.exec();
             free_surface_indicator.exec();
-            corrected_configuration_fluid.exec();
+            //corrected_configuration_fluid.exec();
+            consistency_configuration_fluid.exec();
             transport_velocity_correction.exec();
+            //transport_velocity_consistency.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
 
             time_instance = TickCount::now();
@@ -230,7 +234,8 @@ int main(int ac, char *av[])
 
              /** inner loop for dual-time criteria time-stepping.  */
             acoustic_dt = fluid_acoustic_time_step.exec();
-            fluid_pressure_relaxation_correct.exec(acoustic_dt);
+            //fluid_pressure_relaxation_correct.exec(acoustic_dt);
+            fluid_pressure_relaxation_consistency.exec(acoustic_dt);
             fluid_density_relaxation.exec(acoustic_dt);
             relaxation_time += acoustic_dt;
             integration_time += acoustic_dt;

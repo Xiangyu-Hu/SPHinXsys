@@ -33,11 +33,11 @@
 
 namespace SPH
 {
-class UpdateConfigurationInner : public LocalDynamics, public GeneralDataDelegateInner
+class ConfigurationInner : public LocalDynamics, public GeneralDataDelegateInner
 {
 public:
-    UpdateConfigurationInner(BaseInnerRelation &inner_relation);
-    virtual ~UpdateConfigurationInner() {};
+    ConfigurationInner(BaseInnerRelation &inner_relation);
+    virtual ~ConfigurationInner() {};
 
 protected:
     StdLargeVec<Matd>& B_;
@@ -46,11 +46,38 @@ protected:
     void update(size_t index_i, Real dt = 0.0);
 };
 
-class UpdateConfigurationComplex : public UpdateConfigurationInner, public GeneralDataDelegateContactOnly
+class ConfigurationComplex : public ConfigurationInner, public GeneralDataDelegateContactOnly
 {
 public:
-    UpdateConfigurationComplex(ComplexRelation& complex_relation);
-    virtual ~UpdateConfigurationComplex() {};
+    ConfigurationComplex(ComplexRelation& complex_relation);
+    virtual ~ConfigurationComplex() {};
+
+protected:
+    StdVec<StdLargeVec<Real>*> contact_Vol_;
+    StdVec<StdLargeVec<Real>*> contact_mass_;
+
+    void interaction(size_t index_i, Real dt = 0.0);
+};
+
+class ConsistencyCorrectedConfigurationInner : public LocalDynamics, public GeneralDataDelegateInner
+{
+public:
+    ConsistencyCorrectedConfigurationInner(BaseInnerRelation& inner_relation, Real alpha = Real(0));
+    virtual ~ConsistencyCorrectedConfigurationInner() {};
+
+protected:
+    Real alpha_;
+    StdLargeVec<Matd>& B_;
+
+    void interaction(size_t index_i, Real dt = 0.0);
+    void update(size_t index_i, Real dt = 0.0);
+};
+
+class ConsistencyCorrectedConfigurationComplex : public ConsistencyCorrectedConfigurationInner, public GeneralDataDelegateContactOnly
+{
+public:
+    ConsistencyCorrectedConfigurationComplex(ComplexRelation& complex_relation, Real alpha = Real(0));
+    virtual ~ConsistencyCorrectedConfigurationComplex() {};
 
 protected:
     StdVec<StdLargeVec<Real>*> contact_Vol_;

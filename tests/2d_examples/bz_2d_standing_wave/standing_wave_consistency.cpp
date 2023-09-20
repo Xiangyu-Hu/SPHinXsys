@@ -13,7 +13,7 @@ Real DL = 2.0;                      /**< Tank length. */
 Real DH = 2.0;                      /**< Tank height. */
 Real LL = 2.0;                      /**< Liquid column length. */
 Real LH = 1.0;                      /**< Liquid column height. */
-Real particle_spacing_ref = 0.02;   /**< Initial reference particle spacing. */
+Real particle_spacing_ref = 0.0025;   /**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4; /**< Extending width for boundary conditions. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 //----------------------------------------------------------------------
@@ -141,6 +141,7 @@ int main(int ac, char* av[])
     //  At last, we define the complex relaxations by combining previous defined
     //  inner and contact relations.
     //----------------------------------------------------------------------
+    InnerRelation water_block_inner(water_block);
     ComplexRelation water_block_complex(water_block, { &wall_boundary });
     //----------------------------------------------------------------------
     /** check whether run particle relaxation for body fitted particle distribution. */
@@ -193,11 +194,17 @@ int main(int ac, char* av[])
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
+     /** time-space method to detect surface particles. */
+    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> fluid_pressure_relaxation(water_block_complex);
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannCorrectWithWall> fluid_pressure_relaxation_correct(water_block_complex);
-    Dynamics1Level < fluid_dynamics::Integration1stHalfRiemannConsistencyCorrectWithWall> fluid_pressure_relaxation_consistency(water_block_complex);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannConsistencyCorrectWithWall> fluid_pressure_relaxation_consistency_correct(water_block_complex);
+
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_block_complex);
-    InteractionWithUpdate<CorrectedConfigurationComplex> corrected_configuration_fluid_weighted(water_block_complex, 0.3);
-    InteractionWithUpdate<UpdateConfigurationComplex> corrected_configuration_fluid(water_block_complex);
+
+    InteractionWithUpdate<ConfigurationComplex> configuration_fluid(water_block_complex);
+    InteractionWithUpdate<CorrectedConfigurationComplex> corrected_configuration_fluid(water_block_complex, 0.3);
+    InteractionWithUpdate<ConsistencyCorrectedConfigurationComplex> consistency_corrected_configuration_fluid(water_block_complex, 0.05);
+
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> fluid_density_by_summation(water_block_complex);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
@@ -241,7 +248,7 @@ int main(int ac, char* av[])
     int screen_output_interval = 100;
     int observation_sample_interval = screen_output_interval * 2;
     int restart_output_interval = screen_output_interval * 10;
-    Real end_time = 30.0;
+    Real end_time = 25.0;
     Real output_interval = 0.05;
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -272,19 +279,25 @@ int main(int ac, char* av[])
             fluid_step_initialization.exec();
             Real advection_dt = fluid_advection_time_step.exec();
             fluid_density_by_summation.exec();
-            //corrected_configuration_fluid_weighted.exec();
-            corrected_configuration_fluid.exec();
+
+            //configuration_fluid.exec();
+            //corrected_configuration_fluid.exec(); //WKGC2
+            consistency_corrected_configuration_fluid.exec(); //WKGC1
+
             interval_computing_time_step += TickCount::now() - time_instance;
 
             time_instance = TickCount::now();
             Real relaxation_time = 0.0;
             Real acoustic_dt = 0.0;
-            while (relaxation_time < advection_dt)      
+            while (relaxation_time < advection_dt)
             {
                 /** inner loop for dual-time criteria time-stepping.  */
                 acoustic_dt = fluid_acoustic_time_step.exec();
+
+                //fluid_pressure_relaxation.exec(acoustic_dt);
                 //fluid_pressure_relaxation_correct.exec(acoustic_dt);
-                fluid_pressure_relaxation_consistency.exec(acoustic_dt);
+                fluid_pressure_relaxation_consistency_correct.exec(acoustic_dt);
+
                 fluid_density_relaxation.exec(acoustic_dt);
                 relaxation_time += acoustic_dt;
                 integration_time += acoustic_dt;

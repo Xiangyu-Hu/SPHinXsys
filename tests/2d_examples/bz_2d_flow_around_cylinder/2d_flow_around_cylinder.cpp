@@ -18,7 +18,7 @@ int main(int ac, char *av[])
     /** Tag for run particle relaxation for the initial body fitted distribution. */
     sph_system.setRunParticleRelaxation(false);
     /** Tag for computation start with relaxed body fitted particles distribution. */
-    sph_system.setReloadParticles(false);
+    sph_system.setReloadParticles(true);
 // handle command line arguments
 #ifdef BOOST_AVAILABLE
     sph_system.handleCommandlineOptions(ac, av);
@@ -112,6 +112,8 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     /** Time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
+    InteractionWithUpdate<CorrectedConfigurationComplex> corrected_configuration_fluid_weighted(water_block_complex, 0.3);
+    InteractionWithUpdate<UpdateConfigurationComplex> corrected_configuration_fluid(water_block_complex);
     /** Pressure relaxation using Verlet time stepping. */
     /** Here, we do not use Riemann solver for pressure as the flow is viscous. */
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
@@ -189,7 +191,9 @@ int main(int ac, char *av[])
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
             viscous_acceleration.exec();
-            transport_velocity_correction.exec();
+            corrected_configuration_fluid.exec();
+            //transport_velocity_correction.exec();
+            transport_velocity_consistency.exec();
 
             /** FSI for viscous force. */
             viscous_force_on_cylinder.exec();
@@ -199,7 +203,9 @@ int main(int ac, char *av[])
             {
                 Real dt = SMIN(get_fluid_time_step_size.exec(), Dt);
                 /** Fluid pressure relaxation, first half. */
-                pressure_relaxation.exec(dt);
+                //pressure_relaxation.exec(dt);
+                //pressure_relaxation_correct.exec(dt);
+                pressure_relaxation_consistency.exec(dt);
                 /** FSI for pressure force. */
                 pressure_force_on_cylinder.exec();
                 /** Fluid pressure relaxation, second half. */
