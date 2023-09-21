@@ -25,7 +25,7 @@ namespace SPH
 			turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation")),
 			turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
 			is_near_wall_P1_(*particles_->getVariableByName<int>("IsNearWallP1")),
-			velocity_gradient(*particles_->getVariableByName<Matd>("Velocity_Gradient")),
+			velocity_gradient_(*particles_->getVariableByName<Matd>("VelocityGradient")),
 			k_production_(*particles_->getVariableByName<Real>("K_Production"))
 		{
 			particles_->registerVariable(wall_Y_plus_, "WallYplus");

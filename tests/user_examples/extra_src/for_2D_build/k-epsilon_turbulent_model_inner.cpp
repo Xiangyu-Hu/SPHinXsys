@@ -55,9 +55,9 @@ namespace SPH
 
 				particles_->addVariableToWrite<Real>("ChangeRateOfTKE");
 
-				particles_->registerVariable(velocity_gradient, "Velocity_Gradient");
-				particles_->registerSortableVariable<Matd>("Velocity_Gradient");
-				particles_->addVariableToWrite<Matd>("Velocity_Gradient");
+				particles_->registerVariable(velocity_gradient_, "VelocityGradient");
+				particles_->registerSortableVariable<Matd>("VelocityGradient");
+				particles_->addVariableToWrite<Matd>("VelocityGradient");
 				
 				//for test
 				//particles_->registerVariable(velocity_gradient_wall, "Velocity_Gradient_Wall");
@@ -71,7 +71,7 @@ namespace SPH
 		//=================================================================================================//
 		GetVelocityGradientInner::GetVelocityGradientInner(BaseInnerRelation& inner_relation)
 			: LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
-			vel_(particles_->vel_),velocity_gradient(*particles_->getVariableByName<Matd>("Velocity_Gradient")),
+			vel_(particles_->vel_),velocity_gradient_(*particles_->getVariableByName<Matd>("VelocityGradient")),
 			is_near_wall_P1_(*particles_->getVariableByName<int>("IsNearWallP1"))
 		{
 			//for test

@@ -397,7 +397,7 @@ protected:
 public:
 	TestVeloGrad(SPHBody& sph_body) : FluidInitialCondition(sph_body),
 		pos_(particles_->pos_), vel_(particles_->vel_),
-		velocity_gradient(*particles_->getVariableByName<Matd>("Velocity_Gradient"))
+		velocity_gradient(*particles_->getVariableByName<Matd>("VelocityGradient"))
 	{
 		particles_->registerVariable(expect_velo_gradient_, "ExpectVeloGradient");
 		particles_->addVariableToWrite<Matd>("ExpectVeloGradient");

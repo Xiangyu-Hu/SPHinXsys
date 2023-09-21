@@ -49,8 +49,8 @@ namespace SPH
 				{
 					size_t index_j = contact_neighborhood.j_[n];
 					Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
-					velocity_gradient[index_i] += -2.0*(vel_i - vel_ave_k[index_j]) * nablaW_ijV_j.transpose();
-					//velocity_gradient[index_i] += -0.0 * (vel_i - vel_ave_k[index_j]) * nablaW_ijV_j.transpose();
+					velocity_gradient_[index_i] += -2.0*(vel_i - vel_ave_k[index_j]) * nablaW_ijV_j.transpose();
+					//velocity_gradient_[index_i] += -0.0 * (vel_i - vel_ave_k[index_j]) * nablaW_ijV_j.transpose();
 
 					//for test
 					velocity_gradient_wall[index_i] += -2.0 * (vel_i - vel_ave_k[index_j]) * nablaW_ijV_j.transpose();
@@ -84,8 +84,8 @@ namespace SPH
 				{
 					size_t index_j = contact_neighborhood.j_[n];
 					Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
-					//velocity_gradient[index_i] += -2.3*(vel_i - vel_ave_k[index_j]) * nablaW_ijV_j.transpose();
-					velocity_gradient[index_i] += -0.0 * (vel_i - vel_ave_k[index_j]) * nablaW_ijV_j.transpose();
+					//velocity_gradient_[index_i] += -2.3*(vel_i - vel_ave_k[index_j]) * nablaW_ijV_j.transpose();
+					velocity_gradient_[index_i] += -0.0 * (vel_i - vel_ave_k[index_j]) * nablaW_ijV_j.transpose();
 
 					//for test 
 					velocity_gradient_wall[index_i] += -0.0 * (vel_i - vel_ave_k[index_j]) * nablaW_ijV_j.transpose();
@@ -97,9 +97,9 @@ namespace SPH
 				}
 			}
 	        */
-			strain_rate = 0.5 * (velocity_gradient[index_i].transpose() + velocity_gradient[index_i]);
+			strain_rate = 0.5 * (velocity_gradient_[index_i].transpose() + velocity_gradient_[index_i]);
 			Re_stress = 2.0 * strain_rate * turbu_mu_i / rho_i - (2.0 / 3.0) * turbu_k_i * Matd::Identity();
-			Matd k_production_matrix = Re_stress.array() * velocity_gradient[index_i].array();
+			Matd k_production_matrix = Re_stress.array() * velocity_gradient_[index_i].array();
 			k_production = k_production_matrix.sum();
 
 			std::cout << "K complex should not be executed, please check" << std::endl;
