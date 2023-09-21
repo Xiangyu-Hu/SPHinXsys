@@ -4,7 +4,7 @@
  * @details We consider a Eulerian flow passing by a cylinder in 2D.
  * @author 	Zhentong Wang and Xiangyu Hu
  */
-#include "2d_eulerian_flow_around_cylinder.h"
+#include "2d_eulerian_flow_around_cylinder_high_order.h"
 #include "sphinxsys.h"
 using namespace SPH;
 //----------------------------------------------------------------------
@@ -20,7 +20,7 @@ int main(int ac, char *av[])
     // Tag for run particle relaxation for the initial body fitted distribution.
     sph_system.setRunParticleRelaxation(false);
     // Tag for computation start with relaxed body fitted particles distribution.
-    sph_system.setReloadParticles(true);
+    sph_system.setReloadParticles(false);
     // Handle command line arguments and override the tags for particle relaxation and reload.
     sph_system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(sph_system);

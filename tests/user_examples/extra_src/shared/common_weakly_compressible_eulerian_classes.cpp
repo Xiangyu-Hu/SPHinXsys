@@ -57,6 +57,24 @@ FluidStarState NoRiemannSolverInWCEulerianMethod::getInterfaceState(const FluidS
     return interface_state;
 }
 //=================================================================================================//
+FluidConsistencyStarState NoRiemannSolverInWCEulerianMethod::getInterfaceConsistencyState(const FluidState& state_i, const FluidState& state_j, const Matd& B_i, const Matd& B_j, const Vecd& e_ij)
+{
+    Real ul = -e_ij.dot(state_i.vel_);
+    Real ur = -e_ij.dot(state_j.vel_);
+    Real rhol_cl = fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_) * state_i.rho_;
+    Real rhor_cr = fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_) * state_j.rho_;
+
+    Matd p_star = (rhol_cl * state_j.p_ * B_i + rhor_cr * state_i.p_ * B_j) / (rhol_cl + rhor_cr);
+    Real u_star = (rhol_cl * ul + rhor_cr * ur) / (rhol_cl + rhor_cr);
+    Vecd vel_star = (state_i.vel_ * state_i.rho_ + state_j.vel_ * state_j.rho_) / (state_i.rho_ + state_j.rho_) - e_ij * (u_star - (ul * state_i.rho_ + ur * state_j.rho_) / (state_i.rho_ + state_j.rho_));
+
+    FluidConsistencyStarState interface_state(vel_star, p_star);
+    interface_state.vel_ = vel_star;
+    interface_state.p_B_ = p_star;
+
+    return interface_state;
+}
+//=================================================================================================//
 FluidStarState AcousticRiemannSolverInEulerianMethod::getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
 {
     Real ul = -e_ij.dot(state_i.vel_);
@@ -76,10 +94,30 @@ FluidStarState AcousticRiemannSolverInEulerianMethod::getInterfaceState(const Fl
     return interface_state;
 }
 //=================================================================================================//
+FluidConsistencyStarState AcousticRiemannSolverInEulerianMethod::getInterfaceConsistencyState(const FluidState& state_i, const FluidState& state_j, const Matd& B_i, const Matd& B_j, const Vecd& e_ij)
+{
+    Real ul = -e_ij.dot(state_i.vel_);
+    Real ur = -e_ij.dot(state_j.vel_);
+    Real rhol_cl = fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_) * state_i.rho_;
+    Real rhor_cr = fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_) * state_j.rho_;
+    Real clr = (rhol_cl + rhor_cr) / (state_i.rho_ + state_j.rho_);
+
+    Matd p_star = (rhol_cl * state_j.p_ * B_i + rhor_cr * state_i.p_ * B_j + Matd::Identity() * rhol_cl * rhor_cr * (ul - ur) * SMIN(limiter_parameter_ * SMAX((ul - ur) / clr, Real(0)), Real(1))) / (rhol_cl + rhor_cr);
+    Real u_star = (rhol_cl * ul + rhor_cr * ur + (state_i.p_ - state_j.p_) * pow(SMIN(limiter_parameter_ * SMAX((ul - ur) / clr, Real(0)), Real(1)), 2)) / (rhol_cl + rhor_cr);
+    Vecd vel_star = (state_i.vel_ * state_i.rho_ + state_j.vel_ * state_j.rho_) / (state_i.rho_ + state_j.rho_) - e_ij * (u_star - (ul * state_i.rho_ + ur * state_j.rho_) / (state_i.rho_ + state_j.rho_));
+
+    FluidConsistencyStarState interface_state(vel_star, p_star);
+    interface_state.vel_ = vel_star;
+    interface_state.p_B_ = p_star;
+
+    return interface_state;
+}
+//=================================================================================================//
 EulerianBaseIntegration::EulerianBaseIntegration(BaseInnerRelation &inner_relation) : BaseIntegration(inner_relation),
                                                                                       Vol_(particles_->Vol_), mom_(*particles_->getVariableByName<Vecd>("Momentum")),
                                                                                       dmom_dt_(*particles_->getVariableByName<Vecd>("MomentumChangeRate")),
-                                                                                      dmom_dt_prior_(*particles_->getVariableByName<Vecd>("OtherMomentumChangeRate")){};
+                                                                                      dmom_dt_prior_(*particles_->getVariableByName<Vecd>("OtherMomentumChangeRate")),
+                                                                                      B_(*particles_->getVariableByName<Matd>("CorrectionMatrix")){};
 //=================================================================================================//
 NonReflectiveBoundaryVariableCorrection::NonReflectiveBoundaryVariableCorrection(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner<BaseParticles>(inner_relation),

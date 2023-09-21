@@ -84,6 +84,7 @@ class NoRiemannSolverInWCEulerianMethod
     NoRiemannSolverInWCEulerianMethod(Fluid &fluid_i, Fluid &fluid_j)
         : fluid_i_(fluid_i), fluid_j_(fluid_j){};
     FluidStarState getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij);
+    FluidConsistencyStarState getInterfaceConsistencyState(const FluidState &state_i, const FluidState &state_j, const Matd &B_i, const Matd &B_j, const Vecd &e_ij);
 };
 
 /**
@@ -99,6 +100,7 @@ class AcousticRiemannSolverInEulerianMethod
     AcousticRiemannSolverInEulerianMethod(Fluid &compressible_fluid_i, Fluid &compressible_fluid_j, Real limiter_parameter = 15.0)
         : fluid_i_(compressible_fluid_i), fluid_j_(compressible_fluid_j), limiter_parameter_(limiter_parameter){};
     FluidStarState getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij);
+    FluidConsistencyStarState getInterfaceConsistencyState(const FluidState& state_i, const FluidState& state_j, const Matd& B_i, const Matd& B_j, const Vecd& e_ij);
 };
 
 //----------------------------------------------------------------------
@@ -133,7 +135,8 @@ class InteractionWithWall : public BaseIntegrationType, public fluid_dynamics::F
 
   protected:
     StdVec<Real> wall_inv_rho0_;
-    StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_acc_ave_, wall_n_;
+    StdVec<StdLargeVec<Vecd>*> wall_vel_ave_, wall_acc_ave_, wall_n_;
+    StdVec<StdLargeVec<Matd>*> wall_B_;
 };
 
 /**
@@ -180,6 +183,7 @@ class EulerianBaseIntegration : public fluid_dynamics::BaseIntegration
   protected:
     StdLargeVec<Real> &Vol_;
     StdLargeVec<Vecd> &mom_, &dmom_dt_, &dmom_dt_prior_;
+    StdLargeVec<Matd>& B_;
 };
 
 /**

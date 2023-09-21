@@ -43,6 +43,18 @@ CompressibleFluidStarState NoRiemannSolverInCompressibleEulerianMethod::
     return CompressibleFluidStarState(rho_star, v_star, p_star, energy_star);
 }
 //=================================================================================================//
+CompressibleFluidConsistencyStarState NoRiemannSolverInCompressibleEulerianMethod::
+getConsistencyInterfaceState(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j,
+                             const Matd& B_i, const Matd B_j, const Vecd& e_ij)
+{
+    Matd p_star = 0.5 * (state_i.p_ * B_j + state_j.p_ * B_i);
+    Vecd v_star = 0.5 * (state_i.vel_ + state_j.vel_);
+    Real rho_star = 0.5 * (state_i.rho_ + state_j.rho_);
+    Matd energy_star = 0.5 * (state_i.E_ * B_j + state_j.E_ * B_i);
+
+    return CompressibleFluidConsistencyStarState(rho_star, v_star, p_star, energy_star);
+}
+//=================================================================================================//
 HLLCRiemannSolver::HLLCRiemannSolver(CompressibleFluid &compressible_fluid_i, CompressibleFluid &compressible_fluid_j, Real limiter_parameter)
     : compressible_fluid_i_(compressible_fluid_i), compressible_fluid_j_(compressible_fluid_j){};
 //=================================================================================================//
@@ -87,6 +99,50 @@ CompressibleFluidStarState HLLCRiemannSolver::
         energy_star = state_j.E_;
     }
     return CompressibleFluidStarState(rho_star, v_star, p_star, energy_star);
+}
+//=================================================================================================//
+CompressibleFluidConsistencyStarState HLLCRiemannSolver::
+getConsistencyInterfaceState(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j,
+                             const Matd& B_i, const Matd B_j, const Vecd& e_ij)
+{
+    Real ul = -e_ij.dot(state_i.vel_);
+    Real ur = -e_ij.dot(state_j.vel_);
+    Real s_l = ul - compressible_fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_);
+    Real s_r = ur + compressible_fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_);
+    Real s_star = (state_j.rho_ * ur * (s_r - ur) + state_i.rho_ * ul * (ul - s_l) + state_i.p_ - state_j.p_) / (state_j.rho_ * (s_r - ur) + state_i.rho_ * (ul - s_l));
+    Matd p_star = Matd::Identity();
+    Vecd v_star = Vecd::Zero();
+    Real rho_star = 0.0;
+    Matd energy_star = Matd::Identity();
+    if (0.0 < s_l)
+    {
+        p_star = state_i.p_ * Matd::Identity();
+        v_star = state_i.vel_;
+        rho_star = state_i.rho_;
+        energy_star = state_i.E_ * Matd::Identity();
+    }
+    if (s_l <= 0.0 && 0.0 <= s_star)
+    {
+        p_star = 0.5 * (state_i.p_ * B_j + state_j.p_ * B_i) + 0.5 * Matd::Identity() * (state_i.rho_ * (ul - s_l) * (ul - s_star) + state_j.rho_ * (ur - s_r) * (ur - s_star));
+        v_star = state_i.vel_ - e_ij * (s_star - ul);
+        rho_star = state_i.rho_ * (s_l - ul) / (s_l - s_star);
+        energy_star = ((s_l - ul) * state_i.E_ * Matd::Identity() - state_i.p_ * ul * Matd::Identity() + p_star * s_star) / (s_l - s_star);
+    }
+    if (s_star <= 0.0 && 0.0 <= s_r)
+    {
+        p_star = 0.5 * (state_i.p_ * B_j + state_j.p_ * B_i) + 0.5 * Matd::Identity() * (state_i.rho_ * (ul - s_l) * (ul - s_star) + state_j.rho_ * (ur - s_r) * (ur - s_star));
+        v_star = state_j.vel_ - e_ij * (s_star - ur);
+        rho_star = state_j.rho_ * (s_r - ur) / (s_r - s_star);
+        energy_star = ((s_r - ur) * state_j.E_ * Matd::Identity() - state_j.p_ * ur * Matd::Identity() + p_star * s_star) / (s_r - s_star);
+    }
+    if (s_r < 0.0)
+    {
+        p_star = state_j.p_ * Matd::Identity();
+        v_star = state_j.vel_;
+        rho_star = state_j.rho_;
+        energy_star = state_j.E_ * Matd::Identity();
+    }
+    return CompressibleFluidConsistencyStarState(rho_star, v_star, p_star, energy_star);
 }
 //=================================================================================================//
 HLLCWithLimiterRiemannSolver::HLLCWithLimiterRiemannSolver(CompressibleFluid &compressible_fluid_i, CompressibleFluid &compressible_fluid_j, Real limiter_parameter)
@@ -141,6 +197,56 @@ CompressibleFluidStarState HLLCWithLimiterRiemannSolver::
     return CompressibleFluidStarState(rho_star, v_star, p_star, energy_star);
 }
 //=================================================================================================//
+CompressibleFluidConsistencyStarState HLLCWithLimiterRiemannSolver::
+getConsistencyInterfaceState(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j,
+                             const Matd& B_i, const Matd B_j, const Vecd& e_ij)
+{
+    Real ul = -e_ij.dot(state_i.vel_);
+    Real ur = -e_ij.dot(state_j.vel_);
+    Real s_l = ul - compressible_fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_);
+    Real s_r = ur + compressible_fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_);
+    Real rhol_cl = compressible_fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_) * state_i.rho_;
+    Real rhor_cr = compressible_fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_) * state_j.rho_;
+    Real clr = (rhol_cl + rhor_cr) / (state_i.rho_ + state_j.rho_);
+    Real s_star = (state_j.p_ - state_i.p_) * pow(SMIN(limiter_parameter_ * SMAX((ul - ur) / clr, Real(0)), Real(1)), 2) / (state_i.rho_ * (s_l - ul) - state_j.rho_ * (s_r - ur)) +
+        (state_i.rho_ * (s_l - ul) * ul - state_j.rho_ * (s_r - ur) * ur) / (state_i.rho_ * (s_l - ul) - state_j.rho_ * (s_r - ur));
+    Matd p_star = Matd::Identity();
+    Vecd v_star = Vecd::Zero();
+    Real rho_star = 0.0;
+    Matd energy_star = Matd::Identity();
+    if (0.0 < s_l)
+    {
+        p_star = state_i.p_ * Matd::Identity();
+        v_star = state_i.vel_;
+        rho_star = state_i.rho_;
+        energy_star = state_i.E_ * Matd::Identity();
+    }
+    if (s_l <= 0.0 && 0.0 <= s_star)
+    {
+        p_star = 0.5 * (state_i.p_ * B_j + state_j.p_ * B_i) +
+            0.5 * Matd::Identity() * (state_i.rho_ * (s_l - ul) * (s_star - ul) + state_j.rho_ * (s_r - ur) * (s_star - ur)) * SMIN(limiter_parameter_ * SMAX((ul - ur) / clr, Real(0)), Real(1));
+        v_star = state_i.vel_ - e_ij * (s_star - ul);
+        rho_star = state_i.rho_ * (s_l - ul) / (s_l - s_star);
+        energy_star = ((s_l - ul) * state_i.E_ * Matd::Identity() - state_i.p_ * ul * Matd::Identity() + p_star * s_star) / (s_l - s_star);
+    }
+    if (s_star <= 0.0 && 0.0 <= s_r)
+    {
+        p_star = 0.5 * (state_i.p_ * B_j + state_j.p_ * B_i) +
+            0.5 * Matd::Identity() * (state_i.rho_ * (s_l - ul) * (s_star - ul) + state_j.rho_ * (s_r - ur) * (s_star - ur)) * SMIN(limiter_parameter_ * SMAX((ul - ur) / clr, Real(0)), Real(1));
+        v_star = state_j.vel_ - e_ij * (s_star - ur);
+        rho_star = state_j.rho_ * (s_r - ur) / (s_r - s_star);
+        energy_star = ((s_r - ur) * state_j.E_ * Matd::Identity() - state_j.p_ * ur * Matd::Identity() + p_star * s_star) / (s_r - s_star);
+    }
+    if (s_r < 0.0)
+    {                                                                                                                                                                                                                                                                          
+        p_star = state_j.p_ * Matd::Identity();
+        v_star = state_j.vel_;
+        rho_star = state_j.rho_;
+        energy_star = state_j.E_ * Matd::Identity();
+    }
+    return CompressibleFluidConsistencyStarState(rho_star, v_star, p_star, energy_star);
+}
+//=================================================================================================//
 EulerianCompressibleViscousAccelerationInner::EulerianCompressibleViscousAccelerationInner(BaseInnerRelation &inner_relation)
     : ViscousAccelerationInner(inner_relation),
       dE_dt_prior_(*particles_->getVariableByName<Real>("OtherEnergyChangeRate")),
@@ -173,23 +279,8 @@ BaseIntegrationInCompressible::BaseIntegrationInCompressible(BaseInnerRelation &
                                                                                                   dE_dt_prior_(*particles_->getVariableByName<Real>("OtherEnergyChangeRate")),
                                                                                                   mom_(*particles_->getVariableByName<Vecd>("Momentum")),
                                                                                                   dmom_dt_(*particles_->getVariableByName<Vecd>("MomentumChangeRate")),
-                                                                                                  dmom_dt_prior_(*particles_->getVariableByName<Vecd>("OtherMomentumChangeRate")){};
-//=================================================================================================//
-//ConservativeNoRiemannSolverInCompressibleEulerianMethod::
-//ConservativeNoRiemannSolverInCompressibleEulerianMethod(CompressibleFluid& compressible_fluid_i, CompressibleFluid& compressible_fluid_j)
-//    : compressible_fluid_i_(compressible_fluid_i), compressible_fluid_j_(compressible_fluid_j) {};
-////=================================================================================================//
-//CompressibleFluidStarState ConservativeNoRiemannSolverInCompressibleEulerianMethod::
-//getInterfaceState(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j, 
-//                  const Matd& B_i, const Matd& B_j, const Vecd& e_ij)
-//{
-//    Real p_star = 0.5 * (state_i.p_ * B_j + state_j.p_ * B_i);
-//    Vecd v_star = 0.5 * (state_i.vel_ + state_j.vel_);
-//    Real rho_star = 0.5 * (state_i.rho_ + state_j.rho_);
-//    Real energy_star = 0.5 * (state_i.E_ + state_j.E_);
-//
-//    return CompressibleFluidStarState(rho_star, v_star, p_star, energy_star);
-//}
+                                                                                                  dmom_dt_prior_(*particles_->getVariableByName<Vecd>("OtherMomentumChangeRate")),
+                                                                                                  B_(*particles_->getVariableByName<Matd>("CorrectionMatrix")){};
 //=================================================================================================//
 
 } // namespace SPH

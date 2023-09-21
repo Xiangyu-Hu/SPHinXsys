@@ -100,6 +100,18 @@ struct CompressibleFluidStarState : FluidStarState
 };
 
 /**
+ * @struct CompressibleFluidConsistencyStarState
+ * @brief  Struct for stored states of Riemann solver in compressible flow.
+ */
+struct CompressibleFluidConsistencyStarState : FluidConsistencyStarState
+{
+    Real rho_;
+    Matd E_B_;
+    CompressibleFluidConsistencyStarState(Real rho, Vecd vel, Matd p_B, Matd E_B)
+        : FluidConsistencyStarState(vel, p_B), rho_(rho), E_B_(E_B) {};
+};
+
+/**
  * @struct NoRiemannSolverInCompressibleEulerianMethod
  * @brief  NO RiemannSolver for weakly-compressible flow in Eulerian method for compressible flow.
  */
@@ -110,6 +122,8 @@ class NoRiemannSolverInCompressibleEulerianMethod
   public:
     NoRiemannSolverInCompressibleEulerianMethod(CompressibleFluid &fluid_i, CompressibleFluid &fluid_j);
     CompressibleFluidStarState getInterfaceState(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &e_ij);
+    CompressibleFluidConsistencyStarState getConsistencyInterfaceState(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j,
+                                                                       const Matd& B_i, const Matd B_j, const Vecd& e_ij);
 };
 
 /**
@@ -123,6 +137,8 @@ class HLLCRiemannSolver
   public:
     HLLCRiemannSolver(CompressibleFluid &compressible_fluid_i, CompressibleFluid &compressible_fluid_j, Real limiter_parameter = 0.0);
     CompressibleFluidStarState getInterfaceState(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &e_ij);
+    CompressibleFluidConsistencyStarState getConsistencyInterfaceState(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j,
+                                                                       const Matd& B_i, const Matd B_j, const Vecd& e_ij);
 };
 /**
  * @struct HLLCWithLimiterRiemannSolver
@@ -136,6 +152,8 @@ class HLLCWithLimiterRiemannSolver
   public:
     HLLCWithLimiterRiemannSolver(CompressibleFluid &compressible_fluid_i, CompressibleFluid &compressible_fluid_j, Real limiter_parameter = 5.0);
     CompressibleFluidStarState getInterfaceState(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &e_ij);
+    CompressibleFluidConsistencyStarState getConsistencyInterfaceState(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j,
+                                                                       const Matd& B_i, const Matd B_j, const Vecd& e_ij);
 };
 
 /**
@@ -169,6 +187,7 @@ class BaseIntegrationInCompressible : public fluid_dynamics::BaseIntegration
     CompressibleFluid compressible_fluid_;
     StdLargeVec<Real> &Vol_, &E_, &dE_dt_, &dE_dt_prior_;
     StdLargeVec<Vecd> &mom_, &dmom_dt_, &dmom_dt_prior_;
+    StdLargeVec<Matd>& B_;
 };
 
 /**
@@ -207,21 +226,6 @@ class BaseIntegration2ndHalf : public BaseIntegrationInCompressible
 using Integration2ndHalf = BaseIntegration2ndHalf<NoRiemannSolverInCompressibleEulerianMethod>;
 using Integration2ndHalfHLLCRiemann = BaseIntegration2ndHalf<HLLCRiemannSolver>;
 using Integration2ndHalfHLLCWithLimiterRiemann = BaseIntegration2ndHalf<HLLCWithLimiterRiemannSolver>;
-
-/*==================================================================================================================*/
-/**
- * @class ConservativeNoRiemannSolverInCompressibleEulerianMethod
- * @brief Conservative no riemann solver for weakly-compressible flow in Eulerian method for compressible flow.
- */
-//class ConservativeNoRiemannSolverInCompressibleEulerianMethod
-//{
-//    CompressibleFluid& compressible_fluid_i_, & compressible_fluid_j_;
-//
-//public:
-//    ConservativeNoRiemannSolverInCompressibleEulerianMethod(CompressibleFluid& fluid_i, CompressibleFluid& fluid_j);
-//    CompressibleFluidStarState getInterfaceState(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j,
-//                                                 const Matd& B_i, const Matd& B_j, const Vecd& e_ij);
-//};
 
 } // namespace SPH
 #endif // COMMON_COMPRESSIBLE_EULERIAN_CLASSES_H

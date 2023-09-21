@@ -17,7 +17,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     sph_system.setRunParticleRelaxation(false); //Tag for run particle relaxation for body-fitted distribution
-    sph_system.setReloadParticles(true);        //Tag for computation with save particles distribution
+    sph_system.setReloadParticles(false);       //Tag for computation with save particles distribution
 #ifdef BOOST_AVAILABLE
     sph_system.handleCommandlineOptions(ac, av);// handle command line arguemnts.
 #endif
@@ -98,7 +98,7 @@ int main(int ac, char *av[])
 
         GlobalStaticVariables::physical_time_ = ite;
         /* The procedure to obtain uniform particle distribution that satisfies the 0ht order consistency. */
-        while (current_zero_maximum_residual > 0.00001)
+        while (current_zero_maximum_residual > 0.0001)
         {
             periodic_condition_x.bounding_.exec();
             periodic_condition_y.bounding_.exec();
