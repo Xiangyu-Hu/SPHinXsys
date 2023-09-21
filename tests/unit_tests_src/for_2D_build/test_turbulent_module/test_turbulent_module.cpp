@@ -99,8 +99,8 @@ protected:
 	InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelInner> epsilon_equation_relaxation;
 	
 	//** Test K gradient *
-	InteractionDynamics<fluid_dynamics::TKEnergyAccInner, SequencedPolicy> turbulent_kinetic_energy_acceleration;
-	//InteractionDynamics<fluid_dynamics::TKEnergyAccComplex, SequencedPolicy> turbulent_kinetic_energy_acceleration;
+	//InteractionDynamics<fluid_dynamics::TKEnergyAccInner, SequencedPolicy> turbulent_kinetic_energy_acceleration;
+	InteractionDynamics<fluid_dynamics::TKEnergyAccComplex, SequencedPolicy> turbulent_kinetic_energy_acceleration;
 
 	
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction;
@@ -128,8 +128,8 @@ public:
 		epsilon_equation_relaxation(water_block_inner),
 		
 		//** Test K gradient *
-		turbulent_kinetic_energy_acceleration(water_block_inner),
-		//turbulent_kinetic_energy_acceleration(water_block_complex_relation),
+		//turbulent_kinetic_energy_acceleration(water_block_inner),
+		turbulent_kinetic_energy_acceleration(water_block_complex_relation),
 
 		wall_boundary_normal_direction(wall_boundary),
 		standard_wall_function_correction(water_block_complex_relation),

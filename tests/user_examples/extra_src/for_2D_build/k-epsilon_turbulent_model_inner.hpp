@@ -35,6 +35,26 @@ namespace SPH
 	namespace fluid_dynamics
 	{
 		//=================================================================================================//
+		void GetVelocityGradientInner::interaction(size_t index_i, Real dt)
+		{
+			//** The near wall velo grad is updated in wall function part *
+			if (is_near_wall_P1_[index_i] == 1)
+				return;
+
+			Vecd vel_i = vel_[index_i];
+			velocity_gradient[index_i] = Matd::Zero();
+			const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+			{
+				size_t index_j = inner_neighborhood.j_[n];
+				Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+				//** Strong form *
+				velocity_gradient[index_i] += -(vel_i - vel_[index_j]) * nablaW_ijV_j.transpose();
+				//** Weak form *
+				//velocity_gradient[index_i] += (vel_i + vel_[index_j]) * nablaW_ijV_j.transpose();
+			}
+		}
+		//=================================================================================================//
 		void K_TurtbulentModelInner::interaction(size_t index_i, Real dt)
 		{
 				Vecd vel_i = vel_[index_i];
@@ -49,7 +69,7 @@ namespace SPH
 				Real k_lap(0.0);
 				Matd strain_rate = Matd::Zero();
 				Matd Re_stress = Matd::Zero();
-				velocity_gradient[index_i] = Matd::Zero();
+				//velocity_gradient[index_i] = Matd::Zero();
 
 				const Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 				for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -58,9 +78,9 @@ namespace SPH
 
 					//Vecd nablaW_ijV_j = 0.5* inner_neighborhood.dW_ijV_j_[n] * (B_[index_i] + B_[index_j]) * inner_neighborhood.e_ij_[n];
 					//Vecd nablaW_ijV_j =  inner_neighborhood.dW_ijV_j_[n] * B_[index_i]  * inner_neighborhood.e_ij_[n];
-					Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] *  inner_neighborhood.e_ij_[n];
+					//Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] *  inner_neighborhood.e_ij_[n];
 					//** Strong form *
-					velocity_gradient[index_i] += -(vel_i - vel_[index_j]) * nablaW_ijV_j.transpose();
+					//velocity_gradient[index_i] += -(vel_i - vel_[index_j]) * nablaW_ijV_j.transpose();
 					//** Weak form *
 					//velocity_gradient[index_i] += (vel_i + vel_[index_j]) * nablaW_ijV_j.transpose();
 
@@ -73,8 +93,10 @@ namespace SPH
 				strain_rate = 0.5 * (velocity_gradient[index_i].transpose() + velocity_gradient[index_i]);
 				Re_stress = 2.0 * strain_rate * turbu_mu_i / rho_i - (2.0 / 3.0) * turbu_k_i * Matd::Identity();
 				Matd k_production_matrix = Re_stress.array() * velocity_gradient[index_i].array();
-				k_production_[index_i] = k_production_matrix.sum();
-
+				//** The near wall k production is updated in wall function part *
+				if (is_near_wall_P1_[index_i] != 1) 
+					k_production_[index_i] = k_production_matrix.sum();
+				
 				dk_dt_[index_i] = k_production_[index_i] - turbu_epsilon_[index_i] + k_lap;
 
 				//**Temp treatment to see the influence of S region * 

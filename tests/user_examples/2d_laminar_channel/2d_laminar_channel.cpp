@@ -77,7 +77,7 @@ int main(int ac, char* av[])
 		inlet_outlet_surface_particle_indicator(water_block_complex_relation);
 	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation(water_block_complex_relation);
 	water_block.addBodyStateForRecording<Real>("Pressure");		   // output for debug
-	water_block.addBodyStateForRecording<int>("SurfaceIndicator"); // output for debug
+	water_block.addBodyStateForRecording<int>("Indicator"); // output for debug
 	
 	water_block.addBodyStateForRecording<Vecd>("PriorAcceleration");		   // output for check
 	//water_block.addBodyStateForRecording<Vecd>("Acceleration");                // output for check

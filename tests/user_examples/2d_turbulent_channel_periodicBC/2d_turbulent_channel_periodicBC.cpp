@@ -72,14 +72,14 @@ int main(int ac, char* av[])
 
 
 		
-	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex,SequencedPolicy> transport_velocity_correction(water_block_complex_relation);
+	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_complex_relation);
 	
 	//InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex>
 	//	inlet_outlet_surface_particle_indicator(water_block_complex_relation);
 	
 	InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_complex_relation);
 	water_block.addBodyStateForRecording<Real>("Pressure");		   // output for debug
-	water_block.addBodyStateForRecording<int>("SurfaceIndicator"); // output for debug
+	water_block.addBodyStateForRecording<int>("Indicator"); // output for debug
 
 	/** Define the external force for turbulent startup */
 	/**to reduce instability at start-up stage, 1e-4 is from poisulle case */
@@ -135,7 +135,7 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	size_t number_of_iterations = system.RestartStep();
 	int screen_output_interval = 100;
-	Real end_time = 600.0;
+	Real end_time = 400.0;
 	Real output_interval = end_time / 40.0; /**< Time stamps for output of body states. */
 	Real dt = 0.0;							 /**< Default acoustic time step sizes. */
 	//----------------------------------------------------------------------

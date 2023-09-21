@@ -56,8 +56,9 @@ int main(int ac, char* av[])
 	//Attention! the original one does use Riemann solver for density
 	Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(water_block_complex_relation);
 	
-	/** Turbulent.Note: When use wall function, K Epsilon and TKE gradient calculation only consider inner */
+	/** Turbulent.Note: When use wall function, K Epsilon calculation only consider inner */
 	InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner);
+	InteractionDynamics<fluid_dynamics::GetVelocityGradientInner, SequencedPolicy> get_velocity_gradient(water_block_inner);
 	InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelInner> epsilon_equation_relaxation(water_block_inner);
 	InteractionDynamics<fluid_dynamics::TKEnergyAccComplex> turbulent_kinetic_energy_acceleration(water_block_complex_relation);
 	
@@ -75,13 +76,12 @@ int main(int ac, char* av[])
 	InteractionDynamics<fluid_dynamics::TurbulentViscousAccelerationWithWall, SequencedPolicy> turbulent_viscous_acceleration(water_block_complex_relation);
 
 
-		
-	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex,SequencedPolicy> transport_velocity_correction(water_block_complex_relation);
+	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_complex_relation);
 	InteractionWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex>
 		inlet_outlet_surface_particle_indicator(water_block_complex_relation);
 	InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation(water_block_complex_relation);
 	water_block.addBodyStateForRecording<Real>("Pressure");		   // output for debug
-	water_block.addBodyStateForRecording<int>("SurfaceIndicator"); // output for debug
+	water_block.addBodyStateForRecording<int>("Indicator"); // output for debug
 
 	/** Define the external force for turbulent startup */
 	/**to reduce instability at start-up stage, 1e-4 is from poisulle case */
@@ -144,7 +144,7 @@ int main(int ac, char* av[])
 	size_t number_of_iterations = system.RestartStep();
 	int screen_output_interval = 100;
 	Real end_time = 200.0;
-	Real output_interval = end_time / 40.0; /**< Time stamps for output of body states. */
+	Real output_interval = end_time / 4000.0; /**< Time stamps for output of body states. */
 	Real dt = 0.0;							 /**< Default acoustic time step sizes. */
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
@@ -196,6 +196,7 @@ int main(int ac, char* av[])
 
 				density_relaxation.exec(dt);
 
+				get_velocity_gradient.exec(dt);
 				k_equation_relaxation.exec(dt);
 				epsilon_equation_relaxation.exec(dt);
 				standard_wall_function_correction.exec();

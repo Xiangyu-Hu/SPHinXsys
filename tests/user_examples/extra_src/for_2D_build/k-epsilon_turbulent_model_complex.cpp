@@ -23,7 +23,10 @@ namespace SPH
 			cutoff_radius_(inner_relation.getSPHBody().sph_adaptation_->getKernel()->CutOffRadius()),
 			turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
 			turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation")),
-			turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity"))
+			turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
+			is_near_wall_P1_(*particles_->getVariableByName<int>("IsNearWallP1")),
+			velocity_gradient(*particles_->getVariableByName<Matd>("Velocity_Gradient")),
+			k_production_(*particles_->getVariableByName<Real>("K_Production"))
 		{
 			particles_->registerVariable(wall_Y_plus_, "WallYplus");
 			particles_->registerSortableVariable<Real>("WallYplus");
@@ -34,9 +37,9 @@ namespace SPH
 			particles_->addVariableToWrite<Real>("WallYstar");
 
 
-			particles_->registerVariable(is_near_wall_P1_, "IsNearWallP1");
-			particles_->registerSortableVariable<int>("IsNearWallP1");
-			particles_->addVariableToWrite<int>("IsNearWallP1");
+			//particles_->registerVariable(is_near_wall_P1_, "IsNearWallP1");
+			//particles_->registerSortableVariable<int>("IsNearWallP1");
+			//particles_->addVariableToWrite<int>("IsNearWallP1");
 			particles_->registerVariable(is_near_wall_P2_, "IsNearWallP2");
 			particles_->registerSortableVariable<int>("IsNearWallP2");
 			particles_->addVariableToWrite<int>("IsNearWallP2");

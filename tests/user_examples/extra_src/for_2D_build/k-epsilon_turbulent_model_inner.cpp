@@ -43,6 +43,11 @@ namespace SPH
 				particles_->registerSortableVariable<Matd>("CorrectionMatrix");
 				particles_->addVariableToWrite<Matd>("CorrectionMatrix");
 
+				particles_->registerVariable(is_near_wall_P1_, "IsNearWallP1");
+				particles_->registerSortableVariable<int>("IsNearWallP1");
+				particles_->addVariableToWrite<int>("IsNearWallP1");
+
+
 				//** for test */
 				particles_->registerVariable(k_diffusion_, "K_Diffusion");
 				particles_->registerSortableVariable<Real>("K_Diffusion");
@@ -55,13 +60,24 @@ namespace SPH
 				particles_->addVariableToWrite<Matd>("Velocity_Gradient");
 				
 				//for test
-				particles_->registerVariable(velocity_gradient_wall, "Velocity_Gradient_Wall");
-				particles_->registerSortableVariable<Matd>("Velocity_Gradient_Wall");
-				particles_->addVariableToWrite<Matd>("Velocity_Gradient_Wall");
+				//particles_->registerVariable(velocity_gradient_wall, "Velocity_Gradient_Wall");
+				//particles_->registerSortableVariable<Matd>("Velocity_Gradient_Wall");
+				//particles_->addVariableToWrite<Matd>("Velocity_Gradient_Wall");
 
 				particles_->registerVariable(vel_x_, "Velocity_X");
 				particles_->registerSortableVariable<Real>("Velocity_X");
 				
+		}
+		//=================================================================================================//
+		GetVelocityGradientInner::GetVelocityGradientInner(BaseInnerRelation& inner_relation)
+			: LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
+			vel_(particles_->vel_),velocity_gradient(*particles_->getVariableByName<Matd>("Velocity_Gradient")),
+			is_near_wall_P1_(*particles_->getVariableByName<int>("IsNearWallP1"))
+		{
+			//for test
+			particles_->registerVariable(velocity_gradient_wall, "Velocity_Gradient_Wall");
+			particles_->registerSortableVariable<Matd>("Velocity_Gradient_Wall");
+			particles_->addVariableToWrite<Matd>("Velocity_Gradient_Wall");
 		}
 		//=================================================================================================//
 		void K_TurtbulentModelInner::update(size_t index_i, Real dt)
@@ -100,7 +116,7 @@ namespace SPH
 		TKEnergyAccInner::
 			TKEnergyAccInner(BaseInnerRelation& inner_relation)
 			: BaseTurtbulentModelInner(inner_relation), acc_prior_(particles_->acc_prior_),
-			surface_indicator_(particles_->surface_indicator_), pos_(particles_->pos_),
+			indicator_(particles_->indicator_), pos_(particles_->pos_),
 			turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
 			B_(*particles_->getVariableByName<Matd>("CorrectionMatrix"))//,
 			//is_near_wall_P1_(*particles_->getVariableByName<int>("IsNearWallP1")), //for test

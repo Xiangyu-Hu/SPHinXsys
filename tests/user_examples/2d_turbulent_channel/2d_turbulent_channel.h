@@ -116,10 +116,10 @@ struct InflowVelocity
 		if (aligned_box_.checkInBounds(0, position))
 		{
 			/* Fully-developed velocity inlet */
-			//target_velocity[0] = 1.5 * u_ave * (1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
+			target_velocity[0] = 1.5 * u_ave * (1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
 			
 			/* Uniform velocity inlet */
-			target_velocity[0] = u_ave;
+			//target_velocity[0] = u_ave;
 			
 			/* Fix velocity in Y direction */
 			target_velocity[1] = 0.0;

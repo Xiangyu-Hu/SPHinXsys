@@ -35,6 +35,29 @@ namespace SPH
 	namespace fluid_dynamics
 	{
 		//=================================================================================================//
+		void GetVelocityGradientComplex::
+			interaction(size_t index_i, Real dt)
+		{
+			GetVelocityGradientInner::interaction(index_i, dt);
+			Vecd vel_i = vel_[index_i];
+			velocity_gradient_wall[index_i] = Matd::Zero();
+			for (size_t k = 0; k < FluidContactData::contact_configuration_.size(); ++k)
+			{
+				StdLargeVec<Vecd>& vel_ave_k = *(contact_vel_ave_[k]);
+				Neighborhood& contact_neighborhood = (*FluidContactData::contact_configuration_[k])[index_i];
+				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+				{
+					size_t index_j = contact_neighborhood.j_[n];
+					Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
+					velocity_gradient[index_i] += -2.0*(vel_i - vel_ave_k[index_j]) * nablaW_ijV_j.transpose();
+					//velocity_gradient[index_i] += -0.0 * (vel_i - vel_ave_k[index_j]) * nablaW_ijV_j.transpose();
+
+					//for test
+					velocity_gradient_wall[index_i] += -2.0 * (vel_i - vel_ave_k[index_j]) * nablaW_ijV_j.transpose();
+				}
+			}
+		}
+		//=================================================================================================//
 		void K_TurtbulentModelComplex::
 			interaction(size_t index_i, Real dt)
 		{
@@ -374,6 +397,9 @@ namespace SPH
 				turbu_epsilon_[index_i] = pow(C_mu, 0.75) * pow(turbu_k_[index_i], 1.5) / (Karman * r_wall_normal);
 				//wall_Y_plus_[index_i] = r_wall_normal * velo_fric * rho_i / mu_;
 				wall_Y_star_[index_i] = r_wall_normal * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * rho_i / mu_;
+
+
+
 			}
 		}
 	}

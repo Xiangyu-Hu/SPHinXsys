@@ -52,7 +52,7 @@ namespace SPH
 
         protected:
             StdLargeVec<Vecd>& pos_;
-            StdLargeVec<int>& surface_indicator_;
+            StdLargeVec<int>& indicator_;
             const Real coefficient_;
             Real smoothing_length_sqr_;
             LevelSetShape* level_set_shape_;

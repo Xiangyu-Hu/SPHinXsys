@@ -84,6 +84,27 @@ namespace SPH
 		};
 
 		/**
+		 * @class GetVelocityGradientInner
+		 * @brief  GetVelocityGradientInner
+		 */
+		class GetVelocityGradientInner : public LocalDynamics, public FluidDataInner
+		{
+		public:
+			explicit GetVelocityGradientInner(BaseInnerRelation& inner_relation);
+			virtual ~GetVelocityGradientInner() {};
+
+			inline void interaction(size_t index_i, Real dt = 0.0);
+		protected:
+			StdLargeVec<Vecd>& vel_;
+			StdLargeVec<Matd>& velocity_gradient;
+			StdLargeVec<int>& is_near_wall_P1_; //** This is used to specially treat near wall region  *
+
+			//**For test*
+			StdLargeVec<Matd> velocity_gradient_wall;
+		};
+
+
+		/**
 		 * @class K_TurtbulentModelInner
 		 * @brief  K_TurtbulentModelInner
 		 */
@@ -97,13 +118,15 @@ namespace SPH
 			void update(size_t index_i, Real dt = 0.0);
 		protected:
 			StdLargeVec<Real> dk_dt_;
-			StdLargeVec<Matd>  velocity_gradient;
+			StdLargeVec<Matd> velocity_gradient;
 			StdLargeVec<Matd> B_;
 			StdLargeVec<Real> k_production_;
 
+			StdLargeVec<int> is_near_wall_P1_; //** This is used to specially treat near wall region  *
+
 			//** for test */
 			StdLargeVec<Real>  k_diffusion_, vel_x_;
-			StdLargeVec<Matd> velocity_gradient_wall;
+			//StdLargeVec<Matd> velocity_gradient_wall;
 		};
 
 		/**
@@ -141,7 +164,7 @@ namespace SPH
 			StdLargeVec<Vecd>& acc_prior_;
 			StdLargeVec<Matd>& B_;
 			StdLargeVec<Vecd>& pos_;
-			StdLargeVec<int>& surface_indicator_;
+			StdLargeVec<int>& indicator_;
 			StdLargeVec<Vecd> tke_acc_inner_, tke_acc_wall_;
 			StdLargeVec<Vecd> test_k_grad_rslt_;
 

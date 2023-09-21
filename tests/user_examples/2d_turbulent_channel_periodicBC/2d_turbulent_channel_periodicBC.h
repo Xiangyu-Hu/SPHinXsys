@@ -35,7 +35,7 @@ Real U_f = 1.0;	   /**< Characteristic velocity. */
 Real Re = 500.0;
 
 Real mu_f = rho0_f * U_f * DH / Re; /**< Dynamics viscosity. */
-Real gravity_g = 3.0 * mu_f * U_f / rho0_f / (DH/2.0)/ (DH/2.0) ; /**< Gravity force of fluid. */
+Real gravity_g = 2.0 * mu_f * U_f / rho0_f / (DH/2.0)/ (DH/2.0) ; /**< Gravity force of fluid. */
 Real c_f = 10.0 * U_f;
 
 

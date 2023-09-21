@@ -38,6 +38,31 @@ namespace SPH
     namespace fluid_dynamics
     {
 		/**
+		 * @class GetVelocityGradientComplex
+		 * @brief .
+		 * The
+		 */
+		class GetVelocityGradientComplex
+			: public BaseInteractionComplex<GetVelocityGradientInner, FluidContactData>
+		{
+		public:
+			template <typename... Args>
+			explicit GetVelocityGradientComplex(Args &&...args)
+				: BaseInteractionComplex<GetVelocityGradientInner, FluidContactData>
+				(std::forward<Args>(args)...)
+			{
+				for (size_t k = 0; k != this->contact_particles_.size(); ++k)
+				{
+					contact_vel_ave_.push_back(&(this->contact_particles_[k]->vel_));
+				}
+			};
+			virtual ~GetVelocityGradientComplex() {};
+
+			inline void interaction(size_t index_i, Real dt = 0.0);
+		protected:
+			StdVec<StdLargeVec<Vecd>*> contact_vel_ave_;
+		};
+		/**
 		 * @class K_TurtbulentModelRelaxationWithWall
 		 * @brief .
 		 * The
@@ -141,7 +166,8 @@ namespace SPH
 
 			Real mu_;
 
-			StdLargeVec<int> is_near_wall_P1_, is_near_wall_P2_, is_near_wall_P1_pre_, is_migrate_;
+			StdLargeVec<int> &is_near_wall_P1_;
+			StdLargeVec<int> is_near_wall_P2_, is_near_wall_P1_pre_, is_migrate_;
 			StdLargeVec<Real> velo_tan_;
 			StdLargeVec<Vecd> velo_friction_;
 			StdLargeVec<int> index_nearest;
@@ -151,6 +177,9 @@ namespace SPH
 			StdLargeVec<Real>& rho_;
 
 			int dimension_;
+
+			StdLargeVec<Matd> &velocity_gradient;
+			StdLargeVec<Real> &k_production_;
 
 			virtual Real getFrictionVelo(Real left_bound, Real right_bound, Real e, Real A, Real B);
 			virtual Real WallFunc(Real x, Real CA, Real CB);
