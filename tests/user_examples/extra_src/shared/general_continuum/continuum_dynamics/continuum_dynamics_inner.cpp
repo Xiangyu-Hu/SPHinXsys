@@ -185,7 +185,7 @@ FixedInAxisDirection::FixedInAxisDirection(BodyPartByParticle &body_part, Vecd c
 {
     for (int k = 0; k != Dimensions; ++k)
         constrain_matrix_(k, k) = constrained_axises[k];
-};
+}
 //=================================================================================================//
 void FixedInAxisDirection::update(size_t index_i, Real dt)
 {
@@ -214,8 +214,6 @@ void ConstrainSolidBodyMassCenter::update(size_t index_i, Real dt)
 {
     vel_[index_i] -= velocity_correction_;
 }
-
-//================================================Plastic==========================================//
 //=================================================================================================//
 BaseRelaxationPlastic::BaseRelaxationPlastic(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), PlasticContinuumDataInner(inner_relation),
