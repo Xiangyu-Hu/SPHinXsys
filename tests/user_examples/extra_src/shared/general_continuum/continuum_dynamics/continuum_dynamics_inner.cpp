@@ -95,23 +95,42 @@ void ArtificialStressAcceleration::interaction(size_t index_i, Real dt)
     acc_prior_[index_i] += acceleration;
 }
 //=================================================================================================//
-void ShearStressIntegration::interaction(size_t index_i, Real dt)
+ShearStressIntegration::ShearStressIntegration(BaseInnerRelation &inner_relation)
+    : BaseShearStressIntegration<ContinuumDataInner>(inner_relation),
+      continuum_(particles_->continuum_){};
+//=================================================================================================//
+void ShearStressIntegration::update(size_t index_i, Real dt)
 {
-    Matd velocity_gradient = Matd::Zero();
-    Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-    {
-        size_t index_j = inner_neighborhood.j_[n];
-        Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
-
-        Matd velocity_gradient_ij = -(vel_[index_i] - vel_[index_j]) * nablaW_ijV_j.transpose();
-        velocity_gradient += velocity_gradient_ij;
-    }
-    velocity_gradient_[index_i] = velocity_gradient;
     Matd shear_stress_rate = continuum_.ConstitutiveRelationShearStress(velocity_gradient_[index_i], shear_stress_[index_i]);
     shear_stress_[index_i] += shear_stress_rate * dt;
     Matd full_stress = shear_stress_[index_i] + p_[index_i] * Matd::Identity();
     von_mises_stress_[index_i] = getVonMisesStressFromMatrix(full_stress);
+}
+//=================================================================================================//
+PlasticShearStressIntegration::PlasticShearStressIntegration(BaseInnerRelation &inner_relation)
+    : BaseShearStressIntegration<PlasticContinuumDataInner>(inner_relation),
+      plastic_continuum_(particles_->plastic_continuum_),
+      stress_tensor_3D_(particles_->stress_tensor_3D_), strain_tensor_3D_(particles_->strain_tensor_3D_),
+      stress_rate_3D_(particles_->stress_rate_3D_), strain_rate_3D_(particles_->strain_rate_3D_),
+      elastic_strain_tensor_3D_(particles_->elastic_strain_tensor_3D_),
+      elastic_strain_rate_3D_(particles_->elastic_strain_rate_3D_),
+      E_(plastic_continuum_.getYoungsModulus()), nu_(plastic_continuum_.getPoissonRatio()),
+      shear_stress_(*particles_->getVariableByName<Matd>("ShearStress")) {}
+//=================================================================================================//
+void PlasticShearStressIntegration::update(size_t index_i, Real dt)
+{
+    Mat3d velocity_gradient = upgradeToMat3d(velocity_gradient_[index_i]);
+    stress_rate_3D_[index_i] += plastic_continuum_.ConstitutiveRelation(velocity_gradient, stress_tensor_3D_[index_i]);
+    stress_tensor_3D_[index_i] += stress_rate_3D_[index_i] * dt;
+    stress_tensor_3D_[index_i] = plastic_continuum_.ReturnMapping(stress_tensor_3D_[index_i]);
+    strain_rate_3D_[index_i] = 0.5 * (velocity_gradient + velocity_gradient.transpose());
+    strain_tensor_3D_[index_i] += strain_rate_3D_[index_i] * dt * 0.5;
+    shear_stress_[index_i] = degradeToMatd(strain_tensor_3D_[index_i]);
+    // calculate elastic strain for output visualization
+    Mat3d deviatoric_stress = stress_tensor_3D_[index_i] - (1 / 3) * stress_tensor_3D_[index_i].trace() * Mat3d::Identity();
+    Real hydrostatic_pressure = (1 / 3) * stress_tensor_3D_[index_i].trace();
+    elastic_strain_tensor_3D_[index_i] = deviatoric_stress / (2 * plastic_continuum_.getShearModulus(E_, nu_)) +
+                                         hydrostatic_pressure * Mat3d::Identity() / (9 * plastic_continuum_.getBulkModulus(E_, nu_));
 }
 //=================================================================================================//
 ShearStressAcceleration::ShearStressAcceleration(BaseInnerRelation &inner_relation)
@@ -215,8 +234,8 @@ StressDiffusion::
     : BaseRelaxationPlastic(inner_relation), axis_(axis),
       rho0_(plastic_continuum_.ReferenceDensity()),
       gravity_(gravity__ptr->InducedAcceleration()[axis]),
-      phi_(plastic_continuum_.getFrictionAngle()),
       smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
+      phi_(plastic_continuum_.getFrictionAngle()),
       diffusion_coeff_(zeta_ * smoothing_length_ * plastic_continuum_.ReferenceSoundSpeed()) {}
 //=================================================================================================//
 void StressDiffusion::interaction(size_t index_i, Real dt)
@@ -238,5 +257,6 @@ void StressDiffusion::interaction(size_t index_i, Real dt)
     }
     stress_rate_3D_[index_i] = diffusion_stress_rate_;
 }
+//=================================================================================================//
 } // namespace continuum_dynamics
 } // namespace SPH

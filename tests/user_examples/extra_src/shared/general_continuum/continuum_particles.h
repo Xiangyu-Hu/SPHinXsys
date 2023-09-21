@@ -51,9 +51,6 @@ class PlasticContinuumParticles : public ContinuumParticles
     StdLargeVec<Mat3d> shear_stress_rate_3D_;
     StdLargeVec<Mat3d> shear_strain_rate_3D_;
 
-    StdLargeVec<Real> vertical_stress_;
-    StdLargeVec<Real> acc_deviatoric_plastic_strain_;
-
     Real getDeviatoricPlasticStrain(Mat3d &strain_tensor);
 
     PlasticContinuum &plastic_continuum_;

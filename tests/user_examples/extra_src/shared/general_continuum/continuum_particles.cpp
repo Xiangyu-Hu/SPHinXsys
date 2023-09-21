@@ -59,8 +59,6 @@ void PlasticContinuumParticles::initializeOtherVariables()
     registerVariable(shear_strain_3D_, "ShearStrain3D");
     registerVariable(shear_stress_rate_3D_, "ShearStressRate3D");
     registerVariable(shear_strain_rate_3D_, "ShearStrainRate3D");
-    registerVariable(vertical_stress_, "VerticalStress");
-    registerVariable(acc_deviatoric_plastic_strain_, "AccDeviatoricPlasticStrain");
     //----------------------------------------------------------------------
     //		register sortable particle data
     //----------------------------------------------------------------------
