@@ -84,5 +84,5 @@ Real PlasticContinuumParticles::getDeviatoricPlasticStrain(Mat3d &strain_tensor)
     Real sum = (deviatoric_strain_tensor.cwiseProduct(deviatoric_strain_tensor)).sum();
     return sqrt(sum * 2 / 3);
 }
-
+//=================================================================================================//
 } // namespace SPH
