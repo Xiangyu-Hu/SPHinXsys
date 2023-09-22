@@ -57,8 +57,6 @@ class InteractionWithWall : public BaseInteractionType<FSIContactData>
     virtual ~InteractionWithWall(){};
 
   protected:
-    StdVec<Real> wall_inv_rho0_;
-    StdVec<StdLargeVec<Real> *> wall_mass_;
     StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_acc_ave_, wall_n_;
 };
 

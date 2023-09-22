@@ -133,7 +133,7 @@ void PlasticShearStressIntegration::update(size_t index_i, Real dt)
                                          hydrostatic_pressure * Mat3d::Identity() / (9 * plastic_continuum_.getBulkModulus(E_, nu_));
 }
 //=================================================================================================//
-ShearStressAcceleration::ShearStressAcceleration(BaseInnerRelation &inner_relation)
+BaseShearStressAcceleration::BaseShearStressAcceleration(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), ContinuumDataInner(inner_relation),
       shear_stress_(*particles_->getVariableByName<Matd>("ShearStress")),
       rho_(particles_->rho_), acc_prior_(particles_->acc_prior_) {}
@@ -149,6 +149,30 @@ void ShearStressAcceleration::interaction(size_t index_i, Real dt)
         size_t index_j = inner_neighborhood.j_[n];
         Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
         acceleration += rho_[index_j] * (shear_stress_i / (rho_i * rho_i) + shear_stress_[index_j] / (rho_[index_j] * rho_[index_j])) * nablaW_ijV_j;
+    }
+    acc_prior_[index_i] += acceleration;
+}
+//=================================================================================================//
+void ShearStressAccelerationWithWall::interaction(size_t index_i, Real dt)
+{
+    Matd shear_stress_i = shear_stress_[index_i];
+    Real rho_i = rho_[index_i];
+    Real rho_in_wall = rho_i;
+    Vecd acceleration = Vecd::Zero();
+    for (size_t k = 0; k < contact_configuration_.size(); ++k) // There may be several wall bodies.
+    {
+        Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
+        for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
+        {
+            size_t index_j = wall_neighborhood.j_[n];
+            Vecd &e_ij = wall_neighborhood.e_ij_[n];
+            Real r_ij = wall_neighborhood.r_ij_[n];
+            Real dW_ijV_j = wall_neighborhood.dW_ijV_j_[n];
+            Vecd nablaW_ijV_j = wall_neighborhood.dW_ijV_j_[n] * wall_neighborhood.e_ij_[n];
+
+            Matd shear_stress_in_wall = shear_stress_i;
+            acceleration += rho_[index_j] * (shear_stress_i / (rho_i * rho_i) + shear_stress_in_wall / (rho_in_wall * rho_in_wall)) * nablaW_ijV_j;
+        }
     }
     acc_prior_[index_i] += acceleration;
 }
@@ -227,8 +251,7 @@ BaseRelaxationPlastic::BaseRelaxationPlastic(BaseInnerRelation &inner_relation)
       elastic_strain_tensor_3D_(particles_->elastic_strain_tensor_3D_),
       elastic_strain_rate_3D_(particles_->elastic_strain_rate_3D_) {}
 //=================================================================================================//
-StressDiffusion::
-    StressDiffusion(BaseInnerRelation &inner_relation, SharedPtr<Gravity> gravity__ptr, int axis)
+StressDiffusion::StressDiffusion(BaseInnerRelation &inner_relation, SharedPtr<Gravity> gravity__ptr, int axis)
     : BaseRelaxationPlastic(inner_relation), axis_(axis),
       rho0_(plastic_continuum_.ReferenceDensity()),
       gravity_(gravity__ptr->InducedAcceleration()[axis]),

@@ -1,10 +1,9 @@
 #ifndef CONTINUUM_DYNAMICS_INNER_H
 #define CONTINUUM_DYNAMICS_INNER_H
+#include "all_fluid_dynamics.h"
 #include "constraint_dynamics.h"
 #include "continuum_particles.h"
-#include "fluid_dynamics_inner.hpp"
 #include "general_continuum.h"
-#include "riemann_solver_extra.h"
 
 namespace SPH
 {
@@ -94,19 +93,42 @@ class ShearStressIntegration : public BaseShearStressIntegration<ContinuumDataIn
 };
 
 /**
- * @class ShearStressAcceleration
+ * @class BaseShearStressAcceleration
  */
-class ShearStressAcceleration : public LocalDynamics, public ContinuumDataInner
+class BaseShearStressAcceleration : public LocalDynamics, public ContinuumDataInner
 {
   public:
-    explicit ShearStressAcceleration(BaseInnerRelation &inner_relation);
-    virtual ~ShearStressAcceleration(){};
-    void interaction(size_t index_i, Real dt = 0.0);
+    explicit BaseShearStressAcceleration(BaseInnerRelation &inner_relation);
+    virtual ~BaseShearStressAcceleration(){};
 
   protected:
     StdLargeVec<Matd> &shear_stress_;
     StdLargeVec<Real> &rho_;
     StdLargeVec<Vecd> &acc_prior_;
+};
+
+/**
+ * @class ShearStressAcceleration
+ */
+class ShearStressAcceleration : public BaseShearStressAcceleration
+{
+  public:
+    explicit ShearStressAcceleration(BaseInnerRelation &inner_relation)
+        : BaseShearStressAcceleration(inner_relation){};
+    virtual ~ShearStressAcceleration(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+};
+
+/**
+ * @class ShearStressAccelerationWithWall
+ */
+class ShearStressAccelerationWithWall : public fluid_dynamics::InteractionWithWall<BaseShearStressAcceleration>
+{
+  public:
+    explicit ShearStressAccelerationWithWall(BaseContactRelation &wall_relation)
+        : fluid_dynamics::InteractionWithWall<BaseShearStressAcceleration>(wall_relation){};
+    virtual ~ShearStressAccelerationWithWall(){};
+    void interaction(size_t index_i, Real dt = 0.0);
 };
 
 /**
@@ -249,6 +271,16 @@ class StressDiffusion : public BaseRelaxationPlastic
     Real rho0_, gravity_, smoothing_length_;
     Real phi_, diffusion_coeff_;
 };
+
+class ShearStressAccelerationWithWall : public fluid_dynamics::InteractionWithWall<BaseShearStressAcceleration>
+{
+  public:
+    explicit ShearStressAccelerationWithWall(BaseContactRelation &wall_relation)
+        : fluid_dynamics::InteractionWithWall<BaseShearStressAcceleration>(wall_relation){};
+    virtual ~ShearStressAccelerationWithWall(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+};
+
 } // namespace continuum_dynamics
 } // namespace SPH
 #endif // CONTINUUM_DYNAMICS_INNER_H

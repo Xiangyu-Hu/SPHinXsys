@@ -20,9 +20,6 @@ InteractionWithWall<BaseInteractionType>::InteractionWithWall(BaseContactRelatio
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
-        Real rho0_k = this->contact_bodies_[k]->base_material_->ReferenceDensity();
-        wall_inv_rho0_.push_back(1.0 / rho0_k);
-        wall_mass_.push_back(&(this->contact_particles_[k]->mass_));
         wall_vel_ave_.push_back(this->contact_particles_[k]->AverageVelocity());
         wall_acc_ave_.push_back(this->contact_particles_[k]->AverageAcceleration());
         wall_n_.push_back(&(this->contact_particles_[k]->n_));
