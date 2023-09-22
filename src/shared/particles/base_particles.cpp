@@ -152,7 +152,7 @@ void BaseParticles::writePltFileHeader(std::ofstream &output_file)
     };
 }
 //=================================================================================================//
-void BaseParticles::computeDrivedVariables()
+void BaseParticles::computeDerivedVariables()
 {
     for (auto &derived_variable : derived_variables_)
     {

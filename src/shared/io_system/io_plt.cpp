@@ -42,7 +42,7 @@ void BodyStatesRecordingToPlt::writeWithFileName(const std::string &sequence)
         if (body->checkNewlyUpdated())
         {
             BaseParticles &base_particles = body->getBaseParticles();
-            base_particles.computeDrivedVariables();
+            base_particles.computeDerivedVariables();
 
             if (state_recording_)
             {
