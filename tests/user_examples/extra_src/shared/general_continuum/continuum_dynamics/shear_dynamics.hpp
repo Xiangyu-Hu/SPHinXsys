@@ -1,5 +1,5 @@
 #pragma once
-#include "continuum_dynamics_inner.h"
+#include "shear_dynamics.h"
 namespace SPH
 {
 namespace continuum_dynamics
@@ -30,6 +30,13 @@ void BaseShearStressIntegration<DataDelegationType>::interaction(size_t index_i,
     }
     velocity_gradient_[index_i] = velocity_gradient;
 }
+//=================================================================================================//
+template <class DataDelegationType>
+template <class BaseRelationType>
+BaseShearStressAcceleration<DataDelegationType>::BaseShearStressAcceleration(BaseRelationType &base_relation)
+    : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
+      shear_stress_(*this->particles_->template getVariableByName<Matd>("ShearStress")),
+      rho_(this->particles_->rho_), acc_prior_(this->particles_->acc_prior_) {}
 //=================================================================================================//
 } // namespace continuum_dynamics
 } // namespace SPH
