@@ -36,70 +36,42 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-typedef DataDelegateContact<BaseParticles, BaseParticles, DataDelegateEmptyBase>
-    MultiPhaseContactData;
-typedef DataDelegateContact<BaseParticles, BaseParticles> MultiPhaseData;
+typedef DataDelegateContact<BaseParticles, BaseParticles> MultiPhaseContactData;
 /**
  * @class ViscousAccelerationMultiPhase
  * @brief  the viscosity force induced acceleration
  */
-class ViscousAccelerationMultiPhase : public ViscousAccelerationInner, public MultiPhaseContactData
+class ViscousAccelerationMultiPhase : public BaseViscousAcceleration<MultiPhaseContactData>
 {
   public:
-    ViscousAccelerationMultiPhase(BaseInnerRelation &inner_relation,
-                                  BaseContactRelation &contact_relation);
-    explicit ViscousAccelerationMultiPhase(ComplexRelation &complex_relation);
+    explicit ViscousAccelerationMultiPhase(BaseContactRelation &contact_relation);
     virtual ~ViscousAccelerationMultiPhase(){};
-
-    inline void interaction(size_t index_i, Real dt = 0.0);
+    void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
     StdVec<Real> contact_mu_;
     StdVec<StdLargeVec<Vecd> *> contact_vel_;
 };
-using ViscousAccelerationMultiPhaseWithWall =
-    BaseViscousAccelerationWithWall<ViscousAccelerationMultiPhase>;
 
 /**
- * @class ViscousAccelerationMultiPhase
+ * @class MultiPhaseMomentumInterface
  * @brief Abstract base class for general multiphase fluid dynamics
  */
-template <class RelaxationInnerType>
-class RelaxationMultiPhase : public RelaxationInnerType, public MultiPhaseContactData
+template <class RiemannSolverType, class InterfacePressureType>
+class MultiPhaseMomentumInterface : public BaseIntegration<MultiPhaseContactData>
 {
   public:
-    RelaxationMultiPhase(BaseInnerRelation &inner_relation,
-                         BaseContactRelation &contact_relation);
-    virtual ~RelaxationMultiPhase(){};
+    MultiPhaseMomentumInterface(BaseContactRelation &contact_relation);
+    virtual ~MultiPhaseMomentumInterface(){};
 
   protected:
+    InterfacePressureType interface_pressure_;
     StdVec<Fluid *> contact_fluids_;
+    StdVec<RiemannSolverType> riemann_solvers_;
     StdVec<StdLargeVec<Real> *> contact_p_, contact_rho_n_;
     StdVec<StdLargeVec<Vecd> *> contact_vel_;
 };
-
-/**
- * @class BaseMultiPhaseIntegration1stHalf
- * @brief  template class for multiphase pressure relaxation scheme
- */
-template <class Integration1stHalfType>
-class BaseMultiPhaseIntegration1stHalf : public RelaxationMultiPhase<Integration1stHalfType>
-{
-  public:
-    BaseMultiPhaseIntegration1stHalf(BaseInnerRelation &inner_relation,
-                                     BaseContactRelation &contact_relation);
-    explicit BaseMultiPhaseIntegration1stHalf(ComplexRelation &complex_relation);
-    virtual ~BaseMultiPhaseIntegration1stHalf(){};
-
-    inline void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    using CurrentRiemannSolver = decltype(Integration1stHalfType::riemann_solver_);
-    StdVec<CurrentRiemannSolver> riemann_solvers_;
-    virtual Vecd computeNonConservativeAcceleration(size_t index_i) override;
-};
-using MultiPhaseIntegration1stHalf = BaseMultiPhaseIntegration1stHalf<Integration1stHalf>;
-using MultiPhaseIntegration1stHalfRiemann = BaseMultiPhaseIntegration1stHalf<Integration1stHalfRiemann>;
+using MultiPhaseIntegration1stHalfRiemann = MultiPhaseMomentumInterface<AcousticRiemannSolver, PlainInterfacePressure>;
 
 using MultiPhaseIntegration1stHalfWithWall =
     MomentumWallBoundary<MultiPhaseIntegration1stHalf>;

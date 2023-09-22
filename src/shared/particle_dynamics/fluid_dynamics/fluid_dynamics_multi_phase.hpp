@@ -10,33 +10,49 @@
 
 namespace SPH
 {
-//=================================================================================================//
 namespace fluid_dynamics
 {
 //=================================================================================================//
-void ViscousAccelerationMultiPhase::interaction(size_t index_i, Real dt)
+template <class RiemannSolverType, class InterfacePressureType>
+MultiPhaseMomentumInterface<RiemannSolverType, InterfacePressureType>::
+    MultiPhaseMomentumInterface(BaseContactRelation &contact_relation)
+    : BaseIntegration<MultiPhaseContactData>
 {
-    ViscousAccelerationInner::interaction(index_i, dt);
-
+    for (size_t k = 0; k != contact_particles_.size(); ++k)
+    {
+        contact_fluids_.push_back(DynamicCast<Fluid>(this, &contact_particles_[k]->getBaseMaterial()));
+        riemann_solvers_.push_back(CurrentRiemannSolver(this->fluid_, *this->contact_fluids_[k]));
+        contact_p_.push_back(contact_particles_[k]->template getVariableByName<Real>("Pressure"));
+        contact_rho_n_.push_back(&(contact_particles_[k]->rho_));
+        contact_vel_.push_back(&(contact_particles_[k]->vel_));
+    }
+}
+//=================================================================================================//
+template <class RiemannSolverType, class InterfacePressureType>
+void MultiPhaseMomentumInterface<RiemannSolverType, InterfacePressureType>::interaction(size_t index_i, Real dt)
+{
     Vecd acceleration = Vecd::Zero();
+    Real rho_dissipation(0);
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
-        Real contact_mu_k = this->contact_mu_[k];
-        StdLargeVec<Vecd> &vel_k = *(this->contact_vel_[k]);
+        StdLargeVec<Real> &p_k = *(this->contact_p_[k]);
+        CurrentRiemannSolver &riemann_solver_k = riemann_solvers_[k];
         Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
             size_t index_j = contact_neighborhood.j_[n];
-            Vecd vel_derivative = (this->vel_[index_i] - vel_k[index_j]) /
-                                  (contact_neighborhood.r_ij_[n] + 0.01 * this->smoothing_length_);
-            acceleration += 2.0 * contact_mu_k * vel_derivative * contact_neighborhood.dW_ijV_j_[n];
+            Vecd &e_ij = contact_neighborhood.e_ij_[n];
+            Real dW_ijV_j = contact_neighborhood.dW_ijV_j_[n];
+
+            acceleration -= 2.0 * riemann_solver_k.AverageP(this->p_[index_i], p_k[index_j]) * e_ij * dW_ijV_j;
+            rho_dissipation += riemann_solver_k.DissipativeUJump(this->p_[index_i] - p_k[index_j]) * dW_ijV_j;
         }
     }
-    acc_prior_[index_i] += acceleration / this->rho_[index_i];
+    this->acc_[index_i] += acceleration / this->rho_[index_i];
+    this->drho_dt_[index_i] += rho_dissipation * this->rho_[index_i];
 }
 //=================================================================================================//
-void MultiPhaseColorFunctionGradient::
-    interaction(size_t index_i, Real dt)
+void MultiPhaseColorFunctionGradient::interaction(size_t index_i, Real dt)
 {
     Real Vol_i = Vol_[index_i];
     Vecd gradient = Vecd::Zero();
@@ -60,28 +76,6 @@ void MultiPhaseColorFunctionGradient::
     }
     color_grad_[index_i] = gradient;
     surface_norm_[index_i] = gradient / (gradient.norm() + TinyReal);
-}
-//=================================================================================================//
-template <class RelaxationInnerType>
-RelaxationMultiPhase<RelaxationInnerType>::
-    RelaxationMultiPhase(BaseInnerRelation &inner_relation,
-                         BaseContactRelation &contact_relation)
-    : RelaxationInnerType(inner_relation), MultiPhaseContactData(contact_relation)
-{
-    if (&inner_relation.getSPHBody() != &contact_relation.getSPHBody())
-    {
-        std::cout << "\n Error: the two body_relations do not have the same source body!" << std::endl;
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-        exit(1);
-    }
-
-    for (size_t k = 0; k != contact_particles_.size(); ++k)
-    {
-        contact_fluids_.push_back(DynamicCast<Fluid>(this, &contact_particles_[k]->getBaseMaterial()));
-        contact_p_.push_back(contact_particles_[k]->template getVariableByName<Real>("Pressure"));
-        contact_rho_n_.push_back(&(contact_particles_[k]->rho_));
-        contact_vel_.push_back(&(contact_particles_[k]->vel_));
-    }
 }
 //=================================================================================================//
 template <class Integration1stHalfType>

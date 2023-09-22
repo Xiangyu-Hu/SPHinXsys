@@ -6,17 +6,9 @@ namespace SPH
 namespace fluid_dynamics
 {
 //=================================================================================================//
-ViscousAccelerationMultiPhase::ViscousAccelerationMultiPhase(BaseInnerRelation &inner_relation,
-                                                             BaseContactRelation &contact_relation)
-    : ViscousAccelerationInner(inner_relation), MultiPhaseContactData(contact_relation)
+ViscousAccelerationMultiPhase::ViscousAccelerationMultiPhase(BaseContactRelation &contact_relation)
+    : BaseViscousAcceleration<MultiPhaseContactData>(contact_relation)
 {
-    if (&inner_relation.getSPHBody() != &contact_relation.getSPHBody())
-    {
-        std::cout << "\n Error: the two body_relations do not have the same source body!" << std::endl;
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-        exit(1);
-    }
-
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
         Real mu_k = DynamicCast<Fluid>(this, &contact_particles_[k]->getBaseMaterial())->ReferenceViscosity();
@@ -25,10 +17,24 @@ ViscousAccelerationMultiPhase::ViscousAccelerationMultiPhase(BaseInnerRelation &
     }
 }
 //=================================================================================================//
-ViscousAccelerationMultiPhase::
-    ViscousAccelerationMultiPhase(ComplexRelation &complex_relation)
-    : ViscousAccelerationMultiPhase(complex_relation.getInnerRelation(),
-                                    complex_relation.getContactRelation()) {}
+void ViscousAccelerationMultiPhase::interaction(size_t index_i, Real dt)
+{
+    Vecd acceleration = Vecd::Zero();
+    for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
+    {
+        Real contact_mu_k = this->contact_mu_[k];
+        StdLargeVec<Vecd> &vel_k = *(this->contact_vel_[k]);
+        Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
+        for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+        {
+            size_t index_j = contact_neighborhood.j_[n];
+            Vecd vel_derivative = (this->vel_[index_i] - vel_k[index_j]) /
+                                  (contact_neighborhood.r_ij_[n] + 0.01 * this->smoothing_length_);
+            acceleration += 2.0 * contact_mu_k * vel_derivative * contact_neighborhood.dW_ijV_j_[n];
+        }
+    }
+    acc_prior_[index_i] += acceleration / this->rho_[index_i];
+}
 //=================================================================================================//
 MultiPhaseColorFunctionGradient::
     MultiPhaseColorFunctionGradient(BaseContactRelation &contact_relation)
