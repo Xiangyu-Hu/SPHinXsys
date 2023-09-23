@@ -133,6 +133,31 @@ class KernelCorrection
   protected:
     StdLargeVec<Matd> &B_;
 };
+
+class SingleResolution
+{
+  public:
+    SingleResolution(BaseParticles *particles){};
+    Real operator()(size_t index_i)
+    {
+        return 1.0;
+    };
+};
+
+class AdaptiveResolution
+{
+  public:
+    AdaptiveResolution(BaseParticles *particles)
+        : h_ratio_(*particles->getVariableByName<Real>("SmoothingLengthRatio")){};
+
+    Real operator()(size_t index_i)
+    {
+        return h_ratio_[index_i];
+    };
+
+  protected:
+    StdLargeVec<Real> &h_ratio_;
+};
 //----------------------------------------------------------------------
 // Particle reduce functors
 //----------------------------------------------------------------------

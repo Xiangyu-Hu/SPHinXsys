@@ -28,8 +28,6 @@
  * Dual-criteria time stepping for weakly compressible smoothed particle hydrodynamics.
  * C Zhang, M Rezavand, X Hu - Journal of Computational Physics,
  * Volume 404, 1 March 2020, 109135.
- * If single (acoustic) time step is used, the coefficient should be decrease
- * to about 1/4 of the default value.
  * @author	Chi Zhang and Xiangyu Hu
  */
 
@@ -43,127 +41,58 @@ namespace SPH
 namespace fluid_dynamics
 {
 /**
- * @class TransportVelocityCorrectionInner
- * @brief The particle positions are corrected for more uniformed distribution
- * when there is negative pressure in the flow.
- * @details Note that the default coefficient is for using the dual time criteria method:
- * Dual-criteria time stepping for weakly compressible smoothed particle hydrodynamics.
- * C Zhang, M Rezavand, X Hu - Journal of Computational Physics,
- * Volume 404, 1 March 2020, 109135.
- * If single (acoustic) time step is used, the coefficient should be decrease
+ * @class TransportVelocityCorrection
+ * @brief TBD
+ * @details If single (acoustic) time step is used, the coefficient should be decrease
  * to about 1/4 of the default value.
  */
-template <class ParticleScopeType>
-class TransportVelocityCorrectionInner : public LocalDynamics, public FluidDataInner
+template <class DataDelegationType, class KernelCorrectionType, class ResolutionType, class ParticleScope>
+class TransportVelocityCorrection : public LocalDynamics, public DataDelegationType
 {
   public:
-    explicit TransportVelocityCorrectionInner(BaseInnerRelation &inner_relation, Real coefficient = 0.2)
-        : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
-          pos_(particles_->pos_), indicator_(*particles_->getVariableByName<int>("Indicator")),
-          smoothing_length_sqr_(pow(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
-          coefficient_(coefficient), checkWithinScope(particles_){};
+    template <class BaseRelationType>
+    explicit TransportVelocityCorrection(BaseRelationType &base_relation, Real coefficient);
+    virtual ~TransportVelocityCorrection(){};
+
+  protected:
+    const Real correction_scaling_;
+    StdLargeVec<Vecd> &pos_;
+    KernelCorrectionType kernel_correction_;
+    ResolutionType h_ratio_;
+    ParticleScope checkWithinScope;
+};
+
+template <class KernelCorrectionType, class ResolutionType, class ParticleScope>
+class TransportVelocityCorrectionInner
+    : public TransportVelocityCorrection<FluidDataInner, KernelCorrectionType, ResolutionType, ParticleScope>
+{
+  public:
+    explicit TransportVelocityCorrectionInner(BaseInnerRelation &inner_relation, Real coefficient = 0.2);
     virtual ~TransportVelocityCorrectionInner(){};
-
-    void interaction(size_t index_i, Real dt = 0.0)
-    {
-        if (checkWithinScope(index_i))
-        {
-            Vecd acceleration_trans = Vecd::Zero();
-            const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-            for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-            {
-                Vecd nablaW_ijV_j = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
-
-                // acceleration for transport velocity
-                acceleration_trans -= 2.0 * nablaW_ijV_j;
-            }
-
-            pos_[index_i] += coefficient_ * smoothing_length_sqr_ * acceleration_trans;
-        }
-    };
-
-  protected:
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<int> &indicator_;
-    Real smoothing_length_sqr_;
-    const Real coefficient_;
-    ParticleScopeType checkWithinScope;
+    void interaction(size_t index_i, Real dt = 0.0);
 };
 
-/**
- * @class TransportVelocityCorrectionComplex
- * @brief  transport velocity correction considering the contribution from contact bodies
- */
-template <class ParticleScopeType>
-class TransportVelocityCorrectionComplex
-    : public BaseInteractionComplex<TransportVelocityCorrectionInner<ParticleScopeType>, FluidContactOnly>
+template <class KernelCorrectionType, class ResolutionType, class ParticleScope>
+class TransportVelocityCorrectionWithBoundary
+    : public TransportVelocityCorrection<FluidContactData, KernelCorrectionType, ResolutionType, ParticleScope>
 {
   public:
-    template <typename... Args>
-    TransportVelocityCorrectionComplex(Args &&...args)
-        : BaseInteractionComplex<TransportVelocityCorrectionInner<ParticleScopeType>, FluidContactOnly>(
-              std::forward<Args>(args)...){};
-    virtual ~TransportVelocityCorrectionComplex(){};
-
-    void interaction(size_t index_i, Real dt = 0.0)
-    {
-        TransportVelocityCorrectionInner<ParticleScopeType>::interaction(index_i, dt);
-
-        if (this->checkWithinScope(index_i))
-        {
-            Vecd acceleration_trans = Vecd::Zero();
-            for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
-            {
-                Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
-                for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-                {
-                    Vecd nablaW_ijV_j = contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
-
-                    // acceleration for transport velocity
-                    acceleration_trans -= 2.0 * nablaW_ijV_j;
-                }
-            }
-
-            this->pos_[index_i] += this->coefficient_ * this->smoothing_length_sqr_ * acceleration_trans;
-        }
-    };
+    explicit TransportVelocityCorrectionWithBoundary(BaseInnerRelation &inner_relation, Real coefficient = 0.2);
+    virtual ~TransportVelocityCorrectionWithBoundary(){};
+    void interaction(size_t index_i, Real dt = 0.0);
 };
 
-/**
- * @class TransportVelocityCorrectionInnerAdaptive
- * @brief transport velocity correction
- */
-class TransportVelocityCorrectionInnerAdaptive : public LocalDynamics, public FluidDataInner
+template <class KernelCorrectionType, class ResolutionType, class ParticleScope>
+class TransportVelocityCorrectionContact
+    : public TransportVelocityCorrection<FluidContactData, KernelCorrectionType, ResolutionType, ParticleScope>
 {
   public:
-    explicit TransportVelocityCorrectionInnerAdaptive(BaseInnerRelation &inner_relation, Real coefficient = 0.2);
-    virtual ~TransportVelocityCorrectionInnerAdaptive(){};
-
+    explicit TransportVelocityCorrectionContact(BaseInnerRelation &inner_relation, Real coefficient = 0.2);
+    virtual ~TransportVelocityCorrectionContact(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    SPHAdaptation &sph_adaptation_;
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<int> &indicator_;
-    Real smoothing_length_sqr_;
-    const Real coefficient_;
-};
-
-/**
- * @class TransportVelocityCorrectionComplex<AllParticles>Adaptive
- * @brief  transport velocity correction considering the contribution from contact bodies
- */
-class TransportVelocityCorrectionComplexAdaptive
-    : public BaseInteractionComplex<TransportVelocityCorrectionInnerAdaptive, FluidContactOnly>
-{
-  public:
-    template <typename... Args>
-    TransportVelocityCorrectionComplexAdaptive(Args &&...args)
-        : BaseInteractionComplex<TransportVelocityCorrectionInnerAdaptive, FluidContactOnly>(
-              std::forward<Args>(args)...){};
-    virtual ~TransportVelocityCorrectionComplexAdaptive(){};
-
-    void interaction(size_t index_i, Real dt = 0.0);
+    StdVec<KernelCorrectionType> contact_kernel_corrections_;
 };
 } // namespace fluid_dynamics
 } // namespace SPH
