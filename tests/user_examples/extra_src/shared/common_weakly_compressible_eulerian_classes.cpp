@@ -103,8 +103,8 @@ FluidConsistencyStarState AcousticRiemannSolverInEulerianMethod::getInterfaceCon
     Real clr = (rhol_cl + rhor_cr) / (state_i.rho_ + state_j.rho_);
 
     Matd p_star = (rhol_cl * state_j.p_ * B_i + rhor_cr * state_i.p_ * B_j + Matd::Identity() * rhol_cl * rhor_cr * (ul - ur) * SMIN(limiter_parameter_ * SMAX((ul - ur) / clr, Real(0)), Real(1))) / (rhol_cl + rhor_cr);
-    Real u_star = (rhol_cl * ul + rhor_cr * ur + (state_i.p_ - state_j.p_) * pow(SMIN(limiter_parameter_ * SMAX((ul - ur) / clr, Real(0)), Real(1)), 2)) / (rhol_cl + rhor_cr);
-    Vecd vel_star = (state_i.vel_ * state_i.rho_ + state_j.vel_ * state_j.rho_) / (state_i.rho_ + state_j.rho_) - e_ij * (u_star - (ul * state_i.rho_ + ur * state_j.rho_) / (state_i.rho_ + state_j.rho_));
+    Matd u_star = (rhol_cl * ul * B_j + rhor_cr * ur * B_i + Matd::Identity() * (state_i.p_ - state_j.p_) * pow(SMIN(limiter_parameter_ * SMAX((ul - ur) / clr, Real(0)), Real(1)), 2)) / (rhol_cl + rhor_cr);
+    Vecd vel_star = (B_j * state_i.vel_ * state_i.rho_ + B_i * state_j.vel_ * state_j.rho_) / (state_i.rho_ + state_j.rho_) - (u_star - (ul * state_i.rho_ * B_j + ur * state_j.rho_ * B_i)) * e_ij / (state_i.rho_ + state_j.rho_);
 
     FluidConsistencyStarState interface_state(vel_star, p_star);
     interface_state.vel_ = vel_star;

@@ -11,7 +11,7 @@ using namespace SPH;   // SPHinXsys namespace.
 //----------------------------------------------------------------------
 Real DL = 1.0;                     /**< box length. */
 Real DH = 1.0;                     /**< box height. */
-Real resolution_ref = 1.0 / 25;  /**< Global reference resolution. */
+Real resolution_ref = 1.0 / 100;  /**< Global reference resolution. */
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------
@@ -68,7 +68,7 @@ int main(int ac, char* av[])
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     /** Tag for computation start with relaxed body fitted particles distribution. */
     sph_system.setRunParticleRelaxation(false);
-    sph_system.setReloadParticles(true);
+    sph_system.setReloadParticles(false);
     // handle command line arguments
     sph_system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(sph_system);
@@ -174,6 +174,7 @@ int main(int ac, char* av[])
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     PeriodicConditionUsingCellLinkedList periodic_condition_x(water_block, water_block.getBodyShapeBounds(), xAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition_y(water_block, water_block.getBodyShapeBounds(), yAxis);
+    water_block.addBodyStateForRecording<Real>("Pressure");
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.

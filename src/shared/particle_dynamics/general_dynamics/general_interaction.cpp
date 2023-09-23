@@ -8,7 +8,7 @@ ConfigurationInner::
     ConfigurationInner(BaseInnerRelation& inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()),
       GeneralDataDelegateInner(inner_relation),
-    B_(*this->particles_->template registerSharedVariable<Matd>("CorrectionMatrix", Matd::Identity()))
+    B_(*particles_->getVariableByName<Matd>("CorrectionMatrix"))
 {
     particles_->addVariableToWrite<Matd>("CorrectionMatrix");
 }
@@ -67,7 +67,7 @@ ConsistencyCorrectedConfigurationInner::
     :LocalDynamics(inner_relation.getSPHBody()),
     GeneralDataDelegateInner(inner_relation),
     alpha_(alpha),
-    B_(*this->particles_->template registerSharedVariable<Matd>("CorrectionMatrix", Matd::Identity()))
+    B_(*particles_->getVariableByName<Matd>("CorrectionMatrix"))
 {
     particles_->addVariableToWrite<Matd>("CorrectionMatrix");
 }

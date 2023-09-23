@@ -7,7 +7,7 @@ namespace SPH
 KernelGradientWithCorrectionInner::KernelGradientWithCorrectionInner(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), GeneralDataDelegateInner(inner_relation)
 {
-    particles_->registerVariable(B_, "CorrectionMatrix");
+    particles_->registerVariable(B_, "CorrectionMatrix", [&](size_t i) -> Matd { return Matd::Identity(); });
     particles_->registerVariable(local_configuration_inner_, "LocalConfigurationInner");
 };
 //=================================================================================================//

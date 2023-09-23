@@ -33,7 +33,7 @@ void BaseIntegration1stHalf<RiemannSolverType>::interaction(size_t index_i, Real
 
         CompressibleFluidState state_j(rho_[index_j], vel_[index_j], p_[index_j], E_[index_j]);
         CompressibleFluidStarState interface_state = riemann_solver_.getInterfaceState(state_i, state_j, e_ij);
-        CompressibleFluidConsistencyStarState consistency_interface_state = riemann_solver_.getConsistencyInterfaceState(state_i, state_j, this->B_[index_i], this->B_[index_j], e_ij);
+        //CompressibleFluidConsistencyStarState interface_state = riemann_solver_.getConsistencyInterfaceState(state_i, state_j, this->B_[index_i], this->B_[index_j], e_ij);
 
         momentum_change_rate -= 2.0 * dW_ijV_j *
                                 ((interface_state.rho_ * interface_state.vel_) * interface_state.vel_.transpose() + interface_state.p_ * Matd::Identity()) * e_ij;
@@ -67,7 +67,7 @@ void BaseIntegration2ndHalf<RiemannSolverType>::interaction(size_t index_i, Real
 
         CompressibleFluidState state_j(rho_[index_j], vel_[index_j], p_[index_j], E_[index_j]);
         CompressibleFluidStarState interface_state = riemann_solver_.getInterfaceState(state_i, state_j, e_ij);
-        CompressibleFluidConsistencyStarState consistency_interface_state = riemann_solver_.getConsistencyInterfaceState(state_i, state_j, this->B_[index_i], this->B_[index_j], e_ij);
+        //CompressibleFluidConsistencyStarState interface_state = riemann_solver_.getConsistencyInterfaceState(state_i, state_j, this->B_[index_i], this->B_[index_j], e_ij);
 
         density_change_rate -= 2.0 * dW_ijV_j * (interface_state.rho_ * interface_state.vel_).dot(e_ij);
         energy_change_rate -= 2.0 * dW_ijV_j * (interface_state.E_ * interface_state.vel_ + interface_state.p_ * interface_state.vel_).dot(e_ij);

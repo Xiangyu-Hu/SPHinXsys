@@ -360,8 +360,8 @@ void RelaxationStepImplicitInner::exec(Real dt)
     time_step_size_ = 50 * sqrt(get_time_step_.exec());
 	//surface_correction_.exec(); 
 	//surface_bounding_.exec();
-	target_residual_pressure_ = update_averaged_error_.exec();
-	relaxation_evolution_inner_.updateTargetError(target_residual_pressure_);
+	//target_residual_pressure_ = update_averaged_error_.exec();
+	//relaxation_evolution_inner_.updateTargetError(target_residual_pressure_);
 }
 //=================================================================================================//
 RelaxationByCMImplicitInner::RelaxationByCMImplicitInner(BaseInnerRelation& inner_relation)
@@ -459,8 +459,8 @@ void RelaxationStepByCMImplicitInner::exec(Real dt)
 	//surface_bounding_.exec();
 	//target_residual_cm_ = update_averaged_error_.exec();
 	//relaxation_evolution_inner_.updateTargetError(target_residual_cm_);
-    real_body_->updateCellLinkedList();
-    inner_relation_.updateConfiguration();
+    //real_body_->updateCellLinkedList();
+    //inner_relation_.updateConfiguration();
 }
 //=================================================================================================//
 CalculateCorrectionMatrix::CalculateCorrectionMatrix(BaseInnerRelation& inner_relation, bool level_set_correction)

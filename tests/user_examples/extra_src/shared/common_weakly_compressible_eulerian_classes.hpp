@@ -89,12 +89,13 @@ void BaseIntegration1stHalf<RiemannSolverType>::interaction(size_t index_i, Real
         Vecd &e_ij = inner_neighborhood.e_ij_[n];
 
         FluidState state_j(rho_[index_j], vel_[index_j], p_[index_j]);
-        FluidStarState interface_state = riemann_solver_.getInterfaceState(state_i, state_j, e_ij);
-        FluidConsistencyStarState consistency_interface_state = riemann_solver_.getInterfaceConsistencyState(state_i, state_j, this->B_[index_i], this->B_[index_j], e_ij);
+        /* FluidStarState interface_state = riemann_solver_.getInterfaceState(state_i, state_j, e_ij);
         Real rho_star = this->fluid_.DensityFromPressure(interface_state.p_);
+        momentum_change_rate -= 2.0 * ((rho_star * interface_state.vel_) * interface_state.vel_.transpose() + interface_state.p_ * Matd::Identity()) * e_ij * dW_ijV_j;*/
 
-        momentum_change_rate -= 2.0 *
-                                ((rho_star * interface_state.vel_) * interface_state.vel_.transpose() + interface_state.p_ * Matd::Identity()) * e_ij * dW_ijV_j;
+        FluidConsistencyStarState consistency_interface_state = riemann_solver_.getInterfaceConsistencyState(state_i, state_j, this->B_[index_i], this->B_[index_j], e_ij);
+        Real rho_star = this->fluid_.DensityFromPressure(consistency_interface_state.p_B_.determinant());
+        momentum_change_rate -= 2.0 * ((rho_star * consistency_interface_state.vel_) * consistency_interface_state.vel_.transpose() + consistency_interface_state.p_B_ * Matd::Identity()) * e_ij * dW_ijV_j;
     }
     dmom_dt_[index_i] = momentum_change_rate;
 }
@@ -129,11 +130,14 @@ void BaseIntegration1stHalfWithWall<BaseIntegration1stHalfType>::interaction(siz
             Real p_in_wall = state_i.p_;
             Real rho_in_wall = state_i.rho_;
             FluidState state_j(rho_in_wall, vel_in_wall, p_in_wall);
-            FluidStarState interface_state = this->riemann_solver_.getInterfaceState(state_i, state_j, n_k[index_j]);
-            FluidConsistencyStarState consistency_interface_state = this->riemann_solver_.getInterfaceConsistencyState(state_i, state_j, this->B_[index_i], B_k[index_j], n_k[index_j]);
-            Real rho_star = this->fluid_.DensityFromPressure(interface_state.p_);
 
+            FluidStarState interface_state = this->riemann_solver_.getInterfaceState(state_i, state_j, n_k[index_j]);
+            Real rho_star = this->fluid_.DensityFromPressure(interface_state.p_);
             momentum_change_rate -= 2.0 * ((rho_star * interface_state.vel_) * interface_state.vel_.transpose() + interface_state.p_ * Matd::Identity()) * e_ij * dW_ijV_j;
+
+            /*FluidConsistencyStarState consistency_interface_state = this->riemann_solver_.getInterfaceConsistencyState(state_i, state_j, this->B_[index_i], B_k[index_j], n_k[index_j]);
+            Real rho_star = this->fluid_.DensityFromPressure(consistency_interface_state.p_B_.determinant());
+            momentum_change_rate -= 2.0 * ((rho_star * consistency_interface_state.vel_) * consistency_interface_state.vel_.transpose() + consistency_interface_state.p_B_ * Matd::Identity()) * e_ij * dW_ijV_j;*/
         }
     }
     this->dmom_dt_[index_i] += momentum_change_rate;
@@ -156,11 +160,13 @@ void BaseIntegration2ndHalf<RiemannSolverType>::interaction(size_t index_i, Real
         Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
 
         FluidState state_j(rho_[index_j], vel_[index_j], p_[index_j]);
-        FluidStarState interface_state = riemann_solver_.getInterfaceState(state_i, state_j, e_ij);
-        FluidConsistencyStarState interface_consistency_state = riemann_solver_.getInterfaceConsistencyState(state_i, state_j, this->B_[index_i], this->B_[index_j], e_ij);
-
+        /* FluidStarState interface_state = riemann_solver_.getInterfaceState(state_i, state_j, e_ij);
         Real rho_star = this->fluid_.DensityFromPressure(interface_state.p_);
-        density_change_rate -= 2.0 * (rho_star * interface_state.vel_).dot(e_ij) * dW_ijV_j;
+        density_change_rate -= 2.0 * (rho_star * interface_state.vel_).dot(e_ij) * dW_ijV_j;*/
+
+        FluidConsistencyStarState consistency_interface_state = riemann_solver_.getInterfaceConsistencyState(state_i, state_j, this->B_[index_i], this->B_[index_j], e_ij);
+        Real rho_star = this->fluid_.DensityFromPressure(consistency_interface_state.p_B_.determinant());
+        density_change_rate -= 2.0 * (rho_star * consistency_interface_state.vel_).dot(e_ij) * dW_ijV_j;
     }
     drho_dt_[index_i] = density_change_rate;
 }

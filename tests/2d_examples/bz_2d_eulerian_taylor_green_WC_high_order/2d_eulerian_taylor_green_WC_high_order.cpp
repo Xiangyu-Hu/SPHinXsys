@@ -4,7 +4,7 @@
  * @details 2D eulerian_taylor_green vortex flow example.
  * @author 	Chi Zhang, Zhentong Wang and Xiangyu Hu
  */
-#include "2d_eulerian_taylor_green_high_order.h"
+#include "2d_eulerian_taylor_green_WC_high_order.h"
 #include "sphinxsys.h"
 using namespace SPH; //	Namespace cite here.
 //----------------------------------------------------------------------
@@ -29,7 +29,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     EulerianFluidBody water_body(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_body.defineBodyLevelSetShape()->writeLevelSet(io_environment);
-    water_body.defineParticlesAndMaterial<BaseParticles, CompressibleFluid>(rho0_f, heat_capacity_ratio, mu_f);
+    water_body.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? water_body.generateParticles<ParticleGeneratorReload>(io_environment, water_body.getName())
         : water_body.generateParticles<ParticleGeneratorLattice>();
@@ -98,7 +98,7 @@ int main(int ac, char *av[])
 
         GlobalStaticVariables::physical_time_ = ite;
         /* The procedure to obtain uniform particle distribution that satisfies the 0ht order consistency. */
-        while (current_zero_maximum_residual > 0.0001)
+        while (current_zero_average_residual > 0.0001)
         {
             periodic_condition_x.bounding_.exec();
             periodic_condition_y.bounding_.exec();
@@ -107,9 +107,9 @@ int main(int ac, char *av[])
             periodic_condition_y.update_cell_linked_list_.exec();
             water_body_inner.updateConfiguration();
 
-            //relaxation_0th_implicit_inner.exec(0.1);
-            calculate_correction_matrix.exec();
-            relaxation_1st_implicit_inner.exec(0.1);
+            relaxation_0th_implicit_inner.exec(0.1);
+            //calculate_correction_matrix.exec();
+            //relaxation_1st_implicit_inner.exec(0.1);
 
             ite++;
 
@@ -147,7 +147,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     InnerRelation water_body_inner(water_body);
     InteractionWithUpdate<KernelGradientWithCorrectionInner> kernel_gradient_update(water_body_inner);
-    InteractionDynamics<relax_dynamics::CalculateCorrectionMatrix> calculate_correction_matrix(water_body_inner);
+    InteractionWithUpdate<ConfigurationInner> configuration_fluid(water_body_inner);
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
@@ -155,20 +155,21 @@ int main(int ac, char *av[])
     /** Initial condition with momentum and energy field */
     SimpleDynamics<TaylorGreenInitialCondition> initial_condition(water_body);
     /** Initialize a time step. */
-    SimpleDynamics<EulerianCompressibleTimeStepInitialization> time_step_initialization(water_body);
+    SimpleDynamics<EulerianWCTimeStepInitialization> time_step_initialization(water_body);
     /** Periodic BCs in x direction. */
     PeriodicConditionUsingCellLinkedList periodic_condition_x(water_body, water_body.getBodyShapeBounds(), xAxis);
     /** Periodic BCs in y direction. */
     PeriodicConditionUsingCellLinkedList periodic_condition_y(water_body, water_body.getBodyShapeBounds(), yAxis);
     /** Time step size with considering sound wave speed. */
-    ReduceDynamics<EulerianCompressibleAcousticTimeStepSize> get_fluid_time_step_size(water_body);
+    ReduceDynamics<EulerianWCAcousticTimeStepSize> get_fluid_time_step_size(water_body);
     /** Pressure relaxation algorithm by using verlet time stepping. */
     /** Here, we can use HLLC with Limiter Riemann solver for pressure relaxation and density and energy relaxation  */
-    InteractionWithUpdate<Integration1stHalfHLLCWithLimiterRiemann> pressure_relaxation(water_body_inner);
-    InteractionWithUpdate<Integration2ndHalfHLLCWithLimiterRiemann> density_and_energy_relaxation(water_body_inner);
+    InteractionWithUpdate<Integration1stHalfAcousticRiemann> pressure_relaxation(water_body_inner, 0);
+    InteractionWithUpdate<Integration2ndHalfAcousticRiemann> density_and_energy_relaxation(water_body_inner, 0);
     /** Computing viscous acceleration. */
-    InteractionDynamics<EulerianCompressibleViscousAccelerationInner> viscous_acceleration(water_body_inner);
+    InteractionDynamics<WCEulerianViscousAccelerationInner> viscous_acceleration(water_body_inner);
     water_body.addBodyStateForRecording<Real>("Pressure");
+    water_body.addBodyStateForRecording<Matd>("CorrectionMatrix");
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
@@ -189,7 +190,8 @@ int main(int ac, char *av[])
     periodic_condition_y.update_cell_linked_list_.exec();
     sph_system.initializeSystemConfigurations();
     initial_condition.exec();
-    kernel_gradient_update.exec();
+    //kernel_gradient_update.exec();
+    configuration_fluid.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
