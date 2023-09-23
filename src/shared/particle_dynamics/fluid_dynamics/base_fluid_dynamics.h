@@ -41,7 +41,6 @@ namespace fluid_dynamics
 typedef DataDelegateSimple<BaseParticles> FluidDataSimple;
 typedef DataDelegateInner<BaseParticles> FluidDataInner;
 typedef DataDelegateContact<BaseParticles, BaseParticles> FluidContactData;
-typedef DataDelegateContact<BaseParticles, BaseParticles, DataDelegateEmptyBase> FluidContactOnly;
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // BASE_FLUID_DYNAMICS_H

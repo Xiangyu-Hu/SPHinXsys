@@ -11,61 +11,26 @@
 
 namespace SPH
 {
-//=================================================================================================//
 namespace fluid_dynamics
 {
 //=================================================================================================//
-void FreeSurfaceIndicationInner::
-    interaction(size_t index_i, Real dt)
+template <class DataDelegationType>
+template <class BaseRelationType>
+FreeSurfaceIndication<DataDelegationType>::FreeSurfaceIndication(BaseRelationType &base_relation)
+    : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
+      indicator_(*this->particles_->template getVariableByName<int>("Indicator")),
+      threshold_by_dimensions_(0.75 * Dimensions)
 {
-    Real pos_div = 0.0;
-    const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-    {
-        pos_div -= inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.r_ij_[n];
-    }
-    pos_div_[index_i] = pos_div;
+    this->particles_->registerVariable(pos_div_, "PositionDivergence");
 }
 //=================================================================================================//
-void ColorFunctionGradientInner::
-    interaction(size_t index_i, Real dt)
+template <class DataDelegationType>
+template <class BaseRelationType>
+ColorFunctionGradient<DataDelegationType>::ColorFunctionGradient(BaseRelationType &base_relation)
+    : FreeSurfaceIndication<DataDelegationType>(base_relation)
 {
-    Vecd gradient = Vecd::Zero();
-    const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-    if (pos_div_[index_i] < threshold_by_dimensions_)
-    {
-        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-        {
-            gradient -= inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
-        }
-    }
-    color_grad_[index_i] = gradient;
-    surface_norm_[index_i] = gradient / (gradient.norm() + TinyReal);
-}
-//=================================================================================================//
-void ColorFunctionGradientInterpolationInner::
-    interaction(size_t index_i, Real dt)
-{
-    Vecd grad = Vecd::Zero();
-    Real weight(0);
-    Real total_weight(0);
-    if (indicator_[index_i] == 1 && pos_div_[index_i] > threshold_by_dimensions_)
-    {
-        Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-        {
-            size_t index_j = inner_neighborhood.j_[n];
-            if (indicator_[index_j] == 1 && pos_div_[index_j] < threshold_by_dimensions_)
-            {
-                weight = inner_neighborhood.W_ij_[n] * Vol_[index_j];
-                grad += weight * color_grad_[index_j];
-                total_weight += weight;
-            }
-        }
-        Vecd grad_norm = grad / (total_weight + TinyReal);
-        color_grad_[index_i] = grad_norm;
-        surface_norm_[index_i] = grad_norm / (grad_norm.norm() + TinyReal);
-    }
+    this->particles_->registerVariable(color_grad_, "ColorGradient");
+    this->particles_->registerVariable(surface_norm_, "SurfaceNormal");
 }
 //=================================================================================================//
 void SurfaceTensionAccelerationInner::
@@ -101,22 +66,21 @@ void SurfaceTensionAccelerationInner::
     acc_prior_[index_i] -= acceleration / mass_[index_i];
 }
 //=================================================================================================//
-template <class FreeSurfaceIdentification>
+template <class FreeSurfaceIdentificationType>
 template <typename... ConstructorArgs>
-SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIdentification>::
+SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIdentificationType>::
     SpatialTemporalFreeSurfaceIdentification(ConstructorArgs &&...args)
-    : FreeSurfaceIdentification(std::forward<ConstructorArgs>(args)...)
+    : FreeSurfaceIdentificationType(std::forward<ConstructorArgs>(args)...)
 {
-    this->particles_->registerVariable(previous_surface_indicator_, "PreviousSurfaceIndicator", [&](size_t i) -> int
-                                       { return 1; });
+    this->particles_->registerVariable(previous_surface_indicator_, "PreviousSurfaceIndicator", 1);
     this->particles_->template registerSortableVariable<int>("PreviousSurfaceIndicator");
 }
 //=================================================================================================//
-template <class FreeSurfaceIdentification>
-void SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIdentification>::
+template <class FreeSurfaceIdentificationType>
+void SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIdentificationType>::
     interaction(size_t index_i, Real dt)
 {
-    FreeSurfaceIdentification::interaction(index_i, dt);
+    FreeSurfaceIdentificationType::interaction(index_i, dt);
 
     if (this->pos_div_[index_i] < this->threshold_by_dimensions_ &&
         previous_surface_indicator_[index_i] != 1 &&
@@ -124,8 +88,8 @@ void SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIdentification>::
         this->pos_div_[index_i] = 2.0 * this->threshold_by_dimensions_;
 }
 //=================================================================================================//
-template <class FreeSurfaceIdentification>
-bool SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIdentification>::
+template <class FreeSurfaceIdentificationType>
+bool SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIdentificationType>::
     isNearPreviousFreeSurface(size_t index_i)
 {
     bool is_near_surface = false;
@@ -141,11 +105,11 @@ bool SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIdentification>::
     return is_near_surface;
 }
 //=================================================================================================//
-template <class FreeSurfaceIdentification>
-void SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIdentification>::
+template <class FreeSurfaceIdentificationType>
+void SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIdentificationType>::
     update(size_t index_i, Real dt)
 {
-    FreeSurfaceIdentification::update(index_i, dt);
+    FreeSurfaceIdentificationType::update(index_i, dt);
 
     previous_surface_indicator_[index_i] = this->indicator_[index_i];
 }

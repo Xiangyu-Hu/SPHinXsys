@@ -26,14 +26,14 @@ InteractionWithWall<BaseInteractionType>::InteractionWithWall(BaseContactRelatio
     }
 }
 //=================================================================================================//
-template <class RiemannSolverType, class PressureType>
-MomentumWallBoundary<RiemannSolverType, PressureType>::
+template <class RiemannSolverType, class KernelCorrectionType>
+MomentumWallBoundary<RiemannSolverType, KernelCorrectionType>::
     MomentumWallBoundary(BaseContactRelation &wall_contact_relation)
     : InteractionWithWall<BaseIntegration>(wall_contact_relation),
-      pressure_(fluid_, particles_), riemann_solver_(fluid_, fluid_) {}
+      correction_(particles_), riemann_solver_(fluid_, fluid_) {}
 //=================================================================================================//
-template <class RiemannSolverType, class PressureType>
-void MomentumWallBoundary<RiemannSolverType, PressureType>::interaction(size_t index_i, Real dt)
+template <class RiemannSolverType, class KernelCorrectionType>
+void MomentumWallBoundary<RiemannSolverType, KernelCorrectionType>::interaction(size_t index_i, Real dt)
 {
     Vecd acceleration = Vecd::Zero();
     Real rho_dissipation(0);
@@ -50,7 +50,7 @@ void MomentumWallBoundary<RiemannSolverType, PressureType>::interaction(size_t i
 
             Real face_wall_external_acceleration = (acc_prior_[index_i] - acc_ave_k[index_j]).dot(-e_ij);
             Real p_in_wall = p_[index_i] + rho_[index_i] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
-            acceleration -= 2.0 * pressure_.atBoundary(index_i, p_in_wall) * dW_ijV_j * e_ij;
+            acceleration -= (p_[index_i] + p_in_wall) * correction_(index_i) * dW_ijV_j * e_ij;
             rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_in_wall) * dW_ijV_j;
         }
     }
@@ -58,16 +58,16 @@ void MomentumWallBoundary<RiemannSolverType, PressureType>::interaction(size_t i
     drho_dt_[index_i] += rho_dissipation * rho_[index_i];
 }
 //=================================================================================================//
-template <class RiemannSolverType, class PressureType>
-ExtendMomentumWallBoundary<RiemannSolverType, PressureType>::
+template <class RiemannSolverType, class KernelCorrectionType>
+ExtendMomentumWallBoundary<RiemannSolverType, KernelCorrectionType>::
     ExtendMomentumWallBoundary(BaseContactRelation &wall_contact_relation, Real penalty_strength)
-    : MomentumWallBoundary<RiemannSolverType, PressureType>(wall_contact_relation),
+    : MomentumWallBoundary<RiemannSolverType, KernelCorrectionType>(wall_contact_relation),
       penalty_strength_(penalty_strength) {}
 //=================================================================================================//
-template <class RiemannSolverType, class PressureType>
-void ExtendMomentumWallBoundary<RiemannSolverType, PressureType>::interaction(size_t index_i, Real dt)
+template <class RiemannSolverType, class KernelCorrectionType>
+void ExtendMomentumWallBoundary<RiemannSolverType, KernelCorrectionType>::interaction(size_t index_i, Real dt)
 {
-    MomentumWallBoundary<RiemannSolverType, PressureType>::interaction(index_i, dt);
+    MomentumWallBoundary<RiemannSolverType, KernelCorrectionType>::interaction(index_i, dt);
 
     Real rho_i = this->rho_[index_i];
     Real penalty_pressure = this->p_[index_i];

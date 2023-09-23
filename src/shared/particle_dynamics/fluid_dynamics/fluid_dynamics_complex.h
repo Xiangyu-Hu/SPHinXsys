@@ -124,7 +124,7 @@ class ViscousWallBoundary : public InteractionWithWall<BaseViscousAcceleration>
  * @class MomentumWallBoundary
  * @brief Wall boundary condition for solving the momentum equation
  */
-template <class RiemannSolverType, class PressureType>
+template <class RiemannSolverType, class KernelCorrectionType>
 class MomentumWallBoundary : public InteractionWithWall<BaseIntegration>
 {
   public:
@@ -133,20 +133,20 @@ class MomentumWallBoundary : public InteractionWithWall<BaseIntegration>
     inline void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    PressureType pressure_;
+    KernelCorrectionType correction_;
     RiemannSolverType riemann_solver_;
 };
 
-using MomentumWallBoundaryNoRiemann = MomentumWallBoundary<NoRiemannSolver, PlainPressure>;
-using MomentumWallBoundaryRiemann = MomentumWallBoundary<AcousticRiemannSolver, PlainPressure>;
-using MomentumWallBoundaryDissipativeRiemann = MomentumWallBoundary<DissipativeRiemannSolver, PlainPressure>;
+using MomentumWallBoundaryNoRiemann = MomentumWallBoundary<NoRiemannSolver, NoKernelCorrection>;
+using MomentumWallBoundaryRiemann = MomentumWallBoundary<AcousticRiemannSolver, NoKernelCorrection>;
+using MomentumWallBoundaryDissipativeRiemann = MomentumWallBoundary<DissipativeRiemannSolver, NoKernelCorrection>;
 /**
  * @class ExtendMomentumWallBoundary
  * @brief Wall boundary conditions considering  wall penalty to prevent
  * particle penetration.
  */
-template <class RiemannSolverType, class PressureType>
-class ExtendMomentumWallBoundary : public MomentumWallBoundary<RiemannSolverType, PressureType>
+template <class RiemannSolverType, class KernelCorrectionType>
+class ExtendMomentumWallBoundary : public MomentumWallBoundary<RiemannSolverType, KernelCorrectionType>
 {
   public:
     ExtendMomentumWallBoundary(BaseContactRelation &wall_contact_relation, Real penalty_strength = 1.0);
@@ -156,7 +156,7 @@ class ExtendMomentumWallBoundary : public MomentumWallBoundary<RiemannSolverType
   protected:
     Real penalty_strength_;
 };
-using ExtendMomentumWallBoundaryRiemann = ExtendMomentumWallBoundary<AcousticRiemannSolver, PlainPressure>;
+using ExtendMomentumWallBoundaryRiemann = ExtendMomentumWallBoundary<AcousticRiemannSolver, NoKernelCorrection>;
 
 /**
  * @class ContinuityWallBoundary

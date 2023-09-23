@@ -70,7 +70,13 @@ class NoRiemannSolver
           inv_rho0c0_sum_(1.0 / (rho0c0_i_ + rho0c0_j_)){};
     Real DissipativePJump(const Real &u_jump);
     Real DissipativeUJump(const Real &p_jump);
-    Real AverageP(const Real &p_i, const Real &p_j);
+
+    template <typename T>
+    T AverageP(const T &p_i, const T &p_j)
+    {
+        return (p_i * rho0c0_j_ + p_j * rho0c0_i_) * inv_rho0c0_sum_;
+    };
+
     Vecd AverageV(const Vecd &vel_i, const Vecd &vel_j);
 
   protected:

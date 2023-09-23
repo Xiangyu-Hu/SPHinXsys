@@ -55,67 +55,55 @@ class ViscousAccelerationMultiPhase : public BaseViscousAcceleration<MultiPhaseC
 
 /**
  * @class MultiPhaseMomentumInterface
- * @brief Abstract base class for general multiphase fluid dynamics
+ * @brief Base class for general multiphase fluid dynamics
  */
-template <class RiemannSolverType, class InterfacePressureType>
+template <class RiemannSolverType, class KernelCorrectionType>
 class MultiPhaseMomentumInterface : public BaseIntegration<MultiPhaseContactData>
 {
   public:
     MultiPhaseMomentumInterface(BaseContactRelation &contact_relation);
     virtual ~MultiPhaseMomentumInterface(){};
+    void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    InterfacePressureType interface_pressure_;
-    StdVec<Fluid *> contact_fluids_;
+    StdVec<KernelCorrectionType> correction_;
+    StdVec<KernelCorrectionType> contact_corrections_;
     StdVec<RiemannSolverType> riemann_solvers_;
-    StdVec<StdLargeVec<Real> *> contact_p_, contact_rho_n_;
-    StdVec<StdLargeVec<Vecd> *> contact_vel_;
+    StdVec<StdLargeVec<Real> *> contact_p_;
 };
-using MultiPhaseIntegration1stHalfRiemann = MultiPhaseMomentumInterface<AcousticRiemannSolver, PlainInterfacePressure>;
-
-using MultiPhaseIntegration1stHalfWithWall =
-    MomentumWallBoundary<MultiPhaseIntegration1stHalf>;
-using MultiPhaseIntegration1stHalfRiemannWithWall =
-    MomentumWallBoundary<MultiPhaseIntegration1stHalfRiemann>;
-using ExtendMultiPhaseIntegration1stHalfRiemannWithWall =
-    ExtendMomentumWallBoundary<MultiPhaseIntegration1stHalfRiemann>;
+using MultiPhaseMomentumInterfaceRiemann = MultiPhaseMomentumInterface<AcousticRiemannSolver, NoKernelCorrection>;
 
 /**
- * @class BaseMultiPhaseIntegration2ndHalf
+ * @class MultiPhaseContinuityInterface
  * @brief  template class pressure relaxation scheme with wall boundary
  */
-template <class Integration2ndHalfType>
-class BaseMultiPhaseIntegration2ndHalf : public RelaxationMultiPhase<Integration2ndHalfType>
+template <class RiemannSolverType>
+class MultiPhaseContinuityInterface : public BaseIntegration<MultiPhaseContactData>
 {
   public:
-    BaseMultiPhaseIntegration2ndHalf(BaseInnerRelation &inner_relation,
-                                     BaseContactRelation &contact_relation);
-    explicit BaseMultiPhaseIntegration2ndHalf(ComplexRelation &complex_relation);
-    virtual ~BaseMultiPhaseIntegration2ndHalf(){};
-
+    MultiPhaseContinuityInterface(BaseContactRelation &contact_relation);
+    virtual ~MultiPhaseContinuityInterface(){};
     inline void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    using CurrentRiemannSolver = decltype(Integration2ndHalfType::riemann_solver_);
-    StdVec<CurrentRiemannSolver> riemann_solvers_;
+    StdVec<RiemannSolverType> riemann_solvers_;
+    StdVec<StdLargeVec<Real> *> contact_p_;
+    StdVec<StdLargeVec<Vecd> *> contact_vel_;
 };
-using MultiPhaseIntegration2ndHalf = BaseMultiPhaseIntegration2ndHalf<Integration2ndHalf>;
-using MultiPhaseIntegration2ndHalfRiemann = BaseMultiPhaseIntegration2ndHalf<Integration2ndHalfRiemann>;
-using MultiPhaseIntegration2ndHalfWithWall = BaseMultiPhaseIntegration2ndHalf<MultiPhaseIntegration2ndHalf>;
-using MultiPhaseIntegration2ndHalfRiemannWithWall = ContinuityWallBoundary<MultiPhaseIntegration2ndHalfRiemann>;
+using MultiPhaseContinuityInterfaceRiemann = MultiPhaseContinuityInterface<AcousticRiemannSolver>;
 
 /**
  * @class MultiPhaseColorFunctionGradient
  * @brief  indicate the particles near the interface of a fluid-fluid interaction and computing norm
  * TODO: Need a test cases for this.
  */
-class MultiPhaseColorFunctionGradient : public LocalDynamics, public MultiPhaseData
+class MultiPhaseColorFunctionGradient : public LocalDynamics, public MultiPhaseContactData
 {
   public:
     explicit MultiPhaseColorFunctionGradient(BaseContactRelation &contact_relation);
     virtual ~MultiPhaseColorFunctionGradient(){};
 
-    inline void interaction(size_t index_i, Real dt = 0.0);
+    void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
     Real rho0_;

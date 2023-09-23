@@ -109,6 +109,30 @@ class ParticlesPairAverageContact
     };
 };
 
+class NoKernelCorrection
+{
+  public:
+    NoKernelCorrection(BaseParticles *particles){};
+    Real operator()(size_t index_i)
+    {
+        return 1.0;
+    };
+};
+
+class KernelCorrection
+{
+  public:
+    KernelCorrection(BaseParticles *particles)
+        : B_(*particles->getVariableByName<Matd>("KernelCorrectionMatrix")){};
+
+    Matd operator()(size_t index_i)
+    {
+        return B_[index_i];
+    };
+
+  protected:
+    StdLargeVec<Matd> &B_;
+};
 //----------------------------------------------------------------------
 // Particle reduce functors
 //----------------------------------------------------------------------

@@ -37,26 +37,39 @@ namespace SPH
 namespace fluid_dynamics
 {
 /**
- * @class FreeSurfaceIndicationInner
+ * @class FreeSurfaceIndication
  * @brief  indicate the particles near the free surface of a fluid body.
  * Note that, SPHinXsys does not require this function for simulating general free surface flow problems.
  * However, some other applications may use this function, such as transport velocity formulation,
  * for masking some function which is only applicable for the bulk of the fluid body.
  */
-class FreeSurfaceIndicationInner : public LocalDynamics, public FluidDataInner
+template <class DataDelegationType>
+class FreeSurfaceIndication : public LocalDynamics, public DataDelegationType
 {
   public:
-    explicit FreeSurfaceIndicationInner(BaseInnerRelation &inner_relation, Real threshold = 0.75);
+    template <class BaseRelationType>
+    explicit FreeSurfaceIndication(BaseRelationType &base_relation);
+    virtual ~FreeSurfaceIndication(){};
+
+  protected:
+    StdLargeVec<int> &indicator_;
+    StdLargeVec<Real> pos_div_;
+    Real threshold_by_dimensions_;
+};
+
+/**
+ * @class FreeSurfaceIndicationInner
+ * @brief TBD.
+ */
+class FreeSurfaceIndicationInner : public FreeSurfaceIndication<FluidDataInner>
+{
+  public:
+    explicit FreeSurfaceIndicationInner(BaseInnerRelation &inner_relation);
     virtual ~FreeSurfaceIndicationInner(){};
-
-    inline void interaction(size_t index_i, Real dt = 0.0);
-
+    void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    Real threshold_by_dimensions_;
-    StdLargeVec<int> &indicator_;
-    StdLargeVec<Real> pos_div_;
     Real smoothing_length_;
     bool isVeryNearFreeSurface(size_t index_i);
 };
@@ -65,24 +78,20 @@ class FreeSurfaceIndicationInner : public LocalDynamics, public FluidDataInner
  * @class SpatialTemporalFreeSurfaceIdentification
  * @brief using the spatial-temporal method to indicate the surface particles to avoid mis-judgement.
  */
-template <class FreeSurfaceIdentification>
-class SpatialTemporalFreeSurfaceIdentification : public FreeSurfaceIdentification
+template <class FreeSurfaceIdentificationType>
+class SpatialTemporalFreeSurfaceIdentification : public FreeSurfaceIdentificationType
 {
   public:
     template <typename... ConstructorArgs>
     explicit SpatialTemporalFreeSurfaceIdentification(ConstructorArgs &&...args);
     virtual ~SpatialTemporalFreeSurfaceIdentification(){};
-
-    inline void interaction(size_t index_i, Real dt = 0.0);
-
+    void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
     StdLargeVec<int> previous_surface_indicator_;
     bool isNearPreviousFreeSurface(size_t index_i);
 };
-using SpatialTemporalFreeSurfaceIdentificationInner =
-    SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIndicationInner>;
 
 /**
  * @class DensitySummationFreeSurface
@@ -104,9 +113,6 @@ class DensitySummationFreeSurface : public DensitySummationType
         return SMAX(rho_sum, rho_0);
     };
 };
-
-using DensitySummationFreeSurfaceInner = DensitySummationFreeSurface<DensitySummationInner>;
-using DensitySummationFreeSurfaceInnerAdaptive = DensitySummationFreeSurface<DensitySummationInnerAdaptive>;
 
 /**
  * @class DensitySummationFreeStream
@@ -147,24 +153,36 @@ class FreeSurfaceHeight : public BaseLocalDynamicsReduce<Real, ReduceMax, BodyPa
 
     Real reduce(size_t index_i, Real dt = 0.0) { return pos_[index_i][1]; };
 };
+
+/**
+ * @class ColorFunctionGradient
+ * @brief  indicate the particles near the interface of a fluid-fluid interaction and computing norm
+ */
+
+template <class DataDelegationType>
+class ColorFunctionGradient : public FreeSurfaceIndication<DataDelegationType>
+{
+  public:
+    template <class BaseRelationType>
+    explicit ColorFunctionGradient(BaseRelationType &base_relation);
+    virtual ~ColorFunctionGradient(){};
+
+  protected:
+    StdLargeVec<Vecd> color_grad_;
+    StdLargeVec<Vecd> surface_norm_;
+};
+
 /**
  * @class ColorFunctionGradientInner
  * @brief  indicate the particles near the interface of a fluid-fluid interaction and computing norm
  */
-class ColorFunctionGradientInner : public LocalDynamics, public FluidDataInner
+class ColorFunctionGradientInner : public ColorFunctionGradient<FluidDataInner>
 {
   public:
-    explicit ColorFunctionGradientInner(BaseInnerRelation &inner_relation);
+    explicit ColorFunctionGradientInner(BaseInnerRelation &inner_relation)
+        : ColorFunctionGradient<FluidDataInner>(inner_relation){};
     virtual ~ColorFunctionGradientInner(){};
-
-    inline void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    StdLargeVec<int> &indicator_;
-    StdLargeVec<Real> &pos_div_;
-    Real threshold_by_dimensions_;
-    StdLargeVec<Vecd> color_grad_;
-    StdLargeVec<Vecd> surface_norm_;
+    void interaction(size_t index_i, Real dt = 0.0);
 };
 
 /**

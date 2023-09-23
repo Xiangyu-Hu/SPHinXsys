@@ -53,7 +53,7 @@ class KernelCorrectionMatrixComplex : public KernelCorrectionMatrixInner, public
     KernelCorrectionMatrixComplex(ComplexRelation &complex_relation, Real alpha = Real(0));
     virtual ~KernelCorrectionMatrixComplex(){};
 
-  protected: 
+  protected:
     StdVec<StdLargeVec<Real> *> contact_Vol_;
     StdVec<StdLargeVec<Real> *> contact_mass_;
 

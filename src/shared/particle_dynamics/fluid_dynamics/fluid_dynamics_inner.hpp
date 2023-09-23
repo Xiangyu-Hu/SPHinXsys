@@ -46,11 +46,11 @@ BaseIntegration<DataDelegationType>::BaseIntegration(BaseRelationType &base_rela
       pos_(this->particles_->pos_), vel_(this->particles_->vel_),
       acc_(this->particles_->acc_), acc_prior_(this->particles_->acc_prior_) {}
 //=================================================================================================//
-template <class RiemannSolverType, class PressureType>
-BaseIntegration1stHalfInner<RiemannSolverType, PressureType>::
+template <class RiemannSolverType, class KernelCorrectionType>
+BaseIntegration1stHalfInner<RiemannSolverType, KernelCorrectionType>::
     BaseIntegration1stHalfInner(BaseInnerRelation &inner_relation)
     : BaseIntegration<FluidDataInner>(inner_relation),
-      pressure_(fluid_, particles_), riemann_solver_(fluid_, fluid_)
+      correction_(particles_), riemann_solver_(fluid_, fluid_)
 {
     /**
      *	register sortable particle data
@@ -67,22 +67,22 @@ BaseIntegration1stHalfInner<RiemannSolverType, PressureType>::
     particles_->addVariableToRestart<Real>("Pressure");
 }
 //=================================================================================================//
-template <class RiemannSolverType, class PressureType>
-void BaseIntegration1stHalfInner<RiemannSolverType, PressureType>::initialization(size_t index_i, Real dt)
+template <class RiemannSolverType, class KernelCorrectionType>
+void BaseIntegration1stHalfInner<RiemannSolverType, KernelCorrectionType>::initialization(size_t index_i, Real dt)
 {
     rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
+    p_[index_i] = fluid_.getPressure(rho_[index_i]);
     pos_[index_i] += vel_[index_i] * dt * 0.5;
-    pressure_.update(index_i);
 }
 //=================================================================================================//
-template <class RiemannSolverType, class PressureType>
-void BaseIntegration1stHalfInner<RiemannSolverType, PressureType>::update(size_t index_i, Real dt)
+template <class RiemannSolverType, class KernelCorrectionType>
+void BaseIntegration1stHalfInner<RiemannSolverType, KernelCorrectionType>::update(size_t index_i, Real dt)
 {
     vel_[index_i] += (acc_prior_[index_i] + acc_[index_i]) * dt;
 }
 //=================================================================================================//
-template <class RiemannSolverType, class PressureType>
-void BaseIntegration1stHalfInner<RiemannSolverType, PressureType>::interaction(size_t index_i, Real dt)
+template <class RiemannSolverType, class KernelCorrectionType>
+void BaseIntegration1stHalfInner<RiemannSolverType, KernelCorrectionType>::interaction(size_t index_i, Real dt)
 {
     Vecd acceleration = Vecd::Zero();
     Real rho_dissipation(0);
@@ -93,7 +93,7 @@ void BaseIntegration1stHalfInner<RiemannSolverType, PressureType>::interaction(s
         Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
         const Vecd &e_ij = inner_neighborhood.e_ij_[n];
 
-        acceleration -= 2.0 * pressure_.atInterface(index_i, index_j) * dW_ijV_j * e_ij;
+        acceleration -= (p_[index_i] * correction_(index_j) + p_[index_j] * correction_(index_i)) * dW_ijV_j * e_ij;
         rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_[index_j]) * dW_ijV_j;
     }
     acc_[index_i] += acceleration / rho_[index_i];
