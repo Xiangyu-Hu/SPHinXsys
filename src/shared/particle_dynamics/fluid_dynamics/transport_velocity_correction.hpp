@@ -29,9 +29,10 @@ void TransportVelocityCorrectionInner<KernelCorrectionType, ResolutionType, Part
     if (this->checkWithinScope(index_i))
     {
         Vecd acceleration_trans = Vecd::Zero();
-        const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+        const Neighborhood &inner_neighborhood = this->inner_configuration_[index_i];
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
         {
+            size_t index_j = inner_neighborhood.j_[n];
             // acceleration for transport velocity
             acceleration_trans -= (this->kernel_correction_(index_i) + this->kernel_correction_(index_j)) *
                                   inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
@@ -62,7 +63,7 @@ void TransportVelocityCorrectionWithBoundary<KernelCorrectionType, ResolutionTyp
             {
                 // acceleration for transport velocity
                 acceleration_trans -= 2.0 * this->kernel_correction_(index_i) *
-                                      inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+                                      contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
             }
         }
         Real inv_h_ratio = 1.0 / this->h_ratio_(index_i);
@@ -78,7 +79,7 @@ TransportVelocityCorrectionContact<KernelCorrectionType, ResolutionType, Particl
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
-        contact_kernel_corrections_.push_back(RiemannSolverType(KernelCorrectionType(his->contact_particles_[k])));
+        contact_kernel_corrections_.push_back(RiemannSolverType(KernelCorrectionType(this->contact_particles_[k])));
     }
 }
 //=================================================================================================//
@@ -98,7 +99,7 @@ void TransportVelocityCorrectionContact<KernelCorrectionType, ResolutionType, Pa
                 size_t index_j = contact_neighborhood.j_[n];
                 // acceleration for transport velocity
                 acceleration_trans -= (this->kernel_correction_(index_i) * kernel_correction_k(index_j)) *
-                                      inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
+                                      contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.e_ij_[n];
             }
         }
         Real inv_h_ratio = 1.0 / this->h_ratio_(index_i);

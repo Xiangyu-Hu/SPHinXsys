@@ -36,7 +36,7 @@ void MultiPhaseMomentumInterface<RiemannSolverType, KernelCorrectionType>::inter
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
         StdLargeVec<Real> &p_k = *(this->contact_p_[k]);
-        KernelCorrectionType &corrections_k = contact_corrections_[k];
+        KernelCorrectionType &correction_k = contact_corrections_[k];
         RiemannSolverType &riemann_solver_k = riemann_solvers_[k];
         Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -45,7 +45,7 @@ void MultiPhaseMomentumInterface<RiemannSolverType, KernelCorrectionType>::inter
             Vecd &e_ij = contact_neighborhood.e_ij_[n];
             Real dW_ijV_j = contact_neighborhood.dW_ijV_j_[n];
 
-            acceleration -= riemann_solver_k.AverageP(this->p_[index_i] * correction_k(index_j), p_k[index_j] * correction(index_i)) *
+            acceleration -= riemann_solver_k.AverageP(this->p_[index_i] * correction_k(index_j), p_k[index_j] * correction_(index_i)) *
                             2.0 * e_ij * dW_ijV_j;
             rho_dissipation += riemann_solver_k.DissipativeUJump(this->p_[index_i] - p_k[index_j]) * dW_ijV_j;
         }
@@ -75,7 +75,7 @@ void MultiPhaseContinuityInterface<RiemannSolverType>::interaction(size_t index_
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
         StdLargeVec<Vecd> &vel_k = *(this->contact_vel_[k]);
-        CurrentRiemannSolver &riemann_solver_k = riemann_solvers_[k];
+        RiemannSolverType &riemann_solver_k = riemann_solvers_[k];
         Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
