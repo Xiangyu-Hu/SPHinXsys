@@ -32,7 +32,7 @@
 #include "all_body_relations.h"
 #include "all_particle_dynamics.h"
 #include "base_particles.hpp"
-#include "fluid_body.h"
+#include "solid_particles.h"
 
 namespace SPH
 {
@@ -41,6 +41,8 @@ namespace fluid_dynamics
 typedef DataDelegateSimple<BaseParticles> FluidDataSimple;
 typedef DataDelegateInner<BaseParticles> FluidDataInner;
 typedef DataDelegateContact<BaseParticles, BaseParticles> FluidContactData;
+typedef DataDelegateContact<BaseParticles, SolidParticles, DataDelegateEmptyBase> FluidWallData;
+typedef DataDelegateContact<BaseParticles, SolidParticles> FSIContactData;
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // BASE_FLUID_DYNAMICS_H

@@ -21,16 +21,16 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	fluid_surface_inner.h
- * @brief 	Here, we define the algorithm classes for fluid surfaces.
+ * @file surface indication.h
+ * @brief 	Here, we define the algorithm classes for indicating fluid surfaces.
  * @details Fluid indicators are mainly used here to classify different region in a fluid.
  * @author	Chi Zhang and Xiangyu Hu
  */
 
-#ifndef FLUID_SURFACE_INNER_H
-#define FLUID_SURFACE_INNER_H
+#ifndef SURFACE_INDICATION_H
+#define SURFACE_INDICATION_H
 
-#include "fluid_dynamics_inner.hpp"
+#include "base_fluid_dynamics.h"
 
 namespace SPH
 {
@@ -75,6 +75,19 @@ class FreeSurfaceIndicationInner : public FreeSurfaceIndication<FluidDataInner>
 };
 
 /**
+ * @class FreeSurfaceIndicationContact
+ * @brief indicate the particles near the free fluid surface.
+ */
+class FreeSurfaceIndicationContact : public FreeSurfaceIndication<FluidContactData>
+{
+  public:
+    FreeSurfaceIndicationContact(BaseContactRelation &contact_relation)
+        : FreeSurfaceIndication<FluidContactData>(contact_relation){};
+    virtual ~FreeSurfaceIndicationContact(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+};
+
+/**
  * @class SpatialTemporalFreeSurfaceIdentification
  * @brief using the spatial-temporal method to indicate the surface particles to avoid mis-judgement.
  */
@@ -91,45 +104,6 @@ class SpatialTemporalFreeSurfaceIdentification : public FreeSurfaceIdentificatio
   protected:
     StdLargeVec<int> previous_surface_indicator_;
     bool isNearPreviousFreeSurface(size_t index_i);
-};
-
-/**
- * @class DensitySummationFreeSurface
- * @brief computing density by summation with a re-normalization for free surface flows
- */
-template <class DensitySummationType>
-class DensitySummationFreeSurface : public DensitySummationType
-{
-  public:
-    template <typename... ConstructorArgs>
-    explicit DensitySummationFreeSurface(ConstructorArgs &&...args)
-        : DensitySummationType(std::forward<ConstructorArgs>(args)...){};
-    virtual ~DensitySummationFreeSurface(){};
-    void update(size_t index_i, Real dt = 0.0);
-
-  protected:
-    Real ReinitializedDensity(Real rho_sum, Real rho_0)
-    {
-        return SMAX(rho_sum, rho_0);
-    };
-};
-
-/**
- * @class DensitySummationFreeStream
- * @brief The density is smoothed if the particle is near fluid surface.
- */
-template <class DensitySummationFreeSurfaceType>
-class DensitySummationFreeStream : public DensitySummationFreeSurfaceType
-{
-  public:
-    template <typename... ConstructorArgs>
-    explicit DensitySummationFreeStream(ConstructorArgs &&...args);
-    virtual ~DensitySummationFreeStream(){};
-    void update(size_t index_i, Real dt = 0.0);
-
-  protected:
-    StdLargeVec<int> &indicator_;
-    bool isNearFreeSurface(size_t index_i);
 };
 
 /**
@@ -153,80 +127,6 @@ class FreeSurfaceHeight : public BaseLocalDynamicsReduce<Real, ReduceMax, BodyPa
 
     Real reduce(size_t index_i, Real dt = 0.0) { return pos_[index_i][1]; };
 };
-
-/**
- * @class ColorFunctionGradient
- * @brief  indicate the particles near the interface of a fluid-fluid interaction and computing norm
- */
-
-template <class DataDelegationType>
-class ColorFunctionGradient : public FreeSurfaceIndication<DataDelegationType>
-{
-  public:
-    template <class BaseRelationType>
-    explicit ColorFunctionGradient(BaseRelationType &base_relation);
-    virtual ~ColorFunctionGradient(){};
-
-  protected:
-    StdLargeVec<Vecd> color_grad_;
-    StdLargeVec<Vecd> surface_norm_;
-};
-
-/**
- * @class ColorFunctionGradientInner
- * @brief  indicate the particles near the interface of a fluid-fluid interaction and computing norm
- */
-class ColorFunctionGradientInner : public ColorFunctionGradient<FluidDataInner>
-{
-  public:
-    explicit ColorFunctionGradientInner(BaseInnerRelation &inner_relation)
-        : ColorFunctionGradient<FluidDataInner>(inner_relation){};
-    virtual ~ColorFunctionGradientInner(){};
-    void interaction(size_t index_i, Real dt = 0.0);
-};
-
-/**
- * @class ColorFunctionGradientInterpolationInner
- * @brief
- */
-class ColorFunctionGradientInterpolationInner : public LocalDynamics, public FluidDataInner
-{
-  public:
-    explicit ColorFunctionGradientInterpolationInner(BaseInnerRelation &inner_relation);
-    virtual ~ColorFunctionGradientInterpolationInner(){};
-
-    inline void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    StdLargeVec<Real> &Vol_;
-    StdLargeVec<int> &indicator_;
-    StdLargeVec<Vecd> &color_grad_;
-    StdLargeVec<Vecd> &surface_norm_;
-    StdLargeVec<Real> &pos_div_;
-    Real threshold_by_dimensions_;
-};
-
-/**
- * @class SurfaceTensionAccelerationInner
- * @brief  the surface force induced acceleration
- */
-class SurfaceTensionAccelerationInner : public LocalDynamics, public FluidDataInner
-{
-  public:
-    SurfaceTensionAccelerationInner(BaseInnerRelation &inner_relation, Real gamma);
-    explicit SurfaceTensionAccelerationInner(BaseInnerRelation &inner_relation);
-    virtual ~SurfaceTensionAccelerationInner(){};
-
-    inline void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    Real gamma_;
-    StdLargeVec<Real> &Vol_, &mass_;
-    StdLargeVec<Vecd> &acc_prior_;
-    StdLargeVec<int> &indicator_;
-    StdLargeVec<Vecd> &color_grad_;
-    StdLargeVec<Vecd> &surface_norm_;
-};
 } // namespace fluid_dynamics
 } // namespace SPH
-#endif // FLUID_SURFACE_INNER_H
+#endif // SURFACE_INDICATION_H

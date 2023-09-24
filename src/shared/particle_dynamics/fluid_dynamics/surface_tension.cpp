@@ -1,23 +1,56 @@
-#include "fluid_surface_complex.h"
+#include "surface_tension.hpp"
 
 namespace SPH
 {
 namespace fluid_dynamics
 {
 //=================================================================================================//
-void FreeSurfaceIndicationContact::interaction(size_t index_i, Real dt)
+void ColorFunctionGradientInterpolationInner::interaction(size_t index_i, Real dt)
 {
-    Real pos_div = 0.0;
-    for (size_t k = 0; k < contact_configuration_.size(); ++k)
+    Vecd grad = Vecd::Zero();
+    Real weight(0);
+    Real total_weight(0);
+    if (indicator_[index_i] == 1 && pos_div_[index_i] > threshold_by_dimensions_)
     {
-        Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
-        for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+        Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
         {
-            pos_div -= contact_neighborhood.dW_ijV_j_[n] * contact_neighborhood.r_ij_[n];
+            size_t index_j = inner_neighborhood.j_[n];
+            if (indicator_[index_j] == 1 && pos_div_[index_j] < threshold_by_dimensions_)
+            {
+                weight = inner_neighborhood.W_ij_[n] * Vol_[index_j];
+                grad += weight * color_grad_[index_j];
+                total_weight += weight;
+            }
         }
+        Vecd grad_norm = grad / (total_weight + TinyReal);
+        color_grad_[index_i] = grad_norm;
+        surface_norm_[index_i] = grad_norm / (grad_norm.norm() + TinyReal);
     }
-    pos_div_[index_i] += pos_div;
 }
+//=================================================================================================//
+ColorFunctionGradientInterpolationInner::ColorFunctionGradientInterpolationInner(BaseInnerRelation &inner_relation)
+    : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation), Vol_(particles_->Vol_),
+      indicator_(*particles_->getVariableByName<int>("Indicator")),
+      color_grad_(*particles_->getVariableByName<Vecd>("ColorGradient")),
+      surface_norm_(*particles_->getVariableByName<Vecd>("SurfaceNormal")),
+      pos_div_(*particles_->getVariableByName<Real>("PositionDivergence")),
+      threshold_by_dimensions_((0.75 * (Real)Dimensions))
+
+{
+    particles_->addVariableToWrite<Vecd>("SurfaceNormal");
+    particles_->addVariableToWrite<Vecd>("ColorGradient");
+}
+//=================================================================================================//
+SurfaceTensionAccelerationInner::SurfaceTensionAccelerationInner(BaseInnerRelation &inner_relation, Real gamma)
+    : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
+      gamma_(gamma), Vol_(particles_->Vol_), mass_(particles_->mass_),
+      acc_prior_(particles_->acc_prior_), indicator_(*particles_->getVariableByName<int>("Indicator")),
+      color_grad_(*particles_->getVariableByName<Vecd>("ColorGradient")),
+      surface_norm_(*particles_->getVariableByName<Vecd>("SurfaceNormal")) {}
+//=================================================================================================//
+SurfaceTensionAccelerationInner::SurfaceTensionAccelerationInner(BaseInnerRelation &inner_relation)
+    : SurfaceTensionAccelerationInner(inner_relation, 1.0) {}
 //=================================================================================================//
 void ColorFunctionGradientContact::interaction(size_t index_i, Real dt)
 {

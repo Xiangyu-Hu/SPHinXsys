@@ -11,42 +11,6 @@ FluidInitialCondition::
     : LocalDynamics(sph_body), FluidDataSimple(sph_body),
       pos_(particles_->pos_), vel_(particles_->vel_) {}
 //=================================================================================================//
-void BaseDensitySummationInner::update(size_t index_i, Real dt)
-{
-    rho_[index_i] = rho_sum_[index_i];
-}
-//=================================================================================================//
-DensitySummationInner::DensitySummationInner(BaseInnerRelation &inner_relation)
-    : BaseDensitySummationInner(inner_relation),
-      W0_(sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd)) {}
-//=================================================================================================//
-void DensitySummationInner::interaction(size_t index_i, Real dt)
-{
-    Real sigma = W0_;
-    const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-        sigma += inner_neighborhood.W_ij_[n];
-
-    rho_sum_[index_i] = sigma * rho0_ * inv_sigma0_;
-}
-//=================================================================================================//
-DensitySummationInnerAdaptive::DensitySummationInnerAdaptive(BaseInnerRelation &inner_relation)
-    : BaseDensitySummationInner(inner_relation),
-      sph_adaptation_(*sph_body_.sph_adaptation_),
-      kernel_(*sph_adaptation_.getKernel()),
-      h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")) {}
-//=================================================================================================//
-void DensitySummationInnerAdaptive::interaction(size_t index_i, Real dt)
-{
-    Real sigma_i = mass_[index_i] * kernel_.W0(h_ratio_[index_i], ZeroVecd);
-    const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-        sigma_i += inner_neighborhood.W_ij_[n] * mass_[inner_neighborhood.j_[n]];
-
-    rho_sum_[index_i] = sigma_i * rho0_ * inv_sigma0_ / mass_[index_i] /
-                        sph_adaptation_.NumberDensityScaleFactor(h_ratio_[index_i]);
-}
-//=================================================================================================//
 void ViscousAccelerationInner::interaction(size_t index_i, Real dt)
 {
     Vecd acceleration = Vecd::Zero();

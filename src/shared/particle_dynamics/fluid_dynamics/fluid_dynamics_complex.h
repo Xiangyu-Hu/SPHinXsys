@@ -35,15 +35,11 @@
 
 #include "fluid_dynamics_inner.h"
 #include "fluid_dynamics_inner.hpp"
-#include "solid_body.h"
-#include "solid_particles.h"
 
 namespace SPH
 {
 namespace fluid_dynamics
 {
-typedef DataDelegateContact<BaseParticles, SolidParticles, DataDelegateEmptyBase> FluidWallData;
-typedef DataDelegateContact<BaseParticles, SolidParticles> FSIContactData;
 /**
  * @class InteractionWithWall
  * @brief Base class adding interaction with wall to general relaxation process
@@ -58,53 +54,6 @@ class InteractionWithWall : public BaseInteractionType<FSIContactData>
 
   protected:
     StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_acc_ave_, wall_n_;
-};
-
-/**
- * @class BaseDensitySummationContact
- * @brief computing density by summation considering contribution from contact bodies
- */
-class BaseDensitySummationContact : public BaseDensitySummation<FluidContactData>
-{
-  public:
-    explicit BaseDensitySummationContact(BaseContactRelation &contact_relation);
-    virtual ~BaseDensitySummationContact(){};
-
-  protected:
-    StdVec<Real> contact_inv_rho0_;
-    StdVec<StdLargeVec<Real> *> contact_mass_;
-    Real ContactSummation(size_t index_i);
-};
-
-/**
- * @class DensitySummationContact
- * @brief computing density by summation considering contribution from contact bodies
- */
-class DensitySummationContact : public BaseDensitySummationContact
-{
-  public:
-    explicit DensitySummationContact(BaseContactRelation &contact_relation)
-        : BaseDensitySummationContact(contact_relation){};
-    virtual ~DensitySummationContact(){};
-
-    void interaction(size_t index_i, Real dt = 0.0);
-};
-
-/**
- * @class DensitySummationContactAdaptive
- * @brief computing density by summation considering  contribution from contact bodies
- */
-class DensitySummationContactAdaptive : public BaseDensitySummationContact
-{
-  public:
-    explicit DensitySummationContactAdaptive(BaseContactRelation &contact_relation);
-    virtual ~DensitySummationContactAdaptive(){};
-
-    void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    SPHAdaptation &sph_adaptation_;
-    StdLargeVec<Real> &h_ratio_;
 };
 
 /**

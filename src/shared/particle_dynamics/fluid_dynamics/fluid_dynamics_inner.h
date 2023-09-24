@@ -56,69 +56,6 @@ class FluidInitialCondition : public LocalDynamics, public FluidDataSimple
 };
 
 /**
- * @class BaseDensitySummation
- * @brief Base class for computing density by summation
- */
-template <class DataDelegationType>
-class BaseDensitySummation : public LocalDynamics, public DataDelegationType
-{
-  public:
-    template <class BaseRelationType>
-    explicit BaseDensitySummation(BaseRelationType &base_relation);
-    virtual ~BaseDensitySummation(){};
-
-  protected:
-    StdLargeVec<Real> &rho_, rho_sum_, &mass_;
-    Real rho0_, inv_sigma0_;
-};
-
-/**
- * @class BaseDensitySummationInner
- * @brief Base class for computing density by summation
- */
-class BaseDensitySummationInner : public BaseDensitySummation<FluidDataInner>
-{
-  public:
-    explicit BaseDensitySummationInner(BaseInnerRelation &inner_relation)
-        : BaseDensitySummation<FluidDataInner>(inner_relation){};
-    virtual ~BaseDensitySummationInner(){};
-    void update(size_t index_i, Real dt = 0.0);
-};
-
-/**
- * @class DensitySummationInner
- * @brief  computing density by summation
- */
-class DensitySummationInner : public BaseDensitySummationInner
-{
-  public:
-    explicit DensitySummationInner(BaseInnerRelation &inner_relation);
-    virtual ~DensitySummationInner(){};
-    void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    Real W0_;
-};
-
-/**
- * @class DensitySummationInnerAdaptive
- * @brief  computing density by summation with variable smoothing length
- */
-class DensitySummationInnerAdaptive : public BaseDensitySummationInner
-{
-  public:
-    explicit DensitySummationInnerAdaptive(BaseInnerRelation &inner_relation);
-    virtual ~DensitySummationInnerAdaptive(){};
-
-    void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    SPHAdaptation &sph_adaptation_;
-    Kernel &kernel_;
-    StdLargeVec<Real> &h_ratio_;
-};
-
-/**
  * @class BaseViscousAcceleration
  * @brief Base class for the viscosity force induced acceleration
  */
