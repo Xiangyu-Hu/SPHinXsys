@@ -119,6 +119,7 @@ class WCEulerianViscousAccelerationInner : public fluid_dynamics::BaseViscousAcc
 
   protected:
     StdLargeVec<Vecd> &dmom_dt_prior_;
+    StdLargeVec<Matd> &B_;
 };
 
 /**

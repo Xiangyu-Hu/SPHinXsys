@@ -190,8 +190,9 @@ int main(int ac, char *av[])
     periodic_condition_y.update_cell_linked_list_.exec();
     sph_system.initializeSystemConfigurations();
     initial_condition.exec();
-    //kernel_gradient_update.exec();
     configuration_fluid.exec();
+    //kernel_gradient_update.exec();
+    
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
