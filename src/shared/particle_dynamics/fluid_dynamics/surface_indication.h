@@ -105,28 +105,6 @@ class SpatialTemporalFreeSurfaceIdentification : public FreeSurfaceIdentificatio
     StdLargeVec<int> previous_surface_indicator_;
     bool isNearPreviousFreeSurface(size_t index_i);
 };
-
-/**
- * @class FreeSurfaceHeight
- * @brief Probe the free surface profile for a fluid body part by reduced operation.
- */
-class FreeSurfaceHeight : public BaseLocalDynamicsReduce<Real, ReduceMax, BodyPartByCell>,
-                          public FluidDataSimple
-{
-  protected:
-    StdLargeVec<Vecd> &pos_;
-
-  public:
-    FreeSurfaceHeight(BodyPartByCell &body_part)
-        : BaseLocalDynamicsReduce<Real, ReduceMax, BodyPartByCell>(body_part, Real(MinRealNumber)),
-          FluidDataSimple(sph_body_), pos_(particles_->pos_)
-    {
-        quantity_name_ = "FreeSurfaceHeight";
-    }
-    virtual ~FreeSurfaceHeight(){};
-
-    Real reduce(size_t index_i, Real dt = 0.0) { return pos_[index_i][1]; };
-};
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // SURFACE_INDICATION_H
