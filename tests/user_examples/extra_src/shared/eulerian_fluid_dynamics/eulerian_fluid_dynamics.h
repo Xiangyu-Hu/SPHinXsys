@@ -46,11 +46,10 @@ namespace fluid_dynamics
 class EulerianAcousticRiemannSolver
 {
     Fluid &fluid_i_, &fluid_j_;
-    Real limiter_parameter_;
 
   public:
-    EulerianAcousticRiemannSolver(Fluid &fluid_i, Fluid &fluid_j, Real limiter_parameter = 15.0)
-        : fluid_i_(fluid_i), fluid_j_(fluid_j), limiter_parameter_(limiter_parameter){};
+    EulerianAcousticRiemannSolver(Fluid &fluid_i, Fluid &fluid_j)
+        : fluid_i_(fluid_i), fluid_j_(fluid_j){};
     FluidStarState getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij);
 };
 
@@ -81,13 +80,12 @@ template <class RiemannSolverType>
 class EulerianIntegration1stHalf : public BaseIntegration
 {
   public:
-    explicit EulerianIntegration1stHalf(BaseInnerRelation &inner_relation, Real limiter_parameter = 15.0);
+    explicit EulerianIntegration1stHalf(BaseInnerRelation &inner_relation);
     virtual ~EulerianIntegration1stHalf(){};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    Real limiter_input_;
     RiemannSolverType riemann_solver_;
     StdLargeVec<Vecd> &acc_prior_;
     StdLargeVec<Vecd> mom_, dmom_dt_;
@@ -105,15 +103,12 @@ class EulerianIntegration1stHalfWithWall : public InteractionWithWall<EulerianIn
   public:
     // template for different combination of constructing body relations
     template <class BaseBodyRelationType>
-    EulerianIntegration1stHalfWithWall(BaseContactRelation &wall_contact_relation, BaseBodyRelationType &base_body_relation, Real limiter_parameter = 15.0)
-        : InteractionWithWall<EulerianIntegration1stHalfType>(wall_contact_relation, base_body_relation), limiter_input_(limiter_parameter){};
+    EulerianIntegration1stHalfWithWall(BaseContactRelation &wall_contact_relation, BaseBodyRelationType &base_body_relation)
+        : InteractionWithWall<EulerianIntegration1stHalfType>(wall_contact_relation, base_body_relation){};
     explicit EulerianIntegration1stHalfWithWall(ComplexRelation &fluid_wall_relation)
         : EulerianIntegration1stHalfWithWall(fluid_wall_relation.getContactRelation(), fluid_wall_relation.getInnerRelation()){};
     virtual ~EulerianIntegration1stHalfWithWall(){};
     void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    Real &limiter_input_;
 };
 using EulerianIntegration1stHalfAcousticRiemannWithWall = EulerianIntegration1stHalfWithWall<EulerianIntegration1stHalfAcousticRiemann>;
 
@@ -125,13 +120,12 @@ template <class RiemannSolverType>
 class EulerianIntegration2ndHalf : public BaseIntegration
 {
   public:
-    explicit EulerianIntegration2ndHalf(BaseInnerRelation &inner_relation, Real limiter_parameter = 15.0);
+    explicit EulerianIntegration2ndHalf(BaseInnerRelation &inner_relation);
     virtual ~EulerianIntegration2ndHalf(){};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    Real limiter_input_;
     RiemannSolverType riemann_solver_;
 };
 using EulerianIntegration2ndHalfAcousticRiemann = EulerianIntegration2ndHalf<EulerianAcousticRiemannSolver>;
@@ -146,15 +140,12 @@ class EulerianIntegration2ndHalfWithWall : public InteractionWithWall<EulerianIn
   public:
     // template for different combination of constructing body relations
     template <class BaseBodyRelationType>
-    EulerianIntegration2ndHalfWithWall(BaseContactRelation &wall_contact_relation, BaseBodyRelationType &base_body_relation, Real limiter_parameter = 15.0)
-        : InteractionWithWall<EulerianIntegration2ndHalfType>(wall_contact_relation, base_body_relation), limiter_input_(limiter_parameter){};
+    EulerianIntegration2ndHalfWithWall(BaseContactRelation &wall_contact_relation, BaseBodyRelationType &base_body_relation)
+        : InteractionWithWall<EulerianIntegration2ndHalfType>(wall_contact_relation, base_body_relation){};
     explicit EulerianIntegration2ndHalfWithWall(ComplexRelation &fluid_wall_relation)
         : EulerianIntegration2ndHalfWithWall(fluid_wall_relation.getContactRelation(), fluid_wall_relation.getInnerRelation()){};
     virtual ~EulerianIntegration2ndHalfWithWall(){};
     void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    Real &limiter_input_;
 };
 using EulerianIntegration2ndHalfAcousticRiemannWithWall = EulerianIntegration2ndHalfWithWall<EulerianIntegration2ndHalfAcousticRiemann>;
 
