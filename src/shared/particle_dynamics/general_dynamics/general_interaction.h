@@ -33,32 +33,6 @@
 
 namespace SPH
 {
-class ConfigurationInner : public LocalDynamics, public GeneralDataDelegateInner
-{
-public:
-    ConfigurationInner(BaseInnerRelation &inner_relation);
-    virtual ~ConfigurationInner() {};
-
-protected:
-    StdLargeVec<Matd>& B_;
-
-    void interaction(size_t index_i, Real dt = 0.0);
-    void update(size_t index_i, Real dt = 0.0);
-};
-
-class ConfigurationComplex : public ConfigurationInner, public GeneralDataDelegateContactOnly
-{
-public:
-    ConfigurationComplex(ComplexRelation& complex_relation);
-    virtual ~ConfigurationComplex() {};
-
-protected:
-    StdVec<StdLargeVec<Real>*> contact_Vol_;
-    StdVec<StdLargeVec<Real>*> contact_mass_;
-
-    void interaction(size_t index_i, Real dt = 0.0);
-};
-
 class ConsistencyCorrectedConfigurationInner : public LocalDynamics, public GeneralDataDelegateInner
 {
 public:

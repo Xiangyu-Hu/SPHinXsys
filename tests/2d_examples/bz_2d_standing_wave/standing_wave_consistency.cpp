@@ -201,7 +201,6 @@ int main(int ac, char* av[])
 
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_block_complex);
 
-    InteractionWithUpdate<ConfigurationComplex> configuration_fluid(water_block_complex);
     InteractionWithUpdate<CorrectedConfigurationComplex> corrected_configuration_fluid(water_block_complex, 0.3);
     InteractionWithUpdate<ConsistencyCorrectedConfigurationComplex> consistency_corrected_configuration_fluid(water_block_complex, 0.05);
 

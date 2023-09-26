@@ -4,7 +4,7 @@
  * @details We consider a Eulerian flow passing by a cylinder in 2D.
  * @author 	Zhentong Wang and Xiangyu Hu
  */
-#include "2d_eulerian_flow_around_cylinder_high_order.h"
+#include "2d_eulerian_flow_around_cylinder_EU.h"
 #include "sphinxsys.h"
 using namespace SPH;
 //----------------------------------------------------------------------
@@ -65,6 +65,16 @@ int main(int ac, char *av[])
         ReloadParticleIO write_real_body_particle_reload_files(io_environment, sph_system.real_bodies_);
         relax_dynamics::RelaxationStepInner relaxation_step_inner(cylinder_inner, true);
         relax_dynamics::RelaxationStepComplex relaxation_step_complex(water_block_complex, "OuterBoundary", true);
+
+        relax_dynamics::RelaxationStepByCMInner relaxation_step_CM_inner(cylinder_inner, true);
+        relax_dynamics::RelaxationStepByCMComplex relaxation_step_CM_complex(water_block_complex, "OuterBoundary", true);
+
+        //relax_dynamics::RelaxationStepImplicitInner relaxation_step_implicit_inner(cylinder_inner, true);
+        //relax_dynamics::RelaxationStepImplicitComplex relaxation_step_implicit_complex(water_block_complex, "OuterBoundary", true);
+        
+        //relax_dynamics::RelaxationStepByCMImplicitInner relaxation_step_implicit_inner(cylinder_inner, true);
+        //relax_dynamics::RelaxationStepByCMImplicitComplex relaxation_step_implicit_complex(water_block_complex, "OuterBoundary", true); 
+         
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------

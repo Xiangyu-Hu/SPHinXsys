@@ -35,9 +35,8 @@ void WCEulerianViscousAccelerationInner::interaction(size_t index_i, Real dt)
     {
         size_t index_j = inner_neighborhood.j_[n];
         vel_derivative = (vel_i - vel_[index_j]) / (inner_neighborhood.r_ij_[n] + TinyReal);
-        acceleration += 2.0 * mu_ * vel_derivative * (B_[index_i] * inner_neighborhood.e_ij_[n]).norm() * inner_neighborhood.dW_ijV_j_[n] / rho_i;
+        acceleration += 2.0 * mu_ * vel_derivative * inner_neighborhood.dW_ijV_j_[n] / rho_i;
     }
-    std::cout <<acceleration<< std::endl;
     dmom_dt_prior_[index_i] += rho_i * acceleration;
 }
 //=================================================================================================//
@@ -105,13 +104,11 @@ FluidConsistencyStarState AcousticRiemannSolverInEulerianMethod::getInterfaceCon
     Real clr = (rhol_cl + rhor_cr) / (state_i.rho_ + state_j.rho_);
 
     Matd p_star = (rhol_cl * state_j.p_ * B_i + rhor_cr * state_i.p_ * B_j + Matd::Identity() * rhol_cl * rhor_cr * (ul - ur) * SMIN(limiter_parameter_ * SMAX((ul - ur) / clr, Real(0)), Real(1))) / (rhol_cl + rhor_cr);
-    Matd u_star = (rhol_cl * ul * B_j + rhor_cr * ur * B_i + Matd::Identity() * (state_i.p_ - state_j.p_) * pow(SMIN(limiter_parameter_ * SMAX((ul - ur) / clr, Real(0)), Real(1)), 2)) / (rhol_cl + rhor_cr);
-    Vecd vel_star = (B_j * state_i.vel_ * state_i.rho_ + B_i * state_j.vel_ * state_j.rho_) / (state_i.rho_ + state_j.rho_) - (u_star - (ul * state_i.rho_ * B_i + ur * state_j.rho_ * B_j) / (state_i.rho_ + state_j.rho_)) * e_ij;
-
-    //Matd p_star = (rhol_cl * state_j.p_ * B_i + rhor_cr * state_i.p_ * B_j + Matd::Identity() * rhol_cl * rhor_cr * (ul - ur) * SMIN(limiter_parameter_ * SMAX((ul - ur) / clr, Real(0)), Real(1))) / (rhol_cl + rhor_cr);
+    Real u_star = (rhol_cl * ul + rhor_cr * ur + (state_i.p_ - state_j.p_) * pow(SMIN(limiter_parameter_ * SMAX((ul - ur) / clr, Real(0)), Real(1)), 2)) / (rhol_cl + rhor_cr);
+    Vecd vel_star = (state_i.vel_ * state_i.rho_ + state_j.vel_ * state_j.rho_) / (state_i.rho_ + state_j.rho_) - e_ij * (u_star - (ul * state_i.rho_ + ur * state_j.rho_) / (state_i.rho_ + state_j.rho_));
     //Matd u_star = (rhol_cl * ul * B_j + rhor_cr * ur * B_i + Matd::Identity() * (state_i.p_ - state_j.p_) * pow(SMIN(limiter_parameter_ * SMAX((ul - ur) / clr, Real(0)), Real(1)), 2)) / (rhol_cl + rhor_cr);
-    //Vecd vel_star = (B_j * state_i.vel_ * state_i.rho_ + B_i * state_j.vel_ * state_j.rho_) / (state_i.rho_ + state_j.rho_) - (u_star - (ul * state_i.rho_ * B_j + ur * state_j.rho_ * B_i)) * e_ij / (state_i.rho_ + state_j.rho_);
-
+    //Vecd vel_star = (B_j * state_i.vel_ * state_i.rho_ + B_i * state_j.vel_ * state_j.rho_) / (state_i.rho_ + state_j.rho_) - (u_star - (ul * state_i.rho_ * B_i + ur * state_j.rho_ * B_j) / (state_i.rho_ + state_j.rho_)) * e_ij;
+   
     FluidConsistencyStarState interface_state(vel_star, p_star);
     interface_state.vel_ = vel_star;
     interface_state.p_B_ = p_star;

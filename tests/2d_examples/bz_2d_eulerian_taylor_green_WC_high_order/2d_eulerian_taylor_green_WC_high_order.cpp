@@ -17,7 +17,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     sph_system.setRunParticleRelaxation(false); //Tag for run particle relaxation for body-fitted distribution
-    sph_system.setReloadParticles(false);       //Tag for computation with save particles distribution
+    sph_system.setReloadParticles(true);       //Tag for computation with save particles distribution
 #ifdef BOOST_AVAILABLE
     sph_system.handleCommandlineOptions(ac, av);// handle command line arguemnts.
 #endif
@@ -78,7 +78,6 @@ int main(int ac, char *av[])
         periodic_condition_y.update_cell_linked_list_.exec();
         sph_system.initializeSystemConfigurations();
         write_water_body_to_vtp.writeToFile(0);
-
         //----------------------------------------------------------------------
         //	Relax particles of the insert body.
         //----------------------------------------------------------------------
@@ -98,7 +97,7 @@ int main(int ac, char *av[])
 
         GlobalStaticVariables::physical_time_ = ite;
         /* The procedure to obtain uniform particle distribution that satisfies the 0ht order consistency. */
-        while (current_zero_average_residual > 0.0001)
+        while (current_zero_average_residual > 0.00001)
         {
             periodic_condition_x.bounding_.exec();
             periodic_condition_y.bounding_.exec();
@@ -107,9 +106,9 @@ int main(int ac, char *av[])
             periodic_condition_y.update_cell_linked_list_.exec();
             water_body_inner.updateConfiguration();
 
-            relaxation_0th_implicit_inner.exec(0.1);
-            //calculate_correction_matrix.exec();
-            //relaxation_1st_implicit_inner.exec(0.1);
+            //relaxation_0th_implicit_inner.exec(0.1);
+            calculate_correction_matrix.exec();
+            relaxation_1st_implicit_inner.exec(0.1);
 
             ite++;
 
@@ -146,8 +145,9 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //----------------------------------------------------------------------
     InnerRelation water_body_inner(water_body);
-    InteractionWithUpdate<KernelGradientWithCorrectionInner> kernel_gradient_update(water_body_inner);
-    InteractionWithUpdate<ConfigurationInner> configuration_fluid(water_body_inner);
+    InnerRelation water_body_correct_inner(water_body);
+    InteractionWithUpdate<KernelGradientWithCorrectionInner> kernel_gradient_update(water_body_correct_inner);
+    InteractionWithUpdate<CorrectedConfigurationInner> correct_configuration_fluid(water_body_inner);
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
@@ -167,7 +167,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<Integration1stHalfAcousticRiemann> pressure_relaxation(water_body_inner, 0);
     InteractionWithUpdate<Integration2ndHalfAcousticRiemann> density_and_energy_relaxation(water_body_inner, 0);
     /** Computing viscous acceleration. */
-    InteractionDynamics<WCEulerianViscousAccelerationInner> viscous_acceleration(water_body_inner);
+    InteractionDynamics<WCEulerianViscousAccelerationInner> viscous_acceleration(water_body_correct_inner);
     water_body.addBodyStateForRecording<Real>("Pressure");
     water_body.addBodyStateForRecording<Matd>("CorrectionMatrix");
     //----------------------------------------------------------------------
@@ -190,9 +190,8 @@ int main(int ac, char *av[])
     periodic_condition_y.update_cell_linked_list_.exec();
     sph_system.initializeSystemConfigurations();
     initial_condition.exec();
-    configuration_fluid.exec();
-    //kernel_gradient_update.exec();
-    
+    correct_configuration_fluid.exec();
+    kernel_gradient_update.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
