@@ -1,12 +1,6 @@
-/**
- * @file fluid_dynamics_multi_phase.hpp
- * @brief Here, we define the algorithm classes for the dynamics involving multiple fluids.
- * @author	Chi Zhang and Xiangyu Hu
- */
-
 #pragma once
 
-#include "fluid_dynamics_multi_phase.h"
+#include "multi_phase_dynamics.h"
 
 namespace SPH
 {

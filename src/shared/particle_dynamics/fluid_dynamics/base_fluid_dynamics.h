@@ -43,6 +43,31 @@ typedef DataDelegateInner<BaseParticles> FluidDataInner;
 typedef DataDelegateContact<BaseParticles, BaseParticles> FluidContactData;
 typedef DataDelegateContact<BaseParticles, SolidParticles, DataDelegateEmptyBase> FluidWallData;
 typedef DataDelegateContact<BaseParticles, SolidParticles> FSIContactData;
+/**
+ * @class InteractionWithWall
+ * @brief Base class adding interaction with wall to general relaxation process
+ */
+
+template <template <class DataDelegationType> class BaseInteractionType>
+class InteractionWithWall : public BaseInteractionType<FSIContactData>
+{
+  public:
+    explicit InteractionWithWall(BaseContactRelation &wall_contact_relation)
+        : BaseInteractionType<FSIContactData>(wall_contact_relation)
+    {
+        for (size_t k = 0; k != this->contact_particles_.size(); ++k)
+        {
+            wall_vel_ave_.push_back(this->contact_particles_[k]->AverageVelocity());
+            wall_acc_ave_.push_back(this->contact_particles_[k]->AverageAcceleration());
+            wall_n_.push_back(&(this->contact_particles_[k]->n_));
+        }
+    };
+    virtual ~InteractionWithWall(){};
+
+  protected:
+    StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_acc_ave_, wall_n_;
+};
+
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // BASE_FLUID_DYNAMICS_H

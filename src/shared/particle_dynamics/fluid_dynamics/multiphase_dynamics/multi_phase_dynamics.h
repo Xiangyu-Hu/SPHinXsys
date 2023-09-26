@@ -21,16 +21,16 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file fluid_dynamics_multi_phase.h
+ * @file multi_phase_dynamics.h
  * @brief Here, we define the algorithm classes for the dynamics involving multiple fluids.
  * @author	Chi Zhang and Xiangyu Hu
  */
 
-#ifndef FLUID_DYNAMICS_MULTI_PHASE_H
-#define FLUID_DYNAMICS_MULTI_PHASE_H
+#ifndef MULTI_PHASE_DYNAMICS_H
+#define MULTI_PHASE_DYNAMICS_H
 
-#include "fluid_dynamics_complex.h"
-#include "fluid_dynamics_complex.hpp"
+#include "fluid_integration.hpp"
+#include "viscous_dynamics.hpp"
 
 namespace SPH
 {
@@ -115,4 +115,4 @@ class MultiPhaseColorFunctionGradient : public LocalDynamics, public MultiPhaseC
 };
 } // namespace fluid_dynamics
 } // namespace SPH
-#endif // FLUID_DYNAMICS_MULTI_PHASE_H
+#endif // MULTI_PHASE_DYNAMICS_H

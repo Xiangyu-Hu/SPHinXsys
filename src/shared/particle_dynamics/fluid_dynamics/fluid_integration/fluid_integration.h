@@ -21,53 +21,103 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	fluid_dynamics_complex.h
- * @brief 	Here, we define the algorithm classes for complex fluid dynamics,
- * 			which is involving with either solid walls (with suffix WithWall)
- * 			or/and other bodies treated as wall for the fluid (with suffix Complex).
+ * @file 	fluid_integration.h
+ * @brief 	Here, we define the algorithm classes for fluid dynamics within the body.
+ * @details We consider here weakly compressible fluids.
+ * 			Note that, as these are local dynamics which are combined with particle dynamics
+ * 			algorithms as template, the name-hiding is used for functions in the derived classes.
  * @author	Chi Zhang and Xiangyu Hu
  */
 
-#ifndef FLUID_DYNAMICS_COMPLEX_H
-#define FLUID_DYNAMICS_COMPLEX_H
+#ifndef FLUID_INTEGRATION_H
+#define FLUID_INTEGRATION_H
 
 #include "base_fluid_dynamics.h"
-
-#include "fluid_dynamics_inner.h"
-#include "fluid_dynamics_inner.hpp"
+#include "riemann_solver.h"
+#include "weakly_compressible_fluid.h"
 
 namespace SPH
 {
 namespace fluid_dynamics
 {
 /**
- * @class InteractionWithWall
- * @brief Base class adding interaction with wall to general relaxation process
+ * @class FluidInitialCondition
+ * @brief  Set initial condition for a fluid body.
+ * This is a abstract class to be override for case specific initial conditions
  */
-
-template <template <class DataDelegationType> class BaseInteractionType>
-class InteractionWithWall : public BaseInteractionType<FSIContactData>
+class FluidInitialCondition : public LocalDynamics, public FluidDataSimple
 {
   public:
-    explicit InteractionWithWall(BaseContactRelation &wall_contact_relation);
-    virtual ~InteractionWithWall(){};
+    explicit FluidInitialCondition(SPHBody &sph_body);
+    virtual ~FluidInitialCondition(){};
 
   protected:
-    StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_acc_ave_, wall_n_;
+    StdLargeVec<Vecd> &pos_, &vel_;
 };
 
 /**
- * @class ViscousWallBoundary
- * @brief TBD
+ * @class BaseIntegration
+ * @brief Base class for all fluid relaxation schemes
  */
-class ViscousWallBoundary : public InteractionWithWall<BaseViscousAcceleration>
+template <class DataDelegationType>
+class BaseIntegration : public LocalDynamics, public DataDelegationType
 {
   public:
-    ViscousWallBoundary(BaseContactRelation &wall_contact_relation)
-        : InteractionWithWall<BaseViscousAcceleration>(wall_contact_relation){};
-    virtual ~ViscousWallBoundary(){};
-    void interaction(size_t index_i, Real dt = 0.0);
+    template <class BaseRelationType>
+    explicit BaseIntegration(BaseRelationType &base_relation);
+    virtual ~BaseIntegration(){};
+
+  protected:
+    Fluid &fluid_;
+    StdLargeVec<Real> &rho_, &p_, &drho_dt_;
+    StdLargeVec<Vecd> &pos_, &vel_, &acc_, &acc_prior_;
 };
+
+/**
+ * @class BaseIntegration1stHalfInner
+ * @brief Template class for pressure relaxation scheme with the Riemann solver
+ * as template variable
+ */
+template <class RiemannSolverType, class KernelCorrectionType>
+class BaseIntegration1stHalfInner : public BaseIntegration<FluidDataInner>
+{
+  public:
+    explicit BaseIntegration1stHalfInner(BaseInnerRelation &inner_relation);
+    virtual ~BaseIntegration1stHalfInner(){};
+    void initialization(size_t index_i, Real dt = 0.0);
+    void interaction(size_t index_i, Real dt = 0.0);
+    void update(size_t index_i, Real dt = 0.0);
+
+  protected:
+    KernelCorrectionType correction_;
+    RiemannSolverType riemann_solver_;
+};
+using Integration1stHalfInner = BaseIntegration1stHalfInner<NoRiemannSolver, NoKernelCorrection>;
+using Integration1stHalfInnerRiemann = BaseIntegration1stHalfInner<AcousticRiemannSolver, NoKernelCorrection>;
+using Integration1stHalfInnerDissipativeRiemann = BaseIntegration1stHalfInner<DissipativeRiemannSolver, NoKernelCorrection>;
+
+/**
+ * @class BaseIntegration2ndHalfInner
+ * @brief  Template density relaxation scheme with different Riemann solver
+ */
+template <class RiemannSolverType>
+class BaseIntegration2ndHalfInner : public BaseIntegration<FluidDataInner>
+{
+  public:
+    explicit BaseIntegration2ndHalfInner(BaseInnerRelation &inner_relation);
+    virtual ~BaseIntegration2ndHalfInner(){};
+    void initialization(size_t index_i, Real dt = 0.0);
+    inline void interaction(size_t index_i, Real dt = 0.0);
+    void update(size_t index_i, Real dt = 0.0);
+
+  protected:
+    RiemannSolverType riemann_solver_;
+    StdLargeVec<Real> &Vol_, &mass_;
+};
+using Integration2ndHalfInner = BaseIntegration2ndHalfInner<NoRiemannSolver>;
+/** define the mostly used density relaxation scheme using Riemann solver */
+using Integration2ndHalfInnerRiemann = BaseIntegration2ndHalfInner<AcousticRiemannSolver>;
+using Integration2ndHalfInnerDissipativeRiemann = BaseIntegration2ndHalfInner<DissipativeRiemannSolver>;
 
 /**
  * @class MomentumWallBoundary
@@ -124,37 +174,6 @@ class ContinuityWallBoundary : public InteractionWithWall<BaseIntegration>
 };
 using ContinuityWallBoundaryRiemann = ContinuityWallBoundary<AcousticRiemannSolver>;
 using ContinuityWallBoundaryDissipativeRiemann = ContinuityWallBoundary<DissipativeRiemannSolver>;
-/**
- * @class Oldroyd_BMomentumWallBoundary
- * @brief Dissipative Riemann solver is used here.
- */
-class Oldroyd_BMomentumWallBoundary : public MomentumWallBoundaryDissipativeRiemann
-{
-  public:
-    explicit Oldroyd_BMomentumWallBoundary(BaseContactRelation &wall_contact_relation);
-    virtual ~Oldroyd_BMomentumWallBoundary(){};
-    void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    StdLargeVec<Matd> &tau_;
-};
-
-/**
- * @class Oldroyd_BContinuityWallBoundary
- * @brief Dissipative Riemann solver is used here too.
- */
-class Oldroyd_BContinuityWallBoundary : public ContinuityWallBoundaryDissipativeRiemann
-{
-  public:
-    explicit Oldroyd_BContinuityWallBoundary(BaseContactRelation &wall_contact_relation);
-    virtual ~Oldroyd_BContinuityWallBoundary(){};
-    inline void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    Oldroyd_B_Fluid &oldroyd_b_fluid_;
-    StdLargeVec<Matd> &tau_, &dtau_dt_;
-    Real mu_p_, lambda_;
-};
 } // namespace fluid_dynamics
 } // namespace SPH
-#endif // FLUID_DYNAMICS_COMPLEX_H
+#endif // FLUID_INTEGRATION_H

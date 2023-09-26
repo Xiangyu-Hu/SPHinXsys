@@ -1,4 +1,4 @@
-#include "fluid_dynamics_multi_phase.h"
+#include "multi_phase_dynamics.h"
 
 namespace SPH
 {
