@@ -5,7 +5,7 @@ namespace SPH
 namespace fluid_dynamics
 {
 //=================================================================================================//
-FluidStarState EulerianDissipativeRiemannSolver::getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
+FluidStarState EulerianNoRiemannSolver::getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
 {
     Real ul = -e_ij.dot(state_i.vel_);
     Real ur = -e_ij.dot(state_j.vel_);
@@ -76,43 +76,38 @@ void NonReflectiveBoundaryCorrection::interaction(size_t index_i, Real dt)
     if (indicator_[index_i] == 1 || smeared_surface_[index_i] == 1)
     {
         Real velocity_boundary_normal = vel_[index_i].dot(n_[index_i]);
-        // judge it is the inflow condition
-        if (n_[index_i][0] <= 0.0 || fabs(n_[index_i][1]) > fabs(n_[index_i][0]))
+        bool is_inflow = (n_[index_i][0] <= 0.0 || fabs(n_[index_i][1]) > fabs(n_[index_i][0]));
+        bool is_subsonic = (fabs(velocity_boundary_normal) < sound_speed_);
+
+        inner_weight_summation_[index_i] = 0.0;
+        Real rho_summation = 0.0;
+        Real vel_normal_summation = 0.0;
+        Vecd vel_tangential_summation = Vecd::Zero();
+        Vecd vel_summation = Vecd::Zero();
+        size_t total_inner_neighbor_particles = 0;
+        const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
         {
-            // subsonic inflow condition
-            if (fabs(velocity_boundary_normal) < sound_speed_)
+            size_t index_j = inner_neighborhood.j_[n];
+            if (indicator_[index_j] != 1)
             {
-                inner_weight_summation_[index_i] = 0.0;
-                Real rho_summation = 0.0;
-                Real vel_normal_summation(0.0);
-                size_t total_inner_neighbor_particles = 0;
-                const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-                for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-                {
-                    size_t index_j = inner_neighborhood.j_[n];
-                    if (indicator_[index_j] != 1)
-                    {
-                        Real W_ij = inner_neighborhood.W_ij_[n];
-                        inner_weight_summation_[index_i] += W_ij * Vol_[index_j];
-                        rho_summation += rho_[index_j];
-                        vel_normal_summation += vel_[index_j].dot(n_[index_i]);
-                        total_inner_neighbor_particles += 1;
-                    }
-                }
-                rho_average_[index_i] = rho_summation / (total_inner_neighbor_particles + TinyReal);
-                vel_normal_average_[index_i] = vel_normal_summation / (total_inner_neighbor_particles + TinyReal);
+                Real W_ij = inner_neighborhood.W_ij_[n];
+                inner_weight_summation_[index_i] += W_ij * Vol_[index_j];
+                rho_summation += rho_[index_j];
+                vel_normal_summation += vel_[index_j].dot(n_[index_i]);
+                vel_tangential_summation += vel_[index_j] - vel_[index_j].dot(n_[index_i]) * n_[index_i];
+                vel_summation += vel_[index_j];
+                total_inner_neighbor_particles += 1;
             }
         }
-        // judge it is the outflow condition
-        else
+        rho_average_[index_i] = rho_summation / (total_inner_neighbor_particles + TinyReal);
+        vel_normal_average_[index_i] = vel_normal_summation / (total_inner_neighbor_particles + TinyReal);
+        vel_tangential_average_[index_i] = vel_tangential_summation / (total_inner_neighbor_particles + TinyReal);
+
+        if (!is_inflow)
         {
-            // supersonic outflow condition
-            if (fabs(velocity_boundary_normal) >= sound_speed_)
+            if (!is_subsonic)
             {
-                Real rho_summation = 0.0;
-                Vecd vel_summation = Vecd::Zero();
-                size_t total_inner_neighbor_particles = 0;
-                const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
                 for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
                 {
                     size_t index_j = inner_neighborhood.j_[n];
@@ -126,33 +121,6 @@ void NonReflectiveBoundaryCorrection::interaction(size_t index_i, Real dt)
                 rho_average_[index_i] = rho_summation / (total_inner_neighbor_particles + TinyReal);
                 vel_average_[index_i] = vel_summation / (total_inner_neighbor_particles + TinyReal);
             }
-
-            // subsonic outflow condition
-            if (fabs(velocity_boundary_normal) < sound_speed_)
-            {
-                inner_weight_summation_[index_i] = 0.0;
-                Real rho_summation = 0.0;
-                Real vel_normal_summation(0.0);
-                Vecd vel_tangential_summation = Vecd::Zero();
-                size_t total_inner_neighbor_particles = 0;
-                const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-                for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-                {
-                    size_t index_j = inner_neighborhood.j_[n];
-                    if (indicator_[index_j] != 1)
-                    {
-                        Real W_ij = inner_neighborhood.W_ij_[n];
-                        inner_weight_summation_[index_i] += W_ij * Vol_[index_j];
-                        rho_summation += rho_[index_j];
-                        vel_normal_summation += vel_[index_j].dot(n_[index_i]);
-                        vel_tangential_summation += vel_[index_j] - vel_[index_j].dot(n_[index_i]) * n_[index_i];
-                        total_inner_neighbor_particles += 1;
-                    }
-                }
-                rho_average_[index_i] = rho_summation / (total_inner_neighbor_particles + TinyReal);
-                vel_normal_average_[index_i] = vel_normal_summation / (total_inner_neighbor_particles + TinyReal);
-                vel_tangential_average_[index_i] = vel_tangential_summation / (total_inner_neighbor_particles + TinyReal);
-            }
         }
     }
 }
@@ -163,19 +131,12 @@ void NonReflectiveBoundaryCorrection::update(size_t index_i, Real dt)
     {
         Real velocity_farfield_normal = vel_farfield_.dot(n_[index_i]);
         Real velocity_boundary_normal = vel_[index_i].dot(n_[index_i]);
+        bool is_inflow = (n_[index_i][0] <= 0.0 || fabs(n_[index_i][1]) > fabs(n_[index_i][0]));
+        bool is_subsonic = (fabs(velocity_boundary_normal) < sound_speed_);
 
-        // judge it is the inflow condition
-        if (n_[index_i][0] <= 0.0 || fabs(n_[index_i][1]) > fabs(n_[index_i][0]))
+        if (is_inflow)
         {
-            // supersonic inflow condition
-            if (fabs(velocity_boundary_normal) >= sound_speed_)
-            {
-                vel_[index_i] = vel_farfield_;
-                rho_[index_i] = rho_farfield_;
-                mom_[index_i] = rho_[index_i] * vel_[index_i];
-            }
-            // subsonic inflow condition
-            if (fabs(velocity_boundary_normal) < sound_speed_)
+            if (is_subsonic)
             {
                 rho_[index_i] = rho_average_[index_i] * inner_weight_summation_[index_i] + rho_farfield_ * (1.0 - inner_weight_summation_[index_i]);
                 p_[index_i] = fluid_.getPressure(rho_[index_i]);
@@ -183,25 +144,27 @@ void NonReflectiveBoundaryCorrection::update(size_t index_i, Real dt)
                 vel_[index_i] = vel_normal * n_[index_i] + (vel_farfield_ - velocity_farfield_normal * n_[index_i]);
                 mom_[index_i] = rho_[index_i] * vel_[index_i];
             }
-        }
-        // judge it is the outflow condition
-        else
-        {
-            // supersonic outflow condition
-            if (fabs(velocity_boundary_normal) >= sound_speed_)
+            else
             {
-                rho_[index_i] = rho_average_[index_i] + TinyReal;
-                vel_[index_i] = vel_average_[index_i];
+                vel_[index_i] = vel_farfield_;
+                rho_[index_i] = rho_farfield_;
                 mom_[index_i] = rho_[index_i] * vel_[index_i];
             }
-
-            // subsonic outflow condition
-            if (fabs(velocity_boundary_normal) < sound_speed_)
+        }
+        else
+        {
+            if (is_subsonic)
             {
                 rho_[index_i] = rho_average_[index_i] * inner_weight_summation_[index_i] + rho_farfield_ * (1.0 - inner_weight_summation_[index_i]);
                 p_[index_i] = fluid_.getPressure(rho_[index_i]);
                 Real vel_normal = vel_normal_average_[index_i] * inner_weight_summation_[index_i] + velocity_farfield_normal * (1.0 - inner_weight_summation_[index_i]);
                 vel_[index_i] = vel_normal * n_[index_i] + vel_tangential_average_[index_i];
+                mom_[index_i] = rho_[index_i] * vel_[index_i];
+            }
+            else
+            {
+                rho_[index_i] = rho_average_[index_i];
+                vel_[index_i] = vel_average_[index_i];
                 mom_[index_i] = rho_[index_i] * vel_[index_i];
             }
         }
