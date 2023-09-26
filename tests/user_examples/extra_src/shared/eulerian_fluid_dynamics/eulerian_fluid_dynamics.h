@@ -28,7 +28,6 @@
 #ifndef EULERIAN_FLUID_DYNAMICS_H
 #define EULERIAN_FLUID_DYNAMICS_H
 
-#include "compressible_fluid.h"
 #include "fluid_body.h"
 #include "fluid_dynamics_complex.h"
 #include "fluid_dynamics_inner.h"
@@ -40,17 +39,42 @@ namespace SPH
 namespace fluid_dynamics
 {
 /**
+ * @struct EulerianDissipativeRiemannSolver
+ * @brief  Dissipative RiemannSolver for Eulerian weakly-compressible flow.
+ */
+class EulerianDissipativeRiemannSolver
+{
+  public:
+    EulerianDissipativeRiemannSolver(Fluid &fluid_i, Fluid &fluid_j)
+        : fluid_i_(fluid_i), fluid_j_(fluid_j), rho0_i_(fluid_i.ReferenceDensity()), rho0_j_(fluid_j.ReferenceDensity()),
+          c0_i_(fluid_i.ReferenceSoundSpeed()), c0_j_(fluid_j.ReferenceSoundSpeed()),
+          rho0c0_i_(rho0_i_ * c0_i_), rho0c0_j_(rho0_j_ * c0_j_),
+          inv_rho0c0_sum_(1.0 / (rho0c0_i_ + rho0c0_j_)){};
+    FluidStarState getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij);
+
+  protected:
+    Fluid &fluid_i_, &fluid_j_;
+    Real rho0_i_, rho0_j_;
+    Real c0_i_, c0_j_;
+    Real rho0c0_i_, rho0c0_j_, inv_rho0c0_sum_;
+};
+
+/**
  * @struct EulerianAcousticRiemannSolver
  * @brief  Acoustic RiemannSolver for Eulerian weakly-compressible flow.
  */
-class EulerianAcousticRiemannSolver
+class EulerianAcousticRiemannSolver : public EulerianDissipativeRiemannSolver
 {
-    Fluid &fluid_i_, &fluid_j_;
-
   public:
     EulerianAcousticRiemannSolver(Fluid &fluid_i, Fluid &fluid_j)
-        : fluid_i_(fluid_i), fluid_j_(fluid_j){};
+        : EulerianDissipativeRiemannSolver(fluid_i, fluid_j),
+          inv_rho0c0_ave_(2.0 * inv_rho0c0_sum_), rho0c0_geo_ave_(2.0 * rho0c0_i_ * rho0c0_j_ * inv_rho0c0_sum_),
+          inv_c_ave_(0.5 * (rho0_i_ + rho0_j_) * inv_rho0c0_ave_){};
     FluidStarState getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij);
+
+  protected:
+    Real inv_rho0c0_ave_, rho0c0_geo_ave_;
+    Real inv_c_ave_;
 };
 
 /**

@@ -41,8 +41,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     /** Here we introduce the limiter in the Riemann solver and 0 means the no extra numerical dissipation.
     the value is larger, the numerical dissipation larger*/
-    InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfAcousticRiemann> pressure_relaxation(water_block_inner, 200.0);
-    InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfAcousticRiemann> density_relaxation(water_block_inner, 200.0);
+    InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfAcousticRiemann> pressure_relaxation(water_block_inner);
+    InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfAcousticRiemann> density_relaxation(water_block_inner);
     /** Boundary conditions set up */
     FACBoundaryConditionSetup boundary_condition_setup(water_block_inner, ghost_creation.each_boundary_type_with_all_ghosts_index_,
                                                        ghost_creation.each_boundary_type_with_all_ghosts_eij_, ghost_creation.each_boundary_type_contact_real_index_);

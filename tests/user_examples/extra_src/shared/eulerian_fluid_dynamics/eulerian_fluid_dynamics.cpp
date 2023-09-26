@@ -5,21 +5,30 @@ namespace SPH
 namespace fluid_dynamics
 {
 //=================================================================================================//
+FluidStarState EulerianDissipativeRiemannSolver::getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
+{
+    Real ul = -e_ij.dot(state_i.vel_);
+    Real ur = -e_ij.dot(state_j.vel_);
+    Real p_star = (rho0c0_i_ * state_j.p_ + rho0c0_j_ * state_i.p_) * inv_rho0c0_sum_;
+    Real u_star = (rho0c0_i_ * ul + rho0c0_j_ * ur) * inv_rho0c0_sum_;
+    Vecd vel_star = (state_i.vel_ * state_i.rho_ + state_j.vel_ * state_j.rho_) / (state_i.rho_ + state_j.rho_) 
+        - e_ij * (u_star - (ul * state_i.rho_ + ur * state_j.rho_) / (state_i.rho_ + state_j.rho_));
+    FluidStarState interface_state(vel_star, p_star);
+
+    return interface_state;
+}
+//=================================================================================================//
 FluidStarState EulerianAcousticRiemannSolver::getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
 {
     Real ul = -e_ij.dot(state_i.vel_);
     Real ur = -e_ij.dot(state_j.vel_);
-    Real rhol_cl = fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_) * state_i.rho_;
-    Real rhor_cr = fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_) * state_j.rho_;
-    Real clr = (rhol_cl + rhor_cr) / (state_i.rho_ + state_j.rho_);
-
-    Real p_star = (rhol_cl * state_j.p_ + rhor_cr * state_i.p_ + rhol_cl * rhor_cr * (ul - ur) * SMIN(50.0 * SMAX((ul - ur) / clr, Real(0)), Real(1))) / (rhol_cl + rhor_cr);
-    Real u_star = (rhol_cl * ul + rhor_cr * ur + (state_i.p_ - state_j.p_) * pow(SMIN(50.0 * SMAX((ul - ur) / clr, Real(0)), Real(1)), 2)) / (rhol_cl + rhor_cr);
-    Vecd vel_star = (state_i.vel_ * state_i.rho_ + state_j.vel_ * state_j.rho_) / (state_i.rho_ + state_j.rho_) - e_ij * (u_star - (ul * state_i.rho_ + ur * state_j.rho_) / (state_i.rho_ + state_j.rho_));
-
+    Real p_star = (rho0c0_i_ * state_j.p_ + rho0c0_j_ * state_i.p_) * inv_rho0c0_sum_ 
+        + 0.5 * rho0c0_geo_ave_ * (ul - ur) * SMIN(50.0 * SMAX((ul - ur) * inv_c_ave_, Real(0)), Real(1));
+    Real u_star = (rho0c0_i_ * ul + rho0c0_j_ * ur) * inv_rho0c0_sum_ 
+        + ((state_i.p_ - state_j.p_) * pow(SMIN(50.0 * SMAX((ul - ur) * inv_c_ave_, Real(0)), Real(1)), 2)) * inv_rho0c0_sum_;
+    Vecd vel_star = (state_i.vel_ * state_i.rho_ + state_j.vel_ * state_j.rho_) / (state_i.rho_ + state_j.rho_) 
+        - e_ij * (u_star - (ul * state_i.rho_ + ur * state_j.rho_) / (state_i.rho_ + state_j.rho_));
     FluidStarState interface_state(vel_star, p_star);
-    interface_state.vel_ = vel_star;
-    interface_state.p_ = p_star;
 
     return interface_state;
 }
