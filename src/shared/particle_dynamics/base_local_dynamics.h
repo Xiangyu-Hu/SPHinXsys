@@ -207,6 +207,27 @@ template <typename ReturnType, typename Operation>
 using LocalDynamicsReduce = BaseLocalDynamicsReduce<ReturnType, Operation, SPHBody>;
 
 /**
+ * @class Average
+ * @brief Derives class for computing particle-wise averages.
+ */
+template <class ReduceSumType>
+class Average : public ReduceSumType
+{
+  public:
+    template <class DynamicsIdentifier, typename... Args>
+    Average(DynamicsIdentifier &identifier, Args &&...args)
+        : ReduceSumType(identifier, std::forward<Args>(args)...){};
+    virtual ~Average(){};
+    using ReturnType = typename ReduceSumType::ReduceReturnType;
+
+    virtual ReturnType outputResult(ReturnType reduced_value)
+    {
+        ReturnType sum = ReduceSumType::outputResult(reduced_value);
+        return sum / Real(this->getDynamicsIdentifier().SizeOfLoopRange());
+    }
+};
+
+/**
  * @class LocalDynamicsParameters
  * @brief Class template argument deduction (CTAD) for constructor parameters.
  */

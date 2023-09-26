@@ -22,91 +22,91 @@
  * ------------------------------------------------------------------------- */
 
 /**
-* @file 	diffusion_optimization_common.h
-* @brief 	This is the method for updating, calculating error, observed parameters.
-* @author   Bo Zhang and Xiangyu Hu
-*/
+ * @file 	diffusion_optimization_common.h
+ * @brief 	This is the method for updating, calculating error, observed parameters.
+ * @author   Bo Zhang and Xiangyu Hu
+ */
 
 #ifndef DIFFUSION_OPTIMIZATION_COMMON_H
 #define DIFFUSION_OPTIMIZATION_COMMON_H
 
+#include "all_particle_dynamics.h"
 #include "diffusion_splitting_base.h"
 #include "diffusion_splitting_parameter.h"
 #include "diffusion_splitting_state.h"
-#include "all_particle_dynamics.h"
 
 namespace SPH
 {
-	/**
-	 * @class  ComputeAverageErrorOrPositiveParameter
-	 * @breif  Computing the average error on the (partly) optimization 
-	 *         domain or any paraeter only with positive values.
-	 */
-	template <class DynamicsIdentifier, class ParticlesType>
-	class ComputeAverageErrorOrPositiveParameter
-		: public SpeciesSummation<DynamicsIdentifier, ParticlesType>
-	{
-    protected:
-		StdLargeVec<Real> &variable_;
+/**
+ * @class  ComputeTotalErrorOrPositiveParameter
+ * @brief  Computing the average error on the (partly) optimization
+ *         domain or any parameter only with positive values.
+ */
+template <class DynamicsIdentifier, class ParticlesType>
+class ComputeTotalErrorOrPositiveParameter
+    : public SpeciesSummation<DynamicsIdentifier, ParticlesType>
+{
+  protected:
+    StdLargeVec<Real> &variable_;
 
-	public:
-		ComputeAverageErrorOrPositiveParameter(DynamicsIdentifier &identifier, const std::string &variable_name):
-			SpeciesSummation<DynamicsIdentifier, ParticlesType>(identifier, variable_name),
-			variable_(*this->particles_->template getVariableByName<Real>(variable_name)){};
-		virtual ~ComputeAverageErrorOrPositiveParameter(){};
-		
-		Real reduce(size_t index_i, Real dt = 0.0)
-		{
-			return abs(variable_[index_i]);
-		};
-	};
+  public:
+    ComputeTotalErrorOrPositiveParameter(DynamicsIdentifier &identifier, const std::string &variable_name)
+        : SpeciesSummation<DynamicsIdentifier, ParticlesType>(identifier, variable_name),
+          variable_(*this->particles_->template getVariableByName<Real>(variable_name)){};
+    virtual ~ComputeTotalErrorOrPositiveParameter(){};
 
-	/**
-	 * @class ComputeMaximumError
-	 * @breif Get and return the maximum residual among the whole domain
-	 */
-	template <class DynamicsIdentifier, class ParticlesType>
-    class ComputeMaximumError
-		: public BaseLocalDynamicsReduce<Real, ReduceMax, DynamicsIdentifier>,
-          public DiffusionReactionSimpleData<ParticlesType>
+    Real reduce(size_t index_i, Real dt = 0.0)
     {
-    protected:
-		StdLargeVec<Real> &variable_;
-
-	public:
-		ComputeMaximumError(DynamicsIdentifier &identifier, const std::string &variable_name)
-			: BaseLocalDynamicsReduce<Real, ReduceMax, DynamicsIdentifier>(identifier, Real(0)),
-              DiffusionReactionSimpleData<ParticlesType>(identifier.getSPHBody()),
-              variable_(*this->particles_->template getVariableByName<Real>(variable_name)){};
-
-		Real reduce(size_t index_i, Real dt = 0.0)
-        {
-			return abs(variable_[index_i]);
-        }
+        return abs(variable_[index_i]);
     };
+};
 
-	/**
-	 * @class ThermalConductivityConstrain
-	 * @brief The thermal diffusivity on each particle will be corrected with 
-	 *        the same ratio according to the total thermal diffusivity.
-	 */
-	template <class ParticlesType>
-    class ThermalConductivityConstrain
-        : public LocalDynamics,
-          public DiffusionReactionSimpleData<ParticlesType>
+/**
+ * @class ComputeMaximumError
+ * @brief Get and return the maximum residual among the whole domain
+ */
+template <class DynamicsIdentifier, class ParticlesType>
+class ComputeMaximumError
+    : public BaseLocalDynamicsReduce<Real, ReduceMax, DynamicsIdentifier>,
+      public DiffusionReactionSimpleData<ParticlesType>
+{
+  protected:
+    StdLargeVec<Real> &variable_;
+
+  public:
+    ComputeMaximumError(DynamicsIdentifier &identifier, const std::string &variable_name)
+        : BaseLocalDynamicsReduce<Real, ReduceMax, DynamicsIdentifier>(identifier, Real(0)),
+          DiffusionReactionSimpleData<ParticlesType>(identifier.getSPHBody()),
+          variable_(*this->particles_->template getVariableByName<Real>(variable_name)){};
+
+    Real reduce(size_t index_i, Real dt = 0.0)
     {
-    public:
-        ThermalConductivityConstrain(SPHBody &diffusion_body, const std::string &variable_name,
-                                     Real initial_thermal_conductivity = 1);
-        virtual ~ThermalConductivityConstrain(){};
-        void UpdateAverageParameter(Real new_average_thermal_diffusivity);
+        return abs(variable_[index_i]);
+    }
+};
 
-    protected:
-        Real initial_thermal_conductivity_;
-        Real new_average_thermal_conductivity_;
-        StdLargeVec<Real> &local_thermal_conductivity_;
-        void update(size_t index_i, Real dt = 0.0);
-    };
-}
+/**
+ * @class ThermalConductivityConstrain
+ * @brief The thermal diffusivity on each particle will be corrected with
+ *        the same ratio according to the total thermal diffusivity.
+ */
+template <class ParticlesType>
+class ThermalConductivityConstrain
+    : public LocalDynamics,
+      public DiffusionReactionSimpleData<ParticlesType>
+{
+  public:
+    ThermalConductivityConstrain(SPHBody &diffusion_body, const std::string &variable_name,
+                                 Real initial_thermal_conductivity = 1);
+    virtual ~ThermalConductivityConstrain(){};
+    void UpdateAverageParameter(Real new_average_thermal_diffusivity);
 
-#endif //DIFFUSION_OPTIMIZATION_COMMON_H
+  protected:
+    Real initial_thermal_conductivity_;
+    Real new_average_thermal_conductivity_;
+    StdLargeVec<Real> &local_thermal_conductivity_;
+    void update(size_t index_i, Real dt = 0.0);
+};
+} // namespace SPH
+
+#endif // DIFFUSION_OPTIMIZATION_COMMON_H

@@ -37,19 +37,6 @@ bool VelocityBoundCheck::reduce(size_t index_i, Real dt)
     return vel_[index_i].norm() > velocity_bound_;
 }
 //=================================================================================================//
-UpperFrontInXDirection::UpperFrontInXDirection(SPHBody &sph_body)
-    : LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
-      GeneralDataDelegateSimple(sph_body),
-      pos_(particles_->pos_)
-{
-    quantity_name_ = "UpperFrontInXDirection";
-}
-//=================================================================================================//
-Real UpperFrontInXDirection::reduce(size_t index_i, Real dt)
-{
-    return pos_[index_i][0];
-}
-//=================================================================================================//
 MaximumSpeed::MaximumSpeed(SPHBody &sph_body)
     : LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
       GeneralDataDelegateSimple(sph_body),

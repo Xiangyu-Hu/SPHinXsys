@@ -160,21 +160,27 @@ class VelocityBoundCheck : public LocalDynamicsReduce<bool, ReduceOR>,
 };
 
 /**
- * @class 	UpperFrontInXDirection
- * @brief 	Get the upper front In X Direction for a SPH body
- *			TODO: a test using this method
+ * @class 	UpperFrontInAxisDirection
+ * @brief 	Get the upper front in an axis direction for a body or body part
  */
-class UpperFrontInXDirection : public LocalDynamicsReduce<Real, ReduceMax>,
-                               public GeneralDataDelegateSimple
+template <class DynamicsIdentifier>
+class UpperFrontInAxisDirection : public BaseLocalDynamicsReduce<Real, ReduceMax, DynamicsIdentifier>,
+                                  public GeneralDataDelegateSimple
 {
   protected:
+    int axis_;
     StdLargeVec<Vecd> &pos_;
 
   public:
-    explicit UpperFrontInXDirection(SPHBody &sph_body);
-    virtual ~UpperFrontInXDirection(){};
+    UpperFrontInAxisDirection(DynamicsIdentifier &identifier, std::string name, int axis = lastAxis)
+        : BaseLocalDynamicsReduce<Real, ReduceMax, BodyPartByCell>(identifier, Real(MinRealNumber)),
+          GeneralDataDelegateSimple(identifier.getSPHBody()), axis_(axis), pos_(particles_->pos_)
+    {
+        this->quantity_name_ = name;
+    }
+    virtual ~UpperFrontInAxisDirection(){};
 
-    Real reduce(size_t index_i, Real dt = 0.0);
+    Real reduce(size_t index_i, Real dt = 0.0) { return pos_[index_i][axis_]; };
 };
 
 /**

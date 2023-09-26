@@ -157,11 +157,11 @@ inline Real rand_norm(Real u, Real std)
 /** rotating axis once according to right hand rule.
  * The first_axis must be 0, 1 for 2d and 0, 1, 2 for 3d
  */
-int SecondAxis(int first_axis);
+int NextAxis(int first_axis);
 /** rotating axis twice  according to right hand rule.
  * The first_axis must be 0, 1 for 2d and 0, 1, 2 for 3d
  */
-int ThirdAxis(int first_axis);
+int NextNextAxis(int first_axis);
 
 Real getLeftStateInWeno(Real v1, Real v2, Real v3, Real v4);
 Real getRightStateInWeno(Real v1, Real v2, Real v3, Real v4);

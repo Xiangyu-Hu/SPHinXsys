@@ -82,6 +82,7 @@ class Transform
 };
 
 constexpr Real OneOverDimensions = 1.0 / (Real)Dimensions;
+constexpr int lastAxis = Dimensions - 1;
 
 /** Generalized data container assemble type */
 template <template <typename DataType> typename DataContainerType>
