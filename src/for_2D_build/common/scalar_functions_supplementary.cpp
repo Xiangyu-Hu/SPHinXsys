@@ -3,7 +3,7 @@
 namespace SPH
 {
 //=================================================================================================//
-int SecondAxis(int first_axis)
+int NextAxis(int first_axis)
 {
     return first_axis == 1 ? 0 : 1;
 }

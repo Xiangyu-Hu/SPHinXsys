@@ -185,7 +185,7 @@ int main(int ac, char *av[])
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
         write_fluid_mechanical_energy(io_environment, fluid_block);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
         write_recorded_fluid_pressure("Pressure", io_environment, fluid_observer_contact);

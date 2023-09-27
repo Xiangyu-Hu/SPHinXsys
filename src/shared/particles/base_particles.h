@@ -158,7 +158,7 @@ class BaseParticles
 
     template <class DerivedVariableMethod, class... Ts>
     void addDerivedVariableToWrite(Ts &&...);
-    void computeDrivedVariables();
+    void computeDerivedVariables();
     //----------------------------------------------------------------------
     //		Particle data for sorting
     //----------------------------------------------------------------------

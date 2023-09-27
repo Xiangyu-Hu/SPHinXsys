@@ -128,9 +128,9 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
-    RegressionTestEnsembleAverage<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
+    RegressionTestEnsembleAverage<ReducedQuantityRecording<TotalMechanicalEnergy>>
         write_total_mechanical_energy(io_environment, water_body);
-    RegressionTestEnsembleAverage<ReducedQuantityRecording<ReduceDynamics<MaximumSpeed>>>
+    RegressionTestEnsembleAverage<ReducedQuantityRecording<MaximumSpeed>>
         write_maximum_speed(io_environment, water_body);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configurations

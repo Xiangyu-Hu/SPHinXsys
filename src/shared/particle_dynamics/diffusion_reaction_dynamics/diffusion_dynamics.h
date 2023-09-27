@@ -62,7 +62,7 @@ class BaseDiffusionRelaxation
       public DiffusionReactionSimpleData<ParticlesType>
 {
   protected:
-   typedef typename ParticlesType::DiffusionReactionMaterial Material;
+    typedef typename ParticlesType::DiffusionReactionMaterial Material;
     Material &material_;
     StdVec<BaseDiffusion *> &all_diffusions_;
     StdVec<StdLargeVec<Real> *> &diffusion_species_;
@@ -74,7 +74,6 @@ class BaseDiffusionRelaxation
     explicit BaseDiffusionRelaxation(SPHBody &sph_body);
     virtual ~BaseDiffusionRelaxation(){};
     StdVec<BaseDiffusion *> &AllDiffusions() { return material_.AllDiffusions(); };
-    void initialization(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 };
 
@@ -112,7 +111,6 @@ class DiffusionRelaxationInner
 {
   protected:
     KernelGradientType kernel_gradient_;
-    void getDiffusionChangeRate(size_t particle_i, size_t particle_j, Vecd &e_ij, Real surface_area_ij);
 
   public:
     typedef BaseInnerRelation BodyRelationType;
@@ -200,7 +198,7 @@ class DiffusionRelaxationNeumann
 
   protected:
     void getDiffusionChangeRateNeumann(size_t particle_i, size_t particle_j,
-                                              Real surface_area_ij_Neumann, StdLargeVec<Real> &heat_flux_k);
+                                       Real surface_area_ij_Neumann, StdLargeVec<Real> &heat_flux_k);
 
   public:
     explicit DiffusionRelaxationNeumann(BaseContactRelation &contact_relation);
@@ -280,8 +278,8 @@ class DiffusionRelaxationRK2 : public BaseDynamics<void>
   protected:
     StdVec<StdLargeVec<Real>> diffusion_species_s_; /**< Intermediate state */
     SimpleDynamics<InitializationRK<typename FirstStageType::InnerParticlesType>> rk2_initialization_;
-    Dynamics1Level<FirstStageType> rk2_1st_stage_;
-    Dynamics1Level<SecondStageRK2<FirstStageType>> rk2_2nd_stage_;
+    InteractionWithUpdate<FirstStageType> rk2_1st_stage_;
+    InteractionWithUpdate<SecondStageRK2<FirstStageType>> rk2_2nd_stage_;
     StdVec<BaseDiffusion *> all_diffusions_;
 
   public:

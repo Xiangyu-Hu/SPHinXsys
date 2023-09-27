@@ -132,7 +132,7 @@ int main(int ac, char *av[])
     //	Regression tests are also defined here.
     //----------------------------------------------------------------------
     BodyStatesRecordingToPlt body_states_recording(io_environment, sph_system.real_bodies_);
-    RegressionTestEnsembleAverage<ReducedQuantityRecording<ReduceDynamics<MaximumSpeed>>>
+    RegressionTestEnsembleAverage<ReducedQuantityRecording<MaximumSpeed>>
         write_maximum_speed(io_environment, wave_body);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration

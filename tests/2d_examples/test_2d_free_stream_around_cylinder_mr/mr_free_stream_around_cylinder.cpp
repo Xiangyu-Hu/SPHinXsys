@@ -164,9 +164,9 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
     ObservedQuantityRecording<Vecd>
         write_fluid_velocity("Velocity", io_environment, fluid_observer_contact);
-    RegressionTestTimeAverage<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>>
+    RegressionTestTimeAverage<ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>>
         write_total_viscous_force_on_inserted_body(io_environment, fluid_viscous_force_on_inserted_body, "TotalViscousForceOnSolid");
-    ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>
+    ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>
         write_total_force_on_inserted_body(io_environment, fluid_pressure_force_on_inserted_body, "TotalPressureForceOnSolid");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration

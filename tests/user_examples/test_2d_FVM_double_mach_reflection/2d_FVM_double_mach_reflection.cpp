@@ -54,7 +54,7 @@ int main(int ac, char *av[])
     // Visualization in FVM with date in cell.
     BodyStatesRecordingInMeshToVtp write_real_body_states(
         io_environment, sph_system.real_bodies_, read_mesh_data.elements_nodes_connection_, read_mesh_data.point_coordinates_2D_);
-    RegressionTestEnsembleAverage<ReducedQuantityRecording<ReduceDynamics<MaximumSpeed>>>
+    RegressionTestEnsembleAverage<ReducedQuantityRecording<MaximumSpeed>>
         write_maximum_speed(io_environment, wave_block);
     //----------------------------------------------------------------------
     //	Prepare the simulation with case specified initial condition if necessary.

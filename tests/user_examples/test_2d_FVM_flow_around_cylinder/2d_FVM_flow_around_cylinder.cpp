@@ -61,11 +61,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     // visualization in FVM with data in cell
     BodyStatesRecordingInMeshToVtp write_real_body_states(io_environment, sph_system.real_bodies_, read_mesh_data.elements_nodes_connection_, read_mesh_data.point_coordinates_2D_);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>>
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>>
         write_total_viscous_force_on_inserted_body(io_environment, viscous_force_on_solid, "TotalViscousForceOnSolid");
-    ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>
+    ReducedQuantityRecording<solid_dynamics::TotalForceFromFluid>
         write_total_force_on_inserted_body(io_environment, fluid_force_on_solid_update, "TotalPressureForceOnSolid");
-    ReducedQuantityRecording<ReduceDynamics<MaximumSpeed>> write_maximum_speed(io_environment, water_block);
+    ReducedQuantityRecording<MaximumSpeed> write_maximum_speed(io_environment, water_block);
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------

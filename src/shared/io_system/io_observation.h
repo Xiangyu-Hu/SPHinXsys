@@ -101,20 +101,20 @@ class ObservedQuantityRecording : public BodyStatesRecording,
  * @class ReducedQuantityRecording
  * @brief write reduced quantity of a body
  */
-template <class ReduceMethodType>
+template <class LocalReduceMethodType>
 class ReducedQuantityRecording
 {
   protected:
     IOEnvironment &io_environment_;
     PltEngine plt_engine_;
-    ReduceMethodType reduce_method_;
+    ReduceDynamics<LocalReduceMethodType> reduce_method_;
     std::string dynamics_identifier_name_;
     const std::string quantity_name_;
     std::string filefullpath_output_;
 
   public:
     /*< deduce variable type from reduce method. */
-    using VariableType = typename ReduceMethodType::ReduceReturnType;
+    using VariableType = typename LocalReduceMethodType::ReduceReturnType;
     VariableType type_indicator_; /*< this is an indicator to identify the variable type. */
 
   public:

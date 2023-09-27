@@ -155,7 +155,7 @@ int main(int ac, char *av[])
     // 	write_plate_displacement("Position", io_environment, plate_observer_contact);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
         write_plate_displacement("Position", io_environment, plate_observer_contact);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
         write_kinetic_energy(io_environment, plate_body);
 
     /** Apply initial condition. */

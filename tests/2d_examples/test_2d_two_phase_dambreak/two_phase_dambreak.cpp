@@ -87,7 +87,7 @@ int main(int ac, char *av[])
     /** Output the body states. */
     BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
     /** Output the mechanical energy of fluid body. */
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
         write_water_mechanical_energy(io_environment, water_block, gravity_ptr);
     /** output the observed data from fluid body. */
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
