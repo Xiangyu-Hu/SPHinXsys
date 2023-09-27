@@ -66,5 +66,4 @@ void SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIdentificationType>::
 }
 //=================================================================================================//
 } // namespace fluid_dynamics
-  //=================================================================================================//
 } // namespace SPH
