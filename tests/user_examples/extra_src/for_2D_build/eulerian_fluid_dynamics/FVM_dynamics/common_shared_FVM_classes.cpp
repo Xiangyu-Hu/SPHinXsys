@@ -515,7 +515,7 @@ InnerRelationInFVM::InnerRelationInFVM(RealBody &real_body, vector<vector<vector
 //=================================================================================================//
 template <typename GetParticleIndex, typename GetNeighborRelation>
 void InnerRelationInFVM::searchNeighborsByParticles(size_t total_particles, BaseParticles &source_particles,
-                                                    ParticleConfiguration &particle_configuration, GetParticleIndex &get_particle_index, GetNeighborRelation &get_neighbor_relation)
+    ParticleConfiguration &particle_configuration, GetParticleIndex &get_particle_index, GetNeighborRelation &get_neighbor_relation)
 {
     parallel_for(
         IndexRange(0, base_particles_.total_real_particles_ + base_particles_.total_ghost_particles_),
@@ -595,7 +595,8 @@ void BodyStatesRecordingInMeshToVtp::writeWithFileName(const std::string &sequen
             out_file << "<PolyData>\n";
 
             // Write point data
-            out_file << "<Piece NumberOfPoints=\"" << nodes_coordinates_.size() << "\" NumberOfVerts=\"0\" NumberOfLines=\"0\" NumberOfStrips=\"0\" NumberOfPolys=\"" << elements_nodes_connection_.size() << "\">\n";
+            out_file << "<Piece NumberOfPoints=\"" << nodes_coordinates_.size() << 
+                "\" NumberOfVerts=\"0\" NumberOfLines=\"0\" NumberOfStrips=\"0\" NumberOfPolys=\"" << elements_nodes_connection_.size() << "\">\n";
             out_file << "<Points>\n";
             out_file << "<DataArray type=\"Float64\" NumberOfComponents=\"3\" format=\"ascii\">\n";
 
@@ -651,5 +652,134 @@ void BodyStatesRecordingInMeshToVtp::writeWithFileName(const std::string &sequen
     }
 }
 //=============================================================================================//
+GhostCreationFromMesh::GhostCreationFromMesh(RealBody &real_body, vector<vector<vector<size_t>>> &data_inpute, vector<vector<Real>> nodes_coordinates)
+    : GeneralDataDelegateSimple(real_body), all_needed_data_from_mesh_file_(data_inpute), nodes_coordinates_(nodes_coordinates),
+      pos_(particles_->pos_), Vol_(particles_->Vol_), total_ghost_particles_(particles_->total_ghost_particles_),
+      real_particles_bound_(particles_->real_particles_bound_)
+{
+    each_boundary_type_with_all_ghosts_index_.resize(50);
+    each_boundary_type_with_all_ghosts_eij_.resize(50);
+    each_boundary_type_contact_real_index_.resize(50);
+    ghost_particles_.resize(1);
+    addGhostParticleAndSetInConfiguration();
+}
+//=================================================================================================//
+void GhostCreationFromMesh::addGhostParticleAndSetInConfiguration() 
+{
+    for (size_t i = 0; i != ghost_particles_.size(); ++i)
+        ghost_particles_[i].clear();
+
+    for (size_t index_i = 0; index_i != real_particles_bound_; ++index_i)
+    {
+        for (size_t neighbor_index = 0; neighbor_index != all_needed_data_from_mesh_file_[index_i].size(); ++neighbor_index)
+        {
+            size_t boundary_type = all_needed_data_from_mesh_file_[index_i][neighbor_index][1];
+            if (all_needed_data_from_mesh_file_[index_i][neighbor_index][1] != 2)
+            {
+                mutex_create_ghost_particle_.lock();
+                size_t ghost_particle_index = particles_->insertAGhostParticle(index_i);
+                size_t node1_index = all_needed_data_from_mesh_file_[index_i][neighbor_index][2];
+                size_t node2_index = all_needed_data_from_mesh_file_[index_i][neighbor_index][3];
+                Vecd node1_position = Vecd(nodes_coordinates_[node1_index][0], nodes_coordinates_[node1_index][1]);
+                Vecd node2_position = Vecd(nodes_coordinates_[node2_index][0], nodes_coordinates_[node2_index][1]);
+                Vecd ghost_particle_position = 0.5 * (node1_position + node2_position);
+
+                all_needed_data_from_mesh_file_[index_i][neighbor_index][0] = ghost_particle_index + 1;
+                ghost_particles_[0].push_back(ghost_particle_index);
+                pos_[ghost_particle_index] = ghost_particle_position;
+                mutex_create_ghost_particle_.unlock();
+
+                all_needed_data_from_mesh_file_.resize(ghost_particle_index);
+                std::vector<std::vector<size_t>> new_element;
+
+                // Add (corresponding_index_i,boundary_type,node1_index,node2_index) to the new element
+                std::vector<size_t> sub_element1 = {index_i + 1, boundary_type, node1_index, node2_index};
+                new_element.push_back(sub_element1);
+
+                // Add (corresponding_index_i,boundary_type,node1_index,node2_index) to the new element
+                std::vector<size_t> sub_element2 = {index_i + 1, boundary_type, node1_index, node2_index};
+                new_element.push_back(sub_element2);
+
+                // Add (corresponding_index_i,boundary_type,node1_index,node2_index) to the new element
+                std::vector<size_t> sub_element3 = {index_i + 1, boundary_type, node1_index, node2_index};
+                new_element.push_back(sub_element3);
+
+                // Add the new element to all_needed_data_from_mesh_file_
+                all_needed_data_from_mesh_file_.push_back(new_element);
+                // all_needed_data_from_mesh_file_[ghost_particle_index][0][0].push_back(size_t(0);
+
+                // creating the boundary files with ghost particle index
+                each_boundary_type_with_all_ghosts_index_[boundary_type].push_back(ghost_particle_index);
+
+                // creating the boundary files with contact real particle index
+                each_boundary_type_contact_real_index_[boundary_type].push_back(index_i);
+
+                // creating the boundary files with ghost eij
+                Vecd interface_area_vector = node1_position - node2_position;
+                Real interface_area_size = interface_area_vector.norm();
+                Vecd unit_vector = interface_area_vector / interface_area_size;
+                // normal unit vector
+                Vecd normal_vector = Vecd(unit_vector[1], -unit_vector[0]);
+                // judge the direction
+                Vecd particle_position = pos_[index_i];
+                Vecd node1_to_center_direction = particle_position - node1_position;
+                if (node1_to_center_direction.dot(normal_vector) < 0)
+                {
+                    normal_vector = -normal_vector;
+                };
+                each_boundary_type_with_all_ghosts_eij_[boundary_type].push_back(normal_vector);
+            }
+        }
+    }
+}
+
+//=================================================================================================//
+BoundaryConditionSetupInFVM::BoundaryConditionSetupInFVM(BaseInnerRelationInFVM &inner_relation, vector<vector<size_t>> each_boundary_type_with_all_ghosts_index,
+                            vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_, vector<vector<size_t>> each_boundary_type_contact_real_index)
+    : fluid_dynamics::FluidDataInner(inner_relation), rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")),
+      vel_(particles_->vel_), pos_(particles_->pos_), total_ghost_particles_(particles_->total_ghost_particles_),
+      real_particles_bound_(particles_->real_particles_bound_),
+      each_boundary_type_with_all_ghosts_index_(each_boundary_type_with_all_ghosts_index),
+      each_boundary_type_with_all_ghosts_eij_(each_boundary_type_with_all_ghosts_eij_),
+      each_boundary_type_contact_real_index_(each_boundary_type_contact_real_index){};
+//=================================================================================================//
+void BoundaryConditionSetupInFVM::resetBoundaryConditions() 
+{
+    for (size_t boundary_type = 0; boundary_type < each_boundary_type_with_all_ghosts_index_.size(); ++boundary_type)
+    {
+        if (!each_boundary_type_with_all_ghosts_index_[boundary_type].empty())
+        {
+            for (size_t ghost_number = 0; ghost_number != each_boundary_type_with_all_ghosts_index_[boundary_type].size(); ++ghost_number)
+            {
+                size_t ghost_index = each_boundary_type_with_all_ghosts_index_[boundary_type][ghost_number];
+                size_t index_i = each_boundary_type_contact_real_index_[boundary_type][ghost_number];
+                Vecd e_ij = each_boundary_type_with_all_ghosts_eij_[boundary_type][ghost_number];
+
+                // Dispatch the appropriate boundary condition
+                switch (boundary_type)
+                {
+                case 3: // this refer to the different types of wall boundary condtions
+                    applyNonSlipWallBoundary(ghost_index, index_i);
+                    applyReflectiveWallBoundary(ghost_index, index_i, e_ij);
+                    break;
+                case 10:
+                    applyGivenValueInletFlow(ghost_index);
+                    break;
+                case 36:
+                    applyOutletBoundary(ghost_index, index_i);
+                    break;
+                case 4:
+                    applyTopBoundary(ghost_index, index_i);
+                    break;
+                case 9:
+                    applyFarFieldBoundary(ghost_index);
+                    break;
+                }
+            }
+        }
+    }
+}
+
+//=================================================================================================//
 } // namespace SPH
   //=================================================================================================//
