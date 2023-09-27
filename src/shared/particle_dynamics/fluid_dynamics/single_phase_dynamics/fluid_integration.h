@@ -33,6 +33,7 @@
 #define FLUID_INTEGRATION_H
 
 #include "base_fluid_dynamics.h"
+#include "base_local_dynamics.h"
 #include "riemann_solver.h"
 #include "weakly_compressible_fluid.h"
 
@@ -127,7 +128,7 @@ template <class RiemannSolverType, class KernelCorrectionType>
 class MomentumWallBoundary : public InteractionWithWall<BaseIntegration>
 {
   public:
-    MomentumWallBoundary(BaseContactRelation &wall_contact_relation);
+    explicit MomentumWallBoundary(BaseContactRelation &wall_contact_relation);
     virtual ~MomentumWallBoundary(){};
     inline void interaction(size_t index_i, Real dt = 0.0);
 
@@ -148,7 +149,7 @@ template <class RiemannSolverType, class KernelCorrectionType>
 class ExtendMomentumWallBoundary : public MomentumWallBoundary<RiemannSolverType, KernelCorrectionType>
 {
   public:
-    ExtendMomentumWallBoundary(BaseContactRelation &wall_contact_relation, Real penalty_strength = 1.0);
+    explicit ExtendMomentumWallBoundary(BaseContactRelation &wall_contact_relation, Real penalty_strength = 1.0);
     virtual ~ExtendMomentumWallBoundary(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
@@ -165,7 +166,7 @@ template <class RiemannSolverType>
 class ContinuityWallBoundary : public InteractionWithWall<BaseIntegration>
 {
   public:
-    ContinuityWallBoundary(BaseContactRelation &wall_contact_relation);
+    explicit ContinuityWallBoundary(BaseContactRelation &wall_contact_relation);
     virtual ~ContinuityWallBoundary(){};
     inline void interaction(size_t index_i, Real dt = 0.0);
 
@@ -174,6 +175,24 @@ class ContinuityWallBoundary : public InteractionWithWall<BaseIntegration>
 };
 using ContinuityWallBoundaryRiemann = ContinuityWallBoundary<AcousticRiemannSolver>;
 using ContinuityWallBoundaryDissipativeRiemann = ContinuityWallBoundary<DissipativeRiemannSolver>;
+
+class Integration1stHalfRiemannWithWall
+    : public ComplexInteraction<Integration1stHalfInnerRiemann, MomentumWallBoundaryRiemann>
+{
+  public:
+    explicit Integration1stHalfRiemannWithWall(ComplexRelation &fluid_wall_relation)
+        : ComplexInteraction<Integration1stHalfInnerRiemann, MomentumWallBoundaryRiemann>(
+              fluid_wall_relation.getInnerRelation(), fluid_wall_relation.getContactRelation()){};
+};
+
+class Integration2ndHalfRiemannWithWall
+    : public ComplexInteraction<Integration2ndHalfInnerRiemann, ContinuityWallBoundaryRiemann>
+{
+  public:
+    explicit Integration2ndHalfRiemannWithWall(ComplexRelation &fluid_wall_relation)
+        : ComplexInteraction<Integration2ndHalfInnerRiemann, ContinuityWallBoundaryRiemann>(
+              fluid_wall_relation.getInnerRelation(), fluid_wall_relation.getContactRelation()){};
+};
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // FLUID_INTEGRATION_H

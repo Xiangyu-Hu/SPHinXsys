@@ -50,7 +50,7 @@ class BaseDensitySummation : public LocalDynamics, public DataDelegationType
     virtual ~BaseDensitySummation(){};
 
   protected:
-    StdLargeVec<Real> &rho_, rho_sum_, &mass_;
+    StdLargeVec<Real> &rho_, &mass_, &rho_sum_;
     Real rho0_, inv_sigma0_;
 };
 
@@ -184,6 +184,15 @@ class DensitySummationFreeStream : public DensitySummationFreeSurfaceType
   protected:
     StdLargeVec<int> &indicator_;
     bool isNearFreeSurface(size_t index_i);
+};
+
+class DensitySummationFreeSurfaceComplex
+    : public DensitySummationFreeSurface<ComplexInteraction<DensitySummationInner, DensitySummationContact>>
+{
+  public:
+    explicit DensitySummationFreeSurfaceComplex(ComplexRelation &fluid_wall_relation)
+        : DensitySummationFreeSurface<ComplexInteraction<DensitySummationInner, DensitySummationContact>>(
+              fluid_wall_relation.getInnerRelation(), fluid_wall_relation.getContactRelation()){};
 };
 } // namespace fluid_dynamics
 } // namespace SPH

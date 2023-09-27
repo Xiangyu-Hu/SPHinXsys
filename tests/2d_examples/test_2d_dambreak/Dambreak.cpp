@@ -83,18 +83,16 @@ int main(int ac, char *av[])
     //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
-    ContactRelation water_block_contact(water_block, {&wall_boundary});
+    ContactRelation water_wall_contact(water_block, {&wall_boundary});
+    ComplexRelation water_wall_complex(water_block_inner, water_wall_contact);
     ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
     //----------------------------------------------------------------------
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
-    Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration1stHalfInnerRiemann, fluid_dynamics::MomentumWallBoundaryRiemann>>
-        fluid_pressure_relaxation(water_block_inner, water_block_contact);
-    Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration2ndHalfInnerRiemann, fluid_dynamics::ContinuityWallBoundaryRiemann>>
-        fluid_density_relaxation(water_block_inner, water_block_contact);
-    InteractionWithUpdate<ComplexInteraction<fluid_dynamics::DensitySummationInner, fluid_dynamics::DensitySummationContact>>
-        fluid_density_by_summation(water_block_inner, water_block_contact);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> fluid_pressure_relaxation(water_wall_complex);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_wall_complex);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> fluid_density_by_summation(water_wall_complex);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
     SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block, gravity_ptr);
@@ -124,7 +122,7 @@ int main(int ac, char *av[])
     {
         GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.RestartStep());
         water_block.updateCellLinkedList();
-        water_block_complex.updateConfiguration();
+        water_wall_complex.updateConfiguration();
         fluid_observer_contact.updateConfiguration();
     }
     //----------------------------------------------------------------------
@@ -202,7 +200,7 @@ int main(int ac, char *av[])
             /** Update cell linked list and configuration. */
             time_instance = TickCount::now();
             water_block.updateCellLinkedListWithParticleSort(100);
-            water_block_complex.updateConfiguration();
+            water_wall_complex.updateConfiguration();
             fluid_observer_contact.updateConfiguration();
             interval_updating_configuration += TickCount::now() - time_instance;
         }
