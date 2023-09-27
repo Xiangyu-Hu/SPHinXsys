@@ -16,8 +16,8 @@ namespace SPH
 {
 //=================================================================================================//
 template <class RiemannSolverType>
-BaseIntegration1stHalf<RiemannSolverType>::BaseIntegration1stHalf(BaseInnerRelation &inner_relation, Real limiter_parameter)
-    : BaseIntegrationInCompressible(inner_relation), riemann_solver_(compressible_fluid_, compressible_fluid_, limiter_parameter) {}
+BaseIntegration1stHalf<RiemannSolverType>::BaseIntegration1stHalf(BaseInnerRelation &inner_relation)
+    : BaseIntegrationInCompressible(inner_relation), riemann_solver_(compressible_fluid_, compressible_fluid_) {}
 //=================================================================================================//
 template <class RiemannSolverType>
 void BaseIntegration1stHalf<RiemannSolverType>::interaction(size_t index_i, Real dt)
@@ -48,8 +48,8 @@ void BaseIntegration1stHalf<RiemannSolverType>::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 template <class RiemannSolverType>
-BaseIntegration2ndHalf<RiemannSolverType>::BaseIntegration2ndHalf(BaseInnerRelation &inner_relation, Real limiter_parameter)
-    : BaseIntegrationInCompressible(inner_relation), riemann_solver_(compressible_fluid_, compressible_fluid_, limiter_parameter) {}
+BaseIntegration2ndHalf<RiemannSolverType>::BaseIntegration2ndHalf(BaseInnerRelation &inner_relation)
+    : BaseIntegrationInCompressible(inner_relation), riemann_solver_(compressible_fluid_, compressible_fluid_) {}
 //=================================================================================================//
 template <class RiemannSolverType>
 void BaseIntegration2ndHalf<RiemannSolverType>::interaction(size_t index_i, Real dt)
