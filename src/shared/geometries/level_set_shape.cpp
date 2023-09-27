@@ -88,7 +88,7 @@ Real LevelSetShape::computeKernelGradientMultiplyRijIntegral(const Vecd &probe_p
     return level_set_.probeKernelGradientMultiplyRijIntegral(probe_point, h_ratio);
 }
 //=================================================================================================//
-Vecd LevelSetShape::computeKernelGradientDivideRijIntegral(const Vecd &probe_point, Real h_ratio)
+Real LevelSetShape::computeKernelGradientDivideRijIntegral(const Vecd &probe_point, Real h_ratio)
 {
     return level_set_.probeKernelGradientDivideRijIntegral(probe_point, h_ratio);
 }

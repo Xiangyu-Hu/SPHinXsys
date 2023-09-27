@@ -127,6 +127,9 @@ class BaseViscousAccelerationInner : public LocalDynamics, public FluidDataInner
     StdLargeVec<Vecd> &vel_, &acc_prior_;
     Real mu_;
     Real smoothing_length_;
+
+    /*for viscous debugging*/
+    StdLargeVec<Vecd>& pos_;
 };
 
 /**

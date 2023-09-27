@@ -33,11 +33,11 @@ namespace SPH
 				//out_file << pos_[index_i][0] << " " << pos_[index_i][1] << " "<< index_i << " "  << acceleration_trans[0] << " " << acceleration_trans[1]<<" "  << acceleration_trans.norm() << std::endl;
 				///** correcting particle position */
 
-			std::string output_folder = "./output";
+			/*std::string output_folder = "./output";
 			std::string filefullpath = output_folder + "/" + "transportVelocity_wall_levelset_" + std::to_string(dt) + ".dat";
 			std::ofstream out_file(filefullpath.c_str(), std::ios::app);
 			out_file <<this->particles_->pos_[index_i][0]<<" "<<this->particles_->pos_[index_i][1]<<" " <<index_i<< "  "<<  acceleration_trans.norm()<<std::endl;
-			out_file << " \n";
+			out_file << " \n";*/
 		}
 		//=================================================================================================//
 		StaticConfinementViscousAcceleration::StaticConfinementViscousAcceleration(NearShapeSurface& near_surface)
@@ -55,9 +55,14 @@ namespace SPH
 			/*Here we give the Level-set boundary velocity as zero, but later we need a vector to set the velocity of each level-set cell*/
 			Real phi_r_ij = abs(level_set_shape_->findSignedDistance(pos_[index_i]));
 			vel_derivative = 2.0 * (vel_[index_i] - vel_level_set_cell_j);
-			Vecd kernel_gradient_divide_Rij = level_set_shape_->computeKernelGradientDivideRijIntegral(pos_[index_i]);
-			acceleration += 2.0 * mu_ * kernel_gradient_divide_Rij.norm() * vel_derivative /rho_i;
+			Real kernel_gradient_divide_Rij = level_set_shape_->computeKernelGradientDivideRijIntegral(pos_[index_i]);
+			acceleration += 2.0 * mu_ * kernel_gradient_divide_Rij * vel_derivative /rho_i;
 			acc_prior_[index_i] += acceleration / rho_[index_i];
+
+				std::string output_folder = "./output";
+				std::string filefullpath = output_folder + "/" + "viscous_acceleration_wall_levelset_" + std::to_string(dt) + ".dat";
+				std::ofstream out_file(filefullpath.c_str(), std::ios::app);
+				out_file << this->pos_[index_i][0] << " " << this->pos_[index_i][1] << " "<< index_i << " "  << acceleration[0] << " " << acceleration[1]<<" "  << acceleration.norm() << " "<<kernel_gradient_divide_Rij<< std::endl;
 		}
 		//=================================================================================================//
 		StaticConfinementExtendIntegration1stHalf::

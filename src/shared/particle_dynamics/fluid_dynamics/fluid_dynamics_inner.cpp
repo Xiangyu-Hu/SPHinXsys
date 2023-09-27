@@ -38,7 +38,8 @@ DensitySummationInnerAdaptive::
 //=================================================================================================//
 BaseViscousAccelerationInner::BaseViscousAccelerationInner(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
-      rho_(particles_->rho_), vel_(particles_->vel_), acc_prior_(particles_->acc_prior_),
+      rho_(particles_->rho_), vel_(particles_->vel_), acc_prior_(particles_->acc_prior_), 
+    /*for viscous debugging*/ pos_(particles_->pos_),
       mu_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceViscosity()),
       smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
 //=================================================================================================//

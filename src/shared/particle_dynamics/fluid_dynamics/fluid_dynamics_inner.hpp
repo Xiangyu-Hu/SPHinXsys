@@ -90,10 +90,10 @@ void TransportVelocityCorrectionInner::
         acceleration_trans -= 2.0 * nablaW_ijV_j;
     }
 
-    std::string output_folder = "./output";
+    /*std::string output_folder = "./output";
 	std::string filefullpath = output_folder + "/" + "transportVelocity_inner_" + std::to_string(dt) + ".dat";
 	std::ofstream out_file(filefullpath.c_str(), std::ios::app);
-	out_file << pos_[index_i][0] << " " << pos_[index_i][1] << " "<< index_i << " "  << acceleration_trans.norm() << std::endl;
+	out_file << pos_[index_i][0] << " " << pos_[index_i][1] << " "<< index_i << " "  << acceleration_trans.norm() << std::endl;*/
     /** correcting particle position */
 
     if (surface_indicator_[index_i] == 0)

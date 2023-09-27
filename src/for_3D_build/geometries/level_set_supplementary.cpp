@@ -516,13 +516,13 @@ Real LevelSet::computeKernelGradientMultiplyRijIntegral(const Vecd &position)
     return phi > threshold ? 1.0 : integral * data_spacing_ * data_spacing_ * data_spacing_;
 }
 //=============================================================================================//
-Vecd LevelSet::computeKernelGradientDivideRijIntegral(const Vecd &position)
+Real LevelSet::computeKernelGradientDivideRijIntegral(const Vecd &position)
 {
     Real phi = probeSignedDistance(position);
     Real cutoff_radius = kernel_.CutOffRadius(global_h_ratio_);
     Real threshold = cutoff_radius + data_spacing_;
 
-    Vecd integral = Vecd::Zero();
+    Real integral (0.0);
     if (fabs(phi) < threshold)
     {
         Arrayi global_index_ = global_mesh_.CellIndexFromPosition(position);
@@ -539,8 +539,7 @@ Vecd LevelSet::computeKernelGradientDivideRijIntegral(const Vecd &position)
                     Real distance = displacement.norm();
                     if (distance < cutoff_radius)
                         integral += kernel_.dW(global_h_ratio_, distance, displacement) *
-                                    CutCellVolumeFraction(phi_neighbor, phi_gradient, data_spacing_) *
-                                    displacement / (distance + TinyReal) / (distance + TinyReal);
+                                    CutCellVolumeFraction(phi_neighbor, phi_gradient, data_spacing_) / (distance + TinyReal);
                 }
             });
     }

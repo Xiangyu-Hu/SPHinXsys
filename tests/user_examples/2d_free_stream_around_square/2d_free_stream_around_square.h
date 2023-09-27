@@ -17,6 +17,7 @@ Real DL_sponge = particle_spacing_ref * 10.0; /**< Sponge region to impose emitt
 Real BW = 4.0 * particle_spacing_ref;		  /**< Sponge region to impose injection. */
 Vec2d insert_circle_center(10.0, 0.5 * DH);	  /**< Location of the cylinder center. */
 Real insert_circle_radius = 1.0;			  /**< Radius of the cylinder. */
+Vec2d insert_circle_center_1(13.0, 0.5 * DH);
 // Observation locations
 Vec2d point_coordinate_1(3.0, 5.0);
 Vec2d point_coordinate_2(4.0, 5.0);
@@ -53,6 +54,7 @@ public:
 	{
 		multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
 		multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
+		multi_polygon_.addACircle(insert_circle_center_1, insert_circle_radius, 100, ShapeBooleanOps::sub);
 	}
 };
 class Cylinder : public MultiPolygonShape

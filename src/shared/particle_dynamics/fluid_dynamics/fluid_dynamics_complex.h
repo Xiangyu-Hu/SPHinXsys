@@ -134,6 +134,7 @@ class BaseViscousAccelerationWithWall : public InteractionWithWall<ViscousAccele
     virtual ~BaseViscousAccelerationWithWall(){};
 
     inline void interaction(size_t index_i, Real dt = 0.0);
+
 };
 
 using ViscousAccelerationWithWall = BaseViscousAccelerationWithWall<ViscousAccelerationInner>;

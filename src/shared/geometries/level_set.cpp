@@ -40,7 +40,7 @@ LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing, size_t buffe
       kernel_gradient_(*registerMeshVariable<Vecd>("KernelGradient")),
       kernel_(*sph_adaptation.getKernel()),
       kernel_gradient_multiply_Rij_(*registerMeshVariable<Real>("KernelGradientMultiplyRij")),
-      kernel_gradient_divide_Rij_(*registerMeshVariable<Vecd>("KernelGradientDivideRij"))
+      kernel_gradient_divide_Rij_(*registerMeshVariable<Real>("KernelGradientDivideRij"))
 {
     Real far_field_distance = grid_spacing_ * (Real)buffer_width_;
     initializeASingularDataPackage(
@@ -78,8 +78,8 @@ void LevelSet::updateKernelIntegrals()
                                  kernel_gradient_multiply_Rij_, [&](const Vecd &position) -> Real
                                  { return computeKernelGradientMultiplyRijIntegral(position); });
                              data_pkg->assignByPosition(
-                                 kernel_gradient_divide_Rij_, [&](const Vecd &position) -> Vecd
-                                 { return computeKernelGradientIntegral(position); });
+                                 kernel_gradient_divide_Rij_, [&](const Vecd &position) -> Real
+                                 { return computeKernelGradientDivideRijIntegral(position); });
                          });
 }
 //=================================================================================================//
@@ -354,7 +354,7 @@ Real LevelSet::probeKernelGradientMultiplyRijIntegral(const Vecd &position, Real
     return probeMesh(kernel_gradient_multiply_Rij_, position);
 }
 //=================================================================================================//
-Vecd LevelSet::probeKernelGradientDivideRijIntegral(const Vecd &position, Real h_ratio)
+Real LevelSet::probeKernelGradientDivideRijIntegral(const Vecd &position, Real h_ratio)
 {
     return probeMesh(kernel_gradient_divide_Rij_, position);
 }
@@ -370,13 +370,13 @@ Real MultilevelLevelSet::probeKernelGradientMultiplyRijIntegral(const Vecd &posi
     return alpha * coarse_level_value + (1.0 - alpha) * fine_level_value;
 }
 //=================================================================================================//
-Vecd MultilevelLevelSet::probeKernelGradientDivideRijIntegral(const Vecd &position, Real h_ratio)
+Real MultilevelLevelSet::probeKernelGradientDivideRijIntegral(const Vecd &position, Real h_ratio)
 {
     size_t coarse_level = getCoarseLevel(h_ratio);
     Real alpha = (mesh_levels_[coarse_level + 1]->global_h_ratio_ - h_ratio) /
                  (mesh_levels_[coarse_level + 1]->global_h_ratio_ - mesh_levels_[coarse_level]->global_h_ratio_);
-    Vecd coarse_level_value = mesh_levels_[coarse_level]->probeKernelGradientDivideRijIntegral(position);
-    Vecd fine_level_value = mesh_levels_[coarse_level + 1]->probeKernelGradientDivideRijIntegral(position);
+    Real coarse_level_value = mesh_levels_[coarse_level]->probeKernelGradientDivideRijIntegral(position);
+    Real fine_level_value = mesh_levels_[coarse_level + 1]->probeKernelGradientDivideRijIntegral(position);
 
     return alpha * coarse_level_value + (1.0 - alpha) * fine_level_value;
 }

@@ -202,7 +202,7 @@ namespace SPH
             SimpleDynamics<StaticConfinementDensity> density_summation_;
             SimpleDynamics<StaticConfinementIntegration1stHalf> pressure_relaxation_;
             SimpleDynamics<StaticConfinementIntegration2ndHalf> density_relaxation_;
-            InteractionDynamics<StaticConfinementTransportVelocity, SequencedPolicy> transport_velocity_;
+            InteractionDynamics<StaticConfinementTransportVelocity> transport_velocity_;
             SimpleDynamics<StaticConfinementViscousAcceleration> viscous_acceleration_;
             InteractionDynamics<StaticConfinementFreeSurfaceIndication> free_surface_indication_;
             SimpleDynamics<StaticConfinementBounding> surface_bounding_;

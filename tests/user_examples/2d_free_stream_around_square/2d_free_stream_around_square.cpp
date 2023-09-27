@@ -145,7 +145,7 @@ int main(int ac, char *av[])
 			Real Dt = get_fluid_advection_time_step_size.exec();
 			free_stream_surface_indicator.exec(GlobalStaticVariables::physical_time_);
 			update_fluid_density.exec();
-			viscous_acceleration.exec();
+			//viscous_acceleration.exec();
             transport_velocity_correction.exec(GlobalStaticVariables::physical_time_);
 			//write_real_body_states.writeToFile();
 			size_t inner_ite_dt = 0;
@@ -161,7 +161,7 @@ int main(int ac, char *av[])
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
-				emitter_buffer_inflow_condition.exec();
+				//emitter_buffer_inflow_condition.exec();
 				inner_ite_dt++;
 			}
 
@@ -174,8 +174,8 @@ int main(int ac, char *av[])
 			number_of_iterations++;
 
 			/** Water block configuration and periodic condition. */
-			emitter_inflow_injection.exec();
-			disposer_outflow_deletion.exec();
+			//emitter_inflow_injection.exec();
+			//disposer_outflow_deletion.exec();
 
 			water_block.updateCellLinkedListWithParticleSort(100);
 			water_block_inner.updateConfiguration();

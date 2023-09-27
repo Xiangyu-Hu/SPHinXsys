@@ -59,7 +59,7 @@ class BaseLevelSet : public BaseMeshField
     //=============================================================================================//
     /*below for viscous force and location divergence*/
     virtual Real probeKernelGradientMultiplyRijIntegral(const Vecd& position, Real h_ration = 1.0) = 0;
-    virtual Vecd probeKernelGradientDivideRijIntegral(const Vecd& position, Real h_ration = 1.0) = 0;
+    virtual Real probeKernelGradientDivideRijIntegral(const Vecd& position, Real h_ration = 1.0) = 0;
     //=============================================================================================//
 
   protected:
@@ -110,9 +110,9 @@ class LevelSet : public MeshWithGridDataPackages<GridDataPackage<4, 1>>,
     //=============================================================================================//
     /*below for viscous force and location divergence*/
     Real computeKernelGradientMultiplyRijIntegral(const Vecd &position);
-    Vecd computeKernelGradientDivideRijIntegral(const Vecd &position);
+    Real computeKernelGradientDivideRijIntegral(const Vecd &position);
     virtual Real probeKernelGradientMultiplyRijIntegral(const Vecd& position, Real h_ration = 1.0) override;
-    virtual Vecd probeKernelGradientDivideRijIntegral(const Vecd& position, Real h_ration = 1.0) override;
+    virtual Real probeKernelGradientDivideRijIntegral(const Vecd& position, Real h_ration = 1.0) override;
     //=============================================================================================//
 
   protected:
@@ -126,7 +126,7 @@ class LevelSet : public MeshWithGridDataPackages<GridDataPackage<4, 1>>,
     //=============================================================================================//
     /*below for viscous force and location divergence*/
     MeshVariable<Real> &kernel_gradient_multiply_Rij_;
-    MeshVariable<Vecd>& kernel_gradient_divide_Rij_;
+    MeshVariable<Real>& kernel_gradient_divide_Rij_;
     //=============================================================================================//
 
     void initializeDataForSingularPackage(LevelSetDataPackage *data_pkg, Real far_field_level_set);
@@ -185,7 +185,7 @@ class MultilevelLevelSet : public MultilevelMesh<BaseLevelSet, LevelSet, Refined
     //=============================================================================================//
     /*below for viscous force and location divergence*/
     virtual Real probeKernelGradientMultiplyRijIntegral(const Vecd& position, Real h_ration = 1.0) override;
-    virtual Vecd probeKernelGradientDivideRijIntegral(const Vecd& position, Real h_ration = 1.0) override;
+    virtual Real probeKernelGradientDivideRijIntegral(const Vecd& position, Real h_ration = 1.0) override;
     //=============================================================================================//
 
   protected:

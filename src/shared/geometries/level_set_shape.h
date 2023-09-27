@@ -70,7 +70,7 @@ class LevelSetShape : public Shape
     //=============================================================================================//
     /*below for viscous force and location divergence*/
     Real computeKernelGradientMultiplyRijIntegral(const Vecd &probe_point, Real h_ratio = 1.0);
-    Vecd computeKernelGradientDivideRijIntegral(const Vecd& probe_point, Real h_ratio = 1.0);
+    Real computeKernelGradientDivideRijIntegral(const Vecd& probe_point, Real h_ratio = 1.0);
     //=============================================================================================//
 
   protected:

@@ -114,14 +114,15 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(water_block_complex);
     /** Computing viscous acceleration with wall. */
-    //InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
+    //InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_complex.getInnerRelation());
+    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
     /** Impose transport velocity. */
     InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> transport_velocity_correction(water_block_complex);
     /** Computing vorticity in the flow. */
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_complex.getInnerRelation());
     /** free stream boundary condition. */
     BodyRegionByCell free_stream_buffer(water_block, makeShared<MultiPolygonShape>(createBufferShape()));
-    //SimpleDynamics<FreeStreamCondition> freestream_condition(free_stream_buffer);
+    SimpleDynamics<FreeStreamCondition> freestream_condition(free_stream_buffer);
     //----------------------------------------------------------------------
     //	Algorithms of FSI.
     //----------------------------------------------------------------------
@@ -186,7 +187,7 @@ int main(int ac, char *av[])
             transport_velocity_correction.exec();
 
             /** FSI for viscous force. */
-            viscous_force_on_cylinder.exec();
+            //viscous_force_on_cylinder.exec();
             size_t inner_ite_dt = 0;
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
@@ -202,7 +203,7 @@ int main(int ac, char *av[])
                 relaxation_time += dt;
                 integration_time += dt;
                 GlobalStaticVariables::physical_time_ += dt;
-                //freestream_condition.exec();
+                freestream_condition.exec();
                 inner_ite_dt++;
             }
 

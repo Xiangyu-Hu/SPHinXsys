@@ -9,6 +9,7 @@
  * @brief 	SPHinXsys Library.
  */
 #include "sphinxsys.h"
+#include "level_set_confinement.h"
 /**
  * @brief Namespace cite here.
  */
@@ -53,8 +54,8 @@ class WaterBlock : public MultiPolygonShape
  */
 class WallBoundary : public MultiPolygonShape
 {
-  public:
-    explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
+public:
+    explicit WallBoundary(const std::string& shape_name) : MultiPolygonShape(shape_name)
     {
         /** Geometry definition. */
         std::vector<Vecd> outer_wall_shape;
@@ -72,6 +73,38 @@ class WallBoundary : public MultiPolygonShape
 
         multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
         multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+    }
+};
+
+class WallUp : public MultiPolygonShape
+{
+public :
+    explicit WallUp(const std::string &shape_name): MultiPolygonShape(shape_name)
+    {
+        std::vector<Vecd> upper_wall_shape;
+        upper_wall_shape.push_back(Vecd(-BW, DH));
+        upper_wall_shape.push_back(Vecd(-BW, DH + 1.0 * BW));
+        upper_wall_shape.push_back(Vecd(DL + BW, DH + 1.0 * BW));
+        upper_wall_shape.push_back(Vecd(DL + BW, DH));
+        upper_wall_shape.push_back(Vecd(-BW, DH));
+         
+        multi_polygon_.addAPolygon(upper_wall_shape, ShapeBooleanOps::add);
+    }
+};
+
+class WallDown : public MultiPolygonShape
+{
+public :
+    explicit WallDown(const std::string &shape_name): MultiPolygonShape(shape_name)
+    {
+        std::vector<Vecd> down_wall_shape;
+        down_wall_shape.push_back(Vecd(-BW, - 1.0 * BW));
+        down_wall_shape.push_back(Vecd(-BW, 0.0));
+        down_wall_shape.push_back(Vecd(DL + BW, 0));
+        down_wall_shape.push_back(Vecd(DL + BW, - 1.0 * BW));
+        down_wall_shape.push_back(Vecd(-BW, - 1.0 * BW));
+
+        multi_polygon_.addAPolygon(down_wall_shape, ShapeBooleanOps::add);
     }
 };
 /**
@@ -94,11 +127,12 @@ int main()
     /**
      * @brief 	Particle and body creation of wall boundary.
      */
-    SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
+    /*SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-    wall_boundary.generateParticles<ParticleGeneratorLattice>();
+    wall_boundary.generateParticles<ParticleGeneratorLattice>();*/
     /** topology */
-    ComplexRelation water_block_complex(water_block, {&wall_boundary});
+    //ComplexRelation water_block_complex(water_block, {&wall_boundary});
+    InnerRelation water_block_inner(water_block);
     /**
      * @brief 	Define all numerical methods which are used in this case.
      */
@@ -106,7 +140,7 @@ int main()
      * @brief 	Methods used for time stepping.
      */
     /** Define external force. */
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+    //SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     /** Initialize particle acceleration. */
     SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, makeShared<Gravity>(Vecd(gravity_g, 0.0)));
     /** Periodic BCs in x direction. */
@@ -115,33 +149,54 @@ int main()
      * @brief 	Algorithms of fluid dynamics.
      */
     /** Evaluation of density by summation approach. */
-    InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_complex);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationInner> update_density_by_summation(water_block_inner);
     /** Time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     /** Time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     /** Pressure relaxation algorithm without Riemann solver for viscous flows. */
-    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemann> pressure_relaxation(water_block_inner);
     /** Pressure relaxation algorithm by using position verlet time stepping. */
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(water_block_complex);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalf> density_relaxation(water_block_inner);
     /** Computing viscous acceleration. */
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall,SequencedPolicy> viscous_acceleration(water_block_complex);
-    //InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_complex.getInnerRelation());
+    InteractionDynamics<fluid_dynamics::ViscousAccelerationInner, SequencedPolicy> viscous_acceleration(water_block_inner);
     /** Impose transport velocity. */
-    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> transport_velocity_correction(water_block_complex);
+    InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionInner> transport_velocity_correction(water_block_inner);
     /**
      * @brief Output.
      */
     IOEnvironment io_environment(system);
     /** Output the body states. */
-    BodyStatesRecordingToVtp body_states_recording(io_environment, system.real_bodies_);
+    BodyStatesRecordingToPlt body_states_recording(io_environment, system.real_bodies_);
+
+    NearShapeSurface near_surface_up(water_block, makeShared<InverseShape<WallUp>>("WallUp"));
+    near_surface_up.level_set_shape_.writeLevelSet(io_environment);
+    fluid_dynamics::StaticConfinementGeneral confinement_condition_up(near_surface_up);
+
+    NearShapeSurface near_surface_down(water_block, makeShared<InverseShape<WallDown>>("WallDown"));
+    near_surface_down.level_set_shape_.writeLevelSet(io_environment);
+    fluid_dynamics::StaticConfinementGeneral confinement_condition_down(near_surface_down);
+
+    update_density_by_summation.post_processes_.push_back(&confinement_condition_up.density_summation_);
+    pressure_relaxation.post_processes_.push_back(&confinement_condition_up.pressure_relaxation_);
+    density_relaxation.post_processes_.push_back(&confinement_condition_up.density_relaxation_);
+    density_relaxation.post_processes_.push_back(&confinement_condition_up.surface_bounding_);
+    transport_velocity_correction.post_processes_.push_back(&confinement_condition_up.transport_velocity_);
+    viscous_acceleration.post_processes_.push_back(&confinement_condition_up.viscous_acceleration_);
+
+    update_density_by_summation.post_processes_.push_back(&confinement_condition_down.density_summation_);
+    pressure_relaxation.post_processes_.push_back(&confinement_condition_down.pressure_relaxation_);
+    density_relaxation.post_processes_.push_back(&confinement_condition_down.density_relaxation_);
+    density_relaxation.post_processes_.push_back(&confinement_condition_down.surface_bounding_);
+    transport_velocity_correction.post_processes_.push_back(&confinement_condition_down.transport_velocity_);
+    viscous_acceleration.post_processes_.push_back(&confinement_condition_down.viscous_acceleration_);
     /**
      * @brief Setup geometry and initial conditions.
      */
     system.initializeSystemCellLinkedLists();
     periodic_condition.update_cell_linked_list_.exec();
     system.initializeSystemConfigurations();
-    wall_boundary_normal_direction.exec();
+    //wall_boundary_normal_direction.exec();
     /** Output the start states of bodies. */
     body_states_recording.writeToFile(0);
     
@@ -150,7 +205,7 @@ int main()
      */
     size_t number_of_iterations = system.RestartStep();
     int screen_output_interval = 100;
-    Real end_time = 20.0;   /**< End time. */
+    Real end_time = 30.0;   /**< End time. */
     Real Output_Time = 0.1; /**< Time stamps for output of body states. */
     Real dt = 0.0;          /**< Default acoustic time step sizes. */
     /** statistics for computing CPU time. */
@@ -204,7 +259,7 @@ int main()
             periodic_condition.bounding_.exec();
             water_block.updateCellLinkedListWithParticleSort(100);
             periodic_condition.update_cell_linked_list_.exec();
-            water_block_complex.updateConfiguration();
+            water_block_inner.updateConfiguration();
             interval_updating_configuration += TickCount::now() - time_instance;
         }
         TickCount t2 = TickCount::now();
