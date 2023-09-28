@@ -47,7 +47,6 @@ int main(int ac, char *av[])
     SimpleDynamics<EulerianCompressibleTimeStepInitialization> initialize_a_fluid_step(wave_block);
     /** Time step size with considering sound wave speed. */
     ReduceDynamics<CompressibleAcousticTimeStepSizeInFVM> get_fluid_time_step_size(wave_block, read_mesh_data.min_distance_between_nodes_, 0.1);
-    /** Here we introduce the limiter in the Riemann solver*/
     InteractionWithUpdate<Integration1stHalfHLLCRiemann> pressure_relaxation(water_block_inner);
     InteractionWithUpdate<Integration2ndHalfHLLCRiemann> density_relaxation(water_block_inner);
     // Visualization in FVM with date in cell.

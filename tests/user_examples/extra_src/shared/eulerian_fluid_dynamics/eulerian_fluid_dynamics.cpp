@@ -23,9 +23,9 @@ FluidStarState EulerianAcousticRiemannSolver::getInterfaceState(const FluidState
     Real ul = -e_ij.dot(state_i.vel_);
     Real ur = -e_ij.dot(state_j.vel_);
     Real p_star = (rho0c0_i_ * state_j.p_ + rho0c0_j_ * state_i.p_) * inv_rho0c0_sum_ 
-        + 0.5 * rho0c0_geo_ave_ * (ul - ur) * SMIN(50.0 * SMAX((ul - ur) * inv_c_ave_, Real(0)), Real(1));
+        + 0.5 * rho0c0_geo_ave_ * (ul - ur) * SMIN<Real>(50.0 * SMAX<Real>((ul - ur) * inv_c_ave_, Real(0)), Real(1));
     Real u_star = (rho0c0_i_ * ul + rho0c0_j_ * ur) * inv_rho0c0_sum_ 
-        + ((state_i.p_ - state_j.p_) * pow(SMIN(50.0 * SMAX((ul - ur) * inv_c_ave_, Real(0)), Real(1)), 2)) * inv_rho0c0_sum_;
+        + ((state_i.p_ - state_j.p_) * pow(SMIN<Real>(50.0 * SMAX<Real>((ul - ur) * inv_c_ave_, Real(0)), Real(1)), 2)) * inv_rho0c0_sum_;
     Vecd vel_star = (state_i.vel_ * state_i.rho_ + state_j.vel_ * state_j.rho_) / (state_i.rho_ + state_j.rho_) 
         - e_ij * (u_star - (ul * state_i.rho_ + ur * state_j.rho_) / (state_i.rho_ + state_j.rho_));
     FluidStarState interface_state(vel_star, p_star);

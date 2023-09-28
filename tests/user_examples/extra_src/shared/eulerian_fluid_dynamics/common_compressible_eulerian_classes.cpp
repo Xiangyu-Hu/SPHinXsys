@@ -110,11 +110,11 @@ ContactWaveSpeedAndPressure HLLCWithLimiterRiemannSolver
     Real s_r = getSmallestAndLargestWaveSpeeds(state_i, state_j, e_ij)[1];
     Real clr = (compressible_fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_) * state_i.rho_ 
         + compressible_fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_) * state_j.rho_) / (state_i.rho_ + state_j.rho_);
-    Real s_star = (state_j.p_ - state_i.p_) * pow(SMIN(5.0 * SMAX((ul - ur) / clr, Real(0)), Real(1)), 2) 
+    Real s_star = (state_j.p_ - state_i.p_) * pow(SMIN<Real>(5.0 * SMAX<Real>((ul - ur) / clr, Real(0)), Real(1)), 2) 
         / (state_i.rho_ * (s_l - ul) - state_j.rho_ * (s_r - ur)) + (state_i.rho_ * (s_l - ul) * ul - state_j.rho_ * (s_r - ur) * ur) 
         / (state_i.rho_ * (s_l - ul) - state_j.rho_ * (s_r - ur));
     Real p_star = 0.5 * (state_i.p_ + state_j.p_) + 0.5 * (state_i.rho_ * (s_l - ul) * (s_star - ul) 
-        + state_j.rho_ * (s_r - ur) * (s_star - ur)) * SMIN(5.0 * SMAX((ul - ur) / clr, Real(0)), Real(1));
+        + state_j.rho_ * (s_r - ur) * (s_star - ur)) * SMIN<Real>(5.0 * SMAX<Real>((ul - ur) / clr, Real(0)), Real(1));
     return ContactWaveSpeedAndPressure(s_star, p_star);
 }
 //=================================================================================================//
