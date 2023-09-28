@@ -11,6 +11,10 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/
         DESTINATION ${BUILD_INPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/double_mach_reflection_0.05.msh
         DESTINATION ${BUILD_INPUT_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/double_mach_reflection_0.0125.msh
+        DESTINATION ${BUILD_INPUT_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/double_mach_reflection_0.012.msh
+        DESTINATION ${BUILD_INPUT_PATH})
 
 add_executable(${PROJECT_NAME})
 aux_source_directory(. DIR_SRCS)

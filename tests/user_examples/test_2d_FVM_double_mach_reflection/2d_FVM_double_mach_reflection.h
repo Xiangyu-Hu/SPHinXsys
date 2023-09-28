@@ -35,7 +35,9 @@ Real heat_capacity_ratio = 1.4;              /**< heat capacity ratio. */
 //----------------------------------------------------------------------
 //	Set the file path to the data file.
 //----------------------------------------------------------------------
-std::string double_mach_reflection_mesh_fullpath = "./input/double_mach_reflection_0.05.msh";
+std::string double_mach_reflection_mesh1_fullpath = "./input/double_mach_reflection_0.05.msh";
+std::string double_mach_reflection_mesh2_fullpath = "./input/double_mach_reflection_0.0125.msh";
+std::string double_mach_reflection_mesh3_fullpath = "./input/double_mach_reflection_0.012.msh";
 //
 //	Define geometries and body shapes
 //----------------------------------------------------------------------
