@@ -6,6 +6,7 @@
  * @ref 	doi.org/10.1016/j.ijnonlinmec.2014.04.009, doi.org/10.1201/9780849384165
  */
 #include "sphinxsys.h"
+#include <gtest/gtest.h>
 #include <pybind11/pybind11.h>
 #include <string>
 namespace py = pybind11;
@@ -153,6 +154,15 @@ public:
 		plate_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	}
 };
+Real observed_quantity_0 = 0.0;
+Real observed_quantity_n = 0.0;
+Real displ_max_reference = 1.8687;
+TEST(Plate, MaxDisplacement)
+{
+    Real displ_max = observed_quantity_n - observed_quantity_0;
+    EXPECT_NEAR(displ_max, displ_max_reference, displ_max_reference * 0.1);
+    std::cout << "displ_max: " << displ_max << std::endl;
+}
 //----------------------------------------------------------------------
 //  Define environment.
 //----------------------------------------------------------------------
@@ -243,11 +253,11 @@ public:
 	{
 		return 1;
 	}
-
+	
 	/**
 	 *  The main program
 	 */
-	void runCase()
+	int runCase()
 	{
 
 		/** Set the starting time.
@@ -302,6 +312,11 @@ public:
 		TimeInterval tt;
 		tt = t4 - t1 - interval;
 		std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+		observed_quantity_n = (*write_plate_max_displacement.getObservedQuantity())[0][2];
+
+
+    	testing::InitGoogleTest();
+    	return RUN_ALL_TESTS();
 	}
 };
 
