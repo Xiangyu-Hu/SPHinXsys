@@ -285,8 +285,8 @@ struct LocalDynamicsParameters
 {
     BodyRelationType &body_relation_;
     std::tuple<OtherArgs...> others_;
-    LocalDynamicsParameters(BodyRelationType &body_relation, OtherArgs &&...other_args)
-        : body_relation_(body_relation), others_(std::forward<OtherArgs>(other_args)...){};
+    LocalDynamicsParameters(BodyRelationType &body_relation, OtherArgs... other_args)
+        : body_relation_(body_relation), others_(other_args...){};
 };
 
 /**
