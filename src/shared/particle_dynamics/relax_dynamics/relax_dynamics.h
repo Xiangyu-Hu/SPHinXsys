@@ -34,7 +34,7 @@
 #include "all_particle_dynamics.h"
 #include "base_kernel.h"
 #include "cell_linked_list.h"
-#include "general_dynamics.h"
+#include "general_interaction.h"
 
 namespace SPH
 {

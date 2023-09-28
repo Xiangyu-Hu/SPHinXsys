@@ -22,23 +22,21 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file surface indication.h
- * @brief 	Here, we define the algorithm classes for indicating fluid surfaces.
- * @details Fluid indicators are mainly used here to classify different region in a fluid.
+ * @brief Here, we define the algorithm classes for indicating material surfaces.
+ * @details TBD
  * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef SURFACE_INDICATION_H
 #define SURFACE_INDICATION_H
 
-#include "base_fluid_dynamics.h"
+#include "base_general_dynamics.h"
 
 namespace SPH
 {
-namespace fluid_dynamics
-{
 /**
  * @class FreeSurfaceIndication
- * @brief  indicate the particles near the free surface of a fluid body.
+ * @brief  indicate the particles near the free surface of a body.
  * Note that, SPHinXsys does not require this function for simulating general free surface flow problems.
  * However, some other applications may use this function, such as transport velocity formulation,
  * for masking some function which is only applicable for the bulk of the fluid body.
@@ -53,7 +51,7 @@ class FreeSurfaceIndication : public LocalDynamics, public DataDelegationType
 
   protected:
     StdLargeVec<int> &indicator_;
-    StdLargeVec<Real> pos_div_;
+    StdLargeVec<Real> &pos_div_;
     Real threshold_by_dimensions_;
 };
 
@@ -61,7 +59,7 @@ class FreeSurfaceIndication : public LocalDynamics, public DataDelegationType
  * @class FreeSurfaceIndicationInner
  * @brief TBD.
  */
-class FreeSurfaceIndicationInner : public FreeSurfaceIndication<FluidDataInner>
+class FreeSurfaceIndicationInner : public FreeSurfaceIndication<GeneralDataDelegateInner>
 {
   public:
     explicit FreeSurfaceIndicationInner(BaseInnerRelation &inner_relation);
@@ -78,11 +76,11 @@ class FreeSurfaceIndicationInner : public FreeSurfaceIndication<FluidDataInner>
  * @class FreeSurfaceIndicationContact
  * @brief indicate the particles near the free fluid surface.
  */
-class FreeSurfaceIndicationContact : public FreeSurfaceIndication<FluidContactData>
+class FreeSurfaceIndicationContact : public FreeSurfaceIndication<GeneralDataDelegateContact>
 {
   public:
-    FreeSurfaceIndicationContact(BaseContactRelation &contact_relation)
-        : FreeSurfaceIndication<FluidContactData>(contact_relation){};
+    explicit FreeSurfaceIndicationContact(BaseContactRelation &contact_relation)
+        : FreeSurfaceIndication<GeneralDataDelegateContact>(contact_relation){};
     virtual ~FreeSurfaceIndicationContact(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };
@@ -105,6 +103,14 @@ class SpatialTemporalFreeSurfaceIdentification : public FreeSurfaceIdentificatio
     StdLargeVec<int> previous_surface_indicator_;
     bool isNearPreviousFreeSurface(size_t index_i);
 };
-} // namespace fluid_dynamics
+
+class SpatialTemporalFreeSurfaceIdentificationComplex
+    : public SpatialTemporalFreeSurfaceIdentification<ComplexInteraction<FreeSurfaceIndicationInner, FreeSurfaceIndicationContact>>
+{
+  public:
+    explicit SpatialTemporalFreeSurfaceIdentificationComplex(ComplexRelation &complex_relation)
+        : SpatialTemporalFreeSurfaceIdentification<ComplexInteraction<FreeSurfaceIndicationInner, FreeSurfaceIndicationContact>>(
+              complex_relation.getInnerRelation(), complex_relation.getContactRelation()){};
+};
 } // namespace SPH
 #endif // SURFACE_INDICATION_H

@@ -39,7 +39,6 @@
 #include "multi_phase_dynamics.hpp"
 #include "non_newtonian_dynamics.h"
 #include "shape_confinement.h"
-#include "surface_indication.hpp"
 #include "surface_tension.hpp"
 #include "transport_velocity_correction.hpp"
 #include "viscous_dynamics.hpp"

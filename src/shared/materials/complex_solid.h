@@ -30,7 +30,7 @@
 #define COMPLEX_SOLID_H
 
 #include "elastic_solid.h"
-#include <general_dynamics.h>
+#include "base_general_dynamics.h"
 
 namespace SPH
 {

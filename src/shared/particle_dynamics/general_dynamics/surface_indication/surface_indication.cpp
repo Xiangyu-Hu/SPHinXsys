@@ -2,12 +2,10 @@
 
 namespace SPH
 {
-namespace fluid_dynamics
-{
 //=================================================================================================//
 FreeSurfaceIndicationInner::
     FreeSurfaceIndicationInner(BaseInnerRelation &inner_relation)
-    : FreeSurfaceIndication<FluidDataInner>(inner_relation),
+    : FreeSurfaceIndication<GeneralDataDelegateInner>(inner_relation),
       smoothing_length_(inner_relation.getSPHBody().sph_adaptation_->ReferenceSmoothingLength()) {}
 //=================================================================================================//
 void FreeSurfaceIndicationInner::interaction(size_t index_i, Real dt)
@@ -59,5 +57,4 @@ void FreeSurfaceIndicationContact::interaction(size_t index_i, Real dt)
     pos_div_[index_i] += pos_div;
 }
 //=================================================================================================//
-} // namespace fluid_dynamics
 } // namespace SPH

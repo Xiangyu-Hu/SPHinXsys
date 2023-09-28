@@ -194,6 +194,14 @@ class DensitySummationFreeSurfaceComplex
         : DensitySummationFreeSurface<ComplexInteraction<DensitySummationInner, DensitySummationContact>>(
               fluid_wall_relation.getInnerRelation(), fluid_wall_relation.getContactRelation()){};
 };
+class DensitySummationFreeSurfaceComplexAdaptive
+    : public DensitySummationFreeSurface<ComplexInteraction<DensitySummationInnerAdaptive, DensitySummationContactAdaptive>>
+{
+  public:
+    explicit DensitySummationFreeSurfaceComplexAdaptive(ComplexRelation &fluid_wall_relation)
+        : DensitySummationFreeSurface<ComplexInteraction<DensitySummationInnerAdaptive, DensitySummationContactAdaptive>>(
+              fluid_wall_relation.getInnerRelation(), fluid_wall_relation.getContactRelation()){};
+};
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // DENSITY_SUMMATION_INNER_H

@@ -29,14 +29,14 @@
 #ifndef GENERAL_INTERACTION_H
 #define GENERAL_INTERACTION_H
 
-#include "general_dynamics.h"
+#include "base_general_dynamics.h"
 
 namespace SPH
 {
 class KernelCorrectionMatrixInner : public LocalDynamics, public GeneralDataDelegateInner
 {
   public:
-    KernelCorrectionMatrixInner(BaseInnerRelation &inner_relation, Real alpha = Real(0));
+    explicit KernelCorrectionMatrixInner(BaseInnerRelation &inner_relation, Real alpha = Real(0));
     virtual ~KernelCorrectionMatrixInner(){};
 
   protected:
@@ -50,7 +50,7 @@ class KernelCorrectionMatrixInner : public LocalDynamics, public GeneralDataDele
 class KernelCorrectionMatrixComplex : public KernelCorrectionMatrixInner, public GeneralDataDelegateContactOnly
 {
   public:
-    KernelCorrectionMatrixComplex(ComplexRelation &complex_relation, Real alpha = Real(0));
+    explicit KernelCorrectionMatrixComplex(ComplexRelation &complex_relation, Real alpha = Real(0));
     virtual ~KernelCorrectionMatrixComplex(){};
 
   protected:
@@ -69,7 +69,7 @@ class KernelGradientCorrectionInner : public LocalDynamics, public GeneralDataDe
     ParticlesPairAverageInner<Matd> average_correction_matrix_;
 
   public:
-    KernelGradientCorrectionInner(KernelCorrectionMatrixInner &kernel_correction_inner);
+    explicit KernelGradientCorrectionInner(KernelCorrectionMatrixInner &kernel_correction_inner);
     virtual ~KernelGradientCorrectionInner(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
@@ -103,6 +103,48 @@ class KernelGradientCorrectionComplex : public KernelGradientCorrectionInner, pu
     KernelGradientCorrectionComplex(KernelCorrectionMatrixComplex &kernel_correction_complex);
     virtual ~KernelGradientCorrectionComplex(){};
     void interaction(size_t index_i, Real dt = 0.0);
+};
+
+/**
+ * @class ParticleSmoothing
+ * @brief computing smoothed variable field by averaging with neighbors
+ */
+template <typename VariableType>
+class ParticleSmoothing : public LocalDynamics, public GeneralDataDelegateInner
+{
+  public:
+    explicit ParticleSmoothing(BaseInnerRelation &inner_relation, const std::string &variable_name)
+        : LocalDynamics(inner_relation.getSPHBody()), GeneralDataDelegateInner(inner_relation),
+          W0_(sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd)),
+          smoothed_(*particles_->template getVariableByName<VariableType>(variable_name))
+    {
+        particles_->registerVariable(temp_, variable_name + "_temp");
+    }
+
+    virtual ~ParticleSmoothing(){};
+
+    inline void interaction(size_t index_i, Real dt = 0.0)
+    {
+        Real weight = W0_;
+        VariableType summation = W0_ * smoothed_[index_i];
+        const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+        {
+            size_t index_j = inner_neighborhood.j_[n];
+            summation += inner_neighborhood.W_ij_[n] * smoothed_[index_j];
+            weight += inner_neighborhood.W_ij_[n];
+        }
+        temp_[index_i] = summation / (weight + TinyReal);
+    };
+
+    void update(size_t index_i, Real dt = 0.0)
+    {
+        smoothed_[index_i] = temp_[index_i];
+    };
+
+  protected:
+    const Real W0_;
+    StdLargeVec<VariableType> &smoothed_, temp_;
 };
 } // namespace SPH
 #endif // GENERAL_INTERACTION_H

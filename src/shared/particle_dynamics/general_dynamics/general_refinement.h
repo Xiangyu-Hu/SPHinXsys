@@ -21,14 +21,14 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	general_dynamics_refinement.h
+ * @file 	general_refinement.h
  * @brief 	TODO: these classes should be improved on easy understanding and proper memory usage.
  * @author	Yijie Sun and Xiangyu Hu
  */
+#ifndef GENERAL_REFINEMENT_H
+#define GENERAL_REFINEMENT_H
 
-#pragma once
-
-#include "general_dynamics.h"
+#include "base_general_dynamics.h"
 #include <array>
 
 namespace SPH
@@ -322,3 +322,4 @@ class MergeWithMinimumDensityErrorWithWall : public MergeWithMinimumDensityError
     ComputeDensityErrorWithWall compute_density_error;
 };
 } // namespace SPH
+#endif // GENERAL_REFINEMENT_H

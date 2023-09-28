@@ -34,7 +34,7 @@
 #include "all_particle_dynamics.h"
 #include "base_kernel.h"
 #include "elastic_solid.h"
-#include "general_dynamics.h"
+#include "base_general_dynamics.h"
 #include "solid_body.h"
 #include "solid_particles.h"
 

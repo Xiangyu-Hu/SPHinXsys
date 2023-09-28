@@ -32,7 +32,7 @@
 #include "fluid_body.h"
 #include "fluid_dynamics_complex.h"
 #include "fluid_dynamics_inner.h"
-#include "general_dynamics.h"
+#include "base_general_dynamics.h"
 #include "riemann_solver.h"
 
 namespace SPH

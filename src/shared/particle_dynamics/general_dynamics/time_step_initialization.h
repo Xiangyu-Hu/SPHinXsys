@@ -21,32 +21,70 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	general_solid_dynamics.h
- * @brief 	Here, we define the algorithm classes for solid dynamics.
- * @details We consider here a weakly compressible solids.
+ * @file 	time_step_initialization.h
+ * @brief 	TBD
  * @author	Chi Zhang and Xiangyu Hu
  */
+#ifndef TIME_STEP_INITIALIZATION_H
+#define TIME_STEP_INITIALIZATION_H
 
-#ifndef GENERAL_SOLID_DYNAMICS_H
-#define GENERAL_SOLID_DYNAMICS_H
-
-#include "all_body_relations.h"
-#include "all_particle_dynamics.h"
-#include "base_kernel.h"
-#include "elastic_solid.h"
 #include "base_general_dynamics.h"
-#include "solid_body.h"
-#include "solid_particles.h"
+#include <limits>
 
 namespace SPH
 {
-namespace solid_dynamics
+/**
+ * @class BaseTimeStepInitialization
+ * @brief base class for time step initialization.
+ */
+class BaseTimeStepInitialization : public LocalDynamics
 {
-//----------------------------------------------------------------------
-//		for general solid dynamics
-//----------------------------------------------------------------------
-typedef DataDelegateSimple<SolidParticles> SolidDataSimple;
-typedef DataDelegateInner<SolidParticles> SolidDataInner;
-} // namespace solid_dynamics
+  private:
+    SharedPtrKeeper<Gravity> gravity_ptr_keeper_;
+
+  protected:
+    Gravity *gravity_;
+
+  public:
+    BaseTimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> &gravity_ptr)
+        : LocalDynamics(sph_body), gravity_(gravity_ptr_keeper_.assignPtr(gravity_ptr)){};
+    virtual ~BaseTimeStepInitialization(){};
+};
+
+/**
+ * @class TimeStepInitialization
+ * @brief initialize a time step for a body.
+ */
+class TimeStepInitialization
+    : public BaseTimeStepInitialization,
+      public GeneralDataDelegateSimple
+{
+  protected:
+    StdLargeVec<Vecd> &pos_, &acc_prior_;
+
+  public:
+    explicit TimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd::Zero()));
+    virtual ~TimeStepInitialization(){};
+    void update(size_t index_i, Real dt = 0.0);
+};
+
+/**
+ * @class RandomizeParticlePosition
+ * @brief Randomize the initial particle position
+ */
+class RandomizeParticlePosition
+    : public LocalDynamics,
+      public GeneralDataDelegateSimple
+{
+  protected:
+    StdLargeVec<Vecd> &pos_;
+    Real randomize_scale_;
+
+  public:
+    explicit RandomizeParticlePosition(SPHBody &sph_body);
+    virtual ~RandomizeParticlePosition(){};
+
+    void update(size_t index_i, Real dt = 0.0);
+};
 } // namespace SPH
-#endif // GENERAL_SOLID_DYNAMICS_H
+#endif // TIME_STEP_INITIALIZATION_H

@@ -32,7 +32,7 @@
 #include "compressible_fluid.h"
 #include "fluid_body.h"
 #include "fluid_dynamics_inner.h"
-#include "general_dynamics.h"
+#include "base_general_dynamics.h"
 #include "io_vtk.h"
 using namespace std;
 namespace SPH

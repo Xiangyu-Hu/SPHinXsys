@@ -21,126 +21,19 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	general_dynamics.h
- * @brief 	This is the particle dynamics applicable for all type bodies
+ * @file 	general_reduce.h
+ * @brief TBD
  * @author	Chi Zhang and Xiangyu Hu
  */
 
-#ifndef GENERAL_DYNAMICS_H
-#define GENERAL_DYNAMICS_H
+#ifndef GENERAL_REDUCE_H
+#define GENERAL_REDUCE_H
 
-#include "all_particle_dynamics.h"
-#include "base_body.h"
-#include "base_particles.h"
-#include "external_force.h"
-
+#include "base_general_dynamics.h"
 #include <limits>
 
 namespace SPH
 {
-typedef DataDelegateSimple<BaseParticles> GeneralDataDelegateSimple;
-typedef DataDelegateInner<BaseParticles> GeneralDataDelegateInner;
-typedef DataDelegateContact<BaseParticles, BaseParticles> GeneralDataDelegateContact;
-typedef DataDelegateContact<BaseParticles, BaseParticles, DataDelegateEmptyBase>
-    GeneralDataDelegateContactOnly;
-
-/**
- * @class BaseTimeStepInitialization
- * @brief base class for time step initialization.
- */
-class BaseTimeStepInitialization : public LocalDynamics
-{
-  private:
-    SharedPtrKeeper<Gravity> gravity_ptr_keeper_;
-
-  protected:
-    Gravity *gravity_;
-
-  public:
-    BaseTimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> &gravity_ptr)
-        : LocalDynamics(sph_body), gravity_(gravity_ptr_keeper_.assignPtr(gravity_ptr)){};
-    virtual ~BaseTimeStepInitialization(){};
-};
-
-/**
- * @class TimeStepInitialization
- * @brief initialize a time step for a body.
- */
-class TimeStepInitialization
-    : public BaseTimeStepInitialization,
-      public GeneralDataDelegateSimple
-{
-  protected:
-    StdLargeVec<Vecd> &pos_, &acc_prior_;
-
-  public:
-    TimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd::Zero()));
-    virtual ~TimeStepInitialization(){};
-
-    void update(size_t index_i, Real dt = 0.0);
-};
-
-/**
- * @class RandomizeParticlePosition
- * @brief Randomize the initial particle position
- */
-class RandomizeParticlePosition
-    : public LocalDynamics,
-      public GeneralDataDelegateSimple
-{
-  protected:
-    StdLargeVec<Vecd> &pos_;
-    Real randomize_scale_;
-
-  public:
-    explicit RandomizeParticlePosition(SPHBody &sph_body);
-    virtual ~RandomizeParticlePosition(){};
-
-    void update(size_t index_i, Real dt = 0.0);
-};
-
-/**
- * @class ParticleSmoothing
- * @brief computing smoothed variable field by averaging with neighbors
- */
-template <typename VariableType>
-class ParticleSmoothing : public LocalDynamics, public GeneralDataDelegateInner
-{
-  public:
-    explicit ParticleSmoothing(BaseInnerRelation &inner_relation, const std::string &variable_name)
-        : LocalDynamics(inner_relation.getSPHBody()), GeneralDataDelegateInner(inner_relation),
-          W0_(sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd)),
-          smoothed_(*particles_->template getVariableByName<VariableType>(variable_name))
-    {
-        particles_->registerVariable(temp_, variable_name + "_temp");
-    }
-
-    virtual ~ParticleSmoothing(){};
-
-    inline void interaction(size_t index_i, Real dt = 0.0)
-    {
-        Real weight = W0_;
-        VariableType summation = W0_ * smoothed_[index_i];
-        const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-        {
-            size_t index_j = inner_neighborhood.j_[n];
-            summation += inner_neighborhood.W_ij_[n] * smoothed_[index_j];
-            weight += inner_neighborhood.W_ij_[n];
-        }
-        temp_[index_i] = summation / (weight + TinyReal);
-    };
-
-    void update(size_t index_i, Real dt = 0.0)
-    {
-        smoothed_[index_i] = temp_[index_i];
-    };
-
-  protected:
-    const Real W0_;
-    StdLargeVec<VariableType> &smoothed_, temp_;
-};
-
 /**
  * @class VelocityBoundCheck
  * @brief  check whether particle velocity within a given bound
@@ -172,7 +65,7 @@ class UpperFrontInAxisDirection : public BaseLocalDynamicsReduce<Real, ReduceMax
     StdLargeVec<Vecd> &pos_;
 
   public:
-    UpperFrontInAxisDirection(DynamicsIdentifier &identifier, std::string name, int axis = lastAxis)
+    explicit UpperFrontInAxisDirection(DynamicsIdentifier &identifier, std::string name, int axis = lastAxis)
         : BaseLocalDynamicsReduce<Real, ReduceMax, BodyPartByCell>(identifier, Real(MinRealNumber)),
           GeneralDataDelegateSimple(identifier.getSPHBody()), axis_(axis), pos_(particles_->pos_)
     {
@@ -305,10 +198,10 @@ class TotalMechanicalEnergy
     Gravity *gravity_;
 
   public:
-    TotalMechanicalEnergy(SPHBody &sph_body, SharedPtr<Gravity> = makeShared<Gravity>(Vecd::Zero()));
+    explicit TotalMechanicalEnergy(SPHBody &sph_body, SharedPtr<Gravity> = makeShared<Gravity>(Vecd::Zero()));
     virtual ~TotalMechanicalEnergy(){};
 
     Real reduce(size_t index_i, Real dt = 0.0);
 };
 } // namespace SPH
-#endif // GENERAL_DYNAMICS_H
+#endif // GENERAL_REDUCE_H

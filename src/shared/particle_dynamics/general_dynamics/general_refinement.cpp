@@ -1,9 +1,4 @@
-/**
- * @file 	general_dynamics_refinement.cpp
- * @author	Yijie Sun and Xiangyu Hu
- */
-
-#include "general_dynamics_refinement.h"
+#include "general_refinement.h"
 #include "base_particles.hpp"
 #include "level_set_shape.h"
 

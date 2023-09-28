@@ -35,7 +35,7 @@
 #include "all_simbody.h"
 #include "base_kernel.h"
 #include "elastic_solid.h"
-#include "general_dynamics.h"
+#include "general_reduce.h"
 #include "solid_body.h"
 #include "solid_particles.h"
 

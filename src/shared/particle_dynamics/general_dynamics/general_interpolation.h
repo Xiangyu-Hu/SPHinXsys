@@ -29,7 +29,7 @@
 #ifndef GENERAL_INTERPOLATION_H
 #define GENERAL_INTERPOLATION_H
 
-#include "general_dynamics.h"
+#include "base_general_dynamics.h"
 
 namespace SPH
 {

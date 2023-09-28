@@ -21,32 +21,26 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	general_solid_dynamics.h
- * @brief 	Here, we define the algorithm classes for solid dynamics.
- * @details We consider here a weakly compressible solids.
+ * @file 	base_general_dynamics.h
+ * @brief 	This is the particle dynamics applicable for all type bodies
  * @author	Chi Zhang and Xiangyu Hu
  */
 
-#ifndef GENERAL_SOLID_DYNAMICS_H
-#define GENERAL_SOLID_DYNAMICS_H
+#ifndef BASE_GENERAL_DYNAMICS_H
+#define BASE_GENERAL_DYNAMICS_H
 
-#include "all_body_relations.h"
 #include "all_particle_dynamics.h"
-#include "base_kernel.h"
-#include "elastic_solid.h"
-#include "base_general_dynamics.h"
-#include "solid_body.h"
-#include "solid_particles.h"
+#include "base_body.h"
+#include "base_particles.h"
+#include "external_force.h"
+
+#include <limits>
 
 namespace SPH
 {
-namespace solid_dynamics
-{
-//----------------------------------------------------------------------
-//		for general solid dynamics
-//----------------------------------------------------------------------
-typedef DataDelegateSimple<SolidParticles> SolidDataSimple;
-typedef DataDelegateInner<SolidParticles> SolidDataInner;
-} // namespace solid_dynamics
+typedef DataDelegateSimple<BaseParticles> GeneralDataDelegateSimple;
+typedef DataDelegateInner<BaseParticles> GeneralDataDelegateInner;
+typedef DataDelegateContact<BaseParticles, BaseParticles> GeneralDataDelegateContact;
+typedef DataDelegateContact<BaseParticles, BaseParticles, DataDelegateEmptyBase> GeneralDataDelegateContactOnly;
 } // namespace SPH
-#endif // GENERAL_SOLID_DYNAMICS_H
+#endif // BASE_GENERAL_DYNAMICS_H

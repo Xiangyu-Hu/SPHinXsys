@@ -101,13 +101,21 @@ int main(int ac, char *av[])
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
-
-    /** topology */
+    //----------------------------------------------------------------------
+    //	Define body relation map.
+    //	The contact map gives the topological connections between the bodies.
+    //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
+    //----------------------------------------------------------------------
     AdaptiveInnerRelation water_inner(water_block);
     AdaptiveContactRelation water_contact(water_block, {&wall_boundary});
-    ComplexRelation water_complex(water_inner, water_contact);
     AdaptiveContactRelation fluid_observer_contact(fluid_observer, {&water_block});
-
+    //----------------------------------------------------------------------
+    // Combined relations built from basic relations
+    //----------------------------------------------------------------------
+    ComplexRelation water_complex(water_inner, water_contact);
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
