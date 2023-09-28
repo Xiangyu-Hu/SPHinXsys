@@ -57,6 +57,12 @@ struct CompressibleFluidStarState : FluidStarState
     CompressibleFluidStarState(Real rho, Vecd vel, Real p, Real E)
         : FluidStarState(vel, p), rho_(rho), E_(E){};
 };
+struct ContactWaveSpeedAndPressure
+{
+    Real contact_wave_speed_star_, contact_pressure_star_;
+    ContactWaveSpeedAndPressure(Real contact_wave_speed_star, Real contact_pressure_star)
+        : contact_wave_speed_star_(contact_wave_speed_star), contact_pressure_star_(contact_pressure_star){};
+};
 
 /**
  * @struct NoRiemannSolverInCompressibleEulerianMethod
@@ -67,7 +73,8 @@ class NoRiemannSolverInCEM
 {
   public:
     NoRiemannSolverInCEM(CompressibleFluid &fluid_i, CompressibleFluid &fluid_j);
-    CompressibleFluidStarState getInterfaceState(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &e_ij);
+    CompressibleFluidStarState getInterfaceState(const CompressibleFluidState &state_i, 
+                                    const CompressibleFluidState &state_j, const Vecd &e_ij);
 
   protected:
     CompressibleFluid &compressible_fluid_i_, &compressible_fluid_j_;
@@ -83,8 +90,10 @@ class HLLCRiemannSolver : public NoRiemannSolverInCEM
     HLLCRiemannSolver(CompressibleFluid &compressible_fluid_i, CompressibleFluid &compressible_fluid_j)
         : NoRiemannSolverInCEM(compressible_fluid_i, compressible_fluid_j){};
     Vec2d getSmallestAndLargestWaveSpeeds(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &e_ij);
-    virtual Real getContactWaveSpeed(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &e_ij);
-    virtual CompressibleFluidStarState getInterfaceState(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &e_ij);
+    virtual ContactWaveSpeedAndPressure getContactWaveSpeedAndPressure(const CompressibleFluidState &state_i, 
+                                            const CompressibleFluidState &state_j, const Vecd &e_ij);
+    virtual CompressibleFluidStarState getInterfaceState(const CompressibleFluidState &state_i, 
+                                            const CompressibleFluidState &state_j, const Vecd &e_ij);
 };
 
 /**
@@ -96,8 +105,10 @@ class HLLCWithLimiterRiemannSolver : public HLLCRiemannSolver
   public:
     HLLCWithLimiterRiemannSolver(CompressibleFluid &compressible_fluid_i, CompressibleFluid &compressible_fluid_j)
         : HLLCRiemannSolver(compressible_fluid_i, compressible_fluid_j){};
-    Real getContactWaveSpeed(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &e_ij) override;
-    CompressibleFluidStarState getInterfaceState(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &e_ij) override;
+    ContactWaveSpeedAndPressure getContactWaveSpeedAndPressure(const CompressibleFluidState &state_i, 
+                                    const CompressibleFluidState &state_j, const Vecd &e_ij) override;
+    CompressibleFluidStarState getInterfaceState(const CompressibleFluidState &state_i, 
+                                    const CompressibleFluidState &state_j, const Vecd &e_ij) override;
 };
 
 /**
@@ -150,12 +161,13 @@ class EulerianCompressibleAcousticTimeStepSize : public fluid_dynamics::Acoustic
     Real smoothing_length_;
 
   public:
-    explicit EulerianCompressibleAcousticTimeStepSize(SPHBody &sph_body);
+    explicit EulerianCompressibleAcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL = 0.6);
     virtual ~EulerianCompressibleAcousticTimeStepSize(){};
 
     Real reduce(size_t index_i, Real dt = 0.0);
     virtual Real outputResult(Real reduced_value) override;
     CompressibleFluid compressible_fluid_;
+    Real acousticCFL_;
 };
 
 /**

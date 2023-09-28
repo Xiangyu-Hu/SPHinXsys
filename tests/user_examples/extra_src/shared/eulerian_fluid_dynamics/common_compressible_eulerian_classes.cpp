@@ -15,9 +15,10 @@ void EulerianCompressibleTimeStepInitialization::update(size_t index_i, Real dt)
     dE_dt_prior_[index_i] = rho_[index_i] * (gravity_->InducedAcceleration(pos_[index_i])).dot(vel_[index_i]);
 }
 //=================================================================================================//
-EulerianCompressibleAcousticTimeStepSize::EulerianCompressibleAcousticTimeStepSize(SPHBody &sph_body)
+EulerianCompressibleAcousticTimeStepSize::EulerianCompressibleAcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL)
     : AcousticTimeStepSize(sph_body), rho_(particles_->rho_), p_(*particles_->getVariableByName<Real>("Pressure")), vel_(particles_->vel_),
-      smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()), compressible_fluid_(CompressibleFluid(1.0, 1.4)){};
+      smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()), 
+      compressible_fluid_(CompressibleFluid(1.0, 1.4)), acousticCFL_(acousticCFL){};
 //=================================================================================================//
 Real EulerianCompressibleAcousticTimeStepSize::reduce(size_t index_i, Real dt)
 {
@@ -26,7 +27,7 @@ Real EulerianCompressibleAcousticTimeStepSize::reduce(size_t index_i, Real dt)
 //=================================================================================================//
 Real EulerianCompressibleAcousticTimeStepSize::outputResult(Real reduced_value)
 {
-    return 0.6 / Dimensions * smoothing_length_ / (reduced_value + TinyReal);
+    return acousticCFL_ / Dimensions * smoothing_length_ / (reduced_value + TinyReal);
 }
 //=================================================================================================//
 NoRiemannSolverInCEM ::NoRiemannSolverInCEM(CompressibleFluid &compressible_fluid_i, CompressibleFluid &compressible_fluid_j)
@@ -39,7 +40,6 @@ CompressibleFluidStarState NoRiemannSolverInCEM::
     Vecd v_star = 0.5 * (state_i.vel_ + state_j.vel_);
     Real rho_star = 0.5 * (state_i.rho_ + state_j.rho_);
     Real energy_star = 0.5 * (state_i.E_ + state_j.E_);
-
     return CompressibleFluidStarState(rho_star, v_star, p_star, energy_star);
 }
 //=================================================================================================//
@@ -61,14 +61,17 @@ Vec2d HLLCRiemannSolver::getSmallestAndLargestWaveSpeeds(const CompressibleFluid
     return Vec2d(s_l, s_r);
 }
 //=================================================================================================//
-Real HLLCRiemannSolver::getContactWaveSpeed(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &e_ij)
+ContactWaveSpeedAndPressure HLLCRiemannSolver
+::getContactWaveSpeedAndPressure(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &e_ij)
 {
     Real ul = -e_ij.dot(state_i.vel_);
     Real ur = -e_ij.dot(state_j.vel_);
     Real s_l = getSmallestAndLargestWaveSpeeds(state_i, state_j, e_ij)[0];
     Real s_r = getSmallestAndLargestWaveSpeeds(state_i, state_j, e_ij)[1];
-    return (state_j.p_ - state_i.p_) / (state_i.rho_ * (s_l - ul) - state_j.rho_ * (s_r - ur)) +
+    Real s_star = (state_j.p_ - state_i.p_) / (state_i.rho_ * (s_l - ul) - state_j.rho_ * (s_r - ur)) +
            (state_i.rho_ * (s_l - ul) * ul - state_j.rho_ * (s_r - ur) * ur) / (state_i.rho_ * (s_l - ul) - state_j.rho_ * (s_r - ur));
+    Real p_star = state_i.p_ + state_i.rho_ * (s_l - ul) * (s_star - ul);
+    return ContactWaveSpeedAndPressure(s_star, p_star);
 }
 //=================================================================================================//
 CompressibleFluidStarState HLLCRiemannSolver::
@@ -77,53 +80,18 @@ CompressibleFluidStarState HLLCRiemannSolver::
     Real ul = -e_ij.dot(state_i.vel_);
     Real ur = -e_ij.dot(state_j.vel_);
     Real s_l = getSmallestAndLargestWaveSpeeds(state_i, state_j, e_ij)[0];
-    Real s_star = getContactWaveSpeed(state_i, state_j, e_ij);
     Real s_r = getSmallestAndLargestWaveSpeeds(state_i, state_j, e_ij)[1];
-    Real p_star, rho_star, energy_star;
+    Real s_star = getContactWaveSpeedAndPressure(state_i, state_j, e_ij).contact_wave_speed_star_;
+    Real p_star = getContactWaveSpeedAndPressure(state_i, state_j, e_ij).contact_pressure_star_;
+    Real rho_star, energy_star;
     Vecd vel_star;
-    if (0.0 < s_l){ return CompressibleFluidStarState(state_i.rho_, state_i.vel_, state_i.p_, state_i.E_);}
-    if ((s_l <= 0.0 && 0.0 <= s_star) || (s_star <= 0.0 && 0.0 <= s_r))
+    if (0.0 < s_l || s_r < 0.0)
     {
-        p_star = state_i.p_ + state_i.rho_ * (s_l - ul) * (s_star - ul);
-        vel_star = (0.0 <= s_star) ? state_i.vel_ - e_ij * (s_star - ul) : state_j.vel_ - e_ij * (s_star - ur);
-        rho_star = (0.0 <= s_star) ? state_i.rho_ * (s_l - ul) / (s_l - s_star) : state_j.rho_ * (s_r - ur) / (s_r - s_star);
-        energy_star = (0.0 <= s_star) ? state_i.rho_ * (s_l - ul) / (s_l - s_star) * (state_i.E_ / state_i.rho_ + (s_star - ul) * (s_star + state_i.p_ / state_i.rho_ / (s_l - ul)))
-                                      : state_j.rho_ * (s_r - ur) / (s_r - s_star) * (state_j.E_ / state_j.rho_ + (s_star - ur) * (s_star + state_j.p_ / state_j.rho_ / (s_r - ur)));
-        return CompressibleFluidStarState(rho_star, vel_star, p_star, energy_star);
+        return (0.0 < s_l) ? CompressibleFluidStarState(state_i.rho_, state_i.vel_, state_i.p_, state_i.E_)
+                           : CompressibleFluidStarState(state_j.rho_, state_j.vel_, state_j.p_, state_j.E_);
     }
-    if (s_r < 0.0){ return CompressibleFluidStarState(state_j.rho_, state_j.vel_, state_j.p_, state_j.E_);}
-}
-//=================================================================================================//
-Real HLLCWithLimiterRiemannSolver::getContactWaveSpeed(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &e_ij)
-{
-    Real ul = -e_ij.dot(state_i.vel_);
-    Real ur = -e_ij.dot(state_j.vel_);
-    Real s_l = getSmallestAndLargestWaveSpeeds(state_i, state_j, e_ij)[0];
-    Real s_r = getSmallestAndLargestWaveSpeeds(state_i, state_j, e_ij)[1];
-    Real clr = (compressible_fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_) * state_i.rho_ 
-        + compressible_fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_) * state_j.rho_) / (state_i.rho_ + state_j.rho_);
-    return (state_j.p_ - state_i.p_) * pow(SMIN(5.0 * SMAX((ul - ur) / clr, Real(0)), Real(1)), 2) 
-        / (state_i.rho_ * (s_l - ul) - state_j.rho_ * (s_r - ur)) + (state_i.rho_ * (s_l - ul) * ul - state_j.rho_ * (s_r - ur) * ur) 
-        / (state_i.rho_ * (s_l - ul) - state_j.rho_ * (s_r - ur));
-}
-//=================================================================================================//
-CompressibleFluidStarState HLLCWithLimiterRiemannSolver::
-    getInterfaceState(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &e_ij)
-{
-    Real ul = -e_ij.dot(state_i.vel_);
-    Real ur = -e_ij.dot(state_j.vel_);
-    Real clr = (compressible_fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_) * state_i.rho_ 
-        + compressible_fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_) * state_j.rho_) / (state_i.rho_ + state_j.rho_);
-    Real s_l = getSmallestAndLargestWaveSpeeds(state_i, state_j, e_ij)[0];
-    Real s_star = getContactWaveSpeed(state_i, state_j, e_ij);
-    Real s_r = getSmallestAndLargestWaveSpeeds(state_i, state_j, e_ij)[1];
-    Real p_star, rho_star, energy_star;
-    Vecd vel_star;
-    if (0.0 < s_l){ return CompressibleFluidStarState(state_i.rho_, state_i.vel_, state_i.p_, state_i.E_);}
     if ((s_l <= 0.0 && 0.0 <= s_star) || (s_star <= 0.0 && 0.0 <= s_r))
     {
-        p_star = 0.5 * (state_i.p_ + state_j.p_) + 0.5 * (state_i.rho_ * (s_l - ul) * (s_star - ul) 
-            + state_j.rho_ * (s_r - ur) * (s_star - ur)) * SMIN(5.0 * SMAX((ul - ur) / clr, Real(0)), Real(1));
         vel_star = (0.0 <= s_star) ? state_i.vel_ - e_ij * (s_star - ul) : state_j.vel_ - e_ij * (s_star - ur);
         rho_star = (0.0 <= s_star) ? state_i.rho_ * (s_l - ul) / (s_l - s_star) : state_j.rho_ * (s_r - ur) / (s_r - s_star);
         energy_star = (0.0 <= s_star) 
@@ -131,7 +99,50 @@ CompressibleFluidStarState HLLCWithLimiterRiemannSolver::
             : state_j.rho_ * (s_r - ur) / (s_r - s_star) * (state_j.E_ / state_j.rho_ + (s_star - ur) * (s_star + state_j.p_ / state_j.rho_ / (s_r - ur)));
         return CompressibleFluidStarState(rho_star, vel_star, p_star, energy_star);
     }
-    if (s_r < 0.0){ return CompressibleFluidStarState(state_j.rho_, state_j.vel_, state_j.p_, state_j.E_);}
+}
+//=================================================================================================//
+ContactWaveSpeedAndPressure HLLCWithLimiterRiemannSolver
+::getContactWaveSpeedAndPressure(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &e_ij)
+{
+    Real ul = -e_ij.dot(state_i.vel_);
+    Real ur = -e_ij.dot(state_j.vel_);
+    Real s_l = getSmallestAndLargestWaveSpeeds(state_i, state_j, e_ij)[0];
+    Real s_r = getSmallestAndLargestWaveSpeeds(state_i, state_j, e_ij)[1];
+    Real clr = (compressible_fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_) * state_i.rho_ 
+        + compressible_fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_) * state_j.rho_) / (state_i.rho_ + state_j.rho_);
+    Real s_star = (state_j.p_ - state_i.p_) * pow(SMIN(5.0 * SMAX((ul - ur) / clr, Real(0)), Real(1)), 2) 
+        / (state_i.rho_ * (s_l - ul) - state_j.rho_ * (s_r - ur)) + (state_i.rho_ * (s_l - ul) * ul - state_j.rho_ * (s_r - ur) * ur) 
+        / (state_i.rho_ * (s_l - ul) - state_j.rho_ * (s_r - ur));
+    Real p_star = 0.5 * (state_i.p_ + state_j.p_) + 0.5 * (state_i.rho_ * (s_l - ul) * (s_star - ul) 
+        + state_j.rho_ * (s_r - ur) * (s_star - ur)) * SMIN(5.0 * SMAX((ul - ur) / clr, Real(0)), Real(1));
+    return ContactWaveSpeedAndPressure(s_star, p_star);
+}
+//=================================================================================================//
+CompressibleFluidStarState HLLCWithLimiterRiemannSolver::
+    getInterfaceState(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &e_ij)
+{
+    Real ul = -e_ij.dot(state_i.vel_);
+    Real ur = -e_ij.dot(state_j.vel_);
+    Real s_l = getSmallestAndLargestWaveSpeeds(state_i, state_j, e_ij)[0];
+    Real s_r = getSmallestAndLargestWaveSpeeds(state_i, state_j, e_ij)[1];
+    Real s_star = getContactWaveSpeedAndPressure(state_i, state_j, e_ij).contact_wave_speed_star_;
+    Real p_star = getContactWaveSpeedAndPressure(state_i, state_j, e_ij).contact_pressure_star_;
+    Real rho_star, energy_star;
+    Vecd vel_star;
+    if (0.0 < s_l || s_r < 0.0)
+    {
+        return (0.0 < s_l) ? CompressibleFluidStarState(state_i.rho_, state_i.vel_, state_i.p_, state_i.E_)
+                           : CompressibleFluidStarState(state_j.rho_, state_j.vel_, state_j.p_, state_j.E_);
+    }
+    if ((s_l <= 0.0 && 0.0 <= s_star) || (s_star <= 0.0 && 0.0 <= s_r))
+    {
+        vel_star = (0.0 <= s_star) ? state_i.vel_ - e_ij * (s_star - ul) : state_j.vel_ - e_ij * (s_star - ur);
+        rho_star = (0.0 <= s_star) ? state_i.rho_ * (s_l - ul) / (s_l - s_star) : state_j.rho_ * (s_r - ur) / (s_r - s_star);
+        energy_star = (0.0 <= s_star) 
+            ? state_i.rho_ * (s_l - ul) / (s_l - s_star) * (state_i.E_ / state_i.rho_ + (s_star - ul) * (s_star + state_i.p_ / state_i.rho_ / (s_l - ul)))
+            : state_j.rho_ * (s_r - ur) / (s_r - s_star) * (state_j.E_ / state_j.rho_ + (s_star - ur) * (s_star + state_j.p_ / state_j.rho_ / (s_r - ur)));
+        return CompressibleFluidStarState(rho_star, vel_star, p_star, energy_star);
+    }
 }
 //=================================================================================================//
 EulerianCompressibleViscousAccelerationInner::EulerianCompressibleViscousAccelerationInner(BaseInnerRelation &inner_relation)
