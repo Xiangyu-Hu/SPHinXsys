@@ -235,7 +235,8 @@ public:
 		write_states(io_environment, system.real_bodies_),
 		write_plate_max_displacement("Position", io_environment, plate_observer_contact)
 	{	
-		std::cout<<"Running simulation for loading factor = " << loading_factor <<"\n";
+		if (loading_factor == 200.0) displ_max_reference = 2.5681;
+		std::cout<<"Running simulation for loading factor = " << loading_factor << " and displ_max_reference = " << displ_max_reference << "\n";
 		/** Apply initial condition. */
 		system.initializeSystemCellLinkedLists();
 		system.initializeSystemConfigurations();

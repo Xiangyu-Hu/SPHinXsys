@@ -97,7 +97,7 @@ if __name__ == "__main__":
     output_folder = 'multiple_runs_output/'
     output_file = output_folder + 'Displacements.dat'
     #values = [6.5, 12.5, 25, 50, 75, 100, 125, 150, 175, 200]
-    values = [6.5, 12.5]
+    values = [100, 200]
     displacement = list(range(len(values)))
     run_time = list(range(len(values)))
 
