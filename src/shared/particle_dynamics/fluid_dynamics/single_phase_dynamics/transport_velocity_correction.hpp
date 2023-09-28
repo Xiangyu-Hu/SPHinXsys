@@ -45,9 +45,9 @@ void TransportVelocityCorrectionInner<KernelCorrectionType, ResolutionType, Part
 //=================================================================================================//
 template <class KernelCorrectionType, class ResolutionType, class ParticleScope>
 TransportVelocityCorrectionWithBoundary<KernelCorrectionType, ResolutionType, ParticleScope>::
-    TransportVelocityCorrectionWithBoundary(BaseInnerRelation &inner_relation, Real coefficient)
-    : TransportVelocityCorrection<FluidDataInner, KernelCorrectionType, ResolutionType, ParticleScope>(
-          inner_relation, coefficient) {}
+    TransportVelocityCorrectionWithBoundary(BaseContactRelation &contact_relation, Real coefficient)
+    : TransportVelocityCorrection<FluidContactData, KernelCorrectionType, ResolutionType, ParticleScope>(
+          contact_relation, coefficient) {}
 //=================================================================================================//
 template <class KernelCorrectionType, class ResolutionType, class ParticleScope>
 void TransportVelocityCorrectionWithBoundary<KernelCorrectionType, ResolutionType, ParticleScope>::
@@ -73,13 +73,13 @@ void TransportVelocityCorrectionWithBoundary<KernelCorrectionType, ResolutionTyp
 //=================================================================================================//
 template <class KernelCorrectionType, class ResolutionType, class ParticleScope>
 TransportVelocityCorrectionContact<KernelCorrectionType, ResolutionType, ParticleScope>::
-    TransportVelocityCorrectionContact(BaseInnerRelation &inner_relation, Real coefficient)
-    : TransportVelocityCorrection<FluidDataInner, KernelCorrectionType, ResolutionType, ParticleScope>(
-          inner_relation, coefficient)
+    TransportVelocityCorrectionContact(BaseContactRelation &contact_relation, Real coefficient)
+    : TransportVelocityCorrection<FluidContactData, KernelCorrectionType, ResolutionType, ParticleScope>(
+          contact_relation, coefficient)
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
-        contact_kernel_corrections_.push_back(RiemannSolverType(KernelCorrectionType(this->contact_particles_[k])));
+        contact_kernel_corrections_.push_back(KernelCorrectionType(this->contact_particles_[k]));
     }
 }
 //=================================================================================================//

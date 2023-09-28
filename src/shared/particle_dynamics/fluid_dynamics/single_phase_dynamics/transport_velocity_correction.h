@@ -77,7 +77,7 @@ class TransportVelocityCorrectionWithBoundary
     : public TransportVelocityCorrection<FluidContactData, KernelCorrectionType, ResolutionType, ParticleScope>
 {
   public:
-    explicit TransportVelocityCorrectionWithBoundary(BaseInnerRelation &inner_relation, Real coefficient = 0.2);
+    explicit TransportVelocityCorrectionWithBoundary(BaseContactRelation &contact_relation, Real coefficient = 0.2);
     virtual ~TransportVelocityCorrectionWithBoundary(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };
@@ -87,12 +87,24 @@ class TransportVelocityCorrectionContact
     : public TransportVelocityCorrection<FluidContactData, KernelCorrectionType, ResolutionType, ParticleScope>
 {
   public:
-    explicit TransportVelocityCorrectionContact(BaseInnerRelation &inner_relation, Real coefficient = 0.2);
+    explicit TransportVelocityCorrectionContact(BaseContactRelation &contact_relation, Real coefficient = 0.2);
     virtual ~TransportVelocityCorrectionContact(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
     StdVec<KernelCorrectionType> contact_kernel_corrections_;
+};
+
+template <class ParticleScope>
+class TransportVelocityCorrectionComplex
+    : public ComplexInteraction<TransportVelocityCorrectionInner<NoKernelCorrection, SingleResolution, ParticleScope>,
+                                TransportVelocityCorrectionWithBoundary<NoKernelCorrection, SingleResolution, ParticleScope>>
+{
+  public:
+    explicit TransportVelocityCorrectionComplex(ComplexRelation &complex_relation)
+        : ComplexInteraction<TransportVelocityCorrectionInner<NoKernelCorrection, SingleResolution, ParticleScope>,
+                             TransportVelocityCorrectionWithBoundary<NoKernelCorrection, SingleResolution, ParticleScope>>(
+              complex_relation.getInnerRelation(), complex_relation.getContactRelation()){};
 };
 } // namespace fluid_dynamics
 } // namespace SPH

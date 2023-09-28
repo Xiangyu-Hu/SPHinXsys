@@ -115,7 +115,7 @@ class BaseIntegration2ndHalfInner : public BaseIntegration<FluidDataInner>
     RiemannSolverType riemann_solver_;
     StdLargeVec<Real> &Vol_, &mass_;
 };
-using Integration2ndHalfInner = BaseIntegration2ndHalfInner<NoRiemannSolver>;
+using Integration2ndHalfInnerNoRiemann = BaseIntegration2ndHalfInner<NoRiemannSolver>;
 /** define the mostly used density relaxation scheme using Riemann solver */
 using Integration2ndHalfInnerRiemann = BaseIntegration2ndHalfInner<AcousticRiemannSolver>;
 using Integration2ndHalfInnerDissipativeRiemann = BaseIntegration2ndHalfInner<DissipativeRiemannSolver>;
@@ -173,6 +173,7 @@ class ContinuityWallBoundary : public InteractionWithWall<BaseIntegration>
   protected:
     RiemannSolverType riemann_solver_;
 };
+using ContinuityWallBoundaryNoRiemann = ContinuityWallBoundary<NoRiemannSolver>;
 using ContinuityWallBoundaryRiemann = ContinuityWallBoundary<AcousticRiemannSolver>;
 using ContinuityWallBoundaryDissipativeRiemann = ContinuityWallBoundary<DissipativeRiemannSolver>;
 
@@ -182,6 +183,15 @@ class Integration1stHalfRiemannWithWall
   public:
     explicit Integration1stHalfRiemannWithWall(ComplexRelation &fluid_wall_relation)
         : ComplexInteraction<Integration1stHalfInnerRiemann, MomentumWallBoundaryRiemann>(
+              fluid_wall_relation.getInnerRelation(), fluid_wall_relation.getContactRelation()){};
+};
+
+class Integration2ndHalfWithWall
+    : public ComplexInteraction<Integration2ndHalfInnerNoRiemann, ContinuityWallBoundaryNoRiemann>
+{
+  public:
+    explicit Integration2ndHalfWithWall(ComplexRelation &fluid_wall_relation)
+        : ComplexInteraction<Integration2ndHalfInnerNoRiemann, ContinuityWallBoundaryNoRiemann>(
               fluid_wall_relation.getInnerRelation(), fluid_wall_relation.getContactRelation()){};
 };
 

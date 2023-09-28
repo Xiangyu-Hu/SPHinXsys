@@ -113,6 +113,15 @@ class VorticityInner : public LocalDynamics, public FluidDataInner
     StdLargeVec<Vecd> &vel_;
     StdLargeVec<AngularVecd> vorticity_;
 };
+
+class ViscousAccelerationWithWall
+    : public ComplexInteraction<ViscousAccelerationInner, ViscousWallBoundary>
+{
+  public:
+    explicit ViscousAccelerationWithWall(ComplexRelation &fluid_wall_relation)
+        : ComplexInteraction<ViscousAccelerationInner, ViscousWallBoundary>(
+              fluid_wall_relation.getInnerRelation(), fluid_wall_relation.getContactRelation()){};
+};
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // VISCOUS_DYNAMICS_H

@@ -50,9 +50,14 @@ int main(int ac, char *av[])
     //  At last, we define the complex relaxations by combining previous defined
     //  inner and contact relations.
     //----------------------------------------------------------------------
-    ComplexRelation water_block_complex(water_block, {&cylinder});
+    InnerRelation water_block_inner(water_block);
+    ContactRelation water_block_contact(water_block, {&cylinder});
     ContactRelation cylinder_contact(cylinder, {&water_block});
     ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
+    //----------------------------------------------------------------------
+    // Combined relations built from basic relations
+    //----------------------------------------------------------------------
+    ComplexRelation water_block_complex(water_block_inner, water_block_contact);
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -247,7 +252,6 @@ int main(int ac, char *av[])
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
     write_total_viscous_force_on_inserted_body.testResult();
-
 
     return 0;
 }

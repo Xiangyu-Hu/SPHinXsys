@@ -186,22 +186,26 @@ class DensitySummationFreeStream : public DensitySummationFreeSurfaceType
     bool isNearFreeSurface(size_t index_i);
 };
 
-class DensitySummationFreeSurfaceComplex
-    : public DensitySummationFreeSurface<ComplexInteraction<DensitySummationInner, DensitySummationContact>>
+class DensitySummationComplex
+    : public ComplexInteraction<DensitySummationInner, DensitySummationContact>
 {
   public:
-    explicit DensitySummationFreeSurfaceComplex(ComplexRelation &fluid_wall_relation)
-        : DensitySummationFreeSurface<ComplexInteraction<DensitySummationInner, DensitySummationContact>>(
-              fluid_wall_relation.getInnerRelation(), fluid_wall_relation.getContactRelation()){};
+    explicit DensitySummationComplex(ComplexRelation &complex_relation)
+        : ComplexInteraction<DensitySummationInner, DensitySummationContact>(
+              complex_relation.getInnerRelation(), complex_relation.getContactRelation()){};
 };
-class DensitySummationFreeSurfaceComplexAdaptive
-    : public DensitySummationFreeSurface<ComplexInteraction<DensitySummationInnerAdaptive, DensitySummationContactAdaptive>>
+
+class DensitySummationComplexAdaptive
+    : public ComplexInteraction<DensitySummationInnerAdaptive, DensitySummationContactAdaptive>
 {
   public:
-    explicit DensitySummationFreeSurfaceComplexAdaptive(ComplexRelation &fluid_wall_relation)
-        : DensitySummationFreeSurface<ComplexInteraction<DensitySummationInnerAdaptive, DensitySummationContactAdaptive>>(
-              fluid_wall_relation.getInnerRelation(), fluid_wall_relation.getContactRelation()){};
+    explicit DensitySummationComplexAdaptive(ComplexRelation &complex_relation)
+        : ComplexInteraction<DensitySummationInnerAdaptive, DensitySummationContactAdaptive>(
+              complex_relation.getInnerRelation(), complex_relation.getContactRelation()){};
 };
+
+using DensitySummationFreeSurfaceComplex = DensitySummationFreeSurface<DensitySummationComplex>;
+using DensitySummationFreeSurfaceComplexAdaptive = DensitySummationFreeSurface<DensitySummationComplexAdaptive>;
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // DENSITY_SUMMATION_INNER_H
