@@ -7,7 +7,7 @@ namespace SPH
 	{
 		//=================================================================================================//
 		BaseTurbuClosureCoeff::BaseTurbuClosureCoeff()
-			: Karman(0.4187), C_mu(0.09), TurbulentIntensity(5.0e-2), sigma_k(0.8),
+			: Karman(0.4187), C_mu(0.09), TurbulentIntensity(5.0e-2), sigma_k(1.0),
 			C_l(1.44), C_2(1.92), sigma_E(1.3), turbu_const_E(9.793){}
 		//=================================================================================================//
 		BaseTurtbulentModelInner::BaseTurtbulentModelInner(BaseInnerRelation& inner_relation)
@@ -71,7 +71,8 @@ namespace SPH
 		//=================================================================================================//
 		GetVelocityGradientInner::GetVelocityGradientInner(BaseInnerRelation& inner_relation)
 			: LocalDynamics(inner_relation.getSPHBody()), FluidDataInner(inner_relation),
-			vel_(particles_->vel_),velocity_gradient_(*particles_->getVariableByName<Matd>("VelocityGradient")),
+			vel_(particles_->vel_), pos_(particles_->pos_),
+			velocity_gradient_(*particles_->getVariableByName<Matd>("VelocityGradient")),
 			is_near_wall_P1_(*particles_->getVariableByName<int>("IsNearWallP1"))
 		{
 			//for test

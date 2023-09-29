@@ -303,6 +303,9 @@ namespace SPH
 			Real coefficientB = 0.0;
 
 			Vecd e_ij_t = Vecd::Zero();
+			Vecd e_n = Vecd::Zero();
+			Vecd n_k_j_nearest = Vecd::Zero();
+			Matd direc_matrix = Matd::Zero();
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
 				StdLargeVec<Vecd>& n_k = *(contact_n_[k]);
@@ -335,7 +338,7 @@ namespace SPH
 						std::cout << "strange" << std::endl;
 						system("pause");
 					}
-					Vecd n_k_j_nearest = n_k[index_nearest[index_i]];
+					n_k_j_nearest = n_k[index_nearest[index_i]];
 					if (dimension_ == 2)
 					{
 						e_ij_t[0] = n_k_j_nearest[1];
@@ -344,7 +347,6 @@ namespace SPH
 					}
 				}
 			}
-
 
 			if (r_wall_normal < 1.0 * particle_spacing_ &&
 				r_wall_normal > 0.0 * particle_spacing_ + TinyReal)
@@ -358,13 +360,31 @@ namespace SPH
 				Real velo_tan = 0.0; //tangible velo for fluid particle i
 				velo_tan = abs(e_ij_t.dot(vel_i));
 				velo_tan_[index_i] = velo_tan;
+				
+				
+				//** Wilcox method *
+				/*
 				coefficientA = velo_tan * Karman + TinyReal;
-				coefficientB = (turbu_const_E * rho_i * r_wall_normal) / mu_;
-				
+				coefficientB = (turbu_const_E * rho_i * r_wall_normal) / mu_;				
 				velo_fric = getFrictionVelo(0.0, 3.0, 1e-6, coefficientA, coefficientB);
-				
 				checkFrictionVelo(velo_fric, 1e-2, coefficientA, coefficientB);
+				*/
+				//** Fluent method *
+				velo_fric = sqrt(abs(Karman * velo_tan * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) /
+					log(turbu_const_E * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * r_wall_normal * rho_i / mu_)));
 
+				if (velo_fric != static_cast<Real>(velo_fric)) 
+				{
+					std::cout << "不是实数" << std::endl;
+					std::cout << "velo_fric=" << velo_fric << "velo_tan=" << velo_tan << std::endl;
+					std::cout << "turbu_k_=" << pow(turbu_k_[index_i], 0.5) << std::endl;
+					std::cout << "sum=" << (Karman * velo_tan * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) /
+						log(turbu_const_E * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * r_wall_normal * rho_i / mu_)) << std::endl;
+					std::cout << "numerator=" << Karman * velo_tan * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) << std::endl;
+					std::cout << "denominator=" << log(turbu_const_E * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * r_wall_normal * rho_i / mu_) << std::endl;
+
+					system("pause");
+				}
 				velo_friction_[index_i] = velo_fric* e_ij_t;
 				//friction velocity have the same direction of vel_i, if not, change its direction
 				if (vel_i.dot(velo_friction_[index_i]) < 0.0)
@@ -373,11 +393,6 @@ namespace SPH
 				//**Calcualte Y+, including P layer and SUB layer
 				wall_Y_plus_[index_i] = r_wall_normal * velo_fric * rho_i / mu_;
 
-			}
-			if (r_wall_normal <= 1.5 * particle_spacing_ &&
-				r_wall_normal > 1.0 * particle_spacing_)
-			{
-				//is_near_wall_P2_[index_i] = 1;
 			}
 
 			if (is_near_wall_P1_[index_i] == 0 && is_near_wall_P1_pre_[index_i] == 1)
@@ -389,17 +404,25 @@ namespace SPH
 			is_near_wall_P1_pre_[index_i] = 0;
 			is_near_wall_P1_pre_[index_i] = is_near_wall_P1_[index_i];
 
-			if (is_near_wall_P1_[index_i] == 1&& pos_[index_i][0]>=0.0) // this is a temporal treamtment.
-				//if (r_wall_normal < (cutoff_radius_ - 0.5 * particle_spacing_) &&
-				//r_wall_normal > 0.0 * particle_spacing_ + TinyReal && pos_[index_i][0] >= 0.0)
+			direc_matrix = velo_friction_[index_i].normalized() * n_k_j_nearest.transpose();
+			//&& pos_[index_i][0]>=0.0
+			if (is_near_wall_P1_[index_i] == 1) // this is a temporal treamtment.
 			{
-				turbu_k_[index_i] = velo_fric * velo_fric / sqrt(C_mu);
+				//** Wilcox method *
+				//turbu_k_[index_i] = velo_fric * velo_fric / sqrt(C_mu);
+
 				turbu_epsilon_[index_i] = pow(C_mu, 0.75) * pow(turbu_k_[index_i], 1.5) / (Karman * r_wall_normal);
 				//wall_Y_plus_[index_i] = r_wall_normal * velo_fric * rho_i / mu_;
 				wall_Y_star_[index_i] = r_wall_normal * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * rho_i / mu_;
-
-
-
+				
+				//** Fluent and OpenFoam method *
+				Real denominator = pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * Karman * r_wall_normal;
+				//if (GlobalStaticVariables::physical_time_ >= 0.065 && index_i == 499)
+				//{
+				//	system("pause");
+				//}
+				velocity_gradient_[index_i] = direc_matrix * velo_fric * velo_fric / denominator;
+				k_production_[index_i] = rho_i* pow(velo_fric,4)/ denominator;
 			}
 		}
 	}

@@ -38,8 +38,12 @@ namespace SPH
 		void GetVelocityGradientInner::interaction(size_t index_i, Real dt)
 		{
 			//** The near wall velo grad is updated in wall function part *
-			if (is_near_wall_P1_[index_i] == 1)
+			//** This is a temporal treatment to exclude inlet particles
+			if (is_near_wall_P1_[index_i] == 1&& pos_[index_i][0]>0.0 )
+			{
+				//std::cout << "1" << std::endl;
 				return;
+			}
 
 			Vecd vel_i = vel_[index_i];
 			velocity_gradient_[index_i] = Matd::Zero();

@@ -64,7 +64,7 @@ int main(int ac, char* av[])
 	
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	/** Turbulent standard wall function needs normal vectors of wall. */
-	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block_complex_relation);
+	InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection,SequencedPolicy> standard_wall_function_correction(water_block_complex_relation);
 
 	//** For test *
 	//InteractionDynamics<fluid_dynamics::TKEnergyAccInner,SequencedPolicy> turbulent_kinetic_energy_acceleration(water_block_inner);
@@ -144,7 +144,7 @@ int main(int ac, char* av[])
 	size_t number_of_iterations = system.RestartStep();
 	int screen_output_interval = 100;
 	Real end_time = 200.0;
-	Real output_interval = end_time / 4000.0; /**< Time stamps for output of body states. */
+	Real output_interval = end_time / 40.0; /**< Time stamps for output of body states. */
 	Real dt = 0.0;							 /**< Default acoustic time step sizes. */
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time

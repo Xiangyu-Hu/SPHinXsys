@@ -178,8 +178,8 @@ namespace SPH
 
 			int dimension_;
 
-			StdLargeVec<Matd> velocity_gradient_;
-			StdLargeVec<Real> k_production_;
+			StdLargeVec<Matd> &velocity_gradient_;
+			StdLargeVec<Real> &k_production_;
 
 			virtual Real getFrictionVelo(Real left_bound, Real right_bound, Real e, Real A, Real B);
 			virtual Real WallFunc(Real x, Real CA, Real CB);

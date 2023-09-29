@@ -95,7 +95,7 @@ namespace SPH
 
 			inline void interaction(size_t index_i, Real dt = 0.0);
 		protected:
-			StdLargeVec<Vecd>& vel_;
+			StdLargeVec<Vecd>& vel_, & pos_;
 			StdLargeVec<Matd>& velocity_gradient_;
 			StdLargeVec<int>& is_near_wall_P1_; //** This is used to specially treat near wall region  *
 
