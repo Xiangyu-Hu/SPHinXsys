@@ -107,6 +107,7 @@ class BodyStatesRecording : public BaseIO
     /** write with filename indicated by physical time */
     void writeToFile();
     virtual void writeToFile(size_t iteration_step) override;
+    virtual void copyDeviceData() const;
 
   protected:
     SPHBodyVector bodies_;

@@ -215,6 +215,7 @@ int main(int ac, char *av[])
             interval_updating_configuration += TickCount::now() - time_instance;
         }
 
+        body_states_recording.copyDeviceData();
         body_states_recording.writeToFile();
         TickCount t2 = TickCount::now();
         TickCount t3 = TickCount::now();
