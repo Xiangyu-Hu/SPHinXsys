@@ -36,7 +36,7 @@ Real c_f = 10.0 * U_f;
 Real Re = 40000.0;					/**< Reynolds number. */
 //Real Re = 100.0;
 Real mu_f = rho0_f * U_f * DH / Re; /**< Dynamics viscosity. */
-Real y_p = 0.05;  /**< Physical distance from the first particle to wall  */
+Real y_p_theo_ = 0.05;  /**< Theoretical distance from the first particle P to wall  */
 //----------------------------------------------------------------------
 //	define geometry of SPH bodies
 //----------------------------------------------------------------------

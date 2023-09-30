@@ -292,6 +292,8 @@ namespace SPH
 			distance_to_wall_[index_i] = 0.0;
 			is_near_wall_P1_[index_i] = 0;
 
+			y_p_[index_i] = 0.0;
+
 			Real r_wall_normal = 0.0;
 			Real r_wall_normal_temp = 0.0;
 			Real r_min = 1.0e3;
@@ -360,8 +362,9 @@ namespace SPH
 				Real velo_tan = 0.0; //tangible velo for fluid particle i
 				velo_tan = abs(e_ij_t.dot(vel_i));
 				velo_tan_[index_i] = velo_tan;
-				
-				
+
+				y_p_[index_i] = r_wall_normal + offset_dist_;
+
 				//** Wilcox method *
 				/*
 				coefficientA = velo_tan * Karman + TinyReal;
@@ -371,7 +374,7 @@ namespace SPH
 				*/
 				//** Fluent method *
 				velo_fric = sqrt(abs(Karman * velo_tan * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) /
-					log(turbu_const_E * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * r_wall_normal * rho_i / mu_)));
+					log(turbu_const_E * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * y_p_[index_i] * rho_i / mu_)));
 
 				if (velo_fric != static_cast<Real>(velo_fric)) 
 				{
@@ -391,7 +394,7 @@ namespace SPH
 					velo_friction_[index_i] = -1.0*velo_friction_[index_i];
 				
 				//**Calcualte Y+, including P layer and SUB layer
-				wall_Y_plus_[index_i] = r_wall_normal * velo_fric * rho_i / mu_;
+				wall_Y_plus_[index_i] = y_p_[index_i] * velo_fric * rho_i / mu_;
 
 			}
 
@@ -411,12 +414,12 @@ namespace SPH
 				//** Wilcox method *
 				//turbu_k_[index_i] = velo_fric * velo_fric / sqrt(C_mu);
 
-				turbu_epsilon_[index_i] = pow(C_mu, 0.75) * pow(turbu_k_[index_i], 1.5) / (Karman * r_wall_normal);
+				turbu_epsilon_[index_i] = pow(C_mu, 0.75) * pow(turbu_k_[index_i], 1.5) / (Karman * y_p_[index_i]);
 				//wall_Y_plus_[index_i] = r_wall_normal * velo_fric * rho_i / mu_;
-				wall_Y_star_[index_i] = r_wall_normal * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * rho_i / mu_;
+				wall_Y_star_[index_i] = y_p_[index_i] * pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * rho_i / mu_;
 				
 				//** Fluent and OpenFoam method *
-				Real denominator = pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * Karman * r_wall_normal;
+				Real denominator = pow(C_mu, 0.25) * pow(turbu_k_[index_i], 0.5) * Karman * y_p_[index_i];
 				//if (GlobalStaticVariables::physical_time_ >= 0.065 && index_i == 499)
 				//{
 				//	system("pause");
