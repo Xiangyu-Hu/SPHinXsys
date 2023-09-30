@@ -91,21 +91,6 @@ DeviceDataType *BaseParticles::registerDeviceVariable(const std::string &variabl
                                                    size, host_value)->VariableAddress();
 }
 //=================================================================================================//
-template <typename DeviceDataType>
-DeviceDataType *BaseParticles::getDeviceVariableByName(const std::string &variable_name)
-{
-    DeviceVariable<DeviceDataType> *variable = findVariableByName<DeviceDataType>(all_device_variables_, variable_name);
-
-    if (variable != nullptr)
-    {
-        return variable->VariableAddress();
-    }
-
-    std::cout << "\nError: the device variable '" << variable_name << "' is not registered!\n";
-    std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-    return nullptr;
-}
-//=================================================================================================//
 template <typename DataType>
 StdLargeVec<DataType> *BaseParticles::
     registerSharedVariable(const std::string &variable_name, const DataType &default_value)
