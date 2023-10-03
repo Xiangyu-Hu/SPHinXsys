@@ -5,43 +5,7 @@ namespace SPH
 namespace fluid_dynamics
 {
 //=================================================================================================//
-void BaseDensitySummationInner::update(size_t index_i, Real dt)
-{
-    rho_[index_i] = rho_sum_[index_i];
-}
-//=================================================================================================//
-DensitySummationInner::DensitySummationInner(BaseInnerRelation &inner_relation)
-    : BaseDensitySummationInner(inner_relation),
-      W0_(sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd)) {}
-//=================================================================================================//
-void DensitySummationInner::interaction(size_t index_i, Real dt)
-{
-    Real sigma = W0_;
-    const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-        sigma += inner_neighborhood.W_ij_[n];
-
-    rho_sum_[index_i] = sigma * rho0_ * inv_sigma0_;
-}
-//=================================================================================================//
-DensitySummationInnerAdaptive::DensitySummationInnerAdaptive(BaseInnerRelation &inner_relation)
-    : BaseDensitySummationInner(inner_relation),
-      sph_adaptation_(*sph_body_.sph_adaptation_),
-      kernel_(*sph_adaptation_.getKernel()),
-      h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")) {}
-//=================================================================================================//
-void DensitySummationInnerAdaptive::interaction(size_t index_i, Real dt)
-{
-    Real sigma_i = mass_[index_i] * kernel_.W0(h_ratio_[index_i], ZeroVecd);
-    const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-        sigma_i += inner_neighborhood.W_ij_[n] * mass_[inner_neighborhood.j_[n]];
-
-    rho_sum_[index_i] = sigma_i * rho0_ * inv_sigma0_ / mass_[index_i] /
-                        sph_adaptation_.NumberDensityScaleFactor(h_ratio_[index_i]);
-}
-//=================================================================================================//
-BaseDensitySummationContact::BaseDensitySummationContact(BaseContactRelation &contact_relation)
+DensitySummationContactCommon::DensitySummationContactCommon(BaseContactRelation &contact_relation)
     : BaseDensitySummation<FluidContactData>(contact_relation)
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
@@ -52,7 +16,7 @@ BaseDensitySummationContact::BaseDensitySummationContact(BaseContactRelation &co
     }
 }
 //=================================================================================================//
-Real BaseDensitySummationContact::ContactSummation(size_t index_i)
+Real DensitySummationContactCommon::ContactSummation(size_t index_i)
 {
     Real sigma(0.0);
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
@@ -68,21 +32,48 @@ Real BaseDensitySummationContact::ContactSummation(size_t index_i)
     return sigma;
 };
 //=================================================================================================//
-void DensitySummationContact::interaction(size_t index_i, Real dt)
+void DensitySummation<Inner>::interaction(size_t index_i, Real dt)
 {
-    Real sigma = BaseDensitySummationContact::ContactSummation(index_i);
+    Real sigma = W0_;
+    const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+        sigma += inner_neighborhood.W_ij_[n];
+
+    rho_sum_[index_i] = sigma * rho0_ * inv_sigma0_;
+}
+//=================================================================================================//
+DensitySummation<InnerAdaptive>::DensitySummation(BaseInnerRelation &inner_relation)
+    : DensitySummationInnerCommon(inner_relation),
+      sph_adaptation_(*sph_body_.sph_adaptation_),
+      kernel_(*sph_adaptation_.getKernel()),
+      h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")) {}
+//=================================================================================================//
+void DensitySummation<InnerAdaptive>::interaction(size_t index_i, Real dt)
+{
+    Real sigma_i = mass_[index_i] * kernel_.W0(h_ratio_[index_i], ZeroVecd);
+    const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+        sigma_i += inner_neighborhood.W_ij_[n] * mass_[inner_neighborhood.j_[n]];
+
+    rho_sum_[index_i] = sigma_i * rho0_ * inv_sigma0_ / mass_[index_i] /
+                        sph_adaptation_.NumberDensityScaleFactor(h_ratio_[index_i]);
+}
+//=================================================================================================//
+void DensitySummation<Contact>::interaction(size_t index_i, Real dt)
+{
+    Real sigma = DensitySummationContactCommon::ContactSummation(index_i);
     rho_sum_[index_i] += sigma * rho0_ * rho0_ * inv_sigma0_ / mass_[index_i];
 }
 //=================================================================================================//
-DensitySummationContactAdaptive::
-    DensitySummationContactAdaptive(BaseContactRelation &contact_relation)
-    : BaseDensitySummationContact(contact_relation),
+DensitySummation<ContactAdaptive>::
+    DensitySummation(BaseContactRelation &contact_relation)
+    : DensitySummationContactCommon(contact_relation),
       sph_adaptation_(*sph_body_.sph_adaptation_),
       h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")) {}
 //=================================================================================================//
-void DensitySummationContactAdaptive::interaction(size_t index_i, Real dt)
+void DensitySummation<ContactAdaptive>::interaction(size_t index_i, Real dt)
 {
-    Real sigma = BaseDensitySummationContact::ContactSummation(index_i);
+    Real sigma = DensitySummationContactCommon::ContactSummation(index_i);
     rho_sum_[index_i] += sigma * rho0_ * rho0_ * inv_sigma0_ / mass_[index_i] /
                          sph_adaptation_.NumberDensityScaleFactor(h_ratio_[index_i]);
 }
