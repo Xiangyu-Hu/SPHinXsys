@@ -37,7 +37,6 @@ void WCEulerianViscousAccelerationInner::interaction(size_t index_i, Real dt)
         vel_derivative = (vel_i - vel_[index_j]) / (inner_neighborhood.r_ij_[n] + TinyReal);
         acceleration += 2.0 * mu_ * vel_derivative * (B_[index_i] * inner_neighborhood.e_ij_[n]).norm() * inner_neighborhood.dW_ijV_j_[n] / rho_i;
     }
-    std::cout <<acceleration<< std::endl;
     dmom_dt_prior_[index_i] += rho_i * acceleration;
 }
 //=================================================================================================//

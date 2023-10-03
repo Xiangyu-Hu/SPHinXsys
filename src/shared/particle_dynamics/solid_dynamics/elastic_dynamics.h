@@ -195,16 +195,24 @@ class Integration1stHalf : public BaseIntegration1stHalf
             Real weight = inner_neighborhood.W_ij_[n] * inv_W0_;
             Matd numerical_stress_ij =
                 0.5 * (F_[index_i] + F_[index_j]) * elastic_solid_.PairNumericalDamping(strain_rate, smoothing_length_);
-            acceleration += inv_rho0_ * inner_neighborhood.dW_ijV_j_[n] *
+
+            //correction scheme
+            /*acceleration += inv_rho0_ * inner_neighborhood.dW_ijV_j_[n] *
                             (stress_PK1_B_[index_i] + stress_PK1_B_[index_j] +
                              numerical_dissipation_factor_ * weight * numerical_stress_ij) *
-                            e_ij;
+                            e_ij;*/
+
+            //consistence correction scheme
+            acceleration += inv_rho0_ * inner_neighborhood.dW_ijV_j_[n] *
+                            (stress_PK1_[index_i] * B_[index_i].transpose() + stress_PK1_[index_j] * B_[index_j].transpose() +
+                             numerical_dissipation_factor_ * weight * numerical_stress_ij) * e_ij;
         }
 
         acc_[index_i] = acceleration;
     };
 
   protected:
+    StdLargeVec<Matd> stress_PK1_;
     StdLargeVec<Matd> stress_PK1_B_;
     Real numerical_dissipation_factor_;
     Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd);

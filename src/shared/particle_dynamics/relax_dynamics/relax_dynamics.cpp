@@ -366,13 +366,11 @@ void RelaxationStepImplicitInner::exec(Real dt)
 //=================================================================================================//
 RelaxationByCMImplicitInner::RelaxationByCMImplicitInner(BaseInnerRelation& inner_relation)
 	: LocalDynamics(inner_relation.getSPHBody()), RelaxDataDelegateInner(inner_relation),
-    target_residual_cm_(1.0), kernel_(inner_relation.getSPHBody().sph_adaptation_->getKernel()),
+    kernel_(inner_relation.getSPHBody().sph_adaptation_->getKernel()),
 	Vol_(particles_->Vol_), pos_(particles_->pos_), acc_(particles_->acc_),
 	B_(*particles_->template getVariableByName<Matd>("CorrectionMatrix")),
 	sph_adaptation_(sph_body_.sph_adaptation_)
 {
-    particles_->registerVariable(residual_cm_, "ResidualCM");
-    particles_->addVariableToWrite<Real>("ResidualCM");
 	particles_->registerVariable(implicit_residual_cm_, "ImplicitResidualCM");
 	particles_->addVariableToWrite<Real>("ImplicitResidualCM");
     particles_->addVariableToWrite<Real>("VolumetricMeasure");
@@ -424,7 +422,6 @@ void RelaxationByCMImplicitInner::interaction(size_t index_i, Real dt)
 	updateStates(index_i, dt, error_and_parameters);
 	acc_[index_i] = -error_and_parameters.error_ / dt / dt;
 	implicit_residual_cm_[index_i] = (error_and_parameters.error_ / dt / dt).norm();
-    residual_cm_[index_i] = error_and_parameters.error_.norm();
 }
 //=================================================================================================//
 RelaxationByCMImplicitInnerWithLevelSetCorrection::
@@ -443,74 +440,60 @@ computeErrorAndParameters(size_t index_i, Real dt)
 	return error_and_parameters;
 }
 //=================================================================================================//
-RelaxationStepByCMImplicitInner::RelaxationStepByCMImplicitInner(BaseInnerRelation& inner_relation, bool level_set_correction)
-	: BaseDynamics<void>(inner_relation.getSPHBody()), target_residual_cm_(1.0),
-    time_step_size_(0.01), real_body_(inner_relation.real_body_),
-	inner_relation_(inner_relation), near_shape_surface_(*real_body_), 
-    get_time_step_(*real_body_), relaxation_evolution_inner_(inner_relation), 
-    surface_bounding_(near_shape_surface_), surface_correction_(near_shape_surface_),
-	update_averaged_error_(inner_relation.getSPHBody(), "ResidualCM") {};
+RelaxationStepByCMImplicitInner::RelaxationStepByCMImplicitInner(BaseInnerRelation &inner_relation, bool level_set_correction)
+    : BaseDynamics<void>(inner_relation.getSPHBody()),
+      time_step_size_(0.01), real_body_(inner_relation.real_body_),
+      inner_relation_(inner_relation), near_shape_surface_(*real_body_),
+      get_time_step_(*real_body_), relaxation_evolution_inner_(inner_relation),
+      surface_bounding_(near_shape_surface_), surface_correction_(near_shape_surface_){};
 //=================================================================================================//
 void RelaxationStepByCMImplicitInner::exec(Real dt)
 {
 	relaxation_evolution_inner_.exec(time_step_size_);
 	time_step_size_ = 50 * sqrt(get_time_step_.exec());
-	//surface_correction_.exec();
+	surface_correction_.exec();
 	//surface_bounding_.exec();
-	//target_residual_cm_ = update_averaged_error_.exec();
-	//relaxation_evolution_inner_.updateTargetError(target_residual_cm_);
-    //real_body_->updateCellLinkedList();
-    //inner_relation_.updateConfiguration();
+    real_body_->updateCellLinkedList();
+    inner_relation_.updateConfiguration();
 }
 //=================================================================================================//
-CalculateCorrectionMatrix::CalculateCorrectionMatrix(BaseInnerRelation& inner_relation, bool level_set_correction)
-	: LocalDynamics(inner_relation.getSPHBody()), RelaxDataDelegateInner(inner_relation),
-	pos_(particles_->pos_), level_set_correction_(level_set_correction),
-    B_(*this->particles_->template registerSharedVariable<Matd>("CorrectionMatrix", Matd::Identity())),
-    stress_(*this->particles_->template registerSharedVariable<Matd>("ParticleStress", Matd::Identity())),
-	sph_adaptation_(sph_body_.sph_adaptation_)
+CorrectedConfigurationInnerWithLevelSet::
+    CorrectedConfigurationInnerWithLevelSet(BaseInnerRelation &inner_relation, bool level_set_correction)
+    : LocalDynamics(inner_relation.getSPHBody()),
+      RelaxDataDelegateInner(inner_relation),
+      pos_(particles_->pos_),
+      B_(*particles_->getVariableByName<Matd>("CorrectionMatrix")),
+      level_set_correction_(level_set_correction),
+      sph_adaptation_(sph_body_.sph_adaptation_)
 {
-	particles_->addVariableToWrite<Matd>("ParticleStress");
-	particles_->addVariableToWrite<Matd>("CorrectionMatrix");
     level_set_shape_ = DynamicCast<LevelSetShape>(this, sph_body_.body_shape_);
 }
-//=================================================================================================//
-void CalculateCorrectionMatrix::interaction(size_t index_i, Real dt)
+ //=================================================================================================//     
+void CorrectedConfigurationInnerWithLevelSet::interaction(size_t index_i, Real dt)
 {
     Matd local_configuration = Eps * Matd::Identity();
-	Neighborhood& inner_neighborhood = inner_configuration_[index_i];
-	for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-	{
+
+    const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+    {
         Vecd gradW_ij = inner_neighborhood.dW_ijV_j_[n] * inner_neighborhood.e_ij_[n];
         Vecd r_ji = inner_neighborhood.r_ij_[n] * inner_neighborhood.e_ij_[n];
         local_configuration -= r_ji * gradW_ij.transpose();
-	}
+    }
 
-	if (level_set_correction_)
-	{
-		//The calculation of the particle stress is not related to the level set correction.
+    if (level_set_correction_)
+    {
         local_configuration -= level_set_shape_->computeDisplacementKernelGradientIntegral(pos_[index_i],
-			                   sph_adaptation_->SmoothingLengthRatio(index_i));
-	}
+                               sph_adaptation_->SmoothingLengthRatio(index_i));
+    }
 
-    stress_[index_i] = local_configuration;
-    B_[index_i] = (local_configuration).inverse();
+    B_[index_i] = local_configuration;
+
 }
 //=================================================================================================//
-ReformulateParticleVolume::ReformulateParticleVolume(BaseInnerRelation& inner_relation)
-    : LocalDynamics(inner_relation.getSPHBody()), RelaxDataDelegateInner(inner_relation),
-    Vol_(particles_->Vol_) {};
-//=================================================================================================//
-void ReformulateParticleVolume::interaction(size_t index_i, Real dt)
+void CorrectedConfigurationInnerWithLevelSet::update(size_t index_i, Real dt)
 {
-    Real vol_inverse = Eps;
-    Neighborhood& inner_neighborhood = inner_configuration_[index_i];
-    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-    {
-        size_t index_j = inner_neighborhood.j_[n];
-        vol_inverse += inner_neighborhood.W_ij_[n];
-    }
-    Vol_[index_i] = 1 / (vol_inverse);
+    B_[index_i] = B_[index_i].inverse();
 }
 //=================================================================================================//
 UpdateParticleKineticEnergy::

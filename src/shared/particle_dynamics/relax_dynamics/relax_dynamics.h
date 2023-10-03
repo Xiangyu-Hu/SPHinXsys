@@ -570,8 +570,6 @@ protected:
     virtual ErrorAndParameters<Vecd, Matd, Matd> computeErrorAndParameters(size_t index_i, Real dt = 0.0);
     virtual void updateStates(size_t index_i, Real dt, const ErrorAndParameters<Vecd, Matd, Matd>& error_and_parameters);
 
-    Real target_residual_cm_;
-    StdLargeVec<Real> residual_cm_;
     Kernel* kernel_;
     StdLargeVec<Real>& Vol_;
     StdLargeVec<Vecd>& pos_, & acc_;
@@ -579,9 +577,6 @@ protected:
     StdLargeVec<Real> implicit_residual_cm_;
     LevelSetShape* level_set_shape_;
     SPHAdaptation* sph_adaptation_;
-
-public:
-    inline void updateTargetError(Real target_residual_cm) { target_residual_cm_ = target_residual_cm; }
 };
 
 /**
@@ -611,50 +606,35 @@ public:
     virtual void exec(Real dt = 0.0) override;
 
 protected:
-    Real target_residual_cm_;
     Real time_step_size_;
     RealBody* real_body_;
     BaseInnerRelation& inner_relation_;
     NearShapeSurface near_shape_surface_;
     ReduceDynamics<GetTimeStepSizeSquare> get_time_step_;
-    InteractionSplit<RelaxationByCMImplicitInner> relaxation_evolution_inner_;
+    InteractionSplit<RelaxationByCMImplicitInnerWithLevelSetCorrection> relaxation_evolution_inner_;
     SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
     SimpleDynamics<NearSurfaceVolumeCorrection> surface_correction_;
-    ReduceDynamics<QuantityMaximum<Real>> update_averaged_error_;
 };
 
 /**
- * @class CalcualteCorrectionMatrix
- * @brief calculate the correction matrix based on the first order consistency
- */
-class CalculateCorrectionMatrix : public LocalDynamics, public RelaxDataDelegateInner
+  * @class CorrectedConfigurationInnerWithLevelSet
+  * @brief calculate the correction matrix based on the level set
+  */
+class CorrectedConfigurationInnerWithLevelSet : public LocalDynamics, public RelaxDataDelegateInner
 {
-public:
-    explicit CalculateCorrectionMatrix(BaseInnerRelation& inner_relation, bool level_set_correction = false);
-    virtual ~CalculateCorrectionMatrix() {};
-    void interaction(size_t index_i, Real dt = 0.0);
+  public:
+    explicit CorrectedConfigurationInnerWithLevelSet(BaseInnerRelation &inner_relation, bool level_set_correction = false);
+    virtual ~CorrectedConfigurationInnerWithLevelSet(){};
 
-protected:
+  protected:
     StdLargeVec<Vecd> &pos_;
     StdLargeVec<Matd> &B_;
-    StdLargeVec<Matd> &stress_;
     bool level_set_correction_;
-    LevelSetShape* level_set_shape_;
-    SPHAdaptation* sph_adaptation_;
-};
+    LevelSetShape *level_set_shape_;
+    SPHAdaptation *sph_adaptation_;
 
-/** 
- * @class ReformulateParticleVolume
- */
-class ReformulateParticleVolume : public LocalDynamics, public RelaxDataDelegateInner
-{
-public:
-    explicit ReformulateParticleVolume(BaseInnerRelation& inner_relation);
-    virtual ~ReformulateParticleVolume() {};
     void interaction(size_t index_i, Real dt = 0.0);
-
-protected:
-    StdLargeVec<Real>& Vol_;
+    void update(size_t index_i, Real dt = 0.0);
 };
 
 /**

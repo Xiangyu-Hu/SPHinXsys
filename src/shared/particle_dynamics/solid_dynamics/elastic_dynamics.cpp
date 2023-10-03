@@ -67,6 +67,7 @@ Integration1stHalf::
     : BaseIntegration1stHalf(inner_relation)
 {
     particles_->registerVariable(stress_PK1_B_, "CorrectedStressPK1");
+    particles_->registerVariable(stress_PK1_, "StressPK1");
     numerical_dissipation_factor_ = 0.25;
 }
 //=================================================================================================//
@@ -80,6 +81,7 @@ void Integration1stHalfPK2::initialization(size_t index_i, Real dt)
     rho_[index_i] = rho0_ / F_[index_i].determinant();
     // obtain the first Piola-Kirchhoff stress from the second Piola-Kirchhoff stress
     // it seems using reproducing correction here increases convergence rate near the free surface, note that the correction matrix is in a form of transpose
+    stress_PK1_[index_i] = elastic_solid_.StressPK1(F_[index_i], index_i);
     stress_PK1_B_[index_i] = elastic_solid_.StressPK1(F_[index_i], index_i) * B_[index_i].transpose();
 }
 //=================================================================================================//
