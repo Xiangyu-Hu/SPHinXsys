@@ -153,7 +153,8 @@ template <>
 class DensitySummation<Contact> : public DensitySummationContactCommon
 {
   public:
-    explicit DensitySummation(BaseContactRelation &contact_relation);
+    explicit DensitySummation(BaseContactRelation &contact_relation)
+        : DensitySummationContactCommon(contact_relation){};
     virtual ~DensitySummation(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };
