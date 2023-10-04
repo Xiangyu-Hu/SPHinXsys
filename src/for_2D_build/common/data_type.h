@@ -36,6 +36,7 @@
 namespace SPH
 {
 using Arrayi = Array2i;
+using DeviceArrayi = DeviceArray2i;
 using Vecd = Vec2d;
 using DeviceVecd = DeviceVec2d;
 using Matd = Mat2d;

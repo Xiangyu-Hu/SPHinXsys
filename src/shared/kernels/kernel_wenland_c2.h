@@ -58,5 +58,39 @@ class KernelWendlandC2 : public Kernel
     virtual Real d2W_2D(const Real q) const override;
     virtual Real d2W_3D(const Real q) const override;
 };
+
+class DeviceKernelWendlandC2
+{
+  public:
+    explicit DeviceKernelWendlandC2(Kernel& kernel);
+
+    SYCL_EXTERNAL DeviceReal W(const DeviceReal &r_ij, const DeviceReal &displacement) const;
+    SYCL_EXTERNAL DeviceReal W(const DeviceReal &r_ij, const DeviceVec2d &displacement) const;
+    SYCL_EXTERNAL DeviceReal W(const DeviceReal &r_ij, const DeviceVec3d &displacement) const;
+
+    SYCL_EXTERNAL DeviceReal W_1D(DeviceReal q) const;
+    SYCL_EXTERNAL DeviceReal W_2D(DeviceReal q) const;
+    SYCL_EXTERNAL DeviceReal W_3D(DeviceReal q) const;
+
+    SYCL_EXTERNAL DeviceReal dW(const DeviceReal &r_ij, const DeviceReal &displacement) const;
+    SYCL_EXTERNAL DeviceReal dW(const DeviceReal &r_ij, const DeviceVec2d &displacement) const;
+    SYCL_EXTERNAL DeviceReal dW(const DeviceReal &r_ij, const DeviceVec3d &displacement) const;
+
+    SYCL_EXTERNAL DeviceReal dW_1D(DeviceReal q) const;
+    SYCL_EXTERNAL DeviceReal dW_2D(DeviceReal q) const;
+    SYCL_EXTERNAL DeviceReal dW_3D(DeviceReal q) const;
+
+    SYCL_EXTERNAL DeviceReal d2W_1D(DeviceReal q) const;
+    SYCL_EXTERNAL DeviceReal d2W_2D(DeviceReal q) const;
+    SYCL_EXTERNAL DeviceReal d2W_3D(DeviceReal q) const;
+
+    inline DeviceReal CutOffRadius() const { return rc_ref_; };
+    inline DeviceReal CutOffRadiusSqr() const { return rc_ref_sqr_; };
+
+  private:
+    DeviceReal inv_h_, rc_ref_, rc_ref_sqr_,
+        factor_W_1D_, factor_W_2D_, factor_W_3D_,
+        factor_dW_1D_, factor_dW_2D_, factor_dW_3D_;
+};
 } // namespace SPH
 #endif // KERNEL_WENLAND_C2_H

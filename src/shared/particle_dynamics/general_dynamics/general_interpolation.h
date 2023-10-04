@@ -139,7 +139,8 @@ class BaseInterpolation<DataType, true> : public LocalDynamics, public Interpola
         : LocalDynamics(contact_relation.getSPHBody()), InterpolationContactData(contact_relation),
           DeviceExecutable<BaseInterpolation<DataType, true>,
                            BaseInterpolationKernel<typename DataTypeEquivalence<DataType>::device_t>>(
-              this, this->contact_configuration_device_->data(), this->contact_configuration_device_->size(),
+              this, this->contact_configuration_device_ ? this->contact_configuration_device_->data() : nullptr,
+              this->contact_configuration_device_ ? this->contact_configuration_device_->size() : 0,
               particles_->registerDeviceVariable<typename DataTypeEquivalence<DataType>::device_t>(
                           variable_name, particles_->total_real_particles_)),
           interpolated_quantities_(nullptr)

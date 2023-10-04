@@ -64,6 +64,7 @@ class ComplexRelation : public SPHRelation
 
     virtual void resizeConfiguration() override;
     virtual void updateConfiguration() override;
+    virtual void updateDeviceConfiguration() override;
 };
 } // namespace SPH
 #endif // COMPLEX_BODY_RELATION_H

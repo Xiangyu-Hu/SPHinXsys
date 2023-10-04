@@ -66,7 +66,9 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 	SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
+	SPHSystem sph_system_sycl(system_domain_bounds, particle_spacing_ref);
 	sph_system.handleCommandlineOptions(ac, av);
+	sph_system_sycl.handleCommandlineOptions(ac, av);
 	//----------------------------------------------------------------------
 	//	Creating bodies with corresponding materials and particles.
 	//----------------------------------------------------------------------
@@ -77,40 +79,40 @@ int main(int ac, char *av[])
     water_block.generateParticles<ParticleGeneratorLattice>();
 
     FluidBody water_block_sycl(
-            sph_system, makeShared<TransformShape<GeometricShapeBox>>(
+        sph_system_sycl, makeShared<TransformShape<GeometricShapeBox>>(
                     Transform(water_block_translation), water_block_halfsize, "WaterBody"));
     water_block_sycl.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
     water_block_sycl.generateParticles<ParticleGeneratorLattice>();
+    water_block_sycl.getBaseParticles().registerDeviceMemory();
 
-	SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-	wall_boundary.generateParticles<ParticleGeneratorLattice>();
-	wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
+    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
+    wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
+    wall_boundary.generateParticles<ParticleGeneratorLattice>();
+    wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
 
-    SolidBody wall_boundary_sycl(sph_system, makeShared<WallBoundary>("WallBoundary"));
+    SolidBody wall_boundary_sycl(sph_system_sycl, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary_sycl.defineParticlesAndMaterial<SolidParticles, Solid>();
     wall_boundary_sycl.generateParticles<ParticleGeneratorLattice>();
     wall_boundary_sycl.addBodyStateForRecording<Vecd>("NormalDirection");
-	//----------------------------------------------------------------------
-	//	Define body relation map.
-	//	The contact map gives the topological connections between the bodies.
-	//	Basically the the range of bodies to build neighbor particle lists.
-	//----------------------------------------------------------------------
-	ComplexRelation water_block_complex(water_block, {&wall_boundary});
-	ComplexRelation water_block_complex_sycl(water_block_sycl, {&wall_boundary_sycl});
+    wall_boundary_sycl.getBaseParticles().registerDeviceMemory();
+    //----------------------------------------------------------------------
+    //	Define body relation map.
+    //	The contact map gives the topological connections between the bodies.
+    //	Basically the range of bodies to build neighbor particle lists.
+    //----------------------------------------------------------------------
+    ComplexRelation water_block_complex(water_block, {&wall_boundary});
+    ComplexRelation water_block_complex_sycl(water_block_sycl, {&wall_boundary_sycl});
 
     SharedPtr<Gravity> gravity_ptr = makeSharedDevice<Gravity>(Vecd(0.0, -gravity_g));
 
-    water_block_complex.getInnerRelation().allocateInnerConfigurationDevice();
-    water_block_complex.getContactRelation().allocateContactConfiguration();
     water_block_complex_sycl.getInnerRelation().allocateInnerConfigurationDevice();
     water_block_complex_sycl.getContactRelation().allocateContactConfiguration();
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall, ParallelSYCLDevicePolicy> fluid_pressure_relaxation_sycl(water_block_complex_sycl);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall, ParallelSYCLDevicePolicy> fluid_density_relaxation_sycl(water_block_complex);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall, ParallelSYCLDevicePolicy> fluid_density_relaxation_sycl(water_block_complex_sycl);
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex, ParallelSYCLDevicePolicy> fluid_density_by_summation_sycl(water_block_complex_sycl);
-	SimpleDynamics<TimeStepInitialization, ParallelSYCLDevicePolicy> fluid_step_initialization_sycl(water_block_sycl, gravity_ptr);
-	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize, ParallelSYCLDevicePolicy> fluid_advection_time_step_sycl(water_block_sycl, U_max);
+    SimpleDynamics<TimeStepInitialization, ParallelSYCLDevicePolicy> fluid_step_initialization_sycl(water_block_sycl, gravity_ptr);
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize, ParallelSYCLDevicePolicy> fluid_advection_time_step_sycl(water_block_sycl, U_max);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize, ParallelSYCLDevicePolicy> fluid_acoustic_time_step_sycl(water_block_sycl);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> fluid_pressure_relaxation(water_block_complex);
@@ -119,23 +121,18 @@ int main(int ac, char *av[])
     SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block, gravity_ptr);
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_max);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
-	//----------------------------------------------------------------------
-	//	Prepare the simulation with cell linked list, configuration
-	//	and case specified initial condition if necessary.
-	//----------------------------------------------------------------------
-	sph_system.initializeSystemCellLinkedLists();
-	sph_system.initializeSystemConfigurations();
 
     //----------------------------------------------------------------------
     //	Copy data to device
     //----------------------------------------------------------------------
-    TickCount timer_mem = TickCount::now();
     water_block_sycl.getBaseParticles().copyToDeviceMemory();
-    water_block_complex_sycl.getInnerRelation().copyInnerConfigurationToDevice();
-    water_block_complex_sycl.getContactRelation().copyContactConfigurationToDevice();
-    TimeInterval tt_mem = TickCount::now() - timer_mem;
+    wall_boundary_sycl.getBaseParticles().copyToDeviceMemory();
 
-    executionQueue.setWorkGroupSize(32);
+    //----------------------------------------------------------------------
+    //	Prepare the simulation with cell linked list, configuration
+    //	and case specified initial condition if necessary.
+    //----------------------------------------------------------------------
+    executionQueue.setWorkGroupSize(16);
 
     //----------------------------------------------------------------------
     //	Main loop benchmarks
@@ -146,8 +143,14 @@ int main(int ac, char *av[])
     std::cout << "Number of iterations per test: " << iterations << std::endl;
 
     std::cout << "------------" << std::endl;
-    std::cout << "SYCL memory operations: " << tt_mem.seconds()
-              << " seconds." << std::endl;
+    benchmark([&](){ sph_system.initializeSystemCellLinkedLists(); },
+              [&](){ sph_system_sycl.initializeSystemCellLinkedLists(execution::par_sycl); },
+              "initialize cell linked list", iterations);
+
+    std::cout << "------------" << std::endl;
+    benchmark([&](){ sph_system.initializeSystemConfigurations(); },
+              [&](){ sph_system_sycl.initializeSystemDeviceConfigurations(); },
+              "initialize system configuration", iterations);
 
     std::cout << "------------" << std::endl;
     benchmark([&](){

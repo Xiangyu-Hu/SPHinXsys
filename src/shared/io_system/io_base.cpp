@@ -71,6 +71,12 @@ void BodyStatesRecording::writeToFile(size_t iteration_step)
     writeWithFileName(padValueWithZeros(iteration_step));
 };
 //=============================================================================================//
+void BodyStatesRecording::copyDeviceData() const {
+    for(auto* body : bodies_)
+        if (body->checkNewlyUpdated())
+            body->getBaseParticles().copyFromDeviceMemory();
+}
+//=============================================================================================//
 RestartIO::RestartIO(IOEnvironment &io_environment, SPHBodyVector bodies)
     : BaseIO(io_environment), bodies_(bodies),
       overall_file_path_(io_environment.restart_folder_ + "/Restart_time_")

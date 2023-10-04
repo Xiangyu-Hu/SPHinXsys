@@ -114,7 +114,9 @@ void NeighborBuilder::initializeNeighbor(Neighborhood &neighborhood, const Real 
     neighborhood.e_ij_[current_size] = displacement / (distance + TinyReal);
 }
 //=================================================================================================//
-NeighborBuilderInner::NeighborBuilderInner(SPHBody &body) : NeighborBuilder()
+NeighborBuilderInner::NeighborBuilderInner(SPHBody &body) : NeighborBuilder(),
+                                                            execution::DeviceExecutable<NeighborBuilderInner,
+                                                                                        NeighborBuilderInnerKernel>(this, *body.sph_adaptation_->getKernel())
 {
     kernel_ = body.sph_adaptation_->getKernel();
 }
@@ -185,7 +187,11 @@ void NeighborBuilderSelfContact::operator()(Neighborhood &neighborhood,
 };
 //=================================================================================================//
 NeighborBuilderContact::
-    NeighborBuilderContact(SPHBody &body, SPHBody &contact_body) : NeighborBuilder()
+    NeighborBuilderContact(SPHBody &body, SPHBody &contact_body) : NeighborBuilder(),
+                                                                   execution::DeviceExecutable<NeighborBuilderContact,
+                                                                                               NeighborBuilderContactKernel>(this, body.sph_adaptation_->getKernel()->SmoothingLength()
+                                                                                                                                           > contact_body.sph_adaptation_->getKernel()->SmoothingLength() ?
+                                                                                                                                       *body.sph_adaptation_->getKernel() : *contact_body.sph_adaptation_->getKernel())
 {
     Kernel *source_kernel = body.sph_adaptation_->getKernel();
     Kernel *target_kernel = contact_body.sph_adaptation_->getKernel();

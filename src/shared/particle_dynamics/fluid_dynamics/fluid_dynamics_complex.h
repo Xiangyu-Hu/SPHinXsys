@@ -331,7 +331,8 @@ public DeviceExecutable<BaseIntegration1stHalfWithWall<BaseIntegration1stHalfTyp
                            BaseIntegration1stHalfWithWallKernel<typename BaseIntegration1stHalfType::DeviceKernel>>(this,
                            *this->contact_configuration_device_, this->wall_acc_ave_device_.data(),
                            BaseIntegration1stHalfType::particles_,
-                           BaseIntegration1stHalfType::inner_configuration_device_->data(),
+                           BaseIntegration1stHalfType::inner_configuration_device_ ?
+                           BaseIntegration1stHalfType::inner_configuration_device_->data() : nullptr,
                            this->riemann_solver_) {};
     virtual ~BaseIntegration1stHalfWithWall(){};
 
@@ -458,7 +459,8 @@ class BaseIntegration2ndHalfWithWall : public InteractionWithWall<BaseIntegratio
                   BaseIntegration2ndHalfWithWallKernel<typename BaseIntegration2ndHalfType::DeviceKernel>>(this,
                     *this->contact_configuration_device_, this->wall_vel_ave_device_.data(),
                     this->wall_n_device_.data(), BaseIntegration2ndHalfType::particles_,
-                    BaseIntegration2ndHalfType::inner_configuration_device_->data(), this->riemann_solver_) {};
+                    BaseIntegration2ndHalfType::inner_configuration_device_ ?
+                    BaseIntegration2ndHalfType::inner_configuration_device_->data() : nullptr, this->riemann_solver_) {};
     virtual ~BaseIntegration2ndHalfWithWall(){};
 
     inline void interaction(size_t index_i, Real dt = 0.0);

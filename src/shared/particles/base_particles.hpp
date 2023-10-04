@@ -91,21 +91,6 @@ DeviceDataType *BaseParticles::registerDeviceVariable(const std::string &variabl
                                                    size, host_value)->VariableAddress();
 }
 //=================================================================================================//
-template <typename DeviceDataType>
-DeviceDataType *BaseParticles::getDeviceVariableByName(const std::string &variable_name)
-{
-    DeviceVariable<DeviceDataType> *variable = findVariableByName<DeviceDataType>(all_device_variables_, variable_name);
-
-    if (variable != nullptr)
-    {
-        return variable->VariableAddress();
-    }
-
-    std::cout << "\nError: the device variable '" << variable_name << "' is not registered!\n";
-    std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-    return nullptr;
-}
-//=================================================================================================//
 template <typename DataType>
 StdLargeVec<DataType> *BaseParticles::
     registerSharedVariable(const std::string &variable_name, const DataType &default_value)
@@ -221,10 +206,10 @@ void BaseParticles::registerSortableVariable(const std::string &variable_name)
     }
 }
 //=================================================================================================//
-template <typename SequenceMethod>
-void BaseParticles::sortParticles(SequenceMethod &sequence_method)
+template <typename SequenceMethod, class ExecutionPolicy>
+void BaseParticles::sortParticles(SequenceMethod &sequence_method, ExecutionPolicy execution_policy)
 {
-    StdLargeVec<size_t> &sequence = sequence_method.computingSequence(*this);
+    StdLargeVec<size_t> &sequence = sequence_method.computingSequence(*this/*, execution_policy*/);
     particle_sorting_.sortingParticleData(sequence.data(), total_real_particles_);
 }
 //=================================================================================================//

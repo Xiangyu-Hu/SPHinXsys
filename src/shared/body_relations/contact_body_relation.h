@@ -81,6 +81,7 @@ class ContactRelation : public ContactRelationCrossResolution
     ContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies);
     virtual ~ContactRelation(){};
     virtual void updateConfiguration() override;
+    virtual void updateDeviceConfiguration() override;
 
   protected:
     StdVec<NeighborBuilderContact *> get_contact_neighbors_;

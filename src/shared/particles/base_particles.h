@@ -38,6 +38,7 @@
 #include "sph_data_containers.h"
 #include "xml_engine.h"
 #include "execution_queue.hpp"
+#include "execution_policy.h"
 
 #include <fstream>
 
@@ -149,7 +150,15 @@ class BaseParticles
     DeviceDataType *registerDeviceVariable(const std::string &variable_name, std::size_t size,
                                            const HostDataType* host_value = nullptr);
     template <typename DeviceDataType>
-    DeviceDataType *getDeviceVariableByName(const std::string &variable_name);
+    DeviceDataType *getDeviceVariableByName(const std::string &variable_name)
+    {
+        DeviceVariable<DeviceDataType> *variable = findVariableByName<DeviceDataType>(all_device_variables_, variable_name);
+
+        if (variable != nullptr)
+            return variable->VariableAddress();
+
+        return nullptr;
+    }
     //----------------------------------------------------------------------
     //		Manage subsets of particle variables
     //----------------------------------------------------------------------
@@ -178,8 +187,8 @@ class BaseParticles
 
     template <typename DataType>
     void registerSortableVariable(const std::string &variable_name);
-    template <typename SequenceMethod>
-    void sortParticles(SequenceMethod &sequence_method);
+    template <typename SequenceMethod, class ExecutionPolicy = execution::ParallelPolicy>
+    void sortParticles(SequenceMethod &sequence_method, ExecutionPolicy = execution::par);
     //----------------------------------------------------------------------
     //		Particle data ouput functions
     //----------------------------------------------------------------------

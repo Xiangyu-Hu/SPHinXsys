@@ -35,6 +35,7 @@
 #include "base_data_package.h"
 #include "sph_data_containers.h"
 #include "execution_selector.hpp"
+#include "device_executable.hpp"
 
 namespace SPH
 {
@@ -74,7 +75,7 @@ using ParticleConfiguration = StdLargeVec<Neighborhood>;
 class NeighborhoodDevice {
   public:
     size_t* current_size_;	/**< the current number of neighbors */
-    static constexpr size_t allocated_size_ = 40;  /**< the limit of neighbors does not require memory allocation  */
+    static constexpr size_t allocated_size_ = 28;  /**< the limit of neighbors does not require memory allocation  */
 
     size_t *j_;  /**< index of the neighbor particle. */
     DeviceReal *W_ij_;  /**< kernel value or particle volume contribution */
@@ -90,7 +91,24 @@ class NeighborhoodDevice {
     NeighborhoodDevice& operator=(const Neighborhood& host);
 };
 
+class NeighborBuilderKernel {
+  public:
+    explicit NeighborBuilderKernel(Kernel &kernel) : smoothing_kernel(kernel) {}
 
+  protected:
+    template<class NeighborhoodType, class RealType, class VecType>
+    void initializeNeighbor(NeighborhoodType &neighborhood, const size_t current_size, const RealType &distance,
+                            const VecType &displacement, const size_t index_j, const RealType &Vol_j) const
+    {
+        neighborhood.j_[current_size] = index_j;
+        neighborhood.W_ij_[current_size] = smoothing_kernel.W(distance, displacement);
+        neighborhood.dW_ijV_j_[current_size] = smoothing_kernel.dW(distance, displacement) * Vol_j;
+        neighborhood.r_ij_[current_size] = distance;
+        neighborhood.e_ij_[current_size] = displacement / (distance + TinyReal);
+    }
+
+    DeviceKernelWendlandC2 smoothing_kernel;
+};
 
 /**
  * @class NeighborBuilder
@@ -120,11 +138,32 @@ class NeighborBuilder
     virtual ~NeighborBuilder(){};
 };
 
+
+class NeighborBuilderInnerKernel : public NeighborBuilderKernel {
+  public:
+    NeighborBuilderInnerKernel(Kernel& kernel) : NeighborBuilderKernel(kernel) {}
+
+    void operator()(NeighborhoodDevice &neighborhood, const DeviceVecd &pos_i, const size_t index_i,
+                    const size_t index_j, const DeviceVecd pos_j, const DeviceReal Vol_j) const
+    {
+        DeviceVecd displacement = pos_i - pos_j;
+        DeviceReal distance_metric = sycl::dot(displacement, displacement);
+        if (distance_metric < smoothing_kernel.CutOffRadiusSqr() && index_i != index_j)
+        {
+            auto current_size_atomic = sycl::atomic_ref<size_t, sycl::memory_order::relaxed,
+                                      sycl::memory_scope::device,
+                                      sycl::access::address_space::global_space>(*neighborhood.current_size_);
+            initializeNeighbor(neighborhood, current_size_atomic++, sycl::sqrt(distance_metric), displacement, index_j, Vol_j);
+        }
+    }
+};
+
 /**
  * @class NeighborBuilderInner
  * @brief A inner neighbor builder functor.
  */
-class NeighborBuilderInner : public NeighborBuilder
+class NeighborBuilderInner : public NeighborBuilder,
+                             public execution::DeviceExecutable<NeighborBuilderInner, NeighborBuilderInnerKernel>
 {
   public:
     explicit NeighborBuilderInner(SPHBody &body);
@@ -163,11 +202,32 @@ class NeighborBuilderSelfContact : public NeighborBuilder
     StdLargeVec<Vecd> &pos0_;
 };
 
+
+class NeighborBuilderContactKernel : public NeighborBuilderKernel {
+  public:
+    NeighborBuilderContactKernel(Kernel& kernel) : NeighborBuilderKernel(kernel) {}
+
+    void operator()(NeighborhoodDevice &neighborhood, const DeviceVecd &pos_i, const size_t index_i,
+                    const size_t index_j, const DeviceVecd pos_j, const DeviceReal Vol_j) const
+    {
+        const DeviceVecd displacement = pos_i - pos_j;
+        const DeviceReal distance = sycl::length(displacement);
+        if (distance < smoothing_kernel.CutOffRadius())
+        {
+            auto current_size_atomic = sycl::atomic_ref<size_t, sycl::memory_order::relaxed,
+                                                        sycl::memory_scope::device,
+                                                        sycl::access::address_space::global_space>(*neighborhood.current_size_);
+            initializeNeighbor(neighborhood, current_size_atomic++, distance, displacement, index_j, Vol_j);
+        }
+    }
+};
+
 /**
  * @class NeighborBuilderContact
  * @brief A contact neighbor builder functor for contact relation.
  */
-class NeighborBuilderContact : public NeighborBuilder
+class NeighborBuilderContact : public NeighborBuilder,
+                               public execution::DeviceExecutable<NeighborBuilderContact, NeighborBuilderContactKernel>
 {
   public:
     NeighborBuilderContact(SPHBody &body, SPHBody &contact_body);

@@ -22,6 +22,12 @@ void SPHSystem::initializeSystemCellLinkedLists()
     }
 }
 //=================================================================================================//
+void SPHSystem::initializeSystemCellLinkedLists(execution::ParallelSYCLDevicePolicy execution_policy)
+{
+    for (auto &body : real_bodies_)
+        DynamicCast<RealBody>(this, body)->updateCellLinkedList(execution_policy);
+}
+//=================================================================================================//
 void SPHSystem::initializeSystemConfigurations()
 {
     for (auto &body : sph_bodies_)
@@ -31,6 +37,13 @@ void SPHSystem::initializeSystemConfigurations()
             body->body_relations_[i]->updateConfiguration();
         }
     }
+}
+//=================================================================================================//
+void SPHSystem::initializeSystemDeviceConfigurations()
+{
+    for (auto &body : sph_bodies_)
+        for (auto & body_relation : body->body_relations_)
+            body_relation->updateDeviceConfiguration();
 }
 //=================================================================================================//
 Real SPHSystem::getSmallestTimeStepAmongSolidBodies(Real CFL)

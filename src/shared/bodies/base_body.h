@@ -151,9 +151,6 @@ class SPHBody
         particle_generator.generateParticlesWithBasicVariables();
         base_particles_->initializeOtherVariables();
         base_material_->initializeLocalParameters(base_particles_);
-            
-        // copy allocated particles to device memory
-        base_particles_->registerDeviceMemory();
     };
 
     template <typename DataType>
@@ -211,6 +208,15 @@ class RealBody : public SPHBody
     size_t iteration_count_;
     bool cell_linked_list_created_;
 
+    template<class ExecutionPolicy = execution::ParallelPolicy>
+    inline auto *getCellLinkedListPtr(ExecutionPolicy execution_policy = execution::par) const {
+        return cell_linked_list_ptr_.get();
+    }
+    template<>
+    inline auto *getCellLinkedListPtr(execution::ParallelSYCLDevicePolicy execution_policy) const {
+        return DynamicCast<CellLinkedList>(this, cell_linked_list_ptr_.get())->getDeviceProxy().get(execution_policy);
+    }
+
   public:
     template <typename... ConstructorArgs>
     RealBody(ConstructorArgs &&...args)
@@ -223,12 +229,40 @@ class RealBody : public SPHBody
         split_cell_lists_.resize(number_of_split_cell_lists);
     };
     virtual ~RealBody(){};
-    BaseCellLinkedList &getCellLinkedList();
+    template<class ExecutionPolicy = execution::ParallelPolicy>
+    auto &getCellLinkedList(ExecutionPolicy execution_policy = execution::par)
+    {
+        if (!cell_linked_list_created_)
+        {
+            cell_linked_list_ptr_ = sph_adaptation_->createCellLinkedList(getSPHSystemBounds(), *this);
+            cell_linked_list_created_ = true;
+        }
+        return *getCellLinkedListPtr(execution_policy);
+    }
     void setUseSplitCellLists() { use_split_cell_lists_ = true; };
     bool getUseSplitCellLists() { return use_split_cell_lists_; };
     SplitCellLists &getSplitCellLists() { return split_cell_lists_; };
-    void updateCellLinkedList();
-    void updateCellLinkedListWithParticleSort(size_t particle_sort_period);
+    template<class ExecutionPolicy = execution::ParallelPolicy>
+    void updateCellLinkedList(ExecutionPolicy execution_policy = execution::par)
+    {
+        getCellLinkedList(execution_policy).UpdateCellLists(*base_particles_);
+        base_particles_->total_ghost_particles_ = 0;
+    }
+    template<class ExecutionPolicy = execution::ParallelPolicy>
+    void updateCellLinkedListWithParticleSort(size_t particle_sort_period, ExecutionPolicy execution_policy = execution::par)
+    {
+        if (iteration_count_ % particle_sort_period == 0)
+        {
+            if constexpr (std::is_same_v<ExecutionPolicy, execution::ParallelSYCLDevicePolicy>)
+                base_particles_->copyFromDeviceMemory();
+            base_particles_->sortParticles(getCellLinkedList(), execution_policy);
+            if constexpr (std::is_same_v<ExecutionPolicy, execution::ParallelSYCLDevicePolicy>)
+                base_particles_->copyToDeviceMemory();
+        }
+
+        iteration_count_++;
+        updateCellLinkedList(execution_policy);
+    }
 };
 } // namespace SPH
 #endif // BASE_BODY_H

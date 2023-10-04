@@ -27,6 +27,17 @@ void ContactRelation::updateConfiguration()
     }
 }
 //=================================================================================================//
+void ContactRelation::updateDeviceConfiguration()
+{
+    resetNeighborhoodDeviceCurrentSize();
+    for (size_t k = 0; k != contact_bodies_.size(); ++k)
+    {
+        target_cell_linked_lists_[k]->getDeviceProxy().getKernel()->searchNeighborsByParticles(
+            sph_body_, contact_configuration_device_[k].data(),
+            *get_search_depths_[k], *get_contact_neighbors_[k]);
+    }
+}
+//=================================================================================================//
 SurfaceContactRelation::SurfaceContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies)
     : ContactRelationCrossResolution(sph_body, contact_bodies),
       body_surface_layer_(shape_surface_ptr_keeper_.createPtr<BodySurfaceLayer>(sph_body)),

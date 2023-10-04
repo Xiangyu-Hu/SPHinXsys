@@ -27,16 +27,19 @@ void SolidParticles::initializeOtherVariables()
 void SolidParticles::registerDeviceMemory() {
         BaseParticles::registerDeviceMemory();
         registerDeviceVariable<DeviceVecd>("Normal", total_real_particles_, n_.data());
+        registerDeviceVariable<DeviceVecd>("InitialNormal", total_real_particles_, n0_.data());
 }
 
 void SolidParticles::copyToDeviceMemory() {
     BaseParticles::copyToDeviceMemory();
     copyDataToDevice(n_.data(), getDeviceVariableByName<DeviceVecd>("Normal"), total_real_particles_);
+    copyDataToDevice(n0_.data(), getDeviceVariableByName<DeviceVecd>("InitialNormal"), total_real_particles_);
 }
 
 void SolidParticles::copyFromDeviceMemory() {
     BaseParticles::copyFromDeviceMemory();
     copyDataFromDevice(n_.data(), getDeviceVariableByName<DeviceVecd>("Normal"), total_real_particles_);
+    copyDataFromDevice(n0_.data(), getDeviceVariableByName<DeviceVecd>("InitialNormal"), total_real_particles_);
 }
 
 //=============================================================================================//

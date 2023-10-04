@@ -15,7 +15,7 @@ namespace SPH::execution {
         }
 
     private:
-        ExecutionProxy<Base, Kernel> device_proxy;
+      ExecutionProxy<Base, Kernel> device_proxy;
     };
 }
 
