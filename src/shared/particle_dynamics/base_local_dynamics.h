@@ -46,6 +46,7 @@ class BaseInner;       /**< Base inner interaction */
 class Contact;         /**< Contact interaction: interaction between a body with one or several another bodies */
 class ContactAdaptive; /**< Contact interaction with adaptive resolution */
 class BaseContact;     /**< Base contact interaction*/
+class WithBoundary;    /**< Contact interaction with boundary */
 //----------------------------------------------------------------------
 // Particle group scope functors
 //----------------------------------------------------------------------
@@ -295,8 +296,8 @@ struct LocalDynamicsParameters
 {
     BodyRelationType &body_relation_;
     std::tuple<OtherArgs...> others_;
-    LocalDynamicsParameters(BodyRelationType &body_relation, OtherArgs &&...other_args)
-        : body_relation_(body_relation), others_(std::forward<OtherArgs>(other_args)...){};
+    LocalDynamicsParameters(BodyRelationType &body_relation, OtherArgs... other_args)
+        : body_relation_(body_relation), others_(other_args...){};
 };
 
 /**
