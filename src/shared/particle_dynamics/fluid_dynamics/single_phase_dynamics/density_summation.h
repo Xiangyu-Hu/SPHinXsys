@@ -24,7 +24,8 @@
  * @file density_summation.h
  * @brief Here, we define the algorithm classes for computing
  * the density of a continuum by kernel function summation.
- * @details TBD.
+ * @details We are using templates and their explicit or partial specializations
+ * to identify variations of the interaction types..
  * @author Xiangyu Hu
  */
 
@@ -37,74 +38,49 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-/**
- * @class BaseDensitySummation
- * @brief Template class to prepare the data may be used for all the methods.
- */
+template <typename... InteractionTypes>
+class DensitySummation;
+
 template <class DataDelegationType>
-class BaseDensitySummation : public LocalDynamics, public DataDelegationType
+class DensitySummation<Base, DataDelegationType>
+    : public LocalDynamics, public DataDelegationType
 {
   public:
     template <class BaseRelationType>
-    explicit BaseDensitySummation(BaseRelationType &base_relation);
-    virtual ~BaseDensitySummation(){};
+    explicit DensitySummation(BaseRelationType &base_relation);
+    virtual ~DensitySummation(){};
 
   protected:
     StdLargeVec<Real> &rho_, &mass_, &rho_sum_;
     Real rho0_, inv_sigma0_, W0_;
 };
 
-/**
- * @class DensitySummationInnerCommon
- * @brief Class to prepare common functions for all inner interactions.
- */
-class DensitySummationInnerCommon : public BaseDensitySummation<FluidDataInner>
+template <>
+class DensitySummation<BaseInner> : public DensitySummation<Base, FluidDataInner>
 {
   public:
-    explicit DensitySummationInnerCommon(BaseInnerRelation &inner_relation)
-        : BaseDensitySummation<FluidDataInner>(inner_relation){};
-    virtual ~DensitySummationInnerCommon(){};
+    explicit DensitySummation(BaseInnerRelation &inner_relation)
+        : DensitySummation<Base, FluidDataInner>(inner_relation){};
+    virtual ~DensitySummation(){};
 
   protected:
     void assignDensity(size_t index_i) { rho_[index_i] = rho_sum_[index_i]; };
     void reinitializeDensity(size_t index_i) { rho_[index_i] = SMAX(rho_sum_[index_i], rho0_); };
 };
 
-/**
- * @class DensitySummationContactCommon
- * @brief Class to prepare common functions for all contact interactions.
- */
-class DensitySummationContactCommon : public BaseDensitySummation<FluidContactData>
-{
-  public:
-    explicit DensitySummationContactCommon(BaseContactRelation &contact_relation);
-    virtual ~DensitySummationContactCommon(){};
-
-  protected:
-    StdVec<Real> contact_inv_rho0_;
-    StdVec<StdLargeVec<Real> *> contact_mass_;
-    Real ContactSummation(size_t index_i);
-};
-//----------------------------------------------------------------------
-// Using templates and explicit and partial specializations
-// to identify variations of the interaction types.
-//----------------------------------------------------------------------
-template <typename... InteractionTypes>
-class DensitySummation;
-
 template <>
-class DensitySummation<Inner> : public DensitySummationInnerCommon
+class DensitySummation<Inner> : public DensitySummation<BaseInner>
 {
   public:
     explicit DensitySummation(BaseInnerRelation &inner_relation)
-        : DensitySummationInnerCommon(inner_relation){};
+        : DensitySummation<BaseInner>(inner_relation){};
     virtual ~DensitySummation(){};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0) { assignDensity(index_i); };
 };
 
 template <>
-class DensitySummation<InnerAdaptive> : public DensitySummationInnerCommon
+class DensitySummation<InnerAdaptive> : public DensitySummation<BaseInner>
 {
   public:
     explicit DensitySummation(BaseInnerRelation &inner_relation);
@@ -119,17 +95,30 @@ class DensitySummation<InnerAdaptive> : public DensitySummationInnerCommon
 };
 
 template <>
-class DensitySummation<Contact> : public DensitySummationContactCommon
+class DensitySummation<BaseContact> : public DensitySummation<Base, FluidContactData>
+{
+  public:
+    explicit DensitySummation(BaseContactRelation &contact_relation);
+    virtual ~DensitySummation(){};
+
+  protected:
+    StdVec<Real> contact_inv_rho0_;
+    StdVec<StdLargeVec<Real> *> contact_mass_;
+    Real ContactSummation(size_t index_i);
+};
+
+template <>
+class DensitySummation<Contact> : public DensitySummation<BaseContact>
 {
   public:
     explicit DensitySummation(BaseContactRelation &contact_relation)
-        : DensitySummationContactCommon(contact_relation){};
+        : DensitySummation<BaseContact>(contact_relation){};
     virtual ~DensitySummation(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };
 
 template <>
-class DensitySummation<ContactAdaptive> : public DensitySummationContactCommon
+class DensitySummation<ContactAdaptive> : public DensitySummation<BaseContact>
 {
   public:
     explicit DensitySummation(BaseContactRelation &contact_relation);

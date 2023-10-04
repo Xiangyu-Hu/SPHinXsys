@@ -39,10 +39,13 @@ namespace SPH
 //----------------------------------------------------------------------
 // Interaction types for particle dynamics
 //----------------------------------------------------------------------
+class Base;            /**< Indicating base class for a method */
 class Inner;           /**< Inner interaction: interaction within a body*/
 class InnerAdaptive;   /**< Inner interaction with adaptive resolution */
+class BaseInner;       /**< Base inner interaction */
 class Contact;         /**< Contact interaction: interaction between a body with one or several another bodies */
 class ContactAdaptive; /**< Contact interaction with adaptive resolution */
+class BaseContact;     /**< Base contact interaction*/
 //----------------------------------------------------------------------
 // Particle group scope functors
 //----------------------------------------------------------------------
@@ -314,15 +317,18 @@ class ComplexInteraction<LocalDynamicsName<>>
     void interaction(size_t index_i, Real dt = 0.0){};
 };
 
-template <template <typename... InteractionType> class LocalDynamicsName, class FirstInteraction, class... OtherInteractions>
-class ComplexInteraction<LocalDynamicsName<FirstInteraction, OtherInteractions...>> : public LocalDynamicsName<FirstInteraction>
+template <template <typename... InteractionType> class LocalDynamicsName,
+          class FirstInteraction, class... OtherInteractions>
+class ComplexInteraction<LocalDynamicsName<FirstInteraction, OtherInteractions...>>
+    : public LocalDynamicsName<FirstInteraction>
 {
   protected:
     ComplexInteraction<LocalDynamicsName<OtherInteractions...>> other_interactions_;
 
   public:
     template <class FirstParameterSet, typename... OtherParameterSets>
-    explicit ComplexInteraction(FirstParameterSet &&first_parameter_set, OtherParameterSets &&...other_parameter_sets)
+    explicit ComplexInteraction(FirstParameterSet &&first_parameter_set,
+                                OtherParameterSets &&...other_parameter_sets)
         : LocalDynamicsName<FirstInteraction>(first_parameter_set),
           other_interactions_(std::forward<OtherParameterSets>(other_parameter_sets)...){};
 

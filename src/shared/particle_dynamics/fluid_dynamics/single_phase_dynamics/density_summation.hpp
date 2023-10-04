@@ -9,7 +9,7 @@ namespace fluid_dynamics
 //=================================================================================================//
 template <class DataDelegationType>
 template <class BaseRelationType>
-BaseDensitySummation<DataDelegationType>::BaseDensitySummation(BaseRelationType &base_relation)
+DensitySummation<Base, DataDelegationType>::DensitySummation(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
       rho_(this->particles_->rho_), mass_(this->particles_->mass_),
       rho_sum_(*this->particles_->template registerSharedVariable<Real>("DensitySummation")),
