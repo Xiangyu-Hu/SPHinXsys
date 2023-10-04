@@ -305,11 +305,11 @@ struct LocalDynamicsParameters
  * Typically, it includes an inner interaction and one or
  * several contact interaction and boundary conditions.
  */
-template <typename... InteractionTypes>
+template <typename... T>
 class ComplexInteraction;
 
-template <template <typename... InteractionType> class LocalDynamicsName>
-class ComplexInteraction<LocalDynamicsName<>>
+template <typename... ControlTypes, template <typename... InteractionTypes> class LocalDynamicsName>
+class ComplexInteraction<LocalDynamicsName<>, ControlTypes...>
 {
   public:
     ComplexInteraction(){};
@@ -317,24 +317,24 @@ class ComplexInteraction<LocalDynamicsName<>>
     void interaction(size_t index_i, Real dt = 0.0){};
 };
 
-template <template <typename... InteractionType> class LocalDynamicsName,
+template <typename... ControlTypes, template <typename... InteractionTypes> class LocalDynamicsName,
           class FirstInteraction, class... OtherInteractions>
-class ComplexInteraction<LocalDynamicsName<FirstInteraction, OtherInteractions...>>
-    : public LocalDynamicsName<FirstInteraction>
+class ComplexInteraction<LocalDynamicsName<FirstInteraction, OtherInteractions...>, ControlTypes...>
+    : public LocalDynamicsName<FirstInteraction, ControlTypes...>
 {
   protected:
-    ComplexInteraction<LocalDynamicsName<OtherInteractions...>> other_interactions_;
+    ComplexInteraction<LocalDynamicsName<OtherInteractions...>, ControlTypes...> other_interactions_;
 
   public:
     template <class FirstParameterSet, typename... OtherParameterSets>
     explicit ComplexInteraction(FirstParameterSet &&first_parameter_set,
                                 OtherParameterSets &&...other_parameter_sets)
-        : LocalDynamicsName<FirstInteraction>(first_parameter_set),
+        : LocalDynamicsName<FirstInteraction, ControlTypes...>(first_parameter_set),
           other_interactions_(std::forward<OtherParameterSets>(other_parameter_sets)...){};
 
     void interaction(size_t index_i, Real dt = 0.0)
     {
-        LocalDynamicsName<FirstInteraction>::interaction(index_i, dt);
+        LocalDynamicsName<FirstInteraction, ControlTypes...>::interaction(index_i, dt);
         other_interactions_.interaction(index_i, dt);
     };
 };
