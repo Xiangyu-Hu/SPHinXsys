@@ -203,11 +203,11 @@ using DiffusionRelaxationWithDirichletContact = DiffusionRelaxationDirichlet<Ele
  */
 class ElectroPhysiologyDiffusionRelaxationComplex
     : public DiffusionRelaxationRK2<
-          ComplexInteraction<ElectroPhysiologyDiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>
+          OldComplexInteraction<ElectroPhysiologyDiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>
 {
   public:
     explicit ElectroPhysiologyDiffusionRelaxationComplex(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation)
-        : DiffusionRelaxationRK2<ComplexInteraction<ElectroPhysiologyDiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>(inner_relation, contact_relation){};
+        : DiffusionRelaxationRK2<OldComplexInteraction<ElectroPhysiologyDiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>(inner_relation, contact_relation){};
     virtual ~ElectroPhysiologyDiffusionRelaxationComplex(){};
 };
 

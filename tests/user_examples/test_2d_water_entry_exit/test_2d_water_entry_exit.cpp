@@ -195,11 +195,11 @@ class WettingCylinderBodyInitialCondition
 using CylinderFluidDiffusionDirichlet = DiffusionRelaxationDirichlet<DiffusionCylinderParticles, DiffusionFluidParticles>;
 class ThermalRelaxationComplex
     : public DiffusionRelaxationRK2<
-          ComplexInteraction<CylinderFluidDiffusionDirichlet>>
+          OldComplexInteraction<CylinderFluidDiffusionDirichlet>>
 {
   public:
     explicit ThermalRelaxationComplex(BaseContactRelation &body_contact_relation_Dirichlet)
-        : DiffusionRelaxationRK2<ComplexInteraction<CylinderFluidDiffusionDirichlet>>(body_contact_relation_Dirichlet){};
+        : DiffusionRelaxationRK2<OldComplexInteraction<CylinderFluidDiffusionDirichlet>>(body_contact_relation_Dirichlet){};
     virtual ~ThermalRelaxationComplex(){};
 };
 //------------------------------------------------------------------------------

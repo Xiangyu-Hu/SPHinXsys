@@ -103,12 +103,12 @@ class TransportVelocityCorrectionContact
 
 template <class ParticleScope>
 class TransportVelocityCorrectionComplex
-    : public ComplexInteraction<TransportVelocityCorrectionInner<NoKernelCorrection, SingleResolution, ParticleScope>,
+    : public OldComplexInteraction<TransportVelocityCorrectionInner<NoKernelCorrection, SingleResolution, ParticleScope>,
                                 TransportVelocityCorrectionWithBoundary<NoKernelCorrection, SingleResolution, ParticleScope>>
 {
   public:
     explicit TransportVelocityCorrectionComplex(ComplexRelation &complex_relation, Real coefficient = 0.2)
-        : ComplexInteraction<TransportVelocityCorrectionInner<NoKernelCorrection, SingleResolution, ParticleScope>,
+        : OldComplexInteraction<TransportVelocityCorrectionInner<NoKernelCorrection, SingleResolution, ParticleScope>,
                              TransportVelocityCorrectionWithBoundary<NoKernelCorrection, SingleResolution, ParticleScope>>(
               LocalDynamicsParameters(complex_relation.getInnerRelation(), coefficient),
               LocalDynamicsParameters(complex_relation.getContactRelation(), coefficient)){};

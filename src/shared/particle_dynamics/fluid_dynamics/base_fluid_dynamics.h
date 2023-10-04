@@ -36,6 +36,14 @@
 
 namespace SPH
 {
+//----------------------------------------------------------------------
+// Interaction types specifically for fluid dynamics
+//----------------------------------------------------------------------
+template <typename InnerInteractionType>
+class FreeSurface; /**< An inner interaction considering the effect of free surface */
+template <typename InnerInteractionType>
+class FreeStream; /**< An inner interaction considering the effect of free stream */
+
 namespace fluid_dynamics
 {
 typedef DataDelegateSimple<BaseParticles> FluidDataSimple;

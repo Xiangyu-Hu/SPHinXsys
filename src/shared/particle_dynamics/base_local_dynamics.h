@@ -37,12 +37,19 @@
 namespace SPH
 {
 //----------------------------------------------------------------------
+// Interaction types for particle dynamics
+//----------------------------------------------------------------------
+class Inner;           /**< Inner interaction: interaction within a body*/
+class InnerAdaptive;   /**< Inner interaction with adaptive resolution */
+class Contact;         /**< Contact interaction: interaction between a body with one or several another bodies */
+class ContactAdaptive; /**< Contact interaction with adaptive resolution */
+//----------------------------------------------------------------------
 // Particle group scope functors
 //----------------------------------------------------------------------
 class AllParticles
 {
   public:
-    AllParticles(BaseParticles *base_particles){};
+    explicit AllParticles(BaseParticles *base_particles){};
     bool operator()(size_t index_i)
     {
         return true;
@@ -55,7 +62,7 @@ class IndicatedParticles
     StdLargeVec<int> &indicator_;
 
   public:
-    IndicatedParticles(BaseParticles *base_particles)
+    explicit IndicatedParticles(BaseParticles *base_particles)
         : indicator_(*base_particles->getVariableByName<int>("Indicator")){};
     bool operator()(size_t index_i)
     {
@@ -71,7 +78,7 @@ class NotIndicatedParticles
     StdLargeVec<int> &indicator_;
 
   public:
-    NotIndicatedParticles(BaseParticles *base_particles)
+    explicit NotIndicatedParticles(BaseParticles *base_particles)
         : indicator_(*base_particles->getVariableByName<int>("Indicator")){};
     bool operator()(size_t index_i)
     {
@@ -85,7 +92,7 @@ class ParticlesPairAverageInner
     StdLargeVec<DataType> &variable_;
 
   public:
-    ParticlesPairAverageInner(StdLargeVec<DataType> &variable)
+    explicit ParticlesPairAverageInner(StdLargeVec<DataType> &variable)
         : variable_(variable){};
     DataType operator()(size_t index_i, size_t index_j)
     {
@@ -293,13 +300,13 @@ struct LocalDynamicsParameters
  * @class ComplexInteraction
  * @brief A class that integrates multiple local dynamics.
  * Typically, it includes an inner interaction and one or
- * several contact interaction ad boundary conditions.
+ * several contact interaction and boundary conditions.
  */
-template <typename... InteractionType>
+template <typename... InteractionTypes>
 class ComplexInteraction;
 
-template <>
-class ComplexInteraction<>
+template <template <typename... InteractionType> class LocalDynamicsName>
+class ComplexInteraction<LocalDynamicsName<>>
 {
   public:
     ComplexInteraction(){};
@@ -307,15 +314,52 @@ class ComplexInteraction<>
     void interaction(size_t index_i, Real dt = 0.0){};
 };
 
-template <class FirstInteraction, class... OtherInteractions>
-class ComplexInteraction<FirstInteraction, OtherInteractions...> : public FirstInteraction
+template <template <typename... InteractionType> class LocalDynamicsName, class FirstInteraction, class... OtherInteractions>
+class ComplexInteraction<LocalDynamicsName<FirstInteraction, OtherInteractions...>> : public LocalDynamicsName<FirstInteraction>
 {
   protected:
-    ComplexInteraction<OtherInteractions...> other_interactions_;
+    ComplexInteraction<LocalDynamicsName<OtherInteractions...>> other_interactions_;
 
   public:
     template <class FirstParameterSet, typename... OtherParameterSets>
     explicit ComplexInteraction(FirstParameterSet &&first_parameter_set, OtherParameterSets &&...other_parameter_sets)
+        : LocalDynamicsName<FirstInteraction>(first_parameter_set),
+          other_interactions_(std::forward<OtherParameterSets>(other_parameter_sets)...){};
+
+    void interaction(size_t index_i, Real dt = 0.0)
+    {
+        LocalDynamicsName<FirstInteraction>::interaction(index_i, dt);
+        other_interactions_.interaction(index_i, dt);
+    };
+};
+
+/**
+ * @class OldComplexInteraction
+ * @brief A class that integrates multiple local dynamics.
+ * Typically, it includes an inner interaction and one or
+ * several contact interaction ad boundary conditions.
+ */
+template <typename... InteractionType>
+class OldComplexInteraction;
+
+template <>
+class OldComplexInteraction<>
+{
+  public:
+    OldComplexInteraction(){};
+
+    void interaction(size_t index_i, Real dt = 0.0){};
+};
+
+template <class FirstInteraction, class... OtherInteractions>
+class OldComplexInteraction<FirstInteraction, OtherInteractions...> : public FirstInteraction
+{
+  protected:
+    OldComplexInteraction<OtherInteractions...> other_interactions_;
+
+  public:
+    template <class FirstParameterSet, typename... OtherParameterSets>
+    explicit OldComplexInteraction(FirstParameterSet &&first_parameter_set, OtherParameterSets &&...other_parameter_sets)
         : FirstInteraction(first_parameter_set),
           other_interactions_(std::forward<OtherParameterSets>(other_parameter_sets)...){};
 

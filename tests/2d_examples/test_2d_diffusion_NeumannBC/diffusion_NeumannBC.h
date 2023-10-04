@@ -183,13 +183,13 @@ using SolidDiffusionNeumann = DiffusionRelaxationNeumann<DiffusionParticles, Wal
 //	Specify diffusion relaxation method.
 //----------------------------------------------------------------------
 class DiffusionBodyRelaxation
-    : public DiffusionRelaxationRK2<ComplexInteraction<SolidDiffusionInner, SolidDiffusionDirichlet, SolidDiffusionNeumann>>
+    : public DiffusionRelaxationRK2<OldComplexInteraction<SolidDiffusionInner, SolidDiffusionDirichlet, SolidDiffusionNeumann>>
 {
   public:
     explicit DiffusionBodyRelaxation(InnerRelation &inner_relation,
                                      ContactRelation &body_contact_relation_Dirichlet,
                                      ContactRelation &body_contact_relation_Neumann)
-        : DiffusionRelaxationRK2<ComplexInteraction<SolidDiffusionInner, SolidDiffusionDirichlet, SolidDiffusionNeumann>>(
+        : DiffusionRelaxationRK2<OldComplexInteraction<SolidDiffusionInner, SolidDiffusionDirichlet, SolidDiffusionNeumann>>(
               inner_relation, body_contact_relation_Dirichlet, body_contact_relation_Neumann){};
     virtual ~DiffusionBodyRelaxation(){};
 };

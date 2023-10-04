@@ -178,29 +178,29 @@ using ContinuityWallBoundaryRiemann = ContinuityWallBoundary<AcousticRiemannSolv
 using ContinuityWallBoundaryDissipativeRiemann = ContinuityWallBoundary<DissipativeRiemannSolver>;
 
 class Integration1stHalfRiemannWithWall
-    : public ComplexInteraction<Integration1stHalfInnerRiemann, MomentumWallBoundaryRiemann>
+    : public OldComplexInteraction<Integration1stHalfInnerRiemann, MomentumWallBoundaryRiemann>
 {
   public:
     explicit Integration1stHalfRiemannWithWall(ComplexRelation &fluid_wall_relation)
-        : ComplexInteraction<Integration1stHalfInnerRiemann, MomentumWallBoundaryRiemann>(
+        : OldComplexInteraction<Integration1stHalfInnerRiemann, MomentumWallBoundaryRiemann>(
               fluid_wall_relation.getInnerRelation(), fluid_wall_relation.getContactRelation()){};
 };
 
 class Integration2ndHalfWithWall
-    : public ComplexInteraction<Integration2ndHalfInnerNoRiemann, ContinuityWallBoundaryNoRiemann>
+    : public OldComplexInteraction<Integration2ndHalfInnerNoRiemann, ContinuityWallBoundaryNoRiemann>
 {
   public:
     explicit Integration2ndHalfWithWall(ComplexRelation &fluid_wall_relation)
-        : ComplexInteraction<Integration2ndHalfInnerNoRiemann, ContinuityWallBoundaryNoRiemann>(
+        : OldComplexInteraction<Integration2ndHalfInnerNoRiemann, ContinuityWallBoundaryNoRiemann>(
               fluid_wall_relation.getInnerRelation(), fluid_wall_relation.getContactRelation()){};
 };
 
 class Integration2ndHalfRiemannWithWall
-    : public ComplexInteraction<Integration2ndHalfInnerRiemann, ContinuityWallBoundaryRiemann>
+    : public OldComplexInteraction<Integration2ndHalfInnerRiemann, ContinuityWallBoundaryRiemann>
 {
   public:
     explicit Integration2ndHalfRiemannWithWall(ComplexRelation &fluid_wall_relation)
-        : ComplexInteraction<Integration2ndHalfInnerRiemann, ContinuityWallBoundaryRiemann>(
+        : OldComplexInteraction<Integration2ndHalfInnerRiemann, ContinuityWallBoundaryRiemann>(
               fluid_wall_relation.getInnerRelation(), fluid_wall_relation.getContactRelation()){};
 };
 } // namespace fluid_dynamics

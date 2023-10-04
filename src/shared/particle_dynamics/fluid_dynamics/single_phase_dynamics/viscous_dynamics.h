@@ -115,11 +115,11 @@ class VorticityInner : public LocalDynamics, public FluidDataInner
 };
 
 class ViscousAccelerationWithWall
-    : public ComplexInteraction<ViscousAccelerationInner, ViscousWallBoundary>
+    : public OldComplexInteraction<ViscousAccelerationInner, ViscousWallBoundary>
 {
   public:
     explicit ViscousAccelerationWithWall(ComplexRelation &fluid_wall_relation)
-        : ComplexInteraction<ViscousAccelerationInner, ViscousWallBoundary>(
+        : OldComplexInteraction<ViscousAccelerationInner, ViscousWallBoundary>(
               fluid_wall_relation.getInnerRelation(), fluid_wall_relation.getContactRelation()){};
 };
 } // namespace fluid_dynamics

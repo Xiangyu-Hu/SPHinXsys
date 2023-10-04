@@ -105,11 +105,11 @@ class SpatialTemporalFreeSurfaceIdentification : public FreeSurfaceIdentificatio
 };
 
 class SpatialTemporalFreeSurfaceIdentificationComplex
-    : public SpatialTemporalFreeSurfaceIdentification<ComplexInteraction<FreeSurfaceIndicationInner, FreeSurfaceIndicationContact>>
+    : public SpatialTemporalFreeSurfaceIdentification<OldComplexInteraction<FreeSurfaceIndicationInner, FreeSurfaceIndicationContact>>
 {
   public:
     explicit SpatialTemporalFreeSurfaceIdentificationComplex(ComplexRelation &complex_relation)
-        : SpatialTemporalFreeSurfaceIdentification<ComplexInteraction<FreeSurfaceIndicationInner, FreeSurfaceIndicationContact>>(
+        : SpatialTemporalFreeSurfaceIdentification<OldComplexInteraction<FreeSurfaceIndicationInner, FreeSurfaceIndicationContact>>(
               complex_relation.getInnerRelation(), complex_relation.getContactRelation()){};
 };
 } // namespace SPH

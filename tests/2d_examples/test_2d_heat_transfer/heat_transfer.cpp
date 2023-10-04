@@ -179,11 +179,11 @@ using FluidDiffusionDirichlet = DiffusionRelaxationDirichlet<DiffusionBasePartic
 //----------------------------------------------------------------------
 class ThermalRelaxationComplex
     : public DiffusionRelaxationRK2<
-          ComplexInteraction<FluidDiffusionInner, FluidDiffusionDirichlet>>
+          OldComplexInteraction<FluidDiffusionInner, FluidDiffusionDirichlet>>
 {
   public:
     explicit ThermalRelaxationComplex(BaseInnerRelation &inner_relation, BaseContactRelation &body_contact_relation_Dirichlet)
-        : DiffusionRelaxationRK2<ComplexInteraction<FluidDiffusionInner, FluidDiffusionDirichlet>>(inner_relation, body_contact_relation_Dirichlet){};
+        : DiffusionRelaxationRK2<OldComplexInteraction<FluidDiffusionInner, FluidDiffusionDirichlet>>(inner_relation, body_contact_relation_Dirichlet){};
     virtual ~ThermalRelaxationComplex(){};
 };
 //----------------------------------------------------------------------

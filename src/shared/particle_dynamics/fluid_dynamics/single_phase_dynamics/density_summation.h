@@ -37,52 +37,10 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-class Inner;
-class InnerAdaptive;
-class Contact;
-class ContactAdaptive;
-template <typename InteractionType>
-class FreeSurface;
-template <typename InteractionType>
-class FreeStream;
-
 /**
- * @class ComplexInteraction
- * @brief A class that integrates multiple local dynamics.
- * Typically, it includes an inner interaction and one or
- * several contact interaction ad boundary conditions.
+ * @class BaseDensitySummation
+ * @brief Template class to prepare the data may be used for all the methods.
  */
-template <typename... InteractionTypes>
-class NewComplexInteraction;
-
-template <template <typename... InteractionType> class LocalDynamicsName>
-class NewComplexInteraction<LocalDynamicsName<>>
-{
-  public:
-    NewComplexInteraction(){};
-
-    void interaction(size_t index_i, Real dt = 0.0){};
-};
-
-template <template <typename... InteractionType> class LocalDynamicsName, class FirstInteraction, class... OtherInteractions>
-class NewComplexInteraction<LocalDynamicsName<FirstInteraction, OtherInteractions...>> : public LocalDynamicsName<FirstInteraction>
-{
-  protected:
-    NewComplexInteraction<LocalDynamicsName<OtherInteractions...>> other_interactions_;
-
-  public:
-    template <class FirstParameterSet, typename... OtherParameterSets>
-    explicit NewComplexInteraction(FirstParameterSet &&first_parameter_set, OtherParameterSets &&...other_parameter_sets)
-        : LocalDynamicsName<FirstInteraction>(first_parameter_set),
-          other_interactions_(std::forward<OtherParameterSets>(other_parameter_sets)...){};
-
-    void interaction(size_t index_i, Real dt = 0.0)
-    {
-        LocalDynamicsName<FirstInteraction>::interaction(index_i, dt);
-        other_interactions_.interaction(index_i, dt);
-    };
-};
-
 template <class DataDelegationType>
 class BaseDensitySummation : public LocalDynamics, public DataDelegationType
 {
@@ -96,6 +54,10 @@ class BaseDensitySummation : public LocalDynamics, public DataDelegationType
     Real rho0_, inv_sigma0_, W0_;
 };
 
+/**
+ * @class DensitySummationInnerCommon
+ * @brief Class to prepare common functions for all inner interactions.
+ */
 class DensitySummationInnerCommon : public BaseDensitySummation<FluidDataInner>
 {
   public:
@@ -108,6 +70,10 @@ class DensitySummationInnerCommon : public BaseDensitySummation<FluidDataInner>
     void reinitializeDensity(size_t index_i) { rho_[index_i] = SMAX(rho_sum_[index_i], rho0_); };
 };
 
+/**
+ * @class DensitySummationContactCommon
+ * @brief Class to prepare common functions for all contact interactions.
+ */
 class DensitySummationContactCommon : public BaseDensitySummation<FluidContactData>
 {
   public:
@@ -119,7 +85,10 @@ class DensitySummationContactCommon : public BaseDensitySummation<FluidContactDa
     StdVec<StdLargeVec<Real> *> contact_mass_;
     Real ContactSummation(size_t index_i);
 };
-
+//----------------------------------------------------------------------
+// Using templates and explicit and partial specializations
+// to identify variations of the interaction types.
+//----------------------------------------------------------------------
 template <typename... InteractionTypes>
 class DensitySummation;
 
@@ -202,11 +171,11 @@ class DensitySummation<FreeStream<InteractionType>> : public DensitySummation<In
 
 template <class InnerInteractionType, class ContactInteractionType>
 class BaseDensitySummationComplex
-    : public NewComplexInteraction<DensitySummation<InnerInteractionType, ContactInteractionType>>
+    : public ComplexInteraction<DensitySummation<InnerInteractionType, ContactInteractionType>>
 {
   public:
     explicit BaseDensitySummationComplex(ComplexRelation &complex_relation)
-        : NewComplexInteraction<DensitySummation<InnerInteractionType, ContactInteractionType>>(
+        : ComplexInteraction<DensitySummation<InnerInteractionType, ContactInteractionType>>(
               complex_relation.getInnerRelation(), complex_relation.getContactRelation()){};
 };
 using DensitySummationComplex = BaseDensitySummationComplex<Inner, Contact>;

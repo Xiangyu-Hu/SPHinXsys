@@ -186,13 +186,13 @@ using SolidDiffusionRobin = DiffusionRelaxationRobin<DiffusionParticles, WallPar
 //	Specify diffusion relaxation method.
 //----------------------------------------------------------------------
 class DiffusionBodyRelaxation
-    : public DiffusionRelaxationRK2<ComplexInteraction<SolidDiffusionInner, SolidDiffusionDirichlet, SolidDiffusionRobin>>
+    : public DiffusionRelaxationRK2<OldComplexInteraction<SolidDiffusionInner, SolidDiffusionDirichlet, SolidDiffusionRobin>>
 {
   public:
     explicit DiffusionBodyRelaxation(BaseInnerRelation &inner_relation,
                                      BaseContactRelation &body_contact_relation_Dirichlet,
                                      BaseContactRelation &body_contact_relation_Robin)
-        : DiffusionRelaxationRK2<ComplexInteraction<SolidDiffusionInner, SolidDiffusionDirichlet, SolidDiffusionRobin>>(
+        : DiffusionRelaxationRK2<OldComplexInteraction<SolidDiffusionInner, SolidDiffusionDirichlet, SolidDiffusionRobin>>(
               inner_relation, body_contact_relation_Dirichlet, body_contact_relation_Robin){};
     virtual ~DiffusionBodyRelaxation(){};
 };
