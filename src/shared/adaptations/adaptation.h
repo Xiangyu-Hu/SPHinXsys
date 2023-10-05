@@ -86,10 +86,10 @@ class SPHAdaptation
     virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, RealBody &real_body);
     virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio);
 
-    template <class KernelType, typename... ConstructorArgs>
-    void resetKernel(ConstructorArgs &&...args)
+    template <class KernelType, typename... Args>
+    void resetKernel(Args &&...args)
     {
-        kernel_ptr_.reset(new KernelType(h_ref_, std::forward<ConstructorArgs>(args)...));
+        kernel_ptr_.reset(new KernelType(h_ref_, std::forward<Args>(args)...));
         sigma0_ref_ = computeLatticeNumberDensity(Vecd());
     };
 
@@ -138,9 +138,9 @@ class ParticleWithLocalRefinement : public SPHAdaptation
 class ParticleRefinementByShape : public ParticleWithLocalRefinement
 {
   public:
-    template <typename... ConstructorArgs>
-    ParticleRefinementByShape(ConstructorArgs &&...args)
-        : ParticleWithLocalRefinement(std::forward<ConstructorArgs>(args)...){};
+    template <typename... Args>
+    ParticleRefinementByShape(Args &&...args)
+        : ParticleWithLocalRefinement(std::forward<Args>(args)...){};
 
     virtual ~ParticleRefinementByShape(){};
 
@@ -157,9 +157,9 @@ class ParticleRefinementByShape : public ParticleWithLocalRefinement
 class ParticleRefinementNearSurface : public ParticleRefinementByShape
 {
   public:
-    template <typename... ConstructorArgs>
-    ParticleRefinementNearSurface(ConstructorArgs &&...args)
-        : ParticleRefinementByShape(std::forward<ConstructorArgs>(args)...){};
+    template <typename... Args>
+    ParticleRefinementNearSurface(Args &&...args)
+        : ParticleRefinementByShape(std::forward<Args>(args)...){};
     virtual ~ParticleRefinementNearSurface(){};
 
     virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override;
@@ -172,9 +172,9 @@ class ParticleRefinementNearSurface : public ParticleRefinementByShape
 class ParticleRefinementWithinShape : public ParticleRefinementByShape
 {
   public:
-    template <typename... ConstructorArgs>
-    ParticleRefinementWithinShape(ConstructorArgs &&...args)
-        : ParticleRefinementByShape(std::forward<ConstructorArgs>(args)...){};
+    template <typename... Args>
+    ParticleRefinementWithinShape(Args &&...args)
+        : ParticleRefinementByShape(std::forward<Args>(args)...){};
     virtual ~ParticleRefinementWithinShape(){};
 
     virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override;

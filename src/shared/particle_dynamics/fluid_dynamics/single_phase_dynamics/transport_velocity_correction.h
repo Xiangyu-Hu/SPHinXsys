@@ -68,7 +68,7 @@ class TransportVelocityCorrection<Inner, KernelCorrectionType, ResolutionType, P
 {
   public:
     explicit TransportVelocityCorrection(BaseInnerRelation &inner_relation, Real coefficient = 0.2);
-    explicit TransportVelocityCorrection(LocalDynamicsParameters<BaseInnerRelation, Real> parameters)
+    explicit TransportVelocityCorrection(ConstructorArgs<BaseInnerRelation, Real> parameters)
         : TransportVelocityCorrection(parameters.body_relation_, std::get<0>(parameters.others_)){};
     virtual ~TransportVelocityCorrection(){};
     void interaction(size_t index_i, Real dt = 0.0);
@@ -80,7 +80,7 @@ class TransportVelocityCorrection<WithBoundary, KernelCorrectionType, Resolution
 {
   public:
     explicit TransportVelocityCorrection(BaseContactRelation &contact_relation, Real coefficient = 0.2);
-    explicit TransportVelocityCorrection(LocalDynamicsParameters<BaseContactRelation, Real> parameters)
+    explicit TransportVelocityCorrection(ConstructorArgs<BaseContactRelation, Real> parameters)
         : TransportVelocityCorrection(parameters.body_relation_, std::get<0>(parameters.others_)){};
     virtual ~TransportVelocityCorrection(){};
     void interaction(size_t index_i, Real dt = 0.0);
@@ -92,7 +92,7 @@ class TransportVelocityCorrection<Contact, KernelCorrectionType, ResolutionType,
 {
   public:
     explicit TransportVelocityCorrection(BaseContactRelation &contact_relation, Real coefficient = 0.2);
-    explicit TransportVelocityCorrection(LocalDynamicsParameters<BaseContactRelation, Real> parameters)
+    explicit TransportVelocityCorrection(ConstructorArgs<BaseContactRelation, Real> parameters)
         : TransportVelocityCorrection(parameters.body_relation_, std::get<0>(parameters.others_)){};
     virtual ~TransportVelocityCorrection(){};
     void interaction(size_t index_i, Real dt = 0.0);
@@ -110,8 +110,8 @@ class TransportVelocityCorrectionComplex
     explicit TransportVelocityCorrectionComplex(ComplexRelation &complex_relation, Real coefficient = 0.2)
         : ComplexInteraction<TransportVelocityCorrection<Inner, WithBoundary>,
                              NoKernelCorrection, SingleResolution, ParticleScope>(
-              LocalDynamicsParameters(complex_relation.getInnerRelation(), coefficient),
-              LocalDynamicsParameters(complex_relation.getContactRelation(), coefficient)){};
+              ConstructorArgs(complex_relation.getInnerRelation(), coefficient),
+              ConstructorArgs(complex_relation.getContactRelation(), coefficient)){};
 };
 } // namespace fluid_dynamics
 } // namespace SPH

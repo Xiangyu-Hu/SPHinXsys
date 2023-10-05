@@ -18,10 +18,10 @@ DensitySummation<Base, DataDelegationType>::DensitySummation(BaseRelationType &b
       W0_(this->sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd)) {}
 //=================================================================================================//
 template <class InteractionType>
-template <typename... ConstructorArgs>
+template <typename... Args>
 DensitySummation<FreeStream<InteractionType>>::
-    DensitySummation(ConstructorArgs &&...args)
-    : DensitySummation<InteractionType>(std::forward<ConstructorArgs>(args)...),
+    DensitySummation(Args &&...args)
+    : DensitySummation<InteractionType>(std::forward<Args>(args)...),
       indicator_(*this->particles_->template getVariableByName<int>("Indicator")){};
 //=================================================================================================//
 template <class InteractionType>

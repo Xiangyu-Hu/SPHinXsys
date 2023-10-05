@@ -72,9 +72,9 @@ class TreeBody : public SecondaryStructure, public RealBody
     size_t last_branch_id_;
     Branch *root_;
 
-    template <typename... ConstructorArgs>
-    TreeBody(ConstructorArgs &&...args)
-        : SecondaryStructure(), RealBody(std::forward<ConstructorArgs>(args)...), last_branch_id_(0)
+    template <typename... Args>
+    TreeBody(Args &&...args)
+        : SecondaryStructure(), RealBody(std::forward<Args>(args)...), last_branch_id_(0)
     {
         root_ = branches_ptr_keeper_.createPtr<Branch>(this);
     };

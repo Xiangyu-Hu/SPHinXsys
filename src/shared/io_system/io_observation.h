@@ -118,9 +118,9 @@ class ReducedQuantityRecording
     VariableType type_indicator_; /*< this is an indicator to identify the variable type. */
 
   public:
-    template <typename... ConstructorArgs>
-    ReducedQuantityRecording(IOEnvironment &io_environment, ConstructorArgs &&...args)
-        : io_environment_(io_environment), plt_engine_(), reduce_method_(std::forward<ConstructorArgs>(args)...),
+    template <typename... Args>
+    ReducedQuantityRecording(IOEnvironment &io_environment, Args &&...args)
+        : io_environment_(io_environment), plt_engine_(), reduce_method_(std::forward<Args>(args)...),
           dynamics_identifier_name_(reduce_method_.DynamicsIdentifierName()),
           quantity_name_(reduce_method_.QuantityName())
     {

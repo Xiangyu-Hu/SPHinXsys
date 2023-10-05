@@ -19,8 +19,8 @@ BaseIntegration<DataDelegationType>::BaseIntegration(BaseRelationType &base_rela
       acc_(this->particles_->acc_), acc_prior_(this->particles_->acc_prior_) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>
-BaseIntegration1stHalfInner<RiemannSolverType, KernelCorrectionType>::
-    BaseIntegration1stHalfInner(BaseInnerRelation &inner_relation)
+Integration1stHalf<Inner, RiemannSolverType, KernelCorrectionType>::
+    Integration1stHalf(BaseInnerRelation &inner_relation)
     : BaseIntegration<FluidDataInner>(inner_relation),
       correction_(particles_), riemann_solver_(fluid_, fluid_)
 {
@@ -40,7 +40,7 @@ BaseIntegration1stHalfInner<RiemannSolverType, KernelCorrectionType>::
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>
-void BaseIntegration1stHalfInner<RiemannSolverType, KernelCorrectionType>::initialization(size_t index_i, Real dt)
+void Integration1stHalf<Inner, RiemannSolverType, KernelCorrectionType>::initialization(size_t index_i, Real dt)
 {
     rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
     p_[index_i] = fluid_.getPressure(rho_[index_i]);
@@ -48,13 +48,13 @@ void BaseIntegration1stHalfInner<RiemannSolverType, KernelCorrectionType>::initi
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>
-void BaseIntegration1stHalfInner<RiemannSolverType, KernelCorrectionType>::update(size_t index_i, Real dt)
+void Integration1stHalf<Inner, RiemannSolverType, KernelCorrectionType>::update(size_t index_i, Real dt)
 {
     vel_[index_i] += (acc_prior_[index_i] + acc_[index_i]) * dt;
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>
-void BaseIntegration1stHalfInner<RiemannSolverType, KernelCorrectionType>::interaction(size_t index_i, Real dt)
+void Integration1stHalf<Inner, RiemannSolverType, KernelCorrectionType>::interaction(size_t index_i, Real dt)
 {
     Vecd acceleration = Vecd::Zero();
     Real rho_dissipation(0);
@@ -72,53 +72,14 @@ void BaseIntegration1stHalfInner<RiemannSolverType, KernelCorrectionType>::inter
     drho_dt_[index_i] = rho_dissipation * rho_[index_i];
 }
 //=================================================================================================//
-template <class RiemannSolverType>
-BaseIntegration2ndHalfInner<RiemannSolverType>::
-    BaseIntegration2ndHalfInner(BaseInnerRelation &inner_relation)
-    : BaseIntegration<FluidDataInner>(inner_relation), riemann_solver_(this->fluid_, this->fluid_),
-      Vol_(particles_->Vol_), mass_(particles_->mass_) {}
-//=================================================================================================//
-template <class RiemannSolverType>
-void BaseIntegration2ndHalfInner<RiemannSolverType>::initialization(size_t index_i, Real dt)
-{
-    pos_[index_i] += vel_[index_i] * dt * 0.5;
-}
-//=================================================================================================//
-template <class RiemannSolverType>
-void BaseIntegration2ndHalfInner<RiemannSolverType>::update(size_t index_i, Real dt)
-{
-    rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
-    Vol_[index_i] = mass_[index_i] / rho_[index_i];
-}
-//=================================================================================================//
-template <class RiemannSolverType>
-void BaseIntegration2ndHalfInner<RiemannSolverType>::interaction(size_t index_i, Real dt)
-{
-    Real density_change_rate(0);
-    Vecd p_dissipation = Vecd::Zero();
-    const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-    {
-        size_t index_j = inner_neighborhood.j_[n];
-        const Vecd &e_ij = inner_neighborhood.e_ij_[n];
-        Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
-
-        Real u_jump = (vel_[index_i] - vel_[index_j]).dot(e_ij);
-        density_change_rate += u_jump * dW_ijV_j;
-        p_dissipation += riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * e_ij;
-    }
-    drho_dt_[index_i] += density_change_rate * rho_[index_i];
-    acc_[index_i] = p_dissipation / rho_[index_i];
-};
-//=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>
-MomentumWallBoundary<RiemannSolverType, KernelCorrectionType>::
-    MomentumWallBoundary(BaseContactRelation &wall_contact_relation)
+Integration1stHalf<WithWall, RiemannSolverType, KernelCorrectionType>::
+    Integration1stHalf(BaseContactRelation &wall_contact_relation)
     : InteractionWithWall<BaseIntegration>(wall_contact_relation),
       correction_(particles_), riemann_solver_(fluid_, fluid_) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>
-void MomentumWallBoundary<RiemannSolverType, KernelCorrectionType>::interaction(size_t index_i, Real dt)
+void Integration1stHalf<WithWall, RiemannSolverType, KernelCorrectionType>::interaction(size_t index_i, Real dt)
 {
     Vecd acceleration = Vecd::Zero();
     Real rho_dissipation(0);
@@ -144,15 +105,15 @@ void MomentumWallBoundary<RiemannSolverType, KernelCorrectionType>::interaction(
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>
-ExtendMomentumWallBoundary<RiemannSolverType, KernelCorrectionType>::
-    ExtendMomentumWallBoundary(BaseContactRelation &wall_contact_relation, Real penalty_strength)
-    : MomentumWallBoundary<RiemannSolverType, KernelCorrectionType>(wall_contact_relation),
+Integration1stHalf<WithWallExtend, RiemannSolverType, KernelCorrectionType>::
+    Integration1stHalf(BaseContactRelation &wall_contact_relation, Real penalty_strength)
+    : Integration1stHalf<WithWall, RiemannSolverType, KernelCorrectionType>(wall_contact_relation),
       penalty_strength_(penalty_strength) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>
-void ExtendMomentumWallBoundary<RiemannSolverType, KernelCorrectionType>::interaction(size_t index_i, Real dt)
+void Integration1stHalf<WithWallExtend, RiemannSolverType, KernelCorrectionType>::interaction(size_t index_i, Real dt)
 {
-    MomentumWallBoundary<RiemannSolverType, KernelCorrectionType>::interaction(index_i, dt);
+    Integration1stHalf<WithWall, RiemannSolverType, KernelCorrectionType>::interaction(index_i, dt);
 
     Real rho_i = this->rho_[index_i];
     Real penalty_pressure = this->p_[index_i];
@@ -188,13 +149,52 @@ void ExtendMomentumWallBoundary<RiemannSolverType, KernelCorrectionType>::intera
 }
 //=================================================================================================//
 template <class RiemannSolverType>
-ContinuityWallBoundary<RiemannSolverType>::
-    ContinuityWallBoundary(BaseContactRelation &wall_contact_relation)
+Integration2ndHalf<Inner, RiemannSolverType>::
+    Integration2ndHalf(BaseInnerRelation &inner_relation)
+    : BaseIntegration<FluidDataInner>(inner_relation), riemann_solver_(this->fluid_, this->fluid_),
+      Vol_(particles_->Vol_), mass_(particles_->mass_) {}
+//=================================================================================================//
+template <class RiemannSolverType>
+void Integration2ndHalf<Inner, RiemannSolverType>::initialization(size_t index_i, Real dt)
+{
+    pos_[index_i] += vel_[index_i] * dt * 0.5;
+}
+//=================================================================================================//
+template <class RiemannSolverType>
+void Integration2ndHalf<Inner, RiemannSolverType>::update(size_t index_i, Real dt)
+{
+    rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
+    Vol_[index_i] = mass_[index_i] / rho_[index_i];
+}
+//=================================================================================================//
+template <class RiemannSolverType>
+void Integration2ndHalf<Inner, RiemannSolverType>::interaction(size_t index_i, Real dt)
+{
+    Real density_change_rate(0);
+    Vecd p_dissipation = Vecd::Zero();
+    const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+    {
+        size_t index_j = inner_neighborhood.j_[n];
+        const Vecd &e_ij = inner_neighborhood.e_ij_[n];
+        Real dW_ijV_j = inner_neighborhood.dW_ijV_j_[n];
+
+        Real u_jump = (vel_[index_i] - vel_[index_j]).dot(e_ij);
+        density_change_rate += u_jump * dW_ijV_j;
+        p_dissipation += riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * e_ij;
+    }
+    drho_dt_[index_i] += density_change_rate * rho_[index_i];
+    acc_[index_i] = p_dissipation / rho_[index_i];
+};
+//=================================================================================================//
+template <class RiemannSolverType>
+Integration2ndHalf<WithWall, RiemannSolverType>::
+    Integration2ndHalf(BaseContactRelation &wall_contact_relation)
     : InteractionWithWall<BaseIntegration>(wall_contact_relation),
       riemann_solver_(this->fluid_, this->fluid_) {}
 //=================================================================================================//
 template <class RiemannSolverType>
-void ContinuityWallBoundary<RiemannSolverType>::interaction(size_t index_i, Real dt)
+void Integration2ndHalf<WithWall, RiemannSolverType>::interaction(size_t index_i, Real dt)
 {
     Real density_change_rate = 0.0;
     Vecd p_dissipation = Vecd::Zero();

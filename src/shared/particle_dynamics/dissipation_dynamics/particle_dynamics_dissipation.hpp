@@ -425,10 +425,10 @@ void DampingPairwiseFromWall<VariableType>::
 }
 //=================================================================================================//
 template <class DampingAlgorithmType>
-template <typename... ConstructorArgs>
+template <typename... Args>
 DampingWithRandomChoice<DampingAlgorithmType>::
-    DampingWithRandomChoice(Real random_ratio, ConstructorArgs &&...args)
-    : DampingAlgorithmType(std::forward<ConstructorArgs>(args)...), random_ratio_(random_ratio)
+    DampingWithRandomChoice(Real random_ratio, Args &&...args)
+    : DampingAlgorithmType(std::forward<Args>(args)...), random_ratio_(random_ratio)
 {
     this->eta_ /= random_ratio;
 }

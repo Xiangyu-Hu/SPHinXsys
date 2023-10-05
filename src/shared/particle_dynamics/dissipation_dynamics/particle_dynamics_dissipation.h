@@ -211,8 +211,8 @@ class DampingWithRandomChoice : public DampingAlgorithmType
     bool RandomChoice();
 
   public:
-    template <typename... ConstructorArgs>
-    DampingWithRandomChoice(Real random_ratio, ConstructorArgs &&...args);
+    template <typename... Args>
+    DampingWithRandomChoice(Real random_ratio, Args &&...args);
     virtual ~DampingWithRandomChoice(){};
 
     virtual void exec(Real dt = 0.0) override;

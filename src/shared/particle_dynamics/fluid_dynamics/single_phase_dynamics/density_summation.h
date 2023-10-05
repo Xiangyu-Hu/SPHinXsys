@@ -134,9 +134,9 @@ template <class InteractionType>
 class DensitySummation<FreeSurface<InteractionType>> : public DensitySummation<InteractionType>
 {
   public:
-    template <typename... ConstructorArgs>
-    explicit DensitySummation(ConstructorArgs &&...args)
-        : DensitySummation<InteractionType>(std::forward<ConstructorArgs>(args)...){};
+    template <typename... Args>
+    explicit DensitySummation(Args &&...args)
+        : DensitySummation<InteractionType>(std::forward<Args>(args)...){};
     virtual ~DensitySummation(){};
     void update(size_t index_i, Real dt = 0.0)
     {
@@ -148,8 +148,8 @@ template <class InteractionType>
 class DensitySummation<FreeStream<InteractionType>> : public DensitySummation<InteractionType>
 {
   public:
-    template <typename... ConstructorArgs>
-    explicit DensitySummation(ConstructorArgs &&...args);
+    template <typename... Args>
+    explicit DensitySummation(Args &&...args);
     virtual ~DensitySummation(){};
     void update(size_t index_i, Real dt = 0.0);
 

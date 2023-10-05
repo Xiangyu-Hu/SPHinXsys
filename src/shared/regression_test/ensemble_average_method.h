@@ -62,8 +62,8 @@ class RegressionTestEnsembleAverage : public RegressionTestTimeAverage<ObserveMe
     int testNewResult(int diff, BiVector<Matd> &current_result, BiVector<Matd> &meanvalue, BiVector<Matd> &variance);
 
   public:
-    template <typename... ConstructorArgs>
-    explicit RegressionTestEnsembleAverage(ConstructorArgs &&...args) : RegressionTestTimeAverage<ObserveMethodType>(std::forward<ConstructorArgs>(args)...)
+    template <typename... Args>
+    explicit RegressionTestEnsembleAverage(Args &&...args) : RegressionTestTimeAverage<ObserveMethodType>(std::forward<Args>(args)...)
     {
         this->mean_variance_filefullpath_ = this->input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ + "_ensemble_averaged_mean_variance.xml";
     };

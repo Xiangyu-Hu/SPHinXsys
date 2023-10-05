@@ -47,6 +47,7 @@ class Contact;         /**< Contact interaction: interaction between a body with
 class ContactAdaptive; /**< Contact interaction with adaptive resolution */
 class BaseContact;     /**< Base contact interaction*/
 class WithBoundary;    /**< Contact interaction with boundary */
+class WithWall;        /**< Contact interaction with wall boundary */
 //----------------------------------------------------------------------
 // Particle group scope functors
 //----------------------------------------------------------------------
@@ -288,15 +289,15 @@ class Average : public ReduceSumType
 };
 
 /**
- * @class LocalDynamicsParameters
- * @brief Class template argument deduction (CTAD) for constructor parameters.
+ * @class ConstructorArgs
+ * @brief Class template argument deduction (CTAD) for constructor arguments.
  */
 template <typename BodyRelationType, typename... OtherArgs>
-struct LocalDynamicsParameters
+struct ConstructorArgs
 {
     BodyRelationType &body_relation_;
     std::tuple<OtherArgs...> others_;
-    LocalDynamicsParameters(BodyRelationType &body_relation, OtherArgs... other_args)
+    ConstructorArgs(BodyRelationType &body_relation, OtherArgs... other_args)
         : body_relation_(body_relation), others_(other_args...){};
 };
 

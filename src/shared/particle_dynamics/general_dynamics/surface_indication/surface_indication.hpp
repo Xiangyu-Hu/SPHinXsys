@@ -14,10 +14,10 @@ FreeSurfaceIndication<DataDelegationType>::FreeSurfaceIndication(BaseRelationTyp
       threshold_by_dimensions_(0.75 * Dimensions) {}
 //=================================================================================================//
 template <class FreeSurfaceIdentificationType>
-template <typename... ConstructorArgs>
+template <typename... Args>
 SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIdentificationType>::
-    SpatialTemporalFreeSurfaceIdentification(ConstructorArgs &&...args)
-    : FreeSurfaceIdentificationType(std::forward<ConstructorArgs>(args)...)
+    SpatialTemporalFreeSurfaceIdentification(Args &&...args)
+    : FreeSurfaceIdentificationType(std::forward<Args>(args)...)
 {
     this->particles_->registerVariable(previous_surface_indicator_, "PreviousSurfaceIndicator", 1);
     this->particles_->template registerSortableVariable<int>("PreviousSurfaceIndicator");

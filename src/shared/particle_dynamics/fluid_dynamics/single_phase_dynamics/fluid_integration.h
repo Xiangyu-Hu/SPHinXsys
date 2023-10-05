@@ -26,7 +26,7 @@
  * @details We consider here weakly compressible fluids.
  * 			Note that, as these are local dynamics which are combined with particle dynamics
  * 			algorithms as template, the name-hiding is used for functions in the derived classes.
- * @author	Chi Zhang and Xiangyu Hu
+ * @author	Xiangyu Hu
  */
 
 #ifndef FLUID_INTEGRATION_H
@@ -41,11 +41,6 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-/**
- * @class FluidInitialCondition
- * @brief  Set initial condition for a fluid body.
- * This is a abstract class to be override for case specific initial conditions
- */
 class FluidInitialCondition : public LocalDynamics, public FluidDataSimple
 {
   public:
@@ -56,10 +51,6 @@ class FluidInitialCondition : public LocalDynamics, public FluidDataSimple
     StdLargeVec<Vecd> &pos_, &vel_;
 };
 
-/**
- * @class BaseIntegration
- * @brief Base class for all fluid relaxation schemes
- */
 template <class DataDelegationType>
 class BaseIntegration : public LocalDynamics, public DataDelegationType
 {
@@ -74,17 +65,16 @@ class BaseIntegration : public LocalDynamics, public DataDelegationType
     StdLargeVec<Vecd> &pos_, &vel_, &acc_, &acc_prior_;
 };
 
-/**
- * @class BaseIntegration1stHalfInner
- * @brief Template class for pressure relaxation scheme with the Riemann solver
- * as template variable
- */
+template <typename... InteractionTypes>
+class Integration1stHalf;
+
 template <class RiemannSolverType, class KernelCorrectionType>
-class BaseIntegration1stHalfInner : public BaseIntegration<FluidDataInner>
+class Integration1stHalf<Inner, RiemannSolverType, KernelCorrectionType>
+    : public BaseIntegration<FluidDataInner>
 {
   public:
-    explicit BaseIntegration1stHalfInner(BaseInnerRelation &inner_relation);
-    virtual ~BaseIntegration1stHalfInner(){};
+    explicit Integration1stHalf(BaseInnerRelation &inner_relation);
+    virtual ~Integration1stHalf(){};
     void initialization(size_t index_i, Real dt = 0.0);
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
@@ -93,20 +83,47 @@ class BaseIntegration1stHalfInner : public BaseIntegration<FluidDataInner>
     KernelCorrectionType correction_;
     RiemannSolverType riemann_solver_;
 };
-using Integration1stHalfInner = BaseIntegration1stHalfInner<NoRiemannSolver, NoKernelCorrection>;
-using Integration1stHalfInnerRiemann = BaseIntegration1stHalfInner<AcousticRiemannSolver, NoKernelCorrection>;
-using Integration1stHalfInnerDissipativeRiemann = BaseIntegration1stHalfInner<DissipativeRiemannSolver, NoKernelCorrection>;
 
-/**
- * @class BaseIntegration2ndHalfInner
- * @brief  Template density relaxation scheme with different Riemann solver
- */
-template <class RiemannSolverType>
-class BaseIntegration2ndHalfInner : public BaseIntegration<FluidDataInner>
+template <class RiemannSolverType, class KernelCorrectionType>
+class Integration1stHalf<WithWall, RiemannSolverType, KernelCorrectionType>
+    : public InteractionWithWall<BaseIntegration>
 {
   public:
-    explicit BaseIntegration2ndHalfInner(BaseInnerRelation &inner_relation);
-    virtual ~BaseIntegration2ndHalfInner(){};
+    explicit Integration1stHalf(BaseContactRelation &wall_contact_relation);
+    virtual ~Integration1stHalf(){};
+    inline void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    KernelCorrectionType correction_;
+    RiemannSolverType riemann_solver_;
+};
+
+class WithWallExtend;
+template <class RiemannSolverType, class KernelCorrectionType>
+class Integration1stHalf<WithWallExtend, RiemannSolverType, KernelCorrectionType>
+    : public Integration1stHalf<WithWall, RiemannSolverType, KernelCorrectionType>
+{
+  public:
+    explicit Integration1stHalf(BaseContactRelation &wall_contact_relation, Real penalty_strength = 1.0);
+    explicit Integration1stHalf(ConstructorArgs<BaseContactRelation, Real> parameters)
+        : Integration1stHalf(parameters.body_relation_, std::get<0>(parameters.others_)){};
+    virtual ~Integration1stHalf(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    Real penalty_strength_;
+};
+
+template <typename... InteractionTypes>
+class Integration2ndHalf;
+
+template <class RiemannSolverType>
+class Integration2ndHalf<Inner, RiemannSolverType>
+    : public BaseIntegration<FluidDataInner>
+{
+  public:
+    explicit Integration2ndHalf(BaseInnerRelation &inner_relation);
+    virtual ~Integration2ndHalf(){};
     void initialization(size_t index_i, Real dt = 0.0);
     inline void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
@@ -115,94 +132,43 @@ class BaseIntegration2ndHalfInner : public BaseIntegration<FluidDataInner>
     RiemannSolverType riemann_solver_;
     StdLargeVec<Real> &Vol_, &mass_;
 };
-using Integration2ndHalfInnerNoRiemann = BaseIntegration2ndHalfInner<NoRiemannSolver>;
-/** define the mostly used density relaxation scheme using Riemann solver */
-using Integration2ndHalfInnerRiemann = BaseIntegration2ndHalfInner<AcousticRiemannSolver>;
-using Integration2ndHalfInnerDissipativeRiemann = BaseIntegration2ndHalfInner<DissipativeRiemannSolver>;
 
-/**
- * @class MomentumWallBoundary
- * @brief Wall boundary condition for solving the momentum equation
- */
-template <class RiemannSolverType, class KernelCorrectionType>
-class MomentumWallBoundary : public InteractionWithWall<BaseIntegration>
-{
-  public:
-    explicit MomentumWallBoundary(BaseContactRelation &wall_contact_relation);
-    virtual ~MomentumWallBoundary(){};
-    inline void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    KernelCorrectionType correction_;
-    RiemannSolverType riemann_solver_;
-};
-
-using MomentumWallBoundaryNoRiemann = MomentumWallBoundary<NoRiemannSolver, NoKernelCorrection>;
-using MomentumWallBoundaryRiemann = MomentumWallBoundary<AcousticRiemannSolver, NoKernelCorrection>;
-using MomentumWallBoundaryDissipativeRiemann = MomentumWallBoundary<DissipativeRiemannSolver, NoKernelCorrection>;
-/**
- * @class ExtendMomentumWallBoundary
- * @brief Wall boundary conditions considering  wall penalty to prevent
- * particle penetration.
- */
-template <class RiemannSolverType, class KernelCorrectionType>
-class ExtendMomentumWallBoundary : public MomentumWallBoundary<RiemannSolverType, KernelCorrectionType>
-{
-  public:
-    explicit ExtendMomentumWallBoundary(BaseContactRelation &wall_contact_relation, Real penalty_strength = 1.0);
-    virtual ~ExtendMomentumWallBoundary(){};
-    void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    Real penalty_strength_;
-};
-using ExtendMomentumWallBoundaryRiemann = ExtendMomentumWallBoundary<AcousticRiemannSolver, NoKernelCorrection>;
-
-/**
- * @class ContinuityWallBoundary
- * @brief Wall boundary condition for solving the continuity equation
- */
 template <class RiemannSolverType>
-class ContinuityWallBoundary : public InteractionWithWall<BaseIntegration>
+class Integration2ndHalf<WithWall, RiemannSolverType>
+    : public InteractionWithWall<BaseIntegration>
 {
   public:
-    explicit ContinuityWallBoundary(BaseContactRelation &wall_contact_relation);
-    virtual ~ContinuityWallBoundary(){};
+    explicit Integration2ndHalf(BaseContactRelation &wall_contact_relation);
+    virtual ~Integration2ndHalf(){};
     inline void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
     RiemannSolverType riemann_solver_;
 };
-using ContinuityWallBoundaryNoRiemann = ContinuityWallBoundary<NoRiemannSolver>;
-using ContinuityWallBoundaryRiemann = ContinuityWallBoundary<AcousticRiemannSolver>;
-using ContinuityWallBoundaryDissipativeRiemann = ContinuityWallBoundary<DissipativeRiemannSolver>;
 
+template <class RiemannSolverType>
 class Integration1stHalfRiemannWithWall
-    : public OldComplexInteraction<Integration1stHalfInnerRiemann, MomentumWallBoundaryRiemann>
+    : public ComplexInteraction<Integration1stHalf<Inner, WithWall>, RiemannSolverType, NoKernelCorrection>
 {
   public:
     explicit Integration1stHalfRiemannWithWall(ComplexRelation &fluid_wall_relation)
-        : OldComplexInteraction<Integration1stHalfInnerRiemann, MomentumWallBoundaryRiemann>(
+        : ComplexInteraction<Integration1stHalf<Inner, WithWall>, RiemannSolverType, NoKernelCorrection>(
               fluid_wall_relation.getInnerRelation(), fluid_wall_relation.getContactRelation()){};
 };
-
+using Integration1stHalfRiemannWithWallNoRiemann = Integration1stHalfRiemannWithWall<NoRiemannSolver>;
+using Integration1stHalfRiemannWithWallRiemann = Integration1stHalfRiemannWithWall<AcousticRiemannSolver>;
+template <class RiemannSolverType>
 class Integration2ndHalfWithWall
-    : public OldComplexInteraction<Integration2ndHalfInnerNoRiemann, ContinuityWallBoundaryNoRiemann>
+    : public ComplexInteraction<Integration2ndHalf<Inner, WithWall>, RiemannSolverType>
 {
   public:
     explicit Integration2ndHalfWithWall(ComplexRelation &fluid_wall_relation)
-        : OldComplexInteraction<Integration2ndHalfInnerNoRiemann, ContinuityWallBoundaryNoRiemann>(
+        : ComplexInteraction<Integration2ndHalf<Inner, WithWall>, RiemannSolverType>(
               fluid_wall_relation.getInnerRelation(), fluid_wall_relation.getContactRelation()){};
 };
 
-class Integration2ndHalfRiemannWithWall
-    : public OldComplexInteraction<Integration2ndHalfInnerRiemann, ContinuityWallBoundaryRiemann>
-{
-  public:
-    explicit Integration2ndHalfRiemannWithWall(ComplexRelation &fluid_wall_relation)
-        : OldComplexInteraction<Integration2ndHalfInnerRiemann, ContinuityWallBoundaryRiemann>(
-              fluid_wall_relation.getInnerRelation(), fluid_wall_relation.getContactRelation()){};
-};
+using Integration2ndHalfWithWallNoRiemann = Integration2ndHalfWithWall<NoRiemannSolver>;
+using Integration2ndHalfWithWallRiemann = Integration2ndHalfWithWall<AcousticRiemannSolver>;
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // FLUID_INTEGRATION_H

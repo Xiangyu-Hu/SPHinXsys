@@ -46,12 +46,12 @@ class ComplexShape : public BinaryShapes
         : BinaryShapes(shape_name){};
     virtual ~ComplexShape(){};
 
-    template <typename... ConstructorArgs>
-    LevelSetShape *defineLevelSetShape(SPHBody &sph_body, const std::string &shape_name, ConstructorArgs &&...args)
+    template <typename... Args>
+    LevelSetShape *defineLevelSetShape(SPHBody &sph_body, const std::string &shape_name, Args &&...args)
     {
         size_t index = getShapeIndexByName(shape_name);
         LevelSetShape *level_set_shape = shapes_ptr_keeper_[index].createPtr<LevelSetShape>(
-            sph_body, *shapes_and_ops_[index].first, std::forward<ConstructorArgs>(args)...);
+            sph_body, *shapes_and_ops_[index].first, std::forward<Args>(args)...);
         shapes_and_ops_[index].first = DynamicCast<Shape>(this, level_set_shape);
         return level_set_shape;
     };

@@ -93,8 +93,8 @@ template <class FreeSurfaceIdentificationType>
 class SpatialTemporalFreeSurfaceIdentification : public FreeSurfaceIdentificationType
 {
   public:
-    template <typename... ConstructorArgs>
-    explicit SpatialTemporalFreeSurfaceIdentification(ConstructorArgs &&...args);
+    template <typename... Args>
+    explicit SpatialTemporalFreeSurfaceIdentification(Args &&...args);
     virtual ~SpatialTemporalFreeSurfaceIdentification(){};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
