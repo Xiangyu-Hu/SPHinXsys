@@ -39,11 +39,15 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-/**
- * @class Oldroyd_BIntegration1stHalf
- * @brief Pressure relaxation scheme with the mostly used Riemann solver.
- */
-class Oldroyd_BIntegration1stHalf : public Integration1stHalfInnerDissipativeRiemann
+template <typename... InteractionTypes>
+class Oldroyd_BIntegration1stHalf;
+
+using Integration1stHalfInnerDissipative =
+    Integration1stHalf<Inner, DissipativeRiemannSolver, NoKernelCorrection>;
+
+template <>
+class Oldroyd_BIntegration1stHalf<Inner>
+    : public Integration1stHalfInnerDissipative
 {
   public:
     explicit Oldroyd_BIntegration1stHalf(BaseInnerRelation &inner_relation);
@@ -55,11 +59,29 @@ class Oldroyd_BIntegration1stHalf : public Integration1stHalfInnerDissipativeRie
     StdLargeVec<Matd> tau_, dtau_dt_;
 };
 
-/**
- * @class Oldroyd_BIntegration2ndHalf
- * @brief Density relaxation scheme with the mostly used Riemann solver.
- */
-class Oldroyd_BIntegration2ndHalf : public Integration2ndHalfInnerDissipativeRiemann
+using Integration1stHalfWithWallDissipative =
+    Integration1stHalf<WithWall, DissipativeRiemannSolver, NoKernelCorrection>;
+template <>
+class Oldroyd_BIntegration1stHalf<WithWall>
+    : public Integration1stHalfWithWallDissipative
+{
+  public:
+    explicit Oldroyd_BIntegration1stHalf(BaseContactRelation &wall_contact_relation);
+    virtual ~Oldroyd_BIntegration1stHalf(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    StdLargeVec<Matd> &tau_;
+};
+
+template <typename... InteractionTypes>
+class Oldroyd_BIntegration2ndHalf;
+
+using Integration2ndHalfInnerDissipative =
+    Integration2ndHalf<Inner, DissipativeRiemannSolver>;
+template <>
+class Oldroyd_BIntegration2ndHalf<Inner>
+    : public Integration2ndHalfInnerDissipative
 {
   public:
     explicit Oldroyd_BIntegration2ndHalf(BaseInnerRelation &inner_relation);
@@ -73,30 +95,15 @@ class Oldroyd_BIntegration2ndHalf : public Integration2ndHalfInnerDissipativeRie
     Real mu_p_, lambda_;
 };
 
-/**
- * @class Oldroyd_BMomentumWallBoundary
- * @brief Dissipative Riemann solver is used here.
- */
-class Oldroyd_BMomentumWallBoundary : public MomentumWallBoundaryDissipativeRiemann
+using Integration2ndHalfWithWallDissipative =
+    Integration2ndHalf<WithWall, DissipativeRiemannSolver>;
+template <>
+class Oldroyd_BIntegration2ndHalf<WithWall>
+    : public Integration2ndHalfWithWallDissipative
 {
   public:
-    explicit Oldroyd_BMomentumWallBoundary(BaseContactRelation &wall_contact_relation);
-    virtual ~Oldroyd_BMomentumWallBoundary(){};
-    void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    StdLargeVec<Matd> &tau_;
-};
-
-/**
- * @class Oldroyd_BContinuityWallBoundary
- * @brief Dissipative Riemann solver is used here too.
- */
-class Oldroyd_BContinuityWallBoundary : public ContinuityWallBoundaryDissipativeRiemann
-{
-  public:
-    explicit Oldroyd_BContinuityWallBoundary(BaseContactRelation &wall_contact_relation);
-    virtual ~Oldroyd_BContinuityWallBoundary(){};
+    explicit Oldroyd_BIntegration2ndHalf(BaseContactRelation &wall_contact_relation);
+    virtual ~Oldroyd_BIntegration2ndHalf(){};
     inline void interaction(size_t index_i, Real dt = 0.0);
 
   protected:

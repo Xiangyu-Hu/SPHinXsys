@@ -48,6 +48,7 @@ class ContactAdaptive; /**< Contact interaction with adaptive resolution */
 class BaseContact;     /**< Base contact interaction*/
 class WithBoundary;    /**< Contact interaction with boundary */
 class WithWall;        /**< Contact interaction with wall boundary */
+class WithWallExtend;  /**< Contact interaction with extended wall boundary */
 //----------------------------------------------------------------------
 // Particle group scope functors
 //----------------------------------------------------------------------
