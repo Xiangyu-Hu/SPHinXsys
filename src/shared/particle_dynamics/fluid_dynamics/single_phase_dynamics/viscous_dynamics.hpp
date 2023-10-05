@@ -9,7 +9,7 @@ namespace fluid_dynamics
 //=================================================================================================//
 template <class DataDelegationType>
 template <class BaseRelationType>
-BaseViscousAcceleration<DataDelegationType>::BaseViscousAcceleration(BaseRelationType &base_relation)
+ViscousAcceleration<DataDelegationType>::ViscousAcceleration(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
       rho_(this->particles_->rho_), vel_(this->particles_->vel_),
       acc_prior_(this->particles_->acc_prior_),

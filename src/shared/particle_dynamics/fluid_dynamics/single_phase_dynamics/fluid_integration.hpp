@@ -73,13 +73,13 @@ void Integration1stHalf<Inner, RiemannSolverType, KernelCorrectionType>::interac
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>
-Integration1stHalf<WithWall, RiemannSolverType, KernelCorrectionType>::
+Integration1stHalf<ContactWall, RiemannSolverType, KernelCorrectionType>::
     Integration1stHalf(BaseContactRelation &wall_contact_relation)
     : InteractionWithWall<BaseIntegration>(wall_contact_relation),
       correction_(particles_), riemann_solver_(fluid_, fluid_) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>
-void Integration1stHalf<WithWall, RiemannSolverType, KernelCorrectionType>::interaction(size_t index_i, Real dt)
+void Integration1stHalf<ContactWall, RiemannSolverType, KernelCorrectionType>::interaction(size_t index_i, Real dt)
 {
     Vecd acceleration = Vecd::Zero();
     Real rho_dissipation(0);
@@ -105,15 +105,15 @@ void Integration1stHalf<WithWall, RiemannSolverType, KernelCorrectionType>::inte
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>
-Integration1stHalf<WithWallExtend, RiemannSolverType, KernelCorrectionType>::
+Integration1stHalf<Extended<ContactWall>, RiemannSolverType, KernelCorrectionType>::
     Integration1stHalf(BaseContactRelation &wall_contact_relation, Real penalty_strength)
-    : Integration1stHalf<WithWall, RiemannSolverType, KernelCorrectionType>(wall_contact_relation),
+    : Integration1stHalf<ContactWall, RiemannSolverType, KernelCorrectionType>(wall_contact_relation),
       penalty_strength_(penalty_strength) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType>
-void Integration1stHalf<WithWallExtend, RiemannSolverType, KernelCorrectionType>::interaction(size_t index_i, Real dt)
+void Integration1stHalf<Extended<ContactWall>, RiemannSolverType, KernelCorrectionType>::interaction(size_t index_i, Real dt)
 {
-    Integration1stHalf<WithWall, RiemannSolverType, KernelCorrectionType>::interaction(index_i, dt);
+    Integration1stHalf<ContactWall, RiemannSolverType, KernelCorrectionType>::interaction(index_i, dt);
 
     Real rho_i = this->rho_[index_i];
     Real penalty_pressure = this->p_[index_i];
@@ -188,13 +188,13 @@ void Integration2ndHalf<Inner, RiemannSolverType>::interaction(size_t index_i, R
 };
 //=================================================================================================//
 template <class RiemannSolverType>
-Integration2ndHalf<WithWall, RiemannSolverType>::
+Integration2ndHalf<ContactWall, RiemannSolverType>::
     Integration2ndHalf(BaseContactRelation &wall_contact_relation)
     : InteractionWithWall<BaseIntegration>(wall_contact_relation),
       riemann_solver_(this->fluid_, this->fluid_) {}
 //=================================================================================================//
 template <class RiemannSolverType>
-void Integration2ndHalf<WithWall, RiemannSolverType>::interaction(size_t index_i, Real dt)
+void Integration2ndHalf<ContactWall, RiemannSolverType>::interaction(size_t index_i, Real dt)
 {
     Real density_change_rate = 0.0;
     Vecd p_dissipation = Vecd::Zero();

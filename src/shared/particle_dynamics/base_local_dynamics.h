@@ -46,9 +46,10 @@ class BaseInner;       /**< Base inner interaction */
 class Contact;         /**< Contact interaction: interaction between a body with one or several another bodies */
 class ContactAdaptive; /**< Contact interaction with adaptive resolution */
 class BaseContact;     /**< Base contact interaction*/
-class WithBoundary;    /**< Contact interaction with boundary */
-class WithWall;        /**< Contact interaction with wall boundary */
-class WithWallExtend;  /**< Contact interaction with extended wall boundary */
+class ContactBoundary; /**< Contact interaction with boundary */
+class ContactWall;     /**< Contact interaction with wall boundary */
+template <typename InteractionType>
+class Extended; /**< An extened method of an interaction type */
 //----------------------------------------------------------------------
 // Particle group scope functors
 //----------------------------------------------------------------------

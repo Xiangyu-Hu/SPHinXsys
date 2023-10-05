@@ -22,11 +22,9 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file 	viscous_dynamics.h
- * @brief 	Here, we define the algorithm classes for fluid dynamics within the body.
- * @details We consider here weakly compressible fluids.
- * 			Note that, as these are local dynamics which are combined with particle dynamics
- * 			algorithms as template, the name-hiding is used for functions in the derived classes.
- * @author	Chi Zhang and Xiangyu Hu
+ * @brief Here, we define the algorithm classes for computing viscous forces in fluids.
+ * @details TBD.
+ * @author	Xiangyu Hu
  */
 
 #ifndef VISCOUS_DYNAMICS_H
@@ -38,17 +36,17 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-/**
- * @class BaseViscousAcceleration
- * @brief Base class for the viscosity force induced acceleration
- */
+template <typename... InteractionTypes>
+class ViscousAcceleration;
+
 template <class DataDelegationType>
-class BaseViscousAcceleration : public LocalDynamics, public DataDelegationType
+class ViscousAcceleration<DataDelegationType>
+    : public LocalDynamics, public DataDelegationType
 {
   public:
     template <class BaseRelationType>
-    explicit BaseViscousAcceleration(BaseRelationType &base_relation);
-    virtual ~BaseViscousAcceleration(){};
+    explicit ViscousAcceleration(BaseRelationType &base_relation);
+    virtual ~ViscousAcceleration(){};
 
   protected:
     StdLargeVec<Real> &rho_;
@@ -57,44 +55,57 @@ class BaseViscousAcceleration : public LocalDynamics, public DataDelegationType
     Real smoothing_length_;
 };
 
-/**
- * @class ViscousAccelerationInner
- * @brief  the viscosity force induced acceleration
- */
-class ViscousAccelerationInner : public BaseViscousAcceleration<FluidDataInner>
+template <>
+class ViscousAcceleration<Inner> : public ViscousAcceleration<FluidDataInner>
 {
   public:
-    explicit ViscousAccelerationInner(BaseInnerRelation &inner_relation)
-        : BaseViscousAcceleration<FluidDataInner>(inner_relation){};
-    virtual ~ViscousAccelerationInner(){};
+    explicit ViscousAcceleration(BaseInnerRelation &inner_relation)
+        : ViscousAcceleration<FluidDataInner>(inner_relation){};
+    virtual ~ViscousAcceleration(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };
 
-/**
- * @class AngularConservativeViscousAccelerationInner
- * @brief the viscosity force induced acceleration, a formulation for conserving
- * angular momentum, to be tested for its practical applications.
- */
-class AngularConservativeViscousAccelerationInner : public BaseViscousAcceleration<FluidDataInner>
+template <>
+class ViscousAcceleration<AngularConservative<Inner>>
+    : public ViscousAcceleration<FluidDataInner>
 {
   public:
-    explicit AngularConservativeViscousAccelerationInner(BaseInnerRelation &inner_relation)
-        : BaseViscousAcceleration<FluidDataInner>(inner_relation){};
-    virtual ~AngularConservativeViscousAccelerationInner(){};
+    explicit ViscousAcceleration(BaseInnerRelation &inner_relation)
+        : ViscousAcceleration<FluidDataInner>(inner_relation){};
+    virtual ~ViscousAcceleration(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };
 
-/**
- * @class ViscousWallBoundary
- * @brief TBD
- */
-class ViscousWallBoundary : public InteractionWithWall<BaseViscousAcceleration>
+template <>
+class ViscousAcceleration<ContactWall> : public InteractionWithWall<ViscousAcceleration>
 {
   public:
-    ViscousWallBoundary(BaseContactRelation &wall_contact_relation)
-        : InteractionWithWall<BaseViscousAcceleration>(wall_contact_relation){};
-    virtual ~ViscousWallBoundary(){};
+    ViscousAcceleration(BaseContactRelation &wall_contact_relation)
+        : InteractionWithWall<ViscousAcceleration>(wall_contact_relation){};
+    virtual ~ViscousAcceleration(){};
     void interaction(size_t index_i, Real dt = 0.0);
+};
+
+class ViscousAccelerationWithWall
+    : public ComplexInteraction<ViscousAcceleration<Inner, ContactWall>>
+{
+  public:
+    explicit ViscousAccelerationWithWall(ComplexRelation &fluid_wall_relation)
+        : ComplexInteraction<ViscousAcceleration<Inner, ContactWall>>(
+              fluid_wall_relation.getInnerRelation(), fluid_wall_relation.getContactRelation()){};
+};
+
+template <>
+class ViscousAcceleration<Contact> : public ViscousAcceleration<FluidContactData>
+{
+  public:
+    explicit ViscousAcceleration(BaseContactRelation &contact_relation);
+    virtual ~ViscousAcceleration(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    StdVec<Real> contact_mu_;
+    StdVec<StdLargeVec<Vecd> *> contact_vel_;
 };
 
 /**
@@ -112,15 +123,6 @@ class VorticityInner : public LocalDynamics, public FluidDataInner
   protected:
     StdLargeVec<Vecd> &vel_;
     StdLargeVec<AngularVecd> vorticity_;
-};
-
-class ViscousAccelerationWithWall
-    : public OldComplexInteraction<ViscousAccelerationInner, ViscousWallBoundary>
-{
-  public:
-    explicit ViscousAccelerationWithWall(ComplexRelation &fluid_wall_relation)
-        : OldComplexInteraction<ViscousAccelerationInner, ViscousWallBoundary>(
-              fluid_wall_relation.getInnerRelation(), fluid_wall_relation.getContactRelation()){};
 };
 } // namespace fluid_dynamics
 } // namespace SPH

@@ -40,12 +40,12 @@ void Oldroyd_BIntegration1stHalf<Inner>::interaction(size_t index_i, Real dt)
     acc_[index_i] += acceleration / rho_[index_i];
 }
 //=================================================================================================//
-Oldroyd_BIntegration1stHalf<WithWall>::
+Oldroyd_BIntegration1stHalf<ContactWall>::
     Oldroyd_BIntegration1stHalf(BaseContactRelation &wall_contact_relation)
     : Integration1stHalfWithWallDissipative(wall_contact_relation),
       tau_(*particles_->getVariableByName<Matd>("ElasticStress")){};
 //=================================================================================================//
-void Oldroyd_BIntegration1stHalf<WithWall>::interaction(size_t index_i, Real dt)
+void Oldroyd_BIntegration1stHalf<ContactWall>::interaction(size_t index_i, Real dt)
 {
     Integration1stHalfWithWallDissipative::interaction(index_i, dt);
 
@@ -106,7 +106,7 @@ void Oldroyd_BIntegration2ndHalf<Inner>::
     dtau_dt_[index_i] = stress_rate;
 }
 //=================================================================================================//
-Oldroyd_BIntegration2ndHalf<WithWall>::
+Oldroyd_BIntegration2ndHalf<ContactWall>::
     Oldroyd_BIntegration2ndHalf(BaseContactRelation &wall_contact_relation)
     : Integration2ndHalfWithWallDissipative(wall_contact_relation),
       oldroyd_b_fluid_(DynamicCast<Oldroyd_B_Fluid>(this, particles_->getBaseMaterial())),
@@ -117,7 +117,7 @@ Oldroyd_BIntegration2ndHalf<WithWall>::
     lambda_ = oldroyd_b_fluid_.getReferenceRelaxationTime();
 }
 //=================================================================================================//
-void Oldroyd_BIntegration2ndHalf<WithWall>::interaction(size_t index_i, Real dt)
+void Oldroyd_BIntegration2ndHalf<ContactWall>::interaction(size_t index_i, Real dt)
 {
     Integration2ndHalfWithWallDissipative::interaction(index_i, dt);
 

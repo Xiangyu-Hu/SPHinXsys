@@ -37,21 +37,6 @@ namespace SPH
 namespace fluid_dynamics
 {
 typedef DataDelegateContact<BaseParticles, BaseParticles> MultiPhaseContactData;
-/**
- * @class ViscousAccelerationMultiPhase
- * @brief  the viscosity force induced acceleration
- */
-class ViscousAccelerationMultiPhase : public BaseViscousAcceleration<MultiPhaseContactData>
-{
-  public:
-    explicit ViscousAccelerationMultiPhase(BaseContactRelation &contact_relation);
-    virtual ~ViscousAccelerationMultiPhase(){};
-    void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    StdVec<Real> contact_mu_;
-    StdVec<StdLargeVec<Vecd> *> contact_vel_;
-};
 
 /**
  * @class MultiPhaseMomentumInterface

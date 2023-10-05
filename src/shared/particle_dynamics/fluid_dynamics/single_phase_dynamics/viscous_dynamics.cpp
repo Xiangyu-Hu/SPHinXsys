@@ -5,7 +5,7 @@ namespace SPH
 namespace fluid_dynamics
 {
 //=================================================================================================//
-void ViscousAccelerationInner::interaction(size_t index_i, Real dt)
+void ViscousAcceleration<Inner>::interaction(size_t index_i, Real dt)
 {
     Vecd acceleration = Vecd::Zero();
     Vecd vel_derivative = Vecd::Zero();
@@ -22,7 +22,7 @@ void ViscousAccelerationInner::interaction(size_t index_i, Real dt)
     acc_prior_[index_i] += acceleration / rho_[index_i];
 }
 //=================================================================================================//
-void AngularConservativeViscousAccelerationInner::interaction(size_t index_i, Real dt)
+void ViscousAcceleration<AngularConservative<Inner>>::interaction(size_t index_i, Real dt)
 {
     Vecd acceleration = Vecd::Zero();
     Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -42,7 +42,7 @@ void AngularConservativeViscousAccelerationInner::interaction(size_t index_i, Re
     acc_prior_[index_i] += acceleration / rho_[index_i];
 }
 //=================================================================================================//
-void ViscousWallBoundary::interaction(size_t index_i, Real dt)
+void ViscousAcceleration<ContactWall>::interaction(size_t index_i, Real dt)
 {
     Real rho_i = this->rho_[index_i];
     const Vecd &vel_i = this->vel_[index_i];
@@ -64,6 +64,36 @@ void ViscousWallBoundary::interaction(size_t index_i, Real dt)
     }
 
     this->acc_prior_[index_i] += acceleration;
+}
+//=================================================================================================//
+ViscousAcceleration<Contact>::ViscousAcceleration(BaseContactRelation &contact_relation)
+    : ViscousAcceleration<FluidContactData>(contact_relation)
+{
+    for (size_t k = 0; k != contact_particles_.size(); ++k)
+    {
+        Real mu_k = DynamicCast<Fluid>(this, &contact_particles_[k]->getBaseMaterial())->ReferenceViscosity();
+        contact_mu_.push_back(Real(2) * (mu_ * mu_k) / (mu_ + mu_k));
+        contact_vel_.push_back(&(contact_particles_[k]->vel_));
+    }
+}
+//=================================================================================================//
+void ViscousAcceleration<Contact>::interaction(size_t index_i, Real dt)
+{
+    Vecd acceleration = Vecd::Zero();
+    for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
+    {
+        Real contact_mu_k = this->contact_mu_[k];
+        StdLargeVec<Vecd> &vel_k = *(this->contact_vel_[k]);
+        Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
+        for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+        {
+            size_t index_j = contact_neighborhood.j_[n];
+            Vecd vel_derivative = (this->vel_[index_i] - vel_k[index_j]) /
+                                  (contact_neighborhood.r_ij_[n] + 0.01 * this->smoothing_length_);
+            acceleration += 2.0 * contact_mu_k * vel_derivative * contact_neighborhood.dW_ijV_j_[n];
+        }
+    }
+    acc_prior_[index_i] += acceleration / this->rho_[index_i];
 }
 //=================================================================================================//
 VorticityInner::VorticityInner(BaseInnerRelation &inner_relation)

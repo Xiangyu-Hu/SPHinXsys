@@ -44,13 +44,13 @@ void TransportVelocityCorrection<Inner, KernelCorrectionType, ResolutionType, Pa
 }
 //=================================================================================================//
 template <class KernelCorrectionType, class ResolutionType, class ParticleScope>
-TransportVelocityCorrection<WithBoundary, KernelCorrectionType, ResolutionType, ParticleScope>::
+TransportVelocityCorrection<ContactBoundary, KernelCorrectionType, ResolutionType, ParticleScope>::
     TransportVelocityCorrection(BaseContactRelation &contact_relation, Real coefficient)
     : TransportVelocityCorrection<FluidContactData, KernelCorrectionType, ResolutionType, ParticleScope>(
           contact_relation, coefficient) {}
 //=================================================================================================//
 template <class KernelCorrectionType, class ResolutionType, class ParticleScope>
-void TransportVelocityCorrection<WithBoundary, KernelCorrectionType, ResolutionType, ParticleScope>::
+void TransportVelocityCorrection<ContactBoundary, KernelCorrectionType, ResolutionType, ParticleScope>::
     interaction(size_t index_i, Real dt)
 {
     if (this->checkWithinScope(index_i))

@@ -75,7 +75,7 @@ class TransportVelocityCorrection<Inner, KernelCorrectionType, ResolutionType, P
 };
 
 template <class KernelCorrectionType, class ResolutionType, class ParticleScope>
-class TransportVelocityCorrection<WithBoundary, KernelCorrectionType, ResolutionType, ParticleScope>
+class TransportVelocityCorrection<ContactBoundary, KernelCorrectionType, ResolutionType, ParticleScope>
     : public TransportVelocityCorrection<FluidContactData, KernelCorrectionType, ResolutionType, ParticleScope>
 {
   public:
@@ -103,12 +103,12 @@ class TransportVelocityCorrection<Contact, KernelCorrectionType, ResolutionType,
 
 template <class ParticleScope>
 class TransportVelocityCorrectionComplex
-    : public ComplexInteraction<TransportVelocityCorrection<Inner, WithBoundary>,
+    : public ComplexInteraction<TransportVelocityCorrection<Inner, ContactBoundary>,
                                 NoKernelCorrection, SingleResolution, ParticleScope>
 {
   public:
     explicit TransportVelocityCorrectionComplex(ComplexRelation &complex_relation, Real coefficient = 0.2)
-        : ComplexInteraction<TransportVelocityCorrection<Inner, WithBoundary>,
+        : ComplexInteraction<TransportVelocityCorrection<Inner, ContactBoundary>,
                              NoKernelCorrection, SingleResolution, ParticleScope>(
               ConstructorArgs(complex_relation.getInnerRelation(), coefficient),
               ConstructorArgs(complex_relation.getContactRelation(), coefficient)){};
