@@ -30,7 +30,7 @@
  * Volume 404, 1 March 2020, 109135.
  * If single (acoustic) time step is used, the coefficient should be decrease
  * to about 1/4 of the default value.
- * @author	Chi Zhang and Xiangyu Hu
+ * @author	Xiangyu Hu
  */
 
 #ifndef TRANSPORT_VELOCITY_CORRECTION_H
@@ -45,22 +45,10 @@ namespace fluid_dynamics
 template <typename... T>
 class TransportVelocityCorrection;
 
-template <class KernelCorrectionType, class ResolutionType, class ParticleScopeType>
-struct ControlFunctors
-{
-    using KernelCorrection = KernelCorrectionType;
-    using Resolution = ResolutionType;
-    using ParticleScope = ParticleScopeType;
-};
-
-template <class DataDelegationType, class ControlType>
-class TransportVelocityCorrection<DataDelegationType, ControlType>
+template <class DataDelegationType, class KernelCorrectionType, class ResolutionType, class ParticleScope>
+class TransportVelocityCorrection<DataDelegationType, KernelCorrectionType, ResolutionType, ParticleScope>
     : public LocalDynamics, public DataDelegationType
 {
-    using KernelCorrectionType = typename ControlType::KernelCorrection;
-    using ResolutionType = typename ControlType::Resolution;
-    using ParticleScopeType = typename ControlType::ParticleScope;
-
   public:
     template <class BaseRelationType>
     explicit TransportVelocityCorrection(BaseRelationType &base_relation, Real coefficient);
@@ -71,42 +59,40 @@ class TransportVelocityCorrection<DataDelegationType, ControlType>
     StdLargeVec<Vecd> &pos_;
     KernelCorrectionType kernel_correction_;
     ResolutionType h_ratio_;
-    ParticleScopeType checkWithinScope;
+    ParticleScope checkWithinScope;
 };
 
-template <class ControlType>
-class TransportVelocityCorrection<Inner, ControlType>
-    : public TransportVelocityCorrection<FluidDataInner, ControlType>
+template <class KernelCorrectionType, class ResolutionType, class ParticleScope>
+class TransportVelocityCorrection<Inner, KernelCorrectionType, ResolutionType, ParticleScope>
+    : public TransportVelocityCorrection<FluidDataInner, KernelCorrectionType, ResolutionType, ParticleScope>
 {
   public:
     explicit TransportVelocityCorrection(BaseInnerRelation &inner_relation, Real coefficient = 0.2);
-    TransportVelocityCorrection(LocalDynamicsParameters<BaseInnerRelation, Real> parameters)
+    explicit TransportVelocityCorrection(LocalDynamicsParameters<BaseInnerRelation, Real> parameters)
         : TransportVelocityCorrection(parameters.body_relation_, std::get<0>(parameters.others_)){};
     virtual ~TransportVelocityCorrection(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };
 
-template <class ControlType>
-class TransportVelocityCorrection<WithBoundary, ControlType>
-    : public TransportVelocityCorrection<FluidContactData, ControlType>
+template <class KernelCorrectionType, class ResolutionType, class ParticleScope>
+class TransportVelocityCorrection<WithBoundary, KernelCorrectionType, ResolutionType, ParticleScope>
+    : public TransportVelocityCorrection<FluidContactData, KernelCorrectionType, ResolutionType, ParticleScope>
 {
   public:
     explicit TransportVelocityCorrection(BaseContactRelation &contact_relation, Real coefficient = 0.2);
-    TransportVelocityCorrection(LocalDynamicsParameters<BaseContactRelation, Real> parameters)
+    explicit TransportVelocityCorrection(LocalDynamicsParameters<BaseContactRelation, Real> parameters)
         : TransportVelocityCorrection(parameters.body_relation_, std::get<0>(parameters.others_)){};
     virtual ~TransportVelocityCorrection(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };
 
-template <class ControlType>
-class TransportVelocityCorrection<Contact, ControlType>
-    : public TransportVelocityCorrection<FluidContactData, ControlType>
+template <class KernelCorrectionType, class ResolutionType, class ParticleScope>
+class TransportVelocityCorrection<Contact, KernelCorrectionType, ResolutionType, ParticleScope>
+    : public TransportVelocityCorrection<FluidContactData, KernelCorrectionType, ResolutionType, ParticleScope>
 {
-    using KernelCorrectionType = typename ControlType::KernelCorrection;
-
   public:
     explicit TransportVelocityCorrection(BaseContactRelation &contact_relation, Real coefficient = 0.2);
-    TransportVelocityCorrection(LocalDynamicsParameters<BaseContactRelation, Real> parameters)
+    explicit TransportVelocityCorrection(LocalDynamicsParameters<BaseContactRelation, Real> parameters)
         : TransportVelocityCorrection(parameters.body_relation_, std::get<0>(parameters.others_)){};
     virtual ~TransportVelocityCorrection(){};
     void interaction(size_t index_i, Real dt = 0.0);
@@ -115,15 +101,15 @@ class TransportVelocityCorrection<Contact, ControlType>
     StdVec<KernelCorrectionType> contact_kernel_corrections_;
 };
 
-template <class ParticleScopeType>
+template <class ParticleScope>
 class TransportVelocityCorrectionComplex
     : public ComplexInteraction<TransportVelocityCorrection<Inner, WithBoundary>,
-                                ControlFunctors<NoKernelCorrection, SingleResolution, ParticleScopeType>>
+                                NoKernelCorrection, SingleResolution, ParticleScope>
 {
   public:
     explicit TransportVelocityCorrectionComplex(ComplexRelation &complex_relation, Real coefficient = 0.2)
         : ComplexInteraction<TransportVelocityCorrection<Inner, WithBoundary>,
-                             ControlFunctors<NoKernelCorrection, SingleResolution, ParticleScopeType>>(
+                             NoKernelCorrection, SingleResolution, ParticleScope>(
               LocalDynamicsParameters(complex_relation.getInnerRelation(), coefficient),
               LocalDynamicsParameters(complex_relation.getContactRelation(), coefficient)){};
 };

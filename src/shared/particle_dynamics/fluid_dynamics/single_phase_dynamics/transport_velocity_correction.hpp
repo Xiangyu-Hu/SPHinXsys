@@ -7,23 +7,23 @@ namespace SPH
 namespace fluid_dynamics
 {
 //=================================================================================================//
-template <class DataDelegationType, class ControlType>
+template <class DataDelegationType, class KernelCorrectionType, class ResolutionType, class ParticleScope>
 template <class BaseRelationType>
-TransportVelocityCorrection<DataDelegationType, ControlType>::
+TransportVelocityCorrection<DataDelegationType, KernelCorrectionType, ResolutionType, ParticleScope>::
     TransportVelocityCorrection(BaseRelationType &base_relation, Real coefficient)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
       correction_scaling_(coefficient * pow(sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)),
       pos_(this->particles_->pos_), kernel_correction_(this->particles_), h_ratio_(this->particles_),
       checkWithinScope(this->particles_) {}
 //=================================================================================================//
-template <class ControlType>
-TransportVelocityCorrection<Inner, ControlType>::
+template <class KernelCorrectionType, class ResolutionType, class ParticleScope>
+TransportVelocityCorrection<Inner, KernelCorrectionType, ResolutionType, ParticleScope>::
     TransportVelocityCorrection(BaseInnerRelation &inner_relation, Real coefficient)
-    : TransportVelocityCorrection<FluidDataInner, ControlType>(
+    : TransportVelocityCorrection<FluidDataInner, KernelCorrectionType, ResolutionType, ParticleScope>(
           inner_relation, coefficient) {}
 //=================================================================================================//
-template <class ControlType>
-void TransportVelocityCorrection<Inner, ControlType>::
+template <class KernelCorrectionType, class ResolutionType, class ParticleScope>
+void TransportVelocityCorrection<Inner, KernelCorrectionType, ResolutionType, ParticleScope>::
     interaction(size_t index_i, Real dt)
 {
     if (this->checkWithinScope(index_i))
@@ -43,14 +43,14 @@ void TransportVelocityCorrection<Inner, ControlType>::
     }
 }
 //=================================================================================================//
-template <class ControlType>
-TransportVelocityCorrection<WithBoundary, ControlType>::
+template <class KernelCorrectionType, class ResolutionType, class ParticleScope>
+TransportVelocityCorrection<WithBoundary, KernelCorrectionType, ResolutionType, ParticleScope>::
     TransportVelocityCorrection(BaseContactRelation &contact_relation, Real coefficient)
-    : TransportVelocityCorrection<FluidContactData, ControlType>(
+    : TransportVelocityCorrection<FluidContactData, KernelCorrectionType, ResolutionType, ParticleScope>(
           contact_relation, coefficient) {}
 //=================================================================================================//
-template <class ControlType>
-void TransportVelocityCorrection<WithBoundary, ControlType>::
+template <class KernelCorrectionType, class ResolutionType, class ParticleScope>
+void TransportVelocityCorrection<WithBoundary, KernelCorrectionType, ResolutionType, ParticleScope>::
     interaction(size_t index_i, Real dt)
 {
     if (this->checkWithinScope(index_i))
@@ -71,20 +71,20 @@ void TransportVelocityCorrection<WithBoundary, ControlType>::
     }
 }
 //=================================================================================================//
-template <class ControlType>
-TransportVelocityCorrection<Contact, ControlType>::
+template <class KernelCorrectionType, class ResolutionType, class ParticleScope>
+TransportVelocityCorrection<Contact, KernelCorrectionType, ResolutionType, ParticleScope>::
     TransportVelocityCorrection(BaseContactRelation &contact_relation, Real coefficient)
-    : TransportVelocityCorrection<FluidContactData, ControlType>(
+    : TransportVelocityCorrection<FluidContactData, KernelCorrectionType, ResolutionType, ParticleScope>(
           contact_relation, coefficient)
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
-        contact_kernel_corrections_.push_back(typename ControlType::KernelCorrection(this->contact_particles_[k]));
+        contact_kernel_corrections_.push_back(KernelCorrectionType(this->contact_particles_[k]));
     }
 }
 //=================================================================================================//
-template <class ControlType>
-void TransportVelocityCorrection<Contact, ControlType>::
+template <class KernelCorrectionType, class ResolutionType, class ParticleScope>
+void TransportVelocityCorrection<Contact, KernelCorrectionType, ResolutionType, ParticleScope>::
     interaction(size_t index_i, Real dt)
 {
     if (this->checkWithinScope(index_i))
@@ -93,7 +93,7 @@ void TransportVelocityCorrection<Contact, ControlType>::
         for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
         {
             Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
-            typename ControlType::KernelCorrection &kernel_correction_k = *this->contact_kernel_corrections_[k];
+            KernelCorrectionType &kernel_correction_k = *this->contact_kernel_corrections_[k];
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
             {
                 size_t index_j = contact_neighborhood.j_[n];
