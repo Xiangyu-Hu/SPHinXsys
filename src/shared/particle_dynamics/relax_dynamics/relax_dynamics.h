@@ -79,7 +79,7 @@ class RelaxationAccelerationInner : public LocalDynamics,
                                     public RelaxDataDelegateInner
 {
   public:
-    explicit RelaxationAccelerationInner(BaseInnerRelation &inner_relation);
+    explicit RelaxationAccelerationInner(BaseInnerRelation &inner_relation, NearShapeSurface &near_shape_surface);
     virtual ~RelaxationAccelerationInner(){};
 
     inline void interaction(size_t index_i, Real dt = 0.0)
@@ -105,14 +105,15 @@ class RelaxationAccelerationInnerWithLevelSetCorrection : public RelaxationAccel
 {
   public:
     explicit RelaxationAccelerationInnerWithLevelSetCorrection(
-             BaseInnerRelation &inner_relation);
+             BaseInnerRelation &inner_relation, NearShapeSurface &near_shape_surface);
     virtual ~RelaxationAccelerationInnerWithLevelSetCorrection(){};
 
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
         RelaxationAccelerationInner::interaction(index_i, dt);
+        Real overlap = level_set_shape_->computeKernelIntegral(pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
         acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(
-                         pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
+                         pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * (2 - SMAX(0.5, (1-overlap))); //equivalent to 1 + overlap;
     };
 
   protected:
@@ -220,25 +221,6 @@ class ShapeSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>,
 };
 
 /**
- * @class NearSurfaceVolumeCorrection
- * @brief Correct the particle volume neat the boundary.
- */
-class NearSurfaceVolumeCorrection : public BaseLocalDynamics<BodyPartByCell>,
-                                    public RelaxDataDelegateSimple
-{
-public:
-    NearSurfaceVolumeCorrection(NearShapeSurface& body_part);
-    virtual ~NearSurfaceVolumeCorrection() {};
-    void update(size_t index_i, Real dt = 0.0);
-
-protected:
-    StdLargeVec<Vecd>& pos_;
-    StdLargeVec<Real>& Vol_;
-    LevelSetShape* level_set_shape_;
-    SPHAdaptation* sph_adaptation_;
-};
-
-/**
  * @class RelaxationStepInner
  * @brief carry out particle relaxation step of particles within the body
  */
@@ -279,9 +261,9 @@ class RelaxationAccelerationComplexWithLevelSetCorrection : public RelaxationAcc
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
         RelaxationAccelerationComplex::interaction(index_i, dt);
-
+        Real overlap = level_set_shape_->computeKernelIntegral(pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
         acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(
-                         pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
+                         pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * (2 - SMAX(0.5, (1-overlap)));
     };
 
   protected:
@@ -355,6 +337,7 @@ public:
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
         RelaxationAccelerationByCMInner::interaction(index_i, dt);
+        Real overlap = level_set_shape_->computeKernelIntegral(pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
         acc_[index_i] -= (B_[index_i] + B_[index_i]) * level_set_shape_->computeKernelGradientIntegral(
                          pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
     };
@@ -442,8 +425,10 @@ public:
 
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
+        RelaxationAccelerationByCMComplex::interaction(index_i, dt);
+        Real overlap = level_set_shape_->computeKernelIntegral(pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
         acc_[index_i] -= (B_[index_i] + B_[index_i]) * level_set_shape_->computeKernelGradientIntegral(
-                          pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
+                         pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * (2 - SMAX(0.5, (1-overlap)));
     };
 
 protected:
@@ -502,18 +487,12 @@ protected:
     virtual ErrorAndParameters<Vecd, Matd, Matd> computeErrorAndParameters(size_t index_i, Real dt = 0.0);
     virtual void updateStates(size_t index_i, Real dt, const ErrorAndParameters<Vecd, Matd, Matd>& error_and_parameters);
 
-    Real target_residual_pressure_; //It is generally to be the maximum error in the whole domain.
-    StdLargeVec<Real> residual_pressure_; //It contains the intermediate error.
-
     Kernel* kernel_;
     StdLargeVec<Real>& Vol_;
     StdLargeVec<Vecd>& pos_, & acc_;
     StdLargeVec<Real> implicit_residual_pressure_;
     LevelSetShape* level_set_shape_;
     SPHAdaptation* sph_adaptation_;
-
-public:
-    inline void updateTargetError(Real target_residual_pressure) { Real target_residual_pressure_ = target_residual_pressure; }
 };
 
 /**
@@ -543,16 +522,13 @@ public:
     virtual void exec(Real dt = 0.0) override;
 
 protected:
-    Real target_residual_pressure_;
     Real time_step_size_;
     RealBody* real_body_;
     BaseInnerRelation& inner_relation_;
     NearShapeSurface near_shape_surface_;
     ReduceDynamics<GetTimeStepSizeSquare> get_time_step_;
-    InteractionSplit<RelaxationImplicitInner> relaxation_evolution_inner_;
+    InteractionSplit<RelaxationImplicitInnerWithLevelSetCorrection> relaxation_evolution_inner_;
     SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
-    SimpleDynamics<NearSurfaceVolumeCorrection> surface_correction_;
-    ReduceDynamics<QuantityMaximum<Real>> update_averaged_error_;
 };
 
 /**
@@ -613,7 +589,6 @@ protected:
     ReduceDynamics<GetTimeStepSizeSquare> get_time_step_;
     InteractionSplit<RelaxationByCMImplicitInnerWithLevelSetCorrection> relaxation_evolution_inner_;
     SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
-    SimpleDynamics<NearSurfaceVolumeCorrection> surface_correction_;
 };
 
 /**

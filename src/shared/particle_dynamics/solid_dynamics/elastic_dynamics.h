@@ -200,11 +200,11 @@ class Integration1stHalf : public BaseIntegration1stHalf
             /*acceleration += inv_rho0_ * inner_neighborhood.dW_ijV_j_[n] *
                             (stress_PK1_B_[index_i] + stress_PK1_B_[index_j] +
                              numerical_dissipation_factor_ * weight * numerical_stress_ij) *
-                            e_ij;*/
+                            e_ij;*/                                                                                                                                                       
 
             //consistence correction scheme
             acceleration += inv_rho0_ * inner_neighborhood.dW_ijV_j_[n] *
-                            (stress_PK1_[index_i] * B_[index_i].transpose() + stress_PK1_[index_j] * B_[index_j].transpose() +
+                            (stress_PK1_[index_i] * B_[index_j].transpose() + stress_PK1_[index_j] * B_[index_i].transpose() +
                              numerical_dissipation_factor_ * weight * numerical_stress_ij) * e_ij;
         }
 

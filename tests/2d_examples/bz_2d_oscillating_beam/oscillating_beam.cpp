@@ -101,7 +101,7 @@ int main(int ac, char *av[])
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     /** Tag for computation start with relaxed body fitted particles distribution. */
     sph_system.setRunParticleRelaxation(true);
-    sph_system.setReloadParticles(false);
+    sph_system.setReloadParticles(true);
 #ifdef BOOST_AVAILABLE
     // handle command line arguments
     sph_system.handleCommandlineOptions(ac, av);
@@ -120,6 +120,9 @@ int main(int ac, char *av[])
     ObserverBody beam_observer(sph_system, "BeamObserver");
     beam_observer.defineAdaptationRatios(1.15, 2.0);
     beam_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+
+    beam_body.addBodyStateForRecording<Matd>("CorrectionMatrix");
+    beam_body.addBodyStateForRecording<Real>("VolumetricMeasure");
      //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -140,6 +143,8 @@ int main(int ac, char *av[])
         ReloadParticleIO write_particle_reload_files(io_environment, { &beam_body });
         /** A  Physics relaxation step. */
         InteractionWithUpdate<relax_dynamics::CorrectedConfigurationInnerWithLevelSet> configuration_beam_body(beam_body_inner, true);
+        relax_dynamics::RelaxationStepInner relaxation_step_inner_explicit(beam_body_inner, true);
+        relax_dynamics::RelaxationStepByCMInner relaxation_step_cm_inner_explicit(beam_body_inner, true);
         relax_dynamics::RelaxationStepImplicitInner relaxation_step_inner(beam_body_inner, true);
         relax_dynamics::RelaxationStepByCMImplicitInner relaxation_step_cm_inner(beam_body_inner, true);
         //----------------------------------------------------------------------
@@ -155,7 +160,9 @@ int main(int ac, char *av[])
         while (ite_p < 20000)
         {
             configuration_beam_body.exec();
-            relaxation_step_cm_inner.exec();
+            //relaxation_step_cm_inner.exec();
+            //relaxation_step_inner_explicit.exec();
+            relaxation_step_cm_inner_explicit.exec();
             ite_p += 1;
             if (ite_p % 200 == 0)
             {
@@ -193,7 +200,6 @@ int main(int ac, char *av[])
     // clamping a solid body part. This is softer than a direct constraint
     BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
     SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_beam_base(beam_base);
-    beam_body.addBodyStateForRecording<Matd>("CorrectionMatrix");
     //-----------------------------------------------------------------------------
     // outputs
     //-----------------------------------------------------------------------------
@@ -206,7 +212,7 @@ int main(int ac, char *av[])
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     beam_initial_velocity.exec();
-    beam_corrected_configuration.exec();
+    beam_corrected_configuration_level_set.exec();
     //----------------------------------------------------------------------
     //	Setup computing time-step controls.
     //----------------------------------------------------------------------
