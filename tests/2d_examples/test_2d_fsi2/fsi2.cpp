@@ -100,11 +100,16 @@ int main(int ac, char *av[])
     //  At last, we define the complex relaxations by combining previous defined
     //  inner and contact relations.
     //----------------------------------------------------------------------
+    InnerRelation water_block_inner(water_block);
     InnerRelation insert_body_inner(insert_body);
-    ComplexRelation water_block_complex(water_block, RealBodyVector{&wall_boundary, &insert_body});
+    ContactRelation water_block_contact(water_block, RealBodyVector{&wall_boundary, &insert_body});
     ContactRelation insert_body_contact(insert_body, {&water_block});
     ContactRelation beam_observer_contact(beam_observer, {&insert_body});
     ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
+    //----------------------------------------------------------------------
+    // Combined relations built from basic relations
+    //----------------------------------------------------------------------
+    ComplexRelation water_block_complex(water_block_inner, water_block_contact);
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
@@ -119,8 +124,8 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
     /** Pressure relaxation using verlet time stepping. */
     /** Here, we do not use Riemann solver for pressure as the flow is viscous. */
-    Dynamics1Level<fluid_dynamics::Integration1stHalfRiemannWithWall> pressure_relaxation(water_block_complex);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(water_block_complex);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_complex);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_complex);
     /** viscous acceleration and transport velocity correction can be combined because they are independent dynamics. */
     InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_correction(water_block_complex);
     InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
