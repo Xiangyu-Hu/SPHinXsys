@@ -172,6 +172,7 @@ using DensitySummationComplexAdaptive = BaseDensitySummationComplex<InnerAdaptiv
 using DensitySummationFreeSurfaceComplex = BaseDensitySummationComplex<FreeSurface<Inner>, Contact>;
 using DensitySummationFreeSurfaceComplexAdaptive = BaseDensitySummationComplex<FreeSurface<InnerAdaptive>, ContactAdaptive>;
 using DensitySummationFreeStreamComplex = BaseDensitySummationComplex<FreeStream<Inner>, Contact>;
+using DensitySummationFreeStreamComplexAdaptive = BaseDensitySummationComplex<FreeStream<InnerAdaptive>, ContactAdaptive>;
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // DENSITY_SUMMATION_INNER_H

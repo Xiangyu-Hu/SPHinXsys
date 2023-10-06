@@ -101,18 +101,24 @@ class TransportVelocityCorrection<Contact, KernelCorrectionType, ResolutionType,
     StdVec<KernelCorrectionType> contact_kernel_corrections_;
 };
 
-template <class ParticleScope>
-class TransportVelocityCorrectionComplex
+template <class ResolutionType, class ParticleScope>
+class BaseTransportVelocityCorrectionComplex
     : public ComplexInteraction<TransportVelocityCorrection<Inner, ContactBoundary>,
-                                NoKernelCorrection, SingleResolution, ParticleScope>
+                                NoKernelCorrection, ResolutionType, ParticleScope>
 {
   public:
-    explicit TransportVelocityCorrectionComplex(ComplexRelation &complex_relation, Real coefficient = 0.2)
+    explicit BaseTransportVelocityCorrectionComplex(ComplexRelation &complex_relation, Real coefficient = 0.2)
         : ComplexInteraction<TransportVelocityCorrection<Inner, ContactBoundary>,
-                             NoKernelCorrection, SingleResolution, ParticleScope>(
+                             NoKernelCorrection, ResolutionType, ParticleScope>(
               ConstructorArgs(complex_relation.getInnerRelation(), coefficient),
               ConstructorArgs(complex_relation.getContactRelation(), coefficient)){};
 };
+template <class ParticleScope>
+using TransportVelocityCorrectionComplex =
+    BaseTransportVelocityCorrectionComplex<SingleResolution, ParticleScope>;
+template <class ParticleScope>
+using TransportVelocityCorrectionComplexAdaptive =
+    BaseTransportVelocityCorrectionComplex<AdaptiveResolution, ParticleScope>;
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // TRANSPORT_VELOCITY_CORRECTION_H
