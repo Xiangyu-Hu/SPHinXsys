@@ -76,7 +76,7 @@ class NonWettingSurfaceIndication : public FreeSurfaceIndicationComplex
 
 using WettingCoupledSpatialTemporalFreeSurfaceIdentificationComplex =
     SpatialTemporalFreeSurfaceIdentification<NonWettingSurfaceIndication>;
-using SpatialTemporalFreeSurfaceIdentificationComplex =
+using SpatialTemporalFreeSurfaceIndicationComplex =
     SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIndicationComplex>;
 
 } // namespace fluid_dynamics

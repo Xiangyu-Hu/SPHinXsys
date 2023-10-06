@@ -31,13 +31,16 @@
 
 #include "all_particle_dynamics.h"
 #include "base_body.h"
-#include "base_particles.h"
+#include "base_particles.hpp"
 #include "external_force.h"
 
 #include <limits>
 
 namespace SPH
 {
+template <typename InteractionType>
+class SpatialTemporal; /**< A interaction considering spatial temporal correlations */
+
 typedef DataDelegateSimple<BaseParticles> GeneralDataDelegateSimple;
 typedef DataDelegateInner<BaseParticles> GeneralDataDelegateInner;
 typedef DataDelegateContact<BaseParticles, BaseParticles> GeneralDataDelegateContact;

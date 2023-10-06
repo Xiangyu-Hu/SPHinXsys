@@ -23,8 +23,12 @@
 /**
  * @file surface indication.h
  * @brief Here, we define the algorithm classes for indicating material surfaces.
- * @details TBD
- * @author	Chi Zhang and Xiangyu Hu
+ * @details Note that, SPHinXsys does not require surface indication
+ * for simulating general free surface flow problems.
+ * However, some other applications may use this function,
+ * such as transport velocity formulation,
+ * for masking some function which is only applicable for the bulk of the fluid body.
+ * @author	Xiangyu Hu
  */
 
 #ifndef SURFACE_INDICATION_H
@@ -34,15 +38,12 @@
 
 namespace SPH
 {
-/**
- * @class FreeSurfaceIndication
- * @brief  indicate the particles near the free surface of a body.
- * Note that, SPHinXsys does not require this function for simulating general free surface flow problems.
- * However, some other applications may use this function, such as transport velocity formulation,
- * for masking some function which is only applicable for the bulk of the fluid body.
- */
+template <typename... InteractionTypes>
+class FreeSurfaceIndication;
+
 template <class DataDelegationType>
-class FreeSurfaceIndication : public LocalDynamics, public DataDelegationType
+class FreeSurfaceIndication<DataDelegationType>
+    : public LocalDynamics, public DataDelegationType
 {
   public:
     template <class BaseRelationType>
@@ -55,15 +56,13 @@ class FreeSurfaceIndication : public LocalDynamics, public DataDelegationType
     Real threshold_by_dimensions_;
 };
 
-/**
- * @class FreeSurfaceIndicationInner
- * @brief TBD.
- */
-class FreeSurfaceIndicationInner : public FreeSurfaceIndication<GeneralDataDelegateInner>
+template <>
+class FreeSurfaceIndication<Inner>
+    : public FreeSurfaceIndication<GeneralDataDelegateInner>
 {
   public:
-    explicit FreeSurfaceIndicationInner(BaseInnerRelation &inner_relation);
-    virtual ~FreeSurfaceIndicationInner(){};
+    explicit FreeSurfaceIndication(BaseInnerRelation &inner_relation);
+    virtual ~FreeSurfaceIndication(){};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 
@@ -72,30 +71,24 @@ class FreeSurfaceIndicationInner : public FreeSurfaceIndication<GeneralDataDeleg
     bool isVeryNearFreeSurface(size_t index_i);
 };
 
-/**
- * @class FreeSurfaceIndicationContact
- * @brief indicate the particles near the free fluid surface.
- */
-class FreeSurfaceIndicationContact : public FreeSurfaceIndication<GeneralDataDelegateContact>
+template <>
+class FreeSurfaceIndication<Contact>
+    : public FreeSurfaceIndication<GeneralDataDelegateContact>
 {
   public:
-    explicit FreeSurfaceIndicationContact(BaseContactRelation &contact_relation)
+    explicit FreeSurfaceIndication(BaseContactRelation &contact_relation)
         : FreeSurfaceIndication<GeneralDataDelegateContact>(contact_relation){};
-    virtual ~FreeSurfaceIndicationContact(){};
+    virtual ~FreeSurfaceIndication(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };
 
-/**
- * @class SpatialTemporalFreeSurfaceIdentification
- * @brief using the spatial-temporal method to indicate the surface particles to avoid mis-judgement.
- */
-template <class FreeSurfaceIdentificationType>
-class SpatialTemporalFreeSurfaceIdentification : public FreeSurfaceIdentificationType
+template <>
+class FreeSurfaceIndication<SpatialTemporal<Inner>>
+    : public FreeSurfaceIndication<Inner>
 {
   public:
-    template <typename... Args>
-    explicit SpatialTemporalFreeSurfaceIdentification(Args &&...args);
-    virtual ~SpatialTemporalFreeSurfaceIdentification(){};
+    explicit FreeSurfaceIndication(BaseInnerRelation &inner_relation);
+    virtual ~FreeSurfaceIndication(){};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 
@@ -104,12 +97,12 @@ class SpatialTemporalFreeSurfaceIdentification : public FreeSurfaceIdentificatio
     bool isNearPreviousFreeSurface(size_t index_i);
 };
 
-class SpatialTemporalFreeSurfaceIdentificationComplex
-    : public SpatialTemporalFreeSurfaceIdentification<OldComplexInteraction<FreeSurfaceIndicationInner, FreeSurfaceIndicationContact>>
+class SpatialTemporalFreeSurfaceIndicationComplex
+    : public ComplexInteraction<FreeSurfaceIndication<SpatialTemporal<Inner>, Contact>>
 {
   public:
-    explicit SpatialTemporalFreeSurfaceIdentificationComplex(ComplexRelation &complex_relation)
-        : SpatialTemporalFreeSurfaceIdentification<OldComplexInteraction<FreeSurfaceIndicationInner, FreeSurfaceIndicationContact>>(
+    explicit SpatialTemporalFreeSurfaceIndicationComplex(ComplexRelation &complex_relation)
+        : ComplexInteraction<FreeSurfaceIndication<SpatialTemporal<Inner>, Contact>>(
               complex_relation.getInnerRelation(), complex_relation.getContactRelation()){};
 };
 } // namespace SPH
