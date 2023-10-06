@@ -111,14 +111,27 @@ class RelaxationAccelerationInnerWithLevelSetCorrection : public RelaxationAccel
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
         RelaxationAccelerationInner::interaction(index_i, dt);
+
+        Real phi = level_set_shape_->findSignedDistance(pos_[index_i]);
         Real overlap = level_set_shape_->computeKernelIntegral(pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
-        acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(
-                         pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * (2 - SMAX(0.5, (1-overlap))); //equivalent to 1 + overlap;
+
+        if (phi > -constrained_distance_)
+        {
+            acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(
+                         pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 + overlap);
+        }
+        else
+        {
+            acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(
+                         pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 - overlap);
+        };
+
     };
 
   protected:
     LevelSetShape *level_set_shape_;
     SPHAdaptation *sph_adaptation_;
+    Real constrained_distance_;
 };
 
 /**
@@ -263,7 +276,7 @@ class RelaxationAccelerationComplexWithLevelSetCorrection : public RelaxationAcc
         RelaxationAccelerationComplex::interaction(index_i, dt);
         Real overlap = level_set_shape_->computeKernelIntegral(pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
         acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(
-                         pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * (2 - SMAX(0.5, (1-overlap)));
+                         pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 + overlap);
     };
 
   protected:
@@ -337,14 +350,25 @@ public:
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
         RelaxationAccelerationByCMInner::interaction(index_i, dt);
+
+        Real phi = level_set_shape_->findSignedDistance(pos_[index_i]);
         Real overlap = level_set_shape_->computeKernelIntegral(pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
-        acc_[index_i] -= (B_[index_i] + B_[index_i]) * level_set_shape_->computeKernelGradientIntegral(
-                         pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
+        if (phi > -constrained_distance_)
+        {
+            acc_[index_i] -= (B_[index_i] + B_[index_i]) * level_set_shape_->computeKernelGradientIntegral(
+                pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 + overlap);
+        }
+        else
+        {
+            acc_[index_i] -= (B_[index_i] + B_[index_i]) * level_set_shape_->computeKernelGradientIntegral(
+                pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * (1 - overlap);
+        };
     };
 
 protected:
     LevelSetShape* level_set_shape_;
     SPHAdaptation* sph_adaptation_;
+    Real constrained_distance_;
 };
 
 /**
@@ -428,7 +452,7 @@ public:
         RelaxationAccelerationByCMComplex::interaction(index_i, dt);
         Real overlap = level_set_shape_->computeKernelIntegral(pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
         acc_[index_i] -= (B_[index_i] + B_[index_i]) * level_set_shape_->computeKernelGradientIntegral(
-                         pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i)) * (2 - SMAX(0.5, (1-overlap)));
+                         pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
     };
 
 protected:
@@ -607,6 +631,7 @@ class CorrectedConfigurationInnerWithLevelSet : public LocalDynamics, public Rel
     bool level_set_correction_;
     LevelSetShape *level_set_shape_;
     SPHAdaptation *sph_adaptation_;
+    Real constrained_distance_;
 
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);

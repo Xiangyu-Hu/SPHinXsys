@@ -100,7 +100,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     /** Tag for computation start with relaxed body fitted particles distribution. */
-    sph_system.setRunParticleRelaxation(true);
+    sph_system.setRunParticleRelaxation(false);
     sph_system.setReloadParticles(true);
 #ifdef BOOST_AVAILABLE
     // handle command line arguments
@@ -160,7 +160,6 @@ int main(int ac, char *av[])
         while (ite_p < 20000)
         {
             configuration_beam_body.exec();
-            //relaxation_step_cm_inner.exec();
             //relaxation_step_inner_explicit.exec();
             relaxation_step_cm_inner_explicit.exec();
             ite_p += 1;
@@ -285,7 +284,5 @@ int main(int ac, char *av[])
     {
         write_beam_tip_displacement.testResult();
     }
-
-
     return 0;
 }
