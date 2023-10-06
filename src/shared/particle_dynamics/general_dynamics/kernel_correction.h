@@ -21,89 +21,123 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	general_interaction.h
- * @brief 	This is the interaction dynamics applicable for all type bodies
+ * @file 	kernel_correction.h
+ * @brief 	This the methods related on the corrections of SPH smoothing kernel.
  * @author	Yaru Ren and Xiangyu Hu
  */
 
-#ifndef GENERAL_INTERACTION_H
-#define GENERAL_INTERACTION_H
+#ifndef KERNEL_CORRECTION_H
+#define KERNEL_CORRECTION_H
 
 #include "base_general_dynamics.h"
 
 namespace SPH
 {
-class KernelCorrectionMatrixInner : public LocalDynamics, public GeneralDataDelegateInner
+template <typename... InteractionTypes>
+class KernelCorrectionMatrix;
+
+template <class DataDelegationType>
+class KernelCorrectionMatrix<DataDelegationType>
+    : public LocalDynamics, public DataDelegationType
 {
   public:
-    explicit KernelCorrectionMatrixInner(BaseInnerRelation &inner_relation, Real alpha = Real(0));
-    virtual ~KernelCorrectionMatrixInner(){};
+    template <class BaseRelationType>
+    explicit KernelCorrectionMatrix(BaseRelationType &base_relation, Real alpha = Real(0));
+    virtual ~KernelCorrectionMatrix(){};
 
   protected:
     Real alpha_;
     StdLargeVec<Matd> &B_;
+};
 
+template <>
+class KernelCorrectionMatrix<Inner>
+    : public KernelCorrectionMatrix<GeneralDataDelegateInner>
+{
+  public:
+    explicit KernelCorrectionMatrix(BaseInnerRelation &inner_relation, Real alpha = Real(0))
+        : KernelCorrectionMatrix<GeneralDataDelegateInner>(inner_relation){};
+    explicit KernelCorrectionMatrix(ConstructorArgs<BaseContactRelation, Real> parameters)
+        : KernelCorrectionMatrix(parameters.body_relation_, std::get<0>(parameters.others_)){};
+    virtual ~KernelCorrectionMatrix(){};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 };
 
-class KernelCorrectionMatrixComplex : public KernelCorrectionMatrixInner, public GeneralDataDelegateContactOnly
+template <>
+class KernelCorrectionMatrix<Contact>
+    : public KernelCorrectionMatrix<GeneralDataDelegateContact>
 {
   public:
-    explicit KernelCorrectionMatrixComplex(ComplexRelation &complex_relation, Real alpha = Real(0));
-    virtual ~KernelCorrectionMatrixComplex(){};
+    explicit KernelCorrectionMatrix(BaseContactRelation &contact_relation, Real alpha = Real(0));
+    virtual ~KernelCorrectionMatrix(){};
+    void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
     StdVec<StdLargeVec<Real> *> contact_Vol_;
     StdVec<StdLargeVec<Real> *> contact_mass_;
-
-    void interaction(size_t index_i, Real dt = 0.0);
 };
 
-/**
- * @class KernelGradientCorrectionInner
- * @brief obtain the corrected initial configuration in strong form and correct kernel gradient
- */
-class KernelGradientCorrectionInner : public LocalDynamics, public GeneralDataDelegateInner
+template <class InnerInteractionType, class ContactInteractionType>
+class BaseKernelCorrectionMatrixComplex
+    : public ComplexInteraction<eKernelGradientCorrection<InnerInteractionType, ContactInteractionType>>
+{
+  public:
+    explicit BaseDensitySummationComplex(ComplexRelation &complex_relation)
+        : ComplexInteraction<eKernelGradientCorrection<InnerInteractionType, ContactInteractionType>>(
+              complex_relation.getInnerRelation(), complex_relation.getContactRelation()){};
+};
+using KernelGradientCorrectionComplex = BaseKernelGradientCorrectionComplex<Inner, Contact>;
+
+template <typename... InteractionTypes>
+class KernelGradientCorrection;
+
+template <class DataDelegationType>
+class KernelGradientCorrection<DataDelegationType>
+    : public LocalDynamics, public DataDelegationType
+{
+  public:
+    template <class KernelCorrectionMatrixType>
+    explicit KernelGradientCorrection(KernelCorrectionMatrixType &kernel_correction);
+    virtual ~KernelGradientCorrection(){};
+
+  protected:
+    template <class PairAverageType>
+    void correctKernelGradient(PairAverageType &average_correction_matrix, Neighborhood &neighborhood, size_t index_i);
+};
+
+class KernelGradientCorrection<Inner>
+    : public KernelGradientCorrection<GeneralDataDelegateInner>
 {
     PairAverageInner<Matd> average_correction_matrix_;
 
   public:
-    explicit KernelGradientCorrectionInner(KernelCorrectionMatrixInner &kernel_correction_inner);
-    virtual ~KernelGradientCorrectionInner(){};
+    explicit KernelGradientCorrection(KernelCorrectionMatrix<Inner> &kernel_correction_inner);
+    virtual ~KernelGradientCorrection(){};
     void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    template <class PairAverageType>
-    void correctKernelGradient(PairAverageType &average_correction_matrix, Neighborhood &neighborhood, size_t index_i)
-    {
-        for (size_t n = 0; n != neighborhood.current_size_; ++n)
-        {
-            size_t index_j = neighborhood.j_[n];
-            Vecd displacement = neighborhood.r_ij_[n] * neighborhood.e_ij_[n];
-
-            Vecd corrected_direction = average_correction_matrix(index_i, index_j) * neighborhood.e_ij_[n];
-            Real direction_norm = corrected_direction.norm();
-            neighborhood.dW_ijV_j_[n] *= direction_norm;
-            neighborhood.e_ij_[n] = corrected_direction / (direction_norm + Eps);
-            neighborhood.r_ij_[n] = displacement.dot(neighborhood.e_ij_[n]);
-        }
-    };
 };
 
-/**
- * @class KernelGradientCorrectionComplex
- * @brief obtain the corrected initial configuration in strong form and correct kernel gradient in complex topology
- */
-class KernelGradientCorrectionComplex : public KernelGradientCorrectionInner, public GeneralDataDelegateContactOnly
+class KernelGradientCorrection<Contact>
+    : public KernelGradientCorrection<GeneralDataDelegateContact>
 {
     StdVec<PairAverageContact<Matd>> contact_average_correction_matrix_;
 
   public:
-    KernelGradientCorrectionComplex(KernelCorrectionMatrixComplex &kernel_correction_complex);
-    virtual ~KernelGradientCorrectionComplex(){};
+    KernelGradientCorrection(KernelCorrectionMatrix<Contact> &kernel_correction_contact);
+    virtual ~KernelGradientCorrection(){};
     void interaction(size_t index_i, Real dt = 0.0);
 };
+
+template <class InnerInteractionType, class ContactInteractionType>
+class BaseKernelGradientCorrectionComplex
+    : public ComplexInteraction<eKernelGradientCorrection<InnerInteractionType, ContactInteractionType>>
+{
+  public:
+    explicit BaseKernelGradientCorrectionComplex(KernelGradientCorrectionComplex &kernel_correction_complex)
+        : ComplexInteraction<eKernelGradientCorrection<InnerInteractionType, ContactInteractionType>>(
+              complex_relation.getInnerRelation(), complex_relation.getContactRelation()){};
+};
+using KernelGradientCorrectionComplex = BaseKernelGradientCorrectionComplex<Inner, Contact>;
 
 /**
  * @class ParticleSmoothing
@@ -147,4 +181,4 @@ class ParticleSmoothing : public LocalDynamics, public GeneralDataDelegateInner
     StdLargeVec<VariableType> &smoothed_, temp_;
 };
 } // namespace SPH
-#endif // GENERAL_INTERACTION_H
+#endif // KERNEL_CORRECTION_H

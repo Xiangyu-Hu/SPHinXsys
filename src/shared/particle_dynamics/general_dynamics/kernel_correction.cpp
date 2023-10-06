@@ -1,16 +1,9 @@
-#include "general_interaction.h"
-#include "base_particles.hpp"
+#include "kernel_correction.hpp"
 
 namespace SPH
 {
 //=================================================================================================//
-KernelCorrectionMatrixInner::
-    KernelCorrectionMatrixInner(BaseInnerRelation &inner_relation, Real alpha)
-    : LocalDynamics(inner_relation.getSPHBody()),
-      GeneralDataDelegateInner(inner_relation),
-      alpha_(alpha), B_(*particles_->registerSharedVariable<Matd>("KernelCorrectionMatrix")) {}
-//=================================================================================================//
-void KernelCorrectionMatrixInner::interaction(size_t index_i, Real dt)
+void KernelCorrectionMatrix<Inner>::interaction(size_t index_i, Real dt)
 {
     Matd local_configuration = Eps * Matd::Identity();
 
@@ -24,7 +17,7 @@ void KernelCorrectionMatrixInner::interaction(size_t index_i, Real dt)
     B_[index_i] = local_configuration;
 }
 //=================================================================================================//
-void KernelCorrectionMatrixInner::update(size_t index_i, Real dt)
+void KernelCorrectionMatrix<Inner>::update(size_t index_i, Real dt)
 {
     Real det_sqr = alpha_;
     Matd inverse = B_[index_i].inverse();
@@ -33,10 +26,9 @@ void KernelCorrectionMatrixInner::update(size_t index_i, Real dt)
     B_[index_i] = weight1_ * inverse + weight2_ * Matd::Identity();
 }
 //=================================================================================================//
-KernelCorrectionMatrixComplex::
-    KernelCorrectionMatrixComplex(ComplexRelation &complex_relation, Real alpha)
-    : KernelCorrectionMatrixInner(complex_relation.getInnerRelation(), alpha),
-      GeneralDataDelegateContactOnly(complex_relation.getContactRelation())
+KernelCorrectionMatrix<Contact>::
+    KernelCorrectionMatrix(BaseContactRelation &contact_relation, Real alpha)
+    : KernelCorrectionMatrix<GeneralDataDelegateContact>(contact_relation, alpha)
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
@@ -45,10 +37,8 @@ KernelCorrectionMatrixComplex::
     }
 }
 //=================================================================================================//
-void KernelCorrectionMatrixComplex::interaction(size_t index_i, Real dt)
+void KKernelCorrectionMatrix<Contact>::interaction(size_t index_i, Real dt)
 {
-    KernelCorrectionMatrixInner::interaction(index_i, dt);
-
     Matd local_configuration = ZeroData<Matd>::value;
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
@@ -63,22 +53,20 @@ void KernelCorrectionMatrixComplex::interaction(size_t index_i, Real dt)
     B_[index_i] += local_configuration;
 }
 //=================================================================================================//
-KernelGradientCorrectionInner::
+KernelGradientCorrection<Inner>::
     KernelGradientCorrectionInner(KernelCorrectionMatrixInner &kernel_correction_inner)
-    : LocalDynamics(kernel_correction_inner.getSPHBody()),
-      GeneralDataDelegateInner(kernel_correction_inner.getInnerRelation()),
+    : KernelGradientCorrection<GeneralDataDelegateInner>(kernel_correction_inner),
       average_correction_matrix_(*particles_->getVariableByName<Matd>("KernelCorrectionMatrix")){};
 //=================================================================================================//
-void KernelGradientCorrectionInner::interaction(size_t index_i, Real dt)
+void KernelGradientCorrection<Inner>::interaction(size_t index_i, Real dt)
 {
     Neighborhood &inner_neighborhood = inner_configuration_[index_i];
     correctKernelGradient(average_correction_matrix_, inner_neighborhood, index_i);
 }
 //=================================================================================================//
-KernelGradientCorrectionComplex::
-    KernelGradientCorrectionComplex(KernelCorrectionMatrixComplex &kernel_correction_complex)
-    : KernelGradientCorrectionInner(kernel_correction_complex),
-      GeneralDataDelegateContactOnly(kernel_correction_complex.getContactRelation())
+KernelGradientCorrection<Contact>::
+    KernelGradientCorrection(KernelCorrectionMatrix<Contact> &kernel_correction_contact)
+    : KernelGradientCorrection<GeneralDataDelegateContact>
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
@@ -89,10 +77,8 @@ KernelGradientCorrectionComplex::
     }
 }
 //=================================================================================================//
-void KernelGradientCorrectionComplex::interaction(size_t index_i, Real dt)
+void KernelGradientCorrection<Contact>::interaction(size_t index_i, Real dt)
 {
-    KernelGradientCorrectionInner::interaction(index_i, dt);
-
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
