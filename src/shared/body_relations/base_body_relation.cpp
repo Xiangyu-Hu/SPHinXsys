@@ -47,15 +47,16 @@ namespace SPH
         //=================================================================================================//
         void BaseInnerRelation::resetNeighborhoodDeviceCurrentSize()
         {
-                auto workgroup_size = execution::executionQueue.getWorkGroupSize();
+                const auto total_real_particles = base_particles_.total_real_particles_;
                 NeighborhoodDevice *inner_configuration_device = inner_configuration_device_->data();
                 execution::executionQueue.getQueue()
                     .submit(
                         [&](sycl::handler &cgh) {
-                            cgh.parallel_for(sycl::nd_range<1>{base_particles_.total_real_particles_, workgroup_size},
+                            cgh.parallel_for(execution::executionQueue.getUniformNdRange(total_real_particles),
                                              [=](sycl::nd_item<1> it) {
-                                                 size_t index_i = it.get_global_id();
-                                                 *inner_configuration_device[index_i].current_size_ = 0;
+                                                 if(it.get_global_id() < total_real_particles) {
+                                                     *inner_configuration_device[it.get_global_id()].current_size_ = 0;
+                                                 }
                                              });
                         }).wait();
         }
@@ -113,14 +114,16 @@ namespace SPH
         {
                 for (size_t k = 0; k != contact_bodies_.size(); ++k)
                 {
+                        const auto total_real_particles = base_particles_.total_real_particles_;
                         NeighborhoodDevice *contact_configuration_device = contact_configuration_device_.at(k).data();
                         execution::executionQueue.getQueue()
                             .submit(
                                 [&](sycl::handler &cgh) {
-                                    cgh.parallel_for(sycl::range<1>{base_particles_.total_real_particles_},
-                                                     [=](sycl::item<1> it) {
-                                                         size_t index_i = it.get_id();
-                                                         *contact_configuration_device[index_i].current_size_ = 0;
+                                    cgh.parallel_for(execution::executionQueue.getUniformNdRange(total_real_particles),
+                                                     [=](sycl::nd_item<1> it) {
+                                                         if(it.get_global_id() < total_real_particles) {
+                                                             *contact_configuration_device[it.get_global_id()].current_size_ = 0;
+                                                         }
                                                      });
                                 }).wait();
                 }

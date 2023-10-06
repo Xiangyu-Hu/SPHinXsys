@@ -40,25 +40,28 @@ void CellLinkedListKernel::UpdateCellLists(SPH::BaseParticles &base_particles)
     executionQueue.getQueue().submit(
                   [&, mesh_lower_bound=mesh_lower_bound_, grid_spacing=grid_spacing_, all_grid_points=all_grid_points_,
                    all_cells=all_cells_, index_list=index_list_, index_head_list=index_head_list_](sycl::handler& cgh) {
-                        cgh.parallel_for(total_real_particles, [=](sycl::id<1> id) {
-                                 const size_t index_i = id.get(0);
-                                 const auto cell_index = CellIndexFromPosition(pos_n[index_i], mesh_lower_bound,
-                                                 grid_spacing, all_grid_points);
-                                 const auto linear_cell_index = transferCellIndexTo1D(cell_index, all_cells);
-                                 sycl::atomic_ref<size_t, sycl::memory_order_relaxed, sycl::memory_scope_device,
-                                                  sycl::access::address_space::global_space>
-                                     atomic_head_list(index_head_list[linear_cell_index]);
-                                 /*
-                                  * Insert index at the head of the list, the index previously at the top is then
-                                  * used as the next one pointed by the new index.
-                                  * Indices values are increased by 1 to let 0 be the value that indicates list termination.
-                                  * If the cell list is empty (i.e. head == 0) then head will point to the new index and the
-                                  * new index will point to 0 (i.e. the new index will be the first and last element of the cell list).
-                                  *     index_head_list[linear_cell_index] = index_i+1  ---> index_list[index_i] = 0
-                                  * Since the cell list order is not relevant, memory_order_relaxed will only ensure that each cell of
-                                  * index_head_list gets a new index one at a time.
-                                  */
-                                 index_list[index_i] = atomic_head_list.exchange(index_i+1);
+                        cgh.parallel_for(executionQueue.getUniformNdRange(total_real_particles), [=](sycl::nd_item<1> item) {
+                                 const size_t index_i = item.get_global_id();
+                                 if(index_i < total_real_particles)
+                                 {
+                                     const auto cell_index = CellIndexFromPosition(pos_n[index_i], mesh_lower_bound,
+                                                                                   grid_spacing, all_grid_points);
+                                     const auto linear_cell_index = transferCellIndexTo1D(cell_index, all_cells);
+                                     sycl::atomic_ref<size_t, sycl::memory_order_relaxed, sycl::memory_scope_device,
+                                                      sycl::access::address_space::global_space>
+                                         atomic_head_list(index_head_list[linear_cell_index]);
+                                     /*
+                                      * Insert index at the head of the list, the index previously at the top is then
+                                      * used as the next one pointed by the new index.
+                                      * Indices values are increased by 1 to let 0 be the value that indicates list termination.
+                                      * If the cell list is empty (i.e. head == 0) then head will point to the new index and the
+                                      * new index will point to 0 (i.e. the new index will be the first and last element of the cell list).
+                                      *     index_head_list[linear_cell_index] = index_i+1  ---> index_list[index_i] = 0
+                                      * Since the cell list order is not relevant, memory_order_relaxed will only ensure that each cell of
+                                      * index_head_list gets a new index one at a time.
+                                      */
+                                     index_list[index_i] = atomic_head_list.exchange(index_i + 1);
+                                 }
                         });
                   }).wait();
 }
