@@ -48,6 +48,10 @@ class ContactAdaptive; /**< Contact interaction with adaptive resolution */
 class BaseContact;     /**< Base contact interaction*/
 class ContactBoundary; /**< Contact interaction with boundary */
 class ContactWall;     /**< Contact interaction with wall boundary */
+class Dirichlet;       /**< Contact interaction with Dirichlet boundary condition */
+class Neumann;         /**< Contact interaction with Neumann boundary condition */
+class Robin;           /**< Contact interaction with Robin boundary condition */
+
 template <typename InteractionType>
 class Extended; /**< An extened method of an interaction type */
 //----------------------------------------------------------------------

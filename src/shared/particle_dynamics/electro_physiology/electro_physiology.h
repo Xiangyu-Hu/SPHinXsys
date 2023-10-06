@@ -182,7 +182,7 @@ class GetElectroPhysiologyTimeStepSize : public GetDiffusionTimeStepSize<Electro
     virtual ~GetElectroPhysiologyTimeStepSize(){};
 };
 
-using ElectroPhysiologyDiffusionRelaxationInner = DiffusionRelaxationInner<ElectroPhysiologyParticles, CorrectedKernelGradientInner>;
+using ElectroPhysiologyDiffusionRelaxationInner = DiffusionRelaxation<Inner, ElectroPhysiologyParticles, CorrectedKernelGradientInner>;
 /**
  * @class ElectroPhysiologyDiffusionInnerRK2
  * @brief Compute the diffusion relaxation process
@@ -196,14 +196,14 @@ class ElectroPhysiologyDiffusionInnerRK2
     virtual ~ElectroPhysiologyDiffusionInnerRK2(){};
 };
 
-using DiffusionRelaxationWithDirichletContact = DiffusionRelaxationDirichlet<ElectroPhysiologyParticles, ElectroPhysiologyParticles>;
+using DiffusionRelaxationWithDirichletContact = DiffusionRelaxation<Dirichlet, ElectroPhysiologyParticles, ElectroPhysiologyParticles>;
 /**
  * @class ElectroPhysiologyDiffusionRelaxationComplex
  * @brief Compute the diffusion relaxation process
  */
 class ElectroPhysiologyDiffusionRelaxationComplex
-    : public DiffusionRelaxationRK2<
-          OldComplexInteraction<ElectroPhysiologyDiffusionRelaxationInner, DiffusionRelaxationWithDirichletContact>>
+    : public DiffusionRelaxationRK2 <
+      ComplexInteraction<DiffusionRelaxation<Inner, Dirichlet>, ElectroPhysiologyParticles, ElectroPhysiologyParticles>
 {
   public:
     explicit ElectroPhysiologyDiffusionRelaxationComplex(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation)
