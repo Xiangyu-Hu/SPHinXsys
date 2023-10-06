@@ -7,24 +7,23 @@ namespace SPH
 {
 //=================================================================================================//
 template <class DataDelegationType>
+template <class BaseRelationType>
 KernelCorrectionMatrix<DataDelegationType>::
-    KernelCorrectionMatrix(BaseRelationType &base_relation, , Real alpha)
+    KernelCorrectionMatrix(BaseRelationType &base_relation, Real alpha)
     : LocalDynamics(base_relation.getSPHBody()),
-      DataDelegationType(base_relation),
-      alpha_(alpha), B_(*particles_->registerSharedVariable<Matd>("KernelCorrectionMatrix")) {}
+      DataDelegationType(base_relation), alpha_(alpha),
+      B_(*this->particles_->template registerSharedVariable<Matd>("KernelCorrectionMatrix")) {}
 //=================================================================================================//
 template <class DataDelegationType>
-template <class KernelCorrectionMatrixType>
+template <class BaseRelationType>
 KernelGradientCorrection<DataDelegationType>::
-    KernelGradientCorrection(KernelCorrectionMatrixType &kernel_correction)
-    : LocalDynamics(kernel_correction.getSPHBody()),
-      DataDelegationType(kernel_correction.getRelation()),
-      average_correction_matrix_(*particles_->getVariableByName<Matd>("KernelCorrectionMatrix")){};
+    KernelGradientCorrection(BaseRelationType &base_relation)
+    : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation){};
 //=================================================================================================//
 template <class DataDelegationType>
 template <class PairAverageType>
 void KernelGradientCorrection<DataDelegationType>::
-    average_correction_matrix(PairAverageType &average_correction_matrix, Neighborhood &neighborhood, size_t index_i)
+    correctKernelGradient(PairAverageType &average_correction_matrix, Neighborhood &neighborhood, size_t index_i)
 {
     for (size_t n = 0; n != neighborhood.current_size_; ++n)
     {
@@ -37,6 +36,7 @@ void KernelGradientCorrection<DataDelegationType>::
         neighborhood.e_ij_[n] = corrected_direction / (direction_norm + Eps);
         neighborhood.r_ij_[n] = displacement.dot(neighborhood.e_ij_[n]);
     }
-};
+}
+//=================================================================================================//
 } // namespace SPH
 #endif // KERNEL_CORRECTION_HPP

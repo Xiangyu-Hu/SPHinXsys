@@ -10,9 +10,9 @@
  *                                                                           *
  * SPHinXsys is partially funded by German Research Foundation               *
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
- *  HU1527/12-1 and HU1527/12-4.                                             *
+ *  HU1527/12-1 and HU1527/12-4                                              *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -21,22 +21,34 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    all_general_dynamics.h
- * @brief   This is the header file that user code should include to pick up all
- *          general dynamics used in SPHinXsys.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file particle_smoothing.h
+ * @brief Methods on smoothing discrete values with its neighbors
+ * @author	Xiangyu Hu
  */
 
-#pragma once
+#ifndef PARTICLE_SMOOTHING_H
+#define PARTICLE_SMOOTHING_H
 
 #include "base_general_dynamics.h"
-#include "general_bounding.h"
-#include "general_geometric.h"
-#include "general_interpolation.h"
-#include "general_life_time_dynamics.h"
-#include "general_reduce.h"
-#include "general_refinement.h"
-#include "kernel_correction.hpp"
-#include "particle_smoothing.hpp"
-#include "surface_indication.hpp"
-#include "time_step_initialization.h"
+
+namespace SPH
+{
+/**
+ * @class ParticleSmoothing
+ * @brief computing smoothed variable field by averaging with neighbors
+ */
+template <typename VariableType>
+class ParticleSmoothing : public LocalDynamics, public GeneralDataDelegateInner
+{
+  public:
+    explicit ParticleSmoothing(BaseInnerRelation &inner_relation, const std::string &variable_name);
+    virtual ~ParticleSmoothing(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+    void update(size_t index_i, Real dt = 0.0);
+
+  protected:
+    const Real W0_;
+    StdLargeVec<VariableType> &smoothed_, temp_;
+};
+} // namespace SPH
+#endif // PARTICLE_SMOOTHING_H

@@ -34,7 +34,7 @@
 #include "all_particle_dynamics.h"
 #include "base_kernel.h"
 #include "cell_linked_list.h"
-#include "general_interaction.h"
+#include "particle_smoothing.hpp"
 
 namespace SPH
 {
