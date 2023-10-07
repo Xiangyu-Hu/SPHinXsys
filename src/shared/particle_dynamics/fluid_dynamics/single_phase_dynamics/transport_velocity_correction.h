@@ -46,7 +46,7 @@ template <typename... T>
 class TransportVelocityCorrection;
 
 template <class DataDelegationType, class KernelCorrectionType, class ResolutionType, class ParticleScope>
-class TransportVelocityCorrection<DataDelegationType, KernelCorrectionType, ResolutionType, ParticleScope>
+class TransportVelocityCorrection<Base, DataDelegationType, KernelCorrectionType, ResolutionType, ParticleScope>
     : public LocalDynamics, public DataDelegationType
 {
   public:
@@ -62,9 +62,9 @@ class TransportVelocityCorrection<DataDelegationType, KernelCorrectionType, Reso
     ParticleScope checkWithinScope;
 };
 
-template <typename... OtherControlTypes>
-class TransportVelocityCorrection<Identifier<Inner, OtherControlTypes...>>
-    : public TransportVelocityCorrection<FluidDataInner, OtherControlTypes...>
+template <typename... CommonControlTypes>
+class TransportVelocityCorrection<Inner, CommonControlTypes...>
+    : public TransportVelocityCorrection<Base, FluidDataInner, CommonControlTypes...>
 {
   public:
     explicit TransportVelocityCorrection(BaseInnerRelation &inner_relation, Real coefficient = 0.2);
@@ -74,9 +74,9 @@ class TransportVelocityCorrection<Identifier<Inner, OtherControlTypes...>>
     void interaction(size_t index_i, Real dt = 0.0);
 };
 
-template <typename... OtherControlTypes>
-class TransportVelocityCorrection<Identifier<ContactBoundary, OtherControlTypes...>>
-    : public TransportVelocityCorrection<FluidContactData, OtherControlTypes...>
+template <typename... CommonControlTypes>
+class TransportVelocityCorrection<ContactBoundary, CommonControlTypes...>
+    : public TransportVelocityCorrection<Base, FluidContactData, CommonControlTypes...>
 {
   public:
     explicit TransportVelocityCorrection(BaseContactRelation &contact_relation, Real coefficient = 0.2);
@@ -86,9 +86,9 @@ class TransportVelocityCorrection<Identifier<ContactBoundary, OtherControlTypes.
     void interaction(size_t index_i, Real dt = 0.0);
 };
 
-template <class KernelCorrectionType, typename... OtherControlTypes>
-class TransportVelocityCorrection<Identifier<Contact, KernelCorrectionType, OtherControlTypes...>>
-    : public TransportVelocityCorrection<FluidContactData, KernelCorrectionType, OtherControlTypes...>
+template <class KernelCorrectionType, typename... CommonControlTypes>
+class TransportVelocityCorrection<Contact, KernelCorrectionType, CommonControlTypes...>
+    : public TransportVelocityCorrection<Base, FluidContactData, KernelCorrectionType, CommonControlTypes...>
 {
   public:
     explicit TransportVelocityCorrection(BaseContactRelation &contact_relation, Real coefficient = 0.2);
@@ -101,15 +101,13 @@ class TransportVelocityCorrection<Identifier<Contact, KernelCorrectionType, Othe
     StdVec<KernelCorrectionType> contact_kernel_corrections_;
 };
 
-template <typename... OtherControlTypes>
+template <typename... CommonControlTypes>
 class BaseTransportVelocityCorrectionComplex
-    : public ComplexInteraction<TransportVelocityCorrection<
-          Identifier<Inner, OtherControlTypes...>, Identifier<ContactBoundary, OtherControlTypes...>>>
+    : public ComplexInteraction<TransportVelocityCorrection<Inner, ContactBoundary>, CommonControlTypes...>
 {
   public:
     explicit BaseTransportVelocityCorrectionComplex(ComplexRelation &complex_relation, Real coefficient = 0.2)
-        : ComplexInteraction<TransportVelocityCorrection<
-              Identifier<Inner, OtherControlTypes...>, Identifier<ContactBoundary, OtherControlTypes...>>>(
+        : ComplexInteraction<TransportVelocityCorrection<Inner, ContactBoundary>, CommonControlTypes...>(
               ConstructorArgs(complex_relation.getInnerRelation(), coefficient),
               ConstructorArgs(complex_relation.getContactRelation(), coefficient)){};
 };
