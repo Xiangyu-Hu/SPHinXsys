@@ -155,7 +155,7 @@ class DiffusionInitialCondition
 //----------------------------------------------------------------------
 class DiffusionBodyRelaxation
     : public DiffusionRelaxationRK2<
-          DiffusionRelaxation<Inner, DiffusionParticles, CorrectedKernelGradientInner>>
+          DiffusionRelaxation<Identifier<Inner, DiffusionParticles, CorrectedKernelGradientInner>>>
 {
   public:
     explicit DiffusionBodyRelaxation(BaseInnerRelation &inner_relation)
