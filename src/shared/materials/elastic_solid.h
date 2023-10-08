@@ -75,7 +75,7 @@ class ElasticSolid : public Solid
     /** 2nd Piola-Kirchhoff stress through deformation. */
     virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) = 0;
     /** Cauchy stress through Eulerian Almansi strain tensor. */
-    virtual Matd StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i) = 0;
+    virtual Matd StressCauchy(Matd &almansi_strain, size_t particle_index_i) = 0;
     /** Numerical damping stress using right Cauchy tensor. */
     template <typename ScalingType>
     Matd NumericalDampingRightCauchy(const Matd &deformation, const Matd &deformation_rate, const ScalingType &scaling, size_t particle_index_i)
@@ -119,7 +119,7 @@ class LinearElasticSolid : public ElasticSolid
 
     virtual Matd StressPK1(Matd &deformation, size_t particle_index_i) override;
     virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) override;
-    virtual Matd StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i) override;
+    virtual Matd StressCauchy(Matd &almansi_strain, size_t particle_index_i) override;
     /** Volumetric Kirchhoff stress from determinate */
     virtual Real VolumetricKirchhoff(Real J) override;
     /** Define the calculation of the stress matrix for postprocessing */
@@ -173,7 +173,7 @@ class NeoHookeanSolid : public LinearElasticSolid
 
     /** second Piola-Kirchhoff stress related with green-lagrangian deformation tensor */
     virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) override;
-    virtual Matd StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i) override;
+    virtual Matd StressCauchy(Matd &almansi_strain, size_t particle_index_i) override;
     /** Volumetric Kirchhoff stress from determinate */
     virtual Real VolumetricKirchhoff(Real J) override;
     /** Define the calculation of the stress matrix for postprocessing */
@@ -197,7 +197,7 @@ class NeoHookeanSolidIncompressible : public LinearElasticSolid
 
     /** second Piola-Kirchhoff stress related with green-lagrangian deformation tensor */
     virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) override;
-    virtual Matd StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i) override;
+    virtual Matd StressCauchy(Matd &almansi_strain, size_t particle_index_i) override;
     /** Volumetric Kirchhoff stress from determinate */
     virtual Real VolumetricKirchhoff(Real J) override;
 };
