@@ -14,13 +14,15 @@ SolidParticles::SolidParticles(SPHBody &sph_body, Solid *solid)
 //=================================================================================================//
 void SolidParticles::initializeOtherVariables()
 {
-		BaseParticles::initializeOtherVariables();
+	BaseParticles::initializeOtherVariables();
     registerVariable(pos0_, "InitialPosition", [&](size_t i) -> Vecd
                      { return pos_[i]; });
-		registerVariable(n_, "NormalDirection");
+	registerVariable(n_, "NormalDirection");
     registerVariable(n0_, "InitialNormalDirection", [&](size_t i) -> Vecd
                      { return n_[i]; });
     registerVariable(B_, "CorrectionMatrix", [&](size_t i) -> Matd
+                     { return Matd::Identity(); });
+    registerVariable(B_with_level_set_, "CorrectionMatrixWithLevelSet", [&](size_t i) -> Matd
                      { return Matd::Identity(); });
 }
 //=============================================================================================//
