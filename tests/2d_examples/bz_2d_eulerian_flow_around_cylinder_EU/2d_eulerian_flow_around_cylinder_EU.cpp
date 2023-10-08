@@ -20,7 +20,7 @@ int main(int ac, char *av[])
     // Tag for run particle relaxation for the initial body fitted distribution.
     sph_system.setRunParticleRelaxation(false);
     // Tag for computation start with relaxed body fitted particles distribution.
-    sph_system.setReloadParticles(false);
+    sph_system.setReloadParticles(true);
     // Handle command line arguments and override the tags for particle relaxation and reload.
     sph_system.handleCommandlineOptions(ac, av);
     IOEnvironment io_environment(sph_system);
@@ -66,8 +66,8 @@ int main(int ac, char *av[])
         relax_dynamics::RelaxationStepInner relaxation_step_inner(cylinder_inner, true);
         relax_dynamics::RelaxationStepComplex relaxation_step_complex(water_block_complex, "OuterBoundary", true);
 
-        relax_dynamics::RelaxationStepByCMInner relaxation_step_CM_inner(cylinder_inner, true);
-        relax_dynamics::RelaxationStepByCMComplex relaxation_step_CM_complex(water_block_complex, "OuterBoundary", true);
+        //relax_dynamics::RelaxationStepByCMInner relaxation_step_CM_inner(cylinder_inner, true);
+        //relax_dynamics::RelaxationStepByCMComplex relaxation_step_CM_complex(water_block_complex, "OuterBoundary", true);
 
         //relax_dynamics::RelaxationStepImplicitInner relaxation_step_implicit_inner(cylinder_inner, true);
         //relax_dynamics::RelaxationStepImplicitComplex relaxation_step_implicit_complex(water_block_complex, "OuterBoundary", true);
@@ -146,8 +146,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     size_t number_of_iterations = 0;
     int screen_output_interval = 1000;
-    Real end_time = 80.0;
-    Real output_interval = 5.0; /**< time stamps for output. */
+    Real end_time = 300.0;
+    Real output_interval = 1.0; /**< time stamps for output. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------

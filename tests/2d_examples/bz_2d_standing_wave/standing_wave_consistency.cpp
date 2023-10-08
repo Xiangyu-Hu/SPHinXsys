@@ -202,7 +202,7 @@ int main(int ac, char* av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalfRiemannWithWall> fluid_density_relaxation(water_block_complex);
 
     InteractionWithUpdate<CorrectedConfigurationComplex> corrected_configuration_fluid(water_block_complex, 0.3);
-    InteractionWithUpdate<ConsistencyCorrectedConfigurationComplex> consistency_corrected_configuration_fluid(water_block_complex, 0.05);
+    InteractionWithUpdate<ConsistencyCorrectedConfigurationComplex> consistency_corrected_configuration_fluid(water_block_complex, 0.1);
 
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> fluid_density_by_summation(water_block_complex);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);

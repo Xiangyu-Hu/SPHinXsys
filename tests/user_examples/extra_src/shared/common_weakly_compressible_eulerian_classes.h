@@ -196,7 +196,7 @@ template <class RiemannSolverType>
 class BaseIntegration1stHalf : public EulerianBaseIntegration
 {
   public:
-    explicit BaseIntegration1stHalf(BaseInnerRelation &inner_relation, Real limiter_parameter = 15.0);
+    explicit BaseIntegration1stHalf(BaseInnerRelation &inner_relation, Real limiter_parameter = 1.0);
     virtual ~BaseIntegration1stHalf(){};
     Real limiter_input_;
     RiemannSolverType riemann_solver_;
@@ -216,7 +216,7 @@ class BaseIntegration1stHalfWithWall : public InteractionWithWall<BaseIntegratio
   public:
     // template for different combination of constructing body relations
     template <class BaseBodyRelationType>
-    BaseIntegration1stHalfWithWall(BaseBodyRelationType &base_body_relation, BaseContactRelation &wall_contact_relation, Real limiter_parameter = 15.0)
+    BaseIntegration1stHalfWithWall(BaseBodyRelationType &base_body_relation, BaseContactRelation &wall_contact_relation, Real limiter_parameter = 1.0)
         : InteractionWithWall<BaseIntegration1stHalfType>(base_body_relation, wall_contact_relation), limiter_input_(limiter_parameter){};
     explicit BaseIntegration1stHalfWithWall(ComplexRelation &fluid_wall_relation)
         : BaseIntegration1stHalfWithWall(fluid_wall_relation.getInnerRelation(),
@@ -235,7 +235,7 @@ template <class RiemannSolverType>
 class BaseIntegration2ndHalf : public EulerianBaseIntegration
 {
   public:
-    explicit BaseIntegration2ndHalf(BaseInnerRelation &inner_relation, Real limiter_parameter = 15.0);
+    explicit BaseIntegration2ndHalf(BaseInnerRelation &inner_relation, Real limiter_parameter = 1.0);
     virtual ~BaseIntegration2ndHalf(){};
     Real limiter_input_;
     RiemannSolverType riemann_solver_;
@@ -254,7 +254,7 @@ class BaseIntegration2ndHalfWithWall : public InteractionWithWall<BaseIntegratio
   public:
     // template for different combination of constructing body relations
     template <class BaseBodyRelationType>
-    BaseIntegration2ndHalfWithWall(BaseBodyRelationType &base_body_relation, BaseContactRelation &wall_contact_relation, Real limiter_parameter = 15.0)
+    BaseIntegration2ndHalfWithWall(BaseBodyRelationType &base_body_relation, BaseContactRelation &wall_contact_relation, Real limiter_parameter = 1.0)
         : InteractionWithWall<BaseIntegration2ndHalfType>(base_body_relation, wall_contact_relation), limiter_input_(limiter_parameter){};
     explicit BaseIntegration2ndHalfWithWall(ComplexRelation &fluid_wall_relation)
         : BaseIntegration2ndHalfWithWall(fluid_wall_relation.getInnerRelation(),

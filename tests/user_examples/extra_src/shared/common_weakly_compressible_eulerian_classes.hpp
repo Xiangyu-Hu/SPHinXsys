@@ -93,10 +93,10 @@ void BaseIntegration1stHalf<RiemannSolverType>::interaction(size_t index_i, Real
         FluidConsistencyStarState consistency_interface_state = riemann_solver_.getInterfaceConsistencyState(state_i, state_j, this->B_[index_i], this->B_[index_j], e_ij);
         Real rho_star = this->fluid_.DensityFromPressure(interface_state.p_);
 
-        //momentum_change_rate -= 2.0 * ((rho_star * interface_state.vel_) * interface_state.vel_.transpose() +
-                                //interface_state.p_ * Matd::Identity()) * e_ij * dW_ijV_j;
-        momentum_change_rate -= 2.0 * ((rho_star * consistency_interface_state.vel_) * consistency_interface_state.vel_.transpose() + 
-            consistency_interface_state.p_B_ * Matd::Identity()) * e_ij * dW_ijV_j;
+        momentum_change_rate -= 2.0 * ((rho_star * interface_state.vel_) * interface_state.vel_.transpose() +
+                                interface_state.p_ * Matd::Identity()) * e_ij * dW_ijV_j;
+        //momentum_change_rate -= 2.0 * ((rho_star * consistency_interface_state.vel_) * consistency_interface_state.vel_.transpose() + 
+            //consistency_interface_state.p_B_ * Matd::Identity()) * e_ij * dW_ijV_j;
     }
     dmom_dt_[index_i] = momentum_change_rate; 
 }
@@ -161,8 +161,8 @@ void BaseIntegration2ndHalf<RiemannSolverType>::interaction(size_t index_i, Real
         FluidConsistencyStarState consistency_interface_state = riemann_solver_.getInterfaceConsistencyState(state_i, state_j, this->B_[index_i], this->B_[index_j], e_ij);
         Real rho_star = this->fluid_.DensityFromPressure(interface_state.p_);
 
-        //density_change_rate -= 2.0 * (rho_star * interface_state.vel_).dot(e_ij) * dW_ijV_j;
-        density_change_rate -= 2.0 * (rho_star * consistency_interface_state.vel_).dot(e_ij) * dW_ijV_j; 
+        density_change_rate -= 2.0 * (rho_star * interface_state.vel_).dot(e_ij) * dW_ijV_j;
+        //density_change_rate -= 2.0 * (rho_star * consistency_interface_state.vel_).dot(e_ij) * dW_ijV_j; 
     }
     drho_dt_[index_i] = density_change_rate;
 }
@@ -184,7 +184,7 @@ void BaseIntegration2ndHalfWithWall<BaseIntegration2ndHalfType>::interaction(siz
     for (size_t k = 0; k < fluid_dynamics::FluidWallData::contact_configuration_.size(); ++k)
     {
         StdLargeVec<Vecd> &n_k = *(this->wall_n_[k]);
-        StdLargeVec<Vecd>& B_k = *(this->wall_B_[k]);
+        StdLargeVec<Matd> &B_k = *(this->wall_B_[k]);
         Neighborhood &wall_neighborhood = (*fluid_dynamics::FluidWallData::contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
@@ -198,7 +198,7 @@ void BaseIntegration2ndHalfWithWall<BaseIntegration2ndHalfType>::interaction(siz
 
             FluidState state_j(rho_in_wall, vel_in_wall, p_in_wall);
             FluidStarState interface_state = this->riemann_solver_.getInterfaceState(state_i, state_j, n_k[index_j]);
-            FluidConsistencyStarState consistency_interface_state = this->riemann_solver_.getInterfaceConsistencyState(state_i, state_j, this->wall_B_[index_i], B_k[index_j], n_k[index_j]);
+            FluidConsistencyStarState consistency_interface_state = this->riemann_solver_.getInterfaceConsistencyState(state_i, state_j, this->B_[index_i], B_k[index_j], n_k[index_j]);
             Real rho_star = this->fluid_.DensityFromPressure(interface_state.p_);
 
             density_change_rate -= 2.0 * (rho_star * interface_state.vel_).dot(e_ij) * dW_ijV_j;
