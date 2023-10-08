@@ -290,7 +290,7 @@ ParticleRefinementWithPrescribedArea::
     : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
       refinement_region_bounds_(refinement_region.getBounds()),
       particle_adaptation_(DynamicCast<ParticleSplitAndMerge>(this, *sph_body.sph_adaptation_)),
-      inv_rho0_(1.0 / sph_body_.base_material_->ReferenceDensity()),
+      inv_rho0_(1.0 / particles_->getBaseMaterial().ReferenceDensity()),
       Vol_(particles_->Vol_), pos_(particles_->pos_), rho_(particles_->rho_),
       mass_(particles_->mass_),
       h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")) {}

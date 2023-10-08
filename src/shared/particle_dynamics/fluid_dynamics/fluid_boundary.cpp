@@ -108,7 +108,7 @@ void DisposerOutflowDeletion::update(size_t index_i, Real dt)
 //=================================================================================================//
 StaticConfinementDensity::StaticConfinementDensity(NearShapeSurface &near_surface)
     : BaseLocalDynamics<BodyPartByCell>(near_surface), FluidDataSimple(sph_body_),
-      rho0_(sph_body_.base_material_->ReferenceDensity()),
+      rho0_(particles_->getBaseMaterial().ReferenceDensity()),
       inv_sigma0_(1.0 / sph_body_.sph_adaptation_->LatticeNumberDensity()),
       mass_(particles_->mass_), rho_sum_(*particles_->getVariableByName<Real>("DensitySummation")), pos_(particles_->pos_),
       level_set_shape_(&near_surface.level_set_shape_) {}

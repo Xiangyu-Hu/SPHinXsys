@@ -8,7 +8,7 @@ namespace SPH
 BaseLifeTimeDynamics::BaseLifeTimeDynamics(SPHBody &sph_body)
     : LocalDynamics(sph_body), GeneralDataDelegateSimple(sph_body),
       particle_split_merge_(DynamicCast<ParticleSplitAndMerge>(this, *sph_body.sph_adaptation_)),
-      inv_rho0_(1.0 / sph_body_.base_material_->ReferenceDensity()),
+      inv_rho0_(1.0 / particles_->getBaseMaterial().ReferenceDensity()),
       rho_(particles_->rho_), pos_(particles_->pos_), Vol_(particles_->Vol_),
       mass_(particles_->mass_),
       h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")) {}

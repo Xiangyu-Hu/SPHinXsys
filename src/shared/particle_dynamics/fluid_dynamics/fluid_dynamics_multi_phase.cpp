@@ -33,7 +33,7 @@ ViscousAccelerationMultiPhase::
 MultiPhaseColorFunctionGradient::
     MultiPhaseColorFunctionGradient(BaseContactRelation &contact_relation)
     : LocalDynamics(contact_relation.getSPHBody()), MultiPhaseData(contact_relation),
-      rho0_(sph_body_.base_material_->ReferenceDensity()), Vol_(particles_->Vol_),
+      rho0_(particles_->getBaseMaterial().ReferenceDensity()), Vol_(particles_->Vol_),
       pos_div_(*particles_->getVariableByName<Real>("PositionDivergence")),
       indicator_(*particles_->getVariableByName<int>("Indicator"))
 {
@@ -41,7 +41,7 @@ MultiPhaseColorFunctionGradient::
     particles_->registerVariable(surface_norm_, "SurfaceNormal");
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        Real rho0_k = contact_bodies_[k]->base_material_->ReferenceDensity();
+        Real rho0_k = contact_particles_[k]->getBaseMaterial().ReferenceDensity();
         contact_rho0_.push_back(rho0_k);
         contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
     }

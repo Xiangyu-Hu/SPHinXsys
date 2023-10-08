@@ -76,7 +76,6 @@ class SPHBody
   public:
     Shape *body_shape_;                    /**< volumetric geometry enclosing the body */
     SPHAdaptation *sph_adaptation_;        /**< numerical adaptation policy */
-    BaseMaterial *base_material_;          /**< base material for dynamic cast in DataDelegate */
     StdVec<SPHRelation *> body_relations_; /**< all contact relations centered from this body **/
 
     SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr, const std::string &body_name);
@@ -129,7 +128,6 @@ class SPHBody
     template <class ParticleType = BaseParticles, class MaterialType = BaseMaterial>
     void defineParticlesWithMaterial(MaterialType *material)
     {
-        base_material_ = material;
         base_particles_ = base_particles_ptr_keeper_.createPtr<ParticleType>(*this, material);
     };
 
@@ -150,7 +148,7 @@ class SPHBody
         ParticleGeneratorType particle_generator(*this, std::forward<ConstructorArgs>(args)...);
         particle_generator.generateParticlesWithBasicVariables();
         base_particles_->initializeOtherVariables();
-        base_material_->initializeLocalParameters(base_particles_);
+        base_particles_->getBaseMaterial().initializeLocalParameters(base_particles_);
     };
 
     template <typename DataType>

@@ -13,7 +13,7 @@ FreeSurfaceIndicationComplex::
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        Real rho0_k = contact_bodies_[k]->base_material_->ReferenceDensity();
+        Real rho0_k = contact_particles_[k]->getBaseMaterial().ReferenceDensity();
         contact_inv_rho0_.push_back(1.0 / rho0_k);
         contact_mass_.push_back(&(contact_particles_[k]->mass_));
     }
