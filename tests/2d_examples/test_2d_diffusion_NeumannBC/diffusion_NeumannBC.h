@@ -175,22 +175,24 @@ class NeumannWallBoundaryInitialCondition
         }
     }
 };
-
-using SolidDiffusionInner = DiffusionRelaxationInner<DiffusionParticles>;
-using SolidDiffusionDirichlet = DiffusionRelaxationDirichlet<DiffusionParticles, WallParticles>;
-using SolidDiffusionNeumann = DiffusionRelaxationNeumann<DiffusionParticles, WallParticles>;
 //----------------------------------------------------------------------
 //	Specify diffusion relaxation method.
 //----------------------------------------------------------------------
 class DiffusionBodyRelaxation
-    : public DiffusionRelaxationRK2<OldComplexInteraction<SolidDiffusionInner, SolidDiffusionDirichlet, SolidDiffusionNeumann>>
+    : public DiffusionRelaxationRK2<ComplexInteraction<DiffusionRelaxation<
+          Identifier<Inner, DiffusionParticles, KernelGradientInner>,
+          Identifier<Dirichlet, DiffusionParticles, WallParticles, KernelGradientContact>,
+          Identifier<Neumann, DiffusionParticles, WallParticles, KernelGradientContact>>>>
 {
   public:
     explicit DiffusionBodyRelaxation(InnerRelation &inner_relation,
-                                     ContactRelation &body_contact_relation_Dirichlet,
-                                     ContactRelation &body_contact_relation_Neumann)
-        : DiffusionRelaxationRK2<OldComplexInteraction<SolidDiffusionInner, SolidDiffusionDirichlet, SolidDiffusionNeumann>>(
-              inner_relation, body_contact_relation_Dirichlet, body_contact_relation_Neumann){};
+                                     ContactRelation &contact_Dirichlet,
+                                     ContactRelation &contact_Neumann)
+        : DiffusionRelaxationRK2<ComplexInteraction<DiffusionRelaxation<
+              Identifier<Inner, DiffusionParticles, KernelGradientInner>,
+              Identifier<Dirichlet, DiffusionParticles, WallParticles, KernelGradientContact>,
+              Identifier<Neumann, DiffusionParticles, WallParticles, KernelGradientContact>>>>(
+              inner_relation, contact_Dirichlet, contact_Neumann){};
     virtual ~DiffusionBodyRelaxation(){};
 };
 //----------------------------------------------------------------------
