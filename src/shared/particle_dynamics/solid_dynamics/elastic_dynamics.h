@@ -145,7 +145,7 @@ class BaseElasticIntegration : public LocalDynamics, public ElasticSolidDataInne
   protected:
     StdLargeVec<Real> &rho_, &mass_;
     StdLargeVec<Vecd> &pos_, &vel_, &acc_;
-    StdLargeVec<Matd> &B_, &F_, &dF_dt_;
+    StdLargeVec<Matd> &B_, &F_, &dF_dt_, &B_with_level_set_;
 };
 
 /**
@@ -199,12 +199,14 @@ class Integration1stHalf : public BaseIntegration1stHalf
             //correction scheme
             /*acceleration += inv_rho0_ * inner_neighborhood.dW_ijV_j_[n] *
                             (stress_PK1_B_[index_i] + stress_PK1_B_[index_j] +
-                             numerical_dissipation_factor_ * weight * numerical_stress_ij) * e_ij;*/                                                                                                                                                       
+                             numerical_dissipation_factor_ * weight * numerical_stress_ij) * e_ij; */                                                                                                                                                      
 
             //consistence correction scheme
+
             acceleration += inv_rho0_ * inner_neighborhood.dW_ijV_j_[n] *
-                            (stress_PK1_[index_i] * B_[index_i].transpose() + stress_PK1_[index_j] * B_[index_j].transpose() +
-                             numerical_dissipation_factor_ * weight * numerical_stress_ij) * e_ij;
+                            (stress_PK1_[index_i] * (B_[index_i].determinant() > 1.5 ? B_[index_i] : B_with_level_set_[index_i]) +
+                             stress_PK1_[index_j] * (B_[index_j].determinant() > 1.5 ? B_[index_j] : B_with_level_set_[index_j]) +
+                             numerical_dissipation_factor_ * weight * numerical_stress_ij) *  e_ij;
         }
 
         acc_[index_i] = acceleration;

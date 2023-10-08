@@ -44,7 +44,8 @@ BaseElasticIntegration::
     : LocalDynamics(inner_relation.getSPHBody()), ElasticSolidDataInner(inner_relation),
       rho_(particles_->rho_), mass_(particles_->mass_),
       pos_(particles_->pos_), vel_(particles_->vel_), acc_(particles_->acc_),
-      B_(particles_->B_), F_(particles_->F_), dF_dt_(particles_->dF_dt_) {}
+      B_(particles_->B_), B_with_level_set_(particles_->B_with_level_set_),
+      F_(particles_->F_), dF_dt_(particles_->dF_dt_) {}
 //=================================================================================================//
 BaseIntegration1stHalf::
     BaseIntegration1stHalf(BaseInnerRelation &inner_relation)

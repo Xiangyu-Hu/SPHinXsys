@@ -470,8 +470,7 @@ Matd LevelSet::computeKernelSecondGradientIntegral(const Vecd &position)
 {
     Real phi = probeSignedDistance(position);
     Real cutoff_radius = kernel_.CutOffRadius(global_h_ratio_);
-    //Real threshold = cutoff_radius + data_spacing_;
-    Real threshold = cutoff_radius;
+    Real threshold = cutoff_radius + data_spacing_;
 
     Matd integral = Matd::Zero();
     if (fabs(phi) < threshold)
@@ -482,9 +481,7 @@ Matd LevelSet::computeKernelSecondGradientIntegral(const Vecd &position)
             {
                 Arrayi neighbor_index = Arrayi(global_index_[0] + i, global_index_[1] + j);
                 Real phi_neighbor = DataValueFromGlobalIndex(phi_, neighbor_index);
-                //if (phi_neighbor > -data_spacing_)
-                if (phi_neighbor > - 0.5 * data_spacing_)
-                //if (phi_neighbor > 0 )
+                if (phi_neighbor > -data_spacing_)
                 {
                     Vecd phi_gradient = DataValueFromGlobalIndex(phi_gradient_, neighbor_index);
                     Vecd integral_position = global_mesh_.GridPositionFromIndex(neighbor_index);

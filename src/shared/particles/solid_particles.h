@@ -56,6 +56,7 @@ class SolidParticles : public BaseParticles
     StdLargeVec<Vecd> n_;    /**< normal direction */
     StdLargeVec<Vecd> n0_;   /**< initial normal direction */
     StdLargeVec<Matd> B_;    /**< configuration correction for linear reproducing */
+    StdLargeVec<Matd> B_with_level_set_; 
     Solid &solid_;
 
     /** Get wall average velocity when interacting with fluid. */

@@ -100,8 +100,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     /** Tag for computation start with relaxed body fitted particles distribution. */
-    sph_system.setRunParticleRelaxation(false);
-    sph_system.setReloadParticles(true);
+    sph_system.setRunParticleRelaxation(true);
+    sph_system.setReloadParticles(false);
 #ifdef BOOST_AVAILABLE
     // handle command line arguments
     sph_system.handleCommandlineOptions(ac, av);
@@ -122,6 +122,7 @@ int main(int ac, char *av[])
     beam_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 
     beam_body.addBodyStateForRecording<Matd>("CorrectionMatrix");
+    beam_body.addBodyStateForRecording<Matd>("CorrectionMatrixWithLevelSet");
     beam_body.addBodyStateForRecording<Real>("VolumetricMeasure");
      //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
@@ -147,6 +148,7 @@ int main(int ac, char *av[])
         relax_dynamics::RelaxationStepByCMInner relaxation_step_cm_inner_explicit(beam_body_inner, true);
         relax_dynamics::RelaxationStepImplicitInner relaxation_step_inner(beam_body_inner, true);
         relax_dynamics::RelaxationStepByCMImplicitInner relaxation_step_cm_inner(beam_body_inner, true);
+        InteractionDynamics<relax_dynamics::CheckCorrectedZeroOrderConsistency> check_zero_order_consistency(beam_body_inner, true);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -159,12 +161,15 @@ int main(int ac, char *av[])
         int ite_p = 0;
         while (ite_p < 20000)
         {
-            configuration_beam_body.exec();
-            //relaxation_step_inner_explicit.exec();
-            relaxation_step_cm_inner_explicit.exec();
+            //configuration_beam_body.exec();
+            relaxation_step_inner_explicit.exec();
+            //relaxation_step_cm_inner_explicit.exec();
+            //relaxation_step_inner.exec();
+            //relaxation_step_cm_inner.exec();
             ite_p += 1;
             if (ite_p % 200 == 0)
             {
+                check_zero_order_consistency.exec();
                 std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
                 write_insert_body_to_vtp.writeToFile(ite_p);
             }
@@ -211,6 +216,7 @@ int main(int ac, char *av[])
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     beam_initial_velocity.exec();
+    beam_corrected_configuration.exec();
     beam_corrected_configuration_level_set.exec();
     //----------------------------------------------------------------------
     //	Setup computing time-step controls.
