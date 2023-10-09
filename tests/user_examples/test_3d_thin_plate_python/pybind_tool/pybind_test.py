@@ -19,9 +19,17 @@ else:
     path_2 = 'lib'
 path = os.path.join(path_1, path_2)
 sys.path.append(path)
+
 # change import depending on the project name
 import test_3d_thin_plate_python as test_3d
 
+# set file names
+dat_file_name = 'PlateObserver_Position.dat'
+vtp_file_name_0 = 'PlateBody_0000000000.vtp'
+vtp_file_name_1 = 'PlateBody_0000000001.vtp'
+dat_split = dat_file_name.split('.')[0]
+vtp_split_0 = vtp_file_name_0.split('.')[0]
+vtp_split_1 = vtp_file_name_1.split('.')[0]
 
 def run_case(value):
     parser = argparse.ArgumentParser()
@@ -56,10 +64,10 @@ def net_displacement(file_path, output_file):
 
     return last_time, displacement_z
 
-
+# copy vtp files from the output folder to the multiple_runs_output folder
 def copy_files(output_folder):
-    source_files = ['output/PlateObserver_Position.dat', 'output/SPHBody_PlateBody_0000000000.vtp', 'output/SPHBody_PlateBody_0000000001.vtp']
-    destination_files = [output_folder + 'PlateObserver_Position.dat', output_folder + 'SPHBody_PlateBody_0000000000.vtp', output_folder + 'SPHBody_PlateBody_0000000001.vtp']
+    source_files = ['output/PlateObserver_Position.dat', 'output/PlateBody_0000000000.vtp', 'output/PlateBody_0000000001.vtp']
+    destination_files = [output_folder + dat_file_name, output_folder + vtp_file_name_0, output_folder + vtp_file_name_1]
 
     for index, source_file in enumerate(source_files):
         # Read the content of the source file
@@ -69,10 +77,12 @@ def copy_files(output_folder):
         with open(destination_files[index], 'wb') as destination:
             destination.write(content)
 
+# rename the files in the multiple_runs_output folder
 def rename_files(value, output_folder):
-    old_file_name = [output_folder + 'PlateObserver_Position.dat', output_folder + 'SPHBody_PlateBody_0000000000.vtp', output_folder + 'SPHBody_PlateBody_0000000001.vtp']
-    new_file_name = [(output_folder + 'PlateObserver_Position_' + value + '.dat'), (output_folder + 'SPHBody_PlateBody_0000000000_' + value + '.vtp'), (output_folder + 'SPHBody_PlateBody_0000000001_' + value + '.vtp')]
-
+    old_file_name = [output_folder + dat_file_name, output_folder + vtp_file_name_0, output_folder + vtp_file_name_1]
+    # new_file_name = [(output_folder + 'PlateObserver_Position_' + value + '.dat'), (output_folder + 'PlateBody_0000000000_' + value + '.vtp'), (output_folder + 'PlateBody_0000000001_' + value + '.vtp')]
+    new_file_name = [(output_folder + dat_split + '_' + value + '.dat'), (output_folder + vtp_split_0 + '_' + value + '.vtp'), (output_folder + vtp_split_1 + '_' + value + '.vtp')]
+    
     for index, file in enumerate(old_file_name):
         try:
             os.rename(file, new_file_name[index])
@@ -87,7 +97,7 @@ if __name__ == "__main__":
     output_folder = 'multiple_runs_output/'
     output_file = output_folder + 'Displacements.dat'
     #values = [6.5, 12.5, 25, 50, 75, 100, 125, 150, 175, 200]
-    values = [6.5, 12.5]
+    values = [100, 200]
     displacement = list(range(len(values)))
     run_time = list(range(len(values)))
 
@@ -114,7 +124,8 @@ if __name__ == "__main__":
     print(f"All the cases finished! Files are saved as follows: ")
     for index,value in enumerate(values):
         print(f"For loading_factor = {value} :")
-        new_file_name = [(output_folder + 'PlateObserver_Position_' + str(index) + '.dat'), (output_folder + 'SPHBody_PlateBody_0000000000_' + str(index) + '.vtp'), (output_folder + 'SPHBody_PlateBody_0000000001_' + str(index) + '.vtp')]
+        # new_file_name = [(output_folder + 'PlateObserver_Position_' +  + '.dat'), (output_folder + 'PlateBody_0000000000_' +  + '.vtp'), (output_folder + 'PlateBody_0000000001_' + str(index) + '.vtp')]
+        new_file_name = [(output_folder + dat_split + '_' + str(index) + '.dat'), (output_folder + vtp_split_0 + '_' + str(index) + '.vtp'), (output_folder + vtp_split_1 + '_' + str(index) + '.vtp')]
         print("\t" + new_file_name[0])
         print("\t" + new_file_name[1])
         print("\t" + new_file_name[2])
